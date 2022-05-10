@@ -627,7 +627,7 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
             Title: `${this.examScoreDTO.title} Scores`,
             Author: `Artemis ${VERSION ?? ''}`,
         };
-        const fileName = `${this.examScoreDTO.title} Scores.xlsx`;
+        const fileName = `${this.examScoreDTO.title} Exam Results.xlsx`;
         XLSX.writeFile(workbook, fileName, { Props: workbookProps, compression: true });
     }
 
@@ -640,8 +640,8 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
     exportAsCsv(headers: string[], rows: ExportRow[], customOptions: CsvExportOptions) {
         const options = {
             showLabels: true,
-            title: this.examScoreDTO.title,
-            filename: this.examScoreDTO.title + 'Results',
+            showTitle: false,
+            filename: `${this.examScoreDTO.title} Exam Results`,
             useTextFile: false,
             useBom: true,
             headers,

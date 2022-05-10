@@ -571,7 +571,7 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
         const generalExportOptions = {
             showLabels: true,
             showTitle: false,
-            filename: 'Artemis Course ' + this.course.title + ' Scores',
+            filename: `${this.course.title} Scores`,
             useTextFile: false,
             useBom: true,
             headers: keys,
