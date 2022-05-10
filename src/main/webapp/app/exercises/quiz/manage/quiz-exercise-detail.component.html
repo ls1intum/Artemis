@@ -93,15 +93,13 @@
                             <label class="form-check-label custom-control-label" for="cbRandomizeOrder" jhiTranslate="artemisApp.quizExercise.randomizeQuestionOrder"> </label>
                         </div>
                         <ng-container *ngIf="!isExamMode">
-                            <div class="form-check custom-control">
-                                <span jhiTranslate="artemisApp.quizExercise.quizMode.title" class="colon-suffix no-flex-shrink"></span>
-                                <jhi-help-icon placement="auto" text="artemisApp.quizExercise.quizMode.explanation"></jhi-help-icon>
-                                <select class="form-select" [(ngModel)]="quizExercise.quizMode" (ngModelChange)="cacheValidation()">
-                                    <option [value]="QuizMode.SYNCHRONIZED">{{ 'artemisApp.quizExercise.quizMode.synchronized' | artemisTranslate }}</option>
-                                    <option [value]="QuizMode.BATCHED">{{ 'artemisApp.quizExercise.quizMode.batched' | artemisTranslate }}</option>
-                                    <option [value]="QuizMode.INDIVIDUAL">{{ 'artemisApp.quizExercise.quizMode.individual' | artemisTranslate }}</option>
-                                </select>
-                            </div>
+                            <label jhiTranslate="artemisApp.quizExercise.quizMode.title" class="colon-suffix no-flex-shrink"></label>
+                            <jhi-help-icon placement="auto" text="artemisApp.quizExercise.quizMode.explanation"></jhi-help-icon>
+                            <select class="form-select" [(ngModel)]="quizExercise.quizMode" (ngModelChange)="cacheValidation()">
+                                <option [value]="QuizMode.SYNCHRONIZED">{{ 'artemisApp.quizExercise.quizMode.synchronized' | artemisTranslate }}</option>
+                                <option [value]="QuizMode.BATCHED">{{ 'artemisApp.quizExercise.quizMode.batched' | artemisTranslate }}</option>
+                                <option [value]="QuizMode.INDIVIDUAL">{{ 'artemisApp.quizExercise.quizMode.individual' | artemisTranslate }}</option>
+                            </select>
                             <ng-container>
                                 <jhi-date-time-picker
                                     id="release-date"
@@ -141,7 +139,8 @@
                                 <!-- no scheduled batched mode yet -->
                                 <jhi-button (click)="addQuizBatch()" [btnType]="ButtonType.DEFAULT" title="artemisApp.quizExercise.addBatch"></jhi-button>
                             </div>
-                            <ng-container *ngIf="quizExercise.quizBatches && quizExercise.quizMode !== QuizMode.INDIVIDUAL">
+                            <ng-container *ngIf="quizExercise.quizBatches && quizExercise.quizMode === QuizMode.SYNCHRONIZED">
+                                <!-- Change "quizExercise.quizMode === QuizMode.SYNCHRONIZED" above to "quizExercise.quizMode !== QuizMode.INDIVIDUAL" when scheduled batched mode is active -->
                                 <div *ngFor="let quizBatch of quizExercise.quizBatches; let first = first">
                                     <jhi-date-time-picker
                                         class="form-element"
@@ -153,12 +152,8 @@
                                     ></jhi-date-time-picker>
                                     <span *ngIf="quizBatch.startDateError" class="invalid-feedback">{{ 'artemisApp.quizExercise.startDate' | artemisTranslate }}</span>
                                     <!-- no scheduled batched mode yet -->
-                                    <jhi-button
-                                        *ngIf="quizExercise.quizMode === QuizMode.BATCHED && false"
-                                        (click)="removeQuizBatch(quizBatch)"
-                                        [btnType]="ButtonType.ERROR"
-                                        [icon]="faXmark"
-                                    ></jhi-button>
+                                    <!-- Change *ngIf="false" below to "quizExercise.quizMode === QuizMode.BATCHED" when scheduled batched mode is active -->
+                                    <jhi-button *ngIf="false" (click)="removeQuizBatch(quizBatch)" [btnType]="ButtonType.ERROR" [icon]="faXmark"></jhi-button>
                                 </div>
                             </ng-container>
                         </ng-container>
