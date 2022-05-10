@@ -32,8 +32,7 @@ export class ModelingEditorComponent extends ModelingComponent implements AfterV
     farQuestionCircle = faQuestionCircle;
 
     htmlScroll = 0;
-    clickNoScroll = false;
-    mouseDownListener: ((this: Document, ev: MouseEvent) => any) | undefined;
+    mouseDownListener: any;
     scrollListener: ((this: Document, ev: Event) => any) | undefined;
 
     constructor(private alertService: AlertService, private renderer: Renderer2, private modalService: NgbModal, private guidedTourService: GuidedTourService) {
@@ -66,18 +65,13 @@ export class ModelingEditorComponent extends ModelingComponent implements AfterV
             console.log('Warning: If you experience problems regarding the scrolling behavior, please report them at https://github.com/ls1intum/Artemis');
 
             this.mouseDownListener = () => {
-                if (this.clickNoScroll) {
-                    const copy = this.htmlScroll;
-                    // @ts-ignore behavior 'instant' works with safari
-                    requestAnimationFrame(() => window.scrollTo({ top: copy, left: 0, behavior: 'instant' }));
-                }
-
-                this.clickNoScroll = true;
+                const copy = this.htmlScroll;
+                // @ts-ignore behavior 'instant' works with safari
+                requestAnimationFrame(() => window.scrollTo({ top: copy, left: 0, behavior: 'instant' }));
             };
 
             this.scrollListener = () => {
                 this.htmlScroll = document.getElementsByTagName('html')[0].scrollTop;
-                this.clickNoScroll = false;
             };
 
             document.addEventListener('mousedown', this.mouseDownListener);
