@@ -10,6 +10,7 @@ import { MockMetisService } from '../../../../../helpers/mocks/service/mock-meti
 import { getElements } from '../../../../../helpers/utils/general.utils';
 import { metisPostExerciseUser1, metisPostLectureUser1, metisPostLectureUser2, metisTags } from '../../../../../helpers/sample/metis-sample-data';
 
+// TODO: move tests from posting-thread.component.spec.ts
 describe('PostFooterComponent', () => {
     let component: PostFooterComponent;
     let fixture: ComponentFixture<PostFooterComponent>;

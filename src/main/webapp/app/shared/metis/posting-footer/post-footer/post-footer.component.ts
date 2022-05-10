@@ -1,8 +1,11 @@
-import { Component, Input, OnChanges, OnInit } from '@angular/core';
+import { Component, Input, OnChanges, OnInit, TemplateRef, ViewChild } from '@angular/core';
 import { PostingFooterDirective } from 'app/shared/metis/posting-footer/posting-footer.directive';
 import { Post } from 'app/entities/metis/post.model';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
+import { AnswerPostCreateEditModalComponent } from 'app/shared/metis/posting-create-edit-modal/answer-post-create-edit-modal/answer-post-create-edit-modal.component';
+import { AnswerPost } from 'app/entities/metis/answer-post.model';
+import { faComments } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-post-footer',
@@ -17,6 +20,15 @@ export class PostFooterComponent extends PostingFooterDirective<Post> implements
     tags: string[];
     courseId: number;
 
+    @ViewChild(AnswerPostCreateEditModalComponent) answerPostCreateEditModal?: AnswerPostCreateEditModalComponent;
+    @Input() showAnswers: boolean;
+    sortedAnswerPosts: AnswerPost[];
+    createdAnswerPost: AnswerPost;
+    isAtLeastTutorInCourse: boolean;
+    @ViewChild('createAnswerPostModal') createAnswerPostModal: TemplateRef<AnswerPostCreateEditModalComponent>;
+
+    faComments = faComments;
+
     constructor(private metisService: MetisService) {
         super();
     }
@@ -27,6 +39,9 @@ export class PostFooterComponent extends PostingFooterDirective<Post> implements
     ngOnInit(): void {
         this.courseId = this.metisService.getCourse().id!;
         this.updateTags();
+        this.isAtLeastTutorInCourse = this.metisService.metisUserIsAtLeastTutorInCourse();
+        this.sortAnswerPosts();
+        this.createdAnswerPost = this.createEmptyAnswerPost();
     }
 
     /**
@@ -34,6 +49,7 @@ export class PostFooterComponent extends PostingFooterDirective<Post> implements
      */
     ngOnChanges(): void {
         this.updateTags();
+        this.sortAnswerPosts();
     }
 
     /**
@@ -45,5 +61,33 @@ export class PostFooterComponent extends PostingFooterDirective<Post> implements
         } else {
             this.tags = [];
         }
+    }
+
+    /**
+     * sorts answerPosts by two criteria
+     * 1. criterion: resolvesPost -> true comes first
+     * 2. criterion: creationDate -> most recent comes at the end (chronologically from top to bottom)
+     */
+    sortAnswerPosts(): void {
+        if (!this.posting.answers) {
+            this.sortedAnswerPosts = [];
+            return;
+        }
+        this.sortedAnswerPosts = this.posting.answers.sort(
+            (answerPostA, answerPostB) =>
+                Number(answerPostB.resolvesPost) - Number(answerPostA.resolvesPost) || answerPostA.creationDate!.valueOf() - answerPostB.creationDate!.valueOf(),
+        );
+    }
+
+    /**
+     * creates empty default answer post that is needed on initialization of a newly opened modal to edit or create an answer post, with accordingly set resolvesPost flag
+     * @return AnswerPost created empty default answer post
+     */
+    createEmptyAnswerPost(): AnswerPost {
+        const answerPost = new AnswerPost();
+        answerPost.content = '';
+        answerPost.post = this.posting;
+        answerPost.resolvesPost = this.isAtLeastTutorInCourse;
+        return answerPost;
     }
 }

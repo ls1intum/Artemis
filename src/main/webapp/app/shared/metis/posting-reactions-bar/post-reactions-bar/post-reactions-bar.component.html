@@ -65,4 +65,29 @@
             [darkMode]="darkModeEmojiPicker"
         ></emoji-mart>
     </ng-template>
+    <!-- start discussion -->
+    <div class="col-auto p-0" *ngIf="sortedAnswerPosts.length === 0">
+        <button class="reaction-button" (click)="openPostingCreateEditModal.emit()">
+            <ngx-emoji class="emoji" [emoji]="speechBalloonId" [size]="16"></ngx-emoji>
+            <span class="emoji-count">{{ 'artemisApp.metis.startDiscussion' | artemisTranslate }}</span>
+        </button>
+    </div>
+    <!-- expand answers -->
+    <div class="col-auto p-0" *ngIf="!showAnswers && sortedAnswerPosts.length > 0">
+        <button class="reaction-button" (click)="showAnswersChange.emit(true)">
+            <ngx-emoji class="emoji" [emoji]="speechBalloonId" [size]="16"></ngx-emoji>
+            <span class="emoji-count">{{
+                sortedAnswerPosts.length === 1
+                    ? ('artemisApp.metis.showSingleAnswer' | artemisTranslate)
+                    : ('artemisApp.metis.showMultipleAnswers' | artemisTranslate: { number: sortedAnswerPosts.length })
+            }}</span>
+        </button>
+    </div>
+    <!-- collapse answers -->
+    <div class="col-auto p-0" *ngIf="showAnswers && sortedAnswerPosts.length > 0">
+        <button class="reaction-button clickable" [class.reaction-button--reacted]="showAnswers" (click)="showAnswersChange.emit(false)">
+            <ngx-emoji class="emoji" [emoji]="closeCrossId" [size]="16"></ngx-emoji>
+            <span class="emoji-count">{{ 'artemisApp.metis.collapseAnswers' | artemisTranslate }}</span>
+        </button>
+    </div>
 </div>
