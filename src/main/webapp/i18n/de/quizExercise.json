@@ -62,7 +62,7 @@
             "isPlannedToStart": "Geplante Startzeit",
             "openForPractice": "Zum Üben Freigeben",
             "startQuiz": "Quiz Starten",
-            "startBatch": "Ladung Starten",
+            "startBatch": "Gruppe Starten",
             "endNow": "Jetzt Beenden",
             "showNow": "Für Studierende Anzeigen",
             "duration": "Dauer",
@@ -263,11 +263,11 @@
                 "explanation": "Ausführungsmodus bestimmt wie Studierende an einem Quiz teilnehmen können.\n\nSynchronisiert: Alle Studierenden nehmen gleichzeitig an dem Quiz teil.\nGruppiert: Es gibt mehrere Gruppen an denen Studierende mit einem Passwort teilnehmen können.\nEinzeln: Studierende können jederzeit selbstständig an dem Quiz teilnehmen."
             },
             "releaseDateExplanation": {
-                "synchronized": "Synchronisiert: Das Datum, an dem die Übung für die Schüler sichtbar wird. Die Schüler können die Fragen erst ab dem Startdatum sehen.",
-                "batched": "Gruppiert: Das Datum, an dem die Übung für die Schüler sichtbar wird. Die Schüler können die Fragen erst sehen, wenn ein Stapel gestartet wird und sie das Passwort dafür eingeben.",
-                "individual": "Einzeln: Das Datum, an dem die Übung für die Schüler sichtbar wird. Die Schüler können die Fragen zu dem von ihnen gewählten Zeitpunkt sehen."
+                "synchronized": "Synchronisiert: Das Datum, ab dem das Quiz für die Studierenden in der Aufgabenübersicht sichtbar wird. Die Studierenden können die Fragen erst ab dem Startdatum sehen.",
+                "batched": "Gruppiert: Das Datum, ab dem das Quiz für die Studierenden in der Aufgabenübersicht wird. Die Studierenden können die Fragen erst sehen, wenn ein Stapel gestartet wird und sie das Passwort dafür eingeben.",
+                "individual": "Einzeln: Das Datum, ab dem das Quiz für die Studierenden in der Aufgabenübersicht sichtbar wird. Die Studierenden können ab diesem Zeitpunkt mit der Bearbeitung beginnen."
             },
-            "startTimeExplanation": "Der Zeitpunkt, an dem die Schülerinnen und Schüler die Fragen sehen und mit der Beantwortung beginnen können.",
+            "startTimeExplanation": "Der Zeitpunkt, ab dem die Studierenden die Fragen sehen und mit der Beantwortung beginnen können.",
             "addBatch": "Gruppe hinzufügen",
             "join": "Bearbeiten",
             "joinFailed": "Dem Quiz konnte nicht beigetreten werden.",
