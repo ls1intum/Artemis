@@ -65,9 +65,12 @@ export class ModelingEditorComponent extends ModelingComponent implements AfterV
             console.log('Warning: If you experience problems regarding the scrolling behavior, please report them at https://github.com/ls1intum/Artemis');
 
             this.mouseDownListener = () => {
-                const copy = this.htmlScroll;
-                // @ts-ignore behavior 'instant' works with safari
-                requestAnimationFrame(() => window.scrollTo({ top: copy, left: 0, behavior: 'instant' }));
+                const newScroll = document.getElementsByTagName('html')[0].scrollTop;
+                if (newScroll !== this.htmlScroll) {
+                    const copy = this.htmlScroll;
+                    // @ts-ignore behavior 'instant' works with safari
+                    requestAnimationFrame(() => window.scrollTo({ top: copy, left: 0, behavior: 'instant' }));
+                }
             };
 
             this.scrollListener = () => {
