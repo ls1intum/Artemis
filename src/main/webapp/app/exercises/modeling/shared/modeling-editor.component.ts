@@ -32,7 +32,7 @@ export class ModelingEditorComponent extends ModelingComponent implements AfterV
     farQuestionCircle = faQuestionCircle;
 
     htmlScroll = 0;
-    mouseDownListener: any;
+    mouseDownListener: ((this: Document, ev: MouseEvent) => any) | undefined;
     scrollListener: ((this: Document, ev: Event) => any) | undefined;
 
     constructor(private alertService: AlertService, private renderer: Renderer2, private modalService: NgbModal, private guidedTourService: GuidedTourService) {
