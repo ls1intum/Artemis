@@ -637,7 +637,7 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
      * @param rows The data rows that should be part of the CSV.
      * @param customOptions Custom csv options that should be used for export.
      */
-    exportAsCsv(rows: any[], headers: string[], customOptions: CsvExportOptions) {
+    exportAsCsv(headers: string[], rows: ExportRow[], customOptions: CsvExportOptions) {
         const options = {
             showLabels: true,
             title: this.examScoreDTO.title,
