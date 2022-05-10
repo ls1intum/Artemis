@@ -82,7 +82,7 @@ export class CourseManagementRequests {
     }
 
     /**
-     * Creates a course with the specified title and short name.
+     * Creates a programming exercise with the specified title and other data.
      * @param body an object containing either the course or exercise group the exercise will be added to
      * @param scaMaxPenalty? the max percentage (0-100) static code analysis can reduce from the points (if sca should be disabled pass null)
      * @param recordTestwiseCoverage enable testwise coverage analysis for this exercise (default is false)
