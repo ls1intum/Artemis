@@ -13,11 +13,11 @@
                 *ngIf="!startDateDisplayed"
                 [icon]="faArrowLeft"
                 size="2x"
-                class="col-md-1 d-flex justify-content-end align-items-center"
+                class="col-md-1 arrow d-flex justify-content-end align-items-center"
                 role="button"
                 (click)="switchTimeSpan(LEFT)"
             ></fa-icon>
-            <div #containerRef class="chart col-md-9 mt-1 justify-content-center h-99">
+            <div #containerRef class="chart col-md-10 mt-1 justify-content-center align-items-start h-99" [ngClass]="showsCurrentWeek && startDateDisplayed ? 'col-12' : 'col-10'">
                 <ngx-charts-line-chart
                     [view]="[containerRef.offsetWidth, 500]"
                     [scheme]="chartColor"
@@ -54,8 +54,9 @@
             </h1>
             <fa-icon
                 [icon]="faArrowRight"
+                *ngIf="!(showsCurrentWeek && startDateDisplayed)"
                 size="2x"
-                class="col-md-1 d-flex justify-content-start align-items-center"
+                class="col-md-1 arrow d-flex justify-content-start align-items-center"
                 role="button"
                 (click)="switchTimeSpan(RIGHT)"
                 [ngClass]="{ 'hide-arrow': showsCurrentWeek }"

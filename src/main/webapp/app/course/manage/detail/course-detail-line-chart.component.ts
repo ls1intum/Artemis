@@ -123,6 +123,7 @@ export class CourseDetailLineChartComponent extends ActiveStudentsChart implemen
                 this.absoluteSeries[i]['absoluteValue'] = 0;
             }
         }
+        console.log(this.dataCopy);
         this.loading = false;
     }
 

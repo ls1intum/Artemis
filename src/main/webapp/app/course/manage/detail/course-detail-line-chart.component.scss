@@ -18,6 +18,10 @@
     visibility: hidden;
 }
 
+.arrow {
+    width: 35px;
+}
+
 .chart-title-line {
     margin-top: 15px;
 }
@@ -44,4 +48,10 @@
     stroke-dasharray: 10 !important;
     stroke-dashoffset: 0 !important;
     stroke: var(--primary) !important;
+}
+
+@media (max-width: 760px) {
+    .hide-arrow {
+        width: 0 !important;
+    }
 }
