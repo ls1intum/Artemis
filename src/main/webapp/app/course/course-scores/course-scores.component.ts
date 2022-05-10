@@ -519,8 +519,9 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
         if (!this.exportReady || this.students.length === 0) {
             return;
         }
-        // remove csv from functions
+
         const rows: ExportRow[] = [];
+
         const keys = this.generateExportColumnNames();
 
         this.students.forEach((student) => rows.push(this.generateStudentStatisticsExportRow(student, customCsvOptions)));
