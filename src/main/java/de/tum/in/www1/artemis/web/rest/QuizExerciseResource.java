@@ -322,7 +322,7 @@ public class QuizExerciseResource {
         log.debug("REST request to join Batch : {}", quizExerciseId);
         QuizExercise quizExercise = quizExerciseRepository.findByIdElseThrow(quizExerciseId);
         var user = userRepository.getUserWithGroupsAndAuthorities();
-        if (!authCheckService.isAllowedToSeeExercise(quizExercise, user)) {
+        if (!authCheckService.isAllowedToSeeExercise(quizExercise, user) || !quizExercise.isQuizStarted() || quizExercise.isQuizEnded()) {
             throw new AccessForbiddenException();
         }
         if (quizScheduleService.getQuizBatchForStudent(quizExercise, user).isPresent()) {
