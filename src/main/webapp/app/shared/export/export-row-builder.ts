@@ -4,7 +4,7 @@ import { EMAIL_KEY, NAME_KEY, POINTS_KEY, REGISTRATION_NUMBER_KEY, SCORE_KEY, US
 export type ExportRow = any;
 
 /**
- * Builds rows for the course scores export.
+ * Builds rows for exporting student scores.
  */
 export abstract class ExportRowBuilder {
     private exportRow = {};

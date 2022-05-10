@@ -594,11 +594,9 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
 
     /**
      * Method for exporting exam results
-     * @param customCsvOptions
+     * @param customCsvOptions If present, a CSV file is exported, otherwise an Excel file.
      */
     exportExamResults(customCsvOptions?: CsvExportOptions) {
-        // utilize export button for csv and excel export
-
         const headers = this.generateExportColumnNames();
 
         const rows = this.studentResults.map((studentResult) => {
@@ -686,7 +684,7 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * Constructs a new builder for a new export row.
+     * Constructs a new export row builder for an export row.
      * @param csvExportOptions If present, constructs a CSV row builder with these options, otherwise an Excel row builder is returned.
      * @private
      */
@@ -698,7 +696,13 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
         }
     }
 
-    private convertToExportRow(studentResult: StudentResult, csvExportOptions?: CsvExportOptions) {
+    /**
+     * Generates the export rows from a student's result
+     * @param studentResult
+     * @param csvExportOptions If present, this method generates a CSV row with these options, otherwise an Excel row is returned.
+     * @private
+     */
+    private convertToExportRow(studentResult: StudentResult, csvExportOptions?: CsvExportOptions): ExportRow {
         const rowData = this.newRowBuilder(csvExportOptions);
 
         rowData.setUserInformation(studentResult.name, studentResult.login, studentResult.eMail, studentResult.registrationNumber);

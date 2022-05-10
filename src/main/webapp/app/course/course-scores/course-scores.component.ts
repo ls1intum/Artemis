@@ -596,7 +596,7 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * Generates the list of columns that should be part of the exported CSV file.
+     * Generates the list of columns that should be part of the exported CSV or Excel file.
      * @private
      */
     private generateExportColumnNames(): Array<string> {
@@ -622,8 +622,8 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * Generates a row for the exported csv with the statistics for the given student.
-     * @param student The student for which a row in the CSV should be created.
+     * Generates a row used in the export file consisting of statistics for the given student.
+     * @param student The student for which an export row should be created.
      * @param csvExportOptions If present, generates a CSV row with these options, otherwise an Excel row is generated.
      * @private
      */

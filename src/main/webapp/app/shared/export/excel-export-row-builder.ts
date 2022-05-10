@@ -12,7 +12,7 @@ export interface CommonSpreadsheetCellObject {
 }
 
 /**
- * Builds Excel rows for the course scores export.
+ * Builds Excel rows for exporting student scores.
  */
 export class ExcelExportRowBuilder extends ExportRowBuilder {
     /**

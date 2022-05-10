@@ -3,7 +3,7 @@ import { CsvDecimalSeparator } from 'app/shared/export/export-modal.component';
 import { round } from 'app/shared/util/utils';
 
 /**
- * Builds CSV rows for the course scores export.
+ * Builds CSV rows for exporting student scores.
  */
 export class CsvExportRowBuilder extends ExportRowBuilder {
     private readonly decimalSeparator: CsvDecimalSeparator;
