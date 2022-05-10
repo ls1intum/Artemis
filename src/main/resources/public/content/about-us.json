@@ -279,6 +279,10 @@
         {
             "fullName": "Patrick Bassner",
             "photoDirectory": "public/images/about/Patrick_Bassner.jpg"
+        },
+        {
+            "fullName": "Ali Canberk Anar",
+            "photoDirectory": "public/images/about/Ali_Canberk_Anar.jpg"
         }
     ]
 }
