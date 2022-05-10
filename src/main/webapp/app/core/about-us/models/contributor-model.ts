@@ -1,11 +1,11 @@
 export class ContributorModel {
     fullName: string;
     photoDirectory: string;
-    sortBy: string;
-    role: string;
-    website: string;
+    sortBy?: string;
+    role?: string;
+    website?: string;
 
-    constructor(fullName: string, photoDirectory: string, sortBy: string, role: string, website: string) {
+    constructor(fullName: string, photoDirectory: string, sortBy?: string, role?: string, website?: string) {
         this.fullName = fullName;
         this.photoDirectory = photoDirectory;
         this.sortBy = sortBy;
