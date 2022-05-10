@@ -6,6 +6,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.*;
 import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
 import java.time.temporal.IsoFields;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -703,15 +704,17 @@ public class CourseService {
         /*
          * var spanTime = maximalSize; if (course.getStartDate() != null) { log.debug("Time difference: " + course.getStartDate().until(endDate, ChronoUnit.WEEKS)); var
          * amountOfWeeksBetween = course.getStartDate().until(endDate.plusWeeks(1), ChronoUnit.WEEKS); spanTime = Math.toIntExact(Math.min(maximalSize, amountOfWeeksBetween)); }
-         * return spanTime;
+         * return spanTime; var spanTime = maximalSize; if (course.getStartDate() != null) { var startDateIsoWeek = statisticsRepository.getWeekOfDate(course.getStartDate()); var
+         * endDateIsoWeek = statisticsRepository.getWeekOfDate(endDate); int weeksInYear =
+         * Math.toIntExact(IsoFields.WEEK_OF_WEEK_BASED_YEAR.rangeRefinedBy(course.getStartDate()).getMaximum()); int amountOfWeeksBetween = (endDateIsoWeek - startDateIsoWeek +
+         * weeksInYear) % weeksInYear; spanTime = Math.min(maximalSize, amountOfWeeksBetween + 1); }
          */
         var spanTime = maximalSize;
         if (course.getStartDate() != null) {
-            var startDateIsoWeek = statisticsRepository.getWeekOfDate(course.getStartDate());
-            var endDateIsoWeek = statisticsRepository.getWeekOfDate(endDate);
-            int weeksInYear = Math.toIntExact(IsoFields.WEEK_OF_WEEK_BASED_YEAR.rangeRefinedBy(course.getStartDate()).getMaximum());
-            int amountOfWeeksBetween = (endDateIsoWeek - startDateIsoWeek + weeksInYear) % weeksInYear;
-            spanTime = Math.min(maximalSize, amountOfWeeksBetween + 1);
+            var mondayInWeekOfStart = course.getStartDate().toLocalDateTime().with(DayOfWeek.MONDAY);
+            var mondayInWeekOfEnd = endDate.plusWeeks(1).toLocalDateTime().with(DayOfWeek.MONDAY);
+            var amountOfWeeksBetween = mondayInWeekOfStart.until(mondayInWeekOfEnd, ChronoUnit.WEEKS);
+            spanTime = Math.toIntExact(Math.min(maximalSize, amountOfWeeksBetween));
         }
         return spanTime;
     }
