@@ -60,6 +60,7 @@
         },
         {
             "fullName": "Francisco De las Casas Young",
+            "sortBy": "De las Casas Young",
             "photoDirectory": "public/images/about/Francisco_De_Las_Casas_Young.png"
         },
         {
@@ -180,6 +181,7 @@
         },
         {
             "fullName": "Mai Ton Nu Cam",
+            "sortBy": "Mai Ton Nu Cam",
             "photoDirectory": "public/images/about/Mai_Ton_Nu_Cam.jpg"
         },
         {

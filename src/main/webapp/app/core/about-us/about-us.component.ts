@@ -6,6 +6,7 @@ import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
 import { VERSION } from 'app/app.constants';
 import { StaticContentService } from 'app/shared/service/static-content.service';
 import { AboutUsModel } from 'app/core/about-us/models/about-us-model';
+import { ContributorModel } from 'app/core/about-us/models/contributor-model';
 
 @Component({
     selector: 'jhi-about-us',
@@ -35,7 +36,13 @@ export class AboutUsComponent implements OnInit {
      */
     ngOnInit(): void {
         this.staticContentService.getStaticJsonFromArtemisServer('about-us.json').subscribe((data) => {
-            this.data = data;
+            // Map contributors into the model, as the returned data are just plain objects
+            this.data = { ...data, contributors: data.contributors.map((con: any) => new ContributorModel(con.fullName, con.photoDirectory, con.sortBy, con.role, con.website)) };
+
+            // Sort by last name
+            // Either the last "word" in the name, or the dedicated sortBy field, if present
+            this.data?.contributors?.sort((a, b) => a.getSortIndex().localeCompare(b.getSortIndex()));
+            console.log(this.data.contributors);
         });
 
         this.profileService
