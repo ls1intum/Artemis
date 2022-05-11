@@ -91,6 +91,7 @@
             "status": "Status",
             "quizPointStatistic": "Quiz-Punkte-Statistik",
             "startTime": "Startzeit",
+            "setStartTime": "Quizstart planen",
             "quiz": "Quiz",
             "totalPoints": "Gesamtpunktzahl",
             "totalScore": "Ergebnis",

@@ -90,6 +90,7 @@
             "selectQuizExercise": "Select a Quiz Exercise",
             "status": "Status",
             "startTime": "Start Time",
+            "setStartTime": "Schedule Quiz Start",
             "quizPointStatistic": "Quiz Point Statistic",
             "quiz": "Quiz",
             "totalPoints": "Overall Points",
