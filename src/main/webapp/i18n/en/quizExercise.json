@@ -274,7 +274,7 @@
                 "batched": "Batched: The date when the quiz becomes visible to students. Students cannot see the questions until a batch is started and they enter the password for it.",
                 "individual": "Individual: The date when the quiz becomes visible to students. Students can start working on the quiz from this time onward"
             },
-            "startTimeExplanation": "The time when the students are able to see the questions and start answering.",
+            "startTimeExplanation": "Set the time when the students are able to see the questions and start answering.",
             "addBatch": "Add Batch",
             "join": "Join",
             "joinFailed": "Unable to join the quiz.",
