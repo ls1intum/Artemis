@@ -17,6 +17,7 @@ import { areManualResultsAllowed } from 'app/exercises/shared/exercise/exercise.
 import { getLinkToSubmissionAssessment } from 'app/utils/navigation.utils';
 import { map } from 'rxjs/operators';
 import { faBan, faEdit, faFolderOpen, faSort } from '@fortawesome/free-solid-svg-icons';
+import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 
 @Component({
     templateUrl: './programming-exercise-submissions.component.html',
@@ -98,13 +99,13 @@ export class ProgrammingExerciseSubmissionsComponent implements OnInit {
                 map((response: HttpResponse<ProgrammingSubmission[]>) =>
                     response.body!.map((submission: ProgrammingSubmission) => {
                         const tmpResult = getLatestSubmissionResult(submission);
-                        setLatestSubmissionResult(submission, tmpResult);
                         if (tmpResult) {
                             // reconnect some associations
                             tmpResult.submission = submission;
                             tmpResult.participation = submission.participation;
                             submission.participation!.results = [tmpResult];
                         }
+                        submission.participation = submission.participation as StudentParticipation;
 
                         return submission;
                     }),
@@ -118,11 +119,7 @@ export class ProgrammingExerciseSubmissionsComponent implements OnInit {
                     setLatestSubmissionResult(submission, result);
                     return result?.rated;
                 }).length;
-                this.filteredSubmissions.forEach((sub) => {
-                    if (sub.results && sub.results.length > 0) {
-                        sub.results = sub.results.filter((r) => r.assessmentType !== AssessmentType.AUTOMATIC);
-                    }
-                });
+                this.filteredSubmissions = submissions;
                 this.busy = false;
             });
     }
