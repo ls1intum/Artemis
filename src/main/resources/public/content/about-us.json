@@ -283,6 +283,10 @@
         {
             "fullName": "Ali Canberk Anar",
             "photoDirectory": "public/images/about/Ali_Canberk_Anar.jpg"
+        },
+        {
+            "fullName": "Dominik Weinzierl",
+            "photoDirectory": "public/images/about/Dominik_Weinzierl.png"
         }
     ]
 }
