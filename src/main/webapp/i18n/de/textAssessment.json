@@ -59,7 +59,7 @@
                     "reused": "{{reusedCount}} mal wiederverwendet"
                 }
             },
-            "assessmentInstruction": "Bitte bewege die Maus über den zu bewertenden Textblock und klicke diesen an, um ihn zu bewerten.<br>Um eigene Textblöcke zu bewerten, drücke <code>alt</code>/<code>option</code> und klicke in beliebiger Reihenfolge auf das erste und letzte Wort eines Textabchnitts.",
+            "assessmentInstruction": "Bitte bewege die Maus über den zu bewertenden Textblock und klicke diesen an, um ihn zu bewerten.<br>Um eigene Textblöcke zu bewerten, drücke <code>alt</code>/<code>option</code> und klicke in beliebiger Reihenfolge auf das erste und letzte Wort eines Textabschnitts.",
             "conflict": {
                 "assessor": "Bewertet von: Dir",
                 "otherAssessor": "Bewertet von: {{otherUser}}",
