@@ -243,13 +243,12 @@ public abstract class AbstractSpringIntegrationGitLabCIGitLabTest extends Abstra
 
     @Override
     public void mockFetchCommitInfo(String projectKey, String repositorySlug, String hash) {
-        // Not needed in Gitlab
+        // Unsupported action in GitLab CI setup
     }
 
     @Override
     public void mockCopyBuildPlan(ProgrammingExerciseStudentParticipation participation) throws Exception {
-        final var projectKey = participation.getProgrammingExercise().getProjectKey();
-        // jenkinsRequestMockProvider.mockCopyBuildPlan(projectKey, projectKey);
+        // Unsupported action in GitLab CI setup
     }
 
     @Override
@@ -328,12 +327,12 @@ public abstract class AbstractSpringIntegrationGitLabCIGitLabTest extends Abstra
 
     @Override
     public void mockCreateGroupInUserManagement(String groupName) {
-        // Not needed here
+        // Unsupported action in GitLab CI setup
     }
 
     @Override
     public void mockDeleteGroupInUserManagement(String groupName) {
-        // Not needed here
+        // Unsupported action in GitLab CI setup
     }
 
     @Override
@@ -348,41 +347,39 @@ public abstract class AbstractSpringIntegrationGitLabCIGitLabTest extends Abstra
 
     @Override
     public void mockDeleteBuildPlan(String projectKey, String planName, boolean shouldFail) throws Exception {
-        // jenkinsRequestMockProvider.mockDeleteBuildPlan(projectKey, planName, shouldFail);
+        // Unsupported action in GitLab CI setup
     }
 
     @Override
     public void mockDeleteBuildPlanProject(String projectKey, boolean shouldFail) throws Exception {
-        // jenkinsRequestMockProvider.mockDeleteBuildPlanProject(projectKey, shouldFail);
+        // Unsupported action in GitLab CI setup
     }
 
     @Override
     public void mockAddUserToGroupInUserManagement(User user, String group, boolean failInCi) throws Exception {
         gitlabRequestMockProvider.mockUpdateVcsUser(user.getLogin(), user, Set.of(), Set.of(group), false);
-        // jenkinsRequestMockProvider.mockAddUsersToGroups(user.getLogin(), Set.of(group), failInCi);
     }
 
     @Override
     public void mockRemoveUserFromGroup(User user, String group, boolean failInCi) throws Exception {
         gitlabRequestMockProvider.mockUpdateVcsUser(user.getLogin(), user, Set.of(group), Set.of(), false);
-        // jenkinsRequestMockProvider.mockRemoveUserFromGroups(Set.of(group), failInCi);
-        // jenkinsRequestMockProvider.mockAddUsersToGroups(user.getLogin(), Set.of(group), false);
     }
 
     @Override
     public void mockGetBuildPlan(String projectKey, String planName, boolean planExistsInCi, boolean planIsActive, boolean planIsBuilding, boolean failToGetBuild)
             throws Exception {
-        // jenkinsRequestMockProvider.mockGetBuildStatus(projectKey, planName, planExistsInCi, planIsActive, planIsBuilding, failToGetBuild);
+        // Unsupported action in GitLab CI setup
     }
 
     @Override
     public void mockHealthInCiService(boolean isRunning, HttpStatus httpStatus) throws Exception {
-        // jenkinsRequestMockProvider.mockHealth(isRunning, httpStatus);
+        gitlabRequestMockProvider.mockHealth(isRunning ? "ok" : "notok", httpStatus);
     }
 
     @Override
     public void mockConfigureBuildPlan(ProgrammingExerciseParticipation participation, String defaultBranch) throws Exception {
-        // jenkinsRequestMockProvider.mockConfigureBuildPlan(participation.getProgrammingExercise(), participation.getParticipantIdentifier());
+        gitlabRequestMockProvider.mockGetProject(false);
+        gitlabRequestMockProvider.mockUpdateProject(false);
     }
 
     @Override
@@ -392,7 +389,7 @@ public abstract class AbstractSpringIntegrationGitLabCIGitLabTest extends Abstra
 
     @Override
     public void mockCheckIfProjectExistsInCi(ProgrammingExercise exercise, boolean existsInCi, boolean shouldFail) throws Exception {
-        // jenkinsRequestMockProvider.mockCheckIfProjectExists(exercise, existsInCi, shouldFail);
+        // Unsupported action in GitLab CI setup
     }
 
     @Override
@@ -402,21 +399,21 @@ public abstract class AbstractSpringIntegrationGitLabCIGitLabTest extends Abstra
 
     @Override
     public void mockCheckIfBuildPlanExists(String projectKey, String buildPlanId, boolean buildPlanExists, boolean shouldFail) throws Exception {
-        // jenkinsRequestMockProvider.mockCheckIfBuildPlanExists(projectKey, buildPlanId, buildPlanExists, shouldFail);
+        // Unsupported action in GitLab CI setup
     }
 
     @Override
     public void mockTriggerBuild(AbstractBaseProgrammingExerciseParticipation programmingExerciseParticipation) throws Exception {
-        var projectKey = programmingExerciseParticipation.getProgrammingExercise().getProjectKey();
-        var buildPlanId = programmingExerciseParticipation.getBuildPlanId();
-        // jenkinsRequestMockProvider.mockTriggerBuild(projectKey, buildPlanId, false);
+        gitlabRequestMockProvider.mockCreateTrigger(false);
+        gitlabRequestMockProvider.mockTriggerPipeline(false);
+        gitlabRequestMockProvider.mockDeleteTrigger(false);
     }
 
     @Override
     public void mockTriggerBuildFailed(AbstractBaseProgrammingExerciseParticipation programmingExerciseParticipation) throws Exception {
-        var projectKey = programmingExerciseParticipation.getProgrammingExercise().getProjectKey();
-        var buildPlanId = programmingExerciseParticipation.getBuildPlanId();
-        // jenkinsRequestMockProvider.mockTriggerBuild(projectKey, buildPlanId, true);
+        gitlabRequestMockProvider.mockCreateTrigger(true);
+        gitlabRequestMockProvider.mockTriggerPipeline(true);
+        gitlabRequestMockProvider.mockDeleteTrigger(true);
     }
 
     @Override
