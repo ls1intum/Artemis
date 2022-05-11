@@ -309,6 +309,10 @@
             "photoDirectory": "public/images/about/Simon_Paul.jpg"
         },
         {
+            "fullName": "Swornim Shrestha",
+            "photoDirectory": "public/images/about/Swornim_Shrestha.jpg"
+        },
+        {
             "fullName": "Yuling Sun",
             "photoDirectory": "public/images/about/Yuling_Sun.jpg"
         }
