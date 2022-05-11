@@ -1,4 +1,4 @@
-import { Component, Input, OnChanges, OnInit, TemplateRef, ViewChild } from '@angular/core';
+import { Component, Input, OnChanges, OnDestroy, OnInit, TemplateRef, ViewChild } from '@angular/core';
 import { PostingFooterDirective } from 'app/shared/metis/posting-footer/posting-footer.directive';
 import { Post } from 'app/entities/metis/post.model';
 import { MetisService } from 'app/shared/metis/metis.service';
@@ -12,7 +12,7 @@ import { faComments } from '@fortawesome/free-solid-svg-icons';
     templateUrl: './post-footer.component.html',
     styleUrls: ['./post-footer.component.scss'],
 })
-export class PostFooterComponent extends PostingFooterDirective<Post> implements OnInit, OnChanges {
+export class PostFooterComponent extends PostingFooterDirective<Post> implements OnInit, OnChanges, OnDestroy {
     @Input() previewMode: boolean;
     // if the post is previewed in the create/edit modal,
     // we need to pass the ref in order to close it when navigating to the previewed post via post context
@@ -50,6 +50,13 @@ export class PostFooterComponent extends PostingFooterDirective<Post> implements
     ngOnChanges(): void {
         this.updateTags();
         this.sortAnswerPosts();
+    }
+
+    /**
+     * on leaving the page, the modal should be closed
+     */
+    ngOnDestroy(): void {
+        this.answerPostCreateEditModal?.modalRef?.close();
     }
 
     /**

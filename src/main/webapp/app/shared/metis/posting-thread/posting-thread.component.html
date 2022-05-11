@@ -1,15 +1,6 @@
 <div class="row mb-2 col-12">
     <div class="col-12">
-        <jhi-post [posting]="post"></jhi-post>
-        <div class="row">
-            <div class="col-12">
-                <jhi-answer-post-create-edit-modal
-                    #createAnswerPostModal
-                    [posting]="createdAnswerPost"
-                    (onCreate)="showAnswers = true; createdAnswerPost = createEmptyAnswerPost()"
-                ></jhi-answer-post-create-edit-modal>
-            </div>
-        </div>
+        <jhi-post [posting]="post" [showAnswers]="showAnswers"></jhi-post>
     </div>
 </div>
 <div class="post-separation-line"></div>
