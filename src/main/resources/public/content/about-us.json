@@ -299,6 +299,14 @@
         {
             "fullName": "Georg Willer",
             "photoDirectory": "public/images/about/Georg_Willer.jpg"
+        },
+        {
+            "fullName": "Simon Paul",
+            "photoDirectory": "public/images/about/Simon_Paul.jpg"
+        },
+        {
+            "fullName": "Yuling Sun",
+            "photoDirectory": "public/images/about/Yuling_Sun.jpg"
         }
        
         
