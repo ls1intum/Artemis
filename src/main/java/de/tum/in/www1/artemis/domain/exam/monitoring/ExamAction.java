@@ -36,7 +36,7 @@ import de.tum.in.www1.artemis.domain.exam.monitoring.actions.*;
 public class ExamAction extends DomainObject {
 
     /**
-     * Multiple ExamActions is part of an ExamActivity.
+     * Multiple ExamActions are part of one ExamActivity.
      */
     @ManyToOne
     @JoinColumn(name = "exam_activity_id")

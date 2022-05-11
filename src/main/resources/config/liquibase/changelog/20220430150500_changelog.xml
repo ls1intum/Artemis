@@ -13,7 +13,7 @@
             </column>
         </createTable>
         <addForeignKeyConstraint baseColumnNames="student_exam_id" baseTableName="exam_activity"
-                                 constraintName="TODO_1" deferrable="false" onDelete="CASCADE"
+                                 constraintName="fk_exam_activity_student_exam" deferrable="false" onDelete="CASCADE"
                                  initiallyDeferred="false" referencedColumnNames="id"
                                  referencedTableName="student_exam"/>
 
