@@ -45,4 +45,40 @@ describe('OrderedListCommand', () => {
         command.execute();
         expect(comp.aceEditorContainer.getEditor().getValue()).toBe('line 1\nline 2\n');
     });
+
+    it('should handle empty lines and create new list', () => {
+        comp.aceEditorContainer.getEditor().setValue('Test\n\nTest');
+        command.execute();
+        expect(comp.aceEditorContainer.getEditor().getValue()).toBe('1. Test\n\n1. Test\n');
+    });
+
+    it('should handle empty lines and remove lists', () => {
+        comp.aceEditorContainer.getEditor().setValue('1. Test\n\n1. Test');
+        command.execute();
+        expect(comp.aceEditorContainer.getEditor().getValue()).toBe('Test\n\nTest\n');
+    });
+
+    it('should handle dots in sentences and remove lists', () => {
+        comp.aceEditorContainer.getEditor().setValue('1. Test with dot at the end.\n2. Test with dot. in the center\n3. .Test with dot at the start');
+        command.execute();
+        expect(comp.aceEditorContainer.getEditor().getValue()).toBe('Test with dot at the end.\nTest with dot. in the center\n.Test with dot at the start\n');
+    });
+
+    it('should handle dots in sentences and create lists', () => {
+        comp.aceEditorContainer.getEditor().setValue('Test with dot at the end.\nTest with dot. in the center\n.Test with dot at the start');
+        command.execute();
+        expect(comp.aceEditorContainer.getEditor().getValue()).toBe('1. Test with dot at the end.\n2. Test with dot. in the center\n3. .Test with dot at the start\n');
+    });
+
+    it('should handle single empty lines and create list', () => {
+        comp.aceEditorContainer.getEditor().setValue('');
+        command.execute();
+        expect(comp.aceEditorContainer.getEditor().getValue()).toBe('1. ');
+    });
+
+    it('should handle single empty lines and remove list', () => {
+        comp.aceEditorContainer.getEditor().setValue('1. ');
+        command.execute();
+        expect(comp.aceEditorContainer.getEditor().getValue()).toBe('\n');
+    });
 });
