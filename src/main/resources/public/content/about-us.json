@@ -287,6 +287,10 @@
         {
             "fullName": "Dominik Weinzierl",
             "photoDirectory": "public/images/about/Dominik_Weinzierl.png"
+        },
+        {
+            "fullName": "Ole Vester",
+            "photoDirectory": "public/images/about/Ole_Vester.jpg"
         }
     ]
 }
