@@ -424,7 +424,9 @@ public class QuizExerciseResource {
                 // set release date to now, truncated to seconds because the database only stores seconds
                 var now = ZonedDateTime.now().truncatedTo(ChronoUnit.SECONDS);
                 quizBatchService.getOrCreateSynchronizedQuizBatch(quizExercise).setStartTime(now);
-                quizExercise.setReleaseDate(now);
+                if (quizExercise.getReleaseDate() == null || quizExercise.getReleaseDate().isAfter(ZonedDateTime.now())) {
+                    quizExercise.setReleaseDate(now);
+                }
                 quizExercise.setDueDate(now.plusSeconds(quizExercise.getDuration() + Constants.QUIZ_GRACE_PERIOD_IN_SECONDS));
             }
             case "end-now" -> {
