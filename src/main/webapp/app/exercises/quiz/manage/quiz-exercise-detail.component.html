@@ -132,7 +132,7 @@
                                     [(ngModel)]="scheduleQuizStart"
                                     (ngModelChange)="cacheValidation()"
                                 />
-                                <label class="form-check-label custom-control-label" for="cbScheduleQuizStart" jhiTranslate="artemisApp.quizExercise.startTime"> </label>
+                                <label class="form-check-label custom-control-label" for="cbScheduleQuizStart" jhiTranslate="artemisApp.quizExercise.setStartTime"> </label>
                                 <jhi-help-icon placement="auto" text="artemisApp.quizExercise.startTimeExplanation"></jhi-help-icon>
                             </div>
                             <div class="form-check custom-control custom-checkbox" *ngIf="quizExercise.quizMode === QuizMode.BATCHED && false">
@@ -146,6 +146,7 @@
                                         class="form-element"
                                         name="startTime"
                                         [shouldDisplayTimeZoneWarning]="first"
+                                        labelName="{{ 'artemisApp.quizExercise.startTime' | artemisTranslate }}"
                                         [error]="quizBatch.startDateError ?? false"
                                         (valueChange)="cacheValidation()"
                                         [(ngModel)]="quizBatch.startTime"
