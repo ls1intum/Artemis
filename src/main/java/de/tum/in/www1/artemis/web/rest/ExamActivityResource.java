@@ -17,6 +17,7 @@ import de.tum.in.www1.artemis.domain.exam.monitoring.ExamAction;
 import de.tum.in.www1.artemis.domain.exam.monitoring.ExamActivity;
 import de.tum.in.www1.artemis.repository.StudentExamRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.service.exam.ExamAccessService;
 import de.tum.in.www1.artemis.service.exam.ExamService;
 import de.tum.in.www1.artemis.service.exam.StudentExamAccessService;
 import de.tum.in.www1.artemis.service.exam.monitoring.ExamActivityService;
@@ -43,14 +44,17 @@ public class ExamActivityResource {
 
     private final ExamActivityService examActivityService;
 
+    private final ExamAccessService examAccessService;
+
     public ExamActivityResource(StudentExamAccessService studentExamAccessService, StudentExamRepository studentExamRepository, UserRepository userRepository,
-            ExamMonitoringScheduleService examMonitoringScheduleService, ExamService examService, ExamActivityService examActivityService) {
+            ExamMonitoringScheduleService examMonitoringScheduleService, ExamService examService, ExamActivityService examActivityService, ExamAccessService examAccessService) {
         this.examMonitoringScheduleService = examMonitoringScheduleService;
         this.studentExamAccessService = studentExamAccessService;
         this.studentExamRepository = studentExamRepository;
         this.userRepository = userRepository;
         this.examService = examService;
         this.examActivityService = examActivityService;
+        this.examAccessService = examAccessService;
     }
 
     /**
@@ -88,9 +92,8 @@ public class ExamActivityResource {
     @GetMapping("/courses/{courseId}/exams/{examId}/student-exams/{studentExamId}/activity-cache")
     @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<ExamActivity> getActivityFromCache(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long studentExamId) {
-        StudentExam studentExam = studentExamRepository.findByIdWithExercisesElseThrow(studentExamId);
-        User currentUser = userRepository.getUserWithGroupsAndAuthorities();
-        boolean isTestRun = studentExam.isTestRun();
+        studentExamRepository.findByIdWithExercisesElseThrow(studentExamId);
+        examAccessService.checkCourseAndExamAccessForInstructorElseThrow(courseId, examId);
 
         ExamActivity examActivity = examMonitoringScheduleService.getExamActivityFromCache(examId, studentExamId);
         return ResponseEntity.ok(examActivity);
@@ -102,9 +105,8 @@ public class ExamActivityResource {
     @GetMapping("/courses/{courseId}/exams/{examId}/student-exams/{studentExamId}/activity-database")
     @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<ExamActivity> getActivityFromDatabase(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long studentExamId) {
-        StudentExam studentExam = studentExamRepository.findByIdWithExercisesElseThrow(studentExamId);
-        User currentUser = userRepository.getUserWithGroupsAndAuthorities();
-        boolean isTestRun = studentExam.isTestRun();
+        studentExamRepository.findByIdWithExercisesElseThrow(studentExamId);
+        examAccessService.checkCourseAndExamAccessForInstructorElseThrow(courseId, examId);
 
         ExamActivity examActivity = examActivityService.findByStudentExamId(studentExamId);
         return ResponseEntity.ok(examActivity);

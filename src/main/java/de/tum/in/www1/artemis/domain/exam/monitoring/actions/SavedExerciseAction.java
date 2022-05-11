@@ -35,9 +35,6 @@ public class SavedExerciseAction extends ExamAction {
     @JoinColumn(name = "submission_id")
     private Long submissionId;
 
-    public SavedExerciseAction() {
-    }
-
     public boolean isForced() {
         return forced;
     }

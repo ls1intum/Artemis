@@ -68,8 +68,9 @@ abstract class ExamMonitoringCache implements Cache {
 
     @Override
     public final boolean equals(Object obj) {
-        if (this == obj)
+        if (this == obj) {
             return true;
+        }
         if (!(obj instanceof ExamMonitoringCache))
             return false;
         return Objects.equals(examId, ((ExamMonitoringCache) obj).examId);
