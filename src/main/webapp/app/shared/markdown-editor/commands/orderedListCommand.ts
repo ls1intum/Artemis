@@ -33,13 +33,12 @@ export class OrderedListCommand extends Command {
                     continue;
                 }
                 position = 1;
-                manipulatedText += '\n';
-                continue;
+            } else {
+                // Manipulate the line, e.g. remove the number or add the number.
+                manipulatedText += this.manipulateLine(line, position);
+                position++;
             }
-
-            // Manipulate the line, e.g. remove the number or add the number.
-            manipulatedText += this.manipulateLine(line, position) + '\n';
-            position++;
+            manipulatedText += '\n';
         }
         this.replace(this.getRange(), manipulatedText);
     }
