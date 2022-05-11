@@ -33,9 +33,12 @@ import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.domain.participation.AbstractBaseProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
+import de.tum.in.www1.artemis.service.TimeService;
 import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooBuildResultDTO;
 import de.tum.in.www1.artemis.service.connectors.gitlab.GitLabService;
 import de.tum.in.www1.artemis.service.connectors.gitlabci.GitLabCIService;
+import de.tum.in.www1.artemis.service.ldap.LdapUserService;
+import de.tum.in.www1.artemis.service.user.PasswordService;
 import de.tum.in.www1.artemis.util.AbstractArtemisIntegrationTest;
 
 @SpringBootTest(properties = { "artemis.athene.token-validity-in-seconds=10800",
@@ -57,6 +60,15 @@ public abstract class AbstractSpringIntegrationGitLabCIGitLabTest extends Abstra
     // GitlabApi.
     @SpyBean
     protected GitLabService versionControlService;
+
+    @SpyBean
+    protected TimeService timeService;
+
+    @SpyBean
+    protected LdapUserService ldapUserService;
+
+    @Autowired
+    protected PasswordService passwordService;
 
     @Autowired
     protected GitlabRequestMockProvider gitlabRequestMockProvider;
