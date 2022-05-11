@@ -261,11 +261,11 @@
                 "synchronized": "Synchronisiert",
                 "batched": "Gruppiert",
                 "individual": "Einzeln",
-                "explanation": "Ausführungsmodus bestimmt wie Studierende an einem Quiz teilnehmen können.\n\nSynchronisiert: Alle Studierenden nehmen gleichzeitig an dem Quiz teil.\nGruppiert: Es gibt mehrere Gruppen an denen Studierende mit einem Passwort teilnehmen können.\nEinzeln: Studierende können jederzeit selbstständig an dem Quiz teilnehmen."
+                "explanation": "Der Ausführungsmodus bestimmt wie Studierende an einem Quiz teilnehmen können.\n\nSynchronisiert: Alle Studierenden nehmen gleichzeitig an dem Quiz teil.\nGruppiert: Es gibt mehrere Gruppen an denen Studierende mit einem Passwort teilnehmen können.\nEinzeln: Studierende können jederzeit selbstständig an dem Quiz teilnehmen."
             },
             "releaseDateExplanation": {
                 "synchronized": "Synchronisiert: Das Datum, ab dem das Quiz für die Studierenden in der Aufgabenübersicht sichtbar wird. Die Studierenden können die Fragen erst ab dem Startdatum sehen.",
-                "batched": "Gruppiert: Das Datum, ab dem das Quiz für die Studierenden in der Aufgabenübersicht wird. Die Studierenden können die Fragen erst sehen, wenn eine Gruppe gestartet wird und sie das Passwort dafür eingeben.",
+                "batched": "Gruppiert: Das Datum, ab dem das Quiz für die Studierenden in der Aufgabenübersicht sichtbar wird. Die Studierenden können die Fragen erst sehen, wenn eine Gruppe gestartet wird und sie das Passwort dafür eingeben.",
                 "individual": "Einzeln: Das Datum, ab dem das Quiz für die Studierenden in der Aufgabenübersicht sichtbar wird. Die Studierenden können ab diesem Zeitpunkt mit der Bearbeitung beginnen."
             },
             "startTimeExplanation": "Setzen der Zeitpunkt, ab dem die Studierenden die Fragen sehen und mit der Beantwortung beginnen können.",
