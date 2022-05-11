@@ -12,6 +12,8 @@ import org.springframework.http.client.ClientHttpRequestInterceptor;
 import org.springframework.http.client.ClientHttpResponse;
 import org.springframework.stereotype.Component;
 
+import de.tum.in.www1.artemis.service.connectors.gitlab.GitLabAuthorizationInterceptor;
+
 @Profile("gitlabci")
 @Component
 public class GitLabCIAuthorizationInterceptor implements ClientHttpRequestInterceptor {
@@ -22,6 +24,6 @@ public class GitLabCIAuthorizationInterceptor implements ClientHttpRequestInterc
     @NotNull
     @Override
     public ClientHttpResponse intercept(HttpRequest request, @NotNull byte[] body, @NotNull ClientHttpRequestExecution execution) throws IOException {
-        return de.tum.in.www1.artemis.service.connectors.gitlab.GitLabAuthorizationInterceptor.intercept(request, body, execution, gitlabPrivateToken);
+        return GitLabAuthorizationInterceptor.intercept(request, body, execution, gitlabPrivateToken);
     }
 }
