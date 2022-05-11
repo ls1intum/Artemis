@@ -18,7 +18,7 @@ import { MockRouter } from '../../helpers/mocks/mock-router';
 import * as testClassDiagram from '../../util/modeling/test-models/class-diagram.json';
 import { UMLModel } from '@ls1intum/apollon';
 import { ElementRef } from '@angular/core';
-import { Text } from '@ls1intum/apollon/lib/utils/svg/text';
+import { Text } from '@ls1intum/apollon/lib/es5/utils/svg/text';
 
 // has to be overridden, because jsdom does not provide a getBBox() function for SVGTextElements
 Text.size = () => {

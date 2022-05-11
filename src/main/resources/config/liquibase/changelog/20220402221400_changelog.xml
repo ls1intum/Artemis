@@ -1,0 +1,60 @@
+<?xml version="1.1" encoding="UTF-8" standalone="no"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.9.xsd">
+    <changeSet author="bottbenj" id="20220402221400">
+        <createTable tableName="quiz_batch">
+            <column autoIncrement="true" name="id" type="BIGINT">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="quiz_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="creator_id" type="BIGINT"/>
+            <column name="password" type="VARCHAR(63)"/>
+            <column name="start_date" type="DATETIME"/>
+        </createTable>
+        <addColumn tableName="exercise">
+            <column name="quiz_mode" type="VARCHAR(63)" defaultValue="SYNCHRONIZED">
+                <constraints nullable="false"/>
+            </column>
+            <column name="allowed_per_tutor_batch_count" type="INT" />
+        </addColumn>
+        <addColumn tableName="submission">
+            <column name="quiz_batch" type="BIGINT"/>
+        </addColumn>
+        <addForeignKeyConstraint baseTableName="quiz_batch"
+                                 baseColumnNames="quiz_id"
+                                 constraintName="fk_quiz_batch_quiz_id"
+                                 referencedTableName="exercise"
+                                 referencedColumnNames="id"/>
+        <addForeignKeyConstraint baseTableName="submission"
+                                 baseColumnNames="quiz_batch"
+                                 constraintName="fk_submission_quiz_batch"
+                                 referencedTableName="quiz_batch"
+                                 referencedColumnNames="id"/>
+        <addUniqueConstraint tableName="quiz_batch" columnNames="quiz_id,password"/>
+    </changeSet>
+    <changeSet id="20220402221401" author="bottbenj">
+        <sql>
+            UPDATE exercise
+            SET allowed_number_of_attempts = 1
+            WHERE discriminator = 'Q' AND course_id IS NOT NULL
+        </sql>
+        <sql>
+            INSERT INTO quiz_batch (quiz_id, start_date)
+            SELECT id, release_date FROM exercise
+            WHERE discriminator = 'Q' AND is_planned_to_start = 1 AND course_id IS NOT NULL
+        </sql>
+        <sql>
+            UPDATE exercise
+            SET due_date = DATE_ADD(DATE_ADD(release_date, INTERVAL duration SECOND), INTERVAL 5 SECOND)
+            WHERE discriminator = 'Q' AND is_planned_to_start = 1 AND course_id IS NOT NULL
+        </sql>
+        <sql>
+            UPDATE exercise
+            SET release_date = IF(is_visible_before_start = 1, CURRENT_DATE, IF(is_planned_to_start = 1, release_date, DATE_ADD(CURRENT_DATE, INTERVAL 10 YEAR)))
+            WHERE discriminator = 'Q' AND course_id IS NOT NULL
+        </sql>
+    </changeSet>
+</databaseChangeLog>

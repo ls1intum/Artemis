@@ -8,6 +8,7 @@ import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
 import { faChevronLeft, faPrint } from '@fortawesome/free-solid-svg-icons';
 import { GradeStepBoundsPipe } from 'app/shared/pipes/grade-step-bounds.pipe';
 import { GradeEditMode } from 'app/grading-system/base-grading-system/base-grading-system.component';
+import { ThemeService } from 'app/core/theme/theme.service';
 
 @Component({
     selector: 'jhi-grade-key-overview',
@@ -27,6 +28,7 @@ export class GradingKeyOverviewComponent implements OnInit {
         private gradingSystemService: GradingSystemService,
         private courseCalculationService: CourseScoreCalculationService,
         private navigationUtilService: ArtemisNavigationUtilService,
+        private themeService: ThemeService,
     ) {}
 
     isExam = false;
@@ -88,7 +90,7 @@ export class GradingKeyOverviewComponent implements OnInit {
      * Exports page as PDF
      */
     printPDF() {
-        setTimeout(() => window.print());
+        setTimeout(() => this.themeService.print());
     }
 
     /**

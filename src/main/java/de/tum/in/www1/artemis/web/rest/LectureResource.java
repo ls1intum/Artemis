@@ -188,7 +188,7 @@ public class LectureResource {
      */
     @PostMapping("/lectures/import/{sourceLectureId}")
     @PreAuthorize("hasRole('EDITOR')")
-    public ResponseEntity<Lecture> importLecture(@PathVariable long sourceLectureId, @RequestParam(required = true) long courseId) throws URISyntaxException {
+    public ResponseEntity<Lecture> importLecture(@PathVariable long sourceLectureId, @RequestParam long courseId) throws URISyntaxException {
         final var user = userRepository.getUserWithGroupsAndAuthorities();
         final var sourceLecture = lectureRepository.findByIdWithLectureUnitsElseThrow(sourceLectureId);
         final var destinationCourse = courseRepository.findByIdWithLecturesElseThrow(courseId);

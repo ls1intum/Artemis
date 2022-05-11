@@ -7,11 +7,14 @@
 @import 'node_modules/@danielmoncada/angular-datetime-picker/assets/style/picker.min';
 // Needed for mathematical formulas in markdown editor
 @import '~katex/dist/katex.css';
-// Needed for highlighting code in the markdown editor
-@import '~highlight.js/styles/vs.css';
 @import '~@swimlane/ngx-datatable/themes/bootstrap.css';
 // Needed for emojis in metis reactions
 @import 'node_modules/@ctrl/ngx-emoji-mart/picker';
+
+// Smooth transition between themes
+* {
+    transition: background-color 0.2s, background 0.2s;
+}
 
 /* ==============================================================
 Bootstrap tweaks
@@ -32,8 +35,8 @@ h4 {
 
 /* Increase contrast of links to get 100% on Lighthouse Accessibility Audit. Override this color if you want to change the link color, or use a Bootswatch theme */
 a,
-a:not(.btn):hover {
-    color: $primary;
+a:not(.btn):not(.dropdown-item):not(.page-link):hover {
+    color: $link-color;
     font-weight: bold;
     /* make sure browsers use the pointer cursor for anchors, even with no href */
     cursor: pointer;
@@ -51,6 +54,10 @@ a:not(.btn):hover {
 a.disabled {
     pointer-events: none;
     cursor: default;
+}
+
+.text-normal {
+    color: $body-color !important;
 }
 
 .clickable {
@@ -83,7 +90,7 @@ a.disabled {
 .btn-info:hover,
 .btn-success,
 .btn-success:hover {
-    color: #fff !important;
+    color: $colored-btn-font !important;
 }
 
 a.btn {
@@ -91,9 +98,9 @@ a.btn {
 }
 
 .btn-default {
-    color: #333;
-    background-color: #fff;
-    border-color: #ccc;
+    color: $default-btn-font;
+    background-color: $default-btn-background;
+    border-color: $default-btn-border;
 }
 
 .footer {
@@ -102,7 +109,7 @@ a.btn {
         left: 15px;
         right: 15px;
         bottom: 0;
-        background-color: white;
+        background-color: $footer-bg;
         padding: 5px 0;
     }
 
@@ -130,11 +137,11 @@ a.btn {
 }
 
 .border-lightgrey {
-    border-color: rgba(0, 0, 0, 0.125);
+    border-color: $border-lightgrey;
 }
 
 .text-lightgrey {
-    color: rgba(0, 0, 0, 0.125);
+    color: $text-lightgrey;
 }
 
 .form-group {
@@ -151,9 +158,11 @@ a.btn {
 .form-control,
 .form-select,
 .form-check-input,
-.form-control:hover,
-.form-control:focus {
-    background-color: white;
+.form-control:not(.ace_editor):hover,
+.form-control:focus,
+textarea {
+    background-color: $form-control-focus-background;
+    color: $form-control-color;
 }
 
 .form-inline .form-control {
@@ -180,8 +189,8 @@ Browser Upgrade Prompt
 ========================================================================== */
 .browserupgrade {
     margin: 0.2em 0;
-    background: #ccc;
-    color: #000;
+    background: $browserupgrade-color-background;
+    color: $browserupgrade-color;
     padding: 0.2em 0;
 }
 
@@ -204,25 +213,34 @@ Generic styles
 
 /* Error highlight on input fields */
 .ng-valid[required],
-.ng-valid.required {
-    border-left: 5px solid green;
+.ng-valid.required,
+.ng-invalid:not(form) {
+    border-left: 5px solid $ng-valid-border;
+
+    &.form-check-input {
+        border: 1px solid $ng-valid-border;
+    }
 }
 
 .ng-invalid:not(form) {
-    border-left: 5px solid red;
+    border-left: 5px solid $ng-invalid-border;
+
+    &.form-check-input {
+        border: 1px solid $ng-invalid-border;
+    }
 }
 
 /* other generic styles */
 
 // This class refers to the gutter inserted by split.js for its split view
 .gutter {
-    background-color: #f1f1f1;
+    background-color: $gutter-background;
     cursor: col-resize;
     position: relative;
     transition: background-color 0.2s;
 
     &::before {
-        background-color: darken($body-bg, 10);
+        background-color: $slightly-darker-body-bg;
         border-radius: 1px;
         content: '';
         height: 24px;
@@ -239,14 +257,14 @@ Generic styles
         background-color: $body-bg;
 
         &::before {
-            background-color: darken($body-bg, 20);
+            background-color: $darker-body-bg;
         }
     }
 }
 
 .error {
-    color: white;
-    background-color: red;
+    color: $error-color;
+    background-color: $error-background;
 }
 
 .invalid-feedback {
@@ -271,7 +289,7 @@ Generic styles
 }
 
 .readonly {
-    background-color: #eee;
+    background-color: $readonly-background;
     opacity: 1;
 }
 
@@ -313,7 +331,8 @@ entity tables helpers
 
 /* Remove Bootstrap padding from the element
    http://stackoverflow.com/questions/19562903/remove-padding-from-columns-in-bootstrap-3 */
-@mixin no-padding($side) {
+$padding-sides: 'left', 'right', 'top', 'bottom', 'all';
+@each $side in $padding-sides {
     @if $side == 'all' {
         .no-padding {
             padding: 0 !important;
@@ -324,12 +343,6 @@ entity tables helpers
         }
     }
 }
-
-@include no-padding('left');
-@include no-padding('right');
-@include no-padding('top');
-@include no-padding('bottom');
-@include no-padding('all');
 
 /* bootstrap 3 input-group 100% width
    http://stackoverflow.com/questions/23436430/bootstrap-3-input-group-100-width */
@@ -364,7 +377,7 @@ entity detail page css
         }
 
         dd {
-            border-bottom: 1px solid #eee;
+            border-bottom: 1px solid $jh-entity-details-dd-border;
             padding-left: 180px;
             margin-left: 0;
         }
@@ -372,7 +385,7 @@ entity detail page css
 }
 
 .editor-outline-background {
-    background: #f8f9fa;
+    background: $editor-outline-background;
     max-width: max-content;
 }
 
@@ -456,7 +469,7 @@ ui bootstrap tweaks
 }
 
 .btn-total-score {
-    color: #337ab7;
+    color: $btn-total-score-color;
     border-radius: 6px;
     border: none;
 }
@@ -469,19 +482,19 @@ ui bootstrap tweaks
 /* jhipster-needle-scss-add-main JHipster will add new css style */
 
 .result-orange {
-    color: orange;
+    color: $result-orange;
 }
 
 a.result-orange:hover {
-    color: orange;
+    color: $result-orange;
 }
 
 .result--late {
-    color: gray;
+    color: $result-late;
 }
 
 a.result--late:hover {
-    color: gray;
+    color: $result-late;
 }
 
 span.result {
@@ -511,13 +524,13 @@ span.bold {
 }
 
 .negative {
-    color: #c7254e;
-    background-color: #f9f2f4;
+    color: $negative-color;
+    background-color: $negative-background;
 }
 
 .positive {
-    color: green;
-    background-color: #f2f9f2;
+    color: $positive-color;
+    background-color: $positive-background;
 }
 
 table {
@@ -547,9 +560,9 @@ pre {
     white-space: pre-wrap;
     word-break: break-word;
     word-wrap: break-word;
-    color: #333;
-    background-color: #f5f5f5;
-    border: 1px solid #ccc;
+    color: $artemis-pre-color;
+    background-color: $artemis-pre-background;
+    border: 1px solid $artemis-pre-border;
     border-radius: 4px;
 }
 
@@ -565,34 +578,34 @@ pre {
 .code-success {
     padding: 2px 4px;
     font-size: 90%;
-    color: green;
-    background-color: #f2f9f2;
+    color: $code-success-color;
+    background-color: $code-success-background;
     border-radius: 4px;
     font-family: Menlo, Monaco, Consolas, 'Courier New', monospace;
 }
 
 .code-error {
-    color: #c7254e;
-    background-color: #f9f2f4;
+    color: $code-error-color;
+    background-color: $code-error-background;
 }
 
 .code-warning {
-    color: #e68a00;
-    background-color: #fff5e6;
+    color: $code-warning-color;
+    background-color: $code-warning-background;
 }
 
 code.password {
-    color: transparent !important;
-    background: black;
+    color: $code-password !important;
+    background: $code-password-background;
 }
 
 code.password::selection {
-    background: #3297fd;
-    color: white !important;
+    background: $code-password-selection-background;
+    color: $code-password-selection !important;
 }
 
 code.password:hover {
-    color: white !important;
+    color: $code-password-hover !important;
 }
 
 .apollon-editor label {
@@ -682,11 +695,11 @@ code.password:hover {
 }
 
 .unreferencedFeedback {
-    background-color: whitesmoke;
+    background-color: $unreferenced-feedback-background;
 }
 
 .displaycolor {
-    background: #f8f9fa;
+    background: $displaycolor-background;
 }
 
 // This puts the owl-datetime-picker on top of the ngbootstrap modal
@@ -710,7 +723,7 @@ Course Info Bar
     padding: 1em 1em;
     margin: -1.25rem -1.25rem 0 -1.25rem;
     display: flex;
-    color: #ffffff;
+    color: $white;
     flex-direction: column;
     justify-content: center;
 }
@@ -720,45 +733,20 @@ Course Info Bar
 ========================================================================== */
 .markdown-preview {
     .background-editor-color {
-        background: #f8f9fa;
+        background: $markdown-preview-editor-background;
     }
 
-    .red {
-        color: #ca2024;
-    }
-
-    .green {
-        color: #3ea119;
-    }
-
-    .white {
-        color: #ffffff;
-    }
-
-    .black {
-        color: #000000;
-    }
-
-    .yellow {
-        color: #fffa5c;
-    }
-
-    .blue {
-        color: #0d3cc2;
-    }
-
-    .lila {
-        color: #b05db8;
-    }
-
-    .orange {
-        color: #d86b1f;
+    $color-options: 'red', 'green', 'white', 'black', 'yellow', 'blue', 'lila', 'orange';
+    @each $col in $color-options {
+        .#{$col} {
+            color: var(--markdown-preview-#{$col});
+        }
     }
 
     blockquote {
         padding: 0 1em;
-        color: #6a737d;
-        border-left: 0.25em solid #dfe2e5;
+        color: $markdown-preview-blockquote;
+        border-left: 0.25em solid $markdown-preview-blockquote-border;
     }
 
     img {
@@ -791,12 +779,12 @@ Course Info Bar
     line-height: normal;
 }
 
-.connection-status-admin {
+.connection-status {
     font-size: 14px;
-    color: green;
+    color: $connection-status;
 
     &.disconnected {
-        color: red;
+        color: $connection-status-disconnected;
     }
 
     i {
@@ -1225,19 +1213,19 @@ Course Info Bar
 }
 
 .accordion-body {
-    background: white;
+    background: $brighter-body-bg;
     max-height: 50vh;
     overflow: scroll;
     padding: 0 0.5rem;
 }
 
 .mat-autocomplete-panel.mat-autocomplete-visible {
-    box-shadow: 3px 3px 6px rgb(100 100 100);
+    box-shadow: 3px 3px 6px $mat-autocomplete-visible-box-shadow;
 }
 
 .mat-form-field-outline {
     top: -0.1em !important;
-    color: #ccc;
+    color: $mat-form-field-outline;
 }
 
 /* Connection Warning Tooltip */
@@ -1247,15 +1235,15 @@ Course Info Bar
     background-color: transparent;
 
     .popover-arrow::after {
-        border-bottom-color: #f1d1d1e0;
+        border-bottom-color: $artemis-alert-danger-background;
     }
 
     .popover-body {
         border: none;
         max-width: 70vw;
         width: 400px;
-        background-color: #f1d1d1e0;
-        color: #600c0c;
+        background-color: $artemis-alert-danger-background;
+        color: $artemis-alert-danger-color;
         font-size: 14px;
         display: flex;
         align-items: center;

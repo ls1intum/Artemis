@@ -44,6 +44,7 @@
                 (textBlockRefsChange)="validateFeedback()"
                 (textBlockRefsAddedRemoved)="recalculateTextBlockRefs()"
                 (onConflictsClicked)="navigateToConflictingSubmissions($event)"
+                [criteria]="exercise!.gradingCriteria"
             ></jhi-text-assessment-area>
             <!--endregion-->
 
