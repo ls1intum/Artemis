@@ -33,9 +33,9 @@ public class ArtemisInternalAuthenticationProvider extends ArtemisAuthentication
         if (!user.get().getActivated()) {
             throw new UserNotActivatedException("User " + user.get().getLogin() + " was not activated");
         }
-        // if (!passwordService.checkPasswordMatch(authentication.getCredentials().toString(), user.get().getPassword())) {
-        // throw new AuthenticationServiceException("Invalid password for user " + user.get().getLogin());
-        // }
+        if (!passwordService.checkPasswordMatch(authentication.getCredentials().toString(), user.get().getPassword())) {
+            throw new AuthenticationServiceException("Invalid password for user " + user.get().getLogin());
+        }
         return new UsernamePasswordAuthenticationToken(user.get().getLogin(), user.get().getPassword(), user.get().getGrantedAuthorities());
     }
 
