@@ -291,6 +291,10 @@
         {
             "fullName": "Ole Vester",
             "photoDirectory": "public/images/about/Ole_Vester.jpg"
+        },
+        {
+            "fullName": "Valerie Bucher",
+            "photoDirectory": "public/images/about/Valerie_Bucher.png"
         }
     ]
 }
