@@ -1,6 +1,6 @@
 <jhi-code-editor-grid #grid [isTutorAssessment]="isTutorAssessment" (onResize)="onGridResize($event)">
     <div editorNavbar class="d-flex flex-wrap align-items-center gap-2">
-        <h4><ng-content select="[editorTitle]"></ng-content></h4>
+        <h4 class="editor-title"><ng-content select="[editorTitle]"></ng-content></h4>
         <ng-content select="[editorTitleActions]"></ng-content>
         <div class="d-flex flex-wrap align-items-center ms-auto gap-2">
             <ng-content select="[editorToolbar]"></ng-content>

@@ -12,17 +12,17 @@ import { User } from 'app/core/user/user.model';
 import { GroupNotification, GroupNotificationType } from 'app/entities/group-notification.model';
 import {
     NEW_ANNOUNCEMENT_POST_TITLE,
-    NEW_REPLY_FOR_COURSE_POST_TITLE,
-    NEW_REPLY_FOR_EXERCISE_POST_TITLE,
-    NEW_REPLY_FOR_LECTURE_POST_TITLE,
     NEW_COURSE_POST_TITLE,
     NEW_EXERCISE_POST_TITLE,
     NEW_LECTURE_POST_TITLE,
+    NEW_REPLY_FOR_COURSE_POST_TITLE,
+    NEW_REPLY_FOR_EXERCISE_POST_TITLE,
+    NEW_REPLY_FOR_LECTURE_POST_TITLE,
     Notification,
 } from 'app/entities/notification.model';
 import { Course } from 'app/entities/course.model';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
-import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
+import { QuizExercise, QuizMode } from 'app/entities/quiz/quiz-exercise.model';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { RouteComponents } from 'app/shared/metis/metis.util';
 
@@ -191,7 +191,12 @@ export class NotificationService {
                 this.subscribedTopics.push(quizExerciseTopic);
                 this.jhiWebsocketService.subscribe(quizExerciseTopic);
                 this.jhiWebsocketService.receive(quizExerciseTopic).subscribe((quizExercise: QuizExercise) => {
-                    if (quizExercise.visibleToStudents && quizExercise.started && !quizExercise.isOpenForPractice) {
+                    if (
+                        quizExercise.visibleToStudents &&
+                        quizExercise.quizMode === QuizMode.SYNCHRONIZED &&
+                        quizExercise.quizBatches?.[0]?.started &&
+                        !quizExercise.isOpenForPractice
+                    ) {
                         this.addNotificationToObserver(NotificationService.createNotificationFromStartedQuizExercise(quizExercise));
                     }
                 });

@@ -40,6 +40,9 @@ import { of } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { MockLocalStorageService } from '../../../../helpers/mocks/service/mock-local-storage.service';
+import { LocalStorageService } from 'ngx-webstorage';
+import { ThemeService } from 'app/core/theme/theme.service';
 
 let fixture: ComponentFixture<ExamParticipationSummaryComponent>;
 let component: ExamParticipationSummaryComponent;
@@ -126,6 +129,7 @@ function sharedSetup(url: string[]) {
                         return of(new HttpResponse({ body: { accuracyOfScores: 1 } }));
                     },
                 }),
+                { provide: LocalStorageService, useClass: MockLocalStorageService },
             ],
         })
             .compileComponents()
@@ -145,7 +149,7 @@ describe('ExamParticipationSummaryComponent', () => {
     sharedSetup(['', '']);
 
     it('should expand all exercises and call print when Export PDF is clicked', fakeAsync(() => {
-        const printWindowStub = jest.spyOn(global.window, 'print').mockReturnValue();
+        const printStub = jest.spyOn(TestBed.inject(ThemeService), 'print').mockReturnValue();
         fixture.detectChanges();
         const exportToPDFButton = fixture.debugElement.query(By.css('#exportToPDFButton'));
         const toggleCollapseExerciseButtonOne = fixture.debugElement.query(By.css('#toggleCollapseExerciseButton-0'));
@@ -167,7 +171,7 @@ describe('ExamParticipationSummaryComponent', () => {
         exportToPDFButton.nativeElement.click();
         expect(component.collapsedExerciseIds).toBeEmpty();
         tick();
-        expect(printWindowStub).toHaveBeenCalled();
-        printWindowStub.mockRestore();
+        expect(printStub).toHaveBeenCalled();
+        printStub.mockRestore();
     }));
 });

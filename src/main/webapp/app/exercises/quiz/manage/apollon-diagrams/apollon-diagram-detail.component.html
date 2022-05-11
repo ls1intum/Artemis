@@ -2,7 +2,9 @@
     <div class="row">
         <div class="col text-end">
             <label class="me-1">
-                <input type="checkbox" name="keepOriginalSize" [(ngModel)]="crop" />&nbsp;<span jhiTranslate="artemisApp.apollonDiagram.detail.crop">Crop</span>
+                <input class="form-check-input" type="checkbox" name="keepOriginalSize" [(ngModel)]="crop" />&nbsp;<span jhiTranslate="artemisApp.apollonDiagram.detail.crop"
+                    >Crop</span
+                >
             </label>
             <fa-icon class="me-1" [icon]="faQuestionCircle" ngbTooltip="{{ 'artemisApp.apollonDiagram.detail.help' | artemisTranslate }}"></fa-icon>
             <button class="btn btn-info me-1" (click)="downloadSelection()" [hidden]="!apollonDiagram" [disabled]="!hasSelection">
