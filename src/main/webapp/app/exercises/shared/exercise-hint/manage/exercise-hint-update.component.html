@@ -23,7 +23,7 @@
                     ></jhi-markdown-editor>
                 </div>
                 <div *ngIf="exerciseHint.type === HintType.CODE" class="form-group hint-form__editor-wrapper">
-                    <jhi-code-hint-container [codeHint]="exerciseHint | cast" [enableEditing]="true"></jhi-code-hint-container>
+                    <jhi-code-hint-container [codeHint]="exerciseHint | castToCodeHint" [enableEditing]="true"></jhi-code-hint-container>
                 </div>
                 <div *ngIf="!isLoading; else exerciseLoading" class="form-group">
                     <label class="form-control-label" jhiTranslate="artemisApp.exerciseHint.exercise" for="field_exercise">Exercise</label>

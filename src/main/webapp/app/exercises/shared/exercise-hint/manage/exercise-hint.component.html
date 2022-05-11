@@ -42,8 +42,11 @@
                         </div>
                         <div *ngIf="exerciseHint.type === HintType.CODE">
                             <span>
-                                {{ (exerciseHint | cast).solutionEntries?.length ?? 0 }}
-                                {{ ((exerciseHint | cast).solutionEntries?.length === 1 ? 'artemisApp.exerciseHint.entry' : 'artemisApp.exerciseHint.entries') | artemisTranslate }}
+                                {{ (exerciseHint | castToCodeHint).solutionEntries?.length ?? 0 }}
+                                {{
+                                    ((exerciseHint | castToCodeHint).solutionEntries?.length === 1 ? 'artemisApp.exerciseHint.entry' : 'artemisApp.exerciseHint.entries')
+                                        | artemisTranslate
+                                }}
                             </span>
                         </div>
                     </td>

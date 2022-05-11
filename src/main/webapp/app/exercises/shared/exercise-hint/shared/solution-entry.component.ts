@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild, Input, Output, EventEmitter } from '@angular/core';
+import { Component, OnInit, OnDestroy, ViewChild, Input, Output, EventEmitter } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { Observable, Subscription } from 'rxjs';
 
@@ -11,7 +11,7 @@ import { ThemeService } from 'app/core/theme/theme.service';
     selector: 'jhi-solution-entry',
     templateUrl: './solution-entry.component.html',
 })
-export class SolutionEntryComponent implements OnInit {
+export class SolutionEntryComponent implements OnInit, OnDestroy {
     @ViewChild('editor', { static: true })
     editor: AceEditorComponent;
 
@@ -32,6 +32,10 @@ export class SolutionEntryComponent implements OnInit {
 
     ngOnInit() {
         this.setupEditor();
+    }
+
+    ngOnDestroy(): void {
+        this.themeSubscription.unsubscribe();
     }
 
     emitRemovalEvent() {
@@ -55,7 +59,7 @@ export class SolutionEntryComponent implements OnInit {
                 return this.getText(session, lastLineNumber).toString().length * config.characterWidth;
             },
             getText(session: any, row: number): string | number {
-                return line === undefined ? '' : row + line;
+                return !line ? '' : row + line;
             },
         };
         this.editor.getEditor().getSession().setValue(this.solutionEntry.code);

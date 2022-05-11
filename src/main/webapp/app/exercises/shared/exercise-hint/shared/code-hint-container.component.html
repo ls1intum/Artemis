@@ -8,6 +8,6 @@
         ></jhi-solution-entry>
     </div>
 </div>
-<div *ngIf="sortedSolutionEntries?.length === 0">
+<div *ngIf="!sortedSolutionEntries.length">
     <span jhiTranslate="artemisApp.exerciseHint.noEntries">This code hint has no solution entries.</span>
 </div>

@@ -33,7 +33,6 @@ describe('ExerciseHint Management Component', () => {
         comp.codeHint = codeHint;
 
         comp.ngOnInit();
-        expect(comp.sortedSolutionEntries).toHaveLength(2);
         expect(comp.sortedSolutionEntries).toEqual([solutionEntry2, solutionEntry1]);
     });
 
@@ -50,7 +49,6 @@ describe('ExerciseHint Management Component', () => {
         comp.codeHint = codeHint;
 
         comp.ngOnInit();
-        expect(comp.sortedSolutionEntries).toHaveLength(2);
         expect(comp.sortedSolutionEntries).toEqual([solutionEntry2, solutionEntry1]);
     });
 });
