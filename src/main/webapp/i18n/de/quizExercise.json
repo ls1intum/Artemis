@@ -269,7 +269,7 @@
                 "batched": "Gruppiert: Das Datum, ab dem das Quiz für die Studierenden in der Aufgabenübersicht sichtbar wird. Die Studierenden können die Fragen erst sehen, wenn eine Gruppe gestartet wird und sie das Passwort dafür eingeben.",
                 "individual": "Einzeln: Das Datum, ab dem das Quiz für die Studierenden in der Aufgabenübersicht sichtbar wird. Die Studierenden können ab diesem Zeitpunkt mit der Bearbeitung beginnen."
             },
-            "startTimeExplanation": "Setzen der Zeitpunkt, ab dem die Studierenden die Fragen sehen und mit der Beantwortung beginnen können.",
+            "startTimeExplanation": "Setzen des Zeitpunktes, ab dem die Studierenden die Fragen sehen und mit der Beantwortung beginnen können.",
             "addBatch": "Gruppe hinzufügen",
             "join": "Bearbeiten",
             "joinFailed": "Dem Quiz konnte nicht beigetreten werden.",
