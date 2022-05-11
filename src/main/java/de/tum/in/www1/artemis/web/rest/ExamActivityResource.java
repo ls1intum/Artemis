@@ -2,6 +2,8 @@ package de.tum.in.www1.artemis.web.rest;
 
 import java.util.List;
 
+import javax.ws.rs.BadRequestException;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
@@ -62,7 +64,7 @@ public class ExamActivityResource {
             @RequestBody List<ExamAction> actions) {
         Exam exam = examService.findByIdOrElseThrow(examId);
         if (!exam.isMonitoring())
-            return ResponseEntity.badRequest().build();
+            throw new BadRequestException("Monitoring is not enabled for the exam with the id " + examId);
 
         StudentExam studentExam = studentExamRepository.findByIdWithExercisesElseThrow(studentExamId);
         User currentUser = userRepository.getUserWithGroupsAndAuthorities();

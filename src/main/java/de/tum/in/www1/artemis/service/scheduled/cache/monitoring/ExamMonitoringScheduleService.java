@@ -218,4 +218,14 @@ public class ExamMonitoringScheduleService {
     public void clearAllExamMonitoringData() {
         examCache.clear();
     }
+
+    /**
+     * Returns the exam activity for a specific exam and student exam.
+     * @param examId id of the current exam
+     * @param studentExamId id of the student exam
+     * @return ExamActivity performed by the student
+     */
+    public ExamActivity getExamActivityFromCache(Long examId, Long studentExamId) {
+        return ((ExamMonitoringCache) examCache.getReadCacheFor(examId)).getActivities().getOrDefault(studentExamId, null);
+    }
 }

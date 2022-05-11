@@ -49,6 +49,10 @@ public class ExamActivity extends DomainObject {
         this.examActions.add(examAction);
     }
 
+    public Set<ExamAction> getExamActions() {
+        return examActions;
+    }
+
     @Override
     public String toString() {
         return "ExamActivity{" + "studentExamId=" + studentExamId + '}';

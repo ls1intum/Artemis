@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.service.exam.monitoring;
 
 import java.util.Collection;
+import java.util.List;
 
 import org.springframework.stereotype.Service;
 
@@ -37,12 +38,12 @@ public class ExamActionService {
     }
 
     /**
-     * To avoid direct access to the {@link ExamActionRepository}, we use delegation to find the {@link ExamAction} by the activity id.
+     * To avoid direct access to the {@link ExamActionRepository}, we use delegation to find the {@link ExamAction}s by the activity id.
      *
      * @param examActivityId of the ExamActivity
-     * @return saved {@link ExamAction}
+     * @return list of {@link ExamAction}s
      */
-    public ExamAction findByExamActivityId(Long examActivityId) {
+    public List<ExamAction> findByExamActivityId(Long examActivityId) {
         return examActionRepository.findByExamActivityId(examActivityId);
     }
 }

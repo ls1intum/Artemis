@@ -3,10 +3,13 @@ package de.tum.in.www1.artemis;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,8 +25,6 @@ import de.tum.in.www1.artemis.domain.exam.monitoring.ExamAction;
 import de.tum.in.www1.artemis.domain.exam.monitoring.actions.*;
 import de.tum.in.www1.artemis.repository.ExamRepository;
 import de.tum.in.www1.artemis.repository.StudentExamRepository;
-import de.tum.in.www1.artemis.service.exam.ExamService;
-import de.tum.in.www1.artemis.service.exam.StudentExamService;
 import de.tum.in.www1.artemis.service.exam.monitoring.ExamActionService;
 import de.tum.in.www1.artemis.service.exam.monitoring.ExamActivityService;
 import de.tum.in.www1.artemis.service.scheduled.cache.monitoring.ExamMonitoringScheduleService;
@@ -35,13 +36,7 @@ public class ExamActivityIntegrationTest extends AbstractSpringIntegrationBamboo
     private ExamMonitoringScheduleService examMonitoringScheduleService;
 
     @Autowired
-    private ExamService examService;
-
-    @Autowired
     private ExamRepository examRepository;
-
-    @Autowired
-    private StudentExamService studentExamService;
 
     @Autowired
     private StudentExamRepository studentExamRepository;
@@ -142,8 +137,83 @@ public class ExamActivityIntegrationTest extends AbstractSpringIntegrationBamboo
 
         var examActivity = examActivityService.findByStudentExamId(studentExam.getId());
         examMonitoringScheduleService.executeExamActivitySaveTask(exam.getId());
-        var savedAction = examActionService.findByExamActivityId(examActivity.getId());
+        var savedActions = examActionService.findByExamActivityId(examActivity.getId());
 
-        assertThat(savedAction.getType()).isEqualTo(examActionType);
+        assertThat(savedActions.size()).isEqualTo(1);
+        assertThat(savedActions.get(0).getType()).isEqualTo(examActionType);
+    }
+
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
+    @WithMockUser(username = "student1", roles = "USER")
+    @EnumSource(ExamActionType.class)
+    public void testExamActionNotSavedInDatabase(ExamActionType examActionType) throws Exception {
+        ExamAction examAction = createExamActionBasedOnType(examActionType);
+
+        request.put("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/student-exams/" + studentExam.getId() + "/actions", List.of(examAction), HttpStatus.OK);
+
+        var examActivity = examActivityService.findByStudentExamId(studentExam.getId());
+        var savedActions = examActionService.findByExamActivityId(examActivity.getId());
+
+        assertThat(savedActions.size()).isEqualTo(0);
+    }
+
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
+    @WithMockUser(username = "student1", roles = "USER")
+    @EnumSource(ExamActionType.class)
+    public void testExamActionPresentInCache(ExamActionType examActionType) throws Exception {
+        ExamAction examAction = createExamActionBasedOnType(examActionType);
+
+        request.put("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/student-exams/" + studentExam.getId() + "/actions", List.of(examAction), HttpStatus.OK);
+
+        var examActivity = examMonitoringScheduleService.getExamActivityFromCache(exam.getId(), studentExam.getId());
+        assertThat(examActivity).isNotNull();
+        assertThat(examActivity.getExamActions().size()).isEqualTo(1);
+        assertThat(new ArrayList<>(examActivity.getExamActions()).get(0).getType()).isEqualTo(examActionType);
+    }
+
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
+    @WithMockUser(username = "student1", roles = "USER")
+    @EnumSource(ExamActionType.class)
+    public void testExamActionNotPresentInCache(ExamActionType examActionType) throws Exception {
+        ExamAction examAction = createExamActionBasedOnType(examActionType);
+
+        request.put("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/student-exams/" + studentExam.getId() + "/actions", List.of(examAction), HttpStatus.OK);
+
+        examMonitoringScheduleService.executeExamActivitySaveTask(exam.getId());
+
+        var examActivity = examMonitoringScheduleService.getExamActivityFromCache(exam.getId(), studentExam.getId());
+        assertThat(examActivity).isNull();
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void testMultipleExamActions() throws Exception {
+        List<ExamAction> examActions = Arrays.stream(ExamActionType.values()).map(this::createExamActionBasedOnType).toList();
+
+        request.put("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/student-exams/" + studentExam.getId() + "/actions", examActions, HttpStatus.OK);
+
+        var examActivity = examMonitoringScheduleService.getExamActivityFromCache(exam.getId(), studentExam.getId());
+
+        assertThat(examActivity).isNotNull();
+        assertThat(examActivity.getExamActions().size()).isEqualTo(examActions.size());
+
+        examMonitoringScheduleService.executeExamActivitySaveTask(exam.getId());
+
+        var savedActions = examActionService.findByExamActivityId(examActivity.getId());
+
+        assertThat(savedActions.size()).isEqualTo(examActions.size());
+    }
+
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
+    @WithMockUser(username = "student1", roles = "USER")
+    @EnumSource(ExamActionType.class)
+    public void testExamWithMonitoringDisabled(ExamActionType examActionType) throws Exception {
+        ExamAction examAction = createExamActionBasedOnType(examActionType);
+
+        exam.setMonitoring(false);
+        examRepository.save(exam);
+
+        request.put("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/student-exams/" + studentExam.getId() + "/actions", List.of(examAction),
+                HttpStatus.BAD_REQUEST);
     }
 }
