@@ -814,6 +814,7 @@ public class ExamService {
 
     /**
      * To avoid direct access to the {@link ExamRepository}, we use delegation to find the {@link Exam} based on its id or esle throw an exception.
+     * @param examId the id ofg the exam
      * @return Exam
      */
     public Exam findByIdOrElseThrow(Long examId) {

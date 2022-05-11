@@ -213,6 +213,8 @@ public final class Constants {
 
     public static final String HAZELCAST_EXERCISE_CACHE = HAZELCAST_QUIZ_PREFIX + "exercise-cache";
 
+    public static final long MONITORING_SAVE_DELAY = 60 * 10 * 1000; // 10 minutes in milliseconds
+
     public static final String HAZELCAST_MONITORING_PREFIX = "monitoring-";
 
     public static final String HAZELCAST_MONITORING_CACHE = HAZELCAST_MONITORING_PREFIX + "activity-cache";

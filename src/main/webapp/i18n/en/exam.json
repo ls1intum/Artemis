@@ -317,7 +317,7 @@
             "monitoring": {
                 "enable": {
                     "title": "Enable Exam Monitoring",
-                    "description": "TODO: Exam Monitoring (English)"
+                    "description": "The Exam Monitoring collects the student's interactions with the exam and provides further opportunities for statistics."
                 }
             },
             "testRun": {

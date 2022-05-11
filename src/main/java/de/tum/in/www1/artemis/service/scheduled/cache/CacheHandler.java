@@ -39,6 +39,7 @@ public abstract class CacheHandler<KEY> {
     /**
      * Returns a distributed cache or null.
      *
+     * @param key the id of the cache
      * @return a {@link Cache} object, can be null
      * @implNote This is just a {@linkplain Map#get(Object) get} operation on the map of the cache.
      */

@@ -149,6 +149,8 @@ public class ExamMonitoringScheduleService {
                 }
             }
 
+            delay += Constants.MONITORING_SAVE_DELAY;
+
             var scheduledFuture = threadPoolTaskScheduler.schedule(new ExamActivitySaveTask(examId), delay, TimeUnit.MILLISECONDS);
             // save scheduled future in HashMap
             examCache.performCacheWrite(examId, examMonitoringCache -> {

@@ -14,10 +14,12 @@ import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
 import de.tum.in.www1.artemis.domain.exam.monitoring.ExamAction;
+import de.tum.in.www1.artemis.domain.exam.monitoring.ExamActivity;
 import de.tum.in.www1.artemis.repository.StudentExamRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.exam.ExamService;
 import de.tum.in.www1.artemis.service.exam.StudentExamAccessService;
+import de.tum.in.www1.artemis.service.exam.monitoring.ExamActivityService;
 import de.tum.in.www1.artemis.service.scheduled.cache.monitoring.ExamMonitoringScheduleService;
 
 /**
@@ -39,13 +41,16 @@ public class ExamActivityResource {
 
     private final ExamService examService;
 
+    private final ExamActivityService examActivityService;
+
     public ExamActivityResource(StudentExamAccessService studentExamAccessService, StudentExamRepository studentExamRepository, UserRepository userRepository,
-            ExamMonitoringScheduleService examMonitoringScheduleService, ExamService examService) {
+            ExamMonitoringScheduleService examMonitoringScheduleService, ExamService examService, ExamActivityService examActivityService) {
         this.examMonitoringScheduleService = examMonitoringScheduleService;
         this.studentExamAccessService = studentExamAccessService;
         this.studentExamRepository = studentExamRepository;
         this.userRepository = userRepository;
         this.examService = examService;
+        this.examActivityService = examActivityService;
     }
 
     /**
@@ -60,7 +65,7 @@ public class ExamActivityResource {
      */
     @PutMapping("/courses/{courseId}/exams/{examId}/student-exams/{studentExamId}/actions")
     @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<StudentExam> updatePerformedExamActions(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long studentExamId,
+    public ResponseEntity<Void> updatePerformedExamActions(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long studentExamId,
             @RequestBody List<ExamAction> actions) {
         Exam exam = examService.findByIdOrElseThrow(examId);
         if (!exam.isMonitoring())
@@ -75,5 +80,33 @@ public class ExamActivityResource {
         log.info("REST request by user: {} for exam with id {} to add {} actions for student-exam {}", currentUser.getLogin(), examId, actions.size(), studentExamId);
 
         return ResponseEntity.ok().build();
+    }
+
+    /**
+     * ONLY FOR TESTING OF THIS PR ON TEST SERVER/LOCALLY (will be removed in the future)
+     */
+    @GetMapping("/courses/{courseId}/exams/{examId}/student-exams/{studentExamId}/activity-cache")
+    @PreAuthorize("hasRole('INSTRUCTOR')")
+    public ResponseEntity<ExamActivity> getActivityFromCache(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long studentExamId) {
+        StudentExam studentExam = studentExamRepository.findByIdWithExercisesElseThrow(studentExamId);
+        User currentUser = userRepository.getUserWithGroupsAndAuthorities();
+        boolean isTestRun = studentExam.isTestRun();
+
+        ExamActivity examActivity = examMonitoringScheduleService.getExamActivityFromCache(examId, studentExamId);
+        return ResponseEntity.ok(examActivity);
+    }
+
+    /**
+     * ONLY FOR TESTING OF THIS PR ON TEST SERVER/LOCALLY (will be removed in the future)
+     */
+    @GetMapping("/courses/{courseId}/exams/{examId}/student-exams/{studentExamId}/activity-database")
+    @PreAuthorize("hasRole('INSTRUCTOR')")
+    public ResponseEntity<ExamActivity> getActivityFromDatabase(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long studentExamId) {
+        StudentExam studentExam = studentExamRepository.findByIdWithExercisesElseThrow(studentExamId);
+        User currentUser = userRepository.getUserWithGroupsAndAuthorities();
+        boolean isTestRun = studentExam.isTestRun();
+
+        ExamActivity examActivity = examActivityService.findByStudentExamId(studentExamId);
+        return ResponseEntity.ok(examActivity);
     }
 }

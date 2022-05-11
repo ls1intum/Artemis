@@ -316,7 +316,7 @@
             "monitoring": {
                 "enable": {
                     "title": "Aktiviere die Klausur Überwachung",
-                    "description": "TODO: Exam Monitoring (German)"
+                    "description": "Die Klausur Überwachung sammelt die Interaktionen des  Studenten mit der Klausur und bietet dadurch weitere Möglichkeiten für Statistiken."
                 }
             },
             "testRun": {
