@@ -95,9 +95,7 @@
                                 (click)="startQuiz(quizExercise.id!)"
                                 class="btn btn-warning btn-sm me-1 mb-1"
                                 *ngIf="
-                                    (quizExercise.status === QuizStatus.OPEN_FOR_PRACTICE ||
-                                        quizExercise.status === QuizStatus.VISIBLE ||
-                                        quizExercise.status === QuizStatus.INVISIBLE) &&
+                                    (quizExercise.status === QuizStatus.VISIBLE || quizExercise.status === QuizStatus.INVISIBLE) &&
                                     quizExercise.quizMode === QuizMode.SYNCHRONIZED &&
                                     quizExercise.isAtLeastEditor
                                 "
