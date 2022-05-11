@@ -1,4 +1,4 @@
-import { Component, Input, OnChanges } from '@angular/core';
+import { Component, Input, OnInit } from '@angular/core';
 import dayjs from 'dayjs/esm';
 import { Exercise, ExerciseType, getCourseFromExercise, getIcon, getIconTooltip, IncludedInOverallScore } from 'app/entities/exercise.model';
 import { Exam } from 'app/entities/exam.model';
@@ -11,12 +11,13 @@ import { faArrowLeft, faQuestionCircle } from '@fortawesome/free-solid-svg-icons
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { Course } from 'app/entities/course.model';
 import { AssessmentType } from 'app/entities/assessment-type.model';
+import { ComplaintService } from 'app/complaints/complaint.service';
 
 @Component({
     selector: 'jhi-header-exercise-page-with-details',
     templateUrl: './header-exercise-page-with-details.component.html',
 })
-export class HeaderExercisePageWithDetailsComponent implements OnChanges {
+export class HeaderExercisePageWithDetailsComponent implements OnInit {
     readonly IncludedInOverallScore = IncludedInOverallScore;
     readonly AssessmentType = AssessmentType;
     readonly getIcon = getIcon;
@@ -38,6 +39,8 @@ export class HeaderExercisePageWithDetailsComponent implements OnChanges {
     public programmingExercise?: ProgrammingExercise;
     public course: Course;
     public individualComplaintDeadline?: dayjs.Dayjs;
+    public isNextDueDate: boolean[];
+    public uncertainComplaintDeadline: boolean;
 
     icon: IconProp;
 
@@ -45,30 +48,27 @@ export class HeaderExercisePageWithDetailsComponent implements OnChanges {
     faArrowLeft = faArrowLeft;
     faQuestionCircle = faQuestionCircle;
 
-    /**
-     * Sets the status badge and categories of the exercise on changes
-     */
-    ngOnChanges(): void {
+    constructor(private complaintService: ComplaintService) {}
+
+    ngOnInit(): void {
         this.exerciseCategories = this.exercise.categories || [];
 
-        if (this.exercise) {
-            this.setIcon(this.exercise.type);
-        }
-
-        if (this.exam) {
-            this.isExamMode = true;
-        }
-
-        if (this.exercise && !this.isExamMode) {
-            this.dueDate = getExerciseDueDate(this.exercise, this.studentParticipation);
-        }
-
+        this.setIcon(this.exercise.type);
         this.setExerciseStatusBadge();
 
         this.programmingExercise = this.exercise.type === ExerciseType.PROGRAMMING ? (this.exercise as ProgrammingExercise) : undefined;
-
         this.course = getCourseFromExercise(this.exercise)!;
-        this.individualComplaintDeadline = this.getIndividualComplaintDueDate();
+
+        if (this.exam) {
+            this.isExamMode = true;
+            this.setIsNextDueDateExamMode();
+        } else {
+            this.dueDate = getExerciseDueDate(this.exercise, this.studentParticipation);
+            this.setIsNextDueDateCourseMode();
+            this.individualComplaintDeadline = this.complaintService.getIndividualComplaintDueDate(this.exercise, this.course, this.studentParticipation);
+            this.uncertainComplaintDeadline =
+                (!!this.studentParticipation?.results?.last() && !!this.studentParticipation?.results?.last()?.rated) || dayjs().isBefore(this.dueDate);
+        }
     }
 
     private setExerciseStatusBadge(): void {
@@ -87,21 +87,29 @@ export class HeaderExercisePageWithDetailsComponent implements OnChanges {
         }
     }
 
-    private getIndividualComplaintDueDate(): dayjs.Dayjs | undefined {
-        const assessmentDueDate = this.exercise.assessmentDueDate;
-        if (!assessmentDueDate) {
-            return undefined;
-        }
-        const lastResult = this.studentParticipation?.results?.last();
+    private setIsNextDueDateExamMode() {
+        this.isNextDueDate = [false, false];
         const now = dayjs();
-
-        let complaintDueDate;
-        if (!lastResult || !lastResult?.rated) {
-            complaintDueDate = assessmentDueDate.isBefore(now) ? now : assessmentDueDate;
-        } else {
-            complaintDueDate = assessmentDueDate.isBefore(lastResult.completionDate) ? lastResult.completionDate! : assessmentDueDate;
+        if (now.isBefore(this.exam?.endDate)) {
+            this.isNextDueDate[0] = true;
+        } else if (now.isBefore(this.exam?.publishResultsDate)) {
+            this.isNextDueDate[1] = true;
         }
+    }
 
-        return complaintDueDate.add(this.course.maxComplaintTimeDays!, 'days');
+    private setIsNextDueDateCourseMode() {
+        this.isNextDueDate = [false, false, false, false, false];
+        const now = dayjs();
+        if (now.isBefore(this.dueDate)) {
+            this.isNextDueDate[0] = true;
+        } else if (now.isBefore(this.programmingExercise?.buildAndTestStudentSubmissionsAfterDueDate)) {
+            this.isNextDueDate[1] = true;
+        } else if (now.isBefore(this.exercise.exampleSolutionPublicationDate)) {
+            this.isNextDueDate[2] = true;
+        } else if (now.isBefore(this.exercise.assessmentDueDate)) {
+            this.isNextDueDate[3] = true;
+        } else if (now.isBefore(this.individualComplaintDeadline)) {
+            this.isNextDueDate[4] = true;
+        }
     }
 }

@@ -154,7 +154,6 @@
                 "runTestsAfterDueDate": "Testdurchlauf nach Einreichungsfrist:",
                 "complaintDeadline": "Beschwerdefrist:",
                 "categories": "Kategorien:",
-                "tags": "Tags:",
                 "type": "Typ:",
                 "difficulty": "Schwierigkeit:",
                 "exerciseStatus": "Aufgabenstatus:",
@@ -179,7 +178,18 @@
                 "graded": "Bewertet",
                 "notGraded": "Nicht bewertet",
                 "rated": "Bewertet",
-                "practice": "Übung"
+                "practice": "Übung",
+                "submissionDue": "Abgabe bis:",
+                "submissionDueTooltip": "Die Abgabe ist bis {{date}} möglich.",
+                "testsAfterDueDate": "Testdurchlauf nach Abgabefrist:",
+                "testsAfterDueDateTooltip": "Die Tests werden an {{date}} erneut durchlaufen.",
+                "exampleSolutionPublicationDay": "Veröffentlichung der Beispiellösung:",
+                "exampleSolutionPublicationDayTooltip": "Die Beispiellösung wird an {{date}} veröffentlicht.",
+                "assessmentDue": "Bewertung bis:",
+                "assessmentDueTooltip": "Die Frist für Bewertung ist {{date}}.",
+                "complaintDue": "Beschwerde bis:",
+                "complaintDueTooltip": "Du kannst eine Beschwerde bis {{date}} schreiben.",
+                "complaintDueTooltipUncertain": "Du kannst eine Beschwerde bis mindestens {{date}} schreiben. Du hast {{days}} Tage nach Erhalt der Bewertung Zeit für eine Beschwerde"
             }
         }
     }

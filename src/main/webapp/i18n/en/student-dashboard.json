@@ -156,7 +156,6 @@
                 "runTestsAfterDueDate": "Tests run after due date:",
                 "complaintDeadline": "Complaint deadline:",
                 "categories": "Categories:",
-                "tags": "Tags:",
                 "type": "Type:",
                 "difficulty": "Difficulty:",
                 "exerciseStatus": "Exercise status:",
@@ -181,7 +180,18 @@
                 "graded": "Graded",
                 "notGraded": "Not graded",
                 "rated": "Rated",
-                "practice": "Practice"
+                "practice": "Practice",
+                "submissionDue": "Submission due:",
+                "submissionDueTooltip": "The submission is due by {{date}}.",
+                "testsAfterDueDate": "Tests run after submission due date:",
+                "testsAfterDueDateTooltip": "The tests are run once again at {{date}}.",
+                "exampleSolutionPublicationDay": "Example solution publication:",
+                "exampleSolutionPublicationDayTooltip": "The example solution is published at {{date}}.",
+                "assessmentDue": "Assessment due:",
+                "assessmentDueTooltip": "The assessment is due by {{date}}.",
+                "complaintDue": "Complaint due:",
+                "complaintDueTooltip": "You can write a complain until {{date}}.",
+                "complaintDueTooltipUncertain": "You can write a complain until at least {{date}}. You have {{days}} days after receiving the assessment to file a complaint."
             }
         }
     }

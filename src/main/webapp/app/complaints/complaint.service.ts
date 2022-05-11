@@ -8,6 +8,8 @@ import { Complaint, ComplaintType } from 'app/entities/complaint.model';
 import { ComplaintResponseService } from 'app/complaints/complaint-response.service';
 import { Exercise } from 'app/entities/exercise.model';
 import { map } from 'rxjs/operators';
+import { StudentParticipation } from 'app/entities/participation/student-participation.model';
+import { Course } from 'app/entities/course.model';
 
 export type EntityResponseType = HttpResponse<Complaint>;
 export type EntityResponseTypeArray = HttpResponse<Complaint[]>;
@@ -220,6 +222,33 @@ export class ComplaintService implements IComplaintService {
         }
 
         return false;
+    }
+
+    /**
+     * Calculates the date until which a complaint can be filed at least
+     * @param exercise for which the student can complain
+     * @param studentParticipation of the student in the exercise that can complain
+     * @param course in which the exercise is
+     * @return the date until which the student can complain
+     */
+    getIndividualComplaintDueDate(exercise: Exercise, course: Course, studentParticipation?: StudentParticipation): dayjs.Dayjs | undefined {
+        const assessmentDueDate = exercise.assessmentDueDate;
+        if (!assessmentDueDate) {
+            return undefined;
+        }
+        const lastResult = studentParticipation?.results?.last();
+        const now = dayjs();
+
+        let complaintDueDate;
+        if (!lastResult) {
+            complaintDueDate = assessmentDueDate;
+        } else if (!lastResult!.rated) {
+            complaintDueDate = assessmentDueDate.isBefore(now) ? now : assessmentDueDate;
+        } else {
+            complaintDueDate = assessmentDueDate.isBefore(lastResult.completionDate) ? lastResult.completionDate! : assessmentDueDate;
+        }
+
+        return complaintDueDate.add(course.maxComplaintTimeDays!, 'days');
     }
 
     private requestComplaintsFromUrl(url: string): Observable<EntityResponseTypeArray> {
