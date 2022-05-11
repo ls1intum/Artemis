@@ -101,6 +101,7 @@
                                 <option [value]="QuizMode.INDIVIDUAL">{{ 'artemisApp.quizExercise.quizMode.individual' | artemisTranslate }}</option>
                             </select>
                             <ng-container>
+                                <!-- releaseDate works similar to Exam.visibleDate -->
                                 <jhi-date-time-picker
                                     id="release-date"
                                     class="form-element"
@@ -142,6 +143,7 @@
                             <ng-container *ngIf="quizExercise.quizBatches && quizExercise.quizMode === QuizMode.SYNCHRONIZED">
                                 <!-- Change "quizExercise.quizMode === QuizMode.SYNCHRONIZED" above to "quizExercise.quizMode !== QuizMode.INDIVIDUAL" when scheduled batched mode is active -->
                                 <div *ngFor="let quizBatch of quizExercise.quizBatches; let first = first">
+                                    <!-- startTime works similar to Exam.startDate -->
                                     <jhi-date-time-picker
                                         class="form-element"
                                         name="startTime"
