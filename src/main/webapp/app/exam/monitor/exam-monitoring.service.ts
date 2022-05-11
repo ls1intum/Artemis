@@ -51,7 +51,7 @@ export class ExamMonitoringService {
      * @param examId of the current exam
      * @private
      */
-    private getResourceURL(courseId: number, examId: number): string {
+    public getResourceURL(courseId: number, examId: number): string {
         return `${SERVER_API_URL}api/courses/${courseId}/exams/${examId}`;
     }
 
@@ -63,7 +63,7 @@ export class ExamMonitoringService {
      * @param studentExamId of the student
      * @private
      */
-    private syncActions(examActions: ExamAction[], courseId: number, examId: number, studentExamId: number): Observable<HttpResponse<void>> {
+    public syncActions(examActions: ExamAction[], courseId: number, examId: number, studentExamId: number): Observable<HttpResponse<void>> {
         const url = this.getResourceURL(courseId, examId) + `/student-exams/${studentExamId}/actions`;
         return this.http.put<void>(url, examActions, { observe: 'response' });
     }
