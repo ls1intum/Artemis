@@ -123,7 +123,7 @@
                                     (valueChange)="cacheValidation()"
                                     [(ngModel)]="quizExercise.dueDate"
                                 ></jhi-date-time-picker>
-                                <span *ngIf="quizExercise.dueDateError" class="invalid-feedback">{{ 'artemisApp.exercise.dueDateError' | artemisTranslate }}</span>
+                                <span *ngIf="quizExercise.dueDateError" class="invalid-feedback">{{ 'artemisApp.quizExercise.dueDateError' | artemisTranslate }}</span>
                             </ng-container>
                             <div class="form-check custom-control custom-checkbox" *ngIf="quizExercise.quizMode === QuizMode.SYNCHRONIZED">
                                 <input
@@ -149,11 +149,15 @@
                                         name="startTime"
                                         [shouldDisplayTimeZoneWarning]="first"
                                         labelName="{{ 'artemisApp.quizExercise.startTime' | artemisTranslate }}"
-                                        [error]="quizBatch.startDateError ?? false"
+                                        [error]="quizBatch.startTimeError ?? false"
                                         (valueChange)="cacheValidation()"
                                         [(ngModel)]="quizBatch.startTime"
                                     ></jhi-date-time-picker>
-                                    <span *ngIf="quizBatch.startDateError" class="invalid-feedback">{{ 'artemisApp.quizExercise.startDate' | artemisTranslate }}</span>
+                                    <span *ngIf="quizBatch.startTimeError" class="invalid-feedback">{{
+                                        quizExercise.quizMode === QuizMode.SYNCHRONIZED
+                                            ? 'artemisApp.quizExercise.startTimeErrorSynchronized'
+                                            : ('artemisApp.quizExercise.startTimeError' | artemisTranslate)
+                                    }}</span>
                                     <!-- no scheduled batched mode yet -->
                                     <!-- Change *ngIf="false" below to "quizExercise.quizMode === QuizMode.BATCHED" when scheduled batched mode is active -->
                                     <jhi-button *ngIf="false" (click)="removeQuizBatch(quizBatch)" [btnType]="ButtonType.ERROR" [icon]="faXmark"></jhi-button>
@@ -320,6 +324,7 @@
                                 id="quiz-save"
                                 class="btn btn-success"
                                 (click)="save()"
+                                [disabled]="isSaving || quizExercise.dueDateError || hasErrorInQuizBatches()"
                                 [ngClass]="{ disabled: !pendingChangesCache || !quizIsValid || hasSavedQuizStarted || isSaving }"
                                 jhiTranslate="entity.action.save"
                                 [ngbTooltip]="quizIsValid ? '' : tooltipTranslate"

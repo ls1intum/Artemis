@@ -28,7 +28,7 @@ export class QuizBatch {
     password?: string;
 
     // local helpers
-    startDateError?: boolean;
+    startTimeError?: boolean;
 }
 
 export class QuizExercise extends Exercise {

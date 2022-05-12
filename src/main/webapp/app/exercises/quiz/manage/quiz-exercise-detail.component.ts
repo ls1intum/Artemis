@@ -239,9 +239,21 @@ export class QuizExerciseDetailComponent extends QuizExerciseValidationDirective
         this.cacheValidation();
     }
 
+    /**
+     * Validates if the date is correct
+     */
+    validateDate() {
+        this.exerciseService.validateDate(this.quizExercise);
+        this.quizExercise?.quizBatches?.forEach((batch) => {
+            const startTime = dayjs(batch.startTime);
+            batch.startTimeError = startTime.isBefore(this.quizExercise.releaseDate) || startTime.add(dayjs.duration(this.duration)).isAfter(this.quizExercise.dueDate);
+        });
+    }
+
     cacheValidation() {
         // TODO: quiz cleanup: this makes the exercise dirty and attempts to prevent leaving
-        // this.exerciseService.validateDate(this.quizExercise);
+
+        this.validateDate();
 
         if (this.quizExercise.quizMode === QuizMode.SYNCHRONIZED) {
             if (this.scheduleQuizStart) {
@@ -994,5 +1006,9 @@ export class QuizExerciseDetailComponent extends QuizExerciseValidationDirective
                 return 'artemisApp.quizExercise.releaseDateExplanation.individual';
         }
         return undefined;
+    }
+
+    hasErrorInQuizBatches() {
+        return this.quizExercise?.quizBatches?.some((batch) => batch.startTimeError);
     }
 }
