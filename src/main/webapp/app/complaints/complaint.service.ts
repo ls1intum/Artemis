@@ -232,23 +232,22 @@ export class ComplaintService implements IComplaintService {
      * @return the date until which the student can complain
      */
     getIndividualComplaintDueDate(exercise: Exercise, course: Course, studentParticipation?: StudentParticipation): dayjs.Dayjs | undefined {
-        const assessmentDueDate = exercise.assessmentDueDate;
-        if (!assessmentDueDate) {
-            return undefined;
-        }
         const lastResult = studentParticipation?.results?.last();
         const now = dayjs();
-
-        let complaintDueDate;
         if (!lastResult) {
-            complaintDueDate = assessmentDueDate;
-        } else if (!lastResult!.rated) {
-            complaintDueDate = assessmentDueDate.isBefore(now) ? now : assessmentDueDate;
-        } else {
-            complaintDueDate = assessmentDueDate.isBefore(lastResult.completionDate) ? lastResult.completionDate! : assessmentDueDate;
+            return undefined;
         }
 
-        return complaintDueDate.add(course.maxComplaintTimeDays!, 'days');
+        let complaintStartDate;
+        if (exercise.allowComplaintsForAutomaticAssessments && now.isAfter(exercise.dueDate)) {
+            complaintStartDate = exercise.dueDate;
+        } else if (lastResult.rated && now.isAfter(exercise.assessmentDueDate)) {
+            complaintStartDate = exercise.assessmentDueDate!.isAfter(lastResult.completionDate) ? exercise.assessmentDueDate : lastResult.completionDate;
+        } else {
+            return undefined;
+        }
+
+        return complaintStartDate!.add(course.maxComplaintTimeDays!, 'days');
     }
 
     private requestComplaintsFromUrl(url: string): Observable<EntityResponseTypeArray> {

@@ -179,6 +179,7 @@
                 "notGraded": "Nicht bewertet",
                 "rated": "Bewertet",
                 "practice": "Übung",
+                "assessmentType": "Bewertungsart:",
                 "submissionDue": "Abgabe bis:",
                 "submissionDueTooltip": "Die Abgabe ist bis {{date}} möglich.",
                 "testsAfterDueDate": "Testdurchlauf nach Abgabefrist:",
@@ -189,7 +190,8 @@
                 "assessmentDueTooltip": "Die Frist für Bewertung ist {{date}}.",
                 "complaintDue": "Beschwerde bis:",
                 "complaintDueTooltip": "Du kannst eine Beschwerde bis {{date}} schreiben.",
-                "complaintDueTooltipUncertain": "Du kannst eine Beschwerde bis mindestens {{date}} schreiben. Du hast {{days}} Tage nach Erhalt der Bewertung Zeit für eine Beschwerde"
+                "complaintPossible": "Beschwerde möglich:",
+                "complaintPossibleTooltip": "Eine Beschwerde wird später möglich sein."
             }
         }
     }

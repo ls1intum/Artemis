@@ -40,7 +40,7 @@ export class HeaderExercisePageWithDetailsComponent implements OnInit {
     public course: Course;
     public individualComplaintDeadline?: dayjs.Dayjs;
     public isNextDueDate: boolean[];
-    public uncertainComplaintDeadline: boolean;
+    public canComplainLaterOn: boolean;
 
     icon: IconProp;
 
@@ -66,8 +66,8 @@ export class HeaderExercisePageWithDetailsComponent implements OnInit {
             this.dueDate = getExerciseDueDate(this.exercise, this.studentParticipation);
             this.setIsNextDueDateCourseMode();
             this.individualComplaintDeadline = this.complaintService.getIndividualComplaintDueDate(this.exercise, this.course, this.studentParticipation);
-            this.uncertainComplaintDeadline =
-                (!!this.studentParticipation?.results?.last() && !!this.studentParticipation?.results?.last()?.rated) || dayjs().isBefore(this.dueDate);
+            this.canComplainLaterOn =
+                !this.individualComplaintDeadline && (this.exercise.allowComplaintsForAutomaticAssessments || this.exercise.assessmentType !== AssessmentType.AUTOMATIC);
         }
     }
 
@@ -98,7 +98,7 @@ export class HeaderExercisePageWithDetailsComponent implements OnInit {
     }
 
     private setIsNextDueDateCourseMode() {
-        this.isNextDueDate = [false, false, false, false, false];
+        this.isNextDueDate = [false, false, false, false, false, false];
         const now = dayjs();
         if (now.isBefore(this.dueDate)) {
             this.isNextDueDate[0] = true;
@@ -110,6 +110,8 @@ export class HeaderExercisePageWithDetailsComponent implements OnInit {
             this.isNextDueDate[3] = true;
         } else if (now.isBefore(this.individualComplaintDeadline)) {
             this.isNextDueDate[4] = true;
+        } else if (this.canComplainLaterOn) {
+            this.isNextDueDate[5] = true;
         }
     }
 }
