@@ -37,7 +37,7 @@
                         >
                     </td>
                     <td>
-                        <div *ngIf="exerciseHint.type === HintType.TEXT">
+                        <div>
                             <span [innerHTML]="exerciseHint.content | htmlForMarkdown"></span>
                         </div>
                         <div *ngIf="exerciseHint.type === HintType.CODE">

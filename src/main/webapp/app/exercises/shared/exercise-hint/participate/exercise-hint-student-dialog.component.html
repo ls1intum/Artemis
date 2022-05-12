@@ -5,8 +5,8 @@
 <div class="modal-body">
     <div *ngFor="let exerciseHint of exerciseHints; index as i" class="mb-4">
         <h3 class="mb-3">Hint {{ i + 1 }}: {{ exerciseHint.title }}</h3>
-        <div *ngIf="exerciseHint.type === HintType.TEXT" class="p-3 border border-1 border-secondary bg-light" [innerHTML]="exerciseHint.content | htmlForMarkdown"></div>
-        <div *ngIf="exerciseHint.type === HintType.CODE">
+        <div *ngIf="exerciseHint.content" class="p-3 border border-1 border-secondary bg-light" [innerHTML]="exerciseHint.content | htmlForMarkdown"></div>
+        <div *ngIf="exerciseHint.type === HintType.CODE" class="mt-2">
             <jhi-code-hint-container [codeHint]="exerciseHint | castToCodeHint"></jhi-code-hint-container>
         </div>
     </div>

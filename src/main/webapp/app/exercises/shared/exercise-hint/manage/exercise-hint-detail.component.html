@@ -9,7 +9,7 @@
                     <span>{{ exerciseHint.title }}</span>
                 </dd>
                 <dt><span jhiTranslate="artemisApp.exerciseHint.content">Content</span></dt>
-                <dd *ngIf="exerciseHint.type === HintType.TEXT">
+                <dd>
                     <span *ngIf="exerciseHint.content" [innerHTML]="exerciseHint.content | htmlForMarkdown"></span>
                 </dd>
                 <dd *ngIf="exerciseHint.type === HintType.CODE">
@@ -23,9 +23,7 @@
                 </dd>
             </dl>
 
-            <a *ngIf="exerciseHint.type === HintType.TEXT" [routerLink]="['edit']" class="btn btn-warning">
-                <fa-icon [icon]="faWrench"></fa-icon>&nbsp;<span jhiTranslate="entity.action.edit"> Edit</span>
-            </a>
+            <a [routerLink]="['edit']" class="btn btn-warning"> <fa-icon [icon]="faWrench"></fa-icon>&nbsp;<span jhiTranslate="entity.action.edit"> Edit</span> </a>
         </div>
     </div>
 </div>
