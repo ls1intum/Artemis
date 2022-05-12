@@ -67,7 +67,7 @@ public class BehavioralTestCaseService {
         }
         var testCases = testCaseRepository.findByExerciseId(programmingExercise.getId());
         if (testCases.isEmpty()) {
-            return null;
+            throw new BehavioralSolutionEntryGenerationException("Test cases have not been received yet");
         }
         var gitDiffReport = programmingExercise.getGitDiffReport();
         if (gitDiffReport == null) {
@@ -83,17 +83,28 @@ public class BehavioralTestCaseService {
 
         var blackboard = new BehavioralBlackboard(gitDiffReport, coverageReport, solutionRepoFiles);
         applyKnowledgeSources(blackboard);
-        var solutionEntries = blackboard.getSolutionEntries();
-        if (solutionEntries == null || solutionEntries.isEmpty()) {
+        var newSolutionEntries = blackboard.getSolutionEntries();
+        if (newSolutionEntries == null || newSolutionEntries.isEmpty()) {
             throw new BehavioralSolutionEntryGenerationException("No solution entry was generated");
         }
         // Remove temporary id before saving
-        for (ProgrammingExerciseSolutionEntry solutionEntry : solutionEntries) {
+        for (ProgrammingExerciseSolutionEntry solutionEntry : newSolutionEntries) {
             solutionEntry.setId(null);
         }
-        solutionEntries = solutionEntryRepository.saveAll(solutionEntries);
-        log.info("{} behavioral solution entries for programming exercise {} have been generated", solutionEntries.size(), programmingExercise.getId());
-        return solutionEntries;
+        newSolutionEntries = solutionEntryRepository.saveAll(newSolutionEntries);
+
+        // Get all old solution entries
+        var oldSolutionEntries = newSolutionEntries.stream().map(ProgrammingExerciseSolutionEntry::getTestCase).flatMap(testCase -> testCase.getSolutionEntries().stream())
+                .distinct().toList();
+
+        // Save new solution entries
+        newSolutionEntries = solutionEntryRepository.saveAll(newSolutionEntries);
+
+        // Delete old solution entries
+        solutionEntryRepository.deleteAll(oldSolutionEntries);
+
+        log.info("{} behavioral solution entries for programming exercise {} have been generated", newSolutionEntries.size(), programmingExercise.getId());
+        return newSolutionEntries;
     }
 
     /**
