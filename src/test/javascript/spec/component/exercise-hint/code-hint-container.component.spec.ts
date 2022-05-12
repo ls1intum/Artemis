@@ -55,7 +55,6 @@ describe('ExerciseHint Management Component', () => {
         comp.codeHint = codeHint;
 
         comp.ngOnInit();
-        comp.removeEntryFromCodeHint(1);
         expect(comp.sortedSolutionEntries).toEqual([solutionEntry2, solutionEntry1]);
     });
 
