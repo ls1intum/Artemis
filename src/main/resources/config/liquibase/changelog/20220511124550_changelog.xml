@@ -1,0 +1,19 @@
+<?xml version="1.1" encoding="UTF-8" standalone="no"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
+    <changeSet author="anar" id="20220511124550">
+        <!-- The following script removes messages and conversations from the test servers -->
+        <sql>
+            DELETE from reaction;
+            DELETE from answer_post;
+            DELETE from post where conversation_id IS NOT NULL;
+            DELETE from conversation_participant;
+            DELETE from conversation;
+            DROP TABLE conversation_participant;
+            ALTER TABLE post DROP CONSTRAINT fk_post_conversation_id;
+            ALTER TABLE post DROP COLUMN conversation_id;
+            DROP TABLE conversation;
+    </sql>
+    </changeSet>
+</databaseChangeLog>
