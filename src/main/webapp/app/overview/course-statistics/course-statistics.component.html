@@ -63,14 +63,14 @@
                 <div class="col-md-3 d-flex flex-column align-self-end color-legend-container">
                     <div class="color-legend-entry" *ngFor="let exerciseType of ngxDoughnutData">
                         <div class="color-indicator" [style.background]="exerciseType.color"></div>
-                        <h5 class="statistics-legend">{{ exerciseType.name | artemisTranslate }}</h5>
+                        <h5 class="fw-bolder">{{ exerciseType.name | artemisTranslate }}</h5>
                     </div>
                 </div>
                 <div class="col-md-3">
-                    <h5 class="statistics-legend" id="absolute-course-score">
+                    <h5 class="fw-bolder" id="absolute-course-score">
                         {{ 'artemisApp.courseOverview.statistics.yourPoints' | artemisTranslate: { number: overallPoints } }}
                     </h5>
-                    <h5 class="statistics-legend" id="reachable-course-score">
+                    <h5 class="fw-bolder" id="reachable-course-score">
                         <span>
                             {{ 'artemisApp.courseOverview.statistics.reachablePoints' | artemisTranslate: { number: reachablePoints, relative: currentRelativeScore } }}
                         </span>
@@ -93,8 +93,8 @@
                         ></fa-icon>
                     </h5>
                     <div *ngIf="gradingScaleExists" class="mb-5">
-                        <h5 *ngIf="!isBonus" class="statistics-legend">{{ 'artemisApp.courseOverview.statistics.grade' | artemisTranslate }}: {{ gradeDTO?.gradeName }}</h5>
-                        <h5 *ngIf="isBonus" class="statistics-legend">{{ 'artemisApp.courseOverview.statistics.bonus' | artemisTranslate }}: {{ gradeDTO?.gradeName }}</h5>
+                        <h5 *ngIf="!isBonus" class="fw-bolder">{{ 'artemisApp.courseOverview.statistics.grade' | artemisTranslate }}: {{ gradeDTO?.gradeName }}</h5>
+                        <h5 *ngIf="isBonus" class="fw-bolder">{{ 'artemisApp.courseOverview.statistics.bonus' | artemisTranslate }}: {{ gradeDTO?.gradeName }}</h5>
                         <h6>
                             {{ 'artemisApp.courseOverview.statistics.gradeInfo' | artemisTranslate }}
                             <fa-icon
@@ -111,13 +111,13 @@
                         <div class="mt-3">
                             <a class="btn btn-primary" [routerLink]="['grading-key']" [queryParams]="{ grade: gradeDTO?.gradeName }">
                                 <fa-icon [icon]="faClipboard"></fa-icon>
-                                <span
-                                    >&nbsp;{{
+                                <span>
+                                    {{
                                         isBonus
                                             ? ('artemisApp.exam.examSummary.gradeKeyButtonBonus' | artemisTranslate)
                                             : ('artemisApp.exam.examSummary.gradeKeyButton' | artemisTranslate)
-                                    }}</span
-                                >
+                                    }}
+                                </span>
                             </a>
                         </div>
                     </div>
@@ -205,10 +205,10 @@
                     </ngx-charts-bar-horizontal-stacked>
                 </div>
                 <div class="col-12 col-md-3 align-self-top mt-2" *ngIf="exerciseGroup && exerciseGroup.length > 0">
-                    <h5 class="statistics-legend" id="absolute-score">
+                    <h5 class="fw-bolder" id="absolute-score">
                         {{ 'artemisApp.courseOverview.statistics.yourPoints' | artemisTranslate: { number: exerciseGroup[0].absoluteScore } }}
                     </h5>
-                    <h5 class="statistics-legend" id="reachable-score">
+                    <h5 class="fw-bolder" id="reachable-score">
                         <span>
                             {{
                                 'artemisApp.courseOverview.statistics.reachablePoints'
@@ -222,7 +222,7 @@
                             ngbTooltip="{{ 'artemisApp.courseOverview.statistics.reachableHelpExerciseGroup' | artemisTranslate }}"
                         ></fa-icon>
                     </h5>
-                    <h5 class="statistics-legend" id="max-score">
+                    <h5 class="fw-bolder" id="max-score">
                         <span>
                             {{
                                 'artemisApp.courseOverview.statistics.totalPoints'
@@ -236,7 +236,7 @@
                             ngbTooltip="{{ 'artemisApp.courseOverview.statistics.totalHelpExerciseGroup' | artemisTranslate }}"
                         ></fa-icon>
                     </h5>
-                    <h5 *ngIf="exerciseGroup[0].presentationScoreEnabled && course.presentationScore !== 0" class="statistics-legend" id="presentation-score">
+                    <h5 *ngIf="exerciseGroup[0].presentationScoreEnabled && course.presentationScore !== 0" class="fw-bolder" id="presentation-score">
                         {{ 'artemisApp.courseOverview.statistics.presentationScore' | artemisTranslate: { number: exerciseGroup[0].presentationScore } }}
                     </h5>
                 </div>

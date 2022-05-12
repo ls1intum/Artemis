@@ -46,7 +46,7 @@ export class CourseCardComponent implements OnChanges {
         name: 'vivid',
         selectable: true,
         group: ScaleType.Ordinal,
-        domain: [GraphColors.GREEN, GraphColors.RED], // colors: green, red
+        domain: [GraphColors.GREEN, GraphColors.RED],
     } as Color;
 
     constructor(
