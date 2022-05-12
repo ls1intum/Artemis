@@ -2,11 +2,6 @@
     "artemisApp": {
         "exerciseHint": {
             "textHint": "Text Hinweis",
-            "codeHint": "Code Hinweis",
-            "entry": "Eintrag",
-            "removeEntryQuestion": "Soll dieser Eintrag wirklich entfernt werden?",
-            "entries": "Einträge",
-            "noEntries": "Dieser Code-Hinweis hat keine Einträge.",
             "home": {
                 "title": "Exercise Hints",
                 "createLabel": "Exercise Hint erstellen",
@@ -29,6 +24,14 @@
                 "title": "Hinweise zur Übung",
                 "tooltip": "Hinweise zu dieser Übung öffnen"
             }
+        },
+        "codeHint": {
+            "type": "Code Hinweis",
+            "entry": "Eintrag",
+            "entries": "Einträge",
+            "removeEntryQuestion": "Soll dieser Eintrag wirklich entfernt werden?",
+            "noEntries": "Dieser Code-Hinweis hat keine Einträge.",
+            "deleted": "Exercise Hint gelöscht mit ID {{ param }}"
         }
     }
 }
