@@ -1,9 +1,6 @@
 package de.tum.in.www1.artemis.service.hestia.behavioral;
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.slf4j.Logger;
@@ -65,7 +62,7 @@ public class BehavioralTestCaseService {
         if (!programmingExercise.isTestwiseCoverageEnabled()) {
             throw new BehavioralSolutionEntryGenerationException("This feature is only supported for Java Exercises with active Testwise Coverage");
         }
-        var testCases = testCaseRepository.findByExerciseId(programmingExercise.getId());
+        var testCases = testCaseRepository.findByExerciseIdWithSolutionEntriesAndActive(programmingExercise.getId(), true);
         if (testCases.isEmpty()) {
             throw new BehavioralSolutionEntryGenerationException("Test cases have not been received yet");
         }
@@ -94,8 +91,9 @@ public class BehavioralTestCaseService {
         newSolutionEntries = solutionEntryRepository.saveAll(newSolutionEntries);
 
         // Get all old solution entries
-        var oldSolutionEntries = newSolutionEntries.stream().map(ProgrammingExerciseSolutionEntry::getTestCase).flatMap(testCase -> testCase.getSolutionEntries().stream())
-                .distinct().toList();
+        var oldSolutionEntries = newSolutionEntries.stream().map(ProgrammingExerciseSolutionEntry::getTestCase)
+                .map(testCase1 -> testCases.stream().filter(testCase2 -> Objects.equals(testCase1.getId(), testCase2.getId())).findFirst().orElse(null)).filter(Objects::nonNull)
+                .flatMap(testCase -> testCase.getSolutionEntries().stream()).distinct().toList();
 
         // Save new solution entries
         newSolutionEntries = solutionEntryRepository.saveAll(newSolutionEntries);
