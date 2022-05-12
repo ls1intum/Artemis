@@ -104,8 +104,8 @@ html {
 .form-control[readonly],
 .form-select:disabled,
 .form-select[readonly],
-.form-check-input:disabled,
-.form-check-input[readonly] {
+.form-check-input:disabled:not(:checked),
+.form-check-input[readonly]:not(:checked) {
     background: $gray-700 !important;
     color: $gray-400;
 }
@@ -166,6 +166,14 @@ html {
 
 .form-select option {
     background-color: $neutral-dark !important;
+}
+
+.cdk-overlay-container .tag-option {
+    background: mix($neutral-dark, $white, 90%);
+
+    &:hover {
+        background: mix($neutral-dark, $white, 80%);
+    }
 }
 
 // ==================
