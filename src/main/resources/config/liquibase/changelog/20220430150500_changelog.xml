@@ -69,5 +69,10 @@
                                  constraintName="fk_exam_action_exam_activity" deferrable="false" onDelete="CASCADE"
                                  initiallyDeferred="false" referencedColumnNames="id"
                                  referencedTableName="exam_activity"/>
+
+        <!-- Update exam table -->
+        <addColumn tableName="exam">
+            <column name="monitoring" type="boolean" defaultValue="false"/>
+        </addColumn>
     </changeSet>
 </databaseChangeLog>
