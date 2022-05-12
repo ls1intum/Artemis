@@ -241,7 +241,7 @@ public class ProgrammingExerciseSolutionEntryResource {
         }
         catch (StructuralSolutionEntryGenerationException e) {
             log.error("Unable to create structural solution entries", e);
-            return ResponseEntity.badRequest().build();
+            throw new InternalServerErrorException(e.getMessage());
         }
     }
 

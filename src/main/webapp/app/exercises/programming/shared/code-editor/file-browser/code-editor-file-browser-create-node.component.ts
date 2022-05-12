@@ -6,6 +6,7 @@ import { FileType } from 'app/exercises/programming/shared/code-editor/model/cod
 @Component({
     selector: 'jhi-code-editor-file-browser-create-node',
     templateUrl: './code-editor-file-browser-create-node.component.html',
+    styleUrls: ['./code-editor-file-browser-create-node.component.scss'],
     providers: [NgbModal],
 })
 export class CodeEditorFileBrowserCreateNodeComponent implements AfterViewInit {

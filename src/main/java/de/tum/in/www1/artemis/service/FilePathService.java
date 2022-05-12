@@ -1,6 +1,6 @@
 package de.tum.in.www1.artemis.service;
 
-import java.nio.file.Paths;
+import java.nio.file.Path;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -21,34 +21,34 @@ public class FilePathService {
     }
 
     public static String getTempFilePath() {
-        return Paths.get(fileUploadPath, "images", "temp").toString();
+        return Path.of(fileUploadPath, "images", "temp").toString();
     }
 
     public static String getDragAndDropBackgroundFilePath() {
-        return Paths.get(fileUploadPath, "images", "drag-and-drop", "backgrounds").toString();
+        return Path.of(fileUploadPath, "images", "drag-and-drop", "backgrounds").toString();
     }
 
     public static String getDragItemFilePath() {
-        return Paths.get(fileUploadPath, "images", "drag-and-drop", "drag-items").toString();
+        return Path.of(fileUploadPath, "images", "drag-and-drop", "drag-items").toString();
     }
 
     public static String getCourseIconFilePath() {
-        return Paths.get(fileUploadPath, "images", "course", "icons").toString();
+        return Path.of(fileUploadPath, "images", "course", "icons").toString();
     }
 
     public static String getLectureAttachmentFilePath() {
-        return Paths.get(fileUploadPath, "attachments", "lecture").toString();
+        return Path.of(fileUploadPath, "attachments", "lecture").toString();
     }
 
     public static String getAttachmentUnitFilePath() {
-        return Paths.get(fileUploadPath, "attachments", "attachment-unit").toString();
+        return Path.of(fileUploadPath, "attachments", "attachment-unit").toString();
     }
 
     public static String getFileUploadExercisesFilePath() {
-        return Paths.get(fileUploadPath, "file-upload-exercises").toString();
+        return Path.of(fileUploadPath, "file-upload-exercises").toString();
     }
 
     public static String getMarkdownFilePath() {
-        return Paths.get(fileUploadPath, "markdown").toString();
+        return Path.of(fileUploadPath, "markdown").toString();
     }
 }

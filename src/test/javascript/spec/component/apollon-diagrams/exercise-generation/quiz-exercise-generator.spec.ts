@@ -3,7 +3,7 @@ import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { Router } from '@angular/router';
 import { Selection, UMLModel } from '@ls1intum/apollon';
-import { Text } from '@ls1intum/apollon/lib/utils/svg/text';
+import { Text } from '@ls1intum/apollon/lib/es5/utils/svg/text';
 import { TranslateService } from '@ngx-translate/core';
 import { Course } from 'app/entities/course.model';
 import { DragAndDropQuestion } from 'app/entities/quiz/drag-and-drop-question.model';
@@ -35,10 +35,8 @@ const quizExercise = {
     id: 1,
     quizQuestions: [question1, question2, question3],
     releaseDate: dayjs(now).subtract(2, 'minutes'),
-    adjustedReleaseDate: dayjs(now).subtract(2, 'minutes'),
     dueDate: dayjs(now).add(2, 'minutes'),
-    adjustedDueDate: dayjs(now).add(2, 'minutes'),
-    started: true,
+    quizStarted: true,
 } as QuizExercise;
 
 describe('QuizExercise Generator', () => {

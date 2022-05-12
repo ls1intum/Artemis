@@ -1,15 +1,17 @@
 from abc import ABC, abstractmethod
-from traceback import print_exc
-from signal import SIGALRM, SIG_IGN, alarm, signal
+from contextlib import contextmanager, suppress
 from datetime import datetime, timedelta
-from contextlib import contextmanager
-from typing import Optional, List, Dict
-from os import path, makedirs
 from io import TextIOWrapper
+from os import makedirs, path
+from signal import alarm, SIG_IGN, SIGALRM, signal
+from traceback import print_exc
+from typing import Dict, List, Optional
+
+from testUtils.junit.TestCase import Result, TestCase
 from testUtils.junit.TestSuite import TestSuite
-from testUtils.junit.TestCase import TestCase, Result
-from testUtils.Utils import printTester, PWrap
 from testUtils.TestFailedError import TestFailedError
+from testUtils.Utils import printTester, PWrap
+
 
 # Timeout handler based on: https://www.jujens.eu/posts/en/2018/Jun/02/python-timeout-function/
 class AbstractTest(ABC):
@@ -37,7 +39,7 @@ class AbstractTest(ABC):
         requirements: List[str]
             A list of test cases names that have to finish successfully for this test to run.
             Usually an execution test should have the compile test as it's requirement.
-        
+
         timeoutSec: int
             The test case timeout in seconds,
         """
@@ -48,7 +50,7 @@ class AbstractTest(ABC):
 
         self.case: Optional[TestCase] = None
         self.suite: Optional[TestSuite] = None
-    
+
     def start(self, testResults: Dict[str, Result], suite: TestSuite):
         """
         Starts the test run.
@@ -57,7 +59,7 @@ class AbstractTest(ABC):
 
         testResults: Dict[str, Result]
             All test results up to this point.
-        
+
         suite: TestSuite
             The test suite where this test should get added to.
         """
@@ -90,7 +92,7 @@ class AbstractTest(ABC):
                 except TimeoutError:
                     self._timeout()
                 except Exception as e:
-                    self.__markAsFailed(f"'{self.name}' had an internal error. {str(e)}.\nPlease report this on Moodle (Detailfragen zu Programmieraufgaben)!")
+                    self.__markAsFailed(f"'{self.name}' had an internal error. {str(e)}.\nPlease report this to an instructor!")
                     print_exc()
                     self._onFailed()
         else:
@@ -100,7 +102,7 @@ class AbstractTest(ABC):
             except TestFailedError:
                 printTester(f"'{self.name}' failed.")
             except Exception as e:
-                self.__markAsFailed(f"'{self.name}' had an internal error. {str(e)}.\nPlease report this on Moodle (Detailfragen zu Programmieraufgaben)!")
+                self.__markAsFailed(f"'{self.name}' had an internal error. {str(e)}.\nPlease report this to an instructor!")
                 print_exc()
                 self._onFailed()
 
@@ -112,10 +114,7 @@ class AbstractTest(ABC):
         Checks if all requirements (i.e. other test cases were successfull) are fulfilled.
         """
 
-        for req in self.requirements:
-            if (not req in testResults) or (testResults[req] != Result.SUCCESS):
-                return False
-        return True
+        return all(req in testResults or testResults[req] != Result.SUCCESS for req in self.requirements)
 
     @contextmanager
     def __timeout(self, timeoutSec: int):
@@ -124,19 +123,16 @@ class AbstractTest(ABC):
         # Schedule the signal to be sent after ``time``.
         alarm(timeoutSec)
 
-        try:
+        with suppress(TimeoutError):
             yield
-        except TimeoutError:
-            pass
-        finally:
-            # Unregister the signal so it won't be triggered
-            # if the timeout is not reached.
-            signal(SIGALRM, SIG_IGN)
+        # Unregister the signal so it won't be triggered
+        # if the timeout is not reached.
+        signal(SIGALRM, SIG_IGN)
 
     def __raiseTimeout(self, sigNum: int, frame):
         self._onTimeout()
         raise TimeoutError
-    
+
     def _failWith(self, msg: str):
         """
         Marks the current test as failed with the given message.
@@ -187,7 +183,7 @@ class AbstractTest(ABC):
         """
         filePath: str = self._getStdoutFilePath()
         return self.__loadFileContent(filePath)
-    
+
     def _loadFullStderr(self):
         """
         Returns the stderr output of the executable.
@@ -195,7 +191,7 @@ class AbstractTest(ABC):
 
         filePath: str = self._getStderrFilePath()
         return self.__loadFileContent(filePath)
-    
+
     def _initOutputDirectory(self):
         """
         Prepares the output directory for the stderr and stdout files.
@@ -204,7 +200,7 @@ class AbstractTest(ABC):
         if path.exists(outDir) and path.isdir(outDir):
             return
         makedirs(outDir)
-    
+
     def _getOutputPath(self):
         """
         Returns the output path for temporary stuff like the stderr and stdout files.
@@ -216,9 +212,9 @@ class AbstractTest(ABC):
         """
         Returns the path of the stdout cache file.
         """
-        
+
         return path.join(self._getOutputPath(), "stdout.txt")
-    
+
     def _getStderrFilePath(self):
         """
         Returns the path of the stderr cache file.
@@ -226,13 +222,13 @@ class AbstractTest(ABC):
 
         return path.join(self._getOutputPath(), "stderr.txt")
 
-    def _createPWrap(self, cmd: List[str], cwd:Optional[str] = None):
+    def _createPWrap(self, cmd: List[str], cwd: Optional[str] = None):
         """
         Crates a new PWrap instance from the given command.
         """
 
         return PWrap(cmd, self._getStdoutFilePath(), self._getStderrFilePath(), cwd=cwd)
-    
+
     def _startPWrap(self, pWrap: PWrap):
         """
         Starts the PWrap execution.
@@ -257,7 +253,7 @@ class AbstractTest(ABC):
         Implement your test run here.
         """
         pass
-    
+
     @abstractmethod
     def _onTimeout(self):
         """
@@ -265,7 +261,7 @@ class AbstractTest(ABC):
         Should cancel all outstanding actions and free all resources.
         """
         pass
-    
+
     @abstractmethod
     def _onFailed(self):
         """

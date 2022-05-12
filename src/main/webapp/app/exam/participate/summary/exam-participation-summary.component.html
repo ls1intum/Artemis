@@ -46,7 +46,7 @@
             </div>
             <button
                 id="{{ 'toggleCollapseExerciseButton-' + i }}"
-                class="btn btn-light question-collapse"
+                class="btn question-collapse"
                 (click)="toggleCollapseExercise(exercise.id!)"
                 [attr.aria-expanded]="!isCollapsed(exercise.id!)"
                 [attr.aria-controls]="isCollapsed(exercise.id!)"
