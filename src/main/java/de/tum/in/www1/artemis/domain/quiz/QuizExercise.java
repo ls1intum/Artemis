@@ -412,6 +412,9 @@ public class QuizExercise extends Exercise {
         this.setDueDate(originalQuizExercise.getDueDate());
         this.setReleaseDate(originalQuizExercise.getReleaseDate());
 
+        // cannot update batches
+        this.setQuizBatches(originalQuizExercise.getQuizBatches());
+
         // remove added Questions, which are not allowed to be added
         Set<QuizQuestion> addedQuizQuestions = new HashSet<>();
 
