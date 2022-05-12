@@ -775,7 +775,7 @@ public class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBa
         var exampleSolutionPublicationDate = baseTime.plusHours(3);
         modelingExercise.setExampleSolutionPublicationDate(exampleSolutionPublicationDate);
 
-        var result = request.postWithResponseBody("/api/text-exercises/", modelingExercise, ModelingExercise.class, HttpStatus.CREATED);
+        var result = request.postWithResponseBody("/api/modeling-exercises/", modelingExercise, ModelingExercise.class, HttpStatus.CREATED);
         assertThat(result.getExampleSolutionPublicationDate()).isEqualTo(exampleSolutionPublicationDate);
     }
 

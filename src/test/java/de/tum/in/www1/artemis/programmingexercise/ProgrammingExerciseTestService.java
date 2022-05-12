@@ -1659,7 +1659,7 @@ public class ProgrammingExerciseTestService {
         ProgrammingExercise sourceExercise = database.addProgrammingExerciseToCourse(course1, false);
         ProgrammingExercise exerciseToBeImported = ModelFactory.generateToBeImportedProgrammingExercise("ImportTitle", "Imported", sourceExercise, course2);
 
-        exerciseToBeImported.setExampleSolutionPublicationDate(ZonedDateTime.now());
+        exerciseToBeImported.setExampleSolutionPublicationDate(sourceExercise.getDueDate().plusDays(1));
 
         // Mock requests
         mockDelegate.mockConnectorRequestsForImport(sourceExercise, exerciseToBeImported, false);
@@ -1679,38 +1679,38 @@ public class ProgrammingExerciseTestService {
     // TEST
     public void createProgrammingExercise_setInvalidExampleSolutionPublicationDate_badRequest() throws Exception {
         final var baseTime = ZonedDateTime.now();
-        final Course course = database.addCourseWithOneProgrammingExercise();
-        ProgrammingExercise programmingExercise = programmingExerciseRepository.findByCourseIdWithLatestResultForTemplateSolutionParticipations(course.getId()).get(0);
-        programmingExercise.setId(null);
-        programmingExercise.setAssessmentDueDate(null);
 
-        programmingExercise.setReleaseDate(baseTime.plusHours(1));
-        programmingExercise.setDueDate(baseTime.plusHours(3));
-        programmingExercise.setExampleSolutionPublicationDate(baseTime.plusHours(2));
+        exercise.setAssessmentDueDate(null);
 
-        request.postWithResponseBody("/api/text-exercises/", programmingExercise, ProgrammingExercise.class, HttpStatus.BAD_REQUEST);
+        exercise.setReleaseDate(baseTime.plusHours(1));
+        exercise.setDueDate(baseTime.plusHours(3));
+        exercise.setExampleSolutionPublicationDate(baseTime.plusHours(2));
 
-        programmingExercise.setReleaseDate(baseTime.plusHours(3));
-        programmingExercise.setDueDate(null);
-        programmingExercise.setExampleSolutionPublicationDate(baseTime.plusHours(2));
+        mockDelegate.mockConnectorRequestsForSetup(exercise, false);
 
-        request.postWithResponseBody("/api/text-exercises/", programmingExercise, ProgrammingExercise.class, HttpStatus.BAD_REQUEST);
+        request.postWithResponseBody(ROOT + SETUP, exercise, ProgrammingExercise.class, HttpStatus.BAD_REQUEST);
+
+        exercise.setReleaseDate(baseTime.plusHours(3));
+        exercise.setDueDate(null);
+        exercise.setExampleSolutionPublicationDate(baseTime.plusHours(2));
+
+        request.postWithResponseBody(ROOT + SETUP, exercise, ProgrammingExercise.class, HttpStatus.BAD_REQUEST);
     }
 
     // TEST
     public void createProgrammingExercise_setValidExampleSolutionPublicationDate() throws Exception {
         final var baseTime = ZonedDateTime.now();
-        final Course course = database.addCourseWithOneProgrammingExercise();
-        ProgrammingExercise programmingExercise = programmingExerciseRepository.findByCourseIdWithLatestResultForTemplateSolutionParticipations(course.getId()).get(0);
-        programmingExercise.setId(null);
-        programmingExercise.setAssessmentDueDate(null);
 
-        programmingExercise.setReleaseDate(baseTime.plusHours(1));
-        programmingExercise.setDueDate(baseTime.plusHours(2));
+        exercise.setAssessmentDueDate(null);
+
+        exercise.setReleaseDate(baseTime.plusHours(1));
+        exercise.setDueDate(baseTime.plusHours(2));
         var exampleSolutionPublicationDate = baseTime.plusHours(3);
-        programmingExercise.setExampleSolutionPublicationDate(exampleSolutionPublicationDate);
+        exercise.setExampleSolutionPublicationDate(exampleSolutionPublicationDate);
 
-        var result = request.postWithResponseBody("/api/text-exercises/", programmingExercise, ProgrammingExercise.class, HttpStatus.CREATED);
+        mockDelegate.mockConnectorRequestsForSetup(exercise, false);
+
+        var result = request.postWithResponseBody(ROOT + SETUP, exercise, ProgrammingExercise.class, HttpStatus.CREATED);
         assertThat(result.getExampleSolutionPublicationDate()).isEqualTo(exampleSolutionPublicationDate);
     }
 
