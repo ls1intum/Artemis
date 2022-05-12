@@ -84,6 +84,7 @@ describe('ExamMonitoringService', () => {
         studentExam.examActivity = new ExamActivity();
         service.saveActions(exam, studentExam, course.id!);
         expect(spy).toHaveBeenCalled();
+        expect(spy).toHaveBeenCalledWith([], course.id, exam.id, studentExam.id);
     });
 
     it('should not sync actions when monitoring disabled', () => {
@@ -98,24 +99,34 @@ describe('ExamMonitoringService', () => {
         const spy = jest.spyOn(service, 'syncActions').mockReturnValue(httpResponse());
 
         studentExam.examActivity = new ExamActivity();
-        studentExam.examActivity.examActions = createExamActions();
+        const examActions = createExamActions();
+        studentExam.examActivity.examActions = examActions;
         service.saveActions(exam, studentExam, course.id!);
-        expect(spy).toHaveBeenCalled();
+        expect(spy).toHaveBeenCalledOnce();
+        expect(spy).toHaveBeenCalledWith(examActions, course.id, exam.id, studentExam.id);
 
         expect(studentExam.examActivity.examActions.length).toBe(0);
     });
 
     it('should not remove actions after not successful sync', () => {
+        const spy = jest.spyOn(service, 'syncActions');
+
         const examActions = createExamActions();
         studentExam.examActivity = new ExamActivity();
         studentExam.examActivity.examActions = examActions;
         service.saveActions(exam, studentExam, course.id!);
 
+        expect(spy).toHaveBeenCalledOnce();
+        expect(spy).toHaveBeenCalledWith(examActions, course.id, exam.id, studentExam.id);
+
         expect(studentExam.examActivity.examActions.length).toBe(examActions.length);
     });
 
     it('should return the correct resource url', () => {
+        const spy = jest.spyOn(service, 'getResourceURL');
         const url = service.getResourceURL(course.id!, exam.id!);
+
+        expect(spy).toHaveBeenCalledOnce();
 
         expect(url).toEqual(`${SERVER_API_URL}api/courses/${course.id!}/exams/${exam.id!}`);
     });

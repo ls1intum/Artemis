@@ -80,6 +80,8 @@ public class ExamActivityResource {
         boolean isTestRun = studentExam.isTestRun();
         this.studentExamAccessService.checkStudentExamAccessElseThrow(courseId, examId, studentExamId, currentUser, isTestRun);
 
+        // TODO: Validate actions
+
         actions.forEach(action -> examMonitoringScheduleService.addExamAction(examId, studentExamId, action));
         log.info("REST request by user: {} for exam with id {} to add {} actions for student-exam {}", currentUser.getLogin(), examId, actions.size(), studentExamId);
 
@@ -89,26 +91,19 @@ public class ExamActivityResource {
     /**
      * ONLY FOR TESTING OF THIS PR ON TEST SERVER/LOCALLY (will be removed in the future)
      */
-    @GetMapping("/courses/{courseId}/exams/{examId}/student-exams/{studentExamId}/activity-cache")
+    @GetMapping("/courses/{courseId}/exams/{examId}/student-exams/{studentExamId}/activity")
     @PreAuthorize("hasRole('INSTRUCTOR')")
-    public ResponseEntity<ExamActivity> getActivityFromCache(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long studentExamId) {
+    public ResponseEntity<TestingActivity> getActivityFromDatabase(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long studentExamId) {
         studentExamRepository.findByIdWithExercisesElseThrow(studentExamId);
         examAccessService.checkCourseAndExamAccessForInstructorElseThrow(courseId, examId);
 
-        ExamActivity examActivity = examMonitoringScheduleService.getExamActivityFromCache(examId, studentExamId);
-        return ResponseEntity.ok(examActivity);
+        ExamActivity examActivityDatabase = examActivityService.findByStudentExamId(studentExamId);
+
+        ExamActivity examActivityCache = examMonitoringScheduleService.getExamActivityFromCache(examId, studentExamId);
+
+        return ResponseEntity.ok(new TestingActivity(examActivityDatabase, examActivityCache));
     }
 
-    /**
-     * ONLY FOR TESTING OF THIS PR ON TEST SERVER/LOCALLY (will be removed in the future)
-     */
-    @GetMapping("/courses/{courseId}/exams/{examId}/student-exams/{studentExamId}/activity-database")
-    @PreAuthorize("hasRole('INSTRUCTOR')")
-    public ResponseEntity<ExamActivity> getActivityFromDatabase(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long studentExamId) {
-        studentExamRepository.findByIdWithExercisesElseThrow(studentExamId);
-        examAccessService.checkCourseAndExamAccessForInstructorElseThrow(courseId, examId);
-
-        ExamActivity examActivity = examActivityService.findByStudentExamId(studentExamId);
-        return ResponseEntity.ok(examActivity);
+    private record TestingActivity(ExamActivity examActivityDatabase, ExamActivity examActivityCache) {
     }
 }

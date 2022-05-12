@@ -199,7 +199,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
             this.disconnected = !status.connected;
 
             // Monitor connection update
-            if (this.studentExam !== undefined) {
+            if (this.studentExam) {
                 this.examMonitoringService.handleActionEvent(this.studentExam, new ConnectionUpdatedAction(status.connected), this.exam.monitoring!);
             }
         });
