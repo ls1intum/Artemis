@@ -319,6 +319,10 @@
         {
             "fullName": "Yuling Sun",
             "photoDirectory": "public/images/about/Yuling_Sun.jpg"
+        },
+        {
+            "fullName": "Ata Keşfeden",
+            "photoDirectory": "public/images/about/Ata_Kesfeden.jpg"
         }
     ]
 }
