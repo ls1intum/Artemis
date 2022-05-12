@@ -309,6 +309,10 @@
             "photoDirectory": "public/images/about/Simon_Paul.jpg"
         },
         {
+            "fullName": "Moritz Aberle",
+            "photoDirectory": "public/images/about/placeholder-man.png"
+        },
+        {
             "fullName": "Swornim Shrestha",
             "photoDirectory": "public/images/about/Swornim_Shrestha.jpg"
         },
