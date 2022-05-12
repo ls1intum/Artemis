@@ -154,9 +154,10 @@
                                         [(ngModel)]="quizBatch.startTime"
                                     ></jhi-date-time-picker>
                                     <span *ngIf="quizBatch.startTimeError" class="invalid-feedback">{{
-                                        quizExercise.quizMode === QuizMode.SYNCHRONIZED
+                                        (quizExercise.quizMode === QuizMode.SYNCHRONIZED
                                             ? 'artemisApp.quizExercise.startTimeErrorSynchronized'
-                                            : ('artemisApp.quizExercise.startTimeError' | artemisTranslate)
+                                            : 'artemisApp.quizExercise.startTimeError'
+                                        ) | artemisTranslate
                                     }}</span>
                                     <!-- no scheduled batched mode yet -->
                                     <!-- Change *ngIf="false" below to "quizExercise.quizMode === QuizMode.BATCHED" when scheduled batched mode is active -->

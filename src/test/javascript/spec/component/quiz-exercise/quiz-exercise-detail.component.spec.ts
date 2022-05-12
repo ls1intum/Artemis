@@ -40,6 +40,7 @@ import { ArtemisTestModule } from '../../test.module';
 import { Exam } from 'app/entities/exam.model';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { MockProvider } from 'ng-mocks';
+import { Duration } from 'app/exercises/quiz/manage/quiz-exercise-interfaces';
 
 describe('QuizExercise Management Detail Component', () => {
     let comp: QuizExerciseDetailComponent;
@@ -273,6 +274,80 @@ describe('QuizExercise Management Detail Component', () => {
 
             afterEach(() => {
                 jest.clearAllMocks();
+            });
+        });
+
+        describe('validate dates', () => {
+            // setup
+            beforeEach(() => {
+                resetQuizExercise();
+                comp.course = course;
+                comp.init();
+                comp.quizExercise = quizExercise;
+                comp.duration = new Duration(5, 15);
+                comp.scheduleQuizStart = true;
+            });
+
+            it.each([[QuizMode.SYNCHRONIZED], [QuizMode.BATCHED], [QuizMode.INDIVIDUAL]])('should set errors to false for valid dates for %s mode', (quizMode) => {
+                comp.quizExercise.quizMode = quizMode;
+                comp.cacheValidation();
+
+                if (quizMode !== QuizMode.SYNCHRONIZED) {
+                    comp.addQuizBatch();
+                }
+
+                const now = dayjs();
+                comp.quizExercise.releaseDate = now;
+
+                comp.validateDate();
+                expect(comp.quizExercise.dueDateError).toBe(false);
+                expect(comp.hasErrorInQuizBatches()).toBe(false);
+
+                comp.quizExercise!.quizBatches![0].startTime = now.add(1, 'days');
+
+                comp.validateDate();
+                expect(comp.quizExercise.dueDateError).toBe(false);
+                expect(comp.hasErrorInQuizBatches()).toBe(false);
+
+                comp.quizExercise.dueDate = now.add(2, 'days');
+
+                comp.validateDate();
+                expect(comp.quizExercise.dueDateError).toBe(false);
+                expect(comp.hasErrorInQuizBatches()).toBe(false);
+            });
+
+            it.each([[QuizMode.SYNCHRONIZED], [QuizMode.BATCHED], [QuizMode.INDIVIDUAL]])('should set errors to true for invalid dates for %s mode', (quizMode) => {
+                comp.quizExercise.quizMode = quizMode;
+                comp.cacheValidation();
+
+                if (quizMode !== QuizMode.SYNCHRONIZED) {
+                    comp.addQuizBatch();
+                }
+
+                const now = dayjs();
+                comp.quizExercise.releaseDate = now;
+
+                comp.quizExercise!.quizBatches![0].startTime = now.add(-1, 'days');
+
+                comp.validateDate();
+                expect(comp.quizExercise.dueDateError).toBe(false);
+                expect(comp.hasErrorInQuizBatches()).toBe(true);
+
+                comp.quizExercise.dueDate = now.add(-2, 'days');
+
+                comp.validateDate();
+                expect(comp.quizExercise.dueDateError).toBe(true);
+                expect(comp.hasErrorInQuizBatches()).toBe(true);
+
+                comp.quizExercise!.quizBatches![0].startTime = now.add(1, 'days');
+                comp.quizExercise.dueDate = now.add(1, 'days');
+
+                comp.validateDate();
+                expect(comp.quizExercise.dueDateError).toBe(false);
+                if (quizMode !== QuizMode.SYNCHRONIZED) {
+                    // dueDate for SYNCHRONIZED quizzes are calculated so no need to validate.
+                    expect(comp.hasErrorInQuizBatches()).toBe(true);
+                }
             });
         });
     });

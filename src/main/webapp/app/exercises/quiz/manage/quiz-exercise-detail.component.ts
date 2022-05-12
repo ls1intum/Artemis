@@ -116,6 +116,8 @@ export class QuizExerciseDetailComponent extends QuizExerciseValidationDirective
 
     readonly QuizMode = QuizMode;
 
+    private initCompleted: boolean;
+
     constructor(
         private route: ActivatedRoute,
         private courseService: CourseManagementService,
@@ -237,22 +239,24 @@ export class QuizExerciseDetailComponent extends QuizExerciseValidationDirective
         this.scheduleQuizStart = (this.quizExercise.quizBatches?.length ?? 0) > 0;
         this.updateDuration();
         this.cacheValidation();
+        this.initCompleted = true;
     }
 
     /**
      * Validates if the date is correct
      */
     validateDate() {
-        this.exerciseService.validateDate(this.quizExercise);
+        if (this.initCompleted) {
+            this.exerciseService.validateDate(this.quizExercise);
+        }
+        const dueDate = this.quizExercise.quizMode === QuizMode.SYNCHRONIZED ? null : this.quizExercise.dueDate;
         this.quizExercise?.quizBatches?.forEach((batch) => {
             const startTime = dayjs(batch.startTime);
-            batch.startTimeError = startTime.isBefore(this.quizExercise.releaseDate) || startTime.add(dayjs.duration(this.duration)).isAfter(this.quizExercise.dueDate);
+            batch.startTimeError = startTime.isBefore(this.quizExercise.releaseDate) || startTime.add(dayjs.duration(this.duration)).isAfter(dueDate ?? null);
         });
     }
 
     cacheValidation() {
-        // TODO: quiz cleanup: this makes the exercise dirty and attempts to prevent leaving
-
         this.validateDate();
 
         if (this.quizExercise.quizMode === QuizMode.SYNCHRONIZED) {
