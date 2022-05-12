@@ -323,6 +323,10 @@
         {
             "fullName": "Ata Keşfeden",
             "photoDirectory": "public/images/about/Ata_Kesfeden.jpg"
+        },
+        {
+            "fullName": "Michael Allgaier",
+            "photoDirectory": "public/images/about/Michael_Allgaier.jpg"
         }
     ]
 }
