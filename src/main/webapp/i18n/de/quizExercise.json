@@ -18,7 +18,7 @@
                 "question": "Soll das Quiz <strong>{{ title }}</strong> wirklich zurückgesetzt werden? Diese Aktion kann NICHT rückgängig gemacht werden! <br> Das bedeutet, dass alle Teilnehmenden, Ergebnisse und Statistiken gelöscht werden, aber die Fragen des Quizzes bestehen bleiben. Dann kannst du das Quiz erneut starten."
             },
             "endNow": {
-                "question": "Soll das Quiz <strong>{{ title }}</strong> wirklich jetzt beendet werden? Diese Aktion kann NICHT rückgängig gemacht werden! <br> Dadurch werden alle aktiven Teilnahmen abgebrochen, das starten weiterer verhindert und die Ergebnisse werden unmittelbar veröffentlicht."
+                "question": "Soll das Quiz <strong>{{ title }}</strong> wirklich jetzt beendet werden? Diese Aktion kann NICHT rückgängig gemacht werden! <br> Dies verhindert alle weiteren Abgaben und startet die Veröffentlichung der Ergebnisse."
             },
             "edit": {
                 "title": "Quiz für {{ param }} bearbeiten",
