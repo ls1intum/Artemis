@@ -9,6 +9,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 import de.tum.in.www1.artemis.domain.AbstractAuditingEntity;
 import de.tum.in.www1.artemis.domain.Exercise;
+import de.tum.in.www1.artemis.domain.Team;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.metis.Post;
 
@@ -21,6 +22,9 @@ public class PlagiarismCase extends AbstractAuditingEntity {
 
     @ManyToOne
     private User student;
+
+    @ManyToOne
+    private Team team;
 
     @OneToOne(mappedBy = "plagiarismCase", cascade = CascadeType.REMOVE, orphanRemoval = true)
     private Post post;
@@ -60,6 +64,14 @@ public class PlagiarismCase extends AbstractAuditingEntity {
 
     public void setStudent(User student) {
         this.student = student;
+    }
+
+    public Team getTeam() {
+        return team;
+    }
+
+    public void setTeam(Team team) {
+        this.team = team;
     }
 
     public Post getPost() {

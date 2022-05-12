@@ -3,6 +3,7 @@ CREATE TEMPORARY TABLE new_plagiarism_case
 SELECT
     exercise_id,
     student_id,
+    team_id,
     GROUP_CONCAT(instructor_statement SEPARATOR ' ') as post,
     GROUP_CONCAT(student_statement SEPARATOR ' ') as answer,
     CASE
@@ -16,33 +17,37 @@ SELECT
 FROM
     (
         SELECT
-            exercise_id,
+            pr.exercise_id,
             student_statement_a as student_statement,
             instructor_statement_a as instructor_statement,
             status_a as status,
-            us.id as student_id
+            us.id as student_id,
+            t.id as team_id
         FROM plagiarism_comparison
                  LEFT JOIN plagiarism_result pr on plagiarism_comparison.plagiarism_result_id = pr.id
                  LEFT JOIN plagiarism_submission ps on plagiarism_comparison.submission_a_id = ps.id
                  LEFT JOIN jhi_user us on ps.student_login = us.login
+                 LEFT JOIN team t on ps.student_login = t.short_name
         WHERE status = 0
         UNION ALL
         SELECT
-            exercise_id,
+            pr.exercise_id,
             student_statement_b as student_statement,
             instructor_statement_b as instructor_statement,
             status_b as status,
-            us.id as student_id
+            us.id as student_id,
+            t.id as team_id
         FROM plagiarism_comparison
                  LEFT JOIN plagiarism_result pr on plagiarism_comparison.plagiarism_result_id = pr.id
                  LEFT JOIN plagiarism_submission ps on plagiarism_comparison.submission_b_id = ps.id
                  LEFT JOIN jhi_user us on ps.student_login = us.login
+                 LEFT JOIN team t on ps.student_login = t.short_name
         WHERE status = 0
     ) as temp
-group by student_id, exercise_id;
+group by student_id, team_id, exercise_id;
 
 -- CREATE PLAGIARISM CASES
-INSERT INTO plagiarism_case (exercise_id, student_id, verdict, created_by, verdict_date, verdict_point_deduction, verdict_by_id)
+INSERT INTO plagiarism_case (exercise_id, student_id, team_id, verdict, created_by, verdict_date, verdict_point_deduction, verdict_by_id)
 WITH instructor AS (
     (
         SELECT e.id as exercise_id, min(ju.login) as instructor_login
@@ -55,10 +60,11 @@ WITH instructor AS (
         group by e.id
     )
 )
-SELECT npc.exercise_id, student_id, verdict, instructor_login as created_by, verdict_date, verdict_point_deduction, u.id as verdict_by_id
+SELECT npc.exercise_id, student_id, team_id, verdict, instructor_login as created_by, verdict_date, verdict_point_deduction, u.id as verdict_by_id
 FROM new_plagiarism_case npc
     LEFT JOIN instructor i on i.exercise_id = npc.exercise_id
-    LEFT JOIN jhi_user u on u.login = instructor_login;
+    LEFT JOIN jhi_user u on u.login = instructor_login
+WHERE student_id IS NOT NULL OR team_id IS NOT NULL;
 
 -- UPDATE PLAGIARISM SUBMISSIONS WITH RELATION TO PLAGIARISM CASE
 UPDATE plagiarism_submission as dest,

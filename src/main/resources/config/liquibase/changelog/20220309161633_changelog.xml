@@ -8,9 +8,8 @@
             <column name="exercise_id" type="BIGINT">
                 <constraints nullable="false"/>
             </column>
-            <column name="student_id" type="BIGINT">
-                <constraints nullable="false"/>
-            </column>
+            <column name="student_id" type="BIGINT" />
+            <column name="team_id" type="BIGINT" />
             <column name="created_by" type="VARCHAR(50)">
                 <constraints nullable="false"/>
             </column>
@@ -45,6 +44,13 @@
             constraintName="fk_plagiarism_case_student_id"
             referencedColumnNames="id"
             referencedTableName="jhi_user"
+        />
+        <addForeignKeyConstraint
+            baseTableName="plagiarism_case"
+            baseColumnNames="team_id"
+            constraintName="fk_plagiarism_case_team_id"
+            referencedColumnNames="id"
+            referencedTableName="team"
         />
         <addForeignKeyConstraint
             baseTableName="post"
