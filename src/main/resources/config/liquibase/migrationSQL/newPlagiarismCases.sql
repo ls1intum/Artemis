@@ -26,8 +26,10 @@ FROM
         FROM plagiarism_comparison
                  LEFT JOIN plagiarism_result pr on plagiarism_comparison.plagiarism_result_id = pr.id
                  LEFT JOIN plagiarism_submission ps on plagiarism_comparison.submission_a_id = ps.id
-                 LEFT JOIN jhi_user us on ps.student_login = us.login
-                 LEFT JOIN team t on ps.student_login = t.short_name
+                 LEFT JOIN submission s on ps.submission_id = s.id
+                 LEFT JOIN participation p on s.participation_id = p.id
+                 LEFT JOIN jhi_user us on p.student_id = us.id
+                 LEFT JOIN team t on p.team_id = t.id
         WHERE status = 0
         UNION ALL
         SELECT
@@ -40,8 +42,10 @@ FROM
         FROM plagiarism_comparison
                  LEFT JOIN plagiarism_result pr on plagiarism_comparison.plagiarism_result_id = pr.id
                  LEFT JOIN plagiarism_submission ps on plagiarism_comparison.submission_b_id = ps.id
-                 LEFT JOIN jhi_user us on ps.student_login = us.login
-                 LEFT JOIN team t on ps.student_login = t.short_name
+                 LEFT JOIN submission s on ps.submission_id = s.id
+                 LEFT JOIN participation p on s.participation_id = p.id
+                 LEFT JOIN jhi_user us on p.student_id = us.id
+                 LEFT JOIN team t on p.team_id = t.id
         WHERE status = 0
     ) as temp
 group by student_id, team_id, exercise_id;
