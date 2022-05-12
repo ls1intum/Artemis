@@ -368,6 +368,7 @@ $code-editor-file-browser-header-border: lighten($neutral-dark, 10%);
 $code-editor-file-browser-tree-hover: lighten($neutral-dark, 5%);
 $code-editor-file-browser-input-background: darken($neutral-dark, 10%);
 $code-editor-file-browser-input-color: white;
+$code-editor-diff-newline-background: rgba(46, 160, 67, 0.15);
 
 // Overview variables
 $overview-border-color: $border-color;
