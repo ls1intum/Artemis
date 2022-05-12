@@ -66,8 +66,11 @@ export class HeaderExercisePageWithDetailsComponent implements OnInit {
             this.dueDate = getExerciseDueDate(this.exercise, this.studentParticipation);
             this.setIsNextDueDateCourseMode();
             this.individualComplaintDeadline = this.complaintService.getIndividualComplaintDueDate(this.exercise, this.course, this.studentParticipation);
+            // The student can either still submit or there is a submission where the student did not have the chance to complain yet
             this.canComplainLaterOn =
-                !this.individualComplaintDeadline && (this.exercise.allowComplaintsForAutomaticAssessments || this.exercise.assessmentType !== AssessmentType.AUTOMATIC);
+                (dayjs().isBefore(this.exercise.dueDate) ||
+                    (!!this.studentParticipation?.submissionCount && this.studentParticipation?.submissionCount > 0 && !this.individualComplaintDeadline)) &&
+                (this.exercise.allowComplaintsForAutomaticAssessments || (!!this.exercise.assessmentType && this.exercise.assessmentType !== AssessmentType.AUTOMATIC));
         }
     }
 
