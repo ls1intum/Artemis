@@ -158,12 +158,13 @@ export class QuizExerciseComponent extends ExerciseComponent {
      * @param quizExerciseId the quiz exercise id to end
      */
     endQuiz(quizExerciseId: number) {
-        this.quizExerciseService.end(quizExerciseId).subscribe({
+        return this.quizExerciseService.end(quizExerciseId).subscribe({
             next: (res: HttpResponse<QuizExercise>) => {
                 this.handleNewQuizExercise(res.body!);
+                this.dialogErrorSource.next('');
             },
-            error: (res: HttpErrorResponse) => {
-                this.onError(res);
+            error: (error: HttpErrorResponse) => {
+                this.dialogErrorSource.next(error.headers.get('X-artemisApp-error')!);
                 this.loadOne(quizExerciseId);
             },
         });
