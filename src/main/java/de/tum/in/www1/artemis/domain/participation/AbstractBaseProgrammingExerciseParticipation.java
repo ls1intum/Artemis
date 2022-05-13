@@ -27,6 +27,13 @@ public abstract class AbstractBaseProgrammingExerciseParticipation extends Parti
     @JsonView(QuizView.Before.class)
     private String defaultBranch;
 
+    public AbstractBaseProgrammingExerciseParticipation() {
+    }
+
+    public AbstractBaseProgrammingExerciseParticipation(String defaultBranch) {
+        this.defaultBranch = defaultBranch;
+    }
+
     public String getRepositoryUrl() {
         return repositoryUrl;
     }

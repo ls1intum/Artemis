@@ -178,7 +178,7 @@ public class ProgrammingExerciseImportService {
         String testRepoName = urlService.getRepositorySlugFromRepositoryUrlString(templateExercise.getTestRepositoryUrl());
         String solutionRepoName = urlService.getRepositorySlugFromRepositoryUrlString(templateExercise.getSolutionRepositoryUrl());
 
-        String sourceDefaultBranch = versionControlService.get().getOrRetrieveDefaultBranch(templateExercise.getTemplateParticipation());
+        String sourceDefaultBranch = versionControlService.get().getOrRetrieveDefaultBranchOfParticipation(templateExercise.getTemplateParticipation());
 
         versionControlService.get().copyRepository(sourceProjectKey, templateRepoName, sourceDefaultBranch, targetProjectKey, RepositoryType.TEMPLATE.getName());
         versionControlService.get().copyRepository(sourceProjectKey, solutionRepoName, sourceDefaultBranch, targetProjectKey, RepositoryType.SOLUTION.getName());
@@ -196,7 +196,7 @@ public class ProgrammingExerciseImportService {
 
         // Unprotect the default branch of the template exercise repo.
         var templateVcsRepositoryUrl = newExercise.getVcsTemplateRepositoryUrl();
-        var templateVcsRepositoryDefaultBranch = versionControlService.get().getOrRetrieveDefaultBranch(templateExercise.getTemplateParticipation());
+        var templateVcsRepositoryDefaultBranch = versionControlService.get().getOrRetrieveDefaultBranchOfParticipation(templateExercise.getTemplateParticipation());
         versionControlService.get().unprotectBranch(templateVcsRepositoryUrl, templateVcsRepositoryDefaultBranch);
 
         // Add the necessary hooks notifying Artemis about changes after commits have been pushed
@@ -244,9 +244,9 @@ public class ProgrammingExerciseImportService {
             SolutionProgrammingExerciseParticipation solutionParticipation, String targetExerciseProjectKey, String oldExerciseRepoUrl, String oldSolutionRepoUrl,
             String oldTestRepoUrl, List<AuxiliaryRepository> oldBuildPlanAuxiliaryRepositories) {
         try {
-            String templateDefaultBranch = versionControlService.get().getOrRetrieveDefaultBranch(newExercise.getTemplateParticipation());
+            String templateDefaultBranch = versionControlService.get().getOrRetrieveDefaultBranchOfParticipation(newExercise.getTemplateParticipation());
             String testDefaultBranch = versionControlService.get().getDefaultBranchOfRepository(new VcsRepositoryUrl(newExercise.getTestRepositoryUrl()));
-            String solutionDefaultBranch = versionControlService.get().getOrRetrieveDefaultBranch(newExercise.getSolutionParticipation());
+            String solutionDefaultBranch = versionControlService.get().getOrRetrieveDefaultBranchOfParticipation(newExercise.getSolutionParticipation());
 
             // update 2 repositories for the BASE build plan --> adapt the triggers so that only the assignment repo (and not the tests' repo) will trigger the BASE build plan
             continuousIntegrationService.get().updatePlanRepository(targetExerciseProjectKey, templateParticipation.getBuildPlanId(), ASSIGNMENT_REPO_NAME,

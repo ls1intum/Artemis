@@ -40,6 +40,9 @@ public abstract class AbstractVersionControlService implements VersionControlSer
     @Value("${artemis.lti.user-prefix-u4i:#{null}}")
     protected Optional<String> userPrefixU4I;
 
+    @Value("${artemis.version-control.default-branch:main}")
+    protected String defaultBranch;
+
     private final ApplicationContext applicationContext;
 
     private final GitService gitService;
@@ -149,7 +152,7 @@ public abstract class AbstractVersionControlService implements VersionControlSer
     }
 
     @Override
-    public String getOrRetrieveDefaultBranch(ProgrammingExerciseParticipation participation) {
+    public String getOrRetrieveDefaultBranchOfParticipation(ProgrammingExerciseParticipation participation) {
         if (participation.getDefaultBranch() == null) {
             String defaultBranch = getDefaultBranchOfRepository(participation.getVcsRepositoryUrl());
             participation.setDefaultBranch(defaultBranch);
@@ -168,5 +171,10 @@ public abstract class AbstractVersionControlService implements VersionControlSer
         }
 
         return participation.getDefaultBranch();
+    }
+
+    @Override
+    public String getDefaultBranchOfArtemis() {
+        return defaultBranch;
     }
 }

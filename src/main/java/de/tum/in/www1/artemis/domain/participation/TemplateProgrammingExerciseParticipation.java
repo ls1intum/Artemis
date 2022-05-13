@@ -18,6 +18,13 @@ public class TemplateProgrammingExerciseParticipation extends AbstractBaseProgra
     @JsonIgnoreProperties("templateParticipation")
     private ProgrammingExercise programmingExercise;
 
+    public TemplateProgrammingExerciseParticipation() {
+    }
+
+    public TemplateProgrammingExerciseParticipation(String defaultBranch) {
+        super(defaultBranch);
+    }
+
     @Override
     public ProgrammingExercise getProgrammingExercise() {
         return programmingExercise;

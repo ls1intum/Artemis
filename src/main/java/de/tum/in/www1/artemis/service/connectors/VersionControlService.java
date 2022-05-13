@@ -188,5 +188,7 @@ public interface VersionControlService {
      */
     ConnectorHealth health();
 
-    String getOrRetrieveDefaultBranch(ProgrammingExerciseParticipation participation);
+    String getOrRetrieveDefaultBranchOfParticipation(ProgrammingExerciseParticipation participation);
+
+    String getDefaultBranchOfArtemis();
 }

@@ -133,7 +133,7 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
             return gitService.getOrCheckoutRepository(repositoryUrl, pullOnGet);
         }
         else {
-            String defaultBranch = versionControlService.get().getOrRetrieveDefaultBranch(programmingParticipation);
+            String defaultBranch = versionControlService.get().getOrRetrieveDefaultBranchOfParticipation(programmingParticipation);
             return gitService.getOrCheckoutRepository(repositoryUrl, pullOnGet, defaultBranch);
         }
     }

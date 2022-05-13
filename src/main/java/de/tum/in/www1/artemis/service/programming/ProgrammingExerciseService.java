@@ -359,7 +359,7 @@ public class ProgrammingExerciseService {
                     exerciseCreator);
             // The template repo can be re-written, so we can unprotect the default branch.
             var templateVcsRepositoryUrl = programmingExercise.getVcsTemplateRepositoryUrl();
-            String templateVcsRepositoryDefaultBranch = versionControlService.get().getOrRetrieveDefaultBranch(programmingExercise.getTemplateParticipation());
+            String templateVcsRepositoryDefaultBranch = versionControlService.get().getOrRetrieveDefaultBranchOfParticipation(programmingExercise.getTemplateParticipation());
             versionControlService.get().unprotectBranch(templateVcsRepositoryUrl, templateVcsRepositoryDefaultBranch);
 
             setupTemplateAndPush(solutionRepo, solutionResources, solutionPrefix, projectTypeSolutionResources, projectTypeSolutionPrefix, "Solution", programmingExercise,
@@ -442,11 +442,11 @@ public class ProgrammingExerciseService {
         var templateParticipation = programmingExercise.getTemplateParticipation();
 
         if (templateParticipation == null) {
-            templateParticipation = new TemplateProgrammingExerciseParticipation();
+            templateParticipation = new TemplateProgrammingExerciseParticipation(versionControlService.get().getDefaultBranchOfArtemis());
             programmingExercise.setTemplateParticipation(templateParticipation);
         }
         if (solutionParticipation == null) {
-            solutionParticipation = new SolutionProgrammingExerciseParticipation();
+            solutionParticipation = new SolutionProgrammingExerciseParticipation(versionControlService.get().getDefaultBranchOfArtemis());
             programmingExercise.setSolutionParticipation(solutionParticipation);
         }
 

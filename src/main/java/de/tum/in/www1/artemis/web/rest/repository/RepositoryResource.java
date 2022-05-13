@@ -295,7 +295,7 @@ public abstract class RepositoryResource {
                 isClean = repositoryService.isClean(repositoryUrl);
             }
             else {
-                String defaultBranch = versionControlService.get().getOrRetrieveDefaultBranch(programmingExerciseParticipation);
+                String defaultBranch = versionControlService.get().getOrRetrieveDefaultBranchOfParticipation(programmingExerciseParticipation);
                 isClean = repositoryService.isClean(repositoryUrl, defaultBranch);
             }
             repositoryStatus.setRepositoryStatus(isClean ? RepositoryStatusDTOType.CLEAN : RepositoryStatusDTOType.UNCOMMITTED_CHANGES);
