@@ -58,7 +58,7 @@ describe('OrderedListCommand', () => {
         expect(comp.aceEditorContainer.getEditor().getValue()).toBe('Test\n\nTest');
     });
 
-    it('should handle empty lines and remove lists', () => {
+    it('should handle multiple sequential empty lines and remove lists', () => {
         comp.aceEditorContainer.getEditor().setValue('1. Test\n\n3. Test');
         command.execute();
         expect(comp.aceEditorContainer.getEditor().getValue()).toBe('Test\n\nTest');
