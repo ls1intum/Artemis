@@ -268,7 +268,7 @@ $mc-question-answer-option-hover-background: #fafafa;
 $programming-exercise-instruction-step-wizard-card-header-background: #f5f5f5;
 $programming-exercise-instruction-step-wizard-card-header-border: #ddd;
 $programming-exercise-instruction-step-wizard-row-before-background: #ccc;
-$programming-exercise-instruction-step-wizard-btn-circle-light-border-color: #ccc;
+$programming-exercise-instruction-step-wizard-btn-border-color: #ccc;
 $programming-exercise-instruction-step-wizard-circle-not-done-color: $secondary;
 $programming-exercise-instruction-step-wizard-test-passing-hover-color: #f8f9fa;
 
@@ -286,6 +286,7 @@ $code-editor-file-browser-header-border: #ddd;
 $code-editor-file-browser-tree-hover: #f5f5f5;
 $code-editor-file-browser-input-background: white;
 $code-editor-file-browser-input-color: black;
+$code-editor-diff-newline-background: rgba(63, 185, 80, 0.4);
 
 // Overview variables
 $overview-border-color: $border-color;

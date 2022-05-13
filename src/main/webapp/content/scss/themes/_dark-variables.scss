@@ -211,7 +211,7 @@ $markdown-preview-blockquote-border: #dfe2e5;
 $connection-status: $success;
 $connection-status-disconnected: $danger;
 
-$mat-autocomplete-visible-box-shadow: rgb(100 100 100);
+$mat-autocomplete-visible-box-shadow: black;
 $mat-form-field-outline: #ccc;
 
 // Feature Overview
@@ -350,7 +350,7 @@ $mc-question-answer-option-hover-background: transparentize(#fff, 0.97);
 $programming-exercise-instruction-step-wizard-card-header-background: lighten($neutral-dark, 5%);
 $programming-exercise-instruction-step-wizard-card-header-border: lighten($neutral-dark, 10%);
 $programming-exercise-instruction-step-wizard-row-before-background: #ccc;
-$programming-exercise-instruction-step-wizard-btn-circle-light-border-color: #ccc;
+$programming-exercise-instruction-step-wizard-btn-border-color: #ccc;
 $programming-exercise-instruction-step-wizard-circle-not-done-color: $gray-700;
 $programming-exercise-instruction-step-wizard-test-passing-hover-color: #f8f9fa;
 
@@ -368,6 +368,7 @@ $code-editor-file-browser-header-border: lighten($neutral-dark, 10%);
 $code-editor-file-browser-tree-hover: lighten($neutral-dark, 5%);
 $code-editor-file-browser-input-background: darken($neutral-dark, 10%);
 $code-editor-file-browser-input-color: white;
+$code-editor-diff-newline-background: rgba(46, 160, 67, 0.15);
 
 // Overview variables
 $overview-border-color: $border-color;
