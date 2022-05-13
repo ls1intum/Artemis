@@ -23,7 +23,7 @@ Ace Editor
 
         .btn-inline-comment {
             display: none;
-            color: #3e8acc; // btn-primary color
+            color: var(--primary);
             height: 16px;
         }
 
@@ -37,10 +37,21 @@ Ace Editor
             top: 8px; // standard gutter height is 16px
             left: 25%;
             transform: translate(-50%, -50%);
+            cursor: pointer;
 
-            fa-icon:hover {
-                font-size: 15px;
-                transition: font-size 0.35s ease;
+            fa-icon {
+                position: relative;
+
+                &::after {
+                    content: '';
+                    position: absolute;
+                    width: calc(100% - 6px);
+                    height: calc(100% - 6px);
+                    top: 3px;
+                    left: 3px;
+                    background: white;
+                    z-index: -1;
+                }
             }
         }
 
