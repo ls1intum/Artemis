@@ -74,12 +74,10 @@
             </div>
 
             <div class="form-group match-percentage-container">
-
                 <span class="colon-suffix no-flex-shrink">{{ 'artemisApp.quizExercise.answerMatching.title' | artemisTranslate }}</span>
 
                 <div class="slider-container">
-                    <div class="slider-with-label" >
-
+                    <div class="slider-with-label">
                         <input
                             type="range"
                             name="similarity-slider"
@@ -110,21 +108,18 @@
                     }}</label>
                 </div>
 
-                    <div class="form-group form-check custom-control custom-checkbox">
-                        <input
-                            type="checkbox"
-                            id="{{ 'cbMatchLetterCase' + questionIndex }}"
-                            class="form-check-input custom-control-input"
-                            [(ngModel)]="shortAnswerQuestion.matchLetterCase"
-                            (ngModelChange)="questionUpdated.emit()"
-                        />
-                        <label class="form-check-label custom-control-label" for="{{ 'cbMatchLetterCase' + questionIndex }}">{{
-                            'artemisApp.quizExercise.matchLetterCase.title' | artemisTranslate
-                            }}</label>
-                    </div>
-
-
-
+                <div class="form-group form-check custom-control custom-checkbox">
+                    <input
+                        type="checkbox"
+                        id="{{ 'cbMatchLetterCase' + questionIndex }}"
+                        class="form-check-input custom-control-input"
+                        [(ngModel)]="shortAnswerQuestion.matchLetterCase"
+                        (ngModelChange)="questionUpdated.emit()"
+                    />
+                    <label class="form-check-label custom-control-label" for="{{ 'cbMatchLetterCase' + questionIndex }}">{{
+                        'artemisApp.quizExercise.matchLetterCase.title' | artemisTranslate
+                    }}</label>
+                </div>
             </div>
             <div class="form-group" *ngIf="!reEvaluationInProgress">
                 <div class="delete-button" (click)="deleteQuestion()">
