@@ -34,7 +34,7 @@ public class NotificationTargetFactory {
 
     public static final String EXAM_ARCHIVE_UPDATED_TEXT = "examArchiveUpdated";
 
-    public static final String PLAGIARISM_TEXT = "plagiarism";
+    public static final String PLAGIARISM_TEXT = "plagiarism-cases";
 
     public static final String PLAGIARISM_DETECTED_TEXT = "plagiarismDetected";
 
@@ -186,14 +186,14 @@ public class NotificationTargetFactory {
     // Plagiarism related targets
 
     /**
-     * Create a NotificationTarget for plagiarism related notifications
+     * Create a NotificationTarget for plagiarism case related notifications
      *
-     * @param plagiarismComparisonId is the id of the PlagiarismComparison
+     * @param plagiarismCaseId is the id of the PlagiarismCase
      * @param courseId of the Course
      * @return the final NotificationTarget
      */
-    public static NotificationTarget createPlagiarismCaseTarget(Long plagiarismComparisonId, Long courseId) {
-        return new NotificationTarget(PLAGIARISM_DETECTED_TEXT, plagiarismComparisonId, PLAGIARISM_TEXT, courseId, COURSES_TEXT);
+    public static NotificationTarget createPlagiarismCaseTarget(Long plagiarismCaseId, Long courseId) {
+        return new NotificationTarget(PLAGIARISM_DETECTED_TEXT, plagiarismCaseId, PLAGIARISM_TEXT, courseId, COURSES_TEXT);
     }
 
     /// URL/Link related methods
