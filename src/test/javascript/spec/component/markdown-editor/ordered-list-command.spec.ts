@@ -93,10 +93,4 @@ describe('OrderedListCommand', () => {
         command.execute();
         expect(comp.aceEditorContainer.getEditor().getValue()).toBe('Test\n   Test');
     });
-
-    it('should keep whitespaces at the beginning and remove list', () => {
-        comp.aceEditorContainer.getEditor().setValue('1. Test\n   2. Test');
-        command.execute();
-        expect(comp.aceEditorContainer.getEditor().getValue()).toBe('Test\n   Test');
-    });
 });
