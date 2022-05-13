@@ -64,6 +64,8 @@ public class ParticipationServiceTest extends AbstractSpringIntegrationJenkinsGi
         doNothing().when(versionControlService).addWebHookForParticipation(any());
         // Do Nothing when setRepositoryPermissionsToReadOnly in ParticipationService#createParticipationWithEmptySubmissionIfNotExisting
         doNothing().when(versionControlService).setRepositoryPermissionsToReadOnly(any(), any(String.class), any());
+        // Return the default branch for all repositories of the exercise
+        doReturn(defaultBranch).when(versionControlService).getOrRetrieveDefaultBranchOfExercise(programmingExercise);
 
         StudentParticipation participation = participationService.createParticipationWithEmptySubmissionIfNotExisting(programmingExercise, student.get(), SubmissionType.EXTERNAL);
         assertThat(participation).isNotNull();

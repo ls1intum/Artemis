@@ -161,8 +161,8 @@ public class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBi
         doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(studentRepository.localRepoFile.toPath(), null)).when(gitService).getOrCheckoutRepository(participation);
 
         bitbucketRequestMockProvider.enableMockingOfRequests(true);
-        bitbucketRequestMockProvider.mockDefaultBranch(defaultBranch, participation.getVcsRepositoryUrl());
-        bitbucketRequestMockProvider.mockDefaultBranch(defaultBranch, programmingExercise.getVcsTemplateRepositoryUrl());
+        doReturn(defaultBranch).when(versionControlService).getOrRetrieveDefaultBranchOfStudentParticipation(participation);
+        doReturn(defaultBranch).when(versionControlService).getOrRetrieveDefaultBranchOfExercise(programmingExercise);
 
         logs.add(buildLogEntry);
         logs.add(largeBuildLogEntry);

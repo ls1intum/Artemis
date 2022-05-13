@@ -118,6 +118,7 @@ public interface VersionControlService {
      *
      * @param sourceProjectKey     The key of the template project (normally based on the course and exercise short name)
      * @param sourceRepositoryName The name of the repository which should be copied
+     * @param sourceDefaultBranch  The default branch of the source repository
      * @param targetProjectKey     The key of the target project to which to copy the new plan to
      * @param targetRepositoryName The desired name of the target repository
      * @return The URL for cloning the repository
@@ -188,11 +189,29 @@ public interface VersionControlService {
      */
     ConnectorHealth health();
 
+    /**
+     * Get the default branch used in the participation or retrieves it from the VCS if not present in the database
+     * @param participation The participation to get the default branch from
+     * @return The default branch used by this participation
+     */
     String getOrRetrieveDefaultBranchOfParticipation(ProgrammingExerciseParticipation participation);
 
+    /**
+     * Get the default branch used in the student participation or retrieves it from the VCS if not present in the database
+     * @param participation The student participation to get the default branch from
+     * @return The default branch used by this student participation
+     */
     String getOrRetrieveDefaultBranchOfStudentParticipation(ProgrammingExerciseStudentParticipation participation);
 
+    /**
+     * Get the default branch used in the programmingExercise or retrieves it from the VCS if not present in the database
+     * @param programmingExercise The participation to get the default branch from
+     * @return The default branch used by this programmingExercise
+     */
     String getOrRetrieveDefaultBranchOfExercise(ProgrammingExercise programmingExercise);
 
+    /***
+     * @return The default branch used by Artemis
+     */
     String getDefaultBranchOfArtemis();
 }
