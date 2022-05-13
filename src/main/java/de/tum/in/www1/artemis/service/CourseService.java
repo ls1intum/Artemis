@@ -711,8 +711,8 @@ public class CourseService {
          */
         var spanTime = maximalSize;
         if (course.getStartDate() != null) {
-            var mondayInWeekOfStart = course.getStartDate().toLocalDateTime().with(DayOfWeek.MONDAY);
-            var mondayInWeekOfEnd = endDate.plusWeeks(1).toLocalDateTime().with(DayOfWeek.MONDAY);
+            var mondayInWeekOfStart = course.getStartDate().toLocalDateTime().with(DayOfWeek.MONDAY).withHour(0).withMinute(0).withSecond(0).withNano(0);
+            var mondayInWeekOfEnd = endDate.plusWeeks(1).toLocalDateTime().with(DayOfWeek.MONDAY).withHour(0).withMinute(0).withSecond(0).withNano(0);
             var amountOfWeeksBetween = mondayInWeekOfStart.until(mondayInWeekOfEnd, ChronoUnit.WEEKS);
             spanTime = Math.toIntExact(Math.min(maximalSize, amountOfWeeksBetween));
         }

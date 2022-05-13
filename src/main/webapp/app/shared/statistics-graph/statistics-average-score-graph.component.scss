@@ -20,13 +20,17 @@
     max-width: 300px;
 }
 
-.switch-forward {
-    max-width: 60px;
+.switch-arrow {
+    width: 30px;
 }
 
 .switch-forward-placeholder {
     width: 60px;
     height: 300px;
+}
+
+.hidden {
+    visibility: hidden;
 }
 
 .critical-color {
@@ -39,4 +43,8 @@
 
 .best-color {
     background: var(--stat-av-sc-legend-best);
+}
+
+.chart-container {
+    width: 83.33%;
 }
