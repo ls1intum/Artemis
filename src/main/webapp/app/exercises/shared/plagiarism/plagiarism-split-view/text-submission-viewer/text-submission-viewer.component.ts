@@ -76,6 +76,7 @@ export class TextSubmissionViewerComponent implements OnChanges {
                     next: (files) => {
                         this.loading = false;
                         this.files = this.filterFiles(files);
+                        console.log(this.matches);
                     },
                     error: () => {
                         this.loading = false;
@@ -136,6 +137,10 @@ export class TextSubmissionViewerComponent implements OnChanges {
 
     getMatchesForCurrentFile() {
         return this.matches.get(this.currentFile || 'none') || [];
+    }
+
+    private hasMatch(file: string): boolean {
+        return this.matches.has(file);
     }
 
     insertToken(text: string, token: string, position: number) {
