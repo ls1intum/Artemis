@@ -54,7 +54,12 @@
             <tbody>
                 <tr *ngFor="let quizExercise of filteredQuizExercises; trackBy: trackId" id="exercise-card-{{ quizExercise.id }}">
                     <td *ngIf="!quizIsOver(quizExercise) || !quizExercise.isAtLeastEditor">
-                        <a [routerLink]="['/course-management', quizExercise.course?.id, 'quiz-exercises', quizExercise.id, 'edit']">{{ quizExercise.id }}</a>
+                        <a
+                            *ngIf="quizExercise.status !== QuizStatus.ACTIVE; else readOnlyId"
+                            [routerLink]="['/course-management', quizExercise.course?.id, 'quiz-exercises', quizExercise.id, 'edit']"
+                            >{{ quizExercise.id }}</a
+                        >
+                        <ng-template #readOnlyId>{{ quizExercise.id }}</ng-template>
                     </td>
                     <td *ngIf="quizIsOver(quizExercise) && quizExercise.isAtLeastEditor">
                         <a [routerLink]="['/course-management', quizExercise.course?.id, 'quiz-exercises', quizExercise.id, 're-evaluate']">{{ quizExercise.id }}</a>

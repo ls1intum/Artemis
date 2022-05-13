@@ -99,6 +99,7 @@ public class QuizBatchService {
             case INDIVIDUAL -> Optional.of(createIndividualBatch(quizExercise, user));
         };
 
+        quizBatch = quizBatch.filter(batch -> !batch.isEnded());
         quizBatch.ifPresent(batch -> quizScheduleService.joinQuizBatch(quizExercise, batch, user));
         return quizBatch;
     }

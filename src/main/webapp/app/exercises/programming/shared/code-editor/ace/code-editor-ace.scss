@@ -25,7 +25,6 @@ Ace Editor
             display: none;
             color: #3e8acc; // btn-primary color
             height: 16px;
-            background: white;
         }
 
         .ace_gutter-cell {
@@ -58,7 +57,7 @@ Ace Editor
 
     .diff-newLine {
         position: absolute;
-        background: rgba(100, 200, 100, 0.5);
+        background: var(--code-editor-diff-newline-background);
         z-index: 20;
     }
 }

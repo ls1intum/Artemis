@@ -4,14 +4,6 @@
     border-bottom: 1px solid var(--programming-exercise-instruction-step-wizard-card-header-border);
 }
 
-.stepwizard-step p {
-    margin-top: 10px;
-}
-
-.stepwizard-step .fa {
-    vertical-align: initial;
-}
-
 .stepwizard-row {
     display: table-row;
 }
@@ -20,16 +12,6 @@
     display: table;
     width: 100%;
     position: relative;
-}
-
-.stepwizard-step button[disabled] {
-    opacity: 1 !important;
-    filter: alpha(opacity=100) !important;
-    cursor: default;
-}
-
-.stepwizard-step .btn {
-    cursor: default;
 }
 
 .stepwizard-row:before {
@@ -48,6 +30,20 @@
     text-align: center;
     position: relative;
 
+    .fa {
+        vertical-align: initial;
+    }
+
+    p {
+        margin-top: 10px;
+    }
+
+    button[disabled] {
+        opacity: 1 !important;
+        filter: alpha(opacity=100) !important;
+        cursor: default;
+    }
+
     &--no-result.btn {
         cursor: default;
     }
@@ -55,22 +51,22 @@
     &--failed.btn {
         cursor: pointer;
     }
-}
 
-.stepwizard-circle .not-done {
-    color: var(--programming-exercise-instruction-step-wizard-circle-not-done-color);
-}
+    .btn {
+        cursor: default;
+        background-color: var(--programming-exercise-instruction-step-wizard-card-header-background);
+        width: 30px;
+        height: 30px;
+        text-align: center;
+        padding: 6px 0;
+        font-size: 12px;
+        line-height: 1.428571429;
+        border-radius: 15px;
+        border-color: var(--programming-exercise-instruction-step-wizard-btn-border-color);
+    }
 
-.btn-circle.btn-circle {
-    width: 30px;
-    height: 30px;
-    text-align: center;
-    padding: 6px 0;
-    font-size: 12px;
-    line-height: 1.428571429;
-    border-radius: 15px;
-    &.btn-light {
-        border-color: var(--programming-exercise-instruction-step-wizard-btn-circle-light-border-color);
+    .btn.not-done {
+        color: var(--programming-exercise-instruction-step-wizard-circle-not-done-color);
     }
 }
 
