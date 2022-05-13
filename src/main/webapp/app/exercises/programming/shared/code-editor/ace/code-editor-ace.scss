@@ -61,12 +61,8 @@ Ace Editor
         z-index: 20;
     }
 
-    .ace_gutter-cell {
+    .ace_gutter-cell.gutter-diff-newLine {
         transition: background 0s;
-
-        &.gutter-diff-newLine {
-            transition: background 0s;
-            background: var(--code-editor-gutter-newline-background);
-        }
+        background: var(--code-editor-gutter-newline-background);
     }
 }
