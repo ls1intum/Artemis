@@ -142,18 +142,22 @@
                                 </div>
                             </ng-container>
                             <button
-                                id="quiz-set-end-{{ quizExercise.id }}"
-                                type="submit"
-                                (click)="endQuiz(quizExercise.id!)"
-                                class="btn btn-warning btn-sm me-1 mb-1"
                                 *ngIf="
                                     (quizExercise.status === QuizStatus.VISIBLE || quizExercise.status === QuizStatus.ACTIVE) &&
                                     quizExercise.quizMode !== QuizMode.SYNCHRONIZED &&
-                                    quizExercise.isAtLeastEditor
+                                    quizExercise.isAtLeastInstructor
                                 "
+                                id="quiz-set-end-{{ quizExercise.id }}"
+                                class="mb-1"
+                                jhiDeleteButton
+                                [actionType]="ActionType.EndNow"
+                                [entityTitle]="quizExercise.title || ''"
+                                deleteQuestion="artemisApp.quizExercise.endNow.question"
+                                deleteConfirmationText="artemisApp.exercise.delete.typeNameToConfirm"
+                                (delete)="endQuiz(quizExercise.id!)"
+                                [dialogError]="dialogError$"
                             >
                                 <fa-icon [icon]="faStopCircle"></fa-icon>
-                                <span class="d-none d-md-inline" jhiTranslate="artemisApp.quizExercise.endNow">End Now</span>
                             </button>
                             <button
                                 id="quiz-set-visible-{{ quizExercise.id }}"

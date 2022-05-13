@@ -16,6 +16,7 @@ import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.Lecture;
 import de.tum.in.www1.artemis.domain.enumeration.DisplayPriority;
+import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismCase;
 
 /**
  * A Post, i.e. start of a Metis thread.
@@ -64,6 +65,11 @@ public class Post extends Posting {
     @Enumerated(EnumType.STRING)
     @Column(name = "display_priority")
     private DisplayPriority displayPriority;
+
+    @OneToOne
+    @JoinColumn(name = "plagiarism_case_id")
+    @JsonIncludeProperties({ "id" })
+    private PlagiarismCase plagiarismCase;
 
     public String getTitle() {
         return title;
@@ -169,6 +175,14 @@ public class Post extends Posting {
         this.displayPriority = displayPriority;
     }
 
+    public PlagiarismCase getPlagiarismCase() {
+        return plagiarismCase;
+    }
+
+    public void setPlagiarismCase(PlagiarismCase plagiarismCase) {
+        this.plagiarismCase = plagiarismCase;
+    }
+
     /**
      * Helper method to determine if a given post has the same context, i.e. either same exercise, lecture or course-wide context
      * @param otherPost post that is compared to
@@ -179,6 +193,9 @@ public class Post extends Posting {
             return true;
         }
         else if (getLecture() != null && otherPost.getLecture() != null && getLecture().getId().equals(otherPost.getLecture().getId())) {
+            return true;
+        }
+        else if (getPlagiarismCase() != null && otherPost.getPlagiarismCase() != null && getPlagiarismCase().getId().equals(otherPost.getPlagiarismCase().getId())) {
             return true;
         }
         return getCourseWideContext() != null && otherPost.getCourseWideContext() != null && getCourseWideContext() == otherPost.getCourseWideContext();
