@@ -49,11 +49,11 @@ describe('OrderedListCommand', () => {
     it('should handle empty lines and create new list', () => {
         comp.aceEditorContainer.getEditor().setValue('Test\n\nTest');
         command.execute();
-        expect(comp.aceEditorContainer.getEditor().getValue()).toBe('1. Test\n\n1. Test');
+        expect(comp.aceEditorContainer.getEditor().getValue()).toBe('1. Test\n2. \n3. Test');
     });
 
     it('should handle empty lines and remove lists', () => {
-        comp.aceEditorContainer.getEditor().setValue('1. Test\n\n1. Test');
+        comp.aceEditorContainer.getEditor().setValue('1. Test\n2. \n3. Test');
         command.execute();
         expect(comp.aceEditorContainer.getEditor().getValue()).toBe('Test\n\nTest');
     });

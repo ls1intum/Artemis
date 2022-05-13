@@ -26,14 +26,10 @@ export class OrderedListCommand extends Command {
         let position = 1;
 
         parseArray.forEach((line, index) => {
-            // Empty line -> we start again
-            if (line === '') {
-                // Special case: Single empty line
-                if (parseArray.length === 1) {
-                    manipulatedText = '1. ';
-                    return;
-                }
-                position = 1;
+            // Special case: Single empty line
+            if (line === '' && parseArray.length === 1) {
+                manipulatedText = '1. ';
+                return;
             } else {
                 // Manipulate the line, e.g. remove the number or add the number.
                 manipulatedText += this.manipulateLine(line, position);
@@ -65,7 +61,7 @@ export class OrderedListCommand extends Command {
 
             // Check if this is really a number
             if (elements[0] !== '' && !isNaN(Number(elements[0]))) {
-                // Remove first whitespace
+                // add whitespace and remove first whitespace after the dot
                 return ' '.repeat(whitespaces) + elements[1].substring(1);
             }
         }
