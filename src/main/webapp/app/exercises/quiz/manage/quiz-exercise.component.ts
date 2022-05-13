@@ -163,10 +163,7 @@ export class QuizExerciseComponent extends ExerciseComponent {
                 this.handleNewQuizExercise(res.body!);
                 this.dialogErrorSource.next('');
             },
-            error: (error: HttpErrorResponse) => {
-                this.dialogErrorSource.next(error.headers.get('X-artemisApp-error')!);
-                this.loadOne(quizExerciseId);
-            },
+            error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
         });
     }
 
@@ -273,7 +270,7 @@ export class QuizExerciseComponent extends ExerciseComponent {
                 });
                 this.dialogErrorSource.next('');
             },
-            error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.headers.get('X-artemisApp-error')!),
+            error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
         });
     }
 
@@ -290,7 +287,7 @@ export class QuizExerciseComponent extends ExerciseComponent {
                 });
                 this.dialogErrorSource.next('');
             },
-            error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.headers.get('X-artemisApp-error')!),
+            error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
         });
     }
 
