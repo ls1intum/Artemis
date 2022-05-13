@@ -2,7 +2,8 @@
     "artemisApp": {
         "programmingAssessment": {
             "dashboard": {
-                "heading": "Einreichungen und Bewertungen der Textaufgabe \"{{exerciseTitle}}\""
+                "heading": "Einreichungen und Bewertungen der Textaufgabe \"{{exerciseTitle}}\"",
+                "progressDescription": "Fortschritt: {{ percentageAssessed }} % ({{ numberAssessed }} von {{ numberSubmissions }} eingereichten Programmieraufgaben bewertet)"
             },
             "confirmCancel": "Bist du sicher, dass du die Bewertung abbrechen möchtest? Dein aktueller Bewertungsfortschritt wird gelöscht und die Abgabe steht anderen Tutor:innen wieder zur Verfügung.",
             "notFound": "Wir haben keine neue Programmierabgabe ohne Bewertung gefunden, bitte gehe zurück.",
@@ -11,7 +12,8 @@
             "deductions": "Punkte",
             "penaltyTooltip": "Penalty: {{ percentage }}% aller Penalties.",
             "issuesTooltip": "Issues: {{ percentage }}% aller gefundenen Issues.",
-            "deductionsTooltip": "Punkte: {{ percentage }}% aller abgezogenen Punkte."
+            "deductionsTooltip": "Punkte: {{ percentage }}% aller abgezogenen Punkte.",
+            "noSubmissions": "Keine Einreichungen für diese Übung!"
         }
     }
 }
