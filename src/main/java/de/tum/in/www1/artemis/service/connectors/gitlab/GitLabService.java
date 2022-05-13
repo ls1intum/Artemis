@@ -37,7 +37,11 @@ import de.tum.in.www1.artemis.domain.Commit;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
+import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.exception.VersionControlException;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseStudentParticipationRepository;
+import de.tum.in.www1.artemis.repository.SolutionProgrammingExerciseParticipationRepository;
+import de.tum.in.www1.artemis.repository.TemplateProgrammingExerciseParticipationRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.UrlService;
 import de.tum.in.www1.artemis.service.connectors.AbstractVersionControlService;
@@ -69,8 +73,10 @@ public class GitLabService extends AbstractVersionControlService {
     private final ScheduledExecutorService scheduler;
 
     public GitLabService(UserRepository userRepository, @Qualifier("shortTimeoutGitlabRestTemplate") RestTemplate shortTimeoutRestTemplate, GitLabApi gitlab, UrlService urlService,
-            GitLabUserManagementService gitLabUserManagementService, GitService gitService, ApplicationContext applicationContext) {
-        super(applicationContext, gitService, urlService);
+            GitLabUserManagementService gitLabUserManagementService, GitService gitService, ApplicationContext applicationContext,
+            ProgrammingExerciseStudentParticipationRepository studentParticipationRepository, SolutionProgrammingExerciseParticipationRepository solutionParticipationRepository,
+            TemplateProgrammingExerciseParticipationRepository templateParticipationRepository) {
+        super(applicationContext, gitService, urlService, studentParticipationRepository, solutionParticipationRepository, templateParticipationRepository);
         this.userRepository = userRepository;
         this.shortTimeoutRestTemplate = shortTimeoutRestTemplate;
         this.gitlab = gitlab;
@@ -79,8 +85,8 @@ public class GitLabService extends AbstractVersionControlService {
     }
 
     @Override
-    public void configureRepository(ProgrammingExercise exercise, VcsRepositoryUrl repositoryUrl, Set<User> users, boolean allowAccess) {
-        for (User user : users) {
+    public void configureRepository(ProgrammingExercise exercise, ProgrammingExerciseStudentParticipation participation, boolean allowAccess) {
+        for (User user : participation.getStudents()) {
             String username = user.getLogin();
 
             // This is a failsafe in case a user was not created in VCS on registration
@@ -91,15 +97,15 @@ public class GitLabService extends AbstractVersionControlService {
             if (allowAccess && !Boolean.FALSE.equals(exercise.isAllowOfflineIde())) {
                 // only add access to the repository if the offline IDE usage is NOT explicitly disallowed
                 // NOTE: null values are interpreted as offline IDE is allowed
-                addMemberToRepository(repositoryUrl, user);
+                addMemberToRepository(participation.getVcsRepositoryUrl(), user);
             }
 
             // Validate that the access token exist, if it is required
             gitLabUserManagementService.generateVersionControlAccessTokenIfNecessary(user);
         }
 
-        var defaultBranch = getDefaultBranchOfRepository(repositoryUrl);
-        protectBranch(repositoryUrl, defaultBranch);
+        var defaultBranch = getOrRetrieveDefaultBranch(participation);
+        protectBranch(participation.getVcsRepositoryUrl(), defaultBranch);
     }
 
     @Override

@@ -57,9 +57,9 @@ public class ParticipationServiceTest extends AbstractSpringIntegrationJenkinsGi
         Optional<User> student = userRepository.findOneWithGroupsAndAuthoritiesByLogin("student1");
         var someURL = new VcsRepositoryUrl("http://vcs.fake.fake");
         // Copy Repository in ParticipationService#copyRepository(..)
-        doReturn(someURL).when(versionControlService).copyRepository(any(String.class), any(String.class), any(String.class), any(String.class));
+        doReturn(someURL).when(versionControlService).copyRepository(any(String.class), any(String.class), any(String.class), any(String.class), any(String.class));
         // Configure Repository in ParticipationService#configureRepository(..)
-        doNothing().when(versionControlService).configureRepository(any(), any(), any(), anyBoolean());
+        doNothing().when(versionControlService).configureRepository(any(), any(), anyBoolean());
         // Configure WebHook in ParticipationService#configureRepositoryWebHook(..)
         doNothing().when(versionControlService).addWebHookForParticipation(any());
         // Do Nothing when setRepositoryPermissionsToReadOnly in ParticipationService#createParticipationWithEmptySubmissionIfNotExisting

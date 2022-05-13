@@ -934,7 +934,7 @@ public class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBi
         doAnswer((Answer<Void>) invocation -> {
             ((ProgrammingExercise) participation.getExercise()).setBuildAndTestStudentSubmissionsAfterDueDate(null);
             return null;
-        }).when(versionControlService).configureRepository(programmingExercise, participation.getVcsRepositoryUrl(), participation.getStudents(), true);
+        }).when(versionControlService).configureRepository(programmingExercise, participation, true);
 
         programmingExerciseParticipationService.unlockStudentRepository(programmingExercise, participation);
 

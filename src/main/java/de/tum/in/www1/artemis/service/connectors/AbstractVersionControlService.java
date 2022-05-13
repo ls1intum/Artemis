@@ -18,7 +18,13 @@ import de.tum.in.www1.artemis.domain.Repository;
 import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
 import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
+import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
+import de.tum.in.www1.artemis.domain.participation.SolutionProgrammingExerciseParticipation;
+import de.tum.in.www1.artemis.domain.participation.TemplateProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.exception.VersionControlException;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseStudentParticipationRepository;
+import de.tum.in.www1.artemis.repository.SolutionProgrammingExerciseParticipationRepository;
+import de.tum.in.www1.artemis.repository.TemplateProgrammingExerciseParticipationRepository;
 import de.tum.in.www1.artemis.service.UrlService;
 
 public abstract class AbstractVersionControlService implements VersionControlService {
@@ -40,10 +46,21 @@ public abstract class AbstractVersionControlService implements VersionControlSer
 
     protected final UrlService urlService;
 
-    public AbstractVersionControlService(ApplicationContext applicationContext, GitService gitService, UrlService urlService) {
+    protected final ProgrammingExerciseStudentParticipationRepository studentParticipationRepository;
+
+    protected final SolutionProgrammingExerciseParticipationRepository solutionParticipationRepository;
+
+    protected final TemplateProgrammingExerciseParticipationRepository templateParticipationRepository;
+
+    public AbstractVersionControlService(ApplicationContext applicationContext, GitService gitService, UrlService urlService,
+            ProgrammingExerciseStudentParticipationRepository studentParticipationRepository, SolutionProgrammingExerciseParticipationRepository solutionParticipationRepository,
+            TemplateProgrammingExerciseParticipationRepository templateParticipationRepository) {
         this.applicationContext = applicationContext;
         this.gitService = gitService;
         this.urlService = urlService;
+        this.studentParticipationRepository = studentParticipationRepository;
+        this.solutionParticipationRepository = solutionParticipationRepository;
+        this.templateParticipationRepository = templateParticipationRepository;
     }
 
     /**
@@ -91,7 +108,7 @@ public abstract class AbstractVersionControlService implements VersionControlSer
     }
 
     @Override
-    public VcsRepositoryUrl copyRepository(String sourceProjectKey, String sourceRepositoryName, String targetProjectKey, String targetRepositoryName)
+    public VcsRepositoryUrl copyRepository(String sourceProjectKey, String sourceRepositoryName, String sourceDefaultBranch, String targetProjectKey, String targetRepositoryName)
             throws VersionControlException {
         sourceRepositoryName = sourceRepositoryName.toLowerCase();
         targetRepositoryName = targetRepositoryName.toLowerCase();
@@ -107,7 +124,7 @@ public abstract class AbstractVersionControlService implements VersionControlSer
             // clone the source repo to the target directory
             targetRepo = gitService.getOrCheckoutRepositoryIntoTargetDirectory(sourceRepoUrl, targetRepoUrl, true);
             // copy by pushing the source's content to the target's repo
-            gitService.pushSourceToTargetRepo(targetRepo, targetRepoUrl, getDefaultBranchOfRepository(sourceRepoUrl));
+            gitService.pushSourceToTargetRepo(targetRepo, targetRepoUrl, sourceDefaultBranch);
         }
         catch (GitAPIException e) {
             Path localPath = gitService.getDefaultLocalPathOfRepo(targetRepoUrl);
@@ -129,5 +146,27 @@ public abstract class AbstractVersionControlService implements VersionControlSer
         }
 
         return targetRepoUrl;
+    }
+
+    @Override
+    public String getOrRetrieveDefaultBranch(ProgrammingExerciseParticipation participation) {
+        if (participation.getDefaultBranch() == null) {
+            String defaultBranch = getDefaultBranchOfRepository(participation.getVcsRepositoryUrl());
+            participation.setDefaultBranch(defaultBranch);
+            if (participation instanceof ProgrammingExerciseStudentParticipation studentParticipation) {
+                studentParticipationRepository.save(studentParticipation);
+            }
+            else if (participation instanceof TemplateProgrammingExerciseParticipation templateParticipation) {
+                templateParticipationRepository.save(templateParticipation);
+            }
+            else if (participation instanceof SolutionProgrammingExerciseParticipation solutionParticipation) {
+                solutionParticipationRepository.save(solutionParticipation);
+            }
+            else {
+                throw new IllegalArgumentException("Participation is not of any known kind");
+            }
+        }
+
+        return participation.getDefaultBranch();
     }
 }

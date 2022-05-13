@@ -36,6 +36,10 @@ public interface ProgrammingExerciseParticipation extends ParticipationInterface
 
     Set<Result> getResults();
 
+    String getDefaultBranch();
+
+    void setDefaultBranch(String defaultBranch);
+
     /**
      * This method is used to automatically create a user independent URL when serializing subclasses into json
      * @return a user independent url without the username

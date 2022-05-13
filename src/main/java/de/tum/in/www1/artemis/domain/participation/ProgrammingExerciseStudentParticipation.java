@@ -25,6 +25,10 @@ public class ProgrammingExerciseStudentParticipation extends StudentParticipatio
     @JsonView(QuizView.Before.class)
     private String buildPlanId;
 
+    @Column(name = "default_branch")
+    @JsonView(QuizView.Before.class)
+    private String defaultBranch;
+
     public String getRepositoryUrl() {
         return repositoryUrl;
     }
@@ -39,6 +43,16 @@ public class ProgrammingExerciseStudentParticipation extends StudentParticipatio
 
     public void setBuildPlanId(String buildPlanId) {
         this.buildPlanId = buildPlanId;
+    }
+
+    @Override
+    public String getDefaultBranch() {
+        return defaultBranch;
+    }
+
+    @Override
+    public void setDefaultBranch(String defaultBranch) {
+        this.defaultBranch = defaultBranch;
     }
 
     @Override

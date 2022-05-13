@@ -42,8 +42,6 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 @PreAuthorize("hasRole('USER')")
 public class RepositoryProgrammingExerciseParticipationResource extends RepositoryResource {
 
-    private final ParticipationRepository participationRepository;
-
     private final ProgrammingExerciseParticipationService participationService;
 
     private final ExamSubmissionService examSubmissionService;
@@ -59,9 +57,9 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
             ProgrammingExerciseParticipationService participationService, ProgrammingExerciseRepository programmingExerciseRepository,
             ParticipationRepository participationRepository, ExamSubmissionService examSubmissionService, BuildLogEntryService buildLogService,
             ProgrammingSubmissionRepository programmingSubmissionRepository, SubmissionPolicyService submissionPolicyService) {
-        super(userRepository, authCheckService, gitService, continuousIntegrationService, repositoryService, versionControlService, programmingExerciseRepository);
+        super(userRepository, authCheckService, gitService, continuousIntegrationService, repositoryService, versionControlService, programmingExerciseRepository,
+                participationRepository);
         this.participationService = participationService;
-        this.participationRepository = participationRepository;
         this.examSubmissionService = examSubmissionService;
         this.buildLogService = buildLogService;
         this.programmingSubmissionRepository = programmingSubmissionRepository;
@@ -135,7 +133,7 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
             return gitService.getOrCheckoutRepository(repositoryUrl, pullOnGet);
         }
         else {
-            String defaultBranch = versionControlService.get().getDefaultBranchOfRepository(repositoryUrl);
+            String defaultBranch = versionControlService.get().getOrRetrieveDefaultBranch(programmingParticipation);
             return gitService.getOrCheckoutRepository(repositoryUrl, pullOnGet, defaultBranch);
         }
     }
