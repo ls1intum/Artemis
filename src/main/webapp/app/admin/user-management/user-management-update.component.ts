@@ -51,12 +51,16 @@ export class UserManagementUpdateComponent implements OnInit {
     private isJenkins: boolean;
 
     editForm = this.fb.group({
+        idInput: ['', []],
         loginInput: ['', [Validators.required, Validators.minLength(USERNAME_MIN_LENGTH), Validators.maxLength(USERNAME_MAX_LENGTH)]],
         firstNameInput: ['', [Validators.required, Validators.maxLength(USERNAME_MAX_LENGTH)]],
         lastNameInput: ['', [Validators.required, Validators.maxLength(USERNAME_MAX_LENGTH)]],
         passwordInput: ['', [Validators.minLength(PASSWORD_MIN_LENGTH), Validators.maxLength(PASSWORD_MAX_LENGTH)]],
         emailInput: ['', [Validators.required, Validators.minLength(this.EMAIL_MIN_LENGTH), Validators.maxLength(this.EMAIL_MAX_LENGTH)]],
         registrationNumberInput: ['', [Validators.maxLength(this.REGISTRATION_NUMBER_MAX_LENGTH)]],
+        activatedInput: ['', []],
+        langKeyInput: ['', []],
+        authorityInput: ['', []],
     });
 
     constructor(
