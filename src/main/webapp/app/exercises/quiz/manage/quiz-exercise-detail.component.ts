@@ -247,6 +247,10 @@ export class QuizExerciseDetailComponent extends QuizExerciseValidationDirective
      */
     validateDate() {
         if (this.initCompleted) {
+            // TODO: quiz cleanup: this makes the exercise dirty and attempts to prevent leaving.
+            // Currently initCompleted field is used to prevent marking the exercise dirty on initialization.
+            // However making a change and undoing it still has the issue.
+            // Additionally, quiz exercises are for some reason the only exercise type the has the unsaved changes warning.
             this.exerciseService.validateDate(this.quizExercise);
         }
         const dueDate = this.quizExercise.quizMode === QuizMode.SYNCHRONIZED ? null : this.quizExercise.dueDate;
