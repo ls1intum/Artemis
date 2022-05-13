@@ -23,17 +23,6 @@ public abstract class AbstractBaseProgrammingExerciseParticipation extends Parti
     @JsonView(QuizView.Before.class)
     private String buildPlanId;
 
-    @Column(name = "default_branch")
-    @JsonView(QuizView.Before.class)
-    private String defaultBranch;
-
-    public AbstractBaseProgrammingExerciseParticipation() {
-    }
-
-    public AbstractBaseProgrammingExerciseParticipation(String defaultBranch) {
-        this.defaultBranch = defaultBranch;
-    }
-
     public String getRepositoryUrl() {
         return repositoryUrl;
     }
@@ -48,16 +37,6 @@ public abstract class AbstractBaseProgrammingExerciseParticipation extends Parti
 
     public void setBuildPlanId(String buildPlanId) {
         this.buildPlanId = buildPlanId;
-    }
-
-    @Override
-    public String getDefaultBranch() {
-        return defaultBranch;
-    }
-
-    @Override
-    public void setDefaultBranch(String defaultBranch) {
-        this.defaultBranch = defaultBranch;
     }
 
     @Override

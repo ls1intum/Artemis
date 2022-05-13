@@ -39,10 +39,7 @@ import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipat
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.exception.BitbucketException;
 import de.tum.in.www1.artemis.exception.VersionControlException;
-import de.tum.in.www1.artemis.repository.ProgrammingExerciseStudentParticipationRepository;
-import de.tum.in.www1.artemis.repository.SolutionProgrammingExerciseParticipationRepository;
-import de.tum.in.www1.artemis.repository.TemplateProgrammingExerciseParticipationRepository;
-import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.UrlService;
 import de.tum.in.www1.artemis.service.connectors.AbstractVersionControlService;
 import de.tum.in.www1.artemis.service.connectors.ConnectorHealth;
@@ -76,9 +73,8 @@ public class BitbucketService extends AbstractVersionControlService {
 
     public BitbucketService(PasswordService passwordService, @Qualifier("bitbucketRestTemplate") RestTemplate restTemplate, UserRepository userRepository, UrlService urlService,
             @Qualifier("shortTimeoutBitbucketRestTemplate") RestTemplate shortTimeoutRestTemplate, GitService gitService, ApplicationContext applicationContext,
-            ProgrammingExerciseStudentParticipationRepository studentParticipationRepository, SolutionProgrammingExerciseParticipationRepository solutionParticipationRepository,
-            TemplateProgrammingExerciseParticipationRepository templateParticipationRepository) {
-        super(applicationContext, gitService, urlService, studentParticipationRepository, solutionParticipationRepository, templateParticipationRepository);
+            ProgrammingExerciseStudentParticipationRepository studentParticipationRepository, ProgrammingExerciseRepository programmingExerciseRepository) {
+        super(applicationContext, gitService, urlService, studentParticipationRepository, programmingExerciseRepository);
         this.userRepository = userRepository;
         this.restTemplate = restTemplate;
         this.shortTimeoutRestTemplate = shortTimeoutRestTemplate;

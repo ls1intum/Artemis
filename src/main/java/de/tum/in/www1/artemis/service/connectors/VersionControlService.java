@@ -190,5 +190,9 @@ public interface VersionControlService {
 
     String getOrRetrieveDefaultBranchOfParticipation(ProgrammingExerciseParticipation participation);
 
+    String getOrRetrieveDefaultBranchOfStudentParticipation(ProgrammingExerciseStudentParticipation participation);
+
+    String getOrRetrieveDefaultBranchOfExercise(ProgrammingExercise programmingExercise);
+
     String getDefaultBranchOfArtemis();
 }

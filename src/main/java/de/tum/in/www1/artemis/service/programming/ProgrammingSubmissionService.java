@@ -144,7 +144,6 @@ public class ProgrammingSubmissionService extends SubmissionService {
             throw new IllegalArgumentException(ex);
         }
 
-        // TODO: we should avoid this call by storing the used default branch in the ProgrammingExerciseParticipation
         String defaultBranch = versionControlService.get().getOrRetrieveDefaultBranchOfParticipation(programmingExerciseParticipation);
         if (commit.getBranch() != null && !commit.getBranch().equalsIgnoreCase(defaultBranch)) {
             // if the commit was made in a branch different than the default, ignore this

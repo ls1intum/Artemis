@@ -52,12 +52,10 @@ public class ProgrammingExerciseStudentParticipation extends StudentParticipatio
         this.buildPlanId = buildPlanId;
     }
 
-    @Override
     public String getDefaultBranch() {
         return defaultBranch;
     }
 
-    @Override
     public void setDefaultBranch(String defaultBranch) {
         this.defaultBranch = defaultBranch;
     }

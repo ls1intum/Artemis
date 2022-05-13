@@ -160,6 +160,7 @@ public class ProgrammingExerciseService {
         programmingExercise.generateAndSetProjectKey();
         final User exerciseCreator = userRepository.getUser();
 
+        programmingExercise.setDefaultBranch(versionControlService.get().getDefaultBranchOfArtemis());
         createRepositoriesForNewExercise(programmingExercise);
         initParticipations(programmingExercise);
         setURLsAndBuildPlanIDsForNewExercise(programmingExercise);
@@ -359,7 +360,7 @@ public class ProgrammingExerciseService {
                     exerciseCreator);
             // The template repo can be re-written, so we can unprotect the default branch.
             var templateVcsRepositoryUrl = programmingExercise.getVcsTemplateRepositoryUrl();
-            String templateVcsRepositoryDefaultBranch = versionControlService.get().getOrRetrieveDefaultBranchOfParticipation(programmingExercise.getTemplateParticipation());
+            String templateVcsRepositoryDefaultBranch = versionControlService.get().getOrRetrieveDefaultBranchOfExercise(programmingExercise);
             versionControlService.get().unprotectBranch(templateVcsRepositoryUrl, templateVcsRepositoryDefaultBranch);
 
             setupTemplateAndPush(solutionRepo, solutionResources, solutionPrefix, projectTypeSolutionResources, projectTypeSolutionPrefix, "Solution", programmingExercise,
@@ -442,11 +443,11 @@ public class ProgrammingExerciseService {
         var templateParticipation = programmingExercise.getTemplateParticipation();
 
         if (templateParticipation == null) {
-            templateParticipation = new TemplateProgrammingExerciseParticipation(versionControlService.get().getDefaultBranchOfArtemis());
+            templateParticipation = new TemplateProgrammingExerciseParticipation();
             programmingExercise.setTemplateParticipation(templateParticipation);
         }
         if (solutionParticipation == null) {
-            solutionParticipation = new SolutionProgrammingExerciseParticipation(versionControlService.get().getDefaultBranchOfArtemis());
+            solutionParticipation = new SolutionProgrammingExerciseParticipation();
             programmingExercise.setSolutionParticipation(solutionParticipation);
         }
 

@@ -171,7 +171,7 @@ public class ProgrammingExerciseParticipationService {
     @NotNull
     public void setupInitialSolutionParticipation(ProgrammingExercise newExercise) {
         final String solutionRepoName = newExercise.generateRepositoryName(RepositoryType.SOLUTION);
-        SolutionProgrammingExerciseParticipation solutionParticipation = new SolutionProgrammingExerciseParticipation(versionControlService.get().getDefaultBranchOfArtemis());
+        SolutionProgrammingExerciseParticipation solutionParticipation = new SolutionProgrammingExerciseParticipation();
         newExercise.setSolutionParticipation(solutionParticipation);
         solutionParticipation.setBuildPlanId(newExercise.generateBuildPlanId(BuildPlanType.SOLUTION));
         solutionParticipation.setRepositoryUrl(versionControlService.get().getCloneRepositoryUrl(newExercise.getProjectKey(), solutionRepoName).toString());
@@ -188,7 +188,7 @@ public class ProgrammingExerciseParticipationService {
     @NotNull
     public void setupInitialTemplateParticipation(ProgrammingExercise newExercise) {
         final String exerciseRepoName = newExercise.generateRepositoryName(RepositoryType.TEMPLATE);
-        TemplateProgrammingExerciseParticipation templateParticipation = new TemplateProgrammingExerciseParticipation(versionControlService.get().getDefaultBranchOfArtemis());
+        TemplateProgrammingExerciseParticipation templateParticipation = new TemplateProgrammingExerciseParticipation();
         templateParticipation.setBuildPlanId(newExercise.generateBuildPlanId(BuildPlanType.TEMPLATE));
         templateParticipation.setRepositoryUrl(versionControlService.get().getCloneRepositoryUrl(newExercise.getProjectKey(), exerciseRepoName).toString());
         templateParticipation.setProgrammingExercise(newExercise);

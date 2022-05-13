@@ -19,12 +19,9 @@ import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
 import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
-import de.tum.in.www1.artemis.domain.participation.SolutionProgrammingExerciseParticipation;
-import de.tum.in.www1.artemis.domain.participation.TemplateProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.exception.VersionControlException;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseStudentParticipationRepository;
-import de.tum.in.www1.artemis.repository.SolutionProgrammingExerciseParticipationRepository;
-import de.tum.in.www1.artemis.repository.TemplateProgrammingExerciseParticipationRepository;
 import de.tum.in.www1.artemis.service.UrlService;
 
 public abstract class AbstractVersionControlService implements VersionControlService {
@@ -51,19 +48,15 @@ public abstract class AbstractVersionControlService implements VersionControlSer
 
     protected final ProgrammingExerciseStudentParticipationRepository studentParticipationRepository;
 
-    protected final SolutionProgrammingExerciseParticipationRepository solutionParticipationRepository;
-
-    protected final TemplateProgrammingExerciseParticipationRepository templateParticipationRepository;
+    protected final ProgrammingExerciseRepository programmingExerciseRepository;
 
     public AbstractVersionControlService(ApplicationContext applicationContext, GitService gitService, UrlService urlService,
-            ProgrammingExerciseStudentParticipationRepository studentParticipationRepository, SolutionProgrammingExerciseParticipationRepository solutionParticipationRepository,
-            TemplateProgrammingExerciseParticipationRepository templateParticipationRepository) {
+            ProgrammingExerciseStudentParticipationRepository studentParticipationRepository, ProgrammingExerciseRepository programmingExerciseRepository) {
         this.applicationContext = applicationContext;
         this.gitService = gitService;
         this.urlService = urlService;
         this.studentParticipationRepository = studentParticipationRepository;
-        this.solutionParticipationRepository = solutionParticipationRepository;
-        this.templateParticipationRepository = templateParticipationRepository;
+        this.programmingExerciseRepository = programmingExerciseRepository;
     }
 
     /**
@@ -153,24 +146,34 @@ public abstract class AbstractVersionControlService implements VersionControlSer
 
     @Override
     public String getOrRetrieveDefaultBranchOfParticipation(ProgrammingExerciseParticipation participation) {
+        if (participation instanceof ProgrammingExerciseStudentParticipation studentParticipation) {
+            return getOrRetrieveDefaultBranchOfStudentParticipation(studentParticipation);
+        }
+        else {
+            return getOrRetrieveDefaultBranchOfExercise(participation.getProgrammingExercise());
+        }
+    }
+
+    @Override
+    public String getOrRetrieveDefaultBranchOfStudentParticipation(ProgrammingExerciseStudentParticipation participation) {
         if (participation.getDefaultBranch() == null) {
             String defaultBranch = getDefaultBranchOfRepository(participation.getVcsRepositoryUrl());
             participation.setDefaultBranch(defaultBranch);
-            if (participation instanceof ProgrammingExerciseStudentParticipation studentParticipation) {
-                studentParticipationRepository.save(studentParticipation);
-            }
-            else if (participation instanceof TemplateProgrammingExerciseParticipation templateParticipation) {
-                templateParticipationRepository.save(templateParticipation);
-            }
-            else if (participation instanceof SolutionProgrammingExerciseParticipation solutionParticipation) {
-                solutionParticipationRepository.save(solutionParticipation);
-            }
-            else {
-                throw new IllegalArgumentException("Participation is not of any known kind");
-            }
+            studentParticipationRepository.save(participation);
         }
 
         return participation.getDefaultBranch();
+    }
+
+    @Override
+    public String getOrRetrieveDefaultBranchOfExercise(ProgrammingExercise programmingExercise) {
+        if (programmingExercise.getDefaultBranch() == null) {
+            String defaultBranch = getDefaultBranchOfRepository(programmingExercise.getVcsTemplateRepositoryUrl());
+            programmingExercise.setDefaultBranch(defaultBranch);
+            programmingExerciseRepository.save(programmingExercise);
+        }
+
+        return programmingExercise.getDefaultBranch();
     }
 
     @Override

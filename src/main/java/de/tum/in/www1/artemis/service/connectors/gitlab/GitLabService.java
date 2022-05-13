@@ -39,10 +39,7 @@ import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.exception.VersionControlException;
-import de.tum.in.www1.artemis.repository.ProgrammingExerciseStudentParticipationRepository;
-import de.tum.in.www1.artemis.repository.SolutionProgrammingExerciseParticipationRepository;
-import de.tum.in.www1.artemis.repository.TemplateProgrammingExerciseParticipationRepository;
-import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.UrlService;
 import de.tum.in.www1.artemis.service.connectors.AbstractVersionControlService;
 import de.tum.in.www1.artemis.service.connectors.ConnectorHealth;
@@ -74,9 +71,8 @@ public class GitLabService extends AbstractVersionControlService {
 
     public GitLabService(UserRepository userRepository, @Qualifier("shortTimeoutGitlabRestTemplate") RestTemplate shortTimeoutRestTemplate, GitLabApi gitlab, UrlService urlService,
             GitLabUserManagementService gitLabUserManagementService, GitService gitService, ApplicationContext applicationContext,
-            ProgrammingExerciseStudentParticipationRepository studentParticipationRepository, SolutionProgrammingExerciseParticipationRepository solutionParticipationRepository,
-            TemplateProgrammingExerciseParticipationRepository templateParticipationRepository) {
-        super(applicationContext, gitService, urlService, studentParticipationRepository, solutionParticipationRepository, templateParticipationRepository);
+            ProgrammingExerciseStudentParticipationRepository studentParticipationRepository, ProgrammingExerciseRepository programmingExerciseRepository) {
+        super(applicationContext, gitService, urlService, studentParticipationRepository, programmingExerciseRepository);
         this.userRepository = userRepository;
         this.shortTimeoutRestTemplate = shortTimeoutRestTemplate;
         this.gitlab = gitlab;
@@ -104,7 +100,7 @@ public class GitLabService extends AbstractVersionControlService {
             gitLabUserManagementService.generateVersionControlAccessTokenIfNecessary(user);
         }
 
-        var defaultBranch = getOrRetrieveDefaultBranchOfParticipation(participation);
+        var defaultBranch = getOrRetrieveDefaultBranchOfStudentParticipation(participation);
         protectBranch(participation.getVcsRepositoryUrl(), defaultBranch);
     }
 

@@ -18,13 +18,6 @@ public class SolutionProgrammingExerciseParticipation extends AbstractBaseProgra
     @JsonIgnoreProperties("solutionParticipation")
     private ProgrammingExercise programmingExercise;
 
-    public SolutionProgrammingExerciseParticipation() {
-    }
-
-    public SolutionProgrammingExerciseParticipation(String defaultBranch) {
-        super(defaultBranch);
-    }
-
     @Override
     public ProgrammingExercise getProgrammingExercise() {
         return programmingExercise;
