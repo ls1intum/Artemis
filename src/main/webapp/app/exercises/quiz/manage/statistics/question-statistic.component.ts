@@ -11,7 +11,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
 import { CanBecomeInvalid } from 'app/entities/quiz/drop-location.model';
-import { QuizStatisticsDirective } from 'app/exercises/quiz/manage/statistics/quiz-statistics.directive';
+import { QuizStatistics } from 'app/exercises/quiz/manage/statistics/quiz-statistics';
 
 export const redColor = '#d9534f';
 export const greenColor = '#5cb85c';
@@ -20,7 +20,7 @@ export const lightBlueColor = '#5bc0de';
 export const greyColor = '#838383';
 
 @Component({ template: '' })
-export abstract class QuestionStatisticComponent extends QuizStatisticsDirective implements OnInit, OnDestroy {
+export abstract class QuestionStatisticComponent extends QuizStatistics implements OnInit, OnDestroy {
     question: QuizQuestion;
     questionStatistic: QuizQuestionStatistic;
 
@@ -55,6 +55,9 @@ export abstract class QuestionStatisticComponent extends QuizStatisticsDirective
         protected changeDetector: ChangeDetectorRef,
     ) {
         super(translateService);
+        translateService.onLangChange.subscribe(() => {
+            this.setAxisLabels('showStatistic.questionStatistic.xAxes', 'showStatistic.questionStatistic.yAxes');
+        });
     }
 
     ngOnInit() {

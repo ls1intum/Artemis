@@ -44,16 +44,17 @@
                         [yAxis]="true"
                         [yScaleMax]="maxScale"
                         [tooltipDisabled]="true"
-                        [rotateXAxisTicks]="false"
+                        [rotateXAxisTicks]="true"
                         [maxXAxisTickLength]="17"
                         [dataLabelFormatting]="bindFormatting"
                         [roundEdges]="false"
                     >
                     </ngx-charts-bar-vertical>
 
-                    <div class="col-md-12 text-center">
-                        <button (click)="switchSolution()" type="button" class="btn btn-primary">
-                            <fa-icon *ngIf="showSolution" [icon]="faCheckCircle"></fa-icon>&nbsp; <fa-icon *ngIf="!showSolution" [icon]="faTimesCircle"></fa-icon>&nbsp;
+                    <div class="col-md-12 text-center button-row">
+                        <button (click)="switchSolution()" type="button" class="btn btn-primary mb-1 mb-xl-0">
+                            <fa-icon *ngIf="showSolution" [icon]="faCheckCircle"></fa-icon>
+                            <fa-icon *ngIf="!showSolution" [icon]="faTimesCircle"></fa-icon>&nbsp;
                             <span *ngIf="showSolution" jhiTranslate="showStatistic.hideSolution"></span>
                             <span *ngIf="!showSolution" jhiTranslate="showStatistic.showSolution"></span>
                         </button>
