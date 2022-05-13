@@ -234,6 +234,7 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
             }
             if (this.gutterHighlights.size > 0) {
                 this.gutterHighlights.forEach((classes, row) => classes.forEach((className) => this.editorSession.removeGutterDecoration(row, className)));
+                this.gutterHighlights.clear();
             }
             this.onFileLoad.emit(this.selectedFile);
         }
