@@ -70,6 +70,16 @@
                     "title": "Statistiken Erstellen",
                     "shortDescription": "Statistiken erstellen und Einblicke in die Leistungen der Studierenden gewinnen.",
                     "descriptionTextOne": "Die Klausur ist vorbei, alle Klausuren wurden bewertet und die Beschwerden der Studierenden wurden ausgewertet. Was nun?\n\nDu kannst das Ergebnis der Klausur anhand der von Artemis generierten Statistiken auswerten. Überprüfe die Leistung der Studierenden anhand verschiedener Metriken wie Durchschnitt, Median und Standardabweichung. Überprüfen Sie die wahrgenommenen Schwierigkeiten der Studierenden bei jeder Aufgabe, um die Klausuren in Zukunft zu verbessern. Zusätzlich kannst du alle Ergebnisse in eine CSV-Datei herunterladen, um sie in externe Systeme zu exportieren und Diagramme und Grafiken zur weiteren Analyse zu erstellen."
+                },
+                "checklist": {
+                    "title": "Checkliste Befolgen",
+                    "shortDescription": "Verwende die Prüfungscheckliste, um jeden Schritt der Prüfung zu überwachen und sicherzustellen, dass er korrekt durchgeführt wird.",
+                    "descriptionTextOne": "Die Durchführung einer Prüfung ist ein langer Prozess mit vielen möglichen Fehlerquellen. Artemis bietet dir eine Checkliste von der Erstellung der Übungen bis zum Export der Ergebnisse, die dir einen Überblick über jeden Schritt einer Prüfung gibt. Die Prüfungs-Checkliste enthält die nächste Aktion, die du bei einem Schritt durchführen musst, und fasst den bisherigen Fortschritt zusammen, damit du alle Aufgaben korrekt und vollständig ausführen kannst. Sie hat auch Navigationsschaltflächen, damit du schnell verwandte Aktionen durchführen oder den Fortschritt im Detail überprüfen kannst. Außerdem gibt es auf der Seite mit der Prüfungsliste eine kompakte Übersicht, mit der du die Vorbereitung, Durchführung und Korrektur von Prüfungen in der Liste überblicken kannst."
+                },
+                "gradeKey": {
+                    "title": "Notenschlüssel Erstellen",
+                    "shortDescription": "Erstelle einen Notenschlüssel mit benutzerdefinierten oder vorgegebenen Notenstufen für einen Kurs oder eine Prüfung.",
+                    "descriptionTextOne": "Punkte sind hilfreich, um einzelne Übungen zu bewerten, aber am Ende eines Semesters möchten du und die Studierenden eine Note erhalten. Auf der Notenschlüssel-Seite kannst du für jeden Kurs und jede Prüfung einen Notenschlüssel festlegen und die Notenstufen definieren, indem du die Intervalle, die Mindestnote und die untere/obere Grenze angibst. Der Standard-Notenschlüssel kann auch mit einem einzigen Klick erstellt werden. Artemis kümmert sich dann automatisch um die Zuordnung von Noten zu Notenstufen oder Bonuspunkten und um die Berechnung der Ergebnisstatistik auf der Grundlage der Notenstufen."
                 }
             }
         },
@@ -142,6 +152,11 @@
                     "title": "Kompatibel Mit Allen Gängigen Browsern.",
                     "shortDescription": "Verwende Artemis in allen gängigen Browsern.",
                     "descriptionTextOne": "Der Artemis-Klausurmodus ist mit allen gängigen Browsern kompatibel, einschließlich Chrome, Safari, Edge und Opera. Wir bieten aktive Unterstützung für Google Chrome und Chromium-Browser."
+                },
+                "gradeKey": {
+                    "title": "Notenschlüssel Anzeigen",
+                    "shortDescription": "Sieh dir deine Endnote und die erreichte Note für einen Kurs oder eine Prüfung an, sobald eine neue Aufgabe benotet wurde.",
+                    "descriptionTextOne": "Wenn ein Notenschlüssel für einen Kurs oder eine Prüfung definiert ist, kannst du ihn überprüfen und den Punkteschnitt für jede Bewertungsstufe sowie die zum Bestehen erforderliche Mindestpunktzahl einsehen. Notenschlüssel haben auch einen Bonuspunkte-Modus, der die erreichte Punktzahl in einen Bonus umwandelt. Du musst nicht bis zum Ende des Semesters warten, um den Notenschlüssel zu benutzen, sondern kannst jederzeit deine erreichte Note anhand der bisher durchgeführten und bewerteten Übungen überprüfen."
                 }
             }
         }

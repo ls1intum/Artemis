@@ -124,7 +124,7 @@ public class QuizExerciseResource {
             return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "invalidQuiz", "The quiz exercise is invalid")).body(null);
         }
 
-        quizExercise.validateScoreSettings();
+        quizExercise.validateGeneralSettings();
         // Valid exercises have set either a course or an exerciseGroup
         quizExercise.checkCourseAndExerciseGroupExclusivity(ENTITY_NAME);
 
@@ -162,7 +162,7 @@ public class QuizExerciseResource {
             return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "invalidQuiz", "The quiz exercise is invalid")).body(null);
         }
 
-        quizExercise.validateScoreSettings();
+        quizExercise.validateGeneralSettings();
 
         // Valid exercises have set either a course or an exerciseGroup
         quizExercise.checkCourseAndExerciseGroupExclusivity(ENTITY_NAME);
@@ -210,12 +210,7 @@ public class QuizExerciseResource {
             // not required in the returned json body
             quizExercise.setStudentParticipations(null);
             quizExercise.setCourse(null);
-            Set<QuizBatch> batches = switch (quizExercise.getQuizMode()) {
-                case SYNCHRONIZED -> quizBatchRepository.findAllByQuizExercise(quizExercise);
-                case BATCHED -> quizBatchRepository.findAllByQuizExerciseAndCreator(quizExercise, user.getId());
-                case INDIVIDUAL -> Set.of();
-            };
-            quizExercise.setQuizBatches(batches);
+            setQuizBatches(user, quizExercise);
         }
 
         return quizExercises;
@@ -255,15 +250,16 @@ public class QuizExerciseResource {
     public ResponseEntity<QuizExercise> getQuizExercise(@PathVariable Long quizExerciseId) {
         // TODO: Split this route in two: One for normal and one for exam exercises
         log.debug("REST request to get QuizExercise : {}", quizExerciseId);
+        User user = userRepository.getUserWithGroupsAndAuthorities();
         var quizExercise = quizExerciseRepository.findByIdWithQuestionsAndStatisticsElseThrow(quizExerciseId);
         if (quizExercise.isExamExercise()) {
-            authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, quizExercise, null);
+            authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, quizExercise, user);
             studentParticipationRepository.checkTestRunsExist(quizExercise);
         }
         else if (!authCheckService.isAllowedToSeeExercise(quizExercise, null)) {
             throw new AccessForbiddenException();
         }
-        quizExercise.setQuizBatches(quizBatchRepository.findAllByQuizExerciseAndCreator(quizExercise, userRepository.getUser().getId()));
+        setQuizBatches(user, quizExercise);
         return ResponseEntity.ok(quizExercise);
     }
 
@@ -322,7 +318,7 @@ public class QuizExerciseResource {
         log.debug("REST request to join Batch : {}", quizExerciseId);
         QuizExercise quizExercise = quizExerciseRepository.findByIdElseThrow(quizExerciseId);
         var user = userRepository.getUserWithGroupsAndAuthorities();
-        if (!authCheckService.isAllowedToSeeExercise(quizExercise, user)) {
+        if (!authCheckService.isAllowedToSeeExercise(quizExercise, user) || !quizExercise.isQuizStarted() || quizExercise.isQuizEnded()) {
             throw new AccessForbiddenException();
         }
         if (quizScheduleService.getQuizBatchForStudent(quizExercise, user).isPresent()) {
@@ -429,6 +425,10 @@ public class QuizExerciseResource {
                 // set release date to now, truncated to seconds because the database only stores seconds
                 var now = ZonedDateTime.now().truncatedTo(ChronoUnit.SECONDS);
                 quizBatchService.getOrCreateSynchronizedQuizBatch(quizExercise).setStartTime(now);
+                if (quizExercise.getReleaseDate() != null && quizExercise.getReleaseDate().isAfter(now)) {
+                    // preserve null and valid releaseDates for quiz start lifecycle event
+                    quizExercise.setReleaseDate(now);
+                }
                 quizExercise.setDueDate(now.plusSeconds(quizExercise.getDuration() + Constants.QUIZ_GRACE_PERIOD_IN_SECONDS));
             }
             case "end-now" -> {
@@ -549,5 +549,16 @@ public class QuizExerciseResource {
 
         quizExercise.validateScoreSettings();
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, quizExercise.getId().toString())).body(quizExercise);
+    }
+
+    private void setQuizBatches(User user, QuizExercise quizExercise) {
+        if (quizExercise.getQuizMode() != null) {
+            Set<QuizBatch> batches = switch (quizExercise.getQuizMode()) {
+                case SYNCHRONIZED -> quizBatchRepository.findAllByQuizExercise(quizExercise);
+                case BATCHED -> quizBatchRepository.findAllByQuizExerciseAndCreator(quizExercise, user.getId());
+                case INDIVIDUAL -> Set.of();
+            };
+            quizExercise.setQuizBatches(batches);
+        }
     }
 }

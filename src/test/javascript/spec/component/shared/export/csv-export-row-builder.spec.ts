@@ -1,16 +1,16 @@
 import { CourseScoresStudentStatistics } from 'app/course/course-scores/course-scores-student-statistics';
 import { User } from 'app/core/user/user.model';
-import { EMAIL_KEY, NAME_KEY, POINTS_KEY, REGISTRATION_NUMBER_KEY, SCORE_KEY, USERNAME_KEY } from 'app/course/course-scores/course-scores.component';
+import { EMAIL_KEY, NAME_KEY, POINTS_KEY, REGISTRATION_NUMBER_KEY, SCORE_KEY, USERNAME_KEY } from 'app/shared/export/export-constants';
 import { ExerciseType } from 'app/entities/exercise.model';
-import { CourseScoresRowBuilder } from 'app/course/course-scores/course-scores-row-builder';
-import { CourseScoresCsvRowBuilder } from 'app/course/course-scores/course-scores-csv-row-builder';
+import { ExportRowBuilder } from 'app/shared/export/export-row-builder';
+import { CsvExportRowBuilder } from 'app/shared/export/csv-export-row-builder';
 import { CsvDecimalSeparator } from 'app/shared/export/export-modal.component';
 
-describe('The CourseScoresCsvRowBuilder', () => {
-    let csvRow: CourseScoresRowBuilder;
+describe('The CsvExportRowBuilder', () => {
+    let csvRow: ExportRowBuilder;
 
     beforeEach(() => {
-        csvRow = new CourseScoresCsvRowBuilder(CsvDecimalSeparator.PERIOD);
+        csvRow = new CsvExportRowBuilder(CsvDecimalSeparator.PERIOD);
     });
 
     it('should set a string', () => {
@@ -25,74 +25,74 @@ describe('The CourseScoresCsvRowBuilder', () => {
     });
 
     it('should convert numbers to their localized format', () => {
-        csvRow.setLocalized('n', 100);
+        csvRow.setPoints('n', 100);
         expect(csvRow.build()['n']).toBe('100');
-        csvRow.setLocalized('n', 25.5);
+        csvRow.setPoints('n', 25.5);
         expect(csvRow.build()['n']).toBe('25.5');
-        csvRow.setLocalized('n', 1000.23);
+        csvRow.setPoints('n', 1000.23);
         expect(csvRow.build()['n']).toBe('1000.2');
     });
 
     it('should convert percentage numbers to their localized format', () => {
-        csvRow.setLocalizedPercent('n', 5);
+        csvRow.setScore('n', 5);
         expect(csvRow.build()['n']).toBe('5%');
-        csvRow.setLocalizedPercent('n', 5.5);
+        csvRow.setScore('n', 5.5);
         expect(csvRow.build()['n']).toBe('5.5%');
     });
 
     it('should return a hyphen for NaN values', () => {
-        csvRow.setLocalized('n', NaN);
+        csvRow.setPoints('n', NaN);
         expect(csvRow.build()['n']).toBe('-');
-        csvRow.setLocalizedPercent('p', NaN);
+        csvRow.setScore('p', NaN);
         expect(csvRow.build()['p']).toBe('-');
     });
 
-    describe('Test the CourseScoresCsvRowBuilder with a comma as a decimal separator', () => {
+    describe('Test the CsvExportRowBuilder with a comma as a decimal separator', () => {
         beforeEach(() => {
-            csvRow = new CourseScoresCsvRowBuilder(CsvDecimalSeparator.COMMA);
+            csvRow = new CsvExportRowBuilder(CsvDecimalSeparator.COMMA);
         });
 
         it('should convert numbers to their localized format', () => {
-            csvRow.setLocalized('n', 100);
+            csvRow.setPoints('n', 100);
             expect(csvRow.build()['n']).toBe('100');
-            csvRow.setLocalized('n', 25.5);
+            csvRow.setPoints('n', 25.5);
             expect(csvRow.build()['n']).toBe('25,5');
-            csvRow.setLocalized('n', 1000.23);
+            csvRow.setPoints('n', 1000.23);
             expect(csvRow.build()['n']).toBe('1000,2');
         });
 
         it('should convert percentage numbers to their localized format', () => {
-            csvRow.setLocalizedPercent('n', 5);
+            csvRow.setScore('n', 5);
             expect(csvRow.build()['n']).toBe('5%');
-            csvRow.setLocalizedPercent('n', 5.5);
+            csvRow.setScore('n', 5.5);
             expect(csvRow.build()['n']).toBe('5,5%');
         });
     });
 
-    describe('Test the CourseScoresCsvRowBuilder with a specific accuracyOfScores', () => {
+    describe('Test the CsvExportRowBuilder with a specific accuracyOfScores', () => {
         beforeEach(() => {
-            csvRow = new CourseScoresCsvRowBuilder(CsvDecimalSeparator.PERIOD, 3);
+            csvRow = new CsvExportRowBuilder(CsvDecimalSeparator.PERIOD, 3);
         });
 
         it('should convert numbers to their localized format respecting the accuracyOfScores', () => {
-            csvRow.setLocalized('n', 100.12345);
+            csvRow.setPoints('n', 100.12345);
             expect(csvRow.build()['n']).toBe('100.123');
-            csvRow.setLocalized('n', 99.9999);
+            csvRow.setPoints('n', 99.9999);
             expect(csvRow.build()['n']).toBe('100');
-            csvRow.setLocalized('n', 25.5678);
+            csvRow.setPoints('n', 25.5678);
             expect(csvRow.build()['n']).toBe('25.568');
-            csvRow.setLocalized('n', 1000.2345);
+            csvRow.setPoints('n', 1000.2345);
             expect(csvRow.build()['n']).toBe('1000.235');
         });
 
         it('should convert percentage numbers to their localized format', () => {
-            csvRow.setLocalizedPercent('n', 5.12345);
+            csvRow.setScore('n', 5.12345);
             expect(csvRow.build()['n']).toBe('5.123%');
-            csvRow.setLocalizedPercent('n', 99.9999);
+            csvRow.setScore('n', 99.9999);
             expect(csvRow.build()['n']).toBe('100%');
-            csvRow.setLocalizedPercent('n', 51.9999);
+            csvRow.setScore('n', 51.9999);
             expect(csvRow.build()['n']).toBe('52%');
-            csvRow.setLocalizedPercent('n', 25.5678);
+            csvRow.setScore('n', 25.5678);
             expect(csvRow.build()['n']).toBe('25.568%');
         });
     });
@@ -105,7 +105,7 @@ describe('The CourseScoresCsvRowBuilder', () => {
         user.visibleRegistrationNumber = ' 123456789  ';
         const student = new CourseScoresStudentStatistics(user);
 
-        csvRow.setUserInformation(student);
+        csvRow.setUserInformation(student.user.name, student.user.login, student.user.email, student.user.visibleRegistrationNumber);
 
         const row = csvRow.build();
         expect(row[NAME_KEY]).toBe('Testuser');
@@ -118,7 +118,7 @@ describe('The CourseScoresCsvRowBuilder', () => {
         const user = new User();
         const student = new CourseScoresStudentStatistics(user);
 
-        csvRow.setUserInformation(student);
+        csvRow.setUserInformation(student.user.name, student.user.login, student.user.email, student.user.visibleRegistrationNumber);
 
         const row = csvRow.build();
         expect(row[NAME_KEY]).toBe('');
