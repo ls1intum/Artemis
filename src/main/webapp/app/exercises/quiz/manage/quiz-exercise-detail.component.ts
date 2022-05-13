@@ -1000,18 +1000,6 @@ export class QuizExerciseDetailComponent extends QuizExerciseValidationDirective
         return super.computeInvalidReasons().concat(invalidReasons);
     }
 
-    getReleaseDateExplanation(quizMode?: QuizMode) {
-        switch (quizMode) {
-            case QuizMode.SYNCHRONIZED:
-                return 'artemisApp.quizExercise.releaseDateExplanation.synchronized';
-            case QuizMode.BATCHED:
-                return 'artemisApp.quizExercise.releaseDateExplanation.batched';
-            case QuizMode.INDIVIDUAL:
-                return 'artemisApp.quizExercise.releaseDateExplanation.individual';
-        }
-        return undefined;
-    }
-
     hasErrorInQuizBatches() {
         return this.quizExercise?.quizBatches?.some((batch) => batch.startTimeError);
     }

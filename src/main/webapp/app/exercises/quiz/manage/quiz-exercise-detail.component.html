@@ -106,7 +106,7 @@
                                     id="release-date"
                                     class="form-element"
                                     labelName="{{ 'artemisApp.quizExercise.releaseDate' | artemisTranslate }}"
-                                    labelTooltip="{{ getReleaseDateExplanation(quizExercise.quizMode) | artemisTranslate }}"
+                                    labelTooltip="{{ 'artemisApp.quizExercise.releaseDateExplanation.' + quizExercise.quizMode | artemisTranslate }}"
                                     [(ngModel)]="quizExercise.releaseDate"
                                     (valueChange)="cacheValidation()"
                                     [error]="false"

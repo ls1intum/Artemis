@@ -1363,15 +1363,6 @@ describe('QuizExercise Management Detail Component', () => {
                 comp.removeQuizBatch(b2);
                 expect(quizExercise.quizBatches).toEqual([b1, b3]);
             });
-
-            it.each([
-                [QuizMode.SYNCHRONIZED, 'artemisApp.quizExercise.releaseDateExplanation.synchronized'],
-                [QuizMode.BATCHED, 'artemisApp.quizExercise.releaseDateExplanation.batched'],
-                [QuizMode.INDIVIDUAL, 'artemisApp.quizExercise.releaseDateExplanation.individual'],
-                [undefined, undefined],
-            ])('should return correct release date explanation for %p', (quizMode, translationKey) => {
-                expect(comp.getReleaseDateExplanation(quizMode)).toBe(translationKey);
-            });
         });
 
         describe('show existing questions', () => {
