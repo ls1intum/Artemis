@@ -1,4 +1,4 @@
-import { CourseScoresRowBuilder } from 'app/course/course-scores/course-scores-row-builder';
+import { ExportRowBuilder } from 'app/shared/export/export-row-builder';
 import { round } from 'app/shared/util/utils';
 
 /**
@@ -12,9 +12,9 @@ export interface CommonSpreadsheetCellObject {
 }
 
 /**
- * Builds Excel rows for the course scores export.
+ * Builds Excel rows for exporting student scores.
  */
-export class CourseScoresExcelRowBuilder extends CourseScoresRowBuilder {
+export class ExcelExportRowBuilder extends ExportRowBuilder {
     /**
      * Creates a new empty Excel row.
      */
@@ -23,32 +23,32 @@ export class CourseScoresExcelRowBuilder extends CourseScoresRowBuilder {
     }
 
     /**
-     * Stores the given value under the key in the row after converting it to the localized format stored in the Common Spreadsheet Format (CSF).
-     * @param key Which should be associated with the given value.
-     * @param value That should be placed in the row.
+     * Stores the given points under the key in the row after converting it to the localized format stored in the Common Spreadsheet Format (CSF).
+     * @param key Which should be associated with the given points.
+     * @param points That should be placed in the row.
      */
-    setLocalized(key: string, value: number) {
-        if (isNaN(value)) {
+    setPoints(key: string, points: number | undefined) {
+        if (points == undefined || isNaN(points)) {
             this.set(key, '-');
         } else {
             const numberCell: CommonSpreadsheetCellObject = {
                 t: 'n',
-                v: round(value, this.accuracyOfScores),
+                v: round(points, this.accuracyOfScores),
             };
             this.set(key, numberCell);
         }
     }
 
     /**
-     * Stores the given value under the key in the row after converting it to the localized percentage format stored in the Common Spreadsheet Format (CSF).
-     * @param key Which should be associated with the given value.
-     * @param value That should be placed in the row.
+     * Stores the given score under the key in the row after converting it to the localized percentage format stored in the Common Spreadsheet Format (CSF).
+     * @param key Which should be associated with the given score.
+     * @param score That should be placed in the row.
      */
-    setLocalizedPercent(key: string, value: number) {
-        if (isNaN(value)) {
+    setScore(key: string, score: number | undefined) {
+        if (score == undefined || isNaN(score)) {
             this.set(key, '-');
         } else {
-            const roundedScore = round(value, this.accuracyOfScores);
+            const roundedScore = round(score, this.accuracyOfScores);
             const percentageFormat = Number.isInteger(roundedScore) ? '0%' : '0.' + Array(this.accuracyOfScores + 1).join('0') + '%';
             const percentageCell: CommonSpreadsheetCellObject = {
                 t: 'n',
