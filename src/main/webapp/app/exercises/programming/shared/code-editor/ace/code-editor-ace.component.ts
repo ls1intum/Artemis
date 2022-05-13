@@ -50,10 +50,12 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
     sessionId: number | string;
     @Input()
     readOnlyManualFeedback: boolean;
+
     @Input()
     set annotations(annotations: Array<Annotation>) {
         this.setAnnotations(annotations);
     }
+
     @Input()
     readonly commitState: CommitState;
     @Input()
@@ -98,6 +100,7 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
     fileFeedbackPerLine: { [line: number]: Feedback } = {};
     editorSession: any;
     markerIds: number[] = [];
+    gutterHighlights: Map<number, string[]> = new Map<number, string[]>();
     tabSize = 4;
 
     themeSubscription: Subscription;
@@ -229,6 +232,9 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
                 this.markerIds.forEach((markerId) => this.editorSession.removeMarker(markerId));
                 this.markerIds = [];
             }
+            if (this.gutterHighlights.size > 0) {
+                this.gutterHighlights.forEach((classes, row) => classes.forEach((className) => this.editorSession.removeGutterDecoration(row, className)));
+            }
             this.onFileLoad.emit(this.selectedFile);
         }
     }
@@ -342,6 +348,25 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
         }
 
         this.displayAnnotations();
+    }
+
+    /**
+     * Highlights lines using a marker and / or a gutter decorator.
+     * @param firstLine the first line to highlight
+     * @param lastLine the last line to highlight
+     * @param lineHightlightClassName the classname to use for the highlight of the line in the editor content area, or undefined if it should not be highlighted
+     * @param gutterHightlightClassName the classname to use for the highlight of the line number gutter, or undefined if the gutter should not be highlighted
+     */
+    highlightLines(firstLine: number, lastLine: number, lineHightlightClassName: string | undefined, gutterHightlightClassName: string | undefined) {
+        if (lineHightlightClassName) {
+            this.markerIds.push(this.editorSession.addMarker(new this.Range(firstLine, 0, lastLine, 1), lineHightlightClassName, 'fullLine'));
+        }
+        if (gutterHightlightClassName) {
+            for (let i = firstLine; i <= lastLine; ++i) {
+                this.editorSession.addGutterDecoration(i, gutterHightlightClassName);
+                this.gutterHighlights.computeIfAbsent(i, () => []).push(gutterHightlightClassName);
+            }
+        }
     }
 
     /**
