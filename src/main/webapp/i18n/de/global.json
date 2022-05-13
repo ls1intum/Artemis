@@ -241,7 +241,8 @@
             "addExternalSubmission": "Externe Einreichung anlegen",
             "addAuxiliaryRepository": "Hilfsrepository anlegen",
             "toggleToUnsubmitted": "Setze Studierenden-Klausur auf nicht abgegeben",
-            "toggleToSubmitted": "Setze Studierenden-Klausur auf abgegeben"
+            "toggleToSubmitted": "Setze Studierenden-Klausur auf abgegeben",
+            "endNow": "Jetzt Beenden"
         },
         "detail": {
             "field": "Feld",
@@ -258,6 +259,9 @@
         },
         "noButtonTextDelete": {
             "title": "Löschen bestätigen"
+        },
+        "endNow": {
+            "title": "Beenden bestätigen"
         },
         "cleanup": {
             "title": "Aufräumen bestätigen"
