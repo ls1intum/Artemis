@@ -60,4 +60,13 @@ Ace Editor
         background: var(--code-editor-diff-newline-background);
         z-index: 20;
     }
+
+    .ace_gutter-cell {
+        transition: background 0s;
+
+        &.gutter-diff-newLine {
+            transition: background 0s;
+            background: var(--code-editor-gutter-newline-background);
+        }
+    }
 }
