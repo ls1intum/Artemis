@@ -17,6 +17,9 @@
             "reset": {
                 "question": "Are you sure you want to reset the quiz <strong>{{ title }}</strong>? This action can NOT be undone! <br> This means that all participation, results, and statistics will be deleted, but the quiz questions will remain. Then you can start the quiz again."
             },
+            "endNow": {
+                "question": "Are you sure you want to end the quiz <strong>{{ title }}</strong> now? This action can NOT be undone! <br> This prevents any further submissions and starts to publish the results."
+            },
             "edit": {
                 "title": "Edit Quiz Exercise for {{ param }}",
                 "addQuestion": "Add Question",
@@ -64,7 +67,6 @@
             "startQuiz": "Start Quiz",
             "startBatch": "Start Batch",
             "showNow": "Set Visible",
-            "endNow": "End Now",
             "duration": "Duration",
             "minutes": "minutes",
             "seconds": "seconds",
