@@ -323,7 +323,7 @@ describe('ProgrammingExerciseInstructionComponent', () => {
         fixture.detectChanges();
 
         expect(debugElement.query(By.css('.stepwizard'))).not.toBe(null);
-        expect(debugElement.queryAll(By.css('.stepwizard-circle'))).toHaveLength(2);
+        expect(debugElement.queryAll(By.css('.btn-circle'))).toHaveLength(2);
         tick();
         fixture.detectChanges();
         expect(debugElement.query(By.css('.instructions__content__markdown')).nativeElement.innerHTML).toEqual(problemStatementBubbleSortNotExecutedHtml);
@@ -380,7 +380,7 @@ describe('ProgrammingExerciseInstructionComponent', () => {
         fixture.detectChanges();
 
         expect(debugElement.query(By.css('.stepwizard'))).not.toBe(null);
-        expect(debugElement.queryAll(By.css('.stepwizard-circle'))).toHaveLength(2);
+        expect(debugElement.queryAll(By.css('.btn-circle'))).toHaveLength(2);
         tick();
         fixture.detectChanges();
         expect(debugElement.query(By.css('.instructions__content__markdown')).nativeElement.innerHTML).toEqual(problemStatementBubbleSortFailsHtml);
