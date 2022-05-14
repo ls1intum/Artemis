@@ -30,7 +30,7 @@ import de.tum.in.www1.artemis.service.scheduled.cache.Cache;
 @Service
 public class ExamMonitoringScheduleService {
 
-    private static final Logger log = LoggerFactory.getLogger(ExamMonitoringScheduleService.class);
+    private final Logger logger = LoggerFactory.getLogger(ExamMonitoringScheduleService.class);
 
     private final ExamCache examCache;
 
@@ -107,7 +107,7 @@ public class ExamMonitoringScheduleService {
      */
     public void startSchedule() {
         List<Exam> exams = examService.findAllCurrentAndUpcomingExams().stream().filter(Exam::isMonitoring).toList();
-        log.info("Found {} exams that are not yet ended or are scheduled to start in the future", exams.size());
+        logger.info("Found {} exams that are not yet ended or are scheduled to start in the future", exams.size());
         for (Exam exam : exams) {
             cancelExamActivitySave(exam.getId());
             if (exam.isMonitoring()) {
@@ -159,7 +159,7 @@ public class ExamMonitoringScheduleService {
             });
         }
         catch (@SuppressWarnings("unused") DuplicateTaskException e) {
-            log.debug("Exam {} monitoring save task already registered", examId);
+            logger.debug("Exam {} monitoring save task already registered", examId);
             // this is expected if we run on multiple nodes
         }
     }
@@ -180,11 +180,11 @@ public class ExamMonitoringScheduleService {
                 }
                 scheduledFuture.dispose();
                 if (taskNotDone) {
-                    log.info("Stop scheduled exam activity save for exam {} was successful: {}", examId, cancelSuccess);
+                    logger.info("Stop scheduled exam activity save for exam {} was successful: {}", examId, cancelSuccess);
                 }
             }
             catch (@SuppressWarnings("unused") StaleTaskException e) {
-                log.info("Stop scheduled exam activity save for exam {} already disposed/cancelled", examId);
+                logger.info("Stop scheduled exam activity save for exam {} already disposed/cancelled", examId);
                 // has already been disposed (sadly there is no method to check that)
             }
         });
@@ -201,7 +201,7 @@ public class ExamMonitoringScheduleService {
     public void executeExamActivitySaveTask(Long examId) {
         examCache.performCacheWriteIfPresent(examId, examMonitoringCache -> {
             ((ExamMonitoringCache) examMonitoringCache).getExamActivitySaveHandler().clear();
-            log.debug("Removed exam {} monitoring save tasks", examId);
+            logger.debug("Removed exam {} monitoring save tasks", examId);
             return examMonitoringCache;
         });
 

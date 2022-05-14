@@ -258,8 +258,9 @@ public class QuizScheduleService {
                 // has already been disposed (sadly there is no method to check that)
             }
             for (Cache cachedQuiz : quizCache.getAllCaches()) {
-                if (((QuizExerciseCache) cachedQuiz).getQuizStart() != null)
+                if (((QuizExerciseCache) cachedQuiz).getQuizStart() != null) {
                     cancelScheduledQuizStart(((QuizExerciseCache) cachedQuiz).getExerciseId());
+                }
             }
             threadPoolTaskScheduler.shutdown();
             threadPoolTaskScheduler.destroy();

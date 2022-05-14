@@ -71,8 +71,10 @@ abstract class ExamMonitoringCache implements Cache {
         if (this == obj) {
             return true;
         }
-        if (!(obj instanceof ExamMonitoringCache))
+        if (!(obj instanceof ExamMonitoringCache)) {
             return false;
+
+        }
         return Objects.equals(examId, ((ExamMonitoringCache) obj).examId);
     }
 

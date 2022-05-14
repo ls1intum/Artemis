@@ -30,7 +30,7 @@ import de.tum.in.www1.artemis.domain.exam.monitoring.ExamActivity;
  */
 public class ExamMonitoringDistributedCache extends ExamMonitoringCache implements HazelcastInstanceAware {
 
-    private static final Logger log = LoggerFactory.getLogger(ExamMonitoringDistributedCache.class);
+    private final Logger logger = LoggerFactory.getLogger(ExamMonitoringDistributedCache.class);
 
     private static final String HAZELCAST_CACHE_ACTIVITIES = "-activities";
 
@@ -57,7 +57,7 @@ public class ExamMonitoringDistributedCache extends ExamMonitoringCache implemen
         super(Objects.requireNonNull(examId, "examId must not be null"));
         setExam(exam);
         setExamActivitySaveHandler(examActivitySaveHandler);
-        log.debug("Creating new ExamMonitoringDistributedCache, id {}", getExamId());
+        logger.debug("Creating new ExamMonitoringDistributedCache, id {}", getExamId());
     }
 
     public ExamMonitoringDistributedCache(Long examId, List<ScheduledTaskHandler> examActivitySaveHandler) {
@@ -102,10 +102,10 @@ public class ExamMonitoringDistributedCache extends ExamMonitoringCache implemen
     public void clear() {
         int activitiesSize = activities.size();
         if (activitiesSize > 0) {
-            log.warn("Cache for Exam {} destroyed with {} activities cached", getExamId(), activitiesSize);
+            logger.warn("Cache for Exam {} destroyed with {} activities cached", getExamId(), activitiesSize);
         }
         activities.destroy();
-        exam = null;
+        this.setExam(null);
     }
 
     @Override
@@ -125,15 +125,15 @@ public class ExamMonitoringDistributedCache extends ExamMonitoringCache implemen
         }
 
         @Override
-        public void write(ObjectDataOutput out, ExamMonitoringDistributedCache examMonitoringDistributedCache) throws IOException {
-            out.writeLong(examMonitoringDistributedCache.getExamId());
-            out.writeObject(examMonitoringDistributedCache.examActivitySaveHandler);
+        public void write(ObjectDataOutput output, ExamMonitoringDistributedCache examMonitoringDistributedCache) throws IOException {
+            output.writeLong(examMonitoringDistributedCache.getExamId());
+            output.writeObject(examMonitoringDistributedCache.examActivitySaveHandler);
         }
 
         @Override
-        public @NotNull ExamMonitoringDistributedCache read(ObjectDataInput in) throws IOException {
-            Long examId = in.readLong();
-            List<ScheduledTaskHandler> examActivitySaveHandler = in.readObject();
+        public @NotNull ExamMonitoringDistributedCache read(ObjectDataInput input) throws IOException {
+            Long examId = input.readLong();
+            List<ScheduledTaskHandler> examActivitySaveHandler = input.readObject();
 
             // see class JavaDoc why the exam is null here.
             return new ExamMonitoringDistributedCache(examId, examActivitySaveHandler, null);

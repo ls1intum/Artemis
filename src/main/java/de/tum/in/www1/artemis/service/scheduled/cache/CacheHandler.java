@@ -11,13 +11,13 @@ import org.slf4j.LoggerFactory;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.map.IMap;
 
-public abstract class CacheHandler<KEY> {
+public abstract class CacheHandler<K> {
 
-    private static final Logger log = LoggerFactory.getLogger(CacheHandler.class);
+    private final Logger logger = LoggerFactory.getLogger(CacheHandler.class);
 
     protected final HazelcastInstance hazelcastInstance;
 
-    protected final IMap<KEY, Cache> cache;
+    protected final IMap<K, Cache> cache;
 
     protected CacheHandler(HazelcastInstance hazelcastInstance, String name) {
         this.hazelcastInstance = hazelcastInstance;
@@ -43,7 +43,7 @@ public abstract class CacheHandler<KEY> {
      * @return a {@link Cache} object, can be null
      * @implNote This is just a {@linkplain Map#get(Object) get} operation on the map of the cache.
      */
-    public Cache getCacheFor(KEY key) {
+    public Cache getCacheFor(K key) {
         return cache.get(key);
     }
 
@@ -59,7 +59,7 @@ public abstract class CacheHandler<KEY> {
      * @param key the id of the value, must not be null
      * @return a {@link Cache} object, never null but potentially empty
      */
-    public Cache getReadCacheFor(KEY key) {
+    public Cache getReadCacheFor(K key) {
         return cache.getOrDefault(key, emptyCacheValue());
     }
 
@@ -68,7 +68,7 @@ public abstract class CacheHandler<KEY> {
      * @param key identifier of the cache
      * @return created {@link Cache}
      */
-    protected abstract Cache createDistributedCacheValue(KEY key);
+    protected abstract Cache createDistributedCacheValue(K key);
 
     /**
      * Only for the modification of transient properties, e.g. the exercise and the maps.
@@ -78,7 +78,7 @@ public abstract class CacheHandler<KEY> {
      * @param key the id of the value, must not be null
      * @return a {@link Cache} object, never null and never empty
      */
-    public Cache getTransientWriteCacheFor(KEY key) {
+    public Cache getTransientWriteCacheFor(K key) {
         // Look for a cache
         var cached = cache.get(key);
         // If it exists, just return it
@@ -116,10 +116,10 @@ public abstract class CacheHandler<KEY> {
      * @param writeOperation gets non-null and has  to return non-null.
      * @implNote This operation locks the cache for the given <code>quizExerciseId</code> while the operation is executed. This prevents simultaneous writes.
      */
-    public void performCacheWrite(KEY key, UnaryOperator<Cache> writeOperation) {
+    public void performCacheWrite(K key, UnaryOperator<Cache> writeOperation) {
         cache.lock(key);
         try {
-            log.info("Write cache {}", key);
+            logger.info("Write cache {}", key);
             cache.set(key, writeOperation.apply(getTransientWriteCacheFor(key)));
             // We do this get here to deserialize and load the newly written instance into the near cache directly after the writing operation
             cache.get(key);
@@ -138,12 +138,12 @@ public abstract class CacheHandler<KEY> {
      * @param writeOperation gets non-null and has  to return non-null.
      * @implNote This operation locks the cache for the given <code>quizExerciseId</code> while the operation is executed. This prevents simultaneous writes.
      */
-    public void performCacheWriteIfPresent(KEY key, UnaryOperator<Cache> writeOperation) {
+    public void performCacheWriteIfPresent(K key, UnaryOperator<Cache> writeOperation) {
         cache.lock(key);
         try {
             Cache cached = cache.get(key);
             if (cached != null) {
-                log.info("Write cache {}", key);
+                logger.info("Write cache {}", key);
                 cache.set(key, writeOperation.apply(cached));
                 // We do this get here to deserialize and load the newly written instance into the near cache directly after the write
                 cache.get(key);
@@ -164,7 +164,7 @@ public abstract class CacheHandler<KEY> {
      * @return the cache entry that was removed in case further processing is necessary
      * @implNote This just removes the {@link Cache} from the cache map
      */
-    public Cache remove(KEY key) {
+    public Cache remove(K key) {
         return cache.remove(key);
     }
 
@@ -173,14 +173,14 @@ public abstract class CacheHandler<KEY> {
      * <p>
      * <b>WARNING:</b> The clear operation will clear all cached data like submissions and results.
      * Due to the concurrent nature of the cache, it is not possible to determine if this causes data to be lost.
-     * When in doubt, use only {@link #remove(KEY)} instead.
+     * When in doubt, use only {@link #remove(K)} instead.
      * <p>
      * This action will not cancel any scheduled tasks, this needs to be done separately.
      *
      * @param key the id of the cache to remove and clear
-     * @see #remove(KEY)
+     * @see #remove(K)
      */
-    public void removeAndClear(KEY key) {
+    public void removeAndClear(K key) {
         var cached = cache.remove(key);
         if (cached != null) {
             cached.clear();

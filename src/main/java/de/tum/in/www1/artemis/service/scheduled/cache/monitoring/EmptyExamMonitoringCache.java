@@ -23,7 +23,7 @@ import de.tum.in.www1.artemis.domain.exam.monitoring.ExamActivity;
  */
 public class EmptyExamMonitoringCache extends ExamMonitoringCache {
 
-    private static final Logger log = LoggerFactory.getLogger(EmptyExamMonitoringCache.class);
+    private final Logger logger = LoggerFactory.getLogger(EmptyExamMonitoringCache.class);
 
     static final EmptyExamMonitoringCache INSTANCE = new EmptyExamMonitoringCache();
 
@@ -38,7 +38,7 @@ public class EmptyExamMonitoringCache extends ExamMonitoringCache {
 
     @Override
     void setExam(Exam exam) {
-        log.error("EmptyExamMonitoringCache cannot have an exam");
+        logger.error("EmptyExamMonitoringCache cannot have an exam");
         throwModificationAttemptException();
     }
 
@@ -54,13 +54,13 @@ public class EmptyExamMonitoringCache extends ExamMonitoringCache {
 
     @Override
     void setExamActivitySaveHandler(List<ScheduledTaskHandler> examActivitySaveHandler) {
-        log.error("EmptyExamMonitoringCache cannot have tasks");
+        logger.error("EmptyExamMonitoringCache cannot have tasks");
         throwModificationAttemptException();
     }
 
     @Override
     public void clear() {
-        log.error("EmptyExamMonitoringCache cannot be cleared");
+        logger.error("EmptyExamMonitoringCache cannot be cleared");
         throwModificationAttemptException();
     }
 

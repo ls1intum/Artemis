@@ -72,8 +72,9 @@ public class ExamActivityResource {
     public ResponseEntity<Void> updatePerformedExamActions(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long studentExamId,
             @RequestBody List<ExamAction> actions) {
         Exam exam = examService.findByIdOrElseThrow(examId);
-        if (!exam.isMonitoring())
+        if (!exam.isMonitoring()) {
             throw new BadRequestException("Monitoring is not enabled for the exam with the id " + examId);
+        }
 
         StudentExam studentExam = studentExamRepository.findByIdWithExercisesElseThrow(studentExamId);
         User currentUser = userRepository.getUserWithGroupsAndAuthorities();
@@ -90,6 +91,10 @@ public class ExamActivityResource {
 
     /**
      * ONLY FOR TESTING OF THIS PR ON TEST SERVER/LOCALLY (will be removed in the future)
+     * @param courseId      the course to which the student exams belong to
+     * @param examId        the exam to which the student exams belong to
+     * @param studentExamId the student exam id where we want to add the actions
+     * @return activities in database and cache
      */
     @GetMapping("/courses/{courseId}/exams/{examId}/student-exams/{studentExamId}/activity")
     @PreAuthorize("hasRole('INSTRUCTOR')")

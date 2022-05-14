@@ -50,8 +50,6 @@ public class ExamActivityIntegrationTest extends AbstractSpringIntegrationBamboo
     @Autowired
     private ExamActionService examActionService;
 
-    private List<User> users;
-
     private Course course;
 
     private Exam exam;
@@ -60,7 +58,7 @@ public class ExamActivityIntegrationTest extends AbstractSpringIntegrationBamboo
 
     @BeforeEach
     public void init() {
-        users = database.addUsers(15, 5, 0, 1);
+        List<User> users = database.addUsers(15, 5, 0, 1);
         course = database.addEmptyCourse();
         exam = database.addActiveExamWithRegisteredUser(course, users.get(0));
         exam.setMonitoring(true);
