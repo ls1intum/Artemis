@@ -116,6 +116,8 @@ export class QuizExerciseDetailComponent extends QuizExerciseValidationDirective
 
     readonly QuizMode = QuizMode;
 
+    private initCompleted: boolean;
+
     constructor(
         private route: ActivatedRoute,
         private courseService: CourseManagementService,
@@ -237,11 +239,29 @@ export class QuizExerciseDetailComponent extends QuizExerciseValidationDirective
         this.scheduleQuizStart = (this.quizExercise.quizBatches?.length ?? 0) > 0;
         this.updateDuration();
         this.cacheValidation();
+        this.initCompleted = true;
+    }
+
+    /**
+     * Validates if the date is correct
+     */
+    validateDate() {
+        if (this.initCompleted) {
+            // TODO: quiz cleanup: this makes the exercise dirty and attempts to prevent leaving.
+            // Currently initCompleted field is used to prevent marking the exercise dirty on initialization.
+            // However making a change and undoing it still has the issue.
+            // Additionally, quiz exercises are for some reason the only exercise type the has the unsaved changes warning.
+            this.exerciseService.validateDate(this.quizExercise);
+        }
+        const dueDate = this.quizExercise.quizMode === QuizMode.SYNCHRONIZED ? null : this.quizExercise.dueDate;
+        this.quizExercise?.quizBatches?.forEach((batch) => {
+            const startTime = dayjs(batch.startTime);
+            batch.startTimeError = startTime.isBefore(this.quizExercise.releaseDate) || startTime.add(dayjs.duration(this.duration)).isAfter(dueDate ?? null);
+        });
     }
 
     cacheValidation() {
-        // TODO: quiz cleanup: this makes the exercise dirty and attempts to prevent leaving
-        // this.exerciseService.validateDate(this.quizExercise);
+        this.validateDate();
 
         if (this.quizExercise.quizMode === QuizMode.SYNCHRONIZED) {
             if (this.scheduleQuizStart) {
@@ -982,5 +1002,9 @@ export class QuizExerciseDetailComponent extends QuizExerciseValidationDirective
             }
         }
         return super.computeInvalidReasons().concat(invalidReasons);
+    }
+
+    hasErrorInQuizBatches() {
+        return this.quizExercise?.quizBatches?.some((batch) => batch.startTimeError);
     }
 }

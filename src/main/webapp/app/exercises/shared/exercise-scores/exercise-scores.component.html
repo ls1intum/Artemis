@@ -243,7 +243,7 @@
 
                 <ngx-datatable-column
                     prop=""
-                    *ngIf="exercise.type === ExerciseType.PROGRAMMING && exercise.isAtLeastInstructor"
+                    *ngIf="exercise.type === ExerciseType.PROGRAMMING && exercise.isAtLeastEditor"
                     [resizeable]="false"
                     [minWidth]="470"
                     [width]="470"
@@ -260,14 +260,14 @@
                         <a
                             [routerLink]="['/courses', course.id, 'programming-exercises', exercise.id, 'code-editor', value.participation.id]"
                             class="btn btn-info btn-sm me-1"
-                            *ngIf="value.participation.exercise.allowOnlineEditor"
+                            *ngIf="value.participation.exercise.allowOnlineEditor && exercise.isAtLeastInstructor"
                             [jhiFeatureToggleLink]="FeatureToggle.ProgrammingExercises"
                         >
                             <fa-icon class="me-1" [icon]="faFolderOpen" [fixedWidth]="true"></fa-icon>
                             Online editor
                         </a>
                         <a
-                            *ngIf="exercise.course && (newManualResultAllowed || (value.assessmentType !== exercise.assessmentType && exercise.isAtLeastInstructor))"
+                            *ngIf="exercise.course && exercise.isAtLeastInstructor && (newManualResultAllowed || (value.assessmentType !== exercise.assessmentType && exercise.isAtLeastInstructor))"
                             [routerLink]="['/course-management', exercise.course?.id, 'programming-exercises', exercise.id, 'submissions', value.submission.id, 'assessment']"
                             class="btn btn-primary btn-sm me-1"
                         >
@@ -276,6 +276,7 @@
                         </a>
                         <a
                             *ngIf="
+                                exercise.isAtLeastInstructor &&
                                 exercise.exerciseGroup &&
                                 (newManualResultAllowed || (value.assessmentType !== exercise.assessmentType && exercise.isAtLeastInstructor)) &&
                                 exercise.exerciseGroup!.exam?.numberOfCorrectionRoundsInExam !== undefined &&

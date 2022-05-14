@@ -11,6 +11,7 @@ export enum ActionType {
     Remove = 'remove',
     Unlink = 'unlink',
     NoButtonTextDelete = 'noButtonTextDelete',
+    EndNow = 'endNow',
 }
 
 /**

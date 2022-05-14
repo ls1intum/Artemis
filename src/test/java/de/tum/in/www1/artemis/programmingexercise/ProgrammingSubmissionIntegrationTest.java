@@ -629,7 +629,7 @@ public class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrat
         assertThat(submission.getLatestResult()).isNotNull();
         assertThat(submission.getLatestResult().getAssessmentType()).isEqualTo(AssessmentType.AUTOMATIC);
 
-        String url = "/api/programming-submissions/" + submission.getId() + "/lock?correction-round=1";
+        String url = "/api/programming-submissions/" + submission.getId() + "/lock?correction-round=0";
         var storedSubmission = request.get(url, HttpStatus.OK, ProgrammingSubmission.class);
 
         // Make sure that the stored submission has a latest manual assessment by tutor 1

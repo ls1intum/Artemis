@@ -49,6 +49,13 @@ public class PlagiarismSubmission<E extends PlagiarismSubmissionElement> extends
     @JoinTable(name = "plagiarism_submission_elements", joinColumns = @JoinColumn(name = "plagiarism_submission_id"), inverseJoinColumns = @JoinColumn(name = "plagiarism_submission_element_id"))
     private List<E> elements;
 
+    @ManyToOne
+    private PlagiarismCase plagiarismCase;
+
+    @OneToOne(targetEntity = PlagiarismComparison.class)
+    @JoinColumn(name = "plagiarism_comparison_id")
+    private PlagiarismComparison<E> plagiarismComparison;
+
     /**
      * Size of the related submission.
      * <p>
@@ -156,10 +163,25 @@ public class PlagiarismSubmission<E extends PlagiarismSubmissionElement> extends
         this.score = score;
     }
 
+    public PlagiarismCase getPlagiarismCase() {
+        return plagiarismCase;
+    }
+
+    public void setPlagiarismCase(PlagiarismCase plagiarismCase) {
+        this.plagiarismCase = plagiarismCase;
+    }
+
+    public PlagiarismComparison<E> getPlagiarismComparison() {
+        return plagiarismComparison;
+    }
+
+    public void setPlagiarismComparison(PlagiarismComparison<E> plagiarismComparison) {
+        this.plagiarismComparison = plagiarismComparison;
+    }
+
     @Override
     public String toString() {
-        return "PlagiarismSubmission{" + "submissionId=" + submissionId + ", studentLogin='" + studentLogin + '\'' + ", elements=" + elements + ", size=" + size + ", score="
-                + score + '}';
+        return "PlagiarismSubmission{" + "submissionId=" + submissionId + ", studentLogin='" + studentLogin + '\'' + ", size=" + size + ", score=" + score + '}';
     }
 
     @Override
