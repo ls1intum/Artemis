@@ -7,7 +7,7 @@ import { TextSubmissionElement } from 'app/exercises/shared/plagiarism/types/tex
 import { ModelingSubmissionElement } from 'app/exercises/shared/plagiarism/types/modeling/ModelingSubmissionElement';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { PlagiarismSubmission } from 'app/exercises/shared/plagiarism/types/PlagiarismSubmission';
-import { PlagiarismCasesService } from 'app/course/plagiarism-cases/plagiarism-cases.service';
+import { PlagiarismCasesService } from 'app/course/plagiarism-cases/shared/plagiarism-cases.service';
 import { HttpResponse } from '@angular/common/http';
 
 @Directive({ selector: '[jhiPane]' })
@@ -25,6 +25,7 @@ export class PlagiarismSplitViewComponent implements AfterViewInit, OnChanges, O
     @Input() exercise: Exercise;
     @Input() splitControlSubject: Subject<string>;
     @Input() studentLogin: string;
+    @Input() sortByStudentLogin: string;
 
     @ViewChildren(SplitPaneDirective) panes!: QueryList<SplitPaneDirective>;
 
@@ -70,6 +71,11 @@ export class PlagiarismSplitViewComponent implements AfterViewInit, OnChanges, O
                 .getPlagiarismComparisonForSplitView(this.exercise.course?.id!, changes.comparison.currentValue.id, this.studentLogin)
                 .subscribe((resp: HttpResponse<PlagiarismComparison<TextSubmissionElement | ModelingSubmissionElement>>) => {
                     this.plagiarismComparison = resp.body!;
+                    if (this.sortByStudentLogin && this.sortByStudentLogin === this.plagiarismComparison.submissionB.studentLogin) {
+                        const temp = this.plagiarismComparison.submissionA;
+                        this.plagiarismComparison.submissionA = this.plagiarismComparison.submissionB;
+                        this.plagiarismComparison.submissionB = temp;
+                    }
                     if (this.isProgrammingOrTextExercise) {
                         this.parseTextMatches(this.plagiarismComparison as PlagiarismComparison<TextSubmissionElement>);
                     }
