@@ -26,14 +26,14 @@ public class ScoringStrategyDragAndDropProportionalWithoutPenalty implements Sco
                 DragItem selectedDragItem = dndAnswer.getSelectedDragItemForDropLocation(dropLocation);
 
                 // count the number of drop locations that were meant to not stay empty
-                if (correctDragItems.size() > 0) {
+                if (!correctDragItems.isEmpty()) {
                     mappedDropLocations++;
                 }
 
                 // invalid drop location or invalid drag item => always correct
                 if (dropLocation.isInvalid() || (selectedDragItem != null && selectedDragItem.isInvalid())) {
                     // but points are only given for drop locations that were meant to not stay empty
-                    if (correctDragItems.size() > 0) {
+                    if (!correctDragItems.isEmpty()) {
                         correctMappings++;
                     }
                 }
@@ -41,7 +41,7 @@ public class ScoringStrategyDragAndDropProportionalWithoutPenalty implements Sco
                     // check if user's mapping is correct
                     if (dropLocation.isDropLocationCorrect(dndAnswer)) {
                         // points are only given for drop locations that were meant to not stay empty
-                        if (correctDragItems.size() > 0) {
+                        if (!correctDragItems.isEmpty()) {
                             correctMappings++;
                         }
                     }

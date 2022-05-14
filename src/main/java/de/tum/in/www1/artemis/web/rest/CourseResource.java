@@ -156,7 +156,7 @@ public class CourseResource {
         course.validateShortName();
 
         List<Course> coursesWithSameShortName = courseRepository.findAllByShortName(course.getShortName());
-        if (coursesWithSameShortName.size() > 0) {
+        if (!coursesWithSameShortName.isEmpty()) {
             return ResponseEntity.badRequest().headers(
                     HeaderUtil.createAlert(applicationName, "A course with the same short name already exists. Please choose a different short name.", "shortnameAlreadyExists"))
                     .body(null);
@@ -294,7 +294,7 @@ public class CourseResource {
             return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, false, Course.ENTITY_NAME, "registrationDisabled",
                     "The course does not allow registration. Cannot register user")).body(null);
         }
-        if (course.getOrganizations() != null && course.getOrganizations().size() > 0 && !courseRepository.checkIfUserIsMemberOfCourseOrganizations(user, course)) {
+        if (course.getOrganizations() != null && !course.getOrganizations().isEmpty() && !courseRepository.checkIfUserIsMemberOfCourseOrganizations(user, course)) {
             return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, false, Course.ENTITY_NAME, "registrationNotAllowed",
                     "User is not member of any organization of this course. Cannot register user")).body(null);
         }
@@ -389,7 +389,7 @@ public class CourseResource {
         List<Course> registrableCourses = allCoursesToRegister.stream().filter(course -> {
             // further, check if the course has been assigned to any organization and if yes,
             // check if user is member of at least one of them
-            if (course.getOrganizations() != null && course.getOrganizations().size() > 0) {
+            if (course.getOrganizations() != null && !course.getOrganizations().isEmpty()) {
                 return courseRepository.checkIfUserIsMemberOfCourseOrganizations(user, course);
             }
             else {
