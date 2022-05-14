@@ -11,7 +11,7 @@
                     [exercise]="fileUploadExercise"
                 ></jhi-non-programming-exercise-detail-common-actions>
             </div>
-            <div *ngIf="fileUploadExercise.releaseDate != undefined && dayjs(fileUploadExercise.releaseDate).isBefore(dayjs())" class="mt-3">
+            <div *ngIf="fileUploadExercise.releaseDate == undefined || dayjs(fileUploadExercise.releaseDate).isBefore(dayjs())" class="mt-3">
                 <jhi-exercise-detail-statistics
                     [exercise]="fileUploadExercise"
                     [doughnutStats]="doughnutStats"
