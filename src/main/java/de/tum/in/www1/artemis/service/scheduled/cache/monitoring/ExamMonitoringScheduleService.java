@@ -121,8 +121,9 @@ public class ExamMonitoringScheduleService {
      */
     public void stopSchedule() {
         for (Cache cachedExamMonitoring : examCache.getAllCaches()) {
-            if (((ExamMonitoringCache) cachedExamMonitoring).getExamActivitySaveHandler() != null)
+            if (((ExamMonitoringCache) cachedExamMonitoring).getExamActivitySaveHandler() != null) {
                 cancelExamActivitySave(((ExamMonitoringCache) cachedExamMonitoring).getExamId());
+            }
         }
         threadPoolTaskScheduler.shutdown();
         threadPoolTaskScheduler.destroy();
