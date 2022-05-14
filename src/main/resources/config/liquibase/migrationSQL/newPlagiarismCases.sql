@@ -82,6 +82,7 @@ UPDATE plagiarism_submission as dest,
                  LEFT JOIN jhi_user us on student_login = us.login
                  LEFT JOIN plagiarism_result pr on pc.plagiarism_result_id = pr.id
                  LEFT JOIN plagiarism_case pp on us.id = pp.student_id AND pr.exercise_id = pp.exercise_id
+        WHERE pc.id IS NOT NULL
     ) as src
 SET dest.plagiarism_case_id = src.plagiarism_case_id, dest.plagiarism_comparison_id = src.plagiarism_comparison_id
 WHERE dest.id = src.id;
