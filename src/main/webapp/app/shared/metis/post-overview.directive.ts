@@ -166,6 +166,7 @@ export abstract class PostOverviewDirective implements OnInit, OnDestroy {
             this.currentPostContextFilter.courseWideContext,
             this.exercises?.find((exercise) => exercise.id === this.currentPostContextFilter.exerciseId),
             this.lectures?.find((lecture) => lecture.id === this.currentPostContextFilter.lectureId),
+            undefined,
             this.conversation,
         );
     }
