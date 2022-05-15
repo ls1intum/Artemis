@@ -198,17 +198,6 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
         }
     }
 
-    getLectureUnitName(lectureUnit: LectureUnit): string {
-        switch (lectureUnit.type) {
-            case LectureUnitType.ATTACHMENT:
-                return (<AttachmentUnit>lectureUnit)?.attachment?.name || '';
-            case LectureUnitType.EXERCISE:
-                return (<ExerciseUnit>lectureUnit)?.exercise?.title || '';
-            default:
-                return lectureUnit.name || '';
-        }
-    }
-
     getLectureUnitReleaseDate(lectureUnit: LectureUnit) {
         switch (lectureUnit.type) {
             case LectureUnitType.ATTACHMENT:
