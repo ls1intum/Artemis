@@ -38,7 +38,7 @@ import { MockParticipationWebsocketService } from '../../helpers/mocks/service/m
 import { ExerciseType } from 'app/entities/exercise.model';
 import { MockTranslateService, TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.service';
 import { MockComponent } from 'ng-mocks';
-import { IExerciseHintService, ExerciseHintService } from 'app/exercises/shared/exercise-hint/manage/exercise-hint.service';
+import { ExerciseHintService, IExerciseHintService } from 'app/exercises/shared/exercise-hint/manage/exercise-hint.service';
 import { MockExerciseHintService } from '../../helpers/mocks/service/mock-exercise-hint.service';
 import { ExerciseHint } from 'app/entities/hestia/exercise-hint.model';
 
@@ -323,7 +323,7 @@ describe('ProgrammingExerciseInstructionComponent', () => {
         fixture.detectChanges();
 
         expect(debugElement.query(By.css('.stepwizard'))).not.toBe(null);
-        expect(debugElement.queryAll(By.css('.stepwizard-circle'))).toHaveLength(2);
+        expect(debugElement.queryAll(By.css('.btn-circle'))).toHaveLength(2);
         tick();
         fixture.detectChanges();
         expect(debugElement.query(By.css('.instructions__content__markdown')).nativeElement.innerHTML).toEqual(problemStatementBubbleSortNotExecutedHtml);
@@ -380,7 +380,7 @@ describe('ProgrammingExerciseInstructionComponent', () => {
         fixture.detectChanges();
 
         expect(debugElement.query(By.css('.stepwizard'))).not.toBe(null);
-        expect(debugElement.queryAll(By.css('.stepwizard-circle'))).toHaveLength(2);
+        expect(debugElement.queryAll(By.css('.btn-circle'))).toHaveLength(2);
         tick();
         fixture.detectChanges();
         expect(debugElement.query(By.css('.instructions__content__markdown')).nativeElement.innerHTML).toEqual(problemStatementBubbleSortFailsHtml);

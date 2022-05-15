@@ -31,7 +31,7 @@
                 <span class="context-information" *ngIf="!contextInformation.routerLinkComponents">{{ contextInformation.displayName }}:</span>
             </span>
             <!-- post title not shown in course messages page -->
-            <span *ngIf="!isCourseMessagesPage" class="col-auto">
+            <span *ngIf="pageType !== PageType.PLAGIARISM_CASE && !isCourseMessagesPage" class="col-auto">
                 <a
                     class="post-title"
                     [routerLink]="metisService.getLinkForPost(posting)"

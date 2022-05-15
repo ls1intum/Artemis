@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Objects;
 
 import javax.validation.Valid;
+import javax.ws.rs.ForbiddenException;
 
 import org.commonmark.node.Node;
 import org.commonmark.parser.Parser;
@@ -28,15 +29,18 @@ import de.tum.in.www1.artemis.domain.metis.CourseWideContext;
 import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.domain.metis.PostSortCriterion;
 import de.tum.in.www1.artemis.domain.metis.Reaction;
+import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismCase;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.LectureRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.metis.PostRepository;
+import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismCaseRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.metis.similarity.PostSimilarityComparisonStrategy;
 import de.tum.in.www1.artemis.service.notifications.GroupNotificationService;
+import de.tum.in.www1.artemis.service.plagiarism.PlagiarismCaseService;
 import de.tum.in.www1.artemis.web.rest.dto.PostContextFilter;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
@@ -52,18 +56,25 @@ public class PostService extends PostingService {
 
     private final PostRepository postRepository;
 
+    private final PlagiarismCaseRepository plagiarismCaseRepository;
+
     private final GroupNotificationService groupNotificationService;
+
+    private final PlagiarismCaseService plagiarismCaseService;
 
     private final PostSimilarityComparisonStrategy postContentCompareStrategy;
 
     protected PostService(CourseRepository courseRepository, AuthorizationCheckService authorizationCheckService, UserRepository userRepository, PostRepository postRepository,
             ExerciseRepository exerciseRepository, LectureRepository lectureRepository, GroupNotificationService groupNotificationService,
-            PostSimilarityComparisonStrategy postContentCompareStrategy, SimpMessageSendingOperations messagingTemplate) {
+            PostSimilarityComparisonStrategy postContentCompareStrategy, SimpMessageSendingOperations messagingTemplate, PlagiarismCaseService plagiarismCaseService,
+            PlagiarismCaseRepository plagiarismCaseRepository) {
         super(courseRepository, exerciseRepository, lectureRepository, postRepository, authorizationCheckService, messagingTemplate);
         this.userRepository = userRepository;
         this.postRepository = postRepository;
+        this.plagiarismCaseRepository = plagiarismCaseRepository;
         this.groupNotificationService = groupNotificationService;
         this.postContentCompareStrategy = postContentCompareStrategy;
+        this.plagiarismCaseService = plagiarismCaseService;
     }
 
     /**
@@ -102,8 +113,14 @@ public class PostService extends PostingService {
 
         Post savedPost = postRepository.save(post);
 
-        broadcastForPost(new PostDTO(savedPost, MetisCrudAction.CREATE), course);
-        sendNotification(savedPost, course);
+        // handle posts for plagiarism cases specifically
+        if (savedPost.getPlagiarismCase() != null) {
+            plagiarismCaseService.savePostForPlagiarismCaseAndNotifyStudent(savedPost.getPlagiarismCase().getId(), savedPost);
+        }
+        else {
+            broadcastForPost(new PostDTO(savedPost, MetisCrudAction.CREATE), course);
+            sendNotification(savedPost, course);
+        }
 
         return savedPost;
     }
@@ -218,20 +235,29 @@ public class PostService extends PostingService {
 
         List<Post> postsInCourse;
         // no filter -> get all posts in course
-        if (postContextFilter.getCourseWideContext() == null && postContextFilter.getExerciseId() == null && postContextFilter.getLectureId() == null) {
+        if (postContextFilter.getCourseWideContext() == null && postContextFilter.getExerciseId() == null && postContextFilter.getLectureId() == null
+                && postContextFilter.getPlagiarismCaseId() == null) {
             postsInCourse = this.getAllCoursePosts(postContextFilter);
         }
         // filter by course-wide context
-        else if (postContextFilter.getCourseWideContext() != null && postContextFilter.getExerciseId() == null && postContextFilter.getLectureId() == null) {
+        else if (postContextFilter.getCourseWideContext() != null && postContextFilter.getExerciseId() == null && postContextFilter.getLectureId() == null
+                && postContextFilter.getPlagiarismCaseId() == null) {
             postsInCourse = this.getAllPostsByCourseWideContext(postContextFilter);
         }
         // filter by exercise
-        else if (postContextFilter.getCourseWideContext() == null && postContextFilter.getExerciseId() != null && postContextFilter.getLectureId() == null) {
+        else if (postContextFilter.getCourseWideContext() == null && postContextFilter.getExerciseId() != null && postContextFilter.getLectureId() == null
+                && postContextFilter.getPlagiarismCaseId() == null) {
             postsInCourse = this.getAllExercisePosts(postContextFilter);
         }
         // filter by lecture
-        else if (postContextFilter.getCourseWideContext() == null && postContextFilter.getExerciseId() == null && postContextFilter.getLectureId() != null) {
+        else if (postContextFilter.getCourseWideContext() == null && postContextFilter.getExerciseId() == null && postContextFilter.getLectureId() != null
+                && postContextFilter.getPlagiarismCaseId() == null) {
             postsInCourse = this.getAllLecturePosts(postContextFilter);
+        }
+        // filter by plagiarism case
+        else if (postContextFilter.getCourseWideContext() == null && postContextFilter.getExerciseId() == null && postContextFilter.getLectureId() == null
+                && postContextFilter.getPlagiarismCaseId() != null) {
+            postsInCourse = this.getAllPlagiarismCasePosts(postContextFilter);
         }
         else {
             throw new BadRequestAlertException("A new post cannot be associated with more than one context", METIS_POST_ENTITY_NAME, "ambiguousContext");
@@ -366,6 +392,35 @@ public class PostService extends PostingService {
         lecturePosts.stream().map(Post::getExercise).filter(Objects::nonNull).forEach(Exercise::filterSensitiveInformation);
 
         return lecturePosts;
+    }
+
+    /**
+     * Checks course, user and post validity,
+     * retrieves and filters posts for a plagiarism case by its id
+     * and ensures that sensitive information is filtered out
+     *
+     * @param postContextFilter filter object
+     * @return page of posts that belong to the plagiarism case
+     */
+    public List<Post> getAllPlagiarismCasePosts(PostContextFilter postContextFilter) {
+        final User user = userRepository.getUserWithGroupsAndAuthorities();
+        final PlagiarismCase plagiarismCase = plagiarismCaseRepository.findByIdElseThrow(postContextFilter.getPlagiarismCaseId());
+
+        // checks
+        if (authorizationCheckService.isAtLeastInstructorInCourse(plagiarismCase.getExercise().getCourseViaExerciseGroupOrCourseMember(), user)
+                || plagiarismCase.getStudent().getLogin().equals(user.getLogin())) {
+            // retrieve posts
+            List<Post> plagiarismCasePosts;
+            plagiarismCasePosts = postRepository.findPostsByPlagiarismCaseId(postContextFilter.getPlagiarismCaseId());
+
+            // protect sample solution, grading instructions, etc.
+            plagiarismCasePosts.stream().map(Post::getExercise).filter(Objects::nonNull).forEach(Exercise::filterSensitiveInformation);
+
+            return plagiarismCasePosts;
+        }
+        else {
+            throw new ForbiddenException("Only instructors in the course or the students affected by the plagiarism case are allowed to view its post");
+        }
     }
 
     /**
@@ -531,7 +586,7 @@ public class PostService extends PostingService {
      * @param course    course the posting belongs to
      */
     private void mayInteractWithPostElseThrow(Post post, User user, Course course) {
-        if (post.getCourseWideContext() == CourseWideContext.ANNOUNCEMENT) {
+        if (post.getCourseWideContext() == CourseWideContext.ANNOUNCEMENT || post.getPlagiarismCase() != null) {
             authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, user);
         }
     }

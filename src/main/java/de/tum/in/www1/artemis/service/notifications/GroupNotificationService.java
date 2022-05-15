@@ -4,7 +4,7 @@ import static de.tum.in.www1.artemis.domain.enumeration.GroupNotificationType.*;
 import static de.tum.in.www1.artemis.domain.enumeration.NotificationType.*;
 import static de.tum.in.www1.artemis.domain.notification.GroupNotificationFactory.createNotification;
 import static de.tum.in.www1.artemis.domain.notification.NotificationTitleTypeConstants.LIVE_EXAM_EXERCISE_UPDATE_NOTIFICATION_TITLE;
-import static de.tum.in.www1.artemis.service.notifications.NotificationSettingsCommunicationChannel.*;
+import static de.tum.in.www1.artemis.service.notifications.NotificationSettingsCommunicationChannel.EMAIL;
 
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
@@ -190,8 +190,8 @@ public class GroupNotificationService {
      * Auxiliary method that calls two other methods to check (create/schedule) notifications when a new exercise has been created
      * E.g. ExerciseReleased notification or AssessedExerciseSubmission notification
      *
-     * @param exercise
-     * @param instanceMessageSendService
+     * @param exercise that is created
+     * @param instanceMessageSendService that will call the service to update the scheduled exercise-created notification
      */
     public void checkNotificationsForNewExercise(Exercise exercise, InstanceMessageSendService instanceMessageSendService) {
         checkNotificationForExerciseRelease(exercise, instanceMessageSendService);

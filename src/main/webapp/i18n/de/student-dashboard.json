@@ -31,7 +31,8 @@
                 "lectures": "Vorlesungen",
                 "exams": "Klausuren",
                 "discussion": "Diskussion",
-                "messages": "Nachrichten"
+                "messages": "Nachrichten",
+                "plagiarismCases": "Plagiatsfälle"
             },
             "exerciseList": {
                 "filter": "Filter ({{ num }})",

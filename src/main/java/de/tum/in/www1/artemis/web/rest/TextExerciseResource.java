@@ -3,11 +3,7 @@ package de.tum.in.www1.artemis.web.rest;
 import java.io.File;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,6 +18,7 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.plagiarism.text.TextPlagiarismResult;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismResultRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.feature.Feature;
@@ -472,6 +469,8 @@ public class TextExerciseResource {
         if (plagiarismResult != null) {
             for (var comparison : plagiarismResult.getComparisons()) {
                 comparison.setPlagiarismResult(null);
+                comparison.getSubmissionA().setPlagiarismComparison(null);
+                comparison.getSubmissionB().setPlagiarismComparison(null);
             }
         }
         return ResponseEntity.ok((TextPlagiarismResult) plagiarismResult);
@@ -507,6 +506,8 @@ public class TextExerciseResource {
         log.info("Finished plagiarismResultRepository.savePlagiarismResultAndRemovePrevious call in {}", TimeLogUtil.formatDurationFrom(start));
         for (var comparison : result.getComparisons()) {
             comparison.setPlagiarismResult(null);
+            comparison.getSubmissionA().setPlagiarismComparison(null);
+            comparison.getSubmissionB().setPlagiarismComparison(null);
         }
         return ResponseEntity.ok(result);
     }

@@ -1,21 +1,19 @@
 package de.tum.in.www1.artemis.domain.plagiarism;
 
-import java.util.List;
-import java.util.Objects;
-import java.util.stream.Collectors;
-import java.util.stream.StreamSupport;
-
-import javax.persistence.*;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import de.jplag.Submission;
 import de.tum.in.www1.artemis.domain.DomainObject;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.plagiarism.modeling.ModelingSubmissionElement;
 import de.tum.in.www1.artemis.domain.plagiarism.text.TextSubmissionElement;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.persistence.*;
+import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 @Entity
 @Table(name = "plagiarism_submission")
@@ -48,6 +46,13 @@ public class PlagiarismSubmission<E extends PlagiarismSubmissionElement> extends
     @OneToMany(cascade = CascadeType.ALL, targetEntity = PlagiarismSubmissionElement.class, fetch = FetchType.LAZY)
     @JoinTable(name = "plagiarism_submission_elements", joinColumns = @JoinColumn(name = "plagiarism_submission_id"), inverseJoinColumns = @JoinColumn(name = "plagiarism_submission_element_id"))
     private List<E> elements;
+
+    @ManyToOne
+    private PlagiarismCase plagiarismCase;
+
+    @OneToOne(targetEntity = PlagiarismComparison.class)
+    @JoinColumn(name = "plagiarism_comparison_id")
+    private PlagiarismComparison<E> plagiarismComparison;
 
     /**
      * Size of the related submission.
@@ -156,10 +161,25 @@ public class PlagiarismSubmission<E extends PlagiarismSubmissionElement> extends
         this.score = score;
     }
 
+    public PlagiarismCase getPlagiarismCase() {
+        return plagiarismCase;
+    }
+
+    public void setPlagiarismCase(PlagiarismCase plagiarismCase) {
+        this.plagiarismCase = plagiarismCase;
+    }
+
+    public PlagiarismComparison<E> getPlagiarismComparison() {
+        return plagiarismComparison;
+    }
+
+    public void setPlagiarismComparison(PlagiarismComparison<E> plagiarismComparison) {
+        this.plagiarismComparison = plagiarismComparison;
+    }
+
     @Override
     public String toString() {
-        return "PlagiarismSubmission{" + "submissionId=" + submissionId + ", studentLogin='" + studentLogin + '\'' + ", elements=" + elements + ", size=" + size + ", score="
-                + score + '}';
+        return "PlagiarismSubmission{" + "submissionId=" + submissionId + ", studentLogin='" + studentLogin + '\'' + ", size=" + size + ", score=" + score + '}';
     }
 
     @Override

@@ -20,6 +20,8 @@ public class PostContextFilter {
 
     private Long lectureId;
 
+    private Long plagiarismCaseId;
+
     private Long conversationId;
 
     private String searchText;
@@ -64,6 +66,14 @@ public class PostContextFilter {
 
     public void setLectureId(Long lectureId) {
         this.lectureId = lectureId;
+    }
+
+    public Long getPlagiarismCaseId() {
+        return plagiarismCaseId;
+    }
+
+    public void setPlagiarismCaseId(Long plagiarismCaseId) {
+        this.plagiarismCaseId = plagiarismCaseId;
     }
 
     public Long getConversationId() {

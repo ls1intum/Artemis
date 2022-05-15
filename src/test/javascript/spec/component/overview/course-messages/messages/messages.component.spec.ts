@@ -38,7 +38,6 @@ describe('MessagesComponent', () => {
     let courseManagementService: CourseManagementService;
     let metisService: MetisService;
     let metisServiceGetFilteredPostsSpy: jest.SpyInstance;
-    let metisServiceGetUserStub: jest.SpyInstance;
     let fetchNextPageSpy: jest.SpyInstance;
     let scrollToBottomOfMessagesSpy: jest.SpyInstance;
 
@@ -86,7 +85,6 @@ describe('MessagesComponent', () => {
                 component = fixture.componentInstance;
                 metisService = fixture.debugElement.injector.get(MetisService);
                 metisServiceGetFilteredPostsSpy = jest.spyOn(metisService, 'getFilteredPosts');
-                metisServiceGetUserStub = jest.spyOn(metisService, 'getUser');
                 fetchNextPageSpy = jest.spyOn(component, 'fetchNextPage');
                 scrollToBottomOfMessagesSpy = jest.spyOn(component, 'scrollToBottom');
             });

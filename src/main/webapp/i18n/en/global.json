@@ -246,7 +246,8 @@
             "addExternalSubmission": "Add External Submission",
             "addAuxiliaryRepository": "Add Auxiliary Repository",
             "toggleToUnsubmitted": "Change Student Exam to Unsubmitted",
-            "toggleToSubmitted": "Change Student Exam to Submitted"
+            "toggleToSubmitted": "Change Student Exam to Submitted",
+            "endNow": "End Now"
         },
         "detail": {
             "field": "Field",
@@ -263,6 +264,9 @@
         },
         "noButtonTextDelete": {
             "title": "Confirm delete operation"
+        },
+        "endNow": {
+            "title": "Confirm end now operation"
         },
         "cleanup": {
             "title": "Confirm cleanup operation"

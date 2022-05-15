@@ -1,15 +1,14 @@
 package de.tum.in.www1.artemis.repository.metis;
 
-import java.util.List;
-
+import de.tum.in.www1.artemis.domain.metis.CourseWideContext;
+import de.tum.in.www1.artemis.domain.metis.Post;
+import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import de.tum.in.www1.artemis.domain.metis.CourseWideContext;
-import de.tum.in.www1.artemis.domain.metis.Post;
-import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
+import java.util.List;
 
 /**
  * Spring Data repository for the Post entity.
@@ -87,6 +86,13 @@ public interface PostRepository extends JpaRepository<Post, Long> {
             """)
     List<Post> findPostsByExerciseId(@Param("exerciseId") Long exerciseId, @Param("unresolved") boolean unresolved, @Param("own") boolean own,
             @Param("reactedOrReplied") boolean reactedOrReplied, @Param("userId") Long userId);
+
+    @Query("""
+            SELECT DISTINCT post FROM Post post
+            LEFT JOIN post.answers answer LEFT JOIN post.reactions reaction
+            WHERE post.plagiarismCase.id = :#{#plagiarismCaseId}
+            """)
+    List<Post> findPostsByPlagiarismCaseId(@Param("plagiarismCaseId") Long plagiarismCaseId);
 
     @Query("""
              SELECT DISTINCT post FROM Post post
