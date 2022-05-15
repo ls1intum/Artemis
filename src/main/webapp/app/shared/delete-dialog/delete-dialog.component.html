@@ -7,6 +7,7 @@
             <span *ngSwitchCase="actionTypes.Remove" jhiTranslate="entity.remove.title">Confirm remove operation</span>
             <span *ngSwitchCase="actionTypes.Unlink" jhiTranslate="entity.unlink.title">Confirm unlink operation</span>
             <span *ngSwitchCase="actionTypes.NoButtonTextDelete" jhiTranslate="entity.noButtonTextDelete.title">Confirm delete operation</span>
+            <span *ngSwitchCase="actionTypes.EndNow" jhiTranslate="entity.endNow.title">Confirm end now operation</span>
         </h4>
         <button type="button" class="btn-close" data-dismiss="modal" aria-hidden="true" (click)="clear()"></button>
     </div>
@@ -46,6 +47,7 @@
             <span *ngSwitchCase="actionTypes.Remove" jhiTranslate="entity.action.remove">Remove</span>
             <span *ngSwitchCase="actionTypes.Unlink" jhiTranslate="entity.action.unlink">Unlink</span>
             <span *ngSwitchCase="actionTypes.NoButtonTextDelete" jhiTranslate="entity.action.delete">Delete</span>
+            <span *ngSwitchCase="actionTypes.EndNow" jhiTranslate="entity.action.endNow">End Now</span>
         </button>
     </div>
 </form>
