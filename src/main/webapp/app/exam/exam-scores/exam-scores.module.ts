@@ -9,6 +9,7 @@ import { ArtemisSharedComponentModule } from 'app/shared/components/shared-compo
 import { ExamScoresAverageScoresGraphComponent } from 'app/exam/exam-scores/exam-scores-average-scores-graph.component';
 import { NgxChartsModule } from '@swimlane/ngx-charts';
 import { ArtemisParticipantScoresModule } from 'app/shared/participant-scores/participant-scores.module';
+import { ExportModule } from 'app/shared/export/export.module';
 
 @NgModule({
     declarations: [ExamScoresComponent, ExamScoresAverageScoresGraphComponent],
@@ -21,6 +22,7 @@ import { ArtemisParticipantScoresModule } from 'app/shared/participant-scores/pa
         ArtemisSharedComponentModule,
         NgxChartsModule,
         ArtemisParticipantScoresModule,
+        ExportModule,
     ],
 })
 export class ArtemisExamScoresModule {}

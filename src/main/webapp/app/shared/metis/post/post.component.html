@@ -29,7 +29,7 @@
                 >
                 <span class="context-information" *ngIf="!contextInformation.routerLinkComponents">{{ contextInformation.displayName }}:</span>
             </span>
-            <span class="col-auto">
+            <span *ngIf="pageType !== PageType.PLAGIARISM_CASE" class="col-auto">
                 <a
                     class="post-title"
                     [routerLink]="metisService.getLinkForPost(posting)"

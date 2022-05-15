@@ -12,8 +12,9 @@ public class PostContextConstraintValidator implements ConstraintValidator<PostC
 
     @Override
     public boolean isValid(Post post, ConstraintValidatorContext ctx) {
-        return (post.getExercise() != null && post.getLecture() == null && post.getCourseWideContext() == null)
-                || (post.getExercise() == null && post.getLecture() != null && post.getCourseWideContext() == null)
-                || (post.getExercise() == null && post.getLecture() == null && post.getCourseWideContext() != null && post.getCourse() != null);
+        return (post.getExercise() != null && post.getLecture() == null && post.getPlagiarismCase() == null && post.getCourseWideContext() == null)
+                || (post.getExercise() == null && post.getLecture() != null && post.getPlagiarismCase() == null && post.getCourseWideContext() == null)
+                || (post.getExercise() == null && post.getLecture() == null && post.getPlagiarismCase() != null && post.getCourseWideContext() == null)
+                || (post.getExercise() == null && post.getLecture() == null && post.getPlagiarismCase() == null && post.getCourseWideContext() != null && post.getCourse() != null);
     }
 }

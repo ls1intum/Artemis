@@ -138,7 +138,7 @@ describe('QuizExercise Service', () => {
     });
 
     it.each([
-        [QuizStatus.HIDDEN, false, false, false, false],
+        [QuizStatus.INVISIBLE, false, false, false, false],
         [QuizStatus.VISIBLE, true, false, false, false],
         [QuizStatus.CLOSED, true, true, false, false],
         [QuizStatus.OPEN_FOR_PRACTICE, true, true, false, true],
