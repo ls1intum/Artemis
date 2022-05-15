@@ -1,4 +1,4 @@
-import { ApplicationRef, EmbeddedViewRef, Injectable, ViewContainerRef } from '@angular/core';
+import { ApplicationRef, EmbeddedViewRef, Injectable, Injector, ViewChild, ViewContainerRef } from '@angular/core';
 import { Observable, Subject } from 'rxjs';
 import { ShowdownExtension } from 'showdown';
 // tslint:disable-next-line:max-line-length
@@ -14,6 +14,8 @@ import { ExerciseHint } from 'app/entities/hestia/exercise-hint.model';
 
 @Injectable({ providedIn: 'root' })
 export class ProgrammingExerciseTaskExtensionWrapper implements ArtemisShowdownExtensionWrapper {
+    viewContainerRef: ViewContainerRef;
+
     public exerciseHints: ExerciseHint[] = [];
     private latestResult?: Result;
     private exercise: Exercise;
@@ -24,7 +26,7 @@ export class ProgrammingExerciseTaskExtensionWrapper implements ArtemisShowdownE
     // unique index, even if multiple tasks are shown from different problem statements on the same page (in different tabs)
     private taskIndex = 0;
 
-    constructor(private programmingExerciseInstructionService: ProgrammingExerciseInstructionService, private appRef: ApplicationRef, private viewContainerRef: ViewContainerRef) {}
+    constructor(private programmingExerciseInstructionService: ProgrammingExerciseInstructionService, private appRef: ApplicationRef, private injector: Injector) {}
 
     /**
      * Sets latest result according to parameter.
@@ -67,7 +69,7 @@ export class ProgrammingExerciseTaskExtensionWrapper implements ArtemisShowdownE
 
             // The same task could appear multiple times in the instructions (edge case).
             for (let i = 0; i < taskHtmlContainers.length; i++) {
-                const componentRef = this.viewContainerRef.createComponent(ProgrammingExerciseInstructionTaskStatusComponent);
+                const componentRef = this.viewContainerRef.createComponent(ProgrammingExerciseInstructionTaskStatusComponent, { injector: this.injector });
                 componentRef.instance.exercise = this.exercise;
                 componentRef.instance.exerciseHints = this.exerciseHints.filter((hint) => hints.includes(hint.id!.toString(10)));
                 componentRef.instance.taskName = taskName;
@@ -76,7 +78,7 @@ export class ProgrammingExerciseTaskExtensionWrapper implements ArtemisShowdownE
                 componentRef.instance.showTestDetails =
                     (this.exercise.type === ExerciseType.PROGRAMMING && (this.exercise as ProgrammingExercise).showTestNamesToStudents) || false;
 
-                this.appRef.attachView(componentRef.hostView);
+                // this.appRef.attachView(componentRef.hostView);
                 const domElem = (componentRef.hostView as EmbeddedViewRef<any>).rootNodes[0] as HTMLElement;
                 const taskHtmlContainer = taskHtmlContainers[i];
                 taskHtmlContainer.innerHTML = '';
