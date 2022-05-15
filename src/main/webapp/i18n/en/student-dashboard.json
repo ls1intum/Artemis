@@ -30,7 +30,8 @@
                 "statistics": "Statistics",
                 "lectures": "Lectures",
                 "exams": "Exams",
-                "discussion": "Discussion"
+                "discussion": "Discussion",
+                "plagiarismCases": "Plagiarism Cases"
             },
             "exerciseList": {
                 "filter": "Filter ({{ num }})",
@@ -163,6 +164,7 @@
                 "noResults": "You have no results yet",
                 "instructorActions": {
                     "title": "Instructor actions:",
+                    "titleTutor": "Tutor actions:",
                     "scores": "Scores",
                     "submissions": "Submissions",
                     "statistics": "Statistics"

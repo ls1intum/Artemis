@@ -20,7 +20,7 @@
         "name": "Name",
         "randomPassword": "Random password",
         "keepPassword": "Keep old password",
-        "passwordConstraints": "The password must contain {{min}} to {{max}} characters!",
+        "inputConstraints": "This field must contain {{min}} to {{max}} characters!",
         "groups": "Groups",
         "addGroup": "+ Group",
         "enterGroup": "Enter a group",

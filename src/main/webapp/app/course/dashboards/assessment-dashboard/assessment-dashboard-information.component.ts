@@ -1,8 +1,9 @@
-import { Component, Input, OnChanges, OnInit } from '@angular/core';
+import { Component, Input, OnChanges, OnDestroy, OnInit } from '@angular/core';
 import { DueDateStat } from 'app/course/dashboards/due-date-stat.model';
 import { LegendPosition } from '@swimlane/ngx-charts';
 import { TranslateService } from '@ngx-translate/core';
 import { GraphColors } from 'app/entities/statistics.model';
+import { Subscription } from 'rxjs';
 
 export class AssessmentDashboardInformationEntry {
     constructor(public total: number, public tutor: number, public done?: number) {}
@@ -28,7 +29,7 @@ export class AssessmentDashboardInformationEntry {
     templateUrl: './assessment-dashboard-information.component.html',
     styleUrls: ['./assessment-dashboard-information.component.scss'],
 })
-export class AssessmentDashboardInformationComponent implements OnInit, OnChanges {
+export class AssessmentDashboardInformationComponent implements OnInit, OnChanges, OnDestroy {
     @Input() isExamMode: boolean;
     @Input() courseId: number;
     @Input() examId?: number;
@@ -64,6 +65,8 @@ export class AssessmentDashboardInformationComponent implements OnInit, OnChange
     assessmentLocksLink: any[];
     ratingsLink: any[];
 
+    themeSubscription: Subscription;
+
     constructor(private translateService: TranslateService) {}
 
     ngOnInit(): void {
@@ -71,10 +74,25 @@ export class AssessmentDashboardInformationComponent implements OnInit, OnChange
         this.translateService.onLangChange.subscribe(() => {
             this.setupGraph();
         });
+
+        this.customColors = [
+            {
+                name: this.openedAssessmentsTitle,
+                value: GraphColors.RED,
+            },
+            {
+                name: this.completedAssessmentsTitle,
+                value: GraphColors.BLUE,
+            },
+        ];
     }
 
     ngOnChanges(): void {
         this.setup();
+    }
+
+    ngOnDestroy(): void {
+        this.themeSubscription?.unsubscribe();
     }
 
     setup() {
@@ -94,17 +112,6 @@ export class AssessmentDashboardInformationComponent implements OnInit, OnChange
     setupGraph() {
         this.completedAssessmentsTitle = this.translateService.instant('artemisApp.exerciseAssessmentDashboard.closedAssessments');
         this.openedAssessmentsTitle = this.translateService.instant('artemisApp.exerciseAssessmentDashboard.openAssessments');
-
-        this.customColors = [
-            {
-                name: this.openedAssessmentsTitle,
-                value: GraphColors.RED,
-            },
-            {
-                name: this.completedAssessmentsTitle,
-                value: GraphColors.BLUE,
-            },
-        ];
 
         this.assessments = [
             {

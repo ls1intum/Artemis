@@ -5,7 +5,6 @@ import java.io.InputStream;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
@@ -21,9 +20,9 @@ public class ResourceLoaderServiceTest extends AbstractSpringIntegrationBambooBi
     @Autowired
     private ResourceLoaderService resourceLoaderService;
 
-    private final Path javaPath = Paths.get("templates", "java", "java.txt");
+    private final Path javaPath = Path.of("templates", "java", "java.txt");
 
-    private final Path jenkinsPath = Paths.get("templates", "jenkins", "jenkins.txt");
+    private final Path jenkinsPath = Path.of("templates", "jenkins", "jenkins.txt");
 
     @AfterEach
     public void cleanup() throws IOException {

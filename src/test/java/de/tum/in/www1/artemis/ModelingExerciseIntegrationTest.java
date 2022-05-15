@@ -845,4 +845,56 @@ public class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBa
             assertThat(modelingExercise.getExampleSolutionExplanation()).isEqualTo(classExercise.getExampleSolutionExplanation());
         }
     }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testImportModelingExercise_setGradingInstructionForCopiedFeedback() throws Exception {
+
+        var now = ZonedDateTime.now();
+        Course course1 = database.addEmptyCourse();
+        Course course2 = database.addEmptyCourse();
+
+        ModelingExercise modelingExercise = ModelFactory.generateModelingExercise(now.minusDays(1), now.minusHours(2), now.minusHours(1), DiagramType.ClassDiagram, course1);
+        modelingExercise = modelingExerciseRepository.save(modelingExercise);
+        List<GradingCriterion> gradingCriteria = database.addGradingInstructionsToExercise(modelingExercise);
+        gradingCriterionRepository.saveAll(gradingCriteria);
+        GradingInstruction gradingInstruction = gradingCriteria.get(0).getStructuredGradingInstructions().get(0);
+        assertThat(gradingInstruction.getFeedback()).as("Test feedback should have student readable feedback").isNotEmpty();
+
+        // Create example submission
+        var exampleSubmission = database.generateExampleSubmission("model", modelingExercise, true);
+        exampleSubmission = database.addExampleSubmission(exampleSubmission);
+        database.addResultToSubmission(exampleSubmission.getSubmission(), AssessmentType.MANUAL);
+        var submission = submissionRepository.findWithEagerResultAndFeedbackById(exampleSubmission.getSubmission().getId()).get();
+
+        Feedback feedback = ModelFactory.generateFeedback().get(0);
+        feedback.setGradingInstruction(gradingInstruction);
+        database.addFeedbackToResult(feedback, Objects.requireNonNull(submission.getLatestResult()));
+
+        modelingExercise.setCourse(course2);
+        var importedModelingExercise = request.postWithResponseBody("/api/modeling-exercises/import/" + modelingExercise.getId(), modelingExercise, ModelingExercise.class,
+                HttpStatus.CREATED);
+
+        assertThat(modelingExerciseRepository.findById(importedModelingExercise.getId())).isPresent();
+
+        var importedExampleSubmission = importedModelingExercise.getExampleSubmissions().stream().findFirst().get();
+        GradingInstruction importedFeedbackGradingInstruction = importedExampleSubmission.getSubmission().getLatestResult().getFeedbacks().get(0).getGradingInstruction();
+        assertThat(importedFeedbackGradingInstruction).isNotNull();
+
+        // Copy and original should have the same data but not the same ids.
+        assertThat(importedFeedbackGradingInstruction.getId()).isNotEqualTo(gradingInstruction.getId());
+        assertThat(importedFeedbackGradingInstruction.getGradingCriterion()).isNull();  // To avoid infinite recursion when serializing to JSON.
+        assertThat(importedFeedbackGradingInstruction.getFeedback()).isEqualTo(gradingInstruction.getFeedback());
+        assertThat(importedFeedbackGradingInstruction.getGradingScale()).isEqualTo(gradingInstruction.getGradingScale());
+        assertThat(importedFeedbackGradingInstruction.getInstructionDescription()).isEqualTo(gradingInstruction.getInstructionDescription());
+        assertThat(importedFeedbackGradingInstruction.getCredits()).isEqualTo(gradingInstruction.getCredits());
+        assertThat(importedFeedbackGradingInstruction.getUsageCount()).isEqualTo(gradingInstruction.getUsageCount());
+
+        var importedModelingExerciseFromDb = modelingExerciseRepository.findByIdWithExampleSubmissionsAndResults(importedModelingExercise.getId()).get();
+        var importedFeedbackGradingInstructionFromDb = importedModelingExerciseFromDb.getExampleSubmissions().stream().findFirst().get().getSubmission().getLatestResult()
+                .getFeedbacks().get(0).getGradingInstruction();
+
+        assertThat(importedFeedbackGradingInstructionFromDb.getGradingCriterion().getId()).isNotEqualTo(gradingInstruction.getGradingCriterion().getId());
+
+    }
 }

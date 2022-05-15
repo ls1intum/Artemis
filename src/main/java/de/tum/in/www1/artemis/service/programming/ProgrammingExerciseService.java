@@ -8,7 +8,6 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -543,7 +542,7 @@ public class ProgrammingExerciseService {
             if (!programmingExercise.hasSequentialTestRuns()) {
                 String testFilePath = templatePath + "/testFiles/**/*.*";
                 Resource[] testFileResources = resourceLoaderService.getResources(testFilePath);
-                String packagePath = Paths.get(repository.getLocalPath().toAbsolutePath().toString(), "test", "${packageNameFolder}").toAbsolutePath().toString();
+                String packagePath = Path.of(repository.getLocalPath().toAbsolutePath().toString(), "test", "${packageNameFolder}").toAbsolutePath().toString();
 
                 sectionsMap.put("non-sequential", true);
                 sectionsMap.put("sequential", false);
@@ -556,7 +555,7 @@ public class ProgrammingExerciseService {
                 else {
                     projectFileFileName = "pom.xml";
                 }
-                fileService.replacePlaceholderSections(Paths.get(repository.getLocalPath().toAbsolutePath().toString(), projectFileFileName).toAbsolutePath().toString(),
+                fileService.replacePlaceholderSections(Path.of(repository.getLocalPath().toAbsolutePath().toString(), projectFileFileName).toAbsolutePath().toString(),
                         sectionsMap);
 
                 fileService.copyResources(testFileResources, prefix, packagePath, false);
@@ -602,7 +601,7 @@ public class ProgrammingExerciseService {
                 else {
                     projectFileName = "build.gradle";
                 }
-                fileService.replacePlaceholderSections(Paths.get(repository.getLocalPath().toAbsolutePath().toString(), projectFileName).toAbsolutePath().toString(), sectionsMap);
+                fileService.replacePlaceholderSections(Path.of(repository.getLocalPath().toAbsolutePath().toString(), projectFileName).toAbsolutePath().toString(), sectionsMap);
 
                 // staging project files are only required for maven
                 Resource stagePomXml = null;
@@ -621,16 +620,16 @@ public class ProgrammingExerciseService {
 
                 for (String buildStage : sequentialTestTasks) {
 
-                    Path buildStagePath = Paths.get(repository.getLocalPath().toAbsolutePath().toString(), buildStage);
+                    Path buildStagePath = Path.of(repository.getLocalPath().toAbsolutePath().toString(), buildStage);
                     Files.createDirectory(buildStagePath);
 
                     String buildStageResourcesPath = templatePath + "/testFiles/" + buildStage + "/**/*.*";
                     Resource[] buildStageResources = resourceLoaderService.getResources(buildStageResourcesPath);
 
-                    Files.createDirectory(Paths.get(buildStagePath.toAbsolutePath().toString(), "test"));
-                    Files.createDirectory(Paths.get(buildStagePath.toAbsolutePath().toString(), "test", "${packageNameFolder}"));
+                    Files.createDirectory(Path.of(buildStagePath.toAbsolutePath().toString(), "test"));
+                    Files.createDirectory(Path.of(buildStagePath.toAbsolutePath().toString(), "test", "${packageNameFolder}"));
 
-                    String packagePath = Paths.get(buildStagePath.toAbsolutePath().toString(), "test", "${packageNameFolder}").toAbsolutePath().toString();
+                    String packagePath = Path.of(buildStagePath.toAbsolutePath().toString(), "test", "${packageNameFolder}").toAbsolutePath().toString();
 
                     // staging project files are only required for maven
                     if (isMaven && stagePomXml != null) {
@@ -798,7 +797,7 @@ public class ProgrammingExerciseService {
 
         Path solutionRepositoryPath = solutionRepository.getLocalPath().toRealPath();
         Path exerciseRepositoryPath = exerciseRepository.getLocalPath().toRealPath();
-        Path structureOraclePath = Paths.get(testRepository.getLocalPath().toRealPath().toString(), testsPath, "test.json");
+        Path structureOraclePath = Path.of(testRepository.getLocalPath().toRealPath().toString(), testsPath, "test.json");
 
         String structureOracleJSON = OracleGenerator.generateStructureOracleJSON(solutionRepositoryPath, exerciseRepositoryPath);
         return saveAndPushStructuralOracle(user, testRepository, structureOraclePath, structureOracleJSON);

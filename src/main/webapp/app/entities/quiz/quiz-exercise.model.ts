@@ -10,28 +10,44 @@ export enum QuizStatus {
     OPEN_FOR_PRACTICE,
     ACTIVE,
     VISIBLE,
-    HIDDEN,
+    INVISIBLE,
+}
+
+export enum QuizMode {
+    SYNCHRONIZED = 'SYNCHRONIZED',
+    BATCHED = 'BATCHED',
+    INDIVIDUAL = 'INDIVIDUAL',
+}
+
+export class QuizBatch {
+    id?: number;
+    startTime?: dayjs.Dayjs;
+    started?: boolean;
+    ended?: boolean;
+    submissionAllowed?: boolean;
+    password?: string;
+
+    // local helpers
+    startTimeError?: boolean;
 }
 
 export class QuizExercise extends Exercise {
     public id?: number;
-    public remainingTime?: number; // (computed by server)
-    public timeUntilPlannedStart?: number; // (computed by server)
     public visibleToStudents?: boolean; // (computed by server)
+    public allowedNumberOfAttempts?: number;
+    public remainingNumberOfAttempts?: number;
     public randomizeQuestionOrder?: boolean;
-    public isVisibleBeforeStart?: boolean;
     public isOpenForPractice?: boolean;
-    public isPlannedToStart?: boolean;
     public duration?: number;
     public quizPointStatistic?: QuizPointStatistic;
     public quizQuestions?: QuizQuestion[];
     public status?: QuizStatus;
+    public quizMode?: QuizMode;
+    public quizBatches?: QuizBatch[];
 
     // helper attributes
-    public adjustedDueDate?: dayjs.Dayjs;
-    public adjustedReleaseDate?: dayjs.Dayjs;
-    public ended?: boolean;
-    public started?: boolean;
+    public quizEnded?: boolean;
+    public quizStarted?: boolean;
 
     public isActiveQuiz?: boolean;
     public isPracticeModeAvailable?: boolean;
@@ -41,9 +57,7 @@ export class QuizExercise extends Exercise {
         this.course = course;
         this.exerciseGroup = exerciseGroup;
         this.randomizeQuestionOrder = true; // default value (set by server)
-        this.isVisibleBeforeStart = false; // default value (set by server)
         this.isOpenForPractice = false; // default value (set by server)
-        this.isPlannedToStart = false; // default value (set by server)
         this.isActiveQuiz = false; // default value (set by client, might need to be computed before evaluated)
         this.isPracticeModeAvailable = true; // default value (set by client, might need to be computed before evaluated)
     }

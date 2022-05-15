@@ -1,14 +1,14 @@
 .color-selector {
     position: absolute;
     width: 220px;
-    background-color: #ffffff;
+    background-color: var(--color-selector-background);
     z-index: 1000;
     display: flex;
     flex-wrap: wrap;
     padding: 4px;
     border-radius: 3px;
-    border: 1px solid #ced4da;
-    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.175);
+    border: 1px solid var(--color-selector-border);
+    box-shadow: 0 6px 12px var(--color-selector-box-shadow);
 
     .tag-color-selector {
         height: 50px;
@@ -21,7 +21,7 @@
         border-radius: 3px;
 
         &:hover {
-            border: 1px solid #ced4da;
+            border: 1px solid var(--color-selector-border);
             padding: 3px;
         }
 
@@ -30,7 +30,7 @@
             height: 42px;
             cursor: pointer;
             border-radius: 3px;
-            border: 1px solid #ced4da;
+            border: 1px solid var(--color-selector-border);
         }
     }
 }

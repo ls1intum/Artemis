@@ -15,7 +15,7 @@ import { DragAndDropQuestion } from 'app/entities/quiz/drag-and-drop-question.mo
 import { DragItem } from 'app/entities/quiz/drag-item.model';
 import { DropLocation } from 'app/entities/quiz/drop-location.model';
 import { MultipleChoiceQuestion } from 'app/entities/quiz/multiple-choice-question.model';
-import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
+import { QuizBatch, QuizExercise, QuizMode } from 'app/entities/quiz/quiz-exercise.model';
 import { QuizQuestion, QuizQuestionType } from 'app/entities/quiz/quiz-question.model';
 import { ShortAnswerMapping } from 'app/entities/quiz/short-answer-mapping.model';
 import { ShortAnswerQuestion } from 'app/entities/quiz/short-answer-question.model';
@@ -40,6 +40,7 @@ import { ArtemisTestModule } from '../../test.module';
 import { Exam } from 'app/entities/exam.model';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { MockProvider } from 'ng-mocks';
+import { Duration } from 'app/exercises/quiz/manage/quiz-exercise-interfaces';
 
 describe('QuizExercise Management Detail Component', () => {
     let comp: QuizExerciseDetailComponent;
@@ -59,6 +60,7 @@ describe('QuizExercise Management Detail Component', () => {
 
     const course: Course = { id: 123 } as Course;
     const quizExercise = new QuizExercise(course, undefined);
+    const quizBatch = new QuizBatch();
     const mcQuestion = new MultipleChoiceQuestion();
     const answerOption = new AnswerOption();
     const exam = new Exam();
@@ -73,8 +75,9 @@ describe('QuizExercise Management Detail Component', () => {
         mcQuestion.points = 10;
         mcQuestion.answerOptions = [answerOption];
         quizExercise.quizQuestions = [mcQuestion];
-        quizExercise.isPlannedToStart = false;
+        quizExercise.quizBatches = [];
         quizExercise.releaseDate = undefined;
+        quizExercise.quizMode = QuizMode.SYNCHRONIZED;
     };
 
     resetQuizExercise();
@@ -85,14 +88,14 @@ describe('QuizExercise Management Detail Component', () => {
         const question = new MultipleChoiceQuestion();
         question.title = 'test';
         const answerOption1 = new AnswerOption();
-        answerOption1.text = 'wrong answer';
-        answerOption1.explanation = 'wrong explanation';
-        answerOption1.hint = 'wrong hint';
-        answerOption1.isCorrect = false;
-        const answerOption2 = new AnswerOption();
         answerOption1.text = 'right answer';
         answerOption1.explanation = 'right explanation';
         answerOption1.isCorrect = true;
+        const answerOption2 = new AnswerOption();
+        answerOption2.text = 'wrong answer';
+        answerOption2.explanation = 'wrong explanation';
+        answerOption2.hint = 'wrong hint';
+        answerOption2.isCorrect = false;
         question.answerOptions = [answerOption1, answerOption2];
         question.points = 10;
         return { question, answerOption1, answerOption2 };
@@ -273,6 +276,80 @@ describe('QuizExercise Management Detail Component', () => {
                 jest.clearAllMocks();
             });
         });
+
+        describe('validate dates', () => {
+            // setup
+            beforeEach(() => {
+                resetQuizExercise();
+                comp.course = course;
+                comp.init();
+                comp.quizExercise = quizExercise;
+                comp.duration = new Duration(5, 15);
+                comp.scheduleQuizStart = true;
+            });
+
+            it.each([[QuizMode.SYNCHRONIZED], [QuizMode.BATCHED], [QuizMode.INDIVIDUAL]])('should set errors to false for valid dates for %s mode', (quizMode) => {
+                comp.quizExercise.quizMode = quizMode;
+                comp.cacheValidation();
+
+                if (quizMode !== QuizMode.SYNCHRONIZED) {
+                    comp.addQuizBatch();
+                }
+
+                const now = dayjs();
+                comp.quizExercise.releaseDate = now;
+
+                comp.validateDate();
+                expect(comp.quizExercise.dueDateError).toBe(false);
+                expect(comp.hasErrorInQuizBatches()).toBe(false);
+
+                comp.quizExercise!.quizBatches![0].startTime = now.add(1, 'days');
+
+                comp.validateDate();
+                expect(comp.quizExercise.dueDateError).toBe(false);
+                expect(comp.hasErrorInQuizBatches()).toBe(false);
+
+                comp.quizExercise.dueDate = now.add(2, 'days');
+
+                comp.validateDate();
+                expect(comp.quizExercise.dueDateError).toBe(false);
+                expect(comp.hasErrorInQuizBatches()).toBe(false);
+            });
+
+            it.each([[QuizMode.SYNCHRONIZED], [QuizMode.BATCHED], [QuizMode.INDIVIDUAL]])('should set errors to true for invalid dates for %s mode', (quizMode) => {
+                comp.quizExercise.quizMode = quizMode;
+                comp.cacheValidation();
+
+                if (quizMode !== QuizMode.SYNCHRONIZED) {
+                    comp.addQuizBatch();
+                }
+
+                const now = dayjs();
+                comp.quizExercise.releaseDate = now;
+
+                comp.quizExercise!.quizBatches![0].startTime = now.add(-1, 'days');
+
+                comp.validateDate();
+                expect(comp.quizExercise.dueDateError).toBe(false);
+                expect(comp.hasErrorInQuizBatches()).toBe(true);
+
+                comp.quizExercise.dueDate = now.add(-2, 'days');
+
+                comp.validateDate();
+                expect(comp.quizExercise.dueDateError).toBe(true);
+                expect(comp.hasErrorInQuizBatches()).toBe(true);
+
+                comp.quizExercise!.quizBatches![0].startTime = now.add(1, 'days');
+                comp.quizExercise.dueDate = now.add(1, 'days');
+
+                comp.validateDate();
+                expect(comp.quizExercise.dueDateError).toBe(false);
+                if (quizMode !== QuizMode.SYNCHRONIZED) {
+                    // dueDate for SYNCHRONIZED quizzes are calculated so no need to validate.
+                    expect(comp.hasErrorInQuizBatches()).toBe(true);
+                }
+            });
+        });
     });
 
     describe('without routeChange', () => {
@@ -416,7 +493,7 @@ describe('QuizExercise Management Detail Component', () => {
             const resetQuizExerciseAndSet = () => {
                 resetQuizExercise();
                 comp.quizExercise = quizExercise;
-                comp.quizExercise.isPlannedToStart = true;
+                quizExercise.quizBatches = [quizBatch];
             };
 
             it('should return isVisibleBeforeStart if no quizExercise', () => {
@@ -426,21 +503,21 @@ describe('QuizExercise Management Detail Component', () => {
 
             it('should return isVisibleBeforeStart if quizExercise not planned to start', () => {
                 resetQuizExerciseAndSet();
-                comp.quizExercise.isPlannedToStart = false;
+                quizExercise.quizBatches = [];
                 expect(comp.showDropdown).toBe('isVisibleBeforeStart');
             });
 
             it('should return if end of exercise is in the past', () => {
                 resetQuizExerciseAndSet();
-                comp.quizExercise.releaseDate = dayjs().subtract(20, 's');
-                comp.quizExercise.duration = 10;
+                comp.quizExercise.quizStarted = true;
+                comp.quizExercise.quizEnded = true;
                 expect(comp.showDropdown).toBe('isOpenForPractice');
             });
 
             it('should return if end of exercise is in the future but release date is in the past', () => {
                 resetQuizExerciseAndSet();
-                comp.quizExercise.releaseDate = dayjs().subtract(20, 's');
-                comp.quizExercise.duration = 50;
+                comp.quizExercise.quizStarted = true;
+                comp.quizExercise.quizEnded = false;
                 expect(comp.showDropdown).toBe('active');
             });
         });
@@ -602,6 +679,7 @@ describe('QuizExercise Management Detail Component', () => {
                 const { question: shortQuestion } = createValidSAQuestion();
 
                 beforeEach(() => {
+                    comp.quizExercise = quizExercise;
                     comp.allExistingQuestions = [multiChoiceQuestion, dndQuestion, shortQuestion];
                     comp.mcqFilterEnabled = false;
                     comp.dndFilterEnabled = false;
@@ -1001,6 +1079,23 @@ describe('QuizExercise Management Detail Component', () => {
                 expect(comp.quizIsValid).toBe(false);
             });
 
+            it('should be valid if MC question has scoring type single choice', () => {
+                const { question } = createValidMCQuestion();
+                question.singleChoice = true;
+                comp.quizExercise.quizQuestions = [question];
+                comp.cacheValidation();
+                expect(comp.quizIsValid).toBe(true);
+            });
+
+            it('should not be valid if MC single choice question has multiple correct answers', () => {
+                const { question } = createValidMCQuestion();
+                question.singleChoice = true;
+                question.answerOptions![1]!.isCorrect = true;
+                comp.quizExercise.quizQuestions = [question];
+                comp.cacheValidation();
+                expect(comp.quizIsValid).toBe(false);
+            });
+
             it('should be valid with valid DnD question', () => {
                 const { question } = createValidDnDQuestion();
                 comp.quizExercise.quizQuestions = [question];
@@ -1221,6 +1316,55 @@ describe('QuizExercise Management Detail Component', () => {
             });
         });
 
+        describe('quiz mode', () => {
+            const b1 = new QuizBatch();
+            const b2 = new QuizBatch();
+            const b3 = new QuizBatch();
+            b1.id = 1;
+            b2.id = 2;
+            b3.id = 3;
+
+            beforeEach(() => {
+                resetQuizExercise();
+                comp.quizExercise = quizExercise;
+            });
+
+            it('should manage batches for synchronized mode', () => {
+                comp.cacheValidation();
+                expect(quizExercise.quizBatches).toBeArrayOfSize(0);
+                comp.scheduleQuizStart = true;
+                comp.cacheValidation();
+                expect(quizExercise.quizBatches).toBeArrayOfSize(1);
+                comp.scheduleQuizStart = false;
+                comp.cacheValidation();
+                expect(quizExercise.quizBatches).toBeArrayOfSize(0);
+            });
+
+            it('should add batches', () => {
+                expect(quizExercise.quizBatches).toBeArrayOfSize(0);
+                comp.addQuizBatch();
+                expect(quizExercise.quizBatches).toBeArrayOfSize(1);
+            });
+
+            it('should add batches when none exist', () => {
+                quizExercise.quizBatches = undefined;
+                comp.addQuizBatch();
+                expect(quizExercise.quizBatches).toBeArrayOfSize(1);
+            });
+
+            it('should remove batches', () => {
+                quizExercise.quizBatches = [b1, b2, b3];
+                comp.removeQuizBatch(b2);
+                expect(quizExercise.quizBatches).toEqual([b1, b3]);
+            });
+
+            it('should not remove batches when they dont exist', () => {
+                quizExercise.quizBatches = [b1, b3];
+                comp.removeQuizBatch(b2);
+                expect(quizExercise.quizBatches).toEqual([b1, b3]);
+            });
+        });
+
         describe('show existing questions', () => {
             let courseManagementServiceStub: jest.SpyInstance;
             let examManagementServiceStub: jest.SpyInstance;
@@ -1327,6 +1471,7 @@ describe('QuizExercise Management Detail Component', () => {
             const control = { ...element, value: 'test' };
             beforeEach(() => {
                 comp.importFile = fakeFile;
+                comp.quizExercise = quizExercise;
                 verifyStub = jest.spyOn(comp, 'verifyAndImportQuestions').mockImplementation();
                 readAsText = jest.fn();
                 reader = new FileReader();
@@ -1453,18 +1598,6 @@ describe('QuizExercise Management Detail Component', () => {
                 it('should put reason for no questions', () => {
                     quizExercise.quizQuestions = [];
                     filterReasonAndExpectMoreThanOneInArray('artemisApp.quizExercise.invalidReasons.noQuestion');
-                });
-
-                it('should put reason for invalid release time', () => {
-                    quizExercise.isPlannedToStart = true;
-                    quizExercise.releaseDate = undefined;
-                    filterReasonAndExpectMoreThanOneInArray('artemisApp.quizExercise.invalidReasons.invalidStartTime');
-                });
-
-                it('should put reason if release time is before now', () => {
-                    quizExercise.isPlannedToStart = true;
-                    quizExercise.releaseDate = dayjs().subtract(1500, 's');
-                    filterReasonAndExpectMoreThanOneInArray('artemisApp.quizExercise.invalidReasons.startTimeInPast');
                 });
             });
 

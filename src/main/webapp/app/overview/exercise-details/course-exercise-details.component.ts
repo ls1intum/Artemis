@@ -22,7 +22,6 @@ import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service'
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { getExerciseDueDate, hasExerciseDueDatePassed, participationStatus } from 'app/exercises/shared/exercise/exercise.utils';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
-import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { GradingCriterion } from 'app/exercises/shared/structured-grading-criterion/grading-criterion.model';
 import { CourseExerciseSubmissionResultSimulationService } from 'app/course/manage/course-exercise-submission-result-simulation.service';
@@ -50,6 +49,8 @@ import { SafeHtml } from '@angular/platform-browser';
 import { faBook, faExternalLinkAlt, faEye, faFileSignature, faListAlt, faSignal, faTable, faWrench, faAngleDown, faAngleUp } from '@fortawesome/free-solid-svg-icons';
 import { TextExercise } from 'app/entities/text-exercise.model';
 import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
+import { PlagiarismCasesService } from 'app/course/plagiarism-cases/shared/plagiarism-cases.service';
+import { PlagiarismCase } from 'app/exercises/shared/plagiarism/types/PlagiarismCase';
 
 const MAX_RESULT_HISTORY_LENGTH = 5;
 
@@ -91,6 +92,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     hasSubmissionPolicy: boolean;
     submissionPolicy: SubmissionPolicy;
     exampleSolutionCollapsed: boolean;
+    plagiarismCase?: PlagiarismCase;
 
     public modelingExercise?: ModelingExercise;
     public exampleSolution?: SafeHtml;
@@ -143,6 +145,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         private complaintService: ComplaintService,
         private navigationUtilService: ArtemisNavigationUtilService,
         private artemisMarkdown: ArtemisMarkdownService,
+        private plagiarismCaseService: PlagiarismCasesService,
     ) {}
 
     ngOnInit() {
@@ -189,6 +192,9 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         this.exerciseService.getExerciseDetails(this.exerciseId).subscribe((exerciseResponse: HttpResponse<Exercise>) => {
             this.handleNewExercise(exerciseResponse.body!);
             this.getLatestRatedResult();
+        });
+        this.plagiarismCaseService.getPlagiarismCaseForStudent(this.courseId, this.exerciseId).subscribe((res: HttpResponse<PlagiarismCase>) => {
+            this.plagiarismCase = res.body!;
         });
     }
 
@@ -464,31 +470,6 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
             }
             this.latestRatedResult = latestResult;
         }
-    }
-
-    publishBuildPlanUrl() {
-        return (this.exercise as ProgrammingExercise).publishBuildPlanUrl;
-    }
-
-    buildPlanActive() {
-        return (
-            !!this.exercise &&
-            this.exercise.studentParticipations &&
-            this.exercise.studentParticipations.length > 0 &&
-            this.exercise.studentParticipations[0].initializationState !== InitializationState.INACTIVE
-        );
-    }
-
-    buildPlanUrl(participation: StudentParticipation) {
-        return (participation as ProgrammingExerciseStudentParticipation).buildPlanUrl;
-    }
-
-    projectKey(): string {
-        return (this.exercise as ProgrammingExercise).projectKey!;
-    }
-
-    buildPlanId(participation: Participation) {
-        return (participation! as ProgrammingExerciseStudentParticipation).buildPlanId;
     }
 
     /**

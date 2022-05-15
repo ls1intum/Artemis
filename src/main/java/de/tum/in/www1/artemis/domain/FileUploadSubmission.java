@@ -1,6 +1,6 @@
 package de.tum.in.www1.artemis.domain;
 
-import java.nio.file.Paths;
+import java.nio.file.Path;
 
 import javax.persistence.*;
 
@@ -54,7 +54,7 @@ public class FileUploadSubmission extends Submission {
      * @return path where submission for file upload exercise is stored
      */
     public static String buildFilePath(Long exerciseId, Long submissionId) {
-        return Paths.get(FilePathService.getFileUploadExercisesFilePath(), String.valueOf(exerciseId), String.valueOf(submissionId)).toString();
+        return Path.of(FilePathService.getFileUploadExercisesFilePath(), String.valueOf(exerciseId), String.valueOf(submissionId)).toString();
     }
 
     public void setFilePath(String filePath) {

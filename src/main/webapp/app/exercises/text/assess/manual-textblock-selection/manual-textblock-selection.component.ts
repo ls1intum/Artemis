@@ -2,6 +2,7 @@ import { Component, Input, Output, EventEmitter } from '@angular/core';
 import { TextBlockRef } from 'app/entities/text-block-ref.model';
 import { TextSubmission } from 'app/entities/text-submission.model';
 import { TextBlock } from 'app/entities/text-block.model';
+import { GradingCriterion } from 'app/exercises/shared/structured-grading-criterion/grading-criterion.model';
 
 @Component({
     selector: 'jhi-manual-textblock-selection',
@@ -20,6 +21,7 @@ export class ManualTextblockSelectionComponent {
     @Input() readOnly: boolean;
     @Output() selectedRefChange = new EventEmitter<TextBlockRef | undefined>();
     @Input() submission: TextSubmission;
+    @Input() criteria?: GradingCriterion[];
     textBlockRefGroups: TextBlockRefGroup[];
 
     textBlockRefsChangeEmit(): void {

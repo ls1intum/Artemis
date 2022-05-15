@@ -27,7 +27,6 @@ import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.security.jwt.TokenProvider;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
-import de.tum.in.www1.artemis.service.TimeService;
 import de.tum.in.www1.artemis.service.connectors.LtiService;
 import de.tum.in.www1.artemis.web.rest.dto.ExerciseLtiConfigurationDTO;
 import de.tum.in.www1.artemis.web.rest.dto.LtiLaunchRequestDTO;
@@ -63,16 +62,13 @@ public class LtiResource {
 
     private final AuthorizationCheckService authCheckService;
 
-    private final TimeService timeService;
-
     public LtiResource(LtiService ltiService, UserRepository userRepository, ExerciseRepository exerciseRepository, TokenProvider tokenProvider,
-            AuthorizationCheckService authCheckService, TimeService timeService) {
+            AuthorizationCheckService authCheckService) {
         this.ltiService = ltiService;
         this.userRepository = userRepository;
         this.exerciseRepository = exerciseRepository;
         this.tokenProvider = tokenProvider;
         this.authCheckService = authCheckService;
-        this.timeService = timeService;
     }
 
     /**

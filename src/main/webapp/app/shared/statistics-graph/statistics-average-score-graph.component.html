@@ -67,7 +67,7 @@
                 </li>
                 <li *ngFor="let type of typeSet">
                     <label>
-                        <input class="ms-2" (change)="toggleType(type)" [checked]="chartFilter.get(convertToMapKey(type))" type="checkbox" />
+                        <input class="ms-2 form-check-input" (change)="toggleType(type)" [checked]="chartFilter.get(convertToMapKey(type))" type="checkbox" />
                         <span class="ms-2">{{ 'artemisApp.exercise-scores-chart.' + type.toLowerCase() + 'Plural' | artemisTranslate }}</span>
                     </label>
                 </li>
