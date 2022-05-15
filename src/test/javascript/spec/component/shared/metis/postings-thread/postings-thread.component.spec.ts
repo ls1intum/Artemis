@@ -1,5 +1,4 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { Post } from 'app/entities/metis/post.model';
 import { PostingThreadComponent } from 'app/shared/metis/posting-thread/posting-thread.component';
 import { PostService } from 'app/shared/metis/post.service';
 import { MockPostService } from '../../../../helpers/mocks/service/mock-post.service';
@@ -13,17 +12,12 @@ import { AnswerPostComponent } from 'app/shared/metis/answer-post/answer-post.co
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { AnswerPostCreateEditModalComponent } from 'app/shared/metis/posting-create-edit-modal/answer-post-create-edit-modal/answer-post-create-edit-modal.component';
 import { TranslatePipeMock } from '../../../../helpers/mocks/service/mock-translate.service';
+import { post } from '../../../../helpers/sample/metis-sample-data';
 
 describe('PostingThreadComponent', () => {
     let component: PostingThreadComponent;
     let fixture: ComponentFixture<PostingThreadComponent>;
     let metisService: MetisService;
-    let metisServiceUserAuthorityStub: jest.SpyInstance;
-
-    const post = {
-        id: 1,
-        creationDate: undefined,
-    } as Post;
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
@@ -46,7 +40,6 @@ describe('PostingThreadComponent', () => {
                 fixture = TestBed.createComponent(PostingThreadComponent);
                 component = fixture.componentInstance;
                 metisService = TestBed.inject(MetisService);
-                metisServiceUserAuthorityStub = jest.spyOn(metisService, 'metisUserIsAtLeastTutorInCourse');
             });
     });
 
