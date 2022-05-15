@@ -44,6 +44,27 @@
         >
         </fa-icon>
     </div>
+    <ng-template
+        cdkConnectedOverlay
+        [cdkConnectedOverlayHasBackdrop]="true"
+        [cdkConnectedOverlayBackdropClass]="'cdk-overlay-transparent-backdrop'"
+        [cdkConnectedOverlayOrigin]="trigger"
+        [cdkConnectedOverlayOpen]="showReactionSelector"
+        (backdropClick)="toggleEmojiSelect()"
+    >
+        <emoji-mart
+            [emojisToShowFilter]="emojisToShowFilter"
+            (emojiSelect)="selectReaction($event)"
+            [emojiSize]="20"
+            [categoriesIcons]="categoriesIcons"
+            [showSingleCategory]="true"
+            [showPreview]="false"
+            [color]="'#5289c7'"
+            [recent]="selectedCourseEmojis"
+            [i18n]="{ search: 'artemisApp.metis.searchEmoji' | artemisTranslate, categories: { recent: 'artemisApp.metis.courseEmojiSelectionCategory' | artemisTranslate } }"
+            [darkMode]="darkModeEmojiPicker"
+        ></emoji-mart>
+    </ng-template>
     <!-- start discussion -->
     <div class="col-auto p-0" *ngIf="sortedAnswerPosts.length === 0">
         <button id="startDiscussionButton" class="reaction-button clickable" (click)="openPostingCreateEditModal.emit()">
