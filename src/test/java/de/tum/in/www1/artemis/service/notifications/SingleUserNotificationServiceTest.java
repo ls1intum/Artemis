@@ -19,6 +19,7 @@ import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.domain.notification.Notification;
+import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismCase;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismComparison;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismSubmission;
 import de.tum.in.www1.artemis.domain.plagiarism.text.TextPlagiarismResult;
@@ -52,6 +53,8 @@ public class SingleUserNotificationServiceTest extends AbstractSpringIntegration
     private Exercise exercise;
 
     private PlagiarismComparison<TextSubmissionElement> plagiarismComparison;
+
+    private PlagiarismCase plagiarismCase;
 
     private Result result;
 
@@ -92,6 +95,9 @@ public class SingleUserNotificationServiceTest extends AbstractSpringIntegration
         plagiarismComparison = new PlagiarismComparison<>();
         plagiarismComparison.setSubmissionA(plagiarismSubmission);
         plagiarismComparison.setPlagiarismResult(plagiarismResult);
+
+        plagiarismCase = new PlagiarismCase();
+        plagiarismCase.setExercise(exercise);
 
         result = new Result();
         result.setScore(1D);
@@ -245,8 +251,8 @@ public class SingleUserNotificationServiceTest extends AbstractSpringIntegration
     public void testNotifyUserAboutNewPossiblePlagiarismCase() {
         // explicitly change the user to prevent issues in the following server call due to userRepository.getUser() (@WithMockUser is not working here)
         database.changeUser("student1");
-        singleUserNotificationService.notifyUserAboutNewPossiblePlagiarismCase(plagiarismComparison, user);
-        verifyRepositoryCallWithCorrectNotification(NEW_POSSIBLE_PLAGIARISM_CASE_STUDENT_TITLE);
+        singleUserNotificationService.notifyUserAboutNewPlagiarismCase(plagiarismCase, user);
+        verifyRepositoryCallWithCorrectNotification(NEW_PLAGIARISM_CASE_STUDENT_TITLE);
     }
 
     /**
@@ -256,8 +262,8 @@ public class SingleUserNotificationServiceTest extends AbstractSpringIntegration
     public void testNotifyUserAboutFinalPlagiarismState() {
         // explicitly change the user to prevent issues in the following server call due to userRepository.getUser() (@WithMockUser is not working here)
         database.changeUser("student1");
-        singleUserNotificationService.notifyUserAboutFinalPlagiarismState(plagiarismComparison, user);
-        verifyRepositoryCallWithCorrectNotification(PLAGIARISM_CASE_FINAL_STATE_STUDENT_TITLE);
+        singleUserNotificationService.notifyUserAboutPlagiarismCaseVerdict(plagiarismCase, user);
+        verifyRepositoryCallWithCorrectNotification(PLAGIARISM_CASE_VERDICT_STUDENT_TITLE);
     }
 
     /**
