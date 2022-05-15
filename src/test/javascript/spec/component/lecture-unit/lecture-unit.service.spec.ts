@@ -2,8 +2,6 @@ import { HttpResponse } from '@angular/common/http';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { fakeAsync, TestBed } from '@angular/core/testing';
 import { LectureUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/lectureUnit.service';
-import { MockProvider } from 'ng-mocks';
-import { take } from 'rxjs/operators';
 import { LectureUnit } from 'app/entities/lecture-unit/lectureUnit.model';
 import dayjs from 'dayjs/esm';
 import { AttachmentUnit } from 'app/entities/lecture-unit/attachmentUnit.model';
@@ -71,7 +69,7 @@ describe('LectureUnitService', () => {
         httpMock.verify();
     });
 
-    it('should receive updated order array', async () => {
+    it('should receive updated order array', fakeAsync(() => {
         convertDateFromServerEntitySpy = jest.spyOn(service, 'convertDateFromServerEntity');
         const orderArray = [videoUnit, attachmentUnit, textUnit, exerciseUnit];
         service.updateOrder(1, orderArray).subscribe((resp) => (expectedResultArray = resp));
@@ -79,7 +77,7 @@ describe('LectureUnitService', () => {
         req.flush(orderArray);
         expect(expectedResultArray.body).toBeArrayOfSize(4);
         expect(convertDateFromServerEntitySpy).toHaveBeenCalledTimes(4);
-    });
+    }));
 
     it('should get title of associated element', async () => {
         expect(service.getLectureUnitName(attachmentUnit)).toEqual(attachmentUnit.attachment!.name);

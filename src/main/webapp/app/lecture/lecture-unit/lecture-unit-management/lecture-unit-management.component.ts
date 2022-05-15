@@ -44,7 +44,7 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
         private router: Router,
         private lectureService: LectureService,
         private alertService: AlertService,
-        private lectureUnitService: LectureUnitService,
+        public lectureUnitService: LectureUnitService,
     ) {}
 
     ngOnDestroy(): void {

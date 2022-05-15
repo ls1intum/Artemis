@@ -54,7 +54,7 @@
                 *ngIf="lecture.isAtLeastInstructor"
                 jhiDeleteButton
                 [actionType]="getActionType(lectureUnit)"
-                [entityTitle]="lectureUnitService.getLectureUnitName(lectureUnit)"
+                [entityTitle]="lectureUnitService.getLectureUnitName(lectureUnit) || ''"
                 [deleteQuestion]="getDeleteQuestionKey(lectureUnit)"
                 [deleteConfirmationText]="getDeleteConfirmationTextKey(lectureUnit)"
                 (delete)="deleteLectureUnit(lectureUnit.id!)"
