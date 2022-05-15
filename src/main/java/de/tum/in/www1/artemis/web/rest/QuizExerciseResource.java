@@ -28,7 +28,9 @@ import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.exam.ExamDateService;
 import de.tum.in.www1.artemis.service.notifications.GroupNotificationService;
 import de.tum.in.www1.artemis.service.scheduled.quiz.QuizScheduleService;
+import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
 import de.tum.in.www1.artemis.web.rest.dto.QuizBatchJoinDTO;
+import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 
@@ -546,5 +548,19 @@ public class QuizExerciseResource {
 
         quizExercise.validateScoreSettings();
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, quizExercise.getId().toString())).body(quizExercise);
+    }
+
+    /**
+     * Search for all quiz exercises by title and course title. The result is pageable since there
+     * might be hundreds of exercises in the DB.
+     *
+     * @param search The pageable search containing the page size, page number and query string
+     * @return The desired page, sorted and matching the given query
+     */
+    @GetMapping("/quiz-exercises")
+    @PreAuthorize("hasRole('EDITOR')")
+    public ResponseEntity<SearchResultPageDTO<QuizExercise>> getAllExercisesOnPage(PageableSearchDTO<String> search) {
+        final var user = userRepository.getUserWithGroupsAndAuthorities();
+        return ResponseEntity.ok(quizExerciseService.getAllOnPageWithSize(search, user));
     }
 }

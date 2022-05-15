@@ -6,6 +6,7 @@
                 "createLabel": "Create Quiz",
                 "createModelDragAndDrop": "Create Drag and Drop Model Quiz",
                 "createOrEditLabel": "Create or edit a Quiz Exercise",
+                "importLabel": "Import a Quiz",
                 "exportLabel": "Export Quiz Exercises"
             },
             "created": "Created new Quiz Exercise with identifier {{ param }}",
