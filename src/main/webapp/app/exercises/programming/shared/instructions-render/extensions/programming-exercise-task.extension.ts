@@ -1,4 +1,4 @@
-import { ApplicationRef, ComponentFactoryResolver, EmbeddedViewRef, Injectable, Injector } from '@angular/core';
+import { ApplicationRef, EmbeddedViewRef, Injectable, ViewContainerRef } from '@angular/core';
 import { Observable, Subject } from 'rxjs';
 import { ShowdownExtension } from 'showdown';
 // tslint:disable-next-line:max-line-length
@@ -24,12 +24,7 @@ export class ProgrammingExerciseTaskExtensionWrapper implements ArtemisShowdownE
     // unique index, even if multiple tasks are shown from different problem statements on the same page (in different tabs)
     private taskIndex = 0;
 
-    constructor(
-        private programmingExerciseInstructionService: ProgrammingExerciseInstructionService,
-        private componentFactoryResolver: ComponentFactoryResolver,
-        private appRef: ApplicationRef,
-        private injector: Injector,
-    ) {}
+    constructor(private programmingExerciseInstructionService: ProgrammingExerciseInstructionService, private appRef: ApplicationRef, private viewContainerRef: ViewContainerRef) {}
 
     /**
      * Sets latest result according to parameter.
@@ -72,7 +67,7 @@ export class ProgrammingExerciseTaskExtensionWrapper implements ArtemisShowdownE
 
             // The same task could appear multiple times in the instructions (edge case).
             for (let i = 0; i < taskHtmlContainers.length; i++) {
-                const componentRef = this.componentFactoryResolver.resolveComponentFactory(ProgrammingExerciseInstructionTaskStatusComponent).create(this.injector);
+                const componentRef = this.viewContainerRef.createComponent(ProgrammingExerciseInstructionTaskStatusComponent);
                 componentRef.instance.exercise = this.exercise;
                 componentRef.instance.exerciseHints = this.exerciseHints.filter((hint) => hints.includes(hint.id!.toString(10)));
                 componentRef.instance.taskName = taskName;
