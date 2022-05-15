@@ -35,7 +35,7 @@
     <div class="col-auto px-0">
         <fa-icon
             [icon]="farSmile"
-            class="reaction-button me-0 text-secondary clickable"
+            class="reaction-button text-secondary clickable"
             [class.open-selector]="showReactionSelector"
             (click)="showReactionSelector = !showReactionSelector"
             cdkOverlayOrigin
@@ -44,37 +44,16 @@
         >
         </fa-icon>
     </div>
-    <ng-template
-        cdkConnectedOverlay
-        [cdkConnectedOverlayHasBackdrop]="true"
-        [cdkConnectedOverlayBackdropClass]="'cdk-overlay-transparent-backdrop'"
-        [cdkConnectedOverlayOrigin]="trigger"
-        [cdkConnectedOverlayOpen]="showReactionSelector"
-        (backdropClick)="toggleEmojiSelect()"
-    >
-        <emoji-mart
-            [emojisToShowFilter]="emojisToShowFilter"
-            (emojiSelect)="selectReaction($event)"
-            [emojiSize]="20"
-            [categoriesIcons]="categoriesIcons"
-            [showSingleCategory]="true"
-            [showPreview]="false"
-            [color]="'#5289c7'"
-            [recent]="selectedCourseEmojis"
-            [i18n]="{ search: 'artemisApp.metis.searchEmoji' | artemisTranslate, categories: { recent: 'artemisApp.metis.courseEmojiSelectionCategory' | artemisTranslate } }"
-            [darkMode]="darkModeEmojiPicker"
-        ></emoji-mart>
-    </ng-template>
     <!-- start discussion -->
     <div class="col-auto p-0" *ngIf="sortedAnswerPosts.length === 0">
-        <button id="startDiscussionButton" class="reaction-button" (click)="openPostingCreateEditModal.emit()">
+        <button id="startDiscussionButton" class="reaction-button clickable" (click)="openPostingCreateEditModal.emit()">
             <ngx-emoji class="emoji" [emoji]="speechBalloonId" [size]="16"></ngx-emoji>
             <span class="emoji-count">{{ 'artemisApp.metis.startDiscussion' | artemisTranslate }}</span>
         </button>
     </div>
     <!-- expand answers -->
     <div class="col-auto p-0" *ngIf="!showAnswers && sortedAnswerPosts.length > 0">
-        <button id="expandAnswersButton" class="reaction-button" (click)="showAnswersChange.emit(true)">
+        <button id="expandAnswersButton" class="reaction-button clickable" (click)="showAnswersChange.emit(true)">
             <ngx-emoji class="emoji" [emoji]="speechBalloonId" [size]="16"></ngx-emoji>
             <span class="emoji-count">{{
                 sortedAnswerPosts.length === 1
