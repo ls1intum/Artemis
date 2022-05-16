@@ -21,10 +21,6 @@ public class CodeHint extends ExerciseHint {
     @JsonIgnoreProperties("codeHint")
     private Set<ProgrammingExerciseSolutionEntry> solutionEntries = new HashSet<>();
 
-    @ManyToOne
-    @JsonIgnoreProperties("codeHint")
-    private ProgrammingExerciseTask task;
-
     public Set<ProgrammingExerciseSolutionEntry> getSolutionEntries() {
         return this.solutionEntries;
     }
@@ -33,20 +29,19 @@ public class CodeHint extends ExerciseHint {
         this.solutionEntries = solutionEntries;
     }
 
-    public ProgrammingExerciseTask getProgrammingExerciseTask() {
-        return task;
-    }
-
-    public void setProgrammingExerciseTask(ProgrammingExerciseTask programmingExerciseTask) {
-        this.task = programmingExerciseTask;
-    }
-
     /**
      * This method ensures that all solution entry references are removed before deleting a CodeHint
      */
     @PreRemove
     public void preRemove() {
         solutionEntries.forEach(solutionEntry -> solutionEntry.setCodeHint(null));
+    }
+
+    @Override
+    public void removeContent() {
+        setContent(null);
+        setTitle(null);
+        setSolutionEntries(new HashSet<>());
     }
 
     @Override

@@ -39,6 +39,10 @@ public class ExerciseHint extends DomainObject {
     @JsonIgnoreProperties("exerciseHints")
     private Exercise exercise;
 
+    @ManyToOne
+    @JsonIgnoreProperties("codeHint")
+    private ProgrammingExerciseTask task;
+
     public String getTitle() {
         return title;
     }
@@ -74,8 +78,21 @@ public class ExerciseHint extends DomainObject {
         return this;
     }
 
+    public ProgrammingExerciseTask getProgrammingExerciseTask() {
+        return task;
+    }
+
+    public void setProgrammingExerciseTask(ProgrammingExerciseTask programmingExerciseTask) {
+        this.task = programmingExerciseTask;
+    }
+
     public void setExercise(Exercise exercise) {
         this.exercise = exercise;
+    }
+
+    public void removeContent() {
+        this.content = null;
+        this.title = null;
     }
 
     @Override
