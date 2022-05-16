@@ -31,6 +31,10 @@ export class ModelingEditorComponent extends ModelingComponent implements AfterV
     faCircleNotch = faCircleNotch;
     farQuestionCircle = faQuestionCircle;
 
+    htmlScroll = 0;
+    mouseDownListener: ((this: Document, ev: MouseEvent) => any) | undefined;
+    scrollListener: ((this: Document, ev: Event) => any) | undefined;
+
     constructor(private alertService: AlertService, private renderer: Renderer2, private modalService: NgbModal, private guidedTourService: GuidedTourService) {
         super();
     }
@@ -48,6 +52,7 @@ export class ModelingEditorComponent extends ModelingComponent implements AfterV
             }
         });
         this.setupInteract();
+        this.setupSafariScrollFix();
     }
 
     /**
@@ -75,6 +80,39 @@ export class ModelingEditorComponent extends ModelingComponent implements AfterV
                 this.onModelChanged.emit(model);
             });
         }
+    }
+
+    /**
+     * This is a hack to prevent the UI jumping to bottom when using popovers in Apollon while using Safari.
+     * Other browsers do not show this behavior.
+     * @private
+     */
+    private setupSafariScrollFix() {
+        // Detect Safari desktop: https://stackoverflow.com/a/52205049/7441850
+        const isSafariDesktop = /Safari/i.test(navigator.userAgent) && /Apple Computer/.test(navigator.vendor) && !/Mobi|Android/i.test(navigator.userAgent);
+
+        if (this.readOnly || !isSafariDesktop) {
+            return;
+        }
+
+        console.log('Warning: Installing hack to prevent UI scroll jumps in Safari while using Apollon!');
+        console.log('Warning: If you experience problems regarding the scrolling behavior, please report them at https://github.com/ls1intum/Artemis');
+
+        this.mouseDownListener = () => {
+            const newScroll = document.getElementsByTagName('html')[0].scrollTop;
+            if (newScroll !== this.htmlScroll) {
+                const copy = this.htmlScroll;
+                // @ts-ignore behavior 'instant' works with safari
+                requestAnimationFrame(() => window.scrollTo({ top: copy, left: 0, behavior: 'instant' }));
+            }
+        };
+
+        this.scrollListener = () => {
+            this.htmlScroll = document.getElementsByTagName('html')[0].scrollTop;
+        };
+
+        document.addEventListener('mousedown', this.mouseDownListener);
+        document.addEventListener('scroll', this.scrollListener);
     }
 
     get isApollonEditorMounted(): boolean {
@@ -138,6 +176,11 @@ export class ModelingEditorComponent extends ModelingComponent implements AfterV
             }
             this.apollonEditor.destroy();
             this.apollonEditor = undefined;
+        }
+
+        if (this.mouseDownListener) {
+            document.removeEventListener('mousedown', this.mouseDownListener);
+            document.removeEventListener('scroll', this.scrollListener!);
         }
     }
 

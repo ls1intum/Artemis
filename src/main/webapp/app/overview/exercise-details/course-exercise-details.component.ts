@@ -49,6 +49,8 @@ import { SafeHtml } from '@angular/platform-browser';
 import { faBook, faExternalLinkAlt, faEye, faFileSignature, faListAlt, faSignal, faTable, faWrench, faAngleDown, faAngleUp } from '@fortawesome/free-solid-svg-icons';
 import { TextExercise } from 'app/entities/text-exercise.model';
 import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
+import { PlagiarismCasesService } from 'app/course/plagiarism-cases/shared/plagiarism-cases.service';
+import { PlagiarismCase } from 'app/exercises/shared/plagiarism/types/PlagiarismCase';
 
 const MAX_RESULT_HISTORY_LENGTH = 5;
 
@@ -90,6 +92,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     hasSubmissionPolicy: boolean;
     submissionPolicy: SubmissionPolicy;
     exampleSolutionCollapsed: boolean;
+    plagiarismCase?: PlagiarismCase;
 
     public modelingExercise?: ModelingExercise;
     public exampleSolution?: SafeHtml;
@@ -142,6 +145,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         private complaintService: ComplaintService,
         private navigationUtilService: ArtemisNavigationUtilService,
         private artemisMarkdown: ArtemisMarkdownService,
+        private plagiarismCaseService: PlagiarismCasesService,
     ) {}
 
     ngOnInit() {
@@ -188,6 +192,9 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         this.exerciseService.getExerciseDetails(this.exerciseId).subscribe((exerciseResponse: HttpResponse<Exercise>) => {
             this.handleNewExercise(exerciseResponse.body!);
             this.getLatestRatedResult();
+        });
+        this.plagiarismCaseService.getPlagiarismCaseForStudent(this.courseId, this.exerciseId).subscribe((res: HttpResponse<PlagiarismCase>) => {
+            this.plagiarismCase = res.body!;
         });
     }
 

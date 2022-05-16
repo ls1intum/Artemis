@@ -30,7 +30,8 @@
                 "statistics": "Statistics",
                 "lectures": "Lectures",
                 "exams": "Exams",
-                "discussion": "Discussion"
+                "discussion": "Discussion",
+                "plagiarismCases": "Plagiarism Cases"
             },
             "exerciseList": {
                 "filter": "Filter ({{ num }})",

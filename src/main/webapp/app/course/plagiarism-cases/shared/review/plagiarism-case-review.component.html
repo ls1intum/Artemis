@@ -1,0 +1,25 @@
+<ul ngbNav #nav="ngbNav" class="nav-tabs row" [destroyOnHide]="false">
+    <ng-container *ngFor="let submission of plagiarismCase.plagiarismSubmissions; let i = index">
+        <li [ngbNavItem]="i" class="col px-0">
+            <a ngbNavLink class="btn-sm text-dark text-center">{{ 'artemisApp.plagiarism.plagiarismCases.comparison' | artemisTranslate }} {{ i + 1 }}</a>
+            <ng-template ngbNavContent>
+                <jhi-plagiarism-split-view
+                    *ngIf="forStudent"
+                    [comparison]="submission.plagiarismComparison!"
+                    [exercise]="plagiarismCase.exercise!"
+                    [studentLogin]="plagiarismCase.student!.login!"
+                    [sortByStudentLogin]="'Your submission'"
+                    [splitControlSubject]="splitControlSubject"
+                ></jhi-plagiarism-split-view>
+                <jhi-plagiarism-split-view
+                    *ngIf="!forStudent"
+                    [comparison]="submission.plagiarismComparison!"
+                    [exercise]="plagiarismCase.exercise!"
+                    [sortByStudentLogin]="plagiarismCase.student!.login!"
+                    [splitControlSubject]="splitControlSubject"
+                ></jhi-plagiarism-split-view>
+            </ng-template>
+        </li>
+    </ng-container>
+</ul>
+<div [ngbNavOutlet]="nav" class="mt-2"></div>
