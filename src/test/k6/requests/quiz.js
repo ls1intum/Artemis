@@ -6,12 +6,15 @@ import { QUIZ_EXERCISE, SUBMIT_QUIZ_LIVE, SUBMIT_QUIZ_EXAM } from './endpoints.j
 export function createQuizExercise(artemis, course, exerciseGroup = null, startQuiz = true) {
     let res;
 
+    const currentDate = new Date();
+    const releaseDate = new Date(currentDate.getTime() + 7 * 24 * 60 * 60 * 1000); // Automatic release in one week -> Will be set to 'NOW' once set-visible is called
+
     // The actual exercise
     const exercise = {
         title: 'Quiz K6' + nextAlphanumeric(10),
         type: 'quiz',
         teamMode: false,
-        releaseDate: null,
+        releaseDate,
         randomizeQuestionOrder: true,
         presentationScoreEnabled: false,
         duration: 120,
@@ -23,6 +26,7 @@ export function createQuizExercise(artemis, course, exerciseGroup = null, startQ
         isPracticeModeAvailable: true,
         isVisibleBeforeStart: false,
         mode: 'INDIVIDUAL',
+        quizMode: 'SYNCHRONIZED',
         course: course,
         exerciseGroup: exerciseGroup,
         quizQuestions: generateQuizQuestions(10),
