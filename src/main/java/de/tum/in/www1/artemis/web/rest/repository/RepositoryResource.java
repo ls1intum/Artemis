@@ -25,8 +25,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
 import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.participation.Participation;
-import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.repository.ParticipationRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
@@ -278,14 +276,8 @@ public abstract class RepositoryResource {
         if (!canAccessRepository(domainId)) {
             throw new AccessForbiddenException();
         }
-        Participation participation = participationRepository.findByIdElseThrow(domainId);
-
-        if (!(participation instanceof ProgrammingExerciseParticipation programmingExerciseParticipation)) {
-            throw new IllegalArgumentException();
-        }
-
         RepositoryStatusDTO repositoryStatus = new RepositoryStatusDTO();
-        VcsRepositoryUrl repositoryUrl = programmingExerciseParticipation.getVcsRepositoryUrl();
+        VcsRepositoryUrl repositoryUrl = getRepositoryUrl(domainId);
 
         try {
             boolean isClean;
@@ -295,7 +287,8 @@ public abstract class RepositoryResource {
                 isClean = repositoryService.isClean(repositoryUrl);
             }
             else {
-                String defaultBranch = versionControlService.get().getOrRetrieveDefaultBranchOfParticipation(programmingExerciseParticipation);
+                ProgrammingExercise exercise = programmingExerciseRepository.findByIdElseThrow(domainId);
+                String defaultBranch = versionControlService.get().getOrRetrieveDefaultBranchOfExercise(exercise);
                 isClean = repositoryService.isClean(repositoryUrl, defaultBranch);
             }
             repositoryStatus.setRepositoryStatus(isClean ? RepositoryStatusDTOType.CLEAN : RepositoryStatusDTOType.UNCOMMITTED_CHANGES);
