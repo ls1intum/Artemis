@@ -8,6 +8,8 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.stream.IntStream;
 
+import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.LearningGoal;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -223,4 +225,25 @@ public class CourseServiceTest extends AbstractSpringIntegrationBambooBitbucketJ
         courses = courseService.getAllCoursesForManagementOverview(true);
         assertThat(courses).isEmpty();
     }
+
+    /**
+     * Tests that the addLearningGoal() and removeLearningGoal() functions successfully add
+     * and removes learning goals from the course
+     */
+    @Test
+    public void testCourseLearningGoals(){
+        Course course = new Course();
+        LearningGoal goal = new LearningGoal();
+
+        course.addLearningGoal(goal);
+        assertThat(course.getLearningGoals()).hasSize(1);
+
+        // should not be able to add the same goal twice
+        course.addLearningGoal(goal);
+        assertThat(course.getLearningGoals()).hasSize(1);
+
+        course.removeLearningGoal(goal);
+        assertThat(course.getLearningGoals()).hasSize(0);
+    }
+
 }
