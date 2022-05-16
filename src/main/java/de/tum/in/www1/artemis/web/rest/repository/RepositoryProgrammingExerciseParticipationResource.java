@@ -52,18 +52,20 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
 
     private final SubmissionPolicyService submissionPolicyService;
 
+    private final ParticipationRepository participationRepository;
+
     public RepositoryProgrammingExerciseParticipationResource(UserRepository userRepository, AuthorizationCheckService authCheckService, GitService gitService,
             Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService, RepositoryService repositoryService,
             ProgrammingExerciseParticipationService participationService, ProgrammingExerciseRepository programmingExerciseRepository,
             ParticipationRepository participationRepository, ExamSubmissionService examSubmissionService, BuildLogEntryService buildLogService,
             ProgrammingSubmissionRepository programmingSubmissionRepository, SubmissionPolicyService submissionPolicyService) {
-        super(userRepository, authCheckService, gitService, continuousIntegrationService, repositoryService, versionControlService, programmingExerciseRepository,
-                participationRepository);
+        super(userRepository, authCheckService, gitService, continuousIntegrationService, repositoryService, versionControlService, programmingExerciseRepository);
         this.participationService = participationService;
         this.examSubmissionService = examSubmissionService;
         this.buildLogService = buildLogService;
         this.programmingSubmissionRepository = programmingSubmissionRepository;
         this.submissionPolicyService = submissionPolicyService;
+        this.participationRepository = participationRepository;
     }
 
     @Override
@@ -154,6 +156,15 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
             throw new IllegalArgumentException();
         }
         return participationService.canAccessParticipation((ProgrammingExerciseParticipation) participation);
+    }
+
+    @Override
+    String getOrRetrieveDefaultBranchOfDomainObject(Long participationID) {
+        Participation participation = participationRepository.findByIdElseThrow(participationID);
+        if (!(participation instanceof ProgrammingExerciseStudentParticipation studentParticipation)) {
+            throw new IllegalArgumentException();
+        }
+        return versionControlService.get().getOrRetrieveDefaultBranchOfStudentParticipation(studentParticipation);
     }
 
     @Override

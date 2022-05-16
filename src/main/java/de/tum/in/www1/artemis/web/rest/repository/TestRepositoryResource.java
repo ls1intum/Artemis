@@ -18,7 +18,6 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
 import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.repository.ParticipationRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
@@ -41,9 +40,8 @@ public class TestRepositoryResource extends RepositoryResource {
 
     public TestRepositoryResource(UserRepository userRepository, AuthorizationCheckService authCheckService, GitService gitService,
             Optional<ContinuousIntegrationService> continuousIntegrationService, RepositoryService repositoryService, Optional<VersionControlService> versionControlService,
-            ProgrammingExerciseRepository programmingExerciseRepository, ParticipationRepository participationRepository) {
-        super(userRepository, authCheckService, gitService, continuousIntegrationService, repositoryService, versionControlService, programmingExerciseRepository,
-                participationRepository);
+            ProgrammingExerciseRepository programmingExerciseRepository) {
+        super(userRepository, authCheckService, gitService, continuousIntegrationService, repositoryService, versionControlService, programmingExerciseRepository);
     }
 
     @Override
@@ -63,6 +61,12 @@ public class TestRepositoryResource extends RepositoryResource {
     boolean canAccessRepository(Long exerciseId) {
         ProgrammingExercise exercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exerciseId);
         return authCheckService.isAtLeastEditorInCourse(exercise.getCourseViaExerciseGroupOrCourseMember(), userRepository.getUserWithGroupsAndAuthorities());
+    }
+
+    @Override
+    String getOrRetrieveDefaultBranchOfDomainObject(Long exerciseId) {
+        ProgrammingExercise exercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
+        return versionControlService.get().getOrRetrieveDefaultBranchOfExercise(exercise);
     }
 
     @Override

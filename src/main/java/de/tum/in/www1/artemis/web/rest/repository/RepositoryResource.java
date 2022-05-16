@@ -25,7 +25,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
 import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.repository.ParticipationRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
@@ -63,11 +62,9 @@ public abstract class RepositoryResource {
 
     protected final Optional<VersionControlService> versionControlService;
 
-    protected final ParticipationRepository participationRepository;
-
     public RepositoryResource(UserRepository userRepository, AuthorizationCheckService authCheckService, GitService gitService,
             Optional<ContinuousIntegrationService> continuousIntegrationService, RepositoryService repositoryService, Optional<VersionControlService> versionControlService,
-            ProgrammingExerciseRepository programmingExerciseRepository, ParticipationRepository participationRepository) {
+            ProgrammingExerciseRepository programmingExerciseRepository) {
         this.userRepository = userRepository;
         this.authCheckService = authCheckService;
         this.gitService = gitService;
@@ -75,7 +72,6 @@ public abstract class RepositoryResource {
         this.repositoryService = repositoryService;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.versionControlService = versionControlService;
-        this.participationRepository = participationRepository;
     }
 
     /**
@@ -105,6 +101,13 @@ public abstract class RepositoryResource {
      * @return true if the user can access the repository.
      */
     abstract boolean canAccessRepository(Long domainId);
+
+    /**
+     * Gets or retrieves the default branch from the domain object
+     * @param domainID the id of the domain object
+     * @return the name of the default branch of that domain object
+     */
+    abstract String getOrRetrieveDefaultBranchOfDomainObject(Long domainID);
 
     /**
      * Get a map of files for the given domainId.
@@ -276,6 +279,7 @@ public abstract class RepositoryResource {
         if (!canAccessRepository(domainId)) {
             throw new AccessForbiddenException();
         }
+
         RepositoryStatusDTO repositoryStatus = new RepositoryStatusDTO();
         VcsRepositoryUrl repositoryUrl = getRepositoryUrl(domainId);
 
@@ -287,8 +291,7 @@ public abstract class RepositoryResource {
                 isClean = repositoryService.isClean(repositoryUrl);
             }
             else {
-                ProgrammingExercise exercise = programmingExerciseRepository.findByIdElseThrow(domainId);
-                String defaultBranch = versionControlService.get().getOrRetrieveDefaultBranchOfExercise(exercise);
+                String defaultBranch = getOrRetrieveDefaultBranchOfDomainObject(domainId);
                 isClean = repositoryService.isClean(repositoryUrl, defaultBranch);
             }
             repositoryStatus.setRepositoryStatus(isClean ? RepositoryStatusDTOType.CLEAN : RepositoryStatusDTOType.UNCOMMITTED_CHANGES);
