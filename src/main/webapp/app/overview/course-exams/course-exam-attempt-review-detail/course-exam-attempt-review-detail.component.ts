@@ -21,7 +21,6 @@ export class CourseExamAttemptReviewDetailComponent implements OnInit, OnDestroy
     studentExamState: Subscription;
 
     // Helper-Variables
-    individualWorkingTime: number;
     withinWorkingTime: boolean;
 
     // Icons
@@ -38,10 +37,8 @@ export class CourseExamAttemptReviewDetailComponent implements OnInit, OnDestroy
      */
     ngOnInit() {
         if (this.studentExam.started && this.studentExam.submitted && this.studentExam.startedDate && this.studentExam.submissionDate) {
-            this.individualWorkingTime = dayjs(this.studentExam.submissionDate).diff(dayjs(this.studentExam.startedDate), 'seconds');
             this.withinWorkingTime = false;
         } else if (this.index === 0) {
-            this.individualWorkingTime = 0;
             // A subscription is used here to limit the number of calls for the countdown of the remaining workingTime.
             this.studentExamState = interval(1000).subscribe(() => {
                 this.isWithinWorkingTime();
@@ -51,7 +48,6 @@ export class CourseExamAttemptReviewDetailComponent implements OnInit, OnDestroy
                 }
             });
         } else {
-            this.individualWorkingTime = 0;
             this.withinWorkingTime = false;
         }
     }

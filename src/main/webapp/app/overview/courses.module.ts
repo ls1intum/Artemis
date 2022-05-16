@@ -20,6 +20,7 @@ import { ArtemisExerciseButtonsModule } from 'app/overview/exercise-details/exer
 import { ArtemisCourseExerciseRowModule } from 'app/overview/course-exercises/course-exercise-row.module';
 import { NgxChartsModule } from '@swimlane/ngx-charts';
 import { CourseExamAttemptReviewDetailComponent } from 'app/overview/course-exams/course-exam-attempt-review-detail/course-exam-attempt-review-detail.component';
+import { ArtemisExamSharedModule } from 'app/exam/shared/exam-shared.module';
 
 @NgModule({
     imports: [
@@ -35,6 +36,7 @@ import { CourseExamAttemptReviewDetailComponent } from 'app/overview/course-exam
         FeatureToggleModule,
         RatingModule,
         NgxChartsModule,
+        ArtemisExamSharedModule,
     ],
     declarations: [
         CoursesComponent,

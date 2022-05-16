@@ -48,22 +48,6 @@ describe('CourseExamAttemptReviewDetailComponent', () => {
             });
     });
 
-    it('should calculate the individualWorkingTime correctly', () => {
-        // For submitted Exams, the individualWorkingTime time should be calculated
-        component.studentExam = studentExamSubmitted;
-        component.exam = TestExam3ForTesting;
-        componentFixture.detectChanges();
-        expect(component.individualWorkingTime).toBe(3600);
-    });
-
-    it('should not calculate the individualWorkingTime for TestExams within the working time', () => {
-        // For non-submitted Exams, the individualWorkingTime should not be calculated
-        component.studentExam = studentExamWithinWorkingTime;
-        component.exam = TestExam3ForTesting;
-        componentFixture.detectChanges();
-        expect(component.individualWorkingTime).toBe(0);
-    });
-
     it('should correctly determine, if the Exam is within the working time', () => {
         component.studentExam = studentExamSubmitted;
         component.exam = TestExam3ForTesting;

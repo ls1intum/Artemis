@@ -30,8 +30,9 @@
                             <div *ngIf="studentExam.submissionDate" class="text-end">
                                 {{ 'artemisApp.exam.overview.testExam.submissionDate' | artemisTranslate }} {{ studentExam.submissionDate | artemisDate }}
                             </div>
-                            <div *ngIf="individualWorkingTime" class="text-end">
-                                {{ 'artemisApp.exam.overview.testExam.workingTimeCalculated' | artemisTranslate }} {{ individualWorkingTime | artemisDurationFromSeconds }}
+                            <div *ngIf="studentExam.submissionDate && studentExam.startedDate" class="text-end">
+                                {{ 'artemisApp.exam.overview.testExam.workingTimeCalculated' | artemisTranslate }}
+                                <jhi-testexam-working-time [studentExam]="studentExam"></jhi-testexam-working-time>
                             </div>
                         </div>
                         <!-- TestExams have to be submitted by the students, just as it is the case with RealExams -->

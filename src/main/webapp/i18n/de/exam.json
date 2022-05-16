@@ -68,6 +68,7 @@
             "endExam": "Beenden",
             "date": "Datum",
             "time": "Zeit",
+            "workingTime": "Bearbeitungszeit",
             "resultInformation": "Dein Ergebnis wird nach Abschluss der Korrektur an dieser Stelle für dich veröffentlicht. Du kommst zu dieser Seite, indem du in der Klausurenübersicht des Kurses auf diese Klausur klickst.",
             "course": "Kurs",
             "exercises": "Aufgaben",

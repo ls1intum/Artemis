@@ -68,6 +68,7 @@
             "endExam": "Finish",
             "date": "Date",
             "time": "Time",
+            "workingTime": "Working Time",
             "resultInformation": "Your result will be published here as soon as the correction is finished. You can get to this page by clicking on this exam in the exam overview of this course.",
             "course": "Course",
             "exercises": "Exercises",
