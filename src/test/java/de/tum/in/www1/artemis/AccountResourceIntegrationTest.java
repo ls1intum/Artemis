@@ -371,6 +371,18 @@ public class AccountResourceIntegrationTest extends AbstractSpringIntegrationBam
     }
 
     @Test
+    @WithMockUser(username = "authenticateduser")
+    public void changePasswordSamePassword() throws Exception {
+        User user = ModelFactory.generateActivatedUser("authenticateduser");
+        bitbucketRequestMockProvider.mockUserExists("authenticateduser");
+        userCreationService.createUser(new ManagedUserVM(user));
+
+        PasswordChangeDTO pwChange = new PasswordChangeDTO(ModelFactory.USER_PASSWORD, ModelFactory.USER_PASSWORD);
+        // make request
+        request.postWithoutLocation("/api/account/change-password", pwChange, HttpStatus.BAD_REQUEST, null);
+    }
+
+    @Test
     public void passwordResetByEmail() throws Exception {
         String newPassword = getValidPassword();
         // create user in repo
