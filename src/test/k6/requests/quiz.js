@@ -3,7 +3,7 @@ import { fail, sleep } from 'k6';
 import { nextAlphanumeric, nextWSSubscriptionId, randomArrayValue, extractDestination, extractMessageContent } from '../util/utils.js';
 import { QUIZ_EXERCISE, SUBMIT_QUIZ_LIVE, SUBMIT_QUIZ_EXAM } from './endpoints.js';
 
-export function createQuizExercise(artemis, course, exerciseGroup = null, startQuiz = true) {
+export function createQuizExercise(artemis, course, exerciseGroup = null, startQuiz = true, setReleaseDate = true) {
     let res;
 
     const currentDate = new Date();
@@ -14,7 +14,7 @@ export function createQuizExercise(artemis, course, exerciseGroup = null, startQ
         title: 'Quiz K6' + nextAlphanumeric(10),
         type: 'quiz',
         teamMode: false,
-        releaseDate,
+        releaseDate: setReleaseDate ? releaseDate : null,
         randomizeQuestionOrder: true,
         presentationScoreEnabled: false,
         duration: 120,
