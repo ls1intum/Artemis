@@ -1735,9 +1735,16 @@ public class CourseTestService {
     public void testGetCourseManagementDetailData() throws Exception {
         ZonedDateTime now = ZonedDateTime.now();
         // add courses with exercises
-
-        var course = database.createCoursesWithExercisesAndLectures(true).get(0);
-        course.setStartDate(now.minusWeeks(2));
+        var courses = database.createCoursesWithExercisesAndLectures(true);
+        var course1 = courses.get(0);
+        var course2 = courses.get(1);
+        course1.setStartDate(now.minusWeeks(2));
+        /*
+         * We will duplicate the following submission and result configuration with course2. course1 contains additional submissions created by the DatabaseUtilService. These
+         * submissions would make the test of the active students distribution flaky but are necessary for other test statements to be meaningful. Thus, we test the actual test
+         * distribution only for course2.
+         */
+        course2.setStartDate(now.minusWeeks(2));
 
         var student1 = ModelFactory.generateActivatedUser("user1");
         var student2 = ModelFactory.generateActivatedUser("user2");
@@ -1754,30 +1761,54 @@ public class CourseTestService {
         var releaseDate = now.minusDays(7);
         var dueDate = now.minusDays(2);
         var assessmentDueDate = now.minusDays(1);
-        var exercise = ModelFactory.generateTextExercise(releaseDate, dueDate, assessmentDueDate, course);
-        exercise.setMaxPoints(5.0);
-        exercise = exerciseRepo.save(exercise);
+        var exercise1 = ModelFactory.generateTextExercise(releaseDate, dueDate, assessmentDueDate, course1);
+        exercise1.setMaxPoints(5.0);
+        exercise1 = exerciseRepo.save(exercise1);
+
+        var exercise2 = ModelFactory.generateTextExercise(releaseDate, dueDate, assessmentDueDate, course2);
+        exercise2.setMaxPoints(5.0);
+        exercise2 = exerciseRepo.save(exercise2);
 
         // Add a single participation to that exercise
-        final var exerciseId = exercise.getId();
+        final var exercise1Id = exercise1.getId();
+        final var exercise2Id = exercise2.getId();
 
-        var result1 = database.createParticipationSubmissionAndResult(exerciseId, student1, 5.0, 0.0, 60, true);
-        var result2 = database.createParticipationSubmissionAndResult(exerciseId, student2, 5.0, 0.0, 40, true);
+        var result1 = database.createParticipationSubmissionAndResult(exercise1Id, student1, 5.0, 0.0, 60, true);
+        var result2 = database.createParticipationSubmissionAndResult(exercise1Id, student2, 5.0, 0.0, 40, true);
+
+        var result21 = database.createParticipationSubmissionAndResult(exercise2Id, student1, 5.0, 0.0, 60, true);
+        var result22 = database.createParticipationSubmissionAndResult(exercise2Id, student2, 5.0, 0.0, 40, true);
 
         Submission submission1 = result1.getSubmission();
         submission1.setSubmissionDate(now);
         submissionRepository.save(submission1);
 
+        Submission submission21 = result21.getSubmission();
+        submission21.setSubmissionDate(now);
+        submissionRepository.save(submission21);
+
         Submission submission2 = result2.getSubmission();
         submission2.setSubmissionDate(now.minusWeeks(2));
         submissionRepository.save(submission2);
+
+        Submission submission22 = result22.getSubmission();
+        submission22.setSubmissionDate(now.minusWeeks(2));
+        submissionRepository.save(submission22);
 
         result1.setAssessor(instructor);
         resultRepo.saveAndFlush(result1);
         result2.setAssessor(instructor);
         resultRepo.saveAndFlush(result2);
-        course.addExercises(exercise);
-        courseRepo.save(course);
+        course1.addExercises(exercise1);
+        courseRepo.save(course1);
+
+        result21.setAssessor(instructor);
+        resultRepo.saveAndFlush(result21);
+        result22.setAssessor(instructor);
+        resultRepo.saveAndFlush(result22);
+        course2.addExercises(exercise2);
+        courseRepo.save(course2);
+        System.out.println("Amount of submissions 5: " + submissionRepository.countUniqueSubmissionsByExerciseId(exercise2Id));
 
         // Complaint
         Complaint complaint = new Complaint().complaintType(ComplaintType.COMPLAINT);
@@ -1835,7 +1866,7 @@ public class CourseTestService {
                 + "/text-assessment-after-complaint", feedbackUpdate, Result.class, HttpStatus.OK);
 
         // API call
-        var courseDTO = request.get("/api/courses/" + course.getId() + "/management-detail", HttpStatus.OK, CourseManagementDetailViewDTO.class);
+        var courseDTO = request.get("/api/courses/" + course1.getId() + "/management-detail", HttpStatus.OK, CourseManagementDetailViewDTO.class);
 
         // Check results
         assertThat(courseDTO).isNotNull();
@@ -1868,11 +1899,11 @@ public class CourseTestService {
         assertThat(courseDTO.getCurrentAbsoluteAverageScore()).isEqualTo(18);
         assertThat(courseDTO.getCurrentMaxAverageScore()).isEqualTo(30);
 
-        course.setEndDate(now.minusWeeks(1));
-        courseRepo.save(course);
+        course2.setEndDate(now.minusWeeks(1));
+        courseRepo.save(course2);
 
-        // API call
-        courseDTO = request.get("/api/courses/" + course.getId() + "/management-detail", HttpStatus.OK, CourseManagementDetailViewDTO.class);
+        // API call for course2
+        courseDTO = request.get("/api/courses/" + course2.getId() + "/management-detail", HttpStatus.OK, CourseManagementDetailViewDTO.class);
 
         var expectedActiveStudentDistribution = List.of(1, 0);
         assertThat(courseDTO.getActiveStudents()).as("submission today should not be included").isEqualTo(expectedActiveStudentDistribution);
@@ -1882,7 +1913,7 @@ public class CourseTestService {
         LinkedMultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
         parameters.add("periodIndex", Integer.toString(periodIndex));
 
-        var activeStudents = request.get("/api/courses/" + course.getId() + "/statistics", HttpStatus.OK, Integer[].class, parameters);
+        var activeStudents = request.get("/api/courses/" + course1.getId() + "/statistics", HttpStatus.OK, Integer[].class, parameters);
 
         assertThat(activeStudents).isNotNull();
         assertThat(activeStudents).hasSize(3);
