@@ -1,0 +1,6 @@
+@import 'node_modules/bootstrap/scss/bootstrap';
+
+.exam-points-summary-container {
+    @extend .container;
+    max-width: 980px;
+}
