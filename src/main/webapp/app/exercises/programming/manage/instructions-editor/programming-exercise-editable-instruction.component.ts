@@ -41,7 +41,7 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
     testCaseCommand = new TestCaseCommand();
     exerciseHintCommand = new ExerciseHintCommand();
     katexCommand = new KatexCommand();
-    domainCommands: DomainCommand[] = [this.katexCommand, this.taskCommand, this.testCaseCommand, this.exerciseHintCommand];
+    domainCommands: DomainCommand[] = [this.katexCommand, this.taskCommand, this.testCaseCommand];
 
     savingInstructions = false;
     unsavedChangesValue = false;
@@ -89,7 +89,7 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
             // Note: Exam exercises do not include hints at the moment, therefore, the markdown editor should not offer this command
             this.domainCommands = [this.katexCommand, this.taskCommand, this.testCaseCommand];
         } else {
-            this.domainCommands = [this.katexCommand, this.taskCommand, this.testCaseCommand, this.exerciseHintCommand];
+            this.domainCommands = [this.katexCommand, this.taskCommand, this.testCaseCommand];
         }
         this.exerciseChange.emit(this.programmingExercise);
     }
