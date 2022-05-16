@@ -54,14 +54,14 @@
         <div class="col-auto ms-md-auto">
             <ng-template [ngIf]="isExamMode" [ngIfElse]="courseMode">
                 <ng-container *ngIf="!isTestRun">
-                    <h5 style="{{ isNextDueDate[0] ? 'font-size: 1.575rem;' : '' }}">
+                    <h5 class="{{ isNextDueDate[0] ? 'highlighted-deadline' : '' }}">
                         {{ 'artemisApp.exam.endDate' | artemisTranslate }}
                         {{ exam?.endDate | artemisDate }}
                         <span *ngIf="exam?.endDate && !isTestRun" [ngClass]="exerciseStatusBadge" class="badge">
                             {{ exam?.endDate | artemisTimeAgo }}
                         </span>
                     </h5>
-                    <h5 style="{{ isNextDueDate[1] ? 'font-size: 1.575rem;' : '' }}">
+                    <h5 class="{{ isNextDueDate[1] ? 'highlighted-deadline' : '' }}">
                         {{ 'artemisApp.exam.publishResultsDate' | artemisTranslate }}
                         {{ exam?.publishResultsDate | artemisDate }}
                         <span *ngIf="exam?.publishResultsDate" [ngClass]="exerciseStatusBadge" class="badge">
@@ -71,7 +71,7 @@
                 </ng-container>
             </ng-template>
             <ng-template #courseMode>
-                <h5 *ngIf="dueDate" style="{{ isNextDueDate[0] ? 'font-size: 1.575rem;' : '' }}">
+                <h5 *ngIf="dueDate" class="{{ isNextDueDate[0] ? 'highlighted-deadline' : '' }}">
                     {{ 'artemisApp.courseOverview.exerciseDetails.submissionDue' | artemisTranslate }}
                     <span
                         [ngClass]="exerciseStatusBadge"
@@ -81,7 +81,7 @@
                         {{ dueDate | artemisTimeAgo }}
                     </span>
                 </h5>
-                <h5 *ngIf="programmingExercise?.buildAndTestStudentSubmissionsAfterDueDate" style="{{ isNextDueDate[1] ? 'font-size: 1.575rem;' : '' }}">
+                <h5 *ngIf="programmingExercise?.buildAndTestStudentSubmissionsAfterDueDate" class="{{ isNextDueDate[1] ? 'highlighted-deadline' : '' }}">
                     {{ 'artemisApp.courseOverview.exerciseDetails.testsAfterDueDate' | artemisTranslate }}
                     <span
                         [ngClass]="exerciseStatusBadge"
@@ -94,7 +94,7 @@
                         {{ programmingExercise!.buildAndTestStudentSubmissionsAfterDueDate | artemisTimeAgo }}
                     </span>
                 </h5>
-                <h5 *ngIf="exercise.exampleSolutionPublicationDate" style="{{ isNextDueDate[2] ? 'font-size: 1.575rem;' : '' }}">
+                <h5 *ngIf="exercise.exampleSolutionPublicationDate" class="{{ isNextDueDate[2] ? 'highlighted-deadline' : '' }}">
                     {{ 'artemisApp.courseOverview.exerciseDetails.exampleSolutionPublicationDay' | artemisTranslate }}
                     <span
                         [ngClass]="exerciseStatusBadge"
@@ -107,7 +107,7 @@
                         {{ exercise.exampleSolutionPublicationDate | artemisTimeAgo }}
                     </span>
                 </h5>
-                <h5 *ngIf="exercise.assessmentDueDate" style="{{ isNextDueDate[3] ? 'font-size: 1.575rem;' : '' }}">
+                <h5 *ngIf="exercise.assessmentDueDate" class="{{ isNextDueDate[3] ? 'highlighted-deadline' : '' }}">
                     {{ 'artemisApp.courseOverview.exerciseDetails.assessmentDue' | artemisTranslate }}
                     <span
                         [ngClass]="exerciseStatusBadge"
@@ -117,7 +117,7 @@
                         {{ exercise.assessmentDueDate | artemisTimeAgo }}
                     </span>
                 </h5>
-                <h5 *ngIf="individualComplaintDeadline" style="{{ isNextDueDate[4] ? 'font-size: 1.575rem;' : '' }}">
+                <h5 *ngIf="individualComplaintDeadline" class="{{ isNextDueDate[4] ? 'highlighted-deadline' : '' }}">
                     {{ 'artemisApp.courseOverview.exerciseDetails.complaintDue' | artemisTranslate }}
                     <span
                         [ngClass]="exerciseStatusBadge"
@@ -127,7 +127,7 @@
                         {{ individualComplaintDeadline | artemisTimeAgo }}
                     </span>
                 </h5>
-                <h5 *ngIf="canComplainLaterOn" style="{{ isNextDueDate[5] ? 'font-size: 1.575rem;' : '' }}">
+                <h5 *ngIf="canComplainLaterOn" class="{{ isNextDueDate[5] ? 'highlighted-deadline' : '' }}">
                     {{ 'artemisApp.courseOverview.exerciseDetails.complaintPossible' | artemisTranslate }}
                     <span [ngbTooltip]="'artemisApp.courseOverview.exerciseDetails.complaintPossibleTooltip' | artemisTranslate">
                         {{

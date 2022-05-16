@@ -16,6 +16,7 @@ import { ComplaintService } from 'app/complaints/complaint.service';
 @Component({
     selector: 'jhi-header-exercise-page-with-details',
     templateUrl: './header-exercise-page-with-details.component.html',
+    styleUrls: ['./header-exercise-page-with-details.component.scss'],
 })
 export class HeaderExercisePageWithDetailsComponent implements OnInit {
     readonly IncludedInOverallScore = IncludedInOverallScore;
