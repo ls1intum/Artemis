@@ -1,4 +1,4 @@
-import { ApplicationRef, EmbeddedViewRef, Injectable, Injector, ViewChild, ViewContainerRef } from '@angular/core';
+import { ApplicationRef, EmbeddedViewRef, Injectable, Injector, ViewContainerRef } from '@angular/core';
 import { Observable, Subject } from 'rxjs';
 import { ShowdownExtension } from 'showdown';
 // tslint:disable-next-line:max-line-length
