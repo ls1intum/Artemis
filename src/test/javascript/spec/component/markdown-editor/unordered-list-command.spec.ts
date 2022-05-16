@@ -35,7 +35,7 @@ describe('UnorderedListCommand', () => {
     it('should add ordered list to lines on execute', () => {
         comp.aceEditorContainer.getEditor().setValue('line 1\nline 2');
         command.execute();
-        expect(comp.aceEditorContainer.getEditor().getValue()).toBe('- line 1\n- line 2\n');
+        expect(comp.aceEditorContainer.getEditor().getValue()).toBe('- line 1\n- line 2');
     });
 
     it('should add new ordered list on execute', () => {
@@ -47,6 +47,6 @@ describe('UnorderedListCommand', () => {
     it('should remove ordered list on execute', () => {
         comp.aceEditorContainer.getEditor().setValue('- line 1\n- line 2');
         command.execute();
-        expect(comp.aceEditorContainer.getEditor().getValue()).toBe('line 1\nline 2\n');
+        expect(comp.aceEditorContainer.getEditor().getValue()).toBe('line 1\nline 2');
     });
 });
