@@ -1,6 +1,9 @@
 package de.tum.in.www1.artemis;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 
 import java.net.URISyntaxException;
 import java.net.URL;
@@ -17,6 +20,8 @@ import org.springframework.security.test.context.support.WithMockUser;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 
+import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
 import de.tum.in.www1.artemis.exception.VersionControlException;
 
@@ -82,5 +87,18 @@ public class GitlabServiceTest extends AbstractSpringIntegrationJenkinsGitlabTes
         gitlabRequestMockProvider.mockGetDefaultBranch(defaultBranch);
         String actualDefaultBranch = versionControlService.getDefaultBranchOfRepository(repoURL);
         assertThat(actualDefaultBranch).isEqualTo(defaultBranch);
+    }
+
+    @Test
+    public void testGetOrRetrieveDefaultBranch() throws GitLabApiException {
+        Course course = database.addCourseWithOneProgrammingExercise();
+        ProgrammingExercise programmingExercise = (ProgrammingExercise) course.getExercises().stream().findAny().get();
+        database.addTemplateParticipationForProgrammingExercise(programmingExercise);
+        database.addSolutionParticipationForProgrammingExercise(programmingExercise);
+        gitlabRequestMockProvider.mockGetDefaultBranch(defaultBranch);
+        versionControlService.getOrRetrieveDefaultBranchOfParticipation(programmingExercise.getSolutionParticipation());
+        versionControlService.getOrRetrieveDefaultBranchOfParticipation(programmingExercise.getSolutionParticipation());
+
+        verify(versionControlService, times(1)).getDefaultBranchOfRepository(any());
     }
 }
