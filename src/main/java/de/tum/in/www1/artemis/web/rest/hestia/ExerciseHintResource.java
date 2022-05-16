@@ -2,7 +2,9 @@ package de.tum.in.www1.artemis.web.rest.hestia;
 
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.Set;
+import java.util.*;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -11,18 +13,19 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import de.tum.in.www1.artemis.domain.Exercise;
-import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.hestia.CodeHint;
 import de.tum.in.www1.artemis.domain.hestia.ExerciseHint;
-import de.tum.in.www1.artemis.repository.ExerciseRepository;
-import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
+import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseTask;
+import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.repository.hestia.ExerciseHintRepository;
+import de.tum.in.www1.artemis.repository.hestia.ProgrammingExerciseTaskRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
+import de.tum.in.www1.artemis.web.rest.errors.InternalServerErrorException;
 import tech.jhipster.web.util.HeaderUtil;
 
 /**
@@ -45,16 +48,28 @@ public class ExerciseHintResource {
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
+    private final ProgrammingExerciseTaskRepository programmingExerciseTaskRepository;
+
     private final AuthorizationCheckService authCheckService;
 
     private final ExerciseRepository exerciseRepository;
 
-    public ExerciseHintResource(ExerciseHintRepository exerciseHintRepository, AuthorizationCheckService authCheckService,
-            ProgrammingExerciseRepository programmingExerciseRepository, ExerciseRepository exerciseRepository) {
+    private final StudentParticipationRepository studentParticipationRepository;
+
+    private final UserRepository userRepository;
+
+    private static final int CODE_HINT_DISPLAY_THRESHOLD = 3;
+
+    public ExerciseHintResource(ExerciseHintRepository exerciseHintRepository, ProgrammingExerciseRepository programmingExerciseRepository,
+            ProgrammingExerciseTaskRepository programmingExerciseTaskRepository, AuthorizationCheckService authCheckService, ExerciseRepository exerciseRepository,
+            StudentParticipationRepository studentParticipationRepository, UserRepository userRepository) {
         this.exerciseHintRepository = exerciseHintRepository;
         this.programmingExerciseRepository = programmingExerciseRepository;
+        this.programmingExerciseTaskRepository = programmingExerciseTaskRepository;
         this.authCheckService = authCheckService;
         this.exerciseRepository = exerciseRepository;
+        this.studentParticipationRepository = studentParticipationRepository;
+        this.userRepository = userRepository;
     }
 
     /**
@@ -173,6 +188,11 @@ public class ExerciseHintResource {
     public ResponseEntity<ExerciseHint> getExerciseHint(@PathVariable Long exerciseId, @PathVariable Long exerciseHintId) {
         log.debug("REST request to get ExerciseHint : {}", exerciseHintId);
         ProgrammingExercise exercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
+        if (exercise.isExamExercise()) {
+            // not allowed for exam exercises
+            throw new AccessForbiddenException("");
+        }
+
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, exercise, null);
         var exerciseHint = exerciseHintRepository.findByIdElseThrow(exerciseHintId);
 
@@ -198,6 +218,11 @@ public class ExerciseHintResource {
         ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.STUDENT, programmingExercise, null);
         Set<ExerciseHint> exerciseHints = exerciseHintRepository.findByExerciseId(exerciseId);
+        // filter out code hints if the requester is not at least editor
+        boolean isAtLeastEditor = authCheckService.isAtLeastEditorForExercise(programmingExercise);
+        if (!isAtLeastEditor) {
+            exerciseHints = exerciseHints.stream().filter(hint -> !(hint instanceof CodeHint)).collect(Collectors.toSet());
+        }
         return ResponseEntity.ok(exerciseHints);
     }
 
@@ -228,5 +253,111 @@ public class ExerciseHintResource {
 
         exerciseHintRepository.deleteById(exerciseHintId);
         return ResponseEntity.noContent().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, EXERCISE_HINT_ENTITY_NAME, exerciseHintId.toString())).build();
+    }
+
+    /**
+     * {@code GET  programming-exercises/:exerciseId/available-exercise-hints} : get the available exercise hints.
+     * Exercise hints for a task will only be shown, if the following conditions are met:
+     * (1) at least {@link #CODE_HINT_DISPLAY_THRESHOLD} student submissions exist
+     * (2) the result for the first unsuccessful task has not changed for at least three submissions
+     * (3) if there is a previous task: the result for the previous task is successful for at least the last three results
+     * Note: A task is successful, if the feedback for all associated test cases is positive
+     *
+     * @param exerciseId the exerciseId of the exercise of which to retrieve the codeHint
+     * @return the {@link ResponseEntity} with status {@code 200 (OK)} and with body the exercise hints
+     */
+    @GetMapping("exercises/{exerciseId}/available-exercise-hints")
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<Set<ExerciseHint>> getAvailableCodeHintsAsStudent(@PathVariable Long exerciseId) {
+        log.debug("REST request to get a CodeHint for programming exercise : {}", exerciseId);
+        ProgrammingExercise exercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
+        if (exercise.isExamExercise()) {
+            // not allowed for exam exercises
+            throw new AccessForbiddenException("");
+        }
+
+        var user = userRepository.getUserWithGroupsAndAuthorities();
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.STUDENT, exercise, user);
+
+        var availableExerciseHints = getAvailableExerciseHints(exercise, user);
+        availableExerciseHints.forEach(ExerciseHint::removeContent);
+
+        return ResponseEntity.ok().body(availableExerciseHints);
+    }
+
+    private Set<ExerciseHint> getAvailableExerciseHints(ProgrammingExercise exercise, User user) {
+        Set<ExerciseHint> availableExerciseHints = new HashSet<>();
+        var exerciseHints = exerciseHintRepository.findByExerciseId(exercise.getId());
+        var tasks = programmingExerciseTaskRepository.findByExerciseIdWithTestCases(exercise.getId());
+        var latestThreeResults = getLatestNResults(exercise, user);
+
+        if (latestThreeResults.size() >= CODE_HINT_DISPLAY_THRESHOLD) {
+            var latestResult = latestThreeResults.get(0);
+
+            for (int i = 0; i < tasks.size(); i++) {
+                var task = tasks.get(i);
+                Optional<ProgrammingExerciseTask> previousTask;
+                if (i == 0) {
+                    previousTask = Optional.empty();
+                }
+                else {
+                    previousTask = Optional.of(tasks.get(i - 1));
+                }
+
+                // check that the current task has test cases with negative feedback
+                if (getFeedbackForTaskAndResult(task, latestResult).stream().allMatch(Feedback::isPositive)) {
+                    continue;
+                }
+
+                var currentTaskExerciseHints = exerciseHints.stream().filter(hint -> Objects.equals(hint.getProgrammingExerciseTask().getId(), task.getId()))
+                        .collect(Collectors.toSet());
+                if (!currentTaskExerciseHints.isEmpty() && checkUserHasAccessToCodeHintsForTask(task, previousTask, latestThreeResults)) {
+                    availableExerciseHints = currentTaskExerciseHints;
+                    break;
+                }
+            }
+        }
+
+        return availableExerciseHints;
+    }
+
+    private List<Result> getLatestNResults(ProgrammingExercise exercise, User student) {
+        var allParticipationsForExercise = studentParticipationRepository.findByExerciseIdWithEagerSubmissionsResultAssessorFeedbacks(exercise.getId());
+        var currentStudentParticipation = allParticipationsForExercise.stream().filter(participation -> participation.getParticipant().getParticipants().contains(student))
+                .findFirst().orElseThrow(() -> new InternalServerErrorException("No user"));
+        // (max) three results, sorted descending by completion date (where the first item is the latest)
+        return currentStudentParticipation.getSubmissions().stream().map(Submission::getResults).flatMap(Collection::stream).sorted(Comparator.comparing(Result::getCompletionDate))
+                .skip(currentStudentParticipation.getSubmissions().size() - CODE_HINT_DISPLAY_THRESHOLD).toList();
+    }
+
+    private List<Feedback> getFeedbackForTaskAndResult(ProgrammingExerciseTask task, Result result) {
+        var testCasesInTask = task.getTestCases();
+        var feedbacks = result.getFeedbacks();
+        return feedbacks.stream().filter(feedback -> testCasesInTask.stream().anyMatch(testCase -> Objects.equals(testCase.getTestName(), feedback.getText()))).toList();
+    }
+
+    private boolean checkUserHasAccessToCodeHintsForTask(ProgrammingExerciseTask task, Optional<ProgrammingExerciseTask> previousTask, List<Result> latestResults) {
+        var feedbacksForTask = latestResults.stream().map(result -> getFeedbackForTaskAndResult(task, result)).toList();
+        var latestFeedbackForTask = feedbacksForTask.get(0);
+        // check that result for the previous task is successful for at least the last three results
+        if (previousTask.isPresent()) {
+            var feedbacksForPreviousTask = latestResults.stream().map(result -> getFeedbackForTaskAndResult(previousTask.get(), result)).toList();
+            var previousTaskUnsuccessfulInSubmissions = feedbacksForPreviousTask.stream().anyMatch(feedbacks -> feedbacks.stream().anyMatch(Predicate.not(Feedback::isPositive)));
+            if (previousTaskUnsuccessfulInSubmissions) {
+                return false;
+            }
+        }
+
+        // check that the results for current task did not change within the last submissions
+        for (var feedback : latestFeedbackForTask) {
+            var feedbacksSameTestCaseAndScore = feedbacksForTask.stream().skip(1).flatMap(Collection::stream)
+                    .filter(feedback2 -> Objects.equals(feedback.getText(), feedback2.getText()) && Objects.equals(feedback2.getCredits(), feedback.getCredits())).toList();
+            if (feedbacksSameTestCaseAndScore.size() != feedbacksForTask.size() - 1) {
+                // the score for the last three feedbacks is not the same
+                return false;
+            }
+        }
+
+        return true;
     }
 }
