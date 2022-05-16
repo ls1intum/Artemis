@@ -57,7 +57,7 @@ export class UnorderedListCommand extends Command {
             const elements = [line.slice(whitespaces, index), line.slice(index + 1)];
 
             // Check if this is the first -
-            if (elements[0] === '') {
+            if (elements[0] === '' && elements[1].length >= 1 && elements[1].startsWith(' ')) {
                 // Add whitespaces and remove first whitespace after the dot
                 return ' '.repeat(whitespaces) + elements[1].substring(1);
             }
