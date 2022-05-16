@@ -33,7 +33,6 @@ import { UnorderedListCommand } from 'app/shared/markdown-editor/commands/unorde
 import { HeadingThreeCommand } from 'app/shared/markdown-editor/commands/headingThree.command';
 import { CodeBlockCommand } from 'app/shared/markdown-editor/commands/codeblock.command';
 import { faGripLines, faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
-import { Subscription } from 'rxjs';
 
 export enum MarkdownEditorHeight {
     SMALL = 200,
@@ -156,8 +155,6 @@ export class MarkdownEditorComponent implements AfterViewInit, OnDestroy {
     enableFileUpload = true;
     acceptedFileExtensions = 'png,jpg,jpeg,svg,pdf';
 
-    themeSubscription: Subscription;
-
     // Icons
     faQuestionCircle = faQuestionCircle;
     faGripLines = faGripLines;
@@ -228,10 +225,6 @@ export class MarkdownEditorComponent implements AfterViewInit, OnDestroy {
         if (this.enableResize) {
             this.setupResizable();
         }
-    }
-
-    ngOnDestroy() {
-        this.themeSubscription?.unsubscribe();
     }
 
     /**
