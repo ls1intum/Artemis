@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, ContentChild, ElementRef, EventEmitter, Input, OnDestroy, Output, ViewChild, ViewEncapsulation } from '@angular/core';
+import { AfterViewInit, Component, ContentChild, ElementRef, EventEmitter, Input, Output, ViewChild, ViewEncapsulation } from '@angular/core';
 import { SafeHtml } from '@angular/platform-browser';
 // Note: this import has to be before the 'brace' imports
 import { AceEditorComponent } from 'app/shared/markdown-editor/ace-editor/ace-editor.component';
@@ -62,7 +62,7 @@ const getAceMode = (mode: EditorMode) => {
     styleUrls: ['./markdown-editor.component.scss'],
     encapsulation: ViewEncapsulation.None,
 })
-export class MarkdownEditorComponent implements AfterViewInit, OnDestroy {
+export class MarkdownEditorComponent implements AfterViewInit {
     public DomainMultiOptionCommand = DomainMultiOptionCommand;
     public DomainTagCommand = DomainTagCommand;
     // This ref is used for entering the fullscreen mode.
