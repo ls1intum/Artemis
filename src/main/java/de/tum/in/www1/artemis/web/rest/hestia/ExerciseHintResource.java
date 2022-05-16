@@ -326,8 +326,9 @@ public class ExerciseHintResource {
         var currentStudentParticipation = allParticipationsForExercise.stream().filter(participation -> participation.getParticipant().getParticipants().contains(student))
                 .findFirst().orElseThrow(() -> new InternalServerErrorException("No user"));
         // (max) three results, sorted descending by completion date (where the first item is the latest)
+        var numberOfSubmissionsToSkip = Math.max(currentStudentParticipation.getSubmissions().size() - CODE_HINT_DISPLAY_THRESHOLD, 0);
         return currentStudentParticipation.getSubmissions().stream().map(Submission::getResults).flatMap(Collection::stream).sorted(Comparator.comparing(Result::getCompletionDate))
-                .skip(currentStudentParticipation.getSubmissions().size() - CODE_HINT_DISPLAY_THRESHOLD).toList();
+                .skip(numberOfSubmissionsToSkip).toList();
     }
 
     private List<Feedback> getFeedbackForTaskAndResult(ProgrammingExerciseTask task, Result result) {
