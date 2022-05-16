@@ -140,12 +140,16 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
             this.examId = parseInt(params['examId'], 10);
             this.testRunId = parseInt(params['testRunId'], 10);
             // As a student can have multiple TestExams, the studentExamId is passed as a parameter.
-            // If a new StudentExam should be created, the keyword new is used (and no StudentExam exists)
-            if (params[`studentExamId`] !== 'new') {
-                this.testExam = true;
-                this.studentExamId = parseInt(params['studentExamId'], 10);
+            if (this.route.snapshot.queryParams['studentExamId']) {
+                // If a new StudentExam should be created, the keyword new is used (and no StudentExam exists)
+                if (params[`studentExamId`] !== 'new') {
+                    this.testExam = true;
+                    this.studentExamId = parseInt(params['studentExamId'], 10);
+                } else {
+                    this.testExam = true;
+                }
             } else {
-                this.testExam = true;
+                this.testExam = false;
             }
 
             this.loadingExam = true;
@@ -170,27 +174,6 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                         this.exam = studentExam.exam!;
                         this.testExamStartTime = dayjs();
                         this.initIndividualEndDates(this.testExamStartTime);
-
-                        /* // only show the summary if the student was able to submit on time.
-                        console.log(this.isOver());
-                        if (this.isOver() && this.studentExam.submitted) {
-                            this.examParticipationService
-                                .loadStudentExamForTestExamWithExercisesForSummary(this.courseId, this.examId, this.studentExam.id!)
-                                .subscribe((studentExamWithExercises: StudentExam) => (this.studentExam = studentExamWithExercises));
-                        }
-
-                        // Directly start the exam when we continue from a failed save
-                        if (this.examParticipationService.lastSaveFailed(this.courseId, this.examId)) {
-                            this.examParticipationService
-                                .loadStudentExamWithExercisesForConductionFromLocalStorage(this.courseId, this.examId)
-                                .subscribe((localExam: StudentExam) => {
-                                    this.studentExam = localExam;
-                                    this.loadingExam = false;
-                                    this.examStarted(this.studentExam);
-                                });
-                        } else {
-                            this.loadingExam = false;
-                        } */
                     },
                     error: () => (this.loadingExam = false),
                 });
