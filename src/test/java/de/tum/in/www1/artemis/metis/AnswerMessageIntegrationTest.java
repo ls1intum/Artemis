@@ -70,64 +70,91 @@ public class AnswerMessageIntegrationTest extends AbstractSpringIntegrationBambo
     }
 
     // CREATE
-    // @Test
-    // @WithMockUser(username = "student3", roles = "USER")
-    // public void testCreateConversationAnswerPost_forbidden() throws Exception {
-    // // only participants of a conversation can create posts for it
-    //
-    // // attempt to save new answerPost under someone elses conversation
-    // AnswerPost answerPostToSave = createAnswerPost(existingConversationPostsWithAnswers.get(0));
-    // AnswerPost notCreatedAnswerPost = request.postWithResponseBody("/api/courses/" + courseId + "/answer-posts", answerPostToSave, AnswerPost.class, HttpStatus.FORBIDDEN);
-    //
-    // assertThat(notCreatedAnswerPost).isNull();
-    // assertThat(answerPostRepository.count()).isEqualTo(existingAnswerPosts.size());
-    // }
-
-    // GET
-
-    // UPDATE
 
     @Test
-    @WithMockUser(username = "tutor1", roles = "TA")
-    public void testEditAnswerPost_asTutor() throws Exception {
-        // update post of student1 (index 0)--> OK
-        AnswerPost answerPostToUpdate = editExistingAnswerPost(existingAnswerPosts.get(0));
+    @WithMockUser(username = "student1", roles = "USER")
+    public void testCreateConversationAnswerPost() throws Exception {
+        AnswerPost answerPostToSave = createAnswerPost(existingConversationPostsWithAnswers.get(0));
 
-        AnswerPost updatedAnswerPost = request.putWithResponseBody("/api/courses/" + courseId + "/answer-posts/" + answerPostToUpdate.getId(), answerPostToUpdate, AnswerPost.class,
-                HttpStatus.OK);
-        database.assertSensitiveInformationHidden(updatedAnswerPost);
-        assertThat(answerPostToUpdate).isEqualTo(updatedAnswerPost);
+        AnswerPost createdAnswerPost = request.postWithResponseBody("/api/courses/" + courseId + "/answer-messages", answerPostToSave, AnswerPost.class, HttpStatus.CREATED);
+        database.assertSensitiveInformationHidden(createdAnswerPost);
+        // should not be automatically post resolving
+        assertThat(createdAnswerPost.doesResolvePost()).isFalse();
+        checkCreatedAnswerPost(answerPostToSave, createdAnswerPost);
+        assertThat(existingAnswerPosts.size() + 1).isEqualTo(answerPostRepository.count());
     }
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void testEditAnswerPost_asStudent1() throws Exception {
-        // update own post (index 0)--> OK
-        AnswerPost answerPostToUpdate = editExistingAnswerPost(existingAnswerPosts.get(0));
+    public void testCreateConversationAnswerPost_badRequest() throws Exception {
+        AnswerPost answerPostToSave = createAnswerPost(existingConversationPostsWithAnswers.get(0));
+        answerPostToSave.setId(999L);
 
-        AnswerPost updatedAnswerPost = request.putWithResponseBody("/api/courses/" + courseId + "/answer-posts/" + answerPostToUpdate.getId(), answerPostToUpdate, AnswerPost.class,
-                HttpStatus.OK);
-        database.assertSensitiveInformationHidden(updatedAnswerPost);
-        assertThat(answerPostToUpdate).isEqualTo(updatedAnswerPost);
+        AnswerPost notCreatedAnswerPost = request.postWithResponseBody("/api/courses/" + courseId + "/answer-messages", answerPostToSave, AnswerPost.class, HttpStatus.BAD_REQUEST);
+        assertThat(notCreatedAnswerPost).isNull();
+        assertThat(answerPostRepository.count()).isEqualTo(existingAnswerPosts.size());
+    }
+
+     @Test
+     @WithMockUser(username = "student3", roles = "USER")
+     public void testCreateConversationAnswerPost_forbidden() throws Exception {
+     // only participants of a conversation can create posts for it
+     // attempt to save new answerPost under someone elses conversation
+     AnswerPost answerPostToSave = createAnswerPost(existingConversationPostsWithAnswers.get(0));
+     AnswerPost notCreatedAnswerPost = request.postWithResponseBody("/api/courses/" + courseId + "/answer-messages", answerPostToSave, AnswerPost.class, HttpStatus.FORBIDDEN);
+
+     assertThat(notCreatedAnswerPost).isNull();
+     assertThat(answerPostRepository.count()).isEqualTo(existingAnswerPosts.size());
+     }
+
+    // UPDATE
+
+    @Test
+    @WithMockUser(username = "student1")
+    public void testEditConversationAnswerPost() throws Exception {
+        // conversation answerPost of student1 must be editable by them
+        AnswerPost conversationAnswerPostToUpdate = existingConversationPostsWithAnswers.get(0).getAnswers().iterator().next();
+        conversationAnswerPostToUpdate.setContent("User changes one of their conversation answerPosts");
+
+        AnswerPost updatedAnswerPost = request.putWithResponseBody("/api/courses/" + courseId + "/answer-messages/" + conversationAnswerPostToUpdate.getId(),
+                conversationAnswerPostToUpdate, AnswerPost.class, HttpStatus.OK);
+
+        assertThat(conversationAnswerPostToUpdate).isEqualTo(updatedAnswerPost);
     }
 
     @Test
-    @WithMockUser(username = "student2", roles = "USER")
-    public void testEditAnswerPost_asStudent2_forbidden() throws Exception {
-        // update post from another student (index 1)--> forbidden
-        AnswerPost answerPostNotToUpdate = editExistingAnswerPost(existingAnswerPosts.get(1));
+    @WithMockUser(username = "tutor1", roles = "TA")
+    public void testEditConversationAnswerPost_forbidden() throws Exception {
+        // conversation answerPost of student1 must not be editable by tutors
+        AnswerPost conversationAnswerPostToUpdate = existingConversationPostsWithAnswers.get(0).getAnswers().iterator().next();
+        conversationAnswerPostToUpdate.setContent("Tutor attempts to change some other user's conversation answerPost");
 
-        AnswerPost notUpdatedAnswerPost = request.putWithResponseBody("/api/courses/" + courseId + "/answer-posts/" + answerPostNotToUpdate.getId(), answerPostNotToUpdate,
-                AnswerPost.class, HttpStatus.FORBIDDEN);
+        AnswerPost notUpdatedAnswerPost = request.putWithResponseBody("/api/courses/" + courseId + "/answer-messages/" + conversationAnswerPostToUpdate.getId(),
+                conversationAnswerPostToUpdate, AnswerPost.class, HttpStatus.FORBIDDEN);
+
         assertThat(notUpdatedAnswerPost).isNull();
     }
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
     public void testEditAnswerPostWithIdIsNull_badRequest() throws Exception {
+        // updated answerMessage and provided answerMessageId should match
+        AnswerPost conversationAnswerPostToUpdate = existingConversationPostsWithAnswers.get(0).getAnswers().iterator().next();
+        conversationAnswerPostToUpdate.setContent("User changes one of their conversation answerPosts");
+
+        AnswerPost notUpdatedAnswerPost = request.putWithResponseBody("/api/courses/" + courseId + "/answer-messages/" + 999L,
+                conversationAnswerPostToUpdate, AnswerPost.class, HttpStatus.BAD_REQUEST);
+
+        assertThat(notUpdatedAnswerPost).isNull();
+        assertThat(answerPostRepository.count()).isEqualTo(existingAnswerPosts.size());
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void testEditAnswerPostWithInvalidId_badRequest() throws Exception {
         AnswerPost answerPostToUpdate = createAnswerPost(existingPostsWithAnswersCourseWide.get(0));
 
-        AnswerPost updatedAnswerPostServer = request.putWithResponseBody("/api/courses/" + courseId + "/answer-posts/" + answerPostToUpdate.getId(), answerPostToUpdate,
+        AnswerPost updatedAnswerPostServer = request.putWithResponseBody("/api/courses/" + courseId + "/answer-messages/" + answerPostToUpdate.getId(), answerPostToUpdate,
                 AnswerPost.class, HttpStatus.BAD_REQUEST);
         assertThat(updatedAnswerPostServer).isNull();
     }
@@ -138,93 +165,38 @@ public class AnswerMessageIntegrationTest extends AbstractSpringIntegrationBambo
         AnswerPost answerPostToUpdate = createAnswerPost(existingPostsWithAnswersCourseWide.get(0));
         Course dummyCourse = database.createCourse();
 
-        AnswerPost updatedAnswerPostServer = request.putWithResponseBody("/api/courses/" + dummyCourse.getId() + "/answer-posts/" + answerPostToUpdate.getId(), answerPostToUpdate,
+        AnswerPost updatedAnswerPostServer = request.putWithResponseBody("/api/courses/" + dummyCourse.getId() + "/answer-messages/" + answerPostToUpdate.getId(), answerPostToUpdate,
                 AnswerPost.class, HttpStatus.BAD_REQUEST);
         assertThat(updatedAnswerPostServer).isNull();
     }
 
-    // @Test
-    // @WithMockUser(username = "student1")
-    // public void testEditConversationAnswerPost() throws Exception {
-    // // conversation answerPost of student1 must be editable by them
-    // AnswerPost conversationAnswerPostToUpdate = existingConversationPostsWithAnswers.get(0).getAnswers().iterator().next();
-    // conversationAnswerPostToUpdate.setContent("User changes one of their conversation answerPosts");
-    //
-    // AnswerPost updatedAnswerPost = request.putWithResponseBody("/api/courses/" + courseId + "/answer-posts/" + conversationAnswerPostToUpdate.getId(),
-    // conversationAnswerPostToUpdate, AnswerPost.class, HttpStatus.OK);
-    //
-    // assertThat(conversationAnswerPostToUpdate).isEqualTo(updatedAnswerPost);
-    // }
-
-    // @Test
-    // @WithMockUser(username = "tutor1", roles = "TA")
-    // public void testEditConversationAnswerPost_forbidden() throws Exception {
-    // // conversation answerPost of student1 must not be editable by tutors
-    // AnswerPost conversationAnswerPostToUpdate = existingConversationPostsWithAnswers.get(0).getAnswers().iterator().next();
-    // conversationAnswerPostToUpdate.setContent("Tutor attempts to change some other user's conversation answerPost");
-    //
-    // AnswerPost notUpdatedAnswerPost = request.putWithResponseBody("/api/courses/" + courseId + "/answer-posts/" + conversationAnswerPostToUpdate.getId(),
-    // conversationAnswerPostToUpdate, AnswerPost.class, HttpStatus.FORBIDDEN);
-    //
-    // assertThat(notUpdatedAnswerPost).isNull();
-    // }
-
-    // @Test
-    // @WithMockUser(username = "student1")
-    // public void testDeleteConversationPost() throws Exception {
-    // // conversation post of student1 must be deletable by them
-    // AnswerPost conversationAnswerPostToDelete = existingConversationPostsWithAnswers.get(0).getAnswers().iterator().next();
-    // request.delete("/api/courses/" + courseId + "/answer-posts/" + conversationAnswerPostToDelete.getId(), HttpStatus.OK);
-    //
-    // assertThat(answerPostRepository.count()).isEqualTo(existingAnswerPosts.size() - 1);
-    // }
-
-    // @Test
-    // @WithMockUser(username = "tutor1", roles = "TA")
-    // public void testDeleteConversationPost_forbidden() throws Exception {
-    // // conversation post of student1 must not be deletable by tutors
-    // AnswerPost conversationAnswerPostToDelete = existingConversationPostsWithAnswers.get(0).getAnswers().iterator().next();
-    // request.delete("/api/courses/" + courseId + "/answer-posts/" + conversationAnswerPostToDelete.getId(), HttpStatus.FORBIDDEN);
-    //
-    // assertThat(answerPostRepository.count()).isEqualTo(existingAnswerPosts.size());
-    // }
 
     // DELETE
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void testDeleteAnswerPosts_asStudent1() throws Exception {
-        // delete own post (index 0)--> OK
-        AnswerPost answerPostToDelete = existingAnswerPosts.get(0);
-
-        request.delete("/api/courses/" + courseId + "/answer-posts/" + answerPostToDelete.getId(), HttpStatus.OK);
-        assertThat(answerPostRepository.count()).isEqualTo(existingAnswerPosts.size() - 1);
-    }
-
-    @Test
-    @WithMockUser(username = "student2", roles = "USER")
-    public void testDeleteAnswerPosts_asStudent2_forbidden() throws Exception {
-        // delete post from another student (index 0) --> forbidden
-        AnswerPost answerPostToNotDelete = existingAnswerPosts.get(0);
-
-        request.delete("/api/courses/" + courseId + "/answer-posts/" + answerPostToNotDelete.getId(), HttpStatus.FORBIDDEN);
+    public void testDeleteAnswerPost_asTutor_notFound() throws Exception {
+        request.delete("/api/courses/" + courseId + "/answer-messages/" + 9999L, HttpStatus.NOT_FOUND);
         assertThat(answerPostRepository.count()).isEqualTo(existingAnswerPosts.size());
     }
 
     @Test
-    @WithMockUser(username = "tutor1", roles = "TA")
-    public void testDeleteAnswerPost_asTutor() throws Exception {
-        // delete post from another student (index 0) --> ok
-        AnswerPost answerPostToDelete = existingAnswerPosts.get(0);
+    @WithMockUser(username = "student1")
+    public void testDeleteConversationPost() throws Exception {
+        // conversation post of student1 must be deletable by them
+        AnswerPost conversationAnswerPostToDelete = existingConversationPostsWithAnswers.get(0).getAnswers().iterator().next();
+        request.delete("/api/courses/" + courseId + "/answer-messages/" + conversationAnswerPostToDelete.getId(), HttpStatus.OK);
 
-        request.delete("/api/courses/" + courseId + "/answer-posts/" + answerPostToDelete.getId(), HttpStatus.OK);
         assertThat(answerPostRepository.count()).isEqualTo(existingAnswerPosts.size() - 1);
     }
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void testDeleteAnswerPost_asTutor_notFound() throws Exception {
-        request.delete("/api/courses/" + courseId + "/answer-posts/" + 9999L, HttpStatus.NOT_FOUND);
+    public void testDeleteConversationPost_forbidden() throws Exception {
+        // conversation post of student1 must not be deletable by tutors
+        AnswerPost conversationAnswerPostToDelete = existingConversationPostsWithAnswers.get(0).getAnswers().iterator().next();
+        request.delete("/api/courses/" + courseId + "/answer-messages/" + conversationAnswerPostToDelete.getId(), HttpStatus.FORBIDDEN);
+
         assertThat(answerPostRepository.count()).isEqualTo(existingAnswerPosts.size());
     }
 
@@ -243,7 +215,7 @@ public class AnswerMessageIntegrationTest extends AbstractSpringIntegrationBambo
         return answerPostToUpdate;
     }
 
-    private void checkCreatedAnserPost(AnswerPost expectedAnswerPost, AnswerPost createdAnswerPost) {
+    private void checkCreatedAnswerPost(AnswerPost expectedAnswerPost, AnswerPost createdAnswerPost) {
         // check if answerPost was created with id
         assertThat(createdAnswerPost).isNotNull();
         assertThat(createdAnswerPost.getId()).isNotNull();

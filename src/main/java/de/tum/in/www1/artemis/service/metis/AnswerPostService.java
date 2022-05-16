@@ -101,7 +101,7 @@ public class AnswerPostService extends PostingService {
         if (answerPost.getId() == null || !Objects.equals(answerPost.getId(), answerPostId)) {
             throw new BadRequestAlertException("Invalid id", METIS_ANSWER_POST_ENTITY_NAME, "idnull");
         }
-        AnswerPost existingAnswerPost = answerPostRepository.findAnswerPostByIdElseThrow(answerPostId);
+        AnswerPost existingAnswerPost = this.findById(answerPostId);
         final Course course = preCheckUserAndCourse(user, courseId);
 
         AnswerPost updatedAnswerPost;
@@ -148,7 +148,7 @@ public class AnswerPostService extends PostingService {
 
         // checks
         final Course course = preCheckUserAndCourse(user, courseId);
-        AnswerPost answerPost = answerPostRepository.findAnswerPostByIdElseThrow(answerPostId);
+        AnswerPost answerPost = this.findById(answerPostId);
         mayUpdateOrDeletePostingElseThrow(answerPost, user, course);
 
         // delete

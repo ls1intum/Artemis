@@ -94,7 +94,7 @@ public class AnswerMessageService extends PostingService {
         if (answerMessage.getId() == null || !Objects.equals(answerMessage.getId(), answerMessageId)) {
             throw new BadRequestAlertException("Invalid id", METIS_ANSWER_POST_ENTITY_NAME, "idnull");
         }
-        AnswerPost existingAnswerMessage = answerPostRepository.findAnswerMessageByIdElseThrow(answerMessageId);
+        AnswerPost existingAnswerMessage = this.findById(answerMessageId);
         final Course course = preCheckUserAndCourse(user, courseId);
 
         AnswerPost updatedAnswerMessage;
@@ -128,7 +128,7 @@ public class AnswerMessageService extends PostingService {
 
         // checks
         final Course course = preCheckUserAndCourse(user, courseId);
-        AnswerPost answerMessage = answerPostRepository.findAnswerMessageByIdElseThrow(answerMessageId);
+        AnswerPost answerMessage = this.findById(answerMessageId);
         mayUpdateOrDeleteAnswerMessageElseThrow(answerMessage, user, course);
 
         // delete
