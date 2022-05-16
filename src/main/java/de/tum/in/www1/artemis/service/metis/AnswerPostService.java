@@ -207,6 +207,16 @@ public class AnswerPostService extends PostingService {
     }
 
     /**
+     * Retrieve answer post or answer message from database by id
+     *
+     * @param id id of requested answer post
+     * @return retrieved answer post
+     */
+    public AnswerPost findAnswerPostOrAnswerMessageById(Long id) {
+        return answerPostRepository.findAnswerPostOrAnswerMessageByIdElseThrow(id);
+    }
+
+    /**
      * Checks if the requesting user is authorized in the course context,
      * i.e. user has to be author of original post associated with the answer post or at least teaching assistant
      *

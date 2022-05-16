@@ -31,13 +31,16 @@ public class ReactionService {
 
     private final AnswerPostService answerPostService;
 
+    private final ConversationService conversationService;
+
     public ReactionService(UserRepository userRepository, CourseRepository courseRepository, ReactionRepository reactionRepository, PostService postService,
-            AnswerPostService answerPostService) {
+                           AnswerPostService answerPostService, ConversationService conversationService) {
         this.userRepository = userRepository;
         this.courseRepository = courseRepository;
         this.reactionRepository = reactionRepository;
         this.postService = postService;
         this.answerPostService = answerPostService;
+        this.conversationService = conversationService;
     }
 
     /**
@@ -63,17 +66,16 @@ public class ReactionService {
         // we query the repository dependent on the type of posting and update this posting
         Reaction savedReaction;
         if (posting instanceof Post) {
-            // TODO extend for messages
-            Post post = postService.findById(posting.getId());
+            Post post = postService.findPostOrMessagePostById(posting.getId());
+            mayInteractWithConversationIfConversationMessage(user, post);
             reaction.setPost(post);
             // save reaction
             savedReaction = reactionRepository.save(reaction);
             // save post
             postService.updateWithReaction(post, reaction, courseId);
-        }
-        else {
-            // TODO extend for answerMessages
-            AnswerPost answerPost = answerPostService.findById(posting.getId());
+        } else {
+            AnswerPost answerPost = answerPostService.findAnswerPostOrAnswerMessageById(posting.getId());
+            mayInteractWithConversationIfConversationMessage(user, answerPost.getPost());
             reaction.setAnswerPost(answerPost);
             // save reaction
             savedReaction = reactionRepository.save(reaction);
@@ -86,8 +88,8 @@ public class ReactionService {
     /**
      * Determines authority to delete reaction and deletes the reaction
      *
-     * @param reactionId    id of the reaction to delete
-     * @param courseId      id of the course the according posting belongs to
+     * @param reactionId id of the reaction to delete
+     * @param courseId   id of the course the according posting belongs to
      */
     public void deleteReactionById(Long reactionId, Long courseId) {
         final User user = userRepository.getUserWithGroupsAndAuthorities();
@@ -104,8 +106,7 @@ public class ReactionService {
         if (reaction.getPost() != null) {
             updatedPost = reaction.getPost();
             updatedPost.removeReaction(reaction);
-        }
-        else {
+        } else {
             AnswerPost updatedAnswerPost = reaction.getAnswerPost();
             updatedAnswerPost.removeReaction(reaction);
             updatedPost = updatedAnswerPost.getPost();
@@ -116,5 +117,13 @@ public class ReactionService {
         }
         postService.broadcastForPost(new PostDTO(updatedPost, MetisCrudAction.UPDATE), course);
         reactionRepository.deleteById(reactionId);
+    }
+
+    private void mayInteractWithConversationIfConversationMessage(User user, Post post) {
+        if (post.getConversation() != null) {
+            conversationService.mayInteractWithConversationElseThrow(post.getConversation().getId(), user);
+        } else {
+            return;
+        }
     }
 }

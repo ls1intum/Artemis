@@ -563,6 +563,16 @@ public class PostService extends PostingService {
     }
 
     /**
+     * Retrieve post or message post from database by id
+     *
+     * @param id id of requested post
+     * @return retrieved post
+     */
+    public Post findPostOrMessagePostById(Long id){
+        return postRepository.findPostOrMessagePostByIdElseThrow(id);
+    }
+
+    /**
      * Calculates k similar posts based on the underlying content comparison strategy
      *
      * @param courseId id of the course in which similar posts are searched for

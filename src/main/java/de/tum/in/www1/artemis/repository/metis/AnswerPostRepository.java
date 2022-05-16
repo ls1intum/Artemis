@@ -26,4 +26,9 @@ public interface AnswerPostRepository extends JpaRepository<AnswerPost, Long> {
         return findById(answerPostId).filter(answerPost -> answerPost.getPost().getConversation() != null)
                 .orElseThrow(() -> new EntityNotFoundException("Answer Post", answerPostId));
     }
+
+    @NotNull
+    default AnswerPost findAnswerPostOrAnswerMessageByIdElseThrow(Long answerPostId) {
+        return findById(answerPostId).orElseThrow(() -> new EntityNotFoundException("Answer Post", answerPostId));
+    }
 }
