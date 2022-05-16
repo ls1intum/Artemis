@@ -1,6 +1,3 @@
-$error-text-color: #dc3545;
-$error-bg-color: #f8d7da;
-
 :host {
     max-width: 100%;
 }
@@ -34,7 +31,7 @@ $error-bg-color: #f8d7da;
     white-space: nowrap;
 
     &.has-error {
-        color: $error-text-color;
-        background-color: lighten($error-bg-color, 5%);
+        color: var(--artemis-alert-danger-color);
+        background-color: var(--artemis-alert-danger-background);
     }
 }

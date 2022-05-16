@@ -424,6 +424,18 @@ $data-table-icon-right: white;
 $data-table-transitioning-container-active-background-color: rgba(0, 0, 0, 0.5);
 $data-table-dropdown-item-selected-background-color: $primary;
 
+// Team Participation Table
+$team-participation-table-last-row-border-bottom: $gray-700;
+$team-participation-table-even-row-background: $gray-700;
+$team-participation-table-header-inner-background: $neutral-dark;
+$team-participation-table-current-exercise-bg: mix($success, $neutral-dark, 10%);
+$team-participation-table-current-exercise-text: $success;
+$team-participation-table-box-shadow-color: black;
+
+// Team Short Name
+$team-short-name-background: transparentize($blue, 0.85);
+$team-short-name-color: $blue;
+
 // Exam
 $exam-navigation-bar-background-color: lighten($neutral-dark, 5%);
 $exam-navigation-bar-synced-color: white;
