@@ -11,8 +11,8 @@ export class OrderedListCommand extends Command {
      * @desc Use the Markdown language for creating/removing an ordered list
      */
     execute(): void {
-        const selectedText = this.getSelectedText();
-        this.splitText(selectedText);
+        const extendedText = this.getExtendedSelectedText();
+        this.splitText(extendedText);
     }
 
     /**
@@ -20,15 +20,14 @@ export class OrderedListCommand extends Command {
      * @function splitText
      * @param selectedText the selected text by the cursor
      */
-    splitText(selectedText: string): void {
-        const parseArray = selectedText.split('\n');
+    splitText(selectedText: string[]): void {
         let manipulatedText = '';
         let position = 1;
 
-        parseArray.forEach((line, index) => {
+        selectedText.forEach((line, index) => {
             // Special case: Single empty line
             if (line === '') {
-                if (parseArray.length === 1) {
+                if (selectedText.length === 1) {
                     manipulatedText = '1. ';
                     return;
                 }
@@ -38,7 +37,7 @@ export class OrderedListCommand extends Command {
                 position++;
             }
 
-            if (index !== parseArray.length - 1) {
+            if (index !== selectedText.length - 1) {
                 manipulatedText += '\n';
             }
         });
