@@ -29,10 +29,8 @@ public class ProgrammingExerciseStudentParticipation extends StudentParticipatio
     @JsonView(QuizView.Before.class)
     private String defaultBranch;
 
-    /**
-     * Default constructor
-     */
     public ProgrammingExerciseStudentParticipation() {
+        // Default constructor
     }
 
     public ProgrammingExerciseStudentParticipation(String defaultBranch) {
