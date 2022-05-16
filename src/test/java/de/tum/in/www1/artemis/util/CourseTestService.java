@@ -9,6 +9,7 @@ import static org.mockito.Mockito.*;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.DayOfWeek;
 import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.*;
@@ -1569,6 +1570,8 @@ public class CourseTestService {
     public void testGetExerciseStatsForCourseOverview() throws Exception {
         // Add a course and set the instructor group name
         var instructorsCourse = database.createCourse();
+        instructorsCourse.setStartDate(ZonedDateTime.now().minusWeeks(1).with(DayOfWeek.MONDAY));
+        instructorsCourse.setEndDate(ZonedDateTime.now().minusWeeks(1).with(DayOfWeek.WEDNESDAY));
         instructorsCourse.setInstructorGroupName("test-instructors");
 
         // Fetch and update an instructor
