@@ -91,9 +91,8 @@ export class ExerciseHintUpdateComponent implements OnInit, OnDestroy {
 
             this.programmingExerciseService.getTasksAndTestsExtractedFromProblemStatement(this.exerciseId).subscribe((tasks) => {
                 this.tasks = tasks;
-                console.log(tasks);
+                // if the task for the exercise is not set yet, pick the first one
                 if (!this.exerciseHint.task) {
-                    console.log('went here');
                     this.exerciseHint.task = tasks[0];
                 }
             });
