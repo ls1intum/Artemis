@@ -140,7 +140,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
             this.examId = parseInt(params['examId'], 10);
             this.testRunId = parseInt(params['testRunId'], 10);
             // As a student can have multiple TestExams, the studentExamId is passed as a parameter.
-            if (this.route.snapshot.queryParams['studentExamId']) {
+            if (params['studentExamId']) {
                 // If a new StudentExam should be created, the keyword new is used (and no StudentExam exists)
                 if (params[`studentExamId`] !== 'new') {
                     this.testExam = true;
