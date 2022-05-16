@@ -57,7 +57,7 @@ describe('UnorderedListCommand', () => {
     });
 
     it('should handle empty lines and remove lists', () => {
-        comp.aceEditorContainer.getEditor().setValue('- Test\n-\n- Test');
+        comp.aceEditorContainer.getEditor().setValue('- Test\n- \n- Test');
         command.execute();
         expect(comp.aceEditorContainer.getEditor().getValue()).toBe('Test\n\nTest');
     });
