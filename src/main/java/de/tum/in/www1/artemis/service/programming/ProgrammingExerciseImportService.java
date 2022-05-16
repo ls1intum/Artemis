@@ -357,7 +357,7 @@ public class ProgrammingExerciseImportService {
             copy.setExercise(targetExercise);
             programmingExerciseTaskRepository.save(copy);
             return copy;
-        }).collect(Collectors.toSet()));
+        }).toList());
     }
 
     /**

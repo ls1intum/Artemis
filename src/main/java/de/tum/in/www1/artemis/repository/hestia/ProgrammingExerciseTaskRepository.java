@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.repository.hestia;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
@@ -105,7 +106,7 @@ public interface ProgrammingExerciseTaskRepository extends JpaRepository<Program
             LEFT JOIN FETCH tc.solutionEntries
             WHERE t.exercise.id = :exerciseId
             """)
-    Set<ProgrammingExerciseTask> findByExerciseIdWithTestCases(@Param("exerciseId") Long exerciseId);
+    List<ProgrammingExerciseTask> findByExerciseIdWithTestCases(@Param("exerciseId") Long exerciseId);
 
     /**
      * Returns the task name with the given id

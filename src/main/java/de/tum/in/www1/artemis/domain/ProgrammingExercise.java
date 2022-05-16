@@ -103,7 +103,7 @@ public class ProgrammingExercise extends Exercise {
 
     @OneToMany(mappedBy = "exercise", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
     @JsonIgnoreProperties("exercise")
-    private Set<ProgrammingExerciseTask> tasks = new HashSet<>();
+    private List<ProgrammingExerciseTask> tasks = new ArrayList<>();
 
     @OneToMany(mappedBy = "exercise", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
     @JsonIgnoreProperties("exercise")
@@ -518,11 +518,11 @@ public class ProgrammingExercise extends Exercise {
         this.testCases = testCases;
     }
 
-    public Set<ProgrammingExerciseTask> getTasks() {
+    public List<ProgrammingExerciseTask> getTasks() {
         return tasks;
     }
 
-    public void setTasks(Set<ProgrammingExerciseTask> tasks) {
+    public void setTasks(List<ProgrammingExerciseTask> tasks) {
         this.tasks = tasks;
     }
 
