@@ -186,6 +186,10 @@ html {
     .ace_comment {
         color: #8497ce;
     }
+
+    .ace_active-line {
+        background: transparentize(#44475a, 0.7);
+    }
 }
 
 // ==================
