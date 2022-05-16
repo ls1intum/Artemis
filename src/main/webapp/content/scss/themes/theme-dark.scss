@@ -176,6 +176,18 @@ html {
     }
 }
 
+.ace_editor.ace_dark.ace-dracula {
+    background-color: $neutral-dark !important;
+
+    .ace_gutter {
+        background-color: #242724;
+    }
+
+    .ace_comment {
+        color: #8497ce;
+    }
+}
+
 // ==================
 // NGX CHARTS STYLING
 // ==================
