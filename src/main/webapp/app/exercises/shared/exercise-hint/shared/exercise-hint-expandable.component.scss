@@ -1,0 +1,16 @@
+.mat-expansion-panel-header {
+    padding: 10px 10px 10px 15px !important;
+    font-weight: bold !important;
+}
+
+.mat-expansion-panel-body {
+    padding: 10px 0 0 !important;
+}
+
+.activated {
+    background-color: var(--success) !important;
+}
+
+.not_activated {
+    background-color: var(--info) !important;
+}

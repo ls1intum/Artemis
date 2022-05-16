@@ -2,26 +2,32 @@
     "artemisApp": {
         "exerciseHint": {
             "home": {
-                "title": "Exercise Hints",
-                "createLabel": "Exercise Hint erstellen",
-                "createOrEditLabel": "Exercise Hint erstellen oder bearbeiten",
-                "notFound": "No Exercise Hint found"
+                "title": "Aufgabenhinweise",
+                "createLabel": "Aufgabenhinweis erstellen",
+                "createOrEditLabel": "Aufgabenhinweis erstellen oder bearbeiten",
+                "notFound": "Kein Aufgabenhinweis gefunden"
             },
-            "created": "Exercise Hint erstellt mit ID {{ param }}",
-            "updated": "Exercise Hint aktualisiert mit ID {{ param }}",
-            "deleted": "Exercise Hint gelöscht mit ID {{ param }}",
+            "created": "Aufgabenhinweis erstellt mit ID {{ param }}",
+            "updated": "Aufgabenhinweis aktualisiert mit ID {{ param }}",
+            "deleted": "Aufgabenhinweis gelöscht mit ID {{ param }}",
             "delete": {
-                "question": "Soll Exercise Hint \"{{ title }}\" wirklich dauerhaft gelöscht werden?"
+                "question": "Soll Aufgabenhinweis \"{{ title }}\" wirklich dauerhaft gelöscht werden?"
             },
             "detail": {
-                "title": "Exercise Hint"
+                "title": "Aufgabenhinweis"
             },
-            "title": "Title",
-            "content": "Content",
-            "exercise": "Exercise",
+            "title": "Titel",
+            "task": "Task",
+            "taskTooltip": "Es wird nicht empfohlen, Code-Hinweise anderen Tasks zuzuweisen, weil die Hinweise speziell für einen Task erstellt wurden.",
+            "content": "Inhalt",
+            "exercise": "Aufgabe",
             "studentDialog": {
                 "title": "Hinweise zur Übung",
-                "tooltip": "Hinweise zu dieser Übung öffnen"
+                "tooltip": "Hinweise zu dieser Übung öffnen",
+                "activate": "Aktivieren",
+                "activateTooltip": "Der Hinweis wird aktiviert und den angezeigten Hinweisen hinzugefügt.",
+                "display": "Anzeigen",
+                "collapse": "Verbergen"
             }
         }
     }

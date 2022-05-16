@@ -17,11 +17,17 @@
                 "title": "Exercise Hint"
             },
             "title": "Title",
+            "task": "Task",
+            "taskTooltip": "It is not recommended to assign code hints to other tasks since these are specifically generated for a task.",
             "content": "Content",
             "exercise": "Exercise",
             "studentDialog": {
                 "title": "Exercise Hints",
-                "tooltip": "Open hints for this exercise"
+                "tooltip": "Open hints for this exercise",
+                "activate": "Activate",
+                "activateTooltip": "The hint will be activated and added to your displayed hints.",
+                "display": "Display",
+                "collapse": "Collapse"
             }
         }
     }
