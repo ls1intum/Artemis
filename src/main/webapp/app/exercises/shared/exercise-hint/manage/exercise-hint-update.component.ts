@@ -13,6 +13,9 @@ import { onError } from 'app/shared/util/global.utils';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
 import { faBan, faCircleNotch, faSave } from '@fortawesome/free-solid-svg-icons';
 import { ExerciseHint } from 'app/entities/hestia/exercise-hint.model';
+import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
+import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { Task } from 'app/exercises/programming/shared/instructions-render/task/programming-exercise-task.model';
 
 @Component({
     selector: 'jhi-exercise-hint-update',
@@ -25,6 +28,9 @@ export class ExerciseHintUpdateComponent implements OnInit, OnDestroy {
     courseId: number;
     exerciseId: number;
     exerciseHint = new ExerciseHint();
+
+    programmingExercise: ProgrammingExercise;
+    tasks: Task[];
 
     isSaving: boolean;
     isLoading: boolean;
@@ -44,6 +50,7 @@ export class ExerciseHintUpdateComponent implements OnInit, OnDestroy {
         protected alertService: AlertService,
         protected exerciseHintService: ExerciseHintService,
         protected exerciseService: ExerciseService,
+        private programmingExerciseService: ProgrammingExerciseService,
         private navigationUtilService: ArtemisNavigationUtilService,
     ) {}
 
@@ -81,6 +88,15 @@ export class ExerciseHintUpdateComponent implements OnInit, OnDestroy {
             } else {
                 this.isLoading = false;
             }
+
+            this.programmingExerciseService.getTasksAndTestsExtractedFromProblemStatement(this.exerciseId).subscribe((tasks) => {
+                this.tasks = tasks;
+                console.log(tasks);
+                if (!this.exerciseHint.task) {
+                    console.log('went here');
+                    this.exerciseHint.task = tasks[0];
+                }
+            });
         });
     }
 
