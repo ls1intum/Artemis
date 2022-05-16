@@ -14,6 +14,7 @@ import { ExerciseHint } from 'app/entities/hestia/exercise-hint.model';
 
 @Injectable({ providedIn: 'root' })
 export class ProgrammingExerciseTaskExtensionWrapper implements ArtemisShowdownExtensionWrapper {
+    // We don't have a provider for ViewContainerRef, so we pass it from ProgrammingExerciseInstructionComponent
     viewContainerRef: ViewContainerRef;
 
     public exerciseHints: ExerciseHint[] = [];
@@ -26,7 +27,7 @@ export class ProgrammingExerciseTaskExtensionWrapper implements ArtemisShowdownE
     // unique index, even if multiple tasks are shown from different problem statements on the same page (in different tabs)
     private taskIndex = 0;
 
-    constructor(private programmingExerciseInstructionService: ProgrammingExerciseInstructionService, private appRef: ApplicationRef, private injector: Injector) {}
+    constructor(private programmingExerciseInstructionService: ProgrammingExerciseInstructionService, private injector: Injector) {}
 
     /**
      * Sets latest result according to parameter.
@@ -78,7 +79,6 @@ export class ProgrammingExerciseTaskExtensionWrapper implements ArtemisShowdownE
                 componentRef.instance.showTestDetails =
                     (this.exercise.type === ExerciseType.PROGRAMMING && (this.exercise as ProgrammingExercise).showTestNamesToStudents) || false;
 
-                // this.appRef.attachView(componentRef.hostView);
                 const domElem = (componentRef.hostView as EmbeddedViewRef<any>).rootNodes[0] as HTMLElement;
                 const taskHtmlContainer = taskHtmlContainers[i];
                 taskHtmlContainer.innerHTML = '';
