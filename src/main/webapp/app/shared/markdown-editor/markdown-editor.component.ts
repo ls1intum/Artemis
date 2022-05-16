@@ -34,7 +34,6 @@ import { HeadingThreeCommand } from 'app/shared/markdown-editor/commands/heading
 import { CodeBlockCommand } from 'app/shared/markdown-editor/commands/codeblock.command';
 import { faGripLines, faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 import { Subscription } from 'rxjs';
-import { Theme, ThemeService } from 'app/core/theme/theme.service';
 
 export enum MarkdownEditorHeight {
     SMALL = 200,
@@ -163,12 +162,7 @@ export class MarkdownEditorComponent implements AfterViewInit, OnDestroy {
     faQuestionCircle = faQuestionCircle;
     faGripLines = faGripLines;
 
-    constructor(
-        private artemisMarkdown: ArtemisMarkdownService,
-        private fileUploaderService: FileUploaderService,
-        private alertService: AlertService,
-        private themeService: ThemeService,
-    ) {}
+    constructor(private artemisMarkdown: ArtemisMarkdownService, private fileUploaderService: FileUploaderService, private alertService: AlertService) {}
 
     /** {boolean} true when the plane html view is needed, false when the preview content is needed from the parent */
     get showDefaultPreview(): boolean {
@@ -226,13 +220,6 @@ export class MarkdownEditorComponent implements AfterViewInit, OnDestroy {
             });
         }
         this.setupMarkdownEditor();
-        this.themeSubscription = this.themeService.getCurrentThemeObservable().subscribe((theme: Theme) => {
-            if (!this.aceEditorContainer) {
-                return;
-            }
-            this.aceEditorContainer.setTheme(theme.markdownAceTheme);
-        });
-
         const selectedAceMode = getAceMode(this.editorMode);
         if (selectedAceMode) {
             this.aceEditorContainer.getEditor().getSession().setMode(selectedAceMode);
