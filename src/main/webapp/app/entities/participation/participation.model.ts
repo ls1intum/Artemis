@@ -9,6 +9,15 @@ import { Submission } from 'app/entities/submission.model';
 import { Result } from 'app/entities/result.model';
 
 export const enum InitializationState {
+    /**
+     * The InitializationState enumeration.
+     * UNINITIALIZED:
+     * INITIALIZED: The participation is set up for submissions from the student
+     * FINISHED: Text- / Modelling: At least one submission is done. Quiz: No further submissions should be possible
+     * ARCHIVED: The participation is closed and cannot be edited / updated. The participation can only be loaded for review.
+     * IMPORTANT: ARCHIVED participations need to be loaded via specified Repository-Calls, as they are excluded from the generic ones.
+     * DB-Constraint: studentId / teamId + exerciseId + InitializationState have to be unique (except for ARCHIVED)
+     */
     UNINITIALIZED = 'UNINITIALIZED',
     REPO_COPIED = 'REPO_COPIED',
     REPO_CONFIGURED = 'REPO_CONFIGURED',
@@ -17,6 +26,7 @@ export const enum InitializationState {
     INITIALIZED = 'INITIALIZED',
     FINISHED = 'FINISHED',
     INACTIVE = 'INACTIVE',
+    ARCHIVED = 'ARCHIVED',
 }
 
 // IMPORTANT NOTICE: The following strings have to be consistent with the ones defined in Participation.java
