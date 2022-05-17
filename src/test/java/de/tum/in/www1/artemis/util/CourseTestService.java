@@ -1811,7 +1811,6 @@ public class CourseTestService {
         resultRepo.saveAndFlush(result22);
         course2.addExercises(exercise2);
         courseRepo.save(course2);
-        System.out.println("Amount of submissions 5: " + submissionRepository.countUniqueSubmissionsByExerciseId(exercise2Id));
 
         // Complaint
         Complaint complaint = new Complaint().complaintType(ComplaintType.COMPLAINT);
