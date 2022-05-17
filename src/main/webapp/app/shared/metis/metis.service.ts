@@ -29,6 +29,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { MetisPostDTO } from 'app/entities/metis/metis-post-dto.model';
 import dayjs from 'dayjs/esm';
+import { PlagiarismCase } from 'app/exercises/shared/plagiarism/types/PlagiarismCase';
 
 @Injectable()
 export class MetisService implements OnDestroy {
@@ -83,6 +84,10 @@ export class MetisService implements OnDestroy {
 
     static getLinkForCoursePost(courseId: number): RouteComponents {
         return ['/courses', courseId, 'discussion'];
+    }
+
+    static getLinkForPlagiarismCasePost(courseId: number, plagiarismCaseId: number): RouteComponents {
+        return ['/courses', courseId, 'plagiarism-cases', plagiarismCaseId];
     }
 
     static getQueryParamsForCoursePost(postId: number): Params {
@@ -168,6 +173,7 @@ export class MetisService implements OnDestroy {
             postContextFilter?.courseWideContext !== this.currentPostContextFilter?.courseWideContext ||
             postContextFilter?.lectureId !== this.currentPostContextFilter?.lectureId ||
             postContextFilter?.exerciseId !== this.currentPostContextFilter?.exerciseId ||
+            postContextFilter?.plagiarismCaseId !== this.currentPostContextFilter?.plagiarismCaseId ||
             postContextFilter?.page !== this.currentPostContextFilter?.page
         ) {
             this.currentPostContextFilter = postContextFilter;
@@ -303,7 +309,7 @@ export class MetisService implements OnDestroy {
      * @param {Lecture | undefined} lecture optional lecture as default context
      * @return {Post} created default object
      */
-    createEmptyPostForContext(courseWideContext?: CourseWideContext, exercise?: Exercise, lecture?: Lecture): Post {
+    createEmptyPostForContext(courseWideContext?: CourseWideContext, exercise?: Exercise, lecture?: Lecture, plagiarismCase?: PlagiarismCase): Post {
         const emptyPost: Post = new Post();
         if (courseWideContext) {
             emptyPost.courseWideContext = courseWideContext;
@@ -313,6 +319,8 @@ export class MetisService implements OnDestroy {
             emptyPost.exercise = { id: exercisePost.id, title: exercisePost.title, type: exercisePost.type } as Exercise;
         } else if (lecture) {
             emptyPost.lecture = { id: lecture.id, title: lecture.title } as Lecture;
+        } else if (plagiarismCase) {
+            emptyPost.plagiarismCase = { id: plagiarismCase.id } as PlagiarismCase;
         } else {
             // set default
             emptyPost.courseWideContext = CourseWideContext.TECH_SUPPORT as CourseWideContext;

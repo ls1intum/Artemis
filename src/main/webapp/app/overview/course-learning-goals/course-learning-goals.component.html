@@ -1,10 +1,13 @@
 <div *ngIf="isLoading" class="d-flex justify-content-center">
+    <hr class="w-100" />
     <div class="spinner-border" role="status">
         <span class="sr-only">{{ 'loading' | artemisTranslate }}</span>
     </div>
+    <hr class="w-100" />
 </div>
 
 <div *ngIf="!isLoading" class="row row-cols-auto">
+    <hr *ngIf="learningGoals && learningGoals.length > 0" class="w-100" />
     <h2 *ngIf="learningGoals && learningGoals.length > 0" class="text-center">{{ 'artemisApp.learningGoal.title' | artemisTranslate }}</h2>
     <jhi-learning-goal-card
         class="mx-auto col"
@@ -12,4 +15,5 @@
         [learningGoal]="learningGoal"
         [learningGoalProgress]="getLearningGoalProgress(learningGoal)"
     ></jhi-learning-goal-card>
+    <hr *ngIf="learningGoals && learningGoals.length > 0" class="w-100" />
 </div>

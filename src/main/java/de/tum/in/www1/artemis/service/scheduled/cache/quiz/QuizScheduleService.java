@@ -475,7 +475,7 @@ public class QuizScheduleService {
                             cachedQuiz.getParticipations().remove(entry.getKey());
                         }
                     });
-                    if (finishedParticipations.size() > 0) {
+                    if (!finishedParticipations.isEmpty()) {
                         log.info("Sent out {} participations in {} for quiz {}", finishedParticipations.size(), formatDurationFrom(start), quizExercise.getTitle());
                     }
                 }
@@ -540,7 +540,7 @@ public class QuizScheduleService {
         // submissions are part of results, so we do not need them twice
         participation.setSubmissions(null);
         participation.setParticipant(null);
-        if (participation.getResults() != null && participation.getResults().size() > 0) {
+        if (participation.getResults() != null && !participation.getResults().isEmpty()) {
             QuizSubmission quizSubmission = (QuizSubmission) participation.getResults().iterator().next().getSubmission();
             if (quizSubmission != null && quizSubmission.getSubmittedAnswers() != null) {
                 for (SubmittedAnswer submittedAnswer : quizSubmission.getSubmittedAnswers()) {

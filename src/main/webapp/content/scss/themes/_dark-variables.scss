@@ -211,7 +211,7 @@ $markdown-preview-blockquote-border: #dfe2e5;
 $connection-status: $success;
 $connection-status-disconnected: $danger;
 
-$mat-autocomplete-visible-box-shadow: rgb(100 100 100);
+$mat-autocomplete-visible-box-shadow: black;
 $mat-form-field-outline: #ccc;
 
 // Feature Overview
@@ -350,7 +350,7 @@ $mc-question-answer-option-hover-background: transparentize(#fff, 0.97);
 $programming-exercise-instruction-step-wizard-card-header-background: lighten($neutral-dark, 5%);
 $programming-exercise-instruction-step-wizard-card-header-border: lighten($neutral-dark, 10%);
 $programming-exercise-instruction-step-wizard-row-before-background: #ccc;
-$programming-exercise-instruction-step-wizard-btn-circle-light-border-color: #ccc;
+$programming-exercise-instruction-step-wizard-btn-border-color: #ccc;
 $programming-exercise-instruction-step-wizard-circle-not-done-color: $gray-700;
 $programming-exercise-instruction-step-wizard-test-passing-hover-color: #f8f9fa;
 
@@ -368,6 +368,8 @@ $code-editor-file-browser-header-border: lighten($neutral-dark, 10%);
 $code-editor-file-browser-tree-hover: lighten($neutral-dark, 5%);
 $code-editor-file-browser-input-background: darken($neutral-dark, 10%);
 $code-editor-file-browser-input-color: white;
+$code-editor-diff-newline-background: rgba(46, 160, 67, 0.22);
+$code-editor-gutter-newline-background: rgba(46, 160, 67, 0.6);
 
 // Overview variables
 $overview-border-color: $border-color;
@@ -422,6 +424,18 @@ $data-table-icon-right: white;
 $data-table-transitioning-container-active-background-color: rgba(0, 0, 0, 0.5);
 $data-table-dropdown-item-selected-background-color: $primary;
 
+// Team Participation Table
+$team-participation-table-last-row-border-bottom: $gray-700;
+$team-participation-table-even-row-background: $gray-700;
+$team-participation-table-header-inner-background: $neutral-dark;
+$team-participation-table-current-exercise-bg: mix($success, $neutral-dark, 10%);
+$team-participation-table-current-exercise-text: $success;
+$team-participation-table-box-shadow-color: black;
+
+// Team Short Name
+$team-short-name-background: transparentize($blue, 0.85);
+$team-short-name-color: $blue;
+
 // Exam
 $exam-navigation-bar-background-color: lighten($neutral-dark, 5%);
 $exam-navigation-bar-synced-color: white;
@@ -462,6 +476,7 @@ $textblock-feedback-editor-feedback-neutral-color: $gray-100;
 $textblock-feedback-editor-feedback-neutral-background-color: $gray-900;
 $textblock-feedback-editor-reused-feedback-preview-border: rgba(228, 228, 228, 0.87);
 $textblock-feedback-editor-dropdown-hover: $gray-700;
+$manual-text-selection-span-hover-background-color: $gray-700;
 
 // Guided tour
 $gt-tour-step-bg-color: $gray-700;
@@ -498,8 +513,8 @@ $artemis-alert-success-color: $success;
 $artemis-alert-success-background: darken($success, 30);
 $artemis-alert-success-border: darken($success, 5);
 $artemis-alert-neutral-color: white;
-$artemis-alert-neutral-background: darken(white, 30);
-$artemis-alert-neutral-border: darken(white, 5);
+$artemis-alert-neutral-background: darken($gray-600, 20%);
+$artemis-alert-neutral-border: $gray-600;
 
 $close-circle-color: white;
 $close-circle-background: $gray-900;

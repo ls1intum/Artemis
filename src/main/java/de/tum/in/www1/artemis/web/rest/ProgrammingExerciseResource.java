@@ -231,7 +231,7 @@ public class ProgrammingExerciseResource {
         }
 
         // Check if project type is selected
-        if (programmingLanguageFeature.getProjectTypes().size() > 0) {
+        if (!programmingLanguageFeature.getProjectTypes().isEmpty()) {
             if (programmingExercise.getProjectType() == null) {
                 return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName, "The project type is not set", "projectTypeNotSet")).body(null);
             }

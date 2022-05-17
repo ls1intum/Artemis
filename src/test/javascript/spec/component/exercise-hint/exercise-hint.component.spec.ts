@@ -6,7 +6,7 @@ import { ActivatedRoute } from '@angular/router';
 import { ExerciseHintComponent } from 'app/exercises/shared/exercise-hint/manage/exercise-hint.component';
 import { ArtemisTestModule } from '../../test.module';
 import { ExerciseHint } from 'app/entities/hestia/exercise-hint.model';
-import { ExerciseHintService } from 'app/exercises/shared/exercise-hint/manage/exercise-hint.service';
+import { ExerciseHintService } from 'app/exercises/shared/exercise-hint/shared/exercise-hint.service';
 import { MockActivatedRoute } from '../../helpers/mocks/activated-route/mock-activated-route';
 
 describe('ExerciseHint Management Component', () => {
@@ -34,7 +34,7 @@ describe('ExerciseHint Management Component', () => {
         const hint = new ExerciseHint();
         hint.id = 123;
 
-        jest.spyOn(service, 'findByExerciseId').mockReturnValue(
+        jest.spyOn(service, 'findByExerciseIdWithRelations').mockReturnValue(
             of(
                 new HttpResponse({
                     body: [hint],
@@ -47,8 +47,8 @@ describe('ExerciseHint Management Component', () => {
         comp.ngOnInit();
 
         // THEN
-        expect(service.findByExerciseId).toHaveBeenCalledTimes(1);
-        expect(service.findByExerciseId).toHaveBeenCalledWith(15);
+        expect(service.findByExerciseIdWithRelations).toHaveBeenCalledTimes(1);
+        expect(service.findByExerciseIdWithRelations).toHaveBeenCalledWith(15);
         expect(comp.exerciseHints[0]).toEqual(expect.objectContaining({ id: 123 }));
     });
 

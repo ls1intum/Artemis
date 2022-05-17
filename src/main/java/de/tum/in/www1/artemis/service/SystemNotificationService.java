@@ -27,7 +27,7 @@ public class SystemNotificationService {
         // The 'user' does not need to be logged into Artemis, this leads to an issue when accessing custom repository methods. Therefore a mock auth object has to be created.
         SecurityUtils.setAuthorizationObject();
         List<SystemNotification> allActiveSystemNotification = systemNotificationRepository.findAllActiveSystemNotification(ZonedDateTime.now());
-        return allActiveSystemNotification.size() > 0 ? allActiveSystemNotification.get(0) : null;
+        return allActiveSystemNotification.isEmpty() ? null : allActiveSystemNotification.get(0);
     }
 
     public void sendNotification(SystemNotification systemNotification) {

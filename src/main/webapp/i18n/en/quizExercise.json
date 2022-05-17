@@ -17,6 +17,9 @@
             "reset": {
                 "question": "Are you sure you want to reset the quiz <strong>{{ title }}</strong>? This action can NOT be undone! <br> This means that all participation, results, and statistics will be deleted, but the quiz questions will remain. Then you can start the quiz again."
             },
+            "endNow": {
+                "question": "Are you sure you want to end the quiz <strong>{{ title }}</strong> now? This action can NOT be undone! <br> This prevents any further submissions and starts to publish the results."
+            },
             "edit": {
                 "title": "Edit Quiz Exercise for {{ param }}",
                 "addQuestion": "Add Question",
@@ -46,7 +49,7 @@
             },
             "quizStatus": {
                 "closed": "Closed",
-                "hidden": "Hidden",
+                "invisible": "Invisible",
                 "openForPractice": "Open for practice",
                 "active": "Active",
                 "visible": "Visible"
@@ -61,9 +64,9 @@
             "isOpenForPractice": "Is Open For Practice",
             "isPlannedToStart": "Is Planned To Start",
             "openForPractice": "Release For Practice",
-            "startNow": "Start Now",
+            "startQuiz": "Start Quiz",
+            "startBatch": "Start Batch",
             "showNow": "Set Visible",
-            "endNow": "End Now",
             "duration": "Duration",
             "minutes": "minutes",
             "seconds": "seconds",
@@ -88,7 +91,12 @@
             "selectExam": "Select an Exam",
             "selectQuizExercise": "Select a Quiz Exercise",
             "status": "Status",
-            "startTime": "Start Time",
+            "releaseDate": "Visible from",
+            "startTime": "Start of working time",
+            "startTimeErrorSynchronized": "Start of working time should be after Visible from",
+            "startTimeError": "Start of working time should be after Visible from and before the Due Date",
+            "setStartTime": "Schedule Quiz Start",
+            "dueDateError": "Due Date must be after Visible from. Please check your selection again",
             "quizPointStatistic": "Quiz Point Statistic",
             "quiz": "Quiz",
             "totalPoints": "Overall Points",
@@ -267,10 +275,16 @@
                 "individual": "Individual",
                 "explanation": "Batch Mode controls how students can participate in the quiz.\n\nSynchronized: There is exactly opportunity for all students to participate in the quiz at once.\nBatched: There are multiple opportunities for students to participate in the quiz by using a password.\nIndividual: Students can participate in the quiz by themselves at any time while it is released."
             },
+            "releaseDateExplanation": {
+                "SYNCHRONIZED": "Synchronized: The date when the quiz becomes visible to students. Students cannot see the questions until the start date.",
+                "BATCHED": "Batched: The date when the quiz becomes visible to students. Students cannot see the questions until a batch is started and they enter the password for it.",
+                "INDIVIDUAL": "Individual: The date when the quiz becomes visible to students. Students can start working on the quiz from this time onward"
+            },
+            "startTimeExplanation": "Set the time when the students are able to see the questions and start answering.",
             "addBatch": "Add Batch",
             "join": "Join",
             "joinFailed": "Unable to join the quiz.",
-            "submitSuccess": "Your answers have been successfully submitted!<br><br>The results will be available after the due date."
+            "submitSuccess": "Your answers have been successfully submitted!<br><br>The results will be available after the due date"
         }
     }
 }

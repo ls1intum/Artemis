@@ -367,7 +367,7 @@ public class ExerciseService {
      */
     public void checkExampleSubmissions(Exercise exercise) {
         // Avoid recursions
-        if (exercise.getExampleSubmissions().size() != 0) {
+        if (!exercise.getExampleSubmissions().isEmpty()) {
             Set<ExampleSubmission> exampleSubmissionsWithResults = exampleSubmissionRepository.findAllWithResultByExerciseId(exercise.getId());
             exercise.setExampleSubmissions(exampleSubmissionsWithResults);
             exercise.getExampleSubmissions().forEach(exampleSubmission -> exampleSubmission.setExercise(null));
