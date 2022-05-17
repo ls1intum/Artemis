@@ -30,8 +30,7 @@ Some general aspects:
 =============
 
 1. 1 file per logical component (e.g. parser, scanner, emitter, checker).
-2. Do not add new files. :)
-3. files with ".generated.*" suffix are auto-generated, do not hand-edit them.
+2. files with ".generated.*" suffix are auto-generated, do not hand-edit them.
 
 3. Types
 ========
