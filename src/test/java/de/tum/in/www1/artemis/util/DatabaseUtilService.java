@@ -105,6 +105,9 @@ public class DatabaseUtilService {
     private LectureRepository lectureRepo;
 
     @Autowired
+    private LearningGoalRepository learningGoalRepo;
+
+    @Autowired
     private ExerciseRepository exerciseRepo;
 
     @Autowired
@@ -448,6 +451,14 @@ public class DatabaseUtilService {
 
     public Course createCourseWithOrganizations() {
         return createCourseWithOrganizations("organization1", "org1", "org.org", "This is organization1", null, "^.*@matching.*$");
+    }
+
+    public LearningGoal createLearningGoal(Course course) {
+        LearningGoal learningGoal = new LearningGoal();
+        learningGoal.setTitle("Example Competency");
+        learningGoal.setDescription("Magna pars studiorum, prodita quaerimus.");
+        learningGoal.setCourse(course);
+        return learningGoalRepo.save(learningGoal);
     }
 
     public TextExercise createIndividualTextExercise(Course course, ZonedDateTime pastTimestamp, ZonedDateTime futureTimestamp, ZonedDateTime futureFutureTimestamp) {
