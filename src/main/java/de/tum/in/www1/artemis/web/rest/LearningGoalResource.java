@@ -27,6 +27,8 @@ import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.LearningGoalService;
 import de.tum.in.www1.artemis.web.rest.dto.CourseLearningGoalProgress;
 import de.tum.in.www1.artemis.web.rest.dto.IndividualLearningGoalProgress;
+import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
+import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
@@ -111,7 +113,7 @@ public class LearningGoalResource {
     @DeleteMapping("/courses/{courseId}/goals/{learningGoalId}")
     @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<Void> deleteLectureUnit(@PathVariable Long learningGoalId, @PathVariable Long courseId) {
-        log.info("REST request to remove a LearningGoal : {}", learningGoalId);
+        log.info("REST request to delete a LearningGoal : {}", learningGoalId);
         var learningGoal = findLearningGoal(Role.INSTRUCTOR, learningGoalId, courseId);
         learningGoalRepository.deleteById(learningGoal.getId());
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, learningGoal.getTitle())).build();
@@ -165,6 +167,17 @@ public class LearningGoalResource {
         if (!learningGoal.getCourse().getId().equals(courseId)) {
             throw new ConflictException("The learning goal does not belong to the correct course", "LearningGoal", "learningGoalWrongCourse");
         }
+
+        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(role, learningGoal.getCourse(), null);
+        return learningGoal;
+    }
+
+    private LearningGoal findPrerequisite(Role role, Long learningGoalId, Long courseId) {
+        var learningGoal = learningGoalRepository.findByIdWithConsecutiveCoursesElseThrow(learningGoalId);
+        if (!learningGoal.getConsecutiveCourses().stream().map(Course::getId).toList().contains(courseId)) {
+            throw new ConflictException("The learning goal is not a prerequisite of the given course", "LearningGoal", "prerequisiteWrongCourse");
+        }
+
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(role, learningGoal.getCourse(), null);
         return learningGoal;
     }
@@ -249,6 +262,80 @@ public class LearningGoalResource {
         return ResponseEntity.created(new URI("/api/courses/" + courseId + "/goals/" + persistedLearningGoal.getId()))
                 .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, "")).body(persistedLearningGoal);
 
+    }
+
+    /**
+     * Search for all learning goals by title and course title. The result is pageable.
+     *
+     * @param search The pageable search containing the page size, page number and query string
+     * @return The desired page, sorted and matching the given query
+     */
+    @GetMapping("learning-goals")
+    @PreAuthorize("hasRole('EDITOR')")
+    public ResponseEntity<SearchResultPageDTO<LearningGoal>> getAllLecturesOnPage(PageableSearchDTO<String> search) {
+        final var user = userRepository.getUserWithGroupsAndAuthorities();
+        return ResponseEntity.ok(learningGoalService.getAllOnPageWithSize(search, user));
+    }
+
+    /**
+     * GET /courses/:courseId/prerequisites
+     * @param courseId the id of the course for which the learning goals should be fetched
+     * @return the ResponseEntity with status 200 (OK) and with body the found learning goals
+     */
+    @GetMapping("/courses/{courseId}/prerequisites")
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<List<LearningGoal>> getPrerequisites(@PathVariable Long courseId) {
+        log.debug("REST request to get prerequisites for course with id: {}", courseId);
+        Course course = courseRepository.findByIdElseThrow(courseId);
+        User user = userRepository.getUserWithGroupsAndAuthorities();
+        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
+
+        Set<LearningGoal> prerequisites = learningGoalRepository.findPrerequisitesByCourseId(courseId);
+        // Remove all lecture units as not needed for now
+        for (LearningGoal prerequisite : prerequisites) {
+            prerequisite.setLectureUnits(Collections.emptySet());
+        }
+
+        return ResponseEntity.ok(new ArrayList<>(prerequisites));
+    }
+
+    /**
+     * POST /courses/:courseId/prerequisites/:learningGoalId
+     * @param courseId the id of the course for which the learning goal should be a prerequisite
+     * @param learningGoalId the id of the prerequisite (learning goal) to add
+     * @return the ResponseEntity with status 200 (OK)
+     */
+    @PostMapping("/courses/{courseId}/prerequisites/{learningGoalId}")
+    @PreAuthorize("hasRole('INSTRUCTOR')")
+    public ResponseEntity<LearningGoal> addPrerequisite(@PathVariable Long learningGoalId, @PathVariable Long courseId) {
+        log.info("REST request to add a prerequisite: {}", learningGoalId);
+        var course = courseRepository.findWithEagerLearningGoalsById(courseId).orElseThrow();
+        var learningGoal = learningGoalRepository.findByIdWithConsecutiveCourses(learningGoalId).orElseThrow();
+
+        if (learningGoal.getCourse().getId().equals(courseId)) {
+            throw new ConflictException("The learning goal of a course can not be a prerequisite to the same course", "LearningGoal", "learningGoalCycle");
+        }
+
+        course.addPrerequisite(learningGoal);
+        courseRepository.save(course);
+        return ResponseEntity.ok().headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, learningGoal.getTitle())).body(learningGoal);
+    }
+
+    /**
+     * DELETE /courses/:courseId/prerequisites/:learningGoalId
+     * @param courseId the id of the course for which the learning goal is a prerequisite
+     * @param learningGoalId the id of the prerequisite (learning goal) to remove
+     * @return the ResponseEntity with status 200 (OK)
+     */
+    @DeleteMapping("/courses/{courseId}/prerequisites/{learningGoalId}")
+    @PreAuthorize("hasRole('INSTRUCTOR')")
+    public ResponseEntity<Void> removePrerequisite(@PathVariable Long learningGoalId, @PathVariable Long courseId) {
+        log.info("REST request to remove a prerequisite: {}", learningGoalId);
+        var course = courseRepository.findWithEagerLearningGoalsById(courseId).orElseThrow();
+        var learningGoal = findPrerequisite(Role.INSTRUCTOR, learningGoalId, courseId);
+        course.removePrerequisite(learningGoal);
+        courseRepository.save(course);
+        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, learningGoal.getTitle())).build();
     }
 
     private Set<LectureUnit> getLectureUnitsFromDatabase(Set<LectureUnit> lectureUnitsFromClient) {

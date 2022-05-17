@@ -229,7 +229,7 @@
     </ng-container>
     <ng-container *ngIf="!quizBatch && quizExercise.quizMode === QuizMode.INDIVIDUAL && (quizExercise.remainingNumberOfAttempts ?? 1) > 0">
         <div jhiTranslate="artemisApp.quizExercise.quizInstructions.startNow"></div>
-        <jhi-button id="start-batch" [title]="'artemisApp.quizExercise.startNow'" [btnType]="ButtonType.SUCCESS" (onClick)="joinBatch()"></jhi-button>
+        <jhi-button id="start-batch" [title]="'artemisApp.quizExercise.startBatch'" [btnType]="ButtonType.SUCCESS" (onClick)="joinBatch()"></jhi-button>
     </ng-container>
     <ng-container *ngIf="!quizBatch && quizExercise.quizMode !== QuizMode.SYNCHRONIZED && quizExercise.remainingNumberOfAttempts === 0">
         <div jhiTranslate="artemisApp.quizExercise.quizInstructions.noMoreAttempts" *ngIf="(quizExercise.allowedNumberOfAttempts ?? 0) > 1"></div>
