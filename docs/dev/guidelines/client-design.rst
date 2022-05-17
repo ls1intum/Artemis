@@ -5,6 +5,8 @@ Client Theming
 Artemis ships with two themes: Light Mode and Dark Mode. It is important to ensure that all UI components look
 consistent and good in both themes. Therefore, please follow the rules and hints below.
 
+In general, keep in mind: **All UI changes need to be verified in both themes!**
+
 0. Color Usage
 ==============
 
