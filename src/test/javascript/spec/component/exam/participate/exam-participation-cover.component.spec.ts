@@ -35,6 +35,7 @@ describe('ExamParticipationCoverComponent', () => {
     const exam: Exam = new Exam();
     exam.course = course;
     exam.id = 123;
+    exam.testExam = false;
     const studentExam: StudentExam = new StudentExam();
     studentExam.testRun = false;
 
@@ -180,15 +181,13 @@ describe('ExamParticipationCoverComponent', () => {
         jest.advanceTimersByTime(UI_RELOAD_TIME + 1); // simulate setInterval time passing
         expect(component.waitingForExamStart).toBe(true);
         expect(component.timeUntilStart).toBe('');
-    }));
 
-    it('should start exam for TestExam', fakeAsync(() => {
-        jest.useFakeTimers();
+        // Case TestExam
         component.testRun = false;
         component.testExam = true;
         component.exam.testExam = true;
-        const exercise = { id: 87, type: ExerciseType.TEXT } as Exercise;
-        component.studentExam.exercises = [exercise];
+        const exercise1 = { id: 87, type: ExerciseType.TEXT } as Exercise;
+        component.studentExam.exercises = [exercise1];
 
         jest.spyOn(examParticipationService, 'loadStudentExamWithExercisesForConductionOfTestExam').mockReturnValue(of(studentExam));
 
@@ -198,16 +197,16 @@ describe('ExamParticipationCoverComponent', () => {
         tick();
         expect(component.studentExam).toEqual(studentExam);
 
-        const startDate = dayjs();
-        const now = dayjs();
-        component.exam.startDate = startDate.add(2, 'hours');
-        jest.spyOn(artemisServerDateService, 'now').mockReturnValue(now);
+        const startDate1 = dayjs();
+        const now1 = dayjs();
+        component.exam.startDate = startDate1.add(2, 'hours');
+        jest.spyOn(artemisServerDateService, 'now').mockReturnValue(now1);
         component.startExam();
         tick();
         jest.advanceTimersByTime(UI_RELOAD_TIME + 1); // simulate setInterval time passing
         expect(component.waitingForExamStart).toBe(true);
-        const difference = Math.ceil(component.exam.startDate.diff(now, 's') / 60);
-        expect(component.timeUntilStart).toBe(difference + ' min');
+        const difference1 = Math.ceil(component.exam.startDate.diff(now1, 's') / 60);
+        expect(component.timeUntilStart).toBe(difference1 + ' min');
 
         component.exam.startDate = undefined;
         component.startExam();
@@ -298,6 +297,7 @@ describe('ExamParticipationCoverComponent', () => {
         const now = dayjs();
         jest.spyOn(artemisServerDateService, 'now').mockReturnValue(now);
         component.exam.startDate = startDate.subtract(2, 'hours');
+        component.exam.testExam = false;
         component.studentExam.workingTime = 3600;
         component.exam.gracePeriod = 1;
         component.studentExam.submitted = false;

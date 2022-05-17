@@ -181,6 +181,7 @@ describe('ExamParticipationComponent', () => {
         expect(comp.studentExam).toEqual(studentExam);
         expect(comp.exam).toEqual(studentExam.exam);
     });
+
     it('should load exam if test run id is not defined', () => {
         const studentExam = new StudentExam();
         studentExam.exam = new Exam();
@@ -217,6 +218,7 @@ describe('ExamParticipationComponent', () => {
         expect(comp.studentExam).toEqual(studentExam);
         expect(comp.exam).toEqual(studentExam.exam);
     });
+
     it('should load existing testExam if studentExam id is defined', () => {
         const studentExam = new StudentExam();
         studentExam.exam = new Exam();
@@ -237,6 +239,7 @@ describe('ExamParticipationComponent', () => {
         expect(comp.studentExam.id).toEqual(studentExam.id);
         expect(loadStudentExamWithExercisesForSummary).not.toHaveBeenCalled();
     });
+
     it('should load existing testExam for summary if studentExam id is defined', () => {
         const studentExam = new StudentExam();
         studentExam.exam = new Exam();
