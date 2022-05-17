@@ -9,7 +9,7 @@
             </small>
         </ng-container>
         <ng-container *ngIf="submissions && submissions.length > 0 && exercise.assessmentType === AssessmentType.SEMI_AUTOMATIC">
-            <small [ngClass]="assessedSubmissions === submissions.length ? 'text-success' : submissions.length === 0 ? 'text-warning' : 'text-warning'">
+            <small [ngClass]="assessedSubmissions === submissions.length ? 'text-success' : 'text-warning'">
                 {{
                     'artemisApp.programmingAssessment.dashboard.progressDescription'
                         | artemisTranslate
