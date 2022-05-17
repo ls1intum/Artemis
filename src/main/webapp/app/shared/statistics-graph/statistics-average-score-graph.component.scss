@@ -48,3 +48,10 @@
 .chart-container {
     width: 83.33%;
 }
+
+.chart-row {
+    > * {
+        padding-left: 0;
+        padding-right: 0;
+    }
+}

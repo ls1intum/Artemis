@@ -3,7 +3,7 @@
         <h3>{{ 'artemisApp.course.averageScore' | artemisTranslate }}</h3>
         <h4>{{ 'artemisApp.courseStatistics.courseAverage' | artemisTranslate }}: {{ courseAverage }}%</h4>
     </div>
-    <div class="row col-xl-11">
+    <div class="row col-xl-11 chart-row">
         <fa-icon
             [icon]="faArrowLeft"
             size="2x"
@@ -24,7 +24,6 @@
                 [dataLabelFormatting]="formatDataLabel"
                 [showDataLabel]="true"
                 (select)="onSelect($event)"
-                class="row"
             >
                 <ng-template #tooltipTemplate let-model="model">
                     <b>{{ model.name }}</b> <br />
@@ -42,7 +41,6 @@
             class="col-1 d-flex align-items-center"
             role="button"
             (click)="switchTimeSpan(RIGHT)"
-            style="max-width: 35px"
             [ngClass]="{ hidden: !(currentSize > 10 + currentPeriod) }"
         ></fa-icon>
         <ng-template #placeholder>

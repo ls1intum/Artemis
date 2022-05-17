@@ -83,7 +83,7 @@ export class ParticipantScoresDistributionComponent implements OnInit, OnChanges
         this.highlightScore();
     }
 
-    @HostListener('window:resize', ['$event'])
+    @HostListener('window:resize')
     realignChart() {
         if (window.innerWidth < 700 && this.showYAxisLabel) {
             this.showYAxisLabel = false;
