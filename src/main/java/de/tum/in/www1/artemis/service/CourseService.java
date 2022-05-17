@@ -701,19 +701,9 @@ public class CourseService {
      * @return the allowed time span size
      */
     public int determineTimeSpanSizeForActiveStudents(Course course, ZonedDateTime endDate, int maximalSize) {
-        /*
-         * var spanTime = maximalSize; if (course.getStartDate() != null) { log.debug("Time difference: " + course.getStartDate().until(endDate, ChronoUnit.WEEKS)); var
-         * amountOfWeeksBetween = course.getStartDate().until(endDate.plusWeeks(1), ChronoUnit.WEEKS); spanTime = Math.toIntExact(Math.min(maximalSize, amountOfWeeksBetween)); }
-         * return spanTime; var spanTime = maximalSize; if (course.getStartDate() != null) { var startDateIsoWeek = statisticsRepository.getWeekOfDate(course.getStartDate()); var
-         * endDateIsoWeek = statisticsRepository.getWeekOfDate(endDate); int weeksInYear =
-         * Math.toIntExact(IsoFields.WEEK_OF_WEEK_BASED_YEAR.rangeRefinedBy(course.getStartDate()).getMaximum()); int amountOfWeeksBetween = (endDateIsoWeek - startDateIsoWeek +
-         * weeksInYear) % weeksInYear; spanTime = Math.min(maximalSize, amountOfWeeksBetween + 1); }
-         */
         var spanTime = maximalSize;
         if (course.getStartDate() != null) {
-            var mondayInWeekOfStart = course.getStartDate().toLocalDateTime().with(DayOfWeek.MONDAY).withHour(0).withMinute(0).withSecond(0).withNano(0);
-            var mondayInWeekOfEnd = endDate.plusWeeks(1).toLocalDateTime().with(DayOfWeek.MONDAY).withHour(0).withMinute(0).withSecond(0).withNano(0);
-            var amountOfWeeksBetween = mondayInWeekOfStart.until(mondayInWeekOfEnd, ChronoUnit.WEEKS);
+            var amountOfWeeksBetween = course.getStartDate().until(endDate.plusWeeks(1), ChronoUnit.WEEKS);
             spanTime = Math.toIntExact(Math.min(maximalSize, amountOfWeeksBetween));
         }
         return spanTime;
