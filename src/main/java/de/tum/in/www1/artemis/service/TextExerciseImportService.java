@@ -22,9 +22,12 @@ public class TextExerciseImportService extends ExerciseImportService {
 
     private final FeedbackRepository feedbackRepository;
 
+    private final TextBlockRepository textBlockRepository;
+
     public TextExerciseImportService(TextExerciseRepository textExerciseRepository, ExampleSubmissionRepository exampleSubmissionRepository,
             SubmissionRepository submissionRepository, ResultRepository resultRepository, TextBlockRepository textBlockRepository, FeedbackRepository feedbackRepository) {
-        super(exampleSubmissionRepository, submissionRepository, resultRepository, textBlockRepository);
+        super(exampleSubmissionRepository, submissionRepository, resultRepository);
+        this.textBlockRepository = textBlockRepository;
         this.textExerciseRepository = textExerciseRepository;
         this.feedbackRepository = feedbackRepository;
     }

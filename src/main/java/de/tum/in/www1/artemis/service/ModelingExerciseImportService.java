@@ -24,8 +24,8 @@ public class ModelingExerciseImportService extends ExerciseImportService {
     private final ModelingExerciseRepository modelingExerciseRepository;
 
     public ModelingExerciseImportService(ModelingExerciseRepository modelingExerciseRepository, ExampleSubmissionRepository exampleSubmissionRepository,
-            SubmissionRepository submissionRepository, ResultRepository resultRepository, TextBlockRepository textBlockRepository) {
-        super(exampleSubmissionRepository, submissionRepository, resultRepository, textBlockRepository);
+            SubmissionRepository submissionRepository, ResultRepository resultRepository) {
+        super(exampleSubmissionRepository, submissionRepository, resultRepository);
         this.modelingExerciseRepository = modelingExerciseRepository;
     }
 

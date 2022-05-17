@@ -33,6 +33,9 @@
             "new": {
                 "title": "Quiz für {{ param }} erstellen"
             },
+            "import": {
+                "title": "Quiz für {{ param }} importieren"
+            },
             "export": {
                 "title": "Alle Quizfragen zum Kurs {{ param }}",
                 "export": "Export",

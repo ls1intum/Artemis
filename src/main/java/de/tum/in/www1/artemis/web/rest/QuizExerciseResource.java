@@ -32,6 +32,7 @@ import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
 import de.tum.in.www1.artemis.web.rest.dto.QuizBatchJoinDTO;
 import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
+import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 
 /** REST controller for managing QuizExercise. */
@@ -68,6 +69,8 @@ public class QuizExerciseResource {
 
     private final QuizStatisticService quizStatisticService;
 
+    private final QuizExerciseImportService quizExerciseImportService;
+
     private final AuthorizationCheckService authCheckService;
 
     private final GroupNotificationService groupNotificationService;
@@ -82,9 +85,10 @@ public class QuizExerciseResource {
 
     public QuizExerciseResource(QuizExerciseService quizExerciseService, QuizExerciseRepository quizExerciseRepository, CourseService courseService, UserRepository userRepository,
             ExerciseDeletionService exerciseDeletionServiceService, QuizScheduleService quizScheduleService, QuizStatisticService quizStatisticService,
-            AuthorizationCheckService authCheckService, CourseRepository courseRepository, GroupNotificationService groupNotificationService, ExerciseService exerciseService,
-            ExamDateService examDateService, QuizMessagingService quizMessagingService, StudentParticipationRepository studentParticipationRepository,
-            QuizBatchService quizBatchService, QuizBatchRepository quizBatchRepository, SubmissionRepository submissionRepository) {
+            QuizExerciseImportService quizExerciseImportService, AuthorizationCheckService authCheckService, CourseRepository courseRepository,
+            GroupNotificationService groupNotificationService, ExerciseService exerciseService, ExamDateService examDateService, QuizMessagingService quizMessagingService,
+            StudentParticipationRepository studentParticipationRepository, QuizBatchService quizBatchService, QuizBatchRepository quizBatchRepository,
+            SubmissionRepository submissionRepository) {
         this.quizExerciseService = quizExerciseService;
         this.quizExerciseRepository = quizExerciseRepository;
         this.exerciseDeletionService = exerciseDeletionServiceService;
@@ -92,6 +96,7 @@ public class QuizExerciseResource {
         this.courseService = courseService;
         this.quizScheduleService = quizScheduleService;
         this.quizStatisticService = quizStatisticService;
+        this.quizExerciseImportService = quizExerciseImportService;
         this.authCheckService = authCheckService;
         this.groupNotificationService = groupNotificationService;
         this.exerciseService = exerciseService;
@@ -562,5 +567,45 @@ public class QuizExerciseResource {
     public ResponseEntity<SearchResultPageDTO<QuizExercise>> getAllExercisesOnPage(PageableSearchDTO<String> search) {
         final var user = userRepository.getUserWithGroupsAndAuthorities();
         return ResponseEntity.ok(quizExerciseService.getAllOnPageWithSize(search, user));
+    }
+
+    /**
+     * POST /quiz-exercises/import: Imports an existing quiz exercise into an existing course
+     * <p>
+     * This will import the whole exercise except for the participations and dates. Referenced
+     * entities will get cloned and assigned a new id.
+     *
+     * @param sourceExerciseId The ID of the original exercise which should get imported
+     * @param importedExercise The new exercise containing values that should get overwritten in the
+     *                         imported exercise, s.a. the title or difficulty
+     * @return The imported exercise (200), a not found error (404) if the template does not exist,
+     * or a forbidden error (403) if the user is not at least an instructor in the target course.
+     * @throws URISyntaxException When the URI of the response entity is invalid
+     */
+    @PostMapping("/quiz-exercises/import/{sourceExerciseId}")
+    @PreAuthorize("hasRole('EDITOR')")
+    public ResponseEntity<QuizExercise> importExercise(@PathVariable long sourceExerciseId, @RequestBody QuizExercise importedExercise) throws URISyntaxException {
+        if (sourceExerciseId <= 0 || (importedExercise.getCourseViaExerciseGroupOrCourseMember() == null && importedExercise.getExerciseGroup() == null)) {
+            log.debug("Either the courseId or exerciseGroupId must be set for an import");
+            throw new BadRequestAlertException("Either the courseId or exerciseGroupId must be set for an import", ENTITY_NAME, "noCourseIdOrExerciseGroupId");
+        }
+        importedExercise.checkCourseAndExerciseGroupExclusivity(ENTITY_NAME);
+        final var user = userRepository.getUserWithGroupsAndAuthorities();
+        final var originalQuizExercise = quizExerciseRepository.findByIdWithExampleSubmissionsAndResultsElseThrow(sourceExerciseId);
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, importedExercise, user);
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, originalQuizExercise, user);
+
+        if (!importedExercise.isValid()) {
+            // TODO: improve error message and tell the client why the quiz is invalid (also see above in create Quiz)
+            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "invalidQuiz", "The quiz exercise is invalid")).body(null);
+        }
+
+        // validates general settings: points, dates
+        importedExercise.validateGeneralSettings();
+
+        final var newQuizExercise = quizExerciseImportService.importQuizExercise(originalQuizExercise, importedExercise);
+        quizExerciseRepository.save(newQuizExercise);
+        return ResponseEntity.created(new URI("/api/quiz-exercises/" + newQuizExercise.getId()))
+                .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, newQuizExercise.getId().toString())).body(newQuizExercise);
     }
 }

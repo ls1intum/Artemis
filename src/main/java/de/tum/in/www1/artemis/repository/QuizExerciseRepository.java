@@ -62,6 +62,11 @@ public interface QuizExerciseRepository extends JpaRepository<QuizExercise, Long
         return findById(quizExerciseId).orElseThrow(() -> new EntityNotFoundException("Quiz Exercise", quizExerciseId));
     }
 
+    @NotNull
+    default QuizExercise findByIdWithExampleSubmissionsAndResultsElseThrow(long exerciseId) {
+        return findByIdWithExampleSubmissionsAndResults(exerciseId).orElseThrow(() -> new EntityNotFoundException("Quiz Exercise", exerciseId));
+    }
+
     /**
      * Get one quiz exercise
      *
@@ -147,4 +152,7 @@ public interface QuizExerciseRepository extends JpaRepository<QuizExercise, Long
                 """)
     Page<QuizExercise> findByTitleInExerciseOrCourseAndUserHasAccessToCourse(@Param("partialTitle") String partialTitle, @Param("partialCourseTitle") String partialCourseTitle,
             @Param("groups") Set<String> groups, Pageable pageable);
+
+    @Query("select quizExercise from QuizExercise quizExercise left join fetch quizExercise.exampleSubmissions exampleSubmissions left join fetch exampleSubmissions.submission submission left join fetch submission.results result left join fetch result.feedbacks left join fetch submission.blocks left join fetch result.assessor left join fetch quizExercise.teamAssignmentConfig where quizExercise.id = :#{#exerciseId}")
+    Optional<QuizExercise> findByIdWithExampleSubmissionsAndResults(@Param("exerciseId") Long exerciseId);
 }

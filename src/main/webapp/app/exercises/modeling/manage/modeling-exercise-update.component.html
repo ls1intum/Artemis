@@ -2,7 +2,7 @@
     <div>
         <h4 *ngIf="!modelingExercise.id" id="jhi-modeling-exercise-heading-create" jhiTranslate="artemisApp.modelingExercise.home.createLabel">Create a new Modeling Exercise</h4>
         <h4 *ngIf="!isImport && modelingExercise.id" id="jhi-modeling-exercise-heading-edit" jhiTranslate="artemisApp.modelingExercise.home.editLabel">Edit a Modeling Exercise</h4>
-        <h4 *ngIf="isImport" id="jhi-modeling-exercise-heading-import" jhiTranslate="artemisApp.modelingExercise.home.importLabel"></h4>
+        <h4 *ngIf="isImport" id="jhi-modeling-exercise-heading-import" jhiTranslate="artemisApp.modelingExercise.home.importLabel">Import Modeling Exercise</h4>
     </div>
     <div>
         <div class="form-group" [hidden]="!modelingExercise.id">

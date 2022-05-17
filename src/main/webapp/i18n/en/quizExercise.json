@@ -33,6 +33,10 @@
             "new": {
                 "title": "New Quiz Exercise for {{ param }}"
             },
+            "import": {
+                "title": "Import Quiz Exercise for {{ param }}"
+            },
+
             "export": {
                 "title": "All quiz questions for course {{ param }}",
                 "export": "Export",
