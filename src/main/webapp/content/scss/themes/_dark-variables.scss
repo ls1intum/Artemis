@@ -368,7 +368,8 @@ $code-editor-file-browser-header-border: lighten($neutral-dark, 10%);
 $code-editor-file-browser-tree-hover: lighten($neutral-dark, 5%);
 $code-editor-file-browser-input-background: darken($neutral-dark, 10%);
 $code-editor-file-browser-input-color: white;
-$code-editor-diff-newline-background: rgba(46, 160, 67, 0.15);
+$code-editor-diff-newline-background: rgba(46, 160, 67, 0.22);
+$code-editor-gutter-newline-background: rgba(46, 160, 67, 0.6);
 
 // Overview variables
 $overview-border-color: $border-color;
@@ -463,6 +464,7 @@ $textblock-feedback-editor-feedback-neutral-color: $gray-100;
 $textblock-feedback-editor-feedback-neutral-background-color: $gray-900;
 $textblock-feedback-editor-reused-feedback-preview-border: rgba(228, 228, 228, 0.87);
 $textblock-feedback-editor-dropdown-hover: $gray-700;
+$manual-text-selection-span-hover-background-color: $gray-700;
 
 // Guided tour
 $gt-tour-step-bg-color: $gray-700;

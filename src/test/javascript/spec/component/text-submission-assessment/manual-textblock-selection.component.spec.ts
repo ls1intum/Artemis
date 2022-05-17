@@ -5,7 +5,7 @@ import { TextblockAssessmentCardComponent } from 'app/exercises/text/assess/text
 import { MockComponent, MockProvider } from 'ng-mocks';
 import { By } from '@angular/platform-browser';
 import { TextBlockRef } from 'app/entities/text-block-ref.model';
-import { ManualTextSelectionComponent } from 'app/exercises/text/shared/manual-text-selection/manual-text-selection.component';
+import { ManualTextSelectionComponent, wordSelection } from 'app/exercises/text/shared/manual-text-selection/manual-text-selection.component';
 import { SubmissionExerciseType, SubmissionType } from 'app/entities/submission.model';
 import { TextSubmission } from 'app/entities/text-submission.model';
 import { TextBlock } from 'app/entities/text-block.model';
@@ -20,7 +20,7 @@ describe('ManualTextblockSelectionComponent', () => {
         id: 2278,
         submitted: true,
         type: SubmissionType.MANUAL,
-        text: 'First text. Second text. Third text. Fourth text. Fifth text.',
+        text: 'First text. Second text. Third text. Fourth text. Fifth sixth text.',
     } as unknown as TextSubmission;
     const blocks = [
         {
@@ -48,9 +48,9 @@ describe('ManualTextblockSelectionComponent', () => {
             submission,
         } as TextBlock,
         {
-            text: 'Fifth text.',
+            text: 'Fifth sixth text.',
             startIndex: 50,
-            endIndex: 61,
+            endIndex: 67,
             submission,
         } as TextBlock,
     ];
@@ -89,12 +89,15 @@ describe('ManualTextblockSelectionComponent', () => {
 
     it('should handle manual text selection correctly', () => {
         jest.spyOn(component.textBlockRefAdded, 'emit');
-        component.handleTextSelection('Third text. Fourth text.', component.textBlockRefGroups[2]);
+        const firstWord: wordSelection = { word: 'Fifth', index: 50 };
+        const lastWord: wordSelection = { word: 'sixth', index: 56 };
+        const selectedWords = [firstWord, lastWord];
+        component.handleTextSelection(selectedWords);
         fixture.detectChanges();
 
         const textBlockRef = TextBlockRef.new();
-        textBlockRef.block!.startIndex = 25;
-        textBlockRef.block!.endIndex = 49;
+        textBlockRef.block!.startIndex = 50;
+        textBlockRef.block!.endIndex = 61;
         textBlockRef.block!.setTextFromSubmission(submission);
         textBlockRef.block!.computeId();
         textBlockRef.initFeedback();

@@ -58,7 +58,7 @@ describe('AboutUsComponent', () => {
         const role = 'ADMIN';
         const website = 'www.website.de';
 
-        const contributors = [new ContributorModel(fullName, photoDirectory, role, website)];
+        const contributors = [new ContributorModel(fullName, photoDirectory, undefined, role, website)];
 
         const getStaticJsonFromArtemisServerStub = jest.spyOn(staticContentService, 'getStaticJsonFromArtemisServer').mockReturnValue(of(new AboutUsModel([], contributors)));
         const getProfileInfoStub = jest
