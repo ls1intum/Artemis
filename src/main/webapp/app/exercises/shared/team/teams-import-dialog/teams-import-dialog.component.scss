@@ -46,7 +46,7 @@
     overflow-x: hidden;
     padding: 0.3rem 1rem;
     border-radius: 0.15rem !important;
-    background-color: white;
+    background-color: var(--bs-body-bg);
 
     &.has-success {
         color: var(--artemis-alert-success-color);
