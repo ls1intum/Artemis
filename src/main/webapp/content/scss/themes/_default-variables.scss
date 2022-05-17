@@ -342,6 +342,18 @@ $data-table-icon-right: white;
 $data-table-transitioning-container-active-background-color: rgba(255, 255, 255, 0.5);
 $data-table-dropdown-item-selected-background-color: $primary;
 
+// Team Participation Table
+$team-participation-table-last-row-border-bottom: #d1d4d7;
+$team-participation-table-even-row-background: #f2f2f2;
+$team-participation-table-header-inner-background: white;
+$team-participation-table-current-exercise-bg: lighten(#d4edda, 5%);
+$team-participation-table-current-exercise-text: #155724;
+$team-participation-table-box-shadow-color: gray;
+
+// Team Short Name
+$team-short-name-background: rgba(0, 0, 180, 0.05);
+$team-short-name-color: #053d97;
+
 // Exam
 $exam-navigation-bar-background-color: #ecebe7;
 $exam-navigation-bar-synced-color: white;
@@ -382,6 +394,7 @@ $textblock-feedback-editor-feedback-neutral-color: $gray-900;
 $textblock-feedback-editor-feedback-neutral-background-color: $gray-100;
 $textblock-feedback-editor-reused-feedback-preview-border: rgba(228, 228, 228, 0.87);
 $textblock-feedback-editor-dropdown-hover: #e9ecef;
+$manual-text-selection-span-hover-background-color: $gray-300;
 
 // Guided tour
 $gt-tour-step-bg-color: #ffffff;

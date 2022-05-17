@@ -1,5 +1,5 @@
 <div class="row justify-content-center programming-exercise-detail-wrapper-class">
-    <div class="col-8">
+    <div class="col-md-8">
         <div *ngIf="programmingExercise">
             <h2><span jhiTranslate="artemisApp.programmingExercise.detail.title">Programming Exercise</span> {{ programmingExercise.id }}</h2>
             <hr />
@@ -295,7 +295,7 @@
                     </button>
                 </div>
             </div>
-            <div *ngIf="programmingExercise.releaseDate != undefined && dayjs(programmingExercise.releaseDate).isBefore(dayjs())" class="mt-3">
+            <div *ngIf="!programmingExercise.releaseDate || dayjs(programmingExercise.releaseDate).isBefore(dayjs())" class="mt-3">
                 <jhi-exercise-detail-statistics [exercise]="programmingExercise" [doughnutStats]="doughnutStats" [exerciseType]="PROGRAMMING"></jhi-exercise-detail-statistics>
                 <hr />
                 <div>

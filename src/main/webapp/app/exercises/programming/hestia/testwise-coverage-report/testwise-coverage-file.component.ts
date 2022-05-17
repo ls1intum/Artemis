@@ -1,16 +1,14 @@
-import { Component, Input, ViewChild, OnInit, OnChanges, SimpleChanges, OnDestroy } from '@angular/core';
+import { Component, Input, OnChanges, OnInit, SimpleChanges, ViewChild } from '@angular/core';
 import { AceEditorComponent } from 'app/shared/markdown-editor/ace-editor/ace-editor.component';
 import ace from 'brace';
 import { CoverageFileReport } from 'app/entities/hestia/coverage-file-report.model';
-import { ThemeService } from 'app/core/theme/theme.service';
-import { Subscription } from 'rxjs';
 
 @Component({
     selector: 'jhi-testwise-coverage-file',
     templateUrl: './testwise-coverage-file.component.html',
     styleUrls: ['./testwise-coverage-file.component.scss'],
 })
-export class TestwiseCoverageFileComponent implements OnInit, OnChanges, OnDestroy {
+export class TestwiseCoverageFileComponent implements OnInit, OnChanges {
     @Input()
     fileContent: string;
 
@@ -25,26 +23,15 @@ export class TestwiseCoverageFileComponent implements OnInit, OnChanges, OnDestr
 
     proportionCoveredLines: number;
 
-    themeSubscription: Subscription;
-
-    constructor(private themeService: ThemeService) {}
-
     ngOnInit(): void {
         this.setupEditor();
         this.renderFile();
-        this.themeSubscription = this.themeService.getCurrentThemeObservable().subscribe((theme) => {
-            this.editor.setTheme(theme.codeAceTheme);
-        });
     }
 
     ngOnChanges(changes: SimpleChanges): void {
         if (changes.fileReport || changes.fileContent) {
             this.renderFile();
         }
-    }
-
-    ngOnDestroy(): void {
-        this.themeSubscription?.unsubscribe();
     }
 
     private aggregateCoveredLinesBlocks(fileReport: CoverageFileReport): Map<number, number> {
