@@ -117,7 +117,9 @@ Please check your available options in this order:
         var(--artemis-alert-XXXX-background); // The less intensive background color of the alert
         var(--artemis-alert-XXX-border); // The border color of the alert
 
-    with ``XXX`` being one of: ``info, danger, warning, success, neutral``
+    with ``XXX`` being one of: ``info, danger, warning, success, neutral``.
+
+    If you need to separate something from the background, try to use the ``bg-light`` class which should work in both themes.
 
 2. **Define your own colors for each theme**
 
@@ -128,6 +130,10 @@ Please check your available options in this order:
     .. TIP::
         | The main content area of Artemis uses ``white`` in light mode and ``$neutral-dark`` in dark mode
           as background for the main content area, cards etc.
+        |
+        | For ``$neutral-dark``, a few lightened default options exist: ``$neutral-dark-l-5;`` to ``$neutral-dark-l-20;`` in steps of 5.
+        | Therefore, if you need to separate something from the background, choose one of ``gray-XXX`` for light mode and a lightened option of ``$neutral-dark`` in dark mode.
+        |
         | Keep this in mind while you select the colors to use.
 
     Let's go through it step by step. Let's say, you want to give a box a special background color.
