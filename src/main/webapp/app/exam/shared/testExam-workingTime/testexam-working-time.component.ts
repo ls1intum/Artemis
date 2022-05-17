@@ -14,13 +14,26 @@ export class TestexamWorkingTimeComponent implements OnInit {
     percentUsedWorkingTime = 0;
     usedWorkingTime = 0;
 
+    /**
+     * This component is used to display the used working time and the percentage relative to the default working time for
+     * a testExam.
+     */
     ngOnInit() {
-        if (this.studentExam.exam!.testExam && this.studentExam.submitted && this.studentExam.workingTime && this.studentExam.startedDate && this.studentExam.submissionDate) {
-            const regularExamDuration = this.studentExam.workingTime!;
+        if (
+            this.studentExam.exam!.testExam &&
+            this.studentExam.started &&
+            this.studentExam.submitted &&
+            this.studentExam.workingTime &&
+            this.studentExam.startedDate &&
+            this.studentExam.submissionDate
+        ) {
+            const regularExamDuration = this.studentExam.workingTime;
             this.usedWorkingTime = dayjs(this.studentExam.submissionDate).diff(dayjs(this.studentExam.startedDate), 'seconds');
+            // As students may submit during the grace period, the workingTime is limited to the regular exam duration
             if (this.usedWorkingTime > regularExamDuration) {
                 this.usedWorkingTime = regularExamDuration;
             }
+            // As students may submit during the grace period, the percentage is limited to 100%
             this.percentUsedWorkingTime = round((this.usedWorkingTime / regularExamDuration) * 100, 2);
             if (this.percentUsedWorkingTime > 100) {
                 this.percentUsedWorkingTime = 100;

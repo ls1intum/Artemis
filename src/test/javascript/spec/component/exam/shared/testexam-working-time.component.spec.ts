@@ -36,6 +36,7 @@ describe('TestExamWorkingTimeComponent', () => {
                 studentExam = new StudentExam();
                 studentExam.exam = exam;
                 studentExam.submitted = true;
+                studentExam.started = true;
                 studentExam.startedDate = currentDate.subtract(4, 'hour');
                 studentExam.submissionDate = currentDate.subtract(2, 'hour');
                 studentExam.workingTime = exam.workingTime;
@@ -52,6 +53,14 @@ describe('TestExamWorkingTimeComponent', () => {
 
     it('should have a difference of 0 if the studentExam is linked to a RealExam', () => {
         studentExam.exam!.testExam = false;
+        comp.studentExam = studentExam;
+        comp.ngOnInit();
+        expect(comp.percentUsedWorkingTime).toBe(0);
+        expect(comp.usedWorkingTime).toBe(0);
+    });
+
+    it('should have a difference of 0 if started is false', () => {
+        studentExam.started = false;
         comp.studentExam = studentExam;
         comp.ngOnInit();
         expect(comp.percentUsedWorkingTime).toBe(0);

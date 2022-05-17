@@ -19,6 +19,10 @@ export class MockExamParticipationService {
         return examParticipationSubjectMock;
     }
 
+    loadStudentExamWithExercisesForConductionOfTestExam(courseId: number, examId: number, studentExamId: number): Observable<StudentExam> {
+        return examParticipationSubjectMock;
+    }
+
     getExamExerciseIds = (): number[] => {
         return [1, 3, 7];
     };
