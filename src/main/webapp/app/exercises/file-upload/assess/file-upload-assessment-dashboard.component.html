@@ -1,15 +1,29 @@
 <div *ngIf="exercise">
-    <h4 jhiTranslate="artemisApp.fileUploadAssessment.dashboard.heading" [translateValues]="{ exerciseTitle: exercise.title }"></h4>
-    <jhi-assessment-filters [submissions]="submissions" (filterChange)="updateFilteredSubmissions($event)"></jhi-assessment-filters>
+    <h4 [translateValues]="{ exerciseTitle: exercise.title }" jhiTranslate="artemisApp.fileUploadAssessment.dashboard.heading"></h4>
+    <jhi-assessment-filters (filterChange)="updateFilteredSubmissions($event)" [submissions]="submissions"></jhi-assessment-filters>
     <ng-container *ngIf="!busy"></ng-container>
     <jhi-assessment-warning [exercise]="exercise" [submissions]="filteredSubmissions"></jhi-assessment-warning>
     <h4>
-        <small [ngClass]="assessedSubmissions === submissions.length && submissions.length > 0 ? 'text-success' : 'text-warning'">
-            <strong>Progress: {{ (assessedSubmissions / submissions.length) * 100 | number: '0.0-0' }} % </strong>({{ assessedSubmissions }} out of {{ submissions.length }} upload
-            exercises assessed)
-        </small>
+        <ng-container *ngIf="submissions && submissions.length === 0">
+            <small [ngClass]="'text-warning'">
+                {{ 'artemisApp.fileUploadAssessment.noSubmissions' | artemisTranslate: {} }}
+            </small>
+        </ng-container>
+        <ng-container *ngIf="submissions && submissions.length > 0">
+            <small [ngClass]="assessedSubmissions === submissions.length ? 'text-success' : 'text-warning'">
+                {{
+                    'artemisApp.fileUploadAssessment.dashboard.progressDescription'
+                        | artemisTranslate
+                            : {
+                                  percentageAssessed: (assessedSubmissions / submissions.length) * 100 | number: '0.0-0',
+                                  numberAssessed: assessedSubmissions,
+                                  numberSubmissions: submissions.length
+                              }
+                }}
+            </small>
+        </ng-container>
     </h4>
-    <div class="table-responsive" *ngIf="submissions && submissions.length > 0; else emptyTable">
+    <div *ngIf="submissions && submissions.length > 0" class="table-responsive">
         <table class="table table-striped exercise-table">
             <thead>
                 <tr jhiSort [(predicate)]="predicate" [(ascending)]="reverse" (sortChange)="sortRows()">
@@ -201,7 +215,3 @@
         </table>
     </div>
 </div>
-
-<ng-template #emptyTable>
-    <p jhiTranslate="artemisApp.assessment.dashboard.empty">No Submissions for this exercise!</p>
-</ng-template>
