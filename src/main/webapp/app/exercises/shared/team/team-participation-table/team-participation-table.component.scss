@@ -1,6 +1,3 @@
-$current-exercise-bg-color: lighten(#d4edda, 5%);
-$current-exercise-text-color: #155724;
-
 $space-left-from-divider: 50px;
 
 .ngx-datatable.bootstrap .datatable-header .datatable-header-cell {
@@ -8,7 +5,7 @@ $space-left-from-divider: 50px;
 }
 
 .datatable-row-wrapper:last-child .datatable-body-row {
-    border-bottom: 1px solid #d1d4d7;
+    border-bottom: 1px solid var(--team-participation-table-last-row-border-bottom);
 }
 
 .datatable-row-left {
@@ -24,17 +21,13 @@ $space-left-from-divider: 50px;
             right: -5px;
             top: -$border-width;
             height: calc(100% + #{$border-width});
-            box-shadow: 8px 0 12px -15px inset;
+            box-shadow: 8px 0 12px -15px inset var(--team-participation-table-box-shadow-color);
         }
-    }
-
-    .datatable-row-even & {
-        background-color: #f2f2f2;
     }
 
     .datatable-row-odd &,
     .datatable-header-inner & {
-        background-color: white;
+        background-color: var(--team-participation-table-header-inner-background);
     }
 }
 
@@ -46,19 +39,19 @@ $space-left-from-divider: 50px;
 }
 
 .datatable-row-current-exercise {
-    background-color: $current-exercise-bg-color !important;
+    background-color: var(--team-participation-table-current-exercise-bg) !important;
 
     &.datatable-row-even,
     &.datatable-row-odd {
         .datatable-row-left {
-            background-color: $current-exercise-bg-color;
+            background-color: var(--team-participation-table-current-exercise-bg);
         }
     }
 }
 
 .current-team {
     font-weight: bold;
-    color: $current-exercise-text-color;
+    color: var(--team-participation-table-current-exercise-text);
 }
 
 .btn[disabled]:hover {
