@@ -428,7 +428,7 @@ public class GitlabRequestMockProvider {
         var userId = mockGetUserIdCreateIfNotExist(user, false, shouldFail);
 
         // Add user to existing exercises
-        if (user.getGroups() != null && user.getGroups().size() > 0) {
+        if (user.getGroups() != null && !user.getGroups().isEmpty()) {
             final var instructorExercises = programmingExerciseRepository.findAllByCourse_InstructorGroupNameIn(user.getGroups());
             final var editorExercises = programmingExerciseRepository.findAllByCourse_EditorGroupNameIn(user.getGroups()).stream()
                     .filter(programmingExercise -> !instructorExercises.contains(programmingExercise)).collect(Collectors.toList());
