@@ -1,0 +1,17 @@
+<div class="col-6">
+    <h6>{{ solutionEntry.filePath }}</h6>
+</div>
+<div class="d-flex flex-row">
+    <jhi-ace-editor #editor [mode]="'java'" [readOnly]="true" [hidden]="false" [autoUpdateContent]="true" class="jhi-solution-entry-editor"> </jhi-ace-editor>
+    <div *ngIf="enableEditing" class="ps-2">
+        <button
+            jhiDeleteButton
+            [entityTitle]="solutionEntry.id!.toString()"
+            deleteQuestion="artemisApp.codeHint.removeEntryQuestion"
+            (delete)="emitRemovalEvent()"
+            [dialogError]="dialogError"
+        >
+            <fa-icon [icon]="faTimes"></fa-icon>
+        </button>
+    </div>
+</div>

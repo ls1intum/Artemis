@@ -65,7 +65,7 @@ import { AceEditorModule } from 'app/shared/markdown-editor/ace-editor/ace-edito
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { TreeviewComponent } from 'app/exercises/programming/shared/code-editor/treeview/components/treeview/treeview.component';
 import { TreeviewItemComponent } from 'app/exercises/programming/shared/code-editor/treeview/components/treeview-item/treeview-item.component';
-import { ExerciseHintService } from 'app/exercises/shared/exercise-hint/manage/exercise-hint.service';
+import { ExerciseHintService } from 'app/exercises/shared/exercise-hint/shared/exercise-hint.service';
 import { MockExerciseHintService } from '../../helpers/mocks/service/mock-exercise-hint.service';
 
 describe('CodeEditorContainerIntegration', () => {
