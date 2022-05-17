@@ -380,7 +380,8 @@ public class CourseResource {
     }
 
     /**
-     * GET /courses/for-registration : get all courses that the current user can register to. Decided by the start and end date and if the registrationEnabled flag is set correctly
+     * GET /courses/for-registration : get all courses that the current user can register to.
+     * Decided by the start and end date and if the registrationEnabled flag is set correctly
      *
      * @return the list of courses which are active
      */
@@ -391,7 +392,7 @@ public class CourseResource {
         User user = userRepository.getUserWithGroupsAndAuthoritiesAndOrganizations();
 
         List<Course> allRegisteredCourses = courseService.findAllActiveForUser(user);
-        List<Course> allCoursesToRegister = courseRepository.findAllCurrentlyActiveNotOnlineAndRegistrationEnabledWithOrganizations();
+        List<Course> allCoursesToRegister = courseRepository.findAllCurrentlyActiveNotOnlineAndRegistrationEnabledWithOrganizationsAndPrerequisites();
         List<Course> registrableCourses = allCoursesToRegister.stream().filter(course -> {
             // further, check if the course has been assigned to any organization and if yes,
             // check if user is member of at least one of them
@@ -418,7 +419,7 @@ public class CourseResource {
         long start = System.currentTimeMillis();
         User user = userRepository.getUserWithGroupsAndAuthorities();
 
-        Course course = courseService.findOneWithExercisesAndLecturesAndExamsForUser(courseId, user);
+        Course course = courseService.findOneWithExercisesAndLecturesAndLearningGoalsAndExamsForUser(courseId, user);
         courseService.fetchParticipationsWithSubmissionsAndResultsForCourses(List.of(course), user, start);
         return course;
     }
@@ -436,7 +437,7 @@ public class CourseResource {
         User user = userRepository.getUserWithGroupsAndAuthorities();
 
         // get all courses with exercises for this user
-        List<Course> courses = courseService.findAllActiveWithExercisesAndLecturesAndExamsForUser(user);
+        List<Course> courses = courseService.findAllActiveWithExercisesAndLecturesAndLearningGoalsAndExamsForUser(user);
         courseService.fetchParticipationsWithSubmissionsAndResultsForCourses(courses, user, start);
         return courses;
     }

@@ -68,7 +68,7 @@
                     "table": {
                         "title": "Titel",
                         "course": "Kurs",
-                        "semester": "Semester",
+
                         "doSelect": "Auswählen"
                     },
                     "searchLearningGoal": "Nach Lernziel suchen:",

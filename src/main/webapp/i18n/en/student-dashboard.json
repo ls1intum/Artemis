@@ -14,6 +14,7 @@
                 "registerSuccessful": "Registration successful",
                 "signUpForCourse": "Register",
                 "cancel": "Cancel",
+                "coursePrerequisites": "Prerequisites",
                 "noCourse": "No courses available for registration",
                 "courseLoading": "Courses are loading...",
                 "courseSignupConfirmationTitle": "Confirm Course Registration"
@@ -29,6 +30,7 @@
                 "exercises": "Exercises",
                 "statistics": "Statistics",
                 "lectures": "Lectures",
+                "learningGoals": "Learning Goals",
                 "exams": "Exams",
                 "discussion": "Discussion",
                 "plagiarismCases": "Plagiarism Cases"

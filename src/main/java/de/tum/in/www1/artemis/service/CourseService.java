@@ -159,14 +159,14 @@ public class CourseService {
     }
 
     /**
-     * Get one course with exercises, lectures and exams (filtered for given user)
+     * Get one course with exercises, lectures, learning goals/prerequisites and exams (filtered for given user)
      *
      * @param courseId the course to fetch
      * @param user     the user entity
      * @return the course including exercises, lectures and exams for the user
      */
-    public Course findOneWithExercisesAndLecturesAndExamsForUser(Long courseId, User user) {
-        Course course = courseRepository.findByIdWithLecturesAndExamsElseThrow(courseId);
+    public Course findOneWithExercisesAndLecturesAndLearningGoalsAndExamsForUser(Long courseId, User user) {
+        Course course = courseRepository.findByIdWithLecturesAndLearningGoalsAndExamsElseThrow(courseId);
         if (!authCheckService.isAtLeastStudentInCourse(course, user)) {
             throw new AccessForbiddenException();
         }
@@ -195,8 +195,8 @@ public class CourseService {
      * @param user the user entity
      * @return the list of all courses including exercises, lectures and exams for the user
      */
-    public List<Course> findAllActiveWithExercisesAndLecturesAndExamsForUser(User user) {
-        return courseRepository.findAllActiveWithLecturesAndExams().stream()
+    public List<Course> findAllActiveWithExercisesAndLecturesAndLearningGoalsAndExamsForUser(User user) {
+        return courseRepository.findAllActiveWithLecturesAndLearningGoalsAndExams().stream()
                 // filter old courses and courses the user should not be able to see
                 // skip old courses that have already finished
                 .filter(course -> course.getEndDate() == null || course.getEndDate().isAfter(ZonedDateTime.now())).filter(course -> isCourseVisibleForUser(user, course))

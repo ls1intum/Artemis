@@ -21,6 +21,8 @@ export class LearningGoalCardComponent implements OnInit, OnDestroy {
     learningGoalProgress: IndividualLearningGoalProgress | CourseLearningGoalProgress | undefined;
     @Input()
     isPrerequisite: Boolean;
+    @Input()
+    disableModal: Boolean;
 
     public predicate = 'id';
     public reverse = false;
@@ -66,6 +68,10 @@ export class LearningGoalCardComponent implements OnInit, OnDestroy {
     }
 
     openLearningGoalDetailsModal() {
+        if (this.disableModal) {
+            return;
+        }
+
         // For prerequisites, only open modal when there is a description for now
         // TODO: Later we will display connected lecture units also for prerequisites
         if (this.isPrerequisite && !this.learningGoal.description) {

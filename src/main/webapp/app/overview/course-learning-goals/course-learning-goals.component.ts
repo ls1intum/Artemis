@@ -23,6 +23,7 @@ export class CourseLearningGoalsComponent implements OnInit {
 
     isLoading = false;
     learningGoals: LearningGoal[] = [];
+    prerequisites: LearningGoal[] = [];
     learningGoalIdToLearningGoalProgress = new Map<number, IndividualLearningGoalProgress>();
 
     // this is calculated using the participant scores table on the server instead of going participation -> submission -> result
@@ -51,6 +52,14 @@ export class CourseLearningGoalsComponent implements OnInit {
 
     loadData() {
         this.isLoading = true;
+        this.learningGoalService.getAllPrerequisitesForCourse(this.courseId).subscribe({
+            next: (prerequisites) => {
+                this.prerequisites = prerequisites.body!;
+            },
+            error: (error: string) => {
+                this.alertService.error(error);
+            },
+        });
         this.learningGoalService
             .getAllForCourse(this.courseId)
             .pipe(

@@ -4,12 +4,28 @@
     </div>
 </div>
 
-<div *ngIf="!isLoading" class="row row-cols-auto">
+<div *ngIf="!isLoading">
+    <h2 *ngIf="prerequisites && prerequisites.length > 0" class="text-center">{{ 'artemisApp.learningGoal.prerequisite.title' | artemisTranslate }}</h2>
+
+    <div class="row row-cols-auto">
+        <jhi-learning-goal-card
+            class="mx-auto col"
+            *ngFor="let prerequisite of prerequisites; index as i; trackBy: identify"
+            [learningGoal]="prerequisite"
+            [isPrerequisite]="true"
+        ></jhi-learning-goal-card>
+    </div>
+</div>
+
+<div *ngIf="!isLoading">
     <h2 *ngIf="learningGoals && learningGoals.length > 0" class="text-center">{{ 'artemisApp.learningGoal.title' | artemisTranslate }}</h2>
-    <jhi-learning-goal-card
-        class="mx-auto col"
-        *ngFor="let learningGoal of learningGoals; index as i; trackBy: identify"
-        [learningGoal]="learningGoal"
-        [learningGoalProgress]="getLearningGoalProgress(learningGoal)"
-    ></jhi-learning-goal-card>
+
+    <div class="row row-cols-auto">
+        <jhi-learning-goal-card
+            class="mx-auto col"
+            *ngFor="let learningGoal of learningGoals; index as i; trackBy: identify"
+            [learningGoal]="learningGoal"
+            [learningGoalProgress]="getLearningGoalProgress(learningGoal)"
+        ></jhi-learning-goal-card>
+    </div>
 </div>

@@ -287,8 +287,12 @@ public class LearningGoalResource {
     public ResponseEntity<List<LearningGoal>> getPrerequisites(@PathVariable Long courseId) {
         log.debug("REST request to get prerequisites for course with id: {}", courseId);
         Course course = courseRepository.findByIdElseThrow(courseId);
-        User user = userRepository.getUserWithGroupsAndAuthorities();
-        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
+
+        // Authorization check is skipped when course is open to self-registration
+        if (!course.isRegistrationEnabled()) {
+            User user = userRepository.getUserWithGroupsAndAuthorities();
+            authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
+        }
 
         Set<LearningGoal> prerequisites = learningGoalRepository.findPrerequisitesByCourseId(courseId);
         // Remove all lecture units as not needed for now

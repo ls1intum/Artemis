@@ -9,7 +9,6 @@ import { Language } from 'app/entities/tutor-group.model';
 import { LearningGoal } from 'app/entities/learningGoal.model';
 import { Organization } from 'app/entities/organization.model';
 import { Post } from 'app/entities/metis/post.model';
-import { PlagiarismCase } from 'app/exercises/shared/plagiarism/types/PlagiarismCase';
 import { ProgrammingLanguage } from 'app/entities/programming-exercise.model';
 
 export class Course implements BaseEntity {
@@ -55,6 +54,7 @@ export class Course implements BaseEntity {
     public exercises?: Exercise[];
     public lectures?: Lecture[];
     public learningGoals?: LearningGoal[];
+    public prerequisites?: LearningGoal[];
     public exams?: Exam[];
     public tutorGroups?: TutorGroup[];
     public organizations?: Organization[];

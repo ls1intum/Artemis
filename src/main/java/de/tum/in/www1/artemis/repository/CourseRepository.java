@@ -57,7 +57,7 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
             """)
     List<Course> findAllActive(@Param("now") ZonedDateTime now);
 
-    @EntityGraph(type = LOAD, attributePaths = { "lectures", "lectures.attachments", "exams" })
+    @EntityGraph(type = LOAD, attributePaths = { "lectures", "lectures.attachments", "learningGoals", "prerequisites", "exams" })
     @Query("""
             SELECT DISTINCT c FROM Course c
             WHERE (c.startDate <= :#{#now}
@@ -65,10 +65,13 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
             AND (c.endDate >= :#{#now}
             	OR c.endDate IS NULL)
             """)
-    List<Course> findAllActiveWithLecturesAndExams(@Param("now") ZonedDateTime now);
+    List<Course> findAllActiveWithLecturesAndLearningGoalsAndExams(@Param("now") ZonedDateTime now);
 
     @EntityGraph(type = LOAD, attributePaths = { "lectures", "lectures.attachments", "exams" })
     Optional<Course> findWithEagerLecturesAndExamsById(long courseId);
+
+    @EntityGraph(type = LOAD, attributePaths = { "lectures", "lectures.attachments", "learningGoals", "prerequisites", "exams" })
+    Optional<Course> findWithEagerLecturesAndLearningGoalsAndExamsById(long courseId);
 
     // Note: this is currently only used for testing purposes
     @Query("""
@@ -105,8 +108,8 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
     @EntityGraph(type = LOAD, attributePaths = { "exercises", "lectures", "lectures.lectureUnits", "learningGoals", "prerequisites" })
     Optional<Course> findWithEagerExercisesAndLecturesAndLectureUnitsAndLearningGoalsById(long courseId);
 
-    @Query("select distinct course from Course course left join fetch course.organizations co where (course.startDate is null or course.startDate <= :#{#now}) and (course.endDate is null or course.endDate >= :#{#now}) and course.onlineCourse = false and course.registrationEnabled = true")
-    List<Course> findAllCurrentlyActiveNotOnlineAndRegistrationEnabledWithOrganizations(@Param("now") ZonedDateTime now);
+    @Query("select distinct course from Course course left join fetch course.organizations organizations left join fetch course.prerequisites prerequisites where (course.startDate is null or course.startDate <= :#{#now}) and (course.endDate is null or course.endDate >= :#{#now}) and course.onlineCourse = false and course.registrationEnabled = true")
+    List<Course> findAllCurrentlyActiveNotOnlineAndRegistrationEnabledWithOrganizationsAndPrerequisites(@Param("now") ZonedDateTime now);
 
     @Query("select course from Course course left join fetch course.organizations co where course.id = :#{#courseId}")
     Optional<Course> findWithEagerOrganizations(@Param("courseId") long courseId);
@@ -224,17 +227,17 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
      *
      * @return the list of entities
      */
-    default List<Course> findAllActiveWithLecturesAndExams() {
-        return findAllActiveWithLecturesAndExams(ZonedDateTime.now());
+    default List<Course> findAllActiveWithLecturesAndLearningGoalsAndExams() {
+        return findAllActiveWithLecturesAndLearningGoalsAndExams(ZonedDateTime.now());
     }
 
     /**
-     * Get all the courses to register with eagerly loaded organizations.
+     * Get all the courses to register with eagerly loaded organizations and prerequisites.
      *
      * @return the list of course entities
      */
-    default List<Course> findAllCurrentlyActiveNotOnlineAndRegistrationEnabledWithOrganizations() {
-        return findAllCurrentlyActiveNotOnlineAndRegistrationEnabledWithOrganizations(ZonedDateTime.now());
+    default List<Course> findAllCurrentlyActiveNotOnlineAndRegistrationEnabledWithOrganizationsAndPrerequisites() {
+        return findAllCurrentlyActiveNotOnlineAndRegistrationEnabledWithOrganizationsAndPrerequisites(ZonedDateTime.now());
     }
 
     /**
@@ -246,6 +249,17 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
     @NotNull
     default Course findByIdWithLecturesAndExamsElseThrow(long courseId) {
         return findWithEagerLecturesAndExamsById(courseId).orElseThrow(() -> new EntityNotFoundException("Course", courseId));
+    }
+
+    /**
+     * Get one course by id with lectures, learning goals/prerequisites and exams. If the course cannot be found throw an exception
+     *
+     * @param courseId the id of the entity
+     * @return the entity
+     */
+    @NotNull
+    default Course findByIdWithLecturesAndLearningGoalsAndExamsElseThrow(long courseId) {
+        return findWithEagerLecturesAndLearningGoalsAndExamsById(courseId).orElseThrow(() -> new EntityNotFoundException("Course", courseId));
     }
 
     /**
