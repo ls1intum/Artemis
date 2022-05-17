@@ -7,7 +7,7 @@ import { MockTranslateService } from '../../helpers/mocks/service/mock-translate
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { ApollonDiagramService } from 'app/exercises/quiz/manage/apollon-diagrams/apollon-diagram.service';
-import { ExerciseHintService } from 'app/exercises/shared/exercise-hint/manage/exercise-hint.service';
+import { ExerciseHintService } from 'app/exercises/shared/exercise-hint/shared/exercise-hint.service';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { GuidedTourComponent } from 'app/guided-tour/guided-tour.component';
 import { LectureService } from 'app/lecture/lecture.service';
