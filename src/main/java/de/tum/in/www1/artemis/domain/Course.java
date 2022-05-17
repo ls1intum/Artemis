@@ -630,16 +630,6 @@ public class Course extends DomainObject {
         this.learningGoals = learningGoals;
     }
 
-    public void addLearningGoal(LearningGoal learningGoal) {
-        this.learningGoals.add(learningGoal);
-        learningGoal.setCourse(this);
-    }
-
-    public void removeLearningGoal(LearningGoal learningGoal) {
-        this.learningGoals.remove(learningGoal);
-        learningGoal.setCourse(null);
-    }
-
     public boolean hasCourseArchive() {
         return courseArchivePath != null && !courseArchivePath.isEmpty();
     }
