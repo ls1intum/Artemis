@@ -187,7 +187,7 @@ public class User extends AbstractAuditingEntity implements Participant {
      * @return name as a concatenation of first name and last name
      */
     public String getName() {
-        if (lastName != null && !lastName.equals("")) {
+        if (lastName != null && !lastName.isEmpty()) {
             return firstName + " " + lastName;
         }
         else {
