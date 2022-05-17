@@ -19,6 +19,8 @@ export class LearningGoalCardComponent implements OnInit, OnDestroy {
     learningGoal: LearningGoal;
     @Input()
     learningGoalProgress: IndividualLearningGoalProgress | CourseLearningGoalProgress | undefined;
+    @Input()
+    isPrerequisite: Boolean;
 
     public predicate = 'id';
     public reverse = false;
@@ -32,7 +34,7 @@ export class LearningGoalCardComponent implements OnInit, OnDestroy {
     constructor(private modalService: NgbModal, public lectureUnitService: LectureUnitService, public translateService: TranslateService) {}
 
     ngOnInit(): void {
-        if (!this.learningGoalProgress || this.learningGoalProgress.totalPointsAchievableByStudentsInLearningGoal === 0) {
+        if (this.isPrerequisite || !this.learningGoalProgress || this.learningGoalProgress.totalPointsAchievableByStudentsInLearningGoal === 0) {
             this.isProgressAvailable = false;
         } else {
             this.isProgressAvailable = true;
@@ -64,6 +66,12 @@ export class LearningGoalCardComponent implements OnInit, OnDestroy {
     }
 
     openLearningGoalDetailsModal() {
+        // For prerequisites, only open modal when there is a description for now
+        // TODO: Later we will display connected lecture units also for prerequisites
+        if (this.isPrerequisite && !this.learningGoal.description) {
+            return;
+        }
+
         if (this.learningGoalProgress && this.isCourseProgress(this.learningGoalProgress)) {
             const modalRef = this.modalService.open(this.CourseDetailModalComponent, {
                 size: 'xl',
@@ -71,6 +79,7 @@ export class LearningGoalCardComponent implements OnInit, OnDestroy {
             if (modalRef) {
                 modalRef.componentInstance.learningGoal = this.learningGoal;
                 modalRef.componentInstance.learningGoalCourseProgress = this.learningGoalProgress;
+                modalRef.componentInstance.isPrerequisite = this.isPrerequisite;
             }
         } else {
             const modalRef = this.modalService.open(this.DetailModalComponent, {
@@ -79,6 +88,7 @@ export class LearningGoalCardComponent implements OnInit, OnDestroy {
             if (modalRef) {
                 modalRef.componentInstance.learningGoal = this.learningGoal;
                 modalRef.componentInstance.learningGoalProgress = this.learningGoalProgress;
+                modalRef.componentInstance.isPrerequisite = this.isPrerequisite;
             }
         }
     }
