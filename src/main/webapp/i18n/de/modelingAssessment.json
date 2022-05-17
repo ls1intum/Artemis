@@ -13,9 +13,11 @@
             "heading": "Einreichungen und Bewertungen der Modellierungsaufgabe \"{{ title }}\"",
             "actions": {
                 "open": "Modell bewerten"
-            }
+            },
+            "progressDescription": "Fortschritt: {{ percentageAssessed }} % ({{ numberAssessed }} von {{ numberSubmissions }} eingereichten Modellen bewertet)"
         },
         "notFound": "Wir haben keine neue Modellierungsaufgabe ohne Bewertung gefunden, bitte gehe zurück zum Dashboard.",
-        "impactWarning": "Dieses Feedback kann {{affectedSubmissionsCount}} weitere ähnliche Einreichung/en beeinflussen."
+        "impactWarning": "Dieses Feedback kann {{affectedSubmissionsCount}} weitere ähnliche Einreichung/en beeinflussen.",
+        "noSubmissions": "Keine Einreichungen für diese Übung!"
     }
 }
