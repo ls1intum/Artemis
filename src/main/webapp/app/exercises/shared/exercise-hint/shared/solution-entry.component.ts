@@ -1,17 +1,16 @@
-import { Component, OnInit, OnDestroy, ViewChild, Input, Output, EventEmitter } from '@angular/core';
+import { Component, OnInit, ViewChild, Input, Output, EventEmitter } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { Observable, Subscription } from 'rxjs';
+import { Observable } from 'rxjs';
 
 import { AceEditorComponent } from 'app/shared/markdown-editor/ace-editor/ace-editor.component';
 import { faTimes } from '@fortawesome/free-solid-svg-icons';
 import { ProgrammingExerciseSolutionEntry } from 'app/entities/hestia/programming-exercise-solution-entry.model';
-import { ThemeService } from 'app/core/theme/theme.service';
 
 @Component({
     selector: 'jhi-solution-entry',
     templateUrl: './solution-entry.component.html',
 })
-export class SolutionEntryComponent implements OnInit, OnDestroy {
+export class SolutionEntryComponent implements OnInit {
     @ViewChild('editor', { static: true })
     editor: AceEditorComponent;
 
@@ -25,17 +24,12 @@ export class SolutionEntryComponent implements OnInit, OnDestroy {
     @Output()
     onRemoveEntry: EventEmitter<any> = new EventEmitter();
 
-    themeSubscription: Subscription;
     faTimes = faTimes;
 
-    constructor(protected route: ActivatedRoute, private themeService: ThemeService) {}
+    constructor(protected route: ActivatedRoute) {}
 
     ngOnInit() {
         this.setupEditor();
-    }
-
-    ngOnDestroy(): void {
-        this.themeSubscription.unsubscribe();
     }
 
     emitRemovalEvent() {
@@ -45,9 +39,6 @@ export class SolutionEntryComponent implements OnInit, OnDestroy {
     private setupEditor() {
         const line = this.solutionEntry.line;
 
-        this.themeSubscription = this.themeService.getCurrentThemeObservable().subscribe((theme) => {
-            this.editor.setTheme(theme.codeAceTheme);
-        });
         this.editor.getEditor().setOptions({
             animatedScroll: true,
             maxLines: Infinity,
