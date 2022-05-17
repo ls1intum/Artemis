@@ -244,9 +244,6 @@ public class CourseResource {
 
         // Make sure to preserve associations in updated entity
         updatedCourse.setPrerequisites(existingCourse.getPrerequisites());
-        if (updatedCourse.getOrganizations().isEmpty()) {
-            updatedCourse.setOrganizations(existingCourse.getOrganizations());
-        }
 
         updatedCourse.validateRegistrationConfirmationMessage();
         updatedCourse.validateComplaintsAndRequestMoreFeedbackConfig();
