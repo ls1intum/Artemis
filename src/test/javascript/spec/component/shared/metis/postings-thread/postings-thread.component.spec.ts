@@ -17,7 +17,6 @@ import { post } from '../../../../helpers/sample/metis-sample-data';
 describe('PostingThreadComponent', () => {
     let component: PostingThreadComponent;
     let fixture: ComponentFixture<PostingThreadComponent>;
-    let metisService: MetisService;
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
@@ -39,7 +38,6 @@ describe('PostingThreadComponent', () => {
             .then(() => {
                 fixture = TestBed.createComponent(PostingThreadComponent);
                 component = fixture.componentInstance;
-                metisService = TestBed.inject(MetisService);
             });
     });
 
