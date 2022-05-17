@@ -181,9 +181,15 @@ Please check your available options in this order:
             // My Special Component
             $my-special-component-my-box-background-color: #123456;
 
+1. Theme-specific global styles
+===============================
 
+It might happen that you need to modify a global style rule in one of the themes, for example if you're using a external library which styles need to be overridden.
 
-1. Theme Service
+| Each theme has a dedicated file custom global styles can be added to: ``theme-dark.scss`` and ``theme-default.scss``.
+| For styles that should be applied in both themes, use ``global.scss``.
+
+2. Theme Service
 ================
 
 There will be occasions where you need to know in your components which theme is currently applied.
