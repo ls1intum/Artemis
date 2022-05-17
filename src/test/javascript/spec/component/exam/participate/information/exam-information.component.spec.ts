@@ -24,13 +24,14 @@ let exam = {
     title: 'Test Exam',
     startDate,
     endDate,
+    testExam: false,
 } as Exam;
 
 let studentExam = { id: 1, exam, user, workingTime: 60 } as StudentExam;
 
 describe('ExamInformationComponent', () => {
     beforeEach(() => {
-        exam = { id: 1, title: 'Test Exam', startDate, endDate } as Exam;
+        exam = { id: 1, title: 'ExamForTesting', startDate, endDate } as Exam;
         studentExam = { id: 1, exam, user, workingTime: 60 } as StudentExam;
 
         return TestBed.configureTestingModule({

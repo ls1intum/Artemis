@@ -1,5 +1,5 @@
 <div class="mt-3 mb-4 text-center">
-    <div class="mb-2" *ngIf="exam?.testExam">
+    <div class="mb-2" *ngIf="isTestExam">
         <ng-container>
             <strong class="font-weight-bold">{{ 'artemisApp.examManagement.testExam.examMode' | artemisTranslate }}:</strong>
             <div *ngIf="!isTestExam" class="mx-2 badge bg-success">{{ 'artemisApp.examManagement.testExam.realExam' | artemisTranslate }}</div>
