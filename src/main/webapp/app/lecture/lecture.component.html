@@ -1,15 +1,21 @@
 <div>
-    <h2 id="page-heading">
-        <span jhiTranslate="artemisApp.lecture.home.title">Lectures</span>
-        <a id="jh-create-entity" class="btn btn-primary float-end jh-create-entity create-lecture" [routerLink]="['new']">
-            <fa-icon [icon]="faPlus"></fa-icon>
-            <span jhiTranslate="artemisApp.lecture.home.createLabel">Create Lecture</span>
-        </a>
-        <button (click)="openImportModal()" class="btn btn-primary float-end jh-create-entity import-lecture text-truncate mb-1 me-1" id="lecture-import-button">
-            <fa-icon [icon]="faPlus"></fa-icon>
-            <span jhiTranslate="artemisApp.lecture.home.importLabel">Import Lecture</span>
-        </button>
-    </h2>
+    <div class="row">
+        <div class="col-4">
+            <h2 id="page-heading">
+                <span jhiTranslate="artemisApp.lecture.home.title">Lectures</span>
+            </h2>
+        </div>
+        <div class="col-8 align-self-end text-end">
+            <button (click)="openImportModal()" class="btn btn-primary jh-create-entity import-lecture text-truncate mb-1" id="lecture-import-button">
+                <fa-icon [icon]="faPlus"></fa-icon>
+                <span jhiTranslate="artemisApp.lecture.home.importLabel">Import Lecture</span>
+            </button>
+            <a id="jh-create-entity" class="btn btn-primary jh-create-entity create-lecture mb-1" [routerLink]="['new']">
+                <fa-icon [icon]="faPlus"></fa-icon>
+                <span jhiTranslate="artemisApp.lecture.home.createLabel">Create Lecture</span>
+            </a>
+        </div>
+    </div>
     <br />
     <div class="table-responsive" *ngIf="lectures">
         <table class="table table-striped">

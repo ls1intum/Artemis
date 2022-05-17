@@ -366,8 +366,8 @@ describe('CourseStatisticsComponent', () => {
         fixture.detectChanges();
         expect(comp.ngxExerciseGroups.length).toBe(4);
         const modelingWrapper = fixture.debugElement.query(By.css('#modeling-wrapper'));
-        expect(modelingWrapper.query(By.css('h2')).nativeElement.textContent).toBe(' artemisApp.courseOverview.statistics.exerciseCount ');
-        expect(modelingWrapper.query(By.css('#absolute-score')).nativeElement.textContent).toBe('artemisApp.courseOverview.statistics.yourPoints');
+        expect(modelingWrapper.query(By.css('h4')).nativeElement.textContent).toBe(' artemisApp.courseOverview.statistics.exerciseCount ');
+        expect(modelingWrapper.query(By.css('#absolute-score')).nativeElement.textContent).toBe(' artemisApp.courseOverview.statistics.yourPoints ');
         expect(modelingWrapper.query(By.css('#reachable-score')).nativeElement.textContent).toBe(' artemisApp.courseOverview.statistics.reachablePoints ');
         expect(modelingWrapper.query(By.css('#max-score')).nativeElement.textContent).toBe(' artemisApp.courseOverview.statistics.totalPoints ');
         expect(fixture.debugElement.query(By.css('#presentation-score')).nativeElement.textContent).toBe(' artemisApp.courseOverview.statistics.presentationScore ');
@@ -526,7 +526,7 @@ describe('CourseStatisticsComponent', () => {
 
         // check that html file displays the correct elements
         let debugElement = fixture.debugElement.query(By.css('#absolute-course-score'));
-        expect(debugElement.nativeElement.textContent).toBe('artemisApp.courseOverview.statistics.yourPoints');
+        expect(debugElement.nativeElement.textContent).toBe(' artemisApp.courseOverview.statistics.yourPoints ');
         debugElement = fixture.debugElement.query(By.css('#reachable-course-score'));
         expect(debugElement.nativeElement.textContent).toBe(' artemisApp.courseOverview.statistics.reachablePoints ');
         debugElement = fixture.debugElement.query(By.css('#max-course-score'));
