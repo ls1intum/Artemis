@@ -15,7 +15,7 @@
             *ngFor="let prerequisite of prerequisites; index as i; trackBy: identify"
             [learningGoal]="prerequisite"
             [isPrerequisite]="true"
-            [disableModal]="true"
+            [displayOnly]="true"
         ></jhi-learning-goal-card>
     </div>
 </div>

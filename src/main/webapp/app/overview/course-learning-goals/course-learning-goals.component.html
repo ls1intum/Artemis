@@ -1,31 +1,33 @@
-<div *ngIf="isLoading" class="d-flex justify-content-center">
-    <div class="spinner-border" role="status">
-        <span class="sr-only">{{ 'loading' | artemisTranslate }}</span>
+<div class="container">
+    <div *ngIf="isLoading" class="d-flex justify-content-center">
+        <div class="spinner-border" role="status">
+            <span class="sr-only">{{ 'loading' | artemisTranslate }}</span>
+        </div>
     </div>
-</div>
 
-<div *ngIf="!isLoading">
-    <h2 *ngIf="prerequisites && prerequisites.length > 0" class="text-center">{{ 'artemisApp.learningGoal.prerequisite.title' | artemisTranslate }}</h2>
+    <div *ngIf="!isLoading">
+        <h2 *ngIf="prerequisites && prerequisites.length > 0" class="text-center my-4">{{ 'artemisApp.learningGoal.prerequisite.title' | artemisTranslate }}</h2>
 
-    <div class="row row-cols-auto">
-        <jhi-learning-goal-card
-            class="mx-auto col"
-            *ngFor="let prerequisite of prerequisites; index as i; trackBy: identify"
-            [learningGoal]="prerequisite"
-            [isPrerequisite]="true"
-        ></jhi-learning-goal-card>
+        <div class="d-flex flex-wrap gap-3 justify-content-evenly">
+            <jhi-learning-goal-card
+                *ngFor="let prerequisite of prerequisites; index as i; trackBy: identify"
+                [learningGoal]="prerequisite"
+                [isPrerequisite]="true"
+                [displayOnly]="true"
+            ></jhi-learning-goal-card>
+        </div>
     </div>
-</div>
 
-<div *ngIf="!isLoading">
-    <h2 *ngIf="learningGoals && learningGoals.length > 0" class="text-center">{{ 'artemisApp.learningGoal.title' | artemisTranslate }}</h2>
+    <div *ngIf="!isLoading">
+        <h2 *ngIf="learningGoals && learningGoals.length > 0" class="text-center my-4">{{ 'artemisApp.learningGoal.title' | artemisTranslate }}</h2>
 
-    <div class="row row-cols-auto">
-        <jhi-learning-goal-card
-            class="mx-auto col"
-            *ngFor="let learningGoal of learningGoals; index as i; trackBy: identify"
-            [learningGoal]="learningGoal"
-            [learningGoalProgress]="getLearningGoalProgress(learningGoal)"
-        ></jhi-learning-goal-card>
+        <div class="p-3 d-flex flex-wrap gap-3 justify-content-evenly">
+            <jhi-learning-goal-card
+                *ngFor="let learningGoal of learningGoals; index as i; trackBy: identify"
+                [learningGoal]="learningGoal"
+                [learningGoalProgress]="getLearningGoalProgress(learningGoal)"
+                [displayOnly]="true"
+            ></jhi-learning-goal-card>
+        </div>
     </div>
 </div>

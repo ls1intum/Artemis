@@ -13,7 +13,7 @@
             <ng-template #noProgressBlock>{{ 'artemisApp.learningGoal.learningGoalCard.progressUnavailable' | artemisTranslate }}</ng-template>
         </ng-template>
     </div>
-    <div *ngIf="isPrerequisite" class="card-footer course-goal-card-footer" (click)="$event.stopPropagation()">
+    <div *ngIf="!displayOnly" class="card-footer course-goal-card-footer" (click)="$event.stopPropagation()">
         <ng-content></ng-content>
     </div>
 </div>
