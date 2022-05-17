@@ -14,6 +14,7 @@ import com.fasterxml.jackson.annotation.JsonView;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.DifficultyLevel;
 import de.tum.in.www1.artemis.domain.enumeration.ExerciseMode;
+import de.tum.in.www1.artemis.domain.enumeration.IncludedInOverallScore;
 import de.tum.in.www1.artemis.domain.view.QuizView;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 
@@ -213,9 +214,12 @@ public abstract class BaseExercise extends DomainObject {
         if (isExamExercise()) {
             throw new BadRequestAlertException("An exam exercise may not have any dates set!", getTitle(), "invalidDatesForExamExercise");
         }
+
+        IncludedInOverallScore includedInOverallScore = this instanceof Exercise thisAsExercise ? thisAsExercise.getIncludedInOverallScore() : null;
+
         // at least one is set, so we have to check the three possible errors
-        boolean areDatesValid = isBeforeAndNotNull(getReleaseDate(), getDueDate()) && isValidAssessmentDueDate(getReleaseDate(), getDueDate(), getAssessmentDueDate())
-                && isValidExampleSolutionPublicationDate(getReleaseDate(), getDueDate(), getExampleSolutionPublicationDate());
+        boolean areDatesValid = isNotAfterAndNotNull(getReleaseDate(), getDueDate()) && isValidAssessmentDueDate(getReleaseDate(), getDueDate(), getAssessmentDueDate())
+                && isValidExampleSolutionPublicationDate(getReleaseDate(), getDueDate(), getExampleSolutionPublicationDate(), includedInOverallScore);
 
         if (!areDatesValid) {
             throw new BadRequestAlertException("The exercise dates are not valid", getTitle(), "noValidDates");
@@ -234,7 +238,7 @@ public abstract class BaseExercise extends DomainObject {
         if (dueDate == null) {
             return false;
         }
-        return isBeforeAndNotNull(dueDate, assessmentDueDate) && isBeforeAndNotNull(releaseDate, assessmentDueDate);
+        return isNotAfterAndNotNull(dueDate, assessmentDueDate) && isNotAfterAndNotNull(releaseDate, assessmentDueDate);
     }
 
     /**
@@ -243,22 +247,24 @@ public abstract class BaseExercise extends DomainObject {
      * exampleSolutionPublicationDate is valid if it is not set.
      * @return true if there is no exampleSolutionPublicationDateError
      */
-    private static boolean isValidExampleSolutionPublicationDate(ZonedDateTime releaseDate, ZonedDateTime dueDate, ZonedDateTime exampleSolutionPublicationDate) {
+    private static boolean isValidExampleSolutionPublicationDate(ZonedDateTime releaseDate, ZonedDateTime dueDate, ZonedDateTime exampleSolutionPublicationDate,
+            IncludedInOverallScore includedInOverallScore) {
         if (exampleSolutionPublicationDate == null) {
             return true;
         }
 
-        return isBeforeAndNotNull(dueDate, exampleSolutionPublicationDate) && isBeforeAndNotNull(releaseDate, exampleSolutionPublicationDate);
+        return (isNotAfterAndNotNull(dueDate, exampleSolutionPublicationDate) || includedInOverallScore == IncludedInOverallScore.NOT_INCLUDED)
+                && isNotAfterAndNotNull(releaseDate, exampleSolutionPublicationDate);
     }
 
     /**
      * This method is used to validate if the previousDate is before the laterDate.
      * @return true if the previousDate is valid
      */
-    private static boolean isBeforeAndNotNull(ZonedDateTime previousDate, ZonedDateTime laterDate) {
+    private static boolean isNotAfterAndNotNull(ZonedDateTime previousDate, ZonedDateTime laterDate) {
         if (previousDate == null || laterDate == null) {
             return true;
         }
-        return previousDate.isBefore(laterDate);
+        return !previousDate.isAfter(laterDate);
     }
 }

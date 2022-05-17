@@ -70,6 +70,7 @@
             <div>
                 <jhi-included-in-overall-score-picker
                     [(includedInOverallScore)]="textExercise.includedInOverallScore"
+                    (includedInOverallScoreChange)="validateDate()"
                     [allowNotIncluded]="!isExamMode"
                 ></jhi-included-in-overall-score-picker>
             </div>
@@ -185,6 +186,7 @@
             <input minlength="3" type="text" class="form-control" name="notificationText" id="field_notification_text" [(ngModel)]="notificationText" />
         </div>
     </div>
+
     <div>
         <button type="button" class="btn btn-secondary" (click)="previousState()">
             <fa-icon [icon]="faBan"></fa-icon>&nbsp;<span jhiTranslate="entity.action.cancel">Cancel</span>

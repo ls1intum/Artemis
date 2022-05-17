@@ -58,31 +58,53 @@ export class ExerciseService {
      * Validates if the dates are correct
      */
     validateDate(exercise: Exercise) {
-        exercise.dueDateError = exercise.releaseDate && exercise.dueDate ? !exercise.dueDate.isAfter(exercise.releaseDate) : false;
+        exercise.dueDateError = this.hasDueDateError(exercise);
+        exercise.assessmentDueDateError = this.hasAssessmentDueDateError(exercise);
 
+        exercise.exampleSolutionPublicationDateError = this.hasExampleSolutionPublicationDateError(exercise);
+        exercise.exampleSolutionPublicationDateWarning = this.hasExampleSolutionPublicationDateWarning(exercise);
+    }
+
+    hasDueDateError(exercise: Exercise) {
+        return exercise.releaseDate && exercise.dueDate ? exercise.dueDate.isBefore(exercise.releaseDate) : false;
+    }
+
+    private hasAssessmentDueDateError(exercise: Exercise) {
         if (exercise.releaseDate && exercise.assessmentDueDate) {
             if (exercise.dueDate) {
-                exercise.assessmentDueDateError = exercise.assessmentDueDate.isBefore(exercise.dueDate) || exercise.assessmentDueDate.isBefore(exercise.releaseDate);
-                return;
+                return exercise.assessmentDueDate.isBefore(exercise.dueDate) || exercise.assessmentDueDate.isBefore(exercise.releaseDate);
             } else {
-                exercise.assessmentDueDateError = true;
-                return;
+                return true;
             }
         }
 
         if (exercise.assessmentDueDate) {
             if (exercise.dueDate) {
-                exercise.assessmentDueDateError = !exercise.assessmentDueDate.isAfter(exercise.dueDate);
+                return exercise.assessmentDueDate.isBefore(exercise.dueDate);
             } else {
-                exercise.assessmentDueDateError = true;
+                return true;
             }
         }
+        return false;
+    }
 
+    hasExampleSolutionPublicationDateError(exercise: Exercise) {
         if (exercise.exampleSolutionPublicationDate) {
-            exercise.exampleSolutionPublicationDateError =
-                exercise.exampleSolutionPublicationDate.isSameOrBefore(exercise.dueDate || null) ||
-                exercise.exampleSolutionPublicationDate.isSameOrBefore(exercise.releaseDate || null);
+            return (
+                exercise.exampleSolutionPublicationDate.isBefore(exercise.releaseDate || null) ||
+                (exercise.exampleSolutionPublicationDate.isBefore(exercise.dueDate || null) && exercise.includedInOverallScore !== IncludedInOverallScore.NOT_INCLUDED)
+            );
         }
+        return false;
+    }
+
+    hasExampleSolutionPublicationDateWarning(exercise: Exercise) {
+        if (exercise.exampleSolutionPublicationDate?.isBefore(exercise.dueDate || null)) {
+            if (exercise.includedInOverallScore === IncludedInOverallScore.NOT_INCLUDED) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**

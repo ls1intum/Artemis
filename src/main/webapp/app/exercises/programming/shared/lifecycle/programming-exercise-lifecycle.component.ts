@@ -22,7 +22,7 @@ export class ProgrammingExerciseLifecycleComponent implements OnInit {
     faUserCheck = faUserCheck;
     faUserSlash = faUserSlash;
 
-    constructor(private translator: TranslateService) {}
+    constructor(private translator: TranslateService, private exerciseService: ExerciseService) {}
 
     /**
      * If the programming exercise does not have an id, set the assessment Type to AUTOMATIC
@@ -61,11 +61,11 @@ export class ProgrammingExerciseLifecycleComponent implements OnInit {
      * @param newReleaseDate The new release date
      */
     updateReleaseDate(newReleaseDate?: dayjs.Dayjs) {
-        if (this.exercise.dueDate && newReleaseDate && dayjs(newReleaseDate).isAfter(this.exercise.dueDate)) {
-            this.updateDueDate(newReleaseDate);
+        this.exercise.releaseDate = newReleaseDate;
+        if (this.exerciseService.hasDueDateError(this.exercise)) {
+            this.updateDueDate(newReleaseDate!);
         }
         this.updateExampleSolutionPublicationDate(newReleaseDate);
-        this.exercise.releaseDate = newReleaseDate;
     }
 
     /**
@@ -86,10 +86,11 @@ export class ProgrammingExerciseLifecycleComponent implements OnInit {
 
     /**
      * Updates the example solution publication date of the programming exercise if it is set and not after release or due date.
+     * Due date check is not performed if exercise is not included in the grade.
      * @param newReleaseOrDueDate the new exampleSolutionPublicationDate if it is after the current exampleSolutionPublicationDate
      */
     updateExampleSolutionPublicationDate(newReleaseOrDueDate?: dayjs.Dayjs) {
-        if (this.exercise.exampleSolutionPublicationDate && newReleaseOrDueDate && dayjs(newReleaseOrDueDate).isAfter(this.exercise.exampleSolutionPublicationDate)) {
+        if (this.exerciseService.hasExampleSolutionPublicationDateError(this.exercise)) {
             const message =
                 this.exercise.dueDate != undefined
                     ? 'artemisApp.programmingExercise.timeline.alertNewExampleSolutionPublicationDateAsDueDate'
