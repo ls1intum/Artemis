@@ -4,12 +4,26 @@
     <ng-container *ngIf="!busy"></ng-container>
     <jhi-assessment-warning [exercise]="exercise" [submissions]="filteredSubmissions"></jhi-assessment-warning>
     <h4>
-        <small [ngClass]="assessedSubmissions === submissions.length && submissions.length > 0 ? 'text-success' : 'text-warning'">
-            <strong>Progress: {{ (assessedSubmissions / submissions.length) * 100 | number: '0.0-0' }} % </strong>({{ assessedSubmissions }} out of {{ submissions.length }} text
-            exercises assessed)
-        </small>
+        <ng-container *ngIf="submissions && submissions.length === 0">
+            <small [ngClass]="'text-warning'">
+                {{ 'artemisApp.textAssessment.noSubmissions' | artemisTranslate: {} }}
+            </small>
+        </ng-container>
+        <ng-container *ngIf="submissions && submissions.length > 0">
+            <small [ngClass]="assessedSubmissions === submissions.length ? 'text-success' : 'text-warning'">
+                {{
+                    'artemisApp.textAssessment.dashboard.progressDescription'
+                        | artemisTranslate
+                            : {
+                                  percentageAssessed: (assessedSubmissions / submissions.length) * 100 | number: '0.0-0',
+                                  numberAssessed: assessedSubmissions,
+                                  numberSubmissions: submissions.length
+                              }
+                }}
+            </small>
+        </ng-container>
     </h4>
-    <div *ngIf="submissions && submissions.length > 0; else emptyTable" class="table-responsive">
+    <div *ngIf="submissions && submissions.length > 0" class="table-responsive">
         <table class="table table-striped exercise-table">
             <thead>
                 <tr [(ascending)]="reverse" [(predicate)]="predicate" (sortChange)="sortRows()" jhiSort>
@@ -217,7 +231,3 @@
         </table>
     </div>
 </div>
-
-<ng-template #emptyTable>
-    <p jhiTranslate="artemisApp.assessment.dashboard.empty">No Submissions for this exercise!</p>
-</ng-template>
