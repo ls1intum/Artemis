@@ -22,7 +22,7 @@ public class HttpRequestUtils {
     private static String getIpStringFromRequest(@NotNull HttpServletRequest request) {
         for (String header : IP_HEADER_CANDIDATES) {
             String ipList = request.getHeader(header);
-            if (ipList != null && ipList.length() != 0 && !"unknown".equalsIgnoreCase(ipList)) {
+            if (ipList != null && !ipList.isEmpty() && !"unknown".equalsIgnoreCase(ipList)) {
                 return ipList.split(",")[0];
             }
         }

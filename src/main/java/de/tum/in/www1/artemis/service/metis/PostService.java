@@ -756,7 +756,7 @@ public class PostService extends PostingService {
     public static boolean postFilter(Post post, String searchText) {
         boolean keepPost = true;
 
-        if (searchText != null && searchText.trim().length() > 0) {
+        if (searchText != null && !searchText.isBlank()) {
             // check if the search text is either contained in the title or in the content
             String lowerCasedSearchString = searchText.toLowerCase();
             // if searchText starts with a # and is followed by a post id, filter for post with id
