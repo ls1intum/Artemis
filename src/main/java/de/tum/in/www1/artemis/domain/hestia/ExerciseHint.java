@@ -40,7 +40,7 @@ public class ExerciseHint extends DomainObject {
     private Exercise exercise;
 
     @ManyToOne
-    @JsonIgnoreProperties("codeHint")
+    @JsonIgnoreProperties("exerciseHints")
     private ProgrammingExerciseTask task;
 
     public String getTitle() {

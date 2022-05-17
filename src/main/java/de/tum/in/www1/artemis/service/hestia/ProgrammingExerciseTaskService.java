@@ -55,13 +55,14 @@ public class ProgrammingExerciseTaskService {
      * If there is already a task with the same test cases as a new one, but with a different name the existing one will be renamed.
      *
      * @param exercise The programming exercise to extract the tasks from
+     * @return
      */
-    public void updateTasksFromProblemStatement(ProgrammingExercise exercise) {
+    public Set<ProgrammingExerciseTask> updateTasksFromProblemStatement(ProgrammingExercise exercise) {
         var previousTasks = programmingExerciseTaskRepository.findByExerciseIdWithTestCases(exercise.getId());
         var extractedTasks = extractTasks(exercise);
         // No changes
         if (previousTasks.equals(extractedTasks)) {
-            return;
+            return previousTasks;
         }
         // Add all tasks that did not change
         var tasksToBeSaved = new HashSet<>(previousTasks);
@@ -95,8 +96,8 @@ public class ProgrammingExerciseTaskService {
         // Save all tasks
         for (ProgrammingExerciseTask task : tasksToBeSaved) {
             task.setExercise(exercise);
-            programmingExerciseTaskRepository.save(task);
         }
+        return new HashSet<>(programmingExerciseTaskRepository.saveAll(tasksToBeSaved));
     }
 
     /**

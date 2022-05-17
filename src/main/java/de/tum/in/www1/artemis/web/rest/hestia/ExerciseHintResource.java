@@ -288,7 +288,7 @@ public class ExerciseHintResource {
     private Set<ExerciseHint> getAvailableExerciseHints(ProgrammingExercise exercise, User user) {
         Set<ExerciseHint> availableExerciseHints = new HashSet<>();
         var exerciseHints = exerciseHintRepository.findByExerciseId(exercise.getId());
-        var tasks = programmingExerciseTaskRepository.findByExerciseIdWithTestCases(exercise.getId());
+        var tasks = new ArrayList<>(programmingExerciseTaskRepository.findByExerciseIdWithTestCases(exercise.getId()));
         var latestThreeResults = getLatestNResults(exercise, user);
 
         if (latestThreeResults.size() >= CODE_HINT_DISPLAY_THRESHOLD) {
