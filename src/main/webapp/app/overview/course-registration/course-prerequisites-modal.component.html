@@ -9,9 +9,8 @@
         </div>
     </div>
 
-    <div *ngIf="!isLoading" class="row row-cols-auto">
+    <div *ngIf="!isLoading" class="d-flex flex-wrap gap-3 justify-content-evenly">
         <jhi-learning-goal-card
-            class="mx-auto col"
             *ngFor="let prerequisite of prerequisites; index as i; trackBy: identify"
             [learningGoal]="prerequisite"
             [isPrerequisite]="true"
