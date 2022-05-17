@@ -555,6 +555,7 @@ public class ModelFactory {
         course.setEndDate(endDate);
         course.setExercises(exercises);
         course.setOnlineCourse(false);
+        course.setRegistrationEnabled(false);
         course.setPresentationScore(2);
         course.setAccuracyOfScores(1);
         return course;
