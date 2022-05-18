@@ -194,7 +194,7 @@ public class CourseResource {
             }
         }
 
-        var existingCourse = courseRepository.findByIdElseThrow(updatedCourse.getId());
+        var existingCourse = courseRepository.findByIdWithOrganizationsAndLearningGoalsElseThrow(updatedCourse.getId());
         if (!Objects.equals(existingCourse.getShortName(), updatedCourse.getShortName())) {
             throw new BadRequestAlertException("The course short name cannot be changed", Course.ENTITY_NAME, "shortNameCannotChange", true);
         }
@@ -240,6 +240,12 @@ public class CourseResource {
             if (!Objects.equals(existingCourse.getInstructorGroupName(), updatedCourse.getInstructorGroupName())) {
                 throw new BadRequestAlertException("The instructor group name cannot be changed", Course.ENTITY_NAME, "instructorGroupNameCannotChange", true);
             }
+        }
+
+        // Make sure to preserve associations in updated entity
+        updatedCourse.setPrerequisites(existingCourse.getPrerequisites());
+        if (updatedCourse.getOrganizations().isEmpty()) {
+            updatedCourse.setOrganizations(existingCourse.getOrganizations());
         }
 
         updatedCourse.validateRegistrationConfirmationMessage();
@@ -696,7 +702,7 @@ public class CourseResource {
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> deleteCourse(@PathVariable long courseId) {
         log.info("REST request to delete Course : {}", courseId);
-        Course course = courseRepository.findWithEagerExercisesAndLecturesAndLectureUnitsAndLearningGoalsById(courseId);
+        Course course = courseRepository.findByIdWithExercisesAndLecturesAndLectureUnitsAndLearningGoalsElseThrow(courseId);
         if (course == null) {
             throw new EntityNotFoundException("Course", courseId);
         }
