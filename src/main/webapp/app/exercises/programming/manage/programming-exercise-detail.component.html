@@ -156,28 +156,6 @@
                         <button
                             [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
                             type="button"
-                            (click)="getExtractedTasksAndTestsFromProblemStatement()"
-                            class="btn btn-secondary btn-sm"
-                            ngbTooltip="{{ 'artemisApp.programmingExercise.extractTasksFromProblemStatementWarning' | artemisTranslate }}"
-                        >
-                            <span jhiTranslate="artemisApp.programmingExercise.extractTasksFromProblemStatementTitle">Extract Tasks</span>
-                        </button>
-                    </span>
-                    <span class="me-1">
-                        <button
-                            [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
-                            type="button"
-                            (click)="deleteTasksWithSolutionEntries()"
-                            class="btn btn-secondary btn-sm"
-                            ngbTooltip="{{ 'artemisApp.programmingExercise.deleteTasksAndSolutionEntriesWarning' | artemisTranslate }}"
-                        >
-                            <span jhiTranslate="artemisApp.programmingExercise.deleteTasksAndSolutionEntriesTitle">Delete Tasks</span>
-                        </button>
-                    </span>
-                    <span class="me-1">
-                        <button
-                            [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
-                            type="button"
                             (click)="createStructuralSolutionEntries()"
                             class="btn btn-secondary btn-sm"
                             ngbTooltip="{{ 'artemisApp.programmingExercise.createStructuralSolutionEntriesTooltip' | artemisTranslate }}"

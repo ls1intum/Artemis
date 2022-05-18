@@ -13,10 +13,9 @@ import { onError } from 'app/shared/util/global.utils';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
 import { faBan, faCircleNotch, faSave } from '@fortawesome/free-solid-svg-icons';
 import { ExerciseHint, HintType } from 'app/entities/hestia/exercise-hint.model';
+import { ProgrammingExerciseService, ProgrammingExerciseTask } from 'app/exercises/programming/manage/services/programming-exercise.service';
 import { ProgrammingExerciseSolutionEntry } from 'app/entities/hestia/programming-exercise-solution-entry.model';
-import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
-import { Task } from 'app/exercises/programming/shared/instructions-render/task/programming-exercise-task.model';
 
 @Component({
     selector: 'jhi-exercise-hint-update',
@@ -33,7 +32,7 @@ export class ExerciseHintUpdateComponent implements OnInit, OnDestroy {
     solutionEntries: ProgrammingExerciseSolutionEntry[];
 
     programmingExercise: ProgrammingExercise;
-    tasks: Task[];
+    tasks: ProgrammingExerciseTask[];
 
     isSaving: boolean;
     isLoading: boolean;
@@ -94,10 +93,6 @@ export class ExerciseHintUpdateComponent implements OnInit, OnDestroy {
 
             this.programmingExerciseService.getTasksAndTestsExtractedFromProblemStatement(this.exerciseId).subscribe((tasks) => {
                 this.tasks = tasks;
-                // if the task for the exercise is not set yet, pick the first one
-                if (!this.exerciseHint.task) {
-                    this.exerciseHint.task = tasks[0];
-                }
             });
         });
     }

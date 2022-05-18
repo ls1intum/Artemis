@@ -1,6 +1,6 @@
 import { Exercise } from 'app/entities/exercise.model';
 import { BaseEntity } from 'app/shared/model/base-entity';
-import { Task } from 'app/exercises/programming/shared/instructions-render/task/programming-exercise-task.model';
+import { ProgrammingExerciseTask } from 'app/exercises/programming/manage/services/programming-exercise.service';
 
 export enum HintType {
     TEXT = 'text',
@@ -13,5 +13,8 @@ export class ExerciseHint implements BaseEntity {
     public content?: string;
     public exercise?: Exercise;
     public type?: HintType;
-    public task?: Task;
+    public programmingExerciseTask?: ProgrammingExerciseTask;
+
+    // helper attributes
+    public hasUsed = false;
 }
