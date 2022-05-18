@@ -21,7 +21,7 @@ import { ProgrammingAssessmentManualResultService } from 'app/exercises/programm
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { Complaint } from 'app/entities/complaint.model';
 import { ComplaintService } from 'app/complaints/complaint.service';
-import { ExerciseHintService } from 'app/exercises/shared/exercise-hint/manage/exercise-hint.service';
+import { ExerciseHintService } from 'app/exercises/shared/exercise-hint/shared/exercise-hint.service';
 import { MockRepositoryFileService } from '../../helpers/mocks/service/mock-repository-file.service';
 import { MockExerciseHintService } from '../../helpers/mocks/service/mock-exercise-hint.service';
 import { MockNgbModalService } from '../../helpers/mocks/service/mock-ngb-modal.service';
