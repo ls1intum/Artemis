@@ -66,13 +66,13 @@ export class ExerciseService {
     }
 
     hasDueDateError(exercise: Exercise) {
-        return exercise.releaseDate && exercise.dueDate ? exercise.dueDate.isBefore(exercise.releaseDate) : false;
+        return exercise.releaseDate && exercise.dueDate ? dayjs(exercise.dueDate).isBefore(exercise.releaseDate) : false;
     }
 
     private hasAssessmentDueDateError(exercise: Exercise) {
         if (exercise.releaseDate && exercise.assessmentDueDate) {
             if (exercise.dueDate) {
-                return exercise.assessmentDueDate.isBefore(exercise.dueDate) || exercise.assessmentDueDate.isBefore(exercise.releaseDate);
+                return dayjs(exercise.assessmentDueDate).isBefore(exercise.dueDate) || dayjs(exercise.assessmentDueDate).isBefore(exercise.releaseDate);
             } else {
                 return true;
             }
@@ -80,7 +80,7 @@ export class ExerciseService {
 
         if (exercise.assessmentDueDate) {
             if (exercise.dueDate) {
-                return exercise.assessmentDueDate.isBefore(exercise.dueDate);
+                return dayjs(exercise.assessmentDueDate).isBefore(exercise.dueDate);
             } else {
                 return true;
             }
@@ -91,15 +91,15 @@ export class ExerciseService {
     hasExampleSolutionPublicationDateError(exercise: Exercise) {
         if (exercise.exampleSolutionPublicationDate) {
             return (
-                exercise.exampleSolutionPublicationDate.isBefore(exercise.releaseDate || null) ||
-                (exercise.exampleSolutionPublicationDate.isBefore(exercise.dueDate || null) && exercise.includedInOverallScore !== IncludedInOverallScore.NOT_INCLUDED)
+                dayjs(exercise.exampleSolutionPublicationDate).isBefore(exercise.releaseDate || null) ||
+                (dayjs(exercise.exampleSolutionPublicationDate).isBefore(exercise.dueDate || null) && exercise.includedInOverallScore !== IncludedInOverallScore.NOT_INCLUDED)
             );
         }
         return false;
     }
 
     hasExampleSolutionPublicationDateWarning(exercise: Exercise) {
-        if (exercise.exampleSolutionPublicationDate?.isBefore(exercise.dueDate || null)) {
+        if (exercise.exampleSolutionPublicationDate && dayjs(exercise.exampleSolutionPublicationDate).isBefore(exercise.dueDate || null)) {
             if (exercise.includedInOverallScore === IncludedInOverallScore.NOT_INCLUDED) {
                 return true;
             }
