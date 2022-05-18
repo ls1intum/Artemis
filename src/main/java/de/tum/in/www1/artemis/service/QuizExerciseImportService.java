@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.service;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
 
 import javax.validation.constraints.NotNull;
 
@@ -8,11 +9,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
-import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.quiz.AnswerOption;
+import de.tum.in.www1.artemis.domain.quiz.MultipleChoiceQuestion;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.domain.quiz.QuizQuestion;
-import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
-import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.ExampleSubmissionRepository;
+import de.tum.in.www1.artemis.repository.ResultRepository;
+import de.tum.in.www1.artemis.repository.SubmissionRepository;
 
 @Service
 public class QuizExerciseImportService extends ExerciseImportService {
@@ -30,8 +33,8 @@ public class QuizExerciseImportService extends ExerciseImportService {
     /**
      * Imports a quiz exercise creating a new entity, copying all basic values and saving it in the database.
      * All basic include everything except Student-, Tutor participations, and student questions. <br>
-     * This method calls {@link #copyQuizExerciseBasis(QuizExercise)} to set up the basis of the exercise
-     * {@link #copyExampleSubmission(Exercise, Exercise)} for a hard copy of the example submissions.
+     * This method calls {@link #copyQuizExerciseBasis(QuizExercise)} to set up the basis of the exercise and
+     * {@link #copyQuizQuestions(QuizExercise, QuizExercise)} for a hard copy of the questions.
      *
      * @param templateExercise The template exercise which should get imported
      * @param importedExercise The new exercise already containing values which should not get copied, i.e. overwritten
@@ -42,9 +45,7 @@ public class QuizExerciseImportService extends ExerciseImportService {
         log.debug("Creating a new Exercise based on exercise {}", templateExercise);
         QuizExercise newExercise = copyQuizExerciseBasis(importedExercise);
         copyQuizQuestions(importedExercise, newExercise);
-        newExercise = quizExerciseService.save(newExercise);
-        newExercise.setExampleSubmissions(copyExampleSubmission(templateExercise, newExercise));
-        return newExercise;
+        return quizExerciseService.save(newExercise);
     }
 
     /** This helper method copies all attributes of the {@code importedExercise} into a new exercise.
@@ -59,7 +60,6 @@ public class QuizExerciseImportService extends ExerciseImportService {
         QuizExercise newExercise = new QuizExercise();
 
         super.copyExerciseBasis(newExercise, importedExercise, new HashMap<>());
-        // ««newExercise.setExampleSolution(importedExercise.getExampleSolution());
         newExercise.setRandomizeQuestionOrder(importedExercise.isRandomizeQuestionOrder());
         newExercise.setAllowedNumberOfAttempts(importedExercise.getAllowedNumberOfAttempts());
         newExercise.setRemainingNumberOfAttempts(importedExercise.getRemainingNumberOfAttempts());
@@ -69,69 +69,27 @@ public class QuizExerciseImportService extends ExerciseImportService {
         return newExercise;
     }
 
-    @NotNull
-    private void copyQuizQuestions(QuizExercise templateExercise, QuizExercise newExercise) {
+    /** This helper method copies all questions of the {@code importedExercise} into a new exercise.
+     *
+     * @param importedExercise The exercise from which to copy the questions
+     * @param newExercise The exercise to which the questions are copied
+     */
+    private void copyQuizQuestions(QuizExercise importedExercise, QuizExercise newExercise) {
         log.debug("Copying the QuizQuestions to new QuizExercise: {}", newExercise);
 
-        List<QuizQuestion> newQuizQuestions = new ArrayList<>();
-        for (QuizQuestion quizQuestion : templateExercise.getQuizQuestions()) {
+        for (QuizQuestion quizQuestion : importedExercise.getQuizQuestions()) {
             quizQuestion.setId(null);
             quizQuestion.setQuizQuestionStatistic(null);
+            if (quizQuestion instanceof MultipleChoiceQuestion) {
+                List<AnswerOption> answerOptions = ((MultipleChoiceQuestion) quizQuestion).getAnswerOptions();
+                for (AnswerOption answerOption : answerOptions) {
+                    answerOption.setId(null);
+                    answerOption.setQuestion((MultipleChoiceQuestion) quizQuestion);
+                }
+                ((MultipleChoiceQuestion) quizQuestion).setAnswerOptions(((MultipleChoiceQuestion) quizQuestion).getAnswerOptions());
+            }
             quizQuestion.setExercise(newExercise);
-            newQuizQuestions.add(quizQuestion);
         }
-        newExercise.setQuizQuestions(newQuizQuestions);
-    }
-
-    /** This functions does a hard copy of the example submissions contained in {@code templateExercise}.
-     * To copy the corresponding Submission entity this function calls {@link #copySubmission(Submission)}
-     *
-     * @param templateExercise {TextExercise} The original exercise from which to fetch the example submissions
-     * @param newExercise The new exercise in which we will insert the example submissions
-     * @return The cloned set of example submissions
-     */
-    @Override
-    Set<ExampleSubmission> copyExampleSubmission(Exercise templateExercise, Exercise newExercise) {
-        log.debug("Copying the ExampleSubmissions to new Exercise: {}", newExercise);
-        Set<ExampleSubmission> newExampleSubmissions = new HashSet<>();
-        for (ExampleSubmission originalExampleSubmission : templateExercise.getExampleSubmissions()) {
-            QuizSubmission originalSubmission = (QuizSubmission) originalExampleSubmission.getSubmission();
-            QuizSubmission newSubmission = copySubmission(originalSubmission);
-
-            ExampleSubmission newExampleSubmission = new ExampleSubmission();
-            newExampleSubmission.setExercise(newExercise);
-            newExampleSubmission.setSubmission(newSubmission);
-            newExampleSubmission.setAssessmentExplanation(originalExampleSubmission.getAssessmentExplanation());
-
-            exampleSubmissionRepository.save(newExampleSubmission);
-            newExampleSubmissions.add(newExampleSubmission);
-        }
-        return newExampleSubmissions;
-    }
-
-    /** This helper function does a hard copy of the {@code originalSubmission} and stores the values in {@code newSubmission}.
-     * {@link ExerciseImportService#copyExampleResult(Result, Submission, Map)} respectively.
-     *
-     * @param originalSubmission The original submission to be copied.
-     * @return The cloned submission
-     */
-    @Override
-    QuizSubmission copySubmission(final Submission originalSubmission) {
-        QuizSubmission newSubmission = new QuizSubmission();
-        if (originalSubmission != null) {
-            log.debug("Copying the Submission to new ExampleSubmission: {}", newSubmission);
-            newSubmission.setExampleSubmission(true);
-            newSubmission.setSubmissionDate(originalSubmission.getSubmissionDate());
-            // newSubmission.setLanguage(((TextSubmission) originalSubmission).getLanguage());
-            newSubmission.setType(originalSubmission.getType());
-            newSubmission.setParticipation(originalSubmission.getParticipation());
-            // newSubmission.setText(((TextSubmission) originalSubmission).getText());
-            newSubmission = submissionRepository.saveAndFlush(newSubmission);
-            // newSubmission.setBlocks(copyTextBlocks(((TextSubmission) originalSubmission).getBlocks(), newSubmission));
-            // newSubmission.addResult(copyExampleResult(originalSubmission.getLatestResult(), newSubmission, new HashMap<>()));
-            newSubmission = submissionRepository.saveAndFlush(newSubmission);
-            // updateFeedbackReferencesWithNewTextBlockIds(((TextSubmission) originalSubmission).getBlocks(), newSubmission);
-        }
-        return newSubmission;
+        newExercise.setQuizQuestions(importedExercise.getQuizQuestions());
     }
 }

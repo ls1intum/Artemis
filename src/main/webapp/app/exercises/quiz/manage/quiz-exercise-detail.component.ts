@@ -42,6 +42,7 @@ import { round } from 'app/shared/util/utils';
 import { onError } from 'app/shared/util/global.utils';
 import { QuizExerciseValidationDirective } from 'app/exercises/quiz/manage/quiz-exercise-validation.directive';
 import { faExclamationCircle, faPlus, faXmark } from '@fortawesome/free-solid-svg-icons';
+import { navigateToExampleSubmissions } from 'app/utils/navigation.utils';
 
 @Component({
     selector: 'jhi-quiz-exercise-detail',
@@ -185,6 +186,10 @@ export class QuizExerciseDetailComponent extends QuizExerciseValidationDirective
                 if (!quizId && !this.isExamMode) {
                     this.init();
                 }
+
+                if (this.quizExercise && this.isImport) {
+                    this.quizExercise.course = this.course;
+                }
             });
         }
         if (quizId) {
@@ -228,6 +233,10 @@ export class QuizExerciseDetailComponent extends QuizExerciseValidationDirective
         // Assign savedEntity to identify local changes
         this.savedEntity = this.entity.id && !this.isImport ? cloneDeep(this.entity) : new QuizExercise(undefined, undefined);
         if (!this.quizExercise.course && !this.isExamMode) {
+            this.quizExercise.course = this.course;
+        }
+
+        if (this.isImport && this.course) {
             this.quizExercise.course = this.course;
         }
         if (!this.quizExercise.exerciseGroup && this.isExamMode) {
@@ -857,6 +866,11 @@ export class QuizExerciseDetailComponent extends QuizExerciseValidationDirective
         this.savedEntity = cloneDeep(quizExercise);
         this.quizExercise = quizExercise;
         this.changeDetector.detectChanges();
+
+        // Navigate back
+        if (this.isImport) {
+            this.cancel();
+        }
     }
 
     /**

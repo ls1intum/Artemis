@@ -59,10 +59,6 @@ public abstract class ExerciseImportService {
         }
     }
 
-    abstract Set<ExampleSubmission> copyExampleSubmission(final Exercise templateExercise, final Exercise newExercise);
-
-    abstract Submission copySubmission(final Submission originalSubmission);
-
     /**
      * This helper method does a hard copy of the result of a submission.
      * To copy the feedback, it calls {@link #copyFeedback(List, Result, Map)}

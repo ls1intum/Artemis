@@ -591,7 +591,7 @@ public class QuizExerciseResource {
         }
         importedExercise.checkCourseAndExerciseGroupExclusivity(ENTITY_NAME);
         final var user = userRepository.getUserWithGroupsAndAuthorities();
-        final var originalQuizExercise = quizExerciseRepository.findByIdWithExampleSubmissionsAndResultsElseThrow(sourceExerciseId);
+        final var originalQuizExercise = quizExerciseRepository.findByIdElseThrow(sourceExerciseId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, importedExercise, user);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, originalQuizExercise, user);
 
