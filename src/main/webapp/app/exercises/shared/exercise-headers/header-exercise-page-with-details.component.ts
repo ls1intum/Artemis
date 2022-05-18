@@ -16,7 +16,6 @@ import { ComplaintService } from 'app/complaints/complaint.service';
 @Component({
     selector: 'jhi-header-exercise-page-with-details',
     templateUrl: './header-exercise-page-with-details.component.html',
-    styleUrls: ['./header-exercise-page-with-details.component.scss'],
 })
 export class HeaderExercisePageWithDetailsComponent implements OnInit {
     readonly IncludedInOverallScore = IncludedInOverallScore;
@@ -91,6 +90,9 @@ export class HeaderExercisePageWithDetailsComponent implements OnInit {
         }
     }
 
+    /**
+     * Determines what element of the header should be highlighted. The highlighted deadline/time is the one being due next
+     */
     private setIsNextDueDateExamMode() {
         this.isNextDueDate = [false, false];
         const now = dayjs();
@@ -101,6 +103,9 @@ export class HeaderExercisePageWithDetailsComponent implements OnInit {
         }
     }
 
+    /**
+     * Determines what element of the header should be highlighted. The highlighted deadline/time is the one being due next
+     */
     private setIsNextDueDateCourseMode() {
         this.isNextDueDate = [false, false, false, false, false, false];
         const now = dayjs();

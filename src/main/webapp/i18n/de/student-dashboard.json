@@ -185,13 +185,13 @@
                 "submissionDue": "Abgabe bis:",
                 "submissionDueTooltip": "Die Abgabe ist bis {{date}} möglich.",
                 "testsAfterDueDate": "Testdurchlauf nach Abgabefrist:",
-                "testsAfterDueDateTooltip": "Die Tests werden an {{date}} erneut durchlaufen.",
+                "testsAfterDueDateTooltip": "Die Tests werden {{date}} erneut durchlaufen.",
                 "exampleSolutionPublicationDay": "Veröffentlichung der Beispiellösung:",
-                "exampleSolutionPublicationDayTooltip": "Die Beispiellösung wird an {{date}} veröffentlicht.",
+                "exampleSolutionPublicationDayTooltip": "Die Beispiellösung wird {{date}} veröffentlicht.",
                 "assessmentDue": "Bewertung bis:",
-                "assessmentDueTooltip": "Die Frist für Bewertung ist {{date}}.",
+                "assessmentDueTooltip": "Die Frist für die Bewertung ist {{date}}.",
                 "complaintDue": "Beschwerde bis:",
-                "complaintDueTooltip": "Du kannst eine Beschwerde bis {{date}} schreiben.",
+                "complaintDueTooltip": "Du kannst eine Beschwerde bis {{date}} einreichen.",
                 "complaintPossible": "Beschwerde möglich:",
                 "complaintPossibleTooltip": "Eine Beschwerde wird später möglich sein."
             }
