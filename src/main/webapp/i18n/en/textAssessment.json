@@ -31,8 +31,8 @@
             "instructions": "&nbsp; Instructions &nbsp;",
             "detail": {
                 "credits": {
-                    "one": "{{credits}} credit",
-                    "many": "{{credits}} credits"
+                    "one": "{{credits}} point",
+                    "many": "{{credits}} points"
                 }
             },
             "editor": {
