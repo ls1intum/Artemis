@@ -1,5 +1,5 @@
 <div class="row justify-content-center programming-exercise-detail-wrapper-class">
-    <div class="col-8">
+    <div class="col-md-8">
         <div *ngIf="programmingExercise">
             <h2><span jhiTranslate="artemisApp.programmingExercise.detail.title">Programming Exercise</span> {{ programmingExercise.id }}</h2>
             <hr />
@@ -151,7 +151,7 @@
                 At the moment, this is only visible to admins as the actual main functionality has not yet been added on the server.
                 In the future, this feature will be available to editors and instructors as well.
                 -->
-                <div *ngIf="isAdmin && programmingExercise.programmingLanguage == ProgrammingLanguage.JAVA">
+                <div *ngIf="programmingExercise.isAtLeastEditor && programmingExercise.programmingLanguage == ProgrammingLanguage.JAVA">
                     <span class="me-1">
                         <button
                             [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
@@ -194,6 +194,17 @@
                             ngbTooltip="{{ 'artemisApp.programmingExercise.createBehavioralSolutionEntriesTooltip' | artemisTranslate }}"
                         >
                             <span jhiTranslate="artemisApp.programmingExercise.createBehavioralSolutionEntriesTitle">Create Behavioral Solution Entries</span>
+                        </button>
+                    </span>
+                    <span class="me-1">
+                        <button
+                            [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
+                            type="button"
+                            (click)="generateCodeHints()"
+                            class="btn btn-secondary btn-sm"
+                            ngbTooltip="{{ 'artemisApp.programmingExercise.generateCodeHintsTooltip' | artemisTranslate }}"
+                        >
+                            <span jhiTranslate="artemisApp.programmingExercise.generateCodeHintsTitle">Generate Code Hints</span>
                         </button>
                     </span>
                 </div>
@@ -295,7 +306,7 @@
                     </button>
                 </div>
             </div>
-            <div *ngIf="programmingExercise.releaseDate != undefined && dayjs(programmingExercise.releaseDate).isBefore(dayjs())" class="mt-3">
+            <div *ngIf="!programmingExercise.releaseDate || dayjs(programmingExercise.releaseDate).isBefore(dayjs())" class="mt-3">
                 <jhi-exercise-detail-statistics [exercise]="programmingExercise" [doughnutStats]="doughnutStats" [exerciseType]="PROGRAMMING"></jhi-exercise-detail-statistics>
                 <hr />
                 <div>

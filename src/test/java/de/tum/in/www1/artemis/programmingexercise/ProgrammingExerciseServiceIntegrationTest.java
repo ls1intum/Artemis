@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.programmingexercise;
 
-import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResourceEndpoints.*;
+import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResourceEndpoints.IMPORT;
+import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResourceEndpoints.ROOT;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.stream.Collectors;
@@ -13,7 +14,11 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
-import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.ProgrammingExerciseTestCase;
+import de.tum.in.www1.artemis.domain.StaticCodeAnalysisCategory;
+import de.tum.in.www1.artemis.domain.hestia.CodeHint;
 import de.tum.in.www1.artemis.domain.hestia.ExerciseHint;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseImportService;
@@ -47,7 +52,12 @@ public class ProgrammingExerciseServiceIntegrationTest extends AbstractSpringInt
         database.addCourseWithOneProgrammingExerciseAndTestCases();
         additionalEmptyCourse = database.addEmptyCourse();
         programmingExercise = programmingExerciseRepository.findAll().get(0);
+        // Needed, as we need the test cases for the next steps
+        programmingExercise = database.loadProgrammingExerciseWithEagerReferences(programmingExercise);
         database.addHintsToExercise(programmingExercise);
+        database.addTasksToProgrammingExercise(programmingExercise);
+        database.addSolutionEntriesToProgrammingExercise(programmingExercise);
+        database.addCodeHintsToProgrammingExercise(programmingExercise);
         database.addHintsToProblemStatement(programmingExercise);
         database.addStaticCodeAnalysisCategoriesToProgrammingExercise(programmingExercise);
 
@@ -104,7 +114,7 @@ public class ProgrammingExerciseServiceIntegrationTest extends AbstractSpringInt
 
         final var oldHintIDs = programmingExercise.getExerciseHints().stream().map(ExerciseHint::getId).collect(Collectors.toSet());
         final var newHintIDs = imported.getExerciseHints().stream().map(ExerciseHint::getId).collect(Collectors.toSet());
-        final var matchString = ".*\\{[^{}]*%d[^{}]*\\}.*";
+        final var matchString = ".*\\{%d\\}.*";
         final var importedStatement = imported.getProblemStatement();
         assertThat(oldHintIDs).noneMatch(hint -> importedStatement.matches(String.format(matchString, hint)));
         assertThat(newHintIDs).allMatch(hint -> importedStatement.matches(String.format(matchString, hint)));
@@ -118,8 +128,16 @@ public class ProgrammingExerciseServiceIntegrationTest extends AbstractSpringInt
         // All copied hints/tests have the same content are referenced to the new exercise
         assertThat(imported.getExerciseHints()).allMatch(hint -> programmingExercise.getExerciseHints().stream().anyMatch(
                 oldHint -> oldHint.getContent().equals(hint.getContent()) && oldHint.getTitle().equals(hint.getTitle()) && hint.getExercise().getId().equals(imported.getId())));
+        assertThat(imported.getExerciseHints().stream().filter(eh -> eh instanceof CodeHint).map(eh -> (CodeHint) eh).collect(Collectors.toSet()))
+                .allMatch(codeHint -> programmingExercise.getExerciseHints().stream().filter(eh -> eh instanceof CodeHint).map(eh -> (CodeHint) eh)
+                        .anyMatch(oldHint -> oldHint.getTitle().equals(codeHint.getTitle())
+                                && oldHint.getProgrammingExerciseTask().getTaskName().equals(codeHint.getProgrammingExerciseTask().getTaskName())
+                                && codeHint.getSolutionEntries().size() == 1 && oldHint.getSolutionEntries().stream().findFirst().orElseThrow().getCode()
+                                        .equals(codeHint.getSolutionEntries().stream().findFirst().orElseThrow().getCode())));
+
         assertThat(imported.getTestCases()).allMatch(test -> programmingExercise.getTestCases().stream().anyMatch(oldTest -> test.getExercise().getId().equals(imported.getId())
-                && oldTest.getTestName().equalsIgnoreCase(test.getTestName()) && oldTest.getWeight().equals(test.getWeight())));
+                && oldTest.getTestName().equalsIgnoreCase(test.getTestName()) && oldTest.getWeight().equals(test.getWeight()) && test.getSolutionEntries().size() == 1
+                && oldTest.getSolutionEntries().stream().findFirst().orElseThrow().getCode().equals(test.getSolutionEntries().stream().findFirst().orElseThrow().getCode())));
     }
 
     @Test

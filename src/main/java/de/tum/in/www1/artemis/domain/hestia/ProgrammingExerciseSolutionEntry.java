@@ -7,6 +7,7 @@ import javax.persistence.*;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
@@ -59,7 +60,7 @@ public class ProgrammingExerciseSolutionEntry extends DomainObject {
 
     // Fetched lazily, as we never need the code hint when fetching solution entries
     @ManyToOne(fetch = FetchType.LAZY)
-    @JsonIgnoreProperties("solutionEntries")
+    @JsonIgnore
     private CodeHint codeHint;
 
     @ManyToOne

@@ -3,7 +3,7 @@ import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
-import { ExerciseHint } from 'app/entities/hestia/exercise-hint.model';
+import { ExerciseHint, HintType } from 'app/entities/hestia/exercise-hint.model';
 
 export type ExerciseHintResponse = HttpResponse<ExerciseHint>;
 
@@ -31,9 +31,10 @@ export interface IExerciseHintService {
 
     /**
      * Finds all exercise hints by exercise id
+     * Also fetches any relations. This currently only includes the submission entries of a code hint
      * @param exerciseId Id of exercise
      */
-    findByExerciseId(exerciseId: number): Observable<HttpResponse<ExerciseHint[]>>;
+    findByExerciseIdWithRelations(exerciseId: number): Observable<HttpResponse<ExerciseHint[]>>;
 
     /**
      * Deletes an exercise hint
@@ -56,7 +57,7 @@ export class ExerciseHintService implements IExerciseHintService {
      */
     create(exerciseId: number, exerciseHint: ExerciseHint): Observable<ExerciseHintResponse> {
         exerciseHint.exercise = ExerciseService.convertDateFromClient(exerciseHint.exercise!);
-        exerciseHint.type = 'text';
+        exerciseHint.type = HintType.TEXT;
         if (exerciseHint.exercise.categories) {
             exerciseHint.exercise.categories = ExerciseService.stringifyExerciseCategories(exerciseHint.exercise);
         }
@@ -85,10 +86,11 @@ export class ExerciseHintService implements IExerciseHintService {
 
     /**
      * Finds all exercise hints by exercise id
+     * Also fetches any relations. This currently only includes the submission entries of a code hint
      * @param exerciseId Id of exercise
      */
-    findByExerciseId(exerciseId: number): Observable<HttpResponse<ExerciseHint[]>> {
-        return this.http.get<ExerciseHint[]>(`${this.resourceUrl}/${exerciseId}/exercise-hints`, { observe: 'response' });
+    findByExerciseIdWithRelations(exerciseId: number): Observable<HttpResponse<ExerciseHint[]>> {
+        return this.http.get<ExerciseHint[]>(`${this.resourceUrl}/${exerciseId}/full-exercise-hints`, { observe: 'response' });
     }
 
     /**
