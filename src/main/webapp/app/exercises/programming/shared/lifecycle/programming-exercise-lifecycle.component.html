@@ -112,7 +112,7 @@
                 [(ngModel)]="exercise.exampleSolutionPublicationDate"
                 [readOnly]="readOnly"
                 [startAt]="exercise.dueDate || exercise.releaseDate"
-                [min]="exercise.dueDate || exercise.releaseDate"
+                [min]="(exercise.includedInOverallScore !== IncludedInOverallScore.NOT_INCLUDED ? exercise.dueDate : undefined) || exercise.releaseDate"
                 class="test-schedule-date me-2"
                 label="artemisApp.exercise.exampleSolutionPublicationDate"
                 tooltipText="artemisApp.programmingExercise.timeline.exampleSolutionPublicationDateTooltip"
