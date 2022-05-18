@@ -163,7 +163,7 @@ a.btn {
 .form-control:focus-visible,
 textarea {
     background-color: $form-control-focus-background;
-    color: $form-control-color;
+    color: $form-control-color !important;
 }
 
 .form-inline .form-control {
