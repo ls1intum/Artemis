@@ -395,7 +395,7 @@ public class ProgrammingExerciseImportService {
 
                     targetCodeHint.setProgrammingExerciseTask(targetTask);
                     exerciseHintRepository.save(targetCodeHint);
-                    targetTask.getCodeHints().add(targetCodeHint);
+                    targetTask.getExerciseHints().add(targetCodeHint);
                 });
     }
 
