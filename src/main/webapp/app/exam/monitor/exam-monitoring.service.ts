@@ -49,7 +49,7 @@ export class ExamMonitoringService {
      * Returns the resource url.
      * @param courseId which the exam belongs to
      * @param examId of the current exam
-     * @private
+     * @return the resource url
      */
     public static getResourceURL(courseId: number, examId: number): string {
         return `${SERVER_API_URL}api/courses/${courseId}/exams/${examId}`;
@@ -62,7 +62,6 @@ export class ExamMonitoringService {
      * @param examId of the current exam
      * @param studentExamId of the student
      * @return error if the sync was not successful
-     * @private
      */
     public syncActions(examActions: ExamAction[], courseId: number, examId: number, studentExamId: number): Observable<void> {
         const url = ExamMonitoringService.getResourceURL(courseId, examId) + `/student-exams/${studentExamId}/actions`;
