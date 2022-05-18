@@ -22,13 +22,17 @@
             "taskTooltip": "Es wird nicht empfohlen, Code-Hinweise anderen Tasks zuzuweisen, weil die Hinweise speziell für einen Task erstellt wurden.",
             "content": "Inhalt",
             "exercise": "Aufgabe",
+            "exerciseHintButtonTooltip": "Verfügbare und aktivierte Hinweise für diese Aufgabe anzeigen.",
             "studentDialog": {
                 "title": "Hinweise zur Übung",
                 "tooltip": "Hinweise zu dieser Übung öffnen",
                 "activate": "Aktivieren",
                 "activateTooltip": "Der Hinweis wird aktiviert und den angezeigten Hinweisen hinzugefügt.",
                 "display": "Anzeigen",
-                "collapse": "Verbergen"
+                "collapse": "Verbergen",
+                "rateHintQuestion": "Wie hilfreich war dieser Hinweis?",
+                "emptyAvailableHintsDescription": "Neue verfügbare Hinweise werden hier angezeigt.",
+                "emptyActivatedHintsDescription": "Aktivierte Hinweise werden hier angezeigt."
             }
         },
         "codeHint": {

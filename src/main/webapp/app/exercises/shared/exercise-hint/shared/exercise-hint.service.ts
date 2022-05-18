@@ -42,6 +42,12 @@ export interface IExerciseHintService {
      * @param exerciseHintId Id of exercise hint to delete
      */
     delete(exerciseId: number, exerciseHintId: number): Observable<HttpResponse<void>>;
+
+    /**
+     * Gets all available exercise hints
+     * @param exerciseId Id of the exercise of which to retrieve all available exercise hints
+     */
+    getAvailableExerciseHints(exerciseId: number): Observable<HttpResponse<ExerciseHint[]>>;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -111,5 +117,13 @@ export class ExerciseHintService implements IExerciseHintService {
      */
     delete(exerciseId: number, exerciseHintId: number): Observable<HttpResponse<void>> {
         return this.http.delete<void>(`${this.resourceUrl}/${exerciseId}/exercise-hints/${exerciseHintId}`, { observe: 'response' });
+    }
+
+    /**
+     * Gets all available exercise hints
+     * @param exerciseId Id of the exercise of which to retrieve all available exercise hints
+     */
+    getAvailableExerciseHints(exerciseId: number): Observable<HttpResponse<ExerciseHint[]>> {
+        return this.http.get<ExerciseHint[]>(`${this.resourceUrl}/${exerciseId}/available-exercise-hints`, { observe: 'response' });
     }
 }

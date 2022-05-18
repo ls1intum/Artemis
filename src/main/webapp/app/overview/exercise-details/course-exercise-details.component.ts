@@ -51,6 +51,8 @@ import { TextExercise } from 'app/entities/text-exercise.model';
 import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
 import { PlagiarismCasesService } from 'app/course/plagiarism-cases/shared/plagiarism-cases.service';
 import { PlagiarismCase } from 'app/exercises/shared/plagiarism/types/PlagiarismCase';
+import { ExerciseHintService } from 'app/exercises/shared/exercise-hint/shared/exercise-hint.service';
+import { ExerciseHint } from 'app/entities/hestia/exercise-hint.model';
 
 const MAX_RESULT_HISTORY_LENGTH = 5;
 
@@ -93,6 +95,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     submissionPolicy: SubmissionPolicy;
     exampleSolutionCollapsed: boolean;
     plagiarismCase?: PlagiarismCase;
+    availableExerciseHints: ExerciseHint[];
 
     public modelingExercise?: ModelingExercise;
     public exampleSolution?: SafeHtml;
@@ -146,6 +149,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         private navigationUtilService: ArtemisNavigationUtilService,
         private artemisMarkdown: ArtemisMarkdownService,
         private plagiarismCaseService: PlagiarismCasesService,
+        private exerciseHintService: ExerciseHintService,
     ) {}
 
     ngOnInit() {
@@ -373,6 +377,12 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
                         ? this.exercise.studentParticipations.map((el) => (el.id === changedParticipation.id ? changedParticipation : el))
                         : [changedParticipation];
                 this.mergeResultsAndSubmissionsForParticipations();
+
+                if (ExerciseType.PROGRAMMING === this.exercise?.type) {
+                    this.exerciseHintService.findByExerciseIdWithRelations(this.exerciseId).subscribe((res?: HttpResponse<ExerciseHint[]>) => {
+                        this.availableExerciseHints = res!.body!;
+                    });
+                }
             }
         });
     }

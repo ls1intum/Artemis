@@ -22,13 +22,17 @@
             "taskTooltip": "It is not recommended to assign code hints to other tasks since these are specifically generated for a task.",
             "content": "Content",
             "exercise": "Exercise",
+            "exerciseHintButtonTooltip": "See available and activated hints for this exercise.",
             "studentDialog": {
                 "title": "Exercise Hints",
                 "tooltip": "Open hints for this exercise",
                 "activate": "Activate",
                 "activateTooltip": "The hint will be activated and added to your displayed hints.",
                 "display": "Display",
-                "collapse": "Collapse"
+                "collapse": "Collapse",
+                "rateHintQuestion": "How helpful was this hint?",
+                "emptyAvailableHintsDescription": "New available hints will be displayed here.",
+                "emptyActivatedHintsDescription": "Already activated hints will be displayed here."
             }
         },
         "codeHint": {
