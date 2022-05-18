@@ -852,6 +852,29 @@ public abstract class Exercise extends BaseExercise {
     }
 
     /**
+     * This method is used to validate the dates of an exercise. A date is valid if there is no dueDateError or assessmentDueDateError
+     *
+     * @throws BadRequestAlertException if the dates are not valid
+     */
+    public void validateDates() {
+        // All fields are optional, so there is no error if none of them is set
+        if (getReleaseDate() == null && getDueDate() == null && getAssessmentDueDate() == null && getExampleSolutionPublicationDate() == null) {
+            return;
+        }
+        if (isExamExercise()) {
+            throw new BadRequestAlertException("An exam exercise may not have any dates set!", getTitle(), "invalidDatesForExamExercise");
+        }
+
+        // at least one is set, so we have to check the three possible errors
+        boolean areDatesValid = isNotAfterAndNotNull(getReleaseDate(), getDueDate()) && isValidAssessmentDueDate(getReleaseDate(), getDueDate(), getAssessmentDueDate())
+                && isValidExampleSolutionPublicationDate(getReleaseDate(), getDueDate(), getExampleSolutionPublicationDate(), getIncludedInOverallScore());
+
+        if (!areDatesValid) {
+            throw new BadRequestAlertException("The exercise dates are not valid", getTitle(), "noValidDates");
+        }
+    }
+
+    /**
      * Validates score settings
      * 1. The maxScore needs to be greater than 0
      * 2. If the specified amount of bonus points is valid depending on the IncludedInOverallScore value
