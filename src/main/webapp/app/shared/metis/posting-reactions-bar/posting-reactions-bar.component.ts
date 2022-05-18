@@ -41,6 +41,7 @@ interface ReactionMetaDataMap {
 export abstract class PostingsReactionsBarDirective<T extends Posting> implements OnInit, OnChanges, OnDestroy {
     pinEmojiId: string = PIN_EMOJI_ID;
     archiveEmojiId: string = ARCHIVE_EMOJI_ID;
+    emojiSet = 'facebook' as const;
     /*
      * icons (as svg paths) to be used as category preview image in emoji mart selector
      */
