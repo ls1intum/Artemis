@@ -1,8 +1,8 @@
 import { ElementRef } from '@angular/core';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
+import ace from 'brace';
 
 // Work around to update the range
-const ace = require('brace');
 const Range = ace.acequire('ace/range').Range;
 
 // Required to access end and start
