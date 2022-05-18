@@ -160,6 +160,7 @@ a.btn {
 .form-check-input,
 .form-control:not(.ace_editor):hover,
 .form-control:focus,
+.form-control:focus-visible,
 textarea {
     background-color: $form-control-focus-background;
     color: $form-control-color;
