@@ -34,7 +34,7 @@ export class ExamMonitoringService {
      */
     public saveActions(exam: Exam, studentExam: StudentExam, courseId: number) {
         // We synchronize the user actions with the server and then delete them on the client, as they are no longer used
-        if (exam.monitoring && studentExam.examActivity !== undefined) {
+        if (exam.monitoring && studentExam.examActivity) {
             const actionsToSync = studentExam.examActivity.examActions;
             this.syncActions(actionsToSync, courseId, exam.id!, studentExam.id!).subscribe({
                 // After successful synchronization we can delete the actions -> filter in case of new actions during the synchronization
