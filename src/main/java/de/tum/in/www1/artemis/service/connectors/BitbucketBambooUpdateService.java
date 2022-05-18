@@ -158,7 +158,7 @@ public class BitbucketBambooUpdateService implements ContinuousIntegrationUpdate
         String requestUrl = bambooServerUrl + "/rest/applinks/latest/applicationlink";
         UriComponentsBuilder builder = UriComponentsBuilder.fromUriString(requestUrl).queryParam("expand", "");
         ApplicationLinksDTO links = bambooRestTemplate.exchange(builder.build().toUri(), HttpMethod.GET, null, ApplicationLinksDTO.class).getBody();
-        if (links != null && links.getApplicationLinks() != null && links.getApplicationLinks().size() > 0) {
+        if (links != null && links.getApplicationLinks() != null && !links.getApplicationLinks().isEmpty()) {
             for (var link : links.getApplicationLinks()) {
                 if (link.getName() != null) {
                     cachedApplicationLinks.put(link.getName(), link);

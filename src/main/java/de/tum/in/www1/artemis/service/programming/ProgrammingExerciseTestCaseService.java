@@ -202,7 +202,7 @@ public class ProgrammingExerciseTestCaseService {
         // consider more attributes of the TestCase rather than only the testName.
         testCasesToSave.removeIf(candidate -> testCasesToSave.stream().filter(testCase -> testCase.getTestName().equalsIgnoreCase(candidate.getTestName())).count() > 1);
 
-        if (testCasesToSave.size() > 0) {
+        if (!testCasesToSave.isEmpty()) {
             testCaseRepository.saveAll(testCasesToSave);
             programmingExerciseTaskService.updateTasksFromProblemStatement(exercise);
             return true;

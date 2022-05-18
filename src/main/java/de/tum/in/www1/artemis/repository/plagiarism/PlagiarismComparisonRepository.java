@@ -1,9 +1,11 @@
-package de.tum.in.www1.artemis.repository;
+package de.tum.in.www1.artemis.repository.plagiarism;
 
-import java.util.List;
+import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
+
 import java.util.Optional;
 import java.util.Set;
 
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -68,17 +70,8 @@ public interface PlagiarismComparisonRepository extends JpaRepository<Plagiarism
         return findByIdWithSubmissionsAndElementsB(comparisonId).orElseThrow(() -> new EntityNotFoundException("PlagiarismComparison", comparisonId));
     }
 
+    @EntityGraph(type = LOAD, attributePaths = { "submissionA", "submissionA.plagiarismCase", "submissionB", "submissionB.plagiarismCase" })
     Optional<Set<PlagiarismComparison<?>>> findBySubmissionA_SubmissionIdOrSubmissionB_SubmissionId(long submissionA_submissionId, long submissionB_submissionId);
-
-    // TODO: only load comparisons for the last plagiarismResultId that belongs to one exercise
-    @Query("""
-            SELECT DISTINCT comparison FROM PlagiarismComparison comparison
-            LEFT JOIN FETCH comparison.plagiarismResult plagiarismResult
-            LEFT JOIN FETCH plagiarismResult.exercise exercise
-            WHERE comparison.status = :status
-            AND comparison.plagiarismResult.exercise.course.id = :courseId
-            """)
-    List<PlagiarismComparison<?>> findCasesForCourse(@Param("status") PlagiarismStatus status, @Param("courseId") Long courseId);
 
     // we can't simply call save() on plagiarismComparisons because the plagiarismComparisonMatches have no id
     // and would be recreated. Therefore, we need some update methods:
@@ -87,34 +80,4 @@ public interface PlagiarismComparisonRepository extends JpaRepository<Plagiarism
     @Transactional // ok because of modifying query
     @Query("UPDATE PlagiarismComparison plagiarismComparison set plagiarismComparison.status = :status where plagiarismComparison.id = :plagiarismComparisonId")
     void updatePlagiarismComparisonStatus(@Param("plagiarismComparisonId") Long plagiarismComparisonId, @Param("status") PlagiarismStatus status);
-
-    @Modifying
-    @Transactional // ok because of modifying query
-    @Query("UPDATE PlagiarismComparison plagiarismComparison set plagiarismComparison.statusA = :status where plagiarismComparison.id = :plagiarismComparisonId")
-    void updatePlagiarismComparisonFinalStatusA(@Param("plagiarismComparisonId") Long plagiarismComparisonId, @Param("status") PlagiarismStatus status);
-
-    @Modifying
-    @Transactional // ok because of modifying query
-    @Query("UPDATE PlagiarismComparison plagiarismComparison set plagiarismComparison.statusB = :status where plagiarismComparison.id = :plagiarismComparisonId")
-    void updatePlagiarismComparisonFinalStatusB(@Param("plagiarismComparisonId") Long plagiarismComparisonId, @Param("status") PlagiarismStatus status);
-
-    @Modifying
-    @Transactional // ok because of modifying query
-    @Query("UPDATE PlagiarismComparison plagiarismComparison set plagiarismComparison.instructorStatementA = :statement where plagiarismComparison.id = :plagiarismComparisonId")
-    void updatePlagiarismComparisonInstructorStatementA(@Param("plagiarismComparisonId") Long plagiarismComparisonId, @Param("statement") String statement);
-
-    @Modifying
-    @Transactional // ok because of modifying query
-    @Query("UPDATE PlagiarismComparison plagiarismComparison set plagiarismComparison.instructorStatementB = :statement where plagiarismComparison.id = :plagiarismComparisonId")
-    void updatePlagiarismComparisonInstructorStatementB(@Param("plagiarismComparisonId") Long plagiarismComparisonId, @Param("statement") String statement);
-
-    @Modifying
-    @Transactional // ok because of modifying query
-    @Query("UPDATE PlagiarismComparison plagiarismComparison set plagiarismComparison.studentStatementA = :statement where plagiarismComparison.id = :plagiarismComparisonId")
-    void updatePlagiarismComparisonStudentStatementA(@Param("plagiarismComparisonId") Long plagiarismComparisonId, @Param("statement") String statement);
-
-    @Modifying
-    @Transactional // ok because of modifying query
-    @Query("UPDATE PlagiarismComparison plagiarismComparison set plagiarismComparison.studentStatementB = :statement where plagiarismComparison.id = :plagiarismComparisonId")
-    void updatePlagiarismComparisonStudentStatementB(@Param("plagiarismComparisonId") Long plagiarismComparisonId, @Param("statement") String statement);
 }

@@ -184,6 +184,11 @@ public class QuizExerciseResource {
 
         quizExercise.reconnectJSONIgnoreAttributes();
 
+        // don't allow changing batches except in synchronized mode as the client doesn't have the full list and saving the exercise could otherwise end up deleting a bunch
+        if (quizExercise.getQuizMode() != QuizMode.SYNCHRONIZED || quizExercise.getQuizBatches() == null || quizExercise.getQuizBatches().size() > 1) {
+            quizExercise.setQuizBatches(batches);
+        }
+
         quizExercise = quizExerciseService.save(quizExercise);
         exerciseService.logUpdate(quizExercise, quizExercise.getCourseViaExerciseGroupOrCourseMember(), user);
 
@@ -405,7 +410,8 @@ public class QuizExerciseResource {
     public ResponseEntity<QuizExercise> performActionForQuizExercise(@PathVariable Long quizExerciseId, @PathVariable String action) {
         log.debug("REST request to immediately start QuizExercise : {}", quizExerciseId);
         var quizExercise = quizExerciseRepository.findByIdWithQuestionsAndStatisticsElseThrow(quizExerciseId);
-        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, quizExercise, null);
+        var user = userRepository.getUserWithGroupsAndAuthorities();
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, quizExercise, user);
 
         switch (action) {
             case "start-now" -> {
@@ -431,6 +437,8 @@ public class QuizExerciseResource {
                 quizExercise.setDueDate(now.plusSeconds(quizExercise.getDuration() + Constants.QUIZ_GRACE_PERIOD_IN_SECONDS));
             }
             case "end-now" -> {
+                // editors may not end the quiz
+                authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, quizExercise, user);
                 // only synchronized quiz exercises can be started like this
                 if (quizExercise.getQuizMode() == QuizMode.SYNCHRONIZED) {
                     return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, "quizExercise", "quizSynchronized", "Quiz is synchronized."))

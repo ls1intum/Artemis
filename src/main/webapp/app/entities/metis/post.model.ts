@@ -4,6 +4,7 @@ import { AnswerPost } from 'app/entities/metis/answer-post.model';
 import { Course } from 'app/entities/course.model';
 import { Posting } from 'app/entities/metis/posting.model';
 import { CourseWideContext, DisplayPriority } from 'app/shared/metis/metis.util';
+import { PlagiarismCase } from 'app/exercises/shared/plagiarism/types/PlagiarismCase';
 
 export class Post extends Posting {
     public title?: string;
@@ -13,6 +14,7 @@ export class Post extends Posting {
     public exercise?: Exercise;
     public lecture?: Lecture;
     public course?: Course;
+    public plagiarismCase?: PlagiarismCase;
     public courseWideContext?: CourseWideContext;
     public displayPriority?: DisplayPriority;
 

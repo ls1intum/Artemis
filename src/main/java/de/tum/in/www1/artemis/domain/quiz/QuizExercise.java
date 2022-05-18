@@ -194,7 +194,7 @@ public class QuizExercise extends Exercise {
     @JsonIgnore
     public Boolean isValid() {
         // check title
-        if (getTitle() == null || getTitle().equals("")) {
+        if (getTitle() == null || getTitle().isEmpty()) {
             return false;
         }
 
@@ -412,6 +412,9 @@ public class QuizExercise extends Exercise {
         // reset unchangeable attributes: ( dueDate, releaseDate, question.points)
         this.setDueDate(originalQuizExercise.getDueDate());
         this.setReleaseDate(originalQuizExercise.getReleaseDate());
+
+        // cannot update batches
+        this.setQuizBatches(originalQuizExercise.getQuizBatches());
 
         // remove added Questions, which are not allowed to be added
         Set<QuizQuestion> addedQuizQuestions = new HashSet<>();
