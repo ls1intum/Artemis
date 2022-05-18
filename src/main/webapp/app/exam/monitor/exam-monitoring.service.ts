@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { StudentExam } from 'app/entities/student-exam.model';
 import { ExamAction, ExamActivity } from 'app/entities/exam-user-activity.model';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { Exam } from 'app/entities/exam.model';
 
@@ -63,8 +63,8 @@ export class ExamMonitoringService {
      * @param studentExamId of the student
      * @return error if the sync was not successful
      */
-    public syncActions(examActions: ExamAction[], courseId: number, examId: number, studentExamId: number): Observable<void> {
+    public syncActions(examActions: ExamAction[], courseId: number, examId: number, studentExamId: number): Observable<HttpResponse<void>> {
         const url = ExamMonitoringService.getResourceURL(courseId, examId) + `/student-exams/${studentExamId}/actions`;
-        return this.http.put<void>(url, examActions);
+        return this.http.put<void>(url, examActions, { observe: 'response' });
     }
 }

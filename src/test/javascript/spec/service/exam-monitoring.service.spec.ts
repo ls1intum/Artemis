@@ -102,7 +102,7 @@ describe('ExamMonitoringService', () => {
         expect(spy).toHaveBeenCalledOnce();
         expect(spy).toHaveBeenCalledWith(examActions, course.id, exam.id, studentExam.id);
 
-        expect(studentExam.examActivity.examActions.length).toBe(0);
+        expect(studentExam.examActivity.examActions).toHaveLength(0);
     });
 
     it('should not remove actions after not successful sync', () => {
