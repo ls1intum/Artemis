@@ -66,6 +66,9 @@ public class CourseTestService {
     private LectureRepository lectureRepo;
 
     @Autowired
+    private LearningGoalRepository learningGoalRepo;
+
+    @Autowired
     private ResultRepository resultRepo;
 
     @Autowired
@@ -415,7 +418,6 @@ public class CourseTestService {
 
     // Test
     public void testEditCourseWithPermission() throws Exception {
-
         Course course = ModelFactory.generateCourse(1L, null, null, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
         course = courseRepo.save(course);
 
@@ -427,6 +429,31 @@ public class CourseTestService {
         assertThat(updatedCourse.getTitle()).as("title was changed correctly").isEqualTo(course.getTitle());
         assertThat(updatedCourse.getStartDate()).as("start date was changed correctly").isEqualTo(course.getStartDate());
         assertThat(updatedCourse.getEndDate()).as("end date was changed correctly").isEqualTo(course.getEndDate());
+    }
+
+    // Test
+    public void testEditCourseShouldPreserveAssociations() throws Exception {
+        Course course = database.createCourseWithOrganizations();
+        course = courseRepo.save(course);
+
+        Set<Organization> organizations = course.getOrganizations();
+
+        Set<LearningGoal> learningGoals = new HashSet<>();
+        learningGoals.add(database.createLearningGoal(course));
+        course.setLearningGoals(learningGoals);
+        course = courseRepo.save(course);
+
+        Set<LearningGoal> prerequisites = new HashSet<>();
+        prerequisites.add(database.createLearningGoal(database.createCourse()));
+        course.setPrerequisites(prerequisites);
+        course = courseRepo.save(course);
+
+        request.putWithResponseBody("/api/courses", course, Course.class, HttpStatus.OK);
+
+        Course updatedCourse = courseRepo.findByIdWithOrganizationsAndLearningGoalsElseThrow(course.getId());
+        assertThat(updatedCourse.getOrganizations()).containsExactlyElementsOf(organizations);
+        assertThat(updatedCourse.getLearningGoals()).containsExactlyElementsOf(learningGoals);
+        assertThat(updatedCourse.getPrerequisites()).containsExactlyElementsOf(prerequisites);
     }
 
     // Test
@@ -546,10 +573,10 @@ public class CourseTestService {
         for (Exercise exercise : courses.get(0).getExercises()) {
             // Test that the exercise does not have more than one participation.
             assertThat(exercise.getStudentParticipations()).as("At most one participation for exercise").hasSizeLessThanOrEqualTo(1);
-            if (exercise.getStudentParticipations().size() > 0) {
+            if (!exercise.getStudentParticipations().isEmpty()) {
                 // Buffer participation so that null checking is easier.
                 Participation participation = exercise.getStudentParticipations().iterator().next();
-                if (participation.getSubmissions().size() > 0) {
+                if (!participation.getSubmissions().isEmpty()) {
                     // The call filters participations by submissions and their result. After the call each participation shouldn't have more than one submission.
                     assertThat(participation.getSubmissions()).as("At most one submission for participation").hasSizeLessThanOrEqualTo(1);
                     Submission submission = participation.getSubmissions().iterator().next();
@@ -585,10 +612,10 @@ public class CourseTestService {
         for (Exercise exercise : courses.get(0).getExercises()) {
             // Test that the exercise does not have more than one participation.
             assertThat(exercise.getStudentParticipations()).as("At most one participation for exercise").hasSizeLessThanOrEqualTo(1);
-            if (exercise.getStudentParticipations().size() > 0) {
+            if (!exercise.getStudentParticipations().isEmpty()) {
                 // Buffer participation so that null checking is easier.
                 Participation participation = exercise.getStudentParticipations().iterator().next();
-                if (participation.getSubmissions().size() > 0) {
+                if (!participation.getSubmissions().isEmpty()) {
                     // The call filters participations by submissions and their result. After the call each participation shouldn't have more than one submission.
                     assertThat(participation.getSubmissions()).as("At most one submission for participation").hasSizeLessThanOrEqualTo(1);
                     Submission submission = participation.getSubmissions().iterator().next();
@@ -702,7 +729,7 @@ public class CourseTestService {
                 assertThat(exercise.getNumberOfAssessmentsOfCorrectionRounds()).hasSize(1);
                 assertThat(exercise.getNumberOfAssessmentsOfCorrectionRounds()[0].inTime()).isZero();
                 // Check tutor participation
-                if (exercise.getTutorParticipations().size() > 0) {
+                if (!exercise.getTutorParticipations().isEmpty()) {
                     TutorParticipation tutorParticipation = exercise.getTutorParticipations().iterator().next();
                     assertThat(tutorParticipation.getStatus()).as("Tutor participation status is correctly initialized").isEqualTo(TutorParticipationStatus.NOT_PARTICIPATED);
                 }
