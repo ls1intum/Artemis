@@ -1,14 +1,3 @@
-$success-text-color: #155724;
-$success-bg-color: #d4edda;
-
-$warning-text-color: #856404;
-$warning-bg-color: #fff3cd;
-
-$error-text-color: #dc3545;
-$error-bg-color: #f8d7da;
-
-$text-slightly-muted: #444;
-
 :host {
     display: block;
 }
@@ -27,7 +16,7 @@ $text-slightly-muted: #444;
 }
 
 .intro-text {
-    color: $text-slightly-muted;
+    color: var(--secondary);
 }
 
 .list-group--teams {
@@ -57,23 +46,23 @@ $text-slightly-muted: #444;
     overflow-x: hidden;
     padding: 0.3rem 1rem;
     border-radius: 0.15rem !important;
-    background-color: white;
+    background-color: var(--bs-body-bg);
 
     &.has-success {
-        color: $success-text-color;
-        background-color: $success-bg-color;
+        color: var(--artemis-alert-success-color);
+        background-color: var(--artemis-alert-success-background);
     }
 
     &.has-warning {
-        color: $warning-text-color;
-        background-color: $warning-bg-color;
+        color: var(--artemis-alert-warning-color);
+        background-color: var(--artemis-alert-warning-background);
     }
 
     &.has-error {
-        background-color: $error-bg-color;
+        background-color: var(--artemis-alert-danger-background);
 
         .team-name {
-            color: $error-text-color;
+            color: var(--artemis-alert-danger-color);
         }
     }
 }
@@ -135,7 +124,7 @@ $text-slightly-muted: #444;
         margin-top: 3px;
 
         label {
-            color: $text-slightly-muted;
+            color: var(--secondary);
         }
     }
 }

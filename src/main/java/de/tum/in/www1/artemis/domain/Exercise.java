@@ -562,7 +562,7 @@ public abstract class Exercise extends BaseExercise {
             }
         }
 
-        if (submissionsWithRatedResult.size() > 0) {
+        if (!submissionsWithRatedResult.isEmpty()) {
             if (submissionsWithRatedResult.size() == 1) {
                 return submissionsWithRatedResult.get(0);
             }
@@ -571,7 +571,7 @@ public abstract class Exercise extends BaseExercise {
                 return submissionsWithRatedResult.stream().filter(s -> s.getSubmissionDate() != null).max(Comparator.comparing(Submission::getSubmissionDate)).orElse(null);
             }
         }
-        else if (submissionsWithUnratedResult.size() > 0) {
+        else if (!submissionsWithUnratedResult.isEmpty()) {
             if (this instanceof ProgrammingExercise) {
                 // this is an edge case that is treated differently: the student has not submitted before the due date and the client would otherwise think
                 // that there is no result for the submission and would display a red trigger button.
@@ -585,7 +585,7 @@ public abstract class Exercise extends BaseExercise {
                 return submissionsWithUnratedResult.stream().filter(s -> s.getSubmissionDate() != null).max(Comparator.comparing(Submission::getSubmissionDate)).orElse(null);
             }
         }
-        else if (submissionsWithoutResult.size() > 0) {
+        else if (!submissionsWithoutResult.isEmpty()) {
             if (submissionsWithoutResult.size() == 1) {
                 return submissionsWithoutResult.get(0);
             }

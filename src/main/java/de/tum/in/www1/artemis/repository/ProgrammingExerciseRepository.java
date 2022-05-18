@@ -253,7 +253,8 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
             LEFT JOIN FETCH p.solutionParticipation
             LEFT JOIN FETCH p.auxiliaryRepositories
             LEFT JOIN FETCH p.tasks t
-            LEFT JOIN FETCH t.testCases
+            LEFT JOIN FETCH t.testCases tc
+            LEFT JOIN FETCH tc.solutionEntries
             WHERE p.id = :#{#exerciseId}
             """)
     Optional<ProgrammingExercise> findByIdWithEagerTestCasesStaticCodeAnalysisCategoriesHintsAndTemplateAndSolutionParticipationsAndAuxReposAndTasksWithTestCases(

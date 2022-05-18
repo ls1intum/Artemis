@@ -2,7 +2,7 @@ import { Component, Input, OnInit, ViewEncapsulation } from '@angular/core';
 import { faCheckCircle, faInfoCircle } from '@fortawesome/free-solid-svg-icons';
 
 import { ExerciseHint } from 'app/entities/hestia/exercise-hint.model';
-import { ExerciseHintResponse, ExerciseHintService } from 'app/exercises/shared/exercise-hint/manage/exercise-hint.service';
+import { ExerciseHintResponse, ExerciseHintService } from 'app/exercises/shared/exercise-hint/shared/exercise-hint.service';
 
 /**
  * This component is a modal that shows the exercise's hints.

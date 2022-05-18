@@ -37,7 +37,7 @@ export class CourseLearningGoalsComponent implements OnInit {
     ) {}
 
     ngOnInit(): void {
-        this.activatedRoute.parent!.params.subscribe((params) => {
+        this.activatedRoute.parent!.parent!.params.subscribe((params) => {
             this.courseId = +params['courseId'];
             if (this.courseId) {
                 this.loadData();

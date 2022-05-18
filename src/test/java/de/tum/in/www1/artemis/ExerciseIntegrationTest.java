@@ -201,10 +201,10 @@ public class ExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitb
 
                 // Test that the exercise does not have more than one participation.
                 assertThat(exerciseServer.getStudentParticipations()).as("At most one participation for exercise").hasSizeLessThanOrEqualTo(1);
-                if (exerciseServer.getStudentParticipations().size() > 0) {
+                if (!exerciseServer.getStudentParticipations().isEmpty()) {
                     // Buffer participation so that null checking is easier.
                     Participation participation = exerciseServer.getStudentParticipations().iterator().next();
-                    if (participation.getSubmissions().size() > 0) {
+                    if (!participation.getSubmissions().isEmpty()) {
                         // The call filters participations by submissions and their result. After the call each participation shouldn't have more than one submission.
                         assertThat(participation.getSubmissions()).as("At most one submission for participation").hasSizeLessThanOrEqualTo(1);
                         Submission submission = participation.getSubmissions().iterator().next();

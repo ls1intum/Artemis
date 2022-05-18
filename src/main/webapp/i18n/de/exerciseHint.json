@@ -1,6 +1,7 @@
 {
     "artemisApp": {
         "exerciseHint": {
+            "textHint": "Text Hinweis",
             "home": {
                 "title": "Aufgabenhinweise",
                 "createLabel": "Aufgabenhinweis erstellen",
@@ -29,6 +30,14 @@
                 "display": "Anzeigen",
                 "collapse": "Verbergen"
             }
+        },
+        "codeHint": {
+            "type": "Code Hinweis",
+            "entry": "Eintrag",
+            "entries": "Einträge",
+            "removeEntryQuestion": "Soll dieser Eintrag wirklich entfernt werden?",
+            "noEntries": "Dieser Code-Hinweis hat keine Einträge.",
+            "deleted": "Exercise Hint gelöscht mit ID {{ param }}"
         }
     }
 }
