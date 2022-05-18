@@ -3,14 +3,16 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { LearningGoalService } from 'app/course/learning-goals/learningGoal.service';
 import { AlertService } from 'app/core/util/alert.service';
 import { LearningGoal } from 'app/entities/learningGoal.model';
-import { HttpErrorResponse } from '@angular/common/http';
-import { finalize, switchMap } from 'rxjs/operators';
+import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { filter, finalize, map, switchMap } from 'rxjs/operators';
 import { onError } from 'app/shared/util/global.utils';
 import { forkJoin, Subject } from 'rxjs';
 import { CourseLearningGoalProgress } from 'app/course/learning-goals/learning-goal-course-progress.dtos.model';
 import { captureException } from '@sentry/browser';
 import { isEqual } from 'lodash-es';
 import { faPencilAlt, faPlus, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { PrerequisiteImportComponent } from 'app/course/learning-goals/learning-goal-management/prerequisite-import.component';
 
 @Component({
     selector: 'jhi-learning-goal-management',
@@ -21,6 +23,7 @@ export class LearningGoalManagementComponent implements OnInit, OnDestroy {
     courseId: number;
     isLoading = false;
     learningGoals: LearningGoal[] = [];
+    prerequisites: LearningGoal[] = [];
     learningGoalIdToLearningGoalCourseProgress = new Map<number, CourseLearningGoalProgress>();
     // this is calculated using the participant scores table on the server instead of going participation -> submission -> result
     // we calculate it here to find out if the participant scores table is robust enough to replace the classic way of finding the last result
@@ -34,7 +37,13 @@ export class LearningGoalManagementComponent implements OnInit, OnDestroy {
     faTimes = faTimes;
     faPencilAlt = faPencilAlt;
 
-    constructor(private activatedRoute: ActivatedRoute, private router: Router, private learningGoalService: LearningGoalService, private alertService: AlertService) {}
+    constructor(
+        private activatedRoute: ActivatedRoute,
+        private router: Router,
+        private learningGoalService: LearningGoalService,
+        private alertService: AlertService,
+        private modalService: NgbModal,
+    ) {}
 
     ngOnDestroy(): void {
         this.dialogErrorSource.unsubscribe();
@@ -63,12 +72,31 @@ export class LearningGoalManagementComponent implements OnInit, OnDestroy {
         });
     }
 
+    removePrerequisite(learningGoalId: number) {
+        this.learningGoalService.removePrerequisite(learningGoalId, this.courseId).subscribe({
+            next: () => {
+                this.dialogErrorSource.next('');
+                this.loadData();
+            },
+            error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
+        });
+    }
+
     getLearningGoalCourseProgress(learningGoal: LearningGoal) {
         return this.learningGoalIdToLearningGoalCourseProgress.get(learningGoal.id!);
     }
 
     loadData() {
         this.isLoading = true;
+        this.learningGoalService
+            .getAllPrerequisitesForCourse(this.courseId)
+            .pipe(map((response: HttpResponse<LearningGoal[]>) => response.body!))
+            .subscribe({
+                next: (learningGoals) => {
+                    this.prerequisites = learningGoals;
+                },
+                error: (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),
+            });
         this.learningGoalService
             .getAllForCourse(this.courseId)
             .pipe(
@@ -105,6 +133,28 @@ export class LearningGoalManagementComponent implements OnInit, OnDestroy {
                 },
                 error: (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),
             });
+    }
+
+    openImportModal() {
+        const modalRef = this.modalService.open(PrerequisiteImportComponent, { size: 'lg', backdrop: 'static' });
+        modalRef.componentInstance.disabledIds = this.learningGoals.concat(this.prerequisites).map((learningGoal) => learningGoal.id);
+        modalRef.result.then(
+            (result: LearningGoal) => {
+                this.learningGoalService
+                    .addPrerequisite(result.id!, this.courseId)
+                    .pipe(
+                        filter((res: HttpResponse<LearningGoal>) => res.ok),
+                        map((res: HttpResponse<LearningGoal>) => res.body),
+                    )
+                    .subscribe({
+                        next: (res: LearningGoal) => {
+                            this.prerequisites.push(res);
+                        },
+                        error: (res: HttpErrorResponse) => onError(this.alertService, res),
+                    });
+            },
+            () => {},
+        );
     }
 
     /**
