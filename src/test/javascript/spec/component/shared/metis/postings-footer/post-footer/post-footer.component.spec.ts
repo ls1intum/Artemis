@@ -5,7 +5,6 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { PostReactionsBarComponent } from 'app/shared/metis/posting-reactions-bar/post-reactions-bar/post-reactions-bar.component';
 import { ArtemisCoursesRoutingModule } from 'app/overview/courses-routing.module';
 import { MetisService } from 'app/shared/metis/metis.service';
-import { MockMetisService } from '../../../../../helpers/mocks/service/mock-metis-service.service';
 import { getElements } from '../../../../../helpers/utils/general.utils';
 import { PostService } from 'app/shared/metis/post.service';
 import { MockPostService } from '../../../../../helpers/mocks/service/mock-post.service';
@@ -15,6 +14,7 @@ import { PostComponent } from 'app/shared/metis/post/post.component';
 import { AnswerPostComponent } from 'app/shared/metis/answer-post/answer-post.component';
 import { AnswerPostCreateEditModalComponent } from 'app/shared/metis/posting-create-edit-modal/answer-post-create-edit-modal/answer-post-create-edit-modal.component';
 import { TranslatePipeMock } from '../../../../../helpers/mocks/service/mock-translate.service';
+import { MockMetisService } from '../../../../../helpers/mocks/service/mock-metis-service.service';
 import {
     metisPostExerciseUser1,
     metisPostLectureUser1,
@@ -98,8 +98,8 @@ describe('PostFooterComponent', () => {
         component.posting.answers = unsortedAnswerArray;
         metisServiceUserAuthorityStub.mockReturnValue(true);
         component.ngOnInit();
-        expect(component.isAtLeastTutorInCourse).toEqual(true);
-        expect(component.createdAnswerPost.resolvesPost).toEqual(true);
+        expect(component.isAtLeastTutorInCourse).toBeTrue();
+        expect(component.createdAnswerPost.resolvesPost).toBeTrue();
     });
 
     it('should be initialized correctly for users that are not at least tutors in course', () => {
@@ -107,8 +107,8 @@ describe('PostFooterComponent', () => {
         component.posting.answers = unsortedAnswerArray;
         metisServiceUserAuthorityStub.mockReturnValue(false);
         component.ngOnInit();
-        expect(component.isAtLeastTutorInCourse).toEqual(false);
-        expect(component.createdAnswerPost.resolvesPost).toEqual(false);
+        expect(component.isAtLeastTutorInCourse).toBeFalse();
+        expect(component.createdAnswerPost.resolvesPost).toBeFalse();
     });
 
     it('should contain an answer post', () => {
@@ -117,7 +117,7 @@ describe('PostFooterComponent', () => {
         component.showAnswers = true;
         fixture.detectChanges();
         const answerPostComponent = fixture.debugElement.nativeElement.querySelector('jhi-answer-post');
-        expect(answerPostComponent).not.toBe(null);
+        expect(answerPostComponent).not.toBeNull();
     });
 
     it('should not contain an answer post', () => {
