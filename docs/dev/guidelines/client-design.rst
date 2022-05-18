@@ -1,6 +1,6 @@
-*************
+**************
 Client Theming
-*************
+**************
 
 Artemis ships with two themes: Light Mode and Dark Mode. It is important to ensure that all UI components look
 consistent and good in both themes. Therefore, please follow the rules and hints below.
@@ -92,7 +92,7 @@ Please check your available options in this order:
 
             For buttons: ``<button class="btn btn-danger">``
         * - ``warning``
-          - An orange color indicating a partly-failed operation, a warning, or an unsafe, yet not ultra-dangerous action.
+          - An orange color indicating a partly failed operation, a warning, or an unsafe, yet not ultra-dangerous action.
           - CSS: ``var(--warning)``
 
             For text: ``<span class="text-warning">``
@@ -126,7 +126,7 @@ Please check your available options in this order:
 2. **Define your own colors for each theme**
 
     | If the options above don't suit your use case, you can define your own color variables.
-    | These colors must be be theme-aware, so you have to select a good color for both themes and add them to each
+    | These colors must be theme-aware, so you have to select a good color for both themes and add them to each
       theme's stylesheet.
 
     .. TIP::
