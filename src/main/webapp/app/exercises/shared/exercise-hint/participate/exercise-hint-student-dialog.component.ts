@@ -5,9 +5,9 @@ import { catchError, map, tap } from 'rxjs/operators';
 
 import { NgbActiveModal, NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 
-import { ExerciseHintService } from '../manage/exercise-hint.service';
+import { ExerciseHintService } from '../shared/exercise-hint.service';
 import { faQuestionCircle } from '@fortawesome/free-regular-svg-icons';
-import { ExerciseHint } from 'app/entities/hestia/exercise-hint.model';
+import { ExerciseHint, HintType } from 'app/entities/hestia/exercise-hint.model';
 
 /**
  * This component is a modal that shows the exercise's hints.
@@ -19,6 +19,8 @@ import { ExerciseHint } from 'app/entities/hestia/exercise-hint.model';
 })
 export class ExerciseHintStudentDialogComponent {
     @Input() exerciseHints: ExerciseHint[];
+
+    readonly HintType = HintType;
 
     constructor(public activeModal: NgbActiveModal) {}
 
@@ -48,7 +50,7 @@ export class ExerciseHintStudentDialogComponent {
 })
 export class ExerciseHintStudentComponent implements OnInit, OnDestroy {
     @Input() exerciseId: number;
-    @Input() exerciseHints?: ExerciseHint[];
+    exerciseHints: ExerciseHint[];
     protected ngbModalRef: NgbModalRef | null;
 
     // Icons
@@ -60,16 +62,14 @@ export class ExerciseHintStudentComponent implements OnInit, OnDestroy {
      * Fetches all exercise hints for an exercise from the server
      */
     ngOnInit() {
-        if (!this.exerciseHints) {
-            this.exerciseHintService
-                .findByExerciseId(this.exerciseId)
-                .pipe(
-                    map(({ body }) => body),
-                    tap((hints: ExerciseHint[]) => (this.exerciseHints = hints)),
-                    catchError(() => of()),
-                )
-                .subscribe();
-        }
+        this.exerciseHintService
+            .findByExerciseIdWithRelations(this.exerciseId)
+            .pipe(
+                map(({ body }) => body),
+                tap((hints: ExerciseHint[]) => (this.exerciseHints = hints)),
+                catchError(() => of()),
+            )
+            .subscribe();
     }
 
     /**

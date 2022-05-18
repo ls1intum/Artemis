@@ -12,7 +12,7 @@ export const THEME_OVERRIDE_ID = 'artemis-theme-override';
  */
 export class Theme {
     public static readonly LIGHT = new Theme('LIGHT', true, undefined, faSun, 'chrome', 'dreamweaver');
-    public static readonly DARK = new Theme('DARK', false, 'theme-dark.css', faMoon, 'monokai', 'monokai');
+    public static readonly DARK = new Theme('DARK', false, 'theme-dark.css', faMoon, 'dracula', 'dracula');
 
     private constructor(identifier: string, isDefault: boolean, fileName: string | undefined, icon: IconDefinition, markdownAceTheme: string, codeAceTheme: string) {
         this.identifier = identifier;

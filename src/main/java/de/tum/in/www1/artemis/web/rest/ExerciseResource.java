@@ -168,7 +168,7 @@ public class ExerciseResource {
         exercise.setGradingCriteria(gradingCriteria);
 
         TutorParticipation tutorParticipation = tutorParticipationService.findByExerciseAndTutor(exercise, user);
-        if (exampleSubmissions.size() == 0 && tutorParticipation.getStatus().equals(TutorParticipationStatus.REVIEWED_INSTRUCTIONS)) {
+        if (exampleSubmissions.isEmpty() && tutorParticipation.getStatus().equals(TutorParticipationStatus.REVIEWED_INSTRUCTIONS)) {
             tutorParticipation.setStatus(TutorParticipationStatus.TRAINED);
         }
         exercise.setTutorParticipations(Collections.singleton(tutorParticipation));

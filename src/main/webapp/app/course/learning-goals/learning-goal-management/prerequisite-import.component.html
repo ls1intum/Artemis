@@ -1,0 +1,64 @@
+<form>
+    <div class="modal-header">
+        <h4 class="modal-title" jhiTranslate="artemisApp.learningGoal.prerequisite.import.title">Select Prerequisite</h4>
+        <button (click)="clear()" aria-hidden="true" class="btn-close" data-dismiss="modal" type="button"></button>
+    </div>
+    <div class="modal-body">
+        <div class="form-group form-inline">
+            <span jhiTranslate="artemisApp.learningGoal.prerequisite.import.searchLearningGoal">Search for learning goal:</span>
+            <input [(ngModel)]="searchTerm" class="form-control ms-2" name="searchLearningGoal" type="text" />
+            <span *ngIf="loading" class="ms-3" jhiTranslate="artemisApp.learningGoal.prerequisite.import.loading">Loading...</span>
+        </div>
+        <table class="table table-striped align-middle flex">
+            <thead class="thead-dark">
+                <tr (sortChange)="sortRows()" [(ascending)]="listSorting" [(predicate)]="sortedColumn" class="flex-row" jhiSort>
+                    <th class="col-1" jhiSortBy="{{ column.ID }}">
+                        <span>#</span>
+                        <fa-icon [icon]="faSort"></fa-icon>
+                    </th>
+                    <th class="col-4" jhiSortBy="{{ column.TITLE }}">
+                        <span jhiTranslate="artemisApp.learningGoal.prerequisite.import.table.title">Title</span>
+                        <fa-icon [icon]="faSort"></fa-icon>
+                    </th>
+                    <th class="col-4" jhiSortBy="{{ column.COURSE_TITLE }}">
+                        <span jhiTranslate="artemisApp.learningGoal.prerequisite.import.table.course">Course</span>
+                        <fa-icon [icon]="faSort"></fa-icon>
+                    </th>
+                    <th class="col-2" jhiSortBy="{{ column.SEMESTER }}">
+                        <span jhiTranslate="artemisApp.learningGoal.prerequisite.import.table.semester">Semester</span>
+                        <fa-icon [icon]="faSort"></fa-icon>
+                    </th>
+                    <th class="col-1"></th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr *ngFor="let learningGoal of content.resultsOnPage; trackBy: trackId" class="flex-row">
+                    <td class="col-1">
+                        <span>{{ learningGoal.id }}</span>
+                    </td>
+                    <td class="text-break col-4">
+                        <ngb-highlight [result]="learningGoal.title" [term]="searchTerm"></ngb-highlight>
+                    </td>
+                    <td class="text-break col-4">
+                        <ngb-highlight [result]="learningGoal.course?.title" [term]="searchTerm"></ngb-highlight>
+                    </td>
+                    <td class="col-2">
+                        <span>{{ learningGoal.course?.semester || '' }}</span>
+                    </td>
+                    <td class="col-1">
+                        <jhi-button
+                            (onClick)="selectImport(learningGoal)"
+                            [disabled]="disabledIds.includes(learningGoal.id!)"
+                            [title]="'artemisApp.learningGoal.prerequisite.import.table.doSelect'"
+                        ></jhi-button>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+
+        <div class="d-flex justify-content-between p-2">
+            <ngb-pagination (pageChange)="onPageChange($event)" [(page)]="state.page" [collectionSize]="total" [maxSize]="10" [pageSize]="state.pageSize" [rotate]="true">
+            </ngb-pagination>
+        </div>
+    </div>
+</form>
