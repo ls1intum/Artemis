@@ -13,7 +13,7 @@
                 *ngIf="!startDateDisplayed"
                 [icon]="faArrowLeft"
                 size="2x"
-                class="col-md-1 arrow d-flex justify-content-end align-items-center"
+                class="col-1 arrow d-flex justify-content-end align-items-center"
                 role="button"
                 (click)="switchTimeSpan(LEFT)"
             ></fa-icon>
@@ -56,7 +56,7 @@
                 [icon]="faArrowRight"
                 *ngIf="!(showsCurrentWeek && startDateDisplayed)"
                 size="2x"
-                class="col-md-1 arrow d-flex justify-content-start align-items-center"
+                class="col-1 arrow d-flex justify-content-start align-items-center"
                 role="button"
                 (click)="switchTimeSpan(RIGHT)"
                 [ngClass]="{ 'hide-arrow': showsCurrentWeek }"
