@@ -72,4 +72,10 @@ describe('CoursePrerequisitesModal', () => {
         expect(getAllPrerequisitesForCourseSpy).toHaveBeenCalledTimes(1);
         expect(coursePrerequisitesModalComponent.prerequisites).toHaveLength(2);
     });
+
+    it('should close modal cleared', () => {
+        const dismissActiveModal = jest.spyOn(activeModalStub, 'dismiss');
+        coursePrerequisitesModalComponent.clear();
+        expect(dismissActiveModal).toHaveBeenCalled();
+    });
 });
