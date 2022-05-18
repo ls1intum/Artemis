@@ -1,6 +1,5 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { LearningGoalService } from 'app/course/learning-goals/learningGoal.service';
-import { ActivatedRoute } from '@angular/router';
 import { AlertService } from 'app/core/util/alert.service';
 import { finalize } from 'rxjs/operators';
 import { LearningGoal } from 'app/entities/learningGoal.model';
@@ -18,12 +17,7 @@ export class CoursePrerequisitesModalComponent implements OnInit {
     isLoading = false;
     prerequisites: LearningGoal[] = [];
 
-    constructor(
-        private activatedRoute: ActivatedRoute,
-        private alertService: AlertService,
-        private activeModal: NgbActiveModal,
-        private learningGoalService: LearningGoalService,
-    ) {}
+    constructor(private alertService: AlertService, private activeModal: NgbActiveModal, private learningGoalService: LearningGoalService) {}
 
     ngOnInit(): void {
         if (this.courseId) {
