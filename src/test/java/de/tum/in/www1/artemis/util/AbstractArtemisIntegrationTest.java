@@ -101,8 +101,8 @@ public abstract class AbstractArtemisIntegrationTest implements MockDelegate {
     @SpyBean
     protected TextBlockService textBlockService;
 
-    // @Autowired
-    // protected DatabaseUtilService database;
+    @Autowired
+    protected DatabaseUtilService database;
 
     @Autowired
     protected RequestUtilService request;
