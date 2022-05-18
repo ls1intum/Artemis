@@ -1090,7 +1090,7 @@ public class ProgrammingExerciseGradingService {
             final Feedback feedback) {
         if (feedback.isStaticCodeAnalysisFeedback()) {
             String categoryName = feedback.getText().substring(Feedback.STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER.length());
-            if ("".equals(categoryName)) {
+            if (categoryName.isEmpty()) {
                 return;
             }
             categoryIssuesMap.compute(categoryName, (category, count) -> count == null ? 1 : count + 1);

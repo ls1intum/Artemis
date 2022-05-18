@@ -500,7 +500,7 @@ public class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBi
         List<Ref> refs = studentRepository.localGit.branchList().setListMode(ListBranchCommand.ListMode.REMOTE).call();
         var result = studentRepository.localGit.merge().include(refs.get(0).getObjectId()).setStrategy(MergeStrategy.RESOLVE).call();
         var status = studentRepository.localGit.status().call();
-        assertThat(status.getConflicting().size() > 0).isTrue();
+        assertThat(status.getConflicting()).isNotEmpty();
         assertThat(result.getMergeStatus()).isEqualTo(MergeResult.MergeStatus.CONFLICTING);
 
         // Execute the reset Rest call

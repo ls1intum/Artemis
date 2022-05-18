@@ -1,5 +1,5 @@
 <div class="row justify-content-center">
-    <div class="col-8">
+    <div class="col-md-8">
         <div *ngIf="textExercise">
             <h2><span jhiTranslate="artemisApp.textExercise.detail.title">Text Exercise</span> {{ textExercise.id }}</h2>
             <hr />
@@ -15,7 +15,7 @@
                     <span jhiTranslate="artemisApp.textExercise.checkPlagiarism">Check Plagiarism</span>
                 </a>
             </div>
-            <div *ngIf="textExercise.releaseDate != undefined && dayjs(textExercise.releaseDate).isBefore(dayjs())" class="mt-3">
+            <div *ngIf="!textExercise.releaseDate || dayjs(textExercise.releaseDate).isBefore(dayjs())" class="mt-3">
                 <jhi-exercise-detail-statistics [exercise]="textExercise" [doughnutStats]="doughnutStats" [exerciseType]="ExerciseType.TEXT"></jhi-exercise-detail-statistics>
                 <hr />
                 <div>

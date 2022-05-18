@@ -8,7 +8,7 @@ import { ExerciseHintUpdateComponent } from 'app/exercises/shared/exercise-hint/
 import { ArtemisTestModule } from '../../test.module';
 import { TranslateService } from '@ngx-translate/core';
 import { MockProvider } from 'ng-mocks';
-import { ExerciseHintService } from 'app/exercises/shared/exercise-hint/manage/exercise-hint.service';
+import { ExerciseHintService } from 'app/exercises/shared/exercise-hint/shared/exercise-hint.service';
 import { ExerciseHint } from 'app/entities/hestia/exercise-hint.model';
 import { MockExerciseService } from '../../helpers/mocks/service/mock-exercise.service';
 import { ExerciseHintStudentComponent, ExerciseHintStudentDialogComponent } from 'app/exercises/shared/exercise-hint/participate/exercise-hint-student-dialog.component';
@@ -40,7 +40,7 @@ describe('ExerciseHint Hint Student Component', () => {
         exerciseHint.id = 123;
         comp.exerciseId = 15;
         const headers = new HttpHeaders().append('link', 'link;link');
-        const findByExerciseIdSpy = jest.spyOn(service, 'findByExerciseId').mockReturnValue(
+        const findByExerciseIdSpy = jest.spyOn(service, 'findByExerciseIdWithRelations').mockReturnValue(
             of(
                 new HttpResponse({
                     body: [exerciseHint],

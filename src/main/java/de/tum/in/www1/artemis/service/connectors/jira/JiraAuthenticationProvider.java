@@ -337,7 +337,7 @@ public class JiraAuthenticationProvider extends ArtemisAuthenticationProviderImp
                     });
 
             var results = authenticationResponse.getBody();
-            if (results == null || results.size() == 0) {
+            if (results == null || results.isEmpty()) {
                 // no result
                 return Optional.empty();
             }
