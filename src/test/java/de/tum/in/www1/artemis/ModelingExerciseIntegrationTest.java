@@ -747,6 +747,7 @@ public class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBa
         ModelingExercise modelingExercise = modelingExerciseRepository.findByCourseIdWithCategories(course.getId()).get(0);
         modelingExercise.setId(null);
         modelingExercise.setAssessmentDueDate(null);
+        modelingExercise.setIncludedInOverallScore(IncludedInOverallScore.INCLUDED_COMPLETELY);
 
         modelingExercise.setReleaseDate(baseTime.plusHours(1));
         modelingExercise.setDueDate(baseTime.plusHours(3));
@@ -769,6 +770,7 @@ public class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBa
         ModelingExercise modelingExercise = modelingExerciseRepository.findByCourseIdWithCategories(course.getId()).get(0);
         modelingExercise.setId(null);
         modelingExercise.setAssessmentDueDate(null);
+        modelingExercise.setIncludedInOverallScore(IncludedInOverallScore.INCLUDED_COMPLETELY);
 
         modelingExercise.setReleaseDate(baseTime.plusHours(1));
         modelingExercise.setDueDate(baseTime.plusHours(2));
@@ -777,6 +779,16 @@ public class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBa
 
         var result = request.postWithResponseBody("/api/modeling-exercises/", modelingExercise, ModelingExercise.class, HttpStatus.CREATED);
         assertThat(result.getExampleSolutionPublicationDate()).isEqualTo(exampleSolutionPublicationDate);
+
+        modelingExercise.setIncludedInOverallScore(IncludedInOverallScore.NOT_INCLUDED);
+        modelingExercise.setReleaseDate(baseTime.plusHours(1));
+        modelingExercise.setDueDate(baseTime.plusHours(3));
+        exampleSolutionPublicationDate = baseTime.plusHours(2);
+        modelingExercise.setExampleSolutionPublicationDate(exampleSolutionPublicationDate);
+
+        result = request.postWithResponseBody("/api/modeling-exercises/", modelingExercise, ModelingExercise.class, HttpStatus.CREATED);
+        assertThat(result.getExampleSolutionPublicationDate()).isEqualTo(exampleSolutionPublicationDate);
+
     }
 
     @Test

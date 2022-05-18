@@ -1071,6 +1071,7 @@ public class TextExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
         TextExercise textExercise = textExerciseRepository.findByCourseIdWithCategories(course.getId()).get(0);
         textExercise.setId(null);
         textExercise.setAssessmentDueDate(null);
+        textExercise.setIncludedInOverallScore(IncludedInOverallScore.INCLUDED_COMPLETELY);
 
         textExercise.setReleaseDate(baseTime.plusHours(1));
         textExercise.setDueDate(baseTime.plusHours(3));
@@ -1093,6 +1094,7 @@ public class TextExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
         TextExercise textExercise = textExerciseRepository.findByCourseIdWithCategories(course.getId()).get(0);
         textExercise.setId(null);
         textExercise.setAssessmentDueDate(null);
+        textExercise.setIncludedInOverallScore(IncludedInOverallScore.INCLUDED_COMPLETELY);
 
         textExercise.setReleaseDate(baseTime.plusHours(1));
         textExercise.setDueDate(baseTime.plusHours(2));
@@ -1100,6 +1102,15 @@ public class TextExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
         textExercise.setExampleSolutionPublicationDate(exampleSolutionPublicationDate);
 
         var result = request.postWithResponseBody("/api/text-exercises/", textExercise, TextExercise.class, HttpStatus.CREATED);
+        assertThat(result.getExampleSolutionPublicationDate()).isEqualTo(exampleSolutionPublicationDate);
+
+        textExercise.setIncludedInOverallScore(IncludedInOverallScore.NOT_INCLUDED);
+        textExercise.setReleaseDate(baseTime.plusHours(1));
+        textExercise.setDueDate(baseTime.plusHours(3));
+        exampleSolutionPublicationDate = baseTime.plusHours(2);
+        textExercise.setExampleSolutionPublicationDate(exampleSolutionPublicationDate);
+
+        result = request.postWithResponseBody("/api/text-exercises/", textExercise, TextExercise.class, HttpStatus.CREATED);
         assertThat(result.getExampleSolutionPublicationDate()).isEqualTo(exampleSolutionPublicationDate);
     }
 

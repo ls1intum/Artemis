@@ -581,6 +581,7 @@ public class FileUploadExerciseIntegrationTest extends AbstractSpringIntegration
         FileUploadExercise fileUploadExercise = fileUploadExerciseRepository.findByCourseIdWithCategories(course.getId()).get(0);
         fileUploadExercise.setId(null);
         fileUploadExercise.setAssessmentDueDate(null);
+        fileUploadExercise.setIncludedInOverallScore(IncludedInOverallScore.INCLUDED_COMPLETELY);
 
         fileUploadExercise.setReleaseDate(baseTime.plusHours(1));
         fileUploadExercise.setDueDate(baseTime.plusHours(3));
@@ -592,7 +593,7 @@ public class FileUploadExerciseIntegrationTest extends AbstractSpringIntegration
         fileUploadExercise.setDueDate(null);
         fileUploadExercise.setExampleSolutionPublicationDate(baseTime.plusHours(2));
 
-        request.postWithResponseBody("/api/text-exercises/", fileUploadExercise, FileUploadExercise.class, HttpStatus.BAD_REQUEST);
+        request.postWithResponseBody("/api/file-upload-exercises/", fileUploadExercise, FileUploadExercise.class, HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -603,6 +604,7 @@ public class FileUploadExerciseIntegrationTest extends AbstractSpringIntegration
         FileUploadExercise fileUploadExercise = fileUploadExerciseRepository.findByCourseIdWithCategories(course.getId()).get(0);
         fileUploadExercise.setId(null);
         fileUploadExercise.setAssessmentDueDate(null);
+        fileUploadExercise.setIncludedInOverallScore(IncludedInOverallScore.INCLUDED_COMPLETELY);
 
         fileUploadExercise.setReleaseDate(baseTime.plusHours(1));
         fileUploadExercise.setDueDate(baseTime.plusHours(2));
@@ -610,6 +612,15 @@ public class FileUploadExerciseIntegrationTest extends AbstractSpringIntegration
         fileUploadExercise.setExampleSolutionPublicationDate(exampleSolutionPublicationDate);
 
         var result = request.postWithResponseBody("/api/file-upload-exercises/", fileUploadExercise, FileUploadExercise.class, HttpStatus.CREATED);
+        assertThat(result.getExampleSolutionPublicationDate()).isEqualTo(exampleSolutionPublicationDate);
+
+        fileUploadExercise.setIncludedInOverallScore(IncludedInOverallScore.NOT_INCLUDED);
+        fileUploadExercise.setReleaseDate(baseTime.plusHours(1));
+        fileUploadExercise.setDueDate(baseTime.plusHours(3));
+        exampleSolutionPublicationDate = baseTime.plusHours(2);
+        fileUploadExercise.setExampleSolutionPublicationDate(exampleSolutionPublicationDate);
+
+        result = request.postWithResponseBody("/api/file-upload-exercises/", fileUploadExercise, FileUploadExercise.class, HttpStatus.CREATED);
         assertThat(result.getExampleSolutionPublicationDate()).isEqualTo(exampleSolutionPublicationDate);
 
     }
