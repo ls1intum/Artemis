@@ -696,13 +696,4 @@ public class SubmissionService {
         final Page<Submission> submissionPage = new PageImpl<>(latestSubmissions, sorted, latestSubmissions.size());
         return new SearchResultPageDTO<>(submissionPage.getContent(), studentParticipationPage.getTotalPages());
     }
-
-    /**
-     * To avoid direct access to the {@link SubmissionRepository}, we use delegation to find the corresponding {@link Submission} based on its id.
-     * @param submissionId id of the {@link Submission}
-     * @return Optional<Submission>
-     */
-    public Optional<Submission> findById(Long submissionId) {
-        return submissionRepository.findById(submissionId);
-    }
 }

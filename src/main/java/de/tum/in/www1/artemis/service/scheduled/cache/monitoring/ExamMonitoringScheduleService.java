@@ -21,9 +21,9 @@ import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
 import de.tum.in.www1.artemis.domain.exam.monitoring.ExamAction;
 import de.tum.in.www1.artemis.domain.exam.monitoring.ExamActivity;
+import de.tum.in.www1.artemis.repository.ExamRepository;
 import de.tum.in.www1.artemis.repository.StudentExamRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
-import de.tum.in.www1.artemis.service.exam.ExamService;
 import de.tum.in.www1.artemis.service.exam.monitoring.ExamActivityService;
 import de.tum.in.www1.artemis.service.scheduled.cache.Cache;
 
@@ -36,17 +36,17 @@ public class ExamMonitoringScheduleService {
 
     private final IScheduledExecutorService threadPoolTaskScheduler;
 
-    private final ExamService examService;
+    private final ExamRepository examRepository;
 
     private final StudentExamRepository studentExamRepository;
 
     private final ExamActivityService examActivityService;
 
-    public ExamMonitoringScheduleService(HazelcastInstance hazelcastInstance, ExamService examService, StudentExamRepository studentExamRepository,
+    public ExamMonitoringScheduleService(HazelcastInstance hazelcastInstance, ExamRepository examRepository, StudentExamRepository studentExamRepository,
             ExamActivityService examActivityService) {
         this.threadPoolTaskScheduler = hazelcastInstance.getScheduledExecutorService(Constants.HAZELCAST_MONITORING_SCHEDULER);
         this.examCache = new ExamCache(hazelcastInstance);
-        this.examService = examService;
+        this.examRepository = examRepository;
         this.studentExamRepository = studentExamRepository;
         this.examActivityService = examActivityService;
     }
@@ -70,9 +70,10 @@ public class ExamMonitoringScheduleService {
 
     /**
      * Used to set the exam activity fort a specific student exam in the cache.
-     * @param examId identifies the cache
+     *
+     * @param examId        identifies the cache
      * @param studentExamId identifies the exam activity
-     * @param examActivity new or updated exam activity in the cache
+     * @param examActivity  new or updated exam activity in the cache
      */
     public void updateExamActivity(Long examId, long studentExamId, ExamActivity examActivity) {
         if (examActivity != null) {
@@ -82,9 +83,10 @@ public class ExamMonitoringScheduleService {
 
     /**
      * Used to handle the received actions.
-     * @param examId identifies the cache
+     *
+     * @param examId        identifies the cache
      * @param studentExamId identifies the exam activity
-     * @param examAction new exam action
+     * @param examAction    new exam action
      */
     public void addExamAction(Long examId, long studentExamId, ExamAction examAction) {
         if (examAction != null) {
@@ -106,7 +108,7 @@ public class ExamMonitoringScheduleService {
      * This method schedules all exam activity save tasks after a server (re-)start.
      */
     public void startSchedule() {
-        List<Exam> exams = examService.findAllCurrentAndUpcomingExams().stream().filter(Exam::isMonitoring).toList();
+        List<Exam> exams = examRepository.findAllCurrentAndUpcomingExams().stream().filter(Exam::isMonitoring).toList();
         logger.info("Found {} exams that are not yet ended or are scheduled to start in the future", exams.size());
         for (Exam exam : exams) {
             cancelExamActivitySave(exam.getId());
@@ -131,12 +133,13 @@ public class ExamMonitoringScheduleService {
 
     /**
      * Schedules the exam activity save task for a specific exam.
+     *
      * @param examId specific exam
      */
     public void scheduleExamActivitySave(final long examId) {
         this.cancelExamActivitySave(examId);
         // reload from database to make sure there are no proxy objects
-        final var exam = examService.findByIdOrElseThrow(examId);
+        final var exam = examRepository.findByIdElseThrow(examId);
         try {
             // Check if there is a student exam with longer working time
             var studentExams = studentExamRepository.findByExamId(examId);
@@ -167,6 +170,7 @@ public class ExamMonitoringScheduleService {
 
     /**
      * Cancels the exam activity save task for a specific exam.
+     *
      * @param examId specific exam
      */
     public void cancelExamActivitySave(final long examId) {
@@ -197,6 +201,7 @@ public class ExamMonitoringScheduleService {
 
     /**
      * Saves the exam activities and actions into the database (after the end of the exam) for a specific exam.
+     *
      * @param examId specific exam
      */
     public void executeExamActivitySaveTask(Long examId) {
@@ -224,7 +229,8 @@ public class ExamMonitoringScheduleService {
 
     /**
      * Returns the exam activity for a specific exam and student exam.
-     * @param examId id of the current exam
+     *
+     * @param examId        id of the current exam
      * @param studentExamId id of the student exam
      * @return ExamActivity performed by the student
      */

@@ -2,7 +2,6 @@ package de.tum.in.www1.artemis.service.exam;
 
 import java.security.SecureRandom;
 import java.util.Base64;
-import java.util.Optional;
 
 import javax.annotation.Nullable;
 
@@ -72,14 +71,5 @@ public class ExamSessionService {
     public boolean checkExamSessionIsInitial(Long studentExamId) {
         long examSessionCount = examSessionRepository.findExamSessionCountByStudentExamId(studentExamId);
         return (examSessionCount == 1);
-    }
-
-    /**
-     * To avoid direct access to the {@link ExamSessionRepository}, we use delegation to find the corresponding {@link ExamSession} based on its id.
-     * @param examSessionId id of the {@link ExamSession}
-     * @return Optional<ExamSession>
-     */
-    public Optional<ExamSession> findById(Long examSessionId) {
-        return examSessionRepository.findById(examSessionId);
     }
 }

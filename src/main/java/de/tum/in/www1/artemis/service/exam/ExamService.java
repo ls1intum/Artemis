@@ -803,21 +803,4 @@ public class ExamService {
         exam.getExerciseGroups().stream().flatMap(group -> group.getExercises().stream()).filter(exercise -> exercise instanceof ModelingExercise).map(Exercise::getId)
                 .forEach(instanceMessageSendService::sendModelingExerciseSchedule);
     }
-
-    /**
-     * To avoid direct access to the {@link ExamRepository}, we use delegation to find all current and upcoming exams.
-     * @return List<Exam>
-     */
-    public List<Exam> findAllCurrentAndUpcomingExams() {
-        return examRepository.findAllCurrentAndUpcomingExams();
-    }
-
-    /**
-     * To avoid direct access to the {@link ExamRepository}, we use delegation to find the {@link Exam} based on its id or esle throw an exception.
-     * @param examId the id ofg the exam
-     * @return Exam
-     */
-    public Exam findByIdOrElseThrow(Long examId) {
-        return examRepository.findByIdElseThrow(examId);
-    }
 }

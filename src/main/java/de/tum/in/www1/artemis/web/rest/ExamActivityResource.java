@@ -15,10 +15,10 @@ import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
 import de.tum.in.www1.artemis.domain.exam.monitoring.ExamAction;
 import de.tum.in.www1.artemis.domain.exam.monitoring.ExamActivity;
+import de.tum.in.www1.artemis.repository.ExamRepository;
 import de.tum.in.www1.artemis.repository.StudentExamRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.exam.ExamAccessService;
-import de.tum.in.www1.artemis.service.exam.ExamService;
 import de.tum.in.www1.artemis.service.exam.StudentExamAccessService;
 import de.tum.in.www1.artemis.service.exam.monitoring.ExamActivityService;
 import de.tum.in.www1.artemis.service.scheduled.cache.monitoring.ExamMonitoringScheduleService;
@@ -40,19 +40,20 @@ public class ExamActivityResource {
 
     private final ExamMonitoringScheduleService examMonitoringScheduleService;
 
-    private final ExamService examService;
+    private final ExamRepository examRepository;
 
     private final ExamActivityService examActivityService;
 
     private final ExamAccessService examAccessService;
 
     public ExamActivityResource(StudentExamAccessService studentExamAccessService, StudentExamRepository studentExamRepository, UserRepository userRepository,
-            ExamMonitoringScheduleService examMonitoringScheduleService, ExamService examService, ExamActivityService examActivityService, ExamAccessService examAccessService) {
+            ExamMonitoringScheduleService examMonitoringScheduleService, ExamRepository examRepository, ExamActivityService examActivityService,
+            ExamAccessService examAccessService) {
         this.examMonitoringScheduleService = examMonitoringScheduleService;
         this.studentExamAccessService = studentExamAccessService;
         this.studentExamRepository = studentExamRepository;
         this.userRepository = userRepository;
-        this.examService = examService;
+        this.examRepository = examRepository;
         this.examActivityService = examActivityService;
         this.examAccessService = examAccessService;
     }
@@ -71,7 +72,7 @@ public class ExamActivityResource {
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Void> updatePerformedExamActions(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long studentExamId,
             @RequestBody List<ExamAction> actions) {
-        Exam exam = examService.findByIdOrElseThrow(examId);
+        Exam exam = examRepository.findByIdElseThrow(examId);
         if (!exam.isMonitoring()) {
             throw new BadRequestException("Monitoring is not enabled for the exam with the id " + examId);
         }
