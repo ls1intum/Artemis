@@ -1,13 +1,12 @@
 import { ExerciseType } from 'app/entities/exercise.model';
-import { EMAIL_KEY, NAME_KEY, POINTS_KEY, REGISTRATION_NUMBER_KEY, SCORE_KEY, USERNAME_KEY } from 'app/course/course-scores/course-scores.component';
-import { CourseScoresStudentStatistics } from 'app/course/course-scores/course-scores-student-statistics';
+import { EMAIL_KEY, NAME_KEY, POINTS_KEY, REGISTRATION_NUMBER_KEY, SCORE_KEY, USERNAME_KEY } from 'app/shared/export/export-constants';
 
-export type CourseScoresExportRow = any;
+export type ExportRow = any;
 
 /**
- * Builds rows for the course scores export.
+ * Builds rows for exporting student scores.
  */
-export abstract class CourseScoresRowBuilder {
+export abstract class ExportRowBuilder {
     private exportRow = {};
 
     readonly accuracyOfScores: number;
@@ -23,7 +22,7 @@ export abstract class CourseScoresRowBuilder {
     /**
      * Constructs and returns the actual row data.
      */
-    build(): CourseScoresExportRow {
+    build(): ExportRow {
         return this.exportRow;
     }
 
@@ -37,28 +36,31 @@ export abstract class CourseScoresRowBuilder {
     }
 
     /**
-     * Stores the given value under the key in the row after converting it to the localized format.
-     * @param key Which should be associated with the given value.
-     * @param value That should be placed in the row.
+     * Stores the given points under the key in the row after converting it to the localized format.
+     * @param key Which should be associated with the given points.
+     * @param points That should be placed in the row.
      */
-    abstract setLocalized(key: string, value: number): void;
+    abstract setPoints(key: string, points: number | undefined): void;
 
     /**
-     * Stores the given value under the key in the row after converting it to the localized percentage format.
-     * @param key Which should be associated with the given value.
-     * @param value That should be placed in the row.
+     * Stores the given score under the key in the row after converting it to the localized percentage format.
+     * @param key Which should be associated with the given score.
+     * @param score That should be placed in the row.
      */
-    abstract setLocalizedPercent(key: string, value: number): void;
+    abstract setScore(key: string, score: number | undefined): void;
 
     /**
      * Adds information about the student user to the row.
-     * @param student A student of which the data should be saved.
+     * @param name The name of the student that should be saved.
+     * @param username The username of the student that should be saved.
+     * @param email The email of the student that should be saved.
+     * @param registrationNumber The registration number of the student that should be saved.
      */
-    setUserInformation(student: CourseScoresStudentStatistics) {
-        this.set(NAME_KEY, student.user.name?.trim());
-        this.set(USERNAME_KEY, student.user.login?.trim());
-        this.set(EMAIL_KEY, student.user.email?.trim());
-        this.set(REGISTRATION_NUMBER_KEY, student.user.visibleRegistrationNumber?.trim());
+    setUserInformation(name?: string, username?: string, email?: string, registrationNumber?: string) {
+        this.set(NAME_KEY, name?.trim());
+        this.set(USERNAME_KEY, username?.trim());
+        this.set(EMAIL_KEY, email?.trim());
+        this.set(REGISTRATION_NUMBER_KEY, registrationNumber?.trim());
     }
 
     /**
@@ -67,9 +69,9 @@ export abstract class CourseScoresRowBuilder {
      * @param points The number of points for this exercise type, alternatively already converted to its localized format.
      */
     setExerciseTypePoints(exerciseType: ExerciseType, points: number | string) {
-        const key = CourseScoresRowBuilder.getExerciseTypeKey(exerciseType, POINTS_KEY);
+        const key = ExportRowBuilder.getExerciseTypeKey(exerciseType, POINTS_KEY);
         if (typeof points === 'number') {
-            this.setLocalized(key, points);
+            this.setPoints(key, points);
         } else {
             this.set(key, points);
         }
@@ -81,9 +83,9 @@ export abstract class CourseScoresRowBuilder {
      * @param score The score for this exercise type, alternatively already converted to its localized percentage format.
      */
     setExerciseTypeScore(exerciseType: ExerciseType, score: number | string) {
-        const key = CourseScoresRowBuilder.getExerciseTypeKey(exerciseType, SCORE_KEY);
+        const key = ExportRowBuilder.getExerciseTypeKey(exerciseType, SCORE_KEY);
         if (typeof score === 'number') {
-            this.setLocalizedPercent(key, score);
+            this.setScore(key, score);
         } else {
             this.set(key, score);
         }
@@ -95,7 +97,7 @@ export abstract class CourseScoresRowBuilder {
      * @param suffix A suffix that should be appended to the key.
      */
     static getExerciseTypeKey(exerciseType: ExerciseType, suffix: string): string {
-        const exerciseTypeName = CourseScoresRowBuilder.capitalizeFirstLetter(exerciseType);
+        const exerciseTypeName = ExportRowBuilder.capitalizeFirstLetter(exerciseType);
         return `${exerciseTypeName} ${suffix}`;
     }
 
