@@ -169,7 +169,7 @@ Please check your available options in this order:
             The two options below are meant as a fallback for special cases.
             Please justify the use of these options in your PR description.
 
-        If you need a **slightly modified preset color for some reason**, use `SCSS functions <https://sass-lang.com/documentation/modules/color>`_ to derive it.
+        If you need a **slightly modified preset color**, use `SCSS functions <https://sass-lang.com/documentation/modules/color>`_ to derive it.
 
         .. code-block:: scss
 
@@ -229,7 +229,7 @@ For example, you could add a reactive flag to your component that indicates whet
 
 Additionally, it's possible to change the theme programmatically. **However, this should be rare**: Usually, the user decides which theme
 they want to use by using the theme switching component in the navbar. Any use of this must therefore be justified and
-survive a review by @bassner ;)
+survive a detailed review.
 
 Example:
 
