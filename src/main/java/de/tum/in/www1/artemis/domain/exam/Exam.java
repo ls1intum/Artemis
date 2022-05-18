@@ -36,7 +36,7 @@ public class Exam extends DomainObject {
     private boolean testExam;
 
     /**
-     * This boolean indicates weather monitoring is enabled
+     * This boolean indicates whether monitoring is enabled
      */
     @Column(name = "monitoring")
     private boolean monitoring;
