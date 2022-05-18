@@ -14,7 +14,6 @@ import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
 import de.tum.in.www1.artemis.domain.exam.monitoring.ExamAction;
-import de.tum.in.www1.artemis.domain.exam.monitoring.ExamActivity;
 import de.tum.in.www1.artemis.repository.ExamRepository;
 import de.tum.in.www1.artemis.repository.StudentExamRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
@@ -88,28 +87,5 @@ public class ExamActivityResource {
         log.info("REST request by user: {} for exam with id {} to add {} actions for student-exam {}", currentUser.getLogin(), examId, actions.size(), studentExamId);
 
         return ResponseEntity.ok().build();
-    }
-
-    /**
-     * ONLY FOR TESTING OF THIS PR ON TEST SERVER/LOCALLY (will be removed in the future)
-     * @param courseId      the course to which the student exams belong to
-     * @param examId        the exam to which the student exams belong to
-     * @param studentExamId the student exam id where we want to add the actions
-     * @return activities in database and cache
-     */
-    @GetMapping("/courses/{courseId}/exams/{examId}/student-exams/{studentExamId}/activity")
-    @PreAuthorize("hasRole('INSTRUCTOR')")
-    public ResponseEntity<TestingActivity> getActivityFromDatabase(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long studentExamId) {
-        studentExamRepository.findByIdWithExercisesElseThrow(studentExamId);
-        examAccessService.checkCourseAndExamAccessForInstructorElseThrow(courseId, examId);
-
-        ExamActivity examActivityDatabase = examActivityService.findByStudentExamId(studentExamId);
-
-        ExamActivity examActivityCache = examMonitoringScheduleService.getExamActivityFromCache(examId, studentExamId);
-
-        return ResponseEntity.ok(new TestingActivity(examActivityDatabase, examActivityCache));
-    }
-
-    private record TestingActivity(ExamActivity examActivityDatabase, ExamActivity examActivityCache) {
     }
 }
