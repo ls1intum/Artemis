@@ -6,7 +6,6 @@ import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { Lecture } from 'app/entities/lecture.model';
 import { Post } from 'app/entities/metis/post.model';
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
-import dayjs from 'dayjs/esm';
 
 export const metisLecture = { id: 1, title: 'Metis  Lecture' } as Lecture;
 export const metisLecture2 = { id: 1, title: 'Second Metis  Lecture' } as Lecture;
@@ -151,34 +150,4 @@ export const metisPostToCreateUser1 = {
     author: metisUser1,
     content: 'metisAnswerToCreateUser1',
     creationDate: undefined,
-} as Post;
-
-export const unApprovedAnswerPost1 = {
-    id: 1,
-    creationDate: dayjs(),
-    content: 'not approved most recent',
-    resolvesPost: false,
-} as AnswerPost;
-
-export const unApprovedAnswerPost2 = {
-    id: 2,
-    creationDate: dayjs().subtract(1, 'day'),
-    content: 'not approved',
-    resolvesPost: false,
-} as AnswerPost;
-
-export const approvedAnswerPost = {
-    id: 2,
-    creationDate: undefined,
-    content: 'approved',
-    resolvesPost: true,
-} as AnswerPost;
-
-export const sortedAnswerArray: AnswerPost[] = [approvedAnswerPost, unApprovedAnswerPost2, unApprovedAnswerPost1];
-export const unsortedAnswerArray: AnswerPost[] = [unApprovedAnswerPost1, unApprovedAnswerPost2, approvedAnswerPost];
-
-export const post = {
-    id: 1,
-    creationDate: undefined,
-    answers: unsortedAnswerArray,
 } as Post;
