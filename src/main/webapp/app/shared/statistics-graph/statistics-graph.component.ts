@@ -205,6 +205,10 @@ export class StatisticsGraphComponent implements OnChanges {
         this.yScaleMax = Math.max(3, ...this.dataForSpanType);
     }
 
+    /**
+     * Handles the update of the data labels if the user changes the system language
+     * @private
+     */
     private onSystemLanguageChange(): void {
         this.createLabels();
         this.ngxData.forEach((dataPack, index) => {

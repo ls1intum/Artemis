@@ -83,6 +83,11 @@ export class ParticipantScoresDistributionComponent implements OnInit, OnChanges
         this.highlightScore();
     }
 
+    /**
+     * Handles the appearance adaption for smaller screens.
+     * If the screen width is below 700px, the y axis label consumes too much space.
+     * In this case, the corresponding configuration flag changes so that ngx-charts hides the label.
+     */
     @HostListener('window:resize')
     realignChart() {
         if (window.innerWidth < 700 && this.showYAxisLabel) {
