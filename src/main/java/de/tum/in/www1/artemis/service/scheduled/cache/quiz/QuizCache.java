@@ -49,17 +49,19 @@ final class QuizCache extends CacheHandler<Long> {
     static void configureHazelcast(Config config) {
         QuizExerciseCache.registerSerializers(config);
         // Important to avoid continuous serialization and de-serialization and the implications on transient fields of QuizExerciseCache
-        EvictionConfig evictionConfig = new EvictionConfig() //
+        // @formatter:off
+        EvictionConfig evictionConfig = new EvictionConfig()
                 .setEvictionPolicy(EvictionPolicy.NONE);
-        NearCacheConfig nearCacheConfig = new NearCacheConfig() //
-                .setName(Constants.HAZELCAST_EXERCISE_CACHE + "-local") //
-                .setInMemoryFormat(InMemoryFormat.OBJECT) //
-                .setSerializeKeys(true) //
-                .setInvalidateOnChange(true) //
-                .setTimeToLiveSeconds(0) //
-                .setMaxIdleSeconds(0) //
-                .setEvictionConfig(evictionConfig) //
+        NearCacheConfig nearCacheConfig = new NearCacheConfig()
+                .setName(Constants.HAZELCAST_EXERCISE_CACHE + "-local")
+                .setInMemoryFormat(InMemoryFormat.OBJECT)
+                .setSerializeKeys(true)
+                .setInvalidateOnChange(true)
+                .setTimeToLiveSeconds(0)
+                .setMaxIdleSeconds(0)
+                .setEvictionConfig(evictionConfig)
                 .setCacheLocalEntries(true);
+        // @formatter:on
         config.getMapConfig(Constants.HAZELCAST_EXERCISE_CACHE).setNearCacheConfig(nearCacheConfig);
     }
 

@@ -22,16 +22,18 @@ final class ExamCache extends CacheHandler<Long> {
         ExamMonitoringCache.registerSerializers(config);
         // Important to avoid continuous serialization and de-serialization and the implications on transient fields
         // of ExamMonitoringCache
+        // @formatter:off
         EvictionConfig evictionConfig = new EvictionConfig().setEvictionPolicy(EvictionPolicy.NONE);
-        NearCacheConfig nearCacheConfig = new NearCacheConfig() //
-                .setName(Constants.HAZELCAST_MONITORING_CACHE + "-local") //
-                .setInMemoryFormat(InMemoryFormat.OBJECT).setSerializeKeys(true) //
-                .setInvalidateOnChange(true) //
-                .setTimeToLiveSeconds(0) //
-                .setMaxIdleSeconds(0) //
-                .setEvictionConfig(evictionConfig) //
+        NearCacheConfig nearCacheConfig = new NearCacheConfig()
+                .setName(Constants.HAZELCAST_MONITORING_CACHE + "-local")
+                .setInMemoryFormat(InMemoryFormat.OBJECT).setSerializeKeys(true)
+                .setInvalidateOnChange(true)
+                .setTimeToLiveSeconds(0)
+                .setMaxIdleSeconds(0)
+                .setEvictionConfig(evictionConfig)
                 .setCacheLocalEntries(true);
         config.getMapConfig(Constants.HAZELCAST_MONITORING_CACHE).setNearCacheConfig(nearCacheConfig);
+        // @formatter:on
     }
 
     @Override
