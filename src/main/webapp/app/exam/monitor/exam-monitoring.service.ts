@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { StudentExam } from 'app/entities/student-exam.model';
 import { ExamAction, ExamActivity } from 'app/entities/exam-user-activity.model';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
-import { HttpClient, HttpResponse } from '@angular/common/http';
+import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { Exam } from 'app/entities/exam.model';
 
@@ -51,7 +51,7 @@ export class ExamMonitoringService {
      * @param examId of the current exam
      * @private
      */
-    public getResourceURL(courseId: number, examId: number): string {
+    public static getResourceURL(courseId: number, examId: number): string {
         return `${SERVER_API_URL}api/courses/${courseId}/exams/${examId}`;
     }
 
@@ -61,10 +61,11 @@ export class ExamMonitoringService {
      * @param courseId which the exam belongs to
      * @param examId of the current exam
      * @param studentExamId of the student
+     * @return error if the sync was not successful
      * @private
      */
-    public syncActions(examActions: ExamAction[], courseId: number, examId: number, studentExamId: number): Observable<HttpResponse<void>> {
-        const url = this.getResourceURL(courseId, examId) + `/student-exams/${studentExamId}/actions`;
-        return this.http.put<void>(url, examActions, { observe: 'response' });
+    public syncActions(examActions: ExamAction[], courseId: number, examId: number, studentExamId: number): Observable<void> {
+        const url = ExamMonitoringService.getResourceURL(courseId, examId) + `/student-exams/${studentExamId}/actions`;
+        return this.http.put<void>(url, examActions);
     }
 }

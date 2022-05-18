@@ -315,8 +315,8 @@
             },
             "monitoring": {
                 "enable": {
-                    "title": "Aktiviere die Klausur Überwachung",
-                    "description": "Die Klausur Überwachung sammelt die Interaktionen des  Studenten mit der Klausur und bietet dadurch weitere Möglichkeiten für Statistiken."
+                    "title": "Klausurüberwachung aktivieren",
+                    "description": "Die Klausurüberwachung sammelt die Interaktionen der Studierenden mit der Klausur und bietet dadurch weitere Möglichkeiten für Statistiken."
                 }
             },
             "testRun": {
