@@ -1,4 +1,4 @@
 version: "2"
 services:
-    bamboo:
+    jenkins:
         image: ghcr.io/ls1intum/artemis-jenkins-swift:latest
