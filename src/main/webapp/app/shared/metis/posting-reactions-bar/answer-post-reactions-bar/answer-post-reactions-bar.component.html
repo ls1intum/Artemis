@@ -43,4 +43,11 @@
             [darkMode]="darkModeEmojiPicker"
         ></emoji-mart>
     </ng-template>
+    <!-- add new answer to expanded discussion -->
+    <div class="col-auto p-0" *ngIf="isLastAnswer">
+        <button id="answerNowButton" class="reaction-button clickable" (click)="openPostingCreateEditModal.emit()">
+            <ngx-emoji class="emoji" [emoji]="speechBalloonId" [size]="16"></ngx-emoji>
+            <span class="emoji-count">{{ 'artemisApp.metis.answerNow' | artemisTranslate }}</span>
+        </button>
+    </div>
 </div>

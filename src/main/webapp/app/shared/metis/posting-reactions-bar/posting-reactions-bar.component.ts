@@ -1,4 +1,4 @@
-import { Directive, Input, OnChanges, OnDestroy, OnInit } from '@angular/core';
+import { Directive, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output } from '@angular/core';
 import { Posting } from 'app/entities/metis/posting.model';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { EmojiData } from '@ctrl/ngx-emoji-mart/ngx-emoji';
@@ -47,6 +47,8 @@ export abstract class PostingsReactionsBarDirective<T extends Posting> implement
     archiveEmojiId: string = ARCHIVE_EMOJI_ID;
     speechBalloonId: string = SPEECH_BALOON_ID;
     closeCrossId: string = HEAVY_MULTIPLICATION_ID;
+
+    @Output() openPostingCreateEditModal = new EventEmitter<void>();
 
     /*
      * icons (as svg paths) to be used as category preview image in emoji mart selector

@@ -17,13 +17,14 @@
 </div>
 
 <ng-container *ngIf="showAnswers">
-    <jhi-answer-post *ngFor="let answerPost of sortedAnswerPosts" [posting]="answerPost"></jhi-answer-post>
+    <jhi-answer-post
+        *ngFor="let answerPost of sortedAnswerPosts; let isLastAnswer = last"
+        [posting]="answerPost"
+        [isLastAnswer]="isLastAnswer"
+        (openPostingCreateEditModal)="createAnswerPostModal.open()"
+    >
+    </jhi-answer-post>
 </ng-container>
-<!-- add new answer to expanded discussion -->
-<button *ngIf="showAnswers && sortedAnswerPosts.length > 0" class="btn btn-sm btn-outline-secondary mt-2" (click)="createAnswerPostModal.open()">
-    <fa-icon [icon]="faComments"></fa-icon>
-    <span class="d-none d-md-inline">{{ 'artemisApp.metis.answerNow' | artemisTranslate }}</span>
-</button>
 <jhi-answer-post-create-edit-modal
     #createAnswerPostModal
     [posting]="createdAnswerPost"

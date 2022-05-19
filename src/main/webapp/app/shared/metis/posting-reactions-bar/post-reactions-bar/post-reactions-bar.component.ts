@@ -24,7 +24,6 @@ export class PostReactionsBarComponent extends PostingsReactionsBarDirective<Pos
     @Input() showAnswers: boolean;
     @Input() sortedAnswerPosts: AnswerPost[];
     @Output() showAnswersChange = new EventEmitter<boolean>();
-    @Output() openPostingCreateEditModal = new EventEmitter<void>();
 
     constructor(metisService: MetisService, themeService: ThemeService) {
         super(metisService, themeService);

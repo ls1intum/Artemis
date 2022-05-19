@@ -13,7 +13,8 @@ import { MockAnswerPostService } from '../../../../../helpers/mocks/service/mock
 import { PostComponent } from 'app/shared/metis/post/post.component';
 import { AnswerPostComponent } from 'app/shared/metis/answer-post/answer-post.component';
 import { AnswerPostCreateEditModalComponent } from 'app/shared/metis/posting-create-edit-modal/answer-post-create-edit-modal/answer-post-create-edit-modal.component';
-import { TranslatePipeMock } from '../../../../../helpers/mocks/service/mock-translate.service';
+import { MockPipe } from 'ng-mocks';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockMetisService } from '../../../../../helpers/mocks/service/mock-metis-service.service';
 import {
     metisPostExerciseUser1,
@@ -42,7 +43,7 @@ describe('PostFooterComponent', () => {
             ],
             declarations: [
                 PostFooterComponent,
-                TranslatePipeMock,
+                MockPipe(ArtemisTranslatePipe),
                 MockComponent(FaIconComponent),
                 MockComponent(PostReactionsBarComponent),
                 MockComponent(PostComponent),
@@ -149,24 +150,5 @@ describe('PostFooterComponent', () => {
         component.posting.answers = unsortedAnswerArray;
         component.ngOnChanges();
         expect(component.sortedAnswerPosts).toEqual(sortedAnswerArray);
-    });
-
-    it('answer now button should not be visible if answer posts are not shown', () => {
-        component.posting = post;
-        component.posting.answers = unsortedAnswerArray;
-        component.showAnswers = false;
-        fixture.detectChanges();
-        const answerNowButton = fixture.debugElement.nativeElement.querySelector('button');
-        expect(answerNowButton).toBeNull();
-    });
-
-    it('answer now button should be visible if answer posts are shown', () => {
-        component.posting = post;
-        component.posting.answers = unsortedAnswerArray;
-        component.showAnswers = true;
-        component.ngOnInit();
-        fixture.detectChanges();
-        const answerNowButton = fixture.debugElement.nativeElement.querySelector('button');
-        expect(answerNowButton.innerHTML).toContain('answerNow');
     });
 });
