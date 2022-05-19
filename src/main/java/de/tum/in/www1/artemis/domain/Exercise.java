@@ -22,6 +22,7 @@ import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.TutorParticipation;
+import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismCase;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.domain.view.QuizView;
 import de.tum.in.www1.artemis.web.rest.dto.DueDateStat;
@@ -124,6 +125,11 @@ public abstract class Exercise extends BaseExercise {
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     @JsonIncludeProperties({ "id" })
     private Set<Post> posts = new HashSet<>();
+
+    @OneToMany(mappedBy = "exercise", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
+    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
+    @JsonIncludeProperties({ "id" })
+    private Set<PlagiarismCase> plagiarismCases = new HashSet<>();
 
     @OneToMany(mappedBy = "exercise", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
     private Set<ExerciseHint> exerciseHints = new HashSet<>();
@@ -353,6 +359,14 @@ public abstract class Exercise extends BaseExercise {
         this.posts = posts;
     }
 
+    public Set<PlagiarismCase> getPlagiarismCases() {
+        return plagiarismCases;
+    }
+
+    public void setPlagiarismCases(Set<PlagiarismCase> plagiarismCases) {
+        this.plagiarismCases = plagiarismCases;
+    }
+
     public Set<ExerciseHint> getExerciseHints() {
         return exerciseHints;
     }
@@ -548,7 +562,7 @@ public abstract class Exercise extends BaseExercise {
             }
         }
 
-        if (submissionsWithRatedResult.size() > 0) {
+        if (!submissionsWithRatedResult.isEmpty()) {
             if (submissionsWithRatedResult.size() == 1) {
                 return submissionsWithRatedResult.get(0);
             }
@@ -557,7 +571,7 @@ public abstract class Exercise extends BaseExercise {
                 return submissionsWithRatedResult.stream().filter(s -> s.getSubmissionDate() != null).max(Comparator.comparing(Submission::getSubmissionDate)).orElse(null);
             }
         }
-        else if (submissionsWithUnratedResult.size() > 0) {
+        else if (!submissionsWithUnratedResult.isEmpty()) {
             if (this instanceof ProgrammingExercise) {
                 // this is an edge case that is treated differently: the student has not submitted before the due date and the client would otherwise think
                 // that there is no result for the submission and would display a red trigger button.
@@ -571,7 +585,7 @@ public abstract class Exercise extends BaseExercise {
                 return submissionsWithUnratedResult.stream().filter(s -> s.getSubmissionDate() != null).max(Comparator.comparing(Submission::getSubmissionDate)).orElse(null);
             }
         }
-        else if (submissionsWithoutResult.size() > 0) {
+        else if (!submissionsWithoutResult.isEmpty()) {
             if (submissionsWithoutResult.size() == 1) {
                 return submissionsWithoutResult.get(0);
             }

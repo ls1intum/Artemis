@@ -1,0 +1,19 @@
+<ng-container *ngIf="plagiarismCase">
+    <div class="row my-2 justify-content-center">
+        <div class="col-8 badge py-2" [ngClass]="verdictBadgeClass">
+            {{ verdictTranslationString | artemisTranslate }}
+        </div>
+        <ng-container *ngIf="plagiarismCase.verdict">
+            <div class="col-12 text-center mt-1">
+                {{ 'artemisApp.plagiarism.plagiarismCases.verdict.verdictDate' | artemisTranslate }} {{ plagiarismCase.verdictDate | artemisDate }}
+            </div>
+            <div class="col-12 text-center mt-1">{{ 'artemisApp.plagiarism.plagiarismCases.verdict.verdictBy' | artemisTranslate }} {{ plagiarismCase.verdictBy!.name }}</div>
+            <ng-container *ngIf="!hideDetails">
+                <div *ngIf="plagiarismCase.verdict === plagiarismVerdict.POINT_DEDUCTION" class="col-12 text-center mt-1">{{ plagiarismCase.verdictPointDeduction }}%</div>
+                <div *ngIf="plagiarismCase.verdict === plagiarismVerdict.WARNING" class="col-12 text-center mt-1">
+                    {{ plagiarismCase.verdictMessage }}
+                </div>
+            </ng-container>
+        </ng-container>
+    </div>
+</ng-container>

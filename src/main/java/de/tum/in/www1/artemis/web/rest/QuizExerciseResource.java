@@ -131,7 +131,7 @@ public class QuizExerciseResource {
             return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "invalidQuiz", "The quiz exercise is invalid")).body(null);
         }
 
-        quizExercise.validateScoreSettings();
+        quizExercise.validateGeneralSettings();
         // Valid exercises have set either a course or an exerciseGroup
         quizExercise.checkCourseAndExerciseGroupExclusivity(ENTITY_NAME);
 
@@ -169,7 +169,7 @@ public class QuizExerciseResource {
             return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "invalidQuiz", "The quiz exercise is invalid")).body(null);
         }
 
-        quizExercise.validateScoreSettings();
+        quizExercise.validateGeneralSettings();
 
         // Valid exercises have set either a course or an exerciseGroup
         quizExercise.checkCourseAndExerciseGroupExclusivity(ENTITY_NAME);
@@ -190,6 +190,11 @@ public class QuizExerciseResource {
         }
 
         quizExercise.reconnectJSONIgnoreAttributes();
+
+        // don't allow changing batches except in synchronized mode as the client doesn't have the full list and saving the exercise could otherwise end up deleting a bunch
+        if (quizExercise.getQuizMode() != QuizMode.SYNCHRONIZED || quizExercise.getQuizBatches() == null || quizExercise.getQuizBatches().size() > 1) {
+            quizExercise.setQuizBatches(batches);
+        }
 
         quizExercise = quizExerciseService.save(quizExercise);
         exerciseService.logUpdate(quizExercise, quizExercise.getCourseViaExerciseGroupOrCourseMember(), user);
@@ -217,12 +222,7 @@ public class QuizExerciseResource {
             // not required in the returned json body
             quizExercise.setStudentParticipations(null);
             quizExercise.setCourse(null);
-            Set<QuizBatch> batches = switch (quizExercise.getQuizMode()) {
-                case SYNCHRONIZED -> quizBatchRepository.findAllByQuizExercise(quizExercise);
-                case BATCHED -> quizBatchRepository.findAllByQuizExerciseAndCreator(quizExercise, user.getId());
-                case INDIVIDUAL -> Set.of();
-            };
-            quizExercise.setQuizBatches(batches);
+            setQuizBatches(user, quizExercise);
         }
 
         return quizExercises;
@@ -262,15 +262,16 @@ public class QuizExerciseResource {
     public ResponseEntity<QuizExercise> getQuizExercise(@PathVariable Long quizExerciseId) {
         // TODO: Split this route in two: One for normal and one for exam exercises
         log.debug("REST request to get QuizExercise : {}", quizExerciseId);
+        User user = userRepository.getUserWithGroupsAndAuthorities();
         var quizExercise = quizExerciseRepository.findByIdWithQuestionsAndStatisticsElseThrow(quizExerciseId);
         if (quizExercise.isExamExercise()) {
-            authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, quizExercise, null);
+            authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, quizExercise, user);
             studentParticipationRepository.checkTestRunsExist(quizExercise);
         }
         else if (!authCheckService.isAllowedToSeeExercise(quizExercise, null)) {
             throw new AccessForbiddenException();
         }
-        quizExercise.setQuizBatches(quizBatchRepository.findAllByQuizExerciseAndCreator(quizExercise, userRepository.getUser().getId()));
+        setQuizBatches(user, quizExercise);
         return ResponseEntity.ok(quizExercise);
     }
 
@@ -329,7 +330,7 @@ public class QuizExerciseResource {
         log.debug("REST request to join Batch : {}", quizExerciseId);
         QuizExercise quizExercise = quizExerciseRepository.findByIdElseThrow(quizExerciseId);
         var user = userRepository.getUserWithGroupsAndAuthorities();
-        if (!authCheckService.isAllowedToSeeExercise(quizExercise, user)) {
+        if (!authCheckService.isAllowedToSeeExercise(quizExercise, user) || !quizExercise.isQuizStarted() || quizExercise.isQuizEnded()) {
             throw new AccessForbiddenException();
         }
         if (quizScheduleService.getQuizBatchForStudent(quizExercise, user).isPresent()) {
@@ -416,7 +417,8 @@ public class QuizExerciseResource {
     public ResponseEntity<QuizExercise> performActionForQuizExercise(@PathVariable Long quizExerciseId, @PathVariable String action) {
         log.debug("REST request to immediately start QuizExercise : {}", quizExerciseId);
         var quizExercise = quizExerciseRepository.findByIdWithQuestionsAndStatisticsElseThrow(quizExerciseId);
-        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, quizExercise, null);
+        var user = userRepository.getUserWithGroupsAndAuthorities();
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, quizExercise, user);
 
         switch (action) {
             case "start-now" -> {
@@ -435,9 +437,15 @@ public class QuizExerciseResource {
                 // set release date to now, truncated to seconds because the database only stores seconds
                 var now = ZonedDateTime.now().truncatedTo(ChronoUnit.SECONDS);
                 quizBatchService.getOrCreateSynchronizedQuizBatch(quizExercise).setStartTime(now);
+                if (quizExercise.getReleaseDate() != null && quizExercise.getReleaseDate().isAfter(now)) {
+                    // preserve null and valid releaseDates for quiz start lifecycle event
+                    quizExercise.setReleaseDate(now);
+                }
                 quizExercise.setDueDate(now.plusSeconds(quizExercise.getDuration() + Constants.QUIZ_GRACE_PERIOD_IN_SECONDS));
             }
             case "end-now" -> {
+                // editors may not end the quiz
+                authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, quizExercise, user);
                 // only synchronized quiz exercises can be started like this
                 if (quizExercise.getQuizMode() == QuizMode.SYNCHRONIZED) {
                     return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, "quizExercise", "quizSynchronized", "Quiz is synchronized."))
@@ -606,6 +614,17 @@ public class QuizExerciseResource {
         final var newQuizExercise = quizExerciseImportService.importQuizExercise(originalQuizExercise, importedExercise);
         quizExerciseRepository.save(newQuizExercise);
         return ResponseEntity.created(new URI("/api/quiz-exercises/" + newQuizExercise.getId()))
-                .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, newQuizExercise.getId().toString())).body(newQuizExercise);
+            .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, newQuizExercise.getId().toString())).body(newQuizExercise);
+    }
+
+    private void setQuizBatches(User user, QuizExercise quizExercise) {
+        if (quizExercise.getQuizMode() != null) {
+            Set<QuizBatch> batches = switch (quizExercise.getQuizMode()) {
+                case SYNCHRONIZED -> quizBatchRepository.findAllByQuizExercise(quizExercise);
+                case BATCHED -> quizBatchRepository.findAllByQuizExerciseAndCreator(quizExercise, user.getId());
+                case INDIVIDUAL -> Set.of();
+            };
+            quizExercise.setQuizBatches(batches);
+        }
     }
 }

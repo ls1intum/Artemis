@@ -43,11 +43,6 @@ describe('LearningGoalCardComponent', () => {
         jest.restoreAllMocks();
     });
 
-    it('should initialize', () => {
-        learningGoalCardComponentFixture.detectChanges();
-        expect(learningGoalCardComponent).toBeDefined();
-    });
-
     it('should display progress bar when progress is available', () => {
         const learningGoal = new LearningGoal();
         learningGoal.id = 1;

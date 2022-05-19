@@ -231,7 +231,7 @@ export class QuizExerciseService {
      */
     getStatus(quizExercise: QuizExercise) {
         if (!quizExercise.quizStarted) {
-            return QuizStatus.HIDDEN;
+            return QuizStatus.INVISIBLE;
         }
         if (quizExercise.quizEnded) {
             return quizExercise.isOpenForPractice ? QuizStatus.OPEN_FOR_PRACTICE : QuizStatus.CLOSED;
