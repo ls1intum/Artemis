@@ -94,8 +94,12 @@ public class QuizExerciseImportService extends ExerciseImportService {
                 for (DragAndDropMapping dragAndDropMapping : dndQuestion.getCorrectMappings()) {
                     dragAndDropMapping.setId(null);
                     dragAndDropMapping.setQuestion(dndQuestion);
-                    dragAndDropMapping.setDragItem(dndQuestion.getDragItems().get(dragAndDropMapping.getDragItemIndex()));
-                    dragAndDropMapping.setDropLocation(dndQuestion.getDropLocations().get(dragAndDropMapping.getDropLocationIndex()));
+                    if (dragAndDropMapping.getDragItemIndex() != null) {
+                        dragAndDropMapping.setDragItem(dndQuestion.getDragItems().get(dragAndDropMapping.getDragItemIndex()));
+                    }
+                    if (dragAndDropMapping.getDropLocationIndex() != null) {
+                        dragAndDropMapping.setDropLocation(dndQuestion.getDropLocations().get(dragAndDropMapping.getDropLocationIndex()));
+                    }
                 }
             }
             else if (quizQuestion instanceof ShortAnswerQuestion saQuestion) {
@@ -110,8 +114,12 @@ public class QuizExerciseImportService extends ExerciseImportService {
                 for (ShortAnswerMapping shortAnswerMapping : saQuestion.getCorrectMappings()) {
                     shortAnswerMapping.setId(null);
                     shortAnswerMapping.setQuestion(saQuestion);
-                    shortAnswerMapping.setSolution(saQuestion.getSolutions().get(shortAnswerMapping.getShortAnswerSolutionIndex()));
-                    shortAnswerMapping.setSpot(saQuestion.getSpots().get(shortAnswerMapping.getShortAnswerSpotIndex()));
+                    if (shortAnswerMapping.getShortAnswerSolutionIndex() != null) {
+                        shortAnswerMapping.setSolution(saQuestion.getSolutions().get(shortAnswerMapping.getShortAnswerSolutionIndex()));
+                    }
+                    if (shortAnswerMapping.getShortAnswerSpotIndex() != null) {
+                        shortAnswerMapping.setSpot(saQuestion.getSpots().get(shortAnswerMapping.getShortAnswerSpotIndex()));
+                    }
                 }
             }
             quizQuestion.setExercise(newExercise);
