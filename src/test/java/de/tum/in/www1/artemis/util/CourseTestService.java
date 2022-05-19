@@ -66,6 +66,9 @@ public class CourseTestService {
     private LectureRepository lectureRepo;
 
     @Autowired
+    private LearningGoalRepository learningGoalRepo;
+
+    @Autowired
     private ResultRepository resultRepo;
 
     @Autowired
@@ -415,7 +418,6 @@ public class CourseTestService {
 
     // Test
     public void testEditCourseWithPermission() throws Exception {
-
         Course course = ModelFactory.generateCourse(1L, null, null, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
         course = courseRepo.save(course);
 
@@ -427,6 +429,31 @@ public class CourseTestService {
         assertThat(updatedCourse.getTitle()).as("title was changed correctly").isEqualTo(course.getTitle());
         assertThat(updatedCourse.getStartDate()).as("start date was changed correctly").isEqualTo(course.getStartDate());
         assertThat(updatedCourse.getEndDate()).as("end date was changed correctly").isEqualTo(course.getEndDate());
+    }
+
+    // Test
+    public void testEditCourseShouldPreserveAssociations() throws Exception {
+        Course course = database.createCourseWithOrganizations();
+        course = courseRepo.save(course);
+
+        Set<Organization> organizations = course.getOrganizations();
+
+        Set<LearningGoal> learningGoals = new HashSet<>();
+        learningGoals.add(database.createLearningGoal(course));
+        course.setLearningGoals(learningGoals);
+        course = courseRepo.save(course);
+
+        Set<LearningGoal> prerequisites = new HashSet<>();
+        prerequisites.add(database.createLearningGoal(database.createCourse()));
+        course.setPrerequisites(prerequisites);
+        course = courseRepo.save(course);
+
+        request.putWithResponseBody("/api/courses", course, Course.class, HttpStatus.OK);
+
+        Course updatedCourse = courseRepo.findByIdWithOrganizationsAndLearningGoalsElseThrow(course.getId());
+        assertThat(updatedCourse.getOrganizations()).containsExactlyElementsOf(organizations);
+        assertThat(updatedCourse.getLearningGoals()).containsExactlyElementsOf(learningGoals);
+        assertThat(updatedCourse.getPrerequisites()).containsExactlyElementsOf(prerequisites);
     }
 
     // Test

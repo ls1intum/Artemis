@@ -18,11 +18,11 @@ public class CodeHint extends ExerciseHint {
 
     // No CascadeType.REMOVE here, as we want to retain the solution entries when a code hint is deleted
     @OneToMany(mappedBy = "codeHint", fetch = FetchType.LAZY)
-    @JsonIgnoreProperties("codeHint")
+    @JsonIgnoreProperties({ "codeHint", "testCase" })
     private Set<ProgrammingExerciseSolutionEntry> solutionEntries = new HashSet<>();
 
     @ManyToOne
-    @JsonIgnoreProperties("codeHint")
+    @JsonIgnoreProperties("codeHints")
     private ProgrammingExerciseTask task;
 
     public Set<ProgrammingExerciseSolutionEntry> getSolutionEntries() {

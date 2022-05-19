@@ -7,6 +7,7 @@ import de.jplag.Token;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismSubmissionElement;
 
 @Entity
+// TODO: use @DiscriminatorValue(value = "T") or even better use integers (because they use less space in the database)
 public class TextSubmissionElement extends PlagiarismSubmissionElement {
 
     @Column(name = "file_column")

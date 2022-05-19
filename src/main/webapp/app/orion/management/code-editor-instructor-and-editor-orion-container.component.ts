@@ -13,7 +13,7 @@ import { OrionBuildAndTestService } from 'app/shared/orion/orion-build-and-test.
 import { OrionState } from 'app/shared/orion/orion';
 import { faCircleNotch, faTimesCircle } from '@fortawesome/free-solid-svg-icons';
 import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
-import { ExerciseHintService } from 'app/exercises/shared/exercise-hint/manage/exercise-hint.service';
+import { ExerciseHintService } from 'app/exercises/shared/exercise-hint/shared/exercise-hint.service';
 
 @Component({
     selector: 'jhi-code-editor-instructor-orion',

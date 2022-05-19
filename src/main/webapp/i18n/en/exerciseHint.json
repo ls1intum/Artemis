@@ -1,6 +1,7 @@
 {
     "artemisApp": {
         "exerciseHint": {
+            "textHint": "Text hint",
             "home": {
                 "title": "Exercise Hints",
                 "createLabel": "Create a new Exercise Hint",
@@ -23,6 +24,14 @@
                 "title": "Exercise Hints",
                 "tooltip": "Open hints for this exercise"
             }
+        },
+        "codeHint": {
+            "type": "Code Hint",
+            "entry": "Entry",
+            "entries": "Entries",
+            "removeEntryQuestion": "Are you sure you want to remove this entry?",
+            "noEntries": "This code hint has no solution entries.",
+            "deleted": "Deleted Code Hint with identifier {{ param }}"
         }
     }
 }
