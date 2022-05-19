@@ -7,6 +7,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { TextBlock } from 'app/entities/text-block.model';
 import { faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
 import { LocaleConversionService } from 'app/shared/service/locale-conversion.service';
+import { Course } from 'app/entities/course.model';
 
 @Component({
     selector: 'jhi-text-result',
@@ -36,6 +37,8 @@ export class TextResultComponent {
         this.submissionText = this.submission.text || '';
         this.convertTextToResultBlocks(result.feedbacks);
     }
+    @Input()
+    course?: Course;
 
     constructor(private translateService: TranslateService, private localeConversionService: LocaleConversionService) {}
 
@@ -113,8 +116,8 @@ export class TextResultComponent {
 
     public creditsTranslationForTextResultBlock(textResultBlock: TextResultBlock): string {
         const singular = Math.abs(textResultBlock.feedback!.credits || 0) === 1;
-        return this.translateService.instant(`artemisApp.textAssessment.detail.credits.${singular ? 'one' : 'many'}`, {
-            credits: this.localeConversionService.toLocaleString(textResultBlock.feedback?.credits || 0),
+        return this.translateService.instant(`artemisApp.assessment.detail.points.${singular ? 'one' : 'many'}`, {
+            points: this.localeConversionService.toLocaleString(textResultBlock.feedback?.credits || 0, this.course?.accuracyOfScores),
         });
     }
 }
