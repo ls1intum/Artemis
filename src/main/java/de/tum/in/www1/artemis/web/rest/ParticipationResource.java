@@ -517,6 +517,8 @@ public class ParticipationResource {
     private @Nullable MappingJacksonValue participationForQuizExercise(QuizExercise quizExercise, User user) {
         if (quizExercise.isQuizEnded()) {
             // quiz has ended => get participation from database and add full quizExercise
+            // TODO: first check if the participation actually exists, if not, don't even load the quizExercise and return a "please be patient" message so that the user waits
+
             quizExercise = quizExerciseRepository.findByIdWithQuestionsElseThrow(quizExercise.getId());
             // TODO: we get a lot of error message here, when the quiz has ended, students reload the page (or navigate again into it), but the participation (+ submission
             // + result) has not yet been stored in the database (because for 1500 students this can take up to 60s). We should handle this case here properly
