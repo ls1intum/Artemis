@@ -1,7 +1,6 @@
 package de.tum.in.www1.artemis.service;
 
 import java.util.HashMap;
-import java.util.List;
 
 import javax.validation.constraints.NotNull;
 
@@ -9,10 +8,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
-import de.tum.in.www1.artemis.domain.quiz.AnswerOption;
-import de.tum.in.www1.artemis.domain.quiz.MultipleChoiceQuestion;
-import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
-import de.tum.in.www1.artemis.domain.quiz.QuizQuestion;
+import de.tum.in.www1.artemis.domain.quiz.*;
 import de.tum.in.www1.artemis.repository.ExampleSubmissionRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.repository.SubmissionRepository;
@@ -80,13 +76,43 @@ public class QuizExerciseImportService extends ExerciseImportService {
         for (QuizQuestion quizQuestion : importedExercise.getQuizQuestions()) {
             quizQuestion.setId(null);
             quizQuestion.setQuizQuestionStatistic(null);
-            if (quizQuestion instanceof MultipleChoiceQuestion) {
-                List<AnswerOption> answerOptions = ((MultipleChoiceQuestion) quizQuestion).getAnswerOptions();
-                for (AnswerOption answerOption : answerOptions) {
+            if (quizQuestion instanceof MultipleChoiceQuestion mcQuestion) {
+                for (AnswerOption answerOption : mcQuestion.getAnswerOptions()) {
                     answerOption.setId(null);
-                    answerOption.setQuestion((MultipleChoiceQuestion) quizQuestion);
+                    answerOption.setQuestion(mcQuestion);
                 }
-                ((MultipleChoiceQuestion) quizQuestion).setAnswerOptions(((MultipleChoiceQuestion) quizQuestion).getAnswerOptions());
+            }
+            else if (quizQuestion instanceof DragAndDropQuestion dndQuestion) {
+                for (DropLocation dropLocation : dndQuestion.getDropLocations()) {
+                    dropLocation.setId(null);
+                    dropLocation.setQuestion(dndQuestion);
+                }
+                for (DragItem dragItem : dndQuestion.getDragItems()) {
+                    dragItem.setId(null);
+                    dragItem.setQuestion(dndQuestion);
+                }
+                for (DragAndDropMapping dragAndDropMapping : dndQuestion.getCorrectMappings()) {
+                    dragAndDropMapping.setId(null);
+                    dragAndDropMapping.setQuestion(dndQuestion);
+                    dragAndDropMapping.setDragItem(dndQuestion.getDragItems().get(dragAndDropMapping.getDragItemIndex()));
+                    dragAndDropMapping.setDropLocation(dndQuestion.getDropLocations().get(dragAndDropMapping.getDropLocationIndex()));
+                }
+            }
+            else if (quizQuestion instanceof ShortAnswerQuestion saQuestion) {
+                for (ShortAnswerSpot shortAnswerSpot : saQuestion.getSpots()) {
+                    shortAnswerSpot.setId(null);
+                    shortAnswerSpot.setQuestion(saQuestion);
+                }
+                for (ShortAnswerSolution shortAnswerSolution : saQuestion.getSolutions()) {
+                    shortAnswerSolution.setId(null);
+                    shortAnswerSolution.setQuestion(saQuestion);
+                }
+                for (ShortAnswerMapping shortAnswerMapping : saQuestion.getCorrectMappings()) {
+                    shortAnswerMapping.setId(null);
+                    shortAnswerMapping.setQuestion(saQuestion);
+                    shortAnswerMapping.setSolution(saQuestion.getSolutions().get(shortAnswerMapping.getShortAnswerSolutionIndex()));
+                    shortAnswerMapping.setSpot(saQuestion.getSpots().get(shortAnswerMapping.getShortAnswerSpotIndex()));
+                }
             }
             quizQuestion.setExercise(newExercise);
         }
