@@ -145,7 +145,7 @@ public class ExamQuizService {
                     participation.setExercise(quizExercise);
                     Set<Submission> submissions = participation.getSubmissions();
                     QuizSubmission quizSubmission;
-                    if (submissions.size() == 0) {
+                    if (submissions.isEmpty()) {
                         log.warn("Found no submissions for participation {} (Participant {}) in quiz {}", participation.getId(), participation.getParticipant().getName(),
                                 quizExercise.getId());
                         continue;
@@ -168,7 +168,7 @@ public class ExamQuizService {
                     boolean resultExisting = false;
                     // create new result if none is existing
                     Result result;
-                    if (participation.getResults().size() == 0) {
+                    if (participation.getResults().isEmpty()) {
                         result = new Result().participation(participation);
                     }
                     else {

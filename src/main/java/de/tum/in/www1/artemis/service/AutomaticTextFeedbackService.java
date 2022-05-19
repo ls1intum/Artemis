@@ -54,7 +54,7 @@ public class AutomaticTextFeedbackService {
                 final List<TextBlock> allBlocksInCluster = cluster.getBlocks().parallelStream().filter(elem -> !elem.equals(block)).toList();
                 final Map<String, Feedback> feedbackForTextExerciseInCluster = feedbackRepository.getFeedbackForTextExerciseInCluster(cluster);
 
-                if (feedbackForTextExerciseInCluster.size() != 0) {
+                if (!feedbackForTextExerciseInCluster.isEmpty()) {
                     final Optional<TextBlock> mostSimilarBlockInClusterWithFeedback = allBlocksInCluster.parallelStream()
 
                             // Filter all other blocks in the cluster for those with Feedback

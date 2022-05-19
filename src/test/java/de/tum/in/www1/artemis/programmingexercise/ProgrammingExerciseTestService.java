@@ -351,7 +351,7 @@ public class ProgrammingExerciseTestService {
         if (language == SWIFT) {
             exercise.setPackageName("swiftTest");
         }
-        exercise.setProjectType(programmingLanguageFeature.getProjectTypes().size() > 0 ? programmingLanguageFeature.getProjectTypes().get(0) : null);
+        exercise.setProjectType(programmingLanguageFeature.getProjectTypes().isEmpty() ? null : programmingLanguageFeature.getProjectTypes().get(0));
         mockDelegate.mockConnectorRequestsForSetup(exercise, false);
         validateProgrammingExercise(request.postWithResponseBody(ROOT + SETUP, exercise, ProgrammingExercise.class, HttpStatus.CREATED));
     }
@@ -379,7 +379,7 @@ public class ProgrammingExerciseTestService {
             exercise.setProjectType(ProjectType.GCC);
         }
         else {
-            exercise.setProjectType(programmingLanguageFeature.getProjectTypes().size() > 0 ? programmingLanguageFeature.getProjectTypes().get(0) : null);
+            exercise.setProjectType(programmingLanguageFeature.getProjectTypes().isEmpty() ? null : programmingLanguageFeature.getProjectTypes().get(0));
         }
         mockDelegate.mockConnectorRequestsForSetup(exercise, false);
         var generatedExercise = request.postWithResponseBody(ROOT + SETUP, exercise, ProgrammingExercise.class);

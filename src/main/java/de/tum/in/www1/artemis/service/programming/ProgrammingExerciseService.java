@@ -474,7 +474,7 @@ public class ProgrammingExerciseService {
      */
     private void setupTemplateAndPush(Repository repository, Resource[] resources, String prefix, @Nullable Resource[] projectTypeResources, String projectTypePrefix,
             String templateName, ProgrammingExercise programmingExercise, User user) throws Exception {
-        if (gitService.listFiles(repository).size() == 0) { // Only copy template if repo is empty
+        if (gitService.listFiles(repository).isEmpty()) { // Only copy template if repo is empty
             fileService.copyResources(resources, prefix, repository.getLocalPath().toAbsolutePath().toString(), true);
             // Also copy project type specific files AFTERWARDS (so that they might overwrite the default files)
             if (projectTypeResources != null) {
@@ -500,7 +500,7 @@ public class ProgrammingExerciseService {
     private void setupTestTemplateAndPush(Repository repository, Resource[] resources, String prefix, Resource[] projectTypeResources, String projectTypePrefix,
             String templateName, ProgrammingExercise programmingExercise, User user) throws Exception {
         // Only copy template if repo is empty
-        if (gitService.listFiles(repository).size() == 0
+        if (gitService.listFiles(repository).isEmpty()
                 && (programmingExercise.getProgrammingLanguage() == ProgrammingLanguage.JAVA || programmingExercise.getProgrammingLanguage() == ProgrammingLanguage.KOTLIN)) {
             // First get files that are not dependent on the project type
             String templatePath = getProgrammingLanguageTemplatePath(programmingExercise.getProgrammingLanguage()) + "/test";
