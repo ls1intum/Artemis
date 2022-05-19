@@ -126,7 +126,7 @@ describe('PostFooterComponent', () => {
         component.showAnswers = false;
         fixture.detectChanges();
         const answerPostComponent = fixture.debugElement.nativeElement.querySelector('jhi-answer-post');
-        expect(answerPostComponent).toBe(null);
+        expect(answerPostComponent).toBeNull();
     });
 
     it('should sort answers', () => {
