@@ -27,9 +27,11 @@
                             [exam]="exam!"
                             [courseId]="course!.id!"
                             [studentExam]="studentExam"
+                            [latestExam]="i === 0"
                             [class]="'card m-2 border-primary'"
                         ></jhi-course-exam-attempt-review-detail>
                     </div>
+                    <!-- Control Labels to expand / collaps the list of attemps -->
                     <div class="control-label" *ngIf="i === 4 && !expandAttemptsMap.get(exam!.id!)" (click)="changeExpandAttemptList(exam!.id!)">
                         <fa-icon class="pe-3" [icon]="faAngleDown"></fa-icon>
                         <span class="pe-2">{{ 'artemisApp.exam.overview.testExam.showMoreAttempts' | artemisTranslate }}</span>

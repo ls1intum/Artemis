@@ -26,15 +26,7 @@
                 <!-- Book to indicate, the exam is closed -->
                 <fa-icon *ngIf="examState === 'CLOSED'" [icon]="faBook" size="2x"></fa-icon>
             </h4>
-            <!-- To highlight an imminent or conducting exam, the text is highlighted in turquoise. Only for RealExams, as TestExams have a much larger working window -->
-            <div
-                class="col-8"
-                [class]="
-                    'row card-body justify-content-center ' +
-                    (!exam.testExam && examState === 'IMMINENT' ? 'text-white bg-success' : '') +
-                    (!exam.testExam && examState === 'CONDUCTING' ? 'text-white bg-primary' : '')
-                "
-            >
+            <div class="col-8 row card-body justify-content-center">
                 <div *ngIf="examState === 'UPCOMING'">
                     <h5 class="text-center">{{ 'artemisApp.exam.overview.' + (exam.testExam ? 'testExam.' : '') + 'upcoming' | artemisTranslate }}</h5>
                     <div class="text-center">

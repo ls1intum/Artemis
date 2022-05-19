@@ -18,6 +18,7 @@ export class CourseExamAttemptReviewDetailComponent implements OnInit, OnDestroy
     @Input() courseId: number;
     // Index used to enumerate the attempts per student
     @Input() index: number;
+    @Input() latestExam: boolean;
     studentExamState: Subscription;
 
     // Helper-Variables
@@ -33,12 +34,12 @@ export class CourseExamAttemptReviewDetailComponent implements OnInit, OnDestroy
     /**
      * Calculate the individual working time for every submitted StudentExam. As the StudentExam needs to be submitted, the
      * working time cannot change.
-     * For StudentExams which are still within the allowed working time, a subscription is used to periodically check this.
+     * For the latest StudentExam, which is still within the allowed working time, a subscription is used to periodically check this.
      */
     ngOnInit() {
         if (this.studentExam.started && this.studentExam.submitted && this.studentExam.startedDate && this.studentExam.submissionDate) {
             this.withinWorkingTime = false;
-        } else if (this.index === 0) {
+        } else if (this.latestExam) {
             // A subscription is used here to limit the number of calls for the countdown of the remaining workingTime.
             this.studentExamState = interval(1000).subscribe(() => {
                 this.isWithinWorkingTime();

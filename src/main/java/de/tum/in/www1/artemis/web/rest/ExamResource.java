@@ -873,25 +873,7 @@ public class ExamResource {
         return ResponseEntity.ok(exam);
     }
 
-    /**
-     * GET /courses/{courseId}/exams/{examId}/student-exam/{studentExamId}/start: Get a specified {@link StudentExam} for an TestExam for the exam start.
-     * Note: The Access control, if the requested StudentExam is a TestExam, is performed when generating the {@link StudentExam}
-     * in {@link ExamAccessService} (in order to limit the number of Database-Calls)
-     *
-     * @param courseId      the id of the course
-     * @param examId        the id of the (Test) Exams
-     * @param studentExamId the id of the studentExam
-     * @return the ResponseEntity with status 200 (OK) and with the found / generated student exams (without exercises)
-     */
-    @GetMapping("/courses/{courseId}/exams/{examId}/student-exam/{studentExamId]/start")
-    @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<StudentExam> getStudentExamForTestExamForStartById(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long studentExamId) {
-        log.debug("REST request to get the studentExam {} for the TestExam {} for conduction", studentExamId, examId);
-
-        StudentExam exam = examAccessService.getStudentExamForTestExamElseThrow(courseId, examId, studentExamId);
-
-        return ResponseEntity.ok(exam);
-    }
+    // /courses/{courseId}/exams/{examId}/student-exam/{studentExamId]/start
 
     /**
      * PUT /courses/:courseId/exams/:examId/exercise-groups-order : Update the order of exercise groups. If the received
