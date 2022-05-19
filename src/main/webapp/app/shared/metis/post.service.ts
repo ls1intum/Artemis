@@ -4,6 +4,7 @@ import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import dayjs from 'dayjs/esm';
 import { Post } from 'app/entities/metis/post.model';
+import { AnswerPost } from 'app/entities/metis/answer-post.model';
 import { PostingService } from 'app/shared/metis/posting.service';
 import { DisplayPriority, PostContextFilter } from 'app/shared/metis/metis.util';
 
@@ -145,6 +146,9 @@ export class PostService extends PostingService<Post> {
         if (res.body) {
             res.body.forEach((post: Post) => {
                 post.creationDate = post.creationDate ? dayjs(post.creationDate) : undefined;
+                post.answers?.forEach((answer: AnswerPost) => {
+                    answer.creationDate = answer.creationDate ? dayjs(answer.creationDate) : undefined;
+                });
             });
         }
         return res;
