@@ -10,7 +10,7 @@ export abstract class AbstractExerciseFeedback {
 
     shouldShowAdditionalFeedback(points: number, feedbackText: string) {
         if (Math.abs(points) === 1) {
-            cy.get(this.additionalFeedbackSelector).contains(`${points} Point: ${feedbackText}`).should('be.visible');
+            cy.get(this.additionalFeedbackSelector).contains(`${points} Points: ${feedbackText}`).should('be.visible');
         } else {
             cy.get(this.additionalFeedbackSelector).contains(`${points} Points: ${feedbackText}`).should('be.visible');
         }
