@@ -9,7 +9,7 @@ import { TextSubmission } from 'app/entities/text-submission.model';
             :host {
                 white-space: pre-wrap;
                 display: block;
-                background-color: #f8f9fa;
+                background-color: var(--exam-text-exam-summary-background);
             }
         `,
     ],

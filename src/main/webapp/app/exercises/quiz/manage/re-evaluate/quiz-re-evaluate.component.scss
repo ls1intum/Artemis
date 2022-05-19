@@ -63,8 +63,8 @@
     left: 0;
     right: 0;
     z-index: 10;
-    box-shadow: 0 0 3px rgba(0, 0, 0, 0.7);
-    background: white;
+    box-shadow: 0 0 3px var(--edit-quiz-footer-box-shadow);
+    background: var(--edit-quiz-footer-background);
 
     .container {
         height: 100%;

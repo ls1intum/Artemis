@@ -14,5 +14,7 @@
 
     input {
         min-width: 50%;
+        background: var(--base-grading-system-input-background);
+        color: var(--base-grading-system-input-color);
     }
 }

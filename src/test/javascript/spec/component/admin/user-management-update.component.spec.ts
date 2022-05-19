@@ -2,6 +2,7 @@ import { ComponentFixture, fakeAsync, inject, TestBed, tick } from '@angular/cor
 import { HttpResponse } from '@angular/common/http';
 import { ActivatedRoute, Router, RouterState } from '@angular/router';
 import { of, Subject } from 'rxjs';
+import { FormBuilder } from '@angular/forms';
 
 import { ArtemisTestModule } from '../../test.module';
 import { UserManagementUpdateComponent } from 'app/admin/user-management/user-management-update.component';
@@ -53,6 +54,7 @@ describe('User Management Update Component', () => {
             imports: [ArtemisTestModule, MockModule(MatFormFieldModule), MockModule(MatChipsModule)],
             declarations: [UserManagementUpdateComponent, TranslatePipeMock, MockDirective(NgForm), MockDirective(NgModel)],
             providers: [
+                FormBuilder,
                 {
                     provide: ActivatedRoute,
                     useValue: route,
