@@ -159,7 +159,7 @@ export class PostService extends PostingService<Post> {
      * used for incoming posts via websocket subscription
      * @param   Post post
      */
-    convertDatesOfPost(post: Post) {
+    convertDatesOfPost(post: Post): void {
         post.creationDate = post.creationDate ? dayjs(post.creationDate) : undefined;
         post.answers?.forEach((answer: AnswerPost) => {
             answer.creationDate = answer.creationDate ? dayjs(answer.creationDate) : undefined;
