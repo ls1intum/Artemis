@@ -361,7 +361,7 @@
                         "pattern": "The penalty must be a number greater than 0.",
                         "required": "The penalty must be set."
                     },
-                    "penaltyInfoLabel": "Exceeding Penalty",
+                    "penaltyInfoLabel": "(Exceeding Penalty: {{points}} points)",
                     "triggerAllInformation": "If the exceeding submission limit penalty or the submission limit is updated, the 'Re-evaluate' functionality must be used to update the participants' results."
                 },
                 "submissionPolicyType": {
