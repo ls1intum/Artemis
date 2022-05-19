@@ -14,7 +14,9 @@
         [class.neutral-feedback]="singleFeedback?.credits === 0 || singleFeedback?.isSubsequent"
     >
         <strong>
-            <span>{{ pointTranslation(singleFeedback?.credits ?? 0) }}:</span>
+            <u
+                ><span>{{ pointTranslation(singleFeedback?.credits ?? 0) }}</span></u
+            >:
         </strong>
         <span [innerHTML]="buildFeedbackTextForReview(singleFeedback)"></span>
         <fa-icon
