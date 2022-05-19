@@ -20,7 +20,7 @@ import { ChangeDetectorRef } from '@angular/core';
 
 const question = { id: 1 } as QuizQuestion;
 const course = { id: 2 } as Course;
-let quizExercise = { id: 42, started: true, course, quizQuestions: [question] } as QuizExercise;
+let quizExercise = { id: 42, quizStarted: true, course, quizQuestions: [question] } as QuizExercise;
 
 const route = { params: of({ courseId: 2, exerciseId: 42 }) };
 
@@ -64,7 +64,7 @@ describe('QuizExercise Statistic Component', () => {
 
     afterEach(() => {
         comp.ngOnDestroy();
-        quizExercise = { id: 42, started: true, course, quizQuestions: [question] } as QuizExercise;
+        quizExercise = { id: 42, quizStarted: true, course, quizQuestions: [question] } as QuizExercise;
         quizServiceFindSpy.mockClear();
     });
 

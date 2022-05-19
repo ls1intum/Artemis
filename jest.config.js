@@ -2,7 +2,7 @@ const esModules = ['lodash-es', 'franc-min', 'trigram-utils', 'n-gram', 'collaps
     '@angular/compiler', '@angular/core', '@angular/forms', '@angular/localize', '@angular/platform-browser', '@angular/platform-browser-dynamic', '@angular/router',
     '@ngx-translate/core', '@ngx-translate/http-loader', '@fortawesome/angular-fontawesome', '@angular/cdk', '@angular/material', '@angular/cdk', 'dayjs/esm',
     'rxjs/operators', '@ng-bootstrap/ng-bootstrap', 'ngx-webstorage', '@ctrl/ngx-emoji-mart', 'ngx-device-detector', '@swimlane/ngx-charts',
-    '@angular/service-worker'].join('|');
+    '@angular/service-worker', '@danielmoncada/angular-datetime-picker'].join('|');
 
 const {
     compilerOptions: { baseUrl = './' },
@@ -57,7 +57,7 @@ module.exports = {
             // TODO: in the future, the following values should be increase to at least 85%
             statements: 83.4,
             branches: 70.1,
-            functions: 76.0,
+            functions: 76.18,
             lines: 83.1,
         },
     },

@@ -30,7 +30,8 @@
                 "statistics": "Statistiken",
                 "lectures": "Vorlesungen",
                 "exams": "Klausuren",
-                "discussion": "Diskussion"
+                "discussion": "Diskussion",
+                "plagiarismCases": "Plagiatsfälle"
             },
             "exerciseList": {
                 "filter": "Filter ({{ num }})",
@@ -128,7 +129,8 @@
                 "includeStandardCategories": "Verberge Artemis Standard-Kategorien:",
                 "includeIndividualCategories": "Zeige kurs-spezifische Kategorien:",
                 "includeAllCategories": "Wähle alle Optionen",
-                "exercisesWithNoCategories": "Aufgaben ohne Kategorien"
+                "exercisesWithNoCategories": "Aufgaben ohne Kategorien",
+                "pointsPerExercise": "Punkte pro Aufgabe"
             },
             "lectureList": {
                 "lectureGroupHeader": "Vorlesungen: {{ total }}",

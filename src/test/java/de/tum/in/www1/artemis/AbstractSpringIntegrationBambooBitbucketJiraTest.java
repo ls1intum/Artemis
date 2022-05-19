@@ -95,7 +95,7 @@ public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest extends A
 
     @AfterEach
     public void resetSpyBeans() {
-        Mockito.reset(ldapUserService, continuousIntegrationUpdateService, continuousIntegrationService, versionControlService, bambooServer);
+        Mockito.reset(ldapUserService, continuousIntegrationUpdateService, continuousIntegrationService, versionControlService, bambooServer, textBlockService);
         super.resetSpyBeans();
     }
 
@@ -415,7 +415,7 @@ public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest extends A
         groupsToAdd.removeAll(oldGroups);
         Set<String> groupsToRemove = new HashSet<>(oldGroups);
         groupsToRemove.removeAll(user.getGroups());
-        if (groupsToAdd.size() > 0) {
+        if (!groupsToAdd.isEmpty()) {
             bitbucketRequestMockProvider.mockAddUserToGroups();
         }
         for (String group : groupsToRemove) {

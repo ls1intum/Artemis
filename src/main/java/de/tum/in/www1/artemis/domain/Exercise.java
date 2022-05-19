@@ -22,6 +22,7 @@ import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.TutorParticipation;
+import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismCase;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.domain.view.QuizView;
 import de.tum.in.www1.artemis.web.rest.dto.DueDateStat;
@@ -124,6 +125,11 @@ public abstract class Exercise extends BaseExercise {
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     @JsonIncludeProperties({ "id" })
     private Set<Post> posts = new HashSet<>();
+
+    @OneToMany(mappedBy = "exercise", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
+    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
+    @JsonIncludeProperties({ "id" })
+    private Set<PlagiarismCase> plagiarismCases = new HashSet<>();
 
     @OneToMany(mappedBy = "exercise", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
     private Set<ExerciseHint> exerciseHints = new HashSet<>();
@@ -353,6 +359,14 @@ public abstract class Exercise extends BaseExercise {
         this.posts = posts;
     }
 
+    public Set<PlagiarismCase> getPlagiarismCases() {
+        return plagiarismCases;
+    }
+
+    public void setPlagiarismCases(Set<PlagiarismCase> plagiarismCases) {
+        this.plagiarismCases = plagiarismCases;
+    }
+
     public Set<ExerciseHint> getExerciseHints() {
         return exerciseHints;
     }
@@ -548,7 +562,7 @@ public abstract class Exercise extends BaseExercise {
             }
         }
 
-        if (submissionsWithRatedResult.size() > 0) {
+        if (!submissionsWithRatedResult.isEmpty()) {
             if (submissionsWithRatedResult.size() == 1) {
                 return submissionsWithRatedResult.get(0);
             }
@@ -557,7 +571,7 @@ public abstract class Exercise extends BaseExercise {
                 return submissionsWithRatedResult.stream().filter(s -> s.getSubmissionDate() != null).max(Comparator.comparing(Submission::getSubmissionDate)).orElse(null);
             }
         }
-        else if (submissionsWithUnratedResult.size() > 0) {
+        else if (!submissionsWithUnratedResult.isEmpty()) {
             if (this instanceof ProgrammingExercise) {
                 // this is an edge case that is treated differently: the student has not submitted before the due date and the client would otherwise think
                 // that there is no result for the submission and would display a red trigger button.
@@ -571,7 +585,7 @@ public abstract class Exercise extends BaseExercise {
                 return submissionsWithUnratedResult.stream().filter(s -> s.getSubmissionDate() != null).max(Comparator.comparing(Submission::getSubmissionDate)).orElse(null);
             }
         }
-        else if (submissionsWithoutResult.size() > 0) {
+        else if (!submissionsWithoutResult.isEmpty()) {
             if (submissionsWithoutResult.size() == 1) {
                 return submissionsWithoutResult.get(0);
             }
@@ -793,28 +807,34 @@ public abstract class Exercise extends BaseExercise {
     }
 
     /** Helper method which does a hard copy of the Grading Criteria
+     * Also fills {@code gradingInstructionCopyTracker}.
+     *
+     * @param gradingInstructionCopyTracker  The mapping from original GradingInstruction Ids to new GradingInstruction instances.
      *
      * @return A clone of the grading criteria list
      */
-    public List<GradingCriterion> copyGradingCriteria() {
+    public List<GradingCriterion> copyGradingCriteria(Map<Long, GradingInstruction> gradingInstructionCopyTracker) {
         List<GradingCriterion> newGradingCriteria = new ArrayList<>();
         for (GradingCriterion originalGradingCriterion : getGradingCriteria()) {
             GradingCriterion newGradingCriterion = new GradingCriterion();
             newGradingCriterion.setExercise(this);
             newGradingCriterion.setTitle(originalGradingCriterion.getTitle());
-            newGradingCriterion.setStructuredGradingInstructions(copyGradingInstruction(originalGradingCriterion, newGradingCriterion));
+            newGradingCriterion.setStructuredGradingInstructions(copyGradingInstruction(originalGradingCriterion, newGradingCriterion, gradingInstructionCopyTracker));
             newGradingCriteria.add(newGradingCriterion);
         }
         return newGradingCriteria;
     }
 
     /** Helper method which does a hard copy of the Grading Instructions
+     * Also fills {@code gradingInstructionCopyTracker}.
      *
      * @param originalGradingCriterion The original grading criterion which contains the grading instructions
      * @param newGradingCriterion The cloned grading criterion in which we insert the grading instructions
+     * @param gradingInstructionCopyTracker  The mapping from original GradingInstruction Ids to new GradingInstruction instances.
      * @return A clone of the grading instruction list of the grading criterion
      */
-    private List<GradingInstruction> copyGradingInstruction(GradingCriterion originalGradingCriterion, GradingCriterion newGradingCriterion) {
+    private List<GradingInstruction> copyGradingInstruction(GradingCriterion originalGradingCriterion, GradingCriterion newGradingCriterion,
+            Map<Long, GradingInstruction> gradingInstructionCopyTracker) {
         List<GradingInstruction> newGradingInstructions = new ArrayList<>();
         for (GradingInstruction originalGradingInstruction : originalGradingCriterion.getStructuredGradingInstructions()) {
             GradingInstruction newGradingInstruction = new GradingInstruction();
@@ -826,6 +846,7 @@ public abstract class Exercise extends BaseExercise {
             newGradingInstruction.setGradingCriterion(newGradingCriterion);
 
             newGradingInstructions.add(newGradingInstruction);
+            gradingInstructionCopyTracker.put(originalGradingInstruction.getId(), newGradingInstruction);
         }
         return newGradingInstructions;
     }

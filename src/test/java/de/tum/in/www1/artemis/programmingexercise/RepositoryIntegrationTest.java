@@ -21,6 +21,8 @@ import org.eclipse.jgit.merge.MergeStrategy;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.condition.DisabledOnOs;
+import org.junit.jupiter.api.condition.OS;
 import org.mockito.MockedStatic;
 import org.mockito.stubbing.Answer;
 import org.slf4j.LoggerFactory;
@@ -425,6 +427,7 @@ public class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBi
     }
 
     @Test
+    @DisabledOnOs(OS.WINDOWS) // git file locking issues
     @WithMockUser(username = "student1", roles = "USER")
     public void testPullChanges() throws Exception {
         String fileName = "remoteFile";
@@ -458,6 +461,7 @@ public class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBi
     }
 
     @Test
+    @DisabledOnOs(OS.WINDOWS) // git file locking issues
     @WithMockUser(username = "student1", roles = "USER")
     public void testResetToLastCommit() throws Exception {
         String fileName = "testFile";
@@ -496,7 +500,7 @@ public class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBi
         List<Ref> refs = studentRepository.localGit.branchList().setListMode(ListBranchCommand.ListMode.REMOTE).call();
         var result = studentRepository.localGit.merge().include(refs.get(0).getObjectId()).setStrategy(MergeStrategy.RESOLVE).call();
         var status = studentRepository.localGit.status().call();
-        assertThat(status.getConflicting().size() > 0).isTrue();
+        assertThat(status.getConflicting()).isNotEmpty();
         assertThat(result.getMergeStatus()).isEqualTo(MergeResult.MergeStatus.CONFLICTING);
 
         // Execute the reset Rest call

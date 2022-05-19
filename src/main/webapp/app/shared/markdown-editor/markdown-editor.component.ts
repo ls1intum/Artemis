@@ -217,7 +217,6 @@ export class MarkdownEditorComponent implements AfterViewInit {
             });
         }
         this.setupMarkdownEditor();
-
         const selectedAceMode = getAceMode(this.editorMode);
         if (selectedAceMode) {
             this.aceEditorContainer.getEditor().getSession().setMode(selectedAceMode);
@@ -233,7 +232,6 @@ export class MarkdownEditorComponent implements AfterViewInit {
      * @desc Initializes the ace editor
      */
     setupMarkdownEditor(): void {
-        this.aceEditorContainer.setTheme('chrome');
         this.aceEditorContainer.getEditor().renderer.setShowGutter(this.showLineNumbers);
         this.aceEditorContainer.getEditor().renderer.setPadding(10);
         this.aceEditorContainer.getEditor().renderer.setScrollMargin(8, 8);

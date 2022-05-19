@@ -1,4 +1,4 @@
-import { Component, Input, ViewChild, OnInit, OnChanges, SimpleChanges } from '@angular/core';
+import { Component, Input, OnChanges, OnInit, SimpleChanges, ViewChild } from '@angular/core';
 import { AceEditorComponent } from 'app/shared/markdown-editor/ace-editor/ace-editor.component';
 import ace from 'brace';
 import { CoverageFileReport } from 'app/entities/hestia/coverage-file-report.model';
@@ -22,8 +22,6 @@ export class TestwiseCoverageFileComponent implements OnInit, OnChanges {
     editor: AceEditorComponent;
 
     proportionCoveredLines: number;
-
-    constructor() {}
 
     ngOnInit(): void {
         this.setupEditor();
@@ -79,7 +77,6 @@ export class TestwiseCoverageFileComponent implements OnInit, OnChanges {
     }
 
     private setupEditor(): void {
-        this.editor.setTheme('dreamweaver');
         this.editor.getEditor().setOptions({
             animatedScroll: true,
             maxLines: Infinity,

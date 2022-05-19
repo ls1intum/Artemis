@@ -1,10 +1,10 @@
 .connection-status {
     font-size: 14px;
-    color: green;
+    color: var(--connection-status);
 
     &.disconnected {
         font-size: 20px;
-        color: red;
+        color: var(--connection-status-disconnected);
     }
 
     i {

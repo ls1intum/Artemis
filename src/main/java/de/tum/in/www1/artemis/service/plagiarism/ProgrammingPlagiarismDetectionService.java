@@ -31,9 +31,9 @@ import de.tum.in.www1.artemis.domain.Submission;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.plagiarism.text.TextPlagiarismResult;
 import de.tum.in.www1.artemis.exception.GitException;
-import de.tum.in.www1.artemis.repository.PlagiarismResultRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
+import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismResultRepository;
 import de.tum.in.www1.artemis.service.FileService;
 import de.tum.in.www1.artemis.service.UrlService;
 import de.tum.in.www1.artemis.service.ZipFileService;
@@ -214,7 +214,8 @@ public class ProgrammingPlagiarismDetectionService {
      * @param textPlagiarismResult the plagiarism result to save
      */
     private void limitAndSavePlagiarismResult(TextPlagiarismResult textPlagiarismResult) {
-        textPlagiarismResult.sortAndLimit(500);
+        // TODO: limit the amount temporarily because of database issues
+        textPlagiarismResult.sortAndLimit(100);
         log.info("Limited number of comparisons to {} to avoid performance issues when saving to database", textPlagiarismResult.getComparisons().size());
         plagiarismResultRepository.savePlagiarismResultAndRemovePrevious(textPlagiarismResult);
     }

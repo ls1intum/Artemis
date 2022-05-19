@@ -1,5 +1,5 @@
 <div class="row justify-content-center">
-    <div class="col-8">
+    <div class="col-md-8">
         <form [formGroup]="courseForm" (ngSubmit)="save()" #formDir="ngForm">
             <div class="headline">
                 <jhi-secured-image *ngIf="croppedImage" [src]="croppedImage" [cachingStrategy]="CachingStrategy.LOCAL_STORAGE"> </jhi-secured-image>

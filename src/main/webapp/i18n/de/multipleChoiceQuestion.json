@@ -17,6 +17,8 @@
             },
             "answerOptions": "Antwortmöglichkeiten",
             "randomizeOrder": "Antwortmöglichkeiten in zufälliger Reihenfolge anzeigen",
+            "singleChoice": "Single Choice Modus",
+            "singleChoiceInfo": "Für Fragen bei denen die einzelne richtige Antwort ausgewählt werden soll.",
             "scoringType": "Art der Bewertung",
             "answer": "Antwort",
             "solution": "Lösung",

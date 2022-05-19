@@ -16,6 +16,7 @@ import { MatChipInputEvent } from '@angular/material/chips';
 import { AlertService, AlertType } from 'app/core/util/alert.service';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
+import { FormBuilder, Validators } from '@angular/forms';
 
 @Component({
     selector: 'jhi-user-management-update',
@@ -27,6 +28,10 @@ export class UserManagementUpdateComponent implements OnInit {
     readonly USERNAME_MAX_LENGTH = USERNAME_MAX_LENGTH;
     readonly PASSWORD_MIN_LENGTH = PASSWORD_MIN_LENGTH;
     readonly PASSWORD_MAX_LENGTH = PASSWORD_MAX_LENGTH;
+
+    readonly EMAIL_MIN_LENGTH = 5;
+    readonly EMAIL_MAX_LENGTH = 100;
+    readonly REGISTRATION_NUMBER_MAX_LENGTH = 20;
 
     user: User;
     languages: string[];
@@ -45,6 +50,19 @@ export class UserManagementUpdateComponent implements OnInit {
     private oldLogin?: string;
     private isJenkins: boolean;
 
+    editForm = this.fb.group({
+        idInput: ['', []],
+        loginInput: ['', [Validators.required, Validators.minLength(USERNAME_MIN_LENGTH), Validators.maxLength(USERNAME_MAX_LENGTH)]],
+        firstNameInput: ['', [Validators.required, Validators.maxLength(USERNAME_MAX_LENGTH)]],
+        lastNameInput: ['', [Validators.required, Validators.maxLength(USERNAME_MAX_LENGTH)]],
+        passwordInput: ['', [Validators.minLength(PASSWORD_MIN_LENGTH), Validators.maxLength(PASSWORD_MAX_LENGTH)]],
+        emailInput: ['', [Validators.required, Validators.minLength(this.EMAIL_MIN_LENGTH), Validators.maxLength(this.EMAIL_MAX_LENGTH)]],
+        registrationNumberInput: ['', [Validators.maxLength(this.REGISTRATION_NUMBER_MAX_LENGTH)]],
+        activatedInput: ['', []],
+        langKeyInput: ['', []],
+        authorityInput: ['', []],
+    });
+
     constructor(
         private languageHelper: JhiLanguageHelper,
         private userService: UserService,
@@ -54,6 +72,7 @@ export class UserManagementUpdateComponent implements OnInit {
         private navigationUtilService: ArtemisNavigationUtilService,
         private alertService: AlertService,
         private profileService: ProfileService,
+        private fb: FormBuilder,
     ) {}
 
     /**

@@ -1,5 +1,5 @@
-<div class="d-flex justify-content-center">
-    <h3>{{ 'artemisApp.exercise-scores-chart.title' | artemisTranslate }}</h3>
+<div class="d-flex">
+    <h2 class="col-9">{{ 'artemisApp.exercise-scores-chart.title' | artemisTranslate }}</h2>
     <div *ngIf="typeSet.size > 0" class="filter mb-2" aria-label="Filter Dropdown" ngbDropdown>
         <button class="btn" [ngClass]="{ 'btn-secondary': numberOfActiveFilters === 0, 'btn-success': numberOfActiveFilters > 0 }" ngbDropdownToggle id="filter-dropdown-button">
             <fa-icon [icon]="faFilter"></fa-icon>
@@ -11,15 +11,15 @@
             </li>
             <li *ngFor="let type of typeSet">
                 <label>
-                    <input class="ms-2" (change)="toggleType(type)" [checked]="chartFilter.get(convertToMapKey(type))" type="checkbox" />
+                    <input class="ms-2 form-check-input" (change)="toggleType(type)" [checked]="chartFilter.get(convertToMapKey(type))" type="checkbox" />
                     <span class="ms-2">{{ 'artemisApp.exercise-scores-chart.' + type.toLowerCase() + 'Plural' | artemisTranslate }}</span>
                 </label>
             </li>
         </ul>
     </div>
 </div>
-<div class="d-flex justify-content-center">
-    <div #containerRef class="chart-wrapper">
+<div class="d-flex mt-2 justify-content-center">
+    <div #containerRef class="line-chart-container">
         <ngx-charts-line-chart
             [view]="[containerRef.offsetWidth, 350]"
             [results]="ngxData"
@@ -36,6 +36,7 @@
             [yScaleMin]="1"
             [maxXAxisTickLength]="15"
             (select)="onSelect($event)"
+            [id]="'scores-line-chart'"
         >
             <ng-template #tooltipTemplate let-model="model">
                 <b>{{ model.name }}</b> <br />

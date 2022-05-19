@@ -44,7 +44,10 @@ import de.tum.in.www1.artemis.domain.enumeration.*;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
+import de.tum.in.www1.artemis.domain.hestia.CodeHint;
 import de.tum.in.www1.artemis.domain.hestia.ExerciseHint;
+import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseSolutionEntry;
+import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseTask;
 import de.tum.in.www1.artemis.domain.lecture.*;
 import de.tum.in.www1.artemis.domain.metis.*;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
@@ -55,9 +58,13 @@ import de.tum.in.www1.artemis.domain.plagiarism.text.TextPlagiarismResult;
 import de.tum.in.www1.artemis.domain.quiz.*;
 import de.tum.in.www1.artemis.domain.submissionpolicy.SubmissionPolicy;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.hestia.CodeHintRepository;
 import de.tum.in.www1.artemis.repository.hestia.ExerciseHintRepository;
+import de.tum.in.www1.artemis.repository.hestia.ProgrammingExerciseSolutionEntryRepository;
+import de.tum.in.www1.artemis.repository.hestia.ProgrammingExerciseTaskRepository;
 import de.tum.in.www1.artemis.repository.metis.AnswerPostRepository;
 import de.tum.in.www1.artemis.repository.metis.PostRepository;
+import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismResultRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.user.PasswordService;
@@ -102,6 +109,9 @@ public class DatabaseUtilService {
 
     @Autowired
     private LectureRepository lectureRepo;
+
+    @Autowired
+    private LearningGoalRepository learningGoalRepo;
 
     @Autowired
     private ExerciseRepository exerciseRepo;
@@ -249,6 +259,15 @@ public class DatabaseUtilService {
 
     @Autowired
     private SubmissionPolicyRepository submissionPolicyRepository;
+
+    @Autowired
+    private ProgrammingExerciseTaskRepository programmingExerciseTaskRepository;
+
+    @Autowired
+    private ProgrammingExerciseSolutionEntryRepository solutionEntryRepository;
+
+    @Autowired
+    private CodeHintRepository codeHintRepository;
 
     @Autowired
     private RatingRepository ratingRepo;
@@ -449,6 +468,14 @@ public class DatabaseUtilService {
         return createCourseWithOrganizations("organization1", "org1", "org.org", "This is organization1", null, "^.*@matching.*$");
     }
 
+    public LearningGoal createLearningGoal(Course course) {
+        LearningGoal learningGoal = new LearningGoal();
+        learningGoal.setTitle("Example Competency");
+        learningGoal.setDescription("Magna pars studiorum, prodita quaerimus.");
+        learningGoal.setCourse(course);
+        return learningGoalRepo.save(learningGoal);
+    }
+
     public TextExercise createIndividualTextExercise(Course course, ZonedDateTime pastTimestamp, ZonedDateTime futureTimestamp, ZonedDateTime futureFutureTimestamp) {
         TextExercise textExercise = ModelFactory.generateTextExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, course);
         textExercise.setMaxPoints(10.0);
@@ -636,7 +663,7 @@ public class DatabaseUtilService {
         programmingExercise.getCategories().add("Programming");
         course1.addExercises(programmingExercise);
 
-        QuizExercise quizExercise = ModelFactory.generateQuizExercise(pastTimestamp, futureTimestamp, course1);
+        QuizExercise quizExercise = ModelFactory.generateQuizExercise(pastTimestamp, futureTimestamp, QuizMode.SYNCHRONIZED, course1);
         programmingExercise.getCategories().add("Quiz");
         course1.addExercises(quizExercise);
 
@@ -859,29 +886,20 @@ public class DatabaseUtilService {
     }
 
     public Course createCourseWithAllExerciseTypesAndParticipationsAndSubmissionsAndResults(boolean hasAssessmentDueDatePassed) {
+        var assessmentTimestamp = hasAssessmentDueDatePassed ? ZonedDateTime.now().minusMinutes(10L) : ZonedDateTime.now().plusMinutes(10L);
         Course course = ModelFactory.generateCourse(null, pastTimestamp, futureTimestamp, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
 
         ModelingExercise modelingExercise = ModelFactory.generateModelingExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, DiagramType.ClassDiagram, course);
         TextExercise textExercise = ModelFactory.generateTextExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, course);
         FileUploadExercise fileUploadExercise = ModelFactory.generateFileUploadExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, "png", course);
         ProgrammingExercise programmingExercise = ModelFactory.generateProgrammingExercise(pastTimestamp, futureTimestamp, course);
-        QuizExercise quizExercise = ModelFactory.generateQuizExercise(pastTimestamp, futureTimestamp, course);
+        QuizExercise quizExercise = ModelFactory.generateQuizExercise(pastTimestamp, assessmentTimestamp, QuizMode.SYNCHRONIZED, course);
 
         // Set assessment due dates
-        if (hasAssessmentDueDatePassed) {
-            modelingExercise.setAssessmentDueDate(ZonedDateTime.now().minusMinutes(10L));
-            textExercise.setAssessmentDueDate(ZonedDateTime.now().minusMinutes(10L));
-            fileUploadExercise.setAssessmentDueDate(ZonedDateTime.now().minusMinutes(10L));
-            programmingExercise.setAssessmentDueDate(ZonedDateTime.now().minusMinutes(10L));
-            quizExercise.setAssessmentDueDate(ZonedDateTime.now().minusMinutes(10L));
-        }
-        else {
-            modelingExercise.setAssessmentDueDate(ZonedDateTime.now().plusMinutes(10L));
-            textExercise.setAssessmentDueDate(ZonedDateTime.now().plusMinutes(10L));
-            fileUploadExercise.setAssessmentDueDate(ZonedDateTime.now().plusMinutes(10L));
-            programmingExercise.setAssessmentDueDate(ZonedDateTime.now().plusMinutes(10L));
-            quizExercise.setAssessmentDueDate(ZonedDateTime.now().plusMinutes(10L));
-        }
+        modelingExercise.setAssessmentDueDate(assessmentTimestamp);
+        textExercise.setAssessmentDueDate(assessmentTimestamp);
+        fileUploadExercise.setAssessmentDueDate(assessmentTimestamp);
+        programmingExercise.setAssessmentDueDate(assessmentTimestamp);
 
         // Add exercises to course
         course.addExercises(modelingExercise);
@@ -1922,8 +1940,7 @@ public class DatabaseUtilService {
 
     public Course addCourseWithOneQuizExercise(String title) {
         Course course = ModelFactory.generateCourse(null, pastTimestamp, futureTimestamp, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
-        QuizExercise quizExercise = createQuiz(course, futureTimestamp, futureFutureTimestamp);
-        quizExercise.setIsVisibleBeforeStart(false);
+        QuizExercise quizExercise = createQuiz(course, futureTimestamp, futureFutureTimestamp, QuizMode.SYNCHRONIZED);
         quizExercise.setTitle(title);
         quizExercise.setDuration(120);
         assertThat(quizExercise.getQuizQuestions()).isNotEmpty();
@@ -3019,13 +3036,58 @@ public class DatabaseUtilService {
         exerciseHintRepository.saveAll(hints);
     }
 
+    public void addTasksToProgrammingExercise(ProgrammingExercise programmingExercise) {
+        var tasks = programmingExercise.getTestCases().stream().map(testCase -> {
+            var task = new ProgrammingExerciseTask();
+            task.setTaskName("Task for " + testCase.getTestName());
+            task.setExercise(programmingExercise);
+            task.setTestCases(Collections.singleton(testCase));
+            testCase.setTasks(Collections.singleton(task));
+            return task;
+        }).collect(Collectors.toSet());
+        programmingExercise.setTasks(tasks);
+        programmingExerciseTaskRepository.saveAll(tasks);
+    }
+
+    public void addSolutionEntriesToProgrammingExercise(ProgrammingExercise programmingExercise) {
+        for (ProgrammingExerciseTestCase testCase : programmingExercise.getTestCases()) {
+            var solutionEntry = new ProgrammingExerciseSolutionEntry();
+            solutionEntry.setFilePath("test.txt");
+            solutionEntry.setLine(1);
+            solutionEntry.setCode("Line for " + testCase.getTestName());
+            solutionEntry.setTestCase(testCase);
+
+            testCase.setSolutionEntries(Collections.singleton(solutionEntry));
+            solutionEntryRepository.save(solutionEntry);
+        }
+    }
+
+    public void addCodeHintsToProgrammingExercise(ProgrammingExercise programmingExercise) {
+        for (ProgrammingExerciseTask task : programmingExercise.getTasks()) {
+            var solutionEntries = task.getTestCases().stream().flatMap(testCase -> testCase.getSolutionEntries().stream()).collect(Collectors.toSet());
+            var codeHint = new CodeHint();
+            codeHint.setTitle("Code Hint for " + task.getTaskName());
+            codeHint.setContent("Content for " + task.getTaskName());
+            codeHint.setExercise(programmingExercise);
+            codeHint.setSolutionEntries(solutionEntries);
+            codeHint.setProgrammingExerciseTask(task);
+
+            programmingExercise.getExerciseHints().add(codeHint);
+            codeHintRepository.save(codeHint);
+            for (ProgrammingExerciseSolutionEntry solutionEntry : solutionEntries) {
+                solutionEntry.setCodeHint(codeHint);
+                solutionEntryRepository.save(solutionEntry);
+            }
+        }
+    }
+
     public ProgrammingExercise loadProgrammingExerciseWithEagerReferences(ProgrammingExercise lazyExercise) {
         return programmingExerciseTestRepository.findOneWithEagerEverything(lazyExercise.getId());
     }
 
     public <T extends Exercise> void addHintsToProblemStatement(T exercise) {
         final var statement = exercise.getProblemStatement() == null ? "" : exercise.getProblemStatement();
-        final var hintsInStatement = exercise.getExerciseHints().stream().map(ExerciseHint::getId).map(Object::toString).collect(Collectors.joining(", ", "{", "}"));
+        final var hintsInStatement = exercise.getExerciseHints().stream().map(ExerciseHint::getId).map(Object::toString).collect(Collectors.joining("}{", "{", "}"));
         exercise.setProblemStatement(statement + hintsInStatement);
         exerciseRepo.save(exercise);
     }
@@ -3209,25 +3271,32 @@ public class DatabaseUtilService {
     }
 
     @NotNull
-    public QuizExercise createQuiz(Course course, ZonedDateTime releaseDate, ZonedDateTime dueDate) {
-        QuizExercise quizExercise = ModelFactory.generateQuizExercise(releaseDate, dueDate, course);
-        quizExercise.addQuestions(createMultipleChoiceQuestion());
-        quizExercise.addQuestions(createDragAndDropQuestion());
-        quizExercise.addQuestions(createShortAnswerQuestion());
-        quizExercise.setMaxPoints(quizExercise.getOverallQuizPoints());
-        quizExercise.setGradingInstructions(null);
+    public QuizExercise createQuiz(Course course, ZonedDateTime releaseDate, ZonedDateTime dueDate, QuizMode quizMode) {
+        QuizExercise quizExercise = ModelFactory.generateQuizExercise(releaseDate, dueDate, quizMode, course);
+        initializeQuizExercise(quizExercise);
         return quizExercise;
+    }
+
+    @NotNull
+    public QuizExercise createQuizWithQuizBatchedExercises(Course course, ZonedDateTime releaseDate, ZonedDateTime dueDate, QuizMode quizMode) {
+        QuizExercise quizExerciseWithQuizBatches = ModelFactory.generateQuizExerciseWithQuizBatches(releaseDate, dueDate, quizMode, course);
+        initializeQuizExercise(quizExerciseWithQuizBatches);
+        return quizExerciseWithQuizBatches;
     }
 
     @NotNull
     public QuizExercise createQuizForExam(ExerciseGroup exerciseGroup) {
         QuizExercise quizExercise = ModelFactory.generateQuizExerciseForExam(exerciseGroup);
+        initializeQuizExercise(quizExercise);
+        return quizExercise;
+    }
+
+    private void initializeQuizExercise(QuizExercise quizExercise) {
         quizExercise.addQuestions(createMultipleChoiceQuestion());
         quizExercise.addQuestions(createDragAndDropQuestion());
         quizExercise.addQuestions(createShortAnswerQuestion());
         quizExercise.setMaxPoints(quizExercise.getOverallQuizPoints());
         quizExercise.setGradingInstructions(null);
-        return quizExercise;
     }
 
     @NotNull

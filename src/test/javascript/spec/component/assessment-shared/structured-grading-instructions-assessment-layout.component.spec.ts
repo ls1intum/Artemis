@@ -34,12 +34,12 @@ describe('StructuredGradingInstructionsAssessmentLayoutComponent', () => {
 
         expect(comp.setScore(gradingInstruction.credits)).toBe('1P');
         expect(comp.setTooltip(gradingInstruction)).toBe('Feedback: feedback');
-        expect(comp.setInstrColour(gradingInstruction)).toBe('#e3f0da');
+        expect(comp.setInstrColour(gradingInstruction)).toBe('var(--sgi-assessment-layout-positive-background)');
         gradingInstruction.credits = 0;
         fixture.detectChanges();
-        expect(comp.setInstrColour(gradingInstruction)).toBe('#fff2cc');
+        expect(comp.setInstrColour(gradingInstruction)).toBe('var(--sgi-assessment-layout-zero-background)');
         gradingInstruction.credits = -1;
         fixture.detectChanges();
-        expect(comp.setInstrColour(gradingInstruction)).toBe('#fbe5d6');
+        expect(comp.setInstrColour(gradingInstruction)).toBe('var(--sgi-assessment-layout-negative-background)');
     });
 });

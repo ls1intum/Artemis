@@ -418,7 +418,7 @@ public class Result extends DomainObject {
      * Checks for a new feedback if the score or text has changed compared to the already existing feedback for the same element.
      */
     private boolean feedbackHasChanged(Feedback feedback) {
-        if (this.feedbacks == null || this.feedbacks.size() == 0) {
+        if (this.feedbacks == null || this.feedbacks.isEmpty()) {
             return false;
         }
         return this.feedbacks.stream().filter(existingFeedback -> existingFeedback.getReference() != null && existingFeedback.getReference().equals(feedback.getReference()))

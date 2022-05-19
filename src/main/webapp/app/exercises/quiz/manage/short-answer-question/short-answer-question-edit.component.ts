@@ -180,7 +180,6 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
         this.numberOfSpot = this.shortAnswerQuestion.spots!.length + 1;
 
         // Default editor settings for inline markup editor
-        this.questionEditor.setTheme('chrome');
         this.questionEditor.getEditor().renderer.setShowGutter(false);
         this.questionEditor.getEditor().renderer.setPadding(10);
         this.questionEditor.getEditor().renderer.setScrollMargin(8, 8);

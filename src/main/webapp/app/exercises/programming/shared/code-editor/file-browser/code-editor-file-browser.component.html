@@ -20,7 +20,7 @@
         <button
             id="create_file_root"
             [disabled]="disableActions || isLoadingFiles || commitState === CommitState.CONFLICT"
-            class="btn btn-light"
+            class="btn"
             (click)="setCreatingFileInRoot(FileType.FILE)"
             title="{{ 'artemisApp.editor.fileBrowser.createFileRoot' | artemisTranslate }}"
         >
@@ -30,7 +30,7 @@
         <button
             id="create_folder_root"
             [disabled]="disableActions || isLoadingFiles || commitState === CommitState.CONFLICT"
-            class="btn btn-light ms-2"
+            class="btn ms-2"
             (click)="setCreatingFileInRoot(FileType.FOLDER)"
             title="{{ 'artemisApp.editor.fileBrowser.createFolderRoot' | artemisTranslate }}"
         >
@@ -40,7 +40,7 @@
         <button
             id="compress_tree"
             [disabled]="isLoadingFiles"
-            class="btn btn-light ms-auto"
+            class="btn ms-auto"
             (click)="toggleTreeCompress()"
             title="{{ 'artemisApp.editor.fileBrowser.compressTree' | artemisTranslate }}"
         >

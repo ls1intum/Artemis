@@ -50,8 +50,9 @@ import {
     faUserPlus,
     faWrench,
 } from '@fortawesome/free-solid-svg-icons';
-import { ExerciseHintService } from 'app/exercises/shared/exercise-hint/manage/exercise-hint.service';
+import { ExerciseHintService } from 'app/exercises/shared/exercise-hint/shared/exercise-hint.service';
 import { Exercise } from 'app/entities/exercise.model';
+import { ThemeService } from 'app/core/theme/theme.service';
 
 @Component({
     selector: 'jhi-navbar',
@@ -125,6 +126,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
         private lectureService: LectureService,
         private examService: ExamManagementService,
         private organisationService: OrganizationManagementService,
+        public themeService: ThemeService,
     ) {
         this.version = VERSION ? VERSION : '';
         this.isNavbarCollapsed = true;
@@ -260,6 +262,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
         user_settings: 'artemisApp.userSettings.title',
         detailed: 'artemisApp.gradingSystem.detailedTab.title',
         interval: 'artemisApp.gradingSystem.intervalTab.title',
+        plagiarism_cases: 'artemisApp.plagiarism.cases.pageTitle',
     };
 
     /**

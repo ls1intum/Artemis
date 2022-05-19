@@ -69,7 +69,14 @@
               { "glob": "axios.min.js", "input": "./node_modules/axios/dist", "output": "swagger-ui" },
               { "glob": "**/*", "input": "src/main/webapp/swagger-ui/", "output": "swagger-ui" }
             ],
-            "styles": ["src/main/webapp/content/scss/global.scss"],
+            "styles": [
+              "src/main/webapp/content/scss/themes/theme-default.scss",
+              {
+                "bundleName": "theme-dark",
+                "input": "src/main/webapp/content/scss/themes/theme-dark.scss",
+                "inject": false
+              }
+            ],
             "scripts": []
           },
           "configurations": {
@@ -95,7 +102,7 @@
                 {
                   "type": "initial",
                   "maximumWarning": "2mb",
-                  "maximumError": "2.2mb"
+                  "maximumError": "2.3mb"
                 },
                 {
                   "type": "anyComponentStyle",

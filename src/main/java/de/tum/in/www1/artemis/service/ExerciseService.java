@@ -78,13 +78,15 @@ public class ExerciseService {
 
     private final ExampleSubmissionRepository exampleSubmissionRepository;
 
+    private final QuizBatchService quizBatchService;
+
     public ExerciseService(ExerciseRepository exerciseRepository, AuthorizationCheckService authCheckService, QuizScheduleService quizScheduleService,
             AuditEventRepository auditEventRepository, TeamRepository teamRepository, ProgrammingExerciseRepository programmingExerciseRepository,
             LtiOutcomeUrlRepository ltiOutcomeUrlRepository, StudentParticipationRepository studentParticipationRepository, ResultRepository resultRepository,
             SubmissionRepository submissionRepository, ParticipantScoreRepository participantScoreRepository, UserRepository userRepository,
             ComplaintRepository complaintRepository, TutorLeaderboardService tutorLeaderboardService, ComplaintResponseRepository complaintResponseRepository,
             GradingCriterionRepository gradingCriterionRepository, FeedbackRepository feedbackRepository, RatingService ratingService, ExerciseDateService exerciseDateService,
-            ExampleSubmissionRepository exampleSubmissionRepository) {
+            ExampleSubmissionRepository exampleSubmissionRepository, QuizBatchService quizBatchService) {
         this.exerciseRepository = exerciseRepository;
         this.resultRepository = resultRepository;
         this.authCheckService = authCheckService;
@@ -105,6 +107,7 @@ public class ExerciseService {
         this.exerciseDateService = exerciseDateService;
         this.ratingService = ratingService;
         this.exampleSubmissionRepository = exampleSubmissionRepository;
+        this.quizBatchService = quizBatchService;
     }
 
     /**
@@ -306,6 +309,10 @@ public class ExerciseService {
                 // filter out questions and all statistical information about the quizPointStatistic from quizExercises (so users can't see which answer options are correct)
                 if (exercise instanceof QuizExercise quizExercise) {
                     quizExercise.filterSensitiveInformation();
+
+                    // delete the proxy as it doesn't work; getQuizBatchForStudent will load the batches from the DB directly
+                    quizExercise.setQuizBatches(null);
+                    quizExercise.setQuizBatches(quizBatchService.getQuizBatchForStudent(quizExercise, user).stream().collect(Collectors.toSet()));
                 }
             }
         }
@@ -360,7 +367,7 @@ public class ExerciseService {
      */
     public void checkExampleSubmissions(Exercise exercise) {
         // Avoid recursions
-        if (exercise.getExampleSubmissions().size() != 0) {
+        if (!exercise.getExampleSubmissions().isEmpty()) {
             Set<ExampleSubmission> exampleSubmissionsWithResults = exampleSubmissionRepository.findAllWithResultByExerciseId(exercise.getId());
             exercise.setExampleSubmissions(exampleSubmissionsWithResults);
             exercise.getExampleSubmissions().forEach(exampleSubmission -> exampleSubmission.setExercise(null));
