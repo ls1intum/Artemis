@@ -156,24 +156,24 @@ public abstract class AbstractVersionControlService implements VersionControlSer
 
     @Override
     public String getOrRetrieveDefaultBranchOfStudentParticipation(ProgrammingExerciseStudentParticipation participation) {
-        if (participation.getDefaultBranch() == null) {
+        if (participation.getBranch() == null) {
             String defaultBranch = getDefaultBranchOfRepository(participation.getVcsRepositoryUrl());
-            participation.setDefaultBranch(defaultBranch);
+            participation.setBranch(defaultBranch);
             studentParticipationRepository.save(participation);
         }
 
-        return participation.getDefaultBranch();
+        return participation.getBranch();
     }
 
     @Override
     public String getOrRetrieveDefaultBranchOfExercise(ProgrammingExercise programmingExercise) {
-        if (programmingExercise.getDefaultBranch() == null) {
+        if (programmingExercise.getBranch() == null) {
             String defaultBranch = getDefaultBranchOfRepository(programmingExercise.getVcsTemplateRepositoryUrl());
-            programmingExercise.setDefaultBranch(defaultBranch);
+            programmingExercise.setBranch(defaultBranch);
             programmingExerciseRepository.save(programmingExercise);
         }
 
-        return programmingExercise.getDefaultBranch();
+        return programmingExercise.getBranch();
     }
 
     @Override

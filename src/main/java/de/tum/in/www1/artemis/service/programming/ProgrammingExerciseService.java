@@ -160,7 +160,7 @@ public class ProgrammingExerciseService {
         programmingExercise.generateAndSetProjectKey();
         final User exerciseCreator = userRepository.getUser();
 
-        programmingExercise.setDefaultBranch(versionControlService.get().getDefaultBranchOfArtemis());
+        programmingExercise.setBranch(versionControlService.get().getDefaultBranchOfArtemis());
         createRepositoriesForNewExercise(programmingExercise);
         initParticipations(programmingExercise);
         setURLsAndBuildPlanIDsForNewExercise(programmingExercise);

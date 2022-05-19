@@ -124,7 +124,7 @@ public class ProgrammingExerciseImportService {
     public ProgrammingExercise importProgrammingExerciseBasis(final ProgrammingExercise templateExercise, final ProgrammingExercise newExercise) {
         // Set values we don't want to copy to null
         setupExerciseForImport(newExercise);
-        newExercise.setDefaultBranch(versionControlService.get().getDefaultBranchOfArtemis());
+        newExercise.setBranch(versionControlService.get().getDefaultBranchOfArtemis());
 
         // Note: same order as when creating an exercise
         programmingExerciseParticipationService.setupInitialTemplateParticipation(newExercise);

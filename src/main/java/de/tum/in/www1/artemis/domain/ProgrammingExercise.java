@@ -130,8 +130,8 @@ public class ProgrammingExercise extends Exercise {
     @Column(name = "testwise_coverage_enabled", table = "programming_exercise_details")
     private boolean testwiseCoverageEnabled;
 
-    @Column(name = "default_branch", table = "programming_exercise_details")
-    private String defaultBranch;
+    @Column(name = "branch", table = "programming_exercise_details")
+    private String branch;
 
     /**
      * This boolean flag determines whether the solution repository should be checked out during the build (additional to the student's submission).
@@ -280,12 +280,12 @@ public class ProgrammingExercise extends Exercise {
         return this.projectKey;
     }
 
-    public void setDefaultBranch(String defaultBranch) {
-        this.defaultBranch = defaultBranch;
+    public void setBranch(String branch) {
+        this.branch = branch;
     }
 
-    public String getDefaultBranch() {
-        return defaultBranch;
+    public String getBranch() {
+        return branch;
     }
 
     /**
