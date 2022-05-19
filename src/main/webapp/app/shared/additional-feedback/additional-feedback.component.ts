@@ -26,7 +26,6 @@ export class AdditionalFeedbackComponent {
     faExclamationTriangle = faExclamationTriangle;
 
     // Expose the function to the template
-    readonly roundScoreSpecifiedByCourseSettings = roundValueSpecifiedByCourseSettings;
     readonly getCourseFromExercise = getCourseFromExercise;
     readonly buildFeedbackTextForReview = buildFeedbackTextForReview;
 
