@@ -39,6 +39,11 @@ export abstract class Command {
         return this.aceEditor.getSelectedText();
     }
 
+    /**
+     * Extends the current selection to full lines.
+     *
+     * @return The complete lines of the selected text.
+     */
     protected getExtendedSelectedText(): string[] {
         const text = this.getText();
 

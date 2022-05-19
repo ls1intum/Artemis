@@ -12,22 +12,21 @@ export class OrderedListCommand extends Command {
      */
     execute(): void {
         const extendedText = this.getExtendedSelectedText();
-        this.splitText(extendedText);
+        this.handleManipulation(extendedText);
     }
 
     /**
-     * Splits the text and performs the necessary manipulations.
-     * @function splitText
-     * @param selectedText the selected text by the cursor
+     * Performs the necessary manipulations.
+     * @param extendedText the extended text
      */
-    splitText(selectedText: string[]): void {
+    handleManipulation(extendedText: string[]): void {
         let manipulatedText = '';
         let position = 1;
 
-        selectedText.forEach((line, index) => {
+        extendedText.forEach((line, index) => {
             // Special case: Single empty line
             if (line === '') {
-                if (selectedText.length === 1) {
+                if (extendedText.length === 1) {
                     manipulatedText = '1. ';
                     return;
                 }
@@ -37,7 +36,7 @@ export class OrderedListCommand extends Command {
                 position++;
             }
 
-            if (index !== selectedText.length - 1) {
+            if (index !== extendedText.length - 1) {
                 manipulatedText += '\n';
             }
         });
