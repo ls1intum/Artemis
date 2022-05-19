@@ -142,7 +142,7 @@ export class PostService extends PostingService<Post> {
      * @param   {HttpResponse<Post[]>} res
      * @return  {HttpResponse<Post[]>}
      */
-    protected convertDateArrayFromServer(res: HttpResponse<Post[]>): HttpResponse<Post[]> {
+    convertDateArrayFromServer(res: HttpResponse<Post[]>): HttpResponse<Post[]> {
         if (res.body) {
             res.body.forEach((post: Post) => {
                 post.creationDate = post.creationDate ? dayjs(post.creationDate) : undefined;
@@ -152,5 +152,17 @@ export class PostService extends PostingService<Post> {
             });
         }
         return res;
+    }
+
+    /**
+     * takes a post and converts the date from the server
+     * used for incoming posts via websocket subscription
+     * @param   Post post
+     */
+    convertDatesOfPost(post: Post) {
+        post.creationDate = post.creationDate ? dayjs(post.creationDate) : undefined;
+        post.answers?.forEach((answer: AnswerPost) => {
+            answer.creationDate = answer.creationDate ? dayjs(answer.creationDate) : undefined;
+        });
     }
 }

@@ -18,7 +18,7 @@
 
 <ng-container *ngIf="showAnswers">
     <jhi-answer-post
-        *ngFor="let answerPost of sortedAnswerPosts; let isLastAnswer = last"
+        *ngFor="let answerPost of sortedAnswerPosts; let isLastAnswer = last; trackBy: answerPostTrackByFn"
         [posting]="answerPost"
         [isLastAnswer]="isLastAnswer"
         (openPostingCreateEditModal)="createAnswerPostModal.open()"

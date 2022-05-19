@@ -5,7 +5,6 @@ import { MetisService } from 'app/shared/metis/metis.service';
 import { NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { AnswerPostCreateEditModalComponent } from 'app/shared/metis/posting-create-edit-modal/answer-post-create-edit-modal/answer-post-create-edit-modal.component';
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
-import { faComments } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-post-footer',
@@ -26,8 +25,6 @@ export class PostFooterComponent extends PostingFooterDirective<Post> implements
     createdAnswerPost: AnswerPost;
     isAtLeastTutorInCourse: boolean;
     @ViewChild('createAnswerPostModal') createAnswerPostModal: TemplateRef<AnswerPostCreateEditModalComponent>;
-
-    faComments = faComments;
 
     constructor(private metisService: MetisService) {
         super();
@@ -97,4 +94,10 @@ export class PostFooterComponent extends PostingFooterDirective<Post> implements
         answerPost.resolvesPost = this.isAtLeastTutorInCourse;
         return answerPost;
     }
+
+    /**
+     * defines a function that returns the answerPost id as unique identifier,
+     * by this means, Angular determines which answerPost in the collection of answerPosts has to be reloaded/destroyed on changes
+     */
+    answerPostTrackByFn = (index: number, answerPost: AnswerPost): number => answerPost.id!;
 }
