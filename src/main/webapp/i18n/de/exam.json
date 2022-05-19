@@ -452,6 +452,9 @@
                 }
             }
         },
+        "examMonitoring": {
+            "title": "Klausurüberwachung"
+        },
         "studentExamDetail": {
             "studentExam": "Klausur ({{ examTitle }})",
             "testRun": "Testlauf ({{ examTitle }})",

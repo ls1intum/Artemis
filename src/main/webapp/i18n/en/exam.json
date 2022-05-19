@@ -453,6 +453,9 @@
                 }
             }
         },
+        "examMonitoring": {
+            "title": "Exam Monitoring"
+        },
         "studentExamDetail": {
             "studentExam": "Student exam ({{ examTitle }})",
             "testRun": "Test Run ({{ examTitle }})",
