@@ -28,6 +28,7 @@ import { Params } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { MetisPostDTO } from 'app/entities/metis/metis-post-dto.model';
+import dayjs from 'dayjs/esm';
 import { PlagiarismCase } from 'app/exercises/shared/plagiarism/types/PlagiarismCase';
 
 @Injectable()
@@ -418,7 +419,10 @@ export class MetisService implements OnDestroy {
         this.subscriptionChannel = channel;
         this.jhiWebsocketService.subscribe(this.subscriptionChannel);
         this.jhiWebsocketService.receive(this.subscriptionChannel).subscribe((postDTO: MetisPostDTO) => {
-            this.postService.convertDatesOfPost(postDTO.post);
+            postDTO.post.creationDate = dayjs(postDTO.post.creationDate);
+            postDTO.post.answers?.forEach((answer: AnswerPost) => {
+                answer.creationDate = dayjs(answer.creationDate);
+            });
             switch (postDTO.action) {
                 case MetisPostAction.CREATE_POST:
                     // determine if either the current post context filter is not set to a specific course-wide topic
