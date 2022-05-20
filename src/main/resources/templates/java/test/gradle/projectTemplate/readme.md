@@ -27,7 +27,7 @@ project. Follow this description for IntelliJ:
    test cases.
 5. Inside the `dependencies`-block in the `build.gradle` inside the Test-Project,
    uncomment one of the lines:
-   `testImplementation(':${exerciseNamePomXml}-Exercise')` or
+   `testImplementation(':${exerciseNamePomXml}')` or
    `testImplementation(':${exerciseNamePomXml}-Solution')`
    depending on which project you want to use the source files for executing the
    test cases.
