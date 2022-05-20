@@ -1,8 +1,6 @@
 package de.tum.in.www1.artemis.service.hestia;
 
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.Set;
+import java.util.*;
 import java.util.regex.Pattern;
 
 import org.springframework.stereotype.Service;
@@ -59,7 +57,7 @@ public class ProgrammingExerciseTaskService {
      */
     public Set<ProgrammingExerciseTask> updateTasksFromProblemStatement(ProgrammingExercise exercise) {
         var previousTasks = programmingExerciseTaskRepository.findByExerciseIdWithTestCases(exercise.getId());
-        var extractedTasks = extractTasks(exercise);
+        var extractedTasks = new HashSet<>(extractTasks(exercise));
         // No changes
         if (previousTasks.equals(extractedTasks)) {
             return previousTasks;
@@ -101,16 +99,31 @@ public class ProgrammingExerciseTaskService {
     }
 
     /**
+     * Gets the tasks of a programming exercise sorted by their order in the problem statement
+     * TODO: Replace this with an @OrderColumn on tasks in ProgrammingExercise
+     *
+     * @param exercise The programming exercise
+     * @return The sorted tasks
+     */
+    public List<ProgrammingExerciseTask> getSortedTasks(ProgrammingExercise exercise) {
+        var unsortedTasks = programmingExerciseTaskRepository.findByExerciseIdWithTestCases(exercise.getId());
+        var sortedExtractedTasks = extractTasks(exercise);
+        return sortedExtractedTasks.stream()
+                .map(extractedTask -> unsortedTasks.stream().filter(task -> task.getTestCases().equals(extractedTask.getTestCases())).findFirst().orElse(null))
+                .filter(Objects::nonNull).toList();
+    }
+
+    /**
      * Returns the extracted tasks and test cases from the problem statement markdown and
      * maps the tasks to the corresponding test cases for a programming exercise
      * @param exercise the exercise for which the tasks and test cases should be extracted
      * @return the extracted tasks with the corresponding test cases
      */
-    private Set<ProgrammingExerciseTask> extractTasks(ProgrammingExercise exercise) {
+    private List<ProgrammingExerciseTask> extractTasks(ProgrammingExercise exercise) {
         var problemStatement = exercise.getProblemStatement();
         var matcher = taskPatternForProblemStatementMarkdown.matcher(problemStatement);
         var testCases = programmingExerciseTestCaseRepository.findByExerciseIdAndActive(exercise.getId(), true);
-        var tasks = new HashSet<ProgrammingExerciseTask>();
+        var tasks = new ArrayList<ProgrammingExerciseTask>();
         while (matcher.find()) {
             var taskName = matcher.group("name");
             var testCaseNames = matcher.group("tests");

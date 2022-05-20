@@ -14,7 +14,6 @@ import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseTask;
 import de.tum.in.www1.artemis.domain.hestia.UserExerciseHintActivation;
 import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.hestia.ExerciseHintRepository;
-import de.tum.in.www1.artemis.repository.hestia.ProgrammingExerciseTaskRepository;
 import de.tum.in.www1.artemis.repository.hestia.UserExerciseHintActivationRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
@@ -30,19 +29,19 @@ public class ExerciseHintService {
 
     private final ExerciseHintRepository exerciseHintRepository;
 
-    private final StudentParticipationRepository studentParticipationRepository;
+    private final ProgrammingExerciseTaskService programmingExerciseTaskService;
 
-    private final ProgrammingExerciseTaskRepository programmingExerciseTaskRepository;
+    private final StudentParticipationRepository studentParticipationRepository;
 
     private final UserExerciseHintActivationRepository userExerciseHintActivationRepository;
 
     public ExerciseHintService(AuthorizationCheckService authCheckService, ExerciseHintRepository exerciseHintRepository,
-            StudentParticipationRepository studentParticipationRepository, ProgrammingExerciseTaskRepository programmingExerciseTaskRepository,
+            ProgrammingExerciseTaskService programmingExerciseTaskService, StudentParticipationRepository studentParticipationRepository,
             UserExerciseHintActivationRepository userExerciseHintActivationRepository) {
         this.authCheckService = authCheckService;
         this.exerciseHintRepository = exerciseHintRepository;
+        this.programmingExerciseTaskService = programmingExerciseTaskService;
         this.studentParticipationRepository = studentParticipationRepository;
-        this.programmingExerciseTaskRepository = programmingExerciseTaskRepository;
         this.userExerciseHintActivationRepository = userExerciseHintActivationRepository;
     }
 
@@ -163,7 +162,7 @@ public class ExerciseHintService {
     public Set<ExerciseHint> getAvailableExerciseHints(ProgrammingExercise exercise, User user) {
         Set<ExerciseHint> availableExerciseHints = new HashSet<>();
         var exerciseHints = exerciseHintRepository.findByExerciseId(exercise.getId());
-        var tasks = new ArrayList<>(programmingExerciseTaskRepository.findByExerciseIdWithTestCases(exercise.getId()));
+        var tasks = programmingExerciseTaskService.getSortedTasks(exercise);
         var latestNResults = getLatestNResults(exercise, user);
 
         if (latestNResults.size() >= CODE_HINT_DISPLAY_THRESHOLD) {
