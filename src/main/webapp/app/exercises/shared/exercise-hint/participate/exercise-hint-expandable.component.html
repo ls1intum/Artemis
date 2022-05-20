@@ -24,8 +24,7 @@
     <mat-action-row>
         <button type="button" [ngClass]="'btn btn-secondary'" (click)="collapseContent()">{{ 'artemisApp.exerciseHint.studentDialog.collapse' | artemisTranslate }}</button>
     </mat-action-row>
-    <!-- Display Code Hint or ExerciseHint here -->
-    <div *ngIf="isLoading" class="d-flex justify-content-center mt-5">
+    <div *ngIf="isLoading" class="d-flex justify-content-center">
         <div class="spinner-border" role="status">
             <span class="sr-only">{{ 'loading' | artemisTranslate }}</span>
         </div>
