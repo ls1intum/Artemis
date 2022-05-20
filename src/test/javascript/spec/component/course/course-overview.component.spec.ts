@@ -171,16 +171,16 @@ describe('CourseOverviewComponent', () => {
     });
 
     it('should set Long Description', () => {
-        component.longTextShown = false;
+        component.longDescriptionShown = false;
 
         component.showLongDescription();
 
         expect(component.courseDescription).toBe('');
-        expect(component.longTextShown).toBe(true);
+        expect(component.longDescriptionShown).toBe(true);
     });
 
     it('should set short Description', () => {
-        component.longTextShown = true;
+        component.longDescriptionShown = true;
         const findOneForDashboardStub = jest.spyOn(courseService, 'findOneForDashboard');
         const getCourseStub = jest.spyOn(courseScoreCalculationService, 'getCourse');
         getCourseStub.mockReturnValue(course1);
@@ -191,7 +191,7 @@ describe('CourseOverviewComponent', () => {
         component.showShortDescription();
 
         expect(component.courseDescription).toBe('description of course 1...');
-        expect(component.longTextShown).toBe(false);
+        expect(component.longDescriptionShown).toBe(false);
     });
 
     it('should have visible exams', () => {
