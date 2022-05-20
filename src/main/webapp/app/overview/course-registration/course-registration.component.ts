@@ -40,6 +40,9 @@ export class CourseRegistrationComponent implements OnInit {
         });
     }
 
+    /**
+     * Loads all course that are available for self-registration by the logged-in user
+     */
     loadRegistrableCourses() {
         this.loading = true;
         this.courseService.findAllToRegister().subscribe((registerRes) => {
@@ -48,11 +51,19 @@ export class CourseRegistrationComponent implements OnInit {
         });
     }
 
+    /**
+     * Opens a modal with the prerequisites for the course
+     * @param courseId The course id for which to show the prerequisites
+     */
     showPrerequisites(courseId: number) {
         const modalRef = this.modalService.open(CoursePrerequisitesModalComponent, { size: 'xl' });
         modalRef.componentInstance.courseId = courseId;
     }
 
+    /**
+     * Register the logged-in user for the course
+     * @param courseId The id of course to register the user for
+     */
     registerForCourse(courseId: number) {
         this.courseService.registerForCourse(courseId).subscribe({
             next: () => {

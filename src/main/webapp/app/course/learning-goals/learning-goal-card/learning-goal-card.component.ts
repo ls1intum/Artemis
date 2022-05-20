@@ -67,6 +67,9 @@ export class LearningGoalCardComponent implements OnInit, OnDestroy {
         }
     }
 
+    /**
+     * Opens the modal with details (e.g., progress report) about the clicked learning goal
+     */
     openLearningGoalDetailsModal() {
         // For prerequisites do not open the modal for now
         // TODO: Later we will display connected lecture units also for prerequisites

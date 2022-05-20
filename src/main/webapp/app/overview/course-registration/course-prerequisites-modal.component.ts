@@ -25,6 +25,10 @@ export class CoursePrerequisitesModalComponent implements OnInit {
         }
     }
 
+    /**
+     * Loads the prerequisites for the specified course id
+     * Displays an error alert if it fails
+     */
     loadData() {
         this.isLoading = true;
         this.learningGoalService
@@ -44,10 +48,18 @@ export class CoursePrerequisitesModalComponent implements OnInit {
             });
     }
 
+    /**
+     * Calculates a unique identity for each learning goal card shown in the component
+     * @param index The index in the list
+     * @param learningGoal The learning goal of the current iteration
+     */
     identify(index: number, learningGoal: LearningGoal) {
         return `${index}-${learningGoal.id}`;
     }
 
+    /**
+     * Dismisses the currently active modal
+     */
     clear() {
         this.activeModal.dismiss('cancel');
     }
