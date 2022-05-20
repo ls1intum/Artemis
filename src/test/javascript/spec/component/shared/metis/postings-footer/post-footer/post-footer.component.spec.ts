@@ -151,25 +151,6 @@ describe('PostFooterComponent', () => {
         expect(component.sortedAnswerPosts).toEqual(sortedAnswerArray);
     });
 
-    it('answer now button should not be visible if answer posts are not shown', () => {
-        component.posting = post;
-        component.posting.answers = unsortedAnswerArray;
-        component.showAnswers = false;
-        fixture.detectChanges();
-        const answerNowButton = fixture.debugElement.nativeElement.querySelector('button');
-        expect(answerNowButton).toBeNull();
-    });
-
-    it('answer now button should be visible if answer posts are shown', () => {
-        component.posting = post;
-        component.posting.answers = unsortedAnswerArray;
-        component.showAnswers = true;
-        component.ngOnInit();
-        fixture.detectChanges();
-        const answerNowButton = fixture.debugElement.nativeElement.querySelector('button');
-        expect(answerNowButton.innerHTML).toContain('answerNow');
-    });
-
     it('should be initialized correctly for users that are at least tutors in course', () => {
         component.posting = post;
         component.posting.answers = unsortedAnswerArray;
