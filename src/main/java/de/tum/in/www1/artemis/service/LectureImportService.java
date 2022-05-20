@@ -9,6 +9,7 @@ import java.util.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.in.www1.artemis.domain.Attachment;
 import de.tum.in.www1.artemis.domain.Course;
@@ -46,6 +47,7 @@ public class LectureImportService {
      * @param course          The course to import to
      * @return The lecture in the new course
      */
+    @Transactional // Required to circumvent errors with ordered collection of lecture units
     public Lecture importLecture(final Lecture importedLecture, final Course course) {
         log.debug("Creating a new Lecture based on lecture {}", importedLecture);
 
@@ -65,7 +67,6 @@ public class LectureImportService {
             LectureUnit clonedLectureUnit = cloneLectureUnit(lectureUnit, lecture);
             if (clonedLectureUnit != null) {
                 clonedLectureUnit.setLecture(lecture);
-                clonedLectureUnit.setOrder(lectureUnit.getOrder());
                 lectureUnits.add(clonedLectureUnit);
             }
         }
