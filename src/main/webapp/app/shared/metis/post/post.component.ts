@@ -16,6 +16,7 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
     // if the post is previewed in the create/edit modal,
     // we need to pass the ref in order to close it when navigating to the previewed post via post title
     @Input() modalRef?: NgbModalRef;
+    @Input() showAnswers: boolean;
     postIsResolved: boolean;
     pageType: PageType;
     contextInformation: ContextInformation;
