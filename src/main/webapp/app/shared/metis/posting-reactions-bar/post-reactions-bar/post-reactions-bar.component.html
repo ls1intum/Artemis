@@ -10,28 +10,6 @@
             <span class="emoji-count" [class.reaction-count--reacted]="reactionMetaData.value.hasReacted">{{ reactionMetaData.value.count }}</span>
         </button>
     </div>
-    <div class="col-auto p-0" *ngIf="displayPriority === DisplayPriority.PINNED || currentUserIsAtLeastTutor">
-        <button
-            class="reaction-button pin"
-            [class.reaction-button--not-hoverable]="!currentUserIsAtLeastTutor"
-            [class.reaction-button--reacted]="displayPriority === DisplayPriority.PINNED && currentUserIsAtLeastTutor"
-            [disabled]="!currentUserIsAtLeastTutor"
-            (click)="currentUserIsAtLeastTutor && togglePin()"
-        >
-            <ngx-emoji class="emoji" [emoji]="pinEmojiId" [size]="16" [ngbTooltip]="pinTooltip | artemisTranslate" [placement]="'auto'"> </ngx-emoji>
-        </button>
-    </div>
-    <div class="col-auto p-0" *ngIf="displayPriority === DisplayPriority.ARCHIVED || currentUserIsAtLeastTutor">
-        <button
-            class="reaction-button archive"
-            [class.reaction-button--not-hoverable]="!currentUserIsAtLeastTutor"
-            [class.reaction-button--reacted]="displayPriority === DisplayPriority.ARCHIVED && currentUserIsAtLeastTutor"
-            [disabled]="!currentUserIsAtLeastTutor"
-            (click)="currentUserIsAtLeastTutor && toggleArchive()"
-        >
-            <ngx-emoji class="emoji" [emoji]="archiveEmojiId" [size]="16" [ngbTooltip]="archiveTooltip | artemisTranslate" [placement]="'auto'"></ngx-emoji>
-        </button>
-    </div>
     <div class="col-auto px-0">
         <fa-icon
             [icon]="farSmile"
@@ -65,6 +43,28 @@
             [darkMode]="darkModeEmojiPicker"
         ></emoji-mart>
     </ng-template>
+    <div class="col-auto p-0" *ngIf="displayPriority === DisplayPriority.PINNED || currentUserIsAtLeastTutor">
+        <button
+            class="reaction-button pin"
+            [class.reaction-button--not-hoverable]="!currentUserIsAtLeastTutor"
+            [class.reaction-button--reacted]="displayPriority === DisplayPriority.PINNED && currentUserIsAtLeastTutor"
+            [disabled]="!currentUserIsAtLeastTutor"
+            (click)="currentUserIsAtLeastTutor && togglePin()"
+        >
+            <ngx-emoji class="emoji" [emoji]="pinEmojiId" [size]="16" [ngbTooltip]="pinTooltip | artemisTranslate" [placement]="'auto'"> </ngx-emoji>
+        </button>
+    </div>
+    <div class="col-auto p-0" *ngIf="displayPriority === DisplayPriority.ARCHIVED || currentUserIsAtLeastTutor">
+        <button
+            class="reaction-button archive"
+            [class.reaction-button--not-hoverable]="!currentUserIsAtLeastTutor"
+            [class.reaction-button--reacted]="displayPriority === DisplayPriority.ARCHIVED && currentUserIsAtLeastTutor"
+            [disabled]="!currentUserIsAtLeastTutor"
+            (click)="currentUserIsAtLeastTutor && toggleArchive()"
+        >
+            <ngx-emoji class="emoji" [emoji]="archiveEmojiId" [size]="16" [ngbTooltip]="archiveTooltip | artemisTranslate" [placement]="'auto'"></ngx-emoji>
+        </button>
+    </div>
     <!-- start discussion -->
     <div class="col-auto p-0" *ngIf="sortedAnswerPosts.length === 0">
         <button id="startDiscussionButton" class="reaction-button clickable" (click)="openPostingCreateEditModal.emit()">
