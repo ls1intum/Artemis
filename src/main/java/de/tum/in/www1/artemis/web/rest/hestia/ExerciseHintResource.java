@@ -19,7 +19,6 @@ import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.hestia.ExerciseHintRepository;
-import de.tum.in.www1.artemis.repository.hestia.UserExerciseHintActivationRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.hestia.CodeHintService;
@@ -48,8 +47,6 @@ public class ExerciseHintResource {
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
-    private final UserExerciseHintActivationRepository userExerciseHintActivationRepository;
-
     private final AuthorizationCheckService authCheckService;
 
     private final ExerciseRepository exerciseRepository;
@@ -62,12 +59,10 @@ public class ExerciseHintResource {
     private String applicationName;
 
     public ExerciseHintResource(ExerciseHintService exerciseHintService, ExerciseHintRepository exerciseHintRepository, ProgrammingExerciseRepository programmingExerciseRepository,
-            UserExerciseHintActivationRepository userExerciseHintActivationRepository, AuthorizationCheckService authCheckService, ExerciseRepository exerciseRepository,
-            CodeHintService codeHintService, UserRepository userRepository) {
+            AuthorizationCheckService authCheckService, ExerciseRepository exerciseRepository, CodeHintService codeHintService, UserRepository userRepository) {
         this.exerciseHintService = exerciseHintService;
         this.exerciseHintRepository = exerciseHintRepository;
         this.programmingExerciseRepository = programmingExerciseRepository;
-        this.userExerciseHintActivationRepository = userExerciseHintActivationRepository;
         this.authCheckService = authCheckService;
         this.exerciseRepository = exerciseRepository;
         this.codeHintService = codeHintService;
@@ -187,7 +182,7 @@ public class ExerciseHintResource {
      * or with status {@code 409 (Conflict)} if the exerciseId is not valid.
      */
     @GetMapping("programming-exercises/{exerciseId}/exercise-hints/{exerciseHintId}")
-    @PreAuthorize("hasRole('EDITOR')")
+    @PreAuthorize("hasRole('TA')")
     public ResponseEntity<ExerciseHint> getExerciseHint(@PathVariable Long exerciseId, @PathVariable Long exerciseHintId) {
         log.debug("REST request to get ExerciseHint : {}", exerciseHintId);
         ProgrammingExercise exercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
@@ -196,7 +191,7 @@ public class ExerciseHintResource {
             throw new AccessForbiddenException("");
         }
 
-        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, exercise, null);
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, exercise, null);
         var exerciseHint = exerciseHintRepository.findByIdWithRelationsElseThrow(exerciseHintId);
 
         if (!exerciseHint.getExercise().getId().equals(exerciseId)) {
