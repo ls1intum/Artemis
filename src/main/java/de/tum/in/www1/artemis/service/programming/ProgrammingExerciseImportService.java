@@ -188,7 +188,7 @@ public class ProgrammingExerciseImportService {
         String testRepoName = urlService.getRepositorySlugFromRepositoryUrlString(templateExercise.getTestRepositoryUrl());
         String solutionRepoName = urlService.getRepositorySlugFromRepositoryUrlString(templateExercise.getSolutionRepositoryUrl());
 
-        String sourceDefaultBranch = versionControlService.get().getOrRetrieveDefaultBranchOfExercise(templateExercise);
+        String sourceDefaultBranch = versionControlService.get().getOrRetrieveBranchOfExercise(templateExercise);
 
         versionControlService.get().copyRepository(sourceProjectKey, templateRepoName, sourceDefaultBranch, targetProjectKey, RepositoryType.TEMPLATE.getName());
         versionControlService.get().copyRepository(sourceProjectKey, solutionRepoName, sourceDefaultBranch, targetProjectKey, RepositoryType.SOLUTION.getName());
@@ -206,7 +206,7 @@ public class ProgrammingExerciseImportService {
 
         // Unprotect the default branch of the template exercise repo.
         var templateVcsRepositoryUrl = newExercise.getVcsTemplateRepositoryUrl();
-        var templateVcsRepositoryDefaultBranch = versionControlService.get().getOrRetrieveDefaultBranchOfExercise(templateExercise);
+        var templateVcsRepositoryDefaultBranch = versionControlService.get().getOrRetrieveBranchOfExercise(templateExercise);
         versionControlService.get().unprotectBranch(templateVcsRepositoryUrl, templateVcsRepositoryDefaultBranch);
 
         // Add the necessary hooks notifying Artemis about changes after commits have been pushed
@@ -253,7 +253,7 @@ public class ProgrammingExerciseImportService {
     private void updatePlanRepositoriesInBuildPlans(ProgrammingExercise newExercise, TemplateProgrammingExerciseParticipation templateParticipation,
             SolutionProgrammingExerciseParticipation solutionParticipation, String targetExerciseProjectKey, String oldExerciseRepoUrl, String oldSolutionRepoUrl,
             String oldTestRepoUrl, List<AuxiliaryRepository> oldBuildPlanAuxiliaryRepositories) {
-        String newExerciseDefaultBranch = versionControlService.get().getOrRetrieveDefaultBranchOfExercise(newExercise);
+        String newExerciseDefaultBranch = versionControlService.get().getOrRetrieveBranchOfExercise(newExercise);
 
         // update 2 repositories for the BASE build plan --> adapt the triggers so that only the assignment repo (and not the tests' repo) will trigger the BASE build plan
         continuousIntegrationService.get().updatePlanRepository(targetExerciseProjectKey, templateParticipation.getBuildPlanId(), ASSIGNMENT_REPO_NAME, targetExerciseProjectKey,
@@ -280,7 +280,7 @@ public class ProgrammingExerciseImportService {
         for (int i = 0; i < newRepositories.size(); i++) {
             AuxiliaryRepository newAuxiliaryRepository = newRepositories.get(i);
             AuxiliaryRepository oldAuxiliaryRepository = oldRepositories.get(i);
-            String auxiliaryDefaultBranch = versionControlService.get().getOrRetrieveDefaultBranchOfExercise(newExercise);
+            String auxiliaryDefaultBranch = versionControlService.get().getOrRetrieveBranchOfExercise(newExercise);
             continuousIntegrationService.get().updatePlanRepository(targetExerciseProjectKey, participation.getBuildPlanId(), newAuxiliaryRepository.getName(),
                     targetExerciseProjectKey, newAuxiliaryRepository.getRepositoryUrl(), oldAuxiliaryRepository.getRepositoryUrl(), auxiliaryDefaultBranch, Optional.empty());
         }

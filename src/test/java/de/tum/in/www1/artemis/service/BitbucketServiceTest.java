@@ -81,9 +81,9 @@ public class BitbucketServiceTest extends AbstractSpringIntegrationBambooBitbuck
         database.addTemplateParticipationForProgrammingExercise(programmingExercise);
         database.addSolutionParticipationForProgrammingExercise(programmingExercise);
         bitbucketRequestMockProvider.mockGetDefaultBranch(defaultBranch, programmingExercise.getProjectKey(), 1);
-        versionControlService.getOrRetrieveDefaultBranchOfParticipation(programmingExercise.getSolutionParticipation());
+        versionControlService.getOrRetrieveBranchOfParticipation(programmingExercise.getSolutionParticipation());
         // If we have to retrieve the default branch again, the mockProvider would fail
-        versionControlService.getOrRetrieveDefaultBranchOfParticipation(programmingExercise.getSolutionParticipation());
+        versionControlService.getOrRetrieveBranchOfParticipation(programmingExercise.getSolutionParticipation());
         bitbucketRequestMockProvider.verifyMocks();
     }
 }

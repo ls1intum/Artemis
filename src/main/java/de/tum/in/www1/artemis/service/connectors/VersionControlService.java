@@ -194,21 +194,21 @@ public interface VersionControlService {
      * @param participation The participation to get the default branch from
      * @return The default branch used by this participation
      */
-    String getOrRetrieveDefaultBranchOfParticipation(ProgrammingExerciseParticipation participation);
+    String getOrRetrieveBranchOfParticipation(ProgrammingExerciseParticipation participation);
 
     /**
      * Get the default branch used in the student participation or retrieves it from the VCS if not present in the database
      * @param participation The student participation to get the default branch from
      * @return The default branch used by this student participation
      */
-    String getOrRetrieveDefaultBranchOfStudentParticipation(ProgrammingExerciseStudentParticipation participation);
+    String getOrRetrieveBranchOfStudentParticipation(ProgrammingExerciseStudentParticipation participation);
 
     /**
      * Get the default branch used in the programmingExercise or retrieves it from the VCS if not present in the database
      * @param programmingExercise The participation to get the default branch from
      * @return The default branch used by this programmingExercise
      */
-    String getOrRetrieveDefaultBranchOfExercise(ProgrammingExercise programmingExercise);
+    String getOrRetrieveBranchOfExercise(ProgrammingExercise programmingExercise);
 
     /***
      * @return The default branch used by Artemis

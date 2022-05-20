@@ -96,8 +96,8 @@ public class GitlabServiceTest extends AbstractSpringIntegrationJenkinsGitlabTes
         database.addTemplateParticipationForProgrammingExercise(programmingExercise);
         database.addSolutionParticipationForProgrammingExercise(programmingExercise);
         gitlabRequestMockProvider.mockGetDefaultBranch(defaultBranch);
-        versionControlService.getOrRetrieveDefaultBranchOfParticipation(programmingExercise.getSolutionParticipation());
-        versionControlService.getOrRetrieveDefaultBranchOfParticipation(programmingExercise.getSolutionParticipation());
+        versionControlService.getOrRetrieveBranchOfParticipation(programmingExercise.getSolutionParticipation());
+        versionControlService.getOrRetrieveBranchOfParticipation(programmingExercise.getSolutionParticipation());
 
         verify(versionControlService, times(1)).getDefaultBranchOfRepository(any());
     }

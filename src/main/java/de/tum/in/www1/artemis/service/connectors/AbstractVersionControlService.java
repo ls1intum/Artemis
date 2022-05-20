@@ -104,7 +104,7 @@ public abstract class AbstractVersionControlService implements VersionControlSer
     }
 
     @Override
-    public VcsRepositoryUrl copyRepository(String sourceProjectKey, String sourceRepositoryName, String sourceDefaultBranch, String targetProjectKey, String targetRepositoryName)
+    public VcsRepositoryUrl copyRepository(String sourceProjectKey, String sourceRepositoryName, String sourceBranch, String targetProjectKey, String targetRepositoryName)
             throws VersionControlException {
         sourceRepositoryName = sourceRepositoryName.toLowerCase();
         targetRepositoryName = targetRepositoryName.toLowerCase();
@@ -120,7 +120,7 @@ public abstract class AbstractVersionControlService implements VersionControlSer
             // clone the source repo to the target directory
             targetRepo = gitService.getOrCheckoutRepositoryIntoTargetDirectory(sourceRepoUrl, targetRepoUrl, true);
             // copy by pushing the source's content to the target's repo
-            gitService.pushSourceToTargetRepo(targetRepo, targetRepoUrl, sourceDefaultBranch);
+            gitService.pushSourceToTargetRepo(targetRepo, targetRepoUrl, sourceBranch);
         }
         catch (GitAPIException e) {
             Path localPath = gitService.getDefaultLocalPathOfRepo(targetRepoUrl);
@@ -145,20 +145,20 @@ public abstract class AbstractVersionControlService implements VersionControlSer
     }
 
     @Override
-    public String getOrRetrieveDefaultBranchOfParticipation(ProgrammingExerciseParticipation participation) {
+    public String getOrRetrieveBranchOfParticipation(ProgrammingExerciseParticipation participation) {
         if (participation instanceof ProgrammingExerciseStudentParticipation studentParticipation) {
-            return getOrRetrieveDefaultBranchOfStudentParticipation(studentParticipation);
+            return getOrRetrieveBranchOfStudentParticipation(studentParticipation);
         }
         else {
-            return getOrRetrieveDefaultBranchOfExercise(participation.getProgrammingExercise());
+            return getOrRetrieveBranchOfExercise(participation.getProgrammingExercise());
         }
     }
 
     @Override
-    public String getOrRetrieveDefaultBranchOfStudentParticipation(ProgrammingExerciseStudentParticipation participation) {
+    public String getOrRetrieveBranchOfStudentParticipation(ProgrammingExerciseStudentParticipation participation) {
         if (participation.getBranch() == null) {
-            String defaultBranch = getDefaultBranchOfRepository(participation.getVcsRepositoryUrl());
-            participation.setBranch(defaultBranch);
+            String branch = getDefaultBranchOfRepository(participation.getVcsRepositoryUrl());
+            participation.setBranch(branch);
             studentParticipationRepository.save(participation);
         }
 
@@ -166,10 +166,10 @@ public abstract class AbstractVersionControlService implements VersionControlSer
     }
 
     @Override
-    public String getOrRetrieveDefaultBranchOfExercise(ProgrammingExercise programmingExercise) {
+    public String getOrRetrieveBranchOfExercise(ProgrammingExercise programmingExercise) {
         if (programmingExercise.getBranch() == null) {
-            String defaultBranch = getDefaultBranchOfRepository(programmingExercise.getVcsTemplateRepositoryUrl());
-            programmingExercise.setBranch(defaultBranch);
+            String branch = getDefaultBranchOfRepository(programmingExercise.getVcsTemplateRepositoryUrl());
+            programmingExercise.setBranch(branch);
             programmingExerciseRepository.save(programmingExercise);
         }
 

@@ -70,9 +70,9 @@ public interface ContinuousIntegrationService {
      * **Important**: make sure that participation.programmingExercise.templateParticipation is initialized, otherwise an org.hibernate.LazyInitializationException can occur
      *
      * @param participation contains the unique identifier for build plan on CI system and the url of user's personal repository copy
-     * @param defaultBranch the default branch of the git repository that is used in the build plan
+     * @param branch the default branch of the git repository that is used in the build plan
      */
-    void configureBuildPlan(ProgrammingExerciseParticipation participation, String defaultBranch);
+    void configureBuildPlan(ProgrammingExerciseParticipation participation, String branch);
 
     /**
      * An empty commit might be necessary depending on the chosen CI system (e.g. on Bamboo) so that subsequent commits trigger a new build on the build plan

@@ -84,7 +84,7 @@ public class TestRepositoryResourceIntegrationTest extends AbstractSpringIntegra
         doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(testRepo.localRepoFile.toPath(), null)).when(gitService).getOrCheckoutRepository(eq(testRepoUrl), eq(false),
                 any());
 
-        doReturn(defaultBranch).when(versionControlService).getOrRetrieveDefaultBranchOfExercise(programmingExercise);
+        doReturn(defaultBranch).when(versionControlService).getOrRetrieveBranchOfExercise(programmingExercise);
     }
 
     @AfterEach

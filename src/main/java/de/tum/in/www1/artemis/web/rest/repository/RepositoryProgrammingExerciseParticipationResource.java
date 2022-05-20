@@ -135,8 +135,8 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
             return gitService.getOrCheckoutRepository(repositoryUrl, pullOnGet);
         }
         else {
-            String defaultBranch = versionControlService.get().getOrRetrieveDefaultBranchOfParticipation(programmingParticipation);
-            return gitService.getOrCheckoutRepository(repositoryUrl, pullOnGet, defaultBranch);
+            String branch = versionControlService.get().getOrRetrieveBranchOfParticipation(programmingParticipation);
+            return gitService.getOrCheckoutRepository(repositoryUrl, pullOnGet, branch);
         }
     }
 
@@ -164,7 +164,7 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
         if (!(participation instanceof ProgrammingExerciseStudentParticipation studentParticipation)) {
             throw new IllegalArgumentException();
         }
-        return versionControlService.get().getOrRetrieveDefaultBranchOfStudentParticipation(studentParticipation);
+        return versionControlService.get().getOrRetrieveBranchOfStudentParticipation(studentParticipation);
     }
 
     @Override

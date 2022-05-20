@@ -100,8 +100,8 @@ public class GitLabService extends AbstractVersionControlService {
             gitLabUserManagementService.generateVersionControlAccessTokenIfNecessary(user);
         }
 
-        var defaultBranch = getOrRetrieveDefaultBranchOfStudentParticipation(participation);
-        protectBranch(participation.getVcsRepositoryUrl(), defaultBranch);
+        String branch = getOrRetrieveBranchOfStudentParticipation(participation);
+        protectBranch(participation.getVcsRepositoryUrl(), branch);
     }
 
     @Override
