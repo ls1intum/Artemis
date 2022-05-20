@@ -13,11 +13,11 @@ import { SolutionProgrammingExerciseParticipation } from 'app/entities/participa
 import { TextPlagiarismResult } from 'app/exercises/shared/plagiarism/types/text/TextPlagiarismResult';
 import { PlagiarismOptions } from 'app/exercises/shared/plagiarism/types/PlagiarismOptions';
 import { Submission } from 'app/entities/submission.model';
-import { ProgrammingExerciseTestCase } from 'app/entities/programming-exercise-test-case.model';
 import { ProgrammingExerciseFullGitDiffReport } from 'app/entities/hestia/programming-exercise-full-git-diff-report.model';
 import { ProgrammingExerciseGitDiffReport } from 'app/entities/hestia/programming-exercise-git-diff-report.model';
 import { CoverageReport } from 'app/entities/hestia/coverage-report.model';
 import { ProgrammingExerciseSolutionEntry } from 'app/entities/hestia/programming-exercise-solution-entry.model';
+import { ProgrammingExerciseServerSideTask } from 'app/entities/hestia/programming-exercise-task.model';
 
 export type EntityResponseType = HttpResponse<ProgrammingExercise>;
 export type EntityArrayResponseType = HttpResponse<ProgrammingExercise[]>;
@@ -27,12 +27,6 @@ export type ProgrammingExerciseTestCaseStateDTO = {
     hasStudentResult: boolean;
     testCasesChanged: boolean;
     buildAndTestStudentSubmissionsAfterDueDate?: dayjs.Dayjs;
-};
-
-export type ProgrammingExerciseTask = {
-    id: number;
-    taskName: String;
-    testCases: ProgrammingExerciseTestCase[];
 };
 
 // TODO: we should use a proper enum here
@@ -430,8 +424,10 @@ export class ProgrammingExerciseService {
      * This method and all helper methods are only for testing reason and will be removed later on.
      * @param exerciseId the exercise id
      */
-    getTasksAndTestsExtractedFromProblemStatement(exerciseId: number): Observable<ProgrammingExerciseTask[]> {
-        return this.http.get(`${this.resourceUrl}/${exerciseId}/tasks`, { observe: 'response' }).pipe(map((res: HttpResponse<ProgrammingExerciseTask[]>) => res.body ?? []));
+    getTasksAndTestsExtractedFromProblemStatement(exerciseId: number): Observable<ProgrammingExerciseServerSideTask[]> {
+        return this.http
+            .get(`${this.resourceUrl}/${exerciseId}/tasks`, { observe: 'response' })
+            .pipe(map((res: HttpResponse<ProgrammingExerciseServerSideTask[]>) => res.body ?? []));
     }
 
     /**

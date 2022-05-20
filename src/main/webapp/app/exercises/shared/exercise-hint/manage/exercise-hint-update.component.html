@@ -26,8 +26,8 @@
                             ><jhi-help-icon placement="auto" text="artemisApp.exerciseHint.taskTooltip"></jhi-help-icon
                         ></ng-container>
                     </div>
-                    <select class="form-select" required name="task" [(ngModel)]="exerciseHint.programmingExerciseTask" id="field_task">
-                        <option *ngFor="let task of tasks" [selected]="exerciseHint?.programmingExerciseTask?.id === task?.id">{{ task.taskName }}</option>
+                    <select class="form-select" required name="task" [(ngModel)]="this.exerciseHint.programmingExerciseTask" id="field_task">
+                        <option *ngFor="let task of tasks" [ngValue]="task">{{ task.taskName }}</option>
                     </select>
                 </div>
                 <div class="form-group hint-form__editor-wrapper">

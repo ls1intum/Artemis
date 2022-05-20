@@ -1,6 +1,6 @@
 import { Exercise } from 'app/entities/exercise.model';
 import { BaseEntity } from 'app/shared/model/base-entity';
-import { ProgrammingExerciseTask } from 'app/exercises/programming/manage/services/programming-exercise.service';
+import { ProgrammingExerciseServerSideTask } from 'app/entities/hestia/programming-exercise-task.model';
 
 export enum HintType {
     TEXT = 'text',
@@ -14,6 +14,6 @@ export class ExerciseHint implements BaseEntity {
     public content?: string;
     public exercise?: Exercise;
     public type?: HintType;
-    public programmingExerciseTask?: ProgrammingExerciseTask;
+    public programmingExerciseTask?: ProgrammingExerciseServerSideTask;
     public currentUserRating?: number;
 }
