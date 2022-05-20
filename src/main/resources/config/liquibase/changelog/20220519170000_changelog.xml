@@ -27,7 +27,7 @@
                                  referencedTableName="jhi_user"
                                  referencedColumnNames="id"/>
         <addForeignKeyConstraint baseTableName="user_exercise_hint_activation"
-                                 baseColumnNames="user_id"
+                                 baseColumnNames="exercise_hint_id"
                                  constraintName="fk_user_exercise_hint_activation_exercise_hint_id"
                                  referencedTableName="exercise_hint"
                                  referencedColumnNames="id"/>
