@@ -1,4 +1,4 @@
-import { Directive, EventEmitter, Input, OnChanges, OnInit, Output, TemplateRef, ViewChild } from '@angular/core';
+import { Directive, EventEmitter, Input, OnChanges, OnInit, Output, TemplateRef, ViewChild, ViewContainerRef } from '@angular/core';
 import { FormBuilder, FormGroup } from '@angular/forms';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { Posting } from 'app/entities/metis/posting.model';
@@ -10,7 +10,8 @@ const MAX_CONTENT_LENGTH = 1000;
 @Directive()
 export abstract class PostingCreateEditModalDirective<T extends Posting> implements OnInit, OnChanges {
     @Input() posting: T;
-    @ViewChild('postingEditor') postingEditor: TemplateRef<any>;
+    @Input() inlineInputContainerReference: ViewContainerRef;
+    @ViewChild('inlineInput') postingEditor: TemplateRef<any>;
     @Output() onCreate: EventEmitter<T> = new EventEmitter<T>();
     modalRef?: NgbModalRef;
     modalTitle: string;
@@ -58,21 +59,7 @@ export abstract class PostingCreateEditModalDirective<T extends Posting> impleme
         }
     }
 
-    /**
-     * opens the modal to edit or create a posting
-     */
-    open(): void {
-        this.modalRef = this.modalService.open(this.postingEditor, {
-            size: 'lg',
-            backdrop: 'static',
-            beforeDismiss: () => {
-                // when cancelling the create/update action, we do not want to store the current values
-                // but rather reset the formGroup values so when re-opening the modal we do not show the previously unsaved changes
-                this.resetFormGroup();
-                return true;
-            },
-        });
-    }
+    abstract open(): void;
 
     abstract updateModalTitle(): void;
 

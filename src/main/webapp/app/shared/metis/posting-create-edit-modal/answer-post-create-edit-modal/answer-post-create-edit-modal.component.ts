@@ -4,16 +4,26 @@ import { AnswerPost } from 'app/entities/metis/answer-post.model';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { FormBuilder, Validators } from '@angular/forms';
+import { MarkdownEditorHeight } from 'app/shared/markdown-editor/markdown-editor.component';
 
 @Component({
     selector: 'jhi-answer-post-create-edit-modal',
     templateUrl: './answer-post-create-edit-modal.component.html',
+    styleUrls: ['answer-post-create-edit-modal.component.scss'],
 })
 export class AnswerPostCreateEditModalComponent extends PostingCreateEditModalDirective<AnswerPost> {
+    editorHeight = MarkdownEditorHeight.INLINE;
+
     constructor(protected metisService: MetisService, protected modalService: NgbModal, protected formBuilder: FormBuilder) {
         super(metisService, modalService, formBuilder);
     }
 
+    /**
+     * renders the inline input ng-template to edit or create an answerPost
+     */
+    open(): void {
+        this.inlineInputContainerReference.createEmbeddedView(this.postingEditor);
+    }
     /**
      * resets the answer post content
      */
@@ -35,7 +45,8 @@ export class AnswerPostCreateEditModalComponent extends PostingCreateEditModalDi
                 this.resetFormGroup();
                 this.isLoading = false;
                 this.onCreate.emit(answerPost);
-                this.modalRef?.close();
+                // this.modalRef?.close(); TODO
+                this.inlineInputContainerReference?.clear();
             },
             error: () => {
                 this.isLoading = false;
@@ -52,7 +63,8 @@ export class AnswerPostCreateEditModalComponent extends PostingCreateEditModalDi
         this.metisService.updateAnswerPost(this.posting).subscribe({
             next: () => {
                 this.isLoading = false;
-                this.modalRef?.close();
+                // this.modalRef?.close(); TODO
+                this.inlineInputContainerReference?.clear();
             },
             error: () => {
                 this.isLoading = false;

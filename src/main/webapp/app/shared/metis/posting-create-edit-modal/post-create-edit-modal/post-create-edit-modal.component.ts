@@ -71,6 +71,22 @@ export class PostCreateEditModalComponent extends PostingCreateEditModalDirectiv
     }
 
     /**
+     * opens the modal to edit or create a post
+     */
+    open(): void {
+        this.modalRef = this.modalService.open(this.postingEditor, {
+            size: 'lg',
+            backdrop: 'static',
+            beforeDismiss: () => {
+                // when cancelling the create or update action, we do not want to store the current values
+                // but rather reset the formGroup values so when re-opening the modal we do not show the previously unsaved changes
+                this.resetFormGroup();
+                return true;
+            },
+        });
+    }
+
+    /**
      * resets the pageType, initialContext, post tags, post title, and post content
      */
     resetFormGroup(): void {

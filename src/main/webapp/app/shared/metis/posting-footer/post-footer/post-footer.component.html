@@ -24,9 +24,11 @@
         (openPostingCreateEditModal)="createAnswerPostModal.open()"
     >
     </jhi-answer-post>
+    <ng-container #inlineInputContainer></ng-container>
 </ng-container>
 <jhi-answer-post-create-edit-modal
     #createAnswerPostModal
     [posting]="createdAnswerPost"
+    [inlineInputContainerReference]="inlineInputContainer"
     (onCreate)="showAnswers = true; createdAnswerPost = createEmptyAnswerPost()"
 ></jhi-answer-post-create-edit-modal>

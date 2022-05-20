@@ -1,11 +1,10 @@
-import { Component, Input, OnChanges, OnDestroy, OnInit, TemplateRef, ViewChild } from '@angular/core';
+import { Component, Input, OnChanges, OnDestroy, OnInit, ViewChild, ViewContainerRef } from '@angular/core';
 import { PostingFooterDirective } from 'app/shared/metis/posting-footer/posting-footer.directive';
 import { Post } from 'app/entities/metis/post.model';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { AnswerPostCreateEditModalComponent } from 'app/shared/metis/posting-create-edit-modal/answer-post-create-edit-modal/answer-post-create-edit-modal.component';
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
-import { faComments } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-post-footer',
@@ -25,9 +24,9 @@ export class PostFooterComponent extends PostingFooterDirective<Post> implements
     sortedAnswerPosts: AnswerPost[];
     createdAnswerPost: AnswerPost;
     isAtLeastTutorInCourse: boolean;
-    @ViewChild('createAnswerPostModal') createAnswerPostModal: TemplateRef<AnswerPostCreateEditModalComponent>;
 
-    faComments = faComments;
+    // ng-container to render inlineInputComponent
+    @ViewChild('inlineInputContainer', { read: ViewContainerRef }) inlineInputContainer: ViewContainerRef;
 
     constructor(private metisService: MetisService) {
         super();

@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, EventEmitter, Input, Output, ViewChild, ViewContainerRef } from '@angular/core';
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
 import { PostingDirective } from 'app/shared/metis/posting.directive';
 
@@ -10,4 +10,6 @@ import { PostingDirective } from 'app/shared/metis/posting.directive';
 export class AnswerPostComponent extends PostingDirective<AnswerPost> {
     @Input() isLastAnswer: boolean;
     @Output() openPostingCreateEditModal = new EventEmitter<void>();
+    // ng-container to render inlineInputComponent
+    @ViewChild('inlineInputContainer', { read: ViewContainerRef }) containerForInlineInput: ViewContainerRef;
 }
