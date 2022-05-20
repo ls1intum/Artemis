@@ -118,13 +118,13 @@ public interface VersionControlService {
      *
      * @param sourceProjectKey     The key of the template project (normally based on the course and exercise short name)
      * @param sourceRepositoryName The name of the repository which should be copied
-     * @param sourceDefaultBranch  The default branch of the source repository
+     * @param sourceBranch  The default branch of the source repository
      * @param targetProjectKey     The key of the target project to which to copy the new plan to
      * @param targetRepositoryName The desired name of the target repository
      * @return The URL for cloning the repository
      * @throws VersionControlException if the repository could not be copied on the VCS server (e.g. because the source repo does not exist)
      */
-    VcsRepositoryUrl copyRepository(String sourceProjectKey, String sourceRepositoryName, String sourceDefaultBranch, String targetProjectKey, String targetRepositoryName)
+    VcsRepositoryUrl copyRepository(String sourceProjectKey, String sourceRepositoryName, String sourceBranch, String targetProjectKey, String targetRepositoryName)
             throws VersionControlException;
 
     /**

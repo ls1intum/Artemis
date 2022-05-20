@@ -190,11 +190,11 @@ public interface ContinuousIntegrationService {
      * @param repoProjectKey                    The key of the project that contains the repository, e.g. 'EIST16W1', which is normally the programming exercise project key.
      * @param newRepoUrl                        The url of the newly to be referenced repository.
      * @param existingRepoUrl                   The url of the existing repository (which should be replaced).
-     * @param newDefaultBranch                  The default branch for the new repository
+     * @param newBranch                         The default branch for the new repository
      * @param optionalTriggeredByRepositories   Optional list of repositories that should trigger the new build plan. If empty, no triggers get overwritten.
      */
-    void updatePlanRepository(String buildProjectKey, String buildPlanKey, String ciRepoName, String repoProjectKey, String newRepoUrl, String existingRepoUrl,
-            String newDefaultBranch, Optional<List<String>> optionalTriggeredByRepositories);
+    void updatePlanRepository(String buildProjectKey, String buildPlanKey, String ciRepoName, String repoProjectKey, String newRepoUrl, String existingRepoUrl, String newBranch,
+            Optional<List<String>> optionalTriggeredByRepositories);
 
     /**
      * Gives overall roles permissions for the defined project. A role can e.g. be all logged in users

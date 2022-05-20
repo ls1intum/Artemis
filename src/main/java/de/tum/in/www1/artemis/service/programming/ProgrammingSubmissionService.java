@@ -144,8 +144,8 @@ public class ProgrammingSubmissionService extends SubmissionService {
             throw new IllegalArgumentException(ex);
         }
 
-        String defaultBranch = versionControlService.get().getOrRetrieveBranchOfParticipation(programmingExerciseParticipation);
-        if (commit.getBranch() != null && !commit.getBranch().equalsIgnoreCase(defaultBranch)) {
+        String branch = versionControlService.get().getOrRetrieveBranchOfParticipation(programmingExerciseParticipation);
+        if (commit.getBranch() != null && !commit.getBranch().equalsIgnoreCase(branch)) {
             // if the commit was made in a branch different than the default, ignore this
             throw new IllegalStateException(
                     "Submission for participation id " + participationId + " in branch " + commit.getBranch() + " will be ignored! Only the default branch is considered");

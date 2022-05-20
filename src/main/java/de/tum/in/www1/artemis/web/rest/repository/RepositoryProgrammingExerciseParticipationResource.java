@@ -159,7 +159,7 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
     }
 
     @Override
-    String getOrRetrieveDefaultBranchOfDomainObject(Long participationID) {
+    String getOrRetrieveBranchOfDomainObject(Long participationID) {
         Participation participation = participationRepository.findByIdElseThrow(participationID);
         if (!(participation instanceof ProgrammingExerciseStudentParticipation studentParticipation)) {
             throw new IllegalArgumentException();

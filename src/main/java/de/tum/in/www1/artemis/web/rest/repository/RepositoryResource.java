@@ -107,7 +107,7 @@ public abstract class RepositoryResource {
      * @param domainID the id of the domain object
      * @return the name of the default branch of that domain object
      */
-    abstract String getOrRetrieveDefaultBranchOfDomainObject(Long domainID);
+    abstract String getOrRetrieveBranchOfDomainObject(Long domainID);
 
     /**
      * Get a map of files for the given domainId.
@@ -291,7 +291,7 @@ public abstract class RepositoryResource {
                 isClean = repositoryService.isClean(repositoryUrl);
             }
             else {
-                String branch = getOrRetrieveDefaultBranchOfDomainObject(domainId);
+                String branch = getOrRetrieveBranchOfDomainObject(domainId);
                 isClean = repositoryService.isClean(repositoryUrl, branch);
             }
             repositoryStatus.setRepositoryStatus(isClean ? RepositoryStatusDTOType.CLEAN : RepositoryStatusDTOType.UNCOMMITTED_CHANGES);
