@@ -4,10 +4,10 @@ import { HttpHeaders, HttpResponse } from '@angular/common/http';
 import { ActivatedRoute } from '@angular/router';
 
 import { ExerciseHintComponent } from 'app/exercises/shared/exercise-hint/manage/exercise-hint.component';
-import { ArtemisTestModule } from '../../test.module';
+import { ArtemisTestModule } from '../../../test.module';
 import { ExerciseHint } from 'app/entities/hestia/exercise-hint.model';
 import { ExerciseHintService } from 'app/exercises/shared/exercise-hint/shared/exercise-hint.service';
-import { MockActivatedRoute } from '../../helpers/mocks/activated-route/mock-activated-route';
+import { MockActivatedRoute } from '../../../helpers/mocks/activated-route/mock-activated-route';
 
 describe('ExerciseHint Management Component', () => {
     let comp: ExerciseHintComponent;
@@ -28,13 +28,17 @@ describe('ExerciseHint Management Component', () => {
             });
     });
 
+    afterEach(() => {
+        jest.restoreAllMocks();
+    });
+
     it('Should call load all on init with exerciseId from route', () => {
         // GIVEN
         const headers = new HttpHeaders().append('link', 'link;link');
         const hint = new ExerciseHint();
         hint.id = 123;
 
-        jest.spyOn(service, 'findByExerciseIdWithRelations').mockReturnValue(
+        jest.spyOn(service, 'findByExerciseId').mockReturnValue(
             of(
                 new HttpResponse({
                     body: [hint],
