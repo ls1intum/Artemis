@@ -130,7 +130,8 @@
                 "includeStandardCategories": "Verberge Artemis Standard-Kategorien:",
                 "includeIndividualCategories": "Zeige kurs-spezifische Kategorien:",
                 "includeAllCategories": "Wähle alle Optionen",
-                "exercisesWithNoCategories": "Aufgaben ohne Kategorien"
+                "exercisesWithNoCategories": "Aufgaben ohne Kategorien",
+                "pointsPerExercise": "Punkte pro Aufgabe"
             },
             "lectureList": {
                 "lectureGroupHeader": "Vorlesungen: {{ total }}",

@@ -239,4 +239,22 @@ describe('ProgrammingExercise Management Detail Component', () => {
             message: 'artemisApp.programmingExercise.createStructuralSolutionEntriesSuccess',
         });
     });
+
+    it('Should create behavioral solution entries', () => {
+        const programmingExercise = new ProgrammingExercise(new Course(), undefined);
+        programmingExercise.id = 123;
+        comp.programmingExercise = programmingExercise;
+
+        jest.spyOn(exerciseService, 'createBehavioralSolutionEntries').mockReturnValue(of([] as ProgrammingExerciseSolutionEntry[]));
+        jest.spyOn(alertService, 'addAlert');
+
+        comp.createBehavioralSolutionEntries();
+
+        expect(exerciseService.createBehavioralSolutionEntries).toHaveBeenCalledTimes(1);
+        expect(alertService.addAlert).toHaveBeenCalledTimes(1);
+        expect(alertService.addAlert).toHaveBeenCalledWith({
+            type: AlertType.SUCCESS,
+            message: 'artemisApp.programmingExercise.createBehavioralSolutionEntriesSuccess',
+        });
+    });
 });

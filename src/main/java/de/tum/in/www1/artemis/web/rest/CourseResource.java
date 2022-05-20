@@ -158,7 +158,7 @@ public class CourseResource {
         course.validateShortName();
 
         List<Course> coursesWithSameShortName = courseRepository.findAllByShortName(course.getShortName());
-        if (coursesWithSameShortName.size() > 0) {
+        if (!coursesWithSameShortName.isEmpty()) {
             return ResponseEntity.badRequest().headers(
                     HeaderUtil.createAlert(applicationName, "A course with the same short name already exists. Please choose a different short name.", "shortnameAlreadyExists"))
                     .body(null);
@@ -196,7 +196,7 @@ public class CourseResource {
             }
         }
 
-        var existingCourse = courseRepository.findByIdElseThrow(updatedCourse.getId());
+        var existingCourse = courseRepository.findByIdWithOrganizationsAndLearningGoalsElseThrow(updatedCourse.getId());
         if (!Objects.equals(existingCourse.getShortName(), updatedCourse.getShortName())) {
             throw new BadRequestAlertException("The course short name cannot be changed", Course.ENTITY_NAME, "shortNameCannotChange", true);
         }
@@ -242,6 +242,12 @@ public class CourseResource {
             if (!Objects.equals(existingCourse.getInstructorGroupName(), updatedCourse.getInstructorGroupName())) {
                 throw new BadRequestAlertException("The instructor group name cannot be changed", Course.ENTITY_NAME, "instructorGroupNameCannotChange", true);
             }
+        }
+
+        // Make sure to preserve associations in updated entity
+        updatedCourse.setPrerequisites(existingCourse.getPrerequisites());
+        if (updatedCourse.getOrganizations().isEmpty()) {
+            updatedCourse.setOrganizations(existingCourse.getOrganizations());
         }
 
         updatedCourse.validateRegistrationConfirmationMessage();
@@ -296,7 +302,7 @@ public class CourseResource {
             return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, false, Course.ENTITY_NAME, "registrationDisabled",
                     "The course does not allow registration. Cannot register user")).body(null);
         }
-        if (course.getOrganizations() != null && course.getOrganizations().size() > 0 && !courseRepository.checkIfUserIsMemberOfCourseOrganizations(user, course)) {
+        if (course.getOrganizations() != null && !course.getOrganizations().isEmpty() && !courseRepository.checkIfUserIsMemberOfCourseOrganizations(user, course)) {
             return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, false, Course.ENTITY_NAME, "registrationNotAllowed",
                     "User is not member of any organization of this course. Cannot register user")).body(null);
         }
@@ -391,7 +397,7 @@ public class CourseResource {
         List<Course> registrableCourses = allCoursesToRegister.stream().filter(course -> {
             // further, check if the course has been assigned to any organization and if yes,
             // check if user is member of at least one of them
-            if (course.getOrganizations() != null && course.getOrganizations().size() > 0) {
+            if (course.getOrganizations() != null && !course.getOrganizations().isEmpty()) {
                 return courseRepository.checkIfUserIsMemberOfCourseOrganizations(user, course);
             }
             else {
@@ -698,7 +704,7 @@ public class CourseResource {
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> deleteCourse(@PathVariable long courseId) {
         log.info("REST request to delete Course : {}", courseId);
-        Course course = courseRepository.findWithEagerExercisesAndLecturesAndLectureUnitsAndLearningGoalsById(courseId);
+        Course course = courseRepository.findByIdWithExercisesAndLecturesAndLectureUnitsAndLearningGoalsElseThrow(courseId);
         if (course == null) {
             throw new EntityNotFoundException("Course", courseId);
         }

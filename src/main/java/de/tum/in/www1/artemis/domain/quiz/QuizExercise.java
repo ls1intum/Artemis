@@ -191,7 +191,7 @@ public class QuizExercise extends Exercise {
     @JsonIgnore
     public Boolean isValid() {
         // check title
-        if (getTitle() == null || getTitle().equals("")) {
+        if (getTitle() == null || getTitle().isEmpty()) {
             return false;
         }
 

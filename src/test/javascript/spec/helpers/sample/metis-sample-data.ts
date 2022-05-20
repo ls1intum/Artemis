@@ -6,6 +6,7 @@ import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { Lecture } from 'app/entities/lecture.model';
 import { Post } from 'app/entities/metis/post.model';
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
+import dayjs from 'dayjs/esm';
 import { ConversationParticipant } from 'app/entities/metis/conversation/conversation-details.model';
 import { Conversation } from 'app/entities/metis/conversation/conversation.model';
 
@@ -144,6 +145,46 @@ export const metisPostLectureUser2 = {
 
 metisResolvingAnswerPostUser1.post = metisPostLectureUser2;
 
+export const metisLecturePosts = [metisPostLectureUser1, metisPostLectureUser2];
+
+export const metisCoursePosts = metisCoursePostsWithCourseWideContext.concat(metisExercisePosts, metisLecturePosts);
+
+export const metisPostToCreateUser1 = {
+    author: metisUser1,
+    content: 'metisAnswerToCreateUser1',
+    creationDate: undefined,
+} as Post;
+
+export const unApprovedAnswerPost1 = {
+    id: 1,
+    creationDate: dayjs(),
+    content: 'not approved most recent',
+    resolvesPost: false,
+} as AnswerPost;
+
+export const unApprovedAnswerPost2 = {
+    id: 2,
+    creationDate: dayjs().subtract(1, 'day'),
+    content: 'not approved',
+    resolvesPost: false,
+} as AnswerPost;
+
+export const approvedAnswerPost = {
+    id: 2,
+    creationDate: undefined,
+    content: 'approved',
+    resolvesPost: true,
+} as AnswerPost;
+
+export const sortedAnswerArray: AnswerPost[] = [approvedAnswerPost, unApprovedAnswerPost2, unApprovedAnswerPost1];
+
+export const unsortedAnswerArray: AnswerPost[] = [unApprovedAnswerPost1, unApprovedAnswerPost2, approvedAnswerPost];
+export const post = {
+    id: 1,
+    creationDate: undefined,
+    answers: unsortedAnswerArray,
+} as Post;
+
 const conversationParticipantUser1 = { id: 1, user: metisUser1 } as ConversationParticipant;
 
 const conversationParticipantUser2 = { id: 2, user: metisUser2 } as ConversationParticipant;
@@ -184,17 +225,7 @@ export const conversationsOfUser1 = [conversationBetweenUser1User2];
 
 export const conversationsOfUser2 = [conversationBetweenUser1User2, conversationBetweenUser2AndTutor];
 
-export const metisLecturePosts = [metisPostLectureUser1, metisPostLectureUser2];
-
-export const metisCoursePosts = metisCoursePostsWithCourseWideContext.concat(metisExercisePosts, metisLecturePosts);
-
 export const messagesBetweenUser1User2 = [directMessageUser1, directMessageUser2];
-
-export const metisPostToCreateUser1 = {
-    author: metisUser1,
-    content: 'metisAnswerToCreateUser1',
-    creationDate: undefined,
-} as Post;
 
 export const conversationParticipantToCreateUser2 = {
     user: metisUser2,

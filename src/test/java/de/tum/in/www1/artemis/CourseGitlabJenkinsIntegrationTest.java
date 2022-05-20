@@ -164,6 +164,12 @@ public class CourseGitlabJenkinsIntegrationTest extends AbstractSpringIntegratio
     }
 
     @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testEditCourseShouldPreserveAssociations() throws Exception {
+        courseTestService.testEditCourseShouldPreserveAssociations();
+    }
+
+    @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     public void testUpdateCourseGroups() throws Exception {
         courseTestService.testUpdateCourseGroups();

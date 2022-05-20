@@ -499,7 +499,8 @@ public class TextExerciseResource {
         TextPlagiarismResult result = textPlagiarismDetectionService.checkPlagiarism(textExercise, similarityThreshold, minimumScore, minimumSize);
         log.info("Finished textPlagiarismDetectionService.checkPlagiarism for exercise {} with {} comparisons in {}", exerciseId, result.getComparisons().size(),
                 TimeLogUtil.formatDurationFrom(start));
-        result.sortAndLimit(500);
+        // TODO: limit the amount temporarily because of database issues
+        result.sortAndLimit(100);
         log.info("Limited number of comparisons to {} to avoid performance issues when saving to database", result.getComparisons().size());
         start = System.nanoTime();
         plagiarismResultRepository.savePlagiarismResultAndRemovePrevious(result);

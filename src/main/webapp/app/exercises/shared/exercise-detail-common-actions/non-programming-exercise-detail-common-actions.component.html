@@ -2,7 +2,8 @@
     <div>
         <!-- Edit -->
         <a *ngIf="exercise.isAtLeastEditor" [routerLink]="baseResource + 'edit'" class="btn btn-warning btn-sm me-1" style="margin-bottom: 10px">
-            <fa-icon [icon]="faWrench"></fa-icon>&nbsp;<span jhiTranslate="entity.action.edit"> Edit</span>
+            <fa-icon [icon]="faWrench"></fa-icon>
+            <span class="d-none d-md-inline" jhiTranslate="entity.action.edit"> Edit</span>
         </a>
 
         <!-- Participations  -->
@@ -31,7 +32,8 @@
 
         <!--Statistics -->
         <a *ngIf="exercise.isAtLeastTutor && course" [routerLink]="baseResource + 'exercise-statistics'" class="btn btn-info btn-sm me-1" style="margin-bottom: 10px">
-            <fa-icon [icon]="faChartBar"></fa-icon>&nbsp;<span jhiTranslate="statistics.statistics-title">Statistics</span>
+            <fa-icon [icon]="faChartBar"></fa-icon>
+            <span class="d-none d-md-inline" jhiTranslate="statistics.statistics-title">Statistics</span>
         </a>
 
         <!--Submissions -->
@@ -87,15 +89,16 @@
         </button>
     </div>
 
-    <div style="margin-bottom: 10px">
+    <div class="mb-1">
         <!-- import external submissions -->
-        <span style="margin-right: 5px">
-            <jhi-external-submission *ngIf="exercise.isAtLeastInstructor" [exercise]="exercise"></jhi-external-submission>
-        </span>
+        <jhi-external-submission *ngIf="exercise.isAtLeastInstructor" class="d-inline-block me-1 mb-1" [exercise]="exercise"></jhi-external-submission>
 
         <!-- Export submissions -->
-        <span style="margin-right: 5px">
-            <jhi-exercise-submission-export *ngIf="exercise.isAtLeastInstructor" [exerciseId]="exercise.id!" [exerciseType]="exercise.type!"> </jhi-exercise-submission-export>
-        </span>
+        <jhi-exercise-submission-export
+            *ngIf="exercise.isAtLeastInstructor"
+            class="d-inline-block mb-1"
+            [exerciseId]="exercise.id!"
+            [exerciseType]="exercise.type!"
+        ></jhi-exercise-submission-export>
     </div>
 </ng-container>
