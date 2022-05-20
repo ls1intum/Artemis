@@ -19,7 +19,7 @@ export class MockExerciseHintService implements IExerciseHintService {
         return of({ body: this.exerciseHintDummy }) as Observable<ExerciseHintResponse>;
     }
 
-    findByExerciseIdWithRelations(exerciseId: number): Observable<HttpResponse<ExerciseHint[]>> {
+    findByExerciseId(exerciseId: number): Observable<HttpResponse<ExerciseHint[]>> {
         return of({ body: [this.exerciseHintDummy, this.exerciseHintDummy2] }) as Observable<HttpResponse<ExerciseHint[]>>;
     }
 

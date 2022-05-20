@@ -39,8 +39,7 @@ public class CodeHint extends ExerciseHint {
 
     @Override
     public void removeContent() {
-        setContent(null);
-        setTitle(null);
+        super.removeContent();
         setSolutionEntries(new HashSet<>());
     }
 

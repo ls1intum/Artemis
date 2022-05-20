@@ -135,7 +135,7 @@ export class CodeEditorStudentContainerComponent implements OnInit, OnDestroy {
      */
     private loadExerciseHints() {
         if (!this.exercise.exerciseHints) {
-            return this.exerciseHintService.findByExerciseIdWithRelations(this.exercise.id!).pipe(map(({ body }) => body || []));
+            return this.exerciseHintService.findByExerciseId(this.exercise.id!).pipe(map(({ body }) => body || []));
         }
         return of(this.exercise.exerciseHints);
     }

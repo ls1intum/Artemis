@@ -379,7 +379,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
                 this.mergeResultsAndSubmissionsForParticipations();
 
                 if (ExerciseType.PROGRAMMING === this.exercise?.type) {
-                    this.exerciseHintService.findByExerciseIdWithRelations(this.exerciseId).subscribe((res?: HttpResponse<ExerciseHint[]>) => {
+                    this.exerciseHintService.findByExerciseId(this.exerciseId).subscribe((res?: HttpResponse<ExerciseHint[]>) => {
                         this.availableExerciseHints = res!.body!;
                     });
                 }

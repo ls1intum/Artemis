@@ -171,7 +171,7 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
             return of([]);
         }
 
-        return this.exerciseHintService.findByExerciseIdWithRelations(exerciseId).pipe(
+        return this.exerciseHintService.findByExerciseId(exerciseId).pipe(
             map(({ body }) => body),
             catchError(() => of([])),
         );

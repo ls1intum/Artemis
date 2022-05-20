@@ -90,7 +90,7 @@ public class CodeHintResource {
         ProgrammingExercise exercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, exercise, null);
 
-        var codeHint = codeHintRepository.findByIdWithTaskAndSolutionEntriesElseThrow(codeHintId);
+        var codeHint = codeHintRepository.findByIdWithSolutionEntriesElseThrow(codeHintId);
         if (!Objects.equals(codeHint.getExercise().getId(), exercise.getId())) {
             throw new ConflictException("The code hint does not belong to the exercise", "CodeHint", "codeHintExerciseConflict");
         }

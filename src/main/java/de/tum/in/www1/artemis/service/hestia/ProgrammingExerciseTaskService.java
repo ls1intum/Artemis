@@ -10,17 +10,17 @@ import org.springframework.stereotype.Service;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseTask;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseTestCaseRepository;
-import de.tum.in.www1.artemis.repository.hestia.CodeHintRepository;
+import de.tum.in.www1.artemis.repository.hestia.ExerciseHintRepository;
 import de.tum.in.www1.artemis.repository.hestia.ProgrammingExerciseTaskRepository;
 
 @Service
 public class ProgrammingExerciseTaskService {
 
-    private ProgrammingExerciseTaskRepository programmingExerciseTaskRepository;
+    private final ProgrammingExerciseTaskRepository programmingExerciseTaskRepository;
 
-    private ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository;
+    private final ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository;
 
-    private CodeHintRepository codeHintRepository;
+    private final ExerciseHintRepository exerciseHintRepository;
 
     /**
      * Pattern that is used to extract the tasks (capturing group "name") and test case names (capturing group "tests") from the problem statement.
@@ -31,10 +31,10 @@ public class ProgrammingExerciseTaskService {
     private final Pattern taskPatternForProblemStatementMarkdown = Pattern.compile("\\[task]\\[(?<name>[^\\[\\]]+)]\\((?<tests>.*)\\)");
 
     public ProgrammingExerciseTaskService(ProgrammingExerciseTaskRepository programmingExerciseTaskRepository,
-            ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository, CodeHintRepository codeHintRepository) {
+            ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository, ExerciseHintRepository exerciseHintRepository) {
         this.programmingExerciseTaskRepository = programmingExerciseTaskRepository;
         this.programmingExerciseTestCaseRepository = programmingExerciseTestCaseRepository;
-        this.codeHintRepository = codeHintRepository;
+        this.exerciseHintRepository = exerciseHintRepository;
     }
 
     /**
@@ -44,8 +44,8 @@ public class ProgrammingExerciseTaskService {
      * @param task The task to delete
      */
     public void delete(ProgrammingExerciseTask task) {
-        var codeHints = codeHintRepository.findByTaskId(task.getId());
-        codeHintRepository.deleteAll(codeHints);
+        var exerciseHints = exerciseHintRepository.findByTaskId(task.getId());
+        exerciseHintRepository.deleteAll(exerciseHints);
         programmingExerciseTaskRepository.delete(task);
     }
 

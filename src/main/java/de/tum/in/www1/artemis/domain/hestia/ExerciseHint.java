@@ -32,6 +32,10 @@ public class ExerciseHint extends DomainObject {
     @Column(name = "title")
     private String title;
 
+    // A short description of this hint, so the student knows what this hint is about before activating it
+    @Column(name = "description", length = 1000)
+    private String description;
+
     @Column(name = "content")
     private String content;
 
