@@ -67,6 +67,7 @@ public class ExerciseHintService {
             }
 
             copiedHint.setExercise(target);
+            copiedHint.setDescription(hint.getDescription());
             copiedHint.setContent(hint.getContent());
             copiedHint.setTitle(hint.getTitle());
             exerciseHintRepository.save(copiedHint);
@@ -74,14 +75,6 @@ public class ExerciseHintService {
             return copiedHint;
         }).collect(Collectors.toSet()));
 
-        String patchedStatement = target.getProblemStatement();
-        for (final var idMapping : hintIdMapping.entrySet()) {
-            // Replace any old hint ID in the imported statement with the new hint ID
-            // $1 --> everything before the old hint ID; $3 --> Everything after the old hint ID --> $1 newHintID $3
-            final var replacement = "$1" + idMapping.getValue() + "$3";
-            patchedStatement = patchedStatement.replaceAll("(\\{[^}]*)(" + idMapping.getKey() + ")([^}]*})", replacement);
-        }
-        target.setProblemStatement(patchedStatement);
         return hintIdMapping;
     }
 
