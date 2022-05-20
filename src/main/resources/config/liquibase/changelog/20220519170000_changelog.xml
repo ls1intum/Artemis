@@ -19,6 +19,7 @@
             <column name="activation_date" type="DATETIME">
                 <constraints nullable="false"/>
             </column>
+            <column name="rating" type="TINYINT"/>
         </createTable>
         <addForeignKeyConstraint baseTableName="user_exercise_hint_activation"
                                  baseColumnNames="user_id"

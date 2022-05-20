@@ -29,6 +29,9 @@ public class UserExerciseHintActivation extends DomainObject {
     @Column(name = "activation_date", nullable = false)
     private ZonedDateTime activationDate;
 
+    @Column(name = "rating")
+    private Integer rating;
+
     public User getUser() {
         return user;
     }
@@ -51,5 +54,13 @@ public class UserExerciseHintActivation extends DomainObject {
 
     public void setActivationDate(ZonedDateTime activationDate) {
         this.activationDate = activationDate;
+    }
+
+    public Integer getRating() {
+        return rating;
+    }
+
+    public void setRating(Integer rating) {
+        this.rating = rating;
     }
 }

@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import de.tum.in.www1.artemis.domain.hestia.UserExerciseHintActivation;
+import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 public interface UserExerciseHintActivationRepository extends JpaRepository<UserExerciseHintActivation, Long> {
 
@@ -24,4 +25,9 @@ public interface UserExerciseHintActivationRepository extends JpaRepository<User
             AND ueha.user.id = :userId
             """)
     Optional<UserExerciseHintActivation> findByExerciseHintAndUser(@Param("exerciseHintId") long exerciseHintId, @Param("userId") long userId);
+
+    default UserExerciseHintActivation findByExerciseHintAndUserElseThrow(long exerciseHintId, long userId) {
+        var optionalReport = findByExerciseHintAndUser(exerciseHintId, userId);
+        return optionalReport.orElseThrow(() -> new EntityNotFoundException("UserExerciseHintActivation", exerciseHintId + "-" + userId));
+    }
 }

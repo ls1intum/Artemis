@@ -19,6 +19,7 @@ import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.hestia.ExerciseHintRepository;
+import de.tum.in.www1.artemis.repository.hestia.UserExerciseHintActivationRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.hestia.CodeHintService;
@@ -47,6 +48,8 @@ public class ExerciseHintResource {
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
+    private final UserExerciseHintActivationRepository userExerciseHintActivationRepository;
+
     private final AuthorizationCheckService authCheckService;
 
     private final ExerciseRepository exerciseRepository;
@@ -59,10 +62,12 @@ public class ExerciseHintResource {
     private String applicationName;
 
     public ExerciseHintResource(ExerciseHintService exerciseHintService, ExerciseHintRepository exerciseHintRepository, ProgrammingExerciseRepository programmingExerciseRepository,
-            AuthorizationCheckService authCheckService, ExerciseRepository exerciseRepository, CodeHintService codeHintService, UserRepository userRepository) {
+            UserExerciseHintActivationRepository userExerciseHintActivationRepository, AuthorizationCheckService authCheckService, ExerciseRepository exerciseRepository,
+            CodeHintService codeHintService, UserRepository userRepository) {
         this.exerciseHintService = exerciseHintService;
         this.exerciseHintRepository = exerciseHintRepository;
         this.programmingExerciseRepository = programmingExerciseRepository;
+        this.userExerciseHintActivationRepository = userExerciseHintActivationRepository;
         this.authCheckService = authCheckService;
         this.exerciseRepository = exerciseRepository;
         this.codeHintService = codeHintService;
@@ -271,13 +276,13 @@ public class ExerciseHintResource {
      * {@code POST programming-exercises/:exerciseId/exercise-hints/:exerciseHintId/activate}
      * Activates a single exercise hint of an exercise for the logged-in user
      *
-     * @param exerciseHintId The if of the exercise hint to activate
-     * @param exerciseId The id of the exercise of which to activate the exercise hint
+     * @param exerciseId     The id of the exercise of which to activate the exercise hint
+     * @param exerciseHintId The id of the exercise hint to activate
      * @return The {@link ResponseEntity} with status {@code 200 (OK)} and with body the activated exercise hint with content
      * or with status {@code 400 (BAD_REQUEST)} if the hint could not be activated
      */
     @PostMapping("programming-exercises/{exerciseId}/exercise-hints/{exerciseHintId}/activate")
-    public ResponseEntity<ExerciseHint> activateExerciseHint(@PathVariable Long exerciseHintId, @PathVariable Long exerciseId) {
+    public ResponseEntity<ExerciseHint> activateExerciseHint(@PathVariable Long exerciseId, @PathVariable Long exerciseHintId) {
         log.debug("REST request to activate ExerciseHint : {}", exerciseHintId);
         var exercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
         var user = userRepository.getUserWithGroupsAndAuthorities();
@@ -294,6 +299,31 @@ public class ExerciseHintResource {
         else {
             throw new BadRequestAlertException("Unable to activate exercise hint", EXERCISE_HINT_ENTITY_NAME, "exerciseHintIdActivationFailed");
         }
+    }
+
+    /**
+     * {@code POST programming-exercises/:exerciseId/exercise-hints/:exerciseHintId/rating/:ratingValue}: Rates an exercise hint
+     *
+     * @param exerciseId     The id of the exercise of which to activate the exercise hint
+     * @param exerciseHintId The id of the exercise hint to activate
+     * @param ratingValue    The value of the rating
+     * @return The {@link ResponseEntity} with status {@code 200 (OK)}
+     */
+    @PostMapping("programming-exercises/{exerciseId}/exercise-hints/{exerciseHintId}/rating/{ratingValue}")
+    public ResponseEntity<Void> rateExerciseHint(@PathVariable Long exerciseId, @PathVariable Long exerciseHintId, @PathVariable Integer ratingValue) {
+        log.debug("REST request to rate ExerciseHint : {}", exerciseHintId);
+        var exercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
+        var user = userRepository.getUserWithGroupsAndAuthorities();
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.STUDENT, exercise, user);
+
+        var exerciseHint = exerciseHintRepository.findByIdWithRelationsElseThrow(exerciseHintId);
+        if (!exerciseHint.getExercise().getId().equals(exercise.getId())) {
+            throw new ConflictException("An exercise hint can only be deleted if the exerciseIds match.", EXERCISE_HINT_ENTITY_NAME, "exerciseIdsMismatch");
+        }
+
+        exerciseHintService.rateExerciseHint(exerciseHint, user, ratingValue);
+
+        return ResponseEntity.ok().build();
     }
 
     /**

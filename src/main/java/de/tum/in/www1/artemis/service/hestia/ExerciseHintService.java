@@ -18,6 +18,7 @@ import de.tum.in.www1.artemis.repository.hestia.ProgrammingExerciseTaskRepositor
 import de.tum.in.www1.artemis.repository.hestia.UserExerciseHintActivationRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
+import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.InternalServerErrorException;
 
 @Service
@@ -83,6 +84,23 @@ public class ExerciseHintService {
         }
         target.setProblemStatement(patchedStatement);
         return hintIdMapping;
+    }
+
+    /**
+     * Sets the rating of an exercise hint for a user
+     * The rating is saved in the associated UserExerciseHintActivation.
+     *
+     * @param exerciseHint The exercise hint to rate
+     * @param user         The user that submits the rating
+     * @param ratingValue  The value of the rating
+     */
+    public void rateExerciseHint(ExerciseHint exerciseHint, User user, Integer ratingValue) {
+        if (ratingValue < 1 || ratingValue > 5) {
+            throw new BadRequestAlertException("rating has to be between 1 and 5", "exerciseHint", "ratingValue.invalid", false);
+        }
+        var userExerciseHintActivation = userExerciseHintActivationRepository.findByExerciseHintAndUserElseThrow(exerciseHint.getId(), user.getId());
+        userExerciseHintActivation.setRating(ratingValue);
+        userExerciseHintActivationRepository.save(userExerciseHintActivation);
     }
 
     /**

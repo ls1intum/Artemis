@@ -68,6 +68,14 @@ export interface IExerciseHintService {
      * @param exerciseHintId Id of the exercise hint
      */
     activateExerciseHint(exerciseId: number, exerciseHintId: number): Observable<ExerciseHintResponse>;
+
+    /**
+     * Activates an exercise hint for the current user
+     * @param exerciseId Id of the exercise
+     * @param exerciseHintId Id of the exercise hint
+     * @param ratingValue Value of the rating
+     */
+    rateExerciseHint(exerciseId: number, exerciseHintId: number, ratingValue: number): Observable<HttpResponse<void>>;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -161,5 +169,15 @@ export class ExerciseHintService implements IExerciseHintService {
      */
     activateExerciseHint(exerciseId: number, exerciseHintId: number): Observable<ExerciseHintResponse> {
         return this.http.post<ExerciseHint>(`${this.resourceUrl}/${exerciseId}/exercise-hints/${exerciseHintId}/activate`, {}, { observe: 'response' });
+    }
+
+    /**
+     * Activates an exercise hint for the current user
+     * @param exerciseId Id of the exercise
+     * @param exerciseHintId Id of the exercise hint
+     * @param ratingValue Value of the rating
+     */
+    rateExerciseHint(exerciseId: number, exerciseHintId: number, ratingValue: number): Observable<HttpResponse<void>> {
+        return this.http.post<void>(`${this.resourceUrl}/${exerciseId}/exercise-hints/${exerciseHintId}/rating/${ratingValue}`, {}, { observe: 'response' });
     }
 }
