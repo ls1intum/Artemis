@@ -1,20 +1,9 @@
 import { ElementRef } from '@angular/core';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
-import ace from 'brace';
+import { acequire, Range } from 'brace';
 
 // Work around to update the range
-const Range = ace.acequire('ace/range').Range;
-
-// Required to access end and start
-class RangeContainer {
-    end: Position;
-    start: Position;
-}
-
-class Position {
-    row: number;
-    column: number;
-}
+const RangeCtor = acequire('ace/range').Range as typeof Range;
 
 /**
  * abstract class for all commands - default and domain commands of Artemis
@@ -50,10 +39,10 @@ export abstract class Command {
         // Split text by line breaks
         const lines = text.split('\n');
 
-        const range = this.getRange() as unknown as RangeContainer;
+        const range = this.getRange();
 
         // Update the range
-        this.aceEditor.selection.setRange(new Range(range.start.row, 0, range.end.row, lines[range.end.row].length));
+        this.aceEditor.selection.setRange(new RangeCtor(range.start.row, 0, range.end.row, lines[range.end.row].length));
 
         // Return extended selection as array
         return lines.slice(range.start.row, range.end.row + 1);
