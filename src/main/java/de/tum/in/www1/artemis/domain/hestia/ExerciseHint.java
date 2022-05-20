@@ -63,6 +63,14 @@ public class ExerciseHint extends DomainObject {
         this.title = title;
     }
 
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
     public String getContent() {
         return content;
     }
