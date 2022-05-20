@@ -1516,8 +1516,8 @@ public class ProgrammingExerciseIntegrationTestService {
         final var endpoint = ProgrammingExerciseResourceEndpoints.UNLOCK_ALL_REPOSITORIES.replace("{exerciseId}", String.valueOf(programmingExercise.getId()));
         request.put(ROOT + endpoint, null, HttpStatus.OK);
 
-        verify(versionControlService, times(1)).configureRepository(programmingExercise, participation1.getVcsRepositoryUrl(), participation1.getStudents(), true);
-        verify(versionControlService, times(1)).configureRepository(programmingExercise, participation2.getVcsRepositoryUrl(), participation2.getStudents(), true);
+        verify(versionControlService, times(1)).configureRepository(programmingExercise, participation1, true);
+        verify(versionControlService, times(1)).configureRepository(programmingExercise, participation2, true);
 
         database.changeUser("instructor1");
 

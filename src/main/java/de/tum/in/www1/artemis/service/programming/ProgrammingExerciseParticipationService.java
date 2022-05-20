@@ -221,7 +221,7 @@ public class ProgrammingExerciseParticipationService {
      */
     public void unlockStudentRepository(ProgrammingExercise programmingExercise, ProgrammingExerciseStudentParticipation participation) {
         if (participation.getInitializationState().hasCompletedState(InitializationState.REPO_CONFIGURED)) {
-            versionControlService.get().configureRepository(programmingExercise, participation.getVcsRepositoryUrl(), participation.getStudents(), true);
+            versionControlService.get().configureRepository(programmingExercise, participation, true);
         }
         else {
             log.warn("Cannot unlock student repository for participation {} because the repository was not copied yet!", participation.getId());

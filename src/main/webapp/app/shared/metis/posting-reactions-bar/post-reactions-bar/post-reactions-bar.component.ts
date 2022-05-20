@@ -1,4 +1,4 @@
-import { Component, OnChanges, OnInit } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, OnInit, Output } from '@angular/core';
 import { Reaction } from 'app/entities/metis/reaction.model';
 import { Post } from 'app/entities/metis/post.model';
 import { PostingsReactionsBarDirective } from 'app/shared/metis/posting-reactions-bar/posting-reactions-bar.component';
@@ -6,6 +6,7 @@ import { DisplayPriority } from 'app/shared/metis/metis.util';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { faSmile } from '@fortawesome/free-regular-svg-icons';
 import { ThemeService } from 'app/core/theme/theme.service';
+import { AnswerPost } from 'app/entities/metis/answer-post.model';
 
 @Component({
     selector: 'jhi-post-reactions-bar',
@@ -20,6 +21,10 @@ export class PostReactionsBarComponent extends PostingsReactionsBarDirective<Pos
 
     // Icons
     farSmile = faSmile;
+    @Input() showAnswers: boolean;
+    @Input() sortedAnswerPosts: AnswerPost[];
+    @Output() showAnswersChange = new EventEmitter<boolean>();
+    @Output() openPostingCreateEditModal = new EventEmitter<void>();
 
     constructor(metisService: MetisService, themeService: ThemeService) {
         super(metisService, themeService);
