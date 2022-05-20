@@ -181,6 +181,9 @@ export class QuizExerciseDetailComponent extends QuizExerciseValidationDirective
                         this.exerciseGroup = groupResponse.body || undefined;
                         if (!quizId) {
                             this.init();
+                        } else {
+                            this.quizExercise.exerciseGroup = this.exerciseGroup;
+                            this.quizExercise.course = undefined;
                         }
                     });
                 }
@@ -234,16 +237,16 @@ export class QuizExerciseDetailComponent extends QuizExerciseValidationDirective
         this.prepareEntity(this.entity);
         // Assign savedEntity to identify local changes
         this.savedEntity = this.entity.id && !this.isImport ? cloneDeep(this.entity) : new QuizExercise(undefined, undefined);
-        if (!this.quizExercise.course && !this.isExamMode) {
+
+        if (this.isExamMode) {
+            this.quizExercise.exerciseGroup = this.exerciseGroup;
+            this.quizExercise.course = undefined;
+        } else if (this.isImport && this.course) {
+            this.quizExercise.course = this.course;
+        } else if (!this.quizExercise.course) {
             this.quizExercise.course = this.course;
         }
 
-        if (this.isImport && this.course) {
-            this.quizExercise.course = this.course;
-        }
-        if (!this.quizExercise.exerciseGroup && this.isExamMode) {
-            this.quizExercise.exerciseGroup = this.exerciseGroup;
-        }
         if (!this.isExamMode) {
             this.exerciseCategories = this.quizExercise.categories || [];
             this.courseService.findAllCategoriesOfCourse(this.quizExercise.course!.id!).subscribe({

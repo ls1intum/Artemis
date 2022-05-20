@@ -4,10 +4,11 @@
             "home": {
                 "title": "Quiz Exercises",
                 "createLabel": "Create Quiz",
-                "createModelDragAndDrop": "Create Drag and Drop Model Quiz",
-                "createOrEditLabel": "Create or edit a Quiz Exercise",
+                "editLabel": "Edit Quiz",
                 "importLabel": "Import a Quiz",
-                "exportLabel": "Export Quiz Exercises"
+                "exportLabel": "Export Quiz Exercises",
+                "createModelDragAndDrop": "Create Drag and Drop Model Quiz",
+                "createOrEditLabel": "Create or edit a Quiz Exercise"
             },
             "created": "Created new Quiz Exercise with identifier {{ param }}",
             "updated": "Updated Quiz Exercise with identifier {{ param }}",
@@ -33,13 +34,6 @@
                 "testRunSubmissionsExist": "This quiz contains submissions in one of the test runs for this exam. Delete the test run to edit the answer options."
             },
             "saveError": "An error occurred while saving. Please review your input data and try again later.",
-            "new": {
-                "title": "New Quiz Exercise for {{ param }}"
-            },
-            "import": {
-                "title": "Import Quiz Exercise for {{ param }}"
-            },
-
             "export": {
                 "title": "All quiz questions for course {{ param }}",
                 "export": "Export",
