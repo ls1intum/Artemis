@@ -13,11 +13,7 @@
         [class.negative-feedback]="singleFeedback?.credits && singleFeedback.credits! < 0"
         [class.neutral-feedback]="singleFeedback?.credits === 0 || singleFeedback?.isSubsequent"
     >
-        <strong
-            ><u
-                ><span>{{ pointTranslation(singleFeedback?.credits ?? 0) }}</span></u
-            >:</strong
-        >
+        <span class="feedback-points">{{ pointTranslation(singleFeedback?.credits ?? 0) }}:</span>
         <span [innerHTML]="buildFeedbackTextForReview(singleFeedback)"></span>
         <fa-icon
             *ngIf="singleFeedback.isSubsequent"
