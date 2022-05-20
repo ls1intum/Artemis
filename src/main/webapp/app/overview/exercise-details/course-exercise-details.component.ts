@@ -96,6 +96,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     exampleSolutionCollapsed: boolean;
     plagiarismCase?: PlagiarismCase;
     availableExerciseHints: ExerciseHint[];
+    activatedExerciseHints: ExerciseHint[];
 
     public modelingExercise?: ModelingExercise;
     public exampleSolution?: SafeHtml;
@@ -379,8 +380,15 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
                 this.mergeResultsAndSubmissionsForParticipations();
 
                 if (ExerciseType.PROGRAMMING === this.exercise?.type) {
-                    this.exerciseHintService.findByExerciseId(this.exerciseId).subscribe((res?: HttpResponse<ExerciseHint[]>) => {
-                        this.availableExerciseHints = res!.body!;
+                    this.exerciseHintService.getActivatedExerciseHints(this.exerciseId).subscribe((activatedRes?: HttpResponse<ExerciseHint[]>) => {
+                        this.activatedExerciseHints = activatedRes!.body!;
+
+                        this.exerciseHintService.getAvailableExerciseHints(this.exerciseId).subscribe((availableRes?: HttpResponse<ExerciseHint[]>) => {
+                            // filter out the activated hints from the available hints
+                            this.availableExerciseHints = availableRes!.body!.filter(
+                                (availableHint) => this.activatedExerciseHints.filter((activatedHint) => availableHint.id === activatedHint.id).length === 0,
+                            );
+                        });
                     });
                 }
             }

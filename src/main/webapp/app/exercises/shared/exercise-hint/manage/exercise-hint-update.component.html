@@ -11,6 +11,14 @@
                     <label class="form-control-label" jhiTranslate="artemisApp.exerciseHint.title" for="field_title">Title</label>
                     <input type="text" required minlength="3" class="form-control" name="title" id="field_title" [(ngModel)]="exerciseHint.title" />
                 </div>
+
+                <div class="form-group">
+                    <div>
+                        <label class="label-narrow" jhiTranslate="artemisApp.exerciseHint.description" for="field_description">Description</label>
+                        <jhi-help-icon placement="auto" text="artemisApp.exerciseHint.descriptionTooltip"></jhi-help-icon>
+                    </div>
+                    <input type="text" required minlength="3" class="form-control" name="description" id="field_description" [(ngModel)]="exerciseHint.description" />
+                </div>
                 <div class="form-group">
                     <div>
                         <label class="label-narrow" jhiTranslate="artemisApp.exerciseHint.task" for="field_task">Task</label>

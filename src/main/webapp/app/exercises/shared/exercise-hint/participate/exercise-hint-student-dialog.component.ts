@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { ExerciseHint } from 'app/entities/hestia/exercise-hint.model';
 
@@ -9,22 +9,11 @@ import { ExerciseHint } from 'app/entities/hestia/exercise-hint.model';
     selector: 'jhi-exercise-hint-student-dialog',
     templateUrl: './exercise-hint-student-dialog.component.html',
 })
-export class ExerciseHintStudentDialogComponent implements OnInit {
-    @Input() exerciseHints: ExerciseHint[];
-
-    newAvailableExerciseHints: ExerciseHint[];
-    activatedExerciseHints: ExerciseHint[];
+export class ExerciseHintStudentDialogComponent {
+    @Input() availableExerciseHints: ExerciseHint[];
+    @Input() activatedExerciseHints: ExerciseHint[];
 
     constructor(public activeModal: NgbActiveModal) {}
-
-    ngOnInit(): void {
-        this.categorizeExerciseHints();
-    }
-
-    categorizeExerciseHints() {
-        this.newAvailableExerciseHints = this.exerciseHints.filter((hint) => !hint.hasUsed);
-        this.activatedExerciseHints = this.exerciseHints.filter((hint) => hint.hasUsed);
-    }
 
     /**
      * Dismisses the modal

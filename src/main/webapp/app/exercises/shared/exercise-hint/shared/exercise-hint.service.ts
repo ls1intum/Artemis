@@ -80,7 +80,7 @@ export interface IExerciseHintService {
 
 @Injectable({ providedIn: 'root' })
 export class ExerciseHintService implements IExerciseHintService {
-    public resourceUrl = SERVER_API_URL + 'api/exercises';
+    public resourceUrl = SERVER_API_URL + 'api/programming-exercises';
 
     constructor(protected http: HttpClient) {}
 

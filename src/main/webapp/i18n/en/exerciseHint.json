@@ -20,6 +20,8 @@
             "title": "Title",
             "task": "Task",
             "taskTooltip": "It is not recommended to assign code hints to other tasks since these are specifically generated for a task.",
+            "description": "Description",
+            "descriptionTooltip": "This text is displayed to students who are shown this hint.",
             "content": "Content",
             "exercise": "Exercise",
             "exerciseHintButtonTooltip": "See available and activated hints for this exercise.",

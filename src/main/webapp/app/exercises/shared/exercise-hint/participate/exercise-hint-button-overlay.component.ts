@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, OnChanges, Input } from '@angular/core';
+import { Component, Input } from '@angular/core';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { ExerciseHint } from 'app/entities/hestia/exercise-hint.model';
 import { faCircleQuestion } from '@fortawesome/free-solid-svg-icons';
@@ -9,36 +9,22 @@ import { ExerciseHintStudentDialogComponent } from 'app/exercises/shared/exercis
     templateUrl: './exercise-hint-button-overlay.component.html',
     styleUrls: ['./exercise-hint-button-overlay.component.scss'],
 })
-export class ExerciseHintButtonOverlayComponent implements OnInit, OnChanges, OnDestroy {
+export class ExerciseHintButtonOverlayComponent {
     @Input()
-    exerciseHints: ExerciseHint[];
-
-    hasUsed = false;
+    availableExerciseHints: ExerciseHint[];
+    @Input()
+    activatedExerciseHints: ExerciseHint[];
 
     faCircleQuestion = faCircleQuestion;
     ngbModalRef?: NgbModalRef;
 
     constructor(private modalService: NgbModal) {}
 
-    ngOnInit(): void {
-        this.hasUsed = this.areNewAvailableHintsExisting();
-    }
-
-    ngOnChanges(): void {
-        this.hasUsed = this.areNewAvailableHintsExisting();
-    }
-
-    areNewAvailableHintsExisting(): boolean {
-        return this.exerciseHints?.filter((hint) => hint.hasUsed)?.length > 0 ?? false;
-    }
-
-    ngOnDestroy(): void {
-        this.exerciseHints = [];
-    }
-
     openModal() {
         this.ngbModalRef = this.modalService.open(ExerciseHintStudentDialogComponent as Component, { size: 'lg', backdrop: 'static' });
-        this.ngbModalRef.componentInstance.exerciseHints = this.exerciseHints;
+        this.ngbModalRef.componentInstance.activatedExerciseHints = this.activatedExerciseHints;
+        // do not display available hints twice if they have already been activated
+        this.ngbModalRef.componentInstance.availableExerciseHints = this.availableExerciseHints;
         this.ngbModalRef.result.then(
             () => {
                 this.ngbModalRef = undefined;

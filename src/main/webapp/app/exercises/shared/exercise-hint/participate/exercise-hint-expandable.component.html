@@ -1,17 +1,23 @@
 <mat-expansion-panel [expanded]="expanded" [disabled]="true">
-    <mat-expansion-panel-header [ngClass]="this.exerciseHint.hasUsed ? 'activated' : 'not_activated'">
+    <mat-expansion-panel-header [ngClass]="this.hasUsed ? 'activated' : 'not_activated'">
         <mat-panel-description>
             <mat-panel-title><fa-icon [icon]="faQuestionCircle" size="2x"></fa-icon></mat-panel-title>
-            <mat-panel-description>{{ exerciseHint!.title }}</mat-panel-description>
+            <mat-panel-description>
+                <div>
+                    <div>{{ exerciseHint!.description }}</div>
+                    <div class="task-name">{{ exerciseHint!.programmingExerciseTask?.taskName }}</div>
+                </div>
+            </mat-panel-description>
             <!-- styles.visibility is used to prevent resizing the panel header when the button is not visible -->
             <button
                 type="button"
-                [ngbTooltip]="this.exerciseHint.hasUsed ? '' : ('artemisApp.exerciseHint.studentDialog.activateTooltip' | artemisTranslate)"
+                class="ms-auto"
+                [ngbTooltip]="this.hasUsed ? '' : ('artemisApp.exerciseHint.studentDialog.activateTooltip' | artemisTranslate)"
                 [ngClass]="'btn btn-secondary'"
                 (click)="displayHintContent()"
                 [style.visibility]="expanded ? 'hidden' : 'initial'"
             >
-                {{ 'artemisApp.exerciseHint.studentDialog.' + (this.exerciseHint.hasUsed ? 'display' : 'activate') | artemisTranslate }}
+                {{ 'artemisApp.exerciseHint.studentDialog.' + (this.hasUsed ? 'display' : 'activate') | artemisTranslate }}
             </button>
         </mat-panel-description>
     </mat-expansion-panel-header>
@@ -31,7 +37,15 @@
         </div>
         <div class="d-flex align-items-end flex-column">
             <span [jhiTranslate]="'artemisApp.exerciseHint.studentDialog.rateHintQuestion'">How helpful was this hint?</span>
-            <star-rating checkedColor="gold" uncheckedColor="grey" size="24" [value]="0" [readOnly]="false" [totalStars]="5" (rate)="onRate($event)"></star-rating>
+            <star-rating
+                checkedColor="gold"
+                uncheckedColor="grey"
+                size="24"
+                [value]="this.exerciseHint?.currentUserRating ?? 0"
+                [readOnly]="false"
+                [totalStars]="5"
+                (rate)="onRate($event)"
+            ></star-rating>
         </div>
     </div>
 </mat-expansion-panel>

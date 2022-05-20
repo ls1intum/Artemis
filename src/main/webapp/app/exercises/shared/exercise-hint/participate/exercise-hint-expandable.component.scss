@@ -3,6 +3,19 @@
     font-weight: bold !important;
 }
 
+.mat-expansion-panel-header-title {
+    flex-grow: 0 !important;
+}
+
+.mat-expansion-panel-header-description {
+    flex-grow: 3 !important;
+}
+
+.task-name {
+    font-size: 12px;
+    font-weight: lighter;
+}
+
 .mat-expansion-panel-body {
     padding: 10px 0 0 !important;
 }

@@ -10,11 +10,10 @@ export enum HintType {
 export class ExerciseHint implements BaseEntity {
     public id?: number;
     public title?: string;
+    public description?: string;
     public content?: string;
     public exercise?: Exercise;
     public type?: HintType;
     public programmingExerciseTask?: ProgrammingExerciseTask;
-
-    // helper attributes
-    public hasUsed = false;
+    public currentUserRating?: number;
 }

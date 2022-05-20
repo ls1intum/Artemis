@@ -3,18 +3,22 @@
     <button type="button" class="btn-close" data-dismiss="modal" aria-hidden="true" (click)="clear()"></button>
 </div>
 <div class="modal-body">
-    <h2>New Available Hints</h2>
-    <div *ngFor="let hint of newAvailableExerciseHints" class="mb-3">
-        <jhi-exercise-hint-expandable [exerciseHint]="hint"></jhi-exercise-hint-expandable>
+    <div class="mb-3">
+        <h2>New Available Hints</h2>
+        <div *ngFor="let hint of availableExerciseHints" class="mb-3">
+            <jhi-exercise-hint-expandable [exerciseHint]="hint" [hasUsed]="false"></jhi-exercise-hint-expandable>
+        </div>
+        <span *ngIf="availableExerciseHints?.length === 0" [jhiTranslate]="'artemisApp.exerciseHint.studentDialog.emptyAvailableHintsDescription'" class="ms-3"
+            >New available hints will be displayed here.</span
+        >
     </div>
-    <span *ngIf="newAvailableExerciseHints?.length === 0" [jhiTranslate]="'artemisApp.exerciseHint.studentDialog.emptyAvailableHintsDescription'" class="ms-2"
-        >New available hints will be displayed here.</span
-    >
-    <h2>Already Activated Hints</h2>
-    <div *ngFor="let hint of activatedExerciseHints" class="mb-3">
-        <jhi-exercise-hint-expandable [exerciseHint]="hint"></jhi-exercise-hint-expandable>
+    <div class="mb-3">
+        <h2>Already Activated Hints</h2>
+        <div *ngFor="let hint of activatedExerciseHints" class="mb-3">
+            <jhi-exercise-hint-expandable [exerciseHint]="hint" [hasUsed]="true"></jhi-exercise-hint-expandable>
+        </div>
+        <span *ngIf="activatedExerciseHints?.length === 0" [jhiTranslate]="'artemisApp.exerciseHint.studentDialog.emptyActivatedHintsDescription'" class="ms-3"
+            >Already activated hints will be displayed here.</span
+        >
     </div>
-    <span *ngIf="activatedExerciseHints?.length === 0" [jhiTranslate]="'artemisApp.exerciseHint.studentDialog.emptyActivatedHintsDescription'" class="ms-2"
-        >Already activated hints will be displayed here.</span
-    >
 </div>

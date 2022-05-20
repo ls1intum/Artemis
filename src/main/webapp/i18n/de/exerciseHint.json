@@ -20,6 +20,8 @@
             "title": "Titel",
             "task": "Task",
             "taskTooltip": "Es wird nicht empfohlen, Code-Hinweise anderen Tasks zuzuweisen, weil die Hinweise speziell für einen Task erstellt wurden.",
+            "description": "Beschreibung",
+            "descriptionTooltip": "Dieser Text wird Studierenden angezeigt, die diesen Hint angezeigt bekommen.",
             "content": "Inhalt",
             "exercise": "Aufgabe",
             "exerciseHintButtonTooltip": "Verfügbare und aktivierte Hinweise für diese Aufgabe anzeigen.",

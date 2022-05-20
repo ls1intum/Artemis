@@ -1,4 +1,4 @@
-import { Component, Input, OnInit, ViewEncapsulation } from '@angular/core';
+import { Component, Input, ViewEncapsulation } from '@angular/core';
 import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 
 import { ExerciseHint, HintType } from 'app/entities/hestia/exercise-hint.model';
@@ -14,8 +14,9 @@ import { StarRatingComponent } from 'app/exercises/shared/rating/star-rating/sta
     styleUrls: ['./exercise-hint-expandable.component.scss'],
     encapsulation: ViewEncapsulation.None,
 })
-export class ExerciseHintExpandableComponent implements OnInit {
+export class ExerciseHintExpandableComponent {
     @Input() exerciseHint: ExerciseHint;
+    @Input() hasUsed: boolean;
 
     expanded = false;
     isLoading = false;
@@ -26,20 +27,19 @@ export class ExerciseHintExpandableComponent implements OnInit {
 
     constructor(private exerciseHintService: ExerciseHintService) {}
 
-    ngOnInit(): void {}
-
     displayHintContent() {
+        console.log(this.exerciseHint.currentUserRating);
         this.expanded = true;
 
-        if (this.exerciseHint.hasUsed) {
+        if (this.hasUsed) {
             // the hint already contains the content
             return;
         }
 
         this.isLoading = true;
-        this.exerciseHintService.find(this.exerciseHint!.exercise!.id!, this.exerciseHint!.id!).subscribe((res: ExerciseHintResponse) => {
+        this.exerciseHintService.activateExerciseHint(this.exerciseHint!.exercise!.id!, this.exerciseHint!.id!).subscribe((res: ExerciseHintResponse) => {
             this.exerciseHint = res.body!;
-            this.exerciseHint.hasUsed = true;
+            this.hasUsed = true;
             this.isLoading = false;
         });
     }
@@ -49,6 +49,8 @@ export class ExerciseHintExpandableComponent implements OnInit {
     }
 
     onRate(event: { oldValue: number; newValue: number; starRating: StarRatingComponent }) {
-        // TODO: send rating to endpoint
+        this.exerciseHintService.rateExerciseHint(this.exerciseHint!.exercise!.id!, this.exerciseHint!.id!, event.newValue).subscribe(() => {
+            this.exerciseHint.currentUserRating = event.newValue;
+        });
     }
 }
