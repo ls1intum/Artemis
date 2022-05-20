@@ -47,6 +47,9 @@ public class ExerciseHint extends DomainObject {
     @JsonIgnoreProperties("exerciseHints")
     private ProgrammingExerciseTask task;
 
+    @Transient
+    private Integer currentUserRatingTransient;
+
     public String getTitle() {
         return title;
     }
@@ -102,5 +105,13 @@ public class ExerciseHint extends DomainObject {
     @Override
     public String toString() {
         return "ExerciseHint{" + "id=" + getId() + ", title='" + getTitle() + "'" + ", content='" + getContent() + "'" + "}";
+    }
+
+    public Integer getCurrentUserRating() {
+        return currentUserRatingTransient;
+    }
+
+    public void setCurrentUserRating(Integer currentUserRating) {
+        this.currentUserRatingTransient = currentUserRating;
     }
 }

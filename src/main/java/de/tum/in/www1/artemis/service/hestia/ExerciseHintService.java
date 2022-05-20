@@ -143,8 +143,11 @@ public class ExerciseHintService {
      * @return All activated exercise hints for this user and exercise
      */
     public Set<ExerciseHint> getActivatedExerciseHints(ProgrammingExercise exercise, User user) {
-        return userExerciseHintActivationRepository.findByExerciseAndUserWithExerciseHintRelations(exercise.getId(), user.getId()).stream()
-                .map(UserExerciseHintActivation::getExerciseHint).collect(Collectors.toSet());
+        return userExerciseHintActivationRepository.findByExerciseAndUserWithExerciseHintRelations(exercise.getId(), user.getId()).stream().map(userExerciseHintActivation -> {
+            var exerciseHint = userExerciseHintActivation.getExerciseHint();
+            exerciseHint.setCurrentUserRating(userExerciseHintActivation.getRating());
+            return exerciseHint;
+        }).collect(Collectors.toSet());
     }
 
     /**
