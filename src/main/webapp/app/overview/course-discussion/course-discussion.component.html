@@ -1,5 +1,5 @@
-<div class="row p-3 justify-content-center" *ngIf="course">
-    <div class="row col-10 justify-content-center">
+<div class="row mt-3 justify-content-center" *ngIf="course">
+    <div class="row col-lg-10 justify-content-center">
         <div class="row ps-0">
             <!-- search bar -->
             <div class="input-group col-10 px-0 mb-4">
@@ -26,7 +26,7 @@
             <!-- filter and sort controls -->
             <div class="row justify-content-between">
                 <!-- filter -->
-                <div class="col-auto">
+                <div class="col-12 col-md-auto">
                     <div class="row">
                         <!-- context filter -->
                         <div class="col-auto p-0 selection-prefix">
@@ -79,7 +79,7 @@
                     </div>
                 </div>
                 <!-- sort dropdown -->
-                <div class="col-auto ps-0">
+                <div class="col-12 col-md-auto ps-0">
                     <div class="row align-items-baseline">
                         <div class="col-auto pe-0 selection-prefix">
                             <span>{{ 'artemisApp.metis.overview.sortPostsBy' | artemisTranslate }}</span>
