@@ -103,7 +103,7 @@ public class JenkinsService extends AbstractContinuousIntegrationService {
     }
 
     @Override
-    public void configureBuildPlan(ProgrammingExerciseParticipation participation, String defaultBranch) {
+    public void configureBuildPlan(ProgrammingExerciseParticipation participation, String branch) {
         jenkinsBuildPlanService.configureBuildPlanForParticipation(participation);
     }
 
