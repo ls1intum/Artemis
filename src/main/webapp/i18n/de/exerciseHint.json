@@ -5,7 +5,7 @@
             "home": {
                 "title": "Aufgabenhinweise",
                 "createLabel": "Aufgabenhinweis erstellen",
-                "createOrEditLabel": "Aufgabenhinweis erstellen oder bearbeiten",
+                "editLabel": "Aufgabenhinweis bearbeiten",
                 "notFound": "Kein Aufgabenhinweis gefunden"
             },
             "created": "Aufgabenhinweis erstellt mit ID {{ param }}",

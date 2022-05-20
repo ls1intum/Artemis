@@ -5,7 +5,7 @@
             "home": {
                 "title": "Exercise Hints",
                 "createLabel": "Create a new Exercise Hint",
-                "createOrEditLabel": "Create or edit an Exercise Hint",
+                "editLabel": "Edit an Exercise Hint",
                 "notFound": "No Exercise Hint found"
             },
             "created": "Created new Exercise Hint with identifier {{ param }}",
