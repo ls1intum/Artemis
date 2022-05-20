@@ -99,6 +99,8 @@ export class ExerciseHintUpdateComponent implements OnInit, OnDestroy {
                 const index = this.tasks.findIndex((task) => task.id === this.exerciseHint.programmingExerciseTask?.id);
                 if (index !== -1) {
                     this.exerciseHint.programmingExerciseTask = this.tasks[index];
+                } else if (tasks.length > 0) {
+                    this.exerciseHint.programmingExerciseTask = this.tasks[0];
                 }
             });
         });
