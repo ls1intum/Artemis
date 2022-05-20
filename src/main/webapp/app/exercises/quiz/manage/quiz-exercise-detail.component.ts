@@ -227,7 +227,7 @@ export class QuizExerciseDetailComponent extends QuizExerciseValidationDirective
             this.quizExercise = this.entity;
         }
 
-        if (this.isImport) {
+        if (this.isImport || this.isExamMode) {
             resetDates(this.quizExercise);
         }
 
@@ -908,9 +908,7 @@ export class QuizExerciseDetailComponent extends QuizExerciseValidationDirective
      * @param quizExercise {QuizExercise} exercise which will be prepared
      */
     prepareEntity(quizExercise: QuizExercise): void {
-        if (this.isExamMode) {
-            quizExercise.releaseDate = dayjs(quizExercise.releaseDate);
-        } else {
+        if (!this.isExamMode) {
             quizExercise.releaseDate = quizExercise.releaseDate ? dayjs(quizExercise.releaseDate) : dayjs();
             quizExercise.duration = Number(quizExercise.duration);
             quizExercise.duration = isNaN(quizExercise.duration) ? 10 : quizExercise.duration;
