@@ -14,10 +14,12 @@ public interface UserExerciseHintActivationRepository extends JpaRepository<User
 
     @Query("""
             SELECT ueha FROM UserExerciseHintActivation ueha
+            LEFT JOIN FETCH ueha.exerciseHint eh
+            LEFT JOIN FETCH eh.solutionEntries se
             WHERE ueha.exerciseHint.exercise.id = :exerciseId
             AND ueha.user.id = :userId
             """)
-    Set<UserExerciseHintActivation> findByExerciseAndUser(@Param("exerciseId") long exerciseId, @Param("userId") long userId);
+    Set<UserExerciseHintActivation> findByExerciseAndUserWithExerciseHintRelations(@Param("exerciseId") long exerciseId, @Param("userId") long userId);
 
     @Query("""
             SELECT ueha FROM UserExerciseHintActivation ueha
