@@ -205,13 +205,15 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
      * Adjusts the course description and shows toggle buttons (if it is too long)
      * This also depends on whether the user has already seen the full description (stored in local storage)
      */
-    private adjustCourseDescription() {
+    adjustCourseDescription() {
         if (this.course && this.course.description) {
             this.enableShowMore = this.course.description.length > 50;
             if (this.enableShowMore && !this.longDescriptionShown && localStorage.getItem(DESCRIPTION_READ + this.course.shortName)) {
                 this.courseDescription = this.course.description.slice(0, 50) + '…';
+                this.longDescriptionShown = false;
             } else {
                 this.courseDescription = this.course.description;
+                this.longDescriptionShown = true;
                 localStorage.setItem(DESCRIPTION_READ + this.course.shortName, 'true');
             }
         }
