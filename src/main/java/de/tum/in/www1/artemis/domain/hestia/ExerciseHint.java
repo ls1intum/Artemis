@@ -1,15 +1,14 @@
 package de.tum.in.www1.artemis.domain.hestia;
 
+import java.util.Set;
+
 import javax.persistence.*;
 
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 import org.hibernate.annotations.DiscriminatorOptions;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonSubTypes;
-import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import com.fasterxml.jackson.annotation.*;
 
 import de.tum.in.www1.artemis.domain.DomainObject;
 import de.tum.in.www1.artemis.domain.Exercise;
@@ -46,6 +45,10 @@ public class ExerciseHint extends DomainObject {
     @ManyToOne
     @JsonIgnoreProperties("exerciseHints")
     private ProgrammingExerciseTask task;
+
+    @OneToMany(mappedBy = "exerciseHint", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
+    @JsonIgnore
+    private Set<UserExerciseHintActivation> userExerciseHintActivations;
 
     @Transient
     private Integer currentUserRatingTransient;
@@ -121,5 +124,13 @@ public class ExerciseHint extends DomainObject {
 
     public void setCurrentUserRating(Integer currentUserRating) {
         this.currentUserRatingTransient = currentUserRating;
+    }
+
+    public Set<UserExerciseHintActivation> getUserExerciseHintActivations() {
+        return userExerciseHintActivations;
+    }
+
+    public void setUserExerciseHintActivations(Set<UserExerciseHintActivation> userExerciseHintActivations) {
+        this.userExerciseHintActivations = userExerciseHintActivations;
     }
 }

@@ -18,12 +18,10 @@ import de.tum.in.www1.artemis.domain.User;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class UserExerciseHintActivation extends DomainObject {
 
-    @ManyToOne
-    @JoinColumn(nullable = false)
+    @ManyToOne(optional = false)
     private User user;
 
-    @ManyToOne
-    @JoinColumn(nullable = false)
+    @ManyToOne(optional = false)
     private ExerciseHint exerciseHint;
 
     @Column(name = "activation_date", nullable = false)
