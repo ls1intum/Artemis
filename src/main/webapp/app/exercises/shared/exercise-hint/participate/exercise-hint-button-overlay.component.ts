@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { ExerciseHint } from 'app/entities/hestia/exercise-hint.model';
 import { faCircleQuestion } from '@fortawesome/free-solid-svg-icons';
@@ -14,6 +14,8 @@ export class ExerciseHintButtonOverlayComponent {
     availableExerciseHints: ExerciseHint[];
     @Input()
     activatedExerciseHints: ExerciseHint[];
+    @Output()
+    onHintActivated = new EventEmitter<ExerciseHint>();
 
     faCircleQuestion = faCircleQuestion;
     ngbModalRef?: NgbModalRef;
@@ -22,6 +24,7 @@ export class ExerciseHintButtonOverlayComponent {
 
     openModal() {
         this.ngbModalRef = this.modalService.open(ExerciseHintStudentDialogComponent as Component, { size: 'lg', backdrop: 'static' });
+        this.ngbModalRef.componentInstance.onHintActivated = this.onHintActivated;
         this.ngbModalRef.componentInstance.activatedExerciseHints = this.activatedExerciseHints;
         // do not display available hints twice if they have already been activated
         this.ngbModalRef.componentInstance.availableExerciseHints = this.availableExerciseHints;
