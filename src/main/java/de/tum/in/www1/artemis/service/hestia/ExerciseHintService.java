@@ -156,18 +156,17 @@ public class ExerciseHintService {
      * @return All available exercise hints
      */
     public Set<ExerciseHint> getAvailableExerciseHints(ProgrammingExercise exercise, User user) {
-        Set<ExerciseHint> availableExerciseHints = new HashSet<>();
         var submissions = getSubmissionsForStudent(exercise, user);
 
         if (submissions.isEmpty()) {
-            return availableExerciseHints;
+            return new HashSet<>();
         }
 
         var latestResult = submissions.get(0).getLatestResult();
 
         // latest submissions has no result or latest result has no feedback (most commonly due to a build error)
         if (latestResult == null || latestResult.getFeedbacks().isEmpty()) {
-            return availableExerciseHints;
+            return new HashSet<>();
         }
 
         var exerciseHints = exerciseHintRepository.findByExerciseId(exercise.getId());
@@ -210,9 +209,11 @@ public class ExerciseHintService {
             // add the available hints for the current task
             var availableHintsForCurrentTask = getAvailableExerciseHintsForTask(subsequentNumberSuccessfulSubmissionsForPreviousTask,
                     subsequentNumberOfUnsuccessfulSubmissionsForCurrentTask, hintsInTask);
-            availableExerciseHints.addAll(availableHintsForCurrentTask);
+            if (availableHintsForCurrentTask.size() > 0) {
+                return availableHintsForCurrentTask;
+            }
         }
-        return availableExerciseHints;
+        return new HashSet<>();
     }
 
     private boolean isTaskSuccessfulInSubmission(ProgrammingExerciseTask task, Submission submission) {
