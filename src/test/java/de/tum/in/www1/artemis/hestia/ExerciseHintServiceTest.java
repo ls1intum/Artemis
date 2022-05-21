@@ -121,9 +121,9 @@ public class ExerciseHintServiceTest extends AbstractSpringIntegrationBambooBitb
 
     @Test
     public void testGetAvailableExerciseHintsEmpty4() {
-        addResultWithSuccessfulTestCases(sortedTasks.get(1).getTestCases());
-        addResultWithSuccessfulTestCases(sortedTasks.get(1).getTestCases());
-        addResultWithSuccessfulTestCases(sortedTasks.get(1).getTestCases());
+        addResultWithSuccessfulTestCases(sortedTasks.get(2).getTestCases());
+        addResultWithSuccessfulTestCases(sortedTasks.get(2).getTestCases());
+        addResultWithSuccessfulTestCases(sortedTasks.get(2).getTestCases());
         var availableExerciseHints = exerciseHintService.getAvailableExerciseHints(exercise, student);
         assertThat(availableExerciseHints).isEmpty();
     }
@@ -138,13 +138,21 @@ public class ExerciseHintServiceTest extends AbstractSpringIntegrationBambooBitb
     }
 
     @Test
-    public void testGetAvailableExerciseHints3() {
-        addResultWithFailedTestCases(exercise.getTestCases());
+    public void testGetAvailableExerciseHints2() {
         addResultWithSuccessfulTestCases(sortedTasks.get(0).getTestCases());
         addResultWithSuccessfulTestCases(sortedTasks.get(0).getTestCases());
         addResultWithSuccessfulTestCases(sortedTasks.get(0).getTestCases());
         var availableExerciseHints = exerciseHintService.getAvailableExerciseHints(exercise, student);
         assertThat(availableExerciseHints).containsExactly(hints.get(1));
+    }
+
+    @Test
+    public void testGetAvailableExerciseHints3() {
+        addResultWithSuccessfulTestCases(sortedTasks.get(1).getTestCases());
+        addResultWithSuccessfulTestCases(sortedTasks.get(1).getTestCases());
+        addResultWithSuccessfulTestCases(sortedTasks.get(1).getTestCases());
+        var availableExerciseHints = exerciseHintService.getAvailableExerciseHints(exercise, student);
+        assertThat(availableExerciseHints).containsExactly(hints.get(2));
     }
 
     private void addResultWithFailedTestCases(Collection<ProgrammingExerciseTestCase> failedTestCases) {
