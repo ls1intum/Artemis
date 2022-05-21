@@ -131,12 +131,12 @@ describe('CourseLearningGoals', () => {
 
         const learningGoalCards = courseLearningGoalsComponentFixture.debugElement.queryAll(By.directive(LearningGoalCardStubComponent));
         expect(learningGoalCards).toHaveLength(3); // 1 prerequisite and 2 learning goals
-        expect(getAllPrerequisitesForCourseSpy).toHaveBeenCalledTimes(1);
-        expect(getAllForCourseSpy).toHaveBeenCalledTimes(1);
+        expect(getAllPrerequisitesForCourseSpy).toHaveBeenCalledOnce();
+        expect(getAllForCourseSpy).toHaveBeenCalledOnce();
         expect(getProgressSpy).toHaveBeenCalledTimes(4);
         expect(courseLearningGoalsComponent.learningGoals).toHaveLength(2);
         expect(courseLearningGoalsComponent.learningGoalIdToLearningGoalProgressUsingParticipantScoresTables.has(1)).toEqual(true);
         expect(courseLearningGoalsComponent.learningGoalIdToLearningGoalProgress.has(1)).toEqual(true);
-        expect(captureExceptionSpy).toHaveBeenCalledTimes(1);
+        expect(captureExceptionSpy).toHaveBeenCalledOnce();
     });
 });

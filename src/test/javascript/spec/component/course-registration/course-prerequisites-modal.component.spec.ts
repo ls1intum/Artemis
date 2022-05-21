@@ -69,7 +69,7 @@ describe('CoursePrerequisitesModal', () => {
 
         const learningGoalCards = coursePrerequisitesModalComponentFixture.debugElement.queryAll(By.directive(LearningGoalCardStubComponent));
         expect(learningGoalCards).toHaveLength(2);
-        expect(getAllPrerequisitesForCourseSpy).toHaveBeenCalledTimes(1);
+        expect(getAllPrerequisitesForCourseSpy).toHaveBeenCalledOnce();
         expect(coursePrerequisitesModalComponent.prerequisites).toHaveLength(2);
     });
 
