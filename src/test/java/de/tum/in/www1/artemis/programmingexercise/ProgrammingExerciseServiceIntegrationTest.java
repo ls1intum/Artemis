@@ -109,19 +109,6 @@ public class ProgrammingExerciseServiceIntegrationTest extends AbstractSpringInt
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void importProgrammingExerciseBasis_hintsGotReplacedInStatement() {
-        final var imported = importExerciseBase();
-
-        final var oldHintIDs = programmingExercise.getExerciseHints().stream().map(ExerciseHint::getId).collect(Collectors.toSet());
-        final var newHintIDs = imported.getExerciseHints().stream().map(ExerciseHint::getId).collect(Collectors.toSet());
-        final var matchString = ".*\\{%d\\}.*";
-        final var importedStatement = imported.getProblemStatement();
-        assertThat(oldHintIDs).noneMatch(hint -> importedStatement.matches(String.format(matchString, hint)));
-        assertThat(newHintIDs).allMatch(hint -> importedStatement.matches(String.format(matchString, hint)));
-    }
-
-    @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void importProgrammingExerciseBasis_testsAndHintsHoldTheSameInformation() {
         final var imported = importExerciseBase();
 
