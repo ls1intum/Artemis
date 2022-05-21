@@ -391,6 +391,9 @@ public class ProgrammingExerciseImportService {
             Map<Long, Long> newHintIdByOldId) {
         templateExercise.getExerciseHints().forEach(templateExerciseHint -> {
             var templateTask = templateExerciseHint.getProgrammingExerciseTask();
+            if (templateTask == null) {
+                return;
+            }
             var targetTask = targetExercise.getTasks().stream().filter(newTask -> Objects.equals(newTask.getId(), newTaskIdByOldId.get(templateTask.getId()))).findAny()
                     .orElseThrow();
             var targetExerciseHint = targetExercise.getExerciseHints().stream()
