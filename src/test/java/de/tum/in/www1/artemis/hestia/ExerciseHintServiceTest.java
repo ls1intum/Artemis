@@ -62,8 +62,6 @@ public class ExerciseHintServiceTest extends AbstractSpringIntegrationBambooBitb
 
     private ProgrammingExerciseStudentParticipation studentParticipation;
 
-    private ProgrammingSubmission submission;
-
     private int timeOffset = 0;
 
     @BeforeEach
@@ -81,7 +79,6 @@ public class ExerciseHintServiceTest extends AbstractSpringIntegrationBambooBitb
 
         sortedTasks = programmingExerciseTaskService.getSortedTasks(exercise);
         studentParticipation = database.addStudentParticipationForProgrammingExercise(exercise, student.getLogin());
-        submission = database.createProgrammingSubmission(studentParticipation, false);
     }
 
     @AfterEach
@@ -122,6 +119,20 @@ public class ExerciseHintServiceTest extends AbstractSpringIntegrationBambooBitb
         addResultWithFailedTestCases(exercise.getTestCases());
         addResultWithSuccessfulTestCases(sortedTasks.get(0).getTestCases());
         addResultWithSuccessfulTestCases(sortedTasks.get(0).getTestCases());
+        addResultWithSuccessfulTestCases(sortedTasks.get(0).getTestCases());
+        var availableExerciseHints = exerciseHintService.getAvailableExerciseHints(exercise, student);
+        assertThat(availableExerciseHints).containsExactly(hints.get(1));
+    }
+
+    @Test
+    public void testGetAvailableExerciseHints4() {
+        var hints = exerciseHintRepository.findAll();
+        hints.get(0).setProgrammingExerciseTask(sortedTasks.get(0));
+        hints.get(1).setProgrammingExerciseTask(sortedTasks.get(1));
+        exerciseHintRepository.saveAll(hints);
+        addResultWithSuccessfulTestCases(sortedTasks.get(0).getTestCases());
+        addResultWithSuccessfulTestCases(sortedTasks.get(0).getTestCases());
+        addResultWithSuccessfulTestCases(sortedTasks.get(0).getTestCases());
         var availableExerciseHints = exerciseHintService.getAvailableExerciseHints(exercise, student);
         assertThat(availableExerciseHints).containsExactly(hints.get(1));
     }
@@ -133,6 +144,7 @@ public class ExerciseHintServiceTest extends AbstractSpringIntegrationBambooBitb
     }
 
     private void addResultWithSuccessfulTestCases(Collection<ProgrammingExerciseTestCase> successfulTestCases) {
+        var submission = database.createProgrammingSubmission(studentParticipation, false);
         Result result = new Result().participation(submission.getParticipation()).assessmentType(AssessmentType.AUTOMATIC).resultString("3 out of 3 failed").score(0D).rated(true)
                 .completionDate(ZonedDateTime.now().plusSeconds(timeOffset++));
         result = resultRepository.save(result);
