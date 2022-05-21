@@ -133,4 +133,8 @@ public class ExerciseHint extends DomainObject {
     public void setUserExerciseHintActivations(Set<UserExerciseHintActivation> userExerciseHintActivations) {
         this.userExerciseHintActivations = userExerciseHintActivations;
     }
+
+    public int getThreshold() {
+        return 3;
+    }
 }

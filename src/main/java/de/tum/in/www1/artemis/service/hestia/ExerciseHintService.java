@@ -2,7 +2,6 @@ package de.tum.in.www1.artemis.service.hestia;
 
 import java.time.ZonedDateTime;
 import java.util.*;
-import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
@@ -144,6 +143,7 @@ public class ExerciseHintService {
     }
 
     /**
+     * TODO: update doc
      * Calculates all exercise hints that the user can currently activate for a given programming exercise.
      * Exercise hints for a task will only be shown, if the following conditions are met:
      * (1) at least ExerciseHintService::CODE_HINT_DISPLAY_THRESHOLD student submissions exist
@@ -157,78 +157,107 @@ public class ExerciseHintService {
      */
     public Set<ExerciseHint> getAvailableExerciseHints(ProgrammingExercise exercise, User user) {
         Set<ExerciseHint> availableExerciseHints = new HashSet<>();
+        var submissions = getSubmissionsForStudent(exercise, user);
+
+        if (submissions.isEmpty()) {
+            return availableExerciseHints;
+        }
+
+        var latestResult = submissions.get(0).getLatestResult();
+
+        // latest submissions has no result
+        if (latestResult == null) {
+            return availableExerciseHints;
+        }
+
+        // result for latest submission has no feedback (most commonly due to a build error)
+        if (latestResult.getFeedbacks().isEmpty()) {
+            return availableExerciseHints;
+        }
+
         var exerciseHints = exerciseHintRepository.findByExerciseId(exercise.getId());
         var tasks = programmingExerciseTaskService.getSortedTasks(exercise);
-        var latestNResults = getLatestNResults(exercise, user);
 
-        if (latestNResults.size() >= CODE_HINT_DISPLAY_THRESHOLD) {
-            var latestResult = latestNResults.get(0);
+        var subsequentNumberOfUnsuccessfulSubmissionsByTask = tasks.stream()
+                .collect(Collectors.toMap(task -> task, task -> subsequentNumberOfSuccessfulSubmissionsForTask(submissions, task, false)));
+        var subsequentNumberOfSuccessfulSubmissionsByTask = tasks.stream()
+                .collect(Collectors.toMap(task -> task, task -> subsequentNumberOfSuccessfulSubmissionsForTask(submissions, task, true)));
 
-            for (int i = 0; i < tasks.size(); i++) {
-                var task = tasks.get(i);
-                Optional<ProgrammingExerciseTask> previousTask;
-                if (i == 0) {
-                    previousTask = Optional.empty();
-                }
-                else {
-                    previousTask = Optional.of(tasks.get(i - 1));
-                }
+        for (int i = 0; i < tasks.size(); i++) {
+            var task = tasks.get(i);
+            int subsequentNumberOfUnsuccessfulSubmissionsForCurrentTask = subsequentNumberOfUnsuccessfulSubmissionsByTask.get(task);
+            // current task is successful
+            if (subsequentNumberOfUnsuccessfulSubmissionsForCurrentTask == 0) {
+                continue;
+            }
 
-                // check that the current task has test cases with negative feedback
-                if (getFeedbackForTaskAndResult(task, latestResult).stream().allMatch(Feedback::isPositive)) {
+            var hintsInTask = exerciseHints.stream()
+                    .filter(hint -> Objects.nonNull(hint.getProgrammingExerciseTask()) && Objects.equals(hint.getProgrammingExerciseTask().getId(), task.getId())).toList();
+            // no hints exist for the current task
+            if (hintsInTask.isEmpty()) {
+                continue;
+            }
+
+            Optional<Integer> subsequentNumberSuccessfulSubmissionsForPreviousTask;
+            if (i == 0) {
+                subsequentNumberSuccessfulSubmissionsForPreviousTask = Optional.empty();
+            }
+            else {
+                subsequentNumberSuccessfulSubmissionsForPreviousTask = Optional.of(subsequentNumberOfSuccessfulSubmissionsByTask.get(tasks.get(i - 1)));
+            }
+
+            // skip current task if the previous task was not successful
+            if (Objects.equals(subsequentNumberSuccessfulSubmissionsForPreviousTask.orElse(-1), 0)) {
+                continue;
+            }
+
+            // filter hints that meet the following conditions:
+            // 1. the previous task (if existing) is successful for at least the hint's threshold value
+            // 2. the current task is unsuccessful for at least the hint's threshold value
+            Set<ExerciseHint> availableHintsForTask = new HashSet<>();
+            for (ExerciseHint hint : hintsInTask) {
+                // condition 1
+                if (subsequentNumberSuccessfulSubmissionsForPreviousTask.isPresent() && subsequentNumberSuccessfulSubmissionsForPreviousTask.get() < hint.getThreshold()) {
                     continue;
                 }
 
-                var currentTaskExerciseHints = exerciseHints.stream().filter(hint -> hint.getProgrammingExerciseTask() != null)
-                        .filter(hint -> Objects.equals(hint.getProgrammingExerciseTask().getId(), task.getId())).collect(Collectors.toSet());
-                if (!currentTaskExerciseHints.isEmpty() && checkUserHasAccessToCodeHintsForTask(task, previousTask, latestNResults)) {
-                    availableExerciseHints = currentTaskExerciseHints;
-                    break;
+                // condition 2
+                if (subsequentNumberOfUnsuccessfulSubmissionsForCurrentTask >= hint.getThreshold()) {
+                    availableHintsForTask.add(hint);
                 }
             }
-        }
 
+            availableExerciseHints.addAll(availableHintsForTask);
+        }
         return availableExerciseHints;
     }
 
-    private List<Result> getLatestNResults(ProgrammingExercise exercise, User student) {
+    private boolean isTaskSuccessfulInSubmission(ProgrammingExerciseTask task, Submission submission) {
+        var result = submission.getLatestResult();
+        if (result == null || result.getFeedbacks().isEmpty()) {
+            return false;
+        }
+        var testCasesInTask = task.getTestCases();
+        var feedbacks = result.getFeedbacks();
+        return feedbacks.stream().filter(feedback -> testCasesInTask.stream().anyMatch(testCase -> Objects.equals(testCase.getTestName(), feedback.getText())))
+                .allMatch(Feedback::isPositive);
+    }
+
+    private List<Submission> getSubmissionsForStudent(ProgrammingExercise exercise, User student) {
         var allParticipationsForExercise = studentParticipationRepository.findByExerciseIdWithEagerSubmissionsResultAssessorFeedbacks(exercise.getId());
         var currentStudentParticipation = allParticipationsForExercise.stream().filter(participation -> participation.getParticipant().getParticipants().contains(student))
                 .findFirst().orElseThrow(() -> new InternalServerErrorException("No user"));
-        // (max) three results, sorted descending by completion date (where the first item is the latest)
-        var numberOfSubmissionsToSkip = Math.max(currentStudentParticipation.getSubmissions().size() - CODE_HINT_DISPLAY_THRESHOLD, 0);
-        return currentStudentParticipation.getSubmissions().stream().map(Submission::getResults).flatMap(Collection::stream).sorted(Comparator.comparing(Result::getCompletionDate))
-                .skip(numberOfSubmissionsToSkip).toList();
+        return currentStudentParticipation.getSubmissions().stream().sorted(Comparator.comparing(Submission::getSubmissionDate)).toList();
     }
 
-    private List<Feedback> getFeedbackForTaskAndResult(ProgrammingExerciseTask task, Result result) {
-        var testCasesInTask = task.getTestCases();
-        var feedbacks = result.getFeedbacks();
-        return feedbacks.stream().filter(feedback -> testCasesInTask.stream().anyMatch(testCase -> Objects.equals(testCase.getTestName(), feedback.getText()))).toList();
-    }
-
-    private boolean checkUserHasAccessToCodeHintsForTask(ProgrammingExerciseTask task, Optional<ProgrammingExerciseTask> previousTask, List<Result> latestResults) {
-        var feedbacksForTask = latestResults.stream().map(result -> getFeedbackForTaskAndResult(task, result)).toList();
-        var latestFeedbackForTask = feedbacksForTask.get(0);
-        // check that result for the previous task is successful for at least the last three results
-        if (previousTask.isPresent()) {
-            var feedbacksForPreviousTask = latestResults.stream().map(result -> getFeedbackForTaskAndResult(previousTask.get(), result)).toList();
-            var previousTaskUnsuccessfulInSubmissions = feedbacksForPreviousTask.stream().anyMatch(feedbacks -> feedbacks.stream().anyMatch(Predicate.not(Feedback::isPositive)));
-            if (previousTaskUnsuccessfulInSubmissions) {
-                return false;
+    private int subsequentNumberOfSuccessfulSubmissionsForTask(List<Submission> submissions, ProgrammingExerciseTask task, boolean successful) {
+        int subsequentNumberOfUnsuccessfulSubmissionsForTask = 0;
+        for (Submission submission : submissions) {
+            if (isTaskSuccessfulInSubmission(task, submission) != successful) {
+                break;
             }
+            subsequentNumberOfUnsuccessfulSubmissionsForTask++;
         }
-
-        // check that the results for current task did not change within the last submissions
-        for (var feedback : latestFeedbackForTask) {
-            var feedbacksSameTestCaseAndScore = feedbacksForTask.stream().skip(1).flatMap(Collection::stream)
-                    .filter(feedback2 -> Objects.equals(feedback.getText(), feedback2.getText()) && Objects.equals(feedback2.getCredits(), feedback.getCredits())).toList();
-            if (feedbacksSameTestCaseAndScore.size() != feedbacksForTask.size() - 1) {
-                // the score for the last three feedbacks is not the same
-                return false;
-            }
-        }
-
-        return true;
+        return subsequentNumberOfUnsuccessfulSubmissionsForTask;
     }
 }
