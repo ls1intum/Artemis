@@ -115,7 +115,6 @@ describe('Exam participation', () => {
     }
 
     function makeProgrammingExerciseSubmission() {
-        onlineEditor.toggleCompressFileTree();
         onlineEditor.deleteFile('Client.java');
         onlineEditor.deleteFile('BubbleSort.java');
         onlineEditor.deleteFile('MergeSort.java');

@@ -131,18 +131,12 @@ export class OnlineEditorPage {
     getBuildOutput() {
         return cy.get('#cardBuildOutput');
     }
-
-    toggleCompressFileTree() {
-        return cy.get('#compress_tree').click();
-    }
 }
 
 /**
  * General method for entering, submitting and verifying something in the online editor.
  */
 export function makeSubmissionAndVerifyResults(editorPage: OnlineEditorPage, packageName: string, submission: ProgrammingExerciseSubmission, verifyOutput: () => void) {
-    // Decompress the file tree to access the parent folder
-    editorPage.toggleCompressFileTree();
     // We delete all existing files, so we can create new files and don't have to delete their already existing content
     editorPage.deleteFile('Client.java');
     editorPage.deleteFile('BubbleSort.java');
