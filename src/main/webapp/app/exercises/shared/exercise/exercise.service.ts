@@ -99,8 +99,8 @@ export class ExerciseService {
     }
 
     hasExampleSolutionPublicationDateWarning(exercise: Exercise) {
-        if (exercise.exampleSolutionPublicationDate && dayjs(exercise.exampleSolutionPublicationDate).isBefore(exercise.dueDate || null)) {
-            if (exercise.includedInOverallScore === IncludedInOverallScore.NOT_INCLUDED) {
+        if (exercise.exampleSolutionPublicationDate && !dayjs(exercise.exampleSolutionPublicationDate).isSameOrAfter(exercise.dueDate || null)) {
+            if (!exercise.dueDate || exercise.includedInOverallScore === IncludedInOverallScore.NOT_INCLUDED) {
                 return true;
             }
         }
