@@ -53,7 +53,6 @@ public class ExerciseHintService {
      */
     public Map<Long, Long> copyExerciseHints(final Exercise template, final Exercise target) {
         final Map<Long, Long> hintIdMapping = new HashMap<>();
-        // Copying non text hints is currently not supported
         target.setExerciseHints(template.getExerciseHints().stream().map(hint -> {
             ExerciseHint copiedHint;
             if (hint instanceof CodeHint) {
