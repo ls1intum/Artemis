@@ -179,8 +179,8 @@ public class ExerciseHintService {
                     continue;
                 }
 
-                var currentTaskExerciseHints = exerciseHints.stream().filter(hint -> Objects.equals(hint.getProgrammingExerciseTask().getId(), task.getId()))
-                        .collect(Collectors.toSet());
+                var currentTaskExerciseHints = exerciseHints.stream().filter(hint -> hint.getProgrammingExerciseTask() != null)
+                        .filter(hint -> Objects.equals(hint.getProgrammingExerciseTask().getId(), task.getId())).collect(Collectors.toSet());
                 if (!currentTaskExerciseHints.isEmpty() && checkUserHasAccessToCodeHintsForTask(task, previousTask, latestNResults)) {
                     availableExerciseHints = currentTaskExerciseHints;
                     break;

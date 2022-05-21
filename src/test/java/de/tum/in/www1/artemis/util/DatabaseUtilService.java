@@ -3037,15 +3037,21 @@ public class DatabaseUtilService {
     }
 
     public void addTasksToProgrammingExercise(ProgrammingExercise programmingExercise) {
+        StringBuilder problemStatement = new StringBuilder(programmingExercise.getProblemStatement());
+        problemStatement.append('\n');
+
         var tasks = programmingExercise.getTestCases().stream().map(testCase -> {
             var task = new ProgrammingExerciseTask();
             task.setTaskName("Task for " + testCase.getTestName());
             task.setExercise(programmingExercise);
             task.setTestCases(Collections.singleton(testCase));
             testCase.setTasks(Collections.singleton(task));
+            problemStatement.append("[task][").append(task.getTaskName()).append("](")
+                    .append(task.getTestCases().stream().map(ProgrammingExerciseTestCase::getTestName).collect(Collectors.joining(","))).append(")\n");
             return task;
         }).toList();
         programmingExercise.setTasks(tasks);
+        programmingExercise.setProblemStatement(problemStatement.toString());
         programmingExerciseTaskRepository.saveAll(tasks);
     }
 
