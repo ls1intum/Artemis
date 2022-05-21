@@ -136,6 +136,9 @@
                 "exercisesWithNoCategories": "Exercises with no categories",
                 "pointsPerExercise": "Points per Exercise"
             },
+            "learningGoals": {
+                "noData": "No learning goals available for this course."
+            },
             "lectureList": {
                 "lectureGroupHeader": "Lectures: {{ total }}",
                 "totalLectures": "Total lectures:",

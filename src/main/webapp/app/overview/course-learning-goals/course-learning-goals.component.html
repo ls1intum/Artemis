@@ -1,4 +1,4 @@
-<div class="container">
+<div class="container" *ngIf="isLoading || (learningGoals && learningGoals.length > 0) || (prerequisites && prerequisites.length > 0); else noData">
     <div *ngIf="isLoading" class="d-flex justify-content-center">
         <div class="spinner-border" role="status">
             <span class="sr-only">{{ 'loading' | artemisTranslate }}</span>
@@ -31,3 +31,11 @@
         </div>
     </div>
 </div>
+
+<ng-template #noData>
+    <div class="row">
+        <div class="col mt-3">
+            {{ 'artemisApp.courseOverview.learningGoals.noData' | artemisTranslate }}
+        </div>
+    </div>
+</ng-template>

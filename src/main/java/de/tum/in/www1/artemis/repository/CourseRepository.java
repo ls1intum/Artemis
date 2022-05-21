@@ -57,7 +57,7 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
             """)
     List<Course> findAllActive(@Param("now") ZonedDateTime now);
 
-    @EntityGraph(type = LOAD, attributePaths = { "lectures", "lectures.attachments", "learningGoals", "prerequisites", "exams" })
+    @EntityGraph(type = LOAD, attributePaths = { "lectures", "lectures.attachments", "exams" })
     @Query("""
             SELECT DISTINCT c FROM Course c
             WHERE (c.startDate <= :#{#now}
@@ -65,13 +65,10 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
             AND (c.endDate >= :#{#now}
             	OR c.endDate IS NULL)
             """)
-    List<Course> findAllActiveWithLecturesAndLearningGoalsAndExams(@Param("now") ZonedDateTime now);
+    List<Course> findAllActiveWithLecturesAndExams(@Param("now") ZonedDateTime now);
 
     @EntityGraph(type = LOAD, attributePaths = { "lectures", "lectures.attachments", "exams" })
     Optional<Course> findWithEagerLecturesAndExamsById(long courseId);
-
-    @EntityGraph(type = LOAD, attributePaths = { "lectures", "lectures.attachments", "learningGoals", "prerequisites", "exams" })
-    Optional<Course> findWithEagerLecturesAndLearningGoalsAndExamsById(long courseId);
 
     // Note: this is currently only used for testing purposes
     @Query("""
@@ -227,8 +224,8 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
      *
      * @return the list of entities
      */
-    default List<Course> findAllActiveWithLecturesAndLearningGoalsAndExams() {
-        return findAllActiveWithLecturesAndLearningGoalsAndExams(ZonedDateTime.now());
+    default List<Course> findAllActiveWithLecturesAndExams() {
+        return findAllActiveWithLecturesAndExams(ZonedDateTime.now());
     }
 
     /**
@@ -249,17 +246,6 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
     @NotNull
     default Course findByIdWithLecturesAndExamsElseThrow(long courseId) {
         return findWithEagerLecturesAndExamsById(courseId).orElseThrow(() -> new EntityNotFoundException("Course", courseId));
-    }
-
-    /**
-     * Get one course by id with lectures, learning goals/prerequisites and exams. If the course cannot be found throw an exception
-     *
-     * @param courseId the id of the entity
-     * @return the entity
-     */
-    @NotNull
-    default Course findByIdWithLecturesAndLearningGoalsAndExamsElseThrow(long courseId) {
-        return findWithEagerLecturesAndLearningGoalsAndExamsById(courseId).orElseThrow(() -> new EntityNotFoundException("Course", courseId));
     }
 
     /**

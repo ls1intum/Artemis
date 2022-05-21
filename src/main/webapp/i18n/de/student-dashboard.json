@@ -134,6 +134,9 @@
                 "exercisesWithNoCategories": "Aufgaben ohne Kategorien",
                 "pointsPerExercise": "Punkte pro Aufgabe"
             },
+            "learningGoals": {
+                "noData": "Es sind keine Lernziele für diesen Kurs vorhanden."
+            },
             "lectureList": {
                 "lectureGroupHeader": "Vorlesungen: {{ total }}",
                 "totalLectures": "Vorlesungen insgesamt:",

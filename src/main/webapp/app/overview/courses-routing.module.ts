@@ -8,7 +8,6 @@ import { NgModule } from '@angular/core';
 import { Authority } from 'app/shared/constants/authority.constants';
 import { CourseExercisesComponent } from 'app/overview/course-exercises/course-exercises.component';
 import { GradingKeyOverviewComponent } from 'app/grading-system/grading-key-overview/grading-key-overview.component';
-import { CourseLearningGoalsComponent } from 'app/overview/course-learning-goals/course-learning-goals.component';
 
 const routes: Routes = [
     {
@@ -57,12 +56,7 @@ const routes: Routes = [
             },
             {
                 path: 'learning-goals',
-                component: CourseLearningGoalsComponent,
-                data: {
-                    authorities: [Authority.USER],
-                    pageTitle: 'overview.learningGoals',
-                },
-                canActivate: [UserRouteAccessService],
+                loadChildren: () => import('../overview/course-learning-goals/course-learning-goals.module').then((m) => m.CourseLearningGoalsModule),
             },
             {
                 path: 'discussion',
