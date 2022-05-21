@@ -22,8 +22,6 @@ export class ExamMonitoringComponent implements OnInit, OnDestroy, AfterViewInit
 
     constructor(private route: ActivatedRoute, private examManagementService: ExamManagementService) {}
 
-    ngOnDestroy(): void {}
-
     ngOnInit(): void {
         this.subscription = this.route.params.subscribe((params) => {
             this.examId = parseInt(params['examId'], 10);
@@ -33,6 +31,10 @@ export class ExamMonitoringComponent implements OnInit, OnDestroy, AfterViewInit
         this.examManagementService.find(this.courseId, this.examId).subscribe((examResponse: HttpResponse<Exam>) => {
             this.exam = examResponse.body!;
         });
+    }
+
+    ngOnDestroy(): void {
+        this.subscription?.unsubscribe();
     }
 
     ngAfterViewInit() {}
