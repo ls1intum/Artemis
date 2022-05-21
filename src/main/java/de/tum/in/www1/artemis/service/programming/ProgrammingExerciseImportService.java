@@ -375,7 +375,7 @@ public class ProgrammingExerciseImportService {
             programmingExerciseTaskRepository.save(copy);
             newIdByOldId.put(task.getId(), copy.getId());
             return copy;
-        }).toList());
+        }).collect(Collectors.toList()));
         return newIdByOldId;
     }
 
