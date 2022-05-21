@@ -148,6 +148,7 @@ public class ExerciseHintResource {
         if (exerciseHint instanceof CodeHint codeHint && hintBeforeSaving instanceof CodeHint codeHintBeforeSaving) {
             codeHint.setSolutionEntries(codeHintBeforeSaving.getSolutionEntries());
         }
+        exerciseHint.setUserExerciseHintActivations(hintBeforeSaving.getUserExerciseHintActivations());
         ExerciseHint result = exerciseHintRepository.save(exerciseHint);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, EXERCISE_HINT_ENTITY_NAME, exerciseHint.getId().toString())).body(result);
     }
