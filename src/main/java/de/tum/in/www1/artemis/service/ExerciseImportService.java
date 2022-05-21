@@ -109,14 +109,7 @@ public abstract class ExerciseImportService {
     private List<Feedback> copyFeedback(List<Feedback> originalFeedbacks, Result newResult, Map<Long, GradingInstruction> gradingInstructionCopyTracker) {
         List<Feedback> newFeedbacks = new ArrayList<>();
         for (final var originalFeedback : originalFeedbacks) {
-            Feedback newFeedback = new Feedback();
-            newFeedback.setCredits(originalFeedback.getCredits());
-            newFeedback.setDetailText(originalFeedback.getDetailText());
-            newFeedback.setPositive(originalFeedback.isPositive());
-            newFeedback.setReference(originalFeedback.getReference());
-            newFeedback.setType(originalFeedback.getType());
-            newFeedback.setText(originalFeedback.getText());
-            newFeedback.setResult(newResult);
+            Feedback newFeedback = originalFeedback.copyFeedback();
 
             // Original GradingInstructions should be replaced with copied GradingInstructions before save.
             GradingInstruction originalGradingInstruction = originalFeedback.getGradingInstruction();

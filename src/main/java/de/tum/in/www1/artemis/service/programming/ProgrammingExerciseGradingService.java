@@ -712,7 +712,7 @@ public class ProgrammingExerciseGradingService {
     /**
      * Update the score given the positive tests score divided by all tests' score.
      * Takes weight, bonus multiplier and absolute bonus points into account.
-     * All tests in this case does not include ones with visibility=never.
+     * All tests in this case do not include ones with visibility=never.
      * @param result                     of the build run.
      * @param allTestCases               of a given programming exercise.
      * @param successfulTestCases        test cases with positive feedback.
