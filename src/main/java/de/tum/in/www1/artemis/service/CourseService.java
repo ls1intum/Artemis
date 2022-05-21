@@ -159,7 +159,7 @@ public class CourseService {
     }
 
     /**
-     * Get one course with exercises, lectures, learning goals/prerequisites and exams (filtered for given user)
+     * Get one course with exercises, lectures and exams (filtered for given user)
      *
      * @param courseId the course to fetch
      * @param user     the user entity
