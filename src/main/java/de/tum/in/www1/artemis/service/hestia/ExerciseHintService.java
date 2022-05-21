@@ -165,13 +165,8 @@ public class ExerciseHintService {
 
         var latestResult = submissions.get(0).getLatestResult();
 
-        // latest submissions has no result
-        if (latestResult == null) {
-            return availableExerciseHints;
-        }
-
-        // result for latest submission has no feedback (most commonly due to a build error)
-        if (latestResult.getFeedbacks().isEmpty()) {
+        // latest submissions has no result or latest result has no feedback (most commonly due to a build error)
+        if (latestResult == null || latestResult.getFeedbacks().isEmpty()) {
             return availableExerciseHints;
         }
 
@@ -192,7 +187,8 @@ public class ExerciseHintService {
             }
 
             var hintsInTask = exerciseHints.stream()
-                    .filter(hint -> Objects.nonNull(hint.getProgrammingExerciseTask()) && Objects.equals(hint.getProgrammingExerciseTask().getId(), task.getId())).toList();
+                    .filter(hint -> Objects.nonNull(hint.getProgrammingExerciseTask()) && Objects.equals(hint.getProgrammingExerciseTask().getId(), task.getId()))
+                    .collect(Collectors.toSet());
             // no hints exist for the current task
             if (hintsInTask.isEmpty()) {
                 continue;
@@ -211,23 +207,10 @@ public class ExerciseHintService {
                 continue;
             }
 
-            // filter hints that meet the following conditions:
-            // 1. the previous task (if existing) is successful for at least the hint's threshold value
-            // 2. the current task is unsuccessful for at least the hint's threshold value
-            Set<ExerciseHint> availableHintsForTask = new HashSet<>();
-            for (ExerciseHint hint : hintsInTask) {
-                // condition 1
-                if (subsequentNumberSuccessfulSubmissionsForPreviousTask.isPresent() && subsequentNumberSuccessfulSubmissionsForPreviousTask.get() < hint.getThreshold()) {
-                    continue;
-                }
-
-                // condition 2
-                if (subsequentNumberOfUnsuccessfulSubmissionsForCurrentTask >= hint.getThreshold()) {
-                    availableHintsForTask.add(hint);
-                }
-            }
-
-            availableExerciseHints.addAll(availableHintsForTask);
+            // add the available hints for the current task
+            var availableHintsForCurrentTask = getAvailableExerciseHintsForTask(subsequentNumberSuccessfulSubmissionsForPreviousTask,
+                    subsequentNumberOfUnsuccessfulSubmissionsForCurrentTask, hintsInTask);
+            availableExerciseHints.addAll(availableHintsForCurrentTask);
         }
         return availableExerciseHints;
     }
@@ -251,13 +234,39 @@ public class ExerciseHintService {
     }
 
     private int subsequentNumberOfSuccessfulSubmissionsForTask(List<Submission> submissions, ProgrammingExerciseTask task, boolean successful) {
-        int subsequentNumberOfUnsuccessfulSubmissionsForTask = 0;
+        int subsequentNumberSuccessfulSubmissionsForTask = 0;
         for (Submission submission : submissions) {
             if (isTaskSuccessfulInSubmission(task, submission) != successful) {
                 break;
             }
-            subsequentNumberOfUnsuccessfulSubmissionsForTask++;
+            subsequentNumberSuccessfulSubmissionsForTask++;
         }
-        return subsequentNumberOfUnsuccessfulSubmissionsForTask;
+        return subsequentNumberSuccessfulSubmissionsForTask;
+    }
+
+    /**
+     * Filter hints that meet the following conditions:
+     * 1. the previous task (if existing) is successful for at least the hint's threshold value
+     * 2. the current task is unsuccessful for at least the hint's threshold value
+     * @param subsequentNumberSuccessfulSubmissionsForPreviousTask the subsequent number of the latest submissions the previous task is successful
+     * @param subsequentNumberOfUnsuccessfulSubmissionsForCurrentTask the subsequent number of latest submissions the current task is unsuccessful
+     * @param taskHints all exercise hints in current tasks
+     * @return the available exercise hints
+     */
+    private Set<ExerciseHint> getAvailableExerciseHintsForTask(Optional<Integer> subsequentNumberSuccessfulSubmissionsForPreviousTask,
+            int subsequentNumberOfUnsuccessfulSubmissionsForCurrentTask, Set<ExerciseHint> taskHints) {
+        Set<ExerciseHint> availableHintsForTask = new HashSet<>();
+        for (ExerciseHint hint : taskHints) {
+            // condition 1
+            if (subsequentNumberSuccessfulSubmissionsForPreviousTask.isPresent() && subsequentNumberSuccessfulSubmissionsForPreviousTask.get() < hint.getThreshold()) {
+                continue;
+            }
+
+            // condition 2
+            if (subsequentNumberOfUnsuccessfulSubmissionsForCurrentTask >= hint.getThreshold()) {
+                availableHintsForTask.add(hint);
+            }
+        }
+        return availableHintsForTask;
     }
 }
