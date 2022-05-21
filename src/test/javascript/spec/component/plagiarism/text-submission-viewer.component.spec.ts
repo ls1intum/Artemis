@@ -75,7 +75,7 @@ describe('Text Submission Viewer Component', () => {
         expect(comp.isProgrammingExercise).toBe(true);
     });
 
-    it('sort and filter the files when fetching a programming submission', () => {
+    it('sorts and filters the files when fetching a programming submission', () => {
         comp.exercise = { type: ExerciseType.PROGRAMMING } as ProgrammingExercise;
 
         const filesUnordered = {
