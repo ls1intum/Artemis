@@ -25,16 +25,22 @@ project. Follow this description for IntelliJ:
    `includeBuild('/path/to/repository-solution')`
    depending on which project you want to use the source files for executing the
    test cases.
+   The path can be given relative to the test project directory
+   (e.g., `../repository-solution`).
 5. Inside the `dependencies`-block in the `build.gradle` inside the Test-Project,
    uncomment one of the lines:
    `testImplementation(':${exerciseNamePomXml}')` or
    `testImplementation(':${exerciseNamePomXml}-Solution')`
    depending on which project you want to use the source files for executing the
    test cases.
+6. Change the `assignmentSrcDir` variable in `build.gradle` to the corresponding
+   `src/` directory within the template or solution repository
+   (e.g., `../repository-solution/src/`).
 
-**Note**: Changes made in step 4 and step 5 must not be pushed to the remote
-repository as it can only be used for editing all three projects in the local
-IDE.
+**Note**:
+The described changes to the `build.gradle` and `settings.gradle` files must
+*not* be pushed to the remote repository as they can only be used for editing
+all three projects in the local IDE.
 
 
 ### Sequential test runs
