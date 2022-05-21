@@ -22,8 +22,6 @@ import de.tum.in.www1.artemis.web.rest.errors.InternalServerErrorException;
 @Service
 public class ExerciseHintService {
 
-    private static final int CODE_HINT_DISPLAY_THRESHOLD = 3;
-
     private final AuthorizationCheckService authCheckService;
 
     private final ExerciseHintRepository exerciseHintRepository;
@@ -142,13 +140,12 @@ public class ExerciseHintService {
     }
 
     /**
-     * TODO: update doc
-     * Calculates all exercise hints that the user can currently activate for a given programming exercise.
-     * Exercise hints for a task will only be shown, if the following conditions are met:
-     * (1) at least ExerciseHintService::CODE_HINT_DISPLAY_THRESHOLD student submissions exist
-     * (2) the result for the first unsuccessful task has not changed for at least three submissions
-     * (3) if there is a previous task: the result for the previous task is successful for at least the last three results
-     * Note: A task is successful, if the feedback for all associated test cases is positive
+     * Returns all exercise hints that the user can currently activate for a given programming exercise.
+     * Exercise hints will be shown for the first task that meets the following conditions:
+     * (1) the subsequent number of the latest submissions the previous task is successful is greater or equal to the hint's threshold
+     * (2) the subsequent number of the latest submissions the current task is unsuccessful is greater or equal to the hint's threshold
+     * If no task matches these conditions, no exercise hints will be returned
+     * Note: A task is successful, if the feedback within the submission is positive for all associated test cases within this task
      *
      * @param exercise The programming exercise
      * @param user     The user
@@ -249,7 +246,7 @@ public class ExerciseHintService {
      * 1. the previous task (if existing) is successful for at least the hint's threshold value
      * 2. the current task is unsuccessful for at least the hint's threshold value
      * @param subsequentNumberSuccessfulSubmissionsForPreviousTask the subsequent number of the latest submissions the previous task is successful
-     * @param subsequentNumberOfUnsuccessfulSubmissionsForCurrentTask the subsequent number of latest submissions the current task is unsuccessful
+     * @param subsequentNumberOfUnsuccessfulSubmissionsForCurrentTask the subsequent number of the latest submissions the current task is unsuccessful
      * @param taskHints all exercise hints in current tasks
      * @return the available exercise hints
      */
@@ -258,12 +255,12 @@ public class ExerciseHintService {
         Set<ExerciseHint> availableHintsForTask = new HashSet<>();
         for (ExerciseHint hint : taskHints) {
             // condition 1
-            if (subsequentNumberSuccessfulSubmissionsForPreviousTask.isPresent() && subsequentNumberSuccessfulSubmissionsForPreviousTask.get() < hint.getThreshold()) {
+            if (subsequentNumberSuccessfulSubmissionsForPreviousTask.isPresent() && subsequentNumberSuccessfulSubmissionsForPreviousTask.get() < hint.getDisplayThreshold()) {
                 continue;
             }
 
             // condition 2
-            if (subsequentNumberOfUnsuccessfulSubmissionsForCurrentTask >= hint.getThreshold()) {
+            if (subsequentNumberOfUnsuccessfulSubmissionsForCurrentTask >= hint.getDisplayThreshold()) {
                 availableHintsForTask.add(hint);
             }
         }

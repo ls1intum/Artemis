@@ -135,7 +135,13 @@ public class ExerciseHint extends DomainObject {
         this.userExerciseHintActivations = userExerciseHintActivations;
     }
 
-    public int getThreshold() {
+    /**
+     * Returns a threshold value that defines when this exercise hint is displayed to student participating in a programming exercise.
+     * The algorithm defining if the hint is display is described in {@link de.tum.in.www1.artemis.service.hestia.ExerciseHintService#getAvailableExerciseHints}
+     * Note: This value is currently fixed but planned to be adjustable.
+     * @return the display threshold value
+     */
+    public int getDisplayThreshold() {
         return 3;
     }
 }
