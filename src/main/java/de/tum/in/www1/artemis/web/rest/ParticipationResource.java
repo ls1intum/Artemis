@@ -299,12 +299,12 @@ public class ParticipationResource {
         if (exercise.isExamExercise()) {
             throw new BadRequestAlertException("Cannot set individual due dates for exam exercises", ENTITY_NAME, "examexercise");
         }
-
         if (exercise instanceof QuizExercise) {
             throw new BadRequestAlertException("Cannot set individual due dates for quiz exercises", ENTITY_NAME, "quizexercise");
         }
 
         final List<StudentParticipation> changedParticipations = participationService.updateIndividualDueDates(exercise, participations);
+        participationService.updateLatestIndividualDueDate(exercise, changedParticipations, participations);
         final List<StudentParticipation> updatedParticipations = studentParticipationRepository.saveAllAndFlush(changedParticipations);
 
         if (!updatedParticipations.isEmpty() && exercise instanceof ProgrammingExercise programmingExercise) {

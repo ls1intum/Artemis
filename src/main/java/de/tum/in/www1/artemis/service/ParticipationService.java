@@ -608,6 +608,20 @@ public class ParticipationService {
         return changedParticipations;
     }
 
+    public void updateLatestIndividualDueDate(Exercise exercise, List<StudentParticipation> changedParticipations, List<StudentParticipation> participations) {
+        Optional<ZonedDateTime> latestIndividualDueDate = changedParticipations.stream().map(Participation::getIndividualDueDate).filter(Objects::nonNull)
+                .max(Comparator.naturalOrder());
+        if (latestIndividualDueDate.isPresent() && latestIndividualDueDate.get().isAfter(exercise.getLatestIndividualDueDate())) {
+            exercise.setLatestIndividualDueDate(latestIndividualDueDate.get());
+            exerciseRepository.save(exercise);
+        }
+        else if (latestIndividualDueDate.isEmpty() && exercise.getLatestIndividualDueDate() != null) {
+            latestIndividualDueDate = participations.stream().map(Participation::getIndividualDueDate).filter(Objects::nonNull).max(Comparator.naturalOrder());
+            exercise.setLatestIndividualDueDate(latestIndividualDueDate.orElse(null));
+            exerciseRepository.save(exercise);
+        }
+    }
+
     /**
      * Delete the participation by participationId.
      *

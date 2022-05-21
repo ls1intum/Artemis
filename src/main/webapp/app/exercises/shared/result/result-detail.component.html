@@ -5,7 +5,9 @@
 <div class="modal-body position-relative" id="result-detail-body">
     <!-- Message, if defined -->
     <div *ngIf="messageKey" class="mb-3"><h6 [innerHTML]="messageKey | artemisTranslate"></h6></div>
-    <div *ngIf="showMissingAutomaticFeedbackInformation" class="mb-3"><h6 [innerHTML]="'artemisApp.result.afterDueDateFeedbackHidden' | artemisTranslate"></h6></div>
+    <div *ngIf="showMissingAutomaticFeedbackInformation" class="mb-3">
+        <h6 [innerHTML]="'artemisApp.result.afterDueDateFeedbackHidden' | artemisTranslate: { date: exercise!.latestIndividualDueDate }"></h6>
+    </div>
     <!-- Loading state -->
     <div *ngIf="isLoading; else feedbackContainer" class="text-muted d-flex justify-content-center" id="result-detail-spinner">
         <fa-icon [spin]="true" size="lg" [icon]="faCircleNotch"></fa-icon>

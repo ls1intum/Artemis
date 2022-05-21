@@ -91,6 +91,7 @@ export class ResultComponent implements OnInit, OnChanges {
     // make constants available to html for comparison
     readonly ResultTemplateStatus = ResultTemplateStatus;
     readonly MissingResultInfo = MissingResultInfo;
+    readonly ParticipationType = ParticipationType;
     readonly roundScoreSpecifiedByCourseSettings = roundValueSpecifiedByCourseSettings;
     readonly getCourseFromExercise = getCourseFromExercise;
 
@@ -104,7 +105,6 @@ export class ResultComponent implements OnInit, OnChanges {
     @Input() missingResultInfo = MissingResultInfo.NONE;
     @Input() exercise?: Exercise;
 
-    ParticipationType = ParticipationType;
     textColorClass: string;
     hasFeedback: boolean;
     resultIconClass: IconProp;
@@ -371,7 +371,8 @@ export class ResultComponent implements OnInit, OnChanges {
         componentInstance.showMissingAutomaticFeedbackInformation =
             this.result?.assessmentType === AssessmentType.AUTOMATIC &&
             this.exercise?.type === ExerciseType.PROGRAMMING &&
-            hasExerciseDueDatePassed(this.exercise, this.participation);
+            hasExerciseDueDatePassed(this.exercise, this.participation) &&
+            dayjs().isBefore(this.exercise.latestIndividualDueDate);
     }
 
     /**
