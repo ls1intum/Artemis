@@ -455,6 +455,11 @@
         },
         "examMonitoring": {
             "title": "Exam Monitoring",
+            "header": {
+                "title": "Title",
+                "start": "Start",
+                "end": "End"
+            },
             "menu": {
                 "overview": "Overview",
                 "exercises": "Exercises",

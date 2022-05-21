@@ -454,6 +454,11 @@
         },
         "examMonitoring": {
             "title": "Klausurüberwachung",
+            "header": {
+                "title": "Titel",
+                "start": "Start",
+                "end": "Ende"
+            },
             "menu": {
                 "overview": "Übersicht",
                 "exercises": "Aufgaben",

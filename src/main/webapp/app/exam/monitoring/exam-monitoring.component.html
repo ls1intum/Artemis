@@ -4,7 +4,18 @@
         <div class="course-info-bar">
             <div class="row">
                 <div class="col general-info">
-                    <h3 class="fw-medium">{{ exam.title }}</h3>
+                    <h3 class="fw-medium" jhiTranslate="artemisApp.examMonitoring.title"></h3>
+                    <div class="pt-2 row">
+                        <span class="fs-6"
+                            ><b>{{ 'artemisApp.examMonitoring.header.title' | artemisTranslate }}:</b> {{ exam.title }}</span
+                        >
+                        <span class="fs-6"
+                            ><b>{{ 'artemisApp.examMonitoring.header.start' | artemisTranslate }}:</b> {{ exam.startDate | artemisDate }}</span
+                        >
+                        <span class="fs-6"
+                            ><b>{{ 'artemisApp.examMonitoring.header.end' | artemisTranslate }}:</b> {{ exam.endDate | artemisDate }}</span
+                        >
+                    </div>
                 </div>
             </div>
         </div>
