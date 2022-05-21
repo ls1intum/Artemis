@@ -17,12 +17,10 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
 import de.tum.in.www1.artemis.domain.enumeration.Visibility;
+import de.tum.in.www1.artemis.domain.hestia.ExerciseHint;
 import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseTask;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
-import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
-import de.tum.in.www1.artemis.repository.ProgrammingSubmissionRepository;
-import de.tum.in.www1.artemis.repository.ResultRepository;
-import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.repository.hestia.ExerciseHintRepository;
 import de.tum.in.www1.artemis.repository.hestia.UserExerciseHintActivationRepository;
 import de.tum.in.www1.artemis.service.hestia.ExerciseHintService;
@@ -54,9 +52,14 @@ public class ExerciseHintServiceTest extends AbstractSpringIntegrationBambooBitb
     @Autowired
     private UserExerciseHintActivationRepository userExerciseHintActivationRepository;
 
+    @Autowired
+    private ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository;
+
     private ProgrammingExercise exercise;
 
     private List<ProgrammingExerciseTask> sortedTasks;
+
+    private List<ExerciseHint> hints;
 
     private User student;
 
@@ -72,12 +75,20 @@ public class ExerciseHintServiceTest extends AbstractSpringIntegrationBambooBitb
         student = userRepository.getUserWithGroupsAndAuthorities("student1");
         database.changeUser("student1");
 
+        programmingExerciseTestCaseRepository.saveAll(programmingExerciseTestCaseRepository.findAll().stream().peek(testCase -> testCase.setActive(true)).toList());
         exercise = exerciseRepository.findAll().get(0);
         exercise = database.loadProgrammingExerciseWithEagerReferences(exercise);
         database.addHintsToExercise(exercise);
         database.addTasksToProgrammingExercise(exercise);
 
         sortedTasks = programmingExerciseTaskService.getSortedTasks(exercise);
+
+        hints = exerciseHintRepository.findAll();
+        hints.get(0).setProgrammingExerciseTask(sortedTasks.get(0));
+        hints.get(1).setProgrammingExerciseTask(sortedTasks.get(1));
+        hints.get(2).setProgrammingExerciseTask(sortedTasks.get(2));
+        exerciseHintRepository.saveAll(hints);
+
         studentParticipation = database.addStudentParticipationForProgrammingExercise(exercise, student.getLogin());
     }
 
@@ -87,22 +98,20 @@ public class ExerciseHintServiceTest extends AbstractSpringIntegrationBambooBitb
     }
 
     @Test
-    public void testGetAvailableExerciseHints1() {
-        var hint = exerciseHintRepository.findAll().stream().findFirst().orElseThrow();
-        hint.setProgrammingExerciseTask(sortedTasks.get(0));
-        exerciseHintRepository.save(hint);
-        addResultWithFailedTestCases(exercise.getTestCases());
-        addResultWithFailedTestCases(exercise.getTestCases());
-        addResultWithFailedTestCases(exercise.getTestCases());
+    public void testGetAvailableExerciseHintsEmpty1() {
         var availableExerciseHints = exerciseHintService.getAvailableExerciseHints(exercise, student);
-        assertThat(availableExerciseHints).containsExactly(hint);
+        assertThat(availableExerciseHints).isEmpty();
     }
 
     @Test
-    public void testGetAvailableExerciseHints2() {
-        var hint = exerciseHintRepository.findAll().stream().findFirst().orElseThrow();
-        hint.setProgrammingExerciseTask(sortedTasks.get(0));
-        exerciseHintRepository.save(hint);
+    public void testGetAvailableExerciseHintsEmpty2() {
+        addResultWithFailedTestCases(exercise.getTestCases());
+        var availableExerciseHints = exerciseHintService.getAvailableExerciseHints(exercise, student);
+        assertThat(availableExerciseHints).isEmpty();
+    }
+
+    @Test
+    public void testGetAvailableExerciseHintsEmpty3() {
         addResultWithFailedTestCases(exercise.getTestCases());
         addResultWithSuccessfulTestCases(exercise.getTestCases());
         addResultWithSuccessfulTestCases(exercise.getTestCases());
@@ -111,25 +120,26 @@ public class ExerciseHintServiceTest extends AbstractSpringIntegrationBambooBitb
     }
 
     @Test
-    public void testGetAvailableExerciseHints3() {
-        var hints = exerciseHintRepository.findAll();
-        hints.get(0).setProgrammingExerciseTask(sortedTasks.get(0));
-        hints.get(1).setProgrammingExerciseTask(sortedTasks.get(1));
-        exerciseHintRepository.saveAll(hints);
-        addResultWithFailedTestCases(exercise.getTestCases());
-        addResultWithSuccessfulTestCases(sortedTasks.get(0).getTestCases());
-        addResultWithSuccessfulTestCases(sortedTasks.get(0).getTestCases());
-        addResultWithSuccessfulTestCases(sortedTasks.get(0).getTestCases());
+    public void testGetAvailableExerciseHintsEmpty4() {
+        addResultWithSuccessfulTestCases(sortedTasks.get(1).getTestCases());
+        addResultWithSuccessfulTestCases(sortedTasks.get(1).getTestCases());
+        addResultWithSuccessfulTestCases(sortedTasks.get(1).getTestCases());
         var availableExerciseHints = exerciseHintService.getAvailableExerciseHints(exercise, student);
-        assertThat(availableExerciseHints).containsExactly(hints.get(1));
+        assertThat(availableExerciseHints).isEmpty();
     }
 
     @Test
-    public void testGetAvailableExerciseHints4() {
-        var hints = exerciseHintRepository.findAll();
-        hints.get(0).setProgrammingExerciseTask(sortedTasks.get(0));
-        hints.get(1).setProgrammingExerciseTask(sortedTasks.get(1));
-        exerciseHintRepository.saveAll(hints);
+    public void testGetAvailableExerciseHints1() {
+        addResultWithFailedTestCases(exercise.getTestCases());
+        addResultWithFailedTestCases(exercise.getTestCases());
+        addResultWithFailedTestCases(exercise.getTestCases());
+        var availableExerciseHints = exerciseHintService.getAvailableExerciseHints(exercise, student);
+        assertThat(availableExerciseHints).containsExactly(hints.get(0));
+    }
+
+    @Test
+    public void testGetAvailableExerciseHints3() {
+        addResultWithFailedTestCases(exercise.getTestCases());
         addResultWithSuccessfulTestCases(sortedTasks.get(0).getTestCases());
         addResultWithSuccessfulTestCases(sortedTasks.get(0).getTestCases());
         addResultWithSuccessfulTestCases(sortedTasks.get(0).getTestCases());
