@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.domain.hestia;
 
+import java.util.HashSet;
 import java.util.Set;
 
 import javax.persistence.*;
@@ -48,7 +49,7 @@ public class ExerciseHint extends DomainObject {
 
     @OneToMany(mappedBy = "exerciseHint", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
     @JsonIgnore
-    private Set<UserExerciseHintActivation> userExerciseHintActivations;
+    private Set<UserExerciseHintActivation> userExerciseHintActivations = new HashSet<>();
 
     @Transient
     private Integer currentUserRatingTransient;
