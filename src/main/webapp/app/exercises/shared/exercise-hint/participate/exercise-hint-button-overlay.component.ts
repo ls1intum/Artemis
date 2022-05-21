@@ -3,6 +3,7 @@ import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { ExerciseHint } from 'app/entities/hestia/exercise-hint.model';
 import { faCircleQuestion } from '@fortawesome/free-solid-svg-icons';
 import { ExerciseHintStudentDialogComponent } from 'app/exercises/shared/exercise-hint/participate/exercise-hint-student-dialog.component';
+import cloneDeep from 'lodash-es/cloneDeep';
 
 @Component({
     selector: 'jhi-exercise-hint-button-overlay',
@@ -25,9 +26,9 @@ export class ExerciseHintButtonOverlayComponent {
     openModal() {
         this.ngbModalRef = this.modalService.open(ExerciseHintStudentDialogComponent as Component, { size: 'lg', backdrop: 'static' });
         this.ngbModalRef.componentInstance.onHintActivated = this.onHintActivated;
-        this.ngbModalRef.componentInstance.activatedExerciseHints = this.activatedExerciseHints;
-        // do not display available hints twice if they have already been activated
-        this.ngbModalRef.componentInstance.availableExerciseHints = this.availableExerciseHints;
+        // cloning is required that the lists not change while modal is open
+        this.ngbModalRef.componentInstance.activatedExerciseHints = cloneDeep(this.activatedExerciseHints);
+        this.ngbModalRef.componentInstance.availableExerciseHints = cloneDeep(this.availableExerciseHints);
         this.ngbModalRef.result.then(
             () => {
                 this.ngbModalRef = undefined;
