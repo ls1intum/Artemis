@@ -214,7 +214,8 @@ public class ProgrammingPlagiarismDetectionService {
      * @param textPlagiarismResult the plagiarism result to save
      */
     private void limitAndSavePlagiarismResult(TextPlagiarismResult textPlagiarismResult) {
-        textPlagiarismResult.sortAndLimit(500);
+        // TODO: limit the amount temporarily because of database issues
+        textPlagiarismResult.sortAndLimit(100);
         log.info("Limited number of comparisons to {} to avoid performance issues when saving to database", textPlagiarismResult.getComparisons().size());
         plagiarismResultRepository.savePlagiarismResultAndRemovePrevious(textPlagiarismResult);
     }
