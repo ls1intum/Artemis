@@ -1,0 +1,23 @@
+<div class="row align-items-center mb-2 mt-2">
+    <div class="card unit-card">
+        <div class="card-header unit-card-header row align-content-center" (click)="handleCollapse($event)">
+            <h5 class="m-0 fw-medium">
+                <fa-icon class="col-auto me-2" [icon]="faVideo" [ngbTooltip]="'artemisApp.onlineUnit.tooltip' | artemisTranslate"> </fa-icon>
+                {{ onlineUnit?.name ? onlineUnit.name : '' }}
+                <span
+                    *ngIf="!onlineUnit?.visibleToStudents"
+                    class="badge bg-warning ms-2"
+                    ngbTooltip="{{ 'artemisApp.onlineUnit.notReleasedTooltip' | artemisTranslate }} {{ onlineUnit?.releaseDate | artemisDate }}"
+                >
+                    {{ 'artemisApp.courseOverview.exerciseList.notReleased' | artemisTranslate }}
+                </span>
+            </h5>
+        </div>
+        <div class="card-body unit-card-body" [ngbCollapse]="isCollapsed">
+            <div class="ratio ratio-16x9" *ngIf="!isCollapsed">
+                <iframe id="onlineFrame" class="rounded" [src]="onlineUrl | safeResourceUrl" allow="fullscreen"></iframe>
+            </div>
+            {{ onlineUnit?.description }}
+        </div>
+    </div>
+</div>

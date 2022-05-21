@@ -1,23 +1,23 @@
 import dayjs from 'dayjs/esm';
 import { Component, EventEmitter, Input, OnChanges, OnInit, Output } from '@angular/core';
 import { AbstractControl, FormBuilder, FormGroup, Validators } from '@angular/forms';
-import urlParser from 'js-video-url-parser';
 import { faArrowLeft } from '@fortawesome/free-solid-svg-icons';
 
-export interface VideoUnitFormData {
+export interface OnlineUnitFormData {
     name?: string;
     description?: string;
     releaseDate?: dayjs.Dayjs;
     source?: string;
 }
 
-function videoUrlValidator(control: AbstractControl) {
+function onlineUrlValidator(control: AbstractControl) {
     if (control.value === undefined || control.value === null || control.value === '') {
         return null;
     }
 
-    const videoInfo = urlParser.parse(control.value);
-    return videoInfo ? null : { invalidVideoUrl: true };
+    // const onlineInfo = urlParser.parse(control.value);
+    // return onlineInfo ? null : { invalidOnlineUrl: true };
+    return null;
 }
 
 function urlValidator(control: AbstractControl) {
@@ -40,21 +40,21 @@ function urlValidator(control: AbstractControl) {
 }
 
 @Component({
-    selector: 'jhi-video-unit-form',
-    templateUrl: './video-unit-form.component.html',
+    selector: 'jhi-online-unit-form',
+    templateUrl: './online-unit-form.component.html',
 })
-export class VideoUnitFormComponent implements OnInit, OnChanges {
+export class OnlineUnitFormComponent implements OnInit, OnChanges {
     @Input()
-    formData: VideoUnitFormData;
+    formData: OnlineUnitFormData;
     @Input()
     isEditMode = false;
 
     @Output()
-    formSubmitted: EventEmitter<VideoUnitFormData> = new EventEmitter<VideoUnitFormData>();
+    formSubmitted: EventEmitter<OnlineUnitFormData> = new EventEmitter<OnlineUnitFormData>();
     form: FormGroup;
 
     urlValidator = urlValidator;
-    videoUrlValidator = videoUrlValidator;
+    onlineUrlValidator = onlineUrlValidator;
 
     // Icons
     faArrowLeft = faArrowLeft;
@@ -101,17 +101,17 @@ export class VideoUnitFormComponent implements OnInit, OnChanges {
             description: [undefined, [Validators.maxLength(1000)]],
             releaseDate: [undefined],
             source: [undefined, [Validators.required, this.urlValidator]],
-            urlHelper: [undefined, this.videoUrlValidator],
+            urlHelper: [undefined, this.onlineUrlValidator],
         });
     }
 
-    private setFormValues(formData: VideoUnitFormData) {
+    private setFormValues(formData: OnlineUnitFormData) {
         this.form.patchValue(formData);
     }
 
     submitForm() {
-        const videoUnitFormData: VideoUnitFormData = { ...this.form.value };
-        this.formSubmitted.emit(videoUnitFormData);
+        const onlineUnitFormData: OnlineUnitFormData = { ...this.form.value };
+        this.formSubmitted.emit(onlineUnitFormData);
     }
 
     get isSubmitPossible() {
@@ -126,15 +126,15 @@ export class VideoUnitFormComponent implements OnInit, OnChanges {
         }
     }
 
-    setEmbeddedVideoUrl(event: any) {
+    setEmbeddedOnlineUrl(event: any) {
         event.stopPropagation();
-        this.sourceControl!.setValue(this.extractEmbeddedUrl(this.urlHelperControl!.value));
+        // this.sourceControl!.setValue(this.extractEmbeddedUrl(this.urlHelperControl!.value));
     }
 
-    extractEmbeddedUrl(videoUrl: string) {
-        return urlParser.create({
-            videoInfo: urlParser.parse(videoUrl)!,
+    extractEmbeddedUrl(onlineUrl: string) {
+        /*return urlParser.create({
+            onlineInfo: urlParser.parse(onlineUrl)!,
             format: 'embed',
-        });
+        });*/
     }
 }
