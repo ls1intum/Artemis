@@ -3,7 +3,8 @@
                    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
                    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.4.xsd">
     <!--
-    This changeset ...
+    This changeset adds the table for activating exercise hints for students.
+    It also adds the description column to the exercise_hint table
     -->
     <changeSet author="timor-morrien" id="20220519170000">
         <createTable tableName="user_exercise_hint_activation">
