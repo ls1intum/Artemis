@@ -53,7 +53,7 @@ public class ProgrammingExerciseTaskService {
      * If there is already a task with the same test cases as a new one, but with a different name the existing one will be renamed.
      *
      * @param exercise The programming exercise to extract the tasks from
-     * @return
+     * @return The current tasks of the exercise
      */
     public Set<ProgrammingExerciseTask> updateTasksFromProblemStatement(ProgrammingExercise exercise) {
         var previousTasks = programmingExerciseTaskRepository.findByExerciseIdWithTestCases(exercise.getId());
@@ -116,6 +116,7 @@ public class ProgrammingExerciseTaskService {
     /**
      * Returns the extracted tasks and test cases from the problem statement markdown and
      * maps the tasks to the corresponding test cases for a programming exercise
+     *
      * @param exercise the exercise for which the tasks and test cases should be extracted
      * @return the extracted tasks with the corresponding test cases
      */
