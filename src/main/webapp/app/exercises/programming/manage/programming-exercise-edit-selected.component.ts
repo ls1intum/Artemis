@@ -78,6 +78,7 @@ export class ProgrammingExerciseEditSelectedComponent implements OnInit {
         programmingExercise.buildAndTestStudentSubmissionsAfterDueDate = this.newProgrammingExercise.buildAndTestStudentSubmissionsAfterDueDate;
         programmingExercise.assessmentType = this.newProgrammingExercise.assessmentType;
         programmingExercise.assessmentDueDate = this.newProgrammingExercise.assessmentDueDate;
+        programmingExercise.exampleSolutionPublicationDate = this.newProgrammingExercise.exampleSolutionPublicationDate;
         return programmingExercise;
     }
 
