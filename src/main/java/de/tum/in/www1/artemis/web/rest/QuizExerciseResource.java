@@ -597,11 +597,13 @@ public class QuizExerciseResource {
             log.debug("Either the courseId or exerciseGroupId must be set for an import");
             throw new BadRequestAlertException("Either the courseId or exerciseGroupId must be set for an import", ENTITY_NAME, "noCourseIdOrExerciseGroupId");
         }
+
+        // Valid exercises have set either a course or an exerciseGroup
         importedExercise.checkCourseAndExerciseGroupExclusivity(ENTITY_NAME);
-        final var user = userRepository.getUserWithGroupsAndAuthorities();
-        final var originalQuizExercise = quizExerciseRepository.findByIdElseThrow(sourceExerciseId);
-        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, importedExercise, user);
-        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, originalQuizExercise, user);
+
+        // Retrieve the course over the exerciseGroup or the given courseId
+        Course course = courseService.retrieveCourseOverExerciseGroupOrCourseId(importedExercise);
+        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, null);
 
         if (!importedExercise.isValid()) {
             // TODO: improve error message and tell the client why the quiz is invalid (also see above in create Quiz)
@@ -611,10 +613,10 @@ public class QuizExerciseResource {
         // validates general settings: points, dates
         importedExercise.validateGeneralSettings();
 
+        final var originalQuizExercise = quizExerciseRepository.findByIdElseThrow(sourceExerciseId);
         final var newQuizExercise = quizExerciseImportService.importQuizExercise(originalQuizExercise, importedExercise);
-        quizExerciseRepository.save(newQuizExercise);
         return ResponseEntity.created(new URI("/api/quiz-exercises/" + newQuizExercise.getId()))
-            .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, newQuizExercise.getId().toString())).body(newQuizExercise);
+                .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, newQuizExercise.getId().toString())).body(newQuizExercise);
     }
 
     private void setQuizBatches(User user, QuizExercise quizExercise) {

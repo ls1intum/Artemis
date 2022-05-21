@@ -1,6 +1,6 @@
 package de.tum.in.www1.artemis.service;
 
-import java.util.HashMap;
+import java.util.*;
 
 import javax.validation.constraints.NotNull;
 
@@ -41,6 +41,7 @@ public class QuizExerciseImportService extends ExerciseImportService {
         log.debug("Creating a new Exercise based on exercise {}", templateExercise);
         QuizExercise newExercise = copyQuizExerciseBasis(importedExercise);
         copyQuizQuestions(importedExercise, newExercise);
+        copyQuizBatches(importedExercise, newExercise);
         return quizExerciseService.save(newExercise);
     }
 
@@ -125,5 +126,23 @@ public class QuizExerciseImportService extends ExerciseImportService {
             quizQuestion.setExercise(newExercise);
         }
         newExercise.setQuizQuestions(importedExercise.getQuizQuestions());
+    }
+
+    /** This helper method copies all batches of the {@code importedExercise} into a new exercise.
+     *
+     * @param importedExercise The exercise from which to copy the batches
+     * @param newExercise The exercise to which the batches are copied
+     */
+    @NotNull
+    private void copyQuizBatches(QuizExercise importedExercise, QuizExercise newExercise) {
+        log.debug("Copying the QuizBatches to new QuizExercise: {}", newExercise);
+
+        Set<QuizBatch> quizBatchList = new HashSet<>();
+        for (QuizBatch batch : importedExercise.getQuizBatches()) {
+            batch.setId(null);
+            batch.setQuizExercise(newExercise);
+            quizBatchList.add(batch);
+        }
+        newExercise.setQuizBatches(quizBatchList);
     }
 }
