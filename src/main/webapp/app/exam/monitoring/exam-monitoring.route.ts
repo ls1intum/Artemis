@@ -2,8 +2,14 @@ import { Routes } from '@angular/router';
 import { Authority } from 'app/shared/constants/authority.constants';
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
 import { ExamMonitoringComponent } from 'app/exam/monitoring/exam-monitoring.component';
+import { MonitoringOverviewComponent } from 'app/exam/monitoring/subpages/overview/monitoring-overview.component';
+import { MonitoringExercisesComponent } from 'app/exam/monitoring/subpages/exercise/monitoring-exercises.component';
 
 export const examMonitoringRoute: Routes = [
+    {
+        path: '',
+        redirectTo: 'overview',
+    },
     {
         path: '',
         component: ExamMonitoringComponent,
@@ -12,6 +18,26 @@ export const examMonitoringRoute: Routes = [
             pageTitle: 'artemisApp.examMonitoring.title',
         },
         canActivate: [UserRouteAccessService],
+        children: [
+            {
+                path: 'overview',
+                component: MonitoringOverviewComponent,
+                data: {
+                    authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
+                    pageTitle: 'artemisApp.examMonitoring.title',
+                },
+                canActivate: [UserRouteAccessService],
+            },
+            {
+                path: 'exercises',
+                component: MonitoringExercisesComponent,
+                data: {
+                    authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
+                    pageTitle: 'artemisApp.examMonitoring.title',
+                },
+                canActivate: [UserRouteAccessService],
+            },
+        ],
     },
 ];
 

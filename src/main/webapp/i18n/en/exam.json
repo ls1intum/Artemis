@@ -454,7 +454,16 @@
             }
         },
         "examMonitoring": {
-            "title": "Exam Monitoring"
+            "title": "Exam Monitoring",
+            "menu": {
+                "overview": "Overview",
+                "exercises": "Exercises",
+                "students": "Students",
+                "submissions": "Submissions",
+                "sessions": "Sessions",
+                "activity-log": "Activity log",
+                "summary": "Summary"
+            }
         },
         "studentExamDetail": {
             "studentExam": "Student exam ({{ examTitle }})",

@@ -453,7 +453,16 @@
             }
         },
         "examMonitoring": {
-            "title": "Klausurüberwachung"
+            "title": "Klausurüberwachung",
+            "menu": {
+                "overview": "Übersicht",
+                "exercises": "Aufgaben",
+                "students": "Studenten",
+                "submissions": "Abgaben",
+                "sessions": "Sitzungen",
+                "activity-log": "Aktivitäten",
+                "summary": "Zusammenfassung"
+            }
         },
         "studentExamDetail": {
             "studentExam": "Klausur ({{ examTitle }})",

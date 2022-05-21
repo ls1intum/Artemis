@@ -1,0 +1,24 @@
+<div>
+    <!-- Exam Monitoring info bar -->
+    <div class="course-info-bar">
+        <div class="row">
+            <div class="col general-info">
+                <h3 class="fw-medium">{{ exam.title }}</h3>
+            </div>
+        </div>
+    </div>
+
+    <!-- Exam Monitoring sections -->
+    <div class="tab-bar tab-bar-overview" id="monitoring-tab-bar">
+        <div class="col-12" [class.no-indent]="!controlConfiguration?.useIndentation" [class.col-lg-8]="controlConfiguration?.useIndentation">
+            <div>
+                <div *ngFor="let section of this.sections" [id]="'monitoring-' + section + '-tab'" class="tab-item" [routerLink]="section" routerLinkActive="active">
+                    <b [jhiTranslate]="'artemisApp.examMonitoring.menu.' + section">{{ section }}</b>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="position-relative">
+        <router-outlet (activate)="onSubRouteActivate($event)" (deactivate)="onSubRouteDeactivate()"></router-outlet>
+    </div>
+</div>

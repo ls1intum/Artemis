@@ -2,7 +2,7 @@ import { AfterViewInit, ChangeDetectorRef, Component, EmbeddedViewRef, OnDestroy
 import { Course } from 'app/entities/course.model';
 import { CourseManagementService } from '../course/manage/course-management.service';
 import { ActivatedRoute } from '@angular/router';
-import { Subject, Subscription } from 'rxjs';
+import { Subscription } from 'rxjs';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { CourseScoreCalculationService } from 'app/overview/course-score-calculation.service';
 import { CachingStrategy } from 'app/shared/image/secured-image.component';
@@ -16,22 +16,14 @@ import { ArtemisServerDateService } from 'app/shared/server-date.service';
 import { AlertService, AlertType } from 'app/core/util/alert.service';
 import { faCircleNotch, faSync } from '@fortawesome/free-solid-svg-icons';
 import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
+import { BarControlConfiguration, BarControlConfigurationProvider } from 'app/overview/tab-bar';
 
 const DESCRIPTION_READ = 'isDescriptionRead';
-
-export interface BarControlConfiguration {
-    subject?: Subject<TemplateRef<any>>;
-    useIndentation: boolean;
-}
-
-export interface BarControlConfigurationProvider {
-    controlConfiguration: BarControlConfiguration;
-}
 
 @Component({
     selector: 'jhi-course-overview',
     templateUrl: './course-overview.component.html',
-    styleUrls: ['course-overview.scss'],
+    styleUrls: ['course-overview.scss', './tab-bar/tab-bar.scss'],
 })
 export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit {
     CachingStrategy = CachingStrategy;
