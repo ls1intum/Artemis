@@ -120,8 +120,8 @@ public class ExerciseHintServiceTest extends AbstractSpringIntegrationBambooBitb
         hints.get(1).setProgrammingExerciseTask(sortedTasks.get(1));
         exerciseHintRepository.saveAll(hints);
         addResultWithFailedTestCases(exercise.getTestCases());
-        addResultWithFailedTestCases(exercise.getTestCases());
-        addResultWithFailedTestCases(sortedTasks.get(0).getTestCases());
+        addResultWithSuccessfulTestCases(sortedTasks.get(0).getTestCases());
+        addResultWithSuccessfulTestCases(sortedTasks.get(0).getTestCases());
         var availableExerciseHints = exerciseHintService.getAvailableExerciseHints(exercise, student);
         assertThat(availableExerciseHints).containsExactly(hints.get(1));
     }
