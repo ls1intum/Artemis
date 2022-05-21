@@ -230,7 +230,7 @@ public class ExerciseHintService {
         var allParticipationsForExercise = studentParticipationRepository.findByExerciseIdWithEagerSubmissionsResultAssessorFeedbacks(exercise.getId());
         var currentStudentParticipation = allParticipationsForExercise.stream().filter(participation -> participation.getParticipant().getParticipants().contains(student))
                 .findFirst().orElseThrow(() -> new InternalServerErrorException("No user"));
-        return currentStudentParticipation.getSubmissions().stream().sorted(Comparator.comparing(Submission::getSubmissionDate)).toList();
+        return currentStudentParticipation.getSubmissions().stream().sorted(Comparator.comparing(Submission::getSubmissionDate, Comparator.reverseOrder())).toList();
     }
 
     private int subsequentNumberOfSuccessfulSubmissionsForTask(List<Submission> submissions, ProgrammingExerciseTask task, boolean successful) {
