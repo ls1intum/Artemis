@@ -121,9 +121,10 @@ public class ExerciseHintServiceTest extends AbstractSpringIntegrationBambooBitb
 
     @Test
     public void testGetAvailableExerciseHintsEmpty4() {
-        addResultWithSuccessfulTestCases(sortedTasks.get(2).getTestCases());
-        addResultWithSuccessfulTestCases(sortedTasks.get(2).getTestCases());
-        addResultWithSuccessfulTestCases(sortedTasks.get(2).getTestCases());
+        addResultWithSuccessfulTestCases(sortedTasks.get(0).getTestCases());
+        addResultWithSuccessfulTestCases(sortedTasks.get(0).getTestCases());
+        addResultWithFailedTestCases(sortedTasks.get(2).getTestCases());
+        addResultWithFailedTestCases(sortedTasks.get(2).getTestCases());
         var availableExerciseHints = exerciseHintService.getAvailableExerciseHints(exercise, student);
         assertThat(availableExerciseHints).isEmpty();
     }
@@ -152,7 +153,84 @@ public class ExerciseHintServiceTest extends AbstractSpringIntegrationBambooBitb
         addResultWithSuccessfulTestCases(sortedTasks.get(1).getTestCases());
         addResultWithSuccessfulTestCases(sortedTasks.get(1).getTestCases());
         var availableExerciseHints = exerciseHintService.getAvailableExerciseHints(exercise, student);
-        assertThat(availableExerciseHints).containsExactly(hints.get(2));
+        assertThat(availableExerciseHints).containsExactly(hints.get(0));
+    }
+
+    @Test
+    public void testGetAvailableExerciseHints4() {
+        addResultWithSuccessfulTestCases(sortedTasks.get(2).getTestCases());
+        addResultWithSuccessfulTestCases(sortedTasks.get(2).getTestCases());
+        addResultWithSuccessfulTestCases(sortedTasks.get(2).getTestCases());
+        var availableExerciseHints = exerciseHintService.getAvailableExerciseHints(exercise, student);
+        assertThat(availableExerciseHints).containsExactly(hints.get(0));
+    }
+
+    @Test
+    public void testGetAvailableExerciseHints5() {
+        addResultWithSuccessfulTestCases(sortedTasks.get(1).getTestCases());
+        addResultWithSuccessfulTestCases(sortedTasks.get(2).getTestCases());
+        addResultWithSuccessfulTestCases(sortedTasks.get(1).getTestCases());
+        var availableExerciseHints = exerciseHintService.getAvailableExerciseHints(exercise, student);
+        assertThat(availableExerciseHints).containsExactly(hints.get(0));
+    }
+
+    @Test
+    public void testActivateExerciseHint1() {
+        addResultWithFailedTestCases(exercise.getTestCases());
+        addResultWithFailedTestCases(exercise.getTestCases());
+        addResultWithFailedTestCases(exercise.getTestCases());
+
+        assertThat(exerciseHintService.activateHint(hints.get(0), student)).isTrue();
+        assertThat(exerciseHintService.activateHint(hints.get(1), student)).isFalse();
+        assertThat(exerciseHintService.activateHint(hints.get(2), student)).isFalse();
+        assertThat(userExerciseHintActivationRepository.findAll()).hasSize(1).anyMatch(ueha -> ueha.getUser().equals(student) && ueha.getExerciseHint().equals(hints.get(0)));
+    }
+
+    @Test
+    public void testActivateExerciseHint2() {
+        addResultWithSuccessfulTestCases(sortedTasks.get(0).getTestCases());
+        addResultWithSuccessfulTestCases(sortedTasks.get(0).getTestCases());
+        addResultWithSuccessfulTestCases(sortedTasks.get(0).getTestCases());
+
+        assertThat(exerciseHintService.activateHint(hints.get(0), student)).isFalse();
+        assertThat(exerciseHintService.activateHint(hints.get(1), student)).isTrue();
+        assertThat(exerciseHintService.activateHint(hints.get(2), student)).isFalse();
+        assertThat(userExerciseHintActivationRepository.findAll()).hasSize(1).anyMatch(ueha -> ueha.getUser().equals(student) && ueha.getExerciseHint().equals(hints.get(1)));
+    }
+
+    @Test
+    public void testActivateExerciseHint3() {
+        addResultWithFailedTestCases(sortedTasks.get(2).getTestCases());
+        addResultWithFailedTestCases(sortedTasks.get(2).getTestCases());
+        addResultWithFailedTestCases(sortedTasks.get(2).getTestCases());
+
+        assertThat(exerciseHintService.activateHint(hints.get(0), student)).isFalse();
+        assertThat(exerciseHintService.activateHint(hints.get(1), student)).isFalse();
+        assertThat(exerciseHintService.activateHint(hints.get(2), student)).isTrue();
+        assertThat(userExerciseHintActivationRepository.findAll()).hasSize(1).anyMatch(ueha -> ueha.getUser().equals(student) && ueha.getExerciseHint().equals(hints.get(2)));
+    }
+
+    @Test
+    public void testActivateExerciseHint4() {
+        addResultWithSuccessfulTestCases(exercise.getTestCases());
+        addResultWithSuccessfulTestCases(exercise.getTestCases());
+        addResultWithSuccessfulTestCases(exercise.getTestCases());
+
+        assertThat(exerciseHintService.activateHint(hints.get(0), student)).isFalse();
+        assertThat(exerciseHintService.activateHint(hints.get(1), student)).isFalse();
+        assertThat(exerciseHintService.activateHint(hints.get(2), student)).isFalse();
+        assertThat(userExerciseHintActivationRepository.findAll()).isEmpty();
+    }
+
+    @Test
+    public void testActivateExerciseHintTwiceFails() {
+        addResultWithFailedTestCases(exercise.getTestCases());
+        addResultWithFailedTestCases(exercise.getTestCases());
+        addResultWithFailedTestCases(exercise.getTestCases());
+
+        assertThat(exerciseHintService.activateHint(hints.get(0), student)).isTrue();
+        assertThat(exerciseHintService.activateHint(hints.get(0), student)).isFalse();
+        assertThat(userExerciseHintActivationRepository.findAll()).hasSize(1).anyMatch(ueha -> ueha.getUser().equals(student) && ueha.getExerciseHint().equals(hints.get(0)));
     }
 
     private void addResultWithFailedTestCases(Collection<ProgrammingExerciseTestCase> failedTestCases) {

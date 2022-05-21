@@ -113,17 +113,16 @@ public class ExerciseHintService {
             return false;
         }
 
+        // Check if the hint was already activated
+        if (userExerciseHintActivationRepository.findByExerciseHintAndUser(exerciseHint.getId(), user.getId()).isPresent()) {
+            return false;
+        }
+
         var userExerciseHintActivation = new UserExerciseHintActivation();
         userExerciseHintActivation.setExerciseHint(exerciseHint);
         userExerciseHintActivation.setUser(user);
         userExerciseHintActivation.setActivationDate(ZonedDateTime.now());
-        try {
-            userExerciseHintActivationRepository.save(userExerciseHintActivation);
-        }
-        catch (Exception e) {
-            e.printStackTrace();
-            return false;
-        }
+        userExerciseHintActivationRepository.save(userExerciseHintActivation);
         return true;
     }
 

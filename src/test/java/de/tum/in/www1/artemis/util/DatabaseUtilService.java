@@ -3053,6 +3053,7 @@ public class DatabaseUtilService {
         programmingExercise.setTasks(tasks);
         programmingExercise.setProblemStatement(problemStatement.toString());
         programmingExerciseTaskRepository.saveAll(tasks);
+        programmingExerciseRepository.save(programmingExercise);
     }
 
     public void addSolutionEntriesToProgrammingExercise(ProgrammingExercise programmingExercise) {
