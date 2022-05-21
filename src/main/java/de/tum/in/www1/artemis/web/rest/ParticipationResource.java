@@ -304,8 +304,8 @@ public class ParticipationResource {
         }
 
         final List<StudentParticipation> changedParticipations = participationService.updateIndividualDueDates(exercise, participations);
-        participationService.updateLatestIndividualDueDate(exercise, changedParticipations, participations);
         final List<StudentParticipation> updatedParticipations = studentParticipationRepository.saveAllAndFlush(changedParticipations);
+        participationService.updateLatestIndividualDueDate(exercise, changedParticipations);
 
         if (!updatedParticipations.isEmpty() && exercise instanceof ProgrammingExercise programmingExercise) {
             log.info("Updating scheduling for exercise {} (id {}) due to changed individual due dates.", exercise.getTitle(), exercise.getId());

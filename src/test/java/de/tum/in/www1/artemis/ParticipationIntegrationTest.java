@@ -508,11 +508,42 @@ public class ParticipationIntegrationTest extends AbstractSpringIntegrationBambo
         final var participationsToUpdate = new StudentParticipationList((StudentParticipation) submission.getParticipation());
         final var response = request.putWithResponseBodyList(String.format("/api/exercises/%d/participations/update-individual-due-date", exercise.getId()), participationsToUpdate,
                 StudentParticipation.class, HttpStatus.OK);
+        exercise = (FileUploadExercise) exerciseRepo.findByIdElseThrow(exercise.getId());
 
         assertThat(response).hasSize(1);
         assertThat(response.get(0).getIndividualDueDate()).isEqualToIgnoringNanos(submission.getParticipation().getIndividualDueDate());
+        assertThat(exercise.getLatestIndividualDueDate()).isEqualTo(submission.getParticipation().getIndividualDueDate());
 
         verify(programmingExerciseScheduleService, never()).updateScheduling(any());
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void updateLatestIndividualDueDateOfExercise() throws Exception {
+        final var course = database.addCourseWithFileUploadExercise();
+        var exercise = (FileUploadExercise) course.getExercises().stream().findAny().get();
+        exercise.setDueDate(ZonedDateTime.now().plusHours(2));
+        exercise = exerciseRepo.save(exercise);
+
+        var submission1 = database.addFileUploadSubmission(exercise, ModelFactory.generateFileUploadSubmission(true), "student1");
+        submission1.getParticipation().setIndividualDueDate(ZonedDateTime.now().plusDays(1));
+        var submission2 = database.addFileUploadSubmission(exercise, ModelFactory.generateFileUploadSubmission(true), "student2");
+        submission2.getParticipation().setIndividualDueDate(ZonedDateTime.now().plusDays(2));
+
+        var participationsToUpdate = new StudentParticipationList((StudentParticipation) submission1.getParticipation(), (StudentParticipation) submission2.getParticipation());
+        request.putWithResponseBodyList(String.format("/api/exercises/%d/participations/update-individual-due-date", exercise.getId()), participationsToUpdate,
+                StudentParticipation.class, HttpStatus.OK);
+        exercise = (FileUploadExercise) exerciseRepo.findByIdElseThrow(exercise.getId());
+
+        assertThat(exercise.getLatestIndividualDueDate()).isEqualToIgnoringNanos(submission2.getParticipation().getIndividualDueDate());
+
+        submission2.getParticipation().setIndividualDueDate(ZonedDateTime.now().plusHours(3));
+        participationsToUpdate = new StudentParticipationList((StudentParticipation) submission2.getParticipation());
+        request.putWithResponseBodyList(String.format("/api/exercises/%d/participations/update-individual-due-date", exercise.getId()), participationsToUpdate,
+                StudentParticipation.class, HttpStatus.OK);
+        exercise = (FileUploadExercise) exerciseRepo.findByIdElseThrow(exercise.getId());
+
+        assertThat(exercise.getLatestIndividualDueDate()).isEqualToIgnoringNanos(submission1.getParticipation().getIndividualDueDate());
     }
 
     @Test
