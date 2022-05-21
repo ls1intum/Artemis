@@ -14,6 +14,12 @@
 
 .posting-header {
     font-size: x-small;
+
+    .posting-author {
+        font-size: small;
+        font-weight: 500;
+        padding-right: 5px;
+    }
 }
 
 .resolved {
