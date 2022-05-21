@@ -5,7 +5,7 @@ import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { BrowserDynamicTestingModule } from '@angular/platform-browser-dynamic/testing';
 import { DebugElement } from '@angular/core';
 import dayjs from 'dayjs/esm';
-import { Observable, of, Subject, Subscription, throwError } from 'rxjs';
+import { of, Subject, Subscription, throwError } from 'rxjs';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ArtemisTestModule } from '../../test.module';
 import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
@@ -18,7 +18,6 @@ import { ProgrammingExerciseInstructionService } from 'app/exercises/programming
 import { ProgrammingExerciseTaskExtensionWrapper } from 'app/exercises/programming/shared/instructions-render/extensions/programming-exercise-task.extension';
 import { ProgrammingExercisePlantUmlExtensionWrapper } from 'app/exercises/programming/shared/instructions-render/extensions/programming-exercise-plant-uml.extension';
 import { MockProgrammingExerciseParticipationService } from '../../helpers/mocks/service/mock-programming-exercise-participation.service';
-import { HttpResponse } from '@angular/common/http';
 import { triggerChanges } from '../../helpers/utils/general.utils';
 import { LocalStorageService } from 'ngx-webstorage';
 import { Participation } from 'app/entities/participation/participation.model';
@@ -38,9 +37,8 @@ import { MockParticipationWebsocketService } from '../../helpers/mocks/service/m
 import { ExerciseType } from 'app/entities/exercise.model';
 import { MockTranslateService, TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.service';
 import { MockComponent } from 'ng-mocks';
-import { IExerciseHintService, ExerciseHintService } from 'app/exercises/shared/exercise-hint/shared/exercise-hint.service';
+import { ExerciseHintService } from 'app/exercises/shared/exercise-hint/shared/exercise-hint.service';
 import { MockExerciseHintService } from '../../helpers/mocks/service/mock-exercise-hint.service';
-import { ExerciseHint } from 'app/entities/hestia/exercise-hint.model';
 
 describe('ProgrammingExerciseInstructionComponent', () => {
     let comp: ProgrammingExerciseInstructionComponent;
@@ -49,14 +47,12 @@ describe('ProgrammingExerciseInstructionComponent', () => {
     let participationWebsocketService: ParticipationWebsocketService;
     let repositoryFileService: RepositoryFileService;
     let programmingExerciseParticipationService: ProgrammingExerciseParticipationService;
-    let exerciseHintService: IExerciseHintService;
     let modalService: NgbModal;
 
     let subscribeForLatestResultOfParticipationStub: jest.SpyInstance;
     let getFileStub: jest.SpyInstance;
     let openModalStub: jest.SpyInstance;
     let getLatestResultWithFeedbacks: jest.SpyInstance;
-    let getHintsForExerciseStub: jest.SpyInstance;
 
     const exerciseHints = [{ id: 1 }, { id: 2 }];
 
@@ -94,16 +90,12 @@ describe('ProgrammingExerciseInstructionComponent', () => {
                 participationWebsocketService = debugElement.injector.get(ParticipationWebsocketService);
                 programmingExerciseParticipationService = debugElement.injector.get(ProgrammingExerciseParticipationService);
                 repositoryFileService = debugElement.injector.get(RepositoryFileService);
-                exerciseHintService = debugElement.injector.get(ExerciseHintService);
                 modalService = debugElement.injector.get(NgbModal);
 
                 subscribeForLatestResultOfParticipationStub = jest.spyOn(participationWebsocketService, 'subscribeForLatestResultOfParticipation');
                 openModalStub = jest.spyOn(modalService, 'open');
                 getFileStub = jest.spyOn(repositoryFileService, 'get');
                 getLatestResultWithFeedbacks = jest.spyOn(programmingExerciseParticipationService, 'getLatestResultWithFeedback');
-                getHintsForExerciseStub = jest
-                    .spyOn(exerciseHintService, 'findByExerciseIdWithRelations')
-                    .mockReturnValue(of({ body: exerciseHints }) as Observable<HttpResponse<ExerciseHint[]>>);
 
                 comp.personalParticipation = true;
             });
@@ -131,8 +123,6 @@ describe('ProgrammingExerciseInstructionComponent', () => {
         expect(subscribeForLatestResultOfParticipationStub).toHaveBeenCalledWith(participation.id, true, exercise.id);
         expect(comp.participationSubscription).not.toEqual(oldSubscription);
         expect(comp.isInitial).toBe(true);
-        expect(getHintsForExerciseStub).toHaveBeenCalledOnce();
-        expect(getHintsForExerciseStub).toHaveBeenCalledWith(exercise.id);
         expect(comp.exerciseHints).toEqual(exerciseHints);
     });
 

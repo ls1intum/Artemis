@@ -1,12 +1,11 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { HttpResponse } from '@angular/common/http';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { TranslateModule } from '@ngx-translate/core';
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
 import { AccountService } from 'app/core/auth/account.service';
 import { ChangeDetectorRef, DebugElement } from '@angular/core';
 import { ActivatedRoute, Params, Router } from '@angular/router';
-import { BehaviorSubject, Observable, of, Subject, throwError } from 'rxjs';
+import { BehaviorSubject, of, Subject, throwError } from 'rxjs';
 import * as ace from 'brace';
 import { ArtemisTestModule } from '../../test.module';
 import { ProgrammingExerciseParticipationService } from 'app/exercises/programming/manage/services/programming-exercise-participation.service';
@@ -16,7 +15,6 @@ import { MockAccountService } from '../../helpers/mocks/service/mock-account.ser
 import { MockRouter } from '../../helpers/mocks/mock-router';
 import { problemStatement } from '../../helpers/sample/problemStatement.json';
 import { MockProgrammingExerciseParticipationService } from '../../helpers/mocks/service/mock-programming-exercise-participation.service';
-import { ExerciseHint } from 'app/entities/hestia/exercise-hint.model';
 import { DeviceDetectorService } from 'ngx-device-detector';
 import { CodeEditorInstructorAndEditorContainerComponent } from 'app/exercises/programming/manage/code-editor/code-editor-instructor-and-editor-container.component';
 import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
@@ -51,7 +49,6 @@ import { IncludedInScoreBadgeComponent } from 'app/exercises/shared/exercise-hea
 import { ProgrammingExerciseInstructorExerciseStatusComponent } from 'app/exercises/programming/manage/status/programming-exercise-instructor-exercise-status.component';
 import { UpdatingResultComponent } from 'app/exercises/shared/result/updating-result.component';
 import { ProgrammingExerciseStudentTriggerBuildButtonComponent } from 'app/exercises/programming/shared/actions/programming-exercise-student-trigger-build-button.component';
-import { ExerciseHintStudentComponent } from 'app/exercises/shared/exercise-hint/participate/exercise-hint-student-dialog.component';
 import { ProgrammingExerciseEditableInstructionComponent } from 'app/exercises/programming/manage/instructions-editor/programming-exercise-editable-instruction.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { CodeEditorGridComponent } from 'app/exercises/programming/shared/code-editor/layout/code-editor-grid.component';
@@ -88,7 +85,6 @@ describe('CodeEditorInstructorIntegration', () => {
     let getBuildLogsStub: jest.SpyInstance;
     let findWithParticipationsStub: jest.SpyInstance;
     let getLatestResultWithFeedbacksStub: jest.SpyInstance;
-    let getHintsForExerciseStub: jest.SpyInstance;
 
     let checkIfRepositoryIsCleanSubject: Subject<{ isClean: boolean }>;
     let getRepositoryContentSubject: Subject<{ [fileName: string]: FileType }>;
@@ -116,7 +112,6 @@ describe('CodeEditorInstructorIntegration', () => {
                 ProgrammingExerciseInstructorExerciseStatusComponent,
                 UpdatingResultComponent,
                 MockComponent(ProgrammingExerciseStudentTriggerBuildButtonComponent),
-                MockComponent(ExerciseHintStudentComponent),
                 ProgrammingExerciseEditableInstructionComponent,
                 MockComponent(MarkdownEditorComponent),
                 ProgrammingExerciseInstructionComponent,
@@ -164,7 +159,6 @@ describe('CodeEditorInstructorIntegration', () => {
                 const programmingExerciseService = containerDebugElement.injector.get(ProgrammingExerciseService);
                 domainService = containerDebugElement.injector.get(DomainService);
                 route = containerDebugElement.injector.get(ActivatedRoute);
-                const exerciseHintService = containerDebugElement.injector.get(ExerciseHintService);
                 containerDebugElement.injector.get(Router);
 
                 checkIfRepositoryIsCleanSubject = new Subject<{ isClean: boolean }>();
@@ -184,9 +178,6 @@ describe('CodeEditorInstructorIntegration', () => {
                     .spyOn(programmingExerciseParticipationService, 'getLatestResultWithFeedback')
                     .mockReturnValue(throwError(() => new Error('no result')));
                 getBuildLogsStub = jest.spyOn(buildLogService, 'getBuildLogs');
-                getHintsForExerciseStub = jest
-                    .spyOn(exerciseHintService, 'findByExerciseIdWithRelations')
-                    .mockReturnValue(of({ body: exerciseHints }) as Observable<HttpResponse<ExerciseHint[]>>);
 
                 findWithParticipationsStub = jest.spyOn(programmingExerciseService, 'findWithTemplateAndSolutionParticipationAndResults');
                 findWithParticipationsStub.mockReturnValue(findWithParticipationsSubject);
@@ -284,10 +275,6 @@ describe('CodeEditorInstructorIntegration', () => {
 
         // Called once by each build-output, instructions, result and twice by instructor-exercise-status (=templateParticipation,solutionParticipation) &
         expect(subscribeForLatestResultOfParticipationStub).toHaveBeenCalledTimes(5);
-
-        // called once by instructions (hints are only visible if assignment repo is selected).
-        expect(getHintsForExerciseStub).toHaveBeenCalledTimes(1);
-        expect(getHintsForExerciseStub).toHaveBeenCalledWith(exercise.id);
     });
 
     it('should go into error state when loading the exercise failed', () => {

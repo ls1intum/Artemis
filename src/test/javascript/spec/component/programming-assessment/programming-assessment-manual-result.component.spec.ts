@@ -46,7 +46,6 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { CodeEditorContainerComponent } from 'app/exercises/programming/shared/code-editor/container/code-editor-container.component';
 import { ResultComponent } from 'app/exercises/shared/result/result.component';
 import { IncludedInScoreBadgeComponent } from 'app/exercises/shared/exercise-headers/included-in-score-badge.component';
-import { ExerciseHintStudentComponent } from 'app/exercises/shared/exercise-hint/participate/exercise-hint-student-dialog.component';
 import { AssessmentInstructionsComponent } from 'app/assessment/assessment-instructions/assessment-instructions/assessment-instructions.component';
 import { UnreferencedFeedbackComponent } from 'app/exercises/shared/unreferenced-feedback/unreferenced-feedback.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
@@ -181,7 +180,6 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
                 MockComponent(CodeEditorInstructionsComponent),
                 MockComponent(ResultComponent),
                 MockComponent(IncludedInScoreBadgeComponent),
-                MockComponent(ExerciseHintStudentComponent),
                 MockComponent(AssessmentInstructionsComponent),
                 MockComponent(UnreferencedFeedbackComponent),
                 MockPipe(ArtemisTranslatePipe),

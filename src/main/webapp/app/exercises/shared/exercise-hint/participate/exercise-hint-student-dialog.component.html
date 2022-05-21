@@ -8,16 +8,17 @@
         <div *ngFor="let hint of availableExerciseHints" class="mb-3">
             <jhi-exercise-hint-expandable [exerciseHint]="hint" [hasUsed]="false"></jhi-exercise-hint-expandable>
         </div>
-        <span *ngIf="availableExerciseHints?.length === 0" [jhiTranslate]="'artemisApp.exerciseHint.studentDialog.emptyAvailableHintsDescription'" class="ms-3"
+        <span *ngIf="availableExerciseHints?.length === 0" [jhiTranslate]="'artemisApp.exerciseHint.studentDialog.emptyAvailableHintsDescription'"
             >New available hints will be displayed here.</span
         >
     </div>
+    <hr />
     <div class="mb-3">
         <h2>Already Activated Hints</h2>
         <div *ngFor="let hint of activatedExerciseHints" class="mb-3">
             <jhi-exercise-hint-expandable [exerciseHint]="hint" [hasUsed]="true"></jhi-exercise-hint-expandable>
         </div>
-        <span *ngIf="activatedExerciseHints?.length === 0" [jhiTranslate]="'artemisApp.exerciseHint.studentDialog.emptyActivatedHintsDescription'" class="ms-3"
+        <span *ngIf="activatedExerciseHints?.length === 0" [jhiTranslate]="'artemisApp.exerciseHint.studentDialog.emptyActivatedHintsDescription'"
             >Already activated hints will be displayed here.</span
         >
     </div>

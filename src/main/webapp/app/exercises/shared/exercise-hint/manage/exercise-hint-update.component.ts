@@ -1,15 +1,11 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ActivatedRoute } from '@angular/router';
-import { Observable, of, Subscription } from 'rxjs';
-import { catchError, map, tap } from 'rxjs/operators';
+import { catchError, map, Observable, of, Subscription, tap } from 'rxjs';
 import { AlertService } from 'app/core/util/alert.service';
 import { ExerciseHintService } from '../shared/exercise-hint.service';
 import { EditorMode, MarkdownEditorHeight } from 'app/shared/markdown-editor/markdown-editor.component';
-import { Exercise } from 'app/entities/exercise.model';
-import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { KatexCommand } from 'app/shared/markdown-editor/commands/katex.command';
-import { onError } from 'app/shared/util/global.utils';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
 import { faBan, faCircleNotch, faSave } from '@fortawesome/free-solid-svg-icons';
 import { ExerciseHint, HintType } from 'app/entities/hestia/exercise-hint.model';
@@ -17,6 +13,8 @@ import { ProgrammingExerciseService } from 'app/exercises/programming/manage/ser
 import { ProgrammingExerciseSolutionEntry } from 'app/entities/hestia/programming-exercise-solution-entry.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { ProgrammingExerciseServerSideTask } from 'app/entities/hestia/programming-exercise-task.model';
+import { onError } from 'app/shared/util/global.utils';
+import { Exercise } from 'app/entities/exercise.model';
 
 @Component({
     selector: 'jhi-exercise-hint-update',
@@ -33,12 +31,9 @@ export class ExerciseHintUpdateComponent implements OnInit, OnDestroy {
     solutionEntries: ProgrammingExerciseSolutionEntry[];
 
     programmingExercise: ProgrammingExercise;
-    selectedTask: ProgrammingExerciseServerSideTask;
     tasks: ProgrammingExerciseServerSideTask[];
 
     isSaving: boolean;
-    isLoading: boolean;
-    exerciseNotFound: boolean;
     paramSub: Subscription;
 
     domainCommands = [new KatexCommand()];
@@ -53,7 +48,6 @@ export class ExerciseHintUpdateComponent implements OnInit, OnDestroy {
         private route: ActivatedRoute,
         protected alertService: AlertService,
         protected exerciseHintService: ExerciseHintService,
-        protected exerciseService: ExerciseService,
         private programmingExerciseService: ProgrammingExerciseService,
         private navigationUtilService: ArtemisNavigationUtilService,
     ) {}
@@ -62,18 +56,16 @@ export class ExerciseHintUpdateComponent implements OnInit, OnDestroy {
      * Fetches the exercise from the server and assigns it on the exercise hint
      */
     ngOnInit() {
-        this.isLoading = true;
         this.paramSub = this.route.params.subscribe((params) => {
             this.courseId = params['courseId'];
             this.exerciseId = params['exerciseId'];
             this.isSaving = false;
-            this.exerciseNotFound = false;
         });
         this.route.data.subscribe(({ exerciseHint }) => {
             this.exerciseHint = exerciseHint;
-            // If the exercise was not yet created, load the exercise from the current route to set it as its exercise.
-            if (!this.exerciseHint.id) {
-                this.exerciseService
+
+            if (!this.exerciseHint.exercise) {
+                this.programmingExerciseService
                     .find(this.exerciseId)
                     .pipe(
                         map(({ body }) => body),
@@ -81,16 +73,11 @@ export class ExerciseHintUpdateComponent implements OnInit, OnDestroy {
                             this.exerciseHint.exercise = res;
                         }),
                         catchError((error: HttpErrorResponse) => {
-                            this.exerciseNotFound = true;
                             onError(this.alertService, error);
                             return of(null);
                         }),
                     )
-                    .subscribe(() => {
-                        this.isLoading = false;
-                    });
-            } else {
-                this.isLoading = false;
+                    .subscribe(() => {});
             }
 
             this.programmingExerciseService.getTasksAndTestsExtractedFromProblemStatement(this.exerciseId).subscribe((tasks) => {

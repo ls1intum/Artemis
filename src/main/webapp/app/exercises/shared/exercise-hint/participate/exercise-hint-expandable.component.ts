@@ -28,7 +28,6 @@ export class ExerciseHintExpandableComponent {
     constructor(private exerciseHintService: ExerciseHintService) {}
 
     displayHintContent() {
-        console.log(this.exerciseHint.currentUserRating);
         this.expanded = true;
 
         if (this.hasUsed) {

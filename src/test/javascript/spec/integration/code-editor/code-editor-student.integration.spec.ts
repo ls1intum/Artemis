@@ -43,7 +43,6 @@ import { IncludedInScoreBadgeComponent } from 'app/exercises/shared/exercise-hea
 import { CodeEditorRepositoryIsLockedComponent } from 'app/exercises/programming/shared/code-editor/layout/code-editor-repository-is-locked.component';
 import { UpdatingResultComponent } from 'app/exercises/shared/result/updating-result.component';
 import { ProgrammingExerciseStudentTriggerBuildButtonComponent } from 'app/exercises/programming/shared/actions/programming-exercise-student-trigger-build-button.component';
-import { ExerciseHintStudentComponent } from 'app/exercises/shared/exercise-hint/participate/exercise-hint-student-dialog.component';
 import { ProgrammingExerciseInstructionComponent } from 'app/exercises/programming/shared/instructions-render/programming-exercise-instruction.component';
 import { AdditionalFeedbackComponent } from 'app/shared/additional-feedback/additional-feedback.component';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
@@ -97,7 +96,6 @@ describe('CodeEditorStudentIntegration', () => {
                 MockComponent(IncludedInScoreBadgeComponent),
                 MockComponent(UpdatingResultComponent),
                 MockComponent(ProgrammingExerciseStudentTriggerBuildButtonComponent),
-                MockComponent(ExerciseHintStudentComponent),
                 MockComponent(ProgrammingExerciseInstructionComponent),
                 MockComponent(AdditionalFeedbackComponent),
                 MockPipe(ArtemisTranslatePipe),
