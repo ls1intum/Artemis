@@ -46,7 +46,7 @@
                 <div *ngIf="exerciseHint.type === HintType.CODE" class="form-group hint-form__editor-wrapper">
                     <jhi-code-hint-container [codeHint]="exerciseHint | castToCodeHint" [enableEditing]="true"></jhi-code-hint-container>
                 </div>
-                <div *ngIf="!isLoading; else exerciseLoading" class="form-group">
+                <div *ngIf="exerciseHint?.exercise?.id" class="form-group">
                     <label class="form-control-label" jhiTranslate="artemisApp.exerciseHint.exercise" for="field_exercise">Exercise</label>
                     <input
                         type="text"
@@ -58,15 +58,12 @@
                         [ngModel]="exerciseHint.exercise && exerciseHint.exercise.title + ' (ID: ' + exerciseHint.exercise.id + ')'"
                     />
                 </div>
-                <ng-template #exerciseLoading>
-                    <fa-icon [icon]="faCircleNotch" [spin]="true" class="mb-3 text-secondary"></fa-icon>
-                </ng-template>
             </div>
             <div>
                 <button type="button" id="cancel-save" class="btn btn-secondary" (click)="previousState()">
                     <fa-icon [icon]="faBan"></fa-icon>&nbsp;<span jhiTranslate="entity.action.cancel">Cancel</span>
                 </button>
-                <button type="submit" id="save-entity" [disabled]="hintForm.invalid || isSaving || isLoading || exerciseNotFound" class="btn btn-primary">
+                <button type="submit" id="save-entity" [disabled]="hintForm.invalid || isSaving || !exerciseId" class="btn btn-primary">
                     <fa-icon [icon]="faSave"></fa-icon>&nbsp;<span jhiTranslate="entity.action.save">Save</span>
                 </button>
             </div>

@@ -1,7 +1,7 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
-import { HttpResponse } from '@angular/common/http';
+import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ActivatedRoute } from '@angular/router';
-import { Observable, Subscription } from 'rxjs';
+import { catchError, map, Observable, of, Subscription, tap } from 'rxjs';
 import { AlertService } from 'app/core/util/alert.service';
 import { ExerciseHintService } from '../shared/exercise-hint.service';
 import { EditorMode, MarkdownEditorHeight } from 'app/shared/markdown-editor/markdown-editor.component';
@@ -13,6 +13,8 @@ import { ProgrammingExerciseService } from 'app/exercises/programming/manage/ser
 import { ProgrammingExerciseSolutionEntry } from 'app/entities/hestia/programming-exercise-solution-entry.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { ProgrammingExerciseServerSideTask } from 'app/entities/hestia/programming-exercise-task.model';
+import { onError } from 'app/shared/util/global.utils';
+import { Exercise } from 'app/entities/exercise.model';
 
 @Component({
     selector: 'jhi-exercise-hint-update',
@@ -32,8 +34,6 @@ export class ExerciseHintUpdateComponent implements OnInit, OnDestroy {
     tasks: ProgrammingExerciseServerSideTask[];
 
     isSaving: boolean;
-    isLoading: boolean;
-    exerciseNotFound: boolean;
     paramSub: Subscription;
 
     domainCommands = [new KatexCommand()];
@@ -56,15 +56,30 @@ export class ExerciseHintUpdateComponent implements OnInit, OnDestroy {
      * Fetches the exercise from the server and assigns it on the exercise hint
      */
     ngOnInit() {
-        this.isLoading = true;
         this.paramSub = this.route.params.subscribe((params) => {
             this.courseId = params['courseId'];
             this.exerciseId = params['exerciseId'];
             this.isSaving = false;
-            this.exerciseNotFound = false;
         });
         this.route.data.subscribe(({ exerciseHint }) => {
             this.exerciseHint = exerciseHint;
+
+            if (!this.exerciseHint.exercise) {
+                this.programmingExerciseService
+                    .find(this.exerciseId)
+                    .pipe(
+                        map(({ body }) => body),
+                        tap((res: Exercise) => {
+                            this.exerciseHint.exercise = res;
+                        }),
+                        catchError((error: HttpErrorResponse) => {
+                            onError(this.alertService, error);
+                            return of(null);
+                        }),
+                    )
+                    .subscribe(() => {});
+            }
+
             this.programmingExerciseService.getTasksAndTestsExtractedFromProblemStatement(this.exerciseId).subscribe((tasks) => {
                 this.tasks = tasks;
 
