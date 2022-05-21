@@ -516,6 +516,11 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         this.alertService.error(error);
     }
 
+    onHintActivated(exerciseHint: ExerciseHint) {
+        this.availableExerciseHints = this.availableExerciseHints.filter((hint) => hint.id !== exerciseHint.id);
+        this.activatedExerciseHints.push(exerciseHint);
+    }
+
     // ################## ONLY FOR LOCAL TESTING PURPOSE -- START ##################
 
     /**

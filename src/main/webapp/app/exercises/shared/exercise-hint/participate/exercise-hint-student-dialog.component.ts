@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { ExerciseHint } from 'app/entities/hestia/exercise-hint.model';
 
@@ -12,6 +12,8 @@ import { ExerciseHint } from 'app/entities/hestia/exercise-hint.model';
 export class ExerciseHintStudentDialogComponent {
     @Input() availableExerciseHints: ExerciseHint[];
     @Input() activatedExerciseHints: ExerciseHint[];
+    @Output()
+    onHintActivated = new EventEmitter<ExerciseHint>();
 
     constructor(public activeModal: NgbActiveModal) {}
 

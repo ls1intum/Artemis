@@ -73,7 +73,6 @@ export class ExerciseHintComponent implements OnInit, OnDestroy {
             .subscribe({
                 next: (res: ExerciseHint[]) => {
                     this.exerciseHints = res;
-                    console.log(res);
                 },
                 error: (res: HttpErrorResponse) => onError(this.alertService, res),
             });

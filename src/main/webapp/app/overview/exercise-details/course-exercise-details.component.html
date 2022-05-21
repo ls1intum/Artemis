@@ -288,6 +288,7 @@
             <jhi-exercise-hint-button-overlay
                 [availableExerciseHints]="availableExerciseHints"
                 [activatedExerciseHints]="activatedExerciseHints"
+                (onHintActivated)="onHintActivated($event)"
             ></jhi-exercise-hint-button-overlay>
         </div>
         <div class="col d-flex flex-grow-1 justify-end px-0" style="max-width: min-content">
