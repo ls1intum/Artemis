@@ -436,7 +436,6 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                     type: AlertType.SUCCESS,
                     message: 'artemisApp.programmingExercise.createStructuralSolutionEntriesSuccess',
                 });
-                console.log(ProgrammingExerciseDetailComponent.buildSolutionEntriesMessage(res));
             },
             error: (err) => {
                 this.onError(err);
@@ -451,7 +450,6 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                     type: AlertType.SUCCESS,
                     message: 'artemisApp.programmingExercise.createBehavioralSolutionEntriesSuccess',
                 });
-                console.log(ProgrammingExerciseDetailComponent.buildSolutionEntriesMessage(res));
             },
             error: (err) => {
                 this.onError(err);
