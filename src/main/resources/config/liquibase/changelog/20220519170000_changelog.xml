@@ -7,7 +7,7 @@
     It also adds the description column to the exercise_hint table
     -->
     <changeSet author="timor-morrien" id="20220519170000">
-        <createTable tableName="user_exercise_hint_activation">
+        <createTable tableName="exercise_hint_activation">
             <column name="id" type="BIGINT" autoIncrement="true">
                 <constraints primaryKey="true" nullable="false"/>
             </column>
@@ -22,19 +22,19 @@
             </column>
             <column name="rating" type="TINYINT"/>
         </createTable>
-        <addForeignKeyConstraint baseTableName="user_exercise_hint_activation"
+        <addForeignKeyConstraint baseTableName="exercise_hint_activation"
                                  baseColumnNames="user_id"
-                                 constraintName="fk_user_exercise_hint_activation_user_id"
+                                 constraintName="fk_exercise_hint_activation_user_id"
                                  referencedTableName="jhi_user"
                                  referencedColumnNames="id"/>
-        <addForeignKeyConstraint baseTableName="user_exercise_hint_activation"
+        <addForeignKeyConstraint baseTableName="exercise_hint_activation"
                                  baseColumnNames="exercise_hint_id"
-                                 constraintName="fk_user_exercise_hint_activation_exercise_hint_id"
+                                 constraintName="fk_exercise_hint_activation_exercise_hint_id"
                                  referencedTableName="exercise_hint"
                                  referencedColumnNames="id"/>
-        <addUniqueConstraint tableName="user_exercise_hint_activation"
+        <addUniqueConstraint tableName="exercise_hint_activation"
                              columnNames="user_id,exercise_hint_id"
-                             constraintName="uq_user_exercise_hint_activation"/>
+                             constraintName="uq_exercise_hint_activation"/>
 
         <addColumn tableName="exercise_hint">
             <column name="description" type="VARCHAR(1000)"/>

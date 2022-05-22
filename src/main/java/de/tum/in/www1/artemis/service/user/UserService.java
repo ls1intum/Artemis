@@ -23,7 +23,7 @@ import de.tum.in.www1.artemis.domain.GuidedTourSetting;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.exception.*;
 import de.tum.in.www1.artemis.repository.*;
-import de.tum.in.www1.artemis.repository.hestia.UserExerciseHintActivationRepository;
+import de.tum.in.www1.artemis.repository.hestia.ExerciseHintActivationRepository;
 import de.tum.in.www1.artemis.security.ArtemisAuthenticationProvider;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.SecurityUtils;
@@ -82,13 +82,13 @@ public class UserService {
 
     private final InstanceMessageSendService instanceMessageSendService;
 
-    private final UserExerciseHintActivationRepository userExerciseHintActivationRepository;
+    private final ExerciseHintActivationRepository exerciseHintActivationRepository;
 
     public UserService(UserCreationService userCreationService, UserRepository userRepository, AuthorityService authorityService, AuthorityRepository authorityRepository,
             CacheManager cacheManager, Optional<LdapUserService> ldapUserService, GuidedTourSettingsRepository guidedTourSettingsRepository, PasswordService passwordService,
             Optional<VcsUserManagementService> optionalVcsUserManagementService, Optional<CIUserManagementService> optionalCIUserManagementService,
             ArtemisAuthenticationProvider artemisAuthenticationProvider, StudentScoreRepository studentScoreRepository, InstanceMessageSendService instanceMessageSendService,
-            UserExerciseHintActivationRepository userExerciseHintActivationRepository) {
+            ExerciseHintActivationRepository exerciseHintActivationRepository) {
         this.userCreationService = userCreationService;
         this.userRepository = userRepository;
         this.authorityService = authorityService;
@@ -102,7 +102,7 @@ public class UserService {
         this.artemisAuthenticationProvider = artemisAuthenticationProvider;
         this.studentScoreRepository = studentScoreRepository;
         this.instanceMessageSendService = instanceMessageSendService;
-        this.userExerciseHintActivationRepository = userExerciseHintActivationRepository;
+        this.exerciseHintActivationRepository = exerciseHintActivationRepository;
     }
 
     /**
@@ -436,7 +436,7 @@ public class UserService {
         // 10) Delete the tutor participation
 
         studentScoreRepository.deleteAllByUser(user);
-        userExerciseHintActivationRepository.deleteAllByUser(user);
+        exerciseHintActivationRepository.deleteAllByUser(user);
 
         userRepository.delete(user);
         clearUserCaches(user);

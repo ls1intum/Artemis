@@ -50,7 +50,7 @@ public class ExerciseHint extends DomainObject {
 
     @OneToMany(mappedBy = "exerciseHint", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
     @JsonIgnore
-    private Set<UserExerciseHintActivation> userExerciseHintActivations = new HashSet<>();
+    private Set<ExerciseHintActivation> exerciseHintActivations = new HashSet<>();
 
     @Transient
     private Integer currentUserRatingTransient;
@@ -128,12 +128,12 @@ public class ExerciseHint extends DomainObject {
         this.currentUserRatingTransient = currentUserRating;
     }
 
-    public Set<UserExerciseHintActivation> getUserExerciseHintActivations() {
-        return userExerciseHintActivations;
+    public Set<ExerciseHintActivation> getExerciseHintActivations() {
+        return exerciseHintActivations;
     }
 
-    public void setUserExerciseHintActivations(Set<UserExerciseHintActivation> userExerciseHintActivations) {
-        this.userExerciseHintActivations = userExerciseHintActivations;
+    public void setExerciseHintActivations(Set<ExerciseHintActivation> exerciseHintActivations) {
+        this.exerciseHintActivations = exerciseHintActivations;
     }
 
     /**

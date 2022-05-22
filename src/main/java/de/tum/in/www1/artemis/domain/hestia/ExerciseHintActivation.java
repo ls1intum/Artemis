@@ -13,10 +13,10 @@ import de.tum.in.www1.artemis.domain.DomainObject;
 import de.tum.in.www1.artemis.domain.User;
 
 @Entity
-@Table(name = "user_exercise_hint_activation")
+@Table(name = "exercise_hint_activation")
 @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public class UserExerciseHintActivation extends DomainObject {
+public class ExerciseHintActivation extends DomainObject {
 
     @ManyToOne(optional = false)
     private User user;

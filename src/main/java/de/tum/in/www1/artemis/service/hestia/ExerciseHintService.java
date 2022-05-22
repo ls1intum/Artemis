@@ -9,11 +9,11 @@ import org.springframework.stereotype.Service;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.hestia.CodeHint;
 import de.tum.in.www1.artemis.domain.hestia.ExerciseHint;
+import de.tum.in.www1.artemis.domain.hestia.ExerciseHintActivation;
 import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseTask;
-import de.tum.in.www1.artemis.domain.hestia.UserExerciseHintActivation;
 import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
+import de.tum.in.www1.artemis.repository.hestia.ExerciseHintActivationRepository;
 import de.tum.in.www1.artemis.repository.hestia.ExerciseHintRepository;
-import de.tum.in.www1.artemis.repository.hestia.UserExerciseHintActivationRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
@@ -30,16 +30,16 @@ public class ExerciseHintService {
 
     private final StudentParticipationRepository studentParticipationRepository;
 
-    private final UserExerciseHintActivationRepository userExerciseHintActivationRepository;
+    private final ExerciseHintActivationRepository exerciseHintActivationRepository;
 
     public ExerciseHintService(AuthorizationCheckService authCheckService, ExerciseHintRepository exerciseHintRepository,
             ProgrammingExerciseTaskService programmingExerciseTaskService, StudentParticipationRepository studentParticipationRepository,
-            UserExerciseHintActivationRepository userExerciseHintActivationRepository) {
+            ExerciseHintActivationRepository exerciseHintActivationRepository) {
         this.authCheckService = authCheckService;
         this.exerciseHintRepository = exerciseHintRepository;
         this.programmingExerciseTaskService = programmingExerciseTaskService;
         this.studentParticipationRepository = studentParticipationRepository;
-        this.userExerciseHintActivationRepository = userExerciseHintActivationRepository;
+        this.exerciseHintActivationRepository = exerciseHintActivationRepository;
     }
 
     /**
@@ -76,7 +76,7 @@ public class ExerciseHintService {
 
     /**
      * Sets the rating of an exercise hint for a user
-     * The rating is saved in the associated UserExerciseHintActivation.
+     * The rating is saved in the associated ExerciseHintActivation.
      *
      * @param exerciseHint The exercise hint to rate
      * @param user         The user that submits the rating
@@ -86,9 +86,9 @@ public class ExerciseHintService {
         if (ratingValue < 1 || ratingValue > 5) {
             throw new BadRequestAlertException("rating has to be between 1 and 5", "exerciseHint", "ratingValue.invalid", false);
         }
-        var userExerciseHintActivation = userExerciseHintActivationRepository.findByExerciseHintAndUserElseThrow(exerciseHint.getId(), user.getId());
-        userExerciseHintActivation.setRating(ratingValue);
-        userExerciseHintActivationRepository.save(userExerciseHintActivation);
+        var exerciseHintActivation = exerciseHintActivationRepository.findByExerciseHintAndUserElseThrow(exerciseHint.getId(), user.getId());
+        exerciseHintActivation.setRating(ratingValue);
+        exerciseHintActivationRepository.save(exerciseHintActivation);
     }
 
     /**
@@ -111,15 +111,15 @@ public class ExerciseHintService {
         }
 
         // Check if the hint was already activated
-        if (userExerciseHintActivationRepository.findByExerciseHintAndUser(exerciseHint.getId(), user.getId()).isPresent()) {
+        if (exerciseHintActivationRepository.findByExerciseHintAndUser(exerciseHint.getId(), user.getId()).isPresent()) {
             return false;
         }
 
-        var userExerciseHintActivation = new UserExerciseHintActivation();
-        userExerciseHintActivation.setExerciseHint(exerciseHint);
-        userExerciseHintActivation.setUser(user);
-        userExerciseHintActivation.setActivationDate(ZonedDateTime.now());
-        userExerciseHintActivationRepository.save(userExerciseHintActivation);
+        var exerciseHintActivation = new ExerciseHintActivation();
+        exerciseHintActivation.setExerciseHint(exerciseHint);
+        exerciseHintActivation.setUser(user);
+        exerciseHintActivation.setActivationDate(ZonedDateTime.now());
+        exerciseHintActivationRepository.save(exerciseHintActivation);
         return true;
     }
 
@@ -131,9 +131,9 @@ public class ExerciseHintService {
      * @return All activated exercise hints for this user and exercise
      */
     public Set<ExerciseHint> getActivatedExerciseHints(ProgrammingExercise exercise, User user) {
-        return userExerciseHintActivationRepository.findByExerciseAndUserWithExerciseHintRelations(exercise.getId(), user.getId()).stream().map(userExerciseHintActivation -> {
-            var exerciseHint = userExerciseHintActivation.getExerciseHint();
-            exerciseHint.setCurrentUserRating(userExerciseHintActivation.getRating());
+        return exerciseHintActivationRepository.findByExerciseAndUserWithExerciseHintRelations(exercise.getId(), user.getId()).stream().map(exerciseHintActivation -> {
+            var exerciseHint = exerciseHintActivation.getExerciseHint();
+            exerciseHint.setCurrentUserRating(exerciseHintActivation.getRating());
             return exerciseHint;
         }).collect(Collectors.toSet());
     }

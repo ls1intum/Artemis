@@ -21,8 +21,8 @@ import de.tum.in.www1.artemis.domain.hestia.ExerciseHint;
 import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseTask;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.hestia.ExerciseHintActivationRepository;
 import de.tum.in.www1.artemis.repository.hestia.ExerciseHintRepository;
-import de.tum.in.www1.artemis.repository.hestia.UserExerciseHintActivationRepository;
 import de.tum.in.www1.artemis.service.hestia.ExerciseHintService;
 import de.tum.in.www1.artemis.service.hestia.ProgrammingExerciseTaskService;
 
@@ -50,7 +50,7 @@ public class ExerciseHintServiceTest extends AbstractSpringIntegrationBambooBitb
     private ProgrammingSubmissionRepository programmingSubmissionRepository;
 
     @Autowired
-    private UserExerciseHintActivationRepository userExerciseHintActivationRepository;
+    private ExerciseHintActivationRepository exerciseHintActivationRepository;
 
     @Autowired
     private ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository;
@@ -183,7 +183,7 @@ public class ExerciseHintServiceTest extends AbstractSpringIntegrationBambooBitb
         assertThat(exerciseHintService.activateHint(hints.get(0), student)).isTrue();
         assertThat(exerciseHintService.activateHint(hints.get(1), student)).isFalse();
         assertThat(exerciseHintService.activateHint(hints.get(2), student)).isFalse();
-        assertThat(userExerciseHintActivationRepository.findAll()).hasSize(1).anyMatch(ueha -> ueha.getUser().equals(student) && ueha.getExerciseHint().equals(hints.get(0)));
+        assertThat(exerciseHintActivationRepository.findAll()).hasSize(1).anyMatch(ueha -> ueha.getUser().equals(student) && ueha.getExerciseHint().equals(hints.get(0)));
     }
 
     @Test
@@ -195,7 +195,7 @@ public class ExerciseHintServiceTest extends AbstractSpringIntegrationBambooBitb
         assertThat(exerciseHintService.activateHint(hints.get(0), student)).isFalse();
         assertThat(exerciseHintService.activateHint(hints.get(1), student)).isTrue();
         assertThat(exerciseHintService.activateHint(hints.get(2), student)).isFalse();
-        assertThat(userExerciseHintActivationRepository.findAll()).hasSize(1).anyMatch(ueha -> ueha.getUser().equals(student) && ueha.getExerciseHint().equals(hints.get(1)));
+        assertThat(exerciseHintActivationRepository.findAll()).hasSize(1).anyMatch(ueha -> ueha.getUser().equals(student) && ueha.getExerciseHint().equals(hints.get(1)));
     }
 
     @Test
@@ -207,7 +207,7 @@ public class ExerciseHintServiceTest extends AbstractSpringIntegrationBambooBitb
         assertThat(exerciseHintService.activateHint(hints.get(0), student)).isFalse();
         assertThat(exerciseHintService.activateHint(hints.get(1), student)).isFalse();
         assertThat(exerciseHintService.activateHint(hints.get(2), student)).isTrue();
-        assertThat(userExerciseHintActivationRepository.findAll()).hasSize(1).anyMatch(ueha -> ueha.getUser().equals(student) && ueha.getExerciseHint().equals(hints.get(2)));
+        assertThat(exerciseHintActivationRepository.findAll()).hasSize(1).anyMatch(ueha -> ueha.getUser().equals(student) && ueha.getExerciseHint().equals(hints.get(2)));
     }
 
     @Test
@@ -219,7 +219,7 @@ public class ExerciseHintServiceTest extends AbstractSpringIntegrationBambooBitb
         assertThat(exerciseHintService.activateHint(hints.get(0), student)).isFalse();
         assertThat(exerciseHintService.activateHint(hints.get(1), student)).isFalse();
         assertThat(exerciseHintService.activateHint(hints.get(2), student)).isFalse();
-        assertThat(userExerciseHintActivationRepository.findAll()).isEmpty();
+        assertThat(exerciseHintActivationRepository.findAll()).isEmpty();
     }
 
     @Test
@@ -230,7 +230,7 @@ public class ExerciseHintServiceTest extends AbstractSpringIntegrationBambooBitb
 
         assertThat(exerciseHintService.activateHint(hints.get(0), student)).isTrue();
         assertThat(exerciseHintService.activateHint(hints.get(0), student)).isFalse();
-        assertThat(userExerciseHintActivationRepository.findAll()).hasSize(1).anyMatch(ueha -> ueha.getUser().equals(student) && ueha.getExerciseHint().equals(hints.get(0)));
+        assertThat(exerciseHintActivationRepository.findAll()).hasSize(1).anyMatch(ueha -> ueha.getUser().equals(student) && ueha.getExerciseHint().equals(hints.get(0)));
     }
 
     private void addResultWithFailedTestCases(Collection<ProgrammingExerciseTestCase> failedTestCases) {

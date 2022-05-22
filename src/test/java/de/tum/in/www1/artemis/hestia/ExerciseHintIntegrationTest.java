@@ -22,12 +22,12 @@ import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
 import de.tum.in.www1.artemis.domain.enumeration.Visibility;
 import de.tum.in.www1.artemis.domain.hestia.CodeHint;
 import de.tum.in.www1.artemis.domain.hestia.ExerciseHint;
+import de.tum.in.www1.artemis.domain.hestia.ExerciseHintActivation;
 import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseTask;
-import de.tum.in.www1.artemis.domain.hestia.UserExerciseHintActivation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.hestia.ExerciseHintActivationRepository;
 import de.tum.in.www1.artemis.repository.hestia.ExerciseHintRepository;
-import de.tum.in.www1.artemis.repository.hestia.UserExerciseHintActivationRepository;
 import de.tum.in.www1.artemis.service.hestia.ProgrammingExerciseTaskService;
 
 public class ExerciseHintIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
@@ -51,7 +51,7 @@ public class ExerciseHintIntegrationTest extends AbstractSpringIntegrationBamboo
     private ProgrammingSubmissionRepository programmingSubmissionRepository;
 
     @Autowired
-    private UserExerciseHintActivationRepository userExerciseHintActivationRepository;
+    private ExerciseHintActivationRepository exerciseHintActivationRepository;
 
     @Autowired
     private ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository;
@@ -109,12 +109,12 @@ public class ExerciseHintIntegrationTest extends AbstractSpringIntegrationBamboo
     @WithMockUser(username = "student1", roles = "USER")
     public void queryAllActivatedHintsForAnExercise() throws Exception {
         var user = userRepository.getUserWithGroupsAndAuthorities();
-        var ueha = new UserExerciseHintActivation();
+        var ueha = new ExerciseHintActivation();
         ueha.setExerciseHint(hints.get(0));
         ueha.setUser(user);
         ueha.setActivationDate(ZonedDateTime.now());
         ueha.setRating(4);
-        userExerciseHintActivationRepository.save(ueha);
+        exerciseHintActivationRepository.save(ueha);
 
         var availableHints = request.getList("/api/programming-exercises/" + exercise.getId() + "/exercise-hints/activated", HttpStatus.OK, ExerciseHint.class);
         assertThat(availableHints).hasSize(1);
@@ -137,7 +137,7 @@ public class ExerciseHintIntegrationTest extends AbstractSpringIntegrationBamboo
         assertThat(activatedHint.getId()).isEqualTo(hints.get(0).getId());
         assertThat(activatedHint.getContent()).isEqualTo(hints.get(0).getContent());
 
-        var uehas = userExerciseHintActivationRepository.findAll();
+        var uehas = exerciseHintActivationRepository.findAll();
         assertThat(uehas).hasSize(1);
         assertThat(uehas.get(0).getExerciseHint()).isEqualTo(hints.get(0));
         assertThat(uehas.get(0).getUser()).isEqualTo(user);
@@ -147,15 +147,15 @@ public class ExerciseHintIntegrationTest extends AbstractSpringIntegrationBamboo
     @WithMockUser(username = "student1", roles = "USER")
     public void rateActivatedHintForAnExercise() throws Exception {
         var user = userRepository.getUserWithGroupsAndAuthorities();
-        var ueha = new UserExerciseHintActivation();
+        var ueha = new ExerciseHintActivation();
         ueha.setExerciseHint(hints.get(0));
         ueha.setUser(user);
         ueha.setActivationDate(ZonedDateTime.now());
-        userExerciseHintActivationRepository.save(ueha);
+        exerciseHintActivationRepository.save(ueha);
 
         request.postWithoutLocation("/api/programming-exercises/" + exercise.getId() + "/exercise-hints/" + hints.get(0).getId() + "/rating/" + 4, null, HttpStatus.OK, null);
 
-        ueha = userExerciseHintActivationRepository.findById(ueha.getId()).orElseThrow();
+        ueha = exerciseHintActivationRepository.findById(ueha.getId()).orElseThrow();
         assertThat(ueha.getRating()).isEqualTo(4);
     }
 
@@ -163,16 +163,16 @@ public class ExerciseHintIntegrationTest extends AbstractSpringIntegrationBamboo
     @WithMockUser(username = "student1", roles = "USER")
     public void rateActivatedHintForAnExerciseBadRequest() throws Exception {
         var user = userRepository.getUserWithGroupsAndAuthorities();
-        var ueha = new UserExerciseHintActivation();
+        var ueha = new ExerciseHintActivation();
         ueha.setExerciseHint(hints.get(0));
         ueha.setUser(user);
         ueha.setActivationDate(ZonedDateTime.now());
-        userExerciseHintActivationRepository.save(ueha);
+        exerciseHintActivationRepository.save(ueha);
 
         request.postWithoutLocation("/api/programming-exercises/" + exercise.getId() + "/exercise-hints/" + hints.get(0).getId() + "/rating/" + 100, null, HttpStatus.BAD_REQUEST,
                 null);
 
-        ueha = userExerciseHintActivationRepository.findById(ueha.getId()).orElseThrow();
+        ueha = exerciseHintActivationRepository.findById(ueha.getId()).orElseThrow();
         assertThat(ueha.getRating()).isNull();
     }
 
@@ -181,7 +181,7 @@ public class ExerciseHintIntegrationTest extends AbstractSpringIntegrationBamboo
     public void rateNotActivatedHintForAnExerciseForbidden() throws Exception {
         request.postWithoutLocation("/api/programming-exercises/" + exercise.getId() + "/exercise-hints/" + hints.get(0).getId() + "/rating/" + 4, null, HttpStatus.NOT_FOUND,
                 null);
-        assertThat(userExerciseHintActivationRepository.findAll()).isEmpty();
+        assertThat(exerciseHintActivationRepository.findAll()).isEmpty();
     }
 
     @Test
