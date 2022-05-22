@@ -20,10 +20,13 @@ public class QuizExerciseImportService extends ExerciseImportService {
 
     private final QuizExerciseService quizExerciseService;
 
-    public QuizExerciseImportService(QuizExerciseService quizExerciseService, ExampleSubmissionRepository exampleSubmissionRepository, SubmissionRepository submissionRepository,
-            ResultRepository resultRepository) {
+    private final FileService fileService;
+
+    public QuizExerciseImportService(QuizExerciseService quizExerciseService, FileService fileService, ExampleSubmissionRepository exampleSubmissionRepository,
+            SubmissionRepository submissionRepository, ResultRepository resultRepository) {
         super(exampleSubmissionRepository, submissionRepository, resultRepository);
         this.quizExerciseService = quizExerciseService;
+        this.fileService = fileService;
     }
 
     /**
@@ -84,6 +87,10 @@ public class QuizExerciseImportService extends ExerciseImportService {
                 }
             }
             else if (quizQuestion instanceof DragAndDropQuestion dndQuestion) {
+                // Need to copy the file and get a new path, otherwise two different questions would share the same image and would cause problems in case one was deleted
+                dndQuestion
+                        .setBackgroundFilePath(fileService.copyExistingFileToTarget(dndQuestion.getBackgroundFilePath(), FilePathService.getDragAndDropBackgroundFilePath(), null));
+
                 for (DropLocation dropLocation : dndQuestion.getDropLocations()) {
                     dropLocation.setId(null);
                     dropLocation.setQuestion(dndQuestion);
@@ -91,6 +98,10 @@ public class QuizExerciseImportService extends ExerciseImportService {
                 for (DragItem dragItem : dndQuestion.getDragItems()) {
                     dragItem.setId(null);
                     dragItem.setQuestion(dndQuestion);
+                    if (dragItem.getPictureFilePath() != null) {
+                        // Need to copy the file and get a new path, same as above
+                        dragItem.setPictureFilePath(fileService.copyExistingFileToTarget(dragItem.getPictureFilePath(), FilePathService.getDragItemFilePath(), null));
+                    }
                 }
                 for (DragAndDropMapping dragAndDropMapping : dndQuestion.getCorrectMappings()) {
                     dragAndDropMapping.setId(null);
