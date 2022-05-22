@@ -278,6 +278,7 @@ public class ExerciseHintResource {
      * or with status {@code 400 (BAD_REQUEST)} if the hint could not be activated
      */
     @PostMapping("programming-exercises/{exerciseId}/exercise-hints/{exerciseHintId}/activate")
+    @PreAuthorize("hasRole('USER')")
     public ResponseEntity<ExerciseHint> activateExerciseHint(@PathVariable Long exerciseId, @PathVariable Long exerciseHintId) {
         log.debug("REST request to activate ExerciseHint : {}", exerciseHintId);
         var exercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
@@ -306,6 +307,7 @@ public class ExerciseHintResource {
      * @return The {@link ResponseEntity} with status {@code 200 (OK)}
      */
     @PostMapping("programming-exercises/{exerciseId}/exercise-hints/{exerciseHintId}/rating/{ratingValue}")
+    @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Void> rateExerciseHint(@PathVariable Long exerciseId, @PathVariable Long exerciseHintId, @PathVariable Integer ratingValue) {
         log.debug("REST request to rate ExerciseHint : {}", exerciseHintId);
         var exercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
