@@ -1,11 +1,11 @@
 import { AfterViewInit, Component, OnChanges, OnDestroy, OnInit, SimpleChanges } from '@angular/core';
 
 @Component({
-    selector: 'jhi-monitoring-overview',
-    templateUrl: './monitoring-overview.component.html',
-    styleUrls: ['./monitoring-overview.component.scss', '../monitoring-card.component.scss'],
+    selector: 'jhi-monitoring-activity-log',
+    templateUrl: './monitoring-activity-log.component.html',
+    styleUrls: ['./monitoring-activity-log.component.scss'],
 })
-export class MonitoringOverviewComponent implements OnInit, OnChanges, OnDestroy, AfterViewInit {
+export class MonitoringActivityLogComponent implements OnInit, OnChanges, OnDestroy, AfterViewInit {
     constructor() {}
 
     ngOnChanges(changes: SimpleChanges): void {

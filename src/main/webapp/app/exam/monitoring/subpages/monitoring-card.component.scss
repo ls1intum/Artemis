@@ -1,0 +1,12 @@
+.monitoring-card {
+    border: 1px solid var(--exam-monitoring-card-border-color);
+
+    .monitoring-card-header {
+        cursor: pointer;
+    }
+
+    .monitoring-card-footer {
+        border-top: 1px solid var(--exam-monitoring-card-border-color);
+        background: var(--exam-monitoring-card-footer-background-color);
+    }
+}

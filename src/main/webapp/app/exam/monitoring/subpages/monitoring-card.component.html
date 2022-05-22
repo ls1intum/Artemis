@@ -1,0 +1,17 @@
+<div class="monitoring-card">
+    <div class="monitoring-card-header position-relative d-flex" [style.background-color]="'var(--' + this.color + ')'">
+        <div class="container d-flex flex-column justify-content-center align-items-center text-white py-2">
+            <div class="text-center fw-medium display-6">{{ this.title }}</div>
+            <div class="text-center overflow-hidden text-truncate d-inline mw-100 text-nowrap">
+                {{ this.description }}
+            </div>
+        </div>
+        <ng-content select="[header]"></ng-content>
+    </div>
+
+    <ng-content select="[content]"></ng-content>
+
+    <div class="d-flex flex-row align-items-center px-2 py-1 monitoring-card-footer">
+        <ng-content select="[footer]"></ng-content>
+    </div>
+</div>

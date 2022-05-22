@@ -4,6 +4,7 @@ import { UserRouteAccessService } from 'app/core/auth/user-route-access-service'
 import { ExamMonitoringComponent } from 'app/exam/monitoring/exam-monitoring.component';
 import { MonitoringOverviewComponent } from 'app/exam/monitoring/subpages/overview/monitoring-overview.component';
 import { MonitoringExercisesComponent } from 'app/exam/monitoring/subpages/exercise/monitoring-exercises.component';
+import { MonitoringActivityLogComponent } from 'app/exam/monitoring/subpages/activity-log/monitoring-activity-log.component';
 
 export const examMonitoringRoute: Routes = [
     {
@@ -31,6 +32,15 @@ export const examMonitoringRoute: Routes = [
             {
                 path: 'exercises',
                 component: MonitoringExercisesComponent,
+                data: {
+                    authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
+                    pageTitle: 'artemisApp.examMonitoring.title',
+                },
+                canActivate: [UserRouteAccessService],
+            },
+            {
+                path: 'activity-log',
+                component: MonitoringActivityLogComponent,
                 data: {
                     authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
                     pageTitle: 'artemisApp.examMonitoring.title',

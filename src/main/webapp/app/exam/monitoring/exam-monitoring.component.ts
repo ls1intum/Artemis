@@ -12,7 +12,7 @@ import { HttpResponse } from '@angular/common/http';
 })
 export class ExamMonitoringComponent implements OnInit, OnDestroy, AfterViewInit {
     // 'overview', 'exercises', 'students', 'submissions', 'sessions', 'activity-log', 'summary'
-    readonly sections: string[] = ['overview', 'exercises'];
+    readonly sections: string[] = ['overview', 'exercises', 'activity-log'];
 
     private subscription: Subscription;
     private examId: number;

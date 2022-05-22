@@ -24,8 +24,8 @@
         <div class="tab-bar tab-bar-overview" id="monitoring-tab-bar">
             <div class="col-12">
                 <div>
-                    <div *ngFor="let section of this.sections" [id]="'monitoring-' + section + '-tab'" class="tab-item" [routerLink]="section" routerLinkActive="active">
-                        <b [jhiTranslate]="'artemisApp.examMonitoring.menu.' + section">{{ section }}</b>
+                    <div *ngFor="let section of this.sections" id="monitoring-{{ section }}-tab" class="tab-item" [routerLink]="section" routerLinkActive="active">
+                        <b jhiTranslate="artemisApp.examMonitoring.menu.{{ section }}">{{ section }}</b>
                     </div>
                 </div>
             </div>
