@@ -126,7 +126,7 @@ export class TextSubmissionViewerComponent implements OnChanges {
      */
     private static compareFileWithHasMatch(file1: FileWithHasMatch, file2: FileWithHasMatch): number {
         if (file1.hasMatch === file2.hasMatch) {
-            return file1.file > file2.file ? 1 : -1;
+            return file1.file.localeCompare(file2.file);
         } else if (file1.hasMatch) {
             return -1;
         } else {
