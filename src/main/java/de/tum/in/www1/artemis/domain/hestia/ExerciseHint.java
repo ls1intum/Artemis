@@ -13,6 +13,7 @@ import com.fasterxml.jackson.annotation.*;
 
 import de.tum.in.www1.artemis.domain.DomainObject;
 import de.tum.in.www1.artemis.domain.Exercise;
+import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 
 /**
  * An ExerciseHint.
@@ -41,7 +42,7 @@ public class ExerciseHint extends DomainObject {
 
     @ManyToOne
     @JsonIgnoreProperties("exerciseHints")
-    private Exercise exercise;
+    private ProgrammingExercise exercise;
 
     @ManyToOne
     @JsonIgnoreProperties("exerciseHints")
@@ -92,7 +93,7 @@ public class ExerciseHint extends DomainObject {
         return exercise;
     }
 
-    public ExerciseHint exercise(Exercise exercise) {
+    public ExerciseHint exercise(ProgrammingExercise exercise) {
         this.exercise = exercise;
         return this;
     }
@@ -105,7 +106,7 @@ public class ExerciseHint extends DomainObject {
         this.task = programmingExerciseTask;
     }
 
-    public void setExercise(Exercise exercise) {
+    public void setExercise(ProgrammingExercise exercise) {
         this.exercise = exercise;
     }
 

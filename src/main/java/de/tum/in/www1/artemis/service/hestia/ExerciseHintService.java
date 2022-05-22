@@ -51,7 +51,7 @@ public class ExerciseHintService {
      * @param target   The new target exercise, to which all hints should get copied to.
      * @return A map with the old hint id as a key and the new hint id as a value
      */
-    public Map<Long, Long> copyExerciseHints(final Exercise template, final Exercise target) {
+    public Map<Long, Long> copyExerciseHints(final ProgrammingExercise template, final ProgrammingExercise target) {
         final Map<Long, Long> hintIdMapping = new HashMap<>();
         target.setExerciseHints(template.getExerciseHints().stream().map(hint -> {
             ExerciseHint copiedHint;

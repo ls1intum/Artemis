@@ -58,7 +58,6 @@ public class ProgrammingExerciseServiceIntegrationTest extends AbstractSpringInt
         database.addTasksToProgrammingExercise(programmingExercise);
         database.addSolutionEntriesToProgrammingExercise(programmingExercise);
         database.addCodeHintsToProgrammingExercise(programmingExercise);
-        database.addHintsToProblemStatement(programmingExercise);
         database.addStaticCodeAnalysisCategoriesToProgrammingExercise(programmingExercise);
 
         // Load again to fetch changes to statement and hints while keeping eager refs

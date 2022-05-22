@@ -103,7 +103,7 @@ public class ExerciseHintResource {
             throw new AccessForbiddenException("Exercise hints for exams are currently not supported");
         }
         ExerciseHint result = exerciseHintRepository.save(exerciseHint);
-        return ResponseEntity.created(new URI("/api/exercises/" + exerciseHint.getExercise().getId() + "/exercise-hints/" + result.getId()))
+        return ResponseEntity.created(new URI("/api/programming-exercises/" + exerciseHint.getExercise().getId() + "/exercise-hints/" + result.getId()))
                 .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, EXERCISE_HINT_ENTITY_NAME, result.getId().toString())).body(result);
     }
 

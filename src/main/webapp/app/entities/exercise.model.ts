@@ -98,7 +98,6 @@ export abstract class Exercise implements BaseEntity {
     public exampleSubmissions?: ExampleSubmission[];
     public attachments?: Attachment[];
     public posts?: Post[];
-    public exerciseHints?: ExerciseHint[];
     public gradingCriteria?: GradingCriterion[];
     public exerciseGroup?: ExerciseGroup;
     public learningGoals?: LearningGoal[];
