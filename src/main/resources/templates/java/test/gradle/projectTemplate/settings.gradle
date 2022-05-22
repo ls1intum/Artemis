@@ -1,1 +1,3 @@
 rootProject.name = '${exerciseNamePomXml}-Tests'
+// includeBuild('/path/to/repository-solution')
+// includeBuild('/path/to/repository-exercise')
