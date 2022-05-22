@@ -9,7 +9,11 @@ export abstract class AbstractExerciseFeedback {
     readonly complainButtonSelector = '#complain';
 
     shouldShowAdditionalFeedback(points: number, feedbackText: string) {
-        cy.get(this.additionalFeedbackSelector).contains(`${points} Points: ${feedbackText}`).should('be.visible');
+        if (Math.abs(points) === 1) {
+            cy.get(this.additionalFeedbackSelector).contains(`${points} Point: ${feedbackText}`).should('be.visible');
+        } else {
+            cy.get(this.additionalFeedbackSelector).contains(`${points} Points: ${feedbackText}`).should('be.visible');
+        }
     }
 
     shouldShowScore(achievedPoints: number, maxPoints: number, percentage: number) {
