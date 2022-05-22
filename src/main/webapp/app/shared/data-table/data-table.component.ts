@@ -7,6 +7,7 @@ import { BaseEntity } from 'app/shared/model/base-entity';
 import { LocalStorageService } from 'ngx-webstorage';
 import { SortService } from 'app/shared/service/sort.service';
 import { faSort, faSortUp, faSortDown, faCircleNotch } from '@fortawesome/free-solid-svg-icons';
+import { TranslateService } from '@ngx-translate/core';
 
 /**
  * Enum for ascending and descending order.
@@ -137,7 +138,7 @@ export class DataTableComponent implements OnInit, OnChanges {
     // Icons
     faCircleNotch = faCircleNotch;
 
-    constructor(private sortService: SortService, private localStorage: LocalStorageService) {
+    constructor(private sortService: SortService, private localStorage: LocalStorageService, private translateService: TranslateService) {
         this.entities = [];
         this.entityCriteria = {
             textSearch: [],
@@ -184,6 +185,11 @@ export class DataTableComponent implements OnInit, OnChanges {
                 rows: this.entities,
                 rowClass: '',
                 scrollbarH: true,
+                messages: {
+                    emptyMessage: this.translateService.instant('global.ngx-datatable.empty'),
+                    totalMessage: this.translateService.instant('global.ngx-datatable.total'),
+                    selectedMessage: this.translateService.instant('global.ngx-datatable.selected'),
+                },
             },
             controls: {
                 iconForSortPropField: this.iconForSortPropField,
