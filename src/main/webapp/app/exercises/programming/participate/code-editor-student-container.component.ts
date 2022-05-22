@@ -1,7 +1,7 @@
 import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { Observable, of } from 'rxjs';
 import { Subscription } from 'rxjs';
-import { catchError, mergeMap, map, switchMap, tap } from 'rxjs/operators';
+import { catchError, mergeMap, map, tap } from 'rxjs/operators';
 import { ProgrammingExerciseParticipationService } from 'app/exercises/programming/manage/services/programming-exercise-participation.service';
 import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
 import { codeEditorTour } from 'app/guided-tour/tours/code-editor-tour';
@@ -15,7 +15,6 @@ import { Result } from 'app/entities/result.model';
 import { Feedback, FeedbackType, checkSubsequentFeedbackInAssessment } from 'app/entities/feedback.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { DomainType } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
-import { ExerciseHintService } from 'app/exercises/shared/exercise-hint/shared/exercise-hint.service';
 import { ActivatedRoute } from '@angular/router';
 import { CodeEditorContainerComponent } from 'app/exercises/programming/shared/code-editor/container/code-editor-container.component';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
@@ -27,7 +26,6 @@ import { Course } from 'app/entities/course.model';
 import { SubmissionPolicyService } from 'app/exercises/programming/manage/services/submission-policy.service';
 import { hasExerciseDueDatePassed } from 'app/exercises/shared/exercise/exercise.utils';
 import { faCircleNotch, faTimesCircle } from '@fortawesome/free-solid-svg-icons';
-import { ExerciseHint } from 'app/entities/hestia/exercise-hint.model';
 
 @Component({
     selector: 'jhi-code-editor-student',
@@ -64,7 +62,6 @@ export class CodeEditorStudentContainerComponent implements OnInit, OnDestroy {
         private domainService: DomainService,
         private programmingExerciseParticipationService: ProgrammingExerciseParticipationService,
         private guidedTourService: GuidedTourService,
-        private exerciseHintService: ExerciseHintService,
         private submissionPolicyService: SubmissionPolicyService,
         private route: ActivatedRoute,
     ) {}
@@ -103,13 +100,9 @@ export class CodeEditorStudentContainerComponent implements OnInit, OnDestroy {
                             checkSubsequentFeedbackInAssessment(this.participation.results[0].feedbacks);
                         }
                     }),
-                    switchMap(() => {
-                        return this.loadExerciseHints();
-                    }),
                 )
                 .subscribe({
-                    next: (exerciseHints: ExerciseHint[]) => {
-                        this.exercise.exerciseHints = exerciseHints;
+                    next: () => {
                         this.loadingParticipation = false;
                         this.guidedTourService.enableTourForExercise(this.exercise, codeEditorTour, true);
                     },
@@ -128,16 +121,6 @@ export class CodeEditorStudentContainerComponent implements OnInit, OnDestroy {
         if (this.paramSub) {
             this.paramSub.unsubscribe();
         }
-    }
-
-    /**
-     * Load exercise hints. Take them from the exercise if available.
-     */
-    private loadExerciseHints() {
-        if (!this.exercise.exerciseHints) {
-            return this.exerciseHintService.findByExerciseId(this.exercise.id!).pipe(map(({ body }) => body || []));
-        }
-        return of(this.exercise.exerciseHints);
     }
 
     /**

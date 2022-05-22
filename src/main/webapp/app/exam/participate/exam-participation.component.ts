@@ -242,7 +242,6 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
             // initialize all submissions as synced
             this.studentExam.exercises!.forEach((exercise) => {
                 // We do not support hints in an exam at the moment. Setting an empty array here disables the hint requests
-                exercise.exerciseHints = [];
                 if (exercise.studentParticipations) {
                     exercise.studentParticipations!.forEach((participation) => {
                         if (participation.submissions && participation.submissions.length > 0) {
@@ -330,10 +329,6 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
             .subscribe({
                 next: (studentExam: StudentExam) => {
                     this.studentExam = studentExam;
-                    this.studentExam.exercises!.forEach((exercise) => {
-                        // We do not support hints in an exam at the moment. Setting an empty array here disables the hint requests
-                        exercise.exerciseHints = [];
-                    });
                     this.alertService.addAlert({ type: AlertType.SUCCESS, message: 'artemisApp.studentExam.submitSuccessful', timeout: 20000 });
                 },
                 error: (error: Error) => {

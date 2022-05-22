@@ -126,8 +126,7 @@
             "problemStatement": {
                 "title": "Problem Statement",
                 "taskCommand": "Task",
-                "testCaseCommand": "Insert Test Case",
-                "exerciseHintCommand": "Add task specific hint"
+                "testCaseCommand": "Insert Test Case"
             },
             "status": {
                 "solutionFailsTest": "The Solution Repository does not fulfill one or more test cases. This could indicate an issue with the Solution Repository or the test cases.",

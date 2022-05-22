@@ -21,9 +21,7 @@ import { ProgrammingAssessmentManualResultService } from 'app/exercises/programm
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { Complaint } from 'app/entities/complaint.model';
 import { ComplaintService } from 'app/complaints/complaint.service';
-import { ExerciseHintService } from 'app/exercises/shared/exercise-hint/shared/exercise-hint.service';
 import { MockRepositoryFileService } from '../../helpers/mocks/service/mock-repository-file.service';
-import { MockExerciseHintService } from '../../helpers/mocks/service/mock-exercise-hint.service';
 import { MockNgbModalService } from '../../helpers/mocks/service/mock-ngb-modal.service';
 import { CodeEditorTutorAssessmentContainerComponent } from 'app/exercises/programming/assess/code-editor-tutor-assessment-container.component';
 import { Result } from 'app/entities/result.model';
@@ -190,7 +188,6 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: ParticipationWebsocketService, useClass: MockParticipationWebsocketService },
                 { provide: RepositoryFileService, useClass: MockRepositoryFileService },
-                { provide: ExerciseHintService, useClass: MockExerciseHintService },
                 { provide: NgbModal, useClass: MockNgbModalService },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: LocalStorageService, useClass: MockSyncStorage },

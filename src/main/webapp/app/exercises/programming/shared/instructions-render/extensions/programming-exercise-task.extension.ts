@@ -10,11 +10,9 @@ import { ArtemisShowdownExtensionWrapper } from 'app/shared/markdown-editor/exte
 import { TaskArray, TaskArrayWithExercise } from 'app/exercises/programming/shared/instructions-render/task/programming-exercise-task.model';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
-import { ExerciseHint } from 'app/entities/hestia/exercise-hint.model';
 
 @Injectable({ providedIn: 'root' })
 export class ProgrammingExerciseTaskExtensionWrapper implements ArtemisShowdownExtensionWrapper {
-    public exerciseHints: ExerciseHint[] = [];
     private latestResult?: Result;
     private exercise: Exercise;
 
@@ -67,14 +65,13 @@ export class ProgrammingExerciseTaskExtensionWrapper implements ArtemisShowdownE
      * @param tasks to inject into the html.
      */
     private injectTasks = (tasks: TaskArray) => {
-        tasks.forEach(({ id, taskName, tests, hints }) => {
+        tasks.forEach(({ id, taskName, tests }) => {
             const taskHtmlContainers = document.getElementsByClassName(`pe-task-${id}`);
 
             // The same task could appear multiple times in the instructions (edge case).
             for (let i = 0; i < taskHtmlContainers.length; i++) {
                 const componentRef = this.componentFactoryResolver.resolveComponentFactory(ProgrammingExerciseInstructionTaskStatusComponent).create(this.injector);
                 componentRef.instance.exercise = this.exercise;
-                componentRef.instance.exerciseHints = this.exerciseHints.filter((hint) => hints.includes(hint.id!.toString(10)));
                 componentRef.instance.taskName = taskName;
                 componentRef.instance.latestResult = this.latestResult;
                 componentRef.instance.tests = tests;
@@ -109,7 +106,6 @@ export class ProgrammingExerciseTaskExtensionWrapper implements ArtemisShowdownE
                     .map((task) => {
                         return task.match(innerTaskRegex);
                     })
-                    // Legacy tasks don't contain the hint list, so there are 2 cases (with or without hints).
                     .filter((testMatch) => !!testMatch && (testMatch.length === 3 || testMatch.length === 5))
                     .map((testMatch: RegExpMatchArray) => {
                         const nextIndex = this.taskIndex;
@@ -120,7 +116,6 @@ export class ProgrammingExerciseTaskExtensionWrapper implements ArtemisShowdownE
                             taskName: testMatch[1],
                             // split the names by "," only when there is not a closing bracket without a previous opening bracket
                             tests: testMatch[2].split(/,(?![^(]*?\))/).map((s) => s.trim()),
-                            hints: testMatch[4] ? testMatch[4].split(',').map((s) => s.trim()) : [],
                         };
                     });
                 const tasksWithParticipationId: TaskArrayWithExercise = {

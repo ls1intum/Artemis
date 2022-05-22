@@ -66,8 +66,6 @@ import { ProgrammingExerciseInstructionAnalysisComponent } from 'app/exercises/p
 import { ResultComponent } from 'app/exercises/shared/result/result.component';
 import { ProgrammingExerciseInstructionStepWizardComponent } from 'app/exercises/programming/shared/instructions-render/step-wizard/programming-exercise-instruction-step-wizard.component';
 import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
-import { MockExerciseHintService } from '../../helpers/mocks/service/mock-exercise-hint.service';
-import { ExerciseHintService } from 'app/exercises/shared/exercise-hint/shared/exercise-hint.service';
 
 describe('CodeEditorInstructorIntegration', () => {
     // needed to make sure ace is defined
@@ -91,8 +89,6 @@ describe('CodeEditorInstructorIntegration', () => {
     let subscribeForLatestResultOfParticipationSubject: BehaviorSubject<Result | null>;
     let findWithParticipationsSubject: Subject<{ body: ProgrammingExercise }>;
     let routeSubject: Subject<Params>;
-
-    const exerciseHints = [{ id: 1 }, { id: 2 }];
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
@@ -140,7 +136,6 @@ describe('CodeEditorInstructorIntegration', () => {
                 { provide: ParticipationService, useClass: MockParticipationService },
                 { provide: ProgrammingExerciseParticipationService, useClass: MockProgrammingExerciseParticipationService },
                 { provide: ProgrammingExerciseService, useClass: MockProgrammingExerciseService },
-                { provide: ExerciseHintService, useClass: MockExerciseHintService },
                 { provide: JhiWebsocketService, useClass: MockWebsocketService },
             ],
         })
@@ -271,7 +266,6 @@ describe('CodeEditorInstructorIntegration', () => {
         expect(container.editableInstructions.participation).toEqual(exercise.templateParticipation);
         expect(container.resultComp).not.toBe(undefined); // Have to use this as it's a component
         expect(container.codeEditorContainer.buildOutput).not.toBe(undefined); // Have to use this as it's a component
-        expect(container.editableInstructions.exerciseHints).toEqual(exerciseHints);
 
         // Called once by each build-output, instructions, result and twice by instructor-exercise-status (=templateParticipation,solutionParticipation) &
         expect(subscribeForLatestResultOfParticipationStub).toHaveBeenCalledTimes(5);

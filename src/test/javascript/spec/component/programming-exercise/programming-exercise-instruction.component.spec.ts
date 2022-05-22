@@ -37,8 +37,6 @@ import { MockParticipationWebsocketService } from '../../helpers/mocks/service/m
 import { ExerciseType } from 'app/entities/exercise.model';
 import { MockTranslateService, TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.service';
 import { MockComponent } from 'ng-mocks';
-import { ExerciseHintService } from 'app/exercises/shared/exercise-hint/shared/exercise-hint.service';
-import { MockExerciseHintService } from '../../helpers/mocks/service/mock-exercise-hint.service';
 
 describe('ProgrammingExerciseInstructionComponent', () => {
     let comp: ProgrammingExerciseInstructionComponent;
@@ -53,8 +51,6 @@ describe('ProgrammingExerciseInstructionComponent', () => {
     let getFileStub: jest.SpyInstance;
     let openModalStub: jest.SpyInstance;
     let getLatestResultWithFeedbacks: jest.SpyInstance;
-
-    const exerciseHints = [{ id: 1 }, { id: 2 }];
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
@@ -77,7 +73,6 @@ describe('ProgrammingExerciseInstructionComponent', () => {
                 { provide: ParticipationWebsocketService, useClass: MockParticipationWebsocketService },
                 { provide: RepositoryFileService, useClass: MockRepositoryFileService },
                 { provide: NgbModal, useClass: MockNgbModalService },
-                { provide: ExerciseHintService, useClass: MockExerciseHintService },
             ],
         })
             .overrideModule(ArtemisTestModule, { set: { declarations: [], exports: [] } })
@@ -123,7 +118,6 @@ describe('ProgrammingExerciseInstructionComponent', () => {
         expect(subscribeForLatestResultOfParticipationStub).toHaveBeenCalledWith(participation.id, true, exercise.id);
         expect(comp.participationSubscription).not.toEqual(oldSubscription);
         expect(comp.isInitial).toBe(true);
-        expect(comp.exerciseHints).toEqual(exerciseHints);
     });
 
     it('should try to fetch README.md from assignment repository if no problemStatement was provided', () => {
@@ -301,14 +295,12 @@ describe('ProgrammingExerciseInstructionComponent', () => {
             completeString: '[task][Implement Bubble Sort](testBubbleSort)',
             taskName: 'Implement Bubble Sort',
             tests: ['testBubbleSort'],
-            hints: [],
         });
         expect(comp.tasks[1]).toEqual({
             id: 1,
-            completeString: '[task][Implement Merge Sort](testMergeSort){33,44}',
+            completeString: '[task][Implement Merge Sort](testMergeSort)',
             taskName: 'Implement Merge Sort',
             tests: ['testMergeSort'],
-            hints: ['33', '44'],
         });
         fixture.detectChanges();
 
@@ -358,14 +350,12 @@ describe('ProgrammingExerciseInstructionComponent', () => {
             completeString: '[task][Implement Bubble Sort](testBubbleSort)',
             taskName: 'Implement Bubble Sort',
             tests: ['testBubbleSort'],
-            hints: [],
         });
         expect(comp.tasks[1]).toEqual({
             id: 1,
-            completeString: '[task][Implement Merge Sort](testMergeSort){33,44}',
+            completeString: '[task][Implement Merge Sort](testMergeSort)',
             taskName: 'Implement Merge Sort',
             tests: ['testMergeSort'],
-            hints: ['33', '44'],
         });
         fixture.detectChanges();
 
