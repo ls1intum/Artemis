@@ -3034,6 +3034,7 @@ public class DatabaseUtilService {
         hints.add(exerciseHint3);
         exercise.setExerciseHints(hints);
         exerciseHintRepository.saveAll(hints);
+        programmingExerciseRepository.save(exercise);
     }
 
     public void addTasksToProgrammingExercise(ProgrammingExercise programmingExercise) {
