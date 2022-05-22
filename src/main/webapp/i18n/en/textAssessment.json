@@ -29,12 +29,6 @@
             "submissionLocked": "submission locked",
             "studentSubmission": "Student submission",
             "instructions": "&nbsp; Instructions &nbsp;",
-            "detail": {
-                "credits": {
-                    "one": "{{credits}} credit",
-                    "many": "{{credits}} credits"
-                }
-            },
             "editor": {
                 "assess": "Assess"
             },
