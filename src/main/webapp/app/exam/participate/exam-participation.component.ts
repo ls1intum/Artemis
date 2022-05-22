@@ -241,7 +241,6 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
             // TODO: move to exam-participation.service after studentExam was retrieved
             // initialize all submissions as synced
             this.studentExam.exercises!.forEach((exercise) => {
-                // We do not support hints in an exam at the moment. Setting an empty array here disables the hint requests
                 if (exercise.studentParticipations) {
                     exercise.studentParticipations!.forEach((participation) => {
                         if (participation.submissions && participation.submissions.length > 0) {
