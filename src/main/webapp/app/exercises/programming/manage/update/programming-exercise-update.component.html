@@ -61,6 +61,7 @@
                 [columnMode]="'force'"
                 [rowHeight]="'auto'"
                 [rows]="programmingExercise.auxiliaryRepositories"
+                [messages]="messages"
                 *ngIf="programmingExercise.auxiliaryRepositories && programmingExercise.auxiliaryRepositories.length > 0"
             >
                 <ngx-datatable-column name="Repository Name" prop="repositoryName">

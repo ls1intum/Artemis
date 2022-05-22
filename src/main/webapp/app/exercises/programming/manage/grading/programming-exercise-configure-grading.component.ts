@@ -871,4 +871,12 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
         this.staticCodeAnalysisCategoriesForCharts = this.staticCodeAnalysisCategoriesForTable;
         this.backupStaticCodeAnalysisCategories = this.staticCodeAnalysisCategoriesForTable;
     }
+
+    get messages() {
+        return {
+            emptyMessage: this.translateService.instant('global.ngx-datatable.empty'),
+            totalMessage: this.translateService.instant('global.ngx-datatable.total'),
+            selectedMessage: this.translateService.instant('global.ngx-datatable.selected'),
+        };
+    }
 }

@@ -93,6 +93,7 @@
                             [rows]="filteredTestCasesForTable"
                             [rowClass]="getRowClass"
                             [sorts]="tableSorts.testCases"
+                            [messages]="messages"
                             (sort)="onSort('testCases', $event)"
                         >
                             <ngx-datatable-column name="Test Name" prop="testName">
@@ -282,6 +283,7 @@
                             [rowHeight]="'auto'"
                             [rows]="staticCodeAnalysisCategoriesForTable"
                             [sorts]="tableSorts.codeAnalysis"
+                            [messages]="messages"
                             (sort)="onSort('codeAnalysis', $event)"
                         >
                             <ngx-datatable-column name="Category" prop="name">

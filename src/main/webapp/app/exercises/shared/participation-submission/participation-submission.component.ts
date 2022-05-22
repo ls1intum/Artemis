@@ -262,4 +262,12 @@ export class ParticipationSubmissionComponent implements OnInit {
             this.dialogErrorSource.next(error.message);
         }
     }
+
+    get messages() {
+        return {
+            emptyMessage: this.translateService.instant('global.ngx-datatable.empty'),
+            totalMessage: this.translateService.instant('global.ngx-datatable.total'),
+            selectedMessage: this.translateService.instant('global.ngx-datatable.selected'),
+        };
+    }
 }
