@@ -388,6 +388,9 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
                             this.availableExerciseHints = availableRes!.body!.filter(
                                 (availableHint) => this.activatedExerciseHints.filter((activatedHint) => availableHint.id === activatedHint.id).length === 0,
                             );
+                            if (this.availableExerciseHints.length > 0) {
+                                this.alertService.info("New exercise hints available for task '" + this.availableExerciseHints.first()?.programmingExerciseTask?.taskName + "'");
+                            }
                         });
                     });
                 }

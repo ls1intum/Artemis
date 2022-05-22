@@ -29,12 +29,13 @@
                 "title": "Hinweise zur Übung",
                 "tooltip": "Hinweise zu dieser Übung öffnen",
                 "activate": "Aktivieren",
+                "activatedHintsTitle": "Aktivierte Hinweise",
+                "availableHintsTitle": "Neue Hinweise",
                 "activateTooltip": "Der Hinweis wird aktiviert und den angezeigten Hinweisen hinzugefügt.",
                 "display": "Anzeigen",
                 "collapse": "Verbergen",
                 "rateHintQuestion": "Wie hilfreich war dieser Hinweis?",
-                "emptyAvailableHintsDescription": "Neue verfügbare Hinweise werden hier angezeigt.",
-                "emptyActivatedHintsDescription": "Aktivierte Hinweise werden hier angezeigt."
+                "availableHintTaskDescription": "Hast Du Probleme mit der Aufgabe '{{ taskName }}'? Hier kannst Du Dir die Musterlösung anzeigen lassen."
             }
         },
         "codeHint": {

@@ -3,23 +3,20 @@
     <button type="button" class="btn-close" data-dismiss="modal" aria-hidden="true" (click)="clear()"></button>
 </div>
 <div class="modal-body">
-    <div class="mb-3">
-        <h2>New Available Hints</h2>
+    <div *ngIf="availableExerciseHints && availableExerciseHints.length > 0" class="mb-3">
+        <h2 jhiTranslate="artemisApp.exerciseHint.studentDialog.availableHintsTitle">New available hints</h2>
+        <span>{{
+            'artemisApp.exerciseHint.studentDialog.availableHintTaskDescription' | artemisTranslate: { taskName: availableExerciseHints.first()!.programmingExerciseTask!.taskName }
+        }}</span>
         <div *ngFor="let hint of availableExerciseHints" class="mb-3">
             <jhi-exercise-hint-expandable [exerciseHint]="hint" [hasUsed]="false" (onHintActivated)="this.onHintActivated.emit($event)"></jhi-exercise-hint-expandable>
         </div>
-        <span *ngIf="availableExerciseHints?.length === 0" [jhiTranslate]="'artemisApp.exerciseHint.studentDialog.emptyAvailableHintsDescription'"
-            >New available hints will be displayed here.</span
-        >
+        <hr />
     </div>
-    <hr />
-    <div class="mb-3">
-        <h2>Already Activated Hints</h2>
+    <div *ngIf="activatedExerciseHints && activatedExerciseHints.length > 0" class="mb-3">
+        <h2 jhiTranslate="artemisApp.exerciseHint.studentDialog.activatedHintsTitle">Already activated hints</h2>
         <div *ngFor="let hint of activatedExerciseHints" class="mb-3">
             <jhi-exercise-hint-expandable [exerciseHint]="hint" [hasUsed]="true"></jhi-exercise-hint-expandable>
         </div>
-        <span *ngIf="activatedExerciseHints?.length === 0" [jhiTranslate]="'artemisApp.exerciseHint.studentDialog.emptyActivatedHintsDescription'"
-            >Already activated hints will be displayed here.</span
-        >
     </div>
 </div>
