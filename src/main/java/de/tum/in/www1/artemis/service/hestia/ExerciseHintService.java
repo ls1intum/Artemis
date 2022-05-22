@@ -223,10 +223,9 @@ public class ExerciseHintService {
     }
 
     private List<Submission> getSubmissionsForStudent(ProgrammingExercise exercise, User student) {
-        var allParticipationsForExercise = studentParticipationRepository.findByExerciseIdAndStudentIdWithEagerSubmissionsResultsFeedbacks(exercise.getId(), student.getId());
-        var currentStudentParticipation = allParticipationsForExercise.stream().filter(participation -> participation.getParticipant().getParticipants().contains(student))
-                .findFirst().orElseThrow(() -> new InternalServerErrorException("No user"));
-        return currentStudentParticipation.getSubmissions().stream().sorted(Comparator.comparing(Submission::getSubmissionDate, Comparator.reverseOrder())).toList();
+        var studentParticipation = studentParticipationRepository.findByExerciseIdAndStudentIdWithEagerSubmissionsResultsFeedbacks(exercise.getId(), student.getId())
+                .orElseThrow(() -> new InternalServerErrorException("No participation"));
+        return studentParticipation.getSubmissions().stream().sorted(Comparator.comparing(Submission::getSubmissionDate, Comparator.reverseOrder())).toList();
     }
 
     private int subsequentNumberOfSuccessfulSubmissionsForTask(List<Submission> submissions, ProgrammingExerciseTask task, boolean successful) {
