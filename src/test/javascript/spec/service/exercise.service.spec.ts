@@ -145,7 +145,7 @@ describe('Exercise Service', () => {
     it('should set error when example solution publication date is before release date', () => {
         // Set flags to opposite of what is expected so we know they are changed.
         exercise.exampleSolutionPublicationDateError = false;
-        exercise.exampleSolutionPublicationDateWarning = true;
+        exercise.exampleSolutionPublicationDateWarning = false;
 
         exercise.releaseDate = currentDate.add(5, 'day');
         exercise.dueDate = undefined;
