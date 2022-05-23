@@ -70,6 +70,8 @@ export class ProgrammingExerciseTaskExtensionWrapper implements ArtemisShowdownE
 
             // The same task could appear multiple times in the instructions (edge case).
             for (let i = 0; i < taskHtmlContainers.length; i++) {
+                // TODO: Replace this workaround with official Angular API replacement for ComponentFactoryResolver once available
+                // See https://github.com/angular/angular/issues/45263#issuecomment-1082530357
                 const componentRef = this.viewContainerRef.createComponent(ProgrammingExerciseInstructionTaskStatusComponent, { injector: this.injector });
                 componentRef.instance.exercise = this.exercise;
                 componentRef.instance.exerciseHints = this.exerciseHints.filter((hint) => hints.includes(hint.id!.toString(10)));
