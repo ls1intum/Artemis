@@ -67,9 +67,7 @@
             "description": "Course Description",
             "organizations": "Course Organizations",
             "startDate": "Start",
-            "startDateInvalidWarning": "Start of Course is set invalid or missing",
             "endDate": "End",
-            "endDateInvalidWarning": "End of Course is set invalid or missing",
             "semester": "Semester",
             "maxPoints": {
                 "title": "Maximum number of points for course",
@@ -139,6 +137,12 @@
                 "shortname": {
                     "minlength": "Short Name must contain at least 3 characters.",
                     "forbidden": "Short Name must start with a letter and cannot contain special characters."
+                },
+                "startDate": {
+                    "invalid": "Must be before the end date of the course"
+                },
+                "endDate": {
+                    "invalid": "Must be after the start date of the course"
                 }
             },
             "courseDashboard": "Course Dashboard",

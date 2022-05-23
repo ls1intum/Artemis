@@ -100,18 +100,18 @@
                             labelName="{{ 'artemisApp.course.startDate' | artemisTranslate }}"
                             formControlName="startDate"
                             [(ngModel)]="course.startDate"
-                            [error]="!isValidStartDate"
+                            [error]="!isValidDate"
                         ></jhi-date-time-picker>
-                        <span *ngIf="!isValidEndDate" class="invalid-feedback"> {{ 'artemisApp.course.startDateInvalidWarning' | artemisTranslate }}</span>
+                        <span *ngIf="!isValidDate" class="invalid-feedback"> {{ 'artemisApp.course.form.startDate.invalid' | artemisTranslate }}</span>
                     </div>
                     <div class="form-group flex-grow-1 ms-3">
                         <jhi-date-time-picker
                             labelName="{{ 'artemisApp.course.endDate' | artemisTranslate }}"
                             formControlName="endDate"
                             [(ngModel)]="course.endDate"
-                            [error]="!isValidEndDate"
+                            [error]="!isValidDate"
                         ></jhi-date-time-picker>
-                        <span *ngIf="!isValidEndDate" class="invalid-feedback"> {{ 'artemisApp.course.endDateInvalidWarning' | artemisTranslate }}</span>
+                        <span *ngIf="!isValidDate" class="invalid-feedback"> {{ 'artemisApp.course.form.endDate.invalid' | artemisTranslate }}</span>
                     </div>
                 </div>
                 <div class="form-check">

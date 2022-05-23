@@ -67,9 +67,7 @@
             "description": "Kursbeschreibung",
             "organizations": "Kurs Organisationen",
             "startDate": "Start",
-            "startDateInvalidWarning": "Start des Kurses ist invalide oder fehlt",
             "endDate": "Ende",
-            "endDateInvalidWarning": "Ende des Kurses ist invalide oder fehlt",
             "semester": "Semester",
             "maxPoints": {
                 "title": "Maximale Punktzahl",
@@ -139,6 +137,12 @@
                 "shortname": {
                     "minlength": "Der Kurzname muss mindestens 3 Zeichen lang sein.",
                     "forbidden": "Der Kurzname muss mit einem Buchstaben beginnen und darf keine Sonderzeichen beinhalten."
+                },
+                "startDate": {
+                    "invalid": "Muss vor dem Enddatum des Kurses liegen"
+                },
+                "endDate": {
+                    "invalid": "Muss nach dem Startdatum des Kurses liegen"
                 }
             },
             "courseDashboard": "Kurs-Dashboard",

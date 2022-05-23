@@ -458,31 +458,19 @@ export class CourseUpdateComponent implements OnInit {
     }
 
     /**
-     * Returns whether the start date is valid or not
-     * @return true if the start data is valid
+     * Returns whether the dates are valid or not
+     * @return true if the dats are valid
      */
-    get isValidStartDate(): boolean {
-        // allow instructors to set startDate later
-        if (!this.course.startDate) {
+    get isValidDate(): boolean {
+        // allow instructors to set startDate and endDate later
+        if (!this.course.startDate && !this.course.endDate) {
             return true;
         }
         return dayjs(this.course.startDate).isBefore(this.course.endDate);
     }
 
-    /**
-     * Returns whether the end date is valid or not
-     * @return true if the end data is valid
-     */
-    get isValidEndDate(): boolean {
-        // allow instructors to set endDate later
-        if (!this.course.endDate) {
-            return true;
-        }
-        return dayjs(this.course.endDate).isAfter(this.course.startDate);
-    }
-
     get isValidConfiguration(): boolean {
-        return this.isValidStartDate && this.isValidEndDate;
+        return this.isValidDate;
     }
 }
 
