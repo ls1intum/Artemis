@@ -1285,7 +1285,7 @@ describe('QuizExercise Management Detail Component', () => {
 
             it('should go back to quiz exercise page on cancel', () => {
                 comp.cancel();
-                expect(routerSpy).toBeCalledWith(['/course-management', comp.quizExercise.course!.id, 'quiz-exercises']);
+                expect(routerSpy).toBeCalledWith(['/course-management', comp.courseId, 'quiz-exercises']);
             });
 
             it('should go back to quiz exercise page on cancel', () => {

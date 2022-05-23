@@ -181,7 +181,7 @@ export class QuizExerciseDetailComponent extends QuizExerciseValidationDirective
                         this.exerciseGroup = groupResponse.body || undefined;
                         if (!quizId) {
                             this.init();
-                        } else {
+                        } else if (this.quizExercise) {
                             this.quizExercise.exerciseGroup = this.exerciseGroup;
                             this.quizExercise.course = undefined;
                         }
@@ -999,7 +999,7 @@ export class QuizExerciseDetailComponent extends QuizExerciseValidationDirective
      */
     cancel(): void {
         if (!this.isExamMode) {
-            this.router.navigate(['/course-management', this.quizExercise.course!.id, 'quiz-exercises']);
+            this.router.navigate(['/course-management', this.courseId, 'quiz-exercises']);
         } else {
             this.router.navigate(['/course-management', this.courseId, 'exams', this.examId, 'exercise-groups']);
         }
