@@ -385,7 +385,7 @@ public class Result extends DomainObject {
                 continue;
             }
             if (feedback.getCredits() != null) {
-                feedback.setPositive(feedback.getCredits());
+                feedback.setPositiveViaCredits(feedback.getCredits());
             }
             else {
                 feedback.setCredits(0.0);
