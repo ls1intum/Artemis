@@ -71,11 +71,12 @@ public class ExamQuizService {
     /**
      * This method is intended to be called after a user submits a test run. We calculate the achieved score in the quiz exercises immediately and attach a result.
      * Note: We do not insert the result of this test run quiz participation into the quiz statistics.
-     * @param testRun The test run containing the users participations in all exam exercises
+     * @param studentExam The test run or testExam containing the users participations in all exam exercises
      */
-    public void evaluateQuizParticipationsForTestRun(StudentExam testRun) {
-        final var participations = testRun.getExercises().stream().flatMap(exercise -> exercise.getStudentParticipations().stream().filter(StudentParticipation::isTestRun)
-                .filter(participation -> participation.getExercise() instanceof QuizExercise)).collect(Collectors.toSet());
+    public void evaluateQuizParticipationsForTestRun(StudentExam studentExam) {
+        final var participations = studentExam.getExercises().stream()
+                .flatMap(exercise -> exercise.getStudentParticipations().stream().filter(participation -> participation.getExercise() instanceof QuizExercise))
+                .collect(Collectors.toSet());
         for (final var participation : participations) {
             var quizExercise = (QuizExercise) participation.getExercise();
             final var optionalExistingSubmission = participation.findLatestSubmission();

@@ -208,12 +208,19 @@ public class StudentExam extends AbstractAuditingEntity {
     }
 
     /**
-     * Calls {@link Exam#resultsPublished()}
+     * Determines if the Results of an Exam are already published
+     * For a TestExam, the Results are autmoatically published once the studentExam was submitted
+     * For RealExams, {@link Exam#resultsPublished()} is called
      *
      * @return true the results are published
      */
     @JsonIgnore
     public boolean areResultsPublishedYet() {
-        return exam.resultsPublished();
+        if (this.exam.isTestExam()) {
+            return this.submitted;
+        }
+        else {
+            return exam.resultsPublished();
+        }
     }
 }

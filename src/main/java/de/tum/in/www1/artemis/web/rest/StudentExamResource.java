@@ -405,7 +405,7 @@ public class StudentExamResource {
 
         StudentExam studentExam = studentExamRepository.findByIdWithExercisesElseThrow(studentExamId);
 
-        log.debug("REST request to get the student exam of user {} for TestExam {} and StudentExam {}", user.getLogin(), examId, studentExam.getId());
+        log.debug("REST request to get the student exam of user {} for TestExam {} and StudentExam {} for summary", user.getLogin(), examId, studentExam.getId());
 
         studentExamAccessService.checkCourseAndExamAccessElseThrow(courseId, examId, user, studentExam.isTestRun());
 
