@@ -20,7 +20,7 @@
                 "testExamsHeading": "Test Exams",
                 "testExam": {
                     "upcoming": "Upcoming Test Exam",
-                    "upcomingExplanation": "The Test Exam will start ",
+                    "imminent": "The Test Exam will start ",
                     "imminentExplanation": "You can already open the test exam by clicking on the tile",
                     "conducting": "Start New Test Exam",
                     "conductingExplanation": "You can start a new test exam by clicking on the tile",

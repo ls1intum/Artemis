@@ -258,7 +258,7 @@ export class ExamParticipationCoverComponent implements OnInit, OnDestroy {
         }
         let individualStudentEndDate;
         if (this.exam.testExam) {
-            if (this.studentExam.started && this.studentExam.startedDate) {
+            if (!this.studentExam.submitted && this.studentExam.started && this.studentExam.startedDate) {
                 individualStudentEndDate = dayjs(this.studentExam.startedDate).add(this.studentExam.workingTime!, 'seconds');
             } else {
                 return false;

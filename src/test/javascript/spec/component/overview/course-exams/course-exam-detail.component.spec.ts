@@ -137,14 +137,16 @@ describe('CourseExamDetailComponent', () => {
         component.exam.startDate = currentDatePlus15;
         component.exam.endDate = currentDatePlus30;
         component.exam.workingTime = 15 * 60;
-        componentFixture.detectChanges();
-        expect(component.timeLeftToStartInSeconds()).toBeWithin(15 * 60 - 3, 15 * 60);
+        component.ngOnInit();
+        component.updateExamState();
+        expect(component.timeLeftToStart).toBeWithin(15 * 60 - 3, 15 * 60);
 
         component.exam = new Exam();
         component.exam.startDate = currentDatePlus5;
         component.exam.endDate = currentDatePlus30;
         component.exam.workingTime = 25 * 60;
-        componentFixture.detectChanges();
-        expect(component.timeLeftToStartInSeconds()).toBeWithin(5 * 60 - 3, 5 * 60);
+        component.ngOnInit();
+        component.updateExamState();
+        expect(component.timeLeftToStart).toBeWithin(5 * 60 - 3, 5 * 60);
     });
 });

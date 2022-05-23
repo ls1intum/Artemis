@@ -460,10 +460,10 @@ public class StudentExamService {
             SecurityUtils.setAuthorizationObject();
             try {
                 // Load lazy property
-                if (exercise instanceof ProgrammingExercise programmingExercise && !Hibernate.isInitialized(programmingExercise.getTemplateParticipation())) {
-                    final var programmingExerciseReloaded = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exercise.getId());
-                    programmingExercise.setTemplateParticipation(programmingExerciseReloaded.getTemplateParticipation());
-                }
+                // if (exercise instanceof ProgrammingExercise programmingExercise && !Hibernate.isInitialized(programmingExercise.getTemplateParticipation())) {
+                // final var programmingExerciseReloaded = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exercise.getId());
+                // programmingExercise.setTemplateParticipation(programmingExerciseReloaded.getTemplateParticipation());
+                // }
                 // this will also create initial (empty) submissions for quiz, text, modeling and file upload
                 var participation = participationService.startExerciseWithNewParticipation(exercise, student, true, startedDate);
                 generatedParticipations.add(participation);

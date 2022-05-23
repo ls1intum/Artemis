@@ -31,13 +31,13 @@
                     <h5 class="text-center">{{ 'artemisApp.exam.overview.' + (exam.testExam ? 'testExam.' : '') + 'upcoming' | artemisTranslate }}</h5>
                     <div class="text-center">
                         {{ 'artemisApp.exam.overview.' + (exam.testExam ? 'testExam.' : '') + 'imminent' | artemisTranslate }}
-                        {{ timeLeftToStartInSeconds() | artemisDurationFromSeconds }}
+                        {{ timeLeftToStart | artemisDurationFromSeconds }}
                     </div>
                 </div>
                 <div *ngIf="examState === 'IMMINENT'">
                     <h5 class="text-center">
                         {{ 'artemisApp.exam.overview.' + (exam.testExam ? 'testExam.' : '') + 'imminent' | artemisTranslate }}
-                        {{ timeLeftToStartInSeconds() | artemisDurationFromSeconds }}
+                        {{ timeLeftToStart | artemisDurationFromSeconds }}
                     </h5>
                     <div class="text-center">{{ 'artemisApp.exam.overview.' + (exam.testExam ? 'testExam.' : '') + 'imminentExplanation' | artemisTranslate }}</div>
                 </div>

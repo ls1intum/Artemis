@@ -597,7 +597,7 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
             LEFT JOIN FETCH s.results r
             WHERE p.testRun = FALSE
             AND p.initializationDate = :#{#initializationDate}
-            AND p.initializationState <> 'ARCHIVED'
+            AND p.initializationState = 'ARCHIVED'
                 AND p.student.id = :#{#studentId}
                 AND p.exercise in :#{#exercises}
             """)

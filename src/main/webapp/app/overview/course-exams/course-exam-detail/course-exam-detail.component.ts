@@ -34,6 +34,7 @@ export class CourseExamDetailComponent implements OnInit, OnDestroy {
     @Input() course: Course;
     examState: ExamState;
     examStateSubscription: Subscription;
+    timeLeftToStart: number;
 
     // Icons
     faPenAlt = faPenAlt;
@@ -81,11 +82,11 @@ export class CourseExamDetailComponent implements OnInit, OnDestroy {
         if (dayjs(this.exam.startDate).isAfter(dayjs())) {
             if (dayjs(this.exam.startDate).diff(dayjs(), `s`) < 600) {
                 this.examState = ExamState.IMMINENT;
-                return;
             } else {
                 this.examState = ExamState.UPCOMING;
-                return;
             }
+            this.timeLeftToStartInSeconds();
+            return;
         }
         if (
             this.exam.examStudentReviewStart &&
@@ -116,7 +117,7 @@ export class CourseExamDetailComponent implements OnInit, OnDestroy {
     /**
      * Dynamically calculates the time left until the exam start
      */
-    timeLeftToStartInSeconds(): number {
-        return dayjs(this.exam.startDate!).diff(dayjs(), 'seconds');
+    timeLeftToStartInSeconds() {
+        this.timeLeftToStart = dayjs(this.exam.startDate!).diff(dayjs(), 'seconds');
     }
 }
