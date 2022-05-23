@@ -155,7 +155,7 @@ describe('Exercise Service', () => {
 
         expect(exercise.dueDateError).toBe(false);
         expect(exercise.exampleSolutionPublicationDateError).toBe(true);
-        expect(exercise.exampleSolutionPublicationDateWarning).toBe(false);
+        expect(exercise.exampleSolutionPublicationDateWarning).toBe(true);
     });
 
     it('should set error when example solution publication date is before due date', () => {
