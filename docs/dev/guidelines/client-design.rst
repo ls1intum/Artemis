@@ -130,7 +130,7 @@ Please check your available options in this order:
       theme's stylesheet.
 
     .. TIP::
-        | The main content area of Artemis uses ``white`` in light mode and ``$neutral-dark`` in dark mode
+        | Artemis uses ``white`` in light mode and ``$neutral-dark`` in dark mode
           as background for the main content area, cards etc.
         |
         | For ``$neutral-dark``, a few lightened default options exist: ``$neutral-dark-l-5;`` to ``$neutral-dark-l-20;`` in steps of 5.
