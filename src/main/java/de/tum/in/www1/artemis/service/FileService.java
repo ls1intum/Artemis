@@ -112,9 +112,9 @@ public class FileService implements DisposableBean {
         if (oldFilePath != null && !oldFilePath.contains("files/temp")) {
             try {
                 Path source = Path.of(actualPathForPublicPath(oldFilePath));
-                File targetFile = generateTargetFile("test123", targetFolder, false);
+                File targetFile = generateTargetFile(oldFilePath, targetFolder, false);
                 Path target = targetFile.toPath();
-                Files.move(source, target, REPLACE_EXISTING);
+                Files.copy(source, target, REPLACE_EXISTING);
                 String newFilePath = publicPathForActualPath(target.toString(), entityId);
                 log.debug("Moved File from {} to {}", source, target);
                 return newFilePath;
