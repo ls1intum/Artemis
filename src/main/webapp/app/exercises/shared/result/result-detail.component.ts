@@ -288,6 +288,7 @@ export class ResultDetailComponent implements OnInit {
                 previewText: ResultDetailComponent.computeFeedbackPreviewText(feedback.detailText),
                 positive: feedback.positive,
                 credits: feedback.credits,
+                creditsApplied: feedback.creditsApplied,
             }));
         }
     }
@@ -330,6 +331,7 @@ export class ResultDetailComponent implements OnInit {
             previewText,
             positive: false,
             credits: feedback.credits,
+            creditsApplied: feedback.creditsApplied,
         };
     }
 
@@ -353,6 +355,7 @@ export class ResultDetailComponent implements OnInit {
             positive: false,
             credits: scaIssue.penalty ? -scaIssue.penalty : feedback.credits,
             actualCredits: feedback.credits,
+            creditsApplied: feedback.creditsApplied,
         };
     }
 
@@ -414,6 +417,7 @@ export class ResultDetailComponent implements OnInit {
             previewText,
             positive: feedback.positive,
             credits: feedback.credits,
+            creditsApplied: feedback.creditsApplied,
         };
     }
 
@@ -432,6 +436,7 @@ export class ResultDetailComponent implements OnInit {
             previewText,
             positive: feedback.positive,
             credits: feedback.credits,
+            creditsApplied: feedback.creditsApplied,
         };
     }
 
@@ -469,7 +474,7 @@ export class ResultDetailComponent implements OnInit {
             return [...feedbackList];
         } else {
             const positiveTestCasesWithoutDetailText = feedbackList.filter((feedbackItem) => {
-                return feedbackItem.type === FeedbackItemType.Test && feedbackItem.positive && !feedbackItem.text;
+                return feedbackItem.type === FeedbackItemType.Test && feedbackItem.positive && feedbackItem.creditsApplied && !feedbackItem.text;
             });
             if (positiveTestCasesWithoutDetailText.length > 0) {
                 return [
@@ -478,7 +483,7 @@ export class ResultDetailComponent implements OnInit {
                         category: 'Feedback',
                         title: positiveTestCasesWithoutDetailText.length + ' passed test' + (positiveTestCasesWithoutDetailText.length > 1 ? 's' : ''),
                         positive: true,
-                        credits: positiveTestCasesWithoutDetailText.reduce((sum, feedbackItem) => sum + (feedbackItem.creditsApplied ? feedbackItem.credits || 0 : 0), 0),
+                        credits: positiveTestCasesWithoutDetailText.reduce((sum, feedbackItem) => sum + (feedbackItem.credits || 0), 0),
                     },
                     ...feedbackList.filter((feedbackItem) => !positiveTestCasesWithoutDetailText.includes(feedbackItem)),
                 ];
@@ -503,7 +508,7 @@ export class ResultDetailComponent implements OnInit {
             if (feedback.credits === 0) {
                 return 'alert-warning';
             } else {
-                return feedback.positive || (feedback.credits && feedback.credits > 0) ? 'alert-success' : 'alert-danger';
+                return feedback.positive || (feedback.creditsApplied && feedback.credits && feedback.credits > 0) ? 'alert-success' : 'alert-danger';
             }
         }
     }

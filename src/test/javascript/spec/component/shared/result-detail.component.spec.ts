@@ -69,34 +69,38 @@ describe('ResultDetailComponent', () => {
                 }),
                 credits,
                 positive: false,
+                creditsApplied: true,
             }),
             item: makeFeedbackItem({
                 type: FeedbackItemType.Issue,
                 category: 'Code Issue',
                 title: category + ' Issue in file www/packet/File.java at line ' + line + (column != undefined ? ' column ' + column : ''),
-                text: showDetails ? 'Rule: This is a code issue' : 'This is a code issue',
+                text: 'Rule: This is a code issue',
                 credits: -penalty,
                 actualCredits: credits,
                 positive: false,
+                creditsApplied: true,
             }),
         };
     };
 
-    const generateTestCaseFeedbackPair = (showDetails: boolean, name: string, message: string | undefined, credits = 0) => {
+    const generateTestCaseFeedbackPair = (showDetails: boolean, name: string, message: string | undefined, credits: number, creditsApplied: boolean) => {
         return {
             fb: makeFeedback({
                 text: name,
                 detailText: message,
                 credits,
-                positive: credits > 0,
+                positive: creditsApplied,
+                creditsApplied: creditsApplied,
             }),
             item: makeFeedbackItem({
                 type: FeedbackItemType.Test,
                 category: showDetails ? 'Test Case' : 'Feedback',
                 text: message,
                 credits,
-                positive: credits > 0,
-                title: showDetails ? `Test ${name} ${credits > 0 ? 'passed' : 'failed'}` : undefined,
+                positive: creditsApplied,
+                title: showDetails ? `Test ${name} ${creditsApplied ? 'passed' : 'failed'}` : undefined,
+                creditsApplied: creditsApplied,
             }),
         };
     };
@@ -109,6 +113,7 @@ describe('ResultDetailComponent', () => {
                 detailText: text,
                 credits,
                 positive: credits > 0,
+                creditsApplied: true,
             }),
             item: makeFeedbackItem({
                 type: FeedbackItemType.Feedback,
@@ -117,6 +122,7 @@ describe('ResultDetailComponent', () => {
                 text,
                 credits,
                 positive: credits > 0,
+                creditsApplied: true,
             }),
         };
     };
@@ -134,9 +140,9 @@ describe('ResultDetailComponent', () => {
         addPair(generateManualFeedbackPair(showTestDetails, 'Positive', 'This is good', 4));
         addPair(generateManualFeedbackPair(showTestDetails, 'Negative', 'This is bad', -2));
         addPair(generateManualFeedbackPair(showTestDetails, 'Neutral', 'This is neutral', 0));
-        addPair(generateTestCaseFeedbackPair(showTestDetails, 'TestCase1', 'This failed.'));
-        addPair(generateTestCaseFeedbackPair(showTestDetails, 'TestCase2', 'This passed.', 3));
-        addPair(generateTestCaseFeedbackPair(showTestDetails, 'TestCase3', undefined, 3));
+        addPair(generateTestCaseFeedbackPair(showTestDetails, 'TestCase1', 'This failed.', 5, false));
+        addPair(generateTestCaseFeedbackPair(showTestDetails, 'TestCase2', 'This passed.', 3, true));
+        addPair(generateTestCaseFeedbackPair(showTestDetails, 'TestCase3', undefined, 3, true));
 
         if (!showTestDetails) {
             expectedItems.pop();
@@ -365,19 +371,22 @@ describe('ResultDetailComponent', () => {
     });
 
     it('should show a replacement title if automatic feedback is neither positive nor negative', () => {
-        const feedback = new Feedback();
-        feedback.type = FeedbackType.AUTOMATIC;
-        feedback.text = 'automaticTestCase1';
-        feedback.positive = undefined;
-        feedback.credits = 0.3;
+        const feedback: Feedback = {
+            type: FeedbackType.AUTOMATIC,
+            text: 'automaticTestCase1',
+            positive: undefined,
+            credits: 0.3,
+            creditsApplied: true,
+        };
 
-        const expectedFeedbackItem = {
+        const expectedFeedbackItem: FeedbackItem = {
             category: 'Test Case',
             credits: 0.3,
             title: 'No result information for automaticTestCase1',
             type: FeedbackItemType.Test,
             text: undefined,
             previewText: undefined,
+            creditsApplied: true,
         };
 
         shouldGenerateFeedbackItem(feedback, expectedFeedbackItem);
@@ -387,13 +396,16 @@ describe('ResultDetailComponent', () => {
         const gradingInstruction = new GradingInstruction();
         gradingInstruction.feedback = 'Grading Instruction Feedback';
 
-        const feedback = new Feedback();
-        feedback.type = FeedbackType.MANUAL;
-        feedback.gradingInstruction = gradingInstruction;
-        feedback.text = 'Feedback Title';
-        feedback.detailText = 'Manual tutor feedback';
+        const feedback: Feedback = {
+            type: FeedbackType.MANUAL,
+            gradingInstruction: gradingInstruction,
+            text: 'Feedback Title',
+            detailText: 'Manual tutor feedback',
+            credits: 0,
+            creditsApplied: true,
+        };
 
-        const expectedFeedbackItem = {
+        const expectedFeedbackItem: FeedbackItem = {
             type: FeedbackItemType.Feedback,
             category: 'Tutor',
             title: feedback.text,
@@ -401,6 +413,7 @@ describe('ResultDetailComponent', () => {
             credits: 0,
             positive: undefined,
             previewText: undefined,
+            creditsApplied: true,
         };
 
         shouldGenerateFeedbackItem(feedback, expectedFeedbackItem);
@@ -423,13 +436,16 @@ describe('ResultDetailComponent', () => {
         const gradingInstruction = new GradingInstruction();
         gradingInstruction.feedback = 'Grading Instruction Feedback';
 
-        const feedback = new Feedback();
-        feedback.type = FeedbackType.MANUAL;
-        feedback.gradingInstruction = gradingInstruction;
-        feedback.text = 'Feedback Title';
-        feedback.detailText = 'Manual tutor feedback';
+        const feedback: Feedback = {
+            type: FeedbackType.MANUAL,
+            gradingInstruction: gradingInstruction,
+            text: 'Feedback Title',
+            detailText: 'Manual tutor feedback',
+            credits: 0,
+            creditsApplied: true,
+        };
 
-        const expectedFeedbackItem = {
+        const expectedFeedbackItem: FeedbackItem = {
             type: FeedbackItemType.Feedback,
             category: 'Feedback',
             title: feedback.text,
@@ -437,20 +453,23 @@ describe('ResultDetailComponent', () => {
             credits: 0,
             positive: undefined,
             previewText: undefined,
+            creditsApplied: true,
         };
 
         shouldGenerateFeedbackItem(feedback, expectedFeedbackItem, ExerciseType.PROGRAMMING, false);
     });
 
     it('should show feedback generated from submission policies', () => {
-        const feedback = new Feedback();
-        feedback.type = FeedbackType.AUTOMATIC;
-        feedback.text = `${SUBMISSION_POLICY_FEEDBACK_IDENTIFIER}Submission Penalty Policy`;
-        feedback.detailText = 'You have submitted 2 more times than the submission limit of 10. This results in a deduction of 0.1 points!';
-        feedback.positive = false;
-        feedback.credits = -0.1;
+        const feedback: Feedback = {
+            type: FeedbackType.AUTOMATIC,
+            text: `${SUBMISSION_POLICY_FEEDBACK_IDENTIFIER}Submission Penalty Policy`,
+            detailText: 'You have submitted 2 more times than the submission limit of 10. This results in a deduction of 0.1 points!',
+            positive: false,
+            credits: -0.1,
+            creditsApplied: true,
+        };
 
-        const expectedFeedbackItem = {
+        const expectedFeedbackItem: FeedbackItem = {
             type: FeedbackItemType.Policy,
             category: 'Submission Policy',
             title: 'Submission Penalty Policy',
@@ -458,18 +477,21 @@ describe('ResultDetailComponent', () => {
             previewText: undefined,
             positive: false,
             credits: feedback.credits,
-            appliedCredits: feedback.credits,
+            creditsApplied: true,
         };
 
         shouldGenerateFeedbackItem(feedback, expectedFeedbackItem);
     });
 
     it('should only show the first line of feedback as preview', () => {
-        const feedback = new Feedback();
-        feedback.text = 'Summary';
-        feedback.detailText = 'Multi\nLine\nText';
+        const feedback: Feedback = {
+            text: 'Summary',
+            detailText: 'Multi\nLine\nText',
+            credits: 0,
+            creditsApplied: true,
+        };
 
-        const expectedFeedbackItem = {
+        const expectedFeedbackItem: FeedbackItem = {
             type: FeedbackItemType.Feedback,
             category: 'Feedback',
             title: feedback.text,
@@ -477,17 +499,21 @@ describe('ResultDetailComponent', () => {
             previewText: 'Multi',
             positive: undefined,
             credits: 0,
+            creditsApplied: true,
         };
 
         shouldGenerateFeedbackItem(feedback, expectedFeedbackItem, ExerciseType.QUIZ);
     });
 
     it('should shorten the preview text if it is long', () => {
-        const feedback = new Feedback();
-        feedback.text = 'Summary';
-        feedback.detailText = '0'.repeat(400);
+        const feedback: Feedback = {
+            text: 'Summary',
+            detailText: '0'.repeat(400),
+            credits: 0,
+            creditsApplied: true,
+        };
 
-        const expectedFeedbackItem = {
+        const expectedFeedbackItem: FeedbackItem = {
             type: FeedbackItemType.Feedback,
             category: 'Feedback',
             title: feedback.text,
@@ -495,6 +521,7 @@ describe('ResultDetailComponent', () => {
             previewText: '0'.repeat(300),
             positive: undefined,
             credits: 0,
+            creditsApplied: true,
         };
 
         shouldGenerateFeedbackItem(feedback, expectedFeedbackItem, ExerciseType.MODELING);
@@ -630,7 +657,7 @@ describe('ResultDetailComponent', () => {
 
         // test score exceeding exercise maxpoints
 
-        const feedbackPair1 = generateTestCaseFeedbackPair(true, '', '', 120);
+        const feedbackPair1 = generateTestCaseFeedbackPair(true, '', '', 120, true);
         feedbacks.push(feedbackPair1.fb);
         expectedItems.push(feedbackPair1.item);
 
