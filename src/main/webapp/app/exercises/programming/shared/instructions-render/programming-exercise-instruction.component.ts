@@ -19,7 +19,7 @@ import { RepositoryFileService } from 'app/exercises/shared/result/repository.se
 import { problemStatementHasChanged } from 'app/exercises/shared/exercise/exercise.utils';
 import { ProgrammingExerciseParticipationService } from 'app/exercises/programming/manage/services/programming-exercise-participation.service';
 import { Result } from 'app/entities/result.model';
-import { ExerciseHintService } from 'app/exercises/shared/exercise-hint/manage/exercise-hint.service';
+import { ExerciseHintService } from 'app/exercises/shared/exercise-hint/shared/exercise-hint.service';
 import { findLatestResult } from 'app/shared/util/utils';
 import { faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { hasParticipationChanged } from 'app/exercises/shared/participation/participation.utils';
@@ -174,7 +174,7 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
             return of([]);
         }
 
-        return this.exerciseHintService.findByExerciseId(exerciseId).pipe(
+        return this.exerciseHintService.findByExerciseIdWithRelations(exerciseId).pipe(
             map(({ body }) => body),
             catchError(() => of([])),
         );

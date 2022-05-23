@@ -161,8 +161,8 @@ public class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBi
         doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(studentRepository.localRepoFile.toPath(), null)).when(gitService).getOrCheckoutRepository(participation);
 
         bitbucketRequestMockProvider.enableMockingOfRequests(true);
-        bitbucketRequestMockProvider.mockDefaultBranch(defaultBranch, participation.getVcsRepositoryUrl());
-        bitbucketRequestMockProvider.mockDefaultBranch(defaultBranch, programmingExercise.getVcsTemplateRepositoryUrl());
+        doReturn(defaultBranch).when(versionControlService).getOrRetrieveBranchOfStudentParticipation(participation);
+        doReturn(defaultBranch).when(versionControlService).getOrRetrieveBranchOfExercise(programmingExercise);
 
         logs.add(buildLogEntry);
         logs.add(largeBuildLogEntry);
@@ -500,7 +500,7 @@ public class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBi
         List<Ref> refs = studentRepository.localGit.branchList().setListMode(ListBranchCommand.ListMode.REMOTE).call();
         var result = studentRepository.localGit.merge().include(refs.get(0).getObjectId()).setStrategy(MergeStrategy.RESOLVE).call();
         var status = studentRepository.localGit.status().call();
-        assertThat(status.getConflicting().size() > 0).isTrue();
+        assertThat(status.getConflicting()).isNotEmpty();
         assertThat(result.getMergeStatus()).isEqualTo(MergeResult.MergeStatus.CONFLICTING);
 
         // Execute the reset Rest call
@@ -934,7 +934,7 @@ public class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBi
         doAnswer((Answer<Void>) invocation -> {
             ((ProgrammingExercise) participation.getExercise()).setBuildAndTestStudentSubmissionsAfterDueDate(null);
             return null;
-        }).when(versionControlService).configureRepository(programmingExercise, participation.getVcsRepositoryUrl(), participation.getStudents(), true);
+        }).when(versionControlService).configureRepository(programmingExercise, participation, true);
 
         programmingExerciseParticipationService.unlockStudentRepository(programmingExercise, participation);
 

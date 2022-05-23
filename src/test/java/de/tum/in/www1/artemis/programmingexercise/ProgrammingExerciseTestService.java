@@ -351,7 +351,7 @@ public class ProgrammingExerciseTestService {
         if (language == SWIFT) {
             exercise.setPackageName("swiftTest");
         }
-        exercise.setProjectType(programmingLanguageFeature.getProjectTypes().size() > 0 ? programmingLanguageFeature.getProjectTypes().get(0) : null);
+        exercise.setProjectType(programmingLanguageFeature.getProjectTypes().isEmpty() ? null : programmingLanguageFeature.getProjectTypes().get(0));
         mockDelegate.mockConnectorRequestsForSetup(exercise, false);
         validateProgrammingExercise(request.postWithResponseBody(ROOT + SETUP, exercise, ProgrammingExercise.class, HttpStatus.CREATED));
     }
@@ -379,7 +379,7 @@ public class ProgrammingExerciseTestService {
             exercise.setProjectType(ProjectType.GCC);
         }
         else {
-            exercise.setProjectType(programmingLanguageFeature.getProjectTypes().size() > 0 ? programmingLanguageFeature.getProjectTypes().get(0) : null);
+            exercise.setProjectType(programmingLanguageFeature.getProjectTypes().isEmpty() ? null : programmingLanguageFeature.getProjectTypes().get(0));
         }
         mockDelegate.mockConnectorRequestsForSetup(exercise, false);
         var generatedExercise = request.postWithResponseBody(ROOT + SETUP, exercise, ProgrammingExercise.class);
@@ -1437,6 +1437,7 @@ public class ProgrammingExerciseTestService {
         var participantRepoTestUrl = ModelFactory.getMockFileRepositoryUrl(studentTeamRepo);
         final var teamLocalPath = studentTeamRepo.localRepoFile.toPath();
         doReturn(teamLocalPath).when(gitService).getDefaultLocalPathOfRepo(participantRepoTestUrl);
+        doReturn(defaultBranch).when(versionControlService).getOrRetrieveBranchOfExercise(exercise);
         doThrow(new CanceledException("Checkout got interrupted!")).when(gitService).getOrCheckoutRepositoryIntoTargetDirectory(any(), any(), anyBoolean());
 
         // the local repo should exist before startExercise()

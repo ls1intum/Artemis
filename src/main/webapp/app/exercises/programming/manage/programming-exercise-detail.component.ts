@@ -46,6 +46,7 @@ import { FullGitDiffReportModalComponent } from 'app/exercises/programming/hesti
 import { TestwiseCoverageReportModalComponent } from 'app/exercises/programming/hestia/testwise-coverage-report/testwise-coverage-report-modal.component';
 import { CodeEditorRepositoryFileService } from 'app/exercises/programming/shared/code-editor/service/code-editor-repository.service';
 import { ProgrammingExerciseSolutionEntry } from 'app/entities/hestia/programming-exercise-solution-entry.model';
+import { CodeHintService } from 'app/exercises/shared/exercise-hint/shared/code-hint.service';
 
 @Component({
     selector: 'jhi-programming-exercise-detail',
@@ -110,6 +111,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
         private statisticsService: StatisticsService,
         private sortService: SortService,
         private programmingExerciseGradingService: ProgrammingExerciseGradingService,
+        private codeHintService: CodeHintService,
         private router: Router,
     ) {}
 
@@ -476,7 +478,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                     type: AlertType.SUCCESS,
                     message: 'artemisApp.programmingExercise.createStructuralSolutionEntriesSuccess',
                 });
-                console.log(ProgrammingExerciseDetailComponent.buildStructuralSolutionEntriesMessage(res));
+                console.log(ProgrammingExerciseDetailComponent.buildSolutionEntriesMessage(res));
             },
             error: (err) => {
                 this.onError(err);
@@ -484,7 +486,36 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
         });
     }
 
-    private static buildStructuralSolutionEntriesMessage(solutionEntries: ProgrammingExerciseSolutionEntry[]): string {
+    createBehavioralSolutionEntries() {
+        this.programmingExerciseService.createBehavioralSolutionEntries(this.programmingExercise.id!).subscribe({
+            next: (res) => {
+                this.alertService.addAlert({
+                    type: AlertType.SUCCESS,
+                    message: 'artemisApp.programmingExercise.createBehavioralSolutionEntriesSuccess',
+                });
+                console.log(ProgrammingExerciseDetailComponent.buildSolutionEntriesMessage(res));
+            },
+            error: (err) => {
+                this.onError(err);
+            },
+        });
+    }
+
+    generateCodeHints() {
+        this.codeHintService.generateCodeHintsForExercise(this.programmingExercise.id!, true).subscribe({
+            next: () => {
+                this.alertService.addAlert({
+                    type: AlertType.SUCCESS,
+                    message: 'artemisApp.programmingExercise.generateCodeHintsSuccess',
+                });
+            },
+            error: (err) => {
+                this.onError(err);
+            },
+        });
+    }
+
+    private static buildSolutionEntriesMessage(solutionEntries: ProgrammingExerciseSolutionEntry[]): string {
         return solutionEntries.map((solutionEntry) => `${solutionEntry.filePath}:\n${solutionEntry.code}`).join('\n\n');
     }
 

@@ -2,6 +2,8 @@ package de.tum.in.www1.artemis;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.util.List;
+
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -10,6 +12,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.domain.Lecture;
+import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
 import de.tum.in.www1.artemis.domain.lecture.VideoUnit;
 import de.tum.in.www1.artemis.repository.LectureRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
@@ -106,11 +109,13 @@ public class VideoUnitIntegrationTest extends AbstractSpringIntegrationBambooBit
         lecture1.addLectureUnit(videoUnit);
         lectureRepository.save(lecture1);
 
+        List<LectureUnit> orderedUnits = lecture1.getLectureUnits();
+
         // Updating the lecture unit should not change order attribute
         request.putWithResponseBody("/api/lectures/" + lecture1.getId() + "/video-units", videoUnit, VideoUnit.class, HttpStatus.OK);
 
-        VideoUnit updatedVideoUnit = videoUnitRepository.findById(videoUnit.getId()).orElseThrow();
-        assertThat(updatedVideoUnit.getOrder()).isEqualTo(1);
+        List<LectureUnit> updatedOrderedUnits = lectureRepository.findByIdWithLectureUnits(lecture1.getId()).get().getLectureUnits();
+        assertThat(updatedOrderedUnits).containsExactlyElementsOf(orderedUnits);
     }
 
     private void persistVideoUnitWithLecture() {
