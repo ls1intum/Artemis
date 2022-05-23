@@ -174,9 +174,9 @@
             "dev": "Development",
             "test": "Testserver"
         },
-        "item-count": "Ergebnis {{first}} - {{second}} von {{total}} Elemente.",
+        "item-count": "Elemente {{first}} - {{second}} von {{total}} werden angezeit.",
         "ngx-datatable": {
-            "empty": "Keine Daten zum anzeigen",
+            "empty": "Keine Daten zum Anzeigen",
             "total": "insgesamt",
             "selected": "ausgewählt"
         }
