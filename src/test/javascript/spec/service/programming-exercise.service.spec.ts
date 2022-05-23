@@ -225,6 +225,15 @@ describe('ProgrammingExercise Service', () => {
         tick();
     }));
 
+    it('should make post request for behavioral solution entries', fakeAsync(() => {
+        const expected = [new ProgrammingExerciseSolutionEntry()];
+        expected[0].filePath = 'src/test.java';
+        service.createBehavioralSolutionEntries(123).subscribe((resp) => expect(resp).toEqual(expected));
+        const req = httpMock.expectOne({ method: 'POST', url: `${resourceUrl}/123/behavioral-solution-entries` });
+        req.flush(expected);
+        tick();
+    }));
+
     afterEach(() => {
         httpMock.verify();
     });

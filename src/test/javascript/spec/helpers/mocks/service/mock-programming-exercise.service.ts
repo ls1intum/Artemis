@@ -14,4 +14,5 @@ export class MockProgrammingExerciseService {
     getFullDiffReport = (exerciseId: number) => of({});
     getDiffReport = (exerciseId: number) => of({});
     createStructuralSolutionEntries = (exerciseId: number) => of({});
+    createBehavioralSolutionEntries = (exerciseId: number) => of({});
 }
