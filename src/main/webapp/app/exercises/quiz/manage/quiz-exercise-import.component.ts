@@ -8,7 +8,7 @@ import { faCheck, faSort } from '@fortawesome/free-solid-svg-icons';
 import { QuizExercisePagingService } from 'app/exercises/quiz/manage/quiz-exercise-paging.service';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 
-enum TableColumn {
+export enum TableColumn {
     ID = 'ID',
     TITLE = 'TITLE',
     COURSE_TITLE = 'COURSE_TITLE',

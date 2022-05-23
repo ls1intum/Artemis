@@ -367,6 +367,7 @@ describe('QuizExercise Management Detail Component', () => {
             let alertServiceStub: jest.SpyInstance;
             beforeEach(() => {
                 comp.course = course;
+                comp.courseId = course.id;
                 courseServiceStub = jest.spyOn(courseManagementService, 'findAllCategoriesOfCourse');
                 courseServiceStub.mockReturnValue(of(new HttpResponse<string[]>({ body: ['category1', 'category2'] })));
                 exerciseServiceCategoriesAsStringStub = jest.spyOn(exerciseService, 'convertExerciseCategoriesAsStringFromServer');

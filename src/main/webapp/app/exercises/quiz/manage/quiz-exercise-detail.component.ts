@@ -183,17 +183,15 @@ export class QuizExerciseDetailComponent extends QuizExerciseValidationDirective
                             this.init();
                         } else if (this.quizExercise) {
                             this.quizExercise.exerciseGroup = this.exerciseGroup;
-                            this.quizExercise.course = undefined;
                         }
                     });
-                }
-                // Make sure to call init if we didn't receive an id => new quiz-exercise
-                if (!quizId && !this.isExamMode) {
-                    this.init();
-                }
-
-                if (this.quizExercise && this.isImport) {
-                    this.quizExercise.course = this.course;
+                } else {
+                    // Make sure to call init if we didn't receive an id => new quiz-exercise
+                    if (!quizId) {
+                        this.init();
+                    } else if (this.quizExercise) {
+                        this.quizExercise.course = this.course;
+                    }
                 }
             });
         }
@@ -240,17 +238,20 @@ export class QuizExerciseDetailComponent extends QuizExerciseValidationDirective
         this.savedEntity = this.entity.id && !this.isImport ? cloneDeep(this.entity) : new QuizExercise(undefined, undefined);
 
         if (this.isExamMode) {
-            this.quizExercise.exerciseGroup = this.exerciseGroup;
             this.quizExercise.course = undefined;
-        } else if (this.isImport && this.course) {
-            this.quizExercise.course = this.course;
-        } else if (!this.quizExercise.course) {
-            this.quizExercise.course = this.course;
+            if (!this.quizExercise.exerciseGroup || this.isImport) {
+                this.quizExercise.exerciseGroup = this.exerciseGroup;
+            }
+        } else {
+            this.quizExercise.exerciseGroup = undefined;
+            if (!this.quizExercise.course || this.isImport) {
+                this.quizExercise.course = this.course;
+            }
         }
 
         if (!this.isExamMode) {
             this.exerciseCategories = this.quizExercise.categories || [];
-            this.courseService.findAllCategoriesOfCourse(this.quizExercise.course!.id!).subscribe({
+            this.courseService.findAllCategoriesOfCourse(this.courseId!).subscribe({
                 next: (response: HttpResponse<string[]>) => {
                     this.existingCategories = this.exerciseService.convertExerciseCategoriesAsStringFromServer(response.body!);
                 },
