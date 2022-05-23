@@ -512,7 +512,7 @@ public class ParticipationIntegrationTest extends AbstractSpringIntegrationBambo
 
         assertThat(response).hasSize(1);
         assertThat(response.get(0).getIndividualDueDate()).isEqualToIgnoringNanos(submission.getParticipation().getIndividualDueDate());
-        assertThat(exercise.getLatestIndividualDueDate()).isEqualTo(submission.getParticipation().getIndividualDueDate());
+        assertThat(exercise.getLatestIndividualDueDate()).isEqualToIgnoringNanos(submission.getParticipation().getIndividualDueDate());
 
         verify(programmingExerciseScheduleService, never()).updateScheduling(any());
     }

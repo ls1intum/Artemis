@@ -76,7 +76,7 @@ describe('ResultDetailComponent', () => {
                 title: category + ' Issue in file www/packet/File.java at line ' + line + (column != undefined ? ' column ' + column : ''),
                 text: showDetails ? 'Rule: This is a code issue' : 'This is a code issue',
                 credits: -penalty,
-                appliedCredits: credits,
+                actualCredits: credits,
                 positive: false,
             }),
         };
@@ -522,7 +522,7 @@ describe('ResultDetailComponent', () => {
             baseExpectedFeedbackItem = {
                 category: 'Code Issue',
                 type: FeedbackItemType.Issue,
-                appliedCredits: 0,
+                actualCredits: 0,
                 credits: 0,
                 positive: false,
                 previewText: undefined,
@@ -666,7 +666,7 @@ describe('ResultDetailComponent', () => {
         expect(comp.filteredFeedbackList).toEqual(currentlyVisibleItems);
 
         event.isPositive = false;
-        currentlyVisibleItems = expectedItems.filter((item) => item.positive === false && item.appliedCredits! < 0);
+        currentlyVisibleItems = expectedItems.filter((item) => item.positive === false && item.actualCredits! < 0);
 
         comp.onSelect(event);
 
