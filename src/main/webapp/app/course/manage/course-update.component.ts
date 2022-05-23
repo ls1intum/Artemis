@@ -463,7 +463,7 @@ export class CourseUpdateComponent implements OnInit {
      */
     get isValidDate(): boolean {
         // allow instructors to set startDate and endDate later
-        if (!this.course.startDate && !this.course.endDate) {
+        if (!this.course.startDate || !this.course.endDate) {
             return true;
         }
         return dayjs(this.course.startDate).isBefore(this.course.endDate);
