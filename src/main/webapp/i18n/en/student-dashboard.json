@@ -151,7 +151,7 @@
                 "notReleased": "Not released",
                 "version": "Version",
                 "isDownloading": "Is downloading...",
-                "downloadPdf": "Download PDF"
+                "downloadMergedPdf": "Download Complete PDF"
             },
             "exerciseDetails": {
                 "dueDate": "Due date:",

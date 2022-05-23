@@ -149,7 +149,7 @@
                 "notReleased": "Nicht freigegeben",
                 "version": "Version",
                 "isDownloading": "Wird heruntergeladen...",
-                "downloadPdf": "PDF Herunterladen"
+                "downloadMergedPdf": "Vollständiges PDF herunterladen"
             },
             "exerciseDetails": {
                 "dueDate": "Einreichungsfrist:",
