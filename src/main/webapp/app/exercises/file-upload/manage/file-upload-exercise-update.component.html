@@ -179,7 +179,13 @@
             type="submit"
             id="save-entity"
             (click)="save()"
-            [disabled]="editForm.form.invalid || isSaving || fileUploadExercise.dueDateError || fileUploadExercise.assessmentDueDateError"
+            [disabled]="
+                editForm.form.invalid ||
+                isSaving ||
+                fileUploadExercise.dueDateError ||
+                fileUploadExercise.assessmentDueDateError ||
+                fileUploadExercise.exampleSolutionPublicationDateError
+            "
             class="btn btn-primary"
         >
             <fa-icon [icon]="faSave"></fa-icon>&nbsp;<span jhiTranslate="entity.action.save">Save</span>

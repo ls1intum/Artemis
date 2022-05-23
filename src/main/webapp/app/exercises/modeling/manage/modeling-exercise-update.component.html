@@ -217,7 +217,13 @@
         </button>
         <button
             type="button"
-            [disabled]="editForm.form.invalid || isSaving || modelingExercise.dueDateError || modelingExercise.assessmentDueDateError"
+            [disabled]="
+                editForm.form.invalid ||
+                isSaving ||
+                modelingExercise.dueDateError ||
+                modelingExercise.assessmentDueDateError ||
+                modelingExercise.exampleSolutionPublicationDateError
+            "
             class="btn btn-primary"
             id="modeling-exercise-creation-save"
             (click)="save()"

@@ -197,7 +197,7 @@
             (click)="save()"
             class="btn btn-primary"
             id="submit-entity"
-            [disabled]="editForm.form.invalid || isSaving || textExercise.dueDateError || textExercise.assessmentDueDateError"
+            [disabled]="editForm.form.invalid || isSaving || textExercise.dueDateError || textExercise.assessmentDueDateError || textExercise.exampleSolutionPublicationDateError"
         >
             <fa-icon [icon]="faSave"></fa-icon>
             <span *ngIf="isImport" jhiTranslate="artemisApp.textExercise.submitButton.import">Import</span>
