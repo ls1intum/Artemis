@@ -188,7 +188,7 @@ Please check your available options in this order:
 
 It might happen that you need to modify a global style rule in one of the themes, for example if you're using a external library which styles need to be overridden.
 
-| Each theme has a dedicated file custom global styles can be added to: ``theme-dark.scss`` and ``theme-default.scss``.
+| Each theme has its own file to which custom global styles can be added: ``theme-dark.scss`` and ``theme-default.scss``.
 | For styles that should be applied in both themes, use ``global.scss``.
 
 2. Theme Service
