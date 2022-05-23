@@ -449,6 +449,38 @@ describe('Course Management Update Component', () => {
         });
     });
 
+    describe('isValidStartDate', () => {
+        it('should handle valid start date', () => {
+            comp.course = new Course();
+            comp.course.startDate = dayjs().subtract(1, 'day');
+            comp.course.endDate = undefined;
+            expect(comp.isValidStartDate).toBeTrue();
+        });
+
+        it('should handle invalid start date', () => {
+            comp.course = new Course();
+            comp.course.startDate = dayjs().add(1, 'day');
+            comp.course.endDate = dayjs().subtract(1, 'day');
+            expect(comp.isValidStartDate).toBeFalse();
+        });
+    });
+
+    describe('isValidEndDate', () => {
+        it('should handle valid end date', () => {
+            comp.course = new Course();
+            comp.course.startDate = undefined;
+            comp.course.endDate = dayjs().add(1, 'day');
+            expect(comp.isValidEndDate).toBeTrue();
+        });
+
+        it('should handle invalid end date', () => {
+            comp.course = new Course();
+            comp.course.startDate = dayjs().add(1, 'day');
+            comp.course.endDate = dayjs().subtract(1, 'day');
+            expect(comp.isValidStartDate).toBeFalse();
+        });
+    });
+
     describe('removeOrganizationFromCourse', () => {
         it('should remove organization from component', () => {
             const organization = new Organization();

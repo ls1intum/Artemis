@@ -67,7 +67,9 @@
             "description": "Kursbeschreibung",
             "organizations": "Kurs Organisationen",
             "startDate": "Start",
+            "startDateInvalidWarning": "Start des Kurses ist invalide oder fehlt",
             "endDate": "Ende",
+            "endDateInvalidWarning": "Ende des Kurses ist invalide oder fehlt",
             "semester": "Semester",
             "maxPoints": {
                 "title": "Maximale Punktzahl",

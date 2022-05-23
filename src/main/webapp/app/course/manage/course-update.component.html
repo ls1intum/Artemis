@@ -96,10 +96,22 @@
                 </div>
                 <div class="d-flex">
                     <div class="form-group flex-grow-1">
-                        <jhi-date-time-picker labelName="{{ 'artemisApp.course.startDate' | artemisTranslate }}" formControlName="startDate"></jhi-date-time-picker>
+                        <jhi-date-time-picker
+                            labelName="{{ 'artemisApp.course.startDate' | artemisTranslate }}"
+                            formControlName="startDate"
+                            [(ngModel)]="course.startDate"
+                            [error]="!isValidStartDate"
+                        ></jhi-date-time-picker>
+                        <span *ngIf="!isValidEndDate" class="invalid-feedback"> {{ 'artemisApp.course.startDateInvalidWarning' | artemisTranslate }}</span>
                     </div>
                     <div class="form-group flex-grow-1 ms-3">
-                        <jhi-date-time-picker labelName="{{ 'artemisApp.course.endDate' | artemisTranslate }}" formControlName="endDate"></jhi-date-time-picker>
+                        <jhi-date-time-picker
+                            labelName="{{ 'artemisApp.course.endDate' | artemisTranslate }}"
+                            formControlName="endDate"
+                            [(ngModel)]="course.endDate"
+                            [error]="!isValidEndDate"
+                        ></jhi-date-time-picker>
+                        <span *ngIf="!isValidEndDate" class="invalid-feedback"> {{ 'artemisApp.course.endDateInvalidWarning' | artemisTranslate }}</span>
                     </div>
                 </div>
                 <div class="form-check">
@@ -401,7 +413,7 @@
                     <ng-container *ngTemplateOutlet="saveButtonTpl"></ng-container>
                 </span>
                 <ng-template #saveButtonTpl>
-                    <button type="submit" id="save-entity" [disabled]="courseForm.invalid || isSaving" class="btn btn-primary ms-2">
+                    <button type="submit" id="save-entity" [disabled]="courseForm.invalid || isSaving || !isValidConfiguration" class="btn btn-primary ms-2">
                         <fa-icon [icon]="faSave"></fa-icon>&nbsp;<span jhiTranslate="entity.action.save">Save</span>
                     </button>
                 </ng-template>

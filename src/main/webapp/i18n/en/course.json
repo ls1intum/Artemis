@@ -67,7 +67,9 @@
             "description": "Course Description",
             "organizations": "Course Organizations",
             "startDate": "Start",
+            "startDateInvalidWarning": "Start of Course is set invalid or missing",
             "endDate": "End",
+            "endDateInvalidWarning": "End of Course is set invalid or missing",
             "semester": "Semester",
             "maxPoints": {
                 "title": "Maximum number of points for course",

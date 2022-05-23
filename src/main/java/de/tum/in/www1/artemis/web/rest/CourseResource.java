@@ -166,6 +166,7 @@ public class CourseResource {
         course.validateComplaintsAndRequestMoreFeedbackConfig();
         course.validateOnlineCourseAndRegistrationEnabled();
         course.validateAccuracyOfScores();
+        course.validateStartAndEndDate();
 
         courseService.createOrValidateGroups(course);
         Course result = courseRepository.save(course);
@@ -253,6 +254,7 @@ public class CourseResource {
         updatedCourse.validateOnlineCourseAndRegistrationEnabled();
         updatedCourse.validateShortName();
         updatedCourse.validateAccuracyOfScores();
+        updatedCourse.validateStartAndEndDate();
 
         // Based on the old instructors, editors and TAs, we can update all exercises in the course in the VCS (if necessary)
         // We need the old instructors, editors and TAs, so that the VCS user management service can determine which

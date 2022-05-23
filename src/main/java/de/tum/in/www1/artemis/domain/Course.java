@@ -755,6 +755,15 @@ public class Course extends DomainObject {
     }
 
     /**
+     * Validates that the start and end date of the course fulfill all requirements
+     */
+    public void validateStartAndEndDate() {
+        if (getStartDate() != null && getEndDate() != null && this.getEndDate().isBefore(this.getStartDate())) {
+            throw new BadRequestAlertException("For Courses, the start date has to be before the end date", ENTITY_NAME, "invalidCourseStartDate", true);
+        }
+    }
+
+    /**
      * We want to add users to a group, however different courses might have different courseGroupNames, therefore we
      * use this method to return the customized courseGroup name
      *
