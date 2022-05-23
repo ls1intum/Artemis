@@ -2,8 +2,6 @@
 Client
 ******
 
-WORK IN PROGRESS
-
 0. General
 ==========
 

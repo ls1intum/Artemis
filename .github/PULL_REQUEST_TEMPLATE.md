@@ -17,6 +17,7 @@
 - [ ] I documented the Java code using JavaDoc style.
 #### Client
 - [ ] I followed the [coding and design guidelines](https://docs.artemis.ase.in.tum.de/dev/guidelines/client/).
+- [ ] According to the [theming guidelines](https://docs.artemis.ase.in.tum.de/dev/guidelines/client-design/), I did not specify colors anywhere other than the theming variable files and checked that the changes look consistent in both the light and the dark theme.
 - [ ] I added multiple integration tests (Jest) related to the features (with a high test coverage), while following the [test guidelines](https://docs.artemis.ase.in.tum.de/dev/guidelines/client-tests/).
 - [ ] I added `authorities` to all new routes and checked the course groups for displaying navigation elements (links, buttons).
 - [ ] I documented the TypeScript code using JSDoc style.
