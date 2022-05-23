@@ -599,10 +599,10 @@ public class Result extends DomainObject {
                  * automatic SCA feedback (automatic test feedback has to be capped)
                  */
                 if (feedback.getType() == FeedbackType.AUTOMATIC && !feedback.isStaticCodeAnalysisFeedback()) {
-                    scoreAutomaticTests += Objects.requireNonNullElse(feedback.getCredits(), 0.0);
+                    scoreAutomaticTests += Objects.requireNonNullElse(feedback.getAppliedCredits(), 0.0);
                 }
                 else {
-                    totalPoints += Objects.requireNonNullElse(feedback.getCredits(), 0.0);
+                    totalPoints += Objects.requireNonNullElse(feedback.getAppliedCredits(), 0.0);
                 }
             }
         }

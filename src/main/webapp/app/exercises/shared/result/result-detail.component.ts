@@ -52,7 +52,8 @@ export class FeedbackItem {
     text?: string; // this is typically feedback.detailText
     positive?: boolean;
     credits?: number;
-    appliedCredits?: number;
+    creditsApplied?: boolean;
+    actualCredits?: number;
 }
 
 export const feedbackPreviewCharacterLimit = 300;
@@ -329,7 +330,6 @@ export class ResultDetailComponent implements OnInit {
             previewText,
             positive: false,
             credits: feedback.credits,
-            appliedCredits: feedback.credits,
         };
     }
 
@@ -341,7 +341,7 @@ export class ResultDetailComponent implements OnInit {
     private createProgrammingExerciseScaFeedbackItem(feedback: Feedback): FeedbackItem {
         const scaCategory = feedback.text!.substring(STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER.length);
         const scaIssue = StaticCodeAnalysisIssue.fromFeedback(feedback);
-        const text = this.showTestDetails ? `${scaIssue.rule}: ${scaIssue.message}` : scaIssue.message;
+        const text = `${scaIssue.rule}: ${scaIssue.message}`;
         const previewText = ResultDetailComponent.computeFeedbackPreviewText(text);
 
         return {
@@ -352,7 +352,7 @@ export class ResultDetailComponent implements OnInit {
             previewText,
             positive: false,
             credits: scaIssue.penalty ? -scaIssue.penalty : feedback.credits,
-            appliedCredits: feedback.credits,
+            actualCredits: feedback.credits,
         };
     }
 
@@ -393,6 +393,7 @@ export class ResultDetailComponent implements OnInit {
             previewText,
             positive: feedback.positive,
             credits: feedback.credits,
+            creditsApplied: feedback.creditsApplied,
         };
     }
 
@@ -477,7 +478,7 @@ export class ResultDetailComponent implements OnInit {
                         category: 'Feedback',
                         title: positiveTestCasesWithoutDetailText.length + ' passed test' + (positiveTestCasesWithoutDetailText.length > 1 ? 's' : ''),
                         positive: true,
-                        credits: positiveTestCasesWithoutDetailText.reduce((sum, feedbackItem) => sum + (feedbackItem.credits || 0), 0),
+                        credits: positiveTestCasesWithoutDetailText.reduce((sum, feedbackItem) => sum + (feedbackItem.creditsApplied ? feedbackItem.credits || 0 : 0), 0),
                     },
                     ...feedbackList.filter((feedbackItem) => !positiveTestCasesWithoutDetailText.includes(feedbackItem)),
                 ];
@@ -518,13 +519,13 @@ export class ResultDetailComponent implements OnInit {
             return;
         }
 
-        const sumCredits = (sum: number, feedbackItem: FeedbackItem) => sum + (feedbackItem.credits || 0);
-        const sumAppliedCredits = (sum: number, feedbackItem: FeedbackItem) => sum + (feedbackItem.appliedCredits || 0);
+        const sumCredits = (sum: number, feedbackItem: FeedbackItem) => sum + (feedbackItem.creditsApplied ? feedbackItem.credits || 0 : 0);
+        const sumActualCredits = (sum: number, feedbackItem: FeedbackItem) => sum + (feedbackItem.actualCredits || 0);
 
         let testCaseCredits = feedbackList.filter((item) => item.type === FeedbackItemType.Test).reduce(sumCredits, 0);
         const positiveCredits = feedbackList.filter((item) => item.type !== FeedbackItemType.Test && item.credits && item.credits > 0).reduce(sumCredits, 0);
 
-        let codeIssueCredits = -feedbackList.filter((item) => item.type === FeedbackItemType.Issue).reduce(sumAppliedCredits, 0);
+        let codeIssueCredits = -feedbackList.filter((item) => item.type === FeedbackItemType.Issue).reduce(sumActualCredits, 0);
         const codeIssuePenalties = -feedbackList.filter((item) => item.type === FeedbackItemType.Issue).reduce(sumCredits, 0);
         const negativeCredits = -feedbackList.filter((item) => item.type !== FeedbackItemType.Issue && item.credits && item.credits < 0).reduce(sumCredits, 0);
 
@@ -679,7 +680,7 @@ export class ResultDetailComponent implements OnInit {
         } else {
             this.showOnlyNegativeFeedback = !this.showOnlyNegativeFeedback;
             // by the second predicate we filter all feedback items that do not deduct any points
-            filterPredicate = (feedback: FeedbackItem) => feedback.positive === false && feedback.appliedCredits;
+            filterPredicate = (feedback: FeedbackItem) => feedback.positive === false && feedback.actualCredits;
             this.showOnlyPositiveFeedback = false;
         }
         // we reset the item list in order to make sure that maximal one feedback type is filtered at any time by the chart

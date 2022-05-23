@@ -58,6 +58,7 @@ export class Feedback implements BaseEntity {
     public detailText?: string;
     public reference?: string;
     public credits?: number;
+    public creditsApplied?: boolean;
     public type?: FeedbackType;
     public result?: Result;
     public positive?: boolean;
@@ -80,6 +81,10 @@ export class Feedback implements BaseEntity {
 
     constructor() {
         this.credits = 0;
+    }
+
+    public static getAppliedCredits(that: Feedback): number | undefined {
+        return that.creditsApplied ? that.credits : 0;
     }
 
     public static isStaticCodeAnalysisFeedback(that: Feedback): boolean {

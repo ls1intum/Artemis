@@ -55,6 +55,9 @@ public class Feedback extends DomainObject {
     @Column(name = "credits")
     private Double credits;
 
+    @Column(name = "credits_applied")
+    private Boolean creditsApplied = true;
+
     @Column(name = "positive")
     private Boolean positive;
 
@@ -192,6 +195,23 @@ public class Feedback extends DomainObject {
 
     public void setCredits(Double credits) {
         this.credits = credits;
+    }
+
+    public Boolean getCreditsApplied() {
+        return creditsApplied;
+    }
+
+    public Feedback creditsApplied(Boolean creditsApplied) {
+        this.creditsApplied = creditsApplied;
+        return this;
+    }
+
+    public void setCreditsApplied(Boolean creditsApplied) {
+        this.creditsApplied = creditsApplied;
+    }
+
+    public Double getAppliedCredits() {
+        return creditsApplied ? credits : Double.valueOf(0);
     }
 
     /**
@@ -370,6 +390,7 @@ public class Feedback extends DomainObject {
         feedback.setType(getType());
         // For manual result each feedback needs to have a credit. If no credit is set, we set it to 0.0
         feedback.setCredits(Objects.requireNonNullElse(getCredits(), 0.0));
+        feedback.setCreditsApplied(getCreditsApplied());
         feedback.setText(getText());
         feedback.setPositive(isPositive());
         feedback.setReference(getReference());
@@ -409,13 +430,13 @@ public class Feedback extends DomainObject {
                 }
             }
             else {
-                totalScore += getCredits();
+                totalScore += getAppliedCredits();
             }
         }
         else {
             // First time encountering the grading instruction
             gradingInstructions.put(getGradingInstruction().getId(), 1);
-            totalScore += getCredits();
+            totalScore += getAppliedCredits();
         }
         return totalScore;
     }

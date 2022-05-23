@@ -4,5 +4,10 @@
         <addColumn tableName="exercise">
             <column name="latest_individual_due_date" type="datetime"/>
         </addColumn>
+        <addColumn tableName="feedback">
+            <column name="credits_applied" type="BOOLEAN" defaultValueBoolean="true">
+                <constraints nullable="false" />
+            </column>
+        </addColumn>
     </changeSet>
 </databaseChangeLog>

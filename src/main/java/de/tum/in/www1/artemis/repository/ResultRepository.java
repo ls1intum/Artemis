@@ -590,8 +590,8 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
             }
             else {
                 // in case no structured grading instruction was applied on the assessment model we just sum the feedback credit
-                // TODO: what happens if getCredits is null?
-                totalPoints += feedback.getCredits();
+                // TODO: what happens if getAppliedCredits is null?
+                totalPoints += feedback.getAppliedCredits();
             }
         }
         return totalPoints;
@@ -619,7 +619,7 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
                 criterionId = feedback.getGradingInstruction().getGradingCriterion().getId();
             }
             else {
-                feedbackPoints = feedback.getCredits() != null ? feedback.getCredits() : 0;
+                feedbackPoints = feedback.getAppliedCredits() != null ? feedback.getAppliedCredits() : 0;
                 criterionId = null;
             }
 
