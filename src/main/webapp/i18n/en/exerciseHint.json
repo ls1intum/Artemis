@@ -25,6 +25,7 @@
             "content": "Content",
             "exercise": "Exercise",
             "exerciseHintButtonTooltip": "See available and activated hints for this exercise.",
+            "availableHintsAlertMessage": "New hints available for task '{{ taskName }}'.",
             "studentDialog": {
                 "title": "Exercise Hints",
                 "tooltip": "Open hints for this exercise",

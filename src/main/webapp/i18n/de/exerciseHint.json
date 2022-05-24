@@ -25,6 +25,7 @@
             "content": "Inhalt",
             "exercise": "Aufgabe",
             "exerciseHintButtonTooltip": "Verfügbare und aktivierte Hinweise für diese Aufgabe anzeigen.",
+            "availableHintsAlertMessage": "Neue Hinweise für Aufgabe '{{ taskName }}' verfügbar.",
             "studentDialog": {
                 "title": "Hinweise zur Übung",
                 "tooltip": "Hinweise zu dieser Übung öffnen",
