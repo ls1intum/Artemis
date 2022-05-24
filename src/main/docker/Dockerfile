@@ -44,11 +44,12 @@ RUN chmod +x /bootstrap.sh \
   && useradd -ms /bin/bash artemis
 
 # Create directories for volumes
-RUN mkdir -p /opt/artemis/config /opt/artemis/data /opt/artemis/public/content
+RUN mkdir -p /opt/artemis/config /opt/artemis/data /opt/artemis/public/content /opt/artemis/repos
 
 VOLUME ["/opt/artemis/config"]
 VOLUME ["/opt/artemis/data"]
 VOLUME ["/opt/artemis/public/content"]
+VOLUME ["/opt/artemis/repos"]
 
 EXPOSE 8080
 
