@@ -554,6 +554,7 @@ describe('ResultDetailComponent', () => {
                 positive: false,
                 previewText: undefined,
                 text: 'Checkstyle: SCA Message',
+                creditsApplied: true,
             };
         });
 
