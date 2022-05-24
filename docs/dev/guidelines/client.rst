@@ -308,7 +308,7 @@ Some parts of these guidelines are adapted from https://github.com/microsoft/Typ
 
 Ensure that the layout of your page or component shrinks accordingly and adapts to all display sizes (responsive design).
 
-Prefer using the ``.container`` class ([Boostrap documentation](https://getbootstrap.com/docs/5.2/layout/containers/)) when you want limit the page width on extra-large screens.
+Prefer using the ``.container`` class (https://getbootstrap.com/docs/5.2/layout/containers/) when you want limit the page width on extra-large screens.
 Do not use the following for this purpose if it can be avoided:
 
 .. code-block:: html
