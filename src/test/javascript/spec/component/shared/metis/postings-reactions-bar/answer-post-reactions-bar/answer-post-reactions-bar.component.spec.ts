@@ -21,6 +21,7 @@ import { MockRouter } from '../../../../../helpers/mocks/mock-router';
 import { MockLocalStorageService } from '../../../../../helpers/mocks/service/mock-local-storage.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { ReactingUsersOnPostingPipe } from 'app/shared/pipes/reacting-users-on-posting.pipe';
+import { By } from '@angular/platform-browser';
 import { metisCourse, metisUser1, post } from '../../../../../helpers/sample/metis-sample-data';
 
 describe('AnswerPostReactionsBarComponent', () => {
@@ -100,7 +101,7 @@ describe('AnswerPostReactionsBarComponent', () => {
         component.posting = post;
         component.isLastAnswer = false;
         fixture.detectChanges();
-        const answerNowButton = fixture.debugElement.nativeElement.querySelector('#answerNowButton');
+        const answerNowButton = fixture.debugElement.query(By.css('.answer-now-btn'));
         expect(answerNowButton).toBeNull();
     });
 
@@ -109,7 +110,7 @@ describe('AnswerPostReactionsBarComponent', () => {
         component.isLastAnswer = true;
         component.ngOnInit();
         fixture.detectChanges();
-        const answerNowButton = fixture.debugElement.nativeElement.querySelector('#answerNowButton');
+        const answerNowButton = fixture.debugElement.query(By.css('.answer-now-btn')).nativeElement;
         expect(answerNowButton.innerHTML).toContain('answerNow');
     });
 });
