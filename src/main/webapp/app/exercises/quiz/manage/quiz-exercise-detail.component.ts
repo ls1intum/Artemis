@@ -42,7 +42,6 @@ import { round } from 'app/shared/util/utils';
 import { onError } from 'app/shared/util/global.utils';
 import { QuizExerciseValidationDirective } from 'app/exercises/quiz/manage/quiz-exercise-validation.directive';
 import { faExclamationCircle, faPlus, faXmark } from '@fortawesome/free-solid-svg-icons';
-import { navigateToExampleSubmissions } from 'app/utils/navigation.utils';
 
 @Component({
     selector: 'jhi-quiz-exercise-detail',
