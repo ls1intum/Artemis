@@ -166,7 +166,7 @@ public class CourseResource {
         course.validateComplaintsAndRequestMoreFeedbackConfig();
         course.validateOnlineCourseAndRegistrationEnabled();
         course.validateAccuracyOfScores();
-        if (!course.validateStartAndEndDate()) {
+        if (!course.isValidStartAndEndDate()) {
             throw new BadRequestAlertException("For Courses, the start date has to be before the end date", Course.ENTITY_NAME, "invalidCourseStartDate", true);
         }
 
@@ -256,7 +256,7 @@ public class CourseResource {
         updatedCourse.validateOnlineCourseAndRegistrationEnabled();
         updatedCourse.validateShortName();
         updatedCourse.validateAccuracyOfScores();
-        if (!updatedCourse.validateStartAndEndDate()) {
+        if (!updatedCourse.isValidStartAndEndDate()) {
             throw new BadRequestAlertException("For Courses, the start date has to be before the end date", Course.ENTITY_NAME, "invalidCourseStartDate", true);
         }
 
