@@ -166,7 +166,9 @@ public class CourseResource {
         course.validateComplaintsAndRequestMoreFeedbackConfig();
         course.validateOnlineCourseAndRegistrationEnabled();
         course.validateAccuracyOfScores();
-        course.validateStartAndEndDate();
+        if (!course.validateStartAndEndDate()) {
+            throw new BadRequestAlertException("For Courses, the start date has to be before the end date", Course.ENTITY_NAME, "invalidCourseStartDate", true);
+        }
 
         courseService.createOrValidateGroups(course);
         Course result = courseRepository.save(course);
@@ -254,7 +256,9 @@ public class CourseResource {
         updatedCourse.validateOnlineCourseAndRegistrationEnabled();
         updatedCourse.validateShortName();
         updatedCourse.validateAccuracyOfScores();
-        updatedCourse.validateStartAndEndDate();
+        if (!updatedCourse.validateStartAndEndDate()) {
+            throw new BadRequestAlertException("For Courses, the start date has to be before the end date", Course.ENTITY_NAME, "invalidCourseStartDate", true);
+        }
 
         // Based on the old instructors, editors and TAs, we can update all exercises in the course in the VCS (if necessary)
         // We need the old instructors, editors and TAs, so that the VCS user management service can determine which

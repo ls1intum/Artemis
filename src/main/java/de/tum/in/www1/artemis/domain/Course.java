@@ -757,10 +757,8 @@ public class Course extends DomainObject {
     /**
      * Validates that the start and end date of the course fulfill all requirements
      */
-    public void validateStartAndEndDate() {
-        if (getStartDate() != null && getEndDate() != null && this.getEndDate().isBefore(this.getStartDate())) {
-            throw new BadRequestAlertException("For Courses, the start date has to be before the end date", ENTITY_NAME, "invalidCourseStartDate", true);
-        }
+    public boolean validateStartAndEndDate() {
+        return getStartDate() == null || getEndDate() == null || this.getEndDate().isAfter(this.getStartDate());
     }
 
     /**
