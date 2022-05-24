@@ -180,12 +180,12 @@ export class CourseManagementRequests {
 
     /**
      * Adds the specified student to the course.
-     * @param courseId the course id
-     * @param studentName the student name
+     * @param course the course
+     * @param student the student
      * @returns <Chainable> request response
      */
-    addStudentToCourse(courseId: number, studentName: string) {
-        return this.addUserToCourse(courseId, studentName, 'students');
+    addStudentToCourse(course: Course, user: CypressCredentials) {
+        return this.addUserToCourse(course.id!, user.username, 'students');
     }
 
     /**
@@ -198,8 +198,8 @@ export class CourseManagementRequests {
     /**
      * Adds the specified user to the instructor group in the course
      */
-    addInstructorToCourse(courseId: number, user: CypressCredentials) {
-        return this.addUserToCourse(courseId, user.username, 'instructors');
+    addInstructorToCourse(course: Course, user: CypressCredentials) {
+        return this.addUserToCourse(course.id!, user.username, 'instructors');
     }
 
     private addUserToCourse(courseId: number, username: string, roleIdentifier: string) {
