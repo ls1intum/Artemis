@@ -113,12 +113,8 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
     @PutMapping("/exercises/{exerciseId}/modeling-submissions")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<ModelingSubmission> updateModelingSubmission(@PathVariable long exerciseId, Principal principal, @RequestBody ModelingSubmission modelingSubmission) {
-        long start = System.currentTimeMillis();
         log.debug("REST request to update ModelingSubmission : {}", modelingSubmission.getModel());
-        ResponseEntity<ModelingSubmission> response = handleModelingSubmission(exerciseId, principal, modelingSubmission);
-        long end = System.currentTimeMillis();
-        log.info("updateModelingSubmission took {}ms for exercise {} and user {}", end - start, exerciseId, principal.getName());
-        return response;
+        return handleModelingSubmission(exerciseId, principal, modelingSubmission);
     }
 
     @NotNull
