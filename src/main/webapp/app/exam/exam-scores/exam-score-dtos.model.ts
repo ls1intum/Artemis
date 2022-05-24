@@ -53,9 +53,12 @@ export class StudentResult {
 }
 
 export class StudentExamWithGradeDTO {
+    public maxPoints: number;
+    public maxBonusPoints: number;
     public gradeType?: GradeType;
     public studentExam: StudentExam;
     public studentResult: StudentResult;
+    public achievedPointsPerExercise: { [exerciseId: number]: number };
 }
 
 export class ExerciseResult {

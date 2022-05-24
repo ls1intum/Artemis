@@ -66,34 +66,47 @@ export class ExamPointsSummaryComponent implements OnInit {
         }
     }
 
+    calculatePointsSum() {
+        // TODO: Ata: Remove this.
+        // return this.studentExamWithGrade?.studentResult ?? 0;
+        return -1;
+    }
+
+    calculateMaxPointsSum() {
+        // TODO: Ata: Remove this.
+        return this.studentExamWithGrade?.maxPoints ?? 0;
+    }
+
+    calculateAchievedPoints(exercise: Exercise): number {
+        // TODO: Ata: Remove this.
+        return this.studentExamWithGrade?.achievedPointsPerExercise?.[exercise.id!] ?? 0;
+    }
+
     /**
      * Calculate the max. achievable bonusPoints.
      */
     calculateMaxBonusPointsSum(): number {
-        if (this.exercises) {
-            const exercisesIncluded = this.exercises?.filter((exercise) => exercise.includedInOverallScore !== IncludedInOverallScore.NOT_INCLUDED);
-            return roundValueSpecifiedByCourseSettings(
-                exercisesIncluded.reduce((sum: number, nextExercise: Exercise) => sum + ExamPointsSummaryComponent.getBonusPoints(nextExercise), 0),
-                this.exam.course,
-            );
-        }
-        return 0;
+        return this.studentExamWithGrade?.maxBonusPoints ?? 0;
     }
 
     private hasAtLeastOneResult(): boolean {
-        if (this.exercises && this.exercises.length > 0) {
+        if (this.exercises?.length > 0) {
             return this.exercises.some((exercise) => exercise.studentParticipations?.[0]?.results?.length! > 0);
         }
         return false;
     }
 
-    private static getBonusPoints(exercise: Exercise): number {
-        if (exercise && exercise.includedInOverallScore === IncludedInOverallScore.INCLUDED_AS_BONUS && exercise.maxPoints) {
-            return exercise.maxPoints;
-        } else if (exercise && exercise.bonusPoints) {
-            return exercise.bonusPoints;
-        } else {
-            return 0;
-        }
-    }
+    // private static hasResultScore(exercise: Exercise): boolean {
+    //     return !!(exercise && exercise.maxPoints && exercise.studentParticipations?.[0]?.results?.[0]?.score != undefined);
+    // }
+
+    // private static getBonusPoints(exercise: Exercise): number {
+    //     if (exercise && exercise.includedInOverallScore === IncludedInOverallScore.INCLUDED_AS_BONUS && exercise.maxPoints) {
+    //         return exercise.maxPoints;
+    //     } else if (exercise && exercise.bonusPoints) {
+    //         return exercise.bonusPoints;
+    //     } else {
+    //         return 0;
+    //     }
+    // }
 }

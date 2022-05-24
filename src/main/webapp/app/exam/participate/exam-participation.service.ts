@@ -4,7 +4,7 @@ import { StudentExam } from 'app/entities/student-exam.model';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { QuizSubmission } from 'app/entities/quiz/quiz-submission.model';
-import { catchError, map } from 'rxjs/operators';
+import { catchError, map, tap } from 'rxjs/operators';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { Exam } from 'app/entities/exam.model';
 import dayjs from 'dayjs/esm';
@@ -59,7 +59,7 @@ export class ExamParticipationService {
      */
     public loadStudentExamWithExercisesForSummary(courseId: number, examId: number): Observable<StudentExamWithGradeDTO> {
         const url = this.getResourceURL(courseId, examId) + '/student-exams/summary';
-        return this.getStudentExamFromServer(url, courseId, examId);
+        return this.getStudentExamWithGradeFromServer(url, courseId, examId);
     }
 
     /**
@@ -76,6 +76,27 @@ export class ExamParticipationService {
             catchError(() => {
                 const localStoredExam: StudentExam = JSON.parse(this.localStorageService.retrieve(ExamParticipationService.getLocalStorageKeyForStudentExam(courseId, examId)));
                 return of(localStoredExam);
+            }),
+        );
+    }
+
+    /**
+     * Retrieves a {@link StudentExam} from server or localstorage.
+     */
+    private getStudentExamWithGradeFromServer(url: string, courseId: number, examId: number): Observable<StudentExamWithGradeDTO> {
+        return this.httpClient.get<StudentExamWithGradeDTO>(url).pipe(
+            tap((studentExamWithGrade: StudentExamWithGradeDTO) => {
+                const studentExam = studentExamWithGrade.studentExam;
+                if (studentExam.examSessions && studentExam.examSessions.length > 0 && studentExam.examSessions[0].sessionToken) {
+                    this.saveExamSessionTokenToSessionStorage(studentExam.examSessions[0].sessionToken);
+                }
+                ExamParticipationService.convertStudentExamFromServer(studentExam);
+            }),
+            catchError(() => {
+                const localStoredExam: StudentExam = JSON.parse(this.localStorageService.retrieve(ExamParticipationService.getLocalStorageKeyForStudentExam(courseId, examId)));
+                const studentExamWithGrade = new StudentExamWithGradeDTO();
+                studentExamWithGrade.studentExam = localStoredExam;
+                return of(studentExamWithGrade);
             }),
         );
     }

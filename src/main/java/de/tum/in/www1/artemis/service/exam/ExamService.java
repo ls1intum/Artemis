@@ -284,7 +284,7 @@ public class ExamService {
     }
 
     @NotNull
-    public StudentExamWithGradeDTO calculateStudentResultWithGrade(StudentExam studentExam, List<StudentParticipation> participationsOfStudent) {
+    public StudentExamWithGradeDTO calculateStudentResultWithGradeAndPoints(StudentExam studentExam, List<StudentParticipation> participationsOfStudent) {
         Exam exam = studentExam.getExam();
 
         // Adding exam information to DTO
@@ -292,10 +292,17 @@ public class ExamService {
         var objectMapper = new ObjectMapper();
 
         ExamScoresDTO.StudentResult studentResult = calculateStudentResultWithGrade(studentExam, participationsOfStudent, exam, scores, objectMapper);
-        var studentExamWithGradeDTO = new StudentExamWithGradeDTO(exam.getMaxPoints(), null, studentExam, studentResult);
+        var studentExamWithGradeDTO = new StudentExamWithGradeDTO((double) exam.getMaxPoints(), null, studentExam, studentResult);
 
         Optional<GradingScale> gradingScale = gradingScaleRepository.findByExamId(exam.getId());
         gradingScale.ifPresent(scale -> studentExamWithGradeDTO.gradeType = scale.getGradeType());
+
+        List<Exercise> exercises = participationsOfStudent.stream().map(StudentParticipation::getExercise).toList();
+        studentExamWithGradeDTO.maxPoints = calculateMaxPointsSum(exercises, exam.getCourse());
+        studentExamWithGradeDTO.maxBonusPoints = calculateMaxBonusPointsSum(exercises, exam.getCourse());
+        // TODO: Ata: Check if Result below is correct.
+        studentExamWithGradeDTO.achievedPointsPerExercise = calculateAchievedPointsForExercises(exercises,
+                participationsOfStudent.stream().findFirst().orElseThrow().findLatestLegalResult(), exam.getCourse());
 
         return studentExamWithGradeDTO;
     }
@@ -316,12 +323,12 @@ public class ExamService {
             if (studentParticipation.getResults() != null && !studentParticipation.getResults().isEmpty()) {
                 Result relevantResult = studentParticipation.getResults().iterator().next();
                 // Note: It is important that we round on the individual exercise level first and then sum up.
-                // This is necessary so that the student arrives at the same overall result when doing his own recalculation.
+                // This is necessary so that the student arrives at the same overall result when doing their own recalculation.
                 // Let's assume that the student achieved 1.05 points in each of 5 exercises.
                 // In the client, these are now displayed rounded as 1.1 points.
-                // If the student adds up the displayed points, he gets a total of 5.5 points.
+                // If the student adds up the displayed points, they get a total of 5.5 points.
                 // In order to get the same total result as the student, we have to round before summing.
-                double achievedPoints = roundScoreSpecifiedByCourseSettings(relevantResult.getScore() / 100.0 * exercise.getMaxPoints(), exam.getCourse());
+                double achievedPoints = calculateAchievedPoints(exercise, relevantResult, exam.getCourse());
 
                 // points earned in NOT_INCLUDED exercises do not count towards the students result in the exam
                 if (!exercise.getIncludedInOverallScore().equals(IncludedInOverallScore.NOT_INCLUDED)) {
@@ -341,10 +348,7 @@ public class ExamService {
                             Result firstManualResult = submission.getFirstManualResult();
                             double achievedPointsInFirstCorrection = 0.0;
                             if (firstManualResult != null) {
-                                Double resultScore = firstManualResult.getScore();
-                                achievedPointsInFirstCorrection = resultScore != null
-                                        ? roundScoreSpecifiedByCourseSettings(resultScore / 100.0 * exercise.getMaxPoints(), exam.getCourse())
-                                        : 0.0;
+                                achievedPointsInFirstCorrection = calculateAchievedPoints(exercise, firstManualResult, exam.getCourse());
                             }
                             studentResult.overallPointsAchievedInFirstCorrection += achievedPointsInFirstCorrection;
                         }
@@ -374,6 +378,38 @@ public class ExamService {
             }
         }
         return studentResult;
+    }
+
+    public Double calculateMaxPointsSum(List<Exercise> exercises, Course course) {
+        if (exercises != null) {
+            var exercisesIncluded = exercises.stream().filter((exercise) -> exercise.getIncludedInOverallScore() == IncludedInOverallScore.INCLUDED_COMPLETELY);
+            return roundScoreSpecifiedByCourseSettings(exercisesIncluded.map(Exercise::getMaxPoints).reduce(0.0, Double::sum), course);
+        }
+        return 0.0;
+    }
+
+    public Double calculateMaxBonusPointsSum(List<Exercise> exercises, Course course) {
+        if (exercises != null) {
+            return roundScoreSpecifiedByCourseSettings(exercises.stream().map(this::calculateMaxBonusPoints).reduce(0.0, Double::sum), course);
+        }
+        return 0.0;
+    }
+
+    private Double calculateMaxBonusPoints(Exercise exercise) {
+        return switch (exercise.getIncludedInOverallScore()) {
+            case INCLUDED_COMPLETELY -> exercise.getBonusPoints();
+            case INCLUDED_AS_BONUS -> exercise.getMaxPoints();
+            case NOT_INCLUDED -> 0.0;
+        };
+    }
+
+    private Double calculateAchievedPoints(Exercise exercise, Result result, Course course) {
+        Double resultScore = result.getScore();
+        return resultScore != null ? roundScoreSpecifiedByCourseSettings(exercise.getMaxPoints() * resultScore / 100.0, course) : 0.0;
+    }
+
+    public Map<Long, Double> calculateAchievedPointsForExercises(List<Exercise> exercises, Result result, Course course) {
+        return exercises.stream().collect(Collectors.toMap(Exercise::getId, (exercise) -> calculateAchievedPoints(exercise, result, course)));
     }
 
     /**

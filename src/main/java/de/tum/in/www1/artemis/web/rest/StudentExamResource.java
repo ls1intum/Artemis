@@ -127,7 +127,7 @@ public class StudentExamResource {
         }
         studentExam.getUser().setVisibleRegistrationNumber();
 
-        StudentExamWithGradeDTO studentExamWithGradeDTO = examService.calculateStudentResultWithGrade(studentExam, participations);
+        StudentExamWithGradeDTO studentExamWithGradeDTO = examService.calculateStudentResultWithGradeAndPoints(studentExam, participations);
 
         return ResponseEntity.ok(studentExamWithGradeDTO);
     }
@@ -320,7 +320,7 @@ public class StudentExamResource {
         List<StudentParticipation> participations = studentExam.getExercises().stream().flatMap(exercise -> exercise.getStudentParticipations().stream())
                 .collect(Collectors.toList());
 
-        StudentExamWithGradeDTO studentExamWithGradeDTO = examService.calculateStudentResultWithGrade(studentExam, participations);
+        StudentExamWithGradeDTO studentExamWithGradeDTO = examService.calculateStudentResultWithGradeAndPoints(studentExam, participations);
 
         log.info("getStudentExamForSummary done in {}ms for {} exercises for user {}", System.currentTimeMillis() - start, studentExam.getExercises().size(), user.getLogin());
         return ResponseEntity.ok(studentExamWithGradeDTO);

@@ -129,7 +129,7 @@
             (onExamEnded)="onExamEndConfirmed()"
             (onExamContinueAfterHandInEarly)="toggleHandInEarly()"
         ></jhi-exam-participation-cover>
-        <jhi-exam-participation-summary *ngIf="isOver() && studentExam.submitted" [studentExam]="studentExam"></jhi-exam-participation-summary>
+        <jhi-exam-participation-summary *ngIf="isOver() && studentExam.submitted" [studentExamWithGrade]="studentExamWithGrade"></jhi-exam-participation-summary>
     </ng-container>
 </ng-container>
 <ng-container *ngIf="!loadingExam && !exam">

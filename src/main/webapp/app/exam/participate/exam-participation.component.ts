@@ -34,6 +34,7 @@ import { ExamPage } from 'app/entities/exam-page.model';
 import { ExamPageComponent } from 'app/exam/participate/exercises/exam-page.component';
 import { AUTOSAVE_CHECK_INTERVAL, AUTOSAVE_EXERCISE_INTERVAL } from 'app/shared/constants/exercise-exam-constants';
 import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
+import { StudentExamWithGradeDTO } from 'app/exam/exam-scores/exam-score-dtos.model';
 
 type GenerateParticipationStatus = 'generating' | 'failed' | 'success';
 
@@ -63,8 +64,8 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     // needed, because studentExam is downloaded only when exam is started
     exam: Exam;
     examTitle = '';
-    studentExam: StudentExam;
-
+    studentExamWithGrade: StudentExamWithGradeDTO;
+    studentExam: StudentExam; // TODO: Ata: Maybe remove after all references are changed with studentExamWithGrade
     individualStudentEndDate: dayjs.Dayjs;
     individualStudentEndDateWithGracePeriod: dayjs.Dayjs;
 
@@ -162,7 +163,10 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                         if (this.isOver() && this.studentExam.submitted) {
                             this.examParticipationService
                                 .loadStudentExamWithExercisesForSummary(this.courseId, this.examId)
-                                .subscribe((studentExamWithExercises: StudentExam) => (this.studentExam = studentExamWithExercises));
+                                .subscribe((studentExamWithGradeAndExercises: StudentExamWithGradeDTO) => {
+                                    this.studentExamWithGrade = studentExamWithGradeAndExercises;
+                                    this.studentExam = studentExamWithGradeAndExercises.studentExam;
+                                });
                         }
 
                         // Directly start the exam when we continue from a failed save
