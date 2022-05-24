@@ -1,6 +1,6 @@
 <div id="additional-feedback">
     <b>
-        <fa-icon [icon]="farCommentDots"></fa-icon>&nbsp;
+        <fa-icon [icon]="faCommentDots"></fa-icon>&nbsp;
         <span *ngIf="additional" jhiTranslate="artemisApp.assessment.additionalFeedback"> Additional Feedback</span>
         <span *ngIf="!additional" jhiTranslate="artemisApp.assessment.feedback"> Feedback</span>:</b
     >
@@ -13,9 +13,7 @@
         [class.negative-feedback]="singleFeedback?.credits && singleFeedback.credits! < 0"
         [class.neutral-feedback]="singleFeedback?.credits === 0 || singleFeedback?.isSubsequent"
     >
-        <strong>
-            <span> {{ roundScoreSpecifiedByCourseSettings(singleFeedback.credits, course) + ' Points: ' }} </span>
-        </strong>
+        <span class="feedback-points">{{ pointTranslation(singleFeedback?.credits ?? 0) }}:</span>
         <span [innerHTML]="buildFeedbackTextForReview(singleFeedback)"></span>
         <fa-icon
             *ngIf="singleFeedback.isSubsequent"
