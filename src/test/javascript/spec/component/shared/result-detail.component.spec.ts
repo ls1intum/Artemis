@@ -91,7 +91,7 @@ describe('ResultDetailComponent', () => {
                 detailText: message,
                 credits,
                 positive: creditsApplied,
-                creditsApplied: creditsApplied,
+                creditsApplied,
             }),
             item: makeFeedbackItem({
                 type: FeedbackItemType.Test,
@@ -100,7 +100,7 @@ describe('ResultDetailComponent', () => {
                 credits,
                 positive: creditsApplied,
                 title: showDetails ? `Test ${name} ${creditsApplied ? 'passed' : 'failed'}` : undefined,
-                creditsApplied: creditsApplied,
+                creditsApplied,
             }),
         };
     };
@@ -398,7 +398,7 @@ describe('ResultDetailComponent', () => {
 
         const feedback: Feedback = {
             type: FeedbackType.MANUAL,
-            gradingInstruction: gradingInstruction,
+            gradingInstruction,
             text: 'Feedback Title',
             detailText: 'Manual tutor feedback',
             credits: 0,
@@ -438,7 +438,7 @@ describe('ResultDetailComponent', () => {
 
         const feedback: Feedback = {
             type: FeedbackType.MANUAL,
-            gradingInstruction: gradingInstruction,
+            gradingInstruction,
             text: 'Feedback Title',
             detailText: 'Manual tutor feedback',
             credits: 0,

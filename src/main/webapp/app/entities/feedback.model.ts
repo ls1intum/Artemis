@@ -81,6 +81,7 @@ export class Feedback implements BaseEntity {
 
     constructor() {
         this.credits = 0;
+        this.creditsApplied = true;
     }
 
     public static getAppliedCredits(that: Feedback): number | undefined {
