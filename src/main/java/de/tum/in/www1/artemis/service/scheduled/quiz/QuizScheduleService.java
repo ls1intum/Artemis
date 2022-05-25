@@ -54,8 +54,6 @@ public class QuizScheduleService {
 
     private final StudentParticipationRepository studentParticipationRepository;
 
-    private final ResultRepository resultRepository;
-
     private final UserRepository userRepository;
 
     private final QuizSubmissionRepository quizSubmissionRepository;
@@ -70,12 +68,11 @@ public class QuizScheduleService {
 
     private final QuizExerciseRepository quizExerciseRepository;
 
-    public QuizScheduleService(SimpMessageSendingOperations messagingTemplate, StudentParticipationRepository studentParticipationRepository, ResultRepository resultRepository,
-            UserRepository userRepository, QuizSubmissionRepository quizSubmissionRepository, HazelcastInstance hazelcastInstance, QuizExerciseRepository quizExerciseRepository,
+    public QuizScheduleService(SimpMessageSendingOperations messagingTemplate, StudentParticipationRepository studentParticipationRepository, UserRepository userRepository,
+            QuizSubmissionRepository quizSubmissionRepository, HazelcastInstance hazelcastInstance, QuizExerciseRepository quizExerciseRepository,
             QuizMessagingService quizMessagingService, QuizStatisticService quizStatisticService) {
         this.messagingTemplate = messagingTemplate;
         this.studentParticipationRepository = studentParticipationRepository;
-        this.resultRepository = resultRepository;
         this.userRepository = userRepository;
         this.quizSubmissionRepository = quizSubmissionRepository;
         this.quizExerciseRepository = quizExerciseRepository;
