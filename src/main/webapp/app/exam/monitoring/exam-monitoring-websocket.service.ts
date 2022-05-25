@@ -12,24 +12,10 @@ export interface IExamMonitoringWebsocketService {}
 
 @Injectable({ providedIn: 'root' })
 export class ParticipationWebsocketService implements IExamMonitoringWebsocketService {
-    examObservables: Map<number, BehaviorSubject<Exam | undefined>> = new Map<number, BehaviorSubject<Exam>>();
     examActivityObservables: Map<number, BehaviorSubject<ExamActivity[]>> = new Map<number, BehaviorSubject<ExamActivity[]>>();
     openExamMonitoringWebsocketSubscriptions: Map<number, string> = new Map<number, string>();
 
     constructor(private jhiWebsocketService: JhiWebsocketService) {}
-
-    /**
-     * Notify all exam subscribers with the newest exam provided.
-     * @param exam received or updated exam
-     */
-    private notifyExamSubscribers = (exam: Exam) => {
-        const examObservable = this.examObservables.get(exam.id!);
-        if (!examObservable) {
-            this.examObservables.set(exam.id!, new BehaviorSubject(exam));
-        } else {
-            examObservable.next(exam);
-        }
-    };
 
     /**
      * Notify all exam activity subscribers with the newest exam activity provided.
