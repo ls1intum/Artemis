@@ -11,7 +11,6 @@ import { ExamAction, ExamActivity } from 'app/entities/exam-user-activity.model'
 @Component({
     selector: 'jhi-monitoring-overview',
     templateUrl: './monitoring-overview.component.html',
-    styleUrls: ['./monitoring-overview.component.scss'],
 })
 export class MonitoringOverviewComponent implements OnInit, OnDestroy {
     // Subscriptions
