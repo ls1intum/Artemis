@@ -19,7 +19,12 @@ describe('StudentExamSummaryComponent', () => {
     beforeEach(() => {
         return TestBed.configureTestingModule({
             declarations: [StudentExamSummaryComponent, MockComponent(ExamParticipationSummaryComponent)],
-            providers: [{ provide: ActivatedRoute, useValue: { data: of({ studentExam: studentExamValue }) } }],
+            providers: [
+                {
+                    provide: ActivatedRoute,
+                    useValue: { data: of({ studentExam: { studentExam: studentExamValue } }) },
+                },
+            ],
         })
             .compileComponents()
             .then(() => {
@@ -35,6 +40,6 @@ describe('StudentExamSummaryComponent', () => {
     it('should initialize', () => {
         fixture.detectChanges();
         expect(component).not.toBeNull();
-        expect(component.studentExam).toEqual(studentExamValue);
+        expect(component.studentExamWithGrade.studentExam).toEqual(studentExamValue);
     });
 });

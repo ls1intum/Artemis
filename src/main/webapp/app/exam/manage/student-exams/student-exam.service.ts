@@ -24,7 +24,7 @@ export class StudentExamService {
     find(courseId: number, examId: number, studentExamId: number): Observable<HttpResponse<StudentExamWithGradeDTO>> {
         return this.http
             .get<StudentExamWithGradeDTO>(`${this.resourceUrl}/${courseId}/exams/${examId}/student-exams/${studentExamId}`, { observe: 'response' })
-            .pipe(tap((res: HttpResponse<StudentExamWithGradeDTO>) => this.processStudentExam(res?.body?.studentExam?.exam)));
+            .pipe(tap((res: HttpResponse<StudentExamWithGradeDTO>) => this.processStudentExam(res?.body?.studentExam)));
     }
 
     /**
@@ -48,7 +48,7 @@ export class StudentExamService {
     updateWorkingTime(courseId: number, examId: number, studentExamId: number, workingTime: number): Observable<EntityResponseType> {
         return this.http
             .patch<StudentExam>(`${this.resourceUrl}/${courseId}/exams/${examId}/student-exams/${studentExamId}/working-time`, workingTime, { observe: 'response' })
-            .pipe(tap((res: EntityResponseType) => this.processStudentExam(res?.body?.exam)));
+            .pipe(tap((res: EntityResponseType) => this.processStudentExam(res?.body ?? undefined)));
     }
 
     toggleSubmittedState(courseId: number, examId: number, studentExamId: number, unsubmit: boolean): Observable<EntityResponseType> {

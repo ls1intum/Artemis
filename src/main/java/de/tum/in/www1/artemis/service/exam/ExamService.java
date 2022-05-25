@@ -300,9 +300,7 @@ public class ExamService {
         List<Exercise> exercises = participationsOfStudent.stream().map(StudentParticipation::getExercise).toList();
         studentExamWithGradeDTO.maxPoints = calculateMaxPointsSum(exercises, exam.getCourse());
         studentExamWithGradeDTO.maxBonusPoints = calculateMaxBonusPointsSum(exercises, exam.getCourse());
-        // TODO: Ata: Check if Result below is correct.
-        studentExamWithGradeDTO.achievedPointsPerExercise = calculateAchievedPointsForExercises(exercises,
-                participationsOfStudent.stream().findFirst().orElseThrow().findLatestLegalResult(), exam.getCourse());
+        studentExamWithGradeDTO.achievedPointsPerExercise = calculateAchievedPointsForExercises(participationsOfStudent, exam.getCourse());
 
         return studentExamWithGradeDTO;
     }
@@ -408,8 +406,9 @@ public class ExamService {
         return resultScore != null ? roundScoreSpecifiedByCourseSettings(exercise.getMaxPoints() * resultScore / 100.0, course) : 0.0;
     }
 
-    public Map<Long, Double> calculateAchievedPointsForExercises(List<Exercise> exercises, Result result, Course course) {
-        return exercises.stream().collect(Collectors.toMap(Exercise::getId, (exercise) -> calculateAchievedPoints(exercise, result, course)));
+    private Map<Long, Double> calculateAchievedPointsForExercises(List<StudentParticipation> participationsOfStudent, Course course) {
+        return participationsOfStudent.stream().collect(Collectors.toMap((participation) -> participation.getExercise().getId(),
+                (participation) -> calculateAchievedPoints(participation.getExercise(), participation.getResults().iterator().next(), course)));
     }
 
     /**

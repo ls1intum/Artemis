@@ -556,8 +556,16 @@ public class StudentExamResource {
                     quizSubmission.filterForExam(studentExam.areResultsPublishedYet(), isAtLeastInstructor);
                 }
             }
+            else {
+                // To prevent LazyInitializationException.
+                participation.setResults(Set.of());
+            }
             // add participation into an array
             exercise.setStudentParticipations(Set.of(participation));
+        }
+        else {
+            // To prevent LazyInitializationException.
+            exercise.setStudentParticipations(Set.of());
         }
     }
 
