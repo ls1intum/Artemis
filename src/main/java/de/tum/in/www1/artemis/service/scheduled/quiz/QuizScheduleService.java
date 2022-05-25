@@ -11,6 +11,7 @@ import java.util.stream.Collectors;
 
 import javax.validation.constraints.NotNull;
 
+import org.hibernate.exception.ConstraintViolationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
@@ -649,9 +650,19 @@ public class QuizScheduleService {
                 // add the result of the participation resultHashMap for the statistic-Update
                 addResultForStatisticUpdate(quizExercise.getId(), result);
             }
+            catch (ConstraintViolationException constraintViolationException) {
+                log.error("ConstraintViolationException in saveQuizSubmissionWithParticipationAndResultToDatabase() for user {} in quiz {}: {}", username, quizExercise.getId(), constraintViolationException.getMessage(), constraintViolationException);
+                // We got a ConstraintViolationException -> The "User-Quiz" pair is already saved in the database, but for some reason was not removed from the maps
+                // We remove it from the maps now to prevent this error from occurring again
+                // We do NOT add it to the participation map, as this should have been done already earlier (when the entry was added to the database)
+
+                userSubmissionMap.remove(username);
+
+                // clean up the batch association
+                userBatchMap.remove(username);
+            }
             catch (Exception e) {
                 log.error("Exception in saveQuizSubmissionWithParticipationAndResultToDatabase() for user {} in quiz {}: {}", username, quizExercise.getId(), e.getMessage(), e);
-                //TODO: in case of a org.hibernate.exception.ConstraintViolationException, we should remove this key from the caches
             }
         }
         return count;
