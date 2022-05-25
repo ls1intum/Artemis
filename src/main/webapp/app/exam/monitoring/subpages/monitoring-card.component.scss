@@ -1,4 +1,12 @@
 .monitoring-card {
+    a,
+    a:hover,
+    a:visited,
+    a:active {
+        color: inherit !important;
+        text-decoration: none !important;
+    }
+
     .monitoring-card-header {
         cursor: pointer;
         border-bottom: 2px solid var(--overview-blue-border-color);

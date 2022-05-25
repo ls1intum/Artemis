@@ -1,9 +1,8 @@
 <div class="monitoring-card d-flex flex-column">
-    <div class="monitoring-card-header container-fluid">
+    <a class="monitoring-card-header container-fluid" [routerLink]="['/course-management', this.courseId, 'exams', this.examId, 'monitoring', linkTo]">
         <div class="row justify-content-between">
             <div class="col-10">
                 <div class="container-fluid p-0">
-                    <a [routerLink]="['/course-management', this.courseId, 'exams', this.examId, 'monitoring', linkTo]"></a>
                     <h4 class="fw-medium pt-2">{{ this.title }}</h4>
                     <h6 *ngIf="this.description" class="overflow-hidden text-truncate fw-light pb-1">
                         {{ this.description }}
@@ -17,7 +16,7 @@
             </div>
         </div>
         <ng-content select="[header]"></ng-content>
-    </div>
+    </a>
 
     <div class="monitoring-card-content p-3">
         <ng-content select="[content]"></ng-content>
