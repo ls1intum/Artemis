@@ -13,6 +13,7 @@ export class ExamMonitoringService {
      * @param exam received or updated exam
      */
     public notifyExamSubscribers = (exam: Exam) => {
+        console.log(exam);
         const examObservable = this.examObservables.get(exam.id!);
         if (!examObservable) {
             this.examObservables.set(exam.id!, new BehaviorSubject(exam));

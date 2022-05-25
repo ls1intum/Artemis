@@ -1,39 +1,58 @@
-<div class="d-flex flex-column">
-    <div class="mt-3">
-        <jhi-monitoring-box title="{{ 'artemisApp.examMonitoring.menu.exercises' | artemisTranslate }}" description="ToDo" color="blue">
-            <ng-container header></ng-container>
-            <ng-container content>
-                <div class="container mw-100">
-                    <div class="row">
-                        <div class="col p-0">
-                            <span>Test dabeeg</span>
+<div *ngIf="exam">
+    <div class="d-flex flex-column">
+        <div class="mt-3">
+            <jhi-monitoring-box
+                title="{{ 'artemisApp.examMonitoring.menu.exercises.title' | artemisTranslate }}"
+                description="{{ 'artemisApp.examMonitoring.menu.exercises.description' | artemisTranslate }}"
+                linkTo="exercises"
+                [courseId]="this.courseId"
+                [examId]="this.examId"
+            >
+                <ng-container header></ng-container>
+                <ng-container content>
+                    <div class="container-fluid">
+                        <div class="row">
+                            <jhi-exercise-group-chart [exam]="this.exam"></jhi-exercise-group-chart>
                         </div>
-                        <div class="col p-0">
-                            <jhi-exercise-groups-chart [exam]="this.exam"> </jhi-exercise-groups-chart>
+                        <div class="row">
+                            <jhi-exercise-chart [exam]="this.exam"></jhi-exercise-chart>
                         </div>
                     </div>
-                </div>
-            </ng-container>
-            <ng-container footer>
-                <div>
-                    <span> test </span>
-                </div>
-            </ng-container>
-        </jhi-monitoring-box>
-    </div>
-    <div class="mt-3">
-        <jhi-monitoring-box title="{{ 'artemisApp.examMonitoring.menu.activity-log' | artemisTranslate }}" description="Tada" color="purple">
-            <ng-container header></ng-container>
-            <ng-container content>
-                <div>
-                    <span> test </span>
-                </div>
-            </ng-container>
-            <ng-container footer>
-                <div>
-                    <span> test </span>
-                </div>
-            </ng-container>
-        </jhi-monitoring-box>
+                </ng-container>
+                <ng-container footer>
+                    <div>
+                        <a
+                            [routerLink]="['/course-management', this.courseId, 'exams', this.examId, 'exercise-groups']"
+                            class="btn btn-primary me-1 mb-1"
+                            [ngbTooltip]="'entity.action.exercise' | artemisTranslate"
+                        >
+                            <fa-icon [icon]="faListAlt"></fa-icon>
+                            <span>{{ 'entity.action.exercise' | artemisTranslate }}</span>
+                        </a>
+                    </div>
+                </ng-container>
+            </jhi-monitoring-box>
+        </div>
+        <div class="mt-3">
+            <jhi-monitoring-box
+                title="{{ 'artemisApp.examMonitoring.menu.activity-log.title' | artemisTranslate }}"
+                description="{{ 'artemisApp.examMonitoring.menu.exercises.description' | artemisTranslate }}"
+                linkTo="activity-log"
+                [courseId]="this.courseId"
+                [examId]="this.examId"
+            >
+                <ng-container header></ng-container>
+                <ng-container content>
+                    <div>
+                        <span> test </span>
+                    </div>
+                </ng-container>
+                <ng-container footer>
+                    <div>
+                        <span> test </span>
+                    </div>
+                </ng-container>
+            </jhi-monitoring-box>
+        </div>
     </div>
 </div>

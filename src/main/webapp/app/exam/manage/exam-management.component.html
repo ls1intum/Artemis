@@ -114,6 +114,15 @@
                                     <fa-icon [icon]="faThList"></fa-icon>
                                     <span class="d-none d-md-inline">{{ 'artemisApp.examManagement.examChecklist' | artemisTranslate }}</span>
                                 </a>
+                                <a
+                                    *ngIf="course.isAtLeastInstructor"
+                                    [routerLink]="[exam.id + '/monitoring']"
+                                    class="btn btn-info btn-sm me-1 mb-1"
+                                    id="monitoring-button-{{ exam.id }}"
+                                >
+                                    <fa-icon [icon]="faEye"></fa-icon>
+                                    <span class="d-none d-md-inline">{{ 'artemisApp.examManagement.examMonitoring' | artemisTranslate }}</span>
+                                </a>
                             </div>
                         </div>
                     </td>

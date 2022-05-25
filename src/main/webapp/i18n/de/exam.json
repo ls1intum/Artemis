@@ -301,6 +301,7 @@
             "confirmationEndText": "Bestätigungstext zum Klausurende",
             "assessmentDashboard": "Bewertung",
             "examChecklist": "Klausurcheckliste",
+            "examMonitoring": "Klausurüberwachung",
             "studentExams": "Klausuren der Studierenden",
             "students": "Studierende",
             "gradingSystem": "Notenschlüssel",
@@ -454,19 +455,46 @@
         },
         "examMonitoring": {
             "title": "Klausurüberwachung",
-            "header": {
+            "description": "Die Klausurüberwachungsansicht erlaubt es die Aktionen der Studierenden während der Klausur zu überwachen und die daraus resultierenden Daten zu analysieren.",
+            "table": {
+                "panelHeader": "Klausur Informationen",
+                "panelDescriptionHeader": "Details",
                 "title": "Titel",
                 "start": "Start",
-                "end": "Ende"
+                "end": "Ende",
+                "students": "Registrierte Studenten",
+                "exercises": "Aufgaben",
+                "exerciseGroups": "Aufgabengruppen"
             },
             "menu": {
-                "overview": "Übersicht",
-                "exercises": "Aufgaben",
-                "students": "Studenten",
-                "submissions": "Abgaben",
-                "sessions": "Sitzungen",
-                "activity-log": "Aktivitäten",
-                "summary": "Zusammenfassung"
+                "overview": {
+                    "title": "Übersicht",
+                    "description": "TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO"
+                },
+                "exercises": {
+                    "title": "Aufgaben",
+                    "description": "Zeigt die aktuelle Teilnahme der Studierenden in den jeweilgen Aufgaben und Aufgabengruppen"
+                },
+                "students": {
+                    "title": "Studenten",
+                    "description": "TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO"
+                },
+                "submissions": {
+                    "title": "Abgaben",
+                    "description": "TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO"
+                },
+                "sessions": {
+                    "title": "Sitzungen",
+                    "description": "TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO"
+                },
+                "activity-log": {
+                    "title": "Aktivitäten",
+                    "description": "TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO"
+                },
+                "summary": {
+                    "title": "Zusammenfassung",
+                    "description": "TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO"
+                }
             }
         },
         "studentExamDetail": {

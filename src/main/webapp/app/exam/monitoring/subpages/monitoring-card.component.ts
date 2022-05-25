@@ -1,5 +1,5 @@
 import { Component, Input } from '@angular/core';
-import { ARTEMIS_DEFAULT_COLOR } from 'app/app.constants';
+import { faArrowRight } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-monitoring-box',
@@ -7,11 +7,13 @@ import { ARTEMIS_DEFAULT_COLOR } from 'app/app.constants';
     styleUrls: ['./monitoring-card.component.scss'],
 })
 export class MonitoringCardComponent {
-    readonly ARTEMIS_DEFAULT_COLOR = ARTEMIS_DEFAULT_COLOR;
-
     @Input() title: string;
+    @Input() linkTo: string;
+    @Input() courseId: number;
+    @Input() examId: number;
     @Input() description: string;
-    @Input() color: string;
+
+    faArrowRight = faArrowRight;
 
     constructor() {}
 }

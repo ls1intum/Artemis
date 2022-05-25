@@ -1,12 +1,17 @@
 .monitoring-card {
-    border: 1px solid var(--exam-monitoring-card-border-color);
-
     .monitoring-card-header {
         cursor: pointer;
+        border-bottom: 2px solid var(--overview-blue-border-color);
+        background: var(--exam-monitoring-card-footer-background-color);
+    }
+
+    .monitoring-card-content {
+        border-left: 2px solid var(--exam-monitoring-card-footer-background-color);
+        border-right: 2px solid var(--exam-monitoring-card-footer-background-color);
     }
 
     .monitoring-card-footer {
-        border-top: 1px solid var(--exam-monitoring-card-border-color);
+        border-top: 2px solid var(--overview-blue-border-color);
         background: var(--exam-monitoring-card-footer-background-color);
     }
 }

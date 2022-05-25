@@ -302,6 +302,7 @@
             "confirmationEndText": "Exam end confirmation text",
             "assessmentDashboard": "Assessment",
             "examChecklist": "Exam Checklist",
+            "examMonitoring": "Exam Monitoring",
             "studentExams": "Student Exams",
             "students": "Students",
             "gradingSystem": "Grading Key",
@@ -455,19 +456,46 @@
         },
         "examMonitoring": {
             "title": "Exam Monitoring",
-            "header": {
+            "description": "The Exam Monitoring Dashboard allows instructors to monitor students' actions during the exam and analyze the resulting data.",
+            "table": {
+                "panelHeader": "Exam Information",
+                "panelDescriptionHeader": "Details",
                 "title": "Title",
                 "start": "Start",
-                "end": "End"
+                "end": "End",
+                "students": "Registered students",
+                "exercises": "Exercises",
+                "exerciseGroups": "Exercise groups"
             },
             "menu": {
-                "overview": "Overview",
-                "exercises": "Exercises",
-                "students": "Students",
-                "submissions": "Submissions",
-                "sessions": "Sessions",
-                "activity-log": "Activity log",
-                "summary": "Summary"
+                "overview": {
+                    "title": "Overview",
+                    "description": "TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO"
+                },
+                "exercises": {
+                    "title": "Exercises",
+                    "description": "Shows the current participation of the students in the respective tasks and task groups"
+                },
+                "students": {
+                    "title": "Students",
+                    "description": "TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO"
+                },
+                "submissions": {
+                    "title": "Submissions",
+                    "description": "TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO"
+                },
+                "sessions": {
+                    "title": "Sessions",
+                    "description": "TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO"
+                },
+                "activity-log": {
+                    "title": "Activity log",
+                    "description": "TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO"
+                },
+                "summary": {
+                    "title": "Summary",
+                    "description": "TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO"
+                }
             }
         },
         "studentExamDetail": {

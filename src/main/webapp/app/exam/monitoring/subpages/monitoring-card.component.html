@@ -1,15 +1,21 @@
 <div class="monitoring-card d-flex flex-column">
-    <div class="monitoring-card-header position-relative d-flex" [style.background-color]="'var(--' + this.color + ')'">
-        <div class="container d-flex flex-column justify-content-center align-items-center text-white py-2">
-            <div class="text-center fw-medium display-6">{{ this.title }}</div>
-            <div class="text-center overflow-hidden text-truncate d-inline mw-100 text-nowrap">
+    <div class="monitoring-card-header position-relative d-flex">
+        <div class="container-fluid d-flex flex-column">
+            <a class="stretched-link" [routerLink]="['/course-management', 1, 'exams', 3, 'monitoring', linkTo]"></a>
+            <h4 class="fw-medium pt-2">{{ this.title }}</h4>
+            <h6 *ngIf="this.description" class="overflow-hidden text-truncate d-inline mw-100 text-nowrap fw-light">
                 {{ this.description }}
-            </div>
+            </h6>
+        </div>
+        <div class="d-flex align-items-center pe-3">
+            <fa-icon class="ng-fa-icon" size="2x" [icon]="this.faArrowRight"></fa-icon>
         </div>
         <ng-content select="[header]"></ng-content>
     </div>
 
-    <ng-content select="[content]"></ng-content>
+    <div class="monitoring-card-content p-3">
+        <ng-content select="[content]"></ng-content>
+    </div>
 
     <div class="d-flex flex-row align-items-center px-2 py-1 monitoring-card-footer">
         <ng-content select="[footer]"></ng-content>
