@@ -115,11 +115,11 @@ describe('TextResultComponent', () => {
         textBlock.text = 'this is a text block';
         let textResultBlock = new TextResultBlock(textBlock, feedbacks[0]);
 
-        expect(component.creditsTranslationForTextResultBlock(textResultBlock)).toBe('artemisApp.textAssessment.detail.credits.many');
+        expect(component.creditsTranslationForTextResultBlock(textResultBlock)).toBe('artemisApp.assessment.detail.points.many');
 
         textResultBlock = new TextResultBlock(textBlock, feedbacks[1]);
 
-        expect(component.creditsTranslationForTextResultBlock(textResultBlock)).toBe('artemisApp.textAssessment.detail.credits.one');
+        expect(component.creditsTranslationForTextResultBlock(textResultBlock)).toBe('artemisApp.assessment.detail.points.one');
     });
 
     it('should test result block methods', () => {
