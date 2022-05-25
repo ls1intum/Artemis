@@ -1,0 +1,9 @@
+.bar-chart {
+    width: 100%;
+    height: 100%;
+    min-height: 200px;
+
+    ::ng-deep .legend-labels {
+        background-color: var(--exam-monitoring-card-footer-background-color) !important;
+    }
+}

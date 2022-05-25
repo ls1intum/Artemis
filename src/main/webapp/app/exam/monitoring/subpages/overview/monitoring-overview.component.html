@@ -8,7 +8,6 @@
                 [courseId]="this.courseId"
                 [examId]="this.examId"
             >
-                <ng-container header></ng-container>
                 <ng-container content>
                     <div class="container-fluid">
                         <div class="row">
@@ -36,22 +35,17 @@
         <div class="mt-3">
             <jhi-monitoring-box
                 title="{{ 'artemisApp.examMonitoring.menu.activity-log.title' | artemisTranslate }}"
-                description="{{ 'artemisApp.examMonitoring.menu.exercises.description' | artemisTranslate }}"
+                description="{{ 'artemisApp.examMonitoring.menu.activity-log.description' | artemisTranslate }}"
                 linkTo="activity-log"
                 [courseId]="this.courseId"
                 [examId]="this.examId"
             >
-                <ng-container header></ng-container>
                 <ng-container content>
                     <div>
                         <span> test </span>
                     </div>
                 </ng-container>
-                <ng-container footer>
-                    <div>
-                        <span> test </span>
-                    </div>
-                </ng-container>
+                <ng-container footer> </ng-container>
             </jhi-monitoring-box>
         </div>
     </div>

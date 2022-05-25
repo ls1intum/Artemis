@@ -8,9 +8,12 @@ import { MonitoringExercisesComponent } from 'app/exam/monitoring/subpages/exerc
 import { MonitoringCardComponent } from 'app/exam/monitoring/subpages/monitoring-card.component';
 import { MonitoringActivityLogComponent } from 'app/exam/monitoring/subpages/activity-log/monitoring-activity-log.component';
 import { NgxChartsModule } from '@swimlane/ngx-charts';
-import { ExerciseChartComponent } from 'app/exam/monitoring/charts/exercise-chart/exercise-chart.component';
+import { ExerciseChartComponent } from 'app/exam/monitoring/charts/exercises/exercise-chart/exercise-chart.component';
 import { ArtemisSidePanelModule } from 'app/shared/side-panel/side-panel.module';
-import { ExerciseGroupChartComponent } from 'app/exam/monitoring/charts/exercise-group-chart/exercise-group-chart.component';
+import { ExerciseGroupChartComponent } from 'app/exam/monitoring/charts/exercises/exercise-group-chart/exercise-group-chart.component';
+import { TotalActionsChartComponent } from 'app/exam/monitoring/charts/activity-log/total-actions-chart/total-actions-chart.component';
+import { AverageActionsChartComponent } from 'app/exam/monitoring/charts/activity-log/average-actions-chart/average-actions-chart.component';
+import { CategoryActionsChartComponent } from 'app/exam/monitoring/charts/activity-log/category-actions-chart/category-actions-chart.component';
 
 const ENTITY_STATES = [...examMonitoringState];
 
@@ -24,6 +27,9 @@ const ENTITY_STATES = [...examMonitoringState];
         MonitoringCardComponent,
         ExerciseChartComponent,
         ExerciseGroupChartComponent,
+        TotalActionsChartComponent,
+        AverageActionsChartComponent,
+        CategoryActionsChartComponent,
     ],
 })
 export class ArtemisExamMonitoringModule {}

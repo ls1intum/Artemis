@@ -462,7 +462,7 @@
                 "title": "Titel",
                 "start": "Start",
                 "end": "Ende",
-                "students": "Registrierte Studenten",
+                "students": "Registrierte Studierende",
                 "exercises": "Aufgaben",
                 "exerciseGroups": "Aufgabengruppen"
             },
@@ -476,7 +476,7 @@
                     "description": "Zeigt die aktuelle Teilnahme der Studierenden in den jeweilgen Aufgaben und Aufgabengruppen"
                 },
                 "students": {
-                    "title": "Studenten",
+                    "title": "Studierende",
                     "description": "TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO"
                 },
                 "submissions": {
@@ -489,11 +489,25 @@
                 },
                 "activity-log": {
                     "title": "Aktivitäten",
-                    "description": "TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO"
+                    "description": "Zeigt die vergangenen und aktuellen Aktivitäten der aktiven Studierenden"
                 },
                 "summary": {
                     "title": "Zusammenfassung",
                     "description": "TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO"
+                }
+            },
+            "charts": {
+                "exercise-chart": {
+                    "name": "Anzahl der Studierenden pro Aufgabe gruppiert nach Übungsgruppen",
+                    "xAxisLabel": "Aktuelle Anzahl an aktiven Studierenden",
+                    "yAxisLabel": "Aufgaben",
+                    "legendTitle": "Aufgaben"
+                },
+                "exercise-group-chart": {
+                    "name": "Anzahl der Studierenden pro Aufgabengruppe",
+                    "xAxisLabel": "Aktuelle Anzahl an aktiven Studierenden",
+                    "yAxisLabel": "Aufgabengruppen",
+                    "legendTitle": "Aufgabengruppen"
                 }
             }
         },

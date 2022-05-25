@@ -1,20 +1,14 @@
-import { AfterViewInit, Component, OnChanges, OnDestroy, OnInit, SimpleChanges } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 
 @Component({
     selector: 'jhi-monitoring-exercises',
     templateUrl: './monitoring-exercise.component.html',
     styleUrls: ['./monitoring-exercises.component.scss'],
 })
-export class MonitoringExercisesComponent implements OnInit, OnChanges, OnDestroy, AfterViewInit {
+export class MonitoringExercisesComponent implements OnInit, OnDestroy {
     constructor() {}
 
-    ngOnChanges(changes: SimpleChanges): void {
-        throw new Error('Method not implemented.');
-    }
-
     ngOnInit() {}
-
-    ngAfterViewInit(): void {}
 
     ngOnDestroy(): void {}
 }
