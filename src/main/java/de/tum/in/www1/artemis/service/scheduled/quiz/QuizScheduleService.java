@@ -407,7 +407,7 @@ public class QuizScheduleService {
 
                 // Update cached exercise object (use the expensive operation upfront)
                 quizExercise = quizExerciseRepository.findOneWithQuestionsAndStatistics(quizExerciseId);
-                var batchCache = quizExercise.getQuizBatches().stream().collect(Collectors.toUnmodifiableMap(QuizBatch::getId, b -> b));
+                Map<Long, QuizBatch> batchCache = quizExercise.getQuizBatches().stream().collect(Collectors.toUnmodifiableMap(QuizBatch::getId, batch -> batch));
 
                 // ensure that attempts that were never submitted get committed to the database and saved
                 // this is required to ensure that students cannot gain extra attempts this way
@@ -559,7 +559,7 @@ public class QuizScheduleService {
      * @param userSubmissionMap a Map with all submissions for the given quizExercise mapped by the username
      * @param userBatchMap      a Map of the username to quiz batch id for the given quizExercise
      * @param batchCache        a Map of all the batches for the given quizExercise
-     * @return the number of processed submissions (submit or timeout)
+     * @return                  the number of processed submissions (submit or timeout)
      */
     private int saveQuizSubmissionWithParticipationAndResultToDatabase(@NotNull QuizExercise quizExercise, Map<String, QuizSubmission> userSubmissionMap, Map<String, Long> userBatchMap, Map<Long, QuizBatch> batchCache) {
 
@@ -601,36 +601,37 @@ public class QuizScheduleService {
                 participation.setExercise(quizExercise);
                 participation.setInitializationState(InitializationState.FINISHED);
 
-                // create participation
-                participation = studentParticipationRepository.save(participation);
-                quizSubmission.setParticipation(participation);
-                quizSubmission = quizSubmissionRepository.save(quizSubmission);
-                participation.setSubmissions(Set.of(quizSubmission));
-                var savedQuizSubmission = quizSubmissionRepository.findById(quizSubmission.getId()).get();
-
                 // create new result
                 Result result = new Result().participation(participation);
                 result.setRated(true);
                 result.setAssessmentType(AssessmentType.AUTOMATIC);
-                result.setCompletionDate(savedQuizSubmission.getSubmissionDate());
-                result = resultRepository.save(result);
+                result.setCompletionDate(quizSubmission.getSubmissionDate());
+                result.setSubmission(quizSubmission);
 
-                // set submission, calculate scores and update result and submission accordingly
-                result.setSubmission(savedQuizSubmission);
-                savedQuizSubmission.calculateAndUpdateScores(quizExercise);
-                result.evaluateSubmission();
+                // calculate scores and update result and submission accordingly
+                quizSubmission.calculateAndUpdateScores(quizExercise);
+                result.evaluateQuizSubmission();
 
-                // add result to submission
-                savedQuizSubmission.setResults(List.of(result));
-                // save submission to set result index column
-                savedQuizSubmission = quizSubmissionRepository.save(savedQuizSubmission);
-                result = resultRepository.save(result);
-                // NOTE: we save submission and result here individually so that one exception (e.g. duplicated key) cannot destroy multiple student answers
+                // add result to participation
+                participation.addResult(result);
+
+                // add submission to participation
+                participation.setSubmissions(Set.of(quizSubmission));
+
+                // NOTE: we save (1) participation and (2) submission (in this particular order) here individually so that one exception (e.g. duplicated key) cannot
+                // destroy multiple student answers
+                participation = studentParticipationRepository.save(participation);
+                quizSubmission.addResult(result);
+                quizSubmission.setParticipation(participation);
+                // this automatically saves the results due to CascadeType.ALL
+                quizSubmission = quizSubmissionRepository.save(quizSubmission);
+
+                log.info("Saved quiz submission in " + quizExercise.getTitle() + " for user " + username);
 
                 // reconnect entities after save
-                participation.setSubmissions(Set.of(savedQuizSubmission));
+                participation.setSubmissions(Set.of(quizSubmission));
                 participation.setResults(Set.of(result));
-                result.setSubmission(savedQuizSubmission);
+                result.setSubmission(quizSubmission);
                 result.setParticipation(participation);
 
                 // no point in keeping the participation around for non-synchronized modes where the due date may only be in a week

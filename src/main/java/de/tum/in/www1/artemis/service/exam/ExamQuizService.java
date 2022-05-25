@@ -93,7 +93,7 @@ public class ExamQuizService {
                     result.setSubmission(submission);
                     // calculate scores and update result and submission accordingly
                     submission.calculateAndUpdateScores(quizExercise);
-                    result.evaluateSubmission();
+                    result.evaluateQuizSubmission();
                     // remove submission to follow save order for ordered collections
                     result.setSubmission(null);
                     result = resultRepository.save(result);
@@ -108,9 +108,9 @@ public class ExamQuizService {
                     result.setSubmission(submission);
                     // calculate scores and update result and submission accordingly
                     submission.calculateAndUpdateScores(quizExercise);
-                    // prevent a lazy exception in the evaluateSubmission method
+                    // prevent a lazy exception in the evaluateQuizSubmission method
                     result.setParticipation(participation);
-                    result.evaluateSubmission();
+                    result.evaluateQuizSubmission();
                     resultRepository.save(result);
                 }
                 submissionRepository.save(submission);
@@ -189,7 +189,7 @@ public class ExamQuizService {
                         result.setSubmission(quizSubmission);
                         // calculate scores and update result and submission accordingly
                         quizSubmission.calculateAndUpdateScores(quizExercise);
-                        result.evaluateSubmission();
+                        result.evaluateQuizSubmission();
                         // remove submission to follow save order for ordered collections
                         result.setSubmission(null);
 
