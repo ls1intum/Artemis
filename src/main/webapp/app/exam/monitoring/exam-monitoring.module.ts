@@ -14,11 +14,13 @@ import { ExerciseGroupChartComponent } from 'app/exam/monitoring/charts/exercise
 import { TotalActionsChartComponent } from 'app/exam/monitoring/charts/activity-log/total-actions-chart/total-actions-chart.component';
 import { AverageActionsChartComponent } from 'app/exam/monitoring/charts/activity-log/average-actions-chart/average-actions-chart.component';
 import { CategoryActionsChartComponent } from 'app/exam/monitoring/charts/activity-log/category-actions-chart/category-actions-chart.component';
+import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
+import { ChartTitleComponent } from 'app/exam/monitoring/charts/chart-title.component';
 
 const ENTITY_STATES = [...examMonitoringState];
 
 @NgModule({
-    imports: [RouterModule.forChild(ENTITY_STATES), ArtemisSharedCommonModule, NgxChartsModule, ArtemisSidePanelModule],
+    imports: [RouterModule.forChild(ENTITY_STATES), ArtemisSharedCommonModule, NgxChartsModule, ArtemisSidePanelModule, ArtemisSharedComponentModule],
     declarations: [
         ExamMonitoringComponent,
         MonitoringOverviewComponent,
@@ -30,6 +32,7 @@ const ENTITY_STATES = [...examMonitoringState];
         TotalActionsChartComponent,
         AverageActionsChartComponent,
         CategoryActionsChartComponent,
+        ChartTitleComponent,
     ],
 })
 export class ArtemisExamMonitoringModule {}

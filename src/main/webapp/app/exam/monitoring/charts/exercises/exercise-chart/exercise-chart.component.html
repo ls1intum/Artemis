@@ -1,17 +1,24 @@
-<div class="bar-chart">
-    <ngx-charts-bar-horizontal
-        [scheme]="ngxColor"
-        [results]="ngxData"
-        [gradient]="false"
-        [xAxis]="true"
-        [yAxis]="true"
-        [legend]="true"
-        [showXAxisLabel]="true"
-        [showYAxisLabel]="true"
-        [xAxisLabel]="'artemisApp.examMonitoring.charts.exercise-chart.xAxisLabel' | artemisTranslate"
-        [yAxisLabel]="'artemisApp.examMonitoring.charts.exercise-chart.yAxisLabel' | artemisTranslate"
-        [legendTitle]="'artemisApp.examMonitoring.charts.exercise-chart.legendTitle' | artemisTranslate"
-        [showDataLabel]="true"
-    >
-    </ngx-charts-bar-horizontal>
+<div>
+    <jhi-chart-title
+        [routerLink]="['/course-management', this.exam.course!.id!, 'exams', this.exam.id, 'exercise-groups']"
+        nameTranslationValue="artemisApp.examMonitoring.charts.exercise-chart.name"
+        tooltipTranslationValue="artemisApp.examMonitoring.charts.exercise-chart.tooltip"
+    ></jhi-chart-title>
+    <div class="bar-chart">
+        <ngx-charts-bar-horizontal
+            [scheme]="ngxColor"
+            [results]="ngxData"
+            [gradient]="false"
+            [xAxis]="true"
+            [yAxis]="true"
+            [legend]="true"
+            [showXAxisLabel]="true"
+            [showYAxisLabel]="true"
+            [xAxisLabel]="'artemisApp.examMonitoring.charts.exercise-chart.xAxisLabel' | artemisTranslate"
+            [yAxisLabel]="'artemisApp.examMonitoring.charts.exercise-chart.yAxisLabel' | artemisTranslate"
+            [legendTitle]="'artemisApp.examMonitoring.charts.exercise-chart.legendTitle' | artemisTranslate"
+            [showDataLabel]="true"
+        >
+        </ngx-charts-bar-horizontal>
+    </div>
 </div>

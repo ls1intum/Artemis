@@ -1,18 +1,24 @@
-<div class="line-chart">
-    <ngx-charts-line-chart
-        [view]="[width, 300]"
-        [scheme]="ngxColor"
-        [legend]="true"
-        [showXAxisLabel]="true"
-        [showYAxisLabel]="true"
-        [xAxis]="true"
-        [yAxis]="true"
-        [xAxisLabel]="'artemisApp.examMonitoring.charts.category-actions-chart.xAxisLabel' | artemisTranslate"
-        [yAxisLabel]="'artemisApp.examMonitoring.charts.category-actions-chart.yAxisLabel' | artemisTranslate"
-        [legendTitle]="'artemisApp.examMonitoring.charts.category-actions-chart.legendTitle' | artemisTranslate"
-        [timeline]="false"
-        [results]="ngxData"
-        [curve]="curve"
-    >
-    </ngx-charts-line-chart>
+<div>
+    <jhi-chart-title
+        nameTranslationValue="artemisApp.examMonitoring.charts.category-actions-chart.name"
+        tooltipTranslationValue="artemisApp.examMonitoring.charts.category-actions-chart.tooltip"
+    ></jhi-chart-title>
+    <div class="line-chart">
+        <ngx-charts-line-chart
+            [view]="[width, 300]"
+            [scheme]="ngxColor"
+            [legend]="true"
+            [showXAxisLabel]="true"
+            [showYAxisLabel]="true"
+            [xAxis]="true"
+            [yAxis]="true"
+            [xAxisLabel]="'artemisApp.examMonitoring.charts.category-actions-chart.xAxisLabel' | artemisTranslate"
+            [yAxisLabel]="'artemisApp.examMonitoring.charts.category-actions-chart.yAxisLabel' | artemisTranslate"
+            [legendTitle]="'artemisApp.examMonitoring.charts.category-actions-chart.legendTitle' | artemisTranslate"
+            [timeline]="false"
+            [results]="ngxData"
+            [curve]="curve"
+        >
+        </ngx-charts-line-chart>
+    </div>
 </div>

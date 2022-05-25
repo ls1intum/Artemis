@@ -498,29 +498,34 @@
             },
             "charts": {
                 "exercise-chart": {
-                    "name": "Anzahl der Studierenden pro Aufgabe gruppiert nach Übungsgruppen",
-                    "xAxisLabel": "Aktuelle Anzahl an aktiven Studierenden",
+                    "name": "Aktuelle Anzahl der Studierenden pro Aufgabe gruppiert nach Übungsgruppen",
+                    "tooltip": "TODO",
+                    "xAxisLabel": "Anzahl an Studierenden",
                     "yAxisLabel": "Aufgaben",
                     "legendTitle": "Aufgaben"
                 },
                 "exercise-group-chart": {
-                    "name": "Anzahl der Studierenden pro Aufgabengruppe",
-                    "xAxisLabel": "Aktuelle Anzahl an aktiven Studierenden",
+                    "name": "Aktuelle Anzahl der Studierenden pro Aufgabengruppe",
+                    "tooltip": "TODO",
+                    "xAxisLabel": "Anzahl an Studierenden",
                     "yAxisLabel": "Aufgabengruppen",
                     "legendTitle": "Aufgabengruppen"
                 },
                 "average-actions-chart": {
                     "name": "Durchschnittliche Anzahl an Aktionen pro Studierende",
+                    "tooltip": "TODO",
                     "xAxisLabel": "Zeitpunkt",
                     "yAxisLabel": "Aktionen"
                 },
                 "total-actions-chart": {
                     "name": "Gesamtanzahl an Aktionen",
+                    "tooltip": "TODO",
                     "xAxisLabel": "Zeitpunkt",
                     "yAxisLabel": "Aktionen"
                 },
                 "category-actions-chart": {
                     "name": "Gesamtanzahl an Aktionen pro Kategorie",
+                    "tooltip": "TODO",
                     "xAxisLabel": "Zeitpunkt",
                     "yAxisLabel": "Aktionen",
                     "legendTitle": "Kategorien"

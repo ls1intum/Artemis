@@ -499,29 +499,34 @@
             },
             "charts": {
                 "exercise-chart": {
-                    "name": "Amount of students per exercise grouped by exercise group",
-                    "xAxisLabel": "Current amount of active students",
+                    "name": "Current amount of students per exercise grouped by exercise group",
+                    "xAxisLabel": "Amount of students",
+                    "tooltip": "TODO",
                     "yAxisLabel": "Exercises",
                     "legendTitle": "Exercises"
                 },
                 "exercise-group-chart": {
-                    "name": "Amount of students per exercise group",
-                    "xAxisLabel": "Current amount of active students",
+                    "name": "Current amount of students per exercise group",
+                    "tooltip": "TODO",
+                    "xAxisLabel": "Amount of students",
                     "yAxisLabel": "Exercise Groups",
                     "legendTitle": "Exercise Groups"
                 },
                 "average-actions-chart": {
                     "name": "Average amount of actions per student",
+                    "tooltip": "TODO",
                     "xAxisLabel": "Timestamp",
                     "yAxisLabel": "Actions"
                 },
                 "total-actions-chart": {
                     "name": "Total amount of actions",
+                    "tooltip": "TODO",
                     "xAxisLabel": "Timestamp",
                     "yAxisLabel": "Actions"
                 },
                 "category-actions-chart": {
                     "name": "Total amount of actions per category",
+                    "tooltip": "TODO",
                     "xAxisLabel": "Timestamp",
                     "yAxisLabel": "Actions",
                     "legendTitle": "Categories"
