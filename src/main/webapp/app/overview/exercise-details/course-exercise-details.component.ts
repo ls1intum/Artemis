@@ -385,8 +385,8 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
 
                         this.exerciseHintService.getAvailableExerciseHints(this.exerciseId).subscribe((availableRes?: HttpResponse<ExerciseHint[]>) => {
                             // filter out the activated hints from the available hints
-                            this.availableExerciseHints = availableRes!.body!.filter((availableHint) =>
-                                this.activatedExerciseHints.some((activatedHint) => availableHint.id === activatedHint.id),
+                            this.availableExerciseHints = availableRes!.body!.filter(
+                                (availableHint) => !this.activatedExerciseHints.some((activatedHint) => availableHint.id === activatedHint.id),
                             );
                             if (this.availableExerciseHints.length) {
                                 this.alertService.info('artemisApp.exerciseHint.availableHintsAlertMessage', {
