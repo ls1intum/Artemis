@@ -28,7 +28,6 @@ public interface QuizExerciseRepository extends JpaRepository<QuizExercise, Long
     @Query("""
             SELECT DISTINCT e FROM QuizExercise e
             LEFT JOIN FETCH e.categories
-            LEFT JOIN FETCH e.quizBatches
             WHERE e.course.id = :#{#courseId}
             """)
     List<QuizExercise> findByCourseIdWithCategories(@Param("courseId") Long courseId);
@@ -51,7 +50,7 @@ public interface QuizExerciseRepository extends JpaRepository<QuizExercise, Long
     @EntityGraph(type = LOAD, attributePaths = { "quizQuestions", "quizPointStatistic", "quizQuestions.quizQuestionStatistic", "categories", "quizBatches" })
     Optional<QuizExercise> findWithEagerQuestionsAndStatisticsById(Long quizExerciseId);
 
-    @EntityGraph(type = LOAD, attributePaths = { "quizQuestions", "quizBatches" })
+    @EntityGraph(type = LOAD, attributePaths = { "quizQuestions" })
     Optional<QuizExercise> findWithEagerQuestionsById(Long quizExerciseId);
 
     @NotNull
@@ -76,11 +75,6 @@ public interface QuizExerciseRepository extends JpaRepository<QuizExercise, Long
      * @param quizExerciseId the id of the entity
      * @return the entity
      */
-    @Nullable
-    default QuizExercise findOneWithQuestions(Long quizExerciseId) {
-        return findWithEagerQuestionsById(quizExerciseId).orElse(null);
-    }
-
     @NotNull
     default QuizExercise findByIdWithQuestionsElseThrow(Long quizExerciseId) {
         return findWithEagerQuestionsById(quizExerciseId).orElseThrow(() -> new EntityNotFoundException("Quiz Exercise", quizExerciseId));

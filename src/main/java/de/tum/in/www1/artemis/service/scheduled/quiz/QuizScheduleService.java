@@ -343,7 +343,7 @@ public class QuizScheduleService {
             return quizExerciseCache;
         });
         log.debug("Sending quiz {} start", quizExerciseId);
-        QuizExercise quizExercise = quizExerciseRepository.findOneWithQuestionsAndStatistics(quizExerciseId);
+        QuizExercise quizExercise = quizExerciseRepository.findByIdWithQuestionsAndStatisticsElseThrow(quizExerciseId);
         updateQuizExercise(quizExercise);
         if (quizExercise.getQuizMode() != QuizMode.SYNCHRONIZED) {
             throw new IllegalStateException();
@@ -406,7 +406,7 @@ public class QuizScheduleService {
                 }
 
                 // Update cached exercise object (use the expensive operation upfront)
-                quizExercise = quizExerciseRepository.findOneWithQuestionsAndStatistics(quizExerciseId);
+                quizExercise = quizExerciseRepository.findByIdWithQuestionsAndStatisticsElseThrow(quizExerciseId);
                 var batchCache = quizExercise.getQuizBatches().stream().collect(Collectors.toUnmodifiableMap(QuizBatch::getId, b -> b));
 
                 // ensure that attempts that were never submitted get committed to the database and saved

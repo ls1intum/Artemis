@@ -302,6 +302,7 @@ public class QuizExerciseResource {
         if (!authCheckService.isAllowedToSeeExercise(quizExercise, user)) {
             throw new AccessForbiddenException();
         }
+        quizExercise.setQuizBatches(null); // remove proxy and load batches only if required
         var batch = quizBatchService.getQuizBatchForStudent(quizExercise, user);
         quizExercise.setQuizBatches(batch.stream().collect(Collectors.toSet()));
         // filter out information depending on quiz state
