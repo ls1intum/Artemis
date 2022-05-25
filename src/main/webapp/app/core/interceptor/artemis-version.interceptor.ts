@@ -71,6 +71,11 @@ export class ArtemisVersionInterceptor implements HttpInterceptor {
      * @private
      */
     private checkForUpdates() {
+        // don't spam errors when service workers are not available in development
+        if (!this.updates.isEnabled) {
+            return;
+        }
+
         // first update the service worker
         this.updates.checkForUpdate().then((updateAvailable: boolean) => {
             if (this.hasSeenOutdatedInThisSession || updateAvailable) {
