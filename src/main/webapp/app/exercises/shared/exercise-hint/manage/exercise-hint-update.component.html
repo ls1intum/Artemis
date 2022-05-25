@@ -24,9 +24,9 @@
                 <div class="form-group">
                     <div>
                         <label class="label-narrow" jhiTranslate="artemisApp.exerciseHint.task" for="field_task">Task</label>
-                        <ng-container *ngIf="exerciseHint.type === 'code'"
-                            ><jhi-help-icon placement="auto" text="artemisApp.exerciseHint.taskTooltip"></jhi-help-icon
-                        ></ng-container>
+                        <ng-container *ngIf="exerciseHint.type === 'code'">
+                            <jhi-help-icon placement="auto" text="artemisApp.exerciseHint.taskTooltip"></jhi-help-icon>
+                        </ng-container>
                     </div>
                     <select class="form-select" required name="task" [(ngModel)]="this.exerciseHint.programmingExerciseTask" id="field_task">
                         <option *ngFor="let task of tasks" [ngValue]="task">{{ task.taskName }}</option>

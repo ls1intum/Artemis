@@ -13,9 +13,8 @@
                 type="button"
                 class="ms-auto"
                 [ngbTooltip]="this.hasUsed ? '' : ('artemisApp.exerciseHint.studentDialog.activateTooltip' | artemisTranslate)"
-                [ngClass]="'btn btn-secondary'"
+                [ngClass]="{ 'btn btn-secondary': true, invisible: expanded }"
                 (click)="displayHintContent()"
-                [style.visibility]="expanded ? 'hidden' : 'initial'"
             >
                 {{ 'artemisApp.exerciseHint.studentDialog.' + (this.hasUsed ? 'display' : 'activate') | artemisTranslate }}
             </button>

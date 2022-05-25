@@ -1,13 +1,13 @@
-.mat-expansion-panel-header {
+.panel-header {
     padding: 10px 10px 10px 0 !important;
-    font-weight: bold !important;
+    font-weight: bold;
 }
 
-.mat-expansion-panel-header-title {
+.panel-header-title {
     flex-grow: 0 !important;
 }
 
-.mat-expansion-panel-header-description {
+.panel-description {
     flex-grow: 3 !important;
 }
 
