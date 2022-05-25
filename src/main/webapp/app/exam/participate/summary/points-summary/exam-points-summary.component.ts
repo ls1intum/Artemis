@@ -68,8 +68,7 @@ export class ExamPointsSummaryComponent implements OnInit {
 
     calculatePointsSum() {
         // TODO: Ata: Remove this.
-        // return this.studentExamWithGrade?.studentResult ?? 0;
-        return -1;
+        return this.studentExamWithGrade?.studentResult.overallPointsAchieved ?? 0;
     }
 
     calculateMaxPointsSum() {
