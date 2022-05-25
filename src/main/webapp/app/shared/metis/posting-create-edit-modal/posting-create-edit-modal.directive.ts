@@ -1,6 +1,6 @@
-import { Directive, EventEmitter, Input, OnChanges, OnInit, Output, TemplateRef, ViewChild, ViewContainerRef } from '@angular/core';
+import { Directive, EventEmitter, Input, OnChanges, OnInit, Output, TemplateRef, ViewChild } from '@angular/core';
 import { FormBuilder, FormGroup } from '@angular/forms';
-import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { Posting } from 'app/entities/metis/posting.model';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { PostingEditType } from 'app/shared/metis/metis.util';
@@ -10,10 +10,8 @@ const MAX_CONTENT_LENGTH = 1000;
 @Directive()
 export abstract class PostingCreateEditModalDirective<T extends Posting> implements OnInit, OnChanges {
     @Input() posting: T;
-    @Input() inlineInputContainerReference: ViewContainerRef;
-    @ViewChild('inlineInput') postingEditor: TemplateRef<any>;
+    @ViewChild('postingEditor') postingEditor: TemplateRef<any>;
     @Output() onCreate: EventEmitter<T> = new EventEmitter<T>();
-    modalRef?: NgbModalRef;
     modalTitle: string;
     isLoading = false;
     maxContentLength = MAX_CONTENT_LENGTH;
@@ -39,7 +37,7 @@ export abstract class PostingCreateEditModalDirective<T extends Posting> impleme
      * on changes: sets the content, and the modal title (edit or create), resets the from
      */
     ngOnChanges(): void {
-        this.content = this.posting.content ?? '';
+        this.content = this.posting?.content ?? '';
         this.updateModalTitle();
         this.resetFormGroup();
     }

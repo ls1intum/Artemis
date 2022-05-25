@@ -1,9 +1,10 @@
-<ng-template #inlineInput>
+<ng-template #postingEditor>
     <form [formGroup]="formGroup" (ngSubmit)="confirm()">
-        <div class="message-inline-input-form__wrapper">
+        <div class="markdown-editor-wrapper">
             <jhi-posting-markdown-editor formControlName="content" [editorHeight]="editorHeight" [maxContentLength]="maxContentLength" [isInputLengthDisplayed]="false">
             </jhi-posting-markdown-editor>
             <div class="col text-end">
+                <button jhi-posting-button [buttonLabel]="'artemisApp.metis.cancel' | artemisTranslate" class="btn btn-sm btn-outline-secondary" (click)="close()"></button>
                 <button
                     jhi-posting-button
                     [buttonLoading]="isLoading"

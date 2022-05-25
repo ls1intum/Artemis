@@ -24,7 +24,7 @@ import { MarkdownEditorHeight } from 'app/shared/markdown-editor/markdown-editor
 })
 export class PostingMarkdownEditorComponent implements OnInit, ControlValueAccessor, AfterContentChecked {
     @Input() maxContentLength: number;
-    @Input() editorHeight = MarkdownEditorHeight.SMALL;
+    @Input() editorHeight: MarkdownEditorHeight;
     @Input() isInputLengthDisplayed = true;
     @Output() valueChange = new EventEmitter();
     defaultCommands: Command[];

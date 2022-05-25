@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, Input, ViewContainerRef, ViewEncapsulation } from '@angular/core';
 import { PostingCreateEditModalDirective } from 'app/shared/metis/posting-create-edit-modal/posting-create-edit-modal.directive';
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
@@ -10,8 +10,10 @@ import { MarkdownEditorHeight } from 'app/shared/markdown-editor/markdown-editor
     selector: 'jhi-answer-post-create-edit-modal',
     templateUrl: './answer-post-create-edit-modal.component.html',
     styleUrls: ['answer-post-create-edit-modal.component.scss'],
+    encapsulation: ViewEncapsulation.None,
 })
 export class AnswerPostCreateEditModalComponent extends PostingCreateEditModalDirective<AnswerPost> {
+    @Input() createEditAnswerPostContainerRef: ViewContainerRef;
     editorHeight = MarkdownEditorHeight.INLINE;
 
     constructor(protected metisService: MetisService, protected modalService: NgbModal, protected formBuilder: FormBuilder) {
@@ -19,11 +21,21 @@ export class AnswerPostCreateEditModalComponent extends PostingCreateEditModalDi
     }
 
     /**
-     * renders the inline input ng-template to edit or create an answerPost
+     * renders the ng-template to edit or create an answerPost
      */
     open(): void {
-        this.inlineInputContainerReference.createEmbeddedView(this.postingEditor);
+        this.close();
+        this.createEditAnswerPostContainerRef.createEmbeddedView(this.postingEditor);
     }
+
+    /**
+     * clears the container to remove the input field when the user clicks cancel
+     */
+    close(): void {
+        this.createEditAnswerPostContainerRef.clear();
+        this.resetFormGroup();
+    }
+
     /**
      * resets the answer post content
      */
@@ -45,8 +57,7 @@ export class AnswerPostCreateEditModalComponent extends PostingCreateEditModalDi
                 this.resetFormGroup();
                 this.isLoading = false;
                 this.onCreate.emit(answerPost);
-                // this.modalRef?.close(); TODO
-                this.inlineInputContainerReference?.clear();
+                this.createEditAnswerPostContainerRef?.clear();
             },
             error: () => {
                 this.isLoading = false;
@@ -63,8 +74,7 @@ export class AnswerPostCreateEditModalComponent extends PostingCreateEditModalDi
         this.metisService.updateAnswerPost(this.posting).subscribe({
             next: () => {
                 this.isLoading = false;
-                // this.modalRef?.close(); TODO
-                this.inlineInputContainerReference?.clear();
+                this.createEditAnswerPostContainerRef?.clear();
             },
             error: () => {
                 this.isLoading = false;

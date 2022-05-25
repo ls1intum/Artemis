@@ -1,7 +1,9 @@
-.message-inline-input-form__wrapper {
-    padding-top: 5px;
+.markdown-editor-wrapper {
+    margin-top: 5px;
+    background-color: transparent !important;
 
     .markdown-editor {
-        min-height: 60px !important;
+        min-height: 100px !important;
+        background-color: transparent !important;
     }
 }
