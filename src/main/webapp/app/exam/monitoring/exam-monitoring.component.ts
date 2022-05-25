@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { ActivatedRoute } from '@angular/router';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
@@ -22,7 +22,7 @@ class TableContent {
     templateUrl: './exam-monitoring.component.html',
     styleUrls: ['./exam-monitoring.component.scss', '../../overview/tab-bar/tab-bar.scss'],
 })
-export class ExamMonitoringComponent implements OnInit, OnDestroy, AfterViewInit {
+export class ExamMonitoringComponent implements OnInit, OnDestroy {
     // 'overview', 'exercises', 'students', 'submissions', 'sessions', 'activity-log', 'summary'
     readonly sections: string[] = ['overview', 'exercises', 'activity-log'];
 
@@ -76,6 +76,4 @@ export class ExamMonitoringComponent implements OnInit, OnDestroy, AfterViewInit
     ngOnDestroy(): void {
         this.routeSubscription?.unsubscribe();
     }
-
-    ngAfterViewInit() {}
 }

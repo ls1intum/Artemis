@@ -6,7 +6,7 @@ import { ChartData, getColor } from 'app/exam/monitoring/charts/monitoring-chart
 @Component({
     selector: 'jhi-exercise-group-chart',
     templateUrl: './exercise-group-chart.component.html',
-    styleUrls: ['../../monitoring-bar-chart.scss'],
+    styleUrls: ['../../monitoring-chart.scss'],
 })
 export class ExerciseGroupChartComponent implements OnInit {
     @Input()

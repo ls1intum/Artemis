@@ -1,24 +1,30 @@
 import { Component, OnInit, Input } from '@angular/core';
 import { Color, ScaleType } from '@swimlane/ngx-charts';
-import { ChartData } from 'app/exam/monitoring/charts/monitoring-chart';
+import { ChartData, ChartSeriesData, getColor } from 'app/exam/monitoring/charts/monitoring-chart';
 import { ExamAction } from 'app/entities/exam-user-activity.model';
+import * as shape from 'd3-shape';
 
 @Component({
     selector: 'jhi-average-actions-chart',
     templateUrl: './average-actions-chart.component.html',
+    styleUrls: ['../../monitoring-chart.scss'],
 })
 export class AverageActionsChartComponent implements OnInit {
     @Input()
     examActions: ExamAction[];
+    @Input()
+    width: number;
 
     // Chart
-    ngxData: ChartData[] = [];
+    ngxData: ChartSeriesData[] = [];
     ngxColor = {
-        name: 'Average actions over time',
+        name: 'Average amount of actions per student',
         selectable: true,
         group: ScaleType.Ordinal,
-        domain: [],
+        domain: [getColor(1), getColor(2), getColor(3), getColor(4)],
     } as Color;
+
+    curve: any = shape.curveMonotoneX;
 
     constructor() {}
 
@@ -26,5 +32,17 @@ export class AverageActionsChartComponent implements OnInit {
         this.initData();
     }
 
-    initData() {}
+    initData() {
+        // this.ngxData = mapExamActions(this.examActions);
+        const chartSeriesData = new ChartSeriesData('test', [
+            new ChartData('1', 10),
+            new ChartData('2', 15),
+            new ChartData('3', 18),
+            new ChartData('4', 24),
+            new ChartData('5', 26),
+            new ChartData('6', 30),
+            new ChartData('7', 150),
+        ]);
+        this.ngxData = [chartSeriesData];
+    }
 }

@@ -509,6 +509,22 @@
                     "xAxisLabel": "Current amount of active students",
                     "yAxisLabel": "Exercise Groups",
                     "legendTitle": "Exercise Groups"
+                },
+                "average-actions-chart": {
+                    "name": "Average amount of actions per student",
+                    "xAxisLabel": "Timestamp",
+                    "yAxisLabel": "Actions"
+                },
+                "total-actions-chart": {
+                    "name": "Total amount of actions",
+                    "xAxisLabel": "Timestamp",
+                    "yAxisLabel": "Actions"
+                },
+                "category-actions-chart": {
+                    "name": "Total amount of actions per category",
+                    "xAxisLabel": "Timestamp",
+                    "yAxisLabel": "Actions",
+                    "legendTitle": "Categories"
                 }
             }
         },

@@ -1,14 +1,20 @@
 <div class="monitoring-card d-flex flex-column">
-    <div class="monitoring-card-header position-relative d-flex">
-        <div class="container-fluid d-flex flex-column">
-            <a class="stretched-link" [routerLink]="['/course-management', 1, 'exams', 3, 'monitoring', linkTo]"></a>
-            <h4 class="fw-medium pt-2">{{ this.title }}</h4>
-            <h6 *ngIf="this.description" class="overflow-hidden text-truncate d-inline mw-100 text-nowrap fw-light">
-                {{ this.description }}
-            </h6>
-        </div>
-        <div class="d-flex align-items-center pe-3">
-            <fa-icon class="ng-fa-icon" size="2x" [icon]="this.faArrowRight"></fa-icon>
+    <div class="monitoring-card-header container-fluid">
+        <div class="row justify-content-between">
+            <div class="col-10">
+                <div class="container-fluid p-0">
+                    <a class="stretched-link" [routerLink]="['/course-management', this.courseId, 'exams', this.examId, 'monitoring', linkTo]"></a>
+                    <h4 class="fw-medium pt-2">{{ this.title }}</h4>
+                    <h6 *ngIf="this.description" class="overflow-hidden text-truncate fw-light pb-1">
+                        {{ this.description }}
+                    </h6>
+                </div>
+            </div>
+            <div class="col-2">
+                <div class="d-flex h-100 justify-content-end">
+                    <fa-icon class="ng-fa-icon align-self-center" size="2x" [icon]="this.faArrowRight"></fa-icon>
+                </div>
+            </div>
         </div>
         <ng-content select="[header]"></ng-content>
     </div>

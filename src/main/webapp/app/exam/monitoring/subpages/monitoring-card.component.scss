@@ -11,6 +11,7 @@
     }
 
     .monitoring-card-footer {
+        min-height: 50px;
         border-top: 2px solid var(--overview-blue-border-color);
         background: var(--exam-monitoring-card-footer-background-color);
     }

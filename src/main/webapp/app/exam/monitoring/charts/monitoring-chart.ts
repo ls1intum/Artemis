@@ -3,11 +3,21 @@ import { GraphColors } from 'app/entities/statistics.model';
 // Chart content
 export class ChartData {
     name: string;
-    value: number;
+    value: any;
 
-    constructor(name: string, value: number) {
+    constructor(name: string, value: any) {
         this.name = name;
         this.value = value;
+    }
+}
+
+export class ChartSeriesData {
+    name: string;
+    series: ChartData[];
+
+    constructor(name: string, series: ChartData[]) {
+        this.name = name;
+        this.series = series;
     }
 }
 

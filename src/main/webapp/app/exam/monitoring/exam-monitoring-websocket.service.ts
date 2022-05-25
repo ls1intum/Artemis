@@ -11,7 +11,7 @@ const EXAM_MONITORING_TOPIC = (examId: number) => ``;
 export interface IExamMonitoringWebsocketService {}
 
 @Injectable({ providedIn: 'root' })
-export class ParticipationWebsocketService implements IExamMonitoringWebsocketService {
+export class ExamMonitoringWebsocketService implements IExamMonitoringWebsocketService {
     examActivityObservables: Map<number, BehaviorSubject<ExamActivity[]>> = new Map<number, BehaviorSubject<ExamActivity[]>>();
     openExamMonitoringWebsocketSubscriptions: Map<number, string> = new Map<number, string>();
 

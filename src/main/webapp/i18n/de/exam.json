@@ -508,6 +508,22 @@
                     "xAxisLabel": "Aktuelle Anzahl an aktiven Studierenden",
                     "yAxisLabel": "Aufgabengruppen",
                     "legendTitle": "Aufgabengruppen"
+                },
+                "average-actions-chart": {
+                    "name": "Durchschnittliche Anzahl an Aktionen pro Studierende",
+                    "xAxisLabel": "Zeitpunkt",
+                    "yAxisLabel": "Aktionen"
+                },
+                "total-actions-chart": {
+                    "name": "Gesamtanzahl an Aktionen",
+                    "xAxisLabel": "Zeitpunkt",
+                    "yAxisLabel": "Aktionen"
+                },
+                "category-actions-chart": {
+                    "name": "Gesamtanzahl an Aktionen pro Kategorie",
+                    "xAxisLabel": "Zeitpunkt",
+                    "yAxisLabel": "Aktionen",
+                    "legendTitle": "Kategorien"
                 }
             }
         },
