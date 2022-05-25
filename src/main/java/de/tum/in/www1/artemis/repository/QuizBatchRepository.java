@@ -25,6 +25,8 @@ public interface QuizBatchRepository extends JpaRepository<QuizBatch, Long> {
 
     Optional<QuizBatch> findByQuizExerciseAndPassword(QuizExercise quizExercise, String password);
 
+    Optional<QuizBatch> findFirstByQuizExercise(QuizExercise quizExercise);
+
     @NotNull
     default QuizBatch findByIdElseThrow(Long quizBatchId) throws EntityNotFoundException {
         return findById(quizBatchId).orElseThrow(() -> new EntityNotFoundException("Quiz Batch", quizBatchId));
