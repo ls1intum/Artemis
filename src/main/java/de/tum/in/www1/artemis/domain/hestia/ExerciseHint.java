@@ -146,6 +146,11 @@ public class ExerciseHint extends DomainObject {
         return 3;
     }
 
+    /**
+     * Creates a copy of this hint including basic attributes, but excluding attributes referencing other models
+     *
+     * @return The copied hint
+     */
     public ExerciseHint createCopy() {
         ExerciseHint copiedHint = new ExerciseHint();
 

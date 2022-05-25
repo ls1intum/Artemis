@@ -48,6 +48,11 @@ public class CodeHint extends ExerciseHint {
         return "CodeHint{" + "id=" + getId() + ", title='" + getTitle() + "}";
     }
 
+    /**
+     * Creates a copy of this hint including basic attributes, but excluding attributes referencing other models
+     *
+     * @return The copied hint
+     */
     @Override
     public CodeHint createCopy() {
         CodeHint copiedHint = new CodeHint();
