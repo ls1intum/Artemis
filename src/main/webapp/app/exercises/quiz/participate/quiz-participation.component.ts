@@ -747,8 +747,8 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
 
             // create dictionary with scores for each question
             this.questionScores = {};
-            this.submission.submittedAnswers!.forEach((submittedAnswer) => {
-                // limit decimal places to 2
+            this.submission.submittedAnswers?.forEach((submittedAnswer) => {
+                // limit decimal places
                 this.questionScores[submittedAnswer.quizQuestion!.id!] = roundValueSpecifiedByCourseSettings(submittedAnswer.scoreInPoints!, course);
             }, this);
         }
