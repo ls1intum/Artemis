@@ -12,7 +12,6 @@ import org.hibernate.annotations.DiscriminatorOptions;
 import com.fasterxml.jackson.annotation.*;
 
 import de.tum.in.www1.artemis.domain.DomainObject;
-import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 
 /**
@@ -89,7 +88,7 @@ public class ExerciseHint extends DomainObject {
         this.content = content;
     }
 
-    public Exercise getExercise() {
+    public ProgrammingExercise getExercise() {
         return exercise;
     }
 
@@ -140,9 +139,19 @@ public class ExerciseHint extends DomainObject {
      * Returns a threshold value that defines when this exercise hint is displayed to student participating in a programming exercise.
      * The algorithm defining if the hint is display is described in {@link de.tum.in.www1.artemis.service.hestia.ExerciseHintService#getAvailableExerciseHints}
      * Note: This value is currently fixed but planned to be adjustable.
+     *
      * @return the display threshold value
      */
     public int getDisplayThreshold() {
         return 3;
+    }
+
+    public ExerciseHint createCopy() {
+        ExerciseHint copiedHint = new ExerciseHint();
+
+        copiedHint.setDescription(this.getDescription());
+        copiedHint.setContent(this.getContent());
+        copiedHint.setTitle(this.getTitle());
+        return copiedHint;
     }
 }

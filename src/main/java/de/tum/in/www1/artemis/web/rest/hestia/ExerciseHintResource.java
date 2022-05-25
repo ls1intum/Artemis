@@ -23,7 +23,6 @@ import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.hestia.CodeHintService;
 import de.tum.in.www1.artemis.service.hestia.ExerciseHintService;
-import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
 import tech.jhipster.web.util.HeaderUtil;
@@ -100,7 +99,7 @@ public class ExerciseHintResource {
 
         // Hints for exam exercises are not supported at the moment
         if (exercise.isExamExercise()) {
-            throw new AccessForbiddenException("Exercise hints for exams are currently not supported");
+            throw new BadRequestAlertException("Exercise hints for exams are currently not supported", EXERCISE_HINT_ENTITY_NAME, "exerciseHintNotSupported");
         }
         ExerciseHint result = exerciseHintRepository.save(exerciseHint);
         return ResponseEntity.created(new URI("/api/programming-exercises/" + exerciseHint.getExercise().getId() + "/exercise-hints/" + result.getId()))
@@ -142,7 +141,7 @@ public class ExerciseHintResource {
 
         // Hints for exam exercises are not supported at the moment
         if (exercise.isExamExercise()) {
-            throw new AccessForbiddenException("Exercise hints for exams are currently not supported");
+            throw new BadRequestAlertException("Exercise hints for exams are currently not supported", EXERCISE_HINT_ENTITY_NAME, "exerciseHintNotSupported");
         }
 
         if (exerciseHint instanceof CodeHint codeHint && hintBeforeSaving instanceof CodeHint codeHintBeforeSaving) {
@@ -189,7 +188,7 @@ public class ExerciseHintResource {
         ProgrammingExercise exercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
         if (exercise.isExamExercise()) {
             // not allowed for exam exercises
-            throw new AccessForbiddenException("");
+            throw new BadRequestAlertException("Exercise hints for exams are currently not supported", EXERCISE_HINT_ENTITY_NAME, "exerciseHintNotSupported");
         }
 
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, exercise, null);
@@ -234,7 +233,7 @@ public class ExerciseHintResource {
         ProgrammingExercise exercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
         if (exercise.isExamExercise()) {
             // not allowed for exam exercises
-            throw new AccessForbiddenException("");
+            throw new BadRequestAlertException("Exercise hints for exams are currently not supported", EXERCISE_HINT_ENTITY_NAME, "exerciseHintNotSupported");
         }
 
         var user = userRepository.getUserWithGroupsAndAuthorities();
@@ -256,7 +255,7 @@ public class ExerciseHintResource {
         ProgrammingExercise exercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
         if (exercise.isExamExercise()) {
             // not allowed for exam exercises
-            throw new AccessForbiddenException("");
+            throw new BadRequestAlertException("Exercise hints for exams are currently not supported", EXERCISE_HINT_ENTITY_NAME, "exerciseHintNotSupported");
         }
 
         var user = userRepository.getUserWithGroupsAndAuthorities();

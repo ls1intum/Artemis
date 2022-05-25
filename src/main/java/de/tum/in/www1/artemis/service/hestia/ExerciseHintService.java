@@ -6,8 +6,10 @@ import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
 
-import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.hestia.CodeHint;
+import de.tum.in.www1.artemis.domain.Feedback;
+import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.Submission;
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.hestia.ExerciseHint;
 import de.tum.in.www1.artemis.domain.hestia.ExerciseHintActivation;
 import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseTask;
@@ -17,7 +19,6 @@ import de.tum.in.www1.artemis.repository.hestia.ExerciseHintRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
-import de.tum.in.www1.artemis.web.rest.errors.InternalServerErrorException;
 
 @Service
 public class ExerciseHintService {
@@ -54,18 +55,8 @@ public class ExerciseHintService {
     public Map<Long, Long> copyExerciseHints(final ProgrammingExercise template, final ProgrammingExercise target) {
         final Map<Long, Long> hintIdMapping = new HashMap<>();
         target.setExerciseHints(template.getExerciseHints().stream().map(hint -> {
-            ExerciseHint copiedHint;
-            if (hint instanceof CodeHint) {
-                copiedHint = new CodeHint();
-            }
-            else {
-                copiedHint = new ExerciseHint();
-            }
-
+            ExerciseHint copiedHint = hint.createCopy();
             copiedHint.setExercise(target);
-            copiedHint.setDescription(hint.getDescription());
-            copiedHint.setContent(hint.getContent());
-            copiedHint.setTitle(hint.getTitle());
             exerciseHintRepository.save(copiedHint);
             hintIdMapping.put(hint.getId(), copiedHint.getId());
             return copiedHint;
@@ -106,7 +97,7 @@ public class ExerciseHintService {
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.STUDENT, exerciseHint.getExercise(), user);
 
         // Check if the user can activate the hint
-        if (!getAvailableExerciseHints((ProgrammingExercise) exerciseHint.getExercise(), user).contains(exerciseHint)) {
+        if (!getAvailableExerciseHints(exerciseHint.getExercise(), user).contains(exerciseHint)) {
             return false;
         }
 
@@ -168,9 +159,9 @@ public class ExerciseHintService {
         var tasks = programmingExerciseTaskService.getSortedTasks(exercise);
 
         var subsequentNumberOfUnsuccessfulSubmissionsByTask = tasks.stream()
-                .collect(Collectors.toMap(task -> task, task -> subsequentNumberOfSuccessfulSubmissionsForTask(submissions, task, false)));
+                .collect(Collectors.toMap(task -> task, task -> subsequentNumberOfSubmissionsForTaskWithStatus(submissions, task, false)));
         var subsequentNumberOfSuccessfulSubmissionsByTask = tasks.stream()
-                .collect(Collectors.toMap(task -> task, task -> subsequentNumberOfSuccessfulSubmissionsForTask(submissions, task, true)));
+                .collect(Collectors.toMap(task -> task, task -> subsequentNumberOfSubmissionsForTaskWithStatus(submissions, task, true)));
 
         for (int i = 0; i < tasks.size(); i++) {
             var task = tasks.get(i);
@@ -197,14 +188,14 @@ public class ExerciseHintService {
             }
 
             // skip current task if the previous task was not successful
-            if (Objects.equals(subsequentNumberSuccessfulSubmissionsForPreviousTask.orElse(-1), 0)) {
+            if (0 == subsequentNumberSuccessfulSubmissionsForPreviousTask.orElse(-1)) {
                 continue;
             }
 
             // add the available hints for the current task
             var availableHintsForCurrentTask = getAvailableExerciseHintsForTask(subsequentNumberSuccessfulSubmissionsForPreviousTask,
                     subsequentNumberOfUnsuccessfulSubmissionsForCurrentTask, hintsInTask);
-            if (availableHintsForCurrentTask.size() > 0) {
+            if (!availableHintsForCurrentTask.isEmpty()) {
                 return availableHintsForCurrentTask;
             }
         }
@@ -223,12 +214,11 @@ public class ExerciseHintService {
     }
 
     private List<Submission> getSubmissionsForStudent(ProgrammingExercise exercise, User student) {
-        var studentParticipation = studentParticipationRepository.findByExerciseIdAndStudentIdWithEagerSubmissionsResultsFeedbacks(exercise.getId(), student.getId())
-                .orElseThrow(() -> new InternalServerErrorException("No participation"));
+        var studentParticipation = studentParticipationRepository.findByExerciseIdAndStudentIdWithEagerSubmissionsResultsFeedbacksElseThrow(exercise.getId(), student.getId());
         return studentParticipation.getSubmissions().stream().sorted(Comparator.comparing(Submission::getSubmissionDate, Comparator.reverseOrder())).toList();
     }
 
-    private int subsequentNumberOfSuccessfulSubmissionsForTask(List<Submission> submissions, ProgrammingExerciseTask task, boolean successful) {
+    private int subsequentNumberOfSubmissionsForTaskWithStatus(List<Submission> submissions, ProgrammingExerciseTask task, boolean successful) {
         int subsequentNumberSuccessfulSubmissionsForTask = 0;
         for (Submission submission : submissions) {
             if (isTaskSuccessfulInSubmission(task, submission) != successful) {
@@ -243,9 +233,10 @@ public class ExerciseHintService {
      * Filter hints that meet the following conditions:
      * 1. the previous task (if existing) is successful for at least the hint's threshold value
      * 2. the current task is unsuccessful for at least the hint's threshold value
-     * @param subsequentNumberSuccessfulSubmissionsForPreviousTask the subsequent number of the latest submissions the previous task is successful
+     *
+     * @param subsequentNumberSuccessfulSubmissionsForPreviousTask    the subsequent number of the latest submissions the previous task is successful
      * @param subsequentNumberOfUnsuccessfulSubmissionsForCurrentTask the subsequent number of the latest submissions the current task is unsuccessful
-     * @param taskHints all exercise hints in current tasks
+     * @param taskHints                                               all exercise hints in current tasks
      * @return the available exercise hints
      */
     private Set<ExerciseHint> getAvailableExerciseHintsForTask(Optional<Integer> subsequentNumberSuccessfulSubmissionsForPreviousTask,

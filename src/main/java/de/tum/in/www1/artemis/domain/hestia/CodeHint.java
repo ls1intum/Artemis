@@ -47,4 +47,14 @@ public class CodeHint extends ExerciseHint {
     public String toString() {
         return "CodeHint{" + "id=" + getId() + ", title='" + getTitle() + "}";
     }
+
+    @Override
+    public CodeHint createCopy() {
+        CodeHint copiedHint = new CodeHint();
+
+        copiedHint.setDescription(this.getDescription());
+        copiedHint.setContent(this.getContent());
+        copiedHint.setTitle(this.getTitle());
+        return copiedHint;
+    }
 }
