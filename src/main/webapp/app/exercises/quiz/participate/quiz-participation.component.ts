@@ -969,7 +969,14 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
                     }
                 }
             },
-            error: () => this.alertService.error('artemisApp.quizExercise.joinFailed'),
+            error: (error: HttpErrorResponse) => {
+                const errorMessage = 'Joining the quiz was not possible: ' + error.headers?.get('X-artemisApp-message') || error.message;
+                this.alertService.addAlert({
+                    type: AlertType.DANGER,
+                    message: errorMessage,
+                    disableTranslation: true,
+                });
+            },
         });
     }
 }
