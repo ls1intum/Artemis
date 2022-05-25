@@ -946,6 +946,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
                 const quizExercise = res.body!;
                 if (quizExercise.quizStarted) {
                     this.quizExercise = quizExercise;
+                    this.initQuiz();
                     this.initLiveMode();
                 }
                 setTimeout(() => (this.refreshingQuiz = false), 500); // ensure min animation duration
