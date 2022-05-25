@@ -1,9 +1,18 @@
 <div class="d-flex flex-column">
     <div class="mt-3">
         <jhi-monitoring-box title="{{ 'artemisApp.examMonitoring.menu.exercises' | artemisTranslate }}" description="ToDo" color="blue">
-            <ng-container header> </ng-container>
+            <ng-container header></ng-container>
             <ng-container content>
-                <div>Test</div>
+                <div class="container mw-100">
+                    <div class="row">
+                        <div class="col p-0">
+                            <span>Test dabeeg</span>
+                        </div>
+                        <div class="col p-0">
+                            <jhi-exercise-groups-chart [exam]="this.exam"> </jhi-exercise-groups-chart>
+                        </div>
+                    </div>
+                </div>
             </ng-container>
             <ng-container footer>
                 <div>
@@ -14,9 +23,11 @@
     </div>
     <div class="mt-3">
         <jhi-monitoring-box title="{{ 'artemisApp.examMonitoring.menu.activity-log' | artemisTranslate }}" description="Tada" color="purple">
-            <ng-container header> </ng-container>
+            <ng-container header></ng-container>
             <ng-container content>
-                <div>Test</div>
+                <div>
+                    <span> test </span>
+                </div>
             </ng-container>
             <ng-container footer>
                 <div>

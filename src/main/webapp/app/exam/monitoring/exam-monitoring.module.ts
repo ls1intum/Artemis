@@ -7,11 +7,20 @@ import { MonitoringOverviewComponent } from 'app/exam/monitoring/subpages/overvi
 import { MonitoringExercisesComponent } from 'app/exam/monitoring/subpages/exercise/monitoring-exercises.component';
 import { MonitoringCardComponent } from 'app/exam/monitoring/subpages/monitoring-card.component';
 import { MonitoringActivityLogComponent } from 'app/exam/monitoring/subpages/activity-log/monitoring-activity-log.component';
+import { NgxChartsModule } from '@swimlane/ngx-charts';
+import { ExerciseGroupsChartComponent } from 'app/exam/monitoring/charts/exercise-groups-chart.component';
 
 const ENTITY_STATES = [...examMonitoringState];
 
 @NgModule({
-    imports: [RouterModule.forChild(ENTITY_STATES), ArtemisSharedCommonModule],
-    declarations: [ExamMonitoringComponent, MonitoringOverviewComponent, MonitoringExercisesComponent, MonitoringActivityLogComponent, MonitoringCardComponent],
+    imports: [RouterModule.forChild(ENTITY_STATES), ArtemisSharedCommonModule, NgxChartsModule],
+    declarations: [
+        ExamMonitoringComponent,
+        MonitoringOverviewComponent,
+        MonitoringExercisesComponent,
+        MonitoringActivityLogComponent,
+        MonitoringCardComponent,
+        ExerciseGroupsChartComponent,
+    ],
 })
 export class ArtemisExamMonitoringModule {}
