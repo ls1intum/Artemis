@@ -44,7 +44,6 @@ import {
 import { FullGitDiffReportModalComponent } from 'app/exercises/programming/hestia/git-diff-report/full-git-diff-report-modal.component';
 import { TestwiseCoverageReportModalComponent } from 'app/exercises/programming/hestia/testwise-coverage-report/testwise-coverage-report-modal.component';
 import { CodeEditorRepositoryFileService } from 'app/exercises/programming/shared/code-editor/service/code-editor-repository.service';
-import { ProgrammingExerciseSolutionEntry } from 'app/entities/hestia/programming-exercise-solution-entry.model';
 import { CodeHintService } from 'app/exercises/shared/exercise-hint/shared/code-hint.service';
 
 @Component({
@@ -431,7 +430,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
 
     createStructuralSolutionEntries() {
         this.programmingExerciseService.createStructuralSolutionEntries(this.programmingExercise.id!).subscribe({
-            next: (res) => {
+            next: () => {
                 this.alertService.addAlert({
                     type: AlertType.SUCCESS,
                     message: 'artemisApp.programmingExercise.createStructuralSolutionEntriesSuccess',
@@ -445,7 +444,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
 
     createBehavioralSolutionEntries() {
         this.programmingExerciseService.createBehavioralSolutionEntries(this.programmingExercise.id!).subscribe({
-            next: (res) => {
+            next: () => {
                 this.alertService.addAlert({
                     type: AlertType.SUCCESS,
                     message: 'artemisApp.programmingExercise.createBehavioralSolutionEntriesSuccess',
@@ -469,10 +468,6 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                 this.onError(err);
             },
         });
-    }
-
-    private static buildSolutionEntriesMessage(solutionEntries: ProgrammingExerciseSolutionEntry[]): string {
-        return solutionEntries.map((solutionEntry) => `${solutionEntry.filePath}:\n${solutionEntry.code}`).join('\n\n');
     }
 
     /**
