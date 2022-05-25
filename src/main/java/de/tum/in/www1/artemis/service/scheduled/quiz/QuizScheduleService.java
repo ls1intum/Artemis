@@ -651,6 +651,7 @@ public class QuizScheduleService {
             }
             catch (Exception e) {
                 log.error("Exception in saveQuizSubmissionWithParticipationAndResultToDatabase() for user {} in quiz {}: {}", username, quizExercise.getId(), e.getMessage(), e);
+                //TODO: in case of a org.hibernate.exception.ConstraintViolationException, we should remove this key from the caches
             }
         }
         return count;
