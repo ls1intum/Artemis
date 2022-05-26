@@ -13,7 +13,13 @@
 }
 
 .posting-header {
-    font-size: x-small;
+    font-size: 11px;
+
+    .posting-author {
+        font-size: 13px;
+        font-weight: 500;
+        padding-right: 5px;
+    }
 }
 
 .resolved {
