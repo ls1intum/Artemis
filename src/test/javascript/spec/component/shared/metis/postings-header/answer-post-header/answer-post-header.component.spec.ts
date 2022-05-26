@@ -28,7 +28,6 @@ describe('AnswerPostHeaderComponent', () => {
     let metisServiceUserPostingAuthorMock: jest.SpyInstance;
     let metisServiceDeleteAnswerPostMock: jest.SpyInstance;
     let metisServiceUpdateAnswerPostMock: jest.SpyInstance;
-    let viewContainerRef: ViewContainerRef;
 
     const yesterday: dayjs.Dayjs = dayjs().subtract(1, 'day');
 
@@ -61,7 +60,6 @@ describe('AnswerPostHeaderComponent', () => {
                 fixture = TestBed.createComponent(AnswerPostHeaderComponent);
                 component = fixture.componentInstance;
                 metisService = TestBed.inject(MetisService);
-                viewContainerRef = TestBed.inject(ViewContainerRef);
                 metisServiceUserIsAtLeastTutorMock = jest.spyOn(metisService, 'metisUserIsAtLeastTutorInCourse');
                 metisServiceUserPostingAuthorMock = jest.spyOn(metisService, 'metisUserIsAuthorOfPosting');
                 metisServiceDeleteAnswerPostMock = jest.spyOn(metisService, 'deleteAnswerPost');
