@@ -150,4 +150,13 @@ describe('PostFooterComponent', () => {
         component.ngOnChanges();
         expect(component.sortedAnswerPosts).toEqual(sortedAnswerArray);
     });
+
+    it('should contain reference to container for rendering answerPostCreateEditModal component', () => {
+        expect(component.containerRef).not.toBeNull();
+    });
+
+    it('should contain component to create a new answer post', () => {
+        const answerPostCreateEditModal = fixture.debugElement.nativeElement.querySelector('jhi-answer-post-create-edit-modal');
+        expect(answerPostCreateEditModal).not.toBeNull();
+    });
 });
