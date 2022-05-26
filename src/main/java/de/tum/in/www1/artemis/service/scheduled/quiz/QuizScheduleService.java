@@ -206,6 +206,16 @@ public class QuizScheduleService {
     }
 
     /**
+     * Checks if the scheduler has completed processing of all submissions for a quiz exercise and all results are available in the database.
+     *
+     * @param quizExerciseId the id of the quiz to check
+     * @return if processing of the quiz has finished
+     */
+    public boolean finishedProcessing(Long quizExerciseId) {
+        return quizCache.getReadCacheFor(quizExerciseId).getSubmissions().isEmpty();
+    }
+
+    /**
      * Start scheduler of quiz schedule service
      *
      * @param delayInMillis gap for which the QuizScheduleService should run repeatedly
