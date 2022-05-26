@@ -22,7 +22,7 @@ export class AverageActionsChartComponent implements OnInit {
         name: 'Average amount of actions per student',
         selectable: true,
         group: ScaleType.Ordinal,
-        domain: [getColor(1), getColor(2), getColor(3), getColor(4)],
+        domain: [getColor(3)],
     } as Color;
     curve: any = shape.curveMonotoneX;
     legend = false;

@@ -22,17 +22,7 @@ export class ChartSeriesData {
 }
 
 // Collection of colors used for the exam monitoring
-const colors = [
-    GraphColors.MONITORING_VARIANT_ONE,
-    GraphColors.MONITORING_VARIANT_TWO,
-    GraphColors.MONITORING_VARIANT_THREE,
-    GraphColors.MONITORING_VARIANT_FOUR,
-    GraphColors.MONITORING_VARIANT_FIVE,
-    GraphColors.MONITORING_VARIANT_SIX,
-    GraphColors.MONITORING_VARIANT_SEVEN,
-    GraphColors.MONITORING_VARIANT_EIGHT,
-    GraphColors.MONITORING_VARIANT_NINE,
-];
+const colors = [GraphColors.LIGHT_GREY, GraphColors.GREY, GraphColors.DARK_BLUE, GraphColors.BLUE, GraphColors.LIGHT_BLUE];
 
 /**
  * Returns a color based on the index (modulo)

@@ -22,7 +22,7 @@ export class TotalActionsChartComponent implements OnInit {
         name: 'Total amount of actions',
         selectable: true,
         group: ScaleType.Ordinal,
-        domain: [getColor(1)],
+        domain: [getColor(3)],
     } as Color;
     curve: any = shape.curveMonotoneX;
     legend = false;

@@ -22,7 +22,7 @@ export class CategoryActionsChartComponent implements OnInit {
         name: 'Total amount of actions per category',
         selectable: true,
         group: ScaleType.Ordinal,
-        domain: [getColor(1), getColor(2), getColor(3), getColor(4)],
+        domain: [getColor(0), getColor(1), getColor(2), getColor(3), getColor(4)],
     } as Color;
     curve: any = shape.curveMonotoneX;
     legend = true;
