@@ -35,6 +35,7 @@ import { GraphColors } from 'app/entities/statistics.model';
 import { NgxChartsMultiSeriesDataEntry } from 'app/shared/chart/ngx-charts-datatypes';
 import { axisTickFormattingWithPercentageSign } from 'app/shared/statistics-graph/statistics-graph.utils';
 import { Course } from 'app/entities/course.model';
+import dayjs from 'dayjs/esm';
 
 export enum FeedbackItemType {
     Issue,
@@ -52,7 +53,6 @@ export class FeedbackItem {
     text?: string; // this is typically feedback.detailText
     positive?: boolean;
     credits?: number;
-    creditsApplied?: boolean;
     actualCredits?: number;
 }
 
@@ -68,8 +68,8 @@ export class ResultDetailComponent implements OnInit {
     readonly BuildLogType = BuildLogType;
     readonly AssessmentType = AssessmentType;
     readonly ExerciseType = ExerciseType;
-    readonly roundScoreSpecifiedByCourseSettings = roundValueSpecifiedByCourseSettings;
     readonly FeedbackItemType = FeedbackItemType;
+    readonly roundScoreSpecifiedByCourseSettings = roundValueSpecifiedByCourseSettings;
 
     @Input() exercise?: Exercise;
     @Input() result: Result;
@@ -90,6 +90,7 @@ export class ResultDetailComponent implements OnInit {
      * the result.
      */
     @Input() showMissingAutomaticFeedbackInformation = false;
+    @Input() latestIndividualDueDate?: dayjs.Dayjs;
 
     isLoading = false;
     loadingFailed = false;
@@ -288,7 +289,6 @@ export class ResultDetailComponent implements OnInit {
                 previewText: ResultDetailComponent.computeFeedbackPreviewText(feedback.detailText),
                 positive: feedback.positive,
                 credits: feedback.credits,
-                creditsApplied: feedback.creditsApplied,
             }));
         }
     }
@@ -331,7 +331,6 @@ export class ResultDetailComponent implements OnInit {
             previewText,
             positive: false,
             credits: feedback.credits,
-            creditsApplied: feedback.creditsApplied,
         };
     }
 
@@ -355,7 +354,6 @@ export class ResultDetailComponent implements OnInit {
             positive: false,
             credits: scaIssue.penalty ? -scaIssue.penalty : feedback.credits,
             actualCredits: feedback.credits,
-            creditsApplied: feedback.creditsApplied,
         };
     }
 
@@ -396,7 +394,6 @@ export class ResultDetailComponent implements OnInit {
             previewText,
             positive: feedback.positive,
             credits: feedback.credits,
-            creditsApplied: feedback.creditsApplied,
         };
     }
 
@@ -417,7 +414,6 @@ export class ResultDetailComponent implements OnInit {
             previewText,
             positive: feedback.positive,
             credits: feedback.credits,
-            creditsApplied: feedback.creditsApplied,
         };
     }
 
@@ -436,7 +432,6 @@ export class ResultDetailComponent implements OnInit {
             previewText,
             positive: feedback.positive,
             credits: feedback.credits,
-            creditsApplied: feedback.creditsApplied,
         };
     }
 
@@ -474,7 +469,7 @@ export class ResultDetailComponent implements OnInit {
             return [...feedbackList];
         } else {
             const positiveTestCasesWithoutDetailText = feedbackList.filter((feedbackItem) => {
-                return feedbackItem.type === FeedbackItemType.Test && feedbackItem.positive && feedbackItem.creditsApplied && !feedbackItem.text;
+                return feedbackItem.type === FeedbackItemType.Test && feedbackItem.positive && !feedbackItem.text;
             });
             if (positiveTestCasesWithoutDetailText.length > 0) {
                 return [
@@ -508,7 +503,7 @@ export class ResultDetailComponent implements OnInit {
             if (feedback.credits === 0) {
                 return 'alert-warning';
             } else {
-                return feedback.positive || (feedback.creditsApplied && feedback.credits && feedback.credits > 0) ? 'alert-success' : 'alert-danger';
+                return feedback.positive || (feedback.credits && feedback.credits > 0) ? 'alert-success' : 'alert-danger';
             }
         }
     }
@@ -524,7 +519,7 @@ export class ResultDetailComponent implements OnInit {
             return;
         }
 
-        const sumCredits = (sum: number, feedbackItem: FeedbackItem) => sum + (feedbackItem.creditsApplied ? feedbackItem.credits || 0 : 0);
+        const sumCredits = (sum: number, feedbackItem: FeedbackItem) => sum + (feedbackItem.credits || 0);
         const sumActualCredits = (sum: number, feedbackItem: FeedbackItem) => sum + (feedbackItem.actualCredits || 0);
 
         let testCaseCredits = feedbackList.filter((item) => item.type === FeedbackItemType.Test).reduce(sumCredits, 0);

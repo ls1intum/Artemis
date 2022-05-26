@@ -6,7 +6,7 @@
     <!-- Message, if defined -->
     <div *ngIf="messageKey" class="mb-3"><h6 [innerHTML]="messageKey | artemisTranslate"></h6></div>
     <div *ngIf="showMissingAutomaticFeedbackInformation" class="mb-3">
-        <h6 [innerHTML]="'artemisApp.result.afterDueDateFeedbackHidden' | artemisTranslate: { date: exercise!.latestIndividualDueDate }"></h6>
+        <h6 [innerHTML]="'artemisApp.result.afterDueDateFeedbackHidden' | artemisTranslate: { date: latestIndividualDueDate }"></h6>
     </div>
     <!-- Loading state -->
     <div *ngIf="isLoading; else feedbackContainer" class="text-muted d-flex justify-content-center" id="result-detail-spinner">
@@ -58,8 +58,7 @@
                 </div>
                 <div *ngFor="let feedback of filteredFeedbackList" [ngClass]="['feedback-item', 'alert', getClassNameForFeedbackItem(feedback)]" id="feedback-message">
                     <span>{{ feedback.category }}</span>
-                    <span id="feedback-points" class="feedback-points" *ngIf="feedback.credits" [ngStyle]="!feedback.creditsApplied ? { 'text-decoration': 'line-through' } : {}">
-                        <ng-container *ngIf="!feedback.creditsApplied"> 0P/ </ng-container>
+                    <span id="feedback-points" class="feedback-points" *ngIf="feedback.credits">
                         <ng-container *ngIf="feedback.actualCredits && feedback.actualCredits != feedback.credits">
                             {{ roundScoreSpecifiedByCourseSettings(feedback.actualCredits, course) }}P/
                         </ng-container>

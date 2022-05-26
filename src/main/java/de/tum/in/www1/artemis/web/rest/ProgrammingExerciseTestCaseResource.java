@@ -1,7 +1,9 @@
 package de.tum.in.www1.artemis.web.rest;
 
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -10,9 +12,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.ProgrammingExerciseTestCase;
-import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
-import de.tum.in.www1.artemis.repository.ProgrammingExerciseTestCaseRepository;
-import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseService;
@@ -20,7 +20,7 @@ import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseTestCaseSer
 import de.tum.in.www1.artemis.web.rest.dto.ProgrammingExerciseTestCaseDTO;
 
 /**
- * REST controller for managing ProgrammingExerciseTestCase. Test cases are created automatically from build run results which is why there are not endpoints available for POST,
+ * REST controller for managing ProgrammingExerciseTestCase. Test cases are created automatically from build run results which is why there are no endpoints available for POST,
  * PUT or DELETE.
  */
 @RestController
@@ -41,31 +41,47 @@ public class ProgrammingExerciseTestCaseResource {
 
     private final UserRepository userRepository;
 
+    private final ParticipationRepository participationRepository;
+
     public ProgrammingExerciseTestCaseResource(ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository,
             ProgrammingExerciseTestCaseService programmingExerciseTestCaseService, ProgrammingExerciseService programmingExerciseService,
-            ProgrammingExerciseRepository programmingExerciseRepository, AuthorizationCheckService authCheckService, UserRepository userRepository) {
+            ProgrammingExerciseRepository programmingExerciseRepository, AuthorizationCheckService authCheckService, UserRepository userRepository,
+            ParticipationRepository participationRepository) {
         this.programmingExerciseTestCaseRepository = programmingExerciseTestCaseRepository;
         this.programmingExerciseTestCaseService = programmingExerciseTestCaseService;
         this.programmingExerciseService = programmingExerciseService;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.authCheckService = authCheckService;
         this.userRepository = userRepository;
+        this.participationRepository = participationRepository;
     }
 
     /**
-     * Get the exercise's test cases for the the given exercise id.
+     * Get the exercise's test cases for the given exercise id.
+     * If the accessor is a student all invisible test cases are filtered and the hidden test cases
      *
-     * @param exerciseId of the the exercise.
+     * @param exerciseId of the exercise.
      * @return the found test cases or an empty list if no test cases were found.
      */
     @GetMapping(Endpoints.TEST_CASES)
-    @PreAuthorize("hasRole('TA')")
+    @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Set<ProgrammingExerciseTestCase>> getTestCases(@PathVariable Long exerciseId) {
         log.debug("REST request to get test cases for programming exercise {}", exerciseId);
         var programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exerciseId);
-        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, programmingExercise, null);
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.STUDENT, programmingExercise, null);
+
         Set<ProgrammingExerciseTestCase> testCases = programmingExerciseTestCaseRepository.findByExerciseId(exerciseId);
-        return ResponseEntity.ok(testCases);
+        if (authCheckService.isAtLeastTeachingAssistantForExercise(programmingExercise)) {
+            return ResponseEntity.ok(testCases);
+        }
+
+        ZonedDateTime latestDueDate = participationRepository.findLatestIndividualDueDate(exerciseId).orElse(programmingExercise.getDueDate());
+        if (latestDueDate == null || ZonedDateTime.now().isAfter(latestDueDate)) {
+            return ResponseEntity.ok(testCases.stream().filter(testCase -> !testCase.isInvisible()).collect(Collectors.toSet()));
+        }
+        else {
+            return ResponseEntity.ok(testCases.stream().filter(testCase -> !testCase.isInvisible() && !testCase.isAfterDueDate()).collect(Collectors.toSet()));
+        }
     }
 
     /**

@@ -261,7 +261,6 @@ export class ExerciseService {
             res.body.dueDate = res.body.dueDate ? dayjs(res.body.dueDate) : undefined;
             res.body.assessmentDueDate = res.body.assessmentDueDate ? dayjs(res.body.assessmentDueDate) : undefined;
             res.body.exampleSolutionPublicationDate = res.body.exampleSolutionPublicationDate ? dayjs(res.body.exampleSolutionPublicationDate) : undefined;
-            res.body.latestIndividualDueDate = res.body.latestIndividualDueDate ? dayjs(res.body.latestIndividualDueDate) : undefined;
             res.body.studentParticipations = ParticipationService.convertParticipationsDateFromServer(res.body.studentParticipations);
         }
         return res;
@@ -427,6 +426,12 @@ export class ExerciseService {
             this.accountService.setAccessRightsForExerciseAndReferencedCourse(res.body as Exercise);
         }
         return res;
+    }
+
+    public getLatestDueDate(exerciseId: number): Observable<dayjs.Dayjs | undefined> {
+        return this.http
+            .get<dayjs.Dayjs>(`${this.resourceUrl}/${exerciseId}/latest-due-date`, { observe: 'response' })
+            .pipe(map((res: HttpResponse<dayjs.Dayjs>) => (res.body ? dayjs(res.body) : undefined)));
     }
 }
 

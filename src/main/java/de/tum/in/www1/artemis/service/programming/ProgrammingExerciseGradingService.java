@@ -601,8 +601,7 @@ public class ProgrammingExerciseGradingService {
 
             // The score is always calculated from ALL (except visibility=never) test cases, regardless of the current date!
             final Set<ProgrammingExerciseTestCase> successfulTestCases = testCasesForCurrentDate.stream().filter(isSuccessful(result)).collect(Collectors.toSet());
-            final Set<ProgrammingExerciseTestCase> unsuccessfulTestCases = testCasesForCurrentDate.stream().filter(isSuccessful(result).negate()).collect(Collectors.toSet());
-            updateScore(result, testCases, successfulTestCases, unsuccessfulTestCases, staticCodeAnalysisFeedback, exercise, hasDuplicateTestCases, applySubmissionPolicy);
+            updateScore(result, testCases, successfulTestCases, staticCodeAnalysisFeedback, exercise, hasDuplicateTestCases, applySubmissionPolicy);
             updateResultString(result, testCasesForCurrentDate, successfulTestCases, staticCodeAnalysisFeedback, exercise, hasDuplicateTestCases, applySubmissionPolicy);
         }
         // Case 2: There are no test cases that are executed before the due date has passed. We need to do this to differentiate this case from a build error.
@@ -722,16 +721,21 @@ public class ProgrammingExerciseGradingService {
      * @param hasDuplicateTestCases      indicates duplicate test cases.
      */
     private void updateScore(final Result result, final Set<ProgrammingExerciseTestCase> allTestCases, final Set<ProgrammingExerciseTestCase> successfulTestCases,
-            final Set<ProgrammingExerciseTestCase> unsuccessfulTestCases, final List<Feedback> staticCodeAnalysisFeedback, final ProgrammingExercise programmingExercise,
-            boolean hasDuplicateTestCases, boolean applySubmissionPolicy) {
+            final List<Feedback> staticCodeAnalysisFeedback, final ProgrammingExercise programmingExercise, boolean hasDuplicateTestCases, boolean applySubmissionPolicy) {
         if (hasDuplicateTestCases) {
             result.setScore(0D);
             result.getFeedbacks().forEach(feedback -> feedback.setCredits(0D));
         }
         else {
-            double score = calculateScore(programmingExercise, allTestCases, result, successfulTestCases, unsuccessfulTestCases, staticCodeAnalysisFeedback, applySubmissionPolicy);
+            double score = calculateScore(programmingExercise, allTestCases, result, successfulTestCases, staticCodeAnalysisFeedback, applySubmissionPolicy);
             result.setScore(score);
         }
+
+        result.getFeedbacks().forEach(feedback -> {
+            if (feedback.getCredits() == null) {
+                feedback.setCredits(0D);
+            }
+        });
     }
 
     /**
@@ -745,15 +749,14 @@ public class ProgrammingExerciseGradingService {
      * @return the final total score that should be given to the result.
      */
     private double calculateScore(final ProgrammingExercise programmingExercise, final Set<ProgrammingExerciseTestCase> allTests, final Result result,
-            final Set<ProgrammingExerciseTestCase> successfulTestCases, final Set<ProgrammingExerciseTestCase> unsuccessfulTestCases,
-            final List<Feedback> staticCodeAnalysisFeedback, boolean applySubmissionPolicy) {
+            final Set<ProgrammingExerciseTestCase> successfulTestCases, final List<Feedback> staticCodeAnalysisFeedback, boolean applySubmissionPolicy) {
         if (allTests.isEmpty()) {
             return 0;
         }
 
         final double weightSum = allTests.stream().filter(testCase -> !testCase.isInvisible()).mapToDouble(ProgrammingExerciseTestCase::getWeight).sum();
 
-        double successfulTestPoints = calculateSuccessfulTestPoints(programmingExercise, result, successfulTestCases, unsuccessfulTestCases, allTests.size(), weightSum);
+        double successfulTestPoints = calculateSuccessfulTestPoints(programmingExercise, result, successfulTestCases, allTests.size(), weightSum);
         successfulTestPoints -= calculateTotalPenalty(programmingExercise, result.getParticipation(), staticCodeAnalysisFeedback, applySubmissionPolicy);
 
         if (successfulTestPoints < 0) {
@@ -782,17 +785,12 @@ public class ProgrammingExerciseGradingService {
      * @return the total score for this result without penalty deductions.
      */
     private double calculateSuccessfulTestPoints(final ProgrammingExercise programmingExercise, final Result result, final Set<ProgrammingExerciseTestCase> successfulTestCases,
-            final Set<ProgrammingExerciseTestCase> unsuccessfulTestCases, int totalTestCaseCount, double weightSum) {
+            int totalTestCaseCount, double weightSum) {
         double successfulTestPoints = successfulTestCases.stream().mapToDouble(test -> {
             double credits = calculatePointsForTestCase(result, programmingExercise, test, totalTestCaseCount, weightSum);
-            setCreditsForTestCaseFeedback(result, test, credits, true);
+            setCreditsForTestCaseFeedback(result, test, credits);
             return credits;
         }).sum();
-
-        unsuccessfulTestCases.forEach(test -> {
-            double credits = calculatePointsForTestCase(result, programmingExercise, test, totalTestCaseCount, weightSum);
-            setCreditsForTestCaseFeedback(result, test, credits, false);
-        });
 
         return capPointsAtMaximum(programmingExercise, successfulTestPoints);
     }
@@ -828,14 +826,12 @@ public class ProgrammingExerciseGradingService {
      * @param result which should be updated.
      * @param testCase the feedback that should be updated corresponds to.
      * @param credits that should be set in the feedback.
-     * @param successful determines if the credits are granted
      */
-    private void setCreditsForTestCaseFeedback(final Result result, final ProgrammingExerciseTestCase testCase, double credits, boolean successful) {
+    private void setCreditsForTestCaseFeedback(final Result result, final ProgrammingExerciseTestCase testCase, double credits) {
         // We need to compare testcases ignoring the case, because the testcaseRepository is case-insensitive
         result.getFeedbacks().stream().filter(fb -> FeedbackType.AUTOMATIC.equals(fb.getType()) && fb.getText().equalsIgnoreCase(testCase.getTestName())).findFirst()
                 .ifPresent(feedback -> {
                     feedback.setCredits(credits);
-                    feedback.setCreditsApplied(successful);
                 });
     }
 

@@ -69,10 +69,13 @@ public class ExerciseResource {
 
     private final QuizBatchService quizBatchService;
 
+    private final ParticipationRepository participationRepository;
+
     public ExerciseResource(ExerciseService exerciseService, ExerciseDeletionService exerciseDeletionService, ParticipationService participationService,
             UserRepository userRepository, ExamDateService examDateService, AuthorizationCheckService authCheckService, TutorParticipationService tutorParticipationService,
             ExampleSubmissionRepository exampleSubmissionRepository, ProgrammingExerciseRepository programmingExerciseRepository,
-            GradingCriterionRepository gradingCriterionRepository, ExerciseRepository exerciseRepository, QuizBatchService quizBatchService) {
+            GradingCriterionRepository gradingCriterionRepository, ExerciseRepository exerciseRepository, QuizBatchService quizBatchService,
+            ParticipationRepository participationRepository) {
         this.exerciseService = exerciseService;
         this.exerciseDeletionService = exerciseDeletionService;
         this.participationService = participationService;
@@ -85,6 +88,7 @@ public class ExerciseResource {
         this.exerciseRepository = exerciseRepository;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.quizBatchService = quizBatchService;
+        this.participationRepository = participationRepository;
     }
 
     /**
@@ -309,10 +313,10 @@ public class ExerciseResource {
     }
 
     /**
-     * GET /exercises/:exerciseId/toggle-second-correction
+     * PUT /exercises/:exerciseId/toggle-second-correction
      *
-     * @param exerciseId the exerciseId of the exercise to get the repos from
-     * @return the ResponseEntity with status 200 (OK) and with body the exercise, or with status 404 (Not Found)
+     * @param exerciseId the exerciseId of the exercise to toggle the second correction
+     * @return the ResponseEntity with status 200 (OK) and new state of the correction toggle state
      */
     @PutMapping(value = "/exercises/{exerciseId}/toggle-second-correction")
     @PreAuthorize("hasRole('INSTRUCTOR')")
@@ -323,4 +327,18 @@ public class ExerciseResource {
         return ResponseEntity.ok(exerciseRepository.toggleSecondCorrection(exercise));
     }
 
+    /**
+     * GET /exercises/{exerciseId}/latest-due-date
+     *
+     * @param exerciseId the exerciseId of the exercise to get the repos from
+     * @return the ResponseEntity with status 200 (OK) and the latest due date
+     */
+    @GetMapping(value = "/exercises/{exerciseId}/latest-due-date")
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<ZonedDateTime> getLatestDueDate(@PathVariable Long exerciseId) {
+        log.debug("getLatestDueDate for exercise with id: {}", exerciseId);
+        Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.STUDENT, exercise, null);
+        return ResponseEntity.ok(participationRepository.findLatestIndividualDueDate(exerciseId).orElse(exercise.getDueDate()));
+    }
 }

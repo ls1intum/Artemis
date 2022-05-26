@@ -23,6 +23,7 @@ import { getExerciseDueDate, hasExerciseDueDatePassed } from 'app/exercises/shar
 import { faCircleNotch, faExclamationCircle, faFile } from '@fortawesome/free-solid-svg-icons';
 import { faCheckCircle, faCircle, faQuestionCircle, faTimesCircle } from '@fortawesome/free-regular-svg-icons';
 import { isModelingOrTextOrFileUpload, isParticipationInDueTime, isProgrammingOrQuiz } from 'app/exercises/shared/participation/participation.utils';
+import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 
 /**
  * Enumeration object representing the possible options that
@@ -115,6 +116,8 @@ export class ResultComponent implements OnInit, OnChanges {
 
     resultTooltip: string;
 
+    latestIndividualDueDate?: dayjs.Dayjs;
+
     // Icons
     faCircleNotch = faCircleNotch;
     faFile = faFile;
@@ -127,6 +130,7 @@ export class ResultComponent implements OnInit, OnChanges {
         private translate: TranslateService,
         private http: HttpClient,
         private modalService: NgbModal,
+        private exerciseService: ExerciseService,
     ) {}
 
     /**
@@ -368,11 +372,24 @@ export class ResultComponent implements OnInit, OnChanges {
         // The information should only be shown in case it is after the due date
         // and some automatic test case feedbacks are possibly hidden due to
         // other students still working on the exercise.
-        componentInstance.showMissingAutomaticFeedbackInformation =
+        if (
             this.result?.assessmentType === AssessmentType.AUTOMATIC &&
             this.exercise?.type === ExerciseType.PROGRAMMING &&
-            hasExerciseDueDatePassed(this.exercise, this.participation) &&
-            dayjs().isBefore(this.exercise.latestIndividualDueDate);
+            hasExerciseDueDatePassed(this.exercise, this.participation)
+        ) {
+            if (!this.latestIndividualDueDate) {
+                this.exerciseService.getLatestDueDate(this.exercise.id!).subscribe((res?: dayjs.Dayjs) => {
+                    this.latestIndividualDueDate = res;
+                    componentInstance.showMissingAutomaticFeedbackInformation = dayjs().isBefore(this.latestIndividualDueDate);
+                    componentInstance.latestIndividualDueDate = this.latestIndividualDueDate;
+                });
+            } else {
+                componentInstance.showMissingAutomaticFeedbackInformation = dayjs().isBefore(this.latestIndividualDueDate);
+                componentInstance.latestIndividualDueDate = this.latestIndividualDueDate;
+            }
+        } else {
+            componentInstance.showMissingAutomaticFeedbackInformation = false;
+        }
     }
 
     /**

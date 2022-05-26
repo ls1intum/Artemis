@@ -609,27 +609,6 @@ public class ParticipationService {
     }
 
     /**
-     * Updates the saved latest individual due date in the exercise
-     * @param exercise the exercise for which the latest due date should be updated
-     * @param changedParticipations the list of changed participations with a changed individual due date
-     */
-    public void updateLatestIndividualDueDate(Exercise exercise, List<StudentParticipation> changedParticipations) {
-        Optional<ZonedDateTime> latestIndividualDueDate = changedParticipations.stream().map(Participation::getIndividualDueDate).filter(Objects::nonNull)
-                .max(Comparator.naturalOrder());
-        if (latestIndividualDueDate.isPresent()
-                && (exercise.getLatestIndividualDueDate() == null || latestIndividualDueDate.get().isAfter(exercise.getLatestIndividualDueDate()))) {
-            exercise.setLatestIndividualDueDate(latestIndividualDueDate.get());
-            exerciseRepository.save(exercise);
-        }
-        else if (exercise.getLatestIndividualDueDate() != null
-                && (latestIndividualDueDate.isEmpty() || latestIndividualDueDate.get().isBefore(exercise.getLatestIndividualDueDate()))) {
-            latestIndividualDueDate = participationRepository.findLatestIndividualDueDate(exercise.getId());
-            exercise.setLatestIndividualDueDate(latestIndividualDueDate.orElse(null));
-            exerciseRepository.save(exercise);
-        }
-    }
-
-    /**
      * Delete the participation by participationId.
      *
      * @param participationId  the participationId of the entity

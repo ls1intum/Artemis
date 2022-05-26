@@ -213,11 +213,11 @@ public abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpri
         // Create feedback with duplicate content for test1 and test3
         // This mimics that two new testcases are going to be found as testcases but those are duplicate
         List<Feedback> feedbacks = new ArrayList<>();
-        feedbacks.add(new Feedback().text("test1").positive(true).creditsApplied(true).type(FeedbackType.AUTOMATIC));
-        feedbacks.add(new Feedback().text("test1").positive(true).creditsApplied(true).type(FeedbackType.AUTOMATIC));
-        feedbacks.add(new Feedback().text("test2").positive(false).creditsApplied(false).type(FeedbackType.AUTOMATIC));
-        feedbacks.add(new Feedback().text("test3").positive(false).creditsApplied(false).type(FeedbackType.AUTOMATIC));
-        feedbacks.add(new Feedback().text("test3").positive(false).creditsApplied(false).type(FeedbackType.AUTOMATIC));
+        feedbacks.add(new Feedback().text("test1").positive(true).type(FeedbackType.AUTOMATIC));
+        feedbacks.add(new Feedback().text("test1").positive(true).type(FeedbackType.AUTOMATIC));
+        feedbacks.add(new Feedback().text("test2").positive(false).type(FeedbackType.AUTOMATIC));
+        feedbacks.add(new Feedback().text("test3").positive(false).type(FeedbackType.AUTOMATIC));
+        feedbacks.add(new Feedback().text("test3").positive(false).type(FeedbackType.AUTOMATIC));
         result.feedbacks(feedbacks);
         result.rated(true).hasFeedback(true).successful(false).completionDate(ZonedDateTime.now()).assessmentType(AssessmentType.AUTOMATIC);
         int originalFeedbackSize = result.getFeedbacks().size();
@@ -239,10 +239,10 @@ public abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpri
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void shouldRecalculateScoreBasedOnTestCasesWeightAutomatic() {
         List<Feedback> feedbacks = new ArrayList<>();
-        feedbacks.add(new Feedback().text("test1").positive(true).creditsApplied(true).type(FeedbackType.AUTOMATIC));
-        feedbacks.add(new Feedback().text("test2").positive(true).creditsApplied(true).type(FeedbackType.AUTOMATIC));
-        feedbacks.add(new Feedback().text("test3").positive(false).creditsApplied(false).type(FeedbackType.AUTOMATIC));
-        feedbacks.add(new Feedback().text("test4").positive(false).creditsApplied(false).type(FeedbackType.AUTOMATIC));
+        feedbacks.add(new Feedback().text("test1").positive(true).type(FeedbackType.AUTOMATIC));
+        feedbacks.add(new Feedback().text("test2").positive(true).type(FeedbackType.AUTOMATIC));
+        feedbacks.add(new Feedback().text("test3").positive(false).type(FeedbackType.AUTOMATIC));
+        feedbacks.add(new Feedback().text("test4").positive(false).type(FeedbackType.AUTOMATIC));
         result.setFeedbacks(feedbacks);
         result.setSuccessful(false);
         result.setAssessmentType(AssessmentType.AUTOMATIC);
@@ -259,46 +259,14 @@ public abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpri
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void shouldSetCreditsAndAppliedCredits() {
-        List<Feedback> feedbacks = new ArrayList<>();
-        feedbacks.add(new Feedback().text("test1").positive(true).creditsApplied(true).type(FeedbackType.AUTOMATIC));
-        feedbacks.add(new Feedback().text("test2").positive(true).creditsApplied(true).type(FeedbackType.AUTOMATIC));
-        feedbacks.add(new Feedback().text("test3").positive(false).creditsApplied(false).type(FeedbackType.AUTOMATIC));
-        result.setFeedbacks(feedbacks);
-        result.setSuccessful(false);
-        result.setAssessmentType(AssessmentType.AUTOMATIC);
-
-        var testCases = testCaseService.findByExerciseId(programmingExercise.getId()).stream()
-                .collect(Collectors.toMap(ProgrammingExerciseTestCase::getTestName, Function.identity()));
-        testCases.get("test1").active(true).visibility(Visibility.ALWAYS);
-        testCases.get("test2").active(true).visibility(Visibility.ALWAYS);
-        testCases.get("test3").active(true).visibility(Visibility.ALWAYS);
-        testCaseRepository.saveAll(testCases.values());
-
-        gradingService.calculateScoreForResult(result, programmingExercise, true);
-
-        assertThat(feedbacks.get(0).getCredits()).isEqualTo(7);
-        assertThat(feedbacks.get(1).getCredits()).isEqualTo(14);
-        assertThat(feedbacks.get(2).getCredits()).isEqualTo(21);
-
-        assertThat(feedbacks.get(0).getAppliedCredits()).isEqualTo(7);
-        assertThat(feedbacks.get(1).getAppliedCredits()).isEqualTo(14);
-        assertThat(feedbacks.get(2).getAppliedCredits()).isEqualTo(0);
-
-        // 7+14 of possible 42 -> 50%
-        assertThat(result.getScore()).isEqualTo(50);
-    }
-
-    @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void shouldRecalculateScoreBasedOnTestCasesWeightManual() {
         List<Feedback> feedbacks = new ArrayList<>();
         // we deliberately don't set the credits here, null must work as well
-        feedbacks.add(new Feedback().text("test1").positive(true).creditsApplied(true).type(FeedbackType.AUTOMATIC));
-        feedbacks.add(new Feedback().text("test2").positive(true).creditsApplied(true).type(FeedbackType.AUTOMATIC));
-        feedbacks.add(new Feedback().text("test3").positive(false).creditsApplied(false).type(FeedbackType.AUTOMATIC));
-        feedbacks.add(new Feedback().text("test4").positive(false).creditsApplied(false).type(FeedbackType.AUTOMATIC));
-        feedbacks.add(new Feedback().text("manual").positive(false).creditsApplied(true).type(FeedbackType.MANUAL_UNREFERENCED));
+        feedbacks.add(new Feedback().text("test1").positive(true).type(FeedbackType.AUTOMATIC));
+        feedbacks.add(new Feedback().text("test2").positive(true).type(FeedbackType.AUTOMATIC));
+        feedbacks.add(new Feedback().text("test3").positive(false).type(FeedbackType.AUTOMATIC));
+        feedbacks.add(new Feedback().text("test4").positive(false).type(FeedbackType.AUTOMATIC));
+        feedbacks.add(new Feedback().text("manual").positive(false).type(FeedbackType.MANUAL_UNREFERENCED));
         result.feedbacks(feedbacks);
         result.successful(false);
         result.rated(true);
@@ -328,8 +296,8 @@ public abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpri
         testCaseRepository.saveAll(testCases.values());
 
         Result result = new Result();
-        result.addFeedback(new Feedback().result(result).text("test1").positive(false).creditsApplied(false).type(FeedbackType.AUTOMATIC));
-        result.addFeedback(new Feedback().result(result).text("test2").positive(true).creditsApplied(true).type(FeedbackType.AUTOMATIC));
+        result.addFeedback(new Feedback().result(result).text("test1").positive(false).type(FeedbackType.AUTOMATIC));
+        result.addFeedback(new Feedback().result(result).text("test2").positive(true).type(FeedbackType.AUTOMATIC));
         result.rated(true).hasFeedback(true).successful(false).completionDate(ZonedDateTime.now()).assessmentType(AssessmentType.AUTOMATIC);
 
         result = gradingService.calculateScoreForResult(result, programmingExercise, false);
@@ -388,7 +356,7 @@ public abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpri
         // Missing feedback
         var resultMF = new Result();
         resultMF.setParticipation(participation);
-        var feedbackMF = new Feedback().result(result).text("test3").positive(true).creditsApplied(true).type(FeedbackType.AUTOMATIC).result(resultMF);
+        var feedbackMF = new Feedback().result(result).text("test3").positive(true).type(FeedbackType.AUTOMATIC).result(resultMF);
         resultMF.feedbacks(new ArrayList<>(List.of(feedbackMF))) // List must be mutable
                 .rated(true).score(0D).hasFeedback(true).completionDate(ZonedDateTime.now()).assessmentType(AssessmentType.AUTOMATIC);
         gradingService.calculateScoreForResult(resultMF, programmingExercise, true);
@@ -519,9 +487,9 @@ public abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpri
         programmingExercise = changeRelevantExerciseEndDate(programmingExercise, ZonedDateTime.now().plusHours(10));
 
         List<Feedback> feedbacks = new ArrayList<>();
-        feedbacks.add(new Feedback().text("test1").positive(true).creditsApplied(true).type(FeedbackType.AUTOMATIC));
-        feedbacks.add(new Feedback().text("test2").positive(true).creditsApplied(true).type(FeedbackType.AUTOMATIC));
-        feedbacks.add(new Feedback().text("test3").positive(false).creditsApplied(false).type(FeedbackType.AUTOMATIC));
+        feedbacks.add(new Feedback().text("test1").positive(true).type(FeedbackType.AUTOMATIC));
+        feedbacks.add(new Feedback().text("test2").positive(true).type(FeedbackType.AUTOMATIC));
+        feedbacks.add(new Feedback().text("test3").positive(false).type(FeedbackType.AUTOMATIC));
         result.feedbacks(feedbacks);
         result.successful(false);
         result.assessmentType(AssessmentType.AUTOMATIC);
@@ -547,9 +515,9 @@ public abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpri
         programmingExercise = changeRelevantExerciseEndDate(programmingExercise, ZonedDateTime.now().plusHours(10));
 
         List<Feedback> feedbacks = new ArrayList<>();
-        feedbacks.add(new Feedback().text("test1").positive(true).creditsApplied(true).type(FeedbackType.AUTOMATIC));
-        feedbacks.add(new Feedback().text("test2").positive(true).creditsApplied(true).type(FeedbackType.AUTOMATIC));
-        feedbacks.add(new Feedback().text("test3").positive(false).creditsApplied(false).type(FeedbackType.AUTOMATIC));
+        feedbacks.add(new Feedback().text("test1").positive(true).type(FeedbackType.AUTOMATIC));
+        feedbacks.add(new Feedback().text("test2").positive(true).type(FeedbackType.AUTOMATIC));
+        feedbacks.add(new Feedback().text("test3").positive(false).type(FeedbackType.AUTOMATIC));
         result.feedbacks(feedbacks);
         result.successful(false);
         result.assessmentType(AssessmentType.AUTOMATIC);
@@ -576,9 +544,9 @@ public abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpri
         result.getParticipation().setExercise(programmingExercise);
 
         List<Feedback> feedbacks = new ArrayList<>();
-        feedbacks.add(new Feedback().text("test1").positive(true).creditsApplied(true).type(FeedbackType.AUTOMATIC));
-        feedbacks.add(new Feedback().text("test2").positive(true).creditsApplied(true).type(FeedbackType.AUTOMATIC));
-        feedbacks.add(new Feedback().text("test3").positive(false).creditsApplied(false).type(FeedbackType.AUTOMATIC));
+        feedbacks.add(new Feedback().text("test1").positive(true).type(FeedbackType.AUTOMATIC));
+        feedbacks.add(new Feedback().text("test2").positive(true).type(FeedbackType.AUTOMATIC));
+        feedbacks.add(new Feedback().text("test3").positive(false).type(FeedbackType.AUTOMATIC));
         result.feedbacks(feedbacks);
         result.successful(false);
         result.assessmentType(AssessmentType.AUTOMATIC);
@@ -863,11 +831,11 @@ public abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpri
     }
 
     private Result updateAndSaveAutomaticResult(Result result, boolean test1Passes, boolean test2Passes, boolean test3Passes) {
-        var feedback1 = new Feedback().result(result).text("test1").positive(test1Passes).creditsApplied(test1Passes).type(FeedbackType.AUTOMATIC);
+        var feedback1 = new Feedback().result(result).text("test1").positive(test1Passes).type(FeedbackType.AUTOMATIC);
         result.addFeedback(feedback1);
-        var feedback2 = new Feedback().result(result).text("test2").positive(test2Passes).creditsApplied(test2Passes).type(FeedbackType.AUTOMATIC);
+        var feedback2 = new Feedback().result(result).text("test2").positive(test2Passes).type(FeedbackType.AUTOMATIC);
         result.addFeedback(feedback2);
-        var feedback3 = new Feedback().result(result).text("test3").positive(test3Passes).creditsApplied(test3Passes).type(FeedbackType.AUTOMATIC);
+        var feedback3 = new Feedback().result(result).text("test3").positive(test3Passes).type(FeedbackType.AUTOMATIC);
         result.addFeedback(feedback3);
         result.rated(true) //
                 .hasFeedback(true) //
@@ -919,9 +887,9 @@ public abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpri
             // score 61 %
             var result2b = new Result().participation(participation2).score(61D).successful(false).rated(true).hasFeedback(true).completionDate(ZonedDateTime.now())
                     .assessmentType(AssessmentType.SEMI_AUTOMATIC);
-            result2b.addFeedback(new Feedback().result(result2b).text("test1").positive(false).creditsApplied(false).type(FeedbackType.AUTOMATIC).credits(0.00));
-            result2b.addFeedback(new Feedback().result(result2b).text("test2").positive(false).creditsApplied(false).type(FeedbackType.AUTOMATIC).credits(0.00));
-            result2b.addFeedback(new Feedback().result(result2b).text("test3").positive(true).creditsApplied(true).type(FeedbackType.AUTOMATIC).credits(0.00));
+            result2b.addFeedback(new Feedback().result(result2b).text("test1").positive(false).type(FeedbackType.AUTOMATIC).credits(0.00));
+            result2b.addFeedback(new Feedback().result(result2b).text("test2").positive(false).type(FeedbackType.AUTOMATIC).credits(0.00));
+            result2b.addFeedback(new Feedback().result(result2b).text("test3").positive(true).type(FeedbackType.AUTOMATIC).credits(0.00));
             result2b.addFeedback(new Feedback().result(result2b).detailText("Well done referenced!").credits(1.00).type(FeedbackType.MANUAL));
             result2b.addFeedback(new Feedback().result(result2b).detailText("Well done unreferenced!").credits(10.00).type(FeedbackType.MANUAL_UNREFERENCED));
             result2b.addFeedback(new Feedback().result(result2b).detailText("Well done general!").credits(0.00));
@@ -975,7 +943,7 @@ public abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpri
         var participation1 = database.addStudentParticipationForProgrammingExercise(programmingExerciseSCAEnabled, "student1");
         var result1 = new Result().participation(participation1).resultString("x of y passed").successful(false).rated(true).score(100D);
         // Add some positive test case feedback otherwise the service method won't execute
-        result1.addFeedback(new Feedback().result(result1).text("test1").positive(true).creditsApplied(true).type(FeedbackType.AUTOMATIC));
+        result1.addFeedback(new Feedback().result(result1).text("test1").positive(true).type(FeedbackType.AUTOMATIC));
         // Add feedback which belongs to INACTIVE category
         var feedback1 = new Feedback().result(result1).text(Feedback.STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER).reference("CHECKSTYLE")
                 .detailText("{\"category\": \"miscellaneous\"}").type(FeedbackType.AUTOMATIC);

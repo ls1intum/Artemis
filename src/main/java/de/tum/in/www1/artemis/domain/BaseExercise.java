@@ -54,10 +54,6 @@ public abstract class BaseExercise extends DomainObject {
     @Column(name = "example_solution_publication_date")
     private ZonedDateTime exampleSolutionPublicationDate;
 
-    @Nullable
-    @Column(name = "latest_individual_due_date")
-    private ZonedDateTime latestIndividualDueDate;
-
     @Enumerated(EnumType.STRING)
     @Column(name = "difficulty")
     @JsonView(QuizView.Before.class)
@@ -174,15 +170,6 @@ public abstract class BaseExercise extends DomainObject {
 
     public void setExampleSolutionPublicationDate(@Nullable ZonedDateTime exampleSolutionPublicationDate) {
         this.exampleSolutionPublicationDate = exampleSolutionPublicationDate;
-    }
-
-    @Nullable
-    public ZonedDateTime getLatestIndividualDueDate() {
-        return latestIndividualDueDate;
-    }
-
-    public void setLatestIndividualDueDate(@Nullable ZonedDateTime latestIndividualDueDate) {
-        this.latestIndividualDueDate = latestIndividualDueDate;
     }
 
     /**
