@@ -57,7 +57,7 @@ export class ExamPointsSummaryComponent implements OnInit {
      * Calculate the student's exam grade if a grading scale exists for the exam
      */
     setExamGrade() {
-        if (this.studentExamWithGrade?.studentResult != undefined) {
+        if (this.studentExamWithGrade?.studentResult?.overallGrade != undefined) {
             this.gradingScaleExists = true;
             this.grade = this.studentExamWithGrade.studentResult.overallGrade;
             this.isBonus = this.studentExamWithGrade.gradeType === GradeType.BONUS;
@@ -95,6 +95,7 @@ export class ExamPointsSummaryComponent implements OnInit {
         return false;
     }
 
+    // TODO: Ata: Remove
     // private static hasResultScore(exercise: Exercise): boolean {
     //     return !!(exercise && exercise.maxPoints && exercise.studentParticipations?.[0]?.results?.[0]?.score != undefined);
     // }
