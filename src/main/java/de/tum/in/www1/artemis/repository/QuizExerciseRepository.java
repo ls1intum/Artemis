@@ -53,6 +53,9 @@ public interface QuizExerciseRepository extends JpaRepository<QuizExercise, Long
     @EntityGraph(type = LOAD, attributePaths = { "quizQuestions" })
     Optional<QuizExercise> findWithEagerQuestionsById(Long quizExerciseId);
 
+    @EntityGraph(type = LOAD, attributePaths = { "quizBatches" })
+    Optional<QuizExercise> findWithEagerBatchesById(Long quizExerciseId);
+
     @NotNull
     default QuizExercise findByIdElseThrow(Long quizExerciseId) throws EntityNotFoundException {
         return findById(quizExerciseId).orElseThrow(() -> new EntityNotFoundException("Quiz Exercise", quizExerciseId));
@@ -78,6 +81,17 @@ public interface QuizExerciseRepository extends JpaRepository<QuizExercise, Long
     @NotNull
     default QuizExercise findByIdWithQuestionsElseThrow(Long quizExerciseId) {
         return findWithEagerQuestionsById(quizExerciseId).orElseThrow(() -> new EntityNotFoundException("Quiz Exercise", quizExerciseId));
+    }
+
+    /**
+     * Get one quiz exercise by id and eagerly load batches
+     *
+     * @param quizExerciseId the id of the entity
+     * @return the entity
+     */
+    @NotNull
+    default QuizExercise findByIdWithBatchesElseThrow(Long quizExerciseId) {
+        return findWithEagerBatchesById(quizExerciseId).orElseThrow(() -> new EntityNotFoundException("Quiz Exercise", quizExerciseId));
     }
 
     /**
