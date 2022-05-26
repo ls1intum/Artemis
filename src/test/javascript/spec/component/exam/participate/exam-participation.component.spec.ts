@@ -46,6 +46,7 @@ import { MockWebsocketService } from '../../../helpers/mocks/service/mock-websoc
 import { MockLocalStorageService } from '../../../helpers/mocks/service/mock-local-storage.service';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { LocalStorageService } from 'ngx-webstorage';
+import { StudentExamWithGradeDTO } from 'app/exam/exam-scores/exam-score-dtos.model';
 
 describe('ExamParticipationComponent', () => {
     let fixture: ComponentFixture<ExamParticipationComponent>;
@@ -189,7 +190,9 @@ describe('ExamParticipationComponent', () => {
         const studentExamWithExercises = new StudentExam();
         TestBed.inject(ActivatedRoute).params = of({ courseId: '1', examId: '2' });
         const loadStudentExamSpy = jest.spyOn(examParticipationService, 'loadStudentExam').mockReturnValue(of(studentExam));
-        const loadStudentExamWithExercisesForSummary = jest.spyOn(examParticipationService, 'loadStudentExamWithExercisesForSummary').mockReturnValue(of(studentExamWithExercises));
+        const loadStudentExamWithExercisesForSummary = jest
+            .spyOn(examParticipationService, 'loadStudentExamWithExercisesForSummary')
+            .mockReturnValue(of({ studentExam: studentExamWithExercises } as StudentExamWithGradeDTO));
         comp.ngOnInit();
         expect(loadStudentExamSpy).toHaveBeenCalled();
         expect(comp.studentExam).toEqual(studentExam);
