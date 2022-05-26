@@ -164,6 +164,7 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
         bitbucketRequestMockProvider.mockFetchCommitInfo(projectKey, slug, hash);
         ProgrammingExercise programmingExercise = (ProgrammingExercise) participationRepository.findById(participationId).orElseThrow().getExercise();
         bitbucketRequestMockProvider.mockGetDefaultBranch(defaultBranch, programmingExercise.getProjectKey());
+        doReturn(defaultBranch).when(versionControlService).getOrRetrieveBranchOfExercise(programmingExercise);
         bitbucketRequestMockProvider.mockGetPushDate(programmingExercise.getProjectKey(), hash, ZonedDateTime.now());
         bitbucketRequestMockProvider.mockPutDefaultBranch(programmingExercise.getProjectKey());
         return testService.postSubmission(participationId, HttpStatus.OK, requestAsArtemisUser);
@@ -210,6 +211,7 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
         database.addCourseWithOneProgrammingExerciseAndSpecificTestCases();
         ProgrammingExercise exercise = programmingExerciseRepository.findAllWithEagerParticipationsAndLegalSubmissions().get(1);
         bitbucketRequestMockProvider.mockGetDefaultBranch(defaultBranch, exercise.getProjectKey());
+        doReturn(defaultBranch).when(versionControlService).getOrRetrieveBranchOfExercise(exercise);
         bitbucketRequestMockProvider.mockGetPushDate(exercise.getProjectKey(), "9b3a9bd71a0d80e5bbc42204c319ed3d1d4f0d6d", ZonedDateTime.now());
         bitbucketRequestMockProvider.mockPutDefaultBranch(exercise.getProjectKey());
         var participation = database.addStudentParticipationForProgrammingExercise(exercise, "student3");
@@ -253,6 +255,7 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
     @WithMockUser(username = "student1", roles = "USER")
     void shouldHandleNewBuildResultCreatedByCommit(IntegrationTestParticipationType participationType, boolean additionalCommit) throws Exception {
         bitbucketRequestMockProvider.mockGetDefaultBranch(defaultBranch, exercise.getProjectKey());
+        doReturn(defaultBranch).when(versionControlService).getOrRetrieveBranchOfExercise(exercise);
         bitbucketRequestMockProvider.mockGetPushDate(exercise.getProjectKey(), "9b3a9bd71a0d80e5bbc42204c319ed3d1d4f0d6d", ZonedDateTime.now());
         bitbucketRequestMockProvider.mockDefaultBranch(defaultBranch, exercise.getProjectKey());
 
@@ -297,6 +300,7 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
     @WithMockUser(username = "student1", roles = "USER")
     void shouldNotLinkTwoResultsToTheSameSubmission(IntegrationTestParticipationType participationType) throws Exception {
         bitbucketRequestMockProvider.mockGetDefaultBranch(defaultBranch, exercise.getProjectKey());
+        doReturn(defaultBranch).when(versionControlService).getOrRetrieveBranchOfExercise(exercise);
         bitbucketRequestMockProvider.mockGetPushDate(exercise.getProjectKey(), "9b3a9bd71a0d80e5bbc42204c319ed3d1d4f0d6d", ZonedDateTime.now());
         bitbucketRequestMockProvider.mockDefaultBranch(defaultBranch, exercise.getProjectKey());
 
@@ -341,7 +345,7 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
     void shouldNotCreateTwoSubmissionsForTwoIdenticalCommits(IntegrationTestParticipationType participationType) throws Exception {
         bitbucketRequestMockProvider.mockGetDefaultBranch(defaultBranch, exercise.getProjectKey());
         bitbucketRequestMockProvider.mockGetPushDate(exercise.getProjectKey(), "9b3a9bd71a0d80e5bbc42204c319ed3d1d4f0d6d", ZonedDateTime.now());
-        bitbucketRequestMockProvider.mockDefaultBranch(defaultBranch, exercise.getProjectKey());
+        doReturn(defaultBranch).when(versionControlService).getOrRetrieveBranchOfExercise(exercise);
 
         Long participationId = getParticipationIdByType(participationType, 0);
         // Post the same submission twice.
@@ -568,6 +572,7 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
         var firstCommitDate = secondCommitDate.minusSeconds(30);
 
         bitbucketRequestMockProvider.mockGetDefaultBranch(defaultBranch, testService.programmingExercise.getProjectKey());
+        doReturn(defaultBranch).when(versionControlService).getOrRetrieveBranchOfExercise(testService.programmingExercise);
         bitbucketRequestMockProvider.mockGetPushDate(testService.programmingExercise.getProjectKey(), firstCommitHash, firstCommitDate);
 
         // First commit is pushed but not recorded
@@ -698,6 +703,7 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
         final String hash = "9b3a9bd71a0d80e5bbc42204c319ed3d1d4f0d6d";
         bitbucketRequestMockProvider.mockFetchCommitInfo(projectKey, slug, hash);
         bitbucketRequestMockProvider.mockGetDefaultBranch(defaultBranch, programmingExercise.getProjectKey());
+        doReturn(defaultBranch).when(versionControlService).getOrRetrieveBranchOfExercise(programmingExercise);
         bitbucketRequestMockProvider.mockGetPushDate(programmingExercise.getProjectKey(), "9b3a9bd71a0d80e5bbc42204c319ed3d1d4f0d6d", ZonedDateTime.now());
         bitbucketRequestMockProvider.mockDefaultBranch(defaultBranch, programmingExercise.getProjectKey());
         ProgrammingSubmission submission = mockCommitInfoAndPostSubmission(participation.getId());

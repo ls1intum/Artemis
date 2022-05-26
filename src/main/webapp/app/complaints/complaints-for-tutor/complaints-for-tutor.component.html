@@ -37,14 +37,14 @@
                     }}
                 </span>
                 <small *ngIf="handled">
-                    <span *ngIf="complaint?.accepted" class="text-light bg-success small">
+                    <span *ngIf="complaint?.accepted" class="badge bg-success">
                         &nbsp;{{
                             complaint.complaintType === ComplaintType.MORE_FEEDBACK
                                 ? ('artemisApp.moreFeedback.accepted' | artemisTranslate)
                                 : ('artemisApp.complaint.accepted' | artemisTranslate)
                         }}&nbsp;
                     </span>
-                    <span *ngIf="!complaint?.accepted" class="text-light bg-danger small"> &nbsp;{{ 'artemisApp.complaint.rejected' | artemisTranslate }}&nbsp; </span>
+                    <span *ngIf="!complaint?.accepted" class="badge bg-danger"> &nbsp;{{ 'artemisApp.complaint.rejected' | artemisTranslate }}&nbsp; </span>
                 </small>
             </h4>
             <textarea id="complaintTextArea" class="col-12 px-1" rows="4" [(ngModel)]="complaintText" [readonly]="true" [disabled]="true"></textarea>

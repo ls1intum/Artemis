@@ -112,6 +112,9 @@
             "createStructuralSolutionEntriesTooltip": "Erstellt Solution Entries für alle strukturellen Tests dieser Aufgabe.",
             "createStructuralSolutionEntriesTitle": "Erstelle strukturelle Solution Entries",
             "createStructuralSolutionEntriesSuccess": "Strukturelle Solution Entries wurden erfolgreich erstellt",
+            "createBehavioralSolutionEntriesTooltip": "Erstellt Solution Entries für alle Verhaltenstests dieser Aufgabe.",
+            "createBehavioralSolutionEntriesTitle": "Erstelle verhaltensweise Solution Entries",
+            "createBehavioralSolutionEntriesSuccess": "Verhaltensweise Solution Entries wurden erfolgreich erstellt",
             "editable": {
                 "unsaved": "Ungespeichert.",
                 "unsavedTooltip": "Es gibt ungespeicherte Änderungen in der Aufgabenstellung.",

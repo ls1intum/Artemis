@@ -103,6 +103,13 @@ public abstract class RepositoryResource {
     abstract boolean canAccessRepository(Long domainId);
 
     /**
+     * Gets or retrieves the default branch from the domain object
+     * @param domainID the id of the domain object
+     * @return the name of the default branch of that domain object
+     */
+    abstract String getOrRetrieveBranchOfDomainObject(Long domainID);
+
+    /**
      * Get a map of files for the given domainId.
      *
      * @param domainId that serves as an abstract identifier for retrieving the repository.
@@ -274,7 +281,7 @@ public abstract class RepositoryResource {
         }
 
         RepositoryStatusDTO repositoryStatus = new RepositoryStatusDTO();
-        var repositoryUrl = getRepositoryUrl(domainId);
+        VcsRepositoryUrl repositoryUrl = getRepositoryUrl(domainId);
 
         try {
             boolean isClean;
@@ -284,8 +291,8 @@ public abstract class RepositoryResource {
                 isClean = repositoryService.isClean(repositoryUrl);
             }
             else {
-                String defaultBranch = versionControlService.get().getDefaultBranchOfRepository(repositoryUrl);
-                isClean = repositoryService.isClean(repositoryUrl, defaultBranch);
+                String branch = getOrRetrieveBranchOfDomainObject(domainId);
+                isClean = repositoryService.isClean(repositoryUrl, branch);
             }
             repositoryStatus.setRepositoryStatus(isClean ? RepositoryStatusDTOType.CLEAN : RepositoryStatusDTOType.UNCOMMITTED_CHANGES);
         }
