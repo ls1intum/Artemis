@@ -7,6 +7,7 @@ import javax.annotation.Nullable;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
+import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.exception.VersionControlException;
 
 public interface VersionControlService {
@@ -15,11 +16,10 @@ public interface VersionControlService {
      * Configure the repository for the student(s), this mainly includes setting permissions for the passed users
      *
      * @param exercise the programming exercise for which the repository should be configured
-     * @param repositoryUrl the url of the repository that needs to be configured
-     * @param users one user in an individual exercise, multiple users for a team exercise
+     * @param participation the programming participation corresponding to the repository in the exercise
      * @param allowAccess this determines if the users should get access to the repository directly. You normally want this to be true.
      */
-    void configureRepository(ProgrammingExercise exercise, VcsRepositoryUrl repositoryUrl, Set<User> users, boolean allowAccess);
+    void configureRepository(ProgrammingExercise exercise, ProgrammingExerciseStudentParticipation participation, boolean allowAccess);
 
     /**
      * Creates all necessary webhooks from the VCS to any other system (e.g. Artemis, CI) on pushes to the specified
@@ -118,12 +118,14 @@ public interface VersionControlService {
      *
      * @param sourceProjectKey     The key of the template project (normally based on the course and exercise short name)
      * @param sourceRepositoryName The name of the repository which should be copied
+     * @param sourceBranch  The default branch of the source repository
      * @param targetProjectKey     The key of the target project to which to copy the new plan to
      * @param targetRepositoryName The desired name of the target repository
      * @return The URL for cloning the repository
      * @throws VersionControlException if the repository could not be copied on the VCS server (e.g. because the source repo does not exist)
      */
-    VcsRepositoryUrl copyRepository(String sourceProjectKey, String sourceRepositoryName, String targetProjectKey, String targetRepositoryName) throws VersionControlException;
+    VcsRepositoryUrl copyRepository(String sourceProjectKey, String sourceRepositoryName, String sourceBranch, String targetProjectKey, String targetRepositoryName)
+            throws VersionControlException;
 
     /**
      * Add the user to the repository
@@ -186,4 +188,30 @@ public interface VersionControlService {
      * @return The health of the VCS service containing if it is up and running and any additional data, or the throwing exception otherwise
      */
     ConnectorHealth health();
+
+    /**
+     * Get the default branch used in the participation or retrieves it from the VCS if not present in the database
+     * @param participation The participation to get the default branch from
+     * @return The default branch used by this participation
+     */
+    String getOrRetrieveBranchOfParticipation(ProgrammingExerciseParticipation participation);
+
+    /**
+     * Get the default branch used in the student participation or retrieves it from the VCS if not present in the database
+     * @param participation The student participation to get the default branch from
+     * @return The default branch used by this student participation
+     */
+    String getOrRetrieveBranchOfStudentParticipation(ProgrammingExerciseStudentParticipation participation);
+
+    /**
+     * Get the default branch used in the programmingExercise or retrieves it from the VCS if not present in the database
+     * @param programmingExercise The participation to get the default branch from
+     * @return The default branch used by this programmingExercise
+     */
+    String getOrRetrieveBranchOfExercise(ProgrammingExercise programmingExercise);
+
+    /***
+     * @return The default branch used by Artemis
+     */
+    String getDefaultBranchOfArtemis();
 }

@@ -450,11 +450,19 @@ public class BitbucketRequestMockProvider {
     }
 
     public void mockGetDefaultBranch(String defaultBranch, String projectKey) throws BitbucketException, IOException {
+        mockGetDefaultBranch(defaultBranch, projectKey, ExpectedCount.manyTimes());
+    }
+
+    public void mockGetDefaultBranch(String defaultBranch, String projectKey, int mockedTimes) throws BitbucketException, IOException {
+        mockGetDefaultBranch(defaultBranch, projectKey, ExpectedCount.times(mockedTimes));
+    }
+
+    private void mockGetDefaultBranch(String defaultBranch, String projectKey, ExpectedCount expectedCount) throws BitbucketException, IOException {
         var mockResponse = new BitbucketDefaultBranchDTO("refs/heads/" + defaultBranch);
         mockResponse.setDisplayId(defaultBranch);
         var getDefaultBranchPattern = bitbucketServerUrl + "/rest/api/latest/projects/" + projectKey + "/repos/.*/default-branch";
 
-        mockServer.expect(ExpectedCount.manyTimes(), requestTo(matchesPattern(getDefaultBranchPattern))).andExpect(method(HttpMethod.GET))
+        mockServer.expect(expectedCount, requestTo(matchesPattern(getDefaultBranchPattern))).andExpect(method(HttpMethod.GET))
                 .andRespond(withStatus(HttpStatus.OK).body(mapper.writeValueAsString(mockResponse)).contentType(MediaType.APPLICATION_JSON));
     }
 
