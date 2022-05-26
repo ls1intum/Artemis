@@ -4,6 +4,8 @@ import { TranslateService } from '@ngx-translate/core';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { faCogs, faUserCheck, faUserSlash } from '@fortawesome/free-solid-svg-icons';
+import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
+import { IncludedInOverallScore } from 'app/entities/exercise.model';
 
 @Component({
     selector: 'jhi-programming-exercise-lifecycle',
@@ -16,13 +18,14 @@ export class ProgrammingExerciseLifecycleComponent implements OnInit {
     @Input() readOnly: boolean;
 
     readonly assessmentType = AssessmentType;
+    readonly IncludedInOverallScore = IncludedInOverallScore;
 
     // Icons
     faCogs = faCogs;
     faUserCheck = faUserCheck;
     faUserSlash = faUserSlash;
 
-    constructor(private translator: TranslateService) {}
+    constructor(private translator: TranslateService, private exerciseService: ExerciseService) {}
 
     /**
      * If the programming exercise does not have an id, set the assessment Type to AUTOMATIC
@@ -61,10 +64,11 @@ export class ProgrammingExerciseLifecycleComponent implements OnInit {
      * @param newReleaseDate The new release date
      */
     updateReleaseDate(newReleaseDate?: dayjs.Dayjs) {
-        if (this.exercise.dueDate && newReleaseDate && dayjs(newReleaseDate).isAfter(this.exercise.dueDate)) {
-            this.updateDueDate(newReleaseDate);
-        }
         this.exercise.releaseDate = newReleaseDate;
+        if (this.exerciseService.hasDueDateError(this.exercise)) {
+            this.updateDueDate(newReleaseDate!);
+        }
+        this.updateExampleSolutionPublicationDate(newReleaseDate);
     }
 
     /**
@@ -80,6 +84,22 @@ export class ProgrammingExerciseLifecycleComponent implements OnInit {
         if (afterDue && dayjs(dueDate).isAfter(afterDue)) {
             this.exercise.buildAndTestStudentSubmissionsAfterDueDate = dueDate;
             alert(this.translator.instant('artemisApp.programmingExercise.timeline.alertNewAfterDueDate'));
+        }
+    }
+
+    /**
+     * Updates the example solution publication date of the programming exercise if it is set and not after release or due date.
+     * Due date check is not performed if exercise is not included in the grade.
+     * @param newReleaseOrDueDate the new exampleSolutionPublicationDate if it is after the current exampleSolutionPublicationDate
+     */
+    updateExampleSolutionPublicationDate(newReleaseOrDueDate?: dayjs.Dayjs) {
+        if (this.exerciseService.hasExampleSolutionPublicationDateError(this.exercise)) {
+            const message =
+                this.exercise.dueDate != undefined
+                    ? 'artemisApp.programmingExercise.timeline.alertNewExampleSolutionPublicationDateAsDueDate'
+                    : 'artemisApp.programmingExercise.timeline.alertNewExampleSolutionPublicationDateAsReleaseDate';
+            alert(this.translator.instant(message));
+            this.exercise.exampleSolutionPublicationDate = newReleaseOrDueDate;
         }
     }
 }
