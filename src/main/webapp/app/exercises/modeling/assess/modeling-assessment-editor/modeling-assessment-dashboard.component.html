@@ -10,7 +10,7 @@
                 {{ 'modelingAssessment.noSubmissions' | artemisTranslate: {} }}
             </small>
         </ng-container>
-        <ng-container *ngIf="submissions && submissions.length > 0 && exercise.assessmentType === AssessmentType.SEMI_AUTOMATIC">
+        <ng-container *ngIf="submissions && submissions.length > 0">
             <small [ngClass]="numberAssessedSubmissions === submissions.length ? 'text-success' : 'text-warning'">
                 {{
                     'modelingAssessment.dashboard.progressDescription'
