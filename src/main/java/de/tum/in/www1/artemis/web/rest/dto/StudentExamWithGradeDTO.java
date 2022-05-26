@@ -29,9 +29,7 @@ public class StudentExamWithGradeDTO {
     public StudentExamWithGradeDTO() {
     }
 
-    public StudentExamWithGradeDTO(Double maxPoints, GradeType gradeType, StudentExam studentExam, ExamScoresDTO.StudentResult studentResult) {
-        this.maxPoints = maxPoints;
-        this.gradeType = gradeType;
+    public StudentExamWithGradeDTO(StudentExam studentExam, ExamScoresDTO.StudentResult studentResult) {
         this.studentExam = studentExam;
         this.studentResult = studentResult;
     }

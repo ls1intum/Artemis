@@ -292,12 +292,12 @@ public class ExamService {
         var objectMapper = new ObjectMapper();
 
         ExamScoresDTO.StudentResult studentResult = calculateStudentResultWithGrade(studentExam, participationsOfStudent, exam, scores, objectMapper);
-        var studentExamWithGradeDTO = new StudentExamWithGradeDTO((double) exam.getMaxPoints(), null, studentExam, studentResult);
+        var studentExamWithGradeDTO = new StudentExamWithGradeDTO(studentExam, studentResult);
 
         Optional<GradingScale> gradingScale = gradingScaleRepository.findByExamId(exam.getId());
         gradingScale.ifPresent(scale -> studentExamWithGradeDTO.gradeType = scale.getGradeType());
 
-        List<Exercise> exercises = participationsOfStudent.stream().map(StudentParticipation::getExercise).toList();
+        List<Exercise> exercises = studentExam.getExercises();
         studentExamWithGradeDTO.maxPoints = calculateMaxPointsSum(exercises, exam.getCourse());
         studentExamWithGradeDTO.maxBonusPoints = calculateMaxBonusPointsSum(exercises, exam.getCourse());
         studentExamWithGradeDTO.achievedPointsPerExercise = calculateAchievedPointsForExercises(participationsOfStudent, exam.getCourse());
@@ -402,13 +402,12 @@ public class ExamService {
     }
 
     private Double calculateAchievedPoints(Exercise exercise, Result result, Course course) {
-        Double resultScore = result.getScore();
-        return resultScore != null ? roundScoreSpecifiedByCourseSettings(exercise.getMaxPoints() * resultScore / 100.0, course) : 0.0;
+        return result != null && result.getScore() != null ? roundScoreSpecifiedByCourseSettings(exercise.getMaxPoints() * result.getScore() / 100.0, course) : 0.0;
     }
 
     private Map<Long, Double> calculateAchievedPointsForExercises(List<StudentParticipation> participationsOfStudent, Course course) {
         return participationsOfStudent.stream().collect(Collectors.toMap((participation) -> participation.getExercise().getId(),
-                (participation) -> calculateAchievedPoints(participation.getExercise(), participation.getResults().iterator().next(), course)));
+                (participation) -> calculateAchievedPoints(participation.getExercise(), participation.getResults().stream().findFirst().orElse(null), course)));
     }
 
     /**
