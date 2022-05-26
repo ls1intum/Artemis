@@ -14,9 +14,9 @@
             [legend]="true"
             [showXAxisLabel]="true"
             [showYAxisLabel]="true"
-            [xAxisLabel]="'artemisApp.examMonitoring.charts.{{chart}}.xAxisLabel' | artemisTranslate"
-            [yAxisLabel]="'artemisApp.examMonitoring.charts.{{chart}}.yAxisLabel' | artemisTranslate"
-            [legendTitle]="'artemisApp.examMonitoring.charts.{{chart}}.legendTitle' | artemisTranslate"
+            [xAxisLabel]="'artemisApp.examMonitoring.charts.' + chart + '.xAxisLabel' | artemisTranslate"
+            [yAxisLabel]="'artemisApp.examMonitoring.charts.' + chart + '.yAxisLabel' | artemisTranslate"
+            [legendTitle]="'artemisApp.examMonitoring.charts.' + chart + '.legendTitle' | artemisTranslate"
             [showDataLabel]="true"
         >
         </ngx-charts-bar-horizontal>
