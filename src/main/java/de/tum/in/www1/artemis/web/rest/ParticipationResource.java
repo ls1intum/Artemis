@@ -493,9 +493,7 @@ public class ParticipationResource {
             throw new AccessForbiddenException();
         }
         MappingJacksonValue response;
-        if (exercise instanceof QuizExercise) {
-            // fetch again to load some additional objects
-            var quizExercise = quizExerciseRepository.findByIdWithQuestionsAndStatisticsElseThrow(exercise.getId());
+        if (exercise instanceof QuizExercise quizExercise) {
             response = participationForQuizExercise(quizExercise, user);
         }
         else {
@@ -536,6 +534,7 @@ public class ParticipationResource {
             }
             return new MappingJacksonValue(participation);
         }
+        quizExercise.setQuizBatches(null); // not available here
         var quizBatch = quizBatchService.getQuizBatchForStudent(quizExercise, user);
 
         if (quizBatch.isPresent() && quizBatch.get().isSubmissionAllowed()) {
