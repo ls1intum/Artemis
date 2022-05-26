@@ -16,13 +16,7 @@
     </div>
 </div>
 <ng-container *ngIf="showAnswers">
-    <jhi-answer-post
-        *ngFor="let answerPost of sortedAnswerPosts; let isLastAnswer = last; trackBy: answerPostTrackByFn"
-        [posting]="answerPost"
-        [isLastAnswer]="isLastAnswer"
-        (openPostingCreateEditModal)="createAnswerPostModal.open()"
-    >
-    </jhi-answer-post>
+    <jhi-answer-post *ngFor="let answerPost of sortedAnswerPosts" [posting]="answerPost"></jhi-answer-post>
 </ng-container>
 <!-- rendered during the first reply to a post -->
 <ng-container #createEditAnswerPostContainer></ng-container>
