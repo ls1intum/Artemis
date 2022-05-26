@@ -724,7 +724,6 @@ public class ProgrammingExerciseGradingService {
             final List<Feedback> staticCodeAnalysisFeedback, final ProgrammingExercise programmingExercise, boolean hasDuplicateTestCases, boolean applySubmissionPolicy) {
         if (hasDuplicateTestCases) {
             result.setScore(0D);
-            result.getFeedbacks().forEach(feedback -> feedback.setCredits(0D));
         }
         else {
             double score = calculateScore(programmingExercise, allTestCases, result, successfulTestCases, staticCodeAnalysisFeedback, applySubmissionPolicy);
@@ -750,7 +749,7 @@ public class ProgrammingExerciseGradingService {
      */
     private double calculateScore(final ProgrammingExercise programmingExercise, final Set<ProgrammingExerciseTestCase> allTests, final Result result,
             final Set<ProgrammingExerciseTestCase> successfulTestCases, final List<Feedback> staticCodeAnalysisFeedback, boolean applySubmissionPolicy) {
-        if (allTests.isEmpty()) {
+        if (successfulTestCases.isEmpty()) {
             return 0;
         }
 
@@ -830,9 +829,7 @@ public class ProgrammingExerciseGradingService {
     private void setCreditsForTestCaseFeedback(final Result result, final ProgrammingExerciseTestCase testCase, double credits) {
         // We need to compare testcases ignoring the case, because the testcaseRepository is case-insensitive
         result.getFeedbacks().stream().filter(fb -> FeedbackType.AUTOMATIC.equals(fb.getType()) && fb.getText().equalsIgnoreCase(testCase.getTestName())).findFirst()
-                .ifPresent(feedback -> {
-                    feedback.setCredits(credits);
-                });
+                .ifPresent(feedback -> feedback.setCredits(credits));
     }
 
     /**

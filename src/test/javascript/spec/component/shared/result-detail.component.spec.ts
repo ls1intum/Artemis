@@ -69,7 +69,6 @@ describe('ResultDetailComponent', () => {
                 }),
                 credits,
                 positive: false,
-                creditsApplied: true,
             }),
             item: makeFeedbackItem({
                 type: FeedbackItemType.Issue,
@@ -79,7 +78,6 @@ describe('ResultDetailComponent', () => {
                 credits: -penalty,
                 actualCredits: credits,
                 positive: false,
-                creditsApplied: true,
             }),
         };
     };
@@ -91,7 +89,6 @@ describe('ResultDetailComponent', () => {
                 detailText: message,
                 credits,
                 positive: creditsApplied,
-                creditsApplied,
             }),
             item: makeFeedbackItem({
                 type: FeedbackItemType.Test,
@@ -100,7 +97,6 @@ describe('ResultDetailComponent', () => {
                 credits,
                 positive: creditsApplied,
                 title: showDetails ? `Test ${name} ${creditsApplied ? 'passed' : 'failed'}` : undefined,
-                creditsApplied,
             }),
         };
     };
@@ -113,7 +109,6 @@ describe('ResultDetailComponent', () => {
                 detailText: text,
                 credits,
                 positive: credits > 0,
-                creditsApplied: true,
             }),
             item: makeFeedbackItem({
                 type: FeedbackItemType.Feedback,
@@ -122,7 +117,6 @@ describe('ResultDetailComponent', () => {
                 text,
                 credits,
                 positive: credits > 0,
-                creditsApplied: true,
             }),
         };
     };
@@ -376,7 +370,6 @@ describe('ResultDetailComponent', () => {
             text: 'automaticTestCase1',
             positive: undefined,
             credits: 0.3,
-            creditsApplied: true,
         };
 
         const expectedFeedbackItem: FeedbackItem = {
@@ -386,7 +379,6 @@ describe('ResultDetailComponent', () => {
             type: FeedbackItemType.Test,
             text: undefined,
             previewText: undefined,
-            creditsApplied: true,
         };
 
         shouldGenerateFeedbackItem(feedback, expectedFeedbackItem);
@@ -402,7 +394,6 @@ describe('ResultDetailComponent', () => {
             text: 'Feedback Title',
             detailText: 'Manual tutor feedback',
             credits: 0,
-            creditsApplied: true,
         };
 
         const expectedFeedbackItem: FeedbackItem = {
@@ -413,7 +404,6 @@ describe('ResultDetailComponent', () => {
             credits: 0,
             positive: undefined,
             previewText: undefined,
-            creditsApplied: true,
         };
 
         shouldGenerateFeedbackItem(feedback, expectedFeedbackItem);
@@ -442,7 +432,6 @@ describe('ResultDetailComponent', () => {
             text: 'Feedback Title',
             detailText: 'Manual tutor feedback',
             credits: 0,
-            creditsApplied: true,
         };
 
         const expectedFeedbackItem: FeedbackItem = {
@@ -453,7 +442,6 @@ describe('ResultDetailComponent', () => {
             credits: 0,
             positive: undefined,
             previewText: undefined,
-            creditsApplied: true,
         };
 
         shouldGenerateFeedbackItem(feedback, expectedFeedbackItem, ExerciseType.PROGRAMMING, false);
@@ -466,7 +454,6 @@ describe('ResultDetailComponent', () => {
             detailText: 'You have submitted 2 more times than the submission limit of 10. This results in a deduction of 0.1 points!',
             positive: false,
             credits: -0.1,
-            creditsApplied: true,
         };
 
         const expectedFeedbackItem: FeedbackItem = {
@@ -477,7 +464,6 @@ describe('ResultDetailComponent', () => {
             previewText: undefined,
             positive: false,
             credits: feedback.credits,
-            creditsApplied: true,
         };
 
         shouldGenerateFeedbackItem(feedback, expectedFeedbackItem);
@@ -488,7 +474,6 @@ describe('ResultDetailComponent', () => {
             text: 'Summary',
             detailText: 'Multi\nLine\nText',
             credits: 0,
-            creditsApplied: true,
         };
 
         const expectedFeedbackItem: FeedbackItem = {
@@ -499,7 +484,6 @@ describe('ResultDetailComponent', () => {
             previewText: 'Multi',
             positive: undefined,
             credits: 0,
-            creditsApplied: true,
         };
 
         shouldGenerateFeedbackItem(feedback, expectedFeedbackItem, ExerciseType.QUIZ);
@@ -510,7 +494,6 @@ describe('ResultDetailComponent', () => {
             text: 'Summary',
             detailText: '0'.repeat(400),
             credits: 0,
-            creditsApplied: true,
         };
 
         const expectedFeedbackItem: FeedbackItem = {
@@ -521,7 +504,6 @@ describe('ResultDetailComponent', () => {
             previewText: '0'.repeat(300),
             positive: undefined,
             credits: 0,
-            creditsApplied: true,
         };
 
         shouldGenerateFeedbackItem(feedback, expectedFeedbackItem, ExerciseType.MODELING);
@@ -554,7 +536,6 @@ describe('ResultDetailComponent', () => {
                 positive: false,
                 previewText: undefined,
                 text: 'Checkstyle: SCA Message',
-                creditsApplied: true,
             };
         });
 

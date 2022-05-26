@@ -369,27 +369,7 @@ export class ResultComponent implements OnInit, OnChanges {
             componentInstance.messageKey = 'artemisApp.result.notLatestSubmission';
         }
 
-        // The information should only be shown in case it is after the due date
-        // and some automatic test case feedbacks are possibly hidden due to
-        // other students still working on the exercise.
-        if (
-            this.result?.assessmentType === AssessmentType.AUTOMATIC &&
-            this.exercise?.type === ExerciseType.PROGRAMMING &&
-            hasExerciseDueDatePassed(this.exercise, this.participation)
-        ) {
-            if (!this.latestIndividualDueDate) {
-                this.exerciseService.getLatestDueDate(this.exercise.id!).subscribe((res?: dayjs.Dayjs) => {
-                    this.latestIndividualDueDate = res;
-                    componentInstance.showMissingAutomaticFeedbackInformation = dayjs().isBefore(this.latestIndividualDueDate);
-                    componentInstance.latestIndividualDueDate = this.latestIndividualDueDate;
-                });
-            } else {
-                componentInstance.showMissingAutomaticFeedbackInformation = dayjs().isBefore(this.latestIndividualDueDate);
-                componentInstance.latestIndividualDueDate = this.latestIndividualDueDate;
-            }
-        } else {
-            componentInstance.showMissingAutomaticFeedbackInformation = false;
-        }
+        this.determineShowMissingAutomaticFeedbackInformation(componentInstance);
     }
 
     /**
@@ -535,5 +515,30 @@ export class ResultComponent implements OnInit, OnChanges {
      */
     isManualResult(result: Result | undefined) {
         return result?.assessmentType !== AssessmentType.AUTOMATIC;
+    }
+
+    /**
+     * Determins if some information about testcases could still be hidden because of later individual due dates
+     * @param componentInstance the detailed result view
+     */
+    private determineShowMissingAutomaticFeedbackInformation(componentInstance: ResultDetailComponent) {
+        if (
+            this.result?.assessmentType === AssessmentType.AUTOMATIC &&
+            this.exercise?.type === ExerciseType.PROGRAMMING &&
+            hasExerciseDueDatePassed(this.exercise, this.participation)
+        ) {
+            if (!this.latestIndividualDueDate) {
+                this.exerciseService.getLatestDueDate(this.exercise.id!).subscribe((res?: dayjs.Dayjs) => {
+                    this.latestIndividualDueDate = res;
+                    componentInstance.showMissingAutomaticFeedbackInformation = dayjs().isBefore(this.latestIndividualDueDate);
+                    componentInstance.latestIndividualDueDate = this.latestIndividualDueDate;
+                });
+            } else {
+                componentInstance.showMissingAutomaticFeedbackInformation = dayjs().isBefore(this.latestIndividualDueDate);
+                componentInstance.latestIndividualDueDate = this.latestIndividualDueDate;
+            }
+        } else {
+            componentInstance.showMissingAutomaticFeedbackInformation = false;
+        }
     }
 }
