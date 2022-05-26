@@ -6,9 +6,10 @@ import { ChartData, getColor } from 'app/exam/monitoring/charts/monitoring-chart
 @Component({
     selector: 'jhi-exercise-chart',
     templateUrl: './exercise-chart.component.html',
-    styleUrls: ['../../monitoring-chart.scss'],
+    styleUrls: ['../monitoring-chart.scss'],
 })
 export class ExerciseChartComponent implements OnInit {
+    // Input
     @Input()
     exam: Exam;
 
@@ -21,10 +22,15 @@ export class ExerciseChartComponent implements OnInit {
         domain: [],
     } as Color;
 
+    // Component
+    routerLink: any[];
+    readonly chart = 'exercise-chart';
+
     constructor() {}
 
     ngOnInit(): void {
         this.initData();
+        this.routerLink = ['/course-management', this.exam.course!.id!, 'exams', this.exam.id, 'exercise-groups'];
     }
 
     initData() {

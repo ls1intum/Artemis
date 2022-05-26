@@ -3,7 +3,6 @@ import { BehaviorSubject, tap } from 'rxjs';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { Exam } from 'app/entities/exam.model';
 import { ExamAction, ExamActivity } from 'app/entities/exam-user-activity.model';
-import { cloneDeep } from 'lodash';
 
 // TODO: Add topic
 const EXAM_MONITORING_TOPIC = (examId: number) => ``;
@@ -12,25 +11,24 @@ export interface IExamMonitoringWebsocketService {}
 
 @Injectable({ providedIn: 'root' })
 export class ExamMonitoringWebsocketService implements IExamMonitoringWebsocketService {
-    examActivityObservables: Map<number, BehaviorSubject<ExamActivity[]>> = new Map<number, BehaviorSubject<ExamActivity[]>>();
+    examActionObservables: Map<number, BehaviorSubject<ExamAction | undefined>> = new Map<number, BehaviorSubject<ExamAction | undefined>>();
+    // TODO: Store actions grouped by activity in cache
+    examActivities: Map<number, ExamActivity[]>;
     openExamMonitoringWebsocketSubscriptions: Map<number, string> = new Map<number, string>();
 
     constructor(private jhiWebsocketService: JhiWebsocketService) {}
 
     /**
-     * Notify all exam activity subscribers with the newest exam activity provided.
+     * Notify all exam action subscribers with the newest exam action provided.
      * @param exam received or updated exam
      * @param examAction received exam action
      */
-    private notifyExamActivitySubscribers = (exam: Exam, examAction: ExamAction) => {
-        const examActivityObservable = this.examActivityObservables.get(exam.id!);
-        if (!examActivityObservable) {
-            // TODO: Handle case
+    private notifyExamActionSubscribers = (exam: Exam, examAction: ExamAction) => {
+        const examActionObservable = this.examActionObservables.get(exam.id!);
+        if (!examActionObservable) {
+            this.examActionObservables.set(exam.id!, new BehaviorSubject(examAction));
         } else {
-            const cachedActivity = cloneDeep(this.examActivityObservables.get(exam.id!)!.value!) as ExamActivity[];
-            const examActions = cachedActivity.find((activity) => (activity.id = examAction.examActivityId))!.examActions;
-            examActions.push(examAction);
-            examActivityObservable.next(cachedActivity);
+            examActionObservable.next(examAction);
         }
     };
 
@@ -46,32 +44,32 @@ export class ExamMonitoringWebsocketService implements IExamMonitoringWebsocketS
         this.jhiWebsocketService.subscribe(topic);
         this.jhiWebsocketService
             .receive(topic)
-            .pipe(tap((exmAction: ExamAction) => this.notifyExamActivitySubscribers(exam, exmAction)))
+            .pipe(tap((exmAction: ExamAction) => this.notifyExamActionSubscribers(exam, exmAction)))
             .subscribe();
     }
 
     /**
      * Subscribing to the exam monitoring.
      *
-     * If there is no observable for the exam activities a new one will be created.
+     * If there is no observable for the exam actions a new one will be created.
      *
      * @param exam the exam to observe
      */
-    public subscribeForExamActivities(exam: Exam): BehaviorSubject<ExamActivity[]> {
+    public subscribeForLatestExamAction(exam: Exam): BehaviorSubject<ExamAction | undefined> {
         this.openExamMonitoringWebsocketSubscriptionIfNotExisting(exam);
-        let examActivityObservable = this.examActivityObservables.get(exam.id!)!;
-        if (!examActivityObservable) {
-            examActivityObservable = new BehaviorSubject<ExamActivity[]>([]);
-            this.examActivityObservables.set(exam.id!, examActivityObservable);
+        let examActionObservable = this.examActionObservables.get(exam.id!)!;
+        if (!examActionObservable) {
+            examActionObservable = new BehaviorSubject<ExamAction | undefined>(undefined);
+            this.examActionObservables.set(exam.id!, examActionObservable);
         }
-        return examActivityObservable;
+        return examActionObservable;
     }
 
     /**
      * Unsubscribe from the exam monitoring.
      * @param exam the exam to unsubscribe
      * */
-    public unsubscribeForExamActivities(exam: Exam): void {
+    public unsubscribeForExamAction(exam: Exam): void {
         const topic = EXAM_MONITORING_TOPIC(exam.id!);
         this.jhiWebsocketService.unsubscribe(topic);
         this.openExamMonitoringWebsocketSubscriptions.delete(exam.id!);

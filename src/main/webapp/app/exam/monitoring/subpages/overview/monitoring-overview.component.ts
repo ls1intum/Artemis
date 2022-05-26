@@ -6,7 +6,7 @@ import { Subscription } from 'rxjs';
 import { ExamMonitoringService } from 'app/exam/monitoring/exam-monitoring.service';
 import { faListAlt } from '@fortawesome/free-solid-svg-icons';
 import { ExamMonitoringWebsocketService } from 'app/exam/monitoring/exam-monitoring-websocket.service';
-import { ExamAction, ExamActivity } from 'app/entities/exam-user-activity.model';
+import { ExamAction } from 'app/entities/exam-user-activity.model';
 
 @Component({
     selector: 'jhi-monitoring-overview',
@@ -22,9 +22,6 @@ export class MonitoringOverviewComponent implements OnInit, OnDestroy {
     examId: number;
     courseId: number;
     exam?: Exam;
-
-    // Exam Activity
-    examActivities: ExamActivity[];
 
     // Exam Actions
     examActions: ExamAction[];
@@ -47,9 +44,10 @@ export class MonitoringOverviewComponent implements OnInit, OnDestroy {
         this.examSubscription = this.examMonitoringService.getExamBehaviorSubject(this.examId)?.subscribe((exam) => {
             this.exam = exam;
 
-            this.examMonitoringSubscription = this.examMonitoringWebsocketService.subscribeForExamActivities(this.exam!).subscribe((examActivities) => {
-                this.examActivities = examActivities;
-                this.examActions = examActivities.map((activity) => activity.examActions).flat();
+            this.examMonitoringSubscription = this.examMonitoringWebsocketService.subscribeForLatestExamAction(this.exam!).subscribe((examAction) => {
+                if (examAction) {
+                    this.examActions = [...this.examActions, examAction];
+                }
             });
         });
     }

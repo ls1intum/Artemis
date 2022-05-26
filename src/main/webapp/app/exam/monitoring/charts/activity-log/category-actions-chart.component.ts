@@ -6,10 +6,11 @@ import * as shape from 'd3-shape';
 
 @Component({
     selector: 'jhi-category-actions-chart',
-    templateUrl: './category-actions-chart.component.html',
-    styleUrls: ['../../monitoring-chart.scss'],
+    templateUrl: './actions-chart.component.html',
+    styleUrls: ['../monitoring-chart.scss'],
 })
 export class CategoryActionsChartComponent implements OnInit {
+    // Input
     @Input()
     examActions: ExamAction[];
     @Input()
@@ -23,8 +24,11 @@ export class CategoryActionsChartComponent implements OnInit {
         group: ScaleType.Ordinal,
         domain: [getColor(1), getColor(2), getColor(3), getColor(4)],
     } as Color;
-
     curve: any = shape.curveMonotoneX;
+    legend = true;
+
+    // Component
+    readonly chart = 'category-actions-chart';
 
     constructor() {}
 
