@@ -1,5 +1,5 @@
 import { LectureUnit, LectureUnitType } from 'app/entities/lecture-unit/lectureUnit.model';
-import { HttpClient, HttpResponse } from '@angular/common/http';
+import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import dayjs from 'dayjs/esm';
@@ -8,6 +8,7 @@ import { AttachmentUnit } from 'app/entities/lecture-unit/attachmentUnit.model';
 import { AttachmentService } from 'app/lecture/attachment.service';
 import { ExerciseUnit } from 'app/entities/lecture-unit/exerciseUnit.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
+import { OnlineResourceDTO } from 'app/lecture/lecture-unit/lecture-unit-management/online-resource-dto.model';
 
 type EntityArrayResponseType = HttpResponse<LectureUnit[]>;
 
@@ -129,5 +130,18 @@ export class LectureUnitService {
         } else {
             return lectureUnit.releaseDate;
         }
+    }
+
+    /**
+     * Get the online resource (meta title and description) of the specified link
+     * @param link The link from which to fetch the website's meta information
+     */
+    getOnlineResource(link: string): Observable<HttpResponse<OnlineResourceDTO>> {
+        let params = new HttpParams();
+        params = params.set('link', String(link));
+        return this.httpClient.get<OnlineResourceDTO>(`${this.resourceURL}/online-resource`, {
+            observe: 'response',
+            params,
+        });
     }
 }

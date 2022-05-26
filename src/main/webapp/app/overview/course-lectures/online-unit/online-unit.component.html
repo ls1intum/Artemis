@@ -2,7 +2,7 @@
     <div class="card unit-card">
         <div class="card-header unit-card-header row align-content-center" (click)="handleCollapse($event)">
             <h5 class="m-0 fw-medium">
-                <fa-icon class="col-auto me-2" [icon]="faVideo" [ngbTooltip]="'artemisApp.onlineUnit.tooltip' | artemisTranslate"> </fa-icon>
+                <fa-icon class="col-auto me-2" [icon]="faLink" [ngbTooltip]="'artemisApp.onlineUnit.tooltip' | artemisTranslate"> </fa-icon>
                 {{ onlineUnit?.name ? onlineUnit.name : '' }}
                 <span
                     *ngIf="!onlineUnit?.visibleToStudents"
@@ -12,12 +12,14 @@
                     {{ 'artemisApp.courseOverview.exerciseList.notReleased' | artemisTranslate }}
                 </span>
             </h5>
+            <small>{{ domainName }}</small>
         </div>
         <div class="card-body unit-card-body" [ngbCollapse]="isCollapsed">
-            <div class="ratio ratio-16x9" *ngIf="!isCollapsed">
-                <iframe id="onlineFrame" class="rounded" [src]="onlineUrl | safeResourceUrl" allow="fullscreen"></iframe>
-            </div>
-            {{ onlineUnit?.description }}
+            <p>{{ onlineUnit?.description }}</p>
+
+            <a class="btn btn-primary" [href]="onlineUnit.source" target="_blank">
+                <fa-icon [icon]="faUpRightFromSquare"></fa-icon> <span jhiTranslate="artemisApp.onlineUnit.doOpen">Open link</span>
+            </a>
         </div>
     </div>
 </div>

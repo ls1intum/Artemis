@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.web.rest.lecture;
 
+import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -7,6 +8,9 @@ import java.net.URL;
 
 import javax.ws.rs.BadRequestException;
 
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -20,8 +24,10 @@ import de.tum.in.www1.artemis.repository.LectureRepository;
 import de.tum.in.www1.artemis.repository.OnlineUnitRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
+import de.tum.in.www1.artemis.web.rest.dto.OnlineResourceDTO;
 import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
+import de.tum.in.www1.artemis.web.rest.errors.InternalServerErrorException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 
 @RestController
@@ -146,6 +152,53 @@ public class OnlineUnitResource {
 
         return ResponseEntity.created(new URI("/api/online-units/" + persistedonlineUnit.getId()))
                 .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, "")).body(persistedonlineUnit);
+    }
+
+    /**
+     * Fetch the website's metadata from the specified link to an online resource
+     *
+     * @param link The link (as request parameter) to the website to fetch the metadata from
+     * @return A DTO with link, meta title, and meta description
+     */
+    @GetMapping("/online-resource")
+    @PreAuthorize("hasRole('EDITOR')")
+    public OnlineResourceDTO getOnlineResource(@RequestParam(value = "link") String link) {
+        try {
+            // Ensure that the link is a correctly formed URL
+            URL url = new URL(link);
+
+            Document document = Jsoup.connect(url.toString()).get();
+            String title = getMetaTagContent(document, "title");
+            String description = getMetaTagContent(document, "description");
+
+            return new OnlineResourceDTO(url.toString(), title, description);
+        }
+        catch (MalformedURLException e) {
+            throw new BadRequestException("The specified link is not a valid URL");
+        }
+        catch (IOException e) {
+            throw new InternalServerErrorException("Error while retrieving metadata from link");
+        }
+    }
+
+    /**
+     * Returns the content of the specified meta tag
+     * Inspired by https://www.javachinna.com/generate-rich-link-preview-for-a-given-url-based-on-the-meta-tags-present-in-the-web-page-in-spring-boot/
+     *
+     * @param document The Jsoup document to query
+     * @param tag The meta tag from which to fetch the content
+     * @return The value of the content attribute of the specified tag
+     */
+    private String getMetaTagContent(Document document, String tag) {
+        Element element = document.select("meta[name=" + tag + "]").first();
+        if (element != null && !element.attr("content").isBlank()) {
+            return element.attr("content");
+        }
+        element = document.select("meta[property=og:" + tag + "]").first();
+        if (element != null) {
+            return element.attr("content");
+        }
+        return "";
     }
 
 }

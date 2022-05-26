@@ -83,6 +83,7 @@
             "tooltip": "Das ist eine Onlineeinheit",
             "description": "Beschreibung",
             "notReleasedTooltip": "Onlineeinheit nur sichtbar für Tutor:innen und Lehrende. Veröffentlichungsdatum:",
+            "doOpen": "Link öffnen",
             "createVideoUnit": {
                 "title": "Erstelle Onlineeinheit",
                 "name": "Name",
@@ -95,7 +96,8 @@
                 "source": "Externes Onlineangebot URL",
                 "sourcePlaceHolder": "Gib eine URL zu einem externen Onlineangebot ein.",
                 "sourceRequiredValidationError": "Link ist ein Pflichtfeld",
-                "sourceURLValidationError": "Keine valide URL"
+                "sourceURLValidationError": "Keine valide URL",
+                "urlHelperPlaceholder": "Name und Beschreibung werden von den Metadaten des Links geladen"
             },
             "editOnlineUnit": {
                 "title": "Bearbeite eine Onlineeinheit"

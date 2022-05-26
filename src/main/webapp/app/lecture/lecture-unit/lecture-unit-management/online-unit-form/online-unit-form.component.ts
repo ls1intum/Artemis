@@ -2,6 +2,10 @@ import dayjs from 'dayjs/esm';
 import { Component, EventEmitter, Input, OnChanges, OnInit, Output } from '@angular/core';
 import { AbstractControl, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { faArrowLeft } from '@fortawesome/free-solid-svg-icons';
+import { LectureUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/lectureUnit.service';
+import { map } from 'rxjs';
+import { HttpResponse } from '@angular/common/http';
+import { OnlineResourceDTO } from 'app/lecture/lecture-unit/lecture-unit-management/online-resource-dto.model';
 
 export interface OnlineUnitFormData {
     name?: string;
@@ -10,24 +14,8 @@ export interface OnlineUnitFormData {
     source?: string;
 }
 
-function onlineUrlValidator(control: AbstractControl) {
-    if (control.value === undefined || control.value === null || control.value === '') {
-        return null;
-    }
-
-    // const onlineInfo = urlParser.parse(control.value);
-    // return onlineInfo ? null : { invalidOnlineUrl: true };
-    return null;
-}
-
 function urlValidator(control: AbstractControl) {
     let validUrl = true;
-
-    // for certain cases like embed links for vimeo
-    const regex = /^\/\/.*$/;
-    if (control.value && control.value.match(regex)) {
-        return null;
-    }
 
     try {
         // tslint:disable-next-line:no-unused-expression-chai
@@ -54,12 +42,11 @@ export class OnlineUnitFormComponent implements OnInit, OnChanges {
     form: FormGroup;
 
     urlValidator = urlValidator;
-    onlineUrlValidator = onlineUrlValidator;
 
     // Icons
     faArrowLeft = faArrowLeft;
 
-    constructor(private fb: FormBuilder) {}
+    constructor(private fb: FormBuilder, private lectureUnitService: LectureUnitService) {}
 
     get nameControl() {
         return this.form.get('name');
@@ -75,10 +62,6 @@ export class OnlineUnitFormComponent implements OnInit, OnChanges {
 
     get sourceControl() {
         return this.form.get('source');
-    }
-
-    get urlHelperControl() {
-        return this.form.get('urlHelper');
     }
 
     ngOnChanges(): void {
@@ -101,12 +84,39 @@ export class OnlineUnitFormComponent implements OnInit, OnChanges {
             description: [undefined, [Validators.maxLength(1000)]],
             releaseDate: [undefined],
             source: [undefined, [Validators.required, this.urlValidator]],
-            urlHelper: [undefined, this.onlineUrlValidator],
         });
     }
 
     private setFormValues(formData: OnlineUnitFormData) {
         this.form.patchValue(formData);
+    }
+
+    /**
+     * When the link is changed, fetch the website's metadata and update the form
+     */
+    onLinkChanged(): void {
+        const value = this.sourceControl?.value;
+
+        // If the link does not start with any HTTP protocol then add it
+        const regex = /https?:\/\//;
+        if (value && !value.match(regex)) {
+            this.sourceControl?.setValue('https://' + value);
+        }
+
+        if (this.sourceControl?.valid) {
+            this.lectureUnitService
+                .getOnlineResource(this.sourceControl.value)
+                .pipe(map((response: HttpResponse<OnlineResourceDTO>) => response.body!))
+                .subscribe({
+                    next: (onlineResource) => {
+                        const updateForm = {
+                            name: onlineResource.title || undefined,
+                            description: onlineResource.description || undefined,
+                        };
+                        this.form.patchValue(updateForm);
+                    },
+                });
+        }
     }
 
     submitForm() {
@@ -116,25 +126,5 @@ export class OnlineUnitFormComponent implements OnInit, OnChanges {
 
     get isSubmitPossible() {
         return !this.form.invalid;
-    }
-
-    get isTransformable() {
-        if (this.urlHelperControl!.value === undefined || this.urlHelperControl!.value === null || this.urlHelperControl!.value === '') {
-            return false;
-        } else {
-            return !this.urlHelperControl?.invalid;
-        }
-    }
-
-    setEmbeddedOnlineUrl(event: any) {
-        event.stopPropagation();
-        // this.sourceControl!.setValue(this.extractEmbeddedUrl(this.urlHelperControl!.value));
-    }
-
-    extractEmbeddedUrl(onlineUrl: string) {
-        /*return urlParser.create({
-            onlineInfo: urlParser.parse(onlineUrl)!,
-            format: 'embed',
-        });*/
     }
 }
