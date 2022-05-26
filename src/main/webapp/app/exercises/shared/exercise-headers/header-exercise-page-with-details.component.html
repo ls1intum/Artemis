@@ -27,6 +27,7 @@
                 <span>
                     {{ 'artemisApp.courseOverview.exerciseDetails.assessmentType' | artemisTranslate }}
                     {{ 'artemisApp.AssessmentType.' + exercise.assessmentType | artemisTranslate }}
+                    <fa-icon [icon]="faQuestionCircle" ngbTooltip="{{ 'artemisApp.AssessmentType.tooltip.' + exercise.assessmentType | artemisTranslate }}"></fa-icon>
                 </span>
             </h4>
             <h4 class="row" *ngIf="submissionPolicy">
@@ -42,7 +43,6 @@
                     <fa-icon
                         [icon]="faQuestionCircle"
                         ngbTooltip="{{ 'artemisApp.programmingExercise.submissionPolicy.submissionPolicyType.' + submissionPolicy.type + '.tooltip' | artemisTranslate }}"
-                        placement="top"
                     ></fa-icon>
                 </span>
             </h4>
@@ -90,20 +90,7 @@
                         {{ programmingExercise!.buildAndTestStudentSubmissionsAfterDueDate | artemisTimeAgo }}
                     </span>
                 </h5>
-                <h5 *ngIf="exercise.exampleSolutionPublicationDate" [class.h3]="isNextDueDate[2]">
-                    {{ 'artemisApp.courseOverview.exerciseDetails.exampleSolutionPublicationDay' | artemisTranslate }}
-                    <span
-                        [ngClass]="exerciseStatusBadge"
-                        class="badge"
-                        [ngbTooltip]="
-                            'artemisApp.courseOverview.exerciseDetails.exampleSolutionPublicationDayTooltip'
-                                | artemisTranslate: { date: exercise.exampleSolutionPublicationDate | artemisDate }
-                        "
-                    >
-                        {{ exercise.exampleSolutionPublicationDate | artemisTimeAgo }}
-                    </span>
-                </h5>
-                <h5 *ngIf="exercise.assessmentDueDate" [class.h3]="isNextDueDate[3]">
+                <h5 *ngIf="exercise.assessmentDueDate" [class.h3]="isNextDueDate[2]">
                     {{ 'artemisApp.courseOverview.exerciseDetails.assessmentDue' | artemisTranslate }}
                     <span
                         [ngClass]="exerciseStatusBadge"
@@ -113,7 +100,7 @@
                         {{ exercise.assessmentDueDate | artemisTimeAgo }}
                     </span>
                 </h5>
-                <h5 *ngIf="individualComplaintDeadline" [class.h3]="isNextDueDate[4]">
+                <h5 *ngIf="individualComplaintDeadline" [class.h3]="isNextDueDate[3]">
                     {{ 'artemisApp.courseOverview.exerciseDetails.complaintDue' | artemisTranslate }}
                     <span
                         [ngClass]="exerciseStatusBadge"
@@ -123,7 +110,7 @@
                         {{ individualComplaintDeadline | artemisTimeAgo }}
                     </span>
                 </h5>
-                <h5 *ngIf="canComplainLaterOn" [class.h3]="isNextDueDate[5]">
+                <h5 *ngIf="canComplainLaterOn" [class.h3]="isNextDueDate[4]">
                     {{ 'artemisApp.courseOverview.exerciseDetails.complaintPossible' | artemisTranslate }}
                     <span [ngbTooltip]="'artemisApp.courseOverview.exerciseDetails.complaintPossibleTooltip' | artemisTranslate">
                         {{

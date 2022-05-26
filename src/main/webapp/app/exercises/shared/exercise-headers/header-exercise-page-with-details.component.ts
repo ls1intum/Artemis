@@ -107,20 +107,18 @@ export class HeaderExercisePageWithDetailsComponent implements OnInit {
      * Determines what element of the header should be highlighted. The highlighted deadline/time is the one being due next
      */
     private setIsNextDueDateCourseMode() {
-        this.isNextDueDate = [false, false, false, false, false, false];
+        this.isNextDueDate = [false, false, false, false, false];
         const now = dayjs();
         if (now.isBefore(this.dueDate)) {
             this.isNextDueDate[0] = true;
         } else if (now.isBefore(this.programmingExercise?.buildAndTestStudentSubmissionsAfterDueDate)) {
             this.isNextDueDate[1] = true;
-        } else if (now.isBefore(this.exercise.exampleSolutionPublicationDate)) {
-            this.isNextDueDate[2] = true;
         } else if (now.isBefore(this.exercise.assessmentDueDate)) {
-            this.isNextDueDate[3] = true;
+            this.isNextDueDate[2] = true;
         } else if (now.isBefore(this.individualComplaintDeadline)) {
-            this.isNextDueDate[4] = true;
+            this.isNextDueDate[3] = true;
         } else if (this.canComplainLaterOn) {
-            this.isNextDueDate[5] = true;
+            this.isNextDueDate[4] = true;
         }
     }
 }

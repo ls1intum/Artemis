@@ -6,7 +6,14 @@
             "undefined": "",
             "AUTOMATIC": "Automatisch",
             "SEMI_AUTOMATIC": "Halbautomatisch",
-            "MANUAL": "Manuell"
+            "MANUAL": "Manuell",
+            "tooltip": {
+                "null": "Es steht kein Bewertungsmodus fest.",
+                "undefined": "Es steht kein Bewertungsmodus fest.",
+                "AUTOMATIC": "Diese Aufgabe wird nur automatisch und nicht von Tutor:innen bewertet.",
+                "SEMI_AUTOMATIC": "Diese Aufgabe wird von Tutor:innen bewertet, jedoch werden Bewertungsvorschläge automatisch erstellt. Diese Vorschläge können zum Beispiel Testfälle bei Programmieraufgaben sein.",
+                "MANUAL": "Diese Aufgabe wird manuell von Tutor:innen bewertet."
+            }
         }
     }
 }

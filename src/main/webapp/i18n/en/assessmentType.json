@@ -6,7 +6,14 @@
             "undefined": "",
             "AUTOMATIC": "Automatic",
             "SEMI_AUTOMATIC": "Semi-Automatic",
-            "MANUAL": "Manual"
+            "MANUAL": "Manual",
+            "tooltip": {
+                "null": "No assessment type set.",
+                "undefined": "No assessment type set.",
+                "AUTOMATIC": "This exercise is graded automatically and not by tutors.",
+                "SEMI_AUTOMATIC": "This exercise is graded by a tutor. But automatic grading like test cases in programming exercise make grading suggestions.",
+                "MANUAL": "This exercise is graded manually by a tutor."
+            }
         }
     }
 }

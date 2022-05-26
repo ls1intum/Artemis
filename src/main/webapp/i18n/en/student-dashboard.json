@@ -188,8 +188,6 @@
                 "submissionDueTooltip": "The submission is due by {{date}}.",
                 "testsAfterDueDate": "Tests run after submission due date:",
                 "testsAfterDueDateTooltip": "The tests are run once again at {{date}}.",
-                "exampleSolutionPublicationDay": "Example solution publication:",
-                "exampleSolutionPublicationDayTooltip": "The example solution is published at {{date}}.",
                 "assessmentDue": "Assessment due:",
                 "assessmentDueTooltip": "The assessment is due by {{date}}.",
                 "complaintDue": "Complaint due:",
