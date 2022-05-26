@@ -33,7 +33,7 @@ export class TextAssessmentDashboardComponent implements OnInit {
     exerciseId: number;
     examId: number;
     exerciseGroupId: number;
-    assessedSubmissions: number;
+    numberAssessedSubmissions: number;
 
     private cancelConfirmationText: string;
 
@@ -111,7 +111,7 @@ export class TextAssessmentDashboardComponent implements OnInit {
             .subscribe((submissions: TextSubmission[]) => {
                 this.submissions = submissions;
                 this.filteredSubmissions = this.submissions;
-                this.assessedSubmissions = this.submissions.filter((submission) => {
+                this.numberAssessedSubmissions = this.submissions.filter((submission) => {
                     const result = getLatestSubmissionResult(submission);
                     setLatestSubmissionResult(submission, result);
                     return result?.rated;

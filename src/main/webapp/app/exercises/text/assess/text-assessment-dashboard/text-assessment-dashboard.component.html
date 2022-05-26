@@ -10,13 +10,13 @@
             </small>
         </ng-container>
         <ng-container *ngIf="submissions && submissions.length > 0">
-            <small [ngClass]="assessedSubmissions === submissions.length ? 'text-success' : 'text-warning'">
+            <small [ngClass]="numberAssessedSubmissions === submissions.length ? 'text-success' : 'text-warning'">
                 {{
                     'artemisApp.textAssessment.dashboard.progressDescription'
                         | artemisTranslate
                             : {
-                                  percentageAssessed: (assessedSubmissions / submissions.length) * 100 | number: '0.0-0',
-                                  numberAssessed: assessedSubmissions,
+                                  percentageAssessed: (numberAssessedSubmissions / submissions.length) * 100 | number: '0.0-0',
+                                  numberAssessed: numberAssessedSubmissions,
                                   numberSubmissions: submissions.length
                               }
                 }}

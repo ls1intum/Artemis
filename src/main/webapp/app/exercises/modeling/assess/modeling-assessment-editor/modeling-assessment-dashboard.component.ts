@@ -32,7 +32,6 @@ export class ModelingAssessmentDashboardComponent implements OnInit, OnDestroy {
     // make constants available to html for comparison
     ExerciseType = ExerciseType;
     AssessmentType = AssessmentType;
-
     course: Course;
     exercise: ModelingExercise;
     paramSub: Subscription;
@@ -49,9 +48,8 @@ export class ModelingAssessmentDashboardComponent implements OnInit, OnDestroy {
     // all available submissions
     submissions: ModelingSubmission[];
     filteredSubmissions: ModelingSubmission[];
-
     eventSubscriber: Subscription;
-    assessedSubmissions: number;
+    numberAssessedSubmissions: number;
     busy: boolean;
     userId: number;
     canOverrideAssessments: boolean;
@@ -140,7 +138,7 @@ export class ModelingAssessmentDashboardComponent implements OnInit, OnDestroy {
                     }
                 });
                 this.filteredSubmissions = this.submissions;
-                this.assessedSubmissions = this.submissions.filter((submission) => {
+                this.numberAssessedSubmissions = this.submissions.filter((submission) => {
                     const result = getLatestSubmissionResult(submission);
                     setLatestSubmissionResult(submission, result);
                     return result?.rated;

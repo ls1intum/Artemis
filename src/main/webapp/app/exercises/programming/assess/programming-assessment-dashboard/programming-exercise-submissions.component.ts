@@ -38,7 +38,7 @@ export class ProgrammingExerciseSubmissionsComponent implements OnInit {
     newManualResultAllowed: boolean;
     automaticType = AssessmentType.AUTOMATIC;
     private cancelConfirmationText: string;
-    assessedSubmissions: number;
+    numberAssessedSubmissions: number;
 
     // Icons
     faSort = faSort;
@@ -114,7 +114,7 @@ export class ProgrammingExerciseSubmissionsComponent implements OnInit {
             .subscribe((submissions: ProgrammingSubmission[]) => {
                 this.submissions = submissions;
                 this.filteredSubmissions = submissions;
-                this.assessedSubmissions = this.submissions.filter((submission) => {
+                this.numberAssessedSubmissions = this.submissions.filter((submission) => {
                     const result = getLatestSubmissionResult(submission);
                     setLatestSubmissionResult(submission, result);
                     return result?.rated && Result.isManualResult(result);

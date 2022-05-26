@@ -32,7 +32,7 @@ export class FileUploadAssessmentDashboardComponent implements OnInit {
     examId: number;
     exerciseGroupId: number;
     private cancelConfirmationText: string;
-    assessedSubmissions: number;
+    numberAssessedSubmissions: number;
 
     // Icons
     faSort = faSort;
@@ -106,7 +106,7 @@ export class FileUploadAssessmentDashboardComponent implements OnInit {
             .subscribe((submissions: FileUploadSubmission[]) => {
                 this.submissions = submissions;
                 this.filteredSubmissions = submissions;
-                this.assessedSubmissions = this.submissions.filter((submission) => {
+                this.numberAssessedSubmissions = this.submissions.filter((submission) => {
                     const result = getLatestSubmissionResult(submission);
                     setLatestSubmissionResult(submission, result);
                     return result?.rated;
