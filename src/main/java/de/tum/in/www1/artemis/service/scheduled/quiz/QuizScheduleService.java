@@ -595,8 +595,10 @@ public class QuizScheduleService {
                     continue;
                 }
 
-                // record which batch the submission belongs to
-                quizSubmission.setQuizBatch(quizBatch.getId());
+                if (quizBatch != null) {
+                    // record which batch the submission belongs to
+                    quizSubmission.setQuizBatch(quizBatch.getId());
+                }
 
                 count++;
                 // Create Participation and Result and save to Database (DB Write)
