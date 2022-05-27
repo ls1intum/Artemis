@@ -82,21 +82,21 @@ describe('ResultDetailComponent', () => {
         };
     };
 
-    const generateTestCaseFeedbackPair = (showDetails: boolean, name: string, message: string | undefined, credits: number, creditsApplied: boolean) => {
+    const generateTestCaseFeedbackPair = (showDetails: boolean, name: string, message: string | undefined, credits: number) => {
         return {
             fb: makeFeedback({
                 text: name,
                 detailText: message,
                 credits,
-                positive: creditsApplied,
+                positive: credits > 0,
             }),
             item: makeFeedbackItem({
                 type: FeedbackItemType.Test,
                 category: showDetails ? 'Test Case' : 'Feedback',
                 text: message,
                 credits,
-                positive: creditsApplied,
-                title: showDetails ? `Test ${name} ${creditsApplied ? 'passed' : 'failed'}` : undefined,
+                positive: credits > 0,
+                title: showDetails ? `Test ${name} ${credits > 0 ? 'passed' : 'failed'}` : undefined,
             }),
         };
     };
@@ -134,9 +134,9 @@ describe('ResultDetailComponent', () => {
         addPair(generateManualFeedbackPair(showTestDetails, 'Positive', 'This is good', 4));
         addPair(generateManualFeedbackPair(showTestDetails, 'Negative', 'This is bad', -2));
         addPair(generateManualFeedbackPair(showTestDetails, 'Neutral', 'This is neutral', 0));
-        addPair(generateTestCaseFeedbackPair(showTestDetails, 'TestCase1', 'This failed.', 5, false));
-        addPair(generateTestCaseFeedbackPair(showTestDetails, 'TestCase2', 'This passed.', 3, true));
-        addPair(generateTestCaseFeedbackPair(showTestDetails, 'TestCase3', undefined, 3, true));
+        addPair(generateTestCaseFeedbackPair(showTestDetails, 'TestCase1', 'This failed.', 0));
+        addPair(generateTestCaseFeedbackPair(showTestDetails, 'TestCase2', 'This passed.', 3));
+        addPair(generateTestCaseFeedbackPair(showTestDetails, 'TestCase3', undefined, 3));
 
         if (!showTestDetails) {
             expectedItems.pop();
@@ -639,7 +639,7 @@ describe('ResultDetailComponent', () => {
 
         // test score exceeding exercise maxpoints
 
-        const feedbackPair1 = generateTestCaseFeedbackPair(true, '', '', 120, true);
+        const feedbackPair1 = generateTestCaseFeedbackPair(true, '', '', 120);
         feedbacks.push(feedbackPair1.fb);
         expectedItems.push(feedbackPair1.item);
 
