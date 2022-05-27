@@ -42,6 +42,10 @@
                 "show": "Show discussion",
                 "hide": "Hide discussion"
             },
+            "discussionSection": {
+                "searchBarDefault": "Search for a post",
+                "filterToAnsweredOrReacted": "Reacted or replied to"
+            },
             "overview": {
                 "title": "Posts",
                 "searchBarDefault": "Search for a post, use # to find a specific post (e.g. #1)",

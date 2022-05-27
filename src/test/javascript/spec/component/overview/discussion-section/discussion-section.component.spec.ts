@@ -30,6 +30,7 @@ import { MockRouter } from '../../../helpers/mocks/mock-router';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockLocalStorageService } from '../../../helpers/mocks/service/mock-local-storage.service';
+import { FormBuilder } from '@angular/forms';
 import {
     metisCourse,
     metisExercise,
@@ -57,6 +58,7 @@ describe('PageDiscussionSectionComponent', () => {
         return TestBed.configureTestingModule({
             imports: [HttpClientTestingModule],
             providers: [
+                FormBuilder,
                 MockProvider(SessionStorageService),
                 { provide: ExerciseService, useClass: MockExerciseService },
                 { provide: AnswerPostService, useClass: MockAnswerPostService },

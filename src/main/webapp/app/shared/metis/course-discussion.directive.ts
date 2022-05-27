@@ -41,6 +41,9 @@ export abstract class CourseDiscussionDirective implements OnDestroy {
         this.metisService.getFilteredPosts(this.currentPostContextFilter);
     }
 
+    /**
+     * on leaving the page, should unsubscribe from subscriptions
+     */
     ngOnDestroy(): void {
         this.paramSubscription?.unsubscribe();
         this.postsSubscription?.unsubscribe();
