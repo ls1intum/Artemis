@@ -406,7 +406,7 @@ export class CourseManagementRequests {
             {
                 ...multipleChoiceSubmissionTemplate.submittedAnswers[0],
                 quizQuestion: quizExercise.quizQuestions![0],
-                selectedOptions: tickOptions.map((option) => quizExercise.quizQuestions[0].answerOptions[option].body),
+                selectedOptions: tickOptions.map((option) => quizExercise.quizQuestions[0].answerOptions[option]),
             },
         ];
         const multipleChoiceSubmission = {
