@@ -78,6 +78,7 @@ public abstract class CacheHandler<K> {
      * @param key the id of the value, must not be null
      * @return a {@link Cache} object, never null and never empty
      */
+    // TODO: rename method
     public Cache getTransientWriteCacheFor(K key) {
         // Look for a cache
         var cached = cache.get(key);
