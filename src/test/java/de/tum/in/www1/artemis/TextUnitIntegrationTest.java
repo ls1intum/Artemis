@@ -2,6 +2,8 @@ package de.tum.in.www1.artemis;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.util.List;
+
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -10,6 +12,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.domain.Lecture;
+import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
 import de.tum.in.www1.artemis.domain.lecture.TextUnit;
 import de.tum.in.www1.artemis.repository.LectureRepository;
 import de.tum.in.www1.artemis.repository.TextUnitRepository;
@@ -107,13 +110,15 @@ public class TextUnitIntegrationTest extends AbstractSpringIntegrationBambooBitb
         // Add a second lecture unit
         TextUnit textUnit = database.createTextUnit();
         lecture.addLectureUnit(textUnit);
-        lectureRepository.save(lecture);
+        lecture = lectureRepository.save(lecture);
+
+        List<LectureUnit> orderedUnits = lecture.getLectureUnits();
 
         // Updating the lecture unit should not change order attribute
         request.putWithResponseBody("/api/lectures/" + lecture.getId() + "/text-units", textUnit, TextUnit.class, HttpStatus.OK);
 
-        TextUnit updatedTextUnit = textUnitRepository.findById(textUnit.getId()).orElseThrow();
-        assertThat(updatedTextUnit.getOrder()).isEqualTo(1);
+        List<LectureUnit> updatedOrderedUnits = lectureRepository.findByIdWithLectureUnits(lecture.getId()).get().getLectureUnits();
+        assertThat(updatedOrderedUnits).containsExactlyElementsOf(orderedUnits);
     }
 
     @Test

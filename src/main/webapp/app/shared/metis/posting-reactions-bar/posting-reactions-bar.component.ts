@@ -1,4 +1,4 @@
-import { Directive, Input, OnChanges, OnDestroy, OnInit } from '@angular/core';
+import { Directive, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output } from '@angular/core';
 import { Posting } from 'app/entities/metis/posting.model';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { EmojiData } from '@ctrl/ngx-emoji-mart/ngx-emoji';
@@ -11,6 +11,10 @@ const PIN_EMOJI_ID = 'pushpin';
 const PIN_EMOJI_UNICODE = '1F4CC';
 const ARCHIVE_EMOJI_ID = 'open_file_folder';
 const ARCHIVE_EMOJI_UNICODE = '1F4C2';
+const SPEECH_BALLOON_ID = 'speech_balloon';
+const SPEECH_BALLOON_UNICODE = '1F4AC';
+const HEAVY_MULTIPLICATION_ID = 'heavy_multiplication_x';
+const HEAVY_MULTIPLICATION_UNICODE = '2716';
 
 /**
  * event triggered by the emoji mart component, including EmojiData
@@ -41,6 +45,11 @@ interface ReactionMetaDataMap {
 export abstract class PostingsReactionsBarDirective<T extends Posting> implements OnInit, OnChanges, OnDestroy {
     pinEmojiId: string = PIN_EMOJI_ID;
     archiveEmojiId: string = ARCHIVE_EMOJI_ID;
+    speechBalloonId: string = SPEECH_BALLOON_ID;
+    closeCrossId: string = HEAVY_MULTIPLICATION_ID;
+
+    @Output() openPostingCreateEditModal = new EventEmitter<void>();
+
     /*
      * icons (as svg paths) to be used as category preview image in emoji mart selector
      */
@@ -78,9 +87,14 @@ export abstract class PostingsReactionsBarDirective<T extends Posting> implement
      */
     emojisToShowFilter: (emoji: string | EmojiData) => boolean = (emoji) => {
         if (typeof emoji === 'string') {
-            return emoji !== PIN_EMOJI_UNICODE && emoji !== ARCHIVE_EMOJI_UNICODE;
+            return emoji !== PIN_EMOJI_UNICODE && emoji !== ARCHIVE_EMOJI_UNICODE && emoji !== SPEECH_BALLOON_UNICODE && emoji !== HEAVY_MULTIPLICATION_UNICODE;
         } else {
-            return emoji.unified !== PIN_EMOJI_UNICODE && emoji.unified !== ARCHIVE_EMOJI_UNICODE;
+            return (
+                emoji.unified !== PIN_EMOJI_UNICODE &&
+                emoji.unified !== ARCHIVE_EMOJI_UNICODE &&
+                emoji.unified !== SPEECH_BALLOON_UNICODE &&
+                emoji.unified !== HEAVY_MULTIPLICATION_UNICODE
+            );
         }
     };
 

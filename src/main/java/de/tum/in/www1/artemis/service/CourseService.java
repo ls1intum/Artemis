@@ -703,7 +703,9 @@ public class CourseService {
     public int determineTimeSpanSizeForActiveStudents(Course course, ZonedDateTime endDate, int maximalSize) {
         var spanTime = maximalSize;
         if (course.getStartDate() != null) {
-            var amountOfWeeksBetween = course.getStartDate().until(endDate.plusWeeks(1), ChronoUnit.WEEKS);
+            var mondayInWeekOfStart = course.getStartDate().with(DayOfWeek.MONDAY).withHour(0).withMinute(0).withSecond(0).withNano(0);
+            var mondayInWeekOfEnd = endDate.plusWeeks(1).with(DayOfWeek.MONDAY).withHour(0).withMinute(0).withSecond(0).withNano(0);
+            var amountOfWeeksBetween = mondayInWeekOfStart.until(mondayInWeekOfEnd, ChronoUnit.WEEKS);
             spanTime = Math.toIntExact(Math.min(maximalSize, amountOfWeeksBetween));
         }
         return spanTime;

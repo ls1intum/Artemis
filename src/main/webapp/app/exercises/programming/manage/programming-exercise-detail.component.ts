@@ -478,7 +478,22 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                     type: AlertType.SUCCESS,
                     message: 'artemisApp.programmingExercise.createStructuralSolutionEntriesSuccess',
                 });
-                console.log(ProgrammingExerciseDetailComponent.buildStructuralSolutionEntriesMessage(res));
+                console.log(ProgrammingExerciseDetailComponent.buildSolutionEntriesMessage(res));
+            },
+            error: (err) => {
+                this.onError(err);
+            },
+        });
+    }
+
+    createBehavioralSolutionEntries() {
+        this.programmingExerciseService.createBehavioralSolutionEntries(this.programmingExercise.id!).subscribe({
+            next: (res) => {
+                this.alertService.addAlert({
+                    type: AlertType.SUCCESS,
+                    message: 'artemisApp.programmingExercise.createBehavioralSolutionEntriesSuccess',
+                });
+                console.log(ProgrammingExerciseDetailComponent.buildSolutionEntriesMessage(res));
             },
             error: (err) => {
                 this.onError(err);
@@ -500,7 +515,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
         });
     }
 
-    private static buildStructuralSolutionEntriesMessage(solutionEntries: ProgrammingExerciseSolutionEntry[]): string {
+    private static buildSolutionEntriesMessage(solutionEntries: ProgrammingExerciseSolutionEntry[]): string {
         return solutionEntries.map((solutionEntry) => `${solutionEntry.filePath}:\n${solutionEntry.code}`).join('\n\n');
     }
 

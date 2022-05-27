@@ -2,7 +2,6 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { DebugElement } from '@angular/core';
 import { Post } from 'app/entities/metis/post.model';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { getElement, getElements } from '../../../../../helpers/utils/general.utils';
 import { PostReactionsBarComponent } from 'app/shared/metis/posting-reactions-bar/post-reactions-bar/post-reactions-bar.component';
@@ -18,14 +17,15 @@ import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { PickerModule } from '@ctrl/ngx-emoji-mart';
 import { DisplayPriority } from 'app/shared/metis/metis.util';
-import { MockTranslateService } from '../../../../../helpers/mocks/service/mock-translate.service';
+import { MockTranslateService, TranslatePipeMock } from '../../../../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { Router } from '@angular/router';
 import { MockRouter } from '../../../../../helpers/mocks/mock-router';
 import { MockLocalStorageService } from '../../../../../helpers/mocks/service/mock-local-storage.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
+import { By } from '@angular/platform-browser';
 import { PLACEHOLDER_USER_REACTED, ReactingUsersOnPostingPipe } from 'app/shared/pipes/reacting-users-on-posting.pipe';
-import { metisCourse, metisUser1 } from '../../../../../helpers/sample/metis-sample-data';
+import { metisCourse, metisPostExerciseUser1, metisUser1, sortedAnswerArray } from '../../../../../helpers/sample/metis-sample-data';
 
 describe('PostReactionsBarComponent', () => {
     let component: PostReactionsBarComponent;
@@ -40,13 +40,7 @@ describe('PostReactionsBarComponent', () => {
     beforeEach(() => {
         return TestBed.configureTestingModule({
             imports: [HttpClientTestingModule, MockModule(OverlayModule), MockModule(EmojiModule), MockModule(PickerModule)],
-            declarations: [
-                PostReactionsBarComponent,
-                MockPipe(ReactingUsersOnPostingPipe),
-                MockPipe(ArtemisTranslatePipe),
-                MockDirective(NgbTooltip),
-                MockComponent(FaIconComponent),
-            ],
+            declarations: [PostReactionsBarComponent, TranslatePipeMock, MockPipe(ReactingUsersOnPostingPipe), MockDirective(NgbTooltip), MockComponent(FaIconComponent)],
             providers: [
                 MockProvider(SessionStorageService),
                 { provide: MetisService, useClass: MetisService },
@@ -68,6 +62,7 @@ describe('PostReactionsBarComponent', () => {
                 post.id = 1;
                 post.author = metisUser1;
                 post.displayPriority = DisplayPriority.NONE;
+                component.sortedAnswerPosts = sortedAnswerArray;
                 reactionToDelete = new Reaction();
                 reactionToDelete.id = 1;
                 reactionToDelete.emojiId = 'smile';
@@ -108,8 +103,8 @@ describe('PostReactionsBarComponent', () => {
         expect(component.currentUserIsAtLeastTutor).toEqual(true);
         fixture.detectChanges();
         const reactions = getElements(debugElement, 'ngx-emoji');
-        // emojis to be displayed it the user reaction, the pin emoji and the archive emoji
-        expect(reactions).toHaveLength(3);
+        // emojis to be displayed it the user reaction, the pin, archive and the show answers toggle emoji
+        expect(reactions).toHaveLength(4);
         expect(component.reactionMetaDataMap).toEqual({
             smile: {
                 count: 1,
@@ -200,5 +195,38 @@ describe('PostReactionsBarComponent', () => {
         expect(metisServiceUpdateDisplayPriorityMock).not.toHaveBeenCalled();
         // set correct tooltips for student and post that is archived
         expect(component.archiveTooltip).toEqual('artemisApp.metis.archivedPostTooltip');
+    });
+
+    it('start discussion button should be visible if post does not yet have any answers', () => {
+        component.posting = post;
+        component.sortedAnswerPosts = [];
+        fixture.detectChanges();
+        const startDiscussion = fixture.debugElement.query(By.css('.start-discussion-btn')).nativeElement;
+        expect(startDiscussion.innerHTML).toContain('startDiscussion');
+    });
+
+    it('should display button to show single answer', () => {
+        component.posting = post;
+        component.sortedAnswerPosts = [metisPostExerciseUser1];
+        component.showAnswers = false;
+        fixture.detectChanges();
+        const answerNowButton = fixture.debugElement.query(By.css('.expand-answers-btn')).nativeElement;
+        expect(answerNowButton.innerHTML).toContain('showSingleAnswer');
+    });
+
+    it('should display button to show multiple answers', () => {
+        component.posting = post;
+        component.showAnswers = false;
+        fixture.detectChanges();
+        const answerNowButton = fixture.debugElement.query(By.css('.expand-answers-btn')).nativeElement;
+        expect(answerNowButton.innerHTML).toContain('showMultipleAnswers');
+    });
+
+    it('should display button to collapse answers', () => {
+        component.posting = post;
+        component.showAnswers = true;
+        fixture.detectChanges();
+        const answerNowButton = fixture.debugElement.query(By.css('.collapse-answers-btn')).nativeElement;
+        expect(answerNowButton.innerHTML).toContain('collapseAnswers');
     });
 });

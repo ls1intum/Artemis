@@ -43,7 +43,11 @@
                 "feedback": "Feedback",
                 "feedbackWithColon": "Feedback:",
                 "scoreFor": "Assessment for",
-                "tutorComment": "Tutor Comment:"
+                "tutorComment": "Tutor Comment:",
+                "points": {
+                    "one": "{{points}} Point",
+                    "many": "{{points}} Points"
+                }
             },
             "useAsExampleSubmissionVerificationQuestion": "Are you sure to import this submission as an example submission?",
             "messages": {

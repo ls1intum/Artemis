@@ -43,7 +43,11 @@
                 "feedback": "Feedback",
                 "feedbackWithColon": "Feedback:",
                 "scoreFor": "Bewertung für",
-                "tutorComment": "Kommentar von Tutor:in:"
+                "tutorComment": "Kommentar von Tutor:in:",
+                "points": {
+                    "one": "{{points}} Punkt",
+                    "many": "{{points}} Punkte"
+                }
             },
             "useAsExampleSubmissionVerificationQuestion": "Bist du dir sicher, dass du diese Abgabe als Beispielabgabe importieren möchtest?",
             "messages": {
