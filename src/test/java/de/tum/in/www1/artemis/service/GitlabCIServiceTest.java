@@ -19,12 +19,12 @@ import org.springframework.security.test.context.support.WithMockUser;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 
-import de.tum.in.www1.artemis.AbstractSpringIntegrationGitLabCIGitLabTest;
+import de.tum.in.www1.artemis.AbstractSpringIntegrationGitlabCIGitlabSamlTest;
 import de.tum.in.www1.artemis.ContinuousIntegrationTestService;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.exception.GitLabCIException;
 
-public class GitLabCIServiceTest extends AbstractSpringIntegrationGitLabCIGitLabTest {
+public class GitlabCIServiceTest extends AbstractSpringIntegrationGitlabCIGitlabSamlTest {
 
     @Value("${artemis.version-control.url}")
     private URL gitlabServerUrl;

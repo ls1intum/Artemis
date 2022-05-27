@@ -6,6 +6,7 @@ import static de.tum.in.www1.artemis.domain.enumeration.BuildPlanType.SOLUTION;
 import static de.tum.in.www1.artemis.domain.enumeration.BuildPlanType.TEMPLATE;
 import static de.tum.in.www1.artemis.util.TestConstants.COMMIT_HASH_OBJECT_ID;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
 import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
@@ -22,8 +23,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.saml2.provider.service.registration.RelyingPartyRegistrationRepository;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestPropertySource;
 
@@ -44,11 +47,9 @@ import de.tum.in.www1.artemis.util.AbstractArtemisIntegrationTest;
 @AutoConfigureMockMvc
 @AutoConfigureTestDatabase
 // NOTE: we use a common set of active profiles to reduce the number of application launches during testing. This significantly saves time and memory!
-@ActiveProfiles({ SPRING_PROFILE_TEST, "artemis", "gitlabci", "gitlab", "scheduling" })
-@TestPropertySource(properties = { "info.guided-tour.course-group-tutors=artemis-artemistutorial-tutors", "info.guided-tour.course-group-students=artemis-artemistutorial-students",
-        "info.guided-tour.course-group-editors=artemis-artemistutorial-editors", "info.guided-tour.course-group-instructors=artemis-artemistutorial-instructors",
-        "artemis.user-management.use-external=false" })
-public abstract class AbstractSpringIntegrationGitLabCIGitLabTest extends AbstractArtemisIntegrationTest {
+@ActiveProfiles({ SPRING_PROFILE_TEST, "artemis", "gitlabci", "gitlab", "saml2", "scheduling" })
+@TestPropertySource(properties = { "artemis.user-management.use-external=false" })
+public abstract class AbstractSpringIntegrationGitlabCIGitlabSamlTest extends AbstractArtemisIntegrationTest {
 
     // please only use this to verify method calls using Mockito. Do not mock methods, instead mock the communication with Jenkins using the corresponding RestTemplate.
     @SpyBean
@@ -65,9 +66,13 @@ public abstract class AbstractSpringIntegrationGitLabCIGitLabTest extends Abstra
     @Autowired
     protected GitlabRequestMockProvider gitlabRequestMockProvider;
 
+    // NOTE: this has to be a MockBean, because the class cannot be instantiated in the tests
+    @MockBean
+    protected RelyingPartyRegistrationRepository relyingPartyRegistrationRepository;
+
     @AfterEach
     public void resetSpyBeans() {
-        Mockito.reset(continuousIntegrationService, versionControlService);
+        Mockito.reset(continuousIntegrationService, versionControlService, relyingPartyRegistrationRepository, mailService);
         super.resetSpyBeans();
     }
 
@@ -91,6 +96,10 @@ public abstract class AbstractSpringIntegrationGitLabCIGitLabTest extends Abstra
         // jenkinsRequestMockProvider.mockTriggerBuild(projectKey, SOLUTION.getName(), false);
 
         doNothing().when(gitService).pushSourceToTargetRepo(any(), any());
+
+        // saml2-specific mocks
+        doReturn(null).when(relyingPartyRegistrationRepository).findByRegistrationId(anyString());
+        doNothing().when(mailService).sendSAML2SetPasswordMail(any(User.class));
     }
 
     @Override
