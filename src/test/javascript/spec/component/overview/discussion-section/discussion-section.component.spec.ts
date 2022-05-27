@@ -163,40 +163,13 @@ describe('PageDiscussionSectionComponent', () => {
         expect(posts).toEqual([post1, post3, post2, post4]);
     });
 
-    it('should initialize formGroup correctly for exercise or lecture', fakeAsync(() => {
+    it('should initialize correctly for exercise posts with default settings', fakeAsync(() => {
+        component.exercise = metisExercise;
         component.ngOnInit();
         tick();
-        expect(component.formGroup.get('context')?.value).toEqual({
-            courseId: metisCourse.id,
-            courseWideContext: undefined,
-            exerciseId: component.exercise?.id,
-            lectureId: component.lecture?.id,
-            searchText: undefined,
-            filterToUnresolved: false,
-            filterToOwn: false,
-            filterToAnsweredOrReacted: false,
-        });
         expect(component.formGroup.get('filterToUnresolved')?.value).toBe(false);
         expect(component.formGroup.get('filterToOwn')?.value).toBe(false);
         expect(component.formGroup.get('filterToAnsweredOrReacted')?.value).toBe(false);
-        fixture.detectChanges();
-        const searchInput = getElement(fixture.debugElement, 'input[name=searchText]');
-        expect(searchInput.textContent).toBe('');
-    }));
-
-    it('should initialize discussion section page for exercise or lecture posts with default settings correctly', fakeAsync(() => {
-        component.ngOnInit();
-        tick();
-        expect(component.formGroup.get('context')?.value).toEqual({
-            courseId: metisCourse.id,
-            courseWideContext: undefined,
-            exerciseId: component.exercise?.id,
-            lectureId: component.lecture?.id,
-            searchText: undefined,
-            filterToUnresolved: false,
-            filterToOwn: false,
-            filterToAnsweredOrReacted: false,
-        });
         fixture.detectChanges();
         const searchInput = getElement(fixture.debugElement, 'input[name=searchText]');
         expect(searchInput.textContent).toBe('');
