@@ -61,7 +61,7 @@ public class ExamQuizService {
         log.info("Starting quiz evaluation for quiz {}", quizExerciseId);
         // We have to load the questions and statistics so that we can evaluate and update and we also need the participations and submissions that exist for this exercise so that
         // they can be evaluated
-        var quizExercise = quizExerciseRepository.findOneWithQuestionsAndStatistics(quizExerciseId);
+        var quizExercise = quizExerciseRepository.findByIdWithQuestionsAndStatisticsElseThrow(quizExerciseId);
         Set<Result> createdResults = evaluateSubmissions(quizExercise);
         log.info("Quiz evaluation for quiz {} finished after {} with {} created results", quizExercise.getId(), TimeLogUtil.formatDurationFrom(start), createdResults.size());
         quizStatisticService.updateStatistics(createdResults, quizExercise);
@@ -82,7 +82,7 @@ public class ExamQuizService {
             if (optionalExistingSubmission.isPresent()) {
                 QuizSubmission submission = (QuizSubmission) submissionRepository.findWithEagerResultAndFeedbackById(optionalExistingSubmission.get().getId())
                         .orElseThrow(() -> new EntityNotFoundException("Submission with id \"" + optionalExistingSubmission.get().getId() + "\" does not exist"));
-                participation.setExercise(quizExerciseRepository.findOneWithQuestions(quizExercise.getId()));
+                participation.setExercise(quizExerciseRepository.findByIdWithQuestionsElseThrow(quizExercise.getId()));
                 quizExercise = (QuizExercise) participation.getExercise();
                 Result result;
                 if (submission.getLatestResult() == null) {
