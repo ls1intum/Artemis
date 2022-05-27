@@ -10,16 +10,18 @@ import { PostingButtonComponent } from 'app/shared/metis/posting-button/posting-
 import { HelpIconComponent } from 'app/shared/components/help-icon.component';
 import { PostTagSelectorComponent } from 'app/shared/metis/posting-create-edit-modal/post-create-edit-modal/post-tag-selector/post-tag-selector.component';
 import { CourseWideContext, PageType } from 'app/shared/metis/metis.util';
-import { NgbAccordion, NgbPanel } from '@ng-bootstrap/ng-bootstrap';
+import { NgbAccordion, NgbModal, NgbModalRef, NgbPanel } from '@ng-bootstrap/ng-bootstrap';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { ArtemisTestModule } from '../../../../../test.module';
 import { PostComponent } from 'app/shared/metis/post/post.component';
 import { metisCourse, metisCoursePosts, metisExercise, metisLecture, metisPostLectureUser1, metisPostToCreateUser1 } from '../../../../../helpers/sample/metis-sample-data';
+import { MockNgbModalService } from '../../../../../helpers/mocks/service/mock-ngb-modal.service';
 
 describe('PostCreateEditModalComponent', () => {
     let component: PostCreateEditModalComponent;
     let fixture: ComponentFixture<PostCreateEditModalComponent>;
     let metisService: MetisService;
+    let modal: MockNgbModalService;
     let metisServiceGetPageTypeMock: jest.SpyInstance;
     let metisServiceIsAtLeastInstructorStub: jest.SpyInstance;
     let metisServiceCreateStub: jest.SpyInstance;
@@ -39,13 +41,14 @@ describe('PostCreateEditModalComponent', () => {
                 MockComponent(NgbAccordion),
                 MockDirective(NgbPanel),
             ],
-            providers: [FormBuilder, { provide: MetisService, useClass: MockMetisService }],
+            providers: [FormBuilder, { provide: MetisService, useClass: MockMetisService }, { provide: NgbModal, useClass: MockNgbModalService }],
         })
             .compileComponents()
             .then(() => {
                 fixture = TestBed.createComponent(PostCreateEditModalComponent);
                 component = fixture.componentInstance;
                 metisService = TestBed.inject(MetisService);
+                modal = TestBed.inject(NgbModal);
                 metisServiceGetPageTypeMock = jest.spyOn(metisService, 'getPageType');
                 metisServiceIsAtLeastInstructorStub = jest.spyOn(metisService, 'metisUserIsAtLeastInstructorInCourse');
                 metisServiceIsAtLeastInstructorStub.mockReturnValue(false);
@@ -182,4 +185,16 @@ describe('PostCreateEditModalComponent', () => {
         tick();
         expect(component.isLoading).toBe(false);
     }));
+
+    it('should invoke the modalService', () => {
+        const componentInstance = { title: String, content: String };
+        const result = new Promise((resolve) => resolve(true));
+        const modalServiceOpenMock = jest.spyOn(modal, 'open').mockReturnValue(<NgbModalRef>{
+            componentInstance,
+            result,
+        });
+
+        component.open();
+        expect(modalServiceOpenMock).toHaveBeenCalled();
+    });
 });

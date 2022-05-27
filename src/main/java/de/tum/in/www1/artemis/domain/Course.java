@@ -755,6 +755,14 @@ public class Course extends DomainObject {
     }
 
     /**
+     * Returns true if the start and end date of the course fulfill all requirements
+     * @return true if the dates are valid
+     */
+    public boolean isValidStartAndEndDate() {
+        return getStartDate() == null || getEndDate() == null || this.getEndDate().isAfter(this.getStartDate());
+    }
+
+    /**
      * We want to add users to a group, however different courses might have different courseGroupNames, therefore we
      * use this method to return the customized courseGroup name
      *

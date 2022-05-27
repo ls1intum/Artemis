@@ -1660,7 +1660,7 @@ public class ProgrammingExerciseTestService {
         ProgrammingExercise sourceExercise = database.addProgrammingExerciseToCourse(course1, false);
         ProgrammingExercise exerciseToBeImported = ModelFactory.generateToBeImportedProgrammingExercise("ImportTitle", "Imported", sourceExercise, course2);
 
-        exerciseToBeImported.setExampleSolutionPublicationDate(ZonedDateTime.now());
+        exerciseToBeImported.setExampleSolutionPublicationDate(sourceExercise.getDueDate().plusDays(1));
 
         // Mock requests
         mockDelegate.mockConnectorRequestsForImport(sourceExercise, exerciseToBeImported, false);
@@ -1675,6 +1675,44 @@ public class ProgrammingExerciseTestService {
         ProgrammingExercise newProgrammingExerciseFromDatabase = programmingExerciseRepository.findById(newProgrammingExercise.getId()).get();
         assertThat(newProgrammingExerciseFromDatabase.getExampleSolutionPublicationDate())
                 .as("programming example solution publication date was correctly set to null in the database").isNull();
+    }
+
+    // TEST
+    public void createProgrammingExercise_setInvalidExampleSolutionPublicationDate_badRequest() throws Exception {
+        final var baseTime = ZonedDateTime.now();
+
+        exercise.setAssessmentDueDate(null);
+
+        exercise.setReleaseDate(baseTime.plusHours(1));
+        exercise.setDueDate(baseTime.plusHours(3));
+        exercise.setExampleSolutionPublicationDate(baseTime.plusHours(2));
+
+        mockDelegate.mockConnectorRequestsForSetup(exercise, false);
+
+        request.postWithResponseBody(ROOT + SETUP, exercise, ProgrammingExercise.class, HttpStatus.BAD_REQUEST);
+
+        exercise.setReleaseDate(baseTime.plusHours(3));
+        exercise.setDueDate(null);
+        exercise.setExampleSolutionPublicationDate(baseTime.plusHours(2));
+
+        request.postWithResponseBody(ROOT + SETUP, exercise, ProgrammingExercise.class, HttpStatus.BAD_REQUEST);
+    }
+
+    // TEST
+    public void createProgrammingExercise_setValidExampleSolutionPublicationDate() throws Exception {
+        final var baseTime = ZonedDateTime.now();
+
+        exercise.setAssessmentDueDate(null);
+
+        exercise.setReleaseDate(baseTime.plusHours(1));
+        exercise.setDueDate(baseTime.plusHours(2));
+        var exampleSolutionPublicationDate = baseTime.plusHours(3);
+        exercise.setExampleSolutionPublicationDate(exampleSolutionPublicationDate);
+
+        mockDelegate.mockConnectorRequestsForSetup(exercise, false);
+
+        var result = request.postWithResponseBody(ROOT + SETUP, exercise, ProgrammingExercise.class, HttpStatus.CREATED);
+        assertThat(result.getExampleSolutionPublicationDate()).isEqualTo(exampleSolutionPublicationDate);
     }
 
     // TEST
