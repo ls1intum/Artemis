@@ -8,7 +8,6 @@ import javax.persistence.*;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonView;
 
@@ -28,10 +27,8 @@ public class QuizSubmission extends Submission {
     @JsonView(QuizView.After.class)
     private Double scoreInPoints;
 
-    @ManyToOne
-    @JoinColumn(name = "quiz_batch")
-    @JsonIgnore
-    private QuizBatch quizBatch;
+    @Column(name = "quiz_batch")
+    private Long quizBatch;
 
     @OneToMany(mappedBy = "submission", cascade = CascadeType.ALL, fetch = FetchType.EAGER, orphanRemoval = true)
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
@@ -51,11 +48,11 @@ public class QuizSubmission extends Submission {
         this.scoreInPoints = scoreInPoints;
     }
 
-    public void setQuizBatch(QuizBatch quizBatch) {
+    public void setQuizBatch(Long quizBatch) {
         this.quizBatch = quizBatch;
     }
 
-    public QuizBatch getQuizBatch() {
+    public Long getQuizBatch() {
         return quizBatch;
     }
 
