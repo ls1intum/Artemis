@@ -52,15 +52,4 @@ export enum GraphColors {
     RED = 'var(--graph-red)',
     YELLOW = 'var(--graph-yellow)',
     BLACK = 'var(--graph-black)',
-
-    // Exam-Monitoring (remove if not needed)
-    MONITORING_VARIANT_ONE = 'var(--monitoring-graph-variant-one)',
-    MONITORING_VARIANT_TWO = 'var(--monitoring-graph-variant-two)',
-    MONITORING_VARIANT_THREE = 'var(--monitoring-graph-variant-three)',
-    MONITORING_VARIANT_FOUR = 'var(--monitoring-graph-variant-four)',
-    MONITORING_VARIANT_FIVE = 'var(--monitoring-graph-variant-five)',
-    MONITORING_VARIANT_SIX = 'var(--monitoring-graph-variant-six)',
-    MONITORING_VARIANT_SEVEN = 'var(--monitoring-graph-variant-seven)',
-    MONITORING_VARIANT_EIGHT = 'var(--monitoring-graph-variant-eight)',
-    MONITORING_VARIANT_NINE = 'var(--monitoring-graph-variant-nine)',
 }
