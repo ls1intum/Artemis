@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnChanges, OnDestroy, Output, SimpleChanges } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, OnDestroy, Output, SimpleChanges, ViewContainerRef } from '@angular/core';
 import { SafeHtml } from '@angular/platform-browser';
 import { TranslateService } from '@ngx-translate/core';
 import { ShowdownExtension } from 'showdown';
@@ -70,6 +70,7 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
     faSpinner = faSpinner;
 
     constructor(
+        public viewContainerRef: ViewContainerRef,
         private translateService: TranslateService,
         private resultService: ResultService,
         private repositoryFileService: RepositoryFileService,
@@ -80,7 +81,9 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
         private programmingExercisePlantUmlWrapper: ProgrammingExercisePlantUmlExtensionWrapper,
         private programmingExerciseParticipationService: ProgrammingExerciseParticipationService,
         private exerciseHintService: ExerciseHintService,
-    ) {}
+    ) {
+        this.programmingExerciseTaskWrapper.viewContainerRef = this.viewContainerRef;
+    }
 
     /**
      * If the participation changes, the participation's instructions need to be loaded and the

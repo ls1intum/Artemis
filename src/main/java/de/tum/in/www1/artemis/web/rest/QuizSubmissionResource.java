@@ -193,7 +193,7 @@ public class QuizSubmissionResource {
         result.setAssessmentType(AssessmentType.AUTOMATIC);
         result.setCompletionDate(ZonedDateTime.now());
         // calculate score and update result accordingly
-        result.evaluateSubmission();
+        result.evaluateQuizSubmission();
 
         return ResponseEntity.ok(result);
     }
