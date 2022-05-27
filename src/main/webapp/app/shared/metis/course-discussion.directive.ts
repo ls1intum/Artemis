@@ -1,4 +1,4 @@
-import { Directive, OnDestroy } from '@angular/core';
+import { Directive } from '@angular/core';
 import { FormGroup } from '@angular/forms';
 import { faFilter, faSearch, faPlus, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { PostContextFilter } from 'app/shared/metis/metis.util';
@@ -11,7 +11,7 @@ import { MetisService } from 'app/shared/metis/metis.service';
 @Directive({
     providers: [MetisService],
 })
-export abstract class CourseDiscussionDirective implements OnDestroy {
+export abstract class CourseDiscussionDirective {
     searchText?: string;
     currentPostContextFilter: PostContextFilter;
     formGroup: FormGroup;
@@ -44,7 +44,7 @@ export abstract class CourseDiscussionDirective implements OnDestroy {
     /**
      * on leaving the page, should unsubscribe from subscriptions
      */
-    ngOnDestroy(): void {
+    onDestroy(): void {
         this.paramSubscription?.unsubscribe();
         this.postsSubscription?.unsubscribe();
     }

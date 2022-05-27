@@ -86,6 +86,7 @@ export class DiscussionSectionComponent extends CourseDiscussionDirective implem
      * on leaving the page, the modal should be closed
      */
     ngOnDestroy(): void {
+        super.onDestroy();
         this.postCreateEditModal?.modalRef?.close();
     }
 

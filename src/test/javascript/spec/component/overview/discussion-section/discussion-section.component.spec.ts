@@ -4,7 +4,7 @@ import dayjs from 'dayjs/esm';
 import { Observable, of } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
 import { Course } from 'app/entities/course.model';
-import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
+import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
@@ -19,7 +19,7 @@ import { DiscussionSectionComponent } from 'app/overview/discussion-section/disc
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { PostingThreadComponent } from 'app/shared/metis/posting-thread/posting-thread.component';
 import { PostCreateEditModalComponent } from 'app/shared/metis/posting-create-edit-modal/post-create-edit-modal/post-create-edit-modal.component';
-import { DisplayPriority } from 'app/shared/metis/metis.util';
+import { DisplayPriority, PostSortCriterion, SortDirection } from 'app/shared/metis/metis.util';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
@@ -30,9 +30,12 @@ import { MockRouter } from '../../../helpers/mocks/mock-router';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockLocalStorageService } from '../../../helpers/mocks/service/mock-local-storage.service';
-import { FormBuilder } from '@angular/forms';
+import { FormBuilder, FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { getElement, getElements } from '../../../helpers/utils/general.utils';
+import { ButtonComponent } from 'app/shared/components/button.component';
 import {
     metisCourse,
+    metisCoursePostsWithCourseWideContext,
     metisExercise,
     metisExercisePosts,
     metisLecture,
@@ -49,6 +52,8 @@ describe('PageDiscussionSectionComponent', () => {
     let component: DiscussionSectionComponent;
     let fixture: ComponentFixture<DiscussionSectionComponent>;
     let courseManagementService: CourseManagementService;
+    let metisService: MetisService;
+    let metisServiceGetFilteredPostsSpy: jest.SpyInstance;
     let post1: Post;
     let post2: Post;
     let post3: Post;
@@ -56,7 +61,7 @@ describe('PageDiscussionSectionComponent', () => {
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [HttpClientTestingModule],
+            imports: [HttpClientTestingModule, MockModule(FormsModule), MockModule(ReactiveFormsModule)],
             providers: [
                 FormBuilder,
                 MockProvider(SessionStorageService),
@@ -67,6 +72,7 @@ describe('PageDiscussionSectionComponent', () => {
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: Router, useClass: MockRouter },
                 { provide: LocalStorageService, useClass: MockLocalStorageService },
+                { provide: MetisService, useClass: MetisService },
                 {
                     provide: ActivatedRoute,
                     useValue: new MockActivatedRoute({ postId: metisPostTechSupport.id, courseId: metisCourse.id }),
@@ -77,6 +83,7 @@ describe('PageDiscussionSectionComponent', () => {
                 MockComponent(PostingThreadComponent),
                 MockComponent(PostCreateEditModalComponent),
                 MockComponent(FaIconComponent),
+                MockComponent(ButtonComponent),
                 MockPipe(ArtemisTranslatePipe),
                 MockDirective(NgbTooltip),
             ],
@@ -92,7 +99,8 @@ describe('PageDiscussionSectionComponent', () => {
                 jest.spyOn(courseManagementService, 'findOneForDashboard').mockReturnValue(of({ body: metisCourse }) as Observable<HttpResponse<Course>>);
                 fixture = TestBed.createComponent(DiscussionSectionComponent);
                 component = fixture.componentInstance;
-                fixture.debugElement.injector.get(MetisService);
+                metisService = fixture.debugElement.injector.get(MetisService);
+                metisServiceGetFilteredPostsSpy = jest.spyOn(metisService, 'getFilteredPosts');
             });
     });
 
@@ -154,4 +162,124 @@ describe('PageDiscussionSectionComponent', () => {
         posts = posts.sort(component.sectionSortFn);
         expect(posts).toEqual([post1, post3, post2, post4]);
     });
+
+    it('should initialize formGroup correctly for exercise or lecture', fakeAsync(() => {
+        component.ngOnInit();
+        tick();
+        expect(component.formGroup.get('context')?.value).toEqual({
+            courseId: metisCourse.id,
+            courseWideContext: undefined,
+            exerciseId: component.exercise?.id,
+            lectureId: component.lecture?.id,
+            searchText: undefined,
+            filterToUnresolved: false,
+            filterToOwn: false,
+            filterToAnsweredOrReacted: false,
+        });
+        expect(component.formGroup.get('filterToUnresolved')?.value).toBe(false);
+        expect(component.formGroup.get('filterToOwn')?.value).toBe(false);
+        expect(component.formGroup.get('filterToAnsweredOrReacted')?.value).toBe(false);
+        fixture.detectChanges();
+        const searchInput = getElement(fixture.debugElement, 'input[name=searchText]');
+        expect(searchInput.textContent).toBe('');
+    }));
+
+    it('should initialize discussion section page for exercise or lecture posts with default settings correctly', fakeAsync(() => {
+        component.ngOnInit();
+        tick();
+        expect(component.formGroup.get('context')?.value).toEqual({
+            courseId: metisCourse.id,
+            courseWideContext: undefined,
+            exerciseId: component.exercise?.id,
+            lectureId: component.lecture?.id,
+            searchText: undefined,
+            filterToUnresolved: false,
+            filterToOwn: false,
+            filterToAnsweredOrReacted: false,
+        });
+        fixture.detectChanges();
+        const searchInput = getElement(fixture.debugElement, 'input[name=searchText]');
+        expect(searchInput.textContent).toBe('');
+    }));
+
+    it('should display an extra new post button on top of posts for user convenience', fakeAsync(() => {
+        component.exercise = metisExercise;
+        component.ngOnInit();
+        tick();
+        fixture.detectChanges();
+        component.posts = metisCoursePostsWithCourseWideContext;
+        fixture.detectChanges();
+        const newPostButtons = getElements(fixture.debugElement, '.btn-primary');
+        expect(newPostButtons).not.toBeNull();
+        expect(newPostButtons).toHaveLength(2);
+    }));
+
+    it('extra new post button on top of posts should be hidden if there are less then 3 posts', fakeAsync(() => {
+        component.exercise = metisExercise;
+        component.ngOnInit();
+        tick();
+        fixture.detectChanges();
+        const newPostButtons = getElements(fixture.debugElement, '.btn-primary');
+        expect(newPostButtons).not.toBeNull();
+        expect(newPostButtons).toHaveLength(1);
+    }));
+
+    it('should show search-bar and filters if not focused to a post', fakeAsync(() => {
+        component.exercise = metisExercise;
+        component.ngOnInit();
+        tick();
+        fixture.detectChanges();
+        const searchInput = getElement(fixture.debugElement, 'input[name=searchText]');
+        const filterResolvedCheckbox = getElement(fixture.debugElement, 'input[name=filterToUnresolved]');
+        const filterOwnCheckbox = getElement(fixture.debugElement, 'input[name=filterToOwn]');
+        const filterToAnsweredOrReacted = getElement(fixture.debugElement, 'input[name=filterToAnsweredOrReacted]');
+
+        expect(searchInput).not.toBeNull();
+        expect(filterResolvedCheckbox).not.toBeNull();
+        expect(filterOwnCheckbox).not.toBeNull();
+        expect(filterToAnsweredOrReacted).not.toBeNull();
+    }));
+
+    it('should hide search-bar and filters if focused to a post', fakeAsync(() => {
+        component.ngOnInit();
+        tick();
+        fixture.detectChanges();
+        const searchInput = getElement(fixture.debugElement, 'input[name=searchText]');
+        const filterResolvedCheckbox = getElement(fixture.debugElement, 'input[name=filterToUnresolved]');
+        const filterOwnCheckbox = getElement(fixture.debugElement, 'input[name=filterToOwn]');
+        const filterToAnsweredOrReacted = getElement(fixture.debugElement, 'input[name=filterToAnsweredOrReacted]');
+
+        expect(searchInput).toBeNull();
+        expect(filterResolvedCheckbox).toBeNull();
+        expect(filterOwnCheckbox).toBeNull();
+        expect(filterToAnsweredOrReacted).toBeNull();
+    }));
+
+    it('triggering filters should invoke the metis service', fakeAsync(() => {
+        component.exercise = metisExercise;
+        component.ngOnInit();
+        tick();
+        fixture.detectChanges();
+        component.formGroup.patchValue({
+            filterToUnresolved: true,
+            filterToOwn: true,
+            filterToAnsweredOrReacted: true,
+        });
+
+        const filterResolvedCheckbox = getElement(fixture.debugElement, 'input[name=filterToUnresolved]');
+        const filterOwnCheckbox = getElement(fixture.debugElement, 'input[name=filterToOwn]');
+        const filterToAnsweredOrReacted = getElement(fixture.debugElement, 'input[name=filterToAnsweredOrReacted]');
+
+        filterResolvedCheckbox.dispatchEvent(new Event('change'));
+        filterOwnCheckbox.dispatchEvent(new Event('change'));
+        filterToAnsweredOrReacted.dispatchEvent(new Event('change'));
+
+        tick();
+        fixture.detectChanges();
+
+        expect(component.currentPostContextFilter.filterToUnresolved).toBe(true);
+        expect(component.currentPostContextFilter.filterToOwn).toBe(true);
+        expect(component.currentPostContextFilter.filterToAnsweredOrReacted).toBe(true);
+        expect(metisServiceGetFilteredPostsSpy).toHaveBeenCalledTimes(5);
+    }));
 });

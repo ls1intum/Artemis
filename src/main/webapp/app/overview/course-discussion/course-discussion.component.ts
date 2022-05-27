@@ -114,6 +114,7 @@ export class CourseDiscussionComponent extends CourseDiscussionDirective impleme
     }
 
     ngOnDestroy(): void {
+        super.onDestroy();
         this.totalItemsSubscription?.unsubscribe();
     }
 
