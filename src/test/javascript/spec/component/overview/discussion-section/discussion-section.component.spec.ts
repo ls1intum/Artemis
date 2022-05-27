@@ -19,7 +19,7 @@ import { DiscussionSectionComponent } from 'app/overview/discussion-section/disc
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { PostingThreadComponent } from 'app/shared/metis/posting-thread/posting-thread.component';
 import { PostCreateEditModalComponent } from 'app/shared/metis/posting-create-edit-modal/post-create-edit-modal/post-create-edit-modal.component';
-import { DisplayPriority, PostSortCriterion, SortDirection } from 'app/shared/metis/metis.util';
+import { DisplayPriority } from 'app/shared/metis/metis.util';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
