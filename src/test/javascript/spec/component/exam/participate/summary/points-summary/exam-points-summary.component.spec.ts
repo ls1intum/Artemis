@@ -169,7 +169,7 @@ describe('ExamPointsSummaryComponent', () => {
         const gradingSystemServiceMatchPercentageStub = jest
             .spyOn(gradingSystemService, 'matchPercentageToGradeStepForExam')
             .mockReturnValue(of(new HttpResponse<GradeDTO>({ body: gradeDto })));
-        const achievedPointsRelative = (component.calculatePointsSum() / component.calculateMaxPointsSum()) * 100;
+        const achievedPointsRelative = (component.getAchievedPointsSum() / component.getMaxPointsSum()) * 100;
 
         fixture.detectChanges();
 
@@ -184,17 +184,17 @@ describe('ExamPointsSummaryComponent', () => {
     it('should initialize and calculate scores correctly', () => {
         fixture.detectChanges();
         expect(fixture).not.toBeNull();
-        expect(component.calculateAchievedPoints(programmingExerciseTwo)).toEqual(0);
-        expect(component.calculateAchievedPoints(textExercise)).toEqual(20);
-        expect(component.calculateAchievedPoints(notIncludedTextExercise)).toEqual(10);
-        expect(component.calculateAchievedPoints(bonusTextExercise)).toEqual(10);
-        expect(component.calculateAchievedPoints(quizExercise)).toEqual(2);
-        expect(component.calculateAchievedPoints(modelingExercise)).toEqual(3.33);
-        expect(component.calculateAchievedPoints(programmingExercise)).toEqual(0);
+        expect(component.getAchievedPoints(programmingExerciseTwo)).toEqual(0);
+        expect(component.getAchievedPoints(textExercise)).toEqual(20);
+        expect(component.getAchievedPoints(notIncludedTextExercise)).toEqual(10);
+        expect(component.getAchievedPoints(bonusTextExercise)).toEqual(10);
+        expect(component.getAchievedPoints(quizExercise)).toEqual(2);
+        expect(component.getAchievedPoints(modelingExercise)).toEqual(3.33);
+        expect(component.getAchievedPoints(programmingExercise)).toEqual(0);
 
-        expect(component.calculatePointsSum()).toEqual(35.33);
-        expect(component.calculateMaxPointsSum()).toEqual(40);
-        expect(component.calculateMaxBonusPointsSum()).toEqual(20);
+        expect(component.getAchievedPointsSum()).toEqual(35.33);
+        expect(component.getMaxPointsSum()).toEqual(40);
+        expect(component.getMaxBonusPointsSum()).toEqual(20);
     });
 
     it('should display 0 if no exercises are present', () => {
@@ -202,7 +202,7 @@ describe('ExamPointsSummaryComponent', () => {
         fixture.detectChanges();
         expect(fixture).not.toBeNull();
 
-        expect(component.calculatePointsSum()).toEqual(0);
-        expect(component.calculateMaxPointsSum()).toEqual(0);
+        expect(component.getAchievedPointsSum()).toEqual(0);
+        expect(component.getMaxPointsSum()).toEqual(0);
     });
 });

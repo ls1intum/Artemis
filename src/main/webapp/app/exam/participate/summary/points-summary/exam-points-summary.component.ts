@@ -54,7 +54,7 @@ export class ExamPointsSummaryComponent implements OnInit {
     }
 
     /**
-     * Calculate the student's exam grade if a grading scale exists for the exam
+     * Sets the student's exam grade if a grading scale exists for the exam
      */
     setExamGrade() {
         if (this.studentExamWithGrade?.studentResult?.overallGrade != undefined) {
@@ -66,25 +66,22 @@ export class ExamPointsSummaryComponent implements OnInit {
         }
     }
 
-    calculatePointsSum() {
-        // TODO: Ata: Remove this.
+    getAchievedPointsSum() {
         return this.studentExamWithGrade?.studentResult.overallPointsAchieved ?? 0;
     }
 
-    calculateMaxPointsSum() {
-        // TODO: Ata: Remove this.
+    getMaxPointsSum() {
         return this.studentExamWithGrade?.maxPoints ?? 0;
     }
 
-    calculateAchievedPoints(exercise: Exercise): number {
-        // TODO: Ata: Remove this.
+    getAchievedPoints(exercise: Exercise): number {
         return this.studentExamWithGrade?.achievedPointsPerExercise?.[exercise.id!] ?? 0;
     }
 
     /**
-     * Calculate the max. achievable bonusPoints.
+     * Returns the max. achievable bonusPoints.
      */
-    calculateMaxBonusPointsSum(): number {
+    getMaxBonusPointsSum(): number {
         return this.studentExamWithGrade?.maxBonusPoints ?? 0;
     }
 
@@ -94,19 +91,4 @@ export class ExamPointsSummaryComponent implements OnInit {
         }
         return false;
     }
-
-    // TODO: Ata: Remove
-    // private static hasResultScore(exercise: Exercise): boolean {
-    //     return !!(exercise && exercise.maxPoints && exercise.studentParticipations?.[0]?.results?.[0]?.score != undefined);
-    // }
-
-    // private static getBonusPoints(exercise: Exercise): number {
-    //     if (exercise && exercise.includedInOverallScore === IncludedInOverallScore.INCLUDED_AS_BONUS && exercise.maxPoints) {
-    //         return exercise.maxPoints;
-    //     } else if (exercise && exercise.bonusPoints) {
-    //         return exercise.bonusPoints;
-    //     } else {
-    //         return 0;
-    //     }
-    // }
 }
