@@ -180,7 +180,6 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                                 .loadStudentExamWithExercisesForSummary(this.courseId, this.examId)
                                 .subscribe((studentExamWithGradeAndExercises: StudentExamWithGradeDTO) => {
                                     this.studentExamWithGrade = studentExamWithGradeAndExercises;
-                                    this.studentExam = studentExamWithGradeAndExercises.studentExam;
                                 });
                         }
 
