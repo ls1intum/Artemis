@@ -12,6 +12,7 @@ import { ExerciseServicable } from 'app/exercises/shared/exercise/exercise.servi
 import { map, mergeMap, mergeWith, takeUntil } from 'rxjs/operators';
 import { ExerciseUpdateWarningComponent } from 'app/exercises/shared/exercise-update-warning/exercise-update-warning.component';
 import { hasResults } from 'app/exercises/shared/participation/participation.utils';
+import { AlertService, AlertType } from 'app/core/util/alert.service';
 
 export enum EditType {
     IMPORT,
@@ -26,6 +27,7 @@ export class SaveExerciseCommand<T extends Exercise> {
         private exerciseService: ExerciseServicable<T>,
         private backupExercise: T,
         private editType: EditType,
+        private alertService: AlertService,
     ) {}
 
     save(exercise: T, notificationText?: string): Observable<T> {
@@ -37,6 +39,13 @@ export class SaveExerciseCommand<T extends Exercise> {
                     return {};
             }
         };
+
+        if (exercise.exampleSolutionPublicationDateWarning) {
+            this.alertService.addAlert({
+                type: AlertType.WARNING,
+                message: 'artemisApp.exercise.exampleSolutionPublicationDateWarning',
+            });
+        }
 
         const callServer = ([shouldReevaluate, requestOptions]: [boolean, any?]) => {
             const ex = Exercise.sanitize(exercise);
