@@ -3,9 +3,9 @@
         nameTranslationValue="artemisApp.examMonitoring.charts.{{ chart }}.name"
         tooltipTranslationValue="artemisApp.examMonitoring.charts.{{ chart }}.tooltip"
     ></jhi-chart-title>
-    <div class="line-chart">
+    <div #containerRef class="line-chart">
         <ngx-charts-line-chart
-            [view]="[width, 300]"
+            [view]="[containerRef.offsetWidth, 300]"
             [scheme]="ngxColor"
             [legend]="legend"
             [showXAxisLabel]="true"

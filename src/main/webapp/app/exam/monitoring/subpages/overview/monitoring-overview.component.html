@@ -11,10 +11,12 @@
                 <ng-container content>
                     <div class="container-fluid">
                         <div class="row">
-                            <jhi-exercise-group-chart [exam]="this.exam"></jhi-exercise-group-chart>
-                        </div>
-                        <div class="row pt-4">
-                            <jhi-exercise-chart [exam]="this.exam"></jhi-exercise-chart>
+                            <div class="col-xxl-6">
+                                <jhi-exercise-group-chart [exam]="this.exam"></jhi-exercise-group-chart>
+                            </div>
+                            <div class="col-xxl-6">
+                                <jhi-exercise-chart [exam]="this.exam"></jhi-exercise-chart>
+                            </div>
                         </div>
                     </div>
                 </ng-container>
@@ -41,24 +43,18 @@
                 [examId]="this.examId"
             >
                 <ng-container content>
-                    <div #containerRef class="container-fluid">
+                    <div class="container-fluid">
                         <div class="row">
-                            <div class="col-xl">
-                                <jhi-total-actions-chart
-                                    [width]="containerRef.offsetWidth >= 1200 ? containerRef.offsetWidth / 2.2 : containerRef.offsetWidth"
-                                    [examActions]="this.examActions"
-                                ></jhi-total-actions-chart>
+                            <div class="col-xl-6">
+                                <jhi-total-actions-chart [examActions]="this.examActions"></jhi-total-actions-chart>
                             </div>
-                            <div class="col-xl" [class.pt-4]="containerRef.offsetWidth < 1200">
-                                <jhi-average-actions-chart
-                                    [width]="containerRef.offsetWidth >= 1200 ? containerRef.offsetWidth / 2.2 : containerRef.offsetWidth"
-                                    [examActions]="this.examActions"
-                                ></jhi-average-actions-chart>
+                            <div class="col-xl-6">
+                                <jhi-average-actions-chart [examActions]="this.examActions"></jhi-average-actions-chart>
                             </div>
                         </div>
-                        <div #rowRef class="row pt-4">
+                        <div class="row pt-4">
                             <div class="col">
-                                <jhi-category-actions-chart [width]="rowRef.offsetWidth" [examActions]="this.examActions"></jhi-category-actions-chart>
+                                <jhi-category-actions-chart [examActions]="this.examActions"></jhi-category-actions-chart>
                             </div>
                         </div>
                     </div>

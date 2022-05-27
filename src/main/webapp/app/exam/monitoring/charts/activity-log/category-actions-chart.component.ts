@@ -13,8 +13,6 @@ export class CategoryActionsChartComponent implements OnInit {
     // Input
     @Input()
     examActions: ExamAction[];
-    @Input()
-    width: number;
 
     // Chart
     ngxData: ChartSeriesData[] = [];
