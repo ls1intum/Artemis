@@ -75,7 +75,6 @@ function addFeedbackAndValidateScore(comp: CodeEditorTutorAssessmentContainerCom
         type: FeedbackType.MANUAL_UNREFERENCED,
         detailText: 'unreferenced feedback',
         credits: pointsAwarded,
-        creditsApplied: true,
     });
     comp.validateFeedback();
     expect(comp.manualResult?.score).toEqual(scoreExpected);

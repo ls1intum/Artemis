@@ -31,13 +31,13 @@ import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service'
  */
 enum ResultTemplateStatus {
     /**
-     * An automatic result is currectly being generated and should be available soon.
+     * An automatic result is currently being generated and should be available soon.
      * This is currently only relevant for programming exercises.
      */
     IS_BUILDING = 'IS_BUILDING',
     /**
      * A regular, finished result is available.
-     * Can be rated (counts toward the score) or not rated (after the dealine for pratice).
+     * Can be rated (counts toward the score) or not rated (after the deadline for practice).
      */
     HAS_RESULT = 'HAS_RESULT',
     /**
@@ -234,7 +234,7 @@ export class ResultComponent implements OnInit, OnChanges {
             }
         }
 
-        // If there is a problem, it has priority and we show that instead
+        // If there is a problem, it has priority, and we show that instead
         if (this.missingResultInfo !== MissingResultInfo.NONE) {
             return ResultTemplateStatus.MISSING;
         }
@@ -321,7 +321,7 @@ export class ResultComponent implements OnInit, OnChanges {
     }
 
     /**
-     * Gets the tooltip text that should displayed next to the result string. Not required.
+     * Gets the tooltip text that should be displayed next to the result string. Not required.
      */
     buildResultTooltip() {
         // Only show the 'preliminary' tooltip for programming student participation results and if the buildAndTestAfterDueDate has not passed.
@@ -369,7 +369,13 @@ export class ResultComponent implements OnInit, OnChanges {
             componentInstance.messageKey = 'artemisApp.result.notLatestSubmission';
         }
 
-        this.determineShowMissingAutomaticFeedbackInformation(componentInstance);
+        if (
+            this.result?.assessmentType === AssessmentType.AUTOMATIC &&
+            this.exercise?.type === ExerciseType.PROGRAMMING &&
+            hasExerciseDueDatePassed(this.exercise, this.participation)
+        ) {
+            this.determineShowMissingAutomaticFeedbackInformation(componentInstance);
+        }
     }
 
     /**
@@ -518,27 +524,19 @@ export class ResultComponent implements OnInit, OnChanges {
     }
 
     /**
-     * Determins if some information about testcases could still be hidden because of later individual due dates
+     * Determines if some information about testcases could still be hidden because of later individual due dates
      * @param componentInstance the detailed result view
      */
     private determineShowMissingAutomaticFeedbackInformation(componentInstance: ResultDetailComponent) {
-        if (
-            this.result?.assessmentType === AssessmentType.AUTOMATIC &&
-            this.exercise?.type === ExerciseType.PROGRAMMING &&
-            hasExerciseDueDatePassed(this.exercise, this.participation)
-        ) {
-            if (!this.latestIndividualDueDate) {
-                this.exerciseService.getLatestDueDate(this.exercise.id!).subscribe((res?: dayjs.Dayjs) => {
-                    this.latestIndividualDueDate = res;
-                    componentInstance.showMissingAutomaticFeedbackInformation = dayjs().isBefore(this.latestIndividualDueDate);
-                    componentInstance.latestIndividualDueDate = this.latestIndividualDueDate;
-                });
-            } else {
+        if (!this.latestIndividualDueDate) {
+            this.exerciseService.getLatestDueDate(this.exercise!.id!).subscribe((latestIndividualDueDate?: dayjs.Dayjs) => {
+                this.latestIndividualDueDate = latestIndividualDueDate;
                 componentInstance.showMissingAutomaticFeedbackInformation = dayjs().isBefore(this.latestIndividualDueDate);
                 componentInstance.latestIndividualDueDate = this.latestIndividualDueDate;
-            }
+            });
         } else {
-            componentInstance.showMissingAutomaticFeedbackInformation = false;
+            componentInstance.showMissingAutomaticFeedbackInformation = dayjs().isBefore(this.latestIndividualDueDate);
+            componentInstance.latestIndividualDueDate = this.latestIndividualDueDate;
         }
     }
 }

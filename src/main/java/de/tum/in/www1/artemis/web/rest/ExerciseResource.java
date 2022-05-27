@@ -199,7 +199,7 @@ public class ExerciseResource {
      * @param exerciseId the id of the exercise
      * @return the title of the exercise wrapped in an ResponseEntity or 404 Not Found if no exercise with that id exists
      */
-    @GetMapping(value = "/exercises/{exerciseId}/title")
+    @GetMapping("/exercises/{exerciseId}/title")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<String> getExerciseTitle(@PathVariable Long exerciseId) {
         final var title = exerciseRepository.getExerciseTitle(exerciseId);
@@ -227,7 +227,7 @@ public class ExerciseResource {
      * @param exerciseId exercise to delete
      * @return the ResponseEntity with status 200 (OK)
      */
-    @DeleteMapping(value = "/exercises/{exerciseId}/reset")
+    @DeleteMapping("/exercises/{exerciseId}/reset")
     @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<Void> reset(@PathVariable Long exerciseId) {
         log.debug("REST request to reset Exercise : {}", exerciseId);
@@ -244,7 +244,7 @@ public class ExerciseResource {
      * @param deleteRepositories whether repositories should be deleted or not
      * @return ResponseEntity with status
      */
-    @DeleteMapping(value = "/exercises/{exerciseId}/cleanup")
+    @DeleteMapping("/exercises/{exerciseId}/cleanup")
     @PreAuthorize("hasRole('INSTRUCTOR')")
     @FeatureToggle(Feature.ProgrammingExercises)
     public ResponseEntity<Resource> cleanup(@PathVariable Long exerciseId, @RequestParam(defaultValue = "false") boolean deleteRepositories) {
@@ -262,7 +262,7 @@ public class ExerciseResource {
      * @param exerciseId the exerciseId of the exercise to get the repos from
      * @return the ResponseEntity with status 200 (OK) and with body the exercise, or with status 404 (Not Found)
      */
-    @GetMapping(value = "/exercises/{exerciseId}/details")
+    @GetMapping("/exercises/{exerciseId}/details")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Exercise> getExerciseDetails(@PathVariable Long exerciseId) {
         User user = userRepository.getUserWithGroupsAndAuthorities();
@@ -318,7 +318,7 @@ public class ExerciseResource {
      * @param exerciseId the exerciseId of the exercise to toggle the second correction
      * @return the ResponseEntity with status 200 (OK) and new state of the correction toggle state
      */
-    @PutMapping(value = "/exercises/{exerciseId}/toggle-second-correction")
+    @PutMapping("/exercises/{exerciseId}/toggle-second-correction")
     @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<Boolean> toggleSecondCorrectionEnabled(@PathVariable Long exerciseId) {
         log.debug("toggleSecondCorrectionEnabled for exercise with id: {}", exerciseId);
@@ -333,7 +333,7 @@ public class ExerciseResource {
      * @param exerciseId the exerciseId of the exercise to get the repos from
      * @return the ResponseEntity with status 200 (OK) and the latest due date
      */
-    @GetMapping(value = "/exercises/{exerciseId}/latest-due-date")
+    @GetMapping("/exercises/{exerciseId}/latest-due-date")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<ZonedDateTime> getLatestDueDate(@PathVariable Long exerciseId) {
         log.debug("getLatestDueDate for exercise with id: {}", exerciseId);
