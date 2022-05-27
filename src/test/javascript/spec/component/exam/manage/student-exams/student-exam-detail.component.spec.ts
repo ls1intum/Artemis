@@ -33,6 +33,8 @@ import { AlertService } from 'app/core/util/alert.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { MockTranslateValuesDirective } from '../../../../helpers/mocks/directive/mock-translate-values.directive';
 import { StudentExamWorkingTimeComponent } from 'app/exam/shared/student-exam-working-time.component';
+import { GradeType } from 'app/entities/grading-scale.model';
+import { StudentExamWithGradeDTO, StudentResult } from 'app/exam/exam-scores/exam-score-dtos.model';
 
 describe('StudentExamDetailComponent', () => {
     let studentExamDetailComponentFixture: ComponentFixture<StudentExamDetailComponent>;
@@ -41,6 +43,7 @@ describe('StudentExamDetailComponent', () => {
     let student: User;
     let studentExam: StudentExam;
     let studentExam2: StudentExam;
+    let studentExamWithGrade: StudentExamWithGradeDTO;
     let exercise: Exercise;
     let exam: Exam;
     let studentParticipation: StudentParticipation;
@@ -94,6 +97,23 @@ describe('StudentExamDetailComponent', () => {
             submissionDate: dayjs(),
             exercises: [exercise],
         };
+
+        studentExamWithGrade = {
+            studentExam,
+            maxPoints: 100,
+            gradeType: GradeType.NONE,
+            studentResult: {
+                userId: 1,
+                name: 'user1',
+                login: 'user1',
+                eMail: 'user1@tum.de',
+                registrationNumber: '111',
+                overallPointsAchieved: 40,
+                overallScoreAchieved: 40,
+                overallPointsAchievedInFirstCorrection: 90,
+                submitted: true,
+            },
+        } as StudentExamWithGradeDTO;
 
         return TestBed.configureTestingModule({
             imports: [
@@ -149,10 +169,7 @@ describe('StudentExamDetailComponent', () => {
                                 }),
                         },
                         data: {
-                            subscribe: (fn: (value: any) => void) =>
-                                fn({
-                                    studentExam,
-                                }),
+                            subscribe: (fn: (value: any) => void) => fn({ studentExam: studentExamWithGrade }),
                         },
                         snapshot: {
                             paramMap: convertToParamMap({
@@ -184,10 +201,8 @@ describe('StudentExamDetailComponent', () => {
     };
 
     it('initialize', () => {
-        const gradeSpy = jest.spyOn(gradingSystemService, 'matchPercentageToGradeStepForExam');
         studentExamDetailComponentFixture.detectChanges();
 
-        expect(gradeSpy).toHaveBeenCalledTimes(1);
         expect(course.id).toBe(1);
         expect(studentExamDetailComponent.achievedTotalPoints).toBe(40);
 

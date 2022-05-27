@@ -171,6 +171,6 @@ describe('Student Exam Resolve', () => {
         tick();
 
         expect(findSpy).not.toHaveBeenCalled();
-        expect(receivedExam).toEqual(new StudentExam());
+        expect(receivedExam).toEqual(new StudentExamWithGradeDTO());
     }));
 });

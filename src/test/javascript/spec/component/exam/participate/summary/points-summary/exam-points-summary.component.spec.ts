@@ -18,14 +18,14 @@ import { Result } from 'app/entities/result.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { GradingSystemService } from 'app/grading-system/grading-system.service';
 import { GradeDTO } from 'app/entities/grade-step.model';
-import { of, throwError } from 'rxjs';
-import { HttpResponse } from '@angular/common/http';
 import { GradeType } from 'app/entities/grading-scale.model';
 import { Course } from 'app/entities/course.model';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { StudentExamWithGradeDTO } from 'app/exam/exam-scores/exam-score-dtos.model';
 
 let fixture: ComponentFixture<ExamPointsSummaryComponent>;
 let component: ExamPointsSummaryComponent;
+let studentExamWithGrade: StudentExamWithGradeDTO;
 
 const visibleDate = dayjs().subtract(7, 'hours');
 const startDate = dayjs().subtract(6, 'hours');
@@ -135,6 +135,34 @@ describe('ExamPointsSummaryComponent', () => {
         })
             .compileComponents()
             .then(() => {
+                studentExamWithGrade = {
+                    maxPoints: 40,
+                    maxBonusPoints: 20,
+                    studentExam: { exercises },
+                    studentResult: {
+                        userId: 1,
+                        name: 'user1',
+                        login: 'user1',
+                        eMail: 'user1@tum.de',
+                        registrationNumber: '111',
+                        overallPointsAchieved: 35.33,
+                        overallScoreAchieved: (35.33 / 40) * 100,
+                        overallPointsAchievedInFirstCorrection: 45,
+                        overallGrade: '1.7',
+                        hasPassed: true,
+                        submitted: true,
+                        exerciseGroupIdToExerciseResult: {},
+                    },
+                    achievedPointsPerExercise: {
+                        [textExercise.id!]: 20,
+                        [bonusTextExercise.id!]: 10,
+                        [notIncludedTextExercise.id!]: 10,
+                        [quizExercise.id!]: 2,
+                        [modelingExercise.id!]: 3.33,
+                        [programmingExercise.id!]: 0,
+                    },
+                };
+
                 const course = new Course();
                 course.id = 1;
                 course.accuracyOfScores = 2;
@@ -143,8 +171,9 @@ describe('ExamPointsSummaryComponent', () => {
                 component = fixture.componentInstance;
                 exam.course = course;
                 component.exam = exam;
-                component.exercises = exercises;
                 component.gradingScaleExists = false;
+                component.studentExamWithGrade = studentExamWithGrade;
+                component.exercises = studentExamWithGrade.studentExam.exercises!;
                 gradingSystemService = TestBed.inject(GradingSystemService);
             });
     });
@@ -154,51 +183,47 @@ describe('ExamPointsSummaryComponent', () => {
     });
 
     it('should handle error correctly', () => {
-        const gradingSystemServiceMatchPercentageErrorStub = jest
-            .spyOn(gradingSystemService, 'matchPercentageToGradeStepForExam')
-            .mockReturnValue(throwError(() => ({ status: 404 })));
-
+        component.studentExamWithGrade = undefined as any;
         fixture.detectChanges();
 
         expect(fixture).not.toBeNull();
-        expect(gradingSystemServiceMatchPercentageErrorStub).toHaveBeenCalledTimes(1);
+        expect(component.studentExamWithGrade).toBeUndefined();
         expect(component.gradingScaleExists).toBeFalse();
     });
 
-    it('should calculate exam grade correctly', () => {
-        const gradingSystemServiceMatchPercentageStub = jest
-            .spyOn(gradingSystemService, 'matchPercentageToGradeStepForExam')
-            .mockReturnValue(of(new HttpResponse<GradeDTO>({ body: gradeDto })));
-        const achievedPointsRelative = (component.getAchievedPointsSum() / component.getMaxPointsSum()) * 100;
-
+    it('should retrieve exam grade correctly', () => {
         fixture.detectChanges();
 
         expect(fixture).not.toBeNull();
-        expect(gradingSystemServiceMatchPercentageStub).toHaveBeenCalledWith(1, 1, achievedPointsRelative);
         expect(component.gradingScaleExists).toBeTrue();
         expect(component.isBonus).toBeFalse();
-        expect(component.grade).toEqual(gradeDto.gradeName);
-        expect(component.hasPassed).toEqual(gradeDto.isPassingGrade);
+        expect(component.grade).toEqual(studentExamWithGrade.studentResult.overallGrade);
+        expect(component.isBonus).toEqual(studentExamWithGrade.gradeType === GradeType.BONUS);
+        expect(component.hasPassed).toEqual(studentExamWithGrade.studentResult.hasPassed);
     });
 
     it('should initialize and calculate scores correctly', () => {
         fixture.detectChanges();
         expect(fixture).not.toBeNull();
-        expect(component.getAchievedPoints(programmingExerciseTwo)).toEqual(0);
-        expect(component.getAchievedPoints(textExercise)).toEqual(20);
-        expect(component.getAchievedPoints(notIncludedTextExercise)).toEqual(10);
-        expect(component.getAchievedPoints(bonusTextExercise)).toEqual(10);
-        expect(component.getAchievedPoints(quizExercise)).toEqual(2);
-        expect(component.getAchievedPoints(modelingExercise)).toEqual(3.33);
-        expect(component.getAchievedPoints(programmingExercise)).toEqual(0);
+        expect(component.getAchievedPoints(programmingExerciseTwo)).toBe(0);
+        expect(component.getAchievedPoints(textExercise)).toBe(20);
+        expect(component.getAchievedPoints(notIncludedTextExercise)).toBe(10);
+        expect(component.getAchievedPoints(bonusTextExercise)).toBe(10);
+        expect(component.getAchievedPoints(quizExercise)).toBe(2);
+        expect(component.getAchievedPoints(modelingExercise)).toBe(3.33);
+        expect(component.getAchievedPoints(programmingExercise)).toBe(0);
 
-        expect(component.getAchievedPointsSum()).toEqual(35.33);
-        expect(component.getMaxPointsSum()).toEqual(40);
-        expect(component.getMaxBonusPointsSum()).toEqual(20);
+        expect(component.getAchievedPointsSum()).toBe(35.33);
+        expect(component.getMaxPointsSum()).toBe(40);
+        expect(component.getMaxBonusPointsSum()).toBe(20);
     });
 
     it('should display 0 if no exercises are present', () => {
         component.exercises = [];
+        component.studentExamWithGrade.studentExam.exercises = [];
+        component.studentExamWithGrade.maxPoints = 0;
+        component.studentExamWithGrade.studentResult.overallPointsAchieved = 0;
+
         fixture.detectChanges();
         expect(fixture).not.toBeNull();
 

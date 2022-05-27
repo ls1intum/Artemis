@@ -141,10 +141,6 @@ export class StudentExamDetailComponent implements OnInit {
 
         this.initWorkingTimeForm();
 
-        this.maxTotalPoints = 0;
-        this.achievedTotalPoints = 0;
-        this.bonusTotalPoints = 0;
-
         this.student = this.studentExam.user!;
         this.course = this.studentExam.exam!.course!;
 
