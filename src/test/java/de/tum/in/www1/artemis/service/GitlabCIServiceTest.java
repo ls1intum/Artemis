@@ -75,57 +75,17 @@ public class GitlabCIServiceTest extends AbstractSpringIntegrationGitlabCIGitlab
 
     @Test
     @WithMockUser(roles = "INSTRUCTOR", username = "instructor1")
-    public void testAddFeedbackToResult() {
+    public void testGetWebHookUrl() {
+        // TODO
         var result = continuousIntegrationService.getWebHookUrl(null, null);
         assertThat(result).isEqualTo(Optional.empty());
     }
 
     @Test
     @WithMockUser(roles = "INSTRUCTOR", username = "instructor1")
-    public void testCheckIfProjectExists() {
-        var result = continuousIntegrationService.checkIfProjectExists(null, null);
-        assertThat(result).isNull();
-    }
-
-    @Test
-    @WithMockUser(roles = "INSTRUCTOR", username = "instructor1")
-    public void testRetrieveLatestArtifact() {
-        var result = continuousIntegrationService.retrieveLatestArtifact(null);
-        assertThat(result).isNull();
-    }
-
-    @Test
-    @WithMockUser(roles = "INSTRUCTOR", username = "instructor1")
-    public void testGetLatestBuildLogs() {
-        var result = continuousIntegrationService.getLatestBuildLogs(null);
-        assertThat(result).isNull();
-    }
-
-    @Test
-    @WithMockUser(roles = "INSTRUCTOR", username = "instructor1")
-    public void testCheckIfBuildPlanExists() {
-        var result = continuousIntegrationService.checkIfBuildPlanExists(null, null);
-        assertThat(result).isFalse();
-    }
-
-    @Test
-    @WithMockUser(roles = "INSTRUCTOR", username = "instructor1")
     public void testGetBuildStatus() {
+        // TODO
         var result = continuousIntegrationService.getBuildStatus(null);
-        assertThat(result).isNull();
-    }
-
-    @Test
-    @WithMockUser(roles = "INSTRUCTOR", username = "instructor1")
-    public void testConvertBuildResult() {
-        var result = continuousIntegrationService.convertBuildResult(null);
-        assertThat(result).isNull();
-    }
-
-    @Test
-    @WithMockUser(roles = "INSTRUCTOR", username = "instructor1")
-    public void testGetPlanKey() {
-        var result = continuousIntegrationService.getPlanKey(null);
         assertThat(result).isNull();
     }
 
@@ -173,5 +133,26 @@ public class GitlabCIServiceTest extends AbstractSpringIntegrationGitlabCIGitlab
         ProgrammingExerciseStudentParticipation participation = new ProgrammingExerciseStudentParticipation();
         participation.setRepositoryUrl("http://some.test.url/scm/PROJECTNAME/REPONAME-exercise.git");
         assertThatThrownBy(() -> continuousIntegrationService.configureBuildPlan(participation, "main")).isInstanceOf(GitLabCIException.class);
+    }
+
+    @Test
+    @WithMockUser(roles = "INSTRUCTOR", username = "instructor1")
+    public void testUnsupportedMethods() {
+        continuousIntegrationService.createProjectForExercise(null);
+        continuousIntegrationService.removeAllDefaultProjectPermissions(null);
+        continuousIntegrationService.givePlanPermissions(null, null);
+        continuousIntegrationService.giveProjectPermissions(null, null, null);
+        continuousIntegrationService.updatePlanRepository(null, null, null, null, null, null, null, null);
+        continuousIntegrationService.enablePlan(null, null);
+        continuousIntegrationService.deleteBuildPlan(null, null);
+        continuousIntegrationService.deleteProject(null);
+        continuousIntegrationService.performEmptySetupCommit(null);
+        assertThat(continuousIntegrationService.checkIfProjectExists(null, null)).isNull();
+        assertThat(continuousIntegrationService.checkIfBuildPlanExists(null, null)).isFalse();
+        assertThat(continuousIntegrationService.getPlanKey(null)).isNull();
+        assertThat(continuousIntegrationService.copyBuildPlan(null, null, null, null, null, false)).isNull();
+        assertThat(continuousIntegrationService.convertBuildResult(null)).isNull();
+        assertThat(continuousIntegrationService.getLatestBuildLogs(null)).isNull();
+        assertThat(continuousIntegrationService.retrieveLatestArtifact(null)).isNull();
     }
 }
