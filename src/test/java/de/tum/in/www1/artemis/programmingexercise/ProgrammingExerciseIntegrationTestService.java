@@ -783,6 +783,7 @@ public class ProgrammingExerciseIntegrationTestService {
         }
 
         programmingExercise.setDueDate(ZonedDateTime.now().plusHours(12));
+        programmingExercise.setReleaseDate(programmingExercise.getDueDate().minusDays(1));
         request.put(ROOT + PROGRAMMING_EXERCISES, programmingExercise, HttpStatus.OK);
 
         {
@@ -808,6 +809,7 @@ public class ProgrammingExerciseIntegrationTestService {
         }
 
         programmingExercise.setDueDate(null);
+        programmingExercise.setAssessmentDueDate(null);
         request.put(ROOT + PROGRAMMING_EXERCISES, programmingExercise, HttpStatus.OK);
 
         {

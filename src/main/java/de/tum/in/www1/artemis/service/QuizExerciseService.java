@@ -227,7 +227,7 @@ public class QuizExerciseService {
             // update Successful-Flag in Result
             StudentParticipation studentParticipation = (StudentParticipation) result.getParticipation();
             studentParticipation.setExercise(quizExercise);
-            result.evaluateSubmission();
+            result.evaluateQuizSubmission();
 
             submissions.add(quizSubmission);
         }

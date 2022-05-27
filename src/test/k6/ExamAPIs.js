@@ -87,7 +87,7 @@ export function setup() {
 
         newTextExercise(artemis, exerciseGroup1);
 
-        createQuizExercise(artemis, undefined, exerciseGroup2, false);
+        createQuizExercise(artemis, undefined, exerciseGroup2, false, false);
 
         newModelingExercise(artemis, exerciseGroup3);
 
