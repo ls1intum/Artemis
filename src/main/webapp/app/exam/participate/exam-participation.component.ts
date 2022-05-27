@@ -65,7 +65,22 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     exam: Exam;
     examTitle = '';
     studentExamWithGrade: StudentExamWithGradeDTO;
-    studentExam: StudentExam; // TODO: Ata: Maybe remove after all references are changed with studentExamWithGrade
+
+    get studentExam(): StudentExam {
+        return this.studentExamWithGrade?.studentExam;
+    }
+
+    /**
+     * Sets this.studentExam and this.studentExamWithGradeDTO fields.
+     * @param studentExam StudentExam instance
+     */
+    set studentExam(studentExam: StudentExam) {
+        if (this.studentExamWithGrade == undefined) {
+            this.studentExamWithGrade = new StudentExamWithGradeDTO();
+        }
+        this.studentExamWithGrade.studentExam = studentExam;
+    }
+
     individualStudentEndDate: dayjs.Dayjs;
     individualStudentEndDateWithGracePeriod: dayjs.Dayjs;
 
