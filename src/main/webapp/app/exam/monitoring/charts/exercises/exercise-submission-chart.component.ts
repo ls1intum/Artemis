@@ -2,7 +2,7 @@ import { Component, OnInit, Input } from '@angular/core';
 import { Color, ScaleType } from '@swimlane/ngx-charts';
 import { Exam } from 'app/entities/exam.model';
 import { ChartData, getColor, getSavedExerciseActionsGroupedByActivityId } from 'app/exam/monitoring/charts/monitoring-chart';
-import { ExamAction, SavedExerciseAction, SwitchedExerciseAction } from 'app/entities/exam-user-activity.model';
+import { ExamAction, SwitchedExerciseAction } from 'app/entities/exam-user-activity.model';
 
 @Component({
     selector: 'jhi-exercise-submission-chart',
@@ -37,10 +37,20 @@ export class ExerciseSubmissionChartComponent implements OnInit {
     }
 
     initData() {
+        if (this.examActions.length === 0) {
+            return;
+        }
+        const exerciseAmountMap: Map<number, number> = new Map();
+        const groupedByActivityId = getSavedExerciseActionsGroupedByActivityId(this.examActions);
+
+        for (const [_, value] of Object.entries(groupedByActivityId)) {
+            const saved: Map<number, number> = new Map();
+            value.forEach((action: SwitchedExerciseAction) => saved.set(action.exerciseId!, 1));
+            saved.forEach((key) => exerciseAmountMap.set(key, (exerciseAmountMap.get(key) ?? 0) + 1));
+        }
         this.exam.exerciseGroups!.forEach((group, index) => {
             group.exercises!.forEach((exercise) => {
-                // TODO: Replace with real data
-                this.ngxData.push(new ChartData(exercise.title ?? '', Math.floor(Math.random() * 100)));
+                this.ngxData.push(new ChartData(exercise.title ?? '', exerciseAmountMap.get(exercise.id!) ?? 0));
                 this.ngxColor.domain.push(getColor(index));
             });
         });

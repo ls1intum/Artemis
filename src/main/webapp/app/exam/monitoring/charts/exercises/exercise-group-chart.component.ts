@@ -38,6 +38,9 @@ export class ExerciseGroupChartComponent implements OnInit {
     }
 
     initData() {
+        if (this.examActions.length === 0) {
+            return;
+        }
         const exerciseAmountMap = getCurrentAmountOfStudentsPerExercises(this.examActions);
         this.exam.exerciseGroups!.forEach((group, index) => {
             let amount = 0;

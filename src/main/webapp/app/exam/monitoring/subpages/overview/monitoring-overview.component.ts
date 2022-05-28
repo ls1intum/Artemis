@@ -6,7 +6,8 @@ import { Subscription } from 'rxjs';
 import { ExamMonitoringService } from 'app/exam/monitoring/exam-monitoring.service';
 import { faListAlt } from '@fortawesome/free-solid-svg-icons';
 import { ExamMonitoringWebsocketService } from 'app/exam/monitoring/exam-monitoring-websocket.service';
-import { ExamAction } from 'app/entities/exam-user-activity.model';
+import { EndedExamAction, ExamAction, StartedExamAction } from 'app/entities/exam-user-activity.model';
+import dayjs from 'dayjs/esm';
 
 @Component({
     selector: 'jhi-monitoring-overview',
@@ -24,7 +25,7 @@ export class MonitoringOverviewComponent implements OnInit, OnDestroy {
     exam?: Exam;
 
     // Exam Actions
-    examActions: ExamAction[];
+    examActions: ExamAction[] = [];
 
     faListAlt = faListAlt;
 
@@ -49,6 +50,7 @@ export class MonitoringOverviewComponent implements OnInit, OnDestroy {
                     this.examActions = [...this.examActions, examAction];
                 }
             });
+            this.examActions = this.createSampleActions();
         });
     }
 
@@ -56,5 +58,11 @@ export class MonitoringOverviewComponent implements OnInit, OnDestroy {
         this.examSubscription?.unsubscribe();
         this.routeSubscription?.unsubscribe();
         this.examMonitoringSubscription?.unsubscribe();
+    }
+
+    createSampleActions(): ExamAction[] {
+        const action = new StartedExamAction(5);
+        action.timestamp = dayjs().add(1, 'hour');
+        return [new StartedExamAction(5), new EndedExamAction(), action];
     }
 }

@@ -36,7 +36,7 @@ export class ExamActivity {
 export abstract class ExamAction implements BaseEntity {
     public id?: number;
     public examActivityId?: number;
-    public timestamp?: dayjs.Dayjs;
+    public timestamp: dayjs.Dayjs = dayjs();
     public readonly type: ExamActionType;
 
     protected constructor(examActionEvent: ExamActionType) {
@@ -101,6 +101,7 @@ export class SwitchedExerciseAction extends ExamAction {
 export class SavedExerciseAction extends ExamAction {
     public forced?: boolean;
     public submissionId?: number;
+    public exerciseId?: number;
     public failed?: boolean;
     public automatically?: boolean;
 

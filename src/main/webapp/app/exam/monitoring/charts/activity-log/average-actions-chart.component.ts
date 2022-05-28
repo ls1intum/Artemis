@@ -3,6 +3,7 @@ import { Color, ScaleType } from '@swimlane/ngx-charts';
 import { ChartData, ChartSeriesData, getColor, groupActionsByTimestamp } from 'app/exam/monitoring/charts/monitoring-chart';
 import { ExamAction } from 'app/entities/exam-user-activity.model';
 import * as shape from 'd3-shape';
+import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 
 @Component({
     selector: 'jhi-average-actions-chart',
@@ -30,7 +31,7 @@ export class AverageActionsChartComponent implements OnInit {
     // Component
     readonly chart = 'average-actions-chart';
 
-    constructor() {}
+    constructor(private artemisDatePipe: ArtemisDatePipe) {}
 
     ngOnInit(): void {
         this.initData();
@@ -44,10 +45,9 @@ export class AverageActionsChartComponent implements OnInit {
         const chartData: ChartData[] = [];
         for (const [key, value] of Object.entries(groupedByTimestamp)) {
             // Divide actions per timestamp by amount of registered students
-            chartData.push(new ChartData(key, value.length / this.registeredStudents));
+            chartData.push(new ChartData(this.artemisDatePipe.transform(key, 'short'), value.length / this.registeredStudents));
         }
-        // TODO: Remove debug output
-        console.log(groupedByTimestamp);
+
         this.ngxData = [new ChartSeriesData('actions', chartData)];
     }
 }

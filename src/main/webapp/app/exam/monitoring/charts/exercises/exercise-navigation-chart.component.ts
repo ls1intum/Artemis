@@ -37,6 +37,9 @@ export class ExerciseNavigationChartComponent implements OnInit {
     }
 
     initData() {
+        if (this.examActions.length === 0) {
+            return;
+        }
         const exerciseAmountMap: Map<number, number> = new Map();
         const groupedByActivityId = getSwitchedExerciseActionsGroupedByActivityId(this.examActions);
 
