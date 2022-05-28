@@ -21,7 +21,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 import de.tum.in.www1.artemis.domain.enumeration.*;
 import de.tum.in.www1.artemis.domain.hestia.ExerciseHint;
-import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseGitDiffReport;
 import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseTask;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.SolutionProgrammingExerciseParticipation;
@@ -124,12 +123,6 @@ public class ProgrammingExercise extends Exercise {
 
     @OneToMany(mappedBy = "exercise", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
     private Set<ExerciseHint> exerciseHints = new HashSet<>();
-
-    // Should be lazily loaded, but Hibernate does not support lazy loading for OneToOne relations
-    // Therefore we need JsonIgnore here
-    @OneToOne(mappedBy = "programmingExercise", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
-    @JsonIgnore
-    private ProgrammingExerciseGitDiffReport gitDiffReport;
 
     @Column(name = "testwise_coverage_enabled", table = "programming_exercise_details")
     private boolean testwiseCoverageEnabled;
@@ -775,13 +768,5 @@ public class ProgrammingExercise extends Exercise {
 
     public void setExerciseHints(Set<ExerciseHint> exerciseHints) {
         this.exerciseHints = exerciseHints;
-    }
-
-    public ProgrammingExerciseGitDiffReport getGitDiffReport() {
-        return gitDiffReport;
-    }
-
-    public void setGitDiffReport(ProgrammingExerciseGitDiffReport programmingExerciseGitDiffReport) {
-        this.gitDiffReport = programmingExerciseGitDiffReport;
     }
 }

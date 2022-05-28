@@ -18,6 +18,7 @@ import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
 import de.tum.in.www1.artemis.exception.ContinuousIntegrationException;
 import de.tum.in.www1.artemis.exception.VersionControlException;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.hestia.CoverageReportRepository;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.VersionControlService;
@@ -66,13 +67,15 @@ public class ParticipationService {
 
     private final UrlService urlService;
 
+    private final CoverageReportRepository coverageReportRepository;
+
     public ParticipationService(ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository,
             StudentParticipationRepository studentParticipationRepository, ExerciseRepository exerciseRepository, ProgrammingExerciseRepository programmingExerciseRepository,
             ResultRepository resultRepository, SubmissionRepository submissionRepository, ComplaintResponseRepository complaintResponseRepository,
             ComplaintRepository complaintRepository, TeamRepository teamRepository, GitService gitService, QuizScheduleService quizScheduleService,
             ParticipationRepository participationRepository, Optional<ContinuousIntegrationService> continuousIntegrationService,
-            Optional<VersionControlService> versionControlService, RatingRepository ratingRepository, ParticipantScoreRepository participantScoreRepository,
-            UrlService urlService) {
+            Optional<VersionControlService> versionControlService, RatingRepository ratingRepository, ParticipantScoreRepository participantScoreRepository, UrlService urlService,
+            CoverageReportRepository coverageReportRepository) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.participationRepository = participationRepository;
         this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
@@ -90,6 +93,7 @@ public class ParticipationService {
         this.ratingRepository = ratingRepository;
         this.participantScoreRepository = participantScoreRepository;
         this.urlService = urlService;
+        this.coverageReportRepository = coverageReportRepository;
     }
 
     /**
@@ -668,6 +672,7 @@ public class ParticipationService {
         // The result of the submissions will be deleted via cascade
         submissions.forEach(submission -> {
             resultsToBeDeleted.addAll(submission.getResults());
+            coverageReportRepository.deleteBySubmissionId(submission.getId());
             submissionRepository.deleteById(submission.getId());
         });
         resultsToBeDeleted.forEach(result -> participantScoreRepository.deleteAllByResultIdTransactional(result.getId()));
