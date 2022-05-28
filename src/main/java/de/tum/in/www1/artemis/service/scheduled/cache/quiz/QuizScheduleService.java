@@ -205,6 +205,16 @@ public class QuizScheduleService {
     }
 
     /**
+     * Checks if the scheduler has completed processing of all submissions for a quiz exercise and all results are available in the database.
+     *
+     * @param quizExerciseId the id of the quiz to check
+     * @return if processing of the quiz has finished
+     */
+    public boolean finishedProcessing(Long quizExerciseId) {
+        return quizCache.getReadCacheFor(quizExerciseId).getSubmissions().isEmpty();
+    }
+
+    /**
      * Start scheduler of quiz schedule service
      *
      * @param delayInMillis gap for which the QuizScheduleService should run repeatedly
@@ -343,7 +353,7 @@ public class QuizScheduleService {
             return quizExerciseCache;
         });
         log.debug("Sending quiz {} start", quizExerciseId);
-        QuizExercise quizExercise = quizExerciseRepository.findOneWithQuestionsAndStatistics(quizExerciseId);
+        QuizExercise quizExercise = quizExerciseRepository.findByIdWithQuestionsAndStatisticsElseThrow(quizExerciseId);
         updateQuizExercise(quizExercise);
         if (quizExercise.getQuizMode() != QuizMode.SYNCHRONIZED) {
             throw new IllegalStateException();
@@ -407,7 +417,7 @@ public class QuizScheduleService {
                 }
 
                 // Update cached exercise object (use the expensive operation upfront)
-                quizExercise = quizExerciseRepository.findOneWithQuestionsAndStatistics(quizExerciseId);
+                quizExercise = quizExerciseRepository.findByIdWithQuestionsAndStatisticsElseThrow(quizExerciseId);
                 Map<Long, QuizBatch> batchCache = quizExercise.getQuizBatches().stream().collect(Collectors.toUnmodifiableMap(QuizBatch::getId, batch -> batch));
 
                 // ensure that attempts that were never submitted get committed to the database and saved
@@ -586,8 +596,10 @@ public class QuizScheduleService {
                     continue;
                 }
 
-                // record which batch the submission belongs to
-                quizSubmission.setQuizBatch(quizBatch);
+                if (quizBatch != null) {
+                    // record which batch the submission belongs to
+                    quizSubmission.setQuizBatch(quizBatch.getId());
+                }
 
                 count++;
                 // Create Participation and Result and save to Database (DB Write)
