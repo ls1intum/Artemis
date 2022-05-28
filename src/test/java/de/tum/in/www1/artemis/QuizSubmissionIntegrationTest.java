@@ -358,19 +358,26 @@ public class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
         request.postWithResponseBody("/api/exercises/" + invalidExerciseId + "/submissions/live", quizSubmission, Result.class, HttpStatus.NOT_FOUND);
     }
 
-    @Test
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @WithMockUser(username = "student1", roles = "USER")
-    public void testQuizSubmitNoMoreAttemptsLeftLiveMode_badRequest() throws Exception {
+    @EnumSource(value = QuizMode.class)
+    public void testQuizSubmitWithSubmissionInDatabase(QuizMode quizMode) throws Exception {
         Course course = database.createCourse();
-        QuizExercise quizExercise = database.createQuiz(course, ZonedDateTime.now().minusHours(5), null, QuizMode.SYNCHRONIZED);
+        QuizExercise quizExercise = database.createQuiz(course, ZonedDateTime.now().minusHours(5), null, quizMode);
         quizExercise.setDuration(360);
         quizExercise.getQuizBatches().forEach(batch -> batch.setStartTime(ZonedDateTime.now().minusMinutes(5)));
         quizExercise.setAllowedNumberOfAttempts(0);
         quizExerciseService.save(quizExercise);
 
         QuizSubmission quizSubmission = database.generateSubmissionForThreeQuestions(quizExercise, 1, false, ZonedDateTime.now());
-        // submit quiz more times than the allowed number of attempts, expected status = BAD_REQUEST
-        request.postWithResponseBody("/api/exercises/" + quizExercise.getId() + "/submissions/live", quizSubmission, Result.class, HttpStatus.BAD_REQUEST);
+        var expectedStatus = quizMode == QuizMode.SYNCHRONIZED
+                // because of performance optimizations SYNCHRONIZED mode should not access DB, so it can not recognize that a submission already exists that is not in the
+                // QuizSchedule cache
+                // TODO: is there a way of directly testing that no DB access has happened?
+                ? HttpStatus.OK
+                // but the other modes need to reject submissions when one already exists in the DB
+                : HttpStatus.BAD_REQUEST;
+        request.postWithResponseBody("/api/exercises/" + quizExercise.getId() + "/submissions/live", quizSubmission, Result.class, expectedStatus);
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
