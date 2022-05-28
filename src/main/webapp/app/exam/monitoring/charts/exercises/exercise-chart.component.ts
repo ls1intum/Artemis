@@ -1,7 +1,8 @@
-import { Component, OnInit, Input } from '@angular/core';
+import { Component, Input, OnInit } from '@angular/core';
 import { Color, ScaleType } from '@swimlane/ngx-charts';
 import { Exam } from 'app/entities/exam.model';
-import { ChartData, getColor } from 'app/exam/monitoring/charts/monitoring-chart';
+import { ChartData, getCurrentAmountOfStudentsPerExercises, getColor } from 'app/exam/monitoring/charts/monitoring-chart';
+import { ExamAction, ExamActionType } from 'app/entities/exam-user-activity.model';
 
 @Component({
     selector: 'jhi-exercise-chart',
@@ -10,6 +11,8 @@ import { ChartData, getColor } from 'app/exam/monitoring/charts/monitoring-chart
 })
 export class ExerciseChartComponent implements OnInit {
     // Input
+    @Input()
+    examActions: ExamAction[];
     @Input()
     exam: Exam;
 
@@ -21,6 +24,7 @@ export class ExerciseChartComponent implements OnInit {
         group: ScaleType.Ordinal,
         domain: [],
     } as Color;
+    legend = false;
 
     // Component
     routerLink: any[];
@@ -30,14 +34,17 @@ export class ExerciseChartComponent implements OnInit {
 
     ngOnInit(): void {
         this.initData();
-        this.routerLink = ['/course-management', this.exam.course!.id!, 'exams', this.exam.id, 'exercise-groups'];
+        // this.routerLink = ['/course-management', this.exam.course!.id!, 'exams', this.exam.id, 'exercise-groups'];
     }
 
     initData() {
+        if (this.examActions.length === 0) {
+            return;
+        }
+        const exerciseAmountMap = getCurrentAmountOfStudentsPerExercises(this.examActions);
         this.exam.exerciseGroups!.forEach((group, index) => {
             group.exercises!.forEach((exercise) => {
-                // TODO: Replace with real data
-                this.ngxData.push(new ChartData(exercise.title ?? '', Math.floor(Math.random() * 100)));
+                this.ngxData.push(new ChartData(exercise.title ?? '', exerciseAmountMap.get(exercise.id!) ?? 0));
                 this.ngxColor.domain.push(getColor(index));
             });
         });

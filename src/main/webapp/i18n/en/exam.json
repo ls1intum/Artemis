@@ -512,6 +512,20 @@
                     "yAxisLabel": "Exercise Groups",
                     "legendTitle": "Exercise Groups"
                 },
+                "exercise-submission-chart": {
+                    "name": "Amount of first submissions per exercise",
+                    "tooltip": "TODO",
+                    "xAxisLabel": "Amount of submissions",
+                    "yAxisLabel": "Exercises",
+                    "legendTitle": "Exercises"
+                },
+                "exercise-navigation-chart": {
+                    "name": "Amount of first navigations per exercise",
+                    "tooltip": "TODO",
+                    "xAxisLabel": "Amount of navigations",
+                    "yAxisLabel": "Exercises",
+                    "legendTitle": "Exercises"
+                },
                 "average-actions-chart": {
                     "name": "Average amount of actions per student",
                     "tooltip": "TODO",

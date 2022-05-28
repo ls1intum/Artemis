@@ -1,6 +1,6 @@
 import { Component, OnInit, Input } from '@angular/core';
 import { Color, ScaleType } from '@swimlane/ngx-charts';
-import { ChartData, ChartSeriesData, getColor } from 'app/exam/monitoring/charts/monitoring-chart';
+import { ChartData, ChartSeriesData, getColor, groupActionsByTimestamp } from 'app/exam/monitoring/charts/monitoring-chart';
 import { ExamAction } from 'app/entities/exam-user-activity.model';
 import * as shape from 'd3-shape';
 
@@ -35,16 +35,16 @@ export class TotalActionsChartComponent implements OnInit {
     }
 
     initData() {
-        // this.ngxData = mapExamActions(this.examActions);
-        const chartSeriesData = new ChartSeriesData('test', [
-            new ChartData('1', 10),
-            new ChartData('2', 15),
-            new ChartData('3', 30),
-            new ChartData('4', 80),
-            new ChartData('5', 95),
-            new ChartData('6', 105),
-            new ChartData('7', 10500),
-        ]);
-        this.ngxData = [chartSeriesData];
+        if (this.examActions.length === 0) {
+            return;
+        }
+        const groupedByTimestamp = groupActionsByTimestamp(this.examActions);
+        const chartData: ChartData[] = [];
+        for (const [key, value] of Object.entries(groupedByTimestamp)) {
+            chartData.push(new ChartData(key, value.length));
+        }
+        // TODO: Remove debug output
+        console.log(groupedByTimestamp);
+        this.ngxData = [new ChartSeriesData('actions', chartData)];
     }
 }

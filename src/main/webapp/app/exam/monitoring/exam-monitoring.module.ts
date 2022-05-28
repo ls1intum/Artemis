@@ -16,6 +16,8 @@ import { AverageActionsChartComponent } from 'app/exam/monitoring/charts/activit
 import { CategoryActionsChartComponent } from 'app/exam/monitoring/charts/activity-log/category-actions-chart.component';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { ChartTitleComponent } from 'app/exam/monitoring/charts/chart-title.component';
+import { ExerciseSubmissionChartComponent } from 'app/exam/monitoring/charts/exercises/exercise-submission-chart.component';
+import { ExerciseNavigationChartComponent } from 'app/exam/monitoring/charts/exercises/exercise-navigation-chart.component';
 
 const ENTITY_STATES = [...examMonitoringState];
 
@@ -29,6 +31,8 @@ const ENTITY_STATES = [...examMonitoringState];
         MonitoringCardComponent,
         ExerciseChartComponent,
         ExerciseGroupChartComponent,
+        ExerciseSubmissionChartComponent,
+        ExerciseNavigationChartComponent,
         TotalActionsChartComponent,
         AverageActionsChartComponent,
         CategoryActionsChartComponent,

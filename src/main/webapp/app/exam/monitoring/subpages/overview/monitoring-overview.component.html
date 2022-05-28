@@ -12,10 +12,18 @@
                     <div class="container-fluid">
                         <div class="row">
                             <div class="col-xxl-6">
-                                <jhi-exercise-group-chart [exam]="this.exam"></jhi-exercise-group-chart>
+                                <jhi-exercise-group-chart [examActions]="this.examActions" [exam]="this.exam"></jhi-exercise-group-chart>
                             </div>
                             <div class="col-xxl-6">
-                                <jhi-exercise-chart [exam]="this.exam"></jhi-exercise-chart>
+                                <jhi-exercise-chart [examActions]="this.examActions" [exam]="this.exam"></jhi-exercise-chart>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-xxl-6">
+                                <jhi-exercise-navigation-chart [examActions]="this.examActions" [exam]="this.exam"></jhi-exercise-navigation-chart>
+                            </div>
+                            <div class="col-xxl-6">
+                                <jhi-exercise-submission-chart [examActions]="this.examActions" [exam]="this.exam"></jhi-exercise-submission-chart>
                             </div>
                         </div>
                     </div>

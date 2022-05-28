@@ -511,6 +511,20 @@
                     "yAxisLabel": "Aufgabengruppen",
                     "legendTitle": "Aufgabengruppen"
                 },
+                "exercise-submission-chart": {
+                    "name": "Anzahl der Ersteinreichungen pro Aufgabe",
+                    "tooltip": "TODO",
+                    "xAxisLabel": "Anzahl an Abgaben",
+                    "yAxisLabel": "Aufgaben",
+                    "legendTitle": "Aufgaben"
+                },
+                "exercise-navigation-chart": {
+                    "name": "Anzahl der ersten ersten Ansichten pro Aufgabe",
+                    "tooltip": "TODO",
+                    "xAxisLabel": "Anzahl an Ansichten",
+                    "yAxisLabel": "Aufgaben",
+                    "legendTitle": "Aufgaben"
+                },
                 "average-actions-chart": {
                     "name": "Durchschnittliche Anzahl an Aktionen pro Studierende",
                     "tooltip": "TODO",

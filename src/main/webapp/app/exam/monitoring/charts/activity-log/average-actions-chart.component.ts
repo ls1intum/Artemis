@@ -1,6 +1,6 @@
 import { Component, OnInit, Input } from '@angular/core';
 import { Color, ScaleType } from '@swimlane/ngx-charts';
-import { ChartData, ChartSeriesData, getColor } from 'app/exam/monitoring/charts/monitoring-chart';
+import { ChartData, ChartSeriesData, getColor, groupActionsByTimestamp } from 'app/exam/monitoring/charts/monitoring-chart';
 import { ExamAction } from 'app/entities/exam-user-activity.model';
 import * as shape from 'd3-shape';
 
@@ -13,6 +13,8 @@ export class AverageActionsChartComponent implements OnInit {
     // Input
     @Input()
     examActions: ExamAction[];
+    @Input()
+    registeredStudents: number;
 
     // Chart
     ngxData: ChartSeriesData[] = [];
@@ -35,16 +37,17 @@ export class AverageActionsChartComponent implements OnInit {
     }
 
     initData() {
-        // this.ngxData = mapExamActions(this.examActions);
-        const chartSeriesData = new ChartSeriesData('test', [
-            new ChartData('1', 10),
-            new ChartData('2', 15),
-            new ChartData('3', 18),
-            new ChartData('4', 24),
-            new ChartData('5', 26),
-            new ChartData('6', 30),
-            new ChartData('7', 150),
-        ]);
-        this.ngxData = [chartSeriesData];
+        if (this.examActions.length === 0) {
+            return;
+        }
+        const groupedByTimestamp = groupActionsByTimestamp(this.examActions);
+        const chartData: ChartData[] = [];
+        for (const [key, value] of Object.entries(groupedByTimestamp)) {
+            // Divide actions per timestamp by amount of registered students
+            chartData.push(new ChartData(key, value.length / this.registeredStudents));
+        }
+        // TODO: Remove debug output
+        console.log(groupedByTimestamp);
+        this.ngxData = [new ChartSeriesData('actions', chartData)];
     }
 }
