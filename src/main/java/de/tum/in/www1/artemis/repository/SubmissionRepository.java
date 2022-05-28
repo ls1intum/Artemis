@@ -387,9 +387,9 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
             SELECT COUNT (DISTINCT s)
             FROM StudentParticipation p JOIN p.submissions s
             WHERE p.exercise.id = :#{#exerciseId}
-                AND p.student.id = :#{#studentId}
+                AND p.student.login = :#{#studentLogin}
             """)
-    int countByExerciseIdAndStudentId(@Param("exerciseId") long exerciseId, @Param("studentId") long studentId);
+    int countByExerciseIdAndStudentLogin(@Param("exerciseId") long exerciseId, @Param("studentLogin") String studentLogin);
 
     /**
      * @param exerciseIds the exercise ids we are interested in

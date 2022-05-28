@@ -168,8 +168,8 @@ public class QuizBatchService {
      * @param user the user that the batch should be looked up for
      * @return the batch that the user currently takes part in or empty
      */
-    public Optional<QuizBatch> getQuizBatchForStudent(QuizExercise quizExercise, User user) {
-        var batch = quizScheduleService.getQuizBatchForStudent(quizExercise, user);
+    public Optional<QuizBatch> getQuizBatchForStudentByLogin(QuizExercise quizExercise, String login) {
+        var batch = quizScheduleService.getQuizBatchForStudentByLogin(quizExercise, login);
         if (batch.isEmpty() && quizExercise.getQuizMode() == QuizMode.SYNCHRONIZED) {
             return Optional.of(getOrCreateSynchronizedQuizBatch(quizExercise));
         }

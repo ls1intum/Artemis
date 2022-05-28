@@ -9,8 +9,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Result;
-import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
+import de.tum.in.www1.artemis.domain.enumeration.QuizMode;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
@@ -119,13 +119,13 @@ public class QuizSubmissionService {
      * @return the updated quiz submission object
      * @throws QuizSubmissionException handles errors, e.g. when the live quiz has already ended, or when the quiz was already submitted before
      */
-    public QuizSubmission saveSubmissionForLiveMode(Long exerciseId, QuizSubmission quizSubmission, User user, boolean submitted) throws QuizSubmissionException {
+    public QuizSubmission saveSubmissionForLiveMode(Long exerciseId, QuizSubmission quizSubmission, String userLogin, boolean submitted) throws QuizSubmissionException {
         // TODO: what happens if a user executes this call twice in the same moment (using 2 threads)
 
         String logText = submitted ? "submit quiz in live mode:" : "save quiz in live mode:";
 
         long start = System.nanoTime();
-        checkSubmissionForLiveModeOrThrow(exerciseId, user, logText, start);
+        checkSubmissionForLiveModeOrThrow(exerciseId, userLogin, logText, start);
 
         // recreate pointers back to submission in each submitted answer
         for (SubmittedAnswer submittedAnswer : quizSubmission.getSubmittedAnswers()) {
@@ -136,16 +136,16 @@ public class QuizSubmissionService {
         quizSubmission.setSubmissionDate(ZonedDateTime.now());
 
         // save submission to HashMap
-        quizScheduleService.updateSubmission(exerciseId, user.getLogin(), quizSubmission);
+        quizScheduleService.updateSubmission(exerciseId, userLogin, quizSubmission);
 
-        log.info("{} Saved quiz submission for user {} in quiz {} after {} µs ", logText, user.getLogin(), exerciseId, (System.nanoTime() - start) / 1000);
+        log.info("{} Saved quiz submission for user {} in quiz {} after {} µs ", logText, userLogin, exerciseId, (System.nanoTime() - start) / 1000);
         return quizSubmission;
     }
 
     /**
      * Check that the user is allowed to currently submit to the specified exercise and throws an exception if not
      */
-    private void checkSubmissionForLiveModeOrThrow(Long exerciseId, User user, String logText, long start) throws QuizSubmissionException {
+    private void checkSubmissionForLiveModeOrThrow(Long exerciseId, String userLogin, String logText, long start) throws QuizSubmissionException {
         // check if submission is still allowed
         QuizExercise quizExercise = quizScheduleService.getQuizExercise(exerciseId);
         if (quizExercise == null) {
@@ -153,31 +153,40 @@ public class QuizSubmissionService {
             log.info("Quiz not in QuizScheduleService cache, fetching from DB");
             quizExercise = quizExerciseRepository.findByIdElseThrow(exerciseId);
         }
-        log.debug("{}: Received quiz exercise for user {} in quiz {} in {} µs.", logText, user.getLogin(), exerciseId, (System.nanoTime() - start) / 1000);
+        log.debug("{}: Received quiz exercise for user {} in quiz {} in {} µs.", logText, userLogin, exerciseId, (System.nanoTime() - start) / 1000);
         if (!quizExercise.isQuizStarted() || quizExercise.isQuizEnded()) {
             throw new QuizSubmissionException("The quiz is not active");
         }
 
-        var batch = quizBatchService.getQuizBatchForStudent(quizExercise, user);
+        var batch = quizBatchService.getQuizBatchForStudentByLogin(quizExercise, userLogin);
         if (batch.stream().noneMatch(QuizBatch::isSubmissionAllowed)) {
             throw new QuizSubmissionException("The quiz is not active");
         }
 
-        var cachedSubmission = quizScheduleService.getQuizSubmission(exerciseId, user.getLogin());
+        var cachedSubmission = quizScheduleService.getQuizSubmission(exerciseId, userLogin);
         if (cachedSubmission.isSubmitted()) {
-            // current attempt has not yet been committed to DB, so countByExerciseIdAndStudentId will not pick it up
+            // the old submission has not yet been processed, so don't allow a new one yet
             throw new QuizSubmissionException("You have already submitted the quiz");
+        }
+
+        if (quizExercise.getQuizMode() == QuizMode.SYNCHRONIZED) {
+            // in synchronized mode we cache the participation after we processed the submission, so we can check there if the submission was already processed
+            var cachedParticipation = quizScheduleService.getParticipation(exerciseId, userLogin);
+            if (cachedParticipation != null && cachedParticipation.getResults().stream().anyMatch(r -> r.getSubmission().isSubmitted())) {
+                throw new QuizSubmissionException("You have already submitted the quiz");
+            }
+        }
+        else {
+            // in other modes we have to check the db if there has already been a submission
+            int submissionCount = submissionRepository.countByExerciseIdAndStudentLogin(exerciseId, userLogin);
+            log.debug("{} Counted {} submissions for user {} in quiz {} in {} µs.", logText, submissionCount, userLogin, exerciseId, (System.nanoTime() - start) / 1000);
+            if (quizExercise.getAllowedNumberOfAttempts() != null && submissionCount >= quizExercise.getAllowedNumberOfAttempts()) {
+                throw new QuizSubmissionException("You have no more attempts at this quiz left");
+            }
         }
 
         // TODO: add one additional check: fetch quizSubmission.getId() with the corresponding participation and check that the user of participation is the
         // same as the user who executes this call. This prevents injecting submissions to other users
-
-        // check if user has attempts left for this quiz
-        int submissionCount = submissionRepository.countByExerciseIdAndStudentId(exerciseId, user.getId());
-        log.debug("{} Counted {} submissions for user {} in quiz {} in {} µs.", logText, submissionCount, user.getLogin(), exerciseId, (System.nanoTime() - start) / 1000);
-        if (quizExercise.getAllowedNumberOfAttempts() != null && submissionCount >= quizExercise.getAllowedNumberOfAttempts()) {
-            throw new QuizSubmissionException("You have no more attempts at this quiz left");
-        }
     }
 
     /**

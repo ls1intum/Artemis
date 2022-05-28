@@ -303,7 +303,7 @@ public class QuizExerciseResource {
             throw new AccessForbiddenException();
         }
         quizExercise.setQuizBatches(null); // remove proxy and load batches only if required
-        var batch = quizBatchService.getQuizBatchForStudent(quizExercise, user);
+        var batch = quizBatchService.getQuizBatchForStudentByLogin(quizExercise, user.getLogin());
         quizExercise.setQuizBatches(batch.stream().collect(Collectors.toSet()));
         // filter out information depending on quiz state
         quizExercise.applyAppropriateFilterForStudents(batch.orElse(null));
@@ -327,13 +327,13 @@ public class QuizExerciseResource {
         if (!authCheckService.isAllowedToSeeExercise(quizExercise, user) || !quizExercise.isQuizStarted() || quizExercise.isQuizEnded()) {
             throw new AccessForbiddenException();
         }
-        if (quizScheduleService.getQuizBatchForStudent(quizExercise, user).isPresent()) {
+        if (quizScheduleService.getQuizBatchForStudentByLogin(quizExercise, user.getLogin()).isPresent()) {
             return ResponseEntity.badRequest()
                     .headers(HeaderUtil.createFailureAlert(applicationName, true, "quizExercise", "quizBatchPending", "Previous submission for this quiz is still pending."))
                     .build();
         }
 
-        var submissions = submissionRepository.countByExerciseIdAndStudentId(quizExerciseId, user.getId());
+        var submissions = submissionRepository.countByExerciseIdAndStudentLogin(quizExerciseId, user.getLogin());
         if (quizExercise.getAllowedNumberOfAttempts() != null && submissions >= quizExercise.getAllowedNumberOfAttempts()) {
             return ResponseEntity.badRequest()
                     .headers(HeaderUtil.createFailureAlert(applicationName, true, "quizExercise", "quizAttemptsExceeded", "Maximum number of attempts reached.")).build();
@@ -488,7 +488,8 @@ public class QuizExerciseResource {
         quizExercise = quizExerciseRepository.findByIdWithQuestionsAndStatisticsElseThrow(quizExercise.getId());
         quizScheduleService.updateQuizExercise(quizExercise);
 
-        var quizBatch = quizBatchService.getQuizBatchForStudent(quizExercise, userRepository.getUser()).orElse(null);
+        // get the batch for synchronized quiz exercises and start-now action; otherwise it doesn't matter
+        var quizBatch = quizBatchService.getQuizBatchForStudentByLogin(quizExercise, "any").orElse(null);
 
         // notify websocket channel of changes to the quiz exercise
         quizMessagingService.sendQuizExerciseToSubscribedClients(quizExercise, quizBatch, action);

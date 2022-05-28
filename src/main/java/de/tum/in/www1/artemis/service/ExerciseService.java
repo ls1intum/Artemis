@@ -314,7 +314,7 @@ public class ExerciseService {
                     if (quizExercise.isQuizStarted() && !quizExercise.isQuizEnded()) {
                         // delete the proxy as it doesn't work; getQuizBatchForStudent will load the batches from the DB directly
                         quizExercise.setQuizBatches(null);
-                        quizExercise.setQuizBatches(quizBatchService.getQuizBatchForStudent(quizExercise, user).stream().collect(Collectors.toSet()));
+                        quizExercise.setQuizBatches(quizBatchService.getQuizBatchForStudentByLogin(quizExercise, user.getLogin()).stream().collect(Collectors.toSet()));
                     }
                 }
             }

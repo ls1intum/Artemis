@@ -543,7 +543,7 @@ public class ParticipationResource {
             return new MappingJacksonValue(participation);
         }
         quizExercise.setQuizBatches(null); // not available here
-        var quizBatch = quizBatchService.getQuizBatchForStudent(quizExercise, user);
+        var quizBatch = quizBatchService.getQuizBatchForStudentByLogin(quizExercise, user.getLogin());
 
         if (quizBatch.isPresent() && quizBatch.get().isSubmissionAllowed()) {
             // Quiz is active => construct Participation from
@@ -565,7 +565,7 @@ public class ParticipationResource {
             quizExercise.filterSensitiveInformation();
             quizExercise.setQuizBatches(quizBatch.stream().collect(Collectors.toSet()));
             if (quizExercise.getAllowedNumberOfAttempts() != null) {
-                var attempts = submissionRepository.countByExerciseIdAndStudentId(quizExercise.getId(), user.getId());
+                var attempts = submissionRepository.countByExerciseIdAndStudentLogin(quizExercise.getId(), user.getLogin());
                 quizExercise.setRemainingNumberOfAttempts(quizExercise.getAllowedNumberOfAttempts() - attempts);
             }
             StudentParticipation participation = new StudentParticipation().exercise(quizExercise);
