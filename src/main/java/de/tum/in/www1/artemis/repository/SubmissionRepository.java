@@ -380,7 +380,7 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
     /**
      * Calculate the number of submissions for the given exercise by the given student.
      * @param exerciseId the exercise id we are interested in
-     * @param studentId the id of the student we are interested in
+     * @param studentLogin the login of the student we are interested in
      * @return the number of submissions belonging to the exercise and student id
      */
     @Query("""

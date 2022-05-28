@@ -113,7 +113,7 @@ public class QuizSubmissionService {
      *
      * @param exerciseId the exerciseID to the corresponding QuizExercise
      * @param quizSubmission the submission which should be saved
-     * @param user the user who has initiated the request
+     * @param userLogin the login of the user who has initiated the request
      * @param submitted whether the user has pressed the submit button or not
      *
      * @return the updated quiz submission object

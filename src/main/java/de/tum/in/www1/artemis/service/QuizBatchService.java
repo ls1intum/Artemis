@@ -165,7 +165,7 @@ public class QuizBatchService {
     /**
      * Return the batch that a user the currently participating in for a given exercise
      * @param quizExercise the quiz for that the batch should be look up for
-     * @param user the user that the batch should be looked up for
+     * @param login the login of the user that the batch should be looked up for
      * @return the batch that the user currently takes part in or empty
      */
     public Optional<QuizBatch> getQuizBatchForStudentByLogin(QuizExercise quizExercise, String login) {
