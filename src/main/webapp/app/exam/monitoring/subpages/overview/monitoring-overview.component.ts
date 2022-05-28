@@ -6,7 +6,15 @@ import { Subscription } from 'rxjs';
 import { ExamMonitoringService } from 'app/exam/monitoring/exam-monitoring.service';
 import { faListAlt } from '@fortawesome/free-solid-svg-icons';
 import { ExamMonitoringWebsocketService } from 'app/exam/monitoring/exam-monitoring-websocket.service';
-import { EndedExamAction, ExamAction, StartedExamAction } from 'app/entities/exam-user-activity.model';
+import {
+    ContinuedAfterHandedInEarlyAction,
+    EndedExamAction,
+    ExamAction,
+    HandedInEarlyAction,
+    SavedExerciseAction,
+    StartedExamAction,
+    SwitchedExerciseAction,
+} from 'app/entities/exam-user-activity.model';
 import dayjs from 'dayjs/esm';
 
 @Component({
@@ -63,6 +71,18 @@ export class MonitoringOverviewComponent implements OnInit, OnDestroy {
     createSampleActions(): ExamAction[] {
         const action = new StartedExamAction(5);
         action.timestamp = dayjs().add(1, 'hour');
-        return [new StartedExamAction(5), new EndedExamAction(), action];
+        const saved = new SavedExerciseAction(true, 5, true, true);
+        saved.exerciseId = 5;
+        return [
+            new StartedExamAction(5),
+            new EndedExamAction(),
+            action,
+            new HandedInEarlyAction(),
+            new ContinuedAfterHandedInEarlyAction(),
+            new StartedExamAction(3),
+            new SwitchedExerciseAction(5),
+            new SwitchedExerciseAction(7),
+            saved,
+        ];
     }
 }

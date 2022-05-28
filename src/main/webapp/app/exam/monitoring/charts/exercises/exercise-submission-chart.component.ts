@@ -46,7 +46,9 @@ export class ExerciseSubmissionChartComponent implements OnInit {
         for (const [_, value] of Object.entries(groupedByActivityId)) {
             const saved: Map<number, number> = new Map();
             value.forEach((action: SwitchedExerciseAction) => saved.set(action.exerciseId!, 1));
-            saved.forEach((key) => exerciseAmountMap.set(key, (exerciseAmountMap.get(key) ?? 0) + 1));
+            for (const key of saved.keys()) {
+                exerciseAmountMap.set(key, (exerciseAmountMap.get(key) ?? 0) + 1);
+            }
         }
         this.exam.exerciseGroups!.forEach((group, index) => {
             group.exercises!.forEach((exercise) => {

@@ -46,7 +46,9 @@ export class ExerciseNavigationChartComponent implements OnInit {
         for (const [_, value] of Object.entries(groupedByActivityId)) {
             const navigatedTo: Map<number, number> = new Map();
             value.forEach((action: SwitchedExerciseAction) => navigatedTo.set(action.exerciseId!, 1));
-            navigatedTo.forEach((key) => exerciseAmountMap.set(key, (exerciseAmountMap.get(key) ?? 0) + 1));
+            for (const key of navigatedTo.keys()) {
+                exerciseAmountMap.set(key, (exerciseAmountMap.get(key) ?? 0) + 1);
+            }
         }
         this.exam.exerciseGroups!.forEach((group, index) => {
             group.exercises!.forEach((exercise) => {
