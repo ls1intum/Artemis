@@ -6,6 +6,32 @@
             </h2>
         </div>
         <div class="col-8 align-self-end text-end">
+            <div class="col" aria-label="Filter Dropdown" ngbDropdown>
+                <button class="btn" ngbDropdownToggle id="filter-dropdown-button">
+                    <fa-icon [icon]="faFilter"></fa-icon>
+                    <span>{{ 'artemisApp.lecture.home.filterLabel' | artemisTranslate }}</span>
+                </button>
+                <ul ngbDropdownMenu class="checkbox-menu text-nowrap pe-2" aria-labelledby="filter-dropdown-button">
+                    <li>
+                        <label class="mb-1">
+                            <input class="ms-2 form-check-input" (change)="applyFilters('filterPast')" [checked]="true" type="checkbox" />
+                            <b class="ms-2">{{ 'artemisApp.lecture.home.filterOptions.filterPast' | artemisTranslate }}</b>
+                        </label>
+                    </li>
+                    <li>
+                        <label class="mb-1">
+                            <input class="ms-2 form-check-input" (change)="applyFilters('filterCurrent')" [checked]="true" type="checkbox" />
+                            <b class="ms-2">{{ 'artemisApp.lecture.home.filterOptions.filterCurrent' | artemisTranslate }}</b>
+                        </label>
+                    </li>
+                    <li>
+                        <label class="mb-1">
+                            <input class="ms-2 form-check-input" (change)="applyFilters('filterFuture')" [checked]="true" type="checkbox" />
+                            <b class="ms-2">{{ 'artemisApp.lecture.home.filterOptions.filterFuture' | artemisTranslate }}</b>
+                        </label>
+                    </li>
+                </ul>
+            </div>
             <button (click)="openImportModal()" class="btn btn-primary jh-create-entity import-lecture text-truncate mb-1" id="lecture-import-button">
                 <fa-icon [icon]="faPlus"></fa-icon>
                 <span jhiTranslate="artemisApp.lecture.home.importLabel">Import Lecture</span>
@@ -17,7 +43,7 @@
         </div>
     </div>
     <br />
-    <div class="table-responsive" *ngIf="lectures">
+    <div class="table-responsive" *ngIf="filteredLectures">
         <table class="table table-striped">
             <thead>
                 <tr>
@@ -31,7 +57,7 @@
                 </tr>
             </thead>
             <tbody class="markdown-preview" id="lecture-preview">
-                <tr *ngFor="let lecture of lectures; trackBy: trackId; let i = index" id="lecture-row-{{ i }}">
+                <tr *ngFor="let lecture of filteredLectures; trackBy: trackId; let i = index" id="lecture-row-{{ i }}">
                     <td>
                         <a [routerLink]="[lecture.id]">{{ lecture.id }}</a>
                     </td>

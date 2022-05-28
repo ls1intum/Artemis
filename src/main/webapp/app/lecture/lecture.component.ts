@@ -1,3 +1,4 @@
+import dayjs from 'dayjs/esm';
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Subject, Subscription } from 'rxjs';
@@ -6,6 +7,7 @@ import { AccountService } from 'app/core/auth/account.service';
 import { LectureService } from './lecture.service';
 import { Lecture } from 'app/entities/lecture.model';
 import { ActivatedRoute, Router } from '@angular/router';
+import { faFilter } from '@fortawesome/free-solid-svg-icons';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { onError } from 'app/shared/util/global.utils';
 import { AlertService } from 'app/core/util/alert.service';
@@ -19,6 +21,7 @@ import { LectureImportComponent } from 'app/lecture/lecture-import.component';
 })
 export class LectureComponent implements OnInit, OnDestroy {
     lectures: Lecture[];
+    filteredLectures: Lecture[];
     currentAccount: any;
     eventSubscriber: Subscription;
     courseId: number;
@@ -32,6 +35,11 @@ export class LectureComponent implements OnInit, OnDestroy {
     faPencilAlt = faPencilAlt;
     faFile = faFile;
     faPuzzlePiece = faPuzzlePiece;
+    faFilter = faFilter;
+    // Filter options checkbox state (checked by default)
+    private filterPast = true;
+    private filterCurrent = true;
+    private filterFuture = true;
 
     constructor(
         protected lectureService: LectureService,
@@ -53,6 +61,7 @@ export class LectureComponent implements OnInit, OnDestroy {
             .subscribe({
                 next: (res: Lecture[]) => {
                     this.lectures = res;
+                    this.filteredLectures = res;
                 },
                 error: (res: HttpErrorResponse) => onError(this.alertService, res),
             });
@@ -116,5 +125,39 @@ export class LectureComponent implements OnInit, OnDestroy {
             },
             error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
         });
+    }
+
+    public applyFilters(filterChecked: string): void {
+        // Get the current system time
+        const currentTime = dayjs();
+        // Initialize empty arrays for filtered Lectures
+        let filteredLectures: Array<Lecture> = [];
+        let pastLectures: Array<Lecture> = [];
+        let currentLectures: Array<Lecture> = [];
+        let futureLectures: Array<Lecture> = [];
+
+        // handle checkbox toggle
+        switch (filterChecked) {
+            case 'filterPast':
+                this.filterPast = !this.filterPast;
+                break;
+            case 'filterCurrent':
+                this.filterCurrent = !this.filterCurrent;
+                break;
+            case 'filterFuture':
+                this.filterFuture = !this.filterFuture;
+                break;
+        }
+
+        // update filteredLectures based on the selected filter option checkboxes
+        pastLectures = this.lectures.filter((lecture) => lecture.endDate?.isBefore(dayjs(currentTime)));
+        currentLectures = this.lectures.filter((lecture) => lecture.startDate?.isSameOrBefore(dayjs(currentTime)) && lecture.endDate?.isAfter(dayjs(currentTime)));
+        futureLectures = this.lectures.filter((lecture) => lecture.startDate?.isAfter(dayjs(currentTime)));
+
+        filteredLectures = this.filterPast ? filteredLectures.concat(pastLectures) : filteredLectures;
+        filteredLectures = this.filterCurrent ? filteredLectures.concat(currentLectures) : filteredLectures;
+        filteredLectures = this.filterFuture ? filteredLectures.concat(futureLectures) : filteredLectures;
+
+        this.filteredLectures = filteredLectures;
     }
 }
