@@ -14,10 +14,6 @@
             ><!-- we need to make sure that result is not null, otherwise the compiler complains below -->
             <span [ngClass]="textColorClass" class="guided-tour" id="result-score">
                 <fa-icon [icon]="resultIconClass" size="lg"></fa-icon>
-                <span class="score" *ngIf="exercise" id="result-score-percentage">
-                    <span *ngIf="!short" jhiTranslate="artemisApp.result.score">Score</span>
-                    {{ roundScoreSpecifiedByCourseSettings(result.score, getCourseFromExercise(exercise!)) }}%,
-                </span>
                 <ng-container *ngIf="resultIsPreliminary(result) || hasFeedback; else notPreliminaryAndNoFeedback">
                     <span class="guided-tour result" (click)="showDetails(result)" [ngbTooltip]="resultTooltip" container="body">
                         {{ resultString }}

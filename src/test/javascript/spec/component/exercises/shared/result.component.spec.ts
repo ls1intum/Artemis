@@ -11,19 +11,25 @@ import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { Participation, ParticipationType } from 'app/entities/participation/participation.model';
-import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { cloneDeep } from 'lodash-es';
 import { Submission } from 'app/entities/submission.model';
 import { ExerciseType } from 'app/entities/exercise.model';
 import { faTimesCircle } from '@fortawesome/free-regular-svg-icons';
+import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 
 describe('ResultComponent', () => {
     let fixture: ComponentFixture<ResultComponent>;
     let component: ResultComponent;
 
-    const result = { id: 0, participation: {}, submission: {} } as Result;
-    const modelingExercise = { id: 1, type: ExerciseType.MODELING } as ModelingExercise;
-    const participation = { id: 2, type: ParticipationType.STUDENT, exercise: modelingExercise } as Participation;
+    const result: Result = { id: 0, participation: {}, submission: {} };
+    const programmingExercise: ProgrammingExercise = {
+        id: 1,
+        type: ExerciseType.PROGRAMMING,
+        numberOfAssessmentsOfCorrectionRounds: [],
+        secondCorrectionEnabled: false,
+        studentAssignedTeamIdComputed: false,
+    };
+    const participation: Participation = { id: 2, type: ParticipationType.STUDENT, exercise: programmingExercise };
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -53,9 +59,9 @@ describe('ResultComponent', () => {
     });
 
     it('should set results', () => {
-        const submission1 = { id: 1 } as Submission;
-        const result1 = { id: 1, submission: submission1, score: 1 } as Result;
-        const result2 = { id: 2 } as Result;
+        const submission1: Submission = { id: 1 };
+        const result1: Result = { id: 1, submission: submission1, score: 1 };
+        const result2: Result = { id: 2 };
         const participation1 = cloneDeep(participation);
         participation1.results = [result1, result2];
         component.participation = participation1;
@@ -68,6 +74,6 @@ describe('ResultComponent', () => {
         expect(component.textColorClass).toEqual('text-danger');
         expect(component.hasFeedback).toBeFalse();
         expect(component.resultIconClass).toEqual(faTimesCircle);
-        expect(component.resultString).toEqual('artemisApp.editor.buildSuccessful');
+        expect(component.resultString).toEqual('artemisApp.result.resultStringProgrammingBuildSuccess(artemisApp.result.preliminary)');
     });
 });

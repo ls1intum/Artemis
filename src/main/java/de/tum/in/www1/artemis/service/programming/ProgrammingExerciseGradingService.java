@@ -140,7 +140,7 @@ public class ProgrammingExerciseGradingService {
 
             // Fetch submission or create a fallback
             var latestSubmission = getSubmissionForBuildResult(participation.getId(), buildResult).orElseGet(() -> createAndSaveFallbackSubmission(participation, buildResult));
-            latestSubmission.setBuildFailed(newResult.getFeedbacks().stream().anyMatch(feedback -> feedback.getType() == FeedbackType.AUTOMATIC));
+            latestSubmission.setBuildFailed(newResult.getFeedbacks().stream().noneMatch(feedback -> !feedback.isStaticCodeAnalysisFeedback()));
             // Add artifacts to submission
             latestSubmission.setBuildArtifact(buildResult.hasArtifact());
 
@@ -361,7 +361,7 @@ public class ProgrammingExerciseGradingService {
      * @param result   to modify with new score, result string & added feedbacks (not executed tests)
      * @param exercise the result belongs to.
      * @param isStudentParticipation boolean flag indicating weather the participation of the result is not a solution/template participation.
-     * @return Result with updated feedbacks, score and result string.
+     * @return Result with updated feedbacks and score
      */
     public Result calculateScoreForResult(Result result, ProgrammingExercise exercise, boolean isStudentParticipation) {
         Set<ProgrammingExerciseTestCase> testCases = testCaseService.findActiveByExerciseId(exercise.getId());
@@ -599,6 +599,10 @@ public class ProgrammingExerciseGradingService {
             // The score is always calculated from ALL (except visibility=never) test cases, regardless of the current date!
             final Set<ProgrammingExerciseTestCase> successfulTestCases = testCasesForCurrentDate.stream().filter(isSuccessful(result)).collect(Collectors.toSet());
             updateScore(result, testCases, successfulTestCases, staticCodeAnalysisFeedback, exercise, hasDuplicateTestCases, applySubmissionPolicy);
+
+            if (result.isManual()) {
+                result.setScore(result.calculateTotalPointsForProgrammingExercises(), exercise.getMaxPoints());
+            }
         }
         // Case 2: There are no test cases that are executed before the due date has passed. We need to do this to differentiate this case from a build error.
         else if (!testCases.isEmpty() && !result.getFeedbacks().isEmpty() && !testCaseFeedback.isEmpty()) {

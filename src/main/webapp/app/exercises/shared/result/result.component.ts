@@ -305,20 +305,11 @@ export class ResultComponent implements OnInit, OnChanges {
      * Gets the build result string.
      */
     buildResultString(): string {
-        if (this.isBuildFailed(this.submission)) {
-            return this.isManualResult(this.result) ? this.resultService.getResultString(this.result!, this.exercise!) : this.translate.instant('artemisApp.editor.buildFailed');
-            // Only show the 'preliminary' string for programming student participation results and if the buildAndTestAfterDueDate has not passed.
+        if (this.isBuildFailed(this.submission) && this.isManualResult(this.result)) {
+            return this.translate.instant('artemisApp.editor.buildFailed');
         }
 
-        const buildSuccessful = this.translate.instant('artemisApp.editor.buildSuccessful');
-        const resultStringCompiledMessage = this.resultService.getResultString(this.result!, this.exercise!).replace('0 of 0 passed', buildSuccessful) ?? buildSuccessful;
-
-        if (this.participation && isProgrammingExerciseStudentParticipation(this.participation) && isResultPreliminary(this.result!, this.exercise as ProgrammingExercise)) {
-            const preliminary = '(' + this.translate.instant('artemisApp.result.preliminary') + ')';
-            return `${resultStringCompiledMessage} ${preliminary}`;
-        } else {
-            return resultStringCompiledMessage;
-        }
+        return this.resultService.getResultString(this.result!, this.exercise!);
     }
 
     /**

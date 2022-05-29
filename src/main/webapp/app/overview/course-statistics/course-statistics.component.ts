@@ -322,15 +322,16 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
                             if (participationResult && participationResult.rated) {
                                 const roundedParticipationScore = roundValueSpecifiedByCourseSettings(participationResult.score!, this.course);
                                 const cappedParticipationScore = Math.min(roundedParticipationScore, 100);
+                                const roundedParticipationPoints = roundValueSpecifiedByCourseSettings((participationResult.score! * exercise.maxPoints!) / 100);
                                 const missedScore = 100 - cappedParticipationScore;
-                                const missedPoints = Math.max(exercise.maxPoints! - participationResult.score!, 0);
+                                const missedPoints = Math.max(exercise.maxPoints! - roundedParticipationPoints, 0);
                                 series[5].value = missedScore;
                                 series[5].absoluteValue = missedPoints;
                                 series[5].afterDueDate = false;
                                 series[5].notParticipated = false;
                                 series[5].exerciseId = exercise.id;
 
-                                this.identifyBar(exercise, series, roundedParticipationScore, participationResult.score!);
+                                this.identifyBar(exercise, series, roundedParticipationScore, roundedParticipationPoints);
                                 this.pushToData(exercise, series);
                             }
                         } else {

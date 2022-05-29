@@ -12,7 +12,9 @@ import { Exercise, ExerciseType, getCourseFromExercise } from 'app/entities/exer
 import { map, tap } from 'rxjs/operators';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
 import { TranslateService } from '@ngx-translate/core';
-import { roundScorePercentSpecifiedByCourseSettings } from 'app/shared/util/utils';
+import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
+import { isResultPreliminary } from 'app/exercises/programming/shared/utils/programming-exercise.utils';
+import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 
 export type EntityResponseType = HttpResponse<Result>;
 export type EntityArrayResponseType = HttpResponse<Result[]>;
@@ -39,44 +41,66 @@ export class ResultService implements IResultService {
         return this.http.get<Result>(`${this.resultResourceUrl}/${resultId}`, { observe: 'response' }).pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
     }
 
-    getResultString(result: Result, exercise: Exercise) {
-        const relativeScore = roundScorePercentSpecifiedByCourseSettings(result.score! / exercise.maxPoints!, getCourseFromExercise(exercise));
+    getResultString(result: Result, exercise: Exercise): string {
+        const relativeScore = roundValueSpecifiedByCourseSettings(result.score!, getCourseFromExercise(exercise));
+        const points = roundValueSpecifiedByCourseSettings((result.score! * exercise.maxPoints!) / 100, getCourseFromExercise(exercise));
         if (exercise.type === ExerciseType.PROGRAMMING) {
-            return this.getResultStringProgrammingExercise(result, exercise, relativeScore);
+            return this.getResultStringProgrammingExercise(result, exercise as ProgrammingExercise, relativeScore, points);
         } else {
             return this.translateService.instant(`artemisApp.result.resultStringNonProgramming`, {
                 relativeScore,
-                points: result.score,
+                points,
                 maxPoints: exercise.maxPoints,
             });
         }
     }
 
-    private getResultStringProgrammingExercise(result: Result, exercise: Exercise, relativeScore: number) {
-        const numberOfTestsPassed = result.feedbacks!.filter((feedback) => feedback.type === FeedbackType.AUTOMATIC && feedback.positive).length;
-        const numberOfTestsTotal = result.feedbacks!.filter((feedback) => feedback.type === FeedbackType.AUTOMATIC && !feedback.positive).length;
-        const numberOfIssues = result.feedbacks!.filter((feedback) => Feedback.isStaticCodeAnalysisFeedback(feedback)).length;
+    private getResultStringProgrammingExercise(result: Result, exercise: ProgrammingExercise, relativeScore: number, points: number): string {
+        const numberOfTestsPassed = result.feedbacks?.filter((feedback) => feedback.type === FeedbackType.AUTOMATIC && feedback.positive).length;
+        const numberOfTestsTotal = result.feedbacks?.filter((feedback) => feedback.type === FeedbackType.AUTOMATIC && !feedback.positive).length;
+        const numberOfIssues = result.feedbacks?.filter((feedback) => Feedback.isStaticCodeAnalysisFeedback(feedback)).length;
 
-        if (numberOfTestsTotal === 0) {
-            return this.translateService.instant('artemisApp.result.resultStringNoTestsFound');
-        } else if (numberOfIssues > 0) {
-            return this.translateService.instant('artemisApp.result.resultStringProgrammingCodeIssues', {
+        let resultString: string;
+
+        if (!numberOfTestsTotal || numberOfTestsTotal === 0) {
+            if (numberOfIssues && numberOfIssues > 0) {
+                resultString = this.translateService.instant('artemisApp.result.resultStringProgrammingBuildSuccessCodeIssues', {
+                    relativeScore,
+                    numberOfIssues,
+                    points,
+                    maxPoints: exercise.maxPoints,
+                });
+            } else {
+                resultString = this.translateService.instant(`artemisApp.result.resultStringProgrammingBuildSuccess`, {
+                    relativeScore,
+                    points,
+                    maxPoints: exercise.maxPoints,
+                });
+            }
+        } else if (numberOfIssues && numberOfIssues > 0) {
+            resultString = this.translateService.instant('artemisApp.result.resultStringProgrammingCodeIssues', {
                 relativeScore,
                 numberOfTestsPassed,
                 numberOfTestsTotal,
                 numberOfIssues,
-                points: result.score,
+                points,
                 maxPoints: exercise.maxPoints,
             });
         } else {
-            return this.translateService.instant(`artemisApp.result.resultStringProgramming`, {
+            resultString = this.translateService.instant(`artemisApp.result.resultStringProgramming`, {
                 relativeScore,
                 numberOfTestsPassed,
                 numberOfTestsTotal,
-                points: result.score,
+                points,
                 maxPoints: exercise.maxPoints,
             });
         }
+
+        if (isResultPreliminary(result, exercise)) {
+            resultString += ' (' + this.translateService.instant('artemisApp.result.preliminary') + ')';
+        }
+
+        return resultString;
     }
 
     getResultsForExercise(exerciseId: number, req?: any): Observable<EntityArrayResponseType> {

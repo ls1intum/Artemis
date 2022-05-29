@@ -100,8 +100,8 @@ public class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrat
         // Set submission of newResult
         database.addProgrammingSubmissionToResultAndParticipation(newManualResult, programmingExerciseStudentParticipation, "123");
 
-        manualResult = ModelFactory.generateResult(true, 90D).participation(programmingExerciseStudentParticipation);
         List<Feedback> feedbacks = ModelFactory.generateFeedback().stream().peek(feedback -> feedback.setDetailText("Good work here")).collect(Collectors.toList());
+        manualResult = ModelFactory.generateResult(true, 90D).participation(programmingExerciseStudentParticipation);
         manualResult.setFeedbacks(feedbacks);
         manualResult.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
         manualResult.rated(true);
@@ -281,7 +281,6 @@ public class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrat
         Result response = request.putWithResponseBody("/api/participations/" + programmingExerciseStudentParticipation.getId() + "/manual-results", manualResult, Result.class,
                 HttpStatus.OK);
 
-        assertThat(response.getScore()).isEqualTo(2);
         assertThat(response.getParticipation()).isEqualTo(manualResult.getParticipation());
         assertThat(response.getFeedbacks()).hasSameSizeAs(manualResult.getFeedbacks());
     }
@@ -292,7 +291,6 @@ public class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrat
         Result response = request.putWithResponseBody("/api/participations/" + programmingExerciseStudentParticipation.getId() + "/manual-results?submit=true", manualResult,
                 Result.class, HttpStatus.OK);
 
-        assertThat(response.getScore()).isEqualTo(2);
         assertThat(response.getSubmission()).isNotNull();
         assertThat(response.getParticipation()).isEqualTo(manualResult.getParticipation());
         assertThat(response.getFeedbacks()).hasSameSizeAs(manualResult.getFeedbacks());
@@ -536,7 +534,6 @@ public class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrat
 
         Result response = request.putWithResponseBody("/api/participations/" + programmingExerciseStudentParticipation.getId() + "/manual-results", manualResult, Result.class,
                 HttpStatus.OK);
-        assertThat(response.getScore()).isEqualTo(77);
         assertThat(response.getParticipation()).isEqualTo(manualResult.getParticipation());
         assertThat(response.getFeedbacks()).hasSameSizeAs(manualResult.getFeedbacks());
     }

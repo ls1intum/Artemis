@@ -836,21 +836,21 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambo
         programmingSubmission = submissionRepository.save(programmingSubmission);
 
         // result 1
-        Result r1 = database.addResultToParticipation(AssessmentType.MANUAL, ZonedDateTime.now(), programmingExerciseStudentParticipation, "instructor1", new ArrayList<>());
-        r1.setRated(true);
-        r1 = database.addFeedbackToResults(r1);
-        r1.setSubmission(programmingSubmission);
+        Result result1 = database.addResultToParticipation(AssessmentType.MANUAL, ZonedDateTime.now(), programmingExerciseStudentParticipation, "instructor1", new ArrayList<>());
+        result1.setRated(true);
+        result1 = database.addFeedbackToResults(result1);
+        result1.setSubmission(programmingSubmission);
 
         // result 2
-        Result r2 = database.addResultToParticipation(AssessmentType.MANUAL, ZonedDateTime.now(), programmingExerciseStudentParticipation, "tutor1", new ArrayList<>());
-        r2.setRated(true);
-        r2 = database.addFeedbackToResults(r2);
-        r2.setSubmission(programmingSubmission);
+        Result result2 = database.addResultToParticipation(AssessmentType.MANUAL, ZonedDateTime.now(), programmingExerciseStudentParticipation, "tutor1", new ArrayList<>());
+        result2.setRated(true);
+        result2 = database.addFeedbackToResults(result2);
+        result2.setSubmission(programmingSubmission);
 
-        programmingSubmission.addResult(r1);
+        programmingSubmission.addResult(result1);
         programmingSubmission = submissionRepository.save(programmingSubmission);
 
-        programmingSubmission.addResult(r2);
+        programmingSubmission.addResult(result2);
         submissionRepository.save(programmingSubmission);
 
         var assessments = resultRepository.countNumberOfFinishedAssessmentsForExamExerciseForCorrectionRounds(programmingExercise, 2);
