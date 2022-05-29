@@ -45,9 +45,6 @@ export class ExerciseChartComponent implements OnInit, OnChanges {
      * Create and initialize the data for the chart.
      */
     initData() {
-        if (this.examActions.length === 0) {
-            return;
-        }
         const exerciseAmountMap = getCurrentAmountOfStudentsPerExercises(this.examActions);
         insertNgxDataAndColorForExerciseMap(this.exam, exerciseAmountMap, this.ngxData, this.ngxColor);
     }

@@ -43,17 +43,18 @@ export class CategoryActionsChartComponent implements OnInit, OnChanges {
      * Create and initialize the data for the chart.
      */
     initData() {
-        if (this.examActions.length === 0) {
-            return;
-        }
         // Categories
         const categories: Map<string, number> = new Map();
-        Object.keys(ExamActionType).forEach((type) => categories.set(type, 0));
 
         // Group actions by timestamp
         const groupedByTimestamp = groupActionsByTimestamp(this.examActions);
         const chartSeriesData: ChartSeriesData[] = [];
         const chartData: Map<string, ChartData[]> = new Map();
+
+        Object.keys(ExamActionType).forEach((type) => {
+            categories.set(type, 0);
+            chartData.set(type, []);
+        });
 
         for (const [timestampKey, timestampValue] of Object.entries(groupedByTimestamp)) {
             // Group actions by type

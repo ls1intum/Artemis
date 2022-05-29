@@ -43,9 +43,6 @@ export class TotalActionsChartComponent implements OnInit, OnChanges {
      * Create and initialize the data for the chart.
      */
     initData() {
-        if (this.examActions.length === 0) {
-            return;
-        }
         const groupedByTimestamp = groupActionsByTimestamp(this.examActions);
         const chartData: ChartData[] = [];
         let amount = 0;
