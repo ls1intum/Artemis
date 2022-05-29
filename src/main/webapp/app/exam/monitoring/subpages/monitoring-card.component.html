@@ -3,10 +3,8 @@
         <div class="row justify-content-between">
             <div class="col-10">
                 <div class="container-fluid p-0">
-                    <h4 class="fw-medium pt-2">{{ this.title }}</h4>
-                    <h6 *ngIf="this.description" class="overflow-hidden text-truncate fw-light pb-1">
-                        {{ this.description }}
-                    </h6>
+                    <h4 data-testid="monitoring-card-title" class="fw-medium pt-2">{{ this.title }}</h4>
+                    <h6 data-testid="monitoring-card-description" *ngIf="this.description" class="overflow-hidden text-truncate fw-light pb-1">{{ this.description }}</h6>
                 </div>
             </div>
             <div class="col-2">
