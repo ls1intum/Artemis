@@ -469,32 +469,15 @@
             },
             "menu": {
                 "overview": {
-                    "title": "Overview",
-                    "description": "TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO"
+                    "title": "Overview"
                 },
                 "exercises": {
                     "title": "Exercises",
                     "description": "Shows the current participation of the students in the respective exercise and exercise groups"
                 },
-                "students": {
-                    "title": "Students",
-                    "description": "TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO"
-                },
-                "submissions": {
-                    "title": "Submissions",
-                    "description": "TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO"
-                },
-                "sessions": {
-                    "title": "Sessions",
-                    "description": "TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO"
-                },
                 "activity-log": {
                     "title": "Activity log",
                     "description": "Shows the past and current activities of active students"
-                },
-                "summary": {
-                    "title": "Summary",
-                    "description": "TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO"
                 }
             },
             "charts": {

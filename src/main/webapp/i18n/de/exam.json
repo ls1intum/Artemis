@@ -468,32 +468,15 @@
             },
             "menu": {
                 "overview": {
-                    "title": "Übersicht",
-                    "description": "Die Übersichtsansicht gibt einen allgemeinen Überblick über die wichtigsten Fakten der Klausur."
+                    "title": "Übersicht"
                 },
                 "exercises": {
                     "title": "Aufgaben",
                     "description": "Zeigt die aktuelle Teilnahme der Studierenden in den jeweilgen Aufgaben und Aufgabengruppen"
                 },
-                "students": {
-                    "title": "Studierende",
-                    "description": "TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO"
-                },
-                "submissions": {
-                    "title": "Abgaben",
-                    "description": "TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO"
-                },
-                "sessions": {
-                    "title": "Sitzungen",
-                    "description": "TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO"
-                },
                 "activity-log": {
                     "title": "Aktivitäten",
                     "description": "Zeigt die vergangenen und aktuellen Aktivitäten der aktiven Studierenden"
-                },
-                "summary": {
-                    "title": "Zusammenfassung",
-                    "description": "TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO"
                 }
             },
             "charts": {

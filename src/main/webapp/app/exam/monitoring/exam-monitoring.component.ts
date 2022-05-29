@@ -7,7 +7,7 @@ import { HttpResponse } from '@angular/common/http';
 import { ExamMonitoringService } from './exam-monitoring.service';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 
-class TableContent {
+export class TableContent {
     translateValue: string;
     value: any;
 
