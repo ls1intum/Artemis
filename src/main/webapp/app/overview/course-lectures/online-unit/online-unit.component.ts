@@ -23,7 +23,10 @@ export class OnlineUnitComponent {
         this.isCollapsed = !this.isCollapsed;
     }
 
-    get domainName() {
-        return new URL(this.onlineUnit?.source ?? '').hostname.replace('www.', '');
+    get domainName(): string {
+        if (this.onlineUnit?.source) {
+            return new URL(this.onlineUnit.source).hostname.replace('www.', '');
+        }
+        return '';
     }
 }

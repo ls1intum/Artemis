@@ -1,7 +1,7 @@
 export class OnlineResourceDTO {
-    url: String;
-    title: String;
-    description: String;
+    url: string;
+    title: string;
+    description: string;
 
     constructor() {}
 }

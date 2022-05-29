@@ -2,10 +2,10 @@ import dayjs from 'dayjs/esm';
 import { Component, EventEmitter, Input, OnChanges, OnInit, Output } from '@angular/core';
 import { AbstractControl, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { faArrowLeft } from '@fortawesome/free-solid-svg-icons';
-import { LectureUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/lectureUnit.service';
 import { map } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
 import { OnlineResourceDTO } from 'app/lecture/lecture-unit/lecture-unit-management/online-resource-dto.model';
+import { OnlineUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/onlineUnit.service';
 
 export interface OnlineUnitFormData {
     name?: string;
@@ -46,7 +46,7 @@ export class OnlineUnitFormComponent implements OnInit, OnChanges {
     // Icons
     faArrowLeft = faArrowLeft;
 
-    constructor(private fb: FormBuilder, private lectureUnitService: LectureUnitService) {}
+    constructor(private fb: FormBuilder, private onlineUnitService: OnlineUnitService) {}
 
     get nameControl() {
         return this.form.get('name');
@@ -104,7 +104,7 @@ export class OnlineUnitFormComponent implements OnInit, OnChanges {
         }
 
         if (this.sourceControl?.valid) {
-            this.lectureUnitService
+            this.onlineUnitService
                 .getOnlineResource(this.sourceControl.value)
                 .pipe(map((response: HttpResponse<OnlineResourceDTO>) => response.body!))
                 .subscribe({
