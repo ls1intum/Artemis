@@ -211,7 +211,7 @@ public class QuizScheduleService {
      * @return if processing of the quiz has finished
      */
     public boolean finishedProcessing(Long quizExerciseId) {
-        return quizCache.getReadCacheFor(quizExerciseId).getSubmissions().isEmpty();
+        return ((QuizExerciseCache) quizCache.getReadCacheFor(quizExerciseId)).getSubmissions().isEmpty();
     }
 
     /**
