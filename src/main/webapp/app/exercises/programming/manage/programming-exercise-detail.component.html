@@ -185,6 +185,17 @@
                             <span jhiTranslate="artemisApp.programmingExercise.createStructuralSolutionEntriesTitle">Create Structural Solution Entries</span>
                         </button>
                     </span>
+                    <span *ngIf="programmingExercise.testwiseCoverageEnabled" class="me-1">
+                        <button
+                            [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
+                            type="button"
+                            (click)="createBehavioralSolutionEntries()"
+                            class="btn btn-secondary btn-sm"
+                            ngbTooltip="{{ 'artemisApp.programmingExercise.createBehavioralSolutionEntriesTooltip' | artemisTranslate }}"
+                        >
+                            <span jhiTranslate="artemisApp.programmingExercise.createBehavioralSolutionEntriesTitle">Create Behavioral Solution Entries</span>
+                        </button>
+                    </span>
                     <span class="me-1">
                         <button
                             [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"

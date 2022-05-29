@@ -35,6 +35,7 @@ import { CodeBlockCommand } from 'app/shared/markdown-editor/commands/codeblock.
 import { faGripLines, faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 
 export enum MarkdownEditorHeight {
+    INLINE = 100,
     SMALL = 200,
     MEDIUM = 500,
     LARGE = 1000,
@@ -247,6 +248,9 @@ export class MarkdownEditorComponent implements AfterViewInit {
      * @desc Sets up resizable to enable resizing for the user
      */
     setupResizable(): void {
+        // unregister previously set event listeners for class elements
+        interact('.markdown-editor').unset();
+
         this.interactResizable = interact('.markdown-editor')
             .resizable({
                 // Enable resize from top edge; triggered by class rg-top
