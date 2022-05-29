@@ -1,6 +1,6 @@
 import { Component, OnChanges, OnInit } from '@angular/core';
 import { PostingCreateEditModalDirective } from 'app/shared/metis/posting-create-edit-modal/posting-create-edit-modal.directive';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { Post } from 'app/entities/metis/post.model';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { FormBuilder, Validators } from '@angular/forms';
@@ -27,6 +27,7 @@ export interface ContextSelectorOption {
     styleUrls: ['../../metis.component.scss'],
 })
 export class PostCreateEditModalComponent extends PostingCreateEditModalDirective<Post> implements OnInit, OnChanges {
+    modalRef?: NgbModalRef;
     exercises?: Exercise[];
     lectures?: Lecture[];
     tags: string[];
@@ -68,6 +69,22 @@ export class PostCreateEditModalComponent extends PostingCreateEditModalDirectiv
      */
     ngOnChanges(): void {
         super.ngOnChanges();
+    }
+
+    /**
+     * opens the modal to edit or create a post
+     */
+    open(): void {
+        this.modalRef = this.modalService.open(this.postingEditor, {
+            size: 'lg',
+            backdrop: 'static',
+            beforeDismiss: () => {
+                // when cancelling the create or update action, we do not want to store the current values
+                // but rather reset the formGroup values so when re-opening the modal we do not show the previously unsaved changes
+                this.resetFormGroup();
+                return true;
+            },
+        });
     }
 
     /**

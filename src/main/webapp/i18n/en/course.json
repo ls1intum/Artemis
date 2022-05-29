@@ -137,6 +137,12 @@
                 "shortname": {
                     "minlength": "Short Name must contain at least 3 characters.",
                     "forbidden": "Short Name must start with a letter and cannot contain special characters."
+                },
+                "startDate": {
+                    "invalid": "Must be before the end date of the course"
+                },
+                "endDate": {
+                    "invalid": "Must be after the start date of the course"
                 }
             },
             "courseDashboard": "Course Dashboard",
