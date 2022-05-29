@@ -1,9 +1,7 @@
 package de.tum.in.www1.artemis.web.rest;
 
-import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -58,30 +56,19 @@ public class ProgrammingExerciseTestCaseResource {
 
     /**
      * Get the exercise's test cases for the given exercise id.
-     * If the accessor is a student all invisible test cases are filtered and the hidden test cases
      *
      * @param exerciseId of the exercise.
      * @return the found test cases or an empty list if no test cases were found.
      */
     @GetMapping(Endpoints.TEST_CASES)
-    @PreAuthorize("hasRole('USER')")
+    @PreAuthorize("hasRole('TA')")
     public ResponseEntity<Set<ProgrammingExerciseTestCase>> getTestCases(@PathVariable Long exerciseId) {
         log.debug("REST request to get test cases for programming exercise {}", exerciseId);
         var programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exerciseId);
-        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.STUDENT, programmingExercise, null);
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, programmingExercise, null);
 
         Set<ProgrammingExerciseTestCase> testCases = programmingExerciseTestCaseRepository.findByExerciseId(exerciseId);
-        if (authCheckService.isAtLeastTeachingAssistantForExercise(programmingExercise)) {
-            return ResponseEntity.ok(testCases);
-        }
-
-        ZonedDateTime latestDueDate = participationRepository.findLatestIndividualDueDate(exerciseId).orElse(programmingExercise.getDueDate());
-        if (latestDueDate == null || ZonedDateTime.now().isAfter(latestDueDate)) {
-            return ResponseEntity.ok(testCases.stream().filter(testCase -> !testCase.isInvisible()).collect(Collectors.toSet()));
-        }
-        else {
-            return ResponseEntity.ok(testCases.stream().filter(testCase -> !testCase.isInvisible() && !testCase.isAfterDueDate()).collect(Collectors.toSet()));
-        }
+        return ResponseEntity.ok(testCases);
     }
 
     /**
