@@ -16,7 +16,13 @@ describe('ProgrammingExerciseLifecycleComponent', () => {
 
     const nextDueDate = dayjs().add(5, 'days');
     const afterDueDate = dayjs().add(7, 'days');
-    const exercise = { id: 42, dueDate: nextDueDate, buildAndTestStudentSubmissionsAfterDueDate: afterDueDate } as ProgrammingExercise;
+    const exampleSolutionPublicationDate = dayjs().add(9, 'days');
+    const exercise = {
+        id: 42,
+        dueDate: nextDueDate,
+        buildAndTestStudentSubmissionsAfterDueDate: afterDueDate,
+        exampleSolutionPublicationDate,
+    } as ProgrammingExercise;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -42,6 +48,7 @@ describe('ProgrammingExerciseLifecycleComponent', () => {
 
         expect(comp.exercise.dueDate).toEqual(nextDueDate);
         expect(comp.exercise.buildAndTestStudentSubmissionsAfterDueDate).toEqual(afterDueDate);
+        expect(comp.exercise.exampleSolutionPublicationDate).toEqual(exampleSolutionPublicationDate);
     });
 
     it('should only reset the due date if the release date is between the due date and the after due date', () => {
@@ -51,15 +58,26 @@ describe('ProgrammingExerciseLifecycleComponent', () => {
 
         expect(comp.exercise.dueDate).toEqual(newRelease);
         expect(comp.exercise.buildAndTestStudentSubmissionsAfterDueDate).toEqual(afterDueDate);
+        expect(comp.exercise.exampleSolutionPublicationDate).toEqual(exampleSolutionPublicationDate);
     });
 
-    it('should reset both the due date and the after due date if the new release is after both dates', () => {
+    it('should reset the due date, the after due date and the example solution publication date if the new release is after all dates', () => {
         comp.exercise = exercise;
-        const newRelease = dayjs().add(8, 'days');
+        const newRelease = dayjs().add(10, 'days');
         comp.updateReleaseDate(newRelease);
 
         expect(comp.exercise.dueDate).toEqual(newRelease);
         expect(comp.exercise.buildAndTestStudentSubmissionsAfterDueDate).toEqual(newRelease);
+        expect(comp.exercise.exampleSolutionPublicationDate).toEqual(newRelease);
+    });
+
+    it('should reset the example solution publication date if the new due date is later', () => {
+        const newDueDate = dayjs().add(10, 'days');
+        comp.exercise = exercise;
+        exercise.dueDate = newDueDate;
+        comp.updateExampleSolutionPublicationDate(newDueDate);
+
+        expect(comp.exercise.exampleSolutionPublicationDate).toEqual(newDueDate);
     });
 
     it('should change the value for allowing complaints for exercise with automatic assessment after toggling', () => {

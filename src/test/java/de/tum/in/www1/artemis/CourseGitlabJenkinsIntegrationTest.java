@@ -787,4 +787,16 @@ public class CourseGitlabJenkinsIntegrationTest extends AbstractSpringIntegratio
         String registrationNumber2 = "2345678";
         courseTestService.testAddUsersToCourseGroup(group, registrationNumber1, registrationNumber2);
     }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    public void testCreateCourseWithValidStartAndEndDate() throws Exception {
+        courseTestService.testCreateCourseWithValidStartAndEndDate();
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    public void testCreateCourseWithInvalidStartAndEndDate() throws Exception {
+        courseTestService.testCreateCourseWithInvalidStartAndEndDate();
+    }
 }
