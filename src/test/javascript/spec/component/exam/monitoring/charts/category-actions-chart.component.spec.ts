@@ -40,11 +40,16 @@ describe('Category Actions Chart Component', () => {
     it('should call initData on init without actions', () => {
         expect(comp.ngxData).toEqual([]);
 
+        const chartSeriesData: ChartSeriesData[] = [];
+        createActions().forEach((action) => {
+            chartSeriesData.push(new ChartSeriesData(action.type, []));
+        });
+
         // WHEN
         comp.ngOnInit();
 
         // THEN
-        expect(comp.ngxData).toEqual([new ChartSeriesData('actions', [])]);
+        expect(comp.ngxData).toEqual(chartSeriesData);
     });
 
     it('should call initData on init with actions', () => {
