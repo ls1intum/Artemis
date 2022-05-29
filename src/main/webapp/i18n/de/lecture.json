@@ -9,7 +9,8 @@
                 "filterOptions": {
                     "filterPast": "Vergangenheit",
                     "filterCurrent": "Gegenwart",
-                    "filterFuture": "Zukunft"
+                    "filterFuture": "Zukunft",
+                    "filterUnspecifiedDates": "Unspezifiziert Datteln"
                 },
                 "createOrEditLabel": "Vorlesung erstellen oder bearbeiten"
             },

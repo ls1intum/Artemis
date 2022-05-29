@@ -40,6 +40,7 @@ export class LectureComponent implements OnInit, OnDestroy {
     private filterPast = true;
     private filterCurrent = true;
     private filterFuture = true;
+    private filterUnspecifiedDates = true;
 
     constructor(
         protected lectureService: LectureService,
@@ -127,14 +128,15 @@ export class LectureComponent implements OnInit, OnDestroy {
         });
     }
 
+    /**
+     * Filters Lectures
+     * @param filterChecked the filter checkbox that was clicked
+     */
     public applyFilters(filterChecked: string): void {
         // Get the current system time
         const currentTime = dayjs();
         // Initialize empty arrays for filtered Lectures
         let filteredLectures: Array<Lecture> = [];
-        let pastLectures: Array<Lecture> = [];
-        let currentLectures: Array<Lecture> = [];
-        let futureLectures: Array<Lecture> = [];
 
         // handle checkbox toggle
         switch (filterChecked) {
@@ -147,17 +149,22 @@ export class LectureComponent implements OnInit, OnDestroy {
             case 'filterFuture':
                 this.filterFuture = !this.filterFuture;
                 break;
+            case 'filterUnspecifiedDates':
+                this.filterUnspecifiedDates = !this.filterUnspecifiedDates;
+                break;
         }
 
         // update filteredLectures based on the selected filter option checkboxes
-        pastLectures = this.lectures.filter((lecture) => lecture.endDate?.isBefore(dayjs(currentTime)));
-        currentLectures = this.lectures.filter((lecture) => lecture.startDate?.isSameOrBefore(dayjs(currentTime)) && lecture.endDate?.isAfter(dayjs(currentTime)));
-        futureLectures = this.lectures.filter((lecture) => lecture.startDate?.isAfter(dayjs(currentTime)));
+        const pastLectures = this.lectures.filter((lecture) => lecture.startDate !== undefined && lecture.endDate?.isBefore(dayjs(currentTime)));
+        const currentLectures = this.lectures.filter((lecture) => lecture.startDate?.isSameOrBefore(dayjs(currentTime)) && lecture.endDate?.isAfter(dayjs(currentTime)));
+        const futureLectures = this.lectures.filter((lecture) => lecture.endDate !== undefined && lecture.startDate?.isAfter(dayjs(currentTime)));
+        const unspecifiedDatesLectures = this.lectures.filter((lecture) => lecture.startDate === undefined || lecture.endDate === undefined);
 
         filteredLectures = this.filterPast ? filteredLectures.concat(pastLectures) : filteredLectures;
         filteredLectures = this.filterCurrent ? filteredLectures.concat(currentLectures) : filteredLectures;
         filteredLectures = this.filterFuture ? filteredLectures.concat(futureLectures) : filteredLectures;
-
+        filteredLectures = this.filterUnspecifiedDates ? filteredLectures.concat(unspecifiedDatesLectures) : filteredLectures;
+        filteredLectures.sort((first, second) => 0 - (first.id! < second.id! ? 1 : -1));
         this.filteredLectures = filteredLectures;
     }
 }

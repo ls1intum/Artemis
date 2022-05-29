@@ -14,7 +14,7 @@
                 <ul ngbDropdownMenu class="checkbox-menu text-nowrap pe-2" aria-labelledby="filter-dropdown-button">
                     <li>
                         <label class="mb-1">
-                            <input class="ms-2 form-check-input" (change)="applyFilters('filterPast')" [checked]="true" type="checkbox" />
+                            <input class="ms-2 form-check-input" id="filterPast" (change)="applyFilters('filterPast')" [checked]="true" type="checkbox" />
                             <b class="ms-2">{{ 'artemisApp.lecture.home.filterOptions.filterPast' | artemisTranslate }}</b>
                         </label>
                     </li>
@@ -28,6 +28,12 @@
                         <label class="mb-1">
                             <input class="ms-2 form-check-input" (change)="applyFilters('filterFuture')" [checked]="true" type="checkbox" />
                             <b class="ms-2">{{ 'artemisApp.lecture.home.filterOptions.filterFuture' | artemisTranslate }}</b>
+                        </label>
+                    </li>
+                    <li>
+                        <label class="mb-1">
+                            <input class="ms-2 form-check-input" (change)="applyFilters('filterUnspecifiedDates')" [checked]="true" type="checkbox" />
+                            <b class="ms-2">{{ 'artemisApp.lecture.home.filterOptions.filterUnspecifiedDates' | artemisTranslate }}</b>
                         </label>
                     </li>
                 </ul>

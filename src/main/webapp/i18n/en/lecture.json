@@ -9,7 +9,8 @@
                 "filterOptions": {
                     "filterPast": "Past",
                     "filterCurrent": "Current",
-                    "filterFuture": "Future"
+                    "filterFuture": "Future",
+                    "filterUnspecifiedDates": "Unspecified Date(s)"
                 },
                 "createOrEditLabel": "Create or Edit Lecture"
             },
