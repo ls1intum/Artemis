@@ -58,7 +58,7 @@ export class MonitoringOverviewComponent implements OnInit, OnDestroy {
                     this.examActions = [...this.examActions, examAction];
                 }
             });
-            this.examActions = this.createSampleActions();
+            // this.examActions = this.createSampleActions();
         });
     }
 
@@ -73,6 +73,8 @@ export class MonitoringOverviewComponent implements OnInit, OnDestroy {
         action.timestamp = dayjs().add(1, 'hour');
         const saved = new SavedExerciseAction(true, 5, true, true);
         saved.exerciseId = 5;
+        const switched = new SwitchedExerciseAction(5);
+        switched.timestamp = dayjs().add(1, 'hour');
         return [
             new StartedExamAction(5),
             new EndedExamAction(),
@@ -80,9 +82,9 @@ export class MonitoringOverviewComponent implements OnInit, OnDestroy {
             new HandedInEarlyAction(),
             new ContinuedAfterHandedInEarlyAction(),
             new StartedExamAction(3),
-            new SwitchedExerciseAction(5),
             new SwitchedExerciseAction(7),
             saved,
+            switched,
         ];
     }
 }

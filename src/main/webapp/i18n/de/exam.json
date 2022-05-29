@@ -469,7 +469,7 @@
             "menu": {
                 "overview": {
                     "title": "Übersicht",
-                    "description": "TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO"
+                    "description": "Die Übersichtsansicht gibt einen allgemeinen Überblick über die wichtigsten Fakten der Klausur."
                 },
                 "exercises": {
                     "title": "Aufgaben",
@@ -498,48 +498,48 @@
             },
             "charts": {
                 "exercise-chart": {
-                    "name": "Aktuelle Anzahl der Studierenden pro Aufgabe gruppiert nach Übungsgruppen",
-                    "tooltip": "TODO",
+                    "name": "Aktuelle Anzahl der Studierenden pro Aufgabe gruppiert nach Aufgabengruppen",
+                    "tooltip": "Zeigt die aktuelle Anzahl an Studierenden pro Aufgabe gruppiert nach den Aufgabengruppen.",
                     "xAxisLabel": "Anzahl an Studierenden",
                     "yAxisLabel": "Aufgaben",
                     "legendTitle": "Aufgaben"
                 },
                 "exercise-group-chart": {
                     "name": "Aktuelle Anzahl der Studierenden pro Aufgabengruppe",
-                    "tooltip": "TODO",
+                    "tooltip": "Zeigt die aktuelle Anzahl an Studierenden pro Aufgabengruppe.",
                     "xAxisLabel": "Anzahl an Studierenden",
                     "yAxisLabel": "Aufgabengruppen",
                     "legendTitle": "Aufgabengruppen"
                 },
                 "exercise-submission-chart": {
                     "name": "Anzahl der Ersteinreichungen pro Aufgabe",
-                    "tooltip": "TODO",
+                    "tooltip": "Zeigt die aktuelle Anzahl an Ersteinreichungen pro Aufgabe.",
                     "xAxisLabel": "Anzahl an Abgaben",
                     "yAxisLabel": "Aufgaben",
                     "legendTitle": "Aufgaben"
                 },
                 "exercise-navigation-chart": {
-                    "name": "Anzahl der ersten ersten Ansichten pro Aufgabe",
-                    "tooltip": "TODO",
+                    "name": "Anzahl der ersten Ansichten pro Aufgabe",
+                    "tooltip": "Zeigt die aktuelle Anzahl der ersten Ansichten pro Aufgabe.",
                     "xAxisLabel": "Anzahl an Ansichten",
                     "yAxisLabel": "Aufgaben",
                     "legendTitle": "Aufgaben"
                 },
                 "average-actions-chart": {
                     "name": "Durchschnittliche Anzahl an Aktionen pro Studierende",
-                    "tooltip": "TODO",
+                    "tooltip": "Zeigt die durchschnittliche Anzahl an Aktionen pro Studierende.",
                     "xAxisLabel": "Zeitpunkt",
                     "yAxisLabel": "Aktionen"
                 },
                 "total-actions-chart": {
                     "name": "Gesamtanzahl an Aktionen",
-                    "tooltip": "TODO",
+                    "tooltip": "Zeigt die Gesamtanzahl an Aktionen.",
                     "xAxisLabel": "Zeitpunkt",
                     "yAxisLabel": "Aktionen"
                 },
                 "category-actions-chart": {
                     "name": "Gesamtanzahl an Aktionen pro Kategorie",
-                    "tooltip": "TODO",
+                    "tooltip": "Zeigt die Gesamtanzahl an Aktionen pro Kategorie.",
                     "xAxisLabel": "Zeitpunkt",
                     "yAxisLabel": "Aktionen",
                     "legendTitle": "Kategorien"

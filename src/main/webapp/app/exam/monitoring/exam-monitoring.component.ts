@@ -58,6 +58,10 @@ export class ExamMonitoringComponent implements OnInit, OnDestroy {
         });
     }
 
+    /**
+     * Initialize the exam details table.
+     * @private
+     */
     private initTable() {
         const title = new TableContent('title', this.exam.title);
         const start = new TableContent('start', this.artemisDataPipe.transform(this.exam.startDate));

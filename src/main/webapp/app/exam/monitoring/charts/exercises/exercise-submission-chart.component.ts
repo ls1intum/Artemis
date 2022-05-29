@@ -1,7 +1,7 @@
-import { Component, OnInit, Input } from '@angular/core';
+import { Component, OnInit, Input, OnChanges, SimpleChanges } from '@angular/core';
 import { Color, ScaleType } from '@swimlane/ngx-charts';
 import { Exam } from 'app/entities/exam.model';
-import { ChartData, getColor, getSavedExerciseActionsGroupedByActivityId } from 'app/exam/monitoring/charts/monitoring-chart';
+import { ChartData, getSavedExerciseActionsGroupedByActivityId, insertNgxDataAndColorForExerciseMap } from 'app/exam/monitoring/charts/monitoring-chart';
 import { ExamAction, SwitchedExerciseAction } from 'app/entities/exam-user-activity.model';
 
 @Component({
@@ -9,7 +9,7 @@ import { ExamAction, SwitchedExerciseAction } from 'app/entities/exam-user-activ
     templateUrl: './exercise-chart.component.html',
     styleUrls: ['../monitoring-chart.scss'],
 })
-export class ExerciseSubmissionChartComponent implements OnInit {
+export class ExerciseSubmissionChartComponent implements OnInit, OnChanges {
     // Input
     @Input()
     exam: Exam;
@@ -36,6 +36,13 @@ export class ExerciseSubmissionChartComponent implements OnInit {
         this.initData();
     }
 
+    ngOnChanges(changes: SimpleChanges): void {
+        this.initData();
+    }
+
+    /**
+     * Create and initialize the data for the chart.
+     */
     initData() {
         if (this.examActions.length === 0) {
             return;
@@ -43,6 +50,7 @@ export class ExerciseSubmissionChartComponent implements OnInit {
         const exerciseAmountMap: Map<number, number> = new Map();
         const groupedByActivityId = getSavedExerciseActionsGroupedByActivityId(this.examActions);
 
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
         for (const [_, value] of Object.entries(groupedByActivityId)) {
             const saved: Map<number, number> = new Map();
             value.forEach((action: SwitchedExerciseAction) => saved.set(action.exerciseId!, 1));
@@ -50,11 +58,6 @@ export class ExerciseSubmissionChartComponent implements OnInit {
                 exerciseAmountMap.set(key, (exerciseAmountMap.get(key) ?? 0) + 1);
             }
         }
-        this.exam.exerciseGroups!.forEach((group, index) => {
-            group.exercises!.forEach((exercise) => {
-                this.ngxData.push(new ChartData(exercise.title ?? '', exerciseAmountMap.get(exercise.id!) ?? 0));
-                this.ngxColor.domain.push(getColor(index));
-            });
-        });
+        insertNgxDataAndColorForExerciseMap(this.exam, exerciseAmountMap, this.ngxData, this.ngxColor);
     }
 }

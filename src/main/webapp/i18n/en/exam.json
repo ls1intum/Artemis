@@ -500,47 +500,47 @@
             "charts": {
                 "exercise-chart": {
                     "name": "Current amount of students per exercise grouped by exercise group",
-                    "xAxisLabel": "Amount of students",
+                    "xAxisLabel": "Shows the current amount of students per exercise grouped by exercise group",
                     "tooltip": "TODO",
                     "yAxisLabel": "Exercises",
                     "legendTitle": "Exercises"
                 },
                 "exercise-group-chart": {
                     "name": "Current amount of students per exercise group",
-                    "tooltip": "TODO",
+                    "tooltip": "Shows the current amount of students per exercise group",
                     "xAxisLabel": "Amount of students",
                     "yAxisLabel": "Exercise Groups",
                     "legendTitle": "Exercise Groups"
                 },
                 "exercise-submission-chart": {
                     "name": "Amount of first submissions per exercise",
-                    "tooltip": "TODO",
+                    "tooltip": "Shows the amount of first submissions per exercise",
                     "xAxisLabel": "Amount of submissions",
                     "yAxisLabel": "Exercises",
                     "legendTitle": "Exercises"
                 },
                 "exercise-navigation-chart": {
                     "name": "Amount of first navigations per exercise",
-                    "tooltip": "TODO",
+                    "tooltip": "Shows the amount of first navigations per exercise",
                     "xAxisLabel": "Amount of navigations",
                     "yAxisLabel": "Exercises",
                     "legendTitle": "Exercises"
                 },
                 "average-actions-chart": {
                     "name": "Average amount of actions per student",
-                    "tooltip": "TODO",
+                    "tooltip": "Shows the average amount of actions per student",
                     "xAxisLabel": "Timestamp",
                     "yAxisLabel": "Actions"
                 },
                 "total-actions-chart": {
                     "name": "Total amount of actions",
-                    "tooltip": "TODO",
+                    "tooltip": "Shows the total amount of actions",
                     "xAxisLabel": "Timestamp",
                     "yAxisLabel": "Actions"
                 },
                 "category-actions-chart": {
                     "name": "Total amount of actions per category",
-                    "tooltip": "TODO",
+                    "tooltip": "Shows the total amount of actions per category",
                     "xAxisLabel": "Timestamp",
                     "yAxisLabel": "Actions",
                     "legendTitle": "Categories"

@@ -1,4 +1,4 @@
-import { Component, OnInit, Input } from '@angular/core';
+import { Component, OnInit, Input, OnChanges, SimpleChanges } from '@angular/core';
 import { Color, ScaleType } from '@swimlane/ngx-charts';
 import { ChartData, ChartSeriesData, getColor, groupActionsByTimestamp } from 'app/exam/monitoring/charts/monitoring-chart';
 import { ExamAction } from 'app/entities/exam-user-activity.model';
@@ -10,7 +10,7 @@ import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
     templateUrl: './actions-chart.component.html',
     styleUrls: ['../monitoring-chart.scss'],
 })
-export class TotalActionsChartComponent implements OnInit {
+export class TotalActionsChartComponent implements OnInit, OnChanges {
     // Input
     @Input()
     examActions: ExamAction[];
@@ -21,7 +21,7 @@ export class TotalActionsChartComponent implements OnInit {
         name: 'Total amount of actions',
         selectable: true,
         group: ScaleType.Ordinal,
-        domain: [getColor(3)],
+        domain: [getColor(2)],
     } as Color;
     curve: any = shape.curveMonotoneX;
     legend = false;
@@ -35,6 +35,13 @@ export class TotalActionsChartComponent implements OnInit {
         this.initData();
     }
 
+    ngOnChanges(changes: SimpleChanges): void {
+        this.initData();
+    }
+
+    /**
+     * Create and initialize the data for the chart.
+     */
     initData() {
         if (this.examActions.length === 0) {
             return;

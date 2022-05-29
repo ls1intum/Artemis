@@ -1,4 +1,4 @@
-import { Component, OnInit, Input } from '@angular/core';
+import { Component, OnInit, Input, OnChanges, SimpleChanges } from '@angular/core';
 import { Color, ScaleType } from '@swimlane/ngx-charts';
 import { ChartData, ChartSeriesData, getColor, groupActionsByTimestamp, groupActionsByType } from 'app/exam/monitoring/charts/monitoring-chart';
 import { ExamAction, ExamActionType } from 'app/entities/exam-user-activity.model';
@@ -10,7 +10,7 @@ import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
     templateUrl: './actions-chart.component.html',
     styleUrls: ['../monitoring-chart.scss'],
 })
-export class CategoryActionsChartComponent implements OnInit {
+export class CategoryActionsChartComponent implements OnInit, OnChanges {
     // Input
     @Input()
     examActions: ExamAction[];
@@ -35,6 +35,13 @@ export class CategoryActionsChartComponent implements OnInit {
         this.initData();
     }
 
+    ngOnChanges(changes: SimpleChanges): void {
+        this.initData();
+    }
+
+    /**
+     * Create and initialize the data for the chart.
+     */
     initData() {
         if (this.examActions.length === 0) {
             return;
@@ -63,6 +70,7 @@ export class CategoryActionsChartComponent implements OnInit {
 
         for (const category of categories.keys()) {
             chartSeriesData.push(new ChartSeriesData(category, chartData.get(category)!));
+            this.ngxColor.domain.push(getColor(Object.keys(ExamActionType).indexOf(category)));
         }
         this.ngxData = chartSeriesData;
     }

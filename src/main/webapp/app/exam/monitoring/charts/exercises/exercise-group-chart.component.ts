@@ -1,4 +1,4 @@
-import { Component, OnInit, Input } from '@angular/core';
+import { Component, OnInit, Input, OnChanges, SimpleChanges } from '@angular/core';
 import { Color, ScaleType } from '@swimlane/ngx-charts';
 import { Exam } from 'app/entities/exam.model';
 import { ChartData, getCurrentAmountOfStudentsPerExercises, getColor } from 'app/exam/monitoring/charts/monitoring-chart';
@@ -9,7 +9,7 @@ import { ExamAction } from 'app/entities/exam-user-activity.model';
     templateUrl: './exercise-chart.component.html',
     styleUrls: ['../monitoring-chart.scss'],
 })
-export class ExerciseGroupChartComponent implements OnInit {
+export class ExerciseGroupChartComponent implements OnInit, OnChanges {
     // Input
     @Input()
     exam: Exam;
@@ -37,6 +37,13 @@ export class ExerciseGroupChartComponent implements OnInit {
         // this.routerLink = ['/course-management', this.exam.course!.id!, 'exams', this.exam.id, 'exercise-groups'];
     }
 
+    ngOnChanges(changes: SimpleChanges): void {
+        this.initData();
+    }
+
+    /**
+     * Create and initialize the data for the chart.
+     */
     initData() {
         if (this.examActions.length === 0) {
             return;
