@@ -55,7 +55,7 @@ export class ExamMonitoringWebsocketService implements IExamMonitoringWebsocketS
      *
      * @param exam the exam to observe
      */
-    public subscribeForLatestExamAction(exam: Exam): BehaviorSubject<ExamAction | undefined> {
+    public subscribeForLatestExamAction = (exam: Exam): BehaviorSubject<ExamAction | undefined> => {
         this.openExamMonitoringWebsocketSubscriptionIfNotExisting(exam);
         let examActionObservable = this.examActionObservables.get(exam.id!)!;
         if (!examActionObservable) {
@@ -63,7 +63,7 @@ export class ExamMonitoringWebsocketService implements IExamMonitoringWebsocketS
             this.examActionObservables.set(exam.id!, examActionObservable);
         }
         return examActionObservable;
-    }
+    };
 
     /**
      * Unsubscribe from the exam monitoring.

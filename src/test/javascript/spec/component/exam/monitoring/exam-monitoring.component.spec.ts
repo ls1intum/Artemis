@@ -55,12 +55,11 @@ describe('Exam Monitoring Component', () => {
             .compileComponents()
             .then(() => {
                 pipe = new ArtemisDatePipe(TestBed.inject(TranslateService));
+                fixture = TestBed.createComponent(ExamMonitoringComponent);
+                comp = fixture.componentInstance;
+                examMonitoringService = TestBed.inject(ExamMonitoringService);
+                examManagementService = TestBed.inject(ExamManagementService);
             });
-
-        fixture = TestBed.createComponent(ExamMonitoringComponent);
-        comp = fixture.componentInstance;
-        examMonitoringService = TestBed.inject(ExamMonitoringService);
-        examManagementService = TestBed.inject(ExamManagementService);
     });
 
     afterEach(() => {

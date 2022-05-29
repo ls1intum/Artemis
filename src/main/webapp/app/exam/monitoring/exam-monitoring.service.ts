@@ -25,7 +25,7 @@ export class ExamMonitoringService {
      * Get exam as observable
      * @param examId exam to observe
      */
-    public getExamBehaviorSubject(examId: number): BehaviorSubject<Exam | undefined> | undefined {
+    public getExamBehaviorSubject = (examId: number): BehaviorSubject<Exam | undefined> | undefined => {
         return this.examObservables.get(examId);
-    }
+    };
 }
