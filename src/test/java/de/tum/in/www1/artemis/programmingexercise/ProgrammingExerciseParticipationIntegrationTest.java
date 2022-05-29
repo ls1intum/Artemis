@@ -246,7 +246,6 @@ public class ProgrammingExerciseParticipationIntegrationTest extends AbstractSpr
     @WithMockUser(username = "student1", roles = "USER")
     public void testGetLatestResultWithSubmission(boolean withSubmission) throws Exception {
         var result = addStudentParticipationWithResult(AssessmentType.AUTOMATIC, null);
-        result.setResultString("a of b");
         result.setSuccessful(true);
         result = database.addFeedbackToResults(result);
         var submission = database.addProgrammingSubmissionToResultAndParticipation(result, (ProgrammingExerciseStudentParticipation) programmingExerciseParticipation, "ABC");

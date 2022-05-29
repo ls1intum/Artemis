@@ -120,7 +120,6 @@ describe('ModelingAssessmentEditorComponent', () => {
                 results: [
                     {
                         id: 2374,
-                        resultString: '1 of 12 points',
                         score: 8,
                         rated: true,
                         hasFeedback: true,
@@ -213,7 +212,6 @@ describe('ModelingAssessmentEditorComponent', () => {
 
         component.result = {
             id: 2374,
-            resultString: '1 of 12 points',
             score: 8,
             rated: true,
             hasFeedback: true,
@@ -260,7 +258,6 @@ describe('ModelingAssessmentEditorComponent', () => {
         component.submission.results = [
             {
                 id: 2374,
-                resultString: '1 of 12 points',
                 score: 8,
                 rated: true,
                 hasFeedback: true,
@@ -310,7 +307,6 @@ describe('ModelingAssessmentEditorComponent', () => {
 
         const changedResult = {
             id: 2374,
-            resultString: '1 of 12 points',
             score: 8,
             rated: true,
             hasFeedback: true,

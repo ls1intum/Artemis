@@ -5,12 +5,14 @@ import dayjs from 'dayjs/esm';
 import { Result } from 'app/entities/result.model';
 import { ResultWithPointsPerGradingCriterion } from 'app/entities/result-with-points-per-grading-criterion.model';
 import { createRequestOption } from 'app/shared/util/request.util';
-import { Feedback } from 'app/entities/feedback.model';
+import { Feedback, FeedbackType } from 'app/entities/feedback.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
-import { Exercise, ExerciseType } from 'app/entities/exercise.model';
+import { Exercise, ExerciseType, getCourseFromExercise } from 'app/entities/exercise.model';
 import { map, tap } from 'rxjs/operators';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
+import { TranslateService } from '@ngx-translate/core';
+import { roundScorePercentSpecifiedByCourseSettings } from 'app/shared/util/utils';
 
 export type EntityResponseType = HttpResponse<Result>;
 export type EntityArrayResponseType = HttpResponse<Result[]>;
@@ -31,10 +33,50 @@ export class ResultService implements IResultService {
     private resultResourceUrl = SERVER_API_URL + 'api/results';
     private participationResourceUrl = SERVER_API_URL + 'api/participations';
 
-    constructor(private http: HttpClient) {}
+    constructor(private http: HttpClient, private translateService: TranslateService) {}
 
     find(resultId: number): Observable<EntityResponseType> {
         return this.http.get<Result>(`${this.resultResourceUrl}/${resultId}`, { observe: 'response' }).pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
+    }
+
+    getResultString(result: Result, exercise: Exercise) {
+        const relativeScore = roundScorePercentSpecifiedByCourseSettings(result.score! / exercise.maxPoints!, getCourseFromExercise(exercise));
+        if (exercise.type === ExerciseType.PROGRAMMING) {
+            return this.getResultStringProgrammingExercise(result, exercise, relativeScore);
+        } else {
+            return this.translateService.instant(`artemisApp.result.resultStringNonProgramming`, {
+                relativeScore,
+                points: result.score,
+                maxPoints: exercise.maxPoints,
+            });
+        }
+    }
+
+    private getResultStringProgrammingExercise(result: Result, exercise: Exercise, relativeScore: number) {
+        const numberOfTestsPassed = result.feedbacks!.filter((feedback) => feedback.type === FeedbackType.AUTOMATIC && feedback.positive).length;
+        const numberOfTestsTotal = result.feedbacks!.filter((feedback) => feedback.type === FeedbackType.AUTOMATIC && !feedback.positive).length;
+        const numberOfIssues = result.feedbacks!.filter((feedback) => Feedback.isStaticCodeAnalysisFeedback(feedback)).length;
+
+        if (numberOfTestsTotal === 0) {
+            return this.translateService.instant('artemisApp.result.resultStringNoTestsFound');
+        } else if (numberOfIssues > 0) {
+            return this.translateService.instant('artemisApp.result.resultStringProgrammingCodeIssues', {
+                relativeScore,
+                numberOfTestsPassed,
+                numberOfTestsTotal,
+                numberOfIssues,
+                points: result.score,
+                maxPoints: exercise.maxPoints,
+            });
+        } else {
+            return this.translateService.instant(`artemisApp.result.resultStringProgramming`, {
+                relativeScore,
+                numberOfTestsPassed,
+                numberOfTestsTotal,
+                points: result.score,
+                maxPoints: exercise.maxPoints,
+            });
+        }
     }
 
     getResultsForExercise(exerciseId: number, req?: any): Observable<EntityArrayResponseType> {

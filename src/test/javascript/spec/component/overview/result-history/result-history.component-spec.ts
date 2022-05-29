@@ -43,22 +43,4 @@ describe('ResultHistoryComponent', () => {
         result.score = 30;
         expect(component.resultClass(result)).toEqual('danger');
     });
-
-    it('should test absolute result', () => {
-        fixture.detectChanges();
-
-        expect(component.absoluteResult(result)).toEqual(0);
-
-        result.resultString = 'failed';
-        expect(component.absoluteResult(result)).toEqual(null);
-
-        result.resultString = 'passed';
-        expect(component.absoluteResult(result)).toEqual(null);
-
-        result.resultString = 'no_right_value';
-        expect(component.absoluteResult(result)).toEqual(0);
-
-        result.resultString = '100 points';
-        expect(component.absoluteResult(result)).toEqual(100);
-    });
 });

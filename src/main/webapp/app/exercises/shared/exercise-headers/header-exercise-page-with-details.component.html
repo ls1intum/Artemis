@@ -83,7 +83,9 @@
                 <div class="col-6">
                     <h5>
                         {{
-                            submissionPolicy.submissionLimit +
+                            numberOfSubmissions +
+                                '/' +
+                                submissionPolicy.submissionLimit +
                                 (submissionPolicy.exceedingPenalty != undefined
                                     ? ' (' +
                                       ('artemisApp.programmingExercise.submissionPolicy.submissionPenalty.penaltyInfoLabel' | artemisTranslate) +

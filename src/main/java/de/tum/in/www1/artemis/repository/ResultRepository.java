@@ -550,9 +550,8 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
         // Take bonus points into account to achieve a result score > 100%
         double calculatedPoints = calculateTotalPoints(result.getFeedbacks());
         double totalPoints = constrainToRange(calculatedPoints, maxPoints + bonusPoints);
-        // Set score and resultString according to maxPoints, to establish results with score > 100%
+        // Set score according to maxPoints, to establish results with score > 100%
         result.setScore(totalPoints, maxPoints, exercise.getCourseViaExerciseGroupOrCourseMember());
-        result.setResultString(totalPoints, maxPoints, exercise.getCourseViaExerciseGroupOrCourseMember());
 
         // Workaround to prevent the assessor turning into a proxy object after saving
         var assessor = result.getAssessor();

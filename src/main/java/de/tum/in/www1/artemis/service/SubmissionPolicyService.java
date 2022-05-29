@@ -304,29 +304,6 @@ public class SubmissionPolicyService {
     }
 
     /**
-     * Determines the string that is attached to the result string of an incoming result.
-     * When the number of submissions is below the allowed submissions specified in the submission policy
-     * of the exercise, the attachment has the form 'x of y Submissions', where x is the number
-     * of submissions and y is the allowed number of submissions.
-     *
-     * @param exercise that specifies the active submission policy
-     * @param participation to which the new result belongs
-     * @return the attachment to the result string
-     */
-    public String calculateResultStringAttachment(ProgrammingExercise exercise, Participation participation) {
-        SubmissionPolicy policy = exercise.getSubmissionPolicy();
-        if (policy == null || !policy.isActive()) {
-            return "";
-        }
-        int submissions = getParticipationSubmissionCount(participation);
-        int allowedSubmissions = policy.getSubmissionLimit();
-        if (submissions <= allowedSubmissions) {
-            return ", %d of %d Submissions".formatted(submissions, allowedSubmissions);
-        }
-        return ", %d Submissions".formatted(submissions);
-    }
-
-    /**
      * Calculates and returns the number of submissions for one participation. This amount represents
      * the amount of unique manual submissions with at least one result.
      *

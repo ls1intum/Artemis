@@ -2,7 +2,6 @@ package de.tum.in.www1.artemis.domain;
 
 import static de.tum.in.www1.artemis.service.util.RoundingUtil.*;
 
-import java.text.DecimalFormat;
 import java.time.ZonedDateTime;
 import java.util.*;
 
@@ -35,10 +34,6 @@ import de.tum.in.www1.artemis.service.listeners.ResultListener;
 @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class Result extends DomainObject {
-
-    @Column(name = "result_string")
-    @JsonView(QuizView.After.class)
-    private String resultString;
 
     @Column(name = "completion_date")
     @JsonView(QuizView.Before.class)
@@ -112,65 +107,6 @@ public class Result extends DomainObject {
     @Transient
     @JsonIgnore
     private Map<String, Set<CoverageFileReport>> fileReportsByTestCaseName;
-
-    public String getResultString() {
-        return resultString;
-    }
-
-    public Result resultString(String resultString) {
-        this.resultString = resultString;
-        return this;
-    }
-
-    public void setResultString(String resultString) {
-        this.resultString = resultString;
-    }
-
-    /**
-     * Sets the resultString attribute
-     *
-     * @param totalPoints total amount of points between 0 and maxPoints
-     * @param maxPoints   maximum points reachable at corresponding exercise
-     */
-    public void setResultString(double totalPoints, double maxPoints) {
-        resultString = createResultString(totalPoints, maxPoints);
-    }
-
-    /**
-     * Sets the resultString attribute
-     *
-     * @param totalPoints total amount of points between 0 and maxPoints
-     * @param maxPoints   maximum points reachable at corresponding exercise
-     * @param course      the course that specifies the accuracy of the score
-     */
-    public void setResultString(double totalPoints, double maxPoints, Course course) {
-        resultString = createResultString(totalPoints, maxPoints, course);
-    }
-
-    /**
-     * Builds the resultString attribute
-     *
-     * @param totalPoints total amount of scored points
-     * @param maxPoints   maximum score reachable at corresponding exercise
-     * @return String with result string in this format "2 of 13 points"
-     */
-    public String createResultString(double totalPoints, double maxPoints) {
-        return createResultString(totalPoints, maxPoints, participation.getExercise().getCourseViaExerciseGroupOrCourseMember());
-    }
-
-    /**
-     * Builds the resultString attribute, e.g. "4.2 of 69 points"
-     *
-     * @param totalPoints total amount of scored points
-     * @param maxPoints   maximum score reachable at corresponding exercise
-     * @param course      the course that specifies the accuracy of the score
-     * @return String with result string in this format "2 of 13 points"
-     */
-    public String createResultString(double totalPoints, double maxPoints, Course course) {
-        double pointsRounded = roundScoreSpecifiedByCourseSettings(totalPoints, course);
-        DecimalFormat formatter = new DecimalFormat("#.#");
-        return formatter.format(pointsRounded) + " of " + formatter.format(maxPoints) + " points";
-    }
 
     public ZonedDateTime getCompletionDate() {
         return completionDate;
@@ -525,8 +461,6 @@ public class Result extends DomainObject {
             QuizExercise quizExercise = (QuizExercise) studentParticipation.getExercise();
             // update score
             setScore(quizExercise.getScoreForSubmission(quizSubmission));
-            // update result string
-            setResultString(quizExercise.getScoreInPointsForSubmission(quizSubmission), quizExercise.getOverallQuizPoints());
         }
     }
 
@@ -574,8 +508,8 @@ public class Result extends DomainObject {
 
     @Override
     public String toString() {
-        return "Result{" + "id=" + getId() + ", resultString='" + resultString + '\'' + ", completionDate=" + completionDate + ", successful=" + successful + ", score=" + score
-                + ", rated=" + rated + ", hasFeedback=" + hasFeedback + ", assessmentType=" + assessmentType + ", hasComplaint=" + hasComplaint + '}';
+        return "Result{" + "id=" + getId() + ", completionDate=" + completionDate + ", successful=" + successful + ", score=" + score + ", rated=" + rated + ", hasFeedback="
+                + hasFeedback + ", assessmentType=" + assessmentType + ", hasComplaint=" + hasComplaint + '}';
     }
 
     /**
@@ -632,11 +566,5 @@ public class Result extends DomainObject {
     public void calculateScoreForProgrammingExercise(Double maxPoints) {
         double totalPoints = calculateTotalPointsForProgrammingExercises();
         setScore(totalPoints, maxPoints);
-
-        // Result string has following structure e.g: "1 of 13 passed, 2 issues, 10 of 100 points"
-        // The last part of the result string has to be updated, as the points the student has achieved have changed
-        String[] resultStringParts = getResultString().split(", ");
-        resultStringParts[resultStringParts.length - 1] = createResultString(totalPoints, maxPoints);
-        setResultString(String.join(", ", resultStringParts));
     }
 }

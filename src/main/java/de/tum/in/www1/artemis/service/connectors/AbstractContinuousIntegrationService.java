@@ -54,7 +54,6 @@ public abstract class AbstractContinuousIntegrationService implements Continuous
 
         // We assume the build has failed if no test case feedback has been sent. Static code analysis feedback might exist even though the build failed
         boolean hasTestCaseFeedback = result.getFeedbacks().stream().anyMatch(feedback -> !feedback.isStaticCodeAnalysisFeedback());
-        result.setResultString(hasTestCaseFeedback ? buildResult.getTestsPassedString() : "No tests found");
         return result;
     }
 

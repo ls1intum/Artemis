@@ -32,7 +32,6 @@ import { DiffMatchPatch } from 'diff-match-patch-typescript';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
 import { TemplateProgrammingExerciseParticipation } from 'app/entities/participation/template-programming-exercise-participation.model';
 import { getPositiveAndCappedTotalScore } from 'app/exercises/shared/exercise/exercise.utils';
-import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
 import { getExerciseDashboardLink, getLinkToSubmissionAssessment } from 'app/utils/navigation.utils';
 import { getLatestSubmissionResult, SubmissionType } from 'app/entities/submission.model';
 import { isAllowedToModifyFeedback } from 'app/assessment/assessment.service';
@@ -543,35 +542,14 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
         this.manualResult!.feedbacks = [...this.referencedFeedback, ...this.unreferencedFeedback, ...this.automaticFeedback];
     }
 
-    private createResultString(totalScore: number, maxScore: number | undefined): string {
-        return `${roundValueSpecifiedByCourseSettings(totalScore, getCourseFromExercise(this.exercise))} of ${roundValueSpecifiedByCourseSettings(
-            maxScore,
-            getCourseFromExercise(this.exercise),
-        )} points`;
-    }
-
     private setAttributesForManualResult(totalScore: number) {
         this.setFeedbacksForManualResult();
         // Manual result is always rated and has feedback
         this.manualResult!.rated = true;
         this.manualResult!.hasFeedback = true;
         // Append the automatic result string which the manual result holds with the score part, to create the manual result string
-        // In the case no automatic result exists before the assessment, the resultString is undefined. In this case we just want to see the manual assessment.
-        const resultStringExtension = this.createResultString(totalScore, this.exercise.maxPoints);
         if (this.isFirstAssessment) {
-            if (this.manualResult!.resultString) {
-                this.manualResult!.resultString += ', ' + resultStringExtension;
-            } else {
-                this.manualResult!.resultString = resultStringExtension;
-            }
             this.isFirstAssessment = false;
-        } else {
-            /* Result string has the following structure e.g: "1 of 13 passed, 2 issues, 10 of 100 points" The last part of the result string has to be updated,
-             * as the points the student has achieved have changed
-             */
-            const resultStringParts: string[] = this.manualResult!.resultString!.split(', ');
-            resultStringParts[resultStringParts.length - 1] = resultStringExtension;
-            this.manualResult!.resultString = resultStringParts.join(', ');
         }
 
         this.manualResult!.score = (totalScore / this.exercise.maxPoints!) * 100;

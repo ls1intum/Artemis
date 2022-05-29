@@ -230,7 +230,6 @@ public abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpri
         assertThat(duplicateFeedbackEntries).hasSize(2);
         int countOfNewFeedbacks = originalFeedbackSize + duplicateFeedbackEntries.size();
         assertThat(result.getFeedbacks()).hasSize(countOfNewFeedbacks);
-        assertThat(result.getResultString()).isEqualTo("Error: Found duplicated tests!");
         String notificationText = TEST_CASES_DUPLICATE_NOTIFICATION + "test3, test1";
         verify(groupNotificationService).notifyEditorAndInstructorGroupAboutDuplicateTestCasesForExercise(programmingExercise, notificationText);
     }
@@ -282,7 +281,6 @@ public abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpri
         assertThat(result.isSuccessful()).isFalse();
         assertThat(result.getAssessmentType()).isEqualTo(AssessmentType.SEMI_AUTOMATIC);
         assertThat(result.getFeedbacks().stream().filter(f -> f.getType() == FeedbackType.MANUAL_UNREFERENCED)).isNotEmpty();
-        assertThat(result.getResultString()).isEqualTo(String.format("1 of 1 passed, %.1f of 42 points", 10.5));
     }
 
     @Test
@@ -353,8 +351,7 @@ public abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpri
         result6 = updateAndSaveAutomaticResult(result6, false, false, false);
 
         // Build failure
-        var resultBF = new Result().feedbacks(List.of()).rated(true).score(0D).hasFeedback(false).resultString("Build Failed").completionDate(ZonedDateTime.now())
-                .assessmentType(AssessmentType.AUTOMATIC);
+        var resultBF = new Result().feedbacks(List.of()).rated(true).score(0D).hasFeedback(false).completionDate(ZonedDateTime.now()).assessmentType(AssessmentType.AUTOMATIC);
         resultBF.setParticipation(participation);
         gradingService.calculateScoreForResult(resultBF, programmingExercise, true);
 
@@ -368,56 +365,48 @@ public abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpri
 
         // Assertions result1 - calculated
         assertThat(result1.getScore()).isEqualTo(55D, Offset.offset(offsetByTenThousandth));
-        assertThat(result1.getResultString()).isEqualTo("1 of 3 passed");
         assertThat(result1.getHasFeedback()).isTrue();
         assertThat(result1.isSuccessful()).isFalse();
         assertThat(result1.getFeedbacks()).hasSize(3);
 
         // Assertions result2 - calculated
         assertThat(result2.getScore()).isEqualTo(66.6667);
-        assertThat(result2.getResultString()).isEqualTo("1 of 3 passed");
         assertThat(result2.getHasFeedback()).isTrue();
         assertThat(result2.isSuccessful()).isFalse();
         assertThat(result2.getFeedbacks()).hasSize(3);
 
         // Assertions result3 - calculated
         assertThat(result3.getScore()).isEqualTo(40D);
-        assertThat(result3.getResultString()).isEqualTo("1 of 3 passed");
         assertThat(result3.getHasFeedback()).isTrue();
         assertThat(result3.isSuccessful()).isFalse();
         assertThat(result3.getFeedbacks()).hasSize(3);
 
         // Assertions result4 - calculated
         assertThat(result4.getScore()).isEqualTo(95D, Offset.offset(offsetByTenThousandth));
-        assertThat(result4.getResultString()).isEqualTo("2 of 3 passed");
         assertThat(result4.getHasFeedback()).isTrue();
         assertThat(result4.isSuccessful()).isFalse();
         assertThat(result4.getFeedbacks()).hasSize(3);
 
         // Assertions result5 - capped to 100
         assertThat(result5.getScore()).isEqualTo(100D);
-        assertThat(result5.getResultString()).isEqualTo("3 of 3 passed");
         assertThat(result5.getHasFeedback()).isFalse();
         assertThat(result5.isSuccessful()).isTrue();
         assertThat(result5.getFeedbacks()).hasSize(3);
 
         // Assertions result6 - only negative feedback
         assertThat(result6.getScore()).isEqualTo(0D);
-        assertThat(result6.getResultString()).isEqualTo("0 of 3 passed");
         assertThat(result6.getHasFeedback()).isTrue();
         assertThat(result6.isSuccessful()).isFalse();
         assertThat(result6.getFeedbacks()).hasSize(3);
 
         // Assertions resultBF - build failure
         assertThat(resultBF.getScore()).isEqualTo(0D);
-        assertThat(resultBF.getResultString()).isEqualTo("Build Failed"); // Won't get touched by the service method
         assertThat(resultBF.getHasFeedback()).isFalse();
         assertThat(resultBF.isSuccessful()).isNull(); // Won't get touched by the service method
         assertThat(resultBF.getFeedbacks()).isEmpty();
 
         // Assertions resultMF - missing feedback will be created but is negative
         assertThat(resultMF.getScore()).isEqualTo(55D, Offset.offset(offsetByTenThousandth));
-        assertThat(resultMF.getResultString()).isEqualTo("1 of 3 passed");
         assertThat(resultMF.getHasFeedback()).isFalse(); // Generated missing feedback is omitted
         assertThat(resultMF.isSuccessful()).isFalse();
         assertThat(resultMF.getFeedbacks()).hasSize(3); // Feedback is created for test cases if missing
@@ -458,28 +447,24 @@ public abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpri
 
         // Assertions result1 - calculated
         assertThat(result1.getScore()).isEqualTo(93.3333);
-        assertThat(result1.getResultString()).isEqualTo("1 of 3 passed");
         assertThat(result1.getHasFeedback()).isTrue();
         assertThat(result1.isSuccessful()).isFalse();
         assertThat(result1.getFeedbacks()).hasSize(3);
 
         // Assertions result2 - calculated
         assertThat(result2.getScore()).isEqualTo(133.3333);
-        assertThat(result2.getResultString()).isEqualTo("2 of 3 passed");
         assertThat(result2.getHasFeedback()).isTrue();
         assertThat(result2.isSuccessful()).isTrue();
         assertThat(result2.getFeedbacks()).hasSize(3);
 
         // Assertions result3 - calculated
         assertThat(result3.getScore()).isEqualTo(180D, Offset.offset(offsetByTenThousandth));
-        assertThat(result3.getResultString()).isEqualTo("2 of 3 passed");
         assertThat(result3.getHasFeedback()).isTrue();
         assertThat(result3.isSuccessful()).isTrue();
         assertThat(result3.getFeedbacks()).hasSize(3);
 
         // Assertions result4 - capped at 200%
         assertThat(result4.getScore()).isEqualTo(200D);
-        assertThat(result4.getResultString()).isEqualTo("2 of 3 passed");
         assertThat(result4.getHasFeedback()).isTrue();
         assertThat(result4.isSuccessful()).isTrue();
         assertThat(result4.getFeedbacks()).hasSize(3);
@@ -507,7 +492,6 @@ public abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpri
 
         assertThat(scoreBeforeUpdate).isNotEqualTo(result.getScore());
         assertThat(result.getScore()).isEqualTo(expectedScore);
-        assertThat(result.getResultString()).isEqualTo("1 of 1 passed");
         assertThat(result.isSuccessful()).isFalse();
         // The feedback of the after due date test case must still be there but have its visibility set to AFTER_DUE_DATE.
         assertThat(result.getFeedbacks().stream().filter(feedback -> feedback.getVisibility() == Visibility.AFTER_DUE_DATE).map(Feedback::getText)).containsExactly("test3");
@@ -534,7 +518,6 @@ public abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpri
         Double expectedScore = 25D;
 
         assertThat(scoreBeforeUpdate).isNotEqualTo(result.getScore());
-        assertThat(result.getResultString()).isEqualTo("1 of 2 passed");
         assertThat(result.getScore()).isEqualTo(expectedScore);
         assertThat(result.isSuccessful()).isFalse();
         assertThat(result.getFeedbacks().stream().filter(f -> f.getVisibility() == Visibility.ALWAYS)).hasSize(1);
@@ -563,7 +546,6 @@ public abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpri
         Double expectedScore = 25D;
 
         assertThat(scoreBeforeUpdate).isNotEqualTo(result.getScore());
-        assertThat(result.getResultString()).isEqualTo("1 of 2 passed");
         assertThat(result.getScore()).isEqualTo(expectedScore);
         assertThat(result.isSuccessful()).isFalse();
         // The feedback of the after due date test case must be kept.
@@ -599,7 +581,7 @@ public abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpri
             var results = participation.getResults();
             assertThat(results).hasSize(1);
             var singleResult = results.iterator().next();
-            testParticipationResult(singleResult, 0D, "0 of 3 passed", true, 3, AssessmentType.AUTOMATIC);
+            testParticipationResult(singleResult, 0D, true, 3, AssessmentType.AUTOMATIC);
             assertThat(singleResult).isEqualTo(participation.findLatestLegalResult());
         }
 
@@ -609,7 +591,7 @@ public abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpri
             var results = participation.getResults();
             assertThat(results).hasSize(1);
             var singleResult = results.iterator().next();
-            testParticipationResult(singleResult, 100D, "2 of 3 passed", true, 3, AssessmentType.AUTOMATIC);
+            testParticipationResult(singleResult, 100D, true, 3, AssessmentType.AUTOMATIC);
             assertThat(singleResult).isEqualTo(participation.findLatestLegalResult());
         }
 
@@ -660,7 +642,7 @@ public abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpri
             var results = participation.getResults();
             assertThat(results).hasSize(1);
             var singleResult = results.iterator().next();
-            testParticipationResult(singleResult, 0D, "0 of 4 passed", true, 4, AssessmentType.AUTOMATIC);
+            testParticipationResult(singleResult, 0D, true, 4, AssessmentType.AUTOMATIC);
             assertThat(singleResult).isEqualTo(participation.findLatestLegalResult());
         }
 
@@ -670,7 +652,7 @@ public abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpri
             var results = participation.getResults();
             assertThat(results).hasSize(1);
             var singleResult = results.iterator().next();
-            testParticipationResult(singleResult, 100D, "2 of 4 passed", true, 4, AssessmentType.AUTOMATIC);
+            testParticipationResult(singleResult, 100D, true, 4, AssessmentType.AUTOMATIC);
             assertThat(singleResult).isEqualTo(participation.findLatestLegalResult());
         }
 
@@ -799,7 +781,7 @@ public abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpri
             // student1 25 %
             assertThat(results).hasSize(1);
             var singleResult = results.iterator().next();
-            testParticipationResult(singleResult, 25D, "2 of 3 passed", true, 3, AssessmentType.AUTOMATIC);
+            testParticipationResult(singleResult, 25D, true, 3, AssessmentType.AUTOMATIC);
             assertThat(singleResult).isEqualTo(participation.findLatestLegalResult());
         }
         else if (student == 2) {
@@ -808,12 +790,12 @@ public abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpri
 
             var manualResultOptional = results.stream().filter(result -> result.getAssessmentType() == AssessmentType.SEMI_AUTOMATIC).findAny();
             assertThat(manualResultOptional).isPresent();
-            testParticipationResult(manualResultOptional.get(), 86D, "1 of 3 passed, 86 of 100 points", true, 6, AssessmentType.SEMI_AUTOMATIC);
+            testParticipationResult(manualResultOptional.get(), 86D, true, 6, AssessmentType.SEMI_AUTOMATIC);
             assertThat(manualResultOptional).contains(participation.findLatestLegalResult());
 
             var automaticResultOptional = results.stream().filter(result -> result.getAssessmentType() == AssessmentType.AUTOMATIC).findAny();
             assertThat(automaticResultOptional).isPresent();
-            testParticipationResult(automaticResultOptional.get(), 75D, "2 of 3 passed", true, 3, AssessmentType.AUTOMATIC);
+            testParticipationResult(automaticResultOptional.get(), 75D, true, 3, AssessmentType.AUTOMATIC);
         }
         else if (student == 3) {
             // student3 no result
@@ -824,14 +806,14 @@ public abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpri
             // student4 100%
             assertThat(results).hasSize(1);
             var singleResult = results.iterator().next();
-            testParticipationResult(singleResult, 100D, "3 of 3 passed", false, 3, AssessmentType.AUTOMATIC);
+            testParticipationResult(singleResult, 100D, false, 3, AssessmentType.AUTOMATIC);
             assertThat(singleResult).isEqualTo(participation.findLatestLegalResult());
         }
         else if (student == 5) {
             // student5 Build Failed
             assertThat(results).hasSize(1);
             var singleResult = results.iterator().next();
-            testParticipationResult(singleResult, 0D, "Build Failed", false, 0, AssessmentType.AUTOMATIC);
+            testParticipationResult(singleResult, 0D, false, 0, AssessmentType.AUTOMATIC);
             assertThat(singleResult).isEqualTo(participation.findLatestLegalResult());
         }
     }
@@ -859,7 +841,7 @@ public abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpri
         var participationTemplate = programmingExercise.getTemplateParticipation();
         {
             // score 0 %
-            var resultTemplate = new Result().participation(participationTemplate).resultString("x of y passed").successful(false).rated(true).score(100D);
+            var resultTemplate = new Result().participation(participationTemplate).successful(false).rated(true).score(100D);
             participationTemplate.setResults(Set.of(resultTemplate));
             updateAndSaveAutomaticResult(resultTemplate, false, false, false);
         }
@@ -868,7 +850,7 @@ public abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpri
         var participationSolution = programmingExercise.getSolutionParticipation();
         {
             // score 75 %
-            var resultSolution = new Result().participation(participationSolution).resultString("x of y passed").successful(false).rated(true).score(100D);
+            var resultSolution = new Result().participation(participationSolution).successful(false).rated(true).score(100D);
             participationSolution.setResults(Set.of(resultSolution));
             updateAndSaveAutomaticResult(resultSolution, false, true, true);
         }
@@ -877,7 +859,7 @@ public abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpri
         var participation1 = database.addStudentParticipationForProgrammingExercise(programmingExercise, "student1");
         {
             // score 50 %
-            var result1 = new Result().participation(participation1).resultString("x of y passed").successful(false).rated(true).score(100D);
+            var result1 = new Result().participation(participation1).successful(false).rated(true).score(100D);
             participation1.setResults(Set.of(result1));
             updateAndSaveAutomaticResult(result1, true, true, false);
         }
@@ -887,7 +869,7 @@ public abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpri
         var participation2 = database.addStudentParticipationForProgrammingExercise(programmingExercise, "student2");
         {
             // score 75 %
-            var result2a = new Result().participation(participation2).resultString("x of y passed").successful(false).rated(true).score(100D);
+            var result2a = new Result().participation(participation2).successful(false).rated(true).score(100D);
             result2a = updateAndSaveAutomaticResult(result2a, true, false, true);
 
             // score 61 %
@@ -915,7 +897,7 @@ public abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpri
         var participation4 = database.addStudentParticipationForProgrammingExercise(programmingExercise, "student4");
         {
             // score 100 %
-            var result4 = new Result().participation(participation4).resultString("x of y passed").successful(false).rated(true).score(100D);
+            var result4 = new Result().participation(participation4).successful(false).rated(true).score(100D);
             result4 = updateAndSaveAutomaticResult(result4, true, true, true);
             participation4.setResults(Set.of(result4));
         }
@@ -928,7 +910,6 @@ public abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpri
             var result5 = new Result().participation(participation5) //
                     .feedbacks(List.of()) //
                     .score(0D) //
-                    .resultString("Build Failed") //
                     .rated(true) //
                     .hasFeedback(false) //
                     .successful(false) //
@@ -947,7 +928,7 @@ public abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpri
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void shouldRemoveInvisibleStaticCodeAnalysisFeedbackOnGrading() throws Exception {
         var participation1 = database.addStudentParticipationForProgrammingExercise(programmingExerciseSCAEnabled, "student1");
-        var result1 = new Result().participation(participation1).resultString("x of y passed").successful(false).rated(true).score(100D);
+        var result1 = new Result().participation(participation1).successful(false).rated(true).score(100D);
         // Add some positive test case feedback otherwise the service method won't execute
         result1.addFeedback(new Feedback().result(result1).text("test1").positive(true).type(FeedbackType.AUTOMATIC));
         // Add feedback which belongs to INACTIVE category
@@ -999,7 +980,7 @@ public abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpri
             var results = participation.getResults();
             assertThat(results).hasSize(1);
             var singleResult = results.iterator().next();
-            testParticipationResult(singleResult, 60D, "3 of 3 passed, 21 issues", true, 24, AssessmentType.AUTOMATIC);
+            testParticipationResult(singleResult, 60D, true, 24, AssessmentType.AUTOMATIC);
             assertThat(singleResult).isEqualTo(participation.findLatestLegalResult());
         }
         {
@@ -1007,7 +988,7 @@ public abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpri
             var results = participation.getResults();
             assertThat(results).hasSize(1);
             var singleResult = results.iterator().next();
-            testParticipationResult(singleResult, 71.42857142857143, "3 of 3 passed, 5 issues", true, 8, AssessmentType.AUTOMATIC);
+            testParticipationResult(singleResult, 71.42857142857143, true, 8, AssessmentType.AUTOMATIC);
             assertThat(singleResult).isEqualTo(participation.findLatestLegalResult());
         }
 
@@ -1036,7 +1017,7 @@ public abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpri
             var results = participation.getResults();
             assertThat(results).hasSize(1);
             var singleResult = results.iterator().next();
-            testParticipationResult(singleResult, 0D, "3 of 3 passed, 21 issues", true, 24, AssessmentType.AUTOMATIC);
+            testParticipationResult(singleResult, 0D, true, 24, AssessmentType.AUTOMATIC);
             assertThat(singleResult).isEqualTo(participation.findLatestLegalResult());
         }
         {
@@ -1044,7 +1025,7 @@ public abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpri
             var results = participation.getResults();
             assertThat(results).hasSize(1);
             var singleResult = results.iterator().next();
-            testParticipationResult(singleResult, 11.904761904761903, "2 of 3 passed, 9 issues", true, 12, AssessmentType.AUTOMATIC);
+            testParticipationResult(singleResult, 11.904761904761903, true, 12, AssessmentType.AUTOMATIC);
             assertThat(singleResult).isEqualTo(participation.findLatestLegalResult());
         }
     }
@@ -1073,7 +1054,7 @@ public abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpri
             var results = participation.getResults();
             assertThat(results).hasSize(1);
             var singleResult = results.iterator().next();
-            testParticipationResult(singleResult, 79.04761904761905, "3 of 3 passed, 6 issues", true, 9, AssessmentType.AUTOMATIC);
+            testParticipationResult(singleResult, 79.04761904761905, true, 9, AssessmentType.AUTOMATIC);
             assertThat(singleResult).isEqualTo(participation.findLatestLegalResult());
         }
 
@@ -1102,7 +1083,7 @@ public abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpri
             var results = participation.getResults();
             assertThat(results).hasSize(1);
             var singleResult = results.iterator().next();
-            testParticipationResult(singleResult, 19.047619047619047, "3 of 3 passed, 16 issues", true, 19, AssessmentType.AUTOMATIC);
+            testParticipationResult(singleResult, 19.047619047619047, true, 19, AssessmentType.AUTOMATIC);
             assertThat(singleResult).isEqualTo(participation.findLatestLegalResult());
         }
     }
@@ -1120,7 +1101,7 @@ public abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpri
             var results = participation.getResults();
             assertThat(results).hasSize(1);
             var singleResult = results.iterator().next();
-            testParticipationResult(singleResult, 4.761904761904762, "1 of 3 passed, 2 issues", true, 5, AssessmentType.AUTOMATIC);
+            testParticipationResult(singleResult, 4.761904761904762, true, 5, AssessmentType.AUTOMATIC);
             assertThat(singleResult).isEqualTo(participation.findLatestLegalResult());
         }
         {
@@ -1128,7 +1109,7 @@ public abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpri
             var results = participation.getResults();
             assertThat(results).hasSize(1);
             var singleResult = results.iterator().next();
-            testParticipationResult(singleResult, 40.476190476190474, "2 of 3 passed, 4 issues", true, 7, AssessmentType.AUTOMATIC);
+            testParticipationResult(singleResult, 40.476190476190474, true, 7, AssessmentType.AUTOMATIC);
             assertThat(singleResult).isEqualTo(participation.findLatestLegalResult());
         }
         {
@@ -1136,7 +1117,7 @@ public abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpri
             var results = participation.getResults();
             assertThat(results).hasSize(1);
             var singleResult = results.iterator().next();
-            testParticipationResult(singleResult, 0D, "1 of 3 passed, 7 issues", true, 10, AssessmentType.AUTOMATIC);
+            testParticipationResult(singleResult, 0D, true, 10, AssessmentType.AUTOMATIC);
             assertThat(singleResult).isEqualTo(participation.findLatestLegalResult());
         }
         {
@@ -1144,7 +1125,7 @@ public abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpri
             var results = participation.getResults();
             assertThat(results).hasSize(1);
             var singleResult = results.iterator().next();
-            testParticipationResult(singleResult, 26.190476190476193, "2 of 3 passed, 6 issues", true, 9, AssessmentType.AUTOMATIC);
+            testParticipationResult(singleResult, 26.190476190476193, true, 9, AssessmentType.AUTOMATIC);
             assertThat(singleResult).isEqualTo(participation.findLatestLegalResult());
         }
         {
@@ -1152,7 +1133,7 @@ public abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpri
             var results = participation.getResults();
             assertThat(results).hasSize(1);
             var singleResult = results.iterator().next();
-            testParticipationResult(singleResult, 60D, "3 of 3 passed, 11 issues", true, 14, AssessmentType.AUTOMATIC);
+            testParticipationResult(singleResult, 60D, true, 14, AssessmentType.AUTOMATIC);
             assertThat(singleResult).isEqualTo(participation.findLatestLegalResult());
         }
     }
@@ -1308,9 +1289,8 @@ public abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpri
 
     }
 
-    private void testParticipationResult(Result result, Double score, String resultString, boolean hasFeedback, int feedbackSize, AssessmentType assessmentType) {
+    private void testParticipationResult(Result result, Double score, boolean hasFeedback, int feedbackSize, AssessmentType assessmentType) {
         assertThat(result.getScore()).isEqualTo(score, Offset.offset(offsetByTenThousandth));
-        assertThat(result.getResultString()).isEqualTo(resultString);
         assertThat(result.getHasFeedback()).isEqualTo(hasFeedback);
         assertThat(result.getFeedbacks()).hasSize(feedbackSize);
         assertThat(result.getAssessmentType()).isEqualTo(assessmentType);

@@ -1604,7 +1604,7 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
                     submission = participation.getSubmissions().iterator().next();
                 }
                 // Create results
-                var result = new Result().score(resultScore).rated(true).resultString("Good").completionDate(ZonedDateTime.now().minusMinutes(5));
+                var result = new Result().score(resultScore).rated(true).completionDate(ZonedDateTime.now().minusMinutes(5));
                 result.setParticipation(participation);
                 result.setAssessor(instructor);
                 result = resultRepository.save(result);
@@ -2170,7 +2170,7 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
                 assertThat(participation.getSubmissions()).hasSize(1);
                 submission = participation.getSubmissions().iterator().next();
                 // Create results
-                var result = new Result().score(resultScore).resultString("Good");
+                var result = new Result().score(resultScore);
                 if (exercise instanceof QuizExercise) {
                     result.completionDate(ZonedDateTime.now().minusMinutes(4));
                     result.setRated(true);
@@ -2250,7 +2250,7 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
                 assertThat(participation.getSubmissions()).hasSize(1);
                 submission = participation.getSubmissions().iterator().next();
                 // Create results
-                var result = new Result().score(50D).rated(true).resultString("Good");
+                var result = new Result().score(50D).rated(true);
                 if (exercise instanceof QuizExercise) {
                     result.completionDate(ZonedDateTime.now().minusMinutes(3));
                 }

@@ -23,6 +23,8 @@ import { getExerciseDueDate, hasExerciseDueDatePassed } from 'app/exercises/shar
 import { faCircleNotch, faExclamationCircle, faFile } from '@fortawesome/free-solid-svg-icons';
 import { faCheckCircle, faCircle, faQuestionCircle, faTimesCircle } from '@fortawesome/free-regular-svg-icons';
 import { isModelingOrTextOrFileUpload, isParticipationInDueTime, isProgrammingOrQuiz } from 'app/exercises/shared/participation/participation.utils';
+import { ResultService } from 'app/exercises/shared/result/result.service';
+import { FeedbackType } from 'app/entities/feedback.model';
 
 /**
  * Enumeration object representing the possible options that
@@ -127,6 +129,7 @@ export class ResultComponent implements OnInit, OnChanges {
         private translate: TranslateService,
         private http: HttpClient,
         private modalService: NgbModal,
+        private resultService: ResultService,
     ) {}
 
     /**
@@ -205,6 +208,7 @@ export class ResultComponent implements OnInit, OnChanges {
         if (this.templateStatus === ResultTemplateStatus.LATE) {
             this.textColorClass = this.getTextColorClass();
             this.resultIconClass = this.getResultIconClass();
+            this.resultString = this.resultService.getResultString(this.result!, this.exercise!);
         } else if (this.result && (this.result.score || this.result.score === 0) && (this.result.rated || this.result.rated == undefined || this.showUngradedResults)) {
             this.onlyShowSuccessfulCompileStatus = this.getOnlyShowSuccessfulCompileStatus();
             this.textColorClass = this.getTextColorClass();
@@ -217,6 +221,7 @@ export class ResultComponent implements OnInit, OnChanges {
             // this state is only possible if no rated results are available at all, so we show the info that no graded result is available
             this.templateStatus = ResultTemplateStatus.NO_RESULT;
             this.result = undefined;
+            this.resultString = '';
         }
     }
 
@@ -299,14 +304,14 @@ export class ResultComponent implements OnInit, OnChanges {
     /**
      * Gets the build result string.
      */
-    buildResultString() {
+    buildResultString(): string {
         if (this.isBuildFailed(this.submission)) {
-            return this.isManualResult(this.result) ? this.result!.resultString : this.translate.instant('artemisApp.editor.buildFailed');
+            return this.isManualResult(this.result) ? this.resultService.getResultString(this.result!, this.exercise!) : this.translate.instant('artemisApp.editor.buildFailed');
             // Only show the 'preliminary' string for programming student participation results and if the buildAndTestAfterDueDate has not passed.
         }
 
         const buildSuccessful = this.translate.instant('artemisApp.editor.buildSuccessful');
-        const resultStringCompiledMessage = this.result!.resultString?.replace('0 of 0 passed', buildSuccessful) ?? buildSuccessful;
+        const resultStringCompiledMessage = this.resultService.getResultString(this.result!, this.exercise!).replace('0 of 0 passed', buildSuccessful) ?? buildSuccessful;
 
         if (this.participation && isProgrammingExerciseStudentParticipation(this.participation) && isResultPreliminary(this.result!, this.exercise as ProgrammingExercise)) {
             const preliminary = '(' + this.translate.instant('artemisApp.result.preliminary') + ')';
@@ -408,7 +413,7 @@ export class ResultComponent implements OnInit, OnChanges {
      *
      */
     getOnlyShowSuccessfulCompileStatus(): boolean {
-        const zeroTestsPassed = this.result?.resultString?.includes('0 of 0 passed') ?? false;
+        const zeroTestsPassed = (this.result?.feedbacks?.filter((feedback) => feedback.type === FeedbackType.AUTOMATIC && feedback.positive).length || 0) > 0;
         return this.templateStatus !== ResultTemplateStatus.NO_RESULT && this.templateStatus !== ResultTemplateStatus.IS_BUILDING && zeroTestsPassed;
     }
 

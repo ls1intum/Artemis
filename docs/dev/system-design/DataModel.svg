@@ -235,7 +235,6 @@
           <title>Attributes</title>
           <rect x="369.76163" y="846.354" width="101.47675" height="110" stroke="black" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
           <text transform="translate(375.76163 852.354)" fill="black">
-            <tspan font-family="Helvetica" font-size="12" font-weight="400" fill="black" x="0" y="11">resultString</tspan>
             <tspan font-family="Helvetica" font-size="12" font-weight="400" fill="black" x="0" y="25">completionDate</tspan>
             <tspan font-family="Helvetica" font-size="12" font-weight="400" fill="black" x="0" y="39">successful</tspan>
             <tspan font-family="Helvetica" font-size="12" font-weight="400" fill="black" x="0" y="53">buildArtifact</tspan>

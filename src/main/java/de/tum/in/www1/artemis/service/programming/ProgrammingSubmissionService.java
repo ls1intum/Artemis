@@ -825,9 +825,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
             feedback.setResult(newResult);
         }
         newResult.setFeedbacks(automaticFeedbacks);
-        if (optionalExistingResult.isPresent()) {
-            newResult.setResultString(optionalExistingResult.get().getResultString());
-        }
+
         // Workaround to prevent the assessor turning into a proxy object after saving
         var assessor = newResult.getAssessor();
         newResult = resultRepository.save(newResult);

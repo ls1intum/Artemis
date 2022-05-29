@@ -140,7 +140,7 @@ public class ProgrammingExerciseGradingService {
 
             // Fetch submission or create a fallback
             var latestSubmission = getSubmissionForBuildResult(participation.getId(), buildResult).orElseGet(() -> createAndSaveFallbackSubmission(participation, buildResult));
-            latestSubmission.setBuildFailed("No tests found".equals(newResult.getResultString()));
+            latestSubmission.setBuildFailed(newResult.getFeedbacks().stream().anyMatch(feedback -> feedback.getType() == FeedbackType.AUTOMATIC));
             // Add artifacts to submission
             latestSubmission.setBuildArtifact(buildResult.hasArtifact());
 
@@ -304,9 +304,6 @@ public class ProgrammingExerciseGradingService {
         // copy all feedback from the automatic result
         List<Feedback> copiedFeedbacks = newAutomaticResult.getFeedbacks().stream().map(Feedback::copyFeedback).toList();
         latestSemiAutomaticResult = resultService.addFeedbackToResult(latestSemiAutomaticResult, copiedFeedbacks, false);
-
-        String resultString = updateManualResultString(newAutomaticResult.getResultString(), latestSemiAutomaticResult, programmingExercise);
-        latestSemiAutomaticResult.setResultString(resultString);
 
         return resultRepository.save(latestSemiAutomaticResult);
     }
@@ -602,11 +599,10 @@ public class ProgrammingExerciseGradingService {
             // The score is always calculated from ALL (except visibility=never) test cases, regardless of the current date!
             final Set<ProgrammingExerciseTestCase> successfulTestCases = testCasesForCurrentDate.stream().filter(isSuccessful(result)).collect(Collectors.toSet());
             updateScore(result, testCases, successfulTestCases, staticCodeAnalysisFeedback, exercise, hasDuplicateTestCases, applySubmissionPolicy);
-            updateResultString(result, testCasesForCurrentDate, successfulTestCases, staticCodeAnalysisFeedback, exercise, hasDuplicateTestCases, applySubmissionPolicy);
         }
         // Case 2: There are no test cases that are executed before the due date has passed. We need to do this to differentiate this case from a build error.
         else if (!testCases.isEmpty() && !result.getFeedbacks().isEmpty() && !testCaseFeedback.isEmpty()) {
-            addFeedbackTestsNotExecuted(result, exercise, staticCodeAnalysisFeedback, applySubmissionPolicy);
+            addFeedbackTestsNotExecuted(result, exercise, staticCodeAnalysisFeedback);
         }
         // Case 3: If there is no test case feedback, the build has failed, or it has previously fallen under case 2. In this case we just return the original result without
         // changing it.
@@ -619,17 +615,12 @@ public class ProgrammingExerciseGradingService {
      * @param result to which the feedback should be added.
      * @param exercise to which the result belongs to.
      * @param staticCodeAnalysisFeedback that has been created for this result.
-     * @param applySubmissionPolicy if the submission policy of the exercise should be applied.
      */
-    private void addFeedbackTestsNotExecuted(final Result result, final ProgrammingExercise exercise, final List<Feedback> staticCodeAnalysisFeedback,
-            boolean applySubmissionPolicy) {
+    private void addFeedbackTestsNotExecuted(final Result result, final ProgrammingExercise exercise, final List<Feedback> staticCodeAnalysisFeedback) {
         removeAllTestCaseFeedbackAndSetScoreToZero(result, staticCodeAnalysisFeedback);
 
         // Add feedbacks for all duplicate test cases
-        boolean hasDuplicateTestCases = createFeedbackForDuplicateTests(result, exercise);
-
-        // In this case, test cases won't be displayed but static code analysis feedback must be shown in the result string.
-        updateResultString(result, Set.of(), Set.of(), staticCodeAnalysisFeedback, exercise, hasDuplicateTestCases, applySubmissionPolicy);
+        createFeedbackForDuplicateTests(result, exercise);
     }
 
     /**
@@ -937,56 +928,6 @@ public class ProgrammingExerciseGradingService {
         }
 
         return codeAnalysisPenaltyPoints;
-    }
-
-    /**
-     * Update the result's result string given the successful tests vs. all tests (x of y passed).
-     * @param result                of the build run.
-     * @param allTestCases          of the given programming exercise.
-     * @param successfulTestCases   test cases with positive feedback.
-     * @param scaFeedback           for the result
-     * @param exercise              to which this result and the test cases belong
-     * @param hasDuplicateTestCases indicates duplicate test cases
-     */
-    private void updateResultString(final Result result, final Set<ProgrammingExerciseTestCase> allTestCases, final Set<ProgrammingExerciseTestCase> successfulTestCases,
-            final List<Feedback> scaFeedback, final ProgrammingExercise exercise, boolean hasDuplicateTestCases, boolean applySubmissionPolicy) {
-        if (hasDuplicateTestCases) {
-            result.setResultString("Error: Found duplicated tests!");
-        }
-        else {
-            // Create a new result string that reflects passed, failed & not executed test cases.
-            String newResultString = successfulTestCases.size() + " of " + allTestCases.size() + " passed";
-
-            // Show number of found quality issues if static code analysis is enabled
-            if (Boolean.TRUE.equals(exercise.isStaticCodeAnalysisEnabled())) {
-                String issueTerm = scaFeedback.size() == 1 ? ", 1 issue" : ", " + scaFeedback.size() + " issues";
-                newResultString += issueTerm;
-            }
-
-            if (applySubmissionPolicy) {
-                newResultString += submissionPolicyService.calculateResultStringAttachment(exercise, result.getParticipation());
-            }
-
-            if (result.isManual()) {
-                newResultString = updateManualResultString(newResultString, result, exercise);
-            }
-            result.setResultString(newResultString);
-        }
-    }
-
-    /**
-     * Update the result string of a manual result with the achieved points.
-     * @param resultString The automatic part of the result string
-     * @param result The result to add the result string
-     * @param exercise The programming exercise
-     * @return The updated result string
-     */
-    private String updateManualResultString(String resultString, Result result, ProgrammingExercise exercise) {
-        // Calculate different scores for totalScore calculation and add points and maxScore to result string
-        double maxScore = exercise.getMaxPoints();
-        double points = result.calculateTotalPointsForProgrammingExercises();
-        result.setScore(points, maxScore);
-        return resultString + ", " + result.createResultString(points, maxScore);
     }
 
     /**

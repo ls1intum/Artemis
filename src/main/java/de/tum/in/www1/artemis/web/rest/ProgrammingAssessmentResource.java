@@ -150,12 +150,6 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
         if (Boolean.FALSE.equals(newManualResult.isRated())) {
             throw new BadRequestAlertException("Result is not rated", ENTITY_NAME, "resultNotRated");
         }
-        if (newManualResult.getResultString() == null) {
-            throw new BadRequestAlertException("Result string is required.", ENTITY_NAME, "resultStringNull");
-        }
-        if (newManualResult.getResultString().length() > 255) {
-            throw new BadRequestAlertException("Result string is too long.", ENTITY_NAME, "resultStringNull");
-        }
         if (newManualResult.getScore() == null) {
             throw new BadRequestAlertException("Score is required.", ENTITY_NAME, "scoreNull");
         }

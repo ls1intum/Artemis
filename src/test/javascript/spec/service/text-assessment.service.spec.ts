@@ -283,7 +283,6 @@ describe('TextAssessment Service', () => {
         submission.results = [
             {
                 id: 2374,
-                resultString: '1 of 12 points',
                 score: 8,
                 rated: true,
                 hasFeedback: true,

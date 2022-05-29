@@ -45,7 +45,6 @@ describe('Modeling Assessment Service', () => {
         describe('methods returning a result', () => {
             elemDefault = new Result();
             elemDefault.id = 1;
-            elemDefault.resultString = 'result';
             elemDefault.score = 5;
             elemDefault.hasComplaint = false;
             it('should save an assessment', async () => {

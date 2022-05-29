@@ -353,7 +353,6 @@ public class SubmissionService {
      * @return the newResult
      */
     private Result copyResultContentAndAddToSubmission(Submission submission, Result newResult, Result oldResult) {
-        newResult.setResultString(oldResult.getResultString());
         newResult.setScore(oldResult.getScore());
         newResult.setHasFeedback(oldResult.getHasFeedback());
         newResult.setRated(oldResult.isRated());
@@ -460,7 +459,6 @@ public class SubmissionService {
         // copy feedback from automatic result
         if (existingAutomaticResult.isPresent()) {
             draftAssessment.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
-            draftAssessment.setResultString(existingAutomaticResult.get().getResultString());
             // also saves the draft assessment
             draftAssessment.setFeedbacks(copyFeedbackToNewResult(draftAssessment, existingAutomaticResult.get()));
         }
