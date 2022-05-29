@@ -7,8 +7,7 @@ import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 
 @Component({
     selector: 'jhi-average-actions-chart',
-    templateUrl: './actions-chart.component.html',
-    styleUrls: ['../monitoring-chart.scss'],
+    templateUrl: './average-actions-chart.component.html',
 })
 export class AverageActionsChartComponent implements OnInit, OnChanges {
     // Input

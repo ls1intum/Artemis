@@ -18,6 +18,7 @@ import { ArtemisSharedComponentModule } from 'app/shared/components/shared-compo
 import { ChartTitleComponent } from 'app/exam/monitoring/charts/chart-title.component';
 import { ExerciseSubmissionChartComponent } from 'app/exam/monitoring/charts/exercises/exercise-submission-chart.component';
 import { ExerciseNavigationChartComponent } from 'app/exam/monitoring/charts/exercises/exercise-navigation-chart.component';
+import { ActionsChartComponent } from 'app/exam/monitoring/charts/activity-log/actions-chart.component';
 
 const ENTITY_STATES = [...examMonitoringState];
 
@@ -33,6 +34,7 @@ const ENTITY_STATES = [...examMonitoringState];
         ExerciseGroupChartComponent,
         ExerciseSubmissionChartComponent,
         ExerciseNavigationChartComponent,
+        ActionsChartComponent,
         TotalActionsChartComponent,
         AverageActionsChartComponent,
         CategoryActionsChartComponent,

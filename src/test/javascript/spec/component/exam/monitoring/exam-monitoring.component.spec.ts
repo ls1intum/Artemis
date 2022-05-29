@@ -40,7 +40,7 @@ describe('Exam Monitoring Component', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule],
-            declarations: [ExamMonitoringComponent, ArtemisDatePipe, MockPipe(ArtemisTranslatePipe), MockPipe(ArtemisDatePipe)],
+            declarations: [ExamMonitoringComponent, ArtemisDatePipe, MockPipe(ArtemisTranslatePipe)],
             providers: [{ provide: TranslateService, useClass: MockTranslateService }, { provide: ActivatedRoute, useValue: route }, { provide: ArtemisDatePipe }],
         })
             .compileComponents()

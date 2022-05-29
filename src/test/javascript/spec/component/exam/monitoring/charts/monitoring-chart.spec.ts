@@ -151,7 +151,7 @@ describe('Monitoring charts helper methods', () => {
     });
 });
 
-const createExamActionBasedOnType = (examActionType: ExamActionType): ExamAction => {
+export const createExamActionBasedOnType = (examActionType: ExamActionType): ExamAction => {
     let examAction: ExamAction;
 
     switch (examActionType) {
@@ -180,6 +180,6 @@ const createExamActionBasedOnType = (examActionType: ExamActionType): ExamAction
     return examAction;
 };
 
-function createActions() {
+export function createActions() {
     return Object.keys(ExamActionType).map((action) => createExamActionBasedOnType(ExamActionType[action]));
 }
