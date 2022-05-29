@@ -24,7 +24,7 @@ import { faCircleNotch, faExclamationCircle, faFile } from '@fortawesome/free-so
 import { faCheckCircle, faCircle, faQuestionCircle, faTimesCircle } from '@fortawesome/free-regular-svg-icons';
 import { isModelingOrTextOrFileUpload, isParticipationInDueTime, isProgrammingOrQuiz } from 'app/exercises/shared/participation/participation.utils';
 import { ResultService } from 'app/exercises/shared/result/result.service';
-import { FeedbackType } from 'app/entities/feedback.model';
+import { Feedback } from 'app/entities/feedback.model';
 
 /**
  * Enumeration object representing the possible options that
@@ -404,8 +404,13 @@ export class ResultComponent implements OnInit, OnChanges {
      *
      */
     getOnlyShowSuccessfulCompileStatus(): boolean {
-        const zeroTestsPassed = (this.result?.feedbacks?.filter((feedback) => feedback.type === FeedbackType.AUTOMATIC && feedback.positive).length || 0) > 0;
-        return this.templateStatus !== ResultTemplateStatus.NO_RESULT && this.templateStatus !== ResultTemplateStatus.IS_BUILDING && zeroTestsPassed;
+        const zeroTestsPassed = (this.result?.feedbacks?.filter((feedback) => Feedback.isStaticCodeAnalysisFeedback(feedback)).length || 0) == 0;
+        return (
+            this.templateStatus !== ResultTemplateStatus.NO_RESULT &&
+            this.templateStatus !== ResultTemplateStatus.IS_BUILDING &&
+            !this.isBuildFailed(this.submission) &&
+            zeroTestsPassed
+        );
     }
 
     /**

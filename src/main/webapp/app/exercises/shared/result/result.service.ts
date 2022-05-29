@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, of } from 'rxjs';
+import { catchError, switchMap } from 'rxjs/operators';
 import dayjs from 'dayjs/esm';
 import { Result } from 'app/entities/result.model';
 import { ResultWithPointsPerGradingCriterion } from 'app/entities/result-with-points-per-grading-criterion.model';
@@ -56,6 +57,7 @@ export class ResultService implements IResultService {
     }
 
     private getResultStringProgrammingExercise(result: Result, exercise: ProgrammingExercise, relativeScore: number, points: number): string {
+        this.fetchAdditionalInformation(result);
         const numberOfTestsPassed = result.feedbacks?.filter((feedback) => feedback.type === FeedbackType.AUTOMATIC && feedback.positive).length;
         const numberOfTestsTotal = result.feedbacks?.filter((feedback) => feedback.type === FeedbackType.AUTOMATIC && !feedback.positive).length;
         const numberOfIssues = result.feedbacks?.filter((feedback) => Feedback.isStaticCodeAnalysisFeedback(feedback)).length;
@@ -101,6 +103,31 @@ export class ResultService implements IResultService {
         }
 
         return resultString;
+    }
+
+    /**
+     * Fetches additional information about feedbacks
+     * @private
+     */
+    private fetchAdditionalInformation(result: Result) {
+        of(result.feedbacks).pipe(
+            // If the result already has feedbacks assigned to it, don't query the server.
+            switchMap((feedbacks: Feedback[] | undefined | null) =>
+                feedbacks && feedbacks.length
+                    ? of(feedbacks)
+                    : this.getFeedbackDetailsForResult(result.participation!.id!, result.id!).pipe(map(({ body: feedbackList }) => feedbackList!)),
+            ),
+            switchMap((feedbacks: Feedback[] | undefined | null) => {
+                if (feedbacks && feedbacks.length) {
+                    result.feedbacks = feedbacks!;
+                }
+
+                return of(null);
+            }),
+            catchError(() => {
+                return of(null);
+            }),
+        );
     }
 
     getResultsForExercise(exerciseId: number, req?: any): Observable<EntityArrayResponseType> {
