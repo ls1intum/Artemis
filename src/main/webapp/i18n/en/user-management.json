@@ -36,6 +36,16 @@
         "lastModifiedBy": "Modified by",
         "lastModifiedDate": "Modified date",
         "searchForUser": "Search for User: ",
+        "noData": "No data available",
+        "filter": {
+            "label": "Filter",
+            "types": {
+                "WITH_REG_NO": "With registration number",
+                "WITHOUT_REG_NO": "Without registration number",
+                "INTERNAL": "Internal",
+                "EXTERNAL": "External"
+            }
+        },
         "search": "Search",
         "loading": "Loading...",
         "searchError": "Search term must be empty or contain at least 3 characters.",

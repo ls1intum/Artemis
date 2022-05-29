@@ -20,7 +20,7 @@ import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.SortingOrder;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.dto.UserDTO;
-import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
+import de.tum.in.www1.artemis.web.rest.dto.UserManagementPagableSearchDTO;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 /**
@@ -147,9 +147,16 @@ public interface UserRepository extends JpaRepository<User, Long> {
     Set<User> findAllWithGroupsAndAuthorities();
 
     @EntityGraph(type = LOAD, attributePaths = { "groups", "authorities" })
-    @Query("select user from User user where user.login like %:#{#searchTerm}% or user.email like %:#{#searchTerm}% "
-            + "or user.lastName like %:#{#searchTerm}% or user.firstName like %:#{#searchTerm}%")
-    Page<User> searchByLoginOrNameWithGroups(@Param("searchTerm") String searchTerm, Pageable pageable);
+    @Query("""
+            select user from User user where (user.login like %:#{#searchTerm}% or user.email like %:#{#searchTerm}%
+            or user.lastName like %:#{#searchTerm}% or user.firstName like %:#{#searchTerm}%) and
+            (user.registrationNumber is not null or :withoutRegistrationNumber is true) and
+            (user.registrationNumber is null or :withRegistrationNumber is true) and
+            (user.isInternal is true or :external is true) and
+            (user.isInternal is false or :internal is true)
+            """)
+    Page<User> searchByLoginOrNameApplyingFiltersWithGroups(@Param("searchTerm") String searchTerm, @Param("withRegistrationNumber") boolean withRegistrationNumber,
+            @Param("withoutRegistrationNumber") boolean withoutRegistrationNumber, @Param("internal") boolean internal, @Param("external") boolean external, Pageable pageable);
 
     @Modifying
     @Transactional // ok because of modifying query
@@ -183,15 +190,18 @@ public interface UserRepository extends JpaRepository<User, Long> {
      * @param userSearch used to find users
      * @return all users
      */
-    default Page<UserDTO> getAllManagedUsers(PageableSearchDTO<String> userSearch) {
+    default Page<UserDTO> getAllManagedUsers(UserManagementPagableSearchDTO userSearch) {
         final var searchTerm = userSearch.getSearchTerm();
         var sorting = Sort.by(userSearch.getSortedColumn());
         sorting = userSearch.getSortingOrder() == SortingOrder.ASCENDING ? sorting.ascending() : sorting.descending();
         final var sorted = PageRequest.of(userSearch.getPage(), userSearch.getPageSize(), sorting);
-        return searchByLoginOrNameWithGroups(searchTerm, sorted).map(user -> {
-            user.setVisibleRegistrationNumber();
-            return new UserDTO(user);
-        });
+        return searchByLoginOrNameApplyingFiltersWithGroups(searchTerm, userSearch.getFilters().contains(UserManagementPagableSearchDTO.UserManagementUserFilter.WITH_REG_NO),
+                userSearch.getFilters().contains(UserManagementPagableSearchDTO.UserManagementUserFilter.WITHOUT_REG_NO),
+                userSearch.getFilters().contains(UserManagementPagableSearchDTO.UserManagementUserFilter.INTERNAL),
+                userSearch.getFilters().contains(UserManagementPagableSearchDTO.UserManagementUserFilter.EXTERNAL), sorted).map(user -> {
+                    user.setVisibleRegistrationNumber();
+                    return new UserDTO(user);
+                });
     }
 
     /**

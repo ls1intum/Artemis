@@ -36,6 +36,16 @@
         "lastModifiedBy": "Bearbeitet von",
         "lastModifiedDate": "Zuletzt bearbeitet",
         "searchForUser": "Suche nach Nutzer:innen: ",
+        "noData": "Keine Daten vorhanden",
+        "filter": {
+            "label": "Filter",
+            "types": {
+                "WITH_REG_NO": "Mit Matrikelnummer",
+                "WITHOUT_REG_NO": "Ohne Matrikelnummer",
+                "INTERNAL": "Intern",
+                "EXTERNAL": "Extern"
+            }
+        },
         "search": "Suche",
         "loading": "Laden...",
         "searchError": "Der Suchbegriff muss leer oder mindestens 3 Zeichen lang sein.",

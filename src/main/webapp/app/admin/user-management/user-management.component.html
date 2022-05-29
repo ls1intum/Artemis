@@ -18,6 +18,25 @@
                     [(ngModel)]="searchTerm"
                     (focusout)="loadAll()"
                 />
+                <div class="ms-2" aria-label="Filter Dropdown" ngbDropdown>
+                    <button
+                        class="btn"
+                        [ngClass]="{ 'btn-secondary': activeFilters.length === allFilters.length, 'btn-success': activeFilters.length !== allFilters.length }"
+                        ngbDropdownToggle
+                        id="filter-dropdown-button"
+                    >
+                        <fa-icon [icon]="faFilter"></fa-icon>
+                        <span class="d-s-none d-md-inline">{{ 'userManagement.filter.label' | artemisTranslate }}</span>
+                    </button>
+                    <ul ngbDropdownMenu class="checkbox-menu text-nowrap pe-2" aria-labelledby="filter-dropdown-button">
+                        <li *ngFor="let fType of allFilters">
+                            <label>
+                                <input class="ms-2 form-check-input" (change)="toggleFilter(fType)" [checked]="activeFilters.includes(fType)" type="checkbox" />
+                                <span class="ms-2" [jhiTranslate]="'userManagement.filter.types.' + fType">{{ fType }}</span>
+                            </label>
+                        </li>
+                    </ul>
+                </div>
                 <button class="btn btn-primary ms-3" (click)="loadAll()">
                     <span jhiTranslate="userManagement.search">Search</span>
                 </button>
@@ -74,7 +93,7 @@
                     <th></th>
                 </tr>
             </thead>
-            <tbody *ngIf="users">
+            <tbody *ngIf="users?.length">
                 <tr *ngFor="let user of users; trackBy: trackIdentity">
                     <td>
                         <a [routerLink]="['./', user.login]">{{ user.id }}</a>
@@ -142,6 +161,9 @@
                 </tr>
             </tbody>
         </table>
+        <div *ngIf="users?.length === 0" class="no-data">
+            {{ 'userManagement.noData' | artemisTranslate }}
+        </div>
     </div>
     <div *ngIf="users">
         <div class="row justify-content-center">

@@ -14,11 +14,19 @@ import { AbstractControl, FormControl, FormGroup } from '@angular/forms';
 import { EventManager } from 'app/core/util/event-manager.service';
 import { ParseLinks } from 'app/core/util/parse-links.service';
 import { ASC, DESC, ITEMS_PER_PAGE, SORT } from 'app/shared/constants/pagination.constants';
-import { faEye, faPlus, faSort, faTimes, faWrench } from '@fortawesome/free-solid-svg-icons';
+import { faEye, faPlus, faSort, faTimes, faWrench, faFilter } from '@fortawesome/free-solid-svg-icons';
+
+export enum UserFilter {
+    WITH_REG_NO = 'WITH_REG_NO',
+    WITHOUT_REG_NO = 'WITHOUT_REG_NO',
+    INTERNAL = 'INTERNAL',
+    EXTERNAL = 'EXTERNAL',
+}
 
 @Component({
     selector: 'jhi-user-management',
     templateUrl: './user-management.component.html',
+    styles: ['.no-data { min-height: 300px; width: 100%; display: flex; align-items: center; justify-content: center; }'],
 })
 export class UserManagementComponent implements OnInit, OnDestroy {
     search = new Subject<void>();
@@ -32,6 +40,8 @@ export class UserManagementComponent implements OnInit, OnDestroy {
     predicate!: string;
     ascending!: boolean;
     searchTermString = '';
+    activeFilters: UserFilter[] = [UserFilter.WITH_REG_NO, UserFilter.WITHOUT_REG_NO, UserFilter.INTERNAL, UserFilter.EXTERNAL];
+    readonly allFilters = [UserFilter.WITH_REG_NO, UserFilter.WITHOUT_REG_NO, UserFilter.INTERNAL, UserFilter.EXTERNAL];
 
     private dialogErrorSource = new Subject<string>();
     dialogError = this.dialogErrorSource.asObservable();
@@ -43,6 +53,7 @@ export class UserManagementComponent implements OnInit, OnDestroy {
     faTimes = faTimes;
     faEye = faEye;
     faWrench = faWrench;
+    faFilter = faFilter;
 
     constructor(
         private userService: UserService,
@@ -62,6 +73,7 @@ export class UserManagementComponent implements OnInit, OnDestroy {
                         page: this.page - 1,
                         pageSize: this.itemsPerPage,
                         searchTerm: this.searchTermString,
+                        filters: this.activeFilters,
                         sortingOrder: this.ascending ? SortingOrder.ASCENDING : SortingOrder.DESCENDING,
                         sortedColumn: this.predicate,
                     }),
@@ -113,6 +125,15 @@ export class UserManagementComponent implements OnInit, OnDestroy {
         this.userService.update(user).subscribe(() => {
             this.loadAll();
         });
+    }
+
+    toggleFilter(filter: UserFilter) {
+        const index = this.activeFilters.indexOf(filter);
+        if (index < 0) {
+            this.activeFilters.push(filter);
+        } else {
+            this.activeFilters.splice(index, 1);
+        }
     }
 
     /**
