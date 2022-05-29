@@ -8,11 +8,9 @@ import { ActivatedRoute } from '@angular/router';
 import { Course } from 'app/entities/course.model';
 import { Exam } from 'app/entities/exam.model';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
-import { HasAnyAuthorityDirective } from 'app/shared/auth/has-any-authority.directive';
-import { MockDirective, MockPipe } from 'ng-mocks';
+import { MockPipe } from 'ng-mocks';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
-import { MockRouterLinkDirective } from '../../../helpers/mocks/directive/mock-router-link.directive';
 import { ExamMonitoringComponent, TableContent } from 'app/exam/monitoring/exam-monitoring.component';
 import { ExamMonitoringService } from 'app/exam/monitoring/exam-monitoring.service';
 import dayjs from 'dayjs/esm';
@@ -42,14 +40,7 @@ describe('Exam Monitoring Component', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule],
-            declarations: [
-                ExamMonitoringComponent,
-                ArtemisDatePipe,
-                MockDirective(HasAnyAuthorityDirective),
-                MockPipe(ArtemisTranslatePipe),
-                MockPipe(ArtemisDatePipe),
-                MockRouterLinkDirective,
-            ],
+            declarations: [ExamMonitoringComponent, ArtemisDatePipe, MockPipe(ArtemisTranslatePipe), MockPipe(ArtemisDatePipe)],
             providers: [{ provide: TranslateService, useClass: MockTranslateService }, { provide: ActivatedRoute, useValue: route }, { provide: ArtemisDatePipe }],
         })
             .compileComponents()

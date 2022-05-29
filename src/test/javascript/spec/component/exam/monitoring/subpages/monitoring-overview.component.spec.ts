@@ -4,15 +4,8 @@ import { Course } from 'app/entities/course.model';
 import { Exam } from 'app/entities/exam.model';
 import { MonitoringOverviewComponent } from 'app/exam/monitoring/subpages/overview/monitoring-overview.component';
 import { BehaviorSubject, of } from 'rxjs';
-import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
-import { HasAnyAuthorityDirective } from 'app/shared/auth/has-any-authority.directive';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { MockRouterLinkDirective } from '../../../../helpers/mocks/directive/mock-router-link.directive';
-import { MockTranslateService } from '../../../../helpers/mocks/service/mock-translate.service';
 import { ExamMonitoringService } from 'app/exam/monitoring/exam-monitoring.service';
-import { TranslateService } from '@ngx-translate/core';
 import { ActivatedRoute } from '@angular/router';
-import { MockDirective, MockPipe } from 'ng-mocks';
 import { MockSyncStorage } from '../../../../helpers/mocks/service/mock-sync-storage.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { ExamMonitoringWebsocketService } from 'app/exam/monitoring/exam-monitoring-websocket.service';
@@ -37,15 +30,8 @@ describe('Monitoring Overview Component', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule],
-            declarations: [
-                MonitoringOverviewComponent,
-                MockDirective(HasAnyAuthorityDirective),
-                MockPipe(ArtemisTranslatePipe),
-                MockPipe(ArtemisDatePipe),
-                MockRouterLinkDirective,
-            ],
+            declarations: [MonitoringOverviewComponent],
             providers: [
-                { provide: TranslateService, useClass: MockTranslateService },
                 { provide: ActivatedRoute, useValue: route },
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
