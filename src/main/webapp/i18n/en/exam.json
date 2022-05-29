@@ -500,8 +500,8 @@
             "charts": {
                 "exercise-chart": {
                     "name": "Current amount of students per exercise grouped by exercise group",
-                    "xAxisLabel": "Shows the current amount of students per exercise grouped by exercise group",
-                    "tooltip": "TODO",
+                    "tooltip": "Shows the current amount of students per exercise grouped by exercise group",
+                    "xAxisLabel": "Amount of students",
                     "yAxisLabel": "Exercises",
                     "legendTitle": "Exercises"
                 },
