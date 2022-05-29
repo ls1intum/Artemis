@@ -310,9 +310,12 @@ public class ExerciseService {
                 if (exercise instanceof QuizExercise quizExercise) {
                     quizExercise.filterSensitiveInformation();
 
-                    // delete the proxy as it doesn't work; getQuizBatchForStudent will load the batches from the DB directly
-                    quizExercise.setQuizBatches(null);
-                    quizExercise.setQuizBatches(quizBatchService.getQuizBatchForStudent(quizExercise, user).stream().collect(Collectors.toSet()));
+                    // if the quiz is not active the batches do not matter and there is no point in loading them
+                    if (quizExercise.isQuizStarted() && !quizExercise.isQuizEnded()) {
+                        // delete the proxy as it doesn't work; getQuizBatchForStudent will load the batches from the DB directly
+                        quizExercise.setQuizBatches(null);
+                        quizExercise.setQuizBatches(quizBatchService.getQuizBatchForStudent(quizExercise, user).stream().collect(Collectors.toSet()));
+                    }
                 }
             }
         }
