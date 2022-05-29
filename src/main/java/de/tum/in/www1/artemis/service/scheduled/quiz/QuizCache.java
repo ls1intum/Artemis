@@ -109,6 +109,7 @@ final class QuizCache {
      * @param quizExerciseId the id of the quiz exercise, must not be null
      * @return a {@link QuizExerciseCache} object, never null and never {@linkplain EmptyQuizExerciseCache empty}
      */
+    // TODO: rename method
     QuizExerciseCache getTransientWriteCacheFor(Long quizExerciseId) {
         // Look for an existing quiz cache
         var cachedQuiz = cachedQuizExercises.get(quizExerciseId);

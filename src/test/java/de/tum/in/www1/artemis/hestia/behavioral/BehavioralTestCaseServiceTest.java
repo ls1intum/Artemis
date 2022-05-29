@@ -89,7 +89,6 @@ public class BehavioralTestCaseServiceTest extends AbstractSpringIntegrationBamb
         gitDiffReport.setSolutionRepositoryCommitHash("123a");
         gitDiffReport.setTemplateRepositoryCommitHash("123b");
         gitDiffReport = programmingExerciseGitDiffReportRepository.save(gitDiffReport);
-        exercise.setGitDiffReport(gitDiffReport);
         return gitDiffReport;
     }
 
@@ -101,7 +100,6 @@ public class BehavioralTestCaseServiceTest extends AbstractSpringIntegrationBamb
         gitDiffEntry.setGitDiffReport(gitDiffReport);
         gitDiffReport.getEntries().add(gitDiffEntry);
         var savedGitDiffReport = programmingExerciseGitDiffReportRepository.save(gitDiffReport);
-        exercise.setGitDiffReport(savedGitDiffReport);
         return savedGitDiffReport;
     }
 
@@ -113,7 +111,6 @@ public class BehavioralTestCaseServiceTest extends AbstractSpringIntegrationBamb
         coverageReport.setFileReports(new HashSet<>());
         coverageReport.setSubmission(solutionSubmission);
         coverageReport = coverageReportRepository.save(coverageReport);
-        solutionSubmission.setCoverageReport(coverageReport);
         return coverageReport;
     }
 
