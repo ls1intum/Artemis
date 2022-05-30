@@ -81,15 +81,6 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
     @Query("""
             SELECT DISTINCT p FROM StudentParticipation p
             LEFT JOIN FETCH p.submissions s
-            WHERE p.exercise.id = :#{#exerciseId}
-                AND p.student.login = :#{#username}
-                AND (s.type <> 'ILLEGAL' OR s.type IS NULL)
-            """)
-    Optional<StudentParticipation> findNotFinishedWithEagerLegalSubmissionsByExerciseIdAndStudentLogin(@Param("exerciseId") Long exerciseId, @Param("username") String username);
-
-    @Query("""
-            SELECT DISTINCT p FROM StudentParticipation p
-            LEFT JOIN FETCH p.submissions s
             where p.exercise.id = :#{#exerciseId}
                 AND p.team.id = :#{#teamId}
                 AND (s.type <> 'ILLEGAL' OR s.type IS NULL)
@@ -806,7 +797,7 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
      * @param studentExam studentExam with exercises loaded
      * @return student's participations with submissions and results.
      */
-    default List<StudentParticipation> findArchivedParticipationsByStudentExamWithEagerSubmissionsResultWithoutAssessor(StudentExam studentExam) {
+    default List<StudentParticipation> findArchivedParticipationsByStudentIdAndIndividualExercisesWithEagerSubmissionsResultWithoutAssessor(StudentExam studentExam) {
         return findArchivedParticipationsByStudentIdAndIndividualExercisesWithEagerSubmissionsResultIgnoreTestRuns(studentExam.getUser().getId(), studentExam.getExercises(),
                 studentExam.getStartedDate());
     }
