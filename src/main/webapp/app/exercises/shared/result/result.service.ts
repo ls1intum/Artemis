@@ -15,6 +15,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
 import { isResultPreliminary } from 'app/exercises/programming/shared/utils/programming-exercise.utils';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
 
 export type EntityResponseType = HttpResponse<Result>;
 export type EntityArrayResponseType = HttpResponse<Result[]>;
@@ -60,32 +61,24 @@ export class ResultService implements IResultService {
             this.getFeedbackDetailsForResult(result.participation!.id!, result.id!).pipe(map(({ body: feedbackList }) => (result.feedbacks = feedbackList!)));
         }
 
-        const numberOfTestsPassed = result.feedbacks?.filter((feedback) => feedback.type === FeedbackType.AUTOMATIC && feedback.positive).length;
-        const numberOfTestsTotal = result.feedbacks?.filter((feedback) => feedback.type === FeedbackType.AUTOMATIC && !feedback.positive).length;
+        const numberOfTestsPassed = result.feedbacks?.filter((feedback) => Feedback.isTestCaseFeedback(feedback) && feedback.positive).length;
+        const numberOfTestsTotal = result.feedbacks?.filter((feedback) => Feedback.isTestCaseFeedback(feedback)).length;
         const numberOfIssues = result.feedbacks?.filter((feedback) => Feedback.isStaticCodeAnalysisFeedback(feedback)).length;
 
-        let resultString: string;
+        let buildAndTestMessage;
+        if (result.submission && (result.submission as ProgrammingSubmission).buildFailed) {
+            buildAndTestMessage = this.translateService.instant('artemisApp.result.resultStringBuildFailed');
+        } else if (!numberOfTestsTotal || numberOfTestsTotal === 0) {
+            buildAndTestMessage = this.translateService.instant('artemisApp.result.resultStringBuildSuccessfulNoTests');
+        } else {
+            buildAndTestMessage = this.translateService.instant('artemisApp.result.resultStringBuildSuccessfulTests', { numberOfTestsPassed, numberOfTestsTotal });
+        }
 
-        if (!numberOfTestsTotal || numberOfTestsTotal === 0) {
-            if (numberOfIssues && numberOfIssues > 0) {
-                resultString = this.translateService.instant('artemisApp.result.resultStringProgrammingBuildSuccessCodeIssues', {
-                    relativeScore,
-                    numberOfIssues,
-                    points,
-                    maxPoints: exercise.maxPoints,
-                });
-            } else {
-                resultString = this.translateService.instant(`artemisApp.result.resultStringProgrammingBuildSuccess`, {
-                    relativeScore,
-                    points,
-                    maxPoints: exercise.maxPoints,
-                });
-            }
-        } else if (numberOfIssues && numberOfIssues > 0) {
+        let resultString: string;
+        if (numberOfIssues && numberOfIssues > 0) {
             resultString = this.translateService.instant('artemisApp.result.resultStringProgrammingCodeIssues', {
                 relativeScore,
-                numberOfTestsPassed,
-                numberOfTestsTotal,
+                buildAndTestMessage,
                 numberOfIssues,
                 points,
                 maxPoints: exercise.maxPoints,
@@ -93,8 +86,7 @@ export class ResultService implements IResultService {
         } else {
             resultString = this.translateService.instant(`artemisApp.result.resultStringProgramming`, {
                 relativeScore,
-                numberOfTestsPassed,
-                numberOfTestsTotal,
+                buildAndTestMessage,
                 points,
                 maxPoints: exercise.maxPoints,
             });

@@ -90,7 +90,7 @@ export enum MissingResultInfo {
  * e.g. by using Object.assign to trigger ngOnChanges which makes sure that the result is updated
  */
 export class ResultComponent implements OnInit, OnChanges {
-    // make constants available to html for comparison
+    // make constants available to html
     readonly ResultTemplateStatus = ResultTemplateStatus;
     readonly MissingResultInfo = MissingResultInfo;
     readonly roundScoreSpecifiedByCourseSettings = roundValueSpecifiedByCourseSettings;
@@ -214,7 +214,7 @@ export class ResultComponent implements OnInit, OnChanges {
             this.textColorClass = this.getTextColorClass();
             this.hasFeedback = this.getHasFeedback();
             this.resultIconClass = this.getResultIconClass();
-            this.resultString = this.buildResultString();
+            this.resultString = this.resultService.getResultString(this.result!, this.exercise!);
             this.resultTooltip = this.buildResultTooltip();
         } else if (this.templateStatus !== ResultTemplateStatus.MISSING) {
             // make sure that we do not display results that are 'rated=false' or that do not have a score
@@ -299,17 +299,6 @@ export class ResultComponent implements OnInit, OnChanges {
             return undefined;
         }
         return dayjs.isDayjs(date) ? date : dayjs(date);
-    }
-
-    /**
-     * Gets the build result string.
-     */
-    buildResultString(): string {
-        if (this.isBuildFailed(this.submission) && this.isManualResult(this.result)) {
-            return this.translate.instant('artemisApp.editor.buildFailed');
-        }
-
-        return this.resultService.getResultString(this.result!, this.exercise!);
     }
 
     /**
@@ -507,7 +496,7 @@ export class ResultComponent implements OnInit, OnChanges {
      * build.
      * @param submission the submission
      */
-    isBuildFailed(submission: Submission | undefined) {
+    isBuildFailed(submission?: Submission) {
         const isProgrammingSubmission = submission && submission.submissionExerciseType === SubmissionExerciseType.PROGRAMMING;
         return isProgrammingSubmission && (submission as ProgrammingSubmission).buildFailed;
     }
@@ -516,7 +505,7 @@ export class ResultComponent implements OnInit, OnChanges {
      * Returns true if the specified result is not automatic.
      * @param result the result.
      */
-    isManualResult(result: Result | undefined) {
+    isManualResult(result?: Result) {
         return result?.assessmentType !== AssessmentType.AUTOMATIC;
     }
 }

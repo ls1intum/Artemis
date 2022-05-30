@@ -35,7 +35,7 @@ describe('ProgrammingExerciseInstructionStepWizardComponent', () => {
         const result = {
             id: 1,
             completionDate: dayjs('2019-01-06T22:15:29.203+02:00'),
-            feedbacks: [{ text: 'testBubbleSort', detail_text: 'lorem ipsum' }],
+            feedbacks: [{ text: 'testBubbleSort', detailText: 'lorem ipsum' }],
         } as any;
         const tasks = [
             { completeString: '[task][Implement BubbleSort](testBubbleSort)', taskName: 'Implement BubbleSort', tests: ['testBubbleSort'] } as Task,
@@ -60,7 +60,7 @@ describe('ProgrammingExerciseInstructionStepWizardComponent', () => {
         const result = {
             id: 1,
             completionDate: dayjs('2019-01-06T22:15:29.203+02:00'),
-            feedbacks: [{ text: 'testBubbleSort', detail_text: 'lorem ipsum' }],
+            feedbacks: [{ text: 'testBubbleSort', detailText: 'lorem ipsum' }],
         } as any;
         comp.latestResult = result;
         comp.tasks = [];

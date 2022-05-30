@@ -293,7 +293,7 @@ describe('ProgrammingExerciseInstructionComponent', () => {
         const result = {
             id: 1,
             completionDate: dayjs('2019-06-06T22:15:29.203+02:00'),
-            feedbacks: [{ text: 'testMergeSort', detail_text: 'lorem ipsum', positive: true }],
+            feedbacks: [{ text: 'testMergeSort', detailText: 'lorem ipsum', positive: true }],
         } as any;
         const exercise = { id: 3, course: { id: 4 }, problemStatement, showTestNamesToStudents: true } as ProgrammingExercise;
 
@@ -350,7 +350,7 @@ describe('ProgrammingExerciseInstructionComponent', () => {
         const result = {
             id: 1,
             completionDate: dayjs('2019-01-06T22:15:29.203+02:00'),
-            feedbacks: [{ text: 'testBubbleSort', detail_text: 'lorem ipsum' }],
+            feedbacks: [{ text: 'testBubbleSort', detailText: 'lorem ipsum' }],
         } as any;
         const exercise = { id: 3, course: { id: 4 }, problemStatement } as ProgrammingExercise;
 
