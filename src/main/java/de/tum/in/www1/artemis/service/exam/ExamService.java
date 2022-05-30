@@ -272,11 +272,9 @@ public class ExamService {
         }
 
         // Updating exam information in DTO
-        double sumOverallPoints = scores.studentResults.stream().mapToDouble(studentResult -> studentResult.overallPointsAchieved).sum();
-
         int numberOfStudentResults = scores.studentResults.size();
-
         if (numberOfStudentResults != 0) {
+            double sumOverallPoints = scores.studentResults.stream().mapToDouble(studentResult -> studentResult.overallPointsAchieved).sum();
             scores.averagePointsAchieved = sumOverallPoints / numberOfStudentResults;
         }
 
@@ -378,15 +376,15 @@ public class ExamService {
         return studentResult;
     }
 
-    public Double calculateMaxPointsSum(List<Exercise> exercises, Course course) {
+    private double calculateMaxPointsSum(List<Exercise> exercises, Course course) {
         if (exercises != null) {
-            var exercisesIncluded = exercises.stream().filter((exercise) -> exercise.getIncludedInOverallScore() == IncludedInOverallScore.INCLUDED_COMPLETELY);
+            var exercisesIncluded = exercises.stream().filter(exercise -> exercise.getIncludedInOverallScore() == IncludedInOverallScore.INCLUDED_COMPLETELY);
             return roundScoreSpecifiedByCourseSettings(exercisesIncluded.map(Exercise::getMaxPoints).reduce(0.0, Double::sum), course);
         }
         return 0.0;
     }
 
-    public Double calculateMaxBonusPointsSum(List<Exercise> exercises, Course course) {
+    private double calculateMaxBonusPointsSum(List<Exercise> exercises, Course course) {
         if (exercises != null) {
             return roundScoreSpecifiedByCourseSettings(exercises.stream().map(this::calculateMaxBonusPoints).reduce(0.0, Double::sum), course);
         }
@@ -401,13 +399,13 @@ public class ExamService {
         };
     }
 
-    private Double calculateAchievedPoints(Exercise exercise, Result result, Course course) {
+    private double calculateAchievedPoints(Exercise exercise, Result result, Course course) {
         return result != null && result.getScore() != null ? roundScoreSpecifiedByCourseSettings(exercise.getMaxPoints() * result.getScore() / 100.0, course) : 0.0;
     }
 
     private Map<Long, Double> calculateAchievedPointsForExercises(List<StudentParticipation> participationsOfStudent, Course course) {
-        return participationsOfStudent.stream().collect(Collectors.toMap((participation) -> participation.getExercise().getId(),
-                (participation) -> calculateAchievedPoints(participation.getExercise(), participation.getResults().stream().findFirst().orElse(null), course)));
+        return participationsOfStudent.stream().collect(Collectors.toMap(participation -> participation.getExercise().getId(),
+                participation -> calculateAchievedPoints(participation.getExercise(), participation.getResults().stream().findFirst().orElse(null), course)));
     }
 
     /**
