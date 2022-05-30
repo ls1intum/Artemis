@@ -5,7 +5,7 @@ import dayjs from 'dayjs/esm';
 import { Result } from 'app/entities/result.model';
 import { ResultWithPointsPerGradingCriterion } from 'app/entities/result-with-points-per-grading-criterion.model';
 import { createRequestOption } from 'app/shared/util/request.util';
-import { Feedback, FeedbackType } from 'app/entities/feedback.model';
+import { Feedback } from 'app/entities/feedback.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { Exercise, ExerciseType, getCourseFromExercise } from 'app/entities/exercise.model';
@@ -57,15 +57,15 @@ export class ResultService implements IResultService {
     }
 
     private getResultStringProgrammingExercise(result: Result, exercise: ProgrammingExercise, relativeScore: number, points: number): string {
-        if (!result.feedbacks) {
-            this.getFeedbackDetailsForResult(result.participation!.id!, result.id!).pipe(map(({ body: feedbackList }) => (result.feedbacks = feedbackList!)));
+        if (!result.feedbacks || result.feedbacks.length == 0) {
+            this.getFeedbackDetailsForResult(result.participation!.id!, result.id!).subscribe((feedbackList) => (result.feedbacks = feedbackList.body!));
         }
 
         const numberOfTestsPassed = result.feedbacks?.filter((feedback) => Feedback.isTestCaseFeedback(feedback) && feedback.positive).length;
         const numberOfTestsTotal = result.feedbacks?.filter((feedback) => Feedback.isTestCaseFeedback(feedback)).length;
         const numberOfIssues = result.feedbacks?.filter((feedback) => Feedback.isStaticCodeAnalysisFeedback(feedback)).length;
 
-        let buildAndTestMessage;
+        let buildAndTestMessage: string;
         if (result.submission && (result.submission as ProgrammingSubmission).buildFailed) {
             buildAndTestMessage = this.translateService.instant('artemisApp.result.resultStringBuildFailed');
         } else if (!numberOfTestsTotal || numberOfTestsTotal === 0) {

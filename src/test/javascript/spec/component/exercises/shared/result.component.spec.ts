@@ -74,6 +74,6 @@ describe('ResultComponent', () => {
         expect(component.textColorClass).toEqual('text-danger');
         expect(component.hasFeedback).toBeFalse();
         expect(component.resultIconClass).toEqual(faCheckCircle);
-        expect(component.resultString).toEqual('artemisApp.result.resultStringProgrammingBuildSuccess (artemisApp.result.preliminary)');
+        expect(component.resultString).toEqual('artemisApp.result.resultStringProgramming (artemisApp.result.preliminary)');
     });
 });

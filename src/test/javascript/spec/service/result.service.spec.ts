@@ -40,7 +40,7 @@ describe('ResultService', () => {
         secondCorrectionEnabled: false,
         studentAssignedTeamIdComputed: false,
     };
-    const participation1: StudentParticipation = { type: ParticipationType.STUDENT, initializationDate: dayjs('2021-04-27T12:56:34.458Z'), exercise: programmingExercise };
+    const participation1: StudentParticipation = { type: ParticipationType.STUDENT, initializationDate: dayjs().subtract(4, 'hours'), exercise: programmingExercise };
     const participation2: StudentParticipation = { type: ParticipationType.STUDENT, exercise: programmingExercise };
     const submission1: ProgrammingSubmission = { buildFailed: true };
     const result1: Result = { id: 1, participation: participation1, completionDate: dayjs().add(1, 'hours'), submission: submission1, score: 0 };
@@ -116,7 +116,7 @@ describe('ResultService', () => {
             expect(receivedResult1!.result.participation!.initializationDate).toEqual(participation1.initializationDate);
             expect(receivedResult1!.result.participation!.exercise!.releaseDate).toEqual(programmingExercise.releaseDate);
             expect(receivedResult1!.result.participation!.exercise!.dueDate).toEqual(programmingExercise.dueDate);
-            expect(receivedResult1!.result.durationInMinutes).toBe(573224);
+            expect(receivedResult1!.result.durationInMinutes).toBe(300);
 
             const receivedResult2 = resultsWithScores.find((resWithPoints) => resWithPoints.result.id === 2);
             expect(receivedResult2!.result.completionDate).toBe(result2.completionDate);

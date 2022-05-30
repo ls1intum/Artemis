@@ -178,6 +178,10 @@ export class ResultComponent implements OnInit, OnChanges {
 
         // Note: it can still happen here that this.result is undefined, e.g. when this.participation.results.length == 0
         this.submission = this.result?.submission;
+
+        if (this.result) {
+            this.result.submission = this.result?.submission || this.submission;
+        }
         this.evaluate();
     }
 
