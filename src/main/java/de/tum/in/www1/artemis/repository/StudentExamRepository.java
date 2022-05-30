@@ -47,16 +47,6 @@ public interface StudentExamRepository extends JpaRepository<StudentExam, Long> 
     @Query("""
             SELECT DISTINCT se FROM StudentExam se
             LEFT JOIN FETCH se.exercises e
-                  WHERE se.testRun = FALSE
-                      AND se.exam.id = :#{#examId}
-                      AND se.user.id = :#{#userId}
-                      AND se.exam.testExam = false
-            """)
-    Optional<StudentExam> findLatestStudentExamWithExercisesByUserIdAndExamId(@Param("userId") long userId, @Param("examId") long examId);
-
-    @Query("""
-            SELECT DISTINCT se FROM StudentExam se
-            LEFT JOIN FETCH se.exercises e
             LEFT JOIN FETCH e.studentParticipations sp
             LEFT JOIN FETCH sp.submissions s
             WHERE se.id = :#{#studentExamId}
@@ -181,16 +171,6 @@ public interface StudentExamRepository extends JpaRepository<StudentExam, Long> 
 
     List<StudentExam> findAllByExamId_AndTestRunIsTrue(@Param("examId") Long examId);
 
-    // Necessary ?
-    /*
-     * @Query(""" SELECT se FROM StudentExam se WHERE se.exam.id = :#{#examId} AND se.user.id = :#{#userId} AND se.submitted = FALSE AND se.testRun = FALSE """) List<StudentExam>
-     * findUnsubmittedStudentExamsByExamIdAndUserId(@Param("examId") Long examId,
-     * @Param("userId") Long userId);
-     * @Query(""" SELECT max(se.id) FROM StudentExam se LEFT JOIN FETCH se.exercises e WHERE se.exam.id = :#{#examId} AND se.user.id = :#{#userId} AND se.submitted = FALSE AND
-     * se.testRun = FALSE """) Optional<StudentExam> findLatestUnsubmittedStudentExamWithExercisesByExamIdAndUserId(@Param("examId") Long examId,
-     * @Param("userId") Long userId);
-     */
-
     @Query("""
             SELECT DISTINCT se FROM StudentExam se
              WHERE se.user.id = :#{#userId}
@@ -230,20 +210,6 @@ public interface StudentExamRepository extends JpaRepository<StudentExam, Long> 
         }
         return Optional.empty();
     }
-
-    /**
-     * This method finds an unsubmitted StudentExam, which is still within the working time.
-     * This is mainly used for TestExams, as multiple StudentExams for one exam per user are created. That's why it is not
-     * sufficient enough to just fetch the one StudentExam from the Database, as for the RealExams
-     *
-     * @param examId the exam for which the StudentExam should be fetched
-     * @param userId the user for which the StudentExam should be fetched
-     * @return an optional StudentExam, which is unsubmitted and still within the working time.
-     */
-    /*
-     * default Optional<StudentExam> findLatestUnsubmittedStudentExamWithinWorkingTimeAndWithExercisesByExamIdAndUserId( Long examId, Long userId) { List<StudentExam> studentExams
-     * = findUnsubmittedStudentExamsByExamIdAndUserId(examId, userId); return studentExams.stream().filter(studentExam -> !studentExam.isEnded()).findFirst(); }
-     */
 
     /**
      * Return the individual due date for the exercise of the participation's user

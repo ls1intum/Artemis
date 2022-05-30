@@ -61,14 +61,15 @@ public class ExamSubmissionService {
         if (isExamSubmission(exercise)) {
             // Get the student exam if it was not passed to the function
             Exam exam = exercise.getExerciseGroup().getExam();
-            // The query will either return the RealExam or the latest TestExam with the largest id.
-            Optional<StudentExam> optionalStudentExam = studentExamRepository.findLatestStudentExamWithExercisesByUserIdAndExamId(user.getId(), exam.getId());
+            // Step 1: Find RealExam
+            Optional<StudentExam> optionalStudentExam = studentExamRepository.findWithExercisesByUserIdAndExamId(user.getId(), exam.getId());
             if (optionalStudentExam.isEmpty()) {
+                // Step 2: Find latest (=the highest id) unsubmitted TestExam
                 optionalStudentExam = studentExamRepository.findUnsubmittedStudentExamsForTestExamsWithExercisesByExamIdAndUserId(exam.getId(), user.getId()).stream()
                         .max(Comparator.comparing(StudentExam::getId));
             }
             if (optionalStudentExam.isEmpty()) {
-                // We check for test exams here for performance issues as this will not be the case for all students who are participating in the exam
+                // Step 3: We check for test exams here for performance issues as this will not be the case for all students who are participating in the exam
                 // isAllowedToSubmitDuringExam is called everytime an exercise is saved (e.g. auto save every 30 seconds for every student) therefore it is best to limit
                 // unnecessary database calls
                 if (!isExamTestRunSubmission(exercise, user, exam)) {
