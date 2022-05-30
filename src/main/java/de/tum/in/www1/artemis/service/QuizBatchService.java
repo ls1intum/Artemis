@@ -51,13 +51,6 @@ public class QuizBatchService {
         return quizBatchRepository.saveAndFlush(quizBatch);
     }
 
-    // TODO: quiz cleanup: attempt at lazy loading batches but doesn't work; check it lazy loading makes any sense and how to implement it properly
-    public void loadBatchesIfMissing(QuizExercise quizExercise) {
-        if (quizExercise.getQuizBatches() == null) {
-            quizExercise.setQuizBatches(quizBatchRepository.findAllByQuizExercise(quizExercise));
-        }
-    }
-
     /**
      * Get or create the batch for synchronized quiz exercises. If it was created it will not have been saved to the database yet.
      * Only valid to call for synchronized quiz exercises
@@ -70,11 +63,14 @@ public class QuizBatchService {
             throw new IllegalStateException();
         }
 
-        loadBatchesIfMissing(quizExercise);
-
-        var batch = quizExercise.getQuizBatches().stream().findAny();
-        if (batch.isPresent()) {
-            return batch.get();
+        if (quizExercise.getQuizBatches() == null) {
+            var quizBatch = quizBatchRepository.findFirstByQuizExercise(quizExercise);
+            if (quizBatch.isPresent()) {
+                return quizBatch.get();
+            }
+        }
+        else if (!quizExercise.getQuizBatches().isEmpty()) {
+            return quizExercise.getQuizBatches().iterator().next();
         }
 
         var quizBatch = new QuizBatch();
@@ -115,7 +111,6 @@ public class QuizBatchService {
      * @return a new unused password
      */
     public String createBatchPassword(QuizExercise quizExercise) {
-        loadBatchesIfMissing(quizExercise);
         for (int i = 0; i < 1000; i++) {
             var password = RandomStringUtils.random(8, 0, 0, false, true, null, SECURE_RANDOM);
             if (quizExercise.getQuizBatches().stream().noneMatch(batch -> password.equals(batch.getPassword()))) {

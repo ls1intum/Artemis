@@ -1,5 +1,7 @@
 <div class="row m-1 answer-post">
-    <jhi-answer-post-header [posting]="posting"> </jhi-answer-post-header>
+    <jhi-answer-post-header [posting]="posting" (openPostingCreateEditModal)="createAnswerPostModal.open()"></jhi-answer-post-header>
     <jhi-posting-content [content]="posting.content"></jhi-posting-content>
-    <jhi-answer-post-footer [posting]="posting"> </jhi-answer-post-footer>
+    <ng-container #createEditAnswerPostContainer></ng-container>
+    <jhi-answer-post-footer [posting]="posting" [isLastAnswer]="isLastAnswer" (openPostingCreateEditModal)="openPostingCreateEditModal.emit()"></jhi-answer-post-footer>
 </div>
+<jhi-answer-post-create-edit-modal #createAnswerPostModal [posting]="posting" [createEditAnswerPostContainerRef]="containerRef"></jhi-answer-post-create-edit-modal>
