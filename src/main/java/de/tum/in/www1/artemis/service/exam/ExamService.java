@@ -331,24 +331,9 @@ public class ExamService {
                     studentResult.overallPointsAchieved += achievedPoints;
                 }
 
-                // collect points of first correction, if a second correction exists
+                // Collect points of first correction, if a second correction exists
                 if (exam.getNumberOfCorrectionRoundsInExam() == 2 && !exercise.getIncludedInOverallScore().equals(IncludedInOverallScore.NOT_INCLUDED)) {
-                    Optional<Submission> latestSubmission = studentParticipation.findLatestSubmission();
-                    if (latestSubmission.isPresent()) {
-                        Submission submission = latestSubmission.get();
-                        // Check if second correction already started
-                        if (submission.getManualResults().size() > 1) {
-                            if (!scores.hasSecondCorrectionAndStarted) {
-                                scores.hasSecondCorrectionAndStarted = true;
-                            }
-                            Result firstManualResult = submission.getFirstManualResult();
-                            double achievedPointsInFirstCorrection = 0.0;
-                            if (firstManualResult != null) {
-                                achievedPointsInFirstCorrection = calculateAchievedPoints(exercise, firstManualResult, exam.getCourse());
-                            }
-                            studentResult.overallPointsAchievedInFirstCorrection += achievedPointsInFirstCorrection;
-                        }
-                    }
+                    calculateFirstCorrectionPoints(scores, studentResult, exam.getCourse(), studentParticipation.findLatestSubmission(), exercise);
                 }
 
                 // Check whether the student attempted to solve the exercise
@@ -361,19 +346,56 @@ public class ExamService {
 
         if (scores.maxPoints != null) {
             studentResult.overallScoreAchieved = (studentResult.overallPointsAchieved / scores.maxPoints) * 100.0;
-            var overallScoreAchievedInFirstCorrection = (studentResult.overallPointsAchievedInFirstCorrection / scores.maxPoints) * 100.0;
-            // Sets grading scale related properties for exam scores
-            Optional<GradingScale> gradingScale = gradingScaleRepository.findByExamId(exam.getId());
-            if (gradingScale.isPresent()) {
-                // Calculate current student grade
-                GradeStep studentGrade = gradingScaleRepository.matchPercentageToGradeStep(studentResult.overallScoreAchieved, gradingScale.get().getId());
-                GradeStep studentGradeInFirstCorrection = gradingScaleRepository.matchPercentageToGradeStep(overallScoreAchievedInFirstCorrection, gradingScale.get().getId());
-                studentResult.overallGrade = studentGrade.getGradeName();
-                studentResult.overallGradeInFirstCorrection = studentGradeInFirstCorrection.getGradeName();
-                studentResult.hasPassed = studentGrade.getIsPassingGrade();
-            }
+            calculateGradeInfo(studentResult, exam.getId(), scores.maxPoints);
         }
         return studentResult;
+    }
+
+    /**
+     * Sets grading scale related properties for exam scores
+     * @param studentResult Student's result for the given exam that will be modified by this method
+     * @param examId Id of the relevant exam
+     * @param maxPoints Max points for the given exam
+     */
+    private void calculateGradeInfo(ExamScoresDTO.StudentResult studentResult, Long examId, Integer maxPoints) {
+        Optional<GradingScale> gradingScale = gradingScaleRepository.findByExamId(examId);
+        if (gradingScale.isPresent()) {
+            // Calculate current student grade
+            GradeStep studentGrade = gradingScaleRepository.matchPercentageToGradeStep(studentResult.overallScoreAchieved, gradingScale.get().getId());
+            var overallScoreAchievedInFirstCorrection = (studentResult.overallPointsAchievedInFirstCorrection / maxPoints) * 100.0;
+            GradeStep studentGradeInFirstCorrection = gradingScaleRepository.matchPercentageToGradeStep(overallScoreAchievedInFirstCorrection, gradingScale.get().getId());
+            studentResult.overallGrade = studentGrade.getGradeName();
+            studentResult.overallGradeInFirstCorrection = studentGradeInFirstCorrection.getGradeName();
+            studentResult.hasPassed = studentGrade.getIsPassingGrade();
+        }
+    }
+
+    /**
+     * Collects points of first correction if there is a submission present
+     *
+     * @param scores           Exam scores DTO that will be modified by this method
+     * @param studentResult    Student's result for the given exam that will be modified by this method
+     * @param course           Course of the related exam
+     * @param latestSubmission Student's latest submission for the related exam
+     * @param exercise         Current exercise in the related exam
+     */
+    private void calculateFirstCorrectionPoints(ExamScoresDTO scores, ExamScoresDTO.StudentResult studentResult, Course course, Optional<Submission> latestSubmission,
+            Exercise exercise) {
+        if (latestSubmission.isPresent()) {
+            Submission submission = latestSubmission.get();
+            // Check if second correction already started
+            if (submission.getManualResults().size() > 1) {
+                if (!scores.hasSecondCorrectionAndStarted) {
+                    scores.hasSecondCorrectionAndStarted = true;
+                }
+                Result firstManualResult = submission.getFirstManualResult();
+                double achievedPointsInFirstCorrection = 0.0;
+                if (firstManualResult != null) {
+                    achievedPointsInFirstCorrection = calculateAchievedPoints(exercise, firstManualResult, course);
+                }
+                studentResult.overallPointsAchievedInFirstCorrection += achievedPointsInFirstCorrection;
+            }
+        }
     }
 
     private double calculateMaxPointsSum(List<Exercise> exercises, Course course) {
