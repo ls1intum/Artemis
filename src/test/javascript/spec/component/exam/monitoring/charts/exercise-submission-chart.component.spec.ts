@@ -56,19 +56,20 @@ describe('Exercise Submission Chart Component', () => {
     });
 
     it.each`
-        input           | expect    | color
-        ${[0, 0, 0]}    | ${[3, 0]} | ${[getColor(0), getColor(0)]}
-        ${[0, 0, 1]}    | ${[2, 1]} | ${[getColor(0), getColor(0)]}
-        ${[1, 1, 1]}    | ${[0, 3]} | ${[getColor(0), getColor(0)]}
-        ${[-1, -1, -1]} | ${[0, 0]} | ${[]}
-    `('should call initData on init with actions', (param: { input: number[]; expect: number[]; color: [GraphColors] }) => {
+        input           | activity     | expect    | color
+        ${[0, 0, 0]}    | ${[1, 2, 3]} | ${[3, 0]} | ${[getColor(0), getColor(0)]}
+        ${[0, 0, 0]}    | ${[1, 1, 2]} | ${[2, 0]} | ${[getColor(0), getColor(0)]}
+        ${[0, 0, 1]}    | ${[1, 2, 3]} | ${[2, 1]} | ${[getColor(0), getColor(0)]}
+        ${[1, 1, 1]}    | ${[1, 2, 3]} | ${[0, 3]} | ${[getColor(0), getColor(0)]}
+        ${[-1, -1, -1]} | ${[1, 2, 3]} | ${[0, 0]} | ${[getColor(0), getColor(0)]}
+    `('should call initData on init with actions', (param: { input: number[]; activity: number[]; expect: number[]; color: [GraphColors] }) => {
         // GIVEN
         const action1 = new SavedExerciseAction(true, param.input[0], param.input[0], false, false);
-        action1.examActivityId = 1;
+        action1.examActivityId = param.activity[0];
         const action2 = new SavedExerciseAction(true, param.input[1], param.input[1], true, false);
-        action2.examActivityId = 2;
+        action2.examActivityId = param.activity[1];
         const action3 = new SavedExerciseAction(true, param.input[2], param.input[2], false, true);
-        action3.examActivityId = 3;
+        action3.examActivityId = param.activity[2];
 
         comp.exam = exam;
         comp.examActions = [action1, action2, action3];

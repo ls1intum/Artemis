@@ -62,7 +62,7 @@ describe('Exercise Navigation Chart Component', () => {
         ${[0, 0, 1]}    | ${[1, 2, 3]} | ${[2, 1]} | ${[getColor(0), getColor(0)]}
         ${[1, 1, 1]}    | ${[1, 2, 3]} | ${[0, 3]} | ${[getColor(0), getColor(0)]}
         ${[1, 1, 1]}    | ${[1, 1, 1]} | ${[0, 1]} | ${[getColor(0), getColor(0)]}
-        ${[-1, -1, -1]} | ${[1, 2, 3]} | ${[0, 0]} | ${[]}
+        ${[-1, -1, -1]} | ${[1, 2, 3]} | ${[0, 0]} | ${[getColor(0), getColor(0)]}
     `('should call initData on init with actions', (param: { input: number[]; activity: number[]; expect: number[]; color: [GraphColors] }) => {
         // GIVEN
         const action1 = new SwitchedExerciseAction(param.input[0]);
