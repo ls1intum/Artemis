@@ -19,6 +19,7 @@ import { ChartTitleComponent } from 'app/exam/monitoring/charts/chart-title.comp
 import { ExerciseSubmissionChartComponent } from 'app/exam/monitoring/charts/exercises/exercise-submission-chart.component';
 import { ExerciseNavigationChartComponent } from 'app/exam/monitoring/charts/exercises/exercise-navigation-chart.component';
 import { ActionsChartComponent } from 'app/exam/monitoring/charts/activity-log/actions-chart.component';
+import { ExerciseTemplateChartComponent } from 'app/exam/monitoring/charts/exercises/exercise-template-chart.component';
 
 const ENTITY_STATES = [...examMonitoringState];
 
@@ -30,6 +31,7 @@ const ENTITY_STATES = [...examMonitoringState];
         MonitoringExercisesComponent,
         MonitoringActivityLogComponent,
         MonitoringCardComponent,
+        ExerciseTemplateChartComponent,
         ExerciseChartComponent,
         ExerciseGroupChartComponent,
         ExerciseSubmissionChartComponent,

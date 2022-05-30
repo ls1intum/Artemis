@@ -116,9 +116,9 @@ export function getCurrentAmountOfStudentsPerExercises(examActions: ExamAction[]
  * @param ngxData data of the chart
  * @param ngxColor color of the chart
  */
-export function insertNgxDataAndColorForExerciseMap(exam: Exam, exerciseAmountMap: Map<number, number>, ngxData: NgxChartsSingleSeriesDataEntry[], ngxColor: Color) {
-    exam.exerciseGroups!.forEach((group, index) => {
-        group.exercises!.forEach((exercise) => {
+export function insertNgxDataAndColorForExerciseMap(exam: Exam | undefined, exerciseAmountMap: Map<number, number>, ngxData: NgxChartsSingleSeriesDataEntry[], ngxColor: Color) {
+    exam?.exerciseGroups?.forEach((group, index) => {
+        group.exercises?.forEach((exercise) => {
             ngxData.push(new ChartData(exercise.title ?? '', exerciseAmountMap.get(exercise.id!) ?? 0));
             ngxColor.domain.push(getColor(index));
         });

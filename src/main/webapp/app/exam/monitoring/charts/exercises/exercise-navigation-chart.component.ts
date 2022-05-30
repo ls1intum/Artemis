@@ -1,4 +1,4 @@
-import { Component, OnInit, Input, OnChanges, SimpleChanges } from '@angular/core';
+import { Component, Input, OnChanges, OnInit, SimpleChanges } from '@angular/core';
 import { Color, ScaleType } from '@swimlane/ngx-charts';
 import { Exam } from 'app/entities/exam.model';
 import { ChartData, getSwitchedExerciseActionsGroupedByActivityId, insertNgxDataAndColorForExerciseMap } from 'app/exam/monitoring/charts/monitoring-chart';
@@ -6,15 +6,14 @@ import { ExamAction, SwitchedExerciseAction } from 'app/entities/exam-user-activ
 
 @Component({
     selector: 'jhi-exercise-navigation-chart',
-    templateUrl: './exercise-chart.component.html',
-    styleUrls: ['../monitoring-chart.scss'],
+    templateUrl: './exercise-navigation-chart.component.html',
 })
 export class ExerciseNavigationChartComponent implements OnInit, OnChanges {
     // Input
     @Input()
     exam: Exam;
     @Input()
-    examActions: ExamAction[];
+    examActions: ExamAction[] = [];
 
     // Chart
     ngxData: ChartData[] = [];
@@ -36,6 +35,7 @@ export class ExerciseNavigationChartComponent implements OnInit, OnChanges {
         this.initData();
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     ngOnChanges(changes: SimpleChanges): void {
         this.initData();
     }

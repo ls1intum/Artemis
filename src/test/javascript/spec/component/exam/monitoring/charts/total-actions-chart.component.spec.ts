@@ -9,10 +9,10 @@ import { AverageActionsChartComponent } from 'app/exam/monitoring/charts/activit
 import { NgxChartsModule } from '@swimlane/ngx-charts';
 import { ChartTitleComponent } from 'app/exam/monitoring/charts/chart-title.component';
 import { ChartData, ChartSeriesData } from 'app/exam/monitoring/charts/monitoring-chart';
-import { createActions } from './monitoring-chart.spec';
 import dayjs from 'dayjs/esm';
 import { TotalActionsChartComponent } from 'app/exam/monitoring/charts/activity-log/total-actions-chart.component';
 import { ActionsChartComponent } from 'app/exam/monitoring/charts/activity-log/actions-chart.component';
+import { createActions } from '../exam-monitoring-helper';
 
 describe('Total Actions Chart Component', () => {
     let comp: TotalActionsChartComponent;

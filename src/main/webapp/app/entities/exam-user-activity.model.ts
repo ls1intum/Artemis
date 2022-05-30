@@ -105,10 +105,11 @@ export class SavedExerciseAction extends ExamAction {
     public failed?: boolean;
     public automatically?: boolean;
 
-    constructor(forced: boolean, submissionId: number | undefined, failed: boolean, automatically: boolean) {
+    constructor(forced: boolean, submissionId: number | undefined, exerciseId: number | undefined, failed: boolean, automatically: boolean) {
         super(ExamActionType.SAVED_EXERCISE);
         this.forced = forced;
         this.submissionId = submissionId;
+        this.exerciseId = exerciseId;
         this.failed = failed;
         this.automatically = automatically;
     }

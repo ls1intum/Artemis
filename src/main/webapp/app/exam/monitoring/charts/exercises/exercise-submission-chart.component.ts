@@ -1,20 +1,19 @@
-import { Component, OnInit, Input, OnChanges, SimpleChanges } from '@angular/core';
+import { Component, Input, OnChanges, OnInit, SimpleChanges } from '@angular/core';
 import { Color, ScaleType } from '@swimlane/ngx-charts';
 import { Exam } from 'app/entities/exam.model';
 import { ChartData, getSavedExerciseActionsGroupedByActivityId, insertNgxDataAndColorForExerciseMap } from 'app/exam/monitoring/charts/monitoring-chart';
-import { ExamAction, SwitchedExerciseAction } from 'app/entities/exam-user-activity.model';
+import { ExamAction, SavedExerciseAction, SwitchedExerciseAction } from 'app/entities/exam-user-activity.model';
 
 @Component({
     selector: 'jhi-exercise-submission-chart',
-    templateUrl: './exercise-chart.component.html',
-    styleUrls: ['../monitoring-chart.scss'],
+    templateUrl: './exercise-submission-chart.component.html',
 })
 export class ExerciseSubmissionChartComponent implements OnInit, OnChanges {
     // Input
     @Input()
     exam: Exam;
     @Input()
-    examActions: ExamAction[];
+    examActions: ExamAction[] = [];
 
     // Chart
     ngxData: ChartData[] = [];
@@ -36,6 +35,7 @@ export class ExerciseSubmissionChartComponent implements OnInit, OnChanges {
         this.initData();
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     ngOnChanges(changes: SimpleChanges): void {
         this.initData();
     }
@@ -50,7 +50,7 @@ export class ExerciseSubmissionChartComponent implements OnInit, OnChanges {
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
         for (const [_, value] of Object.entries(groupedByActivityId)) {
             const saved: Map<number, number> = new Map();
-            value.forEach((action: SwitchedExerciseAction) => saved.set(action.exerciseId!, 1));
+            value.forEach((action: SavedExerciseAction) => saved.set(action.exerciseId!, 1));
             for (const key of saved.keys()) {
                 exerciseAmountMap.set(key, (exerciseAmountMap.get(key) ?? 0) + 1);
             }
