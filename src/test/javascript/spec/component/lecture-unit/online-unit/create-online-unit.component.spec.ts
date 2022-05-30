@@ -78,11 +78,6 @@ describe('CreateOnlineUnitComponent', () => {
         jest.restoreAllMocks();
     });
 
-    it('should initialize', () => {
-        createOnlineUnitComponentFixture.detectChanges();
-        expect(createOnlineUnitComponent).not.toBeNull();
-    });
-
     it('should send POST request upon form submission and navigate', fakeAsync(() => {
         const router: Router = TestBed.inject(Router);
         const onlineUnitService = TestBed.inject(OnlineUnitService);
