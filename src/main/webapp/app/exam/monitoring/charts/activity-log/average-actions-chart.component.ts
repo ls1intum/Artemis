@@ -36,6 +36,7 @@ export class AverageActionsChartComponent implements OnInit, OnChanges {
         this.initData();
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     ngOnChanges(changes: SimpleChanges): void {
         this.initData();
     }

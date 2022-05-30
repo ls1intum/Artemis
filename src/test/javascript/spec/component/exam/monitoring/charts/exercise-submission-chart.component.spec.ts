@@ -65,9 +65,9 @@ describe('Exercise Submission Chart Component', () => {
         // GIVEN
         const action1 = new SavedExerciseAction(true, param.input[0], param.input[0], false, false);
         action1.examActivityId = 1;
-        const action2 = new SavedExerciseAction(true, param.input[0], param.input[0], true, false);
+        const action2 = new SavedExerciseAction(true, param.input[1], param.input[1], true, false);
         action2.examActivityId = 2;
-        const action3 = new SavedExerciseAction(true, param.input[0], param.input[0], false, true);
+        const action3 = new SavedExerciseAction(true, param.input[2], param.input[2], false, true);
         action3.examActivityId = 3;
 
         comp.exam = exam;

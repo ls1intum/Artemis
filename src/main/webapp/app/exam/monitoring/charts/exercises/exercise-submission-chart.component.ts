@@ -2,7 +2,8 @@ import { Component, Input, OnChanges, OnInit, SimpleChanges } from '@angular/cor
 import { Color, ScaleType } from '@swimlane/ngx-charts';
 import { Exam } from 'app/entities/exam.model';
 import { ChartData, getSavedExerciseActionsGroupedByActivityId, insertNgxDataAndColorForExerciseMap } from 'app/exam/monitoring/charts/monitoring-chart';
-import { ExamAction, SavedExerciseAction, SwitchedExerciseAction } from 'app/entities/exam-user-activity.model';
+import { ExamAction, SavedExerciseAction } from 'app/entities/exam-user-activity.model';
+import * as shape from 'd3-shape';
 
 @Component({
     selector: 'jhi-exercise-submission-chart',
@@ -24,6 +25,7 @@ export class ExerciseSubmissionChartComponent implements OnInit, OnChanges {
         domain: [],
     } as Color;
     legend = false;
+    curve: any = shape.curveMonotoneX;
 
     // Component
     routerLink: any[];

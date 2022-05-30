@@ -6,16 +6,7 @@ import { Subscription } from 'rxjs';
 import { ExamMonitoringService } from 'app/exam/monitoring/exam-monitoring.service';
 import { faListAlt } from '@fortawesome/free-solid-svg-icons';
 import { ExamMonitoringWebsocketService } from 'app/exam/monitoring/exam-monitoring-websocket.service';
-import {
-    ContinuedAfterHandedInEarlyAction,
-    EndedExamAction,
-    ExamAction,
-    HandedInEarlyAction,
-    SavedExerciseAction,
-    StartedExamAction,
-    SwitchedExerciseAction,
-} from 'app/entities/exam-user-activity.model';
-import dayjs from 'dayjs/esm';
+import { ExamAction } from 'app/entities/exam-user-activity.model';
 
 @Component({
     selector: 'jhi-monitoring-overview',

@@ -3,6 +3,7 @@ import { Color, ScaleType } from '@swimlane/ngx-charts';
 import { Exam } from 'app/entities/exam.model';
 import { ChartData, getSwitchedExerciseActionsGroupedByActivityId, insertNgxDataAndColorForExerciseMap } from 'app/exam/monitoring/charts/monitoring-chart';
 import { ExamAction, SwitchedExerciseAction } from 'app/entities/exam-user-activity.model';
+import * as shape from 'd3-shape';
 
 @Component({
     selector: 'jhi-exercise-navigation-chart',
@@ -24,6 +25,7 @@ export class ExerciseNavigationChartComponent implements OnInit, OnChanges {
         domain: [],
     } as Color;
     legend = false;
+    curve: any = shape.curveMonotoneX;
 
     // Component
     routerLink: any[];

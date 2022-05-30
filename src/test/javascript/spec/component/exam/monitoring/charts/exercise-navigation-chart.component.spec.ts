@@ -67,9 +67,9 @@ describe('Exercise Navigation Chart Component', () => {
         // GIVEN
         const action1 = new SwitchedExerciseAction(param.input[0]);
         action1.examActivityId = param.activity[0];
-        const action2 = new SwitchedExerciseAction(param.input[0]);
+        const action2 = new SwitchedExerciseAction(param.input[1]);
         action2.examActivityId = param.activity[1];
-        const action3 = new SwitchedExerciseAction(param.input[0]);
+        const action3 = new SwitchedExerciseAction(param.input[2]);
         action3.examActivityId = param.activity[2];
 
         comp.exam = exam;
