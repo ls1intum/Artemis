@@ -84,7 +84,7 @@ public class OnlineUnitResource {
      */
     @PutMapping("/lectures/{lectureId}/online-units")
     @PreAuthorize("hasRole('EDITOR')")
-    public ResponseEntity<OnlineUnit> updateonlineUnit(@PathVariable Long lectureId, @RequestBody OnlineUnit onlineUnit) {
+    public ResponseEntity<OnlineUnit> updateOnlineUnit(@PathVariable Long lectureId, @RequestBody OnlineUnit onlineUnit) {
         log.debug("REST request to update an online unit : {}", onlineUnit);
         if (onlineUnit.getId() == null) {
             throw new BadRequestException();
@@ -122,7 +122,7 @@ public class OnlineUnitResource {
      */
     @PostMapping("/lectures/{lectureId}/online-units")
     @PreAuthorize("hasRole('EDITOR')")
-    public ResponseEntity<OnlineUnit> createonlineUnit(@PathVariable Long lectureId, @RequestBody OnlineUnit onlineUnit) throws URISyntaxException {
+    public ResponseEntity<OnlineUnit> createOnlineUnit(@PathVariable Long lectureId, @RequestBody final OnlineUnit onlineUnit) throws URISyntaxException {
         log.debug("REST request to create onlineUnit : {}", onlineUnit);
         if (onlineUnit.getId() != null) {
             throw new BadRequestException();
@@ -144,14 +144,14 @@ public class OnlineUnitResource {
 
         // persist lecture unit before lecture to prevent "null index column for collection" error
         onlineUnit.setLecture(null);
-        onlineUnit = onlineUnitRepository.saveAndFlush(onlineUnit);
-        onlineUnit.setLecture(lecture);
-        lecture.addLectureUnit(onlineUnit);
-        Lecture updatedLecture = lectureRepository.save(lecture);
-        OnlineUnit persistedonlineUnit = (OnlineUnit) updatedLecture.getLectureUnits().get(updatedLecture.getLectureUnits().size() - 1);
+        OnlineUnit persistedOnlineUnit = onlineUnitRepository.saveAndFlush(onlineUnit);
 
-        return ResponseEntity.created(new URI("/api/online-units/" + persistedonlineUnit.getId()))
-                .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, "")).body(persistedonlineUnit);
+        persistedOnlineUnit.setLecture(lecture);
+        lecture.addLectureUnit(persistedOnlineUnit);
+        lectureRepository.save(lecture);
+
+        return ResponseEntity.created(new URI("/api/online-units/" + persistedOnlineUnit.getId()))
+                .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, "")).body(persistedOnlineUnit);
     }
 
     /**
@@ -162,7 +162,7 @@ public class OnlineUnitResource {
      */
     @GetMapping("/online-resource")
     @PreAuthorize("hasRole('EDITOR')")
-    public OnlineResourceDTO getOnlineResource(@RequestParam(value = "link") String link) {
+    public OnlineResourceDTO getOnlineResource(@RequestParam("link") String link) {
         try {
             // Ensure that the link is a correctly formed URL
             URL url = new URL(link);

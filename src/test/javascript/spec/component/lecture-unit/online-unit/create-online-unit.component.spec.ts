@@ -27,7 +27,6 @@ class LectureUnitLayoutStubComponent {
 
 describe('CreateOnlineUnitComponent', () => {
     let createOnlineUnitComponentFixture: ComponentFixture<CreateOnlineUnitComponent>;
-    let createOnlineUnitComponent: CreateOnlineUnitComponent;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -70,7 +69,6 @@ describe('CreateOnlineUnitComponent', () => {
             .compileComponents()
             .then(() => {
                 createOnlineUnitComponentFixture = TestBed.createComponent(CreateOnlineUnitComponent);
-                createOnlineUnitComponent = createOnlineUnitComponentFixture.componentInstance;
             });
     });
 
