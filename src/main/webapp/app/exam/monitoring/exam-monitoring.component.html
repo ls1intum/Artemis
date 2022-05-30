@@ -13,20 +13,20 @@
             <div class="col-md">
                 <span class="exam-monitoring-description" jhiTranslate="artemisApp.examMonitoring.description"></span>
             </div>
-            <div class="col-md exam-monitoring-side-panel">
-                <jhi-side-panel
-                    [panelHeader]="'artemisApp.examMonitoring.table.panelHeader' | artemisTranslate"
-                    [panelDescriptionHeader]="'artemisApp.examMonitoring.table.panelDescriptionHeader' | artemisTranslate"
-                >
-                    <div>
-                        <div *ngFor="let content of this.table" class="row mb-1">
-                            <div class="col-7">{{ 'artemisApp.examMonitoring.table.' + content.translateValue | artemisTranslate }}:</div>
-                            <div class="col-5">
-                                {{ content.value }}
+            <div class="col-md exam-monitoring-side-panel-container">
+                <div class="exam-monitoring-side-panel">
+                    <jhi-side-panel
+                        [panelHeader]="'artemisApp.examMonitoring.table.panelHeader' | artemisTranslate"
+                        [panelDescriptionHeader]="'artemisApp.examMonitoring.table.panelDescriptionHeader' | artemisTranslate"
+                    >
+                        <div>
+                            <div *ngFor="let content of this.table" class="row mb-1">
+                                <div class="col-7">{{ 'artemisApp.examMonitoring.table.' + content.translateValue | artemisTranslate }}:</div>
+                                <div class="col-5">{{ content.value }}</div>
                             </div>
                         </div>
-                    </div>
-                </jhi-side-panel>
+                    </jhi-side-panel>
+                </div>
             </div>
         </div>
 
