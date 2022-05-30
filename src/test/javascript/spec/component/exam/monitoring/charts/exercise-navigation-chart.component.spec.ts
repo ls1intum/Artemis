@@ -17,7 +17,7 @@ import { createTestExercises } from '../exam-monitoring-helper';
 import { GraphColors } from 'app/entities/statistics.model';
 import { ExerciseNavigationChartComponent } from 'app/exam/monitoring/charts/exercises/exercise-navigation-chart.component';
 
-describe('Exercise Submission Chart Component', () => {
+describe('Exercise Navigation Chart Component', () => {
     let comp: ExerciseNavigationChartComponent;
     let fixture: ComponentFixture<ExerciseNavigationChartComponent>;
 

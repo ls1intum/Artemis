@@ -11,7 +11,6 @@ import { ChartData, getColor } from 'app/exam/monitoring/charts/monitoring-chart
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { ExerciseChartComponent } from 'app/exam/monitoring/charts/exercises/exercise-chart.component';
 import { Exam } from 'app/entities/exam.model';
-import { TextExercise } from 'app/entities/text-exercise.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { SwitchedExerciseAction } from 'app/entities/exam-user-activity.model';
 import { ExerciseTemplateChartComponent } from 'app/exam/monitoring/charts/exercises/exercise-template-chart.component';
@@ -57,7 +56,7 @@ describe('Exercise Chart Component', () => {
 
     it('should call initData on init with actions', () => {
         // GIVEN
-        const action = new SwitchedExerciseAction(1);
+        const action = new SwitchedExerciseAction(0);
         action.examActivityId = 1;
 
         comp.exam = exam;
@@ -74,7 +73,7 @@ describe('Exercise Chart Component', () => {
     it('should call initData on init with multiple actions', () => {
         // GIVEN
         const actions = createActions();
-        const action = new SwitchedExerciseAction(1);
+        const action = new SwitchedExerciseAction(0);
         action.examActivityId = 1;
 
         comp.exam = exam;
@@ -84,7 +83,7 @@ describe('Exercise Chart Component', () => {
         comp.ngOnInit();
 
         // THEN
-        expect(comp.ngxData).toEqual([new ChartData(exercises[0].title!, 1)]);
+        expect(comp.ngxData).toEqual([new ChartData(exercises[0].title!, 2)]);
         expect(comp.ngxColor.domain).toEqual([getColor(0)]);
     });
 });
