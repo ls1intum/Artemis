@@ -422,7 +422,10 @@ public class ExamService {
     }
 
     private double calculateAchievedPoints(Exercise exercise, Result result, Course course) {
-        return result != null && result.getScore() != null ? roundScoreSpecifiedByCourseSettings(exercise.getMaxPoints() * result.getScore() / 100.0, course) : 0.0;
+        if (result != null && result.getScore() != null) {
+            return roundScoreSpecifiedByCourseSettings(exercise.getMaxPoints() * result.getScore() / 100.0, course);
+        }
+        return 0.0;
     }
 
     private Map<Long, Double> calculateAchievedPointsForExercises(List<StudentParticipation> participationsOfStudent, Course course) {
