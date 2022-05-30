@@ -413,7 +413,7 @@ public class ExamService {
         return 0.0;
     }
 
-    private Double calculateMaxBonusPoints(Exercise exercise) {
+    private double calculateMaxBonusPoints(Exercise exercise) {
         return switch (exercise.getIncludedInOverallScore()) {
             case INCLUDED_COMPLETELY -> exercise.getBonusPoints();
             case INCLUDED_AS_BONUS -> exercise.getMaxPoints();
