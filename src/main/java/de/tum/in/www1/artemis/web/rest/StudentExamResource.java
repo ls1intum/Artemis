@@ -572,7 +572,9 @@ public class StudentExamResource {
     /**
      * Helper method which attaches the result to its participation.
      * For direct automatic feedback during the exam conduction for {@link ProgrammingExercise}, we need to attach the results.
-     * We also attach the result if the results are already published for the exam. See {@link StudentExam#areResultsPublishedYet}
+     * We also attach the result if the results are already published for the exam.
+     * If no suitable Result is found for StudentParticipation, an empty Result set is assigned to prevent LazyInitializationException on future reads.
+     * See {@link StudentExam#areResultsPublishedYet}
      * @param studentExam the given studentExam
      * @param participation the given participation of the student
      * @param isAtLeastInstructor flag for instructor access privileges
@@ -593,6 +595,10 @@ public class StudentExamResource {
                 // to avoid cycles and support certain use cases on the client, only the last result + submission inside the participation are relevant, i.e. participation ->
                 // lastResult -> lastSubmission
                 participation.setResults(Set.of(latestResult));
+            }
+            else {
+                // To prevent LazyInitializationException.
+                participation.setResults(Set.of());
             }
             lastSubmission.setResults(null);
             participation.setSubmissions(Set.of(lastSubmission));
