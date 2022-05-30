@@ -175,7 +175,7 @@ public class StudentExam extends AbstractAuditingEntity {
 
     /**
      * Returns the individual exam end date taking the working time of this student exam into account.
-     * For TestExams, the startedDate needs to be defined as there is no dependency to exam.startDate
+     * For TestExams, the startedDate needs to be defined as this is not equal to exam.startDate
      *
      * @return the ZonedDateTime that marks the exam end for this student (excluding grace period), or null for TestExams with undefined startedDate
      */

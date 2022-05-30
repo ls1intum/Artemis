@@ -73,7 +73,6 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
             SELECT DISTINCT p FROM StudentParticipation p
             LEFT JOIN FETCH p.submissions s
             WHERE p.exercise.id = :#{#exerciseId}
-                AND p.initializationState <> 'ARCHIVED'
                 AND p.student.login = :#{#username}
                 AND (s.type <> 'ILLEGAL' OR s.type IS NULL)
             """)
@@ -83,7 +82,6 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
             SELECT DISTINCT p FROM StudentParticipation p
             LEFT JOIN FETCH p.submissions s
             WHERE p.exercise.id = :#{#exerciseId}
-                AND p.initializationState <> 'ARCHIVED'
                 AND p.student.login = :#{#username}
                 AND (s.type <> 'ILLEGAL' OR s.type IS NULL)
             """)
@@ -94,7 +92,6 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
             LEFT JOIN FETCH p.submissions s
             where p.exercise.id = :#{#exerciseId}
                 AND p.team.id = :#{#teamId}
-                AND p.initializationState <> 'ARCHIVED'
                 AND (s.type <> 'ILLEGAL' OR s.type IS NULL)
             """)
     Optional<StudentParticipation> findWithEagerLegalSubmissionsByExerciseIdAndTeamId(@Param("exerciseId") Long exerciseId, @Param("teamId") Long teamId);
@@ -597,7 +594,6 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
             LEFT JOIN FETCH s.results r
             WHERE p.testRun = FALSE
             AND p.initializationDate = :#{#initializationDate}
-            AND p.initializationState = 'ARCHIVED'
                 AND p.student.id = :#{#studentId}
                 AND p.exercise in :#{#exercises}
             """)

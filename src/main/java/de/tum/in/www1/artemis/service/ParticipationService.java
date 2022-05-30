@@ -176,7 +176,6 @@ public class ParticipationService {
         // Check if participation already exists and if yes, set existing participation to ARCHIVED
         Optional<StudentParticipation> optionalStudentParticipation = findOneByExerciseAndParticipantAnyState(exercise, participant);
         optionalStudentParticipation.ifPresent(studentParticipation -> {
-            studentParticipation.setInitializationState(ARCHIVED);
             studentParticipationRepository.saveAndFlush(studentParticipation);
         });
 
@@ -231,7 +230,6 @@ public class ParticipationService {
         studentExam.getExercises().forEach(exercise -> {
             Optional<StudentParticipation> optionalStudentParticipation = findOneByExerciseAndParticipantAnyState(exercise, participant);
             optionalStudentParticipation.ifPresent(studentParticipation -> {
-                studentParticipation.setInitializationState(ARCHIVED);
                 studentParticipationRepository.saveAndFlush(studentParticipation);
             });
         });
