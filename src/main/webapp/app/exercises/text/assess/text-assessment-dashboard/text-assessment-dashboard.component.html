@@ -5,7 +5,7 @@
     <jhi-assessment-warning [exercise]="exercise" [submissions]="filteredSubmissions"></jhi-assessment-warning>
     <h4>
         <ng-container *ngIf="submissions && submissions.length === 0">
-            <small [ngClass]="'text-warning'">
+            <small class="text-warning">
                 {{ 'artemisApp.textAssessment.noSubmissions' | artemisTranslate: {} }}
             </small>
         </ng-container>
