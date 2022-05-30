@@ -89,7 +89,7 @@ public class QuizSubmissionService {
         // setup result - submission relation
         result.setSubmission(quizSubmission);
         // calculate score and update result accordingly
-        result.evaluateSubmission();
+        result.evaluateQuizSubmission();
         quizSubmission.addResult(result);
         quizSubmission.setParticipation(participation);
 

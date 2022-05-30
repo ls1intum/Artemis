@@ -61,7 +61,7 @@ public class ExamQuizService {
         log.info("Starting quiz evaluation for quiz {}", quizExerciseId);
         // We have to load the questions and statistics so that we can evaluate and update and we also need the participations and submissions that exist for this exercise so that
         // they can be evaluated
-        var quizExercise = quizExerciseRepository.findOneWithQuestionsAndStatistics(quizExerciseId);
+        var quizExercise = quizExerciseRepository.findByIdWithQuestionsAndStatisticsElseThrow(quizExerciseId);
         Set<Result> createdResults = evaluateSubmissions(quizExercise);
         log.info("Quiz evaluation for quiz {} finished after {} with {} created results", quizExercise.getId(), TimeLogUtil.formatDurationFrom(start), createdResults.size());
         quizStatisticService.updateStatistics(createdResults, quizExercise);
@@ -83,7 +83,7 @@ public class ExamQuizService {
             if (optionalExistingSubmission.isPresent()) {
                 QuizSubmission submission = (QuizSubmission) submissionRepository.findWithEagerResultAndFeedbackById(optionalExistingSubmission.get().getId())
                         .orElseThrow(() -> new EntityNotFoundException("Submission with id \"" + optionalExistingSubmission.get().getId() + "\" does not exist"));
-                participation.setExercise(quizExerciseRepository.findOneWithQuestions(quizExercise.getId()));
+                participation.setExercise(quizExerciseRepository.findByIdWithQuestionsElseThrow(quizExercise.getId()));
                 quizExercise = (QuizExercise) participation.getExercise();
                 Result result;
                 if (submission.getLatestResult() == null) {
@@ -94,7 +94,7 @@ public class ExamQuizService {
                     result.setSubmission(submission);
                     // calculate scores and update result and submission accordingly
                     submission.calculateAndUpdateScores(quizExercise);
-                    result.evaluateSubmission();
+                    result.evaluateQuizSubmission();
                     // remove submission to follow save order for ordered collections
                     result.setSubmission(null);
                     result = resultRepository.save(result);
@@ -109,9 +109,9 @@ public class ExamQuizService {
                     result.setSubmission(submission);
                     // calculate scores and update result and submission accordingly
                     submission.calculateAndUpdateScores(quizExercise);
-                    // prevent a lazy exception in the evaluateSubmission method
+                    // prevent a lazy exception in the evaluateQuizSubmission method
                     result.setParticipation(participation);
-                    result.evaluateSubmission();
+                    result.evaluateQuizSubmission();
                     resultRepository.save(result);
                 }
                 submissionRepository.save(submission);
@@ -190,7 +190,7 @@ public class ExamQuizService {
                         result.setSubmission(quizSubmission);
                         // calculate scores and update result and submission accordingly
                         quizSubmission.calculateAndUpdateScores(quizExercise);
-                        result.evaluateSubmission();
+                        result.evaluateQuizSubmission();
                         // remove submission to follow save order for ordered collections
                         result.setSubmission(null);
 

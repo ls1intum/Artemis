@@ -514,6 +514,13 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
 
         this.isSaving = true;
 
+        if (this.exerciseService.hasExampleSolutionPublicationDateWarning(this.programmingExercise)) {
+            this.alertService.addAlert({
+                type: AlertType.WARNING,
+                message: 'artemisApp.exercise.exampleSolutionPublicationDateWarning',
+            });
+        }
+
         if (this.isImport) {
             this.subscribeToSaveResponse(this.programmingExerciseService.importExercise(this.programmingExercise, this.recreateBuildPlans, this.updateTemplate));
         } else if (this.programmingExercise.id !== undefined) {
