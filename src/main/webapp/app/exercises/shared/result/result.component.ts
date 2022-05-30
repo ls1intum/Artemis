@@ -313,7 +313,7 @@ export class ResultComponent implements OnInit, OnChanges {
     }
 
     /**
-     * Gets the tooltip text that should displayed next to the result string. Not required.
+     * Gets the tooltip text that should be displayed next to the result string. Not required.
      */
     buildResultTooltip() {
         // Only show the 'preliminary' tooltip for programming student participation results and if the buildAndTestAfterDueDate has not passed.
@@ -404,7 +404,7 @@ export class ResultComponent implements OnInit, OnChanges {
      *
      */
     getOnlyShowSuccessfulCompileStatus(): boolean {
-        const zeroTestsPassed = (this.result?.feedbacks?.filter((feedback) => Feedback.isStaticCodeAnalysisFeedback(feedback)).length || 0) == 0;
+        const zeroTestsPassed = (this.result?.feedbacks?.filter((feedback) => Feedback.isStaticCodeAnalysisFeedback(feedback)).length || 0) === 0;
         return (
             this.templateStatus !== ResultTemplateStatus.NO_RESULT &&
             this.templateStatus !== ResultTemplateStatus.IS_BUILDING &&

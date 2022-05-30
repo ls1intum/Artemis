@@ -3602,11 +3602,11 @@ public class DatabaseUtilService {
 
         double calculatedTotalPoints = resultRepo.calculateTotalPoints(storedFeedback);
         double totalPoints = resultRepo.constrainToRange(calculatedTotalPoints, 20.0);
-        storedFeedbackResult.setScore(totalPoints, 20.0);
+        storedFeedbackResult.setScore(100.0 * totalPoints / 20.0);
 
         double calculatedTotalPoints2 = resultRepo.calculateTotalPoints(sentFeedback);
         double totalPoints2 = resultRepo.constrainToRange(calculatedTotalPoints2, 20.0);
-        sentFeedbackResult.setScore(totalPoints2, 20.0);
+        sentFeedbackResult.setScore(100.0 * totalPoints2 / 20.0);
 
         assertThat(storedFeedbackResult.getScore()).as("stored feedback evaluates to the same score as sent feedback").isEqualTo(sentFeedbackResult.getScore());
         storedFeedback.forEach(feedback -> assertThat(feedback.getType()).as("type has been set correctly").isEqualTo(feedbackType));

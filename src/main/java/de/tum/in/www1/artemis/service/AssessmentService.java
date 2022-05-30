@@ -90,8 +90,8 @@ public class AssessmentService {
 
         resultRepository.save(newResult);
 
-        if (exercise instanceof ProgrammingExercise) {
-            newResult.calculateScoreForProgrammingExercise(exercise.getMaxPoints());
+        if (exercise instanceof ProgrammingExercise programmingExercise) {
+            newResult.calculateScoreForProgrammingExercise(programmingExercise);
             newResult.setCompletionDate(ZonedDateTime.now());
             newResult.setHasFeedback(true);
             newResult.setRated(true);

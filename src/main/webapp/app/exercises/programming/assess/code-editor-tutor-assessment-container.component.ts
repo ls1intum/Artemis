@@ -547,14 +547,12 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
         // Manual result is always rated and has feedback
         this.manualResult!.rated = true;
         this.manualResult!.hasFeedback = true;
-        // Append the automatic result string which the manual result holds with the score part, to create the manual result string
+
         if (this.isFirstAssessment) {
             this.isFirstAssessment = false;
         }
 
         this.manualResult!.score = (totalScore / this.exercise.maxPoints!) * 100;
-        // This is done to update the result string in result.component.ts
-        this.manualResult = cloneDeep(this.manualResult);
     }
 
     private avoidCircularStructure() {

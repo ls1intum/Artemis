@@ -742,7 +742,7 @@ public class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
         assertThat(results).hasSize(1);
         var result = results.get(0);
 
-        assertThat(result.getScore()).isEqualTo(1);
+        assertThat(result.getScore()).isEqualTo(11.1);
 
         var submittedAnswers = ((QuizSubmission) result.getSubmission()).getSubmittedAnswers();
         for (SubmittedAnswer submittedAnswer : submittedAnswers) {
@@ -794,7 +794,7 @@ public class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
 
         double expectedScore = switch (scoringType) {
             case ALL_OR_NOTHING, PROPORTIONAL_WITH_PENALTY -> 0;
-            case PROPORTIONAL_WITHOUT_PENALTY -> 4;
+            case PROPORTIONAL_WITHOUT_PENALTY -> 44.4;
         };
         assertThat(result.getScore()).isEqualTo(expectedScore);
     }

@@ -48,7 +48,7 @@ public abstract class AbstractContinuousIntegrationService implements Continuous
         result.setAssessmentType(AssessmentType.AUTOMATIC);
         result.setSuccessful(buildResult.isBuildSuccessful());
         result.setCompletionDate(buildResult.getBuildRunDate());
-        result.setScore(buildResult.getBuildScore());
+        result.setScore(buildResult.getBuildScore(), participation.getProgrammingExercise().getCourseViaExerciseGroupOrCourseMember());
         result.setParticipation((Participation) participation);
         addFeedbackToResult(result, buildResult);
 

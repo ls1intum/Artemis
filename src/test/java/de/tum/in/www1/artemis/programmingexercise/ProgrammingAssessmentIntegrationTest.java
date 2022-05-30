@@ -91,7 +91,7 @@ public class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrat
 
         programmingExerciseStudentParticipation = database.addStudentParticipationForProgrammingExercise(programmingExercise, "student2");
         // A new manual result and submission are created during the locking of submission for manual assessment
-        // The new result has a result string, assessment type, automatic feedbacks and assessor
+        // The new result has an assessment type, automatic feedbacks and assessor
         var automaticFeedback = new Feedback().credits(0.0).detailText("asdfasdf").type(FeedbackType.AUTOMATIC).text("asdf");
         var automaticFeedbacks = new ArrayList<Feedback>();
         automaticFeedbacks.add(automaticFeedback);
@@ -461,9 +461,6 @@ public class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrat
         // Result rated is missing
         request.putWithResponseBody("/api/participations/" + programmingExerciseStudentParticipation.getId() + "/manual-results", result, Result.class, HttpStatus.BAD_REQUEST);
         result.rated(true);
-
-        // Result string is missing
-        request.putWithResponseBody("/api/participations/" + programmingExerciseStudentParticipation.getId() + "/manual-results", result, Result.class, HttpStatus.BAD_REQUEST);
 
         // Check that not automatically created feedbacks must have a detail text
         // Manual feedback

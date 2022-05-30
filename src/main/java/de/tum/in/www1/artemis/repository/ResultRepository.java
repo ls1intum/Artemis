@@ -528,7 +528,7 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
     }
 
     /**
-     * Submitting the result means it is saved with a calculated score, result string and a completion date.
+     * Submitting the result means it is saved with a calculated score and a completion date.
      * @param result the result which should be set to submitted
      * @param exercise the exercises to which the result belongs, which is needed to get points and to determine if the result is rated or not
      * @param dueDate before which the result is considered to be rated

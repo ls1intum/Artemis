@@ -179,8 +179,8 @@ public class Result extends DomainObject {
     }
 
     /**
-     * 1. set score and round it to 4 decimal places
-     * 2. set successful = true, if score >= 100 or false if not
+     * Sets the score to the specified score rounded to 4 decimal places.
+     * If you are handling student results that potentially need rounding, use {@link Result#setScore(Double score, Course course)} instead!
      *
      * @param score new score
      */
@@ -202,21 +202,8 @@ public class Result extends DomainObject {
      */
     public void setScore(Double score, Course course) {
         if (score != null) {
-            // We need to round the score to four decimal places to have a score of 99.999999 to be rounded to 100.0.
-            // Otherwise, a result would not be successful.
-            this.score = roundScoreSpecifiedByCourseSettings(score, course);
-            this.successful = this.score >= 100.0;
+            setScore(roundScoreSpecifiedByCourseSettings(score, course));
         }
-    }
-
-    /**
-     * calculates and sets the score attribute and accordingly the successful flag
-     *
-     * @param totalPoints total amount of points between 0 and maxPoints
-     * @param maxPoints   maximum points reachable at corresponding exercise
-     */
-    public void setScore(double totalPoints, double maxPoints) {
-        setScore(totalPoints / maxPoints * 100);
     }
 
     /**
@@ -460,7 +447,7 @@ public class Result extends DomainObject {
             StudentParticipation studentParticipation = (StudentParticipation) getParticipation();
             QuizExercise quizExercise = (QuizExercise) studentParticipation.getExercise();
             // update score
-            setScore(quizExercise.getScoreForSubmission(quizSubmission));
+            setScore(quizExercise.getScoreForSubmission(quizSubmission), quizExercise.getCourseViaExerciseGroupOrCourseMember());
         }
     }
 
@@ -560,11 +547,11 @@ public class Result extends DomainObject {
     }
 
     /**
-     * calculates the score and the result string for programming exercises
-     * @param maxPoints the max points of the exercise
+     * calculates the score for programming exercises
+     * @param exercise the exercise
      */
-    public void calculateScoreForProgrammingExercise(Double maxPoints) {
+    public void calculateScoreForProgrammingExercise(ProgrammingExercise exercise) {
         double totalPoints = calculateTotalPointsForProgrammingExercises();
-        setScore(totalPoints, maxPoints);
+        setScore(totalPoints, exercise.getMaxPoints(), exercise.getCourseViaExerciseGroupOrCourseMember());
     }
 }

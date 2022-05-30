@@ -402,7 +402,7 @@ public class SubmissionService {
                 result.setParticipation(studentParticipation);
                 result.setAssessor(assessor);
                 result.setCompletionDate(ZonedDateTime.now());
-                result.setScore(score);
+                result.setScore(score, studentParticipation.getExercise().getCourseViaExerciseGroupOrCourseMember());
                 result.rated(true);
                 // we set the assessment type to semi automatic so that it does not appear to the tutors for manual assessment
                 // if we would use AssessmentType.AUTOMATIC, it would be eligible for manual assessment

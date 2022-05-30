@@ -14,7 +14,7 @@ import { Participation, ParticipationType } from 'app/entities/participation/par
 import { cloneDeep } from 'lodash-es';
 import { Submission } from 'app/entities/submission.model';
 import { ExerciseType } from 'app/entities/exercise.model';
-import { faTimesCircle } from '@fortawesome/free-regular-svg-icons';
+import { faCheckCircle } from '@fortawesome/free-regular-svg-icons';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 
 describe('ResultComponent', () => {
@@ -73,7 +73,7 @@ describe('ResultComponent', () => {
         expect(component.submission).toEqual(submission1);
         expect(component.textColorClass).toEqual('text-danger');
         expect(component.hasFeedback).toBeFalse();
-        expect(component.resultIconClass).toEqual(faTimesCircle);
+        expect(component.resultIconClass).toEqual(faCheckCircle);
         expect(component.resultString).toEqual('artemisApp.result.resultStringProgrammingBuildSuccess (artemisApp.result.preliminary)');
     });
 });
