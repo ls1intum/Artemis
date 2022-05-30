@@ -360,7 +360,7 @@ public class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @WithMockUser(username = "student1", roles = "USER")
-    @EnumSource(value = QuizMode.class)
+    @EnumSource(QuizMode.class)
     public void testQuizSubmitWithSubmissionInDatabase(QuizMode quizMode) throws Exception {
         Course course = database.createCourse();
         QuizExercise quizExercise = database.createQuiz(course, ZonedDateTime.now().minusHours(5), null, quizMode);

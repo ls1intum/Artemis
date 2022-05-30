@@ -185,8 +185,9 @@ public class QuizSubmissionService {
             }
         }
 
-        // TODO: add one additional check: fetch quizSubmission.getId() with the corresponding participation and check that the user of participation is the
-        // same as the user who executes this call. This prevents injecting submissions to other users
+        // TODO: additional checks that may be beneficial
+        // for example it is possible for students that are not members of the course to submit the quiz
+        // but for performance reasons the checks may have to be done in the quiz submission service where no feedback for the students can be generated
     }
 
     /**
