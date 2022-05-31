@@ -14,7 +14,6 @@ import de.tum.in.www1.artemis.domain.enumeration.QuizMode;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
-import de.tum.in.www1.artemis.domain.quiz.QuizBatch;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
 import de.tum.in.www1.artemis.domain.quiz.SubmittedAnswer;
@@ -151,15 +150,10 @@ public class QuizSubmissionService {
         if (quizExercise == null) {
             // Fallback solution
             log.info("Quiz not in QuizScheduleService cache, fetching from DB");
-            quizExercise = quizExerciseRepository.findByIdElseThrow(exerciseId);
+            quizExercise = quizExerciseRepository.findByIdWithBatchesElseThrow(exerciseId);
         }
         log.debug("{}: Received quiz exercise for user {} in quiz {} in {} µs.", logText, userLogin, exerciseId, (System.nanoTime() - start) / 1000);
         if (!quizExercise.isQuizStarted() || quizExercise.isQuizEnded()) {
-            throw new QuizSubmissionException("The quiz is not active");
-        }
-
-        var batch = quizBatchService.getQuizBatchForStudentByLogin(quizExercise, userLogin);
-        if (batch.stream().noneMatch(QuizBatch::isSubmissionAllowed)) {
             throw new QuizSubmissionException("The quiz is not active");
         }
 
@@ -170,6 +164,11 @@ public class QuizSubmissionService {
         }
 
         if (quizExercise.getQuizMode() == QuizMode.SYNCHRONIZED) {
+            // the batch exists if the quiz is active, otherwise a new inactive batch is returned
+            if (!quizBatchService.getOrCreateSynchronizedQuizBatch(quizExercise).isSubmissionAllowed()) {
+                throw new QuizSubmissionException("The quiz is not active");
+            }
+
             // in synchronized mode we cache the participation after we processed the submission, so we can check there if the submission was already processed
             var cachedParticipation = quizScheduleService.getParticipation(exerciseId, userLogin);
             if (cachedParticipation != null && cachedParticipation.getResults().stream().anyMatch(r -> r.getSubmission().isSubmitted())) {
@@ -177,11 +176,16 @@ public class QuizSubmissionService {
             }
         }
         else {
-            // in other modes we have to check the db if there has already been a submission
-            int submissionCount = submissionRepository.countByExerciseIdAndStudentLogin(exerciseId, userLogin);
-            log.debug("{} Counted {} submissions for user {} in quiz {} in {} µs.", logText, submissionCount, userLogin, exerciseId, (System.nanoTime() - start) / 1000);
-            if (quizExercise.getAllowedNumberOfAttempts() != null && submissionCount >= quizExercise.getAllowedNumberOfAttempts()) {
-                throw new QuizSubmissionException("You have no more attempts at this quiz left");
+            // in the other modes the resubmission checks are done at join time and the student-batch association is removed when processing a submission
+            var batch = quizBatchService.getQuizBatchForStudentByLogin(quizExercise, userLogin);
+
+            // there is no way of distinguishing these two error cases without an extra db query
+            if (batch.isEmpty()) {
+                throw new QuizSubmissionException("You did not join or have already submitted the quiz");
+            }
+
+            if (!batch.get().isSubmissionAllowed()) {
+                throw new QuizSubmissionException("The quiz is not active");
             }
         }
 
