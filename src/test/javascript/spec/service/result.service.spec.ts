@@ -58,12 +58,12 @@ describe('ResultService', () => {
         feedbacks: [
             { text: 'testBubbleSort', detailText: 'lorem ipsum', positive: false, type: FeedbackType.AUTOMATIC },
             { text: 'testMergeSort', detailText: 'lorem ipsum', positive: true, type: FeedbackType.AUTOMATIC },
-            { text: STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER, detailText: 'lorem ipsum', positive: false, type: FeedbackType.AUTOMATIC },
+            { text: STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER, detailText: 'should not get counted', positive: false, type: FeedbackType.AUTOMATIC },
         ],
         completionDate: dayjs().add(4, 'hours'),
         score: 50,
     };
-    const result5: Result = { feedbacks: [], completionDate: dayjs().subtract(5, 'minutes'), score: 80 };
+    const result5: Result = { feedbacks: [{ text: 'Manual feedback', type: FeedbackType.MANUAL }], completionDate: dayjs().subtract(5, 'minutes'), score: 80 };
 
     const modelingExercise: ModelingExercise = {
         maxPoints: 50,
