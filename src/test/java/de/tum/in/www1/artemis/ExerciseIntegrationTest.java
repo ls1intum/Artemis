@@ -679,7 +679,7 @@ public class ExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitb
         participationRepository.save(studentParticipation3);
 
         ZonedDateTime latestDueDate = request.get("/api/exercises/" + exercise.getId() + "/latest-due-date", HttpStatus.OK, ZonedDateTime.class);
-        assertThat(latestDueDate).isEqualTo(studentParticipation3.getIndividualDueDate());
+        assertThat(latestDueDate).isEqualToIgnoringNanos(studentParticipation3.getIndividualDueDate());
     }
 
     @Test
@@ -691,6 +691,6 @@ public class ExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitb
         database.createAndSaveParticipationForExercise(exercise, "student2");
 
         ZonedDateTime latestDueDate = request.get("/api/exercises/" + exercise.getId() + "/latest-due-date", HttpStatus.OK, ZonedDateTime.class);
-        assertThat(latestDueDate).isEqualTo(exercise.getDueDate());
+        assertThat(latestDueDate).isEqualToIgnoringNanos(exercise.getDueDate());
     }
 }
