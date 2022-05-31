@@ -1307,12 +1307,11 @@ describe('QuizExercise Management Detail Component', () => {
                 expect(comp.quizExercise.duration).toBe(10);
             });
 
-            it('should set release date to dayjs release date if exam mode', () => {
+            it('should set release date to undefined if exam mode', () => {
                 comp.isExamMode = true;
-                const now = dayjs();
-                comp.quizExercise.releaseDate = now;
+                comp.quizExercise.releaseDate = undefined;
                 comp.prepareEntity(comp.quizExercise);
-                expect(comp.quizExercise.releaseDate).toEqual(dayjs(now));
+                expect(comp.quizExercise.releaseDate).toEqual(undefined);
             });
         });
 

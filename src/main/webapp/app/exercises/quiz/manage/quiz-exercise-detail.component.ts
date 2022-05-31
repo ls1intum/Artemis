@@ -207,6 +207,7 @@ export class QuizExerciseDetailComponent extends QuizExerciseValidationDirective
             this.entity.title = '';
             this.entity.duration = 600;
             this.entity.isOpenForPractice = false;
+            // For the examMode, no release Date should be set
             if (!this.isExamMode) {
                 this.entity.releaseDate = dayjs();
             }
@@ -872,7 +873,6 @@ export class QuizExerciseDetailComponent extends QuizExerciseValidationDirective
      */
     prepareEntity(quizExercise: QuizExercise): void {
         if (this.isExamMode) {
-            // quizExercise.releaseDate = dayjs(quizExercise.releaseDate);
             quizExercise.releaseDate = undefined;
         } else {
             quizExercise.releaseDate = quizExercise.releaseDate ? dayjs(quizExercise.releaseDate) : dayjs();
