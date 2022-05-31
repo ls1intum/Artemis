@@ -393,6 +393,9 @@ public class QuizExerciseResource {
         batch.setStartTime(quizBatchService.quizBatchStartDate(quizExercise, ZonedDateTime.now()));
         batch = quizBatchService.save(batch);
 
+        // ensure that there is no scheduler that thinks the batch hasn't started yet
+        quizScheduleService.updateQuizExercise(quizExerciseRepository.findByIdWithQuestionsAndStatisticsElseThrow(quizExercise.getId()));
+
         quizExercise.setQuizBatches(Set.of(batch));
         quizMessagingService.sendQuizExerciseToSubscribedClients(quizExercise, batch, "start-batch");
 

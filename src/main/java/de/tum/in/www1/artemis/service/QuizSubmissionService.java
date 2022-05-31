@@ -21,7 +21,6 @@ import de.tum.in.www1.artemis.exception.QuizSubmissionException;
 import de.tum.in.www1.artemis.repository.QuizExerciseRepository;
 import de.tum.in.www1.artemis.repository.QuizSubmissionRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
-import de.tum.in.www1.artemis.repository.SubmissionRepository;
 import de.tum.in.www1.artemis.service.scheduled.quiz.QuizScheduleService;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
@@ -44,11 +43,9 @@ public class QuizSubmissionService {
 
     private final QuizBatchService quizBatchService;
 
-    private final SubmissionRepository submissionRepository;
-
     public QuizSubmissionService(QuizSubmissionRepository quizSubmissionRepository, QuizScheduleService quizScheduleService, ResultRepository resultRepository,
             SubmissionVersionService submissionVersionService, QuizExerciseRepository quizExerciseRepository, ParticipationService participationService,
-            QuizBatchService quizBatchService, SubmissionRepository submissionRepository) {
+            QuizBatchService quizBatchService) {
         this.quizSubmissionRepository = quizSubmissionRepository;
         this.resultRepository = resultRepository;
         this.quizScheduleService = quizScheduleService;
@@ -56,7 +53,6 @@ public class QuizSubmissionService {
         this.quizExerciseRepository = quizExerciseRepository;
         this.participationService = participationService;
         this.quizBatchService = quizBatchService;
-        this.submissionRepository = submissionRepository;
     }
 
     /**
@@ -150,7 +146,8 @@ public class QuizSubmissionService {
         if (quizExercise == null) {
             // Fallback solution
             log.info("Quiz not in QuizScheduleService cache, fetching from DB");
-            quizExercise = quizExerciseRepository.findByIdWithBatchesElseThrow(exerciseId);
+            quizExercise = quizExerciseRepository.findByIdElseThrow(exerciseId);
+            quizExercise.setQuizBatches(null);
         }
         log.debug("{}: Received quiz exercise for user {} in quiz {} in {} µs.", logText, userLogin, exerciseId, (System.nanoTime() - start) / 1000);
         if (!quizExercise.isQuizStarted() || quizExercise.isQuizEnded()) {
