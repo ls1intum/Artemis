@@ -1565,7 +1565,7 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
         testRunResponse.getExercises().forEach(exercise -> exercise.getStudentParticipations().forEach(studentParticipation -> studentParticipation.setExercise(exercise)));
         // invoke a second time to test the else case in this method
         SecurityUtils.setAuthorizationObject();
-        examQuizService.evaluateQuizParticipationsForTestRun(testRunResponse);
+        examQuizService.evaluateQuizParticipationsForTestRunAndTestExam(testRunResponse);
         // make sure that no second result is created
         checkQuizSubmission(quizExercise.getId(), quizSubmission.getId());
     }

@@ -16,6 +16,8 @@
                 "closedExplanation": "You can review your submission by clicking on the tile",
                 "review": "Exam Review Open",
                 "reviewExplanation": "You can review the assessment until ",
+                "noMoreAttempts": "No More Attempts",
+                "noMoreAttemptsExplanation": "There are currently no further attempts available",
                 "realExamsHeading": "Exams",
                 "testExamsHeading": "Test Exams",
                 "testExam": {

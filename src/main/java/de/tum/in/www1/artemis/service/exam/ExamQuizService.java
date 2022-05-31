@@ -73,7 +73,7 @@ public class ExamQuizService {
      * Note: We do not insert the result of this test run quiz participation into the quiz statistics.
      * @param studentExam The test run or testExam containing the users participations in all exam exercises
      */
-    public void evaluateQuizParticipationsForTestRun(StudentExam studentExam) {
+    public void evaluateQuizParticipationsForTestRunAndTestExam(StudentExam studentExam) {
         final var participations = studentExam.getExercises().stream()
                 .flatMap(exercise -> exercise.getStudentParticipations().stream().filter(participation -> participation.getExercise() instanceof QuizExercise))
                 .collect(Collectors.toSet());
@@ -113,6 +113,10 @@ public class ExamQuizService {
                     result.setParticipation(participation);
                     result.evaluateQuizSubmission();
                     resultRepository.save(result);
+                }
+                if (studentExam.getExam().isTestExam()) {
+                    // In case of an TestExam, the quiz statistic should also be updated
+                    quizStatisticService.updateStatistics(Set.of(result), quizExercise);
                 }
                 submissionRepository.save(submission);
             }

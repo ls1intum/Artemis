@@ -16,6 +16,8 @@
                 "closedExplanation": "Du kannst deine Abgabe durch Klicken auf die Kachel einsehen",
                 "review": "Klausureinsicht möglich",
                 "reviewExplanation": "Die Einsicht findet statt bis ",
+                "noMoreAttempts": "Keine weiteren Versuche",
+                "noMoreAttemptsExplanation": "Derzeit sind keine weiteren Versuche verfügbar",
                 "realExamsHeading": "Klausuren",
                 "testExamsHeading": "Testklausuren",
                 "testExam": {

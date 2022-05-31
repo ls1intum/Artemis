@@ -87,7 +87,7 @@ public class ExamAccessService {
     }
 
     /**
-     * Retrieves a specified studentExam from the database and sends it to the client
+     * Retrieves a specified studentExam for a TestExam from the database and sends it to the client
      * @param courseId the course to which the exam belongs
      * @param examId the examId of the exam we are interested in
      * @param studentExamId the id of the studentExam we are interested in

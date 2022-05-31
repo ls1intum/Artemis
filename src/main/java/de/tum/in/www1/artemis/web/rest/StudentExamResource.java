@@ -285,7 +285,7 @@ public class StudentExamResource {
             throw new AccessForbiddenException("The requested exam does not belong to the requesting user");
         }
         // In case the studentExam is not yet started, new participations need to be set up - isStarted uses Boolean
-        prepareStudentExamForConductionWithParticipations(request, user, studentExam, (studentExam.isStarted() == null || !studentExam.isStarted()));
+        prepareStudentExamForConductionWithInitializationDateSet(request, user, studentExam, (studentExam.isStarted() == null || !studentExam.isStarted()));
 
         log.info("getStudentExamForTestExamForConduction done in {}ms for {} exercises for user {}", System.currentTimeMillis() - start, studentExam.getExercises().size(),
                 user.getLogin());
@@ -609,11 +609,11 @@ public class StudentExamResource {
      * @param studentExam            the student exam to be prepared
      * @param createNewParticipation if a new participation should be created or an existing participation should be fetched from the database
      */
-    private void prepareStudentExamForConductionWithParticipations(HttpServletRequest request, User currentUser, StudentExam studentExam, boolean createNewParticipation) {
+    private void prepareStudentExamForConductionWithInitializationDateSet(HttpServletRequest request, User currentUser, StudentExam studentExam, boolean createNewParticipation) {
 
         if (createNewParticipation) {
-            // 1st: Fix startedDate. As the studentExam.startedDate is used to link the participation.initializationDate, we need to drop the ms (initializationDate is stored with
-            // ms)
+            // 1st: Fix startedDate. As the studentExam.startedDate is used to link the participation.initializationDate, we need to drop the ms
+            // (initializationDate is stored with ms)
             ZonedDateTime startedDate = ZonedDateTime.now().truncatedTo(ChronoUnit.SECONDS);
 
             // 2nd: Set up new participations for the Exercises and set initialisationDate to the startedDate

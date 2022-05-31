@@ -12,7 +12,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.*;
-import de.tum.in.www1.artemis.domain.exam.StudentExam;
 import de.tum.in.www1.artemis.domain.participation.*;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
@@ -107,6 +106,22 @@ public class ParticipationService {
      * @return the participation connecting the given exercise and user
      */
     public StudentParticipation startExercise(Exercise exercise, Participant participant, boolean createInitialSubmission) {
+        return startExerciseWithInitializationDate(exercise, participant, createInitialSubmission, null);
+    }
+
+    /**
+     * This method is called when an StudentExam for a TestExam is set up for conduction.
+     * It creates a Participation which connects the corresponding student and exercise. The TestExam is linked with the iitializationDate = startedDate (StudentExam)
+     * Additionally, it configures repository / build plan related stuff for programming exercises.
+     * In the case of modeling or text exercises, it also initializes and stores the corresponding submission.
+     *
+     * @param exercise                - the exercise for which a new participation is to be created
+     * @param participant             - the user for which the new participation is to be created
+     * @param createInitialSubmission - whether an initial empty submission should be created for text, modeling, quiz, file-upload or not
+     * @param startedDate             - the date which should be set as the initializationDate of the Participation. Links studentExam <-> participation
+     * @return a new participation for the given exercise and user
+     */
+    public StudentParticipation startExerciseWithInitializationDate(Exercise exercise, Participant participant, boolean createInitialSubmission, ZonedDateTime startedDate) {
         // common for all exercises
         // Check if participation already exists
         Optional<StudentParticipation> optionalStudentParticipation = findOneByExerciseAndParticipantAnyState(exercise, participant);
@@ -122,6 +137,10 @@ public class ParticipationService {
             participation.setInitializationState(UNINITIALIZED);
             participation.setExercise(exercise);
             participation.setParticipant(participant);
+            // StartedDate is used to link a Participation to a TestExam exercise
+            if (startedDate != null) {
+                participation.setInitializationDate(startedDate);
+            }
             participation = studentParticipationRepository.saveAndFlush(participation);
         }
         else {
@@ -157,83 +176,6 @@ public class ParticipationService {
             }
         }
         return studentParticipationRepository.saveAndFlush(participation);
-    }
-
-    /**
-     * This method is called when an StudentExam for a TestExam is set up for conduction. It creates a new Participation which connects the corresponding
-     * student and exercise. If an old participation for the given exercise and student exists, the old participation is set to ARCHIVED.
-     * Additionally, it configures repository / build plan related stuff for programming exercises. In the case of modeling or text exercises,
-     * it also initializes and stores the corresponding submission.
-     *
-     * @param exercise                - the exercise for which a new participation is to be created
-     * @param participant             - the user for which the new participation is to be created
-     * @param createInitialSubmission - whether an initial empty submission should be created for text, modeling, quiz, file-upload or not
-     * @param startedDate             - the date which should be set as the initializationDate of the Participation. Links studentExam <-> participation
-     * @return a new participation for the given exercise and user
-     */
-    public StudentParticipation startExerciseWithNewParticipation(Exercise exercise, Participant participant, boolean createInitialSubmission, ZonedDateTime startedDate) {
-        // common for all exercises
-        // Check if participation already exists and if yes, set existing participation to ARCHIVED
-        Optional<StudentParticipation> optionalStudentParticipation = findOneByExerciseAndParticipantAnyState(exercise, participant);
-        optionalStudentParticipation.ifPresent(studentParticipation -> {
-            studentParticipationRepository.saveAndFlush(studentParticipation);
-        });
-
-        // Create new Participation depending on exerciseType
-        StudentParticipation participation;
-        if (exercise instanceof ProgrammingExercise) {
-            participation = new ProgrammingExerciseStudentParticipation();
-        }
-        else {
-            participation = new StudentParticipation();
-        }
-        participation.setInitializationState(UNINITIALIZED);
-        participation.setExercise(exercise);
-        participation.setParticipant(participant);
-        // The initializationDate is set to the startedDate of the StudentExam, in order to link studentExam <-> participation
-        participation.setInitializationDate(startedDate);
-        participation = studentParticipationRepository.saveAndFlush(participation);
-
-        if (exercise instanceof ProgrammingExercise) {
-            // fetch again to get additional objects
-            var programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exercise.getId());
-            participation = startProgrammingExercise(programmingExercise, (ProgrammingExerciseStudentParticipation) participation);
-        }
-        else {
-            // for all other exercises: QuizExercise, ModelingExercise, TextExercise, FileUploadExercise
-            if (participation.getInitializationState() == null || participation.getInitializationState() == UNINITIALIZED) {
-                participation.setInitializationState(INITIALIZED);
-            }
-
-            // TODO: load submission with exercise for exam edge case:
-            // clients creates missing participation for exercise, call on server succeeds, but response to client is lost
-            // -> client tries to create participation again. In this case the submission is not loaded from db -> client errors
-            // if (optionalStudentParticipation.isEmpty() ||
-            if (!submissionRepository.existsByParticipationId(participation.getId())) {
-                // initialize a modeling, text, file upload or quiz submission
-                if (createInitialSubmission) {
-                    submissionRepository.initializeSubmission(participation, exercise, null);
-                }
-            }
-        }
-        return studentParticipationRepository.saveAndFlush(participation);
-    }
-
-    /**
-     * The Method sets, for a given user, all participations for all exercises of a StudentExam to ARCHIVED.
-     * ATTENTION: Currently only used for TestExams!
-     *
-     * @param studentExam the studentExam with loaded Exercises
-     * @param participant the participant of the studentExam
-     */
-    public void setParticipationsForStudentExamToArchived(StudentExam studentExam, Participant participant) {
-        studentExam.getExercises().forEach(exercise -> {
-            Optional<StudentParticipation> optionalStudentParticipation = findOneByExerciseAndParticipantAnyState(exercise, participant);
-            optionalStudentParticipation.ifPresent(studentParticipation -> {
-                studentParticipationRepository.saveAndFlush(studentParticipation);
-            });
-        });
-
     }
 
     /**

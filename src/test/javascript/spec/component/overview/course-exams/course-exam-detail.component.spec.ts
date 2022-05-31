@@ -149,4 +149,12 @@ describe('CourseExamDetailComponent', () => {
         component.updateExamState();
         expect(component.timeLeftToStart).toBeWithin(5 * 60 - 3, 5 * 60);
     });
+
+    it('should determine the exam state to be no_more_attempts', () => {
+        component.exam = new Exam();
+        component.maxAttemptsReached = true;
+        component.ngOnInit();
+        component.updateExamState();
+        expect(component.examState).toBe('NO_MORE_ATTEMPTS');
+    });
 });

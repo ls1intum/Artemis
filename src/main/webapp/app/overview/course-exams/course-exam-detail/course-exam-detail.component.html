@@ -1,6 +1,6 @@
 <div *ngIf="exam" (click)="openExam()" id="exam-{{ exam.id }}">
     <!-- Signature colors for the header: Blue for TestExams and Green for RedExams -->
-    <div [class]="'row card-header ' + (exam.testExam ? 'bg-primary' : 'bg-success')">
+    <div [class]="'row card-header ' + (maxAttemptsReached ? '' : ' clickable ') + (exam.testExam ? 'bg-primary' : 'bg-success')">
         <h5 class="text-center text-white">{{ exam.title }}</h5>
     </div>
     <!-- Case 7: Undefined exam state. show Pencil without further information-->
@@ -25,6 +25,8 @@
                 <fa-icon *ngIf="examState === 'STUDENTREVIEW'" [icon]="faMagnifyingGlass" size="2x"></fa-icon>
                 <!-- Book to indicate, the exam is closed -->
                 <fa-icon *ngIf="examState === 'CLOSED'" [icon]="faBook" size="2x"></fa-icon>
+                <!-- Stop to indicate, no more attemps are possible -->
+                <fa-icon *ngIf="examState === 'NO_MORE_ATTEMPTS'" [icon]="faCircleStop" size="2x"></fa-icon>
             </h4>
             <div class="col-8 row card-body justify-content-center">
                 <div *ngIf="examState === 'UPCOMING'">
@@ -56,6 +58,10 @@
                 <div *ngIf="examState === 'STUDENTREVIEW'">
                     <h5 class="text-center">{{ 'artemisApp.exam.overview.review' | artemisTranslate }}</h5>
                     <div class="text-center">{{ 'artemisApp.exam.overview.reviewExplanation' | artemisTranslate }} {{ exam.examStudentReviewEnd | artemisDate }}</div>
+                </div>
+                <div *ngIf="examState === 'NO_MORE_ATTEMPTS'">
+                    <h5 class="text-center">{{ 'artemisApp.exam.overview.noMoreAttempts' | artemisTranslate }}</h5>
+                    <div class="text-center">{{ 'artemisApp.exam.overview.noMoreAttemptsExplanation' | artemisTranslate }}</div>
                 </div>
             </div>
         </div>

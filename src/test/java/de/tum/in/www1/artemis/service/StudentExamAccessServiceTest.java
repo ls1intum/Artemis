@@ -166,4 +166,5 @@ public class StudentExamAccessServiceTest extends AbstractSpringIntegrationBambo
         assertDoesNotThrow(() -> studentExamAccessService.checkCourseAccessForStudentElseThrow(course1.getId(), users.get(0)));
         assertThrows(AccessForbiddenException.class, () -> studentExamAccessService.checkCourseAccessForStudentElseThrow(course2.getId(), users.get(0)));
     }
+
 }

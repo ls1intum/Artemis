@@ -15,8 +15,15 @@
 <div class="row">
     <ng-container *ngFor="let exam of course!.exams!.filter(isTestExam)">
         <div class="row d-flex align-items-start">
-            <div class="card clickable col-12 col-md-4 col-lg-4 col-xl-3 m-2 border-primary hover-blue">
-                <jhi-course-exam-detail *ngIf="isVisible(exam)" [exam]="exam" [course]="course!" id="exam-{{ exam.id }}"></jhi-course-exam-detail>
+            <div class="card col-12 col-md-4 col-lg-4 col-xl-3 m-2 border-primary hover-blue">
+                <jhi-course-exam-detail
+                    *ngIf="isVisible(exam)"
+                    [exam]="exam"
+                    [course]="course!"
+                    [maxAttemptsReached]="getStudentExamForExamIdOrderedByIdReverse(exam!.id!).length > 0"
+                    id="exam-{{ exam.id }}"
+                >
+                </jhi-course-exam-detail>
             </div>
             <!-- List of cards representing the individual attempts per Student and TestExam. Ordered by Id in reverse (latest StudentExam at the top) -->
             <div class="col-12 col-md-4 col-lg-4 col-xl-3">

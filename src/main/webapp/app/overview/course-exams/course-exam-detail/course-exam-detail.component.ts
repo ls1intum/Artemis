@@ -22,6 +22,8 @@ export const enum ExamState {
     STUDENTREVIEW = 'STUDENTREVIEW',
     // Case 7: Fallback
     UNDEFINED = 'UNDEFINED',
+    // Case 99: No more attempts
+    NO_MORE_ATTEMPTS = 'NO_MORE_ATTEMPTS',
 }
 
 @Component({
@@ -32,6 +34,7 @@ export const enum ExamState {
 export class CourseExamDetailComponent implements OnInit, OnDestroy {
     @Input() exam: Exam;
     @Input() course: Course;
+    @Input() maxAttemptsReached: boolean;
     examState: ExamState;
     examStateSubscription: Subscription;
     timeLeftToStart: number;
@@ -56,6 +59,10 @@ export class CourseExamDetailComponent implements OnInit, OnDestroy {
     }
 
     ngOnDestroy() {
+        this.cancelExamStateSubscription();
+    }
+
+    cancelExamStateSubscription() {
         if (this.examStateSubscription) {
             this.examStateSubscription.unsubscribe();
         }
@@ -65,8 +72,11 @@ export class CourseExamDetailComponent implements OnInit, OnDestroy {
      * navigate to /courses/:courseId/exams/:examId for RealExams or
      * /courses/:courseId/exams/:examId/test-exam/new for TestExams
      */
-    openExam(): void {
+    openExam() {
         if (this.exam.testExam) {
+            if (this.examState === ExamState.NO_MORE_ATTEMPTS) {
+                return;
+            }
             this.router.navigate(['courses', this.course.id, 'exams', this.exam.id, 'test-exam', 'new']);
         } else {
             this.router.navigate(['courses', this.course.id, 'exams', this.exam.id]);
@@ -79,6 +89,11 @@ export class CourseExamDetailComponent implements OnInit, OnDestroy {
      * Updates the status of the exam every second. The cases are explained at the ExamState enum
      */
     updateExamState() {
+        if (this.maxAttemptsReached) {
+            this.examState = ExamState.NO_MORE_ATTEMPTS;
+            this.cancelExamStateSubscription();
+            return;
+        }
         if (dayjs(this.exam.startDate).isAfter(dayjs())) {
             if (dayjs(this.exam.startDate).diff(dayjs(), `s`) < 600) {
                 this.examState = ExamState.IMMINENT;

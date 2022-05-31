@@ -77,6 +77,11 @@ public class ExamRegistrationService {
     public List<StudentDTO> registerStudentsForExam(Long courseId, Long examId, List<StudentDTO> studentDTOs) {
         var course = courseRepository.findByIdElseThrow(courseId);
         var exam = examRepository.findWithRegisteredUsersById(examId).orElseThrow(() -> new EntityNotFoundException("Exam", examId));
+
+        if (exam.isTestExam()) {
+            throw new AccessForbiddenException("Registration of students is only allowed for RealExams");
+        }
+
         List<StudentDTO> notFoundStudentsDTOs = new ArrayList<>();
         for (var studentDto : studentDTOs) {
             var registrationNumber = studentDto.getRegistrationNumber();
@@ -183,17 +188,6 @@ public class ExamRegistrationService {
         AuditEvent auditEvent = new AuditEvent(currentUser.getLogin(), Constants.ADD_USER_TO_EXAM, "exam=" + exam.getTitle());
         auditEventRepository.add(auditEvent);
         log.info("User {} has self-registered to the TestExam {} with id {}", currentUser.getLogin(), exam.getTitle(), exam.getId());
-    }
-
-    /**
-     * Helper method to register a student to an exam
-     *
-     * @param exam    the exam for which we want to register a student
-     * @param student the student to be registered to the exam
-     */
-    private void registerStudentToExam(Exam exam, User student) {
-        exam.addRegisteredUser(student);
-        examRepository.save(exam);
     }
 
     /**

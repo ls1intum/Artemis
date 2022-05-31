@@ -1237,6 +1237,21 @@ public class DatabaseUtilService {
         return exam;
     }
 
+    public Exam addActiveTestExamWithRegisteredUser(Course course, User user) {
+        Exam exam = ModelFactory.generateTestExam(course);
+        exam.setStartDate(ZonedDateTime.now().minusHours(1));
+        exam.setEndDate(ZonedDateTime.now().plusHours(1));
+        exam.addRegisteredUser(user);
+        examRepository.save(exam);
+        var studentExam = new StudentExam();
+        studentExam.setExam(exam);
+        studentExam.setTestRun(false);
+        studentExam.setUser(user);
+        studentExam.setWorkingTime(exam.getWorkingTime());
+        studentExamRepository.save(studentExam);
+        return exam;
+    }
+
     public StudentExam addStudentExam(Exam exam) {
         StudentExam studentExam = ModelFactory.generateStudentExam(exam);
         studentExamRepository.save(studentExam);

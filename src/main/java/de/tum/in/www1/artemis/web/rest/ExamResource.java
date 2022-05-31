@@ -856,7 +856,7 @@ public class ExamResource {
     }
 
     /**
-     * GET /courses/{courseId}/exams/{examId}/test-exam/{studentExamId}start : Get a {@Link StudentExam} for the specified Id for an TestExam for the exam start.
+     * GET /courses/{courseId}/exams/{examId}/test-exam/{studentExamId}/start : Get a {@Link StudentExam} for the specified Id for an TestExam for the exam start.
      *
      * @param courseId the id of the course
      * @param examId   the id of the (Test) Exams
@@ -872,8 +872,6 @@ public class ExamResource {
 
         return ResponseEntity.ok(exam);
     }
-
-    // /courses/{courseId}/exams/{examId}/student-exam/{studentExamId]/start
 
     /**
      * PUT /courses/:courseId/exams/:examId/exercise-groups-order : Update the order of exercise groups. If the received
