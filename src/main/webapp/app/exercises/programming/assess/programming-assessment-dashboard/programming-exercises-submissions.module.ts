@@ -9,6 +9,7 @@ import { RouterModule } from '@angular/router';
 import { ArtemisResultModule } from 'app/exercises/shared/result/result.module';
 import { ArtemisAssessmentSharedModule } from 'app/assessment/assessment-shared.module';
 import { SubmissionResultStatusModule } from 'app/overview/submission-result-status.module';
+import { ArtemisTextSubmissionAssessmentModule } from 'app/exercises/text/assess/text-submission-assessment.module';
 
 @NgModule({
     imports: [
@@ -21,6 +22,7 @@ import { SubmissionResultStatusModule } from 'app/overview/submission-result-sta
         ArtemisResultModule,
         ArtemisAssessmentSharedModule,
         SubmissionResultStatusModule,
+        ArtemisTextSubmissionAssessmentModule,
     ],
     declarations: [ProgrammingExerciseSubmissionsComponent],
 })

@@ -2,26 +2,7 @@
     <h4 [translateValues]="{ exerciseTitle: exercise.title }" jhiTranslate="artemisApp.programmingAssessment.dashboard.heading"></h4>
     <jhi-assessment-filters (filterChange)="updateFilteredSubmissions($event)" [submissions]="submissions"></jhi-assessment-filters>
     <jhi-assessment-warning [exercise]="exercise" [submissions]="filteredSubmissions"></jhi-assessment-warning>
-    <h4>
-        <ng-container *ngIf="submissions && submissions.length === 0">
-            <small class="text-warning">
-                {{ 'artemisApp.programmingAssessment.noSubmissions' | artemisTranslate: {} }}
-            </small>
-        </ng-container>
-        <ng-container *ngIf="submissions && submissions.length > 0 && exercise.assessmentType === AssessmentType.SEMI_AUTOMATIC">
-            <small [ngClass]="numberAssessedSubmissions === submissions.length ? 'text-success' : 'text-warning'">
-                {{
-                    'artemisApp.programmingAssessment.dashboard.progressDescription'
-                        | artemisTranslate
-                            : {
-                                  percentageAssessed: (numberAssessedSubmissions / submissions.length) * 100 | number: '0.0-0',
-                                  numberAssessed: numberAssessedSubmissions,
-                                  numberSubmissions: submissions.length
-                              }
-                }}
-            </small>
-        </ng-container>
-    </h4>
+    <jhi-assesment-progress-label [submissions]="submissions" [numberAssessedSubmissions]="numberAssessedSubmissions"></jhi-assesment-progress-label>
     <span *ngIf="submissions && submissions.length > 0" class="table-responsive">
         <table class="table table-striped exercise-table">
             <thead>
