@@ -7,14 +7,6 @@
                 <ng-content select="[pagetitle]"></ng-content>
                 <jhi-not-released-tag [exercise]="exercise"></jhi-not-released-tag>
             </h3>
-            <h4 class="d-md-flex" *ngIf="exercise.categories || exercise.difficulty">
-                <span *ngFor="let category of exerciseCategories">
-                    <span class="badge text-white me-1" [ngStyle]="{ backgroundColor: category.color }">{{ category.category }}</span>
-                </span>
-                <span *ngIf="exercise.difficulty">
-                    <jhi-difficulty-badge class="me-1" [exercise]="exercise" [showNoLevel]="false"></jhi-difficulty-badge>
-                </span>
-            </h4>
             <h4 class="row" *ngIf="exercise.maxPoints">
                 <span>
                     {{ 'artemisApp.courseOverview.exerciseDetails.points' | artemisTranslate }}
@@ -24,6 +16,12 @@
                         *ngIf="exercise.includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY"
                         [includedInOverallScore]="exercise.includedInOverallScore"
                     ></jhi-included-in-score-badge>
+                    <span *ngFor="let category of exerciseCategories">
+                        <span class="badge text-white me-1" [ngStyle]="{ backgroundColor: category.color }">{{ category.category }}</span>
+                    </span>
+                    <span *ngIf="exercise.difficulty">
+                        <jhi-difficulty-badge class="me-1" [exercise]="exercise" [showNoLevel]="false"></jhi-difficulty-badge>
+                    </span>
                 </span>
             </h4>
             <h4 class="row" *ngIf="exercise.assessmentType && exercise.type === ExerciseType.PROGRAMMING">
