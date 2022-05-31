@@ -68,13 +68,14 @@ export class HeaderExercisePageWithDetailsComponent implements OnInit {
             this.setIsNextDueDateExamMode();
         } else {
             this.dueDate = getExerciseDueDate(this.exercise, this.studentParticipation);
-            this.setIsNextDueDateCourseMode();
             this.individualComplaintDeadline = this.complaintService.getIndividualComplaintDueDate(this.exercise, this.course, this.studentParticipation);
             // The student can either still submit or there is a submission where the student did not have the chance to complain yet
             this.canComplainLaterOn =
                 (dayjs().isBefore(this.exercise.dueDate) ||
                     (!!this.studentParticipation?.submissionCount && this.studentParticipation?.submissionCount > 0 && !this.individualComplaintDeadline)) &&
                 (this.exercise.allowComplaintsForAutomaticAssessments || (!!this.exercise.assessmentType && this.exercise.assessmentType !== AssessmentType.AUTOMATIC));
+
+            this.setIsNextDueDateCourseMode();
 
             if (this.submissionPolicy) {
                 this.countSubmissions();
@@ -136,7 +137,7 @@ export class HeaderExercisePageWithDetailsComponent implements OnInit {
 
         const commitHashSet = new Set<string>();
         this.studentParticipation?.submissions
-            ?.filter((submission) => submission.type === SubmissionType.MANUAL && (!submission.results?.length || 0) === 0)
+            ?.filter((submission) => submission.type === SubmissionType.MANUAL && (submission.results?.length || 0) !== 0)
             .map((submission) => (submission as ProgrammingSubmission).commitHash)
             .forEach((commitHash: string) => commitHashSet.add(commitHash));
 
