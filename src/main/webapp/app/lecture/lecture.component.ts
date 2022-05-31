@@ -137,7 +137,7 @@ export class LectureComponent implements OnInit, OnDestroy {
      * Filters Lectures
      * @param filterChecked the filter checkbox that was clicked
      */
-    public applyFilters(): void {
+    applyFilters(): void {
         // Get the current system time
         const currentTime = dayjs();
         // Initialize empty arrays for filtered Lectures
