@@ -9,6 +9,7 @@ import { ModelingAssessmentDashboardComponent } from 'app/exercises/modeling/ass
 import { ModelingAssessmentEditorComponent } from 'app/exercises/modeling/assess/modeling-assessment-editor/modeling-assessment-editor.component';
 import { ArtemisFullscreenModule } from 'app/shared/fullscreen/fullscreen.module';
 import { SubmissionResultStatusModule } from 'app/overview/submission-result-status.module';
+import { ArtemisTextSubmissionAssessmentModule } from 'app/exercises/text/assess/text-submission-assessment.module';
 
 @NgModule({
     imports: [
@@ -20,6 +21,7 @@ import { SubmissionResultStatusModule } from 'app/overview/submission-result-sta
         ArtemisModelingAssessmentEditorRoutingModule,
         ModelingAssessmentModule,
         SubmissionResultStatusModule,
+        ArtemisTextSubmissionAssessmentModule,
     ],
     declarations: [ModelingAssessmentDashboardComponent, ModelingAssessmentEditorComponent],
     exports: [ModelingAssessmentEditorComponent],
