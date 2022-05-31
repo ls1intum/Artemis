@@ -330,8 +330,8 @@
         <ng-container *ngIf="!reEvaluationInProgress">
             <hr />
             <div class="question-options">
-                <div ngbTooltip="{{ 'artemisApp.dragAndDropQuestion.disabledPreviewTooltip' | artemisTranslate }}" [disableTooltip]="question.backgroundFilePath !== undefined">
-                    <button class="btn btn-outline-secondary" [disabled]="question.backgroundFilePath === undefined" (click)="togglePreview()">
+                <div ngbTooltip="{{ 'artemisApp.dragAndDropQuestion.disabledPreviewTooltip' | artemisTranslate }}" [disableTooltip]="!!question.backgroundFilePath">
+                    <button class="btn btn-outline-secondary" [disabled]="!question.backgroundFilePath" (click)="togglePreview()">
                         <fa-icon [icon]="faEye"></fa-icon>
                         <span jhiTranslate="entity.action.preview"></span>
                     </button>
