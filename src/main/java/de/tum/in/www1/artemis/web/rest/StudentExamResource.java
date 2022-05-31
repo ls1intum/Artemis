@@ -423,7 +423,7 @@ public class StudentExamResource {
 
         // 3rd fetch participations, submissions and results.
         List<StudentParticipation> participations = studentParticipationRepository
-                .findArchivedParticipationsByStudentIdAndIndividualExercisesWithEagerSubmissionsResultWithoutAssessor(studentExam);
+                .findParticipationsByStudentIdAndIndividualExercisesWithEagerSubmissionsResultWithoutAssessor(studentExam);
 
         boolean isAtLeastInstructor = authorizationCheckService.isAtLeastInstructorInCourse(studentExam.getExam().getCourse(), user);
 

@@ -588,7 +588,7 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
                 AND p.student.id = :#{#studentId}
                 AND p.exercise in :#{#exercises}
             """)
-    List<StudentParticipation> findArchivedParticipationsByStudentIdAndIndividualExercisesWithEagerSubmissionsResultIgnoreTestRuns(@Param("studentId") Long studentId,
+    List<StudentParticipation> findParticipationsByStudentIdAndIndividualExercisesWithEagerSubmissionsResultIgnoreTestRuns(@Param("studentId") Long studentId,
             @Param("exercises") List<Exercise> exercises, @Param("initializationDate") ZonedDateTime initializationDate);
 
     @Query("""
@@ -797,8 +797,8 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
      * @param studentExam studentExam with exercises loaded
      * @return student's participations with submissions and results.
      */
-    default List<StudentParticipation> findArchivedParticipationsByStudentIdAndIndividualExercisesWithEagerSubmissionsResultWithoutAssessor(StudentExam studentExam) {
-        return findArchivedParticipationsByStudentIdAndIndividualExercisesWithEagerSubmissionsResultIgnoreTestRuns(studentExam.getUser().getId(), studentExam.getExercises(),
+    default List<StudentParticipation> findParticipationsByStudentIdAndIndividualExercisesWithEagerSubmissionsResultWithoutAssessor(StudentExam studentExam) {
+        return findParticipationsByStudentIdAndIndividualExercisesWithEagerSubmissionsResultIgnoreTestRuns(studentExam.getUser().getId(), studentExam.getExercises(),
                 studentExam.getStartedDate());
     }
 
