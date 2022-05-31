@@ -6,7 +6,7 @@
             (click)="updateReaction(reactionMetaData.key)"
             [ngbTooltip]="reactionMetaData.value.reactingUsers | reactingUsersOnPosting | async"
         >
-            <ngx-emoji class="emoji" [emoji]="reactionMetaData.key" [size]="16"> </ngx-emoji>
+            <ngx-emoji [backgroundImageFn]="emojiSheetURL" class="emoji" [emoji]="reactionMetaData.key" [size]="16"> </ngx-emoji>
             <span class="emoji-count" [class.reaction-count--reacted]="reactionMetaData.value.hasReacted">{{ reactionMetaData.value.count }}</span>
         </button>
     </div>
@@ -41,6 +41,7 @@
             [recent]="selectedCourseEmojis"
             [i18n]="{ search: 'artemisApp.metis.searchEmoji' | artemisTranslate, categories: { recent: 'artemisApp.metis.courseEmojiSelectionCategory' | artemisTranslate } }"
             [darkMode]="darkModeEmojiPicker"
+            [backgroundImageFn]="emojiSheetURL"
         ></emoji-mart>
     </ng-template>
     <div class="col-auto p-0" *ngIf="displayPriority === DisplayPriority.PINNED || currentUserIsAtLeastTutor">
@@ -51,7 +52,8 @@
             [disabled]="!currentUserIsAtLeastTutor"
             (click)="currentUserIsAtLeastTutor && togglePin()"
         >
-            <ngx-emoji class="emoji" [emoji]="pinEmojiId" [size]="16" [ngbTooltip]="pinTooltip | artemisTranslate" [placement]="'auto'"> </ngx-emoji>
+            <ngx-emoji [backgroundImageFn]="emojiSheetURL" class="emoji" [emoji]="pinEmojiId" [size]="16" [ngbTooltip]="pinTooltip | artemisTranslate" [placement]="'auto'">
+            </ngx-emoji>
         </button>
     </div>
     <div class="col-auto p-0" *ngIf="displayPriority === DisplayPriority.ARCHIVED || currentUserIsAtLeastTutor">
@@ -62,20 +64,27 @@
             [disabled]="!currentUserIsAtLeastTutor"
             (click)="currentUserIsAtLeastTutor && toggleArchive()"
         >
-            <ngx-emoji class="emoji" [emoji]="archiveEmojiId" [size]="16" [ngbTooltip]="archiveTooltip | artemisTranslate" [placement]="'auto'"></ngx-emoji>
+            <ngx-emoji
+                [backgroundImageFn]="emojiSheetURL"
+                class="emoji"
+                [emoji]="archiveEmojiId"
+                [size]="16"
+                [ngbTooltip]="archiveTooltip | artemisTranslate"
+                [placement]="'auto'"
+            ></ngx-emoji>
         </button>
     </div>
     <!-- start discussion -->
     <div class="col-auto p-0" *ngIf="sortedAnswerPosts.length === 0">
         <button class="reaction-button clickable start-discussion-btn" (click)="openPostingCreateEditModal.emit()">
-            <ngx-emoji class="emoji" [emoji]="speechBalloonId" [size]="16"></ngx-emoji>
+            <ngx-emoji [backgroundImageFn]="emojiSheetURL" class="emoji" [emoji]="speechBalloonId" [size]="16"></ngx-emoji>
             <span class="emoji-count">{{ 'artemisApp.metis.startDiscussion' | artemisTranslate }}</span>
         </button>
     </div>
     <!-- expand answers -->
     <div class="col-auto p-0" *ngIf="!showAnswers && sortedAnswerPosts.length > 0">
         <button class="reaction-button clickable expand-answers-btn" (click)="showAnswersChange.emit(true)">
-            <ngx-emoji class="emoji" [emoji]="speechBalloonId" [size]="16"></ngx-emoji>
+            <ngx-emoji [backgroundImageFn]="emojiSheetURL" class="emoji" [emoji]="speechBalloonId" [size]="16"></ngx-emoji>
             <span class="emoji-count">{{
                 sortedAnswerPosts.length === 1
                     ? ('artemisApp.metis.showSingleAnswer' | artemisTranslate)
@@ -86,7 +95,7 @@
     <!-- collapse answers -->
     <div class="col-auto p-0" *ngIf="showAnswers && sortedAnswerPosts.length > 0">
         <button class="reaction-button clickable collapse-answers-btn" [class.reaction-button--reacted]="showAnswers" (click)="showAnswersChange.emit(false)">
-            <ngx-emoji class="emoji" [emoji]="closeCrossId" [size]="16"></ngx-emoji>
+            <ngx-emoji [backgroundImageFn]="emojiSheetURL" class="emoji" [emoji]="closeCrossId" [size]="16"></ngx-emoji>
             <span class="emoji-count">{{ 'artemisApp.metis.collapseAnswers' | artemisTranslate }}</span>
         </button>
     </div>

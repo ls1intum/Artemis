@@ -43,6 +43,8 @@ interface ReactionMetaDataMap {
 
 @Directive()
 export abstract class PostingsReactionsBarDirective<T extends Posting> implements OnInit, OnChanges, OnDestroy {
+    readonly emojiSheetURL = () => SERVER_API_URL + '/public/emoji/emoji_sheet_64_256.png';
+
     pinEmojiId: string = PIN_EMOJI_ID;
     archiveEmojiId: string = ARCHIVE_EMOJI_ID;
     speechBalloonId: string = SPEECH_BALLOON_ID;
