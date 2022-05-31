@@ -207,7 +207,9 @@ export class QuizExerciseDetailComponent extends QuizExerciseValidationDirective
             this.entity.title = '';
             this.entity.duration = 600;
             this.entity.isOpenForPractice = false;
-            this.entity.releaseDate = dayjs();
+            if (!this.isExamMode) {
+                this.entity.releaseDate = dayjs();
+            }
             this.entity.randomizeQuestionOrder = true;
             this.entity.quizQuestions = [];
             this.entity.quizMode = QuizMode.SYNCHRONIZED;
@@ -870,7 +872,8 @@ export class QuizExerciseDetailComponent extends QuizExerciseValidationDirective
      */
     prepareEntity(quizExercise: QuizExercise): void {
         if (this.isExamMode) {
-            quizExercise.releaseDate = dayjs(quizExercise.releaseDate);
+            // quizExercise.releaseDate = dayjs(quizExercise.releaseDate);
+            quizExercise.releaseDate = undefined;
         } else {
             quizExercise.releaseDate = quizExercise.releaseDate ? dayjs(quizExercise.releaseDate) : dayjs();
             quizExercise.duration = Number(quizExercise.duration);
