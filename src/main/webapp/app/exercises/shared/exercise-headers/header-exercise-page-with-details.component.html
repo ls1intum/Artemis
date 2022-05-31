@@ -9,19 +9,23 @@
             </h3>
             <h4 class="row" *ngIf="exercise.maxPoints">
                 <span>
-                    {{ 'artemisApp.courseOverview.exerciseDetails.points' | artemisTranslate }}
-                    {{ exercise.maxPoints }}
-                    <span *ngIf="exercise.bonusPoints">({{ 'artemisApp.courseOverview.exerciseDetails.bonus' | artemisTranslate }} {{ exercise.bonusPoints }})</span>
-                    <jhi-included-in-score-badge
-                        *ngIf="exercise.includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY"
-                        [includedInOverallScore]="exercise.includedInOverallScore"
-                    ></jhi-included-in-score-badge>
-                    <span *ngFor="let category of exerciseCategories">
-                        <span class="badge text-white me-1" [ngStyle]="{ backgroundColor: category.color }">{{ category.category }}</span>
-                    </span>
-                    <span *ngIf="exercise.difficulty">
-                        <jhi-difficulty-badge class="me-1" [exercise]="exercise" [showNoLevel]="false"></jhi-difficulty-badge>
-                    </span>
+                    <div class="col-auto">
+                        {{ 'artemisApp.courseOverview.exerciseDetails.points' | artemisTranslate }}
+                        {{ exercise.maxPoints }}
+                        <span *ngIf="exercise.bonusPoints">({{ 'artemisApp.courseOverview.exerciseDetails.bonus' | artemisTranslate }} {{ exercise.bonusPoints }})</span>
+                        <jhi-included-in-score-badge
+                            *ngIf="exercise.includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY"
+                            [includedInOverallScore]="exercise.includedInOverallScore"
+                        ></jhi-included-in-score-badge>
+                    </div>
+                    <div class="col">
+                        <span *ngFor="let category of exerciseCategories">
+                            <span class="badge text-white me-1" [ngStyle]="{ backgroundColor: category.color }">{{ category.category }}</span>
+                        </span>
+                        <span *ngIf="exercise.difficulty">
+                            <jhi-difficulty-badge class="me-1" [exercise]="exercise" [showNoLevel]="false"></jhi-difficulty-badge>
+                        </span>
+                    </div>
                 </span>
             </h4>
             <h4 class="row" *ngIf="exercise.assessmentType && exercise.type === ExerciseType.PROGRAMMING">
