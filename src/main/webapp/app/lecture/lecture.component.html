@@ -20,13 +20,20 @@
                     <ul ngbDropdownMenu class="checkbox-menu text-nowrap pe-2" aria-labelledby="filter-dropdown-button">
                         <li>
                             <label>
-                                <input class="ms-2 form-check-input" (change)="toggleFilters([filterType.PAST])" [checked]="activeFilters.has(filterType.PAST)" type="checkbox" />
+                                <input
+                                    id="filterPast"
+                                    class="ms-2 form-check-input"
+                                    (change)="toggleFilters([filterType.PAST])"
+                                    [checked]="activeFilters.has(filterType.PAST)"
+                                    type="checkbox"
+                                />
                                 <span class="ms-2" jhiTranslate="artemisApp.lecture.home.filterOptions.filterPast">Past</span>
                             </label>
                         </li>
                         <li>
                             <label>
                                 <input
+                                    id="filterCurrent"
                                     class="ms-2 form-check-input"
                                     (change)="toggleFilters([filterType.CURRENT])"
                                     [checked]="activeFilters.has(filterType.CURRENT)"
@@ -38,6 +45,7 @@
                         <li>
                             <label>
                                 <input
+                                    id="filterFuture"
                                     class="ms-2 form-check-input"
                                     (change)="toggleFilters([filterType.FUTURE])"
                                     [checked]="activeFilters.has(filterType.FUTURE)"
@@ -49,6 +57,7 @@
                         <li>
                             <label>
                                 <input
+                                    id="filterUnspecified"
                                     class="ms-2 form-check-input"
                                     (change)="toggleFilters([filterType.UNSPECIFIED])"
                                     [checked]="activeFilters.has(filterType.UNSPECIFIED)"
