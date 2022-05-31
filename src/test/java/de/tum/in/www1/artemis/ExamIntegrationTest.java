@@ -2,9 +2,9 @@ package de.tum.in.www1.artemis;
 
 import static java.time.ZonedDateTime.now;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.awaitility.Awaitility.await;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 import java.nio.file.Files;
@@ -37,14 +37,13 @@ import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.TextAssessmentKnowledgeService;
 import de.tum.in.www1.artemis.service.dto.StudentDTO;
-import de.tum.in.www1.artemis.service.exam.ExamDateService;
-import de.tum.in.www1.artemis.service.exam.ExamRegistrationService;
-import de.tum.in.www1.artemis.service.exam.ExamService;
+import de.tum.in.www1.artemis.service.exam.*;
 import de.tum.in.www1.artemis.service.ldap.LdapUserDto;
 import de.tum.in.www1.artemis.service.user.PasswordService;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.util.ZipFileTestUtilService;
 import de.tum.in.www1.artemis.web.rest.dto.*;
+import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
@@ -106,6 +105,9 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     @Autowired
     private ZipFileTestUtilService zipFileTestUtilService;
 
+    @Autowired
+    private ExamAccessService examAccessService;
+
     private List<User> users;
 
     private Course course1;
@@ -115,6 +117,10 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     private Exam exam1;
 
     private Exam exam2;
+
+    private Exam testExam1;
+
+    private Exam testExam2;
 
     private final int numberOfStudents = 10;
 
@@ -127,6 +133,8 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         course2 = database.addEmptyCourse();
         exam1 = database.addExam(course1);
         exam2 = database.addExamWithExerciseGroup(course1, true);
+        testExam1 = database.addTestExam(course1);
+        testExam2 = database.addTestExamWithExerciseGroup(course1, true);
 
         instructor = users.get(users.size() - 1);
 
@@ -2374,5 +2382,85 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     @WithMockUser(username = "user1", roles = "USER")
     public void testGetExamTitleForNonExistingExam() throws Exception {
         request.get("/api/exams/123124123123/title", HttpStatus.NOT_FOUND, String.class);
+    }
+
+    // ExamRegistration Service - selfRegisterToTestExam
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void testSelfRegisterToTestExam_noTestExam() {
+        assertThatThrownBy(() -> examRegistrationService.selfRegisterToTestExam(course1, exam1.getId())).isInstanceOf(AccessForbiddenException.class);
+    }
+
+    @Test
+    @WithMockUser(username = "student42", roles = "USER")
+    public void testSelfRegisterToTestExam_studentNotPartOfCourse() {
+        assertThatThrownBy(() -> examRegistrationService.selfRegisterToTestExam(course1, exam1.getId())).isInstanceOf(AccessForbiddenException.class);
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void testSelfRegisterToTestExam_successfulRegistration() {
+        Exam testExam = ModelFactory.generateTestExam(course1);
+        testExam.addRegisteredUser(users.get(0));
+        testExam = examRepository.save(testExam);
+        examRegistrationService.selfRegisterToTestExam(course1, testExam.getId());
+        Exam testExamReladed = examRepository.findByIdWithRegisteredUsersElseThrow(testExam.getId());
+        assertTrue(testExamReladed.getRegisteredUsers().contains(users.get(0)));
+    }
+
+    // ExamResource - getStudentExamForTestExamForStart
+    @Test
+    @WithMockUser(username = "student42", roles = "USER")
+    public void testGetStudentExamForTestExamForStart_notRegisteredInCourse() throws Exception {
+        request.get("/api/courses/" + course1.getId() + "/exams/" + testExam1.getId() + "/start-test-exam", HttpStatus.FORBIDDEN, String.class);
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void testGetStudentExamForTestExamForStart_notVisible() throws Exception {
+        testExam1.setVisibleDate(ZonedDateTime.now().plusMinutes(60));
+        testExam1 = examRepository.save(testExam1);
+
+        request.get("/api/courses/" + course1.getId() + "/exams/" + testExam1.getId() + "/start-test-exam", HttpStatus.FORBIDDEN, StudentExam.class);
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void testGetStudentExamForTestExamForStart_sucessful() throws Exception {
+
+        request.get("/api/courses/" + course1.getId() + "/exams/" + testExam1.getId() + "/start-test-exam", HttpStatus.OK, StudentExam.class);
+    }
+
+    // ExamResource - getStudentExamByIdForTestExamForStart
+    @Test
+    @WithMockUser(username = "student42", roles = "USER")
+    public void TestGetStudentExamByIdForTestExamForStart_notRegisteredInCourse() throws Exception {
+        StudentExam studentExam = database.addStudentExam(testExam1);
+        request.get("/api/courses/" + course1.getId() + "/exams/" + testExam1.getId() + "/test-exam/" + studentExam.getId() + "/start", HttpStatus.FORBIDDEN, StudentExam.class);
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void TestGetStudentExamByIdForTestExamForStart_examIdNotMatching() throws Exception {
+        StudentExam studentExam = database.addStudentExam(testExam1);
+        request.get("/api/courses/" + course1.getId() + "/exams/" + testExam1.getId() + 2 + "/test-exam/" + studentExam.getId() + "/start", HttpStatus.FORBIDDEN,
+                StudentExam.class);
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void TestGetStudentExamByIdForTestExamForStart_realExam() throws Exception {
+        StudentExam studentExam = database.addStudentExam(exam1);
+        request.get("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/test-exam/" + studentExam.getId() + "/start", HttpStatus.FORBIDDEN, StudentExam.class);
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void TestGetStudentExamByIdForTestExamForStart_sucessful() throws Exception {
+        StudentExam studentExam = database.addStudentExam(testExam1);
+
+        StudentExam studentExamRetrieved = request.get("/api/courses/" + course1.getId() + "/exams/" + testExam1.getId() + "/test-exam/" + studentExam.getId() + "/start",
+                HttpStatus.OK, StudentExam.class);
+        assertEquals(studentExam, studentExamRetrieved);
     }
 }

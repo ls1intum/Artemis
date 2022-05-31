@@ -1183,6 +1183,12 @@ public class DatabaseUtilService {
         return exam;
     }
 
+    public Exam addTestExam(Course course) {
+        Exam exam = ModelFactory.generateTestExam(course);
+        examRepository.save(exam);
+        return exam;
+    }
+
     public Exam addExam(Course course, User user, ZonedDateTime visibleDate, ZonedDateTime startDate, ZonedDateTime endDate) {
         Exam exam = ModelFactory.generateExam(course);
         exam.addRegisteredUser(user);
@@ -1196,6 +1202,13 @@ public class DatabaseUtilService {
 
     public Exam addExamWithExerciseGroup(Course course, boolean mandatory) {
         Exam exam = ModelFactory.generateExam(course);
+        ModelFactory.generateExerciseGroup(mandatory, exam);
+        examRepository.save(exam);
+        return exam;
+    }
+
+    public Exam addTestExamWithExerciseGroup(Course course, boolean mandatory) {
+        Exam exam = ModelFactory.generateTestExam(course);
         ModelFactory.generateExerciseGroup(mandatory, exam);
         examRepository.save(exam);
         return exam;

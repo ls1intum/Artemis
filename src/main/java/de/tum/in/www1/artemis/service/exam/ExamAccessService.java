@@ -98,7 +98,7 @@ public class ExamAccessService {
 
         // Check that the current user is at least student in the course.
         Course course = courseRepository.findByIdElseThrow(courseId);
-        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, currentUser);
+        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, null);
 
         StudentExam studentExam = studentExamRepository.findByIdElseThrow(studentExamId);
 
@@ -131,7 +131,7 @@ public class ExamAccessService {
 
         // Check that the current user is at least student in the course.
         Course course = courseRepository.findByIdElseThrow(courseId);
-        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, currentUser);
+        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, null);
 
         StudentExam studentExam = studentExamService.generateTestExam(examId, currentUser);
         // For the start of the exam, the exercises are not needed. They are later loaded via StudentExamResource

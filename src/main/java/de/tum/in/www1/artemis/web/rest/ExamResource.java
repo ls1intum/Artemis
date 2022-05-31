@@ -865,8 +865,11 @@ public class ExamResource {
      */
     @GetMapping("/courses/{courseId}/exams/{examId}/test-exam/{studentExamId}/start")
     @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<StudentExam> getStudentExamForTestExamForStart(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long studentExamId) {
-        log.debug("REST request to get StudentExam {}for TestExam {} for conduction", studentExamId, examId);
+    public ResponseEntity<StudentExam> getStudentExamByIdForTestExamForStart(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long studentExamId) {
+        /*
+         * if (true) { throw new ConflictException("Hello World", "Exam", "test"); }
+         */
+        log.debug("REST request to get StudentExam {} for TestExam {} for conduction", studentExamId, examId);
 
         StudentExam exam = examAccessService.getStudentExamForTestExamElseThrow(courseId, examId, studentExamId);
 
