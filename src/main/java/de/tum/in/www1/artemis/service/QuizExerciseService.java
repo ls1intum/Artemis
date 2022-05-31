@@ -402,7 +402,7 @@ public class QuizExerciseService {
 
         // for quizzes, we need to delete the statistics, and we need to reset the quiz to its original state
         quizExercise.setIsOpenForPractice(Boolean.FALSE);
-        quizExercise.setReleaseDate(ZonedDateTime.now().plusYears(1));
+        quizExercise.setReleaseDate(ZonedDateTime.now());
         quizExercise.setDueDate(null);
         quizExercise.setQuizBatches(Set.of());
 
