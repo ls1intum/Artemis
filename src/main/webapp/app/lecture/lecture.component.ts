@@ -7,13 +7,19 @@ import { AccountService } from 'app/core/auth/account.service';
 import { LectureService } from './lecture.service';
 import { Lecture } from 'app/entities/lecture.model';
 import { ActivatedRoute, Router } from '@angular/router';
-import { faFilter } from '@fortawesome/free-solid-svg-icons';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { onError } from 'app/shared/util/global.utils';
 import { AlertService } from 'app/core/util/alert.service';
 import { EventManager } from 'app/core/util/event-manager.service';
-import { faFile, faPencilAlt, faPlus, faPuzzlePiece, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { faFile, faPencilAlt, faPlus, faPuzzlePiece, faTimes, faFilter } from '@fortawesome/free-solid-svg-icons';
 import { LectureImportComponent } from 'app/lecture/lecture-import.component';
+
+export enum LectureDateFilter {
+    PAST = 'filterPast',
+    CURRENT = 'filterCurrent',
+    FUTURE = 'filterFuture',
+    UNSPECIFIED = 'filterUnspecifiedDates',
+}
 
 @Component({
     selector: 'jhi-lecture',
@@ -29,6 +35,9 @@ export class LectureComponent implements OnInit, OnDestroy {
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
 
+    activeFilters: Set<LectureDateFilter>;
+    readonly filterType = LectureDateFilter;
+
     // Icons
     faPlus = faPlus;
     faTimes = faTimes;
@@ -36,11 +45,6 @@ export class LectureComponent implements OnInit, OnDestroy {
     faFile = faFile;
     faPuzzlePiece = faPuzzlePiece;
     faFilter = faFilter;
-    // Filter options checkbox state (checked by default)
-    private filterPast = true;
-    private filterCurrent = true;
-    private filterFuture = true;
-    private filterUnspecifiedDates = true;
 
     constructor(
         protected lectureService: LectureService,
@@ -74,6 +78,7 @@ export class LectureComponent implements OnInit, OnDestroy {
         this.accountService.identity().then((account) => {
             this.currentAccount = account;
         });
+        this.activeFilters = new Set([LectureDateFilter.PAST, LectureDateFilter.CURRENT, LectureDateFilter.FUTURE, LectureDateFilter.UNSPECIFIED]);
         this.registerChangeInLectures();
     }
 
@@ -132,27 +137,11 @@ export class LectureComponent implements OnInit, OnDestroy {
      * Filters Lectures
      * @param filterChecked the filter checkbox that was clicked
      */
-    public applyFilters(filterChecked: string): void {
+    public applyFilters(): void {
         // Get the current system time
         const currentTime = dayjs();
         // Initialize empty arrays for filtered Lectures
         let filteredLectures: Array<Lecture> = [];
-
-        // handle checkbox toggle
-        switch (filterChecked) {
-            case 'filterPast':
-                this.filterPast = !this.filterPast;
-                break;
-            case 'filterCurrent':
-                this.filterCurrent = !this.filterCurrent;
-                break;
-            case 'filterFuture':
-                this.filterFuture = !this.filterFuture;
-                break;
-            case 'filterUnspecifiedDates':
-                this.filterUnspecifiedDates = !this.filterUnspecifiedDates;
-                break;
-        }
 
         // update filteredLectures based on the selected filter option checkboxes
         const pastLectures = this.lectures.filter((lecture) => lecture.startDate !== undefined && lecture.endDate?.isBefore(dayjs(currentTime)));
@@ -160,11 +149,20 @@ export class LectureComponent implements OnInit, OnDestroy {
         const futureLectures = this.lectures.filter((lecture) => lecture.endDate !== undefined && lecture.startDate?.isAfter(dayjs(currentTime)));
         const unspecifiedDatesLectures = this.lectures.filter((lecture) => lecture.startDate === undefined || lecture.endDate === undefined);
 
-        filteredLectures = this.filterPast ? filteredLectures.concat(pastLectures) : filteredLectures;
-        filteredLectures = this.filterCurrent ? filteredLectures.concat(currentLectures) : filteredLectures;
-        filteredLectures = this.filterFuture ? filteredLectures.concat(futureLectures) : filteredLectures;
-        filteredLectures = this.filterUnspecifiedDates ? filteredLectures.concat(unspecifiedDatesLectures) : filteredLectures;
+        filteredLectures = this.activeFilters.has(LectureDateFilter.PAST) ? filteredLectures.concat(pastLectures) : filteredLectures;
+        filteredLectures = this.activeFilters.has(LectureDateFilter.CURRENT) ? filteredLectures.concat(currentLectures) : filteredLectures;
+        filteredLectures = this.activeFilters.has(LectureDateFilter.FUTURE) ? filteredLectures.concat(futureLectures) : filteredLectures;
+        filteredLectures = this.activeFilters.has(LectureDateFilter.UNSPECIFIED) ? filteredLectures.concat(unspecifiedDatesLectures) : filteredLectures;
         filteredLectures.sort((first, second) => 0 - (first.id! < second.id! ? 1 : -1));
         this.filteredLectures = filteredLectures;
+    }
+
+    /**
+     * Filters all displayed lectures by applying the selected activeFilters
+     * @param filters: The filters which should be applied.
+     */
+    toggleFilters(filters: LectureDateFilter[]) {
+        filters.forEach((f) => (this.activeFilters.has(f) ? this.activeFilters.delete(f) : this.activeFilters.add(f)));
+        this.applyFilters();
     }
 }
