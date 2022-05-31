@@ -52,11 +52,9 @@ export class PostFooterComponent extends PostingFooterDirective<Post> implements
     }
 
     /**
-     * on leaving the page, the modal for post creation should be closed,
-     * the container for answerPost creation or editing should be cleared
+     * on leaving the page, the container for answerPost creation or editing should be cleared
      */
     ngOnDestroy(): void {
-        this.modalRef?.close();
         this.answerPostCreateEditModal?.createEditAnswerPostContainerRef?.clear();
     }
 
