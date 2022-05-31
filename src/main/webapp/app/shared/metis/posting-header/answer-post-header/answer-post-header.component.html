@@ -16,9 +16,8 @@
             [ngbTooltip]="'artemisApp.metis.editPosting' | artemisTranslate"
             container="body"
             [icon]="faPencilAlt"
-            (click)="editAnswerPostEditModal.open()"
+            (click)="openPostingCreateEditModal.emit()"
         ></fa-icon>
-        <jhi-answer-post-create-edit-modal #editAnswerPostEditModal [posting]="posting"></jhi-answer-post-create-edit-modal>
         <jhi-confirm-icon
             *ngIf="isAtLeastTutorInCourse || isAuthorOfPosting"
             iconSize="xs"

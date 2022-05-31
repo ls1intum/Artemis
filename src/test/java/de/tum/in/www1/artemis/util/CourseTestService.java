@@ -1960,4 +1960,16 @@ public class CourseTestService {
         assertThat(newStudents).hasSize(2);
         assertThat(newStudents).contains(dto1, dto2);
     }
+
+    // Test
+    public void testCreateCourseWithValidStartAndEndDate() throws Exception {
+        Course course = ModelFactory.generateCourse(null, ZonedDateTime.now().minusDays(1), ZonedDateTime.now(), new HashSet<>(), "student", "tutor", "editor", "instructor");
+        request.post("/api/courses", course, HttpStatus.CREATED);
+    }
+
+    // Test
+    public void testCreateCourseWithInvalidStartAndEndDate() throws Exception {
+        Course course = ModelFactory.generateCourse(null, ZonedDateTime.now().plusDays(1), ZonedDateTime.now(), new HashSet<>(), "student", "tutor", "editor", "instructor");
+        request.post("/api/courses", course, HttpStatus.BAD_REQUEST);
+    }
 }
