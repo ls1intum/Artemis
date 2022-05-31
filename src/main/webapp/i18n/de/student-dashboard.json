@@ -184,8 +184,6 @@
                 "assessmentType": "Bewertungsart:",
                 "submissionDue": "Abgabe bis:",
                 "submissionDueTooltip": "Die Abgabe ist bis {{date}} möglich.",
-                "testsAfterDueDate": "Testdurchlauf nach Abgabefrist:",
-                "testsAfterDueDateTooltip": "Die Tests werden am {{date}} erneut durchlaufen.",
                 "assessmentDue": "Bewertung bis:",
                 "assessmentDueTooltip": "Die Frist für die Bewertung ist am {{date}}.",
                 "complaintDue": "Beschwerde bis:",

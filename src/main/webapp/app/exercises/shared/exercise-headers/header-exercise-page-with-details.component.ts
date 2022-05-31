@@ -12,6 +12,8 @@ import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { Course } from 'app/entities/course.model';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { ComplaintService } from 'app/complaints/complaint.service';
+import { SubmissionType } from 'app/entities/submission.model';
+import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
 
 @Component({
     selector: 'jhi-header-exercise-page-with-details',
@@ -20,6 +22,7 @@ import { ComplaintService } from 'app/complaints/complaint.service';
 export class HeaderExercisePageWithDetailsComponent implements OnInit {
     readonly IncludedInOverallScore = IncludedInOverallScore;
     readonly AssessmentType = AssessmentType;
+    readonly ExerciseType = ExerciseType;
     readonly getIcon = getIcon;
     readonly getIconTooltip = getIconTooltip;
 
@@ -41,6 +44,7 @@ export class HeaderExercisePageWithDetailsComponent implements OnInit {
     public individualComplaintDeadline?: dayjs.Dayjs;
     public isNextDueDate: boolean[];
     public canComplainLaterOn: boolean;
+    public numberOfSubmissions: number;
 
     icon: IconProp;
 
@@ -71,6 +75,10 @@ export class HeaderExercisePageWithDetailsComponent implements OnInit {
                 (dayjs().isBefore(this.exercise.dueDate) ||
                     (!!this.studentParticipation?.submissionCount && this.studentParticipation?.submissionCount > 0 && !this.individualComplaintDeadline)) &&
                 (this.exercise.allowComplaintsForAutomaticAssessments || (!!this.exercise.assessmentType && this.exercise.assessmentType !== AssessmentType.AUTOMATIC));
+
+            if (this.submissionPolicy) {
+                this.countSubmissions();
+            }
         }
     }
 
@@ -107,18 +115,31 @@ export class HeaderExercisePageWithDetailsComponent implements OnInit {
      * Determines what element of the header should be highlighted. The highlighted deadline/time is the one being due next
      */
     private setIsNextDueDateCourseMode() {
-        this.isNextDueDate = [false, false, false, false, false];
+        this.isNextDueDate = [false, false, false, false];
         const now = dayjs();
         if (now.isBefore(this.dueDate)) {
             this.isNextDueDate[0] = true;
-        } else if (now.isBefore(this.programmingExercise?.buildAndTestStudentSubmissionsAfterDueDate)) {
-            this.isNextDueDate[1] = true;
         } else if (now.isBefore(this.exercise.assessmentDueDate)) {
-            this.isNextDueDate[2] = true;
+            this.isNextDueDate[1] = true;
         } else if (now.isBefore(this.individualComplaintDeadline)) {
-            this.isNextDueDate[3] = true;
+            this.isNextDueDate[2] = true;
         } else if (this.canComplainLaterOn) {
-            this.isNextDueDate[4] = true;
+            this.isNextDueDate[3] = true;
         }
+    }
+
+    private countSubmissions() {
+        let submissionCompensation = 0;
+        if (this.studentParticipation?.submissions && this.studentParticipation?.submissions.length > 0) {
+            submissionCompensation = (this.studentParticipation?.submissions.first()?.results?.length || 0) === 0 ? 1 : 0;
+        }
+
+        const commitHashSet = new Set<string>();
+        this.studentParticipation?.submissions
+            ?.filter((submission) => submission.type === SubmissionType.MANUAL && (!submission.results?.length || 0) === 0)
+            .map((submission) => (submission as ProgrammingSubmission).commitHash)
+            .forEach((commitHash: string) => commitHashSet.add(commitHash));
+
+        this.numberOfSubmissions = submissionCompensation + commitHashSet.size;
     }
 }
