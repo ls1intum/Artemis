@@ -173,6 +173,10 @@ public class QuizBatchService {
         if (batch.isEmpty() && quizExercise.getQuizMode() == QuizMode.SYNCHRONIZED) {
             return Optional.of(getOrCreateSynchronizedQuizBatch(quizExercise));
         }
+        if (quizExercise.getQuizBatches() != null && batch.isPresent()) {
+            final Long id = batch.get();
+            return quizExercise.getQuizBatches().stream().filter(b -> Objects.equals(b.getId(), id)).findAny();
+        }
         return batch.flatMap(quizBatchRepository::findById);
     }
 }
