@@ -27,14 +27,13 @@ import { Result } from 'app/entities/result.model';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { StudentExamDetailTableRowComponent } from 'app/exam/manage/student-exams/student-exam-detail-table-row/student-exam-detail-table-row.component';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
-import { GradingSystemService } from 'app/grading-system/grading-system.service';
 import { DataTableComponent } from 'app/shared/data-table/data-table.component';
 import { AlertService } from 'app/core/util/alert.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { MockTranslateValuesDirective } from '../../../../helpers/mocks/directive/mock-translate-values.directive';
 import { StudentExamWorkingTimeComponent } from 'app/exam/shared/student-exam-working-time.component';
 import { GradeType } from 'app/entities/grading-scale.model';
-import { StudentExamWithGradeDTO, StudentResult } from 'app/exam/exam-scores/exam-score-dtos.model';
+import { StudentExamWithGradeDTO } from 'app/exam/exam-scores/exam-score-dtos.model';
 
 describe('StudentExamDetailComponent', () => {
     let studentExamDetailComponentFixture: ComponentFixture<StudentExamDetailComponent>;
@@ -50,7 +49,6 @@ describe('StudentExamDetailComponent', () => {
     let result: Result;
 
     let studentExamService: any;
-    let gradingSystemService: GradingSystemService;
 
     beforeEach(() => {
         course = { id: 1 };
@@ -186,7 +184,6 @@ describe('StudentExamDetailComponent', () => {
                 studentExamDetailComponentFixture = TestBed.createComponent(StudentExamDetailComponent);
                 studentExamDetailComponent = studentExamDetailComponentFixture.componentInstance;
                 studentExamService = TestBed.inject(StudentExamService);
-                gradingSystemService = TestBed.inject(GradingSystemService);
             });
     });
 

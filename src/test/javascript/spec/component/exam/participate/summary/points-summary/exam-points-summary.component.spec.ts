@@ -16,8 +16,6 @@ import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { Result } from 'app/entities/result.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
-import { GradingSystemService } from 'app/grading-system/grading-system.service';
-import { GradeDTO } from 'app/entities/grade-step.model';
 import { GradeType } from 'app/entities/grading-scale.model';
 import { Course } from 'app/entities/course.model';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -118,15 +116,7 @@ const programmingExerciseTwo = {
 } as ProgrammingExercise;
 const exercises = [textExercise, quizExercise, modelingExercise, programmingExercise, programmingExerciseTwo, notIncludedTextExercise, bonusTextExercise];
 
-const gradeDto = {
-    gradeName: 'Name',
-    gradeType: GradeType.GRADE,
-    isPassingGrade: true,
-} as GradeDTO;
-
 describe('ExamPointsSummaryComponent', () => {
-    let gradingSystemService: GradingSystemService;
-
     beforeEach(() => {
         return TestBed.configureTestingModule({
             imports: [RouterTestingModule.withRoutes([]), MockModule(NgbModule), HttpClientTestingModule],
@@ -174,7 +164,6 @@ describe('ExamPointsSummaryComponent', () => {
                 component.gradingScaleExists = false;
                 component.studentExamWithGrade = studentExamWithGrade;
                 component.exercises = studentExamWithGrade.studentExam.exercises!;
-                gradingSystemService = TestBed.inject(GradingSystemService);
             });
     });
 

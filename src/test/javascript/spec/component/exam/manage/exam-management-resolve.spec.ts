@@ -8,7 +8,6 @@ import { HttpResponse } from '@angular/common/http';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { Exam } from 'app/entities/exam.model';
 import { StudentExamService } from 'app/exam/manage/student-exams/student-exam.service';
-import { StudentExam } from 'app/entities/student-exam.model';
 import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
 import { StudentExamWithGradeDTO } from 'app/exam/exam-scores/exam-score-dtos.model';
 

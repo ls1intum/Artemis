@@ -11,7 +11,6 @@ import dayjs from 'dayjs/esm';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { getLatestSubmissionResult, setLatestSubmissionResult } from 'app/entities/submission.model';
 import { GradeType } from 'app/entities/grading-scale.model';
-import { GradingSystemService } from 'app/grading-system/grading-system.service';
 import { faSave } from '@fortawesome/free-solid-svg-icons';
 import { getRelativeWorkingTimeExtension, normalWorkingTime } from 'app/exam/participate/exam.utils';
 import { Exercise } from 'app/entities/exercise.model';
