@@ -57,7 +57,6 @@ public class VideoUnitResource {
      * @param videoUnit provided video unit
      */
     private void validateVideoUrl(VideoUnit videoUnit) {
-        // Validate the URL
         try {
             new URL(videoUnit.getSource());
         }
