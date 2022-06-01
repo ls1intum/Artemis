@@ -122,6 +122,8 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
     private Exam testExam2;
 
+    private StudentExam studentExam1;
+
     private final int numberOfStudents = 10;
 
     private User instructor;
@@ -135,6 +137,7 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         exam2 = database.addExamWithExerciseGroup(course1, true);
         testExam1 = database.addTestExam(course1);
         testExam2 = database.addTestExamWithExerciseGroup(course1, true);
+        studentExam1 = database.addStudentExam(testExam1);
 
         instructor = users.get(users.size() - 1);
 
@@ -2426,7 +2429,15 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void testGetStudentExamForTestExamForStart_sucessful() throws Exception {
+    public void testGetStudentExamForTestExamForStart_ExamDoesNotBelongToCourse() throws Exception {
+        Exam testExam = database.addTestExam(course2);
+
+        request.get("/api/courses/" + course1.getId() + "/exams/" + testExam.getId() + "/start-test-exam", HttpStatus.CONFLICT, StudentExam.class);
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void testGetStudentExamForTestExamForStart_successful() throws Exception {
 
         request.get("/api/courses/" + course1.getId() + "/exams/" + testExam1.getId() + "/start-test-exam", HttpStatus.OK, StudentExam.class);
     }
@@ -2435,32 +2446,50 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     @Test
     @WithMockUser(username = "student42", roles = "USER")
     public void TestGetStudentExamByIdForTestExamForStart_notRegisteredInCourse() throws Exception {
-        StudentExam studentExam = database.addStudentExam(testExam1);
-        request.get("/api/courses/" + course1.getId() + "/exams/" + testExam1.getId() + "/test-exam/" + studentExam.getId() + "/start", HttpStatus.FORBIDDEN, StudentExam.class);
+        request.get("/api/courses/" + course1.getId() + "/exams/" + testExam1.getId() + "/test-exam/" + studentExam1.getId() + "/start", HttpStatus.FORBIDDEN, StudentExam.class);
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void TestGetStudentExamByIdForTestExamForStart_studentExamNotExistent() throws Exception {
+        request.get("/api/courses/" + course1.getId() + "/exams/" + testExam1.getId() + "/test-exam/" + 5555L + "/start", HttpStatus.NOT_FOUND, StudentExam.class);
     }
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
     public void TestGetStudentExamByIdForTestExamForStart_examIdNotMatching() throws Exception {
-        StudentExam studentExam = database.addStudentExam(testExam1);
-        request.get("/api/courses/" + course1.getId() + "/exams/" + testExam1.getId() + 2 + "/test-exam/" + studentExam.getId() + "/start", HttpStatus.FORBIDDEN,
+        request.get("/api/courses/" + course1.getId() + "/exams/" + testExam1.getId() + 2 + "/test-exam/" + studentExam1.getId() + "/start", HttpStatus.FORBIDDEN,
                 StudentExam.class);
     }
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
     public void TestGetStudentExamByIdForTestExamForStart_realExam() throws Exception {
-        StudentExam studentExam = database.addStudentExam(exam1);
-        request.get("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/test-exam/" + studentExam.getId() + "/start", HttpStatus.FORBIDDEN, StudentExam.class);
+        request.get("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/test-exam/" + studentExam1.getId() + "/start", HttpStatus.FORBIDDEN, StudentExam.class);
     }
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void TestGetStudentExamByIdForTestExamForStart_sucessful() throws Exception {
-        StudentExam studentExam = database.addStudentExam(testExam1);
-
-        StudentExam studentExamRetrieved = request.get("/api/courses/" + course1.getId() + "/exams/" + testExam1.getId() + "/test-exam/" + studentExam.getId() + "/start",
+    public void TestGetStudentExamByIdForTestExamForStart_successful() throws Exception {
+        StudentExam studentExamRetrieved = request.get("/api/courses/" + course1.getId() + "/exams/" + testExam1.getId() + "/test-exam/" + studentExam1.getId() + "/start",
                 HttpStatus.OK, StudentExam.class);
-        assertEquals(studentExam, studentExamRetrieved);
+        assertEquals(studentExam1, studentExamRetrieved);
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void TestGetStudentExamByIdForTestExamForStart_notVisible() throws Exception {
+        testExam1.setVisibleDate(ZonedDateTime.now().plusMinutes(60));
+        testExam1 = examRepository.save(testExam1);
+
+        request.get("/api/courses/" + course1.getId() + "/exams/" + testExam1.getId() + "/test-exam/" + studentExam1.getId() + "/start", HttpStatus.FORBIDDEN, StudentExam.class);
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void TestGetStudentExamByIdForTestExamForStart_ExamDoesNotBelongToCourse() throws Exception {
+        Exam testExam = database.addTestExam(course2);
+
+        request.get("/api/courses/" + course1.getId() + "/exams/" + testExam.getId() + "/test-exam/" + studentExam1.getId() + "/start", HttpStatus.FORBIDDEN, StudentExam.class);
     }
 }

@@ -1111,6 +1111,7 @@ public class DatabaseUtilService {
         exam.setRandomizeExerciseOrder(true);
         exam.setStartDate(ZonedDateTime.now().plusHours(2));
         exam.setEndDate(ZonedDateTime.now().plusHours(4));
+        exam.setWorkingTime(2 * 60 * 60);
         exam.setMaxPoints(20);
         exam = examRepository.save(exam);
 
