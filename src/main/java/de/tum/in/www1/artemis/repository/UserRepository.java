@@ -153,7 +153,8 @@ public interface UserRepository extends JpaRepository<User, Long> {
             SELECT user FROM User user
             LEFT JOIN user.authorities ua
             WHERE (user.login like %:#{#searchTerm}% or user.email like %:#{#searchTerm}%
-            OR user.lastName like %:#{#searchTerm}% or user.firstName like %:#{#searchTerm}%) AND ua IN :authorities
+            OR user.lastName like %:#{#searchTerm}% or user.firstName like %:#{#searchTerm}%)
+            AND ua IN :authorities
             AND (user.isInternal = :internal or not user.isInternal = :external)
             AND (user.activated = :activated or not user.activated = :deactivated)
             """)
@@ -193,15 +194,24 @@ public interface UserRepository extends JpaRepository<User, Long> {
      * @return all users
      */
     default Page<UserDTO> getAllManagedUsers(UserPageableSearchDTO<String> userSearch) {
+        // Prepare filter
         final var searchTerm = userSearch.getSearchTerm();
         var sorting = Sort.by(userSearch.getSortedColumn());
         sorting = userSearch.getSortingOrder() == SortingOrder.ASCENDING ? sorting.ascending() : sorting.descending();
         final var sorted = PageRequest.of(userSearch.getPage(), userSearch.getPageSize(), sorting);
+
+        // List of authorities that a user should match at least one
         final var authorities = userSearch.getAuthorities().stream().map((auth) -> new Authority("ROLE_" + auth)).collect(Collectors.toSet());
+
+        // Internal or external users or both
         final var internal = userSearch.getOrigin().contains("INTERNAL");
         final var external = userSearch.getOrigin().contains("EXTERNAL");
+
+        // Activated or deactivated users or both
         final var activated = userSearch.getStatus().contains("ACTIVATED");
         final var deactivated = userSearch.getStatus().contains("DEACTIVATED");
+
+        // Evaluate filter and make request
         return searchByLoginOrNameWithAdditionalFilter(searchTerm, sorted, authorities, internal, external, activated, deactivated).map(user -> {
             user.setVisibleRegistrationNumber();
             return new UserDTO(user);
