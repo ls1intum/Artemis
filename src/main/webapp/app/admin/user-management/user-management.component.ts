@@ -1,12 +1,11 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { HttpErrorResponse, HttpHeaders, HttpResponse } from '@angular/common/http';
 import { ActivatedRoute, Router } from '@angular/router';
-import { Subscription } from 'rxjs';
+import { combineLatest, Subject, Subscription } from 'rxjs';
 import { onError } from 'app/shared/util/global.utils';
 import { User } from 'app/core/user/user.model';
 import { UserService } from 'app/core/user/user.service';
 import { AccountService } from 'app/core/auth/account.service';
-import { combineLatest, Subject } from 'rxjs';
 import { AlertService } from 'app/core/util/alert.service';
 import { SortingOrder } from 'app/shared/table/pageable-table';
 import { debounceTime, switchMap, tap } from 'rxjs/operators';
@@ -14,7 +13,31 @@ import { AbstractControl, FormControl, FormGroup } from '@angular/forms';
 import { EventManager } from 'app/core/util/event-manager.service';
 import { ParseLinks } from 'app/core/util/parse-links.service';
 import { ASC, DESC, ITEMS_PER_PAGE, SORT } from 'app/shared/constants/pagination.constants';
-import { faEye, faPlus, faSort, faTimes, faWrench } from '@fortawesome/free-solid-svg-icons';
+import { faEye, faFilter, faPlus, faSort, faTimes, faWrench } from '@fortawesome/free-solid-svg-icons';
+import { LocalStorageService } from 'ngx-webstorage';
+
+export class UserFilter {
+    authorityFilter: Set<AuthorityFilter> = new Set();
+    originFilter: Set<OriginFilter> = new Set();
+}
+
+export enum AuthorityFilter {
+    ADMIN = 'ADMIN',
+    INSTRUCTOR = 'INSTRUCTOR',
+    EDITOR = 'EDITOR',
+    TEACHING_ASSISTANT = 'TEACHING_ASSISTANT',
+    STUDENT = 'STUDENT',
+}
+
+export enum OriginFilter {
+    INTERNAL = 'INTERNAL',
+    EXTERNAL = 'EXTERNAL',
+}
+
+enum AuthorityOriginStorageKey {
+    AUTHORITY = 'artemis.userManagement.authority',
+    ORIGIN = 'artemis.userManagement.origin',
+}
 
 @Component({
     selector: 'jhi-user-management',
@@ -32,6 +55,10 @@ export class UserManagementComponent implements OnInit, OnDestroy {
     predicate!: string;
     ascending!: boolean;
     searchTermString = '';
+
+    // filters
+    filters: UserFilter = new UserFilter();
+    faFilter = faFilter;
 
     private dialogErrorSource = new Subject<string>();
     dialogError = this.dialogErrorSource.asObservable();
@@ -52,19 +79,24 @@ export class UserManagementComponent implements OnInit, OnDestroy {
         private activatedRoute: ActivatedRoute,
         private router: Router,
         private eventManager: EventManager,
+        private localStorage: LocalStorageService,
     ) {
         this.search
             .pipe(
                 tap(() => (this.loadingSearchResult = true)),
                 debounceTime(1000),
                 switchMap(() =>
-                    this.userService.query({
-                        page: this.page - 1,
-                        pageSize: this.itemsPerPage,
-                        searchTerm: this.searchTermString,
-                        sortingOrder: this.ascending ? SortingOrder.ASCENDING : SortingOrder.DESCENDING,
-                        sortedColumn: this.predicate,
-                    }),
+                    this.userService.query(
+                        {
+                            page: this.page - 1,
+                            pageSize: this.itemsPerPage,
+                            searchTerm: this.searchTermString,
+                            sortingOrder: this.ascending ? SortingOrder.ASCENDING : SortingOrder.DESCENDING,
+                            sortedColumn: this.predicate,
+                            filters: this.filters,
+                        },
+                        this.filters,
+                    ),
                 ),
             )
             .subscribe({
@@ -83,6 +115,7 @@ export class UserManagementComponent implements OnInit, OnDestroy {
      * Retrieves the current user and calls the {@link loadAll} and {@link registerChangeInUsers} methods on init
      */
     ngOnInit(): void {
+        this.initFilter();
         this.userSearchForm = new FormGroup({
             searchControl: new FormControl('', { validators: [this.validateUserSearch], updateOn: 'blur' }),
         });
@@ -101,6 +134,69 @@ export class UserManagementComponent implements OnInit, OnDestroy {
             this.eventManager.destroy(this.userListSubscription);
         }
         this.dialogErrorSource.unsubscribe();
+    }
+
+    /**
+     * Inits the available filter and maps the functions
+     */
+    initFilter() {
+        const authorities = this.localStorage.retrieve(AuthorityOriginStorageKey.AUTHORITY);
+        const authoritiesInStorage =
+            authorities !== null
+                ? authorities
+                      .split(',')
+                      .map((filter: string) => AuthorityFilter[filter])
+                      .filter(Boolean)
+                : this.authorityFilters;
+        this.filters.authorityFilter = new Set(authoritiesInStorage);
+
+        const origin = this.localStorage.retrieve(AuthorityOriginStorageKey.ORIGIN);
+        const originInStorage =
+            origin !== null
+                ? origin
+                      .split(',')
+                      .map((filter: string) => OriginFilter[filter])
+                      .filter(Boolean)
+                : this.originFilters;
+        this.filters.originFilter = new Set(originInStorage);
+    }
+
+    /**
+     *
+     */
+    get authorityFilters() {
+        return Object.keys(AuthorityFilter).map((authority) => AuthorityFilter[authority]);
+    }
+
+    /**
+     *
+     */
+    toggleAuthorityFilter(authority: AuthorityFilter) {
+        if (this.filters.authorityFilter.has(authority)) {
+            this.filters.authorityFilter.delete(authority);
+        } else {
+            this.filters.authorityFilter.add(authority);
+        }
+        this.localStorage.store(AuthorityOriginStorageKey.AUTHORITY, Array.from(this.filters.authorityFilter).join(','));
+    }
+
+    /**
+     *
+     */
+    get originFilters() {
+        return Object.keys(OriginFilter).map((origin) => OriginFilter[origin]);
+    }
+
+    /**
+     *
+     */
+    toggleOriginFilter(origin: OriginFilter) {
+        if (this.filters.originFilter.has(origin)) {
+            this.filters.originFilter.delete(origin);
+        } else {
+            this.filters.originFilter.add(origin);
+        }
+        this.localStorage.store(AuthorityOriginStorageKey.ORIGIN, Array.from(this.filters.originFilter).join(','));
     }
 
     /**

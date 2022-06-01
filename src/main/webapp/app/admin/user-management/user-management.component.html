@@ -7,26 +7,89 @@
     </h2>
     <div class="table-responsive" *ngIf="users">
         <form [formGroup]="userSearchForm">
-            <div class="form-group form-inline">
-                <label for="field_searchTerm" class="form-control-label" jhiTranslate="userManagement.searchForUser">Search for User: </label>
-                <input
-                    class="form-control ms-3"
-                    type="text"
-                    name="searchTerm"
-                    id="field_searchTerm"
-                    formControlName="searchControl"
-                    [(ngModel)]="searchTerm"
-                    (focusout)="loadAll()"
-                />
-                <button class="btn btn-primary ms-3" (click)="loadAll()">
-                    <span jhiTranslate="userManagement.search">Search</span>
-                </button>
-                <ng-container *ngIf="searchControl.invalid && (searchControl.dirty || searchControl.touched)">
-                    <div class="alert alert-danger ms-3 mb-0">
-                        <div jhiTranslate="userManagement.searchError">Search term must be empty or at least 3 character.</div>
+            <div class="container-fluid">
+                <div class="row">
+                    <div class="col">
+                        <div class="form-group form-inline">
+                            <label for="field_searchTerm" class="form-control-label" jhiTranslate="userManagement.searchForUser">Search for User: </label>
+                            <input
+                                class="form-control ms-3"
+                                type="text"
+                                name="searchTerm"
+                                id="field_searchTerm"
+                                formControlName="searchControl"
+                                [(ngModel)]="searchTerm"
+                                (focusout)="loadAll()"
+                            />
+                            <button class="btn btn-primary ms-3" (click)="loadAll()">
+                                <span jhiTranslate="userManagement.search">Search</span>
+                            </button>
+                            <ng-container *ngIf="searchControl.invalid && (searchControl.dirty || searchControl.touched)">
+                                <div class="alert alert-danger ms-3 mb-0">
+                                    <div jhiTranslate="userManagement.searchError">Search term must be empty or at least 3 character.</div>
+                                </div>
+                            </ng-container>
+                            <span class="ms-3" *ngIf="loadingSearchResult" jhiTranslate="userManagement.loading">Loading...</span>
+                        </div>
                     </div>
-                </ng-container>
-                <span class="ms-3" *ngIf="loadingSearchResult" jhiTranslate="userManagement.loading">Loading...</span>
+                    <div class="col p-0">
+                        <div class="d-flex justify-content-center justify-content-md-end">
+                            <div class="d-flex">
+                                <div class="me-2" aria-label="Filter Dropdown" ngbDropdown>
+                                    <button
+                                        class="btn"
+                                        [ngClass]="{ 'btn-secondary': filters.authorityFilter.size === 0, 'btn-success': filters.authorityFilter.size > 0 }"
+                                        ngbDropdownToggle
+                                    >
+                                        <fa-icon [icon]="faFilter"></fa-icon>
+                                        <span class="d-s-none d-md-inline">{{ 'userManagement.filter.authority' | artemisTranslate: { num: filters.authorityFilter.size } }}</span>
+                                    </button>
+                                    <ul ngbDropdownMenu class="checkbox-menu text-nowrap pe-2" aria-labelledby="filter-dropdown-button">
+                                        <li *ngFor="let authority of this.authorityFilters">
+                                            <label>
+                                                <input
+                                                    class="ms-2 form-check-input"
+                                                    (change)="this.toggleAuthorityFilter(authority)"
+                                                    [checked]="this.filters.authorityFilter.has(authority)"
+                                                    type="checkbox"
+                                                />
+                                                <span class="ms-2">{{ authority.toString() }}</span>
+                                            </label>
+                                        </li>
+                                    </ul>
+                                </div>
+                                <div class="me-2" aria-label="Filter Dropdown" ngbDropdown>
+                                    <button
+                                        class="btn"
+                                        [ngClass]="{ 'btn-secondary': filters.originFilter.size === 0, 'btn-success': filters.originFilter.size > 0 }"
+                                        ngbDropdownToggle
+                                    >
+                                        <fa-icon [icon]="faFilter"></fa-icon>
+                                        <span class="d-s-none d-md-inline">{{ 'userManagement.filter.origin' | artemisTranslate: { num: filters.originFilter.size } }}</span>
+                                    </button>
+                                    <ul ngbDropdownMenu class="checkbox-menu text-nowrap pe-2" aria-labelledby="filter-dropdown-button">
+                                        <li *ngFor="let origin of this.originFilters">
+                                            <label>
+                                                <input
+                                                    class="ms-2 form-check-input"
+                                                    (change)="this.toggleOriginFilter(origin)"
+                                                    [checked]="this.filters.originFilter.has(origin)"
+                                                    type="checkbox"
+                                                />
+                                                <span class="ms-2">{{ origin.toString() }}</span>
+                                            </label>
+                                        </li>
+                                    </ul>
+                                </div>
+                                <div aria-label="Apply Filter">
+                                    <button class="btn btn-primary" (click)="loadAll()">
+                                        <span jhiTranslate="userManagement.filter.apply">Apply</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </form>
         <table class="table table-striped" aria-describedby="user-management-page-heading">

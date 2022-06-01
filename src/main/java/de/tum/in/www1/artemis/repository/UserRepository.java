@@ -20,7 +20,7 @@ import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.SortingOrder;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.dto.UserDTO;
-import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
+import de.tum.in.www1.artemis.web.rest.dto.UserPageableSearchDTO;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 /**
@@ -147,8 +147,8 @@ public interface UserRepository extends JpaRepository<User, Long> {
     Set<User> findAllWithGroupsAndAuthorities();
 
     @EntityGraph(type = LOAD, attributePaths = { "groups", "authorities" })
-    @Query("select user from User user where user.login like %:#{#searchTerm}% or user.email like %:#{#searchTerm}% "
-            + "or user.lastName like %:#{#searchTerm}% or user.firstName like %:#{#searchTerm}%")
+    @Query("select user from User user where (user.login like %:#{#searchTerm}% or user.email like %:#{#searchTerm}% "
+            + "or user.lastName like %:#{#searchTerm}% or user.firstName like %:#{#searchTerm}%)")
     Page<User> searchByLoginOrNameWithGroups(@Param("searchTerm") String searchTerm, Pageable pageable);
 
     @Modifying
@@ -183,11 +183,12 @@ public interface UserRepository extends JpaRepository<User, Long> {
      * @param userSearch used to find users
      * @return all users
      */
-    default Page<UserDTO> getAllManagedUsers(PageableSearchDTO<String> userSearch) {
+    default Page<UserDTO> getAllManagedUsers(UserPageableSearchDTO<String> userSearch) {
         final var searchTerm = userSearch.getSearchTerm();
         var sorting = Sort.by(userSearch.getSortedColumn());
         sorting = userSearch.getSortingOrder() == SortingOrder.ASCENDING ? sorting.ascending() : sorting.descending();
         final var sorted = PageRequest.of(userSearch.getPage(), userSearch.getPageSize(), sorting);
+        final var authorities = userSearch.getAuthorities();
         return searchByLoginOrNameWithGroups(searchTerm, sorted).map(user -> {
             user.setVisibleRegistrationNumber();
             return new UserDTO(user);

@@ -1,5 +1,10 @@
 {
     "userManagement": {
+        "filter": {
+            "authority": "Role ({{ num }})",
+            "origin": "Origin ({{ num }})",
+            "apply": "Apply"
+        },
         "home": {
             "title": "Users",
             "createLabel": "Create a new user",
