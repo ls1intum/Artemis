@@ -90,6 +90,10 @@ public class VideoUnitResource {
 
         // Validate the URL
         try {
+            // Remove leading and trailing whitespaces
+            if (videoUnit.getSource() != null) {
+                videoUnit.setSource(videoUnit.getSource().trim());
+            }
             new URL(videoUnit.getSource());
         }
         catch (MalformedURLException exception) {
@@ -124,6 +128,10 @@ public class VideoUnitResource {
 
         // Validate the URL
         try {
+            // Remove leading and trailing whitespaces
+            if (videoUnit.getSource() != null) {
+                videoUnit.setSource(videoUnit.getSource().trim());
+            }
             new URL(videoUnit.getSource());
         }
         catch (MalformedURLException exception) {
