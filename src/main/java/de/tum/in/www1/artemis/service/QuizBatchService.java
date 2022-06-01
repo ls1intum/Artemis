@@ -174,8 +174,8 @@ public class QuizBatchService {
             return Optional.of(getOrCreateSynchronizedQuizBatch(quizExercise));
         }
         if (quizExercise.getQuizBatches() != null && batch.isPresent()) {
-            final Long id = batch.get();
-            return quizExercise.getQuizBatches().stream().filter(b -> Objects.equals(b.getId(), id)).findAny().or(() -> quizBatchRepository.findById(id));
+            final Long batchId = batch.get();
+            return quizExercise.getQuizBatches().stream().filter(b -> Objects.equals(b.getId(), batchId)).findAny().or(() -> quizBatchRepository.findById(batchId));
         }
         return batch.flatMap(quizBatchRepository::findById);
     }

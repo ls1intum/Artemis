@@ -325,7 +325,6 @@ public class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
         var user = new User();
         user.setLogin(username);
         quizScheduleService.joinQuizBatch(quizExercise, batch, user);
-        // quizScheduleService.clearQuizData(quizExercise.getId());
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
