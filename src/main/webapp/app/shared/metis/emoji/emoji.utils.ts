@@ -23,7 +23,7 @@ export class EmojiUtils {
     public static readonly EMOJI_SHEET_URL = () => EMOJI_URL + 'emoji_sheet_64.png';
 
     public static readonly singleDarkModeEmojiUrlFn: (emoji: EmojiData | null) => string = (emoji: EmojiData) => {
-        if (emoji.unified && EMOJIS_TO_REPLACE.includes(emoji.unified)) {
+        if (emoji?.unified && EMOJIS_TO_REPLACE.includes(emoji.unified)) {
             return EMOJI_URL + emoji.unified.toLowerCase() + '.png';
         }
         return '';
