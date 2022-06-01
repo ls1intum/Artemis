@@ -13,7 +13,7 @@ import { EmojiData } from '@ctrl/ngx-emoji-mart/ngx-emoji';
             [emojiSize]="20"
             [showSingleCategory]="true"
             [showPreview]="false"
-            [color]="'#5289c7'"
+            [color]="'var(--primary)'"
             [recent]="recent"
             [i18n]="{ search: 'artemisApp.metis.searchEmoji' | artemisTranslate, categories: { recent: 'artemisApp.metis.courseEmojiSelectionCategory' | artemisTranslate } }"
             [darkMode]="dark"
