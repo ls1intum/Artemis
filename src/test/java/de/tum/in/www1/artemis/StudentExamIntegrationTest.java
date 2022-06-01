@@ -89,6 +89,9 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
     private StudentExamService studentExamService;
 
     @Autowired
+    private GradingScaleRepository gradingScaleRepository;
+
+    @Autowired
     private ObjectMapper objectMapper;
 
     private List<User> users;
@@ -1193,10 +1196,9 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
         database.changeUser(studentExam.getUser().getLogin());
         var studentExamWithGradeDTO = request.get("/api/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/student-exams/summary", HttpStatus.OK,
                 StudentExamWithGradeDTO.class);
-        var studentExamSummary = studentExamWithGradeDTO.studentExam;
 
         // check that no results or other sensitive information is visible for the student
-        for (final var exercise : studentExamSummary.getExercises()) {
+        for (final var exercise : studentExamWithGradeDTO.studentExam.getExercises()) {
             assertThat(exercise.getStudentParticipations().iterator().next().getResults()).isEmpty();
             assertThat(exercise.getGradingInstructions()).isNull();
             assertThat(exercise.getGradingCriteria()).isEmpty();
@@ -1279,10 +1281,9 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
         database.changeUser(studentExam.getUser().getLogin());
         var studentExamWithGradeDTO = request.get("/api/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/student-exams/summary", HttpStatus.OK,
                 StudentExamWithGradeDTO.class);
-        var studentExamSummary = studentExamWithGradeDTO.studentExam;
 
         // check that all relevant information is visible to the student
-        for (final var exercise : studentExamSummary.getExercises()) {
+        for (final var exercise : studentExamWithGradeDTO.studentExam.getExercises()) {
             assertThat(exercise.getStudentParticipations().iterator().next().getResults()).isNotEmpty();
             assertThat(exercise.getGradingInstructions()).isNull();
             assertThat(exercise.getGradingCriteria()).isEmpty();
@@ -1319,6 +1320,157 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
                         }
                     }
                 });
+            }
+        }
+        deleteExam1WithInstructor();
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testGradedStudentExamSummaryWithoutGradingScaleAsStudentAfterPublishResults() throws Exception {
+        StudentExam studentExam = prepareStudentExamsForConduction(false).get(0);
+        StudentExam studentExamWithSubmissions = addExamExerciseSubmissionsForUser(exam2, studentExam.getUser().getLogin());
+
+        // now we change to the point of time when the student exam needs to be submitted
+        // IMPORTANT NOTE: this needs to be configured in a way that the individual student exam ended, but we are still in the grace period time
+        exam2.setStartDate(ZonedDateTime.now().minusMinutes(3));
+        exam2 = examRepository.save(exam2);
+
+        // submitExam
+        var studentExamFinished = request.postWithResponseBody("/api/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/student-exams/submit", studentExamWithSubmissions,
+                StudentExam.class, HttpStatus.OK);
+
+        exam2.setEndDate(ZonedDateTime.now());
+        exam2 = examRepository.save(exam2);
+
+        // Add results to all exercise submissions
+        database.changeUser("instructor1");
+        for (var exercise : studentExamFinished.getExercises()) {
+            if (exercise instanceof QuizExercise) {
+                continue;
+            }
+
+            Participation participation = exercise.getStudentParticipations().iterator().next();
+            Optional<Submission> latestSubmission = participation.findLatestSubmission();
+
+            database.addResultToParticipation(participation, latestSubmission.get());
+        }
+        exam2.setPublishResultsDate(ZonedDateTime.now());
+        exam2 = examRepository.save(exam2);
+
+        // evaluate quizzes
+        request.postWithoutLocation("/api/courses/" + exam2.getCourse().getId() + "/exams/" + exam2.getId() + "/student-exams/evaluate-quiz-exercises", null, HttpStatus.OK,
+                new HttpHeaders());
+
+        // users tries to access exam summary after results are published
+        database.changeUser(studentExam.getUser().getLogin());
+        var studentExamWithGradeDTO = request.get("/api/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/student-exams/summary", HttpStatus.OK,
+                StudentExamWithGradeDTO.class);
+
+        assertThat(studentExamWithGradeDTO.maxPoints).isEqualTo(29.0);
+        assertThat(studentExamWithGradeDTO.maxBonusPoints).isEqualTo(5.0);
+        assertThat(studentExamWithGradeDTO.gradeType).isNull();
+        assertThat(studentExamWithGradeDTO.studentResult.overallPointsAchieved).isEqualTo(29.0);
+        assertThat(studentExamWithGradeDTO.studentResult.overallScoreAchieved).isEqualTo(100.0);
+        assertThat(studentExamWithGradeDTO.studentResult.overallGrade).isNull();
+        assertThat(studentExamWithGradeDTO.studentResult.hasPassed).isNull();
+        assertThat(studentExamWithGradeDTO.studentResult.overallPointsAchievedInFirstCorrection).isEqualTo(0.0);
+        assertThat(studentExamWithGradeDTO.studentResult.overallGradeInFirstCorrection).isNull();
+
+        for (final var exercise : studentExamWithGradeDTO.studentExam.getExercises()) {
+            if (exercise instanceof QuizExercise) {
+                assertThat(studentExamWithGradeDTO.achievedPointsPerExercise.get(exercise.getId())).isEqualTo(4.0);
+            }
+            else {
+                assertThat(studentExamWithGradeDTO.achievedPointsPerExercise.get(exercise.getId())).isEqualTo(5.0);
+            }
+        }
+        deleteExam1WithInstructor();
+    }
+
+    private GradingScale createGradeScale() {
+        GradingScale gradingScale = new GradingScale();
+        GradeStep gradeStep1 = new GradeStep();
+        GradeStep gradeStep2 = new GradeStep();
+        gradeStep1.setGradeName("5.0");
+        gradeStep2.setGradeName("1.0");
+        gradeStep1.setLowerBoundPercentage(0);
+        gradeStep1.setUpperBoundPercentage(60);
+        gradeStep1.setIsPassingGrade(false);
+        gradeStep2.setLowerBoundPercentage(60);
+        gradeStep2.setUpperBoundPercentage(100);
+        gradeStep2.setIsPassingGrade(true);
+        gradeStep2.setUpperBoundInclusive(true);
+        gradeStep1.setGradingScale(gradingScale);
+        gradeStep2.setGradingScale(gradingScale);
+        gradingScale.setGradeType(GradeType.GRADE);
+        gradingScale.setGradeSteps(Set.of(gradeStep1, gradeStep2));
+        gradingScaleRepository.save(gradingScale);
+        return gradingScale;
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testGradedStudentExamSummaryWithGradingScaleAsStudentAfterPublishResults() throws Exception {
+        StudentExam studentExam = prepareStudentExamsForConduction(false).get(0);
+        StudentExam studentExamWithSubmissions = addExamExerciseSubmissionsForUser(exam2, studentExam.getUser().getLogin());
+
+        GradingScale gradingScale = createGradeScale();
+        gradingScale.setExam(exam2);
+        gradingScaleRepository.save(gradingScale);
+
+        // now we change to the point of time when the student exam needs to be submitted
+        // IMPORTANT NOTE: this needs to be configured in a way that the individual student exam ended, but we are still in the grace period time
+        exam2.setStartDate(ZonedDateTime.now().minusMinutes(3));
+        exam2 = examRepository.save(exam2);
+
+        // submitExam
+        var studentExamFinished = request.postWithResponseBody("/api/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/student-exams/submit", studentExamWithSubmissions,
+                StudentExam.class, HttpStatus.OK);
+
+        exam2.setEndDate(ZonedDateTime.now());
+        exam2 = examRepository.save(exam2);
+
+        // Add results to all exercise submissions
+        database.changeUser("instructor1");
+        for (var exercise : studentExamFinished.getExercises()) {
+            if (exercise instanceof QuizExercise) {
+                continue;
+            }
+
+            Participation participation = exercise.getStudentParticipations().iterator().next();
+            Optional<Submission> latestSubmission = participation.findLatestSubmission();
+
+            database.addResultToParticipation(participation, latestSubmission.get());
+        }
+        exam2.setPublishResultsDate(ZonedDateTime.now());
+        exam2 = examRepository.save(exam2);
+
+        // evaluate quizzes
+        request.postWithoutLocation("/api/courses/" + exam2.getCourse().getId() + "/exams/" + exam2.getId() + "/student-exams/evaluate-quiz-exercises", null, HttpStatus.OK,
+                new HttpHeaders());
+
+        // users tries to access exam summary after results are published
+        database.changeUser(studentExam.getUser().getLogin());
+        var studentExamWithGradeDTO = request.get("/api/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/student-exams/summary", HttpStatus.OK,
+                StudentExamWithGradeDTO.class);
+
+        assertThat(studentExamWithGradeDTO.maxPoints).isEqualTo(29.0);
+        assertThat(studentExamWithGradeDTO.maxBonusPoints).isEqualTo(5.0);
+        assertThat(studentExamWithGradeDTO.gradeType).isEqualTo(GradeType.GRADE);
+        assertThat(studentExamWithGradeDTO.studentResult.overallPointsAchieved).isEqualTo(29.0);
+        assertThat(studentExamWithGradeDTO.studentResult.overallScoreAchieved).isEqualTo(100.0);
+        assertThat(studentExamWithGradeDTO.studentResult.overallGrade).isEqualTo("1.0");
+        assertThat(studentExamWithGradeDTO.studentResult.hasPassed).isTrue();
+        assertThat(studentExamWithGradeDTO.studentResult.overallPointsAchievedInFirstCorrection).isEqualTo(0.0);
+        assertThat(studentExamWithGradeDTO.studentResult.overallGradeInFirstCorrection).isEqualTo("5.0");
+
+        for (final var exercise : studentExamWithGradeDTO.studentExam.getExercises()) {
+            if (exercise instanceof QuizExercise) {
+                assertThat(studentExamWithGradeDTO.achievedPointsPerExercise.get(exercise.getId())).isEqualTo(4.0);
+            }
+            else {
+                assertThat(studentExamWithGradeDTO.achievedPointsPerExercise.get(exercise.getId())).isEqualTo(5.0);
             }
         }
         deleteExam1WithInstructor();
