@@ -67,7 +67,9 @@ export class HeaderExercisePageWithDetailsComponent implements OnChanges {
             this.setIsNextDueDateExamMode();
         } else {
             this.dueDate = getExerciseDueDate(this.exercise, this.studentParticipation);
-            this.individualComplaintDeadline = this.complaintService.getIndividualComplaintDueDate(this.exercise, this.course, this.studentParticipation);
+            if (!this.individualComplaintDeadline) {
+                this.individualComplaintDeadline = this.complaintService.getIndividualComplaintDueDate(this.exercise, this.course, this.studentParticipation);
+            }
             // The student can either still submit or there is a submission where the student did not have the chance to complain yet
             this.canComplainLaterOn =
                 (dayjs().isBefore(this.exercise.dueDate) ||

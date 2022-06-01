@@ -50,7 +50,7 @@ describe('HeaderExercisePageWithDetails', () => {
     });
 
     it('should initialise badges, icons, and categories', () => {
-        component.ngOnInit();
+        component.ngOnChanges();
 
         expect(component.exerciseCategories).toEqual([]);
         expect(component.exerciseStatusBadge).toBe('bg-success');
@@ -65,7 +65,7 @@ describe('HeaderExercisePageWithDetails', () => {
         exam.endDate = dayjs().subtract(1, 'day');
         component.exam = exam;
 
-        component.ngOnInit();
+        component.ngOnChanges();
 
         expect(component.exerciseCategories).toEqual(categories);
         expect(component.exerciseStatusBadge).toBe('bg-danger');
@@ -74,14 +74,14 @@ describe('HeaderExercisePageWithDetails', () => {
     it('should set the icon according to the exercise due date', () => {
         const dueDate1 = dayjs().subtract(2, 'days');
         exercise.dueDate = dueDate1;
-        component.ngOnInit();
+        component.ngOnChanges();
         expect(component.dueDate).toEqual(dueDate1);
         expect(component.exerciseStatusBadge).toBe('bg-danger');
 
         const dueDate2 = dayjs().add(1, 'day');
         participation.individualDueDate = dueDate2;
         component.studentParticipation = participation;
-        component.ngOnInit();
+        component.ngOnChanges();
         expect(component.dueDate).toEqual(dueDate2);
         expect(component.exerciseStatusBadge).toBe('bg-success');
     });
@@ -89,12 +89,12 @@ describe('HeaderExercisePageWithDetails', () => {
     it('should set the icon according to the exam end date', () => {
         exam.endDate = dayjs().subtract(1, 'day');
         component.exam = exam;
-        component.ngOnInit();
+        component.ngOnChanges();
         expect(component.exerciseStatusBadge).toBe('bg-danger');
 
         exam.endDate = dayjs().add(1, 'day');
         component.exam = exam;
-        component.ngOnInit();
+        component.ngOnChanges();
         expect(component.exerciseStatusBadge).toBe('bg-success');
     });
 
@@ -103,7 +103,7 @@ describe('HeaderExercisePageWithDetails', () => {
         exam.endDate = dayjs().add(1, 'day');
         component.exam = exam;
 
-        component.ngOnInit();
+        component.ngOnChanges();
 
         expect(component.dueDate).toBe(undefined);
     });
