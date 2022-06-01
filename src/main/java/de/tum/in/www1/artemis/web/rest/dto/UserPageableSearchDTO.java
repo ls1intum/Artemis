@@ -17,6 +17,11 @@ public class UserPageableSearchDTO<T> extends PageableSearchDTO<T> {
      */
     private Set<String> origin;
 
+    /**
+     *
+     */
+    private Set<String> status;
+
     public Set<String> getAuthorities() {
         return authorities;
     }
@@ -31,5 +36,13 @@ public class UserPageableSearchDTO<T> extends PageableSearchDTO<T> {
 
     public void setOrigin(Set<String> origin) {
         this.origin = origin;
+    }
+
+    public Set<String> getStatus() {
+        return status;
+    }
+
+    public void setStatus(Set<String> status) {
+        this.status = status;
     }
 }

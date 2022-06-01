@@ -4,6 +4,7 @@ import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphTyp
 
 import java.time.ZonedDateTime;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import javax.validation.constraints.NotNull;
 
@@ -14,6 +15,7 @@ import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
+import de.tum.in.www1.artemis.domain.Authority;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Organization;
 import de.tum.in.www1.artemis.domain.User;
@@ -147,9 +149,16 @@ public interface UserRepository extends JpaRepository<User, Long> {
     Set<User> findAllWithGroupsAndAuthorities();
 
     @EntityGraph(type = LOAD, attributePaths = { "groups", "authorities" })
-    @Query("select user from User user where (user.login like %:#{#searchTerm}% or user.email like %:#{#searchTerm}% "
-            + "or user.lastName like %:#{#searchTerm}% or user.firstName like %:#{#searchTerm}%)")
-    Page<User> searchByLoginOrNameWithGroups(@Param("searchTerm") String searchTerm, Pageable pageable);
+    @Query("""
+            SELECT user FROM User user
+            LEFT JOIN user.authorities ua
+            WHERE (user.login like %:#{#searchTerm}% or user.email like %:#{#searchTerm}%
+            OR user.lastName like %:#{#searchTerm}% or user.firstName like %:#{#searchTerm}%) AND ua IN :authorities
+            AND (user.isInternal = :internal or not user.isInternal = :external)
+            AND (user.activated = :activated or not user.activated = :deactivated)
+            """)
+    Page<User> searchByLoginOrNameWithAdditionalFilter(@Param("searchTerm") String searchTerm, Pageable pageable, Set<Authority> authorities, boolean internal, boolean external,
+            boolean activated, boolean deactivated);
 
     @Modifying
     @Transactional // ok because of modifying query
@@ -188,8 +197,12 @@ public interface UserRepository extends JpaRepository<User, Long> {
         var sorting = Sort.by(userSearch.getSortedColumn());
         sorting = userSearch.getSortingOrder() == SortingOrder.ASCENDING ? sorting.ascending() : sorting.descending();
         final var sorted = PageRequest.of(userSearch.getPage(), userSearch.getPageSize(), sorting);
-        final var authorities = userSearch.getAuthorities();
-        return searchByLoginOrNameWithGroups(searchTerm, sorted).map(user -> {
+        final var authorities = userSearch.getAuthorities().stream().map((auth) -> new Authority("ROLE_" + auth)).collect(Collectors.toSet());
+        final var internal = userSearch.getOrigin().contains("INTERNAL");
+        final var external = userSearch.getOrigin().contains("EXTERNAL");
+        final var activated = userSearch.getStatus().contains("ACTIVATED");
+        final var deactivated = userSearch.getStatus().contains("DEACTIVATED");
+        return searchByLoginOrNameWithAdditionalFilter(searchTerm, sorted, authorities, internal, external, activated, deactivated).map(user -> {
             user.setVisibleRegistrationNumber();
             return new UserDTO(user);
         });

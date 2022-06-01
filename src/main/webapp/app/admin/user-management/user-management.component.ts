@@ -19,14 +19,15 @@ import { LocalStorageService } from 'ngx-webstorage';
 export class UserFilter {
     authorityFilter: Set<AuthorityFilter> = new Set();
     originFilter: Set<OriginFilter> = new Set();
+    statusFilter: Set<StatusFilter> = new Set();
 }
 
 export enum AuthorityFilter {
     ADMIN = 'ADMIN',
     INSTRUCTOR = 'INSTRUCTOR',
     EDITOR = 'EDITOR',
-    TEACHING_ASSISTANT = 'TEACHING_ASSISTANT',
-    STUDENT = 'STUDENT',
+    TA = 'TA',
+    USER = 'USER',
 }
 
 export enum OriginFilter {
@@ -34,9 +35,15 @@ export enum OriginFilter {
     EXTERNAL = 'EXTERNAL',
 }
 
-enum AuthorityOriginStorageKey {
+export enum StatusFilter {
+    ACTIVATED = 'ACTIVATED',
+    DEACTIVATED = 'DEACTIVATED',
+}
+
+enum UserStorageKey {
     AUTHORITY = 'artemis.userManagement.authority',
     ORIGIN = 'artemis.userManagement.origin',
+    STATUS = 'artemis.userManagement.status',
 }
 
 @Component({
@@ -80,7 +87,14 @@ export class UserManagementComponent implements OnInit, OnDestroy {
         private router: Router,
         private eventManager: EventManager,
         private localStorage: LocalStorageService,
-    ) {
+    ) {}
+
+    /**
+     * Retrieves the current user and calls the {@link loadAll} and {@link registerChangeInUsers} methods on init
+     */
+    ngOnInit(): void {
+        this.initFilters();
+
         this.search
             .pipe(
                 tap(() => (this.loadingSearchResult = true)),
@@ -109,13 +123,7 @@ export class UserManagementComponent implements OnInit, OnDestroy {
                     onError(this.alertService, res);
                 },
             });
-    }
 
-    /**
-     * Retrieves the current user and calls the {@link loadAll} and {@link registerChangeInUsers} methods on init
-     */
-    ngOnInit(): void {
-        this.initFilter();
         this.userSearchForm = new FormGroup({
             searchControl: new FormControl('', { validators: [this.validateUserSearch], updateOn: 'blur' }),
         });
@@ -139,64 +147,87 @@ export class UserManagementComponent implements OnInit, OnDestroy {
     /**
      * Inits the available filter and maps the functions
      */
-    initFilter() {
-        const authorities = this.localStorage.retrieve(AuthorityOriginStorageKey.AUTHORITY);
-        const authoritiesInStorage =
-            authorities !== null
-                ? authorities
-                      .split(',')
-                      .map((filter: string) => AuthorityFilter[filter])
-                      .filter(Boolean)
-                : this.authorityFilters;
-        this.filters.authorityFilter = new Set(authoritiesInStorage);
+    initFilters() {
+        this.filters.authorityFilter = this.initFilter(UserStorageKey.AUTHORITY, AuthorityFilter) as Set<AuthorityFilter>;
+        this.filters.originFilter = this.initFilter(UserStorageKey.ORIGIN, OriginFilter) as Set<OriginFilter>;
+        this.filters.statusFilter = this.initFilter(UserStorageKey.STATUS, StatusFilter) as Set<StatusFilter>;
+    }
 
-        const origin = this.localStorage.retrieve(AuthorityOriginStorageKey.ORIGIN);
-        const originInStorage =
-            origin !== null
-                ? origin
+    /**
+     * Inits a specific filter
+     * @param key of the filter in the local storage
+     * @param type of filter
+     */
+    initFilter(key: UserStorageKey, type: any) {
+        const temp = this.localStorage.retrieve(key);
+        const tempInStorage =
+            temp !== null
+                ? temp
                       .split(',')
-                      .map((filter: string) => OriginFilter[filter])
+                      .map((filter: string) => type[filter])
                       .filter(Boolean)
-                : this.originFilters;
-        this.filters.originFilter = new Set(originInStorage);
+                : this.getFilter(type);
+        return new Set(tempInStorage);
     }
 
     /**
      *
      */
+    toggleFilter(filter: Set<any>, value: any, key: UserStorageKey) {
+        if (filter.has(value)) {
+            filter.delete(value);
+        } else {
+            filter.add(value);
+        }
+        this.localStorage.store(key, Array.from(filter).join(','));
+    }
+
+    /**
+     *
+     */
+    getFilter(type: any) {
+        return Object.keys(type).map((value) => type[value]);
+    }
+    /**
+     *
+     */
     get authorityFilters() {
-        return Object.keys(AuthorityFilter).map((authority) => AuthorityFilter[authority]);
+        return this.getFilter(AuthorityFilter);
     }
 
     /**
      *
      */
     toggleAuthorityFilter(authority: AuthorityFilter) {
-        if (this.filters.authorityFilter.has(authority)) {
-            this.filters.authorityFilter.delete(authority);
-        } else {
-            this.filters.authorityFilter.add(authority);
-        }
-        this.localStorage.store(AuthorityOriginStorageKey.AUTHORITY, Array.from(this.filters.authorityFilter).join(','));
+        this.toggleFilter(this.filters.authorityFilter, authority, UserStorageKey.AUTHORITY);
     }
 
     /**
      *
      */
     get originFilters() {
-        return Object.keys(OriginFilter).map((origin) => OriginFilter[origin]);
+        return this.getFilter(OriginFilter);
     }
 
     /**
      *
      */
     toggleOriginFilter(origin: OriginFilter) {
-        if (this.filters.originFilter.has(origin)) {
-            this.filters.originFilter.delete(origin);
-        } else {
-            this.filters.originFilter.add(origin);
-        }
-        this.localStorage.store(AuthorityOriginStorageKey.ORIGIN, Array.from(this.filters.originFilter).join(','));
+        this.toggleFilter(this.filters.originFilter, origin, UserStorageKey.ORIGIN);
+    }
+
+    /**
+     *
+     */
+    get statusFilters() {
+        return this.getFilter(StatusFilter);
+    }
+
+    /**
+     *
+     */
+    toggleStatusFilter(status: StatusFilter) {
+        this.toggleFilter(this.filters.statusFilter, status, UserStorageKey.STATUS);
     }
 
     /**

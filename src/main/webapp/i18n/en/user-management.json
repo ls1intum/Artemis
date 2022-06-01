@@ -3,6 +3,7 @@
         "filter": {
             "authority": "Role ({{ num }})",
             "origin": "Origin ({{ num }})",
+            "status": "Status ({{ num }})",
             "apply": "Apply"
         },
         "home": {

@@ -81,6 +81,29 @@
                                         </li>
                                     </ul>
                                 </div>
+                                <div class="me-2" aria-label="Filter Dropdown" ngbDropdown>
+                                    <button
+                                        class="btn"
+                                        [ngClass]="{ 'btn-secondary': filters.statusFilter.size === 0, 'btn-success': filters.statusFilter.size > 0 }"
+                                        ngbDropdownToggle
+                                    >
+                                        <fa-icon [icon]="faFilter"></fa-icon>
+                                        <span class="d-s-none d-md-inline">{{ 'userManagement.filter.status' | artemisTranslate: { num: filters.statusFilter.size } }}</span>
+                                    </button>
+                                    <ul ngbDropdownMenu class="checkbox-menu text-nowrap pe-2" aria-labelledby="filter-dropdown-button">
+                                        <li *ngFor="let status of this.statusFilters">
+                                            <label>
+                                                <input
+                                                    class="ms-2 form-check-input"
+                                                    (change)="this.toggleStatusFilter(status)"
+                                                    [checked]="this.filters.statusFilter.has(status)"
+                                                    type="checkbox"
+                                                />
+                                                <span class="ms-2">{{ status.toString() }}</span>
+                                            </label>
+                                        </li>
+                                    </ul>
+                                </div>
                                 <div aria-label="Apply Filter">
                                     <button class="btn btn-primary" (click)="loadAll()">
                                         <span jhiTranslate="userManagement.filter.apply">Apply</span>

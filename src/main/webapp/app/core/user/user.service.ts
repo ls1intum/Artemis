@@ -49,7 +49,7 @@ export class UserService {
         let options = createRequestOption(req);
         options = options.append('authorities', [...filter.authorityFilter].join(','));
         options = options.append('origin', [...filter.originFilter].join(','));
-        console.log(options);
+        options = options.append('status', [...filter.statusFilter].join(','));
         return this.http.get<User[]>(this.resourceUrl, { params: options, observe: 'response' });
     }
 
