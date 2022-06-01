@@ -8,12 +8,23 @@
     background: var(--metis-light-gray);
 }
 
+.bold-line {
+    height: 2px;
+    background: var(--metis-light-gray);
+}
+
 .icon {
     color: var(--metis-gray);
 }
 
 .posting-header {
-    font-size: x-small;
+    font-size: 11px;
+
+    .posting-author {
+        font-size: 13px;
+        font-weight: 500;
+        padding-right: 5px;
+    }
 }
 
 .resolved {

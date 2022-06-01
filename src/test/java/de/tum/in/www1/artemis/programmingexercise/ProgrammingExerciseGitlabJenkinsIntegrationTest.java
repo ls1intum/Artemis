@@ -346,6 +346,18 @@ class ProgrammingExerciseGitlabJenkinsIntegrationTest extends AbstractSpringInte
     }
 
     @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void createProgrammingExercise_setInvalidExampleSolutionPublicationDate_badRequest() throws Exception {
+        programmingExerciseTestService.createProgrammingExercise_setInvalidExampleSolutionPublicationDate_badRequest();
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void createProgrammingExercise_setValidExampleSolutionPublicationDate() throws Exception {
+        programmingExerciseTestService.createProgrammingExercise_setValidExampleSolutionPublicationDate();
+    }
+
+    @Test
     @WithMockUser(username = "student1", roles = "USER")
     public void testGetProgrammingExercise_asStudent_exampleSolutionVisibility() throws Exception {
         programmingExerciseTestService.testGetProgrammingExercise_exampleSolutionVisibility(true, "student1");

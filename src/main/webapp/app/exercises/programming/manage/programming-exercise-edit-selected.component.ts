@@ -5,8 +5,9 @@ import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService, AlertType } from 'app/core/util/alert.service';
 import { faSave } from '@fortawesome/free-solid-svg-icons';
+import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 
 @Component({
     selector: 'jhi-programming-exercise-edit-selected',
@@ -31,6 +32,7 @@ export class ProgrammingExerciseEditSelectedComponent implements OnInit {
         private translateService: TranslateService,
         private alertService: AlertService,
         private programmingExerciseService: ProgrammingExerciseService,
+        private exerciseService: ExerciseService,
     ) {}
 
     ngOnInit(): void {
@@ -47,6 +49,14 @@ export class ProgrammingExerciseEditSelectedComponent implements OnInit {
             }
         }
         this.isSaving = true;
+
+        if (this.exerciseService.hasExampleSolutionPublicationDateWarning(this.newProgrammingExercise)) {
+            this.alertService.addAlert({
+                type: AlertType.WARNING,
+                message: 'artemisApp.exercise.exampleSolutionPublicationDateWarning',
+            });
+        }
+
         this.selectedProgrammingExercises.forEach((programmingExercise) => {
             programmingExercise = this.setNewValues(programmingExercise);
             const requestOptions = {} as any;
@@ -68,6 +78,7 @@ export class ProgrammingExerciseEditSelectedComponent implements OnInit {
         programmingExercise.buildAndTestStudentSubmissionsAfterDueDate = this.newProgrammingExercise.buildAndTestStudentSubmissionsAfterDueDate;
         programmingExercise.assessmentType = this.newProgrammingExercise.assessmentType;
         programmingExercise.assessmentDueDate = this.newProgrammingExercise.assessmentDueDate;
+        programmingExercise.exampleSolutionPublicationDate = this.newProgrammingExercise.exampleSolutionPublicationDate;
         return programmingExercise;
     }
 
