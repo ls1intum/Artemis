@@ -134,7 +134,7 @@ public class PlagiarismResource {
     @DeleteMapping("exercises/{exerciseId}/plagiarism-results/{plagiarismResultId}/plagiarism-comparisons")
     @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<Void> deletePlagiarismComparisons(@PathVariable("exerciseId") long exerciseId, @PathVariable("plagiarismResultId") long plagiarismResultId,
-            @RequestParam(value = "deleteAll") boolean deleteAll) {
+            @RequestParam() boolean deleteAll) {
         log.info("REST request to delete plagiarism comparisons for exercise with id: {}", exerciseId);
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
         if (!authenticationCheckService.isAtLeastInstructorForExercise(exercise)) {
