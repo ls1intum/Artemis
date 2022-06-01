@@ -1,44 +1,46 @@
 {
-    "userManagement": {
-        "home": {
-            "title": "Nutzer:in",
-            "createLabel": "Nutzer:in erstellen",
-            "createOrEditLabel": "Nutzer:in erstellen oder bearbeiten"
-        },
-        "created": "Nutzer:in wurde mit ID {{ param }} erstellt",
-        "updated": "Nutzer:in mit ID {{ param }} wurde geändert",
-        "deleted": "Nutzer:in mit ID {{ param }} wurde gelöscht",
-        "delete": {
-            "question": "Soll Nutzer:in <strong>{{ title }}</strong> wirklich gelöscht werden?"
-        },
-        "detail": {
-            "title": "User"
-        },
-        "login": "Login",
-        "firstName": "Vorname",
-        "lastName": "Nachname",
-        "name": "Name",
-        "randomPassword": "Zufälliges Passwort",
-        "keepPassword": "Altes Passwort behalten",
-        "inputConstraints": "Das Feld muss zwischen {{min}} und {{max}} Zeichen enthalten!",
-        "groups": "Gruppen",
-        "addGroup": "+ Gruppe",
-        "enterGroup": "Gruppe eingeben",
-        "organizations": "Nutzer:in Organisationen",
-        "email": "E-Mail",
-        "registrationNumber": "Matrikelnummer",
-        "activated": "Aktiv",
-        "deactivated": "Deaktiviert",
-        "profiles": "Profile",
-        "langKey": "Sprache",
-        "createdBy": "Erstellt von",
-        "createdDate": "Erstellt am",
-        "lastModifiedBy": "Bearbeitet von",
-        "lastModifiedDate": "Zuletzt bearbeitet",
-        "searchForUser": "Suche nach Nutzer:innen: ",
-        "search": "Suche",
-        "loading": "Laden...",
-        "searchError": "Der Suchbegriff muss leer oder mindestens 3 Zeichen lang sein.",
-        "jenkinsChange": "Die Änderung des Benutzernamens wird für dein aktuelles Setup (Jenkins) nicht unterstützt. Möglicherweise musst du den Benutzernamen in Jenkins manuell ändern.\nDu hast den Benutzer <i>{{ oldLogin }}</i> auf <i>{{ newLogin }}</i> aktualisiert."
+    "artemisApp": {
+        "userManagement": {
+            "home": {
+                "title": "Nutzer:in",
+                "createLabel": "Nutzer:in erstellen",
+                "createOrEditLabel": "Nutzer:in erstellen oder bearbeiten"
+            },
+            "created": "Nutzer:in wurde mit ID {{ param }} erstellt",
+            "updated": "Nutzer:in mit ID {{ param }} wurde geändert",
+            "deleted": "Nutzer:in mit ID {{ param }} wurde gelöscht",
+            "delete": {
+                "question": "Soll Nutzer:in <strong>{{ title }}</strong> wirklich gelöscht werden?"
+            },
+            "detail": {
+                "title": "User"
+            },
+            "login": "Login",
+            "firstName": "Vorname",
+            "lastName": "Nachname",
+            "name": "Name",
+            "randomPassword": "Zufälliges Passwort",
+            "keepPassword": "Altes Passwort behalten",
+            "inputConstraints": "Das Feld muss zwischen {{min}} und {{max}} Zeichen enthalten!",
+            "groups": "Gruppen",
+            "addGroup": "+ Gruppe",
+            "enterGroup": "Gruppe eingeben",
+            "organizations": "Nutzer:in Organisationen",
+            "email": "E-Mail",
+            "registrationNumber": "Matrikelnummer",
+            "activated": "Aktiv",
+            "deactivated": "Deaktiviert",
+            "profiles": "Profile",
+            "langKey": "Sprache",
+            "createdBy": "Erstellt von",
+            "createdDate": "Erstellt am",
+            "lastModifiedBy": "Bearbeitet von",
+            "lastModifiedDate": "Zuletzt bearbeitet",
+            "searchForUser": "Suche nach Nutzer:innen: ",
+            "search": "Suche",
+            "loading": "Laden...",
+            "searchError": "Der Suchbegriff muss leer oder mindestens 3 Zeichen lang sein.",
+            "jenkinsChange": "Die Änderung des Benutzernamens wird für dein aktuelles Setup (Jenkins) nicht unterstützt. Möglicherweise musst du den Benutzernamen in Jenkins manuell ändern.\nDu hast den Benutzer <i>{{ oldLogin }}</i> auf <i>{{ newLogin }}</i> aktualisiert."
+        }
     }
 }

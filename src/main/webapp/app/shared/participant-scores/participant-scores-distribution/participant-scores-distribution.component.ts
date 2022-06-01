@@ -276,7 +276,7 @@ export class ParticipantScoresDistributionComponent implements OnInit, OnChanges
      */
     private getHelpIconTooltipNotBonus(): string {
         if (this.isCourseScore) {
-            return 'instructorDashboard.courseScoreChart.gradingScaleExplanationNotBonus';
+            return 'artemisApp.instructorDashboard.courseScoreChart.gradingScaleExplanationNotBonus';
         } else {
             return 'artemisApp.examScores.gradingScaleExplanationNotBonus';
         }
@@ -288,7 +288,7 @@ export class ParticipantScoresDistributionComponent implements OnInit, OnChanges
      */
     private getHelpIconNoGradingScale(): string {
         if (this.isCourseScore) {
-            return 'instructorDashboard.courseScoreChart.noGradingScaleExplanation';
+            return 'artemisApp.instructorDashboard.courseScoreChart.noGradingScaleExplanation';
         } else {
             return 'artemisApp.examScores.noGradingScaleExplanation';
         }

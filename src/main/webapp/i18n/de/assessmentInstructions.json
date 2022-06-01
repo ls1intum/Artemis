@@ -1,23 +1,25 @@
 {
-    "assessmentInstructions": {
-        "instructions": {
-            "instructions": "Bewertungsanweisungen",
-            "editor": {
-                "addCredits": "[credits] Punkte",
-                "addInstruction": "[instruction] Bewertungsanweisungen",
-                "addFeedback": "[feedback] Feedback",
-                "addGradingScale": "[gradingScale] Bewertungsmaßstab",
-                "addCountUsage": "[count] Anzahl Verwendung",
-                "addCriterion": "[criterion] Bewertungskriterium"
+    "artemisApp": {
+        "assessmentInstructions": {
+            "instructions": {
+                "instructions": "Bewertungsanweisungen",
+                "editor": {
+                    "addCredits": "[credits] Punkte",
+                    "addInstruction": "[instruction] Bewertungsanweisungen",
+                    "addFeedback": "[feedback] Feedback",
+                    "addGradingScale": "[gradingScale] Bewertungsmaßstab",
+                    "addCountUsage": "[count] Anzahl Verwendung",
+                    "addCriterion": "[criterion] Bewertungskriterium"
+                }
+            },
+            "problemStatement": "Aufgabenstellung",
+            "sampleSolution": "Beispiellösung",
+            "assessmentInstructions": "Bewertungsanweisungen",
+            "usageCount": "Anzahl Verwendung",
+            "trainingEvaluationCriteria": {
+                "title": "Bewertungskriterien für das Beurteilungstraining",
+                "description": "Um das Beurteilungstraining erfolgreich abzuschließen, sollte die Bewertung alle folgenden Kriterien erfüllen:<br>&nbsp;1. Die Menge deines Feedbacks sollte der Menge in der Bespielbewertung entsprechen.<br>&nbsp;2. Jedes Feedback sollte die gleiche Bewertungsanweisung und Punktzahl aufweisen.<br>&nbsp;3. Für Feedback mit negativer Punktzahl muss eine Begründung angegeben werden."
             }
-        },
-        "problemStatement": "Aufgabenstellung",
-        "sampleSolution": "Beispiellösung",
-        "assessmentInstructions": "Bewertungsanweisungen",
-        "usageCount": "Anzahl Verwendung",
-        "trainingEvaluationCriteria": {
-            "title": "Bewertungskriterien für das Beurteilungstraining",
-            "description": "Um das Beurteilungstraining erfolgreich abzuschließen, sollte die Bewertung alle folgenden Kriterien erfüllen:<br>&nbsp;1. Die Menge deines Feedbacks sollte der Menge in der Bespielbewertung entsprechen.<br>&nbsp;2. Jedes Feedback sollte die gleiche Bewertungsanweisung und Punktzahl aufweisen.<br>&nbsp;3. Für Feedback mit negativer Punktzahl muss eine Begründung angegeben werden."
         }
     }
 }

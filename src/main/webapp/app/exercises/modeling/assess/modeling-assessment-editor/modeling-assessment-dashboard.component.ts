@@ -82,7 +82,7 @@ export class ModelingAssessmentDashboardComponent implements OnInit, OnDestroy {
         this.submissions = [];
         this.filteredSubmissions = [];
         this.canOverrideAssessments = this.accountService.hasAnyAuthorityDirect([Authority.ADMIN, Authority.INSTRUCTOR]);
-        translateService.get('modelingAssessmentEditor.messages.confirmCancel').subscribe((text) => (this.cancelConfirmationText = text));
+        translateService.get('artemisApp.modelingAssessmentEditor.messages.confirmCancel').subscribe((text) => (this.cancelConfirmationText = text));
     }
 
     ngOnInit() {

@@ -9,13 +9,13 @@ export const organizationMgmtRoute: Route[] = [
         path: 'organization-management',
         component: OrganizationManagementComponent,
         data: {
-            pageTitle: 'organizationManagement.title',
+            pageTitle: 'artemisApp.organizationManagement.title',
         },
     },
     {
         path: 'organization-management',
         data: {
-            pageTitle: 'organizationManagement.title',
+            pageTitle: 'artemisApp.organizationManagement.title',
         },
         children: [
             {
@@ -25,7 +25,7 @@ export const organizationMgmtRoute: Route[] = [
                     organization: OrganizationManagementResolve,
                 },
                 data: {
-                    pageTitle: 'organizationManagement.addLabel',
+                    pageTitle: 'artemisApp.organizationManagement.addLabel',
                 },
             },
             {
@@ -35,7 +35,7 @@ export const organizationMgmtRoute: Route[] = [
                     organization: OrganizationManagementResolve,
                 },
                 data: {
-                    pageTitle: 'organizationManagement.title',
+                    pageTitle: 'artemisApp.organizationManagement.title',
                     breadcrumbLabelVariable: 'organization.id',
                 },
             },
@@ -52,7 +52,7 @@ export const organizationMgmtRoute: Route[] = [
                         path: 'edit',
                         component: OrganizationManagementUpdateComponent,
                         data: {
-                            pageTitle: 'organizationManagement.addOrEditLabel',
+                            pageTitle: 'artemisApp.organizationManagement.addOrEditLabel',
                             breadcrumbLabelVariable: 'organization.id',
                         },
                     },

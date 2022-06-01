@@ -1,44 +1,46 @@
 {
-    "userManagement": {
-        "home": {
-            "title": "Users",
-            "createLabel": "Create a new user",
-            "createOrEditLabel": "Create or edit a user"
-        },
-        "created": "Created new user with identifier {{ param }}",
-        "updated": "Updated User with identifier {{ param }}",
-        "deleted": "Deleted User with identifier {{ param }}",
-        "delete": {
-            "question": "Are you sure you want to delete user <strong>{{ title }}</strong>?"
-        },
-        "detail": {
-            "title": "User"
-        },
-        "login": "Login",
-        "firstName": "First name",
-        "lastName": "Last name",
-        "name": "Name",
-        "randomPassword": "Random password",
-        "keepPassword": "Keep old password",
-        "inputConstraints": "This field must contain {{min}} to {{max}} characters!",
-        "groups": "Groups",
-        "addGroup": "+ Group",
-        "enterGroup": "Enter a group",
-        "organizations": "User organizations",
-        "email": "Email",
-        "registrationNumber": "Registration Number",
-        "activated": "Activated",
-        "deactivated": "Deactivated",
-        "profiles": "Profiles",
-        "langKey": "Language",
-        "createdBy": "Created by",
-        "createdDate": "Created date",
-        "lastModifiedBy": "Modified by",
-        "lastModifiedDate": "Modified date",
-        "searchForUser": "Search for User: ",
-        "search": "Search",
-        "loading": "Loading...",
-        "searchError": "Search term must be empty or contain at least 3 characters.",
-        "jenkinsChange": "Changing the user's login is not supported for your current setup (Jenkins). You may have to manually update the user's login in Jenkins.\nYou changed the user <i>{{ oldLogin }}</i> to <i>{{ newLogin }}</i>."
+    "artemisApp": {
+        "userManagement": {
+            "home": {
+                "title": "Users",
+                "createLabel": "Create a new user",
+                "createOrEditLabel": "Create or edit a user"
+            },
+            "created": "Created new user with identifier {{ param }}",
+            "updated": "Updated User with identifier {{ param }}",
+            "deleted": "Deleted User with identifier {{ param }}",
+            "delete": {
+                "question": "Are you sure you want to delete user <strong>{{ title }}</strong>?"
+            },
+            "detail": {
+                "title": "User"
+            },
+            "login": "Login",
+            "firstName": "First name",
+            "lastName": "Last name",
+            "name": "Name",
+            "randomPassword": "Random password",
+            "keepPassword": "Keep old password",
+            "inputConstraints": "This field must contain {{min}} to {{max}} characters!",
+            "groups": "Groups",
+            "addGroup": "+ Group",
+            "enterGroup": "Enter a group",
+            "organizations": "User organizations",
+            "email": "Email",
+            "registrationNumber": "Registration Number",
+            "activated": "Activated",
+            "deactivated": "Deactivated",
+            "profiles": "Profiles",
+            "langKey": "Language",
+            "createdBy": "Created by",
+            "createdDate": "Created date",
+            "lastModifiedBy": "Modified by",
+            "lastModifiedDate": "Modified date",
+            "searchForUser": "Search for User: ",
+            "search": "Search",
+            "loading": "Loading...",
+            "searchError": "Search term must be empty or contain at least 3 characters.",
+            "jenkinsChange": "Changing the user's login is not supported for your current setup (Jenkins). You may have to manually update the user's login in Jenkins.\nYou changed the user <i>{{ oldLogin }}</i> to <i>{{ newLogin }}</i>."
+        }
     }
 }

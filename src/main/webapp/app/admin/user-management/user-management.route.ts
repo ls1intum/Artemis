@@ -9,7 +9,7 @@ export const userManagementRoute: Route[] = [
         path: 'user-management',
         component: UserManagementComponent,
         data: {
-            pageTitle: 'userManagement.home.title',
+            pageTitle: 'artemisApp.userManagement.home.title',
             defaultSort: 'id,asc',
         },
     },
@@ -17,7 +17,7 @@ export const userManagementRoute: Route[] = [
         // Create a new path without a component defined to prevent resolver caching and the UserManagementComponent from being always rendered
         path: 'user-management',
         data: {
-            pageTitle: 'userManagement.home.title',
+            pageTitle: 'artemisApp.userManagement.home.title',
         },
         children: [
             {
@@ -27,7 +27,7 @@ export const userManagementRoute: Route[] = [
                     user: UserManagementResolve,
                 },
                 data: {
-                    pageTitle: 'userManagement.home.createLabel',
+                    pageTitle: 'artemisApp.userManagement.home.createLabel',
                 },
             },
             {
@@ -37,7 +37,7 @@ export const userManagementRoute: Route[] = [
                     user: UserManagementResolve,
                 },
                 data: {
-                    pageTitle: 'userManagement.home.title',
+                    pageTitle: 'artemisApp.userManagement.home.title',
                 },
             },
             {
@@ -51,7 +51,7 @@ export const userManagementRoute: Route[] = [
                         path: 'edit',
                         component: UserManagementUpdateComponent,
                         data: {
-                            pageTitle: 'userManagement.home.createOrEditLabel',
+                            pageTitle: 'artemisApp.userManagement.home.createOrEditLabel',
                         },
                     },
                 ],

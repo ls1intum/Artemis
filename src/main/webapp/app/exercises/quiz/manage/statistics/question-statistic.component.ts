@@ -155,7 +155,7 @@ export abstract class QuestionStatisticComponent extends QuizStatisticsDirective
      */
     loadInvalidLayout(possibleInvalidElements: CanBecomeInvalid[]) {
         // set Background for invalid answers = grey
-        const invalidLabel = this.translateService.instant('showStatistic.invalid');
+        const invalidLabel = this.translateService.instant('artemisApp.showStatistic.invalid');
         possibleInvalidElements.forEach((element, i) => {
             if (element.invalid) {
                 this.backgroundColors[i] = greyColor;
@@ -175,7 +175,7 @@ export abstract class QuestionStatisticComponent extends QuizStatisticsDirective
         this.backgroundSolutionColors[length] = lightBlueColor;
 
         // add Text for last label based on the language
-        const lastLabel = this.translateService.instant('showStatistic.quizStatistic.yAxes');
+        const lastLabel = this.translateService.instant('artemisApp.showStatistic.quizStatistic.yAxes');
         this.solutionLabels[length] = lastLabel;
         this.labels[length] = lastLabel;
         this.chartLabels = this.labels;
@@ -206,6 +206,6 @@ export abstract class QuestionStatisticComponent extends QuizStatisticsDirective
         }
 
         this.pushDataToNgxEntry(this.changeDetector);
-        this.setAxisLabels('showStatistic.questionStatistic.xAxes', 'showStatistic.questionStatistic.yAxes');
+        this.setAxisLabels('artemisApp.showStatistic.questionStatistic.xAxes', 'artemisApp.showStatistic.questionStatistic.yAxes');
     }
 }

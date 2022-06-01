@@ -81,7 +81,7 @@ describe('Submission Export Dialog Component', () => {
         component.handleExportResponse(response);
 
         expect(alertSpy).toHaveBeenCalledTimes(1);
-        expect(alertSpy).toHaveBeenCalledWith('instructorDashboard.exportSubmissions.successMessage');
+        expect(alertSpy).toHaveBeenCalledWith('artemisApp.instructorDashboard.exportSubmissions.successMessage');
         expect(modalSpy).toHaveBeenCalledTimes(1);
         expect(modalSpy).toHaveBeenCalledWith(true);
         expect(component.exportInProgress).toBe(false);

@@ -1,6 +1,6 @@
 <div *ngIf="exercise">
     <h4>
-        {{ 'modelingAssessment.dashboard.heading' | artemisTranslate: { title: exercise.title } }}
+        {{ 'artemisApp.modelingAssessment.dashboard.heading' | artemisTranslate: { title: exercise.title } }}
     </h4>
     <jhi-assessment-filters (filterChange)="updateFilteredSubmissions($event)" [submissions]="submissions"></jhi-assessment-filters>
     <jhi-assessment-warning [exercise]="exercise" [submissions]="filteredSubmissions"></jhi-assessment-warning>

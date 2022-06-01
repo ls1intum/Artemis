@@ -1,14 +1,14 @@
 <div>
     <h2>
-        <span id="user-management-page-heading" jhiTranslate="userManagement.home.title">Users</span>
+        <span id="user-management-page-heading" jhiTranslate="artemisApp.userManagement.home.title">Users</span>
         <a class="btn btn-primary float-end jh-create-entity" [routerLink]="['./new']">
-            <fa-icon [icon]="faPlus"></fa-icon> <span jhiTranslate="userManagement.home.createLabel">Create a new User</span>
+            <fa-icon [icon]="faPlus"></fa-icon> <span jhiTranslate="artemisApp.userManagement.home.createLabel">Create a new User</span>
         </a>
     </h2>
     <div class="table-responsive" *ngIf="users">
         <form [formGroup]="userSearchForm">
             <div class="form-group form-inline">
-                <label for="field_searchTerm" class="form-control-label" jhiTranslate="userManagement.searchForUser">Search for User: </label>
+                <label for="field_searchTerm" class="form-control-label" jhiTranslate="artemisApp.userManagement.searchForUser">Search for User: </label>
                 <input
                     class="form-control ms-3"
                     type="text"
@@ -19,14 +19,14 @@
                     (focusout)="loadAll()"
                 />
                 <button class="btn btn-primary ms-3" (click)="loadAll()">
-                    <span jhiTranslate="userManagement.search">Search</span>
+                    <span jhiTranslate="artemisApp.userManagement.search">Search</span>
                 </button>
                 <ng-container *ngIf="searchControl.invalid && (searchControl.dirty || searchControl.touched)">
                     <div class="alert alert-danger ms-3 mb-0">
-                        <div jhiTranslate="userManagement.searchError">Search term must be empty or at least 3 character.</div>
+                        <div jhiTranslate="artemisApp.userManagement.searchError">Search term must be empty or at least 3 character.</div>
                     </div>
                 </ng-container>
-                <span class="ms-3" *ngIf="loadingSearchResult" jhiTranslate="userManagement.loading">Loading...</span>
+                <span class="ms-3" *ngIf="loadingSearchResult" jhiTranslate="artemisApp.userManagement.loading">Loading...</span>
             </div>
         </form>
         <table class="table table-striped" aria-describedby="user-management-page-heading">
@@ -37,38 +37,38 @@
                         <fa-icon [icon]="faSort"></fa-icon>
                     </th>
                     <th jhiSortBy="login">
-                        <span jhiTranslate="userManagement.login">Login</span>
+                        <span jhiTranslate="artemisApp.userManagement.login">Login</span>
                         <fa-icon [icon]="faSort"></fa-icon>
                     </th>
                     <th jhiSortBy="email">
-                        <span jhiTranslate="userManagement.email">Email</span>
+                        <span jhiTranslate="artemisApp.userManagement.email">Email</span>
                         <fa-icon [icon]="faSort"></fa-icon>
                     </th>
                     <th jhiSortBy="registrationNumber">
-                        <span jhiTranslate="userManagement.registrationNumber">Registration Number</span>
+                        <span jhiTranslate="artemisApp.userManagement.registrationNumber">Registration Number</span>
                         <fa-icon [icon]="faSort"></fa-icon>
                     </th>
                     <th jhiSortBy="lastName">
-                        <span jhiTranslate="userManagement.name">Name</span>
+                        <span jhiTranslate="artemisApp.userManagement.name">Name</span>
                         <fa-icon [icon]="faSort"></fa-icon>
                     </th>
                     <th></th>
                     <th jhiSortBy="langKey">
-                        <span jhiTranslate="userManagement.langKey">Lang Key</span>
+                        <span jhiTranslate="artemisApp.userManagement.langKey">Lang Key</span>
                         <fa-icon [icon]="faSort"></fa-icon>
                     </th>
-                    <th><span jhiTranslate="userManagement.profiles">Profiles</span></th>
+                    <th><span jhiTranslate="artemisApp.userManagement.profiles">Profiles</span></th>
                     <th><span>Groups</span></th>
                     <th jhiSortBy="createdDate">
-                        <span jhiTranslate="userManagement.createdDate">Created Date</span>
+                        <span jhiTranslate="artemisApp.userManagement.createdDate">Created Date</span>
                         <fa-icon [icon]="faSort"></fa-icon>
                     </th>
                     <th jhiSortBy="lastModifiedBy">
-                        <span jhiTranslate="userManagement.lastModifiedBy">Last Modified By</span>
+                        <span jhiTranslate="artemisApp.userManagement.lastModifiedBy">Last Modified By</span>
                         <fa-icon [icon]="faSort"></fa-icon>
                     </th>
                     <th jhiSortBy="lastModifiedDate">
-                        <span jhiTranslate="userManagement.lastModifiedDate">Last Modified Date</span>
+                        <span jhiTranslate="artemisApp.userManagement.lastModifiedDate">Last Modified Date</span>
                         <fa-icon [icon]="faSort"></fa-icon>
                     </th>
                     <th></th>
@@ -92,13 +92,15 @@
                         <ngb-highlight [result]="user.name" [term]="searchTerm"></ngb-highlight>
                     </td>
                     <td>
-                        <button class="btn btn-danger btn-sm" (click)="setActive(user, true)" *ngIf="!user.activated" jhiTranslate="userManagement.deactivated">Deactivated</button>
+                        <button class="btn btn-danger btn-sm" (click)="setActive(user, true)" *ngIf="!user.activated" jhiTranslate="artemisApp.userManagement.deactivated">
+                            Deactivated
+                        </button>
                         <button
                             class="btn btn-success btn-sm"
                             (click)="setActive(user, false)"
                             *ngIf="user.activated"
                             [disabled]="!currentAccount || currentAccount.login === user.login"
-                            jhiTranslate="userManagement.activated"
+                            jhiTranslate="artemisApp.userManagement.activated"
                         >
                             Activated
                         </button>
@@ -130,7 +132,7 @@
                             <button
                                 jhiDeleteButton
                                 [entityTitle]="user.login!"
-                                deleteQuestion="userManagement.delete.question"
+                                deleteQuestion="artemisApp.userManagement.delete.question"
                                 (delete)="deleteUser(user.login!)"
                                 [dialogError]="dialogError"
                                 [disabled]="!currentAccount || currentAccount.login === user.login"

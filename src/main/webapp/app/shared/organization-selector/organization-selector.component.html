@@ -1,6 +1,6 @@
 <div>
     <div class="modal-header">
-        <h4 class="modal-title" jhiTranslate="organizationManagement.modalSelector.title">Organizations</h4>
+        <h4 class="modal-title" jhiTranslate="artemisApp.organizationManagement.modalSelector.title">Organizations</h4>
         <button type="button" class="btn-close" data-dismiss="modal" aria-hidden="true" (click)="closeModal(undefined)"></button>
     </div>
     <div class="modal-body">
@@ -10,9 +10,9 @@
                     <thead>
                         <tr>
                             <th></th>
-                            <th><span jhiTranslate="organizationManagement.name">Name</span></th>
-                            <th><span jhiTranslate="organizationManagement.shortName">Short Name</span></th>
-                            <th><span jhiTranslate="organizationManagement.emailPattern">Email Pattern</span></th>
+                            <th><span jhiTranslate="artemisApp.organizationManagement.name">Name</span></th>
+                            <th><span jhiTranslate="artemisApp.organizationManagement.shortName">Short Name</span></th>
+                            <th><span jhiTranslate="artemisApp.organizationManagement.emailPattern">Email Pattern</span></th>
                         </tr>
                     </thead>
                     <tbody>
@@ -32,7 +32,12 @@
                             </td>
                             <td>{{ organization.emailPattern }}</td>
                             <td>
-                                <button type="button" class="btn ms-2 btn-primary" (click)="closeModal(organization)" jhiTranslate="organizationManagement.modalSelector.select">
+                                <button
+                                    type="button"
+                                    class="btn ms-2 btn-primary"
+                                    (click)="closeModal(organization)"
+                                    jhiTranslate="artemisApp.organizationManagement.modalSelector.select"
+                                >
                                     Select
                                 </button>
                             </td>

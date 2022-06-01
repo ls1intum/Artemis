@@ -1,10 +1,10 @@
 <form *ngIf="!isLoading; else loadingContainer" name="exportForm" role="form" (ngSubmit)="exportSubmissions(exercise.id!)" #exportForm="ngForm">
     <div class="modal-header">
-        <h4 class="modal-title" jhiTranslate="instructorDashboard.exportSubmissions.title">Confirm export operation</h4>
+        <h4 class="modal-title" jhiTranslate="artemisApp.instructorDashboard.exportSubmissions.title">Confirm export operation</h4>
         <button type="button" class="btn-close" data-dismiss="modal" (click)="clear()"></button>
     </div>
     <div class="modal-body">
-        <p [jhiTranslate]="'instructorDashboard.exportSubmissions.question'" [translateValues]="{ exerciseTitle: exercise.title, courseTitle: exercise.course?.title }">
+        <p [jhiTranslate]="'artemisApp.instructorDashboard.exportSubmissions.question'" [translateValues]="{ exerciseTitle: exercise.title, courseTitle: exercise.course?.title }">
             Confirm export
         </p>
         <textarea
@@ -22,7 +22,7 @@
             <div *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR']" class="checkbox">
                 <label class="control-label">
                     <input class="form-check-input" type="checkbox" name="allStudents" [(ngModel)]="submissionExportOptions.exportAllParticipants" />
-                    <strong [jhiTranslate]="'instructorDashboard.exportSubmissions.downloadAllStudents'"> Or download the submissions of all students }} </strong>
+                    <strong [jhiTranslate]="'artemisApp.instructorDashboard.exportSubmissions.downloadAllStudents'"> Or download the submissions of all students }} </strong>
                 </label>
             </div>
         </ng-container>
@@ -30,11 +30,11 @@
             <div class="checkbox">
                 <label class="control-label">
                     <input class="form-check-input" type="checkbox" name="filterLateSubmissions" [(ngModel)]="this.submissionExportOptions.filterLateSubmissions" />
-                    <strong jhiTranslate="instructorDashboard.exportSubmissions.filterLateSubmissions">Filter late submissions</strong>
+                    <strong jhiTranslate="artemisApp.instructorDashboard.exportSubmissions.filterLateSubmissions">Filter late submissions</strong>
                 </label>
             </div>
             <div class="form-group">
-                <strong jhiTranslate="instructorDashboard.exportSubmissions.filterLateSubmissionsDate"
+                <strong jhiTranslate="artemisApp.instructorDashboard.exportSubmissions.filterLateSubmissionsDate"
                     >Date for filter late submissions (defaults to exercise due date if not set)</strong
                 >
                 <jhi-date-time-picker

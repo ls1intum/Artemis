@@ -1,7 +1,7 @@
 <div class="row justify-content-center">
     <div class="col-md-8">
         <form name="editForm" role="form" novalidate (ngSubmit)="save()" [formGroup]="editForm">
-            <h2 id="myUserLabel" jhiTranslate="userManagement.home.createOrEditLabel">Create or edit a User</h2>
+            <h2 id="myUserLabel" jhiTranslate="artemisApp.userManagement.home.createOrEditLabel">Create or edit a User</h2>
             <div>
                 <div class="form-group" [hidden]="!user.id">
                     <label jhiTranslate="global.field.id">ID</label>
@@ -9,7 +9,7 @@
                 </div>
 
                 <div class="form-group">
-                    <label class="form-control-label" jhiTranslate="userManagement.login">Login</label>
+                    <label class="form-control-label" jhiTranslate="artemisApp.userManagement.login">Login</label>
                     <input
                         type="text"
                         class="form-control"
@@ -29,7 +29,7 @@
                         <small
                             class="form-text text-danger"
                             *ngIf="editForm.get('loginInput')!.errors?.maxlength"
-                            jhiTranslate="userManagement.inputConstraints"
+                            jhiTranslate="artemisApp.userManagement.inputConstraints"
                             [translateValues]="{ min: USERNAME_MIN_LENGTH, max: USERNAME_MAX_LENGTH }"
                         >
                             This field has to contain 4-50 characters!
@@ -42,7 +42,7 @@
                         <small
                             class="form-text text-danger"
                             *ngIf="editForm.get('loginInput')!.errors?.minlength"
-                            jhiTranslate="userManagement.inputConstraints"
+                            jhiTranslate="artemisApp.userManagement.inputConstraints"
                             [translateValues]="{ min: USERNAME_MIN_LENGTH, max: USERNAME_MAX_LENGTH }"
                         >
                             This field has to contain 4-50 characters!
@@ -50,7 +50,7 @@
                     </div>
                 </div>
                 <div class="form-group">
-                    <label class="form-control-label" jhiTranslate="userManagement.firstName">First Name</label>
+                    <label class="form-control-label" jhiTranslate="artemisApp.userManagement.firstName">First Name</label>
                     <input
                         type="text"
                         class="form-control"
@@ -73,7 +73,7 @@
                     </div>
                 </div>
                 <div class="form-group">
-                    <label jhiTranslate="userManagement.lastName">Last Name</label>
+                    <label jhiTranslate="artemisApp.userManagement.lastName">Last Name</label>
                     <input
                         type="text"
                         class="form-control"
@@ -97,7 +97,10 @@
                 </div>
                 <div class="form-check mb-2">
                     <input type="checkbox" class="form-check-input" name="randomPassword" id="randomPassword" (change)="shouldRandomizePassword($event)" checked #editPassword />
-                    <label class="form-check-label" for="randomPassword" [jhiTranslate]="user.id ? 'userManagement.keepPassword' : 'userManagement.randomPassword'"
+                    <label
+                        class="form-check-label"
+                        for="randomPassword"
+                        [jhiTranslate]="user.id ? 'artemisApp.userManagement.keepPassword' : 'artemisApp.userManagement.randomPassword'"
                         >Random password / Keep old password</label
                     >
                 </div>
@@ -118,7 +121,7 @@
                         <small
                             class="form-text text-danger"
                             *ngIf="editForm.get('passwordInput')!.errors?.maxlength"
-                            jhiTranslate="userManagement.inputConstraints"
+                            jhiTranslate="artemisApp.userManagement.inputConstraints"
                             [translateValues]="{ min: PASSWORD_MIN_LENGTH, max: PASSWORD_MAX_LENGTH }"
                         >
                             This field has to contain 8-50 characters!
@@ -126,7 +129,7 @@
                         <small
                             class="form-text text-danger"
                             *ngIf="editForm.get('passwordInput')!.errors?.minlength"
-                            jhiTranslate="userManagement.inputConstraints"
+                            jhiTranslate="artemisApp.userManagement.inputConstraints"
                             [translateValues]="{ min: PASSWORD_MIN_LENGTH, max: PASSWORD_MAX_LENGTH }"
                         >
                             This field has to contain 8-50 characters!
@@ -134,7 +137,7 @@
                     </div>
                 </div>
                 <div class="form-group">
-                    <label class="form-control-label" jhiTranslate="userManagement.groups">Groups</label>
+                    <label class="form-control-label" jhiTranslate="artemisApp.userManagement.groups">Groups</label>
                     <mat-form-field class="group-tag-list" appearance="outline">
                         <mat-chip-list #groupList aria-label="Group selection">
                             <mat-chip *ngFor="let group of user.groups" (removed)="onGroupRemove(user, group)" class="group-tag">
@@ -147,7 +150,7 @@
                             </mat-chip>
                             <input
                                 class="group-tag-input"
-                                [placeholder]="'userManagement.addGroup' | artemisTranslate"
+                                [placeholder]="'artemisApp.userManagement.addGroup' | artemisTranslate"
                                 [formControl]="groupCtrl"
                                 [matChipInputFor]="groupList"
                                 [matChipInputSeparatorKeyCodes]="separatorKeysCodes"
@@ -157,7 +160,7 @@
                     </mat-form-field>
                 </div>
                 <div class="form-group">
-                    <label class="form-control-label" jhiTranslate="userManagement.organizations">User organizations</label>
+                    <label class="form-control-label" jhiTranslate="artemisApp.userManagement.organizations">User organizations</label>
                     <div class="btn-group d-flex flex-wrap">
                         <div *ngFor="let organization of user.organizations">
                             <h5>
@@ -172,7 +175,7 @@
                     <button type="button" class="btn btn-outline-primary" (click)="openOrganizationsModal()">Add</button>
                 </div>
                 <div class="form-group">
-                    <label class="form-control-label" jhiTranslate="userManagement.email">Email</label>
+                    <label class="form-control-label" jhiTranslate="artemisApp.userManagement.email">Email</label>
                     <input
                         type="email"
                         class="form-control"
@@ -193,7 +196,7 @@
                         <small
                             class="form-text text-danger"
                             *ngIf="editForm.get('emailInput')!.errors?.maxlength"
-                            jhiTranslate="userManagement.inputConstraints"
+                            jhiTranslate="artemisApp.userManagement.inputConstraints"
                             [translateValues]="{ min: EMAIL_MIN_LENGTH, max: EMAIL_MAX_LENGTH }"
                         >
                             This field has to contain 5-100 characters!
@@ -203,7 +206,7 @@
                             class="form-text text-danger"
                             *ngIf="editForm.get('emailInput')!.errors?.minlength"
                             jhiTranslate="entity.validation.minlength"
-                            jhiTranslate="userManagement.inputConstraints"
+                            jhiTranslate="artemisApp.userManagement.inputConstraints"
                             [translateValues]="{ min: EMAIL_MIN_LENGTH, max: EMAIL_MAX_LENGTH }"
                         >
                             This field has to contain 5-100 characters!
@@ -215,7 +218,7 @@
                     </div>
                 </div>
                 <div class="form-group">
-                    <label class="form-control-label" jhiTranslate="userManagement.registrationNumber">Registration Number</label>
+                    <label class="form-control-label" jhiTranslate="artemisApp.userManagement.registrationNumber">Registration Number</label>
                     <input
                         type="text"
                         class="form-control"
@@ -248,18 +251,18 @@
                             formControlName="activatedInput"
                             [(ngModel)]="user.activated"
                         />
-                        <span jhiTranslate="userManagement.activated">Activated</span>
+                        <span jhiTranslate="artemisApp.userManagement.activated">Activated</span>
                     </label>
                 </div>
 
                 <div class="form-group" *ngIf="languages && languages.length > 0">
-                    <label jhiTranslate="userManagement.langKey">Lang Key</label>
+                    <label jhiTranslate="artemisApp.userManagement.langKey">Lang Key</label>
                     <select class="form-select" id="langKey" name="langKey" formControlName="langKeyInput" [(ngModel)]="user.langKey">
                         <option *ngFor="let language of languages" [value]="language">{{ language | findLanguageFromKey }}</option>
                     </select>
                 </div>
                 <div class="form-group">
-                    <label jhiTranslate="userManagement.profiles">Profiles</label>
+                    <label jhiTranslate="artemisApp.userManagement.profiles">Profiles</label>
                     <select class="form-select" multiple name="authority" formControlName="authorityInput" [(ngModel)]="user.authorities">
                         <option *ngFor="let authority of authorities" [value]="authority">{{ authority }}</option>
                     </select>

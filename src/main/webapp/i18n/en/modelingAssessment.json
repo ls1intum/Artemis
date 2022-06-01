@@ -1,20 +1,22 @@
 {
-    "modelingAssessment": {
-        "points": "Points",
-        "assessor": "Assessor: {{firstName}} {{lastName}}",
-        "noModel": "No model found to display",
-        "invalidAssessments": "Your assessments are not valid!",
-        "messages": {
-            "noConflicts": "Conflicts could not be loaded",
-            "conflictsResolved": "All conflicts have been processed."
-        },
-        "dashboard": {
-            "heading": "Submissions and assessments of modeling exercise  \"{{ title }}\"",
-            "actions": {
-                "open": "Assess model"
-            }
-        },
-        "notFound": "We couldn't find any unassessed modeling submissions. Please return to the dashboard.",
-        "impactWarning": "This feedback might affect {{affectedSubmissionsCount}} other similar submission/s."
+    "artemisApp": {
+        "modelingAssessment": {
+            "points": "Points",
+            "assessor": "Assessor: {{firstName}} {{lastName}}",
+            "noModel": "No model found to display",
+            "invalidAssessments": "Your assessments are not valid!",
+            "messages": {
+                "noConflicts": "Conflicts could not be loaded",
+                "conflictsResolved": "All conflicts have been processed."
+            },
+            "dashboard": {
+                "heading": "Submissions and assessments of modeling exercise  \"{{ title }}\"",
+                "actions": {
+                    "open": "Assess model"
+                }
+            },
+            "notFound": "We couldn't find any unassessed modeling submissions. Please return to the dashboard.",
+            "impactWarning": "This feedback might affect {{affectedSubmissionsCount}} other similar submission/s."
+        }
     }
 }

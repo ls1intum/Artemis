@@ -1,25 +1,27 @@
 {
-    "importUsers": {
-        "buttonLabel": "Nutzer Importieren",
-        "dialogTitle": "Nutzer Importieren nach:",
-        "introText": "Mit diesem Dialog können Nutzer importiert werden.",
-        "dialogText": "Jeder Eintrag in der Datei muss einen Wert für die Matrikelnummer oder den Login beinhalten.<br>Werte für Vor- und Nachnamen sind optional.",
-        "csvFile": {
-            "label": ".csv Datei auswählen",
-            "tooltip": "Bitte wähle die .csv Datei mit den Nutzern zum Import aus. Pro Eintrag muss entweder die 'LOGIN' oder 'REGISTRATION_NUMBER' Spalte ausgefüllt sein. Folgendes Format muss dabei beachtet werden: Login, Matrikelnummer, Vorname, Nachname. Sie müssen diese in der obersten Spalte angeben!"
-        },
-        "usersForImport": {
-            "label": "Nutzer zum Importieren",
-            "tooltip": "Diese Nutzer werden importiert beim Klicken auf \"Importieren\".",
-            "importFailed": "Bitte versuchen sie es nach dem reparieren der Datei erneut, die Datei konnte wegen folgendem Fehler nicht gelesen werden:",
-            "failedRows": "Die folgenden Reihen in ihrer CSV sind ungültig und müssen entweder den Login oder eine Matrikelnummer enthalten:"
-        },
-        "numberOfUsers": "Anzahl an Nutzern:",
-        "numberOfUsersImported": "Importiert:",
-        "numberOfUsersNotImported": "Nicht gefunden:",
-        "genericErrorMessage": "Der Import von Nutzern in den Kurs oder die Klausur ist fehlgeschlagen!",
-        "firstName": "Vorname",
-        "lastName": "Nachname",
-        "registrationNumber": "Matrikelnummer"
+    "artemisApp": {
+        "importUsers": {
+            "buttonLabel": "Nutzer Importieren",
+            "dialogTitle": "Nutzer Importieren nach:",
+            "introText": "Mit diesem Dialog können Nutzer importiert werden.",
+            "dialogText": "Jeder Eintrag in der Datei muss einen Wert für die Matrikelnummer oder den Login beinhalten.<br>Werte für Vor- und Nachnamen sind optional.",
+            "csvFile": {
+                "label": ".csv Datei auswählen",
+                "tooltip": "Bitte wähle die .csv Datei mit den Nutzern zum Import aus. Pro Eintrag muss entweder die 'LOGIN' oder 'REGISTRATION_NUMBER' Spalte ausgefüllt sein. Folgendes Format muss dabei beachtet werden: Login, Matrikelnummer, Vorname, Nachname. Sie müssen diese in der obersten Spalte angeben!"
+            },
+            "usersForImport": {
+                "label": "Nutzer zum Importieren",
+                "tooltip": "Diese Nutzer werden importiert beim Klicken auf \"Importieren\".",
+                "importFailed": "Bitte versuchen sie es nach dem reparieren der Datei erneut, die Datei konnte wegen folgendem Fehler nicht gelesen werden:",
+                "failedRows": "Die folgenden Reihen in ihrer CSV sind ungültig und müssen entweder den Login oder eine Matrikelnummer enthalten:"
+            },
+            "numberOfUsers": "Anzahl an Nutzern:",
+            "numberOfUsersImported": "Importiert:",
+            "numberOfUsersNotImported": "Nicht gefunden:",
+            "genericErrorMessage": "Der Import von Nutzern in den Kurs oder die Klausur ist fehlgeschlagen!",
+            "firstName": "Vorname",
+            "lastName": "Nachname",
+            "registrationNumber": "Matrikelnummer"
+        }
     }
 }

@@ -224,7 +224,7 @@ describe('ModelingAssessmentComponent', () => {
         fixture.detectChanges();
 
         elementCounts.forEach((elementCount) =>
-            expect(spy).toHaveBeenCalledWith('modelingAssessment.impactWarning', { affectedSubmissionsCount: elementCount.numberOfOtherElements }),
+            expect(spy).toHaveBeenCalledWith('artemisApp.modelingAssessment.impactWarning', { affectedSubmissionsCount: elementCount.numberOfOtherElements }),
         );
 
         expect(spy).toHaveBeenCalledTimes(elementCounts.length);

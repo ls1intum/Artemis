@@ -75,7 +75,7 @@ export class SubmissionExportDialogComponent implements OnInit {
     }
 
     handleExportResponse = (response: HttpResponse<Blob>) => {
-        this.alertService.success('instructorDashboard.exportSubmissions.successMessage');
+        this.alertService.success('artemisApp.instructorDashboard.exportSubmissions.successMessage');
         this.activeModal.dismiss(true);
         this.exportInProgress = false;
         downloadZipFileFromResponse(response);
