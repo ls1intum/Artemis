@@ -8,19 +8,24 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 public class UserPageableSearchDTO<T> extends PageableSearchDTO<T> {
 
     /**
-     *
+     * Set of authorities users need to match at least one.
      */
     private Set<String> authorities;
 
     /**
-     *
+     * Set of origins users need to match at least one.
      */
-    private Set<String> origin;
+    private Set<String> origins;
 
     /**
-     *
+     * Set of status users need to match at least one.
      */
     private Set<String> status;
+
+    /**
+     * Set of courseIds users need to be part in at least one.
+     */
+    private Set<Long> courseIds;
 
     public Set<String> getAuthorities() {
         return authorities;
@@ -30,12 +35,12 @@ public class UserPageableSearchDTO<T> extends PageableSearchDTO<T> {
         this.authorities = authorities;
     }
 
-    public Set<String> getOrigin() {
-        return origin;
+    public Set<String> getOrigins() {
+        return origins;
     }
 
-    public void setOrigin(Set<String> origin) {
-        this.origin = origin;
+    public void setOrigins(Set<String> origins) {
+        this.origins = origins;
     }
 
     public Set<String> getStatus() {
@@ -44,5 +49,13 @@ public class UserPageableSearchDTO<T> extends PageableSearchDTO<T> {
 
     public void setStatus(Set<String> status) {
         this.status = status;
+    }
+
+    public Set<Long> getCourseIds() {
+        return courseIds;
+    }
+
+    public void setCourseIds(Set<Long> courseIds) {
+        this.courseIds = courseIds;
     }
 }

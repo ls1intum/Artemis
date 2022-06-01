@@ -1,9 +1,27 @@
 {
     "userManagement": {
         "filter": {
-            "authority": "Rolle ({{ num }})",
-            "origin": "Herkunft ({{ num }})",
-            "status": "Status ({{ num }})",
+            "authority": {
+                "title": "Rolle ({{ num }})",
+                "admin": "Admin",
+                "instructor": "Lehrender",
+                "editor": "Editor:in",
+                "ta": "Tutor:in",
+                "user": "Studierender"
+            },
+            "origin": {
+                "title": "Herkunft ({{ num }})",
+                "internal": "Intern",
+                "external": "Extern"
+            },
+            "status": {
+                "title": "Status ({{ num }})",
+                "activated": "Aktiviert",
+                "deactivated": "Deaktiviert"
+            },
+            "course": {
+                "title": "Kurs ({{ num }})"
+            },
             "apply": "Apply"
         },
         "home": {

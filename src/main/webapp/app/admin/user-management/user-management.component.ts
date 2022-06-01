@@ -15,11 +15,14 @@ import { ParseLinks } from 'app/core/util/parse-links.service';
 import { ASC, DESC, ITEMS_PER_PAGE, SORT } from 'app/shared/constants/pagination.constants';
 import { faEye, faFilter, faPlus, faSort, faTimes, faWrench } from '@fortawesome/free-solid-svg-icons';
 import { LocalStorageService } from 'ngx-webstorage';
+import { CourseManagementService } from 'app/course/manage/course-management.service';
+import { Course } from 'app/entities/course.model';
 
 export class UserFilter {
     authorityFilter: Set<AuthorityFilter> = new Set();
     originFilter: Set<OriginFilter> = new Set();
     statusFilter: Set<StatusFilter> = new Set();
+    courseFilter: Set<number> = new Set();
 }
 
 export enum AuthorityFilter {
@@ -66,6 +69,7 @@ export class UserManagementComponent implements OnInit, OnDestroy {
     // filters
     filters: UserFilter = new UserFilter();
     faFilter = faFilter;
+    courses: Course[] = [];
 
     private dialogErrorSource = new Subject<string>();
     dialogError = this.dialogErrorSource.asObservable();
@@ -87,13 +91,20 @@ export class UserManagementComponent implements OnInit, OnDestroy {
         private router: Router,
         private eventManager: EventManager,
         private localStorage: LocalStorageService,
+        private curseManagementService: CourseManagementService,
     ) {}
 
     /**
      * Retrieves the current user and calls the {@link loadAll} and {@link registerChangeInUsers} methods on init
      */
     ngOnInit(): void {
-        this.initFilters();
+        // Load all courses and create id to title map
+        this.curseManagementService.getAll().subscribe((courses) => {
+            if (courses.body) {
+                this.courses = courses.body;
+            }
+            this.initFilters();
+        });
 
         this.search
             .pipe(
@@ -151,6 +162,8 @@ export class UserManagementComponent implements OnInit, OnDestroy {
         this.filters.authorityFilter = this.initFilter(UserStorageKey.AUTHORITY, AuthorityFilter) as Set<AuthorityFilter>;
         this.filters.originFilter = this.initFilter(UserStorageKey.ORIGIN, OriginFilter) as Set<OriginFilter>;
         this.filters.statusFilter = this.initFilter(UserStorageKey.STATUS, StatusFilter) as Set<StatusFilter>;
+
+        this.courses.forEach((course) => this.filters.courseFilter.add(course.id!));
     }
 
     /**
@@ -171,63 +184,80 @@ export class UserManagementComponent implements OnInit, OnDestroy {
     }
 
     /**
-     *
+     * Method to add or remove a filter and store the selected filters in the local store if required.
      */
-    toggleFilter(filter: Set<any>, value: any, key: UserStorageKey) {
+    toggleFilter(filter: Set<any>, value: any, key?: UserStorageKey) {
         if (filter.has(value)) {
             filter.delete(value);
         } else {
             filter.add(value);
         }
-        this.localStorage.store(key, Array.from(filter).join(','));
+        if (key) {
+            this.localStorage.store(key, Array.from(filter).join(','));
+        }
     }
 
     /**
-     *
+     * Generic method to return all possible filter values per category.
      */
     getFilter(type: any) {
         return Object.keys(type).map((value) => type[value]);
     }
+
     /**
-     *
+     * Get all filter options for authorities.
      */
     get authorityFilters() {
         return this.getFilter(AuthorityFilter);
     }
 
     /**
-     *
+     * Method to add or remove an authority filter.
      */
     toggleAuthorityFilter(authority: AuthorityFilter) {
         this.toggleFilter(this.filters.authorityFilter, authority, UserStorageKey.AUTHORITY);
     }
 
     /**
-     *
+     * Get all filter options for origin.
      */
     get originFilters() {
         return this.getFilter(OriginFilter);
     }
 
     /**
-     *
+     * Method to add or remove an origin filter.
      */
     toggleOriginFilter(origin: OriginFilter) {
         this.toggleFilter(this.filters.originFilter, origin, UserStorageKey.ORIGIN);
     }
 
     /**
-     *
+     * Get all filter options for status.
      */
     get statusFilters() {
         return this.getFilter(StatusFilter);
     }
 
     /**
-     *
+     * Method to add or remove a status filter.
      */
     toggleStatusFilter(status: StatusFilter) {
         this.toggleFilter(this.filters.statusFilter, status, UserStorageKey.STATUS);
+    }
+
+    /**
+     * Get all filter options for course.
+     */
+    get courseFilters() {
+        return this.courses;
+    }
+
+    /**
+     * Method to add or remove a course filter.
+     */
+    toggleCourseFilter(courseId: number) {
+        this.toggleFilter(this.filters.courseFilter, courseId);
     }
 
     /**

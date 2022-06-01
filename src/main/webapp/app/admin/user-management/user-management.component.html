@@ -42,7 +42,9 @@
                                         ngbDropdownToggle
                                     >
                                         <fa-icon [icon]="faFilter"></fa-icon>
-                                        <span class="d-s-none d-md-inline">{{ 'userManagement.filter.authority' | artemisTranslate: { num: filters.authorityFilter.size } }}</span>
+                                        <span class="d-s-none d-md-inline">{{
+                                            'userManagement.filter.authority.title' | artemisTranslate: { num: filters.authorityFilter.size }
+                                        }}</span>
                                     </button>
                                     <ul ngbDropdownMenu class="checkbox-menu text-nowrap pe-2" aria-labelledby="filter-dropdown-button">
                                         <li *ngFor="let authority of this.authorityFilters">
@@ -53,7 +55,7 @@
                                                     [checked]="this.filters.authorityFilter.has(authority)"
                                                     type="checkbox"
                                                 />
-                                                <span class="ms-2">{{ authority.toString() }}</span>
+                                                <span class="ms-2">{{ 'userManagement.filter.authority.' + authority.toString().toLowerCase() | artemisTranslate }}</span>
                                             </label>
                                         </li>
                                     </ul>
@@ -65,7 +67,7 @@
                                         ngbDropdownToggle
                                     >
                                         <fa-icon [icon]="faFilter"></fa-icon>
-                                        <span class="d-s-none d-md-inline">{{ 'userManagement.filter.origin' | artemisTranslate: { num: filters.originFilter.size } }}</span>
+                                        <span class="d-s-none d-md-inline">{{ 'userManagement.filter.origin.title' | artemisTranslate: { num: filters.originFilter.size } }}</span>
                                     </button>
                                     <ul ngbDropdownMenu class="checkbox-menu text-nowrap pe-2" aria-labelledby="filter-dropdown-button">
                                         <li *ngFor="let origin of this.originFilters">
@@ -76,7 +78,7 @@
                                                     [checked]="this.filters.originFilter.has(origin)"
                                                     type="checkbox"
                                                 />
-                                                <span class="ms-2">{{ origin.toString() }}</span>
+                                                <span class="ms-2">{{ 'userManagement.filter.origin.' + origin.toString().toLowerCase() | artemisTranslate }}</span>
                                             </label>
                                         </li>
                                     </ul>
@@ -88,7 +90,7 @@
                                         ngbDropdownToggle
                                     >
                                         <fa-icon [icon]="faFilter"></fa-icon>
-                                        <span class="d-s-none d-md-inline">{{ 'userManagement.filter.status' | artemisTranslate: { num: filters.statusFilter.size } }}</span>
+                                        <span class="d-s-none d-md-inline">{{ 'userManagement.filter.status.title' | artemisTranslate: { num: filters.statusFilter.size } }}</span>
                                     </button>
                                     <ul ngbDropdownMenu class="checkbox-menu text-nowrap pe-2" aria-labelledby="filter-dropdown-button">
                                         <li *ngFor="let status of this.statusFilters">
@@ -99,7 +101,30 @@
                                                     [checked]="this.filters.statusFilter.has(status)"
                                                     type="checkbox"
                                                 />
-                                                <span class="ms-2">{{ status.toString() }}</span>
+                                                <span class="ms-2">{{ 'userManagement.filter.status.' + status.toString().toLowerCase() | artemisTranslate }}</span>
+                                            </label>
+                                        </li>
+                                    </ul>
+                                </div>
+                                <div class="me-2" aria-label="Filter Dropdown" ngbDropdown>
+                                    <button
+                                        class="btn"
+                                        [ngClass]="{ 'btn-secondary': filters.courseFilter.size === 0, 'btn-success': filters.courseFilter.size > 0 }"
+                                        ngbDropdownToggle
+                                    >
+                                        <fa-icon [icon]="faFilter"></fa-icon>
+                                        <span class="d-s-none d-md-inline">{{ 'userManagement.filter.course.title' | artemisTranslate: { num: filters.courseFilter.size } }}</span>
+                                    </button>
+                                    <ul ngbDropdownMenu class="checkbox-menu text-nowrap pe-2" aria-labelledby="filter-dropdown-button">
+                                        <li *ngFor="let course of this.courseFilters">
+                                            <label>
+                                                <input
+                                                    class="ms-2 form-check-input"
+                                                    (change)="this.toggleCourseFilter(course.id!)"
+                                                    [checked]="this.filters.courseFilter.has(course.id!)"
+                                                    type="checkbox"
+                                                />
+                                                <span class="ms-2">{{ course.title ?? '' }}</span>
                                             </label>
                                         </li>
                                     </ul>

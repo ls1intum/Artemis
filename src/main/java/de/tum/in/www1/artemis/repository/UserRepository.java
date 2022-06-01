@@ -152,14 +152,25 @@ public interface UserRepository extends JpaRepository<User, Long> {
     @Query("""
             SELECT user FROM User user
             LEFT JOIN user.authorities ua
+            LEFT JOIN user.groups gr
             WHERE (user.login like %:#{#searchTerm}% or user.email like %:#{#searchTerm}%
             OR user.lastName like %:#{#searchTerm}% or user.firstName like %:#{#searchTerm}%)
             AND ua IN :authorities
             AND (user.isInternal = :internal or not user.isInternal = :external)
             AND (user.activated = :activated or not user.activated = :deactivated)
+            AND EXISTS (
+                SELECT course FROM Course course
+                where course.id in :courseIds
+                AND (
+                    course.studentGroupName = gr
+                    OR course.teachingAssistantGroupName = gr
+                    OR course.editorGroupName = gr
+                    OR course.instructorGroupName = gr
+                )
+            )
             """)
-    Page<User> searchByLoginOrNameWithAdditionalFilter(@Param("searchTerm") String searchTerm, Pageable pageable, Set<Authority> authorities, boolean internal, boolean external,
-            boolean activated, boolean deactivated);
+    Page<User> searchByLoginOrNameWithAdditionalFilter(@Param("searchTerm") String searchTerm, Pageable pageable, Set<Authority> authorities, Set<Long> courseIds, boolean internal,
+            boolean external, boolean activated, boolean deactivated);
 
     @Modifying
     @Transactional // ok because of modifying query
@@ -204,15 +215,18 @@ public interface UserRepository extends JpaRepository<User, Long> {
         final var authorities = userSearch.getAuthorities().stream().map((auth) -> new Authority("ROLE_" + auth)).collect(Collectors.toSet());
 
         // Internal or external users or both
-        final var internal = userSearch.getOrigin().contains("INTERNAL");
-        final var external = userSearch.getOrigin().contains("EXTERNAL");
+        final var internal = userSearch.getOrigins().contains("INTERNAL");
+        final var external = userSearch.getOrigins().contains("EXTERNAL");
 
         // Activated or deactivated users or both
         final var activated = userSearch.getStatus().contains("ACTIVATED");
         final var deactivated = userSearch.getStatus().contains("DEACTIVATED");
 
+        // Course Ids
+        final var courseIds = userSearch.getCourseIds();
+
         // Evaluate filter and make request
-        return searchByLoginOrNameWithAdditionalFilter(searchTerm, sorted, authorities, internal, external, activated, deactivated).map(user -> {
+        return searchByLoginOrNameWithAdditionalFilter(searchTerm, sorted, authorities, courseIds, internal, external, activated, deactivated).map(user -> {
             user.setVisibleRegistrationNumber();
             return new UserDTO(user);
         });
