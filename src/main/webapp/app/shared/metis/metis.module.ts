@@ -97,6 +97,7 @@ import { EmojiPickerComponent } from 'app/shared/metis/emoji/emoji-picker.compon
         AnswerPostReactionsBarComponent,
         HtmlForPostingMarkdownPipe,
         EmojiComponent,
+        EmojiPickerComponent,
     ],
 })
 export class MetisModule {}
