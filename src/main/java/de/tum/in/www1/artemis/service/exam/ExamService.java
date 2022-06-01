@@ -267,7 +267,7 @@ public class ExamService {
             // Adding student results information to DTO
             List<StudentParticipation> participationsOfStudent = studentParticipations.stream()
                     .filter(studentParticipation -> studentParticipation.getStudent().get().getId().equals(studentExam.getUser().getId())).toList();
-            ExamScoresDTO.StudentResult studentResult = calculateStudentResultWithGrade(studentExam, participationsOfStudent, exam, scores, objectMapper);
+            ExamScoresDTO.StudentResult studentResult = calculateStudentResultWithGrade(studentExam, participationsOfStudent, exam, scores, objectMapper, true);
             scores.studentResults.add(studentResult);
         }
 
@@ -289,7 +289,7 @@ public class ExamService {
         var scores = new ExamScoresDTO(exam.getId(), exam.getTitle(), exam.getMaxPoints());
         var objectMapper = new ObjectMapper();
 
-        ExamScoresDTO.StudentResult studentResult = calculateStudentResultWithGrade(studentExam, participationsOfStudent, exam, scores, objectMapper);
+        ExamScoresDTO.StudentResult studentResult = calculateStudentResultWithGrade(studentExam, participationsOfStudent, exam, scores, objectMapper, false);
         var studentExamWithGradeDTO = new StudentExamWithGradeDTO(studentExam, studentResult);
 
         Optional<GradingScale> gradingScale = gradingScaleRepository.findByExamId(exam.getId());
@@ -305,7 +305,7 @@ public class ExamService {
 
     @NotNull
     private ExamScoresDTO.StudentResult calculateStudentResultWithGrade(StudentExam studentExam, List<StudentParticipation> participationsOfStudent, Exam exam,
-            ExamScoresDTO scores, ObjectMapper objectMapper) {
+            ExamScoresDTO scores, ObjectMapper objectMapper, boolean calculateFirstCorrectionPoints) {
         User user = studentExam.getUser();
         var studentResult = new ExamScoresDTO.StudentResult(user.getId(), user.getName(), user.getEmail(), user.getLogin(), user.getRegistrationNumber(),
                 studentExam.isSubmitted());
@@ -332,7 +332,8 @@ public class ExamService {
                 }
 
                 // Collect points of first correction, if a second correction exists
-                if (exam.getNumberOfCorrectionRoundsInExam() == 2 && !exercise.getIncludedInOverallScore().equals(IncludedInOverallScore.NOT_INCLUDED)) {
+                if (calculateFirstCorrectionPoints && exam.getNumberOfCorrectionRoundsInExam() == 2
+                        && !exercise.getIncludedInOverallScore().equals(IncludedInOverallScore.NOT_INCLUDED)) {
                     calculateFirstCorrectionPoints(scores, studentResult, exam.getCourse(), studentParticipation.findLatestSubmission(), exercise);
                 }
 
