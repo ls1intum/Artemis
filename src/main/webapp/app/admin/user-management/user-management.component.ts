@@ -70,6 +70,9 @@ export class UserManagementComponent implements OnInit, OnDestroy {
     filters: UserFilter = new UserFilter();
     faFilter = faFilter;
     courses: Course[] = [];
+    authorityKey = UserStorageKey.AUTHORITY;
+    statusKey = UserStorageKey.STATUS;
+    originKey = UserStorageKey.ORIGIN;
 
     private dialogErrorSource = new Subject<string>();
     dialogError = this.dialogErrorSource.asObservable();
@@ -212,24 +215,10 @@ export class UserManagementComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * Method to add or remove an authority filter.
-     */
-    toggleAuthorityFilter(authority: AuthorityFilter) {
-        this.toggleFilter(this.filters.authorityFilter, authority, UserStorageKey.AUTHORITY);
-    }
-
-    /**
      * Get all filter options for origin.
      */
     get originFilters() {
         return this.getFilter(OriginFilter);
-    }
-
-    /**
-     * Method to add or remove an origin filter.
-     */
-    toggleOriginFilter(origin: OriginFilter) {
-        this.toggleFilter(this.filters.originFilter, origin, UserStorageKey.ORIGIN);
     }
 
     /**
@@ -240,24 +229,10 @@ export class UserManagementComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * Method to add or remove a status filter.
-     */
-    toggleStatusFilter(status: StatusFilter) {
-        this.toggleFilter(this.filters.statusFilter, status, UserStorageKey.STATUS);
-    }
-
-    /**
      * Get all filter options for course.
      */
     get courseFilters() {
         return this.courses;
-    }
-
-    /**
-     * Method to add or remove a course filter.
-     */
-    toggleCourseFilter(courseId: number) {
-        this.toggleFilter(this.filters.courseFilter, courseId);
     }
 
     /**

@@ -51,7 +51,7 @@
                                             <label>
                                                 <input
                                                     class="ms-2 form-check-input"
-                                                    (change)="this.toggleAuthorityFilter(authority)"
+                                                    (change)="this.toggleFilter(this.filters.authorityFilter, authority, authorityKey)"
                                                     [checked]="this.filters.authorityFilter.has(authority)"
                                                     type="checkbox"
                                                 />
@@ -74,7 +74,7 @@
                                             <label>
                                                 <input
                                                     class="ms-2 form-check-input"
-                                                    (change)="this.toggleOriginFilter(origin)"
+                                                    (change)="this.toggleFilter(this.filters.originFilter, origin, originKey)"
                                                     [checked]="this.filters.originFilter.has(origin)"
                                                     type="checkbox"
                                                 />
@@ -97,7 +97,7 @@
                                             <label>
                                                 <input
                                                     class="ms-2 form-check-input"
-                                                    (change)="this.toggleStatusFilter(status)"
+                                                    (change)="this.toggleFilter(this.filters.statusFilter, status, statusKey)"
                                                     [checked]="this.filters.statusFilter.has(status)"
                                                     type="checkbox"
                                                 />
@@ -120,7 +120,7 @@
                                             <label>
                                                 <input
                                                     class="ms-2 form-check-input"
-                                                    (change)="this.toggleCourseFilter(course.id!)"
+                                                    (change)="this.toggleFilter(this.filters.courseFilter, course.id!)"
                                                     [checked]="this.filters.courseFilter.has(course.id!)"
                                                     type="checkbox"
                                                 />
