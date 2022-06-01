@@ -42,6 +42,10 @@
                 "show": "Diskussion anzeigen",
                 "hide": "Diskussion einklappen"
             },
+            "discussionSection": {
+                "searchBarDefault": "Suche nach Beiträgen",
+                "filterToAnsweredOrReacted": "Reagiert oder beantwortet"
+            },
             "overview": {
                 "title": "Beiträge",
                 "searchBarDefault": "Suche nach Beiträgen, verwende #, um einem bestimmten Beitrag zu suchen (z.B. #1)",

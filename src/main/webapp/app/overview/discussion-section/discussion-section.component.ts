@@ -5,14 +5,16 @@ import { Lecture } from 'app/entities/lecture.model';
 import { DisplayPriority, PageType, VOTE_EMOJI_ID } from 'app/shared/metis/metis.util';
 import { Course } from 'app/entities/course.model';
 import { ActivatedRoute, Params, Router } from '@angular/router';
-import { combineLatest, map, Subscription } from 'rxjs';
+import { combineLatest, map } from 'rxjs';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { Post } from 'app/entities/metis/post.model';
 import { Reaction } from 'app/entities/metis/reaction.model';
 import { PostCreateEditModalComponent } from 'app/shared/metis/posting-create-edit-modal/post-create-edit-modal/post-create-edit-modal.component';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { HttpResponse } from '@angular/common/http';
-import { faArrowLeft, faChevronLeft, faChevronRight, faGripLinesVertical, faPlus } from '@fortawesome/free-solid-svg-icons';
+import { faArrowLeft, faChevronLeft, faChevronRight, faGripLinesVertical } from '@fortawesome/free-solid-svg-icons';
+import { CourseDiscussionDirective } from 'app/shared/metis/course-discussion.directive';
+import { FormBuilder } from '@angular/forms';
 
 @Component({
     selector: 'jhi-discussion-section',
@@ -20,30 +22,30 @@ import { faArrowLeft, faChevronLeft, faChevronRight, faGripLinesVertical, faPlus
     styleUrls: ['./discussion-section.component.scss'],
     providers: [MetisService],
 })
-export class DiscussionSectionComponent implements OnInit, AfterViewInit, OnDestroy {
+export class DiscussionSectionComponent extends CourseDiscussionDirective implements OnInit, AfterViewInit, OnDestroy {
     @Input() exercise?: Exercise;
     @Input() lecture?: Lecture;
     @ViewChild(PostCreateEditModalComponent) postCreateEditModal?: PostCreateEditModalComponent;
-    course?: Course;
     collapsed = false;
-    createdPost: Post;
-    posts: Post[];
-    isLoading = true;
     currentPostId?: number;
     currentPost?: Post;
     readonly pageType = PageType.PAGE_SECTION;
 
-    private postsSubscription: Subscription;
-    private paramSubscription: Subscription;
-
     // Icons
-    faPlus = faPlus;
     faChevronRight = faChevronRight;
     faChevronLeft = faChevronLeft;
     faGripLinesVertical = faGripLinesVertical;
     faArrowLeft = faArrowLeft;
 
-    constructor(private metisService: MetisService, private activatedRoute: ActivatedRoute, private courseManagementService: CourseManagementService, private router: Router) {}
+    constructor(
+        protected metisService: MetisService,
+        private activatedRoute: ActivatedRoute,
+        private courseManagementService: CourseManagementService,
+        private router: Router,
+        private formBuilder: FormBuilder,
+    ) {
+        super(metisService);
+    }
 
     /**
      * on initialization: initializes the metis service, fetches the posts for the exercise or lecture the discussion section is placed at,
@@ -67,6 +69,7 @@ export class DiscussionSectionComponent implements OnInit, AfterViewInit, OnDest
                         lectureId: this.lecture?.id,
                     });
                     this.createEmptyPost();
+                    this.resetFormGroup();
                 }
             });
         });
@@ -80,11 +83,10 @@ export class DiscussionSectionComponent implements OnInit, AfterViewInit, OnDest
     }
 
     /**
-     * on leaving the page, the modal should be closed, subscriptions unsubscribed
+     * on leaving the page, the modal should be closed
      */
     ngOnDestroy(): void {
-        this.paramSubscription?.unsubscribe();
-        this.postsSubscription?.unsubscribe();
+        super.onDestroy();
         this.postCreateEditModal?.modalRef?.close();
     }
 
@@ -169,6 +171,21 @@ export class DiscussionSectionComponent implements OnInit, AfterViewInit, OnDest
             });
     }
 
+    /**
+     * sets the filter options after receiving user input
+     */
+    setFilterAndSort(): void {
+        this.currentPostContextFilter = {
+            courseId: undefined,
+            exerciseId: this.exercise?.id,
+            lectureId: this.lecture?.id,
+            searchText: this.searchText,
+            filterToUnresolved: this.formGroup.get('filterToUnresolved')?.value,
+            filterToOwn: this.formGroup.get('filterToOwn')?.value,
+            filterToAnsweredOrReacted: this.formGroup.get('filterToAnsweredOrReacted')?.value,
+        };
+    }
+
     resetCurrentPost() {
         this.currentPost = undefined;
         this.currentPostId = undefined;
@@ -177,6 +194,19 @@ export class DiscussionSectionComponent implements OnInit, AfterViewInit, OnDest
                 postId: this.currentPostId,
             },
             queryParamsHandling: 'merge',
+        });
+    }
+
+    /**
+     * by default, the form group fields are set to show all posts of the current exercise or lecture
+     */
+    resetFormGroup(): void {
+        this.formGroup = this.formBuilder.group({
+            exerciseId: this.exercise?.id,
+            lectureId: this.lecture?.id,
+            filterToUnresolved: false,
+            filterToOwn: false,
+            filterToAnsweredOrReacted: false,
         });
     }
 }
