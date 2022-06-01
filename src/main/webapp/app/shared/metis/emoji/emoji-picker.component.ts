@@ -6,22 +6,7 @@ import { EmojiData } from '@ctrl/ngx-emoji-mart/ngx-emoji';
 
 @Component({
     selector: 'jhi-emoji-picker',
-    template: `
-        <emoji-mart
-            [emojisToShowFilter]="emojisToShowFilter"
-            [categoriesIcons]="categoriesIcons"
-            [emojiSize]="20"
-            [showSingleCategory]="true"
-            [showPreview]="false"
-            [color]="'var(--primary)'"
-            [recent]="recent"
-            [i18n]="{ search: 'artemisApp.metis.searchEmoji' | artemisTranslate, categories: { recent: 'artemisApp.metis.courseEmojiSelectionCategory' | artemisTranslate } }"
-            [darkMode]="dark"
-            [imageUrlFn]="singleImageFunction"
-            [backgroundImageFn]="utils.EMOJI_SHEET_URL"
-            (emojiSelect)="onEmojiSelect($event)"
-        ></emoji-mart>
-    `,
+    templateUrl: './emoji-picker.component.html',
 })
 export class EmojiPickerComponent implements OnDestroy {
     @Input() emojisToShowFilter: (emoji: string | EmojiData) => boolean;

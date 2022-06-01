@@ -5,19 +5,8 @@ import { EmojiUtils } from 'app/shared/metis/emoji/emoji.utils';
 
 @Component({
     selector: 'jhi-emoji',
-    template: `
-        <!-- Using two instances to 'rerender' if the theme changes -->
-        <ngx-emoji *ngIf="!dark" [backgroundImageFn]="utils.EMOJI_SHEET_URL" class="emoji" [emoji]="emoji" [size]="16"></ngx-emoji>
-        <ngx-emoji *ngIf="dark" [imageUrlFn]="utils.singleDarkModeEmojiUrlFn" [backgroundImageFn]="utils.EMOJI_SHEET_URL" class="emoji" [emoji]="emoji" [size]="16"></ngx-emoji>
-    `,
-    styles: [
-        `
-            :host {
-                height: 16px;
-                display: inline;
-            }
-        `,
-    ],
+    templateUrl: './emoji.component.html',
+    styleUrls: ['./emoji.component.scss'],
 })
 export class EmojiComponent implements OnDestroy {
     utils = EmojiUtils;
