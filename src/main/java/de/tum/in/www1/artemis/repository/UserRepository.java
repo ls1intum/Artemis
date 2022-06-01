@@ -156,9 +156,13 @@ public interface UserRepository extends JpaRepository<User, Long> {
             WHERE (user.login like %:#{#searchTerm}% or user.email like %:#{#searchTerm}%
             OR user.lastName like %:#{#searchTerm}% or user.firstName like %:#{#searchTerm}%)
             AND ua IN :authorities
-            AND (user.isInternal = :internal or not user.isInternal = :external)
-            AND (user.activated = :activated or not user.activated = :deactivated)
-            AND EXISTS (
+            AND ((user.groups IS EMPTY AND NOT EXISTS
+            (
+                SELECT course FROM Course course
+                where course.id in :courseIds
+            ))
+            OR EXISTS
+            (
                 SELECT course FROM Course course
                 where course.id in :courseIds
                 AND (
@@ -167,7 +171,9 @@ public interface UserRepository extends JpaRepository<User, Long> {
                     OR course.editorGroupName = gr
                     OR course.instructorGroupName = gr
                 )
-            )
+            ))
+            AND (user.isInternal = :internal or not user.isInternal = :external)
+            AND (user.activated = :activated or not user.activated = :deactivated)
             """)
     Page<User> searchByLoginOrNameWithAdditionalFilter(@Param("searchTerm") String searchTerm, Pageable pageable, Set<Authority> authorities, Set<Long> courseIds, boolean internal,
             boolean external, boolean activated, boolean deactivated);
