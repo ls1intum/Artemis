@@ -4,7 +4,7 @@ import { Observable } from 'rxjs';
 
 import { createRequestOption } from 'app/shared/util/request.util';
 import { User } from 'app/core/user/user.model';
-import { AuthorityFilter, UserFilter } from 'app/admin/user-management/user-management.component';
+import { UserFilter } from 'app/admin/user-management/user-management.component';
 
 @Injectable({ providedIn: 'root' })
 export class UserService {
@@ -45,12 +45,14 @@ export class UserService {
      * @param filter additional filter
      * @return Observable<HttpResponse<User[]>> with the list of users that match the query as body.
      */
-    query(req: any, filter: UserFilter): Observable<HttpResponse<User[]>> {
+    query(req?: any, filter?: UserFilter): Observable<HttpResponse<User[]>> {
         let options = createRequestOption(req);
-        options = options.append('authorities', [...filter.authorityFilter].join(','));
-        options = options.append('origins', [...filter.originFilter].join(','));
-        options = options.append('status', [...filter.statusFilter].join(','));
-        options = options.append('courseIds', [...filter.courseFilter].join(','));
+        if (filter) {
+            options = options.append('authorities', [...filter.authorityFilter].join(','));
+            options = options.append('origins', [...filter.originFilter].join(','));
+            options = options.append('status', [...filter.statusFilter].join(','));
+            options = options.append('courseIds', [...filter.courseFilter].join(','));
+        }
         return this.http.get<User[]>(this.resourceUrl, { params: options, observe: 'response' });
     }
 

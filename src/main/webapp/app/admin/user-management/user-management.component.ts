@@ -177,7 +177,7 @@ export class UserManagementComponent implements OnInit, OnDestroy {
     initFilter(key: UserStorageKey, type: any) {
         const temp = this.localStorage.retrieve(key);
         const tempInStorage =
-            temp !== null
+            temp !== undefined && temp !== null
                 ? temp
                       .split(',')
                       .map((filter: string) => type[filter])

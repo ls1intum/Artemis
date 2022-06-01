@@ -19,6 +19,10 @@ import { MockRouter } from '../../helpers/mocks/mock-router';
 import { MockRouterLinkDirective } from '../../helpers/mocks/directive/mock-router-link.directive';
 import { EventManager } from 'app/core/util/event-manager.service';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
+import { CourseManagementService } from 'app/course/manage/course-management.service';
+import { MockLocalStorageService } from '../../helpers/mocks/service/mock-local-storage.service';
+import { LocalStorageService } from 'ngx-webstorage';
+import { MockCourseManagementService } from '../../helpers/mocks/service/mock-course-management.service';
 
 describe('UserManagementComponent', () => {
     let comp: UserManagementComponent;
@@ -50,6 +54,8 @@ describe('UserManagementComponent', () => {
                     useValue: route,
                 },
                 { provide: AccountService, useClass: MockAccountService },
+                { provide: LocalStorageService, useClass: MockLocalStorageService },
+                { provide: CourseManagementService, useClass: MockCourseManagementService },
                 { provide: Router, useClass: MockRouter },
                 {
                     provide: ActivatedRoute,
@@ -94,7 +100,7 @@ describe('UserManagementComponent', () => {
             ),
         );
 
-        comp.loadAll();
+        comp.ngOnInit();
         // 1 sec of pause, because of the debounce time
         tick(1000);
 
@@ -119,8 +125,9 @@ describe('UserManagementComponent', () => {
                         }),
                     ),
                 );
-                jest.spyOn(userService, 'update').mockReturnValue(of(new HttpResponse<User>({ status: 200 })));
+                comp.ngOnInit();
 
+                jest.spyOn(userService, 'update').mockReturnValue(of(new HttpResponse<User>({ status: 200 })));
                 // WHEN
                 comp.setActive(user, true);
                 tick(1000); // simulate async

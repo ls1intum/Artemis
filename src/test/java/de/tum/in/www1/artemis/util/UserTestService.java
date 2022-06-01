@@ -5,10 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.io.IOException;
 import java.time.ZonedDateTime;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -500,12 +497,17 @@ public class UserTestService {
 
     // Test
     public void getUsers_asAdmin_isSuccessful() throws Exception {
+        var usersDb = userRepository.findAllWithGroupsAndAuthorities().stream().peek(user -> user.setGroups(Collections.emptySet())).toList();
+        userRepository.saveAll(usersDb);
         final var params = new LinkedMultiValueMap<String, String>();
         params.add("page", "0");
         params.add("pageSize", "100");
         params.add("searchTerm", "");
         params.add("sortingOrder", "ASCENDING");
         params.add("sortedColumn", "id");
+        params.add("authorities", "USER,TA,EDITOR,INSTRUCTOR,ADMIN");
+        params.add("origins", "INTERNAL,EXTERNAL");
+        params.add("status", "ACTIVATED,DEACTIVATED");
         List<UserDTO> users = request.getList("/api/users", HttpStatus.OK, UserDTO.class, params);
         assertThat(users).hasSize(numberOfStudents + numberOfTutors + numberOfEditors + numberOfInstructors + 1); // +1 for admin user himself
     }
@@ -531,12 +533,17 @@ public class UserTestService {
 
     // Test
     public void getUserViaFilter_asAdmin_isSuccessful() throws Exception {
+        student.setGroups(Collections.emptySet());
+        userRepository.save(student);
         final var params = new LinkedMultiValueMap<String, String>();
         params.add("page", "0");
         params.add("pageSize", "100");
         params.add("searchTerm", "student1@test.de");
         params.add("sortingOrder", "ASCENDING");
         params.add("sortedColumn", "id");
+        params.add("authorities", "USER");
+        params.add("origins", "INTERNAL,EXTERNAL");
+        params.add("status", "ACTIVATED,DEACTIVATED");
         List<User> users = request.getList("/api/users", HttpStatus.OK, User.class, params);
         assertThat(users).hasSize(1);
         assertThat(users.get(0).getEmail()).isEqualTo("student1@test.de");

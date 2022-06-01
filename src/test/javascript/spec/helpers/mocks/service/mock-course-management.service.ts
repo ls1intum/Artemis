@@ -37,4 +37,8 @@ export class MockCourseManagementService {
     getAllUsersInCourseGroup(courseId: number, courseGroup: CourseGroup): Observable<HttpResponse<User[]>> {
         return of(new HttpResponse({ body: [] }));
     }
+
+    getAll() {
+        return of(new HttpResponse({ body: [] }));
+    }
 }
