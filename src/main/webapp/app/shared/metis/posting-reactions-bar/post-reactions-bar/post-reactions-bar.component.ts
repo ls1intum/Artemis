@@ -5,7 +5,6 @@ import { PostingsReactionsBarDirective } from 'app/shared/metis/posting-reaction
 import { DisplayPriority } from 'app/shared/metis/metis.util';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { faSmile } from '@fortawesome/free-regular-svg-icons';
-import { ThemeService } from 'app/core/theme/theme.service';
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
 
 @Component({
@@ -26,8 +25,8 @@ export class PostReactionsBarComponent extends PostingsReactionsBarDirective<Pos
     @Output() showAnswersChange = new EventEmitter<boolean>();
     @Output() openPostingCreateEditModal = new EventEmitter<void>();
 
-    constructor(metisService: MetisService, themeService: ThemeService) {
-        super(metisService, themeService);
+    constructor(metisService: MetisService) {
+        super(metisService);
     }
 
     /**
