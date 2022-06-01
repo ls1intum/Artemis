@@ -9,6 +9,7 @@ import javax.annotation.Nullable;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismResult;
 
@@ -39,7 +40,15 @@ public interface PlagiarismResultRepository extends JpaRepository<PlagiarismResu
 
     /**
      * Deletes all plagiarism results associated to the given exercise id
-     * @param exerciseId Id of exercise with plagiarism results that will be deleted.
+     * @param exerciseId ID of exercise with plagiarism results that will be deleted.
      */
+    @Transactional
     void deletePlagiarismResultsByExerciseId(Long exerciseId);
+
+    /**
+     * Deletes all plagiarism results associated to the given exercise id except the one with the given plagiarism result id
+     * @param plagiarismResultId ID of the plagiarism result that won't be deleted.
+     * @param exerciseId ID of exercise with plagiarism results that will be deleted.
+     */
+    void deletePlagiarismResultsByIdNotAndExerciseId(Long plagiarismResultId, Long exerciseId);
 }

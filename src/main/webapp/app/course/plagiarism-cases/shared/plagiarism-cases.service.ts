@@ -14,6 +14,7 @@ export type StatementEntityResponseType = HttpResponse<string>;
 @Injectable({ providedIn: 'root' })
 export class PlagiarismCasesService {
     private resourceUrl = SERVER_API_URL + 'api/courses';
+    private resourceUrlExercises = SERVER_API_URL + 'api/exercises';
 
     constructor(private http: HttpClient) {}
 
@@ -97,5 +98,21 @@ export class PlagiarismCasesService {
      */
     public updatePlagiarismComparisonStatus(courseId: number, plagiarismComparisonId: number, status: PlagiarismStatus): Observable<HttpResponse<void>> {
         return this.http.put<void>(`${this.resourceUrl}/${courseId}/plagiarism-comparisons/${plagiarismComparisonId}/status`, { status }, { observe: 'response' });
+    }
+
+    /**
+     * Clean up plagiarism results and comparisons
+     * If deleteAll is set to true, all plagiarism results belonging to the exercise are deleted,
+     * otherwise only plagiarism comparisons or with status DENIED or CONFIRMED are deleted and old results are deleted as well.
+     *
+     * @param { number } exerciseId
+     * @param {number} plagiarismResultId
+     * @param { boolean } deleteAll
+     */
+    public cleanUpPlagiarism(exerciseId: number, plagiarismResultId: number, deleteAll = false): Observable<HttpResponse<void>> {
+        return this.http.delete<void>(
+            `${this.resourceUrlExercises}/${exerciseId}/plagiarism-results/${plagiarismResultId}/plagiarism-comparisons?deleteAll=` + (deleteAll ? 'true' : 'false'),
+            { observe: 'response' },
+        );
     }
 }
