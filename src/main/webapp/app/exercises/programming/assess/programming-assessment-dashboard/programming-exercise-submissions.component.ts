@@ -17,6 +17,7 @@ import { areManualResultsAllowed } from 'app/exercises/shared/exercise/exercise.
 import { getLinkToSubmissionAssessment } from 'app/utils/navigation.utils';
 import { map } from 'rxjs/operators';
 import { faBan, faEdit, faFolderOpen, faSort } from '@fortawesome/free-solid-svg-icons';
+import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 
 @Component({
     templateUrl: './programming-exercise-submissions.component.html',
@@ -38,7 +39,6 @@ export class ProgrammingExerciseSubmissionsComponent implements OnInit {
     newManualResultAllowed: boolean;
     automaticType = AssessmentType.AUTOMATIC;
     private cancelConfirmationText: string;
-    numberAssessedSubmissions: number;
 
     // Icons
     faSort = faSort;
@@ -114,11 +114,6 @@ export class ProgrammingExerciseSubmissionsComponent implements OnInit {
             .subscribe((submissions: ProgrammingSubmission[]) => {
                 this.submissions = submissions;
                 this.filteredSubmissions = submissions;
-                this.numberAssessedSubmissions = this.submissions.filter((submission) => {
-                    const result = getLatestSubmissionResult(submission);
-                    setLatestSubmissionResult(submission, result);
-                    return result?.rated && Result.isManualResult(result);
-                }).length;
                 this.filteredSubmissions.forEach((sub) => {
                     if (sub.results && sub.results.length > 0) {
                         sub.results = sub.results.filter((r) => r.assessmentType !== AssessmentType.AUTOMATIC);

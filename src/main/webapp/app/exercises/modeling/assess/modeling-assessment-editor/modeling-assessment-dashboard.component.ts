@@ -49,7 +49,6 @@ export class ModelingAssessmentDashboardComponent implements OnInit, OnDestroy {
     submissions: ModelingSubmission[];
     filteredSubmissions: ModelingSubmission[];
     eventSubscriber: Subscription;
-    numberAssessedSubmissions: number;
     busy: boolean;
     userId: number;
     canOverrideAssessments: boolean;
@@ -138,11 +137,6 @@ export class ModelingAssessmentDashboardComponent implements OnInit, OnDestroy {
                     }
                 });
                 this.filteredSubmissions = this.submissions;
-                this.numberAssessedSubmissions = this.submissions.filter((submission) => {
-                    const result = getLatestSubmissionResult(submission);
-                    setLatestSubmissionResult(submission, result);
-                    return result?.rated;
-                }).length;
             });
     }
 

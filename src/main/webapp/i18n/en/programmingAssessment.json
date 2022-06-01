@@ -13,7 +13,7 @@
             "penaltyTooltip": "Penalty: {{ percentage }}% of all penalties.",
             "issuesTooltip": "Issues: {{ percentage }}% of all detected issues.",
             "deductionsTooltip": "Deductions: {{ percentage }}% of all deducted points.",
-            "noSubmissions": "No Submissions for this exercise!"
+            "noSubmissions": "No submissions for this exercise!"
         }
     }
 }

@@ -40,7 +40,7 @@
             },
             "dashboard": {
                 "heading": "Einreichungen und Bewertungen der Textaufgabe \"{{exerciseTitle}}\"",
-                "progressDescription": "Fortschritt: {{ percentageAssessed }} % ({{ numberAssessed }} von {{ numberSubmissions }} eingereichten Texten bewertet)"
+                "progressDescription": "Fortschritt: {{ percentageAssessed }} % ({{ numberAssessed }} von {{ numberSubmissions }} eingereichten Abgaben bewertet)"
             },
             "notFound": "Wir haben keine neue Textvorlage ohne Bewertung gefunden, bitte gehe zurück zum Dashboard.",
             "updateAfterComplaintSuccessful": "Die Bewertung wurde erfolgreich aktualisiert.",
