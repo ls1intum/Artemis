@@ -11,7 +11,7 @@ In general, keep in mind: **All UI changes need to be verified in both themes!**
 ==============
 
 We use different colors for our UI elements in both themes. These colors are passed into Bootstrap, so if you use
-default components such as buttons, cards, forms etc., they will be automagically themed correctly.
+default components such as buttons, cards, forms, etc., they will be automagically themed correctly.
 
 For your custom components and custom stylesheets, please follow this strict global rule:
 
@@ -51,16 +51,16 @@ Please check your available options in this order:
           - Use case
           - Usage
         * - ``bs-body-color``
-          - The default font color; will be black in light mode and white in dark mode
+          - The default font color; will be black in light mode and white in dark mode.
           - CSS: ``var(--bs-body-color)``
         * - ``bs-body-bg``
           - The body background color; will be something bright in light mode and something darker in dark mode.
 
             It can be used for smaller boxes in main content, as it's usually pretty distinguishable from the
-            background color used in Artemis' primary content area
+            background color used in Artemis' primary content area.
           - CSS: ``var(--bs-body-bg)``
         * - ``artemis-dark``
-          - A dark color that is typical for some of Artemis UI elements, for example the navbar background.
+          - A dark color that is typical for some of Artemis' UI elements, for example the navbar background.
           - CSS: ``var(--artemis-dark)``
         * - ``primary``
           - A blue-ish default color to indicate a primary action. Also used as link color. Use this to indicate
@@ -131,7 +131,7 @@ Please check your available options in this order:
 
     .. TIP::
         | Artemis uses ``white`` in light mode and ``$neutral-dark`` in dark mode
-          as background for the main content area, cards etc.
+          as background for the main content area, cards, etc.
         |
         | For ``$neutral-dark``, a few lightened default options exist: ``$neutral-dark-l-5;`` to ``$neutral-dark-l-20;`` in steps of 5.
         | Therefore, if you need to separate something from the background, choose one of ``gray-XXX`` for light mode and a lightened option of ``$neutral-dark`` in dark mode.
@@ -158,7 +158,7 @@ Please check your available options in this order:
     3. Select a value for each theme.
 
         | **Re-use preset colors where possible!** For example, choose ``gray-700`` in light mode and ``gray-400`` in dark mode.
-        | This is still a good approach as you-re reusing already provided colors.
+        | This is still a good approach as you're reusing already provided colors.
 
         .. code-block:: scss
 
@@ -186,7 +186,7 @@ Please check your available options in this order:
 1. Theme-specific global styles
 ===============================
 
-It might happen that you need to modify a global style rule in one of the themes, for example if you're using a external library which styles need to be overridden.
+It might happen that you need to modify a global style rule in one of the themes, for example if you're using an external library which styles need to be overridden.
 
 | Each theme has its own file to which custom global styles can be added: ``theme-dark.scss`` and ``theme-default.scss``.
 | For styles that should be applied in both themes, use ``global.scss``.
