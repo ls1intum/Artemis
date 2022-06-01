@@ -20,8 +20,18 @@ const EMOJIS_TO_REPLACE = [
 ];
 
 export class EmojiUtils {
+    /**
+     * Returns the server URL of the default emoji sheet containing all emojis at once
+     */
     public static readonly EMOJI_SHEET_URL = () => EMOJI_URL + 'emoji_sheet_64.png';
 
+    /**
+     * For dark mode, returns individual images of problematic, dark emojis if necessary.
+     * See EMOJI_TO_REPLACE above in this file for a list of replaced emojis.
+     * Inverted versions are fetched from the server to replace them.
+     *
+     * @param emoji the emoji that is to be rendered
+     */
     public static readonly singleDarkModeEmojiUrlFn: (emoji: EmojiData | null) => string = (emoji: EmojiData) => {
         if (emoji?.unified && EMOJIS_TO_REPLACE.includes(emoji.unified)) {
             return EMOJI_URL + emoji.unified.toLowerCase() + '.png';
