@@ -701,6 +701,14 @@ public class ModelFactory {
         return studentExam;
     }
 
+    public static StudentExam generateStudentExamForTestExam(Exam exam) {
+        StudentExam studentExam = new StudentExam();
+        studentExam.setExam(exam);
+        studentExam.setWorkingTime(exam.getWorkingTime());
+        studentExam.setTestRun(false);
+        return studentExam;
+    }
+
     public static StudentExam generateExamTestRun(Exam exam) {
         StudentExam studentExam = new StudentExam();
         studentExam.setExam(exam);

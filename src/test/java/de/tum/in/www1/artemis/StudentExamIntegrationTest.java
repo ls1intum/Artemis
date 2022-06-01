@@ -44,6 +44,7 @@ import de.tum.in.www1.artemis.service.ParticipationService;
 import de.tum.in.www1.artemis.service.exam.ExamQuizService;
 import de.tum.in.www1.artemis.service.exam.StudentExamService;
 import de.tum.in.www1.artemis.util.LocalRepository;
+import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
@@ -90,6 +91,9 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
     @Autowired
     private ObjectMapper objectMapper;
 
+    @Autowired
+    private UserRepository userRepository;
+
     private List<User> users;
 
     private Course course1;
@@ -100,9 +104,15 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
 
     private Exam exam2;
 
+    private Exam testExam1;
+
+    private Exam testExam2;
+
     private Exam testRunExam;
 
     private StudentExam studentExam1;
+
+    private StudentExam studentExamForTestExam1;
 
     private final List<LocalRepository> studentRepos = new ArrayList<>();
 
@@ -114,12 +124,21 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
         exam1 = database.addActiveExamWithRegisteredUser(course1, users.get(1));
         exam1.addRegisteredUser(users.get(0));
         exam1 = examRepository.save(exam1);
+
         Exam exam2 = database.addExam(course1);
         studentExam1 = database.addStudentExam(exam1);
         studentExam1.setWorkingTime(7200);
         studentExam1.setUser(users.get(0));
         studentExamRepository.save(studentExam1);
         database.addStudentExam(exam2);
+
+        testExam1 = database.addTestExam(course1);
+        studentExamForTestExam1 = database.addStudentExamForTestExam(testExam1, users.get(0));
+
+        testExam2 = database.addTestExam(course1);
+
+        userRepository.save(ModelFactory.generateActivatedUser("student42"));
+
         // TODO: all parts using programmingExerciseTestService should also be provided for Gitlab+Jenkins
         programmingExerciseTestService.setup(this, versionControlService, continuousIntegrationService);
         bitbucketRequestMockProvider.enableMockingOfRequests(true);
@@ -239,7 +258,7 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
         List<StudentExam> studentExams = request.postListWithResponseBody("/api/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/generate-student-exams",
                 Optional.empty(), StudentExam.class, HttpStatus.OK);
         assertThat(studentExams).hasSize(exam2.getRegisteredUsers().size());
-        assertThat(studentExamRepository.findAll()).hasSize(registeredStudents.size() + 3); // we generate three additional student exams in the @Before method
+        assertThat(studentExamRepository.findAll()).hasSize(registeredStudents.size() + 4); // we generate four additional student exams in the @Before method
 
         // start exercises
 
@@ -1640,4 +1659,52 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
         assertThat(studentExam.isSubmitted()).isFalse();
         assertThat(studentExam.getSubmissionDate()).isNull();
     }
+
+    // StudentExamResoure - getStudentExamForTestExamForConduction
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void testGetStudentExamForTestExamForConduction_NoStudentExamFound() throws Exception {
+        request.get("/api/courses/" + course1.getId() + "/exams/" + testExam1.getId() + "/student-exams/" + 5555L + "/conduction", HttpStatus.NOT_FOUND, StudentExam.class);
+    }
+
+    @Test
+    @WithMockUser(username = "student42", roles = "USER")
+    public void testGetStudentExamForTestExamForConduction_NoCourseAccess() throws Exception {
+        StudentExam studentExam = database.addStudentExamForTestExam(testExam1, database.getUserByLogin("student42"));
+        request.get("/api/courses/" + course1.getId() + "/exams/" + testExam1.getId() + "/student-exams/" + studentExam.getId() + "/conduction", HttpStatus.FORBIDDEN,
+                StudentExam.class);
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void testGetStudentExamForTestExamForConduction_NoExamAccess() throws Exception {
+        StudentExam studentExam = database.addStudentExamForTestExam(testExam2, database.getUserByLogin("student2"));
+        request.get("/api/courses/" + course1.getId() + "/exams/" + testExam1.getId() + "/student-exams/" + studentExam.getId() + "/conduction", HttpStatus.FORBIDDEN,
+                StudentExam.class);
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void testGetStudentExamForTestExamForConduction_NotVisible() throws Exception {
+        Exam exam = database.addTestExam(course1);
+        exam.setVisibleDate(ZonedDateTime.now().plusMinutes(60));
+        examRepository.save(exam);
+        request.get("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/student-exams/" + studentExam1.getId() + "/conduction", HttpStatus.FORBIDDEN,
+                StudentExam.class);
+    }
+
+    @Test
+    @WithMockUser(username = "student2", roles = "USER")
+    public void testGetStudentExamForTestExamForConduction_UserIdMismatch() throws Exception {
+        request.get("/api/courses/" + course1.getId() + "/exams/" + testExam1.getId() + "/student-exams/" + studentExamForTestExam1.getId() + "/conduction", HttpStatus.FORBIDDEN,
+                StudentExam.class);
+    }
+
+    @Test
+    @WithMockUser(username = "student2", roles = "USER")
+    public void testGetStudentExamForTestExamForConduction_realExam() throws Exception {
+        request.get("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/student-exams/" + studentExam1.getId() + "/conduction", HttpStatus.FORBIDDEN,
+                StudentExam.class);
+    }
+
 }

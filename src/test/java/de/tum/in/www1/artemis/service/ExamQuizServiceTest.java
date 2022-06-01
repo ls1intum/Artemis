@@ -75,6 +75,7 @@ public class ExamQuizServiceTest extends AbstractSpringIntegrationBambooBitbucke
         exam = database.addExamWithExerciseGroup(course, true);
         exam.setStartDate(ZonedDateTime.now().minusHours(1));
         exam.setEndDate(ZonedDateTime.now().plusHours(1));
+        exam.setWorkingTime(2 * 60 * 60);
         exam.setNumberOfExercisesInExam(1);
         exerciseGroup = exam.getExerciseGroups().get(0);
 
