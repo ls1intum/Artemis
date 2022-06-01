@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input, OnChanges } from '@angular/core';
 import dayjs from 'dayjs/esm';
 import { Exercise, ExerciseType, getCourseFromExercise, getIcon, getIconTooltip, IncludedInOverallScore } from 'app/entities/exercise.model';
 import { Exam } from 'app/entities/exam.model';
@@ -20,7 +20,7 @@ import { SubmissionService } from 'app/exercises/shared/submission/submission.se
     selector: 'jhi-header-exercise-page-with-details',
     templateUrl: './header-exercise-page-with-details.component.html',
 })
-export class HeaderExercisePageWithDetailsComponent implements OnInit {
+export class HeaderExercisePageWithDetailsComponent implements OnChanges {
     readonly IncludedInOverallScore = IncludedInOverallScore;
     readonly AssessmentType = AssessmentType;
     readonly ExerciseType = ExerciseType;
@@ -54,7 +54,7 @@ export class HeaderExercisePageWithDetailsComponent implements OnInit {
 
     constructor(private complaintService: ComplaintService, private submissionSerrvice: SubmissionService) {}
 
-    ngOnInit(): void {
+    ngOnChanges(): void {
         this.exerciseCategories = this.exercise.categories || [];
 
         this.setIcon(this.exercise.type);
@@ -78,8 +78,6 @@ export class HeaderExercisePageWithDetailsComponent implements OnInit {
 
             if (this.submissionPolicy) {
                 this.countSubmissions();
-            } else {
-                this.numberOfSubmissions = 0;
             }
         }
     }
@@ -141,9 +139,6 @@ export class HeaderExercisePageWithDetailsComponent implements OnInit {
             ?.filter((submission) => submission.type === SubmissionType.MANUAL && (!submission.results?.length || 0) === 0)
             .map((submission) => (submission as ProgrammingSubmission).commitHash)
             .forEach((commitHash: string) => commitHashSet.add(commitHash));
-
-        console.log('submissionCompensation: ' + submissionCompensation);
-        console.log('commitHashSet.size: ' + commitHashSet.size);
 
         this.numberOfSubmissions = submissionCompensation + commitHashSet.size;
     }
