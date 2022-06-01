@@ -135,10 +135,10 @@ public class PlagiarismResource {
     @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<Void> deletePlagiarismComparisons(@PathVariable("exerciseId") long exerciseId, @PathVariable("plagiarismResultId") long plagiarismResultId,
             @RequestParam() boolean deleteAll) {
-        log.info("REST request to delete plagiarism comparisons for exercise with id: {}", exerciseId);
+        log.info("REST request to clean up plagiarism comparisons for exercise with id: {}", exerciseId);
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
         if (!authenticationCheckService.isAtLeastInstructorForExercise(exercise)) {
-            throw new AccessForbiddenException("Only students registered for this course can access this plagiarism comparison.");
+            throw new AccessForbiddenException("Only instructors for this course can access these plaiarism results and comparisons.");
         }
         if (deleteAll) {
             // delete all elements for the given exercise
