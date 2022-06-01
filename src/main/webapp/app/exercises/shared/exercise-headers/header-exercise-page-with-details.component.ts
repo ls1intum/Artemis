@@ -14,6 +14,7 @@ import { AssessmentType } from 'app/entities/assessment-type.model';
 import { ComplaintService } from 'app/complaints/complaint.service';
 import { SubmissionType } from 'app/entities/submission.model';
 import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
+import { SubmissionService } from 'app/exercises/shared/submission/submission.service';
 
 @Component({
     selector: 'jhi-header-exercise-page-with-details',
@@ -52,7 +53,7 @@ export class HeaderExercisePageWithDetailsComponent implements OnInit {
     faArrowLeft = faArrowLeft;
     faQuestionCircle = faQuestionCircle;
 
-    constructor(private complaintService: ComplaintService) {}
+    constructor(private complaintService: ComplaintService, private submissionSerrvice: SubmissionService) {}
 
     ngOnInit(): void {
         this.exerciseCategories = this.exercise.categories || [];
@@ -130,14 +131,23 @@ export class HeaderExercisePageWithDetailsComponent implements OnInit {
     }
 
     private countSubmissions() {
+        if (!this.studentParticipation) {
+            return;
+        }
+        if (this.studentParticipation.submissions === undefined) {
+            this.submissionSerrvice.findAllSubmissionsOfParticipation(this.studentParticipation.id!).subscribe((res) => {
+                this.studentParticipation!.submissions = res.body || [];
+            });
+        }
+
         let submissionCompensation = 0;
-        if (this.studentParticipation?.submissions && this.studentParticipation?.submissions.length > 0) {
-            submissionCompensation = (this.studentParticipation?.submissions.first()?.results?.length || 0) === 0 ? 1 : 0;
+
+        if (this.studentParticipation!.submissions!.length > 0) {
+            submissionCompensation = (this.studentParticipation!.submissions!.first()?.results?.length || 0) === 0 ? 1 : 0;
         }
 
         const commitHashSet = new Set<string>();
-        this.studentParticipation?.submissions
-            ?.filter((submission) => submission.type === SubmissionType.MANUAL && (submission.results?.length || 0) !== 0)
+        this.studentParticipation!.submissions!.filter((submission) => submission.type === SubmissionType.MANUAL && (submission.results?.length || 0) !== 0)
             .map((submission) => (submission as ProgrammingSubmission).commitHash)
             .forEach((commitHash: string) => commitHashSet.add(commitHash));
 
