@@ -92,7 +92,7 @@ public class VideoUnitResource {
         try {
             // Remove leading and trailing whitespaces
             if (videoUnit.getSource() != null) {
-                videoUnit.setSource(videoUnit.getSource().trim());
+                videoUnit.setSource(videoUnit.getSource().strip());
             }
             new URL(videoUnit.getSource());
         }
@@ -130,7 +130,7 @@ public class VideoUnitResource {
         try {
             // Remove leading and trailing whitespaces
             if (videoUnit.getSource() != null) {
-                videoUnit.setSource(videoUnit.getSource().trim());
+                videoUnit.setSource(videoUnit.getSource().strip());
             }
             new URL(videoUnit.getSource());
         }

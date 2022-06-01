@@ -174,12 +174,12 @@ public class VideoUnitIntegrationTest extends AbstractSpringIntegrationBambooBit
         videoUnit.setSource(source);
         var persistedVideoUnit = request.postWithResponseBody("/api/lectures/" + this.lecture1.getId() + "/video-units", videoUnit, VideoUnit.class, HttpStatus.CREATED);
         assertThat(persistedVideoUnit.getId()).isNotNull();
-        assertThat(persistedVideoUnit.getSource()).isEqualTo(source.trim());
+        assertThat(persistedVideoUnit.getSource()).isEqualTo(source.strip());
 
         source = "     https://www.youtube.com/embed/8iU8LPEa4o0     ";
         persistedVideoUnit.setSource(source);
         var updatedVideoUnit = request.putWithResponseBody("/api/lectures/" + this.lecture1.getId() + "/video-units", persistedVideoUnit, VideoUnit.class, HttpStatus.OK);
         assertThat(updatedVideoUnit.getId()).isNotNull();
-        assertThat(updatedVideoUnit.getSource()).isEqualTo(source.trim());
+        assertThat(updatedVideoUnit.getSource()).isEqualTo(source.strip());
     }
 }
