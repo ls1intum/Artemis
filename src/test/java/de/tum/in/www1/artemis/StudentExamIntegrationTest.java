@@ -674,6 +674,7 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
         exam2.setNumberOfCorrectionRoundsInExam(2);
         exam2.setStartDate(ZonedDateTime.now().minusMinutes(10));
         exam2.setEndDate(ZonedDateTime.now().minusMinutes(8));
+        exam2.setWorkingTime(2 * 60);
         exam2 = examRepository.save(exam2);
 
         request.postWithoutLocation("/api/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/student-exams/assess-unsubmitted-and-empty-student-exams", Optional.empty(),
@@ -716,6 +717,7 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
         // this test should be after the end date of the exam
         exam2.setStartDate(ZonedDateTime.now().minusMinutes(10));
         exam2.setEndDate(ZonedDateTime.now().minusMinutes(7));
+        exam2.setWorkingTime(3 * 60);
         examRepository.save(exam2);
 
         request.postWithoutLocation("/api/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/student-exams/assess-unsubmitted-and-empty-student-exams", Optional.empty(),

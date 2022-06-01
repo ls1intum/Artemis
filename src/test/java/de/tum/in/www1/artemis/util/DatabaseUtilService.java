@@ -1220,6 +1220,7 @@ public class DatabaseUtilService {
         exam.setVisibleDate(visibleDate);
         exam.setStartDate(startDate);
         exam.setEndDate(endDate);
+        exam.setWorkingTime((int) Duration.between(startDate, endDate).toSeconds());
         exam.setGracePeriod(180);
         examRepository.save(exam);
         return exam;
@@ -1231,6 +1232,7 @@ public class DatabaseUtilService {
         exam.setStartDate(startDate);
         exam.setEndDate(endDate);
         exam.setPublishResultsDate(publishResultDate);
+        exam.setWorkingTime((int) Duration.between(startDate, endDate).toSeconds());
         exam.setGracePeriod(180);
         examRepository.save(exam);
         return exam;
@@ -1240,7 +1242,9 @@ public class DatabaseUtilService {
         Exam exam = ModelFactory.generateExam(course);
         exam.setStartDate(ZonedDateTime.now().minusHours(1));
         exam.setEndDate(ZonedDateTime.now().plusHours(1));
+        exam.setWorkingTime(2 * 60 * 60);
         exam.addRegisteredUser(user);
+        exam.setTestExam(false);
         examRepository.save(exam);
         var studentExam = new StudentExam();
         studentExam.setExam(exam);
@@ -1255,6 +1259,7 @@ public class DatabaseUtilService {
         Exam exam = ModelFactory.generateTestExam(course);
         exam.setStartDate(ZonedDateTime.now().minusHours(1));
         exam.setEndDate(ZonedDateTime.now().plusHours(1));
+        exam.setWorkingTime(2 * 60 * 60);
         exam.addRegisteredUser(user);
         examRepository.save(exam);
         var studentExam = new StudentExam();
