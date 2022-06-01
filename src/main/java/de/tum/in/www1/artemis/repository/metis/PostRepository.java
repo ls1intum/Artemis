@@ -35,7 +35,7 @@ public interface PostRepository extends JpaRepository<Post, Long> {
                 OR answer.author.id = :#{#userId}
                 OR reaction.user.id = :#{#userId})
             AND (:#{#unresolved} = false
-                OR (post.courseWideContext IS NULL OR post.courseWideContext <> 'ANNOUNCEMENT'
+                OR ((post.courseWideContext IS NULL OR post.courseWideContext <> 'ANNOUNCEMENT')
                     AND NOT EXISTS (SELECT answerPost FROM post.answers answerPost
                         WHERE answerPost.resolvesPost = true
                         AND answerPost.post.id = post.id)))
@@ -62,7 +62,7 @@ public interface PostRepository extends JpaRepository<Post, Long> {
                 OR answer.author.id = :#{#userId}
                 OR reaction.user.id = :#{#userId})
             AND (:#{#unresolved} = false
-                 OR (post.courseWideContext IS NULL OR post.courseWideContext <> 'ANNOUNCEMENT'
+                 OR ((post.courseWideContext IS NULL OR post.courseWideContext <> 'ANNOUNCEMENT')
                     AND NOT EXISTS (SELECT answerPost FROM post.answers answerPost
                         WHERE answerPost.resolvesPost = true
                         AND answerPost.post.id = post.id)))
@@ -80,7 +80,7 @@ public interface PostRepository extends JpaRepository<Post, Long> {
                 OR answer.author.id = :#{#userId}
                 OR reaction.user.id = :#{#userId})
             AND (:#{#unresolved} = false
-                 OR (post.courseWideContext IS NULL OR post.courseWideContext <> 'ANNOUNCEMENT'
+                 OR ((post.courseWideContext IS NULL OR post.courseWideContext <> 'ANNOUNCEMENT')
                     AND NOT EXISTS (SELECT answerPost FROM post.answers answerPost
                         WHERE answerPost.resolvesPost = true
                         AND answerPost.post.id = post.id)))
