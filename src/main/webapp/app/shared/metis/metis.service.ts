@@ -420,6 +420,9 @@ export class MetisService implements OnDestroy {
         this.jhiWebsocketService.subscribe(this.subscriptionChannel);
         this.jhiWebsocketService.receive(this.subscriptionChannel).subscribe((postDTO: MetisPostDTO) => {
             postDTO.post.creationDate = dayjs(postDTO.post.creationDate);
+            postDTO.post.answers?.forEach((answer: AnswerPost) => {
+                answer.creationDate = dayjs(answer.creationDate);
+            });
             switch (postDTO.action) {
                 case MetisPostAction.CREATE_POST:
                     // determine if either the current post context filter is not set to a specific course-wide topic

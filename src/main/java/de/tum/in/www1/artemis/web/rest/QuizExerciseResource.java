@@ -302,6 +302,7 @@ public class QuizExerciseResource {
         if (!authCheckService.isAllowedToSeeExercise(quizExercise, user)) {
             throw new AccessForbiddenException();
         }
+        quizExercise.setQuizBatches(null); // remove proxy and load batches only if required
         var batch = quizBatchService.getQuizBatchForStudent(quizExercise, user);
         quizExercise.setQuizBatches(batch.stream().collect(Collectors.toSet()));
         // filter out information depending on quiz state
@@ -358,7 +359,7 @@ public class QuizExerciseResource {
     @PreAuthorize("hasRole('TA')")
     public ResponseEntity<QuizBatch> addBatch(@PathVariable Long quizExerciseId) {
         log.debug("REST request to add batch : {}", quizExerciseId);
-        QuizExercise quizExercise = quizExerciseRepository.findByIdWithQuestionsElseThrow(quizExerciseId);
+        QuizExercise quizExercise = quizExerciseRepository.findByIdWithBatchesElseThrow(quizExerciseId);
         var user = userRepository.getUserWithGroupsAndAuthorities();
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, quizExercise, user);
 
