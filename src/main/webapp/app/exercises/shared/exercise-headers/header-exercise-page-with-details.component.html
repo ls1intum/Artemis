@@ -53,7 +53,7 @@
             </h4>
         </div>
         <div class="col-auto ms-md-auto">
-            <ng-template [ngIf]="isExamMode" [ngIfElse]="courseMode">
+            <ng-template [ngIf]="exam" [ngIfElse]="courseMode">
                 <ng-container *ngIf="!isTestRun">
                     <h5 [class.h3]="isNextDueDate[0]">
                         {{ 'artemisApp.exam.endDate' | artemisTranslate }}

@@ -38,7 +38,6 @@ export class HeaderExercisePageWithDetailsComponent implements OnInit {
 
     public exerciseStatusBadge = 'bg-success';
     public exerciseCategories: ExerciseCategory[];
-    public isExamMode = false;
     public dueDate?: dayjs.Dayjs;
     public programmingExercise?: ProgrammingExercise;
     public course: Course;
@@ -65,7 +64,6 @@ export class HeaderExercisePageWithDetailsComponent implements OnInit {
         this.course = getCourseFromExercise(this.exercise)!;
 
         if (this.exam) {
-            this.isExamMode = true;
             this.setIsNextDueDateExamMode();
         } else {
             this.dueDate = getExerciseDueDate(this.exercise, this.studentParticipation);
@@ -80,6 +78,8 @@ export class HeaderExercisePageWithDetailsComponent implements OnInit {
 
             if (this.submissionPolicy) {
                 this.countSubmissions();
+            } else {
+                this.numberOfSubmissions = 0;
             }
         }
     }
@@ -131,25 +131,19 @@ export class HeaderExercisePageWithDetailsComponent implements OnInit {
     }
 
     private countSubmissions() {
-        if (!this.studentParticipation) {
-            return;
-        }
-        if (this.studentParticipation.submissions === undefined) {
-            this.submissionSerrvice.findAllSubmissionsOfParticipation(this.studentParticipation.id!).subscribe((res) => {
-                this.studentParticipation!.submissions = res.body || [];
-            });
-        }
-
         let submissionCompensation = 0;
-
-        if (this.studentParticipation!.submissions!.length > 0) {
-            submissionCompensation = (this.studentParticipation!.submissions!.first()?.results?.length || 0) === 0 ? 1 : 0;
+        if (this.studentParticipation?.submissions && this.studentParticipation?.submissions.length > 0) {
+            submissionCompensation = (this.studentParticipation?.submissions.first()?.results?.length || 0) === 0 ? 1 : 0;
         }
 
         const commitHashSet = new Set<string>();
-        this.studentParticipation!.submissions!.filter((submission) => submission.type === SubmissionType.MANUAL && (submission.results?.length || 0) !== 0)
+        this.studentParticipation?.submissions
+            ?.filter((submission) => submission.type === SubmissionType.MANUAL && (!submission.results?.length || 0) === 0)
             .map((submission) => (submission as ProgrammingSubmission).commitHash)
             .forEach((commitHash: string) => commitHashSet.add(commitHash));
+
+        console.log('submissionCompensation: ' + submissionCompensation);
+        console.log('commitHashSet.size: ' + commitHashSet.size);
 
         this.numberOfSubmissions = submissionCompensation + commitHashSet.size;
     }
