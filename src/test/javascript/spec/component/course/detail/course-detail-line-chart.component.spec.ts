@@ -112,11 +112,14 @@ describe('CourseDetailLineChartComponent', () => {
 
         component.ngOnChanges();
 
+        expect(component.showLifetimeOverview).toBe(true);
+        expect(component.startDateDisplayed).toBe(true);
+        expect(component.showsCurrentWeek).toBe(true);
+
         expect(component.data[0].series).toHaveLength(2);
         expect(component.data[0].series[0].value).toBe(24);
         expect(component.data[0].series[1].value).toBe(84);
         expect(component.data[0].series[1].name).toBe(endDate.isoWeek().toString());
-        expect(component.startDateDisplayed).toBe(true);
     });
 
     it('should limit the next view if start date is reached', () => {
@@ -137,5 +140,28 @@ describe('CourseDetailLineChartComponent', () => {
         expect(component.data[0].series[0].name).toBe(startDate.isoWeek().toString());
         expect(getStatisticsDataMock).toHaveBeenCalledTimes(1);
         expect(getStatisticsDataMock).toHaveBeenCalledWith(42, -1);
+    });
+
+    it('should create lifetime overview', () => {
+        const getOverviewDataMock = jest.spyOn(service, 'getStatisticsForLifetimeOverview').mockReturnValue(of(initialStats));
+        const startDate = dayjs().subtract(17, 'weeks');
+        component.course = { id: 42, startDate };
+
+        component.displayLifetimeOverview();
+
+        expect(component.showLifetimeOverview).toBe(true);
+        expect(getOverviewDataMock).toHaveBeenCalledTimes(1);
+        expect(getOverviewDataMock).toHaveBeenCalledWith(42);
+        for (let i = 0; i < 17; i++) {
+            expect(component.absoluteSeries[i]['absoluteValue']).toBe(initialStats[i]);
+        }
+    });
+
+    it('should toggle the average reference line', () => {
+        component.showAverage = false;
+
+        component.toggleAverageLine();
+
+        expect(component.showAverage).toBe(true);
     });
 });
