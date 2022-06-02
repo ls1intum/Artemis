@@ -97,6 +97,9 @@ public class ExamQuizService {
                     result.evaluateQuizSubmission();
                     // remove submission to follow save order for ordered collections
                     result.setSubmission(null);
+                    if (studentExam.getExam().isTestExam()) {
+                        result.rated(true);
+                    }
                     result = resultRepository.save(result);
                     participation.setResults(Set.of(result));
                     studentParticipationRepository.save(participation);
@@ -112,11 +115,15 @@ public class ExamQuizService {
                     // prevent a lazy exception in the evaluateQuizSubmission method
                     result.setParticipation(participation);
                     result.evaluateQuizSubmission();
+                    if (studentExam.getExam().isTestExam()) {
+                        result.rated(true);
+                    }
                     resultRepository.save(result);
                 }
                 if (studentExam.getExam().isTestExam()) {
                     // In case of an TestExam, the quiz statistic should also be updated
-                    quizStatisticService.updateStatistics(Set.of(result), quizExercise);
+                    var quizExercise1 = quizExerciseRepository.findByIdWithQuestionsAndStatisticsElseThrow(quizExercise.getId());
+                    quizStatisticService.updateStatistics(Set.of(result), quizExercise1);
                 }
                 submissionRepository.save(submission);
             }

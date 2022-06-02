@@ -284,7 +284,7 @@ public class StudentExamResource {
         if (!user.getId().equals(studentExam.getUser().getId())) {
             throw new AccessForbiddenException("The requested exam does not belong to the requesting user");
         }
-        // In case the studentExam is not yet started, new participations need to be set up - isStarted uses Boolean
+        // In case the studentExam is not yet started, a new participation wit a specific initialization date should be created - isStarted uses Boolean
         prepareStudentExamForConductionWithInitializationDateSet(request, user, studentExam, (studentExam.isStarted() == null || !studentExam.isStarted()));
 
         log.info("getStudentExamForTestExamForConduction done in {}ms for {} exercises for user {}", System.currentTimeMillis() - start, studentExam.getExercises().size(),
@@ -610,17 +610,15 @@ public class StudentExamResource {
             studentExam.setStarted(true);
             studentExam.setStartedDate(startedDate);
 
-            boolean isAtLeastInstructor = authorizationCheckService.isAtLeastInstructorInCourse(studentExam.getExam().getCourse(), currentUser);
-
-            // 4th: connect & filter the exercises and student participations including the latest submission
-            // and results where necessary, to make sure all relevant associations are available
-            for (Exercise exercise : studentExam.getExercises()) {
-                filterParticipationForExercise(studentExam, exercise, studentParticipations, isAtLeastInstructor);
-            }
+            /*
+             * boolean isAtLeastInstructor = authorizationCheckService.isAtLeastInstructorInCourse(studentExam.getExam().getCourse(), currentUser); // 4th: connect & filter the
+             * exercises and student participations including the latest submission // and results where necessary, to make sure all relevant associations are available for
+             * (Exercise exercise : studentExam.getExercises()) { filterParticipationForExercise(studentExam, exercise, studentParticipations, isAtLeastInstructor); }
+             */
         }
-        else {
-            fetchParticipationsSubmissionsAndResultsForStudentExam(studentExam, currentUser);
-        }
+        // else {
+        fetchParticipationsSubmissionsAndResultsForStudentExam(studentExam, currentUser);
+        // }
 
         // 5th: Reload the Quiz-Exercises
         loadExercisesForStudentExam(studentExam);

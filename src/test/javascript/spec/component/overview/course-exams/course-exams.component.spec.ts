@@ -19,37 +19,46 @@ describe('CourseExamsComponent', () => {
     let component: CourseExamsComponent;
     let componentFixture: ComponentFixture<CourseExamsComponent>;
 
-    const visibleRealExam = {
+    const visibleRealExam1 = {
         id: 1,
+        visibleDate: dayjs().subtract(1, 'days'),
+        startDate: dayjs().subtract(30, 'minutes'),
+        testExam: false,
+    } as Exam;
+
+    const visibleRealExam2 = {
+        id: 2,
+
         visibleDate: dayjs().subtract(2, 'days'),
+        startDate: dayjs().subtract(1, 'days'),
         testExam: false,
     } as Exam;
 
     const notVisibleRealExam = {
-        id: 2,
+        id: 3,
         visibleDate: dayjs().add(2, 'days'),
+        startDate: dayjs().add(1, 'days'),
         testExam: false,
     } as Exam;
 
     const visibleTestExam1 = {
-        id: 3,
+        id: 11,
         visibleDate: dayjs().subtract(1, 'days'),
+        startDate: dayjs().subtract(30, 'minutes'),
         testExam: true,
     } as Exam;
 
     const visibleTestExam2 = {
-        id: 4,
+        id: 12,
         visibleDate: dayjs().subtract(4, 'days'),
+        startDate: dayjs().subtract(1, 'days'),
         testExam: true,
     } as Exam;
 
-    const TestExam3ForTesting = {
-        id: 3,
-        testExam: true,
-    } as Exam;
-
-    const TestExam4ForTesting = {
-        id: 4,
+    const notVisibleTestExam = {
+        id: 13,
+        visibleDate: dayjs().add(2, 'days'),
+        startDate: dayjs().add(1, 'days'),
         testExam: true,
     } as Exam;
 
@@ -59,14 +68,14 @@ describe('CourseExamsComponent', () => {
         startedDate: dayjs().subtract(2, 'hour'),
         submitted: true,
         submissionDate: dayjs().subtract(1, 'hour'),
-        exam: TestExam3ForTesting,
+        exam: visibleTestExam1,
     } as StudentExam;
 
     const studentExamForExam3AndNotSubmitted = {
         id: 12,
         started: true,
         startedDate: dayjs().subtract(2, 'hour'),
-        exam: TestExam3ForTesting,
+        exam: visibleTestExam1,
     } as StudentExam;
 
     const studentExamForExam4AndSubmitted = {
@@ -74,7 +83,7 @@ describe('CourseExamsComponent', () => {
         started: true,
         submitted: true,
         submissionDate: dayjs().subtract(1, 'hour'),
-        exam: TestExam4ForTesting,
+        exam: visibleTestExam2,
     } as StudentExam;
 
     beforeEach(() => {
@@ -96,7 +105,7 @@ describe('CourseExamsComponent', () => {
 
                 jest.spyOn(TestBed.inject(CourseManagementService), 'getCourseUpdates').mockReturnValue(of());
                 jest.spyOn(TestBed.inject(CourseScoreCalculationService), 'getCourse').mockReturnValue({
-                    exams: [visibleRealExam, notVisibleRealExam, visibleTestExam1, visibleTestExam2],
+                    exams: [visibleRealExam1, visibleRealExam2, notVisibleRealExam, visibleTestExam1, visibleTestExam2, notVisibleTestExam],
                 });
                 jest.spyOn(TestBed.inject(ExamParticipationService), 'loadStudentExamsForTestExamsPerCourseAndPerUserForOverviewPage').mockReturnValue(
                     of([studentExamForExam3AndSubmitted, studentExamForExam3AndNotSubmitted, studentExamForExam4AndSubmitted]) as Observable<StudentExam[]>,
@@ -106,7 +115,7 @@ describe('CourseExamsComponent', () => {
 
     it('exam should be visible', () => {
         componentFixture.detectChanges();
-        expect(component.isVisible(visibleRealExam)).toBeTrue();
+        expect(component.isVisible(visibleRealExam1)).toBeTrue();
     });
 
     it('exam should not be visible', () => {
@@ -116,18 +125,18 @@ describe('CourseExamsComponent', () => {
 
     it('isTestExam should return false for RealExams', () => {
         componentFixture.detectChanges();
-        expect(component.isTestExam(visibleRealExam)).toBeFalse();
+        expect(component.isTestExam(visibleRealExam1)).toBeFalse();
     });
 
     it('isTestExam should return true for TestExams', () => {
         componentFixture.detectChanges();
-        expect(component.isTestExam(TestExam3ForTesting)).toBeTrue();
+        expect(component.isTestExam(visibleTestExam1)).toBeTrue();
     });
 
     it('should correctly return StudentExams by id in reverse order', () => {
         componentFixture.detectChanges();
         const resultArray = [studentExamForExam3AndNotSubmitted, studentExamForExam3AndSubmitted];
-        expect(component.getStudentExamForExamIdOrderedByIdReverse(3)).toEqual(resultArray);
+        expect(component.getStudentExamForExamIdOrderedByIdReverse(11)).toEqual(resultArray);
     });
 
     it('should correctly initialize the expandAttemptsMap', () => {
@@ -151,5 +160,17 @@ describe('CourseExamsComponent', () => {
         component.changeExpandAttemptList(visibleTestExam1.id!);
 
         expect(component.expandAttemptsMap).toEqual(expectedMap);
+    });
+
+    it('should correctly return visible RealExams ordered according to startedDate', () => {
+        component.ngOnInit();
+        const resultArray = [visibleRealExam2, visibleRealExam1];
+        expect(component.realExamsOfCourse).toEqual(resultArray);
+    });
+
+    it('should correctly return visible TestExams ordered according to startedDate', () => {
+        component.ngOnInit();
+        const resultArray = [visibleTestExam2, visibleTestExam1];
+        expect(component.testExamsOfCourse).toEqual(resultArray);
     });
 });

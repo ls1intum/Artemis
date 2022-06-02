@@ -24,6 +24,8 @@ export class CourseExamsComponent implements OnInit, OnDestroy {
     private studentExamTestExamUpdateSubscription?: Subscription;
     private studentExams: StudentExam[];
     public expandAttemptsMap = new Map<number, boolean>();
+    public realExamsOfCourse: Exam[];
+    public testExamsOfCourse: Exam[];
 
     // Icons
     faAngleUp = faAngleUp;
@@ -59,7 +61,29 @@ export class CourseExamsComponent implements OnInit, OnDestroy {
             });
 
         if (this.course!.exams) {
-            this.expandAttemptsMap = new Map(this.course!.exams!.filter((exam) => exam.testExam).map((exam) => [exam.id!, false]));
+            // The Map is ued to store the boolean value, if the attempt-List for one Exam has been expanded or collapsed
+            this.expandAttemptsMap = new Map(this.course!.exams!.filter((exam) => exam.testExam && this.isVisible(exam)).map((exam) => [exam.id!, false]));
+
+            // Loading the exams from the course
+            this.realExamsOfCourse = this.course!.exams!.filter((exam) => this.isVisible(exam) && !exam.testExam).sort((se1, se2) => {
+                if (se1.startDate! > se2.startDate!) {
+                    return 1;
+                }
+                if (se1.startDate! < se2.startDate!) {
+                    return -1;
+                }
+                return 0;
+            });
+
+            this.testExamsOfCourse = this.course!.exams!.filter((exam) => this.isVisible(exam) && exam.testExam).sort((se1, se2) => {
+                if (se1.startDate! > se2.startDate!) {
+                    return 1;
+                }
+                if (se1.startDate! < se2.startDate!) {
+                    return -1;
+                }
+                return 0;
+            });
         }
     }
 
