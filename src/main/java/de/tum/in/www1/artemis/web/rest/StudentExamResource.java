@@ -439,19 +439,6 @@ public class StudentExamResource {
     }
 
     /**
-     * GET /courses/{courseId}/test-exams-per-user
-     * Retrieves all StudentExams for TestExams of one Course for the specified user
-     *
-     * @param courseId the course to which the student exam belongs to
-     * @return all StudentExams for TestExam for the specified course and user
-     *//*
-         * @GetMapping("courses/{courseId}/test-exams-per-user")
-         * @PreAuthorize("hasRole('USER')") public ResponseEntity<List<StudentExam>> getStudentExamsForCoursePerUser(@PathVariable Long courseId) { User user =
-         * userRepository.getUserWithGroupsAndAuthorities(); studentExamAccessService.checkCourseAccessForStudentElseThrow(courseId, user); List<StudentExam> studentExamList =
-         * studentExamRepository.findStudentExamForTestExamsByUserIdAndCourseId(user.getId(), courseId); return ResponseEntity.ok(studentExamList); }
-         */
-
-    /**
      * GET /courses/{courseId}/exams/{examId}/test-runs : Find all test runs for the exam
      *
      * @param courseId the id of the course

@@ -1190,6 +1190,15 @@ public class DatabaseUtilService {
         return exam;
     }
 
+    public Exam addTestExamWithRegisteredUser(Course course, User user) {
+        Exam exam = ModelFactory.generateTestExam(course);
+        HashSet<User> userHashSet = new HashSet<>();
+        userHashSet.add(user);
+        exam.setRegisteredUsers(userHashSet);
+        examRepository.save(exam);
+        return exam;
+    }
+
     public Exam addExam(Course course, User user, ZonedDateTime visibleDate, ZonedDateTime startDate, ZonedDateTime endDate) {
         Exam exam = ModelFactory.generateExam(course);
         exam.addRegisteredUser(user);
@@ -1255,19 +1264,13 @@ public class DatabaseUtilService {
         return exam;
     }
 
-    public Exam addActiveTestExamWithRegisteredUser(Course course, User user) {
+    public Exam addActiveTestExamWithRegisteredUserWithoutStudentExam(Course course, User user) {
         Exam exam = ModelFactory.generateTestExam(course);
         exam.setStartDate(ZonedDateTime.now().minusHours(1));
         exam.setEndDate(ZonedDateTime.now().plusHours(1));
         exam.setWorkingTime(2 * 60 * 60);
         exam.addRegisteredUser(user);
         examRepository.save(exam);
-        var studentExam = new StudentExam();
-        studentExam.setExam(exam);
-        studentExam.setTestRun(false);
-        studentExam.setUser(user);
-        studentExam.setWorkingTime(exam.getWorkingTime());
-        studentExamRepository.save(studentExam);
         return exam;
     }
 

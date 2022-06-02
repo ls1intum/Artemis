@@ -284,7 +284,7 @@ public class ExamAccessServiceTest extends AbstractSpringIntegrationBambooBitbuc
     @Test
     @WithMockUser(username = "student1", roles = "USER")
     public void testGetStudentExamForTestExam_registeredUser() {
-        Exam exam = database.addActiveTestExamWithRegisteredUser(course1, database.getUserByLogin("student2"));
+        Exam exam = database.addActiveTestExamWithRegisteredUserWithoutStudentExam(course1, database.getUserByLogin("student2"));
         studentExam1.setUser(database.getUserByLogin("student1"));
         studentExamRepository.save(studentExam1);
         examRepository.save(exam);
@@ -301,7 +301,7 @@ public class ExamAccessServiceTest extends AbstractSpringIntegrationBambooBitbuc
     @Test
     @WithMockUser(username = "student1", roles = "USER")
     public void testGetStudentExamForTestExam_wrongExamId() {
-        Exam exam = database.addActiveTestExamWithRegisteredUser(course1, database.getUserByLogin("student1"));
+        Exam exam = database.addActiveTestExamWithRegisteredUserWithoutStudentExam(course1, database.getUserByLogin("student1"));
         studentExam1.setUser(database.getUserByLogin("student1"));
         studentExamRepository.save(studentExam1);
         examRepository.save(exam);
@@ -322,7 +322,7 @@ public class ExamAccessServiceTest extends AbstractSpringIntegrationBambooBitbuc
     @Test
     @WithMockUser(username = "student1", roles = "USER")
     public void testGetStudentExamForTestExam_wrongExamId_examIsVisible() {
-        Exam exam = database.addActiveTestExamWithRegisteredUser(course1, database.getUserByLogin("student1"));
+        Exam exam = database.addActiveTestExamWithRegisteredUserWithoutStudentExam(course1, database.getUserByLogin("student1"));
         exam.setVisibleDate(ZonedDateTime.now().plusMinutes(5));
         examRepository.save(exam);
         assertThatThrownBy(() -> examAccessService.getStudentExamForTestExamElseThrow(course1.getId(), 7777L, studentExam1.getId())).isInstanceOf(AccessForbiddenException.class);
