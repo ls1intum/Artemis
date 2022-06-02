@@ -132,7 +132,7 @@ public class TutorParticipationService {
         }
 
         // In case negative feedback is provided, but content is missing, return empty negative feedback.
-        var feedbackContent = Optional.ofNullable(tutorFeedback.getText() != null ? tutorFeedback.getText() : tutorFeedback.getDetailText()).orElse("");
+        var feedbackContent = Objects.requireNonNullElse(tutorFeedback.getText() != null ? tutorFeedback.getText() : tutorFeedback.getDetailText(), "");
         if (tutorFeedback.getCredits() < 0 && feedbackContent.isBlank()) {
             return Optional.of(FeedbackCorrectionErrorType.EMPTY_NEGATIVE_FEEDBACK);
         }

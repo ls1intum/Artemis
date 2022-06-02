@@ -52,8 +52,6 @@ public abstract class AbstractContinuousIntegrationService implements Continuous
         result.setParticipation((Participation) participation);
         addFeedbackToResult(result, buildResult);
 
-        // We assume the build has failed if no test case feedback has been sent. Static code analysis feedback might exist even though the build failed
-        boolean hasTestCaseFeedback = result.getFeedbacks().stream().anyMatch(feedback -> !feedback.isStaticCodeAnalysisFeedback());
         return result;
     }
 

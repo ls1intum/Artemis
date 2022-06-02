@@ -63,7 +63,7 @@ public class Result extends DomainObject {
     private Boolean rated;
 
     // This explicit flag exists intentionally, as sometimes a Result is loaded from the database without
-    // loading it's Feedback list. In this case you still want to know, if Feedback for this Result exists
+    // loading its Feedback list. In this case you still want to know if Feedback for this Result exists
     // without querying the server/database again.
     // IMPORTANT: Please note, that this flag should only be used for Programming Exercises at the moment
     // all other exercise types should set this flag to false
@@ -100,6 +100,15 @@ public class Result extends DomainObject {
 
     @Column(name = "example_result")
     private Boolean exampleResult;
+
+    @Column(name = "test_case_amount")
+    private Integer testCaseAmount;
+
+    @Column(name = "passed_test_case_amount")
+    private Integer passedTestCaseAmount;
+
+    @Column(name = "code_issue_amount")
+    private Integer codeIssueAmount;
 
     // This attribute is required to forward the coverage file reports after creating the build result. This is required in order to
     // delay referencing the corresponding test cases from the entries because the test cases are not saved in the database
@@ -428,6 +437,30 @@ public class Result extends DomainObject {
         this.exampleResult = exampleResult;
     }
 
+    public Integer getTestCaseAmount() {
+        return testCaseAmount;
+    }
+
+    public void setTestCaseAmount(Integer testCaseAmount) {
+        this.testCaseAmount = Math.min(testCaseAmount, 255);
+    }
+
+    public Integer getPassedTestCaseAmount() {
+        return passedTestCaseAmount;
+    }
+
+    public void setPassedTestCaseAmount(Integer passedTestCaseAmount) {
+        this.passedTestCaseAmount = Math.min(passedTestCaseAmount, 255);
+    }
+
+    public Integer getCodeIssueAmount() {
+        return codeIssueAmount;
+    }
+
+    public void setCodeIssueAmount(Integer codeIssueAmount) {
+        Math.min(this.codeIssueAmount = codeIssueAmount, 255);
+    }
+
     public Map<String, Set<CoverageFileReport>> getCoverageFileReportsByTestCaseName() {
         return fileReportsByTestCaseName;
     }
@@ -530,7 +563,7 @@ public class Result extends DomainObject {
         /*
          * Calculated score from automatic test feedbacks, is capped to max points + bonus points, see also see {@link ProgrammingExerciseGradingService#updateScore}
          */
-        double maxPoints = programmingExercise.getMaxPoints() + Optional.ofNullable(programmingExercise.getBonusPoints()).orElse(0.0);
+        double maxPoints = programmingExercise.getMaxPoints() + Objects.requireNonNullElse(programmingExercise.getBonusPoints(), 0.0);
         if (scoreAutomaticTests > maxPoints) {
             scoreAutomaticTests = maxPoints;
         }

@@ -57,29 +57,24 @@ export class ResultService implements IResultService {
     }
 
     private getResultStringProgrammingExercise(result: Result, exercise: ProgrammingExercise, relativeScore: number, points: number): string {
-        if (!result.feedbacks || result.feedbacks.length == 0) {
-            this.getFeedbackDetailsForResult(result.participation!.id!, result.id!).subscribe((feedbackList) => (result.feedbacks = feedbackList.body!));
-        }
-
-        const numberOfTestsPassed = result.feedbacks?.filter((feedback) => Feedback.isTestCaseFeedback(feedback) && feedback.positive).length;
-        const numberOfTestsTotal = result.feedbacks?.filter((feedback) => Feedback.isTestCaseFeedback(feedback)).length;
-        const numberOfIssues = result.feedbacks?.filter((feedback) => Feedback.isStaticCodeAnalysisFeedback(feedback)).length;
-
         let buildAndTestMessage: string;
         if (result.submission && (result.submission as ProgrammingSubmission).buildFailed) {
             buildAndTestMessage = this.translateService.instant('artemisApp.result.resultStringBuildFailed');
-        } else if (!numberOfTestsTotal || numberOfTestsTotal === 0) {
+        } else if (!result.testCaseAmount || result.testCaseAmount === 0) {
             buildAndTestMessage = this.translateService.instant('artemisApp.result.resultStringBuildSuccessfulNoTests');
         } else {
-            buildAndTestMessage = this.translateService.instant('artemisApp.result.resultStringBuildSuccessfulTests', { numberOfTestsPassed, numberOfTestsTotal });
+            buildAndTestMessage = this.translateService.instant('artemisApp.result.resultStringBuildSuccessfulTests', {
+                numberOfTestsPassed: result.passedTestCaseAmount,
+                numberOfTestsTotal: result.testCaseAmount,
+            });
         }
 
         let resultString: string;
-        if (numberOfIssues && numberOfIssues > 0) {
+        if (result.codeIssueAmount && result.codeIssueAmount > 0) {
             resultString = this.translateService.instant('artemisApp.result.resultStringProgrammingCodeIssues', {
                 relativeScore,
                 buildAndTestMessage,
-                numberOfIssues,
+                numberOfIssues: result.codeIssueAmount,
                 points,
                 maxPoints: exercise.maxPoints,
             });

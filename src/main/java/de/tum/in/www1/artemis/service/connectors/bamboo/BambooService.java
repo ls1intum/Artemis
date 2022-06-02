@@ -589,17 +589,21 @@ public class BambooService extends AbstractContinuousIntegrationService {
             for (final var failedTest : job.getFailedTests()) {
                 result.addFeedback(feedbackRepository.createFeedbackFromTestCase(failedTest.getName(), failedTest.getErrors(), false, programmingLanguage, projectType));
             }
+            result.setTestCaseAmount(result.getTestCaseAmount() + job.getFailedTests().size());
 
             // 2) add feedback for passed test cases
             for (final var successfulTest : job.getSuccessfulTests()) {
                 result.addFeedback(feedbackRepository.createFeedbackFromTestCase(successfulTest.getName(), successfulTest.getErrors(), true, programmingLanguage, projectType));
             }
+            result.setTestCaseAmount(result.getTestCaseAmount() + job.getSuccessfulTests().size());
+            result.setPassedTestCaseAmount(result.getPassedTestCaseAmount() + job.getSuccessfulTests().size());
 
             // 3) process static code analysis feedback
             final var staticCodeAnalysisReports = job.getStaticCodeAnalysisReports();
             if (Boolean.TRUE.equals(programmingExercise.isStaticCodeAnalysisEnabled()) && staticCodeAnalysisReports != null && !staticCodeAnalysisReports.isEmpty()) {
                 var scaFeedbackList = feedbackRepository.createFeedbackFromStaticCodeAnalysisReports(staticCodeAnalysisReports);
                 result.addFeedbacks(scaFeedbackList);
+                result.setCodeIssueAmount(result.getCodeIssueAmount() + scaFeedbackList.size());
             }
 
             // 4) process testwise coverage analysis report

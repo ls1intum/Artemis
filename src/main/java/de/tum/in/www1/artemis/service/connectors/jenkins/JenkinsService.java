@@ -183,6 +183,10 @@ public class JenkinsService extends AbstractContinuousIntegrationService {
                 var feedback = feedbackRepository.createFeedbackFromTestCase(testCase.getName(), feedbackMessages, testCase.isSuccessful(), programmingLanguage, projectType);
                 result.addFeedback(feedback);
             }
+
+            int passedTestCasesAmount = (int) job.getTestCases().stream().filter(TestCaseDTO::isSuccessful).count();
+            result.setTestCaseAmount(result.getTestCaseAmount() + job.getTests());
+            result.setPassedTestCaseAmount(result.getPassedTestCaseAmount() + passedTestCasesAmount);
         }
 
         // Extract static code analysis feedback if option was enabled
@@ -190,6 +194,7 @@ public class JenkinsService extends AbstractContinuousIntegrationService {
         if (Boolean.TRUE.equals(programmingExercise.isStaticCodeAnalysisEnabled()) && staticCodeAnalysisReports != null && !staticCodeAnalysisReports.isEmpty()) {
             var scaFeedbackList = feedbackRepository.createFeedbackFromStaticCodeAnalysisReports(staticCodeAnalysisReports);
             result.addFeedbacks(scaFeedbackList);
+            result.setCodeIssueAmount(result.getCodeIssueAmount() + scaFeedbackList.size());
         }
 
         // Relevant feedback is negative, or positive with a message

@@ -536,7 +536,7 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
      */
     default Result submitResult(Result result, Exercise exercise, Optional<ZonedDateTime> dueDate) {
         double maxPoints = exercise.getMaxPoints();
-        double bonusPoints = Optional.ofNullable(exercise.getBonusPoints()).orElse(0.0);
+        double bonusPoints = Objects.requireNonNullElse(exercise.getBonusPoints(), 0.0);
 
         // Exam results and manual results of programming exercises and example submissions are always to rated
         if (exercise.isExamExercise() || exercise instanceof ProgrammingExercise || Boolean.TRUE.equals(result.isExampleResult())) {

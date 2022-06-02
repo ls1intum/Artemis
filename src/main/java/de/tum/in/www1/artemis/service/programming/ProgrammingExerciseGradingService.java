@@ -599,6 +599,9 @@ public class ProgrammingExerciseGradingService {
             // The score is always calculated from ALL (except visibility=never) test cases, regardless of the current date!
             final Set<ProgrammingExerciseTestCase> successfulTestCases = testCasesForCurrentDate.stream().filter(isSuccessful(result)).collect(Collectors.toSet());
             updateScore(result, testCases, successfulTestCases, staticCodeAnalysisFeedback, exercise, hasDuplicateTestCases, applySubmissionPolicy);
+            result.setTestCaseAmount(testCasesForCurrentDate.size());
+            result.setPassedTestCaseAmount(successfulTestCases.size());
+            result.setCodeIssueAmount(staticCodeAnalysisFeedback.size());
 
             if (result.isManual()) {
                 result.setScore(result.calculateTotalPointsForProgrammingExercises(), exercise.getMaxPoints(), exercise.getCourseViaExerciseGroupOrCourseMember());
@@ -722,7 +725,7 @@ public class ProgrammingExerciseGradingService {
         }
         else {
             double score = calculateScore(programmingExercise, allTestCases, result, successfulTestCases, staticCodeAnalysisFeedback, applySubmissionPolicy);
-            result.setScore(score);
+            result.setScore(score, programmingExercise.getCourseViaExerciseGroupOrCourseMember());
         }
 
         result.getFeedbacks().forEach(feedback -> {
@@ -802,7 +805,7 @@ public class ProgrammingExerciseGradingService {
      * @return The number of points, but no more than the exercise allows for.
      */
     private double capPointsAtMaximum(final ProgrammingExercise programmingExercise, double points) {
-        double maxPoints = programmingExercise.getMaxPoints() + Optional.ofNullable(programmingExercise.getBonusPoints()).orElse(0.0);
+        double maxPoints = programmingExercise.getMaxPoints() + Objects.requireNonNullElse(programmingExercise.getBonusPoints(), 0.0);
         double cappedPoints = points;
 
         if (Double.isNaN(points)) {
@@ -925,8 +928,7 @@ public class ProgrammingExerciseGradingService {
          * supplied, the value defaults to 100 percent. If for example maxScore is 6, maxBonus is 4 and the penalty is 50 percent, then a student can only loose 3 (0.5 * maxScore)
          * points due to static code analysis issues.
          */
-        final var maxExercisePenaltyPoints = (double) Optional.ofNullable(programmingExercise.getMaxStaticCodeAnalysisPenalty()).orElse(100) / 100.0
-                * programmingExercise.getMaxPoints();
+        final var maxExercisePenaltyPoints = Objects.requireNonNullElse(programmingExercise.getMaxStaticCodeAnalysisPenalty(), 100) / 100.0 * programmingExercise.getMaxPoints();
         if (codeAnalysisPenaltyPoints > maxExercisePenaltyPoints) {
             codeAnalysisPenaltyPoints = maxExercisePenaltyPoints;
         }
@@ -943,6 +945,8 @@ public class ProgrammingExerciseGradingService {
         result.setFeedbacks(staticCodeAnalysisFeedback);
         result.hasFeedback(!staticCodeAnalysisFeedback.isEmpty());
         result.setScore(0D);
+        result.setTestCaseAmount(0);
+        result.setPassedTestCaseAmount(0);
     }
 
     /**

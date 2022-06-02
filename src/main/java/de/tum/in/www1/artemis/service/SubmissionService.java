@@ -356,6 +356,9 @@ public class SubmissionService {
         newResult.setScore(oldResult.getScore());
         newResult.setHasFeedback(oldResult.getHasFeedback());
         newResult.setRated(oldResult.isRated());
+        newResult.setTestCaseAmount(oldResult.getTestCaseAmount());
+        newResult.setPassedTestCaseAmount(oldResult.getPassedTestCaseAmount());
+        newResult.setCodeIssueAmount(oldResult.getCodeIssueAmount());
         var savedResult = resultRepository.save(newResult);
         savedResult.setSubmission(submission);
         submission.addResult(savedResult);
