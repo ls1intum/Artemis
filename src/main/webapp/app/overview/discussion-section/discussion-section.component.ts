@@ -2,7 +2,7 @@ import { AfterViewInit, Component, Input, OnDestroy, OnInit, ViewChild } from '@
 import interact from 'interactjs';
 import { Exercise } from 'app/entities/exercise.model';
 import { Lecture } from 'app/entities/lecture.model';
-import { DisplayPriority, PageType, VOTE_EMOJI_ID } from 'app/shared/metis/metis.util';
+import { DisplayPriority, PageType, SortDirection, VOTE_EMOJI_ID } from 'app/shared/metis/metis.util';
 import { Course } from 'app/entities/course.model';
 import { ActivatedRoute, Params, Router } from '@angular/router';
 import { combineLatest, map } from 'rxjs';
@@ -30,6 +30,7 @@ export class DiscussionSectionComponent extends CourseDiscussionDirective implem
     currentPostId?: number;
     currentPost?: Post;
     readonly pageType = PageType.PAGE_SECTION;
+    currentSortDirection: SortDirection | undefined;
 
     // Icons
     faChevronRight = faChevronRight;
@@ -91,15 +92,38 @@ export class DiscussionSectionComponent extends CourseDiscussionDirective implem
     }
 
     /**
+     * on changing the sort direction via icon, the metis service is invoked to deliver the posts for the currently set context,
+     * sorted on the backend
+     */
+    onChangeSortDir(): void {
+        switch (this.currentSortDirection) {
+            case undefined: {
+                this.currentSortDirection = SortDirection.ASCENDING;
+                break;
+            }
+            case SortDirection.ASCENDING: {
+                this.currentSortDirection = SortDirection.DESCENDING;
+                break;
+            }
+            default: {
+                this.currentSortDirection = undefined;
+                break;
+            }
+        }
+        this.posts.sort(this.sectionSortFn);
+    }
+
+    /**
      * sorts posts by following criteria
      * 1. criterion: displayPriority is PINNED -> pinned posts come first
      * 2. criterion: displayPriority is ARCHIVED  -> archived posts come last
      * -- in between pinned and archived posts --
-     * 3. criterion: vote-emoji count -> posts with more vote-emoji counts comes first
-     * 4. criterion: creationDate -> most recent comes at the end (chronologically from top to bottom)
+     * 3. criterion: creationDate - if activated by user through the sort arrow -> most recent comes at the end (chronologically from top to bottom)
+     * 4. criterion: vote-emoji count -> posts with more vote-emoji counts comes first
+     * 5. criterion: if 3'rd criterion was not activated by the user, most recent posts comes at the end (chronologically from top to bottom)
      * @return Post[] sorted array of posts
      */
-    sectionSortFn(postA: Post, postB: Post): number {
+    sectionSortFn = (postA: Post, postB: Post): number => {
         if (postA.displayPriority === DisplayPriority.PINNED && postB.displayPriority !== DisplayPriority.PINNED) {
             return -1;
         }
@@ -112,6 +136,15 @@ export class DiscussionSectionComponent extends CourseDiscussionDirective implem
         if (postA.displayPriority !== DisplayPriority.ARCHIVED && postB.displayPriority === DisplayPriority.ARCHIVED) {
             return -1;
         }
+
+        // 3'rd criterion
+        if (!!this.currentSortDirection) {
+            const comparison = this.sortByDate(postA, postB);
+            if (comparison !== 0) {
+                return comparison;
+            }
+        }
+
         const postAVoteEmojiCount = postA.reactions?.filter((reaction: Reaction) => reaction.emojiId === VOTE_EMOJI_ID).length ?? 0;
         const postBVoteEmojiCount = postB.reactions?.filter((reaction: Reaction) => reaction.emojiId === VOTE_EMOJI_ID).length ?? 0;
         if (postAVoteEmojiCount > postBVoteEmojiCount) {
@@ -120,14 +153,17 @@ export class DiscussionSectionComponent extends CourseDiscussionDirective implem
         if (postAVoteEmojiCount < postBVoteEmojiCount) {
             return 1;
         }
-        if (Number(postA.creationDate) > Number(postB.creationDate)) {
-            return 1;
+
+        // 5'th criterion
+        if (!this.currentSortDirection) {
+            const comparison = this.sortByDate(postA, postB);
+            if (comparison !== 0) {
+                return comparison;
+            }
         }
-        if (Number(postA.creationDate) < Number(postB.creationDate)) {
-            return -1;
-        }
+
         return 0;
-    }
+    };
 
     /**
      * invoke metis service to create an empty default post that is needed on initialization of a modal to create a post,
@@ -209,4 +245,20 @@ export class DiscussionSectionComponent extends CourseDiscussionDirective implem
             filterToAnsweredOrReacted: false,
         });
     }
+
+    /**
+     * helper method which returns the order which posts must be listed
+     * @param postA     first post to compare
+     * @param postB     second post to compare
+     * @return number   the order which posts must be listed
+     */
+    sortByDate = (postA: Post, postB: Post): number => {
+        if (Number(postA.creationDate) > Number(postB.creationDate)) {
+            return this.currentSortDirection === SortDirection.DESCENDING ? -1 : 1;
+        }
+        if (Number(postA.creationDate) < Number(postB.creationDate)) {
+            return this.currentSortDirection === SortDirection.DESCENDING ? 1 : -1;
+        }
+        return 0;
+    };
 }
