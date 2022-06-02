@@ -21,13 +21,13 @@ For your custom components and custom stylesheets, please follow this strict glo
 
 .. role:: bigred
 
-:bigred:`Do not hardcode any color values in your component stylesheets, templates or TypeScript files!`
+:bigred:`Do not hard-code any color values in your component stylesheets, templates or TypeScript files!`
 
-Most likely, any colors hardcoded in your component stylesheets will look bad in either the light mode or dark mode.
+Most likely, any colors hard-coded in your component stylesheets will look bad in either the light mode or dark mode.
 So, you either need to specify different colors for both themes, or you could just use default colors, which is preferred.
 
 .. WARNING::
-    - **Pull Requests with hardcoded colors in component files will not be merged.**
+    - **Pull Requests with hard-coded colors in component files will not be merged.**
     - We want to avoid further color fragmentation in the future.
       You need a good justification to not use default or already provided colors, be it derived or completely custom ones.
 
@@ -38,7 +38,7 @@ Please check your available options in this order:
     a custom color.
 
     Check out the top of ``_default_variables.scss`` to see the available default colors. While you should not
-    use ``black, gray-XXX, white`` in your components as that would equal a hardcoded, not theme-aware color, you should re-use signal colors, base colors and pre-provided 'colorful' colors.
+    use ``black, gray-XXX, white`` in your components as that would equal a hard-coded, not theme-aware color, you should re-use signal colors, base colors and pre-provided 'colorful' colors.
 
     All variables in this file are globally available in the application as native CSS variables.
     For example, ``$danger`` can be accessed in all SCSS files using ``var(--danger)``.
