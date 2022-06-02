@@ -1934,7 +1934,7 @@ public class CourseTestService {
         courseRepo.save(course2);
 
         // API call for the lifetime overview
-        var lifetimeOverviewStats = request.get("/api/courses/" + course2.getId() + "/statistics-lifetime-overview", HttpStatus.OK, ArrayList.class);
+        var lifetimeOverviewStats = request.get("/api/courses/" + course2.getId() + "/statistics-lifetime-overview", HttpStatus.OK, List.class);
 
         var expectedLifetimeOverviewStats = Arrays.stream(new int[21]).boxed().collect(Collectors.toList());
         expectedLifetimeOverviewStats.set(18, 1);
@@ -1944,7 +1944,7 @@ public class CourseTestService {
         course2.setEndDate(now.minusWeeks(1));
         courseRepo.save(course2);
 
-        lifetimeOverviewStats = request.get("/api/courses/" + course2.getId() + "/statistics-lifetime-overview", HttpStatus.OK, ArrayList.class);
+        lifetimeOverviewStats = request.get("/api/courses/" + course2.getId() + "/statistics-lifetime-overview", HttpStatus.OK, List.class);
 
         expectedLifetimeOverviewStats = Arrays.stream(new int[20]).boxed().collect(Collectors.toList());
         expectedLifetimeOverviewStats.set(18, 1);

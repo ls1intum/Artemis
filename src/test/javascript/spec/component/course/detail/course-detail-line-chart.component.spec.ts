@@ -102,20 +102,20 @@ describe('CourseDetailLineChartComponent', () => {
 
         component.ngOnChanges();
 
-        expect(component.data[0].series[16].name).toBe('calendar_week ' + endDate.isoWeek());
+        expect(component.data[0].series[16].name).toBe(endDate.isoWeek().toString());
     });
 
     it('should adapt if course phase is smaller than 4 weeks', () => {
         const endDate = dayjs().subtract(1, 'weeks');
         component.course = { startDate: dayjs().subtract(2, 'weeks'), endDate };
-        component.initialStats = initialStats.slice(15);
+        component.overviewStats = initialStats.slice(15);
 
         component.ngOnChanges();
 
         expect(component.data[0].series).toHaveLength(2);
         expect(component.data[0].series[0].value).toBe(24);
         expect(component.data[0].series[1].value).toBe(84);
-        expect(component.data[0].series[1].name).toBe('calendar_week ' + endDate.isoWeek());
+        expect(component.data[0].series[1].name).toBe(endDate.isoWeek().toString());
         expect(component.startDateDisplayed).toBe(true);
     });
 
@@ -134,7 +134,7 @@ describe('CourseDetailLineChartComponent', () => {
 
         expect(component.data[0].series).toHaveLength(1);
         expect(component.data[0].series[0].value).toBe(84);
-        expect(component.data[0].series[0].name).toBe('calendar_week ' + startDate.isoWeek());
+        expect(component.data[0].series[0].name).toBe(startDate.isoWeek().toString());
         expect(getStatisticsDataMock).toHaveBeenCalledTimes(1);
         expect(getStatisticsDataMock).toHaveBeenCalledWith(42, -1);
     });
