@@ -393,8 +393,9 @@ public class StudentExamResource {
      * Find a specified student exam for the summary of an TestExam. This will be used to display the summary of the exam.
      * The student exam will be returned with the exercises and with the student participation and with the submissions.
      *
-     * @param courseId the course to which the student exam belongs to
-     * @param examId   the exam to which the student exam belongs to
+     * @param courseId      the course to which the student exam belongs to
+     * @param examId        the exam to which the student exam belongs to
+     * @param studentExamId the studentExamId for which the summary should be loaded
      * @return the ResponseEntity with status 200 (OK) and with the found student exam as body
      */
     @GetMapping("/courses/{courseId}/exams/{examId}/student-exams/{studentExamId}/summary")
