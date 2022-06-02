@@ -42,8 +42,10 @@ describe('HeaderExercisePageWithDetails', () => {
                 component = fixture.componentInstance;
 
                 exercise = new ProgrammingExercise(undefined, undefined);
+                exercise.dueDate = undefined;
                 component.exercise = exercise;
                 component.exam = undefined;
+                component.studentParticipation = undefined;
 
                 exam = new Exam();
                 participation = new StudentParticipation(ParticipationType.PROGRAMMING);

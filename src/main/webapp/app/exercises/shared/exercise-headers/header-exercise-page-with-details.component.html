@@ -104,7 +104,7 @@
                 </h5>
                 <h5 *ngIf="canComplainLaterOn" [class.h3]="isNextDueDate[3]">
                     {{ 'artemisApp.courseOverview.exerciseDetails.complaintPossible' | artemisTranslate }}
-                    <span [ngbTooltip]="'artemisApp.courseOverview.exerciseDetails.complaintPossibleTooltip' | artemisTranslate">
+                    <span class="badge bg-success" [ngbTooltip]="'artemisApp.courseOverview.exerciseDetails.complaintPossibleTooltip' | artemisTranslate">
                         {{
                             (exercise.allowComplaintsForAutomaticAssessments || exercise.assessmentType !== AssessmentType.AUTOMATIC ? 'global.generic.yes' : 'global.generic.no')
                                 | artemisTranslate
