@@ -23,7 +23,7 @@ export class EmojiUtils {
     /**
      * Returns the server URL of the default emoji sheet containing all emojis at once
      */
-    public static readonly EMOJI_SHEET_URL = () => EMOJI_URL + 'emoji_sheet_64.png';
+    public static readonly EMOJI_SHEET_URL = () => EMOJI_URL + 'emoji_sheet_64_v6.0.1.png';
 
     /**
      * For dark mode, returns individual images of problematic, dark emojis if necessary.
