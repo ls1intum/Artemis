@@ -418,13 +418,11 @@ public class StudentExamService {
      *
      * @param studentExam the studentExam for which the new participations should be set up
      * @param startedDate the Date to which the InitializationDate should be set, in order to link StudentExam <-> participation
-     * @return a List with all generated participations
      */
-    public List<StudentParticipation> setUpTestExamExerciseParticipationsAndSubmissions(StudentExam studentExam, ZonedDateTime startedDate) {
+    public void setUpTestExamExerciseParticipationsAndSubmissions(StudentExam studentExam, ZonedDateTime startedDate) {
         List<StudentParticipation> generatedParticipations = Collections.synchronizedList(new ArrayList<>());
         setUpExerciseParticipationsAndSubmissionsWithInitializationDate(studentExam, generatedParticipations, startedDate);
         studentParticipationRepository.saveAll(generatedParticipations);
-        return generatedParticipations;
     }
 
     /**

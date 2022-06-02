@@ -2476,7 +2476,7 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     @Test
     @WithMockUser(username = "student1", roles = "USER")
     public void testGetStudentExamByIdForTestExamForStart_notVisible() throws Exception {
-        testExam1.setVisibleDate(ZonedDateTime.now().plusMinutes(60));
+        testExam1.setVisibleDate(now().plusMinutes(60));
         testExam1 = examRepository.save(testExam1);
 
         request.get("/api/courses/" + course1.getId() + "/exams/" + testExam1.getId() + "/test-exam/" + studentExam1.getId() + "/start", HttpStatus.FORBIDDEN, StudentExam.class);
