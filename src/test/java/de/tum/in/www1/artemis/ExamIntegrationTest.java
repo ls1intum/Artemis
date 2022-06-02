@@ -120,8 +120,6 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
     private Exam testExam1;
 
-    private Exam testExam2;
-
     private StudentExam studentExam1;
 
     private final int numberOfStudents = 10;
@@ -136,7 +134,6 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         exam1 = database.addExam(course1);
         exam2 = database.addExamWithExerciseGroup(course1, true);
         testExam1 = database.addTestExam(course1);
-        testExam2 = database.addTestExamWithExerciseGroup(course1, true);
         studentExam1 = database.addStudentExam(testExam1);
 
         instructor = users.get(users.size() - 1);
@@ -2421,7 +2418,7 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     @Test
     @WithMockUser(username = "student1", roles = "USER")
     public void testGetStudentExamForTestExamForStart_notVisible() throws Exception {
-        testExam1.setVisibleDate(ZonedDateTime.now().plusMinutes(60));
+        testExam1.setVisibleDate(now().plusMinutes(60));
         testExam1 = examRepository.save(testExam1);
 
         request.get("/api/courses/" + course1.getId() + "/exams/" + testExam1.getId() + "/start-test-exam", HttpStatus.FORBIDDEN, StudentExam.class);
@@ -2445,32 +2442,32 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     // ExamResource - getStudentExamByIdForTestExamForStart
     @Test
     @WithMockUser(username = "student42", roles = "USER")
-    public void TestGetStudentExamByIdForTestExamForStart_notRegisteredInCourse() throws Exception {
+    public void testGetStudentExamByIdForTestExamForStart_notRegisteredInCourse() throws Exception {
         request.get("/api/courses/" + course1.getId() + "/exams/" + testExam1.getId() + "/test-exam/" + studentExam1.getId() + "/start", HttpStatus.FORBIDDEN, StudentExam.class);
     }
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void TestGetStudentExamByIdForTestExamForStart_studentExamNotExistent() throws Exception {
+    public void testGetStudentExamByIdForTestExamForStart_studentExamNotExistent() throws Exception {
         request.get("/api/courses/" + course1.getId() + "/exams/" + testExam1.getId() + "/test-exam/" + 5555L + "/start", HttpStatus.NOT_FOUND, StudentExam.class);
     }
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void TestGetStudentExamByIdForTestExamForStart_examIdNotMatching() throws Exception {
+    public void testGetStudentExamByIdForTestExamForStart_examIdNotMatching() throws Exception {
         request.get("/api/courses/" + course1.getId() + "/exams/" + testExam1.getId() + 2 + "/test-exam/" + studentExam1.getId() + "/start", HttpStatus.FORBIDDEN,
                 StudentExam.class);
     }
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void TestGetStudentExamByIdForTestExamForStart_realExam() throws Exception {
+    public void testGetStudentExamByIdForTestExamForStart_realExam() throws Exception {
         request.get("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/test-exam/" + studentExam1.getId() + "/start", HttpStatus.FORBIDDEN, StudentExam.class);
     }
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void TestGetStudentExamByIdForTestExamForStart_successful() throws Exception {
+    public void testGetStudentExamByIdForTestExamForStart_successful() throws Exception {
         StudentExam studentExamRetrieved = request.get("/api/courses/" + course1.getId() + "/exams/" + testExam1.getId() + "/test-exam/" + studentExam1.getId() + "/start",
                 HttpStatus.OK, StudentExam.class);
         assertEquals(studentExam1, studentExamRetrieved);
@@ -2478,7 +2475,7 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void TestGetStudentExamByIdForTestExamForStart_notVisible() throws Exception {
+    public void testGetStudentExamByIdForTestExamForStart_notVisible() throws Exception {
         testExam1.setVisibleDate(ZonedDateTime.now().plusMinutes(60));
         testExam1 = examRepository.save(testExam1);
 
@@ -2487,7 +2484,7 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void TestGetStudentExamByIdForTestExamForStart_ExamDoesNotBelongToCourse() throws Exception {
+    public void testGetStudentExamByIdForTestExamForStart_ExamDoesNotBelongToCourse() throws Exception {
         Exam testExam = database.addTestExam(course2);
 
         request.get("/api/courses/" + course1.getId() + "/exams/" + testExam.getId() + "/test-exam/" + studentExam1.getId() + "/start", HttpStatus.FORBIDDEN, StudentExam.class);

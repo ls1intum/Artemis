@@ -386,7 +386,7 @@ public interface StudentExamRepository extends JpaRepository<StudentExam, Long> 
      */
     default StudentExam generateIndividualStudentExam(Exam exam, User student) {
         // StudentExams are saved in the called method
-        HashSet<User> userHashSet = new HashSet<User>();
+        HashSet<User> userHashSet = new HashSet<>();
         userHashSet.add(student);
         return createRandomStudentExams(exam, userHashSet).get(0);
     }

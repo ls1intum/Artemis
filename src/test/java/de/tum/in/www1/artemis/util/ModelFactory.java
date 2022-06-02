@@ -701,6 +701,12 @@ public class ModelFactory {
         return studentExam;
     }
 
+    /**
+     * Helper Method to generate a studentExam for a TestExam
+     *
+     * @param exam the exam to be linked to the studentExam
+     * @return a StudentExam for a TestExam
+     */
     public static StudentExam generateStudentExamForTestExam(Exam exam) {
         StudentExam studentExam = new StudentExam();
         studentExam.setExam(exam);

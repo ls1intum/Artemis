@@ -10,10 +10,12 @@
     border: 1px;
     border-radius: 3px;
     transition: box-shadow 0.1s linear;
+
     .row {
         min-height: 35px;
         align-items: center;
     }
+
     &:hover {
         box-shadow: 0 2px 4px 0 var(--primary);
     }

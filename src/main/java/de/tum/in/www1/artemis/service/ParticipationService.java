@@ -162,9 +162,6 @@ public class ParticipationService {
                 participation.setInitializationState(INITIALIZED);
             }
 
-            if (Optional.ofNullable(participation.getInitializationDate()).isEmpty()) {
-                participation.setInitializationDate(ZonedDateTime.now());
-            }
             // TODO: load submission with exercise for exam edge case:
             // clients creates missing participation for exercise, call on server succeeds, but response to client is lost
             // -> client tries to create participation again. In this case the submission is not loaded from db -> client errors

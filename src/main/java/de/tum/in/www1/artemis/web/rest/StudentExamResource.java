@@ -605,7 +605,7 @@ public class StudentExamResource {
             ZonedDateTime startedDate = ZonedDateTime.now().truncatedTo(ChronoUnit.SECONDS);
 
             // 2nd: Set up new participations for the Exercises and set initialisationDate to the startedDate
-            List<StudentParticipation> studentParticipations = studentExamService.setUpTestExamExerciseParticipationsAndSubmissions(studentExam, startedDate);
+            studentExamService.setUpTestExamExerciseParticipationsAndSubmissions(studentExam, startedDate);
 
             // 3rd: mark the student exam as started
             studentExam.setStarted(true);

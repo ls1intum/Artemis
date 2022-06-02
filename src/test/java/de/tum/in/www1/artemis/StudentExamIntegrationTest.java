@@ -1749,7 +1749,7 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
     @Test
     @WithMockUser(username = "student1", roles = "USER")
     public void testGetStudentExamsForCoursePerUser_success() throws Exception {
-        StudentExam studentExamForTestExam99 = database.addStudentExamForTestExam(exam2, database.getUserByLogin("student2"));
+        database.addStudentExamForTestExam(exam2, database.getUserByLogin("student2"));
         List<StudentExam> studentExamListExpected = new ArrayList<>();
         studentExamListExpected.add(studentExamForTestExam1);
         studentExamListExpected.add(studentExamForTestExam2);
