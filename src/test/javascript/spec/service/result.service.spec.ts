@@ -51,6 +51,9 @@ describe('ResultService', () => {
             { text: 'testMergeSort', detailText: 'lorem ipsum', positive: true, type: FeedbackType.AUTOMATIC },
             { text: SUBMISSION_POLICY_FEEDBACK_IDENTIFIER, detailText: 'should not get counted', positive: true, type: FeedbackType.AUTOMATIC },
         ],
+        testCaseAmount: 2,
+        passedTestCaseAmount: 1,
+        codeIssueAmount: 0,
         completionDate: dayjs().add(3, 'hours'),
         score: 60,
     };
@@ -60,6 +63,9 @@ describe('ResultService', () => {
             { text: 'testMergeSort', detailText: 'lorem ipsum', positive: true, type: FeedbackType.AUTOMATIC },
             { text: STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER, detailText: 'should not get counted', positive: false, type: FeedbackType.AUTOMATIC },
         ],
+        testCaseAmount: 2,
+        passedTestCaseAmount: 1,
+        codeIssueAmount: 1,
         completionDate: dayjs().add(4, 'hours'),
         score: 50,
     };

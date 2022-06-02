@@ -442,7 +442,9 @@ public class Result extends DomainObject {
     }
 
     public void setTestCaseAmount(Integer testCaseAmount) {
-        this.testCaseAmount = Math.min(testCaseAmount, 255);
+        if (testCaseAmount != null) {
+            this.testCaseAmount = Math.min(testCaseAmount, 255);
+        }
     }
 
     public Integer getPassedTestCaseAmount() {
@@ -450,7 +452,9 @@ public class Result extends DomainObject {
     }
 
     public void setPassedTestCaseAmount(Integer passedTestCaseAmount) {
-        this.passedTestCaseAmount = Math.min(passedTestCaseAmount, 255);
+        if (passedTestCaseAmount != null) {
+            this.passedTestCaseAmount = Math.min(passedTestCaseAmount, 255);
+        }
     }
 
     public Integer getCodeIssueAmount() {
@@ -458,7 +462,9 @@ public class Result extends DomainObject {
     }
 
     public void setCodeIssueAmount(Integer codeIssueAmount) {
-        Math.min(this.codeIssueAmount = codeIssueAmount, 255);
+        if (codeIssueAmount != null) {
+            this.codeIssueAmount = Math.min(codeIssueAmount, 255);
+        }
     }
 
     public Map<String, Set<CoverageFileReport>> getCoverageFileReportsByTestCaseName() {

@@ -3,7 +3,7 @@ package de.tum.in.www1.artemis.domain;
 import static de.tum.in.www1.artemis.config.Constants.COMPLAINT_TEXT_LIMIT;
 
 import java.time.ZonedDateTime;
-import java.util.Objects;
+import java.util.Optional;
 
 import javax.persistence.*;
 import javax.validation.constraints.Size;
@@ -132,7 +132,7 @@ public class Complaint extends DomainObject {
 
     @JsonIgnore
     public Participant getParticipant() {
-        return Objects.requireNonNullElse((Participant) student, team);
+        return Optional.ofNullable((Participant) student).orElse(team);
     }
 
     public Complaint participant(Participant participant) {

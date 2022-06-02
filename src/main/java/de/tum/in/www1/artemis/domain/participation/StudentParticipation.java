@@ -1,6 +1,5 @@
 package de.tum.in.www1.artemis.domain.participation;
 
-import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 
@@ -54,7 +53,7 @@ public class StudentParticipation extends Participation {
 
     @JsonIgnore
     public Participant getParticipant() {
-        return Objects.requireNonNullElse((Participant) student, team);
+        return Optional.ofNullable((Participant) student).orElse(team);
     }
 
     /**

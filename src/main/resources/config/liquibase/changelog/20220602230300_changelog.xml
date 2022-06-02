@@ -2,13 +2,13 @@
 <databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog" xmlns:ext="http://www.liquibase.org/xml/ns/dbchangelog-ext" xmlns:pro="http://www.liquibase.org/xml/ns/pro" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog-ext http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-ext.xsd http://www.liquibase.org/xml/ns/pro http://www.liquibase.org/xml/ns/pro/liquibase-pro-3.8.xsd http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.8.xsd">
     <changeSet author="stoehrj" id="20220602230300">
         <addColumn tableName="result">
-            <column name="test_case_amount" type="tinyint"/>
+            <column name="test_case_amount" type="tinyint" defaultValue="0"/>
         </addColumn>
         <addColumn tableName="result">
-            <column name="passed_test_case_amount" type="tinyint"/>
+            <column name="passed_test_case_amount" type="tinyint" defaultValue="0"/>
         </addColumn>
         <addColumn tableName="result">
-            <column name="code_issue_amount" type="tinyint"/>
+            <column name="code_issue_amount" type="tinyint" defaultValue="0"/>
         </addColumn>
     </changeSet>
 </databaseChangeLog>

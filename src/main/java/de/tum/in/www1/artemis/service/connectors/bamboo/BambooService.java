@@ -584,6 +584,10 @@ public class BambooService extends AbstractContinuousIntegrationService {
         final var programmingLanguage = programmingExercise.getProgrammingLanguage();
         final var projectType = programmingExercise.getProjectType();
 
+        result.setTestCaseAmount(0);
+        result.setPassedTestCaseAmount(0);
+        result.setCodeIssueAmount(0);
+
         for (final var job : jobs) {
             // 1) add feedback for failed test cases
             for (final var failedTest : job.getFailedTests()) {
