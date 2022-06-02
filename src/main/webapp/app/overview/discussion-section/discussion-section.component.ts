@@ -119,17 +119,20 @@ export class DiscussionSectionComponent extends CourseDiscussionDirective implem
      * 2. criterion: displayPriority is ARCHIVED  -> archived posts come last
      * -- in between pinned and archived posts --
      * 3. criterion: creationDate - if activated by user through the sort arrow -> most recent comes at the end (chronologically from top to bottom)
-     * 4. criterion: vote-emoji count -> posts with more vote-emoji counts comes first
+     * 4. criterion: if 3'rd criterion was not activated by the user, vote-emoji count -> posts with more vote-emoji counts comes first
      * 5. criterion: if 3'rd criterion was not activated by the user, most recent posts comes at the end (chronologically from top to bottom)
      * @return Post[] sorted array of posts
      */
     sectionSortFn = (postA: Post, postB: Post): number => {
+        // 1'st criterion
         if (postA.displayPriority === DisplayPriority.PINNED && postB.displayPriority !== DisplayPriority.PINNED) {
             return -1;
         }
         if (postA.displayPriority !== DisplayPriority.PINNED && postB.displayPriority === DisplayPriority.PINNED) {
             return 1;
         }
+
+        // 2'nd criterion
         if (postA.displayPriority === DisplayPriority.ARCHIVED && postB.displayPriority !== DisplayPriority.ARCHIVED) {
             return 1;
         }
@@ -145,6 +148,7 @@ export class DiscussionSectionComponent extends CourseDiscussionDirective implem
             }
         }
 
+        // 4'th criterion
         const postAVoteEmojiCount = postA.reactions?.filter((reaction: Reaction) => reaction.emojiId === VOTE_EMOJI_ID).length ?? 0;
         const postBVoteEmojiCount = postB.reactions?.filter((reaction: Reaction) => reaction.emojiId === VOTE_EMOJI_ID).length ?? 0;
         if (postAVoteEmojiCount > postBVoteEmojiCount) {

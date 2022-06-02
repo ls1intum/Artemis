@@ -1,6 +1,4 @@
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
-import { Post } from 'app/entities/metis/post.model';
-import dayjs from 'dayjs/esm';
 import { Observable, of } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
 import { Course } from 'app/entities/course.model';
@@ -19,7 +17,7 @@ import { DiscussionSectionComponent } from 'app/overview/discussion-section/disc
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { PostingThreadComponent } from 'app/shared/metis/posting-thread/posting-thread.component';
 import { PostCreateEditModalComponent } from 'app/shared/metis/posting-create-edit-modal/post-create-edit-modal/post-create-edit-modal.component';
-import { DisplayPriority } from 'app/shared/metis/metis.util';
+import { SortDirection } from 'app/shared/metis/metis.util';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
@@ -40,12 +38,13 @@ import {
     metisExercisePosts,
     metisLecture,
     metisLecturePosts,
-    metisPostExerciseUser1,
-    metisPostExerciseUser2,
-    metisPostLectureUser1,
-    metisPostLectureUser2,
     metisPostTechSupport,
-    metisUpVoteReactionUser1,
+    post1WithCreationDate,
+    post2WithCreationDate,
+    post3WithCreationDate,
+    post4WithCreationDate,
+    post5WithCreationDate,
+    postsWithCreationDate,
 } from '../../../helpers/sample/metis-sample-data';
 
 describe('PageDiscussionSectionComponent', () => {
@@ -54,10 +53,6 @@ describe('PageDiscussionSectionComponent', () => {
     let courseManagementService: CourseManagementService;
     let metisService: MetisService;
     let metisServiceGetFilteredPostsSpy: jest.SpyInstance;
-    let post1: Post;
-    let post2: Post;
-    let post3: Post;
-    let post4: Post;
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
@@ -140,27 +135,20 @@ describe('PageDiscussionSectionComponent', () => {
     }));
 
     it('should sort posts correctly', () => {
-        post1 = metisPostExerciseUser1;
-        post1.creationDate = dayjs();
-        post1.displayPriority = DisplayPriority.PINNED;
+        const posts = postsWithCreationDate.sort(component.sectionSortFn);
+        expect(posts).toEqual([post1WithCreationDate, post3WithCreationDate, post2WithCreationDate, post5WithCreationDate, post4WithCreationDate]);
+    });
 
-        post2 = metisPostExerciseUser2;
-        post2.creationDate = dayjs().subtract(1, 'day');
-        post2.displayPriority = DisplayPriority.NONE;
+    it('should sort posts by creationDate ASC', () => {
+        component.currentSortDirection = SortDirection.ASCENDING;
+        const posts = postsWithCreationDate.sort(component.sectionSortFn);
+        expect(posts).toEqual([post1WithCreationDate, post2WithCreationDate, post3WithCreationDate, post5WithCreationDate, post4WithCreationDate]);
+    });
 
-        post3 = metisPostLectureUser1;
-        post3.creationDate = dayjs().subtract(2, 'day');
-        post3.reactions = [metisUpVoteReactionUser1];
-        post3.displayPriority = DisplayPriority.NONE;
-
-        post4 = metisPostLectureUser2;
-        post4.creationDate = dayjs().subtract(2, 'minute');
-        post4.reactions = [metisUpVoteReactionUser1];
-        post4.displayPriority = DisplayPriority.ARCHIVED;
-
-        let posts = [post1, post2, post3, post4];
-        posts = posts.sort(component.sectionSortFn);
-        expect(posts).toEqual([post1, post3, post2, post4]);
+    it('should sort posts by creationDate DESC', () => {
+        component.currentSortDirection = SortDirection.DESCENDING;
+        const posts = postsWithCreationDate.sort(component.sectionSortFn);
+        expect(posts).toEqual([post1WithCreationDate, post5WithCreationDate, post3WithCreationDate, post2WithCreationDate, post4WithCreationDate]);
     });
 
     it('should initialize correctly for exercise posts with default settings', fakeAsync(() => {
