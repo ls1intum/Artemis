@@ -21,7 +21,7 @@ For your custom components and custom stylesheets, please follow this strict glo
 
 .. role:: bigred
 
-:bigred:`Do not hard-code any color values in your component stylesheets, templates or TypeScript files!`
+:bigred:`Do not hard code any color values in your component stylesheets, templates or TypeScript files!`
 
 Most likely, any colors hard-coded in your component stylesheets will look bad in either the light mode or dark mode.
 So, you either need to specify different colors for both themes, or you could just use default colors, which is preferred.
