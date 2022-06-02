@@ -44,8 +44,6 @@ describe('HeaderExercisePageWithDetails', () => {
                 exercise = new ProgrammingExercise(undefined, undefined);
                 exercise.dueDate = undefined;
                 component.exercise = exercise;
-                component.exam = undefined;
-                component.studentParticipation = undefined;
 
                 exam = new Exam();
                 participation = new StudentParticipation(ParticipationType.PROGRAMMING);
@@ -56,6 +54,7 @@ describe('HeaderExercisePageWithDetails', () => {
         component.ngOnInit();
 
         expect(component.exerciseCategories).toEqual([]);
+        expect(component.isNextDueDate).toStrictEqual([false, false, false, false]);
         expect(component.statusBadges).toStrictEqual(['bg-danger', 'bg-danger', 'bg-danger']);
         // @ts-ignore
         expect(component.icon.iconName).toBe('keyboard');
@@ -71,6 +70,7 @@ describe('HeaderExercisePageWithDetails', () => {
         component.ngOnInit();
 
         expect(component.exerciseCategories).toEqual(categories);
+        expect(component.isNextDueDate).toStrictEqual([false, false]);
         expect(component.statusBadges).toStrictEqual(['bg-danger', 'bg-danger']);
     });
 
@@ -79,6 +79,7 @@ describe('HeaderExercisePageWithDetails', () => {
         exercise.dueDate = dueDate1;
         component.ngOnInit();
         expect(component.dueDate).toEqual(dueDate1);
+        expect(component.isNextDueDate).toStrictEqual([false, false, false, false]);
         expect(component.statusBadges).toStrictEqual(['bg-danger', 'bg-danger', 'bg-danger']);
 
         const dueDate2 = dayjs().add(1, 'day');
@@ -86,6 +87,7 @@ describe('HeaderExercisePageWithDetails', () => {
         component.studentParticipation = participation;
         component.ngOnInit();
         expect(component.dueDate).toEqual(dueDate2);
+        expect(component.isNextDueDate).toStrictEqual([true, false, false, false]);
         expect(component.statusBadges).toStrictEqual(['bg-success', 'bg-success', 'bg-success']);
     });
 
@@ -93,11 +95,13 @@ describe('HeaderExercisePageWithDetails', () => {
         exam.endDate = dayjs().subtract(1, 'day');
         component.exam = exam;
         component.ngOnInit();
+        expect(component.isNextDueDate).toStrictEqual([false, false]);
         expect(component.statusBadges).toStrictEqual(['bg-danger', 'bg-danger']);
 
         exam.endDate = dayjs().add(1, 'day');
         component.exam = exam;
         component.ngOnInit();
+        expect(component.isNextDueDate).toStrictEqual([true, false]);
         expect(component.statusBadges).toStrictEqual(['bg-success', 'bg-success']);
     });
 
