@@ -17,16 +17,12 @@ public abstract class ExerciseImportService {
 
     protected final ResultRepository resultRepository;
 
-    protected final TextBlockRepository textBlockRepository;
-
     private final Logger log = LoggerFactory.getLogger(ExerciseImportService.class);
 
-    public ExerciseImportService(ExampleSubmissionRepository exampleSubmissionRepository, SubmissionRepository submissionRepository, ResultRepository resultRepository,
-            TextBlockRepository textBlockRepository) {
+    public ExerciseImportService(ExampleSubmissionRepository exampleSubmissionRepository, SubmissionRepository submissionRepository, ResultRepository resultRepository) {
         this.exampleSubmissionRepository = exampleSubmissionRepository;
         this.submissionRepository = submissionRepository;
         this.resultRepository = resultRepository;
-        this.textBlockRepository = textBlockRepository;
     }
 
     void copyExerciseBasis(final Exercise newExercise, final Exercise importedExercise, final Map<Long, GradingInstruction> gradingInstructionCopyTracker) {
@@ -62,10 +58,6 @@ public abstract class ExerciseImportService {
             }
         }
     }
-
-    abstract Set<ExampleSubmission> copyExampleSubmission(final Exercise templateExercise, final Exercise newExercise);
-
-    abstract Submission copySubmission(final Submission originalSubmission);
 
     /**
      * This helper method does a hard copy of the result of a submission.
