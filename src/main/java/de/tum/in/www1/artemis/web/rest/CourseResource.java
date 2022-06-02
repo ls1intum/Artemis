@@ -1148,6 +1148,27 @@ public class CourseResource {
     }
 
     /**
+     * GET /courses/:courseId/statistics-lifetime-overview : Get the active students for this particular course over its whole lifetime
+     *
+     * @param courseId the id of the course
+     * @return the ResponseEntity with status 200 (OK) and the data in body, or status 404 (Not Found)
+     */
+    @GetMapping("courses/{courseId}/statistics-lifetime-overview")
+    @PreAuthorize("hasRole('TA')")
+    public ResponseEntity<List<Integer>> getActiveStudentsForCourseLivetime(@PathVariable Long courseId) {
+        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, courseRepository.findByIdElseThrow(courseId), null);
+        var exerciseIds = exerciseRepository.findAllIdsByCourseId(courseId);
+        var course = courseRepository.findByIdElseThrow(courseId);
+        if (course.getStartDate() == null) {
+            throw new IllegalArgumentException("Course does not contain start date");
+        }
+        var endDate = this.courseService.determineEndDateForActiveStudents(course);
+        var returnedSpanSize = this.courseService.calculateWeeksBetweenDates(course.getStartDate(), endDate);
+        var activeStudents = courseService.getActiveStudents(exerciseIds, 0, Math.toIntExact(returnedSpanSize), endDate);
+        return ResponseEntity.ok(activeStudents);
+    }
+
+    /**
      * POST /courses/:courseId/:courseGroup : Add multiple users to the user group of the course so that they can access the course
      * The passed list of UserDTOs must include the registration number (the other entries are currently ignored and can be left out)
      * Note: registration based on other user attributes (e.g. email, name, login) is currently NOT supported
