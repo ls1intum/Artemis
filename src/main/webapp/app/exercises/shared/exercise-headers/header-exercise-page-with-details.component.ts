@@ -1,4 +1,4 @@
-import { Component, Input, OnChanges } from '@angular/core';
+import { Component, Input, OnChanges, OnInit } from '@angular/core';
 import dayjs from 'dayjs/esm';
 import { Exercise, ExerciseType, getCourseFromExercise, getIcon, getIconTooltip, IncludedInOverallScore } from 'app/entities/exercise.model';
 import { Exam } from 'app/entities/exam.model';
@@ -20,7 +20,7 @@ import { SubmissionService } from 'app/exercises/shared/submission/submission.se
     selector: 'jhi-header-exercise-page-with-details',
     templateUrl: './header-exercise-page-with-details.component.html',
 })
-export class HeaderExercisePageWithDetailsComponent implements OnChanges {
+export class HeaderExercisePageWithDetailsComponent implements OnChanges, OnInit {
     readonly IncludedInOverallScore = IncludedInOverallScore;
     readonly AssessmentType = AssessmentType;
     readonly ExerciseType = ExerciseType;
@@ -36,13 +36,13 @@ export class HeaderExercisePageWithDetailsComponent implements OnChanges {
     @Input() public displayBackButton = true; // TODO: This can be removed once we are happy with the breadcrumb navigation
     @Input() public submissionPolicy?: SubmissionPolicy;
 
-    public exerciseStatusBadge = 'bg-success';
     public exerciseCategories: ExerciseCategory[];
     public dueDate?: dayjs.Dayjs;
     public programmingExercise?: ProgrammingExercise;
     public course: Course;
     public individualComplaintDeadline?: dayjs.Dayjs;
     public isNextDueDate: boolean[];
+    public statusBadges: string[];
     public canComplainLaterOn: boolean;
     public numberOfSubmissions: number;
 
@@ -54,11 +54,10 @@ export class HeaderExercisePageWithDetailsComponent implements OnChanges {
 
     constructor(private complaintService: ComplaintService, private submissionSerrvice: SubmissionService) {}
 
-    ngOnChanges(): void {
+    ngOnInit(): void {
         this.exerciseCategories = this.exercise.categories || [];
 
         this.setIcon(this.exercise.type);
-        this.setExerciseStatusBadge();
 
         this.programmingExercise = this.exercise.type === ExerciseType.PROGRAMMING ? (this.exercise as ProgrammingExercise) : undefined;
         this.course = getCourseFromExercise(this.exercise)!;
@@ -77,20 +76,12 @@ export class HeaderExercisePageWithDetailsComponent implements OnChanges {
                 (this.exercise.allowComplaintsForAutomaticAssessments || (!!this.exercise.assessmentType && this.exercise.assessmentType !== AssessmentType.AUTOMATIC));
 
             this.setIsNextDueDateCourseMode();
-
-            if (this.submissionPolicy) {
-                this.countSubmissions();
-            }
         }
     }
 
-    private setExerciseStatusBadge(): void {
-        if (this.exercise) {
-            if (this.exam) {
-                this.exerciseStatusBadge = dayjs().isAfter(dayjs(this.exam.endDate!)) ? 'bg-danger' : 'bg-success';
-            } else {
-                this.exerciseStatusBadge = hasExerciseDueDatePassed(this.exercise, this.studentParticipation) ? 'bg-danger' : 'bg-success';
-            }
+    ngOnChanges(): void {
+        if (this.submissionPolicy) {
+            this.countSubmissions();
         }
     }
 
@@ -108,8 +99,12 @@ export class HeaderExercisePageWithDetailsComponent implements OnChanges {
         const now = dayjs();
         if (now.isBefore(this.exam?.endDate)) {
             this.isNextDueDate[0] = true;
+            this.statusBadges = ['bg-success', 'bg-success'];
         } else if (now.isBefore(this.exam?.publishResultsDate)) {
             this.isNextDueDate[1] = true;
+            this.statusBadges = ['bg-danger', 'bg-success'];
+        } else {
+            this.statusBadges = ['bg-danger', 'bg-danger'];
         }
     }
 
@@ -121,12 +116,18 @@ export class HeaderExercisePageWithDetailsComponent implements OnChanges {
         const now = dayjs();
         if (now.isBefore(this.dueDate)) {
             this.isNextDueDate[0] = true;
+            this.statusBadges = ['bg-success', 'bg-success', 'bg-success'];
         } else if (now.isBefore(this.exercise.assessmentDueDate)) {
             this.isNextDueDate[1] = true;
+            this.statusBadges = ['bg-danger', 'bg-success', 'bg-success'];
         } else if (now.isBefore(this.individualComplaintDeadline)) {
             this.isNextDueDate[2] = true;
+            this.statusBadges = ['bg-danger', 'bg-danger', 'bg-success'];
         } else if (this.canComplainLaterOn) {
             this.isNextDueDate[3] = true;
+            this.statusBadges = ['bg-danger', 'bg-danger', 'bg-danger'];
+        } else {
+            this.statusBadges = ['bg-danger', 'bg-danger', 'bg-danger'];
         }
     }
 
