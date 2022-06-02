@@ -31,9 +31,10 @@ public class PublicResourcesConfiguration implements WebMvcConfigurer {
         addResourceHandlerForPath(registry);
 
         /*
-         * Add caching for about us images / contributor images and for emojis Contributor images are unlikely to change, and emojis must be cached for them to be displayed
-         * quickly, see #5186 All other files will not be cached, especially files in /content/* as they might change with any PR
+         * Add caching for about us images / contributor images and for emojis. Contributor images are unlikely to change. Emojis must be cached for them to be displayed quickly,
+         * see #5186. All other files will not be cached, especially files in /content/* as they might change with any PR.
          */
+
         var defaultCacheControl = CacheControl.maxAge(jHipsterProperties.getHttp().getCache().getTimeToLiveInDays(), TimeUnit.DAYS).cachePublic();
 
         addResourceHandlerForPath(registry, "images", "about").setCacheControl(defaultCacheControl);
@@ -42,6 +43,7 @@ public class PublicResourcesConfiguration implements WebMvcConfigurer {
 
     /**
      * Adds a resource handler for a sub path of /public and returns the registration object for further modification
+     *
      * @param registry the spring registry to use
      * @param subPaths the subpaths to register
      * @return the registration for further modification
@@ -53,6 +55,7 @@ public class PublicResourcesConfiguration implements WebMvcConfigurer {
 
     /**
      * Create a resource location pattern including the given subpaths of /public
+     *
      * @param subPaths the sub paths to use
      * @return the resource location as string
      */
@@ -62,6 +65,7 @@ public class PublicResourcesConfiguration implements WebMvcConfigurer {
 
     /**
      * Create a class path URI including the given subpaths of /public
+     *
      * @param subPaths the sub paths to use
      * @return the location as string
      */
@@ -71,6 +75,7 @@ public class PublicResourcesConfiguration implements WebMvcConfigurer {
 
     /**
      * Create a file system URI including the given subpaths of /public
+     *
      * @param subPaths the sub paths to use
      * @return the location as string
      */
