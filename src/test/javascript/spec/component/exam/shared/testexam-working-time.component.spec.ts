@@ -1,7 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MockPipe } from 'ng-mocks';
 import dayjs from 'dayjs/esm';
-import { StudentExamWorkingTimeComponent } from 'app/exam/shared/student-exam-working-time.component';
 import { ArtemisDurationFromSecondsPipe } from 'app/shared/pipes/artemis-duration-from-seconds.pipe';
 import { Exam } from 'app/entities/exam.model';
 import { StudentExam } from 'app/entities/student-exam.model';
@@ -14,7 +13,7 @@ describe('TestExamWorkingTimeComponent', () => {
 
     let exam: Exam;
     let studentExam: StudentExam;
-    let currentDate = dayjs();
+    const currentDate = dayjs();
 
     beforeEach(() => {
         TestBed.configureTestingModule({
