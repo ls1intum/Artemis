@@ -215,7 +215,7 @@
                 "recentWeekButton": "Jüngste Aktivität",
                 "recentWeekTooltip": "Zeigt die Aktivität von 17 Wochen. Begann der Kurs vor weniger als 17 Wochen, beginnt die Anzeige zum Startdatum.",
                 "lifetimeOverviewButtonLabel": "Kursdauerüberblick",
-                "lifetimeOverviewTooltip": "Zeigt die Periode von Kurstart bis derzeitigem Datum. Ist der Kurs bereits beendet, endet die Anzeige zum Enddatum des Kurses."
+                "lifetimeOverviewTooltip": "Zeigt die Periode von Kurstart bis jetzt. Ist der Kurs bereits beendet, endet die Anzeige zum Enddatum des Kurses."
             }
         }
     }
