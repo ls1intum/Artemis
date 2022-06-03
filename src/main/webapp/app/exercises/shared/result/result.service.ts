@@ -64,8 +64,8 @@ export class ResultService implements IResultService {
             buildAndTestMessage = this.translateService.instant('artemisApp.result.resultStringBuildSuccessfulNoTests');
         } else {
             buildAndTestMessage = this.translateService.instant('artemisApp.result.resultStringBuildSuccessfulTests', {
-                numberOfTestsPassed: result.passedTestCaseAmount == 255 ? '255+' : result.passedTestCaseAmount,
-                numberOfTestsTotal: result.testCaseAmount == 255 ? '255+' : result.testCaseAmount,
+                numberOfTestsPassed: result.passedTestCaseAmount === 255 ? '255+' : result.passedTestCaseAmount,
+                numberOfTestsTotal: result.testCaseAmount === 255 ? '255+' : result.testCaseAmount,
             });
         }
 
@@ -74,7 +74,7 @@ export class ResultService implements IResultService {
             resultString = this.translateService.instant('artemisApp.result.resultStringProgrammingCodeIssues', {
                 relativeScore,
                 buildAndTestMessage,
-                numberOfIssues: result.codeIssueAmount == 255 ? '255+' : result.codeIssueAmount,
+                numberOfIssues: result.codeIssueAmount === 255 ? '255+' : result.codeIssueAmount,
                 points,
                 maxPoints: exercise.maxPoints,
             });
