@@ -283,6 +283,13 @@ public class ExamService {
         return scores;
     }
 
+    /**
+     * Calculates max points, max bonus points and achieved points per exercise if the given studentExam is assessed.
+     * Includes the corresponding grade type as well if a GradingScale is set for the relevant exam.
+     * @param studentExam a StudentExam instance that will have its points and grades calculated if it is assessed
+     * @param participationsOfStudent StudentParticipation list for the given studentExam
+     * @return
+     */
     @NotNull
     public StudentExamWithGradeDTO calculateStudentResultWithGradeAndPoints(StudentExam studentExam, List<StudentParticipation> participationsOfStudent) {
         Exam exam = studentExam.getExam();

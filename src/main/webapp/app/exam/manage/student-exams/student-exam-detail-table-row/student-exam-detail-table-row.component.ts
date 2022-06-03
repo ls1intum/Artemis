@@ -71,7 +71,11 @@ export class StudentExamDetailTableRowComponent implements OnChanges {
         return route;
     }
 
-    getBonusPoints(exercise: Exercise): number | undefined {
+    /**
+     * Gets the bonus points from the given exercise according to its includedInOverallScore value.
+     * @param exercise exercise with or without bonus points
+     */
+    getBonusPoints(exercise?: Exercise): number | undefined {
         if (!exercise) {
             return 0;
         }
@@ -85,7 +89,11 @@ export class StudentExamDetailTableRowComponent implements OnChanges {
         }
     }
 
-    getMaxPoints(exercise: Exercise): number | undefined {
+    /**
+     * Gets the max points from the given exercise according to its includedInOverallScore value.
+     * @param exercise relevant exercise
+     */
+    getMaxPoints(exercise?: Exercise): number | undefined {
         if (!exercise) {
             return 0;
         }

@@ -585,6 +585,8 @@ public class StudentExamResource {
                 || studentExam.areResultsPublishedYet();
         Optional<Submission> latestSubmission = participation.findLatestSubmission();
 
+        // To prevent LazyInitializationException.
+        participation.setResults(Set.of());
         if ((isStudentAllowedToSeeResult || isAtLeastInstructor) && latestSubmission.isPresent()) {
             var lastSubmission = latestSubmission.get();
             // Also set the latest result into the participation as the client expects it there for programming exercises
@@ -596,16 +598,8 @@ public class StudentExamResource {
                 // lastResult -> lastSubmission
                 participation.setResults(Set.of(latestResult));
             }
-            else {
-                // To prevent LazyInitializationException.
-                participation.setResults(Set.of());
-            }
             lastSubmission.setResults(null);
             participation.setSubmissions(Set.of(lastSubmission));
-        }
-        else {
-            // To prevent LazyInitializationException.
-            participation.setResults(Set.of());
         }
     }
 
