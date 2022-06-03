@@ -85,9 +85,6 @@ export class CourseDetailLineChartComponent extends ActiveStudentsChart implemen
         this.amountOfStudents = this.translateService.instant('artemisApp.courseStatistics.amountOfStudents');
         this.updateYAxisLabel();
         this.determineDisplayedPeriod(this.course, this.displayedNumberOfWeeks);
-        /*if (this.showLifetimeOverview) {
-            return;
-        }*/
         /*
         if the course has a start date and already ended
         (i.e. the time difference between today and the course end date is at least one week), we show the lifetime overview by default.
