@@ -58,7 +58,7 @@ describe('OnlineUnitComponent', () => {
         expect(container).not.toBeNull();
         container.click();
 
-        expect(handleCollapseSpy).toHaveBeenCalled();
+        expect(handleCollapseSpy).toHaveBeenCalledOnce();
         expect(onlineUnitComponent.isCollapsed).toBeFalse();
 
         handleCollapseSpy.mockRestore();

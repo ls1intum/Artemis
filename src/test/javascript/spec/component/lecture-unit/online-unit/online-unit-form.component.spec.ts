@@ -99,7 +99,7 @@ describe('OnlineUnitFormComponent', () => {
         submitButton.click();
 
         onlineUnitFormComponentFixture.whenStable().then(() => {
-            expect(submitFormSpy).toHaveBeenCalled();
+            expect(submitFormSpy).toHaveBeenCalledOnce();
             expect(submitFormEventSpy).toHaveBeenCalledWith({
                 name: exampleName,
                 description: exampleDescription,
@@ -154,7 +154,7 @@ describe('OnlineUnitFormComponent', () => {
 
         // THEN
         expect(getOnlineResourceStub).toHaveBeenCalledOnce();
-        expect(onlineUnitFormComponent.sourceControl?.valid).toBe(true);
+        expect(onlineUnitFormComponent.sourceControl?.valid).toBeTrue();
         expect(onlineUnitFormComponent.sourceControl?.value).toEqual('https://example.com');
         expect(onlineUnitFormComponent.nameControl?.value).toEqual(resourceDto.title);
         expect(onlineUnitFormComponent.descriptionControl?.value).toEqual(resourceDto.description);
