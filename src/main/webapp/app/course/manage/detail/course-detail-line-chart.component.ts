@@ -88,15 +88,15 @@ export class CourseDetailLineChartComponent extends ActiveStudentsChart implemen
         /*if (this.showLifetimeOverview) {
             return;
         }*/
-        if (this.currentOffsetToEndDate === 0 || !this.course.startDate) {
-            this.displayDefaultChartScope();
-            /*
-            if the course has a start date and already ended
-            (i.e. the time difference between today and the course end date is at least one week), we show the lifetime overview by default.
-             */
-        } else {
+        /*
+        if the course has a start date and already ended
+        (i.e. the time difference between today and the course end date is at least one week), we show the lifetime overview by default.
+         */
+        if (this.course.startDate && this.currentOffsetToEndDate !== 0) {
             this.showLifetimeOverview = true;
             this.displayLifetimeOverview();
+        } else {
+            this.displayDefaultChartScope();
         }
     }
 
