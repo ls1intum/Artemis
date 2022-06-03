@@ -1095,15 +1095,15 @@ public abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpri
 
         var participations = createTestParticipationsWithResults();
 
-        double[] expectedScore = new double[] { 4.8, 40.5, 0, 26.2, 60 };
-        int[] expectedFeedbackSize = new int[] { 5, 7, 10, 9, 14 };
+        double[] expectedScores = { 4.8, 40.5, 0, 26.2, 60 };
+        int[] expectedFeedbackSize = { 5, 7, 10, 9, 14 };
 
         for (int i = 0; i < participations.size(); i++) {
             var participation = studentParticipationRepository.findWithEagerResultsAndFeedbackById(participations.get(i).getId()).get();
             var results = participation.getResults();
             assertThat(results).hasSize(1);
             var singleResult = results.iterator().next();
-            testParticipationResult(singleResult, expectedScore[i], true, expectedFeedbackSize[i], AssessmentType.AUTOMATIC);
+            testParticipationResult(singleResult, expectedScores[i], true, expectedFeedbackSize[i], AssessmentType.AUTOMATIC);
             assertThat(singleResult).isEqualTo(participation.findLatestLegalResult());
         }
     }
