@@ -367,6 +367,7 @@ describe('QuizExercise Management Detail Component', () => {
             let alertServiceStub: jest.SpyInstance;
             beforeEach(() => {
                 comp.course = course;
+                comp.courseId = course.id;
                 courseServiceStub = jest.spyOn(courseManagementService, 'findAllCategoriesOfCourse');
                 courseServiceStub.mockReturnValue(of(new HttpResponse<string[]>({ body: ['category1', 'category2'] })));
                 exerciseServiceCategoriesAsStringStub = jest.spyOn(exerciseService, 'convertExerciseCategoriesAsStringFromServer');
@@ -1285,7 +1286,7 @@ describe('QuizExercise Management Detail Component', () => {
 
             it('should go back to quiz exercise page on cancel', () => {
                 comp.cancel();
-                expect(routerSpy).toBeCalledWith(['/course-management', comp.quizExercise.course!.id, 'quiz-exercises']);
+                expect(routerSpy).toBeCalledWith(['/course-management', comp.courseId, 'quiz-exercises']);
             });
 
             it('should go back to quiz exercise page on cancel', () => {

@@ -17,7 +17,7 @@ import de.tum.in.www1.artemis.domain.DomainObject;
 import de.tum.in.www1.artemis.domain.view.QuizView;
 
 /**
- * A BuizBatch.
+ * A QuizBatch.
  */
 @Entity
 @Table(name = "quiz_batch")
