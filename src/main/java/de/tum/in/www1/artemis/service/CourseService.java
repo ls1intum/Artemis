@@ -703,7 +703,7 @@ public class CourseService {
     public int determineTimeSpanSizeForActiveStudents(Course course, ZonedDateTime endDate, int maximalSize) {
         var spanTime = maximalSize;
         if (course.getStartDate() != null) {
-            var amountOfWeeksBetween = calculateWeeksBetweenDates(course.getStartDate(), endDate);
+            long amountOfWeeksBetween = calculateWeeksBetweenDates(course.getStartDate(), endDate);
             spanTime = Math.toIntExact(Math.min(maximalSize, amountOfWeeksBetween));
         }
         return spanTime;
