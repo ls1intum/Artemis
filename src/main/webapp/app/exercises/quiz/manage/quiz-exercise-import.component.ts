@@ -4,28 +4,28 @@ import { Subject } from 'rxjs';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { PageableSearch, SearchResult, SortingOrder } from 'app/shared/table/pageable-table';
 import { SortService } from 'app/shared/service/sort.service';
-import { TextExercisePagingService } from 'app/exercises/text/manage/text-exercise/text-exercise-paging.service';
-import { TextExercise } from 'app/entities/text-exercise.model';
 import { faCheck, faSort } from '@fortawesome/free-solid-svg-icons';
+import { QuizExercisePagingService } from 'app/exercises/quiz/manage/quiz-exercise-paging.service';
+import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 
-enum TableColumn {
+export enum TableColumn {
     ID = 'ID',
     TITLE = 'TITLE',
     COURSE_TITLE = 'COURSE_TITLE',
 }
 
 @Component({
-    selector: 'jhi-text-exercise-import',
-    templateUrl: './text-exercise-import.component.html',
+    selector: 'jhi-quiz-exercise-import',
+    templateUrl: './quiz-exercise-import.component.html',
 })
-export class TextExerciseImportComponent implements OnInit {
+export class QuizExerciseImportComponent implements OnInit {
     readonly column = TableColumn;
 
     private search = new Subject<void>();
     private sort = new Subject<void>();
 
     loading = false;
-    content: SearchResult<TextExercise>;
+    content: SearchResult<QuizExercise>;
     total = 0;
     state: PageableSearch = {
         page: 1,
@@ -39,7 +39,7 @@ export class TextExerciseImportComponent implements OnInit {
     faSort = faSort;
     faCheck = faCheck;
 
-    constructor(private pagingService: TextExercisePagingService, private sortService: SortService, private activeModal: NgbActiveModal) {}
+    constructor(private pagingService: QuizExercisePagingService, private sortService: SortService, private activeModal: NgbActiveModal) {}
 
     ngOnInit(): void {
         this.content = { resultsOnPage: [], numberOfPages: 0 };
@@ -80,13 +80,13 @@ export class TextExerciseImportComponent implements OnInit {
     }
 
     /**
-     * Gives the ID for any text exercise in the table, so that it can be tracked/identified by ngFor
+     * Gives the ID for any quiz exercise in the table, so that it can be tracked/identified by ngFor
      *
      * @param index The index of the elemnt in the ngFor
      * @param item The exercise itself
-     * @returns The ID of the text exercise
+     * @returns The ID of the quiz exercise
      */
-    trackId(index: number, item: TextExercise): number {
+    trackId(index: number, item: QuizExercise): number {
         return item.id!;
     }
 
@@ -130,7 +130,7 @@ export class TextExerciseImportComponent implements OnInit {
      *
      * @param exercise The exercise which was selected by the user for the import.
      */
-    openImport(exercise: TextExercise) {
+    openImport(exercise: QuizExercise) {
         this.activeModal.close(exercise);
     }
 
