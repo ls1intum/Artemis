@@ -143,16 +143,14 @@ public interface QuizExerciseRepository extends JpaRepository<QuizExercise, Long
     @Query("""
             SELECT qe FROM QuizExercise qe
             WHERE (qe.id IN
-                (SELECT courseQe.id
-                FROM QuizExercise courseQe
-                WHERE (courseQe.course.instructorGroupName IN :groups OR courseQe.course.editorGroupName IN :groups)
+                    (SELECT courseQe.id FROM QuizExercise courseQe
+                    WHERE (courseQe.course.instructorGroupName IN :groups OR courseQe.course.editorGroupName IN :groups)
                     AND (courseQe.title LIKE %:partialTitle% OR courseQe.course.title LIKE %:partialCourseTitle%))
-            or qe.id IN
-                (SELECT examQe.id
-                FROM QuizExercise examQe
-                WHERE (examQe.exerciseGroup.exam.course.instructorGroupName IN :groups OR examQe.exerciseGroup.exam.course.editorGroupName IN :groups)
+                OR qe.id IN
+                    (SELECT examQe.id FROM QuizExercise examQe
+                    WHERE (examQe.exerciseGroup.exam.course.instructorGroupName IN :groups OR examQe.exerciseGroup.exam.course.editorGroupName IN :groups)
                     AND (examQe.title LIKE %:partialTitle% OR examQe.exerciseGroup.exam.course.title LIKE %:partialCourseTitle%)))
-                """)
+                        """)
     Page<QuizExercise> findByTitleInExerciseOrCourseAndUserHasAccessToCourse(@Param("partialTitle") String partialTitle, @Param("partialCourseTitle") String partialCourseTitle,
             @Param("groups") Set<String> groups, Pageable pageable);
 }
