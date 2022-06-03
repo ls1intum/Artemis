@@ -193,56 +193,56 @@ describe('ExamParticipationSummaryComponent', () => {
         studentExam.exam = TestExam;
         component.studentExam = studentExam;
         component.ngOnInit();
-        expect(component.isTestExam).toBeTrue;
-        expect(component.testExamConduction).toBeTrue;
+        expect(component.isTestExam).toBeTrue();
+        expect(component.testExamConduction).toBeTrue();
 
         studentExam.submitted = true;
         component.studentExam = studentExam;
         component.ngOnInit();
-        expect(component.isTestExam).toBeTrue;
-        expect(component.testExamConduction).toBeFalse;
+        expect(component.isTestExam).toBeTrue();
+        expect(component.testExamConduction).toBeFalse();
     });
 
     it('should correctly identify a RealExam', () => {
         component.studentExam = studentExam;
         component.ngOnInit();
-        expect(component.isTestExam).toBeFalse;
-        expect(component.testExamConduction).toBeFalse;
-        expect(component.isTestRun).toBeFalse;
-        expect(component.testRunConduction).toBeFalse;
+        expect(component.isTestExam).toBeFalse();
+        expect(component.testExamConduction).toBeFalse();
+        expect(component.isTestRun).toBeFalse();
+        expect(component.testRunConduction).toBeFalse();
 
         studentExam.submitted = true;
         component.studentExam = studentExam;
         component.ngOnInit();
-        expect(component.isTestExam).toBeTrue;
-        expect(component.testExamConduction).toBeFalse;
-        expect(component.isTestRun).toBeFalse;
-        expect(component.testRunConduction).toBeFalse;
+        expect(component.isTestExam).toBeTrue();
+        expect(component.testExamConduction).toBeFalse();
+        expect(component.isTestRun).toBeFalse();
+        expect(component.testRunConduction).toBeFalse();
     });
 
     it('should correctly determine if the results are published', () => {
         component.studentExam = studentExam;
         component.testRunConduction = true;
-        expect(component.resultsPublished).toBeFalse;
+        expect(component.resultsPublished).toBeFalse();
 
         component.testExamConduction = true;
         component.testRunConduction = false;
-        expect(component.resultsPublished).toBeFalse;
+        expect(component.resultsPublished).toBeFalse();
 
         component.isTestRun = true;
         component.testExamConduction = false;
-        expect(component.resultsPublished).toBeTrue;
+        expect(component.resultsPublished).toBeTrue();
 
         component.isTestExam = true;
         component.isTestRun = false;
-        expect(component.resultsPublished).toBeTrue;
+        expect(component.resultsPublished).toBeTrue();
 
         component.isTestExam = false;
         // const publishResultsDate is in the past
-        expect(component.resultsPublished).toBeTrue;
+        expect(component.resultsPublished).toBeTrue();
 
         component.studentExam.exam!.publishResultsDate = dayjs().add(2, 'hours');
-        expect(component.resultsPublished).toBeFalse;
+        expect(component.resultsPublished).toBeFalse();
     });
 
     it('should correctly determine if it is after student review start', () => {
@@ -250,11 +250,11 @@ describe('ExamParticipationSummaryComponent', () => {
         const dateSpy = jest.spyOn(artemisServerDateService, 'now').mockReturnValue(now);
 
         component.isTestExam = true;
-        expect(component.isAfterStudentReviewStart()).toBeTrue;
+        expect(component.isAfterStudentReviewStart()).toBeTrue();
 
         component.isTestExam = false;
         component.isTestRun = true;
-        expect(component.isAfterStudentReviewStart()).toBeTrue;
+        expect(component.isAfterStudentReviewStart()).toBeTrue();
 
         component.isTestRun = false;
         component.studentExam.exam!.examStudentReviewStart = examStudentReviewStart;
@@ -262,7 +262,7 @@ describe('ExamParticipationSummaryComponent', () => {
         expect(component.isAfterStudentReviewStart()).toBeTrue();
 
         component.studentExam.exam!.examStudentReviewStart = dayjs().add(30, 'minutes');
-        expect(component.isAfterStudentReviewStart()).toBeFalse;
+        expect(component.isAfterStudentReviewStart()).toBeFalse();
 
         expect(dateSpy).toHaveBeenCalledTimes(2);
     });
@@ -272,18 +272,18 @@ describe('ExamParticipationSummaryComponent', () => {
         const dateSpy = jest.spyOn(artemisServerDateService, 'now').mockReturnValue(now);
 
         component.isTestExam = true;
-        expect(component.isBeforeStudentReviewEnd()).toBeTrue;
+        expect(component.isBeforeStudentReviewEnd()).toBeTrue();
 
         component.isTestExam = false;
         component.isTestRun = true;
-        expect(component.isBeforeStudentReviewEnd()).toBeTrue;
+        expect(component.isBeforeStudentReviewEnd()).toBeTrue();
 
         component.isTestRun = false;
         component.studentExam.exam!.examStudentReviewEnd = examStudentReviewEnd;
         expect(component.isBeforeStudentReviewEnd()).toBeTrue();
 
         component.studentExam.exam!.examStudentReviewEnd = dayjs().subtract(30, 'minutes');
-        expect(component.isBeforeStudentReviewEnd()).toBeFalse;
+        expect(component.isBeforeStudentReviewEnd()).toBeFalse();
 
         expect(dateSpy).toHaveBeenCalledTimes(2);
     });

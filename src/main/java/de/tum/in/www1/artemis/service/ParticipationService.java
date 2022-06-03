@@ -118,30 +118,16 @@ public class ParticipationService {
      * @param exercise                - the exercise for which a new participation is to be created
      * @param participant             - the user for which the new participation is to be created
      * @param createInitialSubmission - whether an initial empty submission should be created for text, modeling, quiz, file-upload or not
-     * @param startedDate             - the date which should be set as the initializationDate of the Participation. Links studentExam <-> participation
+     * @param initializationDate      - the date which should be set as the initializationDate of the Participation. Links studentExam <-> participation
      * @return a new participation for the given exercise and user
      */
-    public StudentParticipation startExerciseWithInitializationDate(Exercise exercise, Participant participant, boolean createInitialSubmission, ZonedDateTime startedDate) {
+    public StudentParticipation startExerciseWithInitializationDate(Exercise exercise, Participant participant, boolean createInitialSubmission, ZonedDateTime initializationDate) {
         // common for all exercises
         // Check if participation already exists
         Optional<StudentParticipation> optionalStudentParticipation = findOneByExerciseAndParticipantAnyState(exercise, participant);
         StudentParticipation participation;
         if (optionalStudentParticipation.isEmpty()) {
-            // create a new participation only if no participation can be found
-            if (exercise instanceof ProgrammingExercise) {
-                participation = new ProgrammingExerciseStudentParticipation(versionControlService.get().getDefaultBranchOfArtemis());
-            }
-            else {
-                participation = new StudentParticipation();
-            }
-            participation.setInitializationState(UNINITIALIZED);
-            participation.setExercise(exercise);
-            participation.setParticipant(participant);
-            // StartedDate is used to link a Participation to a TestExam exercise
-            if (startedDate != null) {
-                participation.setInitializationDate(startedDate);
-            }
-            participation = studentParticipationRepository.saveAndFlush(participation);
+            participation = createNewParticipationWithInitializationDate(exercise, participant, initializationDate);
         }
         else {
             // make sure participation and exercise are connected
@@ -174,6 +160,33 @@ public class ParticipationService {
                     submissionRepository.initializeSubmission(participation, exercise, null);
                 }
             }
+        }
+        return studentParticipationRepository.saveAndFlush(participation);
+    }
+
+    /**
+     * Helper Method to create a new Participation for the
+     *
+     * @param exercise           the exercise for which a participation should be created
+     * @param participant        the participant for the participation
+     * @param initializationDate (optional) Value for the initializationDate of the Participation
+     * @return a StudentParticipation for the exercise and participant with an optional specified initializationDate
+     */
+    private StudentParticipation createNewParticipationWithInitializationDate(Exercise exercise, Participant participant, ZonedDateTime initializationDate) {
+        StudentParticipation participation;
+        // create a new participation only if no participation can be found
+        if (exercise instanceof ProgrammingExercise) {
+            participation = new ProgrammingExerciseStudentParticipation(versionControlService.get().getDefaultBranchOfArtemis());
+        }
+        else {
+            participation = new StudentParticipation();
+        }
+        participation.setInitializationState(UNINITIALIZED);
+        participation.setExercise(exercise);
+        participation.setParticipant(participant);
+        // StartedDate is used to link a Participation to a TestExam exercise
+        if (initializationDate != null) {
+            participation.setInitializationDate(initializationDate);
         }
         return studentParticipationRepository.saveAndFlush(participation);
     }

@@ -28,16 +28,10 @@ export class TestexamWorkingTimeComponent implements OnInit {
             this.studentExam.submissionDate
         ) {
             const regularExamDuration = this.studentExam.workingTime;
-            this.usedWorkingTime = dayjs(this.studentExam.submissionDate).diff(dayjs(this.studentExam.startedDate), 'seconds');
             // As students may submit during the grace period, the workingTime is limited to the regular exam duration
-            if (this.usedWorkingTime > regularExamDuration) {
-                this.usedWorkingTime = regularExamDuration;
-            }
+            this.usedWorkingTime = Math.min(regularExamDuration, dayjs(this.studentExam.submissionDate).diff(dayjs(this.studentExam.startedDate), 'seconds'));
             // As students may submit during the grace period, the percentage is limited to 100%
-            this.percentUsedWorkingTime = round((this.usedWorkingTime / regularExamDuration) * 100, 2);
-            if (this.percentUsedWorkingTime > 100) {
-                this.percentUsedWorkingTime = 100;
-            }
+            this.percentUsedWorkingTime = Math.min(100, round((this.usedWorkingTime / regularExamDuration) * 100, 2));
         }
     }
 }

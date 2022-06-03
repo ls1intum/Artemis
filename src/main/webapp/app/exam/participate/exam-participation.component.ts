@@ -142,7 +142,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
             // As a student can have multiple TestExams, the studentExamId is passed as a parameter.
             if (params['studentExamId']) {
                 // If a new StudentExam should be created, the keyword new is used (and no StudentExam exists)
-                if (params[`studentExamId`] !== 'new') {
+                if (params['studentExamId'] !== 'new') {
                     this.testExam = true;
                     this.studentExamId = parseInt(params['studentExamId'], 10);
                 } else {
@@ -388,7 +388,14 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
             )
             .subscribe({
                 next: (studentExam: StudentExam) => {
-                    this.studentExam = studentExam;
+                    if (studentExam.exam?.testExam) {
+                        // If we have a TestExam, we reload the summary from the server.
+                        this.examParticipationService
+                            .loadStudentExamForTestExamWithExercisesForSummary(this.courseId, this.examId, studentExam.id!)
+                            .subscribe((studentExamWithExercises: StudentExam) => (this.studentExam = studentExamWithExercises));
+                    } else {
+                        this.studentExam = studentExam;
+                    }
                     this.studentExam.exercises!.forEach((exercise) => {
                         // We do not support hints in an exam at the moment. Setting an empty array here disables the hint requests
                         exercise.exerciseHints = [];

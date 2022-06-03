@@ -18,6 +18,7 @@ import de.tum.in.www1.artemis.domain.exam.StudentExam;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.Role;
+import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.ParticipationService;
 import de.tum.in.www1.artemis.service.dto.StudentDTO;
 import de.tum.in.www1.artemis.service.user.UserService;
@@ -48,9 +49,11 @@ public class ExamRegistrationService {
 
     private final StudentParticipationRepository studentParticipationRepository;
 
+    private final AuthorizationCheckService authorizationCheckService;
+
     public ExamRegistrationService(ExamRepository examRepository, UserService userService, ParticipationService participationService, UserRepository userRepository,
             AuditEventRepository auditEventRepository, CourseRepository courseRepository, StudentExamRepository studentExamRepository,
-            StudentParticipationRepository studentParticipationRepository) {
+            StudentParticipationRepository studentParticipationRepository, AuthorizationCheckService authorizationCheckService) {
         this.examRepository = examRepository;
         this.userService = userService;
         this.userRepository = userRepository;
@@ -59,6 +62,7 @@ public class ExamRegistrationService {
         this.courseRepository = courseRepository;
         this.studentExamRepository = studentExamRepository;
         this.studentParticipationRepository = studentParticipationRepository;
+        this.authorizationCheckService = authorizationCheckService;
     }
 
     /**
@@ -168,19 +172,16 @@ public class ExamRegistrationService {
      *
      * @param course the course containing the exam
      * @param examId the examId for which we want to register a student
+     * @param currentUser the user to be registered in the exam
      */
-    public void selfRegisterToTestExam(Course course, long examId) {
+    public void selfRegisterToTestExam(Course course, long examId, User currentUser) {
         Exam exam = examRepository.findByIdWithRegisteredUsersElseThrow(examId);
 
         if (!exam.isTestExam()) {
             throw new AccessForbiddenException("Self-Registration is only allowed for TestExams");
         }
 
-        User currentUser = userRepository.getUserWithGroupsAndAuthorities();
-
-        if (!currentUser.getGroups().contains(course.getStudentGroupName())) {
-            throw new AccessForbiddenException("Students need to be registered in the corresponding course to self-register for a TestExam");
-        }
+        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, currentUser);
 
         exam.addRegisteredUser(currentUser);
         examRepository.save(exam);

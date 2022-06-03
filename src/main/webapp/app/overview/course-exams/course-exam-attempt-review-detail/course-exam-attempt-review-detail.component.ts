@@ -61,9 +61,7 @@ export class CourseExamAttemptReviewDetailComponent implements OnInit, OnDestroy
      * Used to unsubscribe from the studentExamState Subscriptions
      */
     unsubscribeFromExamStateSubscription() {
-        if (this.studentExamState) {
-            this.studentExamState.unsubscribe();
-        }
+        this.studentExamState?.unsubscribe();
     }
 
     /**

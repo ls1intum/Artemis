@@ -1,13 +1,9 @@
-.hover-blue {
-    &:hover {
-        box-shadow: 0 2px 4px 0 var(--primary);
-    }
+.hover-blue:hover {
+    box-shadow: 0 2px 4px 0 var(--primary);
 }
 
-.hover-green {
-    &:hover {
-        box-shadow: 0 2px 4px 0 var(--success);
-    }
+.hover-green:hover {
+    box-shadow: 0 2px 4px 0 var(--success);
 }
 
 .btn-disabled {

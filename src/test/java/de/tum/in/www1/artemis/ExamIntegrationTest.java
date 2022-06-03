@@ -131,6 +131,11 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         users = database.addUsers(numberOfStudents, 5, 0, 1);
         course1 = database.addEmptyCourse();
         course2 = database.addEmptyCourse();
+
+        User student1 = users.get(0);
+        student1.setGroups(Set.of(course1.getStudentGroupName()));
+        userRepo.save(student1);
+
         exam1 = database.addExam(course1);
         exam2 = database.addExamWithExerciseGroup(course1, true);
         testExam1 = database.addTestExam(course1);
@@ -2388,13 +2393,15 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     @Test
     @WithMockUser(username = "student1", roles = "USER")
     public void testSelfRegisterToTestExam_noTestExam() {
-        assertThatThrownBy(() -> examRegistrationService.selfRegisterToTestExam(course1, exam1.getId())).isInstanceOf(AccessForbiddenException.class);
+        assertThatThrownBy(() -> examRegistrationService.selfRegisterToTestExam(course1, exam1.getId(), database.getUserByLogin("student1")))
+                .isInstanceOf(AccessForbiddenException.class);
     }
 
     @Test
     @WithMockUser(username = "student42", roles = "USER")
     public void testSelfRegisterToTestExam_studentNotPartOfCourse() {
-        assertThatThrownBy(() -> examRegistrationService.selfRegisterToTestExam(course1, exam1.getId())).isInstanceOf(AccessForbiddenException.class);
+        assertThatThrownBy(() -> examRegistrationService.selfRegisterToTestExam(course1, exam1.getId(), database.getUserByLogin("student42")))
+                .isInstanceOf(AccessForbiddenException.class);
     }
 
     @Test
@@ -2403,7 +2410,7 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         Exam testExam = ModelFactory.generateTestExam(course1);
         testExam.addRegisteredUser(users.get(0));
         testExam = examRepository.save(testExam);
-        examRegistrationService.selfRegisterToTestExam(course1, testExam.getId());
+        examRegistrationService.selfRegisterToTestExam(course1, testExam.getId(), users.get(0));
         Exam testExamReladed = examRepository.findByIdWithRegisteredUsersElseThrow(testExam.getId());
         assertTrue(testExamReladed.getRegisteredUsers().contains(users.get(0)));
     }

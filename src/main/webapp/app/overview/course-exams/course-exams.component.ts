@@ -65,25 +65,9 @@ export class CourseExamsComponent implements OnInit, OnDestroy {
             this.expandAttemptsMap = new Map(this.course!.exams!.filter((exam) => exam.testExam && this.isVisible(exam)).map((exam) => [exam.id!, false]));
 
             // Loading the exams from the course
-            this.realExamsOfCourse = this.course!.exams!.filter((exam) => this.isVisible(exam) && !exam.testExam).sort((se1, se2) => {
-                if (se1.startDate! > se2.startDate!) {
-                    return 1;
-                }
-                if (se1.startDate! < se2.startDate!) {
-                    return -1;
-                }
-                return 0;
-            });
+            this.realExamsOfCourse = this.course!.exams!.filter((exam) => this.isVisible(exam) && !exam.testExam).sort((se1, se2) => this.sortExamsByStartDate(se1, se2));
 
-            this.testExamsOfCourse = this.course!.exams!.filter((exam) => this.isVisible(exam) && exam.testExam).sort((se1, se2) => {
-                if (se1.startDate! > se2.startDate!) {
-                    return 1;
-                }
-                if (se1.startDate! < se2.startDate!) {
-                    return -1;
-                }
-                return 0;
-            });
+            this.testExamsOfCourse = this.course!.exams!.filter((exam) => this.isVisible(exam) && exam.testExam).sort((se1, se2) => this.sortExamsByStartDate(se1, se2));
         }
     }
 
@@ -97,9 +81,7 @@ export class CourseExamsComponent implements OnInit, OnDestroy {
         if (this.courseUpdatesSubscription) {
             this.courseUpdatesSubscription.unsubscribe();
         }
-        if (this.studentExamTestExamUpdateSubscription) {
-            this.studentExamTestExamUpdateSubscription.unsubscribe();
-        }
+        this.studentExamTestExamUpdateSubscription?.unsubscribe();
     }
 
     /**
@@ -111,16 +93,9 @@ export class CourseExamsComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * Returns if the given exam is a TestExam
-     * @param exam the exam to be checked
-     */
-    isTestExam(exam: Exam): boolean {
-        return exam.testExam ? exam.testExam : false;
-    }
-
-    /**
      * Filters the studentExams for the examId and sorts them according to the studentExam.id in reverse order
      * @param examId the examId for which the StudentExams should be retrieved
+     * @return a by id descending ordered list of studentExams
      */
     getStudentExamForExamIdOrderedByIdReverse(examId: number): StudentExam[] {
         if (!this.studentExams) {
@@ -130,19 +105,31 @@ export class CourseExamsComponent implements OnInit, OnDestroy {
             .filter(function (studentExam) {
                 return studentExam.exam?.id && studentExam.startedDate && studentExam.exam.id === examId && studentExam.startedDate;
             })
-            .sort((se1, se2) => {
-                if (se1.id! > se2.id!) {
-                    return -1;
-                }
-                if (se1.id! < se2.id!) {
-                    return 1;
-                }
-                return 0;
-            });
+            .sort((se1, se2) => se2.id! - se1.id!);
     }
 
+    /**
+     * Used to change the entry corresponding to the examId, if the user has expanded the list of attempts for this exam or not
+     * @param examId the examId for which the boolean-value should be changed
+     */
     changeExpandAttemptList(examId: number) {
         const newValue = !this.expandAttemptsMap.get(examId);
         this.expandAttemptsMap.set(examId, newValue);
+    }
+
+    /**
+     * Used for the sort()-function to order the Exams according to their startDate.
+     * @param exam1 exam1 for comparison
+     * @param exam2 exam2 for comparison
+     * @return value for sort()-function
+     */
+    sortExamsByStartDate(exam1: Exam, exam2: Exam): number {
+        if (dayjs(exam1.startDate!).isBefore(exam2.startDate!)) {
+            return -1;
+        }
+        if (dayjs(exam1.startDate!).isAfter(exam2.startDate!)) {
+            return 1;
+        }
+        return 0;
     }
 }

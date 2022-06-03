@@ -136,11 +136,11 @@ describe('ExamParticipationCoverComponent', () => {
 
         component.startView = true;
         component.updateConfirmation();
-        expect(component.startEnabled).toBe(false);
+        expect(component.startEnabled).toBeFalse();
 
         component.startView = false;
         component.updateConfirmation();
-        expect(component.endEnabled).toBe(false);
+        expect(component.endEnabled).toBeFalse();
     });
 
     it('should start exam', fakeAsync(() => {
@@ -212,13 +212,13 @@ describe('ExamParticipationCoverComponent', () => {
         component.startExam();
         tick();
         jest.advanceTimersByTime(UI_RELOAD_TIME + 1); // simulate setInterval time passing
-        expect(component.waitingForExamStart).toBe(true);
+        expect(component.waitingForExamStart).toBeTrue();
         expect(component.timeUntilStart).toBe('');
     }));
 
     it('test run should always have already started', () => {
         component.testRun = true;
-        expect(component.hasStarted()).toBe(true);
+        expect(component.hasStarted()).toBeTrue();
     });
 
     it('should update displayed times if exam suddenly started ', () => {
@@ -255,7 +255,7 @@ describe('ExamParticipationCoverComponent', () => {
     it('should get start button enabled and end button enabled', () => {
         fixture.detectChanges();
         component.testRun = true;
-        expect(component.startButtonEnabled).toBe(false);
+        expect(component.startButtonEnabled).toBeFalse();
 
         const now = dayjs();
         jest.spyOn(artemisServerDateService, 'now').mockReturnValue(now);
@@ -264,15 +264,15 @@ describe('ExamParticipationCoverComponent', () => {
         component.accountName = 'admin';
         component.confirmed = true;
         component.exam.visibleDate = dayjs().subtract(1, 'hours');
-        expect(component.startButtonEnabled).toBe(true);
+        expect(component.startButtonEnabled).toBeTrue();
 
         component.handInPossible = true;
-        expect(component.endButtonEnabled).toBe(true);
+        expect(component.endButtonEnabled).toBeTrue();
     });
 
     it('should get end button enabled', () => {
         component.enteredName = 'admin';
-        expect(component.inserted).toBe(true);
+        expect(component.inserted).toBeTrue();
     });
 
     it('should disable exam button', () => {
@@ -285,12 +285,12 @@ describe('ExamParticipationCoverComponent', () => {
         component.confirmed = true;
         component.exam.visibleDate = dayjs().subtract(1, 'hours');
         component.exam.visibleDate = dayjs().add(1, 'hours');
-        expect(component.startButtonEnabled).toBe(false);
+        expect(component.startButtonEnabled).toBeFalse();
     });
 
     it('should get whether student failed to submit', () => {
         component.testRun = true;
-        expect(component.studentFailedToSubmit).toBe(false);
+        expect(component.studentFailedToSubmit).toBeFalse();
 
         component.testRun = false;
         const startDate = dayjs();
@@ -301,7 +301,7 @@ describe('ExamParticipationCoverComponent', () => {
         component.studentExam.workingTime = 3600;
         component.exam.gracePeriod = 1;
         component.studentExam.submitted = false;
-        expect(component.studentFailedToSubmit).toBe(true);
+        expect(component.studentFailedToSubmit).toBeTrue();
     });
 
     it('should get whether student failed to submit a TestExam', () => {
@@ -321,12 +321,12 @@ describe('ExamParticipationCoverComponent', () => {
         component.studentExam.workingTime = 3600;
         component.exam.gracePeriod = 1;
         component.studentExam.submitted = false;
-        expect(component.studentFailedToSubmit).toBe(true);
+        expect(component.studentFailedToSubmit).toBeTrue();
 
         component.studentExam.startedDate = now.subtract(1, 'hours');
         component.studentExam.workingTime = 3600;
         component.exam.gracePeriod = 1;
         component.studentExam.submitted = false;
-        expect(component.studentFailedToSubmit).toBe(false);
+        expect(component.studentFailedToSubmit).toBeFalse();
     });
 });

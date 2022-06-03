@@ -45,6 +45,7 @@ export class ExamParticipationService {
      * @param courseId the id of the course the exam is created in
      * @param examId the id of the exam
      * @param studentExamId the id of the student Exam which should be loaded
+     * @returns the studentExam with Exercises for the conduction-phase
      */
     public loadStudentExamWithExercisesForConductionOfTestExam(courseId: number, examId: number, studentExamId: number): Observable<StudentExam> {
         const url = this.getResourceURL(courseId, examId) + '/student-exams/' + studentExamId + '/conduction';
@@ -78,6 +79,7 @@ export class ExamParticipationService {
      * @param courseId the id of the course the exam is created in
      * @param examId the id of the exam
      * @param studentExamId the id of the studentExam
+     * @returns a studentExam with Exercises for the summary-phase
      */
     public loadStudentExamForTestExamWithExercisesForSummary(courseId: number, examId: number, studentExamId: number): Observable<StudentExam> {
         const url = this.getResourceURL(courseId, examId) + '/student-exams/' + studentExamId + '/summary';
@@ -122,6 +124,7 @@ export class ExamParticipationService {
      * Loads {@link StudentExam} object for a TestExam from server
      * @param courseId the id of the course the exam is created in
      * @param examId the id of the exam
+     * @returns a studentExam without exercises for the start-phase
      */
     public loadStudentExamForTestExam(courseId: number, examId: number): Observable<StudentExam> {
         const url = this.getResourceURL(courseId, examId) + '/start-test-exam';
@@ -139,6 +142,7 @@ export class ExamParticipationService {
      * @param courseId the id of the course the exam is created in
      * @param examId the id of the exam
      * @param studentExamId the id of the studentExam we want to fetch
+     * @returns the StudentExam for the specified id without Exercises for the start-phase
      */
     public loadStudentExamForTestExamById(courseId: number, examId: number, studentExamId: number): Observable<StudentExam> {
         const url = this.getResourceURL(courseId, examId) + '/test-exam/' + studentExamId + '/start';
@@ -165,6 +169,7 @@ export class ExamParticipationService {
     /**
      * Loads {@link StudentExam} objects linked to a TestExam per user and per course from server
      * @param courseId the id of the course we are interested
+     * @returns a List of all StudentExams without Exercises per User and Course
      */
     public loadStudentExamsForTestExamsPerCourseAndPerUserForOverviewPage(courseId: number): Observable<StudentExam[]> {
         const url = `${SERVER_API_URL}api/courses/${courseId}/test-exams-per-user`;
@@ -302,8 +307,8 @@ export class ExamParticipationService {
 
     private static convertStudentExamDateFromServer(studentExam: StudentExam): StudentExam {
         studentExam.exam = ExamParticipationService.convertExamDateFromServer(studentExam.exam);
-        studentExam.submissionDate = studentExam.submissionDate ? dayjs(studentExam.submissionDate) : undefined;
-        studentExam.startedDate = studentExam.startedDate ? dayjs(studentExam.startedDate) : undefined;
+        studentExam.submissionDate = studentExam.submissionDate && dayjs(studentExam.submissionDate);
+        studentExam.startedDate = studentExam.startedDate && dayjs(studentExam.startedDate);
         return studentExam;
     }
 

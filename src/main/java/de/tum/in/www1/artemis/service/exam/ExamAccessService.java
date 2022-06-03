@@ -98,7 +98,7 @@ public class ExamAccessService {
 
         // Check that the current user is at least student in the course.
         Course course = courseRepository.findByIdElseThrow(courseId);
-        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, null);
+        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, currentUser);
 
         StudentExam studentExam = studentExamRepository.findByIdElseThrow(studentExamId);
 
@@ -131,7 +131,7 @@ public class ExamAccessService {
 
         // Check that the current user is at least student in the course.
         Course course = courseRepository.findByIdElseThrow(courseId);
-        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, null);
+        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, currentUser);
 
         StudentExam studentExam = studentExamService.generateTestExam(examId, currentUser);
         // For the start of the exam, the exercises are not needed. They are later loaded via StudentExamResource
@@ -155,7 +155,7 @@ public class ExamAccessService {
 
         // Check that the current user is registered for the TestExam. Otherwise, the student can self-register.
         if (!examRepository.isUserRegisteredForExam(exam.getId(), currentUser.getId())) {
-            examRegistrationService.selfRegisterToTestExam(course, exam.getId());
+            examRegistrationService.selfRegisterToTestExam(course, exam.getId(), currentUser);
         }
 
         // Check that the exam is visible

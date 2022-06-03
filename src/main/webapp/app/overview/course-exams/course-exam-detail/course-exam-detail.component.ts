@@ -63,9 +63,7 @@ export class CourseExamDetailComponent implements OnInit, OnDestroy {
     }
 
     cancelExamStateSubscription() {
-        if (this.examStateSubscription) {
-            this.examStateSubscription.unsubscribe();
-        }
+        this.examStateSubscription?.unsubscribe();
     }
 
     /**

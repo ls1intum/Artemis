@@ -123,16 +123,6 @@ describe('CourseExamsComponent', () => {
         expect(component.isVisible(notVisibleRealExam)).toBeFalse();
     });
 
-    it('isTestExam should return false for RealExams', () => {
-        componentFixture.detectChanges();
-        expect(component.isTestExam(visibleRealExam1)).toBeFalse();
-    });
-
-    it('isTestExam should return true for TestExams', () => {
-        componentFixture.detectChanges();
-        expect(component.isTestExam(visibleTestExam1)).toBeTrue();
-    });
-
     it('should correctly return StudentExams by id in reverse order', () => {
         componentFixture.detectChanges();
         const resultArray = [studentExamForExam3AndNotSubmitted, studentExamForExam3AndSubmitted];

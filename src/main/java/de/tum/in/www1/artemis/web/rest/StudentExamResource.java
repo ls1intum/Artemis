@@ -372,7 +372,7 @@ public class StudentExamResource {
 
     /**
      * GET /courses/{courseId}/test-exams-per-user
-     * Retrieves all StudentExams for TestExams of one Course for the specified user
+     * Retrieves all StudentExams for TestExams of one Course for the current user
      *
      * @param courseId the course to which the student exam belongs to
      * @return all StudentExams for TestExam for the specified course and user
@@ -404,31 +404,33 @@ public class StudentExamResource {
         long start = System.currentTimeMillis();
         User user = userRepository.getUserWithGroupsAndAuthorities();
 
+        // 1st: Get the studentExam from the database
         StudentExam studentExam = studentExamRepository.findByIdWithExercisesElseThrow(studentExamId);
 
         log.debug("REST request to get the student exam of user {} for TestExam {} and StudentExam {} for summary", user.getLogin(), examId, studentExam.getId());
 
         studentExamAccessService.checkCourseAndExamAccessElseThrow(courseId, examId, user, studentExam.isTestRun());
 
-        // check that the studentExam has been submitted, otherwise /student-exams/conduction should be used
+        // 2nd: check that the studentExam has been submitted, otherwise /student-exams/conduction should be used
         if (!studentExam.isSubmitted()) {
             throw new AccessForbiddenException();
         }
 
-        // For RealExams, /student-exams/summary must be used, as exactly one StudentExams exists per student.
+        // 3rd: For RealExams, /student-exams/summary must be used, as exactly one StudentExams exists per student.
         if (!studentExam.getExam().isTestExam()) {
             throw new AccessForbiddenException();
         }
 
+        // 4th: Load (Quiz-)Exercises
         loadExercisesForStudentExam(studentExam);
 
-        // 3rd fetch participations, submissions and results.
+        // 5th: fetch participations, submissions and results.
         List<StudentParticipation> participations = studentParticipationRepository
                 .findParticipationsByStudentIdAndIndividualExercisesWithEagerSubmissionsResultWithoutAssessor(studentExam);
 
         boolean isAtLeastInstructor = authorizationCheckService.isAtLeastInstructorInCourse(studentExam.getExam().getCourse(), user);
 
-        // connect & filter the exercises and student participations including the latest submission and results where necessary, to make sure all relevant associations are
+        // 6th: connect & filter the exercises and student participations including the latest submission and results where necessary, to make sure all relevant associations are
         // available
         for (Exercise exercise : studentExam.getExercises()) {
             filterParticipationForExercise(studentExam, exercise, participations, isAtLeastInstructor);
@@ -611,15 +613,9 @@ public class StudentExamResource {
             studentExam.setStarted(true);
             studentExam.setStartedDate(startedDate);
 
-            /*
-             * boolean isAtLeastInstructor = authorizationCheckService.isAtLeastInstructorInCourse(studentExam.getExam().getCourse(), currentUser); // 4th: connect & filter the
-             * exercises and student participations including the latest submission // and results where necessary, to make sure all relevant associations are available for
-             * (Exercise exercise : studentExam.getExercises()) { filterParticipationForExercise(studentExam, exercise, studentParticipations, isAtLeastInstructor); }
-             */
         }
-        // else {
+        // 4th: Fetch the relevant data from the database
         fetchParticipationsSubmissionsAndResultsForStudentExam(studentExam, currentUser);
-        // }
 
         // 5th: Reload the Quiz-Exercises
         loadExercisesForStudentExam(studentExam);
