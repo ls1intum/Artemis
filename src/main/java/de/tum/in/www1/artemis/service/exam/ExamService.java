@@ -312,6 +312,20 @@ public class ExamService {
         return studentExamWithGradeDTO;
     }
 
+    /**
+     * Generates a StudentResult from the given studentExam and participations of the student by aggregating scores and points
+     * achieved per exercise by the relevant student if the given studentExam is assessed.
+     * Calculates the corresponding grade if a GradingScale is given.
+     *
+     * @param studentExam a StudentExam instance that will have its points and grades calculated if it is assessed
+     * @param participationsOfStudent StudentParticipation list for the given studentExam
+     * @param exam the relevant exam
+     * @param scores provides max point value and modified if multiple correction rounds are calculated
+     * @param objectMapper needed for {@link #hasNonEmptySubmission(Set, Exercise, ObjectMapper)}
+     * @param gradingScale optional GradingScale that will be used to set the grade type and the achieved grade if present
+     * @param calculateFirstCorrectionPoints flag to determine whether to calculate the first correction results or not
+     * @return exam result for a student who participated in the exam
+     */
     @NotNull
     private ExamScoresDTO.StudentResult calculateStudentResultWithGrade(StudentExam studentExam, List<StudentParticipation> participationsOfStudent, Exam exam,
             ExamScoresDTO scores, ObjectMapper objectMapper, Optional<GradingScale> gradingScale, boolean calculateFirstCorrectionPoints) {
@@ -327,12 +341,6 @@ public class ExamService {
             // Relevant Result is already calculated
             if (studentParticipation.getResults() != null && !studentParticipation.getResults().isEmpty()) {
                 Result relevantResult = studentParticipation.getResults().iterator().next();
-                // Note: It is important that we round on the individual exercise level first and then sum up.
-                // This is necessary so that the student arrives at the same overall result when doing their own recalculation.
-                // Let's assume that the student achieved 1.05 points in each of 5 exercises.
-                // In the client, these are now displayed rounded as 1.1 points.
-                // If the student adds up the displayed points, they get a total of 5.5 points.
-                // In order to get the same total result as the student, we have to round before summing.
                 double achievedPoints = calculateAchievedPoints(exercise, relevantResult, exam.getCourse());
 
                 // points earned in NOT_INCLUDED exercises do not count towards the students result in the exam
@@ -430,6 +438,20 @@ public class ExamService {
         };
     }
 
+    /**
+     * Calculates and rounds the points achieved by a student for a given exercise with the given result.
+     *
+     * Note: It is important that we round on the individual exercise level first and then sum up.
+     * This is necessary so that the student arrives at the same overall result when doing their own recalculation.
+     * Let's assume that the student achieved 1.05 points in each of 5 exercises.
+     * In the client, these are now displayed rounded as 1.1 points.
+     * If the student adds up the displayed points, they get a total of 5.5 points.
+     * In order to get the same total result as the student, we have to round before summing.
+     * @param exercise the relevant exercise
+     * @param result the result for the given exercise
+     * @param course course to specify number of decimal places to round
+     * @return the rounded points according to the student's achieved score and max points of the exercise
+     */
     private double calculateAchievedPoints(Exercise exercise, Result result, Course course) {
         if (result != null && result.getScore() != null) {
             return roundScoreSpecifiedByCourseSettings(exercise.getMaxPoints() * result.getScore() / 100.0, course);
