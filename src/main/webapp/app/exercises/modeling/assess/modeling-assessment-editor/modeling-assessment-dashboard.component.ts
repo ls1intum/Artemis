@@ -22,13 +22,14 @@ import { getLinkToSubmissionAssessment } from 'app/utils/navigation.utils';
 import { AlertService } from 'app/core/util/alert.service';
 import { EventManager } from 'app/core/util/event-manager.service';
 import { faEdit, faBan, faFolderOpen, faSort } from '@fortawesome/free-solid-svg-icons';
+import { AbstractAssessmentDashboard } from 'app/exercises/shared/dashboards/tutor/abstract-assessment-dashboard';
 
 @Component({
     selector: 'jhi-assessment-dashboard',
     templateUrl: './modeling-assessment-dashboard.component.html',
     providers: [],
 })
-export class ModelingAssessmentDashboardComponent implements OnInit, OnDestroy {
+export class ModelingAssessmentDashboardComponent extends AbstractAssessmentDashboard implements OnInit, OnDestroy {
     // make constants available to html for comparison
     ExerciseType = ExerciseType;
     AssessmentType = AssessmentType;
@@ -77,6 +78,7 @@ export class ModelingAssessmentDashboardComponent implements OnInit, OnDestroy {
         private translateService: TranslateService,
         private sortService: SortService,
     ) {
+        super();
         this.reverse = false;
         this.predicate = 'id';
         this.submissions = [];

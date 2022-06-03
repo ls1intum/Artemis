@@ -16,11 +16,31 @@ import { getLinkToSubmissionAssessment } from 'app/utils/navigation.utils';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { map } from 'rxjs/operators';
 import { faBan, faEdit, faFolderOpen, faSort } from '@fortawesome/free-solid-svg-icons';
+import { AbstractAssessmentDashboard } from 'app/exercises/shared/dashboards/tutor/abstract-assessment-dashboard';
+
+export enum AssessmentState {
+    UNASSESSED,
+    Manual,
+    SEMI_AUTOMATIC,
+}
+
+export enum ComplaintState {
+    OPEN,
+    ADDRESSED,
+}
+
+export enum AssessmentAndComplaintFilter {
+    UNASSESSED,
+    Manual,
+    SEMI_AUTOMATIC,
+    OPEN,
+    ADDRESSED,
+}
 
 @Component({
     templateUrl: './text-assessment-dashboard.component.html',
 })
-export class TextAssessmentDashboardComponent implements OnInit {
+export class TextAssessmentDashboardComponent extends AbstractAssessmentDashboard implements OnInit {
     ExerciseType = ExerciseType;
     exercise: TextExercise;
     submissions: TextSubmission[] = [];
@@ -33,6 +53,8 @@ export class TextAssessmentDashboardComponent implements OnInit {
     exerciseId: number;
     examId: number;
     exerciseGroupId: number;
+
+    filterOption?: number;
 
     private cancelConfirmationText: string;
 
@@ -51,6 +73,7 @@ export class TextAssessmentDashboardComponent implements OnInit {
         private translateService: TranslateService,
         private sortService: SortService,
     ) {
+        super();
         translateService.get('artemisApp.textAssessment.confirmCancel').subscribe((text) => (this.cancelConfirmationText = text));
     }
 
@@ -65,7 +88,11 @@ export class TextAssessmentDashboardComponent implements OnInit {
             this.examId = Number(this.route.snapshot.paramMap.get('examId'));
             this.exerciseGroupId = Number(this.route.snapshot.paramMap.get('exerciseGroupId'));
         }
-
+        this.route.queryParams.subscribe((queryParams) => {
+            if (queryParams['submissionFilter']) {
+                this.filterOption = Number(queryParams['submissionFilter']);
+            }
+        });
         this.exerciseService
             .find(this.exerciseId)
             .pipe(
@@ -109,7 +136,12 @@ export class TextAssessmentDashboardComponent implements OnInit {
             )
             .subscribe((submissions: TextSubmission[]) => {
                 this.submissions = submissions;
-                this.filteredSubmissions = submissions;
+                if (this.filterOption === undefined) {
+                    console.log('no filter');
+                    this.filteredSubmissions = submissions;
+                } else {
+                    this.applyChartFilter(submissions);
+                }
                 this.busy = false;
             });
     }
@@ -151,4 +183,39 @@ export class TextAssessmentDashboardComponent implements OnInit {
     getAssessmentLink(participationId: number, submissionId: number) {
         return getLinkToSubmissionAssessment(this.exercise.type!, this.courseId, this.exerciseId, participationId, submissionId, this.examId, this.exerciseGroupId);
     }
+
+    /*    applyChartFilter(submissions: TextSubmission[]) {
+        if (this.filterOption === undefined) {
+            return;
+        }
+        console.log(typeof this.filterOption);
+        switch (this.filterOption) {
+            case AssessmentAndComplaintFilter.UNASSESSED:
+                this.filteredSubmissions = submissions.filter((submission) => {
+                    return !submission.results || submission.results.every((result) => !result.rated) || submission.results.every((result) => !result.completionDate);
+                });
+                break;
+
+            case AssessmentAndComplaintFilter.Manual:
+                this.filteredSubmissions = submissions.filter((submission) => {
+                    return (
+                        submission.results && submission.results[0].rated && submission.results[0].assessmentType === AssessmentType.MANUAL && submission.results[0].completionDate
+                    );
+                });
+                break;
+
+            case AssessmentAndComplaintFilter.SEMI_AUTOMATIC:
+                this.filteredSubmissions = submissions.filter((submission) => {
+                    return (
+                        submission.results &&
+                        submission.results[0].rated &&
+                        submission.results[0].assessmentType === AssessmentType.SEMI_AUTOMATIC &&
+                        submission.results[0].completionDate
+                    );
+                });
+                break;
+            default:
+                this.filteredSubmissions = submissions;
+        }
+    }*/
 }

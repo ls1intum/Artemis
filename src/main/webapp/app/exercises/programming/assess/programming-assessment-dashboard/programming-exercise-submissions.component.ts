@@ -17,11 +17,12 @@ import { areManualResultsAllowed } from 'app/exercises/shared/exercise/exercise.
 import { getLinkToSubmissionAssessment } from 'app/utils/navigation.utils';
 import { map } from 'rxjs/operators';
 import { faBan, faEdit, faFolderOpen, faSort } from '@fortawesome/free-solid-svg-icons';
+import { AbstractAssessmentDashboard } from 'app/exercises/shared/dashboards/tutor/abstract-assessment-dashboard';
 
 @Component({
     templateUrl: './programming-exercise-submissions.component.html',
 })
-export class ProgrammingExerciseSubmissionsComponent implements OnInit {
+export class ProgrammingExerciseSubmissionsComponent extends AbstractAssessmentDashboard implements OnInit {
     ExerciseType = ExerciseType;
     exercise: ProgrammingExercise;
     submissions: ProgrammingSubmission[] = [];
@@ -53,6 +54,7 @@ export class ProgrammingExerciseSubmissionsComponent implements OnInit {
         private translateService: TranslateService,
         private sortService: SortService,
     ) {
+        super();
         translateService.get('artemisApp.programmingAssessment.confirmCancel').subscribe((text) => (this.cancelConfirmationText = text));
     }
 

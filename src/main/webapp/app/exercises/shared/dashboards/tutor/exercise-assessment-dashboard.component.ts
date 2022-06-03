@@ -150,6 +150,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
     legendPosition = LegendPosition.Below;
     assessments: any[];
     customColors: any[];
+    isAutomaticAssessedProgrammingExercise = false;
 
     // links
     submissionsLink: any[];
@@ -216,6 +217,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
         if (this.programmingExercise && this.programmingExercise.assessmentType === AssessmentType.AUTOMATIC && this.programmingExercise.allowComplaintsForAutomaticAssessments) {
             const numberOfComplaintsLabel = this.translateService.instant('artemisApp.exerciseAssessmentDashboard.numberOfOpenComplaints');
             const numberOfResolvedComplaintsLabel = this.translateService.instant('artemisApp.exerciseAssessmentDashboard.numberOfResolvedComplaints');
+            this.isAutomaticAssessedProgrammingExercise = true;
             this.customColors = [
                 { name: numberOfComplaintsLabel, value: GraphColors.YELLOW },
                 { name: numberOfResolvedComplaintsLabel, value: GraphColors.GREEN },
@@ -779,6 +781,31 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
      * not the legend
      */
     navigateToExerciseSubmissionOverview(event: any): void {
+        if (!this.isAutomaticAssessedProgrammingExercise) {
+            /*console.log(event);
+            let identifier;
+            let name;
+            if (event.value) {
+                identifier = event.name.substring(0, event.name.indexOf(' '));
+                name = event.name;
+            } else {
+                identifier = event.substring(0, event.indexOf(' '));
+                name = event;
+            }
+            console.log(identifier);*/
+            let index = 0;
+            this.assessments.forEach((data, i) => {
+                if (data.name === event.name) {
+                    index = i;
+                }
+            });
+            /*const queryParams: Params = {};
+            queryParams.submissionFilter = this.assessmentStates[index];
+            console.log(queryParams);*/
+            this.router.navigate(['course-management', this.courseId, this.exercise.type! + '-exercises', this.exerciseId, 'submissions'], {
+                queryParams: { submissionFilter: index },
+            });
+        }
         if (event.value && this.accountService.hasAnyAuthorityDirect([Authority.INSTRUCTOR])) {
             this.navigationUtilService.routeInNewTab(['course-management', this.courseId, this.exercise.type! + '-exercises', this.exerciseId, 'submissions']);
         }
