@@ -262,12 +262,14 @@ public class ExamService {
 
         // Adding registered student information to DTO
         Set<StudentExam> studentExams = studentExamRepository.findByExamId(examId); // fetched without test runs
+        Optional<GradingScale> gradingScale = gradingScaleRepository.findByExamId(examId);
+
         ObjectMapper objectMapper = new ObjectMapper();
         for (StudentExam studentExam : studentExams) {
             // Adding student results information to DTO
             List<StudentParticipation> participationsOfStudent = studentParticipations.stream()
                     .filter(studentParticipation -> studentParticipation.getStudent().get().getId().equals(studentExam.getUser().getId())).toList();
-            ExamScoresDTO.StudentResult studentResult = calculateStudentResultWithGrade(studentExam, participationsOfStudent, exam, scores, objectMapper, true);
+            ExamScoresDTO.StudentResult studentResult = calculateStudentResultWithGrade(studentExam, participationsOfStudent, exam, scores, objectMapper, gradingScale, true);
             scores.studentResults.add(studentResult);
         }
 
@@ -289,10 +291,10 @@ public class ExamService {
         var scores = new ExamScoresDTO(exam.getId(), exam.getTitle(), exam.getMaxPoints());
         var objectMapper = new ObjectMapper();
 
-        ExamScoresDTO.StudentResult studentResult = calculateStudentResultWithGrade(studentExam, participationsOfStudent, exam, scores, objectMapper, false);
+        Optional<GradingScale> gradingScale = gradingScaleRepository.findByExamId(exam.getId());
+        ExamScoresDTO.StudentResult studentResult = calculateStudentResultWithGrade(studentExam, participationsOfStudent, exam, scores, objectMapper, gradingScale, false);
         var studentExamWithGradeDTO = new StudentExamWithGradeDTO(studentExam, studentResult);
 
-        Optional<GradingScale> gradingScale = gradingScaleRepository.findByExamId(exam.getId());
         gradingScale.ifPresent(scale -> studentExamWithGradeDTO.gradeType = scale.getGradeType());
 
         List<Exercise> exercises = studentExam.getExercises();
@@ -305,7 +307,7 @@ public class ExamService {
 
     @NotNull
     private ExamScoresDTO.StudentResult calculateStudentResultWithGrade(StudentExam studentExam, List<StudentParticipation> participationsOfStudent, Exam exam,
-            ExamScoresDTO scores, ObjectMapper objectMapper, boolean calculateFirstCorrectionPoints) {
+            ExamScoresDTO scores, ObjectMapper objectMapper, Optional<GradingScale> gradingScale, boolean calculateFirstCorrectionPoints) {
         User user = studentExam.getUser();
         var studentResult = new ExamScoresDTO.StudentResult(user.getId(), user.getName(), user.getEmail(), user.getLogin(), user.getRegistrationNumber(),
                 studentExam.isSubmitted());
@@ -347,7 +349,7 @@ public class ExamService {
 
         if (scores.maxPoints != null) {
             studentResult.overallScoreAchieved = (studentResult.overallPointsAchieved / scores.maxPoints) * 100.0;
-            calculateGradeInfo(studentResult, exam.getId(), scores.maxPoints);
+            calculateGradeInfo(studentResult, gradingScale, scores.maxPoints);
         }
         return studentResult;
     }
@@ -355,11 +357,10 @@ public class ExamService {
     /**
      * Sets grading scale related properties for exam scores
      * @param studentResult Student's result for the given exam that will be modified by this method
-     * @param examId Id of the relevant exam
+     * @param gradingScale GradingScale of the relevant exam if it exists
      * @param maxPoints Max points for the given exam
      */
-    private void calculateGradeInfo(ExamScoresDTO.StudentResult studentResult, Long examId, Integer maxPoints) {
-        Optional<GradingScale> gradingScale = gradingScaleRepository.findByExamId(examId);
+    private void calculateGradeInfo(ExamScoresDTO.StudentResult studentResult, Optional<GradingScale> gradingScale, Integer maxPoints) {
         if (gradingScale.isPresent()) {
             // Calculate current student grade
             GradeStep studentGrade = gradingScaleRepository.matchPercentageToGradeStep(studentResult.overallScoreAchieved, gradingScale.get().getId());
