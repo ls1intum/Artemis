@@ -1,6 +1,6 @@
 import { Directive } from '@angular/core';
 import { FormGroup } from '@angular/forms';
-import { faFilter, faLongArrowAltDown, faLongArrowAltUp, faLongArrowRight, faPlus, faSearch, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { faFilter, faLongArrowAltDown, faLongArrowAltUp, faPlus, faSearch, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { PostContextFilter, PostSortCriterion, SortDirection } from 'app/shared/metis/metis.util';
 import { ButtonType } from '../components/button.component';
 import { Post } from 'app/entities/metis/post.model';
@@ -34,7 +34,6 @@ export abstract class CourseDiscussionDirective {
     faTimes = faTimes;
     faFilter = faFilter;
     faSearch = faSearch;
-    faLongArrowRight = faLongArrowRight;
     faLongArrowAltUp = faLongArrowAltUp;
     faLongArrowAltDown = faLongArrowAltDown;
 

@@ -12,7 +12,7 @@ import { Reaction } from 'app/entities/metis/reaction.model';
 import { PostCreateEditModalComponent } from 'app/shared/metis/posting-create-edit-modal/post-create-edit-modal/post-create-edit-modal.component';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { HttpResponse } from '@angular/common/http';
-import { faArrowLeft, faChevronLeft, faChevronRight, faGripLinesVertical } from '@fortawesome/free-solid-svg-icons';
+import { faArrowLeft, faChevronLeft, faChevronRight, faGripLinesVertical, faLongArrowRight } from '@fortawesome/free-solid-svg-icons';
 import { CourseDiscussionDirective } from 'app/shared/metis/course-discussion.directive';
 import { FormBuilder } from '@angular/forms';
 
@@ -37,6 +37,7 @@ export class DiscussionSectionComponent extends CourseDiscussionDirective implem
     faChevronLeft = faChevronLeft;
     faGripLinesVertical = faGripLinesVertical;
     faArrowLeft = faArrowLeft;
+    faLongArrowRight = faLongArrowRight;
 
     constructor(
         protected metisService: MetisService,
