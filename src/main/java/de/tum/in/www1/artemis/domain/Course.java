@@ -158,6 +158,7 @@ public class Course extends DomainObject {
     private Integer maxPoints;
 
     @Column(name = "accuracy_of_scores")
+    @JsonView(QuizView.Before.class)
     private Integer accuracyOfScores;
 
     @OneToMany(mappedBy = "course", fetch = FetchType.LAZY)

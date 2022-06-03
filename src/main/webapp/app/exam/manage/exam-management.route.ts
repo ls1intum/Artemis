@@ -392,6 +392,16 @@ export const examManagementRoute: Routes = [
         },
         canActivate: [UserRouteAccessService],
     },
+    // Import Quiz Exercise
+    {
+        path: ':examId/exercise-groups/:exerciseGroupId/quiz-exercises/import/:exerciseId',
+        component: QuizExerciseDetailComponent,
+        data: {
+            authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
+            pageTitle: 'artemisApp.quizExercise.home.title',
+        },
+        canActivate: [UserRouteAccessService],
+    },
     // Edit Quiz Exercise
     {
         path: ':examId/exercise-groups/:exerciseGroupId/quiz-exercises/:exerciseId/edit',
