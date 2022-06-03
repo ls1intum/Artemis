@@ -75,7 +75,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
      * @param studentExam StudentExam instance
      */
     set studentExam(studentExam: StudentExam) {
-        if (this.studentExamWithGrade == undefined) {
+        if (!this.studentExamWithGrade) {
             this.studentExamWithGrade = new StudentExamWithGradeDTO();
         }
         this.studentExamWithGrade.studentExam = studentExam;

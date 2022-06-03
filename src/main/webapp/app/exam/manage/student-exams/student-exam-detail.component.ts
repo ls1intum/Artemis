@@ -154,7 +154,7 @@ export class StudentExamDetailComponent implements OnInit {
      * @private
      */
     private initExercise(exercise: Exercise) {
-        if (exercise.studentParticipations?.[0]?.submissions?.[0] != undefined) {
+        if (exercise.studentParticipations?.[0]?.submissions?.[0]) {
             exercise.studentParticipations[0].submissions[0].results = exercise.studentParticipations[0].results;
             setLatestSubmissionResult(exercise?.studentParticipations[0].submissions?.[0], getLatestSubmissionResult(exercise?.studentParticipations[0].submissions?.[0]));
         }
