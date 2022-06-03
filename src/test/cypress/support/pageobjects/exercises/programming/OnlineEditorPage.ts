@@ -121,8 +121,8 @@ export class OnlineEditorPage {
     /**
      * @returns the element containing the result score percentage.
      */
-    getResultScorePercentage() {
-        return cy.get('#result-score-percentage');
+    getResultScore() {
+        return cy.get('#result-score');
     }
 
     /**
