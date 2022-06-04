@@ -108,7 +108,7 @@ public class ExamActivityIntegrationTest extends AbstractSpringIntegrationBamboo
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @WithMockUser(username = "student1", roles = "USER")
     @EnumSource(ExamActionType.class)
-    public void testCreateExamActivityInCacheAndSaveInDatabase(ExamActionType examActionType) throws Exception {
+    public void testCreateExamActivityInCache(ExamActionType examActionType) throws Exception {
         ExamAction examAction = createExamActionBasedOnType(examActionType);
 
         request.put("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/student-exams/" + studentExam.getId() + "/actions", List.of(examAction), HttpStatus.OK);

@@ -3,15 +3,16 @@ package de.tum.in.www1.artemis.domain.exam.monitoring;
 import java.util.HashSet;
 import java.util.Set;
 
-import javax.persistence.*;
-
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
+
+import de.tum.in.www1.artemis.domain.DomainObject;
 
 /**
  * In order to extend the actions in the future, this ExamActivity serves as a container of actions performed per student.
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public class ExamActivity {
+public class ExamActivity extends DomainObject {
 
     /**
      * Since we want to avoid DTOs (and avoid sending the complete exam object),
@@ -22,6 +23,7 @@ public class ExamActivity {
     /**
      * A set of unique actions performed by the student during the exam.
      */
+    @JsonManagedReference
     private Set<ExamAction> examActions = new HashSet<>();
 
     public Long getStudentExamId() {

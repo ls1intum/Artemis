@@ -2,12 +2,12 @@ package de.tum.in.www1.artemis.domain.exam.monitoring;
 
 import java.time.ZonedDateTime;
 
-import javax.persistence.*;
-
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
+import de.tum.in.www1.artemis.domain.DomainObject;
 import de.tum.in.www1.artemis.domain.enumeration.ExamActionType;
 import de.tum.in.www1.artemis.domain.exam.monitoring.actions.*;
 
@@ -25,11 +25,12 @@ import de.tum.in.www1.artemis.domain.exam.monitoring.actions.*;
                @JsonSubTypes.Type(value = EndedExamAction.class, name = "ENDED_EXAM")})
 // @formatter:on
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public class ExamAction {
+public class ExamAction extends DomainObject {
 
     /**
      * Multiple ExamActions are part of one ExamActivity.
      */
+    @JsonBackReference
     protected ExamActivity examActivity;
 
     /**
