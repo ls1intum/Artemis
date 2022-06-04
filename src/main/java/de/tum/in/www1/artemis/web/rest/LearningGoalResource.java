@@ -86,7 +86,7 @@ public class LearningGoalResource {
     }
 
     /**
-     * GET /courses/:courseId/goals/:learningGoalId/progress  gets the learning goal progress for the logged in user
+     * GET /courses/:courseId/goals/:learningGoalId/progress  gets the learning goal progress for the logged-in user
      *
      * @param courseId                 the id of the course to which the learning goal belongs
      * @param learningGoalId           the id of the learning goal for which to get the progress

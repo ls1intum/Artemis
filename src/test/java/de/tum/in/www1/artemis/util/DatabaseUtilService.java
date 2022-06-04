@@ -2065,7 +2065,7 @@ public class DatabaseUtilService {
     }
 
     /**
-     * @return A empty course
+     * @return An empty course
      */
     public Course addEmptyCourse() {
         Course course = ModelFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");

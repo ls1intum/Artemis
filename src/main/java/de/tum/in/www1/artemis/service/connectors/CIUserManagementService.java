@@ -69,8 +69,8 @@ public interface CIUserManagementService {
     void addUserToGroups(String userLogin, Set<String> group) throws ContinuousIntegrationException;
 
     /**
-     * Removes the user from the specified group in the CIS. This e.g revokes access
-     * to certain programming exericses.
+     * Removes the user from the specified group in the CIS. This e.g. revokes access
+     * to certain programming exercises.
      *
      * @param userLogin The user login of the Artemis user to remove from the group
      * @param group The group

@@ -288,7 +288,7 @@ public class ModelFactory {
     }
 
     /**
-     * Generate users that has registration numbers
+     * Generate users that have registration numbers
      *
      * @param loginPrefix prefix that will be added in front of every user's login
      * @param groups groups that the users will be added
