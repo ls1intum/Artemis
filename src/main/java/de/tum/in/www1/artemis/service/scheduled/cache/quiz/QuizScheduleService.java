@@ -41,6 +41,7 @@ import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.QuizMessagingService;
 import de.tum.in.www1.artemis.service.QuizStatisticService;
+import de.tum.in.www1.artemis.service.scheduled.cache.Cache;
 
 @Service
 public class QuizScheduleService {
@@ -266,9 +267,9 @@ public class QuizScheduleService {
                 log.info("Stop Quiz Schedule Service already disposed/cancelled");
                 // has already been disposed (sadly there is no method to check that)
             }
-            for (QuizExerciseCache cachedQuiz : ((QuizCache) quizCache).getAllQuizExerciseCaches()) {
-                if (cachedQuiz.getQuizStart() != null) {
-                    cancelScheduledQuizStart(cachedQuiz.getExerciseId());
+            for (Cache quizCache : quizCache.getAllCaches()) {
+                if (((QuizExerciseCache) quizCache).getQuizStart() != null) {
+                    cancelScheduledQuizStart(((QuizExerciseCache) quizCache).getExerciseId());
                 }
             }
             threadPoolTaskScheduler.shutdown();
@@ -404,7 +405,8 @@ public class QuizScheduleService {
         log.debug("Process cached quiz submissions");
         // global try-catch for error logging
         try {
-            for (QuizExerciseCache cachedQuiz : ((QuizCache)quizCache).getAllQuizExerciseCaches()) {
+            for (Cache cache : quizCache.getAllCaches()) {
+                QuizExerciseCache cachedQuiz = (QuizExerciseCache) cache;
                 // this way near cache is used (values will deserialize new objects)
                 Long quizExerciseId = cachedQuiz.getExerciseId();
                 // Get fresh QuizExercise from DB
