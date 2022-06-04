@@ -174,7 +174,7 @@ dependencies {
     implementation "org.eclipse.jgit:org.eclipse.jgit:${jgit_version}"
     implementation "org.eclipse.jgit:org.eclipse.jgit.ssh.apache:${jgit_version}"
     // https://search.maven.org/artifact/net.sourceforge.plantuml/plantuml
-    implementation "net.sourceforge.plantuml:plantuml:1.2022.4"
+    implementation "net.sourceforge.plantuml:plantuml:1.2022.5"
     implementation "org.imsglobal:basiclti-util:1.2.0"
     implementation "org.jasypt:jasypt:1.9.3"
     implementation "me.xdrop:fuzzywuzzy:1.4.0"
@@ -259,7 +259,7 @@ dependencies {
     implementation "org.apache.maven:maven-model:3.8.5"
     implementation "org.apache.pdfbox:pdfbox:2.0.26"
     implementation "com.google.protobuf:protobuf-java:3.21.1"
-    implementation "org.commonmark:commonmark:0.19"
+    implementation "org.commonmark:commonmark:0.19.0"
     implementation "de.tum.in.ase.athene:client:0.0.2"
 
     annotationProcessor "org.hibernate:hibernate-jpamodelgen:${hibernate_version}"
