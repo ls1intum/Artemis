@@ -33,12 +33,10 @@
             },
             "patternChangeWarning": "Changing the email pattern will trigger a re-assignment of all users to this organization"
         },
-        "artemisApp": {
-            "organization": {
-                "updated": "Organization updated!",
-                "deleted": "Organization deleted!",
-                "created": "Organization created!"
-            }
+        "organization": {
+            "updated": "Organization updated!",
+            "deleted": "Organization deleted!",
+            "created": "Organization created!"
         }
     }
 }

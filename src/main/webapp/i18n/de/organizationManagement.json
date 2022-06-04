@@ -31,12 +31,12 @@
                 "select": "Auswählen",
                 "title": "Organisationen"
             },
-            "patternChangeWarning": "Beim Ändern des Email-Musters wird eine Neuzuweisung der Nutzer:innen zu dieser Organisation ausgeführt",
-            "organization": {
-                "updated": "Organization updated!",
-                "deleted": "Organization deleted!",
-                "created": "Organization created!"
-            }
+            "patternChangeWarning": "Beim Ändern des Email-Musters wird eine Neuzuweisung der Nutzer:innen zu dieser Organisation ausgeführt"
+        },
+        "organization": {
+            "updated": "Organization updated!",
+            "deleted": "Organization deleted!",
+            "created": "Organization created!"
         }
     }
 }
