@@ -24,7 +24,6 @@ import de.tum.in.www1.artemis.domain.exam.monitoring.ExamActivity;
 import de.tum.in.www1.artemis.repository.ExamRepository;
 import de.tum.in.www1.artemis.repository.StudentExamRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
-import de.tum.in.www1.artemis.service.exam.monitoring.ExamActivityService;
 import de.tum.in.www1.artemis.service.scheduled.cache.Cache;
 
 @Service
@@ -40,15 +39,11 @@ public class ExamMonitoringScheduleService {
 
     private final StudentExamRepository studentExamRepository;
 
-    private final ExamActivityService examActivityService;
-
-    public ExamMonitoringScheduleService(HazelcastInstance hazelcastInstance, ExamRepository examRepository, StudentExamRepository studentExamRepository,
-            ExamActivityService examActivityService) {
+    public ExamMonitoringScheduleService(HazelcastInstance hazelcastInstance, ExamRepository examRepository, StudentExamRepository studentExamRepository) {
         this.threadPoolTaskScheduler = hazelcastInstance.getScheduledExecutorService(Constants.HAZELCAST_MONITORING_SCHEDULER);
         this.examCache = new ExamCache(hazelcastInstance);
         this.examRepository = examRepository;
         this.studentExamRepository = studentExamRepository;
-        this.examActivityService = examActivityService;
     }
 
     /**
@@ -95,7 +90,7 @@ public class ExamMonitoringScheduleService {
             if (examActivity == null) {
                 examActivity = new ExamActivity();
                 examActivity.setStudentExamId(studentExamId);
-                examActivity = examActivityService.save(examActivity);
+                // TODO: Save Activity
             }
 
             examAction.setExamActivity(examActivity);
@@ -213,8 +208,8 @@ public class ExamMonitoringScheduleService {
 
         ExamMonitoringCache cache = (ExamMonitoringCache) examCache.getReadCacheFor(examId);
 
-        // TODO: Check if this is enough or we need to handle this in different ways
-        examActivityService.saveAll(cache.getActivities().values());
+        // TODO: Save actions in future PR in database
+        // examActivityService.saveAll(cache.getActivities().values());
         cache.getActivities().clear();
     }
 

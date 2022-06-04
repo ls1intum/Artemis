@@ -17,9 +17,7 @@ import de.tum.in.www1.artemis.domain.exam.monitoring.ExamAction;
 import de.tum.in.www1.artemis.repository.ExamRepository;
 import de.tum.in.www1.artemis.repository.StudentExamRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
-import de.tum.in.www1.artemis.service.exam.ExamAccessService;
 import de.tum.in.www1.artemis.service.exam.StudentExamAccessService;
-import de.tum.in.www1.artemis.service.exam.monitoring.ExamActivityService;
 import de.tum.in.www1.artemis.service.scheduled.cache.monitoring.ExamMonitoringScheduleService;
 
 /**
@@ -41,20 +39,13 @@ public class ExamActivityResource {
 
     private final ExamRepository examRepository;
 
-    private final ExamActivityService examActivityService;
-
-    private final ExamAccessService examAccessService;
-
     public ExamActivityResource(StudentExamAccessService studentExamAccessService, StudentExamRepository studentExamRepository, UserRepository userRepository,
-            ExamMonitoringScheduleService examMonitoringScheduleService, ExamRepository examRepository, ExamActivityService examActivityService,
-            ExamAccessService examAccessService) {
+            ExamMonitoringScheduleService examMonitoringScheduleService, ExamRepository examRepository) {
         this.examMonitoringScheduleService = examMonitoringScheduleService;
         this.studentExamAccessService = studentExamAccessService;
         this.studentExamRepository = studentExamRepository;
         this.userRepository = userRepository;
         this.examRepository = examRepository;
-        this.examActivityService = examActivityService;
-        this.examAccessService = examAccessService;
     }
 
     /**

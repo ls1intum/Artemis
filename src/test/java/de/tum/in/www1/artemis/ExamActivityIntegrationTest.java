@@ -25,8 +25,6 @@ import de.tum.in.www1.artemis.domain.exam.monitoring.ExamAction;
 import de.tum.in.www1.artemis.domain.exam.monitoring.actions.*;
 import de.tum.in.www1.artemis.repository.ExamRepository;
 import de.tum.in.www1.artemis.repository.StudentExamRepository;
-import de.tum.in.www1.artemis.service.exam.monitoring.ExamActionService;
-import de.tum.in.www1.artemis.service.exam.monitoring.ExamActivityService;
 import de.tum.in.www1.artemis.service.scheduled.cache.monitoring.ExamMonitoringScheduleService;
 import de.tum.in.www1.artemis.util.RequestUtilService;
 
@@ -43,12 +41,6 @@ public class ExamActivityIntegrationTest extends AbstractSpringIntegrationBamboo
 
     @Autowired
     private RequestUtilService request;
-
-    @Autowired
-    private ExamActivityService examActivityService;
-
-    @Autowired
-    private ExamActionService examActionService;
 
     private Course course;
 
@@ -120,39 +112,6 @@ public class ExamActivityIntegrationTest extends AbstractSpringIntegrationBamboo
         ExamAction examAction = createExamActionBasedOnType(examActionType);
 
         request.put("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/student-exams/" + studentExam.getId() + "/actions", List.of(examAction), HttpStatus.OK);
-
-        var examActivity = examActivityService.findByStudentExamId(studentExam.getId());
-        assertThat(examActivity).isNotNull();
-    }
-
-    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
-    @WithMockUser(username = "student1", roles = "USER")
-    @EnumSource(ExamActionType.class)
-    public void testExamActionSavedInDatabase(ExamActionType examActionType) throws Exception {
-        ExamAction examAction = createExamActionBasedOnType(examActionType);
-
-        request.put("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/student-exams/" + studentExam.getId() + "/actions", List.of(examAction), HttpStatus.OK);
-
-        var examActivity = examActivityService.findByStudentExamId(studentExam.getId());
-        examMonitoringScheduleService.executeExamActivitySaveTask(exam.getId());
-        var savedActions = examActionService.findByExamActivityId(examActivity.getId());
-
-        assertThat(savedActions.size()).isEqualTo(1);
-        assertThat(savedActions.get(0).getType()).isEqualTo(examActionType);
-    }
-
-    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
-    @WithMockUser(username = "student1", roles = "USER")
-    @EnumSource(ExamActionType.class)
-    public void testExamActionNotSavedInDatabase(ExamActionType examActionType) throws Exception {
-        ExamAction examAction = createExamActionBasedOnType(examActionType);
-
-        request.put("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/student-exams/" + studentExam.getId() + "/actions", List.of(examAction), HttpStatus.OK);
-
-        var examActivity = examActivityService.findByStudentExamId(studentExam.getId());
-        var savedActions = examActionService.findByExamActivityId(examActivity.getId());
-
-        assertThat(savedActions.size()).isEqualTo(0);
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
@@ -196,10 +155,6 @@ public class ExamActivityIntegrationTest extends AbstractSpringIntegrationBamboo
         assertThat(examActivity.getExamActions().size()).isEqualTo(examActions.size());
 
         examMonitoringScheduleService.executeExamActivitySaveTask(exam.getId());
-
-        var savedActions = examActionService.findByExamActivityId(examActivity.getId());
-
-        assertThat(savedActions.size()).isEqualTo(examActions.size());
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
