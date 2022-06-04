@@ -1,11 +1,13 @@
 package de.tum.in.www1.artemis.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
 
+import java.time.ZonedDateTime;
 import java.util.Optional;
 
 import org.junit.jupiter.api.AfterEach;
@@ -17,7 +19,9 @@ import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationJenkinsGitlabTest;
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
+import de.tum.in.www1.artemis.domain.participation.Participant;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.UserRepository;
 
@@ -74,6 +78,38 @@ public class ParticipationServiceTest extends AbstractSpringIntegrationJenkinsGi
         ProgrammingSubmission programmingSubmission = (ProgrammingSubmission) participation.findLatestSubmission().get();
         assertThat(programmingSubmission.getType()).isEqualTo(SubmissionType.EXTERNAL);
         assertThat(programmingSubmission.getResults()).isNullOrEmpty(); // results are not added in the invoked method above
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void testStartExerciseWithInitializationDate_newParticipation() {
+        Course course = database.addCourseWithOneReleasedTextExercise();
+        Exercise modelling = course.getExercises().iterator().next();
+        Participant participant = database.getUserByLogin("student1");
+        ZonedDateTime initializationDate = ZonedDateTime.now().minusHours(5);
+
+        StudentParticipation studentParticipationReceived = participationService.startExerciseWithInitializationDate(modelling, participant, true, initializationDate);
+
+        assertEquals(modelling, studentParticipationReceived.getExercise());
+        assertEquals(participant, studentParticipationReceived.getStudent().get());
+        assertEquals(initializationDate, studentParticipationReceived.getInitializationDate());
+        assertEquals(InitializationState.INITIALIZED, studentParticipationReceived.getInitializationState());
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void testStartExercise_newParticipation() {
+        Course course = database.addCourseWithOneReleasedTextExercise();
+        Exercise modelling = course.getExercises().iterator().next();
+        Participant participant = database.getUserByLogin("student1");
+
+        StudentParticipation studentParticipationReceived = participationService.startExercise(modelling, participant, true);
+
+        assertEquals(modelling, studentParticipationReceived.getExercise());
+        assertEquals(participant, studentParticipationReceived.getStudent().get());
+        // Acceptance range, initializationDate is to be set to now()
+        assertEquals(ZonedDateTime.now().minusSeconds(10), studentParticipationReceived.getInitializationDate());
+        assertEquals(InitializationState.INITIALIZED, studentParticipationReceived.getInitializationState());
     }
 
 }
