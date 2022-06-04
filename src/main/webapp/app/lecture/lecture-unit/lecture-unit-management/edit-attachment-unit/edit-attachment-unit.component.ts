@@ -105,7 +105,7 @@ export class EditAttachmentUnitComponent implements OnInit {
                     this.performUpdate();
                 },
                 (error) => {
-                    // displaying the file upload error in the form but not resetting the form]
+                    // displaying the file upload error in the form but not resetting the form
                     this.attachmentUnitForm.setFileUploadError(error.message);
                     this.isLoading = false;
                 },

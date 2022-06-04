@@ -249,7 +249,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                             participation.submissions.forEach((submission) => {
                                 submission.isSynced = true;
                                 if (submission.submitted == undefined) {
-                                    // only set submitted to false it the value was not specified before
+                                    // only set submitted to false if the value was not specified before
                                     submission.submitted = false;
                                 }
                             });
@@ -654,7 +654,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         this.examParticipationService.setLastSaveFailed(true, this.courseId, this.examId);
 
         if (error.status === 401) {
-            // Unauthorized means the user needs to login to resume
+            // Unauthorized means the user needs to log in to resume
             // Therefore don't show errors because we are redirected to the login page
             this.loggedOut = true;
         } else {

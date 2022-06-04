@@ -785,7 +785,8 @@ public class DatabaseUtilService {
         posts.addAll(createBasicPosts(lecture));
 
         // add posts to course with different course-wide contexts provided in input array
-        CourseWideContext[] courseWideContexts = new CourseWideContext[] { CourseWideContext.ORGANIZATION, CourseWideContext.RANDOM, CourseWideContext.TECH_SUPPORT };
+        CourseWideContext[] courseWideContexts = new CourseWideContext[] { CourseWideContext.ORGANIZATION, CourseWideContext.RANDOM, CourseWideContext.TECH_SUPPORT,
+                CourseWideContext.ANNOUNCEMENT };
         posts.addAll(createBasicPosts(course1, courseWideContexts));
 
         return posts;
@@ -835,7 +836,7 @@ public class DatabaseUtilService {
 
     private List<Post> createBasicPosts(Course courseContext, CourseWideContext[] courseWideContexts) {
         List<Post> posts = new ArrayList<>();
-        for (int i = 0; i < 3; i++) {
+        for (int i = 0; i < courseWideContexts.length; i++) {
             Post postToAdd = createBasicPost(i);
             postToAdd.setCourse(courseContext);
             postToAdd.setCourseWideContext(courseWideContexts[i]);
@@ -2071,7 +2072,7 @@ public class DatabaseUtilService {
     }
 
     /**
-     * @return A empty course
+     * @return An empty course
      */
     public Course addEmptyCourse() {
         Course course = ModelFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");

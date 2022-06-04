@@ -534,7 +534,7 @@ export class GuidedTourService {
 
     /**
      * Determines if the tour step stored in the database is valid for the current tour
-     * It might be that tour steps have been removed in the mean time
+     * It might be that tour steps have been removed in the meantime
      * @param tourSettings  the tour setting that is stored for the current tour
      */
     private hasValidTourStepNumber(tourSettings: GuidedTourSetting[]): boolean {
@@ -1017,7 +1017,7 @@ export class GuidedTourService {
     private updateGuidedTourSettings(guidedTourKey: string, guidedTourStep: number, guidedTourState: GuidedTourState): Observable<EntityResponseType> {
         if (!this.guidedTourSettings) {
             this.resetTour();
-            throw new Error('Cannot update non existing guided tour settings');
+            throw new Error('Cannot update non-existing guided tour settings');
         }
         const existingSettingIndex = this.guidedTourSettings.findIndex((setting) => setting.guidedTourKey === guidedTourKey);
         if (existingSettingIndex !== -1) {
@@ -1037,7 +1037,7 @@ export class GuidedTourService {
     private deleteGuidedTourSetting(guidedTourKey: string): Observable<EntityResponseType> {
         if (!this.guidedTourSettings) {
             this.resetTour();
-            throw new Error('Cannot update non existing guided tour settings');
+            throw new Error('Cannot update non-existing guided tour settings');
         }
 
         const index = this.guidedTourSettings.findIndex((setting) => setting.guidedTourKey === guidedTourKey);
