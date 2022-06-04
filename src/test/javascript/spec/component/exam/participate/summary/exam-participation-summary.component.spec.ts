@@ -68,9 +68,10 @@ const exam = {
     publishResultsDate,
     examStudentReviewStart,
     examStudentReviewEnd,
+    testExam: false,
 } as Exam;
 
-const TestExam = {
+const testExam = {
     id: 2,
     title: 'TestExam for Testing',
     visibleDate,
@@ -99,7 +100,19 @@ const modelingExercise = { id: 3, type: ExerciseType.MODELING, studentParticipat
 const programmingExercise = { id: 4, type: ExerciseType.PROGRAMMING, studentParticipations: [programmingParticipation], exerciseGroup } as ProgrammingExercise;
 const exercises = [textExercise, quizExercise, modelingExercise, programmingExercise];
 
-const studentExam = { id: 1, exam, user, exercises } as StudentExam;
+const studentExam = {
+    id: 1,
+    exam,
+    user,
+    exercises,
+} as StudentExam;
+
+const studentExamForTestExam = {
+    id: 2,
+    exam: testExam,
+    user,
+    exercises,
+} as StudentExam;
 
 function sharedSetup(url: string[]) {
     beforeEach(() => {
@@ -190,14 +203,13 @@ describe('ExamParticipationSummaryComponent', () => {
     }));
 
     it('should correctly identify a TestExam', () => {
-        studentExam.exam = TestExam;
-        component.studentExam = studentExam;
+        component.studentExam = studentExamForTestExam;
         component.ngOnInit();
         expect(component.isTestExam).toBeTrue();
         expect(component.testExamConduction).toBeTrue();
 
-        studentExam.submitted = true;
-        component.studentExam = studentExam;
+        studentExamForTestExam.submitted = true;
+        component.studentExam = studentExamForTestExam;
         component.ngOnInit();
         expect(component.isTestExam).toBeTrue();
         expect(component.testExamConduction).toBeFalse();
@@ -214,7 +226,7 @@ describe('ExamParticipationSummaryComponent', () => {
         studentExam.submitted = true;
         component.studentExam = studentExam;
         component.ngOnInit();
-        expect(component.isTestExam).toBeTrue();
+        expect(component.isTestExam).toBeFalse();
         expect(component.testExamConduction).toBeFalse();
         expect(component.isTestRun).toBeFalse();
         expect(component.testRunConduction).toBeFalse();

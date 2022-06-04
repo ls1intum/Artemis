@@ -88,8 +88,9 @@ public class ExamAccessService {
 
     /**
      * Retrieves a specified studentExam for a TestExam from the database and sends it to the client
-     * @param courseId the course to which the exam belongs
-     * @param examId the examId of the exam we are interested in
+     *
+     * @param courseId      the course to which the exam belongs
+     * @param examId        the examId of the exam we are interested in
      * @param studentExamId the id of the studentExam we are interested in
      * @return a StudentExam without Exercises
      */
@@ -120,20 +121,44 @@ public class ExamAccessService {
     }
 
     /**
-     * Generates a new TestExam for the specified student
+     * Either retrieves an existing StudentExam for a TestExam from the Database or generates a new StudentExam
      *
-     * @param courseId the courseId of the corresponding course
-     * @param examId   the examId for which the StudentExam should be fetched / created
-     * @return a StudentExam for the student and exam
+     * @param courseId - the course to which the exam is linked
+     * @param examId   - the exam for which the studentExam should be retrieved
+     * @return a StudentExam, either existing or newly generated
      */
-    public StudentExam generateTestExamElseThrow(Long courseId, Long examId) {
+    public StudentExam fetchStudentExamForTestExamOrGenerateTestExam(Long courseId, Long examId) {
         User currentUser = userRepository.getUserWithGroupsAndAuthorities();
 
         // Check that the current user is at least student in the course.
         Course course = courseRepository.findByIdElseThrow(courseId);
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, currentUser);
 
-        StudentExam studentExam = studentExamService.generateTestExam(examId, currentUser);
+        StudentExam studentExam;
+
+        // If a StudentExam exists for the exam, we can retrieve it from the database
+        Optional<StudentExam> optionalStudentExam = studentExamRepository.findByExamIdAndUserId(examId, currentUser.getId());
+
+        if (optionalStudentExam.isPresent()) {
+            studentExam = optionalStudentExam.get();
+
+            // For submitted studentExams, the /summary should be used
+            if (Boolean.TRUE.equals(studentExam.isSubmitted()) || studentExam.getSubmissionDate() != null) {
+                throw new AccessForbiddenException("The requested studentExam is already submitted");
+            }
+
+            if (Boolean.TRUE.equals(studentExam.isEnded())) {
+                throw new AccessForbiddenException("The requested studentExam has already ended");
+            }
+
+            if (!studentExam.getExam().isTestExam()) {
+                throw new AccessForbiddenException("The requested exam is no TestExam");
+            }
+
+        }
+        else {
+            studentExam = studentExamService.generateTestExam(examId, currentUser);
+        }
         // For the start of the exam, the exercises are not needed. They are later loaded via StudentExamResource
         studentExam.setExercises(null);
 

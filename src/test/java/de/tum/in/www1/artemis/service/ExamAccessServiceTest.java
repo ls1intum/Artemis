@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import java.time.ZonedDateTime;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -44,6 +45,10 @@ public class ExamAccessServiceTest extends AbstractSpringIntegrationBambooBitbuc
 
     private Exam exam2;
 
+    private Exam testExam1;
+
+    private Exam testExam2;
+
     private ExerciseGroup exerciseGroup1;
 
     private ExerciseGroup exerciseGroup2;
@@ -51,6 +56,10 @@ public class ExamAccessServiceTest extends AbstractSpringIntegrationBambooBitbuc
     private StudentExam studentExam1;
 
     private StudentExam studentExam2;
+
+    private StudentExam studentExamForTestExam1;
+
+    private StudentExam studentExamForTestExam2;
 
     @BeforeEach
     void init() {
@@ -69,10 +78,14 @@ public class ExamAccessServiceTest extends AbstractSpringIntegrationBambooBitbuc
         courseRepository.save(course2);
         exam1 = database.addExamWithExerciseGroup(course1, true);
         exam2 = database.addExamWithExerciseGroup(course2, true);
+        testExam1 = database.addTestExamWithExerciseGroup(course1, true);
+        testExam2 = database.addTestExamWithExerciseGroup(course2, true);
         exerciseGroup1 = exam1.getExerciseGroups().get(0);
         exerciseGroup2 = exam2.getExerciseGroups().get(0);
         studentExam1 = database.addStudentExam(exam1);
         studentExam2 = database.addStudentExam(exam2);
+        studentExamForTestExam1 = database.addStudentExamForTestExam(testExam1, users.get(0));
+        studentExamForTestExam2 = database.addStudentExamForTestExam(testExam2, users.get(0));
     }
 
     @AfterEach
@@ -267,65 +280,96 @@ public class ExamAccessServiceTest extends AbstractSpringIntegrationBambooBitbuc
     @Test
     @WithMockUser(username = "student1", roles = "USER")
     public void testCheckAndGetCourseAndExamAccessForConduction_registeredUser() {
-        studentExam1.setUser(database.getUserByLogin("student1"));
-        studentExamRepository.save(studentExam1);
-        assertThatThrownBy(() -> examAccessService.getExamInCourseElseThrow(course1.getId(), exam1.getId())).isInstanceOf(AccessForbiddenException.class);
+        testExam1.setRegisteredUsers(Set.of());
+        examRepository.save(testExam1);
+        assertThatThrownBy(() -> examAccessService.getExamInCourseElseThrow(course1.getId(), testExam1.getId())).isInstanceOf(AccessForbiddenException.class);
     }
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
     public void testCheckAndGetCourseAndExamAccessForConduction_examIsVisible() {
-        Exam exam = database.addActiveExamWithRegisteredUser(course1, database.getUserByLogin("student1"));
-        exam.setVisibleDate(ZonedDateTime.now().plusMinutes(5));
-        examRepository.save(exam);
-        assertThatThrownBy(() -> examAccessService.getExamInCourseElseThrow(course1.getId(), exam.getId())).isInstanceOf(AccessForbiddenException.class);
-    }
-
-    @Test
-    @WithMockUser(username = "student1", roles = "USER")
-    public void testGetStudentExamForTestExam_registeredUser() {
-        Exam exam = database.addActiveTestExamWithRegisteredUserWithoutStudentExam(course1, database.getUserByLogin("student2"));
-        studentExam1.setUser(database.getUserByLogin("student1"));
-        studentExamRepository.save(studentExam1);
-        examRepository.save(exam);
-        assertThatThrownBy(() -> examAccessService.getStudentExamForTestExamElseThrow(course1.getId(), exam1.getId(), studentExam1.getId()))
-                .isInstanceOf(AccessForbiddenException.class);
+        testExam1.setVisibleDate(ZonedDateTime.now().plusMinutes(5));
+        examRepository.save(testExam1);
+        assertThatThrownBy(() -> examAccessService.getExamInCourseElseThrow(course1.getId(), testExam1.getId())).isInstanceOf(AccessForbiddenException.class);
     }
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
     public void testGetStudentExamForTestExam_studentExamExists() {
-        assertThatThrownBy(() -> examAccessService.getStudentExamForTestExamElseThrow(course1.getId(), exam1.getId(), 555L)).isInstanceOf(EntityNotFoundException.class);
+        assertThatThrownBy(() -> examAccessService.getStudentExamForTestExamElseThrow(course1.getId(), testExam1.getId(), 555L)).isInstanceOf(EntityNotFoundException.class);
     }
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
     public void testGetStudentExamForTestExam_wrongExamId() {
-        Exam exam = database.addActiveTestExamWithRegisteredUserWithoutStudentExam(course1, database.getUserByLogin("student1"));
-        studentExam1.setUser(database.getUserByLogin("student1"));
-        studentExamRepository.save(studentExam1);
-        examRepository.save(exam);
-        assertThatThrownBy(() -> examAccessService.getStudentExamForTestExamElseThrow(course1.getId(), 7777L, studentExam1.getId())).isInstanceOf(AccessForbiddenException.class);
+        assertThatThrownBy(() -> examAccessService.getStudentExamForTestExamElseThrow(course1.getId(), 7777L, studentExamForTestExam1.getId()))
+                .isInstanceOf(AccessForbiddenException.class);
     }
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
     public void testGetStudentExamForTestExam_realExam() {
-        Exam exam = database.addActiveExamWithRegisteredUser(course1, database.getUserByLogin("student1"));
-        studentExam1.setUser(database.getUserByLogin("student1"));
-        studentExamRepository.save(studentExam1);
-        examRepository.save(exam);
-        assertThatThrownBy(() -> examAccessService.getStudentExamForTestExamElseThrow(course1.getId(), exam1.getId(), studentExam1.getId()))
+        assertThatThrownBy(() -> examAccessService.getStudentExamForTestExamElseThrow(course1.getId(), testExam1.getId(), studentExam1.getId()))
                 .isInstanceOf(AccessForbiddenException.class);
     }
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
     public void testGetStudentExamForTestExam_wrongExamId_examIsVisible() {
-        Exam exam = database.addActiveTestExamWithRegisteredUserWithoutStudentExam(course1, database.getUserByLogin("student1"));
-        exam.setVisibleDate(ZonedDateTime.now().plusMinutes(5));
-        examRepository.save(exam);
-        assertThatThrownBy(() -> examAccessService.getStudentExamForTestExamElseThrow(course1.getId(), 7777L, studentExam1.getId())).isInstanceOf(AccessForbiddenException.class);
+        testExam1.setVisibleDate(ZonedDateTime.now().plusMinutes(5));
+        examRepository.save(testExam1);
+        assertThatThrownBy(() -> examAccessService.getStudentExamForTestExamElseThrow(course1.getId(), testExam1.getId(), studentExamForTestExam1.getId()))
+                .isInstanceOf(AccessForbiddenException.class);
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void testFetchStudentExamForTestExamOrGenerateTestExam_noCourseAccess() {
+        database.getUserByLogin("student1").setGroups(Set.of());
+        assertThatThrownBy(() -> examAccessService.fetchStudentExamForTestExamOrGenerateTestExam(course1.getId(), testExam1.getId())).isInstanceOf(AccessForbiddenException.class);
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void testFetchStudentExamForTestExamOrGenerateTestExam_StudentExamPresent_submitted() {
+        studentExamForTestExam1.setSubmitted(true);
+        studentExamRepository.save(studentExamForTestExam1);
+        assertThatThrownBy(() -> examAccessService.fetchStudentExamForTestExamOrGenerateTestExam(course1.getId(), testExam1.getId())).isInstanceOf(AccessForbiddenException.class);
+
+        studentExamForTestExam1.setSubmitted(false);
+        studentExamForTestExam1.setSubmissionDate(ZonedDateTime.now().minusMinutes(5));
+        assertThatThrownBy(() -> examAccessService.fetchStudentExamForTestExamOrGenerateTestExam(course1.getId(), testExam1.getId())).isInstanceOf(AccessForbiddenException.class);
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void testFetchStudentExamForTestExamOrGenerateTestExam_ended() {
+        studentExamForTestExam1.setStarted(true);
+        studentExamForTestExam1.setStartedDate(ZonedDateTime.now().minusHours(10));
+        studentExamRepository.save(studentExamForTestExam1);
+        assertThatThrownBy(() -> examAccessService.fetchStudentExamForTestExamOrGenerateTestExam(course1.getId(), testExam1.getId())).isInstanceOf(AccessForbiddenException.class);
+
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void testFetchStudentExamForTestExamOrGenerateTestExam_realExam() {
+        assertThatThrownBy(() -> examAccessService.fetchStudentExamForTestExamOrGenerateTestExam(course1.getId(), exam1.getId())).isInstanceOf(AccessForbiddenException.class);
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void testFetchStudentExamForTestExamOrGenerateTestExam_notVisible() {
+        testExam1.setVisibleDate(ZonedDateTime.now().plusHours(5));
+        examRepository.save(testExam1);
+        assertThatThrownBy(() -> examAccessService.fetchStudentExamForTestExamOrGenerateTestExam(course1.getId(), testExam1.getId())).isInstanceOf(AccessForbiddenException.class);
+
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void testFetchStudentExamForTestExamOrGenerateTestExam_examBelongsToCourse() {
+        assertThatThrownBy(() -> examAccessService.getExamInCourseElseThrow(course1.getId(), studentExamForTestExam2.getId())).isInstanceOf(ConflictException.class);
     }
 
 }

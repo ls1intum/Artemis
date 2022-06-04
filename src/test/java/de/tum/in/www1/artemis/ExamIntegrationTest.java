@@ -2441,6 +2441,37 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
+    public void testGetStudentExamForTestExamForStart_fetchExam() throws Exception {
+        StudentExam studentExam = database.addStudentExamForTestExam(testExam1, database.getUserByLogin("student1"));
+
+        StudentExam studentExamReceived = request.get("/api/courses/" + course1.getId() + "/exams/" + testExam1.getId() + "/start-test-exam", HttpStatus.OK, StudentExam.class);
+        assertEquals(studentExam, studentExamReceived);
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void testGetStudentExamForTestExamForStart_fetchExam_submitted() throws Exception {
+        StudentExam studentExam = database.addStudentExamForTestExam(testExam1, database.getUserByLogin("student1"));
+        studentExam.setSubmissionDate(ZonedDateTime.now().minusHours(10));
+        studentExam.setSubmitted(true);
+        studentExamRepository.save(studentExam);
+
+        request.get("/api/courses/" + course1.getId() + "/exams/" + testExam1.getId() + "/start-test-exam", HttpStatus.FORBIDDEN, StudentExam.class);
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void testGetStudentExamForTestExamForStart_fetchExam_ended_notSubmitted() throws Exception {
+        StudentExam studentExam = database.addStudentExamForTestExam(testExam1, database.getUserByLogin("student1"));
+        studentExam.setStartedDate(ZonedDateTime.now().minusHours(10));
+        studentExam.setStarted(true);
+        studentExamRepository.save(studentExam);
+
+        request.get("/api/courses/" + course1.getId() + "/exams/" + testExam1.getId() + "/start-test-exam", HttpStatus.FORBIDDEN, StudentExam.class);
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
     public void testGetStudentExamForTestExamForStart_successful() throws Exception {
 
         request.get("/api/courses/" + course1.getId() + "/exams/" + testExam1.getId() + "/start-test-exam", HttpStatus.OK, StudentExam.class);

@@ -850,7 +850,7 @@ public class ExamResource {
     public ResponseEntity<StudentExam> getStudentExamForTestExamForStart(@PathVariable Long courseId, @PathVariable Long examId) {
         log.debug("REST request to get TestExam {} for conduction", examId);
 
-        StudentExam exam = examAccessService.generateTestExamElseThrow(courseId, examId);
+        StudentExam exam = examAccessService.fetchStudentExamForTestExamOrGenerateTestExam(courseId, examId);
 
         return ResponseEntity.ok(exam);
     }

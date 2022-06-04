@@ -62,7 +62,7 @@ export class ExamParticipationSummaryComponent implements OnInit {
         this.isTestRun = this.route.snapshot.url[1]?.toString() === 'test-runs';
         this.isTestExam = this.studentExam.exam!.testExam!;
         this.testRunConduction = this.isTestRun && this.route.snapshot.url[3]?.toString() === 'conduction';
-        this.testExamConduction = !this.studentExam.submitted;
+        this.testExamConduction = this.isTestExam && !this.studentExam.submitted;
         this.courseId = Number(this.route.snapshot.paramMap.get('courseId'));
         this.setExamWithOnlyIdAndStudentReviewPeriod();
     }

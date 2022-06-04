@@ -167,7 +167,7 @@ public class StudentExam extends AbstractAuditingEntity {
         if (Boolean.TRUE.equals(testRun)) {
             return false;
         }
-        if (this.getExam().isTestExam() && this.startedDate == null) {
+        if (this.getExam().isTestExam() && !Boolean.TRUE.equals(this.started) && this.startedDate == null) {
             return false;
         }
         return ZonedDateTime.now().isAfter(getIndividualEndDate());
