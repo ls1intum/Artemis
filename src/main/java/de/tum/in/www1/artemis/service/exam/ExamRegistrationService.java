@@ -113,7 +113,7 @@ public class ExamRegistrationService {
      * Returns <code>true</code> if the current user is registered for the exam
      *
      * @param examId the id of the exam
-     * @return <code>true</code> if the user if registered for the exam, false if this is not the case or the exam does not exist
+     * @return <code>true</code> if the user is registered for the exam, false if this is not the case or the exam does not exist
      */
     public boolean isCurrentUserRegisteredForExam(Long examId) {
         return isUserRegisteredForExam(examId, userRepository.getUser().getId());
@@ -124,14 +124,14 @@ public class ExamRegistrationService {
      *
      * @param examId the id of the exam
      * @param userId the id of the user to check
-     * @return <code>true</code> if the user if registered for the exam, false if this is not the case or the exam does not exist
+     * @return <code>true</code> if the user is registered for the exam, false if this is not the case or the exam does not exist
      */
     public boolean isUserRegisteredForExam(Long examId, Long userId) {
         return examRepository.isUserRegisteredForExam(examId, userId);
     }
 
     /**
-     * Registers student to the exam. In order to do this,  we add the user the the course group, because the user only has access to the exam of a course if the student also has access to the course of the exam.
+     * Registers student to the exam. In order to do this, we add the user to the course group, because the user only has access to the exam of a course if the student also has access to the course of the exam.
      * We only need to add the user to the course group, if the student is not yet part of it, otherwise the student cannot access the exam (within the course).
      *
      * @param course  the course containing the exam

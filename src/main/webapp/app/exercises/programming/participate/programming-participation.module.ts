@@ -5,7 +5,6 @@ import { CodeEditorStudentContainerComponent } from 'app/exercises/programming/p
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { ArtemisProgrammingExerciseActionsModule } from 'app/exercises/programming/shared/actions/programming-exercise-actions.module';
 import { ArtemisResultModule } from 'app/exercises/shared/result/result.module';
-import { ArtemisExerciseHintParticipationModule } from 'app/exercises/shared/exercise-hint/participate/exercise-hint-participation.module';
 import { ArtemisProgrammingExerciseInstructionsRenderModule } from 'app/exercises/programming/shared/instructions-render/programming-exercise-instructions-render.module';
 import { ArtemisProgrammingAssessmentModule } from 'app/exercises/programming/assess/programming-assessment.module';
 import { ArtemisHeaderExercisePageWithDetailsModule } from 'app/exercises/shared/exercise-headers/exercise-headers.module';
@@ -17,7 +16,6 @@ import { SubmissionResultStatusModule } from 'app/overview/submission-result-sta
         ArtemisProgrammingParticipationRoutingModule,
         ArtemisCodeEditorModule,
         ArtemisProgrammingExerciseActionsModule,
-        ArtemisExerciseHintParticipationModule,
         ArtemisResultModule,
         ArtemisProgrammingExerciseInstructionsRenderModule,
         ArtemisProgrammingAssessmentModule,

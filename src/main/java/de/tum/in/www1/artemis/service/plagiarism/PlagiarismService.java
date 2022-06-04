@@ -31,7 +31,7 @@ public class PlagiarismService {
      *
      * @param comparison to anonymize.
      * @param userLogin of the student asking to see his plagiarism comparison.
-     * @return the anoymized plagiarism comparison for the given student
+     * @return the anonymized plagiarism comparison for the given student
      */
     public PlagiarismComparison anonymizeComparisonForStudent(PlagiarismComparison comparison, String userLogin) {
         if (comparison.getSubmissionA().getStudentLogin().equals(userLogin)) {
@@ -54,7 +54,7 @@ public class PlagiarismService {
      *
      * @param submission    the submission to anonymize.
      * @param userLogin     the user login of the student asking to see his plagiarism comparison.
-     * @return the anoymized submission for the given student
+     * @return the anonymized submission for the given student
      */
     public Submission anonymizeSubmissionForStudent(Submission submission, String userLogin) {
         var comparisonOptional = plagiarismComparisonRepository.findBySubmissionA_SubmissionIdOrSubmissionB_SubmissionId(submission.getId(), submission.getId());

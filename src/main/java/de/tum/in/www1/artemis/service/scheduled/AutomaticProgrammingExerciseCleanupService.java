@@ -184,7 +184,7 @@ public class AutomaticProgrammingExerciseCleanupService {
             }
 
             // 1st case: delete the build plan 1 day after the build and test student submissions after due date, because then no builds should be executed any more
-            // and the students repos will be locked anyways.
+            // and the students repos will be locked anyway.
             if (programmingExercise.getBuildAndTestStudentSubmissionsAfterDueDate().plusDays(1).isBefore(now())) {
                 participationsWithBuildPlanToDelete.add(participation);
                 countAfterBuildAndTestDate.getAndIncrement();

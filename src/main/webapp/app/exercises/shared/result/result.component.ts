@@ -185,7 +185,7 @@ export class ResultComponent implements OnInit, OnChanges {
     ngOnChanges(changes: SimpleChanges) {
         if (changes.participation || changes.result) {
             this.ngOnInit();
-            // If is building, we change the templateStatus to building regardless of any other settings.
+            // If it's building, we change the templateStatus to building regardless of any other settings.
         } else if (changes.missingResultInfo) {
             this.evaluate();
         } else if (changes.isBuilding && changes.isBuilding.currentValue) {
@@ -317,7 +317,7 @@ export class ResultComponent implements OnInit, OnChanges {
     }
 
     /**
-     * Gets the tooltip text that should displayed next to the result string. Not required.
+     * Gets the tooltip text that should be displayed next to the result string. Not required.
      */
     buildResultTooltip() {
         // Only show the 'preliminary' tooltip for programming student participation results and if the buildAndTestAfterDueDate has not passed.
