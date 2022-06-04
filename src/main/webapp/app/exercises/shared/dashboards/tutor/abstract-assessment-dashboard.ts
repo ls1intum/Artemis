@@ -4,14 +4,13 @@ import { AssessmentAndComplaintFilter } from 'app/exercises/text/assess/text-ass
 
 export abstract class AbstractAssessmentDashboard {
     filterOption?: number;
-    submissions: Submission[] = [];
-    filteredSubmissions: Submission[] = [];
+    submissions: Submission[];
+    filteredSubmissions: Submission[];
 
-    applyChartFilter(submissions: Submission[]) {
+    applyChartFilter(submissions: Submission[]): void {
         if (this.filterOption === undefined) {
             return;
         }
-        console.log(typeof this.filterOption);
         switch (this.filterOption) {
             case AssessmentAndComplaintFilter.UNASSESSED:
                 this.filteredSubmissions = submissions.filter((submission) => {
