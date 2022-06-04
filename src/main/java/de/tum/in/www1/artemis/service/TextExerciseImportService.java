@@ -22,9 +22,12 @@ public class TextExerciseImportService extends ExerciseImportService {
 
     private final FeedbackRepository feedbackRepository;
 
+    private final TextBlockRepository textBlockRepository;
+
     public TextExerciseImportService(TextExerciseRepository textExerciseRepository, ExampleSubmissionRepository exampleSubmissionRepository,
             SubmissionRepository submissionRepository, ResultRepository resultRepository, TextBlockRepository textBlockRepository, FeedbackRepository feedbackRepository) {
-        super(exampleSubmissionRepository, submissionRepository, resultRepository, textBlockRepository);
+        super(exampleSubmissionRepository, submissionRepository, resultRepository);
+        this.textBlockRepository = textBlockRepository;
         this.textExerciseRepository = textExerciseRepository;
         this.feedbackRepository = feedbackRepository;
     }
@@ -96,7 +99,6 @@ public class TextExerciseImportService extends ExerciseImportService {
      * @param newExercise The new exercise in which we will insert the example submissions
      * @return The cloned set of example submissions
      */
-    @Override
     Set<ExampleSubmission> copyExampleSubmission(Exercise templateExercise, Exercise newExercise) {
         log.debug("Copying the ExampleSubmissions to new Exercise: {}", newExercise);
         Set<ExampleSubmission> newExampleSubmissions = new HashSet<>();
@@ -122,7 +124,6 @@ public class TextExerciseImportService extends ExerciseImportService {
      * @param originalSubmission The original submission to be copied.
      * @return The cloned submission
      */
-    @Override
     TextSubmission copySubmission(final Submission originalSubmission) {
         TextSubmission newSubmission = new TextSubmission();
         if (originalSubmission != null) {
