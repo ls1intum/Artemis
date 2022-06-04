@@ -191,7 +191,7 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
                         this.calculateFilterDependentStatistics();
                         const medianType = this.gradingScaleExists && !this.isBonus ? MedianType.PASSED : MedianType.OVERALL;
                         // if a grading scale exists and the scoring type is not bonus, per default the median of all passed exams is shown.
-                        // We need to set the value for the overall median in order to show it next to the check box
+                        // We need to set the value for the overall median in order to show it next to the checkbox
                         if (medianType === MedianType.PASSED) {
                             // We pass MedianType.OVERALL since we want the median of all exams to be shown, not only of the submitted exams
                             this.setOverallChartMedianDependingOfExamsIncluded(MedianType.OVERALL);
@@ -318,7 +318,7 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
                 // Update the exerciseGroup statistic
                 const exGroupResult = groupIdToGroupResults.get(Number(exGroupId));
                 if (!exGroupResult) {
-                    // This should never been thrown. Indicates that the information in the ExamScoresDTO is inconsistent
+                    // This should never be thrown. Indicates that the information in the ExamScoresDTO is inconsistent
                     throw new Error(`ExerciseGroup with id ${exGroupId} does not exist in this exam!`);
                 }
                 exGroupResult.noOfParticipantsWithFilter++;
@@ -327,7 +327,7 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
                 // Update the specific exercise statistic
                 const exerciseResult = exGroupResult.exerciseResults.find((exResult) => exResult.exerciseId === studentExerciseResult.exerciseId);
                 if (!exerciseResult) {
-                    // This should never been thrown. Indicates that the information in the ExamScoresDTO is inconsistent
+                    // This should never be thrown. Indicates that the information in the ExamScoresDTO is inconsistent
                     throw new Error(`Exercise with id ${studentExerciseResult.exerciseId} does not exist in this exam!`);
                 } else {
                     exerciseResult.noOfParticipantsWithFilter++;
@@ -364,7 +364,7 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
         const studentGradesSubmittedInFirstCorrectionRound: number[] = [];
         const studentGradesTotalInFirstCorrectionRound: number[] = [];
 
-        // Collect student points independent from the filter settings
+        // Collect student points independent of the filter settings
         for (const studentResult of this.studentResults) {
             studentPointsTotal.push(studentResult.overallPointsAchieved!);
             studentPointsTotalInFirstCorrectionRound.push(studentResult.overallPointsAchievedInFirstCorrection!);
@@ -931,7 +931,7 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
      * @private
      */
     private determineSubmittedAndNonEmptyValues(): void {
-        // If one value is not undefined, all other values have been computed as well and we take the cached results instead of recalcuating every time
+        // If one value is not undefined, all other values have been computed as well and we take the cached results instead of recalculating every time
         if (this.aggregatedExamResults.meanPointsSubmittedAndNonEmpty) {
             return;
         }

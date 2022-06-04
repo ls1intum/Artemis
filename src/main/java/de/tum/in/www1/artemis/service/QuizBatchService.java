@@ -165,13 +165,17 @@ public class QuizBatchService {
     /**
      * Return the batch that a user the currently participating in for a given exercise
      * @param quizExercise the quiz for that the batch should be look up for
-     * @param user the user that the batch should be looked up for
+     * @param login the login of the user that the batch should be looked up for
      * @return the batch that the user currently takes part in or empty
      */
-    public Optional<QuizBatch> getQuizBatchForStudent(QuizExercise quizExercise, User user) {
-        var batch = quizScheduleService.getQuizBatchForStudent(quizExercise, user);
+    public Optional<QuizBatch> getQuizBatchForStudentByLogin(QuizExercise quizExercise, String login) {
+        var batch = quizScheduleService.getQuizBatchForStudentByLogin(quizExercise, login);
         if (batch.isEmpty() && quizExercise.getQuizMode() == QuizMode.SYNCHRONIZED) {
             return Optional.of(getOrCreateSynchronizedQuizBatch(quizExercise));
+        }
+        if (quizExercise.getQuizBatches() != null && batch.isPresent()) {
+            final Long batchId = batch.get();
+            return quizExercise.getQuizBatches().stream().filter(b -> Objects.equals(b.getId(), batchId)).findAny().or(() -> quizBatchRepository.findById(batchId));
         }
         return batch.flatMap(quizBatchRepository::findById);
     }

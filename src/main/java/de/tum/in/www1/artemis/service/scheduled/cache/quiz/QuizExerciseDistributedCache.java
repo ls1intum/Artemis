@@ -189,7 +189,7 @@ final class QuizExerciseDistributedCache extends QuizExerciseCache implements Ha
 
         @Override
         public void write(ObjectDataOutput out, QuizExerciseDistributedCache exerciseCacheImpl) throws IOException {
-            // Hazelcast will choose the best fit from it's own serializers for each object
+            // Hazelcast will choose the best fit from its own serializers for each object
             out.writeLong(exerciseCacheImpl.getExerciseId());
             out.writeObject(exerciseCacheImpl.quizStart);
         }

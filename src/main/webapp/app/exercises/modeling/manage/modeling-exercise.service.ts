@@ -123,7 +123,7 @@ export class ModelingExerciseService implements ExerciseServicable<ModelingExerc
     }
 
     /**
-     * Re-evaluates and updates an modeling exercise.
+     * Re-evaluates and updates a modeling exercise.
      *
      * @param modelingExercise that should be updated of type {ModelingExercise}
      * @param req optional request options

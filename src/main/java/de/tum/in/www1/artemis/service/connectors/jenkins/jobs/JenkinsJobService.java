@@ -158,7 +158,7 @@ public class JenkinsJobService {
      * Gets the job config of a job that is inside a folder
      * @param folderName the name of the folder
      * @param jobName the name of the job
-     * @return the job config as an xml document or null if the job doesn't exist
+     * @return the job config as xml document or null if the job doesn't exist
      * @throws IOException in case of errors
      */
     public Document getJobConfig(String folderName, String jobName) throws IOException {

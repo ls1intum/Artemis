@@ -351,7 +351,7 @@ public class UserJenkinsGitlabIntegrationTest extends AbstractSpringIntegrationJ
     @WithMockUser(username = "admin", roles = "ADMIN")
     public void createUserWithGroupsAlreadyFailsInGitlab() throws Exception {
         Course course = database.addEmptyCourse();
-        ProgrammingExercise programmingExericse = database.addProgrammingExerciseToCourse(course, false);
+        ProgrammingExercise programmingExercise = database.addProgrammingExerciseToCourse(course, false);
 
         User newUser = userTestService.student;
         newUser.setId(null);
@@ -359,7 +359,7 @@ public class UserJenkinsGitlabIntegrationTest extends AbstractSpringIntegrationJ
         newUser.setEmail("foobar@tum.com");
         newUser.setGroups(Set.of("tutor", "instructor2"));
 
-        gitlabRequestMockProvider.mockAddUserToGroupsFails(newUser, programmingExericse.getProjectKey());
+        gitlabRequestMockProvider.mockAddUserToGroupsFails(newUser, programmingExercise.getProjectKey());
         request.post("/api/users", new ManagedUserVM(newUser), HttpStatus.INTERNAL_SERVER_ERROR);
     }
 

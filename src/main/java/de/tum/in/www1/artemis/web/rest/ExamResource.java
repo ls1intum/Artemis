@@ -435,7 +435,7 @@ public class ExamResource {
      *
      * @param courseId the id of the course to retrieve
      * @param examId   the id of the exam that contains the exercises
-     * @return data about a exam test run including all exercises, plus some data for the tutor as tutor status for assessment
+     * @return data about an exam test run including all exercises, plus some data for the tutor as tutor status for assessment
      */
     @GetMapping("/courses/{courseId}/exams/{examId}/exam-for-test-run-assessment-dashboard")
     @PreAuthorize("hasRole('INSTRUCTOR')")
@@ -808,7 +808,7 @@ public class ExamResource {
 
     /**
      * DELETE /courses/:courseId/exams/:examId/students/:studentLogin :
-     * Remove one single given user (based on the login) from the students of the exam so that the student cannot access the exam any more.
+     * Remove one single given user (based on the login) from the students of the exam so that the student cannot access the exam anymore.
      * Optionally, also deletes participations and submissions of the student in the student exam.
      *
      * @param courseId                        the id of the course
@@ -836,7 +836,7 @@ public class ExamResource {
 
     /**
      * DELETE /courses/{courseId}/exams/{examId}/allstudents :
-     * Remove all students of the exam so that they cannot access the exam any more.
+     * Remove all students of the exam so that they cannot access the exam anymore.
      * Optionally, also deletes participations and submissions of all students in their student exams.
      *
      * @param courseId                        the id of the course

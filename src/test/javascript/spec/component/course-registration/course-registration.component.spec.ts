@@ -13,6 +13,9 @@ import { TranslateService } from '@ngx-translate/core';
 import { AccountService } from 'app/core/auth/account.service';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
+import { MockNgbModalService } from '../../helpers/mocks/service/mock-ngb-modal.service';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { CoursePrerequisitesModalComponent } from 'app/overview/course-registration/course-prerequisites-modal.component';
 
 describe('CourseRegistrationComponent', () => {
     let fixture: ComponentFixture<CourseRegistrationComponent>;
@@ -20,6 +23,7 @@ describe('CourseRegistrationComponent', () => {
     let courseService: CourseManagementService;
     let accountService: AccountService;
     let profileService: ProfileService;
+    let modalService: NgbModal;
     let findAllToRegisterStub: jest.SpyInstance;
     let registerForCourseStub: jest.SpyInstance;
     let identityStub: jest.SpyInstance;
@@ -39,7 +43,12 @@ describe('CourseRegistrationComponent', () => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule],
             declarations: [CourseRegistrationComponent],
-            providers: [{ provide: LocalStorageService, useClass: MockSyncStorage }, { provide: SessionStorageService, useClass: MockSyncStorage }, MockProvider(TranslateService)],
+            providers: [
+                { provide: LocalStorageService, useClass: MockSyncStorage },
+                { provide: SessionStorageService, useClass: MockSyncStorage },
+                { provide: NgbModal, useClass: MockNgbModalService },
+                MockProvider(TranslateService),
+            ],
         })
             .overrideTemplate(CourseRegistrationComponent, '')
             .compileComponents()
@@ -49,6 +58,7 @@ describe('CourseRegistrationComponent', () => {
                 courseService = TestBed.inject(CourseManagementService);
                 accountService = TestBed.inject(AccountService);
                 profileService = TestBed.inject(ProfileService);
+                modalService = TestBed.inject(NgbModal);
 
                 findAllToRegisterStub = jest.spyOn(courseService, 'findAllToRegister').mockReturnValue(of(new HttpResponse({ body: [course1] })));
                 registerForCourseStub = jest.spyOn(courseService, 'registerForCourse').mockReturnValue(of(new HttpResponse({ body: new User() })));
@@ -84,5 +94,15 @@ describe('CourseRegistrationComponent', () => {
 
         expect(registerForCourseStub).toHaveBeenCalledTimes(1);
         expect(component.coursesToSelect).toEqual([course2]);
+    });
+
+    it('should open modal with prerequisites for course', () => {
+        component.coursesToSelect = [course1];
+        const openModalSpy = jest.spyOn(modalService, 'open');
+
+        component.showPrerequisites(course1.id!);
+
+        expect(openModalSpy).toHaveBeenCalledTimes(1);
+        expect(openModalSpy).toHaveBeenCalledWith(CoursePrerequisitesModalComponent, { size: 'xl' });
     });
 });
