@@ -4,7 +4,6 @@ import { debounceTime, map, tap } from 'rxjs/operators';
 import { ProgrammingExerciseInstructionAnalysisService } from 'app/exercises/programming/manage/instructions-editor/analysis/programming-exercise-instruction-analysis.service';
 import { ProblemStatementAnalysis } from 'app/exercises/programming/manage/instructions-editor/analysis/programming-exercise-instruction-analysis.model';
 import { faCheckCircle, faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
-import { ExerciseHint } from 'app/entities/hestia/exercise-hint.model';
 
 @Component({
     selector: 'jhi-programming-exercise-instruction-instructor-analysis',
@@ -12,7 +11,6 @@ import { ExerciseHint } from 'app/entities/hestia/exercise-hint.model';
 })
 export class ProgrammingExerciseInstructionAnalysisComponent implements OnInit, OnChanges, OnDestroy {
     @Input() exerciseTestCases: string[];
-    @Input() exerciseHints: ExerciseHint[];
     @Input() problemStatement: string;
     @Input() taskRegex: RegExp;
 
@@ -22,8 +20,6 @@ export class ProgrammingExerciseInstructionAnalysisComponent implements OnInit, 
 
     invalidTestCases: string[] = [];
     missingTestCases: string[] = [];
-
-    invalidHints: string[] = [];
 
     // Icons
     faCheckCircle = faCheckCircle;
@@ -36,15 +32,13 @@ export class ProgrammingExerciseInstructionAnalysisComponent implements OnInit, 
             .pipe(
                 debounceTime(500),
                 map(() => {
-                    const { completeAnalysis, missingTestCases, invalidTestCases, invalidHints } = this.analysisService.analyzeProblemStatement(
+                    const { completeAnalysis, missingTestCases, invalidTestCases } = this.analysisService.analyzeProblemStatement(
                         this.problemStatement,
                         this.taskRegex,
                         this.exerciseTestCases,
-                        this.exerciseHints,
                     );
                     this.missingTestCases = missingTestCases;
                     this.invalidTestCases = invalidTestCases;
-                    this.invalidHints = invalidHints;
                     return completeAnalysis;
                 }),
                 tap((analysis: ProblemStatementAnalysis) => this.emitAnalysis(analysis)),
@@ -53,13 +47,7 @@ export class ProgrammingExerciseInstructionAnalysisComponent implements OnInit, 
     }
 
     ngOnChanges(changes: SimpleChanges): void {
-        if (
-            (changes.problemStatement || changes.exerciseTestCases || changes.exerciseHints) &&
-            this.exerciseTestCases &&
-            this.exerciseHints &&
-            this.problemStatement &&
-            this.taskRegex
-        ) {
+        if ((changes.problemStatement || changes.exerciseTestCases) && this.exerciseTestCases && this.problemStatement && this.taskRegex) {
             this.analyzeTasks();
         }
     }

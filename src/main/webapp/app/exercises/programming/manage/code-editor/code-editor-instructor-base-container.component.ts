@@ -3,7 +3,7 @@ import { Observable, Subscription, throwError, of } from 'rxjs';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Location } from '@angular/common';
 import { AlertService } from 'app/core/util/alert.service';
-import { catchError, filter, map, tap, switchMap } from 'rxjs/operators';
+import { catchError, filter, map, tap } from 'rxjs/operators';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
 import { Participation } from 'app/entities/participation/participation.model';
 import { ButtonSize } from 'app/shared/components/button.component';
@@ -16,11 +16,9 @@ import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 import { SolutionProgrammingExerciseParticipation } from 'app/entities/participation/solution-programming-exercise-participation.model';
 import { DomainChange, DomainType } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
-import { ExerciseHint } from 'app/entities/hestia/exercise-hint.model';
 import { CodeEditorContainerComponent } from '../../shared/code-editor/container/code-editor-container.component';
 import { Course } from 'app/entities/course.model';
 import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
-import { ExerciseHintService } from 'app/exercises/shared/exercise-hint/shared/exercise-hint.service';
 
 /**
  * Enumeration specifying the repository type
@@ -80,7 +78,6 @@ export abstract class CodeEditorInstructorBaseContainerComponent implements OnIn
         private courseExerciseService: CourseExerciseService,
         private domainService: DomainService,
         private programmingExerciseParticipationService: ProgrammingExerciseParticipationService,
-        private exerciseHintService: ExerciseHintService,
         private location: Location,
         private participationService: ParticipationService,
         protected route: ActivatedRoute,
@@ -130,13 +127,9 @@ export abstract class CodeEditorInstructorBaseContainerComponent implements OnIn
                             this.domainChangeSubscription = this.subscribeToDomainChange();
                         }
                     }),
-                    switchMap(() => {
-                        return this.loadExerciseHints();
-                    }),
                 )
                 .subscribe({
-                    next: (exerciseHints: ExerciseHint[]) => {
-                        this.exercise.exerciseHints = exerciseHints;
+                    next: () => {
                         this.loadingState = LOADING_STATE.CLEAR;
                     },
                     error: (err: Error) => {
@@ -242,16 +235,6 @@ export abstract class CodeEditorInstructorBaseContainerComponent implements OnIn
         return this.exercise && this.exercise.id === exerciseId
             ? of(this.exercise)
             : this.exerciseService.findWithTemplateAndSolutionParticipationAndResults(exerciseId).pipe(map(({ body }) => body!));
-    }
-
-    /**
-     * Load exercise hints. Take them from the exercise if available.
-     */
-    private loadExerciseHints() {
-        if (!this.exercise.exerciseHints) {
-            return this.exerciseHintService.findByExerciseIdWithRelations(this.exercise.id!).pipe(map(({ body }) => body || []));
-        }
-        return of(this.exercise.exerciseHints);
     }
 
     /**
