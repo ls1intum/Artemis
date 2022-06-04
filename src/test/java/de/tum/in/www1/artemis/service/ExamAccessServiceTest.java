@@ -47,8 +47,6 @@ public class ExamAccessServiceTest extends AbstractSpringIntegrationBambooBitbuc
 
     private Exam testExam1;
 
-    private Exam testExam2;
-
     private ExerciseGroup exerciseGroup1;
 
     private ExerciseGroup exerciseGroup2;
@@ -79,7 +77,7 @@ public class ExamAccessServiceTest extends AbstractSpringIntegrationBambooBitbuc
         exam1 = database.addExamWithExerciseGroup(course1, true);
         exam2 = database.addExamWithExerciseGroup(course2, true);
         testExam1 = database.addTestExamWithExerciseGroup(course1, true);
-        testExam2 = database.addTestExamWithExerciseGroup(course2, true);
+        Exam testExam2 = database.addTestExamWithExerciseGroup(course2, true);
         exerciseGroup1 = exam1.getExerciseGroups().get(0);
         exerciseGroup2 = exam2.getExerciseGroups().get(0);
         studentExam1 = database.addStudentExam(exam1);

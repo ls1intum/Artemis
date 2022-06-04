@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.Mockito.doNothing;
@@ -91,6 +92,7 @@ public class ParticipationServiceTest extends AbstractSpringIntegrationJenkinsGi
         StudentParticipation studentParticipationReceived = participationService.startExerciseWithInitializationDate(modelling, participant, true, initializationDate);
 
         assertEquals(modelling, studentParticipationReceived.getExercise());
+        assertTrue(studentParticipationReceived.getStudent().isPresent());
         assertEquals(participant, studentParticipationReceived.getStudent().get());
         assertEquals(initializationDate, studentParticipationReceived.getInitializationDate());
         assertEquals(InitializationState.INITIALIZED, studentParticipationReceived.getInitializationState());
@@ -106,6 +108,7 @@ public class ParticipationServiceTest extends AbstractSpringIntegrationJenkinsGi
         StudentParticipation studentParticipationReceived = participationService.startExercise(modelling, participant, true);
 
         assertEquals(modelling, studentParticipationReceived.getExercise());
+        assertTrue(studentParticipationReceived.getStudent().isPresent());
         assertEquals(participant, studentParticipationReceived.getStudent().get());
         // Acceptance range, initializationDate is to be set to now()
         assertEquals(ZonedDateTime.now().minusSeconds(10), studentParticipationReceived.getInitializationDate());
