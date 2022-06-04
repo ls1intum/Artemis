@@ -32,7 +32,7 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
     @Input() public participation: Participation;
     @Input() generateHtmlEvents: Observable<void>;
     @Input() personalParticipation: boolean;
-    // If there are no instructions available (neither in the exercise problemStatement or the legacy README.md) emits an event
+    // If there are no instructions available (neither in the exercise problemStatement nor the legacy README.md) emits an event
     @Output()
     public onNoInstructionsAvailable = new EventEmitter();
 

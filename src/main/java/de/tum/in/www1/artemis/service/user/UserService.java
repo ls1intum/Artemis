@@ -334,7 +334,7 @@ public class UserService {
     }
 
     /**
-     * Searches the (optional) LDAP service for a user with the give registration number (= Matrikelnummer) and returns a new Artemis user-
+     * Searches the (optional) LDAP service for a user with the give registration number (= Matrikelnummer) and returns a new Artemis user.
      * Also creates the user in the external user management (e.g. JIRA), in case this is activated
      * Note: this method should only be used if the user does not yet exist in the database
      *
@@ -473,7 +473,7 @@ public class UserService {
     }
 
     /**
-     * Update the guided tour settings of the currently logged in user
+     * Update the guided tour settings of the currently logged-in user
      *
      * @param guidedTourSettings the updated set of guided tour settings
      * @return the updated user object with the changed guided tour settings
@@ -490,7 +490,7 @@ public class UserService {
     }
 
     /**
-     * Delete a given guided tour setting of the currently logged in user (e.g. when the user restarts a guided tutorial)
+     * Delete a given guided tour setting of the currently logged-in user (e.g. when the user restarts a guided tutorial)
      *
      * @param guidedTourSettingsKey the key of the guided tour setting that should be deleted
      * @return the updated user object without the deleted guided tour setting
@@ -618,7 +618,7 @@ public class UserService {
             if (optionalStudent.isPresent()) {
                 var student = optionalStudent.get();
                 // we only need to add the student to the course group, if the student is not yet part of it, otherwise the student cannot access the
-                // course)
+                // course
                 if (!student.getGroups().contains(courseGroupName)) {
                     this.addUserToGroup(student, courseGroupName, courseGroupRole);
                 }

@@ -254,7 +254,7 @@ export class ProgrammingExerciseService {
     }
 
     /**
-     * Returns a entity with true in the body if there is a programming exercise with the given id, it is released (release date < now) and there is at least one student result.
+     * Returns an entity with true in the body if there is a programming exercise with the given id, it is released (release date < now) and there is at least one student result.
      *
      * @param exerciseId ProgrammingExercise id
      */

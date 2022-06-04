@@ -26,7 +26,7 @@ interface ReactionEvent {
 
 /**
  * represents the amount of users that reacted
- * hasReacted indicates if the currently logged in user is among those counted users
+ * hasReacted indicates if the currently logged-in user is among those counted users
  */
 interface ReactionMetaData {
     count: number;
@@ -35,7 +35,7 @@ interface ReactionMetaData {
 }
 
 /**
- * data structure used for displaying emoji reactions with meta data on postings
+ * data structure used for displaying emoji reactions with metadata on postings
  */
 interface ReactionMetaDataMap {
     [emojiId: string]: ReactionMetaData;

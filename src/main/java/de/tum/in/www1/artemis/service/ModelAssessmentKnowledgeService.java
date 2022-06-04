@@ -6,18 +6,18 @@ import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.ModelAssessmentKnowledge;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
-import de.tum.in.www1.artemis.repository.ModelAssesmentKnowledgeRepository;
+import de.tum.in.www1.artemis.repository.ModelAssessmentKnowledgeRepository;
 import de.tum.in.www1.artemis.repository.ModelingExerciseRepository;
 
 @Service
 public class ModelAssessmentKnowledgeService {
 
-    private final ModelAssesmentKnowledgeRepository modelAssesmentKnowledgeRepository;
+    private final ModelAssessmentKnowledgeRepository modelAssessmentKnowledgeRepository;
 
     private final ModelingExerciseRepository modelingExerciseRepository;
 
-    public ModelAssessmentKnowledgeService(ModelAssesmentKnowledgeRepository modelAssesmentKnowledgeRepository, ModelingExerciseRepository modelingExerciseRepository) {
-        this.modelAssesmentKnowledgeRepository = modelAssesmentKnowledgeRepository;
+    public ModelAssessmentKnowledgeService(ModelAssessmentKnowledgeRepository modelAssessmentKnowledgeRepository, ModelingExerciseRepository modelingExerciseRepository) {
+        this.modelAssessmentKnowledgeRepository = modelAssessmentKnowledgeRepository;
         this.modelingExerciseRepository = modelingExerciseRepository;
     }
 
@@ -31,7 +31,7 @@ public class ModelAssessmentKnowledgeService {
         Set<ModelingExercise> exerciseSet = modelingExerciseRepository.findAllByKnowledgeId(knowledgeId);
         // If no other exercises use the same knowledge then remove knowledge
         if (exerciseSet.size() == 1 && modelingExerciseId.equals(exerciseSet.iterator().next().getId())) {
-            modelAssesmentKnowledgeRepository.deleteById(knowledgeId);
+            modelAssessmentKnowledgeRepository.deleteById(knowledgeId);
         }
     }
 
@@ -42,7 +42,7 @@ public class ModelAssessmentKnowledgeService {
      */
     public ModelAssessmentKnowledge createNewKnowledge() {
         ModelAssessmentKnowledge knowledge = new ModelAssessmentKnowledge();
-        modelAssesmentKnowledgeRepository.save(knowledge);
+        modelAssessmentKnowledgeRepository.save(knowledge);
         return knowledge;
     }
 
