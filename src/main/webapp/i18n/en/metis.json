@@ -37,6 +37,9 @@
             "reactedTooltipTrimmed": " and {{ number }} more reacted.",
             "searchEmoji": "Search emoji",
             "courseEmojiSelectionCategory": "Selected emojis for this course",
+            "editor": {
+                "exercise": "Exercise"
+            },
             "discussion": {
                 "label": "Discussion",
                 "show": "Show discussion",

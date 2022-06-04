@@ -9,6 +9,10 @@ import { CodeCommand } from 'app/shared/markdown-editor/commands/code.command';
 import { LinkCommand } from 'app/shared/markdown-editor/commands/link.command';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { MarkdownEditorHeight } from 'app/shared/markdown-editor/markdown-editor.component';
+import { ExerciseReferenceCommand } from 'app/shared/markdown-editor/domainCommands/exerciseReferenceCommand';
+import { DomainCommand } from 'app/shared/markdown-editor/domainCommands/domainCommand';
+import { MetisService } from 'app/shared/metis/metis.service';
+import { ValueItem } from 'app/shared/markdown-editor/domainCommands/domainMultiOptionCommand';
 
 @Component({
     selector: 'jhi-posting-markdown-editor',
@@ -28,9 +32,11 @@ export class PostingMarkdownEditorComponent implements OnInit, ControlValueAcces
     @Input() isInputLengthDisplayed = true;
     @Output() valueChange = new EventEmitter();
     defaultCommands: Command[];
+    exerciseReferenceCommand = new ExerciseReferenceCommand(this.metisService);
+    domainCommands: DomainCommand[] = [this.exerciseReferenceCommand];
     content?: string;
 
-    constructor(private cdref: ChangeDetectorRef) {}
+    constructor(private cdref: ChangeDetectorRef, private metisService: MetisService) {}
 
     /**
      * on initialization: sets commands that will be available as formatting buttons during creation/editing of postings
@@ -45,6 +51,10 @@ export class PostingMarkdownEditorComponent implements OnInit, ControlValueAcces
             new CodeBlockCommand(),
             new LinkCommand(),
         ];
+
+        const exercisesToReference = new Array();
+        this.metisService.getCourse().exercises!.forEach((exercise) => exercisesToReference.push({ id: exercise.id!.toString(), value: exercise.title } as ValueItem));
+        this.exerciseReferenceCommand.setValues(exercisesToReference);
     }
 
     /**
