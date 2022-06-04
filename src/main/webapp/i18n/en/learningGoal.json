@@ -59,7 +59,7 @@
                 "noLearningGoals": "No learning goals are connected with this lecture unit! "
             },
             "prerequisite": {
-                "title": "Prerequisite",
+                "title": "Prerequisites",
                 "managePrerequisites": {
                     "title": "Prerequisite Management"
                 },
