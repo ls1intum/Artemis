@@ -8,7 +8,7 @@
                 <fa-icon *ngIf="!examPreparationFinished" [icon]="faTimesCircle" class="cross"></fa-icon>
             </div>
             <div class="status-step-content">
-                <h6 class="text-center">{{ 'artemisApp.examStatus.preparation.examPreparation' | artemisTranslate }}</h6>
+                <h6 class="text-center">{{ 'artemisApp.examStatus.preparation.' + (isTestExam ? 'testExam.' : '') + 'examPreparation' | artemisTranslate }}</h6>
                 <ol>
                     <li class="d-flex align-items-center">
                         <span>{{
@@ -19,11 +19,11 @@
                     </li>
                     <li class="d-flex align-items-center" *ngIf="isTestExam">
                         <ng-container *ngIf="maxPointExercises === exam.maxPoints">
-                            <span>{{ 'artemisApp.examStatus.preparation.maxPointsCorrect' | artemisTranslate }}{{ exam.maxPoints }}</span>
+                            <span>{{ 'artemisApp.examStatus.preparation.testExam.maxPointsCorrect' | artemisTranslate }}{{ exam.maxPoints }}</span>
                             <fa-icon [icon]="faCheckCircle" class="check"></fa-icon>
                         </ng-container>
                         <ng-container *ngIf="maxPointExercises !== exam.maxPoints">
-                            <span>{{ 'artemisApp.examStatus.preparation.maxPointsWrong' | artemisTranslate: { points: maxPointExercises } }} </span>
+                            <span>{{ 'artemisApp.examStatus.preparation.testExam.maxPointsWrong' | artemisTranslate: { points: maxPointExercises } }} </span>
                             <fa-icon [icon]="faTimes" class="cross"></fa-icon>
                         </ng-container>
                     </li>
@@ -74,17 +74,21 @@
         </div>
         <div class="status-step-content">
             <div class="text-center mb-1">
-                <h6>{{ 'artemisApp.examStatus.conduction.examConduction' | artemisTranslate }}</h6>
+                <h6>{{ 'artemisApp.examStatus.conduction.' + (isTestExam ? 'testExam.' : '') + 'examConduction' | artemisTranslate }}</h6>
                 <b>{{ exam.startDate | artemisDate }} - {{ exam.endDate | artemisDate }}</b>
             </div>
             <!-- In case the exercise configuration is wrong, but the TestExam already started, students are not able to start a TestExam -->
             <div class="text-center mb-1" *ngIf="examConductionState === examConductionStateEnum.ERROR">
-                <h6>{{ 'artemisApp.examStatus.conduction.conductionSuspended' | artemisTranslate }}</h6>
+                <h6>{{ 'artemisApp.examStatus.conduction.' + (isTestExam ? 'testExam.' : '') + 'conductionSuspended' | artemisTranslate }}</h6>
             </div>
-            <ol *ngIf="isAtLeastInstructor && examChecklist && (!isTestExam || examPreparationFinished)">
+            <ol *ngIf="isAtLeastInstructor && examChecklist && examConductionState !== examConductionStateEnum.ERROR">
+                <li *ngIf="isTestExam">
+                    <span> {{ 'artemisApp.examStatus.conduction.testExam.numberOfStudents' | artemisTranslate }} {{ exam.numberOfRegisteredUsers }} </span>
+                </li>
                 <li>
                     <span>
-                        {{ 'artemisApp.examStatus.conduction.startedExams' | artemisTranslate }}:
+                        {{ 'artemisApp.examStatus.conduction.' + (isTestExam ? 'testExam.' : '') + 'startedExams' | artemisTranslate }}
+                        :
                         {{ examChecklist.numberOfExamsStarted }}
                         ({{ numberOfGeneratedStudentExams > 0 ? round((examChecklist.numberOfExamsStarted * 100) / examChecklist.numberOfGeneratedStudentExams!, 1) : 0 }}
                         %)
@@ -92,7 +96,8 @@
                 </li>
                 <li>
                     <span>
-                        {{ 'artemisApp.examStatus.conduction.submittedExams' | artemisTranslate }}:
+                        {{ 'artemisApp.examStatus.conduction.' + (isTestExam ? 'testExam.' : '') + 'submittedExams' | artemisTranslate }}
+                        :
                         {{ examChecklist.numberOfExamsSubmitted }}
                         ({{ numberOfGeneratedStudentExams > 0 ? round((examChecklist.numberOfExamsSubmitted * 100) / numberOfGeneratedStudentExams!, 1) : 0 }}
                         %)

@@ -489,19 +489,29 @@
             "preparation": {
                 "examPreparation": "Exam preparation",
                 "configureExercises": "Configure exercises: {{ amount }} exercise groups",
-                "maxPointsCorrect": "Exam Points set correctly to ",
-                "maxPointsWrong": "Exam Points should be set to {{ points }}",
                 "registerStudents": "Register students: {{ registered }} registered",
                 "generateStudentExams": "Generate student exams: ",
                 "registered": "{{ generated }} of {{ total }}",
                 "notRegistered": "No students registered",
-                "prepareExerciseStart": "Prepare exercise start"
+                "prepareExerciseStart": "Prepare exercise start",
+                "testExam": {
+                    "examPreparation": "TestExam preparation",
+                    "maxPointsCorrect": "Exam Points correctly set to ",
+                    "maxPointsWrong": "Exam Points should be set to {{ points }}"
+                }
             },
             "conduction": {
                 "examConduction": "Exam conduction",
                 "startedExams": "Started exams",
                 "submittedExams": "Submitted exams",
-                "conductionSuspended": "Students cannot start a TestExam until the Exam preparation is finished"
+                "conductionSuspended": "Students cannot start their Exam!",
+                "testExam": {
+                    "examConduction": "TestExam conduction",
+                    "numberOfStudents": "Number of students",
+                    "startedExams": "Started testExams",
+                    "submittedExams": "Submitted testExams",
+                    "conductionSuspended": "Students cannot start a TestExam!"
+                }
             },
             "correction": {
                 "examCorrection": "Exam correction",

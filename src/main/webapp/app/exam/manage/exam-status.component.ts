@@ -95,9 +95,13 @@ export class ExamStatusComponent implements OnChanges {
         const numberOfExercisesEqual = this.examChecklistService.checkNumberOfExerciseGroups(this.exam);
         const noEmptyExerciseGroup = this.examChecklistService.checkEachGroupContainsExercise(this.exam);
         const maximumPointsEqual = this.examChecklistService.checkPointsExercisesEqual(this.exam);
-        const examPointsReachable = this.examChecklistService.checkTotalPointsMandatory(maximumPointsEqual, this.exam);
+        let examPointsReachable;
         if (this.isTestExam) {
+            // This method is called here, as it is part of the exercise configuration - although it is a separate entry to highlight the importance
             this.maxPointExercises = this.examChecklistService.calculateExercisePoints(maximumPointsEqual, this.exam);
+            examPointsReachable = this.exam.maxPoints === this.maxPointExercises;
+        } else {
+            examPointsReachable = this.examChecklistService.checkTotalPointsMandatory(maximumPointsEqual, this.exam);
         }
 
         return atLeastOneGroup && noEmptyExerciseGroup && numberOfExercisesEqual && maximumPointsEqual && examPointsReachable;
@@ -109,6 +113,7 @@ export class ExamStatusComponent implements OnChanges {
      */
     private isExamPreparationFinished(): boolean {
         if (this.isTestExam) {
+            // For TestExams, only the exerciseConfiguration needs to be performed by the instructor
             return this.configuredExercises;
         } else {
             return this.configuredExercises && this.registeredStudents && this.generatedStudentExams && this.preparedExerciseStart;
@@ -120,8 +125,8 @@ export class ExamStatusComponent implements OnChanges {
      * @private
      */
     private setConductionState(): void {
-        // In case the exercise configuration is wrong, but the TestExam already started, students are not able to start a TestExam
-        if (this.isTestExam && this.examAlreadyStarted() && !this.examPreparationFinished) {
+        // In case the exercise configuration is wrong, but the (Test)Exam already started, students are not able to start a TestExam or RealExam
+        if (this.examAlreadyStarted() && !this.examPreparationFinished) {
             this.examConductionState = ExamConductionState.ERROR;
         } else if (this.examAlreadyEnded() && (!this.isAtLeastInstructor || this.examPreparationFinished)) {
             this.examConductionState = ExamConductionState.FINISHED;
@@ -174,8 +179,9 @@ export class ExamStatusComponent implements OnChanges {
     private setExamPreparation(): void {
         // Step 1.1:
         this.configuredExercises = this.areAllExercisesConfigured();
-        // Step 1.2:
+        // For TestExams, only the exerciseConfiguration needs to be performed by the instructor
         if (!this.isTestExam) {
+            // Step 1.2
             this.registeredStudents = this.examChecklistService.checkAtLeastOneRegisteredStudent(this.exam);
             // Step 1.3:
             this.generatedStudentExams = this.examChecklistService.checkAllExamsGenerated(this.exam, this.examChecklist) && this.registeredStudents;

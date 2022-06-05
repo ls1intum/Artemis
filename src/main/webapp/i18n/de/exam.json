@@ -488,19 +488,30 @@
             "preparation": {
                 "examPreparation": "Klausurvorbereitung",
                 "configureExercises": "Konfiguriere Klausuraufgaben: {{ amount }} Aufgabengruppen",
-                "maxPointsCorrect": "Klausurpunkte richtig eingestellt auf ",
-                "maxPointsWrong": "Klausurpunkte sollten {{ points }} sein",
+
                 "registerStudents": "Registriere Studierende: {{ registered }} registiert",
                 "generateStudentExams": "Generiere Klausuren: ",
                 "registered": "{{ generated }} von {{ total }}",
                 "notRegistered": "Keine Studierenden registriert",
-                "prepareExerciseStart": "Bereite Aufgabenstart vor"
+                "prepareExerciseStart": "Bereite Aufgabenstart vor",
+                "testExam": {
+                    "examPreparation": "Testklausurvorbereitung",
+                    "maxPointsCorrect": "Klausurpunkte richtig eingestellt auf ",
+                    "maxPointsWrong": "Klausurpunkte sollten {{ points }} sein"
+                }
             },
             "conduction": {
                 "examConduction": "Klausurdurchführung",
                 "startedExams": "Begonnene Klausuren",
                 "submittedExams": "Abgegebene Klausuren",
-                "conductionSuspended": "Studierende können keine Testklausuren starten, solange die Klausurvorbereitung nicht abgeschlossen ist"
+                "conductionSuspended": "Studierende können keine Klausur starten!",
+                "testExam": {
+                    "examConduction": "Testklausurdurchführung",
+                    "numberOfStudents": "Anzahl der Studierenden",
+                    "startedExams": "Begonnene Testklausuren",
+                    "submittedExams": "Abgegebene Testklausuren",
+                    "conductionSuspended": "Studierende können keine Testklausuren starten!"
+                }
             },
             "correction": {
                 "examCorrection": "Klausurkorrektur",
