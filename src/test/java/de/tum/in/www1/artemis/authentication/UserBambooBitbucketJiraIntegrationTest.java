@@ -286,24 +286,24 @@ public class UserBambooBitbucketJiraIntegrationTest extends AbstractSpringIntegr
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     public void getUsersWithoutGroup() throws Exception {
-        userTestService.getUserWithoutGroups();
+        userTestService.testUserWithoutGroups();
     }
 
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     public void getUsersWithGroups() throws Exception {
-        userTestService.getUserWithGroups();
+        userTestService.testUserWithGroups();
     }
 
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     public void getUserWithActivatedStatus() throws Exception {
-        userTestService.getUserWithActivatedStatus();
+        userTestService.testUserWithActivatedStatus();
     }
 
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     public void getUserWithDeactivatedStatus() throws Exception {
-        userTestService.getUserWithDeactivatedStatus();
+        userTestService.testUserWithDeactivatedStatus();
     }
 }

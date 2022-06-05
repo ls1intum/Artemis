@@ -712,7 +712,7 @@ public class UserTestService {
     }
 
     // Test
-    public void getUserWithoutGroups() throws Exception {
+    public void testUserWithoutGroups() throws Exception {
         final var params = new LinkedMultiValueMap<String, String>();
         params.add("page", "0");
         params.add("pageSize", "100");
@@ -743,7 +743,7 @@ public class UserTestService {
     }
 
     // Test
-    public void getUserWithGroups() throws Exception {
+    public void testUserWithGroups() throws Exception {
         final var params = new LinkedMultiValueMap<String, String>();
         params.add("page", "0");
         params.add("pageSize", "100");
@@ -776,7 +776,7 @@ public class UserTestService {
     }
 
     // Test
-    public void getUserWithActivatedStatus() throws Exception {
+    public void testUserWithActivatedStatus() throws Exception {
         final var params = new LinkedMultiValueMap<String, String>();
         params.add("page", "0");
         params.add("pageSize", "100");
@@ -805,7 +805,7 @@ public class UserTestService {
     }
 
     // Test
-    public void getUserWithDeactivatedStatus() throws Exception {
+    public void testUserWithDeactivatedStatus() throws Exception {
         final var params = new LinkedMultiValueMap<String, String>();
         params.add("page", "0");
         params.add("pageSize", "100");
