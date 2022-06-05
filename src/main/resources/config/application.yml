@@ -34,9 +34,9 @@ artemis:
         # Defines the used docker images for certain programming languages
         build:
             images:
-                JAVA: "bfein/artemis-maven-docker:17"
-                KOTLIN: "bfein/artemis-maven-docker:17"
-                EMPTY: "bfein/artemis-maven-docker:17"
+                JAVA: "ls1tum/artemis-maven-template:java17-7"
+                KOTLIN: "ls1tum/artemis-maven-template:java17-7"
+                EMPTY: "ls1tum/artemis-maven-template:java17-7"
                 PYTHON: "ls1tum/artemis-python-docker:latest"
                 C: "ls1tum/artemis-c-docker:latest"
                 C_FACT: "sharingcodeability/fact:latest"
