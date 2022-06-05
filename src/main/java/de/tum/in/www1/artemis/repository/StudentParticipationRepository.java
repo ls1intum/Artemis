@@ -17,7 +17,10 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.Exercise;
+import de.tum.in.www1.artemis.domain.Result;
+import de.tum.in.www1.artemis.domain.Submission;
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.ExerciseMode;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
@@ -124,6 +127,21 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
             WHERE p.exercise.id = :#{#exerciseId}
             """)
     List<StudentParticipation> findByExerciseIdWithEagerSubmissionsResultAssessorFeedbacks(@Param("exerciseId") Long exerciseId);
+
+    @Query("""
+            SELECT DISTINCT p FROM StudentParticipation p
+            LEFT JOIN FETCH p.submissions s
+            LEFT JOIN FETCH s.results r
+            LEFT JOIN FETCH r.feedbacks
+            WHERE p.exercise.id = :#{#exerciseId}
+            AND p.student.id = :#{#studentId}
+            """)
+    Optional<StudentParticipation> findByExerciseIdAndStudentIdWithEagerSubmissionsResultsFeedbacks(@Param("exerciseId") Long exerciseId, @Param("studentId") Long studentId);
+
+    default StudentParticipation findByExerciseIdAndStudentIdWithEagerSubmissionsResultsFeedbacksElseThrow(Long exerciseId, Long studentId) {
+        return findByExerciseIdAndStudentIdWithEagerSubmissionsResultsFeedbacks(exerciseId, studentId)
+                .orElseThrow(() -> new EntityNotFoundException("Student Participation", exerciseId + "-" + studentId));
+    }
 
     @Query("""
             SELECT DISTINCT p FROM StudentParticipation p
@@ -333,7 +351,7 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
     /**
      * Find all participations of submissions that are submitted and do not already have a manual result and do not belong to test runs.
      * No manual result means that no user has started an assessment for the corresponding submission yet.
-     *
+     * <p>
      * If a student can have multiple submissions per exercise type, the latest not {@link de.tum.in.www1.artemis.domain.enumeration.SubmissionType#ILLEGAL} ILLEGAL submission (by id) will be returned.
      *
      * @param correctionRound the correction round the fetched results should belong to
@@ -374,7 +392,7 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
     /**
      * Find all participations of submissions that are submitted and do not already have a manual result. No manual result means that no user has started an assessment for the
      * corresponding submission yet.
-     *
+     * <p>
      * If a student can have multiple submissions per exercise type, the latest not {@link de.tum.in.www1.artemis.domain.enumeration.SubmissionType#ILLEGAL} ILLEGAL submission (by id) will be returned.
      *
      * @param exerciseId the exercise id the participations should belong to
@@ -475,7 +493,7 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
     /**
      * Find the participation with the given id. Additionally, load all the submissions and results of the participation from the database.
      * Further, load the exercise and its course. Returns an empty Optional if the participation could not be found.
-     *
+     * <p>
      * Note: Does NOT load illegal submissions!
      *
      * @param participationId the id of the participation

@@ -101,7 +101,7 @@ export class ExamParticipationSummaryComponent implements OnInit {
 
     /**
      * @param exercise
-     * returns the students submission for the exercise, undefined if no participation could be found
+     * returns the students' submission for the exercise, undefined if no participation could be found
      */
     getSubmissionForExercise(exercise: Exercise) {
         if (
@@ -117,7 +117,7 @@ export class ExamParticipationSummaryComponent implements OnInit {
 
     /**
      * @param exercise
-     * returns the students submission for the exercise, undefined if no participation could be found
+     * returns the students' submission for the exercise, undefined if no participation could be found
      */
     getParticipationForExercise(exercise: Exercise) {
         if (exercise.studentParticipations && exercise.studentParticipations[0]) {

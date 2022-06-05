@@ -113,7 +113,7 @@ export class TeamsImportDialogComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * If the exercise has no teams yet, the user doesn't have to chose an import strategy
+     * If the exercise has no teams yet, the user doesn't have to choose an import strategy
      * since there is no need for conflict handling decisions when no teams exist yet.
      */
     initImportStrategy() {
@@ -312,7 +312,7 @@ export class TeamsImportDialogComponent implements OnInit, OnDestroy {
 
     /**
      * Calculates which identifier appeared how many times and returns those appear more than once
-     * @param users Users array to find identifiers that appears multiple times in
+     * @param users Users array to find identifiers that appear multiple times in
      * @param identifier Which identifier to use when searching for multiple occurrences
      * @returns Identifiers which appeared multiple times in user array
      */

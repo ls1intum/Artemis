@@ -300,15 +300,13 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
             // TODO: move to exam-participation.service after studentExam was retrieved
             // initialize all submissions as synced
             this.studentExam.exercises!.forEach((exercise) => {
-                // We do not support hints in an exam at the moment. Setting an empty array here disables the hint requests
-                exercise.exerciseHints = [];
                 if (exercise.studentParticipations) {
                     exercise.studentParticipations!.forEach((participation) => {
                         if (participation.submissions && participation.submissions.length > 0) {
                             participation.submissions.forEach((submission) => {
                                 submission.isSynced = true;
                                 if (submission.submitted == undefined) {
-                                    // only set submitted to false it the value was not specified before
+                                    // only set submitted to false if the value was not specified before
                                     submission.submitted = false;
                                 }
                             });
@@ -396,10 +394,6 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                     } else {
                         this.studentExam = studentExam;
                     }
-                    this.studentExam.exercises!.forEach((exercise) => {
-                        // We do not support hints in an exam at the moment. Setting an empty array here disables the hint requests
-                        exercise.exerciseHints = [];
-                    });
                     this.alertService.addAlert({
                         type: AlertType.SUCCESS,
                         message: 'artemisApp.studentExam.submitSuccessful',
@@ -724,7 +718,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         this.examParticipationService.setLastSaveFailed(true, this.courseId, this.examId);
 
         if (error.status === 401) {
-            // Unauthorized means the user needs to login to resume
+            // Unauthorized means the user needs to log in to resume
             // Therefore don't show errors because we are redirected to the login page
             this.loggedOut = true;
         } else {

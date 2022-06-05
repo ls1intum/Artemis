@@ -351,7 +351,7 @@ public class ComplaintResource {
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, exercise, user);
         boolean isAtLeastInstructor = authCheckService.isAtLeastInstructorForExercise(exercise, user);
 
-        // Only instructors can access all complaints about a exercise without filtering by tutorId
+        // Only instructors can access all complaints about an exercise without filtering by tutorId
         if (!isAtLeastInstructor) {
             tutorId = userRepository.getUser().getId();
         }

@@ -26,7 +26,6 @@
                 [innerHTML]="translationBasePath + 'totalTestsPassing' | artemisTranslate: { totalTests: tests.length, passedTests: successfulTests.length }"
                 (click)="failedTests.length + notExecutedTests.length > 0 || hasMessage ? showDetailsForTests() : null"
             ></span>
-            <fa-icon *ngIf="failedTests.length > 0 && exerciseHints.length" [icon]="faQuestionCircle" class="text-secondary" (click)="openHintsModal()"></fa-icon>
         </ng-template>
         <!-- There are no results at all, build error or never executed.-->
         <ng-template #noResult>
