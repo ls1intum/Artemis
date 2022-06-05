@@ -44,6 +44,11 @@
     <div editorToolbar class="d-inline-flex align-items-center">
         <jhi-code-editor-repository-is-locked *ngIf="repositoryIsLocked"
                                               class="me-3"></jhi-code-editor-repository-is-locked>
+        <jhi-exercise-hint-button-overlay
+            [availableExerciseHints]="availableExerciseHints"
+            [activatedExerciseHints]="activatedExerciseHints"
+            (onHintActivated)="onHintActivated($event)"
+        ></jhi-exercise-hint-button-overlay>
         <jhi-updating-result
             *ngIf="participation"
             [exercise]="exercise"
