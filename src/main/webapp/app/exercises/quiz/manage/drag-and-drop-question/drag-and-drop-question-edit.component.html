@@ -330,11 +330,11 @@
         <ng-container *ngIf="!reEvaluationInProgress">
             <hr />
             <div class="question-options">
-                <div class="form-group">
-                    <div class="btn btn-outline-secondary" (click)="togglePreview()">
+                <div ngbTooltip="{{ 'artemisApp.dragAndDropQuestion.disabledPreviewTooltip' | artemisTranslate }}" [disableTooltip]="!!question.backgroundFilePath">
+                    <button class="btn btn-outline-secondary" [disabled]="!question.backgroundFilePath" (click)="togglePreview()">
                         <fa-icon [icon]="faEye"></fa-icon>
                         <span jhiTranslate="entity.action.preview"></span>
-                    </div>
+                    </button>
                 </div>
             </div>
         </ng-container>

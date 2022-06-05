@@ -78,7 +78,7 @@ public class NotificationSettingsResource {
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<NotificationSetting[]> saveNotificationSettingsForCurrentUser(@NotNull @RequestBody NotificationSetting[] notificationSettings) {
         if (notificationSettings.length == 0) {
-            throw new BadRequestAlertException("Cannot save non existing Notification Settings", "NotificationSettings", "notificationSettingsEmpty");
+            throw new BadRequestAlertException("Cannot save non-existing Notification Settings", "NotificationSettings", "notificationSettingsEmpty");
         }
         User currentUser = userRepository.getUserWithGroupsAndAuthorities();
         log.debug("REST request to save NotificationSettings : {} for current user {}", notificationSettings, currentUser);

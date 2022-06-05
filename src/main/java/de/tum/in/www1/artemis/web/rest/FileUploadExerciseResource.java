@@ -291,7 +291,7 @@ public class FileUploadExerciseResource {
             @RequestParam(value = "deleteFeedback", required = false) Boolean deleteFeedbackAfterGradingInstructionUpdate) {
         log.debug("REST request to re-evaluate FileUploadExercise : {}", fileUploadExercise);
 
-        // check that the exercise is exist for given id
+        // check that the exercise exists for given id
         fileUploadExerciseRepository.findByIdElseThrow(exerciseId);
         authCheckService.checkGivenExerciseIdSameForExerciseInRequestBodyElseThrow(exerciseId, fileUploadExercise);
 

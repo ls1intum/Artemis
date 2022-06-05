@@ -137,7 +137,7 @@ export class LectureImportComponent implements OnInit {
      * Method to perform the search based on a search subject
      *
      * @param searchSubject The search subject which we use to search.
-     * @param debounce The delay we apply to deley the feedback / wait for input
+     * @param debounce The delay we apply to delay the feedback / wait for input
      */
     private performSearch(searchSubject: Subject<void>, debounce: number) {
         searchSubject
