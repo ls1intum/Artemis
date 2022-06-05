@@ -111,7 +111,7 @@ export class ParticipantScoresDistributionComponent implements OnInit, OnChanges
     }
 
     /**
-     * Creates the chart labels displaying the intervals each bar covers depending of the existence and state of a grading key
+     * Creates the chart labels displaying the intervals each bar covers depending on the existence and state of a grading key
      * @private
      */
     private createChartLabels(): void {
@@ -180,7 +180,7 @@ export class ParticipantScoresDistributionComponent implements OnInit, OnChanges
     }
 
     /**
-     * Determines and returns the maximum value displayed on the Y axis
+     * Determines and returns the maximum value displayed on the y-axis
      * @private
      */
     private calculateTickMax(): number {

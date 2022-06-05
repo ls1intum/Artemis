@@ -20,6 +20,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import de.tum.in.www1.artemis.domain.enumeration.*;
+import de.tum.in.www1.artemis.domain.hestia.ExerciseHint;
 import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseTask;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.SolutionProgrammingExerciseParticipation;
@@ -102,7 +103,7 @@ public class ProgrammingExercise extends Exercise {
 
     @OneToMany(mappedBy = "exercise", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
     @JsonIgnoreProperties("exercise")
-    private Set<ProgrammingExerciseTask> tasks = new HashSet<>();
+    private List<ProgrammingExerciseTask> tasks = new ArrayList<>();
 
     @OneToMany(mappedBy = "exercise", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
     @JsonIgnoreProperties("exercise")
@@ -119,6 +120,9 @@ public class ProgrammingExercise extends Exercise {
     @Nullable
     @Column(name = "project_type", table = "programming_exercise_details")
     private ProjectType projectType;
+
+    @OneToMany(mappedBy = "exercise", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
+    private Set<ExerciseHint> exerciseHints = new HashSet<>();
 
     @Column(name = "testwise_coverage_enabled", table = "programming_exercise_details")
     private boolean testwiseCoverageEnabled;
@@ -522,11 +526,11 @@ public class ProgrammingExercise extends Exercise {
         this.testCases = testCases;
     }
 
-    public Set<ProgrammingExerciseTask> getTasks() {
+    public List<ProgrammingExerciseTask> getTasks() {
         return tasks;
     }
 
-    public void setTasks(Set<ProgrammingExerciseTask> tasks) {
+    public void setTasks(List<ProgrammingExerciseTask> tasks) {
         this.tasks = tasks;
     }
 
@@ -756,5 +760,13 @@ public class ProgrammingExercise extends Exercise {
         if (getMaxStaticCodeAnalysisPenalty() != null && getMaxStaticCodeAnalysisPenalty() < 0) {
             throw new BadRequestAlertException("The static code analysis penalty must not be negative", "Exercise", "staticCodeAnalysisPenaltyNotNegative");
         }
+    }
+
+    public Set<ExerciseHint> getExerciseHints() {
+        return exerciseHints;
+    }
+
+    public void setExerciseHints(Set<ExerciseHint> exerciseHints) {
+        this.exerciseHints = exerciseHints;
     }
 }

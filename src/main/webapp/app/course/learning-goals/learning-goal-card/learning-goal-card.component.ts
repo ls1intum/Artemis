@@ -21,6 +21,8 @@ export class LearningGoalCardComponent implements OnInit, OnDestroy {
     learningGoalProgress: IndividualLearningGoalProgress | CourseLearningGoalProgress | undefined;
     @Input()
     isPrerequisite: Boolean;
+    @Input()
+    displayOnly: Boolean;
 
     public predicate = 'id';
     public reverse = false;
@@ -65,16 +67,19 @@ export class LearningGoalCardComponent implements OnInit, OnDestroy {
         }
     }
 
+    /**
+     * Opens the modal with details (e.g., progress report) about the clicked learning goal
+     */
     openLearningGoalDetailsModal() {
-        // For prerequisites, only open modal when there is a description for now
+        // For prerequisites do not open the modal for now
         // TODO: Later we will display connected lecture units also for prerequisites
-        if (this.isPrerequisite && !this.learningGoal.description) {
+        if (this.isPrerequisite) {
             return;
         }
 
         if (this.learningGoalProgress && this.isCourseProgress(this.learningGoalProgress)) {
             const modalRef = this.modalService.open(this.CourseDetailModalComponent, {
-                size: 'xl',
+                size: 'lg',
             });
             if (modalRef) {
                 modalRef.componentInstance.learningGoal = this.learningGoal;
@@ -83,7 +88,7 @@ export class LearningGoalCardComponent implements OnInit, OnDestroy {
             }
         } else {
             const modalRef = this.modalService.open(this.DetailModalComponent, {
-                size: 'xl',
+                size: 'lg',
             });
             if (modalRef) {
                 modalRef.componentInstance.learningGoal = this.learningGoal;

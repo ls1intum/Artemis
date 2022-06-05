@@ -58,7 +58,6 @@ public class ProgrammingExerciseServiceIntegrationTest extends AbstractSpringInt
         database.addTasksToProgrammingExercise(programmingExercise);
         database.addSolutionEntriesToProgrammingExercise(programmingExercise);
         database.addCodeHintsToProgrammingExercise(programmingExercise);
-        database.addHintsToProblemStatement(programmingExercise);
         database.addStaticCodeAnalysisCategoriesToProgrammingExercise(programmingExercise);
 
         // Load again to fetch changes to statement and hints while keeping eager refs
@@ -105,19 +104,6 @@ public class ProgrammingExerciseServiceIntegrationTest extends AbstractSpringInt
         final var newStaticCodeAnalysisCategoriesIDs = newlyImported.getStaticCodeAnalysisCategories().stream().map(StaticCodeAnalysisCategory::getId).collect(Collectors.toSet());
         assertThat(newlyImported.getStaticCodeAnalysisCategories()).hasSameSizeAs(programmingExercise.getStaticCodeAnalysisCategories());
         assertThat(programmingExercise.getStaticCodeAnalysisCategories()).noneMatch(category -> newStaticCodeAnalysisCategoriesIDs.contains(category.getId()));
-    }
-
-    @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void importProgrammingExerciseBasis_hintsGotReplacedInStatement() {
-        final var imported = importExerciseBase();
-
-        final var oldHintIDs = programmingExercise.getExerciseHints().stream().map(ExerciseHint::getId).collect(Collectors.toSet());
-        final var newHintIDs = imported.getExerciseHints().stream().map(ExerciseHint::getId).collect(Collectors.toSet());
-        final var matchString = ".*\\{%d\\}.*";
-        final var importedStatement = imported.getProblemStatement();
-        assertThat(oldHintIDs).noneMatch(hint -> importedStatement.matches(String.format(matchString, hint)));
-        assertThat(newHintIDs).allMatch(hint -> importedStatement.matches(String.format(matchString, hint)));
     }
 
     @Test

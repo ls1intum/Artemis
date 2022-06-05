@@ -22,7 +22,7 @@ jenkins:
     # The client-facing URLs (e.g. for the repository clone URL, link to the build plans)
     # will still be constructed from the ones defined in application-artemis.yml.
     internal-urls:
-        # Override the ci url used e.g in Gitlab as the webhook url.
+        # Override the ci url used e.g. in Gitlab as the webhook url.
         ci-url: # http://jenkins:8080
-        # Overrides the vcs url used e.g as the Gitlab checkout url in Jenkins build plans
+        # Overrides the vcs url used e.g. as the Gitlab checkout url in Jenkins build plans
         vcs-url: # http://gitlab:80

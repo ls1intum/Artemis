@@ -39,7 +39,7 @@ public class ResultListener {
      * <p>
      * Will be called by Hibernate BEFORE a result is deleted from the database.
      *
-     * @param resultToBeDeleted result about to be remove
+     * @param resultToBeDeleted result about to be removed
      */
     @PreRemove
     public void removeOrUpdateAssociatedParticipantScore(Result resultToBeDeleted) {

@@ -10,7 +10,7 @@ export class FeedbackCommand extends DomainTagCommand {
 
     /**
      * @function execute
-     * @desc Add a new feedback for he corresponding instruction in the editor at the location of the cursor
+     * @desc Add a new feedback for the corresponding instruction in the editor at the location of the cursor
      */
     execute(): void {
         const text = '\n' + this.getOpeningIdentifier() + FeedbackCommand.text;

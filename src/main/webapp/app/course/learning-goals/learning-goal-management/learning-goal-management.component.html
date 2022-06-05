@@ -17,9 +17,8 @@
             </div>
         </div>
     </div>
-    <div class="row row-cols-auto" style="min-height: 100px">
+    <div class="d-flex my-3 flex-wrap gap-3 justify-content-evenly" style="min-height: 100px">
         <jhi-learning-goal-card
-            class="mx-auto col"
             *ngFor="let learningGoal of learningGoals; index as i; trackBy: identify"
             [learningGoal]="learningGoal"
             [learningGoalProgress]="getLearningGoalCourseProgress(learningGoal)"
@@ -58,9 +57,9 @@
             </div>
         </div>
     </div>
-    <div class="row row-cols-auto" style="min-height: 100px">
-        <jhi-learning-goal-card class="mx-auto col" *ngFor="let prerequisite of prerequisites; index as i; trackBy: identify" [learningGoal]="prerequisite" [isPrerequisite]="true">
-            <button *jhiHasAnyAuthority="['ROLE_INSTRUCTOR', 'ROLE_ADMIN']" id="lockButton" class="btn btn-secondary btn-sm" (click)="removePrerequisite(prerequisite.id!)">
+    <div class="d-flex my-3 flex-wrap gap-3 justify-content-evenly" style="min-height: 100px">
+        <jhi-learning-goal-card *ngFor="let prerequisite of prerequisites; index as i; trackBy: identify" [learningGoal]="prerequisite" [isPrerequisite]="true">
+            <button *jhiHasAnyAuthority="['ROLE_INSTRUCTOR', 'ROLE_ADMIN']" id="removeButton" class="btn btn-secondary btn-sm" (click)="removePrerequisite(prerequisite.id!)">
                 <fa-icon [icon]="faTimes"></fa-icon> {{ 'artemisApp.learningGoal.learningGoalCard.remove' | artemisTranslate }}
             </button>
         </jhi-learning-goal-card>
