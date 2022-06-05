@@ -108,6 +108,7 @@ export class CodeEditorStudentContainerComponent implements OnInit, OnDestroy {
                         if (this.participation.results && this.participation.results[0] && this.participation.results[0].feedbacks) {
                             checkSubsequentFeedbackInAssessment(this.participation.results[0].feedbacks);
                         }
+                        this.loadStudentExerciseHints();
                     }),
                 )
                 .subscribe({
@@ -189,7 +190,7 @@ export class CodeEditorStudentContainerComponent implements OnInit, OnDestroy {
         return [];
     }
 
-    onParticipationChanges() {
+    loadStudentExerciseHints() {
         this.exerciseHintService.getActivatedExerciseHints(this.exercise.id!).subscribe((activatedRes?: HttpResponse<ExerciseHint[]>) => {
             this.activatedExerciseHints = activatedRes!.body!;
 
