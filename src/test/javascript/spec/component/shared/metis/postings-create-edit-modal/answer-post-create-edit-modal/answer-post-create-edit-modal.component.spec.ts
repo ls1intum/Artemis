@@ -4,7 +4,7 @@ import { MockMetisService } from '../../../../../helpers/mocks/service/mock-meti
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockComponent, MockModule, MockPipe } from 'ng-mocks';
 import { AnswerPostCreateEditModalComponent } from 'app/shared/metis/posting-create-edit-modal/answer-post-create-edit-modal/answer-post-create-edit-modal.component';
-import { FormBuilder, FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { UntypedFormBuilder, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { PostingMarkdownEditorComponent } from 'app/shared/metis/posting-markdown-editor/posting-markdown-editor.component';
 import { PostingButtonComponent } from 'app/shared/metis/posting-button/posting-button.component';
 import { HelpIconComponent } from 'app/shared/components/help-icon.component';
@@ -29,7 +29,7 @@ describe('AnswerPostCreateEditModalComponent', () => {
                 MockComponent(PostingButtonComponent),
                 MockComponent(HelpIconComponent),
             ],
-            providers: [FormBuilder, { provide: MetisService, useClass: MockMetisService }, { provide: ViewContainerRef, useClass: MockViewContainerRef }],
+            providers: [UntypedFormBuilder, { provide: MetisService, useClass: MockMetisService }, { provide: ViewContainerRef, useClass: MockViewContainerRef }],
         })
             .compileComponents()
             .then(() => {

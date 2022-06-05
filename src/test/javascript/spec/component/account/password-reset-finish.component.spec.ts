@@ -1,6 +1,6 @@
 import { ElementRef } from '@angular/core';
 import { ComponentFixture, TestBed, inject, tick, fakeAsync } from '@angular/core/testing';
-import { FormBuilder } from '@angular/forms';
+import { UntypedFormBuilder } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { of, throwError } from 'rxjs';
 
@@ -23,7 +23,7 @@ describe('Component Tests', () => {
                 imports: [ArtemisTestModule],
                 declarations: [PasswordResetFinishComponent],
                 providers: [
-                    FormBuilder,
+                    UntypedFormBuilder,
                     {
                         provide: ActivatedRoute,
                         useValue: new MockActivatedRoute({ key: 'XYZPDQ' }),

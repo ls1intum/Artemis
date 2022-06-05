@@ -4,7 +4,7 @@ import { CourseWideContext, DisplayPriority, PostSortCriterion, SortDirection } 
 import { PostingThreadComponent } from 'app/shared/metis/posting-thread/posting-thread.component';
 import { PostCreateEditModalComponent } from 'app/shared/metis/posting-create-edit-modal/post-create-edit-modal/post-create-edit-modal.component';
 import { ButtonComponent } from 'app/shared/components/button.component';
-import { FormBuilder, FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { UntypedFormBuilder, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpResponse } from '@angular/common/http';
 import { Observable, of } from 'rxjs';
@@ -85,7 +85,7 @@ describe('CourseDiscussionComponent', () => {
                 MockComponent(ItemCountComponent),
             ],
             providers: [
-                FormBuilder,
+                UntypedFormBuilder,
                 MockProvider(SessionStorageService),
                 { provide: ExerciseService, useClass: MockExerciseService },
                 { provide: AnswerPostService, useClass: MockAnswerPostService },

@@ -1,6 +1,6 @@
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { HttpResponse } from '@angular/common/http';
-import { FormBuilder } from '@angular/forms';
+import { UntypedFormBuilder } from '@angular/forms';
 import { of, throwError } from 'rxjs';
 
 import { ArtemisTestModule } from '../../test.module';
@@ -25,7 +25,7 @@ describe('Component Tests', () => {
                 imports: [ArtemisTestModule],
                 declarations: [PasswordComponent],
                 providers: [
-                    FormBuilder,
+                    UntypedFormBuilder,
                     { provide: LocalStorageService, useClass: MockSyncStorage },
                     { provide: SessionStorageService, useClass: MockSyncStorage },
                     { provide: AccountService, useClass: MockAccountService },
