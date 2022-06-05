@@ -69,6 +69,20 @@
                             >
                         </div>
                     </div>
+                    <!--multi option command-->
+                    <ng-container *ngFor="let command of defaultCommands | typeCheck: MultiOptionCommand">
+                        <div ngbDropdown class="d-inline-block">
+                            <button class="btn btn-sm" type="button" ngbDropdownToggle>
+                                {{ command.buttonTranslationString | artemisTranslate }}
+                            </button>
+                            <div ngbDropdownMenu>
+                                <button *ngFor="let item of command.getValues()" class="btn-sm" type="button" (click)="command.execute(item.id)" ngbDropdownItem>
+                                    {{ item.value }}
+                                </button>
+                                <button *ngIf="!command.getValues().length" [disabled]="true" ngbDropdownItem jhiTranslate="global.generic.emptyList">No items available</button>
+                            </div>
+                        </div>
+                    </ng-container>
                     <!--color picker command -->
                     <div class="btn-group col-xs-6" *ngIf="colorCommands.length > 0">
                         <div class="color-preview btn btn-sm" (click)="openColorSelector($event)">{{ 'artemisApp.markdownEditor.color' | artemisTranslate }}</div>

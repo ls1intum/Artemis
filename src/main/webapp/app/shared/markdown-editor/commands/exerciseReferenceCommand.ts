@@ -1,22 +1,14 @@
-import { DomainMultiOptionCommand } from 'app/shared/markdown-editor/domainCommands/domainMultiOptionCommand';
 import { MetisService } from 'app/shared/metis/metis.service';
+import { MultiOptionCommand } from 'app/shared/markdown-editor/commands/multiOptionCommand';
 
-export class ExerciseReferenceCommand extends DomainMultiOptionCommand {
+export class ExerciseReferenceCommand extends MultiOptionCommand {
     metisService: MetisService;
+
+    buttonTranslationString = 'artemisApp.metis.editor.exercise';
 
     constructor(metisService: MetisService) {
         super();
         this.metisService = metisService;
-    }
-
-    buttonTranslationString = 'artemisApp.metis.editor.exercise';
-
-    getOpeningIdentifier(): string {
-        return '[';
-    }
-
-    getClosingIdentifier(): string {
-        return ')';
     }
 
     /**
