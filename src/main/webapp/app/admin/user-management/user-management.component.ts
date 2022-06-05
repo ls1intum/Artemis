@@ -17,6 +17,8 @@ import { faEye, faFilter, faPlus, faSort, faTimes, faWrench } from '@fortawesome
 import { LocalStorageService } from 'ngx-webstorage';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { Course } from 'app/entities/course.model';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { TemplateRef, ViewChild } from '@angular/core';
 
 export class UserFilter {
     authorityFilter: Set<AuthorityFilter> = new Set();
@@ -55,6 +57,8 @@ enum UserStorageKey {
     styleUrls: ['./user-management.component.scss'],
 })
 export class UserManagementComponent implements OnInit, OnDestroy {
+    @ViewChild('filterModal') filterModal: TemplateRef<any>;
+
     search = new Subject<void>();
     loadingSearchResult = false;
     currentAccount?: User;
@@ -96,6 +100,7 @@ export class UserManagementComponent implements OnInit, OnDestroy {
         private eventManager: EventManager,
         private localStorage: LocalStorageService,
         private curseManagementService: CourseManagementService,
+        private modalService: NgbModal,
     ) {}
 
     /**
@@ -248,6 +253,21 @@ export class UserManagementComponent implements OnInit, OnDestroy {
      */
     selectAllCourses() {
         this.filters.courseFilter = new Set(this.courses.map((course) => course.id!));
+    }
+
+    /**
+     * Opens the modal.
+     */
+    open(content: any) {
+        this.modalService.open(content).result.then();
+    }
+
+    /**
+     * Apply the filter and close the modal.
+     */
+    applyFilter() {
+        this.loadAll();
+        this.modalService.dismissAll();
     }
 
     /**

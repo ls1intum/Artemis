@@ -1,26 +1,35 @@
 {
     "userManagement": {
         "filter": {
+            "modal": {
+                "open": "Filter",
+                "title": "Filter Nutzer:innen",
+                "close": "Schließen"
+            },
             "authority": {
                 "title": "Rolle ({{ num }})",
-                "admin": "Admin",
-                "instructor": "Lehrender",
+                "tooltip": "Filter die Nutzer:innen anhand ihrere Berechtigungen",
+                "admin": "Administrator",
+                "instructor": "Lehrende",
                 "editor": "Editor:in",
                 "ta": "Tutor:in",
-                "user": "Studierender"
+                "user": "Studierende"
             },
             "origin": {
                 "title": "Herkunft ({{ num }})",
+                "tooltip": "Filter die Nutzer:innen anhand ihres Verwaltungsortes",
                 "internal": "Intern",
                 "external": "Extern"
             },
             "status": {
                 "title": "Status ({{ num }})",
+                "tooltip": "Filter die Nutzer:innen anhand ihres Accountstatus",
                 "activated": "Aktiviert",
                 "deactivated": "Deaktiviert"
             },
             "course": {
                 "title": "Kurs ({{ num }})",
+                "tooltip": "Filter die Nutzer:innen anhand ihrer Kurszugehörigkeit",
                 "all": "Alle",
                 "none": "Keinen"
             },

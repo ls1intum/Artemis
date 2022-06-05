@@ -173,6 +173,11 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
     @Query("select distinct team.students from Team team where team.exercise.course.id = :#{#courseId} and team.shortName = :#{#teamShortName}")
     Set<User> findAllInTeam(@Param("courseId") Long courseId, @Param("teamShortName") String teamShortName);
 
+    /**
+     * Creates the specification to match the provided search term.
+     * @param searchTerm term to match
+     * @return specification used to chain database operations
+     */
     private Specification<User> getSearchTermSpecification(String searchTerm) {
         String extendedSearchTerm = "%" + searchTerm + "%";
         return (root, query, criteriaBuilder) -> {
@@ -185,6 +190,11 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
         };
     }
 
+    /**
+     * Creates the specification to match the provides authorities.
+     * @param authorities set of possible authorities
+     * @return specification used to chain database operations
+     */
     private Specification<User> getAuthoritySpecification(Set<String> authorities) {
         return (root, query, criteriaBuilder) -> {
 
@@ -196,6 +206,12 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
         };
     }
 
+    /**
+     * Creates the specification to match the state of the user (internal or external).
+     * @param internal true if the account should be internal
+     * @param external true if the account should be external
+     * @return specification used to chain database operations
+     */
     private Specification<User> getInternalOrExternalSpecification(boolean internal, boolean external) {
         return (root, query, criteriaBuilder) -> {
             Predicate isInternal = criteriaBuilder.equal(root.get(User_.IS_INTERNAL), internal); // true
@@ -205,6 +221,12 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
         };
     }
 
+    /**
+     * Creates the specification to match the state of the user (activated or deactivated).
+     * @param activated true if the account should be activated
+     * @param deactivated true if the account should be deactivated
+     * @return specification used to chain database operations
+     */
     private Specification<User> getActivatedOrDeactivatedSpecification(boolean activated, boolean deactivated) {
         return (root, query, criteriaBuilder) -> {
             Predicate isActivated = criteriaBuilder.equal(root.get(User_.ACTIVATED), activated);
@@ -214,12 +236,18 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
         };
     }
 
+    /**
+     * Creates the specification to match the users course.
+     * @param courseIds a set of courseIds which the users need to match at least one
+     * @return specification used to chain database operations
+     */
     private Specification<User> getCourseSpecification(Set<Long> courseIds) {
         return (root, query, criteriaBuilder) -> {
             Predicate empty = criteriaBuilder.and(criteriaBuilder.isEmpty(root.get(User_.GROUPS)),
                     criteriaBuilder.equal(criteriaBuilder.size(root.get(User_.GROUPS)), courseIds.size()));
 
-            // Sub-Query
+            // Sub query to find out all users who are part of a group, but this group has no course.
+            // In addition, the requested courses needs to be empty.
             Subquery<Long> subQuery = query.subquery(Long.class);
             Root<User> subUserRoot = subQuery.correlate(root);
             Root<Course> subCourseRoot = subQuery.from(Course.class);
@@ -235,7 +263,7 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
             Predicate notEmptyButInvalidGroups = criteriaBuilder.and(criteriaBuilder.isNotEmpty(root.get(User_.GROUPS)), criteriaBuilder.equal(criteriaBuilder.size(courseIds), 0),
                     criteriaBuilder.equal(subQuery, 0));
 
-            // Sub-Query
+            // Sub query to find all users belonging to a group corresponding to the selected course.
             subQuery = query.subquery(Long.class);
             subUserRoot = subQuery.correlate(root);
             subCourseRoot = subQuery.from(Course.class);
@@ -256,6 +284,10 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
         };
     }
 
+    /**
+     * Creates the specification to get distinct results.
+     * @return specification used to chain database operations
+     */
     private Specification<User> distinct() {
         return (root, query, cb) -> {
             query.distinct(true);
