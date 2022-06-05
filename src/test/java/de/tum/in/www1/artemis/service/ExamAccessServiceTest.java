@@ -323,7 +323,9 @@ public class ExamAccessServiceTest extends AbstractSpringIntegrationBambooBitbuc
     @Test
     @WithMockUser(username = "student1", roles = "USER")
     public void testFetchStudentExamForTestExamOrGenerateTestExam_noCourseAccess() {
-        database.getUserByLogin("student1").setGroups(Set.of());
+        User student1 = database.getUserByLogin("student1");
+        student1.setGroups(Set.of());
+        userRepository.save(student1);
         assertThatThrownBy(() -> examAccessService.fetchStudentExamForTestExamOrGenerateTestExam(course1.getId(), testExam1.getId())).isInstanceOf(AccessForbiddenException.class);
     }
 
@@ -362,12 +364,6 @@ public class ExamAccessServiceTest extends AbstractSpringIntegrationBambooBitbuc
         examRepository.save(testExam1);
         assertThatThrownBy(() -> examAccessService.fetchStudentExamForTestExamOrGenerateTestExam(course1.getId(), testExam1.getId())).isInstanceOf(AccessForbiddenException.class);
 
-    }
-
-    @Test
-    @WithMockUser(username = "student1", roles = "USER")
-    public void testFetchStudentExamForTestExamOrGenerateTestExam_examBelongsToCourse() {
-        assertThatThrownBy(() -> examAccessService.getExamInCourseElseThrow(course1.getId(), studentExamForTestExam2.getId())).isInstanceOf(ConflictException.class);
     }
 
 }

@@ -111,7 +111,8 @@ public class ParticipationServiceTest extends AbstractSpringIntegrationJenkinsGi
         assertTrue(studentParticipationReceived.getStudent().isPresent());
         assertEquals(participant, studentParticipationReceived.getStudent().get());
         // Acceptance range, initializationDate is to be set to now()
-        assertEquals(ZonedDateTime.now().minusSeconds(10), studentParticipationReceived.getInitializationDate());
+        assertTrue(ZonedDateTime.now().minusSeconds(10).isBefore(studentParticipationReceived.getInitializationDate()));
+        assertTrue(ZonedDateTime.now().plusSeconds(10).isAfter(studentParticipationReceived.getInitializationDate()));
         assertEquals(InitializationState.INITIALIZED, studentParticipationReceived.getInitializationState());
     }
 
