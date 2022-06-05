@@ -12,9 +12,9 @@ import cloneDeep from 'lodash-es/cloneDeep';
 })
 export class ExerciseHintButtonOverlayComponent {
     @Input()
-    availableExerciseHints: ExerciseHint[];
+    availableExerciseHints?: ExerciseHint[];
     @Input()
-    activatedExerciseHints: ExerciseHint[];
+    activatedExerciseHints?: ExerciseHint[];
     @Output()
     onHintActivated = new EventEmitter<ExerciseHint>();
 
@@ -27,8 +27,8 @@ export class ExerciseHintButtonOverlayComponent {
         this.ngbModalRef = this.modalService.open(ExerciseHintStudentDialogComponent as Component, { size: 'lg', backdrop: 'static' });
         this.ngbModalRef.componentInstance.onHintActivated = this.onHintActivated;
         // cloning is required that the lists not change while modal is open
-        this.ngbModalRef.componentInstance.activatedExerciseHints = cloneDeep(this.activatedExerciseHints);
-        this.ngbModalRef.componentInstance.availableExerciseHints = cloneDeep(this.availableExerciseHints);
+        this.ngbModalRef.componentInstance.activatedExerciseHints = cloneDeep(this.activatedExerciseHints!);
+        this.ngbModalRef.componentInstance.availableExerciseHints = cloneDeep(this.availableExerciseHints!);
         this.ngbModalRef.result.then(
             () => {
                 this.ngbModalRef = undefined;

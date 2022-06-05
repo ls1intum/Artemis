@@ -48,8 +48,8 @@ export class CodeEditorStudentContainerComponent implements OnInit, OnDestroy {
     exercise: ProgrammingExercise;
     course?: Course;
 
-    activatedExerciseHints: ExerciseHint[];
-    availableExerciseHints: ExerciseHint[];
+    activatedExerciseHints?: ExerciseHint[];
+    availableExerciseHints?: ExerciseHint[];
 
     // Fatal error state: when the participation can't be retrieved, the code editor is unusable for the student
     loadingParticipation = false;
@@ -197,7 +197,7 @@ export class CodeEditorStudentContainerComponent implements OnInit, OnDestroy {
             this.exerciseHintService.getAvailableExerciseHints(this.exercise.id!).subscribe((availableRes?: HttpResponse<ExerciseHint[]>) => {
                 // filter out the activated hints from the available hints
                 this.availableExerciseHints = availableRes!.body!.filter(
-                    (availableHint) => !this.activatedExerciseHints.some((activatedHint) => availableHint.id === activatedHint.id),
+                    (availableHint) => !this.activatedExerciseHints?.some((activatedHint) => availableHint.id === activatedHint.id),
                 );
                 if (this.availableExerciseHints.length) {
                     this.alertService.info('artemisApp.exerciseHint.availableHintsAlertMessage', {
@@ -209,7 +209,7 @@ export class CodeEditorStudentContainerComponent implements OnInit, OnDestroy {
     }
 
     onHintActivated(exerciseHint: ExerciseHint) {
-        this.availableExerciseHints = this.availableExerciseHints.filter((hint) => hint.id !== exerciseHint.id);
-        this.activatedExerciseHints.push(exerciseHint);
+        this.availableExerciseHints = this.availableExerciseHints?.filter((hint) => hint.id !== exerciseHint.id);
+        this.activatedExerciseHints?.push(exerciseHint);
     }
 }
