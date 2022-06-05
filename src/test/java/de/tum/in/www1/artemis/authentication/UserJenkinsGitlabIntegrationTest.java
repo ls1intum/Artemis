@@ -467,25 +467,25 @@ public class UserJenkinsGitlabIntegrationTest extends AbstractSpringIntegrationJ
 
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
-    public void getUsersWithoutGroup() throws Exception {
+    public void testUserWithoutGroups() throws Exception {
         userTestService.testUserWithoutGroups();
     }
 
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
-    public void getUsersWithGroups() throws Exception {
+    public void testUserWithGroups() throws Exception {
         userTestService.testUserWithGroups();
     }
 
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
-    public void getUserWithActivatedStatus() throws Exception {
+    public void testUserWithActivatedStatus() throws Exception {
         userTestService.testUserWithActivatedStatus();
     }
 
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
-    public void getUserWithDeactivatedStatus() throws Exception {
+    public void testUserWithDeactivatedStatus() throws Exception {
         userTestService.testUserWithDeactivatedStatus();
     }
 }

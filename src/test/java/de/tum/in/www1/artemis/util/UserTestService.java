@@ -509,6 +509,7 @@ public class UserTestService {
         params.add("authorities", "USER,TA,EDITOR,INSTRUCTOR,ADMIN");
         params.add("origins", "INTERNAL,EXTERNAL");
         params.add("status", "ACTIVATED,DEACTIVATED");
+        params.add("courseIds", "");
         List<UserDTO> users = request.getList("/api/users", HttpStatus.OK, UserDTO.class, params);
         assertThat(users).hasSize(numberOfStudents + numberOfTutors + numberOfEditors + numberOfInstructors + 1); // +1 for admin user himself
     }
@@ -545,6 +546,7 @@ public class UserTestService {
         params.add("authorities", "USER");
         params.add("origins", "INTERNAL,EXTERNAL");
         params.add("status", "ACTIVATED,DEACTIVATED");
+        params.add("courseIds", "");
         List<User> users = request.getList("/api/users", HttpStatus.OK, User.class, params);
         assertThat(users).hasSize(1);
         assertThat(users.get(0).getEmail()).isEqualTo("student1@test.de");
