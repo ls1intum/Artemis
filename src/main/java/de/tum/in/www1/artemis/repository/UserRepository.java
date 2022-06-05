@@ -155,28 +155,38 @@ public interface UserRepository extends JpaRepository<User, Long> {
             LEFT JOIN user.groups gr
             WHERE (user.login like %:#{#searchTerm}% or user.email like %:#{#searchTerm}%
             OR user.lastName like %:#{#searchTerm}% or user.firstName like %:#{#searchTerm}%)
-            AND ua IN :authorities
-            AND ((user.groups IS EMPTY AND NOT EXISTS
+            AND ((user.authorities IS EMPTY AND :authoritySetSize = 0) OR ua IN :authorities)
+            AND
             (
-                SELECT course FROM Course course
-                where course.id in :courseIds
-            ))
+                (user.groups IS EMPTY AND :courseSetSize = 0)
+            OR
+                (
+                user.groups IS NOT EMPTY AND :courseSetSize = 0 AND NOT EXISTS
+                (
+                    SELECT course FROM Course course
+                    where course.studentGroupName = gr
+                        OR course.teachingAssistantGroupName = gr
+                        OR course.editorGroupName = gr
+                        OR course.instructorGroupName = gr
+
+                ))
             OR EXISTS
-            (
-                SELECT course FROM Course course
-                where course.id in :courseIds
-                AND (
-                    course.studentGroupName = gr
-                    OR course.teachingAssistantGroupName = gr
-                    OR course.editorGroupName = gr
-                    OR course.instructorGroupName = gr
+                (
+                    SELECT course FROM Course course
+                    where course.id in :courseIds
+                    AND (
+                        course.studentGroupName = gr
+                        OR course.teachingAssistantGroupName = gr
+                        OR course.editorGroupName = gr
+                        OR course.instructorGroupName = gr
+                    )
                 )
-            ))
+            )
             AND (user.isInternal = :internal or not user.isInternal = :external)
             AND (user.activated = :activated or not user.activated = :deactivated)
             """)
-    Page<User> searchByLoginOrNameWithAdditionalFilter(@Param("searchTerm") String searchTerm, Pageable pageable, Set<Authority> authorities, Set<Long> courseIds, boolean internal,
-            boolean external, boolean activated, boolean deactivated);
+    Page<User> searchByLoginOrNameWithAdditionalFilter(@Param("searchTerm") String searchTerm, Pageable pageable, Set<Authority> authorities, int authoritySetSize,
+            Set<Long> courseIds, int courseSetSize, boolean internal, boolean external, boolean activated, boolean deactivated);
 
     @Modifying
     @Transactional // ok because of modifying query
@@ -219,6 +229,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
         // List of authorities that a user should match at least one
         final var authorities = userSearch.getAuthorities().stream().map((auth) -> new Authority("ROLE_" + auth)).collect(Collectors.toSet());
+        final var selectedAuthoritiesSize = authorities.size();
 
         // Internal or external users or both
         final var internal = userSearch.getOrigins().contains("INTERNAL");
@@ -230,12 +241,14 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
         // Course Ids
         final var courseIds = userSearch.getCourseIds();
+        final var selectedCourseIdsSize = courseIds.size();
 
         // Evaluate filter and make request
-        return searchByLoginOrNameWithAdditionalFilter(searchTerm, sorted, authorities, courseIds, internal, external, activated, deactivated).map(user -> {
-            user.setVisibleRegistrationNumber();
-            return new UserDTO(user);
-        });
+        return searchByLoginOrNameWithAdditionalFilter(searchTerm, sorted, authorities, selectedAuthoritiesSize, courseIds, selectedCourseIdsSize, internal, external, activated,
+                deactivated).map(user -> {
+                    user.setVisibleRegistrationNumber();
+                    return new UserDTO(user);
+                });
     }
 
     /**

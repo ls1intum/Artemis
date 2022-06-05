@@ -52,6 +52,7 @@ enum UserStorageKey {
 @Component({
     selector: 'jhi-user-management',
     templateUrl: './user-management.component.html',
+    styleUrls: ['./user-management.component.scss'],
 })
 export class UserManagementComponent implements OnInit, OnDestroy {
     search = new Subject<void>();
@@ -104,7 +105,7 @@ export class UserManagementComponent implements OnInit, OnDestroy {
         // Load all courses and create id to title map
         this.curseManagementService.getAll().subscribe((courses) => {
             if (courses.body) {
-                this.courses = courses.body;
+                this.courses = courses.body.sort((c1, c2) => (c1.title ?? '').localeCompare(c2.title ?? ''));
             }
             this.initFilters();
         });
@@ -233,6 +234,20 @@ export class UserManagementComponent implements OnInit, OnDestroy {
      */
     get courseFilters() {
         return this.courses;
+    }
+
+    /**
+     * Deselect all courses
+     */
+    deselectAllCourses() {
+        this.filters.courseFilter.clear();
+    }
+
+    /**
+     * Select all courses
+     */
+    selectAllCourses() {
+        this.filters.courseFilter = new Set(this.courses.map((course) => course.id!));
     }
 
     /**

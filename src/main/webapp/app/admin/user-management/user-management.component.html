@@ -34,8 +34,8 @@
                     </div>
                     <div class="col p-0">
                         <div class="d-flex justify-content-center justify-content-md-end">
-                            <div class="d-flex">
-                                <div class="me-2" aria-label="Filter Dropdown" ngbDropdown>
+                            <div class="row">
+                                <div class="col me-2 p-0" aria-label="Filter Dropdown" ngbDropdown>
                                     <button
                                         class="btn"
                                         [ngClass]="{ 'btn-secondary': filters.authorityFilter.size === 0, 'btn-success': filters.authorityFilter.size > 0 }"
@@ -60,7 +60,7 @@
                                         </li>
                                     </ul>
                                 </div>
-                                <div class="me-2" aria-label="Filter Dropdown" ngbDropdown>
+                                <div class="col me-2 p-0" aria-label="Filter Dropdown" ngbDropdown>
                                     <button
                                         class="btn"
                                         [ngClass]="{ 'btn-secondary': filters.originFilter.size === 0, 'btn-success': filters.originFilter.size > 0 }"
@@ -83,7 +83,7 @@
                                         </li>
                                     </ul>
                                 </div>
-                                <div class="me-2" aria-label="Filter Dropdown" ngbDropdown>
+                                <div class="col me-2 p-0" aria-label="Filter Dropdown" ngbDropdown>
                                     <button
                                         class="btn"
                                         [ngClass]="{ 'btn-secondary': filters.statusFilter.size === 0, 'btn-success': filters.statusFilter.size > 0 }"
@@ -106,7 +106,7 @@
                                         </li>
                                     </ul>
                                 </div>
-                                <div class="me-2" aria-label="Filter Dropdown" ngbDropdown>
+                                <div class="col me-2 p-0" aria-label="Filter Dropdown" ngbDropdown>
                                     <button
                                         class="btn"
                                         [ngClass]="{ 'btn-secondary': filters.courseFilter.size === 0, 'btn-success': filters.courseFilter.size > 0 }"
@@ -115,21 +115,51 @@
                                         <fa-icon [icon]="faFilter"></fa-icon>
                                         <span class="d-s-none d-md-inline">{{ 'userManagement.filter.course.title' | artemisTranslate: { num: filters.courseFilter.size } }}</span>
                                     </button>
-                                    <ul ngbDropdownMenu class="checkbox-menu text-nowrap pe-2" aria-labelledby="filter-dropdown-button">
-                                        <li *ngFor="let course of this.courseFilters">
-                                            <label>
-                                                <input
-                                                    class="ms-2 form-check-input"
-                                                    (change)="this.toggleFilter(this.filters.courseFilter, course.id!)"
-                                                    [checked]="this.filters.courseFilter.has(course.id!)"
-                                                    type="checkbox"
-                                                />
-                                                <span class="ms-2">{{ course.title ?? '' }}</span>
-                                            </label>
-                                        </li>
-                                    </ul>
+                                    <div ngbDropdownMenu>
+                                        <div class="container-fluid mb-2 course-selection">
+                                            <div class="row">
+                                                <div class="form-check col">
+                                                    <input
+                                                        class="form-check-input"
+                                                        type="radio"
+                                                        name="flexRadioDefault"
+                                                        (click)="selectAllCourses()"
+                                                        [checked]="this.filters.courseFilter.size === this.courses.length"
+                                                    />
+                                                    <label class="form-check-label">
+                                                        {{ 'userManagement.filter.course.all' | artemisTranslate }}
+                                                    </label>
+                                                </div>
+                                                <div class="form-check col">
+                                                    <input
+                                                        class="form-check-input"
+                                                        type="radio"
+                                                        name="flexRadioDefault"
+                                                        (click)="deselectAllCourses()"
+                                                        [checked]="this.filters.courseFilter.size === 0"
+                                                    />
+                                                    <label class="form-check-label">
+                                                        {{ 'userManagement.filter.course.none' | artemisTranslate }}
+                                                    </label>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <ul class="text-nowrap p-0 m-0 pe-2 course-dropdown" aria-labelledby="filter-dropdown-button">
+                                            <li *ngFor="let course of this.courseFilters">
+                                                <label>
+                                                    <input
+                                                        class="ms-2 form-check-input"
+                                                        (change)="this.toggleFilter(this.filters.courseFilter, course.id!)"
+                                                        [checked]="this.filters.courseFilter.has(course.id!)"
+                                                        type="checkbox"
+                                                    />
+                                                    <span class="ms-2 course-dropdown-title">{{ course.title ?? '' }}</span>
+                                                </label>
+                                            </li>
+                                        </ul>
+                                    </div>
                                 </div>
-                                <div aria-label="Apply Filter">
+                                <div class="col ps-0" aria-label="Apply Filter">
                                     <button class="btn btn-primary" (click)="loadAll()">
                                         <span jhiTranslate="userManagement.filter.apply">Apply</span>
                                     </button>

@@ -20,7 +20,9 @@
                 "deactivated": "Deaktiviert"
             },
             "course": {
-                "title": "Kurs ({{ num }})"
+                "title": "Kurs ({{ num }})",
+                "all": "Alle",
+                "none": "Keinen"
             },
             "apply": "Apply"
         },
