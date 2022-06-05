@@ -1,5 +1,5 @@
-import { MetisService } from 'app/shared/metis/metis.service';
 import { MultiOptionCommand } from 'app/shared/markdown-editor/commands/multiOptionCommand';
+import { MetisService } from 'app/shared/metis/metis.service';
 
 export class ExerciseReferenceCommand extends MultiOptionCommand {
     metisService: MetisService;
@@ -21,9 +21,7 @@ export class ExerciseReferenceCommand extends MultiOptionCommand {
     execute(selectedExerciseId: string): void {
         const selectedExercise = this.getValues().find((value) => value.id.toString() === selectedExerciseId);
         const referenceLink = '[' + selectedExercise!.value + '](' + this.metisService.getLinkForExercise(selectedExercise!.id) + ')';
-
-        const range = this.getRange();
-        this.replace(range, referenceLink);
+        this.insertText(referenceLink);
         this.focus();
     }
 }

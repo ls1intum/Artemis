@@ -48,7 +48,7 @@
                 <div class="markdown-editor__commands-default">
                     <!--default commands (e.g. bold)-->
                     <button
-                        *ngFor="let command of defaultCommands"
+                        *ngFor="let command of defaultCommands | negatedTypeCheck: MultiOptionCommand"
                         type="button"
                         class="btn btn-sm"
                         (click)="command.execute()"

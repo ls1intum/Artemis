@@ -9,8 +9,8 @@ import { CodeCommand } from 'app/shared/markdown-editor/commands/code.command';
 import { LinkCommand } from 'app/shared/markdown-editor/commands/link.command';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { MarkdownEditorHeight } from 'app/shared/markdown-editor/markdown-editor.component';
-import { ExerciseReferenceCommand } from 'app/shared/markdown-editor/commands/exerciseReferenceCommand';
 import { MetisService } from 'app/shared/metis/metis.service';
+import { ExerciseReferenceCommand } from 'app/shared/markdown-editor/commands/exerciseReference.command';
 
 @Component({
     selector: 'jhi-posting-markdown-editor',
@@ -31,7 +31,6 @@ export class PostingMarkdownEditorComponent implements OnInit, ControlValueAcces
     @Output() valueChange = new EventEmitter();
     defaultCommands: Command[];
     exerciseReferenceCommand = new ExerciseReferenceCommand(this.metisService);
-    // domainCommands: DomainCommand[] = [this.exerciseReferenceCommand]; TODO
     content?: string;
 
     constructor(private cdref: ChangeDetectorRef, private metisService: MetisService) {}
