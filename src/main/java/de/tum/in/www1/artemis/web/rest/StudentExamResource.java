@@ -247,6 +247,10 @@ public class StudentExamResource {
             throw new AccessForbiddenException();
         }
 
+        if (studentExam.getExam().isTestExam()) {
+            throw new AccessForbiddenException("TestExams cannot be loaded via this endpoint");
+        }
+
         prepareStudentExamForConduction(request, user, studentExam);
 
         log.info("getStudentExamForConduction done in {}ms for {} exercises for user {}", System.currentTimeMillis() - start, studentExam.getExercises().size(), user.getLogin());

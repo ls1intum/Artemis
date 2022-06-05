@@ -578,6 +578,10 @@ public class ExamResource {
         var course = courseRepository.findByIdElseThrow(courseId);
         var exam = examRepository.findByIdWithRegisteredUsersElseThrow(examId);
 
+        if (exam.isTestExam()) {
+            throw new AccessForbiddenException("Registration is only allowed for RealExams");
+        }
+
         var student = userRepository.findOneWithGroupsAndAuthoritiesByLogin(studentLogin)
                 .orElseThrow(() -> new EntityNotFoundException("User with login: \"" + studentLogin + "\" does not exist"));
 
@@ -608,6 +612,11 @@ public class ExamResource {
         log.info("REST request to generate student exams for exam {}", examId);
 
         final Exam exam = examRepository.findByIdWithRegisteredUsersExerciseGroupsAndExercisesElseThrow(examId);
+
+        if (exam.isTestExam()) {
+            throw new AccessForbiddenException("Registration is only allowed for RealExams");
+        }
+
         examAccessService.checkCourseAndExamAccessForInstructorElseThrow(courseId, exam);
 
         // Validate settings of the exam
@@ -642,6 +651,11 @@ public class ExamResource {
         log.info("REST request to generate missing student exams for exam {}", examId);
 
         final Exam exam = examRepository.findByIdWithRegisteredUsersExerciseGroupsAndExercisesElseThrow(examId);
+
+        if (exam.isTestExam()) {
+            throw new AccessForbiddenException("Registration is only allowed for RealExams");
+        }
+
         examAccessService.checkCourseAndExamAccessForInstructorElseThrow(courseId, examId);
 
         // Validate settings of the exam

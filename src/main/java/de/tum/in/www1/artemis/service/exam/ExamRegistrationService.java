@@ -198,6 +198,11 @@ public class ExamRegistrationService {
      */
     public void unregisterStudentFromExam(Long examId, boolean deleteParticipationsAndSubmission, User student) {
         var exam = examRepository.findWithRegisteredUsersById(examId).orElseThrow(() -> new EntityNotFoundException("Exam", examId));
+
+        if (exam.isTestExam()) {
+            throw new AccessForbiddenException("Deletion of users is only allowed for RealExams");
+        }
+
         exam.removeRegisteredUser(student);
 
         // Note: we intentionally do not remove the user from the course, because the student might just have "unregistered" from the exam, but should
@@ -238,6 +243,10 @@ public class ExamRegistrationService {
     public void unregisterAllStudentFromExam(Long examId, boolean deleteParticipationsAndSubmission) {
         var exam = examRepository.findWithRegisteredUsersById(examId).orElseThrow(() -> new EntityNotFoundException("Exam", examId));
 
+        if (exam.isTestExam()) {
+            throw new AccessForbiddenException("Unregistration is only allowed for RealExams");
+        }
+
         // remove all registered students
         List<Long> userIds = new ArrayList<>();
         exam.getRegisteredUsers().forEach(user -> userIds.add(user.getId()));
@@ -266,6 +275,10 @@ public class ExamRegistrationService {
         Course course = courseRepository.findByIdElseThrow(courseId);
         var students = userRepository.getStudents(course);
         var exam = examRepository.findByIdWithRegisteredUsersElseThrow(examId);
+
+        if (exam.isTestExam()) {
+            throw new AccessForbiddenException("Registration is only allowed for RealExams");
+        }
 
         Map<String, Object> userData = new HashMap<>();
         userData.put("exam", exam.getTitle());

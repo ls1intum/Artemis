@@ -40,7 +40,6 @@ public interface StudentExamRepository extends JpaRepository<StudentExam, Long> 
                   WHERE se.testRun = FALSE
                       AND se.exam.id = :#{#examId}
                       AND se.user.id = :#{#userId}
-                      AND se.exam.testExam = false
             """)
     Optional<StudentExam> findWithExercisesByUserIdAndExamId(@Param("userId") long userId, @Param("examId") long examId);
 
