@@ -105,21 +105,6 @@ export class CodeEditorStudentContainerComponent implements OnInit, OnDestroy {
                         this.submissionPolicyService.getSubmissionPolicyOfProgrammingExercise(this.exercise.id!).subscribe((submissionPolicy) => {
                             this.exercise.submissionPolicy = submissionPolicy;
                         });
-                        this.exerciseHintService.getActivatedExerciseHints(this.exercise.id!).subscribe((activatedRes?: HttpResponse<ExerciseHint[]>) => {
-                            this.activatedExerciseHints = activatedRes!.body!;
-
-                            this.exerciseHintService.getAvailableExerciseHints(this.exercise.id!).subscribe((availableRes?: HttpResponse<ExerciseHint[]>) => {
-                                // filter out the activated hints from the available hints
-                                this.availableExerciseHints = availableRes!.body!.filter(
-                                    (availableHint) => !this.activatedExerciseHints.some((activatedHint) => availableHint.id === activatedHint.id),
-                                );
-                                if (this.availableExerciseHints.length) {
-                                    this.alertService.info('artemisApp.exerciseHint.availableHintsAlertMessage', {
-                                        taskName: this.availableExerciseHints.first()?.programmingExerciseTask?.taskName,
-                                    });
-                                }
-                            });
-                        });
                         if (this.participation.results && this.participation.results[0] && this.participation.results[0].feedbacks) {
                             checkSubsequentFeedbackInAssessment(this.participation.results[0].feedbacks);
                         }
@@ -202,6 +187,24 @@ export class CodeEditorStudentContainerComponent implements OnInit, OnDestroy {
             return getUnreferencedFeedback(this.latestResult.feedbacks) ?? [];
         }
         return [];
+    }
+
+    onParticipationChanges() {
+        this.exerciseHintService.getActivatedExerciseHints(this.exercise.id!).subscribe((activatedRes?: HttpResponse<ExerciseHint[]>) => {
+            this.activatedExerciseHints = activatedRes!.body!;
+
+            this.exerciseHintService.getAvailableExerciseHints(this.exercise.id!).subscribe((availableRes?: HttpResponse<ExerciseHint[]>) => {
+                // filter out the activated hints from the available hints
+                this.availableExerciseHints = availableRes!.body!.filter(
+                    (availableHint) => !this.activatedExerciseHints.some((activatedHint) => availableHint.id === activatedHint.id),
+                );
+                if (this.availableExerciseHints.length) {
+                    this.alertService.info('artemisApp.exerciseHint.availableHintsAlertMessage', {
+                        taskName: this.availableExerciseHints.first()?.programmingExerciseTask?.taskName,
+                    });
+                }
+            });
+        });
     }
 
     onHintActivated(exerciseHint: ExerciseHint) {
