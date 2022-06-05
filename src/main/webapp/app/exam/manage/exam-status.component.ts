@@ -1,5 +1,5 @@
 import { Component, Input, OnChanges } from '@angular/core';
-import { faArrowRight, faCheckCircle, faTimes, faTimesCircle, faDotCircle } from '@fortawesome/free-solid-svg-icons';
+import { faArrowRight, faCheckCircle, faTimes, faTimesCircle, faDotCircle, faCircleExclamation } from '@fortawesome/free-solid-svg-icons';
 import { Exam } from 'app/entities/exam.model';
 import { ExamChecklistService } from 'app/exam/manage/exams/exam-checklist-component/exam-checklist.service';
 import { ExamChecklist } from 'app/entities/exam-checklist.model';
@@ -17,6 +17,7 @@ export enum ExamConductionState {
     PLANNED,
     RUNNING,
     FINISHED,
+    ERROR,
 }
 
 @Component({
@@ -44,6 +45,9 @@ export class ExamStatusComponent implements OnChanges {
     examReviewState: ExamReviewState;
     examCorrectionState: ExamReviewState;
 
+    isTestExam: boolean;
+    maxPointExercises: number;
+
     readonly examConductionStateEnum = ExamConductionState;
     readonly examReviewStateEnum = ExamReviewState;
     readonly round = round;
@@ -55,6 +59,7 @@ export class ExamStatusComponent implements OnChanges {
     faCheckCircle = faCheckCircle;
     faArrowRight = faArrowRight;
     faDotCircle = faDotCircle;
+    faCircleExclamation = faCircleExclamation;
 
     constructor(private examChecklistService: ExamChecklistService) {}
 
@@ -62,6 +67,7 @@ export class ExamStatusComponent implements OnChanges {
         this.examChecklistService.getExamStatistics(this.exam).subscribe((examStats) => {
             this.examChecklist = examStats;
             this.numberOfGeneratedStudentExams = this.examChecklist.numberOfGeneratedStudentExams ?? 0;
+            this.isTestExam = this.exam.testExam!;
 
             if (this.isAtLeastInstructor) {
                 // Step 1:
@@ -71,9 +77,11 @@ export class ExamStatusComponent implements OnChanges {
             // Step 2: Exam conduction
             this.setConductionState();
 
-            // Step 3: Exam correction
-            this.setReviewState();
-            this.setCorrectionState();
+            if (!this.isTestExam) {
+                // Step 3: Exam correction
+                this.setReviewState();
+                this.setCorrectionState();
+            }
         });
     }
 
@@ -88,6 +96,9 @@ export class ExamStatusComponent implements OnChanges {
         const noEmptyExerciseGroup = this.examChecklistService.checkEachGroupContainsExercise(this.exam);
         const maximumPointsEqual = this.examChecklistService.checkPointsExercisesEqual(this.exam);
         const examPointsReachable = this.examChecklistService.checkTotalPointsMandatory(maximumPointsEqual, this.exam);
+        if (this.isTestExam) {
+            this.maxPointExercises = this.examChecklistService.calculateExercisePoints(maximumPointsEqual, this.exam);
+        }
 
         return atLeastOneGroup && noEmptyExerciseGroup && numberOfExercisesEqual && maximumPointsEqual && examPointsReachable;
     }
@@ -97,7 +108,11 @@ export class ExamStatusComponent implements OnChanges {
      * @private
      */
     private isExamPreparationFinished(): boolean {
-        return this.configuredExercises && this.registeredStudents && this.generatedStudentExams && this.preparedExerciseStart;
+        if (this.isTestExam) {
+            return this.configuredExercises;
+        } else {
+            return this.configuredExercises && this.registeredStudents && this.generatedStudentExams && this.preparedExerciseStart;
+        }
     }
 
     /**
@@ -105,7 +120,10 @@ export class ExamStatusComponent implements OnChanges {
      * @private
      */
     private setConductionState(): void {
-        if (this.examAlreadyEnded() && (!this.isAtLeastInstructor || this.examPreparationFinished)) {
+        // In case the exercise configuration is wrong, but the TestExam already started, students are not able to start a TestExam
+        if (this.isTestExam && this.examAlreadyStarted() && !this.examPreparationFinished) {
+            this.examConductionState = ExamConductionState.ERROR;
+        } else if (this.examAlreadyEnded() && (!this.isAtLeastInstructor || this.examPreparationFinished)) {
             this.examConductionState = ExamConductionState.FINISHED;
         } else if (this.examAlreadyStarted() && !this.examAlreadyEnded()) {
             this.examConductionState = ExamConductionState.RUNNING;
@@ -157,11 +175,13 @@ export class ExamStatusComponent implements OnChanges {
         // Step 1.1:
         this.configuredExercises = this.areAllExercisesConfigured();
         // Step 1.2:
-        this.registeredStudents = this.examChecklistService.checkAtLeastOneRegisteredStudent(this.exam);
-        // Step 1.3:
-        this.generatedStudentExams = this.examChecklistService.checkAllExamsGenerated(this.exam, this.examChecklist) && this.registeredStudents;
-        // Step 1.4:
-        this.preparedExerciseStart = !!this.examChecklist.allExamExercisesAllStudentsPrepared && this.generatedStudentExams;
+        if (!this.isTestExam) {
+            this.registeredStudents = this.examChecklistService.checkAtLeastOneRegisteredStudent(this.exam);
+            // Step 1.3:
+            this.generatedStudentExams = this.examChecklistService.checkAllExamsGenerated(this.exam, this.examChecklist) && this.registeredStudents;
+            // Step 1.4:
+            this.preparedExerciseStart = !!this.examChecklist.allExamExercisesAllStudentsPrepared && this.generatedStudentExams;
+        }
         this.examPreparationFinished = this.isExamPreparationFinished();
     }
 

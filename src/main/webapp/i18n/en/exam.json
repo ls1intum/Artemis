@@ -489,6 +489,8 @@
             "preparation": {
                 "examPreparation": "Exam preparation",
                 "configureExercises": "Configure exercises: {{ amount }} exercise groups",
+                "maxPointsCorrect": "Exam Points set correctly to ",
+                "maxPointsWrong": "Exam Points should be set to {{ points }}",
                 "registerStudents": "Register students: {{ registered }} registered",
                 "generateStudentExams": "Generate student exams: ",
                 "registered": "{{ generated }} of {{ total }}",
@@ -498,7 +500,8 @@
             "conduction": {
                 "examConduction": "Exam conduction",
                 "startedExams": "Started exams",
-                "submittedExams": "Submitted exams"
+                "submittedExams": "Submitted exams",
+                "conductionSuspended": "Students cannot start a TestExam until the Exam preparation is finished"
             },
             "correction": {
                 "examCorrection": "Exam correction",

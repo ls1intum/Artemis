@@ -488,6 +488,8 @@
             "preparation": {
                 "examPreparation": "Klausurvorbereitung",
                 "configureExercises": "Konfiguriere Klausuraufgaben: {{ amount }} Aufgabengruppen",
+                "maxPointsCorrect": "Klausurpunkte richtig eingestellt auf ",
+                "maxPointsWrong": "Klausurpunkte sollten {{ points }} sein",
                 "registerStudents": "Registriere Studierende: {{ registered }} registiert",
                 "generateStudentExams": "Generiere Klausuren: ",
                 "registered": "{{ generated }} von {{ total }}",
@@ -497,7 +499,8 @@
             "conduction": {
                 "examConduction": "Klausurdurchführung",
                 "startedExams": "Begonnene Klausuren",
-                "submittedExams": "Abgegebene Klausuren"
+                "submittedExams": "Abgegebene Klausuren",
+                "conductionSuspended": "Studierende können keine Testklausuren starten, solange die Klausurvorbereitung nicht abgeschlossen ist"
             },
             "correction": {
                 "examCorrection": "Klausurkorrektur",

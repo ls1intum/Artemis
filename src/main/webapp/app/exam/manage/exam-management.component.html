@@ -40,9 +40,11 @@
                     </td>
                     <td class="d-md-table-cell">
                         <ng-container>
-                            <span class="bold" *ngIf="course.isAtLeastInstructor; else notClickableExamTitle">
+                            <div class="bold" *ngIf="course.isAtLeastInstructor; else notClickableExamTitle">
                                 <a id="exam-{{ exam.id }}-title" [routerLink]="[exam.id]">{{ exam.title }}</a>
-                            </span>
+                            </div>
+                            <div class="badge bg-success" *ngIf="!exam.testExam">{{ 'artemisApp.examManagement.testExam.realExam' | artemisTranslate }}</div>
+                            <div class="badge bg-primary" *ngIf="exam.testExam">{{ 'artemisApp.examManagement.testExam.testExam' | artemisTranslate }}</div>
                         </ng-container>
                         <ng-template #notClickableExamTitle>
                             <span>
