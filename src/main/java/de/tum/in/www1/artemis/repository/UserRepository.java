@@ -198,11 +198,11 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
     private Specification<User> getAuthoritySpecification(Set<String> authorities) {
         return (root, query, criteriaBuilder) -> {
 
-            Predicate isEmptyPredicate = criteriaBuilder.and(criteriaBuilder.isEmpty(root.get(User_.AUTHORITIES)),
+            Predicate emptyPredicate = criteriaBuilder.and(criteriaBuilder.isEmpty(root.get(User_.AUTHORITIES)),
                     criteriaBuilder.equal(criteriaBuilder.size(root.get(User_.AUTHORITIES)), authorities.size()));
-            Predicate hasAuthorityPredicate = criteriaBuilder.in(root.join(User_.AUTHORITIES, JoinType.LEFT).get(Authority_.NAME)).value(authorities);
+            Predicate authorityPredicate = criteriaBuilder.in(root.join(User_.AUTHORITIES, JoinType.LEFT).get(Authority_.NAME)).value(authorities);
 
-            return criteriaBuilder.or(isEmptyPredicate, hasAuthorityPredicate);
+            return criteriaBuilder.or(emptyPredicate, authorityPredicate);
         };
     }
 
@@ -214,10 +214,10 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
      */
     private Specification<User> getInternalOrExternalSpecification(boolean internal, boolean external) {
         return (root, query, criteriaBuilder) -> {
-            Predicate isInternalPredicate = criteriaBuilder.equal(root.get(User_.IS_INTERNAL), internal); // true
-            Predicate isExternalPredicate = criteriaBuilder.notEqual(root.get(User_.IS_INTERNAL), external);
+            Predicate internalPredicate = criteriaBuilder.equal(root.get(User_.IS_INTERNAL), internal); // true
+            Predicate externalPredicate = criteriaBuilder.notEqual(root.get(User_.IS_INTERNAL), external);
 
-            return criteriaBuilder.or(isInternalPredicate, isExternalPredicate);
+            return criteriaBuilder.or(internalPredicate, externalPredicate);
         };
     }
 
@@ -229,10 +229,10 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
      */
     private Specification<User> getActivatedOrDeactivatedSpecification(boolean activated, boolean deactivated) {
         return (root, query, criteriaBuilder) -> {
-            Predicate isActivatedPredicate = criteriaBuilder.equal(root.get(User_.ACTIVATED), activated);
-            Predicate isDeactivatedPredicate = criteriaBuilder.notEqual(root.get(User_.ACTIVATED), deactivated);
+            Predicate activatedPredicate = criteriaBuilder.equal(root.get(User_.ACTIVATED), activated);
+            Predicate deactivatedPredicate = criteriaBuilder.notEqual(root.get(User_.ACTIVATED), deactivated);
 
-            return criteriaBuilder.or(isActivatedPredicate, isDeactivatedPredicate);
+            return criteriaBuilder.or(activatedPredicate, deactivatedPredicate);
         };
     }
 
