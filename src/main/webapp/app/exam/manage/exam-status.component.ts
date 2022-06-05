@@ -187,6 +187,10 @@ export class ExamStatusComponent implements OnChanges {
             this.generatedStudentExams = this.examChecklistService.checkAllExamsGenerated(this.exam, this.examChecklist) && this.registeredStudents;
             // Step 1.4:
             this.preparedExerciseStart = !!this.examChecklist.allExamExercisesAllStudentsPrepared && this.generatedStudentExams;
+        } else {
+            this.registeredStudents = false;
+            this.generatedStudentExams = false;
+            this.preparedExerciseStart = false;
         }
         this.examPreparationFinished = this.isExamPreparationFinished();
     }

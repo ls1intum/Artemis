@@ -488,7 +488,6 @@
             "preparation": {
                 "examPreparation": "Klausurvorbereitung",
                 "configureExercises": "Konfiguriere Klausuraufgaben: {{ amount }} Aufgabengruppen",
-
                 "registerStudents": "Registriere Studierende: {{ registered }} registiert",
                 "generateStudentExams": "Generiere Klausuren: ",
                 "registered": "{{ generated }} von {{ total }}",
