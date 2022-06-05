@@ -691,9 +691,9 @@ public class ExamService {
      * Gets a collection of useful statistics for the tutor exam-assessment-dashboard, including: - number of submissions to the course - number of
      * assessments - number of assessments assessed by the tutor - number of complaints
      *
-     * @param course - the couse of the exam
+     * @param course - the course of the exam
      * @param examId - the id of the exam to retrieve stats from
-     * @return data about a exam including all exercises, plus some data for the tutor as tutor status for assessment
+     * @return data about an exam including all exercises, plus some data for the tutor as tutor status for assessment
      */
     public StatsForDashboardDTO getStatsForExamAssessmentDashboard(Course course, Long examId) {
         Exam exam = examRepository.findById(examId).orElseThrow();

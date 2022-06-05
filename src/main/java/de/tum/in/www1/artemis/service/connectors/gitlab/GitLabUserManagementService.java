@@ -415,7 +415,7 @@ public class GitLabUserManagementService implements VcsUserManagementService {
             // TODO: in case we update a tutor group / role here, the tutor should NOT get access to exam exercises before the exam has finished
             Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
             Optional<AccessLevel> accessLevel = getAccessLevelFromUserGroups(userGroups, course);
-            // Do not remove the user from the group and only update it's access level
+            // Do not remove the user from the group and only update its access level
             var shouldUpdateGroupAccess = accessLevel.isPresent();
             if (shouldUpdateGroupAccess) {
                 gitlabApi.getGroupApi().updateMember(exercise.getProjectKey(), gitlabUserId, accessLevel.get());
@@ -558,7 +558,7 @@ public class GitLabUserManagementService implements VcsUserManagementService {
     }
 
     /**
-     * Retrieves the user id of the Gitlab user with the given user name
+     * Retrieves the user id of the Gitlab user with the given username
      *
      * @param username the username for which the user id should be retrieved
      * @return the Gitlab user id

@@ -95,7 +95,7 @@ export interface PatternMatch {
 
 /**
  * The context information of a post contains - for exercise and lecture context - an array of link components to be used by the Router to navigate to the context,
- * and the display name, i.e. the string that is linked, e.g the lecture title
+ * and the display name, i.e. the string that is linked, e.g. the lecture title
  */
 export interface ContextInformation {
     routerLinkComponents?: RouteComponents;

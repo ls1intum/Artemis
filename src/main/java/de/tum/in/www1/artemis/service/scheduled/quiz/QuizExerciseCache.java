@@ -41,12 +41,12 @@ abstract class QuizExerciseCache {
     abstract Map<String, Long> getBatches();
 
     /**
-     * QuizSubmissions by user name
+     * QuizSubmissions by username
      */
     abstract Map<String, QuizSubmission> getSubmissions();
 
     /**
-     * StudentParticipations by user name
+     * StudentParticipations by username
      */
     abstract Map<String, StudentParticipation> getParticipations();
 

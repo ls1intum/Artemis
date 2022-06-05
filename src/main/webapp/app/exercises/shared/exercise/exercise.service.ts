@@ -19,8 +19,11 @@ export type EntityArrayResponseType = HttpResponse<Exercise[]>;
 
 export interface ExerciseServicable<T extends Exercise> {
     create(exercise: T): Observable<HttpResponse<T>>;
+
     import?(exercise: T): Observable<HttpResponse<T>>;
+
     update(exercise: T, req?: any): Observable<HttpResponse<T>>;
+
     reevaluateAndUpdate(exercise: T, req?: any): Observable<HttpResponse<T>>;
 }
 
@@ -52,28 +55,56 @@ export class ExerciseService {
     }
 
     /**
-     * Validates if the date is correct
+     * Validates if the dates are correct
      */
     validateDate(exercise: Exercise) {
-        exercise.dueDateError = exercise.releaseDate && exercise.dueDate ? !exercise.dueDate.isAfter(exercise.releaseDate) : false;
+        exercise.dueDateError = this.hasDueDateError(exercise);
+        exercise.assessmentDueDateError = this.hasAssessmentDueDateError(exercise);
 
+        exercise.exampleSolutionPublicationDateError = this.hasExampleSolutionPublicationDateError(exercise);
+        exercise.exampleSolutionPublicationDateWarning = this.hasExampleSolutionPublicationDateWarning(exercise);
+    }
+
+    hasDueDateError(exercise: Exercise) {
+        return exercise.releaseDate && exercise.dueDate ? dayjs(exercise.dueDate).isBefore(exercise.releaseDate) : false;
+    }
+
+    private hasAssessmentDueDateError(exercise: Exercise) {
         if (exercise.releaseDate && exercise.assessmentDueDate) {
             if (exercise.dueDate) {
-                exercise.assessmentDueDateError = exercise.assessmentDueDate.isBefore(exercise.dueDate) || exercise.assessmentDueDate.isBefore(exercise.releaseDate);
-                return;
+                return dayjs(exercise.assessmentDueDate).isBefore(exercise.dueDate) || dayjs(exercise.assessmentDueDate).isBefore(exercise.releaseDate);
             } else {
-                exercise.assessmentDueDateError = true;
-                return;
+                return true;
             }
         }
 
         if (exercise.assessmentDueDate) {
             if (exercise.dueDate) {
-                exercise.assessmentDueDateError = !exercise.assessmentDueDate.isAfter(exercise.dueDate);
+                return dayjs(exercise.assessmentDueDate).isBefore(exercise.dueDate);
             } else {
-                exercise.assessmentDueDateError = true;
+                return true;
             }
         }
+        return false;
+    }
+
+    hasExampleSolutionPublicationDateError(exercise: Exercise) {
+        if (exercise.exampleSolutionPublicationDate) {
+            return (
+                dayjs(exercise.exampleSolutionPublicationDate).isBefore(exercise.releaseDate || null) ||
+                (dayjs(exercise.exampleSolutionPublicationDate).isBefore(exercise.dueDate || null) && exercise.includedInOverallScore !== IncludedInOverallScore.NOT_INCLUDED)
+            );
+        }
+        return false;
+    }
+
+    hasExampleSolutionPublicationDateWarning(exercise: Exercise) {
+        if (exercise.exampleSolutionPublicationDate && !dayjs(exercise.exampleSolutionPublicationDate).isSameOrAfter(exercise.dueDate || null)) {
+            if (!exercise.dueDate || exercise.includedInOverallScore === IncludedInOverallScore.NOT_INCLUDED) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**
@@ -97,7 +128,7 @@ export class ExerciseService {
     }
 
     /**
-     * Get exercise details including all results for the currently logged in user
+     * Get exercise details including all results for the currently logged-in user
      * @param { number } exerciseId - Id of the exercise to get the repos from
      */
     getExerciseDetails(exerciseId: number): Observable<EntityResponseType> {
@@ -107,9 +138,6 @@ export class ExerciseService {
 
                 if (res.body) {
                     // insert an empty list to avoid additional calls in case the list is empty on the server (because then it would be undefined in the client)
-                    if (res.body.exerciseHints === undefined) {
-                        res.body.exerciseHints = [];
-                    }
                     if (res.body.posts === undefined) {
                         res.body.posts = [];
                     }

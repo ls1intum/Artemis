@@ -35,6 +35,7 @@ import { CodeBlockCommand } from 'app/shared/markdown-editor/commands/codeblock.
 import { faGripLines, faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 
 export enum MarkdownEditorHeight {
+    INLINE = 100,
     SMALL = 200,
     MEDIUM = 500,
     LARGE = 1000,
@@ -110,7 +111,7 @@ export class MarkdownEditorComponent implements AfterViewInit {
         new UnorderedListCommand(),
     ];
 
-    /** {array} containing all header commands accessible for the markdown editor per defaulT*/
+    /** {array} containing all header commands accessible for the markdown editor per default*/
     @Input() headerCommands: Command[] = [new HeadingOneCommand(), new HeadingTwoCommand(), new HeadingThreeCommand()];
 
     /** {domainCommands} containing all domain commands which need to be set by the parent component which contains the markdown editor */
@@ -247,6 +248,9 @@ export class MarkdownEditorComponent implements AfterViewInit {
      * @desc Sets up resizable to enable resizing for the user
      */
     setupResizable(): void {
+        // unregister previously set event listeners for class elements
+        interact('.markdown-editor').unset();
+
         this.interactResizable = interact('.markdown-editor')
             .resizable({
                 // Enable resize from top edge; triggered by class rg-top
@@ -291,7 +295,7 @@ export class MarkdownEditorComponent implements AfterViewInit {
              * will contain the splitted text with the corresponding domainCommandIdentifier which
              * will be emitted to the parent component */
             const commandTextsMappedToCommandIdentifiers: [string, DomainCommand | null][] = [];
-            /** create a remainingMarkdownText of the markdown text to loop trough it and find the domainCommandIdentifier */
+            /** create a remainingMarkdownText of the markdown text to loop through it and find the domainCommandIdentifier */
             let remainingMarkdownText = this.markdown.slice(0);
 
             /** create string with the identifiers to use for RegEx by deleting the [] of the domainCommandIdentifiers */

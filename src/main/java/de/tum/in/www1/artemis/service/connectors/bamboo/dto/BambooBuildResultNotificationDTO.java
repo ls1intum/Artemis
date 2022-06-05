@@ -216,7 +216,7 @@ public class BambooBuildResultNotificationDTO extends AbstractBuildResultNotific
     @JsonIgnoreProperties(ignoreUnknown = true)
     public static final class BambooTestSummaryDTO {
 
-        // We don't even know what unit this. It's doesn't align at all with the value displayed in Bamboo.
+        // We don't even know what unit this. It doesn't align at all with the value displayed in Bamboo.
         // E.g. we got a value of 246 for an 8 second run?
         private int duration;
 

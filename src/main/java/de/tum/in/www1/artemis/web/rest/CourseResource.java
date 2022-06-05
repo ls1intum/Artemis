@@ -166,6 +166,9 @@ public class CourseResource {
         course.validateComplaintsAndRequestMoreFeedbackConfig();
         course.validateOnlineCourseAndRegistrationEnabled();
         course.validateAccuracyOfScores();
+        if (!course.isValidStartAndEndDate()) {
+            throw new BadRequestAlertException("For Courses, the start date has to be before the end date", Course.ENTITY_NAME, "invalidCourseStartDate", true);
+        }
 
         courseService.createOrValidateGroups(course);
         Course result = courseRepository.save(course);
@@ -244,15 +247,15 @@ public class CourseResource {
 
         // Make sure to preserve associations in updated entity
         updatedCourse.setPrerequisites(existingCourse.getPrerequisites());
-        if (updatedCourse.getOrganizations().isEmpty()) {
-            updatedCourse.setOrganizations(existingCourse.getOrganizations());
-        }
 
         updatedCourse.validateRegistrationConfirmationMessage();
         updatedCourse.validateComplaintsAndRequestMoreFeedbackConfig();
         updatedCourse.validateOnlineCourseAndRegistrationEnabled();
         updatedCourse.validateShortName();
         updatedCourse.validateAccuracyOfScores();
+        if (!updatedCourse.isValidStartAndEndDate()) {
+            throw new BadRequestAlertException("For Courses, the start date has to be before the end date", Course.ENTITY_NAME, "invalidCourseStartDate", true);
+        }
 
         // Based on the old instructors, editors and TAs, we can update all exercises in the course in the VCS (if necessary)
         // We need the old instructors, editors and TAs, so that the VCS user management service can determine which
@@ -380,7 +383,8 @@ public class CourseResource {
     }
 
     /**
-     * GET /courses/for-registration : get all courses that the current user can register to. Decided by the start and end date and if the registrationEnabled flag is set correctly
+     * GET /courses/for-registration : get all courses that the current user can register to.
+     * Decided by the start and end date and if the registrationEnabled flag is set correctly
      *
      * @return the list of courses which are active
      */
@@ -391,7 +395,7 @@ public class CourseResource {
         User user = userRepository.getUserWithGroupsAndAuthoritiesAndOrganizations();
 
         List<Course> allRegisteredCourses = courseService.findAllActiveForUser(user);
-        List<Course> allCoursesToRegister = courseRepository.findAllCurrentlyActiveNotOnlineAndRegistrationEnabledWithOrganizations();
+        List<Course> allCoursesToRegister = courseRepository.findAllCurrentlyActiveNotOnlineAndRegistrationEnabledWithOrganizationsAndPrerequisites();
         List<Course> registrableCourses = allCoursesToRegister.stream().filter(course -> {
             // further, check if the course has been assigned to any organization and if yes,
             // check if user is member of at least one of them

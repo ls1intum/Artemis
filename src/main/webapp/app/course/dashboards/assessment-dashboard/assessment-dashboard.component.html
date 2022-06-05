@@ -158,7 +158,7 @@
                                     <a
                                         id="open-exercise-dashboard"
                                         [routerLink]="getAssessmentDashboardLinkForExercise(exercise)"
-                                        class="btn btn-info btn-sm me-1"
+                                        class="btn btn-info btn-sm me-1 mb-1"
                                         [class.guided-tour]="exercise === exerciseForGuidedTour"
                                     >
                                         <span class="d-md-inline" jhiTranslate="entity.action.exerciseDashboard">Exercise dashboard</span>
@@ -170,7 +170,7 @@
                                 <a
                                     [routerLink]="['/course-management', courseId, 'exercises', exercise.id, 'teams']"
                                     [queryParams]="{ filter: TeamFilterProp.OWN }"
-                                    class="btn btn-info btn-sm me-1"
+                                    class="btn btn-info btn-sm me-1 mb-1"
                                     [class.guided-tour]="exercise === exerciseForGuidedTour"
                                 >
                                     <span class="d-none d-md-inline" jhiTranslate="artemisApp.assessmentDashboard.exerciseTeams">Exercise Teams</span>
@@ -185,13 +185,13 @@
                                     "
                                 >
                                     <jhi-second-correction-enable-button
-                                        class="me-1"
+                                        class="me-1 mb-1"
                                         (ngModelChange)="toggleSecondCorrection(exercise.id!)"
                                         [secondCorrectionEnabled]="exercise.secondCorrectionEnabled"
                                         [togglingSecondCorrectionButton]="isTogglingSecondCorrection.get(exercise.id!)!"
                                     ></jhi-second-correction-enable-button>
                                 </ng-container>
-                                <a class="btn btn-primary btn-sm" *ngIf="course?.isAtLeastInstructor" [routerLink]="getSubmissionsLinkForExercise(exercise)">
+                                <a class="btn btn-primary btn-sm mb-1" *ngIf="course?.isAtLeastInstructor" [routerLink]="getSubmissionsLinkForExercise(exercise)">
                                     <span jhiTranslate="artemisApp.assessmentDashboard.submissions">Submissions</span>
                                 </a>
                             </ng-container>

@@ -126,8 +126,7 @@
             "problemStatement": {
                 "title": "Problem Statement",
                 "taskCommand": "Task",
-                "testCaseCommand": "Insert Test Case",
-                "exerciseHintCommand": "Add task specific hint"
+                "testCaseCommand": "Insert Test Case"
             },
             "status": {
                 "solutionFailsTest": "The Solution Repository does not fulfill one or more test cases. This could indicate an issue with the Solution Repository or the test cases.",
@@ -272,6 +271,8 @@
                 "afterDueDateTooltip": "Activate this setting to build & test all student submissions on the selected date. This date must be set after the due date. These generated results will be marked as 'graded' even though the due date has passed.",
                 "alertNewDueDate": "The due date has been set to the release date!",
                 "alertNewAfterDueDate": "The date of the additional test runs has been set to the release date!",
+                "alertNewExampleSolutionPublicationDateAsReleaseDate": "The example solution publication date has been set to the release date!",
+                "alertNewExampleSolutionPublicationDateAsDueDate": "The example solution publication date has been set to the due date!",
                 "assessmentDueDate": "Assessment Due Date",
                 "assessmentDueDateTooltip": "The deadline for manual reviews. As soon as the specified date passes, all manual assessments will be released to students!",
                 "notSet": "not set",
