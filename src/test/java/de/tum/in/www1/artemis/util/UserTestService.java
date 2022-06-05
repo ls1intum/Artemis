@@ -15,6 +15,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
 
+import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.LtiUserId;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.programmingexercise.MockDelegate;
@@ -708,5 +709,131 @@ public class UserTestService {
 
     public UserRepository getUserRepository() {
         return userRepository;
+    }
+
+    // Test
+    public void getUserWithoutGroups() throws Exception {
+        final var params = new LinkedMultiValueMap<String, String>();
+        params.add("page", "0");
+        params.add("pageSize", "100");
+        params.add("searchTerm", "");
+        params.add("sortingOrder", "ASCENDING");
+        params.add("sortedColumn", "id");
+        params.add("authorities", "USER,TA,EDITOR,INSTRUCTOR,ADMIN");
+        params.add("origins", "INTERNAL,EXTERNAL");
+        params.add("status", "ACTIVATED,DEACTIVATED");
+        params.add("courseIds", "");
+
+        List<User> result;
+        List<User> users;
+
+        database.addEmptyCourse();
+
+        int[][] numbers = new int[][] { { 2, 0, 0, 0 }, { 0, 2, 0, 0 }, { 0, 0, 2, 0 }, { 0, 0, 0, 2 }, };
+        for (int[] number : numbers) {
+            userRepository.deleteAll();
+            users = database.addUsers(number[0], number[1], number[2], number[3]);
+            users.get(0).setGroups(Collections.emptySet());
+            users.get(1).setGroups(Set.of("tumuser"));
+            userRepository.saveAll(users);
+            result = request.getList("/api/users", HttpStatus.OK, User.class, params);
+            assertThat(result).hasSize(2); // admin and user
+            assertThat(result.get(0)).isEqualTo(users.get(0));
+        }
+    }
+
+    // Test
+    public void getUserWithGroups() throws Exception {
+        final var params = new LinkedMultiValueMap<String, String>();
+        params.add("page", "0");
+        params.add("pageSize", "100");
+        params.add("searchTerm", "");
+        params.add("sortingOrder", "ASCENDING");
+        params.add("sortedColumn", "id");
+        params.add("authorities", "USER,TA,EDITOR,INSTRUCTOR,ADMIN");
+        params.add("origins", "INTERNAL,EXTERNAL");
+        params.add("status", "ACTIVATED,DEACTIVATED");
+        params.add("courseIds", "1");
+
+        List<User> result;
+        List<User> users;
+
+        Course course = database.addEmptyCourse();
+        course.setId(1L);
+        courseRepository.save(course);
+
+        int[][] numbers = new int[][] { { 2, 0, 0, 0 }, { 0, 2, 0, 0 }, { 0, 0, 2, 0 }, { 0, 0, 0, 2 }, };
+        for (int[] number : numbers) {
+            userRepository.deleteAll();
+            users = database.addUsers(number[0], number[1], number[2], number[3]);
+            users.get(0).setGroups(Collections.emptySet());
+            users.get(1).setGroups(Set.of("tumuser"));
+            userRepository.saveAll(users);
+            result = request.getList("/api/users", HttpStatus.OK, User.class, params);
+            assertThat(result).hasSize(1); // admin and user
+            assertThat(result.get(0)).isEqualTo(users.get(1));
+        }
+    }
+
+    // Test
+    public void getUserWithActivatedStatus() throws Exception {
+        final var params = new LinkedMultiValueMap<String, String>();
+        params.add("page", "0");
+        params.add("pageSize", "100");
+        params.add("searchTerm", "");
+        params.add("sortingOrder", "ASCENDING");
+        params.add("sortedColumn", "id");
+        params.add("authorities", "USER,TA,EDITOR,INSTRUCTOR,ADMIN");
+        params.add("origins", "INTERNAL,EXTERNAL");
+        params.add("status", "ACTIVATED");
+        params.add("courseIds", "");
+
+        List<User> result;
+        List<User> users;
+
+        database.addEmptyCourse();
+
+        int[][] numbers = new int[][] { { 2, 0, 0, 0 }, { 0, 2, 0, 0 }, { 0, 0, 2, 0 }, { 0, 0, 0, 2 }, };
+        for (int[] number : numbers) {
+            userRepository.deleteAll();
+            users = database.addUsers(number[0], number[1], number[2], number[3]);
+            users.get(0).setActivated(true);
+            users.get(1).setActivated(false);
+            userRepository.saveAll(users);
+            result = request.getList("/api/users", HttpStatus.OK, User.class, params);
+            assertThat(result).hasSize(2); // admin and user
+            assertThat(result.get(0)).isEqualTo(users.get(0));
+        }
+    }
+
+    // Test
+    public void getUserWithDeactivatedStatus() throws Exception {
+        final var params = new LinkedMultiValueMap<String, String>();
+        params.add("page", "0");
+        params.add("pageSize", "100");
+        params.add("searchTerm", "");
+        params.add("sortingOrder", "ASCENDING");
+        params.add("sortedColumn", "id");
+        params.add("authorities", "USER,TA,EDITOR,INSTRUCTOR,ADMIN");
+        params.add("origins", "INTERNAL,EXTERNAL");
+        params.add("status", "DEACTIVATED");
+        params.add("courseIds", "");
+
+        List<User> result;
+        List<User> users;
+
+        database.addEmptyCourse();
+
+        int[][] numbers = new int[][] { { 2, 0, 0, 0 }, { 0, 2, 0, 0 }, { 0, 0, 2, 0 }, { 0, 0, 0, 2 }, };
+        for (int[] number : numbers) {
+            userRepository.deleteAll();
+            users = database.addUsers(number[0], number[1], number[2], number[3]);
+            users.get(0).setActivated(true);
+            users.get(1).setActivated(false);
+            userRepository.saveAll(users);
+            result = request.getList("/api/users", HttpStatus.OK, User.class, params);
+            assertThat(result).hasSize(1); // user
+            assertThat(result.get(0)).isEqualTo(users.get(1));
+        }
     }
 }

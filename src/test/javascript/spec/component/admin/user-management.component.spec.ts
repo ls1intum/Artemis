@@ -1,5 +1,5 @@
 import { ComponentFixture, fakeAsync, inject, TestBed, tick } from '@angular/core/testing';
-import { UserManagementComponent } from 'app/admin/user-management/user-management.component';
+import { AuthorityFilter, OriginFilter, StatusFilter, UserManagementComponent } from 'app/admin/user-management/user-management.component';
 import { UserService } from 'app/core/user/user.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
@@ -23,6 +23,7 @@ import { CourseManagementService } from 'app/course/manage/course-management.ser
 import { MockLocalStorageService } from '../../helpers/mocks/service/mock-local-storage.service';
 import { LocalStorageService } from 'ngx-webstorage';
 import { MockCourseManagementService } from '../../helpers/mocks/service/mock-course-management.service';
+import { Course } from 'app/entities/course.model';
 
 describe('UserManagementComponent', () => {
     let comp: UserManagementComponent;
@@ -30,7 +31,16 @@ describe('UserManagementComponent', () => {
     let userService: UserService;
     let accountService: AccountService;
     let eventManager: EventManager;
+    let courseManagementService: CourseManagementService;
     let httpMock: HttpTestingController;
+
+    const course1 = new Course();
+    course1.id = 1;
+    course1.title = 'a';
+    const course2 = new Course();
+    course2.id = 2;
+    course2.title = 'b';
+    const courses = [course2, course1];
 
     const route = {
         params: of({ courseId: 123, sort: 'id,desc' }),
@@ -80,6 +90,7 @@ describe('UserManagementComponent', () => {
                 userService = TestBed.inject(UserService);
                 accountService = TestBed.inject(AccountService);
                 eventManager = TestBed.inject(EventManager);
+                courseManagementService = TestBed.inject(CourseManagementService);
                 httpMock = TestBed.inject(HttpTestingController);
             });
     });
@@ -209,5 +220,76 @@ describe('UserManagementComponent', () => {
         expect(comp.validateUserSearch({ value: [0] } as AbstractControl)).toEqual({ searchControl: true });
         expect(comp.validateUserSearch({ value: [0, 0] } as AbstractControl)).toEqual({ searchControl: true });
         expect(comp.validateUserSearch({ value: [0, 0, 0] } as AbstractControl)).toBe(null);
+    });
+
+    it('should sort courses', () => {
+        const spy = jest.spyOn(courseManagementService, 'getAll').mockReturnValue(
+            of(
+                new HttpResponse({
+                    body: courses,
+                }),
+            ),
+        );
+
+        comp.ngOnInit();
+
+        expect(spy).toHaveBeenCalledOnce();
+        expect(comp.courses).toEqual(courses.sort((c1, c2) => c1.title!.localeCompare(c2.title!)));
+    });
+
+    it('should call initFilters', () => {
+        const spy = jest.spyOn(comp, 'initFilters');
+
+        comp.ngOnInit();
+
+        expect(spy).toHaveBeenCalledOnce();
+    });
+
+    it('should insert filters', () => {
+        jest.spyOn(courseManagementService, 'getAll').mockReturnValue(
+            of(
+                new HttpResponse({
+                    body: courses,
+                }),
+            ),
+        );
+
+        comp.ngOnInit();
+
+        expect(comp.filters.authorityFilter).toEqual(new Set(Object.keys(AuthorityFilter).map((key) => AuthorityFilter[key])));
+        expect(comp.filters.originFilter).toEqual(new Set(Object.keys(OriginFilter).map((key) => OriginFilter[key])));
+        expect(comp.filters.statusFilter).toEqual(new Set(Object.keys(StatusFilter).map((key) => StatusFilter[key])));
+        expect(comp.filters.courseFilter).toEqual(new Set(courses.map((course) => course.id!)));
+    });
+
+    it('should toggle filters', () => {
+        comp.courses = courses;
+
+        comp.toggleFilter(comp.filters.courseFilter, course1.id!);
+        expect(comp.filters.courseFilter).toEqual(new Set([course1.id!]));
+
+        comp.toggleFilter(comp.filters.courseFilter, course1.id!);
+        expect(comp.filters.courseFilter).toEqual(new Set([]));
+    });
+
+    it('should return correct filter values', () => {
+        comp.courses = courses;
+        comp.initFilters();
+
+        expect(comp.authorityFilters).toEqual(Object.keys(AuthorityFilter).map((key) => AuthorityFilter[key]));
+        expect(comp.originFilters).toEqual(Object.keys(OriginFilter).map((key) => OriginFilter[key]));
+        expect(comp.statusFilters).toEqual(Object.keys(StatusFilter).map((key) => StatusFilter[key]));
+        expect(comp.courseFilters).toEqual(courses);
+    });
+
+    it('should select and deselect all courses', () => {
+        comp.courses = courses;
+        comp.initFilters();
+
+        comp.deselectAllCourses();
+        expect(comp.filters.courseFilter).toEqual(new Set());
+
+        comp.selectAllCourses();
+        expect(comp.filters.courseFilter).toEqual(new Set(courses.map((course) => course.id!)));
     });
 });

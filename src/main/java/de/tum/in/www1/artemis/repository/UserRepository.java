@@ -156,21 +156,26 @@ public interface UserRepository extends JpaRepository<User, Long> {
             WHERE (user.login like %:#{#searchTerm}% or user.email like %:#{#searchTerm}%
             OR user.lastName like %:#{#searchTerm}% or user.firstName like %:#{#searchTerm}%)
             AND ((user.authorities IS EMPTY AND :authoritySetSize = 0) OR ua IN :authorities)
+            AND (user.isInternal = :internal or not user.isInternal = :external)
+            AND (user.activated = :activated or not user.activated = :deactivated)
             AND
             (
-                (user.groups IS EMPTY AND :courseSetSize = 0)
-            OR
                 (
-                user.groups IS NOT EMPTY AND :courseSetSize = 0 AND NOT EXISTS
+                    user.groups IS EMPTY AND :courseSetSize = 0
+                )
+                OR
                 (
-                    SELECT course FROM Course course
-                    where course.studentGroupName = gr
-                        OR course.teachingAssistantGroupName = gr
-                        OR course.editorGroupName = gr
-                        OR course.instructorGroupName = gr
+                    user.groups IS NOT EMPTY AND :courseSetSize = 0 AND NOT EXISTS
+                    (
+                        SELECT course FROM Course course
+                        where course.studentGroupName = gr
+                            OR course.teachingAssistantGroupName = gr
+                            OR course.editorGroupName = gr
+                            OR course.instructorGroupName = gr
 
-                ))
-            OR EXISTS
+                    )
+                )
+                OR EXISTS
                 (
                     SELECT course FROM Course course
                     where course.id in :courseIds
@@ -182,8 +187,6 @@ public interface UserRepository extends JpaRepository<User, Long> {
                     )
                 )
             )
-            AND (user.isInternal = :internal or not user.isInternal = :external)
-            AND (user.activated = :activated or not user.activated = :deactivated)
             """)
     Page<User> searchByLoginOrNameWithAdditionalFilter(@Param("searchTerm") String searchTerm, Pageable pageable, Set<Authority> authorities, int authoritySetSize,
             Set<Long> courseIds, int courseSetSize, boolean internal, boolean external, boolean activated, boolean deactivated);

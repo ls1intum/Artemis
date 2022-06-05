@@ -42,7 +42,7 @@
                                         ngbDropdownToggle
                                     >
                                         <fa-icon [icon]="faFilter"></fa-icon>
-                                        <span class="d-s-none d-md-inline">{{
+                                        <span class="d-none d-md-inline">{{
                                             'userManagement.filter.authority.title' | artemisTranslate: { num: filters.authorityFilter.size }
                                         }}</span>
                                     </button>
@@ -67,7 +67,7 @@
                                         ngbDropdownToggle
                                     >
                                         <fa-icon [icon]="faFilter"></fa-icon>
-                                        <span class="d-s-none d-md-inline">{{ 'userManagement.filter.origin.title' | artemisTranslate: { num: filters.originFilter.size } }}</span>
+                                        <span class="d-none d-md-inline">{{ 'userManagement.filter.origin.title' | artemisTranslate: { num: filters.originFilter.size } }}</span>
                                     </button>
                                     <ul ngbDropdownMenu class="checkbox-menu text-nowrap pe-2" aria-labelledby="filter-dropdown-button">
                                         <li *ngFor="let origin of this.originFilters">
@@ -90,7 +90,7 @@
                                         ngbDropdownToggle
                                     >
                                         <fa-icon [icon]="faFilter"></fa-icon>
-                                        <span class="d-s-none d-md-inline">{{ 'userManagement.filter.status.title' | artemisTranslate: { num: filters.statusFilter.size } }}</span>
+                                        <span class="d-none d-md-inline">{{ 'userManagement.filter.status.title' | artemisTranslate: { num: filters.statusFilter.size } }}</span>
                                     </button>
                                     <ul ngbDropdownMenu class="checkbox-menu text-nowrap pe-2" aria-labelledby="filter-dropdown-button">
                                         <li *ngFor="let status of this.statusFilters">
@@ -113,7 +113,7 @@
                                         ngbDropdownToggle
                                     >
                                         <fa-icon [icon]="faFilter"></fa-icon>
-                                        <span class="d-s-none d-md-inline">{{ 'userManagement.filter.course.title' | artemisTranslate: { num: filters.courseFilter.size } }}</span>
+                                        <span class="d-none d-md-inline">{{ 'userManagement.filter.course.title' | artemisTranslate: { num: filters.courseFilter.size } }}</span>
                                     </button>
                                     <div ngbDropdownMenu>
                                         <div class="container-fluid mb-2 course-selection">
@@ -170,7 +170,7 @@
                 </div>
             </div>
         </form>
-        <table class="table table-striped" aria-describedby="user-management-page-heading">
+        <table class="table table-striped user-management-table" aria-describedby="user-management-page-heading">
             <thead>
                 <tr jhiSort [(predicate)]="predicate" [(ascending)]="ascending" (sortChange)="transition()">
                     <th jhiSortBy="id">
