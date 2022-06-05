@@ -6,18 +6,18 @@ import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.TextAssessmentKnowledge;
 import de.tum.in.www1.artemis.domain.TextExercise;
-import de.tum.in.www1.artemis.repository.TextAssesmentKnowledgeRepository;
+import de.tum.in.www1.artemis.repository.TextAssessmentKnowledgeRepository;
 import de.tum.in.www1.artemis.repository.TextExerciseRepository;
 
 @Service
 public class TextAssessmentKnowledgeService {
 
-    private final TextAssesmentKnowledgeRepository textAssesmentKnowledgeRepository;
+    private final TextAssessmentKnowledgeRepository textAssessmentKnowledgeRepository;
 
     private final TextExerciseRepository textExerciseRepository;
 
-    public TextAssessmentKnowledgeService(TextAssesmentKnowledgeRepository textAssesmentKnowledgeRepository, TextExerciseRepository textExerciseRepository) {
-        this.textAssesmentKnowledgeRepository = textAssesmentKnowledgeRepository;
+    public TextAssessmentKnowledgeService(TextAssessmentKnowledgeRepository textAssessmentKnowledgeRepository, TextExerciseRepository textExerciseRepository) {
+        this.textAssessmentKnowledgeRepository = textAssessmentKnowledgeRepository;
         this.textExerciseRepository = textExerciseRepository;
     }
 
@@ -31,7 +31,7 @@ public class TextAssessmentKnowledgeService {
         Set<TextExercise> exerciseSet = textExerciseRepository.findAllByKnowledgeId(knowledgeId);
         // If no other exercises use the same knowledge then remove knowledge
         if (exerciseSet.size() == 1 && textExerciseId.equals(exerciseSet.iterator().next().getId())) {
-            textAssesmentKnowledgeRepository.deleteById(knowledgeId);
+            textAssessmentKnowledgeRepository.deleteById(knowledgeId);
         }
     }
 
@@ -42,7 +42,7 @@ public class TextAssessmentKnowledgeService {
      */
     public TextAssessmentKnowledge createNewKnowledge() {
         TextAssessmentKnowledge knowledge = new TextAssessmentKnowledge();
-        textAssesmentKnowledgeRepository.save(knowledge);
+        textAssessmentKnowledgeRepository.save(knowledge);
         return knowledge;
     }
 

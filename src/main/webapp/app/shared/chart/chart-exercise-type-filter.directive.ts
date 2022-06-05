@@ -31,7 +31,7 @@ export class ChartExerciseTypeFilterDirective {
      * Handles selection or deselection of specific exercise type
      * @param type the ExerciseType the user changed the filter for
      * @param exerciseScores the score objects the updated filter should be applied against
-     * @returns the exeriseScores filtered against the current state of the chart filter
+     * @returns the exerciseScores filtered against the current state of the chart filter
      * @protected
      */
     protected toggleExerciseType(type: ExerciseType, exerciseScores: any[]): any {

@@ -41,6 +41,30 @@ public class VideoUnitResource {
 
     private final AuthorizationCheckService authorizationCheckService;
 
+    /**
+     * Normalizes the provided video Url.
+     * @param videoUnit provided video unit
+     */
+    private void normalizeVideoUrl(VideoUnit videoUnit) {
+        // Remove leading and trailing whitespaces
+        if (videoUnit.getSource() != null) {
+            videoUnit.setSource(videoUnit.getSource().strip());
+        }
+    }
+
+    /**
+     * Validates the provided video Url.
+     * @param videoUnit provided video unit
+     */
+    private void validateVideoUrl(VideoUnit videoUnit) {
+        try {
+            new URL(videoUnit.getSource());
+        }
+        catch (MalformedURLException exception) {
+            throw new BadRequestException();
+        }
+    }
+
     public VideoUnitResource(LectureRepository lectureRepository, AuthorizationCheckService authorizationCheckService, VideoUnitRepository videoUnitRepository) {
         this.lectureRepository = lectureRepository;
         this.authorizationCheckService = authorizationCheckService;
@@ -88,13 +112,8 @@ public class VideoUnitResource {
             throw new ConflictException("Lecture unit must be associated to a lecture of a course", "VideoUnit", "lectureOrCourseMissing");
         }
 
-        // Validate the URL
-        try {
-            new URL(videoUnit.getSource());
-        }
-        catch (MalformedURLException exception) {
-            throw new BadRequestException();
-        }
+        normalizeVideoUrl(videoUnit);
+        validateVideoUrl(videoUnit);
 
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, videoUnit.getLecture().getCourse(), null);
 
@@ -122,13 +141,8 @@ public class VideoUnitResource {
             throw new BadRequestException();
         }
 
-        // Validate the URL
-        try {
-            new URL(videoUnit.getSource());
-        }
-        catch (MalformedURLException exception) {
-            throw new BadRequestException();
-        }
+        normalizeVideoUrl(videoUnit);
+        validateVideoUrl(videoUnit);
 
         Lecture lecture = lectureRepository.findByIdWithPostsAndLectureUnitsAndLearningGoalsElseThrow(lectureId);
         if (lecture.getCourse() == null) {
