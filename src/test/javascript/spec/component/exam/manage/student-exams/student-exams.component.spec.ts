@@ -6,7 +6,7 @@ import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from
 import { StudentExamService } from 'app/exam/manage/student-exams/student-exam.service';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { TranslateService } from '@ngx-translate/core';
-import { StudentExamStatusComponent } from 'app/exam/manage/student-exams/student-exam-status.component';
+import { StudentExamStatusComponent } from 'app/exam/manage/student-exams/student-exam-status/student-exam-status.component';
 import { NgxDatatableModule } from '@swimlane/ngx-datatable';
 import { RouterTestingModule } from '@angular/router/testing';
 import { ArtemisDurationFromSecondsPipe } from 'app/shared/pipes/artemis-duration-from-seconds.pipe';

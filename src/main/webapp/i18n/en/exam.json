@@ -230,6 +230,7 @@
             "studentExamStatusSuccess": "All registered students have an individual exam",
             "studentExamStatusWarning": "Not all registered students have an individual exam",
             "studentExamStatusWarningTooltip": "Click on the button 'Generate missing individual exams' to create the missing student exams. Alternatively, click the button 'Generate individual exams' to delete and re-create exams for all students",
+            "studentExamStatusTestExam": "StudentExams are automatically created once a student requests to start a testExam",
             "evaluateQuizExerciseSuccess": "{{number}} quiz exercises successfully evaluated!",
             "evaluateQuizExerciseFailure": "There was an error during the evaluation of the quiz exercises:\n {{message}}",
             "assessUnsubmittedStudentExamsSuccess": "Reviewed all student exams and assessed the unsubmitted or empty modeling and text exercises with 0 points.",
@@ -340,6 +341,7 @@
                 "showAllUsers": "Show all students",
                 "searchForUsers": "Register a student for this exam by searching for login or name",
                 "searchNoResults": "No students found",
+                "testExamSelfRegistration": "Students are automatically registered for the testExam when starting a testExam",
                 "login": "Login",
                 "name": "Name",
                 "firstName": "First name",
@@ -385,6 +387,7 @@
             },
             "checklist": {
                 "title": "Exam Checklist",
+                "conductionPlannedFromTo": "The conduction is planned from {{ from }} to {{ to }}",
                 "introduction": "This page gives an overview over the various steps when conducting an exam. In the",
                 "linkDescription": "external documentation",
                 "introductionPart2": "you can find more details about the individual steps.",
@@ -392,6 +395,10 @@
                 "description": "Description",
                 "status": "Current status",
                 "goTo": "Page",
+                "testExam": {
+                    "title": "TestExam Checklist",
+                    "introduction": "This page gives an overview over the various steps when creating an testExam."
+                },
                 "tableItem": {
                     "register": "Register students for the exam",
                     "exerciseGroups": "Create at least one exercise group with exercises",

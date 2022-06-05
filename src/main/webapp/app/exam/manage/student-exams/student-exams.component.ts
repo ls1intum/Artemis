@@ -31,6 +31,7 @@ export class StudentExamsComponent implements OnInit {
     course: Course;
     exam: Exam;
     hasStudentsWithoutExam: boolean;
+    isTestExam: boolean;
 
     eventSubscriber: Subscription;
     paramSub: Subscription;
@@ -85,6 +86,7 @@ export class StudentExamsComponent implements OnInit {
             const examObservable = this.examManagementService.find(this.courseId, this.examId, true).pipe(
                 tap((examResponse) => {
                     this.exam = examResponse.body!;
+                    this.isTestExam = this.exam.testExam!;
                     this.isExamStarted = this.exam.startDate ? this.exam.startDate.isBefore(dayjs()) : false;
                     this.calculateIsExamOver();
                 }),
