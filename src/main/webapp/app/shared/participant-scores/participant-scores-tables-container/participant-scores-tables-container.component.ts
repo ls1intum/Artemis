@@ -2,7 +2,7 @@ import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { ParticipantScoreAverageDTO, ParticipantScoreDTO } from 'app/shared/participant-scores/participant-scores.service';
 import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
 import { Course } from 'app/entities/course.model';
-import { FormControl } from '@angular/forms';
+import { UntypedFormControl } from '@angular/forms';
 
 @Component({
     selector: 'jhi-participant-scores-tables-container',
@@ -32,5 +32,5 @@ export class ParticipantScoresTablesContainerComponent {
     @Output()
     reload = new EventEmitter<void>();
 
-    mode = new FormControl('individual');
+    mode = new UntypedFormControl('individual');
 }

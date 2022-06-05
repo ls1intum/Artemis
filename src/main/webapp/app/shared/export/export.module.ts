@@ -6,7 +6,6 @@ import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
 
 @NgModule({
     imports: [ArtemisSharedComponentModule, ArtemisSharedCommonModule],
-    entryComponents: [],
     declarations: [ExportModalComponent, ExportButtonComponent],
     exports: [ExportModalComponent, ExportButtonComponent],
 })

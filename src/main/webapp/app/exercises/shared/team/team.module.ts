@@ -47,6 +47,5 @@ import { ArtemisTeamParticipeModule } from 'app/exercises/shared/team/team-parti
         TeamsImportFromFileFormComponent,
     ],
     exports: [TeamUpdateButtonComponent, TeamsImportButtonComponent, TeamsExportButtonComponent],
-    entryComponents: [TeamUpdateDialogComponent, TeamsImportDialogComponent],
 })
 export class ArtemisTeamModule {}

@@ -27,6 +27,5 @@ import { PrerequisiteImportComponent } from 'app/course/learning-goals/learning-
         PrerequisiteImportComponent,
     ],
     exports: [LearningGoalCardComponent, LearningGoalsPopoverComponent],
-    entryComponents: [LearningGoalDetailModalComponent],
 })
 export class ArtemisLearningGoalsModule {}

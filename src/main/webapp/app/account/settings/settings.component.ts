@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { FormBuilder, Validators } from '@angular/forms';
+import { UntypedFormBuilder, Validators } from '@angular/forms';
 
 import { AccountService } from 'app/core/auth/account.service';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
@@ -23,7 +23,7 @@ export class SettingsComponent implements OnInit {
     });
     isRegistrationEnabled = false;
 
-    constructor(private accountService: AccountService, private fb: FormBuilder, private translateService: TranslateService, private profileService: ProfileService) {}
+    constructor(private accountService: AccountService, private fb: UntypedFormBuilder, private translateService: TranslateService, private profileService: ProfileService) {}
 
     ngOnInit() {
         this.profileService.getProfileInfo().subscribe((profileInfo) => {

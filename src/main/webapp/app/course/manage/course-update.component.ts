@@ -1,6 +1,6 @@
 import { ActivatedRoute, Router } from '@angular/router';
 import { Component, OnInit, ViewChild } from '@angular/core';
-import { FormControl, FormGroup, ValidatorFn, Validators } from '@angular/forms';
+import { UntypedFormControl, UntypedFormGroup, ValidatorFn, Validators } from '@angular/forms';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { AlertService, AlertType } from 'app/core/util/alert.service';
 import { Observable } from 'rxjs';
@@ -35,7 +35,7 @@ export class CourseUpdateComponent implements OnInit {
 
     @ViewChild(ColorSelectorComponent, { static: false }) colorSelector: ColorSelectorComponent;
     readonly ARTEMIS_DEFAULT_COLOR = ARTEMIS_DEFAULT_COLOR;
-    courseForm: FormGroup;
+    courseForm: UntypedFormGroup;
     course: Course;
     isSaving: boolean;
     courseImageFile?: Blob | File;
@@ -121,65 +121,65 @@ export class CourseUpdateComponent implements OnInit {
             }
         });
 
-        this.courseForm = new FormGroup(
+        this.courseForm = new UntypedFormGroup(
             {
-                id: new FormControl(this.course.id),
-                title: new FormControl(this.course.title, [Validators.required]),
-                shortName: new FormControl(this.course.shortName, {
+                id: new UntypedFormControl(this.course.id),
+                title: new UntypedFormControl(this.course.title, [Validators.required]),
+                shortName: new UntypedFormControl(this.course.shortName, {
                     validators: [Validators.required, Validators.minLength(3), regexValidator(shortNamePattern)],
                     updateOn: 'blur',
                 }),
                 // note: we still reference them here so that they are used in the update method when the course is retrieved from the course form
-                customizeGroupNames: new FormControl(this.customizeGroupNames),
-                studentGroupName: new FormControl(this.course.studentGroupName),
-                teachingAssistantGroupName: new FormControl(this.course.teachingAssistantGroupName),
-                editorGroupName: new FormControl(this.course.editorGroupName),
-                instructorGroupName: new FormControl(this.course.instructorGroupName),
-                description: new FormControl(this.course.description),
-                organizations: new FormControl(this.courseOrganizations),
-                startDate: new FormControl(this.course.startDate),
-                endDate: new FormControl(this.course.endDate),
-                semester: new FormControl(this.course.semester),
-                testCourse: new FormControl(this.course.testCourse),
-                onlineCourse: new FormControl(this.course.onlineCourse),
-                complaintsEnabled: new FormControl(this.complaintsEnabled),
-                requestMoreFeedbackEnabled: new FormControl(this.requestMoreFeedbackEnabled),
-                maxPoints: new FormControl(this.course.maxPoints, {
+                customizeGroupNames: new UntypedFormControl(this.customizeGroupNames),
+                studentGroupName: new UntypedFormControl(this.course.studentGroupName),
+                teachingAssistantGroupName: new UntypedFormControl(this.course.teachingAssistantGroupName),
+                editorGroupName: new UntypedFormControl(this.course.editorGroupName),
+                instructorGroupName: new UntypedFormControl(this.course.instructorGroupName),
+                description: new UntypedFormControl(this.course.description),
+                organizations: new UntypedFormControl(this.courseOrganizations),
+                startDate: new UntypedFormControl(this.course.startDate),
+                endDate: new UntypedFormControl(this.course.endDate),
+                semester: new UntypedFormControl(this.course.semester),
+                testCourse: new UntypedFormControl(this.course.testCourse),
+                onlineCourse: new UntypedFormControl(this.course.onlineCourse),
+                complaintsEnabled: new UntypedFormControl(this.complaintsEnabled),
+                requestMoreFeedbackEnabled: new UntypedFormControl(this.requestMoreFeedbackEnabled),
+                maxPoints: new UntypedFormControl(this.course.maxPoints, {
                     validators: [Validators.min(1)],
                 }),
-                accuracyOfScores: new FormControl(this.course.accuracyOfScores, {
+                accuracyOfScores: new UntypedFormControl(this.course.accuracyOfScores, {
                     validators: [Validators.min(1)],
                 }),
-                defaultProgrammingLanguage: new FormControl(this.course.defaultProgrammingLanguage),
-                maxComplaints: new FormControl(this.course.maxComplaints, {
+                defaultProgrammingLanguage: new UntypedFormControl(this.course.defaultProgrammingLanguage),
+                maxComplaints: new UntypedFormControl(this.course.maxComplaints, {
                     validators: [Validators.required, Validators.min(0)],
                 }),
-                maxTeamComplaints: new FormControl(this.course.maxTeamComplaints, {
+                maxTeamComplaints: new UntypedFormControl(this.course.maxTeamComplaints, {
                     validators: [Validators.required, Validators.min(0)],
                 }),
-                maxComplaintTimeDays: new FormControl(this.course.maxComplaintTimeDays, {
+                maxComplaintTimeDays: new UntypedFormControl(this.course.maxComplaintTimeDays, {
                     validators: [Validators.required, Validators.min(0)],
                 }),
-                maxComplaintTextLimit: new FormControl(this.course.maxComplaintTextLimit, {
+                maxComplaintTextLimit: new UntypedFormControl(this.course.maxComplaintTextLimit, {
                     validators: [Validators.required, Validators.min(0), Validators.max(this.COMPLAINT_TEXT_LIMIT)],
                 }),
-                maxComplaintResponseTextLimit: new FormControl(this.course.maxComplaintResponseTextLimit, {
+                maxComplaintResponseTextLimit: new UntypedFormControl(this.course.maxComplaintResponseTextLimit, {
                     validators: [Validators.required, Validators.min(0), Validators.max(this.COMPLAINT_RESPONSE_TEXT_LIMIT)],
                 }),
-                maxRequestMoreFeedbackTimeDays: new FormControl(this.course.maxRequestMoreFeedbackTimeDays, {
+                maxRequestMoreFeedbackTimeDays: new UntypedFormControl(this.course.maxRequestMoreFeedbackTimeDays, {
                     validators: [Validators.required, Validators.min(0)],
                 }),
-                postsEnabled: new FormControl(this.course.postsEnabled),
-                registrationEnabled: new FormControl(this.course.registrationEnabled),
-                registrationConfirmationMessage: new FormControl(this.course.registrationConfirmationMessage, {
+                postsEnabled: new UntypedFormControl(this.course.postsEnabled),
+                registrationEnabled: new UntypedFormControl(this.course.registrationEnabled),
+                registrationConfirmationMessage: new UntypedFormControl(this.course.registrationConfirmationMessage, {
                     validators: [Validators.maxLength(2000)],
                 }),
-                presentationScore: new FormControl({ value: this.course.presentationScore, disabled: this.course.presentationScore === 0 }, [
+                presentationScore: new UntypedFormControl({ value: this.course.presentationScore, disabled: this.course.presentationScore === 0 }, [
                     Validators.min(1),
                     regexValidator(this.presentationScorePattern),
                 ]),
-                color: new FormControl(this.course.color),
-                courseIcon: new FormControl(this.course.courseIcon),
+                color: new UntypedFormControl(this.course.color),
+                courseIcon: new UntypedFormControl(this.course.courseIcon),
             },
             { validators: CourseValidator },
         );
@@ -474,7 +474,7 @@ export class CourseUpdateComponent implements OnInit {
     }
 }
 
-const CourseValidator: ValidatorFn = (formGroup: FormGroup) => {
+const CourseValidator: ValidatorFn = (formGroup: UntypedFormGroup) => {
     const onlineCourse = formGroup.controls['onlineCourse'].value;
     const registrationEnabled = formGroup.controls['registrationEnabled'].value;
     // it cannot be the case that both values are true

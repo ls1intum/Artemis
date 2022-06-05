@@ -50,6 +50,5 @@ const ENTITY_STATES = [...textExerciseRoute];
     ],
     declarations: [TextExerciseComponent, TextExerciseDetailComponent, TextExerciseUpdateComponent, TextExerciseRowButtonsComponent],
     exports: [TextExerciseComponent],
-    entryComponents: [ExternalSubmissionDialogComponent],
 })
 export class ArtemisTextExerciseModule {}

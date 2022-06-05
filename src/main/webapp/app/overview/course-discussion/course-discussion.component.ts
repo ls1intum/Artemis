@@ -7,7 +7,7 @@ import { Exercise } from 'app/entities/exercise.model';
 import { Lecture } from 'app/entities/lecture.model';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { Post } from 'app/entities/metis/post.model';
-import { FormBuilder } from '@angular/forms';
+import { UntypedFormBuilder } from '@angular/forms';
 import { HttpResponse } from '@angular/common/http';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { faLongArrowAltDown, faLongArrowAltUp } from '@fortawesome/free-solid-svg-icons';
@@ -48,7 +48,7 @@ export class CourseDiscussionComponent extends CourseDiscussionDirective impleme
         protected metisService: MetisService,
         private activatedRoute: ActivatedRoute,
         private courseManagementService: CourseManagementService,
-        private formBuilder: FormBuilder,
+        private formBuilder: UntypedFormBuilder,
     ) {
         super(metisService);
     }

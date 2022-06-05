@@ -14,7 +14,7 @@ import { CourseManagementService } from 'app/course/manage/course-management.ser
 import { HttpResponse } from '@angular/common/http';
 import { faArrowLeft, faChevronLeft, faChevronRight, faGripLinesVertical } from '@fortawesome/free-solid-svg-icons';
 import { CourseDiscussionDirective } from 'app/shared/metis/course-discussion.directive';
-import { FormBuilder } from '@angular/forms';
+import { UntypedFormBuilder } from '@angular/forms';
 
 @Component({
     selector: 'jhi-discussion-section',
@@ -42,7 +42,7 @@ export class DiscussionSectionComponent extends CourseDiscussionDirective implem
         private activatedRoute: ActivatedRoute,
         private courseManagementService: CourseManagementService,
         private router: Router,
-        private formBuilder: FormBuilder,
+        private formBuilder: UntypedFormBuilder,
     ) {
         super(metisService);
     }

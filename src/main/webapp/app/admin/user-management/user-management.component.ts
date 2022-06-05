@@ -10,7 +10,7 @@ import { combineLatest, Subject } from 'rxjs';
 import { AlertService } from 'app/core/util/alert.service';
 import { SortingOrder } from 'app/shared/table/pageable-table';
 import { debounceTime, switchMap, tap } from 'rxjs/operators';
-import { AbstractControl, FormControl, FormGroup } from '@angular/forms';
+import { AbstractControl, UntypedFormControl, UntypedFormGroup } from '@angular/forms';
 import { EventManager } from 'app/core/util/event-manager.service';
 import { ParseLinks } from 'app/core/util/parse-links.service';
 import { ASC, DESC, ITEMS_PER_PAGE, SORT } from 'app/shared/constants/pagination.constants';
@@ -35,7 +35,7 @@ export class UserManagementComponent implements OnInit, OnDestroy {
 
     private dialogErrorSource = new Subject<string>();
     dialogError = this.dialogErrorSource.asObservable();
-    userSearchForm: FormGroup;
+    userSearchForm: UntypedFormGroup;
 
     // Icons
     faSort = faSort;
@@ -83,8 +83,8 @@ export class UserManagementComponent implements OnInit, OnDestroy {
      * Retrieves the current user and calls the {@link loadAll} and {@link registerChangeInUsers} methods on init
      */
     ngOnInit(): void {
-        this.userSearchForm = new FormGroup({
-            searchControl: new FormControl('', { validators: [this.validateUserSearch], updateOn: 'blur' }),
+        this.userSearchForm = new UntypedFormGroup({
+            searchControl: new UntypedFormControl('', { validators: [this.validateUserSearch], updateOn: 'blur' }),
         });
         this.accountService.identity().then((user) => {
             this.currentAccount = user!;

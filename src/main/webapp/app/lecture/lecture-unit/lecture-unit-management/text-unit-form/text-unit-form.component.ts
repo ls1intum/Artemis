@@ -1,6 +1,6 @@
 import { Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output } from '@angular/core';
 import dayjs from 'dayjs/esm';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { Subject, Subscription } from 'rxjs';
 import { debounceTime } from 'rxjs/operators';
@@ -28,7 +28,7 @@ export class TextUnitFormComponent implements OnInit, OnChanges, OnDestroy {
     @Input() isEditMode = false;
     @Output() formSubmitted: EventEmitter<TextUnitFormData> = new EventEmitter<TextUnitFormData>();
 
-    form: FormGroup;
+    form: UntypedFormGroup;
     // not included in reactive form
     content: string | undefined;
     contentLoadedFromCache = false;
@@ -37,7 +37,7 @@ export class TextUnitFormComponent implements OnInit, OnChanges, OnDestroy {
     private markdownChanges = new Subject<string>();
     private markdownChangesSubscription: Subscription;
 
-    constructor(private fb: FormBuilder, private router: Router, private translateService: TranslateService) {}
+    constructor(private fb: UntypedFormBuilder, private router: Router, private translateService: TranslateService) {}
 
     get nameControl() {
         return this.form.get('name');

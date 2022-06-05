@@ -7,7 +7,6 @@ import { DeviceDetectorService } from 'ngx-device-detector';
     declarations: [GuidedTourComponent],
     imports: [ArtemisSharedModule],
     exports: [GuidedTourComponent],
-    entryComponents: [GuidedTourComponent],
     providers: [DeviceDetectorService],
 })
 export class GuidedTourModule {}

@@ -1,6 +1,6 @@
 import { Component, ElementRef, EventEmitter, Input, OnChanges, OnInit, Output, ViewChild } from '@angular/core';
 import dayjs from 'dayjs/esm';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { TranslateService } from '@ngx-translate/core';
 
 export interface AttachmentUnitFormData {
@@ -37,7 +37,7 @@ export class AttachmentUnitFormComponent implements OnInit, OnChanges {
 
     @Output()
     formSubmitted: EventEmitter<AttachmentUnitFormData> = new EventEmitter<AttachmentUnitFormData>();
-    form: FormGroup;
+    form: UntypedFormGroup;
 
     // have to handle the file input as a special case at is not part of the reactive form
     @ViewChild('fileInput', { static: false })
@@ -47,7 +47,7 @@ export class AttachmentUnitFormComponent implements OnInit, OnChanges {
     fileName: string = this.fileNamePlaceholder;
     fileInputTouched = false;
 
-    constructor(private translateService: TranslateService, private fb: FormBuilder) {}
+    constructor(private translateService: TranslateService, private fb: UntypedFormBuilder) {}
 
     ngOnChanges(): void {
         this.initializeForm();

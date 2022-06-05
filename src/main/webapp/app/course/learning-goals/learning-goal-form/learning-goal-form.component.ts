@@ -1,5 +1,5 @@
 import { Component, EventEmitter, Input, OnChanges, OnInit, Output } from '@angular/core';
-import { FormBuilder, FormControl, FormGroup, Validators } from '@angular/forms';
+import { UntypedFormBuilder, UntypedFormControl, UntypedFormGroup, Validators } from '@angular/forms';
 import { LearningGoalService } from 'app/course/learning-goals/learningGoal.service';
 import { of } from 'rxjs';
 import { catchError, delay, map, switchMap } from 'rxjs/operators';
@@ -13,7 +13,7 @@ import { intersection } from 'lodash-es';
  * Async Validator to make sure that a learning goal title is unique within a course
  */
 export const titleUniqueValidator = (learningGoalService: LearningGoalService, courseId: number, initialTitle?: string) => {
-    return (learningGoalTitleControl: FormControl) => {
+    return (learningGoalTitleControl: UntypedFormControl) => {
         return of(learningGoalTitleControl.value).pipe(
             delay(250),
             switchMap((title) => {
@@ -72,12 +72,12 @@ export class LearningGoalFormComponent implements OnInit, OnChanges {
     @Output()
     formSubmitted: EventEmitter<LearningGoalFormData> = new EventEmitter<LearningGoalFormData>();
 
-    form: FormGroup;
+    form: UntypedFormGroup;
     selectedLectureInDropdown: Lecture;
     selectedLectureUnitsInTable: LectureUnit[] = [];
 
     constructor(
-        private fb: FormBuilder,
+        private fb: UntypedFormBuilder,
         private learningGoalService: LearningGoalService,
         private translateService: TranslateService,
         public lectureUnitService: LectureUnitService,

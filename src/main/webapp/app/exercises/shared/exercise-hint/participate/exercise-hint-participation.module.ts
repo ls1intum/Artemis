@@ -21,7 +21,6 @@ import { ArtemisSharedComponentModule } from 'app/shared/components/shared-compo
         ArtemisSharedComponentModule,
     ],
     declarations: [ExerciseHintStudentDialogComponent, ExerciseHintExpandableComponent, ExerciseHintButtonOverlayComponent],
-    entryComponents: [ExerciseHintStudentDialogComponent],
     exports: [ExerciseHintStudentDialogComponent, ExerciseHintExpandableComponent, ExerciseHintExpandableComponent, ExerciseHintButtonOverlayComponent],
 })
 export class ArtemisExerciseHintParticipationModule {}

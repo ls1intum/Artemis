@@ -3,7 +3,7 @@ import { ActivatedRoute } from '@angular/router';
 
 import { PasswordResetFinishService } from './password-reset-finish.service';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
-import { FormBuilder, Validators } from '@angular/forms';
+import { UntypedFormBuilder, Validators } from '@angular/forms';
 import { PASSWORD_MAX_LENGTH, PASSWORD_MIN_LENGTH } from 'app/app.constants';
 
 @Component({
@@ -28,7 +28,12 @@ export class PasswordResetFinishComponent implements OnInit, AfterViewInit {
         confirmPassword: ['', [Validators.required, Validators.minLength(PASSWORD_MIN_LENGTH), Validators.maxLength(PASSWORD_MAX_LENGTH)]],
     });
 
-    constructor(private passwordResetFinishService: PasswordResetFinishService, private route: ActivatedRoute, private profileService: ProfileService, private fb: FormBuilder) {}
+    constructor(
+        private passwordResetFinishService: PasswordResetFinishService,
+        private route: ActivatedRoute,
+        private profileService: ProfileService,
+        private fb: UntypedFormBuilder,
+    ) {}
 
     ngOnInit() {
         this.route.queryParams.subscribe((params) => {

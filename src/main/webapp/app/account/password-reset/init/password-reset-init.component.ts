@@ -1,7 +1,7 @@
 import { AfterViewInit, Component, ElementRef, OnInit, ViewChild } from '@angular/core';
 import { PasswordResetInitService } from './password-reset-init.service';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
-import { FormBuilder } from '@angular/forms';
+import { UntypedFormBuilder } from '@angular/forms';
 import { AlertService } from 'app/core/util/alert.service';
 import { HttpErrorResponse } from '@angular/common/http';
 import { onError } from 'app/shared/util/global.utils';
@@ -24,7 +24,7 @@ export class PasswordResetInitComponent implements OnInit, AfterViewInit {
 
     constructor(
         private passwordResetInitService: PasswordResetInitService,
-        private fb: FormBuilder,
+        private fb: UntypedFormBuilder,
         private profileService: ProfileService,
         private alertService: AlertService,
         private translateService: TranslateService,

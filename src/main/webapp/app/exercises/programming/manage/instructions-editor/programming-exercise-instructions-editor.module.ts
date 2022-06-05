@@ -10,7 +10,6 @@ import { ProgrammingExerciseInstructionAnalysisService } from 'app/exercises/pro
 @NgModule({
     imports: [ArtemisSharedModule, ArtemisProgrammingExerciseInstructionsRenderModule, ArtemisMarkdownEditorModule, ArtemisProgrammingExerciseStatusModule],
     declarations: [ProgrammingExerciseEditableInstructionComponent, ProgrammingExerciseInstructionAnalysisComponent],
-    entryComponents: [ProgrammingExerciseEditableInstructionComponent],
     providers: [ProgrammingExerciseInstructionAnalysisService],
     exports: [ArtemisProgrammingExerciseInstructionsRenderModule, ProgrammingExerciseEditableInstructionComponent],
 })

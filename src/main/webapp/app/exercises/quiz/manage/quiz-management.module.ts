@@ -70,8 +70,6 @@ const ENTITY_STATES = [...quizManagementRoute];
         MatchPercentageInfoModalComponent,
         QuizExerciseImportComponent,
     ],
-    // only add popups
-    entryComponents: [QuizReEvaluateWarningComponent],
     exports: [QuizExerciseComponent],
 })
 export class ArtemisQuizManagementModule {}

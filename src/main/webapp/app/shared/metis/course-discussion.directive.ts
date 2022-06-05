@@ -1,5 +1,5 @@
 import { Directive } from '@angular/core';
-import { FormGroup } from '@angular/forms';
+import { UntypedFormGroup } from '@angular/forms';
 import { faFilter, faSearch, faPlus, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { PostContextFilter } from 'app/shared/metis/metis.util';
 import { ButtonType } from '../components/button.component';
@@ -14,7 +14,7 @@ import { MetisService } from 'app/shared/metis/metis.service';
 export abstract class CourseDiscussionDirective {
     searchText?: string;
     currentPostContextFilter: PostContextFilter;
-    formGroup: FormGroup;
+    formGroup: UntypedFormGroup;
     readonly ButtonType = ButtonType;
     course?: Course;
     createdPost: Post;
