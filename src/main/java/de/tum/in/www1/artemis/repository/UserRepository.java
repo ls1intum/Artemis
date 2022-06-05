@@ -173,7 +173,7 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
     @Query("select distinct team.students from Team team where team.exercise.course.id = :#{#courseId} and team.shortName = :#{#teamShortName}")
     Set<User> findAllInTeam(@Param("courseId") Long courseId, @Param("teamShortName") String teamShortName);
 
-    private Specification<User> containsSearchTerm(String searchTerm) {
+    private Specification<User> getSearchTermSpecification(String searchTerm) {
         String extendedSearchTerm = "%" + searchTerm + "%";
         return (root, query, criteriaBuilder) -> {
             Predicate login = criteriaBuilder.like(root.get(User_.LOGIN), extendedSearchTerm);
@@ -185,7 +185,7 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
         };
     }
 
-    private Specification<User> containsAuthorities(Set<String> authorities) {
+    private Specification<User> getAuthoritySpecification(Set<String> authorities) {
         return (root, query, criteriaBuilder) -> {
 
             Predicate isEmpty = criteriaBuilder.and(criteriaBuilder.isEmpty(root.get(User_.AUTHORITIES)),
@@ -196,7 +196,7 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
         };
     }
 
-    private Specification<User> isInternalOrExternal(boolean internal, boolean external) {
+    private Specification<User> getInternalOrExternalSpecification(boolean internal, boolean external) {
         return (root, query, criteriaBuilder) -> {
             Predicate isInternal = criteriaBuilder.equal(root.get(User_.IS_INTERNAL), internal);
             Predicate isExternal = criteriaBuilder.notEqual(root.get(User_.IS_INTERNAL), external);
@@ -205,7 +205,7 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
         };
     }
 
-    private Specification<User> isActivatedOrDeactivated(boolean activated, boolean deactivated) {
+    private Specification<User> getActivatedOrDeactivatedSpecification(boolean activated, boolean deactivated) {
         return (root, query, criteriaBuilder) -> {
             Predicate isActivated = criteriaBuilder.equal(root.get(User_.ACTIVATED), activated);
             Predicate isDeactivated = criteriaBuilder.notEqual(root.get(User_.ACTIVATED), deactivated);
@@ -214,7 +214,7 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
         };
     }
 
-    private Specification<User> isInCourses(Set<Long> courseIds) {
+    private Specification<User> getCourseSpecification(Set<Long> courseIds) {
         return (root, query, criteriaBuilder) -> {
             Predicate empty = criteriaBuilder.and(criteriaBuilder.isEmpty(root.get(User_.GROUPS)),
                     criteriaBuilder.equal(criteriaBuilder.size(root.get(User_.GROUPS)), courseIds.size()));
@@ -290,8 +290,10 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
         // Course Ids
         final var courseIds = userSearch.getCourseIds();
 
-        return findAll(Specification.where(distinct()).and(isInCourses(courseIds)).and(containsAuthorities(authorities)).and(containsSearchTerm(searchTerm))
-                .and(isInternalOrExternal(internal, external)).and(isActivatedOrDeactivated(activated, deactivated)), sorted).map(user -> {
+        return findAll(
+                Specification.where(distinct()).and(getCourseSpecification(courseIds)).and(getAuthoritySpecification(authorities)).and(getSearchTermSpecification(searchTerm))
+                        .and(getInternalOrExternalSpecification(internal, external)).and(getActivatedOrDeactivatedSpecification(activated, deactivated)),
+                sorted).map(user -> {
                     user.setVisibleRegistrationNumber();
                     return new UserDTO(user);
                 });
