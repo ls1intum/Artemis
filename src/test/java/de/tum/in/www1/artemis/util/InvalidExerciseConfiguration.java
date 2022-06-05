@@ -7,7 +7,7 @@ import de.tum.in.www1.artemis.domain.Exercise;
 /**
  * Represents an invalid exercise configuration that can be {@linkplain #applyTo(Exercise) applied} to any given exercise of type <code>E</code>.
  * <p>
- * A configuration is invalid if it results in a {@link HttpStatus#BAD_REQUEST} when any exercise of the right type that the configuration has been applied to is sent to the server, for example via an create or update request.
+ * A configuration is invalid if it results in a {@link HttpStatus#BAD_REQUEST} when any exercise of the right type that the configuration has been applied to is sent to the server, for example via a create or update request.
  * @param <E> specifies the part of the {@link Exercise} hierarchy a configuration can be applied to
  * @implNote this might be useful for future invalidity checks that need to be executed for many different exercise types
  */

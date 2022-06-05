@@ -93,7 +93,7 @@ export class ShortAnswerQuestionStatisticComponent extends QuestionStatisticComp
     }
 
     /**
-     * build the Chart-Layout based on the the Json-entity (questionStatistic)
+     * build the Chart-Layout based on the Json-entity (questionStatistic)
      */
     loadLayout() {
         this.resetLabelsColors();

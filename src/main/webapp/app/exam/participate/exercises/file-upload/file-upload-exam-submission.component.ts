@@ -80,7 +80,7 @@ export class FileUploadExamSubmissionComponent extends ExamSubmissionComponent i
 
     /**
      * Sets file submission for exercise
-     * Here the file selected with the -browse- button is handeled.
+     * Here the file selected with the -browse- button is handled.
      * @param event {object} Event object which contains the uploaded file
      */
     setFileSubmissionForExercise(event: any): void {

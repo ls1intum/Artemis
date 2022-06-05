@@ -535,7 +535,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
     };
 
     /**
-     * Get all submissions that dont have an assessment for all correction rounds
+     * Get all submissions that don't have an assessment for all correction rounds
      * If not in examMode correction rounds defaults to 0.
      * @private
      */

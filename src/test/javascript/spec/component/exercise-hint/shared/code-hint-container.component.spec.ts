@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ArtemisTestModule } from '../../test.module';
+import { ArtemisTestModule } from '../../../test.module';
 import { CodeHintContainerComponent } from 'app/exercises/shared/exercise-hint/shared/code-hint-container.component';
 import { CodeHint } from 'app/entities/hestia/code-hint-model';
 import { ProgrammingExerciseSolutionEntry } from 'app/entities/hestia/programming-exercise-solution-entry.model';
@@ -24,6 +24,10 @@ describe('ExerciseHint Management Component', () => {
 
                 service = TestBed.inject(CodeHintService);
             });
+    });
+
+    afterEach(() => {
+        jest.restoreAllMocks();
     });
 
     it('should sort solution entries by file name', () => {

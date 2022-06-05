@@ -102,7 +102,7 @@ public class ModelingExerciseScheduleService implements IExerciseScheduleService
         }
 
         final ZonedDateTime now = ZonedDateTime.now();
-        // Semi automatically assessed modeling exercises as well
+        // Semi-automatically assessed modeling exercises as well
         // Has a regular due date in the future
         return exercise.getDueDate() != null && now.isBefore(exercise.getDueDate());
     }

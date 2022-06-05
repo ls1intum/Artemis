@@ -28,8 +28,11 @@ import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.exam.ExamDateService;
 import de.tum.in.www1.artemis.service.notifications.GroupNotificationService;
 import de.tum.in.www1.artemis.service.scheduled.quiz.QuizScheduleService;
+import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
 import de.tum.in.www1.artemis.web.rest.dto.QuizBatchJoinDTO;
+import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
+import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 
 /** REST controller for managing QuizExercise. */
@@ -66,6 +69,8 @@ public class QuizExerciseResource {
 
     private final QuizStatisticService quizStatisticService;
 
+    private final QuizExerciseImportService quizExerciseImportService;
+
     private final AuthorizationCheckService authCheckService;
 
     private final GroupNotificationService groupNotificationService;
@@ -80,9 +85,10 @@ public class QuizExerciseResource {
 
     public QuizExerciseResource(QuizExerciseService quizExerciseService, QuizExerciseRepository quizExerciseRepository, CourseService courseService, UserRepository userRepository,
             ExerciseDeletionService exerciseDeletionServiceService, QuizScheduleService quizScheduleService, QuizStatisticService quizStatisticService,
-            AuthorizationCheckService authCheckService, CourseRepository courseRepository, GroupNotificationService groupNotificationService, ExerciseService exerciseService,
-            ExamDateService examDateService, QuizMessagingService quizMessagingService, StudentParticipationRepository studentParticipationRepository,
-            QuizBatchService quizBatchService, QuizBatchRepository quizBatchRepository, SubmissionRepository submissionRepository) {
+            QuizExerciseImportService quizExerciseImportService, AuthorizationCheckService authCheckService, CourseRepository courseRepository,
+            GroupNotificationService groupNotificationService, ExerciseService exerciseService, ExamDateService examDateService, QuizMessagingService quizMessagingService,
+            StudentParticipationRepository studentParticipationRepository, QuizBatchService quizBatchService, QuizBatchRepository quizBatchRepository,
+            SubmissionRepository submissionRepository) {
         this.quizExerciseService = quizExerciseService;
         this.quizExerciseRepository = quizExerciseRepository;
         this.exerciseDeletionService = exerciseDeletionServiceService;
@@ -90,6 +96,7 @@ public class QuizExerciseResource {
         this.courseService = courseService;
         this.quizScheduleService = quizScheduleService;
         this.quizStatisticService = quizStatisticService;
+        this.quizExerciseImportService = quizExerciseImportService;
         this.authCheckService = authCheckService;
         this.groupNotificationService = groupNotificationService;
         this.exerciseService = exerciseService;
@@ -303,7 +310,7 @@ public class QuizExerciseResource {
             throw new AccessForbiddenException();
         }
         quizExercise.setQuizBatches(null); // remove proxy and load batches only if required
-        var batch = quizBatchService.getQuizBatchForStudent(quizExercise, user);
+        var batch = quizBatchService.getQuizBatchForStudentByLogin(quizExercise, user.getLogin());
         quizExercise.setQuizBatches(batch.stream().collect(Collectors.toSet()));
         // filter out information depending on quiz state
         quizExercise.applyAppropriateFilterForStudents(batch.orElse(null));
@@ -327,13 +334,13 @@ public class QuizExerciseResource {
         if (!authCheckService.isAllowedToSeeExercise(quizExercise, user) || !quizExercise.isQuizStarted() || quizExercise.isQuizEnded()) {
             throw new AccessForbiddenException();
         }
-        if (quizScheduleService.getQuizBatchForStudent(quizExercise, user).isPresent()) {
+        if (quizScheduleService.getQuizBatchForStudentByLogin(quizExercise, user.getLogin()).isPresent()) {
             return ResponseEntity.badRequest()
                     .headers(HeaderUtil.createFailureAlert(applicationName, true, "quizExercise", "quizBatchPending", "Previous submission for this quiz is still pending."))
                     .build();
         }
 
-        var submissions = submissionRepository.countByExerciseIdAndStudentId(quizExerciseId, user.getId());
+        var submissions = submissionRepository.countByExerciseIdAndStudentLogin(quizExerciseId, user.getLogin());
         if (quizExercise.getAllowedNumberOfAttempts() != null && submissions >= quizExercise.getAllowedNumberOfAttempts()) {
             return ResponseEntity.badRequest()
                     .headers(HeaderUtil.createFailureAlert(applicationName, true, "quizExercise", "quizAttemptsExceeded", "Maximum number of attempts reached.")).build();
@@ -392,6 +399,9 @@ public class QuizExerciseResource {
 
         batch.setStartTime(quizBatchService.quizBatchStartDate(quizExercise, ZonedDateTime.now()));
         batch = quizBatchService.save(batch);
+
+        // ensure that there is no scheduler that thinks the batch hasn't started yet
+        quizScheduleService.updateQuizExercise(quizExerciseRepository.findByIdWithQuestionsAndStatisticsElseThrow(quizExercise.getId()));
 
         quizExercise.setQuizBatches(Set.of(batch));
         quizMessagingService.sendQuizExerciseToSubscribedClients(quizExercise, batch, "start-batch");
@@ -488,7 +498,8 @@ public class QuizExerciseResource {
         quizExercise = quizExerciseRepository.findByIdWithQuestionsAndStatisticsElseThrow(quizExercise.getId());
         quizScheduleService.updateQuizExercise(quizExercise);
 
-        var quizBatch = quizBatchService.getQuizBatchForStudent(quizExercise, userRepository.getUser()).orElse(null);
+        // get the batch for synchronized quiz exercises and start-now action; otherwise it doesn't matter
+        var quizBatch = quizBatchService.getQuizBatchForStudentByLogin(quizExercise, "any").orElse(null);
 
         // notify websocket channel of changes to the quiz exercise
         quizMessagingService.sendQuizExerciseToSubscribedClients(quizExercise, quizBatch, action);
@@ -555,6 +566,62 @@ public class QuizExerciseResource {
 
         quizExercise.validateScoreSettings();
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, quizExercise.getId().toString())).body(quizExercise);
+    }
+
+    /**
+     * Search for all quiz exercises by title and course title. The result is pageable since there
+     * might be hundreds of exercises in the DB.
+     *
+     * @param search The pageable search containing the page size, page number and query string
+     * @return The desired page, sorted and matching the given query
+     */
+    @GetMapping("/quiz-exercises")
+    @PreAuthorize("hasRole('EDITOR')")
+    public ResponseEntity<SearchResultPageDTO<QuizExercise>> getAllExercisesOnPage(PageableSearchDTO<String> search) {
+        final var user = userRepository.getUserWithGroupsAndAuthorities();
+        return ResponseEntity.ok(quizExerciseService.getAllOnPageWithSize(search, user));
+    }
+
+    /**
+     * POST /quiz-exercises/import: Imports an existing quiz exercise into an existing course
+     * <p>
+     * This will import the whole exercise except for the participations and dates. Referenced
+     * entities will get cloned and assigned a new id.
+     *
+     * @param sourceExerciseId The ID of the original exercise which should get imported
+     * @param importedExercise The new exercise containing values that should get overwritten in the
+     *                         imported exercise, s.a. the title or difficulty
+     * @return The imported exercise (200), a not found error (404) if the template does not exist,
+     * or a forbidden error (403) if the user is not at least an instructor in the target course.
+     * @throws URISyntaxException When the URI of the response entity is invalid
+     */
+    @PostMapping("/quiz-exercises/import/{sourceExerciseId}")
+    @PreAuthorize("hasRole('EDITOR')")
+    public ResponseEntity<QuizExercise> importExercise(@PathVariable long sourceExerciseId, @RequestBody QuizExercise importedExercise) throws URISyntaxException {
+        if (sourceExerciseId <= 0 || (importedExercise.getCourseViaExerciseGroupOrCourseMember() == null && importedExercise.getExerciseGroup() == null)) {
+            log.debug("Either the courseId or exerciseGroupId must be set for an import");
+            throw new BadRequestAlertException("Either the courseId or exerciseGroupId must be set for an import", ENTITY_NAME, "noCourseIdOrExerciseGroupId");
+        }
+
+        // Valid exercises have set either a course or an exerciseGroup
+        importedExercise.checkCourseAndExerciseGroupExclusivity(ENTITY_NAME);
+
+        // Retrieve the course over the exerciseGroup or the given courseId
+        Course course = courseService.retrieveCourseOverExerciseGroupOrCourseId(importedExercise);
+        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, null);
+
+        if (!importedExercise.isValid()) {
+            // TODO: improve error message and tell the client why the quiz is invalid (also see above in create Quiz)
+            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "invalidQuiz", "The quiz exercise is invalid")).body(null);
+        }
+
+        // validates general settings: points, dates
+        importedExercise.validateGeneralSettings();
+
+        final var originalQuizExercise = quizExerciseRepository.findByIdElseThrow(sourceExerciseId);
+        final var newQuizExercise = quizExerciseImportService.importQuizExercise(originalQuizExercise, importedExercise);
+        return ResponseEntity.created(new URI("/api/quiz-exercises/" + newQuizExercise.getId()))
+                .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, newQuizExercise.getId().toString())).body(newQuizExercise);
     }
 
     private void setQuizBatches(User user, QuizExercise quizExercise) {

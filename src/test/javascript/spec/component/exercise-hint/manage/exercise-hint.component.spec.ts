@@ -4,15 +4,17 @@ import { HttpHeaders, HttpResponse } from '@angular/common/http';
 import { ActivatedRoute } from '@angular/router';
 
 import { ExerciseHintComponent } from 'app/exercises/shared/exercise-hint/manage/exercise-hint.component';
-import { ArtemisTestModule } from '../../test.module';
+import { ArtemisTestModule } from '../../../test.module';
 import { ExerciseHint } from 'app/entities/hestia/exercise-hint.model';
 import { ExerciseHintService } from 'app/exercises/shared/exercise-hint/shared/exercise-hint.service';
-import { MockActivatedRoute } from '../../helpers/mocks/activated-route/mock-activated-route';
+import { MockActivatedRoute } from '../../../helpers/mocks/activated-route/mock-activated-route';
+import { EventManager } from 'app/core/util/event-manager.service';
 
 describe('ExerciseHint Management Component', () => {
     let comp: ExerciseHintComponent;
     let fixture: ComponentFixture<ExerciseHintComponent>;
     let service: ExerciseHintService;
+    let eventManager: EventManager;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -24,8 +26,13 @@ describe('ExerciseHint Management Component', () => {
             .then(() => {
                 fixture = TestBed.createComponent(ExerciseHintComponent);
                 comp = fixture.componentInstance;
-                service = fixture.debugElement.injector.get(ExerciseHintService);
+                service = TestBed.inject(ExerciseHintService);
+                eventManager = TestBed.inject(EventManager);
             });
+    });
+
+    afterEach(() => {
+        jest.restoreAllMocks();
     });
 
     it('Should call load all on init with exerciseId from route', () => {
@@ -34,7 +41,7 @@ describe('ExerciseHint Management Component', () => {
         const hint = new ExerciseHint();
         hint.id = 123;
 
-        jest.spyOn(service, 'findByExerciseIdWithRelations').mockReturnValue(
+        jest.spyOn(service, 'findByExerciseId').mockReturnValue(
             of(
                 new HttpResponse({
                     body: [hint],
@@ -47,13 +54,14 @@ describe('ExerciseHint Management Component', () => {
         comp.ngOnInit();
 
         // THEN
-        expect(service.findByExerciseIdWithRelations).toHaveBeenCalledTimes(1);
-        expect(service.findByExerciseIdWithRelations).toHaveBeenCalledWith(15);
+        expect(service.findByExerciseId).toHaveBeenCalledTimes(1);
+        expect(service.findByExerciseId).toHaveBeenCalledWith(15);
         expect(comp.exerciseHints[0]).toEqual(expect.objectContaining({ id: 123 }));
     });
 
     it('should invoke hint deletion', () => {
-        const deleteHintMock = jest.spyOn(service, 'delete');
+        const deleteHintMock = jest.spyOn(service, 'delete').mockReturnValue(of({} as HttpResponse<void>));
+        const broadcastSpy = jest.spyOn(eventManager, 'broadcast');
         const exerciseHint = new ExerciseHint();
         exerciseHint.id = 123;
         comp.exerciseHints = [exerciseHint];
@@ -63,5 +71,16 @@ describe('ExerciseHint Management Component', () => {
 
         expect(deleteHintMock).toHaveBeenCalledTimes(1);
         expect(deleteHintMock).toHaveBeenCalledWith(15, 123);
+        expect(broadcastSpy).toHaveBeenCalledTimes(1);
+        expect(broadcastSpy).toHaveBeenCalledWith({
+            name: 'exerciseHintListModification',
+            content: 'Deleted an exerciseHint',
+        });
+    });
+
+    it('should track item id', () => {
+        const exerciseHint = new ExerciseHint();
+        exerciseHint.id = 1;
+        expect(comp.trackId(0, exerciseHint)).toBe(1);
     });
 });
