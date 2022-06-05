@@ -6,19 +6,18 @@ import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import javax.persistence.criteria.*;
 import javax.validation.constraints.NotNull;
 
 import org.springframework.data.domain.*;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.repository.*;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
-import de.tum.in.www1.artemis.domain.Authority;
-import de.tum.in.www1.artemis.domain.Course;
-import de.tum.in.www1.artemis.domain.Organization;
-import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.SortingOrder;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.dto.UserDTO;
@@ -29,7 +28,7 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
  * Spring Data JPA repository for the User entity.
  */
 @Repository
-public interface UserRepository extends JpaRepository<User, Long> {
+public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificationExecutor<User> {
 
     String USERS_CACHE = "users";
 
@@ -148,49 +147,6 @@ public interface UserRepository extends JpaRepository<User, Long> {
     @Query("select user from User user")
     Set<User> findAllWithGroupsAndAuthorities();
 
-    @EntityGraph(type = LOAD, attributePaths = { "groups", "authorities" })
-    @Query("""
-            SELECT user FROM User user
-            LEFT JOIN user.authorities ua
-            LEFT JOIN user.groups gr
-            WHERE (user.login like %:#{#searchTerm}% or user.email like %:#{#searchTerm}%
-            OR user.lastName like %:#{#searchTerm}% or user.firstName like %:#{#searchTerm}%)
-            AND ((user.authorities IS EMPTY AND :authoritySetSize = 0) OR ua IN :authorities)
-            AND (user.isInternal = :internal or not user.isInternal = :external)
-            AND (user.activated = :activated or not user.activated = :deactivated)
-            AND
-            (
-                (
-                    user.groups IS EMPTY AND :courseSetSize = 0
-                )
-                OR
-                (
-                    user.groups IS NOT EMPTY AND :courseSetSize = 0 AND NOT EXISTS
-                    (
-                        SELECT course FROM Course course
-                        where course.studentGroupName = gr
-                            OR course.teachingAssistantGroupName = gr
-                            OR course.editorGroupName = gr
-                            OR course.instructorGroupName = gr
-
-                    )
-                )
-                OR EXISTS
-                (
-                    SELECT course FROM Course course
-                    where course.id in :courseIds
-                    AND (
-                        course.studentGroupName = gr
-                        OR course.teachingAssistantGroupName = gr
-                        OR course.editorGroupName = gr
-                        OR course.instructorGroupName = gr
-                    )
-                )
-            )
-            """)
-    Page<User> searchByLoginOrNameWithAdditionalFilter(@Param("searchTerm") String searchTerm, Pageable pageable, Set<Authority> authorities, int authoritySetSize,
-            Set<Long> courseIds, int courseSetSize, boolean internal, boolean external, boolean activated, boolean deactivated);
-
     @Modifying
     @Transactional // ok because of modifying query
     @Query("Update User user set user.lastNotificationRead = :#{#lastNotificationRead} where user.id = :#{#userId}")
@@ -217,6 +173,96 @@ public interface UserRepository extends JpaRepository<User, Long> {
     @Query("select distinct team.students from Team team where team.exercise.course.id = :#{#courseId} and team.shortName = :#{#teamShortName}")
     Set<User> findAllInTeam(@Param("courseId") Long courseId, @Param("teamShortName") String teamShortName);
 
+    private Specification<User> containsSearchTerm(String searchTerm) {
+        String extendedSearchTerm = "%" + searchTerm + "%";
+        return (root, query, criteriaBuilder) -> {
+            Predicate login = criteriaBuilder.like(root.get(User_.LOGIN), extendedSearchTerm);
+            Predicate email = criteriaBuilder.like(root.get(User_.EMAIL), extendedSearchTerm);
+            Predicate firstName = criteriaBuilder.like(root.get(User_.FIRST_NAME), extendedSearchTerm);
+            Predicate lastName = criteriaBuilder.like(root.get(User_.LAST_NAME), extendedSearchTerm);
+
+            return criteriaBuilder.or(login, email, firstName, lastName);
+        };
+    }
+
+    private Specification<User> containsAuthorities(Set<String> authorities) {
+        return (root, query, criteriaBuilder) -> {
+
+            Predicate isEmpty = criteriaBuilder.and(criteriaBuilder.isEmpty(root.get(User_.AUTHORITIES)),
+                    criteriaBuilder.equal(criteriaBuilder.size(root.get(User_.AUTHORITIES)), authorities.size()));
+            Predicate hasAuthority = criteriaBuilder.in(root.join(User_.AUTHORITIES, JoinType.LEFT).get(Authority_.NAME)).value(authorities);
+
+            return criteriaBuilder.or(isEmpty, hasAuthority);
+        };
+    }
+
+    private Specification<User> isInternalOrExternal(boolean internal, boolean external) {
+        return (root, query, criteriaBuilder) -> {
+            Predicate isInternal = criteriaBuilder.equal(root.get(User_.IS_INTERNAL), internal);
+            Predicate isExternal = criteriaBuilder.notEqual(root.get(User_.IS_INTERNAL), external);
+
+            return criteriaBuilder.or(isInternal, isExternal);
+        };
+    }
+
+    private Specification<User> isActivatedOrDeactivated(boolean activated, boolean deactivated) {
+        return (root, query, criteriaBuilder) -> {
+            Predicate isActivated = criteriaBuilder.equal(root.get(User_.ACTIVATED), activated);
+            Predicate isDeactivated = criteriaBuilder.notEqual(root.get(User_.ACTIVATED), deactivated);
+
+            return criteriaBuilder.or(isActivated, isDeactivated);
+        };
+    }
+
+    private Specification<User> isInCourses(Set<Long> courseIds) {
+        return (root, query, criteriaBuilder) -> {
+            Predicate empty = criteriaBuilder.and(criteriaBuilder.isEmpty(root.get(User_.GROUPS)),
+                    criteriaBuilder.equal(criteriaBuilder.size(root.get(User_.GROUPS)), courseIds.size()));
+
+            // Sub-Query
+            Subquery<Long> subQuery = query.subquery(Long.class);
+            Root<User> subUserRoot = subQuery.correlate(root);
+            Root<Course> subCourseRoot = subQuery.from(Course.class);
+            Join<User, String> group = subUserRoot.join(User_.GROUPS, JoinType.LEFT);
+
+            Predicate student = criteriaBuilder.equal(subCourseRoot.get(Course_.STUDENT_GROUP_NAME), group);
+            Predicate teaching = criteriaBuilder.equal(subCourseRoot.get(Course_.TEACHING_ASSISTANT_GROUP_NAME), group);
+            Predicate editor = criteriaBuilder.equal(subCourseRoot.get(Course_.EDITOR_GROUP_NAME), group);
+            Predicate instructor = criteriaBuilder.equal(subCourseRoot.get(Course_.INSTRUCTOR_GROUP_NAME), group);
+
+            subQuery.select(criteriaBuilder.count(subUserRoot.get(User_.ID))).where(criteriaBuilder.or(student, teaching, editor, instructor));
+
+            Predicate notEmptyButInvalidGroups = criteriaBuilder.and(criteriaBuilder.isNotEmpty(root.get(User_.GROUPS)), criteriaBuilder.equal(subQuery, 0));
+
+            // Sub-Query
+            subQuery = query.subquery(Long.class);
+            subUserRoot = subQuery.correlate(root);
+            subCourseRoot = subQuery.from(Course.class);
+            group = subUserRoot.join(User_.GROUPS, JoinType.LEFT);
+
+            student = criteriaBuilder.equal(subCourseRoot.get(Course_.STUDENT_GROUP_NAME), group);
+            teaching = criteriaBuilder.equal(subCourseRoot.get(Course_.TEACHING_ASSISTANT_GROUP_NAME), group);
+            editor = criteriaBuilder.equal(subCourseRoot.get(Course_.EDITOR_GROUP_NAME), group);
+            instructor = criteriaBuilder.equal(subCourseRoot.get(Course_.INSTRUCTOR_GROUP_NAME), group);
+
+            Predicate inCourse = criteriaBuilder.in(subCourseRoot.get(Course_.ID)).value(courseIds);
+
+            subQuery.select(criteriaBuilder.count(subUserRoot.get(User_.ID))).where(criteriaBuilder.and(criteriaBuilder.or(student, teaching, editor, instructor), inCourse));
+
+            Predicate notEmptyAndValidGroups = criteriaBuilder.and(criteriaBuilder.isNotEmpty(root.get(User_.GROUPS)),
+                    criteriaBuilder.notEqual(criteriaBuilder.size(root.get(User_.GROUPS)), 0), criteriaBuilder.notEqual(subQuery, 0));
+
+            return criteriaBuilder.or(empty, notEmptyButInvalidGroups, notEmptyAndValidGroups);
+        };
+    }
+
+    private Specification<User> distinct() {
+        return (root, query, cb) -> {
+            query.distinct(true);
+            return null;
+        };
+    }
+
     /**
      * Get all managed users
      *
@@ -231,8 +277,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
         final var sorted = PageRequest.of(userSearch.getPage(), userSearch.getPageSize(), sorting);
 
         // List of authorities that a user should match at least one
-        final var authorities = userSearch.getAuthorities().stream().map((auth) -> new Authority("ROLE_" + auth)).collect(Collectors.toSet());
-        final var selectedAuthoritiesSize = authorities.size();
+        final var authorities = userSearch.getAuthorities().stream().map(auth -> "ROLE_" + auth).collect(Collectors.toSet());
 
         // Internal or external users or both
         final var internal = userSearch.getOrigins().contains("INTERNAL");
@@ -244,11 +289,9 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
         // Course Ids
         final var courseIds = userSearch.getCourseIds();
-        final var selectedCourseIdsSize = courseIds.size();
 
-        // Evaluate filter and make request
-        return searchByLoginOrNameWithAdditionalFilter(searchTerm, sorted, authorities, selectedAuthoritiesSize, courseIds, selectedCourseIdsSize, internal, external, activated,
-                deactivated).map(user -> {
+        return findAll(Specification.where(distinct()).and(isInCourses(courseIds)).and(containsAuthorities(authorities)).and(containsSearchTerm(searchTerm))
+                .and(isInternalOrExternal(internal, external)).and(isActivatedOrDeactivated(activated, deactivated)), sorted).map(user -> {
                     user.setVisibleRegistrationNumber();
                     return new UserDTO(user);
                 });
