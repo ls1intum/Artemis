@@ -198,7 +198,7 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
 
     private Specification<User> getInternalOrExternalSpecification(boolean internal, boolean external) {
         return (root, query, criteriaBuilder) -> {
-            Predicate isInternal = criteriaBuilder.equal(root.get(User_.IS_INTERNAL), internal);
+            Predicate isInternal = criteriaBuilder.equal(root.get(User_.IS_INTERNAL), internal); // true
             Predicate isExternal = criteriaBuilder.notEqual(root.get(User_.IS_INTERNAL), external);
 
             return criteriaBuilder.or(isInternal, isExternal);
@@ -232,7 +232,8 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
 
             subQuery.select(criteriaBuilder.count(subUserRoot.get(User_.ID))).where(criteriaBuilder.or(student, teaching, editor, instructor));
 
-            Predicate notEmptyButInvalidGroups = criteriaBuilder.and(criteriaBuilder.isNotEmpty(root.get(User_.GROUPS)), criteriaBuilder.equal(subQuery, 0));
+            Predicate notEmptyButInvalidGroups = criteriaBuilder.and(criteriaBuilder.isNotEmpty(root.get(User_.GROUPS)), criteriaBuilder.equal(criteriaBuilder.size(courseIds), 0),
+                    criteriaBuilder.equal(subQuery, 0));
 
             // Sub-Query
             subQuery = query.subquery(Long.class);
@@ -249,8 +250,7 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
 
             subQuery.select(criteriaBuilder.count(subUserRoot.get(User_.ID))).where(criteriaBuilder.and(criteriaBuilder.or(student, teaching, editor, instructor), inCourse));
 
-            Predicate notEmptyAndValidGroups = criteriaBuilder.and(criteriaBuilder.isNotEmpty(root.get(User_.GROUPS)),
-                    criteriaBuilder.notEqual(criteriaBuilder.size(root.get(User_.GROUPS)), 0), criteriaBuilder.notEqual(subQuery, 0));
+            Predicate notEmptyAndValidGroups = criteriaBuilder.and(criteriaBuilder.isNotEmpty(root.get(User_.GROUPS)), criteriaBuilder.notEqual(subQuery, 0));
 
             return criteriaBuilder.or(empty, notEmptyButInvalidGroups, notEmptyAndValidGroups);
         };

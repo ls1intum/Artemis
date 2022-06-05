@@ -791,12 +791,10 @@ public class UserTestService {
         List<User> result;
         List<User> users;
 
-        database.addEmptyCourse();
-
         int[][] numbers = new int[][] { { 2, 0, 0, 0 }, { 0, 2, 0, 0 }, { 0, 0, 2, 0 }, { 0, 0, 0, 2 }, };
         for (int[] number : numbers) {
             userRepository.deleteAll();
-            users = database.addUsers(number[0], number[1], number[2], number[3]);
+            users = database.addUsers(number[0], number[1], number[2], number[3]).stream().peek(user -> user.setGroups(Collections.emptySet())).toList();
             users.get(0).setActivated(true);
             users.get(1).setActivated(false);
             userRepository.saveAll(users);
@@ -827,7 +825,7 @@ public class UserTestService {
         int[][] numbers = new int[][] { { 2, 0, 0, 0 }, { 0, 2, 0, 0 }, { 0, 0, 2, 0 }, { 0, 0, 0, 2 }, };
         for (int[] number : numbers) {
             userRepository.deleteAll();
-            users = database.addUsers(number[0], number[1], number[2], number[3]);
+            users = database.addUsers(number[0], number[1], number[2], number[3]).stream().peek(user -> user.setGroups(Collections.emptySet())).toList();
             users.get(0).setActivated(true);
             users.get(1).setActivated(false);
             userRepository.saveAll(users);
