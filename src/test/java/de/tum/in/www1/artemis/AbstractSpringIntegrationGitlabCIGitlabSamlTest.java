@@ -227,22 +227,22 @@ public abstract class AbstractSpringIntegrationGitlabCIGitlabSamlTest extends Ab
 
     @Override
     public void mockTriggerFailedBuild(ProgrammingExerciseStudentParticipation participation) throws Exception {
-        mockTriggerBuild(participation, false);
+        mockTriggerBuild(false);
     }
 
     @Override
     public void mockNotifyPush(ProgrammingExerciseStudentParticipation participation) throws Exception {
-        mockTriggerBuild(participation, false);
+        mockTriggerBuild(false);
     }
 
     @Override
     public void mockTriggerParticipationBuild(ProgrammingExerciseStudentParticipation participation) throws Exception {
-        mockTriggerBuild(participation, false);
+        mockTriggerBuild(false);
     }
 
     @Override
     public void mockTriggerInstructorBuildAll(ProgrammingExerciseStudentParticipation participation) throws Exception {
-        mockTriggerBuild(participation, false);
+        mockTriggerBuild(false);
     }
 
     @Override
@@ -355,15 +355,15 @@ public abstract class AbstractSpringIntegrationGitlabCIGitlabSamlTest extends Ab
 
     @Override
     public void mockTriggerBuild(AbstractBaseProgrammingExerciseParticipation programmingExerciseParticipation) throws Exception {
-        mockTriggerBuild(programmingExerciseParticipation, false);
+        mockTriggerBuild(false);
     }
 
     @Override
     public void mockTriggerBuildFailed(AbstractBaseProgrammingExerciseParticipation programmingExerciseParticipation) throws Exception {
-        mockTriggerBuild(programmingExerciseParticipation, true);
+        mockTriggerBuild(true);
     }
 
-    private void mockTriggerBuild(ProgrammingExerciseParticipation programmingExerciseParticipation, boolean shouldFail) throws GitLabApiException {
+    private void mockTriggerBuild(boolean shouldFail) throws GitLabApiException {
         gitlabRequestMockProvider.mockCreateTrigger(shouldFail);
         gitlabRequestMockProvider.mockTriggerPipeline(shouldFail);
         gitlabRequestMockProvider.mockDeleteTrigger(shouldFail);
