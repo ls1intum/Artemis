@@ -19,6 +19,9 @@
                 "courseLoading": "Courses are loading...",
                 "courseSignupConfirmationTitle": "Confirm Course Registration"
             },
+            "testExam": {
+                "examTitle": "Current test exam in \"{{ course }}\":"
+            },
             "course": "Course"
         },
         "courseOverview": {

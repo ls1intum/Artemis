@@ -19,6 +19,9 @@
                 "courseLoading": "Kurse werden geladen...",
                 "courseSignupConfirmationTitle": "Bestätigung der Kursteilnahme"
             },
+            "testExam": {
+                "examTitle": "Aktuelle Testklausur von \"{{ course }}\":"
+            },
             "course": "Kurs"
         },
         "courseOverview": {

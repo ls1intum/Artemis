@@ -35,6 +35,7 @@ export class CoursesComponent implements OnInit, OnChanges, OnDestroy {
     quizExercisesChannels: string[] = [];
 
     nextRelevantExercise?: Exercise;
+    nextRelevantExam?: Exam;
 
     // Icons
     faPenAlt = faPenAlt;
@@ -59,7 +60,11 @@ export class CoursesComponent implements OnInit, OnChanges, OnDestroy {
     }
 
     ngOnChanges() {
-        this.nextRelevantExercise = this.findNextRelevantExercise();
+        this.nextRelevantExam = this.findNextRelevantExam;
+        // We only need to look for relevant Exercises, if no Exam is upcoming
+        if (!this.nextRelevantExam) {
+            this.nextRelevantExercise = this.findNextRelevantExercise();
+        }
     }
 
     /**
@@ -88,11 +93,18 @@ export class CoursesComponent implements OnInit, OnChanges, OnDestroy {
                         });
                     }
                 });
-
-                this.nextRelevantExams = this.exams.filter(
-                    (exam) => this.serverDateService.now().isBefore(exam.endDate!) && this.serverDateService.now().isAfter(exam.visibleDate!),
-                );
-                this.nextRelevantExercise = this.findNextRelevantExercise();
+                this.nextRelevantExams = this.exams.filter((exam) => {
+                    if (exam.testExam!) {
+                        // As TestExams can have a working window of multiple months, they should only be a relevant exam for [visibleDate, startDate + workingTime]
+                        return (
+                            this.serverDateService.now().isAfter(exam.visibleDate!) &&
+                            this.serverDateService.now().isBefore(dayjs(exam.startDate!).add(exam.workingTime!, 'seconds'))
+                        );
+                    } else {
+                        return this.serverDateService.now().isBefore(exam.endDate!) && this.serverDateService.now().isAfter(exam.visibleDate!);
+                    }
+                });
+                this.ngOnChanges();
             },
             error: (response: string) => this.onError(response),
         });
@@ -136,7 +148,7 @@ export class CoursesComponent implements OnInit, OnChanges, OnDestroy {
     /**
      * Sets the course for the next upcoming exam and returns the next upcoming exam or undefined
      */
-    get nextRelevantExam(): Exam | undefined {
+    get findNextRelevantExam(): Exam | undefined {
         let relevantExam: Exam | undefined;
         if (this.nextRelevantExams) {
             if (this.nextRelevantExams.length === 0) {
@@ -154,9 +166,14 @@ export class CoursesComponent implements OnInit, OnChanges, OnDestroy {
     }
 
     /**
-     * navigate to /courses/:courseid/exams/:examId
+     * navigate to /courses/:courseid/exams/:examId (RealExam)
+     * or to /courses/:courseid/exams (TestExams - as we would need the studentExamId to open the exam)
      */
     openExam(): void {
-        this.router.navigate(['courses', this.nextRelevantCourseForExam?.id, 'exams', this.nextRelevantExam!.id]);
+        if (this.nextRelevantExam!.testExam) {
+            this.router.navigate(['courses', this.nextRelevantCourseForExam?.id, 'exams']);
+        } else {
+            this.router.navigate(['courses', this.nextRelevantCourseForExam?.id, 'exams', this.nextRelevantExam!.id]);
+        }
     }
 }
