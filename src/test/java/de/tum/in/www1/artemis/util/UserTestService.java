@@ -721,10 +721,10 @@ public class UserTestService {
         params.add("searchTerm", "");
         params.add("sortingOrder", "ASCENDING");
         params.add("sortedColumn", "id");
-        params.add("authorities", "USER,TA,EDITOR,INSTRUCTOR,ADMIN");
-        params.add("origins", "INTERNAL,EXTERNAL");
-        params.add("status", "ACTIVATED,DEACTIVATED");
-        params.add("courseIds", "");
+        params.add("authorities", "USER");
+        params.add("origins", "");
+        params.add("status", "");
+        params.add("courseIds", "-1");
 
         List<User> result;
         List<User> users;
@@ -755,9 +755,9 @@ public class UserTestService {
         params.add("searchTerm", "");
         params.add("sortingOrder", "ASCENDING");
         params.add("sortedColumn", "id");
-        params.add("authorities", "USER,TA,EDITOR,INSTRUCTOR,ADMIN");
-        params.add("origins", "INTERNAL,EXTERNAL");
-        params.add("status", "ACTIVATED,DEACTIVATED");
+        params.add("authorities", "USER");
+        params.add("origins", "");
+        params.add("status", "");
         params.add("courseIds", Long.toString(course.getId()));
 
         List<User> result;
@@ -771,7 +771,7 @@ public class UserTestService {
             users.get(1).setGroups(Set.of("tumuser"));
             userRepository.saveAll(users);
             result = request.getList("/api/users", HttpStatus.OK, User.class, params);
-            assertThat(result).hasSize(1); // admin and user
+            assertThat(result).hasSize(1);
             assertThat(result.get(0)).isEqualTo(users.get(1));
         }
     }
@@ -784,8 +784,8 @@ public class UserTestService {
         params.add("searchTerm", "");
         params.add("sortingOrder", "ASCENDING");
         params.add("sortedColumn", "id");
-        params.add("authorities", "USER,TA,EDITOR,INSTRUCTOR,ADMIN");
-        params.add("origins", "INTERNAL,EXTERNAL");
+        params.add("authorities", "USER");
+        params.add("origins", "");
         params.add("status", "ACTIVATED");
         params.add("courseIds", "");
 
@@ -813,8 +813,8 @@ public class UserTestService {
         params.add("searchTerm", "");
         params.add("sortingOrder", "ASCENDING");
         params.add("sortedColumn", "id");
-        params.add("authorities", "USER,TA,EDITOR,INSTRUCTOR,ADMIN");
-        params.add("origins", "INTERNAL,EXTERNAL");
+        params.add("authorities", "USER");
+        params.add("origins", "");
         params.add("status", "DEACTIVATED");
         params.add("courseIds", "");
 

@@ -19,12 +19,40 @@ import { CourseManagementService } from 'app/course/manage/course-management.ser
 import { Course } from 'app/entities/course.model';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { TemplateRef, ViewChild } from '@angular/core';
+import { HttpParams } from '@angular/common/http';
 
 export class UserFilter {
     authorityFilter: Set<AuthorityFilter> = new Set();
     originFilter: Set<OriginFilter> = new Set();
     statusFilter: Set<StatusFilter> = new Set();
     courseFilter: Set<number> = new Set();
+    noAuthority = false;
+    noCourse = false;
+    invalidCourse = false;
+
+    /**
+     * Adds the http param options
+     * @param options request options
+     */
+    adjustOptions(options: HttpParams) {
+        if (this.noAuthority) {
+            options = options.append('authorities', 'NO_AUTHORITY');
+        } else {
+            options = options.append('authorities', [...this.authorityFilter].join(','));
+        }
+        options = options.append('origins', [...this.originFilter].join(','));
+        options = options.append('status', [...this.statusFilter].join(','));
+        if (this.noCourse) {
+            // First Code
+            options = options.append('courseIds', -1);
+        } else if (this.invalidCourse) {
+            // Second Code
+            options = options.append('courseIds', -2);
+        } else {
+            options = options.append('courseIds', [...this.courseFilter].join(','));
+        }
+        return options;
+    }
 }
 
 export enum AuthorityFilter {
@@ -45,10 +73,13 @@ export enum StatusFilter {
     DEACTIVATED = 'DEACTIVATED',
 }
 
-enum UserStorageKey {
+export enum UserStorageKey {
     AUTHORITY = 'artemis.userManagement.authority',
+    NO_AUTHORITY = 'artemis.userManagement.noAuthority',
     ORIGIN = 'artemis.userManagement.origin',
     STATUS = 'artemis.userManagement.status',
+    NO_COURSE = 'artemis.userManagement.noCourse',
+    INVALID_COURSE = 'artemis.userManagement.invalidCourse',
 }
 
 @Component({
@@ -172,7 +203,14 @@ export class UserManagementComponent implements OnInit, OnDestroy {
         this.filters.originFilter = this.initFilter(UserStorageKey.ORIGIN, OriginFilter) as Set<OriginFilter>;
         this.filters.statusFilter = this.initFilter(UserStorageKey.STATUS, StatusFilter) as Set<StatusFilter>;
 
-        this.courses.forEach((course) => this.filters.courseFilter.add(course.id!));
+        let key = this.localStorage.retrieve(UserStorageKey.NO_COURSE);
+        this.filters.noCourse = key ? (key as boolean) : false;
+
+        key = this.localStorage.retrieve(UserStorageKey.NO_AUTHORITY);
+        this.filters.noAuthority = key ? (key as boolean) : false;
+
+        key = this.localStorage.retrieve(UserStorageKey.INVALID_COURSE);
+        this.filters.invalidCourse = key ? (key as boolean) : false;
     }
 
     /**
@@ -188,7 +226,7 @@ export class UserManagementComponent implements OnInit, OnDestroy {
                       .split(',')
                       .map((filter: string) => type[filter])
                       .filter(Boolean)
-                : this.getFilter(type);
+                : new Set();
         return new Set(tempInStorage);
     }
 
@@ -204,6 +242,25 @@ export class UserManagementComponent implements OnInit, OnDestroy {
         if (key) {
             this.localStorage.store(key, Array.from(filter).join(','));
         }
+    }
+
+    /**
+     * Method to add or remove a filter and store the selected filters in the local store if required.
+     */
+    toggleCourseFilter(filter: Set<any>, value: any) {
+        this.filters.noCourse = false;
+        this.updateNoCourse(false);
+        this.updateInvalidCourse(false);
+        this.toggleFilter(filter, value);
+    }
+
+    /**
+     * Method to add or remove a filter and store the selected filters in the local store if required.
+     */
+    toggleAuthorityFilter(filter: Set<any>, value: any, key?: UserStorageKey) {
+        this.filters.noAuthority = false;
+        this.updateNoAuthority(false);
+        this.toggleFilter(filter, value, key);
     }
 
     /**
@@ -242,10 +299,57 @@ export class UserManagementComponent implements OnInit, OnDestroy {
     }
 
     /**
+     * Update the no course selection and the local storage.
+     * @param value new value
+     */
+    updateNoCourse(value: boolean) {
+        this.localStorage.store(UserStorageKey.NO_COURSE, value);
+        this.filters.noCourse = value;
+    }
+
+    /**
+     * Update the invalid course selection and the local storage.
+     * @param value new value
+     */
+    updateInvalidCourse(value: boolean) {
+        this.localStorage.store(UserStorageKey.INVALID_COURSE, value);
+        this.filters.invalidCourse = value;
+    }
+
+    /**
+     * Update the no authority selection and the local storage.
+     * @param value new value
+     */
+    updateNoAuthority(value: boolean) {
+        this.localStorage.store(UserStorageKey.NO_AUTHORITY, value);
+        this.filters.noAuthority = value;
+    }
+
+    /**
      * Deselect all courses
      */
     deselectAllCourses() {
         this.filters.courseFilter.clear();
+        this.updateNoCourse(false);
+        this.updateInvalidCourse(false);
+    }
+
+    /**
+     * Select all users without course
+     */
+    selectEmptyCourses() {
+        this.filters.courseFilter.clear();
+        this.updateNoCourse(true);
+        this.updateInvalidCourse(false);
+    }
+
+    /**
+     * Select all users with invalid course
+     */
+    selectInvalidCourses() {
+        this.filters.courseFilter.clear();
+        this.updateNoCourse(false);
+        this.updateInvalidCourse(true);
     }
 
     /**
@@ -253,6 +357,33 @@ export class UserManagementComponent implements OnInit, OnDestroy {
      */
     selectAllCourses() {
         this.filters.courseFilter = new Set(this.courses.map((course) => course.id!));
+        this.updateNoCourse(false);
+        this.updateInvalidCourse(false);
+    }
+
+    /**
+     * Deselect all roles
+     */
+    deselectAllRoles() {
+        this.filters.authorityFilter.clear();
+        this.localStorage.clear(UserStorageKey.AUTHORITY);
+        this.updateNoAuthority(false);
+    }
+
+    /**
+     * Select empty roles
+     */
+    selectEmptyRoles() {
+        this.filters.authorityFilter.clear();
+        this.updateNoAuthority(true);
+    }
+
+    /**
+     * Select all roles
+     */
+    selectAllRoles() {
+        this.filters.authorityFilter = new Set(this.authorityFilters);
+        this.updateNoAuthority(false);
     }
 
     /**

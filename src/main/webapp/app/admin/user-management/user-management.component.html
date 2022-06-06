@@ -188,13 +188,55 @@
                 </div>
             </div>
             <div class="row user-management-background-accent">
+                <div class="col pt-2 user-management-line-bottom">
+                    <div class="container-fluid mb-2 course-selection px-0">
+                        <div class="row">
+                            <div class="form-check col-3 d-flex justify-content-center">
+                                <input
+                                    class="form-check-input"
+                                    type="radio"
+                                    (click)="selectAllRoles()"
+                                    [checked]="this.filters.authorityFilter.size === this.authorityFilters.length && !this.filters.noAuthority"
+                                />
+                                <label class="form-check-label ps-1">
+                                    {{ 'userManagement.filter.authority.all' | artemisTranslate }}
+                                </label>
+                            </div>
+                            <div class="form-check col-6 d-flex justify-content-center">
+                                <input
+                                    class="form-check-input"
+                                    type="radio"
+                                    (click)="selectEmptyRoles()"
+                                    [checked]="this.filters.authorityFilter.size === 0 && this.filters.noAuthority"
+                                />
+                                <label class="form-check-label ps-1">
+                                    {{ 'userManagement.filter.authority.without' | artemisTranslate }}
+                                </label>
+                                <jhi-help-icon class="ps-1" placement="top" text="userManagement.filter.authority.withoutTooltip"></jhi-help-icon>
+                            </div>
+                            <div class="form-check col-3 d-flex justify-content-center">
+                                <input
+                                    class="form-check-input"
+                                    type="radio"
+                                    (click)="deselectAllRoles()"
+                                    [checked]="this.filters.authorityFilter.size === 0 && !this.filters.noAuthority"
+                                />
+                                <label class="form-check-label ps-1">
+                                    {{ 'userManagement.filter.authority.none' | artemisTranslate }}
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row user-management-background-accent">
                 <div class="col container px-3">
                     <ul class="text-nowrap list-unstyled row my-0 py-2">
-                        <li *ngFor="let authority of this.authorityFilters" class="col">
+                        <li *ngFor="let authority of this.authorityFilters" class="col-4">
                             <label>
                                 <input
                                     class="form-check-input"
-                                    (change)="this.toggleFilter(this.filters.authorityFilter, authority, authorityKey)"
+                                    (change)="this.toggleAuthorityFilter(this.filters.authorityFilter, authority, authorityKey)"
                                     [checked]="this.filters.authorityFilter.has(authority)"
                                     type="checkbox"
                                 />
@@ -258,31 +300,55 @@
             </div>
             <div class="row user-management-background-accent">
                 <div class="col pt-2 user-management-line-bottom">
-                    <div class="container mb-2 course-selection">
+                    <div class="container-fluid mb-2 course-selection px-0">
                         <div class="row">
-                            <div class="form-check col">
+                            <div class="form-check col d-flex justify-content-center">
                                 <input
                                     class="form-check-input"
                                     type="radio"
-                                    name="flexRadioDefault"
                                     (click)="selectAllCourses()"
-                                    [checked]="this.filters.courseFilter.size === this.courses.length"
+                                    [checked]="this.filters.courseFilter.size === this.courses.length && !this.filters.noCourse && !this.filters.invalidCourse"
                                 />
-                                <label class="form-check-label">
+                                <label class="form-check-label ps-1">
                                     {{ 'userManagement.filter.course.all' | artemisTranslate }}
                                 </label>
                             </div>
-                            <div class="form-check col">
+                            <div class="form-check col d-flex justify-content-center">
                                 <input
                                     class="form-check-input"
                                     type="radio"
-                                    name="flexRadioDefault"
                                     (click)="deselectAllCourses()"
-                                    [checked]="this.filters.courseFilter.size === 0"
+                                    [checked]="this.filters.courseFilter.size === 0 && !this.filters.noCourse && !this.filters.invalidCourse"
                                 />
-                                <label class="form-check-label">
+                                <label class="form-check-label ps-1">
                                     {{ 'userManagement.filter.course.none' | artemisTranslate }}
                                 </label>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="form-check col d-flex justify-content-center">
+                                <input
+                                    class="form-check-input"
+                                    type="radio"
+                                    (click)="selectEmptyCourses()"
+                                    [checked]="this.filters.courseFilter.size === 0 && this.filters.noCourse && !this.filters.invalidCourse"
+                                />
+                                <label class="form-check-label ps-1">
+                                    {{ 'userManagement.filter.course.without' | artemisTranslate }}
+                                </label>
+                                <jhi-help-icon class="ps-1" placement="top" text="userManagement.filter.course.withoutTooltip"></jhi-help-icon>
+                            </div>
+                            <div class="form-check col d-flex justify-content-center">
+                                <input
+                                    class="form-check-input"
+                                    type="radio"
+                                    (click)="selectInvalidCourses()"
+                                    [checked]="this.filters.courseFilter.size === 0 && this.filters.invalidCourse && !this.filters.noCourse"
+                                />
+                                <label class="form-check-label ps-1">
+                                    {{ 'userManagement.filter.course.invalid' | artemisTranslate }}
+                                </label>
+                                <jhi-help-icon class="ps-1" placement="top" text="userManagement.filter.course.invalidTooltip"></jhi-help-icon>
                             </div>
                         </div>
                     </div>
@@ -295,7 +361,7 @@
                             <label>
                                 <input
                                     class="form-check-input"
-                                    (change)="this.toggleFilter(this.filters.courseFilter, course.id!)"
+                                    (change)="this.toggleCourseFilter(this.filters.courseFilter, course.id!)"
                                     [checked]="this.filters.courseFilter.has(course.id!)"
                                     type="checkbox"
                                 />

@@ -13,7 +13,11 @@
                 "instructor": "Lehrende",
                 "editor": "Editor:in",
                 "ta": "Tutor:in",
-                "user": "Studierende"
+                "user": "Studierende",
+                "all": "Alle",
+                "none": "Keine",
+                "without": "Keine Rolle",
+                "withoutTooltip": "Wähle alle Nutzer:innen ohne Rolle"
             },
             "origin": {
                 "title": "Herkunft ({{ num }})",
@@ -31,7 +35,11 @@
                 "title": "Kurs ({{ num }})",
                 "tooltip": "Filter die Nutzer:innen anhand ihrer Kurszugehörigkeit",
                 "all": "Alle",
-                "none": "Keinen"
+                "none": "Keinen",
+                "without": "Kein Kurs",
+                "withoutTooltip": "Wähle alle Nutzer:innen ohne Kurs",
+                "invalid": "Invalide Kurse",
+                "invalidTooltip": "Wähle alle Nutzer:innen mit invaliden oder nicht existierenden Kurs"
             },
             "apply": "Apply"
         },

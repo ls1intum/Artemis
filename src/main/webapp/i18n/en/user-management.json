@@ -13,7 +13,11 @@
                 "instructor": "Instructor",
                 "editor": "Editor",
                 "ta": "Tutor",
-                "user": "Student"
+                "user": "Student",
+                "all": "All",
+                "none": "None",
+                "without": "No Role",
+                "withoutTooltip": "Select all users without any role"
             },
             "origin": {
                 "title": "Origin ({{ num }})",
@@ -31,7 +35,11 @@
                 "title": "Course ({{ num }})",
                 "tooltip": "Filters the users according to their course affiliation",
                 "all": "All",
-                "none": "None"
+                "none": "None",
+                "without": "No Course",
+                "withoutTooltip": "Select all users without any course",
+                "invalid": "Invalid Course",
+                "invalidTooltip": "Select all users with invalid or not existing courses"
             },
             "apply": "Apply"
         },

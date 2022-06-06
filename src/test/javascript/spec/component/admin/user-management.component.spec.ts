@@ -1,5 +1,5 @@
 import { ComponentFixture, fakeAsync, inject, TestBed, tick } from '@angular/core/testing';
-import { AuthorityFilter, OriginFilter, StatusFilter, UserManagementComponent } from 'app/admin/user-management/user-management.component';
+import { AuthorityFilter, OriginFilter, StatusFilter, UserManagementComponent, UserStorageKey } from 'app/admin/user-management/user-management.component';
 import { UserService } from 'app/core/user/user.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
@@ -32,6 +32,7 @@ describe('UserManagementComponent', () => {
     let accountService: AccountService;
     let eventManager: EventManager;
     let courseManagementService: CourseManagementService;
+    let localStorageService: MockLocalStorageService;
     let httpMock: HttpTestingController;
 
     const course1 = new Course();
@@ -91,6 +92,7 @@ describe('UserManagementComponent', () => {
                 accountService = TestBed.inject(AccountService);
                 eventManager = TestBed.inject(EventManager);
                 courseManagementService = TestBed.inject(CourseManagementService);
+                localStorageService = TestBed.inject(MockLocalStorageService);
                 httpMock = TestBed.inject(HttpTestingController);
             });
     });
@@ -256,10 +258,10 @@ describe('UserManagementComponent', () => {
 
         comp.ngOnInit();
 
-        expect(comp.filters.authorityFilter).toEqual(new Set(Object.keys(AuthorityFilter).map((key) => AuthorityFilter[key])));
-        expect(comp.filters.originFilter).toEqual(new Set(Object.keys(OriginFilter).map((key) => OriginFilter[key])));
-        expect(comp.filters.statusFilter).toEqual(new Set(Object.keys(StatusFilter).map((key) => StatusFilter[key])));
-        expect(comp.filters.courseFilter).toEqual(new Set(courses.map((course) => course.id!)));
+        expect(comp.filters.authorityFilter).toEqual(new Set());
+        expect(comp.filters.originFilter).toEqual(new Set());
+        expect(comp.filters.statusFilter).toEqual(new Set());
+        expect(comp.filters.courseFilter).toEqual(new Set());
     });
 
     it('should toggle filters', () => {

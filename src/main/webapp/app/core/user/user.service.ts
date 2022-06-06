@@ -48,10 +48,7 @@ export class UserService {
     query(req?: any, filter?: UserFilter): Observable<HttpResponse<User[]>> {
         let options = createRequestOption(req);
         if (filter) {
-            options = options.append('authorities', [...filter.authorityFilter].join(','));
-            options = options.append('origins', [...filter.originFilter].join(','));
-            options = options.append('status', [...filter.statusFilter].join(','));
-            options = options.append('courseIds', [...filter.courseFilter].join(','));
+            options = filter.adjustOptions(options);
         }
         return this.http.get<User[]>(this.resourceUrl, { params: options, observe: 'response' });
     }

@@ -19,6 +19,7 @@ import org.springframework.util.StringUtils;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.SortingOrder;
+import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.dto.UserDTO;
 import de.tum.in.www1.artemis.web.rest.dto.UserPageableSearchDTO;
@@ -74,7 +75,7 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
     @Query("select count(*) from User user where :#{#groupName} member of user.groups")
     Long countByGroupsIsContaining(@Param("groupName") String groupName);
 
-    @Query("select user from User user where lower(user.email) = lower(:#{#searchInput}) or lower(user.login) = lower(:#{#searchInput})")
+    @Query("select user from User user where lower(user.email) = lower(:#{#searchInput}) or lower(user.login) = lower" + "(:#{#searchInput})")
     List<User> findAllByEmailOrUsernameIgnoreCase(@Param("searchInput") String searchInput);
 
     @EntityGraph(type = LOAD, attributePaths = { "groups", "authorities" })
@@ -96,7 +97,7 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
      */
     @EntityGraph(type = LOAD, attributePaths = { "groups" })
     @Query("select user from User user where :#{#groupName} member of user.groups and "
-            + "(user.login like :#{#loginOrName}% or concat_ws(' ', user.firstName, user.lastName) like %:#{#loginOrName}%)")
+            + "(user.login like :#{#loginOrName}% or concat_ws(' ', user.firstName, user.lastName) like " + "%:#{#loginOrName}%)")
     List<User> searchByLoginOrNameInGroup(@Param("groupName") String groupName, @Param("loginOrName") String loginOrName);
 
     /**
@@ -117,8 +118,8 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
     /**
      * Gets users in a group by their login.
      *
-     * @param groupName           Name of group in which to search for users
-     * @param logins Logins of users
+     * @param groupName Name of group in which to search for users
+     * @param logins    Logins of users
      * @return found users that match the criteria
      */
     @EntityGraph(type = LOAD, attributePaths = { "groups" })
@@ -134,9 +135,9 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
      *
      * @param page        Pageable related info (e.g. for page size)
      * @param loginOrName Either a login (e.g. ga12abc) or name (e.g. Max Mustermann) by which to search
-     * @return            list of found users that match the search criteria
+     * @return list of found users that match the search criteria
      */
-    @Query("select user from User user where user.login like :#{#loginOrName}% or concat_ws(' ', user.firstName, user.lastName) like %:#{#loginOrName}%")
+    @Query("select user from User user where user.login like :#{#loginOrName}% or concat_ws(' ', user.firstName, user" + ".lastName) like %:#{#loginOrName}%")
     Page<User> searchAllByLoginOrName(Pageable page, @Param("loginOrName") String loginOrName);
 
     @EntityGraph(type = LOAD, attributePaths = { "groups" })
@@ -158,8 +159,9 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
      * If the value is null then all notifications should be shown.
      * (Not to be confused with notification settings. This filter is based on the notification date alone)
      *
-     * @param userId of the user
-     * @param hideNotificationUntil indicates a time that is used to filter all notifications that are prior to it (if null -> show all notifications)
+     * @param userId                of the user
+     * @param hideNotificationUntil indicates a time that is used to filter all notifications that are prior to it
+     *                              (if null -> show all notifications)
      */
     @Modifying
     @Transactional // ok because of modifying query
@@ -170,11 +172,12 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
     @Query("select user from User user where :#{#groupName} member of user.groups and user not in :#{#ignoredUsers}")
     List<User> findAllInGroupContainingAndNotIn(@Param("groupName") String groupName, @Param("ignoredUsers") Set<User> ignoredUsers);
 
-    @Query("select distinct team.students from Team team where team.exercise.course.id = :#{#courseId} and team.shortName = :#{#teamShortName}")
+    @Query("select distinct team.students from Team team where team.exercise.course.id = :#{#courseId} and team" + ".shortName = :#{#teamShortName}")
     Set<User> findAllInTeam(@Param("courseId") Long courseId, @Param("teamShortName") String teamShortName);
 
     /**
      * Creates the specification to match the provided search term.
+     *
      * @param searchTerm term to match
      * @return specification used to chain database operations
      */
@@ -192,64 +195,115 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
 
     /**
      * Creates the specification to match the provides authorities.
+     *
      * @param authorities set of possible authorities
      * @return specification used to chain database operations
      */
-    private Specification<User> getAuthoritySpecification(Set<String> authorities) {
+    private Specification<User> getAllUsersMatchingAuthorities(Set<String> authorities) {
         return (root, query, criteriaBuilder) -> {
+            Subquery<Long> subQuery = query.subquery(Long.class);
+            Root<User> subUserRoot = subQuery.from(User.class);
+            Join<User, Authority> joinedAuthorities = subUserRoot.join(User_.AUTHORITIES, JoinType.LEFT);
 
-            Predicate emptyPredicate = criteriaBuilder.and(criteriaBuilder.isEmpty(root.get(User_.AUTHORITIES)),
-                    criteriaBuilder.equal(criteriaBuilder.size(root.get(User_.AUTHORITIES)), authorities.size()));
-            Predicate authorityPredicate = criteriaBuilder.in(root.join(User_.AUTHORITIES, JoinType.LEFT).get(Authority_.NAME)).value(authorities);
+            subQuery.select(subUserRoot.get(User_.ID))
+                    .where(criteriaBuilder.and(criteriaBuilder.in(joinedAuthorities.get(Authority_.NAME)).value(authorities),
+                            criteriaBuilder.equal(subUserRoot.get(User_.ID), root.get(User_.ID))))
+                    .groupBy(subUserRoot.get(User_.ID)).having(criteriaBuilder.equal(criteriaBuilder.count(joinedAuthorities), authorities.size()));
 
-            return criteriaBuilder.or(emptyPredicate, authorityPredicate);
+            return criteriaBuilder.and(criteriaBuilder.exists(subQuery));
         };
     }
 
     /**
+     * Creates the specification to match the empty authorities.
+     *
+     * @return specification used to chain database operations
+     */
+    private Specification<User> getAllUsersMatchingEmptyAuthorities() {
+        return (root, query, criteriaBuilder) -> criteriaBuilder.isEmpty(root.get(User_.AUTHORITIES));
+    }
+
+    /**
+     * Returns the matching authority.
+     *
+     * @return specification used to chain database operations
+     */
+    private Specification<User> getAuthoritySpecification(Set<String> authorities) {
+        if (authorities.contains("NO_AUTHORITY")) {
+            // Empty authorities
+            return getAllUsersMatchingEmptyAuthorities();
+        }
+        else if (authorities.size() > 0) {
+            // Match all authorities
+            authorities = authorities.stream().map(auth -> Role.ROLE_PREFIX + auth).collect(Collectors.toSet());
+            return getAllUsersMatchingAuthorities(authorities);
+        }
+        return null;
+    }
+
+    /**
      * Creates the specification to match the state of the user (internal or external).
+     *
      * @param internal true if the account should be internal
      * @param external true if the account should be external
      * @return specification used to chain database operations
      */
     private Specification<User> getInternalOrExternalSpecification(boolean internal, boolean external) {
-        return (root, query, criteriaBuilder) -> {
-            Predicate internalPredicate = criteriaBuilder.equal(root.get(User_.IS_INTERNAL), internal); // true
-            Predicate externalPredicate = criteriaBuilder.notEqual(root.get(User_.IS_INTERNAL), external);
+        if (!internal && !external) {
+            return null;
+        }
+        else {
+            return (root, query, criteriaBuilder) -> {
+                Predicate internalPredicate = criteriaBuilder.equal(root.get(User_.IS_INTERNAL), internal);
+                Predicate externalPredicate = criteriaBuilder.notEqual(root.get(User_.IS_INTERNAL), external);
 
-            return criteriaBuilder.or(internalPredicate, externalPredicate);
-        };
+                return criteriaBuilder.and(internalPredicate, externalPredicate);
+            };
+        }
     }
 
     /**
      * Creates the specification to match the state of the user (activated or deactivated).
-     * @param activated true if the account should be activated
+     *
+     * @param activated   true if the account should be activated
      * @param deactivated true if the account should be deactivated
      * @return specification used to chain database operations
      */
     private Specification<User> getActivatedOrDeactivatedSpecification(boolean activated, boolean deactivated) {
-        return (root, query, criteriaBuilder) -> {
-            Predicate activatedPredicate = criteriaBuilder.equal(root.get(User_.ACTIVATED), activated);
-            Predicate deactivatedPredicate = criteriaBuilder.notEqual(root.get(User_.ACTIVATED), deactivated);
+        if (!activated && !deactivated) {
+            return null;
+        }
+        else {
+            return (root, query, criteriaBuilder) -> {
+                Predicate activatedPredicate = criteriaBuilder.equal(root.get(User_.ACTIVATED), activated);
+                Predicate deactivatedPredicate = criteriaBuilder.notEqual(root.get(User_.ACTIVATED), deactivated);
 
-            return criteriaBuilder.or(activatedPredicate, deactivatedPredicate);
-        };
+                return criteriaBuilder.and(activatedPredicate, deactivatedPredicate);
+            };
+        }
     }
 
     /**
      * Creates the specification to match the users course.
+     *
+     * @return specification used to chain database operations
+     */
+    private Specification<User> getAllUsersMatchingEmptyCourses() {
+        return (root, query, criteriaBuilder) -> criteriaBuilder.isEmpty(root.get(User_.GROUPS));
+    }
+
+    /**
+     * Creates the specification to match the users course.
+     *
      * @param courseIds a set of courseIds which the users need to match at least one
      * @return specification used to chain database operations
      */
-    private Specification<User> getCourseSpecification(Set<Long> courseIds) {
+    private Specification<User> getAllUsersMatchingInvalidCourses(Set<Long> courseIds) {
         return (root, query, criteriaBuilder) -> {
-            Predicate empty = criteriaBuilder.and(criteriaBuilder.isEmpty(root.get(User_.GROUPS)),
-                    criteriaBuilder.equal(criteriaBuilder.size(root.get(User_.GROUPS)), courseIds.size()));
-
             // Sub query to find out all users who are part of a group, but this group has no course.
             // In addition, the requested courses needs to be empty.
             Subquery<Long> subQuery = query.subquery(Long.class);
-            Root<User> subUserRoot = subQuery.correlate(root);
+            Root<User> subUserRoot = subQuery.from(User.class);
             Root<Course> subCourseRoot = subQuery.from(Course.class);
             Join<User, String> group = subUserRoot.join(User_.GROUPS, JoinType.LEFT);
 
@@ -258,38 +312,80 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
             Predicate editor = criteriaBuilder.equal(subCourseRoot.get(Course_.EDITOR_GROUP_NAME), group);
             Predicate instructor = criteriaBuilder.equal(subCourseRoot.get(Course_.INSTRUCTOR_GROUP_NAME), group);
 
-            subQuery.select(criteriaBuilder.count(subUserRoot.get(User_.ID))).where(criteriaBuilder.or(student, teaching, editor, instructor));
+            subQuery.select(subUserRoot.get(User_.ID))
+                    .where(criteriaBuilder.and(criteriaBuilder.or(student, teaching, editor, instructor), criteriaBuilder.equal(subUserRoot.get(User_.ID), root.get(User_.ID))))
+                    .groupBy(subUserRoot.get(User_.ID)).having(criteriaBuilder.equal(criteriaBuilder.count(group), courseIds.size()));
 
             Predicate notEmptyButInvalidGroups = criteriaBuilder.and(criteriaBuilder.isNotEmpty(root.get(User_.GROUPS)), criteriaBuilder.equal(criteriaBuilder.size(courseIds), 0),
-                    criteriaBuilder.equal(subQuery, 0));
+                    criteriaBuilder.exists(subQuery));
 
-            // Sub query to find all users belonging to a group corresponding to the selected course.
-            subQuery = query.subquery(Long.class);
-            subUserRoot = subQuery.correlate(root);
-            subCourseRoot = subQuery.from(Course.class);
-            group = subUserRoot.join(User_.GROUPS, JoinType.LEFT);
-
-            student = criteriaBuilder.equal(subCourseRoot.get(Course_.STUDENT_GROUP_NAME), group);
-            teaching = criteriaBuilder.equal(subCourseRoot.get(Course_.TEACHING_ASSISTANT_GROUP_NAME), group);
-            editor = criteriaBuilder.equal(subCourseRoot.get(Course_.EDITOR_GROUP_NAME), group);
-            instructor = criteriaBuilder.equal(subCourseRoot.get(Course_.INSTRUCTOR_GROUP_NAME), group);
-
-            Predicate inCourse = criteriaBuilder.in(subCourseRoot.get(Course_.ID)).value(courseIds);
-
-            subQuery.select(criteriaBuilder.count(subUserRoot.get(User_.ID))).where(criteriaBuilder.and(criteriaBuilder.or(student, teaching, editor, instructor), inCourse));
-
-            Predicate notEmptyAndValidGroups = criteriaBuilder.and(criteriaBuilder.isNotEmpty(root.get(User_.GROUPS)), criteriaBuilder.notEqual(subQuery, 0));
-
-            return criteriaBuilder.or(empty, notEmptyButInvalidGroups, notEmptyAndValidGroups);
+            return criteriaBuilder.or(notEmptyButInvalidGroups);
         };
     }
 
     /**
+     * Creates the specification to match the users course.
+     *
+     * @param courseIds a set of courseIds which the users need to match at least one
+     * @return specification used to chain database operations
+     */
+    private Specification<User> getAllUsersMatchingCourses(Set<Long> courseIds) {
+        return (root, query, criteriaBuilder) -> {
+            // Sub query to find all users belonging to a group corresponding to the selected course.
+            Subquery<Long> subQuery = query.subquery(Long.class);
+            Root<User> subUserRoot = subQuery.from(User.class);
+            Root<Course> subCourseRoot = subQuery.from(Course.class);
+            Join<User, String> group = subUserRoot.join(User_.GROUPS, JoinType.LEFT);
+
+            // Select all possible group types
+            Predicate student = criteriaBuilder.in(subCourseRoot.get(Course_.STUDENT_GROUP_NAME)).value(group);
+            Predicate teaching = criteriaBuilder.in(subCourseRoot.get(Course_.TEACHING_ASSISTANT_GROUP_NAME)).value(group);
+            Predicate editor = criteriaBuilder.in(subCourseRoot.get(Course_.EDITOR_GROUP_NAME)).value(group);
+            Predicate instructor = criteriaBuilder.in(subCourseRoot.get(Course_.INSTRUCTOR_GROUP_NAME)).value(group);
+
+            // The course needs to be one of the selected
+            Predicate inCourse = criteriaBuilder.in(subCourseRoot.get(Course_.ID)).value(courseIds);
+
+            subQuery.select(subUserRoot.get(User_.ID))
+                    .where(criteriaBuilder.and(criteriaBuilder.or(student, teaching, editor, instructor), inCourse,
+                            criteriaBuilder.equal(subUserRoot.get(User_.ID), root.get(User_.ID))))
+                    .groupBy(subUserRoot.get(User_.ID)).having(criteriaBuilder.equal(criteriaBuilder.count(group), courseIds.size()));
+
+            Predicate notEmptyAndValidGroups = criteriaBuilder.and(criteriaBuilder.isNotEmpty(root.get(User_.GROUPS)), criteriaBuilder.exists(subQuery));
+
+            return criteriaBuilder.or(notEmptyAndValidGroups);
+        };
+    }
+
+    /**
+     * Creates the specification to match the users course.
+     *
+     * @param courseIds a set of courseIds which the users need to match at least one
+     * @return specification used to chain database operations
+     */
+    private Specification<User> getCourseSpecification(Set<Long> courseIds) {
+        if (courseIds.size() == 1 && courseIds.contains(-1L)) {
+            // Empty courses
+            return getAllUsersMatchingEmptyCourses();
+        }
+        else if (courseIds.size() == 1 && courseIds.contains(-2L)) {
+            // Invalid courses
+            return getAllUsersMatchingInvalidCourses(courseIds);
+        }
+        else if (courseIds.size() > 0) {
+            // Match all selected
+            return getAllUsersMatchingCourses(courseIds);
+        }
+        return null;
+    }
+
+    /**
      * Creates the specification to get distinct results.
+     *
      * @return specification used to chain database operations
      */
     private Specification<User> distinct() {
-        return (root, query, cb) -> {
+        return (root, query, criteriaBuilder) -> {
             query.distinct(true);
             return null;
         };
@@ -309,26 +405,26 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
         final var sorted = PageRequest.of(userSearch.getPage(), userSearch.getPageSize(), sorting);
 
         // List of authorities that a user should match at least one
-        final var authorities = userSearch.getAuthorities().stream().map(auth -> "ROLE_" + auth).collect(Collectors.toSet());
+        Set<String> authorities = userSearch.getAuthorities();
 
         // Internal or external users or both
         final var internal = userSearch.getOrigins().contains("INTERNAL");
         final var external = userSearch.getOrigins().contains("EXTERNAL");
 
         // Activated or deactivated users or both
-        final var activated = userSearch.getStatus().contains("ACTIVATED");
-        final var deactivated = userSearch.getStatus().contains("DEACTIVATED");
+        var activated = userSearch.getStatus().contains("ACTIVATED");
+        var deactivated = userSearch.getStatus().contains("DEACTIVATED");
 
         // Course Ids
-        final var courseIds = userSearch.getCourseIds();
+        var courseIds = userSearch.getCourseIds();
 
-        return findAll(
-                Specification.where(distinct()).and(getCourseSpecification(courseIds)).and(getAuthoritySpecification(authorities)).and(getSearchTermSpecification(searchTerm))
-                        .and(getInternalOrExternalSpecification(internal, external)).and(getActivatedOrDeactivatedSpecification(activated, deactivated)),
-                sorted).map(user -> {
-                    user.setVisibleRegistrationNumber();
-                    return new UserDTO(user);
-                });
+        Specification<User> specification = Specification.where(distinct()).and(getSearchTermSpecification(searchTerm)).and(getInternalOrExternalSpecification(internal, external))
+                .and(getActivatedOrDeactivatedSpecification(activated, deactivated)).and(getAuthoritySpecification(authorities)).and(getCourseSpecification(courseIds));
+
+        return findAll(specification, sorted).map(user -> {
+            user.setVisibleRegistrationNumber();
+            return new UserDTO(user);
+        });
     }
 
     /**
@@ -355,6 +451,7 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
 
     /**
      * Retrieve a user by its login, or else throw exception
+     *
      * @param login the login of the user to search
      * @return the user entity if it exists
      */
@@ -540,7 +637,8 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
 
     /**
      * Add organization to user, if not contained already
-     * @param userId the id of the user to add to the organization
+     *
+     * @param userId       the id of the user to add to the organization
      * @param organization the organization to add to the user
      */
     @NotNull
@@ -554,7 +652,8 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
 
     /**
      * Remove organization from user, if currently contained
-     * @param userId the id of the user to remove from the organization
+     *
+     * @param userId       the id of the user to remove from the organization
      * @param organization the organization to remove from the user
      */
     @NotNull
