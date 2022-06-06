@@ -23,6 +23,7 @@ export class CourseLearningGoalsComponent implements OnInit {
 
     isLoading = false;
     learningGoals: LearningGoal[] = [];
+    prerequisites: LearningGoal[] = [];
     learningGoalIdToLearningGoalProgress = new Map<number, IndividualLearningGoalProgress>();
 
     // this is calculated using the participant scores table on the server instead of going participation -> submission -> result
@@ -37,7 +38,7 @@ export class CourseLearningGoalsComponent implements OnInit {
     ) {}
 
     ngOnInit(): void {
-        this.activatedRoute.parent!.parent!.params.subscribe((params) => {
+        this.activatedRoute.parent?.parent?.params.subscribe((params) => {
             this.courseId = +params['courseId'];
             if (this.courseId) {
                 this.loadData();
@@ -49,8 +50,19 @@ export class CourseLearningGoalsComponent implements OnInit {
         return this.learningGoalIdToLearningGoalProgress.get(learningGoal.id!);
     }
 
+    /**
+     * Loads all prerequisites and learning goals (including respective progress) for the course
+     */
     loadData() {
         this.isLoading = true;
+        this.learningGoalService.getAllPrerequisitesForCourse(this.courseId).subscribe({
+            next: (prerequisites) => {
+                this.prerequisites = prerequisites.body!;
+            },
+            error: (error: string) => {
+                this.alertService.error(error);
+            },
+        });
         this.learningGoalService
             .getAllForCourse(this.courseId)
             .pipe(
@@ -89,6 +101,11 @@ export class CourseLearningGoalsComponent implements OnInit {
             });
     }
 
+    /**
+     * Calculates a unique identity for each learning goal card shown in the component
+     * @param index The index in the list
+     * @param learningGoal The learning goal of the current iteration
+     */
     identify(index: number, learningGoal: LearningGoal) {
         return `${index}-${learningGoal.id}`;
     }

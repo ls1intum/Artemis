@@ -89,7 +89,7 @@ public class FileUploadExerciseIntegrationTest extends AbstractSpringIntegration
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void createFileUploadExercise_InvalidInstructor() throws Exception {
         FileUploadExercise fileUploadExercise = database.createFileUploadExercisesWithCourse().get(0);
-        // make sure the instructor is not instructor for this course anymore by changing the courses instructor group name
+        // make sure the instructor is not instructor for this course anymore by changing the courses' instructor group name
         var course = fileUploadExercise.getCourseViaExerciseGroupOrCourseMember();
         course.setInstructorGroupName("new-instructor-group-name");
         courseRepo.save(course);

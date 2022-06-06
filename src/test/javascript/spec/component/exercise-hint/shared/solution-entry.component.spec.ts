@@ -1,4 +1,4 @@
-import { ArtemisTestModule } from '../../test.module';
+import { ArtemisTestModule } from '../../../test.module';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { AceEditorComponent } from 'app/shared/markdown-editor/ace-editor/ace-editor.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';

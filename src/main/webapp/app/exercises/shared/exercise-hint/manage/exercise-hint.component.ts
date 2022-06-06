@@ -65,7 +65,7 @@ export class ExerciseHintComponent implements OnInit, OnDestroy {
      */
     loadAllByExerciseId() {
         this.exerciseHintService
-            .findByExerciseIdWithRelations(this.exerciseId)
+            .findByExerciseId(this.exerciseId)
             .pipe(
                 filter((res: HttpResponse<ExerciseHint[]>) => res.ok),
                 map((res: HttpResponse<ExerciseHint[]>) => res.body),
@@ -73,7 +73,6 @@ export class ExerciseHintComponent implements OnInit, OnDestroy {
             .subscribe({
                 next: (res: ExerciseHint[]) => {
                     this.exerciseHints = res;
-                    console.log(res);
                 },
                 error: (res: HttpErrorResponse) => onError(this.alertService, res),
             });

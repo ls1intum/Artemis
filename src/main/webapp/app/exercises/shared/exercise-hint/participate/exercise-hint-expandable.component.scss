@@ -1,0 +1,31 @@
+.mat-expansion-panel.exercise-hint-student-expansion-panel-wrapper {
+    .mat-expansion-panel-header {
+        padding: 10px 10px 10px 0;
+        font-weight: bold;
+    }
+
+    .mat-expansion-panel-header-title {
+        flex-grow: 0;
+    }
+
+    .mat-expansion-panel-header-description {
+        flex-grow: 3;
+    }
+
+    .task-name {
+        font-size: 12px;
+        font-weight: lighter;
+    }
+
+    .mat-expansion-panel-body {
+        padding: 10px 0 0;
+    }
+
+    .activated {
+        background-color: var(--info);
+    }
+
+    .not_activated {
+        background-color: var(--success);
+    }
+}

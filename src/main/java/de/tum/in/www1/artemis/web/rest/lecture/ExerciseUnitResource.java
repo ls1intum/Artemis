@@ -79,7 +79,7 @@ public class ExerciseUnitResource {
     }
 
     /**
-     * GET /lectures/:lectureId/exercise-units : gets the exercise units associated with an lecture
+     * GET /lectures/:lectureId/exercise-units : gets the exercise units associated with a lecture
      *
      * @param lectureId the id of the lecture to get the exercise-units for
      * @return the ResponseEntity with status 200 (OK) and with body the found exercise units

@@ -230,14 +230,12 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
         analysis.set(0, { lineNumber: 0, invalidTestCases: ['artemisApp.programmingExercise.testCaseAnalysis.invalidTestCase'] });
         analysis.set(2, {
             lineNumber: 2,
-            invalidHints: ['artemisApp.programmingExercise.hintsAnalysis.invalidHint'],
             invalidTestCases: ['artemisApp.programmingExercise.testCaseAnalysis.invalidTestCase'],
         });
 
         const expectedWarnings = [
             { column: 0, row: 0, text: ' - artemisApp.programmingExercise.testCaseAnalysis.invalidTestCase', type: 'warning' },
             { column: 0, row: 2, text: ' - artemisApp.programmingExercise.testCaseAnalysis.invalidTestCase', type: 'warning' },
-            { column: 0, row: 2, text: ' - artemisApp.programmingExercise.hintsAnalysis.invalidHint', type: 'warning' },
         ];
 
         comp.onAnalysisUpdate(analysis);

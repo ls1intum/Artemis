@@ -350,7 +350,7 @@ public class GitlabRequestMockProvider {
         if (removedGroups != null && !removedGroups.isEmpty()) {
             final var exercisesWithOutdatedGroups = programmingExerciseRepository.findAllByInstructorOrEditorOrTAGroupNameIn(removedGroups);
             for (final var exercise : exercisesWithOutdatedGroups) {
-                // If the the user is still in another group for the exercise (TA -> INSTRUCTOR or INSTRUCTOR -> TA),
+                // If the user is still in another group for the exercise (TA -> INSTRUCTOR or INSTRUCTOR -> TA),
                 // then we have to add him as a member with the new access level
                 final var course = exercise.getCourseViaExerciseGroupOrCourseMember();
                 if (user.getGroups().contains(course.getInstructorGroupName())) {
@@ -360,7 +360,7 @@ public class GitlabRequestMockProvider {
                     doReturn(new Member()).when(groupApi).updateMember(eq(exercise.getProjectKey()), anyLong(), eq(GUEST));
                 }
                 else {
-                    // If the user is not a member of any relevant group any more, we can remove him from the exercise
+                    // If the user is not a member of any relevant group anymore, we can remove him from the exercise
                     doNothing().when(groupApi).removeMember(eq(exercise.getProjectKey()), anyLong());
                 }
             }

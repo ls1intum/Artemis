@@ -9,6 +9,7 @@ import java.util.Map.Entry;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
+import javax.annotation.Nullable;
 import javax.validation.constraints.NotNull;
 
 import org.hibernate.exception.ConstraintViolationException;
@@ -167,6 +168,7 @@ public class QuizScheduleService {
      * @param username the username of the user, the participation belongs to (second Key)
      * @return the participation with the given quizExerciseId and username -> return null if there is no participation -> return null if the quizExerciseId or if the username is null
      */
+    @Nullable
     public StudentParticipation getParticipation(Long quizExerciseId, String username) {
         if (quizExerciseId == null || username == null) {
             return null;
@@ -517,8 +519,8 @@ public class QuizScheduleService {
         quizCache.getTransientWriteCacheFor(quizExercise.getId()).getBatches().put(user.getLogin(), quizBatch.getId());
     }
 
-    public Optional<Long> getQuizBatchForStudent(QuizExercise quizExercise, User user) {
-        return Optional.ofNullable(quizCache.getReadCacheFor(quizExercise.getId()).getBatches().get(user.getLogin()));
+    public Optional<Long> getQuizBatchForStudentByLogin(QuizExercise quizExercise, String login) {
+        return Optional.ofNullable(quizCache.getReadCacheFor(quizExercise.getId()).getBatches().get(login));
     }
 
     private void removeCachedQuiz(QuizExerciseCache cachedQuiz) {
