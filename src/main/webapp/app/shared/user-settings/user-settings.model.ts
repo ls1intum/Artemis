@@ -5,7 +5,7 @@ import { Authority } from 'app/shared/constants/authority.constants';
  * UserSettingsStructures represent one entire displayable settings page with detailed information like descriptions, etc.
  * It is used for displaying the settings page in html.
  * The Settings are uses as generics to support multiple implementations for different settings pages
- * Look at a x-settings-structure.ts file for an example of the full UserSettings hierarchy
+ * Look at x-settings-structure.ts file for an example of the full UserSettings hierarchy
  */
 export interface UserSettingsStructure<T> {
     category: UserSettingsCategory;

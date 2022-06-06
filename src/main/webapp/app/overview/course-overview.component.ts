@@ -17,6 +17,7 @@ import { AlertService, AlertType } from 'app/core/util/alert.service';
 import { faCircleNotch, faSync } from '@fortawesome/free-solid-svg-icons';
 import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
 import { BarControlConfiguration, BarControlConfigurationProvider } from 'app/overview/tab-bar';
+import { ARTEMIS_DEFAULT_COLOR } from 'app/app.constants';
 
 const DESCRIPTION_READ = 'isDescriptionRead';
 
@@ -26,14 +27,16 @@ const DESCRIPTION_READ = 'isDescriptionRead';
     styleUrls: ['course-overview.scss', './tab-bar/tab-bar.scss'],
 })
 export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit {
+    readonly ARTEMIS_DEFAULT_COLOR = ARTEMIS_DEFAULT_COLOR;
+
     CachingStrategy = CachingStrategy;
     private courseId: number;
     private subscription: Subscription;
     public course?: Course;
     public refreshingCourse = false;
-    public courseDescription: string;
-    public enableShowMore: boolean;
-    public longTextShown: boolean;
+    public courseDescription: string | undefined;
+    public enableShowMore = false;
+    public longDescriptionShown = false;
     private teamAssignmentUpdateListener: Subscription;
     private quizExercisesChannel: string;
 
@@ -190,26 +193,30 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
         }
     }
 
+    /**
+     * Adjusts the course description and shows toggle buttons (if it is too long)
+     * This also depends on whether the user has already seen the full description (stored in local storage)
+     */
     adjustCourseDescription() {
         if (this.course && this.course.description) {
             this.enableShowMore = this.course.description.length > 50;
-            if (localStorage.getItem(DESCRIPTION_READ + this.course.shortName) && !this.courseDescription && this.enableShowMore) {
-                this.showShortDescription();
+            if (this.enableShowMore && !this.longDescriptionShown && localStorage.getItem(DESCRIPTION_READ + this.course.shortName)) {
+                this.courseDescription = this.course.description.slice(0, 50) + '…';
+                this.longDescriptionShown = false;
             } else {
-                this.showLongDescription();
+                this.courseDescription = this.course.description;
+                this.longDescriptionShown = true;
                 localStorage.setItem(DESCRIPTION_READ + this.course.shortName, 'true');
             }
         }
     }
 
-    showLongDescription() {
-        this.courseDescription = this.course?.description || '';
-        this.longTextShown = true;
-    }
-
-    showShortDescription() {
-        this.courseDescription = this.course?.description?.slice(0, 50) + '...' || '';
-        this.longTextShown = false;
+    /**
+     * Toggle between showing the long and abbreviated course description
+     */
+    toggleCourseDescription() {
+        this.longDescriptionShown = !this.longDescriptionShown;
+        this.adjustCourseDescription();
     }
 
     /**

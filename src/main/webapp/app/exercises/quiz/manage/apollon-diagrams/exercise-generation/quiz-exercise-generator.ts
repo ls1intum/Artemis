@@ -235,8 +235,8 @@ async function generateDragAndDropItemForRelationship(
 /**
  * Create a Drag and Drop Quiz Exercise `DropLocation` for an `Element`.
  *
- * Based on the total size of the complete UML model and the boundaries of an element a drop location is computed. Instead of abolute values
- * for position and size, `DropLocation`s use precentage values to the base of `MAX_SIZE_UNIT`.
+ * Based on the total size of the complete UML model and the boundaries of an element a drop location is computed. Instead of absolute values
+ * for position and size, `DropLocation`s use percentage values to the base of `MAX_SIZE_UNIT`.
  *
  * @param elementLocation The position and size of an element.
  * @param totalSize The total size of the UML model.

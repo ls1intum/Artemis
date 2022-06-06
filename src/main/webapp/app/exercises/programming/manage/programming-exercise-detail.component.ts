@@ -41,11 +41,9 @@ import {
     faUsers,
     faWrench,
 } from '@fortawesome/free-solid-svg-icons';
-import { Task } from 'app/exercises/programming/shared/instructions-render/task/programming-exercise-task.model';
 import { FullGitDiffReportModalComponent } from 'app/exercises/programming/hestia/git-diff-report/full-git-diff-report-modal.component';
 import { TestwiseCoverageReportModalComponent } from 'app/exercises/programming/hestia/testwise-coverage-report/testwise-coverage-report-modal.component';
 import { CodeEditorRepositoryFileService } from 'app/exercises/programming/shared/code-editor/service/code-editor-repository.service';
-import { ProgrammingExerciseSolutionEntry } from 'app/entities/hestia/programming-exercise-solution-entry.model';
 import { CodeHintService } from 'app/exercises/shared/exercise-hint/shared/code-hint.service';
 
 @Component({
@@ -280,47 +278,6 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * Get tasks and corresponding test cases extracted from the problem statement for this exercise
-     */
-    getExtractedTasksAndTestsFromProblemStatement(): void {
-        this.programmingExerciseService.getTasksAndTestsExtractedFromProblemStatement(this.programmingExercise.id!).subscribe({
-            next: (res) => {
-                const numberTests = res.map((task) => task.tests.length).reduce((numberTests1, numberTests2) => numberTests1 + numberTests2, 0);
-                this.alertService.addAlert({
-                    type: AlertType.SUCCESS,
-                    message: 'artemisApp.programmingExercise.extractTasksFromProblemStatementSuccess',
-                    translationParams: {
-                        numberTasks: res.length,
-                        numberTestCases: numberTests,
-                        detailedResult: ProgrammingExerciseDetailComponent.buildTaskCreationMessage(res),
-                    },
-                    timeout: 0,
-                });
-            },
-            error: (error) => this.dialogErrorSource.next(error.message),
-        });
-    }
-
-    private static buildTaskCreationMessage(tasks: Task[]): string {
-        return tasks.map((task) => '"' + task.taskName + '": ' + task.tests).join('\n');
-    }
-
-    /**
-     * Delete all tasks and solution entries for this exercise
-     */
-    deleteTasksWithSolutionEntries(): void {
-        this.programmingExerciseService.deleteTasksWithSolutionEntries(this.programmingExercise.id!).subscribe({
-            next: () => {
-                this.alertService.addAlert({
-                    type: AlertType.SUCCESS,
-                    message: 'artemisApp.programmingExercise.deleteTasksAndSolutionEntriesSuccess',
-                });
-            },
-            error: (error) => this.dialogErrorSource.next(error.message),
-        });
-    }
-
-    /**
      * Cleans up programming exercise
      * @param event contains additional checks from the dialog
      */
@@ -473,12 +430,11 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
 
     createStructuralSolutionEntries() {
         this.programmingExerciseService.createStructuralSolutionEntries(this.programmingExercise.id!).subscribe({
-            next: (res) => {
+            next: () => {
                 this.alertService.addAlert({
                     type: AlertType.SUCCESS,
                     message: 'artemisApp.programmingExercise.createStructuralSolutionEntriesSuccess',
                 });
-                console.log(ProgrammingExerciseDetailComponent.buildSolutionEntriesMessage(res));
             },
             error: (err) => {
                 this.onError(err);
@@ -488,12 +444,11 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
 
     createBehavioralSolutionEntries() {
         this.programmingExerciseService.createBehavioralSolutionEntries(this.programmingExercise.id!).subscribe({
-            next: (res) => {
+            next: () => {
                 this.alertService.addAlert({
                     type: AlertType.SUCCESS,
                     message: 'artemisApp.programmingExercise.createBehavioralSolutionEntriesSuccess',
                 });
-                console.log(ProgrammingExerciseDetailComponent.buildSolutionEntriesMessage(res));
             },
             error: (err) => {
                 this.onError(err);
@@ -513,10 +468,6 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                 this.onError(err);
             },
         });
-    }
-
-    private static buildSolutionEntriesMessage(solutionEntries: ProgrammingExerciseSolutionEntry[]): string {
-        return solutionEntries.map((solutionEntry) => `${solutionEntry.filePath}:\n${solutionEntry.code}`).join('\n\n');
     }
 
     /**

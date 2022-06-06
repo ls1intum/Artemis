@@ -247,7 +247,7 @@ public class BitbucketBambooUpdateService implements ContinuousIntegrationUpdate
 
     /**
      * What we basically want to achieve is the following:
-     * Tests should NOT trigger the BASE build plan any more.
+     * Tests should NOT trigger the BASE build plan anymore.
      * In old exercises this was the case, but in new exercises, this behavior is not wanted. Therefore, all triggers are removed and the assignment trigger is added again for the
      * BASE build plan
      *

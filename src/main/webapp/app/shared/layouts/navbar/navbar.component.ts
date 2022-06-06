@@ -149,7 +149,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
 
         this.subscribeForGuidedTourAvailability();
 
-        // The current user is needed to hide menu items for not logged in users.
+        // The current user is needed to hide menu items for not logged-in users.
         this.authStateSubscription = this.accountService
             .getAuthenticationState()
             .pipe(
@@ -434,10 +434,10 @@ export class NavbarComponent implements OnInit, OnDestroy {
                     this.addTranslationAsCrumb(currentPath, 'grading');
                     break;
                 } else if (this.lastRouteUrlSegment === 'code-editor' && segment === 'new') {
-                    // - This route is bogus an needs to be replaced in the future, display no crumb
+                    // - This route is bogus and needs to be replaced in the future, display no crumb
                     break;
                 } else if (this.lastRouteUrlSegment === 'programming-exercises' && segment === 'import') {
-                    // - This route is bogus an needs to be replaced in the future, display no crumb
+                    // - This route is bogus and needs to be replaced in the future, display no crumb
                     break;
                 } else if (this.lastRouteUrlSegment === 'exercise-groups') {
                     // - Don't display '<type>-exercises' because it has no associated route

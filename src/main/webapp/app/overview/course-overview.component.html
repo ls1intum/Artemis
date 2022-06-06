@@ -1,15 +1,14 @@
 <div>
     <div *ngIf="course">
-        <div class="course-info-bar">
+        <div class="course-info-bar" [ngStyle]="{ backgroundColor: course.color || ARTEMIS_DEFAULT_COLOR }" id="course-detail-info-bar">
             <div class="row">
                 <div class="col general-info">
                     <h3 class="fw-medium">{{ course.title }}</h3>
-                    <h4 class="d-none d-sm-inline fw-medium">{{ course.description || ('artemisApp.courseOverview.noDescription' | artemisTranslate) }}</h4>
-                    <h4 class="d-sm-none fw-medium">{{ courseDescription || ('artemisApp.courseOverview.noDescription' | artemisTranslate) }}</h4>
-                    <h6 class="d-sm-none fw-medium" *ngIf="enableShowMore && !longTextShown" (click)="showLongDescription()">
+                    <h4 class="fw-medium">{{ courseDescription || ('artemisApp.courseOverview.noDescription' | artemisTranslate) }}</h4>
+                    <h6 class="fw-medium" role="button" *ngIf="enableShowMore && !longDescriptionShown" (click)="toggleCourseDescription()">
                         {{ 'artemisApp.courseOverview.showMore' | artemisTranslate }}
                     </h6>
-                    <h6 class="d-sm-none fw-medium" *ngIf="enableShowMore && longTextShown" (click)="showShortDescription()">
+                    <h6 class="fw-medium" role="button" *ngIf="enableShowMore && longDescriptionShown" (click)="toggleCourseDescription()">
                         {{ 'artemisApp.courseOverview.showLess' | artemisTranslate }}
                     </h6>
                 </div>
@@ -43,6 +42,9 @@
                     </div>
                     <div *ngIf="course.lectures" jhiOrionFilter [showInOrionWindow]="false" class="tab-item lectures" routerLink="lectures" routerLinkActive="active">
                         <b jhiTranslate="artemisApp.courseOverview.menu.lectures">Lectures</b>
+                    </div>
+                    <div jhiOrionFilter [showInOrionWindow]="false" class="tab-item learning-goals" routerLink="learning-goals" routerLinkActive="active">
+                        <b jhiTranslate="artemisApp.courseOverview.menu.learningGoals">Learning Goals</b>
                     </div>
                     <div jhiOrionFilter [showInOrionWindow]="false" class="guided-tour tab-item statistics" routerLink="statistics" routerLinkActive="active">
                         <b jhiTranslate="artemisApp.courseOverview.menu.statistics">Statistics</b>
