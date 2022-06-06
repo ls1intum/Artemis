@@ -32,7 +32,7 @@ describe('UserManagementComponent', () => {
     let accountService: AccountService;
     let eventManager: EventManager;
     let courseManagementService: CourseManagementService;
-    let localStorageService: MockLocalStorageService;
+    let localStorageService: LocalStorageService;
     let httpMock: HttpTestingController;
 
     const course1 = new Course();
@@ -92,7 +92,7 @@ describe('UserManagementComponent', () => {
                 accountService = TestBed.inject(AccountService);
                 eventManager = TestBed.inject(EventManager);
                 courseManagementService = TestBed.inject(CourseManagementService);
-                localStorageService = TestBed.inject(MockLocalStorageService);
+                localStorageService = TestBed.inject(LocalStorageService);
                 httpMock = TestBed.inject(HttpTestingController);
             });
     });
@@ -247,31 +247,70 @@ describe('UserManagementComponent', () => {
         expect(spy).toHaveBeenCalledOnce();
     });
 
-    it('should insert filters', () => {
-        jest.spyOn(courseManagementService, 'getAll').mockReturnValue(
-            of(
-                new HttpResponse({
-                    body: courses,
-                }),
-            ),
-        );
+    it.each`
+        input              | key
+        ${AuthorityFilter} | ${UserStorageKey.AUTHORITY}
+        ${OriginFilter}    | ${UserStorageKey.ORIGIN}
+        ${StatusFilter}    | ${UserStorageKey.STATUS}
+    `('should init filters', (param: { input: any; key: any }) => {
+        const val = Object.keys(param.input).join(',');
+        jest.spyOn(localStorageService, 'retrieve').mockReturnValue(val);
 
-        comp.ngOnInit();
-
-        expect(comp.filters.authorityFilter).toEqual(new Set());
-        expect(comp.filters.originFilter).toEqual(new Set());
-        expect(comp.filters.statusFilter).toEqual(new Set());
-        expect(comp.filters.courseFilter).toEqual(new Set());
+        const filter = comp.initFilter(param.key, param.input);
+        expect(filter).toEqual(new Set(Object.keys(param.input).map((value) => param.input[value])));
     });
 
-    it('should toggle filters', () => {
+    it('should toggle course filters', () => {
         comp.courses = courses;
 
+        // Course
         comp.toggleFilter(comp.filters.courseFilter, course1.id!);
         expect(comp.filters.courseFilter).toEqual(new Set([course1.id!]));
 
         comp.toggleFilter(comp.filters.courseFilter, course1.id!);
         expect(comp.filters.courseFilter).toEqual(new Set([]));
+    });
+
+    it.each`
+        input
+        ${AuthorityFilter.ADMIN}
+        ${AuthorityFilter.INSTRUCTOR}
+        ${AuthorityFilter.EDITOR}
+        ${AuthorityFilter.TA}
+        ${AuthorityFilter.USER}
+    `('should toggle authority filters', (param: { input: AuthorityFilter }) => {
+        // Authority
+        comp.toggleFilter(comp.filters.authorityFilter, param.input);
+        expect(comp.filters.authorityFilter).toEqual(new Set([param.input]));
+
+        comp.toggleFilter(comp.filters.authorityFilter, param.input);
+        expect(comp.filters.authorityFilter).toEqual(new Set([]));
+    });
+
+    it.each`
+        input
+        ${OriginFilter.INTERNAL}
+        ${OriginFilter.EXTERNAL}
+    `('should toggle origin filters', (param: { input: OriginFilter }) => {
+        // Authority
+        comp.toggleFilter(comp.filters.originFilter, param.input);
+        expect(comp.filters.originFilter).toEqual(new Set([param.input]));
+
+        comp.toggleFilter(comp.filters.originFilter, param.input);
+        expect(comp.filters.originFilter).toEqual(new Set([]));
+    });
+
+    it.each`
+        input
+        ${StatusFilter.ACTIVATED}
+        ${StatusFilter.DEACTIVATED}
+    `('should toggle status filters', (param: { input: StatusFilter }) => {
+        // Authority
+        comp.toggleFilter(comp.filters.statusFilter, param.input);
+        expect(comp.filters.statusFilter).toEqual(new Set([param.input]));
+
+        comp.toggleFilter(comp.filters.statusFilter, param.input);
+        expect(comp.filters.statusFilter).toEqual(new Set([]));
     });
 
     it('should return correct filter values', () => {
@@ -293,5 +332,18 @@ describe('UserManagementComponent', () => {
 
         comp.selectAllCourses();
         expect(comp.filters.courseFilter).toEqual(new Set(courses.map((course) => course.id!)));
+    });
+
+    it('should select and deselect all roles', () => {
+        const val = Object.keys(AuthorityFilter).join(',');
+        jest.spyOn(localStorageService, 'retrieve').mockReturnValue(val);
+
+        comp.filters.authorityFilter = new Set(comp.initFilter(UserStorageKey.AUTHORITY, AuthorityFilter)) as Set<AuthorityFilter>;
+
+        comp.deselectAllRoles();
+        expect(comp.filters.authorityFilter).toEqual(new Set());
+
+        comp.selectAllRoles();
+        expect(comp.filters.authorityFilter).toEqual(new Set(comp.authorityFilters));
     });
 });
