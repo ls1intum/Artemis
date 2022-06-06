@@ -120,7 +120,7 @@ export class DiscussionSectionComponent extends CourseDiscussionDirective implem
      * -- in between pinned and archived posts --
      * 3. criterion (optional): creationDate - if activated by user through the sort arrow -> most recent comes at the end (chronologically from top to bottom)
      * 4. criterion: if 3'rd criterion was not activated by the user, vote-emoji count -> posts with more vote-emoji counts comes first
-     * 5. criterion: if 3'rd criterion was not activated by the user, most recent posts comes at the end (chronologically from top to bottom)
+     * 5. criterion: most recent posts comes at the end (chronologically from top to bottom)
      * @return Post[] sorted array of posts
      */
     sectionSortFn = (postA: Post, postB: Post): number => {
@@ -142,7 +142,7 @@ export class DiscussionSectionComponent extends CourseDiscussionDirective implem
 
         // 3rd criterion
         if (!!this.currentSortDirection) {
-            const comparison = this.sortByDate(postA, postB);
+            const comparison = this.sortByDate(postA, postB, this.currentSortDirection);
             if (comparison !== 0) {
                 return comparison;
             }
@@ -159,14 +159,7 @@ export class DiscussionSectionComponent extends CourseDiscussionDirective implem
         }
 
         // 5th criterion
-        if (!this.currentSortDirection) {
-            const comparison = this.sortByDate(postA, postB);
-            if (comparison !== 0) {
-                return comparison;
-            }
-        }
-
-        return 0;
+        return this.sortByDate(postA, postB, SortDirection.ASCENDING);
     };
 
     /**
@@ -256,12 +249,12 @@ export class DiscussionSectionComponent extends CourseDiscussionDirective implem
      * @param postB     second post to compare
      * @return number   the order which posts must be listed
      */
-    sortByDate = (postA: Post, postB: Post): number => {
+    sortByDate = (postA: Post, postB: Post, sortDirection: SortDirection): number => {
         if (Number(postA.creationDate) > Number(postB.creationDate)) {
-            return this.currentSortDirection === SortDirection.DESCENDING ? -1 : 1;
+            return sortDirection === SortDirection.DESCENDING ? -1 : 1;
         }
         if (Number(postA.creationDate) < Number(postB.creationDate)) {
-            return this.currentSortDirection === SortDirection.DESCENDING ? 1 : -1;
+            return sortDirection === SortDirection.DESCENDING ? 1 : -1;
         }
         return 0;
     };

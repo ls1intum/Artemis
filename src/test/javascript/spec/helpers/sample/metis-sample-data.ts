@@ -198,7 +198,7 @@ export const post2WithCreationDate = {
 export const post3WithCreationDate = {
     ...metisPostExerciseUser1,
     creationDate: dayjs().subtract(1, 'day'),
-    reactions: [metisUpVoteReactionUser1],
+    reactions: [metisUpVoteReactionUser1, metisUpVoteReactionUser1],
     displayPriority: DisplayPriority.NONE,
 };
 
@@ -212,7 +212,29 @@ export const post4WithCreationDate = {
 export const post5WithCreationDate = {
     ...metisPostLectureUser2,
     creationDate: dayjs().subtract(3, 'minute'),
+    reactions: [metisUpVoteReactionUser1],
     displayPriority: DisplayPriority.NONE,
 };
 
-export const postsWithCreationDate = [post1WithCreationDate, post5WithCreationDate, post3WithCreationDate, post2WithCreationDate, post4WithCreationDate];
+export const post6WithCreationDate = {
+    ...metisPostLectureUser2,
+    creationDate: dayjs().subtract(4, 'minute'),
+    reactions: [metisUpVoteReactionUser1],
+    displayPriority: DisplayPriority.NONE,
+};
+
+export const post7WithCreationDate = {
+    ...metisPostLectureUser2,
+    creationDate: dayjs().subtract(1, 'minute'),
+    displayPriority: DisplayPriority.NONE,
+};
+
+export const postsWithCreationDate = [
+    post1WithCreationDate,
+    post2WithCreationDate,
+    post3WithCreationDate,
+    post4WithCreationDate,
+    post5WithCreationDate,
+    post6WithCreationDate,
+    post7WithCreationDate,
+];

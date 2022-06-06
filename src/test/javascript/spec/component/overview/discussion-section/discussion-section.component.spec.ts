@@ -44,6 +44,8 @@ import {
     post3WithCreationDate,
     post4WithCreationDate,
     post5WithCreationDate,
+    post6WithCreationDate,
+    post7WithCreationDate,
     postsWithCreationDate,
 } from '../../../helpers/sample/metis-sample-data';
 
@@ -136,19 +138,43 @@ describe('PageDiscussionSectionComponent', () => {
 
     it('should sort posts correctly', () => {
         const posts = postsWithCreationDate.sort(component.sectionSortFn);
-        expect(posts).toEqual([post1WithCreationDate, post3WithCreationDate, post2WithCreationDate, post5WithCreationDate, post4WithCreationDate]);
+        expect(posts).toEqual([
+            post1WithCreationDate,
+            post3WithCreationDate,
+            post6WithCreationDate,
+            post5WithCreationDate,
+            post2WithCreationDate,
+            post7WithCreationDate,
+            post4WithCreationDate,
+        ]);
     });
 
     it('should sort posts by creationDate ASC', () => {
         component.currentSortDirection = SortDirection.ASCENDING;
         const posts = postsWithCreationDate.sort(component.sectionSortFn);
-        expect(posts).toEqual([post1WithCreationDate, post2WithCreationDate, post3WithCreationDate, post5WithCreationDate, post4WithCreationDate]);
+        expect(posts).toEqual([
+            post1WithCreationDate,
+            post2WithCreationDate,
+            post3WithCreationDate,
+            post6WithCreationDate,
+            post5WithCreationDate,
+            post7WithCreationDate,
+            post4WithCreationDate,
+        ]);
     });
 
     it('should sort posts by creationDate DESC', () => {
         component.currentSortDirection = SortDirection.DESCENDING;
         const posts = postsWithCreationDate.sort(component.sectionSortFn);
-        expect(posts).toEqual([post1WithCreationDate, post5WithCreationDate, post3WithCreationDate, post2WithCreationDate, post4WithCreationDate]);
+        expect(posts).toEqual([
+            post1WithCreationDate,
+            post7WithCreationDate,
+            post5WithCreationDate,
+            post6WithCreationDate,
+            post3WithCreationDate,
+            post2WithCreationDate,
+            post4WithCreationDate,
+        ]);
     });
 
     it('should initialize correctly for exercise posts with default settings', fakeAsync(() => {
