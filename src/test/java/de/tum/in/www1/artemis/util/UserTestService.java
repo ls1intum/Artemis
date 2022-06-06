@@ -506,12 +506,12 @@ public class UserTestService {
         params.add("searchTerm", "");
         params.add("sortingOrder", "ASCENDING");
         params.add("sortedColumn", "id");
-        params.add("authorities", "USER,TA,EDITOR,INSTRUCTOR,ADMIN");
-        params.add("origins", "INTERNAL,EXTERNAL");
-        params.add("status", "ACTIVATED,DEACTIVATED");
+        params.add("authorities", "");
+        params.add("origins", "");
+        params.add("status", "");
         params.add("courseIds", "");
         List<UserDTO> users = request.getList("/api/users", HttpStatus.OK, UserDTO.class, params);
-        assertThat(users).hasSize(numberOfStudents + numberOfTutors + numberOfEditors + numberOfInstructors + 1); // +1 for admin user himself
+        assertThat(users).hasSize(numberOfStudents + numberOfTutors + numberOfEditors + numberOfInstructors + 2); // +1 for admin user himself
     }
 
     // Test
@@ -544,8 +544,8 @@ public class UserTestService {
         params.add("sortingOrder", "ASCENDING");
         params.add("sortedColumn", "id");
         params.add("authorities", "USER");
-        params.add("origins", "INTERNAL,EXTERNAL");
-        params.add("status", "ACTIVATED,DEACTIVATED");
+        params.add("origins", "");
+        params.add("status", "");
         params.add("courseIds", "");
         List<User> users = request.getList("/api/users", HttpStatus.OK, User.class, params);
         assertThat(users).hasSize(1);
@@ -752,7 +752,7 @@ public class UserTestService {
             users.get(1).setGroups(Set.of("tumuser"));
             userRepository.saveAll(users);
             result = request.getList("/api/users", HttpStatus.OK, User.class, params);
-            assertThat(result).hasSize(2); // admin and user
+            assertThat(result).hasSize(1); // user
             assertThat(result.get(0)).isEqualTo(users.get(0));
         }
     }
