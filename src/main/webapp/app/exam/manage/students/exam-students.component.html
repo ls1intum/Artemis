@@ -11,8 +11,8 @@
             </h5>
         </div>
         <div>
-            <span [jhiTranslate]="'artemisApp.examManagement.examStudents.registeredStudents'">Registered students</span
-            ><span id="#registered-users">: {{ allRegisteredUsers.length }}</span>
+            <span [jhiTranslate]="'artemisApp.examManagement.examStudents.registeredStudents'">Registered students</span>:
+            <span class="badge bg-primary text-white" id="#registered-users"> {{ allRegisteredUsers.length }}</span>
             <span *ngIf="filteredUsersSize < allRegisteredUsers.length" class="text-muted">
                 (<span [jhiTranslate]="'artemisApp.examManagement.examStudents.searchResults'">search results</span>: {{ filteredUsersSize }}
                 )

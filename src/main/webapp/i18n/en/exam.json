@@ -509,6 +509,7 @@
             },
             "conduction": {
                 "examConduction": "Exam conduction",
+                "workingTime": "Working Time",
                 "startedExams": "Started exams",
                 "submittedExams": "Submitted exams",
                 "conductionSuspended": "Students cannot start their Exam!",

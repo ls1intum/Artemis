@@ -508,6 +508,7 @@
             },
             "conduction": {
                 "examConduction": "Klausurdurchführung",
+                "workingTime": "Arbeitszeit",
                 "startedExams": "Begonnene Klausuren",
                 "submittedExams": "Abgegebene Klausuren",
                 "conductionSuspended": "Studierende können keine Klausur starten!",
