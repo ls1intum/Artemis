@@ -473,7 +473,8 @@
                 },
                 "exercises": {
                     "title": "Exercises",
-                    "description": "Shows the current participation of the students in the respective exercise and exercise groups"
+                    "description": "Shows the current participation of the students in the respective exercise and exercise groups",
+                    "groups": "Exercise Groups"
                 },
                 "activity-log": {
                     "title": "Activity log",

@@ -9,7 +9,7 @@
 
     .monitoring-card-header {
         cursor: pointer;
-        border-bottom: 2px solid var(--overview-blue-border-color);
+        border-bottom: 2px solid var(--primary);
         background: var(--exam-monitoring-card-footer-background-color);
     }
 
@@ -20,7 +20,7 @@
 
     .monitoring-card-footer {
         min-height: 50px;
-        border-top: 2px solid var(--overview-blue-border-color);
+        border-top: 2px solid var(--primary);
         background: var(--exam-monitoring-card-footer-background-color);
     }
 }

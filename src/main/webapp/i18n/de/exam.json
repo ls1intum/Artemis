@@ -457,7 +457,7 @@
             "title": "Klausurüberwachung",
             "description": "Die Klausurüberwachungsansicht erlaubt es die Aktionen der Studierenden während der Klausur zu überwachen und die daraus resultierenden Daten zu analysieren.",
             "table": {
-                "panelHeader": "Klausur Informationen",
+                "panelHeader": "Klausurinformationen",
                 "panelDescriptionHeader": "Details",
                 "title": "Titel",
                 "start": "Start",
@@ -472,7 +472,8 @@
                 },
                 "exercises": {
                     "title": "Aufgaben",
-                    "description": "Zeigt die aktuelle Teilnahme der Studierenden in den jeweilgen Aufgaben und Aufgabengruppen"
+                    "description": "Zeigt die aktuelle Teilnahme der Studierenden in den jeweilgen Aufgaben und Aufgabengruppen",
+                    "groups": "Aufgabengruppen"
                 },
                 "activity-log": {
                     "title": "Aktivitäten",
