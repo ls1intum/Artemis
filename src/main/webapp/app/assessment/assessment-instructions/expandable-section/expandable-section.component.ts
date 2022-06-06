@@ -24,9 +24,11 @@ export class ExpandableSectionComponent implements OnInit {
         this.localStorageService.store(this.headerKey, this.isCollapsed);
     }
 
-    switchCollapsed() {
+    /**
+     * Toggle the state of the instruction block and store the updated state in the local storage.
+     */
+    toggleCollapsed() {
         this.isCollapsed = !this.isCollapsed;
-        console.log(this.isCollapsed);
         this.localStorageService.store(this.headerKey, this.isCollapsed);
     }
 }
