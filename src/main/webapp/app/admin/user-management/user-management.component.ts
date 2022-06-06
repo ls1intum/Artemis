@@ -28,7 +28,6 @@ export class UserFilter {
     courseFilter: Set<number> = new Set();
     noAuthority = false;
     noCourse = false;
-    invalidCourse = false;
 
     /**
      * Adds the http param options
@@ -45,9 +44,6 @@ export class UserFilter {
         if (this.noCourse) {
             // First Code
             options = options.append('courseIds', -1);
-        } else if (this.invalidCourse) {
-            // Second Code
-            options = options.append('courseIds', -2);
         } else {
             options = options.append('courseIds', [...this.courseFilter].join(','));
         }
@@ -79,7 +75,6 @@ export enum UserStorageKey {
     ORIGIN = 'artemis.userManagement.origin',
     STATUS = 'artemis.userManagement.status',
     NO_COURSE = 'artemis.userManagement.noCourse',
-    INVALID_COURSE = 'artemis.userManagement.invalidCourse',
 }
 
 @Component({
@@ -208,9 +203,6 @@ export class UserManagementComponent implements OnInit, OnDestroy {
 
         key = this.localStorage.retrieve(UserStorageKey.NO_AUTHORITY);
         this.filters.noAuthority = key ? (key as boolean) : false;
-
-        key = this.localStorage.retrieve(UserStorageKey.INVALID_COURSE);
-        this.filters.invalidCourse = key ? (key as boolean) : false;
     }
 
     /**
@@ -250,7 +242,6 @@ export class UserManagementComponent implements OnInit, OnDestroy {
     toggleCourseFilter(filter: Set<any>, value: any) {
         this.filters.noCourse = false;
         this.updateNoCourse(false);
-        this.updateInvalidCourse(false);
         this.toggleFilter(filter, value);
     }
 
@@ -308,15 +299,6 @@ export class UserManagementComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * Update the invalid course selection and the local storage.
-     * @param value new value
-     */
-    updateInvalidCourse(value: boolean) {
-        this.localStorage.store(UserStorageKey.INVALID_COURSE, value);
-        this.filters.invalidCourse = value;
-    }
-
-    /**
      * Update the no authority selection and the local storage.
      * @param value new value
      */
@@ -331,7 +313,6 @@ export class UserManagementComponent implements OnInit, OnDestroy {
     deselectAllCourses() {
         this.filters.courseFilter.clear();
         this.updateNoCourse(false);
-        this.updateInvalidCourse(false);
     }
 
     /**
@@ -340,16 +321,6 @@ export class UserManagementComponent implements OnInit, OnDestroy {
     selectEmptyCourses() {
         this.filters.courseFilter.clear();
         this.updateNoCourse(true);
-        this.updateInvalidCourse(false);
-    }
-
-    /**
-     * Select all users with invalid course
-     */
-    selectInvalidCourses() {
-        this.filters.courseFilter.clear();
-        this.updateNoCourse(false);
-        this.updateInvalidCourse(true);
     }
 
     /**
@@ -358,7 +329,6 @@ export class UserManagementComponent implements OnInit, OnDestroy {
     selectAllCourses() {
         this.filters.courseFilter = new Set(this.courses.map((course) => course.id!));
         this.updateNoCourse(false);
-        this.updateInvalidCourse(false);
     }
 
     /**

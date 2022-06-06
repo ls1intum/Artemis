@@ -298,37 +298,6 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
      * @param courseIds a set of courseIds which the users need to match at least one
      * @return specification used to chain database operations
      */
-    private Specification<User> getAllUsersMatchingInvalidCourses(Set<Long> courseIds) {
-        return (root, query, criteriaBuilder) -> {
-            // Sub query to find out all users who are part of a group, but this group has no course.
-            // In addition, the requested courses needs to be empty.
-            Subquery<Long> subQuery = query.subquery(Long.class);
-            Root<User> subUserRoot = subQuery.from(User.class);
-            Root<Course> subCourseRoot = subQuery.from(Course.class);
-            Join<User, String> group = subUserRoot.join(User_.GROUPS, JoinType.LEFT);
-
-            Predicate student = criteriaBuilder.equal(subCourseRoot.get(Course_.STUDENT_GROUP_NAME), group);
-            Predicate teaching = criteriaBuilder.equal(subCourseRoot.get(Course_.TEACHING_ASSISTANT_GROUP_NAME), group);
-            Predicate editor = criteriaBuilder.equal(subCourseRoot.get(Course_.EDITOR_GROUP_NAME), group);
-            Predicate instructor = criteriaBuilder.equal(subCourseRoot.get(Course_.INSTRUCTOR_GROUP_NAME), group);
-
-            subQuery.select(subUserRoot.get(User_.ID))
-                    .where(criteriaBuilder.and(criteriaBuilder.or(student, teaching, editor, instructor), criteriaBuilder.equal(subUserRoot.get(User_.ID), root.get(User_.ID))))
-                    .groupBy(subUserRoot.get(User_.ID)).having(criteriaBuilder.equal(criteriaBuilder.count(group), courseIds.size()));
-
-            Predicate notEmptyButInvalidGroups = criteriaBuilder.and(criteriaBuilder.isNotEmpty(root.get(User_.GROUPS)), criteriaBuilder.equal(criteriaBuilder.size(courseIds), 0),
-                    criteriaBuilder.exists(subQuery));
-
-            return criteriaBuilder.or(notEmptyButInvalidGroups);
-        };
-    }
-
-    /**
-     * Creates the specification to match the users course.
-     *
-     * @param courseIds a set of courseIds which the users need to match at least one
-     * @return specification used to chain database operations
-     */
     private Specification<User> getAllUsersMatchingCourses(Set<Long> courseIds) {
         return (root, query, criteriaBuilder) -> {
             // Sub query to find all users belonging to a group corresponding to the selected course.
@@ -368,11 +337,7 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
             // Empty courses
             return getAllUsersMatchingEmptyCourses();
         }
-        else if (courseIds.size() == 1 && courseIds.contains(-2L)) {
-            // Invalid courses
-            return getAllUsersMatchingInvalidCourses(courseIds);
-        }
-        else if (courseIds.size() > 0) {
+        else if (!courseIds.isEmpty()) {
             // Match all selected
             return getAllUsersMatchingCourses(courseIds);
         }

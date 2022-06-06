@@ -37,9 +37,7 @@
                 "all": "All",
                 "none": "None",
                 "without": "No Course",
-                "withoutTooltip": "Select all users without any course",
-                "invalid": "Invalid Course",
-                "invalidTooltip": "Select all users with invalid or not existing courses"
+                "withoutTooltip": "Select all users without any course"
             },
             "apply": "Apply"
         },
