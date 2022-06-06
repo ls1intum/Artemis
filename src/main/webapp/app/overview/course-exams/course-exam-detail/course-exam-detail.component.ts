@@ -122,10 +122,17 @@ export class CourseExamDetailComponent implements OnInit, OnDestroy {
                 return;
             } else {
                 this.examState = ExamState.CLOSED;
+                if (this.exam.testExam) {
+                    // For TestExams, we can cancel the subscription and lock the possibility to click on the exam tile
+                    // For RealExams, a CLOSED RealExam can switch into a STUDENTREVIEW RealExam
+                    this.maxAttemptsReached = true;
+                    this.cancelExamStateSubscription();
+                }
                 return;
             }
         }
         this.examState = ExamState.UNDEFINED;
+        this.cancelExamStateSubscription();
     }
 
     /**
