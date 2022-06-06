@@ -225,6 +225,8 @@ public final class Constants {
 
     public static final String VOTE_EMOJI_ID = "heavy_plus_sign";
 
+    public static final long COURSE_ID_FOR_EMPTY_COURSES = -1;
+
     private Constants() {
     }
 }

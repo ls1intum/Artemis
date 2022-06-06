@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.repository;
 
+import static de.tum.in.www1.artemis.config.Constants.COURSE_ID_FOR_EMPTY_COURSES;
 import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
 
 import java.time.ZonedDateTime;
@@ -75,7 +76,7 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
     @Query("select count(*) from User user where :#{#groupName} member of user.groups")
     Long countByGroupsIsContaining(@Param("groupName") String groupName);
 
-    @Query("select user from User user where lower(user.email) = lower(:#{#searchInput}) or lower(user.login) = lower" + "(:#{#searchInput})")
+    @Query("select user from User user where lower(user.email) = lower(:#{#searchInput}) or lower(user.login) = lower(:#{#searchInput})")
     List<User> findAllByEmailOrUsernameIgnoreCase(@Param("searchInput") String searchInput);
 
     @EntityGraph(type = LOAD, attributePaths = { "groups", "authorities" })
@@ -97,7 +98,7 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
      */
     @EntityGraph(type = LOAD, attributePaths = { "groups" })
     @Query("select user from User user where :#{#groupName} member of user.groups and "
-            + "(user.login like :#{#loginOrName}% or concat_ws(' ', user.firstName, user.lastName) like " + "%:#{#loginOrName}%)")
+            + "(user.login like :#{#loginOrName}% or concat_ws(' ', user.firstName, user.lastName) like %:#{#loginOrName}%)")
     List<User> searchByLoginOrNameInGroup(@Param("groupName") String groupName, @Param("loginOrName") String loginOrName);
 
     /**
@@ -333,7 +334,7 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
      * @return specification used to chain database operations
      */
     private Specification<User> getCourseSpecification(Set<Long> courseIds) {
-        if (courseIds.size() == 1 && courseIds.contains(-1L)) {
+        if (courseIds.size() == 1 && courseIds.contains(COURSE_ID_FOR_EMPTY_COURSES)) {
             // Empty courses
             return getAllUsersMatchingEmptyCourses();
         }
