@@ -306,4 +306,22 @@ public class UserBambooBitbucketJiraIntegrationTest extends AbstractSpringIntegr
     public void testUserWithDeactivatedStatus() throws Exception {
         userTestService.testUserWithDeactivatedStatus();
     }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    public void testUserWithInternalStatus() throws Exception {
+        userTestService.testUserWithInternalStatus();
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    public void testUserWithExternalStatus() throws Exception {
+        userTestService.testUserWithExternalStatus();
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    public void testUserWithExternalAndInternalStatus() throws Exception {
+        userTestService.testUserWithExternalAndInternalStatus();
+    }
 }

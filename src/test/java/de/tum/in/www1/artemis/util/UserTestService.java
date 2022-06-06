@@ -821,4 +821,69 @@ public class UserTestService {
             assertThat(result.get(0)).isEqualTo(users.get(1));
         }
     }
+
+    // Test
+    public void testUserWithInternalStatus() throws Exception {
+        final var params = createParamsForPagingRequest("USER", "INTERNAL", "", "");
+
+        List<User> result;
+        List<User> users;
+
+        database.addEmptyCourse();
+
+        int[][] numbers = new int[][] { { 2, 0, 0, 0 }, { 0, 2, 0, 0 }, { 0, 0, 2, 0 }, { 0, 0, 0, 2 } };
+        for (int[] number : numbers) {
+            userRepository.deleteAll();
+            users = database.addUsers(number[0], number[1], number[2], number[3]).stream().peek(user -> user.setGroups(Collections.emptySet())).toList();
+            users.get(0).setInternal(true);
+            users.get(1).setInternal(false);
+            userRepository.saveAll(users);
+            result = request.getList("/api/users", HttpStatus.OK, User.class, params);
+            assertThat(result).hasSize(1); // user
+            assertThat(result.get(0)).isEqualTo(users.get(0));
+        }
+    }
+
+    // Test
+    public void testUserWithExternalStatus() throws Exception {
+        final var params = createParamsForPagingRequest("USER", "EXTERNAL", "", "");
+
+        List<User> result;
+        List<User> users;
+
+        database.addEmptyCourse();
+
+        int[][] numbers = new int[][] { { 2, 0, 0, 0 }, { 0, 2, 0, 0 }, { 0, 0, 2, 0 }, { 0, 0, 0, 2 } };
+        for (int[] number : numbers) {
+            userRepository.deleteAll();
+            users = database.addUsers(number[0], number[1], number[2], number[3]).stream().peek(user -> user.setGroups(Collections.emptySet())).toList();
+            users.get(0).setInternal(true);
+            users.get(1).setInternal(false);
+            userRepository.saveAll(users);
+            result = request.getList("/api/users", HttpStatus.OK, User.class, params);
+            assertThat(result).hasSize(2); // user and admin
+            assertThat(result.get(0)).isEqualTo(users.get(1));
+        }
+    }
+
+    // Test
+    public void testUserWithExternalAndInternalStatus() throws Exception {
+        final var params = createParamsForPagingRequest("USER", "INTERNAL,EXTERNAL", "", "");
+
+        List<User> result;
+        List<User> users;
+
+        database.addEmptyCourse();
+
+        int[][] numbers = new int[][] { { 2, 0, 0, 0 }, { 0, 2, 0, 0 }, { 0, 0, 2, 0 }, { 0, 0, 0, 2 } };
+        for (int[] number : numbers) {
+            userRepository.deleteAll();
+            users = database.addUsers(number[0], number[1], number[2], number[3]).stream().peek(user -> user.setGroups(Collections.emptySet())).toList();
+            users.get(0).setInternal(true);
+            users.get(1).setInternal(false);
+            userRepository.saveAll(users);
+            result = request.getList("/api/users", HttpStatus.OK, User.class, params);
+            assertThat(result).isEqualTo(Collections.emptyList());
+        }
+    }
 }
