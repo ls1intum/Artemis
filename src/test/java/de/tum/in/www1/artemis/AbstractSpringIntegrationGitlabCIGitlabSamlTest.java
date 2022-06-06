@@ -231,6 +231,11 @@ public abstract class AbstractSpringIntegrationGitlabCIGitlabSamlTest extends Ab
     }
 
     @Override
+    public void mockNotifyPush(ProgrammingExerciseStudentParticipation participation) throws Exception {
+        mockTriggerBuild(participation, false);
+    }
+
+    @Override
     public void mockTriggerParticipationBuild(ProgrammingExerciseStudentParticipation participation) throws Exception {
         mockTriggerBuild(participation, false);
     }
