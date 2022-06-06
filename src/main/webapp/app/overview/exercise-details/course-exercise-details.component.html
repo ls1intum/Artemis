@@ -1,11 +1,6 @@
 <div *ngIf="exercise">
     <!-- HEADER INFORMATION START -->
-    <jhi-header-exercise-page-with-details
-        [exercise]="exercise"
-        [studentParticipation]="studentParticipation"
-        [onBackClick]="backToCourse.bind(this)"
-        [submissionPolicy]="submissionPolicy"
-    >
+    <jhi-header-exercise-page-with-details [exercise]="exercise" [studentParticipation]="studentParticipation" [submissionPolicy]="submissionPolicy">
         <span pagetitle>{{ exercise.title }}</span>
     </jhi-header-exercise-page-with-details>
     <!-- HEADER INFORMATION END -->

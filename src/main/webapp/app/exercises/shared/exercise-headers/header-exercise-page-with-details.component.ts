@@ -7,7 +7,7 @@ import { ExerciseCategory } from 'app/entities/exercise-category.model';
 import { SubmissionPolicy } from 'app/entities/submission-policy.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { getExerciseDueDate, hasExerciseDueDatePassed } from 'app/exercises/shared/exercise/exercise.utils';
-import { faArrowLeft, faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
+import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-header-exercise-page-with-details',
@@ -18,11 +18,9 @@ export class HeaderExercisePageWithDetailsComponent implements OnChanges {
 
     @Input() public exercise: Exercise;
     @Input() public studentParticipation?: StudentParticipation;
-    @Input() public onBackClick: () => void; // TODO: This can be removed once we are happy with the breadcrumb navigation
     @Input() public title: string;
     @Input() public exam?: Exam;
     @Input() public isTestRun = false;
-    @Input() public displayBackButton = true; // TODO: This can be removed once we are happy with the breadcrumb navigation
     @Input() public submissionPolicy?: SubmissionPolicy;
 
     public exerciseStatusBadge = 'bg-success';
@@ -33,7 +31,6 @@ export class HeaderExercisePageWithDetailsComponent implements OnChanges {
     icon: IconProp;
 
     // Icons
-    faArrowLeft = faArrowLeft;
     faQuestionCircle = faQuestionCircle;
 
     /**
