@@ -142,7 +142,7 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
         testExam2.setVisibleDate(ZonedDateTime.now().minusHours(3));
         testExam2.setStartDate(ZonedDateTime.now().minusHours(2));
         testExam2.setEndDate(ZonedDateTime.now().minusHours(1));
-        // examRepository.save(testExam2);
+        examRepository.save(testExam2);
         testExam2 = database.addTextModelingProgrammingExercisesToExam(testExam2, false, true);
         studentExamForTestExam2 = database.addStudentExamForTestExam(testExam2, users.get(0));
         studentExamForTestExam2.setSubmitted(true);
@@ -1748,7 +1748,9 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
     @Test
     @WithMockUser(username = "student1", roles = "USER")
     public void testGetStudentExamForSummary_testExam() throws Exception {
-        request.get("/api/courses/" + course1.getId() + "/exams/" + testExam1.getId() + "/student-exams/summary", HttpStatus.NOT_FOUND, StudentExam.class);
+        studentExam1.setSubmitted(true);
+        studentExamRepository.save(studentExam1);
+        request.get("/api/courses/" + course1.getId() + "/exams/" + testExam1.getId() + "/student-exams/summary", HttpStatus.FORBIDDEN, StudentExam.class);
     }
 
     // StudentExamResource - getStudentExamsForCoursePerUser

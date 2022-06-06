@@ -348,11 +348,11 @@ public class StudentExamResource {
         StudentExam studentExam = findStudentExamWithExercisesElseThrow(user, examId, courseId);
 
         // check that the studentExam has been submitted, otherwise /student-exams/conduction should be used
-        if (!studentExam.isSubmitted()) {
+        if (!Boolean.TRUE.equals(studentExam.isSubmitted())) {
             throw new AccessForbiddenException();
         }
 
-        // For TestExams, /student-exams/{studentExamId}/summary must be used, as multiple StudentExams per User exist.
+        // For TestExams, /student-exams/{studentExamId}/summary must be used.
         if (studentExam.getExam().isTestExam()) {
             throw new AccessForbiddenException();
         }
