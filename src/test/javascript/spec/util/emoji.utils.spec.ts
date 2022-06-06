@@ -9,4 +9,8 @@ describe('EmojiUtils', () => {
     it.each(['1F519', '1F51A', '2714-FE0F', '2122-FE0F'])('should return the correct dark emoji url', (emojiId: string) => {
         expect(EmojiUtils.singleDarkModeEmojiUrlFn({ unified: emojiId } as EmojiData)).toBe(SERVER_API_URL + '/public/emoji/' + emojiId.toLowerCase() + '.png');
     });
+
+    it.each([{ unified: 'foo' }, { unified: '' }, { unified: undefined }, undefined])('should return nothing for emojis that are not be replaced', (emoji: EmojiData) => {
+        expect(EmojiUtils.singleDarkModeEmojiUrlFn(emoji)).toBe('');
+    });
 });
