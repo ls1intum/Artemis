@@ -113,13 +113,13 @@ describe('NavbarComponent', () => {
         expect(component).not.toBeNull();
     });
 
-    it('should not build breadcrumbs for students', () => {
+    it('should build breadcrumbs for students', () => {
         const testUrl = '/courses/1/exercises';
         router.setUrl(testUrl);
 
         fixture.detectChanges();
 
-        expect(component.breadcrumbs.length).toEqual(0);
+        expect(component.breadcrumbs.length).toEqual(3);
     });
 
     it('should build breadcrumbs for course management', () => {
@@ -562,5 +562,26 @@ describe('NavbarComponent', () => {
             expect(component.breadcrumbs[5]).toEqual(exerciseCrumb);
             expect(component.breadcrumbs[6]).toEqual(plagiarismCrumb);
         });
+    });
+
+    describe('Special student route breadcrumb cases', () => {
+        it.each(['programming-exercises', 'modeling-exercises', 'text-exercises'])(
+            'should replace exercise types in URI with just "exercise" on backlinking breadcrumbs',
+            (exType: string) => {
+                const testUrl = `/courses/1/${exType}/2`;
+                router.setUrl(testUrl);
+
+                fixture.detectChanges();
+
+                expect(courseManagementStub).toHaveBeenCalledTimes(1);
+                expect(exerciseTitleStub).toHaveBeenCalledTimes(1);
+
+                expect(component.breadcrumbs).toHaveLength(4);
+                expect(component.breadcrumbs[0]).toMatchObject({ uri: '/courses/', label: 'artemisApp.course.home.title' });
+                expect(component.breadcrumbs[1]).toMatchObject({ uri: '/courses/1/', label: 'Test Course' });
+                expect(component.breadcrumbs[2]).toMatchObject({ uri: '/courses/1/exercises/', label: 'artemisApp.courseOverview.menu.exercises' });
+                expect(component.breadcrumbs[3]).toMatchObject({ uri: '/courses/1/exercises/2/', label: 'Test Exercise' });
+            },
+        );
     });
 });
