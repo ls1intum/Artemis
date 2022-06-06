@@ -713,18 +713,31 @@ public class UserTestService {
         return userRepository;
     }
 
-    // Test
-    public void testUserWithoutGroups() throws Exception {
+    /**
+     * Helper method to create the params.
+     * @param authorities authorities of the users
+     * @param origins of the users
+     * @param status of the users
+     * @param courseIds which the users are part
+     * @return params for request
+     */
+    private LinkedMultiValueMap<String, String> createParamsForPagingRequest(String authorities, String origins, String status, String courseIds) {
         final var params = new LinkedMultiValueMap<String, String>();
         params.add("page", "0");
         params.add("pageSize", "100");
         params.add("searchTerm", "");
         params.add("sortingOrder", "ASCENDING");
         params.add("sortedColumn", "id");
-        params.add("authorities", "USER");
-        params.add("origins", "");
-        params.add("status", "");
-        params.add("courseIds", "-1");
+        params.add("authorities", authorities);
+        params.add("origins", origins);
+        params.add("status", status);
+        params.add("courseIds", courseIds);
+        return params;
+    }
+
+    // Test
+    public void testUserWithoutGroups() throws Exception {
+        final var params = createParamsForPagingRequest("USER", "", "", "-1");
 
         List<User> result;
         List<User> users;
@@ -749,16 +762,7 @@ public class UserTestService {
         Course course = database.addEmptyCourse();
         courseRepository.save(course);
 
-        final var params = new LinkedMultiValueMap<String, String>();
-        params.add("page", "0");
-        params.add("pageSize", "100");
-        params.add("searchTerm", "");
-        params.add("sortingOrder", "ASCENDING");
-        params.add("sortedColumn", "id");
-        params.add("authorities", "USER");
-        params.add("origins", "");
-        params.add("status", "");
-        params.add("courseIds", Long.toString(course.getId()));
+        final var params = createParamsForPagingRequest("USER", "", "", Long.toString(course.getId()));
 
         List<User> result;
         List<User> users;
@@ -778,16 +782,7 @@ public class UserTestService {
 
     // Test
     public void testUserWithActivatedStatus() throws Exception {
-        final var params = new LinkedMultiValueMap<String, String>();
-        params.add("page", "0");
-        params.add("pageSize", "100");
-        params.add("searchTerm", "");
-        params.add("sortingOrder", "ASCENDING");
-        params.add("sortedColumn", "id");
-        params.add("authorities", "USER");
-        params.add("origins", "");
-        params.add("status", "ACTIVATED");
-        params.add("courseIds", "");
+        final var params = createParamsForPagingRequest("USER", "", "ACTIVATED", "");
 
         List<User> result;
         List<User> users;
@@ -807,16 +802,7 @@ public class UserTestService {
 
     // Test
     public void testUserWithDeactivatedStatus() throws Exception {
-        final var params = new LinkedMultiValueMap<String, String>();
-        params.add("page", "0");
-        params.add("pageSize", "100");
-        params.add("searchTerm", "");
-        params.add("sortingOrder", "ASCENDING");
-        params.add("sortedColumn", "id");
-        params.add("authorities", "USER");
-        params.add("origins", "");
-        params.add("status", "DEACTIVATED");
-        params.add("courseIds", "");
+        final var params = createParamsForPagingRequest("USER", "", "DEACTIVATED", "");
 
         List<User> result;
         List<User> users;
