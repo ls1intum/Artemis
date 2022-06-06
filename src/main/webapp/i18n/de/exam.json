@@ -3,10 +3,10 @@
         "exam": {
             "overview": {
                 "start": "Beginn: {{start}}",
-                "duration": "Arbeitzeit: ",
+                "duration": "Arbeitzeit:",
                 "maxPoints": "Erreichbare Punkte: {{points}}",
                 "upcoming": "Demnächst stattfindende Klausur",
-                "imminent": "Die Klausur beginnt in ",
+                "imminent": "Die Klausur beginnt in",
                 "imminentExplanation": "Du kannst die Klausur durch Klicken auf die Kachel bereits öffnen",
                 "conducting": "Laufende Klausur",
                 "conductingExplanation": "Du kannst die Klausur durch Klicken auf die Kachel öffnen",

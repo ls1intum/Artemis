@@ -3,15 +3,14 @@
     <div [ngClass]="{ 'row card-header': true, clickable: !maxAttemptsReached, 'bg-primary': exam.testExam, 'bg-success': !exam.testExam }">
         <h5 class="text-center text-white">{{ exam.title }}</h5>
     </div>
-    <!-- Case 7: Undefined exam state. show Pencil without further information-->
-    <div *ngIf="examState === 'UNDEFINED'" class="row card-body">
-        <h4 class="icon-settings">
+
+    <!-- Body of the Component. Content changes depending on the exam state-->
+    <div class="row card-body d-flex justify-content-center">
+        <h4 *ngIf="examState === 'UNDEFINED'; else nonUndefined" class="icon-settings">
+            <!-- Case 7: Undefined exam state. show Pencil without further information -->
             <fa-icon [icon]="faPenAlt" size="3x"></fa-icon>
         </h4>
-    </div>
-    <!-- Body of the Component. Content changes depending on the exam state-->
-    <div *ngIf="examState !== 'UNDEFINED'" [ngSwitch]="examState" class="row card-body d-flex justify-content-center">
-        <div class="row">
+        <ng-template #nonUndefined [ngSwitch]="examState">
             <h4 class="col-3 icon-settings">
                 <!-- Calender to indicate an upcoming exam -->
                 <fa-icon *ngSwitchCase="'UPCOMING'" [icon]="faCalendarDay" size="2x"></fa-icon>
@@ -28,7 +27,7 @@
                 <!-- Stop to indicate, no more attemps are possible -->
                 <fa-icon *ngSwitchCase="'NO_MORE_ATTEMPTS'" [icon]="faCircleStop" size="2x"></fa-icon>
             </h4>
-            <div class="col-8 row card-body justify-content-center">
+            <div class="col-9 row card-body justify-content-center">
                 <div *ngSwitchCase="'UPCOMING'">
                     <h5 class="text-center">{{ 'artemisApp.exam.overview.' + (exam.testExam ? 'testExam.' : '') + 'upcoming' | artemisTranslate }}</h5>
                     <div class="text-center">
@@ -64,7 +63,7 @@
                     <div class="text-center">{{ 'artemisApp.exam.overview.noMoreAttemptsExplanation' | artemisTranslate }}</div>
                 </div>
             </div>
-        </div>
+        </ng-template>
     </div>
     <!-- Footer -->
     <div class="card-footer row">

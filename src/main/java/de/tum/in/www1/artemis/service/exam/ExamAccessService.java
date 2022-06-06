@@ -71,11 +71,12 @@ public class ExamAccessService {
         }
 
         Exam exam = studentExam.get().getExam();
-        checkExamBelongsToCourseElseThrow(courseId, exam);
 
         if (exam.isTestExam()) {
             throw new AccessForbiddenException("The requested Exam is a RealExam");
         }
+
+        checkExamBelongsToCourseElseThrow(courseId, exam);
 
         // Check that the current user is registered for the exam
         if (!examRepository.isUserRegisteredForExam(examId, currentUser.getId())) {

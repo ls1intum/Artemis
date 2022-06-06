@@ -139,7 +139,7 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         exam1 = database.addExam(course1);
         exam2 = database.addExamWithExerciseGroup(course1, true);
         testExam1 = database.addTestExam(course1);
-        studentExam1 = database.addStudentExam(testExam1);
+        studentExam1 = database.addStudentExamForTestExam(testExam1, users.get(0));
 
         instructor = users.get(users.size() - 1);
 
@@ -2510,19 +2510,16 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     @Test
     @WithMockUser(username = "student1", roles = "USER")
     public void testGetStudentExamForTestExamForStart_fetchExam() throws Exception {
-        StudentExam studentExam = database.addStudentExamForTestExam(testExam1, database.getUserByLogin("student1"));
-
         StudentExam studentExamReceived = request.get("/api/courses/" + course1.getId() + "/exams/" + testExam1.getId() + "/start-test-exam", HttpStatus.OK, StudentExam.class);
-        assertEquals(studentExam, studentExamReceived);
+        assertEquals(studentExam1, studentExamReceived);
     }
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
     public void testGetStudentExamForTestExamForStart_fetchExam_submitted() throws Exception {
-        StudentExam studentExam = database.addStudentExamForTestExam(testExam1, database.getUserByLogin("student1"));
-        studentExam.setSubmissionDate(now().minusHours(10));
-        studentExam.setSubmitted(true);
-        studentExamRepository.save(studentExam);
+        studentExam1.setSubmissionDate(now().minusHours(10));
+        studentExam1.setSubmitted(true);
+        studentExamRepository.save(studentExam1);
 
         request.get("/api/courses/" + course1.getId() + "/exams/" + testExam1.getId() + "/start-test-exam", HttpStatus.FORBIDDEN, StudentExam.class);
     }
@@ -2530,10 +2527,9 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     @Test
     @WithMockUser(username = "student1", roles = "USER")
     public void testGetStudentExamForTestExamForStart_fetchExam_ended_notSubmitted() throws Exception {
-        StudentExam studentExam = database.addStudentExamForTestExam(testExam1, database.getUserByLogin("student1"));
-        studentExam.setStartedDate(now().minusHours(10));
-        studentExam.setStarted(true);
-        studentExamRepository.save(studentExam);
+        studentExam1.setStartedDate(now().minusHours(10));
+        studentExam1.setStarted(true);
+        studentExamRepository.save(studentExam1);
 
         request.get("/api/courses/" + course1.getId() + "/exams/" + testExam1.getId() + "/start-test-exam", HttpStatus.FORBIDDEN, StudentExam.class);
     }
@@ -2541,7 +2537,6 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     @Test
     @WithMockUser(username = "student1", roles = "USER")
     public void testGetStudentExamForTestExamForStart_successful() throws Exception {
-
         request.get("/api/courses/" + course1.getId() + "/exams/" + testExam1.getId() + "/start-test-exam", HttpStatus.OK, StudentExam.class);
     }
 

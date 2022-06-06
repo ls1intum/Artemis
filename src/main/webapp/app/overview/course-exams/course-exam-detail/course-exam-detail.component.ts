@@ -34,6 +34,7 @@ export const enum ExamState {
 export class CourseExamDetailComponent implements OnInit, OnDestroy {
     @Input() exam: Exam;
     @Input() course: Course;
+    // Interims-boolean to limit the number of attempts for a testExam (currently max 1 attempt)
     @Input() maxAttemptsReached: boolean;
     examState: ExamState;
     examStateSubscription: Subscription;
@@ -84,7 +85,7 @@ export class CourseExamDetailComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * Updates the status of the exam every second. The cases are explained at the ExamState enum
+     * Updates the status of the exam every second. The cases are explained at the ExamState enum.
      */
     updateExamState() {
         if (this.maxAttemptsReached) {
