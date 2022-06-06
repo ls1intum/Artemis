@@ -85,6 +85,17 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
     Set<ProgrammingExercise> findAllWithEagerTestCases();
 
     /**
+     * Returns all programming exercises with their hints and tasks
+     * @return all programming exercises
+     */
+    @Query("""
+            SELECT p FROM ProgrammingExercise p
+            LEFT JOIN FETCH p.tasks
+            LEFT JOIN FETCH p.exerciseHints
+            """)
+    Set<ProgrammingExercise> findAllWithEagerTasksAndHints();
+
+    /**
      * Get a programmingExercise with template and solution participation, each with the latest result and feedbacks.
      *
      * @param exerciseId the id of the exercise that should be fetched.

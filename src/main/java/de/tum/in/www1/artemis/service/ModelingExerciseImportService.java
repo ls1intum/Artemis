@@ -24,8 +24,8 @@ public class ModelingExerciseImportService extends ExerciseImportService {
     private final ModelingExerciseRepository modelingExerciseRepository;
 
     public ModelingExerciseImportService(ModelingExerciseRepository modelingExerciseRepository, ExampleSubmissionRepository exampleSubmissionRepository,
-            SubmissionRepository submissionRepository, ResultRepository resultRepository, TextBlockRepository textBlockRepository) {
-        super(exampleSubmissionRepository, submissionRepository, resultRepository, textBlockRepository);
+            SubmissionRepository submissionRepository, ResultRepository resultRepository) {
+        super(exampleSubmissionRepository, submissionRepository, resultRepository);
         this.modelingExerciseRepository = modelingExerciseRepository;
     }
 
@@ -77,7 +77,6 @@ public class ModelingExerciseImportService extends ExerciseImportService {
      * @param newExercise The new exercise in which we will insert the example submissions
      * @return The cloned set of example submissions
      */
-    @Override
     Set<ExampleSubmission> copyExampleSubmission(Exercise templateExercise, Exercise newExercise) {
         return copyExampleSubmission(templateExercise, newExercise, new HashMap<>());
     }
@@ -106,18 +105,6 @@ public class ModelingExerciseImportService extends ExerciseImportService {
             newExampleSubmissions.add(newExampleSubmission);
         }
         return newExampleSubmissions;
-    }
-
-    /**
-     * This helper function does a hard copy of the {@code originalSubmission} and stores the values in {@code newSubmission}.
-     * To copy the submission results this function calls {@link ExerciseImportService#copyExampleResult(Result, Submission, Map)} respectively.
-     *
-     * @param originalSubmission  The original submission to be copied.
-     * @return The cloned submission
-     */
-    @Override
-    Submission copySubmission(Submission originalSubmission) {
-        return copySubmission(originalSubmission, new HashMap<>());
     }
 
     /**

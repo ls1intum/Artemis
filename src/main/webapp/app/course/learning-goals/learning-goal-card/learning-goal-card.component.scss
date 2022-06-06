@@ -1,17 +1,18 @@
 .course-goal-card {
+    width: 100%;
     min-width: 350px;
-    max-width: 500px;
-    min-height: 250px;
-    margin: 10px;
-    border-radius: 15px;
+    max-width: 440px;
+    height: 100%;
+    min-height: 200px;
+    border-radius: 10px;
 }
 
 .course-goal-card-header {
-    border-radius: 15px 15px 0 0 !important;
+    border-radius: 10px 10px 0 0 !important;
 }
 
 .course-goal-card-footer {
-    border-radius: 0 0 15px 15px !important;
+    border-radius: 0 0 10px 10px !important;
 }
 
 .course-goal-card:hover {
@@ -23,5 +24,5 @@
 }
 
 .grow:hover {
-    transform: scale(1.1);
+    transform: scale(1.05);
 }

@@ -158,6 +158,7 @@ public class Course extends DomainObject {
     private Integer maxPoints;
 
     @Column(name = "accuracy_of_scores")
+    @JsonView(QuizView.Before.class)
     private Integer accuracyOfScores;
 
     @OneToMany(mappedBy = "course", fetch = FetchType.LAZY)
@@ -628,16 +629,6 @@ public class Course extends DomainObject {
 
     public void setLearningGoals(Set<LearningGoal> learningGoals) {
         this.learningGoals = learningGoals;
-    }
-
-    public void addLearningGoal(LearningGoal learningGoal) {
-        this.learningGoals.add(learningGoal);
-        learningGoal.setCourse(this);
-    }
-
-    public void removeLearningGoal(LearningGoal learningGoal) {
-        this.learningGoals.remove(learningGoal);
-        learningGoal.setCourse(null);
     }
 
     public boolean hasCourseArchive() {

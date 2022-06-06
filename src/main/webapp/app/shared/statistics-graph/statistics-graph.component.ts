@@ -197,7 +197,7 @@ export class StatisticsGraphComponent implements OnChanges {
     /**
      * Converts the data retrieved from the service to dedicated objects that can be interpreted by ngx-charts
      * and pushes them to ngxData.
-     * Then, computes the upper limit for the y Axis of the chart.
+     * Then, computes the upper limit for the y-axis of the chart.
      * @private
      */
     private pushToData(): void {

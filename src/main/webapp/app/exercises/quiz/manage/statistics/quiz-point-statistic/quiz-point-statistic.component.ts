@@ -184,7 +184,7 @@ export class QuizPointStatisticComponent extends QuizStatistics implements OnIni
      */
     loadQuizSuccess(quizExercise: QuizExercise) {
         // if the Student finds a way to the Website
-        //      -> the Student will be send back to Courses
+        //      -> the Student will be sent back to Courses
         if (!this.accountService.hasAnyAuthorityDirect([Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TA])) {
             this.router.navigate(['courses']);
         }
