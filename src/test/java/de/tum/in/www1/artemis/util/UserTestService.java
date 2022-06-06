@@ -758,12 +758,12 @@ public class UserTestService {
         params.add("authorities", "USER,TA,EDITOR,INSTRUCTOR,ADMIN");
         params.add("origins", "INTERNAL,EXTERNAL");
         params.add("status", "ACTIVATED,DEACTIVATED");
-        params.add("courseIds", "" + course.getId());
+        params.add("courseIds", Long.toString(course.getId()));
 
         List<User> result;
         List<User> users;
 
-        int[][] numbers = new int[][] { { 2, 0, 0, 0 }, { 0, 2, 0, 0 }, { 0, 0, 2, 0 }, { 0, 0, 0, 2 }, };
+        int[][] numbers = new int[][] { { 2, 0, 0, 0 }, { 0, 2, 0, 0 }, { 0, 0, 2, 0 }, { 0, 0, 0, 2 } };
         for (int[] number : numbers) {
             userRepository.deleteAll();
             users = database.addUsers(number[0], number[1], number[2], number[3]);
@@ -792,7 +792,7 @@ public class UserTestService {
         List<User> result;
         List<User> users;
 
-        int[][] numbers = new int[][] { { 2, 0, 0, 0 }, { 0, 2, 0, 0 }, { 0, 0, 2, 0 }, { 0, 0, 0, 2 }, };
+        int[][] numbers = new int[][] { { 2, 0, 0, 0 }, { 0, 2, 0, 0 }, { 0, 0, 2, 0 }, { 0, 0, 0, 2 } };
         for (int[] number : numbers) {
             userRepository.deleteAll();
             users = database.addUsers(number[0], number[1], number[2], number[3]).stream().peek(user -> user.setGroups(Collections.emptySet())).toList();
@@ -823,7 +823,7 @@ public class UserTestService {
 
         database.addEmptyCourse();
 
-        int[][] numbers = new int[][] { { 2, 0, 0, 0 }, { 0, 2, 0, 0 }, { 0, 0, 2, 0 }, { 0, 0, 0, 2 }, };
+        int[][] numbers = new int[][] { { 2, 0, 0, 0 }, { 0, 2, 0, 0 }, { 0, 0, 2, 0 }, { 0, 0, 0, 2 } };
         for (int[] number : numbers) {
             userRepository.deleteAll();
             users = database.addUsers(number[0], number[1], number[2], number[3]).stream().peek(user -> user.setGroups(Collections.emptySet())).toList();
