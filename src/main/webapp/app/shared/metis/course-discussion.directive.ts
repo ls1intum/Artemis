@@ -22,7 +22,7 @@ export abstract class CourseDiscussionDirective {
     isLoading = true;
 
     currentSortCriterion = PostSortCriterion.CREATION_DATE;
-    currentSortDirection: SortDirection | undefined;
+    currentSortDirection?: SortDirection;
     readonly SortBy = PostSortCriterion;
     readonly SortDirection = SortDirection;
 
