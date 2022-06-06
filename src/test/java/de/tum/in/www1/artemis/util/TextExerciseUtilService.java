@@ -47,7 +47,7 @@ public class TextExerciseUtilService {
     }
 
     /**
-     * Generate a set of specified size containing TextBlocks with the the same text
+     * Generate a set of specified size containing TextBlocks with the same text
      * @param count expected size of TextBlock set
      * @return Set of TextBlocks with identical texts
      */

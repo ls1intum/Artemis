@@ -61,8 +61,15 @@ const courseEmpty: Course = {};
 const exam1 = { id: 3, endDate: endDate1, visibleDate: visibleDate1, course: courseEmpty };
 const exam2 = { id: 4, course: courseEmpty };
 const exams = [exam1, exam2];
-const course1 = { id: 1, exams, exercises: [exercise1], description: 'description of course 1' };
-const course2 = { id: 2, exercises: [exercise2], exams: [exam2], description: 'description of course 2', shortName: 'shortName1' };
+const course1 = {
+    id: 1,
+    exams,
+    exercises: [exercise1],
+    description:
+        'Nihilne te nocturnum praesidium Palati, nihil urbis vigiliae. Salutantibus vitae elit libero, a pharetra augue. Quam diu etiam furor iste tuus nos eludet? ' +
+        'Fabio vel iudice vincam, sunt in culpa qui officia. Quam temere in vitiis, legem sancimus haerentia. Quisque ut dolor gravida, placerat libero vel, euismod.',
+};
+const course2 = { id: 2, exercises: [exercise2], exams: [exam2], description: 'Short description of course 2', shortName: 'shortName2' };
 
 @Component({
     template: '<ng-template #controls><button id="test-button">TestButton</button></ng-template>',
@@ -133,6 +140,7 @@ describe('CourseOverviewComponent', () => {
     afterEach(() => {
         component.ngOnDestroy();
         jest.restoreAllMocks();
+        localStorage.clear();
     });
 
     it('Should call all methods on init', async () => {
@@ -170,17 +178,7 @@ describe('CourseOverviewComponent', () => {
         expect(subscribeToTeamAssignmentUpdatesStub).toHaveBeenCalled();
     });
 
-    it('should set Long Description', () => {
-        component.longTextShown = false;
-
-        component.showLongDescription();
-
-        expect(component.courseDescription).toBe('');
-        expect(component.longTextShown).toBe(true);
-    });
-
-    it('should set short Description', () => {
-        component.longTextShown = true;
+    it('should toggle course description', () => {
         const findOneForDashboardStub = jest.spyOn(courseService, 'findOneForDashboard');
         const getCourseStub = jest.spyOn(courseScoreCalculationService, 'getCourse');
         getCourseStub.mockReturnValue(course1);
@@ -188,10 +186,18 @@ describe('CourseOverviewComponent', () => {
 
         component.ngOnInit();
 
-        component.showShortDescription();
+        expect(component.enableShowMore).toBe(true);
+        expect(component.longDescriptionShown).toBe(true);
 
-        expect(component.courseDescription).toBe('description of course 1...');
-        expect(component.longTextShown).toBe(false);
+        component.toggleCourseDescription();
+
+        expect(component.longDescriptionShown).toBe(false);
+        expect(component.courseDescription).toBe('Nihilne te nocturnum praesidium Palati, nihil urbi…');
+
+        component.toggleCourseDescription();
+
+        expect(component.longDescriptionShown).toBe(true);
+        expect(component.courseDescription).toBe(course1.description);
     });
 
     it('should have visible exams', () => {
@@ -236,18 +242,19 @@ describe('CourseOverviewComponent', () => {
     it('should adjustCourseDescription', () => {
         const findOneForDashboardStub = jest.spyOn(courseService, 'findOneForDashboard');
         const getCourseStub = jest.spyOn(courseScoreCalculationService, 'getCourse');
+        const adjustCourseDescriptionStub = jest.spyOn(component, 'adjustCourseDescription');
         getCourseStub.mockReturnValue(course2);
         findOneForDashboardStub.mockReturnValue(of(new HttpResponse({ body: course2, headers: new HttpHeaders() })));
-        const showLongDescriptionStub = jest.spyOn(component, 'showLongDescription');
-        component.enableShowMore = true;
 
         component.ngOnInit();
-        component.adjustCourseDescription();
 
+        expect(adjustCourseDescriptionStub).toHaveBeenCalled();
         expect(component.enableShowMore).toBe(false);
-        expect(showLongDescriptionStub).toHaveBeenCalled();
-        expect(localStorage.getItem('isDescriptionReadshortName1')).toBe('true');
+        expect(component.longDescriptionShown).toBe(true);
+        expect(component.courseDescription).toBe(course2.description);
+        expect(localStorage.getItem('isDescriptionRead' + course2.shortName)).toBe('true');
     });
+
     it('should subscribeForQuizChanges', () => {
         const findOneForDashboardStub = jest.spyOn(courseService, 'findOneForDashboard');
         const getCourseStub = jest.spyOn(courseScoreCalculationService, 'getCourse');

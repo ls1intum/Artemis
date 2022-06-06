@@ -31,7 +31,7 @@ public interface ComplaintResponseRepository extends JpaRepository<ComplaintResp
     long countByComplaint_Result_Participation_Exercise_Course_Id_AndComplaint_ComplaintType_AndSubmittedTimeIsNotNull(Long courseId, ComplaintType complaintType);
 
     /**
-     * This magic method counts the number of complaints responses by complaint type associated to a exam id
+     * This magic method counts the number of complaints responses by complaint type associated to an exam id
      *
      * @param examId      - the id of the exam we want to filter by
      * @param complaintType - complaint type we want to filter by

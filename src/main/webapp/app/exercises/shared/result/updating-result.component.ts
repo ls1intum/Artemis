@@ -17,7 +17,7 @@ import { getExerciseDueDate } from 'app/exercises/shared/exercise/exercise.utils
 import { hasParticipationChanged } from 'app/exercises/shared/participation/participation.utils';
 
 /**
- * A component that wraps the result component, updating its result on every websocket result event for the logged in user.
+ * A component that wraps the result component, updating its result on every websocket result event for the logged-in user.
  * If the participation changes, the newest result from its result array will be used.
  * If the participation does not have any results, there will be no result displayed, until a new result is received through the websocket.
  */
