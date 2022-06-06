@@ -28,23 +28,28 @@ describe('ExpandableSectionComponent', () => {
         jest.restoreAllMocks();
     });
 
+    it('should get correct key', () => {
+        component.headerKey = 'test';
+
+        const key = component.key;
+
+        expect(key).toEqual(component.prefix + component.headerKey);
+    });
+
     it('should load state from local storage on init', () => {
-        const key = 'test';
-        component.headerKey = key;
+        component.headerKey = 'test';
         const retrieveSpy = jest.spyOn(localStorageService, 'retrieve').mockReturnValue(true);
         const storeSpy = jest.spyOn(localStorageService, 'store');
 
         component.ngOnInit();
 
-        expect(retrieveSpy).toHaveBeenCalledWith(key);
+        expect(retrieveSpy).toHaveBeenCalledWith(component.key);
         expect(component.isCollapsed).toBeTrue();
-        expect(storeSpy).toHaveBeenCalledWith(key, true);
+        expect(storeSpy).toHaveBeenCalledWith(component.key, true);
     });
 
     it('should toggle state on toggle of collapsed', () => {
-        const key = 'test';
-
-        component.headerKey = key;
+        component.headerKey = 'test';
         component.isCollapsed = true;
 
         const storeSpy = jest.spyOn(localStorageService, 'store');
@@ -52,6 +57,6 @@ describe('ExpandableSectionComponent', () => {
         component.toggleCollapsed();
 
         expect(component.isCollapsed).toBeFalse();
-        expect(storeSpy).toHaveBeenCalledWith(key, false);
+        expect(storeSpy).toHaveBeenCalledWith(component.key, false);
     });
 });
