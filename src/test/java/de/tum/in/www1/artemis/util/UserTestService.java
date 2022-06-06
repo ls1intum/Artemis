@@ -746,6 +746,9 @@ public class UserTestService {
 
     // Test
     public void testUserWithGroups() throws Exception {
+        Course course = database.addEmptyCourse();
+        courseRepository.save(course);
+
         final var params = new LinkedMultiValueMap<String, String>();
         params.add("page", "0");
         params.add("pageSize", "100");
@@ -755,14 +758,10 @@ public class UserTestService {
         params.add("authorities", "USER,TA,EDITOR,INSTRUCTOR,ADMIN");
         params.add("origins", "INTERNAL,EXTERNAL");
         params.add("status", "ACTIVATED,DEACTIVATED");
-        params.add("courseIds", "1");
+        params.add("courseIds", "" + course.getId());
 
         List<User> result;
         List<User> users;
-
-        Course course = database.addEmptyCourse();
-        course.setId(1L);
-        courseRepository.save(course);
 
         int[][] numbers = new int[][] { { 2, 0, 0, 0 }, { 0, 2, 0, 0 }, { 0, 0, 2, 0 }, { 0, 0, 0, 2 }, };
         for (int[] number : numbers) {
