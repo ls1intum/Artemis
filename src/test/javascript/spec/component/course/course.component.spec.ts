@@ -31,6 +31,7 @@ import { AlertService } from 'app/core/util/alert.service';
 import { Component } from '@angular/core';
 import { of } from 'rxjs';
 import dayjs from 'dayjs/esm';
+import { Exam } from 'app/entities/exam.model';
 
 const endDate1 = dayjs().add(1, 'days');
 const visibleDate1 = dayjs().subtract(1, 'days');
@@ -54,9 +55,16 @@ const exercise2: Exercise = {
 
 const courseEmpty: Course = {};
 
-const exam1 = { id: 3, endDate: endDate1, visibleDate: visibleDate1, course: courseEmpty };
-const exam2 = { id: 4, endDate: endDate2, visibleDate: visibleDate2, course: courseEmpty };
-const exams = [exam1, exam2];
+const exam1 = {
+    id: 3,
+    endDate: endDate1,
+    visibleDate: visibleDate1,
+    startDate: dayjs().add(2, 'hours'),
+    course: courseEmpty,
+    testExam: false,
+};
+const exam2 = { id: 4, endDate: endDate2, visibleDate: visibleDate2, course: courseEmpty, testExam: false };
+let exams = [exam1, exam2];
 const course1 = { id: 1, exams, exercises: [exercise1] };
 const course2 = { id: 2, exercises: [exercise2] };
 const courses: Course[] = [course1, course2];
@@ -80,7 +88,16 @@ describe('CoursesComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, RouterTestingModule.withRoutes([{ path: 'courses/:courseId/exams/:examId', component: DummyComponent }])],
+            imports: [
+                ArtemisTestModule,
+                RouterTestingModule.withRoutes([
+                    {
+                        path: 'courses/:courseId/exams/:examId',
+                        component: DummyComponent,
+                    },
+                    { path: 'courses/:courseId/exams', component: DummyComponent },
+                ]),
+            ],
             declarations: [
                 CoursesComponent,
                 MockDirective(MockHasAnyAuthorityDirective),
@@ -151,6 +168,7 @@ describe('CoursesComponent', () => {
             expect(component.exams).toContain(exam2);
             expect(component.nextRelevantExams?.length).toEqual(1);
             expect(component.nextRelevantExams?.[0]).toEqual(exam1);
+            expect(component.nextRelevantExam).toEqual(exam1);
         });
 
         it('Should load exercises on init', () => {
@@ -182,10 +200,61 @@ describe('CoursesComponent', () => {
         const navigateSpy = jest.spyOn(router, 'navigate');
         component.nextRelevantCourseForExam = course1;
         component.nextRelevantExams = [exam1];
+        component.nextRelevantExam = exam1;
         component.openExam();
         tick();
 
         expect(navigateSpy).toHaveBeenCalledWith(['courses', 1, 'exams', 3]);
         expect(location.path()).toEqual('/courses/1/exams/3');
+    }));
+
+    it('Should load next relevant exam with testExam', fakeAsync(() => {
+        const testExam1 = {
+            id: 5,
+            startDate: dayjs().add(1, 'hour'),
+            endDate: endDate1,
+            visibleDate: visibleDate1.subtract(10, 'minutes'),
+            course: courseEmpty,
+            workingTime: 3600,
+            testExam: true,
+        };
+        const course3 = { id: 3, exams: [testExam1], exercises: [exercise1] };
+        const coursesWithTestExam = [course1, course2, course3];
+
+        const navigateSpy = jest.spyOn(router, 'navigate');
+        const findAllForDashboardSpy = jest.spyOn(courseService, 'findAllForDashboard');
+        const courseScoreCalculationServiceSpy = jest.spyOn(courseScoreCalculationService, 'setCourses');
+        const serverDateServiceSpy = jest.spyOn(serverDateService, 'now');
+        const findNextRelevantExerciseSpy = jest.spyOn(component, 'findNextRelevantExercise');
+        findAllForDashboardSpy.mockReturnValue(
+            of(
+                new HttpResponse({
+                    body: coursesWithTestExam,
+                    headers: new HttpHeaders(),
+                }),
+            ),
+        );
+        serverDateServiceSpy.mockReturnValue(dayjs());
+
+        component.ngOnInit();
+
+        expect(findAllForDashboardSpy).toHaveBeenCalled();
+        expect(findNextRelevantExerciseSpy).toHaveBeenCalled();
+        expect(component.courses).toEqual(coursesWithTestExam);
+        expect(courseScoreCalculationServiceSpy).toHaveBeenCalled();
+        expect(component.exams.length).toEqual(3);
+        expect(component.exams).toContain(exam1);
+        expect(component.exams).toContain(exam2);
+        expect(component.exams).toContain(testExam1);
+        expect(component.nextRelevantExams?.length).toEqual(2);
+        expect(component.nextRelevantExams).toContain(exam1);
+        expect(component.nextRelevantExams).toContain(testExam1);
+        expect(component.nextRelevantExam).toEqual(testExam1);
+
+        component.openExam();
+        tick(1000);
+
+        expect(navigateSpy).toHaveBeenCalledWith(['courses', 3, 'exams']);
+        expect(location.path()).toEqual('/courses/3/exams');
     }));
 });

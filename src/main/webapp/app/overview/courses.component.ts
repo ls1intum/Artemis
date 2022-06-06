@@ -62,9 +62,7 @@ export class CoursesComponent implements OnInit, OnChanges, OnDestroy {
     ngOnChanges() {
         this.nextRelevantExam = this.findNextRelevantExam;
         // We only need to look for relevant Exercises, if no Exam is upcoming
-        if (!this.nextRelevantExam) {
-            this.nextRelevantExercise = this.findNextRelevantExercise();
-        }
+        this.nextRelevantExercise = this.findNextRelevantExercise();
     }
 
     /**
