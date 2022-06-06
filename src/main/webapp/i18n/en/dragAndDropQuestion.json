@@ -23,6 +23,7 @@
             "uploadBackgroundPicture": "Upload Background",
             "upload": "Upload",
             "uploading": "Uploading...",
+            "disabledPreviewTooltip": "To show a preview, please upload a background picture first.",
             "uploadBackgroundInstructions": "Please upload a background picture.",
             "drawOnBackgroundInstructions": "Draw on the background picture to define drop locations.",
             "noBackgroundPicture": "No Background Picture",

@@ -97,7 +97,7 @@ public abstract class PostingService {
         // user has to be at least student in the course
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
 
-        // check if course has posts enabled
+        // check if the course has posts enabled
         if (!course.getPostsEnabled()) {
             throw new BadRequestAlertException("Postings are not enabled for this course", getEntityName(), "400", true);
         }

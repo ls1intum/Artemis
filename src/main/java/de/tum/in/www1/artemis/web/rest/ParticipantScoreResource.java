@@ -78,7 +78,7 @@ public class ParticipantScoreResource {
     /**
      * GET /exams/:examId/exam-scores gets the exam scores of the exam
      * <p>
-     * This method represents a server based way to calculate a students achieved points / score in a exam.
+     * This method represents a server based way to calculate a students achieved points / score in an exam.
      * <p>
      * Currently both this server based calculation method and the traditional client side calculation method is used
      * side-by-side in exam-scores.component.ts.

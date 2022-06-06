@@ -57,8 +57,8 @@ export class PostReactionsBarComponent extends PostingsReactionsBarDirective<Pos
     }
 
     /**
-     * changes the the state of the displayPriority property on a post to PINNED by invoking the metis service
-     * in case the displayPriority is already set to PINNED, it will changed to NONE
+     * changes the state of the displayPriority property on a post to PINNED by invoking the metis service
+     * in case the displayPriority is already set to PINNED, it will be changed to NONE
      */
     togglePin() {
         if (this.displayPriority === DisplayPriority.PINNED) {
@@ -71,8 +71,8 @@ export class PostReactionsBarComponent extends PostingsReactionsBarDirective<Pos
     }
 
     /**
-     * changes the the state of the displayPriority property on a post to ARCHIVED by invoking the metis service,
-     * in case the displayPriority is already set to ARCHIVED, it will changed to NONE
+     * changes the state of the displayPriority property on a post to ARCHIVED by invoking the metis service,
+     * in case the displayPriority is already set to ARCHIVED, it will be changed to NONE
      */
     toggleArchive() {
         if (this.displayPriority === DisplayPriority.ARCHIVED) {

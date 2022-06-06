@@ -23,6 +23,7 @@
             "uploadBackgroundPicture": "Hintergrund Hochladen",
             "upload": "Hochladen",
             "uploading": "Lade hoch...",
+            "disabledPreviewTooltip": "Um eine Vorschau zu zeigen, lade bitte zuerst ein Hintergrundbild hoch.",
             "uploadBackgroundInstructions": "Bitte lade ein Hintergrundbild hoch.",
             "drawOnBackgroundInstructions": "Zeichne auf den Hintergrund, um Drop Locations zu definieren.",
             "noBackgroundPicture": "Kein Hintergrundbild",

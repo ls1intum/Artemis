@@ -61,7 +61,7 @@
             </jhi-assessment-dashboard-information>
         </div>
     </div>
-    <div class="container-fluid table-responsive">
+    <div class="container-fluid mt-4">
         <h4 jhiTranslate="artemisApp.assessmentDashboard.exerciseTable.title"></h4>
         <div *ngIf="!isTestRun" class="guided-tour-form-check col-6 align-baseline">
             <div class="form-check form-check-inline">
@@ -84,121 +84,125 @@
                 </label>
             </div>
         </div>
-        <table class="table exercise-table guided-tour-exercise-table">
-            <thead>
-                <tr jhiSort [(predicate)]="exercisesSortingPredicate" [(ascending)]="exercisesReverseOrder" (sortChange)="sortRows()">
-                    <th jhiSortBy="type">
-                        <a class="th-link">{{ 'artemisApp.assessmentDashboard.exerciseType' | artemisTranslate }}</a>
-                        <fa-icon [icon]="faSort"></fa-icon>
-                    </th>
-                    <th jhiSortBy="title">
-                        <a class="th-link">{{ 'artemisApp.assessmentDashboard.exercise' | artemisTranslate }}</a>
-                        <fa-icon [icon]="faSort"></fa-icon>
-                    </th>
-                    <th *ngIf="!isTestRun">{{ 'artemisApp.assessmentDashboard.yourStatus' | artemisTranslate }}</th>
-                    <th jhiSortBy="averageRating">
-                        <a class="th-link">{{ 'artemisApp.assessmentDashboard.exerciseAverageRating' | artemisTranslate }}</a>
-                        <fa-icon [icon]="faSort"></fa-icon>
-                    </th>
-                    <th jhiSortBy="dueDate" *ngIf="!isExamMode">
-                        <a class="th-link">{{ 'artemisApp.assessmentDashboard.exerciseDueDate' | artemisTranslate }}</a>
-                        <fa-icon [icon]="faSort"></fa-icon>
-                    </th>
-                    <th jhiSortBy="assessmentDueDate" *ngIf="!isExamMode">
-                        <a class="th-link">{{ 'artemisApp.assessmentDashboard.assessmentsDueDate' | artemisTranslate }}</a>
-                        <fa-icon [icon]="faSort"></fa-icon>
-                    </th>
-                    <th>{{ 'artemisApp.assessmentDashboard.actions' | artemisTranslate }}</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr *ngFor="let exercise of currentlyShownExercises">
-                    <td>
-                        <fa-icon [icon]="getIcon(exercise.type)" placement="right" [ngbTooltip]="getIconTooltip(exercise.type) | artemisTranslate" container="body"></fa-icon>
-                    </td>
-                    <td>
-                        <span>{{ exercise.title }}</span>
-                        <jhi-not-released-tag [exercise]="exercise"></jhi-not-released-tag>
-                        <span class="badge bg-success" [hidden]="!asQuizExercise(exercise).isActiveQuiz">Live</span>
-                    </td>
-                    <td *ngIf="!isTestRun && exercise.tutorParticipations && exercise.tutorParticipations![0]">
-                        <jhi-tutor-participation-graph
-                            [exercise]="exercise"
-                            [class.guided-tour]="exercise === exerciseForGuidedTour"
-                            [tutorParticipation]="exercise.tutorParticipations![0]"
-                            [numberOfSubmissions]="exercise.numberOfSubmissions"
-                            [totalNumberOfAssessments]="exercise.totalNumberOfAssessments"
-                            [numberOfComplaints]="exercise.numberOfComplaints || 0"
-                            [numberOfOpenComplaints]="exercise.numberOfOpenComplaints || 0"
-                            [numberOfMoreFeedbackRequests]="exercise.numberOfMoreFeedbackRequests || 0"
-                            [numberOfOpenMoreFeedbackRequests]="exercise.numberOfOpenMoreFeedbackRequests || 0"
-                            [numberOfAssessmentsOfCorrectionRounds]="exercise.numberOfAssessmentsOfCorrectionRounds"
-                        >
-                        </jhi-tutor-participation-graph>
-                    </td>
-                    <td>
-                        <span *ngIf="exercise.averageRating !== undefined"> {{ exercise.averageRating.toFixed(1) }} ⭐️ ({{ exercise.numberOfRatings }}) </span>
-                        <span *ngIf="exercise.averageRating === undefined"> n.a. </span>
-                    </td>
-                    <td *ngIf="!isExamMode">
-                        <span placement="right" [hidden]="!exercise.dueDate" ngbTooltip="{{ exercise.dueDate | artemisDate }}">
-                            {{ exercise.dueDate | artemisTimeAgo }}
-                        </span>
-                    </td>
-                    <td *ngIf="!isExamMode">
-                        <span placement="right" [hidden]="!exercise.assessmentDueDate" ngbTooltip="{{ exercise.assessmentDueDate | artemisDate }}">
-                            {{ exercise.assessmentDueDate | artemisTimeAgo }}
-                        </span>
-                    </td>
+        <div class="row table-responsive">
+            <table class="table exercise-table guided-tour-exercise-table">
+                <thead>
+                    <tr jhiSort [(predicate)]="exercisesSortingPredicate" [(ascending)]="exercisesReverseOrder" (sortChange)="sortRows()">
+                        <th jhiSortBy="type">
+                            <a class="th-link">{{ 'artemisApp.assessmentDashboard.exerciseType' | artemisTranslate }}</a>
+                            <fa-icon [icon]="faSort"></fa-icon>
+                        </th>
+                        <th jhiSortBy="title">
+                            <a class="th-link">{{ 'artemisApp.assessmentDashboard.exercise' | artemisTranslate }}</a>
+                            <fa-icon [icon]="faSort"></fa-icon>
+                        </th>
+                        <th *ngIf="!isTestRun">{{ 'artemisApp.assessmentDashboard.yourStatus' | artemisTranslate }}</th>
+                        <th jhiSortBy="averageRating">
+                            <a class="th-link">{{ 'artemisApp.assessmentDashboard.exerciseAverageRating' | artemisTranslate }}</a>
+                            <fa-icon [icon]="faSort"></fa-icon>
+                        </th>
+                        <th jhiSortBy="dueDate" *ngIf="!isExamMode">
+                            <a class="th-link">{{ 'artemisApp.assessmentDashboard.exerciseDueDate' | artemisTranslate }}</a>
+                            <fa-icon [icon]="faSort"></fa-icon>
+                        </th>
+                        <th jhiSortBy="assessmentDueDate" *ngIf="!isExamMode">
+                            <a class="th-link">{{ 'artemisApp.assessmentDashboard.assessmentsDueDate' | artemisTranslate }}</a>
+                            <fa-icon [icon]="faSort"></fa-icon>
+                        </th>
+                        <th>{{ 'artemisApp.assessmentDashboard.actions' | artemisTranslate }}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr *ngFor="let exercise of currentlyShownExercises">
+                        <td>
+                            <fa-icon [icon]="getIcon(exercise.type)" placement="right" [ngbTooltip]="getIconTooltip(exercise.type) | artemisTranslate" container="body"></fa-icon>
+                        </td>
+                        <td>
+                            <span>{{ exercise.title }}</span>
+                            <jhi-not-released-tag [exercise]="exercise"></jhi-not-released-tag>
+                            <span class="badge bg-success" [hidden]="!asQuizExercise(exercise).isActiveQuiz">Live</span>
+                        </td>
+                        <td *ngIf="!isTestRun && exercise.tutorParticipations && exercise.tutorParticipations![0]">
+                            <jhi-tutor-participation-graph
+                                [exercise]="exercise"
+                                [class.guided-tour]="exercise === exerciseForGuidedTour"
+                                [tutorParticipation]="exercise.tutorParticipations![0]"
+                                [numberOfSubmissions]="exercise.numberOfSubmissions"
+                                [totalNumberOfAssessments]="exercise.totalNumberOfAssessments"
+                                [numberOfComplaints]="exercise.numberOfComplaints || 0"
+                                [numberOfOpenComplaints]="exercise.numberOfOpenComplaints || 0"
+                                [numberOfMoreFeedbackRequests]="exercise.numberOfMoreFeedbackRequests || 0"
+                                [numberOfOpenMoreFeedbackRequests]="exercise.numberOfOpenMoreFeedbackRequests || 0"
+                                [numberOfAssessmentsOfCorrectionRounds]="exercise.numberOfAssessmentsOfCorrectionRounds"
+                            >
+                            </jhi-tutor-participation-graph>
+                        </td>
+                        <td>
+                            <span *ngIf="exercise.averageRating !== undefined"> {{ exercise.averageRating.toFixed(1) }} ⭐️ ({{ exercise.numberOfRatings }}) </span>
+                            <span *ngIf="exercise.averageRating === undefined"> n.a. </span>
+                        </td>
+                        <td *ngIf="!isExamMode">
+                            <span placement="right" [hidden]="!exercise.dueDate" ngbTooltip="{{ exercise.dueDate | artemisDate }}">
+                                {{ exercise.dueDate | artemisTimeAgo }}
+                            </span>
+                        </td>
+                        <td *ngIf="!isExamMode">
+                            <span placement="right" [hidden]="!exercise.assessmentDueDate" ngbTooltip="{{ exercise.assessmentDueDate | artemisDate }}">
+                                {{ exercise.assessmentDueDate | artemisTimeAgo }}
+                            </span>
+                        </td>
 
-                    <td>
-                        <ng-container *ngIf="!exercise.teamMode; else teamsLink">
-                            <ng-container>
+                        <td>
+                            <ng-container *ngIf="!exercise.teamMode; else teamsLink">
+                                <ng-container>
+                                    <a
+                                        id="open-exercise-dashboard"
+                                        [routerLink]="getAssessmentDashboardLinkForExercise(exercise)"
+                                        class="btn btn-info btn-sm me-1 mb-1"
+                                        [class.guided-tour]="exercise === exerciseForGuidedTour"
+                                    >
+                                        <span class="d-md-inline" jhiTranslate="entity.action.exerciseDashboard">Exercise dashboard</span>
+                                    </a>
+                                </ng-container>
+                            </ng-container>
+
+                            <ng-template #teamsLink>
                                 <a
-                                    id="open-exercise-dashboard"
-                                    [routerLink]="getAssessmentDashboardLinkForExercise(exercise)"
-                                    class="btn btn-info btn-sm me-1"
+                                    [routerLink]="['/course-management', courseId, 'exercises', exercise.id, 'teams']"
+                                    [queryParams]="{ filter: TeamFilterProp.OWN }"
+                                    class="btn btn-info btn-sm me-1 mb-1"
                                     [class.guided-tour]="exercise === exerciseForGuidedTour"
                                 >
-                                    <span class="d-md-inline" jhiTranslate="entity.action.exerciseDashboard">Exercise dashboard</span>
+                                    <span class="d-none d-md-inline" jhiTranslate="artemisApp.assessmentDashboard.exerciseTeams">Exercise Teams</span>
+                                </a>
+                            </ng-template>
+
+                            <ng-container *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR']">
+                                <ng-container
+                                    class="col-lg-3 col-md-6 col-sm-6"
+                                    *ngIf="
+                                        course?.isAtLeastInstructor && isExamMode && !isTestRun && exam?.numberOfCorrectionRoundsInExam && exam!.numberOfCorrectionRoundsInExam! > 1
+                                    "
+                                >
+                                    <jhi-second-correction-enable-button
+                                        class="me-1 mb-1"
+                                        (ngModelChange)="toggleSecondCorrection(exercise.id!)"
+                                        [secondCorrectionEnabled]="exercise.secondCorrectionEnabled"
+                                        [togglingSecondCorrectionButton]="isTogglingSecondCorrection.get(exercise.id!)!"
+                                    ></jhi-second-correction-enable-button>
+                                </ng-container>
+                                <a class="btn btn-primary btn-sm mb-1" *ngIf="course?.isAtLeastInstructor" [routerLink]="getSubmissionsLinkForExercise(exercise)">
+                                    <span jhiTranslate="artemisApp.assessmentDashboard.submissions">Submissions</span>
                                 </a>
                             </ng-container>
-                        </ng-container>
-
-                        <ng-template #teamsLink>
-                            <a
-                                [routerLink]="['/course-management', courseId, 'exercises', exercise.id, 'teams']"
-                                [queryParams]="{ filter: TeamFilterProp.OWN }"
-                                class="btn btn-info btn-sm me-1"
-                                [class.guided-tour]="exercise === exerciseForGuidedTour"
-                            >
-                                <span class="d-none d-md-inline" jhiTranslate="artemisApp.assessmentDashboard.exerciseTeams">Exercise Teams</span>
-                            </a>
-                        </ng-template>
-
-                        <ng-container *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR']">
-                            <ng-container
-                                class="col-lg-3 col-md-6 col-sm-6"
-                                *ngIf="course?.isAtLeastInstructor && isExamMode && !isTestRun && exam?.numberOfCorrectionRoundsInExam && exam!.numberOfCorrectionRoundsInExam! > 1"
-                            >
-                                <jhi-second-correction-enable-button
-                                    class="me-1"
-                                    (ngModelChange)="toggleSecondCorrection(exercise.id!)"
-                                    [secondCorrectionEnabled]="exercise.secondCorrectionEnabled"
-                                    [togglingSecondCorrectionButton]="isTogglingSecondCorrection.get(exercise.id!)!"
-                                ></jhi-second-correction-enable-button>
-                            </ng-container>
-                            <a class="btn btn-primary btn-sm" *ngIf="course?.isAtLeastInstructor" [routerLink]="getSubmissionsLinkForExercise(exercise)">
-                                <span jhiTranslate="artemisApp.assessmentDashboard.submissions">Submissions</span>
-                            </a>
-                        </ng-container>
-                    </td>
-                </tr>
-            </tbody>
-        </table>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
     </div>
 
-    <div *ngIf="course.isAtLeastInstructor && tutorIssues.length > 0" class="container-fluid pt-4">
+    <div *ngIf="course.isAtLeastInstructor && tutorIssues.length > 0" class="container-fluid mt-4">
         <h4>{{ 'artemisApp.assessmentDashboard.tutorPerformanceIssues.title' | artemisTranslate }}</h4>
         <ul *ngFor="let issue of tutorIssues">
             <li *ngIf="issue.averageTutorValue < issue.allowedRange.lowerBound">
