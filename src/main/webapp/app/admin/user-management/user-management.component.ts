@@ -42,7 +42,7 @@ export class UserFilter {
         options = options.append('origins', [...this.originFilter].join(','));
         options = options.append('status', [...this.statusFilter].join(','));
         if (this.noCourse) {
-            // First Code
+            // -1 means that we filter for users without any course
             options = options.append('courseIds', -1);
         } else {
             options = options.append('courseIds', [...this.courseFilter].join(','));
@@ -191,7 +191,7 @@ export class UserManagementComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * Inits the available filter and maps the functions
+     * Inits the available filter and maps the functions.
      */
     initFilters() {
         this.filters.authorityFilter = this.initFilter(UserStorageKey.AUTHORITY, AuthorityFilter) as Set<AuthorityFilter>;
@@ -206,7 +206,7 @@ export class UserManagementComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * Inits a specific filter
+     * Inits a specific filter.
      * @param key of the filter in the local storage
      * @param type of filter
      */
@@ -237,7 +237,7 @@ export class UserManagementComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * Method to add or remove a filter and store the selected filters in the local store if required.
+     * Method to add or remove a course filter.
      */
     toggleCourseFilter(filter: Set<any>, value: any) {
         this.filters.noCourse = false;
@@ -246,7 +246,7 @@ export class UserManagementComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * Method to add or remove a filter and store the selected filters in the local store if required.
+     * Method to add or remove an authority filter and store the selected authority filters in the local store if required.
      */
     toggleAuthorityFilter(filter: Set<any>, value: any, key?: UserStorageKey) {
         this.filters.noAuthority = false;

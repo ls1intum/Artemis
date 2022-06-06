@@ -224,8 +224,8 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
     }
 
     /**
-     * Returns the matching authority.
-     *
+     * Returns the matching authority specification.
+     * @param authorities provided authorities
      * @return specification used to chain database operations
      */
     private Specification<User> getAuthoritySpecification(Set<String> authorities) {
@@ -233,10 +233,10 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
             // Empty authorities
             return getAllUsersMatchingEmptyAuthorities();
         }
-        else if (authorities.size() > 0) {
+        else if (!authorities.isEmpty()) {
             // Match all authorities
-            authorities = authorities.stream().map(auth -> Role.ROLE_PREFIX + auth).collect(Collectors.toSet());
-            return getAllUsersMatchingAuthorities(authorities);
+            var modifiedAuthorities = authorities.stream().map(auth -> Role.ROLE_PREFIX + auth).collect(Collectors.toSet());
+            return getAllUsersMatchingAuthorities(modifiedAuthorities);
         }
         return null;
     }
