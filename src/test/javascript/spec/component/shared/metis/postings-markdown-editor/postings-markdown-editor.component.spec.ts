@@ -53,9 +53,7 @@ describe('PostingsMarkdownEditor', () => {
         component.ngOnInit();
 
         const exerciseReferenceCommand = new ExerciseReferenceCommand(metisService);
-        const exercisesToReference = new Array();
-        metisService.getCourse().exercises!.forEach((exercise) => exercisesToReference.push({ id: exercise.id!.toString(), value: exercise.title }));
-        exerciseReferenceCommand.setValues(exercisesToReference);
+        exerciseReferenceCommand.setValues(metisService.getCourse().exercises!.map((exercise) => ({ id: exercise.id!.toString(), value: exercise.title! })));
 
         expect(component.defaultCommands).toEqual([
             new BoldCommand(),

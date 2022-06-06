@@ -39,9 +39,7 @@ export class PostingMarkdownEditorComponent implements OnInit, ControlValueAcces
      * on initialization: sets commands that will be available as formatting buttons during creation/editing of postings
      */
     ngOnInit(): void {
-        const exercisesToReference = new Array();
-        this.metisService.getCourse().exercises!.forEach((exercise) => exercisesToReference.push({ id: exercise.id!.toString(), value: exercise.title }));
-        this.exerciseReferenceCommand.setValues(exercisesToReference);
+        this.exerciseReferenceCommand.setValues(this.metisService.getCourse().exercises!.map((exercise) => ({ id: exercise.id!.toString(), value: exercise.title! })));
 
         this.defaultCommands = [
             new BoldCommand(),
