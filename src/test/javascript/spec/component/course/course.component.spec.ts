@@ -31,7 +31,6 @@ import { AlertService } from 'app/core/util/alert.service';
 import { Component } from '@angular/core';
 import { of } from 'rxjs';
 import dayjs from 'dayjs/esm';
-import { Exam } from 'app/entities/exam.model';
 
 const endDate1 = dayjs().add(1, 'days');
 const visibleDate1 = dayjs().subtract(1, 'days');
@@ -64,7 +63,7 @@ const exam1 = {
     testExam: false,
 };
 const exam2 = { id: 4, endDate: endDate2, visibleDate: visibleDate2, course: courseEmpty, testExam: false };
-let exams = [exam1, exam2];
+const exams = [exam1, exam2];
 const course1 = { id: 1, exams, exercises: [exercise1] };
 const course2 = { id: 2, exercises: [exercise2] };
 const courses: Course[] = [course1, course2];
