@@ -15,7 +15,7 @@ export class ExerciseReferenceCommand extends MultiOptionCommand {
      * @function execute
      * @param {string} selectedExerciseId   ID of the exercise to be referenced
      * @desc                                Add an exercise reference link in markdown language
-     *                                      1. Add ('[{exercise-title}](https://{client-address}/course/{courseId}/exercise/{exerciseId}})') at the cursor in the editor
+     *                                      1. Add '[{exercise-title}](/courses/{courseId}/exercises/{exerciseId}})' at the cursor in the editor
      *                                      2. Link in markdown language appears which when clicked navigates to the exercise page
      */
     execute(selectedExerciseId: string): void {
