@@ -265,6 +265,18 @@ export class NavbarComponent implements OnInit, OnDestroy {
         plagiarism_cases: 'artemisApp.plagiarism.cases.pageTitle',
     };
 
+    studentPathBreadcrumbTranslations = {
+        exams: 'artemisApp.courseOverview.menu.exams',
+        exercises: 'artemisApp.courseOverview.menu.exercises',
+        lectures: 'artemisApp.courseOverview.menu.lectures',
+        learning_goals: 'artemisApp.courseOverview.menu.learningGoals',
+        statistics: 'artemisApp.courseOverview.menu.statistics',
+        discussion: 'artemisApp.metis.discussion.label',
+        code_editor: 'artemisApp.editor.breadCrumbTitle',
+        participate: 'artemisApp.submission.detail.title',
+        live: 'artemisApp.submission.detail.title',
+    };
+
     /**
      * Fills the breadcrumbs array with entries for admin and course-management routes
      */
@@ -276,7 +288,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
         }
 
         // Temporarily restrict routes
-        if (!fullURI.startsWith('/admin') && !fullURI.startsWith('/course-management')) {
+        if (!fullURI.startsWith('/admin') && !fullURI.startsWith('/course-management') && !fullURI.startsWith('/courses')) {
             return;
         }
 
@@ -315,6 +327,26 @@ export class NavbarComponent implements OnInit, OnDestroy {
      * @param segment the current url segment (string representation of an entityID) to add a crumb for
      */
     private addBreadcrumbForNumberSegment(currentPath: string, segment: string): void {
+        const isStudentPath = currentPath.startsWith('/courses');
+        if (isStudentPath) {
+            switch (this.lastRouteUrlSegment) {
+                case 'code-editor':
+                case 'participate':
+                    this.addTranslationAsCrumb(currentPath, this.lastRouteUrlSegment);
+                    return;
+                case 'exercises':
+                    this.addResolvedTitleAsCrumb(this.exerciseService.getTitle(Number(segment)), currentPath, segment);
+                    return;
+                default:
+                    const exercisesMatcher = this.lastRouteUrlSegment?.match(/.+-exercises/);
+                    if (exercisesMatcher) {
+                        this.addResolvedTitleAsCrumb(this.exerciseService.getTitle(Number(segment)), currentPath.replace(exercisesMatcher[0], 'exercises'), 'exercises');
+                        return;
+                    }
+                    break;
+            }
+        }
+
         switch (this.lastRouteUrlSegment) {
             // Displays the path segment as breadcrumb (no other title exists)
             case 'system-notification-management':
@@ -323,6 +355,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
                 this.addBreadcrumb(currentPath, segment, false);
                 break;
             case 'course-management':
+            case 'courses':
                 this.addResolvedTitleAsCrumb(this.courseManagementService.getTitle(Number(segment)), currentPath, segment);
                 break;
             case 'exercises':
@@ -391,6 +424,16 @@ export class NavbarComponent implements OnInit, OnDestroy {
      * @param segment the current url segment to add a (translated) crumb for
      */
     private addBreadcrumbForUrlSegment(currentPath: string, segment: string): void {
+        const isStudentPath = currentPath.startsWith('/courses');
+
+        if (isStudentPath) {
+            const exercisesMatcher = segment?.match(/.+-exercises/);
+            if (exercisesMatcher) {
+                this.addTranslationAsCrumb(currentPath.replace(exercisesMatcher[0], 'exercises'), 'exercises');
+                return;
+            }
+        }
+
         // When we're not dealing with an ID we need to translate the current part
         // The translation might still depend on the previous parts
         switch (segment) {
@@ -409,6 +452,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
             case 'mc-question-statistic':
             case 'dnd-question-statistic':
             case 'sa-question-statistic':
+            case 'participate':
                 break;
             case 'example-submissions':
                 // Hide example submission dashboard for non instructor users
@@ -532,7 +576,9 @@ export class NavbarComponent implements OnInit, OnDestroy {
      */
     private addTranslationAsCrumb(uri: string, translationKey: string): void {
         const key = translationKey.split('-').join('_');
-        if (this.breadcrumbTranslation[key]) {
+        if (uri.startsWith('/courses') && this.studentPathBreadcrumbTranslations[key]) {
+            this.addBreadcrumb(uri, this.studentPathBreadcrumbTranslations[key], true);
+        } else if (this.breadcrumbTranslation[key]) {
             this.addBreadcrumb(uri, this.breadcrumbTranslation[key], true);
         } else {
             // If there is no valid entry in the mapping display the raw key instead of a "not found"
