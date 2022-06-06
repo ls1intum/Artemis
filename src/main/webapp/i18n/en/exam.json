@@ -397,7 +397,7 @@
                 "goTo": "Page",
                 "testExam": {
                     "title": "TestExam Checklist",
-                    "introduction": "This page gives an overview over the various steps when creating an testExam."
+                    "introduction": "This page gives an overview over the various steps when creating a testExam."
                 },
                 "tableItem": {
                     "register": "Register students for the exam",
@@ -517,7 +517,7 @@
                     "numberOfStudents": "Number of students",
                     "startedExams": "Started testExams",
                     "submittedExams": "Submitted testExams",
-                    "conductionSuspended": "Students cannot start a TestExam!"
+                    "conductionSuspended": "Students cannot start a testExam!"
                 }
             },
             "correction": {

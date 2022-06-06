@@ -40,7 +40,10 @@ export class ExamStatusComponent implements OnChanges {
     generatedStudentExams: boolean;
     preparedExerciseStart: boolean;
 
+    // all steps for the preparation finished
     examPreparationFinished = false;
+    // All mandatory steps for the preparation finished
+    mandatoryPreparationFinished = false;
     examConductionState: ExamConductionState;
     examReviewState: ExamReviewState;
     examCorrectionState: ExamReviewState;
@@ -121,12 +124,25 @@ export class ExamStatusComponent implements OnChanges {
     }
 
     /**
+     * Helper method to indicate weather the mandatory preparation steps are performed in order to display a warning in the status.
+     * (PrepareExerciseStart is not mandatory, but highly recommended)
+     * @private
+     */
+    private isMandatoryPreparationFinished(): boolean {
+        if (this.isTestExam) {
+            return this.configuredExercises;
+        } else {
+            return this.configuredExercises && this.registeredStudents && this.generatedStudentExams;
+        }
+    }
+
+    /**
      * Sets the conductionState according to the current situation
      * @private
      */
     private setConductionState(): void {
         // In case the exercise configuration is wrong, but the (Test)Exam already started, students are not able to start a TestExam or RealExam
-        if (this.examAlreadyStarted() && !this.examPreparationFinished) {
+        if (this.examAlreadyStarted() && !this.mandatoryPreparationFinished) {
             this.examConductionState = ExamConductionState.ERROR;
         } else if (this.examAlreadyEnded() && (!this.isAtLeastInstructor || this.examPreparationFinished)) {
             this.examConductionState = ExamConductionState.FINISHED;
@@ -193,6 +209,7 @@ export class ExamStatusComponent implements OnChanges {
             this.preparedExerciseStart = false;
         }
         this.examPreparationFinished = this.isExamPreparationFinished();
+        this.mandatoryPreparationFinished = this.isMandatoryPreparationFinished();
     }
 
     /**

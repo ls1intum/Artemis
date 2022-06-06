@@ -55,7 +55,10 @@ export class ExamUpdateComponent implements OnInit {
             if (!this.exam.gracePeriod) {
                 this.exam.gracePeriod = 180;
             }
-            if (!this.exam.numberOfCorrectionRoundsInExam) {
+            // TestExams only feature automatic assessment
+            if (this.exam.testExam) {
+                this.exam.numberOfCorrectionRoundsInExam = 0;
+            } else if (!this.exam.numberOfCorrectionRoundsInExam) {
                 this.exam.numberOfCorrectionRoundsInExam = 1;
             }
         });
@@ -114,7 +117,11 @@ export class ExamUpdateComponent implements OnInit {
     }
 
     get isValidNumberOfCorrectionRounds(): boolean {
-        return this.exam?.numberOfCorrectionRoundsInExam! < 3 && this.exam?.numberOfCorrectionRoundsInExam! > 0;
+        if (this.exam.testExam) {
+            return this.exam.numberOfCorrectionRoundsInExam === 0;
+        } else {
+            return this.exam?.numberOfCorrectionRoundsInExam! < 3 && this.exam?.numberOfCorrectionRoundsInExam! > 0;
+        }
     }
 
     get isValidMaxPoints(): boolean {
