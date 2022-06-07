@@ -16,14 +16,13 @@ export class ExpandableSectionComponent implements OnInit {
     faAngleRight = faAngleRight;
     faAngleDown = faAngleDown;
 
-    prefix = 'collapsed.';
+    readonly prefix = 'collapsed.';
 
     constructor(private localStorageService: LocalStorageService) {}
 
     ngOnInit(): void {
-        const collapsed = this.localStorageService.retrieve(this.key);
-        this.isCollapsed = collapsed !== undefined && collapsed !== null && (collapsed as boolean);
-        this.localStorageService.store(this.key, this.isCollapsed);
+        this.isCollapsed = !!this.localStorageService.retrieve(this.storageKey);
+        this.localStorageService.store(this.storageKey, this.isCollapsed);
     }
 
     /**
@@ -31,13 +30,13 @@ export class ExpandableSectionComponent implements OnInit {
      */
     toggleCollapsed() {
         this.isCollapsed = !this.isCollapsed;
-        this.localStorageService.store(this.key, this.isCollapsed);
+        this.localStorageService.store(this.storageKey, this.isCollapsed);
     }
 
     /**
      * Returns the key to identify the value in the local storage
      */
-    get key() {
+    get storageKey() {
         return this.prefix + this.headerKey;
     }
 }

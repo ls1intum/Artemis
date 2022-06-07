@@ -31,7 +31,7 @@ describe('ExpandableSectionComponent', () => {
     it('should get correct key', () => {
         component.headerKey = 'test';
 
-        const key = component.key;
+        const key = component.storageKey;
 
         expect(key).toEqual(component.prefix + component.headerKey);
     });
@@ -43,9 +43,9 @@ describe('ExpandableSectionComponent', () => {
 
         component.ngOnInit();
 
-        expect(retrieveSpy).toHaveBeenCalledWith(component.key);
+        expect(retrieveSpy).toHaveBeenCalledWith(component.storageKey);
         expect(component.isCollapsed).toBeTrue();
-        expect(storeSpy).toHaveBeenCalledWith(component.key, true);
+        expect(storeSpy).toHaveBeenCalledWith(component.storageKey, true);
     });
 
     it('should toggle state on toggle of collapsed', () => {
@@ -57,6 +57,6 @@ describe('ExpandableSectionComponent', () => {
         component.toggleCollapsed();
 
         expect(component.isCollapsed).toBeFalse();
-        expect(storeSpy).toHaveBeenCalledWith(component.key, false);
+        expect(storeSpy).toHaveBeenCalledWith(component.storageKey, false);
     });
 });
