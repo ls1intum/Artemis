@@ -12,7 +12,7 @@ import { getElement } from '../../../../helpers/utils/general.utils';
 import { By } from '@angular/platform-browser';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { MockMetisService } from '../../../../helpers/mocks/service/mock-metis-service.service';
-import { ExerciseReferenceCommand } from 'app/shared/markdown-editor/commands/exerciseReference.command';
+import { ExerciseReferenceCommand } from 'app/shared/markdown-editor/commands/courseArtifactReferenceCommands/exerciseReferenceCommand';
 import { metisAnswerPostUser2, metisPostExerciseUser1 } from '../../../../helpers/sample/metis-sample-data';
 
 // tslint:disable-next-line:directive-selector

@@ -360,6 +360,12 @@ describe('Metis Service', () => {
         expect(referenceRouterLink).toEqual('/courses/' + metisCourse.id + '/exercises/' + metisExercise.id!.toString());
     });
 
+    it('should determine the router link required for referencing a lecture page within posting', () => {
+        metisService.setCourse(course);
+        const referenceRouterLink = metisService.getLinkForLecture(metisLecture.id!.toString());
+        expect(referenceRouterLink).toEqual('/courses/' + metisCourse.id + '/lectures/' + metisLecture.id!.toString());
+    });
+
     it('should determine the query param for a reference to a post with course-wide context', () => {
         metisService.setCourse(course);
         const referenceLinkComponents = metisService.getQueryParamsForPost(metisCoursePostsWithCourseWideContext[0]);

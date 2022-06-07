@@ -6,16 +6,16 @@ import { ArtemisMarkdownEditorModule } from 'app/shared/markdown-editor/markdown
 import { ArtemisTestModule } from '../../test.module';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { MockMetisService } from '../../helpers/mocks/service/mock-metis-service.service';
-import { metisExercise } from '../../helpers/sample/metis-sample-data';
+import { metisLecture } from '../../helpers/sample/metis-sample-data';
 import { CourseArtifactType } from 'app/shared/markdown-editor/command-constants';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { MockComponent } from 'ng-mocks';
-import { ExerciseReferenceCommand } from 'app/shared/markdown-editor/commands/courseArtifactReferenceCommands/exerciseReferenceCommand';
+import { LectureReferenceCommand } from 'app/shared/markdown-editor/commands/courseArtifactReferenceCommands/lectureReferenceCommand';
 
-describe('Exercise Reference Command', () => {
+describe('Lecture Reference Command', () => {
     let comp: MarkdownEditorComponent;
     let fixture: ComponentFixture<MarkdownEditorComponent>;
-    let exerciseReferenceCommand: ExerciseReferenceCommand;
+    let lectureReferenceCommand: LectureReferenceCommand;
     let metisService: MetisService;
 
     beforeEach(() => {
@@ -37,22 +37,27 @@ describe('Exercise Reference Command', () => {
     });
 
     it('should initialize correctly', () => {
-        exerciseReferenceCommand = new ExerciseReferenceCommand(metisService);
-        expect(exerciseReferenceCommand.getValues()).toEqual(
-            metisService.getCourse().exercises!.map((exercise) => ({ id: exercise.id!.toString(), value: exercise.title!, type: CourseArtifactType.EXERCISE })),
+        lectureReferenceCommand = new LectureReferenceCommand(metisService);
+        expect(lectureReferenceCommand.getValues()).toEqual(
+            metisService.getCourse().lectures!.map((lecture) => ({
+                id: lecture.id!.toString(),
+                value: lecture.title!,
+                type: CourseArtifactType.LECTURE,
+                elements: lecture.attachments?.map((attachment) => ({ id: attachment.id!.toString(), value: attachment.name!, courseArtifactType: CourseArtifactType.ATTACHMENT })),
+            })),
         );
     });
 
-    it('should insert correct reference link for exercise to markdown editor on execute', () => {
-        exerciseReferenceCommand = new ExerciseReferenceCommand(metisService);
+    it('should insert correct reference link for lecture to markdown editor on execute', () => {
+        lectureReferenceCommand = new LectureReferenceCommand(metisService);
 
-        comp.defaultCommands = [exerciseReferenceCommand];
+        comp.defaultCommands = [lectureReferenceCommand];
         fixture.detectChanges();
 
         comp.aceEditorContainer.getEditor().setValue('');
 
-        const referenceRouterLinkToExercise = '[' + metisExercise.title + '](/courses/' + metisService.getCourse().id + '/exercises/' + metisExercise.id + ')';
-        exerciseReferenceCommand.execute(metisExercise.id!.toString());
-        expect(comp.aceEditorContainer.getEditor().getValue()).toBe(referenceRouterLinkToExercise);
+        const referenceRouterLinkToLecture = '[' + metisLecture.title + '](/courses/' + metisService.getCourse().id + '/lectures/' + metisLecture.id + ')';
+        lectureReferenceCommand.execute(metisLecture.id!.toString());
+        expect(comp.aceEditorContainer.getEditor().getValue()).toBe(referenceRouterLinkToLecture);
     });
 });

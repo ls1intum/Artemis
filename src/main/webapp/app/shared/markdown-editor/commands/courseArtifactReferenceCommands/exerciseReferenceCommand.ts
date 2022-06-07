@@ -1,5 +1,6 @@
 import { MultiOptionCommand } from 'app/shared/markdown-editor/commands/multiOptionCommand';
 import { MetisService } from 'app/shared/metis/metis.service';
+import { CourseArtifactType } from 'app/shared/markdown-editor/command-constants';
 
 export class ExerciseReferenceCommand extends MultiOptionCommand {
     metisService: MetisService;
@@ -9,6 +10,8 @@ export class ExerciseReferenceCommand extends MultiOptionCommand {
     constructor(metisService: MetisService) {
         super();
         this.metisService = metisService;
+
+        this.setValues(this.metisService.getCourse().exercises!.map((exercise) => ({ id: exercise.id!.toString(), value: exercise.title!, type: CourseArtifactType.EXERCISE })));
     }
 
     /**
