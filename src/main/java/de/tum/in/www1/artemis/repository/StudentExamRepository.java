@@ -375,19 +375,4 @@ public interface StudentExamRepository extends JpaRepository<StudentExam, Long> 
         // StudentExams are saved in the called method
         return createRandomStudentExams(exam, missingUsers);
     }
-
-    /**
-     * Generates an individual StudentExam
-     *
-     * @param exam    with eagerly loaded users, exerciseGroups and exercises loaded
-     * @param student the student for which the StudentExam should be created
-     * @return the generated StudentExam
-     */
-    default StudentExam generateIndividualStudentExam(Exam exam, User student) {
-        // StudentExams are saved in the called method
-        HashSet<User> userHashSet = new HashSet<>();
-        userHashSet.add(student);
-        return createRandomStudentExams(exam, userHashSet).get(0);
-    }
-
 }

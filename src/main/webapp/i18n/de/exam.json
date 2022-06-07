@@ -192,7 +192,7 @@
             "exercisePoints": "Punkte",
             "exerciseName": "Name",
             "noStudentExam": "Du bist nicht für die Klausur {{ examTitle }} angemeldet. Bitte wende dich an die entsprechende Lehrkraft.",
-            "noFurtherAttempts": "Derzeit sind keine weiteren Versuche für die Testklausur {{ examTitle }} möglich. Um deine Abgabe zu betrachten, navigiere zur Exam Seite ",
+            "noFurtherAttempts": "Derzeit sind keine weiteren Versuche für die Testklausur {{ examTitle }} möglich. Um deine Abgabe zu betrachten, navigiere zur Klausurseite ",
             "submitProgrammingExercise": "Weiter",
             "submitOtherExercise": "Speichern & Weiter",
             "submitLastExercise": "Speichern",
