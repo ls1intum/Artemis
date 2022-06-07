@@ -229,7 +229,7 @@
 
             <ng-container *ngIf="!isCollapsed">
                 <jhi-notification-sidebar [ngClass]="'nav-item'" *ngIf="currAccount && !examModeActive()"></jhi-notification-sidebar>
-                <jhi-theme-switch [ngClass]="'nav-item'" [popoverPlacement]="isCollapsed ? 'bottom-left' : 'bottom-right'"></jhi-theme-switch>
+                <jhi-theme-switch [ngClass]="'nav-item'" [popoverPlacement]="'bottom-right'"></jhi-theme-switch>
                 <ng-container *ngTemplateOutlet="userMenu"></ng-container>
             </ng-container>
 
