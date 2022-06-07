@@ -29,7 +29,14 @@ describe('Course Management Detail Component', () => {
     let eventManager: EventManager;
 
     const route = { params: of({ courseId: 1 }) };
-    const course = { id: 123, title: 'Course Title', isAtLeastInstructor: true, endDate: dayjs().subtract(5, 'minutes'), courseArchivePath: 'some-path' };
+    const course = {
+        id: 123,
+        title: 'Course Title',
+        description: 'Cras mattis iudicium purus sit amet fermentum. Gallia est omnis divisa in partes tres, quarum.',
+        isAtLeastInstructor: true,
+        endDate: dayjs().subtract(5, 'minutes'),
+        courseArchivePath: 'some-path',
+    };
     const dtoMock = {
         numberOfStudentsInCourse: 100,
         numberOfTeachingAssistantsInCourse: 5,
@@ -122,5 +129,22 @@ describe('Course Management Detail Component', () => {
             name: 'courseListModification',
             content: 'Deleted an course',
         });
+    });
+
+    it('should toggle course description', () => {
+        component.ngOnInit();
+
+        expect(component.enableShowMore).toBe(true);
+        expect(component.longDescriptionShown).toBe(false);
+
+        component.toggleCourseDescription();
+
+        expect(component.longDescriptionShown).toBe(true);
+        expect(component.courseDescription).toBe(course.description);
+
+        component.toggleCourseDescription();
+
+        expect(component.longDescriptionShown).toBe(false);
+        expect(component.courseDescription).toBe('Cras mattis iudicium purus sit amet fermentum. Gal…');
     });
 });
