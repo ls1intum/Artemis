@@ -270,7 +270,7 @@
                     >
                         <!-- -->
                         <span>{{ 'artemisApp.examManagement.checklist.textitems.startedExam' | artemisTranslate }}:</span>
-                        <div style="padding-top: 5px">
+                        <div class="pt-2">
                             <jhi-progress-bar
                                 [denominator]="examChecklist.numberOfGeneratedStudentExams!"
                                 [numerator]="examChecklist.numberOfExamsStarted!"
@@ -290,7 +290,7 @@
                         "
                     >
                         <span>{{ 'artemisApp.examManagement.checklist.textitems.submittedExam' | artemisTranslate }}:</span>
-                        <div style="padding-top: 5px">
+                        <div class="pt-2">
                             <jhi-progress-bar
                                 [denominator]="examChecklist.numberOfExamsStarted"
                                 [numerator]="examChecklist.numberOfExamsSubmitted!"
@@ -349,7 +349,7 @@
                             <div *ngFor="let finishedByCorrectionRound of examChecklist.numberOfTotalExamAssessmentsFinishedByCorrectionRound; let index = index">
                                 <hr *ngIf="index > 0" />
                                 <span> {{ 'artemisApp.examManagement.checklist.textitems.correctionRound' | artemisTranslate }} {{ index + 1 }} : </span>
-                                <div style="padding-top: 5px">
+                                <div class="pt-2">
                                     <jhi-progress-bar
                                         [denominator]="examChecklist.numberOfTotalParticipationsForAssessment"
                                         [numerator]="finishedByCorrectionRound!"
@@ -434,7 +434,7 @@
                         <span>{{ 'artemisApp.examManagement.checklist.descriptionItem.resolveComplaints' | artemisTranslate }}</span>
                         <hr />
                         <div *ngIf="examChecklist && examChecklist.numberOfAllComplaintsDone !== null && examChecklist.numberOfAllComplaints !== 0">
-                            <div style="padding-top: 5px">
+                            <div class="pt-2">
                                 <jhi-progress-bar
                                     [denominator]="examChecklist.numberOfAllComplaints!"
                                     [numerator]="examChecklist.numberOfAllComplaintsDone!"

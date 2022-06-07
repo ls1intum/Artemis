@@ -501,7 +501,7 @@
                 "notRegistered": "Keine Studierenden registriert",
                 "prepareExerciseStart": "Bereite Aufgabenstart vor",
                 "testExam": {
-                    "examPreparation": "Testklausurvorbereitung",
+                    "examPreparation": "Testklausur-Vorbereitung",
                     "maxPointsCorrect": "Klausurpunkte richtig eingestellt auf ",
                     "maxPointsWrong": "Klausurpunkte sollten {{ points }} sein"
                 }
@@ -513,7 +513,7 @@
                 "submittedExams": "Abgegebene Klausuren",
                 "conductionSuspended": "Studierende können keine Klausur starten!",
                 "testExam": {
-                    "examConduction": "Testklausurdurchführung",
+                    "examConduction": "Testklausur-Durchführung",
                     "numberOfStudents": "Anzahl der Studierenden",
                     "startedExams": "Begonnene Testklausuren",
                     "submittedExams": "Abgegebene Testklausuren",
