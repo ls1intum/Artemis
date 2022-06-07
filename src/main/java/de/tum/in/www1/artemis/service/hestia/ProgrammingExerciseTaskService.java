@@ -27,6 +27,7 @@ public class ProgrammingExerciseTaskService {
      * - tests: "testBubbleSort,testBubbleSortHidden"
      *
      * This is coupled to the value used in `ProgrammingExerciseTaskExtensionWrapper` and `TaskCommand` in the client
+     * If you change the regex, make sure to change it in all places!
      */
     private final Pattern taskPatternForProblemStatementMarkdown = Pattern.compile("\\[task]\\[(?<name>[^\\[\\]]+)]\\((?<tests>.*)\\)");
 
