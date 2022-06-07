@@ -211,13 +211,12 @@ export class UserManagementComponent implements OnInit, OnDestroy {
      */
     initFilter<E>(key: UserStorageKey, type: Filter): Set<E> {
         const temp = this.localStorage.retrieve(key);
-        const tempInStorage =
-            temp !== undefined && temp !== null
-                ? temp
-                      .split(',')
-                      .map((filter: string) => type[filter])
-                      .filter(Boolean)
-                : new Set();
+        const tempInStorage = temp
+            ? temp
+                  .split(',')
+                  .map((filter: string) => type[filter])
+                  .filter(Boolean)
+            : new Set();
         return new Set(tempInStorage);
     }
 
