@@ -1,6 +1,5 @@
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
-import { Post } from 'app/entities/metis/post.model';
-import { CourseWideContext, DisplayPriority, PostSortCriterion, SortDirection } from 'app/shared/metis/metis.util';
+import { CourseWideContext, PostSortCriterion, SortDirection } from 'app/shared/metis/metis.util';
 import { PostingThreadComponent } from 'app/shared/metis/posting-thread/posting-thread.component';
 import { PostCreateEditModalComponent } from 'app/shared/metis/posting-create-edit-modal/post-create-edit-modal/post-create-edit-modal.component';
 import { ButtonComponent } from 'app/shared/components/button.component';
@@ -25,11 +24,11 @@ import { MockPostService } from '../../../helpers/mocks/service/mock-post.servic
 import { CourseDiscussionComponent } from 'app/overview/course-discussion/course-discussion.component';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
-import dayjs from 'dayjs/esm';
 import { MockRouter } from '../../../helpers/mocks/mock-router';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockLocalStorageService } from '../../../helpers/mocks/service/mock-local-storage.service';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { ItemCountComponent } from 'app/shared/pagination/item-count.component';
 import {
     metisCourse,
     metisCoursePosts,
@@ -40,15 +39,8 @@ import {
     metisLecture,
     metisLecture2,
     metisLecturePosts,
-    metisPostExerciseUser1,
-    metisPostExerciseUser2,
-    metisPostLectureUser1,
-    metisPostLectureUser2,
-    metisResolvingAnswerPostUser1,
-    metisUpVoteReactionUser1,
     metisUser1,
 } from '../../../helpers/sample/metis-sample-data';
-import { ItemCountComponent } from 'app/shared/pagination/item-count.component';
 
 describe('CourseDiscussionComponent', () => {
     let component: CourseDiscussionComponent;
@@ -57,10 +49,6 @@ describe('CourseDiscussionComponent', () => {
     let metisService: MetisService;
     let metisServiceGetFilteredPostsSpy: jest.SpyInstance;
     let metisServiceGetUserStub: jest.SpyInstance;
-    let post1: Post;
-    let post2: Post;
-    let post3: Post;
-    let post4: Post;
 
     const id = metisCourse.id;
     const parentRoute = {
@@ -398,27 +386,6 @@ describe('CourseDiscussionComponent', () => {
     }
 
     describe('sorting of posts', () => {
-        beforeEach(() => {
-            post1 = metisPostExerciseUser1;
-            post1.creationDate = dayjs();
-            post1.displayPriority = DisplayPriority.PINNED;
-
-            post2 = metisPostExerciseUser2;
-            post2.creationDate = dayjs().subtract(1, 'day');
-            post2.displayPriority = DisplayPriority.NONE;
-
-            post3 = metisPostLectureUser1;
-            post3.creationDate = dayjs().subtract(2, 'day');
-            post3.reactions = [metisUpVoteReactionUser1];
-            post3.answers = [metisResolvingAnswerPostUser1];
-            post3.displayPriority = DisplayPriority.NONE;
-
-            post4 = metisPostLectureUser2;
-            post4.creationDate = dayjs().subtract(2, 'minute');
-            post4.reactions = [metisUpVoteReactionUser1];
-            post4.displayPriority = DisplayPriority.ARCHIVED;
-        });
-
         it('should distinguish context filter options for properly show them in form', () => {
             let result = component.compareContextFilterOptionFn({ courseId: metisCourse.id }, { courseId: metisCourse.id });
             expect(result).toBe(true);
