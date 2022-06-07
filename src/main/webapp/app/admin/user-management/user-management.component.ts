@@ -77,6 +77,8 @@ export enum UserStorageKey {
     NO_COURSE = 'artemis.userManagement.noCourse',
 }
 
+type Filter = typeof AuthorityFilter | typeof OriginFilter | typeof StatusFilter;
+
 @Component({
     selector: 'jhi-user-management',
     templateUrl: './user-management.component.html',
@@ -194,15 +196,12 @@ export class UserManagementComponent implements OnInit, OnDestroy {
      * Inits the available filter and maps the functions.
      */
     initFilters() {
-        this.filters.authorityFilter = this.initFilter(UserStorageKey.AUTHORITY, AuthorityFilter) as Set<AuthorityFilter>;
-        this.filters.originFilter = this.initFilter(UserStorageKey.ORIGIN, OriginFilter) as Set<OriginFilter>;
-        this.filters.statusFilter = this.initFilter(UserStorageKey.STATUS, StatusFilter) as Set<StatusFilter>;
+        this.filters.authorityFilter = this.initFilter<AuthorityFilter>(UserStorageKey.AUTHORITY, AuthorityFilter);
+        this.filters.originFilter = this.initFilter<OriginFilter>(UserStorageKey.ORIGIN, OriginFilter);
+        this.filters.statusFilter = this.initFilter<StatusFilter>(UserStorageKey.STATUS, StatusFilter);
 
-        let key = this.localStorage.retrieve(UserStorageKey.NO_COURSE);
-        this.filters.noCourse = key ? (key as boolean) : false;
-
-        key = this.localStorage.retrieve(UserStorageKey.NO_AUTHORITY);
-        this.filters.noAuthority = key ? (key as boolean) : false;
+        this.filters.noCourse = !!this.localStorage.retrieve(UserStorageKey.NO_COURSE);
+        this.filters.noAuthority = !!this.localStorage.retrieve(UserStorageKey.NO_AUTHORITY);
     }
 
     /**
@@ -210,7 +209,7 @@ export class UserManagementComponent implements OnInit, OnDestroy {
      * @param key of the filter in the local storage
      * @param type of filter
      */
-    initFilter(key: UserStorageKey, type: any) {
+    initFilter<E>(key: UserStorageKey, type: Filter): Set<E> {
         const temp = this.localStorage.retrieve(key);
         const tempInStorage =
             temp !== undefined && temp !== null
@@ -225,7 +224,7 @@ export class UserManagementComponent implements OnInit, OnDestroy {
     /**
      * Method to add or remove a filter and store the selected filters in the local store if required.
      */
-    toggleFilter(filter: Set<any>, value: any, key?: UserStorageKey) {
+    toggleFilter<E>(filter: Set<E>, value: E, key?: UserStorageKey) {
         if (filter.has(value)) {
             filter.delete(value);
         } else {
@@ -239,25 +238,39 @@ export class UserManagementComponent implements OnInit, OnDestroy {
     /**
      * Method to add or remove a course filter.
      */
-    toggleCourseFilter(filter: Set<any>, value: any) {
+    toggleCourseFilter(filter: Set<number>, value: number) {
         this.filters.noCourse = false;
         this.updateNoCourse(false);
-        this.toggleFilter(filter, value);
+        this.toggleFilter<number>(filter, value);
     }
 
     /**
      * Method to add or remove an authority filter and store the selected authority filters in the local store if required.
      */
-    toggleAuthorityFilter(filter: Set<any>, value: any, key?: UserStorageKey) {
+    toggleAuthorityFilter(filter: Set<AuthorityFilter>, value: AuthorityFilter) {
         this.filters.noAuthority = false;
         this.updateNoAuthority(false);
-        this.toggleFilter(filter, value, key);
+        this.toggleFilter<AuthorityFilter>(filter, value, this.authorityKey);
+    }
+
+    /**
+     * Method to add or remove an origin filter and store the selected origin filters in the local store if required.
+     */
+    toggleOriginFilter(filter: Set<OriginFilter>, value: OriginFilter) {
+        this.toggleFilter<OriginFilter>(filter, value, this.originKey);
+    }
+
+    /**
+     * Method to add or remove a status filter and store the selected status filters in the local store if required.
+     */
+    toggleStatusFilter(filter: Set<StatusFilter>, value: StatusFilter) {
+        this.toggleFilter<StatusFilter>(filter, value, this.statusKey);
     }
 
     /**
      * Generic method to return all possible filter values per category.
      */
-    getFilter(type: any) {
+    getFilter(type: Filter) {
         return Object.keys(type).map((value) => type[value]);
     }
 

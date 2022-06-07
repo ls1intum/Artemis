@@ -236,7 +236,7 @@
                             <label>
                                 <input
                                     class="form-check-input"
-                                    (change)="this.toggleAuthorityFilter(this.filters.authorityFilter, authority, authorityKey)"
+                                    (change)="this.toggleAuthorityFilter(this.filters.authorityFilter, authority)"
                                     [checked]="this.filters.authorityFilter.has(authority)"
                                     type="checkbox"
                                 />
@@ -259,7 +259,7 @@
                             <label>
                                 <input
                                     class="form-check-input"
-                                    (change)="this.toggleFilter(this.filters.originFilter, origin, originKey)"
+                                    (change)="this.toggleOriginFilter(this.filters.originFilter, origin)"
                                     [checked]="this.filters.originFilter.has(origin)"
                                     type="checkbox"
                                 />
@@ -282,7 +282,7 @@
                             <label>
                                 <input
                                     class="form-check-input"
-                                    (change)="this.toggleFilter(this.filters.statusFilter, status, statusKey)"
+                                    (change)="this.toggleStatusFilter(this.filters.statusFilter, status)"
                                     [checked]="this.filters.statusFilter.has(status)"
                                     type="checkbox"
                                 />
