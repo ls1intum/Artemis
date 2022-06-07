@@ -1,3 +1,4 @@
+<!-- Display next relevant exam -->
 <div *ngIf="nextRelevantExam && nextRelevantCourseForExam" class="row">
     <h3 class="col mb-3 fw-medium">
         {{ 'artemisApp.studentDashboard.' + (nextRelevantExam.testExam ? 'testExam.' : '') + 'examTitle' | artemisTranslate: { course: nextRelevantCourseForExam.title } }}
@@ -21,6 +22,7 @@
         </div>
     </div>
 </div>
+<!-- Display next relevant exercise -->
 <div class="row mb-1" *ngIf="nextRelevantExercise && nextRelevantCourse">
     <div class="col">
         <h3 class="fw-medium">
