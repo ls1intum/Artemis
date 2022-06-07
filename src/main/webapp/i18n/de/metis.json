@@ -44,7 +44,8 @@
             },
             "discussionSection": {
                 "searchBarDefault": "Suche nach Beiträgen",
-                "filterToAnsweredOrReacted": "Reagiert oder beantwortet"
+                "sortByDate": "Datum:",
+                "defaultSortCriterion": "Standard-Sortierung"
             },
             "overview": {
                 "title": "Beiträge",
@@ -52,7 +53,7 @@
                 "postContextFilter": "Zeige Beiträge in:",
                 "filterToUnresolved": "Ungeklärt",
                 "filterToOwn": "Eigene",
-                "filterToAnsweredOrReacted": "Reagiert oder beantwortet von Dir",
+                "filterToAnsweredOrReacted": "Reagiert",
                 "courseFilterExplanation": "(Alle Beiträge)",
                 "sortPostsBy": "Sortiere nach:",
                 "sortDescending": "Absteigend",
