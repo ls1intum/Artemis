@@ -91,15 +91,14 @@ export class CoursesComponent implements OnInit, OnChanges, OnDestroy {
                         });
                     }
                 });
+                // Used as constant to limit the number of calls
+                const timeNow = this.serverDateService.now();
                 this.nextRelevantExams = this.exams.filter((exam) => {
                     if (exam.testExam!) {
                         // As TestExams can have a working window of multiple months, they should only be a relevant exam for [visibleDate, startDate + workingTime]
-                        return (
-                            this.serverDateService.now().isAfter(exam.visibleDate!) &&
-                            this.serverDateService.now().isBefore(dayjs(exam.startDate!).add(exam.workingTime!, 'seconds'))
-                        );
+                        return timeNow.isAfter(exam.visibleDate!) && timeNow.isBefore(dayjs(exam.startDate!).add(exam.workingTime!, 'seconds'));
                     } else {
-                        return this.serverDateService.now().isBefore(exam.endDate!) && this.serverDateService.now().isAfter(exam.visibleDate!);
+                        return timeNow.isBefore(exam.endDate!) && timeNow.isAfter(exam.visibleDate!);
                     }
                 });
                 this.ngOnChanges();
