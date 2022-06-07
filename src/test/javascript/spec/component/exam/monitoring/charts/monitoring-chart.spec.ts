@@ -1,5 +1,4 @@
 import {
-    ChartData,
     getColor,
     getCurrentAmountOfStudentsPerExercises,
     getSavedExerciseActionsGroupedByActivityId,
@@ -137,7 +136,10 @@ describe('Monitoring charts helper methods', () => {
         const ngxColor: Color = { name: 'exercise groups', selectable: true, group: ScaleType.Ordinal, domain: [] } as Color;
 
         insertNgxDataAndColorForExerciseMap(exam, exerciseAmountMap, ngxData, ngxColor);
-        expect(ngxData).toEqual([new ChartData(exercise1.title, 1), new ChartData(exercise2.title, 1)]);
+        expect(ngxData).toEqual([
+            { name: exercise1.title, value: 1 },
+            { name: exercise2.title, value: 1 },
+        ]);
         expect(ngxColor.domain).toEqual([getColor(0), getColor(0)]);
     });
 });

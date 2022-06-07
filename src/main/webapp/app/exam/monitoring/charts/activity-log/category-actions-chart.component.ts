@@ -1,41 +1,28 @@
-import { Component, OnInit, Input, OnChanges, SimpleChanges } from '@angular/core';
-import { Color, ScaleType } from '@swimlane/ngx-charts';
-import { ChartData, ChartSeriesData, getColor, groupActionsByTimestamp, groupActionsByType } from 'app/exam/monitoring/charts/monitoring-chart';
+import { Component, Input, OnChanges, OnInit } from '@angular/core';
+import { getColor, groupActionsByTimestamp, groupActionsByType } from 'app/exam/monitoring/charts/monitoring-chart';
 import { ExamAction, ExamActionType } from 'app/entities/exam-user-activity.model';
-import * as shape from 'd3-shape';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { ChartComponent } from 'app/exam/monitoring/charts/chart.component';
+import { NgxChartsMultiSeriesDataEntry, NgxChartsSingleSeriesDataEntry } from 'app/shared/chart/ngx-charts-datatypes';
 
 @Component({
     selector: 'jhi-category-actions-chart',
     templateUrl: './category-actions-chart.component.html',
 })
-export class CategoryActionsChartComponent implements OnInit, OnChanges {
+export class CategoryActionsChartComponent extends ChartComponent implements OnInit, OnChanges {
     // Input
     @Input()
     examActions: ExamAction[];
 
-    // Chart
-    ngxData: ChartSeriesData[] = [];
-    ngxColor = {
-        name: 'Total amount of actions per category',
-        selectable: true,
-        group: ScaleType.Ordinal,
-        domain: [getColor(0), getColor(1), getColor(2), getColor(3), getColor(4)],
-    } as Color;
-    curve: any = shape.curveMonotoneX;
-    legend = true;
-
-    // Component
-    readonly chart = 'category-actions-chart';
-
-    constructor(private artemisDatePipe: ArtemisDatePipe) {}
+    constructor(private artemisDatePipe: ArtemisDatePipe) {
+        super('category-actions-chart', true, [getColor(0), getColor(1), getColor(2), getColor(3), getColor(4)]);
+    }
 
     ngOnInit(): void {
         this.initData();
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    ngOnChanges(changes: SimpleChanges): void {
+    ngOnChanges(): void {
         this.initData();
     }
 
@@ -48,8 +35,8 @@ export class CategoryActionsChartComponent implements OnInit, OnChanges {
 
         // Group actions by timestamp
         const groupedByTimestamp = groupActionsByTimestamp(this.examActions);
-        const chartSeriesData: ChartSeriesData[] = [];
-        const chartData: Map<string, ChartData[]> = new Map();
+        const chartSeriesData: NgxChartsMultiSeriesDataEntry[] = [];
+        const chartData: Map<string, NgxChartsSingleSeriesDataEntry[]> = new Map();
 
         Object.keys(ExamActionType).forEach((type) => {
             categories.set(type, 0);
@@ -65,12 +52,12 @@ export class CategoryActionsChartComponent implements OnInit, OnChanges {
             }
 
             for (const [category, amount] of categories.entries()) {
-                chartData.set(category, [...(chartData.get(category) ?? []), new ChartData(this.artemisDatePipe.transform(timestampKey, 'short'), amount)]);
+                chartData.set(category, [...(chartData.get(category) ?? []), { name: this.artemisDatePipe.transform(timestampKey, 'short'), value: amount }]);
             }
         }
 
         for (const category of categories.keys()) {
-            chartSeriesData.push(new ChartSeriesData(category, chartData.get(category)!));
+            chartSeriesData.push({ name: category, series: chartData.get(category)! });
             this.ngxColor.domain.push(getColor(Object.keys(ExamActionType).indexOf(category)));
         }
         this.ngxData = chartSeriesData;

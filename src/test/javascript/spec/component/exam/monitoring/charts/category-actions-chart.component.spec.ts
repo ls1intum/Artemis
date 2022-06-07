@@ -8,11 +8,11 @@ import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { AverageActionsChartComponent } from 'app/exam/monitoring/charts/activity-log/average-actions-chart.component';
 import { NgxChartsModule } from '@swimlane/ngx-charts';
 import { ChartTitleComponent } from 'app/exam/monitoring/charts/chart-title.component';
-import { ChartData, ChartSeriesData } from 'app/exam/monitoring/charts/monitoring-chart';
 import dayjs from 'dayjs/esm';
 import { ActionsChartComponent } from 'app/exam/monitoring/charts/activity-log/actions-chart.component';
 import { CategoryActionsChartComponent } from 'app/exam/monitoring/charts/activity-log/category-actions-chart.component';
 import { createActions } from '../exam-monitoring-helper';
+import { NgxChartsMultiSeriesDataEntry } from 'app/shared/chart/ngx-charts-datatypes';
 
 describe('Category Actions Chart Component', () => {
     let comp: CategoryActionsChartComponent;
@@ -40,9 +40,9 @@ describe('Category Actions Chart Component', () => {
     it('should call initData on init without actions', () => {
         expect(comp.ngxData).toEqual([]);
 
-        const chartSeriesData: ChartSeriesData[] = [];
+        const chartSeriesData: NgxChartsMultiSeriesDataEntry[] = [];
         createActions().forEach((action) => {
-            chartSeriesData.push(new ChartSeriesData(action.type, []));
+            chartSeriesData.push({ name: action.type, series: [] });
         });
 
         // WHEN
@@ -60,9 +60,9 @@ describe('Category Actions Chart Component', () => {
             return action;
         });
 
-        const chartSeriesData: ChartSeriesData[] = [];
+        const chartSeriesData: NgxChartsMultiSeriesDataEntry[] = [];
         comp.examActions.forEach((action) => {
-            chartSeriesData.push(new ChartSeriesData(action.type, [new ChartData(pipe.transform(now, 'short'), 1)]));
+            chartSeriesData.push({ name: action.type, series: [{ name: pipe.transform(now, 'short'), value: 1 }] });
         });
 
         // WHEN

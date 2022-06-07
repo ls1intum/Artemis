@@ -484,47 +484,47 @@
             "charts": {
                 "exercise-chart": {
                     "name": "Current amount of students per exercise grouped by exercise group",
-                    "tooltip": "Shows the current amount of students per exercise grouped by exercise group",
-                    "xAxisLabel": "Amount of students",
+                    "tooltip": "Shows the current number of students per exercise grouped by exercise group",
+                    "xAxisLabel": "Number of students",
                     "yAxisLabel": "Exercises",
                     "legendTitle": "Exercises"
                 },
                 "exercise-group-chart": {
-                    "name": "Current amount of students per exercise group",
-                    "tooltip": "Shows the current amount of students per exercise group",
-                    "xAxisLabel": "Amount of students",
+                    "name": "Current number of students per exercise group",
+                    "tooltip": "Shows the current number of students per exercise group",
+                    "xAxisLabel": "Number of students",
                     "yAxisLabel": "Exercise Groups",
                     "legendTitle": "Exercise Groups"
                 },
                 "exercise-submission-chart": {
-                    "name": "Amount of first submissions per exercise",
-                    "tooltip": "Shows the amount of first submissions per exercise",
+                    "name": "Number of first submissions per exercise",
+                    "tooltip": "Shows the number of first submissions per exercise",
                     "xAxisLabel": "Amount of submissions",
                     "yAxisLabel": "Exercises",
                     "legendTitle": "Exercises"
                 },
                 "exercise-navigation-chart": {
-                    "name": "Amount of first navigations per exercise",
-                    "tooltip": "Shows the amount of first navigations per exercise",
+                    "name": "Number of first navigations per exercise",
+                    "tooltip": "Shows the number of first navigations per exercise",
                     "xAxisLabel": "Amount of navigations",
                     "yAxisLabel": "Exercises",
                     "legendTitle": "Exercises"
                 },
                 "average-actions-chart": {
-                    "name": "Average amount of actions per student",
-                    "tooltip": "Shows the average amount of actions per student",
+                    "name": "Average number of actions per student",
+                    "tooltip": "Shows the average number of actions per student",
                     "xAxisLabel": "Timestamp",
                     "yAxisLabel": "Actions"
                 },
                 "total-actions-chart": {
-                    "name": "Total amount of actions",
-                    "tooltip": "Shows the total amount of actions",
+                    "name": "Total number of actions",
+                    "tooltip": "Shows the total number of actions",
                     "xAxisLabel": "Timestamp",
                     "yAxisLabel": "Actions"
                 },
                 "category-actions-chart": {
-                    "name": "Total amount of actions per category",
-                    "tooltip": "Shows the total amount of actions per category",
+                    "name": "Total number of actions per category",
+                    "tooltip": "Shows the total number of actions per category",
                     "xAxisLabel": "Timestamp",
                     "yAxisLabel": "Actions",
                     "legendTitle": "Categories"

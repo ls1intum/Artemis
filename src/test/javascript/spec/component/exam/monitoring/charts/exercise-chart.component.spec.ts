@@ -7,7 +7,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { NgxChartsModule } from '@swimlane/ngx-charts';
 import { ChartTitleComponent } from 'app/exam/monitoring/charts/chart-title.component';
-import { ChartData, getColor } from 'app/exam/monitoring/charts/monitoring-chart';
+import { getColor } from 'app/exam/monitoring/charts/monitoring-chart';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { ExerciseChartComponent } from 'app/exam/monitoring/charts/exercises/exercise-chart.component';
 import { Exam } from 'app/entities/exam.model';
@@ -66,7 +66,7 @@ describe('Exercise Chart Component', () => {
         comp.ngOnInit();
 
         // THEN
-        expect(comp.ngxData).toEqual([new ChartData(exercises[0].title!, 1)]);
+        expect(comp.ngxData).toEqual([{ name: exercises[0].title!, value: 1 }]);
         expect(comp.ngxColor.domain).toEqual([getColor(0)]);
     });
 
@@ -83,7 +83,7 @@ describe('Exercise Chart Component', () => {
         comp.ngOnInit();
 
         // THEN
-        expect(comp.ngxData).toEqual([new ChartData(exercises[0].title!, 2)]);
+        expect(comp.ngxData).toEqual([{ name: exercises[0].title!, value: 2 }]);
         expect(comp.ngxColor.domain).toEqual([getColor(0)]);
     });
 });

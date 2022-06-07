@@ -2,29 +2,8 @@ import { GraphColors } from 'app/entities/statistics.model';
 import { ExamAction, ExamActionType, SwitchedExerciseAction } from 'app/entities/exam-user-activity.model';
 import { groupBy } from 'lodash';
 import { Exam } from 'app/entities/exam.model';
-import { NgxChartsSingleSeriesDataEntry } from 'app/shared/chart/ngx-charts-datatypes';
+import { NgxChartsEntry } from 'app/shared/chart/ngx-charts-datatypes';
 import { Color } from '@swimlane/ngx-charts';
-
-// Chart content
-export class ChartData {
-    name: string;
-    value: any;
-
-    constructor(name: string, value: any) {
-        this.name = name;
-        this.value = value;
-    }
-}
-
-export class ChartSeriesData {
-    name: string;
-    series: ChartData[];
-
-    constructor(name: string, series: ChartData[]) {
-        this.name = name;
-        this.series = series;
-    }
-}
 
 // Collection of colors used for the exam monitoring
 const colors = [GraphColors.LIGHT_BLUE, GraphColors.LIGHT_GREY, GraphColors.BLUE, GraphColors.GREY, GraphColors.DARK_BLUE];
@@ -116,10 +95,10 @@ export function getCurrentAmountOfStudentsPerExercises(examActions: ExamAction[]
  * @param ngxData data of the chart
  * @param ngxColor color of the chart
  */
-export function insertNgxDataAndColorForExerciseMap(exam: Exam | undefined, exerciseAmountMap: Map<number, number>, ngxData: NgxChartsSingleSeriesDataEntry[], ngxColor: Color) {
+export function insertNgxDataAndColorForExerciseMap(exam: Exam | undefined, exerciseAmountMap: Map<number, number>, ngxData: NgxChartsEntry[], ngxColor: Color) {
     exam?.exerciseGroups?.forEach((group, index) => {
         group.exercises?.forEach((exercise) => {
-            ngxData.push(new ChartData(exercise.title ?? '', exerciseAmountMap.get(exercise.id!) ?? 0));
+            ngxData.push({ name: exercise.title ?? '', value: exerciseAmountMap.get(exercise.id!) ?? 0 });
             ngxColor.domain.push(getColor(index));
         });
     });

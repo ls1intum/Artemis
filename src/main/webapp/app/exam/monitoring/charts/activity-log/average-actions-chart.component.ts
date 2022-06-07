@@ -1,43 +1,33 @@
-import { Component, OnInit, Input, OnChanges, SimpleChanges } from '@angular/core';
-import { Color, ScaleType } from '@swimlane/ngx-charts';
-import { ChartData, ChartSeriesData, getColor, groupActionsByTimestamp } from 'app/exam/monitoring/charts/monitoring-chart';
+import { Component, Input, OnChanges, OnInit } from '@angular/core';
+import { getColor, groupActionsByTimestamp } from 'app/exam/monitoring/charts/monitoring-chart';
 import { ExamAction } from 'app/entities/exam-user-activity.model';
-import * as shape from 'd3-shape';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { ChartComponent } from 'app/exam/monitoring/charts/chart.component';
+import { NgxChartsSingleSeriesDataEntry } from 'app/shared/chart/ngx-charts-datatypes';
 
 @Component({
     selector: 'jhi-average-actions-chart',
     templateUrl: './average-actions-chart.component.html',
 })
-export class AverageActionsChartComponent implements OnInit, OnChanges {
+export class AverageActionsChartComponent extends ChartComponent implements OnInit, OnChanges {
     // Input
     @Input()
     examActions: ExamAction[];
     @Input()
     registeredStudents: number;
 
-    // Chart
-    ngxData: ChartSeriesData[] = [];
-    ngxColor = {
-        name: 'Average amount of actions per student',
-        selectable: true,
-        group: ScaleType.Ordinal,
-        domain: [getColor(2)],
-    } as Color;
-    curve: any = shape.curveMonotoneX;
-    legend = false;
-
     // Component
     readonly chart = 'average-actions-chart';
 
-    constructor(private artemisDatePipe: ArtemisDatePipe) {}
+    constructor(private artemisDatePipe: ArtemisDatePipe) {
+        super('average-actions-chart', false, [getColor(2)]);
+    }
 
     ngOnInit(): void {
         this.initData();
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    ngOnChanges(changes: SimpleChanges): void {
+    ngOnChanges(): void {
         this.initData();
     }
 
@@ -46,12 +36,12 @@ export class AverageActionsChartComponent implements OnInit, OnChanges {
      */
     initData() {
         const groupedByTimestamp = groupActionsByTimestamp(this.examActions);
-        const chartData: ChartData[] = [];
+        const chartData: NgxChartsSingleSeriesDataEntry[] = [];
         for (const [key, value] of Object.entries(groupedByTimestamp)) {
             // Divide actions per timestamp by amount of registered students
-            chartData.push(new ChartData(this.artemisDatePipe.transform(key, 'short'), value.length / this.registeredStudents));
+            chartData.push({ name: this.artemisDatePipe.transform(key, 'short'), value: value.length / this.registeredStudents });
         }
 
-        this.ngxData = [new ChartSeriesData('actions', chartData)];
+        this.ngxData = [{ name: 'actions', series: chartData }];
     }
 }

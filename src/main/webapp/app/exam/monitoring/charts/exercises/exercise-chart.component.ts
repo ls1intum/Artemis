@@ -1,52 +1,36 @@
-import { Component, Input, OnChanges, OnInit, SimpleChanges } from '@angular/core';
-import { Color, ScaleType } from '@swimlane/ngx-charts';
+import { Component, Input, OnChanges, OnInit } from '@angular/core';
 import { Exam } from 'app/entities/exam.model';
-import { ChartData, getCurrentAmountOfStudentsPerExercises, insertNgxDataAndColorForExerciseMap } from 'app/exam/monitoring/charts/monitoring-chart';
+import { getCurrentAmountOfStudentsPerExercises, insertNgxDataAndColorForExerciseMap } from 'app/exam/monitoring/charts/monitoring-chart';
 import { ExamAction } from 'app/entities/exam-user-activity.model';
-import * as shape from 'd3-shape';
+import { ChartComponent } from 'app/exam/monitoring/charts/chart.component';
 
 @Component({
     selector: 'jhi-exercise-chart',
     templateUrl: './exercise-chart.component.html',
 })
-export class ExerciseChartComponent implements OnInit, OnChanges {
+export class ExerciseChartComponent extends ChartComponent implements OnInit, OnChanges {
     // Input
     @Input()
     exam: Exam;
     @Input()
     examActions: ExamAction[] = [];
 
-    // Chart
-    ngxData: ChartData[] = [];
-    ngxColor = {
-        name: 'Amount of students per exercise grouped by exercise group',
-        selectable: true,
-        group: ScaleType.Ordinal,
-        domain: [],
-    } as Color;
-    legend = false;
-    curve: any = shape.curveMonotoneX;
-
-    // Component
-    routerLink: any[];
-    readonly chart = 'exercise-chart';
-
-    constructor() {}
+    constructor() {
+        super('exercise-chart', false);
+    }
 
     ngOnInit(): void {
         this.initData();
-        // this.routerLink = ['/course-management', this.exam.course!.id!, 'exams', this.exam.id, 'exercise-groups'];
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    ngOnChanges(changes: SimpleChanges): void {
+    ngOnChanges(): void {
         this.initData();
     }
 
     /**
      * Create and initialize the data for the chart.
      */
-    initData() {
+    override initData() {
         const exerciseAmountMap = getCurrentAmountOfStudentsPerExercises(this.examActions);
         insertNgxDataAndColorForExerciseMap(this.exam, exerciseAmountMap, this.ngxData, this.ngxColor);
     }

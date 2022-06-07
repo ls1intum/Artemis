@@ -1,44 +1,29 @@
-import { Component, Input, OnChanges, OnInit, SimpleChanges } from '@angular/core';
-import { Color, ScaleType } from '@swimlane/ngx-charts';
+import { Component, Input, OnChanges, OnInit } from '@angular/core';
 import { Exam } from 'app/entities/exam.model';
-import { ChartData, getSavedExerciseActionsGroupedByActivityId, insertNgxDataAndColorForExerciseMap } from 'app/exam/monitoring/charts/monitoring-chart';
+import { getSavedExerciseActionsGroupedByActivityId, insertNgxDataAndColorForExerciseMap } from 'app/exam/monitoring/charts/monitoring-chart';
 import { ExamAction, SavedExerciseAction } from 'app/entities/exam-user-activity.model';
-import * as shape from 'd3-shape';
+import { ChartComponent } from 'app/exam/monitoring/charts/chart.component';
 
 @Component({
     selector: 'jhi-exercise-submission-chart',
     templateUrl: './exercise-submission-chart.component.html',
 })
-export class ExerciseSubmissionChartComponent implements OnInit, OnChanges {
+export class ExerciseSubmissionChartComponent extends ChartComponent implements OnInit, OnChanges {
     // Input
     @Input()
     exam: Exam;
     @Input()
     examActions: ExamAction[] = [];
 
-    // Chart
-    ngxData: ChartData[] = [];
-    ngxColor = {
-        name: 'Amount of first submissions per exercise',
-        selectable: true,
-        group: ScaleType.Ordinal,
-        domain: [],
-    } as Color;
-    legend = false;
-    curve: any = shape.curveMonotoneX;
-
-    // Component
-    routerLink: any[];
-    readonly chart = 'exercise-submission-chart';
-
-    constructor() {}
+    constructor() {
+        super('exercise-submission-chart', false);
+    }
 
     ngOnInit(): void {
         this.initData();
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    ngOnChanges(changes: SimpleChanges): void {
+    ngOnChanges(): void {
         this.initData();
     }
 

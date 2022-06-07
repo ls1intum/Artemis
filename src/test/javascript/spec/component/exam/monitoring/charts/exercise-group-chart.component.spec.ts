@@ -7,7 +7,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { NgxChartsModule } from '@swimlane/ngx-charts';
 import { ChartTitleComponent } from 'app/exam/monitoring/charts/chart-title.component';
-import { ChartData, getColor } from 'app/exam/monitoring/charts/monitoring-chart';
+import { getColor } from 'app/exam/monitoring/charts/monitoring-chart';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { Exam } from 'app/entities/exam.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
@@ -81,7 +81,10 @@ describe('Exercise Group Chart Component', () => {
         comp.ngOnInit();
 
         // THEN
-        expect(comp.ngxData).toEqual([new ChartData(exerciseGroup1.title!, param.expect[0]), new ChartData(exerciseGroup2.title!, param.expect[1])]);
+        expect(comp.ngxData).toEqual([
+            { name: exerciseGroup1.title!, value: param.expect[0] },
+            { name: exerciseGroup2.title!, value: param.expect[1] },
+        ]);
         expect(comp.ngxColor.domain).toEqual([getColor(0), getColor(1)]);
     });
 });

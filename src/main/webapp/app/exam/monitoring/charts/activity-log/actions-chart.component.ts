@@ -1,6 +1,6 @@
 import { Component, Input } from '@angular/core';
 import { Color } from '@swimlane/ngx-charts';
-import { ChartSeriesData } from 'app/exam/monitoring/charts/monitoring-chart';
+import { NgxChartsEntry } from 'app/shared/chart/ngx-charts-datatypes';
 
 @Component({
     selector: 'jhi-actions-chart',
@@ -10,7 +10,7 @@ import { ChartSeriesData } from 'app/exam/monitoring/charts/monitoring-chart';
 export class ActionsChartComponent {
     // Input
     @Input()
-    ngxData: ChartSeriesData[] = [];
+    ngxData: NgxChartsEntry[] = [];
     @Input()
     ngxColor: Color;
     @Input()
@@ -18,7 +18,7 @@ export class ActionsChartComponent {
     @Input()
     legend = false;
     @Input()
-    chart: string;
+    chartIdentifierKey: string;
 
     constructor() {}
 }

@@ -1,5 +1,6 @@
 import { Component, Input } from '@angular/core';
 import { Color } from '@swimlane/ngx-charts';
+import { NgxChartsEntry } from 'app/shared/chart/ngx-charts-datatypes';
 
 @Component({
     selector: 'jhi-exercise-template-chart',
@@ -9,7 +10,7 @@ import { Color } from '@swimlane/ngx-charts';
 export class ExerciseTemplateChartComponent {
     // Input
     @Input()
-    ngxData: any[];
+    ngxData: NgxChartsEntry[];
     @Input()
     ngxColor: Color;
     @Input()
@@ -17,7 +18,7 @@ export class ExerciseTemplateChartComponent {
     @Input()
     legend = false;
     @Input()
-    chart: string;
+    chartIdentifierKey: string;
     @Input()
     routerLink?: any[];
 

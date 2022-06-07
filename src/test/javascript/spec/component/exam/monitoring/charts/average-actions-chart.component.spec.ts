@@ -8,7 +8,6 @@ import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { AverageActionsChartComponent } from 'app/exam/monitoring/charts/activity-log/average-actions-chart.component';
 import { NgxChartsModule } from '@swimlane/ngx-charts';
 import { ChartTitleComponent } from 'app/exam/monitoring/charts/chart-title.component';
-import { ChartData, ChartSeriesData } from 'app/exam/monitoring/charts/monitoring-chart';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import dayjs from 'dayjs/esm';
 import { ActionsChartComponent } from 'app/exam/monitoring/charts/activity-log/actions-chart.component';
@@ -45,7 +44,7 @@ describe('Average Actions Chart Component', () => {
         comp.ngOnInit();
 
         // THEN
-        expect(comp.ngxData).toEqual([new ChartSeriesData('actions', [])]);
+        expect(comp.ngxData).toEqual([{ name: 'actions', series: [] }]);
     });
 
     it.each`
@@ -65,6 +64,6 @@ describe('Average Actions Chart Component', () => {
         comp.ngOnInit();
 
         // THEN
-        expect(comp.ngxData).toEqual([new ChartSeriesData('actions', [new ChartData(pipe.transform(now, 'short'), comp.examActions.length / comp.registeredStudents)])]);
+        expect(comp.ngxData).toEqual([{ name: 'actions', series: [{ name: pipe.transform(now, 'short'), value: comp.examActions.length / comp.registeredStudents }] }]);
     });
 });
