@@ -375,4 +375,5 @@ public interface StudentExamRepository extends JpaRepository<StudentExam, Long> 
         // StudentExams are saved in the called method
         return createRandomStudentExams(exam, missingUsers);
     }
+
 }
