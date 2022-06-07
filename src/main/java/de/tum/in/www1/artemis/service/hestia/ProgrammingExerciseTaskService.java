@@ -25,6 +25,8 @@ public class ProgrammingExerciseTaskService {
      * Example: "[task][Implement BubbleSort](testBubbleSort,testBubbleSortHidden)". Following values are extracted by the named capturing groups:
      * - name: "Implement BubbleSort"
      * - tests: "testBubbleSort,testBubbleSortHidden"
+     *
+     * This is coupled to the value used in `ProgrammingExerciseTaskExtensionWrapper` and `TaskCommand` in the client
      */
     private final Pattern taskPatternForProblemStatementMarkdown = Pattern.compile("\\[task]\\[(?<name>[^\\[\\]]+)]\\((?<tests>.*)\\)");
 
@@ -122,6 +124,10 @@ public class ProgrammingExerciseTaskService {
      */
     private List<ProgrammingExerciseTask> extractTasks(ProgrammingExercise exercise) {
         var problemStatement = exercise.getProblemStatement();
+        // Rare edge case, as some old programming exercises have no problem statement
+        if (problemStatement == null) {
+            return new ArrayList<>();
+        }
         var matcher = taskPatternForProblemStatementMarkdown.matcher(problemStatement);
         var testCases = programmingExerciseTestCaseRepository.findByExerciseIdAndActive(exercise.getId(), true);
         var tasks = new ArrayList<ProgrammingExerciseTask>();

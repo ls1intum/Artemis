@@ -19,6 +19,10 @@ export class TaskCommand extends DomainTagCommand {
         this.addCompleter(taskCommandCompleter);
     }
 
+    /**
+     * The task structure is coupled to the value used in `ProgrammingExerciseTaskService` in the server and
+     * `ProgrammingExerciseTaskExtensionWrapper` in the client
+     */
     private getTask() {
         return `${this.getOpeningIdentifier()}[${TaskCommand.taskPlaceholder}](${TaskCommand.testCasePlaceholder})`;
     }
