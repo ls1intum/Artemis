@@ -3,13 +3,13 @@
     <h3 class="col mb-3 fw-medium">
         {{ 'artemisApp.studentDashboard.' + (nextRelevantExam.testExam ? 'testExam.' : '') + 'examTitle' | artemisTranslate: { course: nextRelevantCourseForExam.title } }}
     </h3>
-    <div class="col-12 ps-4 pe-4 mb-5">
+    <div class="col-12 px-4 mb-5">
         <div class="row justify-content-between align-items-center exam-container ps-3 pe-3" (click)="openExam()">
-            <div class="mb-4 mt-4 d-flex" style="width: unset">
+            <div class="mb-4 mt-4 d-flex w-auto">
                 <fa-icon [icon]="faPenAlt" size="2x"></fa-icon>
                 <h4 class="ms-2 fw-medium">{{ nextRelevantExam.title }}</h4>
             </div>
-            <div class="text-end mb-4 mt-4" style="width: unset">
+            <div class="text-end my-4 w-auto">
                 <div *ngIf="nextRelevantExam.startDate">{{ 'artemisApp.exam.overview.start' | artemisTranslate: { start: nextRelevantExam.startDate | artemisDate } }}</div>
                 <div *ngIf="nextRelevantExam.maxPoints">{{ 'artemisApp.exam.overview.maxPoints' | artemisTranslate: { points: nextRelevantExam.maxPoints } }}</div>
                 <ng-container>
