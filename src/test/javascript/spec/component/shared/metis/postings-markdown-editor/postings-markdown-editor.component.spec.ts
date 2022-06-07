@@ -13,6 +13,7 @@ import { By } from '@angular/platform-browser';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { MockMetisService } from '../../../../helpers/mocks/service/mock-metis-service.service';
 import { ExerciseReferenceCommand } from 'app/shared/markdown-editor/commands/courseArtifactReferenceCommands/exerciseReferenceCommand';
+import { LectureReferenceCommand } from 'app/shared/markdown-editor/commands/courseArtifactReferenceCommands/lectureReferenceCommand';
 import { metisAnswerPostUser2, metisPostExerciseUser1 } from '../../../../helpers/sample/metis-sample-data';
 
 // tslint:disable-next-line:directive-selector
@@ -52,9 +53,6 @@ describe('PostingsMarkdownEditor', () => {
     it('should have set the correct default commands on init', () => {
         component.ngOnInit();
 
-        const exerciseReferenceCommand = new ExerciseReferenceCommand(metisService);
-        exerciseReferenceCommand.setValues(metisService.getCourse().exercises!.map((exercise) => ({ id: exercise.id!.toString(), value: exercise.title! })));
-
         expect(component.defaultCommands).toEqual([
             new BoldCommand(),
             new ItalicCommand(),
@@ -63,7 +61,8 @@ describe('PostingsMarkdownEditor', () => {
             new CodeCommand(),
             new CodeBlockCommand(),
             new LinkCommand(),
-            exerciseReferenceCommand,
+            new ExerciseReferenceCommand(metisService),
+            new LectureReferenceCommand(metisService),
         ]);
     });
 
