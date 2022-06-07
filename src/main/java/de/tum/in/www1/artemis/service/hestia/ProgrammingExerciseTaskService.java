@@ -125,10 +125,6 @@ public class ProgrammingExerciseTaskService {
      */
     private List<ProgrammingExerciseTask> extractTasks(ProgrammingExercise exercise) {
         var problemStatement = exercise.getProblemStatement();
-        // Rare edge case, as some old programming exercises have no problem statement
-        if (problemStatement == null) {
-            return new ArrayList<>();
-        }
         var matcher = taskPatternForProblemStatementMarkdown.matcher(problemStatement);
         var testCases = programmingExerciseTestCaseRepository.findByExerciseIdAndActive(exercise.getId(), true);
         var tasks = new ArrayList<ProgrammingExerciseTask>();
