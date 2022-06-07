@@ -1,6 +1,6 @@
 import { Course } from 'app/entities/course.model';
 import { User } from 'app/core/user/user.model';
-import { CourseWideContext, VOTE_EMOJI_ID } from 'app/shared/metis/metis.util';
+import { CourseWideContext, DisplayPriority, VOTE_EMOJI_ID } from 'app/shared/metis/metis.util';
 import { Reaction } from 'app/entities/metis/reaction.model';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { Lecture } from 'app/entities/lecture.model';
@@ -182,3 +182,59 @@ export const post = {
     creationDate: undefined,
     answers: unsortedAnswerArray,
 } as Post;
+
+export const post1WithCreationDate = {
+    ...metisPostExerciseUser1,
+    creationDate: dayjs(),
+    displayPriority: DisplayPriority.PINNED,
+};
+
+export const post2WithCreationDate = {
+    ...metisPostExerciseUser2,
+    creationDate: dayjs().subtract(2, 'day'),
+    displayPriority: DisplayPriority.NONE,
+};
+
+export const post3WithCreationDate = {
+    ...metisPostExerciseUser1,
+    creationDate: dayjs().subtract(1, 'day'),
+    reactions: [metisUpVoteReactionUser1, metisUpVoteReactionUser1],
+    displayPriority: DisplayPriority.NONE,
+};
+
+export const post4WithCreationDate = {
+    ...metisPostLectureUser2,
+    creationDate: dayjs().subtract(2, 'minute'),
+    reactions: [metisUpVoteReactionUser1],
+    displayPriority: DisplayPriority.ARCHIVED,
+};
+
+export const post5WithCreationDate = {
+    ...metisPostLectureUser2,
+    creationDate: dayjs().subtract(3, 'minute'),
+    reactions: [metisUpVoteReactionUser1],
+    displayPriority: DisplayPriority.NONE,
+};
+
+export const post6WithCreationDate = {
+    ...metisPostLectureUser2,
+    creationDate: dayjs().subtract(4, 'minute'),
+    reactions: [metisUpVoteReactionUser1],
+    displayPriority: DisplayPriority.NONE,
+};
+
+export const post7WithCreationDate = {
+    ...metisPostLectureUser2,
+    creationDate: dayjs().subtract(1, 'minute'),
+    displayPriority: DisplayPriority.NONE,
+};
+
+export const postsWithCreationDate = [
+    post1WithCreationDate,
+    post2WithCreationDate,
+    post3WithCreationDate,
+    post4WithCreationDate,
+    post5WithCreationDate,
+    post6WithCreationDate,
+    post7WithCreationDate,
+];
