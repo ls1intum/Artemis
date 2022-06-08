@@ -1,5 +1,5 @@
 import { Component, OnDestroy, OnInit, ViewChild, ViewEncapsulation } from '@angular/core';
-import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { HttpErrorResponse, HttpResponse, HttpStatusCode } from '@angular/common/http';
 import { Subscription } from 'rxjs';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Observable, of, Subject } from 'rxjs';
@@ -166,7 +166,9 @@ export class ExamStudentsComponent implements OnInit, OnDestroy {
                     this.flashRowClass(cssClasses.newlyRegistered);
                 },
                 error: (error: HttpErrorResponse) => {
-                    this.onError(`artemisApp.exam.${error.headers.get('x-null-error')}`);
+                    if (error.status === HttpStatusCode.BadRequest && error.headers.get('x-null-error') === 'error.cannotRegisterInstructor') {
+                        this.onError('artemisApp.studentExam.error.cannotRegisterInstructor');
+                    }
                 },
             });
         } else {
