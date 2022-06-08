@@ -35,8 +35,6 @@ export class ExamStudentsComponent implements OnInit, OnDestroy {
     readonly ButtonSize = ButtonSize;
     readonly ActionType = ActionType;
 
-    static readonly cannotRegisterInstructorErrorKey = 'cannotRegisterInstructor';
-
     courseId: number;
     exam: Exam;
     allRegisteredUsers: User[] = [];

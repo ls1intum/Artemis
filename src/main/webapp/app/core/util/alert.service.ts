@@ -63,6 +63,8 @@ export class AlertService {
     errorListener: Subscription;
     httpErrorListener: Subscription;
 
+    readonly conflictErrorKeysToSkip: string[] = ['cannotRegisterInstructor'];
+
     constructor(private sanitizer: DomSanitizer, private ngZone: NgZone, private translateService: TranslateService, private eventManager: EventManager) {
         this.errorListener = eventManager.subscribe('artemisApp.error', (response: EventWithContent<unknown> | string) => {
             const errorResponse = (response as EventWithContent<AlertError>).content;
@@ -119,7 +121,7 @@ export class AlertService {
                 default:
                     if (httpErrorResponse.error && httpErrorResponse.error.title) {
                         // To avoid displaying this alerts twice, we need to filter the received errors. In this case, we filter for the cannot register instructor error.
-                        if (httpErrorResponse.error.errorKey === ExamStudentsComponent.cannotRegisterInstructorErrorKey && httpErrorResponse.status === 403) {
+                        if (httpErrorResponse.status === 403 && httpErrorResponse.error.errorKey in this.conflictErrorKeysToSkip) {
                             break;
                         }
                         this.addErrorAlert(httpErrorResponse.error.title, httpErrorResponse.error.message, httpErrorResponse.error.params);
