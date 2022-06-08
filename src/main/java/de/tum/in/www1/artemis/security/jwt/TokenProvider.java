@@ -81,17 +81,24 @@ public class TokenProvider {
      * @return JWT Token
      */
     public String createToken(Authentication authentication, boolean rememberMe) {
-        String authorities = authentication.getAuthorities().stream().map(GrantedAuthority::getAuthority).collect(Collectors.joining(","));
-
-        long now = (new Date()).getTime();
-        Date validity;
         if (rememberMe) {
-            validity = new Date(now + this.tokenValidityInMillisecondsForRememberMe);
+            return createTokenWithCustomDuration(authentication, this.tokenValidityInMillisecondsForRememberMe);
         }
         else {
-            validity = new Date(now + this.tokenValidityInMilliseconds);
+            return createTokenWithCustomDuration(authentication, this.tokenValidityInMilliseconds);
         }
+    }
 
+    /**
+     * Create JWT Token a fully populated <code>Authentication</code> object.
+     * @param authentication Authentication Object
+     * @param durationValidityInMilliseconds The duration how long the access token should be valid
+     * @return JWT Token
+     */
+    public String createTokenWithCustomDuration(Authentication authentication, Long durationValidityInMilliseconds) {
+        String authorities = authentication.getAuthorities().stream().map(GrantedAuthority::getAuthority).collect(Collectors.joining(","));
+        long now = (new Date()).getTime();
+        Date validity = new Date(now + durationValidityInMilliseconds);
         return Jwts.builder().setSubject(authentication.getName()).claim(AUTHORITIES_KEY, authorities).signWith(key, SignatureAlgorithm.HS512).setExpiration(validity).compact();
     }
 
