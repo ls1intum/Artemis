@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.service.connectors.gitlabci;
 
 import java.net.URL;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import org.gitlab4j.api.GitLabApi;
@@ -28,7 +29,6 @@ import de.tum.in.www1.artemis.service.UrlService;
 import de.tum.in.www1.artemis.service.connectors.AbstractContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.CIPermission;
 import de.tum.in.www1.artemis.service.connectors.ConnectorHealth;
-import de.tum.in.www1.artemis.service.connectors.gitlab.GitLabService;
 import de.tum.in.www1.artemis.service.dto.AbstractBuildResultNotificationDTO;
 
 @Profile("gitlabci")
@@ -200,7 +200,7 @@ public class GitLabCIService extends AbstractContinuousIntegrationService {
 
     @Override
     public ConnectorHealth health() {
-        return GitLabService.health(gitlabServerUrl, shortTimeoutRestTemplate);
+        return new ConnectorHealth(true, Map.of("cf.", "Version Control Server"));
     }
 
     @Override

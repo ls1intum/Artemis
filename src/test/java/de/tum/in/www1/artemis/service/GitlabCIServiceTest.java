@@ -5,7 +5,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
-import java.net.URL;
 import java.util.Optional;
 
 import org.gitlab4j.api.GitLabApiException;
@@ -13,7 +12,6 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationGitlabCIGitlabSamlTest;
@@ -23,9 +21,6 @@ import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentPar
 import de.tum.in.www1.artemis.exception.GitLabCIException;
 
 public class GitlabCIServiceTest extends AbstractSpringIntegrationGitlabCIGitlabSamlTest {
-
-    @Value("${artemis.version-control.url}")
-    private URL gitlabServerUrl;
 
     @Autowired
     private ContinuousIntegrationTestService continuousIntegrationTestService;
@@ -46,20 +41,10 @@ public class GitlabCIServiceTest extends AbstractSpringIntegrationGitlabCIGitlab
 
     @Test
     @WithMockUser(roles = "INSTRUCTOR", username = "instructor1")
-    public void testHealthOk() throws Exception {
-        continuousIntegrationTestService.testHealthRunning();
-    }
-
-    @Test
-    @WithMockUser(roles = "INSTRUCTOR", username = "instructor1")
-    public void testHealthNotOk() throws Exception {
-        continuousIntegrationTestService.testHealthNotRunning();
-    }
-
-    @Test
-    @WithMockUser(roles = "INSTRUCTOR", username = "instructor1")
-    public void testHealthException() throws Exception {
-        continuousIntegrationTestService.testHealthException();
+    public void testHealth() throws Exception {
+        var health = continuousIntegrationService.health();
+        assertThat(health.isUp()).isTrue();
+        assertThat(health.getAdditionalInfo()).containsEntry("status", "ok").containsEntry("cf.", "Version Control Server");
     }
 
     @Test

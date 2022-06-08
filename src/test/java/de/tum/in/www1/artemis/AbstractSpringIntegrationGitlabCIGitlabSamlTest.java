@@ -96,10 +96,6 @@ public abstract class AbstractSpringIntegrationGitlabCIGitlabSamlTest extends Ab
     public void mockConnectorRequestsForImport(ProgrammingExercise sourceExercise, ProgrammingExercise exerciseToBeImported, boolean recreateBuildPlans) throws Exception {
         mockImportRepositories(exerciseToBeImported);
         doNothing().when(gitService).pushSourceToTargetRepo(any(), any());
-
-        if (!recreateBuildPlans) {
-            mockUpdatePlanRepositoriesInBuildPlans(exerciseToBeImported);
-        }
     }
 
     @Override
@@ -107,7 +103,6 @@ public abstract class AbstractSpringIntegrationGitlabCIGitlabSamlTest extends Ab
             boolean shouldPlanEnableFail) throws Exception {
         mockImportRepositories(exerciseToBeImported);
         doNothing().when(gitService).pushSourceToTargetRepo(any(), any());
-        mockUpdatePlanRepositoriesInBuildPlans(exerciseToBeImported);
     }
 
     private void mockImportRepositories(ProgrammingExercise exerciseToBeImported) throws GitLabApiException {
@@ -125,10 +120,6 @@ public abstract class AbstractSpringIntegrationGitlabCIGitlabSamlTest extends Ab
         gitlabRequestMockProvider.mockAddAuthenticatedWebHook();
         gitlabRequestMockProvider.mockAddAuthenticatedWebHook();
         gitlabRequestMockProvider.mockAddAuthenticatedWebHook();
-    }
-
-    private void mockUpdatePlanRepositoriesInBuildPlans(ProgrammingExercise exerciseToBeImported) {
-        // Unsupported action in GitLab CI setup
     }
 
     @Override
