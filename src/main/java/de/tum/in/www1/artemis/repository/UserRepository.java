@@ -33,17 +33,17 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
 
     String USERS_CACHE = "users";
 
-    long COURSE_ID_FOR_EMPTY_COURSES = -1;
+    long FILTER_EMPTY_COURSES = -1;
 
-    String USER_MANAGEMENT_FILTER_NO_AUTHORITY = "NO_AUTHORITY";
+    String FILTER_NO_AUTHORITY = "NO_AUTHORITY";
 
-    String USER_MANAGEMENT_FILTER_INTERNAL = "INTERNAL";
+    String FILTER_INTERNAL = "INTERNAL";
 
-    String USER_MANAGEMENT_FILTER_EXTERNAL = "EXTERNAL";
+    String FILTER_EXTERNAL = "EXTERNAL";
 
-    String USER_MANAGEMENT_FILTER_ACTIVATED = "ACTIVATED";
+    String FILTER_ACTIVATED = "ACTIVATED";
 
-    String USER_MANAGEMENT_FILTER_DEACTIVATED = "DEACTIVATED";
+    String FILTER_DEACTIVATED = "DEACTIVATED";
 
     @EntityGraph(type = LOAD, attributePaths = { "groups" })
     Optional<User> findOneWithGroupsByActivationKey(String activationKey);
@@ -241,7 +241,7 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
      * @return specification used to chain database operations
      */
     private Specification<User> getAuthoritySpecification(Set<String> authorities) {
-        if (authorities.contains(USER_MANAGEMENT_FILTER_NO_AUTHORITY)) {
+        if (authorities.contains(FILTER_NO_AUTHORITY)) {
             // Empty authorities
             return getAllUsersMatchingEmptyAuthorities();
         }
@@ -345,7 +345,7 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
      * @return specification used to chain database operations
      */
     private Specification<User> getCourseSpecification(Set<Long> courseIds) {
-        if (courseIds.size() == 1 && courseIds.contains(COURSE_ID_FOR_EMPTY_COURSES)) {
+        if (courseIds.size() == 1 && courseIds.contains(FILTER_EMPTY_COURSES)) {
             // Empty courses
             return getAllUsersMatchingEmptyCourses();
         }
@@ -385,12 +385,12 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
         Set<String> authorities = userSearch.getAuthorities();
 
         // Internal or external users or both
-        final var internal = userSearch.getOrigins().contains(USER_MANAGEMENT_FILTER_INTERNAL);
-        final var external = userSearch.getOrigins().contains(USER_MANAGEMENT_FILTER_EXTERNAL);
+        final var internal = userSearch.getOrigins().contains(FILTER_INTERNAL);
+        final var external = userSearch.getOrigins().contains(FILTER_EXTERNAL);
 
         // Activated or deactivated users or both
-        var activated = userSearch.getStatus().contains(USER_MANAGEMENT_FILTER_ACTIVATED);
-        var deactivated = userSearch.getStatus().contains(USER_MANAGEMENT_FILTER_DEACTIVATED);
+        var activated = userSearch.getStatus().contains(FILTER_ACTIVATED);
+        var deactivated = userSearch.getStatus().contains(FILTER_DEACTIVATED);
 
         // Course Ids
         var courseIds = userSearch.getCourseIds();
