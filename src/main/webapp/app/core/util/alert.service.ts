@@ -9,7 +9,6 @@ import { captureException } from '@sentry/browser';
 import { faCheckCircle, faExclamationCircle, faExclamationTriangle, faInfoCircle, IconDefinition } from '@fortawesome/free-solid-svg-icons';
 import { HttpErrorResponse } from '@angular/common/http';
 import dayjs from 'dayjs';
-import { ExamStudentsComponent } from 'app/exam/manage/students/exam-students.component';
 
 export class AlertType {
     public static readonly SUCCESS = new AlertType(faCheckCircle, 'success', 'btn-success');
