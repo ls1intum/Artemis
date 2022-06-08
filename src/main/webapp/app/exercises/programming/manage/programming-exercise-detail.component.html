@@ -163,7 +163,7 @@
                             <span jhiTranslate="artemisApp.programmingExercise.createStructuralSolutionEntriesTitle">Create Structural Solution Entries</span>
                         </button>
                     </span>
-                    <span *ngIf="programmingExercise.testwiseCoverageEnabled" class="me-1">
+                    <span *ngIf="programmingExercise.testwiseCoverageEnabled && programmingExercise.programmingLanguage === ProgrammingLanguage.JAVA" class="me-1">
                         <button
                             [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
                             type="button"

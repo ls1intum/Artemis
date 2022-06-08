@@ -412,7 +412,7 @@
             "withDependencies": "Mit beispielhafter Abhängigkeit",
             "withDependenciesTooltip": "Fügt dem generierten Projekt eine externe Apache commons-lang-Abhängigkeit als Beispiel dafür hinzu, wie Maven-Abhängigkeiten mit Artemis-Aufgaben verwendet werden sollten.",
             "recordTestwiseCoverage": "Testweise Test-Abdeckung aufzeichnen",
-            "recordTestwiseCoverageTooltip": "Durch Aktivierung dieser Option wird die testweise Test-Abdeckung für das Lösungs-Repository aufgezeichnet. Diese Option ist nur für Java-Gradle-Projekte mit nicht-sequentiellen Testläufen verfügbar.",
+            "recordTestwiseCoverageTooltip": "Durch Aktivierung dieser Option wird die testweise Test-Abdeckung für das Lösungs-Repository aufgezeichnet. Diese Option ist nur für Java/Kotlin-Aufgaben mit nicht-sequentiellen Testläufen verfügbar.",
             "coveredLineRatio": "Anteil Test-Abgedeckter Zeilen",
             "testwiseCoverageReport": {
                 "button": "Testweise Test-Abdeckung anzeigen",
