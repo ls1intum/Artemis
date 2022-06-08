@@ -198,7 +198,13 @@
                             <span jhiTranslate="artemisApp.programmingExercise.diffReport.button">Update Diff-Report</span>
                         </button>
                     </span>
-                    <span class="mr-1" *ngIf="programmingExercise.programmingLanguage === ProgrammingLanguage.JAVA && programmingExercise.testwiseCoverageEnabled">
+                    <span
+                        class="mr-1"
+                        *ngIf="
+                            (programmingExercise.programmingLanguage === ProgrammingLanguage.JAVA || programmingExercise.programmingLanguage === ProgrammingLanguage.KOTLIN) &&
+                            programmingExercise.testwiseCoverageEnabled
+                        "
+                    >
                         <button
                             [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
                             type="button"
