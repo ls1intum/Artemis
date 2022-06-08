@@ -36,6 +36,7 @@ export class ListOfComplaintsComponent implements OnInit {
     showAddressedComplaints = false;
     allComplaintsForTutorLoaded = false;
     isLoadingAllComplaints = false;
+    filterOption?: number; // TODO: Find solution for intuitive chart filter reset
 
     loading = true;
     // Icons
@@ -65,6 +66,12 @@ export class ListOfComplaintsComponent implements OnInit {
             this.correctionRound = Number(queryParams['correctionRound']);
         });
         this.route.data.subscribe((data) => (this.complaintType = data.complaintType));
+        this.route.queryParams.subscribe((queryParams) => {
+            if (queryParams['submissionFilter']) {
+                this.filterOption = Number(queryParams['submissionFilter']);
+                this.triggerShowAllComplaints();
+            }
+        });
         this.loadComplaints();
     }
 
@@ -96,6 +103,9 @@ export class ListOfComplaintsComponent implements OnInit {
         complaintResponse.subscribe({
             next: (res) => {
                 this.complaints = res.body!;
+                if (this.filterOption && this.filterOption === 4) {
+                    this.showAddressedComplaints = true;
+                }
 
                 if (!this.showAddressedComplaints) {
                     this.complaintsToShow = this.complaints.filter((complaint) => complaint.accepted === undefined);

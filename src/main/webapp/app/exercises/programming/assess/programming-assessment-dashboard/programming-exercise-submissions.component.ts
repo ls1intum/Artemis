@@ -70,6 +70,12 @@ export class ProgrammingExerciseSubmissionsComponent extends AbstractAssessmentD
             this.exerciseGroupId = Number(this.route.snapshot.paramMap.get('exerciseGroupId'));
         }
 
+        this.route.queryParams.subscribe((queryParams) => {
+            if (queryParams['submissionFilter']) {
+                this.filterOption = Number(queryParams['submissionFilter']);
+            }
+        });
+
         this.exerciseService
             .find(this.exerciseId)
             .pipe(
@@ -119,6 +125,9 @@ export class ProgrammingExerciseSubmissionsComponent extends AbstractAssessmentD
                         sub.results = sub.results.filter((r) => r.assessmentType !== AssessmentType.AUTOMATIC);
                     }
                 });
+                if (!!this.filterOption) {
+                    this.applyChartFilter(this.filteredSubmissions);
+                }
                 this.busy = false;
             });
     }

@@ -29,14 +29,6 @@ export enum ComplaintState {
     ADDRESSED,
 }
 
-export enum AssessmentAndComplaintFilter {
-    UNASSESSED,
-    Manual,
-    SEMI_AUTOMATIC,
-    OPEN,
-    ADDRESSED,
-}
-
 @Component({
     templateUrl: './text-assessment-dashboard.component.html',
 })
@@ -137,7 +129,6 @@ export class TextAssessmentDashboardComponent extends AbstractAssessmentDashboar
             .subscribe((submissions: TextSubmission[]) => {
                 this.submissions = submissions;
                 if (this.filterOption === undefined) {
-                    console.log('no filter');
                     this.filteredSubmissions = submissions;
                 } else {
                     this.applyChartFilter(submissions);
@@ -183,39 +174,4 @@ export class TextAssessmentDashboardComponent extends AbstractAssessmentDashboar
     getAssessmentLink(participationId: number, submissionId: number) {
         return getLinkToSubmissionAssessment(this.exercise.type!, this.courseId, this.exerciseId, participationId, submissionId, this.examId, this.exerciseGroupId);
     }
-
-    /*    applyChartFilter(submissions: TextSubmission[]) {
-        if (this.filterOption === undefined) {
-            return;
-        }
-        console.log(typeof this.filterOption);
-        switch (this.filterOption) {
-            case AssessmentAndComplaintFilter.UNASSESSED:
-                this.filteredSubmissions = submissions.filter((submission) => {
-                    return !submission.results || submission.results.every((result) => !result.rated) || submission.results.every((result) => !result.completionDate);
-                });
-                break;
-
-            case AssessmentAndComplaintFilter.Manual:
-                this.filteredSubmissions = submissions.filter((submission) => {
-                    return (
-                        submission.results && submission.results[0].rated && submission.results[0].assessmentType === AssessmentType.MANUAL && submission.results[0].completionDate
-                    );
-                });
-                break;
-
-            case AssessmentAndComplaintFilter.SEMI_AUTOMATIC:
-                this.filteredSubmissions = submissions.filter((submission) => {
-                    return (
-                        submission.results &&
-                        submission.results[0].rated &&
-                        submission.results[0].assessmentType === AssessmentType.SEMI_AUTOMATIC &&
-                        submission.results[0].completionDate
-                    );
-                });
-                break;
-            default:
-                this.filteredSubmissions = submissions;
-        }
-    }*/
 }

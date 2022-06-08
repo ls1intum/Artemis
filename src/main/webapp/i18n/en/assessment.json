@@ -90,7 +90,8 @@
                     "showAll": "Show all",
                     "showLocked": "Show locked"
                 },
-                "bonusPointExplanation": "In this exercise there are {{maxPoints}} points and {{maxBonusPoints}} bonus points, so students can achieve a maximum of {{maxPointsWithBonus}} points, which would correspond to a score of {{maxPercentage}}%."
+                "bonusPointExplanation": "In this exercise there are {{maxPoints}} points and {{maxBonusPoints}} bonus points, so students can achieve a maximum of {{maxPointsWithBonus}} points, which would correspond to a score of {{maxPercentage}}%.",
+                "resetFilter": "Reset filter"
             },
             "locks": {
                 "home": {

@@ -781,34 +781,22 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
      * not the legend
      */
     navigateToExerciseSubmissionOverview(event: any): void {
-        if (!this.isAutomaticAssessedProgrammingExercise) {
-            /*console.log(event);
-            let identifier;
-            let name;
-            if (event.value) {
-                identifier = event.name.substring(0, event.name.indexOf(' '));
-                name = event.name;
-            } else {
-                identifier = event.substring(0, event.indexOf(' '));
-                name = event;
+        if (!event.value || !this.accountService.hasAnyAuthorityDirect([Authority.INSTRUCTOR])) {
+            return;
+        }
+        let index = 0;
+        let route = ['course-management', this.courseId, this.exercise.type! + '-exercises', this.exerciseId, 'submissions'];
+        if (this.isAutomaticAssessedProgrammingExercise) {
+            index = 3;
+            route = ['course-management', this.courseId, this.exercise.type! + '-exercises', this.exerciseId, 'complaints'];
+        }
+        this.assessments.forEach((data, i) => {
+            if (data.name === event.name) {
+                index += i;
             }
-            console.log(identifier);*/
-            let index = 0;
-            this.assessments.forEach((data, i) => {
-                if (data.name === event.name) {
-                    index = i;
-                }
-            });
-            /*const queryParams: Params = {};
-            queryParams.submissionFilter = this.assessmentStates[index];
-            console.log(queryParams);*/
-            this.router.navigate(['course-management', this.courseId, this.exercise.type! + '-exercises', this.exerciseId, 'submissions'], {
-                queryParams: { submissionFilter: index },
-            });
-        }
-        if (event.value && this.accountService.hasAnyAuthorityDirect([Authority.INSTRUCTOR])) {
-            this.navigationUtilService.routeInNewTab(['course-management', this.courseId, this.exercise.type! + '-exercises', this.exerciseId, 'submissions']);
-        }
+        });
+
+        this.navigationUtilService.routeInNewTab(route, { queryParams: { submissionFilter: index } });
     }
 
     sortSubmissionRows(correctionRound: number) {

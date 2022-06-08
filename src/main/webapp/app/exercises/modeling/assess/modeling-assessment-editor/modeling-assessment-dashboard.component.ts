@@ -96,6 +96,11 @@ export class ModelingAssessmentDashboardComponent extends AbstractAssessmentDash
             this.courseService.find(this.courseId).subscribe((res: HttpResponse<Course>) => {
                 this.course = res.body!;
             });
+            this.route.queryParams.subscribe((queryParams) => {
+                if (queryParams['submissionFilter']) {
+                    this.filterOption = Number(queryParams['submissionFilter']);
+                }
+            });
             this.exerciseId = params['exerciseId'];
             this.exerciseService.find(this.exerciseId).subscribe((res: HttpResponse<Exercise>) => {
                 if (res.body!.type === ExerciseType.MODELING) {
@@ -141,7 +146,11 @@ export class ModelingAssessmentDashboardComponent extends AbstractAssessmentDash
                         }
                     }
                 });
-                this.filteredSubmissions = this.submissions;
+                if (this.filterOption === undefined) {
+                    this.filteredSubmissions = this.submissions;
+                } else {
+                    this.applyChartFilter(this.submissions);
+                }
                 this.assessedSubmissions = this.submissions.filter((submission) => {
                     const result = getLatestSubmissionResult(submission);
                     setLatestSubmissionResult(submission, result);
