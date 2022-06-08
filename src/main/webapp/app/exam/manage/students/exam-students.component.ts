@@ -35,6 +35,8 @@ export class ExamStudentsComponent implements OnInit, OnDestroy {
     readonly ButtonSize = ButtonSize;
     readonly ActionType = ActionType;
 
+    static readonly cannotRegisterInstructorErrorKey = 'cannotRegisterInstructor';
+
     courseId: number;
     exam: Exam;
     allRegisteredUsers: User[] = [];
@@ -166,7 +168,7 @@ export class ExamStudentsComponent implements OnInit, OnDestroy {
                     this.flashRowClass(cssClasses.newlyRegistered);
                 },
                 error: (error: HttpErrorResponse) => {
-                    if (error.status === 403) {
+                    if (error.status === 403 && error.error.errorKey === ExamStudentsComponent.cannotRegisterInstructorErrorKey) {
                         this.onError(`artemisApp.exam.error.${error.error.errorKey}`);
                     }
                     this.isTransitioning = false;

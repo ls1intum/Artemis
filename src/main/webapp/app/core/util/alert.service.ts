@@ -9,6 +9,7 @@ import { captureException } from '@sentry/browser';
 import { faCheckCircle, faExclamationCircle, faExclamationTriangle, faInfoCircle, IconDefinition } from '@fortawesome/free-solid-svg-icons';
 import { HttpErrorResponse } from '@angular/common/http';
 import dayjs from 'dayjs';
+import { ExamStudentsComponent } from 'app/exam/manage/students/exam-students.component';
 
 export class AlertType {
     public static readonly SUCCESS = new AlertType(faCheckCircle, 'success', 'btn-success');
@@ -111,18 +112,16 @@ export class AlertService {
                     }
                     break;
 
-                case 403:
-                    // All access forbidden errors with additional identifier keys are handled by their own component
-                    if (httpErrorResponse.error && httpErrorResponse.error.title && !httpErrorResponse.error.errorKey) {
-                        this.addErrorAlert(httpErrorResponse.error.title, httpErrorResponse.error.message, httpErrorResponse.error.params);
-                    }
-                    break;
                 case 404:
                     // Disabled
                     break;
 
                 default:
                     if (httpErrorResponse.error && httpErrorResponse.error.title) {
+                        // To avoid displaying this alerts twice, we need to filter the received errors. In this case, we filter for the cannot register instructor error.
+                        if (httpErrorResponse.error.errorKey === ExamStudentsComponent.cannotRegisterInstructorErrorKey && httpErrorResponse.status === 403) {
+                            break;
+                        }
                         this.addErrorAlert(httpErrorResponse.error.title, httpErrorResponse.error.message, httpErrorResponse.error.params);
                     }
             }
