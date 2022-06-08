@@ -3,12 +3,12 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>${packageName}</groupId>
     <artifactId>${exerciseNamePomXml}-Tests</artifactId>
-    <!--non-sequential-start-->
+    <!--%non-sequential-start%-->
     <packaging>jar</packaging>
-    <!--non-sequential-stop-->
-    <!--sequential-start-->
+    <!--%non-sequential-stop%-->
+    <!--%sequential-start%-->
     <packaging>pom</packaging>
-    <!--sequential-stop-->
+    <!--%sequential-stop%-->
     <version>1.0</version>
     <name>${exerciseName} Tests</name>
 	<properties>
@@ -37,14 +37,14 @@
     </dependencies>
     <build>
         <sourceDirectory>${project.basedir}${studentWorkingDirectory}</sourceDirectory>
-        <!--non-sequential-start-->
+        <!--%non-sequential-start%-->
         <testSourceDirectory>${project.basedir}/test</testSourceDirectory>
         <testResources>
             <testResource>
                 <directory>${project.basedir}/test</directory>
             </testResource>
         </testResources>
-        <!--non-sequential-stop-->
+        <!--%non-sequential-stop%-->
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -136,14 +136,14 @@
                                 <file>${project.build.outputDirectory}/sun/</file>
                                 <file>${project.build.outputDirectory}/org/gradle/</file>
                                 <file>${project.build.outputDirectory}/worker/org/gradle/</file>
-                                <!--%record-testwise-coverage-start%-->
+                                <!--%%record-testwise-coverage-start%%-->
                                 <file>${project.build.outputDirectory}/com/squareup/</file>
                                 <file>${project.build.outputDirectory}/com/teamscale/</file>
                                 <file>${project.build.outputDirectory}/okhttp3/</file>
                                 <file>${project.build.outputDirectory}/okio/</file>
                                 <file>${project.build.outputDirectory}/retrofit2/</file>
                                 <file>${project.build.outputDirectory}/shadow/</file>
-                                <!--%record-testwise-coverage-stop%-->
+                                <!--%%record-testwise-coverage-stop%%-->
                             </files>
                         </requireFilesDontExist>
                     </rules>

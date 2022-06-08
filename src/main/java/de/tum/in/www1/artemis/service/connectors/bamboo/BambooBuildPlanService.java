@@ -329,11 +329,17 @@ public class BambooBuildPlanService {
             String goals = "clean test";
             if (recordTestwiseCoverage) {
                 // If a testwise coverage should be performed, a custom profile is used for the execution
-                goals += "-Pcoverage";
-                artifacts.add(new Artifact().name("testwiseCoverageReport").location("target/tia/reports").copyPattern("**testwise-coverage**.json"));
+                goals += " -Pcoverage";
+                artifacts.add(new Artifact().name("testwiseCoverageReport").location("target/tia/reports").copyPattern("tiaTests.json"));
             }
 
             defaultTasks.add(new MavenTask().goal(goals).jdk("JDK").executableLabel("Maven 3").description("Tests").hasTests(true));
+
+            // the report name of the artifact has to be renamed, since the name contains the latest timestamp and artifact pattern matching
+            // returns a folder of artifacts, instead of the individual artifact. The report has to be renamed after the build execution
+            if (recordTestwiseCoverage) {
+                defaultTasks.add(new ScriptTask().description("Move Report File").inlineBody("mv target/tia/reports/*/testwise-coverage-*.json target/tia/reports/tiaTests.json"));
+            }
         }
         else {
             // setting the permission as a final task is required as a workaround because the docker container runs as a root user
