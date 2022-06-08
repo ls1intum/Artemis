@@ -9,6 +9,7 @@ import { ArtemisProgrammingExerciseInstructionsRenderModule } from 'app/exercise
 import { ArtemisProgrammingAssessmentModule } from 'app/exercises/programming/assess/programming-assessment.module';
 import { ArtemisHeaderExercisePageWithDetailsModule } from 'app/exercises/shared/exercise-headers/exercise-headers.module';
 import { SubmissionResultStatusModule } from 'app/overview/submission-result-status.module';
+import { ArtemisExerciseHintParticipationModule } from 'app/exercises/shared/exercise-hint/participate/exercise-hint-participation.module';
 
 @NgModule({
     imports: [
@@ -21,6 +22,7 @@ import { SubmissionResultStatusModule } from 'app/overview/submission-result-sta
         ArtemisProgrammingAssessmentModule,
         ArtemisHeaderExercisePageWithDetailsModule,
         SubmissionResultStatusModule,
+        ArtemisExerciseHintParticipationModule,
     ],
     declarations: [CodeEditorStudentContainerComponent],
 })
