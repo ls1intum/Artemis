@@ -14,8 +14,6 @@
                 "editor": "Editor",
                 "ta": "Tutor",
                 "user": "Student",
-                "all": "All",
-                "none": "None",
                 "without": "No Role",
                 "withoutTooltip": "Select all users without any role"
             },
@@ -34,12 +32,12 @@
             "course": {
                 "title": "Course ({{ num }})",
                 "tooltip": "Filters the users according to their course affiliation",
-                "all": "All",
-                "none": "None",
                 "without": "No Course",
                 "withoutTooltip": "Select all users without any course"
             },
-            "apply": "Apply"
+            "apply": "Apply",
+            "all": "All",
+            "none": "None"
         },
         "home": {
             "title": "Users",
