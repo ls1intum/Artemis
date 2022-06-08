@@ -55,6 +55,11 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
     courseDTO: CourseManagementDetailViewDto;
     activeStudents: number[];
     course: Course;
+
+    public courseDescription: string | undefined;
+    public enableShowMore = false;
+    public longDescriptionShown = false;
+
     private eventSubscriber: Subscription;
 
     private dialogErrorSource = new Subject<string>();
@@ -123,6 +128,7 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
         // Get course first for basic course information
         this.courseService.find(courseId).subscribe((courseResponse) => {
             this.course = courseResponse.body!;
+            this.adjustCourseDescription();
         });
         // fetch statistics separately because it takes quite long for larger courses
         this.courseService.getCourseStatisticsForDetailView(courseId).subscribe({
@@ -150,5 +156,27 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
             error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
         });
         this.router.navigate(['/course-management']);
+    }
+
+    /**
+     * Toggle between showing the long and abbreviated course description
+     */
+    toggleCourseDescription() {
+        this.longDescriptionShown = !this.longDescriptionShown;
+        this.adjustCourseDescription();
+    }
+
+    /**
+     * Adjusts the course description and shows toggle buttons (if it is too long)
+     */
+    private adjustCourseDescription() {
+        if (this.course && this.course.description) {
+            this.enableShowMore = this.course.description.length > 50;
+            if (this.enableShowMore && !this.longDescriptionShown) {
+                this.courseDescription = this.course.description.slice(0, 50) + '…';
+            } else {
+                this.courseDescription = this.course.description;
+            }
+        }
     }
 }

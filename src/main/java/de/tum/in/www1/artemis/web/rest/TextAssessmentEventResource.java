@@ -52,7 +52,7 @@ public class TextAssessmentEventResource {
 
     /**
      * The text assessment analytics are enabled when the configuration info.text-assessment-analytics-enabled is set to true.
-     * A non existing entry or false mean that the text assessment analytics is not enabled
+     * A non-existing entry or false mean that the text assessment analytics is not enabled
      * @return whether the text assessment analytics are enabled or not
      */
     private boolean isTextAssessmentAnalyticsEnabled() {
@@ -60,7 +60,7 @@ public class TextAssessmentEventResource {
     }
 
     /**
-     * Get events/{courseId} : Retrieve all of the events from the 'text_assessment_event' table by course id
+     * Get events/{courseId} : Retrieve all the events from the 'text_assessment_event' table by course id
      * @param courseId the id of the course to filter by
      * @return returns a List of TextAssessmentEvent's
      */
@@ -109,7 +109,7 @@ public class TextAssessmentEventResource {
 
     /**
      * This method checks that the event parameter is valid.
-     * - The user id received should match the logged in users id.
+     * - The user id received should match the logged-in users id.
      * - The user should be at least tutor of the course
      * - The course id received should exist
      * - The exercise id received should be an exercise of the course.
@@ -121,7 +121,7 @@ public class TextAssessmentEventResource {
         User user = userRepository.getUserWithGroupsAndAuthorities();
 
         // make sure that the received event doesn't already have an ID
-        // reject if the logged in user id and received event user id do not match
+        // reject if the logged-in user id and received event user id do not match
         // make sure that the event submission id is not null
         if (event.getId() != null || !user.getId().equals(event.getUserId()) || event.getSubmissionId() == null) {
             return false;
