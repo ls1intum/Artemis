@@ -89,7 +89,7 @@ export class CourseDetailLineChartComponent extends ActiveStudentsChart implemen
         if the course has a start date and already ended
         (i.e. the time difference between today and the course end date is at least one week), we show the lifetime overview by default.
          */
-        if (this.course.startDate && this.currentOffsetToEndDate !== 0) {
+        if (this.course.startDate && !!this.currentOffsetToEndDate) {
             this.showLifetimeOverview = true;
             this.displayLifetimeOverview();
         } else {
