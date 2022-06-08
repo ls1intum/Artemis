@@ -60,7 +60,7 @@ describe('Text Submission Viewer Component', () => {
         });
 
         expect(textSubmissionService.getTextSubmission).toHaveBeenCalledWith(2);
-        expect(comp.isProgrammingExercise).toBe(false);
+        expect(comp.isProgrammingExercise).toBeFalse();
     });
 
     it('fetches a programming submission', () => {

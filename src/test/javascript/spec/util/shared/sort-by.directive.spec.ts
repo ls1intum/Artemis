@@ -120,7 +120,7 @@ describe('Directive: SortByDirective', () => {
 
         // THEN
         expect(component.predicate).toBe('name');
-        expect(component.ascending).toBe(false);
+        expect(component.ascending).toBeFalse();
         expect(sortByDirective.iconComponent?.icon).toBe(faSortDown);
         expect(component.transition).toHaveBeenCalledOnce();
     });

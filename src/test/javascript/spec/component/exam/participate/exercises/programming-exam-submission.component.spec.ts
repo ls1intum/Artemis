@@ -83,7 +83,7 @@ describe('ProgrammingExamSubmissionComponent', () => {
         expect(domainServiceSetDomainSpy).toHaveBeenCalledOnce();
         expect(domainServiceSetDomainSpy).toHaveBeenCalledWith([DomainType.PARTICIPATION, { exercise }]);
 
-        expect(component.repositoryIsLocked).toBe(false);
+        expect(component.repositoryIsLocked).toBeFalse();
         expect(component.getExercise()).toEqual(newExercise());
     });
 
@@ -102,7 +102,7 @@ describe('ProgrammingExamSubmissionComponent', () => {
         component.studentParticipation = newParticipation();
 
         component.onCommitStateChange(CommitState.UNDEFINED);
-        expect(component.hasSubmittedOnce).toBe(false);
+        expect(component.hasSubmittedOnce).toBeFalse();
 
         component.onCommitStateChange(CommitState.CLEAN);
 
@@ -121,7 +121,7 @@ describe('ProgrammingExamSubmissionComponent', () => {
         component.studentParticipation.submissions![0].isSynced = true;
         component.onFileChanged();
 
-        expect(component.studentParticipation.submissions![0].isSynced).toBe(false);
+        expect(component.studentParticipation.submissions![0].isSynced).toBeFalse();
     });
 
     it('should get submission', () => {
@@ -138,6 +138,6 @@ describe('ProgrammingExamSubmissionComponent', () => {
         exercise.allowOnlineEditor = false;
         component.exercise = exercise;
 
-        expect(component.hasUnsavedChanges()).toBe(false);
+        expect(component.hasUnsavedChanges()).toBeFalse();
     });
 });

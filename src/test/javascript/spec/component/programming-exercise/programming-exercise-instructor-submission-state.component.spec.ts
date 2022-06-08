@@ -163,12 +163,12 @@ describe('ProgrammingExerciseInstructorSubmissionStateComponent', () => {
         expect(getExerciseSubmissionStateStub).toHaveBeenCalledOnce();
         expect(getExerciseSubmissionStateStub).toHaveBeenCalledWith(exercise.id);
 
-        expect(comp.hasFailedSubmissions).toBe(false);
-        expect(comp.isBuildingFailedSubmissions).toBe(false);
+        expect(comp.hasFailedSubmissions).toBeFalse();
+        expect(comp.isBuildingFailedSubmissions).toBeFalse();
         expect(comp.buildingSummary).toEqual(compressedSummary);
 
         expect(getTriggerAllButton()).not.toBe(null);
-        expect(getTriggerAllButton().disabled).toBe(false);
+        expect(getTriggerAllButton().disabled).toBeFalse();
         expect(getTriggerFailedButton()).not.toBe(null);
         expect(getTriggerFailedButton().disabled).toBeTrue();
         expect(getBuildState()).not.toBe(null);
@@ -198,14 +198,14 @@ describe('ProgrammingExerciseInstructorSubmissionStateComponent', () => {
         expect(getExerciseSubmissionStateStub).toHaveBeenCalledWith(exercise.id);
 
         expect(comp.hasFailedSubmissions).toBeTrue();
-        expect(comp.isBuildingFailedSubmissions).toBe(false);
+        expect(comp.isBuildingFailedSubmissions).toBeFalse();
         expect(comp.buildingSummary).toEqual(compressedSummary);
 
         expect(getResultEtaContainer()).not.toBe(null);
         expect(getTriggerAllButton()).not.toBe(null);
-        expect(getTriggerAllButton().disabled).toBe(false);
+        expect(getTriggerAllButton().disabled).toBeFalse();
         expect(getTriggerFailedButton()).not.toBe(null);
-        expect(getTriggerFailedButton().disabled).toBe(false);
+        expect(getTriggerFailedButton().disabled).toBeFalse();
         expect(getBuildState()).not.toBe(null);
     }));
 
@@ -223,7 +223,7 @@ describe('ProgrammingExerciseInstructorSubmissionStateComponent', () => {
 
         const triggerButton = getTriggerFailedButton();
         expect(triggerButton).not.toBe(null);
-        expect(triggerButton.disabled).toBe(false);
+        expect(triggerButton.disabled).toBeFalse();
 
         // Button is clicked.
         triggerButton.click();
@@ -239,7 +239,7 @@ describe('ProgrammingExerciseInstructorSubmissionStateComponent', () => {
 
         fixture.detectChanges();
 
-        expect(comp.isBuildingFailedSubmissions).toBe(false);
+        expect(comp.isBuildingFailedSubmissions).toBeFalse();
     });
 
     it('should disable the trigger all button while a build is running and re-enable it when it is complete', fakeAsync(() => {
@@ -257,7 +257,7 @@ describe('ProgrammingExerciseInstructorSubmissionStateComponent', () => {
 
         fixture.detectChanges();
 
-        expect(getTriggerAllButton().disabled).toBe(false);
+        expect(getTriggerAllButton().disabled).toBeFalse();
 
         getBuildRunStateSubject.next(BuildRunState.RUNNING);
         fixture.detectChanges();
@@ -267,6 +267,6 @@ describe('ProgrammingExerciseInstructorSubmissionStateComponent', () => {
         getBuildRunStateSubject.next(BuildRunState.COMPLETED);
         fixture.detectChanges();
 
-        expect(getTriggerAllButton().disabled).toBe(false);
+        expect(getTriggerAllButton().disabled).toBeFalse();
     }));
 });

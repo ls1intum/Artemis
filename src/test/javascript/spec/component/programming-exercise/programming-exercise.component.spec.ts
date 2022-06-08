@@ -279,7 +279,7 @@ describe('ProgrammingExercise Management Component', () => {
 
             // THEN
             expect(comp.isExerciseSelected(programmingExercise)).toBeTrue();
-            expect(comp.isExerciseSelected(programmingExercise2)).toBe(false);
+            expect(comp.isExerciseSelected(programmingExercise2)).toBeFalse();
         });
     });
 });

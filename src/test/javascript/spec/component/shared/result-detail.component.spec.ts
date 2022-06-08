@@ -264,7 +264,7 @@ describe('ResultDetailComponent', () => {
 
         expect(getFeedbackDetailsForResultStub).not.toHaveBeenCalled();
         expect(comp.filteredFeedbackList).toEqual(expectedItems);
-        expect(comp.isLoading).toBe(false);
+        expect(comp.isLoading).toBeFalse();
     });
 
     it('should try to retrieve the feedbacks from the server if provided result does not have feedbacks', () => {
@@ -277,7 +277,7 @@ describe('ResultDetailComponent', () => {
         expect(getFeedbackDetailsForResultStub).toHaveBeenCalledOnce();
         expect(getFeedbackDetailsForResultStub).toHaveBeenCalledWith(comp.result.participation!.id!, comp.result.id);
         expect(comp.filteredFeedbackList).toIncludeSameMembers(expectedItems);
-        expect(comp.isLoading).toBe(false);
+        expect(comp.isLoading).toBeFalse();
     });
 
     it('should try to retrieve build logs if the exercise type is PROGRAMMING and no submission was provided.', () => {
@@ -288,7 +288,7 @@ describe('ResultDetailComponent', () => {
         expect(buildlogsStub).toHaveBeenCalledOnce();
         expect(buildlogsStub).toHaveBeenCalledWith(comp.result.participation!.id, comp.result.id);
         expect(comp.buildLogs).toBeArrayOfSize(0);
-        expect(comp.isLoading).toBe(false);
+        expect(comp.isLoading).toBeFalse();
     });
 
     it('should try to retrieve build logs if the exercise type is PROGRAMMING and a submission was provided which was marked with build failed.', () => {
@@ -300,7 +300,7 @@ describe('ResultDetailComponent', () => {
         expect(buildlogsStub).toHaveBeenCalledOnce();
         expect(buildlogsStub).toHaveBeenCalledWith(comp.result.participation!.id, comp.result.id);
         expect(comp.buildLogs).toBeArrayOfSize(0);
-        expect(comp.isLoading).toBe(false);
+        expect(comp.isLoading).toBeFalse();
     });
 
     it('should not try to retrieve build logs if the exercise type is not PROGRAMMING', () => {
@@ -311,7 +311,7 @@ describe('ResultDetailComponent', () => {
 
         expect(buildlogsStub).not.toHaveBeenCalled();
         expect(comp.feedbackList).toBe(undefined);
-        expect(comp.isLoading).toBe(false);
+        expect(comp.isLoading).toBeFalse();
     });
 
     it('should not try to retrieve build logs if submission was not marked with build failed', () => {
@@ -322,7 +322,7 @@ describe('ResultDetailComponent', () => {
 
         expect(buildlogsStub).not.toHaveBeenCalled();
         expect(comp.buildLogs).toBe(undefined);
-        expect(comp.isLoading).toBe(false);
+        expect(comp.isLoading).toBeFalse();
     });
 
     it('fetchBuildLogs should suppress 403 error', () => {
@@ -334,8 +334,8 @@ describe('ResultDetailComponent', () => {
 
         expect(buildlogsStub).toHaveBeenCalledOnce();
         expect(buildlogsStub).toHaveBeenCalledWith(comp.result.participation!.id, comp.result.id);
-        expect(comp.loadingFailed).toBe(false);
-        expect(comp.isLoading).toBe(false);
+        expect(comp.loadingFailed).toBeFalse();
+        expect(comp.isLoading).toBeFalse();
     });
 
     it('fetchBuildLogs should not suppress errors with status other than 403', () => {
@@ -348,7 +348,7 @@ describe('ResultDetailComponent', () => {
         expect(buildlogsStub).toHaveBeenCalledOnce();
         expect(buildlogsStub).toHaveBeenCalledWith(comp.result.participation!.id, comp.result.id);
         expect(comp.loadingFailed).toBeTrue();
-        expect(comp.isLoading).toBe(false);
+        expect(comp.isLoading).toBeFalse();
     });
 
     it('should show test names if showTestDetails is set to true', () => {
@@ -361,7 +361,7 @@ describe('ResultDetailComponent', () => {
 
         expect(getFeedbackDetailsForResultStub).not.toHaveBeenCalled();
         expect(comp.filteredFeedbackList).toEqual(expectedItems);
-        expect(comp.isLoading).toBe(false);
+        expect(comp.isLoading).toBeFalse();
     });
 
     it('should show a replacement title if automatic feedback is neither positive nor negative', () => {
@@ -584,7 +584,7 @@ describe('ResultDetailComponent', () => {
 
         expect(getFeedbackDetailsForResultStub).not.toHaveBeenCalled();
         expect(comp.filteredFeedbackList).toEqual([expectedFeedbackItem]);
-        expect(comp.isLoading).toBe(false);
+        expect(comp.isLoading).toBeFalse();
     };
 
     it('should filter the correct feedbacks when a filter is set', () => {
@@ -597,7 +597,7 @@ describe('ResultDetailComponent', () => {
 
         expect(getFeedbackDetailsForResultStub).not.toHaveBeenCalled;
         expect(comp.filteredFeedbackList).toEqual(expectedItems.filter((item) => item.type === FeedbackItemType.Test));
-        expect(comp.isLoading).toBe(false);
+        expect(comp.isLoading).toBeFalse();
     });
 
     it('should generate correct class names for feedback items', () => {
@@ -626,7 +626,7 @@ describe('ResultDetailComponent', () => {
         expect(comp.showScoreChartTooltip).toBeTrue();
 
         checkChartPreset(5, 5, '10', '5 of 6');
-        expect(comp.isLoading).toBe(false);
+        expect(comp.isLoading).toBeFalse();
 
         // test score exceeding exercise maxpoints
 
@@ -662,7 +662,7 @@ describe('ResultDetailComponent', () => {
         comp.onSelect(event);
 
         expect(comp.showOnlyPositiveFeedback).toBeTrue();
-        expect(comp.showOnlyNegativeFeedback).toBe(false);
+        expect(comp.showOnlyNegativeFeedback).toBeFalse();
         expect(comp.filteredFeedbackList).toEqual(currentlyVisibleItems);
 
         event.isPositive = false;
@@ -671,12 +671,12 @@ describe('ResultDetailComponent', () => {
         comp.onSelect(event);
 
         expect(comp.showOnlyNegativeFeedback).toBeTrue();
-        expect(comp.showOnlyPositiveFeedback).toBe(false);
+        expect(comp.showOnlyPositiveFeedback).toBeFalse();
         expect(comp.filteredFeedbackList).toEqual(currentlyVisibleItems);
 
         comp.resetChartFilter();
 
-        expect(comp.showOnlyNegativeFeedback).toBe(false);
+        expect(comp.showOnlyNegativeFeedback).toBeFalse();
         expect(comp.filteredFeedbackList).toEqual(expectedItems);
     });
 

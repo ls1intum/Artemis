@@ -125,7 +125,7 @@ describe('ButtonComponent', () => {
 
         const button = getButton();
         expect(button).not.toBe(null);
-        expect(button.disabled).toBe(false);
+        expect(button.disabled).toBeFalse();
         button.click();
         tick();
 

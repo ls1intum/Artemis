@@ -143,7 +143,7 @@ describe('ComplaintsFormComponent', () => {
         tick(100);
 
         expect(responseTextArea.maxLength).toBe(20);
-        expect(complaintButton.disabled).toBe(false);
+        expect(complaintButton.disabled).toBeFalse();
     }));
 
     it('submit complaint button should be disabled', fakeAsync(() => {

@@ -158,7 +158,7 @@ describe('Exercise Scores Component', () => {
         expect(component.isLoading).toBeTrue();
         tick();
         expect(component.resultCriteria.filterProp).toBe(component.FilterProp.SUCCESSFUL);
-        expect(component.isLoading).toBe(false);
+        expect(component.isLoading).toBeFalse();
     }));
 
     it('should filter result prop "successful"', () => {
@@ -172,13 +172,13 @@ describe('Exercise Scores Component', () => {
         component.resultCriteria.filterProp = component.FilterProp.UNSUCCESSFUL;
         result.successful = true;
 
-        expect(component.filterResultByProp(result)).toBe(false);
+        expect(component.filterResultByProp(result)).toBeFalse();
     });
 
     it('should filter result prop "build failed"', () => {
         component.resultCriteria.filterProp = component.FilterProp.BUILD_FAILED;
 
-        expect(component.filterResultByProp(result)).toBe(false);
+        expect(component.filterResultByProp(result)).toBeFalse();
     });
 
     it('should filter result prop "manual"', () => {
@@ -190,7 +190,7 @@ describe('Exercise Scores Component', () => {
     it('should filter result prop "automatic"', () => {
         component.resultCriteria.filterProp = component.FilterProp.AUTOMATIC;
 
-        expect(component.filterResultByProp(result)).toBe(false);
+        expect(component.filterResultByProp(result)).toBeFalse();
     });
 
     it('should filter result prop default value', () => {
@@ -284,7 +284,7 @@ describe('Exercise Scores Component', () => {
         expect(resultServiceStub).toHaveBeenCalledOnce();
         expect(resultServiceStub).toHaveBeenCalledWith(component.exercise);
         expect(component.results).toEqual([result]);
-        expect(component.isLoading).toBe(false);
+        expect(component.isLoading).toBeFalse();
     });
 
     it('should format date correctly', () => {

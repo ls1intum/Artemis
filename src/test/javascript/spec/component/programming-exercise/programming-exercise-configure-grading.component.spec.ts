@@ -530,7 +530,7 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
         updateTestCasesStub.mockReturnValue(of({ ...orderedTests[0], afterDueDate: true }));
         const saveTestCases = debugElement.query(By.css(saveTableButton));
         expect(saveTestCases).not.toBe(null);
-        expect(saveTestCases.nativeElement.disabled).toBe(false);
+        expect(saveTestCases.nativeElement.disabled).toBeFalse();
         saveTestCases.nativeElement.click();
 
         fixture.detectChanges();

@@ -267,8 +267,8 @@ describe('ComplaintsForTutorComponent', () => {
 
         const rejectComplaintButton = complaintForTutorComponentFixture.debugElement.query(By.css('#rejectComplaintButton')).nativeElement;
         const acceptComplaintButton = complaintForTutorComponentFixture.debugElement.query(By.css('#acceptComplaintButton')).nativeElement;
-        expect(rejectComplaintButton.disabled).toBe(false);
-        expect(acceptComplaintButton.disabled).toBe(false);
+        expect(rejectComplaintButton.disabled).toBeFalse();
+        expect(acceptComplaintButton.disabled).toBeFalse();
 
         responseTextArea.value = responseTextArea.value + 'A';
         expect(responseTextArea.value.length).toBe(27);

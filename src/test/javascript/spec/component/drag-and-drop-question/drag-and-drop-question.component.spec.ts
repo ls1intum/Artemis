@@ -135,7 +135,7 @@ describe('DragAndDropQuestionComponent', () => {
     it('should hide sample solutions', () => {
         comp.showingSampleSolution = true;
         comp.hideSampleSolution();
-        expect(comp.showingSampleSolution).toBe(false);
+        expect(comp.showingSampleSolution).toBeFalse();
     });
 
     it('should return unassigned drag items', () => {
@@ -150,7 +150,7 @@ describe('DragAndDropQuestionComponent', () => {
         const { dropLocation: dropLocation1, mapping: mapping1 } = getDropLocationMappingAndItem();
         const { dropLocation: dropLocation2, mapping: mapping2, dragItem: dragItem2 } = getDropLocationMappingAndItem();
         comp.mappings = [mapping1, mapping2];
-        expect(comp.invalidDragItemForDropLocation(dropLocation1)).toBe(false);
+        expect(comp.invalidDragItemForDropLocation(dropLocation1)).toBeFalse();
         dragItem2.invalid = true;
         expect(comp.invalidDragItemForDropLocation(dropLocation2)).toBeTrue();
     });

@@ -181,7 +181,7 @@ describe('ExerciseScoresChartComponent', () => {
             component.toggleType(type);
 
             expect(component.numberOfActiveFilters).toBe(4 - index);
-            expect(component.chartFilter.get(type)).toBe(false);
+            expect(component.chartFilter.get(type)).toBeFalse();
 
             component.ngxData.forEach((line: any) => {
                 expect(line.series.filter((exerciseEntry: any) => exerciseEntry.exerciseType === exerciseDTOs[index].exerciseType)).toHaveLength(0);

@@ -76,8 +76,8 @@ describe('CodeEditorAceComponent', () => {
 
         comp.isLoading = false;
         fixture.detectChanges();
-        expect(aceEditor.nativeElement.hasAttribute('hidden')).toBe(false);
-        expect(comp.editor.getEditor().getReadOnly()).toBe(false);
+        expect(aceEditor.nativeElement.hasAttribute('hidden')).toBeFalse();
+        expect(comp.editor.getEditor().getReadOnly()).toBeFalse();
     });
 
     it('if a file is selected and the component is not loading a file from server, the editor should be usable', () => {
@@ -87,8 +87,8 @@ describe('CodeEditorAceComponent', () => {
         const placeholder = debugElement.query(By.css('#no-file-selected'));
         expect(placeholder).toBe(null);
         const aceEditor = debugElement.query(By.css('#ace-code-editor'));
-        expect(aceEditor.nativeElement.hasAttribute('hidden')).toBe(false);
-        expect(comp.editor.getEditor().getReadOnly()).toBe(false);
+        expect(aceEditor.nativeElement.hasAttribute('hidden')).toBeFalse();
+        expect(comp.editor.getEditor().getReadOnly()).toBeFalse();
     });
 
     it('should not load the file from server on selected file change if the file is already in session', () => {
@@ -109,7 +109,7 @@ describe('CodeEditorAceComponent', () => {
         loadFileSubject.next({ fileName: selectedFile, fileContent: 'lorem ipsum' });
         fixture.detectChanges();
 
-        expect(comp.isLoading).toBe(false);
+        expect(comp.isLoading).toBeFalse();
         expect(initEditorAfterFileChangeSpy).toHaveBeenCalledWith();
     });
 

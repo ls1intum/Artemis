@@ -58,8 +58,8 @@ describe('NotificationSettingsComponent', () => {
                 id: settingId,
             },
         };
-        expect(comp.settingsChanged).toBe(false);
-        expect(notificationSettingA.changed).toBe(false);
+        expect(comp.settingsChanged).toBeFalse();
+        expect(notificationSettingA.changed).toBeFalse();
 
         comp.toggleSetting(event, NotificationSettingsCommunicationChannel.WEBAPP);
 

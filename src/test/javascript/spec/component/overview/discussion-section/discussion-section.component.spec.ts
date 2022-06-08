@@ -181,9 +181,9 @@ describe('PageDiscussionSectionComponent', () => {
         component.exercise = metisExercise;
         component.ngOnInit();
         tick();
-        expect(component.formGroup.get('filterToUnresolved')?.value).toBe(false);
-        expect(component.formGroup.get('filterToOwn')?.value).toBe(false);
-        expect(component.formGroup.get('filterToAnsweredOrReacted')?.value).toBe(false);
+        expect(component.formGroup.get('filterToUnresolved')?.value).toBeFalse();
+        expect(component.formGroup.get('filterToOwn')?.value).toBeFalse();
+        expect(component.formGroup.get('filterToAnsweredOrReacted')?.value).toBeFalse();
         fixture.detectChanges();
         const searchInput = getElement(fixture.debugElement, 'input[name=searchText]');
         expect(searchInput.textContent).toBe('');

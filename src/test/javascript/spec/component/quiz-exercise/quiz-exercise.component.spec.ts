@@ -320,7 +320,7 @@ describe('QuizExercise Management Component', () => {
 
     it('Should return quiz is not over', () => {
         quizExercise.quizEnded = false;
-        expect(comp.quizIsOver(quizExercise)).toBe(false);
+        expect(comp.quizIsOver(quizExercise)).toBeFalse();
     });
 
     it('Should return quiz id', () => {

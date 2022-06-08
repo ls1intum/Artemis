@@ -624,7 +624,7 @@ describe('ExamScoresComponent', () => {
 
         expect(comp.gradingScaleExists).toBeTrue();
         expect(comp.gradingScale).toEqual(gradingScale);
-        expect(comp.isBonus).toBe(false);
+        expect(comp.isBonus).toBeFalse();
     });
 
     it('should filter non-empty submissions', () => {
@@ -815,7 +815,7 @@ describe('ExamScoresComponent', () => {
 
         comp.toggleMedian(MedianType.PASSED);
 
-        expect(comp.showPassedMedian).toBe(false);
+        expect(comp.showPassedMedian).toBeFalse();
 
         comp.toggleMedian(MedianType.OVERALL);
 
@@ -825,7 +825,7 @@ describe('ExamScoresComponent', () => {
         comp.toggleMedian(MedianType.PASSED);
 
         expect(comp.showPassedMedian).toBeTrue();
-        expect(comp.showOverallMedian).toBe(false);
+        expect(comp.showOverallMedian).toBeFalse();
     });
 
     it('should return data label correctly if noOfExamsFiltered is 0', () => {

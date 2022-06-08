@@ -158,7 +158,7 @@ describe('ListOfComplaintsComponent', () => {
             comp.loadComplaints();
 
             expect(comp.complaintsToShow).toIncludeSameMembers([complaint3]);
-            expect(comp.hasStudentInformation).toBe(false);
+            expect(comp.hasStudentInformation).toBeFalse();
         });
 
         it('process complaints with student information', () => {
@@ -181,7 +181,7 @@ describe('ListOfComplaintsComponent', () => {
         const freeComplaints = [complaint3, complaint4];
         findAllByCourseIdStub.mockReturnValue(of({ body: complaints } as EntityResponseTypeArray));
         comp.loadComplaints();
-        expect(comp.showAddressedComplaints).toBe(false);
+        expect(comp.showAddressedComplaints).toBeFalse();
         expect(comp.complaintsToShow).toIncludeSameMembers(freeComplaints);
 
         comp.triggerAddressedComplaints();
@@ -191,7 +191,7 @@ describe('ListOfComplaintsComponent', () => {
 
         comp.triggerAddressedComplaints();
 
-        expect(comp.showAddressedComplaints).toBe(false);
+        expect(comp.showAddressedComplaints).toBeFalse();
         expect(comp.complaintsToShow).toIncludeSameMembers(freeComplaints);
     });
 

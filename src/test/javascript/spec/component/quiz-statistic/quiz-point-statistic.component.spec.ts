@@ -184,7 +184,7 @@ describe('QuizExercise Point Statistic Component', () => {
             // check
             expect(routerSpy).not.toHaveBeenCalled();
             expect(comp.quizExercise).toEqual(quizExercise);
-            expect(comp.waitingForQuizStart).toBe(false);
+            expect(comp.waitingForQuizStart).toBeFalse();
             expect(loadDataSpy).toHaveBeenCalled();
         });
     });

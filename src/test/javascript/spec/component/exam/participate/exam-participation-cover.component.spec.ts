@@ -121,11 +121,11 @@ describe('ExamParticipationCoverComponent', () => {
 
         component.startView = true;
         component.updateConfirmation();
-        expect(component.startEnabled).toBe(false);
+        expect(component.startEnabled).toBeFalse();
 
         component.startView = false;
         component.updateConfirmation();
-        expect(component.endEnabled).toBe(false);
+        expect(component.endEnabled).toBeFalse();
     });
 
     it('should start exam', fakeAsync(() => {
@@ -207,7 +207,7 @@ describe('ExamParticipationCoverComponent', () => {
     it('should get start button enabled and end button enabled', () => {
         fixture.detectChanges();
         component.testRun = true;
-        expect(component.startButtonEnabled).toBe(false);
+        expect(component.startButtonEnabled).toBeFalse();
 
         const now = dayjs();
         jest.spyOn(artemisServerDateService, 'now').mockReturnValue(now);
@@ -237,12 +237,12 @@ describe('ExamParticipationCoverComponent', () => {
         component.confirmed = true;
         component.exam.visibleDate = dayjs().subtract(1, 'hours');
         component.exam.visibleDate = dayjs().add(1, 'hours');
-        expect(component.startButtonEnabled).toBe(false);
+        expect(component.startButtonEnabled).toBeFalse();
     });
 
     it('should get whether student failed to submit', () => {
         component.testRun = true;
-        expect(component.studentFailedToSubmit).toBe(false);
+        expect(component.studentFailedToSubmit).toBeFalse();
 
         component.testRun = false;
         const startDate = dayjs();

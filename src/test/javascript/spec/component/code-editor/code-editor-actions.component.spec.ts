@@ -174,12 +174,12 @@ describe('CodeEditorActionsComponent', () => {
         commitStub.mockReturnValue(commitObservable);
 
         const commitButton = fixture.debugElement.query(By.css('#submit_button'));
-        expect(commitButton.nativeElement.disabled).toBe(false);
+        expect(commitButton.nativeElement.disabled).toBeFalse();
 
         // start commit, wait for result
         commitButton.nativeElement.click();
         expect(commitStub).toHaveBeenNthCalledWith(1);
-        expect(comp.isBuilding).toBe(false);
+        expect(comp.isBuilding).toBeFalse();
         expect(comp.commitState).toEqual(CommitState.COMMITTING);
 
         fixture.detectChanges();
@@ -191,7 +191,7 @@ describe('CodeEditorActionsComponent', () => {
         expect(comp.commitState).toEqual(CommitState.CLEAN);
 
         fixture.detectChanges();
-        expect(commitButton.nativeElement.disabled).toBe(false);
+        expect(commitButton.nativeElement.disabled).toBeFalse();
     });
 
     it('should commit if no unsaved changes exist and emit an error on error response', () => {
@@ -206,12 +206,12 @@ describe('CodeEditorActionsComponent', () => {
         commitStub.mockReturnValue(commitObservable);
 
         const commitButton = fixture.debugElement.query(By.css('#submit_button'));
-        expect(commitButton.nativeElement.disabled).toBe(false);
+        expect(commitButton.nativeElement.disabled).toBeFalse();
 
         // start commit, wait for result
         commitButton.nativeElement.click();
         expect(commitStub).toHaveBeenNthCalledWith(1);
-        expect(comp.isBuilding).toBe(false);
+        expect(comp.isBuilding).toBeFalse();
         expect(comp.commitState).toEqual(CommitState.COMMITTING);
 
         fixture.detectChanges();
@@ -219,12 +219,12 @@ describe('CodeEditorActionsComponent', () => {
 
         // commit result mockReturnValue an error
         commitObservable.error('error!');
-        expect(comp.isBuilding).toBe(false);
+        expect(comp.isBuilding).toBeFalse();
         expect(comp.commitState).toEqual(CommitState.UNCOMMITTED_CHANGES);
         expect(onErrorSpy).toHaveBeenNthCalledWith(1, 'commitFailed');
 
         fixture.detectChanges();
-        expect(commitButton.nativeElement.disabled).toBe(false);
+        expect(commitButton.nativeElement.disabled).toBeFalse();
     });
 
     it('should not commit if unsavedFiles exist, instead should save files with commit set to true', fakeAsync(() => {
@@ -241,7 +241,7 @@ describe('CodeEditorActionsComponent', () => {
         saveChangedFilesStub.mockReturnValue(saveObservable);
 
         const commitButton = fixture.debugElement.query(By.css('#submit_button'));
-        expect(commitButton.nativeElement.disabled).toBe(false);
+        expect(commitButton.nativeElement.disabled).toBeFalse();
 
         // unsaved changes exist, needs to save files first
         commitButton.nativeElement.click();
@@ -265,7 +265,7 @@ describe('CodeEditorActionsComponent', () => {
         expect(comp.commitState).toEqual(CommitState.CLEAN);
 
         fixture.detectChanges();
-        expect(commitButton.nativeElement.disabled).toBe(false);
+        expect(commitButton.nativeElement.disabled).toBeFalse();
 
         fixture.destroy();
         flush();

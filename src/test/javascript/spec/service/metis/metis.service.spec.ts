@@ -291,7 +291,7 @@ describe('Metis Service', () => {
     it('should determine that metis user is not author of post', () => {
         metisServiceUserStub.mockReturnValue(metisUser2);
         const metisUserIsAuthorOfPostingReturn = metisService.metisUserIsAuthorOfPosting(post);
-        expect(metisUserIsAuthorOfPostingReturn).toBe(false);
+        expect(metisUserIsAuthorOfPostingReturn).toBeFalse();
     });
 
     it('should set course information correctly and invoke an update of the post tags in this course', () => {

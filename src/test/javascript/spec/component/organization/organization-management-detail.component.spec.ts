@@ -144,8 +144,8 @@ describe('OrganizationManagementDetailComponent', () => {
                 { id: user1.id, login: user1.login },
                 { id: user2.id, login: user2.login },
             ]);
-            expect(component.searchNoResults).toBe(false);
-            expect(component.searchFailed).toBe(false);
+            expect(component.searchNoResults).toBeFalse();
+            expect(component.searchFailed).toBeFalse();
         });
 
         tick();
@@ -185,8 +185,8 @@ describe('OrganizationManagementDetailComponent', () => {
 
         result.subscribe((a) => {
             expect(a).toStrictEqual([]);
-            expect(component.searchNoResults).toBe(false);
-            expect(component.searchFailed).toBe(false);
+            expect(component.searchNoResults).toBeFalse();
+            expect(component.searchFailed).toBeFalse();
         });
 
         tick();
@@ -202,7 +202,7 @@ describe('OrganizationManagementDetailComponent', () => {
         result.subscribe((a) => {
             expect(a).toStrictEqual([]);
             expect(component.searchNoResults).toBeTrue();
-            expect(component.searchFailed).toBe(false);
+            expect(component.searchFailed).toBeFalse();
         });
 
         tick();
@@ -217,7 +217,7 @@ describe('OrganizationManagementDetailComponent', () => {
 
         result.subscribe((a) => {
             expect(a).toStrictEqual([]);
-            expect(component.searchNoResults).toBe(false);
+            expect(component.searchNoResults).toBeFalse();
             expect(component.searchFailed).toBeTrue();
         });
 

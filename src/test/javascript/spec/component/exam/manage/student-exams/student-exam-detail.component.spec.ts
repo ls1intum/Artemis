@@ -201,7 +201,7 @@ describe('StudentExamDetailComponent', () => {
 
         studentExamDetailComponent.saveWorkingTime();
         expect(studentExamSpy).toHaveBeenCalledOnce();
-        expect(studentExamDetailComponent.isSavingWorkingTime).toBe(false);
+        expect(studentExamDetailComponent.isSavingWorkingTime).toBeFalse();
         expect(course.id).toBe(1);
         expect(studentExamDetailComponent.achievedTotalPoints).toBe(40);
         expect(studentExamDetailComponent.maxTotalPoints).toBe(100);
@@ -214,7 +214,7 @@ describe('StudentExamDetailComponent', () => {
         studentExamDetailComponent.saveWorkingTime();
         studentExamDetailComponent.saveWorkingTime();
         expect(studentExamSpy).toHaveBeenCalledTimes(3);
-        expect(studentExamDetailComponent.isSavingWorkingTime).toBe(false);
+        expect(studentExamDetailComponent.isSavingWorkingTime).toBeFalse();
         expect(course.id).toBe(1);
         expect(studentExamDetailComponent.achievedTotalPoints).toBe(40);
         expect(studentExamDetailComponent.maxTotalPoints).toBe(100);
@@ -230,7 +230,7 @@ describe('StudentExamDetailComponent', () => {
         studentExamDetailComponent.studentExam = studentExam;
 
         studentExamDetailComponent.studentExam.submitted = false;
-        expect(studentExamDetailComponent.isFormDisabled()).toBe(false);
+        expect(studentExamDetailComponent.isFormDisabled()).toBeFalse();
 
         studentExamDetailComponent.studentExam.submitted = true;
         expect(studentExamDetailComponent.isFormDisabled()).toBeTrue();
@@ -241,7 +241,7 @@ describe('StudentExamDetailComponent', () => {
         studentExamDetailComponent.studentExam = studentExam;
 
         studentExamDetailComponent.studentExam.exam!.visibleDate = dayjs().add(1, 'hour');
-        expect(studentExamDetailComponent.isFormDisabled()).toBe(false);
+        expect(studentExamDetailComponent.isFormDisabled()).toBeFalse();
 
         studentExamDetailComponent.studentExam.exam!.visibleDate = dayjs().subtract(1, 'hour');
         expect(studentExamDetailComponent.isFormDisabled()).toBeTrue();
@@ -258,13 +258,13 @@ describe('StudentExamDetailComponent', () => {
     it('should get examIsOver', () => {
         studentExamDetailComponent.studentExam = studentExam;
         studentExam.exam!.gracePeriod = 100;
-        expect(studentExamDetailComponent.examIsOver()).toBe(false);
+        expect(studentExamDetailComponent.examIsOver()).toBeFalse();
         studentExam.exam!.endDate = dayjs().add(-20, 'seconds');
-        expect(studentExamDetailComponent.examIsOver()).toBe(false);
+        expect(studentExamDetailComponent.examIsOver()).toBeFalse();
         studentExam.exam!.endDate = dayjs().add(-200, 'seconds');
         expect(studentExamDetailComponent.examIsOver()).toBeTrue();
         studentExam.exam = undefined;
-        expect(studentExamDetailComponent.examIsOver()).toBe(false);
+        expect(studentExamDetailComponent.examIsOver()).toBeFalse();
     });
 
     it('should toggle to unsubmitted', () => {

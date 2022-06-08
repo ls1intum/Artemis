@@ -48,7 +48,7 @@ describe('AccountService', () => {
         getStub = jest.spyOn(httpService, 'get');
 
         expect(accountService.userIdentity).toBe(undefined);
-        expect(accountService.isAuthenticated()).toBe(false);
+        expect(accountService.isAuthenticated()).toBeFalse();
     });
 
     afterEach(() => {
@@ -117,14 +117,14 @@ describe('AccountService', () => {
         it.each(authorities)('should return false if not authenticated, no user id and no authorities are set', async (authority: Authority) => {
             usedAuthorities.push(authority);
 
-            await expect(accountService.hasAnyAuthority(usedAuthorities)).resolves.toBe(false);
+            await expect(accountService.hasAnyAuthority(usedAuthorities)).resolves.toBeFalse();
         });
 
         it.each(authorities)('should return false if authenticated, user id but no authorities are set', async (authority: Authority) => {
             accountService.userIdentity = user;
             usedAuthorities.push(authority);
 
-            await expect(accountService.hasAnyAuthority(usedAuthorities)).resolves.toBe(false);
+            await expect(accountService.hasAnyAuthority(usedAuthorities)).resolves.toBeFalse();
         });
 
         it.each(authorities)('should return true if user is required', async (authority: Authority) => {
@@ -144,11 +144,11 @@ describe('AccountService', () => {
             const index = authorities.indexOf(authority);
             accountService.userIdentity = { id: index + 1, groups: ['USER'], authorities: [authorities[(index + 1) % 5]] } as User;
 
-            await expect(accountService.hasAnyAuthority([authority])).resolves.toBe(false);
+            await expect(accountService.hasAnyAuthority([authority])).resolves.toBeFalse();
         });
 
         it.each(authorities)('should return false if not authenticated', async (authority: Authority) => {
-            await expect(accountService.hasAuthority(authority)).resolves.toBe(false);
+            await expect(accountService.hasAuthority(authority)).resolves.toBeFalse();
         });
     });
 
@@ -157,21 +157,21 @@ describe('AccountService', () => {
         it.each(groups)('should return false if not authenticated', (group: string) => {
             result = accountService.hasGroup(group);
 
-            expect(result).toBe(false);
+            expect(result).toBeFalse();
         });
 
         it.each(groups)('should return false if no authorities are set', (group: string) => {
             accountService.userIdentity = user;
             result = accountService.hasGroup(group);
 
-            expect(result).toBe(false);
+            expect(result).toBeFalse();
         });
 
         it.each(groups)('should return false if no groups are set', (group: string) => {
             accountService.userIdentity = { id: 10, authorities } as User;
             result = accountService.hasGroup(group);
 
-            expect(result).toBe(false);
+            expect(result).toBeFalse();
         });
 
         it.each(groups)('should return false if group does not match', (group: string) => {
@@ -180,7 +180,7 @@ describe('AccountService', () => {
 
             result = accountService.hasGroup(group);
 
-            expect(result).toBe(false);
+            expect(result).toBeFalse();
         });
 
         it.each(groups)('should return true if group matchs', (group: string) => {
@@ -198,7 +198,7 @@ describe('AccountService', () => {
 
             result = accountService.isAtLeastTutorInCourse(course);
 
-            expect(result).toBe(false);
+            expect(result).toBeFalse();
         });
 
         it.each(['TA', 'EDITOR', 'INSTRUCTOR'])('should return true if user is tutor, editor or instructor', (group: string) => {
@@ -224,7 +224,7 @@ describe('AccountService', () => {
 
             result = accountService.isAtLeastEditorInCourse(course);
 
-            expect(result).toBe(false);
+            expect(result).toBeFalse();
         });
 
         it.each(['EDITOR', 'INSTRUCTOR'])('should return true if user is editor or instructor', (group: string) => {
@@ -250,7 +250,7 @@ describe('AccountService', () => {
 
             result = accountService.isAtLeastInstructorInCourse(course);
 
-            expect(result).toBe(false);
+            expect(result).toBeFalse();
         });
 
         it('should return true if user is instructor', () => {
@@ -276,11 +276,11 @@ describe('AccountService', () => {
 
             result = accountService.isAtLeastTutorForExercise(exercise);
 
-            expect(result).toBe(false);
+            expect(result).toBeFalse();
 
             result = accountService.isAtLeastTutorForExercise(examExercise);
 
-            expect(result).toBe(false);
+            expect(result).toBeFalse();
         });
 
         it.each(['TA', 'EDITOR', 'INSTRUCTOR'])('should return true if user is tutor, editor or instructor', (group: string) => {
@@ -314,11 +314,11 @@ describe('AccountService', () => {
 
             result = accountService.isAtLeastEditorForExercise(exercise);
 
-            expect(result).toBe(false);
+            expect(result).toBeFalse();
 
             result = accountService.isAtLeastEditorForExercise(examExercise);
 
-            expect(result).toBe(false);
+            expect(result).toBeFalse();
         });
 
         it.each(['EDITOR', 'INSTRUCTOR'])('should return true if user is editor or instructor', (group: string) => {
@@ -352,11 +352,11 @@ describe('AccountService', () => {
 
             result = accountService.isAtLeastInstructorForExercise(exercise);
 
-            expect(result).toBe(false);
+            expect(result).toBeFalse();
 
             result = accountService.isAtLeastInstructorForExercise(examExercise);
 
-            expect(result).toBe(false);
+            expect(result).toBeFalse();
         });
 
         it('should return true if user is editor or instructor', () => {
@@ -390,7 +390,7 @@ describe('AccountService', () => {
 
             result = accountService.isAdmin();
 
-            expect(result).toBe(false);
+            expect(result).toBeFalse();
         });
 
         it('should return true if user is system admin', () => {
@@ -439,7 +439,7 @@ describe('AccountService', () => {
 
             result = accountService.isOwnerOfParticipation(participation);
 
-            expect(result).toBe(false);
+            expect(result).toBeFalse();
         });
 
         it('should return true if student is owner', () => {
@@ -457,7 +457,7 @@ describe('AccountService', () => {
 
             result = accountService.isOwnerOfParticipation(participation);
 
-            expect(result).toBe(false);
+            expect(result).toBeFalse();
         });
 
         it('should return true if student is part of the team', () => {

@@ -96,11 +96,11 @@ describe('ExamInformationComponent', () => {
         component.exam = exam;
         fixture.detectChanges();
         expect(fixture).not.toBeUndefined();
-        expect(component.isExamOverMultipleDays).toBe(false);
+        expect(component.isExamOverMultipleDays).toBeFalse();
 
         component.studentExam = studentExam;
         fixture.detectChanges();
         expect(fixture).not.toBeUndefined();
-        expect(component.isExamOverMultipleDays).toBe(false);
+        expect(component.isExamOverMultipleDays).toBeFalse();
     });
 });

@@ -140,8 +140,8 @@ describe('Plagiarism Cases Student View Component', () => {
 
     it('should check if student has responded for a plagiarism case', () => {
         expect(component.hasStudentAnswer(plagiarismCase1)).toBeTrue();
-        expect(component.hasStudentAnswer(plagiarismCase2)).toBe(false);
-        expect(component.hasStudentAnswer(plagiarismCase3)).toBe(false);
+        expect(component.hasStudentAnswer(plagiarismCase2)).toBeFalse();
+        expect(component.hasStudentAnswer(plagiarismCase3)).toBeFalse();
     });
 
     it('should export plagiarism cases as CSV', () => {

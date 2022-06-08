@@ -202,7 +202,7 @@ describe('Course Management Update Component', () => {
             // THEN
             expect(updateStub).toHaveBeenCalledOnce();
             expect(updateStub).toHaveBeenCalledWith({ ...entity });
-            expect(comp.isSaving).toBe(false);
+            expect(comp.isSaving).toBeFalse();
         }));
 
         it('Should call create service on save for new entity', fakeAsync(() => {
@@ -235,7 +235,7 @@ describe('Course Management Update Component', () => {
             // THEN
             expect(createStub).toHaveBeenCalledOnce();
             expect(createStub).toHaveBeenCalledWith({ ...entity });
-            expect(comp.isSaving).toBe(false);
+            expect(comp.isSaving).toBeFalse();
         }));
     });
 
@@ -266,7 +266,7 @@ describe('Course Management Update Component', () => {
 
     describe('imageLoaded', () => {
         it('should show cropper', () => {
-            expect(comp.showCropper).toBe(false);
+            expect(comp.showCropper).toBeFalse();
             comp.imageLoaded();
             expect(comp.showCropper).toBeTrue();
         });
@@ -287,7 +287,7 @@ describe('Course Management Update Component', () => {
             const file = base64StringToBlob(croppedImage, 'image/*');
             file['name'] = comp.courseImageFileName;
             expect(uploadStub.mock.calls[0][1]).toBe(comp.courseImageFileName);
-            expect(comp.showCropper).toBe(false);
+            expect(comp.showCropper).toBeFalse();
         });
         it('should set image name to course icon if upload fails', () => {
             uploadStub.mockRejectedValue({} as FileUploadResponse);
@@ -296,7 +296,7 @@ describe('Course Management Update Component', () => {
             comp.uploadCourseImage();
             expect(uploadStub.mock.calls[0][1]).toBe(comp.courseImageFileName);
             expect(comp.courseImageFileName).toBe(comp.course.courseIcon);
-            expect(comp.showCropper).toBe(false);
+            expect(comp.showCropper).toBeFalse();
         });
     });
 
@@ -309,7 +309,7 @@ describe('Course Management Update Component', () => {
             });
             expect(comp.courseForm.controls['presentationScore'].disabled).toBeTrue();
             comp.changePresentationScoreInput();
-            expect(comp.courseForm.controls['presentationScore'].disabled).toBe(false);
+            expect(comp.courseForm.controls['presentationScore'].disabled).toBeFalse();
             expect(comp.presentationScoreEnabled).toBeTrue();
         });
         it('should reset if control has value', () => {
@@ -317,11 +317,11 @@ describe('Course Management Update Component', () => {
             comp.courseForm = new FormGroup({
                 presentationScore: control,
             });
-            expect(comp.courseForm.controls['presentationScore'].disabled).toBe(false);
+            expect(comp.courseForm.controls['presentationScore'].disabled).toBeFalse();
             comp.changePresentationScoreInput();
             expect(comp.courseForm.controls['presentationScore'].disabled).toBeTrue();
             expect(comp.courseForm.controls['presentationScore'].value).toBe(0);
-            expect(comp.presentationScoreEnabled).toBe(false);
+            expect(comp.presentationScoreEnabled).toBeFalse();
         });
     });
 
@@ -334,9 +334,9 @@ describe('Course Management Update Component', () => {
                 registrationEnabled: new FormControl(true),
             });
             expect(comp.courseForm.controls['registrationEnabled'].value).toBeTrue();
-            expect(comp.courseForm.controls['onlineCourse'].value).toBe(false);
+            expect(comp.courseForm.controls['onlineCourse'].value).toBeFalse();
             comp.changeOnlineCourse();
-            expect(comp.courseForm.controls['registrationEnabled'].value).toBe(false);
+            expect(comp.courseForm.controls['registrationEnabled'].value).toBeFalse();
             expect(comp.courseForm.controls['onlineCourse'].value).toBeTrue();
             expect(comp.course.onlineCourse).toBeTrue();
         });
@@ -350,10 +350,10 @@ describe('Course Management Update Component', () => {
                 registrationEnabled: new FormControl(false),
                 onlineCourse: new FormControl(true),
             });
-            expect(comp.courseForm.controls['registrationEnabled'].value).toBe(false);
+            expect(comp.courseForm.controls['registrationEnabled'].value).toBeFalse();
             expect(comp.courseForm.controls['onlineCourse'].value).toBeTrue();
             comp.changeRegistrationEnabled();
-            expect(comp.courseForm.controls['onlineCourse'].value).toBe(false);
+            expect(comp.courseForm.controls['onlineCourse'].value).toBeFalse();
             expect(comp.courseForm.controls['registrationEnabled'].value).toBeTrue();
             expect(comp.course.registrationEnabled).toBeTrue();
         });
@@ -382,7 +382,7 @@ describe('Course Management Update Component', () => {
             expect(comp.courseForm.controls['maxComplaintTimeDays'].value).toBe(0);
             expect(comp.courseForm.controls['maxComplaintTextLimit'].value).toBe(0);
             expect(comp.courseForm.controls['maxComplaintResponseTextLimit'].value).toBe(0);
-            expect(comp.complaintsEnabled).toBe(false);
+            expect(comp.complaintsEnabled).toBeFalse();
         });
     });
 
@@ -397,7 +397,7 @@ describe('Course Management Update Component', () => {
             expect(comp.requestMoreFeedbackEnabled).toBeTrue();
             comp.changeRequestMoreFeedbackEnabled();
             expect(comp.courseForm.controls['maxRequestMoreFeedbackTimeDays'].value).toBe(0);
-            expect(comp.requestMoreFeedbackEnabled).toBe(false);
+            expect(comp.requestMoreFeedbackEnabled).toBeFalse();
         });
     });
 
@@ -421,7 +421,7 @@ describe('Course Management Update Component', () => {
             expect(comp.courseForm.controls['teachingAssistantGroupName'].value).toBe(undefined);
             expect(comp.courseForm.controls['editorGroupName'].value).toBe(undefined);
             expect(comp.courseForm.controls['instructorGroupName'].value).toBe(undefined);
-            expect(comp.customizeGroupNames).toBe(false);
+            expect(comp.customizeGroupNames).toBeFalse();
         });
     });
 
@@ -431,7 +431,7 @@ describe('Course Management Update Component', () => {
             comp.course.testCourse = true;
             expect(comp.course.testCourse).toBeTrue();
             comp.changeTestCourseEnabled();
-            expect(comp.course.testCourse).toBe(false);
+            expect(comp.course.testCourse).toBeFalse();
             comp.changeTestCourseEnabled();
             expect(comp.course.testCourse).toBeTrue();
         });

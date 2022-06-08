@@ -52,10 +52,10 @@ describe('Exercise Service', () => {
 
         service.validateDate(exercise);
 
-        expect(exercise.dueDateError).toBe(false);
-        expect(exercise.assessmentDueDateError).toBe(false);
-        expect(exercise.exampleSolutionPublicationDateError).toBe(false);
-        expect(exercise.exampleSolutionPublicationDateWarning).toBe(false);
+        expect(exercise.dueDateError).toBeFalse();
+        expect(exercise.assessmentDueDateError).toBeFalse();
+        expect(exercise.exampleSolutionPublicationDateError).toBeFalse();
+        expect(exercise.exampleSolutionPublicationDateWarning).toBeFalse();
     });
 
     it('should validate dates', () => {
@@ -72,10 +72,10 @@ describe('Exercise Service', () => {
 
         service.validateDate(exercise);
 
-        expect(exercise.dueDateError).toBe(false);
-        expect(exercise.assessmentDueDateError).toBe(false);
-        expect(exercise.exampleSolutionPublicationDateError).toBe(false);
-        expect(exercise.exampleSolutionPublicationDateWarning).toBe(false);
+        expect(exercise.dueDateError).toBeFalse();
+        expect(exercise.assessmentDueDateError).toBeFalse();
+        expect(exercise.exampleSolutionPublicationDateError).toBeFalse();
+        expect(exercise.exampleSolutionPublicationDateWarning).toBeFalse();
     });
 
     it('should set errors on invalid due and assessment due dates', () => {
@@ -107,10 +107,10 @@ describe('Exercise Service', () => {
 
         service.validateDate(exercise);
 
-        expect(exercise.dueDateError).toBe(false);
-        expect(exercise.assessmentDueDateError).toBe(false);
-        expect(exercise.exampleSolutionPublicationDateError).toBe(false);
-        expect(exercise.exampleSolutionPublicationDateWarning).toBe(false);
+        expect(exercise.dueDateError).toBeFalse();
+        expect(exercise.assessmentDueDateError).toBeFalse();
+        expect(exercise.exampleSolutionPublicationDateError).toBeFalse();
+        expect(exercise.exampleSolutionPublicationDateWarning).toBeFalse();
     });
 
     it('should validate empty example solution publication date', () => {
@@ -125,9 +125,9 @@ describe('Exercise Service', () => {
 
         service.validateDate(exercise);
 
-        expect(exercise.dueDateError).toBe(false);
-        expect(exercise.exampleSolutionPublicationDateError).toBe(false);
-        expect(exercise.exampleSolutionPublicationDateWarning).toBe(false);
+        expect(exercise.dueDateError).toBeFalse();
+        expect(exercise.exampleSolutionPublicationDateError).toBeFalse();
+        expect(exercise.exampleSolutionPublicationDateWarning).toBeFalse();
     });
 
     it('should set error when due date is before release date', () => {
@@ -153,7 +153,7 @@ describe('Exercise Service', () => {
 
         service.validateDate(exercise);
 
-        expect(exercise.dueDateError).toBe(false);
+        expect(exercise.dueDateError).toBeFalse();
         expect(exercise.exampleSolutionPublicationDateError).toBeTrue();
         expect(exercise.exampleSolutionPublicationDateWarning).toBeTrue();
     });
@@ -169,9 +169,9 @@ describe('Exercise Service', () => {
 
         service.validateDate(exercise);
 
-        expect(exercise.dueDateError).toBe(false);
+        expect(exercise.dueDateError).toBeFalse();
         expect(exercise.exampleSolutionPublicationDateError).toBeTrue();
-        expect(exercise.exampleSolutionPublicationDateWarning).toBe(false);
+        expect(exercise.exampleSolutionPublicationDateWarning).toBeFalse();
     });
 
     it('should allow example solution publication date is before due date with a warning', () => {
@@ -187,8 +187,8 @@ describe('Exercise Service', () => {
 
         service.validateDate(exercise);
 
-        expect(exercise.dueDateError).toBe(false);
-        expect(exercise.exampleSolutionPublicationDateError).toBe(false);
+        expect(exercise.dueDateError).toBeFalse();
+        expect(exercise.exampleSolutionPublicationDateError).toBeFalse();
         expect(exercise.exampleSolutionPublicationDateWarning).toBeTrue();
     });
 });

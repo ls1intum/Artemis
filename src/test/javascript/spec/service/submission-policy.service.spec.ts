@@ -40,7 +40,7 @@ describe('Submission Policy Service', () => {
             tick();
 
             const request = httpMock.expectOne({ method: 'POST', url: expectedUrl });
-            expect(lockRepositoryPolicy.active).toBe(false);
+            expect(lockRepositoryPolicy.active).toBeFalse();
             request.flush(lockRepositoryPolicy);
             tick();
 

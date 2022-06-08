@@ -61,7 +61,7 @@ describe('Directive: SortDirective', () => {
 
         // THEN
         expect(component.predicate).toBe('ID');
-        expect(component.ascending).toBe(false);
+        expect(component.ascending).toBeFalse();
         expect(component.transition).toHaveBeenCalledTimes(2);
     });
 

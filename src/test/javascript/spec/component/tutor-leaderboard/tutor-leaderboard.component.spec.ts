@@ -55,7 +55,7 @@ describe('TutorLeaderboardComponent', () => {
             testIsAtLeastInstructor((component) => {
                 component.course = course;
             });
-            expect(comp.isExerciseDashboard).toBe(false);
+            expect(comp.isExerciseDashboard).toBeFalse();
             expect(comp.course).toBe(course);
             expect(comp.exercise).toBe(undefined);
         });
@@ -72,9 +72,9 @@ describe('TutorLeaderboardComponent', () => {
         });
 
         it('sets isExamMode if exam is set', () => {
-            expect(comp.isExamMode).toBe(false);
+            expect(comp.isExamMode).toBeFalse();
             comp.ngOnInit();
-            expect(comp.isExamMode).toBe(false);
+            expect(comp.isExamMode).toBeFalse();
 
             const exam = {} as Exam;
             const course = { exams: [exam] } as Course;
@@ -90,10 +90,10 @@ describe('TutorLeaderboardComponent', () => {
         });
 
         function testIsAtLeastInstructor(setupComponent: (comp: TutorLeaderboardComponent) => void): void {
-            expect(comp.isAtLeastInstructor).toBe(false);
+            expect(comp.isAtLeastInstructor).toBeFalse();
             comp.ngOnInit();
-            expect(comp.isAtLeastInstructor).toBe(false);
-            expect(comp.isExerciseDashboard).toBe(false);
+            expect(comp.isAtLeastInstructor).toBeFalse();
+            expect(comp.isExerciseDashboard).toBeFalse();
             expect(comp.course).toBe(undefined);
             expect(isAtLeastInstructorInCourseStub).not.toBeCalled();
 

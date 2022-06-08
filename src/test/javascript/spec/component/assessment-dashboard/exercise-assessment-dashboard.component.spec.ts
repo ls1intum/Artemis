@@ -398,7 +398,7 @@ describe('ExerciseAssessmentDashboardComponent', () => {
 
         expect(comp.unassessedSubmissionByCorrectionRound?.get(0)).toEqual(modelingSubmission);
         expect(comp.unassessedSubmissionByCorrectionRound?.get(0)?.latestResult).toBe(undefined);
-        expect(comp.submissionLockLimitReached).toBe(false);
+        expect(comp.submissionLockLimitReached).toBeFalse();
         expect(comp.submissionsByCorrectionRound?.get(0)).toHaveLength(0);
     });
 
@@ -487,11 +487,11 @@ describe('ExerciseAssessmentDashboardComponent', () => {
         });
 
         expect(comp.tutorParticipation).toBe(undefined);
-        expect(comp.isLoading).toBe(false);
+        expect(comp.isLoading).toBeFalse();
 
         comp.readInstruction();
 
-        expect(comp.isLoading).toBe(false);
+        expect(comp.isLoading).toBeFalse();
 
         expect(comp.tutorParticipation).toEqual(tutorParticipation);
         expect(comp.tutorParticipationStatus).toEqual(TutorParticipationStatus.REVIEWED_INSTRUCTIONS);
@@ -768,7 +768,7 @@ describe('ExerciseAssessmentDashboardComponent', () => {
 
         comp.toggleSecondCorrection();
 
-        expect(comp.togglingSecondCorrectionButton).toBe(false);
+        expect(comp.togglingSecondCorrectionButton).toBeFalse();
         expect(comp.secondCorrectionEnabled).toBe(secondCorrectionEnabled);
         expect(comp.numberOfCorrectionRoundsEnabled).toBe(2);
     });

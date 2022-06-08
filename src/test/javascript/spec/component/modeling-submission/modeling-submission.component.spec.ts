@@ -193,7 +193,7 @@ describe('ModelingSubmission Management Component', () => {
         comp.modelingExercise.dueDate = dayjs().subtract(1, 'days');
 
         fixture.detectChanges();
-        expect(comp.isActive).toBe(false);
+        expect(comp.isActive).toBeFalse();
     });
 
     it('should navigate to access denied page on 403 error status', () => {
@@ -337,7 +337,7 @@ describe('ModelingSubmission Management Component', () => {
         expect(comp.shouldBeDisplayed(feedback)).toBeTrue();
         comp.selectedEntities = ['3'];
         fixture.detectChanges();
-        expect(comp.shouldBeDisplayed(feedback)).toBe(false);
+        expect(comp.shouldBeDisplayed(feedback)).toBeFalse();
     });
 
     it('should shouldBeDisplayed return true if feedback reference is in selectedEntities or selectedRelationships', () => {
@@ -350,7 +350,7 @@ describe('ModelingSubmission Management Component', () => {
         comp.selectedEntities = [];
         comp.selectedRelationships = [id];
         fixture.detectChanges();
-        expect(comp.shouldBeDisplayed(feedback)).toBe(false);
+        expect(comp.shouldBeDisplayed(feedback)).toBeFalse();
     });
 
     it('should update submission with current values', () => {
@@ -408,7 +408,7 @@ describe('ModelingSubmission Management Component', () => {
         const canDeactivate = comp.canDeactivate();
 
         expect(currentModelStub).toHaveBeenCalledOnce();
-        expect(canDeactivate).toBe(false);
+        expect(canDeactivate).toBeFalse();
     });
 
     it('should set isChanged property to false after saving', () => {
@@ -424,7 +424,7 @@ describe('ModelingSubmission Management Component', () => {
         comp.modelingExercise.id = 1;
         fixture.detectChanges();
         comp.saveDiagram();
-        expect(comp.isChanged).toBe(false);
+        expect(comp.isChanged).toBeFalse();
     });
 
     it('should mark the subsequent feedback', () => {

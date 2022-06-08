@@ -125,7 +125,7 @@ describe('PostCreateEditModalComponent', () => {
             metisLecture,
         });
         tick();
-        expect(component.isLoading).toBe(false);
+        expect(component.isLoading).toBeFalse();
         expect(onCreateSpy).toHaveBeenCalledOnce();
     }));
 
@@ -156,7 +156,7 @@ describe('PostCreateEditModalComponent', () => {
         });
         // debounce time of title input field
         tick(800);
-        expect(component.isLoading).toBe(false);
+        expect(component.isLoading).toBeFalse();
         expect(onCreateSpy).toHaveBeenCalledOnce();
     }));
 
@@ -183,7 +183,7 @@ describe('PostCreateEditModalComponent', () => {
             title: updatedTitle,
         });
         tick();
-        expect(component.isLoading).toBe(false);
+        expect(component.isLoading).toBeFalse();
     }));
 
     it('should invoke the modalService', () => {

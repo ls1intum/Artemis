@@ -108,6 +108,6 @@ describe('Team Config Form Group Component', () => {
 
     it('exercise mode should be non-editable for non-exam and imported exercise', () => {
         component.isImport = true;
-        expect(component.changeExerciseModeDisabled).toBe(false);
+        expect(component.changeExerciseModeDisabled).toBeFalse();
     });
 });

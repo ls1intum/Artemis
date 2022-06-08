@@ -85,7 +85,7 @@ describe('External Submission Dialog', () => {
 
         expect(activeModal.close).toHaveBeenCalledOnce();
         expect(activeModal.close).toHaveBeenCalledWith(result);
-        expect(component.isSaving).toBe(false);
+        expect(component.isSaving).toBeFalse();
         expect(eventManagerSpy).toHaveBeenCalledOnce();
         expect(eventManagerSpy).toHaveBeenCalledWith({ name: 'resultListModification', content: 'Added a manual result' });
     });
@@ -100,7 +100,7 @@ describe('External Submission Dialog', () => {
         component.save();
         expect(createMock).toHaveBeenCalledOnce();
         expect(onSaveErrorSpy).toHaveBeenCalledOnce();
-        expect(component.isSaving).toBe(false);
+        expect(component.isSaving).toBeFalse();
     });
 
     it('should add a new feedback on pushFeedback and remove last on popFeedback', () => {

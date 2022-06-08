@@ -181,8 +181,8 @@ describe('CodeEditorStudentIntegration', () => {
 
         expect(getStudentParticipationWithLatestResultStub).toHaveBeenNthCalledWith(1, participation.id);
         expect(getFeedbackDetailsForResultStub).toHaveBeenNthCalledWith(1, participation.id, result.id);
-        expect(container.loadingParticipation).toBe(false);
-        expect(container.participationCouldNotBeFetched).toBe(false);
+        expect(container.loadingParticipation).toBeFalse();
+        expect(container.participationCouldNotBeFetched).toBeFalse();
         expect(container.participation).toEqual({ ...participation, results: [{ ...result, feedbacks }] });
     });
 
@@ -226,7 +226,7 @@ describe('CodeEditorStudentIntegration', () => {
 
         findWithLatestResultSubject.error('fatal error');
 
-        expect(container.loadingParticipation).toBe(false);
+        expect(container.loadingParticipation).toBeFalse();
         expect(container.participationCouldNotBeFetched).toBeTrue();
         expect(getFeedbackDetailsForResultStub).not.toHaveBeenCalled();
         expect(container.participation).toBe(undefined);

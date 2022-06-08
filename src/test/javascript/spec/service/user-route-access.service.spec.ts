@@ -86,7 +86,7 @@ describe('UserRouteAccessService', () => {
         const storeSpy = jest.spyOn(storageService, 'storeUrl');
         const navigateMock = jest.spyOn(router, 'navigate').mockReturnValue(Promise.resolve(true));
 
-        await expect(service.checkLogin([Authority.EDITOR], url)).resolves.toBe(false);
+        await expect(service.checkLogin([Authority.EDITOR], url)).resolves.toBeFalse();
         expect(storeSpy).toHaveBeenCalledOnce();
         expect(storeSpy).toHaveBeenCalledWith(url);
         expect(navigateMock).toHaveBeenCalledTimes(2);

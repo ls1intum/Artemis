@@ -414,7 +414,7 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
 
         expect(confirmSpy).toHaveBeenCalledOnce();
         tick(100);
-        expect(comp.cancelBusy).toBe(false);
+        expect(comp.cancelBusy).toBeFalse();
         expect(navigateBackStub).toHaveBeenCalledOnce();
         expect(cancelBackStub).toHaveBeenCalledOnce();
         flush();

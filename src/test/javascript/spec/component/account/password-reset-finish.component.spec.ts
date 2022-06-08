@@ -101,7 +101,7 @@ describe('Component Tests', () => {
                 tick();
 
                 expect(service.save).toHaveBeenCalledWith('XYZPDQ', 'password');
-                expect(comp.success).toBe(false);
+                expect(comp.success).toBeFalse();
                 expect(comp.error).toBeTrue();
             }),
         ));

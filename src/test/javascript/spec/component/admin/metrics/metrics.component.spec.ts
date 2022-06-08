@@ -33,19 +33,19 @@ describe('MetricsComponent', () => {
         comp.ngOnInit();
         expect(service.getMetrics).toHaveBeenCalledOnce();
         expect(service.threadDump).toHaveBeenCalledOnce();
-        expect(comp.updatingMetrics).toBe(false);
+        expect(comp.updatingMetrics).toBeFalse();
         expect(comp.metrics).toEqual(mockMetrics);
         expect(comp.threads).toEqual(mockThreadDump.threads);
     });
 
     it('metricsKeyExists method should work correctly', () => {
         comp.metrics = {} as any as Metrics;
-        expect(comp.metricsKeyExists('cache')).toBe(false);
+        expect(comp.metricsKeyExists('cache')).toBeFalse();
 
         comp.metrics = {
             cache: undefined,
         } as any as Metrics;
-        expect(comp.metricsKeyExists('cache')).toBe(false);
+        expect(comp.metricsKeyExists('cache')).toBeFalse();
 
         comp.metrics = {
             cache: {},
@@ -57,12 +57,12 @@ describe('MetricsComponent', () => {
         comp.metrics = {
             cache: undefined,
         } as any as Metrics;
-        expect(comp.metricsKeyExistsAndObjectNotEmpty('cache')).toBe(false);
+        expect(comp.metricsKeyExistsAndObjectNotEmpty('cache')).toBeFalse();
 
         comp.metrics = {
             cache: {},
         } as any as Metrics;
-        expect(comp.metricsKeyExistsAndObjectNotEmpty('cache')).toBe(false);
+        expect(comp.metricsKeyExistsAndObjectNotEmpty('cache')).toBeFalse();
 
         comp.metrics = {
             cache: { randomKey: {} },

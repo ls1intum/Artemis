@@ -124,7 +124,7 @@ describe('ShortAnswerQuestionComponent', () => {
         component.forceSampleSolution = false;
         component.hideSampleSolution();
 
-        expect(component.showingSampleSolution).toBe(false);
+        expect(component.showingSampleSolution).toBeFalse();
     });
 
     it('should get submitted text size for spot', () => {

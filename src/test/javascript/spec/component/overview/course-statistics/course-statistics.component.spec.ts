@@ -556,8 +556,8 @@ describe('CourseStatisticsComponent', () => {
 
         comp.toggleAllCategories();
 
-        expect(comp.allCategoriesSelected).toBe(false);
-        expect(comp.exerciseCategoryFilters.get('quiz1')).toBe(false);
+        expect(comp.allCategoriesSelected).toBeFalse();
+        expect(comp.exerciseCategoryFilters.get('quiz1')).toBeFalse();
         expect(comp.numberOfAppliedFilters).toBe(1);
         comp.ngxExerciseGroups.forEach((group) => {
             expect(group).toHaveLength(0);
@@ -576,7 +576,7 @@ describe('CourseStatisticsComponent', () => {
 
         comp.toggleNotIncludedInScoreExercises();
 
-        expect(comp.currentlyHidingNotIncludedInScoreExercises).toBe(false);
+        expect(comp.currentlyHidingNotIncludedInScoreExercises).toBeFalse();
         expect(comp.numberOfAppliedFilters).toBe(3);
         expect(comp.exerciseCategoryFilters.get('programming1')).toBeTrue();
         expect(comp.exerciseCategoryFilters.get('quiz1')).toBeTrue();
@@ -586,15 +586,15 @@ describe('CourseStatisticsComponent', () => {
         comp.toggleCategory('programming1');
 
         expect(comp.numberOfAppliedFilters).toBe(2);
-        expect(comp.exerciseCategoryFilters.get('programming1')).toBe(false);
+        expect(comp.exerciseCategoryFilters.get('programming1')).toBeFalse();
         expect(comp.ngxExerciseGroups).toHaveLength(2);
         expect(comp.ngxExerciseGroups.filter((group) => group[0].type === ExerciseType.PROGRAMMING)).toHaveLength(0);
 
         comp.toggleCategory('quiz1');
 
         expect(comp.numberOfAppliedFilters).toBe(1);
-        expect(comp.exerciseCategoryFilters.get('programming1')).toBe(false);
-        expect(comp.exerciseCategoryFilters.get('quiz1')).toBe(false);
+        expect(comp.exerciseCategoryFilters.get('programming1')).toBeFalse();
+        expect(comp.exerciseCategoryFilters.get('quiz1')).toBeFalse();
         expect(comp.ngxExerciseGroups).toHaveLength(1);
         expect(comp.ngxExerciseGroups.filter((group) => group[0].type === ExerciseType.PROGRAMMING)).toHaveLength(0);
         expect(comp.ngxExerciseGroups.filter((group) => group[0].type === ExerciseType.QUIZ)).toHaveLength(0);

@@ -237,12 +237,12 @@ describe('TeamParticipationTableComponent', () => {
 
     it('Check enabled assessment button for exercises without due date', () => {
         const expectedAssessmentActionButtonDisabled = comp.isAssessmentButtonDisabled(exercise2, submission2);
-        expect(expectedAssessmentActionButtonDisabled).toBe(false);
+        expect(expectedAssessmentActionButtonDisabled).toBeFalse();
     });
 
     it('Check enabled assessment button for exercises with submission and passed due date', () => {
         const expectedAssessmentActionButtonDisabled = comp.isAssessmentButtonDisabled(exercise3, submission3);
-        expect(expectedAssessmentActionButtonDisabled).toBe(false);
+        expect(expectedAssessmentActionButtonDisabled).toBeFalse();
     });
 
     it('Check disabled assessment button for exercises without submission', () => {
@@ -280,6 +280,6 @@ describe('TeamParticipationTableComponent', () => {
             },
             submission5,
         );
-        expect(expectedAssessmentActionButtonDisabled).toBe(false);
+        expect(expectedAssessmentActionButtonDisabled).toBeFalse();
     });
 });

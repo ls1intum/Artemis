@@ -120,7 +120,7 @@ describe('UsersImportButtonComponent', () => {
         component.importUsers();
 
         expect(examManagementService.addStudentsToExam).toHaveBeenCalledOnce();
-        expect(component.isImporting).toBe(false);
+        expect(component.isImporting).toBeFalse();
         expect(component.hasImported).toBeTrue();
         expect(component.notFoundUsers).toHaveLength(studentsNotFound.length);
     });
@@ -183,7 +183,7 @@ describe('UsersImportButtonComponent', () => {
         component.importUsers();
 
         importedStudents.forEach((student) => expect(component.wasImported(student)).toBeTrue());
-        notImportedStudents.forEach((student) => expect(component.wasImported(student)).toBe(false));
+        notImportedStudents.forEach((student) => expect(component.wasImported(student)).toBeFalse());
         expect(component.numberOfUsersImported).toBe(importedStudents.length);
         expect(component.numberOfUsersNotImported).toBe(notImportedStudents.length);
     });
@@ -202,8 +202,8 @@ describe('UsersImportButtonComponent', () => {
 
         fixture.detectChanges();
 
-        expect(component.hasImported).toBe(false);
-        expect(component.isSubmitDisabled).toBe(false);
+        expect(component.hasImported).toBeFalse();
+        expect(component.isSubmitDisabled).toBeFalse();
         const importButton = fixture.debugElement.query(By.css('#import'));
 
         expect(importButton).not.toBe(null);
@@ -211,7 +211,7 @@ describe('UsersImportButtonComponent', () => {
         importButton.nativeElement.click();
 
         expect(examManagementService.addStudentsToExam).toHaveBeenCalledOnce();
-        expect(component.isImporting).toBe(false);
+        expect(component.isImporting).toBeFalse();
         expect(component.hasImported).toBeTrue();
         expect(component.notFoundUsers).toHaveLength(studentsNotFound.length);
 

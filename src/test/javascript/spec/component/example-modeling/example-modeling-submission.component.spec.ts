@@ -145,7 +145,7 @@ describe('Example Modeling Submission Component', () => {
         comp.upsertExampleModelingSubmission();
 
         // THEN
-        expect(comp.isNewSubmission).toBe(false);
+        expect(comp.isNewSubmission).toBeFalse();
         expect(serviceSpy).toHaveBeenCalledOnce();
 
         expect(alertSpy).toHaveBeenCalledOnce();
@@ -178,7 +178,7 @@ describe('Example Modeling Submission Component', () => {
         tick(1);
 
         // THEN
-        expect(comp.isNewSubmission).toBe(false);
+        expect(comp.isNewSubmission).toBeFalse();
         expect(serviceSpy).toHaveBeenCalledTimes(2);
         expect(modelingAssessmentServiceSpy).toHaveBeenCalledOnce();
         expect(alertSpy).toHaveBeenCalledOnce();
@@ -274,8 +274,8 @@ describe('Example Modeling Submission Component', () => {
         comp.showSubmission();
 
         // THEN
-        expect(comp.feedbackChanged).toBe(false);
-        expect(comp.assessmentMode).toBe(false);
+        expect(comp.feedbackChanged).toBeFalse();
+        expect(comp.assessmentMode).toBeFalse();
         expect(comp.totalScore).toBe(mockFeedbackWithReference.credits);
     });
 

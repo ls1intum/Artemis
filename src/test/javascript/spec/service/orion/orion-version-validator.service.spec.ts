@@ -58,7 +58,7 @@ describe('OrionValidatorService', () => {
         setUserAgent(userAgent + legacy);
         orionVersionValidator.isOrion = true;
 
-        orionVersionValidator.validateOrionVersion().subscribe((result) => expect(result).toBe(false));
+        orionVersionValidator.validateOrionVersion().subscribe((result) => expect(result).toBeFalse());
         tick();
 
         expect(profileInfoStub).not.toHaveBeenCalled();
@@ -70,7 +70,7 @@ describe('OrionValidatorService', () => {
         setUserAgent(userAgent + versionTooLow);
         orionVersionValidator.isOrion = true;
 
-        orionVersionValidator.validateOrionVersion().subscribe((result) => expect(result).toBe(false));
+        orionVersionValidator.validateOrionVersion().subscribe((result) => expect(result).toBeFalse());
         tick();
 
         expect(profileInfoStub).toHaveBeenCalledOnce();

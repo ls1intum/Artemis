@@ -371,7 +371,7 @@ describe('GuidedTourService', () => {
                     if (exercise === exercise1) {
                         expect(guidedTourService['isGuidedTourAvailableForExercise'](exercise)).toBeTrue();
                     } else {
-                        expect(guidedTourService['isGuidedTourAvailableForExercise'](exercise)).toBe(false);
+                        expect(guidedTourService['isGuidedTourAvailableForExercise'](exercise)).toBeFalse();
                     }
                 });
 
@@ -476,12 +476,12 @@ describe('GuidedTourService', () => {
             });
             it('should return false if it is not the current Step', () => {
                 guidedTourService.currentTour = guidedTour;
-                expect(guidedTourService.isCurrentStep(step2)).toBe(false);
+                expect(guidedTourService.isCurrentStep(step2)).toBeFalse();
                 guidedTourService.currentTourStepIndex += 1;
-                expect(guidedTourService.isCurrentStep(step1)).toBe(false);
+                expect(guidedTourService.isCurrentStep(step1)).toBeFalse();
             });
             it('should return false if current Tour is undefined', () => {
-                expect(guidedTourService.isCurrentStep(step1)).toBe(false);
+                expect(guidedTourService.isCurrentStep(step1)).toBeFalse();
             });
         });
 
@@ -491,11 +491,11 @@ describe('GuidedTourService', () => {
                 expect(guidedTourService.isCurrentTour(tour)).toBeTrue();
             });
             it('should return false if it is not the current Tour', () => {
-                expect(guidedTourService.isCurrentTour(tour)).toBe(false);
+                expect(guidedTourService.isCurrentTour(tour)).toBeFalse();
             });
             it('should return false if the current Tour is undefined', () => {
                 guidedTourService.currentTour = tourWithCourseAndExercise;
-                expect(guidedTourService.isCurrentTour(tour)).toBe(false);
+                expect(guidedTourService.isCurrentTour(tour)).toBeFalse();
             });
         });
 

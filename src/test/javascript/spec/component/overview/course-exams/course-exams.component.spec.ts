@@ -53,6 +53,6 @@ describe('CourseExamsComponent', () => {
 
     it('exam should not be visible', () => {
         componentFixture.detectChanges();
-        expect(component.isVisible(notVisibleExam)).toBe(false);
+        expect(component.isVisible(notVisibleExam)).toBeFalse();
     });
 });

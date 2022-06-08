@@ -69,9 +69,9 @@ describe('Exercise Update Warning Service', () => {
         backupExercise.gradingCriteria = [gradingCriterion];
         updateWarningService.checkExerciseBeforeUpdate(exercise, backupExercise);
 
-        expect(updateWarningService.instructionDeleted).toBe(false);
-        expect(updateWarningService.creditChanged).toBe(false);
-        expect(updateWarningService.usageCountChanged).toBe(false);
+        expect(updateWarningService.instructionDeleted).toBeFalse();
+        expect(updateWarningService.creditChanged).toBeFalse();
+        expect(updateWarningService.usageCountChanged).toBeFalse();
 
         expect(loadExerciseSpy).toHaveBeenCalledOnce();
         expect(loadExerciseSpy).toHaveBeenCalledWith(exercise, backupExercise);

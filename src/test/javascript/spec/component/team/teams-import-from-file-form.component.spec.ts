@@ -87,7 +87,7 @@ describe('TeamsImportFromFileFormComponent', () => {
             expect(comp.importedTeams).toEqual(mockFileStudents);
             expect(comp.sourceTeams).toStrictEqual(mockFileTeamsConverted);
             expect(teams).toStrictEqual(mockFileTeamsConverted);
-            expect(comp.loading).toBe(false);
+            expect(comp.loading).toBeFalse();
             expect(comp.importFile).toBe(undefined);
             expect(comp.importFileName).toBe('');
             expect(getElementStub).toHaveBeenCalledOnce();

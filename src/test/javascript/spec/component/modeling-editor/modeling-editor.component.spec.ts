@@ -107,7 +107,7 @@ describe('ModelingEditorComponent', () => {
     it('isFullScreen false', () => {
         // test
         const fullScreen = component.isFullScreen;
-        expect(fullScreen).toBe(false);
+        expect(fullScreen).toBeFalse();
     });
 
     it('getCurrentModel', () => {

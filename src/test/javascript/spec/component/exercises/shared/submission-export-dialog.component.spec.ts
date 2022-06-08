@@ -64,8 +64,8 @@ describe('Submission Export Dialog Component', () => {
         const findSpy = jest.spyOn(exerciseService, 'find');
         component.ngOnInit();
 
-        expect(component.isLoading).toBe(false);
-        expect(component.exportInProgress).toBe(false);
+        expect(component.isLoading).toBeFalse();
+        expect(component.exportInProgress).toBeFalse();
         expect(component.submissionExportOptions).toEqual(submissionExportOptions);
         expect(component.exercise).toEqual({ id: exerciseId } as Exercise);
         expect(findSpy).toHaveBeenCalledOnce();
@@ -84,7 +84,7 @@ describe('Submission Export Dialog Component', () => {
         expect(alertSpy).toHaveBeenCalledWith('instructorDashboard.exportSubmissions.successMessage');
         expect(modalSpy).toHaveBeenCalledOnce();
         expect(modalSpy).toHaveBeenCalledWith(true);
-        expect(component.exportInProgress).toBe(false);
+        expect(component.exportInProgress).toBeFalse();
         expect(downloadSpy).toHaveBeenCalledOnce();
         expect(downloadSpy).toHaveBeenCalledWith(response);
     });

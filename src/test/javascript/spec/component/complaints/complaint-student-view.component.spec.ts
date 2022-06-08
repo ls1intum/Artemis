@@ -160,7 +160,7 @@ describe('ComplaintsStudentViewComponent', () => {
         function expectExamDefault() {
             expectDefault();
             expect(component.isExamMode).toBeTrue();
-            expect(component.timeOfFeedbackRequestValid).toBe(false);
+            expect(component.timeOfFeedbackRequestValid).toBeFalse();
             expect(component.timeOfComplaintValid).toBeTrue();
         }
 
@@ -174,7 +174,7 @@ describe('ComplaintsStudentViewComponent', () => {
             fixture.detectChanges();
             tick(100);
 
-            expect(component.showSection).toBe(false);
+            expect(component.showSection).toBeFalse();
         }
     });
 
@@ -198,8 +198,8 @@ describe('ComplaintsStudentViewComponent', () => {
             fixture.detectChanges();
             tick(100);
 
-            expect(component.timeOfFeedbackRequestValid).toBe(false);
-            expect(component.timeOfComplaintValid).toBe(false);
+            expect(component.timeOfFeedbackRequestValid).toBeFalse();
+            expect(component.timeOfComplaintValid).toBeFalse();
         }));
 
         it('should not be available if assessment due date not set and completion date is out of period', fakeAsync(() => {
@@ -211,8 +211,8 @@ describe('ComplaintsStudentViewComponent', () => {
             fixture.detectChanges();
             tick(100);
 
-            expect(component.timeOfFeedbackRequestValid).toBe(false);
-            expect(component.timeOfComplaintValid).toBe(false);
+            expect(component.timeOfFeedbackRequestValid).toBeFalse();
+            expect(component.timeOfComplaintValid).toBeFalse();
         }));
 
         it('should not be available if completionDate after assessment due date and date is out of period', fakeAsync(() => {
@@ -229,8 +229,8 @@ describe('ComplaintsStudentViewComponent', () => {
             fixture.detectChanges();
             tick(100);
 
-            expect(component.timeOfFeedbackRequestValid).toBe(false);
-            expect(component.timeOfComplaintValid).toBe(false);
+            expect(component.timeOfFeedbackRequestValid).toBeFalse();
+            expect(component.timeOfComplaintValid).toBeFalse();
         }));
 
         it('complaints should be available if feedback requests disabled', fakeAsync(() => {
@@ -246,7 +246,7 @@ describe('ComplaintsStudentViewComponent', () => {
 
             expect(component.showSection).toBeTrue();
             expect(component.timeOfComplaintValid).toBeTrue();
-            expect(component.timeOfFeedbackRequestValid).toBe(false);
+            expect(component.timeOfFeedbackRequestValid).toBeFalse();
         }));
 
         it('feedback requests should be available if complaints are disabled', fakeAsync(() => {
@@ -268,7 +268,7 @@ describe('ComplaintsStudentViewComponent', () => {
             tick(100);
 
             expect(component.showSection).toBeTrue();
-            expect(component.timeOfComplaintValid).toBe(false);
+            expect(component.timeOfComplaintValid).toBeFalse();
             expect(component.timeOfFeedbackRequestValid).toBeTrue();
         }));
 
@@ -280,13 +280,13 @@ describe('ComplaintsStudentViewComponent', () => {
             tick(100);
 
             expect(component.showSection).toBeTrue();
-            expect(component.timeOfComplaintValid).toBe(false);
-            expect(component.timeOfFeedbackRequestValid).toBe(false);
+            expect(component.timeOfComplaintValid).toBeFalse();
+            expect(component.timeOfFeedbackRequestValid).toBeFalse();
         }));
 
         function expectCourseDefault() {
             expectDefault();
-            expect(component.isExamMode).toBe(false);
+            expect(component.isExamMode).toBeFalse();
             expect(component.timeOfFeedbackRequestValid).toBeTrue();
             expect(component.timeOfComplaintValid).toBeTrue();
         }
@@ -326,7 +326,7 @@ describe('ComplaintsStudentViewComponent', () => {
         fixture.detectChanges();
         tick(100);
 
-        expect(component.timeOfComplaintValid).toBe(false);
+        expect(component.timeOfComplaintValid).toBeFalse();
     }));
 
     it('complaint should be possible with long assessment periods', fakeAsync(() => {

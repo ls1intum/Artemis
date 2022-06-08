@@ -220,7 +220,7 @@ describe('TextFeedbackConflictsComponent', () => {
         textAssessmentAreaComponent.textBlockRefsChangeEmit();
 
         expect(component.leftTotalScore).toBe(2);
-        expect(component.isOverrideDisabled).toBe(false);
+        expect(component.isOverrideDisabled).toBeFalse();
 
         jest.spyOn(textAssessmentService, 'submit').mockReturnValue(
             of(
@@ -315,7 +315,7 @@ describe('TextFeedbackConflictsComponent', () => {
 
         expect(solveConflictStub).toHaveBeenCalledOnce();
         expect(component.isMarkingDisabled).toBeTrue();
-        expect(component.markBusy).toBe(false);
+        expect(component.markBusy).toBeFalse();
     });
 
     it('should switch submissions when it changed in the header', () => {

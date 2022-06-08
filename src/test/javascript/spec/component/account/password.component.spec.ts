@@ -51,8 +51,8 @@ describe('Component Tests', () => {
             comp.changePassword();
             // THEN
             expect(comp.doNotMatch).toBeTrue();
-            expect(comp.error).toBe(false);
-            expect(comp.success).toBe(false);
+            expect(comp.error).toBeFalse();
+            expect(comp.success).toBeFalse();
         });
 
         it('should call Auth.changePassword when passwords match', () => {
@@ -89,8 +89,8 @@ describe('Component Tests', () => {
             comp.changePassword();
 
             // THEN
-            expect(comp.doNotMatch).toBe(false);
-            expect(comp.error).toBe(false);
+            expect(comp.doNotMatch).toBeFalse();
+            expect(comp.error).toBeFalse();
             expect(comp.success).toBeTrue();
         });
 
@@ -106,8 +106,8 @@ describe('Component Tests', () => {
             comp.changePassword();
 
             // THEN
-            expect(comp.doNotMatch).toBe(false);
-            expect(comp.success).toBe(false);
+            expect(comp.doNotMatch).toBeFalse();
+            expect(comp.success).toBeFalse();
             expect(comp.error).toBeTrue();
         });
 

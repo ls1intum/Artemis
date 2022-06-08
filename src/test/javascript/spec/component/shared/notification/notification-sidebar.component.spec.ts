@@ -133,7 +133,7 @@ describe('Notification Sidebar Component', () => {
             const overlay = notificationSidebarComponentFixture.debugElement.nativeElement.querySelector('.notification-overlay');
             overlay.click();
             expect(notificationSidebarComponent.toggleSidebar).toHaveBeenCalledOnce();
-            expect(notificationSidebarComponent.showSidebar).toBe(false);
+            expect(notificationSidebarComponent.showSidebar).toBeFalse();
         });
 
         it('should close sidebar when user clicks on close button', () => {
@@ -142,7 +142,7 @@ describe('Notification Sidebar Component', () => {
             const close = notificationSidebarComponentFixture.debugElement.nativeElement.querySelector('.close');
             close.click();
             expect(notificationSidebarComponent.toggleSidebar).toHaveBeenCalledOnce();
-            expect(notificationSidebarComponent.showSidebar).toBe(false);
+            expect(notificationSidebarComponent.showSidebar).toBeFalse();
         });
 
         it('should close sidebar when user clicks on a notification', () => {
@@ -151,7 +151,7 @@ describe('Notification Sidebar Component', () => {
             notificationSidebarComponent.showSidebar = true;
             const notification = notificationSidebarComponentFixture.debugElement.nativeElement.querySelector('.notification-item');
             notification.click();
-            expect(notificationSidebarComponent.showSidebar).toBe(false);
+            expect(notificationSidebarComponent.showSidebar).toBeFalse();
         });
     });
 
@@ -303,7 +303,7 @@ describe('Notification Sidebar Component', () => {
             jest.spyOn(userService, 'updateNotificationVisibility');
             const hideUntilToggle = notificationSidebarComponentFixture.debugElement.nativeElement.querySelector('#hide-until-toggle');
             hideUntilToggle.click();
-            expect(notificationSidebarComponent.showButtonToHideCurrentlyDisplayedNotifications).toBe(false);
+            expect(notificationSidebarComponent.showButtonToHideCurrentlyDisplayedNotifications).toBeFalse();
             expect(notificationSidebarComponent.toggleNotificationDisplay).toHaveBeenCalledOnce();
             expect(userService.updateNotificationVisibility).toHaveBeenCalledOnce();
         });

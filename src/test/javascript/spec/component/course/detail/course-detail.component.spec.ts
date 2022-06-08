@@ -135,7 +135,7 @@ describe('Course Management Detail Component', () => {
         component.ngOnInit();
 
         expect(component.enableShowMore).toBeTrue();
-        expect(component.longDescriptionShown).toBe(false);
+        expect(component.longDescriptionShown).toBeFalse();
 
         component.toggleCourseDescription();
 
@@ -144,7 +144,7 @@ describe('Course Management Detail Component', () => {
 
         component.toggleCourseDescription();
 
-        expect(component.longDescriptionShown).toBe(false);
+        expect(component.longDescriptionShown).toBeFalse();
         expect(component.courseDescription).toBe('Cras mattis iudicium purus sit amet fermentum. Gal…');
     });
 });

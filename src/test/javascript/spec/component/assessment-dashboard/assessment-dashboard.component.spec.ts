@@ -211,11 +211,11 @@ describe('AssessmentDashboardInformationComponent', () => {
         expect(comp.isExamMode).toBeTrue();
         expect(comp.courseId).toBe(10);
         expect(comp.examId).toBe(20);
-        expect(comp.isTestRun).toBe(false);
+        expect(comp.isTestRun).toBeFalse();
         expect(getExamWithInterestingExercisesForAssessmentDashboardStub).toHaveBeenCalledOnce();
         expect(getStatsForExamAssessmentDashboardStub).toHaveBeenCalledOnce();
         expect(comp.exam).toEqual(exam);
-        expect(comp.hideFinishedExercises).toBe(false);
+        expect(comp.hideFinishedExercises).toBeFalse();
         expect(comp.allExercises).toHaveLength(4);
         expect(comp.currentlyShownExercises).toHaveLength(4);
     }));
@@ -234,7 +234,7 @@ describe('AssessmentDashboardInformationComponent', () => {
         comp.ngOnInit();
         tick();
 
-        expect(comp.isExamMode).toBe(false);
+        expect(comp.isExamMode).toBeFalse();
         expect(comp.courseId).toBe(10);
         expect(comp.examId).toBe(0);
         expect(getCourseWithInterestingExercisesForTutorsStub).toHaveBeenCalledOnce();
@@ -252,7 +252,7 @@ describe('AssessmentDashboardInformationComponent', () => {
         expect(comp.currentlyShownExercises.find((exercise) => exercise.id === fileUploadExercise.id!)!.secondCorrectionEnabled).toBeTrue();
         toggleSecondCorrectionStub.mockReturnValue(of(false));
         comp.toggleSecondCorrection(fileUploadExercise.id!);
-        expect(comp.currentlyShownExercises.find((exercise) => exercise.id === fileUploadExercise.id!)!.secondCorrectionEnabled).toBe(false);
+        expect(comp.currentlyShownExercises.find((exercise) => exercise.id === fileUploadExercise.id!)!.secondCorrectionEnabled).toBeFalse();
     });
 
     it('should update exercises when finished exercises are filtered', () => {
@@ -390,9 +390,9 @@ describe('AssessmentDashboardInformationComponent', () => {
                     const ratingCheckerA = new TutorIssueRatingChecker(1, 3, 0, tutorName, tutorId);
                     const ratingCheckerB = new TutorIssueRatingChecker(1, 3.2, 4, tutorName, tutorId);
                     const ratingCheckerC = new TutorIssueRatingChecker(1, 5, 3, tutorName, tutorId);
-                    expect(ratingCheckerA.isPerformanceIssue).toBe(false);
-                    expect(ratingCheckerB.isPerformanceIssue).toBe(false);
-                    expect(ratingCheckerC.isPerformanceIssue).toBe(false);
+                    expect(ratingCheckerA.isPerformanceIssue).toBeFalse();
+                    expect(ratingCheckerB.isPerformanceIssue).toBeFalse();
+                    expect(ratingCheckerC.isPerformanceIssue).toBeFalse();
                 });
             });
 
@@ -410,10 +410,10 @@ describe('AssessmentDashboardInformationComponent', () => {
                     const ratingCheckerB = new TutorIssueScoreChecker(1, 66, 80, tutorName, tutorId);
                     const ratingCheckerC = new TutorIssueScoreChecker(1, 90, 80, tutorName, tutorId);
                     const ratingCheckerD = new TutorIssueScoreChecker(1, 96.009, 80, tutorName, tutorId);
-                    expect(ratingCheckerA.isPerformanceIssue).toBe(false);
-                    expect(ratingCheckerB.isPerformanceIssue).toBe(false);
-                    expect(ratingCheckerC.isPerformanceIssue).toBe(false);
-                    expect(ratingCheckerD.isPerformanceIssue).toBe(false);
+                    expect(ratingCheckerA.isPerformanceIssue).toBeFalse();
+                    expect(ratingCheckerB.isPerformanceIssue).toBeFalse();
+                    expect(ratingCheckerC.isPerformanceIssue).toBeFalse();
+                    expect(ratingCheckerD.isPerformanceIssue).toBeFalse();
                 });
             });
 
@@ -431,10 +431,10 @@ describe('AssessmentDashboardInformationComponent', () => {
                     const ratingCheckerB = new TutorIssueComplaintsChecker(1, 8, 10, tutorName, tutorId);
                     const ratingCheckerC = new TutorIssueComplaintsChecker(1, 0, 10, tutorName, tutorId);
                     const ratingCheckerD = new TutorIssueComplaintsChecker(1, 12.001, 10, tutorName, tutorId);
-                    expect(ratingCheckerA.isPerformanceIssue).toBe(false);
-                    expect(ratingCheckerB.isPerformanceIssue).toBe(false);
-                    expect(ratingCheckerC.isPerformanceIssue).toBe(false);
-                    expect(ratingCheckerD.isPerformanceIssue).toBe(false);
+                    expect(ratingCheckerA.isPerformanceIssue).toBeFalse();
+                    expect(ratingCheckerB.isPerformanceIssue).toBeFalse();
+                    expect(ratingCheckerC.isPerformanceIssue).toBeFalse();
+                    expect(ratingCheckerD.isPerformanceIssue).toBeFalse();
                 });
             });
         });

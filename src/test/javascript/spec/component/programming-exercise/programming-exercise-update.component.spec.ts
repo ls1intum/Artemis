@@ -135,7 +135,7 @@ describe('ProgrammingExercise Management Update Component', () => {
 
             // THEN
             expect(programmingExerciseService.update).toHaveBeenCalledWith(entity, {});
-            expect(comp.isSaving).toBe(false);
+            expect(comp.isSaving).toBeFalse();
         }));
 
         it('Should call create service on save for new entity', fakeAsync(() => {
@@ -151,7 +151,7 @@ describe('ProgrammingExercise Management Update Component', () => {
 
             // THEN
             expect(programmingExerciseService.automaticSetup).toHaveBeenCalledWith(entity);
-            expect(comp.isSaving).toBe(false);
+            expect(comp.isSaving).toBeFalse();
         }));
 
         it('Should trim the exercise title before saving', fakeAsync(() => {
@@ -199,7 +199,7 @@ describe('ProgrammingExercise Management Update Component', () => {
 
             // THEN
             expect(exerciseGroupService.find).toHaveBeenCalledWith(courseId, examId, exerciseGroupId);
-            expect(comp.isSaving).toBe(false);
+            expect(comp.isSaving).toBeFalse();
             expect(comp.programmingExercise).toStrictEqual(expectedExamProgrammingExercise);
             expect(comp.isExamMode).toBeTrue();
         }));
@@ -227,9 +227,9 @@ describe('ProgrammingExercise Management Update Component', () => {
 
             // THEN
             expect(courseService.find).toHaveBeenCalledWith(courseId);
-            expect(comp.isSaving).toBe(false);
+            expect(comp.isSaving).toBeFalse();
             expect(comp.programmingExercise).toStrictEqual(expectedProgrammingExercise);
-            expect(comp.isExamMode).toBe(false);
+            expect(comp.isExamMode).toBeFalse();
         }));
     });
 
@@ -303,7 +303,7 @@ describe('ProgrammingExercise Management Update Component', () => {
             scaCheckbox = fixture.nativeElement.querySelector('#field_staticCodeAnalysisEnabled');
 
             expect(scaCheckbox).toBe(null);
-            expect(comp.programmingExercise.staticCodeAnalysisEnabled).toBe(false);
+            expect(comp.programmingExercise.staticCodeAnalysisEnabled).toBeFalse();
             expect(comp.programmingExercise.maxStaticCodeAnalysisPenalty).toBe(undefined);
             expect(comp.programmingExercise.programmingLanguage).toBe(ProgrammingLanguage.HASKELL);
         }));
@@ -357,7 +357,7 @@ describe('ProgrammingExercise Management Update Component', () => {
             // THEN
             expect(comp.selectedProgrammingLanguage).toBe(ProgrammingLanguage.C);
             expect(comp.selectedProjectType).toBe(ProjectType.FACT);
-            expect(comp.programmingExercise.staticCodeAnalysisEnabled).toBe(false);
+            expect(comp.programmingExercise.staticCodeAnalysisEnabled).toBeFalse();
             expect(comp.programmingExercise.maxStaticCodeAnalysisPenalty).toBe(undefined);
         }));
     });
@@ -401,8 +401,8 @@ describe('ProgrammingExercise Management Update Component', () => {
                 expect(comp.programmingExercise.maxStaticCodeAnalysisPenalty).toBe(maxPenalty);
                 expect(scaCheckbox.checked).toBe(scaActivatedOriginal);
                 expect(!!maxPenaltyInput).toBe(scaActivatedOriginal);
-                expect(recreateBuildPlanCheckbox.checked).toBe(false);
-                expect(updateTemplateCheckbox.checked).toBe(false);
+                expect(recreateBuildPlanCheckbox.checked).toBeFalse();
+                expect(updateTemplateCheckbox.checked).toBeFalse();
                 expect(comp.programmingExercise).toBe(programmingExercise);
                 expect(courseService.find).toHaveBeenCalledWith(courseId);
 

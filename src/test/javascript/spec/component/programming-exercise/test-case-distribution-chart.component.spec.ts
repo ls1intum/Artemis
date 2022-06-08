@@ -201,6 +201,6 @@ describe('Test case distribution chart', () => {
         component.resetTableFilter();
 
         expect(emitStub).toHaveBeenCalledWith(-5);
-        expect(component.tableFiltered).toBe(false);
+        expect(component.tableFiltered).toBeFalse();
     });
 });

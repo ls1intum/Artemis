@@ -338,7 +338,7 @@ describe('Interval Grading System Component', () => {
 
         comp.createGradeStep();
 
-        expect(comp.gradingScale.gradeSteps[1].lowerBoundInclusive).toBe(false);
+        expect(comp.gradingScale.gradeSteps[1].lowerBoundInclusive).toBeFalse();
         expect(comp.gradingScale.gradeSteps).toHaveLength(2);
     });
 
@@ -355,15 +355,15 @@ describe('Interval Grading System Component', () => {
         comp.setInclusivity();
 
         expect(comp.gradingScale.gradeSteps[0].lowerBoundInclusive).toBeTrue();
-        expect(comp.gradingScale.gradeSteps[0].upperBoundInclusive).toBe(false);
+        expect(comp.gradingScale.gradeSteps[0].upperBoundInclusive).toBeFalse();
 
         expect(comp.gradingScale.gradeSteps[1].lowerBoundInclusive).toBeTrue();
-        expect(comp.gradingScale.gradeSteps[1].upperBoundInclusive).toBe(false);
+        expect(comp.gradingScale.gradeSteps[1].upperBoundInclusive).toBeFalse();
 
         expect(comp.gradingScale.gradeSteps[2].lowerBoundInclusive).toBeTrue();
         expect(comp.gradingScale.gradeSteps[2].upperBoundInclusive).toBeTrue();
 
-        expect(comp.gradingScale.gradeSteps[3].lowerBoundInclusive).toBe(false);
+        expect(comp.gradingScale.gradeSteps[3].lowerBoundInclusive).toBeFalse();
         expect(comp.gradingScale.gradeSteps[3].upperBoundInclusive).toBeTrue();
     });
 
@@ -374,13 +374,13 @@ describe('Interval Grading System Component', () => {
         expect(comp.gradingScale.gradeSteps[0].lowerBoundInclusive).toBeTrue();
         expect(comp.gradingScale.gradeSteps[0].upperBoundInclusive).toBeTrue();
 
-        expect(comp.gradingScale.gradeSteps[1].lowerBoundInclusive).toBe(false);
+        expect(comp.gradingScale.gradeSteps[1].lowerBoundInclusive).toBeFalse();
         expect(comp.gradingScale.gradeSteps[1].upperBoundInclusive).toBeTrue();
 
-        expect(comp.gradingScale.gradeSteps[2].lowerBoundInclusive).toBe(false);
+        expect(comp.gradingScale.gradeSteps[2].lowerBoundInclusive).toBeFalse();
         expect(comp.gradingScale.gradeSteps[2].upperBoundInclusive).toBeTrue();
 
-        expect(comp.gradingScale.gradeSteps[3].lowerBoundInclusive).toBe(false);
+        expect(comp.gradingScale.gradeSteps[3].lowerBoundInclusive).toBeFalse();
         expect(comp.gradingScale.gradeSteps[3].upperBoundInclusive).toBeTrue();
     });
 });

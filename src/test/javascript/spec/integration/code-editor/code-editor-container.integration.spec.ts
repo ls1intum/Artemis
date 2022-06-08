@@ -209,7 +209,7 @@ describe('CodeEditorContainerIntegration', () => {
         // container
         expect(container.commitState).toBe(CommitState.CLEAN);
         expect(container.editorState).toBe(EditorState.CLEAN);
-        expect(container.buildOutput.isBuilding).toBe(false);
+        expect(container.buildOutput.isBuilding).toBeFalse();
         expect(container.unsavedFiles).toStrictEqual({});
 
         // file browser
@@ -219,13 +219,13 @@ describe('CodeEditorContainerIntegration', () => {
         expect(container.fileBrowser.unsavedFiles).toHaveLength(0);
 
         // ace editor
-        expect(container.aceEditor.isLoading).toBe(false);
+        expect(container.aceEditor.isLoading).toBeFalse();
         expect(container.aceEditor.commitState).toBe(CommitState.CLEAN);
 
         // actions
         expect(container.actions.commitState).toBe(CommitState.CLEAN);
         expect(container.actions.editorState).toBe(EditorState.CLEAN);
-        expect(container.actions.isBuilding).toBe(false);
+        expect(container.actions.isBuilding).toBeFalse();
 
         // status
         expect(container.fileBrowser.status.commitState).toBe(CommitState.CLEAN);
@@ -234,7 +234,7 @@ describe('CodeEditorContainerIntegration', () => {
         // build output
         expect(getBuildLogsStub).toHaveBeenCalledOnce();
         expect(container.buildOutput.rawBuildLogs.extractErrors(ProgrammingLanguage.JAVA, ProjectType.PLAIN_MAVEN)).toEqual(extractedBuildLogErrors);
-        expect(container.buildOutput.isBuilding).toBe(false);
+        expect(container.buildOutput.isBuilding).toBeFalse();
 
         // instructions
         expect(container.instructions).not.toBe(undefined); // Have to use this as it's a component
@@ -284,7 +284,7 @@ describe('CodeEditorContainerIntegration', () => {
         // container
         expect(container.commitState).toBe(CommitState.COULD_NOT_BE_RETRIEVED);
         expect(container.editorState).toBe(EditorState.CLEAN);
-        expect(container.buildOutput.isBuilding).toBe(false);
+        expect(container.buildOutput.isBuilding).toBeFalse();
         expect(container.unsavedFiles).toStrictEqual({});
 
         // file browser
@@ -294,14 +294,14 @@ describe('CodeEditorContainerIntegration', () => {
         expect(container.fileBrowser.unsavedFiles).toHaveLength(0);
 
         // ace editor
-        expect(container.aceEditor.isLoading).toBe(false);
+        expect(container.aceEditor.isLoading).toBeFalse();
         expect(container.aceEditor.annotationsArray.map((a) => omit(a, 'hash'))).toEqual(extractedBuildLogErrors);
         expect(container.aceEditor.commitState).toBe(CommitState.COULD_NOT_BE_RETRIEVED);
 
         // actions
         expect(container.actions.commitState).toBe(CommitState.COULD_NOT_BE_RETRIEVED);
         expect(container.actions.editorState).toBe(EditorState.CLEAN);
-        expect(container.actions.isBuilding).toBe(false);
+        expect(container.actions.isBuilding).toBeFalse();
 
         // status
         expect(container.fileBrowser.status.commitState).toBe(CommitState.COULD_NOT_BE_RETRIEVED);
@@ -310,7 +310,7 @@ describe('CodeEditorContainerIntegration', () => {
         // build output
         expect(getBuildLogsStub).toHaveBeenCalledOnce();
         expect(container.buildOutput.rawBuildLogs.extractErrors(ProgrammingLanguage.JAVA, ProjectType.PLAIN_MAVEN)).toEqual(extractedBuildLogErrors);
-        expect(container.buildOutput.isBuilding).toBe(false);
+        expect(container.buildOutput.isBuilding).toBeFalse();
 
         // instructions
         expect(container.instructions).not.toBe(undefined); // Have to use this as it's a component
@@ -335,7 +335,7 @@ describe('CodeEditorContainerIntegration', () => {
         containerFixture.detectChanges();
         expect(container.selectedFile).toBe(selectedFile);
         expect(container.aceEditor.selectedFile).toBe(selectedFile);
-        expect(container.aceEditor.isLoading).toBe(false);
+        expect(container.aceEditor.isLoading).toBeFalse();
         expect(container.aceEditor.fileSession).toContainKey(selectedFile);
         expect(getFileStub).toHaveBeenCalledOnce();
         expect(getFileStub).toHaveBeenCalledWith(selectedFile);
@@ -446,7 +446,7 @@ describe('CodeEditorContainerIntegration', () => {
         subscribeForLatestResultOfParticipationSubject.next(successfulResult);
         containerFixture.detectChanges();
 
-        expect(container.buildOutput.isBuilding).toBe(false);
+        expect(container.buildOutput.isBuilding).toBeFalse();
         expect(container.buildOutput.rawBuildLogs).toEqual(expectedBuildLog);
         expect(container.fileBrowser.errorFiles).toHaveLength(0);
     });
@@ -501,7 +501,7 @@ describe('CodeEditorContainerIntegration', () => {
         });
         containerFixture.detectChanges();
 
-        expect(container.buildOutput.isBuilding).toBe(false);
+        expect(container.buildOutput.isBuilding).toBeFalse();
         expect(container.buildOutput.rawBuildLogs).toEqual(expectedBuildLog);
         expect(container.fileBrowser.errorFiles).toHaveLength(0);
 

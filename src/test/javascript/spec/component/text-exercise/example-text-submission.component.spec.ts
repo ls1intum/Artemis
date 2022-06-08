@@ -464,7 +464,7 @@ describe('ExampleTextSubmissionComponent', () => {
         // THEN
         expect(exampleSubmissionServiceSpy).toHaveBeenCalledOnce();
         expect(comp.exampleSubmission).toEqual(exampleSubmission);
-        expect(comp.unsavedSubmissionChanges).toBe(false);
+        expect(comp.unsavedSubmissionChanges).toBeFalse();
         expect(alertSuccessSpy).toHaveBeenCalledOnce();
         expect(alertSuccessSpy).toHaveBeenCalledWith('artemisApp.exampleSubmission.saveSuccessful');
     });

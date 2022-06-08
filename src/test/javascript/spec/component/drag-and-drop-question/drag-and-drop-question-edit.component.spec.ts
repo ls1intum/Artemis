@@ -82,8 +82,8 @@ describe('DragAndDropQuestionEditComponent', () => {
     });
 
     it('should initialize', () => {
-        expect(component.isQuestionCollapsed).toBe(false);
-        expect(component.isUploadingDragItemFile).toBe(false);
+        expect(component.isQuestionCollapsed).toBeFalse();
+        expect(component.isUploadingDragItemFile).toBeFalse();
         expect(component.mouse).toStrictEqual(new DragAndDropMouseEvent());
     });
 
@@ -146,7 +146,7 @@ describe('DragAndDropQuestionEditComponent', () => {
 
         expect(component.backgroundFile).toBe(undefined);
         expect(component.question.backgroundFilePath).toBe(newPath);
-        expect(component.isUploadingBackgroundFile).toBe(false);
+        expect(component.isUploadingBackgroundFile).toBeFalse();
     }));
 
     it('should move the mouse in different situations', () => {
@@ -272,7 +272,7 @@ describe('DragAndDropQuestionEditComponent', () => {
         component.drag();
         expect(component.dropAllowed).toBeTrue();
         component.drop();
-        expect(component.dropAllowed).toBe(false);
+        expect(component.dropAllowed).toBeFalse();
     });
 
     it('should duplicate drop location', () => {
@@ -371,7 +371,7 @@ describe('DragAndDropQuestionEditComponent', () => {
             component.uploadDragItem();
             tick();
         } catch (error) {
-            expect(component.isUploadingDragItemFile).toBe(false);
+            expect(component.isUploadingDragItemFile).toBeFalse();
             // Once because spy has been called in first execution of uploadDragItem()
             expect(questionUpdatedSpy).toHaveBeenCalledOnce();
         }
@@ -389,7 +389,7 @@ describe('DragAndDropQuestionEditComponent', () => {
 
         expect(questionUpdatedSpy).toHaveBeenCalledOnce();
         expect(component.dragItemPicture).toBe(newPath);
-        expect(component.isUploadingDragItemFile).toBe(false);
+        expect(component.isUploadingDragItemFile).toBeFalse();
     }));
 
     it('should delete drag item', () => {
@@ -471,7 +471,7 @@ describe('DragAndDropQuestionEditComponent', () => {
 
         expect(component.dragItemPicture).toBe(newPath);
         expect(questionUpdatedSpy).toHaveBeenCalledOnce();
-        expect(component.isUploadingDragItemFile).toBe(false);
+        expect(component.isUploadingDragItemFile).toBeFalse();
     }));
 
     it('should change question title', () => {
@@ -529,7 +529,7 @@ describe('DragAndDropQuestionEditComponent', () => {
 
         component.resetDragItem(firstItem);
 
-        expect(component.question.dragItems[2].invalid).toBe(false);
+        expect(component.question.dragItems[2].invalid).toBeFalse();
     });
 
     it('should reset drop location', () => {
@@ -546,7 +546,7 @@ describe('DragAndDropQuestionEditComponent', () => {
 
         component.resetDropLocation(firstItem);
 
-        expect(component.question.dropLocations[2].invalid).toBe(false);
+        expect(component.question.dropLocations[2].invalid).toBeFalse();
     });
 
     it('should toggle preview', () => {
@@ -556,7 +556,7 @@ describe('DragAndDropQuestionEditComponent', () => {
 
         component.togglePreview();
 
-        expect(component.showPreview).toBe(false);
+        expect(component.showPreview).toBeFalse();
         expect(component.question.text).toBe(undefined);
     });
 

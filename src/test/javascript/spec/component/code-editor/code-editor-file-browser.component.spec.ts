@@ -82,7 +82,7 @@ describe('CodeEditorFileBrowserComponent', () => {
         triggerChanges(comp, { property: 'commitState', currentValue: CommitState.UNDEFINED });
         fixture.detectChanges();
 
-        expect(comp.isLoadingFiles).toBe(false);
+        expect(comp.isLoadingFiles).toBeFalse();
         expect(comp.repositoryFiles).toEqual(repositoryContent);
         expect(comp.filesTreeViewItem).toEqual(expectedFileTreeItems);
         const renderedFolders = debugElement.queryAll(By.css('jhi-code-editor-file-browser-folder'));
@@ -99,7 +99,7 @@ describe('CodeEditorFileBrowserComponent', () => {
 
         triggerChanges(comp, { property: 'commitState', currentValue: CommitState.UNDEFINED });
         fixture.detectChanges();
-        expect(comp.isLoadingFiles).toBe(false);
+        expect(comp.isLoadingFiles).toBeFalse();
         expect(comp.repositoryFiles).toEqual(repositoryContent);
         const renderedFolders = debugElement.queryAll(By.css('jhi-code-editor-file-browser-folder'));
         const renderedFiles = debugElement.queryAll(By.css('jhi-code-editor-file-browser-file'));
@@ -217,7 +217,7 @@ describe('CodeEditorFileBrowserComponent', () => {
         comp.commitState = CommitState.UNDEFINED;
         triggerChanges(comp, { property: 'commitState', currentValue: CommitState.UNDEFINED });
         fixture.detectChanges();
-        expect(comp.isLoadingFiles).toBe(false);
+        expect(comp.isLoadingFiles).toBeFalse();
         expect(comp.repositoryFiles).toEqual(allowedFiles);
         expect(comp.filesTreeViewItem.map((x) => x.toString())).toEqual(expectedFileTreeItems);
         const renderedFolders = debugElement.queryAll(By.css('jhi-code-editor-file-browser-folder'));
@@ -264,7 +264,7 @@ describe('CodeEditorFileBrowserComponent', () => {
 
         fixture.detectChanges();
         expect(comp.commitState).toEqual(CommitState.COULD_NOT_BE_RETRIEVED);
-        expect(comp.isLoadingFiles).toBe(false);
+        expect(comp.isLoadingFiles).toBeFalse();
         expect(comp.repositoryFiles).toBe(undefined);
         expect(comp.filesTreeViewItem).toBe(undefined);
         expect(onErrorSpy).toHaveBeenCalledOnce();
@@ -290,7 +290,7 @@ describe('CodeEditorFileBrowserComponent', () => {
         getRepositoryContentSubject.error('fatal error');
 
         fixture.detectChanges();
-        expect(comp.isLoadingFiles).toBe(false);
+        expect(comp.isLoadingFiles).toBeFalse();
         expect(comp.repositoryFiles).toBe(undefined);
         expect(comp.filesTreeViewItem).toBe(undefined);
         expect(onErrorSpy).toHaveBeenCalledOnce();
@@ -764,7 +764,7 @@ describe('CodeEditorFileBrowserComponent', () => {
 
         expect(debugElement.query(By.css(createFileRoot)).nativeElement.disabled).toBeTrue();
         expect(debugElement.query(By.css(createFolderRoot)).nativeElement.disabled).toBeTrue();
-        expect(debugElement.query(By.css(compressTree)).nativeElement.disabled).toBe(false);
+        expect(debugElement.query(By.css(compressTree)).nativeElement.disabled).toBeFalse();
 
         // Resolve conflict.
         conflictService.notifyConflictState(GitConflictState.OK);
@@ -777,9 +777,9 @@ describe('CodeEditorFileBrowserComponent', () => {
 
         expect(comp.commitState).toEqual(CommitState.CLEAN);
 
-        expect(debugElement.query(By.css(createFileRoot)).nativeElement.disabled).toBe(false);
-        expect(debugElement.query(By.css(createFolderRoot)).nativeElement.disabled).toBe(false);
-        expect(debugElement.query(By.css(compressTree)).nativeElement.disabled).toBe(false);
+        expect(debugElement.query(By.css(createFileRoot)).nativeElement.disabled).toBeFalse();
+        expect(debugElement.query(By.css(createFolderRoot)).nativeElement.disabled).toBeFalse();
+        expect(debugElement.query(By.css(compressTree)).nativeElement.disabled).toBeFalse();
 
         expect(getRepositoryContentStub).toHaveBeenCalledOnce();
         expect(comp.selectedFile).toBe(undefined);

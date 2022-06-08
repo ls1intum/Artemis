@@ -126,7 +126,7 @@ describe('Plagiarism Inspector Component', () => {
 
         expect(websocketServiceSpy).toHaveBeenCalledWith(comp.getPlagarismDetectionTopic());
         expect(comp.getPlagarismDetectionTopic()).toEqual(`/topic/modeling-exercises/${modelingExercise.id}/plagiarism-check`);
-        expect(comp.detectionInProgress).toBe(false);
+        expect(comp.detectionInProgress).toBeFalse();
         expect(comp.plagiarismResult).toBe(modelingPlagiarismResult);
     }));
 
@@ -220,7 +220,7 @@ describe('Plagiarism Inspector Component', () => {
         jest.spyOn(comp, 'handlePlagiarismResult');
 
         comp.getLatestPlagiarismResult();
-        expect(comp.detectionInProgress).toBe(false);
+        expect(comp.detectionInProgress).toBeFalse();
 
         tick();
 
@@ -235,7 +235,7 @@ describe('Plagiarism Inspector Component', () => {
         jest.spyOn(comp, 'handlePlagiarismResult');
 
         comp.getLatestPlagiarismResult();
-        expect(comp.detectionInProgress).toBe(false);
+        expect(comp.detectionInProgress).toBeFalse();
 
         tick();
 
@@ -250,7 +250,7 @@ describe('Plagiarism Inspector Component', () => {
         jest.spyOn(comp, 'handlePlagiarismResult');
 
         comp.getLatestPlagiarismResult();
-        expect(comp.detectionInProgress).toBe(false);
+        expect(comp.detectionInProgress).toBeFalse();
 
         tick();
 
@@ -267,7 +267,7 @@ describe('Plagiarism Inspector Component', () => {
     it('should not be programming exercise', () => {
         comp.exercise = { type: ExerciseType.TEXT } as TextExercise;
 
-        expect(comp.isProgrammingExercise()).toBe(false);
+        expect(comp.isProgrammingExercise()).toBeFalse();
     });
 
     it('should trigger similarity distribution', () => {
@@ -299,7 +299,7 @@ describe('Plagiarism Inspector Component', () => {
 
             expect(comp.visibleComparisons).toEqual(comparisons);
             expect(comp.sidebarOffset).toBe(0);
-            expect(comp.chartFilterApplied).toBe(false);
+            expect(comp.chartFilterApplied).toBeFalse();
         });
 
         it('should return the selected comparison', () => {

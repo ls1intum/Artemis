@@ -58,7 +58,7 @@ describe('TextAssessmentAreaComponent', () => {
 
         component.onAltToggle(eventMock, false);
         expect(spyOnAlt).toHaveBeenCalledOnce();
-        expect(component.autoTextBlockAssessment).toBe(false);
+        expect(component.autoTextBlockAssessment).toBeFalse();
     });
 
     it('should add TextBlockRef if text block is added manually', () => {

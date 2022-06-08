@@ -43,10 +43,10 @@ describe('ExerciseUtils', () => {
 
     it('the due date should not have passed if the exercise has no due date', () => {
         const exercise = exerciseWithDueDate(undefined);
-        expect(hasExerciseDueDatePassed(exercise)).toBe(false);
+        expect(hasExerciseDueDatePassed(exercise)).toBeFalse();
 
         const participation = participationWithDueDate(dayjs().subtract(1, 'hour'));
-        expect(hasExerciseDueDatePassed(exercise, participation)).toBe(false);
+        expect(hasExerciseDueDatePassed(exercise, participation)).toBeFalse();
     });
 
     it('the due date should have passed if the exercise due date has passed and no individual due date exists', () => {
@@ -61,6 +61,6 @@ describe('ExerciseUtils', () => {
         const exercise = exerciseWithDueDate(dayjs().subtract(1, 'hour'));
         const participation = participationWithDueDate(dayjs().add(1, 'hour'));
 
-        expect(hasExerciseDueDatePassed(exercise, participation)).toBe(false);
+        expect(hasExerciseDueDatePassed(exercise, participation)).toBeFalse();
     });
 });

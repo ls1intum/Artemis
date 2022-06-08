@@ -68,7 +68,7 @@ describe('Plagiarism Split Pane Header Component', () => {
     it('does not find an active file', () => {
         const activeFile = comp.getActiveFile();
 
-        expect(activeFile).toBe(false);
+        expect(activeFile).toBeFalse();
     });
 
     it('returns the active file', () => {
@@ -86,13 +86,13 @@ describe('Plagiarism Split Pane Header Component', () => {
         comp.handleFileSelect(files[idx], idx);
 
         expect(comp.activeFileIndex).toBe(idx);
-        expect(comp.showFiles).toBe(false);
+        expect(comp.showFiles).toBeFalse();
         expect(comp.selectFile.emit).toHaveBeenCalledOnce();
         expect(comp.selectFile.emit).toHaveBeenCalledWith(files[idx]);
     });
 
     it('has no files', () => {
-        expect(comp.hasFiles()).toBe(false);
+        expect(comp.hasFiles()).toBeFalse();
     });
 
     it('has files', () => {
@@ -115,6 +115,6 @@ describe('Plagiarism Split Pane Header Component', () => {
 
         comp.toggleShowFiles();
 
-        expect(comp.showFiles).toBe(false);
+        expect(comp.showFiles).toBeFalse();
     });
 });

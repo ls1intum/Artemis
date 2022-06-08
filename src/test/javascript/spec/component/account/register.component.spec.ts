@@ -75,9 +75,9 @@ describe('Component Tests', () => {
                 user.langKey = 'en';
                 expect(service.save).toHaveBeenCalledWith(user);
                 expect(comp.success).toBeTrue();
-                expect(comp.errorUserExists).toBe(false);
-                expect(comp.errorEmailExists).toBe(false);
-                expect(comp.error).toBe(false);
+                expect(comp.errorUserExists).toBeFalse();
+                expect(comp.errorEmailExists).toBeFalse();
+                expect(comp.error).toBeFalse();
             }),
         ));
 
@@ -99,8 +99,8 @@ describe('Component Tests', () => {
                 tick();
 
                 expect(comp.errorUserExists).toBeTrue();
-                expect(comp.errorEmailExists).toBe(false);
-                expect(comp.error).toBe(false);
+                expect(comp.errorEmailExists).toBeFalse();
+                expect(comp.error).toBeFalse();
             }),
         ));
 
@@ -122,8 +122,8 @@ describe('Component Tests', () => {
                 tick();
 
                 expect(comp.errorEmailExists).toBeTrue();
-                expect(comp.errorUserExists).toBe(false);
-                expect(comp.error).toBe(false);
+                expect(comp.errorUserExists).toBeFalse();
+                expect(comp.error).toBeFalse();
             }),
         ));
 
@@ -143,8 +143,8 @@ describe('Component Tests', () => {
                 comp.register();
                 tick();
 
-                expect(comp.errorUserExists).toBe(false);
-                expect(comp.errorEmailExists).toBe(false);
+                expect(comp.errorUserExists).toBeFalse();
+                expect(comp.errorEmailExists).toBeFalse();
                 expect(comp.error).toBeTrue();
             }),
         ));

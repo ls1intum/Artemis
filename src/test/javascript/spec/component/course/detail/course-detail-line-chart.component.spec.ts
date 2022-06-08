@@ -81,7 +81,7 @@ describe('CourseDetailLineChartComponent', () => {
 
         component.ngOnChanges();
 
-        expect(component.startDateAlreadyPassed).toBe(false);
+        expect(component.startDateAlreadyPassed).toBeFalse();
     });
 
     it('should show only 2 weeks if start date is 1 week ago', () => {

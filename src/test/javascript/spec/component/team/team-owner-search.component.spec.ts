@@ -112,7 +112,7 @@ describe('Team Owner Search Component', () => {
         expect(searchFailedSpy).toHaveBeenCalledOnce();
         expect(searchFailedSpy).toHaveBeenCalledWith(true);
 
-        expect(comp.ownerOptionsLoaded).toBe(false);
+        expect(comp.ownerOptionsLoaded).toBeFalse();
         expect(loadOwnerOptionsResult).toBe(undefined);
     });
 });

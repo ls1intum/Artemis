@@ -196,7 +196,7 @@ describe('User Management Update Component', () => {
         comp.isSaving = true;
         // @ts-ignore
         comp.onSaveError();
-        expect(comp.isSaving).toBe(false);
+        expect(comp.isSaving).toBeFalse();
     });
 
     it('should set password to undefined if random password should be used', () => {

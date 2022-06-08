@@ -72,7 +72,7 @@ describe('ColorSelectorComponent', () => {
         DEFAULT_COLORS.forEach((color) => {
             component.showColorSelector = true;
             component.selectColorForTag(color);
-            expect(component.showColorSelector).toBe(false);
+            expect(component.showColorSelector).toBeFalse();
             expect(emitMock).toHaveBeenCalledWith(color);
         });
     });
@@ -81,7 +81,7 @@ describe('ColorSelectorComponent', () => {
         component.showColorSelector = true;
         component.cancelColorSelector();
 
-        expect(component.showColorSelector).toBe(false);
+        expect(component.showColorSelector).toBeFalse();
     });
 
     it('should close the color selector correctly', () => {
@@ -107,6 +107,6 @@ describe('ColorSelectorComponent', () => {
 
         component.clickOutside(event);
 
-        expect(component.showColorSelector).toBe(false);
+        expect(component.showColorSelector).toBeFalse();
     });
 });

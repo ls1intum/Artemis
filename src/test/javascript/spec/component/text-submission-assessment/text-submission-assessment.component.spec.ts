@@ -180,7 +180,7 @@ describe('TextSubmissionAssessmentComponent', () => {
         component['activatedRoute'] = route();
         component.ngOnInit();
         tick();
-        expect(component.isTestRun).toBe(false);
+        expect(component.isTestRun).toBeFalse();
         expect(component.exerciseId).toBe(1);
         expect(component.examId).toBe(2);
     }));
@@ -323,7 +323,7 @@ describe('TextSubmissionAssessmentComponent', () => {
         component.save();
 
         expect(errorStub).toHaveBeenCalledOnce();
-        expect(component.saveBusy).toBe(false);
+        expect(component.saveBusy).toBeFalse();
     });
 
     it('should invoke import example submission', () => {

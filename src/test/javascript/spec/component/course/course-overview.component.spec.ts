@@ -191,7 +191,7 @@ describe('CourseOverviewComponent', () => {
 
         component.toggleCourseDescription();
 
-        expect(component.longDescriptionShown).toBe(false);
+        expect(component.longDescriptionShown).toBeFalse();
         expect(component.courseDescription).toBe('Nihilne te nocturnum praesidium Palati, nihil urbi…');
 
         component.toggleCourseDescription();
@@ -223,7 +223,7 @@ describe('CourseOverviewComponent', () => {
 
         const bool = component.hasVisibleExams();
 
-        expect(bool).toBe(false);
+        expect(bool).toBeFalse();
     });
 
     it('should subscribeToTeamAssignmentUpdates', () => {
@@ -249,7 +249,7 @@ describe('CourseOverviewComponent', () => {
         component.ngOnInit();
 
         expect(adjustCourseDescriptionStub).toHaveBeenCalled();
-        expect(component.enableShowMore).toBe(false);
+        expect(component.enableShowMore).toBeFalse();
         expect(component.longDescriptionShown).toBeTrue();
         expect(component.courseDescription).toBe(course2.description);
         expect(localStorage.getItem('isDescriptionRead' + course2.shortName)).toBe('true');

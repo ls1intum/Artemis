@@ -166,7 +166,7 @@ describe('Guided tour integration', () => {
             // Click through tour steps in NavComponent
             for (let i = 1; i < 6; i++) {
                 guidedTourService.nextStep();
-                expect(guidedTourService.isOnFirstStep).toBe(false);
+                expect(guidedTourService.isOnFirstStep).toBeFalse();
                 guidedTourComponent.currentTourStep = guidedTourService['currentStep'];
 
                 if (guidedTourComponent.currentTourStep.highlightSelector) {

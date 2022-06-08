@@ -224,7 +224,7 @@ describe('GuidedTourComponent', () => {
         });
 
         it('should determine if the tour step has bottom orientation', () => {
-            expect(guidedTourComponent['isBottom']()).toBe(false);
+            expect(guidedTourComponent['isBottom']()).toBeFalse();
 
             guidedTourComponent.currentTourStep!.orientation = Orientation.BOTTOM;
             expect(guidedTourComponent['isBottom']()).toBeTrue();

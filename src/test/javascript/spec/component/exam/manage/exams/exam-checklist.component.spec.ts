@@ -82,7 +82,7 @@ describe('ExamChecklistComponent', () => {
         component.ngOnChanges();
 
         expect(component.countMandatoryExercises).toBe(1);
-        expect(component.hasOptionalExercises).toBe(false);
+        expect(component.hasOptionalExercises).toBeFalse();
 
         const additionalExerciseGroup = {
             id: 13,

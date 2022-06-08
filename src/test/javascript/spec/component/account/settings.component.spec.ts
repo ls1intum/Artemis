@@ -114,7 +114,7 @@ describe('SettingsComponent', () => {
             tick();
 
             // THEN
-            expect(comp.success).toBe(false);
+            expect(comp.success).toBeFalse();
         }),
     ));
 });

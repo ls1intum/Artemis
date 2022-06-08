@@ -107,9 +107,9 @@ describe('ProgrammingAssessmentRepoExportDialogComponent', () => {
 
         comp.exportRepos(exerciseId);
         tick();
-        expect(comp.repositoryExportOptions.addParticipantName).toBe(false);
+        expect(comp.repositoryExportOptions.addParticipantName).toBeFalse();
         expect(comp.repositoryExportOptions.hideStudentNameInZippedFolder).toBeTrue();
-        expect(comp.exportInProgress).toBe(false);
+        expect(comp.exportInProgress).toBeFalse();
         expect(exportReposStub).toHaveBeenCalledOnce();
     }));
 
@@ -123,7 +123,7 @@ describe('ProgrammingAssessmentRepoExportDialogComponent', () => {
         comp.exportRepos(exerciseId);
         tick();
         expect(comp.repositoryExportOptions.addParticipantName).toBeTrue();
-        expect(comp.exportInProgress).toBe(false);
+        expect(comp.exportInProgress).toBeFalse();
         expect(exportReposStub).toHaveBeenCalledOnce();
     }));
 
@@ -140,7 +140,7 @@ describe('ProgrammingAssessmentRepoExportDialogComponent', () => {
         comp.bulkExportRepos();
         tick();
         expect(comp.repositoryExportOptions.exportAllParticipants).toBeTrue();
-        expect(comp.exportInProgress).toBe(false);
+        expect(comp.exportInProgress).toBeFalse();
         expect(exportReposStub).toHaveBeenCalledTimes(2);
     }));
 });

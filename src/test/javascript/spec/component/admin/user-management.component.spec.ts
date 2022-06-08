@@ -101,7 +101,7 @@ describe('UserManagementComponent', () => {
         expect(comp.users).toHaveLength(1);
         expect(comp.users[0].id).toBe(1);
         expect(comp.totalItems).toBe(1);
-        expect(comp.loadingSearchResult).toBe(false);
+        expect(comp.loadingSearchResult).toBeFalse();
     }));
 
     describe('setActive', () => {
