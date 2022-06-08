@@ -140,7 +140,7 @@ export class ExampleTextSubmissionComponent extends TextAssessmentBaseComponent 
             } else if (this.result?.id) {
                 this.state = State.forExistingAssessmentWithContext(this);
             }
-            // do this here to make sure  everythign is loaded before the guided tour step is loaded
+            // do this here to make sure everything is loaded before the guided tour step is loaded
             this.guidedTourService.componentPageLoaded();
         });
     }

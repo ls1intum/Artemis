@@ -568,6 +568,22 @@ public class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
+    public void testGetUnresolvedPostsPostsForCourse_AnnouncementsFilteredOut() throws Exception {
+        // filterToUnresolved set true; will filter out announcements as they are resolved by default
+        var params = new LinkedMultiValueMap<String, String>();
+        params.add("filterToUnresolved", "true");
+
+        List<Post> returnedPosts = request.getList("/api/courses/" + courseId + "/posts", HttpStatus.OK, Post.class, params);
+        database.assertSensitiveInformationHidden(returnedPosts);
+        // get posts of current user without announcements and compare
+        List<Post> postsWithoutAnnouncements = existingPosts.stream()
+                .filter(post -> (post.getCourseWideContext() == null || !post.getCourseWideContext().equals(CourseWideContext.ANNOUNCEMENT))).toList();
+
+        assertThat(returnedPosts).isEqualTo(postsWithoutAnnouncements);
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
     public void testGetPostsForCourse_WithPostId() throws Exception {
 
         var params = new LinkedMultiValueMap<String, String>();

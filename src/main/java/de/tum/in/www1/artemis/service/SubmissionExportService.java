@@ -58,7 +58,7 @@ public abstract class SubmissionExportService {
      *
      * @param exerciseId the id   of the exercise to be exported
      * @param submissionExportOptions the options for the export
-     * @return the zippped file with the exported submissions
+     * @return the zipped file with the exported submissions
      */
     public File exportStudentSubmissionsElseThrow(Long exerciseId, SubmissionExportOptionsDTO submissionExportOptions) {
         return exportStudentSubmissions(exerciseId, submissionExportOptions)
@@ -71,7 +71,7 @@ public abstract class SubmissionExportService {
      *
      * @param exerciseId the id   of the exercise to be exported
      * @param submissionExportOptions the options for the export
-     * @return the zippped file with the exported submissions
+     * @return the zipped file with the exported submissions
      */
     public Optional<File> exportStudentSubmissions(Long exerciseId, SubmissionExportOptionsDTO submissionExportOptions) {
         Path outputDir = Path.of(fileService.getUniquePathString(submissionExportPath));

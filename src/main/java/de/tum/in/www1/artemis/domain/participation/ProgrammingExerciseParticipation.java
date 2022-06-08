@@ -82,7 +82,7 @@ public interface ProgrammingExerciseParticipation extends ParticipationInterface
      * the buildAndTestAfterDueDate of the exercise is set and the due date has passed,
      * or if manual correction is involved and the due date has passed.
      *
-     * Locked means that the student can't make any changes to their repository any more.
+     * Locked means that the student can't make any changes to their repository anymore.
      * While we can control this easily in the remote VCS, we need to check this manually
      * for the local repository on the Artemis server.
      *
