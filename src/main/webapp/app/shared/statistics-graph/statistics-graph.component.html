@@ -3,7 +3,7 @@
         <h3>{{ chartName | artemisTranslate }}</h3>
     </div>
     <div class="row col-xl-11">
-        <fa-icon [icon]="faArrowLeft" size="2x" class="col-1 d-flex justify-content-end align-items-center ps-0 pe-0" role="button" (click)="switchTimeSpan(LEFT)"></fa-icon>
+        <fa-icon [icon]="faArrowLeft" size="2x" class="col-1 d-flex justify-content-end align-items-center px-0" role="button" (click)="switchTimeSpan(LEFT)"></fa-icon>
         <div #containerRef class="chart col-10 ps-0 pe-0">
             <ngx-charts-bar-vertical
                 [view]="[containerRef.offsetWidth, 250]"
