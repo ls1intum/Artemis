@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.net.URL;
 import java.util.Optional;
 
 import org.gitlab4j.api.GitLabApiException;
@@ -24,7 +25,7 @@ import de.tum.in.www1.artemis.exception.GitLabCIException;
 public class GitlabCIServiceTest extends AbstractSpringIntegrationGitlabCIGitlabSamlTest {
 
     @Value("${artemis.version-control.url}")
-    private String gitlabServerUrl;
+    private URL gitlabServerUrl;
 
     @Autowired
     private ContinuousIntegrationTestService continuousIntegrationTestService;
