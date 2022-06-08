@@ -1,6 +1,5 @@
 package de.tum.in.www1.artemis.repository;
 
-import static de.tum.in.www1.artemis.config.Constants.*;
 import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
 
 import java.time.ZonedDateTime;
@@ -33,6 +32,18 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificationExecutor<User> {
 
     String USERS_CACHE = "users";
+
+    long COURSE_ID_FOR_EMPTY_COURSES = -1;
+
+    String USER_MANAGEMENT_FILTER_NO_AUTHORITY = "NO_AUTHORITY";
+
+    String USER_MANAGEMENT_FILTER_INTERNAL = "INTERNAL";
+
+    String USER_MANAGEMENT_FILTER_EXTERNAL = "EXTERNAL";
+
+    String USER_MANAGEMENT_FILTER_ACTIVATED = "ACTIVATED";
+
+    String USER_MANAGEMENT_FILTER_DEACTIVATED = "DEACTIVATED";
 
     @EntityGraph(type = LOAD, attributePaths = { "groups" })
     Optional<User> findOneWithGroupsByActivationKey(String activationKey);

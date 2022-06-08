@@ -225,18 +225,6 @@ public final class Constants {
 
     public static final String VOTE_EMOJI_ID = "heavy_plus_sign";
 
-    public static final long COURSE_ID_FOR_EMPTY_COURSES = -1;
-
-    public static final String USER_MANAGEMENT_FILTER_NO_AUTHORITY = "NO_AUTHORITY";
-
-    public static final String USER_MANAGEMENT_FILTER_INTERNAL = "INTERNAL";
-
-    public static final String USER_MANAGEMENT_FILTER_EXTERNAL = "EXTERNAL";
-
-    public static final String USER_MANAGEMENT_FILTER_ACTIVATED = "ACTIVATED";
-
-    public static final String USER_MANAGEMENT_FILTER_DEACTIVATED = "DEACTIVATED";
-
     private Constants() {
     }
 }
