@@ -42,13 +42,18 @@
                 "show": "Diskussion anzeigen",
                 "hide": "Diskussion einklappen"
             },
+            "discussionSection": {
+                "searchBarDefault": "Suche nach Beiträgen",
+                "sortByDate": "Datum:",
+                "defaultSortCriterion": "Standard-Sortierung"
+            },
             "overview": {
                 "title": "Beiträge",
                 "searchBarDefault": "Suche nach Beiträgen, verwende #, um einem bestimmten Beitrag zu suchen (z.B. #1)",
                 "postContextFilter": "Zeige Beiträge in:",
                 "filterToUnresolved": "Ungeklärt",
                 "filterToOwn": "Eigene",
-                "filterToAnsweredOrReacted": "Reagiert oder beantwortet von Dir",
+                "filterToAnsweredOrReacted": "Reagiert",
                 "courseFilterExplanation": "(Alle Beiträge)",
                 "sortPostsBy": "Sortiere nach:",
                 "sortDescending": "Absteigend",

@@ -556,6 +556,12 @@ public class CourseGitlabJenkinsIntegrationTest extends AbstractSpringIntegratio
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testGetAllEditorsInCourse() throws Exception {
+        courseTestService.testGetAllEditorsInCourse();
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testGetAllStudentsOrTutorsOrInstructorsInCourse_AsInstructorOfOtherCourse_forbidden() throws Exception {
         courseTestService.testGetAllStudentsOrTutorsOrInstructorsInCourse_AsInstructorOfOtherCourse_forbidden();
     }

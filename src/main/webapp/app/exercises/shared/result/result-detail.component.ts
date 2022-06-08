@@ -448,7 +448,7 @@ export class ResultDetailComponent implements OnInit {
             catchError((error: HttpErrorResponse) => {
                 /**
                  * The request returns 403 if the build was successful and therefore no build logs exist.
-                 * If no submission is available, the client will attempt to fetch the build logs anyways.
+                 * If no submission is available, the client will attempt to fetch the build logs anyway.
                  * We catch the error here as it would prevent the displaying of feedback.
                  */
                 if (error.status === 403) {

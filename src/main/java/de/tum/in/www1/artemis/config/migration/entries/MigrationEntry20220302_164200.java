@@ -16,7 +16,7 @@ import de.tum.in.www1.artemis.service.user.PasswordService;
 
 /**
  * This migration does the following for all internal users:
- * 1) Decrypt the password in the database using the legacy password service (which will not be used any more in the future)
+ * 1) Decrypt the password in the database using the legacy password service (which will not be used anymore in the future)
  * 2) Hashes the password with the new BCryptPasswordEncoder
  */
 @Component

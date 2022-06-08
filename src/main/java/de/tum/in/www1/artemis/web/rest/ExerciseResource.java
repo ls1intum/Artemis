@@ -294,7 +294,7 @@ public class ExerciseResource {
 
         if (exercise instanceof QuizExercise quizExercise) {
             quizExercise.setQuizBatches(null);
-            quizExercise.setQuizBatches(quizBatchService.getQuizBatchForStudent(quizExercise, user).stream().collect(Collectors.toSet()));
+            quizExercise.setQuizBatches(quizBatchService.getQuizBatchForStudentByLogin(quizExercise, user.getLogin()).stream().collect(Collectors.toSet()));
         }
         if (exercise instanceof ProgrammingExercise programmingExercise) {
             // TODO: instead fetch the policy without programming exercise, should be faster

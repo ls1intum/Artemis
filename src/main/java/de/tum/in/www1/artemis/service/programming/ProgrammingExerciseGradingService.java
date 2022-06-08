@@ -285,7 +285,7 @@ public class ProgrammingExerciseGradingService {
     /**
      * Updates an existing semi-automatic result with automatic feedback from another result.
      *
-     * Note: for the second correction it is important that we do not create additional semi automatic results
+     * Note: for the second correction it is important that we do not create additional semi-automatic results
      *
      * @param lastSemiAutomaticResultId The latest manual result for the same submission (which must exist in the database)
      * @param newAutomaticResult The new automatic result
@@ -293,7 +293,7 @@ public class ProgrammingExerciseGradingService {
      * @return The updated semi-automatic result
      */
     private Result updateLatestSemiAutomaticResultWithNewAutomaticFeedback(long lastSemiAutomaticResultId, Result newAutomaticResult, ProgrammingExercise programmingExercise) {
-        // Note: refetch the semi automatic result with feedback and assessor
+        // Note: refetch the semi-automatic result with feedback and assessor
         var latestSemiAutomaticResult = resultRepository.findByIdWithEagerFeedbacksAndAssessor(lastSemiAutomaticResultId).get();
         // this makes it the most recent result, but optionally keeps the draft state of an unfinished manual result
         latestSemiAutomaticResult.setCompletionDate(latestSemiAutomaticResult.getCompletionDate() != null ? newAutomaticResult.getCompletionDate() : null);
@@ -927,7 +927,7 @@ public class ProgrammingExerciseGradingService {
 
         /*
          * Cap at the maximum allowed penalty for this exercise (maxStaticCodeAnalysisPenalty is in percent) The max penalty is applied to the maxScore. If no max penalty was
-         * supplied, the value defaults to 100 percent. If for example maxScore is 6, maxBonus is 4 and the penalty is 50 percent, then a student can only loose 3 (0.5 * maxScore)
+         * supplied, the value defaults to 100 percent. If for example maxScore is 6, maxBonus is 4 and the penalty is 50 percent, then a student can only lose 3 (0.5 * maxScore)
          * points due to static code analysis issues.
          */
         final var maxExercisePenaltyPoints = (double) Optional.ofNullable(programmingExercise.getMaxStaticCodeAnalysisPenalty()).orElse(100) / 100.0
