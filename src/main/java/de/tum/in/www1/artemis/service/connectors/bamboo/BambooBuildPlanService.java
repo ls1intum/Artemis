@@ -326,10 +326,14 @@ public class BambooBuildPlanService {
     private void modifyBuildConfigurationForRegularTestsForJavaAndKotlinExercise(boolean isMavenProject, boolean recordTestwiseCoverage, List<Task<?, ?>> defaultTasks,
             List<Task<?, ?>> finalTasks, List<Artifact> artifacts) {
         if (isMavenProject) {
-            defaultTasks.add(new MavenTask().goal("clean test").jdk("JDK").executableLabel("Maven 3").description("Tests").hasTests(true));
+            String goals = "clean test";
             if (recordTestwiseCoverage) {
+                // If a testwise coverage should be performed, a custom profile is used for the execution
+                goals += "-Pcoverage";
                 artifacts.add(new Artifact().name("testwiseCoverageReport").location("target/tia/reports").copyPattern("**testwise-coverage**.json"));
             }
+
+            defaultTasks.add(new MavenTask().goal(goals).jdk("JDK").executableLabel("Maven 3").description("Tests").hasTests(true));
         }
         else {
             // setting the permission as a final task is required as a workaround because the docker container runs as a root user
