@@ -330,7 +330,7 @@ public class ExerciseResource {
     /**
      * GET /exercises/{exerciseId}/latest-due-date
      *
-     * @param exerciseId the exerciseId of the exercise to get the repos from
+     * @param exerciseId the exerciseId of the exercise to get the latest due date from
      * @return the ResponseEntity with status 200 (OK) and the latest due date
      */
     @GetMapping("/exercises/{exerciseId}/latest-due-date")

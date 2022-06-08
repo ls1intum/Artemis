@@ -531,12 +531,15 @@ export class ResultComponent implements OnInit, OnChanges {
         if (!this.latestIndividualDueDate) {
             this.exerciseService.getLatestDueDate(this.exercise!.id!).subscribe((latestIndividualDueDate?: dayjs.Dayjs) => {
                 this.latestIndividualDueDate = latestIndividualDueDate;
-                componentInstance.showMissingAutomaticFeedbackInformation = dayjs().isBefore(this.latestIndividualDueDate);
-                componentInstance.latestIndividualDueDate = this.latestIndividualDueDate;
+                this.initializeMissingAutomaticFeedbackAndLatestIndividualDueDate(componentInstance);
             });
         } else {
-            componentInstance.showMissingAutomaticFeedbackInformation = dayjs().isBefore(this.latestIndividualDueDate);
-            componentInstance.latestIndividualDueDate = this.latestIndividualDueDate;
+            this.initializeMissingAutomaticFeedbackAndLatestIndividualDueDate(componentInstance);
         }
+    }
+
+    private initializeMissingAutomaticFeedbackAndLatestIndividualDueDate(componentInstance: ResultDetailComponent) {
+        componentInstance.showMissingAutomaticFeedbackInformation = dayjs().isBefore(this.latestIndividualDueDate);
+        componentInstance.latestIndividualDueDate = this.latestIndividualDueDate;
     }
 }

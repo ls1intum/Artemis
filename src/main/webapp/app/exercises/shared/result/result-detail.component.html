@@ -66,7 +66,7 @@
                             [ngbTooltip]="'artemisApp.assessment.subsequentFeedback' | artemisTranslate"
                         ></fa-icon>
                         <fa-icon
-                            *ngIf="feedback.type === FeedbackItemType.Issue && feedback.actualCredits && feedback.actualCredits != feedback.credits"
+                            *ngIf="feedback.type === FeedbackItemType.Issue && feedback.actualCredits !== feedback.credits"
                             [icon]="faExclamationTriangle"
                             [ngbTooltip]="'artemisApp.programmingAssessment.codeIssueNotApplied' | artemisTranslate: { points: feedback.credits }"
                         >
