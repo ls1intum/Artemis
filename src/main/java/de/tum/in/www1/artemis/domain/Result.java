@@ -35,6 +35,11 @@ import de.tum.in.www1.artemis.service.listeners.ResultListener;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class Result extends DomainObject {
 
+    @Column(name = "result_string")
+    @JsonView(QuizView.After.class)
+    @Deprecated
+    private String resultString;
+
     @Column(name = "completion_date")
     @JsonView(QuizView.Before.class)
     private ZonedDateTime completionDate;
@@ -117,6 +122,11 @@ public class Result extends DomainObject {
     @Transient
     @JsonIgnore
     private Map<String, Set<CoverageFileReport>> fileReportsByTestCaseName;
+
+    @Deprecated
+    public String getResultString() {
+        return resultString;
+    }
 
     public ZonedDateTime getCompletionDate() {
         return completionDate;
