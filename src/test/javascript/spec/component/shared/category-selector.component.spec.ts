@@ -84,7 +84,7 @@ describe('Category Selector Component', () => {
         comp.onItemRemove(category2);
 
         expect(comp.categories).toEqual([category1, category3]);
-        expect(cancelColorSelectorSpy).toHaveBeenCalledTimes(1);
+        expect(cancelColorSelectorSpy).toHaveBeenCalledOnce();
         expect(emitSpy).toHaveBeenCalledWith([category1, category3]);
     });
 
@@ -143,7 +143,7 @@ describe('Category Selector Component', () => {
         comp.onItemAdd(event);
 
         expect(comp.categories).toEqual([category6]);
-        expect(emitSpy).not.toHaveBeenCalledTimes(1);
+        expect(emitSpy).not.toHaveBeenCalledOnce();
         expect(comp.categoryCtrl.value).toBe(null);
     });
 

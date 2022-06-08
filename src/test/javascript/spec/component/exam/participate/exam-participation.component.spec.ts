@@ -126,7 +126,7 @@ describe('ExamParticipationComponent', () => {
         it('should initialize and display test run ribbon', () => {
             fixture.detectChanges();
             expect(fixture).toBeTruthy();
-            expect(!!comp.testRunId).toBe(true);
+            expect(!!comp.testRunId).toBeTrue();
             const testRunRibbon = fixture.debugElement.query(By.css('#testRunRibbon'));
             expect(testRunRibbon).toBeDefined();
         });
@@ -135,7 +135,7 @@ describe('ExamParticipationComponent', () => {
             comp.ngOnInit();
             fixture.detectChanges();
             expect(fixture).toBeTruthy();
-            expect(!!comp.testRunId).toBe(false);
+            expect(!!comp.testRunId).toBeFalse();
             const testRunRibbon = fixture.debugElement.query(By.css('#testRunRibbon'));
             expect(testRunRibbon).toBeNull();
         });
@@ -144,29 +144,29 @@ describe('ExamParticipationComponent', () => {
     describe('isProgrammingExercise', () => {
         it('should return true if active exercise is a programming exercise', () => {
             comp.activeExamPage.exercise = new ProgrammingExercise(new Course(), undefined);
-            expect(comp.isProgrammingExercise()).toBe(true);
+            expect(comp.isProgrammingExercise()).toBeTrue();
         });
         it('should return false if active exercise is not a programming exercise', () => {
             comp.activeExamPage.exercise = new ModelingExercise(UMLDiagramType.ClassDiagram, new Course(), undefined);
-            expect(comp.isProgrammingExercise()).toBe(false);
+            expect(comp.isProgrammingExercise()).toBeFalse();
         });
     });
 
     describe('isProgrammingExerciseWithCodeEditor', () => {
         it('should return true if programming exercise is with code editor', () => {
             comp.activeExamPage.exercise = new ProgrammingExercise(new Course(), undefined);
-            expect(comp.isProgrammingExerciseWithCodeEditor()).toBe(false);
+            expect(comp.isProgrammingExerciseWithCodeEditor()).toBeFalse();
             (comp.activeExamPage.exercise as ProgrammingExercise).allowOnlineEditor = true;
-            expect(comp.isProgrammingExerciseWithCodeEditor()).toBe(true);
+            expect(comp.isProgrammingExerciseWithCodeEditor()).toBeTrue();
         });
     });
 
     describe('isProgrammingExerciseWithOfflineIDE', () => {
         it('should return true if active exercise is with offline ide', () => {
             comp.activeExamPage.exercise = new ProgrammingExercise(new Course(), undefined);
-            expect(comp.isProgrammingExerciseWithOfflineIDE()).toBe(true);
+            expect(comp.isProgrammingExerciseWithOfflineIDE()).toBeTrue();
             (comp.activeExamPage.exercise as ProgrammingExercise).allowOfflineIde = false;
-            expect(comp.isProgrammingExerciseWithOfflineIDE()).toBe(false);
+            expect(comp.isProgrammingExerciseWithOfflineIDE()).toBeFalse();
         });
     });
 
@@ -267,16 +267,16 @@ describe('ExamParticipationComponent', () => {
         expect(firstParticipation.submissions).toBeDefined();
         expect(firstParticipation.submissions!.length).toBeGreaterThan(0);
         expect(latestPendingSubmissionSpy).toHaveBeenCalled();
-        expect(firstExercise.studentParticipations![0].submissions![0].submitted).toBe(true);
+        expect(firstExercise.studentParticipations![0].submissions![0].submitted).toBeTrue();
 
         // Sync exercises with submission
         const secondSubmission = secondExercise.studentParticipations![0].submissions![0];
-        expect(secondSubmission.isSynced).toBe(true);
-        expect(secondSubmission.submitted).toBe(false);
+        expect(secondSubmission.isSynced).toBeTrue();
+        expect(secondSubmission.submitted).toBeFalse();
 
         // Initialize Exam Overview Page
         expect(comp.activeExamPage.exercise).toBeUndefined();
-        expect(comp.activeExamPage.isOverviewPage).toBe(true);
+        expect(comp.activeExamPage.isOverviewPage).toBeTrue();
     };
 
     it('should initialize exercises when exam starts', () => {
@@ -319,7 +319,7 @@ describe('ExamParticipationComponent', () => {
 
         comp.createParticipationForExercise(exercise).subscribe((participation) => {
             expect(createdParticipation.exercise).toBeUndefined();
-            expect(programmingSubmission.isSynced).toBe(true);
+            expect(programmingSubmission.isSynced).toBeTrue();
             expect(participation).toEqual(createdParticipation);
         });
         expect(courseExerciseServiceStub).toHaveBeenCalled();
@@ -352,10 +352,10 @@ describe('ExamParticipationComponent', () => {
         });
 
         const expectSyncedSubmissions = (submission: Submission, syncedSubmission: Submission) => {
-            expect(submission.isSynced).toBe(true);
-            expect(submission.submitted).toBe(true);
-            expect(syncedSubmission.isSynced).toBe(true);
-            expect(syncedSubmission.submitted).toBe(false);
+            expect(submission.isSynced).toBeTrue();
+            expect(submission.submitted).toBeTrue();
+            expect(syncedSubmission.isSynced).toBeTrue();
+            expect(syncedSubmission.submitted).toBeFalse();
         };
 
         it('should sync text submissions', () => {
@@ -435,24 +435,24 @@ describe('ExamParticipationComponent', () => {
             const studentExam = new StudentExam();
             studentExam.ended = true;
             comp.studentExam = studentExam;
-            expect(comp.isOver()).toBe(true);
+            expect(comp.isOver()).toBeTrue();
         });
         it('should return true when handed in early', () => {
             comp.handInEarly = true;
-            expect(comp.isOver()).toBe(true);
+            expect(comp.isOver()).toBeTrue();
         });
         it('should return true if student exam has been submitted', () => {
             const studentExam = new StudentExam();
             studentExam.submitted = true;
             comp.studentExam = studentExam;
-            expect(comp.isOver()).toBe(true);
+            expect(comp.isOver()).toBeTrue();
         });
         it('should be over if individual end date is before server date', () => {
             const endDate = dayjs().subtract(1, 'days');
             const date = dayjs();
             comp.individualStudentEndDate = endDate;
             const serverNowSpy = jest.spyOn(artemisServerDateService, 'now').mockReturnValue(date);
-            expect(comp.isOver()).toBe(true);
+            expect(comp.isOver()).toBeTrue();
             expect(serverNowSpy).toHaveBeenCalled();
         });
         it('should not be over if individual end date is after server date', () => {
@@ -460,7 +460,7 @@ describe('ExamParticipationComponent', () => {
             const date = dayjs();
             comp.individualStudentEndDate = endDate;
             const serverNowSpy = jest.spyOn(artemisServerDateService, 'now').mockReturnValue(date);
-            expect(comp.isOver()).toBe(false);
+            expect(comp.isOver()).toBeFalse();
             expect(serverNowSpy).toHaveBeenCalled();
         });
     });
@@ -473,9 +473,9 @@ describe('ExamParticipationComponent', () => {
 
     describe('isVisible', () => {
         it('should be visible if test run', () => {
-            expect(comp.isVisible()).toBe(true);
+            expect(comp.isVisible()).toBeTrue();
             setComponentWithoutTestRun();
-            expect(comp.isVisible()).toBe(false);
+            expect(comp.isVisible()).toBeFalse();
         });
 
         it('should be visible if visible date is before server date', () => {
@@ -484,7 +484,7 @@ describe('ExamParticipationComponent', () => {
             const date = dayjs();
             comp.exam.visibleDate = visibleDate;
             const serverNowSpy = jest.spyOn(artemisServerDateService, 'now').mockReturnValue(date);
-            expect(comp.isVisible()).toBe(true);
+            expect(comp.isVisible()).toBeTrue();
             expect(serverNowSpy).toHaveBeenCalled();
         });
 
@@ -494,16 +494,16 @@ describe('ExamParticipationComponent', () => {
             const date = dayjs();
             comp.exam.visibleDate = visibleDate;
             const serverNowSpy = jest.spyOn(artemisServerDateService, 'now').mockReturnValue(date);
-            expect(comp.isVisible()).toBe(false);
+            expect(comp.isVisible()).toBeFalse();
             expect(serverNowSpy).toHaveBeenCalled();
         });
     });
 
     describe('isActive', () => {
         it('should be active if test run', () => {
-            expect(comp.isActive()).toBe(true);
+            expect(comp.isActive()).toBeTrue();
             setComponentWithoutTestRun();
-            expect(comp.isActive()).toBe(false);
+            expect(comp.isActive()).toBeFalse();
         });
 
         it('should be active if start date is before server date', () => {
@@ -512,7 +512,7 @@ describe('ExamParticipationComponent', () => {
             const date = dayjs();
             comp.exam.startDate = startDate;
             const serverNowSpy = jest.spyOn(artemisServerDateService, 'now').mockReturnValue(date);
-            expect(comp.isActive()).toBe(true);
+            expect(comp.isActive()).toBeTrue();
             expect(serverNowSpy).toHaveBeenCalled();
         });
 
@@ -522,7 +522,7 @@ describe('ExamParticipationComponent', () => {
             const date = dayjs();
             comp.exam.startDate = startDate;
             const serverNowSpy = jest.spyOn(artemisServerDateService, 'now').mockReturnValue(date);
-            expect(comp.isActive()).toBe(false);
+            expect(comp.isActive()).toBeFalse();
             expect(serverNowSpy).toHaveBeenCalled();
         });
     });

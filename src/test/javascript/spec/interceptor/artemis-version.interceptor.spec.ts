@@ -50,7 +50,7 @@ describe(`ArtemisVersionInterceptor`, () => {
     it('should check for an update immediately and after 60 seconds again if app is stable', fakeAsync(() => {
         new ArtemisVersionInterceptor(appRef, swUpdate as any as SwUpdate, serverDateService, alertService, {} as any as Window);
 
-        expect(checkForUpdateSpy).toHaveBeenCalledTimes(1);
+        expect(checkForUpdateSpy).toHaveBeenCalledOnce();
         tick(60000);
         expect(checkForUpdateSpy).toHaveBeenCalledTimes(2);
         discardPeriodicTasks();
@@ -62,7 +62,7 @@ describe(`ArtemisVersionInterceptor`, () => {
         sub.next(false);
         expect(checkForUpdateSpy).toHaveBeenCalledTimes(0);
         tick(30000);
-        expect(checkForUpdateSpy).toHaveBeenCalledTimes(1);
+        expect(checkForUpdateSpy).toHaveBeenCalledOnce();
         discardPeriodicTasks();
     }));
 
@@ -71,13 +71,13 @@ describe(`ArtemisVersionInterceptor`, () => {
         const addAlertSpy = jest.spyOn(alertService, 'addAlert').mockImplementation(funMock);
         new ArtemisVersionInterceptor(appRef, swUpdate as any as SwUpdate, serverDateService, alertService, { location: { reload: jest.fn() } } as any as Window);
         tick();
-        expect(addAlertSpy).toHaveBeenCalledTimes(1);
-        expect(funMock).toHaveBeenCalledTimes(1);
+        expect(addAlertSpy).toHaveBeenCalledOnce();
+        expect(funMock).toHaveBeenCalledOnce();
         expect(funMock).toHaveBeenCalledWith(expect.objectContaining({ type: AlertType.INFO, message: 'artemisApp.outdatedAlert' }));
 
         expect(activateUpdateSpy).not.toHaveBeenCalled();
         funMock.mock.calls[0][0].action.callback();
-        expect(activateUpdateSpy).toHaveBeenCalledTimes(1);
+        expect(activateUpdateSpy).toHaveBeenCalledOnce();
         discardPeriodicTasks();
     }));
 
@@ -86,14 +86,14 @@ describe(`ArtemisVersionInterceptor`, () => {
 
         const intercept = new ArtemisVersionInterceptor(appRef, swUpdate as any as SwUpdate, serverDateService, alertService, {} as any as Window);
         tick();
-        expect(checkForUpdateSpy).toHaveBeenCalledTimes(1);
+        expect(checkForUpdateSpy).toHaveBeenCalledOnce();
 
         let mockHandler = {
             handle: jest.fn(() => of(new HttpResponse({ status: 200, body: {}, headers: new HttpHeaders({ [ARTEMIS_VERSION_HEADER]: VERSION }) }))),
         };
         intercept.intercept(requestMock, mockHandler).subscribe();
         tick();
-        expect(checkForUpdateSpy).toHaveBeenCalledTimes(1);
+        expect(checkForUpdateSpy).toHaveBeenCalledOnce();
 
         mockHandler = {
             handle: jest.fn(() => of(new HttpResponse({ status: 200, body: {}, headers: new HttpHeaders({ [ARTEMIS_VERSION_HEADER]: '0.0.0' }) }))),
