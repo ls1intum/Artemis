@@ -59,10 +59,7 @@
                 <div *ngFor="let feedback of filteredFeedbackList" [ngClass]="['feedback-item', 'alert', getClassNameForFeedbackItem(feedback)]" id="feedback-message">
                     <span>{{ feedback.category }}</span>
                     <span id="feedback-points" class="feedback-points" *ngIf="feedback.credits">
-                        <ng-container *ngIf="feedback.actualCredits && feedback.actualCredits != feedback.credits">
-                            {{ roundScoreSpecifiedByCourseSettings(feedback.actualCredits, course) }}P/
-                        </ng-container>
-                        {{ roundScoreSpecifiedByCourseSettings(feedback.credits, course) }}P
+                        {{ roundScoreSpecifiedByCourseSettings(feedback.actualCredits ?? feedback.credits, course) }}P
                         <fa-icon
                             *ngIf="feedback.type === FeedbackItemType.Subsequent"
                             [icon]="faExclamationTriangle"
