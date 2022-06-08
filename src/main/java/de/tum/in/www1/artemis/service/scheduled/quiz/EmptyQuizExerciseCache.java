@@ -18,7 +18,7 @@ import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
  * <p>
  * This allows to handle a not-cached quiz exercise elegantly, because most operations on the cache are read operations on the
  * exercise object or the submission, participation or result map. This immutable, singleton class returning only null or empty
- * data structures on read operations allows being used as as default, if no real cache exists. This saves us much branching and
+ * data structures on read operations allows being used as default, if no real cache exists. This saves us much branching and
  * checking in the {@link QuizScheduleService}, as we can either just return the {@link EmptyQuizExerciseCache} or create a new
  * real {@link QuizExerciseCache} for write operations, if no cache can be found.
  * <p>

@@ -21,9 +21,7 @@ import { ProgrammingAssessmentManualResultService } from 'app/exercises/programm
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { Complaint } from 'app/entities/complaint.model';
 import { ComplaintService } from 'app/complaints/complaint.service';
-import { ExerciseHintService } from 'app/exercises/shared/exercise-hint/shared/exercise-hint.service';
 import { MockRepositoryFileService } from '../../helpers/mocks/service/mock-repository-file.service';
-import { MockExerciseHintService } from '../../helpers/mocks/service/mock-exercise-hint.service';
 import { MockNgbModalService } from '../../helpers/mocks/service/mock-ngb-modal.service';
 import { CodeEditorTutorAssessmentContainerComponent } from 'app/exercises/programming/assess/code-editor-tutor-assessment-container.component';
 import { Result } from 'app/entities/result.model';
@@ -46,7 +44,6 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { CodeEditorContainerComponent } from 'app/exercises/programming/shared/code-editor/container/code-editor-container.component';
 import { ResultComponent } from 'app/exercises/shared/result/result.component';
 import { IncludedInScoreBadgeComponent } from 'app/exercises/shared/exercise-headers/included-in-score-badge.component';
-import { ExerciseHintStudentComponent } from 'app/exercises/shared/exercise-hint/participate/exercise-hint-student-dialog.component';
 import { AssessmentInstructionsComponent } from 'app/assessment/assessment-instructions/assessment-instructions/assessment-instructions.component';
 import { UnreferencedFeedbackComponent } from 'app/exercises/shared/unreferenced-feedback/unreferenced-feedback.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
@@ -181,7 +178,6 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
                 MockComponent(CodeEditorInstructionsComponent),
                 MockComponent(ResultComponent),
                 MockComponent(IncludedInScoreBadgeComponent),
-                MockComponent(ExerciseHintStudentComponent),
                 MockComponent(AssessmentInstructionsComponent),
                 MockComponent(UnreferencedFeedbackComponent),
                 MockPipe(ArtemisTranslatePipe),
@@ -192,7 +188,6 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: ParticipationWebsocketService, useClass: MockParticipationWebsocketService },
                 { provide: RepositoryFileService, useClass: MockRepositoryFileService },
-                { provide: ExerciseHintService, useClass: MockExerciseHintService },
                 { provide: NgbModal, useClass: MockNgbModalService },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: LocalStorageService, useClass: MockSyncStorage },

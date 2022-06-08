@@ -49,7 +49,7 @@ public class WebsocketMessagingService {
      * Broadcast a new result to the client.
      *
      * @param participation the id is used in the destination (so that only clients who have subscribed the specific participation will receive the result)
-     * @param result the new result that should be send to the client. It typically includes feedback, its participation will be cut off here to reduce the payload size.
+     * @param result the new result that should be sent to the client. It typically includes feedback, its participation will be cut off here to reduce the payload size.
      *               As the participation is already known to the client, we do not need to send it. This also cuts of the exercise (including the potentially huge
      *               problem statement and the course with all potential attributes
      */

@@ -6,6 +6,8 @@ import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { matchesRegexFully } from 'app/utils/regex.util';
 import { faCheckCircle } from '@fortawesome/free-solid-svg-icons';
 import { AlertService } from 'app/core/util/alert.service';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { CoursePrerequisitesModalComponent } from 'app/overview/course-registration/course-prerequisites-modal.component';
 
 @Component({
     selector: 'jhi-course-registration-selector',
@@ -24,6 +26,7 @@ export class CourseRegistrationComponent implements OnInit {
         private courseService: CourseManagementService,
         private profileService: ProfileService,
         private alertService: AlertService,
+        private modalService: NgbModal,
     ) {}
 
     ngOnInit(): void {
@@ -37,6 +40,9 @@ export class CourseRegistrationComponent implements OnInit {
         });
     }
 
+    /**
+     * Loads all course that are available for self-registration by the logged-in user
+     */
     loadRegistrableCourses() {
         this.loading = true;
         this.courseService.findAllToRegister().subscribe((registerRes) => {
@@ -45,6 +51,19 @@ export class CourseRegistrationComponent implements OnInit {
         });
     }
 
+    /**
+     * Opens a modal with the prerequisites for the course
+     * @param courseId The course id for which to show the prerequisites
+     */
+    showPrerequisites(courseId: number) {
+        const modalRef = this.modalService.open(CoursePrerequisitesModalComponent, { size: 'xl' });
+        modalRef.componentInstance.courseId = courseId;
+    }
+
+    /**
+     * Register the logged-in user for the course
+     * @param courseId The id of course to register the user for
+     */
     registerForCourse(courseId: number) {
         this.courseService.registerForCourse(courseId).subscribe({
             next: () => {
