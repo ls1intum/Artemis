@@ -255,17 +255,32 @@ export class UserManagementComponent implements OnInit, OnDestroy {
     /**
      * Method to add or remove an origin filter and store the selected origin filters in the local store if required.
      */
-    toggleOriginFilter(filter: Set<OriginFilter>, value: OriginFilter) {
-        this.filters.originFilter.clear();
-        this.toggleFilter<OriginFilter>(filter, value, this.originKey);
+    toggleOriginFilter(value?: OriginFilter) {
+        const filter = this.filters.originFilter;
+        this.deselectFilter<OriginFilter>(filter, this.originKey);
+        if (value) {
+            this.toggleFilter<OriginFilter>(filter, value, this.originKey);
+        }
     }
 
     /**
      * Method to add or remove a status filter and store the selected status filters in the local store if required.
      */
-    toggleStatusFilter(filter: Set<StatusFilter>, value: StatusFilter) {
-        this.filters.statusFilter.clear();
-        this.toggleFilter<StatusFilter>(filter, value, this.statusKey);
+    toggleStatusFilter(value?: StatusFilter) {
+        const filter = this.filters.statusFilter;
+        this.deselectFilter<StatusFilter>(filter, this.statusKey);
+        if (value) {
+            this.toggleFilter<StatusFilter>(filter, value, this.statusKey);
+        }
+    }
+
+    /**
+     * Deselect filter.
+     */
+    deselectFilter<E>(filter: Set<E>, key: UserStorageKey) {
+        if (filter.size) {
+            this.toggleFilter<E>(filter, Array.from(filter).pop()!, key);
+        }
     }
 
     /**
