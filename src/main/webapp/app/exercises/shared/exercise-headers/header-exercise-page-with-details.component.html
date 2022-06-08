@@ -9,15 +9,15 @@
                 <jhi-not-released-tag [exercise]="exercise"></jhi-not-released-tag>
             </h3>
             <h4 class="d-md-flex" *ngIf="exercise.maxPoints">
-                <div class="me-1">
+                <span class="me-2">
                     {{ 'artemisApp.courseOverview.exerciseDetails.points' | artemisTranslate }}
                     {{ exercise.maxPoints }}
                     <span *ngIf="exercise.bonusPoints">({{ 'artemisApp.courseOverview.exerciseDetails.bonus' | artemisTranslate }} {{ exercise.bonusPoints }})</span>
-                </div>
+                </span>
                 <jhi-included-in-score-badge
                     *ngIf="exercise.includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY"
                     [includedInOverallScore]="exercise.includedInOverallScore"
-                    class="me-1"
+                    class="me-2"
                 ></jhi-included-in-score-badge>
                 <span *ngFor="let category of exerciseCategories">
                     <span class="badge text-white me-1" [ngStyle]="{ backgroundColor: category.color }">{{ category.category }}</span>
