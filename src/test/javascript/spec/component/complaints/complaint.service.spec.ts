@@ -86,7 +86,7 @@ describe('ComplaintService', () => {
 
             const result = complaintService.isComplaintLockedForLoggedInUser(_complaint, new TextExercise(undefined, undefined));
 
-            expect(result).toBe(true);
+            expect(result).toBeTrue();
         });
 
         it('should be false if user is instructor', () => {
@@ -152,7 +152,7 @@ describe('ComplaintService', () => {
             accountService.userIdentity = { login } as User;
 
             const result = complaintService.isComplaintLockedByLoggedInUser(_complaint);
-            expect(result).toBe(true);
+            expect(result).toBeTrue();
         });
     });
 
@@ -168,7 +168,7 @@ describe('ComplaintService', () => {
             _complaint.complaintResponse.isCurrentlyLocked = true;
 
             const result = complaintService.isComplaintLocked(_complaint);
-            expect(result).toBe(true);
+            expect(result).toBeTrue();
         });
     });
 
@@ -232,7 +232,7 @@ describe('ComplaintService', () => {
 
             const result = complaintService.shouldHighlightComplaint(complaint);
 
-            expect(result).toBe(true);
+            expect(result).toBeTrue();
         });
     });
 

@@ -108,9 +108,9 @@ describe('ComplaintsStudentViewComponent', () => {
 
             expectExamDefault();
             expect(component.complaint).toBe(undefined);
-            expect(complaintBySubmissionMock).toHaveBeenCalledTimes(1);
-            expect(numberOfAllowedComplaintsMock).toHaveBeenCalledTimes(1);
-            expect(userMock).toHaveBeenCalledTimes(1);
+            expect(complaintBySubmissionMock).toHaveBeenCalledOnce();
+            expect(numberOfAllowedComplaintsMock).toHaveBeenCalledOnce();
+            expect(userMock).toHaveBeenCalledOnce();
         }));
 
         it('should initialize with complaint', fakeAsync(() => {
@@ -126,9 +126,9 @@ describe('ComplaintsStudentViewComponent', () => {
 
             expectExamDefault();
             expect(component.complaint).toStrictEqual(complaint);
-            expect(complaintBySubmissionMock).toHaveBeenCalledTimes(1);
-            expect(numberOfAllowedComplaintsMock).toHaveBeenCalledTimes(1);
-            expect(userMock).toHaveBeenCalledTimes(1);
+            expect(complaintBySubmissionMock).toHaveBeenCalledOnce();
+            expect(numberOfAllowedComplaintsMock).toHaveBeenCalledOnce();
+            expect(userMock).toHaveBeenCalledOnce();
         }));
 
         it('should be visible on test run', fakeAsync(() => {
@@ -143,7 +143,7 @@ describe('ComplaintsStudentViewComponent', () => {
             fixture.detectChanges();
             tick(100);
 
-            expect(component.showSection).toBe(true);
+            expect(component.showSection).toBeTrue();
             expect(serverDateStub).not.toHaveBeenCalled();
         }));
 
@@ -159,9 +159,9 @@ describe('ComplaintsStudentViewComponent', () => {
 
         function expectExamDefault() {
             expectDefault();
-            expect(component.isExamMode).toBe(true);
+            expect(component.isExamMode).toBeTrue();
             expect(component.timeOfFeedbackRequestValid).toBe(false);
-            expect(component.timeOfComplaintValid).toBe(true);
+            expect(component.timeOfComplaintValid).toBeTrue();
         }
 
         function testVisibilityToBeHiddenWithExam(exam: Exam) {
@@ -244,8 +244,8 @@ describe('ComplaintsStudentViewComponent', () => {
             fixture.detectChanges();
             tick(100);
 
-            expect(component.showSection).toBe(true);
-            expect(component.timeOfComplaintValid).toBe(true);
+            expect(component.showSection).toBeTrue();
+            expect(component.timeOfComplaintValid).toBeTrue();
             expect(component.timeOfFeedbackRequestValid).toBe(false);
         }));
 
@@ -267,9 +267,9 @@ describe('ComplaintsStudentViewComponent', () => {
             fixture.detectChanges();
             tick(100);
 
-            expect(component.showSection).toBe(true);
+            expect(component.showSection).toBeTrue();
             expect(component.timeOfComplaintValid).toBe(false);
-            expect(component.timeOfFeedbackRequestValid).toBe(true);
+            expect(component.timeOfFeedbackRequestValid).toBeTrue();
         }));
 
         it('no action should be allowed if the result is automatic for a non automatic exercise', fakeAsync(() => {
@@ -279,7 +279,7 @@ describe('ComplaintsStudentViewComponent', () => {
             fixture.detectChanges();
             tick(100);
 
-            expect(component.showSection).toBe(true);
+            expect(component.showSection).toBeTrue();
             expect(component.timeOfComplaintValid).toBe(false);
             expect(component.timeOfFeedbackRequestValid).toBe(false);
         }));
@@ -287,8 +287,8 @@ describe('ComplaintsStudentViewComponent', () => {
         function expectCourseDefault() {
             expectDefault();
             expect(component.isExamMode).toBe(false);
-            expect(component.timeOfFeedbackRequestValid).toBe(true);
-            expect(component.timeOfComplaintValid).toBe(true);
+            expect(component.timeOfFeedbackRequestValid).toBeTrue();
+            expect(component.timeOfComplaintValid).toBeTrue();
         }
 
         function testInitWithResultStub(content: Observable<EntityResponseType>) {
@@ -301,19 +301,19 @@ describe('ComplaintsStudentViewComponent', () => {
             tick(100);
 
             expectCourseDefault();
-            expect(complaintBySubmissionStub).toHaveBeenCalledTimes(1);
-            expect(numberOfAllowedComplaintsStub).toHaveBeenCalledTimes(1);
-            expect(userStub).toHaveBeenCalledTimes(1);
+            expect(complaintBySubmissionStub).toHaveBeenCalledOnce();
+            expect(numberOfAllowedComplaintsStub).toHaveBeenCalledOnce();
+            expect(userStub).toHaveBeenCalledOnce();
         }
     });
 
     function expectDefault() {
         expect(component.submission).toStrictEqual(submission);
         expect(component.course).toStrictEqual(course);
-        expect(component.showSection).toBe(true);
+        expect(component.showSection).toBeTrue();
         expect(component.formComplaintType).toBe(undefined);
         expect(component.remainingNumberOfComplaints).toStrictEqual(numberOfComplaints);
-        expect(component.isCorrectUserToFileAction).toBe(true);
+        expect(component.isCorrectUserToFileAction).toBeTrue();
         expect(result.participation).toStrictEqual(participation);
     }
 
@@ -336,8 +336,8 @@ describe('ComplaintsStudentViewComponent', () => {
         fixture.detectChanges();
         tick(100);
 
-        expect(component.showSection).toBe(true);
-        expect(component.timeOfComplaintValid).toBe(true);
-        expect(component.timeOfFeedbackRequestValid).toBe(true);
+        expect(component.showSection).toBeTrue();
+        expect(component.timeOfComplaintValid).toBeTrue();
+        expect(component.timeOfFeedbackRequestValid).toBeTrue();
     }));
 });

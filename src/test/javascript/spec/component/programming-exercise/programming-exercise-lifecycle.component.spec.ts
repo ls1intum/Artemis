@@ -86,7 +86,7 @@ describe('ProgrammingExerciseLifecycleComponent', () => {
         comp.exercise.assessmentType = AssessmentType.AUTOMATIC;
         comp.toggleComplaintsType();
 
-        expect(comp.exercise.allowComplaintsForAutomaticAssessments).toBe(true);
+        expect(comp.exercise.allowComplaintsForAutomaticAssessments).toBeTrue();
     });
 
     it('should change assessment type from automatic to semi-automatic after toggling', () => {

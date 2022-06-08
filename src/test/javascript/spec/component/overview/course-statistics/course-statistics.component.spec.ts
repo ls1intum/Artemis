@@ -376,7 +376,7 @@ describe('CourseStatisticsComponent', () => {
         // as it is not included, the presentation score should be 0
         expect(programming.presentationScore).toBe(0);
         expect(programming.series).toHaveLength(6);
-        expect(programming.series[2].isProgrammingExercise).toBe(true);
+        expect(programming.series[2].isProgrammingExercise).toBeTrue();
         expect(programming.series[2].absoluteValue).toBe(17);
 
         const quiz: any = comp.ngxExerciseGroups[1][0];
@@ -550,9 +550,9 @@ describe('CourseStatisticsComponent', () => {
 
         // 3 Filters: Hide optional, Exercises with no categories and quiz1
         expect(comp.numberOfAppliedFilters).toBe(3);
-        expect(comp.exerciseCategoryFilters.get('quiz1')).toBe(true);
+        expect(comp.exerciseCategoryFilters.get('quiz1')).toBeTrue();
         expect(comp.exerciseCategoryFilters.get('programming1')).toBe(undefined);
-        expect(comp.allCategoriesSelected).toBe(true);
+        expect(comp.allCategoriesSelected).toBeTrue();
 
         comp.toggleAllCategories();
 
@@ -565,8 +565,8 @@ describe('CourseStatisticsComponent', () => {
 
         comp.toggleAllCategories();
 
-        expect(comp.allCategoriesSelected).toBe(true);
-        expect(comp.exerciseCategoryFilters.get('quiz1')).toBe(true);
+        expect(comp.allCategoriesSelected).toBeTrue();
+        expect(comp.exerciseCategoryFilters.get('quiz1')).toBeTrue();
         expect(comp.numberOfAppliedFilters).toBe(3);
         expect(comp.ngxExerciseGroups).toHaveLength(2);
     });
@@ -578,8 +578,8 @@ describe('CourseStatisticsComponent', () => {
 
         expect(comp.currentlyHidingNotIncludedInScoreExercises).toBe(false);
         expect(comp.numberOfAppliedFilters).toBe(3);
-        expect(comp.exerciseCategoryFilters.get('programming1')).toBe(true);
-        expect(comp.exerciseCategoryFilters.get('quiz1')).toBe(true);
+        expect(comp.exerciseCategoryFilters.get('programming1')).toBeTrue();
+        expect(comp.exerciseCategoryFilters.get('quiz1')).toBeTrue();
         expect(comp.ngxExerciseGroups).toHaveLength(3);
         expect(comp.ngxExerciseGroups[0][0].name).toBe('Until 18:20 too');
 
@@ -607,7 +607,7 @@ describe('CourseStatisticsComponent', () => {
         comp.toggleCategory('programming1');
 
         expect(comp.numberOfAppliedFilters).toBe(1);
-        expect(comp.exerciseCategoryFilters.get('programming1')).toBe(true);
+        expect(comp.exerciseCategoryFilters.get('programming1')).toBeTrue();
         expect(comp.ngxExerciseGroups).toHaveLength(1);
     });
 

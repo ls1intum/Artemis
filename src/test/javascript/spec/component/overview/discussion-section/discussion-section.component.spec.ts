@@ -264,9 +264,9 @@ describe('PageDiscussionSectionComponent', () => {
         tick();
         fixture.detectChanges();
 
-        expect(component.currentPostContextFilter.filterToUnresolved).toBe(true);
-        expect(component.currentPostContextFilter.filterToOwn).toBe(true);
-        expect(component.currentPostContextFilter.filterToAnsweredOrReacted).toBe(true);
+        expect(component.currentPostContextFilter.filterToUnresolved).toBeTrue();
+        expect(component.currentPostContextFilter.filterToOwn).toBeTrue();
+        expect(component.currentPostContextFilter.filterToAnsweredOrReacted).toBeTrue();
         expect(metisServiceGetFilteredPostsSpy).toHaveBeenCalledTimes(5);
     }));
 });

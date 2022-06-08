@@ -130,7 +130,7 @@ describe('Exam Navigation Bar Component', () => {
     it('should tell the type of the selected programming exercise', () => {
         comp.exerciseIndex = 0;
 
-        expect(comp.isProgrammingExercise()).toBe(true);
+        expect(comp.isProgrammingExercise()).toBeTrue();
     });
 
     it('should tell the type of the selected text exercise', () => {

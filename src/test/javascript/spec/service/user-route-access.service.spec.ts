@@ -78,7 +78,7 @@ describe('UserRouteAccessService', () => {
     });
 
     it('should return true if authorities are omitted', async () => {
-        await expect(service.checkLogin([], url)).resolves.toBe(true);
+        await expect(service.checkLogin([], url)).resolves.toBeTrue();
     });
 
     it('should store url if identity is undefined', async () => {
@@ -87,7 +87,7 @@ describe('UserRouteAccessService', () => {
         const navigateMock = jest.spyOn(router, 'navigate').mockReturnValue(Promise.resolve(true));
 
         await expect(service.checkLogin([Authority.EDITOR], url)).resolves.toBe(false);
-        expect(storeSpy).toHaveBeenCalledTimes(1);
+        expect(storeSpy).toHaveBeenCalledOnce();
         expect(storeSpy).toHaveBeenCalledWith(url);
         expect(navigateMock).toHaveBeenCalledTimes(2);
         expect(navigateMock.mock.calls[0][0]).toEqual(['accessdenied']);

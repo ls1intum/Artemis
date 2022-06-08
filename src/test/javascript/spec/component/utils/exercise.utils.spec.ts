@@ -53,8 +53,8 @@ describe('ExerciseUtils', () => {
         const exercise = exerciseWithDueDate(dayjs().subtract(1, 'hour'));
         const participation = participationWithDueDate(undefined);
 
-        expect(hasExerciseDueDatePassed(exercise)).toBe(true);
-        expect(hasExerciseDueDatePassed(exercise, participation)).toBe(true);
+        expect(hasExerciseDueDatePassed(exercise)).toBeTrue();
+        expect(hasExerciseDueDatePassed(exercise, participation)).toBeTrue();
     });
 
     it('the due date should not have passed if the individual due date is in the future', () => {

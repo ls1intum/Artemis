@@ -116,7 +116,7 @@ describe('ExampleSubmissionImportComponent', () => {
             component.listSorting = true;
             tick(10);
             expect(searchForSubmissionsSpy).toHaveBeenCalledWith({ ...state, sortingOrder: SortingOrder.ASCENDING }, exercise.id);
-            expect(component.listSorting).toBe(true);
+            expect(component.listSorting).toBeTrue();
         });
     }));
 

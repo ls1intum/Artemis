@@ -123,7 +123,7 @@ describe('ModelingSubmission Management Component', () => {
         comp.ngOnInit();
 
         // THEN
-        expect(getLatestSubmissionForModelingEditorStub).toHaveBeenCalledTimes(1);
+        expect(getLatestSubmissionForModelingEditorStub).toHaveBeenCalledOnce();
         expect(comp.submission.id).toBe(20);
     });
 
@@ -140,7 +140,7 @@ describe('ModelingSubmission Management Component', () => {
         const submitButton = debugElement.query(By.css('jhi-button'));
         expect(submitButton).not.toBe(null);
         expect(submitButton.attributes['ng-reflect-disabled']).toBe('false');
-        expect(comp.isActive).toBe(true);
+        expect(comp.isActive).toBeTrue();
     });
 
     it('should not allow to submit after the deadline if the initialization date is before the due date', () => {
@@ -163,7 +163,7 @@ describe('ModelingSubmission Management Component', () => {
 
         fixture.detectChanges();
 
-        expect(comp.isLate).toBe(true);
+        expect(comp.isLate).toBeTrue();
         const submitButton = debugElement.query(By.css('jhi-button'));
         expect(submitButton).not.toBe(null);
         expect(submitButton.attributes['ng-reflect-disabled']).toBe('false');
@@ -188,7 +188,7 @@ describe('ModelingSubmission Management Component', () => {
         fixture.detectChanges();
         comp.participation.initializationDate = dayjs();
 
-        expect(comp.isActive).toBe(true);
+        expect(comp.isActive).toBeTrue();
 
         comp.modelingExercise.dueDate = dayjs().subtract(1, 'days');
 
@@ -200,7 +200,7 @@ describe('ModelingSubmission Management Component', () => {
         jest.spyOn(service, 'getLatestSubmissionForModelingEditor').mockReturnValue(throwError(() => ({ status: 403 })));
         const routerStub = jest.spyOn(router, 'navigate').mockReturnValue(new Promise(() => true));
         fixture.detectChanges();
-        expect(routerStub).toHaveBeenCalledTimes(1);
+        expect(routerStub).toHaveBeenCalledOnce();
     });
 
     it('should set correct properties on modeling exercise update when saving', () => {
@@ -209,7 +209,7 @@ describe('ModelingSubmission Management Component', () => {
 
         const updateStub = jest.spyOn(service, 'update').mockReturnValue(of(new HttpResponse({ body: submission })));
         comp.saveDiagram();
-        expect(updateStub).toHaveBeenCalledTimes(1);
+        expect(updateStub).toHaveBeenCalledOnce();
         expect(comp.submission).toEqual(submission);
     });
 
@@ -220,7 +220,7 @@ describe('ModelingSubmission Management Component', () => {
         comp.modelingExercise = new ModelingExercise(UMLDiagramType.DeploymentDiagram, undefined, undefined);
         comp.modelingExercise.id = 1;
         comp.saveDiagram();
-        expect(createStub).toHaveBeenCalledTimes(1);
+        expect(createStub).toHaveBeenCalledOnce();
         expect(comp.submission).toEqual(submission);
     });
 
@@ -233,7 +233,7 @@ describe('ModelingSubmission Management Component', () => {
         comp.modelingExercise = new ModelingExercise(UMLDiagramType.DeploymentDiagram, undefined, undefined);
         comp.modelingExercise.id = 1;
         comp.submit();
-        expect(createStub).toHaveBeenCalledTimes(1);
+        expect(createStub).toHaveBeenCalledOnce();
         expect(comp.submission).toEqual(submission);
     });
 
@@ -245,7 +245,7 @@ describe('ModelingSubmission Management Component', () => {
         comp.modelingExercise = new ModelingExercise(UMLDiagramType.DeploymentDiagram, undefined, undefined);
         comp.modelingExercise.id = 1;
         comp.submit();
-        expect(alertServiceSpy).toHaveBeenCalledTimes(1);
+        expect(alertServiceSpy).toHaveBeenCalledOnce();
         expect(comp.submission).toBe(modelSubmission);
     });
 
@@ -271,7 +271,7 @@ describe('ModelingSubmission Management Component', () => {
             .spyOn(participationWebSocketService, 'subscribeForLatestResultOfParticipation')
             .mockReturnValue(subscribeForLatestResultOfParticipationSubject);
         fixture.detectChanges();
-        expect(subscribeForLatestResultOfParticipationStub).toHaveBeenCalledTimes(1);
+        expect(subscribeForLatestResultOfParticipationStub).toHaveBeenCalledOnce();
         expect(comp.assessmentResult).toEqual(newResult);
     });
 
@@ -289,7 +289,7 @@ describe('ModelingSubmission Management Component', () => {
         const receiveStub = jest.spyOn(websocketService, 'receive').mockReturnValue(of(modelSubmission));
         fixture.detectChanges();
         expect(comp.submission).toEqual(modelSubmission);
-        expect(receiveStub).toHaveBeenCalledTimes(1);
+        expect(receiveStub).toHaveBeenCalledOnce();
     });
 
     it('should set correct properties on modeling exercise update when submitting', () => {
@@ -304,7 +304,7 @@ describe('ModelingSubmission Management Component', () => {
         comp.modelingExercise.id = 1;
         fixture.detectChanges();
         comp.submit();
-        expect(updateStub).toHaveBeenCalledTimes(1);
+        expect(updateStub).toHaveBeenCalledOnce();
         expect(comp.submission).toEqual(submission);
     });
 
@@ -334,7 +334,7 @@ describe('ModelingSubmission Management Component', () => {
         comp.selectedEntities = [];
         comp.selectedRelationships = [];
         fixture.detectChanges();
-        expect(comp.shouldBeDisplayed(feedback)).toBe(true);
+        expect(comp.shouldBeDisplayed(feedback)).toBeTrue();
         comp.selectedEntities = ['3'];
         fixture.detectChanges();
         expect(comp.shouldBeDisplayed(feedback)).toBe(false);
@@ -346,7 +346,7 @@ describe('ModelingSubmission Management Component', () => {
         comp.selectedEntities = [id];
         comp.selectedRelationships = [];
         fixture.detectChanges();
-        expect(comp.shouldBeDisplayed(feedback)).toBe(true);
+        expect(comp.shouldBeDisplayed(feedback)).toBeTrue();
         comp.selectedEntities = [];
         comp.selectedRelationships = [id];
         fixture.detectChanges();
@@ -361,7 +361,7 @@ describe('ModelingSubmission Management Component', () => {
         comp.explanation = 'Explanation Test';
         comp.updateSubmissionWithCurrentValues();
         expect(currentModelStub).toHaveBeenCalledTimes(2);
-        expect(comp.hasElements).toBe(true);
+        expect(comp.hasElements).toBeTrue();
         expect(comp.submission).not.toBe(undefined);
         expect(comp.submission.model).toBe(JSON.stringify(model));
         expect(comp.submission.explanationText).toBe('Explanation Test');
@@ -407,7 +407,7 @@ describe('ModelingSubmission Management Component', () => {
 
         const canDeactivate = comp.canDeactivate();
 
-        expect(currentModelStub).toHaveBeenCalledTimes(1);
+        expect(currentModelStub).toHaveBeenCalledOnce();
         expect(canDeactivate).toBe(false);
     });
 
@@ -467,6 +467,6 @@ describe('ModelingSubmission Management Component', () => {
         expect(unreferencedFeedback![0].isSubsequent).toBe(undefined);
         expect(referencedFeedback).not.toBe(undefined);
         expect(referencedFeedback).toHaveLength(1);
-        expect(referencedFeedback![0].isSubsequent).toBe(true);
+        expect(referencedFeedback![0].isSubsequent).toBeTrue();
     });
 });

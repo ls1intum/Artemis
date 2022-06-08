@@ -216,7 +216,7 @@ describe('QuizParticipationComponent', () => {
             refreshButton.click();
             fixture.detectChanges();
 
-            expect(initLiveModeSpy).toHaveBeenCalledTimes(1);
+            expect(initLiveModeSpy).toHaveBeenCalledOnce();
             expect(findStudentSpy).toHaveBeenCalledWith(quizExercise.id);
             expect(participationSpy).toHaveBeenCalledWith(quizExercise.id);
         });
@@ -273,7 +273,7 @@ describe('QuizParticipationComponent', () => {
 
         it('should return true if student didnt interact with any question', () => {
             component.quizExercise = { ...quizExercise, quizQuestions: undefined };
-            expect(component.areAllQuestionsAnswered()).toBe(true);
+            expect(component.areAllQuestionsAnswered()).toBeTrue();
 
             component.quizExercise = quizExercise;
             component.selectedAnswerOptions = new Map<number, AnswerOption[]>();
@@ -327,7 +327,7 @@ describe('QuizParticipationComponent', () => {
             expect(participationSpy).toHaveBeenCalledWith(quizExercise.id);
             expect(component.questionScores[question2.id!]).toBe(answer.scoreInPoints);
             expect(component.userScore).toBe(quizSubmission.scoreInPoints);
-            expect(component.showingResult).toBe(true);
+            expect(component.showingResult).toBeTrue();
         });
 
         it('should update on selection changes', () => {
@@ -352,7 +352,7 @@ describe('QuizParticipationComponent', () => {
 
             component.onSaveError('error');
             expect(component.isSubmitting).toBe(false);
-            expect(component.unsavedChanges).toBe(true);
+            expect(component.unsavedChanges).toBeTrue();
 
             expect(alertSpy).toHaveBeenCalled();
         });
@@ -383,7 +383,7 @@ describe('QuizParticipationComponent', () => {
             component.updateParticipationFromServer(participation);
 
             expect(component.submission.id).toBe(submission.id);
-            expect(component.quizExercise.quizEnded).toBe(true);
+            expect(component.quizExercise.quizEnded).toBeTrue();
         });
     });
 
@@ -596,7 +596,7 @@ describe('QuizParticipationComponent', () => {
             fixture.detectChanges();
 
             expect(resultForSolutionServiceSpy).toHaveBeenCalledWith(quizExerciseForPractice.id);
-            expect(component.showingResult).toBe(true);
+            expect(component.showingResult).toBeTrue();
             expect(component.totalScore).toBe(6);
         });
 

@@ -160,7 +160,7 @@ describe('ProgrammingExerciseInstructorSubmissionStateComponent', () => {
 
         fixture.detectChanges();
 
-        expect(getExerciseSubmissionStateStub).toHaveBeenCalledTimes(1);
+        expect(getExerciseSubmissionStateStub).toHaveBeenCalledOnce();
         expect(getExerciseSubmissionStateStub).toHaveBeenCalledWith(exercise.id);
 
         expect(comp.hasFailedSubmissions).toBe(false);
@@ -170,7 +170,7 @@ describe('ProgrammingExerciseInstructorSubmissionStateComponent', () => {
         expect(getTriggerAllButton()).not.toBe(null);
         expect(getTriggerAllButton().disabled).toBe(false);
         expect(getTriggerFailedButton()).not.toBe(null);
-        expect(getTriggerFailedButton().disabled).toBe(true);
+        expect(getTriggerFailedButton().disabled).toBeTrue();
         expect(getBuildState()).not.toBe(null);
     }));
 
@@ -197,7 +197,7 @@ describe('ProgrammingExerciseInstructorSubmissionStateComponent', () => {
 
         expect(getExerciseSubmissionStateStub).toHaveBeenCalledWith(exercise.id);
 
-        expect(comp.hasFailedSubmissions).toBe(true);
+        expect(comp.hasFailedSubmissions).toBeTrue();
         expect(comp.isBuildingFailedSubmissions).toBe(false);
         expect(comp.buildingSummary).toEqual(compressedSummary);
 
@@ -228,7 +228,7 @@ describe('ProgrammingExerciseInstructorSubmissionStateComponent', () => {
         // Button is clicked.
         triggerButton.click();
 
-        expect(comp.isBuildingFailedSubmissions).toBe(true);
+        expect(comp.isBuildingFailedSubmissions).toBeTrue();
         expect(getFailedSubmissionParticipationsForExerciseStub).toHaveBeenCalledWith(comp.exercise.id, ProgrammingSubmissionState.HAS_FAILED_SUBMISSION);
         expect(triggerAllStub).toHaveBeenCalledWith(comp.exercise.id, failedSubmissionParticipationIds);
 
@@ -262,7 +262,7 @@ describe('ProgrammingExerciseInstructorSubmissionStateComponent', () => {
         getBuildRunStateSubject.next(BuildRunState.RUNNING);
         fixture.detectChanges();
 
-        expect(getTriggerAllButton().disabled).toBe(true);
+        expect(getTriggerAllButton().disabled).toBeTrue();
 
         getBuildRunStateSubject.next(BuildRunState.COMPLETED);
         fixture.detectChanges();

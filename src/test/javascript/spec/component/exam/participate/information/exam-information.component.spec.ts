@@ -80,7 +80,7 @@ describe('ExamInformationComponent', () => {
         exam.endDate = dayjs(exam.startDate).add(2, 'days');
         fixture.detectChanges();
         expect(fixture).not.toBeUndefined();
-        expect(component.isExamOverMultipleDays).toBe(true);
+        expect(component.isExamOverMultipleDays).toBeTrue();
     });
 
     it('should detect if the working time extends to another day', () => {
@@ -89,7 +89,7 @@ describe('ExamInformationComponent', () => {
         studentExam.workingTime = 24 * 60 * 60;
         fixture.detectChanges();
         expect(fixture).not.toBeUndefined();
-        expect(component.isExamOverMultipleDays).toBe(true);
+        expect(component.isExamOverMultipleDays).toBeTrue();
     });
 
     it('should return false for exams that only last one day', () => {

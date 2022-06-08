@@ -80,7 +80,7 @@ describe('ProgrammingExamSubmissionComponent', () => {
 
         fixture.detectChanges();
 
-        expect(domainServiceSetDomainSpy).toHaveBeenCalledTimes(1);
+        expect(domainServiceSetDomainSpy).toHaveBeenCalledOnce();
         expect(domainServiceSetDomainSpy).toHaveBeenCalledWith([DomainType.PARTICIPATION, { exercise }]);
 
         expect(component.repositoryIsLocked).toBe(false);
@@ -95,7 +95,7 @@ describe('ProgrammingExamSubmissionComponent', () => {
         component.exercise = programmingExercise;
         fixture.detectChanges();
 
-        expect(component.repositoryIsLocked).toBe(true);
+        expect(component.repositoryIsLocked).toBeTrue();
     });
 
     it('should change state on commit', () => {
@@ -107,12 +107,12 @@ describe('ProgrammingExamSubmissionComponent', () => {
         component.onCommitStateChange(CommitState.CLEAN);
 
         // After the first call with CommitState.CLEAN, component.hasSubmittedOnce must be now true
-        expect(component.hasSubmittedOnce).toBe(true);
+        expect(component.hasSubmittedOnce).toBeTrue();
 
         component.onCommitStateChange(CommitState.CLEAN);
 
-        expect(component.studentParticipation.submissions![0].submitted).toBe(true);
-        expect(component.studentParticipation.submissions![0].isSynced).toBe(true);
+        expect(component.studentParticipation.submissions![0].submitted).toBeTrue();
+        expect(component.studentParticipation.submissions![0].isSynced).toBeTrue();
     });
 
     it('should desync on file change', () => {

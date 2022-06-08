@@ -30,7 +30,7 @@ describe('FormDateTimePickerComponent', () => {
 
         component.valueChanged();
 
-        expect(emitStub).toHaveBeenCalledTimes(1);
+        expect(emitStub).toHaveBeenCalledOnce();
     });
 
     describe('test date conversion', () => {
@@ -89,8 +89,8 @@ describe('FormDateTimePickerComponent', () => {
         component.updateField(newDate);
 
         expect(component.value).toEqual(newDate);
-        expect(onChangeSpy).toHaveBeenCalledTimes(1);
+        expect(onChangeSpy).toHaveBeenCalledOnce();
         expect(onChangeSpy).toHaveBeenCalledWith(newDate);
-        expect(valueChangedStub).toHaveBeenCalledTimes(1);
+        expect(valueChangedStub).toHaveBeenCalledOnce();
     });
 });

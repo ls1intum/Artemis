@@ -126,10 +126,10 @@ describe('DragAndDropQuestionComponent', () => {
         const solveSpy = jest.spyOn(dragAndDropQuestionUtil, 'solve').mockReturnValue(mappings);
         comp.mappings = mappings;
         comp.forceSampleSolution = true;
-        expect(comp.forceSampleSolution).toBe(true);
+        expect(comp.forceSampleSolution).toBeTrue();
         expect(solveSpy).toHaveBeenCalledWith(comp.question, mappings);
         expect(comp.sampleSolutionMappings).toEqual(mappings);
-        expect(comp.showingSampleSolution).toBe(true);
+        expect(comp.showingSampleSolution).toBeTrue();
     });
 
     it('should hide sample solutions', () => {
@@ -152,7 +152,7 @@ describe('DragAndDropQuestionComponent', () => {
         comp.mappings = [mapping1, mapping2];
         expect(comp.invalidDragItemForDropLocation(dropLocation1)).toBe(false);
         dragItem2.invalid = true;
-        expect(comp.invalidDragItemForDropLocation(dropLocation2)).toBe(true);
+        expect(comp.invalidDragItemForDropLocation(dropLocation2)).toBeTrue();
     });
 
     it('should return no drag item if there is no mapping', () => {
@@ -207,7 +207,7 @@ describe('DragAndDropQuestionComponent', () => {
     it('should set drop allowed to true when dragged', () => {
         comp.dropAllowed = false;
         comp.drag();
-        expect(comp.dropAllowed).toBe(true);
+        expect(comp.dropAllowed).toBeTrue();
     });
 
     const getDropLocationMappingAndItem = () => {

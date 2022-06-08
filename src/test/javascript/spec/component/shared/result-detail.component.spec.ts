@@ -274,7 +274,7 @@ describe('ResultDetailComponent', () => {
 
         comp.ngOnInit();
 
-        expect(getFeedbackDetailsForResultStub).toHaveBeenCalledTimes(1);
+        expect(getFeedbackDetailsForResultStub).toHaveBeenCalledOnce();
         expect(getFeedbackDetailsForResultStub).toHaveBeenCalledWith(comp.result.participation!.id!, comp.result.id);
         expect(comp.filteredFeedbackList).toIncludeSameMembers(expectedItems);
         expect(comp.isLoading).toBe(false);
@@ -285,7 +285,7 @@ describe('ResultDetailComponent', () => {
 
         comp.ngOnInit();
 
-        expect(buildlogsStub).toHaveBeenCalledTimes(1);
+        expect(buildlogsStub).toHaveBeenCalledOnce();
         expect(buildlogsStub).toHaveBeenCalledWith(comp.result.participation!.id, comp.result.id);
         expect(comp.buildLogs).toBeArrayOfSize(0);
         expect(comp.isLoading).toBe(false);
@@ -297,7 +297,7 @@ describe('ResultDetailComponent', () => {
 
         comp.ngOnInit();
 
-        expect(buildlogsStub).toHaveBeenCalledTimes(1);
+        expect(buildlogsStub).toHaveBeenCalledOnce();
         expect(buildlogsStub).toHaveBeenCalledWith(comp.result.participation!.id, comp.result.id);
         expect(comp.buildLogs).toBeArrayOfSize(0);
         expect(comp.isLoading).toBe(false);
@@ -332,7 +332,7 @@ describe('ResultDetailComponent', () => {
 
         comp.ngOnInit();
 
-        expect(buildlogsStub).toHaveBeenCalledTimes(1);
+        expect(buildlogsStub).toHaveBeenCalledOnce();
         expect(buildlogsStub).toHaveBeenCalledWith(comp.result.participation!.id, comp.result.id);
         expect(comp.loadingFailed).toBe(false);
         expect(comp.isLoading).toBe(false);
@@ -345,9 +345,9 @@ describe('ResultDetailComponent', () => {
 
         comp.ngOnInit();
 
-        expect(buildlogsStub).toHaveBeenCalledTimes(1);
+        expect(buildlogsStub).toHaveBeenCalledOnce();
         expect(buildlogsStub).toHaveBeenCalledWith(comp.result.participation!.id, comp.result.id);
-        expect(comp.loadingFailed).toBe(true);
+        expect(comp.loadingFailed).toBeTrue();
         expect(comp.isLoading).toBe(false);
     });
 
@@ -623,7 +623,7 @@ describe('ResultDetailComponent', () => {
 
         expect(comp.filteredFeedbackList).toEqual(expectedItems);
         expect(comp.backupFilteredFeedbackList).toEqual(expectedItems);
-        expect(comp.showScoreChartTooltip).toBe(true);
+        expect(comp.showScoreChartTooltip).toBeTrue();
 
         checkChartPreset(5, 5, '10', '5 of 6');
         expect(comp.isLoading).toBe(false);
@@ -661,7 +661,7 @@ describe('ResultDetailComponent', () => {
 
         comp.onSelect(event);
 
-        expect(comp.showOnlyPositiveFeedback).toBe(true);
+        expect(comp.showOnlyPositiveFeedback).toBeTrue();
         expect(comp.showOnlyNegativeFeedback).toBe(false);
         expect(comp.filteredFeedbackList).toEqual(currentlyVisibleItems);
 
@@ -670,7 +670,7 @@ describe('ResultDetailComponent', () => {
 
         comp.onSelect(event);
 
-        expect(comp.showOnlyNegativeFeedback).toBe(true);
+        expect(comp.showOnlyNegativeFeedback).toBeTrue();
         expect(comp.showOnlyPositiveFeedback).toBe(false);
         expect(comp.filteredFeedbackList).toEqual(currentlyVisibleItems);
 

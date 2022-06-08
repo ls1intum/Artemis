@@ -66,7 +66,7 @@ describe('TutorLeaderboardComponent', () => {
             testIsAtLeastInstructor((component) => {
                 component.exercise = exercise;
             });
-            expect(comp.isExerciseDashboard).toBe(true);
+            expect(comp.isExerciseDashboard).toBeTrue();
             expect(comp.course).toBe(course);
             expect(comp.exercise).toBe(exercise);
         });
@@ -81,12 +81,12 @@ describe('TutorLeaderboardComponent', () => {
             comp.exam = exam;
             comp.course = course;
             comp.ngOnInit();
-            expect(comp.isExamMode).toBe(true);
+            expect(comp.isExamMode).toBeTrue();
         });
 
         it('should sort rows', () => {
             comp.ngOnInit();
-            expect(sortByPropertySpy).toHaveBeenCalledTimes(1);
+            expect(sortByPropertySpy).toHaveBeenCalledOnce();
         });
 
         function testIsAtLeastInstructor(setupComponent: (comp: TutorLeaderboardComponent) => void): void {
@@ -99,8 +99,8 @@ describe('TutorLeaderboardComponent', () => {
 
             setupComponent(comp);
             comp.ngOnInit();
-            expect(comp.isAtLeastInstructor).toBe(true);
-            expect(isAtLeastInstructorInCourseStub).toHaveBeenCalledTimes(1);
+            expect(comp.isAtLeastInstructor).toBeTrue();
+            expect(isAtLeastInstructorInCourseStub).toHaveBeenCalledOnce();
         }
     });
 

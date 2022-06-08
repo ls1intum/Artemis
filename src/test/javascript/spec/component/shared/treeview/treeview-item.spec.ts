@@ -50,7 +50,7 @@ describe('TreeviewItem', () => {
             });
             expect(treeviewItem.children[0].collapsed).toBe(false);
             treeviewItem.setCollapsedRecursive(true);
-            expect(treeviewItem.children[0].collapsed).toBe(true);
+            expect(treeviewItem.children[0].collapsed).toBeTrue();
         });
     });
 
@@ -78,9 +78,9 @@ describe('TreeviewItem', () => {
             });
             expect(treeviewItem.children[0].disabled).toBe(false);
             treeviewItem.disabled = true;
-            expect(treeviewItem.children[0].disabled).toBe(true);
+            expect(treeviewItem.children[0].disabled).toBeTrue();
             treeviewItem.disabled = true;
-            expect(treeviewItem.children[0].disabled).toBe(true);
+            expect(treeviewItem.children[0].disabled).toBeTrue();
         });
     });
 

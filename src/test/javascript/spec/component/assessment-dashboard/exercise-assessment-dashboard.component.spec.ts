@@ -350,7 +350,7 @@ describe('ExerciseAssessmentDashboardComponent', () => {
         const setupGraphSpy = jest.spyOn(comp, 'setupGraph');
 
         translateService.use('en'); // Change language.
-        expect(setupGraphSpy).toHaveBeenCalledTimes(1);
+        expect(setupGraphSpy).toHaveBeenCalledOnce();
     }));
 
     it('should initialize with tutor leaderboard entry', () => {
@@ -381,7 +381,7 @@ describe('ExerciseAssessmentDashboardComponent', () => {
         const setupGraphSpy = jest.spyOn(comp, 'setupGraph');
 
         translateService.use('en'); // Change language.
-        expect(setupGraphSpy).toHaveBeenCalledTimes(1);
+        expect(setupGraphSpy).toHaveBeenCalledOnce();
     });
 
     it('should set unassessedSubmission if lock limit is not reached', () => {
@@ -413,7 +413,7 @@ describe('ExerciseAssessmentDashboardComponent', () => {
         expect(modelingSubmissionStubWithoutAssessment).toHaveBeenNthCalledWith(2, modelingExercise.id, undefined, 1);
 
         expect(comp.unassessedSubmissionByCorrectionRound?.get(1)).toBe(undefined);
-        expect(comp.submissionLockLimitReached).toBe(true);
+        expect(comp.submissionLockLimitReached).toBeTrue();
         expect(comp.submissionsByCorrectionRound?.get(1)).toHaveLength(0);
     });
 
@@ -470,19 +470,19 @@ describe('ExerciseAssessmentDashboardComponent', () => {
 
     it('should calculateStatus DRAFT', () => {
         expect(modelingSubmission.latestResult).toBe(undefined);
-        expect(comp.calculateSubmissionStatusIsDraft(modelingSubmission)).toBe(true);
+        expect(comp.calculateSubmissionStatusIsDraft(modelingSubmission)).toBeTrue();
     });
 
     it('should call hasBeenCompletedByTutor', () => {
         comp.exampleSubmissionsCompletedByTutor = [{ id: 1 }, { id: 2 }];
-        expect(comp.hasBeenCompletedByTutor(1)).toBe(true);
+        expect(comp.hasBeenCompletedByTutor(1)).toBeTrue();
     });
 
     it('should call readInstruction', () => {
         const tutorParticipationServiceCreateStub = jest.spyOn(tutorParticipationService, 'create');
         const tutorParticipation = { id: 1, status: TutorParticipationStatus.REVIEWED_INSTRUCTIONS };
         tutorParticipationServiceCreateStub.mockImplementation(() => {
-            expect(comp.isLoading).toBe(true);
+            expect(comp.isLoading).toBeTrue();
             return of(new HttpResponse({ body: tutorParticipation, headers: new HttpHeaders() }));
         });
 
@@ -792,7 +792,7 @@ describe('ExerciseAssessmentDashboardComponent', () => {
 
         fixture.detectChanges();
 
-        expect(sortMoreFeedbackRowsSpy).toHaveBeenCalledTimes(1);
+        expect(sortMoreFeedbackRowsSpy).toHaveBeenCalledOnce();
 
         submissionServiceSpy.mockReturnValue(throwError(() => errorResponse));
 
@@ -804,7 +804,7 @@ describe('ExerciseAssessmentDashboardComponent', () => {
 
         comp.loadAll();
 
-        expect(alertServiceSpy).toHaveBeenCalledTimes(1);
+        expect(alertServiceSpy).toHaveBeenCalledOnce();
         expect(alertServiceSpy).toHaveBeenCalledWith('error.http.400');
     });
 

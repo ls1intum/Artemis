@@ -64,7 +64,7 @@ describe('ComplaintResponseService', () => {
     it('should correctly calculate that complaint response is locked for user', () => {
         const lockedComplaintResponse = setupLockTest('test', false, 'test2', true);
         const isLocked = complaintResponseService.isComplaintResponseLockedForLoggedInUser(lockedComplaintResponse, new TextExercise(undefined, undefined));
-        expect(isLocked).toBe(true);
+        expect(isLocked).toBeTrue();
     });
 
     it('should correctly calculate that complaint response is not locked for instructor', () => {

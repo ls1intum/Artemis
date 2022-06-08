@@ -55,7 +55,7 @@ describe('ActivateComponent', () => {
             tick();
 
             expect(comp.error).toBe(false);
-            expect(comp.success).toBe(true);
+            expect(comp.success).toBeTrue();
         }),
     ));
 
@@ -67,7 +67,7 @@ describe('ActivateComponent', () => {
             comp.activateAccount();
             tick();
 
-            expect(comp.error).toBe(true);
+            expect(comp.error).toBeTrue();
             expect(comp.success).toBe(false);
         }),
     ));

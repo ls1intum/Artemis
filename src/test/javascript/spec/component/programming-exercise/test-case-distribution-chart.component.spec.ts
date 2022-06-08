@@ -191,7 +191,7 @@ describe('Test case distribution chart', () => {
         component.onSelectWeight(event);
 
         expect(emitStub).toHaveBeenCalledWith(5);
-        expect(component.tableFiltered).toBe(true);
+        expect(component.tableFiltered).toBeTrue();
     });
 
     it('should reset table correctly', () => {

@@ -108,7 +108,7 @@ describe('User Management Update Component', () => {
                 comp.ngOnInit();
 
                 // THEN
-                expect(getAllSpy).toHaveBeenCalledTimes(1);
+                expect(getAllSpy).toHaveBeenCalledOnce();
                 expect(comp.languages).toEqual(LANGUAGES);
             }),
         ));
@@ -142,8 +142,8 @@ describe('User Management Update Component', () => {
                 translateService.use('en');
 
                 // THEN
-                expect(updateTitleSpy).toHaveBeenCalledTimes(1);
-                expect(setTitleOnTitleServiceSpy).toHaveBeenCalledTimes(1);
+                expect(updateTitleSpy).toHaveBeenCalledOnce();
+                expect(setTitleOnTitleServiceSpy).toHaveBeenCalledOnce();
                 expect(setTitleOnTitleServiceSpy).toHaveBeenCalledWith('artemisApp');
             }),
         ));
@@ -221,7 +221,7 @@ describe('User Management Update Component', () => {
 
         comp.openOrganizationsModal();
 
-        expect(openSpy).toHaveBeenCalledTimes(1);
+        expect(openSpy).toHaveBeenCalledOnce();
         expect(openSpy).toHaveBeenCalledWith(OrganizationSelectorComponent, { size: 'xl', backdrop: 'static' });
         expect(modalRef.componentInstance.organizations).toBe(orgs);
 
@@ -252,8 +252,8 @@ describe('User Management Update Component', () => {
         comp.onGroupAdd(comp.user, event);
 
         expect(comp.user.groups).toEqual([newGroup]);
-        expect(event.chipInput!.clear).toHaveBeenCalledTimes(1);
-        expect(groupCtrlSetValueSpy).toHaveBeenCalledTimes(1);
+        expect(event.chipInput!.clear).toHaveBeenCalledOnce();
+        expect(groupCtrlSetValueSpy).toHaveBeenCalledOnce();
         expect(groupCtrlSetValueSpy).toHaveBeenCalledWith(null);
     });
 });

@@ -61,7 +61,7 @@ describe('CodeEditorAceComponent', () => {
         const placeholder = debugElement.query(By.css('#no-file-selected'));
         expect(placeholder).not.toBe(null);
         const aceEditor = debugElement.query(By.css('#ace-code-editor'));
-        expect(aceEditor.nativeElement.hasAttribute('hidden')).toBe(true);
+        expect(aceEditor.nativeElement.hasAttribute('hidden')).toBeTrue();
     });
 
     it('if the component is loading a file from server, it should show the editor in a readonly state', () => {
@@ -71,8 +71,8 @@ describe('CodeEditorAceComponent', () => {
         const placeholder = debugElement.query(By.css('#no-file-selected'));
         expect(placeholder).toBe(null);
         const aceEditor = debugElement.query(By.css('#ace-code-editor'));
-        expect(aceEditor.nativeElement.hasAttribute('hidden')).toBe(true);
-        expect(comp.editor.getEditor().getReadOnly()).toBe(true);
+        expect(aceEditor.nativeElement.hasAttribute('hidden')).toBeTrue();
+        expect(comp.editor.getEditor().getReadOnly()).toBeTrue();
 
         comp.isLoading = false;
         fixture.detectChanges();
@@ -103,7 +103,7 @@ describe('CodeEditorAceComponent', () => {
         triggerChanges(comp, { property: 'selectedFile', currentValue: selectedFile });
         fixture.detectChanges();
 
-        expect(comp.isLoading).toBe(true);
+        expect(comp.isLoading).toBeTrue();
         expect(loadRepositoryFileStub).toHaveBeenCalledWith(selectedFile);
         expect(initEditorAfterFileChangeSpy).not.toHaveBeenCalled();
         loadFileSubject.next({ fileName: selectedFile, fileContent: 'lorem ipsum' });
@@ -197,8 +197,8 @@ describe('CodeEditorAceComponent', () => {
         const displayFeedbacksSpy = jest.spyOn(comp, 'displayFeedbacks');
         comp.onFileTextChanged('newFileContent');
 
-        expect(comp.editor.getEditor().getReadOnly()).toBe(true);
-        expect(displayFeedbacksSpy).toHaveBeenCalledTimes(1);
+        expect(comp.editor.getEditor().getReadOnly()).toBeTrue();
+        expect(displayFeedbacksSpy).toHaveBeenCalledOnce();
     });
 
     it('should setup inline comment buttons in gutter', () => {

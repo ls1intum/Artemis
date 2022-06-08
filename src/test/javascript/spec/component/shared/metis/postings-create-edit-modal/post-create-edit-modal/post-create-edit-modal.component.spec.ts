@@ -126,7 +126,7 @@ describe('PostCreateEditModalComponent', () => {
         });
         tick();
         expect(component.isLoading).toBe(false);
-        expect(onCreateSpy).toHaveBeenCalledTimes(1);
+        expect(onCreateSpy).toHaveBeenCalledOnce();
     }));
 
     it('should invoke metis service with created announcement in overview', fakeAsync(() => {
@@ -157,7 +157,7 @@ describe('PostCreateEditModalComponent', () => {
         // debounce time of title input field
         tick(800);
         expect(component.isLoading).toBe(false);
-        expect(onCreateSpy).toHaveBeenCalledTimes(1);
+        expect(onCreateSpy).toHaveBeenCalledOnce();
     }));
 
     it('should invoke metis service with updated post in page section', fakeAsync(() => {

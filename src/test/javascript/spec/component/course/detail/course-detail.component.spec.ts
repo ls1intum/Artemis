@@ -134,12 +134,12 @@ describe('Course Management Detail Component', () => {
     it('should toggle course description', () => {
         component.ngOnInit();
 
-        expect(component.enableShowMore).toBe(true);
+        expect(component.enableShowMore).toBeTrue();
         expect(component.longDescriptionShown).toBe(false);
 
         component.toggleCourseDescription();
 
-        expect(component.longDescriptionShown).toBe(true);
+        expect(component.longDescriptionShown).toBeTrue();
         expect(component.courseDescription).toBe(course.description);
 
         component.toggleCourseDescription();

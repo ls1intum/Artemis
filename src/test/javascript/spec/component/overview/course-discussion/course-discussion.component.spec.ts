@@ -221,7 +221,7 @@ describe('CourseDiscussionComponent', () => {
         tick();
         fixture.detectChanges();
         expect(metisServiceGetFilteredPostsSpy).toHaveBeenCalledTimes(3);
-        expect(component.currentPostContextFilter.filterToUnresolved).toBe(true);
+        expect(component.currentPostContextFilter.filterToUnresolved).toBeTrue();
         // actual post filtering done at server side, tested by AnswerPostIntegrationTest
     }));
 
@@ -243,8 +243,8 @@ describe('CourseDiscussionComponent', () => {
         tick();
         fixture.detectChanges();
         expect(metisServiceGetFilteredPostsSpy).toHaveBeenCalledTimes(4);
-        expect(component.currentPostContextFilter.filterToUnresolved).toBe(true);
-        expect(component.currentPostContextFilter.filterToOwn).toBe(true);
+        expect(component.currentPostContextFilter.filterToUnresolved).toBeTrue();
+        expect(component.currentPostContextFilter.filterToOwn).toBeTrue();
         expect(component.currentPostContextFilter.filterToAnsweredOrReacted).toBe(false);
         // actual post filtering done at server side, tested by AnswerPostIntegrationTest
     }));
@@ -266,7 +266,7 @@ describe('CourseDiscussionComponent', () => {
         fixture.detectChanges();
         expect(metisServiceGetFilteredPostsSpy).toHaveBeenCalledTimes(3);
         expect(component.currentPostContextFilter.filterToUnresolved).toBe(false);
-        expect(component.currentPostContextFilter.filterToOwn).toBe(true);
+        expect(component.currentPostContextFilter.filterToOwn).toBeTrue();
         expect(component.currentPostContextFilter.filterToAnsweredOrReacted).toBe(false);
         // actual post filtering done at server side, tested by PostIntegrationTest
     }));
@@ -388,19 +388,19 @@ describe('CourseDiscussionComponent', () => {
     describe('sorting of posts', () => {
         it('should distinguish context filter options for properly show them in form', () => {
             let result = component.compareContextFilterOptionFn({ courseId: metisCourse.id }, { courseId: metisCourse.id });
-            expect(result).toBe(true);
+            expect(result).toBeTrue();
             result = component.compareContextFilterOptionFn({ courseId: metisCourse.id }, { courseId: 99 });
             expect(result).toBe(false);
             result = component.compareContextFilterOptionFn({ lectureId: metisLecture.id }, { lectureId: metisLecture.id });
-            expect(result).toBe(true);
+            expect(result).toBeTrue();
             result = component.compareContextFilterOptionFn({ lectureId: metisLecture.id }, { lectureId: 99 });
             expect(result).toBe(false);
             result = component.compareContextFilterOptionFn({ exerciseId: metisExercise.id }, { exerciseId: metisExercise.id });
-            expect(result).toBe(true);
+            expect(result).toBeTrue();
             result = component.compareContextFilterOptionFn({ exerciseId: metisExercise.id }, { exerciseId: 99 });
             expect(result).toBe(false);
             result = component.compareContextFilterOptionFn({ courseWideContext: CourseWideContext.ORGANIZATION }, { courseWideContext: CourseWideContext.ORGANIZATION });
-            expect(result).toBe(true);
+            expect(result).toBeTrue();
             result = component.compareContextFilterOptionFn({ courseWideContext: CourseWideContext.ORGANIZATION }, { courseWideContext: CourseWideContext.TECH_SUPPORT });
             expect(result).toBe(false);
         });

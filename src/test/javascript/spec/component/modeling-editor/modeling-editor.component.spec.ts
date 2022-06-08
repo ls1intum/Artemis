@@ -235,7 +235,7 @@ describe('ModelingEditorComponent', () => {
         const newExplanation = 'New Explanation';
         component.onExplanationInput(newExplanation);
 
-        expect(spy).toHaveBeenCalledTimes(1);
+        expect(spy).toHaveBeenCalledOnce();
         expect(spy).toHaveBeenCalledWith(newExplanation);
         expect(component.explanation).toBe(newExplanation);
     });

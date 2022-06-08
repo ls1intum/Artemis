@@ -186,8 +186,8 @@ describe('CourseOverviewComponent', () => {
 
         component.ngOnInit();
 
-        expect(component.enableShowMore).toBe(true);
-        expect(component.longDescriptionShown).toBe(true);
+        expect(component.enableShowMore).toBeTrue();
+        expect(component.longDescriptionShown).toBeTrue();
 
         component.toggleCourseDescription();
 
@@ -196,7 +196,7 @@ describe('CourseOverviewComponent', () => {
 
         component.toggleCourseDescription();
 
-        expect(component.longDescriptionShown).toBe(true);
+        expect(component.longDescriptionShown).toBeTrue();
         expect(component.courseDescription).toBe(course1.description);
     });
 
@@ -210,7 +210,7 @@ describe('CourseOverviewComponent', () => {
 
         const bool = component.hasVisibleExams();
 
-        expect(bool).toBe(true);
+        expect(bool).toBeTrue();
     });
 
     it('should not have visible exams', () => {
@@ -250,7 +250,7 @@ describe('CourseOverviewComponent', () => {
 
         expect(adjustCourseDescriptionStub).toHaveBeenCalled();
         expect(component.enableShowMore).toBe(false);
-        expect(component.longDescriptionShown).toBe(true);
+        expect(component.longDescriptionShown).toBeTrue();
         expect(component.courseDescription).toBe(course2.description);
         expect(localStorage.getItem('isDescriptionRead' + course2.shortName)).toBe('true');
     });

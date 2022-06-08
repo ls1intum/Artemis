@@ -108,9 +108,9 @@ describe('Plagiarism Split View Component', () => {
 
         tick();
 
-        expect(comp.isProgrammingOrTextExercise).toBe(true);
+        expect(comp.isProgrammingOrTextExercise).toBeTrue();
         expect(comp.isModelingExercise).toBe(false);
-        expect(comp.parseTextMatches).toHaveBeenCalledTimes(1);
+        expect(comp.parseTextMatches).toHaveBeenCalledOnce();
     }));
 
     it('should subscribe to the split control subject', () => {
@@ -120,7 +120,7 @@ describe('Plagiarism Split View Component', () => {
         comp.ngOnInit();
 
         // eslint-disable-next-line deprecation/deprecation
-        expect(comp.splitControlSubject.subscribe).toHaveBeenCalledTimes(1);
+        expect(comp.splitControlSubject.subscribe).toHaveBeenCalledOnce();
     });
 
     it('should collapse the left pane', () => {

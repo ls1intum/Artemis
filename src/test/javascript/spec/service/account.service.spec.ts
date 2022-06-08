@@ -60,32 +60,32 @@ describe('AccountService', () => {
 
         const userReceived = await accountService.identity(false);
 
-        expect(getStub).toHaveBeenCalledTimes(1);
+        expect(getStub).toHaveBeenCalledOnce();
         expect(getStub).toHaveBeenCalledWith(getUserUrl, { observe: 'response' });
         expect(userReceived).toEqual(user);
         expect(accountService.userIdentity).toEqual(user);
-        expect(accountService.isAuthenticated()).toBe(true);
+        expect(accountService.isAuthenticated()).toBeTrue();
     });
 
     it('should fetch the user on identity if the userIdentity is defined yet (force=true)', async () => {
         accountService.userIdentity = user;
         expect(accountService.userIdentity).toEqual(user);
-        expect(accountService.isAuthenticated()).toBe(true);
+        expect(accountService.isAuthenticated()).toBeTrue();
         getStub.mockReturnValue(of({ body: user2 }));
 
         const userReceived = await accountService.identity(true);
 
-        expect(getStub).toHaveBeenCalledTimes(1);
+        expect(getStub).toHaveBeenCalledOnce();
         expect(getStub).toHaveBeenCalledWith(getUserUrl, { observe: 'response' });
         expect(userReceived).toEqual(user2);
         expect(accountService.userIdentity).toEqual(user2);
-        expect(accountService.isAuthenticated()).toBe(true);
+        expect(accountService.isAuthenticated()).toBeTrue();
     });
 
     it('should NOT fetch the user on identity if the userIdentity is defined (force=false)', async () => {
         accountService.userIdentity = user;
         expect(accountService.userIdentity).toEqual(user);
-        expect(accountService.isAuthenticated()).toBe(true);
+        expect(accountService.isAuthenticated()).toBeTrue();
         getStub.mockReturnValue(of({ body: user2 }));
 
         const userReceived = await accountService.identity(false);
@@ -93,7 +93,7 @@ describe('AccountService', () => {
         expect(getStub).not.toHaveBeenCalled();
         expect(userReceived).toEqual(user);
         expect(accountService.userIdentity).toEqual(user);
-        expect(accountService.isAuthenticated()).toBe(true);
+        expect(accountService.isAuthenticated()).toBeTrue();
     });
 
     it('should authenticate a user', () => {
@@ -131,13 +131,13 @@ describe('AccountService', () => {
             accountService.userIdentity = user3;
             usedAuthorities.push(authority);
 
-            await expect(accountService.hasAnyAuthority(usedAuthorities)).resolves.toBe(true);
+            await expect(accountService.hasAnyAuthority(usedAuthorities)).resolves.toBeTrue();
         });
 
         it.each(authorities)('should return true if authority matches exactly', async (authority: Authority) => {
             accountService.userIdentity = { id: authorities.indexOf(authority), groups: ['USER'], authorities: [authority] } as User;
 
-            await expect(accountService.hasAnyAuthority([authority])).resolves.toBe(true);
+            await expect(accountService.hasAnyAuthority([authority])).resolves.toBeTrue();
         });
 
         it.each(authorities)('should return false if authority does not match', async (authority: Authority) => {
@@ -188,7 +188,7 @@ describe('AccountService', () => {
 
             result = accountService.hasGroup(group);
 
-            expect(result).toBe(true);
+            expect(result).toBeTrue();
         });
     });
 
@@ -206,7 +206,7 @@ describe('AccountService', () => {
 
             result = accountService.isAtLeastTutorInCourse(course);
 
-            expect(result).toBe(true);
+            expect(result).toBeTrue();
         });
 
         it('should return true if user is system admin', () => {
@@ -214,7 +214,7 @@ describe('AccountService', () => {
 
             result = accountService.isAtLeastTutorInCourse(course);
 
-            expect(result).toBe(true);
+            expect(result).toBeTrue();
         });
     });
 
@@ -232,7 +232,7 @@ describe('AccountService', () => {
 
             result = accountService.isAtLeastEditorInCourse(course);
 
-            expect(result).toBe(true);
+            expect(result).toBeTrue();
         });
 
         it('should return true if user is system admin', () => {
@@ -240,7 +240,7 @@ describe('AccountService', () => {
 
             result = accountService.isAtLeastEditorInCourse(course);
 
-            expect(result).toBe(true);
+            expect(result).toBeTrue();
         });
     });
 
@@ -258,7 +258,7 @@ describe('AccountService', () => {
 
             result = accountService.isAtLeastInstructorInCourse(course);
 
-            expect(result).toBe(true);
+            expect(result).toBeTrue();
         });
 
         it('should return true if user is system admin', () => {
@@ -266,7 +266,7 @@ describe('AccountService', () => {
 
             result = accountService.isAtLeastInstructorInCourse(course);
 
-            expect(result).toBe(true);
+            expect(result).toBeTrue();
         });
     });
 
@@ -288,11 +288,11 @@ describe('AccountService', () => {
 
             result = accountService.isAtLeastTutorForExercise(exercise);
 
-            expect(result).toBe(true);
+            expect(result).toBeTrue();
 
             result = accountService.isAtLeastTutorForExercise(examExercise);
 
-            expect(result).toBe(true);
+            expect(result).toBeTrue();
         });
 
         it('should return true if user is system admin', () => {
@@ -300,11 +300,11 @@ describe('AccountService', () => {
 
             result = accountService.isAtLeastTutorForExercise(exercise);
 
-            expect(result).toBe(true);
+            expect(result).toBeTrue();
 
             result = accountService.isAtLeastTutorForExercise(examExercise);
 
-            expect(result).toBe(true);
+            expect(result).toBeTrue();
         });
     });
 
@@ -326,11 +326,11 @@ describe('AccountService', () => {
 
             result = accountService.isAtLeastEditorForExercise(exercise);
 
-            expect(result).toBe(true);
+            expect(result).toBeTrue();
 
             result = accountService.isAtLeastEditorForExercise(examExercise);
 
-            expect(result).toBe(true);
+            expect(result).toBeTrue();
         });
 
         it('should return true if user is system admin', () => {
@@ -338,11 +338,11 @@ describe('AccountService', () => {
 
             result = accountService.isAtLeastEditorForExercise(exercise);
 
-            expect(result).toBe(true);
+            expect(result).toBeTrue();
 
             result = accountService.isAtLeastEditorForExercise(examExercise);
 
-            expect(result).toBe(true);
+            expect(result).toBeTrue();
         });
     });
 
@@ -364,11 +364,11 @@ describe('AccountService', () => {
 
             result = accountService.isAtLeastInstructorForExercise(exercise);
 
-            expect(result).toBe(true);
+            expect(result).toBeTrue();
 
             result = accountService.isAtLeastInstructorForExercise(examExercise);
 
-            expect(result).toBe(true);
+            expect(result).toBeTrue();
         });
 
         it('should return true if user is system admin', () => {
@@ -376,11 +376,11 @@ describe('AccountService', () => {
 
             result = accountService.isAtLeastInstructorForExercise(exercise);
 
-            expect(result).toBe(true);
+            expect(result).toBeTrue();
 
             result = accountService.isAtLeastInstructorForExercise(examExercise);
 
-            expect(result).toBe(true);
+            expect(result).toBeTrue();
         });
     });
 
@@ -398,7 +398,7 @@ describe('AccountService', () => {
 
             result = accountService.isAdmin();
 
-            expect(result).toBe(true);
+            expect(result).toBeTrue();
         });
     });
 
@@ -407,12 +407,12 @@ describe('AccountService', () => {
 
         accountService.setAccessRightsForExerciseAndReferencedCourse(exercise);
 
-        expect(exercise.isAtLeastEditor).toBe(true);
-        expect(exercise.isAtLeastEditor).toBe(true);
-        expect(exercise.isAtLeastInstructor).toBe(true);
-        expect(exercise.course!.isAtLeastEditor).toBe(true);
-        expect(exercise.course!.isAtLeastEditor).toBe(true);
-        expect(exercise.course!.isAtLeastInstructor).toBe(true);
+        expect(exercise.isAtLeastEditor).toBeTrue();
+        expect(exercise.isAtLeastEditor).toBeTrue();
+        expect(exercise.isAtLeastInstructor).toBeTrue();
+        expect(exercise.course!.isAtLeastEditor).toBeTrue();
+        expect(exercise.course!.isAtLeastEditor).toBeTrue();
+        expect(exercise.course!.isAtLeastInstructor).toBeTrue();
     });
 
     it('should set access rights for referenced exercise', () => {
@@ -421,12 +421,12 @@ describe('AccountService', () => {
 
         accountService.setAccessRightsForCourseAndReferencedExercises(course);
 
-        expect(exercise.isAtLeastEditor).toBe(true);
-        expect(exercise.isAtLeastEditor).toBe(true);
-        expect(exercise.isAtLeastInstructor).toBe(true);
-        expect(exercise.course!.isAtLeastEditor).toBe(true);
-        expect(exercise.course!.isAtLeastEditor).toBe(true);
-        expect(exercise.course!.isAtLeastInstructor).toBe(true);
+        expect(exercise.isAtLeastEditor).toBeTrue();
+        expect(exercise.isAtLeastEditor).toBeTrue();
+        expect(exercise.isAtLeastInstructor).toBeTrue();
+        expect(exercise.course!.isAtLeastEditor).toBeTrue();
+        expect(exercise.course!.isAtLeastEditor).toBeTrue();
+        expect(exercise.course!.isAtLeastInstructor).toBeTrue();
     });
 
     describe('test isOwnerOfParticipation', () => {
@@ -448,7 +448,7 @@ describe('AccountService', () => {
 
             result = accountService.isOwnerOfParticipation(participation);
 
-            expect(result).toBe(true);
+            expect(result).toBeTrue();
         });
 
         it('should return false if student is not part of the team', () => {
@@ -466,7 +466,7 @@ describe('AccountService', () => {
 
             result = accountService.isOwnerOfParticipation(participation);
 
-            expect(result).toBe(true);
+            expect(result).toBeTrue();
         });
     });
 

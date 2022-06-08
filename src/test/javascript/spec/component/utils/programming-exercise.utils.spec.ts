@@ -212,7 +212,7 @@ describe('ProgrammingExerciseUtils', () => {
         it('returns true on legacy result', () => {
             const result = new Result();
             result.completionDate = legacyDate;
-            expect(isLegacyResult(result)).toBe(true);
+            expect(isLegacyResult(result)).toBeTrue();
         });
 
         it('returns false on non legacy result', () => {
@@ -315,7 +315,7 @@ describe('ProgrammingExerciseUtils', () => {
     describe('isProgrammingExerciseStudentParticipation', () => {
         it('returns true for a programming exercise participation', () => {
             const participation = new ProgrammingExerciseStudentParticipation();
-            expect(isProgrammingExerciseStudentParticipation(participation)).toBe(true);
+            expect(isProgrammingExerciseStudentParticipation(participation)).toBeTrue();
         });
 
         it('returns false for another participation', () => {
@@ -332,17 +332,17 @@ describe('ProgrammingExerciseUtils', () => {
 
         it('returns true for a student programming exercise participation', () => {
             const participation = new ProgrammingExerciseStudentParticipation();
-            expect(isProgrammingExerciseParticipation(participation)).toBe(true);
+            expect(isProgrammingExerciseParticipation(participation)).toBeTrue();
         });
 
         it('returns true for a template programming exercise participation', () => {
             const participation = new TemplateProgrammingExerciseParticipation();
-            expect(isProgrammingExerciseParticipation(participation)).toBe(true);
+            expect(isProgrammingExerciseParticipation(participation)).toBeTrue();
         });
 
         it('returns true for a solution programming exercise participation', () => {
             const participation = new SolutionProgrammingExerciseParticipation();
-            expect(isProgrammingExerciseParticipation(participation)).toBe(true);
+            expect(isProgrammingExerciseParticipation(participation)).toBeTrue();
         });
 
         it('returns false for a normal student participation', () => {
@@ -370,7 +370,7 @@ describe('ProgrammingExerciseUtils', () => {
 
         it('returns true on date in the past', () => {
             exercise.dueDate = dayjs().subtract(1, 'hour');
-            expect(hasDeadlinePassed(exercise)).toBe(true);
+            expect(hasDeadlinePassed(exercise)).toBeTrue();
         });
 
         it('returns false on date in the future', () => {
@@ -394,12 +394,12 @@ describe('ProgrammingExerciseUtils', () => {
         });
 
         it('return true if the result completion date is not set', () => {
-            expect(isResultPreliminary(result, exercise)).toBe(true);
+            expect(isResultPreliminary(result, exercise)).toBeTrue();
         });
 
         it('return true on invalid date', () => {
             result.completionDate = dayjs('Invalid date');
-            expect(isResultPreliminary(result, exercise)).toBe(true);
+            expect(isResultPreliminary(result, exercise)).toBeTrue();
         });
 
         describe('manual assessment set for the exercise', () => {
@@ -410,7 +410,7 @@ describe('ProgrammingExerciseUtils', () => {
 
             it('return true if the assessment due date is set and in the future', () => {
                 exercise.assessmentDueDate = dayjs().add(5, 'hours');
-                expect(isResultPreliminary(result, exercise)).toBe(true);
+                expect(isResultPreliminary(result, exercise)).toBeTrue();
             });
 
             it('return false if the assessment due date is set and in the past', () => {
@@ -420,7 +420,7 @@ describe('ProgrammingExerciseUtils', () => {
 
             it('return true if the assessment due date is not set and the latest result is an automatic assessment', () => {
                 result.assessmentType = AssessmentType.AUTOMATIC;
-                expect(isResultPreliminary(result, exercise)).toBe(true);
+                expect(isResultPreliminary(result, exercise)).toBeTrue();
             });
 
             it('return false if the assessment due date is not set and the latest result is not an automatic assessment', () => {
@@ -432,7 +432,7 @@ describe('ProgrammingExerciseUtils', () => {
         it('return true if buildAndTest date is set and in the future', () => {
             result.completionDate = dayjs();
             exercise.buildAndTestStudentSubmissionsAfterDueDate = dayjs().add(5, 'hours');
-            expect(isResultPreliminary(result, exercise)).toBe(true);
+            expect(isResultPreliminary(result, exercise)).toBeTrue();
         });
 
         it('return false if buildAndTest date is set and in the past', () => {

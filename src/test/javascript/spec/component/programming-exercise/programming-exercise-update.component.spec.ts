@@ -201,7 +201,7 @@ describe('ProgrammingExercise Management Update Component', () => {
             expect(exerciseGroupService.find).toHaveBeenCalledWith(courseId, examId, exerciseGroupId);
             expect(comp.isSaving).toBe(false);
             expect(comp.programmingExercise).toStrictEqual(expectedExamProgrammingExercise);
-            expect(comp.isExamMode).toBe(true);
+            expect(comp.isExamMode).toBeTrue();
         }));
     });
 
@@ -290,8 +290,8 @@ describe('ProgrammingExercise Management Update Component', () => {
             fixture.detectChanges();
             tick();
 
-            expect(scaCheckbox.checked).toBe(true);
-            expect(comp.programmingExercise.staticCodeAnalysisEnabled).toBe(true);
+            expect(scaCheckbox.checked).toBeTrue();
+            expect(comp.programmingExercise.staticCodeAnalysisEnabled).toBeTrue();
             expect(comp.programmingExercise.maxStaticCodeAnalysisPenalty).toBe(50);
 
             // Switch to another programming language not supporting sca
@@ -317,7 +317,7 @@ describe('ProgrammingExercise Management Update Component', () => {
             // THEN
             expect(courseService.find).toHaveBeenCalledWith(courseId);
             expect(comp.selectedProgrammingLanguage).toBe(ProgrammingLanguage.SWIFT);
-            expect(comp.staticCodeAnalysisAllowed).toBe(true);
+            expect(comp.staticCodeAnalysisAllowed).toBeTrue();
             expect(comp.packageNamePattern).toBe(comp.appNamePatternForSwift);
         }));
 
@@ -332,7 +332,7 @@ describe('ProgrammingExercise Management Update Component', () => {
             expect(courseService.find).toHaveBeenCalledWith(courseId);
             expect(comp.selectedProgrammingLanguage).toBe(ProgrammingLanguage.C);
             expect(comp.selectedProjectType).toBe(ProjectType.GCC);
-            expect(comp.staticCodeAnalysisAllowed).toBe(true);
+            expect(comp.staticCodeAnalysisAllowed).toBeTrue();
         }));
 
         it('Should activate SCA for Java', fakeAsync(() => {
@@ -343,7 +343,7 @@ describe('ProgrammingExercise Management Update Component', () => {
 
             // THEN
             expect(comp.selectedProgrammingLanguage).toBe(ProgrammingLanguage.JAVA);
-            expect(comp.staticCodeAnalysisAllowed).toBe(true);
+            expect(comp.staticCodeAnalysisAllowed).toBeTrue();
             expect(comp.packageNamePattern).toBe(comp.packageNamePatternForJavaKotlin);
         }));
 
@@ -395,7 +395,7 @@ describe('ProgrammingExercise Management Update Component', () => {
                 const recreateBuildPlanCheckbox = fixture.nativeElement.querySelector('#field_recreateBuildPlans');
                 const updateTemplateCheckbox = fixture.nativeElement.querySelector('#field_updateTemplateFiles');
 
-                expect(comp.isImport).toBe(true);
+                expect(comp.isImport).toBeTrue();
                 expect(comp.originalStaticCodeAnalysisEnabled).toBe(scaActivatedOriginal);
                 expect(comp.programmingExercise.staticCodeAnalysisEnabled).toBe(scaActivatedOriginal);
                 expect(comp.programmingExercise.maxStaticCodeAnalysisPenalty).toBe(maxPenalty);
@@ -428,8 +428,8 @@ describe('ProgrammingExercise Management Update Component', () => {
                 expect(scaCheckbox.checked).toBe(!scaActivatedOriginal);
                 expect(comp.programmingExercise.staticCodeAnalysisEnabled).toBe(!scaActivatedOriginal);
                 expect(comp.programmingExercise.maxStaticCodeAnalysisPenalty).toBe(scaActivatedOriginal ? undefined : newMaxPenalty);
-                expect(comp.recreateBuildPlans).toBe(true);
-                expect(comp.updateTemplate).toBe(true);
+                expect(comp.recreateBuildPlans).toBeTrue();
+                expect(comp.updateTemplate).toBeTrue();
 
                 // Deactivate recreation of build plans
                 recreateBuildPlanCheckbox.click();

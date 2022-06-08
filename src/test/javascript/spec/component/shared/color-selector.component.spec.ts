@@ -36,7 +36,7 @@ describe('ColorSelectorComponent', () => {
 
         expect(component.colorSelectorPosition).toEqual({ left: 0, top: 10 });
         expect(component.height).toBe(7);
-        expect(component.showColorSelector).toBe(true);
+        expect(component.showColorSelector).toBeTrue();
 
         component.showColorSelector = false;
 
@@ -44,7 +44,7 @@ describe('ColorSelectorComponent', () => {
 
         expect(component.colorSelectorPosition).toEqual({ left: 0, top: 65 });
         expect(component.height).toBe(7);
-        expect(component.showColorSelector).toBe(true);
+        expect(component.showColorSelector).toBeTrue();
     });
 
     it('should set the tag colors correctly', () => {
@@ -95,13 +95,13 @@ describe('ColorSelectorComponent', () => {
 
         component.clickOutside(event);
 
-        expect(component.showColorSelector).toBe(true);
+        expect(component.showColorSelector).toBeTrue();
 
         target.className = 'color-preview';
 
         component.clickOutside(event);
 
-        expect(component.showColorSelector).toBe(true);
+        expect(component.showColorSelector).toBeTrue();
 
         target.className = 'jhi-alert';
 

@@ -52,7 +52,7 @@ describe('Component Tests', () => {
 
             comp.register();
 
-            expect(comp.doNotMatch).toBe(true);
+            expect(comp.doNotMatch).toBeTrue();
         });
 
         it('should update success to true after creating an account', inject(
@@ -74,7 +74,7 @@ describe('Component Tests', () => {
                 user.login = '';
                 user.langKey = 'en';
                 expect(service.save).toHaveBeenCalledWith(user);
-                expect(comp.success).toBe(true);
+                expect(comp.success).toBeTrue();
                 expect(comp.errorUserExists).toBe(false);
                 expect(comp.errorEmailExists).toBe(false);
                 expect(comp.error).toBe(false);
@@ -98,7 +98,7 @@ describe('Component Tests', () => {
                 comp.register();
                 tick();
 
-                expect(comp.errorUserExists).toBe(true);
+                expect(comp.errorUserExists).toBeTrue();
                 expect(comp.errorEmailExists).toBe(false);
                 expect(comp.error).toBe(false);
             }),
@@ -121,7 +121,7 @@ describe('Component Tests', () => {
                 comp.register();
                 tick();
 
-                expect(comp.errorEmailExists).toBe(true);
+                expect(comp.errorEmailExists).toBeTrue();
                 expect(comp.errorUserExists).toBe(false);
                 expect(comp.error).toBe(false);
             }),
@@ -145,7 +145,7 @@ describe('Component Tests', () => {
 
                 expect(comp.errorUserExists).toBe(false);
                 expect(comp.errorEmailExists).toBe(false);
-                expect(comp.error).toBe(true);
+                expect(comp.error).toBeTrue();
             }),
         ));
     });

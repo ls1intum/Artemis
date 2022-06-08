@@ -73,6 +73,6 @@ describe('StudentExamWorkingTimeComponent', () => {
 
         studentExam.testRun = true;
         comp.ngOnInit();
-        expect(comp.isTestRun).toBe(true);
+        expect(comp.isTestRun).toBeTrue();
     });
 });

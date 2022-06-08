@@ -63,10 +63,10 @@ describe('HeaderParticipationPage', () => {
     });
 
     it('should always publish the results for regular exercises', () => {
-        expect(component.resultsPublished).toBe(true);
+        expect(component.resultsPublished).toBeTrue();
 
         exercise.exerciseGroup = new ExerciseGroup();
-        expect(component.resultsPublished).toBe(true);
+        expect(component.resultsPublished).toBeTrue();
     });
 
     it('should only publish the results for exam exercises after the publishing date', () => {
@@ -80,7 +80,7 @@ describe('HeaderParticipationPage', () => {
         expect(component.resultsPublished).toBe(false);
 
         exam.publishResultsDate = dayjs().subtract(1, 'day');
-        expect(component.resultsPublished).toBe(true);
+        expect(component.resultsPublished).toBeTrue();
 
         exam.publishResultsDate = dayjs().add(1, 'day');
         expect(component.resultsPublished).toBe(false);

@@ -68,7 +68,7 @@ describe('HeaderExercisePageWithDetails', () => {
 
         component.ngOnChanges();
 
-        expect(component.isExamMode).toBe(true);
+        expect(component.isExamMode).toBeTrue();
         expect(component.exerciseCategories).toEqual(categories);
         expect(component.exerciseStatusBadge).toBe('bg-danger');
     });

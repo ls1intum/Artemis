@@ -210,7 +210,7 @@ describe('TextFeedbackConflictsComponent', () => {
         component['setPropertiesFromServerResponse']([conflictingSubmission]);
         fixture.detectChanges();
 
-        expect(component.isOverrideDisabled).toBe(true);
+        expect(component.isOverrideDisabled).toBeTrue();
 
         const textAssessmentArea = fixture.debugElement.query(By.directive(TextAssessmentAreaComponent));
         const textAssessmentAreaComponent = textAssessmentArea.componentInstance as TextAssessmentAreaComponent;
@@ -313,8 +313,8 @@ describe('TextFeedbackConflictsComponent', () => {
         const solveConflictStub = jest.spyOn(textAssessmentService, 'solveFeedbackConflict').mockReturnValue(throwError(() => errorResponse));
         component.discardConflict();
 
-        expect(solveConflictStub).toHaveBeenCalledTimes(1);
-        expect(component.isMarkingDisabled).toBe(true);
+        expect(solveConflictStub).toHaveBeenCalledOnce();
+        expect(component.isMarkingDisabled).toBeTrue();
         expect(component.markBusy).toBe(false);
     });
 
@@ -343,7 +343,7 @@ describe('TextFeedbackConflictsComponent', () => {
         expect(button).not.toBe(null);
         button.triggerEventHandler('click', null);
 
-        expect(clickSpy).toHaveBeenCalledTimes(1);
+        expect(clickSpy).toHaveBeenCalledOnce();
     });
 
     it('should handle error correctly when submitting left submission', () => {
@@ -353,7 +353,7 @@ describe('TextFeedbackConflictsComponent', () => {
 
         component.overrideLeftSubmission();
 
-        expect(errorStub).toHaveBeenCalledTimes(1);
-        expect(component.isOverrideDisabled).toBe(true);
+        expect(errorStub).toHaveBeenCalledOnce();
+        expect(component.isOverrideDisabled).toBeTrue();
     });
 });

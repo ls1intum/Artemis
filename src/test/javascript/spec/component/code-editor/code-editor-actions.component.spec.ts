@@ -183,11 +183,11 @@ describe('CodeEditorActionsComponent', () => {
         expect(comp.commitState).toEqual(CommitState.COMMITTING);
 
         fixture.detectChanges();
-        expect(commitButton.nativeElement.disabled).toBe(true);
+        expect(commitButton.nativeElement.disabled).toBeTrue();
 
         // commit result mockReturnValue
         commitObservable.next(null);
-        expect(comp.isBuilding).toBe(true);
+        expect(comp.isBuilding).toBeTrue();
         expect(comp.commitState).toEqual(CommitState.CLEAN);
 
         fixture.detectChanges();
@@ -215,7 +215,7 @@ describe('CodeEditorActionsComponent', () => {
         expect(comp.commitState).toEqual(CommitState.COMMITTING);
 
         fixture.detectChanges();
-        expect(commitButton.nativeElement.disabled).toBe(true);
+        expect(commitButton.nativeElement.disabled).toBeTrue();
 
         // commit result mockReturnValue an error
         commitObservable.error('error!');
@@ -261,7 +261,7 @@ describe('CodeEditorActionsComponent', () => {
 
         tick();
 
-        expect(comp.isBuilding).toBe(true);
+        expect(comp.isBuilding).toBeTrue();
         expect(comp.commitState).toEqual(CommitState.CLEAN);
 
         fixture.detectChanges();

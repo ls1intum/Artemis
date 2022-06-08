@@ -93,7 +93,7 @@ describe('DragAndDropQuestionEditComponent', () => {
 
         fixture.detectChanges();
 
-        expect(questionUpdatedSpy).toHaveBeenCalledTimes(1);
+        expect(questionUpdatedSpy).toHaveBeenCalledOnce();
         expect(component.backupQuestion).toEqual(question1);
     });
 
@@ -106,9 +106,9 @@ describe('DragAndDropQuestionEditComponent', () => {
         component.moveDownQuestion();
         component.deleteQuestion();
 
-        expect(eventUpSpy).toHaveBeenCalledTimes(1);
-        expect(eventDownSpy).toHaveBeenCalledTimes(1);
-        expect(eventDeleteSpy).toHaveBeenCalledTimes(1);
+        expect(eventUpSpy).toHaveBeenCalledOnce();
+        expect(eventDownSpy).toHaveBeenCalledOnce();
+        expect(eventDeleteSpy).toHaveBeenCalledOnce();
     });
 
     it('should set background file', () => {
@@ -215,7 +215,7 @@ describe('DragAndDropQuestionEditComponent', () => {
 
         component.mouseUp();
 
-        expect(questionUpdatedSpy).toHaveBeenCalledTimes(1);
+        expect(questionUpdatedSpy).toHaveBeenCalledOnce();
         expect(component.draggingState).toBe(DragState.NONE);
         expect(component.currentDropLocation).toBe(undefined);
 
@@ -268,9 +268,9 @@ describe('DragAndDropQuestionEditComponent', () => {
         const modalServiceSpy = jest.spyOn(modalService, 'open');
 
         component.open(content);
-        expect(modalServiceSpy).toHaveBeenCalledTimes(1);
+        expect(modalServiceSpy).toHaveBeenCalledOnce();
         component.drag();
-        expect(component.dropAllowed).toBe(true);
+        expect(component.dropAllowed).toBeTrue();
         component.drop();
         expect(component.dropAllowed).toBe(false);
     });
@@ -328,7 +328,7 @@ describe('DragAndDropQuestionEditComponent', () => {
 
         component.addTextDragItem();
 
-        expect(questionUpdatedSpy).toHaveBeenCalledTimes(1);
+        expect(questionUpdatedSpy).toHaveBeenCalledOnce();
         const firstDragItemOfQuestion = component.question.dragItems![0];
         expect(firstDragItemOfQuestion.text).toBe('Text');
     });
@@ -359,7 +359,7 @@ describe('DragAndDropQuestionEditComponent', () => {
 
             const expectedItem = component.question.dragItems![0];
             expect(expectedItem!.pictureFilePath).toBe('alwaysGoYourPath');
-            expect(questionUpdatedSpy).toHaveBeenCalledTimes(1);
+            expect(questionUpdatedSpy).toHaveBeenCalledOnce();
             expect(component.dragItemFileName).toBe('');
             expect(component.dragItemFile).toBe(undefined);
             jest.restoreAllMocks();
@@ -373,7 +373,7 @@ describe('DragAndDropQuestionEditComponent', () => {
         } catch (error) {
             expect(component.isUploadingDragItemFile).toBe(false);
             // Once because spy has been called in first execution of uploadDragItem()
-            expect(questionUpdatedSpy).toHaveBeenCalledTimes(1);
+            expect(questionUpdatedSpy).toHaveBeenCalledOnce();
         }
     }));
 
@@ -387,7 +387,7 @@ describe('DragAndDropQuestionEditComponent', () => {
         component.uploadPictureForDragItemChange();
         tick();
 
-        expect(questionUpdatedSpy).toHaveBeenCalledTimes(1);
+        expect(questionUpdatedSpy).toHaveBeenCalledOnce();
         expect(component.dragItemPicture).toBe(newPath);
         expect(component.isUploadingDragItemFile).toBe(false);
     }));
@@ -435,7 +435,7 @@ describe('DragAndDropQuestionEditComponent', () => {
 
         component.onDragDrop(alternativeLocation, event);
 
-        expect(questionUpdatedSpy).toHaveBeenCalledTimes(1);
+        expect(questionUpdatedSpy).toHaveBeenCalledOnce();
         expect(component.question.correctMappings).toEqual([mapping, expectedMapping]);
     });
 
@@ -470,7 +470,7 @@ describe('DragAndDropQuestionEditComponent', () => {
         tick();
 
         expect(component.dragItemPicture).toBe(newPath);
-        expect(questionUpdatedSpy).toHaveBeenCalledTimes(1);
+        expect(questionUpdatedSpy).toHaveBeenCalledOnce();
         expect(component.isUploadingDragItemFile).toBe(false);
     }));
 
@@ -567,7 +567,7 @@ describe('DragAndDropQuestionEditComponent', () => {
 
         component.changesInMarkdown();
 
-        expect(questionUpdatedSpy).toHaveBeenCalledTimes(1);
+        expect(questionUpdatedSpy).toHaveBeenCalledOnce();
         expect(component.question.text).toBe(undefined);
     });
 

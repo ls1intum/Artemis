@@ -39,7 +39,7 @@ describe('UnreferencedFeedbackComponent', () => {
         fixture.detectChanges();
 
         comp.validateFeedback();
-        expect(comp.assessmentsAreValid).toBe(true);
+        expect(comp.assessmentsAreValid).toBeTrue();
     });
 
     it('should add unreferenced feedback', () => {

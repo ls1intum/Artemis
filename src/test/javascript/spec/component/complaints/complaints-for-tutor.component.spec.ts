@@ -277,8 +277,8 @@ describe('ComplaintsForTutorComponent', () => {
         complaintForTutorComponentFixture.detectChanges();
         tick();
 
-        expect(rejectComplaintButton.disabled).toBe(true);
-        expect(acceptComplaintButton.disabled).toBe(true);
+        expect(rejectComplaintButton.disabled).toBeTrue();
+        expect(acceptComplaintButton.disabled).toBeTrue();
     }));
 
     it('text area should have the correct max length', fakeAsync(() => {

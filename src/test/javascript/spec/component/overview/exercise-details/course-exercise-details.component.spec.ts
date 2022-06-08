@@ -261,7 +261,7 @@ describe('CourseExerciseDetailsComponent', () => {
         );
         comp.simulateSubmission();
 
-        expect(comp.wasSubmissionSimulated).toBe(true);
+        expect(comp.wasSubmissionSimulated).toBeTrue();
     });
 
     it('should simulate a result', fakeAsync(() => {
@@ -318,7 +318,7 @@ describe('CourseExerciseDetailsComponent', () => {
         comp.showIfExampleSolutionPresent({ ...programmingExercise });
         expect(comp.exampleSolution).toBe(undefined);
         expect(comp.exampleSolutionUML).toBe(undefined);
-        expect(comp.isProgrammingExerciseExampleSolutionPublished).toBe(true);
+        expect(comp.isProgrammingExerciseExampleSolutionPublished).toBeTrue();
 
         comp.showIfExampleSolutionPresent({ ...programmingExercise, exampleSolutionPublished: false });
         expect(comp.exampleSolution).toBe(undefined);

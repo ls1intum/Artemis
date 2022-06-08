@@ -29,10 +29,10 @@ describe('MetricsComponent', () => {
         const mockThreadDump = { threads: [] };
         jest.spyOn(service, 'getMetrics').mockReturnValue(of(mockMetrics as Metrics));
         jest.spyOn(service, 'threadDump').mockReturnValue(of(mockThreadDump as ThreadDump));
-        expect(comp.updatingMetrics).toBe(true);
+        expect(comp.updatingMetrics).toBeTrue();
         comp.ngOnInit();
-        expect(service.getMetrics).toHaveBeenCalledTimes(1);
-        expect(service.threadDump).toHaveBeenCalledTimes(1);
+        expect(service.getMetrics).toHaveBeenCalledOnce();
+        expect(service.threadDump).toHaveBeenCalledOnce();
         expect(comp.updatingMetrics).toBe(false);
         expect(comp.metrics).toEqual(mockMetrics);
         expect(comp.threads).toEqual(mockThreadDump.threads);
@@ -50,7 +50,7 @@ describe('MetricsComponent', () => {
         comp.metrics = {
             cache: {},
         } as any as Metrics;
-        expect(comp.metricsKeyExists('cache')).toBe(true);
+        expect(comp.metricsKeyExists('cache')).toBeTrue();
     });
 
     it('metricsKeyExistsAndObjectNotEmpty method should work correctly', () => {
@@ -67,6 +67,6 @@ describe('MetricsComponent', () => {
         comp.metrics = {
             cache: { randomKey: {} },
         } as any as Metrics;
-        expect(comp.metricsKeyExistsAndObjectNotEmpty('cache')).toBe(true);
+        expect(comp.metricsKeyExistsAndObjectNotEmpty('cache')).toBeTrue();
     });
 });

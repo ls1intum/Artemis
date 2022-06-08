@@ -45,13 +45,13 @@ describe('External Submission Dialog', () => {
         const result = new Result();
         const extServiceSpy = jest.spyOn(externalSubmissionService, 'generateInitialManualResult').mockReturnValue(result);
         component.ngOnInit();
-        expect(extServiceSpy).toHaveBeenCalledTimes(1);
+        expect(extServiceSpy).toHaveBeenCalledOnce();
         expect(component.result).toBe(result);
     });
 
     it('should dismiss the modal on clear', () => {
         component.clear();
-        expect(activeModal.dismiss).toHaveBeenCalledTimes(1);
+        expect(activeModal.dismiss).toHaveBeenCalledOnce();
         expect(activeModal.dismiss).toHaveBeenCalledWith('cancel');
     });
 
@@ -74,19 +74,19 @@ describe('External Submission Dialog', () => {
 
         component.save();
 
-        expect(component.isSaving).toBe(true);
+        expect(component.isSaving).toBeTrue();
         expect(result.feedbacks).toBe(component.feedbacks);
         expect(result.feedbacks).toSatisfyAll((feedback) => feedback.type === FeedbackType.MANUAL);
-        expect(createMock).toHaveBeenCalledTimes(1);
+        expect(createMock).toHaveBeenCalledOnce();
         expect(createMock).toHaveBeenCalledWith(component.exercise, component.student, result);
         expect(activeModal.close).toHaveBeenCalledTimes(0);
 
         subject.next(new HttpResponse<Result>({ body: result }));
 
-        expect(activeModal.close).toHaveBeenCalledTimes(1);
+        expect(activeModal.close).toHaveBeenCalledOnce();
         expect(activeModal.close).toHaveBeenCalledWith(result);
         expect(component.isSaving).toBe(false);
-        expect(eventManagerSpy).toHaveBeenCalledTimes(1);
+        expect(eventManagerSpy).toHaveBeenCalledOnce();
         expect(eventManagerSpy).toHaveBeenCalledWith({ name: 'resultListModification', content: 'Added a manual result' });
     });
 
@@ -98,8 +98,8 @@ describe('External Submission Dialog', () => {
         const onSaveErrorSpy = jest.spyOn(component, 'onSaveError');
 
         component.save();
-        expect(createMock).toHaveBeenCalledTimes(1);
-        expect(onSaveErrorSpy).toHaveBeenCalledTimes(1);
+        expect(createMock).toHaveBeenCalledOnce();
+        expect(onSaveErrorSpy).toHaveBeenCalledOnce();
         expect(component.isSaving).toBe(false);
     });
 

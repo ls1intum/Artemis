@@ -72,7 +72,7 @@ describe('Text Submission Viewer Component', () => {
         });
 
         expect(repositoryService.getRepositoryContent).toHaveBeenCalled();
-        expect(comp.isProgrammingExercise).toBe(true);
+        expect(comp.isProgrammingExercise).toBeTrue();
     });
 
     it('filters files of type FILE', () => {

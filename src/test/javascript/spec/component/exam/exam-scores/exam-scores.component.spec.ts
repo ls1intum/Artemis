@@ -622,7 +622,7 @@ describe('ExamScoresComponent', () => {
         jest.spyOn(gradingSystemService, 'findMatchingGradeStep').mockReturnValue(gradingScale.gradeSteps[0]);
         fixture.detectChanges();
 
-        expect(comp.gradingScaleExists).toBe(true);
+        expect(comp.gradingScaleExists).toBeTrue();
         expect(comp.gradingScale).toEqual(gradingScale);
         expect(comp.isBonus).toBe(false);
     });
@@ -641,7 +641,7 @@ describe('ExamScoresComponent', () => {
 
         comp.toggleFilterForNonEmptySubmission();
 
-        expect(comp.filterForNonEmptySubmissions).toBe(true);
+        expect(comp.filterForNonEmptySubmissions).toBeTrue();
     });
 
     describe('test table filtering', () => {
@@ -811,7 +811,7 @@ describe('ExamScoresComponent', () => {
         comp.isBonus = false;
         fixture.detectChanges();
 
-        expect(comp.showPassedMedian).toBe(true);
+        expect(comp.showPassedMedian).toBeTrue();
 
         comp.toggleMedian(MedianType.PASSED);
 
@@ -820,11 +820,11 @@ describe('ExamScoresComponent', () => {
         comp.toggleMedian(MedianType.OVERALL);
 
         expect(comp.overallChartMedian).toBe(50);
-        expect(comp.showOverallMedian).toBe(true);
+        expect(comp.showOverallMedian).toBeTrue();
 
         comp.toggleMedian(MedianType.PASSED);
 
-        expect(comp.showPassedMedian).toBe(true);
+        expect(comp.showPassedMedian).toBeTrue();
         expect(comp.showOverallMedian).toBe(false);
     });
 

@@ -79,7 +79,7 @@ describe('CodeEditorGridComponent', () => {
             switch (windowName) {
                 case fileBrowserWindowName: {
                     if (collapsed) {
-                        expect(comp.fileBrowserIsCollapsed).toBe(true);
+                        expect(comp.fileBrowserIsCollapsed).toBeTrue();
                         expect(comp.rightPanelIsCollapsed).toBe(false);
                         expect(comp.buildOutputIsCollapsed).toBe(false);
                     } else {
@@ -90,7 +90,7 @@ describe('CodeEditorGridComponent', () => {
                 case instructionsWindowName: {
                     if (collapsed) {
                         expect(comp.fileBrowserIsCollapsed).toBe(false);
-                        expect(comp.rightPanelIsCollapsed).toBe(true);
+                        expect(comp.rightPanelIsCollapsed).toBeTrue();
                         expect(comp.buildOutputIsCollapsed).toBe(false);
                     } else {
                         expectAllWindowsToNotBeCollapsed();
@@ -101,7 +101,7 @@ describe('CodeEditorGridComponent', () => {
                     if (collapsed) {
                         expect(comp.fileBrowserIsCollapsed).toBe(false);
                         expect(comp.rightPanelIsCollapsed).toBe(false);
-                        expect(comp.buildOutputIsCollapsed).toBe(true);
+                        expect(comp.buildOutputIsCollapsed).toBeTrue();
                     } else {
                         expectAllWindowsToNotBeCollapsed();
                     }

@@ -160,7 +160,7 @@ describe('Guided tour integration', () => {
             courseCardComponentFixture.autoDetectChanges(true);
             navBarComponentFixture.autoDetectChanges(true);
 
-            expect(guidedTourService.isOnFirstStep).toBe(true);
+            expect(guidedTourService.isOnFirstStep).toBeTrue();
             expect(guidedTourSteps).toBe(9);
 
             // Click through tour steps in NavComponent
@@ -197,7 +197,7 @@ describe('Guided tour integration', () => {
                 }
             }
 
-            expect(guidedTourService.isOnLastStep).toBe(true);
+            expect(guidedTourService.isOnLastStep).toBeTrue();
         });
     });
 });

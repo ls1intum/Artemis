@@ -71,7 +71,7 @@ describe('PostComponent', () => {
         component.ngOnInit();
         metisServiceIsPostResolvedStub.mockReturnValue(true);
         component.ngOnChanges();
-        expect(component.postIsResolved).toBe(true);
+        expect(component.postIsResolved).toBeTrue();
     });
 
     it('should contain a post header', () => {
