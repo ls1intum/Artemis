@@ -4,27 +4,25 @@
             <h3>
                 <fa-icon *ngIf="displayBackButton" [icon]="faArrowLeft" (click)="onBackClick()" class="back-button me-2"></fa-icon>
                 <fa-icon *ngIf="exercise.type" [icon]="getIcon(exercise.type)" [ngbTooltip]="getIconTooltip(exercise.type) | artemisTranslate" container="body"></fa-icon>
+                &nbsp;
                 <ng-content select="[pagetitle]"></ng-content>
                 <jhi-not-released-tag [exercise]="exercise"></jhi-not-released-tag>
             </h3>
             <h4 class="row" *ngIf="exercise.maxPoints">
-                <div class="col-auto">
-                    {{ 'artemisApp.courseOverview.exerciseDetails.points' | artemisTranslate }}
-                    {{ exercise.maxPoints }}
-                    <span *ngIf="exercise.bonusPoints">({{ 'artemisApp.courseOverview.exerciseDetails.bonus' | artemisTranslate }} {{ exercise.bonusPoints }})</span>
-                    <jhi-included-in-score-badge
-                        *ngIf="exercise.includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY"
-                        [includedInOverallScore]="exercise.includedInOverallScore"
-                    ></jhi-included-in-score-badge>
-                </div>
-                <div class="col">
-                    <span *ngFor="let category of exerciseCategories">
-                        <span class="badge text-white me-1" [ngStyle]="{ backgroundColor: category.color }">{{ category.category }}</span>
-                    </span>
-                    <span *ngIf="exercise.difficulty">
-                        <jhi-difficulty-badge class="me-1" [exercise]="exercise" [showNoLevel]="false"></jhi-difficulty-badge>
-                    </span>
-                </div>
+                {{ 'artemisApp.courseOverview.exerciseDetails.points' | artemisTranslate }}
+                {{ exercise.maxPoints }}
+                <span *ngIf="exercise.bonusPoints">({{ 'artemisApp.courseOverview.exerciseDetails.bonus' | artemisTranslate }} {{ exercise.bonusPoints }})</span>
+                <jhi-included-in-score-badge
+                    *ngIf="exercise.includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY"
+                    [includedInOverallScore]="exercise.includedInOverallScore"
+                ></jhi-included-in-score-badge>
+                &nbsp;
+                <span *ngFor="let category of exerciseCategories">
+                    <span class="badge text-white me-1" [ngStyle]="{ backgroundColor: category.color }">{{ category.category }}</span>
+                </span>
+                <span *ngIf="exercise.difficulty">
+                    <jhi-difficulty-badge class="me-1" [exercise]="exercise" [showNoLevel]="false"></jhi-difficulty-badge>
+                </span>
             </h4>
             <h4 class="row" *ngIf="exercise.assessmentType && exercise.type === ExerciseType.PROGRAMMING">
                 <span>
@@ -55,34 +53,34 @@
         <div class="col-auto ms-md-auto">
             <ng-template [ngIf]="exam" [ngIfElse]="courseMode">
                 <ng-container *ngIf="!isTestRun">
-                    <h5 [class.h3]="isNextDueDate[0]">
+                    <h4 [style.font-weight]="!isNextDueDate[0] ? '300' : '500'">
                         {{ 'artemisApp.exam.endDate' | artemisTranslate }}
                         {{ exam?.endDate | artemisDate }}
                         <span *ngIf="exam?.endDate && !isTestRun" [ngClass]="statusBadges[0]" class="badge">
                             {{ exam?.endDate | artemisTimeAgo }}
                         </span>
-                    </h5>
-                    <h5 [class.h3]="isNextDueDate[1]">
+                    </h4>
+                    <h4 [style.font-weight]="!isNextDueDate[1] ? '300' : '500'">
                         {{ 'artemisApp.exam.publishResultsDate' | artemisTranslate }}
                         {{ exam?.publishResultsDate | artemisDate }}
                         <span *ngIf="exam?.publishResultsDate" [ngClass]="statusBadges[1]" class="badge">
                             {{ exam?.publishResultsDate | artemisTimeAgo }}
                         </span>
-                    </h5>
+                    </h4>
                 </ng-container>
             </ng-template>
             <ng-template #courseMode>
-                <h5 *ngIf="dueDate" [class.h3]="isNextDueDate[0]">
+                <h4 *ngIf="dueDate" [class.h3]="isNextDueDate[0]">
                     {{ 'artemisApp.courseOverview.exerciseDetails.submissionDue' | artemisTranslate }}
                     <span
-                        [ngClass]="statusBadges[0]"
+                        [style.font-weight]="!isNextDueDate[0] ? '300' : '500'"
                         class="badge"
                         [ngbTooltip]="'artemisApp.courseOverview.exerciseDetails.submissionDueTooltip' | artemisTranslate: { date: dueDate | artemisDate }"
                     >
                         {{ dueDate | artemisTimeAgo }}
                     </span>
-                </h5>
-                <h5 *ngIf="exercise.assessmentDueDate" [class.h3]="isNextDueDate[1]">
+                </h4>
+                <h4 *ngIf="exercise.assessmentDueDate" [style.font-weight]="!isNextDueDate[1] ? '300' : '500'">
                     {{ 'artemisApp.courseOverview.exerciseDetails.assessmentDue' | artemisTranslate }}
                     <span
                         [ngClass]="statusBadges[1]"
@@ -91,8 +89,8 @@
                     >
                         {{ exercise.assessmentDueDate | artemisTimeAgo }}
                     </span>
-                </h5>
-                <h5 *ngIf="individualComplaintDeadline" [class.h3]="isNextDueDate[2]">
+                </h4>
+                <h4 *ngIf="individualComplaintDeadline" [style.font-weight]="!isNextDueDate[2] ? '300' : '500'">
                     {{ 'artemisApp.courseOverview.exerciseDetails.complaintDue' | artemisTranslate }}
                     <span
                         [ngClass]="statusBadges[2]"
@@ -101,8 +99,8 @@
                     >
                         {{ individualComplaintDeadline | artemisTimeAgo }}
                     </span>
-                </h5>
-                <h5 *ngIf="canComplainLaterOn" [class.h3]="isNextDueDate[3]">
+                </h4>
+                <h4 *ngIf="canComplainLaterOn" [style.font-weight]="!isNextDueDate[3] ? '300' : '500'">
                     {{ 'artemisApp.courseOverview.exerciseDetails.complaintPossible' | artemisTranslate }}
                     <span class="badge bg-success" [ngbTooltip]="'artemisApp.courseOverview.exerciseDetails.complaintPossibleTooltip' | artemisTranslate">
                         {{
@@ -110,7 +108,7 @@
                                 | artemisTranslate
                         }}
                     </span>
-                </h5>
+                </h4>
             </ng-template>
         </div>
     </div>

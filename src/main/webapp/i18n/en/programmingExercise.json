@@ -382,7 +382,7 @@
                         "tooltip": "The system deducts points from your score for each submission that exceeds the submission limit. Try to stay within the submission limit to avoid penalties!"
                     }
                 },
-                "submissionLimitTitle": "Submission Limit",
+                "submissionLimitTitle": "Submission limit",
                 "submissionLimitDescription": "The amount of submissions a participant can make before the system enforces the selected policy.",
                 "editInGradingInformation": "The submission policy can only be edited and toggled on the grading page of the programming exercise!",
                 "submissionLimitWarning": {
