@@ -2,7 +2,7 @@
     "userManagement": {
         "filter": {
             "modal": {
-                "open": "Filter",
+                "open": "Filter ({{ num }})",
                 "title": "Filter Nutzer:innen",
                 "close": "Schließen"
             },

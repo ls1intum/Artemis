@@ -1,6 +1,6 @@
 package de.tum.in.www1.artemis.repository;
 
-import static de.tum.in.www1.artemis.config.Constants.COURSE_ID_FOR_EMPTY_COURSES;
+import static de.tum.in.www1.artemis.config.Constants.*;
 import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
 
 import java.time.ZonedDateTime;
@@ -136,9 +136,9 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
      *
      * @param page        Pageable related info (e.g. for page size)
      * @param loginOrName Either a login (e.g. ga12abc) or name (e.g. Max Mustermann) by which to search
-     * @return list of found users that match the search criteria
+     * @return            list of found users that match the search criteria
      */
-    @Query("select user from User user where user.login like :#{#loginOrName}% or concat_ws(' ', user.firstName, user" + ".lastName) like %:#{#loginOrName}%")
+    @Query("select user from User user where user.login like :#{#loginOrName}% or concat_ws(' ', user.firstName, user.lastName) like %:#{#loginOrName}%")
     Page<User> searchAllByLoginOrName(Pageable page, @Param("loginOrName") String loginOrName);
 
     @EntityGraph(type = LOAD, attributePaths = { "groups" })
@@ -173,7 +173,7 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
     @Query("select user from User user where :#{#groupName} member of user.groups and user not in :#{#ignoredUsers}")
     List<User> findAllInGroupContainingAndNotIn(@Param("groupName") String groupName, @Param("ignoredUsers") Set<User> ignoredUsers);
 
-    @Query("select distinct team.students from Team team where team.exercise.course.id = :#{#courseId} and team" + ".shortName = :#{#teamShortName}")
+    @Query("select distinct team.students from Team team where team.exercise.course.id = :#{#courseId} and team.shortName = :#{#teamShortName}")
     Set<User> findAllInTeam(@Param("courseId") Long courseId, @Param("teamShortName") String teamShortName);
 
     /**
@@ -230,7 +230,7 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
      * @return specification used to chain database operations
      */
     private Specification<User> getAuthoritySpecification(Set<String> authorities) {
-        if (authorities.contains("NO_AUTHORITY")) {
+        if (authorities.contains(USER_MANAGEMENT_FILTER_NO_AUTHORITY)) {
             // Empty authorities
             return getAllUsersMatchingEmptyAuthorities();
         }
@@ -363,7 +363,7 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
      * @param userSearch used to find users
      * @return all users
      */
-    default Page<UserDTO> getAllManagedUsers(UserPageableSearchDTO<String> userSearch) {
+    default Page<UserDTO> getAllManagedUsers(UserPageableSearchDTO userSearch) {
         // Prepare filter
         final var searchTerm = userSearch.getSearchTerm();
         var sorting = Sort.by(userSearch.getSortedColumn());
@@ -374,12 +374,12 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
         Set<String> authorities = userSearch.getAuthorities();
 
         // Internal or external users or both
-        final var internal = userSearch.getOrigins().contains("INTERNAL");
-        final var external = userSearch.getOrigins().contains("EXTERNAL");
+        final var internal = userSearch.getOrigins().contains(USER_MANAGEMENT_FILTER_INTERNAL);
+        final var external = userSearch.getOrigins().contains(USER_MANAGEMENT_FILTER_EXTERNAL);
 
         // Activated or deactivated users or both
-        var activated = userSearch.getStatus().contains("ACTIVATED");
-        var deactivated = userSearch.getStatus().contains("DEACTIVATED");
+        var activated = userSearch.getStatus().contains(USER_MANAGEMENT_FILTER_ACTIVATED);
+        var deactivated = userSearch.getStatus().contains(USER_MANAGEMENT_FILTER_DEACTIVATED);
 
         // Course Ids
         var courseIds = userSearch.getCourseIds();

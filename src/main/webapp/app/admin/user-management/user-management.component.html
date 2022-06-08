@@ -35,7 +35,14 @@
                     </div>
                     <div class="col p-0">
                         <div class="d-flex justify-content-center justify-content-md-end">
-                            <button type="button" class="btn btn-primary" (click)="this.open(content)">{{ 'userManagement.filter.modal.open' | artemisTranslate }}</button>
+                            <button
+                                class="btn"
+                                (click)="this.open(content)"
+                                [ngClass]="{ 'btn-secondary': !filters.numberOfAppliedFilters, 'btn-success': !!filters.numberOfAppliedFilters }"
+                            >
+                                <fa-icon [icon]="faFilter"></fa-icon>
+                                <span class="d-s-none d-md-inline">{{ 'userManagement.filter.modal.open' | artemisTranslate: { num: filters.numberOfAppliedFilters } }}</span>
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -258,7 +265,7 @@
                         <li *ngFor="let origin of this.originFilters" class="col">
                             <label>
                                 <input class="form-check-input" (change)="this.toggleOriginFilter(origin)" [checked]="this.filters.originFilter.has(origin)" type="radio" />
-                                <span class="ms-2">{{ 'userManagement.filter.origin.' + origin.toString().toLowerCase() | artemisTranslate }}</span>
+                                <span class="ps-1">{{ 'userManagement.filter.origin.' + origin.toString().toLowerCase() | artemisTranslate }}</span>
                             </label>
                         </li>
                         <li class="col-3">
@@ -282,7 +289,7 @@
                         <li *ngFor="let status of this.statusFilters" class="col">
                             <label>
                                 <input class="form-check-input" (change)="this.toggleStatusFilter(status)" [checked]="this.filters.statusFilter.has(status)" type="radio" />
-                                <span class="ms-2">{{ 'userManagement.filter.status.' + status.toString().toLowerCase() | artemisTranslate }}</span>
+                                <span class="ps-1">{{ 'userManagement.filter.status.' + status.toString().toLowerCase() | artemisTranslate }}</span>
                             </label>
                         </li>
                         <li class="col-3">

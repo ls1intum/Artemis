@@ -49,6 +49,13 @@ export class UserFilter {
         }
         return options;
     }
+
+    /**
+     * Returns the number of applied filters.
+     */
+    get numberOfAppliedFilters() {
+        return this.authorityFilter.size + this.originFilter.size + this.statusFilter.size + this.courseFilter.size + (this.noAuthority ? 1 : 0) + (this.noCourse ? 1 : 0);
+    }
 }
 
 export enum AuthorityFilter {

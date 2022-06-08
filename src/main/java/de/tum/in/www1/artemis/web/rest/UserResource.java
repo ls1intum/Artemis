@@ -204,7 +204,7 @@ public class UserResource {
      */
     @GetMapping("users")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<List<UserDTO>> getAllUsers(@ApiParam UserPageableSearchDTO<String> userSearch) {
+    public ResponseEntity<List<UserDTO>> getAllUsers(@ApiParam UserPageableSearchDTO userSearch) {
         final Page<UserDTO> page = userRepository.getAllManagedUsers(userSearch);
         HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), page);
         return new ResponseEntity<>(page.getContent(), headers, HttpStatus.OK);

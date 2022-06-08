@@ -5,25 +5,25 @@ import java.util.Set;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public class UserPageableSearchDTO<T> extends PageableSearchDTO<T> {
+public class UserPageableSearchDTO extends PageableSearchDTO<String> {
 
     /**
-     * Set of authorities users need to match at least one.
+     * Set of authorities users need to match.
      */
     private Set<String> authorities;
 
     /**
-     * Set of origins users need to match at least one.
+     * Set of origins users need to match.
      */
     private Set<String> origins;
 
     /**
-     * Set of status users need to match at least one.
+     * Set of status users need to match.
      */
     private Set<String> status;
 
     /**
-     * Set of courseIds users need to be part in at least one.
+     * Set of courseIds users need to be part in.
      */
     private Set<Long> courseIds;
 
