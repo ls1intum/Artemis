@@ -738,7 +738,8 @@ describe('ExerciseAssessmentDashboardComponent', () => {
 
         it('should navigate if user is instructor and clicked pie part', () => {
             jest.spyOn(accountService, 'hasAnyAuthorityDirect').mockReturnValue(true);
-            event = { value: 40 };
+            event = { name: 'test', value: 40 };
+            comp.assessments = [event];
 
             const exercises = [programmingExercise, modelingExercise, textExercise, fileUploadExercise];
 
@@ -749,7 +750,9 @@ describe('ExerciseAssessmentDashboardComponent', () => {
 
                 comp.navigateToExerciseSubmissionOverview(event);
 
-                expect(routingStub).toHaveBeenCalledWith(['course-management', 42, preparedExercise.type + '-exercises', preparedExercise.id, 'submissions']);
+                expect(routingStub).toHaveBeenCalledWith(['course-management', 42, preparedExercise.type + '-exercises', preparedExercise.id, 'submissions'], {
+                    queryParams: { submissionFilter: 0 },
+                });
             });
         });
     });
