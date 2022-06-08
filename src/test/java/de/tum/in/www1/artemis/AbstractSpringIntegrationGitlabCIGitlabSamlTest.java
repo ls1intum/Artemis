@@ -1,16 +1,11 @@
 package de.tum.in.www1.artemis;
 
-import static de.tum.in.www1.artemis.config.Constants.ASSIGNMENT_REPO_NAME;
-import static de.tum.in.www1.artemis.config.Constants.TEST_REPO_NAME;
-import static de.tum.in.www1.artemis.domain.enumeration.BuildPlanType.SOLUTION;
-import static de.tum.in.www1.artemis.domain.enumeration.BuildPlanType.TEMPLATE;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
 import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
 
-import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.List;
 import java.util.Set;
@@ -28,6 +23,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.saml2.provider.service.registration.RelyingPartyRegistrationRepository;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestPropertySource;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
 
 import de.tum.in.www1.artemis.connector.GitlabRequestMockProvider;
 import de.tum.in.www1.artemis.domain.*;
@@ -113,7 +110,7 @@ public abstract class AbstractSpringIntegrationGitlabCIGitlabSamlTest extends Ab
         mockUpdatePlanRepositoriesInBuildPlans(exerciseToBeImported);
     }
 
-    private void mockImportRepositories(ProgrammingExercise exerciseToBeImported) throws Exception {
+    private void mockImportRepositories(ProgrammingExercise exerciseToBeImported) throws GitLabApiException {
         final var targetTemplateRepoName = exerciseToBeImported.generateRepositoryName(RepositoryType.TEMPLATE);
         final var targetSolutionRepoName = exerciseToBeImported.generateRepositoryName(RepositoryType.SOLUTION);
         final var targetTestsRepoName = exerciseToBeImported.generateRepositoryName(RepositoryType.TESTS);
@@ -130,18 +127,8 @@ public abstract class AbstractSpringIntegrationGitlabCIGitlabSamlTest extends Ab
         gitlabRequestMockProvider.mockAddAuthenticatedWebHook();
     }
 
-    private void mockUpdatePlanRepositoriesInBuildPlans(ProgrammingExercise exerciseToBeImported) throws Exception {
-        String templateBuildPlanId = exerciseToBeImported.getProjectKey() + "-" + TEMPLATE.getName();
-        String solutionBuildPlanId = exerciseToBeImported.getProjectKey() + "-" + SOLUTION.getName();
-
-        final var targetTemplateRepoName = exerciseToBeImported.generateRepositoryName(RepositoryType.TEMPLATE);
-        final var targetSolutionRepoName = exerciseToBeImported.generateRepositoryName(RepositoryType.SOLUTION);
-        final var targetTestsRepoName = exerciseToBeImported.generateRepositoryName(RepositoryType.TESTS);
-
-        mockUpdatePlanRepository(exerciseToBeImported, templateBuildPlanId, ASSIGNMENT_REPO_NAME, targetTemplateRepoName, List.of(ASSIGNMENT_REPO_NAME));
-        mockUpdatePlanRepository(exerciseToBeImported, templateBuildPlanId, TEST_REPO_NAME, targetTestsRepoName, List.of());
-        mockUpdatePlanRepository(exerciseToBeImported, solutionBuildPlanId, ASSIGNMENT_REPO_NAME, targetSolutionRepoName, List.of());
-        mockUpdatePlanRepository(exerciseToBeImported, solutionBuildPlanId, TEST_REPO_NAME, targetTestsRepoName, List.of());
+    private void mockUpdatePlanRepositoriesInBuildPlans(ProgrammingExercise exerciseToBeImported) {
+        // Unsupported action in GitLab CI setup
     }
 
     @Override
@@ -151,7 +138,7 @@ public abstract class AbstractSpringIntegrationGitlabCIGitlabSamlTest extends Ab
 
     @Override
     public void mockConnectorRequestsForStartParticipation(ProgrammingExercise exercise, String username, Set<User> users, boolean ltiUserExists, HttpStatus status)
-            throws Exception {
+            throws GitLabApiException {
         // Step 1a)
         gitlabRequestMockProvider.mockCopyRepositoryForParticipation(exercise, username);
         // Step 1b)
@@ -162,39 +149,36 @@ public abstract class AbstractSpringIntegrationGitlabCIGitlabSamlTest extends Ab
     }
 
     @Override
-    public void mockConnectorRequestsForResumeParticipation(ProgrammingExercise exercise, String username, Set<User> users, boolean ltiUserExists) throws Exception {
+    public void mockConnectorRequestsForResumeParticipation(ProgrammingExercise exercise, String username, Set<User> users, boolean ltiUserExists) throws GitLabApiException {
         gitlabRequestMockProvider.mockGetDefaultBranch(defaultBranch);
         // Step 2 is not needed in the GitLab CI setup.
     }
 
     @Override
-    public void mockUpdatePlanRepositoryForParticipation(ProgrammingExercise exercise, String username) throws IOException, URISyntaxException {
-        final var projectKey = exercise.getProjectKey();
-        final var repoName = projectKey.toLowerCase() + "-" + username;
-        mockUpdatePlanRepository(exercise, username, ASSIGNMENT_REPO_NAME, repoName, List.of());
+    public void mockUpdatePlanRepositoryForParticipation(ProgrammingExercise exercise, String username) {
+        // Unsupported action in GitLab CI setup
     }
 
     @Override
-    public void mockUpdatePlanRepository(ProgrammingExercise exercise, String planName, String repoNameInCI, String repoNameInVcs, List<String> triggeredBy)
-            throws IOException, URISyntaxException {
-        // jenkinsRequestMockProvider.mockUpdatePlanRepository(exercise.getProjectKey(), planName, false);
+    public void mockUpdatePlanRepository(ProgrammingExercise exercise, String planName, String repoNameInCI, String repoNameInVcs, List<String> triggeredBy) {
+        // Unsupported action in GitLab CI setup
     }
 
     @Override
-    public void mockRemoveRepositoryAccess(ProgrammingExercise exercise, Team team, User firstStudent) throws Exception {
+    public void mockRemoveRepositoryAccess(ProgrammingExercise exercise, Team team, User firstStudent) throws GitLabApiException {
         final var repositorySlug = (exercise.getProjectKey() + "-" + team.getParticipantIdentifier()).toLowerCase();
         gitlabRequestMockProvider.mockRemoveMemberFromRepository(repositorySlug, firstStudent.getLogin());
     }
 
     @Override
-    public void mockRepositoryWritePermissionsForTeam(Team team, User newStudent, ProgrammingExercise exercise, HttpStatus status) throws Exception {
+    public void mockRepositoryWritePermissionsForTeam(Team team, User newStudent, ProgrammingExercise exercise, HttpStatus status) throws GitLabApiException {
         final var repositorySlug = (exercise.getProjectKey() + "-" + team.getParticipantIdentifier()).toLowerCase();
         final var repositoryPath = exercise.getProjectKey() + "/" + repositorySlug;
         gitlabRequestMockProvider.mockAddMemberToRepository(repositoryPath, newStudent.getLogin(), !status.is2xxSuccessful());
     }
 
     @Override
-    public void mockRepositoryWritePermissionsForStudent(User student, ProgrammingExercise exercise, HttpStatus status) throws Exception {
+    public void mockRepositoryWritePermissionsForStudent(User student, ProgrammingExercise exercise, HttpStatus status) throws GitLabApiException {
         final var repositorySlug = (exercise.getProjectKey() + "-" + student.getParticipantIdentifier()).toLowerCase();
         final var repositoryPath = exercise.getProjectKey() + "/" + repositorySlug;
         gitlabRequestMockProvider.mockAddMemberToRepository(repositoryPath, student.getLogin(), !status.is2xxSuccessful());
@@ -216,63 +200,63 @@ public abstract class AbstractSpringIntegrationGitlabCIGitlabSamlTest extends Ab
     }
 
     @Override
-    public void mockCopyBuildPlan(ProgrammingExerciseStudentParticipation participation) throws Exception {
+    public void mockCopyBuildPlan(ProgrammingExerciseStudentParticipation participation) {
         // Unsupported action in GitLab CI setup
     }
 
     @Override
-    public void mockConfigureBuildPlan(ProgrammingExerciseStudentParticipation participation) throws Exception {
+    public void mockConfigureBuildPlan(ProgrammingExerciseStudentParticipation participation) throws GitLabApiException {
+        mockAddBuildPlanToGitLabRepositoryConfiguration(false);
+    }
+
+    @Override
+    public void mockTriggerFailedBuild(ProgrammingExerciseStudentParticipation participation) throws GitLabApiException {
+        mockTriggerBuild(false);
+    }
+
+    @Override
+    public void mockNotifyPush(ProgrammingExerciseStudentParticipation participation) throws GitLabApiException {
+        mockTriggerBuild(false);
+    }
+
+    @Override
+    public void mockTriggerParticipationBuild(ProgrammingExerciseStudentParticipation participation) throws GitLabApiException {
+        mockTriggerBuild(false);
+    }
+
+    @Override
+    public void mockTriggerInstructorBuildAll(ProgrammingExerciseStudentParticipation participation) throws GitLabApiException {
+        mockTriggerBuild(false);
+    }
+
+    @Override
+    public void mockUpdateUserInUserManagement(String oldLogin, User user, String password, Set<String> oldGroups) {
         // Unsupported action in GitLab CI setup
     }
 
     @Override
-    public void mockTriggerFailedBuild(ProgrammingExerciseStudentParticipation participation) throws Exception {
-        mockTriggerBuild(false);
-    }
-
-    @Override
-    public void mockNotifyPush(ProgrammingExerciseStudentParticipation participation) throws Exception {
-        mockTriggerBuild(false);
-    }
-
-    @Override
-    public void mockTriggerParticipationBuild(ProgrammingExerciseStudentParticipation participation) throws Exception {
-        mockTriggerBuild(false);
-    }
-
-    @Override
-    public void mockTriggerInstructorBuildAll(ProgrammingExerciseStudentParticipation participation) throws Exception {
-        mockTriggerBuild(false);
-    }
-
-    @Override
-    public void mockUpdateUserInUserManagement(String oldLogin, User user, String password, Set<String> oldGroups) throws Exception {
-        // Unsupported action in GitLab CI setup
-    }
-
-    @Override
-    public void mockCreateUserInUserManagement(User user, boolean userExistsInCi) throws Exception {
+    public void mockCreateUserInUserManagement(User user, boolean userExistsInCi) throws GitLabApiException {
         gitlabRequestMockProvider.mockCreateVcsUser(user, false);
     }
 
     @Override
-    public void mockFailToCreateUserInExernalUserManagement(User user, boolean failInVcs, boolean failInCi, boolean failToGetCiUser) throws Exception {
+    public void mockFailToCreateUserInExernalUserManagement(User user, boolean failInVcs, boolean failInCi, boolean failToGetCiUser) throws GitLabApiException {
         gitlabRequestMockProvider.mockCreateVcsUser(user, failInVcs);
     }
 
     @Override
-    public void mockDeleteUserInUserManagement(User user, boolean userExistsInUserManagement, boolean failInVcs, boolean failInCi) throws Exception {
+    public void mockDeleteUserInUserManagement(User user, boolean userExistsInUserManagement, boolean failInVcs, boolean failInCi) throws GitLabApiException {
         gitlabRequestMockProvider.mockDeleteVcsUser(user.getLogin(), userExistsInUserManagement, failInVcs);
     }
 
     @Override
-    public void mockUpdateCoursePermissions(Course updatedCourse, String oldInstructorGroup, String oldEditorGroup, String oldTeachingAssistantGroup) throws Exception {
+    public void mockUpdateCoursePermissions(Course updatedCourse, String oldInstructorGroup, String oldEditorGroup, String oldTeachingAssistantGroup) throws GitLabApiException {
         gitlabRequestMockProvider.mockUpdateCoursePermissions(updatedCourse, oldInstructorGroup, oldEditorGroup, oldTeachingAssistantGroup);
     }
 
     @Override
     public void mockFailUpdateCoursePermissionsInCi(Course updatedCourse, String oldInstructorGroup, String oldEditorGroup, String oldTeachingAssistantGroup,
-            boolean failToAddUsers, boolean failToRemoveUsers) throws Exception {
+            boolean failToAddUsers, boolean failToRemoveUsers) throws GitLabApiException {
         gitlabRequestMockProvider.mockUpdateCoursePermissions(updatedCourse, oldInstructorGroup, oldEditorGroup, oldTeachingAssistantGroup);
     }
 
@@ -287,79 +271,82 @@ public abstract class AbstractSpringIntegrationGitlabCIGitlabSamlTest extends Ab
     }
 
     @Override
-    public void mockDeleteRepository(String projectKey, String repostoryName, boolean shouldFail) throws Exception {
+    public void mockDeleteRepository(String projectKey, String repostoryName, boolean shouldFail) throws GitLabApiException {
         gitlabRequestMockProvider.mockDeleteRepository(projectKey + "/" + repostoryName, shouldFail);
     }
 
     @Override
-    public void mockDeleteProjectInVcs(String projectKey, boolean shouldFail) throws Exception {
+    public void mockDeleteProjectInVcs(String projectKey, boolean shouldFail) throws GitLabApiException {
         gitlabRequestMockProvider.mockDeleteProject(projectKey, shouldFail);
     }
 
     @Override
-    public void mockDeleteBuildPlan(String projectKey, String planName, boolean shouldFail) throws Exception {
+    public void mockDeleteBuildPlan(String projectKey, String planName, boolean shouldFail) {
         // Unsupported action in GitLab CI setup
     }
 
     @Override
-    public void mockDeleteBuildPlanProject(String projectKey, boolean shouldFail) throws Exception {
+    public void mockDeleteBuildPlanProject(String projectKey, boolean shouldFail) {
         // Unsupported action in GitLab CI setup
     }
 
     @Override
-    public void mockAddUserToGroupInUserManagement(User user, String group, boolean failInCi) throws Exception {
+    public void mockAddUserToGroupInUserManagement(User user, String group, boolean failInCi) throws GitLabApiException {
         gitlabRequestMockProvider.mockUpdateVcsUser(user.getLogin(), user, Set.of(), Set.of(group), false);
     }
 
     @Override
-    public void mockRemoveUserFromGroup(User user, String group, boolean failInCi) throws Exception {
+    public void mockRemoveUserFromGroup(User user, String group, boolean failInCi) throws GitLabApiException {
         gitlabRequestMockProvider.mockUpdateVcsUser(user.getLogin(), user, Set.of(group), Set.of(), false);
     }
 
     @Override
-    public void mockGetBuildPlan(String projectKey, String planName, boolean planExistsInCi, boolean planIsActive, boolean planIsBuilding, boolean failToGetBuild)
-            throws Exception {
+    public void mockGetBuildPlan(String projectKey, String planName, boolean planExistsInCi, boolean planIsActive, boolean planIsBuilding, boolean failToGetBuild) {
         // Unsupported action in GitLab CI setup
     }
 
     @Override
-    public void mockHealthInCiService(boolean isRunning, HttpStatus httpStatus) throws Exception {
+    public void mockHealthInCiService(boolean isRunning, HttpStatus httpStatus) throws URISyntaxException, JsonProcessingException {
         gitlabRequestMockProvider.mockHealth(isRunning ? "ok" : "notok", httpStatus);
     }
 
     @Override
-    public void mockConfigureBuildPlan(ProgrammingExerciseParticipation participation, String defaultBranch) throws Exception {
-        gitlabRequestMockProvider.mockGetProject(false);
-        gitlabRequestMockProvider.mockUpdateProject(false);
+    public void mockConfigureBuildPlan(ProgrammingExerciseParticipation participation, String defaultBranch) throws GitLabApiException {
+        mockAddBuildPlanToGitLabRepositoryConfiguration(false);
+    }
+
+    public void mockAddBuildPlanToGitLabRepositoryConfiguration(boolean shouldFail) throws GitLabApiException {
+        gitlabRequestMockProvider.mockGetProject(shouldFail);
+        gitlabRequestMockProvider.mockUpdateProject(shouldFail);
     }
 
     @Override
-    public void mockCheckIfProjectExistsInVcs(ProgrammingExercise exercise, boolean existsInVcs) throws Exception {
+    public void mockCheckIfProjectExistsInVcs(ProgrammingExercise exercise, boolean existsInVcs) throws GitLabApiException {
         gitlabRequestMockProvider.mockCheckIfProjectExists(exercise, existsInVcs);
     }
 
     @Override
-    public void mockCheckIfProjectExistsInCi(ProgrammingExercise exercise, boolean existsInCi, boolean shouldFail) throws Exception {
+    public void mockCheckIfProjectExistsInCi(ProgrammingExercise exercise, boolean existsInCi, boolean shouldFail) {
         // Unsupported action in GitLab CI setup
     }
 
     @Override
-    public void mockRepositoryUrlIsValid(VcsRepositoryUrl repositoryUrl, String projectKey, boolean isUrlValid) throws Exception {
+    public void mockRepositoryUrlIsValid(VcsRepositoryUrl repositoryUrl, String projectKey, boolean isUrlValid) throws GitLabApiException {
         gitlabRequestMockProvider.mockRepositoryUrlIsValid(repositoryUrl, isUrlValid);
     }
 
     @Override
-    public void mockCheckIfBuildPlanExists(String projectKey, String buildPlanId, boolean buildPlanExists, boolean shouldFail) throws Exception {
+    public void mockCheckIfBuildPlanExists(String projectKey, String buildPlanId, boolean buildPlanExists, boolean shouldFail) {
         // Unsupported action in GitLab CI setup
     }
 
     @Override
-    public void mockTriggerBuild(AbstractBaseProgrammingExerciseParticipation programmingExerciseParticipation) throws Exception {
+    public void mockTriggerBuild(AbstractBaseProgrammingExerciseParticipation programmingExerciseParticipation) throws GitLabApiException {
         mockTriggerBuild(false);
     }
 
     @Override
-    public void mockTriggerBuildFailed(AbstractBaseProgrammingExerciseParticipation programmingExerciseParticipation) throws Exception {
+    public void mockTriggerBuildFailed(AbstractBaseProgrammingExerciseParticipation programmingExerciseParticipation) throws GitLabApiException {
         mockTriggerBuild(true);
     }
 
@@ -370,12 +357,12 @@ public abstract class AbstractSpringIntegrationGitlabCIGitlabSamlTest extends Ab
     }
 
     @Override
-    public void mockSetRepositoryPermissionsToReadOnly(VcsRepositoryUrl repositoryUrl, String projectKey, Set<User> users) throws Exception {
+    public void mockSetRepositoryPermissionsToReadOnly(VcsRepositoryUrl repositoryUrl, String projectKey, Set<User> users) throws GitLabApiException {
         gitlabRequestMockProvider.setRepositoryPermissionsToReadOnly(repositoryUrl, users);
     }
 
     @Override
-    public void mockConfigureRepository(ProgrammingExercise exercise, String participantIdentifier, Set<User> students, boolean userExists) throws Exception {
+    public void mockConfigureRepository(ProgrammingExercise exercise, String participantIdentifier, Set<User> students, boolean userExists) throws GitLabApiException {
         gitlabRequestMockProvider.mockConfigureRepository(exercise, students, userExists);
     }
 

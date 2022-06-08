@@ -14,13 +14,11 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
-
-import com.fasterxml.jackson.core.JsonProcessingException;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationGitlabCIGitlabSamlTest;
 import de.tum.in.www1.artemis.ContinuousIntegrationTestService;
+import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.exception.GitLabCIException;
 
@@ -48,29 +46,20 @@ public class GitlabCIServiceTest extends AbstractSpringIntegrationGitlabCIGitlab
 
     @Test
     @WithMockUser(roles = "INSTRUCTOR", username = "instructor1")
-    public void testHealthOk() throws URISyntaxException, JsonProcessingException {
-        gitlabRequestMockProvider.mockHealth("ok", HttpStatus.OK);
-        var health = versionControlService.health();
-        assertThat(health.getAdditionalInfo()).containsEntry("url", gitlabServerUrl);
-        assertThat(health.isUp()).isTrue();
+    public void testHealthOk() throws Exception {
+        continuousIntegrationTestService.testHealthRunning();
     }
 
     @Test
     @WithMockUser(roles = "INSTRUCTOR", username = "instructor1")
-    public void testHealthNotOk() throws URISyntaxException, JsonProcessingException {
-        gitlabRequestMockProvider.mockHealth("notok", HttpStatus.OK);
-        var health = versionControlService.health();
-        assertThat(health.getAdditionalInfo()).containsEntry("url", gitlabServerUrl).containsEntry("status", "notok");
-        assertThat(health.isUp()).isFalse();
+    public void testHealthNotOk() throws Exception {
+        continuousIntegrationTestService.testHealthNotRunning();
     }
 
     @Test
     @WithMockUser(roles = "INSTRUCTOR", username = "instructor1")
-    public void testHealthException() throws URISyntaxException, JsonProcessingException {
-        gitlabRequestMockProvider.mockHealth("ok", HttpStatus.INTERNAL_SERVER_ERROR);
-        var health = versionControlService.health();
-        assertThat(health.isUp()).isFalse();
-        assertThat(health.getException()).isNotNull();
+    public void testHealthException() throws Exception {
+        continuousIntegrationTestService.testHealthException();
     }
 
     @Test
@@ -92,47 +81,48 @@ public class GitlabCIServiceTest extends AbstractSpringIntegrationGitlabCIGitlab
     @Test
     @WithMockUser(roles = "INSTRUCTOR", username = "instructor1")
     public void testTriggerBuildSuccess() throws GitLabApiException {
-        gitlabRequestMockProvider.mockCreateTrigger(false);
-        gitlabRequestMockProvider.mockTriggerPipeline(false);
-        gitlabRequestMockProvider.mockDeleteTrigger(false);
-
+        mockTriggerBuild(null);
         ProgrammingExerciseStudentParticipation participation = new ProgrammingExerciseStudentParticipation();
-        participation.setRepositoryUrl("http://some.test.url/scm/PROJECTNAME/REPONAME-exercise.git");
+        participation.setRepositoryUrl("http://some.test.url/PROJECTNAME/REPONAME-exercise.git");
         continuousIntegrationService.triggerBuild(participation);
     }
 
     @Test
     @WithMockUser(roles = "INSTRUCTOR", username = "instructor1")
     public void testTriggerBuildFails() throws GitLabApiException {
-        gitlabRequestMockProvider.mockCreateTrigger(true);
-        gitlabRequestMockProvider.mockTriggerPipeline(true);
-        gitlabRequestMockProvider.mockDeleteTrigger(true);
-
+        mockTriggerBuildFailed(null);
         ProgrammingExerciseStudentParticipation participation = new ProgrammingExerciseStudentParticipation();
-        participation.setRepositoryUrl("http://some.test.url/scm/PROJECTNAME/REPONAME-exercise.git");
+        participation.setRepositoryUrl("http://some.test.url/PROJECTNAME/REPONAME-exercise.git");
         assertThatThrownBy(() -> continuousIntegrationService.triggerBuild(participation)).isInstanceOf(GitLabCIException.class);
     }
 
     @Test
     @WithMockUser(roles = "INSTRUCTOR", username = "instructor1")
-    public void testConfigureBuildPlanSuccess() throws GitLabApiException {
-        gitlabRequestMockProvider.mockGetProject(false);
-        gitlabRequestMockProvider.mockUpdateProject(false);
-
-        ProgrammingExerciseStudentParticipation participation = new ProgrammingExerciseStudentParticipation();
-        participation.setRepositoryUrl("http://some.test.url/scm/PROJECTNAME/REPONAME-exercise.git");
-        continuousIntegrationService.configureBuildPlan(participation, "main");
+    public void testConfigureBuildPlanSuccess() throws Exception {
+        continuousIntegrationTestService.testConfigureBuildPlan();
     }
 
     @Test
     @WithMockUser(roles = "INSTRUCTOR", username = "instructor1")
     public void testConfigureBuildPlanFails() throws GitLabApiException {
-        gitlabRequestMockProvider.mockGetProject(true);
-        gitlabRequestMockProvider.mockUpdateProject(true);
+        mockAddBuildPlanToGitLabRepositoryConfiguration(true);
 
         ProgrammingExerciseStudentParticipation participation = new ProgrammingExerciseStudentParticipation();
-        participation.setRepositoryUrl("http://some.test.url/scm/PROJECTNAME/REPONAME-exercise.git");
+        participation.setRepositoryUrl("http://some.test.url/PROJECTNAME/REPONAME-exercise.git");
         assertThatThrownBy(() -> continuousIntegrationService.configureBuildPlan(participation, "main")).isInstanceOf(GitLabCIException.class);
+    }
+
+    @Test
+    @WithMockUser(roles = "INSTRUCTOR", username = "instructor1")
+    public void testCreateBuildPlanForExercise() throws GitLabApiException, URISyntaxException {
+        mockAddBuildPlanToGitLabRepositoryConfiguration(false);
+        continuousIntegrationService.createBuildPlanForExercise(null, null, new VcsRepositoryUrl("http://some.test.url/PROJECTNAME/REPONAME-exercise.git"), null, null);
+    }
+
+    @Test
+    @WithMockUser(roles = "INSTRUCTOR", username = "instructor1")
+    public void testRecreateBuildPlansForExercise() throws GitLabApiException {
+
     }
 
     @Test
