@@ -111,6 +111,12 @@ export class AlertService {
                     }
                     break;
 
+                case 403:
+                    // All access forbidden errors with additional identifier keys are handled by their own component
+                    if (httpErrorResponse.error && httpErrorResponse.error.title && !httpErrorResponse.error.errorKey) {
+                        this.addErrorAlert(httpErrorResponse.error.title, httpErrorResponse.error.message, httpErrorResponse.error.params);
+                    }
+                    break;
                 case 404:
                     // Disabled
                     break;
