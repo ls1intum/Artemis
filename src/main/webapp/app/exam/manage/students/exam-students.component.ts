@@ -165,10 +165,8 @@ export class ExamStudentsComponent implements OnInit, OnDestroy {
                     // Flash green background color to signal to the user that this student was registered
                     this.flashRowClass(cssClasses.newlyRegistered);
                 },
-                error: (error: HttpErrorResponse) => {
-                    if (error.status === HttpStatusCode.BadRequest && error.headers.get('x-null-error') === 'error.cannotRegisterInstructor') {
-                        this.onError('artemisApp.studentExam.error.cannotRegisterInstructor');
-                    }
+                error: () => {
+                    this.isTransitioning = false;
                 },
             });
         } else {
