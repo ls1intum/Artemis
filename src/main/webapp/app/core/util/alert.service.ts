@@ -121,7 +121,7 @@ export class AlertService {
                 default:
                     if (httpErrorResponse.error && httpErrorResponse.error.title) {
                         // To avoid displaying this alerts twice, we need to filter the received errors. In this case, we filter for the cannot register instructor error.
-                        if (httpErrorResponse.status === 403 && httpErrorResponse.error.errorKey in this.conflictErrorKeysToSkip) {
+                        if (httpErrorResponse.status === 403 && this.conflictErrorKeysToSkip.includes(httpErrorResponse.error.errorKey)) {
                             break;
                         }
                         this.addErrorAlert(httpErrorResponse.error.title, httpErrorResponse.error.message, httpErrorResponse.error.params);
