@@ -26,7 +26,6 @@ import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.web.rest.dto.OnlineResourceDTO;
 import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
-import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 import de.tum.in.www1.artemis.web.rest.errors.InternalServerErrorException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 
@@ -64,7 +63,7 @@ public class OnlineUnitResource {
     @PreAuthorize("hasRole('EDITOR')")
     public ResponseEntity<OnlineUnit> getOnlineUnit(@PathVariable Long onlineUnitId, @PathVariable Long lectureId) {
         log.debug("REST request to get onlineUnit : {}", onlineUnitId);
-        var onlineUnit = onlineUnitRepository.findById(onlineUnitId).orElseThrow(() -> new EntityNotFoundException("onlineUnit", onlineUnitId));
+        var onlineUnit = onlineUnitRepository.findByIdElseThrow(onlineUnitId);
         if (onlineUnit.getLecture() == null || onlineUnit.getLecture().getCourse() == null) {
             throw new ConflictException("Lecture unit must be associated to a lecture of a course", "onlineUnit", "lectureOrCourseMissing");
         }

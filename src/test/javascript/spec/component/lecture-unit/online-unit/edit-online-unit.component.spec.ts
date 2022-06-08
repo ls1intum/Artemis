@@ -103,7 +103,7 @@ describe('EditOnlineUnitComponent', () => {
         ).componentInstance;
         editOnlineUnitComponentFixture.detectChanges(); // onInit
         expect(editOnlineUnitComponent.onlineUnit).toEqual(onlineUnitOfResponse);
-        expect(findByIdStub).toHaveBeenCalledTimes(1);
+        expect(findByIdStub).toHaveBeenCalledOnce();
         expect(editOnlineUnitComponent.formData.name).toEqual(onlineUnitOfResponse.name);
         expect(editOnlineUnitComponent.formData.releaseDate).toEqual(onlineUnitOfResponse.releaseDate);
         expect(editOnlineUnitComponent.formData.description).toEqual(onlineUnitOfResponse.description);
@@ -129,7 +129,7 @@ describe('EditOnlineUnitComponent', () => {
         const findByIdStub = jest.spyOn(onlineUnitService, 'findById').mockReturnValue(of(findByIdResponse));
 
         editOnlineUnitComponentFixture.detectChanges(); // onInit
-        expect(findByIdStub).toHaveBeenCalledTimes(1);
+        expect(findByIdStub).toHaveBeenCalledOnce();
         expect(editOnlineUnitComponent.onlineUnit).toEqual(onlineUnitInDatabase);
 
         const changedUnit: OnlineUnit = {
@@ -152,8 +152,8 @@ describe('EditOnlineUnitComponent', () => {
             source: changedUnit.source,
         });
 
-        expect(updatedStub).toHaveBeenCalledTimes(1);
-        expect(navigateSpy).toHaveBeenCalledTimes(1);
+        expect(updatedStub).toHaveBeenCalledOnce();
+        expect(navigateSpy).toHaveBeenCalledOnce();
         navigateSpy.mockRestore();
     });
 });

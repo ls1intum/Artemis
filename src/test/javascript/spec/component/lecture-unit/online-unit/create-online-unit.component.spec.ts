@@ -110,8 +110,8 @@ describe('CreateOnlineUnitComponent', () => {
             expect(onlineUnitCallArgument.source).toEqual(formDate.source);
             expect(lectureIdCallArgument).toEqual(1);
 
-            expect(createStub).toHaveBeenCalledTimes(1);
-            expect(navigateSpy).toHaveBeenCalledTimes(1);
+            expect(createStub).toHaveBeenCalledOnce();
+            expect(navigateSpy).toHaveBeenCalledOnce();
 
             navigateSpy.mockRestore();
         });

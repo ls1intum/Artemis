@@ -83,7 +83,7 @@
             "updated": "Online unit updated",
             "tooltip": "This is an online unit",
             "description": "Description",
-            "notReleasedTooltip": "Online only visible to teaching assistants and instructors. Release date:",
+            "notReleasedTooltip": "Online unit only visible to teaching assistants and instructors. Release date:",
             "doOpen": "Open link",
             "createOnlineUnit": {
                 "title": "Create Online Unit",
