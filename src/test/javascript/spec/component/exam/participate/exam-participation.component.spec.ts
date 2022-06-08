@@ -283,6 +283,7 @@ describe('ExamParticipationComponent', () => {
         const studentExam = new StudentExam();
         studentExam.workingTime = 100;
         comp.testRunStartTime = dayjs().subtract(1000, 'seconds');
+        comp.exam = new Exam();
         testExamStarted(studentExam);
     });
 
@@ -347,6 +348,7 @@ describe('ExamParticipationComponent', () => {
 
         beforeEach(() => {
             comp.studentExam = new StudentExam();
+            comp.exam = new Exam();
         });
 
         const expectSyncedSubmissions = (submission: Submission, syncedSubmission: Submission) => {
@@ -367,7 +369,7 @@ describe('ExamParticipationComponent', () => {
             textExercise.studentParticipations = [participation];
             comp.studentExam.exercises = [textExercise];
             textSubmissionUpdateSpy = jest.spyOn(textSubmissionService, 'update').mockReturnValue(of(new HttpResponse({ body: submission })));
-            comp.triggerSave(false);
+            comp.triggerSave(false, false);
             expect(textSubmissionUpdateSpy).toHaveBeenCalledWith(submission, 5);
             expect(textSubmissionUpdateSpy).not.toHaveBeenCalledWith(syncedSubmission, 5);
             expectSyncedSubmissions(submission, syncedSubmission);
@@ -384,7 +386,7 @@ describe('ExamParticipationComponent', () => {
             modelingExercise.studentParticipations = [participation];
             comp.studentExam.exercises = [modelingExercise];
             modelingSubmissionUpdateSpy = jest.spyOn(modelingSubmissionService, 'update').mockReturnValue(of(new HttpResponse({ body: submission })));
-            comp.triggerSave(false);
+            comp.triggerSave(false, false);
             expect(modelingSubmissionUpdateSpy).toHaveBeenCalledWith(submission, 5);
             expect(modelingSubmissionUpdateSpy).not.toHaveBeenCalledWith(syncedSubmission, 5);
             expectSyncedSubmissions(submission, syncedSubmission);
@@ -401,7 +403,7 @@ describe('ExamParticipationComponent', () => {
             quizExercise.studentParticipations = [participation];
             comp.studentExam.exercises = [quizExercise];
             quizSubmissionUpdateSpy = jest.spyOn(examParticipationService, 'updateQuizSubmission').mockReturnValue(of(submission));
-            comp.triggerSave(false);
+            comp.triggerSave(false, false);
             tick(500);
             expect(quizSubmissionUpdateSpy).toHaveBeenCalledWith(5, submission);
             expect(quizSubmissionUpdateSpy).not.toHaveBeenCalledWith(5, syncedSubmission);
@@ -412,6 +414,7 @@ describe('ExamParticipationComponent', () => {
     it('should submit exam when end confirmed', () => {
         const studentExam = new StudentExam();
         const submitSpy = jest.spyOn(examParticipationService, 'submitStudentExam').mockReturnValue(of(studentExam));
+        comp.exam = new Exam();
         comp.onExamEndConfirmed();
         expect(submitSpy).toHaveBeenCalled();
         expect(comp.studentExam).toEqual(studentExam);
@@ -421,6 +424,7 @@ describe('ExamParticipationComponent', () => {
         const httpError = new HttpErrorResponse({ error: 'Forbidden', status: 403 });
         const submitSpy = jest.spyOn(examParticipationService, 'submitStudentExam').mockReturnValue(throwError(() => httpError));
         const alertErrorSpy = jest.spyOn(alertService, 'error');
+        comp.exam = new Exam();
         comp.onExamEndConfirmed();
         expect(submitSpy).toHaveBeenCalled();
         expect(alertErrorSpy).toHaveBeenCalled();
@@ -526,6 +530,8 @@ describe('ExamParticipationComponent', () => {
     it('should clear autoSaveInterval when exam ended', () => {
         const clearIntervalSpy = jest.spyOn(window, 'clearInterval');
         comp.autoSaveInterval = 1;
+        comp.studentExam = new StudentExam();
+        comp.exam = new Exam();
         comp.examEnded();
         expect(clearIntervalSpy).toHaveBeenCalledWith(comp.autoSaveInterval);
     });
@@ -541,8 +547,9 @@ describe('ExamParticipationComponent', () => {
         const triggerSpy = jest.spyOn(comp, 'triggerSave');
         const exerciseChange = { overViewChange: false, exercise: exercise2, forceSave: true };
         const createParticipationForExerciseSpy = jest.spyOn(comp, 'createParticipationForExercise').mockReturnValue(of(new StudentParticipation()));
+        comp.exam = new Exam();
         comp.onPageChange(exerciseChange);
-        expect(triggerSpy).toHaveBeenCalledWith(true);
+        expect(triggerSpy).toHaveBeenCalledWith(true, false);
         expect(comp.exerciseIndex).toEqual(1);
         expect(createParticipationForExerciseSpy).toHaveBeenCalledWith(exercise2);
     });
