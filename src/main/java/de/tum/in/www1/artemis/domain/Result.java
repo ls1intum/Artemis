@@ -101,6 +101,7 @@ public class Result extends DomainObject {
     @Column(name = "example_result")
     private Boolean exampleResult;
 
+    // The following attributes are only used for Programming Exercises
     @Column(name = "test_case_amount")
     private Integer testCaseAmount;
 
@@ -153,7 +154,7 @@ public class Result extends DomainObject {
     }
 
     /**
-     * This explicit flag exists intentionally, as sometimes a Result is loaded from the database without loading it's Feedback list. In this case you still want to know, if
+     * This explicit flag exists intentionally, as sometimes a Result is loaded from the database without loading its Feedback list. In this case you still want to know, if
      * Feedback for this Result exists without querying the server/database again. IMPORTANT: Please note, that this flag should only be used for Programming Exercises at the
      * moment all other exercise types should set this flag to false
      *
@@ -164,7 +165,7 @@ public class Result extends DomainObject {
     }
 
     /**
-     * This explicit flag exists intentionally, as sometimes a Result is loaded from the database without loading it's Feedback list. In this case you still want to know, if
+     * This explicit flag exists intentionally, as sometimes a Result is loaded from the database without loading its Feedback list. In this case you still want to know, if
      * Feedback for this Result exists without querying the server/database again. IMPORTANT: Please note, that this flag should only be used for Programming Exercises at the
      * moment all other exercise types should set this flag to false
      *
@@ -175,7 +176,7 @@ public class Result extends DomainObject {
     }
 
     /**
-     * This explicit flag exists intentionally, as sometimes a Result is loaded from the database without loading it's Feedback list. In this case you still want to know, if
+     * This explicit flag exists intentionally, as sometimes a Result is loaded from the database without loading its Feedback list. In this case you still want to know, if
      * Feedback for this Result exists without querying the server/database again. IMPORTANT: Please note, that this flag should only be used for Programming Exercises at the
      * moment all other exercise types should set this flag to false
      *

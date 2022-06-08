@@ -48,7 +48,7 @@ With the following commands, you will set up one cluster with three agents as we
    The CLUSTER_NAME, RANCHER_SERVER_HOSTNAME and KUBECONFIG_FILE environment variables need to be set so that they can be used in the next commands.
    If you don't want to set environment variables you can replace their values in the commands. What you need to do is replace $CLUSTER_NAME with "k3d-rancher", $RANCHER_SERVER_HOSTNAME with "rancher.localhost" and $KUBECONFIG_FILE with "k3d-rancher.yml".
 
-   **For MacOS/Linux**:
+   **For macOS/Linux**:
 
    ::
 
@@ -77,7 +77,7 @@ With the following commands, you will set up one cluster with three agents as we
    You should also write the cluster configuration into the KUBECONFIG_FILE. This configuration will be later needed when you are creating deployments.
    You can either set the path to the file as an environment variable or replace it with "<path-to-kubeconfig-file>" when needed.
 
-   **For MacOS/Linux**:
+   **For macOS/Linux**:
 
    ::
 
@@ -124,7 +124,7 @@ With the following commands, you will set up one cluster with three agents as we
    During the installation, we set the namespace and the hostname on which Rancher will be accessible.
    Then we can check the installation status.
 
-   **For MacOS/Linux**:
+   **For macOS/Linux**:
 
    ::
 

@@ -539,7 +539,7 @@ public class GitService {
      *
      * @param localPath           to git repo on server.
      * @param remoteRepositoryUrl the remote repository url for the git repository, will be added to the Repository object for later use, can be null
-     * @param defaultBranch       the name of the branch that should be used as defalut branch
+     * @param defaultBranch       the name of the branch that should be used as default branch
      * @return the git repository in the localPath or **null** if it does not exist on the server.
      */
     public Repository getExistingCheckedOutRepositoryByLocalPath(@NotNull Path localPath, @Nullable VcsRepositoryUrl remoteRepositoryUrl, String defaultBranch) {
@@ -907,7 +907,7 @@ public class GitService {
      *
      * @param repository          Local Repository Object.
      * @param programmingExercise ProgrammingExercise associated with this repo.
-     * @param overwriteMain       If false keeps main and creates squash commit in seperate branch, if true squashes main
+     * @param overwriteMain       If false keeps main and creates squash commit in separate branch, if true squashes main
      */
     public void combineAllStudentCommits(Repository repository, ProgrammingExercise programmingExercise, boolean overwriteMain) {
         try (Git studentGit = new Git(repository)) {

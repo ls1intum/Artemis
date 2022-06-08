@@ -3,7 +3,7 @@ import { ActivatedRoute } from '@angular/router';
 import { of } from 'rxjs';
 
 import { ExerciseHintDetailComponent } from 'app/exercises/shared/exercise-hint/manage/exercise-hint-detail.component';
-import { ArtemisTestModule } from '../../test.module';
+import { ArtemisTestModule } from '../../../test.module';
 import { ExerciseHint } from 'app/entities/hestia/exercise-hint.model';
 
 describe('ExerciseHint Management Detail Component', () => {
@@ -27,8 +27,6 @@ describe('ExerciseHint Management Detail Component', () => {
 
     describe('OnInit', () => {
         it('Should call load all on init', () => {
-            // GIVEN
-
             // WHEN
             comp.ngOnInit();
 

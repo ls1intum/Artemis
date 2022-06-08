@@ -599,7 +599,7 @@ public class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrat
         String url = "/api/programming-submissions/" + submission.getId() + "/lock";
         var storedSubmission = request.get(url, HttpStatus.OK, ProgrammingSubmission.class);
 
-        // Make sure that the stored submission has a semi automatic assessment by tutor 1
+        // Make sure that the stored submission has a semi-automatic assessment by tutor 1
         assertThat(storedSubmission.getLatestResult()).isNotNull();
         assertThat(storedSubmission.getLatestResult().getAssessmentType()).isEqualTo(AssessmentType.SEMI_AUTOMATIC);
         assertThat(storedSubmission.getLatestResult().getAssessor().getLogin()).isEqualTo("tutor1");

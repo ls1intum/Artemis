@@ -137,7 +137,7 @@ public class MigrationService {
                 baseEntry = entryList.get(startIndex);
                 startIndex++;
             }
-            // Go through the list of registered entries and make sure that every date is smaller than the date of it's successor.
+            // Go through the list of registered entries and make sure that every date is smaller than the date of its successor.
             for (int i = startIndex; i < entryList.size(); i++) {
                 MigrationEntry entry = entryList.get(i);
                 if (!StringUtils.isEmpty(entry.date()) && baseEntry.date().compareTo(entry.date()) >= 0) {

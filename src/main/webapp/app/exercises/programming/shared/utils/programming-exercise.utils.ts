@@ -85,7 +85,7 @@ export const isResultPreliminary = (latestResult: Result, programmingExercise?: 
     }
     // If an exercise's assessment type is not automatic the last result is supposed to be manually assessed
     if (programmingExercise.assessmentType !== AssessmentType.AUTOMATIC) {
-        // either the semi-automatic result is not yet available as last result (then it is preliminary), or it is already available, then it still can be changed)
+        // either the semi-automatic result is not yet available as last result (then it is preliminary), or it is already available (then it still can be changed)
         if (programmingExercise.assessmentDueDate) {
             return dayjs().isBefore(dayjs(programmingExercise.assessmentDueDate));
         }

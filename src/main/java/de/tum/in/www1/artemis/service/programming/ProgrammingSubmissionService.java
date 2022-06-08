@@ -134,7 +134,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
         Commit commit;
         try {
             // we can find this out by looking into the requestBody, e.g. changes=[{ref={id=refs/heads/BitbucketStationSupplies, displayId=BitbucketStationSupplies, type=BRANCH}
-            // if the branch is different than main, throw an IllegalArgumentException, but make sure the REST call still returns 200 to Bitbucket
+            // if the branch is different from main, throw an IllegalArgumentException, but make sure the REST call still returns 200 to Bitbucket
             commit = versionControlService.get().getLastCommitDetails(requestBody);
             log.info("NotifyPush invoked due to the commit {} by {} with {} in branch {}", commit.getCommitHash(), commit.getAuthorName(), commit.getAuthorEmail(),
                     commit.getBranch());
@@ -146,7 +146,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
 
         String branch = versionControlService.get().getOrRetrieveBranchOfParticipation(programmingExerciseParticipation);
         if (commit.getBranch() != null && !commit.getBranch().equalsIgnoreCase(branch)) {
-            // if the commit was made in a branch different than the default, ignore this
+            // if the commit was made in a branch different from the default, ignore this
             throw new IllegalStateException(
                     "Submission for participation id " + participationId + " in branch " + commit.getBranch() + " will be ignored! Only the default branch is considered");
         }
@@ -298,7 +298,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
      * Trigger the CI of all student participations and the template participation of the given exercise.
      * The build result will become rated regardless of the due date as the submission type is INSTRUCTOR.
      *
-     * The method is async because it would timeout a calling resource method.
+     * The method is async because it would time out a calling resource method.
      *
      * @param exerciseId to identify the programming exercise.
      * @throws EntityNotFoundException if there is no programming exercise for the given exercise id.
@@ -561,7 +561,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
     }
 
     /**
-     * If testCasesChanged = true, this marks the programming exercise as dirty, meaning that its test cases were changed and the student submissions should be be built & tested.
+     * If testCasesChanged = true, this marks the programming exercise as dirty, meaning that its test cases were changed and the student submissions should be built & tested.
      * This method also sends out a notification to the client if testCasesChanged = true.
      * In case the testCaseChanged value is the same for the programming exercise or the programming exercise is not released or has no results, the method will return immediately.
      *
@@ -648,13 +648,13 @@ public class ProgrammingSubmissionService extends SubmissionService {
      * Before returning the submissions we strip away all automatic results, to be able to correctly display them in the client.
      *
      * Not exam mode:
-     * In this case the query that returns the participations returns the contained sumbissions in a different way:
-     * Here hibernate sets all automatic results to null, therefore we must filter all those out. This way the client can access the subissions'
+     * In this case the query that returns the participations returns the contained submissions in a different way:
+     * Here hibernate sets all automatic results to null, therefore we must filter all those out. This way the client can access the submissions'
      * single result.
      *
      * @param exerciseId      - the id of the exercise we are looking for
      * @param correctionRound - the correctionRound for which the submissions should be fetched for
-     * @param tutor           - the the tutor we are interested in
+     * @param tutor           - the tutor we are interested in
      * @param examMode        - flag should be set to ignore the test run submissions
      * @return a list of programming submissions
      */
@@ -801,7 +801,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
         }
         else if (correctionRound == 0 && submission.getLatestResult() == null) {
             // Older programming Exercises have only one result in each submission. One submission for the automatic result, another one for the manual one.
-            // When the assessment of such an submission is cancelled, this leaves behind a programming-submission without any results.
+            // When the assessment of such a submission is cancelled, this leaves behind a programming-submission without any results.
             // We still want to be able to assess the result-less submission again, so we need to avoid the below else branch, and the following out of bounds Exception.
             // New automatic results can be easily created by using the "trigger all" feature
             optionalExistingResult = Optional.empty();

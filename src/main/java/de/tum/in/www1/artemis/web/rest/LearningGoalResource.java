@@ -86,7 +86,7 @@ public class LearningGoalResource {
     }
 
     /**
-     * GET /courses/:courseId/goals/:learningGoalId/progress  gets the learning goal progress for the logged in user
+     * GET /courses/:courseId/goals/:learningGoalId/progress  gets the learning goal progress for the logged-in user
      *
      * @param courseId                 the id of the course to which the learning goal belongs
      * @param learningGoalId           the id of the learning goal for which to get the progress
@@ -287,8 +287,12 @@ public class LearningGoalResource {
     public ResponseEntity<List<LearningGoal>> getPrerequisites(@PathVariable Long courseId) {
         log.debug("REST request to get prerequisites for course with id: {}", courseId);
         Course course = courseRepository.findByIdElseThrow(courseId);
-        User user = userRepository.getUserWithGroupsAndAuthorities();
-        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
+
+        // Authorization check is skipped when course is open to self-registration
+        if (!course.isRegistrationEnabled()) {
+            User user = userRepository.getUserWithGroupsAndAuthorities();
+            authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
+        }
 
         Set<LearningGoal> prerequisites = learningGoalRepository.findPrerequisitesByCourseId(courseId);
         // Remove all lecture units as not needed for now

@@ -23,7 +23,7 @@ export class OnlineEditorPage {
     }
 
     /**
-     * Writes all the content in the corresponding files in the online editor. NOTE: This does not create non existing files.
+     * Writes all the content in the corresponding files in the online editor. NOTE: This does not create non-existing files.
      * It only opens existing files and writes the content there!
      * @param submission object which contains the information about which files need to be edited with what content
      * @param packageName the package name of the project to overwrite it in the submission templates

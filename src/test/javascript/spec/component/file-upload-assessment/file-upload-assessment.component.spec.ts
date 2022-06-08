@@ -103,7 +103,7 @@ describe('FileUploadAssessmentComponent', () => {
                 debugElement = fixture.debugElement;
                 router = debugElement.injector.get(Router);
                 fileUploadSubmissionService = TestBed.inject(FileUploadSubmissionService);
-                // The TestBed only knows about it's providers and the component has it's own injector, so the component's service needs to be injected by
+                // The TestBed only knows about its providers and the component has its own injector, so the component's service needs to be injected by
                 // getting the injector.
                 fileUploadAssessmentService = fixture.componentRef.injector.get(FileUploadAssessmentService);
                 accountService = TestBed.inject(AccountService);

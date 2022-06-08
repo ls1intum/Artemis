@@ -143,7 +143,7 @@ export class TutorEffortStatisticsComponent extends PlagiarismAndTutorEffortDire
     }
 
     /**
-     * Determines the upper limit for the y axis
+     * Determines the upper limit for the y-axis
      * @param data the data that should be displayed
      * @private
      */

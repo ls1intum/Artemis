@@ -18,7 +18,7 @@ export class FileUploadExerciseService implements ExerciseServicable<FileUploadE
 
     /**
      * Sends request to create new file upload exercise
-     * @param fileUploadExercise that will be send to the server
+     * @param fileUploadExercise that will be sent to the server
      */
     create(fileUploadExercise: FileUploadExercise): Observable<EntityResponseType> {
         let copy = ExerciseService.convertDateFromClient(fileUploadExercise);
@@ -76,7 +76,7 @@ export class FileUploadExerciseService implements ExerciseServicable<FileUploadE
     }
 
     /**
-     * Re-evaluates and updates an file upload exercise.
+     * Re-evaluates and updates a file upload exercise.
      *
      * @param fileUploadExercise that should be updated of type {FileUploadExercise}
      * @param req optional request options
