@@ -200,7 +200,7 @@ public class GitLabCIService extends AbstractContinuousIntegrationService {
 
     @Override
     public ConnectorHealth health() {
-        return new ConnectorHealth(true, Map.of("cf.", "Version Control Server"));
+        return new ConnectorHealth(true, Map.of("cf.", "Version Control Server", "url", gitlabServerUrl));
     }
 
     @Override

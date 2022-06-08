@@ -12,6 +12,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationGitlabCIGitlabSamlTest;
@@ -21,6 +22,9 @@ import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentPar
 import de.tum.in.www1.artemis.exception.GitLabCIException;
 
 public class GitlabCIServiceTest extends AbstractSpringIntegrationGitlabCIGitlabSamlTest {
+
+    @Value("${artemis.version-control.url}")
+    private String gitlabServerUrl;
 
     @Autowired
     private ContinuousIntegrationTestService continuousIntegrationTestService;
@@ -44,7 +48,7 @@ public class GitlabCIServiceTest extends AbstractSpringIntegrationGitlabCIGitlab
     public void testHealth() throws Exception {
         var health = continuousIntegrationService.health();
         assertThat(health.isUp()).isTrue();
-        assertThat(health.getAdditionalInfo()).containsEntry("status", "ok").containsEntry("cf.", "Version Control Server");
+        assertThat(health.getAdditionalInfo()).containsEntry("cf.", "Version Control Server").containsEntry("url", gitlabServerUrl);
     }
 
     @Test
