@@ -73,7 +73,7 @@ public class CodeHintIntegrationTest extends AbstractSpringIntegrationBambooBitb
         database.addTasksToProgrammingExercise(exercise);
         database.addSolutionEntriesToProgrammingExercise(exercise);
         database.addCodeHintsToProgrammingExercise(exercise);
-        codeHint = codeHintRepository.findByIdWithTaskAndSolutionEntriesElseThrow(codeHintRepository.findAll().get(0).getId());
+        codeHint = codeHintRepository.findByIdWithSolutionEntriesElseThrow(codeHintRepository.findAll().get(0).getId());
         solutionEntry = codeHint.getSolutionEntries().stream().findFirst().orElseThrow();
     }
 
@@ -96,7 +96,7 @@ public class CodeHintIntegrationTest extends AbstractSpringIntegrationBambooBitb
     public void removeSolutionEntryFromCodeHintAsAnEditor() throws Exception {
         addCodeHints();
         request.delete("/api/programming-exercises/" + exercise.getId() + "/code-hints/" + codeHint.getId() + "/solution-entries/" + solutionEntry.getId(), HttpStatus.NO_CONTENT);
-        assertThat(codeHintRepository.findByIdWithTaskAndSolutionEntriesElseThrow(codeHint.getId()).getSolutionEntries()).isEmpty();
+        assertThat(codeHintRepository.findByIdWithSolutionEntriesElseThrow(codeHint.getId()).getSolutionEntries()).isEmpty();
     }
 
     @Test
@@ -104,6 +104,6 @@ public class CodeHintIntegrationTest extends AbstractSpringIntegrationBambooBitb
     public void removeSolutionEntryFromCodeHintAsAnInstructor() throws Exception {
         addCodeHints();
         request.delete("/api/programming-exercises/" + exercise.getId() + "/code-hints/" + codeHint.getId() + "/solution-entries/" + solutionEntry.getId(), HttpStatus.NO_CONTENT);
-        assertThat(codeHintRepository.findByIdWithTaskAndSolutionEntriesElseThrow(codeHint.getId()).getSolutionEntries()).isEmpty();
+        assertThat(codeHintRepository.findByIdWithSolutionEntriesElseThrow(codeHint.getId()).getSolutionEntries()).isEmpty();
     }
 }

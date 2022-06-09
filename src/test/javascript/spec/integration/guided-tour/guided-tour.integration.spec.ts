@@ -160,13 +160,13 @@ describe('Guided tour integration', () => {
             courseCardComponentFixture.autoDetectChanges(true);
             navBarComponentFixture.autoDetectChanges(true);
 
-            expect(guidedTourService.isOnFirstStep).toBe(true);
+            expect(guidedTourService.isOnFirstStep).toBeTrue();
             expect(guidedTourSteps).toBe(9);
 
             // Click through tour steps in NavComponent
             for (let i = 1; i < 6; i++) {
                 guidedTourService.nextStep();
-                expect(guidedTourService.isOnFirstStep).toBe(false);
+                expect(guidedTourService.isOnFirstStep).toBeFalse();
                 guidedTourComponent.currentTourStep = guidedTourService['currentStep'];
 
                 if (guidedTourComponent.currentTourStep.highlightSelector) {
@@ -197,7 +197,7 @@ describe('Guided tour integration', () => {
                 }
             }
 
-            expect(guidedTourService.isOnLastStep).toBe(true);
+            expect(guidedTourService.isOnLastStep).toBeTrue();
         });
     });
 });

@@ -83,7 +83,29 @@
                                             name="filterToAnsweredOrReacted"
                                             (change)="onSelectContext()"
                                         />
-                                        <span class="px-1">{{ 'artemisApp.metis.discussionSection.filterToAnsweredOrReacted' | artemisTranslate }}</span>
+                                        <span class="px-1">{{ 'artemisApp.metis.overview.filterToAnsweredOrReacted' | artemisTranslate }}</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- sort dropdown -->
+                            <div class="col-auto ps-0">
+                                <div class="row align-items-baseline">
+                                    <div class="col-auto pe-1">
+                                        <span>{{ 'artemisApp.metis.discussionSection.sortByDate' | artemisTranslate }}</span>
+                                    </div>
+                                    <div class="col-auto p-0 clickable" *ngIf="!currentSortDirection" (click)="onChangeSortDir()">
+                                        <fa-icon [icon]="faLongArrowRight" [ngbTooltip]="'artemisApp.metis.discussionSection.defaultSortCriterion' | artemisTranslate"> </fa-icon>
+                                    </div>
+                                    <div class="col-auto p-0 clickable" *ngIf="currentSortDirection" (click)="onChangeSortDir()">
+                                        <fa-icon
+                                            [icon]="currentSortDirection === SortDirection.ASCENDING ? faLongArrowAltUp : faLongArrowAltDown"
+                                            [ngbTooltip]="
+                                                currentSortDirection === SortDirection.ASCENDING
+                                                    ? ('artemisApp.metis.overview.sortAscending' | artemisTranslate)
+                                                    : ('artemisApp.metis.overview.sortDescending' | artemisTranslate)
+                                            "
+                                        >
+                                        </fa-icon>
                                     </div>
                                 </div>
                             </div>

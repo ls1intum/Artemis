@@ -84,7 +84,7 @@ export class CourseManagementOverviewStatisticsComponent extends ActiveStudentsC
     }
 
     /**
-     * Appends a percentage sign to every tick on the y axis
+     * Appends a percentage sign to every tick on the y-axis
      * @param value the default tick
      */
     formatYAxis(value: any): string {

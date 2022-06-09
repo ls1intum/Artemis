@@ -14,6 +14,7 @@
                 "registerSuccessful": "Registration successful",
                 "signUpForCourse": "Register",
                 "cancel": "Cancel",
+                "coursePrerequisites": "Prerequisites",
                 "noCourse": "No courses available for registration",
                 "courseLoading": "Courses are loading...",
                 "courseSignupConfirmationTitle": "Confirm Course Registration"
@@ -29,6 +30,7 @@
                 "exercises": "Exercises",
                 "statistics": "Statistics",
                 "lectures": "Lectures",
+                "learningGoals": "Learning Goals",
                 "exams": "Exams",
                 "discussion": "Discussion",
                 "plagiarismCases": "Plagiarism Cases"
@@ -133,6 +135,9 @@
                 "includeAllCategories": "Select all options",
                 "exercisesWithNoCategories": "Exercises with no categories",
                 "pointsPerExercise": "Points per Exercise"
+            },
+            "learningGoals": {
+                "noData": "No learning goals available for this course."
             },
             "lectureList": {
                 "lectureGroupHeader": "Lectures: {{ total }}",

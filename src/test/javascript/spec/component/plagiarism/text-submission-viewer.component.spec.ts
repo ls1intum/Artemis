@@ -60,7 +60,7 @@ describe('Text Submission Viewer Component', () => {
         });
 
         expect(textSubmissionService.getTextSubmission).toHaveBeenCalledWith(2);
-        expect(comp.isProgrammingExercise).toBe(false);
+        expect(comp.isProgrammingExercise).toBeFalse();
     });
 
     it('fetches a programming submission', () => {
@@ -72,7 +72,7 @@ describe('Text Submission Viewer Component', () => {
         });
 
         expect(repositoryService.getRepositoryContent).toHaveBeenCalled();
-        expect(comp.isProgrammingExercise).toBe(true);
+        expect(comp.isProgrammingExercise).toBeTrue();
     });
 
     it('filters files of type FILE', () => {

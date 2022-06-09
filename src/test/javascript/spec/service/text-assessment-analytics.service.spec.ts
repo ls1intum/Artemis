@@ -63,7 +63,7 @@ describe('TextAssessmentAnalytics Service', () => {
         const subscribeToRouteParameters = jest.spyOn<any, any>(service, 'subscribeToRouteParameters');
         service.analyticsEnabled = true;
         service.setComponentRoute(route());
-        expect(subscribeToRouteParameters).toHaveBeenCalledTimes(1);
+        expect(subscribeToRouteParameters).toHaveBeenCalledOnce();
         expect(service['courseId']).toBe(1);
     }));
 
@@ -77,8 +77,8 @@ describe('TextAssessmentAnalytics Service', () => {
 
         service.sendAssessmentEvent(TextAssessmentEventType.VIEW_AUTOMATIC_SUGGESTION_ORIGIN, FeedbackType.AUTOMATIC, TextBlockType.AUTOMATIC);
 
-        expect(errorStub).toHaveBeenCalledTimes(1);
-        expect(consoleErrorMock).toHaveBeenCalledTimes(1);
+        expect(errorStub).toHaveBeenCalledOnce();
+        expect(consoleErrorMock).toHaveBeenCalledOnce();
         expect(consoleErrorMock).toHaveBeenCalledWith('Error sending statistics: error occurred');
     });
 

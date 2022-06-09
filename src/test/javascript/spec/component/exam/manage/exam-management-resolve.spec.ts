@@ -46,7 +46,7 @@ describe('Exam Resolve', () => {
         examObservable.subscribe((exam) => (receivedExam = exam));
         tick();
 
-        expect(findSpy).toHaveBeenCalledTimes(1);
+        expect(findSpy).toHaveBeenCalledOnce();
         expect(findSpy).toHaveBeenCalledWith(1, 2, true, true);
         expect(receivedExam).toEqual({ id: 1 });
     }));
@@ -102,7 +102,7 @@ describe('Exam Group Resolve', () => {
         examObservable.subscribe((exam) => (receivedExamGroup = exam));
         tick();
 
-        expect(findSpy).toHaveBeenCalledTimes(1);
+        expect(findSpy).toHaveBeenCalledOnce();
         expect(findSpy).toHaveBeenCalledWith(1, 2, 3);
         expect(receivedExamGroup).toEqual({ id: 1 });
     }));
@@ -153,7 +153,7 @@ describe('Student Exam Resolve', () => {
         examObservable.subscribe((examWithGrade) => (receivedExamWithGrade = examWithGrade));
         tick();
 
-        expect(findSpy).toHaveBeenCalledTimes(1);
+        expect(findSpy).toHaveBeenCalledOnce();
         expect(findSpy).toHaveBeenCalledWith(1, 2, 3);
         expect(receivedExamWithGrade!.maxPoints).toBe(10);
         expect(receivedExamWithGrade!.studentExam).toEqual({ id: 1 });

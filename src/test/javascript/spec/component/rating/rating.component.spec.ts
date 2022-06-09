@@ -42,7 +42,7 @@ describe('RatingComponent', () => {
     it('should get rating', () => {
         jest.spyOn(ratingService, 'getRating');
         ratingComponent.ngOnInit();
-        expect(ratingService.getRating).toHaveBeenCalledTimes(1);
+        expect(ratingService.getRating).toHaveBeenCalledOnce();
         expect(ratingComponent.result?.id).toBe(89);
     });
 
@@ -97,7 +97,7 @@ describe('RatingComponent', () => {
                 newValue: 2,
                 starRating: new StarRatingComponent(),
             });
-            expect(ratingService.createRating).toHaveBeenCalledTimes(1);
+            expect(ratingService.createRating).toHaveBeenCalledOnce();
             expect(ratingService.updateRating).toHaveBeenCalledTimes(0);
             expect(ratingComponent.rating.result?.id).toBe(89);
             expect(ratingComponent.rating.rating).toBe(2);
@@ -110,7 +110,7 @@ describe('RatingComponent', () => {
                 newValue: 2,
                 starRating: new StarRatingComponent(),
             });
-            expect(ratingService.updateRating).toHaveBeenCalledTimes(1);
+            expect(ratingService.updateRating).toHaveBeenCalledOnce();
             expect(ratingService.createRating).toHaveBeenCalledTimes(0);
             expect(ratingComponent.rating.result?.id).toBe(89);
             expect(ratingComponent.rating.rating).toBe(2);

@@ -1,0 +1,43 @@
+<?xml version="1.1" encoding="UTF-8" standalone="no"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.4.xsd">
+    <!--
+    This changeset adds the table for activating exercise hints for students.
+    It also adds the description column to the exercise_hint table
+    -->
+    <changeSet author="timor-morrien" id="20220519170000">
+        <createTable tableName="exercise_hint_activation">
+            <column name="id" type="BIGINT" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="user_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="exercise_hint_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="activation_date" type="DATETIME">
+                <constraints nullable="false"/>
+            </column>
+            <column name="rating" type="TINYINT"/>
+        </createTable>
+        <addForeignKeyConstraint baseTableName="exercise_hint_activation"
+                                 baseColumnNames="user_id"
+                                 constraintName="fk_exercise_hint_activation_user_id"
+                                 referencedTableName="jhi_user"
+                                 referencedColumnNames="id"/>
+        <addForeignKeyConstraint baseTableName="exercise_hint_activation"
+                                 baseColumnNames="exercise_hint_id"
+                                 constraintName="fk_exercise_hint_activation_exercise_hint_id"
+                                 referencedTableName="exercise_hint"
+                                 referencedColumnNames="id"/>
+        <addUniqueConstraint tableName="exercise_hint_activation"
+                             columnNames="user_id,exercise_hint_id"
+                             constraintName="uq_exercise_hint_activation"/>
+
+        <addColumn tableName="exercise_hint">
+            <column name="description" type="VARCHAR(1000)"/>
+        </addColumn>
+    </changeSet>
+</databaseChangeLog>

@@ -238,7 +238,7 @@ describe('TextEditorComponent', () => {
         comp.answer = 'abc';
         jest.spyOn(textSubmissionService, 'update');
         comp.submit();
-        expect(textSubmissionService.update).toHaveBeenCalledTimes(1);
+        expect(textSubmissionService.update).toHaveBeenCalledOnce();
         expect(comp.isSaving).toBeFalsy();
     });
 
@@ -281,7 +281,7 @@ describe('TextEditorComponent', () => {
         // @ts-ignore
         jest.spyOn(comp, 'updateParticipation');
         comp.onReceiveSubmissionFromTeam(submission);
-        expect(comp['updateParticipation']).toHaveBeenCalledTimes(1);
+        expect(comp['updateParticipation']).toHaveBeenCalledOnce();
         expect(comp.answer).toEqual('abc');
     });
 

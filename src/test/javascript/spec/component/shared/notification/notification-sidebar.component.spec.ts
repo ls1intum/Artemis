@@ -101,20 +101,20 @@ describe('Notification Sidebar Component', () => {
             getAuthenticationStateStub.mockReturnValue(of({ lastNotificationRead } as User));
 
             notificationSidebarComponent.ngOnInit();
-            expect(accountService.getAuthenticationState).toHaveBeenCalledTimes(1);
+            expect(accountService.getAuthenticationState).toHaveBeenCalledOnce();
             expect(notificationSidebarComponent.lastNotificationRead).toBe(lastNotificationRead);
         });
 
         it('should query notifications', () => {
             jest.spyOn(notificationService, 'queryNotificationsFilteredBySettings');
             notificationSidebarComponent.ngOnInit();
-            expect(notificationService.queryNotificationsFilteredBySettings).toHaveBeenCalledTimes(1);
+            expect(notificationService.queryNotificationsFilteredBySettings).toHaveBeenCalledOnce();
         });
 
         it('should subscribe to notification updates for user', () => {
             jest.spyOn(notificationService, 'subscribeToNotificationUpdates');
             notificationSidebarComponent.ngOnInit();
-            expect(notificationService.subscribeToNotificationUpdates).toHaveBeenCalledTimes(1);
+            expect(notificationService.subscribeToNotificationUpdates).toHaveBeenCalledOnce();
         });
     });
 
@@ -123,8 +123,8 @@ describe('Notification Sidebar Component', () => {
             jest.spyOn(notificationSidebarComponent, 'toggleSidebar');
             const bell = notificationSidebarComponentFixture.debugElement.nativeElement.querySelector('.notification-button');
             bell.click();
-            expect(notificationSidebarComponent.toggleSidebar).toHaveBeenCalledTimes(1);
-            expect(notificationSidebarComponent.showSidebar).toBe(true);
+            expect(notificationSidebarComponent.toggleSidebar).toHaveBeenCalledOnce();
+            expect(notificationSidebarComponent.showSidebar).toBeTrue();
         });
 
         it('should close sidebar when user clicks on notification overlay', () => {
@@ -132,8 +132,8 @@ describe('Notification Sidebar Component', () => {
             jest.spyOn(notificationSidebarComponent, 'toggleSidebar');
             const overlay = notificationSidebarComponentFixture.debugElement.nativeElement.querySelector('.notification-overlay');
             overlay.click();
-            expect(notificationSidebarComponent.toggleSidebar).toHaveBeenCalledTimes(1);
-            expect(notificationSidebarComponent.showSidebar).toBe(false);
+            expect(notificationSidebarComponent.toggleSidebar).toHaveBeenCalledOnce();
+            expect(notificationSidebarComponent.showSidebar).toBeFalse();
         });
 
         it('should close sidebar when user clicks on close button', () => {
@@ -141,8 +141,8 @@ describe('Notification Sidebar Component', () => {
             jest.spyOn(notificationSidebarComponent, 'toggleSidebar');
             const close = notificationSidebarComponentFixture.debugElement.nativeElement.querySelector('.close');
             close.click();
-            expect(notificationSidebarComponent.toggleSidebar).toHaveBeenCalledTimes(1);
-            expect(notificationSidebarComponent.showSidebar).toBe(false);
+            expect(notificationSidebarComponent.toggleSidebar).toHaveBeenCalledOnce();
+            expect(notificationSidebarComponent.showSidebar).toBeFalse();
         });
 
         it('should close sidebar when user clicks on a notification', () => {
@@ -151,7 +151,7 @@ describe('Notification Sidebar Component', () => {
             notificationSidebarComponent.showSidebar = true;
             const notification = notificationSidebarComponentFixture.debugElement.nativeElement.querySelector('.notification-item');
             notification.click();
-            expect(notificationSidebarComponent.showSidebar).toBe(false);
+            expect(notificationSidebarComponent.showSidebar).toBeFalse();
         });
     });
 
@@ -162,7 +162,7 @@ describe('Notification Sidebar Component', () => {
             notificationSidebarComponentFixture.detectChanges();
             const notification = notificationSidebarComponentFixture.debugElement.nativeElement.querySelector('.notification-item');
             notification.click();
-            expect(notificationService.interpretNotification).toHaveBeenCalledTimes(1);
+            expect(notificationService.interpretNotification).toHaveBeenCalledOnce();
         });
     });
 
@@ -173,8 +173,8 @@ describe('Notification Sidebar Component', () => {
             const bell = notificationSidebarComponentFixture.debugElement.nativeElement.querySelector('.notification-button');
             bell.click();
             tick(2000);
-            expect(notificationSidebarComponent.updateLastNotificationRead).toHaveBeenCalledTimes(1);
-            expect(userService.updateLastNotificationRead).toHaveBeenCalledTimes(1);
+            expect(notificationSidebarComponent.updateLastNotificationRead).toHaveBeenCalledOnce();
+            expect(userService.updateLastNotificationRead).toHaveBeenCalledOnce();
         }));
 
         it('should update components last notification read two seconds after the user opened the sidebar', fakeAsync(() => {
@@ -205,7 +205,7 @@ describe('Notification Sidebar Component', () => {
             const queryNotificationsFilteredBySettingsStub = jest.spyOn(notificationService, 'queryNotificationsFilteredBySettings');
             queryNotificationsFilteredBySettingsStub.mockReturnValue(of(generateQueryResponse([notificationPast, notificationNow])));
             notificationSidebarComponent.ngOnInit();
-            expect(notificationService.queryNotificationsFilteredBySettings).toHaveBeenCalledTimes(1);
+            expect(notificationService.queryNotificationsFilteredBySettings).toHaveBeenCalledOnce();
             expect(notificationSidebarComponent.sortedNotifications[0]).toBe(notificationNow);
             expect(notificationSidebarComponent.sortedNotifications[1]).toBe(notificationPast);
         });
@@ -214,7 +214,7 @@ describe('Notification Sidebar Component', () => {
             const queryNotificationsFilteredBySettingsStub = jest.spyOn(notificationService, 'queryNotificationsFilteredBySettings');
             queryNotificationsFilteredBySettingsStub.mockReturnValue(of(generateQueryResponse(notifications)));
             notificationSidebarComponent.ngOnInit();
-            expect(notificationService.queryNotificationsFilteredBySettings).toHaveBeenCalledTimes(1);
+            expect(notificationService.queryNotificationsFilteredBySettings).toHaveBeenCalledOnce();
             expect(notificationSidebarComponent.totalNotifications).toBe(notifications.length);
         });
 
@@ -252,7 +252,7 @@ describe('Notification Sidebar Component', () => {
             queryNotificationsFilteredBySettingsStub.mockReturnValue(of(generateQueryResponse(notifications)));
 
             notificationSidebarComponent.ngOnInit();
-            expect(notificationService.queryNotificationsFilteredBySettings).toHaveBeenCalledTimes(1);
+            expect(notificationService.queryNotificationsFilteredBySettings).toHaveBeenCalledOnce();
             expect(notificationSidebarComponent.recentNotificationCount).toBe(1);
         });
 
@@ -298,14 +298,14 @@ describe('Notification Sidebar Component', () => {
         it('should toggle which notifications are displayed (hide until property) when user clicks on archive button', () => {
             notificationSidebarComponent.ngOnInit();
             notificationSidebarComponent.notifications = notifications;
-            expect(notificationSidebarComponent.showButtonToHideCurrentlyDisplayedNotifications).toBe(true);
+            expect(notificationSidebarComponent.showButtonToHideCurrentlyDisplayedNotifications).toBeTrue();
             jest.spyOn(notificationSidebarComponent, 'toggleNotificationDisplay');
             jest.spyOn(userService, 'updateNotificationVisibility');
             const hideUntilToggle = notificationSidebarComponentFixture.debugElement.nativeElement.querySelector('#hide-until-toggle');
             hideUntilToggle.click();
-            expect(notificationSidebarComponent.showButtonToHideCurrentlyDisplayedNotifications).toBe(false);
-            expect(notificationSidebarComponent.toggleNotificationDisplay).toHaveBeenCalledTimes(1);
-            expect(userService.updateNotificationVisibility).toHaveBeenCalledTimes(1);
+            expect(notificationSidebarComponent.showButtonToHideCurrentlyDisplayedNotifications).toBeFalse();
+            expect(notificationSidebarComponent.toggleNotificationDisplay).toHaveBeenCalledOnce();
+            expect(userService.updateNotificationVisibility).toHaveBeenCalledOnce();
         });
     });
 

@@ -85,7 +85,7 @@ public class ProgrammingExerciseParticipationResource {
     }
 
     /**
-     * Get the latest result for a given programming exercise participation including it's result.
+     * Get the latest result for a given programming exercise participation including its result.
      *
      * @param participationId for which to retrieve the programming exercise participation with latest result and feedbacks.
      * @param withSubmission flag determining whether the corresponding submission should also be returned

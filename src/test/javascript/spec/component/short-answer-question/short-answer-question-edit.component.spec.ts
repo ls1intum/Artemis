@@ -270,7 +270,7 @@ describe('ShortAnswerQuestionEditComponent', () => {
 
         const expectedMapping = new ShortAnswerMapping(spot, shortAnswerSolution1);
         expect(component.shortAnswerQuestion.correctMappings.pop()).toEqual(expectedMapping);
-        expect(questionUpdatedSpy).toHaveBeenCalledTimes(1);
+        expect(questionUpdatedSpy).toHaveBeenCalledOnce();
     });
 
     it('should setup question editor', () => {
@@ -291,7 +291,7 @@ describe('ShortAnswerQuestionEditComponent', () => {
         const modalService = TestBed.inject(NgbModal);
         const modalSpy = jest.spyOn(modalService, 'open');
         component.open(content);
-        expect(modalSpy).toHaveBeenCalledTimes(1);
+        expect(modalSpy).toHaveBeenCalledOnce();
     });
 
     it('should add spot to cursor', () => {
@@ -405,7 +405,7 @@ describe('ShortAnswerQuestionEditComponent', () => {
     it('should delete question', () => {
         const questionDeleted = jest.spyOn(component.questionDeleted, 'emit');
         component.deleteQuestion();
-        expect(questionDeleted).toHaveBeenCalledTimes(1);
+        expect(questionDeleted).toHaveBeenCalledOnce();
     });
 
     it('should toggle preview', () => {
@@ -432,8 +432,8 @@ describe('ShortAnswerQuestionEditComponent', () => {
         component.moveUp();
         component.moveDown();
 
-        expect(eventUpSpy).toHaveBeenCalledTimes(1);
-        expect(eventDownSpy).toHaveBeenCalledTimes(1);
+        expect(eventUpSpy).toHaveBeenCalledOnce();
+        expect(eventDownSpy).toHaveBeenCalledOnce();
     });
 
     it('should reset the question', () => {
@@ -486,7 +486,7 @@ describe('ShortAnswerQuestionEditComponent', () => {
 
         component.setQuestionText('0-0-0-0');
 
-        expect(getNavigationSpy).toHaveBeenCalledTimes(1);
+        expect(getNavigationSpy).toHaveBeenCalledOnce();
         const splitString = ['This', 'is', 'a', 'text', 'for', 'a', 'test'];
         expect(component.textParts.pop()).toEqual(splitString);
     });
@@ -497,6 +497,6 @@ describe('ShortAnswerQuestionEditComponent', () => {
         component.toggleExactMatchCheckbox(true);
 
         expect(component.shortAnswerQuestion.similarityValue).toBe(100);
-        expect(questionUpdated).toHaveBeenCalledTimes(1);
+        expect(questionUpdated).toHaveBeenCalledOnce();
     });
 });
