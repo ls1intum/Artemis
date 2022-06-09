@@ -81,7 +81,7 @@ export class MockMetisService {
     }
 
     getLinkForExercise(exerciseId: string): string {
-        return '/courses/' + metisCourse.id + '/exercises/' + exerciseId;
+        return `/courses/${metisCourse.id}/exercises/${exerciseId}`;
     }
 
     getContextInformation(post: Post): ContextInformation {
