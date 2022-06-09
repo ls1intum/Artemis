@@ -196,7 +196,6 @@ public class ProgrammingExerciseGitDiffReportService {
                 programmingExerciseGitDiffReportRepository.delete(existingReport);
             }
             newReport = programmingExerciseGitDiffReportRepository.save(newReport);
-            programmingExercise.setGitDiffReport(newReport);
             programmingExerciseRepository.save(programmingExercise);
             return newReport;
         }

@@ -167,4 +167,18 @@ public class VideoUnitIntegrationTest extends AbstractSpringIntegrationBambooBit
         request.get("/api/lectures/" + lecture1.getId() + "/video-units/" + this.videoUnit.getId(), HttpStatus.NOT_FOUND, VideoUnit.class);
     }
 
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void removeLeadingAndTrailingWhitespaces() throws Exception {
+        String source = "     https://www.youtube.com/embed/8iU8LPEa4o0     ";
+        videoUnit.setSource(source);
+        var persistedVideoUnit = request.postWithResponseBody("/api/lectures/" + this.lecture1.getId() + "/video-units", videoUnit, VideoUnit.class, HttpStatus.CREATED);
+        assertThat(persistedVideoUnit.getId()).isNotNull();
+        assertThat(persistedVideoUnit.getSource()).isEqualTo(source.strip());
+
+        persistedVideoUnit.setSource(source);
+        var updatedVideoUnit = request.putWithResponseBody("/api/lectures/" + this.lecture1.getId() + "/video-units", persistedVideoUnit, VideoUnit.class, HttpStatus.OK);
+        assertThat(updatedVideoUnit.getId()).isNotNull();
+        assertThat(updatedVideoUnit.getSource()).isEqualTo(source.strip());
+    }
 }

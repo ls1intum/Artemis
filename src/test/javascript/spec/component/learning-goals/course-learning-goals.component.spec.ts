@@ -21,6 +21,8 @@ import * as Sentry from '@sentry/browser';
 class LearningGoalCardStubComponent {
     @Input() learningGoal: LearningGoal;
     @Input() learningGoalProgress: IndividualLearningGoalProgress;
+    @Input() isPrerequisite: Boolean;
+    @Input() displayOnly: Boolean;
 }
 
 class MockActivatedRoute {
@@ -80,7 +82,7 @@ describe('CourseLearningGoals', () => {
         expect(courseLearningGoalsComponent.courseId).toEqual(1);
     });
 
-    it('should load learning goal and associated progress and display a card for each of them', () => {
+    it('should load prerequisites and learning goals (with associated progress) and display a card for each of them', () => {
         const learningGoalService = TestBed.inject(LearningGoalService);
         const learningGoal = new LearningGoal();
         const textUnit = new TextUnit();
@@ -97,6 +99,10 @@ describe('CourseLearningGoals', () => {
         learningGoalProgress.totalPointsAchievableByStudentsInLearningGoal = 10;
         learningGoalProgress.progressInLectureUnits = [learningUnitProgress];
 
+        const prerequisitesOfCourseResponse: HttpResponse<LearningGoal[]> = new HttpResponse({
+            body: [new LearningGoal()],
+            status: 200,
+        });
         const learningGoalsOfCourseResponse: HttpResponse<LearningGoal[]> = new HttpResponse({
             body: [learningGoal, new LearningGoal()],
             status: 200,
@@ -113,6 +119,7 @@ describe('CourseLearningGoals', () => {
             status: 200,
         });
 
+        const getAllPrerequisitesForCourseSpy = jest.spyOn(learningGoalService, 'getAllPrerequisitesForCourse').mockReturnValue(of(prerequisitesOfCourseResponse));
         const getAllForCourseSpy = jest.spyOn(learningGoalService, 'getAllForCourse').mockReturnValue(of(learningGoalsOfCourseResponse));
         const getProgressSpy = jest.spyOn(learningGoalService, 'getProgress');
         getProgressSpy.mockReturnValueOnce(of(learningGoalProgressResponse)); // when useParticipantScoreTable = false
@@ -125,12 +132,13 @@ describe('CourseLearningGoals', () => {
         courseLearningGoalsComponentFixture.detectChanges();
 
         const learningGoalCards = courseLearningGoalsComponentFixture.debugElement.queryAll(By.directive(LearningGoalCardStubComponent));
-        expect(learningGoalCards).toHaveLength(2);
-        expect(getAllForCourseSpy).toHaveBeenCalledTimes(1);
+        expect(learningGoalCards).toHaveLength(3); // 1 prerequisite and 2 learning goals
+        expect(getAllPrerequisitesForCourseSpy).toHaveBeenCalledOnce();
+        expect(getAllForCourseSpy).toHaveBeenCalledOnce();
         expect(getProgressSpy).toHaveBeenCalledTimes(4);
         expect(courseLearningGoalsComponent.learningGoals).toHaveLength(2);
         expect(courseLearningGoalsComponent.learningGoalIdToLearningGoalProgressUsingParticipantScoresTables.has(1)).toEqual(true);
         expect(courseLearningGoalsComponent.learningGoalIdToLearningGoalProgress.has(1)).toEqual(true);
-        expect(captureExceptionSpy).toHaveBeenCalledTimes(1);
+        expect(captureExceptionSpy).toHaveBeenCalledOnce();
     });
 });

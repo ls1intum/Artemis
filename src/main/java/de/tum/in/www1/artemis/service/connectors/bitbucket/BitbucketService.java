@@ -112,7 +112,7 @@ public class BitbucketService extends AbstractVersionControlService {
     }
 
     /**
-     * This methods protects the repository on the Bitbucket server by using a REST-call to setup branch protection.
+     * This method protects the repository on the Bitbucket server by using a REST-call to setup branch protection.
      * The branch protection is applied to all branches and prevents rewriting the history (force-pushes) and deletion of branches.
      *
      * @param projectKey     The project key of the repository that should be protected
@@ -217,7 +217,7 @@ public class BitbucketService extends AbstractVersionControlService {
     }
 
     /**
-     * Creates an user on Bitbucket
+     * Creates a user on Bitbucket
      *
      * @param username     The wanted Bitbucket username
      * @param password     The wanted password in clear text

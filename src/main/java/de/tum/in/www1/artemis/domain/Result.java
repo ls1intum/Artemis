@@ -68,7 +68,7 @@ public class Result extends DomainObject {
     private Boolean rated;
 
     // This explicit flag exists intentionally, as sometimes a Result is loaded from the database without
-    // loading it's Feedback list. In this case you still want to know, if Feedback for this Result exists
+    // loading its Feedback list. In this case you still want to know, if Feedback for this Result exists
     // without querying the server/database again.
     // IMPORTANT: Please note, that this flag should only be used for Programming Exercises at the moment
     // all other exercise types should set this flag to false
@@ -208,7 +208,7 @@ public class Result extends DomainObject {
     }
 
     /**
-     * This explicit flag exists intentionally, as sometimes a Result is loaded from the database without loading it's Feedback list. In this case you still want to know, if
+     * This explicit flag exists intentionally, as sometimes a Result is loaded from the database without loading its Feedback list. In this case you still want to know, if
      * Feedback for this Result exists without querying the server/database again. IMPORTANT: Please note, that this flag should only be used for Programming Exercises at the
      * moment all other exercise types should set this flag to false
      *
@@ -219,7 +219,7 @@ public class Result extends DomainObject {
     }
 
     /**
-     * This explicit flag exists intentionally, as sometimes a Result is loaded from the database without loading it's Feedback list. In this case you still want to know, if
+     * This explicit flag exists intentionally, as sometimes a Result is loaded from the database without loading its Feedback list. In this case you still want to know, if
      * Feedback for this Result exists without querying the server/database again. IMPORTANT: Please note, that this flag should only be used for Programming Exercises at the
      * moment all other exercise types should set this flag to false
      *
@@ -230,7 +230,7 @@ public class Result extends DomainObject {
     }
 
     /**
-     * This explicit flag exists intentionally, as sometimes a Result is loaded from the database without loading it's Feedback list. In this case you still want to know, if
+     * This explicit flag exists intentionally, as sometimes a Result is loaded from the database without loading its Feedback list. In this case you still want to know, if
      * Feedback for this Result exists without querying the server/database again. IMPORTANT: Please note, that this flag should only be used for Programming Exercises at the
      * moment all other exercise types should set this flag to false
      *
@@ -518,7 +518,7 @@ public class Result extends DomainObject {
     /**
      * Updates the attributes "score" and "successful" by evaluating its submission
      */
-    public void evaluateSubmission() {
+    public void evaluateQuizSubmission() {
         if (submission instanceof QuizSubmission quizSubmission) {
             // get the exercise this result belongs to
             StudentParticipation studentParticipation = (StudentParticipation) getParticipation();
@@ -633,7 +633,7 @@ public class Result extends DomainObject {
         double totalPoints = calculateTotalPointsForProgrammingExercises();
         setScore(totalPoints, maxPoints);
 
-        // Result string has following structure e.g: "1 of 13 passed, 2 issues, 10 of 100 points"
+        // Result string has the following structure e.g: "1 of 13 passed, 2 issues, 10 of 100 points"
         // The last part of the result string has to be updated, as the points the student has achieved have changed
         String[] resultStringParts = getResultString().split(", ");
         resultStringParts[resultStringParts.length - 1] = createResultString(totalPoints, maxPoints);

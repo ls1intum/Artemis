@@ -23,8 +23,10 @@ import { Router } from '@angular/router';
 import { MockRouter } from '../../../../../helpers/mocks/mock-router';
 import { MockLocalStorageService } from '../../../../../helpers/mocks/service/mock-local-storage.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
+import { By } from '@angular/platform-browser';
 import { PLACEHOLDER_USER_REACTED, ReactingUsersOnPostingPipe } from 'app/shared/pipes/reacting-users-on-posting.pipe';
 import { metisCourse, metisPostExerciseUser1, metisUser1, sortedAnswerArray } from '../../../../../helpers/sample/metis-sample-data';
+import { EmojiComponent } from 'app/shared/metis/emoji/emoji.component';
 
 describe('PostReactionsBarComponent', () => {
     let component: PostReactionsBarComponent;
@@ -39,7 +41,14 @@ describe('PostReactionsBarComponent', () => {
     beforeEach(() => {
         return TestBed.configureTestingModule({
             imports: [HttpClientTestingModule, MockModule(OverlayModule), MockModule(EmojiModule), MockModule(PickerModule)],
-            declarations: [PostReactionsBarComponent, TranslatePipeMock, MockPipe(ReactingUsersOnPostingPipe), MockDirective(NgbTooltip), MockComponent(FaIconComponent)],
+            declarations: [
+                PostReactionsBarComponent,
+                TranslatePipeMock,
+                MockPipe(ReactingUsersOnPostingPipe),
+                MockDirective(NgbTooltip),
+                MockComponent(FaIconComponent),
+                EmojiComponent,
+            ],
             providers: [
                 MockProvider(SessionStorageService),
                 { provide: MetisService, useClass: MetisService },
@@ -101,7 +110,7 @@ describe('PostReactionsBarComponent', () => {
         component.ngOnInit();
         expect(component.currentUserIsAtLeastTutor).toEqual(true);
         fixture.detectChanges();
-        const reactions = getElements(debugElement, 'ngx-emoji');
+        const reactions = getElements(debugElement, 'jhi-emoji');
         // emojis to be displayed it the user reaction, the pin, archive and the show answers toggle emoji
         expect(reactions).toHaveLength(4);
         expect(component.reactionMetaDataMap).toEqual({
@@ -200,7 +209,7 @@ describe('PostReactionsBarComponent', () => {
         component.posting = post;
         component.sortedAnswerPosts = [];
         fixture.detectChanges();
-        const startDiscussion = fixture.debugElement.nativeElement.querySelector('#startDiscussionButton');
+        const startDiscussion = fixture.debugElement.query(By.css('.start-discussion-btn')).nativeElement;
         expect(startDiscussion.innerHTML).toContain('startDiscussion');
     });
 
@@ -209,7 +218,7 @@ describe('PostReactionsBarComponent', () => {
         component.sortedAnswerPosts = [metisPostExerciseUser1];
         component.showAnswers = false;
         fixture.detectChanges();
-        const answerNowButton = fixture.debugElement.nativeElement.querySelector('#expandAnswersButton');
+        const answerNowButton = fixture.debugElement.query(By.css('.expand-answers-btn')).nativeElement;
         expect(answerNowButton.innerHTML).toContain('showSingleAnswer');
     });
 
@@ -217,7 +226,7 @@ describe('PostReactionsBarComponent', () => {
         component.posting = post;
         component.showAnswers = false;
         fixture.detectChanges();
-        const answerNowButton = fixture.debugElement.nativeElement.querySelector('#expandAnswersButton');
+        const answerNowButton = fixture.debugElement.query(By.css('.expand-answers-btn')).nativeElement;
         expect(answerNowButton.innerHTML).toContain('showMultipleAnswers');
     });
 
@@ -225,7 +234,7 @@ describe('PostReactionsBarComponent', () => {
         component.posting = post;
         component.showAnswers = true;
         fixture.detectChanges();
-        const answerNowButton = fixture.debugElement.nativeElement.querySelector('#collapseAnswersButton');
+        const answerNowButton = fixture.debugElement.query(By.css('.collapse-answers-btn')).nativeElement;
         expect(answerNowButton.innerHTML).toContain('collapseAnswers');
     });
 });

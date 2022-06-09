@@ -1,10 +1,9 @@
-import { Component, OnChanges, OnInit } from '@angular/core';
+import { Component, Input, OnChanges, OnInit } from '@angular/core';
 import { Reaction } from 'app/entities/metis/reaction.model';
 import { PostingsReactionsBarDirective } from 'app/shared/metis/posting-reactions-bar/posting-reactions-bar.component';
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
 import { faSmile } from '@fortawesome/free-regular-svg-icons';
 import { MetisService } from 'app/shared/metis/metis.service';
-import { ThemeService } from 'app/core/theme/theme.service';
 
 @Component({
     selector: 'jhi-answer-post-reactions-bar',
@@ -12,11 +11,12 @@ import { ThemeService } from 'app/core/theme/theme.service';
     styleUrls: ['../posting-reactions-bar.component.scss'],
 })
 export class AnswerPostReactionsBarComponent extends PostingsReactionsBarDirective<AnswerPost> implements OnInit, OnChanges {
+    @Input() isLastAnswer = false;
     // Icons
     farSmile = faSmile;
 
-    constructor(metisService: MetisService, themeService: ThemeService) {
-        super(metisService, themeService);
+    constructor(metisService: MetisService) {
+        super(metisService);
     }
 
     /**

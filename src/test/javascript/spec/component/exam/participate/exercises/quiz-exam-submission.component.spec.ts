@@ -79,7 +79,7 @@ describe('QuizExamSubmissionComponent', () => {
         fixture.detectChanges();
 
         expect(fixture).toBeDefined();
-        expect(quizServiceSpy).toHaveBeenCalledTimes(1);
+        expect(quizServiceSpy).toHaveBeenCalledOnce();
         expect(component.selectedAnswerOptions.has(1)).toEqual(true);
         expect(component.selectedAnswerOptions.size).toEqual(1);
         expect(component.dragAndDropMappings.has(2)).toEqual(true);

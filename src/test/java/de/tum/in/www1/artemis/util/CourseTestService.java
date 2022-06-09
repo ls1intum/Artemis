@@ -1088,6 +1088,16 @@ public class CourseTestService {
     }
 
     // Test
+    public void testGetAllEditorsInCourse() throws Exception {
+        Course course = ModelFactory.generateCourse(null, null, null, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
+        course = courseRepo.save(course);
+
+        // Get all editors for course
+        List<User> editors = request.getList("/api/courses/" + course.getId() + "/editors", HttpStatus.OK, User.class);
+        assertThat(editors).as("All editors in course found").hasSize(numberOfEditors);
+    }
+
+    // Test
     public void testGetAllStudentsOrTutorsOrInstructorsInCourse_AsInstructorOfOtherCourse_forbidden() throws Exception {
         Course course = ModelFactory.generateCourse(null, null, null, new HashSet<>(), "other-tumuser", "other-tutor", "other-editor", "other-instructor");
         course = courseRepo.save(course);
@@ -1959,5 +1969,17 @@ public class CourseTestService {
         var newStudents = request.postListWithResponseBody("/api/courses/" + course.getId() + "/" + group, List.of(dto1, dto2), StudentDTO.class, HttpStatus.OK);
         assertThat(newStudents).hasSize(2);
         assertThat(newStudents).contains(dto1, dto2);
+    }
+
+    // Test
+    public void testCreateCourseWithValidStartAndEndDate() throws Exception {
+        Course course = ModelFactory.generateCourse(null, ZonedDateTime.now().minusDays(1), ZonedDateTime.now(), new HashSet<>(), "student", "tutor", "editor", "instructor");
+        request.post("/api/courses", course, HttpStatus.CREATED);
+    }
+
+    // Test
+    public void testCreateCourseWithInvalidStartAndEndDate() throws Exception {
+        Course course = ModelFactory.generateCourse(null, ZonedDateTime.now().plusDays(1), ZonedDateTime.now(), new HashSet<>(), "student", "tutor", "editor", "instructor");
+        request.post("/api/courses", course, HttpStatus.BAD_REQUEST);
     }
 }

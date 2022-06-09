@@ -57,8 +57,8 @@ describe('Submission Export Button Component', () => {
 
         component.openSubmissionExportDialog(mouseEvent);
 
-        expect(mouseEventSpy).toHaveBeenCalledTimes(1);
-        expect(openSpy).toHaveBeenCalledTimes(1);
+        expect(mouseEventSpy).toHaveBeenCalledOnce();
+        expect(openSpy).toHaveBeenCalledOnce();
         expect(openSpy).toHaveBeenCalledWith(SubmissionExportDialogComponent, { keyboard: true, size: 'lg' });
     });
 

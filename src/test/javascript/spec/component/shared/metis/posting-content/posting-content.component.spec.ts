@@ -140,7 +140,7 @@ describe('PostingContentComponent', () => {
         }));
 
         it('should include content before and reference as well as a linked reference within the course discussion overview', fakeAsync(() => {
-            // currently loaded posts will be set to a list of posts having an course-wide context  -> simulating being at course discussion overview
+            // currently loaded posts will be set to a list of posts having a course-wide context  -> simulating being at course discussion overview
             jest.spyOn(metisService, 'posts', 'get').mockReturnValue(of(metisCoursePostsWithCourseWideContext) as Observable<Post[]>);
             component.ngOnInit();
             tick();
@@ -163,7 +163,7 @@ describe('PostingContentComponent', () => {
         }));
 
         it('should compute parts when referencing a post from a lecture context while being at the course discussion overview.', fakeAsync(() => {
-            // currently loaded posts will be set to a list of posts having an course-wide context -> simulating being at course discussion overview
+            // currently loaded posts will be set to a list of posts having a course-wide context -> simulating being at course discussion overview
             jest.spyOn(metisService, 'posts', 'get').mockReturnValue(of(metisCoursePostsWithCourseWideContext) as Observable<Post[]>);
             component.ngOnInit();
             tick();
@@ -185,7 +185,7 @@ describe('PostingContentComponent', () => {
         }));
 
         it('should compute parts when referencing a post from an exercise context while being at the course discussion overview', fakeAsync(() => {
-            // currently loaded posts will be set to a list of posts having an course-wide context -> simulating being at course discussion overview
+            // currently loaded posts will be set to a list of posts having a course-wide context -> simulating being at course discussion overview
             jest.spyOn(metisService, 'posts', 'get').mockReturnValue(of(metisCoursePostsWithCourseWideContext) as Observable<Post[]>);
             component.ngOnInit();
             tick();
@@ -207,7 +207,7 @@ describe('PostingContentComponent', () => {
         }));
 
         it('should compute parts when referencing a post with course-wide context while being at a lecture page', fakeAsync(() => {
-            // currently loaded posts will be set to a list of posts having an course-wide context -> simulating being at lecture page
+            // currently loaded posts will be set to a list of posts having a course-wide context -> simulating being at lecture page
             jest.spyOn(metisService, 'posts', 'get').mockReturnValue(of(metisLecturePosts) as Observable<Post[]>);
             component.ngOnInit();
             tick();
@@ -229,7 +229,7 @@ describe('PostingContentComponent', () => {
         }));
 
         it('should compute parts when referencing a post with lecture context while being at a lecture page', fakeAsync(() => {
-            // currently loaded posts will be set to a list of posts having an course-wide context -> simulating being at lecture page
+            // currently loaded posts will be set to a list of posts having a course-wide context -> simulating being at lecture page
             jest.spyOn(metisService, 'posts', 'get').mockReturnValue(of(metisLecturePosts) as Observable<Post[]>);
             component.ngOnInit();
             tick();
