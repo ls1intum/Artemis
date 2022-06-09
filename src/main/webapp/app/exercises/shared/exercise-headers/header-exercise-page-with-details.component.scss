@@ -11,6 +11,21 @@ $h4-size: 1.3rem;
     line-height: 1.2;
     font-weight: 300;
 
+    .right-col {
+        flex: 0 0 auto;
+
+        > div:not(:last-child) {
+            margin-bottom: 5px;
+        }
+
+        > div {
+            display: flex;
+            width: 100%;
+            justify-content: space-between;
+            gap: 10px;
+        }
+    }
+
     .left-col {
         flex: 1 1 min-content;
         min-width: 0;
@@ -58,21 +73,6 @@ $h4-size: 1.3rem;
             flex-wrap: wrap;
             gap: 0.25em;
             align-items: center;
-        }
-    }
-
-    .right-col {
-        flex: 0 0 auto;
-
-        > div:not(:last-child) {
-            margin-bottom: 5px;
-        }
-
-        > div {
-            display: flex;
-            width: 100%;
-            justify-content: space-between;
-            gap: 10px;
         }
     }
 
