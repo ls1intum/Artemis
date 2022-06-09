@@ -116,7 +116,7 @@ describe('TextAssessmentDashboardComponent', () => {
         // test for init values
         expect(component).toBeTruthy();
         expect(component.submissions).toEqual([]);
-        expect(component.reverse).toBe(false);
+        expect(component.reverse).toBeFalse();
         expect(component.predicate).toBe('id');
         expect(component.filteredSubmissions).toEqual([]);
 
@@ -124,7 +124,7 @@ describe('TextAssessmentDashboardComponent', () => {
         component.ngOnInit();
 
         // check
-        expect(getTextSubmissionStub).toHaveBeenCalledTimes(1);
+        expect(getTextSubmissionStub).toHaveBeenCalledOnce();
         expect(getTextSubmissionStub).toHaveBeenCalledWith(textExercise.id, { submittedOnly: true });
         expect(component.exercise).toEqual(textExercise);
         expect(component.examId).toBe(2);
@@ -142,7 +142,7 @@ describe('TextAssessmentDashboardComponent', () => {
         component.ngOnInit();
         tick(100);
         // check
-        expect(getTextSubmissionStub).toHaveBeenCalledTimes(1);
+        expect(getTextSubmissionStub).toHaveBeenCalledOnce();
         expect(getTextSubmissionStub).toHaveBeenCalledWith(textExercise.id, { submittedOnly: true });
         expect(component.submissions).toEqual([textSubmission]);
         expect(component.filteredSubmissions).toEqual([textSubmission]);
@@ -159,7 +159,7 @@ describe('TextAssessmentDashboardComponent', () => {
         component.ngOnInit();
 
         // check
-        expect(findExerciseStub).toHaveBeenCalledTimes(1);
+        expect(findExerciseStub).toHaveBeenCalledOnce();
         expect(getTextSubmissionStub).toHaveBeenCalledWith(textExercise.id, { submittedOnly: true });
         expect(component.submissions).toEqual([]);
         expect(component.filteredSubmissions).toEqual([]);
@@ -184,9 +184,9 @@ describe('TextAssessmentDashboardComponent', () => {
         tick();
 
         // check
-        expect(cancelAssessmentStub).toHaveBeenCalledTimes(1);
+        expect(cancelAssessmentStub).toHaveBeenCalledOnce();
         expect(cancelAssessmentStub).toHaveBeenCalledWith(textSubmission.participation.id, textSubmission.id);
-        expect(windowSpy).toHaveBeenCalledTimes(1);
+        expect(windowSpy).toHaveBeenCalledOnce();
     }));
 
     it('should sort rows', () => {
@@ -197,7 +197,7 @@ describe('TextAssessmentDashboardComponent', () => {
         component.submissions = [textSubmission];
         component.sortRows();
 
-        expect(sortServiceSpy).toHaveBeenCalledTimes(1);
+        expect(sortServiceSpy).toHaveBeenCalledOnce();
         expect(sortServiceSpy).toHaveBeenCalledWith([textSubmission], 'predicate', false);
     });
 

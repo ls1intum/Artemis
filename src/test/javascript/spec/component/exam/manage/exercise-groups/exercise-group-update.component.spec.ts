@@ -107,7 +107,7 @@ describe('ExerciseGroupUpdateComponent', () => {
 
         expect(component.isSaving).toBeFalse();
         expect(component.exam).toEqual(exam);
-        expect(alertServiceStub).toHaveBeenCalledTimes(1);
+        expect(alertServiceStub).toHaveBeenCalledOnce();
         flush();
     }));
 });

@@ -54,7 +54,7 @@ describe('AnswerPost Service', () => {
         }));
 
         it('should delete a AnswerPost', fakeAsync(() => {
-            service.delete(1, metisResolvingAnswerPostUser1).subscribe((resp) => expect(resp.ok).toBe(true));
+            service.delete(1, metisResolvingAnswerPostUser1).subscribe((resp) => expect(resp.ok).toBeTrue());
 
             const req = httpMock.expectOne({ method: 'DELETE' });
             req.flush({ status: 200 });

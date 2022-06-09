@@ -22,7 +22,7 @@ describe('SystemNotificationManagementResolveService', () => {
         // @ts-ignore
         systemNotificationManagementResolve.resolve({ params: { id: '1' } } as any as ActivatedRouteSnapshot).subscribe((noti) => (result = noti));
         expect(result).toBe(toReturn.body);
-        expect(spy).toHaveBeenCalledTimes(1);
+        expect(spy).toHaveBeenCalledOnce();
         expect(spy).toHaveBeenCalledWith(1);
     });
 

@@ -42,6 +42,6 @@ describe('AdminFeatureToggleComponentTest', () => {
         comp.ngOnInit();
         comp.onFeatureToggle(event, comp.availableToggles[0]);
 
-        expect(comp.availableToggles[0].isActive).toBe(false);
+        expect(comp.availableToggles[0].isActive).toBeFalse();
     });
 });

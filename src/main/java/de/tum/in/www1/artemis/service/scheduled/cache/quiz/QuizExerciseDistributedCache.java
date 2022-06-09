@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.service.scheduled.quiz;
+package de.tum.in.www1.artemis.service.scheduled.cache.quiz;
 
 import java.io.IOException;
 import java.io.Serializable;
@@ -135,7 +135,7 @@ final class QuizExerciseDistributedCache extends QuizExerciseCache implements Ha
     }
 
     @Override
-    void clear() {
+    public void clear() {
         int batchesSize = batches.size();
         int participationsSize = participations.size();
         int submissionsSize = submissions.size();

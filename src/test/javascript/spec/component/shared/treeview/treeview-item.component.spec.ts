@@ -158,7 +158,7 @@ describe('TreeviewItemComponent', () => {
             });
 
             it('should raise event checkedChange', () => {
-                expect(checkedChangeSpy).toHaveBeenCalledTimes(1);
+                expect(checkedChangeSpy).toHaveBeenCalledOnce();
                 expect(checkedChangeSpy).toHaveBeenCalledWith(true);
             });
 
@@ -175,7 +175,7 @@ describe('TreeviewItemComponent', () => {
                 });
 
                 it('should raise event checkedChange', () => {
-                    expect(checkedChangeSpy).toHaveBeenCalledTimes(1);
+                    expect(checkedChangeSpy).toHaveBeenCalledOnce();
                     expect(checkedChangeSpy).toHaveBeenCalledWith(true);
                 });
             });
@@ -197,7 +197,7 @@ describe('TreeviewItemComponent', () => {
                 });
 
                 it('should raise event checkedChange', () => {
-                    expect(checkedChangeSpy).toHaveBeenCalledTimes(1);
+                    expect(checkedChangeSpy).toHaveBeenCalledOnce();
                     expect(checkedChangeSpy).toHaveBeenCalledWith(false);
                 });
             });
