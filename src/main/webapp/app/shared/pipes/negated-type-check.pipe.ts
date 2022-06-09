@@ -8,6 +8,6 @@ export class NegatedTypeCheckPipe implements PipeTransform {
      * @param classType The class' type that array items are checked against.
      */
     transform(items: Array<any>, classType: Function): any[] {
-        return items.filter((item) => item instanceof classType === false);
+        return items.filter((item) => !(item instanceof classType));
     }
 }

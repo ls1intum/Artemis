@@ -45,7 +45,7 @@ describe('Exercise Reference Command', () => {
 
         comp.aceEditorContainer.getEditor().setValue('');
 
-        const referenceRouterLinkToExercise = '[' + metisExercise.title + '](/courses/' + metisService.getCourse().id + '/exercises/' + metisExercise.id + ')';
+        const referenceRouterLinkToExercise = `[${metisExercise.title}](/courses/${metisService.getCourse().id}/exercises/${metisExercise.id})`;
         exerciseReferenceCommand.execute(metisExercise.id!.toString());
         expect(comp.aceEditorContainer.getEditor().getValue()).toBe(referenceRouterLinkToExercise);
     });

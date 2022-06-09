@@ -19,8 +19,8 @@ export class ExerciseReferenceCommand extends MultiOptionCommand {
      *                                      2. Link in markdown language appears which when clicked navigates to the exercise page
      */
     execute(selectedExerciseId: string): void {
-        const selectedExercise = this.getValues().find((value) => value.id.toString() === selectedExerciseId);
-        const referenceLink = '[' + selectedExercise!.value + '](' + this.metisService.getLinkForExercise(selectedExercise!.id) + ')';
+        const selectedExercise = this.getValues().find((value) => value.id.toString() === selectedExerciseId)!;
+        const referenceLink = `[${selectedExercise.value}](${this.metisService.getLinkForExercise(selectedExercise.id)})`;
         this.insertText(referenceLink);
         this.focus();
     }

@@ -357,7 +357,7 @@ describe('Metis Service', () => {
     it('should determine the router link required for referencing an exercise page within posting', () => {
         metisService.setCourse(course);
         const referenceRouterLink = metisService.getLinkForExercise(metisExercise.id!.toString());
-        expect(referenceRouterLink).toEqual('/courses/' + metisCourse.id + '/exercises/' + metisExercise.id!.toString());
+        expect(referenceRouterLink).toEqual(`/courses/${metisCourse.id}/exercises/${metisExercise.id!.toString()}`);
     });
 
     it('should determine the query param for a reference to a post with course-wide context', () => {
