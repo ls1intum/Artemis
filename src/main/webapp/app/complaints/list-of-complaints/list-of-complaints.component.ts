@@ -110,7 +110,11 @@ export class ListOfComplaintsComponent implements OnInit {
                 if (!this.showAddressedComplaints) {
                     this.complaintsToShow = this.complaints.filter((complaint) => complaint.accepted === undefined);
                 } else {
-                    this.complaintsToShow = this.complaints;
+                    if (this.filterOption === 4) {
+                        this.complaintsToShow = this.complaints.filter((complaint) => complaint.accepted === true);
+                    } else {
+                        this.complaintsToShow = this.complaints;
+                    }
                 }
 
                 if (this.complaints.some((complaint) => complaint.student)) {
@@ -206,5 +210,14 @@ export class ListOfComplaintsComponent implements OnInit {
         } else {
             return this.translateService.instant('artemisApp.locks.notUnlocked');
         }
+    }
+
+    updateFilteredComplaints(complaints: Complaint[]) {
+        this.complaintsToShow = complaints;
+    }
+
+    resetFilterOptions(): void {
+        this.updateFilteredComplaints(this.complaints);
+        this.filterOption = undefined;
     }
 }
