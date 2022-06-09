@@ -73,7 +73,7 @@ describe('ComplaintService', () => {
     describe('isComplaintLockedForLoggedInUser', () => {
         it('should be false if no visible lock is present', () => {
             const result = complaintService.isComplaintLockedForLoggedInUser(new Complaint(), new TextExercise(undefined, undefined));
-            expect(result).toBe(false);
+            expect(result).toBeFalse();
         });
 
         it('should be false if user has the lock', () => {
@@ -86,7 +86,7 @@ describe('ComplaintService', () => {
 
             const result = complaintService.isComplaintLockedForLoggedInUser(_complaint, new TextExercise(undefined, undefined));
 
-            expect(result).toBe(false);
+            expect(result).toBeFalse();
         });
 
         it('should be true if user has not the lock', () => {
@@ -101,7 +101,7 @@ describe('ComplaintService', () => {
 
             const result = complaintService.isComplaintLockedForLoggedInUser(_complaint, new TextExercise(undefined, undefined));
 
-            expect(result).toBe(true);
+            expect(result).toBeTrue();
         });
 
         it('should be false if user is instructor', () => {
@@ -116,14 +116,14 @@ describe('ComplaintService', () => {
 
             const result = complaintService.isComplaintLockedForLoggedInUser(_complaint, new TextExercise(undefined, undefined));
 
-            expect(result).toBe(false);
+            expect(result).toBeFalse();
         });
     });
 
     describe('isComplaintLockedByLoggedInUser', () => {
         it('should be false if no visible lock is present', () => {
             const result = complaintService.isComplaintLockedByLoggedInUser(new Complaint());
-            expect(result).toBe(false);
+            expect(result).toBeFalse();
         });
 
         it('should be false if the complaint is not locked', () => {
@@ -131,7 +131,7 @@ describe('ComplaintService', () => {
             _complaint.complaintResponse = new ComplaintResponse();
 
             const result = complaintService.isComplaintLockedByLoggedInUser(_complaint);
-            expect(result).toBe(false);
+            expect(result).toBeFalse();
         });
 
         it('should be false if the complaint has been handled', () => {
@@ -142,7 +142,7 @@ describe('ComplaintService', () => {
             _complaint.complaintResponse.submittedTime = dayjs();
 
             const result = complaintService.isComplaintLockedByLoggedInUser(_complaint);
-            expect(result).toBe(false);
+            expect(result).toBeFalse();
         });
 
         it('should be false if another user has the lock', () => {
@@ -155,7 +155,7 @@ describe('ComplaintService', () => {
             accountService.userIdentity = { login: anotherLogin } as User;
 
             const result = complaintService.isComplaintLockedByLoggedInUser(_complaint);
-            expect(result).toBe(false);
+            expect(result).toBeFalse();
         });
 
         it('should be true if the same user has the lock', () => {
@@ -167,14 +167,14 @@ describe('ComplaintService', () => {
             accountService.userIdentity = { login } as User;
 
             const result = complaintService.isComplaintLockedByLoggedInUser(_complaint);
-            expect(result).toBe(true);
+            expect(result).toBeTrue();
         });
     });
 
     describe('isComplaintLocked', () => {
         it('should be false if no visible lock is present', () => {
             const result = complaintService.isComplaintLocked(new Complaint());
-            expect(result).toBe(false);
+            expect(result).toBeFalse();
         });
 
         it('should be true if locked', () => {
@@ -183,7 +183,7 @@ describe('ComplaintService', () => {
             _complaint.complaintResponse.isCurrentlyLocked = true;
 
             const result = complaintService.isComplaintLocked(_complaint);
-            expect(result).toBe(true);
+            expect(result).toBeTrue();
         });
     });
 
@@ -225,7 +225,7 @@ describe('ComplaintService', () => {
 
             const result = complaintService.shouldHighlightComplaint(complaint);
 
-            expect(result).toBe(false);
+            expect(result).toBeFalse();
         });
 
         it('should not highlight recent complaints', () => {
@@ -236,7 +236,7 @@ describe('ComplaintService', () => {
 
             const result = complaintService.shouldHighlightComplaint(complaint);
 
-            expect(result).toBe(false);
+            expect(result).toBeFalse();
         });
 
         it('should highlight old complaints', () => {
@@ -247,7 +247,7 @@ describe('ComplaintService', () => {
 
             const result = complaintService.shouldHighlightComplaint(complaint);
 
-            expect(result).toBe(true);
+            expect(result).toBeTrue();
         });
     });
 

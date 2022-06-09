@@ -61,7 +61,7 @@ describe('OrionExerciseDetailsStudentActionsComponent', () => {
     it('ngOnInit should subscribe to state', () => {
         comp.ngOnInit();
 
-        expect(orionStateStub).toHaveBeenCalledTimes(1);
+        expect(orionStateStub).toHaveBeenCalledOnce();
         expect(orionStateStub).toHaveBeenCalledWith();
         expect(comp.orionState).toEqual(orionState);
     });
@@ -74,7 +74,7 @@ describe('OrionExerciseDetailsStudentActionsComponent', () => {
         comp.courseId = 456;
 
         comp.importIntoIDE();
-        expect(cloneSpy).toHaveBeenCalledTimes(1);
+        expect(cloneSpy).toHaveBeenCalledOnce();
         expect(cloneSpy).toHaveBeenCalledWith('testUrl', programmingExercise);
     });
 
@@ -82,8 +82,8 @@ describe('OrionExerciseDetailsStudentActionsComponent', () => {
         comp.exercise = exercise;
         comp.submitChanges();
 
-        expect(submitSpy).toHaveBeenCalledTimes(1);
-        expect(forwardBuildSpy).toHaveBeenCalledTimes(1);
+        expect(submitSpy).toHaveBeenCalledOnce();
+        expect(forwardBuildSpy).toHaveBeenCalledOnce();
         // asserts forwardBuild has been called directly after submit
         expect(forwardBuildSpy.mock.invocationCallOrder[0]).toBe(submitSpy.mock.invocationCallOrder[0] + 1);
     });
@@ -91,7 +91,7 @@ describe('OrionExerciseDetailsStudentActionsComponent', () => {
     it('isOfflineIdeAllowed should reflect exercise state', () => {
         comp.exercise = { allowOfflineIde: true } as any;
 
-        expect(comp.isOfflineIdeAllowed).toBe(true);
+        expect(comp.isOfflineIdeAllowed).toBeTrue();
     });
 
     it('should submit if stated in route', () => {
@@ -99,7 +99,7 @@ describe('OrionExerciseDetailsStudentActionsComponent', () => {
 
         comp.ngOnInit();
 
-        expect(submitChangesSpy).toHaveBeenCalledTimes(1);
+        expect(submitChangesSpy).toHaveBeenCalledOnce();
         expect(submitChangesSpy).toHaveBeenCalledWith();
     });
 });

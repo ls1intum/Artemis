@@ -76,7 +76,7 @@ describe('Quiz Scoring Info Student Modal Component', () => {
 
         comp.open(content);
 
-        expect(openModalSpy).toHaveBeenCalledTimes(1);
+        expect(openModalSpy).toHaveBeenCalledOnce();
         expect(openModalSpy).toHaveBeenCalledWith(content, { size: 'lg' });
     });
 

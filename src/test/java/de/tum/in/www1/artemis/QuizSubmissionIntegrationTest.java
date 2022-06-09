@@ -34,7 +34,7 @@ import de.tum.in.www1.artemis.domain.quiz.*;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.QuizBatchService;
 import de.tum.in.www1.artemis.service.QuizExerciseService;
-import de.tum.in.www1.artemis.service.scheduled.quiz.QuizScheduleService;
+import de.tum.in.www1.artemis.service.scheduled.cache.quiz.QuizScheduleService;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.web.websocket.QuizSubmissionWebsocketService;
 

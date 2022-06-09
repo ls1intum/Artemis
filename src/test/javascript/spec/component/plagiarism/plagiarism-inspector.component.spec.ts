@@ -126,7 +126,7 @@ describe('Plagiarism Inspector Component', () => {
 
         expect(websocketServiceSpy).toHaveBeenCalledWith(comp.getPlagarismDetectionTopic());
         expect(comp.getPlagarismDetectionTopic()).toEqual(`/topic/modeling-exercises/${modelingExercise.id}/plagiarism-check`);
-        expect(comp.detectionInProgress).toBe(false);
+        expect(comp.detectionInProgress).toBeFalse();
         expect(comp.plagiarismResult).toBe(modelingPlagiarismResult);
     }));
 
@@ -220,7 +220,7 @@ describe('Plagiarism Inspector Component', () => {
         jest.spyOn(comp, 'handlePlagiarismResult');
 
         comp.getLatestPlagiarismResult();
-        expect(comp.detectionInProgress).toBe(false);
+        expect(comp.detectionInProgress).toBeFalse();
 
         tick();
 
@@ -235,7 +235,7 @@ describe('Plagiarism Inspector Component', () => {
         jest.spyOn(comp, 'handlePlagiarismResult');
 
         comp.getLatestPlagiarismResult();
-        expect(comp.detectionInProgress).toBe(false);
+        expect(comp.detectionInProgress).toBeFalse();
 
         tick();
 
@@ -250,7 +250,7 @@ describe('Plagiarism Inspector Component', () => {
         jest.spyOn(comp, 'handlePlagiarismResult');
 
         comp.getLatestPlagiarismResult();
-        expect(comp.detectionInProgress).toBe(false);
+        expect(comp.detectionInProgress).toBeFalse();
 
         tick();
 
@@ -261,13 +261,13 @@ describe('Plagiarism Inspector Component', () => {
     it('should be programming exercise', () => {
         comp.exercise = { type: ExerciseType.PROGRAMMING } as ProgrammingExercise;
 
-        expect(comp.isProgrammingExercise()).toBe(true);
+        expect(comp.isProgrammingExercise()).toBeTrue();
     });
 
     it('should not be programming exercise', () => {
         comp.exercise = { type: ExerciseType.TEXT } as TextExercise;
 
-        expect(comp.isProgrammingExercise()).toBe(false);
+        expect(comp.isProgrammingExercise()).toBeFalse();
     });
 
     it('should trigger similarity distribution', () => {
@@ -276,9 +276,9 @@ describe('Plagiarism Inspector Component', () => {
 
         comp.showSimilarityDistribution(true);
 
-        expect(resetFilterStub).toHaveBeenCalledTimes(1);
-        expect(getLatestPlagiarismResultStub).toHaveBeenCalledTimes(1);
-        expect(comp.showRunDetails).toBe(true);
+        expect(resetFilterStub).toHaveBeenCalledOnce();
+        expect(getLatestPlagiarismResultStub).toHaveBeenCalledOnce();
+        expect(comp.showRunDetails).toBeTrue();
     });
 
     describe('test chart interactivity', () => {
@@ -289,17 +289,17 @@ describe('Plagiarism Inspector Component', () => {
 
             comp.filterByChart(range);
 
-            expect(filterComparisonsMock).toHaveBeenCalledTimes(1);
+            expect(filterComparisonsMock).toHaveBeenCalledOnce();
             expect(filterComparisonsMock).toHaveBeenCalledWith(range, comparisons);
             expect(comp.visibleComparisons).toEqual([]);
             expect(comp.sidebarOffset).toBe(0);
-            expect(comp.chartFilterApplied).toBe(true);
+            expect(comp.chartFilterApplied).toBeTrue();
 
             comp.resetFilter();
 
             expect(comp.visibleComparisons).toEqual(comparisons);
             expect(comp.sidebarOffset).toBe(0);
-            expect(comp.chartFilterApplied).toBe(false);
+            expect(comp.chartFilterApplied).toBeFalse();
         });
 
         it('should return the selected comparison', () => {

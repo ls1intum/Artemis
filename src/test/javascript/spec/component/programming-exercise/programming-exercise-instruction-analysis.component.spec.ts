@@ -83,7 +83,7 @@ describe('ProgrammingExerciseInstructionInstructorAnalysis', () => {
             expect(comp.invalidTestCases).toEqual(invalidTestCases);
 
             // Check that an event with the updated analysis is emitted.
-            expect(emitAnalysisSpy).toHaveBeenCalledTimes(1);
+            expect(emitAnalysisSpy).toHaveBeenCalledOnce();
             expect(emitAnalysisSpy).toHaveBeenCalledWith(completeAnalysis);
 
             // Check rendered html.
