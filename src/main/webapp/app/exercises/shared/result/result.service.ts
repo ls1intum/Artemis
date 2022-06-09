@@ -60,21 +60,21 @@ export class ResultService implements IResultService {
         let buildAndTestMessage: string;
         if (result.submission && (result.submission as ProgrammingSubmission).buildFailed) {
             buildAndTestMessage = this.translateService.instant('artemisApp.result.resultStringBuildFailed');
-        } else if (!result.testCaseAmount || result.testCaseAmount === 0) {
+        } else if (!result.testCaseCount || result.testCaseCount === 0) {
             buildAndTestMessage = this.translateService.instant('artemisApp.result.resultStringBuildSuccessfulNoTests');
         } else {
             buildAndTestMessage = this.translateService.instant('artemisApp.result.resultStringBuildSuccessfulTests', {
-                numberOfTestsPassed: result.passedTestCaseAmount === 255 ? '255+' : result.passedTestCaseAmount,
-                numberOfTestsTotal: result.testCaseAmount === 255 ? '255+' : result.testCaseAmount,
+                numberOfTestsPassed: result.passedTestCaseCount === 255 ? '255+' : result.passedTestCaseCount,
+                numberOfTestsTotal: result.testCaseCount === 255 ? '255+' : result.testCaseCount,
             });
         }
 
         let resultString: string;
-        if (result.codeIssueAmount && result.codeIssueAmount > 0) {
+        if (result.codeIssueCount && result.codeIssueCount > 0) {
             resultString = this.translateService.instant('artemisApp.result.resultStringProgrammingCodeIssues', {
                 relativeScore,
                 buildAndTestMessage,
-                numberOfIssues: result.codeIssueAmount === 255 ? '255+' : result.codeIssueAmount,
+                numberOfIssues: result.codeIssueCount === 255 ? '255+' : result.codeIssueCount,
                 points,
                 maxPoints: exercise.maxPoints,
             });

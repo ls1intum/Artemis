@@ -107,14 +107,14 @@ public class Result extends DomainObject {
     private Boolean exampleResult;
 
     // The following attributes are only used for Programming Exercises
-    @Column(name = "test_case_amount")
-    private Integer testCaseAmount;
+    @Column(name = "test_case_count")
+    private Integer testCaseCount;
 
-    @Column(name = "passed_test_case_amount")
-    private Integer passedTestCaseAmount;
+    @Column(name = "passed_test_case_count")
+    private Integer passedTestCaseCount;
 
-    @Column(name = "code_issue_amount")
-    private Integer codeIssueAmount;
+    @Column(name = "code_issue_count")
+    private Integer codeIssueCount;
 
     // This attribute is required to forward the coverage file reports after creating the build result. This is required in order to
     // delay referencing the corresponding test cases from the entries because the test cases are not saved in the database
@@ -448,33 +448,33 @@ public class Result extends DomainObject {
         this.exampleResult = exampleResult;
     }
 
-    public Integer getTestCaseAmount() {
-        return testCaseAmount;
+    public Integer getTestCaseCount() {
+        return testCaseCount;
     }
 
-    public void setTestCaseAmount(Integer testCaseAmount) {
-        if (testCaseAmount != null) {
-            this.testCaseAmount = Math.min(testCaseAmount, 255);
+    public void setTestCaseCount(Integer testCaseCount) {
+        if (testCaseCount != null) {
+            this.testCaseCount = Math.min(testCaseCount, 255);
         }
     }
 
-    public Integer getPassedTestCaseAmount() {
-        return passedTestCaseAmount;
+    public Integer getPassedTestCaseCount() {
+        return passedTestCaseCount;
     }
 
-    public void setPassedTestCaseAmount(Integer passedTestCaseAmount) {
-        if (passedTestCaseAmount != null) {
-            this.passedTestCaseAmount = Math.min(passedTestCaseAmount, 255);
+    public void setPassedTestCaseCount(Integer passedTestCaseCount) {
+        if (passedTestCaseCount != null) {
+            this.passedTestCaseCount = Math.min(passedTestCaseCount, 255);
         }
     }
 
-    public Integer getCodeIssueAmount() {
-        return codeIssueAmount;
+    public Integer getCodeIssueCount() {
+        return codeIssueCount;
     }
 
-    public void setCodeIssueAmount(Integer codeIssueAmount) {
-        if (codeIssueAmount != null) {
-            this.codeIssueAmount = Math.min(codeIssueAmount, 255);
+    public void setCodeIssueCount(Integer codeIssueCount) {
+        if (codeIssueCount != null) {
+            this.codeIssueCount = Math.min(codeIssueCount, 255);
         }
     }
 

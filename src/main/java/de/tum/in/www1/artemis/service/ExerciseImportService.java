@@ -77,9 +77,9 @@ public abstract class ExerciseImportService {
         newResult.setRated(true);
         newResult.setHasFeedback(originalResult.getHasFeedback());
         newResult.setScore(originalResult.getScore());
-        newResult.setTestCaseAmount(originalResult.getTestCaseAmount());
-        newResult.setPassedTestCaseAmount(originalResult.getPassedTestCaseAmount());
-        newResult.setCodeIssueAmount(originalResult.getCodeIssueAmount());
+        newResult.setTestCaseCount(originalResult.getTestCaseCount());
+        newResult.setPassedTestCaseCount(originalResult.getPassedTestCaseCount());
+        newResult.setCodeIssueCount(originalResult.getCodeIssueCount());
         newResult.setFeedbacks(copyFeedback(originalResult.getFeedbacks(), newResult, gradingInstructionCopyTracker));
         // Cut relationship to parent because result is an ordered collection
         newResult.setSubmission(null);

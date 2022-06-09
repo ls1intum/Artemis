@@ -6,6 +6,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
+import com.google.common.collect.Lists;
+
 import de.tum.in.www1.artemis.config.migration.MigrationEntry;
 import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.repository.ResultRepository;
@@ -35,35 +37,32 @@ public class MigrationEntry20220608_194500 extends MigrationEntry {
         results.removeIf(result -> !result.getResultString().matches(".*of.*passed.*"));
 
         LOGGER.info("Found {} results to process.", results.size());
-        int remainder = results.size() % listSize;
-        int listCount = results.size() / listSize;
-        for (int i = 0; i < listCount; i++) {
-            List<Result> sublist = results.subList(i * listSize, (i + 1) * listSize);
-            processResults(sublist);
-        }
-        if (remainder > 0) {
-            List<Result> sublist = results.subList(listCount * listSize, (listCount * listSize) + remainder);
-            processResults(sublist);
-        }
+
+        Lists.partition(results, 100).forEach(resultList -> {
+            LOGGER.info("Process (next) 100 results for the migration in one batch...");
+            processResults(resultList);
+        });
     }
 
     private void processResults(List<Result> results) {
         results.forEach(result -> {
             String[] resultStringParts = result.getResultString().split(", ");
             for (String resultStringPart : resultStringParts) {
+                // Matches e.g. "21 of 42 passed"
                 if (resultStringPart.matches(".*of.*passed.*")) {
                     String[] testCaseParts = resultStringPart.split(" ");
                     int passedTestCasesAmount = Integer.parseInt(testCaseParts[0]);
                     int testCasesAmount = Integer.parseInt(testCaseParts[2]);
 
-                    result.setPassedTestCaseAmount(passedTestCasesAmount);
-                    result.setTestCaseAmount(testCasesAmount);
+                    result.setPassedTestCaseCount(passedTestCasesAmount);
+                    result.setTestCaseCount(testCasesAmount);
                 }
+                // Matches e.g. "9 issues"
                 else if (resultStringPart.contains("issue")) {
                     String[] issueParts = resultStringPart.split(" ");
-                    int codeIssueAmount = Integer.parseInt(issueParts[0]);
+                    int codeIssueCount = Integer.parseInt(issueParts[0]);
 
-                    result.setCodeIssueAmount(codeIssueAmount);
+                    result.setCodeIssueCount(codeIssueCount);
                 }
             }
         });

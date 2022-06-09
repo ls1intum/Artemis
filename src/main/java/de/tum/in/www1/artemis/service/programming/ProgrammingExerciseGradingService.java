@@ -599,9 +599,9 @@ public class ProgrammingExerciseGradingService {
             // The score is always calculated from ALL (except visibility=never) test cases, regardless of the current date!
             final Set<ProgrammingExerciseTestCase> successfulTestCases = testCasesForCurrentDate.stream().filter(isSuccessful(result)).collect(Collectors.toSet());
             updateScore(result, testCases, successfulTestCases, staticCodeAnalysisFeedback, exercise, hasDuplicateTestCases, applySubmissionPolicy);
-            result.setTestCaseAmount(testCasesForCurrentDate.size());
-            result.setPassedTestCaseAmount(successfulTestCases.size());
-            result.setCodeIssueAmount(staticCodeAnalysisFeedback.size());
+            result.setTestCaseCount(testCasesForCurrentDate.size());
+            result.setPassedTestCaseCount(successfulTestCases.size());
+            result.setCodeIssueCount(staticCodeAnalysisFeedback.size());
 
             if (result.isManual()) {
                 result.setScore(result.calculateTotalPointsForProgrammingExercises(), exercise.getMaxPoints(), exercise.getCourseViaExerciseGroupOrCourseMember());
@@ -945,8 +945,8 @@ public class ProgrammingExerciseGradingService {
         result.setFeedbacks(staticCodeAnalysisFeedback);
         result.hasFeedback(!staticCodeAnalysisFeedback.isEmpty());
         result.setScore(0D);
-        result.setTestCaseAmount(0);
-        result.setPassedTestCaseAmount(0);
+        result.setTestCaseCount(0);
+        result.setPassedTestCaseCount(0);
     }
 
     /**
