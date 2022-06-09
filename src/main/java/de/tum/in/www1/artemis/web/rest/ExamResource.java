@@ -86,10 +86,12 @@ public class ExamResource {
 
     private final StudentExamRepository studentExamRepository;
 
+    private final EntityTitleCacheService entityTitleCacheService;
+
     public ExamResource(UserRepository userRepository, CourseRepository courseRepository, ExamService examService, ExamAccessService examAccessService,
             InstanceMessageSendService instanceMessageSendService, ExamRepository examRepository, SubmissionService submissionService, AuthorizationCheckService authCheckService,
             ExamDateService examDateService, TutorParticipationRepository tutorParticipationRepository, AssessmentDashboardService assessmentDashboardService,
-            ExamRegistrationService examRegistrationService, StudentExamRepository studentExamRepository) {
+            ExamRegistrationService examRegistrationService, StudentExamRepository studentExamRepository, EntityTitleCacheService entityTitleCacheService) {
         this.userRepository = userRepository;
         this.courseRepository = courseRepository;
         this.examService = examService;
@@ -103,6 +105,7 @@ public class ExamResource {
         this.tutorParticipationRepository = tutorParticipationRepository;
         this.assessmentDashboardService = assessmentDashboardService;
         this.studentExamRepository = studentExamRepository;
+        this.entityTitleCacheService = entityTitleCacheService;
     }
 
     /**
@@ -335,7 +338,7 @@ public class ExamResource {
     @GetMapping(value = "/exams/{examId}/title")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<String> getExamTitle(@PathVariable Long examId) {
-        final var title = examRepository.getExamTitle(examId);
+        final var title = entityTitleCacheService.getExamTitle(examId);
         return title == null ? ResponseEntity.notFound().build() : ResponseEntity.ok(title);
     }
 

@@ -91,7 +91,7 @@ public interface ExamRepository extends JpaRepository<Exam, Long> {
     long countGeneratedStudentExamsByExamWithoutTestRuns(@Param("examId") long examId);
 
     /**
-     * Returns the title of the exam with the given id
+     * Returns the title of the exam with the given id. The {@link de.tum.in.www1.artemis.service.EntityTitleCacheService} offers a cached variant of this method
      *
      * @param examId the id of the exam
      * @return the name/title of the exam or null if the exam does not exist

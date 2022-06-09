@@ -26,10 +26,7 @@ import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.LectureRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.Role;
-import de.tum.in.www1.artemis.service.AuthorizationCheckService;
-import de.tum.in.www1.artemis.service.ExerciseService;
-import de.tum.in.www1.artemis.service.LectureImportService;
-import de.tum.in.www1.artemis.service.LectureService;
+import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
 import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
@@ -63,8 +60,10 @@ public class LectureResource {
 
     private final ExerciseService exerciseService;
 
+    private final EntityTitleCacheService entityTitleCacheService;
+
     public LectureResource(LectureRepository lectureRepository, LectureService lectureService, LectureImportService lectureImportService, CourseRepository courseRepository,
-            UserRepository userRepository, AuthorizationCheckService authCheckService, ExerciseService exerciseService) {
+            UserRepository userRepository, AuthorizationCheckService authCheckService, ExerciseService exerciseService, EntityTitleCacheService entityTitleCacheService) {
         this.lectureRepository = lectureRepository;
         this.lectureService = lectureService;
         this.lectureImportService = lectureImportService;
@@ -72,6 +71,7 @@ public class LectureResource {
         this.userRepository = userRepository;
         this.authCheckService = authCheckService;
         this.exerciseService = exerciseService;
+        this.entityTitleCacheService = entityTitleCacheService;
     }
 
     /**
@@ -238,7 +238,7 @@ public class LectureResource {
     @GetMapping(value = "/lectures/{lectureId}/title")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<String> getLectureTitle(@PathVariable Long lectureId) {
-        final var title = lectureRepository.getLectureTitle(lectureId);
+        final var title = entityTitleCacheService.getLectureTitle(lectureId);
         return title == null ? ResponseEntity.notFound().build() : ResponseEntity.ok(title);
     }
 

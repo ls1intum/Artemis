@@ -108,13 +108,15 @@ public class CourseResource {
 
     private final RatingService ratingService;
 
+    private final EntityTitleCacheService entityTitleCacheService;
+
     public CourseResource(UserRepository userRepository, CourseService courseService, CourseRepository courseRepository, ExerciseService exerciseService,
             AuthorizationCheckService authCheckService, TutorParticipationRepository tutorParticipationRepository, RatingService ratingService,
             ComplaintRepository complaintRepository, ComplaintResponseRepository complaintResponseRepository, SubmissionRepository submissionRepository,
             SubmissionService submissionService, ComplaintService complaintService, TutorLeaderboardService tutorLeaderboardService, ResultRepository resultRepository,
             ProgrammingExerciseRepository programmingExerciseRepository, AuditEventRepository auditEventRepository, ParticipantScoreRepository participantScoreRepository,
             Optional<VcsUserManagementService> optionalVcsUserManagementService, AssessmentDashboardService assessmentDashboardService, ExerciseRepository exerciseRepository,
-            Optional<CIUserManagementService> optionalCiUserManagementService) {
+            Optional<CIUserManagementService> optionalCiUserManagementService, EntityTitleCacheService entityTitleCacheService) {
         this.courseService = courseService;
         this.courseRepository = courseRepository;
         this.exerciseService = exerciseService;
@@ -136,6 +138,7 @@ public class CourseResource {
         this.resultRepository = resultRepository;
         this.participantScoreRepository = participantScoreRepository;
         this.ratingService = ratingService;
+        this.entityTitleCacheService = entityTitleCacheService;
     }
 
     /**
@@ -875,7 +878,7 @@ public class CourseResource {
     @PreAuthorize("hasRole('USER')")
     @ResponseBody
     public ResponseEntity<String> getCourseTitle(@PathVariable Long courseId) {
-        final var title = courseRepository.getCourseTitle(courseId);
+        final var title = entityTitleCacheService.getCourseTitle(courseId);
         return title == null ? ResponseEntity.notFound().build() : ResponseEntity.ok(title);
     }
 

@@ -116,7 +116,7 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
     Optional<Course> findById(long courseId);
 
     /**
-     * Returns the title of the course with the given id
+     * Returns the title of the course with the given id. The {@link de.tum.in.www1.artemis.service.EntityTitleCacheService} offers a cached variant of this method
      *
      * @param courseId the id of the course
      * @return the name/title of the course or null if the course does not exist

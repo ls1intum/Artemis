@@ -17,6 +17,7 @@ import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.OrganizationRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.service.EntityTitleCacheService;
 import de.tum.in.www1.artemis.service.OrganizationService;
 import de.tum.in.www1.artemis.web.rest.dto.OrganizationCountDTO;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
@@ -45,12 +46,15 @@ public class OrganizationResource {
 
     private final CourseRepository courseRepository;
 
+    private final EntityTitleCacheService entityTitleCacheService;
+
     public OrganizationResource(OrganizationService organizationService, OrganizationRepository organizationRepository, UserRepository userRepository,
-            CourseRepository courseRepository) {
+            CourseRepository courseRepository, EntityTitleCacheService entityTitleCacheService) {
         this.organizationService = organizationService;
         this.userRepository = userRepository;
         this.organizationRepository = organizationRepository;
         this.courseRepository = courseRepository;
+        this.entityTitleCacheService = entityTitleCacheService;
     }
 
     /**
@@ -297,7 +301,7 @@ public class OrganizationResource {
     @GetMapping("organizations/{organizationId}/title")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<String> getOrganizationTitle(@PathVariable Long organizationId) {
-        final var title = organizationRepository.getOrganizationTitle(organizationId);
+        final var title = entityTitleCacheService.getOrganizationTitle(organizationId);
         return title == null ? ResponseEntity.notFound().build() : ResponseEntity.ok(title);
     }
 }

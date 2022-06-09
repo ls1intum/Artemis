@@ -18,6 +18,7 @@ import de.tum.in.www1.artemis.repository.ApollonDiagramRepository;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
+import de.tum.in.www1.artemis.service.EntityTitleCacheService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
@@ -42,10 +43,14 @@ public class ApollonDiagramResource {
 
     private final CourseRepository courseRepository;
 
-    public ApollonDiagramResource(ApollonDiagramRepository apollonDiagramRepository, AuthorizationCheckService authCheckService, CourseRepository courseRepository) {
+    private final EntityTitleCacheService entityTitleCacheService;
+
+    public ApollonDiagramResource(ApollonDiagramRepository apollonDiagramRepository, AuthorizationCheckService authCheckService, CourseRepository courseRepository,
+            EntityTitleCacheService entityTitleCacheService) {
         this.apollonDiagramRepository = apollonDiagramRepository;
         this.authCheckService = authCheckService;
         this.courseRepository = courseRepository;
+        this.entityTitleCacheService = entityTitleCacheService;
     }
 
     /**
@@ -114,7 +119,7 @@ public class ApollonDiagramResource {
     @GetMapping(value = "/apollon-diagrams/{diagramId}/title")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<String> getExerciseTitle(@PathVariable Long diagramId) {
-        final var title = apollonDiagramRepository.getDiagramTitle(diagramId);
+        final var title = entityTitleCacheService.getDiagramTitle(diagramId);
         return title == null ? ResponseEntity.notFound().build() : ResponseEntity.ok(title);
     }
 

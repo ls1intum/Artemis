@@ -51,7 +51,7 @@ public interface ExerciseHintRepository extends JpaRepository<ExerciseHint, Long
     Set<ExerciseHint> findByTaskId(Long taskId);
 
     /**
-     * Returns the title of the hint with the given id
+     * Returns the title of the hint with the given id. The {@link de.tum.in.www1.artemis.service.EntityTitleCacheService} offers a cached variant of this method
      *
      * @param hintId the id of the hint
      * @return the name/title of the hint or null if the hint does not exist

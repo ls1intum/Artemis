@@ -64,7 +64,7 @@ public interface OrganizationRepository extends JpaRepository<Organization, Long
     Long getNumberOfCoursesByOrganizationId(@Param("organizationId") long organizationId);
 
     /**
-     * Returns the title of the organization with the given id
+     * Returns the title of the organization with the given id. The {@link de.tum.in.www1.artemis.service.EntityTitleCacheService} offers a cached variant of this method
      *
      * @param organizationId the id of the organization
      * @return the name/title of the organization or null if the organization does not exist
