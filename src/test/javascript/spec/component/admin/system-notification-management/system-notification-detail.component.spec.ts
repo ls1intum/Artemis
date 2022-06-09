@@ -53,7 +53,7 @@ describe('SystemNotificationManagementDetailComponent', () => {
     it('should initialize', () => {
         const dataSpy = jest.spyOn(route.data, 'subscribe');
         detailComponentFixture.detectChanges();
-        expect(dataSpy).toHaveBeenCalledTimes(1);
+        expect(dataSpy).toHaveBeenCalledOnce();
     });
 
     it('should navigate to edit if edit is clicked', fakeAsync(() => {
@@ -63,7 +63,7 @@ describe('SystemNotificationManagementDetailComponent', () => {
         button.click();
 
         tick();
-        expect(router.navigateByUrl).toHaveBeenCalledTimes(1);
+        expect(router.navigateByUrl).toHaveBeenCalledOnce();
         const navigationArray = router.navigateByUrl.mock.calls[0][0];
         expect(navigationArray).toEqual(['edit']);
     }));

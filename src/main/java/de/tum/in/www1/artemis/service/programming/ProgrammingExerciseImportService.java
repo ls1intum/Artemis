@@ -35,11 +35,14 @@ import de.tum.in.www1.artemis.service.UrlService;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.VersionControlService;
+import de.tum.in.www1.artemis.service.hestia.ExerciseHintService;
 
 @Service
 public class ProgrammingExerciseImportService {
 
     private final Logger log = LoggerFactory.getLogger(ProgrammingExerciseImportService.class);
+
+    private final ExerciseHintService exerciseHintService;
 
     private final ExerciseHintRepository exerciseHintRepository;
 
@@ -75,13 +78,14 @@ public class ProgrammingExerciseImportService {
 
     private final UrlService urlService;
 
-    public ProgrammingExerciseImportService(ExerciseHintRepository exerciseHintRepository, Optional<VersionControlService> versionControlService,
-            Optional<ContinuousIntegrationService> continuousIntegrationService, ProgrammingExerciseParticipationService programmingExerciseParticipationService,
-            ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository, StaticCodeAnalysisCategoryRepository staticCodeAnalysisCategoryRepository,
-            ProgrammingExerciseRepository programmingExerciseRepository, ProgrammingExerciseService programmingExerciseService, GitService gitService, FileService fileService,
-            UserRepository userRepository, StaticCodeAnalysisService staticCodeAnalysisService, AuxiliaryRepositoryRepository auxiliaryRepositoryRepository,
-            SubmissionPolicyRepository submissionPolicyRepository, UrlService urlService, ProgrammingExerciseTaskRepository programmingExerciseTaskRepository,
-            ProgrammingExerciseSolutionEntryRepository solutionEntryRepository) {
+    public ProgrammingExerciseImportService(ExerciseHintService exerciseHintService, ExerciseHintRepository exerciseHintRepository,
+            Optional<VersionControlService> versionControlService, Optional<ContinuousIntegrationService> continuousIntegrationService,
+            ProgrammingExerciseParticipationService programmingExerciseParticipationService, ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository,
+            StaticCodeAnalysisCategoryRepository staticCodeAnalysisCategoryRepository, ProgrammingExerciseRepository programmingExerciseRepository,
+            ProgrammingExerciseService programmingExerciseService, GitService gitService, FileService fileService, UserRepository userRepository,
+            StaticCodeAnalysisService staticCodeAnalysisService, AuxiliaryRepositoryRepository auxiliaryRepositoryRepository, SubmissionPolicyRepository submissionPolicyRepository,
+            UrlService urlService, ProgrammingExerciseTaskRepository programmingExerciseTaskRepository, ProgrammingExerciseSolutionEntryRepository solutionEntryRepository) {
+        this.exerciseHintService = exerciseHintService;
         this.exerciseHintRepository = exerciseHintRepository;
         this.versionControlService = versionControlService;
         this.continuousIntegrationService = continuousIntegrationService;
@@ -133,11 +137,11 @@ public class ProgrammingExerciseImportService {
         programmingExerciseService.initParticipations(newExercise);
 
         // Hints, tasks, test cases and static code analysis categories
-        Map<Long, Long> newHintIdByOldId = exerciseHintRepository.copyExerciseHints(templateExercise, newExercise);
+        Map<Long, Long> newHintIdByOldId = exerciseHintService.copyExerciseHints(templateExercise, newExercise);
         programmingExerciseRepository.save(newExercise);
         Map<Long, Long> newTestCaseIdByOldId = importTestCases(templateExercise, newExercise);
         Map<Long, Long> newTaskIdByOldId = importTasks(templateExercise, newExercise, newTestCaseIdByOldId);
-        updateTaskCodeHintReferences(templateExercise, newExercise, newTaskIdByOldId, newHintIdByOldId);
+        updateTaskExerciseHintReferences(templateExercise, newExercise, newTaskIdByOldId, newHintIdByOldId);
         importSolutionEntries(templateExercise, newExercise, newTestCaseIdByOldId, newHintIdByOldId);
 
         // Copy or create SCA categories
@@ -361,33 +365,34 @@ public class ProgrammingExerciseImportService {
             programmingExerciseTaskRepository.save(copy);
             newIdByOldId.put(task.getId(), copy.getId());
             return copy;
-        }).collect(Collectors.toSet()));
-
+        }).collect(Collectors.toList()));
         return newIdByOldId;
     }
 
     /**
-     * Updates the newly imported code hints to reference the newly imported tasks they belong to.
+     * Updates the newly imported exercise hints to reference the newly imported tasks they belong to.
      *
      * @param templateExercise The template exercise which tasks should be copied
      * @param targetExercise   The new exercise to which all tasks should get copied to
      * @param newTaskIdByOldId A map with the old task id as a key and the new task id as a value
      * @param newHintIdByOldId A map with the old hint id as a key and the new hint id as a value
      */
-    private void updateTaskCodeHintReferences(final ProgrammingExercise templateExercise, final ProgrammingExercise targetExercise, Map<Long, Long> newTaskIdByOldId,
+    private void updateTaskExerciseHintReferences(final ProgrammingExercise templateExercise, final ProgrammingExercise targetExercise, Map<Long, Long> newTaskIdByOldId,
             Map<Long, Long> newHintIdByOldId) {
-        templateExercise.getExerciseHints().stream().filter(exerciseHint -> exerciseHint instanceof CodeHint).map(exerciseHint -> (CodeHint) exerciseHint)
-                .forEach(templateCodeHint -> {
-                    var templateTask = templateCodeHint.getProgrammingExerciseTask();
-                    var targetTask = targetExercise.getTasks().stream().filter(newTask -> Objects.equals(newTask.getId(), newTaskIdByOldId.get(templateTask.getId()))).findAny()
-                            .orElseThrow();
-                    var targetCodeHint = (CodeHint) targetExercise.getExerciseHints().stream()
-                            .filter(newHint -> Objects.equals(newHint.getId(), newHintIdByOldId.get(templateCodeHint.getId()))).findAny().orElseThrow();
+        templateExercise.getExerciseHints().forEach(templateExerciseHint -> {
+            var templateTask = templateExerciseHint.getProgrammingExerciseTask();
+            if (templateTask == null) {
+                return;
+            }
+            var targetTask = targetExercise.getTasks().stream().filter(newTask -> Objects.equals(newTask.getId(), newTaskIdByOldId.get(templateTask.getId()))).findAny()
+                    .orElseThrow();
+            var targetExerciseHint = targetExercise.getExerciseHints().stream()
+                    .filter(newHint -> Objects.equals(newHint.getId(), newHintIdByOldId.get(templateExerciseHint.getId()))).findAny().orElseThrow();
 
-                    targetCodeHint.setProgrammingExerciseTask(targetTask);
-                    exerciseHintRepository.save(targetCodeHint);
-                    targetTask.getCodeHints().add(targetCodeHint);
-                });
+            targetExerciseHint.setProgrammingExerciseTask(targetTask);
+            exerciseHintRepository.save(targetExerciseHint);
+            targetTask.getExerciseHints().add(targetExerciseHint);
+        });
     }
 
     /**

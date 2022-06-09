@@ -39,7 +39,7 @@ public class VcsRepositoryUrl {
         if (this == obj) {
             return true;
         }
-        // we explicitly allow subclasses (i.e. obj is a subclass of this) here (to avoid issues when comparing sub classes with the same url)
+        // we explicitly allow subclasses (i.e. obj is a subclass of this) here (to avoid issues when comparing subclasses with the same url)
         // Note that this also includes the null check
         if (!(obj instanceof VcsRepositoryUrl that)) {
             return false;

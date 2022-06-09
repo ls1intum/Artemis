@@ -14,7 +14,7 @@ export class TextEditorService {
     }
 
     /**
-     * Takes a text and returns it's language
+     * Takes a text and returns its language
      * @param   {string} text
      *
      * @returns {Language} language of the text

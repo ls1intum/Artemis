@@ -130,7 +130,7 @@ export class TextAssessmentService {
      * @param participationId id of the participation the submission belongs to
      * @param submissionId id of the submission for which the feedback items should be retrieved of type {number}
      * @param correctionRound
-     * @param resultId instructors can results by id
+     * @param resultId id of the searched result (if instructors search for a specific result)
      */
     public getFeedbackDataForExerciseSubmission(participationId: number, submissionId: number, correctionRound = 0, resultId?: number): Observable<StudentParticipation> {
         let params = new HttpParams();

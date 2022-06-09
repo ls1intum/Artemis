@@ -59,7 +59,7 @@ describe('CourseManagementStatisticsComponent', () => {
     it('should initialize', () => {
         const statisticsService = jest.spyOn(service, 'getCourseStatistics').mockReturnValue(of(returnValue));
         fixture.detectChanges();
-        expect(statisticsService).toHaveBeenCalledTimes(1);
+        expect(statisticsService).toHaveBeenCalledOnce();
     });
 
     it('should trigger when tab changed', fakeAsync(() => {
@@ -71,7 +71,7 @@ describe('CourseManagementStatisticsComponent', () => {
         button.click();
 
         tick();
-        expect(tabSpy).toHaveBeenCalledTimes(1);
+        expect(tabSpy).toHaveBeenCalledOnce();
         expect(component.currentSpan).toBe(SpanType.MONTH);
     }));
 });

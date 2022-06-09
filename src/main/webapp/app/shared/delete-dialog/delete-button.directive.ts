@@ -25,7 +25,7 @@ export class DeleteButtonDirective implements OnInit {
 
     /**
      * This method appends classes and type property to the button on which directive was used, additionally adds a span tag with delete text.
-     * We can't use component, as Angular would wrap it in it's own tag and this will break button grouping that we are using for other buttons.
+     * We can't use component, as Angular would wrap it in its own tag and this will break button grouping that we are using for other buttons.
      */
     ngOnInit() {
         // set button classes and submit property

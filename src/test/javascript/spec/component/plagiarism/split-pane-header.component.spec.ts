@@ -66,14 +66,14 @@ describe('Plagiarism Split Pane Header Component', () => {
             files: { currentValue: files } as SimpleChange,
         });
 
-        expect(comp.selectFile.emit).toHaveBeenCalledTimes(1);
+        expect(comp.selectFile.emit).toHaveBeenCalledOnce();
         expect(comp.selectFile.emit).toHaveBeenCalledWith(files[0].file);
     });
 
     it('does not find an active file', () => {
         const activeFile = comp.hasActiveFile();
 
-        expect(activeFile).toBe(false);
+        expect(activeFile).toBeFalse();
     });
 
     it('returns the active file', () => {
@@ -91,19 +91,19 @@ describe('Plagiarism Split Pane Header Component', () => {
         comp.handleFileSelect(files[idx], idx);
 
         expect(comp.activeFileIndex).toBe(idx);
-        expect(comp.showFiles).toBe(false);
-        expect(comp.selectFile.emit).toHaveBeenCalledTimes(1);
+        expect(comp.showFiles).toBeFalse();
+        expect(comp.selectFile.emit).toHaveBeenCalledOnce();
         expect(comp.selectFile.emit).toHaveBeenCalledWith(files[idx].file);
     });
 
     it('has no files', () => {
-        expect(comp.hasFiles()).toBe(false);
+        expect(comp.hasFiles()).toBeFalse();
     });
 
     it('has files', () => {
         comp.files = files;
 
-        expect(comp.hasFiles()).toBe(true);
+        expect(comp.hasFiles()).toBeTrue();
     });
 
     it('toggles "show files"', () => {
@@ -112,7 +112,7 @@ describe('Plagiarism Split Pane Header Component', () => {
 
         comp.toggleShowFiles();
 
-        expect(comp.showFiles).toBe(true);
+        expect(comp.showFiles).toBeTrue();
     });
 
     it('does not toggle "show files"', () => {
@@ -120,6 +120,6 @@ describe('Plagiarism Split Pane Header Component', () => {
 
         comp.toggleShowFiles();
 
-        expect(comp.showFiles).toBe(false);
+        expect(comp.showFiles).toBeFalse();
     });
 });

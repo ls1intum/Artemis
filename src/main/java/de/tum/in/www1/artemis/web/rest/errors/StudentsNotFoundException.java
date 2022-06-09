@@ -8,7 +8,7 @@ import java.util.Map;
 import de.tum.in.www1.artemis.web.rest.TeamResource;
 
 /**
- * Exception that will be thrown if the user tries to imports teams that contains students whose login or registration number cannot be found. The error response will
+ * Exception that will be thrown if the user tries to import teams that contain students whose login or registration number cannot be found. The error response will
  * contain a list of registration numbers and logins.
  */
 public class StudentsNotFoundException extends BadRequestAlertException {

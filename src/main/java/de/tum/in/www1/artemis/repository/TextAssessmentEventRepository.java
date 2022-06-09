@@ -38,7 +38,7 @@ public interface TextAssessmentEventRepository extends JpaRepository<TextAssessm
     Integer getNumberOfTutorsInvolvedInAssessingByExerciseAndCourseId(@Param("courseId") Long courseId, @Param("exerciseId") Long exerciseId);
 
     /**
-     * Query and find all events which do not have the respective fields empty. This fields are specifically needed non-empty
+     * Query and find all events which do not have the respective fields empty. These fields are specifically needed non-empty
      * for the tutor effort estimation process
      * @param courseId the id of the course to check for
      * @param textExerciseId the id of the text exercise to check for

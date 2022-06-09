@@ -31,7 +31,7 @@ import de.tum.in.www1.artemis.domain.quiz.*;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.QuizExerciseService;
-import de.tum.in.www1.artemis.service.scheduled.quiz.QuizScheduleService;
+import de.tum.in.www1.artemis.service.scheduled.cache.quiz.QuizScheduleService;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.util.QuizUtilService;
 import de.tum.in.www1.artemis.web.rest.dto.QuizBatchJoinDTO;
@@ -1128,7 +1128,7 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
             assertThat(shortAnswerQuestion.getCorrectMappings()).hasSize(2);
             assertThat(shortAnswerQuestion.getCorrectMappings()).hasSize(2);
 
-            // add a solution with an mapping onto spot number 0
+            // add a solution with a mapping onto spot number 0
             ShortAnswerSolution newSolution = new ShortAnswerSolution();
             newSolution.setText("text");
             newSolution.setId(3L);
@@ -1276,7 +1276,7 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
     }
 
     /**
-     * test non instructors cant create quiz exercises
+     * test non-instructors cant create quiz exercises
      * */
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
@@ -1292,7 +1292,7 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
     }
 
     /**
-     * test non instructors cant get all quiz exercises
+     * test non-instructors cant get all quiz exercises
      * */
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
@@ -1309,7 +1309,7 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
     }
 
     /**
-     * test non instructors cant perform start-now, set-visible or open-for-practice on quiz exercises
+     * test non-instructors can't perform start-now, set-visible or open-for-practice on quiz exercises
      * */
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
@@ -1328,7 +1328,7 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
     }
 
     /**
-     * test non instructors cant see the exercise if it is not set to visible
+     * test non-instructors can't see the exercise if it is not set to visible
      * */
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
@@ -1344,7 +1344,7 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
     }
 
     /**
-     * test non instructors cant delete an exercise
+     * test non-instructors cant delete an exercise
      * */
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
@@ -1374,7 +1374,7 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
     }
 
     /**
-     * test students not in course cant get quiz exercises
+     * test students not in course can't get quiz exercises
      * */
     @Test
     @WithMockUser(username = "student1", roles = "USER")
@@ -1389,7 +1389,7 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
     }
 
     /**
-     * test non instructors in this course cant re-evaluate quiz exercises
+     * test non-instructors in this course cant re-evaluate quiz exercises
      * */
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
