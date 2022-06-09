@@ -37,6 +37,7 @@ export abstract class ExamAction implements BaseEntity {
     public id?: number;
     public examActivityId?: number;
     public timestamp: dayjs.Dayjs = dayjs();
+    public ceiledTimestamp?: dayjs.Dayjs;
     public readonly type: ExamActionType;
 
     protected constructor(examActionEvent: ExamActionType) {

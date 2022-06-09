@@ -49,7 +49,7 @@ describe('Total Actions Chart Component', () => {
     it('should call initData on init with actions', () => {
         const now = dayjs();
         // GIVEN
-        comp.examActions = createActions().map((action) => {
+        comp.receivedExamActions = createActions().map((action) => {
             action.timestamp = now;
             return action;
         });
@@ -58,6 +58,6 @@ describe('Total Actions Chart Component', () => {
         comp.ngOnInit();
 
         // THEN
-        expect(comp.ngxData).toEqual([{ name: 'actions', series: [{ name: pipe.transform(now, 'short'), value: comp.examActions.length }] }]);
+        expect(comp.ngxData).toEqual([{ name: 'actions', series: [{ name: pipe.transform(now, 'short'), value: comp.receivedExamActions.length }] }]);
     });
 });

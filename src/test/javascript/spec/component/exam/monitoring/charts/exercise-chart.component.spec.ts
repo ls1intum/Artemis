@@ -60,7 +60,7 @@ describe('Exercise Chart Component', () => {
         action.examActivityId = 1;
 
         comp.exam = exam;
-        comp.examActions = [action];
+        comp.receivedExamActions = [action];
 
         // WHEN
         comp.ngOnInit();
@@ -77,7 +77,7 @@ describe('Exercise Chart Component', () => {
         action.examActivityId = 1;
 
         comp.exam = exam;
-        comp.examActions = [...actions, action];
+        comp.receivedExamActions = [...actions, action];
 
         // WHEN
         comp.ngOnInit();

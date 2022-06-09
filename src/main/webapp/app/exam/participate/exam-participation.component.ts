@@ -638,14 +638,14 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                 switch (submissionToSync.exercise.type) {
                     case ExerciseType.TEXT:
                         this.textSubmissionService.update(submissionToSync.submission as TextSubmission, submissionToSync.exercise.id!).subscribe({
-                            next: () => this.onSaveSubmissionSuccess(submissionToSync.submission, forceSave, automatically),
-                            error: (error: HttpErrorResponse) => this.onSaveSubmissionError(error, forceSave, automatically),
+                            next: () => this.onSaveSubmissionSuccess(submissionToSync.submission, submissionToSync.exercise.id!, forceSave, automatically),
+                            error: (error: HttpErrorResponse) => this.onSaveSubmissionError(error, submissionToSync.exercise.id!, forceSave, automatically),
                         });
                         break;
                     case ExerciseType.MODELING:
                         this.modelingSubmissionService.update(submissionToSync.submission as ModelingSubmission, submissionToSync.exercise.id!).subscribe({
-                            next: () => this.onSaveSubmissionSuccess(submissionToSync.submission, forceSave, automatically),
-                            error: (error: HttpErrorResponse) => this.onSaveSubmissionError(error, forceSave, automatically),
+                            next: () => this.onSaveSubmissionSuccess(submissionToSync.submission, submissionToSync.exercise.id!, forceSave, automatically),
+                            error: (error: HttpErrorResponse) => this.onSaveSubmissionError(error, submissionToSync.exercise.id!, forceSave, automatically),
                         });
                         break;
                     case ExerciseType.PROGRAMMING:
@@ -653,8 +653,8 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                         break;
                     case ExerciseType.QUIZ:
                         this.examParticipationService.updateQuizSubmission(submissionToSync.exercise.id!, submissionToSync.submission as QuizSubmission).subscribe({
-                            next: () => this.onSaveSubmissionSuccess(submissionToSync.submission, forceSave, automatically),
-                            error: (error: HttpErrorResponse) => this.onSaveSubmissionError(error, forceSave, automatically),
+                            next: () => this.onSaveSubmissionSuccess(submissionToSync.submission, submissionToSync.exercise.id!, forceSave, automatically),
+                            error: (error: HttpErrorResponse) => this.onSaveSubmissionError(error, submissionToSync.exercise.id!, forceSave, automatically),
                         });
                         break;
                     case ExerciseType.FILE_UPLOAD:
@@ -669,20 +669,24 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         this.currentPageComponents.filter((component) => component.hasUnsavedChanges()).forEach((component) => component.updateSubmissionFromView());
     }
 
-    private onSaveSubmissionSuccess(submission: Submission, lastSavedForced: boolean, lastSavedAutomatically: boolean) {
+    private onSaveSubmissionSuccess(submission: Submission, exerciseId: number, lastSavedForced: boolean, lastSavedAutomatically: boolean) {
         this.examParticipationService.setLastSaveFailed(false, this.courseId, this.examId);
         this.examMonitoringService.handleActionEvent(
             this.studentExam,
-            new SavedExerciseAction(lastSavedForced, submission.id, false, lastSavedAutomatically),
+            new SavedExerciseAction(lastSavedForced, submission.id, exerciseId, false, lastSavedAutomatically),
             this.exam.monitoring!,
         );
         submission.isSynced = true;
         submission.submitted = true;
     }
 
-    private onSaveSubmissionError(error: HttpErrorResponse, lastSavedForced: boolean, lastSavedAutomatically: boolean) {
+    private onSaveSubmissionError(error: HttpErrorResponse, exerciseId: number, lastSavedForced: boolean, lastSavedAutomatically: boolean) {
         this.examParticipationService.setLastSaveFailed(true, this.courseId, this.examId);
-        this.examMonitoringService.handleActionEvent(this.studentExam, new SavedExerciseAction(lastSavedForced, undefined, true, lastSavedAutomatically), this.exam.monitoring!);
+        this.examMonitoringService.handleActionEvent(
+            this.studentExam,
+            new SavedExerciseAction(lastSavedForced, undefined, exerciseId, true, lastSavedAutomatically),
+            this.exam.monitoring!,
+        );
 
         if (error.status === 401) {
             // Unauthorized means the user needs to log in to resume

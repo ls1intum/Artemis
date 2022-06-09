@@ -18,13 +18,13 @@ export function getColor(index: number) {
 }
 
 /**
- * Groups actions by timestamp.
+ * Groups actions by ceiled timestamp or timestamp.
  * @param examActions array of actions
  * @return grouped actions
  */
 export function groupActionsByTimestamp(examActions: ExamAction[]) {
     return groupBy(examActions, (action: ExamAction) => {
-        return action.timestamp;
+        return action.ceiledTimestamp ?? action.timestamp;
     });
 }
 

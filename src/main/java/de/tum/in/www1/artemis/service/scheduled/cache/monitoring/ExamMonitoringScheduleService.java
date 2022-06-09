@@ -24,6 +24,7 @@ import de.tum.in.www1.artemis.domain.exam.monitoring.ExamActivity;
 import de.tum.in.www1.artemis.repository.ExamRepository;
 import de.tum.in.www1.artemis.repository.StudentExamRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
+import de.tum.in.www1.artemis.service.WebsocketMessagingService;
 import de.tum.in.www1.artemis.service.scheduled.cache.Cache;
 
 @Service
@@ -39,11 +40,15 @@ public class ExamMonitoringScheduleService {
 
     private final StudentExamRepository studentExamRepository;
 
-    public ExamMonitoringScheduleService(HazelcastInstance hazelcastInstance, ExamRepository examRepository, StudentExamRepository studentExamRepository) {
+    private final WebsocketMessagingService messagingService;
+
+    public ExamMonitoringScheduleService(HazelcastInstance hazelcastInstance, ExamRepository examRepository, StudentExamRepository studentExamRepository,
+            WebsocketMessagingService messagingService) {
         this.threadPoolTaskScheduler = hazelcastInstance.getScheduledExecutorService(Constants.HAZELCAST_MONITORING_SCHEDULER);
         this.examCache = new ExamCache(hazelcastInstance);
         this.examRepository = examRepository;
         this.studentExamRepository = studentExamRepository;
+        this.messagingService = messagingService;
     }
 
     /**
@@ -96,6 +101,9 @@ public class ExamMonitoringScheduleService {
             examAction.setExamActivity(examActivity);
             examActivity.addExamAction(examAction);
             updateExamActivity(examId, studentExamId, examActivity);
+
+            // send message to subscribers
+            messagingService.sendMessage("/topic/exam-monitoring/" + examId + "/action", examAction);
         }
     }
 

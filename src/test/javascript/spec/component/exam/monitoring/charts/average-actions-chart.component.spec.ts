@@ -54,7 +54,7 @@ describe('Average Actions Chart Component', () => {
     `('should call initData on init with actions', (param: { amount: number }) => {
         const now = dayjs();
         // GIVEN
-        comp.examActions = createActions().map((action) => {
+        comp.receivedExamActions = createActions().map((action) => {
             action.timestamp = now;
             return action;
         });
@@ -64,6 +64,6 @@ describe('Average Actions Chart Component', () => {
         comp.ngOnInit();
 
         // THEN
-        expect(comp.ngxData).toEqual([{ name: 'actions', series: [{ name: pipe.transform(now, 'short'), value: comp.examActions.length / comp.registeredStudents }] }]);
+        expect(comp.ngxData).toEqual([{ name: 'actions', series: [{ name: pipe.transform(now, 'short'), value: comp.receivedExamActions.length / comp.registeredStudents }] }]);
     });
 });

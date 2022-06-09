@@ -1,25 +1,27 @@
-import { Component, Input, OnChanges, OnInit } from '@angular/core';
+import { Component, Input, OnChanges, OnInit, OnDestroy } from '@angular/core';
 import { Exam } from 'app/entities/exam.model';
 import { getSwitchedExerciseActionsGroupedByActivityId, insertNgxDataAndColorForExerciseMap } from 'app/exam/monitoring/charts/monitoring-chart';
 import { ExamAction, SwitchedExerciseAction } from 'app/entities/exam-user-activity.model';
 import { ChartComponent } from 'app/exam/monitoring/charts/chart.component';
+import { ExamMonitoringWebsocketService } from '../../exam-monitoring-websocket.service';
+import { ActivatedRoute } from '@angular/router';
 
 @Component({
     selector: 'jhi-exercise-navigation-chart',
     templateUrl: './exercise-navigation-chart.component.html',
 })
-export class ExerciseNavigationChartComponent extends ChartComponent implements OnInit, OnChanges {
+export class ExerciseNavigationChartComponent extends ChartComponent implements OnInit, OnChanges, OnDestroy {
     // Input
     @Input()
     exam: Exam;
-    @Input()
-    examActions: ExamAction[] = [];
 
-    constructor() {
-        super('exercise-navigation-chart', false);
+    constructor(route: ActivatedRoute, examMonitoringWebsocketService: ExamMonitoringWebsocketService) {
+        super(route, examMonitoringWebsocketService, 'exercise-navigation-chart', false);
     }
 
     ngOnInit(): void {
+        this.initSubscriptions();
+        this.initRenderRate(15);
         this.initData();
     }
 
@@ -27,12 +29,16 @@ export class ExerciseNavigationChartComponent extends ChartComponent implements 
         this.initData();
     }
 
+    ngOnDestroy(): void {
+        this.endSubscriptions();
+    }
+
     /**
      * Create and initialize the data for the chart.
      */
     initData() {
         const exerciseAmountMap: Map<number, number> = new Map();
-        const groupedByActivityId = getSwitchedExerciseActionsGroupedByActivityId(this.examActions);
+        const groupedByActivityId = getSwitchedExerciseActionsGroupedByActivityId(this.receivedExamActions);
 
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
         for (const [_, value] of Object.entries(groupedByActivityId)) {
@@ -43,5 +49,13 @@ export class ExerciseNavigationChartComponent extends ChartComponent implements 
             }
         }
         insertNgxDataAndColorForExerciseMap(this.exam, exerciseAmountMap, this.ngxData, this.ngxColor);
+        // Re-trigger change detection
+        this.ngxData = [...this.ngxData];
+        this.ngxColor = Object.assign({}, this.ngxColor);
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    filterRenderedData(examAction: ExamAction): boolean {
+        return true;
     }
 }

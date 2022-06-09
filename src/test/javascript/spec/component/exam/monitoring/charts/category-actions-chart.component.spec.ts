@@ -55,13 +55,13 @@ describe('Category Actions Chart Component', () => {
     it('should call initData on init with actions', () => {
         const now = dayjs();
         // GIVEN
-        comp.examActions = createActions().map((action) => {
+        comp.receivedExamActions = createActions().map((action) => {
             action.timestamp = now;
             return action;
         });
 
         const chartSeriesData: NgxChartsMultiSeriesDataEntry[] = [];
-        comp.examActions.forEach((action) => {
+        comp.receivedExamActions.forEach((action) => {
             chartSeriesData.push({ name: action.type, series: [{ name: pipe.transform(now, 'short'), value: 1 }] });
         });
 

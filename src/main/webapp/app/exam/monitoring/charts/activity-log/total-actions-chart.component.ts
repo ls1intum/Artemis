@@ -1,24 +1,24 @@
-import { Component, Input, OnChanges, OnInit } from '@angular/core';
+import { Component, OnChanges, OnInit, OnDestroy } from '@angular/core';
 import { getColor, groupActionsByTimestamp } from 'app/exam/monitoring/charts/monitoring-chart';
 import { ExamAction } from 'app/entities/exam-user-activity.model';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ChartComponent } from 'app/exam/monitoring/charts/chart.component';
 import { NgxChartsSingleSeriesDataEntry } from 'app/shared/chart/ngx-charts-datatypes';
+import { ExamMonitoringWebsocketService } from '../../exam-monitoring-websocket.service';
+import { ActivatedRoute } from '@angular/router';
 
 @Component({
     selector: 'jhi-total-actions-chart',
     templateUrl: './total-actions-chart.component.html',
 })
-export class TotalActionsChartComponent extends ChartComponent implements OnInit, OnChanges {
-    // Input
-    @Input()
-    examActions: ExamAction[];
-
-    constructor(private artemisDatePipe: ArtemisDatePipe) {
-        super('total-actions-chart', false, [getColor(2)]);
+export class TotalActionsChartComponent extends ChartComponent implements OnInit, OnChanges, OnDestroy {
+    constructor(route: ActivatedRoute, examMonitoringWebsocketService: ExamMonitoringWebsocketService, private artemisDatePipe: ArtemisDatePipe) {
+        super(route, examMonitoringWebsocketService, 'total-actions-chart', false, [getColor(2)]);
     }
 
     ngOnInit(): void {
+        this.initSubscriptions();
+        this.initRenderRate(15);
         this.initData();
     }
 
@@ -26,17 +26,26 @@ export class TotalActionsChartComponent extends ChartComponent implements OnInit
         this.initData();
     }
 
+    ngOnDestroy(): void {
+        this.endSubscriptions();
+    }
+
     /**
      * Create and initialize the data for the chart.
      */
     initData() {
-        const groupedByTimestamp = groupActionsByTimestamp(this.examActions);
+        const groupedByTimestamp = groupActionsByTimestamp(this.filteredExamActions);
         const chartData: NgxChartsSingleSeriesDataEntry[] = [];
         let amount = 0;
         for (const [key, value] of Object.entries(groupedByTimestamp)) {
             amount += value.length;
-            chartData.push({ name: this.artemisDatePipe.transform(key, 'short'), value: amount });
+            chartData.push({ name: this.artemisDatePipe.transform(key, 'short', true), value: amount });
         }
         this.ngxData = [{ name: 'actions', series: chartData }];
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    filterRenderedData(examAction: ExamAction): boolean {
+        return true;
     }
 }

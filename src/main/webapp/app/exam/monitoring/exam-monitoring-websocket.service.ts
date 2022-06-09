@@ -1,19 +1,17 @@
 import { Injectable } from '@angular/core';
-import { BehaviorSubject, tap } from 'rxjs';
+import { BehaviorSubject } from 'rxjs';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { Exam } from 'app/entities/exam.model';
 import { ExamAction, ExamActivity } from 'app/entities/exam-user-activity.model';
+import dayjs from 'dayjs/esm';
 
-// TODO: Add topic
-const EXAM_MONITORING_TOPIC = (examId: number) => ``;
+const EXAM_MONITORING_TOPIC = (examId: number) => `/topic/exam-monitoring/${examId}/action`;
 
 export interface IExamMonitoringWebsocketService {}
 
 @Injectable({ providedIn: 'root' })
 export class ExamMonitoringWebsocketService implements IExamMonitoringWebsocketService {
     examActionObservables: Map<number, BehaviorSubject<ExamAction | undefined>> = new Map<number, BehaviorSubject<ExamAction | undefined>>();
-    // TODO: Store actions grouped by activity in cache
-    examActivities: Map<number, ExamActivity[]>;
     openExamMonitoringWebsocketSubscriptions: Map<number, string> = new Map<number, string>();
 
     constructor(private jhiWebsocketService: JhiWebsocketService) {}
@@ -24,6 +22,7 @@ export class ExamMonitoringWebsocketService implements IExamMonitoringWebsocketS
      * @param examAction received exam action
      */
     private notifyExamActionSubscribers = (exam: Exam, examAction: ExamAction) => {
+        this.prepareAction(examAction);
         const examActionObservable = this.examActionObservables.get(exam.id!);
         if (!examActionObservable) {
             this.examActionObservables.set(exam.id!, new BehaviorSubject(examAction));
@@ -42,10 +41,7 @@ export class ExamMonitoringWebsocketService implements IExamMonitoringWebsocketS
         this.openExamMonitoringWebsocketSubscriptions.set(exam.id!, topic);
 
         this.jhiWebsocketService.subscribe(topic);
-        this.jhiWebsocketService
-            .receive(topic)
-            .pipe(tap((exmAction: ExamAction) => this.notifyExamActionSubscribers(exam, exmAction)))
-            .subscribe();
+        this.jhiWebsocketService.receive(topic).subscribe((exmAction: ExamAction) => this.notifyExamActionSubscribers(exam, exmAction));
     }
 
     /**
@@ -73,5 +69,23 @@ export class ExamMonitoringWebsocketService implements IExamMonitoringWebsocketS
         const topic = EXAM_MONITORING_TOPIC(exam.id!);
         this.jhiWebsocketService.unsubscribe(topic);
         this.openExamMonitoringWebsocketSubscriptions.delete(exam.id!);
+    }
+
+    /**
+     *
+     * @param examId
+     */
+    public getExamMonitoringObservable(examId: number): BehaviorSubject<ExamAction | undefined> | undefined {
+        return this.examActionObservables.get(examId);
+    }
+
+    /**
+     *
+     * @param examAction
+     * @private
+     */
+    private prepareAction(examAction: ExamAction) {
+        examAction.timestamp = dayjs(examAction.timestamp);
+        examAction.ceiledTimestamp = examAction.timestamp.add(15 - (examAction.timestamp.get('seconds') % 15), 'seconds').startOf('seconds');
     }
 }

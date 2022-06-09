@@ -46,7 +46,7 @@ export class MonitoringOverviewComponent implements OnInit, OnDestroy {
 
             this.examMonitoringSubscription = this.examMonitoringWebsocketService.subscribeForLatestExamAction(this.exam!).subscribe((examAction) => {
                 if (examAction) {
-                    this.examActions = [...this.examActions, examAction];
+                    this.examActions.push(examAction);
                 }
             });
         });
@@ -55,6 +55,7 @@ export class MonitoringOverviewComponent implements OnInit, OnDestroy {
     ngOnDestroy(): void {
         this.examSubscription?.unsubscribe();
         this.routeSubscription?.unsubscribe();
+        this.examMonitoringWebsocketService.unsubscribeForExamAction(this.exam!);
         this.examMonitoringSubscription?.unsubscribe();
     }
 }

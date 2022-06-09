@@ -73,7 +73,7 @@ describe('Exercise Navigation Chart Component', () => {
         action3.examActivityId = param.activity[2];
 
         comp.exam = exam;
-        comp.examActions = [action1, action2, action3];
+        comp.receivedExamActions = [action1, action2, action3];
 
         // WHEN
         comp.ngOnInit();
