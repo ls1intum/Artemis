@@ -99,8 +99,8 @@ public class EntityTitleCacheService {
         titleMap.put("organization" + organizationId, title);
     }
 
-    public String setHintTitle(Long hintId, Long exerciseId, String title) {
-        return titleMap.computeIfAbsent("hint" + hintId + "-" + exerciseId, ignored -> exerciseHintRepository.getHintTitle(hintId));
+    public void setHintTitle(Long hintId, Long exerciseId, String title) {
+        titleMap.put("hint" + hintId + "-" + exerciseId, title);
     }
 
     /**
