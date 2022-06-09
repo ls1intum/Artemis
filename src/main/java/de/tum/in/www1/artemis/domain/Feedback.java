@@ -216,7 +216,7 @@ public class Feedback extends DomainObject {
     }
 
     public void setPositiveViaCredits() {
-        this.positive = credits >= 0;
+        this.positive = credits != null && credits >= 0;
     }
 
     public FeedbackType getType() {

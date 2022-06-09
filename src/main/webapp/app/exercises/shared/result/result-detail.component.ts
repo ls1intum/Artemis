@@ -342,7 +342,7 @@ export class ResultDetailComponent implements OnInit {
     private createProgrammingExerciseScaFeedbackItem(feedback: Feedback): FeedbackItem {
         const scaCategory = feedback.text!.substring(STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER.length);
         const scaIssue = StaticCodeAnalysisIssue.fromFeedback(feedback);
-        const text = `${scaIssue.rule}: ${scaIssue.message}`;
+        const text = this.showTestDetails ? `${scaIssue.rule}: ${scaIssue.message}` : scaIssue.message;
         const previewText = ResultDetailComponent.computeFeedbackPreviewText(text);
 
         return {
