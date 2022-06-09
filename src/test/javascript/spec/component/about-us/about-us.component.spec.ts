@@ -45,7 +45,7 @@ describe('AboutUsComponent', () => {
         fixture.detectChanges();
         tick();
         fixture.whenStable().then(() => {
-            expect(getStaticJsonFromArtemisServerStub).toHaveBeenCalledTimes(1);
+            expect(getStaticJsonFromArtemisServerStub).toHaveBeenCalledOnce();
         });
     }));
 
@@ -68,8 +68,8 @@ describe('AboutUsComponent', () => {
         fixture.detectChanges();
         tick();
         fixture.whenStable().then(() => {
-            expect(getStaticJsonFromArtemisServerStub).toHaveBeenCalledTimes(1);
-            expect(getProfileInfoStub).toHaveBeenCalledTimes(1);
+            expect(getStaticJsonFromArtemisServerStub).toHaveBeenCalledOnce();
+            expect(getProfileInfoStub).toHaveBeenCalledOnce();
             expect(fixture.debugElement.nativeElement.querySelector('#contributorsName').innerHTML).toBe(fullName);
         });
     }));

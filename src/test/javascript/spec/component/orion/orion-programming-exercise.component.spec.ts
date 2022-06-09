@@ -43,7 +43,7 @@ describe('OrionProgrammingExerciseComponent', () => {
 
         comp.ngOnInit();
 
-        expect(orionStateStub).toHaveBeenCalledTimes(1);
+        expect(orionStateStub).toHaveBeenCalledOnce();
         expect(orionStateStub).toHaveBeenCalledWith();
         expect(comp.orionState).toEqual(orionState);
     });
@@ -54,7 +54,7 @@ describe('OrionProgrammingExerciseComponent', () => {
 
         comp.editInIDE(programmingExercise);
 
-        expect(editExerciseSpy).toHaveBeenCalledTimes(1);
+        expect(editExerciseSpy).toHaveBeenCalledOnce();
         expect(editExerciseSpy).toHaveBeenCalledWith(programmingExercise);
     });
 
@@ -62,7 +62,7 @@ describe('OrionProgrammingExerciseComponent', () => {
         const navigateSpy = jest.spyOn(router, 'navigate');
         comp.openOrionEditor({ ...programmingExercise, templateParticipation: { id: 1234 } });
 
-        expect(navigateSpy).toHaveBeenCalledTimes(1);
+        expect(navigateSpy).toHaveBeenCalledOnce();
         expect(navigateSpy).toHaveBeenCalledWith(['code-editor', 'ide', 456, 'admin', 1234]);
     });
 
@@ -73,7 +73,7 @@ describe('OrionProgrammingExerciseComponent', () => {
 
         comp.openOrionEditor(programmingExercise);
 
-        expect(navigateStub).toHaveBeenCalledTimes(1);
+        expect(navigateStub).toHaveBeenCalledOnce();
         expect(navigateStub).toHaveBeenCalledWith(['code-editor', 'ide', 456, 'admin', undefined]);
     });
 });

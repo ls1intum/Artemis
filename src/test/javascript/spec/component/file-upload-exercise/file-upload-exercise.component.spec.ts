@@ -89,7 +89,7 @@ describe('FileUploadExercise Management Component', () => {
         comp.ngOnInit();
         comp.deleteFileUploadExercise(456);
         expect(fileUploadExerciseService.delete).toHaveBeenCalledWith(456);
-        expect(fileUploadExerciseService.delete).toHaveBeenCalledTimes(1);
+        expect(fileUploadExerciseService.delete).toHaveBeenCalledOnce();
     });
 
     it('Should return exercise id', () => {

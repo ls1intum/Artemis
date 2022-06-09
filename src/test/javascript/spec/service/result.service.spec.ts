@@ -134,7 +134,7 @@ describe('ResultService', () => {
 
         tick();
 
-        expect(httpStub).toHaveBeenCalledTimes(1);
+        expect(httpStub).toHaveBeenCalledOnce();
         expect(httpStub).toHaveBeenCalledWith(`api/exercises/${programmingExercise.id}/results-with-points-per-criterion`, expect.anything());
     }));
 

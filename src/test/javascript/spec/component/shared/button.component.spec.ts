@@ -109,7 +109,7 @@ describe('ButtonComponent', () => {
 
         const button = getButton();
         expect(button).not.toBe(null);
-        expect(button.disabled).toBe(true);
+        expect(button.disabled).toBeTrue();
         button.click();
         tick();
 
@@ -125,11 +125,11 @@ describe('ButtonComponent', () => {
 
         const button = getButton();
         expect(button).not.toBe(null);
-        expect(button.disabled).toBe(false);
+        expect(button.disabled).toBeFalse();
         button.click();
         tick();
 
-        expect(clickSpy).toHaveBeenCalledTimes(1);
+        expect(clickSpy).toHaveBeenCalledOnce();
     }));
 
     it('should show loading indicator when loading is set', fakeAsync(() => {
@@ -141,7 +141,7 @@ describe('ButtonComponent', () => {
 
         const button = getButton();
         expect(button).not.toBe(null);
-        expect(button.disabled).toBe(true);
+        expect(button.disabled).toBeTrue();
         const loadingIcon = getLoading();
         expect(loadingIcon).not.toBe(null);
 

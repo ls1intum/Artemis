@@ -116,7 +116,7 @@ describe('ProgrammingExerciseInstructionComponent', () => {
         expect(subscribeForLatestResultOfParticipationStub).toHaveBeenCalledOnce();
         expect(subscribeForLatestResultOfParticipationStub).toHaveBeenCalledWith(participation.id, true, exercise.id);
         expect(comp.participationSubscription).not.toEqual(oldSubscription);
-        expect(comp.isInitial).toBe(true);
+        expect(comp.isInitial).toBeTrue();
     });
 
     it('should try to fetch README.md from assignment repository if no problemStatement was provided', () => {
@@ -141,7 +141,7 @@ describe('ProgrammingExerciseInstructionComponent', () => {
         fixture.detectChanges();
         triggerChanges(comp);
         fixture.detectChanges();
-        expect(comp.isLoading).toBe(true);
+        expect(comp.isLoading).toBeTrue();
         expect(debugElement.query(By.css('#programming-exercise-instructions-loading'))).not.toBe(null);
         expect(debugElement.query(By.css('#programming-exercise-instructions-content'))).toBe(null);
         expect(getFileStub).toHaveBeenCalledOnce();
@@ -152,8 +152,8 @@ describe('ProgrammingExerciseInstructionComponent', () => {
         expect(loadInitialResultStub).toHaveBeenCalledOnce();
         expect(comp.latestResult).toEqual(result);
         expect(updateMarkdownStub).toHaveBeenCalledOnce();
-        expect(comp.isInitial).toBe(false);
-        expect(comp.isLoading).toBe(false);
+        expect(comp.isInitial).toBeFalse();
+        expect(comp.isLoading).toBeFalse();
         fixture.detectChanges();
         expect(debugElement.query(By.css('#programming-exercise-instructions-loading'))).toBe(null);
         expect(debugElement.query(By.css('#programming-exercise-instructions-content'))).not.toBe(null);
@@ -186,8 +186,8 @@ describe('ProgrammingExerciseInstructionComponent', () => {
         expect(loadInitialResultStub).toHaveBeenCalledOnce();
         expect(comp.latestResult).toEqual(result);
         expect(updateMarkdownStub).toHaveBeenCalledOnce();
-        expect(comp.isInitial).toBe(false);
-        expect(comp.isLoading).toBe(false);
+        expect(comp.isInitial).toBeFalse();
+        expect(comp.isLoading).toBeFalse();
         fixture.detectChanges();
         expect(debugElement.query(By.css('#programming-exercise-instructions-loading'))).toBe(null);
         expect(debugElement.query(By.css('#programming-exercise-instructions-content'))).not.toBe(null);
@@ -215,7 +215,7 @@ describe('ProgrammingExerciseInstructionComponent', () => {
 
         fixture.detectChanges();
         triggerChanges(comp);
-        expect(comp.isLoading).toBe(true);
+        expect(comp.isLoading).toBeTrue();
         expect(getFileStub).toHaveBeenCalledOnce();
         expect(getFileStub).toHaveBeenCalledWith(participation.id, 'README.md');
 
@@ -225,8 +225,8 @@ describe('ProgrammingExerciseInstructionComponent', () => {
         expect(comp.latestResult).toBe(undefined);
         expect(updateMarkdownStub).not.toHaveBeenCalled();
         expect(noInstructionsAvailableSpy).toHaveBeenCalledOnce();
-        expect(comp.isInitial).toBe(false);
-        expect(comp.isLoading).toBe(false);
+        expect(comp.isInitial).toBeFalse();
+        expect(comp.isLoading).toBeFalse();
         fixture.detectChanges();
         expect(debugElement.query(By.css('#programming-exercise-instructions-loading'))).toBe(null);
         expect(debugElement.query(By.css('#programming-exercise-instructions-content'))).not.toBe(null);
@@ -306,8 +306,8 @@ describe('ProgrammingExerciseInstructionComponent', () => {
         expect(getLatestResultWithFeedbacks).toHaveBeenCalledOnce();
         expect(getLatestResultWithFeedbacks).toHaveBeenCalledWith(participation.id);
         expect(updateMarkdownStub).toHaveBeenCalledOnce();
-        expect(comp.isInitial).toBe(false);
-        expect(comp.isLoading).toBe(false);
+        expect(comp.isInitial).toBeFalse();
+        expect(comp.isLoading).toBeFalse();
     });
 
     it('should create the steps task icons for the tasks in problem statement markdown (non legacy case)', fakeAsync(() => {

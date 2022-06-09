@@ -102,7 +102,7 @@ describe('ListOfComplaintsComponent', () => {
             activatedRoute.setParameters({ tutorId: 12, courseId: 34, exerciseId: 56, complaintType: ComplaintType.MORE_FEEDBACK });
             comp.ngOnInit();
 
-            expect(findAllByTutorIdForExerciseIdStub).toHaveBeenCalledTimes(1);
+            expect(findAllByTutorIdForExerciseIdStub).toHaveBeenCalledOnce();
             expect(findAllByTutorIdForExerciseIdStub).toHaveBeenCalledWith(12, 56, ComplaintType.MORE_FEEDBACK);
             verifyNotCalled(findAllByTutorIdForCourseIdStub, findAllByExerciseIdStub, findAllByCourseIdAndExamIdStub, findAllByCourseIdStub);
         });
@@ -111,7 +111,7 @@ describe('ListOfComplaintsComponent', () => {
             activatedRoute.setParameters({ tutorId: 12, courseId: 34, examId: 56, complaintType: ComplaintType.MORE_FEEDBACK });
             comp.ngOnInit();
 
-            expect(findAllByTutorIdForCourseIdStub).toHaveBeenCalledTimes(1);
+            expect(findAllByTutorIdForCourseIdStub).toHaveBeenCalledOnce();
             expect(findAllByTutorIdForCourseIdStub).toHaveBeenCalledWith(12, 34, ComplaintType.MORE_FEEDBACK);
             verifyNotCalled(findAllByTutorIdForExerciseIdStub, findAllByExerciseIdStub, findAllByCourseIdAndExamIdStub, findAllByCourseIdStub);
         });
@@ -120,7 +120,7 @@ describe('ListOfComplaintsComponent', () => {
             activatedRoute.setParameters({ tutorId: 12, courseId: 34, complaintType: ComplaintType.MORE_FEEDBACK });
             comp.ngOnInit();
 
-            expect(findAllByTutorIdForCourseIdStub).toHaveBeenCalledTimes(1);
+            expect(findAllByTutorIdForCourseIdStub).toHaveBeenCalledOnce();
             expect(findAllByTutorIdForCourseIdStub).toHaveBeenCalledWith(12, 34, ComplaintType.MORE_FEEDBACK);
             verifyNotCalled(findAllByTutorIdForExerciseIdStub, findAllByExerciseIdStub, findAllByCourseIdAndExamIdStub, findAllByCourseIdStub);
         });
@@ -129,7 +129,7 @@ describe('ListOfComplaintsComponent', () => {
             activatedRoute.setParameters({ courseId: 12, exerciseId: 34, complaintType: ComplaintType.MORE_FEEDBACK });
             comp.ngOnInit();
 
-            expect(findAllByExerciseIdStub).toHaveBeenCalledTimes(1);
+            expect(findAllByExerciseIdStub).toHaveBeenCalledOnce();
             expect(findAllByExerciseIdStub).toHaveBeenCalledWith(34, ComplaintType.MORE_FEEDBACK);
             verifyNotCalled(findAllByTutorIdForCourseIdStub, findAllByTutorIdForCourseIdStub, findAllByCourseIdAndExamIdStub, findAllByCourseIdStub);
         });
@@ -138,7 +138,7 @@ describe('ListOfComplaintsComponent', () => {
             activatedRoute.setParameters({ courseId: 12, examId: 34, complaintType: ComplaintType.MORE_FEEDBACK });
             comp.ngOnInit();
 
-            expect(findAllByCourseIdAndExamIdStub).toHaveBeenCalledTimes(1);
+            expect(findAllByCourseIdAndExamIdStub).toHaveBeenCalledOnce();
             expect(findAllByCourseIdAndExamIdStub).toHaveBeenCalledWith(12, 34);
             verifyNotCalled(findAllByTutorIdForCourseIdStub, findAllByTutorIdForCourseIdStub, findAllByExerciseIdStub, findAllByCourseIdStub);
         });
@@ -147,7 +147,7 @@ describe('ListOfComplaintsComponent', () => {
             activatedRoute.setParameters({ courseId: 12, complaintType: ComplaintType.MORE_FEEDBACK });
             comp.ngOnInit();
 
-            expect(findAllByCourseIdStub).toHaveBeenCalledTimes(1);
+            expect(findAllByCourseIdStub).toHaveBeenCalledOnce();
             expect(findAllByCourseIdStub).toHaveBeenCalledWith(12, ComplaintType.MORE_FEEDBACK);
             verifyNotCalled(findAllByTutorIdForExerciseIdStub, findAllByTutorIdForCourseIdStub, findAllByExerciseIdStub, findAllByCourseIdAndExamIdStub);
         });
@@ -157,7 +157,7 @@ describe('ListOfComplaintsComponent', () => {
             comp.loadComplaints();
 
             expect(comp.complaintsToShow).toIncludeSameMembers([complaint3]);
-            expect(comp.hasStudentInformation).toBe(false);
+            expect(comp.hasStudentInformation).toBeFalse();
         });
 
         it('process complaints with student information', () => {
@@ -165,13 +165,13 @@ describe('ListOfComplaintsComponent', () => {
             comp.loadComplaints();
 
             expect(comp.complaintsToShow).toIncludeSameMembers([complaint3, complaint4]);
-            expect(comp.hasStudentInformation).toBe(true);
+            expect(comp.hasStudentInformation).toBeTrue();
 
             findAllByCourseIdStub.mockReturnValue(of({ body: [complaint1, complaint2, complaint3, complaint5] } as EntityResponseTypeArray));
             comp.loadComplaints();
 
             expect(comp.complaintsToShow).toIncludeSameMembers([complaint3]);
-            expect(comp.hasStudentInformation).toBe(true);
+            expect(comp.hasStudentInformation).toBeTrue();
         });
     });
 
@@ -180,17 +180,17 @@ describe('ListOfComplaintsComponent', () => {
         const freeComplaints = [complaint3, complaint4];
         findAllByCourseIdStub.mockReturnValue(of({ body: complaints } as EntityResponseTypeArray));
         comp.loadComplaints();
-        expect(comp.showAddressedComplaints).toBe(false);
+        expect(comp.showAddressedComplaints).toBeFalse();
         expect(comp.complaintsToShow).toIncludeSameMembers(freeComplaints);
 
         comp.triggerAddressedComplaints();
 
-        expect(comp.showAddressedComplaints).toBe(true);
+        expect(comp.showAddressedComplaints).toBeTrue();
         expect(comp.complaintsToShow).toIncludeSameMembers(complaints);
 
         comp.triggerAddressedComplaints();
 
-        expect(comp.showAddressedComplaints).toBe(false);
+        expect(comp.showAddressedComplaints).toBeFalse();
         expect(comp.complaintsToShow).toIncludeSameMembers(freeComplaints);
     });
 
@@ -205,7 +205,7 @@ describe('ListOfComplaintsComponent', () => {
 
             comp.calculateComplaintLockStatus(complaint);
 
-            expect(translateService.instant).toHaveBeenCalledTimes(1);
+            expect(translateService.instant).toHaveBeenCalledOnce();
             expect(translateService.instant).toHaveBeenCalledWith('artemisApp.locks.notUnlocked');
         });
 
@@ -227,7 +227,7 @@ describe('ListOfComplaintsComponent', () => {
 
             comp.calculateComplaintLockStatus(complaint);
 
-            expect(translateService.instant).toHaveBeenCalledTimes(1);
+            expect(translateService.instant).toHaveBeenCalledOnce();
             expect(translateService.instant).toHaveBeenCalledWith('artemisApp.locks.lockInformationYou', { endDate: `${endDate.valueOf()}` });
         });
 
@@ -249,7 +249,7 @@ describe('ListOfComplaintsComponent', () => {
 
             comp.calculateComplaintLockStatus(complaint);
 
-            expect(translateService.instant).toHaveBeenCalledTimes(1);
+            expect(translateService.instant).toHaveBeenCalledOnce();
             expect(translateService.instant).toHaveBeenCalledWith('artemisApp.locks.lockInformation', { endDate: `${endDate.valueOf()}`, user: reviewLogin });
         });
     });
@@ -285,7 +285,7 @@ describe('ListOfComplaintsComponent', () => {
         comp.openAssessmentEditor(complaint);
 
         expect(comp.correctionRound).toBe(0);
-        expect(router.navigate).toHaveBeenCalledTimes(1);
+        expect(router.navigate).toHaveBeenCalledOnce();
         expect(router.navigate).toHaveBeenCalledWith(
             ['/course-management', `${courseId}`, 'text-exercises', `${exerciseId}`, 'participations', `${participationId}`, 'submissions', `${submissionId}`, 'assessment'],
             { queryParams: { 'correction-round': 0 } },
