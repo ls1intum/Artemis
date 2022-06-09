@@ -31,10 +31,9 @@ public class MigrationEntry20220608_194500 extends MigrationEntry {
      */
     @Override
     public void execute() {
-        int listSize = 100;
         List<Result> results = resultRepository.findAll();
 
-        results.removeIf(result -> !result.getResultString().matches(".*of.*passed.*"));
+        results.removeIf(result -> result.getResultString() == null || !result.getResultString().matches(".*of.*passed.*"));
 
         LOGGER.info("Found {} results to process.", results.size());
 
@@ -44,6 +43,11 @@ public class MigrationEntry20220608_194500 extends MigrationEntry {
         });
     }
 
+    /*
+     * Takes a result string such as "21 of 42 passed, 42 issues" and splits it into its different components: The number of tests, the number of passed tests and the number of
+     * issues.
+     * @param results Batch of results that should get processed
+     */
     private void processResults(List<Result> results) {
         results.forEach(result -> {
             String[] resultStringParts = result.getResultString().split(", ");
@@ -56,6 +60,7 @@ public class MigrationEntry20220608_194500 extends MigrationEntry {
 
                     result.setPassedTestCaseCount(passedTestCasesAmount);
                     result.setTestCaseCount(testCasesAmount);
+                    result.setResultString(null);
                 }
                 // Matches e.g. "9 issues"
                 else if (resultStringPart.contains("issue")) {
@@ -63,6 +68,7 @@ public class MigrationEntry20220608_194500 extends MigrationEntry {
                     int codeIssueCount = Integer.parseInt(issueParts[0]);
 
                     result.setCodeIssueCount(codeIssueCount);
+                    result.setResultString(null);
                 }
             }
         });

@@ -128,6 +128,11 @@ public class Result extends DomainObject {
         return resultString;
     }
 
+    @Deprecated
+    public void setResultString(String resultString) {
+        this.resultString = resultString;
+    }
+
     public ZonedDateTime getCompletionDate() {
         return completionDate;
     }
