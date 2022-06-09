@@ -159,7 +159,7 @@ describe('ExamMonitoringService', () => {
 
         expect(spy).toHaveBeenCalledOnce();
 
-        expect(topic).toEqual(`topic/exam-monitoring/${exam.id}/actions`);
+        expect(topic).toEqual(`/topic/exam-monitoring/${exam.id}/actions`);
     });
 
     it.each(createExamActions())('should call websocket send', (action: ExamAction) => {

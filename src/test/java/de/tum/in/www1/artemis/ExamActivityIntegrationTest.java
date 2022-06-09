@@ -25,7 +25,6 @@ import de.tum.in.www1.artemis.domain.exam.monitoring.actions.*;
 import de.tum.in.www1.artemis.repository.ExamRepository;
 import de.tum.in.www1.artemis.repository.StudentExamRepository;
 import de.tum.in.www1.artemis.service.scheduled.cache.monitoring.ExamMonitoringScheduleService;
-import de.tum.in.www1.artemis.util.RequestUtilService;
 import de.tum.in.www1.artemis.web.rest.ExamActivityResource;
 
 public class ExamActivityIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
@@ -41,9 +40,6 @@ public class ExamActivityIntegrationTest extends AbstractSpringIntegrationBamboo
 
     @Autowired
     private ExamActivityResource examActivityResource;
-
-    @Autowired
-    private RequestUtilService request;
 
     private Course course;
 
@@ -124,7 +120,6 @@ public class ExamActivityIntegrationTest extends AbstractSpringIntegrationBamboo
     public void testExamActionPresentInCache(ExamActionType examActionType) {
         ExamAction examAction = createExamActionBasedOnType(examActionType);
 
-        // TODO - replace with websocket call
         examActivityResource.updatePerformedExamActions(exam.getId(), examAction);
 
         var examActivity = examMonitoringScheduleService.getExamActivityFromCache(exam.getId(), studentExam.getId());
@@ -139,7 +134,6 @@ public class ExamActivityIntegrationTest extends AbstractSpringIntegrationBamboo
     public void testExamActionNotPresentInCache(ExamActionType examActionType) {
         ExamAction examAction = createExamActionBasedOnType(examActionType);
 
-        // TODO - replace with websocket call
         examActivityResource.updatePerformedExamActions(exam.getId(), examAction);
 
         examMonitoringScheduleService.executeExamActivitySaveTask(exam.getId());
@@ -154,7 +148,6 @@ public class ExamActivityIntegrationTest extends AbstractSpringIntegrationBamboo
         List<ExamAction> examActions = Arrays.stream(ExamActionType.values()).map(this::createExamActionBasedOnType).toList();
 
         for (ExamAction examAction : examActions) {
-            // TODO - replace with websocket call
             examActivityResource.updatePerformedExamActions(exam.getId(), examAction);
         }
 
@@ -175,7 +168,6 @@ public class ExamActivityIntegrationTest extends AbstractSpringIntegrationBamboo
         exam.setMonitoring(false);
         examRepository.save(exam);
 
-        // TODO - replace with websocket call
         examActivityResource.updatePerformedExamActions(exam.getId(), examAction);
 
         // Currently, we don't apply any filtering - so there should be an activity and action in the cache

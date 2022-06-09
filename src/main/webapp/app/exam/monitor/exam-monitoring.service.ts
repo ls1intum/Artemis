@@ -66,7 +66,7 @@ export class ExamMonitoringService {
      * @return the websocket topic
      */
     public static buildWebsocketTopic(examId: number): string {
-        return `topic/exam-monitoring/${examId}/actions`;
+        return `/topic/exam-monitoring/${examId}/actions`;
     }
 
     /**

@@ -26,7 +26,7 @@ public class ExamActivityResource {
      * @param examId    the exam to which the student exams belong to
      * @param action    action performed by the user
      */
-    @MessageMapping("topic/exam-monitoring/{examId}/actions")
+    @MessageMapping("/topic/exam-monitoring/{examId}/actions")
     public void updatePerformedExamActions(@DestinationVariable Long examId, @Payload ExamAction action) {
         examMonitoringScheduleService.addExamActions(examId, action);
     }
