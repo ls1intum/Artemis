@@ -8,6 +8,8 @@ import java.util.Set;
 import javax.validation.constraints.NotNull;
 
 import org.springframework.dao.IncorrectResultSizeDataAccessException;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -103,6 +105,23 @@ public interface GradingScaleRepository extends JpaRepository<GradingScale, Long
      * @return a list of grading scales for the exam
      */
     List<GradingScale> findAllByExamId(@Param("examId") Long examId);
+
+    /**
+     * Query which fetches all the modeling exercises for which the user is instructor in the course and matching the search criteria.
+     * As JPQL doesn't support unions, the distinction for course exercises and exam exercises is made with sub queries.
+     *
+     * @param partialTitle exercise title search term
+     * @param groups user groups
+     * @param pageable Pageable
+     * @return Page with search results
+     */
+    @Query("""
+            SELECT gradingScale
+            FROM GradingScale gradingScale
+            WHERE (gradingScale.course.instructorGroupName IN :groups AND gradingScale.course.title LIKE %:partialTitle%)
+                OR (gradingScale.exam.course.instructorGroupName IN :groups AND gradingScale.exam.title LIKE %:partialTitle%)
+            """)
+    Page<GradingScale> findByTitleInCourseOrExamAndUserHasAccessToCourse(@Param("partialTitle") String partialTitle, @Param("groups") Set<String> groups, Pageable pageable);
 
     /**
      * Maps a grade percentage to a valid grade step within the grading scale or throws an exception if no match was found
