@@ -83,12 +83,15 @@ public class ModelingExerciseResource {
 
     private final ModelAssessmentKnowledgeService modelAssessmentKnowledgeService;
 
+    private final EntityTitleCacheService entityTitleCacheService;
+
     public ModelingExerciseResource(ModelingExerciseRepository modelingExerciseRepository, UserRepository userRepository, CourseService courseService,
             AuthorizationCheckService authCheckService, CourseRepository courseRepository, ParticipationRepository participationRepository,
             ModelingExerciseService modelingExerciseService, ExerciseDeletionService exerciseDeletionService, PlagiarismResultRepository plagiarismResultRepository,
             ModelingExerciseImportService modelingExerciseImportService, SubmissionExportService modelingSubmissionExportService, GroupNotificationService groupNotificationService,
             ExerciseService exerciseService, GradingCriterionRepository gradingCriterionRepository, ModelingPlagiarismDetectionService modelingPlagiarismDetectionService,
-            InstanceMessageSendService instanceMessageSendService, ModelClusterRepository modelClusterRepository, ModelAssessmentKnowledgeService modelAssessmentKnowledgeService) {
+            InstanceMessageSendService instanceMessageSendService, ModelClusterRepository modelClusterRepository, ModelAssessmentKnowledgeService modelAssessmentKnowledgeService,
+            EntityTitleCacheService entityTitleCacheService) {
         this.modelingExerciseRepository = modelingExerciseRepository;
         this.courseService = courseService;
         this.modelingExerciseService = modelingExerciseService;
@@ -107,6 +110,7 @@ public class ModelingExerciseResource {
         this.instanceMessageSendService = instanceMessageSendService;
         this.modelClusterRepository = modelClusterRepository;
         this.modelAssessmentKnowledgeService = modelAssessmentKnowledgeService;
+        this.entityTitleCacheService = entityTitleCacheService;
     }
 
     // TODO: most of these calls should be done in the context of a course
@@ -144,6 +148,7 @@ public class ModelingExerciseResource {
         ModelingExercise result = modelingExerciseRepository.save(modelingExercise);
         modelingExerciseService.scheduleOperations(result.getId());
         groupNotificationService.checkNotificationsForNewExercise(modelingExercise, instanceMessageSendService);
+        entityTitleCacheService.setExerciseTitle(result.getId(), result.getTitle());
 
         return ResponseEntity.created(new URI("/api/modeling-exercises/" + result.getId()))
                 .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, result.getId().toString())).body(result);
@@ -209,6 +214,7 @@ public class ModelingExerciseResource {
 
         groupNotificationService.checkAndCreateAppropriateNotificationsWhenUpdatingExercise(modelingExerciseBeforeUpdate, updatedModelingExercise, notificationText,
                 instanceMessageSendService);
+        entityTitleCacheService.setExerciseTitle(updatedModelingExercise.getId(), updatedModelingExercise.getTitle());
 
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, modelingExercise.getId().toString()))
                 .body(updatedModelingExercise);

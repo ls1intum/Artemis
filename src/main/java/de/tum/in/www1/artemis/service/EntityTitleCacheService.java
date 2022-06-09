@@ -71,8 +71,36 @@ public class EntityTitleCacheService {
         return titleMap.computeIfAbsent("organization" + organizationId, ignored -> organizationRepository.getOrganizationTitle(organizationId));
     }
 
-    public String getHintTitle(Long hintId) {
-        return titleMap.computeIfAbsent("hint" + hintId, ignored -> exerciseHintRepository.getHintTitle(hintId));
+    public String getHintTitle(Long hintId, Long exerciseId) {
+        return titleMap.computeIfAbsent("hint" + hintId + "-" + exerciseId, ignored -> exerciseHintRepository.getHintTitle(hintId));
+    }
+
+    public void setDiagramTitle(Long diagramID, String title) {
+        titleMap.put("diagram" + diagramID, title);
+    }
+
+    public void setCourseTitle(Long courseID, String title) {
+        titleMap.put("course" + courseID, title);
+    }
+
+    public void setExamTitle(Long examID, String title) {
+        titleMap.put("exam" + examID, title);
+    }
+
+    public void setExerciseTitle(Long exerciseId, String title) {
+        titleMap.put("exercise" + exerciseId, title);
+    }
+
+    public void setLectureTitle(Long lectureId, String title) {
+        titleMap.put("lecture" + lectureId, title);
+    }
+
+    public void setOrganizationTitle(Long organizationId, String title) {
+        titleMap.put("organization" + organizationId, title);
+    }
+
+    public String setHintTitle(Long hintId, Long exerciseId, String title) {
+        return titleMap.computeIfAbsent("hint" + hintId + "-" + exerciseId, ignored -> exerciseHintRepository.getHintTitle(hintId));
     }
 
     /**

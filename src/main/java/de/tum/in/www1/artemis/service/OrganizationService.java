@@ -23,10 +23,14 @@ public class OrganizationService {
 
     private final CourseRepository courseRepository;
 
-    public OrganizationService(OrganizationRepository organizationRepository, UserRepository userRepository, CourseRepository courseRepository) {
+    private final EntityTitleCacheService entityTitleCacheService;
+
+    public OrganizationService(OrganizationRepository organizationRepository, UserRepository userRepository, CourseRepository courseRepository,
+            EntityTitleCacheService entityTitleCacheService) {
         this.organizationRepository = organizationRepository;
         this.userRepository = userRepository;
         this.courseRepository = courseRepository;
+        this.entityTitleCacheService = entityTitleCacheService;
     }
 
     /**
@@ -64,6 +68,7 @@ public class OrganizationService {
         Organization addedOrganization = save(organization);
         addedOrganization = organizationRepository.findByIdWithEagerUsersAndCoursesElseThrow(addedOrganization.getId());
         index(addedOrganization);
+        entityTitleCacheService.setOrganizationTitle(organization.getId(), addedOrganization.getName());
         return addedOrganization;
     }
 
@@ -90,6 +95,7 @@ public class OrganizationService {
         if (indexingRequired) {
             index(oldOrganization);
         }
+        entityTitleCacheService.setOrganizationTitle(organization.getId(), organization.getName());
         return organizationRepository.save(oldOrganization);
     }
 

@@ -91,6 +91,7 @@ public class LectureResource {
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, lecture.getCourse(), null);
 
         Lecture result = lectureRepository.save(lecture);
+        entityTitleCacheService.setLectureTitle(result.getId(), result.getTitle());
         return ResponseEntity.created(new URI("/api/lectures/" + result.getId()))
                 .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, result.getId().toString())).body(result);
     }
@@ -118,6 +119,7 @@ public class LectureResource {
         lecture.setLectureUnits(originalLecture.getLectureUnits());
 
         Lecture result = lectureRepository.save(lecture);
+        entityTitleCacheService.setLectureTitle(result.getId(), result.getTitle());
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, lecture.getId().toString())).body(result);
     }
 

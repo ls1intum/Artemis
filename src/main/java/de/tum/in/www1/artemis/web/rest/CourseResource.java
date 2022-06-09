@@ -175,6 +175,7 @@ public class CourseResource {
 
         courseService.createOrValidateGroups(course);
         Course result = courseRepository.save(course);
+        entityTitleCacheService.setCourseTitle(result.getId(), result.getTitle());
         return ResponseEntity.created(new URI("/api/courses/" + result.getId()))
                 .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, Course.ENTITY_NAME, result.getTitle())).body(result);
     }
@@ -271,6 +272,7 @@ public class CourseResource {
                 .ifPresent(userManagementService -> userManagementService.updateCoursePermissions(result, oldInstructorGroup, oldEditorGroup, oldTeachingAssistantGroup));
         optionalCiUserManagementService
                 .ifPresent(ciUserManagementService -> ciUserManagementService.updateCoursePermissions(result, oldInstructorGroup, oldEditorGroup, oldTeachingAssistantGroup));
+        entityTitleCacheService.setCourseTitle(result.getId(), result.getTitle());
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, Course.ENTITY_NAME, updatedCourse.getTitle())).body(result);
     }
 

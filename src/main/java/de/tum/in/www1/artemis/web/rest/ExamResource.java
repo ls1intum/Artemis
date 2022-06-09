@@ -143,6 +143,7 @@ public class ExamResource {
         if (result.isMonitoring()) {
             examMonitoringScheduleService.scheduleExamActivitySave(result.getId());
         }
+        entityTitleCacheService.setExamTitle(result.getId(), result.getTitle());
 
         return ResponseEntity.created(new URI("/api/courses/" + courseId + "/exams/" + result.getId()))
                 .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, result.getTitle())).body(result);
@@ -204,6 +205,8 @@ public class ExamResource {
             Exam examWithExercises = examService.findByIdWithExerciseGroupsAndExercisesElseThrow(result.getId());
             examService.scheduleModelingExercises(examWithExercises);
         }
+
+        entityTitleCacheService.setExamTitle(result.getId(), result.getTitle());
 
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, result.getTitle())).body(result);
     }
