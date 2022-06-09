@@ -81,7 +81,7 @@ describe('CourseDetailLineChartComponent', () => {
 
         component.ngOnChanges();
 
-        expect(component.startDateAlreadyPassed).toBe(false);
+        expect(component.startDateAlreadyPassed).toBeFalse();
     });
 
     it('should show only 2 weeks if start date is 1 week ago', () => {
@@ -116,7 +116,7 @@ describe('CourseDetailLineChartComponent', () => {
         expect(component.data[0].series[0].value).toBe(24);
         expect(component.data[0].series[1].value).toBe(84);
         expect(component.data[0].series[1].name).toBe('calendar_week ' + endDate.isoWeek());
-        expect(component.startDateDisplayed).toBe(true);
+        expect(component.startDateDisplayed).toBeTrue();
     });
 
     it('should limit the next view if start date is reached', () => {
@@ -135,7 +135,7 @@ describe('CourseDetailLineChartComponent', () => {
         expect(component.data[0].series).toHaveLength(1);
         expect(component.data[0].series[0].value).toBe(84);
         expect(component.data[0].series[0].name).toBe('calendar_week ' + startDate.isoWeek());
-        expect(getStatisticsDataMock).toHaveBeenCalledTimes(1);
+        expect(getStatisticsDataMock).toHaveBeenCalledOnce();
         expect(getStatisticsDataMock).toHaveBeenCalledWith(42, -1);
     });
 });

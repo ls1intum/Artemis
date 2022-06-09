@@ -86,7 +86,7 @@ describe('ProgrammingExerciseGradingService', () => {
             .pipe(tap((newTestCases) => (testCasesExercise1 = newTestCases)))
             .subscribe();
 
-        expect(getStub).toHaveBeenCalledTimes(1);
+        expect(getStub).toHaveBeenCalledOnce();
         expect(testCasesExercise1).toEqual(testCases1);
         expect(testCasesExercise2).toBe(undefined);
 
@@ -113,7 +113,7 @@ describe('ProgrammingExerciseGradingService', () => {
             .pipe(tap((newTestCases) => (testCasesExercise1 = newTestCases)))
             .subscribe();
 
-        expect(getStub).toHaveBeenCalledTimes(1);
+        expect(getStub).toHaveBeenCalledOnce();
         expect(testCasesExercise1).toEqual(testCases1);
     });
 
