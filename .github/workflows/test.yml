@@ -93,7 +93,7 @@ jobs:
               node-version: '${{ env.node }}'
               cache: 'npm'
         - name: Install Dependencies
-          run: npm install
+          run: npm install --force
         - name: Compile TypeScript Test Files With Typechecking
           run: npm run compile:ts:tests
         - name: TypeScript Test Without Typechecking
@@ -119,7 +119,7 @@ jobs:
                 node-version: '${{ env.node }}'
                 cache: 'npm'
           - name: Install Dependencies
-            run: npm install
+            run: npm install --force
           - name: Compile TypeScript Test Files With Typechecking
             run: npm run compile:ts:tests
           - name: TypeScript Test (Selection) Without Typechecking
@@ -136,7 +136,7 @@ jobs:
         node-version: '${{ env.node }}'
         cache: 'npm'
     - name: Install Dependencies
-      run: npm install
+      run: npm install --force
     - name: TypeScript Formatting
       run: npm run prettier:check
     - name: TypeScript Code Style
@@ -154,6 +154,6 @@ jobs:
         node-version: '${{ env.node }}'
         cache: 'npm'
     - name: Install Dependencies
-      run: npm install
+      run: npm install --force
     - name: Compile TypeScript Files With Typechecking
       run: npm run compile:ts
