@@ -109,7 +109,7 @@ public class EntityTitleCacheService {
      * @param config the {@link Config} the EntityTitleCache-specific configuration should be added to
      */
     public static void configureHazelcast(Config config) {
-        // @formatter:on
+        // @formatter:off
         EvictionConfig evictionConfig = new EvictionConfig()
                 .setEvictionPolicy(EvictionPolicy.NONE);
         NearCacheConfig nearCacheConfig = new NearCacheConfig()
@@ -122,6 +122,6 @@ public class EntityTitleCacheService {
                 .setEvictionConfig(evictionConfig)
                 .setCacheLocalEntries(true);
         config.getMapConfig(HAZELCAST_TITLE_CACHE).setNearCacheConfig(nearCacheConfig);
-        // @formatter:off
+        // @formatter:on
     }
 }
