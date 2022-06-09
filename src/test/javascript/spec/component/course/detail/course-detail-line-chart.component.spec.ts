@@ -162,6 +162,6 @@ describe('CourseDetailLineChartComponent', () => {
 
         component.toggleAverageLine();
 
-        expect(component.showAverage).toBeFalse();
+        expect(component.showAverage).toBeTrue();
     });
 });
