@@ -153,7 +153,7 @@ describe('SCA category distribution chart', () => {
             component.onSelect(event);
 
             expect(emitStub).toHaveBeenCalledWith(77);
-            expect(component.tableFiltered).toBe(true);
+            expect(component.tableFiltered).toBeTrue();
         });
 
         it('should reset the table correctly', () => {
@@ -162,7 +162,7 @@ describe('SCA category distribution chart', () => {
             component.resetTableFilter();
 
             expect(emitStub).toHaveBeenCalledWith(-5);
-            expect(component.tableFiltered).toBe(false);
+            expect(component.tableFiltered).toBeFalse();
         });
     });
 });

@@ -62,13 +62,13 @@ describe('ProgrammingExercise Trigger All Button Component', () => {
         const button = fixture.debugElement.nativeElement.querySelector('#trigger-all-button button');
         button.click();
 
-        expect(modalService.open).toHaveBeenCalledTimes(1);
+        expect(modalService.open).toHaveBeenCalledOnce();
         expect(modalService.open).toHaveBeenCalledWith(ProgrammingExerciseInstructorTriggerAllDialogComponent, {
             size: 'lg',
             backdrop: 'static',
         });
 
-        expect(submissionService.triggerInstructorBuildForAllParticipationsOfExercise).toHaveBeenCalledTimes(1);
+        expect(submissionService.triggerInstructorBuildForAllParticipationsOfExercise).toHaveBeenCalledOnce();
         expect(submissionService.triggerInstructorBuildForAllParticipationsOfExercise).toHaveBeenCalledWith(programmingExercise.id);
     });
 });

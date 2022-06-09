@@ -80,9 +80,9 @@ describe('ParticipationWebsocketService', () => {
 
     it('should setup a result subscriptions with the websocket service on subscribeForLatestResult for instructors', () => {
         participationWebsocketService.subscribeForLatestResultOfParticipation(participation.id!, false, exerciseId2);
-        expect(subscribeSpy).toHaveBeenCalledTimes(1);
+        expect(subscribeSpy).toHaveBeenCalledOnce();
         expect(subscribeSpy).toHaveBeenCalledWith(participationInstructorResultTopic);
-        expect(receiveStub).toHaveBeenCalledTimes(1);
+        expect(receiveStub).toHaveBeenCalledOnce();
         expect(receiveStub).toHaveBeenCalledWith(participationInstructorResultTopic);
         expect(unsubscribeSpy).not.toHaveBeenCalled();
 
@@ -92,16 +92,16 @@ describe('ParticipationWebsocketService', () => {
         expect(participationWebsocketService.openPersonalWebsocketSubscription).toBe(undefined);
 
         expect(participationWebsocketService.resultObservables.size).toBe(1);
-        expect(participationWebsocketService.resultObservables.has(participation.id!)).toBe(true);
+        expect(participationWebsocketService.resultObservables.has(participation.id!)).toBeTrue();
 
         expect(participationWebsocketService.participationObservable).toBe(undefined);
     });
 
     it('should setup a result subscriptions with the websocket service on subscribeForLatestResult for students', () => {
         participationWebsocketService.subscribeForLatestResultOfParticipation(participation.id!, true);
-        expect(subscribeSpy).toHaveBeenCalledTimes(1);
+        expect(subscribeSpy).toHaveBeenCalledOnce();
         expect(subscribeSpy).toHaveBeenCalledWith(participationPersonalResultTopic);
-        expect(receiveStub).toHaveBeenCalledTimes(1);
+        expect(receiveStub).toHaveBeenCalledOnce();
         expect(receiveStub).toHaveBeenCalledWith(participationPersonalResultTopic);
         expect(unsubscribeSpy).not.toHaveBeenCalled();
 
@@ -111,7 +111,7 @@ describe('ParticipationWebsocketService', () => {
         expect(participationWebsocketService.openPersonalWebsocketSubscription).toBe(participationPersonalResultTopic);
 
         expect(participationWebsocketService.resultObservables.size).toBe(1);
-        expect(participationWebsocketService.resultObservables.has(participation.id!)).toBe(true);
+        expect(participationWebsocketService.resultObservables.has(participation.id!)).toBeTrue();
 
         expect(participationWebsocketService.participationObservable).toBe(undefined);
     });
@@ -125,7 +125,7 @@ describe('ParticipationWebsocketService', () => {
         // Emit new result from websocket
         receiveResultForParticipationSubject.next(newRatedResult);
 
-        expect(resultSpy).toHaveBeenCalledTimes(1);
+        expect(resultSpy).toHaveBeenCalledOnce();
         expect(resultSpy).toHaveBeenCalledWith(newRatedResult);
     });
 
@@ -138,7 +138,7 @@ describe('ParticipationWebsocketService', () => {
         // Emit new result from websocket
         receiveResultForParticipationSubject.next(newUnratedResult);
 
-        expect(resultSpy).toHaveBeenCalledTimes(1);
+        expect(resultSpy).toHaveBeenCalledOnce();
         expect(resultSpy).toHaveBeenCalledWith(newUnratedResult);
     });
 
@@ -156,9 +156,9 @@ describe('ParticipationWebsocketService', () => {
         // Emit new result from websocket
         receiveResultForParticipationSubject.next(newRatedResult);
 
-        expect(resultSpy).toHaveBeenCalledTimes(1);
+        expect(resultSpy).toHaveBeenCalledOnce();
         expect(resultSpy).toHaveBeenCalledWith(newRatedResult);
-        expect(participationSpy).toHaveBeenCalledTimes(1);
+        expect(participationSpy).toHaveBeenCalledOnce();
         expect(participationSpy).toHaveBeenCalledWith({ ...participation, results: [...participation.results!, newRatedResult] });
         expect(participationWebsocketService.cachedParticipations.get(participation.id!)).toEqual({ ...participation, results: [...participation.results!, newRatedResult] });
     });
@@ -177,9 +177,9 @@ describe('ParticipationWebsocketService', () => {
         // Emit new result from websocket
         receiveResultForParticipationSubject.next(newUnratedResult);
 
-        expect(resultSpy).toHaveBeenCalledTimes(1);
+        expect(resultSpy).toHaveBeenCalledOnce();
         expect(resultSpy).toHaveBeenCalledWith(newUnratedResult);
-        expect(participationSpy).toHaveBeenCalledTimes(1);
+        expect(participationSpy).toHaveBeenCalledOnce();
         expect(participationSpy).toHaveBeenCalledWith({ ...participation, results: [...participation.results!, newUnratedResult] });
         expect(participationWebsocketService.cachedParticipations.get(participation.id!)).toEqual({
             ...participation,
@@ -207,9 +207,9 @@ describe('ParticipationWebsocketService', () => {
         expect(participationWebsocketService.cachedParticipations.get(participation.id!)).toEqual({ ...participation, results: [...participation.results!, newRatedResult] });
         expect(participationWebsocketService.cachedParticipations.get(participation2.id!)).toEqual(participation2);
 
-        expect(resultSpy).toHaveBeenCalledTimes(1);
+        expect(resultSpy).toHaveBeenCalledOnce();
         expect(resultSpy).toHaveBeenCalledWith(newRatedResult);
-        expect(participationSpy).toHaveBeenCalledTimes(1);
+        expect(participationSpy).toHaveBeenCalledOnce();
         expect(participationSpy).toHaveBeenCalledWith({ ...participation, results: [...participation.results!, newRatedResult] });
     });
 
@@ -233,9 +233,9 @@ describe('ParticipationWebsocketService', () => {
         expect(participationWebsocketService.cachedParticipations.size).toBe(1);
         expect(participationWebsocketService.cachedParticipations.get(participationWithoutResult.id!)).toEqual({ ...participationWithoutResult, results: [newRatedResult] });
 
-        expect(resultSpy).toHaveBeenCalledTimes(1);
+        expect(resultSpy).toHaveBeenCalledOnce();
         expect(resultSpy).toHaveBeenCalledWith(newRatedResult);
-        expect(participationSpy).toHaveBeenCalledTimes(1);
+        expect(participationSpy).toHaveBeenCalledOnce();
         expect(participationSpy).toHaveBeenCalledWith({ ...participationWithoutResult, results: [newRatedResult] });
     });
 

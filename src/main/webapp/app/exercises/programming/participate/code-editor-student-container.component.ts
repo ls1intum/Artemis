@@ -26,6 +26,10 @@ import { Course } from 'app/entities/course.model';
 import { SubmissionPolicyService } from 'app/exercises/programming/manage/services/submission-policy.service';
 import { hasExerciseDueDatePassed } from 'app/exercises/shared/exercise/exercise.utils';
 import { faCircleNotch, faTimesCircle } from '@fortawesome/free-solid-svg-icons';
+import { ExerciseHint } from 'app/entities/hestia/exercise-hint.model';
+import { ExerciseHintService } from 'app/exercises/shared/exercise-hint/shared/exercise-hint.service';
+import { HttpResponse } from '@angular/common/http';
+import { AlertService } from 'app/core/util/alert.service';
 
 @Component({
     selector: 'jhi-code-editor-student',
@@ -43,6 +47,9 @@ export class CodeEditorStudentContainerComponent implements OnInit, OnDestroy {
     participation: StudentParticipation;
     exercise: ProgrammingExercise;
     course?: Course;
+
+    activatedExerciseHints?: ExerciseHint[];
+    availableExerciseHints?: ExerciseHint[];
 
     // Fatal error state: when the participation can't be retrieved, the code editor is unusable for the student
     loadingParticipation = false;
@@ -64,6 +71,8 @@ export class CodeEditorStudentContainerComponent implements OnInit, OnDestroy {
         private guidedTourService: GuidedTourService,
         private submissionPolicyService: SubmissionPolicyService,
         private route: ActivatedRoute,
+        private alertService: AlertService,
+        private exerciseHintService: ExerciseHintService,
     ) {}
 
     /**
@@ -99,6 +108,7 @@ export class CodeEditorStudentContainerComponent implements OnInit, OnDestroy {
                         if (this.participation.results && this.participation.results[0] && this.participation.results[0].feedbacks) {
                             checkSubsequentFeedbackInAssessment(this.participation.results[0].feedbacks);
                         }
+                        this.loadStudentExerciseHints();
                     }),
                 )
                 .subscribe({
@@ -178,5 +188,28 @@ export class CodeEditorStudentContainerComponent implements OnInit, OnDestroy {
             return getUnreferencedFeedback(this.latestResult.feedbacks) ?? [];
         }
         return [];
+    }
+
+    loadStudentExerciseHints() {
+        this.exerciseHintService.getActivatedExerciseHints(this.exercise.id!).subscribe((activatedRes?: HttpResponse<ExerciseHint[]>) => {
+            this.activatedExerciseHints = activatedRes!.body!;
+
+            this.exerciseHintService.getAvailableExerciseHints(this.exercise.id!).subscribe((availableRes?: HttpResponse<ExerciseHint[]>) => {
+                // filter out the activated hints from the available hints
+                this.availableExerciseHints = availableRes!.body!.filter(
+                    (availableHint) => !this.activatedExerciseHints?.some((activatedHint) => availableHint.id === activatedHint.id),
+                );
+                if (this.availableExerciseHints.length) {
+                    this.alertService.info('artemisApp.exerciseHint.availableHintsAlertMessage', {
+                        taskName: this.availableExerciseHints.first()?.programmingExerciseTask?.taskName,
+                    });
+                }
+            });
+        });
+    }
+
+    onHintActivated(exerciseHint: ExerciseHint) {
+        this.availableExerciseHints = this.availableExerciseHints?.filter((hint) => hint.id !== exerciseHint.id);
+        this.activatedExerciseHints?.push(exerciseHint);
     }
 }
