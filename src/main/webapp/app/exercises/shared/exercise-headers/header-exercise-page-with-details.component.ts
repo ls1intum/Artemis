@@ -19,6 +19,7 @@ import { SubmissionService } from 'app/exercises/shared/submission/submission.se
 @Component({
     selector: 'jhi-header-exercise-page-with-details',
     templateUrl: './header-exercise-page-with-details.component.html',
+    styleUrls: ['./header-exercise-page-with-details.component.scss'],
 })
 export class HeaderExercisePageWithDetailsComponent implements OnChanges, OnInit {
     readonly IncludedInOverallScore = IncludedInOverallScore;
@@ -144,5 +145,9 @@ export class HeaderExercisePageWithDetailsComponent implements OnChanges, OnInit
             .forEach((commitHash: string) => commitHashSet.add(commitHash));
 
         this.numberOfSubmissions = submissionCompensation + commitHashSet.size;
+    }
+
+    isNotReleased() {
+        return this.exercise.isAtLeastTutor && this.exercise.releaseDate != undefined && !dayjs(this.exercise.releaseDate).isBefore(dayjs());
     }
 }
