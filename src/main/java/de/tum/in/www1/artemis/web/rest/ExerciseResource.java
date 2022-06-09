@@ -69,10 +69,13 @@ public class ExerciseResource {
 
     private final QuizBatchService quizBatchService;
 
+    private final EntityTitleService entityTitleService;
+
     public ExerciseResource(ExerciseService exerciseService, ExerciseDeletionService exerciseDeletionService, ParticipationService participationService,
             UserRepository userRepository, ExamDateService examDateService, AuthorizationCheckService authCheckService, TutorParticipationService tutorParticipationService,
             ExampleSubmissionRepository exampleSubmissionRepository, ProgrammingExerciseRepository programmingExerciseRepository,
-            GradingCriterionRepository gradingCriterionRepository, ExerciseRepository exerciseRepository, QuizBatchService quizBatchService) {
+            GradingCriterionRepository gradingCriterionRepository, ExerciseRepository exerciseRepository, QuizBatchService quizBatchService,
+            EntityTitleService entityTitleService) {
         this.exerciseService = exerciseService;
         this.exerciseDeletionService = exerciseDeletionService;
         this.participationService = participationService;
@@ -85,6 +88,7 @@ public class ExerciseResource {
         this.exerciseRepository = exerciseRepository;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.quizBatchService = quizBatchService;
+        this.entityTitleService = entityTitleService;
     }
 
     /**
@@ -198,7 +202,7 @@ public class ExerciseResource {
     @GetMapping(value = "/exercises/{exerciseId}/title")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<String> getExerciseTitle(@PathVariable Long exerciseId) {
-        final var title = exerciseRepository.getExerciseTitle(exerciseId);
+        final var title = entityTitleService.getExerciseTitle(exerciseId);
         return title == null ? ResponseEntity.notFound().build() : ResponseEntity.ok(title);
     }
 
