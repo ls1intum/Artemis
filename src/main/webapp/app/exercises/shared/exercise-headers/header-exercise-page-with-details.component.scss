@@ -1,12 +1,9 @@
-$h3-size: 1.575rem;
-$h4-size: 1.3rem;
 #exercise-header {
     display: flex;
     flex-wrap: wrap;
     flex-direction: row;
     justify-content: flex-start;
     gap: 10px;
-
     font-size: 1.3rem;
     line-height: 1.2;
     font-weight: 300;
@@ -14,22 +11,21 @@ $h4-size: 1.3rem;
     .right-col {
         flex: 0 0 auto;
 
-        > div:not(:last-child) {
-            margin-bottom: 5px;
-        }
-
         > div {
             display: flex;
             width: 100%;
             justify-content: space-between;
             gap: 10px;
         }
+
+        > div:not(:last-child) {
+            margin-bottom: 5px;
+        }
     }
 
     .left-col {
         flex: 1 1 min-content;
         min-width: 0;
-
         display: flex;
         flex-direction: column;
         gap: 5px;
@@ -43,7 +39,6 @@ $h4-size: 1.3rem;
                 margin-bottom: 0;
                 margin-right: 10px;
                 font-size: 1.575rem;
-
                 white-space: nowrap;
                 text-overflow: ellipsis;
                 overflow: hidden;
