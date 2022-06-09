@@ -12,7 +12,7 @@ import { TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.se
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
 import { HttpHeaders, HttpResponse } from '@angular/common/http';
-import { of } from 'rxjs';
+import { BehaviorSubject, of } from 'rxjs';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { MockExerciseService } from '../../helpers/mocks/service/mock-exercise.service';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
@@ -86,6 +86,7 @@ describe('TextAssessmentDashboardComponent', () => {
                                 examId: 2,
                             }),
                         },
+                        queryParams: new BehaviorSubject({}),
                     },
                 },
             ],

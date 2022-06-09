@@ -13,6 +13,10 @@ export abstract class AbstractAssessmentDashboard {
     filteredSubmissions: Submission[];
     resetFilter = false;
 
+    /**
+     * Applies the filter based on the selection in the chart to the displayed submissions
+     * @param submissions all submissions visible in the default view
+     */
     applyChartFilter(submissions: Submission[]): void {
         if (this.filterOption === undefined) {
             return;
@@ -50,7 +54,11 @@ export abstract class AbstractAssessmentDashboard {
         }
     }
 
-    resetFilterOptions() {
+    /**
+     * Triggers the reset of the applied chart filter
+     * Also resets the "Show locked" option to "Show all" if applied together with the chart filter
+     */
+    resetFilterOptions(): void {
         this.updateFilteredSubmissions(this.submissions);
         this.filterOption = undefined;
         this.resetFilter = true;

@@ -18,17 +18,6 @@ import { map } from 'rxjs/operators';
 import { faBan, faEdit, faFolderOpen, faSort } from '@fortawesome/free-solid-svg-icons';
 import { AbstractAssessmentDashboard } from 'app/exercises/shared/dashboards/tutor/abstract-assessment-dashboard';
 
-export enum AssessmentState {
-    UNASSESSED,
-    Manual,
-    SEMI_AUTOMATIC,
-}
-
-export enum ComplaintState {
-    OPEN,
-    ADDRESSED,
-}
-
 @Component({
     templateUrl: './text-assessment-dashboard.component.html',
 })
