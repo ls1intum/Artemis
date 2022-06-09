@@ -53,16 +53,14 @@ public interface TextExerciseRepository extends JpaRepository<TextExercise, Long
     @Query("""
             SELECT te FROM TextExercise te
             WHERE (te.id IN
-                (SELECT courseTe.id
-                FROM TextExercise courseTe
-                WHERE (courseTe.course.instructorGroupName IN :groups OR courseTe.course.editorGroupName IN :groups)
+                    (SELECT courseTe.id FROM TextExercise courseTe
+                    WHERE (courseTe.course.instructorGroupName IN :groups OR courseTe.course.editorGroupName IN :groups)
                     AND (courseTe.title LIKE %:partialTitle% OR courseTe.course.title LIKE %:partialCourseTitle%))
-            or te.id IN
-                (SELECT examTe.id
-                FROM TextExercise examTe
-                WHERE (examTe.exerciseGroup.exam.course.instructorGroupName IN :groups OR examTe.exerciseGroup.exam.course.editorGroupName IN :groups)
+                OR te.id IN
+                    (SELECT examTe.id FROM TextExercise examTe
+                    WHERE (examTe.exerciseGroup.exam.course.instructorGroupName IN :groups OR examTe.exerciseGroup.exam.course.editorGroupName IN :groups)
                     AND (examTe.title LIKE %:partialTitle% OR examTe.exerciseGroup.exam.course.title LIKE %:partialCourseTitle%)))
-                """)
+                        """)
     Page<TextExercise> findByTitleInExerciseOrCourseAndUserHasAccessToCourse(@Param("partialTitle") String partialTitle, @Param("partialCourseTitle") String partialCourseTitle,
             @Param("groups") Set<String> groups, Pageable pageable);
 

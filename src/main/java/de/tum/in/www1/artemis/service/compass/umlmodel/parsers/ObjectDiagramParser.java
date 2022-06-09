@@ -18,7 +18,7 @@ import de.tum.in.www1.artemis.service.compass.umlmodel.object.*;
 public class ObjectDiagramParser {
 
     /**
-     * Create a UML object diagram from the model and relationship elements given as JSON arrays. It parses the JSON objects to corresponding Java objects and creates a
+     * Create a UML object diagram from the model and relationship elements given as JSON arrays. It parses the JSON objects to corresponding Java objects and creates an
      * object diagram containing these UML model elements.
      *
      * @param modelElements the model elements as JSON array

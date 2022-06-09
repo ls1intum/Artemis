@@ -151,7 +151,7 @@ describe('TutorEffortStatisticsComponent', () => {
 
         component.onSelect();
 
-        expect(navigateSpy).toHaveBeenCalledTimes(1);
+        expect(navigateSpy).toHaveBeenCalledOnce();
         expect(navigateSpy).toHaveBeenCalledWith(expectedArray);
     });
 

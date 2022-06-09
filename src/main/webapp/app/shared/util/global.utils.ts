@@ -12,7 +12,7 @@ export const escapeStringForUseInRegex = (text: string) => {
 
 type StringPositions = Array<{ start: number; end: number; word: string }>;
 /**
- * Insert a string that is segmented by a specified delimiter, and the a dictionary that provides the
+ * Insert a string that is segmented by a specified delimiter, and a dictionary that provides the
  * start and end positions of the segments.
  * E.g.: "word1, word2" -> [{start: 0, end: 4, word: "word1"}, {start: 6, end: 10, word: "word2"}]
  * @param stringToSegment string which should be provided segment information about

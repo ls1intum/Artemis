@@ -34,6 +34,16 @@ import { ExamPage } from 'app/entities/exam-page.model';
 import { ExamPageComponent } from 'app/exam/participate/exercises/exam-page.component';
 import { AUTOSAVE_CHECK_INTERVAL, AUTOSAVE_EXERCISE_INTERVAL } from 'app/shared/constants/exercise-exam-constants';
 import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
+import { ExamMonitoringService } from 'app/exam/monitor/exam-monitoring.service';
+import {
+    ConnectionUpdatedAction,
+    ContinuedAfterHandedInEarlyAction,
+    EndedExamAction,
+    HandedInEarlyAction,
+    SavedExerciseAction,
+    StartedExamAction,
+    SwitchedExerciseAction,
+} from 'app/entities/exam-user-activity.model';
 
 type GenerateParticipationStatus = 'generating' | 'failed' | 'success';
 
@@ -121,6 +131,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         private translateService: TranslateService,
         private alertService: AlertService,
         private courseExerciseService: CourseExerciseService,
+        private examMonitoringService: ExamMonitoringService,
     ) {
         // show only one synchronization error every 5s
         this.errorSubscription = this.synchronizationAlert.pipe(throttleTime(5000)).subscribe(() => {
@@ -186,6 +197,11 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         // listen to connect / disconnect events
         this.websocketSubscription = this.websocketService.connectionState.subscribe((status) => {
             this.disconnected = !status.connected;
+
+            // Monitor connection update
+            if (this.studentExam) {
+                this.examMonitoringService.handleActionEvent(this.studentExam, new ConnectionUpdatedAction(status.connected), this.exam.monitoring!);
+            }
         });
     }
 
@@ -226,6 +242,10 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         if (studentExam) {
             // init studentExam
             this.studentExam = studentExam;
+
+            // Monitor exam start
+            this.examMonitoringService.handleActionEvent(studentExam, new StartedExamAction(studentExam.examSessions?.last()?.id), this.exam.monitoring!);
+
             // provide exam-participation.service with exerciseId information (e.g. needed for exam notifications)
             const exercises: Exercise[] = this.studentExam.exercises!;
             const exerciseIds = exercises.map((exercise) => exercise.id).filter(Number) as number[];
@@ -241,15 +261,13 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
             // TODO: move to exam-participation.service after studentExam was retrieved
             // initialize all submissions as synced
             this.studentExam.exercises!.forEach((exercise) => {
-                // We do not support hints in an exam at the moment. Setting an empty array here disables the hint requests
-                exercise.exerciseHints = [];
                 if (exercise.studentParticipations) {
                     exercise.studentParticipations!.forEach((participation) => {
                         if (participation.submissions && participation.submissions.length > 0) {
                             participation.submissions.forEach((submission) => {
                                 submission.isSynced = true;
                                 if (submission.submitted == undefined) {
-                                    // only set submitted to false it the value was not specified before
+                                    // only set submitted to false if the value was not specified before
                                     submission.submitted = false;
                                 }
                             });
@@ -301,7 +319,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         this.autoSaveInterval = window.setInterval(() => {
             this.autoSaveTimer++;
             if (this.autoSaveTimer >= AUTOSAVE_EXERCISE_INTERVAL && !this.isOver()) {
-                this.triggerSave(false);
+                this.triggerSave(false, true);
             }
         }, AUTOSAVE_CHECK_INTERVAL);
     }
@@ -310,12 +328,15 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
      * triggered after student accepted exam end terms, will make final call to update submission on server
      */
     onExamEndConfirmed() {
+        this.examMonitoringService.handleActionEvent(this.studentExam, new EndedExamAction(), this.exam.monitoring!);
         // temporary lock the submit button in order to protect against spam
         this.handInPossible = false;
         this.submitInProgress = true;
         if (this.autoSaveInterval) {
             window.clearInterval(this.autoSaveInterval);
         }
+
+        this.examMonitoringService.saveActions(this.exam, this.studentExam, this.courseId);
 
         // Submit the exam with a timeout of 20s = 20000ms
         // If we don't receive a response within that time throw an error the subscription can then handle
@@ -330,10 +351,6 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
             .subscribe({
                 next: (studentExam: StudentExam) => {
                     this.studentExam = studentExam;
-                    this.studentExam.exercises!.forEach((exercise) => {
-                        // We do not support hints in an exam at the moment. Setting an empty array here disables the hint requests
-                        exercise.exerciseHints = [];
-                    });
                     this.alertService.addAlert({ type: AlertType.SUCCESS, message: 'artemisApp.studentExam.submitSuccessful', timeout: 20000 });
                 },
                 error: (error: Error) => {
@@ -382,6 +399,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
      * called when exam ended because the working time is over
      */
     examEnded() {
+        this.examMonitoringService.handleActionEvent(this.studentExam, new EndedExamAction(), this.exam.monitoring!);
         if (this.autoSaveInterval) {
             window.clearInterval(this.autoSaveInterval);
         }
@@ -397,9 +415,11 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         if (this.handInEarly) {
             // update local studentExam for later sync with server if the student wants to hand in early
             this.updateLocalStudentExam();
+            this.examMonitoringService.handleActionEvent(this.studentExam, new HandedInEarlyAction(), this.exam.monitoring!);
         } else if (this.studentExam?.exercises && this.activeExamPage) {
             const index = this.studentExam.exercises.findIndex((exercise) => !this.activeExamPage.isOverviewPage && exercise.id === this.activeExamPage.exercise!.id);
             this.exerciseIndex = index ? index : 0;
+            this.examMonitoringService.handleActionEvent(this.studentExam, new ContinuedAfterHandedInEarlyAction(), this.exam.monitoring!);
         }
     }
 
@@ -470,12 +490,13 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
      * @param exerciseChange
      */
     onPageChange(exerciseChange: { overViewChange: boolean; exercise?: Exercise; forceSave: boolean }): void {
+        this.examMonitoringService.handleActionEvent(this.studentExam, new SwitchedExerciseAction(exerciseChange.exercise?.id), this.exam.monitoring!);
         const activeComponent = this.activePageComponent;
         if (activeComponent) {
             activeComponent.onDeactivate();
         }
         try {
-            this.triggerSave(exerciseChange.forceSave);
+            this.triggerSave(exerciseChange.forceSave, false);
         } catch (error) {
             // an error here should never lead to the wrong exercise being shown
             captureException(error);
@@ -568,8 +589,9 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
      *      --> in this case, we can even save all submissions with isSynced = true
      *
      * @param forceSave is set to true, when the current exercise should be saved (even if there are no changes)
+     * @param automatically is set to true, when the current exercise should be saved automatically
      */
-    triggerSave(forceSave: boolean) {
+    triggerSave(forceSave: boolean, automatically: boolean) {
         // before the request, we would mark the submission as isSynced = true
         // right after the response - in case it was successful - we mark the submission as isSynced = false
         this.autoSaveTimer = 0;
@@ -609,18 +631,21 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         // if no connection available -> don't try to sync, except it is forced
         // based on the submissions that need to be saved and the exercise, we perform different actions
         if (forceSave || !this.disconnected) {
+            // Save collected actions
+            this.examMonitoringService.saveActions(this.exam, this.studentExam, this.courseId);
+
             submissionsToSync.forEach((submissionToSync: { exercise: Exercise; submission: Submission }) => {
                 switch (submissionToSync.exercise.type) {
                     case ExerciseType.TEXT:
                         this.textSubmissionService.update(submissionToSync.submission as TextSubmission, submissionToSync.exercise.id!).subscribe({
-                            next: () => this.onSaveSubmissionSuccess(submissionToSync.submission),
-                            error: (error: HttpErrorResponse) => this.onSaveSubmissionError(error),
+                            next: () => this.onSaveSubmissionSuccess(submissionToSync.submission, forceSave, automatically),
+                            error: (error: HttpErrorResponse) => this.onSaveSubmissionError(error, forceSave, automatically),
                         });
                         break;
                     case ExerciseType.MODELING:
                         this.modelingSubmissionService.update(submissionToSync.submission as ModelingSubmission, submissionToSync.exercise.id!).subscribe({
-                            next: () => this.onSaveSubmissionSuccess(submissionToSync.submission),
-                            error: (error: HttpErrorResponse) => this.onSaveSubmissionError(error),
+                            next: () => this.onSaveSubmissionSuccess(submissionToSync.submission, forceSave, automatically),
+                            error: (error: HttpErrorResponse) => this.onSaveSubmissionError(error, forceSave, automatically),
                         });
                         break;
                     case ExerciseType.PROGRAMMING:
@@ -628,8 +653,8 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                         break;
                     case ExerciseType.QUIZ:
                         this.examParticipationService.updateQuizSubmission(submissionToSync.exercise.id!, submissionToSync.submission as QuizSubmission).subscribe({
-                            next: () => this.onSaveSubmissionSuccess(submissionToSync.submission),
-                            error: (error: HttpErrorResponse) => this.onSaveSubmissionError(error),
+                            next: () => this.onSaveSubmissionSuccess(submissionToSync.submission, forceSave, automatically),
+                            error: (error: HttpErrorResponse) => this.onSaveSubmissionError(error, forceSave, automatically),
                         });
                         break;
                     case ExerciseType.FILE_UPLOAD:
@@ -644,17 +669,23 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         this.currentPageComponents.filter((component) => component.hasUnsavedChanges()).forEach((component) => component.updateSubmissionFromView());
     }
 
-    private onSaveSubmissionSuccess(submission: Submission) {
+    private onSaveSubmissionSuccess(submission: Submission, lastSavedForced: boolean, lastSavedAutomatically: boolean) {
         this.examParticipationService.setLastSaveFailed(false, this.courseId, this.examId);
+        this.examMonitoringService.handleActionEvent(
+            this.studentExam,
+            new SavedExerciseAction(lastSavedForced, submission.id, false, lastSavedAutomatically),
+            this.exam.monitoring!,
+        );
         submission.isSynced = true;
         submission.submitted = true;
     }
 
-    private onSaveSubmissionError(error: HttpErrorResponse) {
+    private onSaveSubmissionError(error: HttpErrorResponse, lastSavedForced: boolean, lastSavedAutomatically: boolean) {
         this.examParticipationService.setLastSaveFailed(true, this.courseId, this.examId);
+        this.examMonitoringService.handleActionEvent(this.studentExam, new SavedExerciseAction(lastSavedForced, undefined, true, lastSavedAutomatically), this.exam.monitoring!);
 
         if (error.status === 401) {
-            // Unauthorized means the user needs to login to resume
+            // Unauthorized means the user needs to log in to resume
             // Therefore don't show errors because we are redirected to the login page
             this.loggedOut = true;
         } else {

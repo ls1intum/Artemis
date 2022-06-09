@@ -70,7 +70,7 @@ describe('Assessment Detail Component', () => {
         comp.delete();
         fixture.detectChanges();
 
-        expect(emitSpy).toHaveBeenCalledTimes(1);
-        expect(confirmStub).toHaveBeenCalledTimes(1);
+        expect(emitSpy).toHaveBeenCalledOnce();
+        expect(confirmStub).toHaveBeenCalledOnce();
     });
 });

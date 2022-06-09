@@ -52,7 +52,7 @@ describe('TeamsImportFromFileFormComponent', () => {
             const setImportStub = jest.spyOn(comp, 'setImportFile');
             const inputElement = debugElement.query(By.css('input')).nativeElement;
             inputElement.dispatchEvent(new Event('change'));
-            expect(setImportStub).toHaveBeenCalledTimes(1);
+            expect(setImportStub).toHaveBeenCalledOnce();
         });
     });
 
@@ -83,14 +83,14 @@ describe('TeamsImportFromFileFormComponent', () => {
         });
 
         afterEach(() => {
-            expect(convertTeamsStub).toHaveBeenCalledTimes(1);
+            expect(convertTeamsStub).toHaveBeenCalledOnce();
             expect(comp.importedTeams).toEqual(mockFileStudents);
             expect(comp.sourceTeams).toStrictEqual(mockFileTeamsConverted);
             expect(teams).toStrictEqual(mockFileTeamsConverted);
-            expect(comp.loading).toBe(false);
+            expect(comp.loading).toBeFalse();
             expect(comp.importFile).toBe(undefined);
             expect(comp.importFileName).toBe('');
-            expect(getElementStub).toHaveBeenCalledTimes(1);
+            expect(getElementStub).toHaveBeenCalledOnce();
             expect(control.value).toBe('');
         });
 
@@ -130,7 +130,7 @@ describe('TeamsImportFromFileFormComponent', () => {
             comp.setImportFile(ev);
             expect(comp.importFile).toStrictEqual(file);
             expect(comp.importFileName).toBe('testFileName');
-            expect(changeDetectorDetectChangesSpy).toHaveBeenCalledTimes(1);
+            expect(changeDetectorDetectChangesSpy).toHaveBeenCalledOnce();
         });
 
         it('should set import file correctly', () => {

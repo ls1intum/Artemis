@@ -55,7 +55,7 @@ describe('TutorLeaderboardComponent', () => {
             testIsAtLeastInstructor((component) => {
                 component.course = course;
             });
-            expect(comp.isExerciseDashboard).toBe(false);
+            expect(comp.isExerciseDashboard).toBeFalse();
             expect(comp.course).toBe(course);
             expect(comp.exercise).toBe(undefined);
         });
@@ -66,41 +66,41 @@ describe('TutorLeaderboardComponent', () => {
             testIsAtLeastInstructor((component) => {
                 component.exercise = exercise;
             });
-            expect(comp.isExerciseDashboard).toBe(true);
+            expect(comp.isExerciseDashboard).toBeTrue();
             expect(comp.course).toBe(course);
             expect(comp.exercise).toBe(exercise);
         });
 
         it('sets isExamMode if exam is set', () => {
-            expect(comp.isExamMode).toBe(false);
+            expect(comp.isExamMode).toBeFalse();
             comp.ngOnInit();
-            expect(comp.isExamMode).toBe(false);
+            expect(comp.isExamMode).toBeFalse();
 
             const exam = {} as Exam;
             const course = { exams: [exam] } as Course;
             comp.exam = exam;
             comp.course = course;
             comp.ngOnInit();
-            expect(comp.isExamMode).toBe(true);
+            expect(comp.isExamMode).toBeTrue();
         });
 
         it('should sort rows', () => {
             comp.ngOnInit();
-            expect(sortByPropertySpy).toHaveBeenCalledTimes(1);
+            expect(sortByPropertySpy).toHaveBeenCalledOnce();
         });
 
         function testIsAtLeastInstructor(setupComponent: (comp: TutorLeaderboardComponent) => void): void {
-            expect(comp.isAtLeastInstructor).toBe(false);
+            expect(comp.isAtLeastInstructor).toBeFalse();
             comp.ngOnInit();
-            expect(comp.isAtLeastInstructor).toBe(false);
-            expect(comp.isExerciseDashboard).toBe(false);
+            expect(comp.isAtLeastInstructor).toBeFalse();
+            expect(comp.isExerciseDashboard).toBeFalse();
             expect(comp.course).toBe(undefined);
             expect(isAtLeastInstructorInCourseStub).not.toBeCalled();
 
             setupComponent(comp);
             comp.ngOnInit();
-            expect(comp.isAtLeastInstructor).toBe(true);
-            expect(isAtLeastInstructorInCourseStub).toHaveBeenCalledTimes(1);
+            expect(comp.isAtLeastInstructor).toBeTrue();
+            expect(isAtLeastInstructorInCourseStub).toHaveBeenCalledOnce();
         }
     });
 

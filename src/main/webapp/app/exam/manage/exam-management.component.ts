@@ -55,7 +55,7 @@ export class ExamManagementComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * Initialize the course and all exams when this view is initialised.
+     * Initialize the course and all exams when this view is initialized.
      * Subscribes to 'examListModification' event.
      * @see registerChangeInExams
      */

@@ -101,7 +101,7 @@ describe('UserManagementComponent', () => {
         expect(comp.users).toHaveLength(1);
         expect(comp.users[0].id).toBe(1);
         expect(comp.totalItems).toBe(1);
-        expect(comp.loadingSearchResult).toBe(false);
+        expect(comp.loadingSearchResult).toBeFalse();
     }));
 
     describe('setActive', () => {
@@ -127,7 +127,7 @@ describe('UserManagementComponent', () => {
 
                 // THEN
                 expect(userService.update).toHaveBeenCalledWith({ ...user, activated: true });
-                expect(userService.query).toHaveBeenCalledTimes(1);
+                expect(userService.query).toHaveBeenCalledOnce();
                 expect(comp.users && comp.users[0]).toEqual(expect.objectContaining({ id: 123 }));
             }),
         ));
@@ -146,14 +146,14 @@ describe('UserManagementComponent', () => {
         comp.ngOnInit();
         tick(1000);
 
-        expect(identitySpy).toHaveBeenCalledTimes(1);
+        expect(identitySpy).toHaveBeenCalledOnce();
         expect(comp.currentAccount).toEqual({ id: 99 });
 
         expect(comp.page).toBe(1);
         expect(comp.predicate).toBe('id');
-        expect(comp.ascending).toBe(true);
+        expect(comp.ascending).toBeTrue();
 
-        expect(querySpy).toHaveBeenCalledTimes(1);
+        expect(querySpy).toHaveBeenCalledOnce();
     }));
 
     it('should destroy the user list subscription on destroy', () => {
@@ -162,7 +162,7 @@ describe('UserManagementComponent', () => {
 
         const destroySpy = jest.spyOn(eventManager, 'destroy').mockImplementation(jest.fn());
         comp.ngOnDestroy();
-        expect(destroySpy).toHaveBeenCalledTimes(1);
+        expect(destroySpy).toHaveBeenCalledOnce();
         expect(destroySpy).toHaveBeenCalledWith(object);
     });
 
@@ -181,13 +181,13 @@ describe('UserManagementComponent', () => {
         comp.dialogError.subscribe((text) => (errorText = text));
 
         comp.deleteUser('test');
-        expect(deleteSpy).toHaveBeenCalledTimes(1);
+        expect(deleteSpy).toHaveBeenCalledOnce();
         expect(deleteSpy).toHaveBeenCalledWith('test');
         const reqD = httpMock.expectOne(SERVER_API_URL + 'api/users/test');
         reqD.flush(null, { status, statusText });
 
         if (status === 200) {
-            expect(broadcastSpy).toHaveBeenCalledTimes(1);
+            expect(broadcastSpy).toHaveBeenCalledOnce();
             expect(broadcastSpy).toHaveBeenCalledWith({ name: 'userListModification', content: 'Deleted a user' });
         } else {
             expect(broadcastSpy).not.toHaveBeenCalled();

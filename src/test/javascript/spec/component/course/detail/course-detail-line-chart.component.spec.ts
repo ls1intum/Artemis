@@ -81,7 +81,7 @@ describe('CourseDetailLineChartComponent', () => {
 
         component.ngOnChanges();
 
-        expect(component.startDateAlreadyPassed).toBe(false);
+        expect(component.startDateAlreadyPassed).toBeFalse();
     });
 
     it('should show only 2 weeks if start date is 1 week ago', () => {
@@ -112,9 +112,9 @@ describe('CourseDetailLineChartComponent', () => {
 
         component.ngOnChanges();
 
-        expect(component.showLifetimeOverview).toBe(true);
-        expect(component.startDateDisplayed).toBe(true);
-        expect(component.showsCurrentWeek).toBe(true);
+        expect(component.showLifetimeOverview).toBeTrue();
+        expect(component.startDateDisplayed).toBeTrue();
+        expect(component.showsCurrentWeek).toBeTrue();
 
         expect(component.data[0].series).toHaveLength(2);
         expect(component.data[0].series[0].value).toBe(24);
@@ -138,7 +138,7 @@ describe('CourseDetailLineChartComponent', () => {
         expect(component.data[0].series).toHaveLength(1);
         expect(component.data[0].series[0].value).toBe(84);
         expect(component.data[0].series[0].name).toBe(startDate.isoWeek().toString());
-        expect(getStatisticsDataMock).toHaveBeenCalledTimes(1);
+        expect(getStatisticsDataMock).toHaveBeenCalledOnce();
         expect(getStatisticsDataMock).toHaveBeenCalledWith(42, -1);
     });
 
@@ -149,8 +149,8 @@ describe('CourseDetailLineChartComponent', () => {
 
         component.displayLifetimeOverview();
 
-        expect(component.showLifetimeOverview).toBe(true);
-        expect(getOverviewDataMock).toHaveBeenCalledTimes(1);
+        expect(component.showLifetimeOverview).toBeTrue();
+        expect(getOverviewDataMock).toHaveBeenCalledOnce();
         expect(getOverviewDataMock).toHaveBeenCalledWith(42);
         for (let i = 0; i < 17; i++) {
             expect(component.absoluteSeries[i]['absoluteValue']).toBe(initialStats[i]);
@@ -162,6 +162,6 @@ describe('CourseDetailLineChartComponent', () => {
 
         component.toggleAverageLine();
 
-        expect(component.showAverage).toBe(true);
+        expect(component.showAverage).toBeFalse();
     });
 });
