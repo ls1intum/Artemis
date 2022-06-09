@@ -917,7 +917,8 @@ public class FileService implements DisposableBean {
     /**
      * Merge the PDF files located in the given paths.
      *
-     * @param paths list of paths to merge
+     * @param paths             list of paths to merge
+     * @param mergedPdfFileName title of merged pdf file
      * @return byte array of the merged file
      */
     public Optional<byte[]> mergePdfFiles(List<String> paths, String mergedPdfFileName) {
