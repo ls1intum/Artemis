@@ -109,17 +109,19 @@ public class EntityTitleCacheService {
      * @param config the {@link Config} the EntityTitleCache-specific configuration should be added to
      */
     public static void configureHazelcast(Config config) {
-        EvictionConfig evictionConfig = new EvictionConfig() //
+        // @formatter:on
+        EvictionConfig evictionConfig = new EvictionConfig()
                 .setEvictionPolicy(EvictionPolicy.NONE);
-        NearCacheConfig nearCacheConfig = new NearCacheConfig() //
-                .setName(HAZELCAST_TITLE_CACHE + "-local") //
-                .setInMemoryFormat(InMemoryFormat.OBJECT) //
-                .setSerializeKeys(true) //
-                .setInvalidateOnChange(true) //
-                .setTimeToLiveSeconds(0) //
-                .setMaxIdleSeconds(0) //
-                .setEvictionConfig(evictionConfig) //
+        NearCacheConfig nearCacheConfig = new NearCacheConfig()
+                .setName(HAZELCAST_TITLE_CACHE + "-local")
+                .setInMemoryFormat(InMemoryFormat.OBJECT)
+                .setSerializeKeys(true)
+                .setInvalidateOnChange(true)
+                .setTimeToLiveSeconds(0)
+                .setMaxIdleSeconds(0)
+                .setEvictionConfig(evictionConfig)
                 .setCacheLocalEntries(true);
         config.getMapConfig(HAZELCAST_TITLE_CACHE).setNearCacheConfig(nearCacheConfig);
+        // @formatter:off
     }
 }
