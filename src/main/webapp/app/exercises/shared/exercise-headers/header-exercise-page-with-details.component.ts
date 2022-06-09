@@ -14,7 +14,6 @@ import { AssessmentType } from 'app/entities/assessment-type.model';
 import { ComplaintService } from 'app/complaints/complaint.service';
 import { SubmissionType } from 'app/entities/submission.model';
 import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
-import { SubmissionService } from 'app/exercises/shared/submission/submission.service';
 
 @Component({
     selector: 'jhi-header-exercise-page-with-details',
@@ -53,7 +52,7 @@ export class HeaderExercisePageWithDetailsComponent implements OnChanges, OnInit
     faArrowLeft = faArrowLeft;
     faQuestionCircle = faQuestionCircle;
 
-    constructor(private complaintService: ComplaintService, private submissionSerrvice: SubmissionService) {}
+    constructor(private complaintService: ComplaintService) {}
 
     ngOnInit(): void {
         this.exerciseCategories = this.exercise.categories || [];
@@ -72,8 +71,7 @@ export class HeaderExercisePageWithDetailsComponent implements OnChanges, OnInit
             }
             // The student can either still submit or there is a submission where the student did not have the chance to complain yet
             this.canComplainLaterOn =
-                (dayjs().isBefore(this.exercise.dueDate) ||
-                    (!!this.studentParticipation?.submissionCount && this.studentParticipation?.submissionCount > 0 && !this.individualComplaintDeadline)) &&
+                (dayjs().isBefore(this.exercise.dueDate) || (!!this.studentParticipation?.submissionCount && !this.individualComplaintDeadline)) &&
                 (this.exercise.allowComplaintsForAutomaticAssessments || (!!this.exercise.assessmentType && this.exercise.assessmentType !== AssessmentType.AUTOMATIC));
 
             this.setIsNextDueDateCourseMode();
@@ -94,6 +92,9 @@ export class HeaderExercisePageWithDetailsComponent implements OnChanges, OnInit
 
     /**
      * Determines what element of the header should be highlighted. The highlighted deadline/time is the one being due next
+     * Arrays (for badge class (= statusBadges) and highlighting (= isNextDueDate)) consist of
+     * 0: Exam End Date
+     * 1: Publish Results Date
      */
     private setIsNextDueDateExamMode() {
         this.isNextDueDate = [false, false];
@@ -111,6 +112,11 @@ export class HeaderExercisePageWithDetailsComponent implements OnChanges, OnInit
 
     /**
      * Determines what element of the header should be highlighted. The highlighted deadline/time is the one being due next
+     * Arrays (for badge class (= statusBadges) and highlighting (= isNextDueDate)) consist of
+     * 0: Submission Due Date
+     * 1: Assessment Due Date
+     * 2: Individual Complaint Deadline
+     * 3: Complaint Possible (Yes / No)
      */
     private setIsNextDueDateCourseMode() {
         this.isNextDueDate = [false, false, false, false];

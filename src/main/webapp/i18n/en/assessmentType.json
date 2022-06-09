@@ -4,9 +4,13 @@
         "AssessmentType": {
             "null": "",
             "undefined": "",
-            "AUTOMATIC": "Automatic",
-            "SEMI_AUTOMATIC": "Semi-Automatic",
-            "MANUAL": "Manual",
+            "AUTOMATIC": "automatic",
+            "SEMI_AUTOMATIC": "semi-automatic",
+            "MANUAL": "manual",
+            "forExerciseHeader": {
+                "AUTOMATIC": "automatic",
+                "SEMI_AUTOMATIC": "manual"
+            },
             "tooltip": {
                 "null": "No assessment type set.",
                 "undefined": "No assessment type set.",

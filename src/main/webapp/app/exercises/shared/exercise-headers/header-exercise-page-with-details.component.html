@@ -1,25 +1,23 @@
 <div class="course-info-bar" *ngIf="exercise" id="exercise-header">
     <div class="left-col">
         <div class="title-row">
-            <h3>
+            <div class="inner-row">
                 <fa-icon *ngIf="displayBackButton" [icon]="faArrowLeft" (click)="onBackClick()" class="back-button me-2"></fa-icon>
                 <fa-icon *ngIf="exercise.type" [icon]="getIcon(exercise.type)" [ngbTooltip]="getIconTooltip(exercise.type) | artemisTranslate" container="body"></fa-icon>
                 &nbsp;
                 <ng-content select="[pagetitle]"></ng-content>
-            </h3>
-            <h4 *ngIf="isNotReleased() || exercise.difficulty || exerciseCategories?.length">
+            </div>
+            <div class="badge-row" *ngIf="isNotReleased() || exercise.difficulty || exerciseCategories?.length">
                 <jhi-not-released-tag [exercise]="exercise" *ngIf="isNotReleased()" [noMargin]="true"></jhi-not-released-tag>
-                <span *ngIf="exercise.difficulty">
-                    <jhi-difficulty-badge class="me-3" [exercise]="exercise" [showNoLevel]="false"></jhi-difficulty-badge>
-                </span>
+                <jhi-difficulty-badge *ngIf="exercise.difficulty" class="me-3" [exercise]="exercise" [showNoLevel]="false"></jhi-difficulty-badge>
                 <div class="exercise-categories" *ngIf="exerciseCategories?.length">
                     <span *ngFor="let category of exerciseCategories">
                         <span class="badge text-white" [ngStyle]="{ backgroundColor: category.color }">{{ category.category }}</span>
                     </span>
                 </div>
-            </h4>
+            </div>
         </div>
-        <h4 class="points-row" *ngIf="exercise.maxPoints">
+        <div class="points-row" *ngIf="exercise.maxPoints">
             <span class="me-2">
                 {{ 'artemisApp.courseOverview.exerciseDetails.points' | artemisTranslate }}
                 {{ exercise.maxPoints }}
@@ -30,19 +28,19 @@
                 [includedInOverallScore]="exercise.includedInOverallScore"
                 class="me-2"
             ></jhi-included-in-score-badge>
-        </h4>
-        <h4 class="assessment-row" *ngIf="exercise.assessmentType && exercise.type === ExerciseType.PROGRAMMING">
+        </div>
+        <div class="assessment-row" *ngIf="exercise.assessmentType && exercise.type === ExerciseType.PROGRAMMING">
             <div>
                 {{ 'artemisApp.courseOverview.exerciseDetails.assessmentType' | artemisTranslate }}
             </div>
             <div>
-                {{ 'artemisApp.AssessmentType.' + exercise.assessmentType | artemisTranslate }}
-                &nbsp;<fa-icon [icon]="faQuestionCircle" ngbTooltip="{{ 'artemisApp.AssessmentType.tooltip.' + exercise.assessmentType | artemisTranslate }}"></fa-icon>
+                {{ 'artemisApp.AssessmentType.forExerciseHeader.' + exercise.assessmentType | artemisTranslate }}
+                <fa-icon [icon]="faQuestionCircle" ngbTooltip="{{ 'artemisApp.AssessmentType.tooltip.' + exercise.assessmentType | artemisTranslate }}"></fa-icon>
             </div>
-        </h4>
-        <h4 class="row" *ngIf="submissionPolicy">
-            <span>
-                {{ 'artemisApp.programmingExercise.submissionPolicy.submissionLimitTitle' | artemisTranslate }}:
+        </div>
+        <div class="submission-row" *ngIf="submissionPolicy">
+            <div>{{ 'artemisApp.programmingExercise.submissionPolicy.submissionLimitTitle' | artemisTranslate }}:</div>
+            <div>
                 {{
                     numberOfSubmissions +
                         '/' +
@@ -56,10 +54,10 @@
                     [icon]="faQuestionCircle"
                     ngbTooltip="{{ 'artemisApp.programmingExercise.submissionPolicy.submissionPolicyType.' + submissionPolicy.type + '.tooltip' | artemisTranslate }}"
                 ></fa-icon>
-            </span>
-        </h4>
+            </div>
+        </div>
     </div>
-    <h4 class="right-col">
+    <div class="right-col">
         <ng-template [ngIf]="exam" [ngIfElse]="courseMode">
             <ng-container *ngIf="!isTestRun">
                 <div [ngClass]="{ 'fw-500': isNextDueDate[0] }">
@@ -119,5 +117,5 @@
                 </span>
             </div>
         </ng-template>
-    </h4>
+    </div>
 </div>

@@ -4,9 +4,13 @@
         "AssessmentType": {
             "null": "",
             "undefined": "",
-            "AUTOMATIC": "Automatisch",
-            "SEMI_AUTOMATIC": "Halbautomatisch",
-            "MANUAL": "Manuell",
+            "AUTOMATIC": "automatisch",
+            "SEMI_AUTOMATIC": "halbautomatisch",
+            "MANUAL": "manuell",
+            "forExerciseHeader": {
+                "AUTOMATIC": "automatisch",
+                "SEMI_AUTOMATIC": "manuell"
+            },
             "tooltip": {
                 "null": "Es steht kein Bewertungsmodus fest.",
                 "undefined": "Es steht kein Bewertungsmodus fest.",

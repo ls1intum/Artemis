@@ -186,7 +186,7 @@
                 "notGraded": "Nicht bewertet",
                 "rated": "Bewertet",
                 "practice": "Übung",
-                "assessmentType": "Bewertungsart:",
+                "assessmentType": "Bewertung:",
                 "submissionDue": "Abgabe bis:",
                 "submissionDueTooltip": "Die Abgabe ist bis {{date}} möglich.",
                 "assessmentDue": "Bewertung bis:",
