@@ -26,6 +26,11 @@ import de.tum.in.www1.artemis.repository.StudentExamRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.scheduled.cache.Cache;
 
+/**
+ * For all {@link Exam}s where monitoring is enabled, the scheduling service schedules the cache reset after another 30 minutes {@link Constants}
+ * after the last {@link StudentExam} is completed. In addition, it takes care of adding new {@link ExamAction}s per {@link ExamActivity} and {@link Exam}.
+ * The service works as an interface for the distributed hazelcast exam monitoring cache;
+ */
 @Service
 public class ExamMonitoringScheduleService {
 
@@ -153,7 +158,7 @@ public class ExamMonitoringScheduleService {
                 }
             }
 
-            delay += Constants.MONITORING_SAVE_DELAY;
+            delay += Constants.MONITORING_CACHE_RESET_DELAY;
 
             var scheduledFuture = threadPoolTaskScheduler.schedule(new ExamActivitySaveTask(examId), delay, TimeUnit.MILLISECONDS);
             // save scheduled future in HashMap
