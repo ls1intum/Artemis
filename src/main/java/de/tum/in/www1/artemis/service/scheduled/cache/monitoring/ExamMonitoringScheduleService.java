@@ -79,12 +79,15 @@ public class ExamMonitoringScheduleService {
     /**
      * Used to handle the received actions.
      *
-     * @param examId        identifies the cache
-     * @param studentExamId identifies the exam activity
-     * @param examAction    new exam action
+     * @param examId    identifies the cache
+     * @param action    new exam action
      */
-    public void addExamAction(Long examId, long studentExamId, ExamAction examAction) {
-        if (examAction != null) {
+    public void addExamActions(Long examId, ExamAction action) {
+        if (action != null && action.getStudentExamId() != null) {
+            // All actions in this list belong to the same student exam
+            Long studentExamId = action.getStudentExamId();
+
+            // Retrieve the activity from the cache
             ExamActivity examActivity = ((ExamMonitoringCache) examCache.getTransientWriteCacheFor(examId)).getActivities().get(studentExamId);
 
             if (examActivity == null) {
@@ -93,8 +96,10 @@ public class ExamMonitoringScheduleService {
                 // TODO: Save Activity
             }
 
-            examAction.setExamActivity(examActivity);
-            examActivity.addExamAction(examAction);
+            // Connect action and activity
+            action.setExamActivity(examActivity);
+
+            examActivity.addExamAction(action);
             updateExamActivity(examId, studentExamId, examActivity);
         }
     }

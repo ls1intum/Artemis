@@ -13,7 +13,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.domain.Course;
@@ -27,6 +26,7 @@ import de.tum.in.www1.artemis.repository.ExamRepository;
 import de.tum.in.www1.artemis.repository.StudentExamRepository;
 import de.tum.in.www1.artemis.service.scheduled.cache.monitoring.ExamMonitoringScheduleService;
 import de.tum.in.www1.artemis.util.RequestUtilService;
+import de.tum.in.www1.artemis.web.rest.ExamActivityResource;
 
 public class ExamActivityIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
@@ -38,6 +38,9 @@ public class ExamActivityIntegrationTest extends AbstractSpringIntegrationBamboo
 
     @Autowired
     private StudentExamRepository studentExamRepository;
+
+    @Autowired
+    private ExamActivityResource examActivityResource;
 
     @Autowired
     private RequestUtilService request;
@@ -102,25 +105,27 @@ public class ExamActivityIntegrationTest extends AbstractSpringIntegrationBamboo
         }
         examAction.setType(examActionType);
         examAction.setTimestamp(ZonedDateTime.now());
+        examAction.setStudentExamId(studentExam.getId());
         return examAction;
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @WithMockUser(username = "student1", roles = "USER")
     @EnumSource(ExamActionType.class)
-    public void testCreateExamActivityInCache(ExamActionType examActionType) throws Exception {
+    public void testCreateExamActivityInCache(ExamActionType examActionType) {
         ExamAction examAction = createExamActionBasedOnType(examActionType);
 
-        request.put("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/student-exams/" + studentExam.getId() + "/actions", List.of(examAction), HttpStatus.OK);
+        examActivityResource.updatePerformedExamActions(exam.getId(), examAction);
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @WithMockUser(username = "student1", roles = "USER")
     @EnumSource(ExamActionType.class)
-    public void testExamActionPresentInCache(ExamActionType examActionType) throws Exception {
+    public void testExamActionPresentInCache(ExamActionType examActionType) {
         ExamAction examAction = createExamActionBasedOnType(examActionType);
 
-        request.put("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/student-exams/" + studentExam.getId() + "/actions", List.of(examAction), HttpStatus.OK);
+        // TODO - replace with websocket call
+        examActivityResource.updatePerformedExamActions(exam.getId(), examAction);
 
         var examActivity = examMonitoringScheduleService.getExamActivityFromCache(exam.getId(), studentExam.getId());
         assertThat(examActivity).isNotNull();
@@ -131,10 +136,11 @@ public class ExamActivityIntegrationTest extends AbstractSpringIntegrationBamboo
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @WithMockUser(username = "student1", roles = "USER")
     @EnumSource(ExamActionType.class)
-    public void testExamActionNotPresentInCache(ExamActionType examActionType) throws Exception {
+    public void testExamActionNotPresentInCache(ExamActionType examActionType) {
         ExamAction examAction = createExamActionBasedOnType(examActionType);
 
-        request.put("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/student-exams/" + studentExam.getId() + "/actions", List.of(examAction), HttpStatus.OK);
+        // TODO - replace with websocket call
+        examActivityResource.updatePerformedExamActions(exam.getId(), examAction);
 
         examMonitoringScheduleService.executeExamActivitySaveTask(exam.getId());
 
@@ -144,10 +150,13 @@ public class ExamActivityIntegrationTest extends AbstractSpringIntegrationBamboo
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void testMultipleExamActions() throws Exception {
+    public void testMultipleExamActions() {
         List<ExamAction> examActions = Arrays.stream(ExamActionType.values()).map(this::createExamActionBasedOnType).toList();
 
-        request.put("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/student-exams/" + studentExam.getId() + "/actions", examActions, HttpStatus.OK);
+        for (ExamAction examAction : examActions) {
+            // TODO - replace with websocket call
+            examActivityResource.updatePerformedExamActions(exam.getId(), examAction);
+        }
 
         var examActivity = examMonitoringScheduleService.getExamActivityFromCache(exam.getId(), studentExam.getId());
 
@@ -160,13 +169,19 @@ public class ExamActivityIntegrationTest extends AbstractSpringIntegrationBamboo
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @WithMockUser(username = "student1", roles = "USER")
     @EnumSource(ExamActionType.class)
-    public void testExamWithMonitoringDisabled(ExamActionType examActionType) throws Exception {
+    public void testExamWithMonitoringDisabled(ExamActionType examActionType) {
         ExamAction examAction = createExamActionBasedOnType(examActionType);
 
         exam.setMonitoring(false);
         examRepository.save(exam);
 
-        request.put("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/student-exams/" + studentExam.getId() + "/actions", List.of(examAction),
-                HttpStatus.BAD_REQUEST);
+        // TODO - replace with websocket call
+        examActivityResource.updatePerformedExamActions(exam.getId(), examAction);
+
+        // Currently, we don't apply any filtering - so there should be an activity and action in the cache
+        var examActivity = examMonitoringScheduleService.getExamActivityFromCache(exam.getId(), studentExam.getId());
+        assertThat(examActivity).isNotNull();
+        assertThat(examActivity.getExamActions().size()).isEqualTo(1);
+        assertThat(new ArrayList<>(examActivity.getExamActions()).get(0).getType()).isEqualTo(examActionType);
     }
 }
