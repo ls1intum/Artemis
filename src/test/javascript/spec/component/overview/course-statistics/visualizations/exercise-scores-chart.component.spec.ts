@@ -78,7 +78,7 @@ describe('ExerciseScoresChartComponent', () => {
         const secondExercise = generateExerciseScoresDTO(ExerciseType.QUIZ, 2, 40, 80, 90, dayjs().add(5, 'days'), 'Second Exercise');
 
         const getScoresStub = setUpServiceAndStartComponent([firstExercise, secondExercise]);
-        expect(getScoresStub).toHaveBeenCalledTimes(1);
+        expect(getScoresStub).toHaveBeenCalledOnce();
         expect(component.ngxData).toHaveLength(3);
 
         // datasets[0] is student score
@@ -111,19 +111,19 @@ describe('ExerciseScoresChartComponent', () => {
 
         const getScoresStub = setUpServiceAndStartComponent(exercises);
 
-        expect(getScoresStub).toHaveBeenCalledTimes(1);
+        expect(getScoresStub).toHaveBeenCalledOnce();
         expect(component.ngxData[0].series.map((exercise: any) => exercise.exerciseId)).toEqual([0, 1, 2, 3, 4, 5, 6, 7, 8, 9]);
 
         component.filteredExerciseIDs = [2, 4, 5];
         component.ngOnChanges();
         // should not have to reload the data from the server
-        expect(getScoresStub).toHaveBeenCalledTimes(1);
+        expect(getScoresStub).toHaveBeenCalledOnce();
         // should only contain the not filtered exercises
         expect(component.ngxData[0].series.map((exercise: any) => exercise.exerciseId)).toEqual([0, 1, 3, 6, 7, 8, 9]);
 
         component.filteredExerciseIDs = [];
         component.ngOnChanges();
-        expect(getScoresStub).toHaveBeenCalledTimes(1);
+        expect(getScoresStub).toHaveBeenCalledOnce();
         expect(component.ngxData[0].series.map((exercise: any) => exercise.exerciseId)).toEqual([0, 1, 2, 3, 4, 5, 6, 7, 8, 9]);
     });
 
@@ -175,13 +175,13 @@ describe('ExerciseScoresChartComponent', () => {
         expect(component.numberOfActiveFilters).toBe(5);
 
         exerciseTypes.forEach((type, index) => {
-            expect(component.typeSet.has(type)).toBe(true);
-            expect(component.chartFilter.get(type)).toBe(true);
+            expect(component.typeSet.has(type)).toBeTrue();
+            expect(component.chartFilter.get(type)).toBeTrue();
 
             component.toggleType(type);
 
             expect(component.numberOfActiveFilters).toBe(4 - index);
-            expect(component.chartFilter.get(type)).toBe(false);
+            expect(component.chartFilter.get(type)).toBeFalse();
 
             component.ngxData.forEach((line: any) => {
                 expect(line.series.filter((exerciseEntry: any) => exerciseEntry.exerciseType === exerciseDTOs[index].exerciseType)).toHaveLength(0);

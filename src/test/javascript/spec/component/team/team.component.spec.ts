@@ -149,7 +149,7 @@ describe('TeamComponent', () => {
             comp.ngOnInit();
             jest.spyOn(router, 'navigate');
             comp.onTeamDelete();
-            expect(router['navigate']).toHaveBeenCalledTimes(1);
+            expect(router['navigate']).toHaveBeenCalledOnce();
             expect(router['navigate']).toHaveBeenCalledWith(['/course-management', mockExercise.course?.id, 'exercises', mockExercise.id, 'teams']);
         });
     });
