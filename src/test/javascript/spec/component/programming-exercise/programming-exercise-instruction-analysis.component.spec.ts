@@ -2,7 +2,6 @@ import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testin
 import { By } from '@angular/platform-browser';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { DebugElement } from '@angular/core';
-import { ExerciseHint } from 'app/entities/hestia/exercise-hint.model';
 import { TaskCommand } from 'app/shared/markdown-editor/domainCommands/programming-exercise/task.command';
 import { triggerChanges } from '../../helpers/utils/general.utils';
 import { ProgrammingExerciseInstructionAnalysisComponent } from 'app/exercises/programming/manage/instructions-editor/analysis/programming-exercise-instruction-analysis.component';
@@ -20,16 +19,11 @@ describe('ProgrammingExerciseInstructionInstructorAnalysis', () => {
     const testCaseOkId = 'instruction_analysis_test-case-ok';
     const testCaseIssuesId = 'instruction_analysis_test-case-issues';
 
-    const hintOkId = 'instruction_analysis_hint-ok';
-    const hintIssuesId = 'instruction_analysis_hint-issues';
-
     const taskCommand = new TaskCommand();
     const taskRegex = taskCommand.getTagRegex('g');
     const exerciseTestCases = ['test1', 'test2', 'test6', 'test7'];
     const problemStatement =
         '1. [task][SortStrategy Interface](test1,test2) \n 2. [task][SortStrategy Interface](test3) \n lorem ipsum \n lorem \n  3. [task][SortStrategy Interface](test2,test4)';
-
-    const exerciseHints = [{ id: 1 }, { id: 2 }] as ExerciseHint[];
 
     describe('Component tests', () => {
         let analysisService: ProgrammingExerciseInstructionAnalysisService;
@@ -68,17 +62,14 @@ describe('ProgrammingExerciseInstructionInstructorAnalysis', () => {
                 },
             };
             const invalidTestCases = ['testMergeSort'];
-            const invalidHints: string[] = [];
             const missingTestCases = ['testBubbleSort'];
 
-            analyzeProblemStatementStub.mockReturnValue({ completeAnalysis, invalidTestCases, invalidHints, missingTestCases });
+            analyzeProblemStatementStub.mockReturnValue({ completeAnalysis, invalidTestCases, missingTestCases });
 
             // dummy data.
-            const hints = [{ id: 3 }] as ExerciseHint[];
             const testCases = ['testabc'];
             comp.problemStatement = problemStatement;
             comp.taskRegex = taskRegex;
-            comp.exerciseHints = hints;
             comp.exerciseTestCases = testCases;
 
             comp.ngOnInit();
@@ -90,25 +81,18 @@ describe('ProgrammingExerciseInstructionInstructorAnalysis', () => {
             // Check internal state of the component.
             expect(comp.missingTestCases).toEqual(missingTestCases);
             expect(comp.invalidTestCases).toEqual(invalidTestCases);
-            expect(comp.invalidHints).toEqual(invalidHints);
 
             // Check that an event with the updated analysis is emitted.
-            expect(emitAnalysisSpy).toHaveBeenCalledTimes(1);
+            expect(emitAnalysisSpy).toHaveBeenCalledOnce();
             expect(emitAnalysisSpy).toHaveBeenCalledWith(completeAnalysis);
 
             // Check rendered html.
             const testCaseOk = debugElement.query(By.css(`#${testCaseOkId}`));
             const testCaseIssues = debugElement.query(By.css(`#${testCaseIssuesId}`));
-            const hintOk = debugElement.query(By.css(`#${hintOkId}`));
-            const hintIssues = debugElement.query(By.css(`#${hintIssuesId}`));
 
             // Test cases are not ok according to the analysis.
             expect(testCaseOk).toBe(null);
             expect(testCaseIssues).not.toBe(null);
-
-            // Hints are ok according to the analysis.
-            expect(hintOk).not.toBe(null);
-            expect(hintIssues).toBe(null);
         }));
 
         describe('Analysis service integration test', () => {
@@ -130,7 +114,6 @@ describe('ProgrammingExerciseInstructionInstructorAnalysis', () => {
                 comp.problemStatement = problemStatement;
                 comp.taskRegex = taskRegex;
                 comp.exerciseTestCases = exerciseTestCases;
-                comp.exerciseHints = exerciseHints;
 
                 const completeAnalysis = {
                     '0': { invalidTestCases: ['artemisApp.programmingExercise.testCaseAnalysis.invalidTestCase'] },

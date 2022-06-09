@@ -161,8 +161,8 @@ describe('TutorParticipationGraphComponent', () => {
 
         comp.ngOnInit();
 
-        expect(calculatePercentageAssessmentProgressStub).toHaveBeenCalledTimes(1);
-        expect(calculatePercentageComplaintsProgressStub).toHaveBeenCalledTimes(1);
+        expect(calculatePercentageAssessmentProgressStub).toHaveBeenCalledOnce();
+        expect(calculatePercentageComplaintsProgressStub).toHaveBeenCalledOnce();
 
         calculatePercentageAssessmentProgressStub.mockRestore();
         calculatePercentageComplaintsProgressStub.mockRestore();

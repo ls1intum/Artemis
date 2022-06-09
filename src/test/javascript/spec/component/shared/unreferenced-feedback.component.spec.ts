@@ -25,7 +25,7 @@ describe('UnreferencedFeedbackComponent', () => {
 
     it('should validate feedback', () => {
         comp.validateFeedback();
-        expect(comp.assessmentsAreValid).toBe(false);
+        expect(comp.assessmentsAreValid).toBeFalse();
 
         const feedback = new Feedback();
         feedback.credits = undefined;
@@ -33,13 +33,13 @@ describe('UnreferencedFeedbackComponent', () => {
 
         fixture.detectChanges();
         comp.validateFeedback();
-        expect(comp.assessmentsAreValid).toBe(false);
+        expect(comp.assessmentsAreValid).toBeFalse();
 
         feedback.credits = 1;
         fixture.detectChanges();
 
         comp.validateFeedback();
-        expect(comp.assessmentsAreValid).toBe(true);
+        expect(comp.assessmentsAreValid).toBeTrue();
     });
 
     it('should add unreferenced feedback', () => {

@@ -1,0 +1,49 @@
+<mat-expansion-panel [expanded]="expanded" [disabled]="true" class="exercise-hint-student-expansion-panel-wrapper">
+    <mat-expansion-panel-header>
+        <mat-panel-description>
+            <mat-panel-title><fa-icon [icon]="faQuestionCircle" size="2x"></fa-icon></mat-panel-title>
+            <mat-panel-description>
+                <div>
+                    <div>{{ exerciseHint!.description }}</div>
+                    <div class="task-name">{{ exerciseHint!.programmingExerciseTask?.taskName }}</div>
+                </div>
+            </mat-panel-description>
+            <!-- styles.visibility is used to prevent resizing the panel header when the button is not visible -->
+            <button
+                type="button"
+                class="ms-auto"
+                [ngbTooltip]="this.hasUsed ? '' : ('artemisApp.exerciseHint.studentDialog.activateTooltip' | artemisTranslate)"
+                [ngClass]="{ 'btn btn-secondary': true, invisible: expanded }"
+                (click)="displayHintContent()"
+            >
+                {{ 'artemisApp.exerciseHint.studentDialog.' + (this.hasUsed ? 'display' : 'activate') | artemisTranslate }}
+            </button>
+        </mat-panel-description>
+    </mat-expansion-panel-header>
+    <mat-action-row>
+        <button type="button" [ngClass]="'btn btn-secondary'" (click)="collapseContent()">{{ 'artemisApp.exerciseHint.studentDialog.collapse' | artemisTranslate }}</button>
+    </mat-action-row>
+    <div *ngIf="isLoading" class="d-flex justify-content-center">
+        <div class="spinner-border" role="status">
+            <span class="sr-only">{{ 'loading' | artemisTranslate }}</span>
+        </div>
+    </div>
+    <div *ngIf="!isLoading">
+        <div *ngIf="exerciseHint?.content" class="p-3 mb-2 border border-1 border-secondary bg-light" [innerHTML]="exerciseHint!.content | htmlForMarkdown"></div>
+        <div *ngIf="exerciseHint.type === HintType.CODE && (exerciseHint | castToCodeHint)?.solutionEntries">
+            <jhi-code-hint-container [codeHint]="exerciseHint | castToCodeHint"></jhi-code-hint-container>
+        </div>
+        <div class="d-flex align-items-end flex-column">
+            <span [jhiTranslate]="'artemisApp.exerciseHint.studentDialog.rateHintQuestion'">How helpful was this hint?</span>
+            <star-rating
+                checkedColor="gold"
+                uncheckedColor="grey"
+                size="24"
+                [value]="this.exerciseHint?.currentUserRating ?? 0"
+                [readOnly]="false"
+                [totalStars]="5"
+                (rate)="onRate($event)"
+            ></star-rating>
+        </div>
+    </div>
+</mat-expansion-panel>

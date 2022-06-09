@@ -126,7 +126,7 @@ export class NotificationPopupComponent implements OnInit {
     }
 
     /**
-     * Adds a notification about a updated exercise during a live exam to the component's state
+     * Adds a notification about an updated exercise during a live exam to the component's state
      * and pushes updated problemStatement to student exam exercise via BehaviorSubjects
      *
      * @param notification {Notification}

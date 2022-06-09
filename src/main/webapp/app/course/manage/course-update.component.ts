@@ -456,6 +456,22 @@ export class CourseUpdateComponent implements OnInit {
     updateRegistrationConfirmationMessage(message: string) {
         this.courseForm.controls['registrationConfirmationMessage'].setValue(message);
     }
+
+    /**
+     * Returns whether the dates are valid or not
+     * @return true if the dats are valid
+     */
+    get isValidDate(): boolean {
+        // allow instructors to set startDate and endDate later
+        if (!this.course.startDate || !this.course.endDate) {
+            return true;
+        }
+        return dayjs(this.course.startDate).isBefore(this.course.endDate);
+    }
+
+    get isValidConfiguration(): boolean {
+        return this.isValidDate;
+    }
 }
 
 const CourseValidator: ValidatorFn = (formGroup: FormGroup) => {

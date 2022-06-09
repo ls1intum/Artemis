@@ -68,6 +68,7 @@
             <div>
                 <jhi-included-in-overall-score-picker
                     [(includedInOverallScore)]="fileUploadExercise.includedInOverallScore"
+                    (includedInOverallScoreChange)="validateDate()"
                     [allowNotIncluded]="!isExamMode"
                 ></jhi-included-in-overall-score-picker>
             </div>
@@ -154,7 +155,12 @@
                 name="exampleSolutionPublicationDate"
                 labelName="{{ 'artemisApp.exercise.exampleSolutionPublicationDate' | artemisTranslate }}"
                 [(ngModel)]="fileUploadExercise.exampleSolutionPublicationDate"
+                [error]="fileUploadExercise.exampleSolutionPublicationDateError!"
+                (valueChange)="validateDate()"
             ></jhi-date-time-picker>
+            <span *ngIf="fileUploadExercise.exampleSolutionPublicationDateError" class="invalid-feedback">{{
+                'artemisApp.exercise.exampleSolutionPublicationDateError' | artemisTranslate
+            }}</span>
         </div>
         <div class="form-group">
             <label class="form-control-label" jhiTranslate="artemisApp.exercise.assessmentInstructions" for="gradingInstructions">Assessment Instructions</label>
@@ -173,7 +179,13 @@
             type="submit"
             id="save-entity"
             (click)="save()"
-            [disabled]="editForm.form.invalid || isSaving || fileUploadExercise.dueDateError || fileUploadExercise.assessmentDueDateError"
+            [disabled]="
+                editForm.form.invalid ||
+                isSaving ||
+                fileUploadExercise.dueDateError ||
+                fileUploadExercise.assessmentDueDateError ||
+                fileUploadExercise.exampleSolutionPublicationDateError
+            "
             class="btn btn-primary"
         >
             <fa-icon [icon]="faSave"></fa-icon>&nbsp;<span jhiTranslate="entity.action.save">Save</span>

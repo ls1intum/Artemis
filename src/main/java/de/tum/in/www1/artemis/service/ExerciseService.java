@@ -22,7 +22,7 @@ import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
 import de.tum.in.www1.artemis.domain.scores.ParticipantScore;
 import de.tum.in.www1.artemis.repository.*;
-import de.tum.in.www1.artemis.service.scheduled.quiz.QuizScheduleService;
+import de.tum.in.www1.artemis.service.scheduled.cache.quiz.QuizScheduleService;
 import de.tum.in.www1.artemis.web.rest.dto.CourseManagementOverviewExerciseStatisticsDTO;
 import de.tum.in.www1.artemis.web.rest.dto.DueDateStat;
 import de.tum.in.www1.artemis.web.rest.dto.StatsForDashboardDTO;
@@ -310,9 +310,12 @@ public class ExerciseService {
                 if (exercise instanceof QuizExercise quizExercise) {
                     quizExercise.filterSensitiveInformation();
 
-                    // delete the proxy as it doesn't work; getQuizBatchForStudent will load the batches from the DB directly
-                    quizExercise.setQuizBatches(null);
-                    quizExercise.setQuizBatches(quizBatchService.getQuizBatchForStudent(quizExercise, user).stream().collect(Collectors.toSet()));
+                    // if the quiz is not active the batches do not matter and there is no point in loading them
+                    if (quizExercise.isQuizStarted() && !quizExercise.isQuizEnded()) {
+                        // delete the proxy as it doesn't work; getQuizBatchForStudent will load the batches from the DB directly
+                        quizExercise.setQuizBatches(null);
+                        quizExercise.setQuizBatches(quizBatchService.getQuizBatchForStudentByLogin(quizExercise, user.getLogin()).stream().collect(Collectors.toSet()));
+                    }
                 }
             }
         }

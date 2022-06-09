@@ -14,6 +14,7 @@
                 "registerSuccessful": "Anmeldung erfolgreich",
                 "signUpForCourse": "Anmelden",
                 "cancel": "Abbrechen",
+                "coursePrerequisites": "Voraussetzungen",
                 "noCourse": "Keine Kurse für eine Registrierung verfügbar",
                 "courseLoading": "Kurse werden geladen...",
                 "courseSignupConfirmationTitle": "Bestätigung der Kursteilnahme"
@@ -29,6 +30,7 @@
                 "exercises": "Aufgaben",
                 "statistics": "Statistiken",
                 "lectures": "Vorlesungen",
+                "learningGoals": "Lernziele",
                 "exams": "Klausuren",
                 "discussion": "Diskussion",
                 "plagiarismCases": "Plagiatsfälle"
@@ -131,6 +133,9 @@
                 "includeAllCategories": "Wähle alle Optionen",
                 "exercisesWithNoCategories": "Aufgaben ohne Kategorien",
                 "pointsPerExercise": "Punkte pro Aufgabe"
+            },
+            "learningGoals": {
+                "noData": "Es sind keine Lernziele für diesen Kurs vorhanden."
             },
             "lectureList": {
                 "lectureGroupHeader": "Vorlesungen: {{ total }}",
