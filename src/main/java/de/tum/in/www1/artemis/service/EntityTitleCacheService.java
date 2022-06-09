@@ -75,6 +75,11 @@ public class EntityTitleCacheService {
         return titleMap.computeIfAbsent("hint" + hintId, ignored -> exerciseHintRepository.getHintTitle(hintId));
     }
 
+    /**
+     * Configures Hazelcast for the EntityTitleCache before the HazelcastInstance is created.
+     *
+     * @param config the {@link Config} the EntityTitleCache-specific configuration should be added to
+     */
     public static void configureHazelcast(Config config) {
         EvictionConfig evictionConfig = new EvictionConfig() //
                 .setEvictionPolicy(EvictionPolicy.NONE);
