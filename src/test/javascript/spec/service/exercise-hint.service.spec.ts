@@ -102,7 +102,7 @@ describe('ExerciseHint Service', () => {
 
         const req = httpMock.expectOne({ method: 'DELETE' });
         req.flush({ status: 200 });
-        expect(expectedResult).toBe(true);
+        expect(expectedResult).toBeTrue();
     });
 
     afterEach(() => {

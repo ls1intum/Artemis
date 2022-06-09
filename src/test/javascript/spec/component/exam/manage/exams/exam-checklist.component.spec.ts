@@ -75,14 +75,14 @@ describe('ExamChecklistComponent', () => {
         component.ngOnChanges();
 
         expect(component.countMandatoryExercises).toBe(0);
-        expect(component.hasOptionalExercises).toBe(true);
+        expect(component.hasOptionalExercises).toBeTrue();
 
         component.exam.exerciseGroups[0].isMandatory = true;
 
         component.ngOnChanges();
 
         expect(component.countMandatoryExercises).toBe(1);
-        expect(component.hasOptionalExercises).toBe(false);
+        expect(component.hasOptionalExercises).toBeFalse();
 
         const additionalExerciseGroup = {
             id: 13,
@@ -93,7 +93,7 @@ describe('ExamChecklistComponent', () => {
         component.ngOnChanges();
 
         expect(component.countMandatoryExercises).toBe(1);
-        expect(component.hasOptionalExercises).toBe(true);
+        expect(component.hasOptionalExercises).toBeTrue();
     });
 
     it('should set exam checklist correctly', () => {
@@ -101,7 +101,7 @@ describe('ExamChecklistComponent', () => {
 
         component.ngOnChanges();
 
-        expect(getExamStatisticsStub).toHaveBeenCalledTimes(1);
+        expect(getExamStatisticsStub).toHaveBeenCalledOnce();
         expect(getExamStatisticsStub).toHaveBeenCalledWith(exam);
         expect(component.examChecklist).toEqual(examChecklist);
     });

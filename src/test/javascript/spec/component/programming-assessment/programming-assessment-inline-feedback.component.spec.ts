@@ -57,7 +57,7 @@ describe('CodeEditorTutorAssessmentInlineFeedbackComponent', () => {
         expect(comp.feedback.reference).toBe(`file:${fileName}_line:${codeLine}`);
         expect(comp.feedback.type).toBe(FeedbackType.MANUAL);
 
-        expect(onUpdateFeedbackSpy).toHaveBeenCalledTimes(1);
+        expect(onUpdateFeedbackSpy).toHaveBeenCalledOnce();
         expect(onUpdateFeedbackSpy).toHaveBeenCalledWith(comp.feedback);
     });
 
@@ -65,7 +65,7 @@ describe('CodeEditorTutorAssessmentInlineFeedbackComponent', () => {
         const onEditFeedbackSpy = jest.spyOn(comp.onEditFeedback, 'emit');
         comp.editFeedback(codeLine);
 
-        expect(onEditFeedbackSpy).toHaveBeenCalledTimes(1);
+        expect(onEditFeedbackSpy).toHaveBeenCalledOnce();
         expect(onEditFeedbackSpy).toHaveBeenCalledWith(codeLine);
     });
 
@@ -73,7 +73,7 @@ describe('CodeEditorTutorAssessmentInlineFeedbackComponent', () => {
         const onCancelFeedbackSpy = jest.spyOn(comp.onCancelFeedback, 'emit');
         comp.cancelFeedback();
 
-        expect(onCancelFeedbackSpy).toHaveBeenCalledTimes(1);
+        expect(onCancelFeedbackSpy).toHaveBeenCalledOnce();
         expect(onCancelFeedbackSpy).toHaveBeenCalledWith(codeLine);
     });
 
@@ -83,10 +83,10 @@ describe('CodeEditorTutorAssessmentInlineFeedbackComponent', () => {
         const confirmSpy = jest.spyOn(window, 'confirm');
         comp.deleteFeedback();
 
-        expect(confirmSpy).toHaveBeenCalledTimes(1);
+        expect(confirmSpy).toHaveBeenCalledOnce();
         expect(confirmSpy).toHaveBeenCalledWith('artemisApp.feedback.delete.question');
 
-        expect(onDeleteFeedbackSpy).toHaveBeenCalledTimes(1);
+        expect(onDeleteFeedbackSpy).toHaveBeenCalledOnce();
         expect(onDeleteFeedbackSpy).toHaveBeenCalledWith(comp.feedback);
     });
 
@@ -111,7 +111,7 @@ describe('CodeEditorTutorAssessmentInlineFeedbackComponent', () => {
 
         comp.updateFeedback();
 
-        expect(comp.feedback.positive).toBe(true);
+        expect(comp.feedback.positive).toBeTrue();
     });
 
     it('should display the feedback text properly', () => {

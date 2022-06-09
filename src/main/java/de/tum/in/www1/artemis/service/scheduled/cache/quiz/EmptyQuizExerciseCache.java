@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.service.scheduled.quiz;
+package de.tum.in.www1.artemis.service.scheduled.cache.quiz;
 
 import java.util.List;
 import java.util.Map;
@@ -80,7 +80,7 @@ final class EmptyQuizExerciseCache extends QuizExerciseCache {
     }
 
     @Override
-    void clear() {
+    public void clear() {
         log.error("EmptyQuizExerciseCache cannot be cleared");
         throwModificationAttemptException();
     }

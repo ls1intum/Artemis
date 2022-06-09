@@ -61,7 +61,7 @@ describe('PostComponent', () => {
         metisServiceIsPostResolvedStub.mockReturnValue(false);
         component.posting = metisPostExerciseUser1;
         component.ngOnInit();
-        expect(component.postIsResolved).toBe(false);
+        expect(component.postIsResolved).toBeFalse();
     });
 
     it('should be re-evaluated on changes', () => {
@@ -71,7 +71,7 @@ describe('PostComponent', () => {
         component.ngOnInit();
         metisServiceIsPostResolvedStub.mockReturnValue(true);
         component.ngOnChanges();
-        expect(component.postIsResolved).toBe(true);
+        expect(component.postIsResolved).toBeTrue();
     });
 
     it('should contain a post header', () => {

@@ -36,6 +36,7 @@ import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.dto.StudentDTO;
 import de.tum.in.www1.artemis.service.exam.*;
 import de.tum.in.www1.artemis.service.messaging.InstanceMessageSendService;
+import de.tum.in.www1.artemis.service.scheduled.cache.monitoring.ExamMonitoringScheduleService;
 import de.tum.in.www1.artemis.web.rest.dto.*;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
@@ -88,10 +89,13 @@ public class ExamResource {
 
     private final EntityTitleCacheService entityTitleCacheService;
 
+    private final ExamMonitoringScheduleService examMonitoringScheduleService;
+
     public ExamResource(UserRepository userRepository, CourseRepository courseRepository, ExamService examService, ExamAccessService examAccessService,
             InstanceMessageSendService instanceMessageSendService, ExamRepository examRepository, SubmissionService submissionService, AuthorizationCheckService authCheckService,
             ExamDateService examDateService, TutorParticipationRepository tutorParticipationRepository, AssessmentDashboardService assessmentDashboardService,
-            ExamRegistrationService examRegistrationService, StudentExamRepository studentExamRepository, EntityTitleCacheService entityTitleCacheService) {
+            ExamRegistrationService examRegistrationService, StudentExamRepository studentExamRepository, EntityTitleCacheService entityTitleCacheService,
+            ExamMonitoringScheduleService examMonitoringScheduleService) {
         this.userRepository = userRepository;
         this.courseRepository = courseRepository;
         this.examService = examService;
@@ -106,6 +110,7 @@ public class ExamResource {
         this.assessmentDashboardService = assessmentDashboardService;
         this.studentExamRepository = studentExamRepository;
         this.entityTitleCacheService = entityTitleCacheService;
+        this.examMonitoringScheduleService = examMonitoringScheduleService;
     }
 
     /**
@@ -134,6 +139,11 @@ public class ExamResource {
         examAccessService.checkCourseAccessForInstructorElseThrow(courseId);
 
         Exam result = examRepository.save(exam);
+
+        if (result.isMonitoring()) {
+            examMonitoringScheduleService.scheduleExamActivitySave(result.getId());
+        }
+
         return ResponseEntity.created(new URI("/api/courses/" + courseId + "/exams/" + result.getId()))
                 .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, result.getTitle())).body(result);
     }
@@ -173,6 +183,10 @@ public class ExamResource {
         updatedExam.setRegisteredUsers(originalExam.getRegisteredUsers());
 
         Exam result = examRepository.save(updatedExam);
+
+        if (updatedExam.isMonitoring()) {
+            examMonitoringScheduleService.scheduleExamActivitySave(result.getId());
+        }
 
         // We can't test dates for equality as the dates retrieved from the database lose precision. Also use instant to take timezones into account
         Comparator<ZonedDateTime> comparator = Comparator.comparing(date -> date.truncatedTo(ChronoUnit.SECONDS).toInstant());
@@ -537,6 +551,11 @@ public class ExamResource {
         var exam = examRepository.findByIdElseThrow(examId);
         examAccessService.checkCourseAndExamAccessForInstructorElseThrow(courseId, examId);
 
+        if (exam.isMonitoring()) {
+            // Cancel schedule of exam monitoring
+            examMonitoringScheduleService.cancelExamActivitySave(examId);
+        }
+
         examService.delete(examId);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, exam.getTitle())).build();
     }
@@ -557,9 +576,20 @@ public class ExamResource {
         var exam = examRepository.findByIdElseThrow(examId);
         examAccessService.checkCourseAndExamAccessForInstructorElseThrow(courseId, examId);
 
+        if (exam.isMonitoring()) {
+            // Cancel schedule of exam monitoring
+            examMonitoringScheduleService.cancelExamActivitySave(examId);
+        }
+
         examService.reset(exam.getId());
         Exam returnExam = examService.findByIdWithExerciseGroupsAndExercisesElseThrow(examId);
         examService.setExamProperties(returnExam);
+
+        if (returnExam.isMonitoring()) {
+            // Schedule exam monitoring
+            examMonitoringScheduleService.scheduleExamActivitySave(examId);
+        }
+
         return ResponseEntity.ok(returnExam);
     }
 
@@ -626,6 +656,10 @@ public class ExamResource {
             studentExam.getExam().setExerciseGroups(null);
             studentExam.getExam().setStudentExams(null);
         }
+
+        // Reschedule after creation (possible longer working time)
+        examMonitoringScheduleService.scheduleExamActivitySave(examId);
+
         log.info("Generated {} student exams in {} for exam {}", studentExams.size(), formatDurationFrom(start), examId);
         return ResponseEntity.ok().body(studentExams);
     }
@@ -658,6 +692,9 @@ public class ExamResource {
             studentExam.getExam().setExerciseGroups(null);
             studentExam.getExam().setStudentExams(null);
         }
+
+        // Reschedule after creation (possible longer working time)
+        examMonitoringScheduleService.scheduleExamActivitySave(examId);
 
         log.info("Generated {} missing student exams for exam {}", studentExams.size(), examId);
         return ResponseEntity.ok().body(studentExams);
