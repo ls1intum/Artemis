@@ -1,10 +1,12 @@
 package de.tum.in.www1.artemis.service;
 
-import static de.tum.in.www1.artemis.config.Constants.HAZELCAST_QUIZ_PREFIX;
-
 import org.springframework.stereotype.Service;
 
-import com.hazelcast.config.*;
+import com.hazelcast.config.Config;
+import com.hazelcast.config.EvictionConfig;
+import com.hazelcast.config.EvictionPolicy;
+import com.hazelcast.config.InMemoryFormat;
+import com.hazelcast.config.NearCacheConfig;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.map.IMap;
 
@@ -15,9 +17,9 @@ public class EntityTitleService {
 
     private final ExerciseRepository exerciseRepository;
 
-    private transient IMap<Long, String> exerciseTitles;
+    private final transient IMap<Long, String> exerciseTitles;
 
-    public static final String HAZELCAST_EXERCISE_TITLE_CACHE = HAZELCAST_QUIZ_PREFIX + "exercise-cache";
+    public static final String HAZELCAST_EXERCISE_TITLE_CACHE = "entity-title-cache";
 
     public EntityTitleService(ExerciseRepository exerciseRepository, HazelcastInstance hazelcastInstance) {
         this.exerciseRepository = exerciseRepository;
