@@ -155,6 +155,7 @@
     <profiles>
         <profile>
             <id>coverage</id>
+            <!-- TODO: remove this repository and upgrade the version to 24.0.2, once released -->
             <pluginRepositories>
                 <pluginRepository>
                     <id>oss.sonatype.org-snapshot</id>
