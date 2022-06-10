@@ -36,6 +36,8 @@ export class ResultService implements IResultService {
     private resultResourceUrl = SERVER_API_URL + 'api/results';
     private participationResourceUrl = SERVER_API_URL + 'api/participations';
 
+    private readonly maxValueProgrammingResultInts = 255; // Size of tinyInt in SQL, that is used to store these values
+
     constructor(private http: HttpClient, private translateService: TranslateService) {}
 
     find(resultId: number): Observable<EntityResponseType> {
@@ -64,34 +66,37 @@ export class ResultService implements IResultService {
             buildAndTestMessage = this.translateService.instant('artemisApp.result.resultStringBuildSuccessfulNoTests');
         } else {
             buildAndTestMessage = this.translateService.instant('artemisApp.result.resultStringBuildSuccessfulTests', {
-                numberOfTestsPassed: result.passedTestCaseCount === 255 ? '255+' : result.passedTestCaseCount,
-                numberOfTestsTotal: result.testCaseCount === 255 ? '255+' : result.testCaseCount,
+                numberOfTestsPassed: result.passedTestCaseCount! >= this.maxValueProgrammingResultInts ? `${this.maxValueProgrammingResultInts}+` : result.passedTestCaseCount,
+                numberOfTestsTotal: result.testCaseCount! >= this.maxValueProgrammingResultInts ? `${this.maxValueProgrammingResultInts}+` : result.testCaseCount,
             });
         }
 
-        let resultString: string;
-        if (result.codeIssueCount && result.codeIssueCount > 0) {
-            resultString = this.translateService.instant('artemisApp.result.resultStringProgrammingCodeIssues', {
-                relativeScore,
-                buildAndTestMessage,
-                numberOfIssues: result.codeIssueCount === 255 ? '255+' : result.codeIssueCount,
-                points,
-                maxPoints: exercise.maxPoints,
-            });
-        } else {
-            resultString = this.translateService.instant(`artemisApp.result.resultStringProgramming`, {
-                relativeScore,
-                buildAndTestMessage,
-                points,
-                maxPoints: exercise.maxPoints,
-            });
-        }
+        let resultString = this.getBaseResultStringProgrammingExercise(result, exercise, relativeScore, points, buildAndTestMessage);
 
         if (isResultPreliminary(result, exercise)) {
             resultString += ' (' + this.translateService.instant('artemisApp.result.preliminary') + ')';
         }
 
         return resultString;
+    }
+
+    private getBaseResultStringProgrammingExercise(result: Result, exercise: ProgrammingExercise, relativeScore: number, points: number, buildAndTestMessage: string): string {
+        if (result.codeIssueCount && result.codeIssueCount > 0) {
+            return this.translateService.instant('artemisApp.result.resultStringProgrammingCodeIssues', {
+                relativeScore,
+                buildAndTestMessage,
+                numberOfIssues: result.codeIssueCount! >= this.maxValueProgrammingResultInts ? `${this.maxValueProgrammingResultInts}+` : result.codeIssueCount,
+                points,
+                maxPoints: exercise.maxPoints,
+            });
+        } else {
+            return this.translateService.instant(`artemisApp.result.resultStringProgramming`, {
+                relativeScore,
+                buildAndTestMessage,
+                points,
+                maxPoints: exercise.maxPoints,
+            });
+        }
     }
 
     getResultsForExercise(exerciseId: number, req?: any): Observable<EntityArrayResponseType> {

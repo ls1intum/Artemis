@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.config.migration.entries;
 
-import java.util.List;
+import java.time.ZonedDateTime;
+import java.util.*;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -10,10 +11,11 @@ import com.google.common.collect.Lists;
 
 import de.tum.in.www1.artemis.config.migration.MigrationEntry;
 import de.tum.in.www1.artemis.domain.Result;
+import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 
 /**
- * This migration extracts the information about a programming result and stores it inside the new variables
+ * This migration extracts the information about a programming result and stores it inside the new variables so the result String can still be displayed correctly in the client
  */
 @Component
 public class MigrationEntry20220608_194500 extends MigrationEntry {
@@ -32,15 +34,29 @@ public class MigrationEntry20220608_194500 extends MigrationEntry {
     @Override
     public void execute() {
         List<Result> results = resultRepository.findAll();
+        results.removeIf(result -> !(result.getParticipation() instanceof ProgrammingExerciseParticipation));
 
-        results.removeIf(result -> result.getResultString() == null || !result.getResultString().matches(".*of.*passed.*"));
+        List<Result> unprocessedResults = new ArrayList<>();
+        List<Result> processedResults = new ArrayList<>();
+        results.forEach(result -> {
+            if (result.getResultString() != null && result.getResultString().matches(".*of.*passed.*")) {
+                unprocessedResults.add(result);
+            }
+            else {
+                processedResults.add(result);
+            }
+        });
 
-        LOGGER.info("Found {} results to process.", results.size());
+        LOGGER.info("Found {} results to process.", unprocessedResults.size());
 
         Lists.partition(results, 100).forEach(resultList -> {
             LOGGER.info("Process (next) 100 results for the migration in one batch...");
             processResults(resultList);
         });
+
+        if (!unprocessedResults.isEmpty()) {
+            reportUnprocessedResults(unprocessedResults);
+        }
     }
 
     /*
@@ -74,6 +90,13 @@ public class MigrationEntry20220608_194500 extends MigrationEntry {
         });
 
         resultRepository.saveAll(results);
+    }
+
+    private void reportUnprocessedResults(List<Result> unprocessedResults) {
+        LOGGER.error("Found {} results of programming exercises that could not be processed! These results will no longer show a correct resultString!", unprocessedResults.size());
+        Optional<ZonedDateTime> latestUnprocessedResult = unprocessedResults.stream().map(Result::getCompletionDate).filter(Objects::nonNull).max(Comparator.naturalOrder());
+        latestUnprocessedResult.ifPresent(zonedDateTime -> LOGGER.error("The latest of these unprocessed results is from {}.", zonedDateTime));
+        LOGGER.error("The IDs of the unprocessed results are: {}", unprocessedResults.stream().map(Result::getId).toList());
     }
 
     /**

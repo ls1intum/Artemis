@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.domain;
 
+import static de.tum.in.www1.artemis.config.Constants.MAX_VALUE_PROGRAMMING_RESULT_INTS;
 import static de.tum.in.www1.artemis.service.util.RoundingUtil.*;
 
 import java.time.ZonedDateTime;
@@ -459,7 +460,7 @@ public class Result extends DomainObject {
 
     public void setTestCaseCount(Integer testCaseCount) {
         if (testCaseCount != null) {
-            this.testCaseCount = Math.min(testCaseCount, 255);
+            this.testCaseCount = Math.min(testCaseCount, MAX_VALUE_PROGRAMMING_RESULT_INTS);
         }
     }
 
@@ -469,7 +470,7 @@ public class Result extends DomainObject {
 
     public void setPassedTestCaseCount(Integer passedTestCaseCount) {
         if (passedTestCaseCount != null) {
-            this.passedTestCaseCount = Math.min(passedTestCaseCount, 255);
+            this.passedTestCaseCount = Math.min(passedTestCaseCount, MAX_VALUE_PROGRAMMING_RESULT_INTS);
         }
     }
 
@@ -479,7 +480,7 @@ public class Result extends DomainObject {
 
     public void setCodeIssueCount(Integer codeIssueCount) {
         if (codeIssueCount != null) {
-            this.codeIssueCount = Math.min(codeIssueCount, 255);
+            this.codeIssueCount = Math.min(codeIssueCount, MAX_VALUE_PROGRAMMING_RESULT_INTS);
         }
     }
 

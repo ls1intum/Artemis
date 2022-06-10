@@ -607,7 +607,7 @@ public class BambooService extends AbstractContinuousIntegrationService {
             if (Boolean.TRUE.equals(programmingExercise.isStaticCodeAnalysisEnabled()) && staticCodeAnalysisReports != null && !staticCodeAnalysisReports.isEmpty()) {
                 var scaFeedbackList = feedbackRepository.createFeedbackFromStaticCodeAnalysisReports(staticCodeAnalysisReports);
                 result.addFeedbacks(scaFeedbackList);
-                result.setCodeIssueCount(result.getCodeIssueCount() + scaFeedbackList.size());
+                result.setCodeIssueCount(scaFeedbackList.size());
             }
 
             // 4) process testwise coverage analysis report
