@@ -74,7 +74,7 @@ describe('ResultDetailComponent', () => {
                 type: FeedbackItemType.Issue,
                 category: 'Code Issue',
                 title: category + ' Issue in file www/packet/File.java at line ' + line + (column != undefined ? ' column ' + column : ''),
-                text: 'Rule: This is a code issue',
+                text: showDetails ? 'Rule: This is a code issue' : 'This is a code issue',
                 credits: -penalty,
                 actualCredits: credits,
                 positive: false,
