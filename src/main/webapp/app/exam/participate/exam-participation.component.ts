@@ -74,8 +74,21 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     // needed, because studentExam is downloaded only when exam is started
     exam: Exam;
     examTitle = '';
+
+    /**
+     * This component needs {@link StudentExamWithGradeDTO} only for passing it to {@link ExamParticipationSummaryComponent}.
+     * This allows us including the calculated points and grade (if applicable and present) in the same response
+     * so we send one less request to the server.
+     *
+     * For usages inside this component, {@link StudentExam} retrieved from {@link StudentExamWithGradeDTO#studentExam} is sufficient.
+     * {@link studentExamWithGrade}
+     */
     studentExamWithGrade: StudentExamWithGradeDTO;
 
+    /**
+     * Allows this component to access the studentExam without knowing about {@link studentExamWithGrade} wrapper.
+     * See {@link studentExamWithGrade} for more information.
+     */
     get studentExam(): StudentExam {
         return this.studentExamWithGrade?.studentExam;
     }

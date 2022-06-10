@@ -415,6 +415,13 @@ public class ExamService {
         }
     }
 
+    /**
+     * First rounds max points for each exercise according to their {@link IncludedInOverallScore} value and sums them up.
+     *
+     * @param exercises exercises to sum their max points, intended use case is passing all exercises in a {@link StudentExam}
+     * @param course supplies the rounding accuracy of scores
+     * @return sum of rounded max points if exercises are given, else 0.0
+     */
     private double calculateMaxPointsSum(List<Exercise> exercises, Course course) {
         if (exercises != null) {
             var exercisesIncluded = exercises.stream().filter(exercise -> exercise.getIncludedInOverallScore() == IncludedInOverallScore.INCLUDED_COMPLETELY);
@@ -423,6 +430,13 @@ public class ExamService {
         return 0.0;
     }
 
+    /**
+     * First rounds max bonus points for each exercise according to their {@link IncludedInOverallScore} value and sums them up.
+     *
+     * @param exercises exercises to sum their bonus points, intended use case is passing all exercises in a {@link StudentExam}
+     * @param course supplies the rounding accuracy of scores
+     * @return sum of rounded max bonus points if exercises are given, else 0.0
+     */
     private double calculateMaxBonusPointsSum(List<Exercise> exercises, Course course) {
         if (exercises != null) {
             return roundScoreSpecifiedByCourseSettings(exercises.stream().map(this::calculateMaxBonusPoints).reduce(0.0, Double::sum), course);
@@ -430,6 +444,15 @@ public class ExamService {
         return 0.0;
     }
 
+    /**
+     * Gets max bonus points for the given exercise.
+     * - If the exercise is included completely, returns max bonus points
+     * - If the exercise is included as a bonus, returns max points
+     * - If the exercise is not included, returns 0.0
+     *
+     * @param exercise the exercise that the points will be read from
+     * @return max bonus points for the exercise retrieved according to the conditions above
+     */
     private double calculateMaxBonusPoints(Exercise exercise) {
         return switch (exercise.getIncludedInOverallScore()) {
             case INCLUDED_COMPLETELY -> exercise.getBonusPoints();

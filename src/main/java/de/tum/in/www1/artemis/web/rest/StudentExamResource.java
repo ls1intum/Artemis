@@ -104,6 +104,8 @@ public class StudentExamResource {
 
     /**
      * GET /courses/{courseId}/exams/{examId}/student-exams/{studentExamId} : Find a student exam by id.
+     * Includes aggregate points, assessment result and grade calculations if the exam is assessed.
+     * See {@link StudentExamWithGradeDTO} for more explanation.
      *
      * @param courseId      the course to which the student exam belongs to
      * @param examId        the exam to which the student exam belongs to
@@ -303,6 +305,8 @@ public class StudentExamResource {
      * GET /courses/{courseId}/exams/{examId}/student-exams/summary : Find a student exam for the summary.
      * This will be used to display the summary of the exam. The student exam will be returned with the exercises
      * and with the student participation and with the submissions.
+     * Includes aggregate points, assessment result and grade calculations if the exam is assessed.
+     * See {@link StudentExamWithGradeDTO} for more explanation.
      *
      * @param courseId  the course to which the student exam belongs to
      * @param examId    the exam to which the student exam belongs to
