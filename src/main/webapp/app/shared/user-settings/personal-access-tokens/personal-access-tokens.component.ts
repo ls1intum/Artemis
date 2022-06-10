@@ -35,9 +35,7 @@ export class PersonalAccessTokensComponent implements OnInit {
     }
 
     generateNewToken() {
-        this.http
-            .post<JwtToken>(this.tokenUrl, '', { params: { lifetimeMilliseconds: this.newTokenLifetimeMillis } })
-            .subscribe((resp: JwtToken) => (this.token = resp['id_token']));
+        this.http.post<JwtToken>(this.tokenUrl, this.newTokenLifetimeMillis).subscribe((resp: JwtToken) => (this.token = resp['id_token']));
     }
 
     /**

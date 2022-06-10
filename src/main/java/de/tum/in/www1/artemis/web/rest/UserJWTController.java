@@ -135,8 +135,9 @@ public class UserJWTController {
 
     @PostMapping("/personal-access-token")
     @FeatureToggle(Feature.PersonalAccessTokens)
-    public ResponseEntity<JWTToken> getPersonalAccessToken(@RequestParam(value = "lifetimeMilliseconds", required = true) Long lifetimeMilliseconds) {
+    public ResponseEntity<JWTToken> getPersonalAccessToken(@RequestBody Long lifetimeMilliseconds) {
         User user = userRepository.getUser();
+
         if (!user.getActivated()) {
             throw new UserNotActivatedException("User was disabled!");
         }
