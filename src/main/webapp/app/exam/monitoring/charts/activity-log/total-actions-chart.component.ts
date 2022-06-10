@@ -1,4 +1,4 @@
-import { Component, OnChanges, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { getColor, groupActionsByTimestamp } from 'app/exam/monitoring/charts/monitoring-chart';
 import { ExamAction } from 'app/entities/exam-user-activity.model';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
@@ -11,18 +11,16 @@ import { ActivatedRoute } from '@angular/router';
     selector: 'jhi-total-actions-chart',
     templateUrl: './total-actions-chart.component.html',
 })
-export class TotalActionsChartComponent extends ChartComponent implements OnInit, OnChanges, OnDestroy {
+export class TotalActionsChartComponent extends ChartComponent implements OnInit, OnDestroy {
+    readonly renderRate = 5;
+
     constructor(route: ActivatedRoute, examMonitoringWebsocketService: ExamMonitoringWebsocketService, private artemisDatePipe: ArtemisDatePipe) {
         super(route, examMonitoringWebsocketService, 'total-actions-chart', false, [getColor(2)]);
     }
 
     ngOnInit(): void {
         this.initSubscriptions();
-        this.initRenderRate(15);
-        this.initData();
-    }
-
-    ngOnChanges(): void {
+        this.initRenderRate(this.renderRate);
         this.initData();
     }
 
@@ -37,9 +35,12 @@ export class TotalActionsChartComponent extends ChartComponent implements OnInit
         const groupedByTimestamp = groupActionsByTimestamp(this.filteredExamActions);
         const chartData: NgxChartsSingleSeriesDataEntry[] = [];
         let amount = 0;
-        for (const [key, value] of Object.entries(groupedByTimestamp)) {
-            amount += value.length;
-            chartData.push({ name: this.artemisDatePipe.transform(key, 'short', true), value: amount });
+        for (const timestamp of this.getLastXTimestamps()) {
+            const key = timestamp.toString();
+            if (key in groupedByTimestamp) {
+                amount += groupedByTimestamp[key].length;
+            }
+            chartData.push({ name: this.artemisDatePipe.transform(timestamp, 'time', true), value: amount });
         }
         this.ngxData = [{ name: 'actions', series: chartData }];
     }

@@ -1,4 +1,4 @@
-import { Component, OnChanges, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { getColor, groupActionsByTimestamp, groupActionsByType } from 'app/exam/monitoring/charts/monitoring-chart';
 import { ExamAction, ExamActionType } from 'app/entities/exam-user-activity.model';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
@@ -11,18 +11,16 @@ import { ActivatedRoute } from '@angular/router';
     selector: 'jhi-category-actions-chart',
     templateUrl: './category-actions-chart.component.html',
 })
-export class CategoryActionsChartComponent extends ChartComponent implements OnInit, OnChanges, OnDestroy {
+export class CategoryActionsChartComponent extends ChartComponent implements OnInit, OnDestroy {
+    readonly renderRate = 5;
+
     constructor(route: ActivatedRoute, examMonitoringWebsocketService: ExamMonitoringWebsocketService, private artemisDatePipe: ArtemisDatePipe) {
-        super(route, examMonitoringWebsocketService, 'category-actions-chart', false, [getColor(0), getColor(1), getColor(2), getColor(3), getColor(4)]);
+        super(route, examMonitoringWebsocketService, 'category-actions-chart', true, [getColor(0), getColor(1), getColor(2), getColor(3), getColor(4)]);
     }
 
     ngOnInit(): void {
         this.initSubscriptions();
-        this.initRenderRate(15);
-        this.initData();
-    }
-
-    ngOnChanges(): void {
+        this.initRenderRate(this.renderRate);
         this.initData();
     }
 
@@ -43,20 +41,26 @@ export class CategoryActionsChartComponent extends ChartComponent implements OnI
         const chartData: Map<string, NgxChartsSingleSeriesDataEntry[]> = new Map();
 
         Object.keys(ExamActionType).forEach((type) => {
-            categories.set(type, 0);
             chartData.set(type, []);
         });
 
-        for (const [timestampKey, timestampValue] of Object.entries(groupedByTimestamp)) {
-            // Group actions by type
-            const groupedByType = groupActionsByType(timestampValue);
+        for (const timestamp of this.getLastXTimestamps()) {
+            Object.keys(ExamActionType).forEach((type) => {
+                categories.set(type, 0);
+            });
 
-            for (const [typeKey, typeValue] of Object.entries(groupedByType)) {
-                categories.set(typeKey, categories.get(typeKey)! + typeValue.length);
+            const key = timestamp.toString();
+            if (key in groupedByTimestamp) {
+                // Group actions by type
+                const groupedByType = groupActionsByType(groupedByTimestamp[key]);
+
+                for (const [typeKey, typeValue] of Object.entries(groupedByType)) {
+                    categories.set(typeKey, typeValue.length);
+                }
             }
 
             for (const [category, amount] of categories.entries()) {
-                chartData.set(category, [...(chartData.get(category) ?? []), { name: this.artemisDatePipe.transform(timestampKey, 'short', true), value: amount }]);
+                chartData.set(category, [...(chartData.get(category) ?? []), { name: this.artemisDatePipe.transform(timestamp, 'time', true), value: amount }]);
             }
         }
 
@@ -67,8 +71,7 @@ export class CategoryActionsChartComponent extends ChartComponent implements OnI
         this.ngxData = chartSeriesData;
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     filterRenderedData(examAction: ExamAction): boolean {
-        return true;
+        return this.filterActionsNotInTimeframe(examAction);
     }
 }

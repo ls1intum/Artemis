@@ -4,6 +4,7 @@ import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { Exam } from 'app/entities/exam.model';
 import { ExamAction, ExamActivity } from 'app/entities/exam-user-activity.model';
 import dayjs from 'dayjs/esm';
+import { ceilDayjsSeconds } from 'app/exam/monitoring/charts/monitoring-chart';
 
 const EXAM_MONITORING_TOPIC = (examId: number) => `/topic/exam-monitoring/${examId}/action`;
 
@@ -86,6 +87,6 @@ export class ExamMonitoringWebsocketService implements IExamMonitoringWebsocketS
      */
     private prepareAction(examAction: ExamAction) {
         examAction.timestamp = dayjs(examAction.timestamp);
-        examAction.ceiledTimestamp = examAction.timestamp.add(15 - (examAction.timestamp.get('seconds') % 15), 'seconds').startOf('seconds');
+        examAction.ceiledTimestamp = ceilDayjsSeconds(examAction.timestamp, 15);
     }
 }

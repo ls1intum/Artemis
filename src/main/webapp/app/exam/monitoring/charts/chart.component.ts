@@ -4,7 +4,9 @@ import { NgxChartsEntry } from 'app/shared/chart/ngx-charts-datatypes';
 import { Subscription } from 'rxjs';
 import { ExamMonitoringWebsocketService } from '../exam-monitoring-websocket.service';
 import { ActivatedRoute } from '@angular/router';
-import { ExamAction } from '../../../entities/exam-user-activity.model';
+import { ExamAction } from 'app/entities/exam-user-activity.model';
+import dayjs from 'dayjs/esm';
+import { ceilDayjsSeconds } from 'app/exam/monitoring/charts/monitoring-chart';
 
 export abstract class ChartComponent {
     // Subscriptions
@@ -16,10 +18,12 @@ export abstract class ChartComponent {
     protected courseId: number;
 
     // Actions
-    protected receivedExamActions: ExamAction[] = [];
     protected filteredExamActions: ExamAction[] = [];
 
     chartIdentifierKey = '';
+
+    showNumberLastTimeStamps = 10;
+    timeStampGapInSeconds = 15;
 
     // Chart
     ngxData: NgxChartsEntry[] = [];
@@ -54,9 +58,7 @@ export abstract class ChartComponent {
 
         this.examActionSubscription = this.examMonitoringWebsocketService.getExamMonitoringObservable(this.examId)?.subscribe((examAction) => {
             if (examAction) {
-                this.receivedExamActions.push(examAction);
                 this.filteredExamActions.push(examAction);
-                console.log(this.filteredExamActions);
             }
         });
     }
@@ -68,7 +70,7 @@ export abstract class ChartComponent {
     protected initRenderRate(seconds: number) {
         // Trigger change detection every x seconds and filter the data
         setInterval(() => {
-            this.filteredExamActions = [...this.filteredExamActions.filter(this.filterRenderedData)];
+            this.filteredExamActions = [...this.filteredExamActions.filter((action) => this.filterRenderedData(action))];
             this.initData();
         }, seconds * 1000);
     }
@@ -79,4 +81,19 @@ export abstract class ChartComponent {
     abstract initData(): void;
 
     abstract filterRenderedData(examAction: ExamAction): boolean;
+
+    protected filterActionsNotInTimeframe(examAction: ExamAction): boolean {
+        return ceilDayjsSeconds(dayjs(), this.timeStampGapInSeconds)
+            .subtract(this.showNumberLastTimeStamps * this.timeStampGapInSeconds, 'seconds')
+            .isBefore(examAction.ceiledTimestamp ?? examAction.timestamp);
+    }
+
+    protected getLastXTimestamps(): dayjs.Dayjs[] {
+        const ceiledNow = ceilDayjsSeconds(dayjs(), 15);
+        const timestamps = [];
+        for (let i = this.showNumberLastTimeStamps; i > 0; i--) {
+            timestamps.push(ceiledNow.subtract(i * this.timeStampGapInSeconds, 'seconds'));
+        }
+        return timestamps;
+    }
 }
