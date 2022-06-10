@@ -161,7 +161,7 @@ describe('ExamPointsSummaryComponent', () => {
         fixture.detectChanges();
 
         expect(fixture).not.toBeNull();
-        expect(gradingSystemServiceMatchPercentageErrorStub).toHaveBeenCalledTimes(1);
+        expect(gradingSystemServiceMatchPercentageErrorStub).toHaveBeenCalledOnce();
         expect(component.gradingScaleExists).toBeFalse();
     });
 

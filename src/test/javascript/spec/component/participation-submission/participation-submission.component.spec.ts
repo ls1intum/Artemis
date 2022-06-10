@@ -170,7 +170,7 @@ describe('ParticipationSubmissionComponent', () => {
         fixture.detectChanges();
         tick();
 
-        expect(comp.isLoading).toBe(false);
+        expect(comp.isLoading).toBeFalse();
         // check if findAllSubmissionsOfParticipationStub() is called and works
         expect(findAllSubmissionsOfParticipationStub).toHaveBeenCalled();
         expect(comp.participation).toEqual(participation);
@@ -211,7 +211,7 @@ describe('ParticipationSubmissionComponent', () => {
         fixture.detectChanges();
         tick();
 
-        expect(comp.isLoading).toBe(false);
+        expect(comp.isLoading).toBeFalse();
         expect(findWithTemplateAndSolutionParticipationStub).toHaveBeenCalled();
         expect(comp.exercise).toEqual(programmingExercise);
         expect(comp.participation).toEqual(templateParticipation);
@@ -248,7 +248,7 @@ describe('ParticipationSubmissionComponent', () => {
         fixture.detectChanges();
         tick();
 
-        expect(comp.isLoading).toBe(false);
+        expect(comp.isLoading).toBeFalse();
         expect(findWithTemplateAndSolutionParticipationStub).toHaveBeenCalled();
         expect(comp.participation).toEqual(solutionParticipation);
         expect(comp.submissions).toEqual(solutionParticipation.submissions);

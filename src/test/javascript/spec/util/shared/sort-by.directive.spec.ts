@@ -83,7 +83,7 @@ describe('Directive: SortByDirective', () => {
         // THEN
         expect(sortByDirective.jhiSortBy).toBe('name');
         expect(component.predicate).toBe('name');
-        expect(component.ascending).toBe(true);
+        expect(component.ascending).toBeTrue();
         expect(sortByDirective.iconComponent?.icon).toBe(faSortUp);
         expect(component.transition).toHaveBeenCalledTimes(0);
     });
@@ -102,9 +102,9 @@ describe('Directive: SortByDirective', () => {
         // THEN
         expect(sortByDirective.jhiSortBy).toBe('name');
         expect(component.predicate).toBe('name');
-        expect(component.ascending).toBe(true);
+        expect(component.ascending).toBeTrue();
         expect(sortByDirective.iconComponent?.icon).toBe(faSortUp);
-        expect(component.transition).toHaveBeenCalledTimes(1);
+        expect(component.transition).toHaveBeenCalledOnce();
     });
 
     it('should update component predicate, order, icon when user clicks on column header', () => {
@@ -120,9 +120,9 @@ describe('Directive: SortByDirective', () => {
 
         // THEN
         expect(component.predicate).toBe('name');
-        expect(component.ascending).toBe(false);
+        expect(component.ascending).toBeFalse();
         expect(sortByDirective.iconComponent?.icon).toBe(faSortDown);
-        expect(component.transition).toHaveBeenCalledTimes(1);
+        expect(component.transition).toHaveBeenCalledOnce();
     });
 
     it('should update component predicate, order, icon when user double clicks on column header', () => {
@@ -143,7 +143,7 @@ describe('Directive: SortByDirective', () => {
 
         // THEN
         expect(component.predicate).toBe('name');
-        expect(component.ascending).toBe(true);
+        expect(component.ascending).toBeTrue();
         expect(sortByDirective.iconComponent?.icon).toBe(faSortUp);
         expect(component.transition).toHaveBeenCalledTimes(2);
     });
