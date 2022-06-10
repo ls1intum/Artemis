@@ -39,14 +39,14 @@ describe('StateStorageService', () => {
     it('should retrieve previous state', () => {
         service.getPreviousState();
 
-        expect(retrieveSpy).toHaveBeenCalledTimes(1);
+        expect(retrieveSpy).toHaveBeenCalledOnce();
         expect(retrieveSpy).toHaveBeenCalledWith(previousStateKey);
     });
 
     it('should reset previous state', () => {
         service.resetPreviousState();
 
-        expect(clearSpy).toHaveBeenCalledTimes(1);
+        expect(clearSpy).toHaveBeenCalledOnce();
         expect(clearSpy).toHaveBeenCalledWith(previousStateKey);
     });
 
@@ -56,14 +56,14 @@ describe('StateStorageService', () => {
 
         service.storePreviousState(name, params);
 
-        expect(storeSpy).toHaveBeenCalledTimes(1);
+        expect(storeSpy).toHaveBeenCalledOnce();
         expect(storeSpy).toHaveBeenCalledWith(previousStateKey, expectedState);
     });
 
     it('should retrieve destination state', () => {
         service.getDestinationState();
 
-        expect(retrieveSpy).toHaveBeenCalledTimes(1);
+        expect(retrieveSpy).toHaveBeenCalledOnce();
         expect(retrieveSpy).toHaveBeenCalledWith(destinationStateKey);
     });
 
@@ -72,14 +72,14 @@ describe('StateStorageService', () => {
 
         service.storeUrl(newUrl);
 
-        expect(storeSpy).toHaveBeenCalledTimes(1);
+        expect(storeSpy).toHaveBeenCalledOnce();
         expect(storeSpy).toHaveBeenCalledWith(previousUrlKey, newUrl);
     });
 
     it('should retrieve the previous URL', () => {
         service.getUrl();
 
-        expect(retrieveSpy).toHaveBeenCalledTimes(1);
+        expect(retrieveSpy).toHaveBeenCalledOnce();
         expect(retrieveSpy).toHaveBeenCalledWith(previousUrlKey);
     });
 
@@ -102,7 +102,7 @@ describe('StateStorageService', () => {
 
         service.storeDestinationState(destinationState, params, fromState);
 
-        expect(storeSpy).toHaveBeenCalledTimes(1);
+        expect(storeSpy).toHaveBeenCalledOnce();
         expect(storeSpy).toHaveBeenCalledWith(destinationStateKey, expectedDestinationInfo);
     });
 });

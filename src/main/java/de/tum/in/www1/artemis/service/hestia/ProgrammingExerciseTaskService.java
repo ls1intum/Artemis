@@ -25,6 +25,9 @@ public class ProgrammingExerciseTaskService {
      * Example: "[task][Implement BubbleSort](testBubbleSort,testBubbleSortHidden)". Following values are extracted by the named capturing groups:
      * - name: "Implement BubbleSort"
      * - tests: "testBubbleSort,testBubbleSortHidden"
+     *
+     * This is coupled to the value used in `ProgrammingExerciseTaskExtensionWrapper` and `TaskCommand` in the client
+     * If you change the regex, make sure to change it in all places!
      */
     private final Pattern taskPatternForProblemStatementMarkdown = Pattern.compile("\\[task]\\[(?<name>[^\\[\\]]+)]\\((?<tests>.*)\\)");
 
@@ -121,10 +124,13 @@ public class ProgrammingExerciseTaskService {
      * @return the extracted tasks with the corresponding test cases
      */
     private List<ProgrammingExerciseTask> extractTasks(ProgrammingExercise exercise) {
+        var tasks = new ArrayList<ProgrammingExerciseTask>();
         var problemStatement = exercise.getProblemStatement();
+        if (problemStatement == null || problemStatement.isEmpty()) {
+            return tasks;
+        }
         var matcher = taskPatternForProblemStatementMarkdown.matcher(problemStatement);
         var testCases = programmingExerciseTestCaseRepository.findByExerciseIdAndActive(exercise.getId(), true);
-        var tasks = new ArrayList<ProgrammingExerciseTask>();
         while (matcher.find()) {
             var taskName = matcher.group("name");
             var testCaseNames = matcher.group("tests");

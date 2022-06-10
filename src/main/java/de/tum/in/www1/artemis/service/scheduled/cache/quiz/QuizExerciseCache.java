@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.service.scheduled.quiz;
+package de.tum.in.www1.artemis.service.scheduled.cache.quiz;
 
 import java.util.*;
 
@@ -9,11 +9,12 @@ import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
+import de.tum.in.www1.artemis.service.scheduled.cache.Cache;
 
 /**
  * Represents the cache for one specific quiz exercise.
  */
-abstract class QuizExerciseCache {
+abstract class QuizExerciseCache implements Cache {
 
     private final Long exerciseId;
 
@@ -69,13 +70,6 @@ abstract class QuizExerciseCache {
      * Set the ScheduledTaskHandlers
      */
     abstract void setQuizStart(List<ScheduledTaskHandler> quizStart);
-
-    /**
-     * Releases all (Hazelcast) resources, all cached objects will be lost.
-     * <p>
-     * This should only be used for exceptional cases, such as deleting or resetting the exercise or for testing.
-     */
-    abstract void clear();
 
     @Override
     public final int hashCode() {

@@ -134,17 +134,17 @@ describe('Course Management Detail Component', () => {
     it('should toggle course description', () => {
         component.ngOnInit();
 
-        expect(component.enableShowMore).toBe(true);
-        expect(component.longDescriptionShown).toBe(false);
+        expect(component.enableShowMore).toBeTrue();
+        expect(component.longDescriptionShown).toBeFalse();
 
         component.toggleCourseDescription();
 
-        expect(component.longDescriptionShown).toBe(true);
+        expect(component.longDescriptionShown).toBeTrue();
         expect(component.courseDescription).toBe(course.description);
 
         component.toggleCourseDescription();
 
-        expect(component.longDescriptionShown).toBe(false);
+        expect(component.longDescriptionShown).toBeFalse();
         expect(component.courseDescription).toBe('Cras mattis iudicium purus sit amet fermentum. Gal…');
     });
 });

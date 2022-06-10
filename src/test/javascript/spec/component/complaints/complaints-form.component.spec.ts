@@ -81,8 +81,8 @@ describe('ComplaintsFormComponent', () => {
         const createMock = jest.spyOn(complaintService, 'create').mockReturnValue(of({} as EntityResponseType));
         const submitSpy = jest.spyOn(component.submit, 'emit');
         component.createComplaint();
-        expect(createMock).toHaveBeenCalledTimes(1);
-        expect(submitSpy).toHaveBeenCalledTimes(1);
+        expect(createMock).toHaveBeenCalledOnce();
+        expect(submitSpy).toHaveBeenCalledOnce();
         expect(submitSpy).toHaveBeenCalledWith();
     });
 
@@ -91,9 +91,9 @@ describe('ComplaintsFormComponent', () => {
         const submitSpy = jest.spyOn(component.submit, 'emit');
         const errorSpy = jest.spyOn(alertService, 'error');
         component.createComplaint();
-        expect(createMock).toHaveBeenCalledTimes(1);
+        expect(createMock).toHaveBeenCalledOnce();
         expect(submitSpy).not.toHaveBeenCalled();
-        expect(errorSpy).toHaveBeenCalledTimes(1);
+        expect(errorSpy).toHaveBeenCalledOnce();
     });
 
     it('should throw known error after complaint creation', () => {
@@ -104,9 +104,9 @@ describe('ComplaintsFormComponent', () => {
         const numberOfComplaints = 42;
         component.maxComplaintsPerCourse = numberOfComplaints;
         component.createComplaint();
-        expect(createMock).toHaveBeenCalledTimes(1);
+        expect(createMock).toHaveBeenCalledOnce();
         expect(submitSpy).not.toHaveBeenCalled();
-        expect(errorSpy).toHaveBeenCalledTimes(1);
+        expect(errorSpy).toHaveBeenCalledOnce();
         expect(errorSpy).toHaveBeenCalledWith('artemisApp.complaint.tooManyComplaints', { maxComplaintNumber: numberOfComplaints });
     });
 
@@ -121,7 +121,7 @@ describe('ComplaintsFormComponent', () => {
         component.complaintText = 'abcdefghijklmnopqrstuvwxyz';
         component.createComplaint();
         expect(submitSpy).not.toHaveBeenCalled();
-        expect(errorSpy).toHaveBeenCalledTimes(1);
+        expect(errorSpy).toHaveBeenCalledOnce();
         expect(errorSpy).toHaveBeenCalledWith('artemisApp.complaint.exceededComplaintTextLimit', { maxComplaintTextLimit: 20 });
     });
 
@@ -143,7 +143,7 @@ describe('ComplaintsFormComponent', () => {
         tick(100);
 
         expect(responseTextArea.maxLength).toBe(20);
-        expect(complaintButton.disabled).toBe(false);
+        expect(complaintButton.disabled).toBeFalse();
     }));
 
     it('submit complaint button should be disabled', fakeAsync(() => {
@@ -164,6 +164,6 @@ describe('ComplaintsFormComponent', () => {
         fixture.detectChanges();
         tick(100);
 
-        expect(complaintButton.disabled).toBe(true);
+        expect(complaintButton.disabled).toBeTrue();
     }));
 });

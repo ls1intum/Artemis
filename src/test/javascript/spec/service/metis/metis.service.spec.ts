@@ -285,13 +285,13 @@ describe('Metis Service', () => {
     it('should determine that metis user is author of post', () => {
         metisServiceUserStub.mockReturnValue(metisUser1);
         const metisUserIsAuthorOfPostingReturn = metisService.metisUserIsAuthorOfPosting(post);
-        expect(metisUserIsAuthorOfPostingReturn).toBe(true);
+        expect(metisUserIsAuthorOfPostingReturn).toBeTrue();
     });
 
     it('should determine that metis user is not author of post', () => {
         metisServiceUserStub.mockReturnValue(metisUser2);
         const metisUserIsAuthorOfPostingReturn = metisService.metisUserIsAuthorOfPosting(post);
-        expect(metisUserIsAuthorOfPostingReturn).toBe(false);
+        expect(metisUserIsAuthorOfPostingReturn).toBeFalse();
     });
 
     it('should set course information correctly and invoke an update of the post tags in this course', () => {
@@ -357,7 +357,7 @@ describe('Metis Service', () => {
     it('should determine the router link required for referencing an exercise page within posting', () => {
         metisService.setCourse(course);
         const referenceRouterLink = metisService.getLinkForExercise(metisExercise.id!.toString());
-        expect(referenceRouterLink).toEqual('/courses/' + metisCourse.id + '/exercises/' + metisExercise.id!.toString());
+        expect(referenceRouterLink).toEqual(`/courses/${metisCourse.id}/exercises/${metisExercise.id!.toString()}`);
     });
 
     it('should determine the router link required for referencing a lecture page within posting', () => {
@@ -426,7 +426,7 @@ describe('Metis Service', () => {
             // setup subscription
             metisService.getFilteredPosts({ lectureId: metisLecture.id! });
             expect(metisServiceCreateWebsocketSubscriptionSpy).toHaveBeenCalledWith(MetisWebsocketChannelPrefix + `lectures/${metisLecture.id}`);
-            expect(websocketServiceSubscribeSpy).toHaveBeenCalledTimes(1);
+            expect(websocketServiceSubscribeSpy).toHaveBeenCalledOnce();
             // receive message on channel
             tick();
             expect(metisServiceGetFilteredPostsSpy).toHaveBeenCalledWith({ lectureId: metisLecture.id! }, false);
@@ -438,7 +438,7 @@ describe('Metis Service', () => {
             // setup subscription
             metisService.getFilteredPosts({ exerciseId: metisExercise.id!, page: 0, pageSize: ITEMS_PER_PAGE });
             expect(metisServiceCreateWebsocketSubscriptionSpy).toHaveBeenCalledWith(MetisWebsocketChannelPrefix + `exercises/${metisExercise.id}`);
-            expect(websocketServiceSubscribeSpy).toHaveBeenCalledTimes(1);
+            expect(websocketServiceSubscribeSpy).toHaveBeenCalledOnce();
             // receive message on channel
             tick();
             expect(metisServiceGetFilteredPostsSpy).toHaveBeenCalledWith({ exerciseId: metisExercise.id!, page: 0, pageSize: ITEMS_PER_PAGE });
@@ -451,7 +451,7 @@ describe('Metis Service', () => {
             // setup subscription
             metisService.getFilteredPosts({ courseWideContext: courseWidePostWithTags.courseWideContext });
             expect(metisServiceCreateWebsocketSubscriptionSpy).toHaveBeenCalledWith(MetisWebsocketChannelPrefix + `courses/${metisCourse.id}`);
-            expect(websocketServiceSubscribeSpy).toHaveBeenCalledTimes(1);
+            expect(websocketServiceSubscribeSpy).toHaveBeenCalledOnce();
             // receive message on channel
             tick();
             expect(metisServiceGetFilteredPostsSpy).toHaveBeenCalledWith({ courseWideContext: courseWidePostWithTags.courseWideContext }, false);
@@ -465,7 +465,7 @@ describe('Metis Service', () => {
             // trigger createWebsocketSubscription for the second time with the same context filter. i.e. same channel
             metisService.getFilteredPosts({ exerciseId: metisExercise.id! });
             expect(metisServiceGetFilteredPostsSpy).toHaveBeenCalledWith({ exerciseId: metisExercise.id! }, false);
-            expect(websocketServiceSubscribeSpy).toHaveBeenCalledTimes(1);
+            expect(websocketServiceSubscribeSpy).toHaveBeenCalledOnce();
         }));
     });
 });

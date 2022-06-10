@@ -362,7 +362,7 @@ export class MetisService implements OnDestroy {
      * @return {string} router link of the exercise
      */
     getLinkForExercise(exerciseId: string): string {
-        return '/courses/' + this.getCourse().id + '/exercises/' + exerciseId;
+        return `/courses/${this.getCourse().id}/exercises/${exerciseId}`;
     }
 
     /**
