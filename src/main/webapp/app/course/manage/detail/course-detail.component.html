@@ -3,7 +3,7 @@
         <div class="course-info-bar" [ngStyle]="{ backgroundColor: course.color || ARTEMIS_DEFAULT_COLOR }" id="course-detail-info-bar">
             <div class="row">
                 <div class="col general-info">
-                    <h3 class="fw-medium">{{ course.title }}</h3>
+                    <h3 class="fw-medium" [ngStyle]="courseDescription ? {} : { 'margin-bottom': 0 }">{{ course.title }}</h3>
                     <ng-container *ngIf="courseDescription">
                         <h4 class="fw-medium">{{ courseDescription | artemisTranslate }}</h4>
                         <h6 class="fw-medium" role="button" *ngIf="enableShowMore && !longDescriptionShown" (click)="toggleCourseDescription()">
