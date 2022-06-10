@@ -48,11 +48,11 @@ public class MigrationEntry20220608_194500 extends MigrationEntry {
             }
         });
 
-        Lists.partition(otherResults, 100).forEach(resultList -> {
-            LOGGER.info("Process (next) 100 non-programming results for the migration in one batch...");
-            resultList.forEach(result -> result.setResultString(null));
-            resultRepository.saveAll(resultList);
-        });
+        // TODO: Uncomment this before merging
+        /*
+         * Lists.partition(otherResults, 100).forEach(resultList -> { LOGGER.info("Process (next) 100 non-programming results for the migration in one batch...");
+         * resultList.forEach(result -> result.setResultString(null)); resultRepository.saveAll(resultList); });
+         */
 
         Lists.partition(results, 100).forEach(resultList -> {
             LOGGER.info("Process (next) 100 programming results for the migration in one batch...");
@@ -61,7 +61,8 @@ public class MigrationEntry20220608_194500 extends MigrationEntry {
 
         programmingResults.removeIf(result -> result.getResultString() == null);
         if (!programmingResults.isEmpty()) {
-            reportUnprocessedResults(programmingResults);
+            // TODO: Uncomment this before merging
+            // reportUnprocessedResults(programmingResults);
         }
     }
 
@@ -84,7 +85,8 @@ public class MigrationEntry20220608_194500 extends MigrationEntry {
                     result.setTestCaseCount(testCasesAmount);
 
                     // If we found the test cases, we successfully migrated that result
-                    result.setResultString(null);
+                    // TODO: Uncomment this before merging
+                    // result.setResultString(null);
                 }
                 // Matches e.g. "9 issues"
                 else if (resultStringPart.contains("issue")) {
