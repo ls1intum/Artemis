@@ -41,20 +41,20 @@ describe('ProgrammingExerciseFullGitDiffEntry Component', () => {
 
         comp.ngOnInit();
 
-        expect(comp.editorNow.getEditor().setOptions).toHaveBeenCalledTimes(1);
+        expect(comp.editorNow.getEditor().setOptions).toHaveBeenCalledOnce();
         expect(comp.editorNow.getEditor().setOptions).toHaveBeenCalledWith({
             animatedScroll: true,
             maxLines: Infinity,
         });
-        expect(comp.editorPrevious.getEditor().setOptions).toHaveBeenCalledTimes(1);
+        expect(comp.editorPrevious.getEditor().setOptions).toHaveBeenCalledOnce();
         expect(comp.editorPrevious.getEditor().setOptions).toHaveBeenCalledWith({
             animatedScroll: true,
             maxLines: Infinity,
         });
 
-        expect(comp.editorNow.getEditor().getSession().setValue).toHaveBeenCalledTimes(1);
+        expect(comp.editorNow.getEditor().getSession().setValue).toHaveBeenCalledOnce();
         expect(comp.editorNow.getEditor().getSession().setValue).toHaveBeenCalledWith('DEF');
-        expect(comp.editorPrevious.getEditor().getSession().setValue).toHaveBeenCalledTimes(1);
+        expect(comp.editorPrevious.getEditor().getSession().setValue).toHaveBeenCalledOnce();
         expect(comp.editorPrevious.getEditor().getSession().setValue).toHaveBeenCalledWith('ABC');
 
         expect(comp.editorNow.getEditor().container.style.background).toBe('rgba(63, 185, 80, 0.5)');

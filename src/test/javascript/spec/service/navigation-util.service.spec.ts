@@ -40,28 +40,28 @@ describe('Navigation Util Service', () => {
 
         service.navigateBack([]);
 
-        expect(backSpy).toHaveBeenCalledTimes(1);
+        expect(backSpy).toHaveBeenCalledOnce();
         expect(backSpy).toHaveBeenCalledWith();
     });
 
     it('should use fallback', () => {
         service.navigateBack(['a', 'b', 'c']);
 
-        expect(router.navigate).toHaveBeenCalledTimes(1);
+        expect(router.navigate).toHaveBeenCalledOnce();
         expect(router.navigate).toHaveBeenCalledWith(['a', 'b', 'c']);
     });
 
     it('should use without optional', () => {
         service.navigateBackWithOptional(['a', 'b', 'c'], undefined);
 
-        expect(router.navigate).toHaveBeenCalledTimes(1);
+        expect(router.navigate).toHaveBeenCalledOnce();
         expect(router.navigate).toHaveBeenCalledWith(['a', 'b', 'c']);
     });
 
     it('should use with optional', () => {
         service.navigateBackWithOptional(['a', 'b', 'c'], 'd');
 
-        expect(router.navigate).toHaveBeenCalledTimes(1);
+        expect(router.navigate).toHaveBeenCalledOnce();
         expect(router.navigate).toHaveBeenCalledWith(['a', 'b', 'c', 'd']);
     });
 
@@ -75,7 +75,7 @@ describe('Navigation Util Service', () => {
         service.routeInNewTab(['course-management', 17]);
 
         expect(creationMock).toHaveBeenCalledWith(route);
-        expect(creationMock).toHaveBeenCalledTimes(1);
+        expect(creationMock).toHaveBeenCalledOnce();
         expect(serializationMock).toHaveBeenCalledWith(urlTreeMock);
         expect(windowStub).toHaveBeenCalledWith('testValue', '_blank');
     });

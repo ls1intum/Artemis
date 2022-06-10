@@ -48,7 +48,7 @@ describe('TextblockFeedbackDropdownComponent', () => {
         const changeSpy = jest.spyOn(component.didChange, 'emit');
         component.updateAssessmentWithDropdown(gradingInstruction);
 
-        expect(changeSpy).toHaveBeenCalledTimes(1);
+        expect(changeSpy).toHaveBeenCalledOnce();
         expect(component.feedback.gradingInstruction).toEqual(gradingInstruction);
     });
 

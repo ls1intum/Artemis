@@ -186,7 +186,7 @@ describe('TextblockFeedbackEditorComponent', () => {
 
         component.escKeyup();
         fixture.detectChanges();
-        expect(confirmSpy).toHaveBeenCalledTimes(1);
+        expect(confirmSpy).toHaveBeenCalledOnce();
     });
 
     it('should show feedback impact warning when numberOfAffectedSubmissions > 0', () => {
@@ -225,7 +225,7 @@ describe('TextblockFeedbackEditorComponent', () => {
         const modalServiceSpy = jest.spyOn(modalService, 'open');
 
         component.openOriginOfFeedbackModal(content).then(() => {
-            expect(modalServiceSpy).toHaveBeenCalledTimes(1);
+            expect(modalServiceSpy).toHaveBeenCalledOnce();
         });
     });
 
@@ -277,7 +277,7 @@ describe('TextblockFeedbackEditorComponent', () => {
         component.connectAutomaticFeedbackOriginBlocksWithFeedback();
         tick();
 
-        expect(participationStub).toHaveBeenCalledTimes(1);
+        expect(participationStub).toHaveBeenCalledOnce();
         expect(component.listOfBlocksWithFeedback).toEqual([
             {
                 text: 'First text.',
@@ -357,6 +357,6 @@ describe('TextblockFeedbackEditorComponent', () => {
         component.feedback.type = FeedbackType.AUTOMATIC;
         const typeSpy = jest.spyOn(component.textAssessmentAnalytics, 'sendAssessmentEvent');
         component.didChange();
-        expect(typeSpy).toHaveBeenCalledTimes(1);
+        expect(typeSpy).toHaveBeenCalledOnce();
     });
 });

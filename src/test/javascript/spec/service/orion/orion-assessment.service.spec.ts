@@ -57,9 +57,9 @@ describe('OrionAssessmentService', () => {
 
         orionAssessmentService.downloadSubmissionInOrion(16, 'new', 0, false);
 
-        expect(getSubmissionStub).toHaveBeenCalledTimes(1);
+        expect(getSubmissionStub).toHaveBeenCalledOnce();
         expect(getSubmissionStub).toHaveBeenCalledWith(16, true, 0);
-        expect(sendSubmissionToOrionSpy).toHaveBeenCalledTimes(1);
+        expect(sendSubmissionToOrionSpy).toHaveBeenCalledOnce();
         expect(sendSubmissionToOrionSpy).toHaveBeenCalledWith(16, programmingSubmission.id, 0, false);
     });
 
@@ -68,7 +68,7 @@ describe('OrionAssessmentService', () => {
 
         orionAssessmentService.downloadSubmissionInOrion(16, programmingSubmission, 0, false);
 
-        expect(sendSubmissionToOrionStub).toHaveBeenCalledTimes(1);
+        expect(sendSubmissionToOrionStub).toHaveBeenCalledOnce();
         expect(sendSubmissionToOrionStub).toHaveBeenCalledWith(16, programmingSubmission.id, 0, false);
     });
 
@@ -87,7 +87,7 @@ describe('OrionAssessmentService', () => {
 
         testConversion(mockReader);
 
-        expect(downloadSubmissionSpy).toHaveBeenCalledTimes(1);
+        expect(downloadSubmissionSpy).toHaveBeenCalledOnce();
         expect(downloadSubmissionSpy).toHaveBeenCalledWith(11, 0, false, 'testBase64');
     });
 
@@ -106,7 +106,7 @@ describe('OrionAssessmentService', () => {
 
         testConversion(mockReader);
 
-        expect(alertErrorSpy).toHaveBeenCalledTimes(1);
+        expect(alertErrorSpy).toHaveBeenCalledOnce();
         expect(alertErrorSpy).toHaveBeenCalledWith('artemisApp.assessmentDashboard.orion.downloadFailed');
     });
 
@@ -129,14 +129,14 @@ describe('OrionAssessmentService', () => {
 
         orionAssessmentService.downloadSubmissionInOrion(16, programmingSubmission, 0, false);
 
-        expect(isCloningSpy).toHaveBeenCalledTimes(1);
+        expect(isCloningSpy).toHaveBeenCalledOnce();
         expect(isCloningSpy).toHaveBeenCalledWith(true);
-        expect(lockAndGetStub).toHaveBeenCalledTimes(1);
+        expect(lockAndGetStub).toHaveBeenCalledOnce();
         expect(lockAndGetStub).toHaveBeenCalledWith(11, 0);
-        expect(exportSubmissionStub).toHaveBeenCalledTimes(1);
+        expect(exportSubmissionStub).toHaveBeenCalledOnce();
         // expect anything as repository export options, since they are hardcoded anyways
         expect(exportSubmissionStub).toHaveBeenCalledWith(16, [1], expect.anything());
-        expect(readerStub).toHaveBeenCalledTimes(1);
+        expect(readerStub).toHaveBeenCalledOnce();
     }
 
     it('should cancel lock correctly', fakeAsync(() => {
@@ -151,7 +151,7 @@ describe('OrionAssessmentService', () => {
         stateObservable.next({ ...orionState, cloning: false });
         tick();
 
-        expect(cancelStub).toHaveBeenCalledTimes(1);
+        expect(cancelStub).toHaveBeenCalledOnce();
         expect(cancelStub).toHaveBeenCalledWith(24);
     }));
 });
