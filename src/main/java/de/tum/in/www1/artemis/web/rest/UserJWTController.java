@@ -6,6 +6,7 @@ import javax.validation.Valid;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.util.Pair;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -19,13 +20,18 @@ import org.springframework.web.bind.annotation.*;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.security.UserNotActivatedException;
 import de.tum.in.www1.artemis.security.jwt.JWTFilter;
 import de.tum.in.www1.artemis.security.jwt.TokenProvider;
 import de.tum.in.www1.artemis.service.connectors.SAML2Service;
+import de.tum.in.www1.artemis.service.feature.Feature;
+import de.tum.in.www1.artemis.service.feature.FeatureToggle;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.CaptchaRequiredException;
+import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 import de.tum.in.www1.artemis.web.rest.vm.LoginVM;
 
 /**
@@ -37,16 +43,28 @@ public class UserJWTController {
 
     private static final Logger log = LoggerFactory.getLogger(UserJWTController.class);
 
+    private static final String ENTITY_NAME = "userJWTController";
+
+    @Value("${jhipster.clientApp.name}")
+    private String applicationName;
+
     private final TokenProvider tokenProvider;
 
     private final AuthenticationManagerBuilder authenticationManagerBuilder;
 
     private final Optional<SAML2Service> saml2Service;
 
-    public UserJWTController(TokenProvider tokenProvider, AuthenticationManagerBuilder authenticationManagerBuilder, Optional<SAML2Service> saml2Service) {
+    private final UserRepository userRepository;
+
+    @Value("${artemis.personal-access-token.max-lifetime}")
+    private long personalAccessTokenMaxLifetimeMilliseconds;
+
+    public UserJWTController(TokenProvider tokenProvider, AuthenticationManagerBuilder authenticationManagerBuilder, Optional<SAML2Service> saml2Service,
+            UserRepository userRepository) {
         this.tokenProvider = tokenProvider;
         this.authenticationManagerBuilder = authenticationManagerBuilder;
         this.saml2Service = saml2Service;
+        this.userRepository = userRepository;
     }
 
     /**
@@ -113,6 +131,30 @@ public class UserJWTController {
         final HttpHeaders httpHeaders = new HttpHeaders();
         httpHeaders.add(JWTFilter.AUTHORIZATION_HEADER, "Bearer " + jwt);
         return new ResponseEntity<>(new JWTToken(jwt), httpHeaders, HttpStatus.OK);
+    }
+
+    @PostMapping("/personal-access-token")
+    @FeatureToggle(Feature.PersonalAccessTokens)
+    public ResponseEntity<JWTToken> getPersonalAccessToken(@RequestParam(value = "lifetimeMilliseconds", required = true) Long lifetimeMilliseconds) {
+        User user = userRepository.getUser();
+        if (!user.getActivated()) {
+            throw new UserNotActivatedException("User was disabled!");
+        }
+
+        if (lifetimeMilliseconds > this.personalAccessTokenMaxLifetimeMilliseconds)
+            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "invalidPATLifetime",
+                    "Requested token lifetime exceeds maximum lifetime for personal access tokens!")).build();
+
+        // Automatically returns 401 if not fully authorized
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        final String jwt = tokenProvider.createTokenWithCustomDuration(authentication, lifetimeMilliseconds);
+        return new ResponseEntity<>(new JWTToken(jwt), HttpStatus.OK);
+    }
+
+    @GetMapping("/personal-access-token")
+    @FeatureToggle(Feature.PersonalAccessTokens)
+    public ResponseEntity<Long> getPersonalAccessTokenMaxLifetime() {
+        return new ResponseEntity<>(this.personalAccessTokenMaxLifetimeMilliseconds, HttpStatus.OK);
     }
 
     /**

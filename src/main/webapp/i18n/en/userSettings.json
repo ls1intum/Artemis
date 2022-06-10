@@ -7,6 +7,16 @@
             "userSettings": "User Settings",
             "accountInformation": "Account Information",
             "notificationSettings": "Notifications",
+            "personalAccessTokens": {
+                "title": "Personal Access Tokens",
+                "lifetime": "Lifetime (Days)",
+                "customMin": "The value must be at least 1.",
+                "customMax": "The value exceeds the maximum lifetime for personal access tokens.",
+                "generate": "Generate",
+                "copy": "Copy",
+                "copied": "Copied!",
+                "generatedToken": "Generated token"
+            },
             "notificationSettingsFilterInfo": "These settings also filter the notification sidebar",
             "accountInformationPage": {
                 "registrationNumber": "Registration Number",
