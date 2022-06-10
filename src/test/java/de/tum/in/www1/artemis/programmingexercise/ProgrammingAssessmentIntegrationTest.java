@@ -106,8 +106,6 @@ public class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrat
         manualResult.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
         manualResult.rated(true);
 
-        double points = manualResult.calculateTotalPointsForProgrammingExercises();
-
         doReturn(ObjectId.fromString(dummyHash)).when(gitService).getLastCommitHash(ArgumentMatchers.any());
     }
 
@@ -390,7 +388,6 @@ public class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrat
         Result response = request.putWithResponseBody("/api/participations/" + programmingExerciseStudentParticipation.getId() + "/manual-results?submit=true", manualResult,
                 Result.class, HttpStatus.OK);
         assertThat(response.getScore()).isEqualTo(expectedScore, Offset.offset(offsetByTenThousandth));
-        double maxPoints = programmingExercise.getMaxPoints();
     }
 
     @Test
