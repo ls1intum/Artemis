@@ -16,22 +16,40 @@ import { ExerciseTemplateChartComponent } from 'app/exam/monitoring/charts/exerc
 import { createTestExercises } from '../exam-monitoring-helper';
 import { ExerciseSubmissionChartComponent } from 'app/exam/monitoring/charts/exercises/exercise-submission-chart.component';
 import { GraphColors } from 'app/entities/statistics.model';
+import { Course } from 'app/entities/course.model';
+import { of } from 'rxjs';
+import { ActivatedRoute } from '@angular/router';
+import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
+import { MockWebsocketService } from '../../../../helpers/mocks/service/mock-websocket.service';
 
 describe('Exercise Submission Chart Component', () => {
     let comp: ExerciseSubmissionChartComponent;
     let fixture: ComponentFixture<ExerciseSubmissionChartComponent>;
 
+    // Course
+    const course = new Course();
+    course.id = 1;
+
+    // Exam
     const exam = new Exam();
+    exam.id = 1;
     const exercises = createTestExercises(2);
     const exerciseGroup = new ExerciseGroup();
     exerciseGroup.exercises = exercises;
     exam.exerciseGroups = [exerciseGroup];
 
+    const route = { parent: { params: of({ courseId: course.id, examId: exam.id }) } };
+
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, NgxChartsModule, ArtemisSharedComponentModule],
             declarations: [ExerciseSubmissionChartComponent, ChartTitleComponent, ExerciseTemplateChartComponent, ArtemisDatePipe, MockPipe(ArtemisTranslatePipe)],
-            providers: [{ provide: TranslateService, useClass: MockTranslateService }, { provide: ArtemisDatePipe }],
+            providers: [
+                { provide: JhiWebsocketService, useClass: MockWebsocketService },
+                { provide: ActivatedRoute, useValue: route },
+                { provide: TranslateService, useClass: MockTranslateService },
+                { provide: ArtemisDatePipe },
+            ],
         })
             .compileComponents()
             .then(() => {
@@ -72,7 +90,7 @@ describe('Exercise Submission Chart Component', () => {
         action3.examActivityId = param.activity[2];
 
         comp.exam = exam;
-        comp.receivedExamActions = [action1, action2, action3];
+        comp.filteredExamActions = [action1, action2, action3];
 
         // WHEN
         comp.ngOnInit();

@@ -11,6 +11,9 @@ import {
 } from 'app/entities/exam-user-activity.model';
 import { Exercise } from 'app/entities/exercise.model';
 import { TextExercise } from 'app/entities/text-exercise.model';
+import dayjs from 'dayjs/esm';
+import { NgxChartsSingleSeriesDataEntry } from 'app/shared/chart/ngx-charts-datatypes';
+import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 
 export const createExamActionBasedOnType = (examActionType: ExamActionType): ExamAction => {
     let examAction: ExamAction;
@@ -56,4 +59,8 @@ export function createTestExercises(amount: number, startIndex = 0): Exercise[] 
         index++;
     }
     return exercises;
+}
+
+export function createSingleSeriesDataEntriesWithTimestamps(timestamps: dayjs.Dayjs[], artemisDatePipe: ArtemisDatePipe): NgxChartsSingleSeriesDataEntry[] {
+    return timestamps.map((timestamp) => ({ name: artemisDatePipe.transform(timestamp, 'time', true), value: 0 } as NgxChartsSingleSeriesDataEntry));
 }

@@ -11,18 +11,40 @@ import { ChartTitleComponent } from 'app/exam/monitoring/charts/chart-title.comp
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import dayjs from 'dayjs/esm';
 import { ActionsChartComponent } from 'app/exam/monitoring/charts/activity-log/actions-chart.component';
-import { createActions } from '../exam-monitoring-helper';
+import { createActions, createSingleSeriesDataEntriesWithTimestamps } from '../exam-monitoring-helper';
+import { Course } from 'app/entities/course.model';
+import { Exam } from 'app/entities/exam.model';
+import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
+import { MockWebsocketService } from '../../../../helpers/mocks/service/mock-websocket.service';
+import { of } from 'rxjs';
+import { ActivatedRoute } from '@angular/router';
+import { ceilDayjsSeconds } from 'app/exam/monitoring/charts/monitoring-chart';
 
 describe('Average Actions Chart Component', () => {
     let comp: AverageActionsChartComponent;
     let fixture: ComponentFixture<AverageActionsChartComponent>;
     let pipe: ArtemisDatePipe;
 
+    // Course
+    const course = new Course();
+    course.id = 1;
+
+    // Exam
+    const exam = new Exam();
+    exam.id = 1;
+
+    const route = { parent: { params: of({ courseId: course.id, examId: exam.id }) } };
+
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, NgxChartsModule, ArtemisSharedComponentModule],
             declarations: [AverageActionsChartComponent, ChartTitleComponent, ActionsChartComponent, ArtemisDatePipe, MockPipe(ArtemisTranslatePipe)],
-            providers: [{ provide: TranslateService, useClass: MockTranslateService }, { provide: ArtemisDatePipe }],
+            providers: [
+                { provide: JhiWebsocketService, useClass: MockWebsocketService },
+                { provide: ActivatedRoute, useValue: route },
+                { provide: TranslateService, useClass: MockTranslateService },
+                { provide: ArtemisDatePipe },
+            ],
         })
             .compileComponents()
             .then(() => {
@@ -40,11 +62,13 @@ describe('Average Actions Chart Component', () => {
     it('should call initData on init without actions', () => {
         expect(comp.ngxData).toEqual([]);
 
+        const series = createSingleSeriesDataEntriesWithTimestamps(comp.getLastXTimestamps(), pipe);
+
         // WHEN
         comp.ngOnInit();
 
         // THEN
-        expect(comp.ngxData).toEqual([{ name: 'actions', series: [] }]);
+        expect(comp.ngxData).toEqual([{ name: 'actions', series }]);
     });
 
     it.each`
@@ -53,17 +77,25 @@ describe('Average Actions Chart Component', () => {
         ${2}
     `('should call initData on init with actions', (param: { amount: number }) => {
         const now = dayjs();
+        const ceiledNow = ceilDayjsSeconds(now, comp.timeStampGapInSeconds);
+
+        // Create series
+        const series = createSingleSeriesDataEntriesWithTimestamps(comp.getLastXTimestamps(), pipe);
+
         // GIVEN
-        comp.receivedExamActions = createActions().map((action) => {
+        comp.filteredExamActions = createActions().map((action) => {
             action.timestamp = now;
+            action.ceiledTimestamp = ceiledNow;
             return action;
         });
         comp.registeredStudents = param.amount;
+
+        series.filter((data) => data.name === pipe.transform(ceiledNow, 'time', true).toString())[0].value = comp.filteredExamActions.length / comp.registeredStudents;
 
         // WHEN
         comp.ngOnInit();
 
         // THEN
-        expect(comp.ngxData).toEqual([{ name: 'actions', series: [{ name: pipe.transform(now, 'short'), value: comp.receivedExamActions.length / comp.registeredStudents }] }]);
+        expect(comp.ngxData).toEqual([{ name: 'actions', series }]);
     });
 });

@@ -11,19 +11,41 @@ import { ChartTitleComponent } from 'app/exam/monitoring/charts/chart-title.comp
 import dayjs from 'dayjs/esm';
 import { ActionsChartComponent } from 'app/exam/monitoring/charts/activity-log/actions-chart.component';
 import { CategoryActionsChartComponent } from 'app/exam/monitoring/charts/activity-log/category-actions-chart.component';
-import { createActions } from '../exam-monitoring-helper';
+import { createActions, createSingleSeriesDataEntriesWithTimestamps } from '../exam-monitoring-helper';
 import { NgxChartsMultiSeriesDataEntry } from 'app/shared/chart/ngx-charts-datatypes';
+import { Course } from 'app/entities/course.model';
+import { Exam } from 'app/entities/exam.model';
+import { of } from 'rxjs';
+import { ActivatedRoute } from '@angular/router';
+import { ceilDayjsSeconds } from 'app/exam/monitoring/charts/monitoring-chart';
+import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
+import { MockWebsocketService } from '../../../../helpers/mocks/service/mock-websocket.service';
 
 describe('Category Actions Chart Component', () => {
     let comp: CategoryActionsChartComponent;
     let fixture: ComponentFixture<CategoryActionsChartComponent>;
     let pipe: ArtemisDatePipe;
 
+    // Course
+    const course = new Course();
+    course.id = 1;
+
+    // Exam
+    const exam = new Exam();
+    exam.id = 1;
+
+    const route = { parent: { params: of({ courseId: course.id, examId: exam.id }) } };
+
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, NgxChartsModule],
             declarations: [AverageActionsChartComponent, ChartTitleComponent, ActionsChartComponent, ArtemisDatePipe, MockPipe(ArtemisTranslatePipe)],
-            providers: [{ provide: TranslateService, useClass: MockTranslateService }, { provide: ArtemisDatePipe }],
+            providers: [
+                { provide: ActivatedRoute, useValue: route },
+                { provide: JhiWebsocketService, useClass: MockWebsocketService },
+                { provide: TranslateService, useClass: MockTranslateService },
+                { provide: ArtemisDatePipe },
+            ],
         })
             .compileComponents()
             .then(() => {});
@@ -42,7 +64,7 @@ describe('Category Actions Chart Component', () => {
 
         const chartSeriesData: NgxChartsMultiSeriesDataEntry[] = [];
         createActions().forEach((action) => {
-            chartSeriesData.push({ name: action.type, series: [] });
+            chartSeriesData.push({ name: action.type, series: createSingleSeriesDataEntriesWithTimestamps(comp.getLastXTimestamps(), pipe) });
         });
 
         // WHEN
@@ -54,15 +76,22 @@ describe('Category Actions Chart Component', () => {
 
     it('should call initData on init with actions', () => {
         const now = dayjs();
+        const ceiledNow = ceilDayjsSeconds(now, comp.timeStampGapInSeconds);
+
         // GIVEN
-        comp.receivedExamActions = createActions().map((action) => {
+        comp.filteredExamActions = createActions().map((action) => {
             action.timestamp = now;
+            action.ceiledTimestamp = ceiledNow;
             return action;
         });
 
         const chartSeriesData: NgxChartsMultiSeriesDataEntry[] = [];
-        comp.receivedExamActions.forEach((action) => {
-            chartSeriesData.push({ name: action.type, series: [{ name: pipe.transform(now, 'short'), value: 1 }] });
+        comp.filteredExamActions.forEach((action) => {
+            // Create series
+            const series = createSingleSeriesDataEntriesWithTimestamps(comp.getLastXTimestamps(), pipe);
+            // Insert value
+            series.filter((data) => data.name === pipe.transform(ceiledNow, 'time', true).toString())[0].value = 1;
+            chartSeriesData.push({ name: action.type, series });
         });
 
         // WHEN

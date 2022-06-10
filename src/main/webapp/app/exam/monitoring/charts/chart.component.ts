@@ -18,7 +18,7 @@ export abstract class ChartComponent {
     protected courseId: number;
 
     // Actions
-    protected filteredExamActions: ExamAction[] = [];
+    filteredExamActions: ExamAction[] = [];
 
     chartIdentifierKey = '';
 
@@ -88,10 +88,10 @@ export abstract class ChartComponent {
             .isBefore(examAction.ceiledTimestamp ?? examAction.timestamp);
     }
 
-    protected getLastXTimestamps(): dayjs.Dayjs[] {
+    public getLastXTimestamps(): dayjs.Dayjs[] {
         const ceiledNow = ceilDayjsSeconds(dayjs(), 15);
         const timestamps = [];
-        for (let i = this.showNumberLastTimeStamps; i > 0; i--) {
+        for (let i = this.showNumberLastTimeStamps - 1; i >= 0; i--) {
             timestamps.push(ceiledNow.subtract(i * this.timeStampGapInSeconds, 'seconds'));
         }
         return timestamps;
