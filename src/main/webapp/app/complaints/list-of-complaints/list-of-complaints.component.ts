@@ -36,7 +36,7 @@ export class ListOfComplaintsComponent implements OnInit {
     showAddressedComplaints = false;
     allComplaintsForTutorLoaded = false;
     isLoadingAllComplaints = false;
-    filterOption?: number; // TODO: Find solution for intuitive chart filter reset
+    filterOption?: number;
 
     loading = true;
     // Icons
@@ -175,7 +175,7 @@ export class ListOfComplaintsComponent implements OnInit {
         if (this.showAddressedComplaints) {
             this.complaintsToShow = this.complaints;
         } else {
-            this.complaintsToShow = this.complaints.filter((complaint) => complaint.accepted === undefined);
+            this.resetFilterOptions();
         }
     }
 
@@ -213,7 +213,7 @@ export class ListOfComplaintsComponent implements OnInit {
     }
 
     updateFilteredComplaints(complaints: Complaint[]) {
-        this.complaintsToShow = complaints;
+        this.complaintsToShow = complaints.filter((complaint) => complaint.accepted === undefined);
     }
 
     resetFilterOptions(): void {
