@@ -34,28 +34,34 @@ public class MigrationEntry20220608_194500 extends MigrationEntry {
     @Override
     public void execute() {
         List<Result> results = resultRepository.findAll();
-        results.removeIf(result -> !(result.getParticipation() instanceof ProgrammingExerciseParticipation));
+        results.removeIf(result -> result.getResultString() == null);
+        LOGGER.info("Found {} results to process.", results.size());
 
-        List<Result> unprocessedResults = new ArrayList<>();
-        List<Result> processedResults = new ArrayList<>();
+        List<Result> programmingResults = new ArrayList<>();
+        List<Result> otherResults = new ArrayList<>();
         results.forEach(result -> {
-            if (result.getResultString() != null && result.getResultString().matches(".*of.*passed.*")) {
-                unprocessedResults.add(result);
+            if (result.getParticipation() instanceof ProgrammingExerciseParticipation) {
+                programmingResults.add(result);
             }
             else {
-                processedResults.add(result);
+                otherResults.add(result);
             }
         });
 
-        LOGGER.info("Found {} results to process.", unprocessedResults.size());
-
-        Lists.partition(results, 100).forEach(resultList -> {
-            LOGGER.info("Process (next) 100 results for the migration in one batch...");
-            processResults(resultList);
+        Lists.partition(otherResults, 100).forEach(resultList -> {
+            LOGGER.info("Process (next) 100 non-programming results for the migration in one batch...");
+            resultList.forEach(result -> result.setResultString(null));
+            resultRepository.saveAll(resultList);
         });
 
-        if (!unprocessedResults.isEmpty()) {
-            reportUnprocessedResults(unprocessedResults);
+        Lists.partition(results, 100).forEach(resultList -> {
+            LOGGER.info("Process (next) 100 programming results for the migration in one batch...");
+            processProgrammingResults(resultList);
+        });
+
+        programmingResults.removeIf(result -> result.getResultString() == null);
+        if (!programmingResults.isEmpty()) {
+            reportUnprocessedResults(programmingResults);
         }
     }
 
@@ -64,7 +70,7 @@ public class MigrationEntry20220608_194500 extends MigrationEntry {
      * issues.
      * @param results Batch of results that should get processed
      */
-    private void processResults(List<Result> results) {
+    private void processProgrammingResults(List<Result> results) {
         results.forEach(result -> {
             String[] resultStringParts = result.getResultString().split(", ");
             for (String resultStringPart : resultStringParts) {
@@ -76,6 +82,8 @@ public class MigrationEntry20220608_194500 extends MigrationEntry {
 
                     result.setPassedTestCaseCount(passedTestCasesAmount);
                     result.setTestCaseCount(testCasesAmount);
+
+                    // If we found the test cases, we successfully migrated that result
                     result.setResultString(null);
                 }
                 // Matches e.g. "9 issues"
@@ -84,7 +92,6 @@ public class MigrationEntry20220608_194500 extends MigrationEntry {
                     int codeIssueCount = Integer.parseInt(issueParts[0]);
 
                     result.setCodeIssueCount(codeIssueCount);
-                    result.setResultString(null);
                 }
             }
         });
