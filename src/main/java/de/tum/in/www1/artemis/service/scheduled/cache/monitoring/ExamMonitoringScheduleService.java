@@ -89,7 +89,6 @@ public class ExamMonitoringScheduleService {
      */
     public void addExamActions(Long examId, ExamAction action) {
         if (action != null && action.getStudentExamId() != null) {
-            // All actions in this list belong to the same student exam
             Long studentExamId = action.getStudentExamId();
 
             // Retrieve the activity from the cache
