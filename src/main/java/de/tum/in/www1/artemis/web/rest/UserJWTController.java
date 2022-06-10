@@ -133,6 +133,12 @@ public class UserJWTController {
         return new ResponseEntity<>(new JWTToken(jwt), httpHeaders, HttpStatus.OK);
     }
 
+    /**
+     * Generates a personal access token (JWT token) for the current user.
+     *
+     * @param lifetimeMilliseconds the lifetime for the JWT token
+     * @return a JWT Token
+     */
     @PostMapping("/personal-access-token")
     @FeatureToggle(Feature.PersonalAccessTokens)
     public ResponseEntity<JWTToken> getPersonalAccessToken(@RequestBody Long lifetimeMilliseconds) {
@@ -153,6 +159,10 @@ public class UserJWTController {
         return new ResponseEntity<>(new JWTToken(jwt), HttpStatus.OK);
     }
 
+    /**
+     * Returns the maximum lifetime for personal access tokens.
+     * @return the maximum lifetime for personal access tokens
+     */
     @GetMapping("/personal-access-token")
     @FeatureToggle(Feature.PersonalAccessTokens)
     public ResponseEntity<Long> getPersonalAccessTokenMaxLifetime() {
