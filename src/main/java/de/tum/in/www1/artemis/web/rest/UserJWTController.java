@@ -142,9 +142,10 @@ public class UserJWTController {
             throw new UserNotActivatedException("User was disabled!");
         }
 
+        long difference = this.personalAccessTokenMaxLifetimeMilliseconds - lifetimeMilliseconds;
         if (lifetimeMilliseconds > this.personalAccessTokenMaxLifetimeMilliseconds)
             return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "invalidPATLifetime",
-                    "Requested token lifetime exceeds maximum lifetime for personal access tokens!")).build();
+                    "Requested token lifetime exceeds the maximum lifetime for personal access tokens by" + difference)).build();
 
         // Automatically returns 401 if not fully authorized
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
