@@ -16,7 +16,7 @@ import de.tum.in.www1.artemis.service.scheduled.cache.CacheHandler;
  * Hazelcast distributed objects are more database like, which means that modifications of the objects themselves
  * will not have any effect until they are send to all other instances, e.g. by replacing the value in the data structure.
  * <p>
- * To handle this better, we provide methods in this class that make {@linkplain #getReadCacheFor(Long) read-operations} and
+ * To handle this better, we provide methods in the {@link CacheHandler super class} that make {@linkplain #getReadCacheFor(Long) read-operations} and
  * {@linkplain #getTransientWriteCacheFor(Long) write operations on transient properties} easier and less error-prone;
  * and that allow for {@linkplain #performCacheWrite(Long, UnaryOperator) atomic writes} (including an
  * {@linkplain #performCacheWriteIfPresent(Long, UnaryOperator) if-present variant}).
