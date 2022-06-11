@@ -117,21 +117,9 @@ export class TextAssessmentDashboardComponent extends AbstractAssessmentDashboar
             )
             .subscribe((submissions: TextSubmission[]) => {
                 this.submissions = submissions;
-                if (this.filterOption === undefined) {
-                    this.filteredSubmissions = submissions;
-                } else {
-                    this.applyChartFilter(submissions);
-                }
+                this.applyChartFilter(this.submissions);
                 this.busy = false;
             });
-    }
-
-    /**
-     * Update the submission filter for assessments
-     * @param {Submission[]} filteredSubmissions - Submissions to be filtered for
-     */
-    updateFilteredSubmissions(filteredSubmissions: Submission[]) {
-        this.filteredSubmissions = filteredSubmissions as TextSubmission[];
     }
 
     /**

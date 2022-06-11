@@ -167,7 +167,7 @@ describe('FileUploadAssessmentDashboardComponent', () => {
 
         // setup
         component.ngOnInit();
-        component.updateFilteredSubmissions([fileUploadSubmission1]);
+        component.applyChartFilter([fileUploadSubmission1]);
         // check
         expect(component.filteredSubmissions).toEqual([fileUploadSubmission1]);
     });

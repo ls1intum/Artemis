@@ -19,6 +19,7 @@ export abstract class AbstractAssessmentDashboard {
      */
     applyChartFilter(submissions: Submission[]): void {
         if (this.filterOption === undefined) {
+            this.filteredSubmissions = submissions;
             return;
         }
         switch (this.filterOption) {
@@ -59,14 +60,8 @@ export abstract class AbstractAssessmentDashboard {
      * Also resets the "Show locked" option to "Show all" if applied together with the chart filter
      */
     resetFilterOptions(): void {
-        this.updateFilteredSubmissions(this.submissions);
         this.filterOption = undefined;
+        this.applyChartFilter(this.submissions);
         this.resetFilter = true;
     }
-
-    /**
-     * Update the submission filter for assessments
-     * @param {Submission[]} filteredSubmissions - Submissions to be filtered for
-     */
-    abstract updateFilteredSubmissions(filteredSubmissions: Submission[]): void;
 }

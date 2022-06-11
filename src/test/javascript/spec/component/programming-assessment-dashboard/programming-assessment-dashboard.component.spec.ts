@@ -167,7 +167,7 @@ describe('ProgrammingAssessmentDashboardComponent', () => {
 
         // setup
         component.ngOnInit();
-        component.updateFilteredSubmissions([programmingSubmission1]);
+        component.applyChartFilter([programmingSubmission1]);
         // check
         expect(component.filteredSubmissions).toEqual([programmingSubmission1]);
     });

@@ -146,21 +146,13 @@ export class ModelingAssessmentDashboardComponent extends AbstractAssessmentDash
                         }
                     }
                 });
-                if (this.filterOption === undefined) {
-                    this.filteredSubmissions = this.submissions;
-                } else {
-                    this.applyChartFilter(this.submissions);
-                }
+                this.applyChartFilter(this.submissions);
                 this.assessedSubmissions = this.submissions.filter((submission) => {
                     const result = getLatestSubmissionResult(submission);
                     setLatestSubmissionResult(submission, result);
                     return !!result;
                 }).length;
             });
-    }
-
-    updateFilteredSubmissions(filteredSubmissions: Submission[]) {
-        this.filteredSubmissions = filteredSubmissions as ModelingSubmission[];
     }
 
     getAssessmentRouterLink(participationId: number, submissionId: number): string[] {

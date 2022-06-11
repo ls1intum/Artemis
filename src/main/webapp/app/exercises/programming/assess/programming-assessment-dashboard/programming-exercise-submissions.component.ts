@@ -125,19 +125,9 @@ export class ProgrammingExerciseSubmissionsComponent extends AbstractAssessmentD
                         sub.results = sub.results.filter((r) => r.assessmentType !== AssessmentType.AUTOMATIC);
                     }
                 });
-                if (!!this.filterOption) {
-                    this.applyChartFilter(this.filteredSubmissions);
-                }
+                this.applyChartFilter(submissions);
                 this.busy = false;
             });
-    }
-
-    /**
-     * Update the submission filter for assessments
-     * @param {Submission[]} filteredSubmissions - Submissions to be filtered for
-     */
-    updateFilteredSubmissions(filteredSubmissions: Submission[]) {
-        this.filteredSubmissions = filteredSubmissions as ProgrammingSubmission[];
     }
 
     /**

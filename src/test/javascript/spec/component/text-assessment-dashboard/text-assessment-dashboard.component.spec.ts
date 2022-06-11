@@ -169,7 +169,7 @@ describe('TextAssessmentDashboardComponent', () => {
     it('should update filtered submissions', () => {
         // setup
         component.ngOnInit();
-        component.updateFilteredSubmissions([textSubmission]);
+        component.applyChartFilter([textSubmission]);
         // check
         expect(component.filteredSubmissions).toEqual([textSubmission]);
     });

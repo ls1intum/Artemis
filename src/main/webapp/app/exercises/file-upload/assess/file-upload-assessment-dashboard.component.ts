@@ -110,16 +110,8 @@ export class FileUploadAssessmentDashboardComponent extends AbstractAssessmentDa
             )
             .subscribe((submissions: FileUploadSubmission[]) => {
                 this.submissions = submissions;
-                if (this.filterOption === undefined) {
-                    this.filteredSubmissions = submissions;
-                } else {
-                    this.applyChartFilter(submissions);
-                }
+                this.applyChartFilter(submissions);
             });
-    }
-
-    updateFilteredSubmissions(filteredSubmissions: Submission[]) {
-        this.filteredSubmissions = filteredSubmissions as FileUploadSubmission[];
     }
 
     /**
