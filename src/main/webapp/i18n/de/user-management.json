@@ -14,8 +14,6 @@
                 "editor": "Editor:in",
                 "ta": "Tutor:in",
                 "user": "Studierende",
-                "all": "Alle",
-                "none": "Keine",
                 "without": "Keine Rolle",
                 "withoutTooltip": "Wähle alle Nutzer:innen ohne Rolle"
             },
@@ -34,12 +32,12 @@
             "course": {
                 "title": "Kurs ({{ num }})",
                 "tooltip": "Filter die Nutzer:innen anhand ihrer Kurszugehörigkeit",
-                "all": "Alle",
-                "none": "Keinen",
                 "without": "Kein Kurs",
                 "withoutTooltip": "Wähle alle Nutzer:innen ohne Kurs"
             },
-            "apply": "Apply"
+            "apply": "Anwenden",
+            "all": "Alle",
+            "none": "Keinen"
         },
         "home": {
             "title": "Nutzer:in",
