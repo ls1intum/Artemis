@@ -59,8 +59,8 @@ export abstract class ActiveStudentsChart {
      * @protected
      */
     protected determineDifferenceBetweenIsoWeeks(date1: dayjs.Dayjs, date2: dayjs.Dayjs): number {
-        const normalizedDate1 = date1.day(0).hour(0).minute(0).second(0).millisecond(0);
-        const normalizedDate2 = date2.day(0).hour(0).minute(0).second(0).millisecond(0);
+        const normalizedDate1 = date1.isoWeekday(1).hour(2).minute(0).second(0).millisecond(0);
+        const normalizedDate2 = date2.isoWeekday(1).hour(2).minute(0).second(0).millisecond(0);
         return normalizedDate2.diff(normalizedDate1, 'week');
     }
 }
