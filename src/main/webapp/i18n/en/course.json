@@ -159,6 +159,7 @@
                 "searchForUsers": "Add a user to this course group by searching for login or name",
                 "searchNoResults": "No users found",
                 "login": "Login",
+                "registrationNumber": "Registration Number",
                 "name": "Name",
                 "email": "Email",
                 "removeFromGroup": {

@@ -159,6 +159,7 @@
                 "searchForUsers": "Nutzer:in zu dieser Kursgruppe hinzufügen durch Suchen nach Login oder Namen",
                 "searchNoResults": "Kein:e Nutzer:innen gefunden",
                 "login": "Login",
+                "registrationNumber": "Matrikelnummer",
                 "name": "Name",
                 "email": "E-Mail",
                 "removeFromGroup": {

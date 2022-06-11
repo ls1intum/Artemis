@@ -558,6 +558,8 @@ public class CourseService {
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
         var usersInGroup = userRepository.findAllInGroup(groupName);
         usersInGroup.forEach(user -> {
+            // explicitly set the registration number
+            user.setVisibleRegistrationNumber(user.getRegistrationNumber());
             // remove some values which are not needed in the client
             user.setLastNotificationRead(null);
             user.setActivationKey(null);
