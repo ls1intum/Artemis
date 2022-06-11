@@ -213,16 +213,12 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
      */
     private Specification<User> getAllUsersMatchingAuthorities(Set<String> authorities) {
         return (root, query, criteriaBuilder) -> {
-            Subquery<Long> subQuery = query.subquery(Long.class);
-            Root<User> subUserRoot = subQuery.from(User.class);
-            Join<User, Authority> joinedAuthorities = subUserRoot.join(User_.AUTHORITIES, JoinType.LEFT);
+            Join<User, Authority> joinedAuthorities = root.join(User_.AUTHORITIES, JoinType.LEFT);
+            joinedAuthorities.on(criteriaBuilder.in(joinedAuthorities.get(Authority_.NAME)).value(authorities));
 
-            subQuery.select(subUserRoot.get(User_.ID))
-                    .where(criteriaBuilder.and(criteriaBuilder.in(joinedAuthorities.get(Authority_.NAME)).value(authorities),
-                            criteriaBuilder.equal(subUserRoot.get(User_.ID), root.get(User_.ID))))
-                    .groupBy(subUserRoot.get(User_.ID)).having(criteriaBuilder.equal(criteriaBuilder.count(joinedAuthorities), authorities.size()));
+            query.groupBy(root.get(User_.ID)).having(criteriaBuilder.equal(criteriaBuilder.count(joinedAuthorities), authorities.size()));
 
-            return criteriaBuilder.and(criteriaBuilder.exists(subQuery));
+            return null;
         };
     }
 
@@ -312,27 +308,24 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
      */
     private Specification<User> getAllUsersMatchingCourses(Set<Long> courseIds) {
         return (root, query, criteriaBuilder) -> {
-            // Sub query to find all users belonging to a group corresponding to the selected course.
-            Subquery<Long> subQuery = query.subquery(Long.class);
-            Root<User> subUserRoot = subQuery.from(User.class);
-            Root<Course> subCourseRoot = subQuery.from(Course.class);
-            Join<User, String> group = subUserRoot.join(User_.GROUPS, JoinType.LEFT);
+            Root<Course> courseRoot = query.from(Course.class);
+
+            Join<User, String> group = root.join(User_.GROUPS, JoinType.LEFT);
 
             // Select all possible group types
-            Predicate student = criteriaBuilder.in(subCourseRoot.get(Course_.STUDENT_GROUP_NAME)).value(group);
-            Predicate teaching = criteriaBuilder.in(subCourseRoot.get(Course_.TEACHING_ASSISTANT_GROUP_NAME)).value(group);
-            Predicate editor = criteriaBuilder.in(subCourseRoot.get(Course_.EDITOR_GROUP_NAME)).value(group);
-            Predicate instructor = criteriaBuilder.in(subCourseRoot.get(Course_.INSTRUCTOR_GROUP_NAME)).value(group);
+            Predicate student = criteriaBuilder.in(courseRoot.get(Course_.STUDENT_GROUP_NAME)).value(group);
+            Predicate teaching = criteriaBuilder.in(courseRoot.get(Course_.TEACHING_ASSISTANT_GROUP_NAME)).value(group);
+            Predicate editor = criteriaBuilder.in(courseRoot.get(Course_.EDITOR_GROUP_NAME)).value(group);
+            Predicate instructor = criteriaBuilder.in(courseRoot.get(Course_.INSTRUCTOR_GROUP_NAME)).value(group);
 
             // The course needs to be one of the selected
-            Predicate inCourse = criteriaBuilder.in(subCourseRoot.get(Course_.ID)).value(courseIds);
+            Predicate inCourse = criteriaBuilder.in(courseRoot.get(Course_.ID)).value(courseIds);
 
-            subQuery.select(subUserRoot.get(User_.ID))
-                    .where(criteriaBuilder.and(criteriaBuilder.or(student, teaching, editor, instructor), inCourse,
-                            criteriaBuilder.equal(subUserRoot.get(User_.ID), root.get(User_.ID))))
-                    .groupBy(subUserRoot.get(User_.ID)).having(criteriaBuilder.equal(criteriaBuilder.count(group), courseIds.size()));
+            group.on(criteriaBuilder.and(criteriaBuilder.or(student, teaching, editor, instructor), inCourse));
 
-            Predicate notEmptyAndValidGroups = criteriaBuilder.and(criteriaBuilder.isNotEmpty(root.get(User_.GROUPS)), criteriaBuilder.exists(subQuery));
+            query.groupBy(root.get(User_.ID)).having(criteriaBuilder.equal(criteriaBuilder.count(group), courseIds.size()));
+
+            Predicate notEmptyAndValidGroups = criteriaBuilder.and(criteriaBuilder.isNotEmpty(root.get(User_.GROUPS)));
 
             return criteriaBuilder.or(notEmptyAndValidGroups);
         };
