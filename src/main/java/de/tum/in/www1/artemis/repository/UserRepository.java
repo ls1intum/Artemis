@@ -35,7 +35,7 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
 
     long FILTER_EMPTY_COURSES = -1;
 
-    String FILTER_NO_AUTHORITY = "NO_AUTHORITY";
+    String FILTER_NO_AUTHORITY = "ROLE_NO_AUTHORITY";
 
     String FILTER_INTERNAL = "INTERNAL";
 
@@ -234,17 +234,17 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
     /**
      * Returns the matching authority specification.
      * @param authorities provided authorities
+     * @param courseIds a set of courseIds which the users need to match
      * @return specification used to chain database operations
      */
-    private Specification<User> getAuthoritySpecification(Set<String> authorities) {
+    private Specification<User> getAuthoritySpecification(Set<String> authorities, Set<Long> courseIds) {
         if (authorities.contains(FILTER_NO_AUTHORITY)) {
             // Empty authorities
             return getAllUsersMatchingEmptyAuthorities();
         }
-        else if (!authorities.isEmpty()) {
+        else if (!authorities.isEmpty() && courseIds.isEmpty()) {
             // Match all authorities
-            var modifiedAuthorities = authorities.stream().map(auth -> Role.ROLE_PREFIX + auth).collect(Collectors.toSet());
-            return getAllUsersMatchingAuthorities(modifiedAuthorities);
+            return getAllUsersMatchingAuthorities(authorities);
         }
         return null;
     }
@@ -303,7 +303,7 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
     /**
      * Creates the specification to match the users course.
      *
-     * @param courseIds a set of courseIds which the users need to match at least one
+     * @param courseIds a set of courseIds which the users need to match
      * @return specification used to chain database operations
      */
     private Specification<User> getAllUsersMatchingCourses(Set<Long> courseIds) {
@@ -350,6 +350,32 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
     }
 
     /**
+     * Creates the specification for authorities and courses.
+     * Since we can't use group by when filtering for both, we need to switch to sub query.
+     *
+     * @param courseIds a set of courseIds which the users need to match at least one
+     * @param authorities set of possible authorities
+     * @return specification used to chain database operations
+     */
+    private Specification<User> getAuthorityAndCourseSpecification(Set<Long> courseIds, Set<String> authorities) {
+        return (root, query, criteriaBuilder) -> {
+            if ((!courseIds.isEmpty() && !courseIds.contains(FILTER_EMPTY_COURSES)) && (!authorities.isEmpty() && !authorities.contains(FILTER_NO_AUTHORITY))) {
+                Subquery<Long> subQuery = query.subquery(Long.class);
+                Root<User> subUserRoot = subQuery.from(User.class);
+                Join<User, Authority> joinedAuthorities = subUserRoot.join(User_.AUTHORITIES, JoinType.LEFT);
+
+                subQuery.select(subUserRoot.get(User_.ID))
+                        .where(criteriaBuilder.and(criteriaBuilder.in(joinedAuthorities.get(Authority_.NAME)).value(authorities),
+                                criteriaBuilder.equal(subUserRoot.get(User_.ID), root.get(User_.ID))))
+                        .groupBy(subUserRoot.get(User_.ID)).having(criteriaBuilder.equal(criteriaBuilder.count(joinedAuthorities), authorities.size()));
+
+                return criteriaBuilder.and(criteriaBuilder.exists(subQuery));
+            }
+            return null;
+        };
+    }
+
+    /**
      * Creates the specification to get distinct results.
      *
      * @return specification used to chain database operations
@@ -376,6 +402,7 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
 
         // List of authorities that a user should match at least one
         Set<String> authorities = userSearch.getAuthorities();
+        var modifiedAuthorities = authorities.stream().map(auth -> Role.ROLE_PREFIX + auth).collect(Collectors.toSet());
 
         // Internal or external users or both
         final var internal = userSearch.getOrigins().contains(FILTER_INTERNAL);
@@ -389,7 +416,8 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
         var courseIds = userSearch.getCourseIds();
 
         Specification<User> specification = Specification.where(distinct()).and(getSearchTermSpecification(searchTerm)).and(getInternalOrExternalSpecification(internal, external))
-                .and(getActivatedOrDeactivatedSpecification(activated, deactivated)).and(getAuthoritySpecification(authorities)).and(getCourseSpecification(courseIds));
+                .and(getActivatedOrDeactivatedSpecification(activated, deactivated)).and(getAuthoritySpecification(modifiedAuthorities, courseIds))
+                .and(getCourseSpecification(courseIds)).and(getAuthorityAndCourseSpecification(courseIds, modifiedAuthorities));
 
         return findAll(specification, sorted).map(user -> {
             user.setVisibleRegistrationNumber();
