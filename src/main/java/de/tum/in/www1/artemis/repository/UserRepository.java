@@ -242,7 +242,7 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
             // Empty authorities
             return getAllUsersMatchingEmptyAuthorities();
         }
-        else if (!authorities.isEmpty() && courseIds.isEmpty()) {
+        else if (!authorities.isEmpty() && (courseIds.isEmpty() || courseIds.contains(FILTER_EMPTY_COURSES))) {
             // Match all authorities
             return getAllUsersMatchingAuthorities(authorities);
         }
