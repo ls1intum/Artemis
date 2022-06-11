@@ -325,9 +325,7 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
 
             query.groupBy(root.get(User_.ID)).having(criteriaBuilder.equal(criteriaBuilder.count(group), courseIds.size()));
 
-            Predicate notEmptyAndValidGroups = criteriaBuilder.and(criteriaBuilder.isNotEmpty(root.get(User_.GROUPS)));
-
-            return criteriaBuilder.or(notEmptyAndValidGroups);
+            return null;
         };
     }
 
@@ -351,7 +349,7 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
 
     /**
      * Creates the specification for authorities and courses.
-     * Since we can't use group by when filtering for both, we need to switch to sub query.
+     * Since for some reason we can't combine both filters with joins, we need to switch to sub query.
      *
      * @param courseIds a set of courseIds which the users need to match at least one
      * @param authorities set of possible authorities
