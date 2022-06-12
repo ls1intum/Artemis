@@ -153,7 +153,7 @@ const createExamActionBasedOnType = (examActionType: ExamActionType): ExamAction
             examAction = new SwitchedExerciseAction(0);
             break;
         case ExamActionType.SAVED_EXERCISE:
-            examAction = new SavedExerciseAction(false, 0, false, true);
+            examAction = new SavedExerciseAction(false, 0, 0, false, true);
             break;
         case ExamActionType.CONNECTION_UPDATED:
             examAction = new ConnectionUpdatedAction(false);
