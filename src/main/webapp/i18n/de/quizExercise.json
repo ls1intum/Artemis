@@ -4,6 +4,8 @@
             "home": {
                 "title": "Quiz",
                 "createLabel": "Quiz erstellen",
+                "editLabel": "Quiz bearbeiten",
+                "importLabel": "Quiz importieren",
                 "createModelDragAndDrop": "Drag-And-Drop Model Quiz erstellen",
                 "createOrEditLabel": "Quiz erstellen oder bearbeiten",
                 "exportLabel": "Quizübungen exportieren"
@@ -32,9 +34,6 @@
                 "testRunSubmissionsExist": "Dieses Quiz enthält Abgaben für einen der Testläufe der Klausur. Lösche den Testlauf, um die Antwortoptionen zu bearbeiten."
             },
             "saveError": "Beim Speichern ist ein Fehler ist aufgetreten. Bitte überprüfe deine Eingabe und versuche es später noch einmal.",
-            "new": {
-                "title": "Quiz für {{ param }} erstellen"
-            },
             "export": {
                 "title": "Alle Quizfragen zum Kurs {{ param }}",
                 "export": "Export",

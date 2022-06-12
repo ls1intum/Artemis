@@ -74,6 +74,6 @@ describe('LearningGoalCourseDetailModalComponent', () => {
         const sortService = TestBed.inject(SortService);
         const sortByPropertySpy = jest.spyOn(sortService, 'sortByProperty');
         learningGoalCourseDetailModal.sortConnectedLectureUnits();
-        expect(sortByPropertySpy).toHaveBeenCalledTimes(1);
+        expect(sortByPropertySpy).toHaveBeenCalledOnce();
     }));
 });

@@ -95,15 +95,15 @@ describe('ParticipationComponent', () => {
         component.ngOnInit();
         tick();
 
-        expect(component.isLoading).toBe(false);
+        expect(component.isLoading).toBeFalse();
         expect(component.participations.length).toBe(1);
         expect(component.participations[0].id).toBe(participation.id);
-        expect(component.newManualResultAllowed).toBe(false);
-        expect(component.presentationScoreEnabled).toBe(false);
+        expect(component.newManualResultAllowed).toBeFalse();
+        expect(component.presentationScoreEnabled).toBeFalse();
 
-        expect(exerciseFindStub).toHaveBeenCalledTimes(1);
+        expect(exerciseFindStub).toHaveBeenCalledOnce();
         expect(exerciseFindStub).toHaveBeenCalledWith(theExercise.id);
-        expect(participationFindStub).toHaveBeenCalledTimes(1);
+        expect(participationFindStub).toHaveBeenCalledOnce();
         expect(participationFindStub).toHaveBeenCalledWith(participation.id, true);
     }));
 
@@ -121,18 +121,18 @@ describe('ParticipationComponent', () => {
         component.ngOnInit();
         tick();
 
-        expect(component.isLoading).toBe(false);
+        expect(component.isLoading).toBeFalse();
         expect(component.participations.length).toBe(1);
         expect(component.participations[0].id).toBe(participation.id);
-        expect(component.newManualResultAllowed).toBe(false);
-        expect(component.presentationScoreEnabled).toBe(false);
+        expect(component.newManualResultAllowed).toBeFalse();
+        expect(component.presentationScoreEnabled).toBeFalse();
         expect(component.exerciseSubmissionState).toEqual(submissionState);
 
-        expect(exerciseFindStub).toHaveBeenCalledTimes(1);
+        expect(exerciseFindStub).toHaveBeenCalledOnce();
         expect(exerciseFindStub).toHaveBeenCalledWith(theExercise.id);
-        expect(participationFindStub).toHaveBeenCalledTimes(1);
+        expect(participationFindStub).toHaveBeenCalledOnce();
         expect(participationFindStub).toHaveBeenCalledWith(participation.id, true);
-        expect(submissionGetStateStub).toHaveBeenCalledTimes(1);
+        expect(submissionGetStateStub).toHaveBeenCalledOnce();
         expect(submissionGetStateStub).toHaveBeenCalledWith(participation.id);
     }));
 
@@ -183,19 +183,19 @@ describe('ParticipationComponent', () => {
         const participation: StudentParticipation = { id: 1, student, team };
 
         component.participationCriteria.filterProp = component.FilterProp.ALL;
-        expect(component.filterParticipationByProp(participation)).toBe(true);
+        expect(component.filterParticipationByProp(participation)).toBeTrue();
 
         // Returns true only if submission count is 0
         component.participationCriteria.filterProp = component.FilterProp.NO_SUBMISSIONS;
-        expect(component.filterParticipationByProp(participation)).toBe(false);
+        expect(component.filterParticipationByProp(participation)).toBeFalse();
         participation.submissionCount = 0;
-        expect(component.filterParticipationByProp(participation)).toBe(true);
+        expect(component.filterParticipationByProp(participation)).toBeTrue();
         participation.submissionCount = 1;
-        expect(component.filterParticipationByProp(participation)).toBe(false);
+        expect(component.filterParticipationByProp(participation)).toBeFalse();
 
         component.exerciseSubmissionState = {};
         component.participationCriteria.filterProp = component.FilterProp.FAILED;
-        expect(component.filterParticipationByProp(participation)).toBe(false);
+        expect(component.filterParticipationByProp(participation)).toBeFalse();
 
         // Test different submission states
         Object.values(ProgrammingSubmissionState).forEach((programmingSubmissionState) => {
@@ -265,11 +265,11 @@ describe('ParticipationComponent', () => {
         component.saveChangedDueDates();
         tick();
 
-        expect(updateDueDateStub).toHaveBeenCalledTimes(1);
+        expect(updateDueDateStub).toHaveBeenCalledOnce();
         expect(updateDueDateStub).toHaveBeenCalledWith(component.exercise, expectedSent);
         expect(component.participations).toEqual(expectedSent);
         expect(component.participationsChangedDueDate).toEqual(new Map());
-        expect(component.isSaving).toBe(false);
+        expect(component.isSaving).toBeFalse();
     }));
 
     it('should remove a participation from the change map when it has been deleted', fakeAsync(() => {
@@ -285,7 +285,7 @@ describe('ParticipationComponent', () => {
         component.deleteParticipation(1, {});
         tick();
 
-        expect(deleteStub).toHaveBeenCalledTimes(1);
+        expect(deleteStub).toHaveBeenCalledOnce();
         expect(component.participationsChangedDueDate).toEqual(new Map());
     }));
 
@@ -348,7 +348,7 @@ describe('ParticipationComponent', () => {
             component.addPresentation(participation);
             tick();
 
-            expect(updateStub).toHaveBeenCalledTimes(1);
+            expect(updateStub).toHaveBeenCalledOnce();
             expect(updateStub).toHaveBeenCalledWith(exercise1, participation);
         }));
 
@@ -369,7 +369,7 @@ describe('ParticipationComponent', () => {
             component.removePresentation(participation);
             tick();
 
-            expect(updateStub).toHaveBeenCalledTimes(1);
+            expect(updateStub).toHaveBeenCalledOnce();
             expect(updateStub).toHaveBeenCalledWith(exercise1, participation);
         }));
 
@@ -385,10 +385,10 @@ describe('ParticipationComponent', () => {
 
         it('should check if the presentation score actions should be displayed', () => {
             component.exercise = exercise1;
-            expect(component.checkPresentationScoreConfig()).toBe(true);
+            expect(component.checkPresentationScoreConfig()).toBeTrue();
 
             component.exercise = exercise2;
-            expect(component.checkPresentationScoreConfig()).toBe(false);
+            expect(component.checkPresentationScoreConfig()).toBeFalse();
         });
     });
 });

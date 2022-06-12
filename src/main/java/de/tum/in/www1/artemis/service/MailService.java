@@ -74,7 +74,7 @@ public class MailService {
 
     private static final String RELATIVE_SCORE = "relativeScore";
 
-    // Translation that can not be done via i18n Recource Bundle (for Thymeleaf) but has to be set in this service via Java
+    // Translation that can not be done via i18n Resource Bundle (for Thymeleaf) but has to be set in this service via Java
     private final String newAnnouncementEN = "New announcement \"%s\" in course \"%s\"";
 
     private final String newAnnouncementDE = "Neue Ankündigung \"%s\" im Kurs \"%s\"";

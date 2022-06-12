@@ -29,7 +29,7 @@ describe('Component Tests', () => {
         it('should set all default values correctly', () => {
             expect(comp.filter).toBe('');
             expect(comp.orderProp).toBe('name');
-            expect(comp.ascending).toBe(true);
+            expect(comp.ascending).toBeTrue();
         });
 
         it('should call load all on init', () => {
@@ -49,7 +49,7 @@ describe('Component Tests', () => {
             comp.ngOnInit();
 
             // THEN
-            expect(service.findAll).toHaveBeenCalledTimes(1);
+            expect(service.findAll).toHaveBeenCalledOnce();
             expect(comp.loggers?.[0]).toEqual(expect.objectContaining(log));
         });
 
@@ -71,8 +71,8 @@ describe('Component Tests', () => {
             comp.changeLevel('main', 'ERROR');
 
             // THEN
-            expect(service.changeLevel).toHaveBeenCalledTimes(1);
-            expect(service.findAll).toHaveBeenCalledTimes(1);
+            expect(service.changeLevel).toHaveBeenCalledOnce();
+            expect(service.findAll).toHaveBeenCalledOnce();
             expect(comp.loggers?.[0]).toEqual(expect.objectContaining(log));
         });
 

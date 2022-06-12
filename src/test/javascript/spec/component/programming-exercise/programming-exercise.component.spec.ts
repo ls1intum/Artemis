@@ -112,9 +112,9 @@ describe('ProgrammingExercise Management Component', () => {
         comp.ngOnInit();
         comp.resetProgrammingExercise(456);
         expect(exerciseService.reset).toHaveBeenCalledWith(456);
-        expect(exerciseService.reset).toHaveBeenCalledTimes(1);
+        expect(exerciseService.reset).toHaveBeenCalledOnce();
         expect(mockSubscriber).toHaveBeenCalledWith('');
-        expect(mockSubscriber).toHaveBeenCalledTimes(1);
+        expect(mockSubscriber).toHaveBeenCalledOnce();
     });
 
     it('Should not reset exercise on error', () => {
@@ -127,9 +127,9 @@ describe('ProgrammingExercise Management Component', () => {
         comp.ngOnInit();
         comp.resetProgrammingExercise(456);
         expect(exerciseService.reset).toHaveBeenCalledWith(456);
-        expect(exerciseService.reset).toHaveBeenCalledTimes(1);
+        expect(exerciseService.reset).toHaveBeenCalledOnce();
         expect(mockSubscriber).toHaveBeenCalledWith(httpErrorResponse.message);
-        expect(mockSubscriber).toHaveBeenCalledTimes(1);
+        expect(mockSubscriber).toHaveBeenCalledOnce();
     });
 
     it('Should delete exercise', () => {
@@ -149,9 +149,9 @@ describe('ProgrammingExercise Management Component', () => {
         comp.ngOnInit();
         comp.deleteProgrammingExercise(456, { deleteStudentReposBuildPlans: true, deleteBaseReposBuildPlans: true });
         expect(programmingExerciseService.delete).toHaveBeenCalledWith(456, true, true);
-        expect(programmingExerciseService.delete).toHaveBeenCalledTimes(1);
+        expect(programmingExerciseService.delete).toHaveBeenCalledOnce();
         expect(mockSubscriber).toHaveBeenCalledWith('');
-        expect(mockSubscriber).toHaveBeenCalledTimes(1);
+        expect(mockSubscriber).toHaveBeenCalledOnce();
     });
 
     it('Should not delete exercise on error', () => {
@@ -164,9 +164,9 @@ describe('ProgrammingExercise Management Component', () => {
         comp.ngOnInit();
         comp.deleteProgrammingExercise(456, { deleteStudentReposBuildPlans: true, deleteBaseReposBuildPlans: true });
         expect(programmingExerciseService.delete).toHaveBeenCalledWith(456, true, true);
-        expect(programmingExerciseService.delete).toHaveBeenCalledTimes(1);
+        expect(programmingExerciseService.delete).toHaveBeenCalledOnce();
         expect(mockSubscriber).toHaveBeenCalledWith(httpErrorResponse.message);
-        expect(mockSubscriber).toHaveBeenCalledTimes(1);
+        expect(mockSubscriber).toHaveBeenCalledOnce();
     });
 
     it('Should open import modal', () => {
@@ -175,7 +175,7 @@ describe('ProgrammingExercise Management Component', () => {
 
         comp.openImportModal();
         expect(modalService.open).toHaveBeenCalledWith(ProgrammingExerciseImportComponent, { size: 'lg', backdrop: 'static' });
-        expect(modalService.open).toHaveBeenCalledTimes(1);
+        expect(modalService.open).toHaveBeenCalledOnce();
     });
 
     it('Should open edit selected modal', () => {
@@ -184,7 +184,7 @@ describe('ProgrammingExercise Management Component', () => {
 
         comp.openEditSelectedModal();
         expect(modalService.open).toHaveBeenCalledWith(ProgrammingExerciseEditSelectedComponent, { size: 'xl', backdrop: 'static' });
-        expect(modalService.open).toHaveBeenCalledTimes(1);
+        expect(modalService.open).toHaveBeenCalledOnce();
     });
 
     it('Should open repo export modal', () => {
@@ -193,7 +193,7 @@ describe('ProgrammingExercise Management Component', () => {
 
         comp.openRepoExportModal();
         expect(modalService.open).toHaveBeenCalledWith(ProgrammingAssessmentRepoExportDialogComponent, { size: 'lg', backdrop: 'static' });
-        expect(modalService.open).toHaveBeenCalledTimes(1);
+        expect(modalService.open).toHaveBeenCalledOnce();
     });
 
     it('Should return exercise id', () => {
@@ -278,8 +278,8 @@ describe('ProgrammingExercise Management Component', () => {
             comp.toggleProgrammingExercise(programmingExercise);
 
             // THEN
-            expect(comp.isExerciseSelected(programmingExercise)).toBe(true);
-            expect(comp.isExerciseSelected(programmingExercise2)).toBe(false);
+            expect(comp.isExerciseSelected(programmingExercise)).toBeTrue();
+            expect(comp.isExerciseSelected(programmingExercise2)).toBeFalse();
         });
     });
 });

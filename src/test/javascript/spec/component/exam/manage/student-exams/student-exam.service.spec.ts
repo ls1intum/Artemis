@@ -31,14 +31,14 @@ describe('Student Exam Service', () => {
 
     it('should call correct url if toggling submitted state and unsubmit is false', () => {
         service.toggleSubmittedState(1, 2, 3, false);
-        expect(httpClientPutSpy).toHaveBeenCalledTimes(1);
+        expect(httpClientPutSpy).toHaveBeenCalledOnce();
         expect(httpClientPutSpy.mock.calls[0]).toHaveLength(3);
         expect(httpClientPutSpy.mock.calls[0][0]).toContain('toggle-to-submitted');
     });
 
     it('should call correct url if toggling submitted state and unsubmit is true', () => {
         service.toggleSubmittedState(1, 2, 3, true);
-        expect(httpClientPutSpy).toHaveBeenCalledTimes(1);
+        expect(httpClientPutSpy).toHaveBeenCalledOnce();
         expect(httpClientPutSpy.mock.calls[0]).toHaveLength(3);
         expect(httpClientPutSpy.mock.calls[0][0]).toContain('toggle-to-unsubmitted');
     });
@@ -67,7 +67,7 @@ describe('Student Exam Service', () => {
         let returnedExam;
         service.find(1, 2, 3).subscribe((result) => (returnedExam = result));
 
-        expect(getSpy).toHaveBeenCalledTimes(1);
+        expect(getSpy).toHaveBeenCalledOnce();
         expect(getSpy).toHaveBeenCalledWith(`${SERVER_API_URL}api/courses/1/exams/2/student-exams/3`, { observe: 'response' });
         expect(returnedExam).toBe(response);
         expect(accountService.setAccessRightsForCourse).toHaveBeenCalledTimes(payload?.exam?.course ? 1 : 0);
@@ -75,7 +75,7 @@ describe('Student Exam Service', () => {
         const patchSpy = jest.spyOn(httpClient, 'patch').mockReturnValue(of(response));
         service.updateWorkingTime(1, 2, 3, 10).subscribe((result) => (returnedExam = result));
 
-        expect(patchSpy).toHaveBeenCalledTimes(1);
+        expect(patchSpy).toHaveBeenCalledOnce();
         expect(patchSpy).toHaveBeenCalledWith(`${SERVER_API_URL}api/courses/1/exams/2/student-exams/3/working-time`, 10, { observe: 'response' });
         expect(returnedExam).toBe(response);
         expect(accountService.setAccessRightsForCourse).toHaveBeenCalledTimes(payload?.exam?.course ? 2 : 0);
@@ -112,7 +112,7 @@ describe('Student Exam Service', () => {
         let returnedExams;
         service.findAllForExam(1, 2).subscribe((result) => (returnedExams = result));
 
-        expect(getSpy).toHaveBeenCalledTimes(1);
+        expect(getSpy).toHaveBeenCalledOnce();
         expect(getSpy).toHaveBeenCalledWith(`${SERVER_API_URL}api/courses/1/exams/2/student-exams`, { observe: 'response' });
         expect(returnedExams).toBe(response);
         expect(accountService.setAccessRightsForCourse).toHaveBeenCalledTimes(2);

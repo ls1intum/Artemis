@@ -186,7 +186,7 @@ describe('CourseLectureDetails', () => {
         expect(downloadButton).not.toBeNull();
 
         downloadButton.nativeElement.click();
-        expect(downloadAttachmentStub).toHaveBeenCalledTimes(1);
+        expect(downloadAttachmentStub).toHaveBeenCalledOnce();
     }));
 });
 

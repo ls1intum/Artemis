@@ -36,6 +36,19 @@ a:not(.btn):hover {
         .nav-item {
             margin-left: 1.5rem;
         }
+
+        .navbar-bottom-bar {
+            display: flex;
+            gap: 5px;
+            justify-content: space-evenly;
+            align-items: center;
+            flex-wrap: wrap;
+
+            > .nav-item {
+                flex: 0 1 auto;
+                margin-left: 0;
+            }
+        }
     }
     a.nav-link {
         font-weight: 400;

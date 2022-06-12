@@ -194,7 +194,7 @@ describe('Course Exam Archive Button Component', () => {
             const archiveState: CourseExamArchiveState = { exportState: 'COMPLETED', message: '' };
             comp.handleArchiveStateChanges(archiveState);
 
-            expect(comp.isBeingArchived).toBe(false);
+            expect(comp.isBeingArchived).toBeFalse();
             expect(comp.archiveButtonText).toEqual(comp.getArchiveButtonText());
             expect(alertServiceSpy).toBeCalled();
             expect(comp.course).toBeDefined();
@@ -210,7 +210,7 @@ describe('Course Exam Archive Button Component', () => {
             const archiveState: CourseExamArchiveState = { exportState: 'COMPLETED_WITH_WARNINGS', message: 'warning 1\nwarning 2' };
             comp.handleArchiveStateChanges(archiveState);
 
-            expect(comp.isBeingArchived).toBe(false);
+            expect(comp.isBeingArchived).toBeFalse();
             expect(comp.archiveButtonText).toEqual(comp.getArchiveButtonText());
             expect(comp.archiveWarnings).toEqual(archiveState.message.split('\n'));
             expect(comp.course).toBeDefined();
@@ -248,7 +248,7 @@ describe('Course Exam Archive Button Component', () => {
             comp.cleanupCourse();
 
             expect(cleanupStub).toBeCalledTimes(0);
-            expect(comp.canCleanupCourse()).toBe(false);
+            expect(comp.canCleanupCourse()).toBeFalse();
         }));
 
         it('should download archive for exam', fakeAsync(() => {
@@ -278,7 +278,7 @@ describe('Course Exam Archive Button Component', () => {
             const archiveState: CourseExamArchiveState = { exportState: 'COMPLETED', message: '' };
             comp.handleArchiveStateChanges(archiveState);
 
-            expect(comp.isBeingArchived).toBe(false);
+            expect(comp.isBeingArchived).toBeFalse();
             expect(comp.archiveButtonText).toEqual(comp.getArchiveButtonText());
             expect(alertServiceSpy).toBeCalled();
             expect(comp.exam).toBeDefined();
