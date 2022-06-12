@@ -145,15 +145,13 @@ public class UserSpecs {
             Join<User, String> group = root.join(User_.GROUPS, JoinType.LEFT);
 
             // Select all possible group types
-            Predicate student = criteriaBuilder.in(courseRoot.get(Course_.STUDENT_GROUP_NAME)).value(group);
-            Predicate teaching = criteriaBuilder.in(courseRoot.get(Course_.TEACHING_ASSISTANT_GROUP_NAME)).value(group);
-            Predicate editor = criteriaBuilder.in(courseRoot.get(Course_.EDITOR_GROUP_NAME)).value(group);
-            Predicate instructor = criteriaBuilder.in(courseRoot.get(Course_.INSTRUCTOR_GROUP_NAME)).value(group);
+            String[] columns = new String[] { Course_.STUDENT_GROUP_NAME, Course_.TEACHING_ASSISTANT_GROUP_NAME, Course_.EDITOR_GROUP_NAME, Course_.INSTRUCTOR_GROUP_NAME };
+            Predicate[] predicates = Arrays.stream(columns).map((column) -> criteriaBuilder.in(courseRoot.get(column)).value(group)).toArray(Predicate[]::new);
 
             // The course needs to be one of the selected
             Predicate inCourse = criteriaBuilder.in(courseRoot.get(Course_.ID)).value(courseIds);
 
-            group.on(criteriaBuilder.and(criteriaBuilder.or(student, teaching, editor, instructor), inCourse));
+            group.on(criteriaBuilder.and(criteriaBuilder.or(predicates), inCourse));
 
             query.groupBy(root.get(User_.ID)).having(criteriaBuilder.equal(criteriaBuilder.count(group), courseIds.size()));
 
