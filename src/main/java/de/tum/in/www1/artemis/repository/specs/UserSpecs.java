@@ -142,35 +142,43 @@ public class UserSpecs {
         return (root, query, criteriaBuilder) -> {
             Root<Course> courseRoot = query.from(Course.class);
 
-            Join<User, String> group = root.join(User_.GROUPS, JoinType.LEFT);
+            Join<User, String> userToGroupJoin = root.join(User_.GROUPS, JoinType.LEFT);
 
-            // Select all possible group types
-            String[] columns = new String[] { Course_.STUDENT_GROUP_NAME, Course_.TEACHING_ASSISTANT_GROUP_NAME, Course_.EDITOR_GROUP_NAME, Course_.INSTRUCTOR_GROUP_NAME };
-            Predicate[] predicates = Arrays.stream(columns).map((column) -> criteriaBuilder.in(courseRoot.get(column)).value(group)).toArray(Predicate[]::new);
+            updateAllUsersMatchingCoursesJoin(criteriaBuilder, courseRoot, userToGroupJoin);
 
-            // The course needs to be one of the selected
-            Predicate inCourse = criteriaBuilder.in(courseRoot.get(Course_.ID)).value(courseIds);
+            query.groupBy(root.get(User_.ID)).having(criteriaBuilder.equal(criteriaBuilder.count(userToGroupJoin), courseIds.size()));
 
-            group.on(criteriaBuilder.and(criteriaBuilder.or(predicates), inCourse));
-
-            query.groupBy(root.get(User_.ID)).having(criteriaBuilder.equal(criteriaBuilder.count(group), courseIds.size()));
-
-            return null;
+            return criteriaBuilder.in(courseRoot.get(Course_.ID)).value(courseIds);
         };
+    }
+
+    /**
+     * Helper method to update the course join. We join the users with the course via the groups of the users and the authority groups of the courses.
+     * @param criteriaBuilder to build the criteria
+     * @param courseRoot used to get course data
+     * @param userToGroupJoin users joined with their groups
+     */
+    private static void updateAllUsersMatchingCoursesJoin(CriteriaBuilder criteriaBuilder, Root<Course> courseRoot, Join<User, String> userToGroupJoin) {
+        // Select all possible group types
+        String[] columns = new String[] { Course_.STUDENT_GROUP_NAME, Course_.TEACHING_ASSISTANT_GROUP_NAME, Course_.EDITOR_GROUP_NAME, Course_.INSTRUCTOR_GROUP_NAME };
+        Predicate[] predicates = Arrays.stream(columns).map((column) -> criteriaBuilder.in(courseRoot.get(column)).value(userToGroupJoin)).toArray(Predicate[]::new);
+
+        userToGroupJoin.on(criteriaBuilder.or(predicates));
     }
 
     /**
      * Creates the specification to match the users course.
      *
      * @param courseIds a set of courseIds which the users need to match at least one
+     * @param authorities provided authorities
      * @return specification used to chain database operations
      */
-    public static Specification<User> getCourseSpecification(Set<Long> courseIds) {
+    public static Specification<User> getCourseSpecification(Set<Long> courseIds, Set<String> authorities) {
         if (courseIds.size() == 1 && courseIds.contains(FILTER_EMPTY_COURSES)) {
             // Empty courses
             return getAllUsersMatchingEmptyCourses();
         }
-        else if (!courseIds.isEmpty()) {
+        else if (!courseIds.isEmpty() && (authorities.isEmpty() || authorities.contains(FILTER_NO_AUTHORITY))) {
             // Match all selected
             return getAllUsersMatchingCourses(courseIds);
         }
@@ -178,8 +186,7 @@ public class UserSpecs {
     }
 
     /**
-     * Creates the specification for authorities and courses.
-     * Since for some reason we can't combine both filters with joins, we need to switch to sub query.
+     * Creates the specification for authorities and courses. We need to combine adapt the group by statement.
      *
      * @param courseIds a set of courseIds which the users need to match at least one
      * @param authorities set of possible authorities
@@ -188,16 +195,17 @@ public class UserSpecs {
     public static Specification<User> getAuthorityAndCourseSpecification(Set<Long> courseIds, Set<String> authorities) {
         return (root, query, criteriaBuilder) -> {
             if ((!courseIds.isEmpty() && !courseIds.contains(FILTER_EMPTY_COURSES)) && (!authorities.isEmpty() && !authorities.contains(FILTER_NO_AUTHORITY))) {
-                Subquery<Long> subQuery = query.subquery(Long.class);
-                Root<User> subUserRoot = subQuery.from(User.class);
-                Join<User, Authority> joinedAuthorities = subUserRoot.join(User_.AUTHORITIES, JoinType.LEFT);
+                Join<User, Authority> joinedAuthorities = root.join(User_.AUTHORITIES, JoinType.LEFT);
+                joinedAuthorities.on(criteriaBuilder.in(joinedAuthorities.get(Authority_.NAME)).value(authorities));
 
-                subQuery.select(subUserRoot.get(User_.ID))
-                        .where(criteriaBuilder.and(criteriaBuilder.in(joinedAuthorities.get(Authority_.NAME)).value(authorities),
-                                criteriaBuilder.equal(subUserRoot.get(User_.ID), root.get(User_.ID))))
-                        .groupBy(subUserRoot.get(User_.ID)).having(criteriaBuilder.equal(criteriaBuilder.count(joinedAuthorities), authorities.size()));
+                Root<Course> courseRoot = query.from(Course.class);
+                Join<User, String> userToGroupJoin = root.join(User_.GROUPS, JoinType.LEFT);
+                updateAllUsersMatchingCoursesJoin(criteriaBuilder, courseRoot, userToGroupJoin);
 
-                return criteriaBuilder.and(criteriaBuilder.exists(subQuery));
+                query.groupBy(root.get(User_.ID)).having(criteriaBuilder.equal(criteriaBuilder.count(joinedAuthorities), authorities.size()),
+                        criteriaBuilder.equal(criteriaBuilder.count(userToGroupJoin), courseIds.size()));
+
+                return criteriaBuilder.in(courseRoot.get(Course_.ID)).value(courseIds);
             }
             return null;
         };

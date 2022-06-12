@@ -213,7 +213,7 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
 
         Specification<User> specification = Specification.where(distinct()).and(getSearchTermSpecification(searchTerm)).and(getInternalOrExternalSpecification(internal, external))
                 .and(getActivatedOrDeactivatedSpecification(activated, deactivated)).and(getAuthoritySpecification(modifiedAuthorities, courseIds))
-                .and(getCourseSpecification(courseIds)).and(getAuthorityAndCourseSpecification(courseIds, modifiedAuthorities));
+                .and(getCourseSpecification(courseIds, modifiedAuthorities)).and(getAuthorityAndCourseSpecification(courseIds, modifiedAuthorities));
 
         return findAll(specification, sorted).map(user -> {
             user.setVisibleRegistrationNumber();
