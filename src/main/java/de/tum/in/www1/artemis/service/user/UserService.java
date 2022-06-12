@@ -655,4 +655,8 @@ public class UserService {
     public void updateUserNotificationVisibility(Long userId, ZonedDateTime hideUntil) {
         userRepository.updateUserNotificationVisibility(userId, hideUntil);
     }
+
+    public void updateUserLanguageKey(Long userId, String languageKey) {
+        userRepository.updateUserLanguageKey(userId, languageKey);
+    }
 }
