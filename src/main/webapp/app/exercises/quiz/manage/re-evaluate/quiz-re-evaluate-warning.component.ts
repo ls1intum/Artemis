@@ -242,7 +242,7 @@ export class QuizReEvaluateWarningComponent implements OnInit {
     /**
      * Confirm changes
      *  => send changes to server and wait for result
-     *  if saving failed -> show failed massage
+     *  if saving failed -> show failed message
      */
     confirmChange(): void {
         this.busy = true;

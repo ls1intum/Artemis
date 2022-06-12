@@ -4,7 +4,6 @@ import { HttpErrorResponse, HttpHeaders, HttpResponse } from '@angular/common/ht
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { TranslateService } from '@ngx-translate/core';
-
 import { ArtemisTestModule } from '../../test.module';
 import { QuizExerciseComponent } from 'app/exercises/quiz/manage/quiz-exercise.component';
 import { QuizExerciseService } from 'app/exercises/quiz/manage/quiz-exercise.service';
@@ -14,12 +13,16 @@ import { MockTranslateService } from '../../helpers/mocks/service/mock-translate
 import { Course } from 'app/entities/course.model';
 import { ExerciseFilter } from 'app/entities/exercise-filter.model';
 import { AlertService } from 'app/core/util/alert.service';
+import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
+import { QuizExerciseImportComponent } from 'app/exercises/quiz/manage/quiz-exercise-import.component';
+import { MockNgbModalService } from '../../helpers/mocks/service/mock-ngb-modal.service';
 
 describe('QuizExercise Management Component', () => {
     let comp: QuizExerciseComponent;
     let fixture: ComponentFixture<QuizExerciseComponent>;
     let service: QuizExerciseService;
     let alertService: AlertService;
+    let modalService: NgbModal;
 
     const course = { id: 123 } as Course;
     const quizExercise = new QuizExercise(course, undefined);
@@ -38,6 +41,7 @@ describe('QuizExercise Management Component', () => {
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: TranslateService, useClass: MockTranslateService },
+                { provide: NgbModal, useClass: MockNgbModalService },
             ],
         })
             .overrideTemplate(QuizExerciseComponent, '')
@@ -47,6 +51,7 @@ describe('QuizExercise Management Component', () => {
         comp = fixture.componentInstance;
         service = fixture.debugElement.injector.get(QuizExerciseService);
         alertService = fixture.debugElement.injector.get(AlertService);
+        modalService = fixture.debugElement.injector.get(NgbModal);
 
         comp.course = course;
         comp.quizExercises = [quizExercise];
@@ -92,6 +97,15 @@ describe('QuizExercise Management Component', () => {
         comp.resetQuizExercise(456);
         expect(service.reset).toHaveBeenCalledWith(456);
         expect(service.reset).toHaveBeenCalledTimes(1);
+    });
+
+    it('Should open modal', () => {
+        const mockReturnValue = { result: Promise.resolve({ id: 456 } as QuizExercise) } as NgbModalRef;
+        jest.spyOn(modalService, 'open').mockReturnValue(mockReturnValue);
+
+        comp.openImportModal();
+        expect(modalService.open).toHaveBeenCalledWith(QuizExerciseImportComponent, { size: 'lg', backdrop: 'static' });
+        expect(modalService.open).toHaveBeenCalledTimes(1);
     });
 
     it('Should open quiz for practice', () => {

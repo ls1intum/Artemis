@@ -31,7 +31,7 @@ public class MigrationEntry20211214_184200 extends MigrationEntry {
     }
 
     /**
-     * Retrieves all users from the database and executes the processing method in batches of a 100 users to prevent database timeouts
+     * Retrieves all users from the database and executes the processing method in batches of 100 users to prevent database timeouts
      */
     @Override
     public void execute() {
