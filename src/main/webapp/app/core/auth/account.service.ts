@@ -282,4 +282,13 @@ export class AccountService implements IAccountService {
     getImageUrl() {
         return this.isAuthenticated() && this.userIdentity ? this.userIdentity.imageUrl : undefined;
     }
+
+    /**
+     * Sets a new language key for the current user
+     *
+     * @param languageKey The new languageKey
+     */
+    updateLanguage(languageKey: String): Observable<void> {
+        return this.http.post<void>(`${SERVER_API_URL}/api/account/change-language`, languageKey);
+    }
 }
