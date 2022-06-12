@@ -463,10 +463,19 @@ export class CourseUpdateComponent implements OnInit {
      */
     get isValidDate(): boolean {
         // allow instructors to set startDate and endDate later
-        if (!this.course.startDate || !this.course.endDate) {
+        if (this.atLeastOneDateNotExisting()) {
             return true;
         }
         return dayjs(this.course.startDate).isBefore(this.course.endDate);
+    }
+
+    /**
+     * Auxiliary method checking if at least one date is not set or simply deleted by the user
+     * @private
+     */
+    private atLeastOneDateNotExisting(): boolean {
+        // we need to take into account that the date is only deleted by the user, which leads to a invalid state of the date
+        return !this.course.startDate || !this.course.endDate || !this.course.startDate.isValid() || !this.course.endDate.isValid();
     }
 
     get isValidConfiguration(): boolean {
