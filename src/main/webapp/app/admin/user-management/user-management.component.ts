@@ -177,6 +177,12 @@ export class UserManagementComponent implements OnInit, OnDestroy {
         });
     }
 
+    ldapSync(user: User) {
+        this.userService.update(user).subscribe(() => {
+            this.loadAll();
+        });
+    }
+
     private onSuccess(users: User[], headers: HttpHeaders) {
         this.totalItems = Number(headers.get('X-Total-Count'));
         this.users = users;

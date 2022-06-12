@@ -137,6 +137,15 @@
                             >
                                 <fa-icon [icon]="faTimes"></fa-icon>
                             </button>
+                            <button
+                                class="btn btn-default btn-sm"
+                                (click)="ldapSync(user)"
+                                [disabled]="!currentAccount || currentAccount.login === user.login"
+                                jhiTranslate="userManagement.ldapSync"
+                            >
+                                <i class="fa fa-arrows-h" aria-hidden="true"></i>
+                                LDAP
+                            </button>
                         </div>
                     </td>
                 </tr>
