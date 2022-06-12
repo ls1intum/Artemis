@@ -27,7 +27,7 @@ public class UserSpecs {
     public static Specification<User> getSearchTermSpecification(String searchTerm) {
         String extendedSearchTerm = "%" + searchTerm + "%";
         return (root, query, criteriaBuilder) -> {
-            String[] columns = new String[] { User_.LOGIN, User_.EMAIL, User_.FIRST_NAME, User_.LAST_NAME };
+            String[] columns = { User_.LOGIN, User_.EMAIL, User_.FIRST_NAME, User_.LAST_NAME };
             Predicate[] predicates = Arrays.stream(columns).map((column) -> criteriaBuilder.like(root.get(column), extendedSearchTerm)).toArray(Predicate[]::new);
 
             return criteriaBuilder.or(predicates);
@@ -160,7 +160,7 @@ public class UserSpecs {
      */
     private static void updateAllUsersMatchingCoursesJoin(CriteriaBuilder criteriaBuilder, Root<Course> courseRoot, Join<User, String> userToGroupJoin) {
         // Select all possible group types
-        String[] columns = new String[] { Course_.STUDENT_GROUP_NAME, Course_.TEACHING_ASSISTANT_GROUP_NAME, Course_.EDITOR_GROUP_NAME, Course_.INSTRUCTOR_GROUP_NAME };
+        String[] columns = { Course_.STUDENT_GROUP_NAME, Course_.TEACHING_ASSISTANT_GROUP_NAME, Course_.EDITOR_GROUP_NAME, Course_.INSTRUCTOR_GROUP_NAME };
         Predicate[] predicates = Arrays.stream(columns).map((column) -> criteriaBuilder.in(courseRoot.get(column)).value(userToGroupJoin)).toArray(Predicate[]::new);
 
         userToGroupJoin.on(criteriaBuilder.or(predicates));
