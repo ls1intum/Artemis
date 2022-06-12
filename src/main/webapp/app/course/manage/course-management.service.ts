@@ -79,6 +79,14 @@ export class CourseManagementService {
     }
 
     /**
+     * get the active users for the lifetime overview of the line chart in the detail view
+     * @param courseId the id of the course of which the statistics should be fetched
+     */
+    getStatisticsForLifetimeOverview(courseId: number): Observable<number[]> {
+        return this.http.get<number[]>(`${this.resourceUrl}/${courseId}/statistics-lifetime-overview`);
+    }
+
+    /**
      * Fetches the title of the course with the given id
      *
      * @param courseId the id of the course

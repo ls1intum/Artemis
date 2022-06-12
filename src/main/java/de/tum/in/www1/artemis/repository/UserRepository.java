@@ -457,9 +457,9 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
     }
 
     /**
-     * Get user with user groups and authorities of currently logged in user
+     * Get user with user groups and authorities of currently logged-in user
      *
-     * @return currently logged in user
+     * @return currently logged-in user
      */
     @NotNull
     default User getUserWithGroupsAndAuthorities() {
@@ -469,9 +469,9 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
     }
 
     /**
-     * Get user with user groups, authorities and organizations of currently logged in user
+     * Get user with user groups, authorities and organizations of currently logged-in user
      *
-     * @return currently logged in user
+     * @return currently logged-in user
      */
     @NotNull
     default User getUserWithGroupsAndAuthoritiesAndOrganizations() {
@@ -481,10 +481,10 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
     }
 
     /**
-     * Get user with user groups, authorities and guided tour settings of currently logged in user
+     * Get user with user groups, authorities and guided tour settings of currently logged-in user
      * Note: this method should only be invoked if the guided tour settings are really needed
      *
-     * @return currently logged in user
+     * @return currently logged-in user
      */
     @NotNull
     default User getUserWithGroupsAuthoritiesAndGuidedTourSettings() {

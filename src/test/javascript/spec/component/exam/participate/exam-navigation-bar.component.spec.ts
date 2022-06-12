@@ -130,19 +130,19 @@ describe('Exam Navigation Bar Component', () => {
     it('should tell the type of the selected programming exercise', () => {
         comp.exerciseIndex = 0;
 
-        expect(comp.isProgrammingExercise()).toBe(true);
+        expect(comp.isProgrammingExercise()).toBeTrue();
     });
 
     it('should tell the type of the selected text exercise', () => {
         comp.exerciseIndex = 1;
 
-        expect(comp.isProgrammingExercise()).toBe(false);
+        expect(comp.isProgrammingExercise()).toBeFalse();
     });
 
     it('should tell the type of the selected modeling exercise', () => {
         comp.exerciseIndex = 2;
 
-        expect(comp.isProgrammingExercise()).toBe(false);
+        expect(comp.isProgrammingExercise()).toBeFalse();
     });
 
     it('save the exercise with changeExercise', () => {

@@ -52,7 +52,7 @@ describe('HeaderExercisePageWithDetails', () => {
     it('should initialise badges, icons, and categories', () => {
         component.ngOnChanges();
 
-        expect(component.isExamMode).toBe(false);
+        expect(component.isExamMode).toBeFalse();
         expect(component.exerciseCategories).toEqual([]);
         expect(component.exerciseStatusBadge).toBe('bg-success');
         // @ts-ignore
@@ -68,7 +68,7 @@ describe('HeaderExercisePageWithDetails', () => {
 
         component.ngOnChanges();
 
-        expect(component.isExamMode).toBe(true);
+        expect(component.isExamMode).toBeTrue();
         expect(component.exerciseCategories).toEqual(categories);
         expect(component.exerciseStatusBadge).toBe('bg-danger');
     });

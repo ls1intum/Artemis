@@ -239,7 +239,7 @@ public class SubmissionService {
      * database without explicitly saving them.
      *
      * @param submission Submission to be modified.
-     * @param user the currently logged in user which is used for hiding specific submission details based on instructor and teaching assistant rights
+     * @param user the currently logged-in user which is used for hiding specific submission details based on instructor and teaching assistant rights
      */
     public void hideDetails(Submission submission, User user) {
         // do not send old submissions or old results to the client
@@ -283,7 +283,7 @@ public class SubmissionService {
     }
 
     /**
-     * Copy Feedbacks from one Result to a another Result
+     * Copy Feedbacks from one Result to another Result
      * @param newResult new result to copy feedback to
      * @param oldResult old result to copy feedback from
      * @return the list of newly created feedbacks
@@ -405,7 +405,7 @@ public class SubmissionService {
                 result.setCompletionDate(ZonedDateTime.now());
                 result.setScore(score);
                 result.rated(true);
-                // we set the assessment type to semi automatic so that it does not appear to the tutors for manual assessment
+                // we set the assessment type to semi-automatic so that it does not appear to the tutors for manual assessment
                 // if we would use AssessmentType.AUTOMATIC, it would be eligible for manual assessment
                 result.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
                 result = saveNewResult(latestSubmission.get(), result);

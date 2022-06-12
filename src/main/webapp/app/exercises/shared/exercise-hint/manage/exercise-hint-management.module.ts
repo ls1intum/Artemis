@@ -9,6 +9,7 @@ import { ExerciseHintComponent } from 'app/exercises/shared/exercise-hint/manage
 import { ArtemisExerciseHintSharedModule } from 'app/exercises/shared/exercise-hint/shared/exercise-hint-shared.module';
 import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
 import { ArtemisMarkdownEditorModule } from 'app/shared/markdown-editor/markdown-editor.module';
+import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 
 const ENTITY_STATES = [...exerciseHintRoute];
 
@@ -20,6 +21,8 @@ const ENTITY_STATES = [...exerciseHintRoute];
         ReactiveFormsModule,
         ArtemisMarkdownModule,
         ArtemisMarkdownEditorModule,
+        ArtemisExerciseHintSharedModule,
+        ArtemisSharedComponentModule,
         ArtemisExerciseHintSharedModule,
     ],
     declarations: [ExerciseHintComponent, ExerciseHintDetailComponent, ExerciseHintUpdateComponent],

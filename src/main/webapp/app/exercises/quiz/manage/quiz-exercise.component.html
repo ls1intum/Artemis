@@ -19,6 +19,15 @@
             <fa-icon [icon]="faPlus"></fa-icon>
             <span jhiTranslate="artemisApp.quizExercise.home.createModelDragAndDrop"> Create new Drag and Drop Model Quiz </span>
         </a>
+        <button
+            *ngIf="course && course.isAtLeastEditor"
+            id="jh-import-entity"
+            class="btn btn-primary jh-create-entity create-quiz-exercise text-truncate mb-1 me-1"
+            (click)="openImportModal()"
+        >
+            <fa-icon [icon]="faPlus"></fa-icon>
+            <span class="hidden-sm-down" jhiTranslate="artemisApp.quizExercise.home.importLabel"> Import quiz </span>
+        </button>
         <a
             *ngIf="quizExercises && quizExercises.length > 0 && course.isAtLeastEditor"
             class="btn me-2 btn-primary jh-create-entity create-quiz-exercise text-truncate mb-1 me-1"
