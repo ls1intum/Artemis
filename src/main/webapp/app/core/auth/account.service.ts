@@ -148,7 +148,7 @@ export class AccountService implements IAccountService {
 
                         // After retrieve the account info, the language will be changed to
                         // the user's preferred language configured in the account setting
-                        const langKey = this.sessionStorage.retrieve('locale') || this.userIdentity.langKey;
+                        const langKey = this.userIdentity.langKey || this.sessionStorage.retrieve('locale');
                         this.translateService.use(langKey);
                     } else {
                         this.userIdentity = undefined;

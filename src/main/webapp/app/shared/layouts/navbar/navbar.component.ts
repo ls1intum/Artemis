@@ -551,9 +551,16 @@ export class NavbarComponent implements OnInit, OnDestroy {
     }
 
     changeLanguage(languageKey: string) {
-        this.sessionStorage.store('locale', languageKey);
-        this.translateService.use(languageKey);
-        this.localeConversionService.locale = languageKey;
+        if (this.currAccount) {
+            this.accountService.updateLanguage(languageKey).subscribe({
+                next: () => {
+                    this.translateService.use(languageKey);
+                },
+                error: (error: HttpErrorResponse) => onError(this.alertService, error),
+            });
+        } else {
+            this.translateService.use(languageKey);
+        }
     }
 
     collapseNavbar() {
