@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpResponse } from '@angular/common/http';
+import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { PlagiarismCase } from 'app/exercises/shared/plagiarism/types/PlagiarismCase';
 import { PlagiarismStatus } from 'app/exercises/shared/plagiarism/types/PlagiarismStatus';
@@ -110,9 +110,10 @@ export class PlagiarismCasesService {
      * @param { boolean } deleteAll
      */
     public cleanUpPlagiarism(exerciseId: number, plagiarismResultId: number, deleteAll = false): Observable<HttpResponse<void>> {
-        return this.http.delete<void>(
-            `${this.resourceUrlExercises}/${exerciseId}/plagiarism-results/${plagiarismResultId}/plagiarism-comparisons?deleteAll=` + (deleteAll ? 'true' : 'false'),
-            { observe: 'response' },
-        );
+        const params = new HttpParams().append('deleteAll', deleteAll ? 'true' : 'false');
+        return this.http.delete<void>(`${this.resourceUrlExercises}/${exerciseId}/plagiarism-results/${plagiarismResultId}/plagiarism-comparisons`, {
+            params,
+            observe: 'response',
+        });
     }
 }

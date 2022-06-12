@@ -30,7 +30,6 @@ import { TextSubmissionElement } from 'app/exercises/shared/plagiarism/types/tex
 import { PlagiarismCasesService } from 'app/course/plagiarism-cases/shared/plagiarism-cases.service';
 import { HttpResponse } from '@angular/common/http';
 import { MockNgbModalService } from '../../helpers/mocks/service/mock-ngb-modal.service';
-import { expectElementToBeDisabled } from '../../helpers/utils/general.utils';
 
 jest.mock('app/shared/util/download.util', () => ({
     downloadFile: jest.fn(),
