@@ -71,7 +71,6 @@ export class ListOfComplaintsComponent implements OnInit {
         this.route.queryParams.subscribe((queryParams) => {
             if (queryParams['filterOption']) {
                 this.filterOption = Number(queryParams['filterOption']);
-                this.triggerShowAllComplaints();
             }
         });
         this.loadComplaints();
@@ -218,6 +217,7 @@ export class ListOfComplaintsComponent implements OnInit {
 
     resetFilterOptions(): void {
         this.updateFilteredComplaints(this.complaints);
+        this.showAddressedComplaints = false;
         this.filterOption = undefined;
     }
 }
