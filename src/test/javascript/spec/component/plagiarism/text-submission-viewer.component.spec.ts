@@ -97,8 +97,8 @@ describe('Text Submission Viewer Component', () => {
             plagiarismSubmission: { currentValue: { submissionId: 2 } } as SimpleChange,
         });
 
-        expect(repositoryService.getRepositoryContent).toHaveBeenCalled();
-        expect(comp.isProgrammingExercise).toBe(true);
+        expect(repositoryService.getRepositoryContent).toHaveBeenCalledOnce();
+        expect(comp.isProgrammingExercise).toBeTrue();
 
         // files with matches first, then the ones without match; each section ordered lexicographically
         const expectedFiles = [

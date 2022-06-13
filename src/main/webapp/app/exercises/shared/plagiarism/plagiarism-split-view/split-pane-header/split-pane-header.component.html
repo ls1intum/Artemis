@@ -10,7 +10,7 @@
 
     <ul *ngIf="showFiles" class="split-pane-header-files">
         <li *ngFor="let file of files; let idx = index" class="split-pane-header-file" ngbDropdownItem (click)="handleFileSelect(file, idx)">
-            <span [ngClass]="{ 'split-pane-header-file-with-match': file.hasMatch }">{{ file.file }}</span>
+            <span [class.split-pane-header-file-with-match]="file.hasMatch">{{ file.file }}</span>
         </li>
 
         <li *ngIf="!hasFiles()">{{ 'artemisApp.plagiarism.noFilesFound' | artemisTranslate }}</li>
