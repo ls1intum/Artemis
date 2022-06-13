@@ -149,9 +149,10 @@ public class UserJWTController {
         }
 
         long difference = this.personalAccessTokenMaxLifetimeMilliseconds - lifetimeMilliseconds;
-        if (lifetimeMilliseconds > this.personalAccessTokenMaxLifetimeMilliseconds)
+        if (lifetimeMilliseconds > this.personalAccessTokenMaxLifetimeMilliseconds) {
             return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "invalidPATLifetime",
                     "Requested token lifetime exceeds the maximum lifetime for personal access tokens by" + difference)).build();
+        }
 
         // Automatically returns 401 if not fully authorized
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
