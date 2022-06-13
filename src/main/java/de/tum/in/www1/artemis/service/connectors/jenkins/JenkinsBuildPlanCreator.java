@@ -59,7 +59,7 @@ public class JenkinsBuildPlanCreator implements JenkinsXmlConfigBuilder {
 
     private static final String REPLACE_JENKINS_TIMEOUT = "#jenkinsTimeout";
 
-    private static final String REPLACE_TESTWISE_COVERAGE_MAVEN_Profile = "#testwiseCoverageMavenProfile";
+    private static final String REPLACE_TESTWISE_COVERAGE_MAVEN_PROFILE = "#testwiseCoverageMavenProfile";
 
     private static final String REPLACE_TESTWISE_COVERAGE_GRADLE_TASK = "#testwiseCoverageGradleTask";
 
@@ -130,7 +130,7 @@ public class JenkinsBuildPlanCreator implements JenkinsXmlConfigBuilder {
             testwiseCoverageAnalysisGradleTask = "tiaTests --run-all-tests";
             testwiseCoverageAnalysisScript = createTestwiseCoverageAnalysisScript(projectType);
         }
-        replacements.put(REPLACE_TESTWISE_COVERAGE_MAVEN_Profile, testwiseCoverageAnalysisMavenProfile);
+        replacements.put(REPLACE_TESTWISE_COVERAGE_MAVEN_PROFILE, testwiseCoverageAnalysisMavenProfile);
         replacements.put(REPLACE_TESTWISE_COVERAGE_GRADLE_TASK, testwiseCoverageAnalysisGradleTask);
         replacements.put(REPLACE_TESTWISE_COVERAGE_SCRIPT, testwiseCoverageAnalysisScript);
 
