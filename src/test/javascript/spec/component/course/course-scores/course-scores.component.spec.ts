@@ -2,7 +2,7 @@ import { HttpResponse } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
-import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
+import { MockLanguageHelper, MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 import { User } from 'app/core/user/user.model';
 import { CourseScoresComponent, HighlightType } from 'app/course/course-scores/course-scores.component';
 import { EMAIL_KEY, NAME_KEY, COURSE_OVERALL_POINTS_KEY, COURSE_OVERALL_SCORE_KEY, USERNAME_KEY } from 'app/shared/export/export-constants';
@@ -34,6 +34,7 @@ import { ExerciseTypeStatisticsMap } from 'app/course/course-scores/exercise-typ
 import { CsvDecimalSeparator, CsvExportOptions, CsvFieldSeparator, CsvQuoteStrings } from 'app/shared/export/export-modal.component';
 import { ExportButtonComponent } from 'app/shared/export/export-button.component';
 import { CommonSpreadsheetCellObject } from 'app/shared/export/excel-export-row-builder';
+import { JhiLanguageHelper } from 'app/core/language/language.helper';
 
 describe('CourseScoresComponent', () => {
     let fixture: ComponentFixture<CourseScoresComponent>;
@@ -251,6 +252,7 @@ describe('CourseScoresComponent', () => {
                     useValue: { params: of({ courseId: 1 }) },
                 },
                 { provide: TranslateService, useClass: MockTranslateService },
+                { provide: JhiLanguageHelper, useClass: MockLanguageHelper },
                 MockProvider(ParticipantScoresService),
                 MockProvider(GradingSystemService, {
                     findGradingScaleForCourse: () => {

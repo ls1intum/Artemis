@@ -1,6 +1,9 @@
 import { Injectable, NgModule, Pipe, PipeTransform } from '@angular/core';
 import { LangChangeEvent, TranslateLoader, TranslateModule, TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { BehaviorSubject, Observable, of, Subject } from 'rxjs';
+import { JhiLanguageHelper } from 'app/core/language/language.helper';
+import { LANGUAGES } from 'app/core/language/language.constants';
+import { ActivatedRouteSnapshot } from '@angular/router';
 
 export const TRANSLATED_STRING = '';
 
@@ -54,6 +57,30 @@ export class MockTranslateService {
     }
 }
 
+export class MockLanguageHelper {
+    private _language: BehaviorSubject<string> = new BehaviorSubject('en');
+
+    /**
+     * Get all supported ISO_639-1 language codes.
+     */
+    getAll(): string[] {
+        return LANGUAGES;
+    }
+
+    get language(): Observable<string> {
+        return this._language.asObservable();
+    }
+    updateTitle(titleKey?: string) {}
+
+    private getPageTitle(routeSnapshot: ActivatedRouteSnapshot) {
+        return '';
+    }
+
+    public determinePreferredLanguage(): string {
+        return 'en';
+    }
+}
+
 const translations: any = {};
 
 class FakeLoader implements TranslateLoader {
@@ -85,6 +112,7 @@ export class TranslateServiceStub {
     providers: [
         { provide: TranslateService, useClass: TranslateServiceStub },
         { provide: TranslatePipe, useClass: TranslatePipeMock },
+        { provide: JhiLanguageHelper, useClass: MockLanguageHelper },
     ],
     imports: [
         TranslateModule.forRoot({
