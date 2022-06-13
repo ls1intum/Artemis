@@ -1135,14 +1135,36 @@ public class CourseResource {
     @GetMapping("courses/{courseId}/statistics")
     @PreAuthorize("hasRole('TA')")
     public ResponseEntity<List<Integer>> getActiveStudentsForCourseDetailView(@PathVariable Long courseId, @RequestParam Long periodIndex) {
-        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, courseRepository.findByIdElseThrow(courseId), null);
-        var exerciseIds = exerciseRepository.findAllIdsByCourseId(courseId);
-        var spanEndDate = now().plusWeeks(17 * periodIndex);
         var course = courseRepository.findByIdElseThrow(courseId);
+        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, course, null);
+        var exerciseIds = exerciseRepository.findAllIdsByCourseId(courseId);
+        var chartEndDate = this.courseService.determineEndDateForActiveStudents(course);
+        var spanEndDate = chartEndDate.plusWeeks(17 * periodIndex);
         var returnedSpanSize = this.courseService.determineTimeSpanSizeForActiveStudents(course, spanEndDate, 17);
-        var activeStudents = courseService.getActiveStudents(exerciseIds, periodIndex, 17, now());
+        var activeStudents = courseService.getActiveStudents(exerciseIds, periodIndex, 17, chartEndDate);
         // We omit data concerning the time before the start date
         return ResponseEntity.ok(activeStudents.subList(activeStudents.size() - returnedSpanSize, activeStudents.size()));
+    }
+
+    /**
+     * GET /courses/:courseId/statistics-lifetime-overview : Get the active students for this particular course over its whole lifetime
+     *
+     * @param courseId the id of the course
+     * @return the ResponseEntity with status 200 (OK) and the data in body, or status 404 (Not Found)
+     */
+    @GetMapping("courses/{courseId}/statistics-lifetime-overview")
+    @PreAuthorize("hasRole('TA')")
+    public ResponseEntity<List<Integer>> getActiveStudentsForCourseLivetime(@PathVariable Long courseId) {
+        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, courseRepository.findByIdElseThrow(courseId), null);
+        var exerciseIds = exerciseRepository.findAllIdsByCourseId(courseId);
+        var course = courseRepository.findByIdElseThrow(courseId);
+        if (course.getStartDate() == null) {
+            throw new IllegalArgumentException("Course does not contain start date");
+        }
+        var endDate = this.courseService.determineEndDateForActiveStudents(course);
+        var returnedSpanSize = this.courseService.calculateWeeksBetweenDates(course.getStartDate(), endDate);
+        var activeStudents = courseService.getActiveStudents(exerciseIds, 0, Math.toIntExact(returnedSpanSize), endDate);
+        return ResponseEntity.ok(activeStudents);
     }
 
     /**
