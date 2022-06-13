@@ -138,7 +138,7 @@ public class ParticipationService {
         if (exercise instanceof ProgrammingExercise) {
             // fetch again to get additional objects
             var programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exercise.getId());
-            participation = startProgrammingExercise(programmingExercise, (ProgrammingExerciseStudentParticipation) participation);
+            participation = startProgrammingExercise(programmingExercise, (ProgrammingExerciseStudentParticipation) participation, initializationDate == null);
         }
         else {// for all other exercises: QuizExercise, ModelingExercise, TextExercise, FileUploadExercise
             if (participation.getInitializationState() == null || participation.getInitializationState() == UNINITIALIZED
@@ -195,11 +195,12 @@ public class ParticipationService {
      * Start a programming exercise participation (which does not exist yet) by creating and configuring a student git repository (step 1) and a student build plan (step 2)
      * based on the templates in the given programming exercise
      *
-     * @param exercise      the programming exercise that the currently active user (student) wants to start
-     * @param participation inactive participation
+     * @param exercise              the programming exercise that the currently active user (student) wants to start
+     * @param participation         inactive participation
+     * @param setInitializationDate flag if the InitializationDate should be set to the current time
      * @return started participation
      */
-    private StudentParticipation startProgrammingExercise(ProgrammingExercise exercise, ProgrammingExerciseStudentParticipation participation) {
+    private StudentParticipation startProgrammingExercise(ProgrammingExercise exercise, ProgrammingExerciseStudentParticipation participation, boolean setInitializationDate) {
         // Step 1a) create the student repository (based on the template repository)
         participation = copyRepository(participation);
         // Step 1b) configure the student repository (e.g. access right, etc.)
@@ -214,8 +215,13 @@ public class ParticipationService {
         // Note: we configure the repository webhook last, so that the potential empty commit does not trigger a new programming submission (see empty-commit-necessary)
         // Step 3) configure the web hook of the student repository
         participation = configureRepositoryWebHook(participation);
+        // Step 4a) Set the InitializationState to initialized to indicate, the programming exercise is ready
         participation.setInitializationState(INITIALIZED);
-        participation.setInitializationDate(ZonedDateTime.now());
+        // Step 4b) Set the InitializationDate to the current time
+        if (setInitializationDate) {
+            // Note: For TestExams, the InitializationDate is set to the StudentExam: startedDate in {#link #startExerciseWithInitializationDate}
+            participation.setInitializationDate(ZonedDateTime.now());
+        }
         // after saving, we need to make sure the object that is used after the if statement is the right one
         return participation;
     }
