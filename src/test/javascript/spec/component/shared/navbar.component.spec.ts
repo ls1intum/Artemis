@@ -21,7 +21,7 @@ import { NotificationSidebarComponent } from 'app/shared/notification/notificati
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { of } from 'rxjs';
+import { EMPTY, of } from 'rxjs';
 import { MockRouter } from '../../helpers/mocks/mock-router';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { ArtemisTestModule } from '../../test.module';
@@ -29,6 +29,8 @@ import { OrganizationManagementService } from 'app/admin/organization-management
 import { MockRouterLinkActiveOptionsDirective, MockRouterLinkDirective } from '../../helpers/mocks/directive/mock-router-link.directive';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { JhiConnectionWarningComponent } from 'app/shared/connection-warning/connection-warning.component';
+import { AccountService } from 'app/core/auth/account.service';
+import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
 
 class MockBreadcrumb {
     label: string;
@@ -85,6 +87,7 @@ describe('NavbarComponent', () => {
             ],
             providers: [
                 MockProvider(UrlSerializer),
+                MockProvider(MockAccountService),
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: TranslateService, useClass: MockTranslateService },
@@ -111,6 +114,33 @@ describe('NavbarComponent', () => {
     it('should initialize component', () => {
         fixture.detectChanges();
         expect(component).not.toBeNull();
+    });
+
+    it('should make api call when logged in user changes language', () => {
+        const languageService = fixture.debugElement.injector.get(TranslateService);
+        const useSpy = jest.spyOn(languageService, 'use');
+        const accountService = fixture.debugElement.injector.get(AccountService);
+        const languageChangeSpy = jest.spyOn(accountService, 'updateLanguage');
+
+        fixture.detectChanges();
+        component.changeLanguage('elvish');
+
+        expect(useSpy).toHaveBeenCalledWith('elvish');
+        expect(languageChangeSpy).toHaveBeenCalledWith('elvish');
+    });
+
+    it('should not make api call when anonymous user changes language', () => {
+        const languageService = fixture.debugElement.injector.get(TranslateService);
+        const useSpy = jest.spyOn(languageService, 'use');
+        const accountService = fixture.debugElement.injector.get(AccountService);
+        const languageChangeSpy = jest.spyOn(accountService, 'updateLanguage');
+
+        fixture.detectChanges();
+        component.currAccount = undefined;
+        component.changeLanguage('elvish');
+
+        expect(useSpy).toHaveBeenCalledWith('elvish');
+        expect(languageChangeSpy).toHaveBeenCalledTimes(0);
     });
 
     it('should not build breadcrumbs for students', () => {

@@ -11,6 +11,7 @@ export class MockAccountService implements IAccountService {
     getAuthenticationState = () => of({ id: 99 } as User);
     authenticate = (identity: User | undefined) => {};
     fetch = () => of({ body: { id: 99 } as User } as any);
+    updateLanguage = (languageKey: string) => of({});
     getImageUrl = () => 'blob';
     hasAuthority = (authority: string) => Promise.resolve(true);
     isAtLeastTutorInCourse = (course: Course) => true;
