@@ -1,6 +1,5 @@
 import { MultiOptionCommand } from 'app/shared/markdown-editor/commands/multiOptionCommand';
 import { MetisService } from 'app/shared/metis/metis.service';
-import { CourseArtifactType } from 'app/shared/markdown-editor/command-constants';
 
 export class ExerciseReferenceCommand extends MultiOptionCommand {
     metisService: MetisService;
@@ -11,7 +10,13 @@ export class ExerciseReferenceCommand extends MultiOptionCommand {
         super();
         this.metisService = metisService;
 
-        this.setValues(this.metisService.getCourse().exercises!.map((exercise) => ({ id: exercise.id!.toString(), value: exercise.title!, type: CourseArtifactType.EXERCISE })));
+        this.setValues(
+            this.metisService.getCourse().exercises!.map((exercise) => ({
+                id: exercise.id!.toString(),
+                value: exercise.title!,
+                type: exercise.type,
+            })),
+        );
     }
 
     /**
@@ -23,7 +28,7 @@ export class ExerciseReferenceCommand extends MultiOptionCommand {
      */
     execute(selectedExerciseId: string): void {
         const selectedExercise = this.getValues().find((value) => value.id.toString() === selectedExerciseId)!;
-        const referenceLink = `[${selectedExercise.value}](${this.metisService.getLinkForExercise(selectedExercise.id)})`;
+        const referenceLink = `[${selectedExercise.type}](${this.metisService.getLinkForExercise(selectedExercise.id)})${selectedExercise.value}[/${selectedExercise.type}]`;
         this.insertText(referenceLink);
         this.focus();
     }

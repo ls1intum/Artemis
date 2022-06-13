@@ -71,16 +71,28 @@
                     </div>
                     <!--multi option command-->
                     <ng-container *ngFor="let command of defaultCommands | typeCheck: MultiOptionCommand">
-                        <div ngbDropdown class="d-inline-block">
-                            <button class="btn btn-sm" type="button" ngbDropdownToggle>
+                        <div ngbDropdown class="dropdown">
+                            <button class="btn btn-sm dropdown-toggle" type="button" ngbDropdownToggle>
                                 {{ command.buttonTranslationString | artemisTranslate }}
                             </button>
-                            <div ngbDropdownMenu>
-                                <button *ngFor="let item of command.getValues()" class="btn-sm" type="button" (click)="command.execute(item.id)" ngbDropdownItem>
-                                    {{ item.value }}
-                                </button>
-                                <button *ngIf="!command.getValues().length" [disabled]="true" ngbDropdownItem jhiTranslate="global.generic.emptyList">No items available</button>
-                            </div>
+
+                            <ul class="dropdown-menu" ngbDropdownMenu>
+                                <li *ngFor="let item of command.getValues()">
+                                    <a *ngIf="item.elements === undefined; else withCategory" (click)="command.execute(item.id, item.type)" class="dropdown-item">{{
+                                        item.value
+                                    }}</a>
+                                    <ng-template #withCategory>
+                                        <a class="dropdown-item" (click)="command.execute(item.id, item.type)">
+                                            {{ item.value }}<fa-icon class="float-end" [icon]="faAngleRight"></fa-icon>
+                                        </a>
+                                        <ul class="dropdown-menu dropdown-submenu">
+                                            <li *ngFor="let nestedElement of item.elements">
+                                                <a (click)="command.execute(item.id, nestedElement.type, nestedElement.id)" class="dropdown-item">{{ nestedElement.value }}</a>
+                                            </li>
+                                        </ul>
+                                    </ng-template>
+                                </li>
+                            </ul>
                         </div>
                     </ng-container>
                     <!--color picker command -->

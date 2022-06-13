@@ -1,12 +1,6 @@
 export type ValueItem = {
     id: string;
     value: string;
-    type?: CourseArtifactType;
+    type?: string;
     elements?: ValueItem[];
 };
-
-export enum CourseArtifactType {
-    EXERCISE = 'Exercise',
-    LECTURE = 'Lecture',
-    ATTACHMENT = 'Attachment',
-}
