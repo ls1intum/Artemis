@@ -796,7 +796,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
             }
         });
 
-        this.navigationUtilService.routeInNewTab(route, { queryParams: { submissionFilter: index } });
+        this.navigationUtilService.routeInNewTab(route, { queryParams: { filterOption: index } });
     }
 
     sortSubmissionRows(correctionRound: number) {

@@ -751,7 +751,7 @@ describe('ExerciseAssessmentDashboardComponent', () => {
                 comp.navigateToExerciseSubmissionOverview(event);
 
                 expect(routingStub).toHaveBeenCalledWith(['course-management', 42, preparedExercise.type + '-exercises', preparedExercise.id, 'submissions'], {
-                    queryParams: { submissionFilter: 0 },
+                    queryParams: { filterOption: 0 },
                 });
             });
         });

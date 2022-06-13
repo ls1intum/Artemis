@@ -97,8 +97,8 @@ export class ModelingAssessmentDashboardComponent extends AbstractAssessmentDash
                 this.course = res.body!;
             });
             this.route.queryParams.subscribe((queryParams) => {
-                if (queryParams['submissionFilter']) {
-                    this.filterOption = Number(queryParams['submissionFilter']);
+                if (queryParams['filterOption']) {
+                    this.filterOption = Number(queryParams['filterOption']);
                 }
             });
             this.exerciseId = params['exerciseId'];

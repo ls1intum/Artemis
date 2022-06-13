@@ -44,6 +44,8 @@ export class ListOfComplaintsComponent implements OnInit {
     faFolderOpen = faFolderOpen;
     faExclamationTriangle = faExclamationTriangle;
 
+    readonly FilterOptionAddressedComplaints = 4; // the number passed by the chart through the route indicating that only addressed complaints should be shown
+
     constructor(
         public complaintService: ComplaintService,
         private alertService: AlertService,
@@ -67,8 +69,8 @@ export class ListOfComplaintsComponent implements OnInit {
         });
         this.route.data.subscribe((data) => (this.complaintType = data.complaintType));
         this.route.queryParams.subscribe((queryParams) => {
-            if (queryParams['submissionFilter']) {
-                this.filterOption = Number(queryParams['submissionFilter']);
+            if (queryParams['filterOption']) {
+                this.filterOption = Number(queryParams['filterOption']);
                 this.triggerShowAllComplaints();
             }
         });
@@ -103,18 +105,16 @@ export class ListOfComplaintsComponent implements OnInit {
         complaintResponse.subscribe({
             next: (res) => {
                 this.complaints = res.body!;
-                if (this.filterOption && this.filterOption === 4) {
+                if (this.filterOption === this.FilterOptionAddressedComplaints) {
                     this.showAddressedComplaints = true;
                 }
 
                 if (!this.showAddressedComplaints) {
                     this.complaintsToShow = this.complaints.filter((complaint) => complaint.accepted === undefined);
+                } else if (this.filterOption === this.FilterOptionAddressedComplaints) {
+                    this.complaintsToShow = this.complaints.filter((complaint) => complaint.accepted !== undefined);
                 } else {
-                    if (this.filterOption === 4) {
-                        this.complaintsToShow = this.complaints.filter((complaint) => complaint.accepted === true);
-                    } else {
-                        this.complaintsToShow = this.complaints;
-                    }
+                    this.complaintsToShow = this.complaints;
                 }
 
                 if (this.complaints.some((complaint) => complaint.student)) {

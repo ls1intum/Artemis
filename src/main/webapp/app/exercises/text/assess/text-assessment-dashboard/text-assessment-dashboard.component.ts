@@ -70,8 +70,8 @@ export class TextAssessmentDashboardComponent extends AbstractAssessmentDashboar
             this.exerciseGroupId = Number(this.route.snapshot.paramMap.get('exerciseGroupId'));
         }
         this.route.queryParams.subscribe((queryParams) => {
-            if (queryParams['submissionFilter']) {
-                this.filterOption = Number(queryParams['submissionFilter']);
+            if (queryParams['filterOption']) {
+                this.filterOption = Number(queryParams['filterOption']);
             }
         });
         this.exerciseService
