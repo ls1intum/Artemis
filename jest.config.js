@@ -22,6 +22,9 @@ module.exports = {
             },
         },
     },
+    testEnvironmentOptions: {
+        url: 'https://artemis.fake/test'
+    },
     roots: ['<rootDir>', `<rootDir>/${baseUrl}`],
     modulePaths: [`<rootDir>/${baseUrl}`],
     setupFiles: ['jest-date-mock'],
@@ -63,7 +66,7 @@ module.exports = {
     },
     setupFilesAfterEnv: ['<rootDir>/src/test/javascript/spec/jest-test-setup.ts', 'jest-extended/all'],
     moduleFileExtensions: ['ts', 'html', 'js', 'json', 'mjs'],
-    resolver: 'jest-preset-angular/build/resolvers/ng-jest-resolver.js',
+    resolver: '<rootDir>/jest.resolver.js',
     transformIgnorePatterns: [`/node_modules/(?!${esModules})`],
     transform: {
         '^.+\\.(ts|js|mjs|html|svg)$': 'jest-preset-angular',

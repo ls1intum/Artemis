@@ -228,7 +228,7 @@ export class ComplaintService implements IComplaintService {
 
     private convertDateFromClient(complaint: Complaint): Complaint {
         return Object.assign({}, complaint, {
-            submittedTime: complaint.submittedTime && dayjs(complaint.submittedTime).isValid ? complaint.submittedTime.toJSON() : undefined,
+            submittedTime: complaint.submittedTime && dayjs(complaint.submittedTime).isValid() ? complaint.submittedTime.toJSON() : undefined,
         });
     }
 
