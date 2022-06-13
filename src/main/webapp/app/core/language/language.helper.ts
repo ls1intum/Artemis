@@ -77,14 +77,18 @@ export class JhiLanguageHelper {
         // In the languages array the languages are ordered by preference with the most preferred language first.
         for (let i = 0; i < navigator.languages.length; i++) {
             // return the language with the highest preference
-            if (navigator.languages[i].startsWith('en')) {
+            if (this.getNavigatorReference().languages[i].startsWith('en')) {
                 return 'en';
             }
-            if (navigator.languages[i].startsWith('de')) {
+            if (this.getNavigatorReference().languages[i].startsWith('de')) {
                 return 'de';
             }
         }
         // english as fallback
         return 'en';
+    }
+
+    public getNavigatorReference(): any {
+        return navigator;
     }
 }
