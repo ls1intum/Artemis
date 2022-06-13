@@ -49,7 +49,7 @@ describe('Exercise Hint Button Overlay Component', () => {
 
         comp.openModal();
 
-        expect(openModalSpy).toHaveBeenCalledTimes(1);
+        expect(openModalSpy).toHaveBeenCalledOnce();
         expect(openModalSpy).toHaveBeenCalledWith(ExerciseHintStudentDialogComponent, { size: 'lg', backdrop: 'static' });
         expect(componentInstance.availableExerciseHints).toEqual([availableExerciseHint]);
         expect(componentInstance.activatedExerciseHints).toEqual([activatedExerciseHint]);

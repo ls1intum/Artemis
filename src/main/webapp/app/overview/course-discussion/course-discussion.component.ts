@@ -10,7 +10,6 @@ import { Post } from 'app/entities/metis/post.model';
 import { UntypedFormBuilder } from '@angular/forms';
 import { HttpResponse } from '@angular/common/http';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
-import { faLongArrowAltDown, faLongArrowAltUp } from '@fortawesome/free-solid-svg-icons';
 import { ITEMS_PER_PAGE } from 'app/shared/constants/pagination.constants';
 import { CourseDiscussionDirective } from 'app/shared/metis/course-discussion.directive';
 
@@ -26,23 +25,16 @@ export class CourseDiscussionComponent extends CourseDiscussionDirective impleme
 
     exercises?: Exercise[];
     lectures?: Lecture[];
-    currentSortCriterion = PostSortCriterion.CREATION_DATE;
     currentSortDirection = SortDirection.DESCENDING;
     totalItems = 0;
     pagingEnabled = true;
     itemsPerPage = ITEMS_PER_PAGE;
     page = 1;
     readonly CourseWideContext = CourseWideContext;
-    readonly SortBy = PostSortCriterion;
-    readonly SortDirection = SortDirection;
     readonly PageType = PageType;
     readonly pageType = PageType.OVERVIEW;
 
     private totalItemsSubscription: Subscription;
-
-    // Icons
-    faLongArrowAltUp = faLongArrowAltUp;
-    faLongArrowAltDown = faLongArrowAltDown;
 
     constructor(
         protected metisService: MetisService,

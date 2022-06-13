@@ -100,7 +100,7 @@ describe('QuizExercise Point Statistic Component', () => {
             expect(quizServiceFindSpy).toHaveBeenCalledWith(42);
             expect(loadQuizSuccessSpy).toHaveBeenCalledWith(quizExercise);
             expect(comp.quizExerciseChannel).toEqual('/topic/courses/2/quizExercises');
-            expect(updateDisplayedTimesSpy).toHaveBeenCalledTimes(1);
+            expect(updateDisplayedTimesSpy).toHaveBeenCalledOnce();
             discardPeriodicTasks();
         }));
 
@@ -184,7 +184,7 @@ describe('QuizExercise Point Statistic Component', () => {
             // check
             expect(routerSpy).not.toHaveBeenCalled();
             expect(comp.quizExercise).toEqual(quizExercise);
-            expect(comp.waitingForQuizStart).toBe(false);
+            expect(comp.waitingForQuizStart).toBeFalse();
             expect(loadDataSpy).toHaveBeenCalled();
         });
     });

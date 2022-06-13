@@ -83,6 +83,6 @@ describe('LearningGoalCardComponent', () => {
         const modalService = TestBed.inject(NgbModal);
         const openSpy = jest.spyOn(modalService, 'open');
         card.click();
-        expect(openSpy).toHaveBeenCalledTimes(1);
+        expect(openSpy).toHaveBeenCalledOnce();
     });
 });

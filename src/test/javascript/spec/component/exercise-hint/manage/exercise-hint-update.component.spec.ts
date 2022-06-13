@@ -79,7 +79,7 @@ describe('ExerciseHint Management Update Component', () => {
 
         comp.ngOnInit();
 
-        expect(findByExerciseIdSpy).toHaveBeenCalledTimes(1);
+        expect(findByExerciseIdSpy).toHaveBeenCalledOnce();
         expect(findByExerciseIdSpy).toHaveBeenCalledWith(15);
         expect(comp.exerciseHint.exercise).toEqual(exercise);
         expect(comp.exerciseHint).toEqual(exerciseHint);
@@ -95,7 +95,7 @@ describe('ExerciseHint Management Update Component', () => {
 
         comp.ngOnInit();
 
-        expect(getTasksSpy).toHaveBeenCalledTimes(1);
+        expect(getTasksSpy).toHaveBeenCalledOnce();
         expect(getTasksSpy).toHaveBeenCalledWith(15);
         tick();
         expect(comp.tasks).toEqual([task1, task2]);
@@ -108,7 +108,7 @@ describe('ExerciseHint Management Update Component', () => {
 
         comp.ngOnInit();
 
-        expect(getTasksSpy).toHaveBeenCalledTimes(1);
+        expect(getTasksSpy).toHaveBeenCalledOnce();
         expect(getTasksSpy).toHaveBeenCalledWith(15);
         tick();
         expect(comp.tasks).toEqual([task1, task2]);

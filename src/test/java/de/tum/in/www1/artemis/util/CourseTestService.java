@@ -13,6 +13,7 @@ import java.time.DayOfWeek;
 import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import org.mockito.ArgumentMatchers;
 import org.mockito.MockedStatic;
@@ -1088,6 +1089,16 @@ public class CourseTestService {
     }
 
     // Test
+    public void testGetAllEditorsInCourse() throws Exception {
+        Course course = ModelFactory.generateCourse(null, null, null, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
+        course = courseRepo.save(course);
+
+        // Get all editors for course
+        List<User> editors = request.getList("/api/courses/" + course.getId() + "/editors", HttpStatus.OK, User.class);
+        assertThat(editors).as("All editors in course found").hasSize(numberOfEditors);
+    }
+
+    // Test
     public void testGetAllStudentsOrTutorsOrInstructorsInCourse_AsInstructorOfOtherCourse_forbidden() throws Exception {
         Course course = ModelFactory.generateCourse(null, null, null, new HashSet<>(), "other-tumuser", "other-tutor", "other-editor", "other-instructor");
         course = courseRepo.save(course);
@@ -1928,7 +1939,28 @@ public class CourseTestService {
         assertThat(courseDTO.getCurrentAbsoluteAverageScore()).isEqualTo(18);
         assertThat(courseDTO.getCurrentMaxAverageScore()).isEqualTo(30);
 
+        course2.setStartDate(now.minusWeeks(20));
+        course2.setEndDate(null);
+        courseRepo.save(course2);
+
+        // API call for the lifetime overview
+        var lifetimeOverviewStats = request.get("/api/courses/" + course2.getId() + "/statistics-lifetime-overview", HttpStatus.OK, List.class);
+
+        var expectedLifetimeOverviewStats = Arrays.stream(new int[21]).boxed().collect(Collectors.toList());
+        expectedLifetimeOverviewStats.set(18, 1);
+        expectedLifetimeOverviewStats.set(20, 1);
+        assertThat(lifetimeOverviewStats).as("should depict 21 weeks in total").isEqualTo(expectedLifetimeOverviewStats);
+
         course2.setEndDate(now.minusWeeks(1));
+        courseRepo.save(course2);
+
+        lifetimeOverviewStats = request.get("/api/courses/" + course2.getId() + "/statistics-lifetime-overview", HttpStatus.OK, List.class);
+
+        expectedLifetimeOverviewStats = Arrays.stream(new int[20]).boxed().collect(Collectors.toList());
+        expectedLifetimeOverviewStats.set(18, 1);
+        assertThat(lifetimeOverviewStats).as("should only depict data until the end date of the course").isEqualTo(expectedLifetimeOverviewStats);
+
+        course2.setStartDate(now.minusWeeks(2));
         courseRepo.save(course2);
 
         // API call for course2
