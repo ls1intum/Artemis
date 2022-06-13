@@ -18,7 +18,7 @@
             (change)="convertTokenLifetimeFromDaysToMillis()"
             #lifetime="ngModel"
         />
-        <button [disabled]="!lifetime.valid || token" class="btn btn-primary btn-sm me-2 input-group-append" type="button" style="min-width: 100px" (click)="generateNewToken()">
+        <button [disabled]="!lifetime.valid || token" class="btn btn-primary btn-sm me-2 pat-button input-group-append" type="button" (click)="generateNewToken()">
             {{ 'artemisApp.userSettings.personalAccessTokens.generate' | artemisTranslate }}
         </button>
     </div>
@@ -37,9 +37,8 @@
             [cdkCopyToClipboard]="token"
             (cdkCopyToClipboardCopied)="onCopyFinished($event)"
             [class.btn-success]="wasCopied"
-            class="btn btn-primary btn-sm me-2 input-group-append"
+            class="btn btn-primary btn-sm me-2 pat-button input-group-append"
             type="button"
-            style="min-width: 100px"
         >
             {{ wasCopied ? ('artemisApp.userSettings.personalAccessTokens.copied' | artemisTranslate) : ('artemisApp.userSettings.personalAccessTokens.copy' | artemisTranslate) }}
         </button>
