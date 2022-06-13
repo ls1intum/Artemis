@@ -235,7 +235,10 @@ public final class Constants {
 
     public static final String VOTE_EMOJI_ID = "heavy_plus_sign";
 
-    public static final int MAX_VALUE_PROGRAMMING_RESULT_INTS = 255; // Size of tinyInt in SQL, that is used to store these values
+    /**
+     * Size of tinyInt in SQL, that is used to store these values
+     */
+    public static final int MAX_VALUE_PROGRAMMING_RESULT_INTS = 255;
 
     private Constants() {
     }

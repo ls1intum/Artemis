@@ -34,35 +34,18 @@ public class MigrationEntry20220608_194500 extends MigrationEntry {
     @Override
     public void execute() {
         List<Result> results = resultRepository.findAll();
-        results.removeIf(result -> result.getResultString() == null);
+        results.removeIf(result -> result.getResultString() == null || !(result.getParticipation() instanceof ProgrammingExerciseParticipation));
         LOGGER.info("Found {} results to process.", results.size());
 
-        List<Result> programmingResults = new ArrayList<>();
-        List<Result> otherResults = new ArrayList<>();
-        results.forEach(result -> {
-            if (result.getParticipation() instanceof ProgrammingExerciseParticipation) {
-                programmingResults.add(result);
-            }
-            else {
-                otherResults.add(result);
-            }
-        });
-
-        // TODO: Uncomment this before merging
-        /*
-         * Lists.partition(otherResults, 100).forEach(resultList -> { LOGGER.info("Process (next) 100 non-programming results for the migration in one batch...");
-         * resultList.forEach(result -> result.setResultString(null)); resultRepository.saveAll(resultList); });
-         */
+        List<Result> unprocessedResults = new ArrayList<>();
 
         Lists.partition(results, 100).forEach(resultList -> {
-            LOGGER.info("Process (next) 100 programming results for the migration in one batch...");
-            processProgrammingResults(resultList);
+            LOGGER.info("Process (next) 100 results for the migration in one batch...");
+            unprocessedResults.addAll(processProgrammingResults(resultList));
         });
 
-        programmingResults.removeIf(result -> result.getResultString() == null);
-        if (!programmingResults.isEmpty()) {
-            // TODO: Uncomment this before merging
-            // reportUnprocessedResults(programmingResults);
+        if (!unprocessedResults.isEmpty()) {
+            reportUnprocessedResults(unprocessedResults);
         }
     }
 
@@ -71,9 +54,10 @@ public class MigrationEntry20220608_194500 extends MigrationEntry {
      * issues.
      * @param results Batch of results that should get processed
      */
-    private void processProgrammingResults(List<Result> results) {
-        results.forEach(result -> {
+    private List<Result> processProgrammingResults(List<Result> results) {
+        List<Result> unsuccessfulResults = results.stream().filter(result -> {
             String[] resultStringParts = result.getResultString().split(", ");
+            boolean successfull = false;
             for (String resultStringPart : resultStringParts) {
                 // Matches e.g. "21 of 42 passed"
                 if (resultStringPart.matches(".*of.*passed.*")) {
@@ -85,8 +69,7 @@ public class MigrationEntry20220608_194500 extends MigrationEntry {
                     result.setTestCaseCount(testCasesAmount);
 
                     // If we found the test cases, we successfully migrated that result
-                    // TODO: Uncomment this before merging
-                    // result.setResultString(null);
+                    successfull = true;
                 }
                 // Matches e.g. "9 issues"
                 else if (resultStringPart.contains("issue")) {
@@ -96,13 +79,18 @@ public class MigrationEntry20220608_194500 extends MigrationEntry {
                     result.setCodeIssueCount(codeIssueCount);
                 }
             }
-        });
+            return !successfull;
+        }).toList();
 
         resultRepository.saveAll(results);
+
+        return unsuccessfulResults;
     }
 
     private void reportUnprocessedResults(List<Result> unprocessedResults) {
-        LOGGER.error("Found {} results of programming exercises that could not be processed! These results will no longer show a correct resultString!", unprocessedResults.size());
+        LOGGER.error(
+                "Found {} results of programming exercises that could not be processed! These results will no longer show a correct resultString! The actual score is unaffected by this.",
+                unprocessedResults.size());
         Optional<ZonedDateTime> latestUnprocessedResult = unprocessedResults.stream().map(Result::getCompletionDate).filter(Objects::nonNull).max(Comparator.naturalOrder());
         latestUnprocessedResult.ifPresent(zonedDateTime -> LOGGER.error("The latest of these unprocessed results is from {}.", zonedDateTime));
         LOGGER.error("The IDs of the unprocessed results are: {}", unprocessedResults.stream().map(Result::getId).toList());
