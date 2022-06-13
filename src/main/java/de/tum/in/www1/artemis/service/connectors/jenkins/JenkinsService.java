@@ -36,6 +36,7 @@ import de.tum.in.www1.artemis.service.connectors.jenkins.dto.TestCaseDTO;
 import de.tum.in.www1.artemis.service.connectors.jenkins.dto.TestResultsDTO;
 import de.tum.in.www1.artemis.service.connectors.jenkins.jobs.JenkinsJobService;
 import de.tum.in.www1.artemis.service.dto.AbstractBuildResultNotificationDTO;
+import de.tum.in.www1.artemis.service.hestia.TestwiseCoverageService;
 
 @Profile("jenkins")
 @Service
@@ -54,14 +55,18 @@ public class JenkinsService extends AbstractContinuousIntegrationService {
 
     private final JenkinsInternalUrlService jenkinsInternalUrlService;
 
+    private final TestwiseCoverageService testwiseCoverageService;
+
     public JenkinsService(@Qualifier("jenkinsRestTemplate") RestTemplate restTemplate, JenkinsServer jenkinsServer, ProgrammingSubmissionRepository programmingSubmissionRepository,
             FeedbackRepository feedbackRepository, @Qualifier("shortTimeoutJenkinsRestTemplate") RestTemplate shortTimeoutRestTemplate, BuildLogEntryService buildLogService,
-            JenkinsBuildPlanService jenkinsBuildPlanService, JenkinsJobService jenkinsJobService, JenkinsInternalUrlService jenkinsInternalUrlService) {
+            JenkinsBuildPlanService jenkinsBuildPlanService, JenkinsJobService jenkinsJobService, JenkinsInternalUrlService jenkinsInternalUrlService,
+            TestwiseCoverageService testwiseCoverageService) {
         super(programmingSubmissionRepository, feedbackRepository, buildLogService, restTemplate, shortTimeoutRestTemplate);
         this.jenkinsServer = jenkinsServer;
         this.jenkinsBuildPlanService = jenkinsBuildPlanService;
         this.jenkinsJobService = jenkinsJobService;
         this.jenkinsInternalUrlService = jenkinsInternalUrlService;
+        this.testwiseCoverageService = testwiseCoverageService;
     }
 
     @Override
@@ -190,6 +195,13 @@ public class JenkinsService extends AbstractContinuousIntegrationService {
         if (Boolean.TRUE.equals(programmingExercise.isStaticCodeAnalysisEnabled()) && staticCodeAnalysisReports != null && !staticCodeAnalysisReports.isEmpty()) {
             var scaFeedbackList = feedbackRepository.createFeedbackFromStaticCodeAnalysisReports(staticCodeAnalysisReports);
             result.addFeedbacks(scaFeedbackList);
+        }
+
+        final var testwiseCoverageReport = ((TestResultsDTO) buildResult).getTestwiseCoverageReport();
+        if (Boolean.TRUE.equals(programmingExercise.isTestwiseCoverageEnabled()) && testwiseCoverageReport != null && !testwiseCoverageReport.isEmpty()) {
+            // since the test cases are not saved to the database yet, the test case is null for the entries
+            var coverageFileReportsWithoutTestsByTestCaseName = testwiseCoverageService.createTestwiseCoverageFileReportsWithoutTestsByTestCaseName(testwiseCoverageReport);
+            result.setCoverageFileReportsByTestCaseName(coverageFileReportsWithoutTestsByTestCaseName);
         }
 
         // Relevant feedback is negative, or positive with a message

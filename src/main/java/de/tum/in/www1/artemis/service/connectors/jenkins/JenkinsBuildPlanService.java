@@ -101,10 +101,12 @@ public class JenkinsBuildPlanService {
         var programmingLanguage = exercise.getProgrammingLanguage();
         var staticCodeAnalysisEnabled = exercise.isStaticCodeAnalysisEnabled();
         var isSequentialTestRuns = exercise.hasSequentialTestRuns();
+        var isSolutionPlan = planKey.equals("SOLUTION");
+        var testwiseCoverageAnalysisEnabled = exercise.isTestwiseCoverageEnabled() && isSolutionPlan;
 
         final var configBuilder = builderFor(programmingLanguage, exercise.getProjectType());
         Document jobConfig = configBuilder.buildBasicConfig(programmingLanguage, Optional.ofNullable(exercise.getProjectType()), testRepositoryURL, repositoryURL,
-                staticCodeAnalysisEnabled, isSequentialTestRuns);
+                staticCodeAnalysisEnabled, isSequentialTestRuns, testwiseCoverageAnalysisEnabled);
 
         var jobFolder = exercise.getProjectKey();
         var job = jobFolder + "-" + planKey;

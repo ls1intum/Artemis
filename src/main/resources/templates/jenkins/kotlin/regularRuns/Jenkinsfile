@@ -23,13 +23,14 @@ pipeline {
                 steps {
                     timestamps {
                         withMaven {
-                            sh 'mvn clean test -B'
+                            sh 'mvn clean test -B #testwiseCoverageMavenProfile'
                         }
                     }
                 }
             }
         }
         post {
+            #testwiseCoverageScript
             cleanup {
                 sh 'rm -rf results'
                 sh 'mkdir results'

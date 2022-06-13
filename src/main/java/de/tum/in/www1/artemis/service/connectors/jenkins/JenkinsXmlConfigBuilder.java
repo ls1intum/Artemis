@@ -21,8 +21,9 @@ public interface JenkinsXmlConfigBuilder {
      * @param assignmentRepositoryURL The URL of the assignment repository, i.e. template or participation repo
      * @param isStaticCodeAnalysisEnabled Flag which determines whether a build plan with or without static code analysis is created
      * @param isSequentialRuns Should activate sequential test runs options
+     * @param isTestwiseCoverageEnabled Flag which determines whether a build plan with or without testwise coverage analysis is created
      * @return The parsed XML document containing the Jenkins build config
      */
     Document buildBasicConfig(ProgrammingLanguage programmingLanguage, Optional<ProjectType> projectType, VcsRepositoryUrl testRepositoryURL,
-            VcsRepositoryUrl assignmentRepositoryURL, boolean isStaticCodeAnalysisEnabled, boolean isSequentialRuns);
+            VcsRepositoryUrl assignmentRepositoryURL, boolean isStaticCodeAnalysisEnabled, boolean isSequentialRuns, boolean isTestwiseCoverageEnabled);
 }

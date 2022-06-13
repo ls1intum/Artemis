@@ -59,6 +59,12 @@ public class JenkinsBuildPlanCreator implements JenkinsXmlConfigBuilder {
 
     private static final String REPLACE_JENKINS_TIMEOUT = "#jenkinsTimeout";
 
+    private static final String REPLACE_TESTWISE_COVERAGE_MAVEN_Profile = "#testwiseCoverageMavenProfile";
+
+    private static final String REPLACE_TESTWISE_COVERAGE_GRADLE_TASK = "#testwiseCoverageGradleTask";
+
+    private static final String REPLACE_TESTWISE_COVERAGE_SCRIPT = "#testwiseCoverageScript";
+
     private String artemisNotificationUrl;
 
     @Value("${artemis.continuous-integration.secret-push-token}")
@@ -91,14 +97,15 @@ public class JenkinsBuildPlanCreator implements JenkinsXmlConfigBuilder {
     }
 
     public String getPipelineScript(ProgrammingLanguage programmingLanguage, Optional<ProjectType> projectType, VcsRepositoryUrl testRepositoryURL,
-            VcsRepositoryUrl assignmentRepositoryURL, boolean isStaticCodeAnalysisEnabled, boolean isSequentialRuns) {
+            VcsRepositoryUrl assignmentRepositoryURL, boolean isStaticCodeAnalysisEnabled, boolean isSequentialRuns, boolean isTestwiseCoverageAnalysisEnabled) {
         var pipelinePath = getResourcePath(programmingLanguage, projectType, isStaticCodeAnalysisEnabled, isSequentialRuns);
-        var replacements = getReplacements(programmingLanguage, projectType, testRepositoryURL, assignmentRepositoryURL, isStaticCodeAnalysisEnabled);
+        var replacements = getReplacements(programmingLanguage, projectType, testRepositoryURL, assignmentRepositoryURL, isStaticCodeAnalysisEnabled,
+                isTestwiseCoverageAnalysisEnabled);
         return replacePipelineScriptParameters(pipelinePath, replacements);
     }
 
     private Map<String, String> getReplacements(ProgrammingLanguage programmingLanguage, Optional<ProjectType> projectType, VcsRepositoryUrl testRepositoryURL,
-            VcsRepositoryUrl assignmentRepositoryURL, boolean isStaticCodeAnalysisEnabled) {
+            VcsRepositoryUrl assignmentRepositoryURL, boolean isStaticCodeAnalysisEnabled, boolean isTestwiseCoverageAnalysisEnabled) {
         Map<String, String> replacements = new HashMap<>();
         replacements.put(REPLACE_TEST_REPO, testRepositoryURL.getURI().toString());
         replacements.put(REPLACE_ASSIGNMENT_REPO, assignmentRepositoryURL.getURI().toString());
@@ -114,6 +121,19 @@ public class JenkinsBuildPlanCreator implements JenkinsXmlConfigBuilder {
             String staticCodeAnalysisScript = createStaticCodeAnalysisScript(programmingLanguage, projectType);
             replacements.put(REPLACE_STATIC_CODE_ANALYSIS_SCRIPT, staticCodeAnalysisScript);
         }
+        // replace testwise coverage analysis placeholder
+        String testwiseCoverageAnalysisMavenProfile = "";
+        String testwiseCoverageAnalysisGradleTask = "";
+        String testwiseCoverageAnalysisScript = "";
+        if (isTestwiseCoverageAnalysisEnabled) {
+            testwiseCoverageAnalysisMavenProfile = "-Pcoverage";
+            testwiseCoverageAnalysisGradleTask = "tiaTests --run-all-tests";
+            testwiseCoverageAnalysisScript = createTestwiseCoverageAnalysisScript(projectType);
+        }
+        replacements.put(REPLACE_TESTWISE_COVERAGE_MAVEN_Profile, testwiseCoverageAnalysisMavenProfile);
+        replacements.put(REPLACE_TESTWISE_COVERAGE_GRADLE_TASK, testwiseCoverageAnalysisGradleTask);
+        replacements.put(REPLACE_TESTWISE_COVERAGE_SCRIPT, testwiseCoverageAnalysisScript);
+
         return replacements;
     }
 
@@ -150,10 +170,11 @@ public class JenkinsBuildPlanCreator implements JenkinsXmlConfigBuilder {
 
     @Override
     public Document buildBasicConfig(ProgrammingLanguage programmingLanguage, Optional<ProjectType> projectType, VcsRepositoryUrl testRepositoryURL,
-            VcsRepositoryUrl assignmentRepositoryURL, boolean isStaticCodeAnalysisEnabled, boolean isSequentialRuns) {
+            VcsRepositoryUrl assignmentRepositoryURL, boolean isStaticCodeAnalysisEnabled, boolean isSequentialRuns, boolean isTestwiseCoverageEnabled) {
         final var resourcePath = Path.of("templates", "jenkins", "config.xml");
 
-        String pipeLineScript = getPipelineScript(programmingLanguage, projectType, testRepositoryURL, assignmentRepositoryURL, isStaticCodeAnalysisEnabled, isSequentialRuns);
+        String pipeLineScript = getPipelineScript(programmingLanguage, projectType, testRepositoryURL, assignmentRepositoryURL, isStaticCodeAnalysisEnabled, isSequentialRuns,
+                isTestwiseCoverageEnabled);
         pipeLineScript = pipeLineScript.replace("'", "&apos;");
         pipeLineScript = pipeLineScript.replace("<", "&lt;");
         pipeLineScript = pipeLineScript.replace(">", "&gt;");
@@ -215,6 +236,30 @@ public class JenkinsBuildPlanCreator implements JenkinsXmlConfigBuilder {
             // sh command: swiftlint lint assignment > <scaDir>/<result>.xml
             script.append("swiftlint lint assignment > ").append(STATIC_CODE_ANALYSIS_REPORT_DIR).append("/").append(tool.getFilePattern()).append(lineEnding);
         }
+        return script.toString();
+    }
+
+    private String createTestwiseCoverageAnalysisScript(Optional<ProjectType> projectType) {
+        StringBuilder script = new StringBuilder();
+        String lineEnding = "&#xd;";
+
+        script.append("success {").append(lineEnding);
+        script.append("sh '''").append(lineEnding);
+        script.append("rm -rf testwiseCoverageReport").append(lineEnding);
+        script.append("mkdir testwiseCoverageReport").append(lineEnding);
+
+        String reportDir;
+        if (projectType.isEmpty() || projectType.get().isGradle()) {
+            reportDir = "build/reports/testwise-coverage/tiaTests/tiaTests.json";
+        }
+        else {
+            reportDir = "target/tia/reports/*/*.json";
+        }
+        script.append("mv ").append(reportDir).append(" testwiseCoverageReport/").append(lineEnding);
+
+        script.append("'''").append(lineEnding);
+        script.append("}").append(lineEnding);
+
         return script.toString();
     }
 }
