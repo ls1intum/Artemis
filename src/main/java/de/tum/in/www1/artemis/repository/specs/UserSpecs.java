@@ -168,7 +168,7 @@ public class UserSpecs {
     }
 
     /**
-     * Creates the specification to match the users course.
+     * Creates the specification to find users that are part of any of the given courses.
      *
      * @param courseIds a set of courseIds which the users need to match at least one
      * @param authorities provided authorities
