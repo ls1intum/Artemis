@@ -60,14 +60,14 @@
     <div class="right-col">
         <ng-template [ngIf]="exam" [ngIfElse]="courseMode">
             <ng-container *ngIf="!isTestRun">
-                <div [ngClass]="{ 'fw-500': isNextDueDate[0] }">
+                <div [class.fw-500]="isNextDueDate[0]">
                     {{ 'artemisApp.exam.endDate' | artemisTranslate }}
                     {{ exam?.endDate | artemisDate }}
                     <span *ngIf="exam?.endDate && !isTestRun" [ngClass]="statusBadges[0]" class="badge">
                         {{ exam?.endDate | artemisTimeAgo }}
                     </span>
                 </div>
-                <div [ngClass]="{ 'fw-500': isNextDueDate[1] }">
+                <div [class.fw-500]="isNextDueDate[1]">
                     {{ 'artemisApp.exam.publishResultsDate' | artemisTranslate }}
                     {{ exam?.publishResultsDate | artemisDate }}
                     <span *ngIf="exam?.publishResultsDate" [ngClass]="statusBadges[1]" class="badge">
@@ -77,7 +77,7 @@
             </ng-container>
         </ng-template>
         <ng-template #courseMode>
-            <div *ngIf="dueDate" [ngClass]="{ 'fw-500': isNextDueDate[0] }">
+            <div *ngIf="dueDate" [class.fw-500]="isNextDueDate[0]">
                 {{ 'artemisApp.courseOverview.exerciseDetails.submissionDue' | artemisTranslate }}
                 <span
                     [ngClass]="statusBadges[0]"
@@ -87,7 +87,7 @@
                     {{ dueDate | artemisTimeAgo }}
                 </span>
             </div>
-            <div *ngIf="exercise.assessmentDueDate" [ngClass]="{ 'fw-500': isNextDueDate[1] }">
+            <div *ngIf="exercise.assessmentDueDate" [class.fw-500]="isNextDueDate[1]">
                 {{ 'artemisApp.courseOverview.exerciseDetails.assessmentDue' | artemisTranslate }}
                 <span
                     [ngClass]="statusBadges[1]"
@@ -97,7 +97,7 @@
                     {{ exercise.assessmentDueDate | artemisTimeAgo }}
                 </span>
             </div>
-            <div *ngIf="individualComplaintDeadline" [ngClass]="{ 'fw-500': isNextDueDate[2] }">
+            <div *ngIf="individualComplaintDeadline" [class.fw-500]="isNextDueDate[2]">
                 {{ 'artemisApp.courseOverview.exerciseDetails.complaintDue' | artemisTranslate }}
                 <span
                     [ngClass]="statusBadges[2]"
@@ -107,7 +107,7 @@
                     {{ individualComplaintDeadline | artemisTimeAgo }}
                 </span>
             </div>
-            <div *ngIf="canComplainLaterOn" [ngClass]="{ 'fw-500': isNextDueDate[3] }">
+            <div *ngIf="canComplainLaterOn" [class.fw-500]="isNextDueDate[3]">
                 {{ 'artemisApp.courseOverview.exerciseDetails.complaintPossible' | artemisTranslate }}
                 <span class="badge bg-success" [ngbTooltip]="'artemisApp.courseOverview.exerciseDetails.complaintPossibleTooltip' | artemisTranslate">
                     {{
