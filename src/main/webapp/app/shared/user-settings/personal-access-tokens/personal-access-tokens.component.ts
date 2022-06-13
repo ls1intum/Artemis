@@ -1,10 +1,6 @@
-import { HttpClient } from '@angular/common/http';
 import { Component, OnInit } from '@angular/core';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
-
-type JwtToken = {
-    id_token: string;
-};
+import { PersonalAccessTokenService } from 'app/shared/user-settings/personal-access-tokens/personal-access-tokens.service';
 
 @Component({
     selector: 'jhi-personal-access-tokens',
@@ -20,14 +16,13 @@ export class PersonalAccessTokensComponent implements OnInit {
     token = '';
 
     private dayInMillis = 1000 * 60 * 60 * 24;
-    private tokenUrl = SERVER_API_URL + 'api/personal-access-token';
 
-    constructor(private http: HttpClient) {
+    constructor(private patService: PersonalAccessTokenService) {
         this.convertTokenLifetimeFromDaysToMillis();
     }
 
     ngOnInit() {
-        this.http.get<number>(this.tokenUrl).subscribe((resp: number) => (this.tokenMaxLifetimeDays = resp / this.dayInMillis));
+        this.patService.getTokenMaxLifetimeMillis().subscribe((resp: number) => (this.tokenMaxLifetimeDays = resp / this.dayInMillis));
     }
 
     convertTokenLifetimeFromDaysToMillis() {
@@ -35,7 +30,7 @@ export class PersonalAccessTokensComponent implements OnInit {
     }
 
     generateNewToken() {
-        this.http.post<JwtToken>(this.tokenUrl, this.newTokenLifetimeMillis).subscribe((resp: JwtToken) => (this.token = resp['id_token']));
+        this.patService.generateNewToken(this.newTokenLifetimeMillis).subscribe((token: string) => (this.token = token));
     }
 
     /**
