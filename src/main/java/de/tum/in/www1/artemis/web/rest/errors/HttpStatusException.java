@@ -17,8 +17,8 @@ public abstract class HttpStatusException extends AbstractThrowableProblem {
 
     private final String errorKey;
 
-    public HttpStatusException(URI type, String defaultMessage, String entityName, String errorKey, Map<String, Object> parameters) {
-        super(type, defaultMessage, Status.BAD_REQUEST, null, null, null, parameters);
+    public HttpStatusException(URI type, String defaultMessage, Status status, String entityName, String errorKey, Map<String, Object> parameters) {
+        super(type, defaultMessage, status, null, null, null, parameters);
         this.entityName = entityName;
         this.errorKey = errorKey;
     }

@@ -70,6 +70,18 @@
                     </ng-template>
                 </ngx-datatable-column>
 
+                <ngx-datatable-column prop="visibleRegistrationNumber" [minWidth]="150" [width]="200" [maxWidth]="200">
+                    <ng-template ngx-datatable-header-template>
+                        <span class="datatable-header-cell-wrapper" (click)="controls.onSort('visibleRegistrationNumber')">
+                            <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.course.courseGroup.registrationNumber"> Registration Number </span>
+                            <fa-icon [icon]="controls.iconForSortPropField('visibleRegistrationNumber')"></fa-icon>
+                        </span>
+                    </ng-template>
+                    <ng-template ngx-datatable-cell-template let-value="value">
+                        <span>{{ value }}</span>
+                    </ng-template>
+                </ngx-datatable-column>
+
                 <ngx-datatable-column prop="name" [minWidth]="150" [width]="250" [maxWidth]="250">
                     <ng-template ngx-datatable-header-template>
                         <span class="datatable-header-cell-wrapper" (click)="controls.onSort('name')">
