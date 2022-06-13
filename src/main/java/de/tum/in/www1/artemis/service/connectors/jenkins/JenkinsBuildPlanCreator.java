@@ -225,7 +225,7 @@ public class JenkinsBuildPlanCreator implements JenkinsXmlConfigBuilder {
 
             // Copy all static code analysis reports to new directory
             for (var tool : StaticCodeAnalysisTool.getToolsForProgrammingLanguage(programmingLanguage)) {
-                script.append("cp target/").append(tool.getFilePattern()).append(" ").append(STATIC_CODE_ANALYSIS_REPORT_DIR).append(lineEnding);
+                script.append("cp target/").append(tool.getFilePattern()).append(" ").append(STATIC_CODE_ANALYSIS_REPORT_DIR).append(" || true").append(lineEnding);
             }
         }
         else if (programmingLanguage == ProgrammingLanguage.SWIFT) {
