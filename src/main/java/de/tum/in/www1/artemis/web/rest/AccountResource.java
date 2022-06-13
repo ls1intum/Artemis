@@ -196,9 +196,9 @@ public class AccountResource {
     @PostMapping(path = "/account/change-language")
     public void changeLanguageKey(@RequestBody String languageKey) {
         User user = userRepository.getUser();
-        String langKey = languageKey.toLowerCase().trim();
+        String langKey = languageKey.replaceAll("\"", "").toLowerCase().trim();
         if (!"en".equals(langKey) && !"de".equals(langKey)) {
-            throw new IllegalArgumentException("Language key must be 'en' or 'de'");
+            throw new BadRequestAlertException("Invalid language key", "Account", "invalidLanguageKey");
         }
         userService.updateUserLanguageKey(user.getId(), langKey);
     }
