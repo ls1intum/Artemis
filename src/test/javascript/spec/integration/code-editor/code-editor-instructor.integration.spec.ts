@@ -207,7 +207,7 @@ describe('CodeEditorInstructorIntegration', () => {
         container.ngOnInit();
         routeSubject.next({ exerciseId: 1 });
         expect(container.codeEditorContainer).toBe(undefined); // Have to use this as it's a component
-        expect(findWithParticipationsStub).toHaveBeenCalledTimes(1);
+        expect(findWithParticipationsStub).toHaveBeenCalledOnce();
         expect(findWithParticipationsStub).toHaveBeenCalledWith(exercise.id);
         expect(container.loadingState).toBe(container.LOADING_STATE.INITIALIZING);
     };
@@ -239,7 +239,7 @@ describe('CodeEditorInstructorIntegration', () => {
         findWithParticipationsSubject.next({ body: exercise });
 
         expect(getLatestResultWithFeedbacksStub).not.toHaveBeenCalled();
-        expect(setDomainSpy).toHaveBeenCalledTimes(1);
+        expect(setDomainSpy).toHaveBeenCalledOnce();
         expect(setDomainSpy).toHaveBeenCalledWith([DomainType.PARTICIPATION, exercise.templateParticipation]);
         expect(container.exercise).toEqual(exercise);
         expect(container.selectedRepository).toBe(container.REPOSITORY.TEMPLATE);
@@ -303,7 +303,7 @@ describe('CodeEditorInstructorIntegration', () => {
 
         findWithParticipationsSubject.next({ body: exercise });
 
-        expect(setDomainSpy).toHaveBeenCalledTimes(1);
+        expect(setDomainSpy).toHaveBeenCalledOnce();
         expect(setDomainSpy).toHaveBeenCalledWith([DomainType.TEST_REPOSITORY, exercise]);
         expect(container.selectedParticipation).toBe(undefined);
         expect(container.selectedRepository).toBe(container.REPOSITORY.TEST);
@@ -371,7 +371,7 @@ describe('CodeEditorInstructorIntegration', () => {
 
         checkSolutionRepository(exercise);
 
-        expect(findWithParticipationsStub).toHaveBeenCalledTimes(1);
+        expect(findWithParticipationsStub).toHaveBeenCalledOnce();
         expect(findWithParticipationsStub).toHaveBeenCalledWith(exercise.id);
         expect(setDomainSpy).toHaveBeenCalledTimes(2);
         expect(setDomainSpy).toHaveBeenNthCalledWith(1, [DomainType.PARTICIPATION, exercise.studentParticipations[0]]);
@@ -401,7 +401,7 @@ describe('CodeEditorInstructorIntegration', () => {
 
         containerFixture.detectChanges();
 
-        expect(setDomainSpy).toHaveBeenCalledTimes(1);
+        expect(setDomainSpy).toHaveBeenCalledOnce();
         expect(setDomainSpy).toHaveBeenCalledWith([DomainType.PARTICIPATION, exercise.solutionParticipation]);
         checkSolutionRepository(exercise);
     });

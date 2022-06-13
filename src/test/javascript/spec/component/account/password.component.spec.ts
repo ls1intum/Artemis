@@ -50,9 +50,9 @@ describe('Component Tests', () => {
             // WHEN
             comp.changePassword();
             // THEN
-            expect(comp.doNotMatch).toBe(true);
-            expect(comp.error).toBe(false);
-            expect(comp.success).toBe(false);
+            expect(comp.doNotMatch).toBeTrue();
+            expect(comp.error).toBeFalse();
+            expect(comp.success).toBeFalse();
         });
 
         it('should call Auth.changePassword when passwords match', () => {
@@ -89,9 +89,9 @@ describe('Component Tests', () => {
             comp.changePassword();
 
             // THEN
-            expect(comp.doNotMatch).toBe(false);
-            expect(comp.error).toBe(false);
-            expect(comp.success).toBe(true);
+            expect(comp.doNotMatch).toBeFalse();
+            expect(comp.error).toBeFalse();
+            expect(comp.success).toBeTrue();
         });
 
         it('should notify of error if change password fails', () => {
@@ -106,9 +106,9 @@ describe('Component Tests', () => {
             comp.changePassword();
 
             // THEN
-            expect(comp.doNotMatch).toBe(false);
-            expect(comp.success).toBe(false);
-            expect(comp.error).toBe(true);
+            expect(comp.doNotMatch).toBeFalse();
+            expect(comp.success).toBeFalse();
+            expect(comp.error).toBeTrue();
         });
 
         it('sets user on init', fakeAsync(() => {

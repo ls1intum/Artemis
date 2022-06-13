@@ -98,7 +98,7 @@ describe('TestwiseCoverageFile Component', () => {
         fixture.detectChanges();
 
         expect(comp.proportionCoveredLines).toBe(0.2);
-        expect(addMarkerSpy).toHaveBeenCalledTimes(1);
+        expect(addMarkerSpy).toHaveBeenCalledOnce();
         expect(addMarkerSpy).toHaveBeenCalledWith(range1, 'ace_highlight-marker', 'fullLine');
     });
 });

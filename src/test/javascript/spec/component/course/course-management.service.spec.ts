@@ -420,6 +420,17 @@ describe('Course Management Service', () => {
         tick();
     }));
 
+    it('should return lifetime overview data', fakeAsync(() => {
+        const stats = [34, 23, 45, 67, 89, 201, 67, 890, 1359];
+        courseManagementService
+            .getStatisticsForLifetimeOverview(course.id!)
+            .pipe(take(1))
+            .subscribe((res) => expect(res).toEqual(stats));
+        const req = httpMock.expectOne({ method: 'GET', url: `${resourceUrl}/${course.id}/statistics-lifetime-overview` });
+        req.flush(stats);
+        tick();
+    }));
+
     afterEach(() => {
         httpMock.verify();
         jest.restoreAllMocks();
