@@ -75,7 +75,8 @@ public class TokenProvider {
     }
 
     /**
-     * Create JWT Token a fully populated <code>Authentication</code> object.
+     * Creates a JWT Token from a fully populated {@link Authentication} object.
+     *
      * @param authentication Authentication Object
      * @param rememberMe Determines Token lifetime (30 minutes vs 30 days)
      * @return JWT Token
@@ -90,7 +91,8 @@ public class TokenProvider {
     }
 
     /**
-     * Create JWT Token a fully populated <code>Authentication</code> object.
+     * Creates a JWT Token from a fully populated {@link Authentication} object.
+     *
      * @param authentication Authentication Object
      * @param durationValidityInMilliseconds The duration how long the access token should be valid
      * @return JWT Token
