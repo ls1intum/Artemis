@@ -188,4 +188,46 @@ describe('CoursesComponent', () => {
         expect(navigateSpy).toHaveBeenCalledWith(['courses', 1, 'exams', 3]);
         expect(location.path()).toEqual('/courses/1/exams/3');
     }));
+
+    it('Should load next relevant exam ignoring testExams', fakeAsync(() => {
+        const testExam1 = {
+            id: 5,
+            startDate: dayjs().add(1, 'hour'),
+            endDate: endDate1,
+            visibleDate: visibleDate1.subtract(10, 'minutes'),
+            course: courseEmpty,
+            workingTime: 3600,
+            testExam: true,
+        };
+        const course3 = { id: 3, exams: [testExam1], exercises: [exercise1] };
+        const coursesWithTestExam = [course1, course2, course3];
+
+        const findAllForDashboardSpy = jest.spyOn(courseService, 'findAllForDashboard');
+        const courseScoreCalculationServiceSpy = jest.spyOn(courseScoreCalculationService, 'setCourses');
+        const serverDateServiceSpy = jest.spyOn(serverDateService, 'now');
+        const findNextRelevantExerciseSpy = jest.spyOn(component, 'findNextRelevantExercise');
+        findAllForDashboardSpy.mockReturnValue(
+            of(
+                new HttpResponse({
+                    body: coursesWithTestExam,
+                    headers: new HttpHeaders(),
+                }),
+            ),
+        );
+        serverDateServiceSpy.mockReturnValue(dayjs());
+
+        component.ngOnInit();
+        tick(1000);
+
+        expect(findAllForDashboardSpy).toHaveBeenCalled();
+        expect(findNextRelevantExerciseSpy).toHaveBeenCalled();
+        expect(component.courses).toEqual(coursesWithTestExam);
+        expect(courseScoreCalculationServiceSpy).toHaveBeenCalled();
+        expect(component.exams.length).toEqual(3);
+        expect(component.exams).toContain(exam1);
+        expect(component.exams).toContain(exam2);
+        expect(component.exams).toContain(testExam1);
+        expect(component.nextRelevantExams?.length).toEqual(1);
+        expect(component.nextRelevantExams).toContain(exam1);
+    }));
 });
