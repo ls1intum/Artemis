@@ -249,7 +249,7 @@ public class JenkinsBuildPlanCreator implements JenkinsXmlConfigBuilder {
         script.append("mkdir testwiseCoverageReport").append(lineEnding);
 
         String reportDir;
-        if (projectType.isEmpty() || projectType.get().isGradle()) {
+        if (projectType.isPresent() && projectType.get().isGradle()) {
             reportDir = "build/reports/testwise-coverage/tiaTests/tiaTests.json";
         }
         else {
