@@ -349,6 +349,12 @@
                 "endDate": "End of working window",
                 "workingTimeTooltip": "The working time allowed to the students per run"
             },
+            "monitoring": {
+                "enable": {
+                    "title": "Enable Exam Monitoring",
+                    "description": "The Exam Monitoring collects the student's interactions with the exam and provides further opportunities for statistics."
+                }
+            },
             "testRun": {
                 "testRun": "Test Run",
                 "title": "Test Run Management: ",

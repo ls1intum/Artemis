@@ -152,7 +152,7 @@ describe('ExamParticipationCoverComponent', () => {
 
         component.startExam();
 
-        expect(saveStudentExamSpy).toHaveBeenCalledTimes(1);
+        expect(saveStudentExamSpy).toHaveBeenCalledOnce();
         expect(saveStudentExamSpy).toHaveBeenCalledWith(exam!.course!.id, exam!.id, studentExam);
 
         component.testRun = false;
@@ -171,7 +171,7 @@ describe('ExamParticipationCoverComponent', () => {
         component.startExam();
         tick();
         jest.advanceTimersByTime(UI_RELOAD_TIME + 1); // simulate setInterval time passing
-        expect(component.waitingForExamStart).toBe(true);
+        expect(component.waitingForExamStart).toBeTrue();
         const difference = Math.ceil(component.exam.startDate.diff(now, 'seconds') / 60);
         expect(component.timeUntilStart).toBe(difference + ' min');
 
@@ -179,7 +179,7 @@ describe('ExamParticipationCoverComponent', () => {
         component.startExam();
         tick();
         jest.advanceTimersByTime(UI_RELOAD_TIME + 1); // simulate setInterval time passing
-        expect(component.waitingForExamStart).toBe(true);
+        expect(component.waitingForExamStart).toBeTrue();
         expect(component.timeUntilStart).toBe('');
 
         // Case TestExam
@@ -228,7 +228,7 @@ describe('ExamParticipationCoverComponent', () => {
         const eventSpy = jest.spyOn(component.onExamStarted, 'emit');
 
         component.updateDisplayedTimes(studentExam);
-        expect(eventSpy).toHaveBeenCalledTimes(1);
+        expect(eventSpy).toHaveBeenCalledOnce();
     });
 
     it('should create the relative time text correctly', () => {
@@ -242,14 +242,14 @@ describe('ExamParticipationCoverComponent', () => {
         component.onExamEnded = new EventEmitter<StudentExam>();
         const saveStudentExamSpy = jest.spyOn(component.onExamEnded, 'emit');
         component.submitExam();
-        expect(saveStudentExamSpy).toHaveBeenCalledTimes(1);
+        expect(saveStudentExamSpy).toHaveBeenCalledOnce();
     });
 
     it('should continue after handing in early', () => {
         component.onExamContinueAfterHandInEarly = new EventEmitter<void>();
         const saveStudentExamSpy = jest.spyOn(component.onExamContinueAfterHandInEarly, 'emit');
         component.continueAfterHandInEarly();
-        expect(saveStudentExamSpy).toHaveBeenCalledTimes(1);
+        expect(saveStudentExamSpy).toHaveBeenCalledOnce();
     });
 
     it('should get start button enabled and end button enabled', () => {

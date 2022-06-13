@@ -45,7 +45,7 @@ describe('Delete Dialog Service', () => {
             result,
         });
         service.openDeleteDialog(data);
-        expect(openModalStub).toHaveBeenCalledTimes(1);
+        expect(openModalStub).toHaveBeenCalledOnce();
         expect(openModalStub).toHaveBeenCalledWith(DeleteDialogComponent, { size: 'lg', backdrop: 'static' });
     });
 });
