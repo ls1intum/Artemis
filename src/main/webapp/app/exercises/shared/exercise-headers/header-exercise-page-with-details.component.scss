@@ -25,9 +25,11 @@
 
     .left-col {
         flex: 1 1 auto;
+
         @supports (flex-basis: min-content) {
             flex: 1 1 min-content;
         }
+
         min-width: 0;
         display: flex;
         flex-direction: column;
