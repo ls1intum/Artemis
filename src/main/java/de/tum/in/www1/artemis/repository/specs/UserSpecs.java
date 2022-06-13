@@ -14,12 +14,12 @@ import de.tum.in.www1.artemis.domain.*;
  */
 public class UserSpecs {
 
-    static long FILTER_EMPTY_COURSES = -1;
+    private static final long FILTER_EMPTY_COURSES = -1;
 
-    static String FILTER_NO_AUTHORITY = "ROLE_NO_AUTHORITY";
+    private static final String FILTER_NO_AUTHORITY = "ROLE_NO_AUTHORITY";
 
     /**
-     * Creates the specification to match the provided search term.
+     * Creates the specification to match the provided search term within the user’s login, email, and name attributes.
      *
      * @param searchTerm term to match
      * @return specification used to chain database operations
@@ -28,7 +28,7 @@ public class UserSpecs {
         String extendedSearchTerm = "%" + searchTerm + "%";
         return (root, query, criteriaBuilder) -> {
             String[] columns = { User_.LOGIN, User_.EMAIL, User_.FIRST_NAME, User_.LAST_NAME };
-            Predicate[] predicates = Arrays.stream(columns).map((column) -> criteriaBuilder.like(root.get(column), extendedSearchTerm)).toArray(Predicate[]::new);
+            Predicate[] predicates = Arrays.stream(columns).map(column -> criteriaBuilder.like(root.get(column), extendedSearchTerm)).toArray(Predicate[]::new);
 
             return criteriaBuilder.or(predicates);
         };
@@ -124,7 +124,7 @@ public class UserSpecs {
     }
 
     /**
-     * Creates the specification to match the users course.
+     * Creates the specification to find all users that are not part of any course.
      *
      * @return specification used to chain database operations
      */
@@ -133,7 +133,7 @@ public class UserSpecs {
     }
 
     /**
-     * Creates the specification to match the users course.
+     * Creates the specification to find users that are part of any of the given courses.
      *
      * @param courseIds a set of courseIds which the users need to match
      * @return specification used to chain database operations
@@ -154,6 +154,7 @@ public class UserSpecs {
 
     /**
      * Helper method to update the course join. We join the users with the course via the groups of the users and the authority groups of the courses.
+     *
      * @param criteriaBuilder to build the criteria
      * @param courseRoot used to get course data
      * @param userToGroupJoin users joined with their groups
@@ -161,7 +162,7 @@ public class UserSpecs {
     private static void updateAllUsersMatchingCoursesJoin(CriteriaBuilder criteriaBuilder, Root<Course> courseRoot, Join<User, String> userToGroupJoin) {
         // Select all possible group types
         String[] columns = { Course_.STUDENT_GROUP_NAME, Course_.TEACHING_ASSISTANT_GROUP_NAME, Course_.EDITOR_GROUP_NAME, Course_.INSTRUCTOR_GROUP_NAME };
-        Predicate[] predicates = Arrays.stream(columns).map((column) -> criteriaBuilder.in(courseRoot.get(column)).value(userToGroupJoin)).toArray(Predicate[]::new);
+        Predicate[] predicates = Arrays.stream(columns).map(column -> criteriaBuilder.in(courseRoot.get(column)).value(userToGroupJoin)).toArray(Predicate[]::new);
 
         userToGroupJoin.on(criteriaBuilder.or(predicates));
     }
