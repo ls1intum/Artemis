@@ -10,9 +10,9 @@
             required
             type="number"
             class="form-control"
-            [customMin]="1"
+            min="1"
             [customMax]="tokenMaxLifetimeDays"
-            [step]="1"
+            step="1"
             name="lifetime"
             id="field_lifetime_days"
             [(ngModel)]="newTokenLifetimeDays"
