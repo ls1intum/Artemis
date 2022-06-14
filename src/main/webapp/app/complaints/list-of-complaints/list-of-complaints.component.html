@@ -51,7 +51,13 @@
             </label>
         </div>
     </div>
-    <div *ngIf="filterOption !== undefined" type="button" class="row btn btn-primary" (click)="resetFilterOptions()" jhiTranslate="artemisApp.assessment.dashboard.resetFilter">
+    <div
+        *ngIf="filterOption === FilterOptionAddressedComplaints"
+        type="button"
+        class="row btn btn-primary"
+        (click)="resetFilterOptions()"
+        jhiTranslate="artemisApp.assessment.dashboard.resetFilter"
+    >
         Reset submission filter
     </div>
     <div class="row table-responsive pt-3">
