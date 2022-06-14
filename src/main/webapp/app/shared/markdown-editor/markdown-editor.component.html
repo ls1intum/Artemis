@@ -75,8 +75,10 @@
                             <button class="btn btn-sm dropdown-toggle" type="button" ngbDropdownToggle>
                                 {{ command.buttonTranslationString | artemisTranslate }}
                             </button>
-
                             <ul class="dropdown-menu" ngbDropdownMenu>
+                                <button *ngIf="!command.getValues() || command.getValues().length === 0" [disabled]="true" ngbDropdownItem jhiTranslate="global.generic.emptyList">
+                                    No items available
+                                </button>
                                 <li *ngFor="let item of command.getValues()">
                                     <a *ngIf="item.elements === undefined; else withCategory" (click)="command.execute(item.id, item.type)" class="dropdown-item">{{
                                         item.value

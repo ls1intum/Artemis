@@ -11,7 +11,7 @@ export class ExerciseReferenceCommand extends MultiOptionCommand {
         this.metisService = metisService;
 
         this.setValues(
-            this.metisService.getCourse().exercises!.map((exercise) => ({
+            this.metisService.getCourse().exercises!?.map((exercise) => ({
                 id: exercise.id!.toString(),
                 value: exercise.title!,
                 type: exercise.type,

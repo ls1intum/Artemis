@@ -12,7 +12,7 @@ export class LectureAttachmentReferenceCommand extends MultiOptionCommand {
         this.metisService = metisService;
 
         this.setValues(
-            this.metisService.getCourse().lectures!.map((lecture) => ({
+            this.metisService.getCourse().lectures!?.map((lecture) => ({
                 id: lecture.id!.toString(),
                 value: lecture.title!,
                 type: ReferenceType.LECTURE,
