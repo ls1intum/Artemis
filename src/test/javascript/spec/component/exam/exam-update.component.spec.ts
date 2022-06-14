@@ -23,7 +23,7 @@ import { GradingSystemService } from 'app/grading-system/grading-system.service'
 import { GradingScale } from 'app/entities/grading-scale.model';
 import { DataTableComponent } from 'app/shared/data-table/data-table.component';
 import { AlertService } from 'app/core/util/alert.service';
-import { ActivatedRoute, convertToParamMap, Params } from '@angular/router';
+import { ActivatedRoute, convertToParamMap, Params, UrlSegment } from '@angular/router';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { HelpIconComponent } from 'app/shared/components/help-icon.component';
 import { ArtemisExamModePickerModule } from 'app/exam/manage/exams/exam-mode-picker/exam-mode-picker.module';
@@ -136,6 +136,8 @@ describe('Exam Update Component', () => {
         fixture = TestBed.createComponent(ExamUpdateComponent);
         component = fixture.componentInstance;
         examManagementService = fixture.debugElement.injector.get(ExamManagementService);
+        const route = TestBed.inject(ActivatedRoute);
+        route.url = of([{ path: '' } as UrlSegment]);
     });
 
     afterEach(() => {
