@@ -81,14 +81,14 @@ export class ExamImportComponent implements OnInit {
     }
 
     /**
-     * Gives the ID for any text exercise in the table, so that it can be tracked/identified by ngFor
+     * Gives the ID for any exam in the table, so that it can be tracked/identified by ngFor
      *
      * @param index The index of the element in the ngFor
-     * @param item The exercise itself
-     * @returns The ID of the text exercise
+     * @param exam The exercise itself
+     * @returns The ID of the exam
      */
-    trackId(index: number, item: Exam): number {
-        return item.id!;
+    trackId(index: number, exam: Exam): number {
+        return exam.id!;
     }
 
     /** Set the list sorting direction

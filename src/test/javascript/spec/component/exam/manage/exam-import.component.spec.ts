@@ -12,8 +12,9 @@ import { SearchResult } from 'app/shared/table/pageable-table';
 import { ExamImportComponent } from 'app/exam/manage/exam-import/exam-import.component';
 import { ExamPagingService } from 'app/exam/manage/exam-import/exam-paging.service';
 import { Exam } from 'app/entities/exam.model';
+
 describe('Exam Import Component', () => {
-    let comp: ExamImportComponent;
+    let component: ExamImportComponent;
     let fixture: ComponentFixture<ExamImportComponent>;
     let sortService: SortService;
     let pagingService: ExamPagingService;
@@ -28,7 +29,7 @@ describe('Exam Import Component', () => {
             .compileComponents()
             .then(() => {
                 fixture = TestBed.createComponent(ExamImportComponent);
-                comp = fixture.componentInstance;
+                component = fixture.componentInstance;
                 sortService = fixture.debugElement.injector.get(SortService);
                 pagingService = fixture.debugElement.injector.get(ExamPagingService);
                 activeModal = TestBed.inject(NgbActiveModal);
@@ -41,7 +42,7 @@ describe('Exam Import Component', () => {
 
     it('should initialize the subjects', () => {
         // GIVEN
-        const searchSpy = jest.spyOn(comp, 'performSearch' as any);
+        const searchSpy = jest.spyOn(component, 'performSearch' as any);
 
         // WHEN
         fixture.detectChanges();
@@ -57,7 +58,7 @@ describe('Exam Import Component', () => {
         fixture.detectChanges();
 
         // THEN
-        expect(comp.content).toEqual({ resultsOnPage: [], numberOfPages: 0 });
+        expect(component.content).toEqual({ resultsOnPage: [], numberOfPages: 0 });
     });
 
     it('should close the active modal', () => {
@@ -65,7 +66,7 @@ describe('Exam Import Component', () => {
         const activeModalSpy = jest.spyOn(activeModal, 'dismiss');
 
         // WHEN
-        comp.clear();
+        component.clear();
 
         // THEN
         expect(activeModalSpy).toHaveBeenCalledOnce();
@@ -77,7 +78,7 @@ describe('Exam Import Component', () => {
         const activeModalSpy = jest.spyOn(activeModal, 'close');
         const exam = { id: 1 } as Exam;
         // WHEN
-        comp.openImport(exam);
+        component.openImport(exam);
 
         // THEN
         expect(activeModalSpy).toHaveBeenCalledOnce();
@@ -93,21 +94,21 @@ describe('Exam Import Component', () => {
         fixture.detectChanges();
 
         let expectedPageNumber = 1;
-        comp.onPageChange(expectedPageNumber);
+        component.onPageChange(expectedPageNumber);
         tick();
-        expect(comp.page).toBe(expectedPageNumber);
-        expect(comp.total).toBe(numberOfPages * defaultPageSize);
+        expect(component.page).toBe(expectedPageNumber);
+        expect(component.total).toBe(numberOfPages * defaultPageSize);
 
         expectedPageNumber = 2;
-        comp.onPageChange(expectedPageNumber);
+        component.onPageChange(expectedPageNumber);
         tick();
-        expect(comp.page).toBe(expectedPageNumber);
-        expect(comp.total).toBe(numberOfPages * defaultPageSize);
+        expect(component.page).toBe(expectedPageNumber);
+        expect(component.total).toBe(numberOfPages * defaultPageSize);
 
         // Page number should be changed unless it is falsy.
-        comp.onPageChange(0);
+        component.onPageChange(0);
         tick();
-        expect(comp.page).toBe(expectedPageNumber);
+        expect(component.page).toBe(expectedPageNumber);
 
         // Number of times onPageChange is called with a truthy value.
         expect(pagingServiceSpy).toHaveBeenCalledTimes(2);
@@ -117,10 +118,10 @@ describe('Exam Import Component', () => {
         const sortServiceSpy = jest.spyOn(sortService, 'sortByProperty');
 
         fixture.detectChanges();
-        comp.sortRows();
+        component.sortRows();
 
         expect(sortServiceSpy).toHaveBeenCalledOnce();
-        expect(sortServiceSpy).toHaveBeenCalledWith([], comp.column.ID, false);
+        expect(sortServiceSpy).toHaveBeenCalledWith([], component.column.ID, false);
     });
 
     it('should set search term and search', fakeAsync(() => {
@@ -130,9 +131,9 @@ describe('Exam Import Component', () => {
         fixture.detectChanges();
 
         const expectedSearchTerm = 'search term';
-        comp.searchTerm = expectedSearchTerm;
+        component.searchTerm = expectedSearchTerm;
         tick();
-        expect(comp.searchTerm).toBe(expectedSearchTerm);
+        expect(component.searchTerm).toBe(expectedSearchTerm);
 
         // It should wait first before executing search.
         expect(pagingServiceSpy).toHaveBeenCalledTimes(0);
@@ -141,4 +142,9 @@ describe('Exam Import Component', () => {
 
         expect(pagingServiceSpy).toHaveBeenCalledOnce();
     }));
+
+    it('should track the id correctly', () => {
+        const exam = { id: 1 } as Exam;
+        expect(component.trackId(5, exam)).toBe(exam.id);
+    });
 });
