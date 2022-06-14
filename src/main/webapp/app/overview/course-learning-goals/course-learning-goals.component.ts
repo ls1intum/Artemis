@@ -97,7 +97,13 @@ export class CourseLearningGoalsComponent implements OnInit {
                     }
                     this.testIfScoreUsingParticipantScoresTableDiffers();
                 },
-                error: (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),
+                error: (errorResponse: HttpErrorResponse) => {
+                    this.learningGoalService.resetCache();
+                    // Suppress 404 errors, which can happen when loading progress for cached but deleted learning goals
+                    if (errorResponse.status !== 404) {
+                        onError(this.alertService, errorResponse);
+                    }
+                },
             });
     }
 

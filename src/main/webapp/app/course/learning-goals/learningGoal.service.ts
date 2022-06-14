@@ -67,29 +67,29 @@ export class LearningGoalService {
     }
 
     create(learningGoal: LearningGoal, courseId: number): Observable<EntityResponseType> {
-        changeSubject.next();
+        this.resetCache();
         const copy = this.convertDateFromClient(learningGoal);
         return this.httpClient.post<LearningGoal>(`${this.resourceURL}/courses/${courseId}/goals`, copy, { observe: 'response' });
     }
 
     addPrerequisite(learningGoalId: number, courseId: number): Observable<EntityResponseType> {
-        changeSubject.next();
+        this.resetCache();
         return this.httpClient.post(`${this.resourceURL}/courses/${courseId}/prerequisites/${learningGoalId}`, null, { observe: 'response' });
     }
 
     update(learningGoal: LearningGoal, courseId: number): Observable<EntityResponseType> {
-        changeSubject.next();
+        this.resetCache();
         const copy = this.convertDateFromClient(learningGoal);
         return this.httpClient.put(`${this.resourceURL}/courses/${courseId}/goals`, copy, { observe: 'response' });
     }
 
     delete(learningGoalId: number, courseId: number) {
-        changeSubject.next();
+        this.resetCache();
         return this.httpClient.delete(`${this.resourceURL}/courses/${courseId}/goals/${learningGoalId}`, { observe: 'response' });
     }
 
     removePrerequisite(learningGoalId: number, courseId: number) {
-        changeSubject.next();
+        this.resetCache();
         return this.httpClient.delete(`${this.resourceURL}/courses/${courseId}/prerequisites/${learningGoalId}`, { observe: 'response' });
     }
 
@@ -106,5 +106,12 @@ export class LearningGoalService {
             copy.lectureUnits = this.lectureUnitService.convertDateArrayFromClient(copy.lectureUnits);
         }
         return copy;
+    }
+
+    /**
+     * Bust the cache for learning goals and prerequisites
+     */
+    resetCache() {
+        changeSubject.next();
     }
 }
