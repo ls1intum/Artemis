@@ -12,6 +12,8 @@ import { SessionStorageStrategy } from 'app/shared/image/session-storage-strateg
 type EntityResponseType = HttpResponse<LearningGoal>;
 type EntityArrayResponseType = HttpResponse<LearningGoal[]>;
 
+const changeSubject = new Subject<void>();
+
 @Injectable({
     providedIn: 'root',
 })
@@ -22,6 +24,7 @@ export class LearningGoalService {
 
     @Cacheable({
         storageStrategy: SessionStorageStrategy,
+        cacheBusterObserver: changeSubject.asObservable(),
         maxCacheCount: 50,
         maxAge: 300000, // 5 minutes
     })
@@ -31,6 +34,7 @@ export class LearningGoalService {
 
     @Cacheable({
         storageStrategy: SessionStorageStrategy,
+        cacheBusterObserver: changeSubject.asObservable(),
         maxCacheCount: 50,
         maxAge: 300000, // 5 minutes
     })
@@ -63,24 +67,29 @@ export class LearningGoalService {
     }
 
     create(learningGoal: LearningGoal, courseId: number): Observable<EntityResponseType> {
+        changeSubject.next();
         const copy = this.convertDateFromClient(learningGoal);
         return this.httpClient.post<LearningGoal>(`${this.resourceURL}/courses/${courseId}/goals`, copy, { observe: 'response' });
     }
 
     addPrerequisite(learningGoalId: number, courseId: number): Observable<EntityResponseType> {
+        changeSubject.next();
         return this.httpClient.post(`${this.resourceURL}/courses/${courseId}/prerequisites/${learningGoalId}`, null, { observe: 'response' });
     }
 
     update(learningGoal: LearningGoal, courseId: number): Observable<EntityResponseType> {
+        changeSubject.next();
         const copy = this.convertDateFromClient(learningGoal);
         return this.httpClient.put(`${this.resourceURL}/courses/${courseId}/goals`, copy, { observe: 'response' });
     }
 
     delete(learningGoalId: number, courseId: number) {
+        changeSubject.next();
         return this.httpClient.delete(`${this.resourceURL}/courses/${courseId}/goals/${learningGoalId}`, { observe: 'response' });
     }
 
     removePrerequisite(learningGoalId: number, courseId: number) {
+        changeSubject.next();
         return this.httpClient.delete(`${this.resourceURL}/courses/${courseId}/prerequisites/${learningGoalId}`, { observe: 'response' });
     }
 
