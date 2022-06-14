@@ -2,9 +2,9 @@
     <div class="col">
         <form name="editForm" role="form" #editForm="ngForm" (ngSubmit)="save()">
             <div *ngIf="!exam.id; else edit">
-                <h4>{{ 'artemisApp.examManagement.createExam' | artemisTranslate }}</h4>
+                <h4 *ngIf="!isImport">{{ 'artemisApp.examManagement.createExam' | artemisTranslate }}</h4>
+                <h4 *ngIf="isImport">{{ 'artemisApp.examManagement.importExam' | artemisTranslate }}</h4>
             </div>
-
             <ng-template #edit>
                 <h4>{{ 'artemisApp.examManagement.editExam' | artemisTranslate }}</h4>
             </ng-template>
@@ -217,7 +217,7 @@
                     <fa-icon [icon]="faBan"></fa-icon>&nbsp;<span jhiTranslate="entity.action.cancel"> Cancel</span>
                 </button>
                 <button id="save-exam" type="submit" [disabled]="editForm.form.invalid || !isValidConfiguration || isSaving" class="btn btn-primary">
-                    <fa-icon [icon]="faSave"></fa-icon>&nbsp;<span jhiTranslate="entity.action.save">Save</span>
+                    <fa-icon [icon]="faSave"></fa-icon>&nbsp;{{ 'entity.action.' + (isImport ? 'import' : 'save') | artemisTranslate }}
                 </button>
                 <ng-template #renderedWarning>
                     <div>{{ 'artemisApp.examManagement.reviewDatesInvalidExplanation' | artemisTranslate }}</div>

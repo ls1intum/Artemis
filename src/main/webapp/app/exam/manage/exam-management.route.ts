@@ -109,6 +109,18 @@ export const examManagementRoute: Routes = [
         canActivate: [UserRouteAccessService],
     },
     {
+        path: 'import/:examId',
+        component: ExamUpdateComponent,
+        resolve: {
+            exam: ExamResolve,
+        },
+        data: {
+            authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
+            pageTitle: 'artemisApp.examManagement.title',
+        },
+        canActivate: [UserRouteAccessService],
+    },
+    {
         path: ':examId/participant-scores',
         component: ExamParticipantScoresComponent,
         data: {

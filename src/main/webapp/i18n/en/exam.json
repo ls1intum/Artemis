@@ -315,6 +315,9 @@
                 "endDate": "End of working window",
                 "workingTimeTooltip": "The working time allowed to the students per run"
             },
+            "import": {
+                "search": "Search for exam"
+            },
             "monitoring": {
                 "enable": {
                     "title": "Enable Exam Monitoring",

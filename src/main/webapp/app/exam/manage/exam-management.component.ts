@@ -15,10 +15,6 @@ import { ExamInformationDTO } from 'app/entities/exam-information.model';
 import dayjs from 'dayjs/esm';
 import { EventManager } from 'app/core/util/event-manager.service';
 import { faClipboard, faEye, faListAlt, faPlus, faSort, faThList, faTimes, faUser, faWrench } from '@fortawesome/free-solid-svg-icons';
-import { ExerciseGroup } from 'app/entities/exercise-group.model';
-import { ExerciseType } from 'app/entities/exercise.model';
-import { ProgrammingExerciseImportComponent } from 'app/exercises/programming/manage/programming-exercise-import.component';
-import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ExamImportComponent } from 'app/exam/manage/exam-import/exam-import.component';
 

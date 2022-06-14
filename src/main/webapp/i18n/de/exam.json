@@ -314,6 +314,9 @@
                 "endDate": "Ende Bearbeitungsfenster",
                 "workingTimeTooltip": "Die erlaubte Bearbeitungszeit je Durchlauf"
             },
+            "import": {
+                "search": "Suche nach einer Klausur"
+            },
             "monitoring": {
                 "enable": {
                     "title": "Klausurüberwachung aktivieren",

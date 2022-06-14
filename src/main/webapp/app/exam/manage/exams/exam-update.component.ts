@@ -12,6 +12,7 @@ import { onError } from 'app/shared/util/global.utils';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
 import { faBan, faExclamationTriangle, faSave } from '@fortawesome/free-solid-svg-icons';
 import { AccountService } from 'app/core/auth/account.service';
+import { tap } from 'rxjs/operators';
 
 @Component({
     selector: 'jhi-exam-update',
@@ -27,6 +28,7 @@ export class ExamUpdateComponent implements OnInit {
     maxWorkingTimeInMinutes: number;
     // Interims-boolean to hide the option to create an TestExam in production, as the feature is not yet fully implemented
     isAdmin: boolean;
+    isImport = false;
 
     // Icons
     faSave = faSave;
@@ -52,6 +54,13 @@ export class ExamUpdateComponent implements OnInit {
                 },
                 error: (err: HttpErrorResponse) => onError(this.alertService, err),
             });
+            // Tap the URL to determine, if the Exam should be imported
+            this.route.url.pipe(tap((segments) => (this.isImport = segments.some((segment) => segment.path === 'import')))).subscribe();
+
+            if (this.isImport) {
+                this.resetIdAndDatesForImport();
+            }
+
             if (!this.exam.gracePeriod) {
                 this.exam.gracePeriod = 180;
             }
@@ -229,5 +238,19 @@ export class ExamUpdateComponent implements OnInit {
         }
         // check for undefined because undefined is otherwise treated as the now dayjs
         return this.exam.examStudentReviewStart !== undefined && dayjs(this.exam.examStudentReviewEnd).isAfter(this.exam.examStudentReviewStart);
+    }
+
+    /**
+     * Helper-Method to reset the Exam Id and Exam dates when importing the Exam
+     * @private
+     */
+    private resetIdAndDatesForImport() {
+        this.exam.id = undefined;
+        this.exam.visibleDate = undefined;
+        this.exam.startDate = undefined;
+        this.exam.endDate = undefined;
+        this.exam.publishResultsDate = undefined;
+        this.exam.examStudentReviewStart = undefined;
+        this.exam.examStudentReviewEnd = undefined;
     }
 }
