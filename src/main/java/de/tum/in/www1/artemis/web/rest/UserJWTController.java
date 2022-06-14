@@ -164,7 +164,7 @@ public class UserJWTController {
      * Returns the maximum lifetime for personal access tokens.
      * @return the maximum lifetime for personal access tokens
      */
-    @GetMapping("/personal-access-token")
+    @GetMapping("/personal-access-token/maximum-lifetime")
     @FeatureToggle(Feature.PersonalAccessTokens)
     public ResponseEntity<Long> getPersonalAccessTokenMaxLifetime() {
         return new ResponseEntity<>(this.personalAccessTokenMaxLifetimeMilliseconds, HttpStatus.OK);
