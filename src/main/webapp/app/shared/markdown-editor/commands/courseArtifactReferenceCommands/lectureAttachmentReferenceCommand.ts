@@ -2,7 +2,7 @@ import { MultiOptionCommand } from 'app/shared/markdown-editor/commands/multiOpt
 import { MetisService } from 'app/shared/metis/metis.service';
 import { ReferenceType } from 'app/shared/metis/metis.util';
 
-export class LectureReferenceCommand extends MultiOptionCommand {
+export class LectureAttachmentReferenceCommand extends MultiOptionCommand {
     metisService: MetisService;
 
     buttonTranslationString = 'artemisApp.metis.editor.lecture';

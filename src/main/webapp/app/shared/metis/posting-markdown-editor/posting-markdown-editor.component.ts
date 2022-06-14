@@ -11,7 +11,7 @@ import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { MarkdownEditorHeight } from 'app/shared/markdown-editor/markdown-editor.component';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { ExerciseReferenceCommand } from 'app/shared/markdown-editor/commands/courseArtifactReferenceCommands/exerciseReferenceCommand';
-import { LectureReferenceCommand } from 'app/shared/markdown-editor/commands/courseArtifactReferenceCommands/lectureReferenceCommand';
+import { LectureAttachmentReferenceCommand } from 'app/shared/markdown-editor/commands/courseArtifactReferenceCommands/lectureAttachmentReferenceCommand';
 
 @Component({
     selector: 'jhi-posting-markdown-editor',
@@ -48,7 +48,7 @@ export class PostingMarkdownEditorComponent implements OnInit, ControlValueAcces
             new CodeBlockCommand(),
             new LinkCommand(),
             new ExerciseReferenceCommand(this.metisService),
-            new LectureReferenceCommand(this.metisService),
+            new LectureAttachmentReferenceCommand(this.metisService),
         ];
     }
 

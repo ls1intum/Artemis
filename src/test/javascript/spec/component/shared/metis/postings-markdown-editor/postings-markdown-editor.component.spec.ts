@@ -13,7 +13,7 @@ import { By } from '@angular/platform-browser';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { MockMetisService } from '../../../../helpers/mocks/service/mock-metis-service.service';
 import { ExerciseReferenceCommand } from 'app/shared/markdown-editor/commands/courseArtifactReferenceCommands/exerciseReferenceCommand';
-import { LectureReferenceCommand } from 'app/shared/markdown-editor/commands/courseArtifactReferenceCommands/lectureReferenceCommand';
+import { LectureAttachmentReferenceCommand } from 'app/shared/markdown-editor/commands/courseArtifactReferenceCommands/lectureAttachmentReferenceCommand';
 import { metisAnswerPostUser2, metisPostExerciseUser1 } from '../../../../helpers/sample/metis-sample-data';
 
 // tslint:disable-next-line:directive-selector
@@ -62,7 +62,7 @@ describe('PostingsMarkdownEditor', () => {
             new CodeBlockCommand(),
             new LinkCommand(),
             new ExerciseReferenceCommand(metisService),
-            new LectureReferenceCommand(metisService),
+            new LectureAttachmentReferenceCommand(metisService),
         ]);
     });
 
