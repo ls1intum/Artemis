@@ -10,7 +10,7 @@
             required
             type="number"
             class="form-control"
-            min="1"
+            [customMin]="1"
             [customMax]="tokenMaxLifetimeDays"
             step="1"
             name="lifetime"
