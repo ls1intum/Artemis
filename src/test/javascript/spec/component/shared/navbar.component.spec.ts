@@ -119,7 +119,7 @@ describe('NavbarComponent', () => {
 
         fixture.detectChanges();
 
-        expect(component.breadcrumbs.length).toEqual(3);
+        expect(component.breadcrumbs).toHaveLength(3);
     });
 
     it('should build breadcrumbs for course management', () => {
