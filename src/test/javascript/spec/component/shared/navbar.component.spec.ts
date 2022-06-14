@@ -574,7 +574,7 @@ describe('NavbarComponent', () => {
                 fixture.detectChanges();
 
                 expect(courseManagementStub).toHaveBeenCalledTimes(1);
-                expect(exerciseTitleStub).toHaveBeenCalledTimes(1);
+                expect(exerciseTitleStub).toHaveBeenCalledOnce();
 
                 expect(component.breadcrumbs).toHaveLength(4);
                 expect(component.breadcrumbs[0]).toMatchObject({ uri: '/courses/', label: 'artemisApp.course.home.title' });
