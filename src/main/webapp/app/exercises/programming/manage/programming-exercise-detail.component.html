@@ -187,7 +187,7 @@
                     </span>
                 </div>
                 <div *ngIf="programmingExercise.isAtLeastEditor">
-                    <span class="mr-1">
+                    <span class="me-1">
                         <button
                             [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
                             type="button"
@@ -198,7 +198,7 @@
                             <span jhiTranslate="artemisApp.programmingExercise.diffReport.button">Update Diff-Report</span>
                         </button>
                     </span>
-                    <span class="mr-1" *ngIf="programmingExercise.programmingLanguage === ProgrammingLanguage.JAVA && programmingExercise.testwiseCoverageEnabled">
+                    <span class="me-1" *ngIf="programmingExercise.programmingLanguage === ProgrammingLanguage.JAVA && programmingExercise.testwiseCoverageEnabled">
                         <button
                             [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
                             type="button"
@@ -340,13 +340,13 @@
                     <span jhiTranslate="artemisApp.programmingExercise.templateRepositoryUrl">Template Repository Url</span>
                     <div class="clone-buttons" *ngIf="programmingExercise.templateParticipation && programmingExercise.templateParticipation.repositoryUrl">
                         <jhi-clone-repo-button
-                            class="ml-2"
+                            class="ms-2"
                             [smallButtons]="true"
                             [repositoryUrl]="programmingExercise?.templateParticipation?.repositoryUrl! || ''"
                             [isTeamParticipation]="false"
                         ></jhi-clone-repo-button>
                         <jhi-programming-exercise-instructor-repo-download
-                            class="ml-2"
+                            class="ms-2"
                             [exerciseId]="programmingExercise.id!"
                             [repositoryType]="'TEMPLATE'"
                         ></jhi-programming-exercise-instructor-repo-download>
@@ -417,13 +417,13 @@
                             <dt>
                                 <span>{{ auxiliaryRepository.name }} Repository</span>
                                 <jhi-clone-repo-button
-                                    class="ml-2"
+                                    class="ms-2"
                                     [smallButtons]="true"
                                     [repositoryUrl]="auxiliaryRepository.repositoryUrl!"
                                     [isTeamParticipation]="false"
                                 ></jhi-clone-repo-button>
                                 <jhi-programming-exercise-instructor-repo-download
-                                    class="ml-2"
+                                    class="ms-2"
                                     [exerciseId]="programmingExercise.id!"
                                     [repositoryType]="'AUXILIARY'"
                                     [auxiliaryRepositoryId]="auxiliaryRepository.id!"
@@ -433,7 +433,7 @@
                                         >Checkout Directory: {{ auxiliaryRepository.checkoutDirectory }}
                                     </span>
                                     <ng-template #noCheckoutDirectorySet>
-                                        <fa-icon [icon]="faExclamationTriangle" class="text-warning mr-1" [ngbTooltip]="noCheckoutDirectorySetTooltip"></fa-icon>
+                                        <fa-icon [icon]="faExclamationTriangle" class="text-warning me-1" [ngbTooltip]="noCheckoutDirectorySetTooltip"></fa-icon>
                                         <span jhiTranslate="artemisApp.programmingExercise.noCheckoutDirectorySet">Checkout Directory was not set</span>
                                     </ng-template>
                                     <ng-template #noCheckoutDirectorySetTooltip>
