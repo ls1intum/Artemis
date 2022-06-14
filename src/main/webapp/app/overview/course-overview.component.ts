@@ -17,6 +17,7 @@ import { AlertService, AlertType } from 'app/core/util/alert.service';
 import { faCircleNotch, faSync } from '@fortawesome/free-solid-svg-icons';
 import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
 import { ARTEMIS_DEFAULT_COLOR } from 'app/app.constants';
+import { LearningGoalService } from 'app/course/learning-goals/learningGoal.service';
 
 const DESCRIPTION_READ = 'isDescriptionRead';
 
@@ -71,6 +72,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
         private courseService: CourseManagementService,
         private courseExerciseService: CourseExerciseService,
         private courseCalculationService: CourseScoreCalculationService,
+        private learningGoalService: LearningGoalService,
         private route: ActivatedRoute,
         private teamService: TeamService,
         private jhiWebsocketService: JhiWebsocketService,
@@ -87,6 +89,8 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
         this.course = this.courseCalculationService.getCourse(this.courseId);
         if (!this.course) {
             this.loadCourse();
+        } else {
+            this.loadLearningGoals();
         }
         this.adjustCourseDescription();
         await this.subscribeToTeamAssignmentUpdates();
@@ -159,6 +163,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
                 this.courseCalculationService.updateCourse(res.body!);
                 this.course = this.courseCalculationService.getCourse(this.courseId);
                 this.adjustCourseDescription();
+                this.loadLearningGoals();
                 setTimeout(() => (this.refreshingCourse = false), 500); // ensure min animation duration
             },
             error: (error: HttpErrorResponse) => {
@@ -201,6 +206,25 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
         }
     }
 
+    loadLearningGoals() {
+        this.learningGoalService.getAllForCourse(this.courseId).subscribe({
+            next: (learningGoals) => {
+                if (this.course) {
+                    this.course.learningGoals = learningGoals.body!;
+                }
+            },
+            error: () => {},
+        });
+        this.learningGoalService.getAllPrerequisitesForCourse(this.courseId).subscribe({
+            next: (prerequisites) => {
+                if (this.course) {
+                    this.course.prerequisites = prerequisites.body!;
+                }
+            },
+            error: () => {},
+        });
+    }
+
     /**
      * Adjusts the course description and shows toggle buttons (if it is too long)
      * This also depends on whether the user has already seen the full description (stored in local storage)
@@ -237,6 +261,10 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
             }
         }
         return false;
+    }
+
+    hasLearningGoals(): boolean {
+        return (this.course?.learningGoals?.length ?? 0) + (this.course?.prerequisites?.length ?? 0) > 0;
     }
 
     /**

@@ -36,6 +36,8 @@ import { AlertService } from 'app/core/util/alert.service';
 import { AfterViewInit, Component, TemplateRef, ViewChild } from '@angular/core';
 import { By } from '@angular/platform-browser';
 import { TeamAssignmentPayload } from 'app/entities/team.model';
+import { LearningGoalService } from 'app/course/learning-goals/learningGoal.service';
+import { LearningGoal } from 'app/entities/learningGoal.model';
 
 const endDate1 = dayjs().add(1, 'days');
 const visibleDate1 = dayjs().subtract(1, 'days');
@@ -69,7 +71,7 @@ const course1 = {
         'Nihilne te nocturnum praesidium Palati, nihil urbis vigiliae. Salutantibus vitae elit libero, a pharetra augue. Quam diu etiam furor iste tuus nos eludet? ' +
         'Fabio vel iudice vincam, sunt in culpa qui officia. Quam temere in vitiis, legem sancimus haerentia. Quisque ut dolor gravida, placerat libero vel, euismod.',
 };
-const course2 = { id: 2, exercises: [exercise2], exams: [exam2], description: 'Short description of course 2', shortName: 'shortName2' };
+const course2 = { id: 2, exercises: [exercise2], exams: [exam2], description: 'Short description of course 2', shortName: 'shortName2', learningGoals: [new LearningGoal()] };
 
 @Component({
     template: '<ng-template #controls><button id="test-button">TestButton</button></ng-template>',
@@ -92,6 +94,7 @@ describe('CourseOverviewComponent', () => {
     let courseService: CourseManagementService;
     let courseScoreCalculationService: CourseScoreCalculationService;
     let teamService: TeamService;
+    let learningGoalService: LearningGoalService;
     let jhiWebsocketService: JhiWebsocketService;
 
     const route: MockActivatedRouteWithSubjects = new MockActivatedRouteWithSubjects();
@@ -133,6 +136,7 @@ describe('CourseOverviewComponent', () => {
                 courseService = TestBed.inject(CourseManagementService);
                 courseScoreCalculationService = TestBed.inject(CourseScoreCalculationService);
                 teamService = TestBed.inject(TeamService);
+                learningGoalService = TestBed.inject(LearningGoalService);
                 jhiWebsocketService = TestBed.inject(JhiWebsocketService);
             });
     }));
@@ -224,6 +228,26 @@ describe('CourseOverviewComponent', () => {
         const bool = component.hasVisibleExams();
 
         expect(bool).toBeFalse();
+    });
+
+    it('should have learning goals', () => {
+        const findOneForDashboardStub = jest.spyOn(courseService, 'findOneForDashboard');
+        const getCourseStub = jest.spyOn(courseScoreCalculationService, 'getCourse');
+
+        const learningGoalsResponse: HttpResponse<LearningGoal[]> = new HttpResponse({
+            body: [new LearningGoal()],
+            status: 200,
+        });
+        jest.spyOn(learningGoalService, 'getAllPrerequisitesForCourse').mockReturnValue(of(learningGoalsResponse));
+        jest.spyOn(learningGoalService, 'getAllForCourse').mockReturnValue(of(learningGoalsResponse));
+        getCourseStub.mockReturnValue(course2);
+        findOneForDashboardStub.mockReturnValue(of(new HttpResponse({ body: course2, headers: new HttpHeaders() })));
+
+        component.ngOnInit();
+
+        expect(component.hasLearningGoals()).toBeTrue();
+        expect(component.course?.learningGoals).not.toBeEmpty();
+        expect(component.course?.prerequisites).not.toBeEmpty();
     });
 
     it('should subscribeToTeamAssignmentUpdates', () => {

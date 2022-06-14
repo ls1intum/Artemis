@@ -1,11 +1,12 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, Subject } from 'rxjs';
 import { LearningGoal } from 'app/entities/learningGoal.model';
 import { LectureUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/lectureUnit.service';
 import { map } from 'rxjs/operators';
 import { IndividualLearningGoalProgress } from 'app/course/learning-goals/learning-goal-individual-progress-dtos.model';
 import { CourseLearningGoalProgress } from 'app/course/learning-goals/learning-goal-course-progress.dtos.model';
+import { Cacheable } from 'ts-cacheable';
 
 type EntityResponseType = HttpResponse<LearningGoal>;
 type EntityArrayResponseType = HttpResponse<LearningGoal[]>;
@@ -18,10 +19,18 @@ export class LearningGoalService {
 
     constructor(private httpClient: HttpClient, private lectureUnitService: LectureUnitService) {}
 
+    @Cacheable({
+        maxCacheCount: 50,
+        maxAge: 300000, // 5 minutes
+    })
     getAllForCourse(courseId: number): Observable<EntityArrayResponseType> {
         return this.httpClient.get<LearningGoal[]>(`${this.resourceURL}/courses/${courseId}/goals`, { observe: 'response' });
     }
 
+    @Cacheable({
+        maxCacheCount: 50,
+        maxAge: 300000, // 5 minutes
+    })
     getAllPrerequisitesForCourse(courseId: number): Observable<EntityArrayResponseType> {
         return this.httpClient.get<LearningGoal[]>(`${this.resourceURL}/courses/${courseId}/prerequisites`, { observe: 'response' });
     }
