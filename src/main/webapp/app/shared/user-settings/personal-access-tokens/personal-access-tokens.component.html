@@ -25,7 +25,7 @@
     </div>
     <ng-container *ngFor="let error of lifetime.errors! | keyvalue | removekeys: ['required']">
         <div *ngIf="lifetime.invalid && (lifetime.dirty || lifetime.touched)" class="alert alert-danger">
-            <div [jhiTranslate]="'artemisApp.userSettings.personalAccessTokens' + '.' + error.key"></div>
+            <div [jhiTranslate]="'artemisApp.userSettings.personalAccessTokens.' + error.key"></div>
         </div>
     </ng-container>
 </div>
