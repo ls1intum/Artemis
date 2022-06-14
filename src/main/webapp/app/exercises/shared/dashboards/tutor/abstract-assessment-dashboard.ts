@@ -25,7 +25,9 @@ export abstract class AbstractAssessmentDashboard {
         switch (this.filterOption) {
             case AssessmentFilter.UNASSESSED:
                 this.filteredSubmissions = submissions.filter((submission) => {
-                    return !submission.results || !submission.results.last()?.rated || submission.results.every((result) => !result.completionDate);
+                    return (
+                        !submission.results || submission.results.length === 0 || !submission.results.last()?.rated || submission.results.every((result) => !result.completionDate)
+                    );
                 });
                 break;
 
@@ -33,6 +35,7 @@ export abstract class AbstractAssessmentDashboard {
                 this.filteredSubmissions = submissions.filter((submission) => {
                     return (
                         submission.results &&
+                        submission.results.length > 0 &&
                         submission.results.last()!.rated &&
                         submission.results.last()!.assessmentType === AssessmentType.MANUAL &&
                         submission.results.last()!.completionDate
@@ -44,14 +47,13 @@ export abstract class AbstractAssessmentDashboard {
                 this.filteredSubmissions = submissions.filter((submission) => {
                     return (
                         submission.results &&
+                        submission.results.length > 0 &&
                         submission.results.last()!.rated &&
                         submission.results.last()!.assessmentType === AssessmentType.SEMI_AUTOMATIC &&
                         submission.results.last()!.completionDate
                     );
                 });
                 break;
-            default:
-                this.filteredSubmissions = submissions;
         }
     }
 
@@ -61,7 +63,7 @@ export abstract class AbstractAssessmentDashboard {
      */
     resetFilterOptions(): void {
         this.filterOption = undefined;
-        this.applyChartFilter(this.submissions);
         this.resetFilter = true;
+        this.applyChartFilter(this.submissions);
     }
 }
