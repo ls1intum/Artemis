@@ -129,7 +129,7 @@ describe('CoursesComponent', () => {
 
             component.ngOnInit();
 
-            expect(loadAndFilterCoursesSpy).toHaveBeenCalled();
+            expect(loadAndFilterCoursesSpy).toHaveBeenCalledOnce();
         });
 
         it('Should load courses on init', () => {
@@ -142,14 +142,12 @@ describe('CoursesComponent', () => {
 
             component.ngOnInit();
 
-            expect(findAllForDashboardSpy).toHaveBeenCalled();
-            expect(findNextRelevantExerciseSpy).toHaveBeenCalled();
+            expect(findAllForDashboardSpy).toHaveBeenCalledOnce();
+            expect(findNextRelevantExerciseSpy).toHaveBeenCalledOnce();
             expect(component.courses).toEqual(courses);
-            expect(courseScoreCalculationServiceSpy).toHaveBeenCalled();
-            expect(component.exams.length).toEqual(2);
-            expect(component.exams).toContain(exam1);
-            expect(component.exams).toContain(exam2);
-            expect(component.nextRelevantExams?.length).toEqual(1);
+            expect(courseScoreCalculationServiceSpy).toHaveBeenCalledOnce();
+            expect(component.exams).toEqual([exam1, exam2]);
+            expect(component.nextRelevantExams).toHaveLength(1);
             expect(component.nextRelevantExams?.[0]).toEqual(exam1);
         });
 
@@ -219,15 +217,11 @@ describe('CoursesComponent', () => {
         component.ngOnInit();
         tick(1000);
 
-        expect(findAllForDashboardSpy).toHaveBeenCalled();
-        expect(findNextRelevantExerciseSpy).toHaveBeenCalled();
+        expect(findAllForDashboardSpy).toHaveBeenCalledOnce();
+        expect(findNextRelevantExerciseSpy).toHaveBeenCalledOnce();
         expect(component.courses).toEqual(coursesWithTestExam);
-        expect(courseScoreCalculationServiceSpy).toHaveBeenCalled();
-        expect(component.exams.length).toEqual(3);
-        expect(component.exams).toContain(exam1);
-        expect(component.exams).toContain(exam2);
-        expect(component.exams).toContain(testExam1);
-        expect(component.nextRelevantExams?.length).toEqual(1);
-        expect(component.nextRelevantExams).toContain(exam1);
+        expect(courseScoreCalculationServiceSpy).toHaveBeenCalledOnce();
+        expect(component.exams).toEqual([exam1, exam2, testExam1]);
+        expect(component.nextRelevantExams).toEqual([exam1]);
     }));
 });
