@@ -1,6 +1,6 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { Subject } from 'rxjs';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
@@ -15,6 +15,12 @@ import { ExamInformationDTO } from 'app/entities/exam-information.model';
 import dayjs from 'dayjs/esm';
 import { EventManager } from 'app/core/util/event-manager.service';
 import { faClipboard, faEye, faListAlt, faPlus, faSort, faThList, faTimes, faUser, faWrench } from '@fortawesome/free-solid-svg-icons';
+import { ExerciseGroup } from 'app/entities/exercise-group.model';
+import { ExerciseType } from 'app/entities/exercise.model';
+import { ProgrammingExerciseImportComponent } from 'app/exercises/programming/manage/programming-exercise-import.component';
+import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { ExamImportComponent } from 'app/exam/manage/exam-import/exam-import.component';
 
 @Component({
     selector: 'jhi-exam-management',
@@ -49,6 +55,8 @@ export class ExamManagementComponent implements OnInit, OnDestroy {
         private accountService: AccountService,
         private alertService: AlertService,
         private sortService: SortService,
+        private modalService: NgbModal,
+        private router: Router,
     ) {
         this.predicate = 'id';
         this.ascending = true;
@@ -128,5 +136,24 @@ export class ExamManagementComponent implements OnInit, OnDestroy {
             return exam.latestIndividualEndDate.isBefore(dayjs());
         }
         return false;
+    }
+
+    /**
+     * Opens the import module for an exam import
+     */
+    openImportModal() {
+        const importBaseRoute = ['/course-management', this.course.id, 'exams', 'import'];
+
+        const programmingImportModalRef = this.modalService.open(ExamImportComponent, {
+            size: 'lg',
+            backdrop: 'static',
+        });
+        programmingImportModalRef.result.then(
+            (result: Exam) => {
+                importBaseRoute.push(result.id);
+                this.router.navigate(importBaseRoute);
+            },
+            () => {},
+        );
     }
 }

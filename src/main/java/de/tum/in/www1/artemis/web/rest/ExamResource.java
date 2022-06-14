@@ -293,6 +293,18 @@ public class ExamResource {
     }
 
     /**
+     * GET /exams : Find all exams the user is allowed to access
+     *
+     * @return the ResponseEntity with status 200 (OK) and a list of exams. The list can be empty
+     */
+    @GetMapping("/exams")
+    @PreAuthorize("hasRole('INSTRUCTOR')")
+    public ResponseEntity<SearchResultPageDTO<Exam>> getAllExamsOnPage(PageableSearchDTO<String> search) {
+        final var user = userRepository.getUserWithGroupsAndAuthorities();
+        return ResponseEntity.ok(examService.getAllOnPageWithSize(search, user));
+    }
+
+    /**
      * GET /courses/{courseId}/exams/{examId} : Find an exam by id.
      *
      * @param courseId           the course to which the exam belongs
@@ -490,14 +502,14 @@ public class ExamResource {
     }
 
     /**
-     * GET /courses/{courseId}/exams-for-user : Find all exams the user is allowed to access (Is at least Instructor)
+     * GET /courses/{courseId}/exams-for-user : Find all exams with quiz-questions the user is allowed to access (Is at least Instructor)
      *
      * @param courseId the course to which the exam belongs
      * @return the ResponseEntity with status 200 (OK) and a list of exams. The list can be empty
      */
     @GetMapping("/courses/{courseId}/exams-for-user")
     @PreAuthorize("hasRole('INSTRUCTOR')")
-    public ResponseEntity<List<Exam>> getExamsForUser(@PathVariable Long courseId) {
+    public ResponseEntity<List<Exam>> getExamsWithQuizExercisesForUser(@PathVariable Long courseId) {
         User user = userRepository.getUserWithGroupsAndAuthorities();
         if (authCheckService.isAdmin(user)) {
             return ResponseEntity.ok(examRepository.findAllWithQuizExercisesWithEagerExerciseGroupsAndExercises());
