@@ -7,6 +7,7 @@ import { map } from 'rxjs/operators';
 import { IndividualLearningGoalProgress } from 'app/course/learning-goals/learning-goal-individual-progress-dtos.model';
 import { CourseLearningGoalProgress } from 'app/course/learning-goals/learning-goal-course-progress.dtos.model';
 import { Cacheable } from 'ts-cacheable';
+import { SessionStorageStrategy } from 'app/shared/image/session-storage-strategy';
 
 type EntityResponseType = HttpResponse<LearningGoal>;
 type EntityArrayResponseType = HttpResponse<LearningGoal[]>;
@@ -20,6 +21,7 @@ export class LearningGoalService {
     constructor(private httpClient: HttpClient, private lectureUnitService: LectureUnitService) {}
 
     @Cacheable({
+        storageStrategy: SessionStorageStrategy,
         maxCacheCount: 50,
         maxAge: 300000, // 5 minutes
     })
@@ -28,6 +30,7 @@ export class LearningGoalService {
     }
 
     @Cacheable({
+        storageStrategy: SessionStorageStrategy,
         maxCacheCount: 50,
         maxAge: 300000, // 5 minutes
     })

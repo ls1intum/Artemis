@@ -145,6 +145,7 @@ describe('CourseOverviewComponent', () => {
         component.ngOnDestroy();
         jest.restoreAllMocks();
         localStorage.clear();
+        sessionStorage.clear();
     });
 
     it('Should call all methods on init', async () => {
