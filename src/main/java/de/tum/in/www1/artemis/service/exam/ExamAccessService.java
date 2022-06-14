@@ -120,7 +120,7 @@ public class ExamAccessService {
         // For the start of the exam, the exercises are not needed. They are later loaded via StudentExamResource
         studentExam.setExercises(null);
 
-        checkStudentAccessToExamAndExamIsVisible(course, currentUser, exam);
+        checkStudentAccessToTestExamAndExamIsVisible(course, currentUser, exam);
 
         return studentExam;
     }
@@ -167,7 +167,7 @@ public class ExamAccessService {
         // For the start of the exam, the exercises are not needed. They are later loaded via StudentExamResource
         studentExam.setExercises(null);
 
-        checkStudentAccessToExamAndExamIsVisible(course, currentUser, studentExam.getExam());
+        checkStudentAccessToTestExamAndExamIsVisible(course, currentUser, studentExam.getExam());
 
         return studentExam;
     }
@@ -180,13 +180,11 @@ public class ExamAccessService {
      * @param currentUser the user for which the exam should be retrieved
      * @param exam        the exam linked to the studentExam
      */
-    private void checkStudentAccessToExamAndExamIsVisible(Course course, User currentUser, Exam exam) {
+    private void checkStudentAccessToTestExamAndExamIsVisible(Course course, User currentUser, Exam exam) {
         checkExamBelongsToCourseElseThrow(course.getId(), exam);
 
         // Check that the current user is registered for the TestExam. Otherwise, the student can self-register.
-        if (!examRepository.isUserRegisteredForExam(exam.getId(), currentUser.getId())) {
-            examRegistrationService.selfRegisterToTestExam(course, exam.getId(), currentUser);
-        }
+        examRegistrationService.checkRegistrationOrRegisterStudentToTestExam(course, exam.getId(), currentUser);
 
         // Check that the exam is visible
         if (exam.getVisibleDate() != null && exam.getVisibleDate().isAfter(ZonedDateTime.now())) {

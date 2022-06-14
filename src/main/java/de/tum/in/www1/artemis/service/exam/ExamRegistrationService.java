@@ -167,14 +167,14 @@ public class ExamRegistrationService {
     }
 
     /**
-     * Enables self-registration to an TestExam.
+     * Checks if the current User is registered for the TestExam, otherwise the User is registered to the TestExam.
      * The calling user must be registered in the respective course
      *
-     * @param course the course containing the exam
-     * @param examId the examId for which we want to register a student
+     * @param course      the course containing the exam
+     * @param examId      the examId for which we want to register a student
      * @param currentUser the user to be registered in the exam
      */
-    public void selfRegisterToTestExam(Course course, long examId, User currentUser) {
+    public void checkRegistrationOrRegisterStudentToTestExam(Course course, long examId, User currentUser) {
         Exam exam = examRepository.findByIdWithRegisteredUsersElseThrow(examId);
 
         if (!exam.isTestExam()) {
@@ -183,12 +183,15 @@ public class ExamRegistrationService {
 
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, currentUser);
 
-        exam.addRegisteredUser(currentUser);
-        examRepository.save(exam);
+        // We only need to update the registered users, if the user is not yet registered for the TestExam
+        if (!exam.getRegisteredUsers().contains(currentUser)) {
+            exam.addRegisteredUser(currentUser);
+            examRepository.save(exam);
 
-        AuditEvent auditEvent = new AuditEvent(currentUser.getLogin(), Constants.ADD_USER_TO_EXAM, "exam=" + exam.getTitle());
-        auditEventRepository.add(auditEvent);
-        log.info("User {} has self-registered to the TestExam {} with id {}", currentUser.getLogin(), exam.getTitle(), exam.getId());
+            AuditEvent auditEvent = new AuditEvent(currentUser.getLogin(), Constants.ADD_USER_TO_EXAM, "TestExam=" + exam.getTitle());
+            auditEventRepository.add(auditEvent);
+            log.info("User {} has self-registered to the TestExam {} with id {}", currentUser.getLogin(), exam.getTitle(), exam.getId());
+        }
     }
 
     /**
