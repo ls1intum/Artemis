@@ -1,5 +1,5 @@
 import { Component, HostListener, OnDestroy, OnInit } from '@angular/core';
-import { Observable, of, Subscription } from 'rxjs';
+import { of, Subscription } from 'rxjs';
 import { filter, map, switchMap, tap } from 'rxjs/operators';
 import { NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { SessionStorageService } from 'ngx-webstorage';
@@ -17,8 +17,7 @@ import { Exam } from 'app/entities/exam.model';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
 import { LocaleConversionService } from 'app/shared/service/locale-conversion.service';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
-import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { onError } from 'app/shared/util/global.utils';
+import { HttpResponse } from '@angular/common/http';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { ApollonDiagramService } from 'app/exercises/quiz/manage/apollon-diagrams/apollon-diagram.service';
 import { LectureService } from 'app/lecture/lecture.service';
@@ -53,6 +52,7 @@ import {
 import { ExerciseHintService } from 'app/exercises/shared/exercise-hint/shared/exercise-hint.service';
 import { Exercise } from 'app/entities/exercise.model';
 import { ThemeService } from 'app/core/theme/theme.service';
+import { EntityTitleService, EntityType } from 'app/shared/layouts/navbar/entity-title.service';
 
 @Component({
     selector: 'jhi-navbar',
@@ -73,6 +73,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
     isRegistrationEnabled = false;
     passwordResetEnabled = false;
     breadcrumbs: Breadcrumb[];
+    breadcrumbSubscriptions: Subscription[];
     isCollapsed: boolean;
 
     // Icons
@@ -127,6 +128,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
         private examService: ExamManagementService,
         private organisationService: OrganizationManagementService,
         public themeService: ThemeService,
+        private entityTitleService: EntityTitleService,
     ) {
         this.version = VERSION ? VERSION : '';
         this.isNavbarCollapsed = true;
@@ -283,6 +285,8 @@ export class NavbarComponent implements OnInit, OnDestroy {
      */
     private buildBreadcrumbs(fullURI: string): void {
         this.breadcrumbs = [];
+        this.breadcrumbSubscriptions?.forEach((subscription) => subscription.unsubscribe());
+        this.breadcrumbSubscriptions = [];
 
         if (!fullURI) {
             return;
@@ -336,12 +340,12 @@ export class NavbarComponent implements OnInit, OnDestroy {
                     this.addTranslationAsCrumb(currentPath, this.lastRouteUrlSegment);
                     return;
                 case 'exercises':
-                    this.addResolvedTitleAsCrumb(this.exerciseService.getTitle(Number(segment)), currentPath, segment);
+                    this.addResolvedTitleAsCrumb(EntityType.EXERCISE, [Number(segment)], currentPath, segment);
                     return;
                 default:
                     const exercisesMatcher = this.lastRouteUrlSegment?.match(/.+-exercises/);
                     if (exercisesMatcher) {
-                        this.addResolvedTitleAsCrumb(this.exerciseService.getTitle(Number(segment)), currentPath.replace(exercisesMatcher[0], 'exercises'), 'exercises');
+                        this.addResolvedTitleAsCrumb(EntityType.EXERCISE, [Number(segment)], currentPath.replace(exercisesMatcher[0], 'exercises'), 'exercises');
                         return;
                     }
                     break;
@@ -357,7 +361,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
                 break;
             case 'course-management':
             case 'courses':
-                this.addResolvedTitleAsCrumb(this.courseManagementService.getTitle(Number(segment)), currentPath, segment);
+                this.addResolvedTitleAsCrumb(EntityType.COURSE, [Number(segment)], currentPath, segment);
                 break;
             case 'exercises':
                 // Special case: A raw /course-management/XXX/exercises/XXX doesn't work, we need to add the exercise type
@@ -370,26 +374,26 @@ export class NavbarComponent implements OnInit, OnDestroy {
             case 'programming-exercises':
             case 'quiz-exercises':
             case 'assessment-dashboard':
-                this.addResolvedTitleAsCrumb(this.exerciseService.getTitle(Number(segment)), currentPath, segment);
+                this.addResolvedTitleAsCrumb(EntityType.EXERCISE, [Number(segment)], currentPath, segment);
                 break;
             case 'exercise-hints':
                 // obtain the exerciseId of the current path
                 // current path of form '/course-management/:courseId/exercises/:exerciseId/...
                 const exerciseId = currentPath.split('/')[4];
-                this.addResolvedTitleAsCrumb(this.exerciseHintService.getTitle(Number(exerciseId), Number(segment)), currentPath, segment);
+                this.addResolvedTitleAsCrumb(EntityType.HINT, [Number(segment), Number(exerciseId)], currentPath, segment);
                 break;
             case 'apollon-diagrams':
-                this.addResolvedTitleAsCrumb(this.apollonDiagramService.getTitle(Number(segment)), currentPath, segment);
+                this.addResolvedTitleAsCrumb(EntityType.DIAGRAM, [Number(segment)], currentPath, segment);
                 break;
             case 'lectures':
-                this.addResolvedTitleAsCrumb(this.lectureService.getTitle(Number(segment)), currentPath, segment);
+                this.addResolvedTitleAsCrumb(EntityType.LECTURE, [Number(segment)], currentPath, segment);
                 break;
             case 'exams':
                 this.routeExamId = Number(segment);
-                this.addResolvedTitleAsCrumb(this.examService.getTitle(this.routeExamId), currentPath, segment);
+                this.addResolvedTitleAsCrumb(EntityType.EXAM, [this.routeExamId], currentPath, segment);
                 break;
             case 'organization-management':
-                this.addResolvedTitleAsCrumb(this.organisationService.getTitle(Number(segment)), currentPath, segment);
+                this.addResolvedTitleAsCrumb(EntityType.ORGANIZATION, [Number(segment)], currentPath, segment);
                 break;
             case 'import':
                 // Special case: Don't display the ID here but the name directly (clicking the ID wouldn't work)
@@ -525,22 +529,22 @@ export class NavbarComponent implements OnInit, OnDestroy {
      * Uses the server response to add a title for a breadcrumb
      * While waiting for the response or in case of an error the segment is displayed directly as fallback
      *
-     * @param observable the observable returning an entity to display the title of
+     * @param type the type of the entity
+     * @param ids the ids of the entity
      * @param uri the uri/path for the breadcrumb
      * @param segment the current url segment to add a breadcrumb for
      */
-    private addResolvedTitleAsCrumb(observable: Observable<HttpResponse<string>>, uri: string, segment: string): void {
+    private addResolvedTitleAsCrumb(type: EntityType, ids: number[], uri: string, segment: string): void {
         // Insert the segment until we fetched a title from the server to insert at the correct index
-        const crumb = this.addBreadcrumb(uri, segment, false);
+        let crumb = this.addBreadcrumb(uri, segment, false);
 
-        observable.subscribe({
-            next: (response: HttpResponse<string>) => {
-                // Fall back to the segment in case there is no body returned
-                const title = response.body ?? segment;
-                this.setBreadcrumb(uri, title, false, this.breadcrumbs.indexOf(crumb));
-            },
-            error: (error: HttpErrorResponse) => onError(this.alertService, error),
-        });
+        this.breadcrumbSubscriptions.push(
+            this.entityTitleService.getTitle(type, ids).subscribe({
+                next: (title: string) => {
+                    crumb = this.setBreadcrumb(uri, title, false, this.breadcrumbs.indexOf(crumb));
+                },
+            }),
+        );
     }
 
     /**
