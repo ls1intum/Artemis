@@ -573,7 +573,7 @@ describe('NavbarComponent', () => {
 
                 fixture.detectChanges();
 
-                expect(courseManagementStub).toHaveBeenCalledTimes(1);
+                expect(courseManagementStub).toHaveBeenCalledOnce();
                 expect(exerciseTitleStub).toHaveBeenCalledOnce();
 
                 expect(component.breadcrumbs).toHaveLength(4);
