@@ -98,20 +98,6 @@ describe('Exam Management Service Tests', () => {
         tick();
     }));
 
-    it('should get the exam title', fakeAsync(() => {
-        // GIVEN
-        const mockExam: Exam = { id: 1 };
-        const expectedTitle = 'expectedTitle';
-
-        // WHEN
-        service.getTitle(mockExam.id!).subscribe((res) => expect(res.body).toEqual(expectedTitle));
-
-        // THEN
-        const req = httpMock.expectOne({ method: 'GET', url: `api/exams/${mockExam.id!}/title` });
-        req.flush(expectedTitle);
-        tick();
-    }));
-
     it('should get exam scores', fakeAsync(() => {
         // GIVEN
         const mockExam: Exam = { id: 1 };
