@@ -20,6 +20,7 @@ import { ExamMonitoringService } from 'app/exam/monitor/exam-monitoring.service'
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { MockWebsocketService } from '../helpers/mocks/service/mock-websocket.service';
 import * as Sentry from '@sentry/browser';
+import { CaptureContext } from '@sentry/types';
 
 const createExamActions = (): ExamAction[] => {
     return Object.keys(ExamActionType).map((type) => createExamActionBasedOnType(ExamActionType[type]));
@@ -59,6 +60,7 @@ describe('ExamMonitoringService', () => {
     let examMonitoringService: ExamMonitoringService;
     let websocketService: JhiWebsocketService;
     let artemisServerDateService: ArtemisServerDateService;
+    let captureExceptionSpy: jest.SpyInstance<string, [exception: any, captureContext?: CaptureContext | undefined]>;
     let exam: Exam;
     let studentExam: StudentExam;
     let course: Course;
@@ -73,6 +75,7 @@ describe('ExamMonitoringService', () => {
                 examMonitoringService = TestBed.inject(ExamMonitoringService);
                 websocketService = TestBed.inject(JhiWebsocketService);
                 artemisServerDateService = TestBed.inject(ArtemisServerDateService);
+                captureExceptionSpy = jest.spyOn(Sentry, 'captureException');
             });
     });
 
@@ -179,7 +182,6 @@ describe('ExamMonitoringService', () => {
         const spy = jest.spyOn(examMonitoringService, 'sendAction').mockImplementation(() => {
             throw error;
         });
-        const captureExceptionSpy = jest.spyOn(Sentry, 'captureException');
 
         studentExam.examActivity = new ExamActivity();
         studentExam.examActivity.examActions.push(action);
@@ -195,7 +197,6 @@ describe('ExamMonitoringService', () => {
         const spy = jest.spyOn(artemisServerDateService, 'now').mockImplementation(() => {
             throw error;
         });
-        const captureExceptionSpy = jest.spyOn(Sentry, 'captureException');
 
         examMonitoringService.handleActionEvent(studentExam, action, exam.monitoring!);
         expect(spy).toHaveBeenCalledOnce();
