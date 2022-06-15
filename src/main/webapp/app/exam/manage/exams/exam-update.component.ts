@@ -47,6 +47,14 @@ export class ExamUpdateComponent implements OnInit {
     ngOnInit(): void {
         this.route.data.subscribe(({ exam }) => {
             this.exam = exam;
+
+            // Tap the URL to determine, if the Exam should be imported
+            this.route.url.pipe(tap((segments) => (this.isImport = segments.some((segment) => segment.path === 'import')))).subscribe();
+
+            if (this.isImport) {
+                this.resetIdAndDatesForImport();
+            }
+
             this.courseManagementService.find(Number(this.route.snapshot.paramMap.get('courseId'))).subscribe({
                 next: (response: HttpResponse<Course>) => {
                     this.exam.course = response.body!;
@@ -54,12 +62,6 @@ export class ExamUpdateComponent implements OnInit {
                 },
                 error: (err: HttpErrorResponse) => onError(this.alertService, err),
             });
-            // Tap the URL to determine, if the Exam should be imported
-            this.route.url.pipe(tap((segments) => (this.isImport = segments.some((segment) => segment.path === 'import')))).subscribe();
-
-            if (this.isImport) {
-                this.resetIdAndDatesForImport();
-            }
 
             if (!this.exam.gracePeriod) {
                 this.exam.gracePeriod = 180;
@@ -85,7 +87,9 @@ export class ExamUpdateComponent implements OnInit {
 
     save() {
         this.isSaving = true;
-        if (this.exam.id !== undefined) {
+        if (this.isImport) {
+            this.subscribeToSaveResponse(this.examManagementService.import(this.course.id!, this.exam));
+        } else if (this.exam.id !== undefined) {
             this.subscribeToSaveResponse(this.examManagementService.update(this.course.id!, this.exam));
         } else {
             this.subscribeToSaveResponse(this.examManagementService.create(this.course.id!, this.exam));

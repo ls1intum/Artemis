@@ -8,6 +8,7 @@ import { Injectable } from '@angular/core';
 import { ActivatedRouteSnapshot, Resolve } from '@angular/router';
 import { filter, map, Observable, of } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
+import { tap } from 'rxjs/operators';
 
 @Injectable({ providedIn: 'root' })
 export class ExamResolve implements Resolve<Exam> {
@@ -23,7 +24,15 @@ export class ExamResolve implements Resolve<Exam> {
         const examId = route.params['examId'] ? route.params['examId'] : undefined;
         const withStudents = route.data['requestOptions'] ? route.data['requestOptions'].withStudents : false;
         const withExerciseGroups = route.data['requestOptions'] ? route.data['requestOptions'].withExerciseGroups : false;
-        if (courseId && examId) {
+        const isImport = route.toString().includes('import');
+        if (isImport && examId) {
+            // When importing an exam, the courseId cannot be used, as the exam.course.id may deviate from the target course id
+            // Additionally, the exercises are needed to select the exercises, that should be imported alongside the exam
+            return this.examManagementService.findWithExercisesAndWithoutCourseId(examId).pipe(
+                filter((response: HttpResponse<Exam>) => response.ok),
+                map((response: HttpResponse<Exam>) => response.body!),
+            );
+        } else if (courseId && examId) {
             return this.examManagementService.find(courseId, examId, withStudents, withExerciseGroups).pipe(
                 filter((response: HttpResponse<Exam>) => response.ok),
                 map((response: HttpResponse<Exam>) => response.body!),

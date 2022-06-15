@@ -202,6 +202,41 @@ public class ExamResource {
     }
 
     /**
+     * POST /courses/{courseId}/exam-import : Imports a new exam with exercises.
+     *
+     * @param courseId         the course to which the exam belongs
+     * @param examToBeImported the exam to import / create
+     * @return the ResponseEntity with status 201 (Created) and with body the newly imported exam, or with status 400 (Bad Request) if the exam has already an ID
+     * @throws URISyntaxException if the Location URI syntax is incorrect
+     */
+    @PostMapping("/courses/{courseId}/exam-import")
+    @PreAuthorize("hasRole('INSTRUCTOR')")
+    public ResponseEntity<Exam> importExam(@PathVariable Long courseId, @RequestBody Exam examToBeImported) throws URISyntaxException {
+        log.debug("REST request to create an exam : {}", examToBeImported);
+
+        // Step 1: Exam Import without Exercises
+        if (examToBeImported.getId() != null) {
+            throw new BadRequestAlertException("A imported exam cannot already have an ID", ENTITY_NAME, "idexists");
+        }
+
+        checkForExamConflictsElseThrow(courseId, examToBeImported);
+        examAccessService.checkCourseAccessForInstructorElseThrow(courseId);
+
+        List<ExerciseGroup> exerciseGroups = examToBeImported.getExerciseGroups();
+        // We need to set the Exercise Groups to null, because the Exercises are imported in the next step
+        examToBeImported.setExerciseGroups(null);
+
+        Exam result = examRepository.save(examToBeImported);
+
+        if (result.isMonitoring()) {
+            examMonitoringScheduleService.scheduleExamActivitySave(result.getId());
+        }
+
+        return ResponseEntity.created(new URI("/api/courses/" + courseId + "/exams/" + result.getId()))
+                .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, result.getTitle())).body(result);
+    }
+
+    /**
      * Checks if the input values are set correctly. More details in the corresponding methods
      *
      * @param courseId the exam should belong to.
@@ -302,6 +337,24 @@ public class ExamResource {
     public ResponseEntity<SearchResultPageDTO<Exam>> getAllExamsOnPage(PageableSearchDTO<String> search) {
         final var user = userRepository.getUserWithGroupsAndAuthorities();
         return ResponseEntity.ok(examService.getAllOnPageWithSize(search, user));
+    }
+
+    /**
+     * GET /exams/{examId} : Find an exam by id with exercises for the exam import
+     *
+     * @param examId the exam to find
+     * @return the ResponseEntity with status 200 (OK) and with the found exam as body
+     */
+    @GetMapping("/exams/{examId}")
+    @PreAuthorize("hasRole('INSTRUCTOR')")
+    public ResponseEntity<Exam> getExamForImportWithExercises(@PathVariable Long examId) {
+        log.debug("REST request to get exam : {} for import with exercises", examId);
+
+        Exam exam = examService.findByIdWithExerciseGroupsAndExercisesElseThrow(examId);
+        examAccessService.checkCourseAndExamAccessForInstructorElseThrow(exam.getCourse().getId(), examId);
+
+        examService.setExamProperties(exam);
+        return ResponseEntity.ok(exam);
     }
 
     /**

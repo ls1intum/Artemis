@@ -73,4 +73,11 @@ public class ExerciseGroup extends DomainObject {
     public void addExercise(Exercise exercise) {
         this.exercises.add(exercise);
     }
+
+    public ExerciseGroup copyExerciseGroup(ExerciseGroup exerciseGroupToCopy) {
+        ExerciseGroup exerciseGroupCopied = new ExerciseGroup();
+        exerciseGroupCopied.title = exerciseGroupToCopy.getTitle();
+        exerciseGroupCopied.isMandatory = exerciseGroupToCopy.getIsMandatory();
+        return exerciseGroupCopied;
+    }
 }

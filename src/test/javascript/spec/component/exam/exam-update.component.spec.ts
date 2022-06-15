@@ -29,6 +29,9 @@ import { HelpIconComponent } from 'app/shared/components/help-icon.component';
 import { ArtemisExamModePickerModule } from 'app/exam/manage/exams/exam-mode-picker/exam-mode-picker.module';
 import { CustomMinDirective } from 'app/shared/validators/custom-min-validator.directive';
 import { CustomMaxDirective } from 'app/shared/validators/custom-max-validator.directive';
+import { User } from 'app/core/user/user.model';
+import { StudentExam } from 'app/entities/student-exam.model';
+import { MockActivatedRoute } from '../../helpers/mocks/activated-route/mock-activated-route';
 
 @Component({
     template: '',
@@ -44,290 +47,429 @@ describe('Exam Update Component', () => {
 
     const course = new Course();
     course.id = 1;
+
+    const timeNow = dayjs();
+
     const routes = [
         { path: 'course-management/:courseId/exams/:examId', component: DummyComponent },
         { path: 'course-management/:courseId/exams', component: DummyComponent },
+        { path: 'course-management/:courseId/exams/import/:examId', component: DummyComponent },
     ];
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({
-            imports: [
-                RouterTestingModule.withRoutes(routes),
-                MockModule(NgbModule),
-                TranslateModule.forRoot(),
-                FontAwesomeTestingModule,
-                FormsModule,
-                HttpClientModule,
-                ArtemisExamModePickerModule,
-            ],
-            declarations: [
-                ExamUpdateComponent,
-                MockComponent(FormDateTimePickerComponent),
-                MockComponent(MarkdownEditorComponent),
-                MockComponent(DataTableComponent),
-                DummyComponent,
-                MockPipe(ArtemisTranslatePipe),
-                MockComponent(HelpIconComponent),
-                MockDirective(CustomMinDirective),
-                MockDirective(CustomMaxDirective),
-            ],
-            providers: [
-                { provide: LocalStorageService, useClass: MockSyncStorage },
-                { provide: SessionStorageService, useClass: MockSyncStorage },
-                MockDirective(TranslateDirective),
-                {
-                    provide: ActivatedRoute,
-                    useValue: {
-                        data: {
-                            subscribe: (fn: (value: Params) => void) =>
-                                fn({
-                                    exam,
+    describe('create and update exam', () => {
+        beforeEach(() => {
+            TestBed.configureTestingModule({
+                imports: [
+                    RouterTestingModule.withRoutes(routes),
+                    MockModule(NgbModule),
+                    TranslateModule.forRoot(),
+                    FontAwesomeTestingModule,
+                    FormsModule,
+                    HttpClientModule,
+                    ArtemisExamModePickerModule,
+                ],
+                declarations: [
+                    ExamUpdateComponent,
+                    MockComponent(FormDateTimePickerComponent),
+                    MockComponent(MarkdownEditorComponent),
+                    MockComponent(DataTableComponent),
+                    DummyComponent,
+                    MockPipe(ArtemisTranslatePipe),
+                    MockComponent(HelpIconComponent),
+                    MockDirective(CustomMinDirective),
+                    MockDirective(CustomMaxDirective),
+                ],
+                providers: [
+                    { provide: LocalStorageService, useClass: MockSyncStorage },
+                    { provide: SessionStorageService, useClass: MockSyncStorage },
+                    MockDirective(TranslateDirective),
+                    {
+                        provide: ActivatedRoute,
+                        useValue: {
+                            data: {
+                                subscribe: (fn: (value: Params) => void) =>
+                                    fn({
+                                        exam,
+                                    }),
+                            },
+                            snapshot: {
+                                paramMap: convertToParamMap({
+                                    courseId: '1',
                                 }),
-                        },
-                        snapshot: {
-                            paramMap: convertToParamMap({
-                                courseId: '1',
-                            }),
+                            },
                         },
                     },
-                },
-                MockProvider(AlertService),
-                MockProvider(CourseManagementService, {
-                    find: () => {
-                        return of(
-                            new HttpResponse({
-                                body: course,
-                                status: 200,
-                            }),
-                        );
-                    },
-                }),
-                MockProvider(GradingSystemService, {
-                    findGradingScaleForExam: () => {
-                        return of(
-                            new HttpResponse({
-                                body: new GradingScale(),
-                                status: 200,
-                            }),
-                        );
-                    },
-                }),
-                MockProvider(ExamManagementService, {
-                    create: () => {
-                        return of(
-                            new HttpResponse({
-                                body: {},
-                                status: 200,
-                            }),
-                        );
-                    },
-                    update: () => {
-                        return of(
-                            new HttpResponse({
-                                body: {},
-                                status: 200,
-                            }),
-                        );
-                    },
-                }),
-            ],
-        }).compileComponents();
+                    MockProvider(AlertService),
+                    MockProvider(CourseManagementService, {
+                        find: () => {
+                            return of(
+                                new HttpResponse({
+                                    body: course,
+                                    status: 200,
+                                }),
+                            );
+                        },
+                    }),
+                    MockProvider(GradingSystemService, {
+                        findGradingScaleForExam: () => {
+                            return of(
+                                new HttpResponse({
+                                    body: new GradingScale(),
+                                    status: 200,
+                                }),
+                            );
+                        },
+                    }),
+                    MockProvider(ExamManagementService, {
+                        create: () => {
+                            return of(
+                                new HttpResponse({
+                                    body: {},
+                                    status: 200,
+                                }),
+                            );
+                        },
+                        update: () => {
+                            return of(
+                                new HttpResponse({
+                                    body: {},
+                                    status: 200,
+                                }),
+                            );
+                        },
+                    }),
+                ],
+            }).compileComponents();
 
-        fixture = TestBed.createComponent(ExamUpdateComponent);
-        component = fixture.componentInstance;
-        examManagementService = fixture.debugElement.injector.get(ExamManagementService);
-        const route = TestBed.inject(ActivatedRoute);
-        route.url = of([{ path: '' } as UrlSegment]);
+            fixture = TestBed.createComponent(ExamUpdateComponent);
+            component = fixture.componentInstance;
+            examManagementService = fixture.debugElement.injector.get(ExamManagementService);
+            const route = TestBed.inject(ActivatedRoute);
+            route.url = of([{ path: '' } as UrlSegment]);
+        });
+
+        afterEach(() => {
+            jest.restoreAllMocks();
+        });
+
+        it('should initialize', () => {
+            fixture.detectChanges();
+            expect(fixture).not.toBeNull();
+            expect(component.exam).not.toBeNull();
+            expect(component.exam.course).toEqual(course);
+            expect(component.exam.gracePeriod).toBe(180);
+            expect(component.exam.numberOfCorrectionRoundsInExam).toBe(1);
+            expect(component.exam.testExam).toBeFalse();
+            expect(component.exam.workingTime).toBe(0);
+            expect(component.isImport).toBeFalse();
+        });
+
+        it('should validate the dates correctly', () => {
+            exam.visibleDate = dayjs().add(1, 'hours');
+            exam.startDate = dayjs().add(2, 'hours');
+            exam.endDate = dayjs().add(3, 'hours');
+            exam.workingTime = 3600;
+            fixture.detectChanges();
+            expect(component.isValidConfiguration).toBeTrue();
+
+            exam.publishResultsDate = dayjs().add(4, 'hours');
+            exam.examStudentReviewStart = dayjs().add(5, 'hours');
+            exam.examStudentReviewEnd = dayjs().add(6, 'hours');
+            fixture.detectChanges();
+            expect(component.isValidConfiguration).toBeTrue();
+
+            exam.visibleDate = undefined;
+            exam.startDate = undefined;
+            exam.endDate = undefined;
+            fixture.detectChanges();
+            expect(component.isValidConfiguration).toBeFalse();
+
+            exam.visibleDate = dayjs().add(1, 'hours');
+            exam.startDate = dayjs().add(2, 'hours');
+            exam.endDate = dayjs().add(3, 'hours');
+            exam.examStudentReviewEnd = undefined;
+            fixture.detectChanges();
+            expect(component.isValidConfiguration).toBeFalse();
+
+            exam.examStudentReviewStart = dayjs().add(6, 'hours');
+            exam.examStudentReviewEnd = dayjs().add(5, 'hours');
+            fixture.detectChanges();
+            expect(component.isValidConfiguration).toBeFalse();
+
+            exam.examStudentReviewStart = undefined;
+            fixture.detectChanges();
+            expect(component.isValidConfiguration).toBeFalse();
+        });
+
+        it('should update', fakeAsync(() => {
+            fixture.detectChanges();
+
+            const updateSpy = jest.spyOn(examManagementService, 'update');
+
+            // trigger save
+            component.save();
+            tick();
+            expect(updateSpy).toHaveBeenCalledOnce();
+            expect(component.isSaving).toBeFalse();
+        }));
+
+        it('should calculate the working time for RealExams correctly', () => {
+            exam.testExam = false;
+
+            exam.startDate = undefined;
+            exam.endDate = dayjs().add(2, 'hours');
+            fixture.detectChanges();
+            // Without a valid startDate, the workingTime should be 0
+            // exam.workingTime is stored in seconds
+            expect(exam.workingTime).toBe(0);
+            // the component returns the workingTime in Minutes
+            expect(component.calculateWorkingTime).toBe(0);
+
+            exam.startDate = dayjs().add(0, 'hours');
+            exam.endDate = dayjs().add(2, 'hours');
+            fixture.detectChanges();
+            expect(exam.workingTime).toBe(7200);
+            expect(component.calculateWorkingTime).toBe(120);
+
+            exam.startDate = dayjs().add(0, 'hours');
+            exam.endDate = undefined;
+            fixture.detectChanges();
+            // Without an endDate, the working time should be 0;
+            expect(exam.workingTime).toBe(0);
+            expect(component.calculateWorkingTime).toBe(0);
+        });
+
+        it('should not calculate the working time for testExams', () => {
+            exam.testExam = true;
+            exam.workingTime = 3600;
+            exam.startDate = dayjs().add(0, 'hours');
+            exam.endDate = dayjs().add(12, 'hours');
+            fixture.detectChanges();
+            expect(exam.workingTime).toBe(3600);
+            expect(component.calculateWorkingTime).toBe(60);
+        });
+
+        it('validates the working time for TestExams correctly', () => {
+            exam.testExam = true;
+            exam.workingTime = undefined;
+            fixture.detectChanges();
+            expect(component.validateWorkingTime).toBeFalse();
+
+            exam.startDate = undefined;
+            exam.endDate = undefined;
+            expect(component.validateWorkingTime).toBeFalse();
+
+            exam.startDate = dayjs().add(0, 'hours');
+            exam.workingTime = 3600;
+            exam.endDate = dayjs().subtract(2, 'hours');
+            expect(component.validateWorkingTime).toBeFalse();
+
+            exam.endDate = dayjs().add(2, 'hours');
+            expect(component.validateWorkingTime).toBeTrue();
+
+            exam.workingTime = 7200;
+            expect(component.validateWorkingTime).toBeTrue();
+
+            exam.workingTime = 10800;
+            expect(component.validateWorkingTime).toBeFalse();
+        });
+
+        it('validates the working time for RealExams correctly', () => {
+            exam.testExam = false;
+
+            exam.workingTime = undefined;
+            exam.startDate = undefined;
+            exam.endDate = undefined;
+            fixture.detectChanges();
+            expect(component.validateWorkingTime).toBeFalse();
+
+            exam.workingTime = 3600;
+            expect(component.validateWorkingTime).toBeFalse();
+
+            exam.startDate = dayjs().add(0, 'hours');
+            expect(component.validateWorkingTime).toBeFalse();
+
+            exam.endDate = dayjs().add(1, 'hours');
+            expect(component.validateWorkingTime).toBeTrue();
+        });
+
+        it('should correctly catch HTTPError when updating the exam', fakeAsync(() => {
+            const alertService = TestBed.inject(AlertService);
+            const httpError = new HttpErrorResponse({ error: 'Forbidden', status: 403 });
+            fixture.detectChanges();
+
+            const alertServiceSpy = jest.spyOn(alertService, 'error');
+            const updateStub = jest.spyOn(examManagementService, 'update').mockReturnValue(throwError(() => httpError));
+
+            // trigger save
+            component.save();
+            tick();
+            expect(alertServiceSpy).toHaveBeenCalledOnce();
+            expect(component.isSaving).toBeFalse();
+
+            updateStub.mockRestore();
+        }));
+
+        it('should create', fakeAsync(() => {
+            exam.id = undefined;
+            fixture.detectChanges();
+
+            const createSpy = jest.spyOn(examManagementService, 'create');
+
+            // trigger save
+            component.save();
+            tick();
+            expect(createSpy).toHaveBeenCalledOnce();
+            expect(component.isSaving).toBeFalse();
+        }));
+
+        it('should correctly catch HTTPError when creating the exam', fakeAsync(() => {
+            const alertService = TestBed.inject(AlertService);
+            const httpError = new HttpErrorResponse({ error: 'Forbidden', status: 403 });
+            fixture.detectChanges();
+
+            const alertServiceSpy = jest.spyOn(alertService, 'error');
+            const createStub = jest.spyOn(examManagementService, 'create').mockReturnValue(throwError(() => httpError));
+
+            // trigger save
+            component.save();
+            tick();
+            expect(alertServiceSpy).toHaveBeenCalledOnce();
+            expect(component.isSaving).toBeFalse();
+
+            createStub.mockRestore();
+        }));
     });
 
-    afterEach(() => {
-        jest.restoreAllMocks();
+    describe('import exam', () => {
+        const examForImport = {
+            id: 3,
+            title: 'RealExam for Testing',
+            testExam: true,
+            examiner: 'Bruegge',
+            moduleNumber: 'IN0006',
+            courseName: 'Artemis',
+            visibleDate: timeNow.subtract(2, 'hours'),
+            startDate: timeNow.subtract(1, 'hours'),
+            endDate: timeNow.add(1, 'hours'),
+            workingTime: 2 * 60 * 60,
+            gracePeriod: 90,
+            maxPoints: 15,
+            numberOfExercisesInExam: 5,
+            randomizeExerciseOrder: true,
+            publishResultsDate: timeNow.add(1, 'days'),
+            examStudentReviewStart: timeNow.add(2, 'days'),
+            examStudentReviewEnd: timeNow.add(3, 'days'),
+            numberOfCorrectionRoundsInExam: 2,
+            startText: 'Hello World',
+            endText: 'Goodbye World',
+            confirmationStartText: '111',
+            confirmationEndText: '222',
+            course: course,
+            numberOfRegisteredUsers: 1,
+            registeredUsers: [new User(5)],
+            studentExams: [new StudentExam()],
+        } as Exam;
+
+        beforeEach(() => {
+            TestBed.configureTestingModule({
+                imports: [
+                    RouterTestingModule.withRoutes(routes),
+                    MockModule(NgbModule),
+                    TranslateModule.forRoot(),
+                    FontAwesomeTestingModule,
+                    FormsModule,
+                    HttpClientModule,
+                    ArtemisExamModePickerModule,
+                ],
+                declarations: [
+                    ExamUpdateComponent,
+                    MockComponent(FormDateTimePickerComponent),
+                    MockComponent(MarkdownEditorComponent),
+                    MockComponent(DataTableComponent),
+                    DummyComponent,
+                    MockPipe(ArtemisTranslatePipe),
+                    MockComponent(HelpIconComponent),
+                    MockDirective(CustomMinDirective),
+                    MockDirective(CustomMaxDirective),
+                ],
+                providers: [
+                    { provide: LocalStorageService, useClass: MockSyncStorage },
+                    { provide: SessionStorageService, useClass: MockSyncStorage },
+                    { provide: ActivatedRoute, useClass: new MockActivatedRoute() },
+                    MockDirective(TranslateDirective),
+                    MockProvider(AlertService),
+                    MockProvider(CourseManagementService, {
+                        find: () => {
+                            return of(
+                                new HttpResponse({
+                                    body: course,
+                                    status: 200,
+                                }),
+                            );
+                        },
+                    }),
+                    MockProvider(GradingSystemService, {
+                        findGradingScaleForExam: () => {
+                            return of(
+                                new HttpResponse({
+                                    body: new GradingScale(),
+                                    status: 200,
+                                }),
+                            );
+                        },
+                    }),
+                    MockProvider(ExamManagementService, {
+                        create: () => {
+                            return of(
+                                new HttpResponse({
+                                    body: {},
+                                    status: 200,
+                                }),
+                            );
+                        },
+                        update: () => {
+                            return of(
+                                new HttpResponse({
+                                    body: {},
+                                    status: 200,
+                                }),
+                            );
+                        },
+                    }),
+                ],
+            }).compileComponents();
+
+            fixture = TestBed.createComponent(ExamUpdateComponent);
+            component = fixture.componentInstance;
+            examManagementService = fixture.debugElement.injector.get(ExamManagementService);
+
+            const route = TestBed.inject(ActivatedRoute);
+            route.params = of({ courseId: 1, examId: examForImport.id });
+            route.url = of([{ path: 'course' } as UrlSegment, { path: 'exam' } as UrlSegment, { path: 'import' } as UrlSegment]);
+            route.data = of({ examForImport });
+            // const route = TestBed.inject(ActivatedRoute);
+            // route.url = of([{ path: 'import' } as UrlSegment]);
+        });
+
+        afterEach(() => {
+            jest.restoreAllMocks();
+        });
+
+        it('should correctly initialize an import', () => {
+            fixture.detectChanges();
+            expect(fixture).not.toBeNull();
+            expect(component.exam).not.toBeNull();
+
+            exam.startDate = undefined;
+            exam.endDate = undefined;
+            exam.publishResultsDate = undefined;
+            exam.examStudentReviewStart = undefined;
+            exam.examStudentReviewEnd = undefined;
+            exam.id = undefined;
+
+            expect(component.exam).toEqual(exam);
+            expect(component.isImport).toBeTrue();
+        });
     });
-
-    it('should initialize', () => {
-        fixture.detectChanges();
-        expect(fixture).not.toBeNull();
-        expect(component.exam).not.toBeNull();
-        expect(component.exam.course).toEqual(course);
-        expect(component.exam.gracePeriod).toBe(180);
-        expect(component.exam.numberOfCorrectionRoundsInExam).toBe(1);
-        expect(component.exam.testExam).toBeFalse();
-        expect(component.exam.workingTime).toBe(0);
-    });
-
-    it('should validate the dates correctly', () => {
-        exam.visibleDate = dayjs().add(1, 'hours');
-        exam.startDate = dayjs().add(2, 'hours');
-        exam.endDate = dayjs().add(3, 'hours');
-        exam.workingTime = 3600;
-        fixture.detectChanges();
-        expect(component.isValidConfiguration).toBeTrue();
-
-        exam.publishResultsDate = dayjs().add(4, 'hours');
-        exam.examStudentReviewStart = dayjs().add(5, 'hours');
-        exam.examStudentReviewEnd = dayjs().add(6, 'hours');
-        fixture.detectChanges();
-        expect(component.isValidConfiguration).toBeTrue();
-
-        exam.visibleDate = undefined;
-        exam.startDate = undefined;
-        exam.endDate = undefined;
-        fixture.detectChanges();
-        expect(component.isValidConfiguration).toBeFalse();
-
-        exam.visibleDate = dayjs().add(1, 'hours');
-        exam.startDate = dayjs().add(2, 'hours');
-        exam.endDate = dayjs().add(3, 'hours');
-        exam.examStudentReviewEnd = undefined;
-        fixture.detectChanges();
-        expect(component.isValidConfiguration).toBeFalse();
-
-        exam.examStudentReviewStart = dayjs().add(6, 'hours');
-        exam.examStudentReviewEnd = dayjs().add(5, 'hours');
-        fixture.detectChanges();
-        expect(component.isValidConfiguration).toBeFalse();
-
-        exam.examStudentReviewStart = undefined;
-        fixture.detectChanges();
-        expect(component.isValidConfiguration).toBeFalse();
-    });
-
-    it('should update', fakeAsync(() => {
-        fixture.detectChanges();
-
-        const updateSpy = jest.spyOn(examManagementService, 'update');
-
-        // trigger save
-        component.save();
-        tick();
-        expect(updateSpy).toHaveBeenCalledOnce();
-        expect(component.isSaving).toBeFalse();
-    }));
-
-    it('should calculate the working time for RealExams correctly', () => {
-        exam.testExam = false;
-
-        exam.startDate = undefined;
-        exam.endDate = dayjs().add(2, 'hours');
-        fixture.detectChanges();
-        // Without a valid startDate, the workingTime should be 0
-        // exam.workingTime is stored in seconds
-        expect(exam.workingTime).toBe(0);
-        // the component returns the workingTime in Minutes
-        expect(component.calculateWorkingTime).toBe(0);
-
-        exam.startDate = dayjs().add(0, 'hours');
-        exam.endDate = dayjs().add(2, 'hours');
-        fixture.detectChanges();
-        expect(exam.workingTime).toBe(7200);
-        expect(component.calculateWorkingTime).toBe(120);
-
-        exam.startDate = dayjs().add(0, 'hours');
-        exam.endDate = undefined;
-        fixture.detectChanges();
-        // Without an endDate, the working time should be 0;
-        expect(exam.workingTime).toBe(0);
-        expect(component.calculateWorkingTime).toBe(0);
-    });
-
-    it('should not calculate the working time for testExams', () => {
-        exam.testExam = true;
-        exam.workingTime = 3600;
-        exam.startDate = dayjs().add(0, 'hours');
-        exam.endDate = dayjs().add(12, 'hours');
-        fixture.detectChanges();
-        expect(exam.workingTime).toBe(3600);
-        expect(component.calculateWorkingTime).toBe(60);
-    });
-
-    it('validates the working time for TestExams correctly', () => {
-        exam.testExam = true;
-        exam.workingTime = undefined;
-        fixture.detectChanges();
-        expect(component.validateWorkingTime).toBeFalse();
-
-        exam.startDate = undefined;
-        exam.endDate = undefined;
-        expect(component.validateWorkingTime).toBeFalse();
-
-        exam.startDate = dayjs().add(0, 'hours');
-        exam.workingTime = 3600;
-        exam.endDate = dayjs().subtract(2, 'hours');
-        expect(component.validateWorkingTime).toBeFalse();
-
-        exam.endDate = dayjs().add(2, 'hours');
-        expect(component.validateWorkingTime).toBeTrue();
-
-        exam.workingTime = 7200;
-        expect(component.validateWorkingTime).toBeTrue();
-
-        exam.workingTime = 10800;
-        expect(component.validateWorkingTime).toBeFalse();
-    });
-
-    it('validates the working time for RealExams correctly', () => {
-        exam.testExam = false;
-
-        exam.workingTime = undefined;
-        exam.startDate = undefined;
-        exam.endDate = undefined;
-        fixture.detectChanges();
-        expect(component.validateWorkingTime).toBeFalse();
-
-        exam.workingTime = 3600;
-        expect(component.validateWorkingTime).toBeFalse();
-
-        exam.startDate = dayjs().add(0, 'hours');
-        expect(component.validateWorkingTime).toBeFalse();
-
-        exam.endDate = dayjs().add(1, 'hours');
-        expect(component.validateWorkingTime).toBeTrue();
-    });
-
-    it('should correctly catch HTTPError when updating the exam', fakeAsync(() => {
-        const alertService = TestBed.inject(AlertService);
-        const httpError = new HttpErrorResponse({ error: 'Forbidden', status: 403 });
-        fixture.detectChanges();
-
-        const alertServiceSpy = jest.spyOn(alertService, 'error');
-        const updateStub = jest.spyOn(examManagementService, 'update').mockReturnValue(throwError(() => httpError));
-
-        // trigger save
-        component.save();
-        tick();
-        expect(alertServiceSpy).toHaveBeenCalledOnce();
-        expect(component.isSaving).toBeFalse();
-
-        updateStub.mockRestore();
-    }));
-
-    it('should create', fakeAsync(() => {
-        exam.id = undefined;
-        fixture.detectChanges();
-
-        const createSpy = jest.spyOn(examManagementService, 'create');
-
-        // trigger save
-        component.save();
-        tick();
-        expect(createSpy).toHaveBeenCalledOnce();
-        expect(component.isSaving).toBeFalse();
-    }));
-
-    it('should correctly catch HTTPError when creating the exam', fakeAsync(() => {
-        const alertService = TestBed.inject(AlertService);
-        const httpError = new HttpErrorResponse({ error: 'Forbidden', status: 403 });
-        fixture.detectChanges();
-
-        const alertServiceSpy = jest.spyOn(alertService, 'error');
-        const createStub = jest.spyOn(examManagementService, 'create').mockReturnValue(throwError(() => httpError));
-
-        // trigger save
-        component.save();
-        tick();
-        expect(alertServiceSpy).toHaveBeenCalledOnce();
-        expect(component.isSaving).toBeFalse();
-
-        createStub.mockRestore();
-    }));
 });

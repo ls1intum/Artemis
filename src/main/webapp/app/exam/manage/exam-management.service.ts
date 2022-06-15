@@ -51,6 +51,18 @@ export class ExamManagementService {
     }
 
     /**
+     * Imports an exam on the server using a PUT request.
+     * @param courseId The course id.
+     * @param exam The exam with exercises to import.
+     */
+    import(courseId: number, exam: Exam): Observable<EntityResponseType> {
+        const copy = ExamManagementService.convertDateFromClient(exam);
+        return this.http
+            .put<Exam>(`${this.resourceUrl}/${courseId}/exam-import`, copy, { observe: 'response' })
+            .pipe(map((res: EntityResponseType) => ExamManagementService.convertDateFromServer(res)));
+    }
+
+    /**
      * Find an exam on the server using a GET request.
      * @param courseId The course id.
      * @param examId The id of the exam to get.
@@ -61,6 +73,23 @@ export class ExamManagementService {
         const options = createRequestOption({ withStudents, withExerciseGroups });
         return this.http
             .get<Exam>(`${this.resourceUrl}/${courseId}/exams/${examId}`, { params: options, observe: 'response' })
+            .pipe(map((res: EntityResponseType) => ExamManagementService.convertDateFromServer(res)))
+            .pipe(
+                tap((res: EntityResponseType) => {
+                    if (res.body?.course) {
+                        this.accountService.setAccessRightsForCourse(res.body.course);
+                    }
+                }),
+            );
+    }
+
+    /**
+     * Find an exam on the server using a GET request with exercises for the exam import
+     * @param examId The id of the exam to get.
+     */
+    findWithExercisesAndWithoutCourseId(examId: number): Observable<EntityResponseType> {
+        return this.http
+            .get<Exam>(`api/exams/${examId}`, { observe: 'response' })
             .pipe(map((res: EntityResponseType) => ExamManagementService.convertDateFromServer(res)))
             .pipe(
                 tap((res: EntityResponseType) => {

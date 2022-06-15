@@ -108,6 +108,7 @@ export const examManagementRoute: Routes = [
         },
         canActivate: [UserRouteAccessService],
     },
+    // Exam Import
     {
         path: 'import/:examId',
         component: ExamUpdateComponent,

@@ -140,13 +140,13 @@ export class ExamManagementComponent implements OnInit, OnDestroy {
     openImportModal() {
         const importBaseRoute = ['/course-management', this.course.id, 'exams', 'import'];
 
-        const programmingImportModalRef = this.modalService.open(ExamImportComponent, {
+        const examImportModalRef = this.modalService.open(ExamImportComponent, {
             size: 'lg',
             backdrop: 'static',
         });
-        programmingImportModalRef.result.then(
-            (result: Exam) => {
-                importBaseRoute.push(result.id);
+        examImportModalRef.result.then(
+            (exam: Exam) => {
+                importBaseRoute.push(exam.id);
                 this.router.navigate(importBaseRoute);
             },
             () => {},
