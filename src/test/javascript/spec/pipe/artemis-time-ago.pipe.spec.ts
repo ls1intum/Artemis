@@ -30,7 +30,7 @@ describe('ArtemisTimeAgoPipe', () => {
         { value: dayjs().add(5, 'minutes'), expected: { en: 'in 5 minutes', de: 'in 5 Minuten' } },
         { value: dayjs().add(10, 'minutes'), expected: { en: 'in 10 minutes', de: 'in 10 Minuten' } },
         { value: dayjs().add(2, 'hours'), expected: { en: 'in 2 hours', de: 'in 2 Stunden' } },
-        { value: dayjs().add(-5, 'minutes'), expected: { en: '2 minutes ago', de: 'vor 2 Minuten' } },
+        { value: dayjs().add(-5, 'minutes'), expected: { en: '5 minutes ago', de: 'vor 5 Minuten' } },
         { value: dayjs().add(-10, 'minutes'), expected: { en: '10 minutes ago', de: 'vor 10 Minuten' } },
         { value: dayjs().add(-2, 'hours'), expected: { en: '2 hours ago', de: 'vor 2 Stunden' } },
     ])('returns the correct time and switches the language correctly', ({ value, expected }) => {
