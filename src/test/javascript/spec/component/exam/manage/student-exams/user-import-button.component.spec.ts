@@ -39,6 +39,6 @@ describe('UsersImportButtonComponent', () => {
         comp.openUsersImportDialog(new MouseEvent('click'));
         const openStudentsExamImportDialogButton = fixture.debugElement.query(By.css('jhi-button'));
         expect(openStudentsExamImportDialogButton).not.toBe(null);
-        expect(modalServiceOpenStub).toHaveBeenCalledTimes(1);
+        expect(modalServiceOpenStub).toHaveBeenCalledOnce();
     });
 });

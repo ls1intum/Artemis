@@ -205,7 +205,7 @@ describe('CourseExercisesComponent', () => {
 
         component.toggleFilters(filters);
 
-        expect(localStorageSpy).toHaveBeenCalledTimes(1);
+        expect(localStorageSpy).toHaveBeenCalledOnce();
         expect(component.activeFilters).toEqual(new Set());
 
         for (let i = 1; i < 8; i++) {

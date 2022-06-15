@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.service.scheduled.quiz;
+package de.tum.in.www1.artemis.service.scheduled.cache.quiz;
 
 import static de.tum.in.www1.artemis.service.util.TimeLogUtil.formatDurationFrom;
 
@@ -41,6 +41,7 @@ import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.QuizMessagingService;
 import de.tum.in.www1.artemis.service.QuizStatisticService;
+import de.tum.in.www1.artemis.service.scheduled.cache.Cache;
 
 @Service
 public class QuizScheduleService {
@@ -111,7 +112,7 @@ public class QuizScheduleService {
      */
     public void updateSubmission(Long quizExerciseId, String username, QuizSubmission quizSubmission) {
         if (quizSubmission != null && quizExerciseId != null && username != null) {
-            quizCache.getTransientWriteCacheFor(quizExerciseId).getSubmissions().put(username, quizSubmission);
+            ((QuizExerciseCache) quizCache.getTransientWriteCacheFor(quizExerciseId)).getSubmissions().put(username, quizSubmission);
         }
     }
 
@@ -125,7 +126,7 @@ public class QuizScheduleService {
     public void addResultForStatisticUpdate(Long quizExerciseId, Result result) {
         log.debug("add result for statistic update for quiz {}: {}", quizExerciseId, result);
         if (quizExerciseId != null && result != null) {
-            quizCache.getTransientWriteCacheFor(quizExerciseId).getResults().put(result.getId(), result);
+            ((QuizExerciseCache) quizCache.getTransientWriteCacheFor(quizExerciseId)).getResults().put(result.getId(), result);
         }
     }
 
@@ -137,7 +138,7 @@ public class QuizScheduleService {
      */
     private void addParticipation(Long quizExerciseId, StudentParticipation participation) {
         if (quizExerciseId != null && participation != null) {
-            quizCache.getTransientWriteCacheFor(quizExerciseId).getParticipations().put(participation.getParticipantIdentifier(), participation);
+            ((QuizExerciseCache) quizCache.getTransientWriteCacheFor(quizExerciseId)).getParticipations().put(participation.getParticipantIdentifier(), participation);
         }
     }
 
@@ -153,7 +154,7 @@ public class QuizScheduleService {
         if (quizExerciseId == null || username == null) {
             return null;
         }
-        QuizSubmission quizSubmission = quizCache.getReadCacheFor(quizExerciseId).getSubmissions().get(username);
+        QuizSubmission quizSubmission = ((QuizExerciseCache) quizCache.getReadCacheFor(quizExerciseId)).getSubmissions().get(username);
         if (quizSubmission != null) {
             return quizSubmission;
         }
@@ -173,7 +174,7 @@ public class QuizScheduleService {
         if (quizExerciseId == null || username == null) {
             return null;
         }
-        return quizCache.getReadCacheFor(quizExerciseId).getParticipations().get(username);
+        return ((QuizExerciseCache) quizCache.getReadCacheFor(quizExerciseId)).getParticipations().get(username);
     }
 
     /**
@@ -186,7 +187,7 @@ public class QuizScheduleService {
         if (quizExerciseId == null) {
             return null;
         }
-        QuizExercise quizExercise = quizCache.getReadCacheFor(quizExerciseId).getExercise();
+        QuizExercise quizExercise = ((QuizExerciseCache) quizCache.getReadCacheFor(quizExerciseId)).getExercise();
         if (quizExercise == null) {
             quizExercise = quizExerciseRepository.findOneWithQuestionsAndStatistics(quizExerciseId);
             if (quizExercise != null) {
@@ -212,7 +213,7 @@ public class QuizScheduleService {
      * @return if processing of the quiz has finished
      */
     public boolean finishedProcessing(Long quizExerciseId) {
-        return quizCache.getReadCacheFor(quizExerciseId).getSubmissions().isEmpty();
+        return ((QuizExerciseCache) quizCache.getReadCacheFor(quizExerciseId)).getSubmissions().isEmpty();
     }
 
     /**
@@ -266,9 +267,10 @@ public class QuizScheduleService {
                 log.info("Stop Quiz Schedule Service already disposed/cancelled");
                 // has already been disposed (sadly there is no method to check that)
             }
-            for (QuizExerciseCache cachedQuiz : quizCache.getAllQuizExerciseCaches()) {
-                if (cachedQuiz.getQuizStart() != null)
-                    cancelScheduledQuizStart(cachedQuiz.getExerciseId());
+            for (Cache quizCache : quizCache.getAllCaches()) {
+                if (((QuizExerciseCache) quizCache).getQuizStart() != null) {
+                    cancelScheduledQuizStart(((QuizExerciseCache) quizCache).getExerciseId());
+                }
             }
             threadPoolTaskScheduler.shutdown();
             threadPoolTaskScheduler.destroy();
@@ -298,7 +300,7 @@ public class QuizScheduleService {
                     var scheduledFuture = threadPoolTaskScheduler.schedule(new QuizStartTask(quizExerciseId), delay, TimeUnit.MILLISECONDS);
                     // save scheduled future in HashMap
                     quizCache.performCacheWrite(quizExerciseId, quizExerciseCache -> {
-                        quizExerciseCache.setQuizStart(List.of(scheduledFuture.getHandler()));
+                        ((QuizExerciseCache) quizExerciseCache).setQuizStart(List.of(scheduledFuture.getHandler()));
                         return quizExerciseCache;
                     });
                 }
@@ -318,7 +320,7 @@ public class QuizScheduleService {
      * @param quizExerciseId the quiz exercise for which the quiz start should be canceled
      */
     public void cancelScheduledQuizStart(Long quizExerciseId) {
-        quizCache.getReadCacheFor(quizExerciseId).getQuizStart().forEach(taskHandler -> {
+        ((QuizExerciseCache) quizCache.getReadCacheFor(quizExerciseId)).getQuizStart().forEach(taskHandler -> {
             IScheduledFuture<?> scheduledFuture = threadPoolTaskScheduler.getScheduledFuture(taskHandler);
             try {
                 // if the task has been disposed, this will throw a StaleTaskException
@@ -338,7 +340,7 @@ public class QuizScheduleService {
             }
         });
         quizCache.performCacheWriteIfPresent(quizExerciseId, cachedQuiz -> {
-            cachedQuiz.setQuizStart(QuizExerciseCache.getEmptyQuizStartList());
+            ((QuizExerciseCache) cachedQuiz).setQuizStart(QuizExerciseCache.getEmptyQuizStartList());
             return cachedQuiz;
         });
     }
@@ -348,7 +350,7 @@ public class QuizScheduleService {
      */
     void executeQuizStartNowTask(Long quizExerciseId) {
         quizCache.performCacheWriteIfPresent(quizExerciseId, quizExerciseCache -> {
-            quizExerciseCache.getQuizStart().clear();
+            ((QuizExerciseCache) quizExerciseCache).getQuizStart().clear();
             log.debug("Removed quiz {} start tasks", quizExerciseId);
             return quizExerciseCache;
         });
@@ -403,7 +405,8 @@ public class QuizScheduleService {
         log.debug("Process cached quiz submissions");
         // global try-catch for error logging
         try {
-            for (QuizExerciseCache cachedQuiz : quizCache.getAllQuizExerciseCaches()) {
+            for (Cache cache : quizCache.getAllCaches()) {
+                QuizExerciseCache cachedQuiz = (QuizExerciseCache) cache;
                 // this way near cache is used (values will deserialize new objects)
                 Long quizExerciseId = cachedQuiz.getExerciseId();
                 // Get fresh QuizExercise from DB
@@ -516,11 +519,11 @@ public class QuizScheduleService {
 
     public void joinQuizBatch(QuizExercise quizExercise, QuizBatch quizBatch, User user) {
         log.debug("join user {} to batch {} for quiz {}", user, quizBatch, quizExercise.getId());
-        quizCache.getTransientWriteCacheFor(quizExercise.getId()).getBatches().put(user.getLogin(), quizBatch.getId());
+        ((QuizExerciseCache)quizCache.getTransientWriteCacheFor(quizExercise.getId())).getBatches().put(user.getLogin(), quizBatch.getId());
     }
 
     public Optional<Long> getQuizBatchForStudentByLogin(QuizExercise quizExercise, String login) {
-        return Optional.ofNullable(quizCache.getReadCacheFor(quizExercise.getId()).getBatches().get(login));
+        return Optional.ofNullable(((QuizExerciseCache)quizCache.getReadCacheFor(quizExercise.getId())).getBatches().get(login));
     }
 
     private void removeCachedQuiz(QuizExerciseCache cachedQuiz) {

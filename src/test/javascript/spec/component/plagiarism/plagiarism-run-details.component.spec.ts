@@ -79,7 +79,7 @@ describe('Plagiarism Run Details', () => {
 
         comp.onSelect(event);
 
-        expect(similaritySelectedStub).toHaveBeenCalledTimes(1);
+        expect(similaritySelectedStub).toHaveBeenCalledOnce();
         expect(similaritySelectedStub).toHaveBeenCalledWith({ minimumSimilarity: minimumBorder, maximumSimilarity: maximumBorder });
         jest.restoreAllMocks();
     });

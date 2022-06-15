@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.service.scheduled.quiz;
+package de.tum.in.www1.artemis.service.scheduled.cache.quiz;
 
 import java.io.Serial;
 import java.io.Serializable;

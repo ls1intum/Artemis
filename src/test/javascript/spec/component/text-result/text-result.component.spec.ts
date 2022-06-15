@@ -232,6 +232,6 @@ describe('TextResultComponent', () => {
         expect(component.textResults[0].feedback).not.toBe(undefined);
         expect(component.textResults[0].feedback!.isSubsequent).toBe(undefined);
         expect(component.textResults[1].feedback).not.toBe(undefined);
-        expect(component.textResults[1].feedback!.isSubsequent).toBe(true);
+        expect(component.textResults[1].feedback!.isSubsequent).toBeTrue();
     });
 });

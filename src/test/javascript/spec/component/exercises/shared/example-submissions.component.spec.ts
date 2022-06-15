@@ -79,7 +79,7 @@ describe('Example Submission Component', () => {
         component.deleteExampleSubmission(0);
 
         // THEN
-        expect(deleteStub).toHaveBeenCalledTimes(1);
+        expect(deleteStub).toHaveBeenCalledOnce();
         expect(exercise.exampleSubmissions?.length).toBe(1);
     });
 
@@ -90,7 +90,7 @@ describe('Example Submission Component', () => {
         const alertServiceSpy = jest.spyOn(alertService, 'error');
         component.deleteExampleSubmission(0);
 
-        expect(alertServiceSpy).toHaveBeenCalledTimes(1);
+        expect(alertServiceSpy).toHaveBeenCalledOnce();
     });
 
     it('should get the submission size', () => {
@@ -110,7 +110,7 @@ describe('Example Submission Component', () => {
         component.ngOnInit();
         expect(component.exercise.exampleSubmissions).not.toBe(undefined);
         expect(component.exercise.exampleSubmissions![0].submission?.submissionSize).toBe(2);
-        expect(getSubmissionSizeSpy).toHaveBeenCalledTimes(1);
+        expect(getSubmissionSizeSpy).toHaveBeenCalledOnce();
     });
 
     it('should not open import modal', () => {
@@ -122,7 +122,7 @@ describe('Example Submission Component', () => {
 
         component.openImportModal();
 
-        expect(modalServiceStub).toHaveBeenCalledTimes(1);
+        expect(modalServiceStub).toHaveBeenCalledOnce();
         expect(importStub).not.toHaveBeenCalled();
     });
 
@@ -132,7 +132,7 @@ describe('Example Submission Component', () => {
 
         component.ngOnDestroy();
 
-        expect(modalServiceStub).toHaveBeenCalledTimes(1);
-        expect(modalServiceDismissSpy).toHaveBeenCalledTimes(1);
+        expect(modalServiceStub).toHaveBeenCalledOnce();
+        expect(modalServiceDismissSpy).toHaveBeenCalledOnce();
     });
 });

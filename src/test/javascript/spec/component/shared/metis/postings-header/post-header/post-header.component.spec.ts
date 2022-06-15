@@ -76,7 +76,7 @@ describe('PostHeaderComponent', () => {
         fixture.detectChanges();
         expect(getElement(debugElement, '.deleteIcon')).not.toBe(null);
         component.deletePosting();
-        expect(metisServiceDeletePostMock).toHaveBeenCalledTimes(1);
+        expect(metisServiceDeletePostMock).toHaveBeenCalledOnce();
     });
 
     it('should not display edit and delete options to tutor if posting is announcement', () => {

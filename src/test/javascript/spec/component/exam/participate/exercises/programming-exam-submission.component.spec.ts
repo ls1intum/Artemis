@@ -80,10 +80,10 @@ describe('ProgrammingExamSubmissionComponent', () => {
 
         fixture.detectChanges();
 
-        expect(domainServiceSetDomainSpy).toHaveBeenCalledTimes(1);
+        expect(domainServiceSetDomainSpy).toHaveBeenCalledOnce();
         expect(domainServiceSetDomainSpy).toHaveBeenCalledWith([DomainType.PARTICIPATION, { exercise }]);
 
-        expect(component.repositoryIsLocked).toBe(false);
+        expect(component.repositoryIsLocked).toBeFalse();
         expect(component.getExercise()).toEqual(newExercise());
     });
 
@@ -95,24 +95,24 @@ describe('ProgrammingExamSubmissionComponent', () => {
         component.exercise = programmingExercise;
         fixture.detectChanges();
 
-        expect(component.repositoryIsLocked).toBe(true);
+        expect(component.repositoryIsLocked).toBeTrue();
     });
 
     it('should change state on commit', () => {
         component.studentParticipation = newParticipation();
 
         component.onCommitStateChange(CommitState.UNDEFINED);
-        expect(component.hasSubmittedOnce).toBe(false);
+        expect(component.hasSubmittedOnce).toBeFalse();
 
         component.onCommitStateChange(CommitState.CLEAN);
 
         // After the first call with CommitState.CLEAN, component.hasSubmittedOnce must be now true
-        expect(component.hasSubmittedOnce).toBe(true);
+        expect(component.hasSubmittedOnce).toBeTrue();
 
         component.onCommitStateChange(CommitState.CLEAN);
 
-        expect(component.studentParticipation.submissions![0].submitted).toBe(true);
-        expect(component.studentParticipation.submissions![0].isSynced).toBe(true);
+        expect(component.studentParticipation.submissions![0].submitted).toBeTrue();
+        expect(component.studentParticipation.submissions![0].isSynced).toBeTrue();
     });
 
     it('should desync on file change', () => {
@@ -121,7 +121,7 @@ describe('ProgrammingExamSubmissionComponent', () => {
         component.studentParticipation.submissions![0].isSynced = true;
         component.onFileChanged();
 
-        expect(component.studentParticipation.submissions![0].isSynced).toBe(false);
+        expect(component.studentParticipation.submissions![0].isSynced).toBeFalse();
     });
 
     it('should get submission', () => {
@@ -138,6 +138,6 @@ describe('ProgrammingExamSubmissionComponent', () => {
         exercise.allowOnlineEditor = false;
         component.exercise = exercise;
 
-        expect(component.hasUnsavedChanges()).toBe(false);
+        expect(component.hasUnsavedChanges()).toBeFalse();
     });
 });

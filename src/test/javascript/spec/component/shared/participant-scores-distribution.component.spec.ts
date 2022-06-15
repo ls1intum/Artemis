@@ -129,7 +129,7 @@ describe('ParticipantScoresDistributionComponent', () => {
 
         component.ngOnChanges();
 
-        expect(component.gradingScaleExists).toBe(true);
+        expect(component.gradingScaleExists).toBeTrue();
         expect(component.xAxisLabel).toBe('artemisApp.examScores.xAxesartemisApp.examScores.xAxesSuffixNoBonus');
         expect(component.yAxisLabel).toBe('artemisApp.examScores.yAxes');
         expect(component.helpIconTooltip).toBe('instructorDashboard.courseScoreChart.gradingScaleExplanationNotBonus');
@@ -155,8 +155,8 @@ describe('ParticipantScoresDistributionComponent', () => {
 
         component.ngOnChanges();
 
-        expect(component.gradingScaleExists).toBe(true);
-        expect(component.isBonus).toBe(true);
+        expect(component.gradingScaleExists).toBeTrue();
+        expect(component.isBonus).toBeTrue();
         expect(component.xAxisLabel).toBe('artemisApp.examScores.xAxesartemisApp.examScores.xAxesSuffixBonus');
         expect(component.yAxisLabel).toBe('artemisApp.examScores.yAxes');
         expect(component.helpIconTooltip).toBe('artemisApp.examScores.gradingScaleExplanationBonus');
