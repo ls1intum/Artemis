@@ -132,7 +132,7 @@ export class PostingContentComponent implements OnInit, OnDestroy {
         // Group 2: reference pattern L{LectureId}E{ExerciseId} (Ex: L03E03)
         // globally searched for, i.e. no return after first match
         const pattern =
-            /(?<POST>#\d+)|(?<PROGRAMMING>\[programming].*\[\/programming])|(?<MODELING>\[modeling].*\[\/modeling])|(?<QUIZ>\[quiz].*\[\/quiz])|(?<TEXT>\[text].*\[\/text])|(?<FILE_UPLOAD>\[file-upload].*\[\/file-upload])|(?<LECTURE>\[lecture].*\[\/lecture])|(?<ATTACHMENT>\[attachment].*\[\/attachment])/g;
+            /(?<POST>#\d+)|(?<PROGRAMMING>\[programming].*?\[\/programming])|(?<MODELING>\[modeling].*?\[\/modeling])|(?<QUIZ>\[quiz].*?\[\/quiz])|(?<TEXT>\[text].*?\[\/text])|(?<FILE_UPLOAD>\[file-upload].*?\[\/file-upload])|(?<LECTURE>\[lecture].*?\[\/lecture])|(?<ATTACHMENT>\[attachment].*?\[\/attachment])/g;
 
         // array with PatternMatch objects per reference found in the posting content
         const patternMatches: PatternMatch[] = [];
