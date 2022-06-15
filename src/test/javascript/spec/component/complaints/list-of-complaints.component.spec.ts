@@ -319,7 +319,7 @@ describe('ListOfComplaintsComponent', () => {
             comp.resetFilterOptions();
 
             expect(comp.complaintsToShow).toEqual(openComplaints);
-            expect(comp.filterOption).toBe(undefined);
+            expect(comp.filterOption).toBeUndefined();
         }),
     );
 
