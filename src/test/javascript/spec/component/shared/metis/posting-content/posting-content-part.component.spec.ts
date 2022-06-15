@@ -8,8 +8,6 @@ import { HtmlForPostingMarkdownPipe } from 'app/shared/pipes/html-for-posting-ma
 import { getElement, getElements } from '../../../../helpers/utils/general.utils';
 import { MockQueryParamsDirective, MockRouterLinkDirective } from '../../../../helpers/mocks/directive/mock-router-link.directive';
 import { FileService } from 'app/shared/http/file.service';
-import { MetisService } from 'app/shared/metis/metis.service';
-import { MockMetisService } from '../../../../helpers/mocks/service/mock-metis-service.service';
 import { MockFileService } from '../../../../helpers/mocks/service/mock-file.service';
 import { MockRouter } from '../../../../helpers/mocks/mock-router';
 
@@ -18,7 +16,6 @@ describe('PostingContentPartComponent', () => {
     let fixture: ComponentFixture<PostingContentPartComponent>;
     let debugElement: DebugElement;
     let router: Router;
-    let metisService: MetisService;
     let fileService: FileService;
     let openAttachmentSpy: jest.SpyInstance;
     let navigateByUrlSpy: jest.SpyInstance;
@@ -36,7 +33,6 @@ describe('PostingContentPartComponent', () => {
                 MockQueryParamsDirective,
             ],
             providers: [
-                { provide: MetisService, useClass: MockMetisService },
                 { provide: FileService, useClass: MockFileService },
                 { provide: Router, useClass: MockRouter },
             ],
@@ -47,7 +43,6 @@ describe('PostingContentPartComponent', () => {
                 component = fixture.componentInstance;
                 debugElement = fixture.debugElement;
                 router = TestBed.inject(Router);
-                metisService = TestBed.inject(MetisService);
                 fileService = TestBed.inject(FileService);
 
                 navigateByUrlSpy = jest.spyOn(router, 'navigateByUrl');
@@ -110,196 +105,41 @@ describe('PostingContentPartComponent', () => {
 
             // on click should navigate to referenced post within current tab
             referenceLink.click();
-            expect(navigateByUrlSpy).toHaveBeenCalledTimes(1);
+            expect(navigateByUrlSpy).toHaveBeenCalledOnce();
             expect(openAttachmentSpy).toBeCalledTimes(0);
         });
 
-        it('should contain a reference to file upload exercise with icon', () => {
-            const referenceStr = 'File Upload Exercise';
+        it.each([
+            ['File Upload Exercise', '/courses/1/exercises/30', ReferenceType.FILE_UPLOAD, 'fa fa-file-arrow-up'],
+            ['Modeling Exercise', '/courses/1/exercises/29', ReferenceType.MODELING, 'fa fa-diagram-project'],
+            ['Quiz Exercise', '/courses/1/exercises/61', ReferenceType.QUIZ, 'fa fa-check-double'],
+            ['Programming Exercise', '/courses/1/exercises/53', ReferenceType.PROGRAMMING, 'fa fa-keyboard'],
+            ['Text Exercise', '/courses/1/exercises/28', ReferenceType.TEXT, 'fa fa-font'],
+            ['Exercise', '/courses/1/exercises/28', undefined, 'fa fa-paperclip'],
+            ['Test Lecture', '/courses/1/lectures/1/', ReferenceType.LECTURE, 'fa fa-chalkboard-user'],
+        ])('should contain a reference to artifact with icon', (referenceStr, linkToReference, referenceType, faIcon) => {
             component.postingContentPart = {
                 contentBeforeReference,
-                linkToReference: ['/courses/1/exercises/30'],
+                linkToReference: [linkToReference],
                 referenceStr,
-                referenceType: ReferenceType.FILE_UPLOAD,
+                referenceType,
                 contentAfterReference,
             } as PostingContentPart;
             fixture.detectChanges();
 
-            // should display exercise name to user
+            // should display artifact name to user
             const referenceLink = getElement(debugElement, '.reference');
             expect(referenceLink).not.toBe(null);
             expect(referenceLink.innerHTML).toInclude(referenceStr);
 
-            // should display relevant icon for file upload exercise
+            // should display relevant icon for artifact according to its type
             const icon = getElement(debugElement, 'fa-icon');
             expect(icon).not.toBe(null);
-            expect(icon.innerHTML).toInclude('fa fa-file-arrow-up');
+            expect(icon.innerHTML).toInclude(faIcon);
 
-            // on click should navigate to referenced file upload exercise within current tab
+            // on click should navigate to referenced artifact within current tab
             referenceLink.click();
-            expect(navigateByUrlSpy).toHaveBeenCalledTimes(1);
-            expect(openAttachmentSpy).toBeCalledTimes(0);
-        });
-
-        it('should contain a reference to modeling exercise with icon', () => {
-            const referenceStr = 'Modeling Exercise';
-            component.postingContentPart = {
-                contentBeforeReference,
-                linkToReference: ['/courses/1/exercises/29'],
-                referenceStr,
-                referenceType: ReferenceType.MODELING,
-                contentAfterReference,
-            } as PostingContentPart;
-            fixture.detectChanges();
-
-            // should display exercise name to user
-            const referenceLink = getElement(debugElement, '.reference');
-            expect(referenceLink).not.toBe(null);
-            expect(referenceLink.innerHTML).toInclude(referenceStr);
-
-            // should display relevant icon for modeling exercise
-            const icon = getElement(debugElement, 'fa-icon');
-            expect(icon).not.toBe(null);
-            expect(icon.innerHTML).toInclude('fa fa-diagram-project');
-
-            // on click should navigate to referenced modeling exercise within current tab
-            referenceLink.click();
-            expect(navigateByUrlSpy).toHaveBeenCalledTimes(1);
-            expect(openAttachmentSpy).toBeCalledTimes(0);
-        });
-
-        it('should contain a reference to quiz exercise with icon', () => {
-            const referenceStr = 'Quiz Exercise';
-            component.postingContentPart = {
-                contentBeforeReference,
-                linkToReference: ['/courses/1/exercises/61'],
-                referenceStr,
-                referenceType: ReferenceType.QUIZ,
-                contentAfterReference,
-            } as PostingContentPart;
-            fixture.detectChanges();
-
-            // should display exercise name to user
-            const referenceLink = getElement(debugElement, '.reference');
-            expect(referenceLink).not.toBe(null);
-            expect(referenceLink.innerHTML).toInclude(referenceStr);
-
-            // should display relevant icon for quiz exercise
-            const icon = getElement(debugElement, 'fa-icon');
-            expect(icon).not.toBe(null);
-            expect(icon.innerHTML).toInclude('fa fa-check-double');
-
-            // on click should navigate to referenced quiz exercise within current tab
-            referenceLink.click();
-            expect(navigateByUrlSpy).toHaveBeenCalledTimes(1);
-            expect(openAttachmentSpy).toBeCalledTimes(0);
-        });
-
-        it('should contain a reference to programming exercise with icon', () => {
-            const referenceStr = 'Programming Exercise';
-            component.postingContentPart = {
-                contentBeforeReference,
-                linkToReference: ['/courses/1/exercises/53'],
-                referenceStr,
-                referenceType: ReferenceType.PROGRAMMING,
-                contentAfterReference,
-            } as PostingContentPart;
-            fixture.detectChanges();
-
-            // should display exercise name to user
-            const referenceLink = getElement(debugElement, '.reference');
-            expect(referenceLink).not.toBe(null);
-            expect(referenceLink.innerHTML).toInclude(referenceStr);
-
-            // should display relevant icon for programming exercise
-            const icon = getElement(debugElement, 'fa-icon');
-            expect(icon).not.toBe(null);
-            expect(icon.innerHTML).toInclude('fa fa-keyboard');
-
-            // on click should navigate to referenced programming exercise within current tab
-            referenceLink.click();
-            expect(navigateByUrlSpy).toHaveBeenCalledTimes(1);
-            expect(openAttachmentSpy).toBeCalledTimes(0);
-        });
-
-        it('should contain a reference to text exercise with icon', () => {
-            const referenceStr = 'Text Exercise';
-            component.postingContentPart = {
-                contentBeforeReference,
-                linkToReference: ['/courses/1/exercises/28'],
-                referenceStr,
-                referenceType: ReferenceType.TEXT,
-                contentAfterReference,
-            } as PostingContentPart;
-            fixture.detectChanges();
-
-            // should display exercise name to user
-            const referenceLink = getElement(debugElement, '.reference');
-            expect(referenceLink).not.toBe(null);
-            expect(referenceLink.innerHTML).toInclude(referenceStr);
-
-            // should display relevant icon for test exercise
-            const icon = getElement(debugElement, 'fa-icon');
-            expect(icon).not.toBe(null);
-            expect(icon.innerHTML).toInclude('fa fa-font');
-
-            // on click should navigate to referenced text exercise within current tab
-            referenceLink.click();
-            expect(navigateByUrlSpy).toHaveBeenCalledTimes(1);
-            expect(openAttachmentSpy).toBeCalledTimes(0);
-        });
-
-        it('should contain a reference to exercise with default icon', () => {
-            const referenceStr = 'Text Exercise';
-            component.postingContentPart = {
-                contentBeforeReference,
-                linkToReference: ['/courses/1/exercises/28'],
-                referenceStr,
-                referenceType: undefined,
-                contentAfterReference,
-            } as PostingContentPart;
-            fixture.detectChanges();
-
-            // should display exercise name to user
-            const referenceLink = getElement(debugElement, '.reference');
-            expect(referenceLink).not.toBe(null);
-            expect(referenceLink.innerHTML).toInclude(referenceStr);
-
-            // should display relevant icon for exercise
-            const icon = getElement(debugElement, 'fa-icon');
-            expect(icon).not.toBe(null);
-            expect(icon.innerHTML).toInclude('fa fa-paperclip');
-
-            // on click should navigate to referenced exercise within current tab
-            referenceLink.click();
-            expect(navigateByUrlSpy).toHaveBeenCalledTimes(1);
-            expect(openAttachmentSpy).toBeCalledTimes(0);
-        });
-
-        it('should contain a reference to lecture with icon', () => {
-            const referenceStr = 'Test Lecture';
-            component.postingContentPart = {
-                contentBeforeReference,
-                linkToReference: ['/courses/1/lectures/1/'],
-                referenceStr,
-                referenceType: ReferenceType.LECTURE,
-                contentAfterReference,
-            } as PostingContentPart;
-            fixture.detectChanges();
-
-            // should display lecture name to user
-            const referenceLink = getElement(debugElement, '.reference');
-            expect(referenceLink).not.toBe(null);
-            expect(referenceLink.innerHTML).toInclude(referenceStr);
-
-            // should display relevant icon for lecture
-            const icon = getElement(debugElement, 'fa-icon');
-            expect(icon).not.toBe(null);
-            expect(icon.innerHTML).toInclude('fa fa-chalkboard-user');
-
-            // on click should navigate to referenced lecture within current tab
-            referenceLink.click();
-            expect(navigateByUrlSpy).toHaveBeenCalledTimes(1);
+            expect(navigateByUrlSpy).toHaveBeenCalledOnce();
             expect(openAttachmentSpy).toBeCalledTimes(0);
         });
 
