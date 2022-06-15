@@ -57,7 +57,7 @@ export class PostingContentComponent implements OnInit, OnDestroy {
             patternMatches.forEach((patternMatch: PatternMatch, index: number) => {
                 const referencedId = this.content!.substring(patternMatch.startIndex + 1, patternMatch.endIndex); // e.g. post id 6
                 const referenceType = patternMatch.referenceType;
-                let referenceStr; // e.g. '#6'
+                let referenceStr; // e.g. '#6', 'Lecture-1.pdf', 'Modeling Exercise'
                 let linkToReference;
                 let attachmentToReference;
                 let queryParams;
@@ -77,9 +77,15 @@ export class PostingContentComponent implements OnInit, OnDestroy {
                     ReferenceType.TEXT === referenceType ||
                     ReferenceType.FILE_UPLOAD === referenceType
                 ) {
+                    // reference opening tag: [{referenceType}] (wrapped between 2 characters)
+                    // reference closing tag: [/referenceType] (wrapped between 3 characters)
+                    // referenceStr: string to be displayed for the reference
+                    // linkToReference: link to be navigated to on reference click
                     referenceStr = this.content!.substring(this.content?.indexOf(')', patternMatch.startIndex)! + 1, patternMatch.endIndex - (referenceType.length + 3));
                     linkToReference = [this.content!.substring(this.content?.indexOf('(', patternMatch.startIndex)! + 1, this.content?.indexOf(')', patternMatch.startIndex))];
                 } else if (ReferenceType.ATTACHMENT === referenceType) {
+                    // referenceStr: string to be displayed for the reference
+                    // attachmentToReference: location of attachment to be opened on reference click
                     referenceStr = this.content!.substring(this.content?.indexOf(')', patternMatch.startIndex)! + 1, patternMatch.endIndex - (referenceType.length + 3));
                     attachmentToReference = this.content!.substring(this.content?.indexOf('(', patternMatch.startIndex)! + 1, this.content?.indexOf(')', patternMatch.startIndex));
                 }
@@ -127,9 +133,13 @@ export class PostingContentComponent implements OnInit, OnDestroy {
      * searches a regex pattern within a string and returns an array containing a PatternMatch Object per match
      */
     getPatternMatches(): PatternMatch[] {
-        // TODO: enhance comment
-        // Group 1: reference pattern #{PostId} Ex: (#45)
-        // Group 2: reference pattern L{LectureId}E{ExerciseId} (Ex: L03E03)
+        // Group 1: reference pattern for Posts: #{PostId} Ex: (#45)
+        // Group 2: reference pattern for Programming Exercises
+        // Group 3: reference pattern for Modeling Exercises
+        // Group 4: reference pattern for Text Exercises
+        // Group 5: reference pattern for File Upload Exercises
+        // Group 6: reference pattern for Lectures
+        // Group 7: reference pattern for Lecture Attachments
         // globally searched for, i.e. no return after first match
         const pattern =
             /(?<POST>#\d+)|(?<PROGRAMMING>\[programming].*?\[\/programming])|(?<MODELING>\[modeling].*?\[\/modeling])|(?<QUIZ>\[quiz].*?\[\/quiz])|(?<TEXT>\[text].*?\[\/text])|(?<FILE_UPLOAD>\[file-upload].*?\[\/file-upload])|(?<LECTURE>\[lecture].*?\[\/lecture])|(?<ATTACHMENT>\[attachment].*?\[\/attachment])/g;
@@ -155,7 +165,7 @@ export class PostingContentComponent implements OnInit, OnDestroy {
             patternMatches.push({
                 startIndex: match.index,
                 endIndex: pattern.lastIndex,
-                referenceType: match.groups!['Post_Id'] ? ReferenceType.POST : group!,
+                referenceType: group!,
             } as PatternMatch);
         }
         return patternMatches;
