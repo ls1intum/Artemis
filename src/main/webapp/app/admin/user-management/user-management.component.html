@@ -36,6 +36,17 @@
                     <div class="col p-0">
                         <div class="d-flex justify-content-center justify-content-md-end">
                             <button
+                                jhiDeleteButton
+                                [buttonSize]="medium"
+                                [entityTitle]="this.selectedUsers.length.toString()"
+                                deleteQuestion="userManagement.batch.delete.question"
+                                deleteConfirmationText="userManagement.batch.delete.typeNumberToConfirm"
+                                (delete)="this.deleteAllSelectedUsers()"
+                                [dialogError]="this.dialogError"
+                            >
+                                <fa-icon [icon]="faTimes"></fa-icon>
+                            </button>
+                            <button
                                 class="btn"
                                 (click)="this.open(content)"
                                 [ngClass]="{ 'btn-secondary': !filters.numberOfAppliedFilters, 'btn-success': !!filters.numberOfAppliedFilters }"
@@ -51,6 +62,10 @@
         <table class="table table-striped user-management-table" aria-describedby="user-management-page-heading">
             <thead>
                 <tr jhiSort [(predicate)]="predicate" [(ascending)]="ascending" (sortChange)="transition()">
+                    <th class="user-management-select-all">
+                        <span class="pe-1" jhiTranslate="userManagement.batch.all">ID</span>
+                        <input class="form-check-input" [checked]="this.selectedUsers.length === this.users.length" (change)="this.selectAllUsers()" type="checkbox" />
+                    </th>
                     <th jhiSortBy="id">
                         <span jhiTranslate="global.field.id">ID</span>
                         <fa-icon [icon]="faSort"></fa-icon>
@@ -95,6 +110,9 @@
             </thead>
             <tbody *ngIf="users">
                 <tr *ngFor="let user of users; trackBy: trackIdentity">
+                    <td>
+                        <input class="form-check-input" [checked]="this.selectedUsers.indexOf(user) > -1" (change)="this.selectUser(user)" type="checkbox" />
+                    </td>
                     <td>
                         <a [routerLink]="['./', user.login]">{{ user.id }}</a>
                     </td>
@@ -150,7 +168,7 @@
                                 jhiDeleteButton
                                 [entityTitle]="user.login!"
                                 deleteQuestion="userManagement.delete.question"
-                                (delete)="deleteUser(user.login!)"
+                                (delete)="deleteUser(user.login!, false)"
                                 [dialogError]="dialogError"
                                 [disabled]="!currentAccount || currentAccount.login === user.login"
                             >

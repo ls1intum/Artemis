@@ -20,6 +20,7 @@ import { Course } from 'app/entities/course.model';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { TemplateRef, ViewChild } from '@angular/core';
 import { HttpParams } from '@angular/common/http';
+import { ButtonSize } from 'app/shared/components/button.component';
 
 export class UserFilter {
     authorityFilter: Set<AuthorityFilter> = new Set();
@@ -98,6 +99,7 @@ export class UserManagementComponent implements OnInit, OnDestroy {
     loadingSearchResult = false;
     currentAccount?: User;
     users: User[];
+    selectedUsers: User[] = [];
     userListSubscription?: Subscription;
     totalItems = 0;
     itemsPerPage = ITEMS_PER_PAGE;
@@ -124,6 +126,8 @@ export class UserManagementComponent implements OnInit, OnDestroy {
     faTimes = faTimes;
     faEye = faEye;
     faWrench = faWrench;
+
+    readonly medium = ButtonSize.MEDIUM;
 
     constructor(
         private userService: UserService,
@@ -420,6 +424,42 @@ export class UserManagementComponent implements OnInit, OnDestroy {
     }
 
     /**
+     * Selects/Unselects all (filtered) users.
+     */
+    selectAllUsers() {
+        if (this.selectedUsers.length === this.users.length) {
+            // Clear all users
+            this.selectedUsers = [];
+        } else {
+            // Add all users
+            this.selectedUsers = [...this.users];
+        }
+    }
+
+    /**
+     * Selects/Unselects all (filtered) users.
+     */
+    selectUser(user: User) {
+        const index = this.selectedUsers.indexOf(user);
+        if (index > -1) {
+            this.selectedUsers.splice(index, 1);
+        } else {
+            // Add all users
+            this.selectedUsers.push(user);
+        }
+    }
+
+    /**
+     * Delete all selected users.
+     */
+    deleteAllSelectedUsers() {
+        for (const user of this.selectedUsers) {
+            this.deleteUser(user.login!, true);
+        }
+        this.dialogErrorSource.next('');
+    }
+
+    /**
      * Retrieve the list of users from the user service for a single page in the user management based on the page, size and sort configuration
      */
     loadAll() {
@@ -467,15 +507,18 @@ export class UserManagementComponent implements OnInit, OnDestroy {
     /**
      * Deletes a user
      * @param login of the user that should be deleted
+     * @param batch update will be triggered manually
      */
-    deleteUser(login: string) {
+    deleteUser(login: string, batch: boolean) {
         this.userService.delete(login).subscribe({
             next: () => {
                 this.eventManager.broadcast({
                     name: 'userListModification',
                     content: 'Deleted a user',
                 });
-                this.dialogErrorSource.next('');
+                if (!batch) {
+                    this.dialogErrorSource.next('');
+                }
             },
             error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
         });

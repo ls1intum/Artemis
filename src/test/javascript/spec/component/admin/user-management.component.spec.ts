@@ -200,7 +200,7 @@ describe('UserManagementComponent', () => {
         let errorText: string | undefined = undefined;
         comp.dialogError.subscribe((text) => (errorText = text));
 
-        comp.deleteUser('test');
+        comp.deleteUser('test', false);
         expect(deleteSpy).toHaveBeenCalledOnce();
         expect(deleteSpy).toHaveBeenCalledWith('test');
         const reqD = httpMock.expectOne(SERVER_API_URL + 'api/users/test');
@@ -345,5 +345,35 @@ describe('UserManagementComponent', () => {
 
         comp.selectAllRoles();
         expect(comp.filters.authorityFilter).toEqual(new Set(comp.authorityFilters));
+    });
+
+    it('should delete all selected users', () => {
+        const deleteSpy = jest.spyOn(userService, 'delete').mockReturnValue(of());
+
+        // users
+        const users = [1, 2, 3].map((id) => {
+            const user = new User();
+            user.login = id.toString();
+            return user;
+        });
+
+        comp.selectedUsers = [users[0], users[1]];
+
+        comp.deleteAllSelectedUsers();
+        expect(deleteSpy).toHaveBeenCalledTimes(2);
+        expect(deleteSpy).toHaveBeenCalledWith(users[0].login);
+        expect(deleteSpy).toHaveBeenCalledWith(users[1].login);
+    });
+
+    it('should add and remove user from selected users', () => {
+        // user
+        const user = new User();
+        user.login = '1';
+
+        expect(comp.selectedUsers).toEqual([]);
+        comp.selectUser(user);
+        expect(comp.selectedUsers).toEqual([user]);
+        comp.selectUser(user);
+        expect(comp.selectedUsers).toEqual([]);
     });
 });
