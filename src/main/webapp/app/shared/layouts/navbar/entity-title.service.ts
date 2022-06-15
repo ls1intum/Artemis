@@ -1,6 +1,7 @@
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { Observable, ReplaySubject, Subject, throwError } from 'rxjs';
+import { captureException } from '@sentry/browser';
+import { EMPTY, Observable, ReplaySubject, Subject, throwError } from 'rxjs';
 
 export enum EntityType {
     COURSE = 'COURSE',
@@ -32,18 +33,25 @@ export class EntityTitleService {
      * @param ids the ids that identify the entity. Mostly one ID, for exercise hints provide the exercise id as second item in the array.
      */
     public getTitle(type: EntityType, ids: number[]): Observable<string> {
-        if (!type || !ids?.length || ids.some((id) => !id && id !== 0)) {
-            return throwError(() => new Error('Invalid parameters'));
+        // We want to be very defensive here, therefore we wrap everything in a try/catch and return EMPTY if an error occurs
+        try {
+            if (!type || !ids?.length || ids.some((id) => !id && id !== 0)) {
+                captureException(new Error(`Supplied invalid parameters to getTitle() of EntityTitleService: Type=${type}, ids=${ids}`));
+                return EMPTY;
+            }
+
+            const mapKey = EntityTitleService.createMapKey(type, ids);
+
+            const { subject } = this.titleSubjects.computeIfAbsent(mapKey, () => ({
+                timeout: setTimeout(() => this.fetchTitle(type, ids), FETCH_FALLBACK_TIMEOUT),
+                subject: new ReplaySubject<string>(1),
+            }));
+
+            return subject.asObservable();
+        } catch (e) {
+            captureException(e);
+            return EMPTY;
         }
-
-        const mapKey = EntityTitleService.createMapKey(type, ids);
-
-        const { subject } = this.titleSubjects.computeIfAbsent(mapKey, () => ({
-            timeout: setTimeout(() => this.fetchTitle(type, ids), FETCH_FALLBACK_TIMEOUT),
-            subject: new ReplaySubject<string>(1),
-        }));
-
-        return subject.asObservable();
     }
 
     /**
@@ -55,20 +63,26 @@ export class EntityTitleService {
      * @param title the title of the entity
      */
     public setTitle(type: EntityType, ids: (number | undefined)[], title: string | undefined) {
-        if (!ids?.length || ids.some((id) => !id && id !== 0) || !title) {
-            return;
-        }
+        // We want to be very defensive here, therefore we wrap everything in a try/catch
+        try {
+            if (!ids?.length || ids.some((id) => !id && id !== 0) || !title) {
+                captureException(new Error(`Supplied invalid parameters to setTitle() of EntityTitleService: Type=${type}, ids=${ids}, title=${title}`));
+                return;
+            }
 
-        const mapKey = EntityTitleService.createMapKey(type, ids as number[]);
+            const mapKey = EntityTitleService.createMapKey(type, ids as number[]);
 
-        const { subject, timeout } = this.titleSubjects.computeIfAbsent(mapKey, () => ({
-            subject: new ReplaySubject<string>(1),
-        }));
+            const { subject, timeout } = this.titleSubjects.computeIfAbsent(mapKey, () => ({
+                subject: new ReplaySubject<string>(1),
+            }));
 
-        subject.next(title!);
+            subject.next(title!);
 
-        if (timeout) {
-            clearTimeout(timeout);
+            if (timeout) {
+                clearTimeout(timeout);
+            }
+        } catch (e) {
+            captureException(e);
         }
     }
 
