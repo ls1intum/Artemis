@@ -34,6 +34,7 @@ export class ExamActivity {
  */
 export abstract class ExamAction implements BaseEntity {
     public id?: number;
+    public studentExamId?: number;
     public timestamp?: dayjs.Dayjs;
     public readonly type: ExamActionType;
 
