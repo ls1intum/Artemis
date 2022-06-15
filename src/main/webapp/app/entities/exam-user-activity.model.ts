@@ -19,7 +19,6 @@ export enum ExamActionType {
  */
 export class ExamActivity {
     public examActions: ExamAction[];
-    public id?: number;
 
     constructor() {
         this.examActions = [];
@@ -35,8 +34,9 @@ export class ExamActivity {
  */
 export abstract class ExamAction implements BaseEntity {
     public id?: number;
+    public studentExamId?: number;
+    public timestamp?: dayjs.Dayjs;
     public examActivityId?: number;
-    public timestamp: dayjs.Dayjs = dayjs();
     public ceiledTimestamp?: dayjs.Dayjs;
     public readonly type: ExamActionType;
 
@@ -102,15 +102,13 @@ export class SwitchedExerciseAction extends ExamAction {
 export class SavedExerciseAction extends ExamAction {
     public forced?: boolean;
     public submissionId?: number;
-    public exerciseId?: number;
     public failed?: boolean;
     public automatically?: boolean;
 
-    constructor(forced: boolean, submissionId: number | undefined, exerciseId: number | undefined, failed: boolean, automatically: boolean) {
+    constructor(forced: boolean, submissionId: number | undefined, failed: boolean, automatically: boolean) {
         super(ExamActionType.SAVED_EXERCISE);
         this.forced = forced;
         this.submissionId = submissionId;
-        this.exerciseId = exerciseId;
         this.failed = failed;
         this.automatically = automatically;
     }
