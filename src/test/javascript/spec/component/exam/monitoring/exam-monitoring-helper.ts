@@ -41,6 +41,8 @@ export const createExamActionBasedOnType = (examActionType: ExamActionType): Exa
             examAction = new ConnectionUpdatedAction(false);
             break;
     }
+    examAction.timestamp = dayjs();
+    examAction.examActivityId = 0;
     return examAction;
 };
 

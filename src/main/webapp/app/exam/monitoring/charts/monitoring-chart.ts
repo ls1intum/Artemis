@@ -91,10 +91,11 @@ export function getCurrentAmountOfStudentsPerExercises(examActions: ExamAction[]
     const exerciseAmountMap: Map<number, number> = new Map();
     const groupedByActivityId = getLastActionGroupedByActivityId(examActions);
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    for (const [_, action] of Object.entries(groupedByActivityId)) {
-        if ((action as ExamAction).type === ExamActionType.SWITCHED_EXERCISE) {
-            if (action.exerciseId) {
-                exerciseAmountMap.set(action.exerciseId, (exerciseAmountMap.get(action.exerciseId) ?? 0) + 1);
+    for (const [_, action] of groupedByActivityId) {
+        if (action.type === ExamActionType.SWITCHED_EXERCISE) {
+            const switchedExerciseAction = action as SwitchedExerciseAction;
+            if (switchedExerciseAction.exerciseId !== undefined) {
+                exerciseAmountMap.set(switchedExerciseAction.exerciseId, (exerciseAmountMap.get(switchedExerciseAction.exerciseId) ?? 0) + 1);
             }
         }
     }

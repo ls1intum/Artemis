@@ -101,7 +101,7 @@ describe('Exercise Chart Component', () => {
         comp.ngOnInit();
 
         // THEN
-        expect(comp.ngxData).toEqual([{ name: exercises[0].title!, value: 2 }]);
+        expect(comp.ngxData).toEqual([{ name: exercises[0].title!, value: 1 }]);
         expect(comp.ngxColor.domain).toEqual([getColor(0)]);
     });
 });
