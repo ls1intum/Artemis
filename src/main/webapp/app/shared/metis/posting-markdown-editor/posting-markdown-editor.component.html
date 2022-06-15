@@ -5,6 +5,8 @@
         (markdownChange)="updateField($event)"
         [enableResize]="true"
         [resizableMinHeight]="editorHeight"
+        (onEditSelect)="previewMode = false"
+        (onPreviewSelect)="previewMode = true"
         [metaCommands]="[]"
         [headerCommands]="[]"
         [defaultCommands]="defaultCommands"
@@ -13,7 +15,7 @@
     >
         <!-- Preview -->
         <ng-container #preview>
-            <jhi-posting-content [content]="content"></jhi-posting-content>
+            <jhi-posting-content *ngIf="previewMode" [content]="content"></jhi-posting-content>
             <hr />
         </ng-container>
         <!-- End of Preview-->

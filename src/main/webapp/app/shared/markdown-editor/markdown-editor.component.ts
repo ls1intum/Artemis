@@ -123,6 +123,7 @@ export class MarkdownEditorComponent implements AfterViewInit {
     @Output() textWithDomainCommandsFound = new EventEmitter<[string, DomainCommand | null][]>();
 
     @Output() onPreviewSelect = new EventEmitter();
+    @Output() onEditSelect = new EventEmitter();
 
     /** {showPreviewButton}
      * 1. true -> the preview of the editor is used
@@ -373,6 +374,8 @@ export class MarkdownEditorComponent implements AfterViewInit {
         this.previewMode = !this.previewMode;
         if (this.previewMode) {
             this.onPreviewSelect.emit();
+        } else {
+            this.onEditSelect.emit();
         }
         // The text must only be parsed when the active tab before event was edit, otherwise the text can't have changed.
         if (event.activeId === 'editor_edit') {

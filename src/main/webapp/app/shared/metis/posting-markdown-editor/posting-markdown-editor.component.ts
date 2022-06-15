@@ -32,6 +32,7 @@ export class PostingMarkdownEditorComponent implements OnInit, ControlValueAcces
     @Output() valueChange = new EventEmitter();
     defaultCommands: Command[];
     content?: string;
+    previewMode = false;
 
     constructor(private cdref: ChangeDetectorRef, private metisService: MetisService) {}
 
