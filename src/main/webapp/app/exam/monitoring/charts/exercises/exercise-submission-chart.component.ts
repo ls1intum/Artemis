@@ -34,7 +34,22 @@ export class ExerciseSubmissionChartComponent extends ChartComponent implements 
     /**
      * Create and initialize the data for the chart.
      */
-    initData() {
+    override initData() {
+        this.createChartData();
+    }
+
+    /**
+     * Updates the data for the chart.
+     */
+    override updateData() {
+        this.createChartData();
+    }
+
+    /**
+     * Creates the chart data based on the provided actions.
+     * @private
+     */
+    private createChartData() {
         this.ngxData = [];
         this.ngxColor.domain = [];
         const exerciseAmountMap: Map<number, number> = new Map();

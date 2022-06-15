@@ -1,4 +1,4 @@
-import { Component, Input, OnInit, OnDestroy } from '@angular/core';
+import { Component, Input, OnDestroy, OnInit } from '@angular/core';
 import { Exam } from 'app/entities/exam.model';
 import { getCurrentAmountOfStudentsPerExercises, insertNgxDataAndColorForExerciseMap } from 'app/exam/monitoring/charts/monitoring-chart';
 import { ExamAction, ExamActionType } from 'app/entities/exam-user-activity.model';
@@ -35,6 +35,21 @@ export class ExerciseChartComponent extends ChartComponent implements OnInit, On
      * Create and initialize the data for the chart.
      */
     override initData() {
+        this.createChartData();
+    }
+
+    /**
+     * Updates the data for the chart.
+     */
+    override updateData() {
+        this.createChartData();
+    }
+
+    /**
+     * Creates the chart data based on the provided actions.
+     * @private
+     */
+    private createChartData() {
         this.ngxData = [];
         this.ngxColor.domain = [];
         const exerciseAmountMap = getCurrentAmountOfStudentsPerExercises(this.filteredExamActions);

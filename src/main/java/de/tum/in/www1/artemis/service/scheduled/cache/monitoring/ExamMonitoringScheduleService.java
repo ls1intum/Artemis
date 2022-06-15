@@ -102,17 +102,19 @@ public class ExamMonitoringScheduleService {
             if (examActivity == null) {
                 examActivity = new ExamActivity();
                 examActivity.setStudentExamId(studentExamId);
+                // Since we don't store the activity in the database at the moment, we reuse the student exam id
+                examActivity.setId(studentExamId);
                 // TODO: Save Activity
             }
 
             // Connect action and activity
-            action.setExamActivity(examActivity);
+            action.setExamActivityId(examActivity.getId());
 
             examActivity.addExamAction(action);
             updateExamActivity(examId, studentExamId, examActivity);
 
             // send message to subscribers
-            messagingService.sendMessage("/topic/exam-monitoring/" + examId + "/action", examAction);
+            messagingService.sendMessage("/topic/exam-monitoring/" + examId + "/action", action);
         }
     }
 

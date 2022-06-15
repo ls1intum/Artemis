@@ -35,6 +35,21 @@ export class ExerciseGroupChartComponent extends ChartComponent implements OnIni
      * Create and initialize the data for the chart.
      */
     override initData() {
+        this.createChartData();
+    }
+
+    /**
+     * Updates the data for the chart.
+     */
+    override updateData() {
+        this.createChartData();
+    }
+
+    /**
+     * Creates the chart data based on the provided actions.
+     * @private
+     */
+    private createChartData() {
         this.ngxData = [];
         this.ngxColor.domain = [];
         const exerciseAmountMap = getCurrentAmountOfStudentsPerExercises(this.filteredExamActions);

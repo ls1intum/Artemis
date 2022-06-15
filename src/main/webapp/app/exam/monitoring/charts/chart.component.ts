@@ -71,7 +71,7 @@ export abstract class ChartComponent {
         // Trigger change detection every x seconds and filter the data
         setInterval(() => {
             this.filteredExamActions = [...this.filteredExamActions.filter((action) => this.filterRenderedData(action))];
-            this.initData();
+            this.updateData();
         }, seconds * 1000);
     }
 
@@ -80,14 +80,27 @@ export abstract class ChartComponent {
      */
     abstract initData(): void;
 
+    /**
+     * Updates the data for the chart.
+     */
+    abstract updateData(): void;
+
     abstract filterRenderedData(examAction: ExamAction): boolean;
 
+    /**
+     * Method to filter actions which are not in the specified time frame.
+     * @param examAction received action
+     * @protected
+     */
     protected filterActionsNotInTimeframe(examAction: ExamAction): boolean {
         return ceilDayjsSeconds(dayjs(), this.timeStampGapInSeconds)
             .subtract(this.showNumberLastTimeStamps * this.timeStampGapInSeconds, 'seconds')
             .isBefore(examAction.ceiledTimestamp ?? examAction.timestamp);
     }
 
+    /**
+     * Method to get the last x time stamps.
+     */
     public getLastXTimestamps(): dayjs.Dayjs[] {
         const ceiledNow = ceilDayjsSeconds(dayjs(), 15);
         const timestamps = [];

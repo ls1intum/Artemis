@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { Exam } from 'app/entities/exam.model';
-import { ExamAction, ExamActivity } from 'app/entities/exam-user-activity.model';
+import { ExamAction } from 'app/entities/exam-user-activity.model';
 import dayjs from 'dayjs/esm';
 import { ceilDayjsSeconds } from 'app/exam/monitoring/charts/monitoring-chart';
 
@@ -73,16 +73,16 @@ export class ExamMonitoringWebsocketService implements IExamMonitoringWebsocketS
     }
 
     /**
-     *
-     * @param examId
+     * Returns the exam as observable.
+     * @param examId corresponding exam id
      */
     public getExamMonitoringObservable(examId: number): BehaviorSubject<ExamAction | undefined> | undefined {
         return this.examActionObservables.get(examId);
     }
 
     /**
-     *
-     * @param examAction
+     * Prepares the received actions, e.g. updates the timestamp and creates the rounded timestamp
+     * @param examAction received exam action
      * @private
      */
     private prepareAction(examAction: ExamAction) {

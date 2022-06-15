@@ -31,7 +31,22 @@ export class CategoryActionsChartComponent extends ChartComponent implements OnI
     /**
      * Create and initialize the data for the chart.
      */
-    initData() {
+    override initData() {
+        this.createChartData();
+    }
+
+    /**
+     * Updates the data for the chart.
+     */
+    override updateData() {
+        this.createChartData();
+    }
+
+    /**
+     * Creates the chart data based on the provided actions.
+     * @private
+     */
+    private createChartData() {
         // Categories
         const categories: Map<string, number> = new Map();
 

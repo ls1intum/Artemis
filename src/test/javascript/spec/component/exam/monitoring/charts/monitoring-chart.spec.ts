@@ -2,7 +2,6 @@ import {
     getColor,
     getCurrentAmountOfStudentsPerExercises,
     getSavedExerciseActionsGroupedByActivityId,
-    getSwitchedExerciseActionsGroupedByActivityId,
     groupActionsByActivityId,
     groupActionsByTimestamp,
     groupActionsByType,
@@ -16,7 +15,7 @@ import { TextExercise } from 'app/entities/text-exercise.model';
 import { NgxChartsSingleSeriesDataEntry } from 'app/shared/chart/ngx-charts-datatypes';
 import { Color, ScaleType } from '@swimlane/ngx-charts';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
-import { createActions } from '../exam-monitoring-helper';
+import { createActions, createExamActionBasedOnType } from '../exam-monitoring-helper';
 
 describe('Monitoring charts helper methods', () => {
     it('should return a color', () => {
@@ -63,15 +62,6 @@ describe('Monitoring charts helper methods', () => {
         actions.forEach((action) => expect(grouped[action.examActivityId!]).toEqual([action]));
     });
 
-    it('should filter actions for SwitchedExerciseAction and group actions by activity id', () => {
-        const actions = createActions().map((action) => {
-            action.examActivityId = 0;
-            return action;
-        });
-        const grouped = getSwitchedExerciseActionsGroupedByActivityId(actions);
-        expect(grouped[0]).toEqual(actions.filter((action) => action.type === ExamActionType.SWITCHED_EXERCISE));
-    });
-
     it('should filter actions for SavedExerciseAction and group actions by activity id', () => {
         const actions = createActions().map((action) => {
             action.examActivityId = 0;
@@ -87,7 +77,9 @@ describe('Monitoring charts helper methods', () => {
     });
 
     it('should get current amount of students per exercise - 1', () => {
-        const amount = getCurrentAmountOfStudentsPerExercises(createActions());
+        const action = createExamActionBasedOnType(ExamActionType.SWITCHED_EXERCISE);
+        action.examActivityId = 0;
+        const amount = getCurrentAmountOfStudentsPerExercises([action]);
         const expectedMap = new Map();
         expectedMap.set(0, 1);
         expect(amount).toEqual(expectedMap);

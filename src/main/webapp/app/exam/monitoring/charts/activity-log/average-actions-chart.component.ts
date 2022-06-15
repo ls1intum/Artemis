@@ -35,7 +35,22 @@ export class AverageActionsChartComponent extends ChartComponent implements OnIn
     /**
      * Create and initialize the data for the chart.
      */
-    initData() {
+    override initData() {
+        this.createChartData();
+    }
+
+    /**
+     * Updates the data for the chart.
+     */
+    override updateData() {
+        this.createChartData();
+    }
+
+    /**
+     * Creates the chart data based on the provided actions.
+     * @private
+     */
+    private createChartData() {
         const groupedByTimestamp = groupActionsByTimestamp(this.filteredExamActions);
         const chartData: NgxChartsSingleSeriesDataEntry[] = [];
         for (const timestamp of this.getLastXTimestamps()) {

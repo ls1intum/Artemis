@@ -1,5 +1,5 @@
 import { GraphColors } from 'app/entities/statistics.model';
-import { ExamAction, ExamActionType, SwitchedExerciseAction } from 'app/entities/exam-user-activity.model';
+import { ExamAction, ExamActionType, ExamActivity, SwitchedExerciseAction } from 'app/entities/exam-user-activity.model';
 import { groupBy } from 'lodash';
 import { Exam } from 'app/entities/exam.model';
 import { NgxChartsEntry } from 'app/shared/chart/ngx-charts-datatypes';
@@ -52,12 +52,16 @@ export function groupActionsByActivityId(examActions: ExamAction[]) {
 }
 
 /**
- * Get actions filtered for SwitchedExerciseAction and grouped by activity id.
+ * Get the last action grouped by activity id.
  * @param examActions array of actions
  * @return filtered and grouped actions
  */
-export function getSwitchedExerciseActionsGroupedByActivityId(examActions: ExamAction[]) {
-    return groupActionsByActivityId(examActions.filter((action) => action.type === ExamActionType.SWITCHED_EXERCISE));
+export function getLastActionGroupedByActivityId(examActions: ExamAction[]) {
+    const activityActionMap: Map<number, ExamAction> = new Map();
+    for (const [key, actions] of Object.entries(groupActionsByActivityId(examActions))) {
+        activityActionMap.set(Number(key), (actions.sort((a, b) => (a.timestamp?.isAfter(b.timestamp) ? 1 : -1)) as ExamAction[]).last()!);
+    }
+    return activityActionMap;
 }
 
 /**
@@ -70,21 +74,29 @@ export function getSavedExerciseActionsGroupedByActivityId(examActions: ExamActi
 }
 
 /**
+ * Get actions filtered for SwitchedExerciseAction and grouped by activity id.
+ * @param examActions array of actions
+ * @return filtered and grouped actions
+ */
+export function getSwitchedExerciseActionsGroupedByActivityId(examActions: ExamAction[]) {
+    return groupActionsByActivityId(examActions.filter((action) => action.type === ExamActionType.SWITCHED_EXERCISE));
+}
+
+/**
  * Returns the current amount of students per exercise.
  * @param examActions array of actions
  * @return amount of students per exercise as map
  */
 export function getCurrentAmountOfStudentsPerExercises(examActions: ExamAction[]): Map<number, number> {
     const exerciseAmountMap: Map<number, number> = new Map();
-    const groupedByActivityId = getSwitchedExerciseActionsGroupedByActivityId(examActions);
+    const groupedByActivityId = getLastActionGroupedByActivityId(examActions);
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    for (const [_, value] of Object.entries(groupedByActivityId)) {
-        const sortedByTimestamp = value.sort((a, b) => (a.timestamp?.isAfter(b.timestamp) ? 1 : -1));
-        if (sortedByTimestamp.length === 0) {
-            continue;
+    for (const [_, action] of Object.entries(groupedByActivityId)) {
+        if ((action as ExamAction).type === ExamActionType.SWITCHED_EXERCISE) {
+            if (action.exerciseId) {
+                exerciseAmountMap.set(action.exerciseId, (exerciseAmountMap.get(action.exerciseId) ?? 0) + 1);
+            }
         }
-        const last = sortedByTimestamp.last()! as SwitchedExerciseAction;
-        exerciseAmountMap.set(last.exerciseId!, (exerciseAmountMap.get(last.exerciseId!) ?? 0) + 1);
     }
     return exerciseAmountMap;
 }
@@ -106,10 +118,10 @@ export function insertNgxDataAndColorForExerciseMap(exam: Exam | undefined, exer
 }
 
 /**
- *
- * @param timestamp
- * @param seconds
+ * Method to round the provided timestamp to the specified seconds
+ * @param timestamp timestamp to round
+ * @param seconds specified gap
  */
 export function ceilDayjsSeconds(timestamp: dayjs.Dayjs, seconds: number) {
-    return timestamp.add(15 - (timestamp.get('seconds') % seconds), 'seconds').startOf('seconds');
+    return timestamp.add(seconds - (timestamp.get('seconds') % seconds), 'seconds').startOf('seconds');
 }
