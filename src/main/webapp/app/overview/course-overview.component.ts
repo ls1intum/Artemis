@@ -263,8 +263,11 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
         return false;
     }
 
+    /**
+     * Check if the course has any learning goals or prerequisites
+     */
     hasLearningGoals(): boolean {
-        return (this.course?.learningGoals?.length ?? 0) + (this.course?.prerequisites?.length ?? 0) > 0;
+        return !!(this.course?.learningGoals?.length || this.course?.prerequisites?.length);
     }
 
     /**
