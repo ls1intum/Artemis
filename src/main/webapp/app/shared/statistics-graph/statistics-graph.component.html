@@ -1,28 +1,28 @@
-<div class="row">
-    <div class="col-md-2 d-flex">
-        <div class="row flex-grow-1">
-            <h3 class="col-md-8 d-flex">{{ chartName | artemisTranslate }}</h3>
-            <fa-icon [icon]="faArrowLeft" size="3x" class="col-md-4 d-flex justify-content-end align-items-center" role="button" (click)="switchTimeSpan(LEFT)"></fa-icon>
+<div class="row d-flex justify-content-center">
+    <div class="col-xl-1">
+        <h3>{{ chartName | artemisTranslate }}</h3>
+    </div>
+    <div class="row col-xl-11">
+        <fa-icon [icon]="faArrowLeft" size="2x" class="col-1 d-flex justify-content-end align-items-center px-0" role="button" (click)="switchTimeSpan(LEFT)"></fa-icon>
+        <div #containerRef class="chart col-10 px-0">
+            <ngx-charts-bar-vertical
+                [view]="[containerRef.offsetWidth, 250]"
+                [results]="ngxData"
+                [scheme]="ngxColor"
+                [xAxis]="true"
+                [yAxis]="true"
+                [showDataLabel]="true"
+                [yScaleMax]="yScaleMax"
+                [yAxisTickFormatting]="yAxisTickFormatting"
+                [animations]="false"
+            >
+                <ng-template #tooltipTemplate let-model="model">
+                    <b>{{ model.name }}</b> <br />
+                    <span>{{ tooltipTranslation | artemisTranslate }}: {{ model.value }}</span>
+                </ng-template>
+            </ngx-charts-bar-vertical>
         </div>
+        <fa-icon [icon]="faArrowRight" size="2x" class="col-1 d-flex justify-content-start align-items-center px-0" role="button" (click)="switchTimeSpan(RIGHT)"></fa-icon>
     </div>
-    <div #containerRef class="chart col-md-9">
-        <ngx-charts-bar-vertical
-            [view]="[containerRef.offsetWidth, 250]"
-            [results]="ngxData"
-            [scheme]="ngxColor"
-            [xAxis]="true"
-            [yAxis]="true"
-            [showDataLabel]="true"
-            [yScaleMax]="yScaleMax"
-            [yAxisTickFormatting]="yAxisTickFormatting"
-            [animations]="false"
-        >
-            <ng-template #tooltipTemplate let-model="model">
-                <b>{{ model.name }}</b> <br />
-                <span>{{ tooltipTranslation | artemisTranslate }}: {{ model.value }}</span>
-            </ng-template>
-        </ngx-charts-bar-vertical>
-    </div>
-    <fa-icon [icon]="faArrowRight" size="3x" class="col-md-1 d-flex justify-content-start align-items-center" role="button" (click)="switchTimeSpan(RIGHT)"></fa-icon>
 </div>
-<h4 class="col-md-9 offset-md-2 text-center mt-3 mb-5">{{ chartTime }}</h4>
+<h4 class="col-xl-9 offset-xl-2 text-center mt-3 mb-5">{{ chartTime }}</h4>
