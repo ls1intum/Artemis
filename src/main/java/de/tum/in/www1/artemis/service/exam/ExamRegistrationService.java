@@ -167,7 +167,7 @@ public class ExamRegistrationService {
     }
 
     /**
-     * Checks if the current User is registered for the TestExam, otherwise the User is registered to the TestExam.
+     * Checks if the current User is registered for the test exam, otherwise the User is registered to the test exam.
      * The calling user must be registered in the respective course
      *
      * @param course      the course containing the exam
@@ -183,7 +183,7 @@ public class ExamRegistrationService {
 
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, currentUser);
 
-        // We only need to update the registered users, if the user is not yet registered for the TestExam
+        // We only need to update the registered users, if the user is not yet registered for the test exam
         if (!exam.getRegisteredUsers().contains(currentUser)) {
             exam.addRegisteredUser(currentUser);
             examRepository.save(exam);

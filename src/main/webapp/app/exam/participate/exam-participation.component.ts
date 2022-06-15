@@ -150,7 +150,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
             this.courseId = parseInt(params['courseId'], 10);
             this.examId = parseInt(params['examId'], 10);
             this.testRunId = parseInt(params['testRunId'], 10);
-            // As a student can have multiple TestExams, the studentExamId is passed as a parameter.
+            // As a student can have multiple test exams, the studentExamId is passed as a parameter.
             if (params['studentExamId']) {
                 // If a new StudentExam should be created, the keyword new is used (and no StudentExam exists)
                 if (params['studentExamId'] !== 'new') {
@@ -189,7 +189,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                     error: () => (this.loadingExam = false),
                 });
             } else if (this.testExam && this.studentExamId) {
-                // Case existing studentExam for TestExam -> fetch with ID from server
+                // Case existing studentExam for test exam -> fetch with ID from server
                 this.examParticipationService.loadStudentExamForTestExamById(this.courseId, this.examId, this.studentExamId).subscribe({
                     next: (studentExam) => {
                         this.studentExam = studentExam;
@@ -409,7 +409,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
             .subscribe({
                 next: (studentExam: StudentExam) => {
                     if (studentExam.exam?.testExam) {
-                        // If we have a TestExam, we reload the summary from the server.
+                        // If we have a test exam, we reload the summary from the server.
                         this.examParticipationService
                             .loadStudentExamForTestExamWithExercisesForSummary(this.courseId, this.examId, studentExam.id!)
                             .subscribe((studentExamWithExercises: StudentExam) => (this.studentExam = studentExamWithExercises));

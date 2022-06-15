@@ -155,7 +155,7 @@ public class StudentExam extends AbstractAuditingEntity {
 
     /**
      * check if the individual student exam has ended (based on the working time)
-     * For TestExams, we cannot use exam.startTime, but need to use the student.startedDate. If this is not yet set,
+     * For test exams, we cannot use exam.startTime, but need to use the student.startedDate. If this is not yet set,
      * the studentExams has not yet started and therefore cannot be ended.
      *
      * @return true if the exam has finished, otherwise false, null if this cannot be determined
@@ -175,9 +175,9 @@ public class StudentExam extends AbstractAuditingEntity {
 
     /**
      * Returns the individual exam end date taking the working time of this student exam into account.
-     * For TestExams, the startedDate needs to be defined as this is not equal to exam.startDate
+     * For test exams, the startedDate needs to be defined as this is not equal to exam.startDate
      *
-     * @return the ZonedDateTime that marks the exam end for this student (excluding grace period), or null for TestExams with undefined startedDate
+     * @return the ZonedDateTime that marks the exam end for this student (excluding grace period), or null for test exams with undefined startedDate
      */
     @JsonIgnore
     public ZonedDateTime getIndividualEndDate() {
@@ -193,7 +193,7 @@ public class StudentExam extends AbstractAuditingEntity {
     /**
      * Returns the individual exam end date taking the working time of this student exam into account and the grace period set for this exam
      *
-     * @return the ZonedDateTime that marks the exam end for this student, including the exam's grace period, or null for TestExams with undefined startedDate
+     * @return the ZonedDateTime that marks the exam end for this student, including the exam's grace period, or null for test exams with undefined startedDate
      */
     @JsonIgnore
     public ZonedDateTime getIndividualEndDateWithGracePeriod() {
@@ -209,8 +209,8 @@ public class StudentExam extends AbstractAuditingEntity {
 
     /**
      * Determines if the Results of an Exam are already published
-     * For a TestExam, the Results are autmoatically published once the studentExam was submitted
-     * For RealExams, {@link Exam#resultsPublished()} is called
+     * For a test exam, the Results are autmoatically published once the studentExam was submitted
+     * For real exams, {@link Exam#resultsPublished()} is called
      *
      * @return true the results are published
      */

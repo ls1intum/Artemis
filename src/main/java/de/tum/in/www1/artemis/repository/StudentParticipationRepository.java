@@ -809,8 +809,8 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
     }
 
     /**
-     * Gets all participation for the given studentExam for a TestExam with their submissions and result.
-     * As multiple participations for a TestExam can exists, the link is established with studentExam.startedDate <-> participation.InitializationDate
+     * Gets all participation for the given studentExam for a test exam with their submissions and result.
+     * As multiple participations for a test exam can exists, the link is established with studentExam.startedDate <-> participation.InitializationDate
      *
      * @param studentExam studentExam with exercises loaded
      * @return student's participations with submissions and results.

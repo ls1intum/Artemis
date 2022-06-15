@@ -12,7 +12,7 @@
     </div>
     <hr />
 </ng-container>
-<!-- Section TestExams. Shold not be displayed, if no TestExams exist -->
+<!-- Section test exams. Shold not be displayed, if no test exams exist -->
 <ng-container *ngIf="testExamsOfCourse.length > 0">
     <h2 jhiTranslate="artemisApp.exam.overview.testExamsHeading">Test Exams</h2>
     <div class="row">
@@ -27,7 +27,7 @@
                     >
                     </jhi-course-exam-detail>
                 </div>
-                <!-- List of cards representing the individual attempts per Student and TestExam. Ordered by Id in reverse (latest StudentExam at the top) -->
+                <!-- List of cards representing the individual attempts per Student and test exam. Ordered by Id in reverse (latest StudentExam at the top) -->
                 <div class="col-12 col-md-4 col-lg-4 col-xl-3">
                     <ng-container *ngFor="let studentExam of getStudentExamForExamIdOrderedByIdReverse(exam!.id!); let i = index; let cnt = count">
                         <div class="row align-items-start" *ngIf="i < 4 || expandAttemptsMap.get(exam!.id!)">

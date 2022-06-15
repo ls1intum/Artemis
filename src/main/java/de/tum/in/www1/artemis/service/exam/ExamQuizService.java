@@ -71,7 +71,7 @@ public class ExamQuizService {
     /**
      * This method is intended to be called after a user submits a test run. We calculate the achieved score in the quiz exercises immediately and attach a result.
      * Note: We do not insert the result of this test run quiz participation into the quiz statistics.
-     * @param studentExam The test run or testExam containing the users participations in all exam exercises
+     * @param studentExam The test run or test exam containing the users participations in all exam exercises
      */
     public void evaluateQuizParticipationsForTestRunAndTestExam(StudentExam studentExam) {
         final var participations = studentExam.getExercises().stream()
@@ -121,7 +121,7 @@ public class ExamQuizService {
                     resultRepository.save(result);
                 }
                 if (studentExam.getExam().isTestExam()) {
-                    // In case of an TestExam, the quiz statistic should also be updated
+                    // In case of an test exam, the quiz statistic should also be updated
                     var quizExercise1 = quizExerciseRepository.findByIdWithQuestionsAndStatisticsElseThrow(quizExercise.getId());
                     quizStatisticService.updateStatistics(Set.of(result), quizExercise1);
                 }

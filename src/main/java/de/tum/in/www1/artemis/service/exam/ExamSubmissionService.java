@@ -67,10 +67,10 @@ public class ExamSubmissionService {
         if (isExamSubmission(exercise)) {
             // Get the student exam if it was not passed to the function
             Exam exam = exercise.getExerciseGroup().getExam();
-            // Step 1: Find RealExam
+            // Step 1: Find real exam
             Optional<StudentExam> optionalStudentExam = studentExamRepository.findWithExercisesByUserIdAndExamId(user.getId(), exam.getId());
             if (optionalStudentExam.isEmpty()) {
-                // Step 2: Find latest (=the highest id) unsubmitted TestExam
+                // Step 2: Find latest (=the highest id) unsubmitted test exam
                 optionalStudentExam = studentExamRepository.findUnsubmittedStudentExamsForTestExamsWithExercisesByExamIdAndUserId(exam.getId(), user.getId()).stream()
                         .max(Comparator.comparing(StudentExam::getId));
             }

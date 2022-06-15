@@ -35,7 +35,7 @@
                                 <jhi-testexam-working-time [studentExam]="studentExam"></jhi-testexam-working-time>
                             </div>
                         </div>
-                        <!-- TestExams have to be submitted by the students, just as it is the case with RealExams -->
+                        <!-- test exams have to be submitted by the students, just as it is the case with real exams -->
                         <div *ngIf="!withinWorkingTime && !studentExam.submitted">
                             <div class="text-end">{{ 'artemisApp.exam.overview.testExam.notSubmitted' | artemisTranslate }}</div>
                         </div>

@@ -75,7 +75,7 @@ export class ExamParticipationService {
 
     /**
      * Retrieves a {@link StudentExam} from server or localstorage for display of the summary.
-     * Needed to display the summary for TestExams, as one student can have multiple studentExams.
+     * Needed to display the summary for test exams, as one student can have multiple studentExams.
      * @param courseId the id of the course the exam is created in
      * @param examId the id of the exam
      * @param studentExamId the id of the studentExam
@@ -121,7 +121,7 @@ export class ExamParticipationService {
     }
 
     /**
-     * Loads {@link StudentExam} object for a TestExam from server
+     * Loads {@link StudentExam} object for a test exam from server
      * @param courseId the id of the course the exam is created in
      * @param examId the id of the exam
      * @returns a studentExam without exercises for the start-phase
@@ -138,7 +138,7 @@ export class ExamParticipationService {
     }
 
     /**
-     * Loads {@link StudentExam} object for a TestExam from server
+     * Loads {@link StudentExam} object for a test exam from server
      * @param courseId the id of the course the exam is created in
      * @param examId the id of the exam
      * @param studentExamId the id of the studentExam we want to fetch
@@ -167,7 +167,7 @@ export class ExamParticipationService {
     }
 
     /**
-     * Loads {@link StudentExam} objects linked to a TestExam per user and per course from server
+     * Loads {@link StudentExam} objects linked to a test exam per user and per course from server
      * @param courseId the id of the course we are interested
      * @returns a List of all StudentExams without Exercises per User and Course
      */

@@ -34,7 +34,7 @@ export const enum ExamState {
 export class CourseExamDetailComponent implements OnInit, OnDestroy {
     @Input() exam: Exam;
     @Input() course: Course;
-    // Interims-boolean to limit the number of attempts for a testExam (currently max 1 attempt)
+    // Interims-boolean to limit the number of attempts for a test exam (currently max 1 attempt)
     @Input() maxAttemptsReached: boolean;
     examState: ExamState;
     examStateSubscription: Subscription;
@@ -68,8 +68,8 @@ export class CourseExamDetailComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * navigate to /courses/:courseId/exams/:examId for RealExams or
-     * /courses/:courseId/exams/:examId/test-exam/new for TestExams
+     * navigate to /courses/:courseId/exams/:examId for real exams or
+     * /courses/:courseId/exams/:examId/test-exam/new for test exams
      */
     openExam() {
         if (this.exam.testExam) {
@@ -123,8 +123,8 @@ export class CourseExamDetailComponent implements OnInit, OnDestroy {
             } else {
                 this.examState = ExamState.CLOSED;
                 if (this.exam.testExam) {
-                    // For TestExams, we can cancel the subscription and lock the possibility to click on the exam tile
-                    // For RealExams, a CLOSED RealExam can switch into a STUDENTREVIEW RealExam
+                    // For test exams, we can cancel the subscription and lock the possibility to click on the exam tile
+                    // For real exams, a CLOSED real exam can switch into a STUDENTREVIEW real exam
                     this.maxAttemptsReached = true;
                     this.cancelExamStateSubscription();
                 }

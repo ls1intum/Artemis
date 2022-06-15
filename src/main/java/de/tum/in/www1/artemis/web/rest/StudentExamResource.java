@@ -340,7 +340,7 @@ public class StudentExamResource {
     }
 
     /**
-     * GET /courses/{courseId}/exams/{examId}/student-exams/summary : Find a student exam for the summary of an RealExam.
+     * GET /courses/{courseId}/exams/{examId}/student-exams/summary : Find a student exam for the summary of an real exam.
      * This will be used to display the summary of the exam. The student exam will be returned with the exercises
      * and with the student participation and with the submissions.
      *
@@ -361,7 +361,7 @@ public class StudentExamResource {
             throw new AccessForbiddenException();
         }
 
-        // For TestExams, /student-exams/{studentExamId}/summary must be used.
+        // For test exams, /student-exams/{studentExamId}/summary must be used.
         if (studentExam.getExam().isTestExam()) {
             throw new AccessForbiddenException();
         }
@@ -385,10 +385,10 @@ public class StudentExamResource {
 
     /**
      * GET /courses/{courseId}/test-exams-per-user
-     * Retrieves all StudentExams for TestExams of one Course for the current user
+     * Retrieves all StudentExams for test exams of one Course for the current user
      *
      * @param courseId the course to which the student exam belongs to
-     * @return all StudentExams for TestExam for the specified course and user
+     * @return all StudentExams for test exam for the specified course and user
      */
     @GetMapping("courses/{courseId}/test-exams-per-user")
     @PreAuthorize("hasRole('USER')")
@@ -403,7 +403,7 @@ public class StudentExamResource {
 
     /**
      * GET /courses/{courseId}/exams/{examId}/student-exams/{studentExamId}summary
-     * Find a specified student exam for the summary of an TestExam. This will be used to display the summary of the exam.
+     * Find a specified student exam for the summary of an test exam. This will be used to display the summary of the exam.
      * The student exam will be returned with the exercises and with the student participation and with the submissions.
      *
      * @param courseId      the course to which the student exam belongs to
@@ -429,7 +429,7 @@ public class StudentExamResource {
             throw new AccessForbiddenException();
         }
 
-        // 3rd: For RealExams, /student-exams/summary must be used, as exactly one StudentExams exists per student.
+        // 3rd: For real exams, /student-exams/summary must be used, as exactly one StudentExams exists per student.
         if (!studentExam.getExam().isTestExam()) {
             throw new AccessForbiddenException();
         }

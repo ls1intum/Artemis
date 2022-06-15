@@ -110,8 +110,8 @@ public class ParticipationService {
     }
 
     /**
-     * This method is called when an StudentExam for a TestExam is set up for conduction.
-     * It creates a Participation which connects the corresponding student and exercise. The TestExam is linked with the iitializationDate = startedDate (StudentExam)
+     * This method is called when an StudentExam for a test exam is set up for conduction.
+     * It creates a Participation which connects the corresponding student and exercise. The test exam is linked with the iitializationDate = startedDate (StudentExam)
      * Additionally, it configures repository / build plan related stuff for programming exercises.
      * In the case of modeling or text exercises, it also initializes and stores the corresponding submission.
      *
@@ -184,7 +184,7 @@ public class ParticipationService {
         participation.setInitializationState(UNINITIALIZED);
         participation.setExercise(exercise);
         participation.setParticipant(participant);
-        // StartedDate is used to link a Participation to a TestExam exercise
+        // StartedDate is used to link a Participation to a test exam exercise
         if (initializationDate != null) {
             participation.setInitializationDate(initializationDate);
         }
@@ -219,7 +219,7 @@ public class ParticipationService {
         participation.setInitializationState(INITIALIZED);
         // Step 4b) Set the InitializationDate to the current time
         if (setInitializationDate) {
-            // Note: For TestExams, the InitializationDate is set to the StudentExam: startedDate in {#link #startExerciseWithInitializationDate}
+            // Note: For test exams, the InitializationDate is set to the StudentExam: startedDate in {#link #startExerciseWithInitializationDate}
             participation.setInitializationDate(ZonedDateTime.now());
         }
         // after saving, we need to make sure the object that is used after the if statement is the right one

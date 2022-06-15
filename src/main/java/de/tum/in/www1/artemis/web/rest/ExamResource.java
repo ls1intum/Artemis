@@ -236,8 +236,8 @@ public class ExamResource {
 
     /**
      * Checks that the visible/start/end-dates are present and in the correct order.
-     * For RealExams: visibleDate < startDate < endDate
-     * For TestExams: visibleDate <= startDate < endDate
+     * For real exams: visibleDate < startDate < endDate
+     * For test exams: visibleDate <= startDate < endDate
      *
      * @param exam the exam to be checked
      */
@@ -259,7 +259,7 @@ public class ExamResource {
     }
 
     /**
-     * Validates the working time, which should be equal (RealExams) or smaller / equal (TestExams) to the
+     * Validates the working time, which should be equal (real exams) or smaller / equal (test exams) to the
      * difference between start- and endDate.
      *
      * @param exam the exam to be checked
@@ -274,7 +274,7 @@ public class ExamResource {
         }
         else if (exam.getWorkingTime() != differenceStartEndDate) {
             /*
-             * Set the working time to the time difference for RealExams, if not done by the client. This can be an issue if the working time calculation in the client is not
+             * Set the working time to the time difference for real exams, if not done by the client. This can be an issue if the working time calculation in the client is not
              * performed (e.g. for Cypress-2E2-Tests). However, since the working time currently depends on the start- and end-date, we can do a server-side assignment
              */
             exam.setWorkingTime(differenceStartEndDate);
@@ -884,8 +884,8 @@ public class ExamResource {
     }
 
     /**
-     * GET /courses/{courseId}/exams/{examId}/start-test-exam : Get a {@Link StudentExam} for an TestExam for the exam start.
-     * Note: The Access control, if the requested StudentExam is a TestExam, is performed when generating the {@Link StudentExam}
+     * GET /courses/{courseId}/exams/{examId}/start-test-exam : Get a {@Link StudentExam} for an test exam for the exam start.
+     * Note: The Access control, if the requested StudentExam is a test exam, is performed when generating the {@Link StudentExam}
      * in {@Link StudentExamService} (in order to limit the number of Database-Calls)
      *
      * @param courseId the id of the course
@@ -903,7 +903,7 @@ public class ExamResource {
     }
 
     /**
-     * GET /courses/{courseId}/exams/{examId}/test-exam/{studentExamId}/start : Get a {@Link StudentExam} for the specified Id for an TestExam for the exam start.
+     * GET /courses/{courseId}/exams/{examId}/test-exam/{studentExamId}/start : Get a {@Link StudentExam} for the specified Id for an test exam for the exam start.
      *
      * @param courseId the id of the course
      * @param examId   the id of the (Test) Exams

@@ -16,7 +16,7 @@ export class TestexamWorkingTimeComponent implements OnInit {
 
     /**
      * This component is used to display the used working time and the percentage relative to the default working time for
-     * a testExam.
+     * a test exam.
      */
     ngOnInit() {
         if (

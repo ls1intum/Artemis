@@ -117,7 +117,7 @@ describe('ExamParticipationCoverComponent', () => {
         component.ngOnInit();
         expect(component.graceEndDate).toEqual(now.add(1, 'seconds').add(1, 'seconds'));
 
-        // Case TestExam
+        // Case test exam
         now = dayjs();
         component.studentExam.workingTime = 1;
         component.exam.testExam = true;
@@ -182,7 +182,7 @@ describe('ExamParticipationCoverComponent', () => {
         expect(component.waitingForExamStart).toBeTrue();
         expect(component.timeUntilStart).toBe('');
 
-        // Case TestExam
+        // Case test exam
         component.testRun = false;
         component.testExam = true;
         component.exam.testExam = true;

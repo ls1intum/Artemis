@@ -1,5 +1,5 @@
 <div *ngIf="exam" (click)="openExam()" id="exam-{{ exam.id }}">
-    <!-- Signature colors for the header: Blue for TestExams and Green for RedExams -->
+    <!-- Signature colors for the header: Blue for test exams and Green for RedExams -->
     <div
         [ngClass]="{
             'row card-header': true,
@@ -74,7 +74,7 @@
     </div>
     <!-- Footer -->
     <div class="card-footer row">
-        <!-- For RealExams, the start date is shown. For TestExams, the working window is shown to the students -->
+        <!-- For real exams, the start date is shown. For test exams, the working window is shown to the students -->
         <div *ngIf="!exam.testExam && exam.startDate" class="col-sm">{{ 'artemisApp.exam.overview.start' | artemisTranslate: { start: exam.startDate | artemisDate } }}</div>
         <div *ngIf="exam.testExam && exam.startDate && exam.endDate" class="col-12">
             {{

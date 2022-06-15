@@ -6,7 +6,7 @@
             <div *ngIf="isTestExam" class="mx-2 badge bg-primary">{{ 'artemisApp.examManagement.testExam.testExam' | artemisTranslate }}</div>
         </ng-container>
     </div>
-    <!-- For TestExams, the currentDate (analogous to the RealExam) and the workingTime should be displayed -->
+    <!-- For test exams, the currentDate (analogous to the real exam) and the workingTime should be displayed -->
     <div class="mb-2" *ngIf="exam && isTestExam">
         <span class="mx-2">
             <strong class="font-weight-bold">{{ 'artemisApp.exam.date' | artemisTranslate }}:</strong>

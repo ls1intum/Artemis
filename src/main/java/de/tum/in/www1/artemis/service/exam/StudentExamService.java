@@ -122,7 +122,7 @@ public class StudentExamService {
         }
 
         if (studentExam.isTestRun() || studentExam.getExam().isTestExam()) {
-            // immediately evaluate quiz participations for test runs and TestExams
+            // immediately evaluate quiz participations for test runs and test exams
             examQuizService.evaluateQuizParticipationsForTestRunAndTestExam(studentExam);
         }
         else if (!studentExam.isTestRun()) {
@@ -414,7 +414,7 @@ public class StudentExamService {
     }
 
     /**
-     * Method to set up new participations for a StudentExam of a TestExam.
+     * Method to set up new participations for a StudentExam of a test exam.
      *
      * @param studentExam the studentExam for which the new participations should be set up
      * @param startedDate the Date to which the InitializationDate should be set, in order to link StudentExam <-> participation
@@ -569,7 +569,7 @@ public class StudentExamService {
     }
 
     /**
-     * Generates a new TestExam for the student and stores it in the database
+     * Generates a new test exam for the student and stores it in the database
      *
      * @param examId  the exam for which the StudentExam should be fetched / created
      * @param student the corresponding student

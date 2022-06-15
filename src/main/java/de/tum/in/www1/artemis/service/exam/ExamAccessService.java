@@ -92,7 +92,7 @@ public class ExamAccessService {
     }
 
     /**
-     * Retrieves a specified studentExam for a TestExam from the database and sends it to the client
+     * Retrieves a specified studentExam for a test exam from the database and sends it to the client
      *
      * @param courseId      the course to which the exam belongs
      * @param examId        the examId of the exam we are interested in
@@ -126,7 +126,7 @@ public class ExamAccessService {
     }
 
     /**
-     * Either retrieves an existing StudentExam for a TestExam from the Database or generates a new StudentExam
+     * Either retrieves an existing StudentExam for a test exam from the Database or generates a new StudentExam
      *
      * @param courseId - the course to which the exam is linked
      * @param examId   - the exam for which the studentExam should be retrieved
@@ -183,7 +183,7 @@ public class ExamAccessService {
     private void checkStudentAccessToTestExamAndExamIsVisible(Course course, User currentUser, Exam exam) {
         checkExamBelongsToCourseElseThrow(course.getId(), exam);
 
-        // Check that the current user is registered for the TestExam. Otherwise, the student can self-register.
+        // Check that the current user is registered for the test exam. Otherwise, the student can self-register.
         examRegistrationService.checkRegistrationOrRegisterStudentToTestExam(course, exam.getId(), currentUser);
 
         // Check that the exam is visible

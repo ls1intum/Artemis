@@ -792,7 +792,7 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testCreateTestExam_asInstructor() throws Exception {
-        // Test the creation of a TestExam
+        // Test the creation of a test exam
         Exam examA = ModelFactory.generateTestExam(course1);
         request.post("/api/courses/" + course1.getId() + "/exams", examA, HttpStatus.CREATED);
 
@@ -802,7 +802,7 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testCreateTestExam_asInstructor_withVisibleDateEqualsStartDate() throws Exception {
-        // Test the creation of a TestExam, where visibleDate equals StartDate
+        // Test the creation of a test exam, where visibleDate equals StartDate
         Exam examB = ModelFactory.generateTestExam(course1);
         examB.setVisibleDate(examB.getStartDate());
         request.post("/api/courses/" + course1.getId() + "/exams", examB, HttpStatus.CREATED);
@@ -833,13 +833,13 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testUpdateTestExam_asInstructor_withExamModeChanged() throws Exception {
         // The Exam-Mode should not be changeable with a PUT / update operation, a CONFLICT should be returned instead
-        // Case 1: TestExam should be updated to RealExam
+        // Case 1: test exam should be updated to real exam
         Exam examA = ModelFactory.generateTestExam(course1);
         Exam createdExamA = request.postWithResponseBody("/api/courses/" + course1.getId() + "/exams", examA, Exam.class, HttpStatus.CREATED);
         createdExamA.setTestExam(false);
         request.putWithResponseBody("/api/courses/" + course1.getId() + "/exams", createdExamA, Exam.class, HttpStatus.CONFLICT);
 
-        // Case 2: RealExam should be updated to TestExam
+        // Case 2: real exam should be updated to test exam
         Exam examB = ModelFactory.generateTestExam(course1);
         examB.setTestExam(false);
         Exam createdExamB = request.postWithResponseBody("/api/courses/" + course1.getId() + "/exams", examB, Exam.class, HttpStatus.CREATED);
@@ -2457,7 +2457,7 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         request.get("/api/exams/123124123123/title", HttpStatus.NOT_FOUND, String.class);
     }
 
-    // ExamRegistration Service - selfRegisterToTestExam
+    // ExamRegistration Service - checkRegistrationOrRegisterStudentToTestExam
     @Test
     @WithMockUser(username = "student1", roles = "USER")
     public void testCheckRegistrationOrRegisterStudentToTestExam_noTestExam() {
