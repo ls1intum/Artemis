@@ -32,6 +32,10 @@ export class LectureUnitService {
         return this.httpClient.delete(`${this.resourceURL}/lectures/${lectureId}/lecture-units/${lectureUnitId}`, { observe: 'response' });
     }
 
+    complete(lectureUnitId: number, lectureId: number) {
+        return this.httpClient.post(`${this.resourceURL}/lectures/${lectureId}/lecture-units/${lectureUnitId}/complete`, { observe: 'response' });
+    }
+
     convertDateFromClient<T extends LectureUnit>(lectureUnit: T): T {
         if (lectureUnit.type === LectureUnitType.ATTACHMENT) {
             if ((<AttachmentUnit>lectureUnit).attachment) {

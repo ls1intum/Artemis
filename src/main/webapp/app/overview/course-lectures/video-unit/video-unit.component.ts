@@ -1,7 +1,9 @@
-import { Component, Input, OnInit } from '@angular/core';
-import { faVideo } from '@fortawesome/free-solid-svg-icons';
+import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { faCheck, faVideo } from '@fortawesome/free-solid-svg-icons';
 import { VideoUnit } from 'app/entities/lecture-unit/videoUnit.model';
 import urlParser from 'js-video-url-parser';
+import { VideoUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/videoUnit.service';
+import { LectureUnit } from 'app/entities/lecture-unit/lectureUnit.model';
 
 @Component({
     selector: 'jhi-video-unit',
@@ -10,6 +12,7 @@ import urlParser from 'js-video-url-parser';
 })
 export class VideoUnitComponent implements OnInit {
     @Input() videoUnit: VideoUnit;
+    @Output() onComplete: EventEmitter<any> = new EventEmitter();
 
     videoUrl: string;
     isCollapsed = true;
@@ -22,6 +25,7 @@ export class VideoUnitComponent implements OnInit {
 
     // Icons
     faVideo = faVideo;
+    faCheck = faCheck;
 
     constructor() {}
 
@@ -37,5 +41,7 @@ export class VideoUnitComponent implements OnInit {
     handleCollapse(event: Event) {
         event.stopPropagation();
         this.isCollapsed = !this.isCollapsed;
+
+        this.onComplete.emit(this.videoUnit as LectureUnit);
     }
 }

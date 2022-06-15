@@ -1,9 +1,10 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { SafeHtml } from '@angular/platform-browser';
-import { faExternalLinkAlt, faScroll } from '@fortawesome/free-solid-svg-icons';
+import { faCheck, faExternalLinkAlt, faScroll } from '@fortawesome/free-solid-svg-icons';
 import { TextUnit } from 'app/entities/lecture-unit/textUnit.model';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { htmlForMarkdown } from 'app/shared/util/markdown.conversion.util';
+import { LectureUnit } from 'app/entities/lecture-unit/lectureUnit.model';
 
 @Component({
     selector: 'jhi-text-unit',
@@ -12,6 +13,8 @@ import { htmlForMarkdown } from 'app/shared/util/markdown.conversion.util';
 })
 export class TextUnitComponent implements OnInit {
     @Input() textUnit: TextUnit;
+    @Output() onComplete: EventEmitter<any> = new EventEmitter();
+
     isCollapsed = true;
 
     formattedContent?: SafeHtml;
@@ -19,6 +22,7 @@ export class TextUnitComponent implements OnInit {
     // Icons
     faExternalLinkAlt = faExternalLinkAlt;
     faScroll = faScroll;
+    faCheck = faCheck;
 
     constructor(private artemisMarkdown: ArtemisMarkdownService) {}
 
@@ -31,6 +35,8 @@ export class TextUnitComponent implements OnInit {
     handleCollapse(event: Event) {
         event.stopPropagation();
         this.isCollapsed = !this.isCollapsed;
+
+        this.onComplete.emit(this.textUnit as LectureUnit);
     }
 
     openPopup(event: Event) {

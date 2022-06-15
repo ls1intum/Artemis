@@ -11,6 +11,7 @@
                 >
                     {{ 'artemisApp.courseOverview.exerciseList.notReleased' | artemisTranslate }}
                 </span>
+                <fa-icon *ngIf="videoUnit.completed" class="me-2 text-success" [icon]="faCheck"></fa-icon>
             </h5>
         </div>
         <div class="card-body unit-card-body" [ngbCollapse]="isCollapsed">

@@ -83,7 +83,7 @@ public class LectureUnitIntegrationTest extends AbstractSpringIntegrationBambooB
 
         List<LectureUnit> lectureUnits = List.of(this.textUnit, this.textUnit2);
 
-        this.lecture1 = lectureRepository.findByIdWithPostsAndLectureUnitsAndLearningGoals(lecture1.getId()).get();
+        this.lecture1 = lectureRepository.findByIdWithLectureUnitsElseThrow(lecture1.getId());
 
         for (LectureUnit lectureUnit : lectureUnits) {
             this.lecture1.addLectureUnit(lectureUnit);
@@ -128,6 +128,18 @@ public class LectureUnitIntegrationTest extends AbstractSpringIntegrationBambooB
     @WithMockUser(username = "instructor42", roles = "INSTRUCTOR")
     public void updateLectureUnitOrder_notInstructorInCourse_shouldReturnForbidden() throws Exception {
         request.put("/api/lectures/" + lecture1.getId() + "/lecture-units-order", List.of(), HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void setLectureUnitCompleted() throws Exception {
+        request.postWithoutLocation("/api/lectures/" + lecture1.getId() + "/lecture-units/" + lecture1.getLectureUnits().get(0).getId() + "/complete", null, HttpStatus.OK, null);
+
+        this.lecture1 = lectureRepository.findByIdWithPostsAndLectureUnitsAndLearningGoalsAndCompletionsElseThrow(lecture1.getId());
+        LectureUnit lectureUnit = this.lecture1.getLectureUnits().get(0);
+
+        assertThat(lectureUnit.isCompletedFor(userRepo.getUser())).isTrue();
+        assertThat(lectureUnit.getCompletionDate(userRepo.getUser())).isNotNull();
     }
 
 }

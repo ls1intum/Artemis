@@ -85,4 +85,12 @@ describe('AttachmentUnitComponent', () => {
         downloadButton.click();
         expect(downloadFileStub).toHaveBeenCalledTimes(1);
     });
+
+    it('should call complete callback when downloaded', (done) => {
+        attachmentUnitComponent.onComplete.subscribe((lectureUnit) => {
+            expect(lectureUnit).toEqual(attachmentUnit);
+            done();
+        });
+        attachmentUnitComponent.downloadAttachment();
+    }, 1000);
 });

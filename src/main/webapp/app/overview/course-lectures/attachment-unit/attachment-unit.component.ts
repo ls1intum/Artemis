@@ -1,7 +1,8 @@
-import { Component, Input } from '@angular/core';
-import { faFile, faFileArchive, faFileImage, faFilePdf } from '@fortawesome/free-solid-svg-icons';
+import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { faCheck, faFile, faFileArchive, faFileImage, faFilePdf } from '@fortawesome/free-solid-svg-icons';
 import { AttachmentUnit } from 'app/entities/lecture-unit/attachmentUnit.model';
 import { FileService } from 'app/shared/http/file.service';
+import { LectureUnit } from 'app/entities/lecture-unit/lectureUnit.model';
 
 @Component({
     selector: 'jhi-attachment-unit',
@@ -10,8 +11,12 @@ import { FileService } from 'app/shared/http/file.service';
 })
 export class AttachmentUnitComponent {
     @Input() attachmentUnit: AttachmentUnit;
+    @Output() onComplete: EventEmitter<any> = new EventEmitter();
 
     isCollapsed = true;
+
+    // Icons
+    faCheck = faCheck;
 
     constructor(private fileService: FileService) {}
 
@@ -23,6 +28,7 @@ export class AttachmentUnitComponent {
     downloadAttachment() {
         if (this.attachmentUnit?.attachment?.link) {
             this.fileService.downloadFileWithAccessToken(this.attachmentUnit?.attachment?.link);
+            this.onComplete.emit(this.attachmentUnit as LectureUnit);
         }
     }
 

@@ -583,7 +583,7 @@ public class DatabaseUtilService {
     }
 
     public Lecture addLectureUnitsToLecture(Lecture lecture, Set<LectureUnit> lectureUnits) {
-        Lecture l = lectureRepo.findByIdWithPostsAndLectureUnitsAndLearningGoals(lecture.getId()).get();
+        Lecture l = lectureRepo.findByIdWithLectureUnits(lecture.getId()).get();
         for (LectureUnit lectureUnit : lectureUnits) {
             l.addLectureUnit(lectureUnit);
         }

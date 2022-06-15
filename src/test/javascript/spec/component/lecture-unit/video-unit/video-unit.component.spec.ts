@@ -41,6 +41,7 @@ describe('VideoUnitComponent', () => {
             .then(() => {
                 videoUnitComponentFixture = TestBed.createComponent(VideoUnitComponent);
                 videoUnitComponent = videoUnitComponentFixture.componentInstance;
+                videoUnitComponent.videoUnit = videoUnit;
             });
     });
 
@@ -48,13 +49,7 @@ describe('VideoUnitComponent', () => {
         jest.restoreAllMocks();
     });
 
-    it('should initialize', () => {
-        videoUnitComponentFixture.detectChanges();
-        expect(videoUnitComponent).not.toBeNull();
-    });
-
     it('should iFrame correctly', () => {
-        videoUnitComponent.videoUnit = videoUnit;
         videoUnitComponent.isCollapsed = false;
         videoUnitComponentFixture.detectChanges(); // ngInit
         const iFrame = videoUnitComponentFixture.debugElement.nativeElement.querySelector('#videoFrame');
@@ -62,14 +57,12 @@ describe('VideoUnitComponent', () => {
     });
 
     it('should not have iFrame', () => {
-        videoUnitComponent.videoUnit = videoUnit;
         videoUnitComponentFixture.detectChanges(); // ngInit
         const iFrame = videoUnitComponentFixture.debugElement.nativeElement.querySelector('#videoFrame');
         expect(iFrame).toBeNull();
     });
 
     it('should collapse when clicked', () => {
-        videoUnitComponent.videoUnit = videoUnit;
         videoUnitComponentFixture.detectChanges(); // ngInit
         expect(videoUnitComponent.isCollapsed).toBeTrue();
         const handleCollapseSpy = jest.spyOn(videoUnitComponent, 'handleCollapse');
@@ -83,4 +76,12 @@ describe('VideoUnitComponent', () => {
 
         handleCollapseSpy.mockRestore();
     });
+
+    it('should call complete callback when clicked', (done) => {
+        videoUnitComponent.onComplete.subscribe((lectureUnit) => {
+            expect(lectureUnit).toEqual(videoUnit);
+            done();
+        });
+        videoUnitComponent.handleCollapse(new Event('click'));
+    }, 1000);
 });

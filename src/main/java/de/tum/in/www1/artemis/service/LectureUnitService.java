@@ -1,15 +1,22 @@
 package de.tum.in.www1.artemis.service;
 
+import java.time.ZonedDateTime;
 import java.util.*;
+
+import javax.annotation.Nullable;
+import javax.validation.constraints.NotNull;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.in.www1.artemis.domain.LearningGoal;
 import de.tum.in.www1.artemis.domain.Lecture;
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
+import de.tum.in.www1.artemis.domain.lecture.LectureUnitCompletion;
 import de.tum.in.www1.artemis.repository.LearningGoalRepository;
 import de.tum.in.www1.artemis.repository.LectureRepository;
+import de.tum.in.www1.artemis.repository.LectureUnitCompletionRepository;
 
 @Service
 public class LectureUnitService {
@@ -18,9 +25,37 @@ public class LectureUnitService {
 
     private final LearningGoalRepository learningGoalRepository;
 
-    public LectureUnitService(LectureRepository lectureRepository, LearningGoalRepository learningGoalRepository) {
+    private final LectureUnitCompletionRepository lectureUnitCompletionRepository;
+
+    public LectureUnitService(LectureRepository lectureRepository, LearningGoalRepository learningGoalRepository, LectureUnitCompletionRepository lectureUnitCompletionRepository) {
         this.lectureRepository = lectureRepository;
         this.learningGoalRepository = learningGoalRepository;
+        this.lectureUnitCompletionRepository = lectureUnitCompletionRepository;
+    }
+
+    /**
+     * Mark the lecture unit as completed by the given user
+     * @param lectureUnit The lecture unit to completed for the user
+     * @param user The user that completed the lecture unit
+     */
+    public void setLectureUnitCompleted(@NotNull LectureUnit lectureUnit, @NotNull User user) {
+        LectureUnitCompletion completion = new LectureUnitCompletion();
+        completion.setLectureUnit(lectureUnit);
+        completion.setUser(user);
+        completion.setCompletedAt(ZonedDateTime.now());
+        lectureUnitCompletionRepository.save(completion);
+    }
+
+    /**
+     * Get the timestamp when the lecture unit was completed by the user
+     * @param lectureUnit The lecture unit completed by the user
+     * @param user The user that completed the lecture unit
+     * @return The completion timestamp or null if not yet completed by the user
+     */
+    @Nullable
+    public ZonedDateTime getLectureUnitCompletion(@NotNull LectureUnit lectureUnit, @NotNull User user) {
+        Optional<LectureUnitCompletion> completion = lectureUnitCompletionRepository.findByLectureUnitIdAndUserId(lectureUnit.getId(), user.getId());
+        return completion.map(LectureUnitCompletion::getCompletedAt).orElse(null);
     }
 
     /**
@@ -38,7 +73,7 @@ public class LectureUnitService {
         for (LearningGoal learningGoal : associatedLearningGoals) {
             disconnectLectureUnitAndLearningGoal(lectureUnit, learningGoal);
         }
-        Lecture lecture = lectureRepository.findByIdWithPostsAndLectureUnitsAndLearningGoalsElseThrow(lectureUnit.getLecture().getId());
+        Lecture lecture = lectureRepository.findByIdWithLectureUnitsElseThrow(lectureUnit.getLecture().getId());
         // Creating a new list of lecture units without the one we want to remove
         List<LectureUnit> lectureUnitsUpdated = new ArrayList<>();
         for (LectureUnit unit : lecture.getLectureUnits()) {

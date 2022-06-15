@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { HttpErrorResponse } from '@angular/common/http';
+import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import dayjs from 'dayjs/esm';
 import { Lecture } from 'app/entities/lecture.model';
 import { FileService } from 'app/shared/http/file.service';
@@ -10,9 +10,10 @@ import { LectureUnit, LectureUnitType } from 'app/entities/lecture-unit/lectureU
 import { AttachmentUnit } from 'app/entities/lecture-unit/attachmentUnit.model';
 import { DiscussionSectionComponent } from 'app/overview/discussion-section/discussion-section.component';
 import { onError } from 'app/shared/util/global.utils';
-import { finalize } from 'rxjs/operators';
+import { filter, finalize, map } from 'rxjs/operators';
 import { AlertService } from 'app/core/util/alert.service';
 import { faSpinner } from '@fortawesome/free-solid-svg-icons';
+import { LectureUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/lectureUnit.service';
 
 @Component({
     selector: 'jhi-course-lecture-details',
@@ -33,7 +34,13 @@ export class CourseLectureDetailsComponent implements OnInit {
     // Icons
     faSpinner = faSpinner;
 
-    constructor(private alertService: AlertService, private lectureService: LectureService, private activatedRoute: ActivatedRoute, private fileService: FileService) {}
+    constructor(
+        private alertService: AlertService,
+        private lectureService: LectureService,
+        private lectureUnitService: LectureUnitService,
+        private activatedRoute: ActivatedRoute,
+        private fileService: FileService,
+    ) {}
 
     ngOnInit(): void {
         this.activatedRoute.params.subscribe((params) => {
@@ -73,6 +80,7 @@ export class CourseLectureDetailsComponent implements OnInit {
                 error: (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),
             });
     }
+
     attachmentNotReleased(attachment: Attachment): boolean {
         return attachment.releaseDate != undefined && !dayjs(attachment.releaseDate).isBefore(dayjs())!;
     }
@@ -96,6 +104,17 @@ export class CourseLectureDetailsComponent implements OnInit {
     downloadMergedFiles(): void {
         if (this.lecture?.course?.id && this.lectureId) {
             this.fileService.downloadMergedFileWithAccessToken(this.lecture.course.id, this.lectureId);
+        }
+    }
+
+    completeLectureUnit(lectureUnit: LectureUnit): void {
+        if (this.lecture && !lectureUnit.completed) {
+            this.lectureUnitService.complete(lectureUnit.id!, this.lecture.id!).subscribe({
+                next: () => {
+                    lectureUnit.completed = true;
+                },
+                error: (res: HttpErrorResponse) => onError(this.alertService, res),
+            });
         }
     }
 
