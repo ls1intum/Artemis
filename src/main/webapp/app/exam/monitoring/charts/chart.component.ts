@@ -50,6 +50,10 @@ export abstract class ChartComponent {
         };
     }
 
+    /**
+     * Inits all subscriptions.
+     * @protected
+     */
     protected initSubscriptions() {
         this.routeSubscription = this.route.parent?.params.subscribe((params) => {
             this.examId = parseInt(params['examId'], 10);
@@ -63,6 +67,10 @@ export abstract class ChartComponent {
         });
     }
 
+    /**
+     * Unsubscribes from all subscriptions.
+     * @protected
+     */
     protected endSubscriptions() {
         this.examActionSubscription?.unsubscribe();
     }

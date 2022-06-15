@@ -1,5 +1,5 @@
 import { GraphColors } from 'app/entities/statistics.model';
-import { ExamAction, ExamActionType, ExamActivity, SwitchedExerciseAction } from 'app/entities/exam-user-activity.model';
+import { ExamAction, ExamActionType, SwitchedExerciseAction } from 'app/entities/exam-user-activity.model';
 import { groupBy } from 'lodash';
 import { Exam } from 'app/entities/exam.model';
 import { NgxChartsEntry } from 'app/shared/chart/ngx-charts-datatypes';

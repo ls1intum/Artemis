@@ -12,7 +12,7 @@ import { ActivatedRoute } from '@angular/router';
     templateUrl: './category-actions-chart.component.html',
 })
 export class CategoryActionsChartComponent extends ChartComponent implements OnInit, OnDestroy {
-    readonly renderRate = 5;
+    readonly renderRate = 10;
 
     constructor(route: ActivatedRoute, examMonitoringWebsocketService: ExamMonitoringWebsocketService, private artemisDatePipe: ArtemisDatePipe) {
         super(route, examMonitoringWebsocketService, 'category-actions-chart', true, [getColor(0), getColor(1), getColor(2), getColor(3), getColor(4)]);

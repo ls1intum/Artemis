@@ -16,7 +16,7 @@ export class AverageActionsChartComponent extends ChartComponent implements OnIn
     @Input()
     registeredStudents: number;
 
-    readonly renderRate = 5;
+    readonly renderRate = 10;
 
     constructor(route: ActivatedRoute, examMonitoringWebsocketService: ExamMonitoringWebsocketService, private artemisDatePipe: ArtemisDatePipe) {
         super(route, examMonitoringWebsocketService, 'average-actions-chart', false, [getColor(2)]);

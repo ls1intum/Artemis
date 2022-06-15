@@ -69,7 +69,8 @@ export class ExerciseNavigationChartComponent extends ChartComponent implements 
         this.ngxColor = Object.assign({}, this.ngxColor);
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     filterRenderedData(examAction: ExamAction): boolean {
-        return examAction.type === ExamActionType.SWITCHED_EXERCISE;
+        return true;
     }
 }
