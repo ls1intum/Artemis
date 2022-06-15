@@ -30,9 +30,9 @@ describe('ArtemisTimeAgoPipe', () => {
         { value: dayjs().add(5, 'minutes'), expected: { en: 'in 5 minutes', de: 'in 5 Minuten' } },
         { value: dayjs().add(10, 'minutes'), expected: { en: 'in 10 minutes', de: 'in 10 Minuten' } },
         { value: dayjs().add(2, 'hours'), expected: { en: 'in 2 hours', de: 'in 2 Stunden' } },
-        { value: dayjs().add(-5, 'minutes'), expected: { en: '5 minutes ago', de: 'vor 5 Minuten' } },
-        { value: dayjs().add(-10, 'minutes'), expected: { en: '10 minutes ago', de: 'vor 10 Minuten' } },
-        { value: dayjs().add(-2, 'hours'), expected: { en: '2 hours ago', de: 'vor 2 Stunden' } },
+        { value: dayjs().subtract(5, 'minutes'), expected: { en: '5 minutes ago', de: 'vor 5 Minuten' } },
+        { value: dayjs().subtract(10, 'minutes'), expected: { en: '10 minutes ago', de: 'vor 10 Minuten' } },
+        { value: dayjs().subtract(2, 'hours'), expected: { en: '2 hours ago', de: 'vor 2 Stunden' } },
     ])('returns the correct time and switches the language correctly', ({ value, expected }) => {
         Object.entries(expected).forEach(([langKey, expectedOutput]) => {
             translateService.use(langKey);
@@ -41,7 +41,7 @@ describe('ArtemisTimeAgoPipe', () => {
     });
 
     it('updates the output automatically as time passes, but removes the timer after destroy', fakeAsync(() => {
-        const time = dayjs().add(-60, 'seconds');
+        const time = dayjs().subtract(60, 'seconds');
         expect(pipe.transform(time)).toBe('a minute ago');
         expect(cdRef.markForCheck).not.toHaveBeenCalled();
         tick(30000);
