@@ -40,7 +40,7 @@ describe('ArtemisTimeAgoPipe', () => {
         });
     });
 
-    it('updates the output automatically as time passes, but removes the timer after destory', fakeAsync(() => {
+    it('updates the output automatically as time passes, but removes the timer after destroy', fakeAsync(() => {
         const time = dayjs().add(-60, 'seconds');
         expect(pipe.transform(time)).toBe('a minute ago');
         expect(cdRef.markForCheck).not.toHaveBeenCalled();
