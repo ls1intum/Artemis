@@ -93,13 +93,7 @@ public class OnlineUnitResource {
             throw new ConflictException("Lecture unit must be associated to a lecture of a course", "onlineUnit", "lectureOrCourseMissing");
         }
 
-        // Validate the URL
-        try {
-            new URL(onlineUnit.getSource());
-        }
-        catch (MalformedURLException exception) {
-            throw new BadRequestException();
-        }
+        validateUrl(onlineUnit);
 
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, onlineUnit.getLecture().getCourse(), null);
 
@@ -127,13 +121,7 @@ public class OnlineUnitResource {
             throw new BadRequestException();
         }
 
-        // Validate the URL
-        try {
-            new URL(onlineUnit.getSource());
-        }
-        catch (MalformedURLException exception) {
-            throw new BadRequestException();
-        }
+        validateUrl(onlineUnit);
 
         Lecture lecture = lectureRepository.findByIdWithPostsAndLectureUnitsAndLearningGoalsElseThrow(lectureId);
         if (lecture.getCourse() == null) {
@@ -200,4 +188,16 @@ public class OnlineUnitResource {
         return "";
     }
 
+    /**
+     * Validates the source url of an online unit.
+     * @param onlineUnit The online unit to check the source URL for.
+     */
+    private void validateUrl(OnlineUnit onlineUnit) {
+        try {
+            new URL(onlineUnit.getSource());
+        }
+        catch (MalformedURLException exception) {
+            throw new BadRequestException();
+        }
+    }
 }
