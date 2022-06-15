@@ -1,7 +1,7 @@
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { captureException } from '@sentry/browser';
-import { EMPTY, Observable, ReplaySubject, Subject, throwError } from 'rxjs';
+import { EMPTY, Observable, ReplaySubject, Subject } from 'rxjs';
 
 export enum EntityType {
     COURSE = 'COURSE',
