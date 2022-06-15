@@ -2,7 +2,7 @@ import { AfterViewInit, ChangeDetectorRef, Component, EmbeddedViewRef, OnDestroy
 import { Course } from 'app/entities/course.model';
 import { CourseManagementService } from '../course/manage/course-management.service';
 import { ActivatedRoute } from '@angular/router';
-import { Subject, Subscription } from 'rxjs';
+import { forkJoin, Subject, Subscription } from 'rxjs';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { CourseScoreCalculationService } from 'app/overview/course-score-calculation.service';
 import { CachingStrategy } from 'app/shared/image/secured-image.component';
@@ -89,7 +89,8 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
         this.course = this.courseCalculationService.getCourse(this.courseId);
         if (!this.course) {
             this.loadCourse();
-        } else {
+        } else if (!this.course.learningGoals || !this.course.prerequisites) {
+            // If the course is present but without learning goals (e.g. loaded in Artemis overview), we only need to fetch those
             this.loadLearningGoals();
         }
         this.adjustCourseDescription();
@@ -156,6 +157,10 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
         }
     }
 
+    /**
+     * Fetch the course from the server including all exercises, lectures, exams and learning goals
+     * @param refresh Whether this is a force refresh (displays loader animation)
+     */
     loadCourse(refresh = false) {
         this.refreshingCourse = refresh;
         this.courseService.findOneForDashboard(this.courseId).subscribe({
@@ -163,7 +168,6 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
                 this.courseCalculationService.updateCourse(res.body!);
                 this.course = this.courseCalculationService.getCourse(this.courseId);
                 this.adjustCourseDescription();
-                this.loadLearningGoals();
                 setTimeout(() => (this.refreshingCourse = false), 500); // ensure min animation duration
             },
             error: (error: HttpErrorResponse) => {
@@ -207,18 +211,12 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
     }
 
     loadLearningGoals() {
-        this.learningGoalService.getAllForCourse(this.courseId).subscribe({
-            next: (learningGoals) => {
+        forkJoin([this.learningGoalService.getAllForCourse(this.courseId), this.learningGoalService.getAllPrerequisitesForCourse(this.courseId)]).subscribe({
+            next: ([learningGoals, prerequisites]) => {
                 if (this.course) {
                     this.course.learningGoals = learningGoals.body!;
-                }
-            },
-            error: () => {},
-        });
-        this.learningGoalService.getAllPrerequisitesForCourse(this.courseId).subscribe({
-            next: (prerequisites) => {
-                if (this.course) {
                     this.course.prerequisites = prerequisites.body!;
+                    this.courseCalculationService.updateCourse(this.course);
                 }
             },
             error: () => {},

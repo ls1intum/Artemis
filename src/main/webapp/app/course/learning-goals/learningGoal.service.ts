@@ -1,18 +1,14 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
-import { Observable, Subject } from 'rxjs';
+import { Observable } from 'rxjs';
 import { LearningGoal } from 'app/entities/learningGoal.model';
 import { LectureUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/lectureUnit.service';
 import { map } from 'rxjs/operators';
 import { IndividualLearningGoalProgress } from 'app/course/learning-goals/learning-goal-individual-progress-dtos.model';
 import { CourseLearningGoalProgress } from 'app/course/learning-goals/learning-goal-course-progress.dtos.model';
-import { Cacheable } from 'ts-cacheable';
-import { SessionStorageStrategy } from 'app/shared/image/session-storage-strategy';
 
 type EntityResponseType = HttpResponse<LearningGoal>;
 type EntityArrayResponseType = HttpResponse<LearningGoal[]>;
-
-const changeSubject = new Subject<void>();
 
 @Injectable({
     providedIn: 'root',
@@ -22,22 +18,10 @@ export class LearningGoalService {
 
     constructor(private httpClient: HttpClient, private lectureUnitService: LectureUnitService) {}
 
-    @Cacheable({
-        storageStrategy: SessionStorageStrategy,
-        cacheBusterObserver: changeSubject.asObservable(),
-        maxCacheCount: 50,
-        maxAge: 300000, // 5 minutes
-    })
     getAllForCourse(courseId: number): Observable<EntityArrayResponseType> {
         return this.httpClient.get<LearningGoal[]>(`${this.resourceURL}/courses/${courseId}/goals`, { observe: 'response' });
     }
 
-    @Cacheable({
-        storageStrategy: SessionStorageStrategy,
-        cacheBusterObserver: changeSubject.asObservable(),
-        maxCacheCount: 50,
-        maxAge: 300000, // 5 minutes
-    })
     getAllPrerequisitesForCourse(courseId: number): Observable<EntityArrayResponseType> {
         return this.httpClient.get<LearningGoal[]>(`${this.resourceURL}/courses/${courseId}/prerequisites`, { observe: 'response' });
     }
@@ -67,29 +51,24 @@ export class LearningGoalService {
     }
 
     create(learningGoal: LearningGoal, courseId: number): Observable<EntityResponseType> {
-        this.resetCache();
         const copy = this.convertDateFromClient(learningGoal);
         return this.httpClient.post<LearningGoal>(`${this.resourceURL}/courses/${courseId}/goals`, copy, { observe: 'response' });
     }
 
     addPrerequisite(learningGoalId: number, courseId: number): Observable<EntityResponseType> {
-        this.resetCache();
         return this.httpClient.post(`${this.resourceURL}/courses/${courseId}/prerequisites/${learningGoalId}`, null, { observe: 'response' });
     }
 
     update(learningGoal: LearningGoal, courseId: number): Observable<EntityResponseType> {
-        this.resetCache();
         const copy = this.convertDateFromClient(learningGoal);
         return this.httpClient.put(`${this.resourceURL}/courses/${courseId}/goals`, copy, { observe: 'response' });
     }
 
     delete(learningGoalId: number, courseId: number) {
-        this.resetCache();
         return this.httpClient.delete(`${this.resourceURL}/courses/${courseId}/goals/${learningGoalId}`, { observe: 'response' });
     }
 
     removePrerequisite(learningGoalId: number, courseId: number) {
-        this.resetCache();
         return this.httpClient.delete(`${this.resourceURL}/courses/${courseId}/prerequisites/${learningGoalId}`, { observe: 'response' });
     }
 
@@ -106,12 +85,5 @@ export class LearningGoalService {
             copy.lectureUnits = this.lectureUnitService.convertDateArrayFromClient(copy.lectureUnits);
         }
         return copy;
-    }
-
-    /**
-     * Bust the cache for learning goals and prerequisites
-     */
-    resetCache() {
-        changeSubject.next();
     }
 }

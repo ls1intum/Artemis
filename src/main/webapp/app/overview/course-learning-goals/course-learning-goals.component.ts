@@ -11,6 +11,8 @@ import { IndividualLearningGoalProgress } from 'app/course/learning-goals/learni
 import { AccountService } from 'app/core/auth/account.service';
 import { captureException } from '@sentry/browser';
 import { isEqual } from 'lodash-es';
+import { CourseScoreCalculationService } from 'app/overview/course-score-calculation.service';
+import { Course } from 'app/entities/course.model';
 
 @Component({
     selector: 'jhi-course-learning-goals',
@@ -22,6 +24,7 @@ export class CourseLearningGoalsComponent implements OnInit {
     courseId: number;
 
     isLoading = false;
+    course?: Course;
     learningGoals: LearningGoal[] = [];
     prerequisites: LearningGoal[] = [];
     learningGoalIdToLearningGoalProgress = new Map<number, IndividualLearningGoalProgress>();
@@ -33,17 +36,23 @@ export class CourseLearningGoalsComponent implements OnInit {
     constructor(
         private activatedRoute: ActivatedRoute,
         private alertService: AlertService,
+        private courseCalculationService: CourseScoreCalculationService,
         private learningGoalService: LearningGoalService,
         private accountService: AccountService,
     ) {}
 
     ngOnInit(): void {
         this.activatedRoute.parent?.parent?.params.subscribe((params) => {
-            this.courseId = +params['courseId'];
-            if (this.courseId) {
-                this.loadData();
-            }
+            this.courseId = parseInt(params['courseId'], 10);
         });
+
+        this.course = this.courseCalculationService.getCourse(this.courseId);
+        if (this.course && this.course.learningGoals && this.course.prerequisites) {
+            this.learningGoals = this.course.learningGoals;
+            this.prerequisites = this.course.prerequisites;
+        } else {
+            this.loadData();
+        }
     }
 
     getLearningGoalProgress(learningGoal: LearningGoal) {
@@ -97,13 +106,7 @@ export class CourseLearningGoalsComponent implements OnInit {
                     }
                     this.testIfScoreUsingParticipantScoresTableDiffers();
                 },
-                error: (errorResponse: HttpErrorResponse) => {
-                    this.learningGoalService.resetCache();
-                    // Suppress 404 errors, which can happen when loading progress for cached but deleted learning goals
-                    if (errorResponse.status !== 404) {
-                        onError(this.alertService, errorResponse);
-                    }
-                },
+                error: (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),
             });
     }
 
