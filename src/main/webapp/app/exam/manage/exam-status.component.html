@@ -65,7 +65,7 @@
         <!-- If exam conduction is planned, but not started yet, show a red cross,
              If exam is currently conducted, show a yellow dot
              If the exam preparation and the conduction period are finished, show a green check
-             If the TestExam preparation is not yet finished, but the TestExam has already started, show a warning-->
+             If the test eam preparation is not yet finished, but the test eam has already started, show a warning-->
         <div class="d-flex justify-content-center header-icon" [ngSwitch]="examConductionState">
             <fa-icon *ngSwitchCase="examConductionStateEnum.PLANNED" [icon]="faTimesCircle" class="cross"></fa-icon>
             <fa-icon *ngSwitchCase="examConductionStateEnum.RUNNING" [icon]="faDotCircle" class="running"></fa-icon>
@@ -77,7 +77,7 @@
                 <h6>{{ 'artemisApp.examStatus.conduction.' + (isTestExam ? 'testExam.' : '') + 'examConduction' | artemisTranslate }}</h6>
                 <b>{{ exam.startDate | artemisDate }} - {{ exam.endDate | artemisDate }}</b>
             </div>
-            <!-- In case the exercise configuration is wrong, but the TestExam already started, students are not able to start a TestExam -->
+            <!-- In case the exercise configuration is wrong, but the test eam already started, students are not able to start a test eam -->
             <div class="text-center mb-1" *ngIf="examConductionState === examConductionStateEnum.ERROR">
                 <h6>{{ 'artemisApp.examStatus.conduction.' + (isTestExam ? 'testExam.' : '') + 'conductionSuspended' | artemisTranslate }}</h6>
             </div>

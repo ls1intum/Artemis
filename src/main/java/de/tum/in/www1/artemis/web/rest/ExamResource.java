@@ -236,8 +236,8 @@ public class ExamResource {
 
     /**
      * Checks that the visible/start/end-dates are present and in the correct order.
-     * For RealExams: visibleDate < startDate < endDate
-     * For TestExams: visibleDate <= startDate < endDate
+     * For real exams: visibleDate < startDate < endDate
+     * For test eams: visibleDate <= startDate < endDate
      *
      * @param exam the exam to be checked
      */
@@ -259,7 +259,7 @@ public class ExamResource {
     }
 
     /**
-     * Validates the working time, which should be equal (RealExams) or smaller / equal (TestExams) to the
+     * Validates the working time, which should be equal (real exams) or smaller / equal (test eams) to the
      * difference between start- and endDate.
      *
      * @param exam the exam to be checked
@@ -274,7 +274,7 @@ public class ExamResource {
         }
         else if (exam.getWorkingTime() != differenceStartEndDate) {
             /*
-             * Set the working time to the time difference for RealExams, if not done by the client. This can be an issue if the working time calculation in the client is not
+             * Set the working time to the time difference for real exams, if not done by the client. This can be an issue if the working time calculation in the client is not
              * performed (e.g. for Cypress-2E2-Tests). However, since the working time currently depends on the start- and end-date, we can do a server-side assignment
              */
             exam.setWorkingTime(differenceStartEndDate);
