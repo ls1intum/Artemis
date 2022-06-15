@@ -13,6 +13,7 @@ import de.tum.in.www1.artemis.domain.User;
 public class LectureUnitCompletion {
 
     @EmbeddedId
+    @SuppressWarnings("unused")
     private LectureUnitUserId id = new LectureUnitUserId();
 
     @ManyToOne
@@ -51,6 +52,7 @@ public class LectureUnitCompletion {
     }
 
     @Embeddable
+    @SuppressWarnings("unused")
     public static class LectureUnitUserId implements Serializable {
 
         @Serial

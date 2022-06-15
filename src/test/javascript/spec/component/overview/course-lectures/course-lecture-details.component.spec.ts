@@ -190,6 +190,26 @@ describe('CourseLectureDetails', () => {
         downloadButton.nativeElement.click();
         expect(downloadAttachmentStub).toHaveBeenCalledOnce();
     }));
+
+    it('should complete lecture unit', fakeAsync(() => {
+        const lectureUnitService = TestBed.inject(LectureUnitService);
+        const completeSpy = jest.spyOn(lectureUnitService, 'complete');
+        completeSpy.mockReturnValue(of(new HttpResponse({ headers: new HttpHeaders() })));
+
+        courseLecturesDetailsComponent.lecture = lecture;
+        courseLecturesDetailsComponent.ngOnInit();
+        fixture.detectChanges();
+
+        expect(lectureUnit3.completed).toBeFalsy();
+        courseLecturesDetailsComponent.completeLectureUnit(lectureUnit3);
+        expect(completeSpy).toHaveBeenCalledWith(lectureUnit3.id, lecture.id);
+        expect(lectureUnit3.completed).toBeTrue();
+
+        // Should not make request if unit already completed
+        completeSpy.mockReset();
+        courseLecturesDetailsComponent.completeLectureUnit(lectureUnit3);
+        expect(completeSpy).not.toHaveBeenCalled();
+    }));
 });
 
 const getAttachmentUnit = (lecture: Lecture, id: number, releaseDate: dayjs.Dayjs) => {

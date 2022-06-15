@@ -2,7 +2,6 @@ import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { faCheck, faVideo } from '@fortawesome/free-solid-svg-icons';
 import { VideoUnit } from 'app/entities/lecture-unit/videoUnit.model';
 import urlParser from 'js-video-url-parser';
-import { VideoUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/videoUnit.service';
 import { LectureUnit } from 'app/entities/lecture-unit/lectureUnit.model';
 
 @Component({

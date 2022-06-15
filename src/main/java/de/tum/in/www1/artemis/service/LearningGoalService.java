@@ -312,7 +312,7 @@ public class LearningGoalService {
             progress.lectureUnitId = lectureUnit.getId();
             progress.noOfParticipants = lectureUnit.getCompletedUsers().size();
             progress.totalPointsAchievableByStudentsInLectureUnit = 0.0;
-            progress.averageScoreAchievedByStudentInLectureUnit = progress.noOfParticipants / numberOfStudents;
+            progress.averageScoreAchievedByStudentInLectureUnit = progress.noOfParticipants / numberOfStudents * 100;
             progress.participationRate = progress.noOfParticipants / numberOfStudents * 100;
             return progress;
         }).collect(Collectors.toSet());

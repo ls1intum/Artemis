@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { HttpErrorResponse } from '@angular/common/http';
 import dayjs from 'dayjs/esm';
 import { Lecture } from 'app/entities/lecture.model';
 import { FileService } from 'app/shared/http/file.service';
@@ -10,7 +10,7 @@ import { LectureUnit, LectureUnitType } from 'app/entities/lecture-unit/lectureU
 import { AttachmentUnit } from 'app/entities/lecture-unit/attachmentUnit.model';
 import { DiscussionSectionComponent } from 'app/overview/discussion-section/discussion-section.component';
 import { onError } from 'app/shared/util/global.utils';
-import { filter, finalize, map } from 'rxjs/operators';
+import { finalize } from 'rxjs/operators';
 import { AlertService } from 'app/core/util/alert.service';
 import { faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { LectureUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/lectureUnit.service';
