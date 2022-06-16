@@ -426,7 +426,7 @@ export class UserManagementComponent implements OnInit, OnDestroy {
     /**
      * Selects/Unselects all (filtered) users.
      */
-    selectAllUsers() {
+    toggleAllUserSelection() {
         const usersWithoutCurrentUser = this.usersWithoutCurrentUser;
         if (this.selectedUsers.length === usersWithoutCurrentUser.length) {
             // Clear all users
@@ -447,7 +447,7 @@ export class UserManagementComponent implements OnInit, OnDestroy {
     /**
      * Selects/Unselects a user.
      */
-    selectUser(user: User) {
+    toggleUser(user: User) {
         const index = this.selectedUsers.indexOf(user);
         if (index > -1) {
             this.selectedUsers.splice(index, 1);

@@ -67,7 +67,7 @@
                         <input
                             class="form-check-input"
                             [checked]="this.selectedUsers.length === this.usersWithoutCurrentUser.length"
-                            (change)="this.selectAllUsers()"
+                            (change)="this.toggleAllUserSelection()"
                             type="checkbox"
                         />
                     </th>
@@ -120,7 +120,7 @@
                             class="form-check-input"
                             [disabled]="!currentAccount || currentAccount.login === user.login"
                             [checked]="this.selectedUsers.includes(user)"
-                            (change)="this.selectUser(user)"
+                            (change)="this.toggleUser(user)"
                             type="checkbox"
                         />
                     </td>

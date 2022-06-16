@@ -309,9 +309,10 @@ public class UserResource {
                     deletedUsers.add(login);
                 }
             }
-            catch (Exception ignored) {
+            catch (Exception exception) {
                 // In order to handle all users even if some users produce exceptions, we catch them and ignore them and proceed with the remaining users
-                log.debug("REST request to delete user {} failed", login);
+                log.error("REST request to delete user {} failed", login);
+                log.error(exception.getMessage());
             }
         }
         return ResponseEntity.ok().headers(HeaderUtil.createAlert(applicationName, "userManagement.batch.deleted", String.valueOf(deletedUsers.size()))).body(deletedUsers);

@@ -370,9 +370,9 @@ describe('UserManagementComponent', () => {
         user.login = '1';
 
         expect(comp.selectedUsers).toEqual([]);
-        comp.selectUser(user);
+        comp.toggleUser(user);
         expect(comp.selectedUsers).toEqual([user]);
-        comp.selectUser(user);
+        comp.toggleUser(user);
         expect(comp.selectedUsers).toEqual([]);
     });
 });
