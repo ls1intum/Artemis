@@ -4,6 +4,7 @@ import { Observable } from 'rxjs';
 
 import { createRequestOption } from 'app/shared/util/request.util';
 import { User } from 'app/core/user/user.model';
+import { UserFilter } from 'app/admin/user-management/user-management.component';
 
 @Injectable({ providedIn: 'root' })
 export class UserService {
@@ -41,10 +42,14 @@ export class UserService {
     /**
      * Submit a query for a given request.
      * @param req The query request
+     * @param filter additional filter
      * @return Observable<HttpResponse<User[]>> with the list of users that match the query as body.
      */
-    query(req?: any): Observable<HttpResponse<User[]>> {
-        const options = createRequestOption(req);
+    query(req?: any, filter?: UserFilter): Observable<HttpResponse<User[]>> {
+        let options = createRequestOption(req);
+        if (filter) {
+            options = filter.adjustOptions(options);
+        }
         return this.http.get<User[]>(this.resourceUrl, { params: options, observe: 'response' });
     }
 
