@@ -3,14 +3,16 @@
         <div class="course-info-bar" [ngStyle]="{ backgroundColor: course.color || ARTEMIS_DEFAULT_COLOR }" id="course-detail-info-bar">
             <div class="row">
                 <div class="col general-info">
-                    <h3 class="fw-medium">{{ course.title }}</h3>
-                    <h4 class="fw-medium">{{ courseDescription || ('artemisApp.courseOverview.noDescription' | artemisTranslate) }}</h4>
-                    <h6 class="fw-medium" role="button" *ngIf="enableShowMore && !longDescriptionShown" (click)="toggleCourseDescription()">
-                        {{ 'artemisApp.courseOverview.showMore' | artemisTranslate }}
-                    </h6>
-                    <h6 class="fw-medium" role="button" *ngIf="enableShowMore && longDescriptionShown" (click)="toggleCourseDescription()">
-                        {{ 'artemisApp.courseOverview.showLess' | artemisTranslate }}
-                    </h6>
+                    <h3 class="fw-medium" [class.mb-0]="!courseDescription">{{ course.title }}</h3>
+                    <ng-container *ngIf="courseDescription">
+                        <h4 class="fw-medium">{{ courseDescription }}</h4>
+                        <h6 class="fw-medium" role="button" *ngIf="enableShowMore && !longDescriptionShown" (click)="toggleCourseDescription()">
+                            {{ 'artemisApp.courseOverview.showMore' | artemisTranslate }}
+                        </h6>
+                        <h6 class="fw-medium" role="button" *ngIf="enableShowMore && longDescriptionShown" (click)="toggleCourseDescription()">
+                            {{ 'artemisApp.courseOverview.showLess' | artemisTranslate }}
+                        </h6>
+                    </ng-container>
                 </div>
                 <div class="col-4 d-none d-md-flex justify-content-end course-icon">
                     <jhi-secured-image
@@ -94,7 +96,7 @@
             </div>
         </div>
         <div class="row">
-            <div class="col-md-4">
+            <div class="col-xxl-4">
                 <div class="row">
                     <jhi-course-detail-doughnut-chart
                         class="doughnut-container col-md-6 my-3"
@@ -132,14 +134,12 @@
                     ></jhi-course-detail-doughnut-chart>
                 </div>
             </div>
-            <jhi-fullscreen class="col-md-8 fullscreen align-items-center">
-                <jhi-course-detail-line-chart
-                    class="col-12"
-                    [course]="course"
-                    [numberOfStudentsInCourse]="course.numberOfStudents!"
-                    [initialStats]="activeStudents"
-                ></jhi-course-detail-line-chart>
-            </jhi-fullscreen>
+            <jhi-course-detail-line-chart
+                class="col-xxl-8"
+                [course]="course"
+                [numberOfStudentsInCourse]="course.numberOfStudents!"
+                [initialStats]="activeStudents"
+            ></jhi-course-detail-line-chart>
         </div>
         <hr />
         <div>
