@@ -360,7 +360,7 @@ describe('UserManagementComponent', () => {
         comp.selectedUsers = [users[0], users[1]];
 
         comp.deleteAllSelectedUsers();
-        expect(deleteSpy).toHaveBeenCalledTimes(1);
+        expect(deleteSpy).toHaveBeenCalledOnce();
         expect(deleteSpy).toHaveBeenCalledWith([users[0].login, users[1].login]);
     });
 
