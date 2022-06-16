@@ -108,7 +108,7 @@ export class CourseLectureDetailsComponent implements OnInit {
     }
 
     completeLectureUnit(lectureUnit: LectureUnit): void {
-        if (this.lecture && !lectureUnit.completed) {
+        if (this.lecture && !lectureUnit.completed && lectureUnit.visibleToStudents) {
             this.lectureUnitService.complete(lectureUnit.id!, this.lecture.id!).subscribe({
                 next: () => {
                     lectureUnit.completed = true;
