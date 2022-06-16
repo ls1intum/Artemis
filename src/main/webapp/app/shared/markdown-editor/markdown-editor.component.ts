@@ -33,6 +33,7 @@ import { UnorderedListCommand } from 'app/shared/markdown-editor/commands/unorde
 import { HeadingThreeCommand } from 'app/shared/markdown-editor/commands/headingThree.command';
 import { CodeBlockCommand } from 'app/shared/markdown-editor/commands/codeblock.command';
 import { faGripLines, faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
+import { MultiOptionCommand } from 'app/shared/markdown-editor/commands/multiOptionCommand';
 
 export enum MarkdownEditorHeight {
     INLINE = 100,
@@ -64,6 +65,7 @@ const getAceMode = (mode: EditorMode) => {
     encapsulation: ViewEncapsulation.None,
 })
 export class MarkdownEditorComponent implements AfterViewInit {
+    public MultiOptionCommand = MultiOptionCommand;
     public DomainMultiOptionCommand = DomainMultiOptionCommand;
     public DomainTagCommand = DomainTagCommand;
     // This ref is used for entering the fullscreen mode.

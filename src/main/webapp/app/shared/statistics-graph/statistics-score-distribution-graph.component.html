@@ -1,10 +1,8 @@
-<div class="row mb-5">
-    <div class="col-md-2 d-flex">
-        <div class="row flex-grow-1">
-            <h3 class="col-md-8 d-flex">{{ 'statistics.score_distribution' | artemisTranslate }}</h3>
-        </div>
+<div class="row mb-3">
+    <div class="col-xl-2">
+        <h3>{{ 'statistics.score_distribution' | artemisTranslate }}</h3>
     </div>
-    <div #containerRef class="col-md-9">
+    <div #containerRef class="col-xl-9">
         <ngx-charts-bar-vertical
             [view]="[containerRef.offsetWidth, 250]"
             [results]="ngxData"
