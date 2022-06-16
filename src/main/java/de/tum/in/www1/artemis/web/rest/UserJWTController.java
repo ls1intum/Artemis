@@ -148,8 +148,8 @@ public class UserJWTController {
             throw new UserNotActivatedException("User was disabled!");
         }
 
-        long difference = this.personalAccessTokenMaxLifetimeMilliseconds - lifetimeMilliseconds;
         if (lifetimeMilliseconds > this.personalAccessTokenMaxLifetimeMilliseconds) {
+            long difference = this.personalAccessTokenMaxLifetimeMilliseconds - lifetimeMilliseconds;
             return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "invalidPATLifetime",
                     "Requested token lifetime exceeds the maximum lifetime for personal access tokens by " + difference)).build();
         }
