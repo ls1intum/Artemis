@@ -3,7 +3,7 @@
         "batch": {
             "all": "All",
             "delete": {
-                "question": "Are you sure you want to permanently delete the users (<strong>{{ title }}</strong>)? This action can NOT be undone!",
+                "question": "Are you sure you want to permanently delete <strong>{{ title }}</strong> users? This action can NOT be undone!",
                 "typeNumberToConfirm": "Please type in the number of users to confirm."
             },
             "deleted": "Deleted {{ param }} Users"

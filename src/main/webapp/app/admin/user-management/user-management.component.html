@@ -168,7 +168,7 @@
                                 jhiDeleteButton
                                 [entityTitle]="user.login!"
                                 deleteQuestion="userManagement.delete.question"
-                                (delete)="deleteUser(user.login!, false)"
+                                (delete)="deleteUser(user.login!)"
                                 [dialogError]="dialogError"
                                 [disabled]="!currentAccount || currentAccount.login === user.login"
                             >

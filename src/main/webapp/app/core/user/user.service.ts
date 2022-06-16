@@ -77,11 +77,11 @@ export class UserService {
      * @return Observable<HttpResponse<void>>
      */
     deleteUsers(logins: string[]): Observable<HttpResponse<void>> {
-        const params = new HttpParams();
+        let params = new HttpParams();
         for (const login of logins) {
-            params.append('login', login);
+            params = params.append('login', login);
         }
-        return this.http.delete<void>(`${this.resourceUrl}/delete`, { params, observe: 'response' });
+        return this.http.delete<void>(`${this.resourceUrl}`, { params, observe: 'response' });
     }
 
     /**
