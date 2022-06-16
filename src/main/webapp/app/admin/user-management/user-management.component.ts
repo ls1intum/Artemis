@@ -427,13 +427,21 @@ export class UserManagementComponent implements OnInit, OnDestroy {
      * Selects/Unselects all (filtered) users.
      */
     selectAllUsers() {
-        if (this.selectedUsers.length === this.users.length) {
+        const usersWithoutCurrentUser = this.usersWithoutCurrentUser;
+        if (this.selectedUsers.length === usersWithoutCurrentUser.length) {
             // Clear all users
             this.selectedUsers = [];
         } else {
             // Add all users
-            this.selectedUsers = [...this.users];
+            this.selectedUsers = [...usersWithoutCurrentUser];
         }
+    }
+
+    /**
+     * Gets the users without the current user.
+     */
+    get usersWithoutCurrentUser() {
+        return this.users.filter((user) => this.currentAccount && this.currentAccount.login !== user.login);
     }
 
     /**
