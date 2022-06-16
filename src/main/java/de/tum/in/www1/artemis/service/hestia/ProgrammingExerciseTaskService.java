@@ -140,9 +140,6 @@ public class ProgrammingExerciseTaskService {
             task.setExercise(exercise);
             var testCaseNames = extractTestCaseNames(capturedTestCaseNames);
 
-            // parsing the test case names from the capture group with splitting by ',', if there are no unclosed rounded brackets
-            // This respects the fact that parametrized tests may contain commas (e.g. "testInsert(InsertMock, 1)").
-
             for (String testName : testCaseNames) {
                 testCases.stream().filter(tc -> tc.getTestName().equals(testName)).findFirst().ifPresent(task.getTestCases()::add);
             }
@@ -153,7 +150,7 @@ public class ProgrammingExerciseTaskService {
 
     /**
      * Get the test case names from the captured group by splitting by ',' if there are no unclosed rounded brackets for
-     * the current test case. This respects the fact that parametrized tests may contain commas.
+     * the current test case. This respects the fact that parameterized tests may contain commas.
      * Example: "testInsert(InsertMock, 1),testClass[SortStrategy],testWithBraces()" results in the following list
      * ["testInsert(InsertMock, 1)", "testClass[SortStrategy]", "testWithBraces()"]
      * @param capturedTestCaseNames the captured test case names matched from the problem statement
