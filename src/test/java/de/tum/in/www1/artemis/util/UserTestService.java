@@ -145,7 +145,7 @@ public class UserTestService {
     // Test
     public void deleteUsers() throws Exception {
         userRepository.deleteAll();
-        var users = database.addUsers(1, 1, 1, 1);
+        var users = database.addUsers(1, 1, 1, 1).stream().filter(user -> !user.getLogin().equals("admin")).toList();
 
         for (var user : users) {
             mockDelegate.mockDeleteUserInUserManagement(user, true, false, false);
