@@ -133,18 +133,62 @@ public class ProgrammingExerciseTaskService {
         var testCases = programmingExerciseTestCaseRepository.findByExerciseIdAndActive(exercise.getId(), true);
         while (matcher.find()) {
             var taskName = matcher.group("name");
-            var testCaseNames = matcher.group("tests");
+            var capturedTestCaseNames = matcher.group("tests");
 
             var task = new ProgrammingExerciseTask();
             task.setTaskName(taskName);
             task.setExercise(exercise);
-            String[] testNames = testCaseNames.split(",");
-            for (String testName : testNames) {
-                String finalTestName = testName.trim();
-                testCases.stream().filter(tc -> tc.getTestName().equals(finalTestName)).findFirst().ifPresent(task.getTestCases()::add);
+            var testCaseNames = extractTestCaseNames(capturedTestCaseNames);
+
+            // parsing the test case names from the capture group with splitting by ',', if there are no unclosed rounded brackets
+            // This respects the fact that parametrized tests may contain commas (e.g. "testInsert(InsertMock, 1)").
+
+            for (String testName : testCaseNames) {
+                testCases.stream().filter(tc -> tc.getTestName().equals(testName)).findFirst().ifPresent(task.getTestCases()::add);
             }
             tasks.add(task);
         }
         return tasks;
+    }
+
+    /**
+     * Get the test case names from the captured group by splitting by ',' if there are no unclosed rounded brackets for
+     * the current test case. This respects the fact that parametrized tests may contain commas.
+     * Example: "testInsert(InsertMock, 1),testClass[SortStrategy],testWithBraces()" results in the following list
+     * ["testInsert(InsertMock, 1)", "testClass[SortStrategy]", "testWithBraces()"]
+     * @param capturedTestCaseNames the captured test case names matched from the problem statement
+     * @return test case names
+     */
+    private List<String> extractTestCaseNames(String capturedTestCaseNames) {
+        List<String> testCaseNames = new ArrayList<>();
+        int numberUnclosedRoundedBrackets = 0;
+        StringBuilder currentTestCaseName = new StringBuilder();
+        for (int i = 0; i < capturedTestCaseNames.length(); i++) {
+            char currentChar = capturedTestCaseNames.charAt(i);
+
+            // check potential split
+            if (currentChar == ',' && numberUnclosedRoundedBrackets == 0) {
+                testCaseNames.add(currentTestCaseName.toString());
+                currentTestCaseName = new StringBuilder();
+                continue;
+            }
+
+            // count the numbers of brackets
+            if (currentChar == '(') {
+                numberUnclosedRoundedBrackets++;
+            }
+            else if (currentChar == ')') {
+                numberUnclosedRoundedBrackets--;
+            }
+
+            currentTestCaseName.append(currentChar);
+
+            // when at the end of the captured names, add the current name to the result
+            if (capturedTestCaseNames.length() == i + 1) {
+                testCaseNames.add(currentTestCaseName.toString());
+            }
+        }
+
+        return testCaseNames.stream().map(String::trim).toList();
     }
 }
