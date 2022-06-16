@@ -1,7 +1,7 @@
 <span
     class="not-released-tag badge bg-warning"
     [class.ms-1]="!noMargin"
-    *ngIf="exercise.isAtLeastTutor && exercise.releaseDate != undefined && !dayjs(exercise.releaseDate).isBefore(dayjs())"
+    *ngIf="isNotReleased(exercise)"
     ngbTooltip="{{ 'artemisApp.courseOverview.exerciseList.notReleasedTooltip' | artemisTranslate }}{{ exercise.releaseDate | artemisDate }}"
 >
     {{ 'artemisApp.courseOverview.exerciseList.notReleased' | artemisTranslate }}

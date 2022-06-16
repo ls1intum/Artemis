@@ -236,3 +236,7 @@ export function resetDates(exercise: Exercise) {
     exercise.assessmentDueDate = undefined;
     exercise.exampleSolutionPublicationDate = undefined;
 }
+
+export function isNotReleased(exercise: Exercise) {
+    return exercise.isAtLeastTutor && exercise.releaseDate != undefined && !dayjs(exercise.releaseDate).isBefore(dayjs());
+}

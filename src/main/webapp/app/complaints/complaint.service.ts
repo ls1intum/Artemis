@@ -241,6 +241,8 @@ export class ComplaintService implements IComplaintService {
         let complaintStartDate;
         if (exercise.allowComplaintsForAutomaticAssessments && now.isAfter(exercise.dueDate)) {
             complaintStartDate = exercise.dueDate;
+        } else if (lastResult.rated && !exercise.assessmentDueDate) {
+            complaintStartDate = lastResult.completionDate;
         } else if (lastResult.rated && now.isAfter(exercise.assessmentDueDate)) {
             complaintStartDate = exercise.assessmentDueDate!.isAfter(lastResult.completionDate) ? exercise.assessmentDueDate : lastResult.completionDate;
         } else {
