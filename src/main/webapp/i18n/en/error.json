@@ -10,6 +10,7 @@
             "409": "There was a conflict while processing your request.",
             "500": "Internal server error."
         },
+        "cannotDeleteYourself": "You cannot delete your own account",
         "fileUploadSavingError": "Error! The upload failed. Make sure you are connected to the Internet!",
         "concurrencyFailure": "Another user modified this data at the same time as you. Your changes were rejected.",
         "validation": "Validation error on the server.",

@@ -63,7 +63,7 @@
             <thead>
                 <tr jhiSort [(predicate)]="predicate" [(ascending)]="ascending" (sortChange)="transition()">
                     <th class="user-management-select-all">
-                        <span class="pe-1" jhiTranslate="userManagement.batch.all">ID</span>
+                        <span class="pe-1" jhiTranslate="userManagement.batch.all">All</span>
                         <input
                             class="form-check-input"
                             [checked]="this.selectedUsers.length === this.usersWithoutCurrentUser.length"
@@ -119,7 +119,7 @@
                         <input
                             class="form-check-input"
                             [disabled]="!currentAccount || currentAccount.login === user.login"
-                            [checked]="this.selectedUsers.indexOf(user) > -1"
+                            [checked]="this.selectedUsers.includes(user)"
                             (change)="this.selectUser(user)"
                             type="checkbox"
                         />

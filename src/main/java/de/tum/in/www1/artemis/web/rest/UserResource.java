@@ -93,6 +93,16 @@ public class UserResource {
         this.ltiUserIdRepository = ltiUserIdRepository;
     }
 
+    /**
+     * Return true if the current users' login matches the provided login
+     * @param login user login
+     * @return true if both logins match
+     */
+    private boolean isCurrentUser(String login) {
+        var currentUser = userRepository.getUser();
+        return currentUser.getLogin().equals(login);
+    }
+
     private static void checkUsernameAndPasswordValidity(String username, String password) {
 
         if (!StringUtils.hasLength(username) || username.length() < USERNAME_MIN_LENGTH) {
@@ -274,6 +284,9 @@ public class UserResource {
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> deleteUser(@PathVariable String login) {
         log.debug("REST request to delete User: {}", login);
+        if (isCurrentUser(login)) {
+            throw new BadRequestAlertException("You cannot delete yourself", "userManagement", "cannotDeleteYourself");
+        }
         userService.deleteUser(login);
         return ResponseEntity.ok().headers(HeaderUtil.createAlert(applicationName, "userManagement.deleted", login)).build();
     }
@@ -286,12 +299,20 @@ public class UserResource {
      */
     @DeleteMapping("users")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<Void> deleteUsers(@RequestParam(name = "login") List<String> logins) {
+    public ResponseEntity<List<String>> deleteUsers(@RequestParam(name = "login") List<String> logins) {
         log.debug("REST request to delete {} users", logins.size());
+        List<String> deletedUsers = new java.util.ArrayList<>();
         for (String login : logins) {
-            userService.deleteUser(login);
+            try {
+                if (!isCurrentUser(login)) {
+                    userService.deleteUser(login);
+                    deletedUsers.add(login);
+                }
+            }
+            catch (Exception ignored) {
+            }
         }
-        return ResponseEntity.ok().headers(HeaderUtil.createAlert(applicationName, "userManagement.batch.deleted", String.valueOf(logins.size()))).build();
+        return ResponseEntity.ok().headers(HeaderUtil.createAlert(applicationName, "userManagement.batch.deleted", String.valueOf(deletedUsers.size()))).body(deletedUsers);
     }
 
     @PutMapping("users/notification-date")
