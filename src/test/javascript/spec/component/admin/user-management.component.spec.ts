@@ -195,12 +195,12 @@ describe('UserManagementComponent', () => {
         { status: 200, statusText: '' },
         { status: 400, statusText: 'Delete Failure' },
     ])('should broadcast after user deletion, or show error', ({ status, statusText }) => {
-        const deleteSpy = jest.spyOn(userService, 'delete');
+        const deleteSpy = jest.spyOn(userService, 'deleteUser');
         const broadcastSpy = jest.spyOn(eventManager, 'broadcast');
         let errorText: string | undefined = undefined;
         comp.dialogError.subscribe((text) => (errorText = text));
 
-        comp.deleteUser('test', false);
+        comp.deleteUser('test');
         expect(deleteSpy).toHaveBeenCalledOnce();
         expect(deleteSpy).toHaveBeenCalledWith('test');
         const reqD = httpMock.expectOne(SERVER_API_URL + 'api/users/test');
@@ -348,7 +348,7 @@ describe('UserManagementComponent', () => {
     });
 
     it('should delete all selected users', () => {
-        const deleteSpy = jest.spyOn(userService, 'delete').mockReturnValue(of());
+        const deleteSpy = jest.spyOn(userService, 'deleteUsers').mockReturnValue(of());
 
         // users
         const users = [1, 2, 3].map((id) => {
@@ -360,9 +360,8 @@ describe('UserManagementComponent', () => {
         comp.selectedUsers = [users[0], users[1]];
 
         comp.deleteAllSelectedUsers();
-        expect(deleteSpy).toHaveBeenCalledTimes(2);
-        expect(deleteSpy).toHaveBeenCalledWith(users[0].login);
-        expect(deleteSpy).toHaveBeenCalledWith(users[1].login);
+        expect(deleteSpy).toHaveBeenCalledTimes(1);
+        expect(deleteSpy).toHaveBeenCalledWith([users[0].login, users[1].login]);
     });
 
     it('should add and remove user from selected users', () => {

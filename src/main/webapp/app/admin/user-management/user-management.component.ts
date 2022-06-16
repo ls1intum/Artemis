@@ -437,7 +437,7 @@ export class UserManagementComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * Selects/Unselects all (filtered) users.
+     * Selects/Unselects a user.
      */
     selectUser(user: User) {
         const index = this.selectedUsers.indexOf(user);
@@ -453,10 +453,17 @@ export class UserManagementComponent implements OnInit, OnDestroy {
      * Delete all selected users.
      */
     deleteAllSelectedUsers() {
-        for (const user of this.selectedUsers) {
-            this.deleteUser(user.login!, true);
-        }
-        this.dialogErrorSource.next('');
+        const logins = this.selectedUsers.map((user) => user.login!);
+        this.userService.deleteUsers(logins).subscribe({
+            next: () => {
+                this.eventManager.broadcast({
+                    name: 'userListModification',
+                    content: 'Deleted users',
+                });
+                this.dialogErrorSource.next('');
+            },
+            error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
+        });
     }
 
     /**
@@ -507,18 +514,15 @@ export class UserManagementComponent implements OnInit, OnDestroy {
     /**
      * Deletes a user
      * @param login of the user that should be deleted
-     * @param batch update will be triggered manually
      */
-    deleteUser(login: string, batch: boolean) {
-        this.userService.delete(login).subscribe({
+    deleteUser(login: string) {
+        this.userService.deleteUser(login).subscribe({
             next: () => {
                 this.eventManager.broadcast({
                     name: 'userListModification',
                     content: 'Deleted a user',
                 });
-                if (!batch) {
-                    this.dialogErrorSource.next('');
-                }
+                this.dialogErrorSource.next('');
             },
             error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
         });

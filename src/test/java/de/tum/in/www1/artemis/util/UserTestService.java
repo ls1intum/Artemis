@@ -143,6 +143,26 @@ public class UserTestService {
     }
 
     // Test
+    public void deleteUsers() throws Exception {
+        userRepository.deleteAll();
+        var users = database.addUsers(1, 1, 1, 1);
+
+        for (var user : users) {
+            mockDelegate.mockDeleteUserInUserManagement(user, true, false, false);
+        }
+
+        LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+        users.stream().map(User::getLogin).forEach(login -> params.add("login", login));
+
+        request.delete("/api/users", HttpStatus.OK, params);
+
+        for (var user : users) {
+            var deletedUser = userRepository.findById(user.getId());
+            assertThat(deletedUser).isEmpty();
+        }
+    }
+
+    // Test
     public void updateUser_asAdmin_isSuccessful() throws Exception {
         student.setInternal(true);
         student = userRepository.save(student);

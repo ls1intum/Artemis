@@ -278,6 +278,22 @@ public class UserResource {
         return ResponseEntity.ok().headers(HeaderUtil.createAlert(applicationName, "userManagement.deleted", login)).build();
     }
 
+    /**
+     * Delete users: deletes the provided users
+     *
+     * @param logins user logins to delete
+     * @return the ResponseEntity with status 200 (OK)
+     */
+    @DeleteMapping("users")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Void> deleteUsers(@RequestParam(name = "login") List<String> logins) {
+        log.debug("REST request to delete {} users", logins.size());
+        for (String login : logins) {
+            userService.deleteUser(login);
+        }
+        return ResponseEntity.ok().headers(HeaderUtil.createAlert(applicationName, "userManagement.batch.deleted", String.valueOf(logins.size()))).build();
+    }
+
     @PutMapping("users/notification-date")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Void> updateUserNotificationDate() {

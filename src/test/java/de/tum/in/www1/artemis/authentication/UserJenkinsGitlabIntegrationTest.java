@@ -248,6 +248,12 @@ public class UserJenkinsGitlabIntegrationTest extends AbstractSpringIntegrationJ
 
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
+    public void deleteUsers() throws Exception {
+        userTestService.deleteUsers();
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
     public void getUsers_asAdmin_isSuccessful() throws Exception {
         userTestService.getUsers_asAdmin_isSuccessful();
     }
