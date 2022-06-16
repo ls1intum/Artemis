@@ -22,7 +22,6 @@
             "course": "Course"
         },
         "courseOverview": {
-            "noDescription": "No description available",
             "noCourseIcon": "No course icon available",
             "showMore": "Show more",
             "showLess": "Show less",
