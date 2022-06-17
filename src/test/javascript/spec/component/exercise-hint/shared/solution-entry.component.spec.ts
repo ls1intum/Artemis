@@ -35,14 +35,14 @@ describe('Solution Entry Component', () => {
 
         comp.ngOnInit();
 
-        expect(comp.editor.getEditor().setOptions).toHaveBeenCalledTimes(1);
+        expect(comp.editor.getEditor().setOptions).toHaveBeenCalledOnce();
         expect(comp.editor.getEditor().setOptions).toHaveBeenCalledWith({
             animatedScroll: true,
             maxLines: Infinity,
             showPrintMargin: false,
         });
 
-        expect(comp.editor.getEditor().getSession().setValue).toHaveBeenCalledTimes(1);
+        expect(comp.editor.getEditor().getSession().setValue).toHaveBeenCalledOnce();
         expect(comp.editor.getEditor().getSession().setValue).toHaveBeenCalledWith('ABC');
     });
 

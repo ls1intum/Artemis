@@ -313,6 +313,12 @@
                 "endDate": "Ende Bearbeitungsfenster",
                 "workingTimeTooltip": "Die erlaubte Bearbeitungszeit je Durchlauf"
             },
+            "monitoring": {
+                "enable": {
+                    "title": "Klausurüberwachung aktivieren",
+                    "description": "Die Klausurüberwachung sammelt die Interaktionen der Studierenden mit der Klausur und bietet dadurch weitere Möglichkeiten für Statistiken."
+                }
+            },
             "testRun": {
                 "testRun": "Testlauf",
                 "title": "Testlaufverwaltung: ",

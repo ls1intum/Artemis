@@ -1,6 +1,6 @@
 {
     "name": "artemis",
-    "version": "5.8.4",
+    "version": "5.8.5",
     "description": "Interactive Learning with Individual Feedback",
     "private": true,
     "license": "MIT",
@@ -68,6 +68,14 @@
         "webstomp-client": "1.2.6",
         "xlsx": "0.18.5",
         "zone.js": "0.11.5"
+    },
+    "overrides": {
+        "showdown-katex": {
+            "showdown": "2.1.0"
+        },
+        "@swimlane/ngx-datatable": {
+            "rxjs": "7.5.5"
+        }
     },
     "devDependencies": {
         "@angular-builders/custom-webpack": "13.1.0",

@@ -1,6 +1,5 @@
 .card {
     height: 450px;
-    max-width: 2000px;
 
     .card-title {
         font-size: 1.575rem;
@@ -115,7 +114,6 @@
 
     .statistics-card {
         border-left: 1px solid rgba(0, 0, 0, 0.125);
-        width: 100%;
         height: 300px;
 
         .statistics-chart {

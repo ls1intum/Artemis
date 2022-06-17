@@ -58,6 +58,6 @@ describe('HealthModalComponentTest', () => {
         expect(button).not.toBe(null);
 
         button.nativeElement.click();
-        expect(dismissSpy).toHaveBeenCalledTimes(1);
+        expect(dismissSpy).toHaveBeenCalledOnce();
     });
 });

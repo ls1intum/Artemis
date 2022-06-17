@@ -58,11 +58,11 @@ describe('OrionValidatorService', () => {
         setUserAgent(userAgent + legacy);
         orionVersionValidator.isOrion = true;
 
-        orionVersionValidator.validateOrionVersion().subscribe((result) => expect(result).toBe(false));
+        orionVersionValidator.validateOrionVersion().subscribe((result) => expect(result).toBeFalse());
         tick();
 
         expect(profileInfoStub).not.toHaveBeenCalled();
-        expect(navigateSpy).toHaveBeenCalledTimes(1);
+        expect(navigateSpy).toHaveBeenCalledOnce();
         expect(navigateSpy).toHaveBeenCalledWith('/orion-outdated?versionString=soOldThatThereIsNoVersion');
     }));
 
@@ -70,11 +70,11 @@ describe('OrionValidatorService', () => {
         setUserAgent(userAgent + versionTooLow);
         orionVersionValidator.isOrion = true;
 
-        orionVersionValidator.validateOrionVersion().subscribe((result) => expect(result).toBe(false));
+        orionVersionValidator.validateOrionVersion().subscribe((result) => expect(result).toBeFalse());
         tick();
 
-        expect(profileInfoStub).toHaveBeenCalledTimes(1);
-        expect(navigateSpy).toHaveBeenCalledTimes(1);
+        expect(profileInfoStub).toHaveBeenCalledOnce();
+        expect(navigateSpy).toHaveBeenCalledOnce();
         expect(navigateSpy).toHaveBeenCalledWith(`/orion-outdated?versionString=0.9.0`);
     }));
 
@@ -82,17 +82,17 @@ describe('OrionValidatorService', () => {
         setUserAgent(userAgent + versionCorrect);
         orionVersionValidator.isOrion = true;
 
-        orionVersionValidator.validateOrionVersion().subscribe((result) => expect(result).toBe(true));
+        orionVersionValidator.validateOrionVersion().subscribe((result) => expect(result).toBeTrue());
         tick();
 
-        expect(profileInfoStub).toHaveBeenCalledTimes(1);
+        expect(profileInfoStub).toHaveBeenCalledOnce();
         expect(navigateSpy).not.toHaveBeenCalled();
     }));
 
     it('should not do anything if a normal browser is connected', fakeAsync(() => {
         setUserAgent(userAgent);
 
-        orionVersionValidator.validateOrionVersion().subscribe((result) => expect(result).toBe(true));
+        orionVersionValidator.validateOrionVersion().subscribe((result) => expect(result).toBeTrue());
         tick();
 
         expect(profileInfoStub).not.toHaveBeenCalled();
@@ -104,7 +104,7 @@ describe('OrionValidatorService', () => {
         // @ts-ignore
         orionVersionValidator.isValidVersion = true;
 
-        orionVersionValidator.validateOrionVersion().subscribe((result) => expect(result).toBe(true));
+        orionVersionValidator.validateOrionVersion().subscribe((result) => expect(result).toBeTrue());
         tick();
 
         expect(profileInfoStub).not.toHaveBeenCalled();

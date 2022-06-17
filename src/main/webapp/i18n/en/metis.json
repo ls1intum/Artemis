@@ -37,6 +37,9 @@
             "reactedTooltipTrimmed": " and {{ number }} more reacted.",
             "searchEmoji": "Search emoji",
             "courseEmojiSelectionCategory": "Selected emojis for this course",
+            "editor": {
+                "exercise": "Exercise"
+            },
             "discussion": {
                 "label": "Discussion",
                 "show": "Show discussion",
@@ -44,7 +47,8 @@
             },
             "discussionSection": {
                 "searchBarDefault": "Search for a post",
-                "filterToAnsweredOrReacted": "Reacted or replied to"
+                "sortByDate": "Date:",
+                "defaultSortCriterion": "Default sorting"
             },
             "overview": {
                 "title": "Posts",
@@ -53,7 +57,7 @@
                 "courseFilterExplanation": "(All posts)",
                 "filterToUnresolved": "Unresolved",
                 "filterToOwn": "Own",
-                "filterToAnsweredOrReacted": "Reacted or replied by you",
+                "filterToAnsweredOrReacted": "Reacted",
                 "sortPostsBy": "Sort by:",
                 "sortDescending": "Descending",
                 "sortAscending": "Ascending",
