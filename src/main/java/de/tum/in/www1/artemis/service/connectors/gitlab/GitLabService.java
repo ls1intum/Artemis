@@ -329,14 +329,17 @@ public class GitLabService extends AbstractVersionControlService {
     public Commit getLastCommitDetails(Object requestBody) throws VersionControlException {
         final var details = GitLabPushNotificationDTO.convert(requestBody);
         final var commit = new Commit();
-        // We will notify for every commit, so we can just use the first commit in the notification list
-        final var gitLabCommit = details.getCommits().get(0);
-        commit.setMessage(gitLabCommit.getMessage());
-        commit.setAuthorEmail(gitLabCommit.getAuthor().getEmail());
-        commit.setAuthorName(gitLabCommit.getAuthor().getName());
-        final var ref = details.getRef().split("/");
-        commit.setBranch(ref[ref.length - 1]);
-        commit.setCommitHash(gitLabCommit.getHash());
+        final var gitLabCommitHash = details.getNewHash();
+        commit.setCommitHash(gitLabCommitHash);
+        final var gitLabCommitOptional = details.getCommits().stream().filter(com -> gitLabCommitHash.equals(com.getHash())).findFirst();
+        if (gitLabCommitOptional.isPresent()) {
+            final var gitLabCommit = gitLabCommitOptional.get();
+            commit.setMessage(gitLabCommit.getMessage());
+            commit.setAuthorEmail(gitLabCommit.getAuthor().getEmail());
+            commit.setAuthorName(gitLabCommit.getAuthor().getName());
+            final var ref = details.getRef().split("/");
+            commit.setBranch(ref[ref.length - 1]);
+        }
 
         return commit;
     }
