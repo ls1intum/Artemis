@@ -1,14 +1,19 @@
 package de.tum.in.www1.artemis.repository.metis;
 
+import static de.tum.in.www1.artemis.repository.specs.PostSpecs.*;
+
 import java.util.List;
 
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import de.tum.in.www1.artemis.domain.metis.CourseWideContext;
 import de.tum.in.www1.artemis.domain.metis.Post;
+import de.tum.in.www1.artemis.web.rest.dto.PostContextFilter;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 /**
@@ -16,9 +21,23 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
  */
 @SuppressWarnings("unused")
 @Repository
-public interface PostRepository extends JpaRepository<Post, Long> {
+public interface PostRepository extends JpaRepository<Post, Long>, JpaSpecificationExecutor<Post> {
 
     List<Post> findPostsByAuthorLogin(String login);
+
+    default List<Post> getAllCoursePosts(PostContextFilter postContextFilter, Long userId) {
+        Specification<Post> specification = Specification.where(distinct())
+                .and(getCourseSpecification(postContextFilter.getCourseId())
+                        .and(getLectureSpecification(postContextFilter.getLectureId()).and(getCourseWideContextSpecification(postContextFilter.getCourseWideContext()))
+                                .and(getOwnSpecification(postContextFilter.getFilterToOwn(), userId)))
+                        .and(getAnsweredOrReactedSpecification(postContextFilter.getFilterToAnsweredOrReacted(), userId))
+                        .and(getUnresolvedSpecification(postContextFilter.getFilterToUnresolved()))
+                        .and(getSortSpecification(postContextFilter.getPostSortCriterion(), postContextFilter.getSortingOrder())));
+
+        return findAll(specification);
+    }
+
+    List<Post> findAll(Specification<Post> spec);
 
     @Query("""
             SELECT DISTINCT post FROM Post post
