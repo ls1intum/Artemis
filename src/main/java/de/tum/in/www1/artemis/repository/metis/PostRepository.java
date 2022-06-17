@@ -27,8 +27,9 @@ public interface PostRepository extends JpaRepository<Post, Long>, JpaSpecificat
 
     default List<Post> getAllCoursePosts(PostContextFilter postContextFilter, Long userId) {
         Specification<Post> specification = Specification.where(distinct())
-                .and(getCourseSpecification(postContextFilter.getCourseId())
-                        .and(getLectureSpecification(postContextFilter.getLectureId()).and(getCourseWideContextSpecification(postContextFilter.getCourseWideContext()))
+                .and(getCourseSpecification(postContextFilter.getCourseId(), postContextFilter.getLectureId(), postContextFilter.getExerciseId())
+                        .and(getLectureSpecification(postContextFilter.getLectureId()).and(getExerciseSpecification(postContextFilter.getExerciseId()))
+                                .and(getCourseWideContextSpecification(postContextFilter.getCourseWideContext()))
                                 .and(getOwnSpecification(postContextFilter.getFilterToOwn(), userId)))
                         .and(getAnsweredOrReactedSpecification(postContextFilter.getFilterToAnsweredOrReacted(), userId))
                         .and(getUnresolvedSpecification(postContextFilter.getFilterToUnresolved()))

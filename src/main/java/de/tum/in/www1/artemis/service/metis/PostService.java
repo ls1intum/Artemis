@@ -378,8 +378,7 @@ public class PostService extends PostingService {
 
         // retrieve posts
         List<Post> exercisePosts;
-        exercisePosts = postRepository.findPostsByExerciseId(postContextFilter.getExerciseId(), postContextFilter.getFilterToUnresolved(), postContextFilter.getFilterToOwn(),
-                postContextFilter.getFilterToAnsweredOrReacted(), user.getId());
+        exercisePosts = postRepository.getAllCoursePosts(postContextFilter, user.getId());
 
         // protect sample solution, grading instructions, etc.
         exercisePosts.forEach(post -> post.getExercise().filterSensitiveInformation());
@@ -404,8 +403,7 @@ public class PostService extends PostingService {
 
         // retrieve posts
         List<Post> lecturePosts;
-        lecturePosts = postRepository.findPostsByLectureId(postContextFilter.getLectureId(), postContextFilter.getFilterToUnresolved(), postContextFilter.getFilterToOwn(),
-                postContextFilter.getFilterToAnsweredOrReacted(), user.getId());
+        lecturePosts = postRepository.getAllCoursePosts(postContextFilter, user.getId());
 
         // protect sample solution, grading instructions, etc.
         lecturePosts.stream().map(Post::getExercise).filter(Objects::nonNull).forEach(Exercise::filterSensitiveInformation);
