@@ -1,7 +1,6 @@
 import { Pipe, ChangeDetectorRef, PipeTransform, OnDestroy, NgZone } from '@angular/core';
 import dayjs from 'dayjs/esm';
 import { isDate } from 'app/shared/util/utils';
-import 'dayjs/locale/de';
 import { TranslateService } from '@ngx-translate/core';
 
 @Pipe({
