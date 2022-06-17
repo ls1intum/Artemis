@@ -11,6 +11,7 @@ import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { faAngleDown, faAngleRight, faFolderOpen, faInfoCircle, faPrint } from '@fortawesome/free-solid-svg-icons';
 import { ThemeService } from 'app/core/theme/theme.service';
 import { StudentExamWithGradeDTO } from 'app/exam/exam-scores/exam-score-dtos.model';
+import { ExamParticipationService } from 'app/exam/participate/exam-participation.service';
 
 @Component({
     selector: 'jhi-exam-participation-summary',
@@ -28,14 +29,39 @@ export class ExamParticipationSummaryComponent implements OnInit {
     readonly IncludedInOverallScore = IncludedInOverallScore;
     readonly SUBMISSION_TYPE_ILLEGAL = SubmissionType.ILLEGAL;
 
+    /**
+     * If true, expects {@link studentExam} input is provided before ngOnInit and fetches StudentExamWithGradeDTO
+     * (without studentExam) from server itself.
+     * Otherwise, expects {@link studentExamWithGradeDTO} input is provided by the parent component with {@link StudentExamWithGradeDTO#studentExam} set.
+     */
+    @Input()
+    shouldFetchGradeInfoSeparately = false;
+
+    /**
+     * Current student's exam.
+     * @see shouldFetchGradeInfoSeparately
+     */
+    @Input()
+    studentExam: StudentExam;
+
+    /**
+     * Sets {@link studentExamWithGradeDTO} and also {@link studentExam} if {@link StudentExamWithGradeDTO#studentExam} is set.
+     * Allows doing one less HTTP request if {@link studentExamWithGradeDTO} is provided with {@link StudentExamWithGradeDTO#studentExam}
+     * and {@link shouldFetchGradeInfoSeparately} is false.
+     *
+     * @see shouldFetchGradeInfoSeparately
+     *
+     * @param studentExamWithGrade Grade info for current student's exam, possibly containing {@link StudentExamWithGradeDTO#studentExam}.
+     */
     @Input()
     set studentExamWithGrade(studentExamWithGrade: StudentExamWithGradeDTO) {
         this.studentExamWithGradeDTO = studentExamWithGrade;
-        this.studentExam = studentExamWithGrade?.studentExam;
+        if (studentExamWithGrade?.studentExam != undefined) {
+            this.studentExam = studentExamWithGrade.studentExam;
+        }
     }
 
     studentExamWithGradeDTO: StudentExamWithGradeDTO;
-    studentExam: StudentExam;
 
     @Input()
     instructorView = false;
@@ -57,7 +83,12 @@ export class ExamParticipationSummaryComponent implements OnInit {
     faAngleRight = faAngleRight;
     faAngleDown = faAngleDown;
 
-    constructor(private route: ActivatedRoute, private serverDateService: ArtemisServerDateService, private themeService: ThemeService) {}
+    constructor(
+        private route: ActivatedRoute,
+        private serverDateService: ArtemisServerDateService,
+        private themeService: ThemeService,
+        private examParticipationService: ExamParticipationService,
+    ) {}
 
     /**
      * Initialise the courseId from the current url
@@ -67,6 +98,14 @@ export class ExamParticipationSummaryComponent implements OnInit {
         this.isTestRun = this.route.snapshot.url[1]?.toString() === 'test-runs';
         this.testRunConduction = this.isTestRun && this.route.snapshot.url[3]?.toString() === 'conduction';
         this.courseId = Number(this.route.snapshot.paramMap.get('courseId'));
+        if (this.shouldFetchGradeInfoSeparately) {
+            if (!this.studentExam.id) {
+                throw new Error('studentExam.id should be present if shouldFetchGradeInfoSeparately is true');
+            }
+            this.examParticipationService
+                .loadStudentExamGradeInfoForSummary(this.courseId, this.studentExam.id)
+                .subscribe((studentExamWithGrade: StudentExamWithGradeDTO) => (this.studentExamWithGradeDTO = studentExamWithGrade));
+        }
         this.setExamWithOnlyIdAndStudentReviewPeriod();
     }
 
@@ -97,7 +136,7 @@ export class ExamParticipationSummaryComponent implements OnInit {
     }
 
     public generateLink(exercise: Exercise) {
-        if (exercise && exercise.studentParticipations && exercise.studentParticipations.length > 0) {
+        if (exercise?.studentParticipations?.[0] != undefined) {
             return ['/courses', this.courseId, `${exercise.type}-exercises`, exercise.id, 'participate', exercise.studentParticipations[0].id];
         }
     }
@@ -107,15 +146,7 @@ export class ExamParticipationSummaryComponent implements OnInit {
      * returns the students' submission for the exercise, undefined if no participation could be found
      */
     getSubmissionForExercise(exercise: Exercise) {
-        if (
-            exercise &&
-            exercise.studentParticipations &&
-            exercise.studentParticipations.length > 0 &&
-            exercise.studentParticipations[0].submissions &&
-            exercise.studentParticipations[0].submissions.length > 0
-        ) {
-            return exercise.studentParticipations[0].submissions[0];
-        }
+        return exercise?.studentParticipations?.[0]?.submissions?.[0];
     }
 
     /**
@@ -123,9 +154,7 @@ export class ExamParticipationSummaryComponent implements OnInit {
      * returns the students' submission for the exercise, undefined if no participation could be found
      */
     getParticipationForExercise(exercise: Exercise) {
-        if (exercise.studentParticipations && exercise.studentParticipations[0]) {
-            return exercise.studentParticipations[0];
-        }
+        return exercise.studentParticipations?.[0];
     }
 
     /**

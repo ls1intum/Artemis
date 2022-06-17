@@ -305,8 +305,6 @@ public class StudentExamResource {
      * GET /courses/{courseId}/exams/{examId}/student-exams/summary : Find a student exam for the summary.
      * This will be used to display the summary of the exam. The student exam will be returned with the exercises
      * and with the student participation and with the submissions.
-     * Includes aggregate points, assessment result and grade calculations if the exam is assessed.
-     * See {@link StudentExamWithGradeDTO} for more explanation.
      *
      * @param courseId  the course to which the student exam belongs to
      * @param examId    the exam to which the student exam belongs to
@@ -314,10 +312,52 @@ public class StudentExamResource {
      */
     @GetMapping("/courses/{courseId}/exams/{examId}/student-exams/summary")
     @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<StudentExamWithGradeDTO> getStudentExamForSummary(@PathVariable Long courseId, @PathVariable Long examId) {
+    public ResponseEntity<StudentExam> getStudentExamForSummary(@PathVariable Long courseId, @PathVariable Long examId) {
         long start = System.currentTimeMillis();
         User user = userRepository.getUserWithGroupsAndAuthorities();
         log.debug("REST request to get the student exam of user {} for exam {}", user.getLogin(), examId);
+        StudentExam studentExam = findStudentExamWithExercisesElseThrow(user, examId, courseId);
+
+        // check that the studentExam has been submitted, otherwise /student-exams/conduction should be used
+        if (!studentExam.isSubmitted()) {
+            throw new AccessForbiddenException();
+        }
+
+        loadExercisesForStudentExam(studentExam);
+
+        // 3rd fetch participations, submissions and results and connect them to the studentExam
+        fetchParticipationsSubmissionsAndResultsForStudentExam(studentExam, user);
+
+        log.info("getStudentExamForSummary done in {}ms for {} exercises for user {}", System.currentTimeMillis() - start, studentExam.getExercises().size(), user.getLogin());
+        return ResponseEntity.ok(studentExam);
+    }
+
+    @NotNull
+    private StudentExam findStudentExamWithExercisesElseThrow(User user, Long examId, Long courseId) {
+        StudentExam studentExam = studentExamRepository.findWithExercisesByUserIdAndExamId(user.getId(), examId)
+                .orElseThrow(() -> new EntityNotFoundException("No student exam found for examId " + examId + " and userId " + user.getId()));
+        studentExamAccessService.checkCourseAndExamAccessElseThrow(courseId, examId, user, studentExam.isTestRun());
+        return studentExam;
+    }
+
+    /**
+     * GET /courses/{courseId}/exams/{examId}/student-exams/grade-summary : Return student exam result, aggregate points, assessment result
+     * for a student exam and grade calculations if the exam is assessed.
+     *
+     * Does not return the student exam itself to save bandwidth.
+     *
+     * See {@link StudentExamWithGradeDTO} for more explanation.
+     *
+     * @param courseId  the course to which the student exam belongs to
+     * @param examId    the exam to which the student exam belongs to
+     * @return the ResponseEntity with status 200 (OK) and with the StudentExamWithGradeDTO instance without the student exam as body
+     */
+    @GetMapping("/courses/{courseId}/exams/{examId}/student-exams/grade-summary")
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<StudentExamWithGradeDTO> getStudentExamGradesForSummary(@PathVariable Long courseId, @PathVariable Long examId) {
+        long start = System.currentTimeMillis();
+        User user = userRepository.getUserWithGroupsAndAuthorities();
+        log.debug("REST request to get the student exam grades of user {} for exam {}", user.getLogin(), examId);
         StudentExam studentExam = findStudentExamWithExercisesElseThrow(user, examId, courseId);
 
         // check that the studentExam has been submitted, otherwise /student-exams/conduction should be used
@@ -334,17 +374,11 @@ public class StudentExamResource {
                 .collect(Collectors.toList());
 
         StudentExamWithGradeDTO studentExamWithGradeDTO = examService.calculateStudentResultWithGradeAndPoints(studentExam, participations);
+        studentExamWithGradeDTO.studentExam = null;  // To save bandwidth.
 
-        log.info("getStudentExamForSummary done in {}ms for {} exercises for user {}", System.currentTimeMillis() - start, studentExam.getExercises().size(), user.getLogin());
+        log.info("getStudentExamGradesForSummary done in {}ms for {} exercises for user {}", System.currentTimeMillis() - start, studentExam.getExercises().size(),
+                user.getLogin());
         return ResponseEntity.ok(studentExamWithGradeDTO);
-    }
-
-    @NotNull
-    private StudentExam findStudentExamWithExercisesElseThrow(User user, Long examId, Long courseId) {
-        StudentExam studentExam = studentExamRepository.findWithExercisesByUserIdAndExamId(user.getId(), examId)
-                .orElseThrow(() -> new EntityNotFoundException("No student exam found for examId " + examId + " and userId " + user.getId()));
-        studentExamAccessService.checkCourseAndExamAccessElseThrow(courseId, examId, user, studentExam.isTestRun());
-        return studentExam;
     }
 
     /**

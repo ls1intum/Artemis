@@ -115,6 +115,11 @@ export class StudentExamDetailComponent implements OnInit {
      * @param studentExamWithGrade
      */
     private setStudentExamWithGrade(studentExamWithGrade: StudentExamWithGradeDTO) {
+        if (studentExamWithGrade.studentExam == undefined) {
+            // This should not happen, the server endpoint should return studentExamWithGrade.studentExam.
+            throw new Error('studentExamWithGrade.studentExam is undefined');
+        }
+
         this.studentExam = studentExamWithGrade.studentExam;
         this.achievedPointsPerExercise = studentExamWithGrade.achievedPointsPerExercise;
 

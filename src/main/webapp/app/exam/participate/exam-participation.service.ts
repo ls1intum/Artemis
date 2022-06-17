@@ -4,7 +4,7 @@ import { StudentExam } from 'app/entities/student-exam.model';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { QuizSubmission } from 'app/entities/quiz/quiz-submission.model';
-import { catchError, map, tap } from 'rxjs/operators';
+import { catchError, map } from 'rxjs/operators';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { Exam } from 'app/entities/exam.model';
 import dayjs from 'dayjs/esm';
@@ -57,9 +57,9 @@ export class ExamParticipationService {
      * @param courseId the id of the course the exam is created in
      * @param examId the id of the exam
      */
-    public loadStudentExamWithExercisesForSummary(courseId: number, examId: number): Observable<StudentExamWithGradeDTO> {
+    public loadStudentExamWithExercisesForSummary(courseId: number, examId: number): Observable<StudentExam> {
         const url = this.getResourceURL(courseId, examId) + '/student-exams/summary';
-        return this.getStudentExamWithGradeFromServer(url, courseId, examId);
+        return this.getStudentExamFromServer(url, courseId, examId);
     }
 
     /**
@@ -81,24 +81,15 @@ export class ExamParticipationService {
     }
 
     /**
-     * Retrieves a {@link StudentExam} from server or localstorage.
+     * Retrieves a {@link StudentExamWithGradeDTO} without {@link StudentExamWithGradeDTO#studentExam} from server for display of the summary.
+     * {@link StudentExamWithGradeDTO#studentExam} is excluded from response to save bandwidth.
+     *
+     * @param courseId the id of the course the exam is created in
+     * @param examId the id of the exam
      */
-    private getStudentExamWithGradeFromServer(url: string, courseId: number, examId: number): Observable<StudentExamWithGradeDTO> {
-        return this.httpClient.get<StudentExamWithGradeDTO>(url).pipe(
-            tap((studentExamWithGrade: StudentExamWithGradeDTO) => {
-                const studentExam = studentExamWithGrade.studentExam;
-                if (studentExam.examSessions && studentExam.examSessions.length > 0 && studentExam.examSessions[0].sessionToken) {
-                    this.saveExamSessionTokenToSessionStorage(studentExam.examSessions[0].sessionToken);
-                }
-                ExamParticipationService.convertStudentExamFromServer(studentExam);
-            }),
-            catchError(() => {
-                const localStoredExam: StudentExam = JSON.parse(this.localStorageService.retrieve(ExamParticipationService.getLocalStorageKeyForStudentExam(courseId, examId)));
-                const studentExamWithGrade = new StudentExamWithGradeDTO();
-                studentExamWithGrade.studentExam = localStoredExam;
-                return of(studentExamWithGrade);
-            }),
-        );
+    public loadStudentExamGradeInfoForSummary(courseId: number, examId: number): Observable<StudentExamWithGradeDTO> {
+        const url = this.getResourceURL(courseId, examId) + '/student-exams/grade-summary';
+        return this.httpClient.get<StudentExamWithGradeDTO>(url);
     }
 
     /**

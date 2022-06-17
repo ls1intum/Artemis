@@ -43,6 +43,9 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { MockLocalStorageService } from '../../../../helpers/mocks/service/mock-local-storage.service';
 import { LocalStorageService } from 'ngx-webstorage';
 import { ThemeService } from 'app/core/theme/theme.service';
+import { GradeType } from 'app/entities/grading-scale.model';
+import { ExamParticipationService } from 'app/exam/participate/exam-participation.service';
+import { StudentExamWithGradeDTO, StudentResult } from 'app/exam/exam-scores/exam-score-dtos.model';
 
 let fixture: ComponentFixture<ExamParticipationSummaryComponent>;
 let component: ExamParticipationSummaryComponent;
@@ -88,6 +91,16 @@ const programmingExercise = { id: 4, type: ExerciseType.PROGRAMMING, studentPart
 const exercises = [textExercise, quizExercise, modelingExercise, programmingExercise];
 
 const studentExam = { id: 1, exam, user, exercises } as StudentExam;
+const gradeInfo: StudentExamWithGradeDTO = {
+    maxPoints: 100,
+    maxBonusPoints: 10,
+    studentResult: {} as StudentResult,
+    gradeType: GradeType.GRADE,
+    achievedPointsPerExercise: {
+        1: 20,
+        2: 10,
+    },
+};
 
 function sharedSetup(url: string[]) {
     beforeEach(() => {
@@ -130,6 +143,7 @@ function sharedSetup(url: string[]) {
                     },
                 }),
                 { provide: LocalStorageService, useClass: MockLocalStorageService },
+                MockProvider(ExamParticipationService),
             ],
         })
             .compileComponents()
@@ -174,4 +188,31 @@ describe('ExamParticipationSummaryComponent', () => {
         expect(printStub).toHaveBeenCalled();
         printStub.mockRestore();
     }));
+
+    it('should retrieve grade info correctly', () => {
+        const serviceSpy = jest.spyOn(TestBed.inject(ExamParticipationService), 'loadStudentExamGradeInfoForSummary').mockReturnValue(of({ ...gradeInfo }));
+        component.shouldFetchGradeInfoSeparately = true;
+
+        fixture.detectChanges();
+
+        const courseId = 1;
+        expect(serviceSpy).toHaveBeenCalledOnce();
+        expect(serviceSpy).toHaveBeenCalledWith(courseId, studentExam.id);
+        expect(component.studentExam).toEqual(studentExam);
+        expect(component.studentExamWithGradeDTO).toEqual(gradeInfo);
+    });
+
+    it('should extract StudentExam from StudentExamWithGradeDTO correctly', () => {
+        const serviceSpy = jest.spyOn(TestBed.inject(ExamParticipationService), 'loadStudentExamGradeInfoForSummary');
+
+        const studentExamWithGrade = { ...gradeInfo, studentExam };
+        component.studentExamWithGrade = studentExamWithGrade;
+        component.shouldFetchGradeInfoSeparately = false;
+
+        fixture.detectChanges();
+
+        expect(serviceSpy).toHaveBeenCalledTimes(0);
+        expect(component.studentExam).toEqual(studentExam);
+        expect(component.studentExamWithGradeDTO).toEqual(studentExamWithGrade);
+    });
 });

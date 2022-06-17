@@ -34,7 +34,6 @@ import { ExamPage } from 'app/entities/exam-page.model';
 import { ExamPageComponent } from 'app/exam/participate/exercises/exam-page.component';
 import { AUTOSAVE_CHECK_INTERVAL, AUTOSAVE_EXERCISE_INTERVAL } from 'app/shared/constants/exercise-exam-constants';
 import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
-import { StudentExamWithGradeDTO } from 'app/exam/exam-scores/exam-score-dtos.model';
 import { ExamMonitoringService } from 'app/exam/monitor/exam-monitoring.service';
 import {
     ConnectionUpdatedAction,
@@ -74,35 +73,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     // needed, because studentExam is downloaded only when exam is started
     exam: Exam;
     examTitle = '';
-
-    /**
-     * This component needs {@link StudentExamWithGradeDTO} only for passing it to {@link ExamParticipationSummaryComponent}.
-     * This allows us including the calculated points and grade (if applicable and present) in the same response
-     * so we send one less request to the server.
-     *
-     * For usages inside this component, {@link StudentExam} retrieved from {@link StudentExamWithGradeDTO#studentExam} is sufficient.
-     * {@link studentExamWithGrade}
-     */
-    studentExamWithGrade: StudentExamWithGradeDTO;
-
-    /**
-     * Allows this component to access the studentExam without knowing about {@link studentExamWithGrade} wrapper.
-     * See {@link studentExamWithGrade} for more information.
-     */
-    get studentExam(): StudentExam {
-        return this.studentExamWithGrade?.studentExam;
-    }
-
-    /**
-     * Sets this.studentExam and this.studentExamWithGradeDTO fields.
-     * @param studentExam StudentExam instance
-     */
-    set studentExam(studentExam: StudentExam) {
-        if (!this.studentExamWithGrade) {
-            this.studentExamWithGrade = new StudentExamWithGradeDTO();
-        }
-        this.studentExamWithGrade.studentExam = studentExam;
-    }
+    studentExam: StudentExam;
 
     individualStudentEndDate: dayjs.Dayjs;
     individualStudentEndDateWithGracePeriod: dayjs.Dayjs;
@@ -202,9 +173,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                         if (this.isOver() && this.studentExam.submitted) {
                             this.examParticipationService
                                 .loadStudentExamWithExercisesForSummary(this.courseId, this.examId)
-                                .subscribe((studentExamWithGradeAndExercises: StudentExamWithGradeDTO) => {
-                                    this.studentExamWithGrade = studentExamWithGradeAndExercises;
-                                });
+                                .subscribe((studentExamWithExercises: StudentExam) => (this.studentExam = studentExamWithExercises));
                         }
 
                         // Directly start the exam when we continue from a failed save

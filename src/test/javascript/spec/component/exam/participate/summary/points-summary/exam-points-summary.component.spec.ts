@@ -163,7 +163,7 @@ describe('ExamPointsSummaryComponent', () => {
                 component.exam = exam;
                 component.gradingScaleExists = false;
                 component.studentExamWithGrade = studentExamWithGrade;
-                component.exercises = studentExamWithGrade.studentExam.exercises!;
+                component.exercises = studentExamWithGrade.studentExam!.exercises!;
             });
     });
 
@@ -209,7 +209,7 @@ describe('ExamPointsSummaryComponent', () => {
 
     it('should display 0 if no exercises are present', () => {
         component.exercises = [];
-        component.studentExamWithGrade.studentExam.exercises = [];
+        component.studentExamWithGrade.studentExam!.exercises = [];
         component.studentExamWithGrade.maxPoints = 0;
         component.studentExamWithGrade.studentResult.overallPointsAchieved = 0;
 
