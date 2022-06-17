@@ -27,7 +27,7 @@ import { getLatestSubmissionResult, SubmissionExerciseType } from 'app/entities/
 import { TextSubmission } from 'app/entities/text-submission.model';
 import { TextAssessmentService } from 'app/exercises/text/assess/text-assessment.service';
 import { of } from 'rxjs';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 import { Result } from 'app/entities/result.model';
 import { TextblockFeedbackDropdownComponent } from 'app/exercises/text/assess/textblock-feedback-editor/dropdown/textblock-feedback-dropdown.component';
 
