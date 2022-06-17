@@ -185,7 +185,7 @@ export class ResultComponent implements OnInit, OnChanges {
         this.evaluate();
 
         this.translate.onLangChange.subscribe(() => {
-            if (this.resultString !== '') {
+            if (!!this.resultString) {
                 this.resultString = this.resultService.getResultString(this.result!, this.exercise!);
             }
         });
