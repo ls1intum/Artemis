@@ -1,7 +1,7 @@
 import { Component, Input, OnDestroy, OnInit } from '@angular/core';
 import { Exam } from 'app/entities/exam.model';
 import { getSwitchedExerciseActionsGroupedByActivityId, insertNgxDataAndColorForExerciseMap } from 'app/exam/monitoring/charts/monitoring-chart';
-import { ExamAction, ExamActionType, SwitchedExerciseAction } from 'app/entities/exam-user-activity.model';
+import { ExamAction, SwitchedExerciseAction } from 'app/entities/exam-user-activity.model';
 import { ChartComponent } from 'app/exam/monitoring/charts/chart.component';
 import { ExamMonitoringWebsocketService } from '../../exam-monitoring-websocket.service';
 import { ActivatedRoute } from '@angular/router';
