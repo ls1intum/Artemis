@@ -302,6 +302,11 @@ public class UserResource {
     public ResponseEntity<List<String>> deleteUsers(@RequestParam(name = "login") List<String> logins) {
         log.debug("REST request to delete {} users", logins.size());
         List<String> deletedUsers = new java.util.ArrayList<>();
+
+        // Get current user and remove current user from list of logins
+        var currentUser = userRepository.getUser();
+        logins.remove(currentUser.getLogin());
+
         for (String login : logins) {
             try {
                 if (!isCurrentUser(login)) {
@@ -312,7 +317,7 @@ public class UserResource {
             catch (Exception exception) {
                 // In order to handle all users even if some users produce exceptions, we catch them and ignore them and proceed with the remaining users
                 log.error("REST request to delete user {} failed", login);
-                log.error(exception.getMessage());
+                log.error(exception.getMessage(), exception);
             }
         }
         return ResponseEntity.ok().headers(HeaderUtil.createAlert(applicationName, "userManagement.batch.deleted", String.valueOf(deletedUsers.size()))).body(deletedUsers);
