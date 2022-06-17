@@ -80,19 +80,12 @@
                                     No items available
                                 </button>
                                 <li *ngFor="let item of command.getValues()">
-                                    <a *ngIf="item.elements === undefined; else withCategory" (click)="command.execute(item.id, item.type)" class="dropdown-item">{{
-                                        item.value
-                                    }}</a>
-                                    <ng-template #withCategory>
-                                        <a class="dropdown-item" (click)="command.execute(item.id, item.type)">
-                                            {{ item.value }}<fa-icon class="float-end" [icon]="faAngleRight"></fa-icon>
-                                        </a>
-                                        <ul class="dropdown-menu dropdown-submenu">
-                                            <li *ngFor="let nestedElement of item.elements">
-                                                <a (click)="command.execute(item.id, nestedElement.type, nestedElement.id)" class="dropdown-item">{{ nestedElement.value }}</a>
-                                            </li>
-                                        </ul>
-                                    </ng-template>
+                                    <a class="dropdown-item" (click)="command.execute(item.id, item.type)">
+                                        {{ item.value }}
+                                    </a>
+                                    <ng-container *ngFor="let nestedElement of item.elements">
+                                        <a class="dropdown-item nested" (click)="command.execute(item.id, nestedElement.type, nestedElement.id)">{{ nestedElement.value }}</a>
+                                    </ng-container>
                                 </li>
                             </ul>
                         </div>
