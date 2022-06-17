@@ -32,26 +32,6 @@
     },
     "commits": [
         {
-            "id": "11028e4104243d8cbae9175f2bc938cb8c2d7924",
-            "message": "Changes by Online Editor",
-            "title": "Changes by Online Editor",
-            "timestamp": "2021-01-02T10:45:33+01:00",
-            "url": "http://localhost/CS1PE1/cs1pe1-artemis_admin_backup/-/commit/11028e4104243d8cbae9175f2bc938cb8c2d7924",
-            "author": {
-                "name": "artemis_admin_backup artemis_admin_backup",
-                "email": "artemis_admin_backup@localhost"
-            },
-            "added": [
-
-            ],
-            "modified": [
-                "src/com/pe1/BubbleSort.java"
-            ],
-            "removed": [
-
-            ]
-        },
-        {
             "id": "bfee66eb53d2c29e94cebeb807752ed8843d4e9b",
             "message": "Exercise-Template pushed by Artemis",
             "title": "Exercise-Template pushed by Artemis",
@@ -72,6 +52,26 @@
             ],
             "modified": [
 
+            ],
+            "removed": [
+
+            ]
+        },
+        {
+            "id": "11028e4104243d8cbae9175f2bc938cb8c2d7924",
+            "message": "Changes by Online Editor",
+            "title": "Changes by Online Editor",
+            "timestamp": "2021-01-02T10:45:33+01:00",
+            "url": "http://localhost/CS1PE1/cs1pe1-artemis_admin_backup/-/commit/11028e4104243d8cbae9175f2bc938cb8c2d7924",
+            "author": {
+                "name": "artemis_admin_backup artemis_admin_backup",
+                "email": "artemis_admin_backup@localhost"
+            },
+            "added": [
+
+            ],
+            "modified": [
+                "src/com/pe1/BubbleSort.java"
             ],
             "removed": [
 
