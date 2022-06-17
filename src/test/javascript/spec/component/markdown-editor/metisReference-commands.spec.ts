@@ -66,7 +66,7 @@ describe('Exercise Lecture Attachment Reference Commands', () => {
 
         comp.aceEditorContainer.getEditor().setValue('');
 
-        const referenceRouterLinkToExercise = `[${metisExercise.type}](${metisService.getLinkForExercise(metisExercise.id!.toString())})${metisExercise.title}[/${
+        const referenceRouterLinkToExercise = `[${metisExercise.type}]${metisExercise.title}(${metisService.getLinkForExercise(metisExercise.id!.toString())})[/${
             metisExercise.type
         }]`;
         exerciseReferenceCommand.execute(metisExercise.id!.toString());
@@ -81,7 +81,7 @@ describe('Exercise Lecture Attachment Reference Commands', () => {
 
         comp.aceEditorContainer.getEditor().setValue('');
 
-        const referenceRouterLinkToLecture = `[lecture](${metisService.getLinkForLecture(metisLecture.id!.toString())})${metisLecture.title}[/lecture]`;
+        const referenceRouterLinkToLecture = `[lecture]${metisLecture.title}(${metisService.getLinkForLecture(metisLecture.id!.toString())})[/lecture]`;
         lectureReferenceCommand.execute(metisLecture.id!.toString(), ReferenceType.LECTURE);
         expect(comp.aceEditorContainer.getEditor().getValue()).toBe(referenceRouterLinkToLecture);
     });
@@ -94,7 +94,7 @@ describe('Exercise Lecture Attachment Reference Commands', () => {
 
         comp.aceEditorContainer.getEditor().setValue('');
 
-        const referenceRouterLinkToLecture = `[attachment](${metisLecture.attachments?.first()?.link})${metisLecture.attachments?.first()?.name}[/attachment]`;
+        const referenceRouterLinkToLecture = `[attachment]${metisLecture.attachments?.first()?.name}(${metisLecture.attachments?.first()?.link})[/attachment]`;
         lectureReferenceCommand.execute(metisLecture.id!.toString(), ReferenceType.ATTACHMENT, metisLecture.attachments?.first()?.id!.toString());
         expect(comp.aceEditorContainer.getEditor().getValue()).toBe(referenceRouterLinkToLecture);
     });

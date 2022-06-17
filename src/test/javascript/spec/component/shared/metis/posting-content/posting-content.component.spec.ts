@@ -324,7 +324,7 @@ describe('PostingContentComponent', () => {
         }));
 
         it('should compute parts when referencing a file upload exercise', fakeAsync(() => {
-            component.content = `I want to reference [file-upload](courses/1/exercises/1)File Upload Exercise[/file-upload].`;
+            component.content = `I want to reference [file-upload]File Upload Exercise(courses/1/exercises/1)[/file-upload].`;
             const matches = component.getPatternMatches();
             component.computePostingContentParts(matches);
             expect(component.postingContentParts).toEqual([
@@ -339,7 +339,7 @@ describe('PostingContentComponent', () => {
         }));
 
         it('should compute parts when referencing a modeling exercise', fakeAsync(() => {
-            component.content = `I want to reference [modeling](courses/1/exercises/1)Modeling Exercise[/modeling].`;
+            component.content = `I want to reference [modeling]Modeling Exercise(courses/1/exercises/1)[/modeling].`;
             const matches = component.getPatternMatches();
             component.computePostingContentParts(matches);
             expect(component.postingContentParts).toEqual([
@@ -354,7 +354,7 @@ describe('PostingContentComponent', () => {
         }));
 
         it('should compute parts when referencing a quiz exercise', fakeAsync(() => {
-            component.content = `I want to reference [quiz](courses/1/exercises/1)Quiz Exercise[/quiz].`;
+            component.content = `I want to reference [quiz]Quiz Exercise(courses/1/exercises/1)[/quiz].`;
             const matches = component.getPatternMatches();
             component.computePostingContentParts(matches);
             expect(component.postingContentParts).toEqual([
@@ -369,7 +369,7 @@ describe('PostingContentComponent', () => {
         }));
 
         it('should compute parts when referencing a programming exercise', fakeAsync(() => {
-            component.content = `I want to reference [programming](courses/1/exercises/1)Programming Exercise[/programming].`;
+            component.content = `I want to reference [programming]Programming Exercise(courses/1/exercises/1)[/programming].`;
             const matches = component.getPatternMatches();
             component.computePostingContentParts(matches);
             expect(component.postingContentParts).toEqual([
@@ -384,7 +384,7 @@ describe('PostingContentComponent', () => {
         }));
 
         it('should compute parts when referencing a text exercise', fakeAsync(() => {
-            component.content = `I want to reference [text](courses/1/exercises/1)Text Exercise[/text].`;
+            component.content = `I want to reference [text]Text Exercise(courses/1/exercises/1)[/text].`;
             const matches = component.getPatternMatches();
             component.computePostingContentParts(matches);
             expect(component.postingContentParts).toEqual([
@@ -399,7 +399,7 @@ describe('PostingContentComponent', () => {
         }));
 
         it('should compute parts when referencing a lecture', fakeAsync(() => {
-            component.content = `I want to reference [lecture](courses/1/lectures/1)Lecture 1[/lecture].`;
+            component.content = `I want to reference [lecture]Lecture 1(courses/1/lectures/1)[/lecture].`;
             const matches = component.getPatternMatches();
             component.computePostingContentParts(matches);
             expect(component.postingContentParts).toEqual([
@@ -414,7 +414,7 @@ describe('PostingContentComponent', () => {
         }));
 
         it('should compute parts when referencing an attachment', fakeAsync(() => {
-            component.content = `I want to reference [attachment](attachmentPath/attachment.pdf)PDF File[/attachment].`;
+            component.content = `I want to reference [attachment]PDF File(attachmentPath/attachment.pdf)[/attachment].`;
             const matches = component.getPatternMatches();
             component.computePostingContentParts(matches);
             expect(component.postingContentParts).toEqual([

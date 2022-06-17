@@ -33,8 +33,8 @@ export class LectureAttachmentReferenceCommand extends MultiOptionCommand {
         const selectedAttachment = selectedLecture.attachments?.find((value) => value.id!.toString() === selectedElementId)!;
         const referenceLink =
             ReferenceType.LECTURE === type
-                ? `[lecture](${this.metisService.getLinkForLecture(selectedLecture.id!.toString())})${selectedLecture.title}[/lecture]`
-                : `[attachment](${selectedAttachment.link})${selectedAttachment.name}[/attachment]`;
+                ? `[lecture]${selectedLecture.title}(${this.metisService.getLinkForLecture(selectedLecture.id!.toString())})[/lecture]`
+                : `[attachment]${selectedAttachment.name}(${selectedAttachment.link})[/attachment]`;
         this.insertText(referenceLink);
         this.focus();
     }

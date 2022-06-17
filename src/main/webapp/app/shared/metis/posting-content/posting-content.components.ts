@@ -81,12 +81,12 @@ export class PostingContentComponent implements OnInit, OnDestroy {
                     // reference closing tag: [/referenceType] (wrapped between 3 characters)
                     // referenceStr: string to be displayed for the reference
                     // linkToReference: link to be navigated to on reference click
-                    referenceStr = this.content!.substring(this.content?.indexOf(')', patternMatch.startIndex)! + 1, patternMatch.endIndex - (referenceType.length + 3));
+                    referenceStr = this.content!.substring(this.content?.indexOf(']', patternMatch.startIndex)! + 1, this.content?.indexOf('(', patternMatch.startIndex)!);
                     linkToReference = [this.content!.substring(this.content?.indexOf('(', patternMatch.startIndex)! + 1, this.content?.indexOf(')', patternMatch.startIndex))];
                 } else if (ReferenceType.ATTACHMENT === referenceType) {
                     // referenceStr: string to be displayed for the reference
                     // attachmentToReference: location of attachment to be opened on reference click
-                    referenceStr = this.content!.substring(this.content?.indexOf(')', patternMatch.startIndex)! + 1, patternMatch.endIndex - (referenceType.length + 3));
+                    referenceStr = this.content!.substring(this.content?.indexOf(']', patternMatch.startIndex)! + 1, this.content?.indexOf('(', patternMatch.startIndex)!);
                     attachmentToReference = this.content!.substring(this.content?.indexOf('(', patternMatch.startIndex)! + 1, this.content?.indexOf(')', patternMatch.startIndex));
                 }
 
