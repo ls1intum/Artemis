@@ -8,6 +8,7 @@ import java.util.Objects;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -88,6 +89,7 @@ public class ApollonDiagramResource {
      */
     @PutMapping("/course/{courseId}/apollon-diagrams")
     @PreAuthorize("hasRole('TA')")
+    @CacheEvict(cacheNames = "diagramTitle", key = "#apollonDiagram.id")
     public ResponseEntity<ApollonDiagram> updateApollonDiagram(@RequestBody ApollonDiagram apollonDiagram, @PathVariable Long courseId) throws URISyntaxException {
         log.debug("REST request to update ApollonDiagram : {}", apollonDiagram);
 
@@ -113,7 +115,7 @@ public class ApollonDiagramResource {
      */
     @GetMapping(value = "/apollon-diagrams/{diagramId}/title")
     @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<String> getExerciseTitle(@PathVariable Long diagramId) {
+    public ResponseEntity<String> getDiagramTitle(@PathVariable Long diagramId) {
         final var title = apollonDiagramRepository.getDiagramTitle(diagramId);
         return title == null ? ResponseEntity.notFound().build() : ResponseEntity.ok(title);
     }
@@ -163,6 +165,7 @@ public class ApollonDiagramResource {
      */
     @DeleteMapping("/course/{courseId}/apollon-diagrams/{apollonDiagramId}")
     @PreAuthorize("hasRole('EDITOR')")
+    @CacheEvict(cacheNames = "diagramTitle", key = "#apollonDiagram.id")
     public ResponseEntity<Void> deleteApollonDiagram(@PathVariable Long apollonDiagramId, @PathVariable Long courseId) {
         log.debug("REST request to delete ApollonDiagram : {}", apollonDiagramId);
 
