@@ -7,9 +7,7 @@ import javax.persistence.criteria.*;
 
 import org.springframework.data.jpa.domain.Specification;
 
-import de.tum.in.www1.artemis.domain.Exercise;
-import de.tum.in.www1.artemis.domain.Exercise_;
-import de.tum.in.www1.artemis.domain.Lecture_;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.DisplayPriority;
 import de.tum.in.www1.artemis.domain.enumeration.SortingOrder;
 import de.tum.in.www1.artemis.domain.metis.*;
@@ -22,7 +20,13 @@ public class PostSpecs {
                 return criteriaBuilder.conjunction();
             }
             else {
-                return criteriaBuilder.equal(root.get(Post_.COURSE), courseId);
+                Join<Post, Lecture> joinedLectures = root.join(Post_.LECTURE, JoinType.LEFT);
+                Join<Post, Exercise> joinedExercises = root.join(Post_.EXERCISE, JoinType.LEFT);
+
+                Predicate coursePosts = criteriaBuilder.equal(root.get(Post_.COURSE), courseId);
+                Predicate coursePostsWithLectureContext = criteriaBuilder.equal(joinedLectures.get(Lecture_.COURSE).get(Course_.ID), courseId);
+                Predicate coursePostsWithExerciseContext = criteriaBuilder.equal(joinedExercises.get(Exercise_.COURSE).get(Course_.ID), courseId);
+                return criteriaBuilder.or(coursePosts, coursePostsWithLectureContext, coursePostsWithExerciseContext);
             }
         };
     }

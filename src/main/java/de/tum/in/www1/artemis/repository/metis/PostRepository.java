@@ -32,8 +32,8 @@ public interface PostRepository extends JpaRepository<Post, Long>, JpaSpecificat
                                 .and(getCourseWideContextSpecification(postContextFilter.getCourseWideContext()))
                                 .and(getOwnSpecification(postContextFilter.getFilterToOwn(), userId)))
                         .and(getAnsweredOrReactedSpecification(postContextFilter.getFilterToAnsweredOrReacted(), userId))
-                        .and(getUnresolvedSpecification(postContextFilter.getFilterToUnresolved()))
-                        .and(getSortSpecification(postContextFilter.getPostSortCriterion(), postContextFilter.getSortingOrder())));
+                        .and(getUnresolvedSpecification(postContextFilter.getFilterToUnresolved())));
+        // .and(getSortSpecification(postContextFilter.getPostSortCriterion(), postContextFilter.getSortingOrder())));
 
         return findAll(specification);
     }
