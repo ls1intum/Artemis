@@ -48,9 +48,7 @@ public class PostSpecs {
                 return criteriaBuilder.conjunction();
             }
             else {
-                Join<Post, Exercise> joinedExercises = root.join(Post_.EXERCISE, JoinType.INNER);
-                joinedExercises.on(criteriaBuilder.equal(joinedExercises.get(Exercise_.ID), exerciseId));
-
+                root.join(Post_.EXERCISE, JoinType.INNER);
                 return criteriaBuilder.equal(root.get(Post_.EXERCISE).get(Exercise_.ID), exerciseId);
             }
         });
@@ -113,7 +111,8 @@ public class PostSpecs {
                 Subquery<Long> subQuery = query.subquery(Long.class);
                 Root<AnswerPost> subRoot = subQuery.from(AnswerPost.class);
                 Predicate subPredicate = criteriaBuilder.equal(subRoot.get(AnswerPost_.RESOLVES_POST), Boolean.TRUE);
-                subQuery.select(subRoot.get(AnswerPost_.ID)).where(subPredicate);
+                Predicate postBinder = criteriaBuilder.equal(root.get(Post_.ID), subRoot.get(AnswerPost_.POST).get(Post_.ID));
+                subQuery.select(subRoot.get(AnswerPost_.ID)).where(criteriaBuilder.and(postBinder, subPredicate));
 
                 Predicate notAnnouncement = criteriaBuilder.or(postsWithoutCourseWideContext, notAnnouncementPosts);
                 Predicate notResolves = criteriaBuilder.exists(subQuery).not();
