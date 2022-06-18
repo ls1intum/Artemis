@@ -80,11 +80,13 @@
                                     No items available
                                 </button>
                                 <li *ngFor="let item of command.getValues()">
-                                    <a class="dropdown-item" (click)="command.execute(item.id, item.type)">
+                                    <button class="btn-sm" type="button" (click)="command.execute(item.id, item.type)" ngbDropdownItem>
                                         {{ item.value }}
-                                    </a>
+                                    </button>
                                     <ng-container *ngFor="let nestedElement of item.elements">
-                                        <a class="dropdown-item nested" (click)="command.execute(item.id, nestedElement.type, nestedElement.id)">{{ nestedElement.value }}</a>
+                                        <button class="btn-sm nested" type="button" (click)="command.execute(item.id, nestedElement.type, nestedElement.id)" ngbDropdownItem>
+                                            {{ nestedElement.value }}
+                                        </button>
                                     </ng-container>
                                 </li>
                             </ul>
