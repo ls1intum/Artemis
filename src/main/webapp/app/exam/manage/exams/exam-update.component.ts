@@ -10,13 +10,17 @@ import { CourseManagementService } from 'app/course/manage/course-management.ser
 import dayjs from 'dayjs/esm';
 import { onError } from 'app/shared/util/global.utils';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
-import { faBan, faExclamationTriangle, faSave } from '@fortawesome/free-solid-svg-icons';
+import { faBan, faCheckDouble, faExclamationTriangle, faFileUpload, faKeyboard, faProjectDiagram, faSave, faFont } from '@fortawesome/free-solid-svg-icons';
 import { AccountService } from 'app/core/auth/account.service';
 import { tap } from 'rxjs/operators';
+import { Exercise, ExerciseType } from 'app/entities/exercise.model';
+import { ExerciseGroup } from 'app/entities/exercise-group.model';
+import { IconProp } from '@fortawesome/fontawesome-svg-core';
 
 @Component({
     selector: 'jhi-exam-update',
     templateUrl: './exam-update.component.html',
+    styleUrls: ['./exam-update.component.scss'],
 })
 export class ExamUpdateComponent implements OnInit {
     exam: Exam;
@@ -29,11 +33,20 @@ export class ExamUpdateComponent implements OnInit {
     // Interims-boolean to hide the option to create an TestExam in production, as the feature is not yet fully implemented
     isAdmin: boolean;
     isImport = false;
+    // Map to determine, which exercises should be imported alongside an exam
+    selectedExercises?: Map<ExerciseGroup, Set<Exercise>>;
+    // Expose enums to the template
+    exerciseType = ExerciseType;
 
     // Icons
     faSave = faSave;
     faBan = faBan;
     faExclamationTriangle = faExclamationTriangle;
+    faCheckDouble = faCheckDouble;
+    faFileUpload = faFileUpload;
+    faProjectDiagram = faProjectDiagram;
+    faKeyboard = faKeyboard;
+    faFont = faFont;
 
     constructor(
         private route: ActivatedRoute,
@@ -53,6 +66,10 @@ export class ExamUpdateComponent implements OnInit {
 
             if (this.isImport) {
                 this.resetIdAndDatesForImport();
+                this.selectedExercises = new Map<ExerciseGroup, Set<Exercise>>();
+                this.exam.exerciseGroups?.forEach((exerciseGroup) => {
+                    this.selectedExercises!.set(exerciseGroup, new Set<Exercise>(exerciseGroup.exercises!));
+                });
             }
 
             this.courseManagementService.find(Number(this.route.snapshot.paramMap.get('courseId'))).subscribe({
@@ -256,5 +273,43 @@ export class ExamUpdateComponent implements OnInit {
         this.exam.publishResultsDate = undefined;
         this.exam.examStudentReviewStart = undefined;
         this.exam.examStudentReviewEnd = undefined;
+    }
+
+    /**
+     * Sets the selected exercise for an exercise group in the testRunConfiguration dictionary, {@link testRunConfiguration}.
+     * There, the exerciseGroups' id is used as a key to track the selected exercises for this test run.
+     * @param exercise The selected exercise
+     * @param exerciseGroup The exercise group for which the user selected an exercise
+     */
+    onSelectExercise(exercise: Exercise, exerciseGroup: ExerciseGroup) {
+        if (this.selectedExercises!.get(exerciseGroup)!.has(exercise)) {
+            // Case Exercise is already selected -> delete
+            this.selectedExercises!.get(exerciseGroup)!.delete(exercise);
+        } else {
+            this.selectedExercises!.get(exerciseGroup)!.add(exercise);
+        }
+    }
+
+    exerciseIsSelected(exercise: Exercise, exerciseGroup: ExerciseGroup): boolean {
+        return this.selectedExercises!.get(exerciseGroup)!.has(exercise);
+    }
+
+    /**
+     * Get an icon for the type of the given exercise.
+     * @param exercise {Exercise}
+     */
+    getExerciseIcon(exercise: Exercise): IconProp {
+        switch (exercise.type) {
+            case ExerciseType.QUIZ:
+                return this.faCheckDouble;
+            case ExerciseType.FILE_UPLOAD:
+                return this.faFileUpload;
+            case ExerciseType.MODELING:
+                return this.faProjectDiagram;
+            case ExerciseType.PROGRAMMING:
+                return this.faKeyboard;
+            default:
+                return this.faFont;
+        }
     }
 }

@@ -12,11 +12,10 @@ import de.tum.in.www1.artemis.domain.TextExercise;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
-import de.tum.in.www1.artemis.repository.ExamRepository;
-import de.tum.in.www1.artemis.repository.ExerciseGroupRepository;
-import de.tum.in.www1.artemis.repository.ModelingExerciseRepository;
-import de.tum.in.www1.artemis.repository.TextExerciseRepository;
+import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
+import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.ModelingExerciseImportService;
+import de.tum.in.www1.artemis.service.QuizExerciseImportService;
 import de.tum.in.www1.artemis.service.TextExerciseImportService;
 
 @Service
@@ -36,9 +35,14 @@ public class ExamImportService {
 
     private final ExamAccessService examAccessService;
 
+    private final QuizExerciseRepository quizExerciseRepository;
+
+    private final QuizExerciseImportService quizExerciseImportService;
+
     public ExamImportService(TextExerciseImportService textExerciseImportService, TextExerciseRepository textExerciseRepository,
             ModelingExerciseImportService modelingExerciseImportService, ModelingExerciseRepository modelingExerciseRepository, ExamRepository examRepository,
-            ExerciseGroupRepository exerciseGroupRepository, ExamAccessService examAccessService) {
+            ExerciseGroupRepository exerciseGroupRepository, ExamAccessService examAccessService, QuizExerciseRepository quizExerciseRepository,
+            QuizExerciseImportService importQuizExercise) {
         this.textExerciseImportService = textExerciseImportService;
         this.textExerciseRepository = textExerciseRepository;
         this.modelingExerciseImportService = modelingExerciseImportService;
@@ -46,6 +50,8 @@ public class ExamImportService {
         this.examRepository = examRepository;
         this.exerciseGroupRepository = exerciseGroupRepository;
         this.examAccessService = examAccessService;
+        this.quizExerciseRepository = quizExerciseRepository;
+        this.quizExerciseImportService = importQuizExercise;
     }
 
     @NotNull
@@ -75,7 +81,8 @@ public class ExamImportService {
     @NotNull
     public Exam importExerciseGroupsWithExercises(List<ExerciseGroup> exerciseGroupsToCopy, Exam newExam) {
         // Copy each exerciseGroup
-        exerciseGroupsToCopy.forEach(exerciseGroupToCopy -> {
+        exerciseGroupsToCopy.stream().filter(exerciseGroup -> !exerciseGroup.getExercises().isEmpty()).forEach(exerciseGroupToCopy -> {
+            // Helper Method to copy the Exercise Group and the exercises
             ExerciseGroup exerciseGroupCopied = copyExerciseGroupWithExercises(exerciseGroupToCopy);
             // Attach the new Exercise Group with the newly created Exercise to the new Exam
             newExam.addExerciseGroup(exerciseGroupCopied);
@@ -92,14 +99,16 @@ public class ExamImportService {
      */
     @NotNull
     private ExerciseGroup copyExerciseGroupWithExercises(ExerciseGroup exerciseGroupToCopy) {
-        // Create a new ExerciseGroup
-        ExerciseGroup exerciseGroupCopied = exerciseGroupToCopy.copyExerciseGroup(exerciseGroupToCopy);
+        // Create a new ExerciseGroup with the same name and boolean:mandatory
+        ExerciseGroup exerciseGroupCopied = exerciseGroupToCopy.copyExerciseGroupWithTitleAndIsMandatory(exerciseGroupToCopy);
         // Copy each exercise within the existing Exercise Group
         exerciseGroupToCopy.getExercises().forEach(exerciseToCopy -> {
             // We need to set the new Exercise Group to the old exercise, so the new exercise group is correctly set for the new exercise
             exerciseToCopy.setExerciseGroup(exerciseGroupCopied);
             Exercise exerciseCopied;
+
             switch (exerciseToCopy.getExerciseType()) {
+
                 case MODELING -> {
                     final Optional<ModelingExercise> optionalOriginalModellingExercise = modelingExerciseRepository
                             .findByIdWithExampleSubmissionsAndResults(exerciseToCopy.getId());
@@ -109,6 +118,7 @@ public class ExamImportService {
                     }
                     exerciseCopied = modelingExerciseImportService.importModelingExercise(optionalOriginalModellingExercise.get(), (ModelingExercise) exerciseToCopy);
                 }
+
                 case TEXT -> {
                     final Optional<TextExercise> optionalOriginalTextExercise = textExerciseRepository.findByIdWithExampleSubmissionsAndResults(exerciseToCopy.getId());
                     // We do not want to abort the whole exam import process, we only skip the relevant exercise
@@ -117,9 +127,21 @@ public class ExamImportService {
                     }
                     exerciseCopied = textExerciseImportService.importTextExercise(optionalOriginalTextExercise.get(), (TextExercise) exerciseToCopy);
                 }
-                /*
-                 * case PROGRAMMING -> System.out.println("hello"); case QUIZ -> System.out.println("hello"); case FILE_UPLOAD -> System.out.println("hello");
-                 */
+                case PROGRAMMING -> {
+                    return;
+                }
+                case FILE_UPLOAD -> {
+                    return;
+                }
+                case QUIZ -> {
+                    final Optional<QuizExercise> optionalOriginalQuizExercise = quizExerciseRepository.findById(exerciseToCopy.getId());
+                    // We do not want to abort the whole exam import process, we only skip the relevant exercise
+                    if (optionalOriginalQuizExercise.isEmpty()) {
+                        return;
+                    }
+                    exerciseCopied = quizExerciseImportService.importQuizExercise(optionalOriginalQuizExercise.get(), (QuizExercise) exerciseToCopy);
+                }
+
                 default -> {
                     return;
                 }

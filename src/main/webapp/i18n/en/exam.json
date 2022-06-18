@@ -293,6 +293,13 @@
                 "title": "Maximum number of points for exam",
                 "warning": "Updating this field will update the grading scale for the exam if such exists, such that the points values for the grade steps still match the percentages, adjusted for the new maximum points value"
             },
+            "exerciseImport": {
+                "title": "Import Exam Exercises",
+                "explanation": "Select the individual exercises, which should be imported alongside the exam, by clicking on it",
+                "exerciseGroupTooltip": "The title of an exercise group can be changed before the import",
+                "exerciseTitleTooltip": "The title of an exercise can be changed before the import. Further changes are possible after the import",
+                "shortNameTooltip": "The shortname of a programming task must be unique. The short name of the exercise can NOT be edited after creating the exercise! Together with the course short name, it is used as a unique identifier for the exercise in all parts of Artemis (incl. repositories and build plans)"
+            },
             "numberOfExerciseGroups": "Number of exercise groups:",
             "numberOfExercisesInExam": "Number of exercises in exam",
             "numberOfCorrectionRoundsInExam": "Number of correction rounds in exam",
