@@ -464,4 +464,46 @@ public class UserJenkinsGitlabIntegrationTest extends AbstractSpringIntegrationJ
     public void initializeUserExternal() throws Exception {
         userTestService.initializeUserExternal();
     }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    public void testUserWithoutGroups() throws Exception {
+        userTestService.testUserWithoutGroups();
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    public void testUserWithGroups() throws Exception {
+        userTestService.testUserWithGroups();
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    public void testUserWithActivatedStatus() throws Exception {
+        userTestService.testUserWithActivatedStatus();
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    public void testUserWithDeactivatedStatus() throws Exception {
+        userTestService.testUserWithDeactivatedStatus();
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    public void testUserWithInternalStatus() throws Exception {
+        userTestService.testUserWithInternalStatus();
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    public void testUserWithExternalStatus() throws Exception {
+        userTestService.testUserWithExternalStatus();
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    public void testUserWithExternalAndInternalStatus() throws Exception {
+        userTestService.testUserWithExternalAndInternalStatus();
+    }
 }

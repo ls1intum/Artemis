@@ -165,7 +165,7 @@ $browserupgrade-color: black;
 $browserupgrade-color-background: #ccc;
 $ng-valid-border: green;
 $ng-invalid-border: red;
-$gutter-background: #f1f1f1;
+$gutter-background: #bbb;
 $error-color: white;
 $error-background: red;
 $readonly-background: #eee;
@@ -549,3 +549,7 @@ $graph-green: rgba(40, 164, 40, 1);
 $graph-red: rgba(204, 0, 0, 1);
 $graph-yellow: rgba(230, 174, 6, 1);
 $graph-black: rgb(229, 229, 229);
+
+// User-Management
+$user-management-background-color: rgba($white, 0.02);
+$user-management-border-color: rgba($white, 0.15);
