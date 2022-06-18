@@ -48,7 +48,6 @@ public class PostSpecs {
                 return criteriaBuilder.conjunction();
             }
             else {
-                root.join(Post_.EXERCISE, JoinType.INNER);
                 return criteriaBuilder.equal(root.get(Post_.EXERCISE).get(Exercise_.ID), exerciseId);
             }
         });
