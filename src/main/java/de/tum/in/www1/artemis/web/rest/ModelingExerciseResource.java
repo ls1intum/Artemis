@@ -9,6 +9,7 @@ import java.util.Objects;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.core.io.Resource;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -177,6 +178,7 @@ public class ModelingExerciseResource {
      */
     @PutMapping("modeling-exercises")
     @PreAuthorize("hasRole('EDITOR')")
+    @CacheEvict(cacheNames = "exerciseTitle", key = "#modelingExercise.id")
     public ResponseEntity<ModelingExercise> updateModelingExercise(@RequestBody ModelingExercise modelingExercise,
             @RequestParam(value = "notificationText", required = false) String notificationText) throws URISyntaxException {
         log.debug("REST request to update ModelingExercise : {}", modelingExercise);
@@ -266,6 +268,7 @@ public class ModelingExerciseResource {
      */
     @DeleteMapping("modeling-exercises/{exerciseId}")
     @PreAuthorize("hasRole('INSTRUCTOR')")
+    @CacheEvict(cacheNames = "exerciseTitle", key = "#exerciseId")
     public ResponseEntity<Void> deleteModelingExercise(@PathVariable Long exerciseId) {
         log.info("REST request to delete ModelingExercise : {}", exerciseId);
         var modelingExercise = modelingExerciseRepository.findByIdElseThrow(exerciseId);
@@ -469,6 +472,7 @@ public class ModelingExerciseResource {
      */
     @PutMapping(Endpoints.REEVALUATE_EXERCISE)
     @PreAuthorize("hasRole('EDITOR')")
+    @CacheEvict(cacheNames = "exerciseTitle", key = "#modelingExercise.id")
     public ResponseEntity<ModelingExercise> reEvaluateAndUpdateModelingExercise(@PathVariable long exerciseId, @RequestBody ModelingExercise modelingExercise,
             @RequestParam(value = "deleteFeedback", required = false) Boolean deleteFeedbackAfterGradingInstructionUpdate) throws URISyntaxException {
         log.debug("REST request to re-evaluate ModelingExercise : {}", modelingExercise);

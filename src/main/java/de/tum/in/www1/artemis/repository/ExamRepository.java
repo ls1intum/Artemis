@@ -9,6 +9,7 @@ import java.util.stream.Collectors;
 
 import javax.validation.constraints.NotNull;
 
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -101,6 +102,7 @@ public interface ExamRepository extends JpaRepository<Exam, Long> {
             FROM Exam e
             WHERE e.id = :examId
             """)
+    @Cacheable(cacheNames = "examTitle", key = "#examId", unless = "#result == null")
     String getExamTitle(@Param("examId") Long examId);
 
     @NotNull

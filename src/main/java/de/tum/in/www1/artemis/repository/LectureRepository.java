@@ -5,6 +5,7 @@ import java.util.Set;
 
 import javax.validation.constraints.NotNull;
 
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -89,6 +90,7 @@ public interface LectureRepository extends JpaRepository<Lecture, Long> {
             FROM Lecture lecture
             WHERE lecture.id = :lectureId
             """)
+    @Cacheable(cacheNames = "lectureTitle", key = "#lectureId", unless = "#result == null")
     String getLectureTitle(@Param("lectureId") Long lectureId);
 
     @NotNull

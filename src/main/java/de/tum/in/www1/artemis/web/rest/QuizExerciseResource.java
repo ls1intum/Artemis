@@ -11,6 +11,7 @@ import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -156,6 +157,7 @@ public class QuizExerciseResource {
      */
     @PutMapping("/quiz-exercises")
     @PreAuthorize("hasRole('EDITOR')")
+    @CacheEvict(cacheNames = "exerciseTitle", key = "#quizExercise.id")
     public ResponseEntity<QuizExercise> updateQuizExercise(@RequestBody QuizExercise quizExercise,
             @RequestParam(value = "notificationText", required = false) String notificationText) throws URISyntaxException {
         log.debug("REST request to update QuizExercise : {}", quizExercise);
@@ -514,6 +516,7 @@ public class QuizExerciseResource {
      */
     @DeleteMapping("/quiz-exercises/{quizExerciseId}")
     @PreAuthorize("hasRole('INSTRUCTOR')")
+    @CacheEvict(cacheNames = "exerciseTitle", key = "#quizExerciseId")
     public ResponseEntity<Void> deleteQuizExercise(@PathVariable Long quizExerciseId) {
         log.info("REST request to delete QuizExercise : {}", quizExerciseId);
         var quizExercise = quizExerciseRepository.findByIdElseThrow(quizExerciseId);

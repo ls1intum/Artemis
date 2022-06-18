@@ -8,6 +8,7 @@ import java.util.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.core.io.Resource;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -179,6 +180,7 @@ public class TextExerciseResource {
      */
     @PutMapping("/text-exercises")
     @PreAuthorize("hasRole('EDITOR')")
+    @CacheEvict(cacheNames = "exerciseTitle", key = "#textExercise.id")
     public ResponseEntity<TextExercise> updateTextExercise(@RequestBody TextExercise textExercise,
             @RequestParam(value = "notificationText", required = false) String notificationText) throws URISyntaxException {
         log.debug("REST request to update TextExercise : {}", textExercise);
@@ -282,6 +284,7 @@ public class TextExerciseResource {
      */
     @DeleteMapping("/text-exercises/{exerciseId}")
     @PreAuthorize("hasRole('INSTRUCTOR')")
+    @CacheEvict(cacheNames = "exerciseTitle", key = "#exerciseId")
     public ResponseEntity<Void> deleteTextExercise(@PathVariable Long exerciseId) {
         log.info("REST request to delete TextExercise : {}", exerciseId);
         var textExercise = textExerciseRepository.findByIdElseThrow(exerciseId);
@@ -528,6 +531,7 @@ public class TextExerciseResource {
      */
     @PutMapping(Endpoints.REEVALUATE_EXERCISE)
     @PreAuthorize("hasRole('EDITOR')")
+    @CacheEvict(cacheNames = "exerciseTitle", key = "#textExercise.id")
     public ResponseEntity<TextExercise> reEvaluateAndUpdateTextExercise(@PathVariable long exerciseId, @RequestBody TextExercise textExercise,
             @RequestParam(value = "deleteFeedback", required = false) Boolean deleteFeedbackAfterGradingInstructionUpdate) throws URISyntaxException {
         log.debug("REST request to re-evaluate TextExercise : {}", textExercise);

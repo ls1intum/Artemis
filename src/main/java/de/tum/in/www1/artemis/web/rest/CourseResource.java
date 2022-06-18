@@ -21,6 +21,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.actuate.audit.AuditEvent;
 import org.springframework.boot.actuate.audit.AuditEventRepository;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.core.io.Resource;
 import org.springframework.http.MediaType;
@@ -185,6 +186,7 @@ public class CourseResource {
      */
     @PutMapping("/courses")
     @PreAuthorize("hasRole('INSTRUCTOR')")
+    @CacheEvict(cacheNames = "courseTitle", key = "#updatedCourse.id")
     public ResponseEntity<Course> updateCourse(@RequestBody Course updatedCourse) throws URISyntaxException {
         log.debug("REST request to update Course : {}", updatedCourse);
         User user = userRepository.getUserWithGroupsAndAuthorities();
@@ -704,6 +706,7 @@ public class CourseResource {
      */
     @DeleteMapping("/courses/{courseId}")
     @PreAuthorize("hasRole('ADMIN')")
+    @CacheEvict(cacheNames = "courseTitle", key = "#courseId")
     public ResponseEntity<Void> deleteCourse(@PathVariable long courseId) {
         log.info("REST request to delete Course : {}", courseId);
         Course course = courseRepository.findByIdWithExercisesAndLecturesAndLectureUnitsAndLearningGoalsElseThrow(courseId);

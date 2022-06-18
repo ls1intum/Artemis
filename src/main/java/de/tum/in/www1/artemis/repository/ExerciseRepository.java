@@ -9,6 +9,7 @@ import java.util.stream.Collectors;
 
 import javax.validation.constraints.NotNull;
 
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -310,6 +311,7 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
             FROM Exercise e
             WHERE e.id = :exerciseId
             """)
+    @Cacheable(cacheNames = "exerciseTitle", key = "#exerciseId", unless = "#result == null")
     String getExerciseTitle(@Param("exerciseId") Long exerciseId);
 
     /**

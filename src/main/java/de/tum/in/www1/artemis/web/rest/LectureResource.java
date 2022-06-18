@@ -11,6 +11,7 @@ import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -104,6 +105,7 @@ public class LectureResource {
      */
     @PutMapping("/lectures")
     @PreAuthorize("hasRole('EDITOR')")
+    @CacheEvict(cacheNames = "lectureTitle", key = "#lecture.id")
     public ResponseEntity<Lecture> updateLecture(@RequestBody Lecture lecture) {
         log.debug("REST request to update Lecture : {}", lecture);
         if (lecture.getId() == null) {
@@ -288,6 +290,7 @@ public class LectureResource {
      */
     @DeleteMapping("/lectures/{id}")
     @PreAuthorize("hasRole('INSTRUCTOR')")
+    @CacheEvict(cacheNames = "lectureTitle", key = "#id")
     public ResponseEntity<Void> deleteLecture(@PathVariable Long id) {
         Optional<Lecture> optionalLecture = lectureRepository.findByIdWithPostsAndLectureUnitsAndLearningGoals(id);
         if (optionalLecture.isEmpty()) {

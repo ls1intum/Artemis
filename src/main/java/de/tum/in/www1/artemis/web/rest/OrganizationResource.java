@@ -7,6 +7,7 @@ import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -152,6 +153,7 @@ public class OrganizationResource {
      */
     @PutMapping("organizations/{organizationId}")
     @PreAuthorize("hasRole('ADMIN')")
+    @CacheEvict(cacheNames = "organizationTitle", key = "#organizationId")
     public ResponseEntity<Organization> updateOrganization(@PathVariable Long organizationId, @RequestBody Organization organization) {
         log.debug("REST request to update organization : {}", organization);
         if (organization.getId() == null) {
@@ -173,6 +175,7 @@ public class OrganizationResource {
      */
     @DeleteMapping("organizations/{organizationId}")
     @PreAuthorize("hasRole('ADMIN')")
+    @CacheEvict(cacheNames = "organizationTitle", key = "#organizationId")
     public ResponseEntity<Void> deleteOrganization(@PathVariable Long organizationId) {
         log.debug("REST request to delete organization : {}", organizationId);
         organizationService.deleteOrganization(organizationId);
