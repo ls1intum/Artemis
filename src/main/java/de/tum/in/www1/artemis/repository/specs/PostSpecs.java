@@ -95,28 +95,26 @@ public class PostSpecs {
     }
 
     public static Specification<Post> getUnresolvedSpecification(Boolean unresolved) {
-        // TODO
         return ((root, query, criteriaBuilder) -> {
             if (unresolved == null || !unresolved) {
                 return null;
             }
             else {
-                Join<Post, AnswerPost> joinedAnswers = root.join(Post_.ANSWERS, JoinType.LEFT);
-                joinedAnswers.on(criteriaBuilder.equal(root.get(Post_.ID), joinedAnswers.get(AnswerPost_.POST).get(Post_.ID)));
+                root.join(Post_.ANSWERS, JoinType.LEFT);
 
-                // Predicate postsWithoutCourseWideContext = criteriaBuilder.isNull(root.get(Post_.COURSE_WIDE_CONTEXT));
-                // Predicate notAnnouncementPosts = criteriaBuilder.notEqual(root.get(Post_.COURSE_WIDE_CONTEXT), CourseWideContext.ANNOUNCEMENT);
+                Predicate postsWithoutCourseWideContext = criteriaBuilder.isNull(root.get(Post_.COURSE_WIDE_CONTEXT));
+                Predicate notAnnouncementPosts = criteriaBuilder.notEqual(root.get(Post_.COURSE_WIDE_CONTEXT), CourseWideContext.ANNOUNCEMENT);
 
-                // Predicate postsWithoutAnswers = criteriaBuilder.isNull(joinedAnswers.get(Post_.ANSWERS));
+                // Post should not have any answer that resolves
+                Subquery<Long> subQuery = query.subquery(Long.class);
+                Root<AnswerPost> subRoot = subQuery.from(AnswerPost.class);
+                Predicate subPredicate = criteriaBuilder.equal(subRoot.get(AnswerPost_.RESOLVES_POST), Boolean.TRUE);
+                subQuery.select(subRoot.get(AnswerPost_.ID)).where(subPredicate);
 
-                Predicate postsWithoutResolvingAnswers = criteriaBuilder.isNotMember(Boolean.TRUE, joinedAnswers.get(AnswerPost_.RESOLVES_POST));
+                Predicate notAnnouncement = criteriaBuilder.or(postsWithoutCourseWideContext, notAnnouncementPosts);
+                Predicate notResolves = criteriaBuilder.exists(subQuery).not();
 
-                // Predicate notAnnouncement = criteriaBuilder.or(postsWithoutCourseWideContext, notAnnouncementPosts);
-                // Predicate notResolves = criteriaBuilder.and(criteriaBuilder.conjunction(), postsWithoutResolvingAnswers);
-
-                // return criteriaBuilder.and(notAnnouncement, postsWithoutResolvingAnswers);
-
-                return criteriaBuilder.not(postsWithoutResolvingAnswers);
+                return criteriaBuilder.and(notAnnouncement, notResolves);
             }
         });
     }
