@@ -4,6 +4,8 @@ import static de.tum.in.www1.artemis.repository.specs.PostSpecs.*;
 
 import java.util.List;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
@@ -25,17 +27,17 @@ public interface PostRepository extends JpaRepository<Post, Long>, JpaSpecificat
 
     List<Post> findPostsByAuthorLogin(String login);
 
-    default List<Post> getAllCoursePosts(PostContextFilter postContextFilter, Long userId) {
+    default Page<Post> getAllCoursePosts(PostContextFilter postContextFilter, Long userId, Pageable pageable) {
         Specification<Post> specification = Specification.where(distinct())
                 .and(getCourseSpecification(postContextFilter.getCourseId(), postContextFilter.getLectureId(), postContextFilter.getExerciseId())
                         .and(getLectureSpecification(postContextFilter.getLectureId()).and(getExerciseSpecification(postContextFilter.getExerciseId()))
-                                .and(getCourseWideContextSpecification(postContextFilter.getCourseWideContext()))
+                                .and(getSearchTextSpecification(postContextFilter.getSearchText())).and(getCourseWideContextSpecification(postContextFilter.getCourseWideContext()))
                                 .and(getOwnSpecification(postContextFilter.getFilterToOwn(), userId)))
                         .and(getAnsweredOrReactedSpecification(postContextFilter.getFilterToAnsweredOrReacted(), userId))
                         .and(getUnresolvedSpecification(postContextFilter.getFilterToUnresolved())));
         // .and(getSortSpecification(postContextFilter.getPostSortCriterion(), postContextFilter.getSortingOrder())));
 
-        return findAll(specification);
+        return findAll(specification, pageable);
     }
 
     List<Post> findAll(Specification<Post> spec);

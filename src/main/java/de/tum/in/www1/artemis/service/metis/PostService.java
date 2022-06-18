@@ -5,7 +5,6 @@ import static de.tum.in.www1.artemis.config.Constants.VOTE_EMOJI_ID;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
-import java.util.stream.Collectors;
 
 import javax.validation.Valid;
 import javax.ws.rs.ForbiddenException;
@@ -230,61 +229,42 @@ public class PostService extends PostingService {
      */
     public Page<Post> getPostsInCourse(boolean pagingEnabled, Pageable pageable, @Valid PostContextFilter postContextFilter) {
 
-        List<Post> postsInCourse;
+        Page<Post> postsInCourse;
         // no filter -> get all posts in course
         if (postContextFilter.getCourseWideContext() == null && postContextFilter.getExerciseId() == null && postContextFilter.getLectureId() == null
                 && postContextFilter.getPlagiarismCaseId() == null) {
-            postsInCourse = this.getAllCoursePosts(postContextFilter);
+            postsInCourse = this.getAllCoursePosts(postContextFilter, pageable);
         }
         // filter by course-wide context
         else if (postContextFilter.getCourseWideContext() != null && postContextFilter.getExerciseId() == null && postContextFilter.getLectureId() == null
                 && postContextFilter.getPlagiarismCaseId() == null) {
-            postsInCourse = this.getAllPostsByCourseWideContext(postContextFilter);
+            postsInCourse = this.getAllPostsByCourseWideContext(postContextFilter, pageable);
         }
         // filter by exercise
         else if (postContextFilter.getCourseWideContext() == null && postContextFilter.getExerciseId() != null && postContextFilter.getLectureId() == null
                 && postContextFilter.getPlagiarismCaseId() == null) {
-            postsInCourse = this.getAllExercisePosts(postContextFilter);
+            postsInCourse = this.getAllExercisePosts(postContextFilter, pageable);
         }
         // filter by lecture
         else if (postContextFilter.getCourseWideContext() == null && postContextFilter.getExerciseId() == null && postContextFilter.getLectureId() != null
                 && postContextFilter.getPlagiarismCaseId() == null) {
-            postsInCourse = this.getAllLecturePosts(postContextFilter);
+            postsInCourse = this.getAllLecturePosts(postContextFilter, pageable);
         }
         // filter by plagiarism case
         else if (postContextFilter.getCourseWideContext() == null && postContextFilter.getExerciseId() == null && postContextFilter.getLectureId() == null
                 && postContextFilter.getPlagiarismCaseId() != null) {
-            postsInCourse = this.getAllPlagiarismCasePosts(postContextFilter);
+            postsInCourse = new PageImpl<>(this.getAllPlagiarismCasePosts(postContextFilter));
         }
         else {
             throw new BadRequestAlertException("A new post cannot be associated with more than one context", METIS_POST_ENTITY_NAME, "ambiguousContext");
         }
 
-        // search by text or #post
-        if (postContextFilter.getSearchText() != null) {
-            postsInCourse = postsInCourse.stream().filter(post -> postFilter(post, postContextFilter.getSearchText())).collect(Collectors.toList());
-        }
+        // // search by text or #post
+        // if (postContextFilter.getSearchText() != null) {
+        // postsInCourse = postsInCourse.stream().filter(post -> postFilter(post, postContextFilter.getSearchText())).collect(Collectors.toList());
+        // }
 
-        final Page<Post> postsPage;
-        if (pagingEnabled) {
-            int startIndex = pageable.getPageNumber() * pageable.getPageSize();
-            int endIndex = Math.min(startIndex + pageable.getPageSize(), postsInCourse.size());
-
-            // sort (only used by CourseDiscussionsPage, which has pagination enabled)
-            postsInCourse.sort((postA, postB) -> postComparator(postA, postB, postContextFilter.getPostSortCriterion(), postContextFilter.getSortingOrder()));
-
-            try {
-                postsPage = new PageImpl<>(postsInCourse.subList(startIndex, endIndex), pageable, postsInCourse.size());
-            }
-            catch (IllegalArgumentException ex) {
-                throw new BadRequestAlertException("Not enough posts to fetch " + pageable.getPageNumber() + "'th page", METIS_POST_ENTITY_NAME, "invalidPageRequest");
-            }
-        }
-        else {
-            postsPage = new PageImpl<>(postsInCourse);
-        }
-
-        return postsPage;
+        return postsInCourse;
     }
 
     /**
@@ -316,9 +296,10 @@ public class PostService extends PostingService {
      * and ensures that sensitive information is filtered out
      *
      * @param postContextFilter filter object
+     * @param pageable
      * @return page of posts that belong to the course
      */
-    public List<Post> getAllCoursePosts(PostContextFilter postContextFilter) {
+    public Page<Post> getAllCoursePosts(PostContextFilter postContextFilter, Pageable pageable) {
         final User user = userRepository.getUserWithGroupsAndAuthorities();
 
         // checks
@@ -326,8 +307,8 @@ public class PostService extends PostingService {
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, null);
 
         // retrieve posts
-        List<Post> coursePosts;
-        coursePosts = postRepository.getAllCoursePosts(postContextFilter, user.getId());
+        Page<Post> coursePosts;
+        coursePosts = postRepository.getAllCoursePosts(postContextFilter, user.getId(), pageable);
 
         // protect sample solution, grading instructions, etc.
         coursePosts.stream().map(Post::getExercise).filter(Objects::nonNull).forEach(Exercise::filterSensitiveInformation);
@@ -341,9 +322,10 @@ public class PostService extends PostingService {
      * and ensures that sensitive information is filtered out
      *
      * @param postContextFilter filter object
+     * @param pageable
      * @return page of posts for a certain course-wide context
      */
-    public List<Post> getAllPostsByCourseWideContext(PostContextFilter postContextFilter) {
+    public Page<Post> getAllPostsByCourseWideContext(PostContextFilter postContextFilter, Pageable pageable) {
         final User user = userRepository.getUserWithGroupsAndAuthorities();
 
         // checks
@@ -351,9 +333,9 @@ public class PostService extends PostingService {
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, null);
 
         // retrieve posts
-        List<Post> coursePosts;
+        Page<Post> coursePosts;
         // retrieve posts
-        coursePosts = postRepository.getAllCoursePosts(postContextFilter, user.getId());
+        coursePosts = postRepository.getAllCoursePosts(postContextFilter, user.getId(), pageable);
 
         // protect sample solution, grading instructions, etc.
         coursePosts.stream().map(Post::getExercise).filter(Objects::nonNull).forEach(Exercise::filterSensitiveInformation);
@@ -367,9 +349,10 @@ public class PostService extends PostingService {
      * and ensures that sensitive information is filtered out
      *
      * @param postContextFilter filter object
+     * @param pageable
      * @return page of posts that belong to the exercise
      */
-    public List<Post> getAllExercisePosts(PostContextFilter postContextFilter) {
+    public Page<Post> getAllExercisePosts(PostContextFilter postContextFilter, Pageable pageable) {
         final User user = userRepository.getUserWithGroupsAndAuthorities();
 
         // checks
@@ -377,8 +360,8 @@ public class PostService extends PostingService {
         preCheckExercise(user, postContextFilter.getCourseId(), postContextFilter.getExerciseId());
 
         // retrieve posts
-        List<Post> exercisePosts;
-        exercisePosts = postRepository.getAllCoursePosts(postContextFilter, user.getId());
+        Page<Post> exercisePosts;
+        exercisePosts = postRepository.getAllCoursePosts(postContextFilter, user.getId(), pageable);
 
         // protect sample solution, grading instructions, etc.
         exercisePosts.forEach(post -> post.getExercise().filterSensitiveInformation());
@@ -392,9 +375,10 @@ public class PostService extends PostingService {
      * and ensures that sensitive information is filtered out
      *
      * @param postContextFilter filter object
+     * @param pageable
      * @return page of posts that belong to the lecture
      */
-    public List<Post> getAllLecturePosts(PostContextFilter postContextFilter) {
+    public Page<Post> getAllLecturePosts(PostContextFilter postContextFilter, Pageable pageable) {
         final User user = userRepository.getUserWithGroupsAndAuthorities();
 
         // checks
@@ -402,8 +386,8 @@ public class PostService extends PostingService {
         preCheckLecture(user, postContextFilter.getCourseId(), postContextFilter.getLectureId());
 
         // retrieve posts
-        List<Post> lecturePosts;
-        lecturePosts = postRepository.getAllCoursePosts(postContextFilter, user.getId());
+        Page<Post> lecturePosts;
+        lecturePosts = postRepository.getAllCoursePosts(postContextFilter, user.getId(), pageable);
 
         // protect sample solution, grading instructions, etc.
         lecturePosts.stream().map(Post::getExercise).filter(Objects::nonNull).forEach(Exercise::filterSensitiveInformation);
@@ -755,10 +739,7 @@ public class PostService extends PostingService {
         if (searchText != null && !searchText.isBlank()) {
             // check if the search text is either contained in the title or in the content
             String lowerCasedSearchString = searchText.toLowerCase();
-            // if searchText starts with a # and is followed by a post id, filter for post with id
-            if (lowerCasedSearchString.startsWith("#") && (lowerCasedSearchString.substring(1) != null && !lowerCasedSearchString.substring(1).isBlank())) {
-                return post.getId() == Integer.parseInt(lowerCasedSearchString.substring(1));
-            }
+
             // regular search on content, title, and tags
             return post.getTitle() != null && post.getTitle().toLowerCase().contains(lowerCasedSearchString)
                     || post.getContent() != null && post.getContent().toLowerCase().contains(lowerCasedSearchString)

@@ -34,7 +34,7 @@ public class PostSpecs {
     public static Specification<Post> getLectureSpecification(Long lectureId) {
         return ((root, query, criteriaBuilder) -> {
             if (lectureId == null) {
-                return null;
+                return criteriaBuilder.conjunction();
             }
             else {
                 return criteriaBuilder.equal(root.get(Post_.LECTURE).get(Lecture_.ID), lectureId);
@@ -56,7 +56,7 @@ public class PostSpecs {
     public static Specification<Post> getCourseWideContextSpecification(CourseWideContext courseWideContext) {
         return ((root, query, criteriaBuilder) -> {
             if (courseWideContext == null) {
-                return null;
+                return criteriaBuilder.conjunction();
             }
             else {
                 return criteriaBuilder.equal(root.get(Post_.COURSE_WIDE_CONTEXT), courseWideContext);
@@ -67,7 +67,7 @@ public class PostSpecs {
     public static Specification<Post> getOwnSpecification(Boolean filterToOwn, Long userId) {
         return ((root, query, criteriaBuilder) -> {
             if (filterToOwn == null || !filterToOwn) {
-                return null;
+                return criteriaBuilder.conjunction();
             }
             else {
                 return criteriaBuilder.equal(root.get(Post_.AUTHOR), userId);
@@ -78,7 +78,7 @@ public class PostSpecs {
     public static Specification<Post> getAnsweredOrReactedSpecification(Boolean answeredOrReacted, Long userId) {
         return ((root, query, criteriaBuilder) -> {
             if (answeredOrReacted == null || !answeredOrReacted) {
-                return null;
+                return criteriaBuilder.conjunction();
             }
             else {
                 Join<Post, AnswerPost> joinedAnswers = root.join(Post_.ANSWERS, JoinType.LEFT);
@@ -98,7 +98,7 @@ public class PostSpecs {
     public static Specification<Post> getUnresolvedSpecification(Boolean unresolved) {
         return ((root, query, criteriaBuilder) -> {
             if (unresolved == null || !unresolved) {
-                return null;
+                return criteriaBuilder.conjunction();
             }
             else {
                 root.join(Post_.ANSWERS, JoinType.LEFT);
@@ -117,6 +117,30 @@ public class PostSpecs {
                 Predicate notResolves = criteriaBuilder.exists(subQuery).not();
 
                 return criteriaBuilder.and(notAnnouncement, notResolves);
+            }
+        });
+    }
+
+    public static Specification<Post> getSearchTextSpecification(String searchText) {
+        return ((root, query, criteriaBuilder) -> {
+            if (searchText == null || searchText.isBlank()) {
+                return criteriaBuilder.conjunction();
+            }
+            else if (searchText.startsWith("#") && (searchText.substring(1) != null && !searchText.substring(1).isBlank())) {
+                // if searchText starts with a # and is followed byS a post id, filter for post with id
+                return criteriaBuilder.equal(root.get(Post_.ID), Integer.parseInt(searchText.substring(1)));
+            }
+            else {
+                root.fetch(Post_.TAGS);
+
+                String extendedSearchText = "%" + searchText.toLowerCase() + "%";
+
+                Predicate title = criteriaBuilder.like(criteriaBuilder.lower(root.get(Post_.TITLE)), criteriaBuilder.literal(extendedSearchText));
+                Predicate content = criteriaBuilder.like(criteriaBuilder.lower(root.get(Post_.CONTENT)), criteriaBuilder.literal(extendedSearchText));
+                // Predicate tags = criteriaBuilder.like(criteriaBuilder.function("CONCAT", String.class, root.get(Post_.TAGS)), criteriaBuilder.literal(extendedSearchText));
+                // //TODO
+
+                return criteriaBuilder.or(title, content);
             }
         });
     }
