@@ -80,7 +80,7 @@ public interface LectureRepository extends JpaRepository<Lecture, Long> {
             @Param("groups") Set<String> groups, Pageable pageable);
 
     /**
-     * Returns the title of the lecture with the given id. The {@link de.tum.in.www1.artemis.service.EntityTitleCacheService} offers a cached variant of this method
+     * Returns the title of the lecture with the given id.
      *
      * @param lectureId the id of the lecture
      * @return the name/title of the lecture or null if the lecture does not exist

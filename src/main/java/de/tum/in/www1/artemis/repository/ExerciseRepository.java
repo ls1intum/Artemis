@@ -301,7 +301,7 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
     Optional<Exercise> findWithEagerStudentParticipationsStudentAndSubmissionsById(Long exerciseId);
 
     /**
-     * Returns the title of the exercise with the given id. The {@link de.tum.in.www1.artemis.service.EntityTitleCacheService} offers a cached variant of this method
+     * Returns the title of the exercise with the given id.
      *
      * @param exerciseId the id of the exercise
      * @return the name/title of the exercise or null if the exercise does not exist
