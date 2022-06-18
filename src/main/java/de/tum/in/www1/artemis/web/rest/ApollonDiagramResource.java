@@ -18,7 +18,6 @@ import de.tum.in.www1.artemis.repository.ApollonDiagramRepository;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
-import de.tum.in.www1.artemis.service.EntityTitleCacheService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
@@ -43,14 +42,10 @@ public class ApollonDiagramResource {
 
     private final CourseRepository courseRepository;
 
-    private final EntityTitleCacheService entityTitleCacheService;
-
-    public ApollonDiagramResource(ApollonDiagramRepository apollonDiagramRepository, AuthorizationCheckService authCheckService, CourseRepository courseRepository,
-            EntityTitleCacheService entityTitleCacheService) {
+    public ApollonDiagramResource(ApollonDiagramRepository apollonDiagramRepository, AuthorizationCheckService authCheckService, CourseRepository courseRepository) {
         this.apollonDiagramRepository = apollonDiagramRepository;
         this.authCheckService = authCheckService;
         this.courseRepository = courseRepository;
-        this.entityTitleCacheService = entityTitleCacheService;
     }
 
     /**
@@ -78,7 +73,6 @@ public class ApollonDiagramResource {
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, course, null);
 
         ApollonDiagram result = apollonDiagramRepository.save(apollonDiagram);
-        entityTitleCacheService.setDiagramTitle(result.getId(), result.getTitle());
         return ResponseEntity.created(new URI("/api/apollon-diagrams/" + result.getId()))
                 .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, result.getId().toString())).body(result);
     }
@@ -108,7 +102,6 @@ public class ApollonDiagramResource {
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, course, null);
 
         ApollonDiagram result = apollonDiagramRepository.save(apollonDiagram);
-        entityTitleCacheService.setDiagramTitle(result.getId(), result.getTitle());
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, apollonDiagram.getId().toString())).body(result);
     }
 
@@ -121,7 +114,7 @@ public class ApollonDiagramResource {
     @GetMapping(value = "/apollon-diagrams/{diagramId}/title")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<String> getExerciseTitle(@PathVariable Long diagramId) {
-        final var title = entityTitleCacheService.getDiagramTitle(diagramId);
+        final var title = apollonDiagramRepository.getDiagramTitle(diagramId);
         return title == null ? ResponseEntity.notFound().build() : ResponseEntity.ok(title);
     }
 

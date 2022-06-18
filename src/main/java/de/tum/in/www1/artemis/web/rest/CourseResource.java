@@ -108,15 +108,13 @@ public class CourseResource {
 
     private final RatingService ratingService;
 
-    private final EntityTitleCacheService entityTitleCacheService;
-
     public CourseResource(UserRepository userRepository, CourseService courseService, CourseRepository courseRepository, ExerciseService exerciseService,
             AuthorizationCheckService authCheckService, TutorParticipationRepository tutorParticipationRepository, RatingService ratingService,
             ComplaintRepository complaintRepository, ComplaintResponseRepository complaintResponseRepository, SubmissionRepository submissionRepository,
             SubmissionService submissionService, ComplaintService complaintService, TutorLeaderboardService tutorLeaderboardService, ResultRepository resultRepository,
             ProgrammingExerciseRepository programmingExerciseRepository, AuditEventRepository auditEventRepository, ParticipantScoreRepository participantScoreRepository,
             Optional<VcsUserManagementService> optionalVcsUserManagementService, AssessmentDashboardService assessmentDashboardService, ExerciseRepository exerciseRepository,
-            Optional<CIUserManagementService> optionalCiUserManagementService, EntityTitleCacheService entityTitleCacheService) {
+            Optional<CIUserManagementService> optionalCiUserManagementService) {
         this.courseService = courseService;
         this.courseRepository = courseRepository;
         this.exerciseService = exerciseService;
@@ -138,7 +136,6 @@ public class CourseResource {
         this.resultRepository = resultRepository;
         this.participantScoreRepository = participantScoreRepository;
         this.ratingService = ratingService;
-        this.entityTitleCacheService = entityTitleCacheService;
     }
 
     /**
@@ -175,7 +172,6 @@ public class CourseResource {
 
         courseService.createOrValidateGroups(course);
         Course result = courseRepository.save(course);
-        entityTitleCacheService.setCourseTitle(result.getId(), result.getTitle());
         return ResponseEntity.created(new URI("/api/courses/" + result.getId()))
                 .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, Course.ENTITY_NAME, result.getTitle())).body(result);
     }
@@ -272,7 +268,6 @@ public class CourseResource {
                 .ifPresent(userManagementService -> userManagementService.updateCoursePermissions(result, oldInstructorGroup, oldEditorGroup, oldTeachingAssistantGroup));
         optionalCiUserManagementService
                 .ifPresent(ciUserManagementService -> ciUserManagementService.updateCoursePermissions(result, oldInstructorGroup, oldEditorGroup, oldTeachingAssistantGroup));
-        entityTitleCacheService.setCourseTitle(result.getId(), result.getTitle());
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, Course.ENTITY_NAME, updatedCourse.getTitle())).body(result);
     }
 
@@ -880,7 +875,7 @@ public class CourseResource {
     @PreAuthorize("hasRole('USER')")
     @ResponseBody
     public ResponseEntity<String> getCourseTitle(@PathVariable Long courseId) {
-        final var title = entityTitleCacheService.getCourseTitle(courseId);
+        final var title = courseRepository.getCourseTitle(courseId);
         return title == null ? ResponseEntity.notFound().build() : ResponseEntity.ok(title);
     }
 

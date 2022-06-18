@@ -21,7 +21,6 @@ import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.hestia.ExerciseHintRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
-import de.tum.in.www1.artemis.service.EntityTitleCacheService;
 import de.tum.in.www1.artemis.service.hestia.CodeHintService;
 import de.tum.in.www1.artemis.service.hestia.ExerciseHintService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
@@ -55,14 +54,11 @@ public class ExerciseHintResource {
 
     private final UserRepository userRepository;
 
-    private final EntityTitleCacheService entityTitleCacheService;
-
     @Value("${jhipster.clientApp.name}")
     private String applicationName;
 
     public ExerciseHintResource(ExerciseHintService exerciseHintService, ExerciseHintRepository exerciseHintRepository, ProgrammingExerciseRepository programmingExerciseRepository,
-            AuthorizationCheckService authCheckService, ExerciseRepository exerciseRepository, CodeHintService codeHintService, UserRepository userRepository,
-            EntityTitleCacheService entityTitleCacheService) {
+            AuthorizationCheckService authCheckService, ExerciseRepository exerciseRepository, CodeHintService codeHintService, UserRepository userRepository) {
         this.exerciseHintService = exerciseHintService;
         this.exerciseHintRepository = exerciseHintRepository;
         this.programmingExerciseRepository = programmingExerciseRepository;
@@ -70,7 +66,6 @@ public class ExerciseHintResource {
         this.exerciseRepository = exerciseRepository;
         this.codeHintService = codeHintService;
         this.userRepository = userRepository;
-        this.entityTitleCacheService = entityTitleCacheService;
     }
 
     /**
@@ -107,7 +102,6 @@ public class ExerciseHintResource {
             throw new BadRequestAlertException("Exercise hints for exams are currently not supported", EXERCISE_HINT_ENTITY_NAME, "exerciseHintNotSupported");
         }
         ExerciseHint result = exerciseHintRepository.save(exerciseHint);
-        entityTitleCacheService.setHintTitle(result.getId(), exerciseId, result.getTitle());
         return ResponseEntity.created(new URI("/api/programming-exercises/" + exerciseHint.getExercise().getId() + "/exercise-hints/" + result.getId()))
                 .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, EXERCISE_HINT_ENTITY_NAME, result.getId().toString())).body(result);
     }
@@ -155,7 +149,6 @@ public class ExerciseHintResource {
         }
         exerciseHint.setExerciseHintActivations(hintBeforeSaving.getExerciseHintActivations());
         ExerciseHint result = exerciseHintRepository.save(exerciseHint);
-        entityTitleCacheService.setHintTitle(result.getId(), exerciseId, result.getTitle());
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, EXERCISE_HINT_ENTITY_NAME, exerciseHint.getId().toString())).body(result);
     }
 
@@ -170,11 +163,6 @@ public class ExerciseHintResource {
     @GetMapping("programming-exercises/{exerciseId}/exercise-hints/{exerciseHintId}/title")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<String> getHintTitle(@PathVariable Long exerciseId, @PathVariable Long exerciseHintId) {
-        final var cachedTitle = entityTitleCacheService.getHintTitle(exerciseHintId, exerciseHintId);
-        if (cachedTitle != null) {
-            return ResponseEntity.ok(cachedTitle);
-        }
-
         final var hint = exerciseHintRepository.findByIdElseThrow(exerciseHintId);
 
         if (hint.getExercise() == null || !hint.getExercise().getId().equals(exerciseId)) {

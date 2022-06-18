@@ -63,12 +63,10 @@ public class FileUploadExerciseResource {
 
     private final InstanceMessageSendService instanceMessageSendService;
 
-    private final EntityTitleCacheService entityTitleCacheService;
-
     public FileUploadExerciseResource(FileUploadExerciseRepository fileUploadExerciseRepository, UserRepository userRepository, AuthorizationCheckService authCheckService,
             CourseService courseService, GroupNotificationService groupNotificationService, ExerciseService exerciseService, ExerciseDeletionService exerciseDeletionService,
             FileUploadSubmissionExportService fileUploadSubmissionExportService, GradingCriterionRepository gradingCriterionRepository, CourseRepository courseRepository,
-            ParticipationRepository participationRepository, InstanceMessageSendService instanceMessageSendService, EntityTitleCacheService entityTitleCacheService) {
+            ParticipationRepository participationRepository, InstanceMessageSendService instanceMessageSendService) {
         this.fileUploadExerciseRepository = fileUploadExerciseRepository;
         this.userRepository = userRepository;
         this.courseService = courseService;
@@ -81,7 +79,6 @@ public class FileUploadExerciseResource {
         this.courseRepository = courseRepository;
         this.participationRepository = participationRepository;
         this.instanceMessageSendService = instanceMessageSendService;
-        this.entityTitleCacheService = entityTitleCacheService;
     }
 
     /**
@@ -109,7 +106,6 @@ public class FileUploadExerciseResource {
 
         FileUploadExercise result = fileUploadExerciseRepository.save(fileUploadExercise);
         groupNotificationService.checkNotificationsForNewExercise(fileUploadExercise, instanceMessageSendService);
-        entityTitleCacheService.setExerciseTitle(result.getId(), result.getTitle());
 
         return ResponseEntity.created(new URI("/api/file-upload-exercises/" + result.getId()))
                 .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, result.getId().toString())).body(result);
@@ -186,7 +182,6 @@ public class FileUploadExerciseResource {
 
         groupNotificationService.checkAndCreateAppropriateNotificationsWhenUpdatingExercise(fileUploadExerciseBeforeUpdate, updatedExercise, notificationText,
                 instanceMessageSendService);
-        entityTitleCacheService.setExerciseTitle(updatedExercise.getId(), updatedExercise.getTitle());
 
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, exerciseId.toString())).body(updatedExercise);
     }
