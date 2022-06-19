@@ -46,6 +46,7 @@ import { ThemeService } from 'app/core/theme/theme.service';
 import { GradeType } from 'app/entities/grading-scale.model';
 import { ExamParticipationService } from 'app/exam/participate/exam-participation.service';
 import { StudentExamWithGradeDTO, StudentResult } from 'app/exam/exam-scores/exam-score-dtos.model';
+import { MockExamParticipationService } from '../../../../helpers/mocks/service/mock-exam-participation.service';
 
 let fixture: ComponentFixture<ExamParticipationSummaryComponent>;
 let component: ExamParticipationSummaryComponent;
@@ -143,7 +144,7 @@ function sharedSetup(url: string[]) {
                     },
                 }),
                 { provide: LocalStorageService, useClass: MockLocalStorageService },
-                MockProvider(ExamParticipationService),
+                { provide: ExamParticipationService, useClass: MockExamParticipationService },
             ],
         })
             .compileComponents()
@@ -196,8 +197,8 @@ describe('ExamParticipationSummaryComponent', () => {
 
         const courseId = 1;
         expect(serviceSpy).toHaveBeenCalledOnce();
-        expect(serviceSpy).toHaveBeenCalledWith(courseId, studentExam.id);
+        expect(serviceSpy).toHaveBeenCalledWith(courseId, studentExam.exam!.id);
         expect(component.studentExam).toEqual(studentExam);
-        expect(component.studentExamGradeInfoDTO).toEqual(gradeInfo);
+        expect(component.studentExamGradeInfoDTO).toEqual({ ...gradeInfo, studentExam });
     });
 });
