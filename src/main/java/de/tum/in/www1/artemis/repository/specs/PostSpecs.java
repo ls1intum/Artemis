@@ -121,26 +121,32 @@ public class PostSpecs {
         });
     }
 
+    /**
+     * filters posts on a search string in a match-all-manner
+     * post is only kept if the search string (which is not a #id pattern) is included in either the post title, content or tag (all strings lowercased)
+     *
+     * @param searchText text to be searched within posts
+     * @return boolean predicate if the post is kept (true) or filtered out (false)
+     */
     public static Specification<Post> getSearchTextSpecification(String searchText) {
         return ((root, query, criteriaBuilder) -> {
             if (searchText == null || searchText.isBlank()) {
                 return criteriaBuilder.conjunction();
             }
+            // search by text or #post
             else if (searchText.startsWith("#") && (searchText.substring(1) != null && !searchText.substring(1).isBlank())) {
-                // if searchText starts with a # and is followed byS a post id, filter for post with id
+                // if searchText starts with a # and is followed by a post id, filter for post with id
                 return criteriaBuilder.equal(root.get(Post_.ID), Integer.parseInt(searchText.substring(1)));
             }
             else {
-                root.fetch(Post_.TAGS);
+                // regular search on content, title, and tags
+                Expression<String> searchTextLiteral = criteriaBuilder.literal("%" + searchText.toLowerCase() + "%");
 
-                String extendedSearchText = "%" + searchText.toLowerCase() + "%";
+                Predicate searchInPostTitle = criteriaBuilder.like(criteriaBuilder.lower(root.get(Post_.TITLE)), searchTextLiteral);
+                Predicate searchInPostContent = criteriaBuilder.like(criteriaBuilder.lower(root.get(Post_.CONTENT)), searchTextLiteral);
+                Predicate searchInPostTags = criteriaBuilder.like(criteriaBuilder.lower(criteriaBuilder.concat(root.join(Post_.TAGS), " ")), searchTextLiteral);
 
-                Predicate title = criteriaBuilder.like(criteriaBuilder.lower(root.get(Post_.TITLE)), criteriaBuilder.literal(extendedSearchText));
-                Predicate content = criteriaBuilder.like(criteriaBuilder.lower(root.get(Post_.CONTENT)), criteriaBuilder.literal(extendedSearchText));
-                // Predicate tags = criteriaBuilder.like(criteriaBuilder.function("CONCAT", String.class, root.get(Post_.TAGS)), criteriaBuilder.literal(extendedSearchText));
-                // //TODO
-
-                return criteriaBuilder.or(title, content);
+                return criteriaBuilder.or(searchInPostTitle, searchInPostContent, searchInPostTags);
             }
         });
     }
@@ -150,14 +156,25 @@ public class PostSpecs {
 
             List<Order> orderList = new ArrayList<>();
 
-            Expression<Object> caseExpression = criteriaBuilder.selectCase()
-                    .when(criteriaBuilder.equal(root.get(Post_.DISPLAY_PRIORITY), criteriaBuilder.literal(DisplayPriority.PINNED)), 1)
-                    .when(criteriaBuilder.equal(root.get(Post_.DISPLAY_PRIORITY), criteriaBuilder.literal(DisplayPriority.NONE)), 2)
-                    .when(criteriaBuilder.equal(root.get(Post_.DISPLAY_PRIORITY), criteriaBuilder.literal(DisplayPriority.ARCHIVED)), 3);
-            orderList.add(criteriaBuilder.asc(caseExpression));
+            Expression<Object> pinnedFirstThenAnnouncementsArchivedLast = criteriaBuilder.selectCase()
+                    .when(criteriaBuilder.and(criteriaBuilder.equal(root.get(Post_.DISPLAY_PRIORITY), criteriaBuilder.literal(DisplayPriority.PINNED)),
+                            criteriaBuilder.equal(root.get(Post_.COURSE_WIDE_CONTEXT), criteriaBuilder.literal(CourseWideContext.ANNOUNCEMENT))), 1)
+                    .when(criteriaBuilder.equal(root.get(Post_.DISPLAY_PRIORITY), criteriaBuilder.literal(DisplayPriority.PINNED)), 2)
+                    .when(criteriaBuilder.equal(root.get(Post_.DISPLAY_PRIORITY), criteriaBuilder.literal(DisplayPriority.NONE)), 3)
+                    .when(criteriaBuilder.equal(root.get(Post_.DISPLAY_PRIORITY), criteriaBuilder.literal(DisplayPriority.ARCHIVED)), 4);
+            orderList.add(criteriaBuilder.asc(pinnedFirstThenAnnouncementsArchivedLast));
 
-            if (postSortCriterion != null && postSortCriterion != PostSortCriterion.CREATION_DATE) {
-                orderList.add(sortingOrder == SortingOrder.ASCENDING ? criteriaBuilder.asc(root.get(Post_.CREATION_DATE)) : criteriaBuilder.desc(root.get(Post_.CREATION_DATE)));
+            if (postSortCriterion != null) {
+                Expression<?> sortCriterion = null;
+
+                if (postSortCriterion == PostSortCriterion.CREATION_DATE) {
+                    sortCriterion = root.get(Post_.CREATION_DATE);
+                }
+                else if (postSortCriterion == PostSortCriterion.ANSWER_COUNT) {
+
+                }
+
+                orderList.add(sortingOrder == SortingOrder.ASCENDING ? criteriaBuilder.asc(sortCriterion) : criteriaBuilder.desc(sortCriterion));
             }
 
             query.orderBy(orderList);

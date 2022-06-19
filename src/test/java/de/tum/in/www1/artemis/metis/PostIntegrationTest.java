@@ -657,20 +657,6 @@ public class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         assertThat(returnedPosts.size()).isIn(returnedPosts.size(), MAX_POSTS_PER_PAGE);
     }
 
-    @Test
-    @WithMockUser(username = "student1", roles = "USER")
-    public void testGetPostsPageForCourse_badRequest() throws Exception {
-        // pagingEnabled set; will try to fetch a page of course posts
-        var params = new LinkedMultiValueMap<String, String>();
-        params.add("pagingEnabled", "true");
-        // invalid page request as there are not enough posts create such page
-        params.add("page", "4");
-        params.add("size", "10");
-
-        List<Post> returnedPosts = request.getList("/api/courses/" + courseId + "/posts", HttpStatus.BAD_REQUEST, Post.class, params);
-        assertThat(returnedPosts).isNull();
-    }
-
     // DELETE
 
     @Test

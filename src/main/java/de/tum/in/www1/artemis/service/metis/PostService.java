@@ -233,22 +233,22 @@ public class PostService extends PostingService {
         // no filter -> get all posts in course
         if (postContextFilter.getCourseWideContext() == null && postContextFilter.getExerciseId() == null && postContextFilter.getLectureId() == null
                 && postContextFilter.getPlagiarismCaseId() == null) {
-            postsInCourse = this.getAllCoursePosts(postContextFilter, pageable);
+            postsInCourse = this.getAllCoursePosts(postContextFilter, pagingEnabled, pageable);
         }
         // filter by course-wide context
         else if (postContextFilter.getCourseWideContext() != null && postContextFilter.getExerciseId() == null && postContextFilter.getLectureId() == null
                 && postContextFilter.getPlagiarismCaseId() == null) {
-            postsInCourse = this.getAllPostsByCourseWideContext(postContextFilter, pageable);
+            postsInCourse = this.getAllPostsByCourseWideContext(postContextFilter, pagingEnabled, pageable);
         }
         // filter by exercise
         else if (postContextFilter.getCourseWideContext() == null && postContextFilter.getExerciseId() != null && postContextFilter.getLectureId() == null
                 && postContextFilter.getPlagiarismCaseId() == null) {
-            postsInCourse = this.getAllExercisePosts(postContextFilter, pageable);
+            postsInCourse = this.getAllExercisePosts(postContextFilter, pagingEnabled, pageable);
         }
         // filter by lecture
         else if (postContextFilter.getCourseWideContext() == null && postContextFilter.getExerciseId() == null && postContextFilter.getLectureId() != null
                 && postContextFilter.getPlagiarismCaseId() == null) {
-            postsInCourse = this.getAllLecturePosts(postContextFilter, pageable);
+            postsInCourse = this.getAllLecturePosts(postContextFilter, pagingEnabled, pageable);
         }
         // filter by plagiarism case
         else if (postContextFilter.getCourseWideContext() == null && postContextFilter.getExerciseId() == null && postContextFilter.getLectureId() == null
@@ -258,11 +258,6 @@ public class PostService extends PostingService {
         else {
             throw new BadRequestAlertException("A new post cannot be associated with more than one context", METIS_POST_ENTITY_NAME, "ambiguousContext");
         }
-
-        // // search by text or #post
-        // if (postContextFilter.getSearchText() != null) {
-        // postsInCourse = postsInCourse.stream().filter(post -> postFilter(post, postContextFilter.getSearchText())).collect(Collectors.toList());
-        // }
 
         return postsInCourse;
     }
@@ -296,10 +291,11 @@ public class PostService extends PostingService {
      * and ensures that sensitive information is filtered out
      *
      * @param postContextFilter filter object
+     * @param pagingEnabled
      * @param pageable
      * @return page of posts that belong to the course
      */
-    public Page<Post> getAllCoursePosts(PostContextFilter postContextFilter, Pageable pageable) {
+    public Page<Post> getAllCoursePosts(PostContextFilter postContextFilter, boolean pagingEnabled, Pageable pageable) {
         final User user = userRepository.getUserWithGroupsAndAuthorities();
 
         // checks
@@ -308,7 +304,7 @@ public class PostService extends PostingService {
 
         // retrieve posts
         Page<Post> coursePosts;
-        coursePosts = postRepository.getAllCoursePosts(postContextFilter, user.getId(), pageable);
+        coursePosts = postRepository.getCoursePosts(postContextFilter, user.getId(), pagingEnabled, pageable);
 
         // protect sample solution, grading instructions, etc.
         coursePosts.stream().map(Post::getExercise).filter(Objects::nonNull).forEach(Exercise::filterSensitiveInformation);
@@ -322,10 +318,11 @@ public class PostService extends PostingService {
      * and ensures that sensitive information is filtered out
      *
      * @param postContextFilter filter object
+     * @param pagingEnabled
      * @param pageable
      * @return page of posts for a certain course-wide context
      */
-    public Page<Post> getAllPostsByCourseWideContext(PostContextFilter postContextFilter, Pageable pageable) {
+    public Page<Post> getAllPostsByCourseWideContext(PostContextFilter postContextFilter, boolean pagingEnabled, Pageable pageable) {
         final User user = userRepository.getUserWithGroupsAndAuthorities();
 
         // checks
@@ -335,7 +332,7 @@ public class PostService extends PostingService {
         // retrieve posts
         Page<Post> coursePosts;
         // retrieve posts
-        coursePosts = postRepository.getAllCoursePosts(postContextFilter, user.getId(), pageable);
+        coursePosts = postRepository.getCoursePosts(postContextFilter, user.getId(), pagingEnabled, pageable);
 
         // protect sample solution, grading instructions, etc.
         coursePosts.stream().map(Post::getExercise).filter(Objects::nonNull).forEach(Exercise::filterSensitiveInformation);
@@ -349,10 +346,11 @@ public class PostService extends PostingService {
      * and ensures that sensitive information is filtered out
      *
      * @param postContextFilter filter object
+     * @param pagingEnabled
      * @param pageable
      * @return page of posts that belong to the exercise
      */
-    public Page<Post> getAllExercisePosts(PostContextFilter postContextFilter, Pageable pageable) {
+    public Page<Post> getAllExercisePosts(PostContextFilter postContextFilter, boolean pagingEnabled, Pageable pageable) {
         final User user = userRepository.getUserWithGroupsAndAuthorities();
 
         // checks
@@ -361,7 +359,7 @@ public class PostService extends PostingService {
 
         // retrieve posts
         Page<Post> exercisePosts;
-        exercisePosts = postRepository.getAllCoursePosts(postContextFilter, user.getId(), pageable);
+        exercisePosts = postRepository.getCoursePosts(postContextFilter, user.getId(), pagingEnabled, pageable);
 
         // protect sample solution, grading instructions, etc.
         exercisePosts.forEach(post -> post.getExercise().filterSensitiveInformation());
@@ -375,10 +373,11 @@ public class PostService extends PostingService {
      * and ensures that sensitive information is filtered out
      *
      * @param postContextFilter filter object
+     * @param pagingEnabled
      * @param pageable
      * @return page of posts that belong to the lecture
      */
-    public Page<Post> getAllLecturePosts(PostContextFilter postContextFilter, Pageable pageable) {
+    public Page<Post> getAllLecturePosts(PostContextFilter postContextFilter, boolean pagingEnabled, Pageable pageable) {
         final User user = userRepository.getUserWithGroupsAndAuthorities();
 
         // checks
@@ -387,7 +386,7 @@ public class PostService extends PostingService {
 
         // retrieve posts
         Page<Post> lecturePosts;
-        lecturePosts = postRepository.getAllCoursePosts(postContextFilter, user.getId(), pageable);
+        lecturePosts = postRepository.getCoursePosts(postContextFilter, user.getId(), pagingEnabled, pageable);
 
         // protect sample solution, grading instructions, etc.
         lecturePosts.stream().map(Post::getExercise).filter(Objects::nonNull).forEach(Exercise::filterSensitiveInformation);

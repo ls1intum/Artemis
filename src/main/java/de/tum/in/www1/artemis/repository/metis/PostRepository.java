@@ -5,6 +5,7 @@ import static de.tum.in.www1.artemis.repository.specs.PostSpecs.*;
 import java.util.List;
 
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -27,20 +28,23 @@ public interface PostRepository extends JpaRepository<Post, Long>, JpaSpecificat
 
     List<Post> findPostsByAuthorLogin(String login);
 
-    default Page<Post> getAllCoursePosts(PostContextFilter postContextFilter, Long userId, Pageable pageable) {
-        Specification<Post> specification = Specification.where(distinct())
-                .and(getCourseSpecification(postContextFilter.getCourseId(), postContextFilter.getLectureId(), postContextFilter.getExerciseId())
+    default Page<Post> getCoursePosts(PostContextFilter postContextFilter, Long userId, boolean pagingEnabled, Pageable pageable) {
+        Specification<Post> specification = Specification
+                .where(getCourseSpecification(postContextFilter.getCourseId(), postContextFilter.getLectureId(), postContextFilter.getExerciseId())
                         .and(getLectureSpecification(postContextFilter.getLectureId()).and(getExerciseSpecification(postContextFilter.getExerciseId()))
                                 .and(getSearchTextSpecification(postContextFilter.getSearchText())).and(getCourseWideContextSpecification(postContextFilter.getCourseWideContext()))
                                 .and(getOwnSpecification(postContextFilter.getFilterToOwn(), userId)))
                         .and(getAnsweredOrReactedSpecification(postContextFilter.getFilterToAnsweredOrReacted(), userId))
-                        .and(getUnresolvedSpecification(postContextFilter.getFilterToUnresolved())));
-        // .and(getSortSpecification(postContextFilter.getPostSortCriterion(), postContextFilter.getSortingOrder())));
+                        .and(getUnresolvedSpecification(postContextFilter.getFilterToUnresolved()))
+                        .and(getSortSpecification(postContextFilter.getPostSortCriterion(), postContextFilter.getSortingOrder())));
 
-        return findAll(specification, pageable);
+        if (pagingEnabled) {
+            return findAll(specification, pageable);
+        }
+        else {
+            return new PageImpl<>(findAll(specification));
+        }
     }
-
-    List<Post> findAll(Specification<Post> spec);
 
     @Query("""
             SELECT DISTINCT post FROM Post post
