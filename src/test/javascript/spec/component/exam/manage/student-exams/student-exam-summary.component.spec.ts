@@ -40,6 +40,6 @@ describe('StudentExamSummaryComponent', () => {
     it('should initialize', () => {
         fixture.detectChanges();
         expect(component).not.toBeNull();
-        expect(component.studentExamWithGrade.studentExam).toEqual(studentExamValue);
+        expect(component.studentExam).toEqual(studentExamValue);
     });
 });
