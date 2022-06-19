@@ -4,8 +4,6 @@ import { Exam } from 'app/entities/exam.model';
 import { ArtemisTestModule } from '../test.module';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
 import { StudentExam } from 'app/entities/student-exam.model';
-import { HttpResponse } from '@angular/common/http';
-import { of } from 'rxjs';
 import {
     ConnectionUpdatedAction,
     ContinuedAfterHandedInEarlyAction,
@@ -19,115 +17,8 @@ import {
     SwitchedExerciseAction,
 } from 'app/entities/exam-user-activity.model';
 import { ExamMonitoringService } from 'app/exam/monitor/exam-monitoring.service';
-
-describe('ExamMonitoringService', () => {
-    let service: ExamMonitoringService;
-    let exam: Exam;
-    let studentExam: StudentExam;
-    let course: Course;
-
-    beforeEach(() => {
-        TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
-            providers: [ArtemisServerDateService, ExamMonitoringService],
-        })
-            .compileComponents()
-            .then(() => {
-                service = TestBed.inject(ExamMonitoringService);
-            });
-    });
-
-    beforeEach(() => {
-        // reset exam
-        exam = new Exam();
-        exam.id = 1;
-        exam.monitoring = true;
-
-        // reset studentExam
-        studentExam = new StudentExam();
-        studentExam.id = 1;
-
-        // reset course
-        course = new Course();
-        course.id = 1;
-    });
-
-    afterEach(() => {
-        jest.restoreAllMocks();
-    });
-
-    it('should handle exam actions when monitoring enabled', () => {
-        const examActions = createExamActions();
-        expect(examActions).toHaveLength(Object.keys(ExamActionType).length);
-        examActions.forEach((action) => {
-            service.handleActionEvent(studentExam, action, exam.monitoring!);
-            expect(studentExam.examActivity?.examActions).toEqual([action]);
-            studentExam.examActivity!.examActions = [];
-        });
-    });
-
-    it('should not handle exam actions when monitoring disabled', () => {
-        exam.monitoring = false;
-        const examActions = createExamActions();
-        expect(examActions).toHaveLength(Object.keys(ExamActionType).length);
-        examActions.forEach((action) => {
-            service.handleActionEvent(studentExam, action, exam.monitoring!);
-            expect(studentExam.examActivity).toBeUndefined();
-        });
-    });
-
-    it('should sync actions when monitoring enabled', () => {
-        const spy = jest.spyOn(service, 'syncActions').mockReturnValue(httpResponse());
-        studentExam.examActivity = new ExamActivity();
-        service.saveActions(exam, studentExam, course.id!);
-        expect(spy).toHaveBeenCalledOnce();
-        expect(spy).toHaveBeenCalledWith([], course.id, exam.id, studentExam.id);
-    });
-
-    it('should not sync actions when monitoring disabled', () => {
-        const spy = jest.spyOn(service, 'syncActions').mockReturnValue(httpResponse());
-        studentExam.examActivity = new ExamActivity();
-        exam.monitoring = false;
-        service.saveActions(exam, studentExam, course.id!);
-        expect(spy).not.toHaveBeenCalled();
-    });
-
-    it('should remove actions after successful sync', () => {
-        const spy = jest.spyOn(service, 'syncActions').mockReturnValue(httpResponse());
-
-        studentExam.examActivity = new ExamActivity();
-        const examActions = createExamActions();
-        studentExam.examActivity.examActions = examActions;
-        service.saveActions(exam, studentExam, course.id!);
-        expect(spy).toHaveBeenCalledOnce();
-        expect(spy).toHaveBeenCalledWith(examActions, course.id, exam.id, studentExam.id);
-
-        expect(studentExam.examActivity.examActions).toHaveLength(0);
-    });
-
-    it('should not remove actions after not successful sync', () => {
-        const spy = jest.spyOn(service, 'syncActions');
-
-        const examActions = createExamActions();
-        studentExam.examActivity = new ExamActivity();
-        studentExam.examActivity.examActions = examActions;
-        service.saveActions(exam, studentExam, course.id!);
-
-        expect(spy).toHaveBeenCalledOnce();
-        expect(spy).toHaveBeenCalledWith(examActions, course.id, exam.id, studentExam.id);
-
-        expect(studentExam.examActivity.examActions).toHaveLength(examActions.length);
-    });
-
-    it('should return the correct resource url', () => {
-        const spy = jest.spyOn(ExamMonitoringService, 'getResourceURL');
-        const url = ExamMonitoringService.getResourceURL(course.id!, exam.id!);
-
-        expect(spy).toHaveBeenCalledOnce();
-
-        expect(url).toEqual(`${SERVER_API_URL}api/courses/${course.id!}/exams/${exam.id!}`);
-    });
-});
+import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
+import { MockWebsocketService } from '../helpers/mocks/service/mock-websocket.service';
 
 const createExamActions = (): ExamAction[] => {
     return Object.keys(ExamActionType).map((type) => createExamActionBasedOnType(ExamActionType[type]));
@@ -159,7 +50,124 @@ const createExamActionBasedOnType = (examActionType: ExamActionType): ExamAction
             examAction = new ConnectionUpdatedAction(false);
             break;
     }
+    examAction.studentExamId = 1;
     return examAction;
 };
 
-const httpResponse = (body?: any) => of(new HttpResponse({ body }));
+describe('ExamMonitoringService', () => {
+    let examMonitoringService: ExamMonitoringService;
+    let websocketService: JhiWebsocketService;
+    let exam: Exam;
+    let studentExam: StudentExam;
+    let course: Course;
+
+    beforeEach(() => {
+        TestBed.configureTestingModule({
+            imports: [ArtemisTestModule],
+            providers: [ArtemisServerDateService, ExamMonitoringService, { provide: JhiWebsocketService, useClass: MockWebsocketService }],
+        })
+            .compileComponents()
+            .then(() => {
+                examMonitoringService = TestBed.inject(ExamMonitoringService);
+                websocketService = TestBed.inject(JhiWebsocketService);
+            });
+    });
+
+    beforeEach(() => {
+        // reset exam
+        exam = new Exam();
+        exam.id = 1;
+        exam.monitoring = true;
+
+        // reset studentExam
+        studentExam = new StudentExam();
+        studentExam.id = 1;
+
+        // reset course
+        course = new Course();
+        course.id = 1;
+    });
+
+    afterEach(() => {
+        jest.restoreAllMocks();
+    });
+
+    it('should handle exam actions when monitoring enabled', () => {
+        const examActions = createExamActions();
+        expect(examActions).toHaveLength(Object.keys(ExamActionType).length);
+        examActions.forEach((action) => {
+            examMonitoringService.handleActionEvent(studentExam, action, exam.monitoring!);
+            expect(studentExam.examActivity?.examActions).toEqual([action]);
+            studentExam.examActivity!.examActions = [];
+        });
+    });
+
+    it('should not handle exam actions when monitoring disabled', () => {
+        exam.monitoring = false;
+        const examActions = createExamActions();
+        expect(examActions).toHaveLength(Object.keys(ExamActionType).length);
+        examActions.forEach((action) => {
+            examMonitoringService.handleActionEvent(studentExam, action, exam.monitoring!);
+            expect(studentExam.examActivity).toBeUndefined();
+        });
+    });
+
+    it.each(createExamActions())('should send actions when monitoring enabled and websocket connected', (action: ExamAction) => {
+        const spy = jest.spyOn(examMonitoringService, 'sendAction');
+        studentExam.examActivity = new ExamActivity();
+        studentExam.examActivity.examActions.push(action);
+        examMonitoringService.saveActions(exam, studentExam, true);
+        expect(spy).toHaveBeenCalledOnce();
+        expect(spy).toHaveBeenCalledWith(action, exam.id);
+    });
+
+    it.each(createExamActions())('should not send actions when monitoring disabled', (action: ExamAction) => {
+        const spy = jest.spyOn(examMonitoringService, 'sendAction');
+        studentExam.examActivity = new ExamActivity();
+        studentExam.examActivity.examActions.push(action);
+        exam.monitoring = false;
+        examMonitoringService.saveActions(exam, studentExam, true);
+        expect(spy).not.toHaveBeenCalled();
+    });
+
+    it.each(createExamActions())('should remove actions after send when websocket connected', (action: ExamAction) => {
+        const spy = jest.spyOn(examMonitoringService, 'sendAction');
+
+        studentExam.examActivity = new ExamActivity();
+        studentExam.examActivity.examActions.push(action);
+        examMonitoringService.saveActions(exam, studentExam, true);
+        expect(spy).toHaveBeenCalledOnce();
+        expect(spy).toHaveBeenCalledWith(action, exam.id);
+
+        expect(studentExam.examActivity.examActions).toHaveLength(0);
+    });
+
+    it.each(createExamActions())('should not remove actions when websocket not connected', (action: ExamAction) => {
+        const spy = jest.spyOn(examMonitoringService, 'sendAction');
+
+        studentExam.examActivity = new ExamActivity();
+        studentExam.examActivity.examActions.push(action);
+        examMonitoringService.saveActions(exam, studentExam, false);
+        expect(spy).not.toHaveBeenCalled();
+
+        expect(studentExam.examActivity.examActions).toHaveLength(1);
+    });
+
+    it('should return the correct topic', () => {
+        const spy = jest.spyOn(ExamMonitoringService, 'buildWebsocketTopic');
+        const topic = ExamMonitoringService.buildWebsocketTopic(exam.id!);
+
+        expect(spy).toHaveBeenCalledOnce();
+
+        expect(topic).toEqual(`/topic/exam-monitoring/${exam.id}/actions`);
+    });
+
+    it.each(createExamActions())('should call websocket send', (action: ExamAction) => {
+        const spy = jest.spyOn(websocketService, 'send');
+
+        examMonitoringService.sendAction(action, exam.id!);
+
+        expect(spy).toHaveBeenCalledOnce();
+        expect(spy).toHaveBeenCalledWith(ExamMonitoringService.buildWebsocketTopic(exam.id!), action);
+    });
+});

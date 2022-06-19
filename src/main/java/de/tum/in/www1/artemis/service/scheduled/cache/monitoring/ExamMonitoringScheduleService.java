@@ -26,6 +26,11 @@ import de.tum.in.www1.artemis.repository.StudentExamRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.scheduled.cache.Cache;
 
+/**
+ * For all {@link Exam}s where monitoring is enabled, the scheduling service schedules the cache reset after another 30 minutes {@link Constants}
+ * after the last {@link StudentExam} is completed. In addition, it takes care of adding new {@link ExamAction}s per {@link ExamActivity} and {@link Exam}.
+ * The service works as an interface for the distributed hazelcast exam monitoring cache;
+ */
 @Service
 public class ExamMonitoringScheduleService {
 
@@ -79,12 +84,14 @@ public class ExamMonitoringScheduleService {
     /**
      * Used to handle the received actions.
      *
-     * @param examId        identifies the cache
-     * @param studentExamId identifies the exam activity
-     * @param examAction    new exam action
+     * @param examId    identifies the cache
+     * @param action    new exam action
      */
-    public void addExamAction(Long examId, long studentExamId, ExamAction examAction) {
-        if (examAction != null) {
+    public void addExamActions(Long examId, ExamAction action) {
+        if (action != null && action.getStudentExamId() != null) {
+            Long studentExamId = action.getStudentExamId();
+
+            // Retrieve the activity from the cache
             ExamActivity examActivity = ((ExamMonitoringCache) examCache.getTransientWriteCacheFor(examId)).getActivities().get(studentExamId);
 
             if (examActivity == null) {
@@ -93,8 +100,10 @@ public class ExamMonitoringScheduleService {
                 // TODO: Save Activity
             }
 
-            examAction.setExamActivity(examActivity);
-            examActivity.addExamAction(examAction);
+            // Connect action and activity
+            action.setExamActivity(examActivity);
+
+            examActivity.addExamAction(action);
             updateExamActivity(examId, studentExamId, examActivity);
         }
     }
@@ -148,7 +157,7 @@ public class ExamMonitoringScheduleService {
                 }
             }
 
-            delay += Constants.MONITORING_SAVE_DELAY;
+            delay += Constants.MONITORING_CACHE_RESET_DELAY;
 
             var scheduledFuture = threadPoolTaskScheduler.schedule(new ExamActivitySaveTask(examId), delay, TimeUnit.MILLISECONDS);
             // save scheduled future in HashMap
