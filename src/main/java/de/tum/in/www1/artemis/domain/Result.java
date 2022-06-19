@@ -124,16 +124,6 @@ public class Result extends DomainObject {
     @JsonIgnore
     private Map<String, Set<CoverageFileReport>> fileReportsByTestCaseName;
 
-    @Deprecated
-    public String getResultString() {
-        return resultString;
-    }
-
-    @Deprecated
-    public void setResultString(String resultString) {
-        this.resultString = resultString;
-    }
-
     public ZonedDateTime getCompletionDate() {
         return completionDate;
     }
