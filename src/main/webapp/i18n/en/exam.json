@@ -53,6 +53,7 @@
             "nrOfStudents": "Registered Students",
             "created": "New exam created",
             "updated": "Exam updated",
+            "imported": "Exam imported",
             "deleted": "Deleted exam \"{{ param }}\"",
             "exercise": "Exercise {{nr}}",
             "startConsentText": "I hereby confirm with my full name, representing my signature, that I have read the conditions of participation and will adhere to them for the duration of the exam.",
@@ -296,6 +297,7 @@
             "exerciseImport": {
                 "title": "Import Exam Exercises",
                 "explanation": "Select the individual exercises, which should be imported alongside the exam, by clicking on it",
+                "selected": "Selected",
                 "exerciseGroupTooltip": "The title of an exercise group can be changed before the import",
                 "exerciseTitleTooltip": "The title of an exercise can be changed before the import. Further changes are possible after the import",
                 "shortNameTooltip": "The shortname of a programming task must be unique. The short name of the exercise can NOT be edited after creating the exercise! Together with the course short name, it is used as a unique identifier for the exercise in all parts of Artemis (incl. repositories and build plans)"

@@ -2,8 +2,12 @@
     background-color: var(--primary);
 }
 
+.exerciseGroupNotSelected {
+    background-color: grey;
+}
+
 .smallbox {
-    width: 40px;
+    width: 50px;
 }
 .mediumbox {
     width: 125px;

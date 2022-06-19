@@ -49,6 +49,7 @@ import { ExamStatusComponent } from 'app/exam/manage/exam-status.component';
 import { ArtemisExamModePickerModule } from 'app/exam/manage/exams/exam-mode-picker/exam-mode-picker.module';
 import { ExamImportComponent } from 'app/exam/manage/exam-import/exam-import.component';
 import { ArtemisHeaderExercisePageWithDetailsModule } from 'app/exercises/shared/exercise-headers/exercise-headers.module';
+import { ArtemisExamExerciseImport } from 'app/exam/manage/exams/exam-exercise-import/exam-exercise-import.module';
 
 const ENTITY_STATES = [...examManagementState];
 
@@ -80,6 +81,7 @@ const ENTITY_STATES = [...examManagementState];
         ArtemisExamSharedModule,
         ArtemisExamModePickerModule,
         ArtemisHeaderExercisePageWithDetailsModule,
+        ArtemisExamExerciseImport,
     ],
     declarations: [
         ExamManagementComponent,

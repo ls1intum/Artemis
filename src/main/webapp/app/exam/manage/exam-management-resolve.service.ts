@@ -8,7 +8,6 @@ import { Injectable } from '@angular/core';
 import { ActivatedRouteSnapshot, Resolve } from '@angular/router';
 import { filter, map, Observable, of } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
-import { tap } from 'rxjs/operators';
 
 @Injectable({ providedIn: 'root' })
 export class ExamResolve implements Resolve<Exam> {

@@ -4,7 +4,7 @@
         <div class="ms-auto d-flex" *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR']">
             <a class="btn btn-primary me-1" *ngIf="course.isAtLeastInstructor" (click)="openImportModal()">
                 <fa-icon [icon]="faPlus"></fa-icon>
-                <span class="d-none d-xl-inline">{{ 'artemisApp.examManagement.importExam' | artemisTranslate }}</span>
+                <span class="hidden-sm-down">{{ 'artemisApp.examManagement.importExam' | artemisTranslate }}</span>
             </a>
             <a class="btn btn-primary jh-create-entity create-exam" id="create-exam" *ngIf="course.isAtLeastInstructor" [routerLink]="['new']">
                 <fa-icon [icon]="faPlus"></fa-icon>

@@ -52,7 +52,7 @@ export class ExamManagementService {
 
     /**
      * Imports an exam on the server using a PUT request.
-     * @param courseId The course id.
+     * @param courseId The course id into which the exam should be imported
      * @param exam The exam with exercises to import.
      */
     import(courseId: number, exam: Exam): Observable<EntityResponseType> {

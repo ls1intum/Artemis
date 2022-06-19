@@ -10,17 +10,15 @@ import { CourseManagementService } from 'app/course/manage/course-management.ser
 import dayjs from 'dayjs/esm';
 import { onError } from 'app/shared/util/global.utils';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
-import { faBan, faCheckDouble, faExclamationTriangle, faFileUpload, faKeyboard, faProjectDiagram, faSave, faFont } from '@fortawesome/free-solid-svg-icons';
+import { faBan, faCheckDouble, faExclamationTriangle, faSave, faFont } from '@fortawesome/free-solid-svg-icons';
 import { AccountService } from 'app/core/auth/account.service';
 import { tap } from 'rxjs/operators';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
-import { IconProp } from '@fortawesome/fontawesome-svg-core';
 
 @Component({
     selector: 'jhi-exam-update',
     templateUrl: './exam-update.component.html',
-    styleUrls: ['./exam-update.component.scss'],
 })
 export class ExamUpdateComponent implements OnInit {
     exam: Exam;
@@ -43,9 +41,6 @@ export class ExamUpdateComponent implements OnInit {
     faBan = faBan;
     faExclamationTriangle = faExclamationTriangle;
     faCheckDouble = faCheckDouble;
-    faFileUpload = faFileUpload;
-    faProjectDiagram = faProjectDiagram;
-    faKeyboard = faKeyboard;
     faFont = faFont;
 
     constructor(
@@ -66,6 +61,7 @@ export class ExamUpdateComponent implements OnInit {
 
             if (this.isImport) {
                 this.resetIdAndDatesForImport();
+                // Initializing the map for the exam import
                 this.selectedExercises = new Map<ExerciseGroup, Set<Exercise>>();
                 this.exam.exerciseGroups?.forEach((exerciseGroup) => {
                     this.selectedExercises!.set(exerciseGroup, new Set<Exercise>(exerciseGroup.exercises!));
@@ -105,6 +101,7 @@ export class ExamUpdateComponent implements OnInit {
     save() {
         this.isSaving = true;
         if (this.isImport) {
+            this.mapSelectedExercisesToExam();
             this.subscribeToSaveResponse(this.examManagementService.import(this.course.id!, this.exam));
         } else if (this.exam.id !== undefined) {
             this.subscribeToSaveResponse(this.examManagementService.update(this.course.id!, this.exam));
@@ -128,6 +125,22 @@ export class ExamUpdateComponent implements OnInit {
     private onSaveError(error: HttpErrorResponse) {
         onError(this.alertService, error);
         this.isSaving = false;
+    }
+
+    /**
+     * Helper method to map the Map<ExerciseGroup, Set<Exercises>> selectedExercises to an ExerciseGroup[] with Exercises[] each.
+     * Called once when user is importing the exam
+     * @private
+     */
+    private mapSelectedExercisesToExam() {
+        const exerciseGroups: ExerciseGroup[] = [];
+        this.selectedExercises?.forEach((value, key) => {
+            if (value.size > 0) {
+                key.exercises = Array.from(value.values());
+                exerciseGroups.push(key);
+            }
+        });
+        this.exam.exerciseGroups = exerciseGroups;
     }
 
     get isValidConfiguration(): boolean {
@@ -229,7 +242,8 @@ export class ExamUpdateComponent implements OnInit {
             if (this.exam.startDate && this.exam.endDate) {
                 this.maxWorkingTimeInMinutes = dayjs(this.exam.endDate).diff(this.exam.startDate, 's') / 60;
             } else {
-                this.maxWorkingTimeInMinutes = 0;
+                // In case of an import, the exam.workingTime is imported, but the start / end date are deleted -> no error should be shown to the user in this case
+                this.maxWorkingTimeInMinutes = this.isImport ? this.workingTimeInMinutes : 0;
             }
         }
     }
@@ -273,43 +287,5 @@ export class ExamUpdateComponent implements OnInit {
         this.exam.publishResultsDate = undefined;
         this.exam.examStudentReviewStart = undefined;
         this.exam.examStudentReviewEnd = undefined;
-    }
-
-    /**
-     * Sets the selected exercise for an exercise group in the testRunConfiguration dictionary, {@link testRunConfiguration}.
-     * There, the exerciseGroups' id is used as a key to track the selected exercises for this test run.
-     * @param exercise The selected exercise
-     * @param exerciseGroup The exercise group for which the user selected an exercise
-     */
-    onSelectExercise(exercise: Exercise, exerciseGroup: ExerciseGroup) {
-        if (this.selectedExercises!.get(exerciseGroup)!.has(exercise)) {
-            // Case Exercise is already selected -> delete
-            this.selectedExercises!.get(exerciseGroup)!.delete(exercise);
-        } else {
-            this.selectedExercises!.get(exerciseGroup)!.add(exercise);
-        }
-    }
-
-    exerciseIsSelected(exercise: Exercise, exerciseGroup: ExerciseGroup): boolean {
-        return this.selectedExercises!.get(exerciseGroup)!.has(exercise);
-    }
-
-    /**
-     * Get an icon for the type of the given exercise.
-     * @param exercise {Exercise}
-     */
-    getExerciseIcon(exercise: Exercise): IconProp {
-        switch (exercise.type) {
-            case ExerciseType.QUIZ:
-                return this.faCheckDouble;
-            case ExerciseType.FILE_UPLOAD:
-                return this.faFileUpload;
-            case ExerciseType.MODELING:
-                return this.faProjectDiagram;
-            case ExerciseType.PROGRAMMING:
-                return this.faKeyboard;
-            default:
-                return this.faFont;
-        }
     }
 }

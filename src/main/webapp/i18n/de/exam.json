@@ -52,6 +52,7 @@
             "nrOfStudents": "Anzahl registrierter Studierender",
             "created": "Neue Klausur erstellt",
             "updated": "Klausur bearbeitet",
+            "imported": "Klausur importiert",
             "deleted": "Klausur \"{{ param }}\" gelöscht",
             "exercise": "Aufgabe {{nr}}",
             "startConsentText": "Hiermit bestätige ich mit meinem vollen Namen stellvertretend für meine Unterschrift, dass ich die Teilnahmebedingungen gelesen habe und diese für die Dauer der Klausur einhalten werde.",
@@ -295,6 +296,7 @@
             "exerciseImport": {
                 "title": "Import von Klausuraufgaben",
                 "explanation": "Wähle durch Klicken die individuellen Aufgaben aus, welche mit der Klausur importiert werden sollen",
+                "selected": "Ausgewählt",
                 "exerciseGroupTooltip": "Der Titel der Aufgabengruppe kann vor dem Import angepasst werden",
                 "exerciseTitleTooltip": "Der Titel der Aufgabe kann vor dem Import angepasst werden. Weitere Änderungen an der Aufgabe sind nach dem Import möglich",
                 "shortNameTooltip": "Der Kurzname einer Programmieraufgabe muss einzigartig sein. Der Kurzname der Aufgabe kann NICHT im Nachhinein bearbeitet werden! Zusammen mit dem Kurs-Kurznamen wird er als eindeutiger Schlüssel für die Aufgabe in Artemis genutzt (inkl. Repositories und Build Pläne)"
