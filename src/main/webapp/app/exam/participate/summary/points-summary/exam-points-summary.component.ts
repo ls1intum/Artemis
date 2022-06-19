@@ -16,9 +16,6 @@ import { StudentExamWithGradeDTO } from 'app/exam/exam-scores/exam-score-dtos.mo
 })
 export class ExamPointsSummaryComponent implements OnInit {
     readonly IncludedInOverallScore = IncludedInOverallScore;
-    @Input() exercises: Exercise[];
-    @Input() exam: Exam;
-    @Input() studentExamId: number;
     @Input() studentExamWithGrade: StudentExamWithGradeDTO;
 
     gradingScaleExists = false;
@@ -29,15 +26,10 @@ export class ExamPointsSummaryComponent implements OnInit {
     // Icons
     faClipboard = faClipboard;
 
-    constructor(
-        private serverDateService: ArtemisServerDateService,
-        public exerciseService: ExerciseService,
-        private changeDetector: ChangeDetectorRef,
-        private gradingSystemService: GradingSystemService,
-    ) {}
+    constructor(private serverDateService: ArtemisServerDateService, public exerciseService: ExerciseService, private changeDetector: ChangeDetectorRef) {}
 
     ngOnInit() {
-        if (this.exam && this.exam.publishResultsDate && dayjs(this.exam.publishResultsDate).isBefore(this.serverDateService.now())) {
+        if (this.isExamResultPublished()) {
             this.setExamGrade();
         }
     }
@@ -49,7 +41,12 @@ export class ExamPointsSummaryComponent implements OnInit {
      * - at least one exercise has a result
      */
     show(): boolean {
-        return !!(this.exam && this.exam.publishResultsDate && dayjs(this.exam.publishResultsDate).isBefore(this.serverDateService.now()) && this.hasAtLeastOneResult());
+        return !!(this.isExamResultPublished() && this.hasAtLeastOneResult());
+    }
+
+    private isExamResultPublished() {
+        const exam = this.studentExamWithGrade?.studentExam?.exam;
+        return exam && exam.publishResultsDate && dayjs(exam.publishResultsDate).isBefore(this.serverDateService.now());
     }
 
     /**
@@ -85,8 +82,9 @@ export class ExamPointsSummaryComponent implements OnInit {
     }
 
     private hasAtLeastOneResult(): boolean {
-        if (this.exercises?.length > 0) {
-            return this.exercises.some((exercise) => exercise.studentParticipations?.[0]?.results?.length! > 0);
+        const exercises = this.studentExamWithGrade?.studentExam?.exercises;
+        if (exercises?.length! > 0) {
+            return exercises!.some((exercise) => exercise.studentParticipations?.[0]?.results?.length! > 0);
         }
         return false;
     }

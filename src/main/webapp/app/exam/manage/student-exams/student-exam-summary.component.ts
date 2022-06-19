@@ -1,20 +1,20 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { StudentExamWithGradeDTO } from 'app/exam/exam-scores/exam-score-dtos.model';
+import { StudentExam } from 'app/entities/student-exam.model';
 
 @Component({
     selector: 'jhi-student-exam-summary',
-    template: '<jhi-exam-participation-summary [studentExamWithGrade]="studentExamWithGrade" [instructorView]="true"></jhi-exam-participation-summary>',
+    template: '<jhi-exam-participation-summary [studentExam]="studentExam" [instructorView]="true"></jhi-exam-participation-summary>',
 })
 export class StudentExamSummaryComponent implements OnInit {
-    studentExamWithGrade: StudentExamWithGradeDTO;
+    studentExam: StudentExam;
 
     constructor(private route: ActivatedRoute) {}
 
     /**
-     * Initialize the Student Exam With Grade
+     * Initialize the studentExam
      */
     ngOnInit(): void {
-        this.route.data.subscribe(({ studentExam: studentExamWithGrade }) => (this.studentExamWithGrade = studentExamWithGrade));
+        this.route.data.subscribe(({ studentExam: studentExamWithGrade }) => (this.studentExam = studentExamWithGrade.studentExam));
     }
 }

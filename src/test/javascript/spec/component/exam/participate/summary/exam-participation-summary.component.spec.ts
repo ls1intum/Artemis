@@ -191,7 +191,6 @@ describe('ExamParticipationSummaryComponent', () => {
 
     it('should retrieve grade info correctly', () => {
         const serviceSpy = jest.spyOn(TestBed.inject(ExamParticipationService), 'loadStudentExamGradeInfoForSummary').mockReturnValue(of({ ...gradeInfo }));
-        component.shouldFetchGradeInfoSeparately = true;
 
         fixture.detectChanges();
 
@@ -199,20 +198,6 @@ describe('ExamParticipationSummaryComponent', () => {
         expect(serviceSpy).toHaveBeenCalledOnce();
         expect(serviceSpy).toHaveBeenCalledWith(courseId, studentExam.id);
         expect(component.studentExam).toEqual(studentExam);
-        expect(component.studentExamWithGradeDTO).toEqual(gradeInfo);
-    });
-
-    it('should extract StudentExam from StudentExamWithGradeDTO correctly', () => {
-        const serviceSpy = jest.spyOn(TestBed.inject(ExamParticipationService), 'loadStudentExamGradeInfoForSummary');
-
-        const studentExamWithGrade = { ...gradeInfo, studentExam };
-        component.studentExamWithGrade = studentExamWithGrade;
-        component.shouldFetchGradeInfoSeparately = false;
-
-        fixture.detectChanges();
-
-        expect(serviceSpy).toHaveBeenCalledTimes(0);
-        expect(component.studentExam).toEqual(studentExam);
-        expect(component.studentExamWithGradeDTO).toEqual(studentExamWithGrade);
+        expect(component.studentExamGradeInfoDTO).toEqual(gradeInfo);
     });
 });

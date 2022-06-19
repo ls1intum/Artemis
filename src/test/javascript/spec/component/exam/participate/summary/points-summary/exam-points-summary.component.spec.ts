@@ -128,7 +128,7 @@ describe('ExamPointsSummaryComponent', () => {
                 studentExamWithGrade = {
                     maxPoints: 40,
                     maxBonusPoints: 20,
-                    studentExam: { exercises },
+                    studentExam: { exercises, exam },
                     studentResult: {
                         userId: 1,
                         name: 'user1',
@@ -160,10 +160,8 @@ describe('ExamPointsSummaryComponent', () => {
                 fixture = TestBed.createComponent(ExamPointsSummaryComponent);
                 component = fixture.componentInstance;
                 exam.course = course;
-                component.exam = exam;
                 component.gradingScaleExists = false;
                 component.studentExamWithGrade = studentExamWithGrade;
-                component.exercises = studentExamWithGrade.studentExam!.exercises!;
             });
     });
 
@@ -172,11 +170,11 @@ describe('ExamPointsSummaryComponent', () => {
     });
 
     it('should handle error correctly', () => {
-        component.studentExamWithGrade = undefined as any;
+        component.studentExamWithGrade.studentExam = undefined as any;
         fixture.detectChanges();
 
         expect(fixture).not.toBeNull();
-        expect(component.studentExamWithGrade).toBeUndefined();
+        expect(component.studentExamWithGrade.studentExam).toBeUndefined();
         expect(component.gradingScaleExists).toBeFalse();
     });
 
@@ -208,7 +206,6 @@ describe('ExamPointsSummaryComponent', () => {
     });
 
     it('should display 0 if no exercises are present', () => {
-        component.exercises = [];
         component.studentExamWithGrade.studentExam!.exercises = [];
         component.studentExamWithGrade.maxPoints = 0;
         component.studentExamWithGrade.studentResult.overallPointsAchieved = 0;

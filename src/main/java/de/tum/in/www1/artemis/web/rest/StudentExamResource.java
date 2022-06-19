@@ -361,7 +361,7 @@ public class StudentExamResource {
         StudentExam studentExam = findStudentExamWithExercisesElseThrow(user, examId, courseId);
 
         // check that the studentExam has been submitted, otherwise /student-exams/conduction should be used
-        if (!studentExam.isSubmitted()) {
+        if (!studentExam.isSubmitted() || !studentExam.areResultsPublishedYet()) {
             throw new AccessForbiddenException();
         }
 

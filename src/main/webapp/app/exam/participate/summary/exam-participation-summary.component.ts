@@ -30,38 +30,15 @@ export class ExamParticipationSummaryComponent implements OnInit {
     readonly SUBMISSION_TYPE_ILLEGAL = SubmissionType.ILLEGAL;
 
     /**
-     * If true, expects {@link studentExam} input is provided before ngOnInit and fetches StudentExamWithGradeDTO
-     * (without studentExam) from server itself.
-     * Otherwise, expects {@link studentExamWithGradeDTO} input is provided by the parent component with {@link StudentExamWithGradeDTO#studentExam} set.
-     */
-    @Input()
-    shouldFetchGradeInfoSeparately = false;
-
-    /**
      * Current student's exam.
-     * @see shouldFetchGradeInfoSeparately
      */
     @Input()
     studentExam: StudentExam;
 
     /**
-     * Sets {@link studentExamWithGradeDTO} and also {@link studentExam} if {@link StudentExamWithGradeDTO#studentExam} is set.
-     * Allows doing one less HTTP request if {@link studentExamWithGradeDTO} is provided with {@link StudentExamWithGradeDTO#studentExam}
-     * and {@link shouldFetchGradeInfoSeparately} is false.
-     *
-     * @see shouldFetchGradeInfoSeparately
-     *
-     * @param studentExamWithGrade Grade info for current student's exam, possibly containing {@link StudentExamWithGradeDTO#studentExam}.
+     * Grade info for current student's exam.
      */
-    @Input()
-    set studentExamWithGrade(studentExamWithGrade: StudentExamWithGradeDTO) {
-        this.studentExamWithGradeDTO = studentExamWithGrade;
-        if (studentExamWithGrade?.studentExam != undefined) {
-            this.studentExam = studentExamWithGrade.studentExam;
-        }
-    }
-
-    studentExamWithGradeDTO: StudentExamWithGradeDTO;
+    studentExamGradeInfoDTO: StudentExamWithGradeDTO;
 
     @Input()
     instructorView = false;
@@ -98,14 +75,14 @@ export class ExamParticipationSummaryComponent implements OnInit {
         this.isTestRun = this.route.snapshot.url[1]?.toString() === 'test-runs';
         this.testRunConduction = this.isTestRun && this.route.snapshot.url[3]?.toString() === 'conduction';
         this.courseId = Number(this.route.snapshot.paramMap.get('courseId'));
-        if (this.shouldFetchGradeInfoSeparately) {
-            if (!this.studentExam.id) {
-                throw new Error('studentExam.id should be present if shouldFetchGradeInfoSeparately is true');
-            }
-            this.examParticipationService
-                .loadStudentExamGradeInfoForSummary(this.courseId, this.studentExam.id)
-                .subscribe((studentExamWithGrade: StudentExamWithGradeDTO) => (this.studentExamWithGradeDTO = studentExamWithGrade));
+        if (!this.studentExam?.exam?.id) {
+            throw new Error('studentExam.exam.id should be present to fetch grade info');
         }
+        this.examParticipationService.loadStudentExamGradeInfoForSummary(this.courseId, this.studentExam.exam.id).subscribe((studentExamWithGrade: StudentExamWithGradeDTO) => {
+            studentExamWithGrade.studentExam = this.studentExam;
+            this.studentExamGradeInfoDTO = studentExamWithGrade;
+        });
+
         this.setExamWithOnlyIdAndStudentReviewPeriod();
     }
 
@@ -136,7 +113,7 @@ export class ExamParticipationSummaryComponent implements OnInit {
     }
 
     public generateLink(exercise: Exercise) {
-        if (exercise?.studentParticipations?.[0] != undefined) {
+        if (exercise?.studentParticipations?.length) {
             return ['/courses', this.courseId, `${exercise.type}-exercises`, exercise.id, 'participate', exercise.studentParticipations[0].id];
         }
     }

@@ -19,7 +19,7 @@
     </a>
 </div>
 <div class="mb-4 container exam-points-summary-container" *ngIf="studentExam && studentExam.exercises && studentExam.exam && studentExam.exam.course">
-    <jhi-exam-points-summary [studentExamWithGrade]="studentExamWithGradeDTO" [exercises]="studentExam.exercises" [exam]="studentExam.exam"></jhi-exam-points-summary>
+    <jhi-exam-points-summary [studentExamWithGrade]="studentExamGradeInfoDTO"></jhi-exam-points-summary>
 </div>
 <div *ngIf="!resultsPublished" class="mb-0">
     <fa-icon [icon]="faInfoCircle" class="info-icon"></fa-icon>

@@ -13,7 +13,7 @@
         </thead>
         <tbody>
             <tr
-                *ngFor="let exercise of exercises; let i = index"
+                *ngFor="let exercise of studentExamWithGrade?.studentExam?.exercises; let i = index"
                 [ngClass]="{
                     'font-italic text-danger font-weight-bold': exercise.includedInOverallScore === IncludedInOverallScore.NOT_INCLUDED,
                     'font-italic text-warning font-weight-bold': exercise.includedInOverallScore === IncludedInOverallScore.INCLUDED_AS_BONUS
