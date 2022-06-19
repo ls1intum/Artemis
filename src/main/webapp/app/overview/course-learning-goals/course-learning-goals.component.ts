@@ -3,7 +3,6 @@ import { LearningGoalService } from 'app/course/learning-goals/learningGoal.serv
 import { ActivatedRoute } from '@angular/router';
 import { AlertService } from 'app/core/util/alert.service';
 import { onError } from 'app/shared/util/global.utils';
-import { finalize, switchMap } from 'rxjs/operators';
 import { HttpErrorResponse } from '@angular/common/http';
 import { LearningGoal } from 'app/entities/learningGoal.model';
 import { forkJoin } from 'rxjs';
@@ -50,6 +49,7 @@ export class CourseLearningGoalsComponent implements OnInit {
         if (this.course && this.course.learningGoals && this.course.prerequisites) {
             this.learningGoals = this.course.learningGoals;
             this.prerequisites = this.course.prerequisites;
+            this.loadProgress();
         } else {
             this.loadData();
         }
@@ -60,54 +60,51 @@ export class CourseLearningGoalsComponent implements OnInit {
     }
 
     /**
-     * Loads all prerequisites and learning goals (including respective progress) for the course
+     * Loads all prerequisites and learning goals for the course
      */
     loadData() {
         this.isLoading = true;
-        this.learningGoalService.getAllPrerequisitesForCourse(this.courseId).subscribe({
-            next: (prerequisites) => {
+        forkJoin([this.learningGoalService.getAllForCourse(this.courseId), this.learningGoalService.getAllPrerequisitesForCourse(this.courseId)]).subscribe({
+            next: ([learningGoals, prerequisites]) => {
+                this.learningGoals = learningGoals.body!;
                 this.prerequisites = prerequisites.body!;
+                this.loadProgress();
+                this.isLoading = false;
             },
-            error: (error: string) => {
-                this.alertService.error(error);
-            },
+            error: (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),
         });
-        this.learningGoalService
-            .getAllForCourse(this.courseId)
-            .pipe(
-                switchMap((res) => {
-                    this.learningGoals = res.body!;
+    }
 
-                    const progressObservable = this.learningGoals.map((lg) => {
-                        return this.learningGoalService.getProgress(lg.id!, this.courseId, false);
-                    });
+    /**
+     * Loads the respective progress for each learning goal
+     */
+    loadProgress() {
+        if (!this.learningGoals) {
+            return;
+        }
 
-                    const progressObservableUsingParticipantScore = this.learningGoals.map((lg) => {
-                        return this.learningGoalService.getProgress(lg.id!, this.courseId, true);
-                    });
+        const progressObservable = this.learningGoals.map((lg) => {
+            return this.learningGoalService.getProgress(lg.id!, this.courseId, false);
+        });
 
-                    return forkJoin([forkJoin(progressObservable), forkJoin(progressObservableUsingParticipantScore)]);
-                }),
-            )
-            .pipe(
-                finalize(() => {
-                    this.isLoading = false;
-                }),
-            )
-            .subscribe({
-                next: ([learningGoalProgressResponses, learningGoalProgressResponsesUsingParticipantScores]) => {
-                    for (const learningGoalProgressResponse of learningGoalProgressResponses) {
-                        const learningGoalProgress = learningGoalProgressResponse.body!;
-                        this.learningGoalIdToLearningGoalProgress.set(learningGoalProgress.learningGoalId, learningGoalProgress);
-                    }
-                    for (const learningGoalProgressResponse of learningGoalProgressResponsesUsingParticipantScores) {
-                        const learningGoalProgress = learningGoalProgressResponse.body!;
-                        this.learningGoalIdToLearningGoalProgressUsingParticipantScoresTables.set(learningGoalProgress.learningGoalId, learningGoalProgress);
-                    }
-                    this.testIfScoreUsingParticipantScoresTableDiffers();
-                },
-                error: (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),
-            });
+        const progressObservableUsingParticipantScore = this.learningGoals.map((lg) => {
+            return this.learningGoalService.getProgress(lg.id!, this.courseId, true);
+        });
+
+        forkJoin([forkJoin(progressObservable), forkJoin(progressObservableUsingParticipantScore)]).subscribe({
+            next: ([learningGoalProgressResponses, learningGoalProgressResponsesUsingParticipantScores]) => {
+                for (const learningGoalProgressResponse of learningGoalProgressResponses) {
+                    const learningGoalProgress = learningGoalProgressResponse.body!;
+                    this.learningGoalIdToLearningGoalProgress.set(learningGoalProgress.learningGoalId, learningGoalProgress);
+                }
+                for (const learningGoalProgressResponse of learningGoalProgressResponsesUsingParticipantScores) {
+                    const learningGoalProgress = learningGoalProgressResponse.body!;
+                    this.learningGoalIdToLearningGoalProgressUsingParticipantScoresTables.set(learningGoalProgress.learningGoalId, learningGoalProgress);
+                }
+                this.testIfScoreUsingParticipantScoresTableDiffers();
+            },
+            error: (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),
+        });
     }
 
     /**
