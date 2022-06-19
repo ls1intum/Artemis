@@ -147,14 +147,17 @@ public class OnlineUnitResource {
      * @param link The link (as request parameter) to the website to fetch the metadata from
      * @return A DTO with link, meta title, and meta description
      */
-    @GetMapping("/online-resource")
+    @GetMapping("/lectures/online-units/fetch-online-resource")
     @PreAuthorize("hasRole('EDITOR')")
     public OnlineResourceDTO getOnlineResource(@RequestParam("link") String link) {
         try {
             // Ensure that the link is a correctly formed URL
             URL url = new URL(link);
 
-            Document document = Jsoup.connect(url.toString()).get();
+            log.info("Requesting online resource at {}", url);
+
+            // Request the document, limited to 3 seconds and 500 KB (enough for most websites)
+            Document document = Jsoup.connect(url.toString()).timeout(3000).maxBodySize(500000).get();
             String title = getMetaTagContent(document, "title");
             String description = getMetaTagContent(document, "description");
 

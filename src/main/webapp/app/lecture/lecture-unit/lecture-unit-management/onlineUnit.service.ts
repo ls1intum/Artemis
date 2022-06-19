@@ -41,7 +41,7 @@ export class OnlineUnitService {
     getOnlineResource(link: string): Observable<HttpResponse<OnlineResourceDTO>> {
         let params = new HttpParams();
         params = params.set('link', String(link));
-        return this.httpClient.get<OnlineResourceDTO>(`${this.resourceURL}/online-resource`, {
+        return this.httpClient.get<OnlineResourceDTO>(`${this.resourceURL}/lectures/online-units/fetch-online-resource`, {
             observe: 'response',
             params,
         });
