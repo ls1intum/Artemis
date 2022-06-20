@@ -25,6 +25,7 @@ import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { TreeviewModule } from 'app/exercises/programming/shared/code-editor/treeview/treeview.module';
 import { ExerciseCategory } from 'app/entities/exercise-category.model';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
+import { ChartCategoryFilter } from 'app/shared/chart/chart-category-filter';
 
 describe('CourseStatisticsComponent', () => {
     let comp: CourseStatisticsComponent;
@@ -339,7 +340,7 @@ describe('CourseStatisticsComponent', () => {
                 ArtemisTranslatePipe,
                 MockDirective(NgbTooltip),
             ],
-            providers: [MockProvider(ArtemisNavigationUtilService), { provide: ActivatedRoute, useValue: { parent: { params: of(1) } } }],
+            providers: [MockProvider(ArtemisNavigationUtilService), MockProvider(ChartCategoryFilter), { provide: ActivatedRoute, useValue: { parent: { params: of(1) } } }],
         })
             .compileComponents()
             .then(() => {
@@ -545,33 +546,7 @@ describe('CourseStatisticsComponent', () => {
         expect(routingStub).toHaveBeenCalledWith(['courses', 64, 'exercises', 42]);
     });
 
-    it('should deselect and select all categories', () => {
-        setupExercisesWithCategories();
-
-        // 3 Filters: Hide optional, Exercises with no categories and quiz1
-        expect(comp.numberOfAppliedFilters).toBe(3);
-        expect(comp.exerciseCategoryFilters.get('quiz1')).toBeTrue();
-        expect(comp.exerciseCategoryFilters.get('programming1')).toBe(undefined);
-        expect(comp.allCategoriesSelected).toBeTrue();
-
-        comp.toggleAllCategories();
-
-        expect(comp.allCategoriesSelected).toBeFalse();
-        expect(comp.exerciseCategoryFilters.get('quiz1')).toBeFalse();
-        expect(comp.numberOfAppliedFilters).toBe(1);
-        comp.ngxExerciseGroups.forEach((group) => {
-            expect(group).toHaveLength(0);
-        });
-
-        comp.toggleAllCategories();
-
-        expect(comp.allCategoriesSelected).toBeTrue();
-        expect(comp.exerciseCategoryFilters.get('quiz1')).toBeTrue();
-        expect(comp.numberOfAppliedFilters).toBe(3);
-        expect(comp.ngxExerciseGroups).toHaveLength(2);
-    });
-
-    it('should switch filter categories correctly', () => {
+    /*it('should switch filter categories correctly', () => {
         setupExercisesWithCategories();
 
         comp.toggleNotIncludedInScoreExercises();
@@ -649,6 +624,15 @@ describe('CourseStatisticsComponent', () => {
         comp.toggleCategory('quiz1');
 
         expect(comp.ngxExerciseGroups).toHaveLength(1);
+    });*/
+
+    it('should filter optional exercises correctly', () => {
+        setupExercisesWithCategories();
+        comp.toggleNotIncludedInScoreExercises();
+
+        expect(comp.currentlyHidingNotIncludedInScoreExercises).toBeFalse();
+        expect(comp.ngxExerciseGroups).toHaveLength(3);
+        expect(comp.ngxExerciseGroups[0][0].name).toBe('Until 18:20 too');
     });
 
     const setupExercisesWithCategories = () => {

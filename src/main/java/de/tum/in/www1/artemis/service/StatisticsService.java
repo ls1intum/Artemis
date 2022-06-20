@@ -128,7 +128,7 @@ public class StatisticsService {
     public CourseManagementStatisticsDTO getCourseStatistics(Long courseId) {
 
         var courseManagementStatisticsDTO = new CourseManagementStatisticsDTO();
-        Set<Exercise> exercises = statisticsRepository.findExercisesByCourseId(courseId);
+        Set<Exercise> exercises = exerciseRepository.findByCourseIdWithCategories(courseId);
 
         if (exercises.isEmpty()) {
             // Handle newly created courses that have no exercises
@@ -148,6 +148,7 @@ public class StatisticsService {
             exercise.setAverageScore(roundedAverageScore);
             var fittingExercise = includedExercises.stream().filter(includedExercise -> includedExercise.getId() == exercise.getExerciseId()).findAny().orElseThrow();
             exercise.setExerciseType(fittingExercise.getExerciseType());
+            exercise.setCategories(fittingExercise.getCategories());
         });
 
         if (averageScoreForCourse != null && averageScoreForCourse > 0) {

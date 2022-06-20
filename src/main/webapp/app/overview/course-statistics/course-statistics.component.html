@@ -23,19 +23,19 @@
                 </li>
                 <li>
                     <label class="mb-1">
-                        <input class="ms-2 form-check-input" (change)="toggleAllCategories()" [checked]="allCategoriesSelected" type="checkbox" />
+                        <input class="ms-2 form-check-input" (change)="toggleAllCategories()" [checked]="filter.allCategoriesSelected" type="checkbox" />
                         <b class="ms-2">{{ 'artemisApp.courseOverview.statistics.includeAllCategories' | artemisTranslate }}</b>
                     </label>
                 </li>
                 <li>
                     <label>
-                        <input class="ms-2 form-check-input" (change)="toggleExercisesWithNoCategory()" [checked]="includeExercisesWithNoCategory" type="checkbox" />
+                        <input class="ms-2 form-check-input" (change)="toggleExercisesWithNoCategory()" [checked]="filter.includeExercisesWithNoCategory" type="checkbox" />
                         <span class="ms-2">{{ 'artemisApp.courseOverview.statistics.exercisesWithNoCategories' | artemisTranslate }}</span>
                     </label>
                 </li>
-                <li *ngFor="let category of exerciseCategories">
+                <li *ngFor="let category of filter.exerciseCategories">
                     <label>
-                        <input class="ms-2 form-check-input" (change)="toggleCategory(category)" [checked]="exerciseCategoryFilters.get(category)" type="checkbox" />
+                        <input class="ms-2 form-check-input" (change)="toggleCategory(category)" [checked]="filter.getCurrentFilterState(category)" type="checkbox" />
                         <span class="ms-2">{{ category }}</span>
                     </label>
                 </li>

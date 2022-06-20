@@ -31,7 +31,7 @@ describe('StatisticsAverageScoreGraphComponent', () => {
 
     const courseAverageScore = 75;
 
-    const exerciseTypes = [ExerciseType.PROGRAMMING, ExerciseType.MODELING, ExerciseType.QUIZ, ExerciseType.TEXT, ExerciseType.FILE_UPLOAD];
+    // const exerciseTypes = [ExerciseType.PROGRAMMING, ExerciseType.MODELING, ExerciseType.QUIZ, ExerciseType.TEXT, ExerciseType.FILE_UPLOAD];
     const exerciseTypeStrings = ['text', 'programming', 'file-upload', 'quiz', 'modeling', 'quiz', 'programming', 'text', 'file-upload', 'programming', 'modeling'];
 
     beforeEach(() => {
@@ -132,14 +132,14 @@ describe('StatisticsAverageScoreGraphComponent', () => {
     });
 
     describe('test filtering', () => {
-        const programmingExercises = [exercise2, exercise7, exercise10];
+        /*const programmingExercises = [exercise2, exercise7, exercise10];
         const modelingExercises = [exercise5, exercise11];
         const quizExercises = [exercise4, exercise6];
         const textExercises = [exercise1, exercise8];
-        const fileUploadExercises = [exercise3, exercise9];
+        const fileUploadExercises = [exercise3, exercise9];*/
         let expectedScores: CourseManagementStatisticsModel[];
 
-        it.each(exerciseTypes)('should filter for type correctly if only one type is selected', (type: ExerciseType) => {
+        /*it.each(exerciseTypes)('should filter for type correctly if only one type is selected', (type: ExerciseType) => {
             toggleAllTypes();
 
             component.toggleType(type);
@@ -162,7 +162,7 @@ describe('StatisticsAverageScoreGraphComponent', () => {
             }
 
             expect(component.currentPeriod).toBe(0);
-        });
+        });*/
 
         it('should filter correctly if lowest third is selected', () => {
             expectedScores = [exercise1, exercise2, exercise3];
@@ -216,9 +216,9 @@ describe('StatisticsAverageScoreGraphComponent', () => {
         });
     });
 
-    const toggleAllTypes = () => {
+    /*const toggleAllTypes = () => {
         exerciseTypes.forEach((type) => {
             component.toggleType(type);
         });
-    };
+    };*/
 });

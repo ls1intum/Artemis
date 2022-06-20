@@ -1,30 +1,41 @@
-import { Directive } from '@angular/core';
+import { Injectable } from '@angular/core';
 import { ExerciseType } from 'app/entities/exercise.model';
+import { ChartFilter } from 'app/shared/chart/chart-filter';
 
-@Directive()
-export class ChartExerciseTypeFilterDirective {
-    // Ideally I would design the filter as map from ExerciseType to boolean.
-    // But I observed some unexpected casting of the ExerciseType in the ExerciseDTO
-    // that leads to the following situation: When trying to look up a value given an ExerciseType in a map with structure: ExerciseType -> boolean
-    // instead of comparing the string value of the enum, the enum key was taken as string and then used as key for the map
-    // E.g. ExerciseType.PROGRAMMING would lead to chartFilter.get('PROGRAMMING') instead of chartFilter.get('programming')
-    // This way, never a value was returned as the map did not contain such key
-    chartFilter: Map<string, boolean> = new Map();
-    numberOfActiveFilters = 0;
+@Injectable({ providedIn: 'root' })
+export class ChartExerciseTypeFilter extends ChartFilter {
     typeSet: Set<ExerciseType> = new Set();
 
     /**
      * Set up initial filter for the chart
      * @param exerciseScores the score objects containing an exercise type a filter should
      * be provided for
-     * @protected
      */
-    protected initializeFilterOptions(exerciseScores: any[]): void {
+    initializeFilterOptions(exerciseScores: any[]): void {
         this.typeSet = new Set(exerciseScores.map((score) => score.exerciseType));
         this.typeSet.forEach((type) => {
-            this.chartFilter.set(ChartExerciseTypeFilterDirective.convertToMapKey(type), true);
+            this.filterMap.set(ChartExerciseTypeFilter.convertToMapKey(type), true);
         });
         this.numberOfActiveFilters = this.typeSet.size;
+    }
+
+    updateFilterOptions(exerciseScores: any[]): any[] {
+        this.typeSet = new Set(exerciseScores.map((score) => score.exerciseType));
+        this.filterMap.forEach((value, key) => {
+            if (!this.typeSet.has(ChartExerciseTypeFilter.convertToExerciseType(key))) {
+                this.filterMap.delete(key);
+            }
+        });
+        this.typeSet.forEach((type) => {
+            const convertedKey = ChartExerciseTypeFilter.convertToMapKey(type);
+            if (this.filterMap.get(convertedKey) === undefined) {
+                this.filterMap.set(convertedKey, true);
+            }
+        });
+
+        this.numberOfActiveFilters = 0;
+        this.filterMap.forEach((value) => (this.numberOfActiveFilters += value ? 1 : 0));
+        return this.applyCurrentFilter(exerciseScores);
     }
 
     /**
@@ -32,26 +43,28 @@ export class ChartExerciseTypeFilterDirective {
      * @param type the ExerciseType the user changed the filter for
      * @param exerciseScores the score objects the updated filter should be applied against
      * @returns the exerciseScores filtered against the current state of the chart filter
-     * @protected
      */
-    protected toggleExerciseType(type: ExerciseType, exerciseScores: any[]): any {
-        const convertedType = ChartExerciseTypeFilterDirective.convertToMapKey(type);
-        const isIncluded = this.chartFilter.get(convertedType);
-        this.chartFilter.set(convertedType, !isIncluded);
+    toggleExerciseType(type: ExerciseType, exerciseScores: any[]): any {
+        const convertedType = ChartExerciseTypeFilter.convertToMapKey(type);
+        const isIncluded = this.filterMap.get(convertedType);
+        this.filterMap.set(convertedType, !isIncluded);
         this.numberOfActiveFilters += !isIncluded ? 1 : -1;
         return this.applyCurrentFilter(exerciseScores);
     }
 
-    private applyCurrentFilter(exerciseScores: any[]) {
-        return exerciseScores.filter((score) => this.chartFilter.get(ChartExerciseTypeFilterDirective.convertToMapKey(score.exerciseType)));
+    applyCurrentFilter(exerciseScores: any[]) {
+        return exerciseScores.filter((score) => this.filterMap.get(ChartExerciseTypeFilter.convertToMapKey(score.exerciseType)));
     }
 
     /**
      * Converts a given exercise type to a map key and returns it
      * @param type the exercise type
-     * @protected
      */
-    protected static convertToMapKey(type: ExerciseType) {
+    static convertToMapKey(type: ExerciseType) {
         return type.toLowerCase().replace('_', '-');
+    }
+
+    static convertToExerciseType(type: string): ExerciseType {
+        return type.replace('-', '_').toUpperCase() as ExerciseType;
     }
 }

@@ -7,6 +7,7 @@ import { ExerciseManagementStatisticsDto } from 'app/exercises/shared/statistics
 import { map } from 'rxjs/operators';
 import { round } from 'app/shared/util/utils';
 import dayjs from 'dayjs/esm';
+import { ExerciseCategory } from 'app/entities/exercise-category.model';
 
 @Injectable({ providedIn: 'root' })
 export class StatisticsService {
@@ -43,9 +44,12 @@ export class StatisticsService {
      */
     getCourseStatistics(courseId: number): Observable<CourseManagementStatisticsDTO> {
         const params = new HttpParams().set('courseId', '' + courseId);
-        return this.http
-            .get<CourseManagementStatisticsDTO>(`${this.resourceUrl}course-statistics`, { params })
-            .pipe(map((res: CourseManagementStatisticsDTO) => StatisticsService.convertDatesFromServer(res)));
+        return this.http.get<CourseManagementStatisticsDTO>(`${this.resourceUrl}course-statistics`, { params }).pipe(
+            map((res: CourseManagementStatisticsDTO) => {
+                StatisticsService.convertExerciseCategoriesForCourseManagementStatistics(res);
+                return StatisticsService.convertDatesFromServer(res);
+            }),
+        );
     }
 
     /**
@@ -70,5 +74,12 @@ export class StatisticsService {
             averageScores.releaseDate = averageScores.releaseDate !== null ? dayjs(averageScores.releaseDate) : undefined;
         });
         return dto;
+    }
+
+    private static convertExerciseCategoriesForCourseManagementStatistics(res: CourseManagementStatisticsDTO): CourseManagementStatisticsDTO {
+        res.averageScoresOfExercises.forEach((avgScoresOfExercise) => {
+            avgScoresOfExercise.categories = avgScoresOfExercise.categories?.map((category) => JSON.parse(category as string) as ExerciseCategory);
+        });
+        return res;
     }
 }
