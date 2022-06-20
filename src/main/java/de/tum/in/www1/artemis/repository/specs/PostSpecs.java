@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.repository.specs;
 
+import static de.tum.in.www1.artemis.config.Constants.VOTE_EMOJI_ID;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -179,10 +181,17 @@ public class PostSpecs {
                         subQuery.select(criteriaBuilder.count(subRoot.get(AnswerPost_.POST).get(Post_.ID))).where(criteriaBuilder.and(postBinder)).groupBy(root.get(Post_.ID));
 
                         sortCriterion = criteriaBuilder.selectCase().when(criteriaBuilder.exists(subQuery).not(), 0).otherwise(subQuery.getSelection());
-
                     }
                     else if (postSortCriterion == PostSortCriterion.VOTES) {
-                        // TODO
+                        // Count number of up votes per Post
+                        Subquery<Long> subQuery = query.subquery(Long.class);
+                        Root<Reaction> subRoot = subQuery.from(Reaction.class);
+                        Predicate postBinder = criteriaBuilder.equal(root.get(Post_.ID), subRoot.get(Reaction_.POST).get(Post_.ID));
+                        Predicate upVotes = criteriaBuilder.equal(subRoot.get(Reaction_.EMOJI_ID), VOTE_EMOJI_ID);
+                        subQuery.select(criteriaBuilder.count(subRoot.get(Reaction_.POST).get(Post_.ID))).where(criteriaBuilder.and(postBinder, upVotes))
+                                .groupBy(root.get(Post_.ID));
+
+                        sortCriterion = criteriaBuilder.selectCase().when(criteriaBuilder.exists(subQuery).not(), 0).otherwise(subQuery.getSelection());
                     }
                     orderList.add(sortingOrder == SortingOrder.ASCENDING ? criteriaBuilder.asc(sortCriterion) : criteriaBuilder.desc(sortCriterion));
                 }
