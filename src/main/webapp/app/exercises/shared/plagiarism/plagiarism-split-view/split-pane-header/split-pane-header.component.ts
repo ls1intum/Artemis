@@ -1,13 +1,21 @@
 import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges } from '@angular/core';
 import { faChevronDown } from '@fortawesome/free-solid-svg-icons';
 
+/**
+ * A file name that additionally stores if a plagiarism match has been found for it.
+ */
+export type FileWithHasMatch = {
+    file: string;
+    hasMatch: boolean;
+};
+
 @Component({
     selector: 'jhi-split-pane-header',
     templateUrl: './split-pane-header.component.html',
     styleUrls: ['./split-pane-header.component.scss'],
 })
 export class SplitPaneHeaderComponent implements OnChanges {
-    @Input() files: string[];
+    @Input() files: FileWithHasMatch[];
     @Input() studentLogin: string;
     @Output() selectFile = new EventEmitter<string>();
 
@@ -19,31 +27,35 @@ export class SplitPaneHeaderComponent implements OnChanges {
 
     ngOnChanges(changes: SimpleChanges) {
         if (changes.files) {
-            const files = changes.files.currentValue;
+            const files: FileWithHasMatch = changes.files.currentValue;
 
             this.activeFileIndex = 0;
 
             if (this.hasFiles()) {
-                this.selectFile.emit(files[0]);
+                this.selectFile.emit(files[0].file);
             }
         }
     }
 
-    getActiveFile() {
-        return this.hasFiles() && this.activeFileIndex < this.files.length && this.files[this.activeFileIndex];
+    hasActiveFile(): boolean {
+        return this.hasFiles() && this.activeFileIndex < this.files.length;
     }
 
-    handleFileSelect(file: string, idx: number) {
+    getActiveFile(): string {
+        return this.files[this.activeFileIndex].file;
+    }
+
+    handleFileSelect(file: FileWithHasMatch, idx: number): void {
         this.activeFileIndex = idx;
         this.showFiles = false;
-        this.selectFile.emit(file);
+        this.selectFile.emit(file.file);
     }
 
-    hasFiles() {
+    hasFiles(): boolean {
         return this.files && this.files.length > 0;
     }
 
-    toggleShowFiles() {
+    toggleShowFiles(): void {
         if (this.hasFiles()) {
             this.showFiles = !this.showFiles;
         }
