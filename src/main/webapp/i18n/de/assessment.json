@@ -91,7 +91,7 @@
                     "showLocked": "Nur gesperrte anzeigen"
                 },
                 "bonusPointExplanation": "In dieser Aufgabe gibt es {{maxPoints}} Punkte und {{maxBonusPoints}} Bonuspunkte, somit können Studierende maximal {{maxPointsWithBonus}} Punkte erreichen, was einem Score von {{maxPercentage}}% entsprechen würde.",
-                "resetFilter": "Filter aufheben"
+                "resetFilter": "Filter zurücksetzen"
             },
             "locks": {
                 "home": {
