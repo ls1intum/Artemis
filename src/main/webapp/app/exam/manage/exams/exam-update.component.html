@@ -141,8 +141,13 @@
                 <input class="form-check-input" type="checkbox" id="DublerandomizeExerciseOrder" name="DublerandomizeExerciseOrder" [(ngModel)]="exam.randomizeExerciseOrder" />
                 <label class="form-check-label" for="DublerandomizeExerciseOrder" jhiTranslate="artemisApp.examManagement.randomizeQuestionOrder"> Randomize Question Order </label>
             </div>
+
             <!-- Subsection Exercise Selection for Exam Import -->
-            <div class="mb-3" *ngIf="isImport">
+            <div class="mb-3" *ngIf="isImport && exam.exerciseGroups">
+                <h5 jhiTranslate="artemisApp.examManagement.exerciseImport.title">Import Exam Exercises</h5>
+                <p jhiTranslate="artemisApp.examManagement.exerciseImport.explanation">
+                    Select the individual exercises, which should be imported alongside the exam, by clicking on it
+                </p>
                 <jhi-exam-exercise-import [exam]="exam" [selectedExercises]="selectedExercises"></jhi-exam-exercise-import>
             </div>
 

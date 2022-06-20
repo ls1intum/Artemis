@@ -26,6 +26,7 @@ import { EventManager } from 'app/core/util/event-manager.service';
 import { faAngleDown, faAngleUp, faCheckDouble, faFileUpload, faFont, faKeyboard, faPlus, faProjectDiagram, faTimes, faWrench } from '@fortawesome/free-solid-svg-icons';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { QuizExerciseImportComponent } from 'app/exercises/quiz/manage/quiz-exercise-import.component';
+import { ExamImportComponent } from 'app/exam/manage/exams/exam-import/exam-import.component';
 
 @Component({
     selector: 'jhi-exercise-groups',
@@ -277,5 +278,31 @@ export class ExerciseGroupsComponent implements OnInit {
                 }
             }
         }
+    }
+
+    /**
+     * Opens the import module for an exam import
+     */
+    openExerciseGroupImportModal() {
+        const examImportModalRef = this.modalService.open(ExamImportComponent, {
+            size: 'xl',
+            backdrop: 'static',
+        });
+        // The Exercise Group selection is performed within the exam-update.component afterwards
+        examImportModalRef.componentInstance.withExerciseGroupSelection = true;
+        examImportModalRef.componentInstance.courseShortName = this.course.shortName;
+
+        const importBaseRoute = ['/course-management', this.course.id, 'exams', this.examId, 'exercise-groups'];
+
+        examImportModalRef.result.then(
+            (exam: Exam) => {
+                if (this.exam.exerciseGroups) {
+                    this.examManagementService.importExerciseGroup(this.courseId, this.examId, exam.exerciseGroups!);
+                    // Reload the page after the import
+                    this.ngOnInit();
+                }
+            },
+            () => {},
+        );
     }
 }

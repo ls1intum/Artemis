@@ -16,7 +16,7 @@ import dayjs from 'dayjs/esm';
 import { EventManager } from 'app/core/util/event-manager.service';
 import { faClipboard, faEye, faListAlt, faPlus, faSort, faThList, faTimes, faUser, faWrench } from '@fortawesome/free-solid-svg-icons';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { ExamImportComponent } from 'app/exam/manage/exam-import/exam-import.component';
+import { ExamImportComponent } from 'app/exam/manage/exams/exam-import/exam-import.component';
 
 @Component({
     selector: 'jhi-exam-management',
@@ -138,12 +138,15 @@ export class ExamManagementComponent implements OnInit, OnDestroy {
      * Opens the import module for an exam import
      */
     openImportModal() {
-        const importBaseRoute = ['/course-management', this.course.id, 'exams', 'import'];
-
         const examImportModalRef = this.modalService.open(ExamImportComponent, {
             size: 'lg',
             backdrop: 'static',
         });
+        // The Exercise Group selection is performed within the exam-update.component afterwards
+        examImportModalRef.componentInstance.withExerciseGroupSelection = false;
+
+        const importBaseRoute = ['/course-management', this.course.id, 'exams', 'import'];
+
         examImportModalRef.result.then(
             (exam: Exam) => {
                 importBaseRoute.push(exam.id);

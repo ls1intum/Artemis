@@ -15,7 +15,7 @@ export class ExamExerciseImportComponent implements OnInit {
     // Map to determine, which exercises should be imported alongside an exam
     @Input() selectedExercises?: Map<ExerciseGroup, Set<Exercise>>;
     // The shortName of the course to be displayed next to the shortName of a Programming Exercise to form the vcs key
-    courseShortName?: string;
+    @Input() courseShortName?: string;
     // Expose enums to the template
     exerciseType = ExerciseType;
 
@@ -31,7 +31,9 @@ export class ExamExerciseImportComponent implements OnInit {
     constructor() {}
 
     ngOnInit(): void {
-        this.courseShortName = this.exam.course!.shortName;
+        if (!this.courseShortName) {
+            this.courseShortName = this.exam.course!.shortName;
+        }
     }
 
     /**

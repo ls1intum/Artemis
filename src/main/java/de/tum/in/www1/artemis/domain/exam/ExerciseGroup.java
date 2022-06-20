@@ -74,16 +74,4 @@ public class ExerciseGroup extends DomainObject {
         this.exercises.add(exercise);
     }
 
-    /**
-     * Creates a new Exercise Group with the title and boolean:isMandatory of the provided Exercise Group
-     *
-     * @param exerciseGroupToCopy Exercise Group, which title and isMandatory should be copied
-     * @return a new Exercise Group with the same title and isMandatory
-     */
-    public ExerciseGroup copyExerciseGroupWithTitleAndIsMandatory(ExerciseGroup exerciseGroupToCopy) {
-        ExerciseGroup exerciseGroupCopied = new ExerciseGroup();
-        exerciseGroupCopied.title = exerciseGroupToCopy.getTitle();
-        exerciseGroupCopied.isMandatory = exerciseGroupToCopy.getIsMandatory();
-        return exerciseGroupCopied;
-    }
 }

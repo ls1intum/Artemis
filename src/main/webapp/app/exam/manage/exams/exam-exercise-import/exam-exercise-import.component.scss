@@ -9,10 +9,18 @@
 .smallbox {
     width: 50px;
 }
+
 .mediumbox {
-    width: 125px;
+    width: 200px;
 }
 
 .largebox {
-    width: 250px;
+    width: 400px;
+}
+.flex {
+    flex-wrap: wrap;
+}
+
+.table-stacked {
+    display: flex;
 }

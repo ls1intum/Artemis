@@ -376,7 +376,11 @@
             "exerciseGroups": "Exercise Groups",
             "exerciseGroup": {
                 "create": "Create new Exercise Group",
+                "import": "Import Exercise Group",
                 "update": "Edit Exercise Group",
+                "selectExerciseGroup": "Select Exercise Groups",
+                "selectExerciseGroupExplanation": "Select the individual exercises, which should be imported alongside the exercise groups, by clicking on it",
+                "noExerciseGroup": "The selected exam {{examTitle}} has no exercise groups",
                 "type": "Type",
                 "title": "Title",
                 "points": "Points",

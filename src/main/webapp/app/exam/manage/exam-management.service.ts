@@ -58,8 +58,18 @@ export class ExamManagementService {
     import(courseId: number, exam: Exam): Observable<EntityResponseType> {
         const copy = ExamManagementService.convertDateFromClient(exam);
         return this.http
-            .put<Exam>(`${this.resourceUrl}/${courseId}/exam-import`, copy, { observe: 'response' })
+            .post<Exam>(`${this.resourceUrl}/${courseId}/exam-import`, copy, { observe: 'response' })
             .pipe(map((res: EntityResponseType) => ExamManagementService.convertDateFromServer(res)));
+    }
+
+    /**
+     * Imports an exam on the server using a PUT request.
+     * @param courseId The course id into which the exercise groups should be imported
+     * @param examId The exam id to which the exercise groups should be added
+     * @param exerciseGroups the exercise groups to be added to the exam
+     */
+    importExerciseGroup(courseId: number, examId: number, exerciseGroups: ExerciseGroup[]): Observable<HttpResponse<ExerciseGroup[]>> {
+        return this.http.post<ExerciseGroup[]>(`${this.resourceUrl}/${courseId}/exams}${examId}/import-exercise-group`, exerciseGroups, { observe: 'response' });
     }
 
     /**
