@@ -18,13 +18,13 @@ export class CategoryActionsChartComponent extends ChartComponent implements OnI
         super(route, examMonitoringWebsocketService, 'category-actions-chart', true, [getColor(0), getColor(1), getColor(2), getColor(3), getColor(4)]);
     }
 
-    ngOnInit(): void {
+    ngOnInit() {
         this.initSubscriptions();
         this.initRenderRate(this.renderRate);
         this.initData();
     }
 
-    ngOnDestroy(): void {
+    ngOnDestroy() {
         this.endSubscriptions();
     }
 
@@ -86,7 +86,7 @@ export class CategoryActionsChartComponent extends ChartComponent implements OnI
         this.ngxData = chartSeriesData;
     }
 
-    filterRenderedData(examAction: ExamAction): boolean {
+    filterRenderedData(examAction: ExamAction) {
         return this.filterActionsNotInTimeframe(examAction);
     }
 }

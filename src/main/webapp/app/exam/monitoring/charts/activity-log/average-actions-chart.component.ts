@@ -22,13 +22,13 @@ export class AverageActionsChartComponent extends ChartComponent implements OnIn
         super(route, examMonitoringWebsocketService, 'average-actions-chart', false, [getColor(2)]);
     }
 
-    ngOnInit(): void {
+    ngOnInit() {
         this.initSubscriptions();
         this.initRenderRate(this.renderRate);
         this.initData();
     }
 
-    ngOnDestroy(): void {
+    ngOnDestroy() {
         this.endSubscriptions();
     }
 
@@ -66,7 +66,7 @@ export class AverageActionsChartComponent extends ChartComponent implements OnIn
         this.ngxData = [{ name: 'actions', series: chartData }];
     }
 
-    filterRenderedData(examAction: ExamAction): boolean {
+    filterRenderedData(examAction: ExamAction) {
         return this.filterActionsNotInTimeframe(examAction);
     }
 }

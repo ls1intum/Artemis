@@ -18,13 +18,13 @@ export class TotalActionsChartComponent extends ChartComponent implements OnInit
         super(route, examMonitoringWebsocketService, 'total-actions-chart', false, [getColor(2)]);
     }
 
-    ngOnInit(): void {
+    ngOnInit() {
         this.initSubscriptions();
         this.initRenderRate(this.renderRate);
         this.initData();
     }
 
-    ngOnDestroy(): void {
+    ngOnDestroy() {
         this.endSubscriptions();
     }
 
@@ -61,7 +61,7 @@ export class TotalActionsChartComponent extends ChartComponent implements OnInit
     }
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    filterRenderedData(examAction: ExamAction): boolean {
+    filterRenderedData(examAction: ExamAction) {
         return true;
     }
 }

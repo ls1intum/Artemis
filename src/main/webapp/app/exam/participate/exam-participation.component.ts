@@ -34,7 +34,6 @@ import { ExamPage } from 'app/entities/exam-page.model';
 import { ExamPageComponent } from 'app/exam/participate/exercises/exam-page.component';
 import { AUTOSAVE_CHECK_INTERVAL, AUTOSAVE_EXERCISE_INTERVAL } from 'app/shared/constants/exercise-exam-constants';
 import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
-import { ExamMonitoringService } from 'app/exam/monitor/exam-monitoring.service';
 import {
     ConnectionUpdatedAction,
     ContinuedAfterHandedInEarlyAction,
@@ -44,6 +43,7 @@ import {
     StartedExamAction,
     SwitchedExerciseAction,
 } from 'app/entities/exam-user-activity.model';
+import { ExamMonitoringService } from 'app/exam/monitoring/exam-monitoring.service';
 
 type GenerateParticipationStatus = 'generating' | 'failed' | 'success';
 

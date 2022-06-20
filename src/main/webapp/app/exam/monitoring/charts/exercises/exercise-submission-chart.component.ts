@@ -21,13 +21,13 @@ export class ExerciseSubmissionChartComponent extends ChartComponent implements 
         super(route, examMonitoringWebsocketService, 'exercise-submission-chart', false);
     }
 
-    ngOnInit(): void {
+    ngOnInit() {
         this.initSubscriptions();
         this.initRenderRate(this.renderRate);
         this.initData();
     }
 
-    ngOnDestroy(): void {
+    ngOnDestroy() {
         this.endSubscriptions();
     }
 
@@ -69,7 +69,7 @@ export class ExerciseSubmissionChartComponent extends ChartComponent implements 
         this.ngxColor = Object.assign({}, this.ngxColor);
     }
 
-    filterRenderedData(examAction: ExamAction): boolean {
+    filterRenderedData(examAction: ExamAction) {
         return examAction.type === ExamActionType.SAVED_EXERCISE;
     }
 }

@@ -44,7 +44,7 @@ export class ExamMonitoringComponent implements OnInit, OnDestroy {
         private artemisDataPipe: ArtemisDatePipe,
     ) {}
 
-    ngOnInit(): void {
+    ngOnInit() {
         this.routeSubscription = this.route.params.subscribe((params) => {
             this.examId = parseInt(params['examId'], 10);
             this.courseId = parseInt(params['courseId'], 10);
@@ -77,7 +77,7 @@ export class ExamMonitoringComponent implements OnInit, OnDestroy {
         this.table.push(title, start, end, students, exercises, exerciseGroups);
     }
 
-    ngOnDestroy(): void {
+    ngOnDestroy() {
         this.routeSubscription?.unsubscribe();
     }
 }

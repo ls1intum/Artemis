@@ -21,13 +21,13 @@ export class ExerciseNavigationChartComponent extends ChartComponent implements 
         super(route, examMonitoringWebsocketService, 'exercise-navigation-chart', false);
     }
 
-    ngOnInit(): void {
+    ngOnInit() {
         this.initSubscriptions();
         this.initRenderRate(this.renderRate);
         this.initData();
     }
 
-    ngOnDestroy(): void {
+    ngOnDestroy() {
         this.endSubscriptions();
     }
 
@@ -70,7 +70,7 @@ export class ExerciseNavigationChartComponent extends ChartComponent implements 
     }
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    filterRenderedData(examAction: ExamAction): boolean {
+    filterRenderedData(examAction: ExamAction) {
         return true;
     }
 }

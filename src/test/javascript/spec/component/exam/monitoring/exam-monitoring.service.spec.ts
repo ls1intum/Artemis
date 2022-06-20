@@ -1,58 +1,14 @@
 import { TestBed } from '@angular/core/testing';
 import { Course } from 'app/entities/course.model';
 import { Exam } from 'app/entities/exam.model';
-import { ArtemisTestModule } from '../test.module';
+import { ArtemisTestModule } from '../../../test.module';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
 import { StudentExam } from 'app/entities/student-exam.model';
-import {
-    ConnectionUpdatedAction,
-    ContinuedAfterHandedInEarlyAction,
-    EndedExamAction,
-    ExamAction,
-    ExamActionType,
-    ExamActivity,
-    HandedInEarlyAction,
-    SavedExerciseAction,
-    StartedExamAction,
-    SwitchedExerciseAction,
-} from 'app/entities/exam-user-activity.model';
-import { ExamMonitoringService } from 'app/exam/monitor/exam-monitoring.service';
+import { ExamAction, ExamActionType, ExamActivity } from 'app/entities/exam-user-activity.model';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
-import { MockWebsocketService } from '../helpers/mocks/service/mock-websocket.service';
-
-const createExamActions = (): ExamAction[] => {
-    return Object.keys(ExamActionType).map((type) => createExamActionBasedOnType(ExamActionType[type]));
-};
-
-const createExamActionBasedOnType = (examActionType: ExamActionType): ExamAction => {
-    let examAction: ExamAction;
-
-    switch (examActionType) {
-        case ExamActionType.STARTED_EXAM:
-            examAction = new StartedExamAction(0);
-            break;
-        case ExamActionType.ENDED_EXAM:
-            examAction = new EndedExamAction();
-            break;
-        case ExamActionType.HANDED_IN_EARLY:
-            examAction = new HandedInEarlyAction();
-            break;
-        case ExamActionType.CONTINUED_AFTER_HAND_IN_EARLY:
-            examAction = new ContinuedAfterHandedInEarlyAction();
-            break;
-        case ExamActionType.SWITCHED_EXERCISE:
-            examAction = new SwitchedExerciseAction(0);
-            break;
-        case ExamActionType.SAVED_EXERCISE:
-            examAction = new SavedExerciseAction(false, 0, 0, false, true);
-            break;
-        case ExamActionType.CONNECTION_UPDATED:
-            examAction = new ConnectionUpdatedAction(false);
-            break;
-    }
-    examAction.studentExamId = 1;
-    return examAction;
-};
+import { MockWebsocketService } from '../../../helpers/mocks/service/mock-websocket.service';
+import { ExamMonitoringService } from 'app/exam/monitoring/exam-monitoring.service';
+import { createActions } from './exam-monitoring-helper';
 
 describe('ExamMonitoringService', () => {
     let examMonitoringService: ExamMonitoringService;
@@ -93,7 +49,7 @@ describe('ExamMonitoringService', () => {
     });
 
     it('should handle exam actions when monitoring enabled', () => {
-        const examActions = createExamActions();
+        const examActions = createActions();
         expect(examActions).toHaveLength(Object.keys(ExamActionType).length);
         examActions.forEach((action) => {
             examMonitoringService.handleActionEvent(studentExam, action, exam.monitoring!);
@@ -104,7 +60,7 @@ describe('ExamMonitoringService', () => {
 
     it('should not handle exam actions when monitoring disabled', () => {
         exam.monitoring = false;
-        const examActions = createExamActions();
+        const examActions = createActions();
         expect(examActions).toHaveLength(Object.keys(ExamActionType).length);
         examActions.forEach((action) => {
             examMonitoringService.handleActionEvent(studentExam, action, exam.monitoring!);
@@ -112,7 +68,7 @@ describe('ExamMonitoringService', () => {
         });
     });
 
-    it.each(createExamActions())('should send actions when monitoring enabled and websocket connected', (action: ExamAction) => {
+    it.each(createActions())('should send actions when monitoring enabled and websocket connected', (action: ExamAction) => {
         const spy = jest.spyOn(examMonitoringService, 'sendAction');
         studentExam.examActivity = new ExamActivity();
         studentExam.examActivity.examActions.push(action);
@@ -121,7 +77,7 @@ describe('ExamMonitoringService', () => {
         expect(spy).toHaveBeenCalledWith(action, exam.id);
     });
 
-    it.each(createExamActions())('should not send actions when monitoring disabled', (action: ExamAction) => {
+    it.each(createActions())('should not send actions when monitoring disabled', (action: ExamAction) => {
         const spy = jest.spyOn(examMonitoringService, 'sendAction');
         studentExam.examActivity = new ExamActivity();
         studentExam.examActivity.examActions.push(action);
@@ -130,7 +86,7 @@ describe('ExamMonitoringService', () => {
         expect(spy).not.toHaveBeenCalled();
     });
 
-    it.each(createExamActions())('should remove actions after send when websocket connected', (action: ExamAction) => {
+    it.each(createActions())('should remove actions after send when websocket connected', (action: ExamAction) => {
         const spy = jest.spyOn(examMonitoringService, 'sendAction');
 
         studentExam.examActivity = new ExamActivity();
@@ -142,7 +98,7 @@ describe('ExamMonitoringService', () => {
         expect(studentExam.examActivity.examActions).toHaveLength(0);
     });
 
-    it.each(createExamActions())('should not remove actions when websocket not connected', (action: ExamAction) => {
+    it.each(createActions())('should not remove actions when websocket not connected', (action: ExamAction) => {
         const spy = jest.spyOn(examMonitoringService, 'sendAction');
 
         studentExam.examActivity = new ExamActivity();
@@ -162,7 +118,7 @@ describe('ExamMonitoringService', () => {
         expect(topic).toEqual(`/topic/exam-monitoring/${exam.id}/actions`);
     });
 
-    it.each(createExamActions())('should call websocket send', (action: ExamAction) => {
+    it.each(createActions())('should call websocket send', (action: ExamAction) => {
         const spy = jest.spyOn(websocketService, 'send');
 
         examMonitoringService.sendAction(action, exam.id!);

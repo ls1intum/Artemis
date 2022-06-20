@@ -21,13 +21,13 @@ export class ExerciseGroupChartComponent extends ChartComponent implements OnIni
         super(route, examMonitoringWebsocketService, 'exercise-group-chart', false);
     }
 
-    ngOnInit(): void {
+    ngOnInit() {
         this.initSubscriptions();
         this.initRenderRate(this.renderRate);
         this.initData();
     }
 
-    ngOnDestroy(): void {
+    ngOnDestroy() {
         this.endSubscriptions();
     }
 
@@ -67,7 +67,7 @@ export class ExerciseGroupChartComponent extends ChartComponent implements OnIni
     }
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    filterRenderedData(examAction: ExamAction): boolean {
+    filterRenderedData(examAction: ExamAction) {
         return true;
     }
 }

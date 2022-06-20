@@ -21,13 +21,13 @@ export class ExerciseChartComponent extends ChartComponent implements OnInit, On
         super(route, examMonitoringWebsocketService, 'exercise-chart', false);
     }
 
-    ngOnInit(): void {
+    ngOnInit() {
         this.initSubscriptions();
         this.initRenderRate(this.renderRate);
         this.initData();
     }
 
-    ngOnDestroy(): void {
+    ngOnDestroy() {
         this.endSubscriptions();
     }
 
@@ -59,7 +59,7 @@ export class ExerciseChartComponent extends ChartComponent implements OnInit, On
         this.ngxColor = Object.assign({}, this.ngxColor);
     }
 
-    filterRenderedData(examAction: ExamAction): boolean {
+    filterRenderedData(examAction: ExamAction) {
         return examAction.type === ExamActionType.SWITCHED_EXERCISE;
     }
 }

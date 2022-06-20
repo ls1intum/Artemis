@@ -9,5 +9,5 @@ export class MonitoringExercisesComponent implements OnInit, OnDestroy {
 
     ngOnInit() {}
 
-    ngOnDestroy(): void {}
+    ngOnDestroy() {}
 }

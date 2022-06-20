@@ -100,7 +100,7 @@ export abstract class ChartComponent {
      * @param examAction received action
      * @protected
      */
-    protected filterActionsNotInTimeframe(examAction: ExamAction): boolean {
+    protected filterActionsNotInTimeframe(examAction: ExamAction) {
         return ceilDayjsSeconds(dayjs(), this.timeStampGapInSeconds)
             .subtract(this.showNumberLastTimeStamps * this.timeStampGapInSeconds, 'seconds')
             .isBefore(examAction.ceiledTimestamp ?? examAction.timestamp);
@@ -109,7 +109,7 @@ export abstract class ChartComponent {
     /**
      * Method to get the last x time stamps.
      */
-    public getLastXTimestamps(): dayjs.Dayjs[] {
+    public getLastXTimestamps() {
         const ceiledNow = ceilDayjsSeconds(dayjs(), 15);
         const timestamps = [];
         for (let i = this.showNumberLastTimeStamps - 1; i >= 0; i--) {

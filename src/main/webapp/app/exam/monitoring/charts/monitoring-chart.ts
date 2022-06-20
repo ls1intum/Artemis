@@ -87,7 +87,7 @@ export function getSwitchedExerciseActionsGroupedByActivityId(examActions: ExamA
  * @param examActions array of actions
  * @return amount of students per exercise as map
  */
-export function getCurrentAmountOfStudentsPerExercises(examActions: ExamAction[]): Map<number, number> {
+export function getCurrentAmountOfStudentsPerExercises(examActions: ExamAction[]) {
     const exerciseAmountMap: Map<number, number> = new Map();
     const groupedByActivityId = getLastActionGroupedByActivityId(examActions);
     // eslint-disable-next-line @typescript-eslint/no-unused-vars

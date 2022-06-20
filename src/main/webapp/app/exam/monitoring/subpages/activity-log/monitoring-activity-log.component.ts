@@ -9,5 +9,5 @@ export class MonitoringActivityLogComponent implements OnInit, OnDestroy {
 
     ngOnInit() {}
 
-    ngOnDestroy(): void {}
+    ngOnDestroy() {}
 }
