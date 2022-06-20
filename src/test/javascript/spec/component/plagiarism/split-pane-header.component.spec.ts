@@ -5,7 +5,7 @@ import { ArtemisTestModule } from '../../test.module';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { SplitPaneHeaderComponent } from 'app/exercises/shared/plagiarism/plagiarism-split-view/split-pane-header/split-pane-header.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { NgbTooltip, NgbDropdown } from '@ng-bootstrap/ng-bootstrap';
 import { NgModel } from '@angular/forms';
 import { PlagiarismDetailsComponent } from 'app/exercises/shared/plagiarism/plagiarism-details/plagiarism-details.component';
 import { PlagiarismRunDetailsComponent } from 'app/exercises/shared/plagiarism/plagiarism-run-details/plagiarism-run-details.component';
@@ -16,7 +16,11 @@ describe('Plagiarism Split Pane Header Component', () => {
     let comp: SplitPaneHeaderComponent;
     let fixture: ComponentFixture<SplitPaneHeaderComponent>;
 
-    const files = ['src/Main.java', 'src/Utils.java', 'src/Other.java'];
+    const files = [
+        { file: 'src/Main.java', hasMatch: true },
+        { file: 'src/Utils.java', hasMatch: false },
+        { file: 'src/Other.java', hasMatch: true },
+    ];
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -24,6 +28,7 @@ describe('Plagiarism Split Pane Header Component', () => {
             declarations: [
                 SplitPaneHeaderComponent,
                 MockPipe(ArtemisTranslatePipe),
+                MockDirective(NgbDropdown),
                 MockDirective(NgbTooltip),
                 MockDirective(NgModel),
                 MockComponent(PlagiarismDetailsComponent),
@@ -62,11 +67,11 @@ describe('Plagiarism Split Pane Header Component', () => {
         });
 
         expect(comp.selectFile.emit).toHaveBeenCalledOnce();
-        expect(comp.selectFile.emit).toHaveBeenCalledWith(files[0]);
+        expect(comp.selectFile.emit).toHaveBeenCalledWith(files[0].file);
     });
 
     it('does not find an active file', () => {
-        const activeFile = comp.getActiveFile();
+        const activeFile = comp.hasActiveFile();
 
         expect(activeFile).toBeFalse();
     });
@@ -75,7 +80,7 @@ describe('Plagiarism Split Pane Header Component', () => {
         comp.files = files;
         const activeFile = comp.getActiveFile();
 
-        expect(activeFile).toBe(files[0]);
+        expect(activeFile).toBe(files[0].file);
     });
 
     it('handles selection of a file', () => {
@@ -88,7 +93,7 @@ describe('Plagiarism Split Pane Header Component', () => {
         expect(comp.activeFileIndex).toBe(idx);
         expect(comp.showFiles).toBeFalse();
         expect(comp.selectFile.emit).toHaveBeenCalledOnce();
-        expect(comp.selectFile.emit).toHaveBeenCalledWith(files[idx]);
+        expect(comp.selectFile.emit).toHaveBeenCalledWith(files[idx].file);
     });
 
     it('has no files', () => {

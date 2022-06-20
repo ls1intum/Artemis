@@ -11,6 +11,7 @@ import { HttpResponse } from '@angular/common/http';
 @Component({
     selector: 'jhi-exercise-statistics',
     templateUrl: './exercise-statistics.component.html',
+    styleUrls: ['../../../course/manage/course-management-statistics.component.scss'],
 })
 export class ExerciseStatisticsComponent implements OnInit {
     // html properties

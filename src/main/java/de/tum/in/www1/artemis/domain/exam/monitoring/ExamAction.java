@@ -28,6 +28,12 @@ import de.tum.in.www1.artemis.domain.exam.monitoring.actions.*;
 public class ExamAction extends DomainObject {
 
     /**
+     * In order to avoid DTOs, we use this value to create and identify the correct exam activity.
+     * This value is used for this purpose only. There is no guarantee that this value is always correct in other cases.
+     */
+    protected Long studentExamId;
+
+    /**
      * Multiple ExamActions are part of one ExamActivity.
      */
     @JsonBackReference
@@ -61,5 +67,13 @@ public class ExamAction extends DomainObject {
 
     public void setType(ExamActionType type) {
         this.type = type;
+    }
+
+    public Long getStudentExamId() {
+        return studentExamId;
+    }
+
+    public void setStudentExamId(Long studentExamId) {
+        this.studentExamId = studentExamId;
     }
 }
