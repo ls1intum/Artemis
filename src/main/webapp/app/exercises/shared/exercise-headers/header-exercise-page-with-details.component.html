@@ -7,7 +7,7 @@
                 &nbsp;
                 <ng-content select="[pagetitle]"></ng-content>
             </div>
-            <div class="badge-row" *ngIf="isNotReleased(exercise) || exercise.difficulty || exerciseCategories?.length">
+            <div class="badge-row" *ngIf="(exercise.releaseDate && dayjs(exercise.releaseDate).isAfter(dayjs())) || exercise.difficulty || exerciseCategories?.length">
                 <jhi-not-released-tag [exercise]="exercise" [noMargin]="true"></jhi-not-released-tag>
                 <jhi-difficulty-badge *ngIf="exercise.difficulty" class="me-3" [exercise]="exercise" [showNoLevel]="false"></jhi-difficulty-badge>
                 <div class="exercise-categories" *ngIf="exerciseCategories?.length">
