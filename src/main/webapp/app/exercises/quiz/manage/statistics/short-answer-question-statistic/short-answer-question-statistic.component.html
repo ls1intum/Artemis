@@ -66,8 +66,8 @@
                     >
                     </ngx-charts-bar-vertical>
 
-                    <div class="col-md-12 text-center">
-                        <button (click)="switchSolution()" type="button" class="btn btn-primary">
+                    <div class="col-md-12 text-center button-row">
+                        <button (click)="switchSolution()" type="button" class="btn btn-primary show-solution">
                             <fa-icon *ngIf="showSolution" [icon]="faCheckCircle"></fa-icon>&nbsp; <fa-icon *ngIf="!showSolution" [icon]="faTimesCircle"></fa-icon>&nbsp;
                             <span *ngIf="showSolution" jhiTranslate="showStatistic.dragAndDropQuestionStatistic.hideSampleSolution"></span>
                             <span *ngIf="!showSolution" jhiTranslate="showStatistic.dragAndDropQuestionStatistic.showSampleSolution"></span>

@@ -60,8 +60,9 @@ export class CourseUpdateComponent implements OnInit {
 
     // NOTE: These constants are used to define the maximum length of complaints and complaint responses.
     // This is the maximum value allowed in our database. These values must be the same as in Constants.java
-    readonly COMPLAINT_RESPONSE_TEXT_LIMIT = 5000;
-    readonly COMPLAINT_TEXT_LIMIT = 5000;
+    // Currently set to 65535 as this is the limit of TEXT
+    readonly COMPLAINT_RESPONSE_TEXT_LIMIT = 65535;
+    readonly COMPLAINT_TEXT_LIMIT = 65535;
 
     constructor(
         private courseService: CourseManagementService,

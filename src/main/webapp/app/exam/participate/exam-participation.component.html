@@ -82,7 +82,7 @@
                 </div>
             </ng-container>
             <!-- exam connection status footer bar -->
-            <div *ngIf="!disconnected" class="exam-footer connected">
+            <div *ngIf="connected" class="exam-footer connected">
                 <div class="container">
                     <div class="exam-footer-content">
                         <!-- Note by SK: this case shows an empty <p> on purpose -->
@@ -94,7 +94,7 @@
                     </div>
                 </div>
             </div>
-            <div *ngIf="disconnected" class="exam-footer disconnected">
+            <div *ngIf="!connected" class="exam-footer disconnected">
                 <div class="container">
                     <div class="exam-footer-content">
                         <p *ngIf="!isProgrammingExercise()" jhiTranslate="artemisApp.examParticipation.disconnected" class="mb-0"></p>
