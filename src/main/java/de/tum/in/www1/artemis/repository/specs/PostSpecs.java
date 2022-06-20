@@ -171,9 +171,18 @@ public class PostSpecs {
                     sortCriterion = root.get(Post_.CREATION_DATE);
                 }
                 else if (postSortCriterion == PostSortCriterion.ANSWER_COUNT) {
+                    // Count number of Answers per Post
+                    Subquery<Long> subQuery = query.subquery(Long.class);
+                    Root<AnswerPost> subRoot = subQuery.from(AnswerPost.class);
+                    Predicate postBinder = criteriaBuilder.equal(root.get(Post_.ID), subRoot.get(AnswerPost_.POST).get(Post_.ID));
+                    subQuery.select(criteriaBuilder.count(subRoot.get(AnswerPost_.POST).get(Post_.ID))).where(criteriaBuilder.and(postBinder)).groupBy(root.get(Post_.ID));
+
+                    sortCriterion = criteriaBuilder.selectCase().when(criteriaBuilder.exists(subQuery).not(), 0).otherwise(subQuery.getSelection());
 
                 }
-
+                else if (postSortCriterion == PostSortCriterion.VOTES) {
+                    // TODO
+                }
                 orderList.add(sortingOrder == SortingOrder.ASCENDING ? criteriaBuilder.asc(sortCriterion) : criteriaBuilder.desc(sortCriterion));
             }
 
@@ -181,17 +190,5 @@ public class PostSpecs {
 
             return criteriaBuilder.conjunction();
         });
-    }
-
-    /**
-     * Creates the specification to get distinct results.
-     *
-     * @return specification used to chain database operations
-     */
-    public static Specification<Post> distinct() {
-        return (root, query, criteriaBuilder) -> {
-            query.distinct(true);
-            return null;
-        };
     }
 }
