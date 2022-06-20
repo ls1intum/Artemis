@@ -9,10 +9,14 @@ import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { MockWebsocketService } from '../../../helpers/mocks/service/mock-websocket.service';
 import { ExamMonitoringService } from 'app/exam/monitoring/exam-monitoring.service';
 import { createActions } from './exam-monitoring-helper';
+import * as Sentry from '@sentry/browser';
+import { CaptureContext } from '@sentry/types';
 
 describe('ExamMonitoringService', () => {
     let examMonitoringService: ExamMonitoringService;
     let websocketService: JhiWebsocketService;
+    let artemisServerDateService: ArtemisServerDateService;
+    let captureExceptionSpy: jest.SpyInstance<string, [exception: any, captureContext?: CaptureContext | undefined]>;
     let exam: Exam;
     let studentExam: StudentExam;
     let course: Course;
@@ -26,6 +30,8 @@ describe('ExamMonitoringService', () => {
             .then(() => {
                 examMonitoringService = TestBed.inject(ExamMonitoringService);
                 websocketService = TestBed.inject(JhiWebsocketService);
+                artemisServerDateService = TestBed.inject(ArtemisServerDateService);
+                captureExceptionSpy = jest.spyOn(Sentry, 'captureException');
             });
     });
 
@@ -125,5 +131,32 @@ describe('ExamMonitoringService', () => {
 
         expect(spy).toHaveBeenCalledOnce();
         expect(spy).toHaveBeenCalledWith(ExamMonitoringService.buildWebsocketTopic(exam.id!), action);
+    });
+
+    it.each(createActions())('should send exception to sentry during invalid save', (action: ExamAction) => {
+        const error = new Error('Invalid');
+        const spy = jest.spyOn(examMonitoringService, 'sendAction').mockImplementation(() => {
+            throw error;
+        });
+
+        studentExam.examActivity = new ExamActivity();
+        studentExam.examActivity.examActions.push(action);
+        examMonitoringService.saveActions(exam, studentExam, true);
+
+        expect(spy).toHaveBeenCalledOnce();
+        expect(captureExceptionSpy).toHaveBeenCalledOnce();
+        expect(captureExceptionSpy).toHaveBeenCalledWith(error);
+    });
+
+    it.each(createActions())('should send exception to sentry during invalid handle', (action: ExamAction) => {
+        const error = new Error('Invalid');
+        const spy = jest.spyOn(artemisServerDateService, 'now').mockImplementation(() => {
+            throw error;
+        });
+
+        examMonitoringService.handleActionEvent(studentExam, action, exam.monitoring!);
+        expect(spy).toHaveBeenCalledOnce();
+        expect(captureExceptionSpy).toHaveBeenCalledOnce();
+        expect(captureExceptionSpy).toHaveBeenCalledWith(error);
     });
 });

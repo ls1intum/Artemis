@@ -5,6 +5,7 @@ import { ArtemisServerDateService } from 'app/shared/server-date.service';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { StudentExam } from 'app/entities/student-exam.model';
 import { ExamAction, ExamActivity } from 'app/entities/exam-user-activity.model';
+import { captureException } from '@sentry/browser';
 
 @Injectable({ providedIn: 'root' })
 export class ExamMonitoringService {
@@ -49,7 +50,10 @@ export class ExamMonitoringService {
             examAction.studentExamId = studentExam.id;
             examActivity.addAction(examAction);
             studentExam.examActivity = examActivity;
-        } catch (e) {}
+        } catch (error) {
+            // Send the error to sentry
+            captureException(error);
+        }
     }
 
     /**
@@ -69,7 +73,10 @@ export class ExamMonitoringService {
                 // After synchronization, we can delete the actions -> filter in case of new actions during the synchronization
                 studentExam.examActivity!.examActions = studentExam.examActivity!.examActions.filter((action) => !actionsToSend.includes(action));
             }
-        } catch (e) {}
+        } catch (error) {
+            // Send the error to sentry
+            captureException(error);
+        }
     }
 
     /**
