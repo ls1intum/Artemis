@@ -307,10 +307,14 @@ describe('ListOfComplaintsComponent', () => {
 
             switch (Number(filterOption)) {
                 case 4:
+                    // This filter option indicates that the user selected the part of the pie representing the number of addressed complaints
+                    // -> Only addressed complaints should be shown
                     expect(comp.complaintsToShow).toEqual(addressedComplaints);
                     expect(comp.showAddressedComplaints).toBeTrue();
                     break;
                 case 5:
+                    // This filter option indicates that the user selected the part of the pie representing the number of open complaints
+                    // -> Only open complaints should be shown
                     expect(comp.complaintsToShow).toEqual(openComplaints);
                     expect(comp.showAddressedComplaints).toBeFalse();
                     break;
