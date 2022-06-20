@@ -12,9 +12,9 @@ import { ArtemisSharedComponentModule } from 'app/shared/components/shared-compo
 import { ExerciseChartComponent } from 'app/exam/monitoring/charts/exercises/exercise-chart.component';
 import { Exam } from 'app/entities/exam.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
-import { SwitchedExerciseAction } from 'app/entities/exam-user-activity.model';
+import { SavedExerciseAction, SwitchedExerciseAction } from 'app/entities/exam-user-activity.model';
 import { ExerciseTemplateChartComponent } from 'app/exam/monitoring/charts/exercises/exercise-template-chart.component';
-import { createActions, createTestExercises } from '../exam-monitoring-helper';
+import { createTestExercises } from '../exam-monitoring-helper';
 import { of } from 'rxjs';
 import { ActivatedRoute } from '@angular/router';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
@@ -90,12 +90,13 @@ describe('Exercise Chart Component', () => {
 
     it('should call initData on init with multiple actions', () => {
         // GIVEN
-        const actions = createActions();
+        const savedAction = new SavedExerciseAction(false, 0, 0, false, true);
+        savedAction.examActivityId = 1;
         const action = new SwitchedExerciseAction(0);
         action.examActivityId = 1;
 
         comp.exam = exam;
-        comp.filteredExamActions = [...actions, action];
+        comp.filteredExamActions = [savedAction, action];
 
         // WHEN
         comp.ngOnInit();
