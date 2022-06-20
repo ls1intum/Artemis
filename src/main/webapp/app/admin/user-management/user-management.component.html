@@ -293,7 +293,7 @@
                         <li *ngFor="let status of this.statusFilters" class="col">
                             <label>
                                 <input class="form-check-input" (change)="this.toggleStatusFilter(status)" [checked]="this.filters.statusFilter.has(status)" type="radio" />
-                                <span class="ps-1">{{ 'a.rtemisAppuserManagement.filter.status.' + status.toString().toLowerCase() | artemisTranslate }}</span>
+                                <span class="ps-1">{{ 'artemisApp.userManagement.filter.status.' + status.toString().toLowerCase() | artemisTranslate }}</span>
                             </label>
                         </li>
                         <li class="col-3">
