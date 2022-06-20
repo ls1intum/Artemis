@@ -15,5 +15,6 @@ export class ExerciseHint implements BaseEntity {
     public exercise?: ProgrammingExercise;
     public type?: HintType;
     public programmingExerciseTask?: ProgrammingExerciseServerSideTask;
+    public displayThreshold?: number;
     public currentUserRating?: number;
 }

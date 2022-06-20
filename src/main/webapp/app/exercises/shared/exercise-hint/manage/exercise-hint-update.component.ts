@@ -63,6 +63,7 @@ export class ExerciseHintUpdateComponent implements OnInit, OnDestroy {
         });
         this.route.data.subscribe(({ exerciseHint }) => {
             this.exerciseHint = exerciseHint;
+            this.exerciseHint.displayThreshold = this.exerciseHint.displayThreshold ?? 3;
 
             if (!this.exerciseHint.exercise) {
                 this.programmingExerciseService
