@@ -14,6 +14,8 @@ import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ExamMonitoringComponent, TableContent } from 'app/exam/monitoring/exam-monitoring.component';
 import { ExamMonitoringService } from 'app/exam/monitoring/exam-monitoring.service';
 import dayjs from 'dayjs/esm';
+import { JhiWebsocketService } from '../../../../../../main/webapp/app/core/websocket/websocket.service';
+import { MockWebsocketService } from '../../../helpers/mocks/service/mock-websocket.service';
 
 describe('Exam Monitoring Component', () => {
     // Course
@@ -41,7 +43,12 @@ describe('Exam Monitoring Component', () => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule],
             declarations: [ExamMonitoringComponent, ArtemisDatePipe, MockPipe(ArtemisTranslatePipe)],
-            providers: [{ provide: TranslateService, useClass: MockTranslateService }, { provide: ActivatedRoute, useValue: route }, { provide: ArtemisDatePipe }],
+            providers: [
+                { provide: TranslateService, useClass: MockTranslateService },
+                { provide: ActivatedRoute, useValue: route },
+                { provide: ArtemisDatePipe },
+                { provide: JhiWebsocketService, useClass: MockWebsocketService },
+            ],
         })
             .compileComponents()
             .then(() => {
