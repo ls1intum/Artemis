@@ -17,7 +17,7 @@ public class PostSpecs {
     public static Specification<Post> getCourseSpecification(Long courseId, Long lectureId, Long exerciseId) {
         return (root, query, criteriaBuilder) -> {
             if (lectureId != null || exerciseId != null) {
-                return criteriaBuilder.conjunction();
+                return null;
             }
             else {
                 Join<Post, Lecture> joinedLectures = root.join(Post_.LECTURE, JoinType.LEFT);
@@ -34,7 +34,7 @@ public class PostSpecs {
     public static Specification<Post> getLectureSpecification(Long lectureId) {
         return ((root, query, criteriaBuilder) -> {
             if (lectureId == null) {
-                return criteriaBuilder.conjunction();
+                return null;
             }
             else {
                 return criteriaBuilder.equal(root.get(Post_.LECTURE).get(Lecture_.ID), lectureId);
@@ -45,7 +45,7 @@ public class PostSpecs {
     public static Specification<Post> getExerciseSpecification(Long exerciseId) {
         return ((root, query, criteriaBuilder) -> {
             if (exerciseId == null) {
-                return criteriaBuilder.conjunction();
+                return null;
             }
             else {
                 return criteriaBuilder.equal(root.get(Post_.EXERCISE).get(Exercise_.ID), exerciseId);
@@ -56,7 +56,7 @@ public class PostSpecs {
     public static Specification<Post> getCourseWideContextSpecification(CourseWideContext courseWideContext) {
         return ((root, query, criteriaBuilder) -> {
             if (courseWideContext == null) {
-                return criteriaBuilder.conjunction();
+                return null;
             }
             else {
                 return criteriaBuilder.equal(root.get(Post_.COURSE_WIDE_CONTEXT), courseWideContext);
@@ -67,7 +67,7 @@ public class PostSpecs {
     public static Specification<Post> getOwnSpecification(Boolean filterToOwn, Long userId) {
         return ((root, query, criteriaBuilder) -> {
             if (filterToOwn == null || !filterToOwn) {
-                return criteriaBuilder.conjunction();
+                return null;
             }
             else {
                 return criteriaBuilder.equal(root.get(Post_.AUTHOR), userId);
@@ -78,7 +78,7 @@ public class PostSpecs {
     public static Specification<Post> getAnsweredOrReactedSpecification(Boolean answeredOrReacted, Long userId) {
         return ((root, query, criteriaBuilder) -> {
             if (answeredOrReacted == null || !answeredOrReacted) {
-                return criteriaBuilder.conjunction();
+                return null;
             }
             else {
                 Join<Post, AnswerPost> joinedAnswers = root.join(Post_.ANSWERS, JoinType.LEFT);
@@ -98,7 +98,7 @@ public class PostSpecs {
     public static Specification<Post> getUnresolvedSpecification(Boolean unresolved) {
         return ((root, query, criteriaBuilder) -> {
             if (unresolved == null || !unresolved) {
-                return criteriaBuilder.conjunction();
+                return null;
             }
             else {
                 root.join(Post_.ANSWERS, JoinType.LEFT);
@@ -131,7 +131,7 @@ public class PostSpecs {
     public static Specification<Post> getSearchTextSpecification(String searchText) {
         return ((root, query, criteriaBuilder) -> {
             if (searchText == null || searchText.isBlank()) {
-                return criteriaBuilder.conjunction();
+                return null;
             }
             // search by text or #post
             else if (searchText.startsWith("#") && (searchText.substring(1) != null && !searchText.substring(1).isBlank())) {
@@ -151,42 +151,44 @@ public class PostSpecs {
         });
     }
 
-    public static Specification<Post> getSortSpecification(PostSortCriterion postSortCriterion, SortingOrder sortingOrder) {
+    public static Specification<Post> getSortSpecification(boolean pagingEnabled, PostSortCriterion postSortCriterion, SortingOrder sortingOrder) {
         return ((root, query, criteriaBuilder) -> {
+            if (pagingEnabled) {
 
-            List<Order> orderList = new ArrayList<>();
+                List<Order> orderList = new ArrayList<>();
 
-            Expression<Object> pinnedFirstThenAnnouncementsArchivedLast = criteriaBuilder.selectCase()
-                    .when(criteriaBuilder.and(criteriaBuilder.equal(root.get(Post_.DISPLAY_PRIORITY), criteriaBuilder.literal(DisplayPriority.PINNED)),
-                            criteriaBuilder.equal(root.get(Post_.COURSE_WIDE_CONTEXT), criteriaBuilder.literal(CourseWideContext.ANNOUNCEMENT))), 1)
-                    .when(criteriaBuilder.equal(root.get(Post_.DISPLAY_PRIORITY), criteriaBuilder.literal(DisplayPriority.PINNED)), 2)
-                    .when(criteriaBuilder.equal(root.get(Post_.DISPLAY_PRIORITY), criteriaBuilder.literal(DisplayPriority.NONE)), 3)
-                    .when(criteriaBuilder.equal(root.get(Post_.DISPLAY_PRIORITY), criteriaBuilder.literal(DisplayPriority.ARCHIVED)), 4);
-            orderList.add(criteriaBuilder.asc(pinnedFirstThenAnnouncementsArchivedLast));
+                Expression<Object> pinnedFirstThenAnnouncementsArchivedLast = criteriaBuilder.selectCase()
+                        .when(criteriaBuilder.and(criteriaBuilder.equal(root.get(Post_.DISPLAY_PRIORITY), criteriaBuilder.literal(DisplayPriority.PINNED)),
+                                criteriaBuilder.equal(root.get(Post_.COURSE_WIDE_CONTEXT), criteriaBuilder.literal(CourseWideContext.ANNOUNCEMENT))), 1)
+                        .when(criteriaBuilder.equal(root.get(Post_.DISPLAY_PRIORITY), criteriaBuilder.literal(DisplayPriority.PINNED)), 2)
+                        .when(criteriaBuilder.equal(root.get(Post_.DISPLAY_PRIORITY), criteriaBuilder.literal(DisplayPriority.NONE)), 3)
+                        .when(criteriaBuilder.equal(root.get(Post_.DISPLAY_PRIORITY), criteriaBuilder.literal(DisplayPriority.ARCHIVED)), 4);
+                orderList.add(criteriaBuilder.asc(pinnedFirstThenAnnouncementsArchivedLast));
 
-            if (postSortCriterion != null) {
-                Expression<?> sortCriterion = null;
+                if (postSortCriterion != null) {
+                    Expression<?> sortCriterion = null;
 
-                if (postSortCriterion == PostSortCriterion.CREATION_DATE) {
-                    sortCriterion = root.get(Post_.CREATION_DATE);
+                    if (postSortCriterion == PostSortCriterion.CREATION_DATE) {
+                        sortCriterion = root.get(Post_.CREATION_DATE);
+                    }
+                    else if (postSortCriterion == PostSortCriterion.ANSWER_COUNT) {
+                        // Count number of Answers per Post
+                        Subquery<Long> subQuery = query.subquery(Long.class);
+                        Root<AnswerPost> subRoot = subQuery.from(AnswerPost.class);
+                        Predicate postBinder = criteriaBuilder.equal(root.get(Post_.ID), subRoot.get(AnswerPost_.POST).get(Post_.ID));
+                        subQuery.select(criteriaBuilder.count(subRoot.get(AnswerPost_.POST).get(Post_.ID))).where(criteriaBuilder.and(postBinder)).groupBy(root.get(Post_.ID));
+
+                        sortCriterion = criteriaBuilder.selectCase().when(criteriaBuilder.exists(subQuery).not(), 0).otherwise(subQuery.getSelection());
+
+                    }
+                    else if (postSortCriterion == PostSortCriterion.VOTES) {
+                        // TODO
+                    }
+                    orderList.add(sortingOrder == SortingOrder.ASCENDING ? criteriaBuilder.asc(sortCriterion) : criteriaBuilder.desc(sortCriterion));
                 }
-                else if (postSortCriterion == PostSortCriterion.ANSWER_COUNT) {
-                    // Count number of Answers per Post
-                    Subquery<Long> subQuery = query.subquery(Long.class);
-                    Root<AnswerPost> subRoot = subQuery.from(AnswerPost.class);
-                    Predicate postBinder = criteriaBuilder.equal(root.get(Post_.ID), subRoot.get(AnswerPost_.POST).get(Post_.ID));
-                    subQuery.select(criteriaBuilder.count(subRoot.get(AnswerPost_.POST).get(Post_.ID))).where(criteriaBuilder.and(postBinder)).groupBy(root.get(Post_.ID));
 
-                    sortCriterion = criteriaBuilder.selectCase().when(criteriaBuilder.exists(subQuery).not(), 0).otherwise(subQuery.getSelection());
-
-                }
-                else if (postSortCriterion == PostSortCriterion.VOTES) {
-                    // TODO
-                }
-                orderList.add(sortingOrder == SortingOrder.ASCENDING ? criteriaBuilder.asc(sortCriterion) : criteriaBuilder.desc(sortCriterion));
+                query.orderBy(orderList);
             }
-
-            query.orderBy(orderList);
 
             return criteriaBuilder.conjunction();
         });

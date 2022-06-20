@@ -36,7 +36,7 @@ public interface PostRepository extends JpaRepository<Post, Long>, JpaSpecificat
                                 .and(getOwnSpecification(postContextFilter.getFilterToOwn(), userId)))
                         .and(getAnsweredOrReactedSpecification(postContextFilter.getFilterToAnsweredOrReacted(), userId))
                         .and(getUnresolvedSpecification(postContextFilter.getFilterToUnresolved()))
-                        .and(getSortSpecification(postContextFilter.getPostSortCriterion(), postContextFilter.getSortingOrder())));
+                        .and(getSortSpecification(pagingEnabled, postContextFilter.getPostSortCriterion(), postContextFilter.getSortingOrder())));
 
         if (pagingEnabled) {
             return findAll(specification, pageable);
