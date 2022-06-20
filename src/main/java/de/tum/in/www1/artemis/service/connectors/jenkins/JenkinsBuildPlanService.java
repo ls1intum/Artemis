@@ -34,6 +34,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.offbytwo.jenkins.JenkinsServer;
 
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.enumeration.BuildPlanType;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
@@ -101,7 +102,7 @@ public class JenkinsBuildPlanService {
         var programmingLanguage = exercise.getProgrammingLanguage();
         var staticCodeAnalysisEnabled = exercise.isStaticCodeAnalysisEnabled();
         var isSequentialTestRuns = exercise.hasSequentialTestRuns();
-        var isSolutionPlan = planKey.equals("SOLUTION");
+        var isSolutionPlan = planKey.equals(BuildPlanType.SOLUTION.getName());
         var testwiseCoverageAnalysisEnabled = exercise.isTestwiseCoverageEnabled() && isSolutionPlan;
 
         final var configBuilder = builderFor(programmingLanguage, exercise.getProjectType());

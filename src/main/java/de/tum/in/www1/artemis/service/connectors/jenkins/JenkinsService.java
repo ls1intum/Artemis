@@ -176,7 +176,8 @@ public class JenkinsService extends AbstractContinuousIntegrationService {
 
     @Override
     protected void addFeedbackToResult(Result result, AbstractBuildResultNotificationDTO buildResult) {
-        final var jobs = ((TestResultsDTO) buildResult).getResults();
+        final var testResults = ((TestResultsDTO) buildResult);
+        final var jobs = testResults.getResults();
         final var programmingExercise = (ProgrammingExercise) result.getParticipation().getExercise();
         final var programmingLanguage = programmingExercise.getProgrammingLanguage();
         final var projectType = programmingExercise.getProjectType();
@@ -191,13 +192,13 @@ public class JenkinsService extends AbstractContinuousIntegrationService {
         }
 
         // Extract static code analysis feedback if option was enabled
-        final var staticCodeAnalysisReports = ((TestResultsDTO) buildResult).getStaticCodeAnalysisReports();
+        final var staticCodeAnalysisReports = testResults.getStaticCodeAnalysisReports();
         if (Boolean.TRUE.equals(programmingExercise.isStaticCodeAnalysisEnabled()) && staticCodeAnalysisReports != null && !staticCodeAnalysisReports.isEmpty()) {
             var scaFeedbackList = feedbackRepository.createFeedbackFromStaticCodeAnalysisReports(staticCodeAnalysisReports);
             result.addFeedbacks(scaFeedbackList);
         }
 
-        final var testwiseCoverageReport = ((TestResultsDTO) buildResult).getTestwiseCoverageReport();
+        final var testwiseCoverageReport = testResults.getTestwiseCoverageReport();
         if (Boolean.TRUE.equals(programmingExercise.isTestwiseCoverageEnabled()) && testwiseCoverageReport != null && !testwiseCoverageReport.isEmpty()) {
             // since the test cases are not saved to the database yet, the test case is null for the entries
             var coverageFileReportsWithoutTestsByTestCaseName = testwiseCoverageService.createTestwiseCoverageFileReportsWithoutTestsByTestCaseName(testwiseCoverageReport);
