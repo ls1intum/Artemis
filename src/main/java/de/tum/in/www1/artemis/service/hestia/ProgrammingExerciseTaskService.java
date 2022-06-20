@@ -158,6 +158,10 @@ public class ProgrammingExerciseTaskService {
      */
     private List<String> extractTestCaseNames(String capturedTestCaseNames) {
         List<String> testCaseNames = new ArrayList<>();
+        if ("".equals(capturedTestCaseNames)) {
+            return testCaseNames;
+        }
+
         int numberUnclosedRoundedBrackets = 0;
         StringBuilder currentTestCaseName = new StringBuilder();
         for (int i = 0; i < capturedTestCaseNames.length(); i++) {
@@ -165,7 +169,7 @@ public class ProgrammingExerciseTaskService {
 
             // check potential split
             if (currentChar == ',' && numberUnclosedRoundedBrackets == 0) {
-                testCaseNames.add(currentTestCaseName.toString());
+                testCaseNames.add(currentTestCaseName.toString().trim());
                 currentTestCaseName = new StringBuilder();
                 continue;
             }
@@ -179,13 +183,10 @@ public class ProgrammingExerciseTaskService {
             }
 
             currentTestCaseName.append(currentChar);
-
-            // when at the end of the captured names, add the current name to the result
-            if (capturedTestCaseNames.length() == i + 1) {
-                testCaseNames.add(currentTestCaseName.toString());
-            }
         }
 
-        return testCaseNames.stream().map(String::trim).toList();
+        testCaseNames.add(currentTestCaseName.toString().trim());
+
+        return testCaseNames;
     }
 }
