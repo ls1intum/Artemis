@@ -1,7 +1,7 @@
 import { Component, Input, OnDestroy, OnInit } from '@angular/core';
 import { Exam } from 'app/entities/exam.model';
 import { getColor, getCurrentAmountOfStudentsPerExercises } from 'app/exam/monitoring/charts/monitoring-chart';
-import { ExamAction } from 'app/entities/exam-user-activity.model';
+import { ExamAction, ExamActionType } from 'app/entities/exam-user-activity.model';
 import { ChartComponent } from 'app/exam/monitoring/charts/chart.component';
 import { ExamMonitoringWebsocketService } from '../../exam-monitoring-websocket.service';
 import { ActivatedRoute } from '@angular/router';
@@ -66,8 +66,7 @@ export class ExerciseGroupChartComponent extends ChartComponent implements OnIni
         this.ngxColor = Object.assign({}, this.ngxColor);
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     filterRenderedData(examAction: ExamAction) {
-        return true;
+        return examAction.type === ExamActionType.SWITCHED_EXERCISE || examAction.type === ExamActionType.SAVED_EXERCISE;
     }
 }

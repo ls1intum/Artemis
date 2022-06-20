@@ -60,6 +60,6 @@ export class ExerciseChartComponent extends ChartComponent implements OnInit, On
     }
 
     filterRenderedData(examAction: ExamAction) {
-        return examAction.type === ExamActionType.SWITCHED_EXERCISE;
+        return examAction.type === ExamActionType.SWITCHED_EXERCISE || examAction.type === ExamActionType.SAVED_EXERCISE;
     }
 }

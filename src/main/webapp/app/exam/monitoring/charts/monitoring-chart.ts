@@ -1,5 +1,5 @@
 import { GraphColors } from 'app/entities/statistics.model';
-import { ExamAction, ExamActionType, SwitchedExerciseAction } from 'app/entities/exam-user-activity.model';
+import { ExamAction, ExamActionType, SavedExerciseAction, SwitchedExerciseAction } from 'app/entities/exam-user-activity.model';
 import { groupBy } from 'lodash';
 import { Exam } from 'app/entities/exam.model';
 import { NgxChartsEntry } from 'app/shared/chart/ngx-charts-datatypes';
@@ -92,10 +92,15 @@ export function getCurrentAmountOfStudentsPerExercises(examActions: ExamAction[]
     const groupedByActivityId = getLastActionGroupedByActivityId(examActions);
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     for (const [_, action] of groupedByActivityId) {
+        let typedAction = undefined;
         if (action.type === ExamActionType.SWITCHED_EXERCISE) {
-            const switchedExerciseAction = action as SwitchedExerciseAction;
-            if (switchedExerciseAction.exerciseId !== undefined) {
-                exerciseAmountMap.set(switchedExerciseAction.exerciseId, (exerciseAmountMap.get(switchedExerciseAction.exerciseId) ?? 0) + 1);
+            typedAction = action as SwitchedExerciseAction;
+        } else if (action.type === ExamActionType.SAVED_EXERCISE) {
+            typedAction = action as SavedExerciseAction;
+        }
+        if (typedAction) {
+            if (typedAction.exerciseId !== undefined) {
+                exerciseAmountMap.set(typedAction.exerciseId, (exerciseAmountMap.get(typedAction.exerciseId) ?? 0) + 1);
             }
         }
     }
