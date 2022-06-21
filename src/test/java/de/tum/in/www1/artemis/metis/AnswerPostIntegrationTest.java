@@ -3,7 +3,6 @@ package de.tum.in.www1.artemis.metis;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.Collection;
-import java.util.Comparator;
 import java.util.List;
 
 import org.junit.jupiter.api.AfterEach;
@@ -18,7 +17,10 @@ import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.SortingOrder;
-import de.tum.in.www1.artemis.domain.metis.*;
+import de.tum.in.www1.artemis.domain.metis.AnswerPost;
+import de.tum.in.www1.artemis.domain.metis.CourseWideContext;
+import de.tum.in.www1.artemis.domain.metis.Post;
+import de.tum.in.www1.artemis.domain.metis.PostSortCriterion;
 import de.tum.in.www1.artemis.repository.metis.AnswerPostRepository;
 
 public class AnswerPostIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
@@ -282,9 +284,12 @@ public class AnswerPostIntegrationTest extends AbstractSpringIntegrationBambooBi
 
         List<Post> returnedPosts = request.getList("/api/courses/" + courseId + "/posts", HttpStatus.OK, Post.class, params);
         database.assertSensitiveInformationHidden(returnedPosts);
-        existingPostsWithAnswers = existingPostsWithAnswers.stream().sorted(Comparator.comparing((Post post) -> post.getAnswers().size()).reversed()).toList();
 
-        assertThat(returnedPosts).isEqualTo(existingPostsWithAnswers);
+        int numberOfMaxAnswersSeenOnAnyPost = Integer.MAX_VALUE;
+        for (int i = 0; i < returnedPosts.size(); i++) {
+            assertThat(returnedPosts.get(i).getAnswers().size()).isLessThanOrEqualTo(numberOfMaxAnswersSeenOnAnyPost);
+            numberOfMaxAnswersSeenOnAnyPost = returnedPosts.get(i).getAnswers().size();
+        }
     }
 
     @Test
@@ -305,9 +310,12 @@ public class AnswerPostIntegrationTest extends AbstractSpringIntegrationBambooBi
 
         List<Post> returnedPosts = request.getList("/api/courses/" + courseId + "/posts", HttpStatus.OK, Post.class, params);
         database.assertSensitiveInformationHidden(returnedPosts);
-        existingPostsWithAnswers = existingPostsWithAnswers.stream().sorted(Comparator.comparing(post -> post.getAnswers().size())).toList();
 
-        assertThat(returnedPosts).isEqualTo(existingPostsWithAnswers);
+        int numberOfMaxAnswersSeenOnAnyPost = 0;
+        for (int i = 0; i < returnedPosts.size(); i++) {
+            assertThat(returnedPosts.get(i).getAnswers().size()).isGreaterThanOrEqualTo(numberOfMaxAnswersSeenOnAnyPost);
+            numberOfMaxAnswersSeenOnAnyPost = returnedPosts.get(i).getAnswers().size();
+        }
     }
 
     @Test

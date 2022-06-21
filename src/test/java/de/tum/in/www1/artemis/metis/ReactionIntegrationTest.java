@@ -4,7 +4,6 @@ import static de.tum.in.www1.artemis.config.Constants.VOTE_EMOJI_ID;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.Collection;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
 
@@ -220,9 +219,6 @@ public class ReactionIntegrationTest extends AbstractSpringIntegrationBambooBitb
         createVoteReactionOnPost(postReactedOn2, student1);
         createVoteReactionOnPost(postReactedOn2, student2);
 
-        // refresh posts after reactions are added
-        existingPostsWithAnswers = postRepository.findPostsForCourse(courseId, null, false, false, false, null);
-
         var params = new LinkedMultiValueMap<String, String>();
 
         // ordering only available in course discussions page, where paging is enabled
@@ -235,10 +231,12 @@ public class ReactionIntegrationTest extends AbstractSpringIntegrationBambooBitb
 
         List<Post> returnedPosts = request.getList("/api/courses/" + courseId + "/posts", HttpStatus.OK, Post.class, params);
 
-        existingPostsWithAnswers
-                .sort(Comparator.comparing((Post post) -> post.getReactions().stream().filter(reaction -> reaction.getEmojiId().equals(VOTE_EMOJI_ID)).count()).reversed());
-
-        assertThat(returnedPosts).isEqualTo(existingPostsWithAnswers);
+        Long numberOfMaxVotesSeenOnAnyPost = Long.MAX_VALUE;
+        for (int i = 0; i < returnedPosts.size(); i++) {
+            Long numberOfVotes = returnedPosts.get(i).getReactions().stream().filter(reaction -> reaction.getEmojiId().equals(VOTE_EMOJI_ID)).count();
+            assertThat(numberOfVotes).isLessThanOrEqualTo(numberOfMaxVotesSeenOnAnyPost);
+            numberOfMaxVotesSeenOnAnyPost = numberOfVotes;
+        }
     }
 
     @Test
@@ -257,9 +255,6 @@ public class ReactionIntegrationTest extends AbstractSpringIntegrationBambooBitb
         Post post2ReactedOn = existingPostsWithAnswers.get(1);
         createVoteReactionOnPost(post2ReactedOn, student2);
 
-        // refresh posts after reactions are added
-        existingPostsWithAnswers = postRepository.findPostsForCourse(courseId, null, false, false, false, null);
-
         var params = new LinkedMultiValueMap<String, String>();
 
         // ordering only available in course discussions page, where paging is enabled
@@ -272,9 +267,12 @@ public class ReactionIntegrationTest extends AbstractSpringIntegrationBambooBitb
 
         List<Post> returnedPosts = request.getList("/api/courses/" + courseId + "/posts", HttpStatus.OK, Post.class, params);
 
-        existingPostsWithAnswers.sort(Comparator.comparing((Post post) -> post.getReactions().stream().filter(reaction -> reaction.getEmojiId().equals(VOTE_EMOJI_ID)).count()));
-
-        assertThat(returnedPosts).isEqualTo(existingPostsWithAnswers);
+        Long numberOfMaxVotesSeenOnAnyPost = 0L;
+        for (int i = 0; i < returnedPosts.size(); i++) {
+            Long numberOfVotes = returnedPosts.get(i).getReactions().stream().filter(reaction -> reaction.getEmojiId().equals(VOTE_EMOJI_ID)).count();
+            assertThat(numberOfVotes).isGreaterThanOrEqualTo(numberOfMaxVotesSeenOnAnyPost);
+            numberOfMaxVotesSeenOnAnyPost = numberOfVotes;
+        }
     }
 
     // DELETE
