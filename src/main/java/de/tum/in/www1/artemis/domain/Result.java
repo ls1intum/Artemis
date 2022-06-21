@@ -113,13 +113,13 @@ public class Result extends DomainObject {
 
     // The following attributes are only used for Programming Exercises
     @Column(name = "test_case_count")
-    private Integer testCaseCount;
+    private Integer testCaseCount = 0;
 
     @Column(name = "passed_test_case_count")
-    private Integer passedTestCaseCount;
+    private Integer passedTestCaseCount = 0;
 
     @Column(name = "code_issue_count")
-    private Integer codeIssueCount;
+    private Integer codeIssueCount = 0;
 
     // This attribute is required to forward the coverage file reports after creating the build result. This is required in order to
     // delay referencing the corresponding test cases from the entries because the test cases are not saved in the database
