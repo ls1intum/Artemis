@@ -22,7 +22,7 @@ import { Complaint, ComplaintType } from 'app/entities/complaint.model';
 import { ModelingAssessmentService } from 'app/exercises/modeling/assess/modeling-assessment.service';
 import { assessmentNavigateBack } from 'app/exercises/shared/navigate-back.util';
 import { StructuredGradingCriterionService } from 'app/exercises/shared/structured-grading-criterion/structured-grading-criterion.service';
-import { getSubmissionResultByCorrectionRound, getSubmissionResultById } from 'app/entities/submission.model';
+import { getLatestSubmissionResult, getSubmissionResultByCorrectionRound, getSubmissionResultById } from 'app/entities/submission.model';
 import { getExerciseDashboardLink, getLinkToSubmissionAssessment } from 'app/utils/navigation.utils';
 import { ExerciseType, getCourseFromExercise } from 'app/entities/exercise.model';
 import { SubmissionService } from 'app/exercises/shared/submission/submission.service';
@@ -64,8 +64,8 @@ export class ModelingAssessmentEditorComponent implements OnInit {
     isTestRun = false;
     hasAutomaticFeedback = false;
     hasAssessmentDueDatePassed: boolean;
-    correctionRound = 0;
-    resultId: number;
+    correctionRound?: number;
+    resultId?: number;
     loadingInitialSubmission = true;
     highlightDifferences = false;
     resizeOptions = { verticalResize: true };
@@ -119,7 +119,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
             this.exerciseDashboardLink = getExerciseDashboardLink(this.courseId, this.exerciseId, this.examId, this.isTestRun);
 
             const submissionId = params.get('submissionId');
-            this.resultId = Number(params.get('resultId')) ?? 0;
+            this.resultId = Number(params.get('resultId'));
             if (submissionId === 'new') {
                 this.loadRandomSubmission(this.exerciseId);
             } else {
@@ -160,11 +160,14 @@ export class ModelingAssessmentEditorComponent implements OnInit {
         const studentParticipation = this.submission.participation as StudentParticipation;
         this.modelingExercise = studentParticipation.exercise as ModelingExercise;
         this.course = getCourseFromExercise(this.modelingExercise);
-        if (this.resultId > 0) {
-            this.result = getSubmissionResultById(submission, this.resultId);
-            this.correctionRound = submission.results?.findIndex((result) => result.id === this.resultId)!;
-        } else {
+        if (this.resultId) {
+            this.result = getSubmissionResultById(submission, this.resultId!);
+            this.correctionRound = submission.results?.findIndex((result) => result.id === this.resultId);
+        } else if (this.correctionRound) {
             this.result = getSubmissionResultByCorrectionRound(this.submission, this.correctionRound);
+        } else {
+            this.result = getLatestSubmissionResult(this.submission);
+            this.correctionRound = submission.results?.length;
         }
         this.hasAssessmentDueDatePassed = !!this.modelingExercise!.assessmentDueDate && dayjs(this.modelingExercise!.assessmentDueDate).isBefore(dayjs());
 
@@ -195,7 +198,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
         }
         this.checkPermissions();
 
-        this.submissionService.handleFeedbackCorrectionRoundTag(this.correctionRound, this.submission);
+        this.submissionService.handleFeedbackCorrectionRoundTag(this.correctionRound!, this.submission);
 
         this.isLoading = false;
     }
@@ -424,7 +427,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
         if (!this.isApollonModelLoaded) {
             this.isApollonModelLoaded = true;
             this.calculateTotalScore();
-            this.submissionService.handleFeedbackCorrectionRoundTag(this.correctionRound, this.submission!);
+            this.submissionService.handleFeedbackCorrectionRoundTag(this.correctionRound!, this.submission!);
             return;
         }
 
@@ -472,7 +475,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
         const hasUnreferencedFeedback = Feedback.haveCreditsAndComments(this.unreferencedFeedback);
         // When unreferenced feedback is set, it has to be valid (score + detailed text)
         this.assessmentsAreValid = (hasReferencedFeedback && this.unreferencedFeedback.length === 0) || hasUnreferencedFeedback;
-        this.submissionService.handleFeedbackCorrectionRoundTag(this.correctionRound, this.submission!);
+        this.submissionService.handleFeedbackCorrectionRoundTag(this.correctionRound!, this.submission!);
     }
 
     navigateBack() {

@@ -331,7 +331,8 @@ public class TextAssessmentResource extends AssessmentResource {
     @GetMapping("participations/{participationId}/submissions/{submissionId}/for-text-assessment")
     @PreAuthorize("hasRole('TA')")
     public ResponseEntity<Participation> retrieveParticipationForSubmission(@PathVariable Long participationId, @PathVariable Long submissionId,
-            @RequestParam(value = "correction-round", defaultValue = "0") int correctionRound, @RequestParam(value = "resultId", required = false) Long resultId) {
+            @RequestParam(value = "correction-round", defaultValue = "0") int correctionRound, @RequestParam(value = "resultId", required = false) Long resultId,
+            @RequestParam(value = "latestResult", defaultValue = "false") boolean latestResult) {
 
         log.debug("REST request to get data for tutors text assessment submission: {}", submissionId);
         final var textSubmission = textSubmissionRepository.findByIdWithParticipationExerciseResultAssessorElseThrow(submissionId);
@@ -396,7 +397,7 @@ public class TextAssessmentResource extends AssessmentResource {
             result = textSubmission.getResultForCorrectionRound(correctionRound);
         }
 
-        textSubmission.removeNotNeededResults(correctionRound, resultId);
+        textSubmission.removeNotNeededResults(correctionRound, resultId, latestResult);
         participation.setResults(Set.copyOf(textSubmission.getResults()));
 
         final ResponseEntity.BodyBuilder bodyBuilder = ResponseEntity.ok();

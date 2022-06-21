@@ -182,11 +182,10 @@ public class ComplaintResource {
         StudentParticipation participation = (StudentParticipation) complaint.getResult().getParticipation();
         var exercise = participation.getExercise();
         var isOwner = authCheckService.isOwnerOfParticipation(participation, user);
-        var isAtLeastTA = authCheckService.isAtLeastTeachingAssistantForExercise(exercise, user);
-        if (!isOwner && !isAtLeastTA) {
+        var isAtLeastTutor = authCheckService.isAtLeastTeachingAssistantForExercise(exercise, user);
+        if (!isOwner && !isAtLeastTutor) {
             throw new AccessForbiddenException();
         }
-        var isAtLeastTutor = authCheckService.isAtLeastTeachingAssistantForExercise(exercise, user);
         var isAtLeastInstructor = authCheckService.isAtLeastInstructorForExercise(exercise, user);
         var isTeamParticipation = participation.getParticipant() instanceof Team;
         var isTutorOfTeam = user.getLogin().equals(participation.getTeam().map(team -> team.getOwner().getLogin()).orElse(null));

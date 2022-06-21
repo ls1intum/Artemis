@@ -12,7 +12,14 @@ import { TextBlockRef } from 'app/entities/text-block-ref.model';
 import { cloneDeep } from 'lodash-es';
 import { TextSubmission } from 'app/entities/text-submission.model';
 import { FeedbackConflict } from 'app/entities/feedback-conflict';
-import { getLatestSubmissionResult, getSubmissionResultByCorrectionRound, getSubmissionResultById, setLatestSubmissionResult, Submission } from 'app/entities/submission.model';
+import {
+    getLastResult,
+    getLatestSubmissionResult,
+    getSubmissionResultByCorrectionRound,
+    getSubmissionResultById,
+    setLatestSubmissionResult,
+    Submission,
+} from 'app/entities/submission.model';
 import { Participation } from 'app/entities/participation/participation.model';
 import { TextAssessmentEvent } from 'app/entities/text-assesment-event.model';
 import { AccountService } from 'app/core/auth/account.service';
@@ -132,13 +139,15 @@ export class TextAssessmentService {
      * @param correctionRound
      * @param resultId id of the searched result (if instructors search for a specific result)
      */
-    public getFeedbackDataForExerciseSubmission(participationId: number, submissionId: number, correctionRound = 0, resultId?: number): Observable<StudentParticipation> {
+    public getFeedbackDataForExerciseSubmission(participationId: number, submissionId: number, correctionRound?: number, resultId?: number): Observable<StudentParticipation> {
         let params = new HttpParams();
-        if (resultId && resultId > 0) {
+        if (resultId) {
             // in case resultId is set, we do not need the correction round
             params = params.set('resultId', resultId!.toString());
-        } else {
+        } else if (correctionRound) {
             params = params.set('correction-round', correctionRound.toString());
+        } else {
+            params = params.set('latestResult', true);
         }
         return this.http
             .get<StudentParticipation>(`${this.resourceUrl}/participations/${participationId}/submissions/${submissionId}/for-text-assessment`, { observe: 'response', params })
@@ -153,8 +162,10 @@ export class TextAssessmentService {
                     let result;
                     if (resultId) {
                         result = getSubmissionResultById(submission, resultId);
-                    } else {
+                    } else if (correctionRound) {
                         result = getSubmissionResultByCorrectionRound(submission, correctionRound)!;
+                    } else {
+                        result = getLastResult(submission);
                     }
                     TextAssessmentService.reconnectResultsParticipation(participation, submission, result!);
                     (submission as TextSubmission).atheneTextAssessmentTrackingToken = response.headers.get('x-athene-tracking-authorization') || undefined;

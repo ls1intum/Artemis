@@ -158,7 +158,8 @@ public class FileUploadSubmissionResource extends AbstractSubmissionResource {
     @GetMapping("file-upload-submissions/{submissionId}")
     @PreAuthorize("hasRole('TA')")
     public ResponseEntity<FileUploadSubmission> getFileUploadSubmission(@PathVariable Long submissionId,
-            @RequestParam(value = "correction-round", defaultValue = "0") int correctionRound, @RequestParam(value = "resultId", required = false) Long resultId) {
+            @RequestParam(value = "correction-round", defaultValue = "0") int correctionRound, @RequestParam(value = "resultId", required = false) Long resultId,
+            @RequestParam(value = "latestResult", defaultValue = "false") boolean latestResult) {
         log.debug("REST request to get FileUploadSubmission with id: {}", submissionId);
         var fileUploadSubmission = fileUploadSubmissionRepository.findByIdElseThrow(submissionId);
         var studentParticipation = (StudentParticipation) fileUploadSubmission.getParticipation();
@@ -192,7 +193,7 @@ public class FileUploadSubmissionResource extends AbstractSubmissionResource {
 
         // prepare fileUploadSubmission for response
         fileUploadSubmissionService.hideDetails(fileUploadSubmission, user);
-        fileUploadSubmission.removeNotNeededResults(correctionRound, resultId);
+        fileUploadSubmission.removeNotNeededResults(correctionRound, resultId, latestResult);
         return ResponseEntity.ok(fileUploadSubmission);
     }
 

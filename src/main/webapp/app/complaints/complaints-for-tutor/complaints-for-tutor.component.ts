@@ -4,7 +4,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { ComplaintResponseService } from 'app/complaints/complaint-response.service';
 import { ComplaintResponse } from 'app/entities/complaint-response.model';
 import { Complaint, ComplaintType } from 'app/entities/complaint.model';
-import { finalize } from 'rxjs/operators';
+import { finalize, take } from 'rxjs/operators';
 import { Exercise } from 'app/entities/exercise.model';
 import { ActivatedRoute, Router } from '@angular/router';
 import { assessmentNavigateBack } from 'app/exercises/shared/navigate-back.util';
@@ -171,6 +171,14 @@ export class ComplaintsForTutorComponent implements OnInit {
             // If the complaint was rejected or it was a more feedback request, just the complaint response is updated.
             this.resolveComplaint();
         }
+
+        this.activatedRoute.queryParams.pipe(take(1)).subscribe((params) => {
+            this.router.navigate([], {
+                relativeTo: this.activatedRoute,
+                queryParams: { 'correction-round': Number(params['correction-round'] ?? 0) + 1 },
+                queryParamsHandling: 'merge',
+            });
+        });
     }
 
     private resolveComplaint() {

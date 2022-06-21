@@ -90,14 +90,17 @@ export class ModelingSubmissionService {
      * @param correctionRound
      * @param resultId
      */
-    getSubmission(submissionId: number, correctionRound = 0, resultId?: number): Observable<ModelingSubmission> {
+    getSubmission(submissionId: number, correctionRound?: number, resultId?: number): Observable<ModelingSubmission> {
         const url = `api/modeling-submissions/${submissionId}`;
         let params = new HttpParams();
-        if (correctionRound !== 0) {
+        if (correctionRound) {
             params = params.set('correction-round', correctionRound.toString());
         }
-        if (resultId && resultId > 0) {
+        if (resultId) {
             params = params.set('resultId', resultId.toString());
+        }
+        if (!correctionRound && !resultId) {
+            params = params.set('latestResult', true);
         }
         return this.http.get<ModelingSubmission>(url, { params }).pipe(map((res: ModelingSubmission) => this.submissionService.convertSubmissionFromServer(res)));
     }

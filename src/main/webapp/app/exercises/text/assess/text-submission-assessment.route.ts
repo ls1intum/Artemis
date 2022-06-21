@@ -53,6 +53,7 @@ export class StudentParticipationResolver implements Resolve<StudentParticipatio
         if (submissionId) {
             return this.textAssessmentService.getFeedbackDataForExerciseSubmission(participationId, submissionId, correctionRound).pipe(catchError(() => of(undefined)));
         }
+
         return of(undefined);
     }
 }

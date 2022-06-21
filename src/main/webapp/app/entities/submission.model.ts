@@ -121,10 +121,13 @@ export function setSubmissionResultByCorrectionRound(submission: Submission, res
 
 export function getFirstResult(submission: Submission | undefined): Result | undefined {
     if (submission?.results) {
-        const length = submission.results.length;
-        if (length > 0) {
-            return submission.results[0];
-        }
+        return submission.results.first();
+    }
+}
+
+export function getLastResult(submission: Submission | undefined): Result | undefined {
+    if (submission?.results) {
+        return submission.results.last();
     }
 }
 

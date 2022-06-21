@@ -62,9 +62,9 @@ export class FileUploadAssessmentComponent implements OnInit, OnDestroy {
     isTestRun = false;
     courseId: number;
     hasAssessmentDueDatePassed: boolean;
-    correctionRound = 0;
+    correctionRound?: number;
     hasNewSubmissions = true;
-    resultId: number;
+    resultId?: number;
     examId = 0;
     exerciseGroupId: number;
     exerciseDashboardLink: string[];
@@ -112,7 +112,7 @@ export class FileUploadAssessmentComponent implements OnInit, OnDestroy {
         this.route.queryParamMap.subscribe((queryParams) => {
             this.isTestRun = queryParams.get('testRun') === 'true';
             if (queryParams.get('correction-round')) {
-                this.correctionRound = parseInt(queryParams.get('correction-round')!, 10);
+                this.correctionRound = Number(queryParams.get('correction-round'));
             }
         });
 
@@ -206,10 +206,11 @@ export class FileUploadAssessmentComponent implements OnInit, OnDestroy {
         this.accountService.setAccessRightsForExercise(this.exercise);
         this.course = getCourseFromExercise(this.exercise);
         this.hasAssessmentDueDatePassed = !!this.exercise.assessmentDueDate && dayjs(this.exercise.assessmentDueDate).isBefore(dayjs());
-        if (this.resultId > 0) {
-            this.correctionRound = this.submission.results?.findIndex((result) => result.id === this.resultId)!;
+        if (this.resultId) {
+            this.correctionRound = this.submission.results?.findIndex((result) => result.id === this.resultId);
             this.result = getSubmissionResultById(this.submission, this.resultId);
         } else {
+            this.correctionRound = submission.results?.length;
             this.result = getLatestSubmissionResult(this.submission);
         }
         this.getComplaint();
@@ -231,7 +232,7 @@ export class FileUploadAssessmentComponent implements OnInit, OnDestroy {
         this.checkPermissions();
         this.calculateTotalScore();
 
-        this.submissionService.handleFeedbackCorrectionRoundTag(this.correctionRound, this.submission);
+        this.submissionService.handleFeedbackCorrectionRoundTag(this.correctionRound!, this.submission);
 
         this.busy = false;
         this.isLoading = false;
@@ -396,7 +397,7 @@ export class FileUploadAssessmentComponent implements OnInit, OnDestroy {
 
         this.calculateTotalScore();
 
-        this.submissionService.handleFeedbackCorrectionRoundTag(this.correctionRound, this.submission);
+        this.submissionService.handleFeedbackCorrectionRoundTag(this.correctionRound!, this.submission);
     }
 
     /**

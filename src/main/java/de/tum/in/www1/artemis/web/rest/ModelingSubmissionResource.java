@@ -180,7 +180,8 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<ModelingSubmission> getModelingSubmission(@PathVariable Long submissionId,
             @RequestParam(value = "correction-round", defaultValue = "0") int correctionRound, @RequestParam(value = "resultId", required = false) Long resultId,
-            @RequestParam(value = "withoutResults", defaultValue = "false") boolean withoutResults) {
+            @RequestParam(value = "withoutResults", defaultValue = "false") boolean withoutResults,
+            @RequestParam(value = "latestResult", defaultValue = "false") boolean latestResult) {
         log.debug("REST request to get ModelingSubmission with id: {}", submissionId);
         // TODO CZ: include exerciseId in path to get exercise for auth check more easily?
         var modelingSubmission = modelingSubmissionRepository.findByIdElseThrow(submissionId);
@@ -224,7 +225,7 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
         modelingSubmissionService.hideDetails(modelingSubmission, user);
         // Don't remove results when they were not requested in the first place
         if (!withoutResults) {
-            modelingSubmission.removeNotNeededResults(correctionRound, resultId);
+            modelingSubmission.removeNotNeededResults(correctionRound, resultId, latestResult);
         }
 
         return ResponseEntity.ok(modelingSubmission);

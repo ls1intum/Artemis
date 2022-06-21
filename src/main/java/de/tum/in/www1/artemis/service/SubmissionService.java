@@ -339,8 +339,13 @@ public class SubmissionService {
     public Result createResultAfterComplaintResponse(Submission submission, Result oldResult, List<Feedback> feedbacks) {
         Result newResult = new Result();
         newResult.setParticipation(submission.getParticipation());
+        newResult.setRated(oldResult.isRated());
         copyFeedbackToResult(newResult, feedbacks);
-        newResult = copyResultContentAndAddToSubmission(submission, newResult, oldResult);
+        newResult = resultRepository.save(newResult);
+
+        newResult.setSubmission(submission);
+        submission.addResult(newResult);
+        submissionRepository.save(submission);
         return newResult;
     }
 
