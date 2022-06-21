@@ -141,13 +141,13 @@ export class HeaderExercisePageWithDetailsComponent implements OnChanges, OnInit
 
     private countSubmissions() {
         let submissionCompensation = 0;
-        if (this.studentParticipation?.submissions && this.studentParticipation?.submissions.length > 0) {
-            submissionCompensation = (this.studentParticipation?.submissions.first()?.results?.length || 0) === 0 ? 1 : 0;
+        if (this.studentParticipation?.submissions?.length) {
+            submissionCompensation = !this.studentParticipation.submissions.first()?.results?.length ? 1 : 0;
         }
 
         const commitHashSet = new Set<string>();
         this.studentParticipation?.submissions
-            ?.filter((submission) => submission.type === SubmissionType.MANUAL && (!submission.results?.length || 0) === 0)
+            ?.filter((submission) => submission.type === SubmissionType.MANUAL && submission.results?.length)
             .map((submission) => (submission as ProgrammingSubmission).commitHash)
             .forEach((commitHash: string) => commitHashSet.add(commitHash));
 

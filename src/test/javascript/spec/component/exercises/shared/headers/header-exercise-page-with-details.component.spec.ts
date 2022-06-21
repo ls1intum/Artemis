@@ -14,6 +14,10 @@ import { ParticipationType } from 'app/entities/participation/participation.mode
 import { Exam } from 'app/entities/exam.model';
 import dayjs from 'dayjs/esm';
 import { ExerciseCategory } from 'app/entities/exercise-category.model';
+import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
+import { SubmissionType } from 'app/entities/submission.model';
+import { Result } from 'app/entities/result.model';
+import { LockRepositoryPolicy } from 'app/entities/submission-policy.model';
 
 describe('HeaderExercisePageWithDetails', () => {
     let component: HeaderExercisePageWithDetailsComponent;
@@ -21,6 +25,11 @@ describe('HeaderExercisePageWithDetails', () => {
     let exam: Exam;
     let exercise: ProgrammingExercise;
     let participation: StudentParticipation;
+
+    const submissionCountingOne: ProgrammingSubmission = { type: SubmissionType.MANUAL, results: [new Result()], commitHash: 'qwer' };
+    const submissionCountingTwo: ProgrammingSubmission = { type: SubmissionType.MANUAL, results: [new Result()], commitHash: 'asdf' };
+    const submissionNotManual: ProgrammingSubmission = { type: SubmissionType.INSTRUCTOR };
+    const submissionNoResult: ProgrammingSubmission = { type: SubmissionType.MANUAL, commitHash: 'yxcv' };
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -112,6 +121,26 @@ describe('HeaderExercisePageWithDetails', () => {
 
         component.ngOnInit();
 
-        expect(component.dueDate).toBe(undefined);
+        expect(component.dueDate).toBeUndefined();
+    });
+
+    it('should count number of submissions correctly', () => {
+        participation.submissions = [submissionCountingOne, submissionNoResult, submissionCountingTwo, submissionNotManual];
+        component.studentParticipation = participation;
+        component.submissionPolicy = new LockRepositoryPolicy();
+
+        component.ngOnChanges();
+
+        expect(component.numberOfSubmissions).toBe(2);
+    });
+
+    it('should count number of submissions correctly with compensation', () => {
+        participation.submissions = [submissionNoResult, submissionCountingOne, submissionCountingTwo, submissionNotManual];
+        component.studentParticipation = participation;
+        component.submissionPolicy = new LockRepositoryPolicy();
+
+        component.ngOnChanges();
+
+        expect(component.numberOfSubmissions).toBe(3);
     });
 });
