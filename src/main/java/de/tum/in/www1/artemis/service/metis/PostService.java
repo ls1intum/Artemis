@@ -1,7 +1,5 @@
 package de.tum.in.www1.artemis.service.metis;
 
-import static de.tum.in.www1.artemis.config.Constants.VOTE_EMOJI_ID;
-
 import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
@@ -26,10 +24,8 @@ import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.Lecture;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.DisplayPriority;
-import de.tum.in.www1.artemis.domain.enumeration.SortingOrder;
 import de.tum.in.www1.artemis.domain.metis.CourseWideContext;
 import de.tum.in.www1.artemis.domain.metis.Post;
-import de.tum.in.www1.artemis.domain.metis.PostSortCriterion;
 import de.tum.in.www1.artemis.domain.metis.Reaction;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismCase;
 import de.tum.in.www1.artemis.repository.CourseRepository;
@@ -588,161 +584,5 @@ public class PostService extends PostingService {
         if (post.getCourseWideContext() == CourseWideContext.ANNOUNCEMENT || post.getPlagiarismCase() != null) {
             authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, user);
         }
-    }
-
-    /**
-     * sorts posts by following criteria
-     * 1. criterion: displayPriority is PINNED -> pinned posts come first
-     * 2. criterion: displayPriority is ARCHIVED  -> archived posts come last
-     * -- in between pinned and archived posts --
-     * 3. criterion: currently selected criterion in combination with currently selected order
-     *
-     * @param postA             post 1 to be compared
-     * @param postB             post 2 to be compared
-     * @param postSortCriterion criterion to sort posts (CREATION_DATE, #VOTES,#ANSWERS)
-     * @param sortingOrder      direction of sorting (ASC, DESC)
-     * @return number indicating the order of two elements
-     */
-    public static int postComparator(Post postA, Post postB, PostSortCriterion postSortCriterion, SortingOrder sortingOrder) {
-        // sort by priority
-        int order = compareByPriority(postA, postB);
-        if (order != 0) {
-            return order;
-        }
-
-        // sort by votes via voteEmojiCount
-        if (postSortCriterion == PostSortCriterion.VOTES) {
-            order = compareByVotes(postA, postB, sortingOrder);
-            if (order != 0) {
-                return order;
-            }
-        }
-
-        // sort by creation date
-        if (postSortCriterion == PostSortCriterion.CREATION_DATE) {
-            order = compareByCreationDate(postA, postB, sortingOrder);
-            if (order != 0) {
-                return order;
-            }
-        }
-
-        // sort by answer count
-        if (postSortCriterion == PostSortCriterion.ANSWER_COUNT) {
-            order = compareByAnswerCount(postA, postB, sortingOrder);
-            if (order != 0) {
-                return order;
-            }
-        }
-        return 0;
-    }
-
-    private static int compareByPriority(Post postA, Post postB) {
-        if ((postA.getCourseWideContext() == CourseWideContext.ANNOUNCEMENT && postA.getDisplayPriority() == DisplayPriority.PINNED
-                && postB.getCourseWideContext() != CourseWideContext.ANNOUNCEMENT)
-                || ((postA.getDisplayPriority() == DisplayPriority.PINNED && postB.getDisplayPriority() != DisplayPriority.PINNED)
-                        || postA.getDisplayPriority() != DisplayPriority.ARCHIVED && postB.getDisplayPriority() == DisplayPriority.ARCHIVED)) {
-            return -1;
-        }
-        else if ((postA.getCourseWideContext() != CourseWideContext.ANNOUNCEMENT && postB.getCourseWideContext() == CourseWideContext.ANNOUNCEMENT
-                && postB.getDisplayPriority() == DisplayPriority.PINNED)
-                || (postA.getDisplayPriority() != DisplayPriority.PINNED && postB.getDisplayPriority() == DisplayPriority.PINNED)
-                || postA.getDisplayPriority() == DisplayPriority.ARCHIVED && postB.getDisplayPriority() != DisplayPriority.ARCHIVED) {
-            return 1;
-        }
-        else {
-            return 0;
-        }
-    }
-
-    private static int compareByVotes(Post postA, Post postB, SortingOrder sortingOrder) {
-        int comparisonResult = 0;
-
-        int postAVoteEmojiCount = 0;
-        int postBVoteEmojiCount = 0;
-
-        if (postA.getReactions() != null) {
-            postAVoteEmojiCount = (int) postA.getReactions().stream().filter((Reaction reaction) -> reaction.getEmojiId().equals(VOTE_EMOJI_ID)).count();
-        }
-
-        if (postB.getReactions() != null) {
-            postBVoteEmojiCount = (int) postB.getReactions().stream().filter((Reaction reaction) -> reaction.getEmojiId().equals(VOTE_EMOJI_ID)).count();
-        }
-
-        if (postAVoteEmojiCount > postBVoteEmojiCount) {
-            comparisonResult = 1;
-        }
-        else if (postAVoteEmojiCount < postBVoteEmojiCount) {
-            comparisonResult = -1;
-        }
-
-        return applySortingOrder(sortingOrder, comparisonResult);
-    }
-
-    private static int compareByCreationDate(Post postA, Post postB, SortingOrder sortingOrder) {
-        int comparisonResult = 0;
-
-        if (postA.getCreationDate().compareTo(postB.getCreationDate()) > 0) {
-            comparisonResult = 1;
-        }
-        else if (postA.getCreationDate().compareTo(postB.getCreationDate()) < 0) {
-            comparisonResult = -1;
-        }
-
-        return applySortingOrder(sortingOrder, comparisonResult);
-    }
-
-    private static int compareByAnswerCount(Post postA, Post postB, SortingOrder sortingOrder) {
-        int comparisonResult = 0;
-
-        int postAAnswerCount = 0;
-        int postBAnswerCount = 0;
-
-        if (postA.getAnswers() != null) {
-            postAAnswerCount = postA.getAnswers().size();
-        }
-        if (postB.getAnswers() != null) {
-            postBAnswerCount = postB.getAnswers().size();
-        }
-
-        if (postAAnswerCount > postBAnswerCount) {
-            comparisonResult = 1;
-        }
-        else if (postAAnswerCount < postBAnswerCount) {
-            comparisonResult = -1;
-        }
-
-        return applySortingOrder(sortingOrder, comparisonResult);
-    }
-
-    private static int applySortingOrder(SortingOrder sortingOrder, int comparisonResult) {
-        if (SortingOrder.ASCENDING == sortingOrder) {
-            return comparisonResult;
-        }
-        else {
-            return -1 * comparisonResult;
-        }
-    }
-
-    /**
-     * filters posts on a search string in a match-all-manner
-     * - currentPostContentFilter: post is only kept if the search string (which is not a #id pattern) is included in either the post title, content or tag (all strings lowercased)
-     *
-     * @param post          checked post for including searchText
-     * @param searchText    text to be searched within posts
-     * @return boolean predicate if the post is kept (true) or filtered out (false)
-     */
-    public static boolean postFilter(Post post, String searchText) {
-        boolean keepPost = true;
-
-        if (searchText != null && !searchText.isBlank()) {
-            // check if the search text is either contained in the title or in the content
-            String lowerCasedSearchString = searchText.toLowerCase();
-
-            // regular search on content, title, and tags
-            return post.getTitle() != null && post.getTitle().toLowerCase().contains(lowerCasedSearchString)
-                    || post.getContent() != null && post.getContent().toLowerCase().contains(lowerCasedSearchString)
-                    || post.getTags() != null && String.join(" ", post.getTags()).toLowerCase().contains(lowerCasedSearchString);
-        }
-        return keepPost;
     }
 }

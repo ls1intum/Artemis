@@ -153,12 +153,25 @@ public class PostSpecs {
         });
     }
 
+    /**
+     * sorts posts by following criteria
+     * 1. criterion: displayPriority is PINNED -> pinned posts come first
+     * 2. criterion: displayPriority is ARCHIVED  -> archived posts come last
+     * -- in between pinned and archived posts --
+     * 3. criterion: currently selected criterion in combination with currently selected order
+     *
+     * @param pagingEnabled
+     * @param postSortCriterion criterion to sort posts (CREATION_DATE, #VOTES,#ANSWERS)
+     * @param sortingOrder      direction of sorting (ASC, DESC)
+     * @return number indicating the order of two elements
+     */
     public static Specification<Post> getSortSpecification(boolean pagingEnabled, PostSortCriterion postSortCriterion, SortingOrder sortingOrder) {
         return ((root, query, criteriaBuilder) -> {
             if (pagingEnabled) {
 
                 List<Order> orderList = new ArrayList<>();
 
+                // sort by priority
                 Expression<Object> pinnedFirstThenAnnouncementsArchivedLast = criteriaBuilder.selectCase()
                         .when(criteriaBuilder.and(criteriaBuilder.equal(root.get(Post_.DISPLAY_PRIORITY), criteriaBuilder.literal(DisplayPriority.PINNED)),
                                 criteriaBuilder.equal(root.get(Post_.COURSE_WIDE_CONTEXT), criteriaBuilder.literal(CourseWideContext.ANNOUNCEMENT))), 1)
@@ -171,10 +184,11 @@ public class PostSpecs {
                     Expression<?> sortCriterion = null;
 
                     if (postSortCriterion == PostSortCriterion.CREATION_DATE) {
+                        // sort by creation date
                         sortCriterion = root.get(Post_.CREATION_DATE);
                     }
                     else if (postSortCriterion == PostSortCriterion.ANSWER_COUNT) {
-                        // Count number of Answers per Post
+                        // sort by answer count
                         Subquery<Long> subQuery = query.subquery(Long.class);
                         Root<AnswerPost> subRoot = subQuery.from(AnswerPost.class);
                         Predicate postBinder = criteriaBuilder.equal(root.get(Post_.ID), subRoot.get(AnswerPost_.POST).get(Post_.ID));
@@ -183,7 +197,7 @@ public class PostSpecs {
                         sortCriterion = criteriaBuilder.selectCase().when(criteriaBuilder.exists(subQuery).not(), 0).otherwise(subQuery.getSelection());
                     }
                     else if (postSortCriterion == PostSortCriterion.VOTES) {
-                        // Count number of up votes per Post
+                        // sort by votes via voteEmojiCount
                         Subquery<Long> subQuery = query.subquery(Long.class);
                         Root<Reaction> subRoot = subQuery.from(Reaction.class);
                         Predicate postBinder = criteriaBuilder.equal(root.get(Post_.ID), subRoot.get(Reaction_.POST).get(Post_.ID));
