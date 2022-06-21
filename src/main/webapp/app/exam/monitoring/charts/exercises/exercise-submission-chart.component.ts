@@ -55,8 +55,7 @@ export class ExerciseSubmissionChartComponent extends ChartComponent implements 
         const exerciseAmountMap: Map<number, number> = new Map();
         const groupedByActivityId = getSavedExerciseActionsGroupedByActivityId(this.filteredExamActions);
 
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        for (const [_, value] of Object.entries(groupedByActivityId)) {
+        for (const value of Object.values(groupedByActivityId)) {
             const saved: Map<number, number> = new Map();
             value.forEach((action: SavedExerciseAction) => saved.set(action.exerciseId!, 1));
             for (const key of saved.keys()) {
@@ -66,7 +65,6 @@ export class ExerciseSubmissionChartComponent extends ChartComponent implements 
         insertNgxDataAndColorForExerciseMap(this.exam, exerciseAmountMap, this.ngxData, this.ngxColor);
         // Re-trigger change detection
         this.ngxData = [...this.ngxData];
-        this.ngxColor = Object.assign({}, this.ngxColor);
     }
 
     filterRenderedData(examAction: ExamAction) {

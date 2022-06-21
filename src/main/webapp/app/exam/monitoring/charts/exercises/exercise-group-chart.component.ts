@@ -63,10 +63,14 @@ export class ExerciseGroupChartComponent extends ChartComponent implements OnIni
         });
         // Re-trigger change detection
         this.ngxData = [...this.ngxData];
-        this.ngxColor = Object.assign({}, this.ngxColor);
     }
 
     filterRenderedData(examAction: ExamAction) {
-        return examAction.type === ExamActionType.SWITCHED_EXERCISE || examAction.type === ExamActionType.SAVED_EXERCISE;
+        return (
+            examAction.type === ExamActionType.SWITCHED_EXERCISE ||
+            examAction.type === ExamActionType.SAVED_EXERCISE ||
+            examAction.type === ExamActionType.ENDED_EXAM ||
+            examAction.type === ExamActionType.HANDED_IN_EARLY
+        );
     }
 }

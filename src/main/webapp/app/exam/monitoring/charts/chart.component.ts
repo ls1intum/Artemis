@@ -56,8 +56,8 @@ export abstract class ChartComponent {
      */
     protected initSubscriptions() {
         this.routeSubscription = this.route.parent?.params.subscribe((params) => {
-            this.examId = parseInt(params['examId'], 10);
-            this.courseId = parseInt(params['courseId'], 10);
+            this.examId = Number(params['examId']);
+            this.courseId = Number(params['courseId']);
         });
 
         this.examActionSubscription = this.examMonitoringWebsocketService.getExamMonitoringObservable(this.examId)?.subscribe((examAction) => {
@@ -93,7 +93,13 @@ export abstract class ChartComponent {
      */
     abstract updateData(): void;
 
-    abstract filterRenderedData(examAction: ExamAction): boolean;
+    /**
+     * The default case is that we don't filter any actions. This filter is adapted in subclasses.
+     * @param examAction
+     */
+    filterRenderedData(examAction: ExamAction): boolean {
+        return true;
+    }
 
     /**
      * Method to filter actions which are not in the specified time frame.

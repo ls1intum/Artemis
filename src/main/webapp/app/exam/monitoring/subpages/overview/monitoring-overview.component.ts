@@ -37,8 +37,8 @@ export class MonitoringOverviewComponent implements OnInit, OnDestroy {
 
     ngOnInit() {
         this.routeSubscription = this.route.parent?.params.subscribe((params) => {
-            this.examId = parseInt(params['examId'], 10);
-            this.courseId = parseInt(params['courseId'], 10);
+            this.examId = Number(params['examId']);
+            this.courseId = Number(params['courseId']);
         });
 
         this.examSubscription = this.examMonitoringService.getExamBehaviorSubject(this.examId)?.subscribe((exam) => {

@@ -489,7 +489,7 @@
             },
             "charts": {
                 "exercise-chart": {
-                    "name": "Current amount of students per exercise grouped by exercise group",
+                    "name": "Current number of students per exercise grouped by exercise group",
                     "tooltip": "Shows the current number of students per exercise grouped by exercise group",
                     "xAxisLabel": "Number of students",
                     "yAxisLabel": "Exercises",

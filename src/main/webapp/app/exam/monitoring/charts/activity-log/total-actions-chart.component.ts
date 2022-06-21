@@ -59,9 +59,4 @@ export class TotalActionsChartComponent extends ChartComponent implements OnInit
         }
         this.ngxData = [{ name: 'actions', series: chartData }];
     }
-
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    filterRenderedData(examAction: ExamAction) {
-        return true;
-    }
 }

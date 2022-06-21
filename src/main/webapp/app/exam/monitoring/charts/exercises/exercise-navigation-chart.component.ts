@@ -55,8 +55,7 @@ export class ExerciseNavigationChartComponent extends ChartComponent implements 
         const exerciseAmountMap: Map<number, number> = new Map();
         const groupedByActivityId = getSwitchedExerciseActionsGroupedByActivityId(this.filteredExamActions);
 
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        for (const [_, value] of Object.entries(groupedByActivityId)) {
+        for (const value of Object.values(groupedByActivityId)) {
             const navigatedTo: Map<number, number> = new Map();
             value.forEach((action: SwitchedExerciseAction) => navigatedTo.set(action.exerciseId!, 1));
             for (const key of navigatedTo.keys()) {
@@ -66,11 +65,5 @@ export class ExerciseNavigationChartComponent extends ChartComponent implements 
         insertNgxDataAndColorForExerciseMap(this.exam, exerciseAmountMap, this.ngxData, this.ngxColor);
         // Re-trigger change detection
         this.ngxData = [...this.ngxData];
-        this.ngxColor = Object.assign({}, this.ngxColor);
-    }
-
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    filterRenderedData(examAction: ExamAction) {
-        return true;
     }
 }
