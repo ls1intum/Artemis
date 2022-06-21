@@ -199,7 +199,7 @@ public class PostSpecs {
                 query.orderBy(orderList);
             }
 
-            return criteriaBuilder.conjunction();
+            return null;
         });
     }
 }
