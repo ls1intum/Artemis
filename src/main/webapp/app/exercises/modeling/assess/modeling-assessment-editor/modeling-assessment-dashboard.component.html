@@ -3,9 +3,9 @@
         {{ 'modelingAssessment.dashboard.heading' | artemisTranslate: { title: exercise.title } }}
     </h4>
     <jhi-assessment-filters (filterChange)="applyChartFilter($event)" [submissions]="submissions" [resetFilter]="resetFilter"></jhi-assessment-filters>
-    <div *ngIf="filterOption !== undefined" type="button" class="btn btn-primary" (click)="resetFilterOptions()" jhiTranslate="artemisApp.assessment.dashboard.resetFilter">
+    <button *ngIf="filterOption !== undefined" type="button" class="btn btn-primary" (click)="resetFilterOptions()" jhiTranslate="artemisApp.assessment.dashboard.resetFilter">
         Reset submission filter
-    </div>
+    </button>
     <jhi-assessment-warning [exercise]="exercise" [submissions]="filteredSubmissions"></jhi-assessment-warning>
     <h4>
         <small [ngStyle]="assessedSubmissions === submissions.length && submissions.length > 0 ? { color: '#5cb85c' } : {}">

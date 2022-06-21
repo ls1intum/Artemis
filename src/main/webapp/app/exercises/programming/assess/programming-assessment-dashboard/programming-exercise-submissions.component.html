@@ -1,9 +1,9 @@
 <span *ngIf="exercise">
     <h4 [translateValues]="{ exerciseTitle: exercise.title }" jhiTranslate="artemisApp.programmingAssessment.dashboard.heading"></h4>
     <jhi-assessment-filters (filterChange)="applyChartFilter($event)" [submissions]="submissions" [resetFilter]="resetFilter"></jhi-assessment-filters>
-    <div *ngIf="filterOption !== undefined" type="button" class="btn btn-primary" (click)="resetFilterOptions()" jhiTranslate="artemisApp.assessment.dashboard.resetFilter">
+    <button *ngIf="filterOption !== undefined" type="button" class="btn btn-primary" (click)="resetFilterOptions()" jhiTranslate="artemisApp.assessment.dashboard.resetFilter">
         Reset submission filter
-    </div>
+    </button>
     <jhi-assessment-warning [exercise]="exercise" [submissions]="filteredSubmissions"></jhi-assessment-warning>
     <span *ngIf="submissions && submissions.length > 0; else emptyTable" class="table-responsive">
         <table class="table table-striped exercise-table">
