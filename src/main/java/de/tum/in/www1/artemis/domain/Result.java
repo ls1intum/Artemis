@@ -36,6 +36,10 @@ import de.tum.in.www1.artemis.service.listeners.ResultListener;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class Result extends DomainObject {
 
+    /*
+     * IMPORTANT on removal: Mention in release notes that an intermediary upgrade to version 5.8.5 or later is necessary before updating to the current version, as otherwise the
+     * database migration can no longer convert the old data into the new representation.
+     */
     @Column(name = "result_string")
     @JsonView(QuizView.After.class)
     @Deprecated
@@ -448,30 +452,24 @@ public class Result extends DomainObject {
         return testCaseCount;
     }
 
-    public void setTestCaseCount(Integer testCaseCount) {
-        if (testCaseCount != null) {
-            this.testCaseCount = Math.min(testCaseCount, MAX_VALUE_PROGRAMMING_RESULT_INTS);
-        }
+    public void setTestCaseCount(int testCaseCount) {
+        this.testCaseCount = Math.min(testCaseCount, MAX_VALUE_PROGRAMMING_RESULT_INTS);
     }
 
     public Integer getPassedTestCaseCount() {
         return passedTestCaseCount;
     }
 
-    public void setPassedTestCaseCount(Integer passedTestCaseCount) {
-        if (passedTestCaseCount != null) {
-            this.passedTestCaseCount = Math.min(passedTestCaseCount, MAX_VALUE_PROGRAMMING_RESULT_INTS);
-        }
+    public void setPassedTestCaseCount(int passedTestCaseCount) {
+        this.passedTestCaseCount = Math.min(passedTestCaseCount, MAX_VALUE_PROGRAMMING_RESULT_INTS);
     }
 
     public Integer getCodeIssueCount() {
         return codeIssueCount;
     }
 
-    public void setCodeIssueCount(Integer codeIssueCount) {
-        if (codeIssueCount != null) {
-            this.codeIssueCount = Math.min(codeIssueCount, MAX_VALUE_PROGRAMMING_RESULT_INTS);
-        }
+    public void setCodeIssueCount(int codeIssueCount) {
+        this.codeIssueCount = Math.min(codeIssueCount, MAX_VALUE_PROGRAMMING_RESULT_INTS);
     }
 
     public Map<String, Set<CoverageFileReport>> getCoverageFileReportsByTestCaseName() {
@@ -541,8 +539,9 @@ public class Result extends DomainObject {
 
     @Override
     public String toString() {
-        return "Result{" + "id=" + getId() + ", completionDate=" + completionDate + ", successful=" + successful + ", score=" + score + ", rated=" + rated + ", hasFeedback="
-                + hasFeedback + ", assessmentType=" + assessmentType + ", hasComplaint=" + hasComplaint + '}';
+        return "Result{" + "id" + getId() + ", completionDate=" + completionDate + ", successful=" + successful + ", score=" + score + ", rated=" + rated + ", hasFeedback="
+                + hasFeedback + ", assessmentType=" + assessmentType + ", hasComplaint=" + hasComplaint + ", testCaseCount=" + testCaseCount + ", passedTestCaseCount="
+                + passedTestCaseCount + ", codeIssueCount=" + codeIssueCount + '}';
     }
 
     /**

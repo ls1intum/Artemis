@@ -16,6 +16,7 @@ import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
 import { isResultPreliminary } from 'app/exercises/programming/shared/utils/programming-exercise.utils';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
+import { captureException } from '@sentry/browser';
 
 export type EntityResponseType = HttpResponse<Result>;
 export type EntityArrayResponseType = HttpResponse<Result[]>;
@@ -44,7 +45,16 @@ export class ResultService implements IResultService {
         return this.http.get<Result>(`${this.resultResourceUrl}/${resultId}`, { observe: 'response' }).pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
     }
 
-    getResultString(result: Result, exercise: Exercise): string {
+    getResultString(result: Result | undefined, exercise: Exercise | undefined): string {
+        if (result && exercise) {
+            return this.getResultStringNotUndefined(result, exercise);
+        } else {
+            captureException('Tried to generate a result string, but either the result or exercise was undefined');
+            return '';
+        }
+    }
+
+    private getResultStringNotUndefined(result: Result, exercise: Exercise): string {
         const relativeScore = roundValueSpecifiedByCourseSettings(result.score!, getCourseFromExercise(exercise));
         const points = roundValueSpecifiedByCourseSettings((result.score! * exercise.maxPoints!) / 100, getCourseFromExercise(exercise));
         if (exercise.type === ExerciseType.PROGRAMMING) {
