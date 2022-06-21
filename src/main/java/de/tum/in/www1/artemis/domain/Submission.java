@@ -301,11 +301,13 @@ public abstract class Submission extends DomainObject {
     public abstract boolean isEmpty();
 
     /**
-     * In case user calls for correctionRound 0, but more manual results already exists
-     * and he has not requested a specific result, remove any other results
+     * Filters out unneeded results.
+     * Either only returns the latest result or in case user calls for correctionRound 0, but more manual results already exists
+     * and they did not request a specific result, removes any other results
      *
      * @param correctionRound for which not to remove results
      * @param resultId specific resultId
+     * @param latestResult specifies that only the latest result should be kept
      */
     public void removeNotNeededResults(int correctionRound, Long resultId, boolean latestResult) {
         if (latestResult) {

@@ -326,6 +326,7 @@ public class TextAssessmentResource extends AssessmentResource {
      * @param submissionId the id of the submission we want
      * @param correctionRound correction round for which we want the submission
      * @param resultId if result already exists, we want to get the submission for this specific result
+     * @param latestResult specifies that only the latest result should be send
      * @return a Participation of the tutor in the submission
      */
     @GetMapping("participations/{participationId}/submissions/{submissionId}/for-text-assessment")

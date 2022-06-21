@@ -19,7 +19,7 @@
     (nextSubmission)="assessNext()"
     (updateAssessmentAfterComplaint)="onUpdateAssessmentAfterComplaint($event)"
     [(highlightDifferences)]="highlightDifferences"
-    [correctionRound]="correctionRound"
+    [correctionRound]="correctionRound!"
     (useAsExampleSubmission)="useStudentSubmissionAsExampleSubmission()"
 >
     <ng-container *ngIf="submission; then assessment; else noSubmission"></ng-container>
