@@ -35,6 +35,7 @@ import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.domain.metis.PostSortCriterion;
 import de.tum.in.www1.artemis.repository.metis.PostRepository;
 import de.tum.in.www1.artemis.service.notifications.GroupNotificationService;
+import de.tum.in.www1.artemis.web.rest.dto.PostContextFilter;
 
 public class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
@@ -118,7 +119,10 @@ public class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         Post createdPost = request.postWithResponseBody("/api/courses/" + courseId + "/posts", postToSave, Post.class, HttpStatus.CREATED);
         database.assertSensitiveInformationHidden(createdPost);
         checkCreatedPost(postToSave, createdPost);
-        assertThat(existingExercisePosts).hasSize(postRepository.findPostsByExerciseId(exerciseId, false, false, false, null).size() - 1);
+
+        PostContextFilter postContextFilter = new PostContextFilter();
+        postContextFilter.setExerciseId(exerciseId);
+        assertThat(existingExercisePosts).hasSize(postRepository.findPosts(postContextFilter, null, false, null).getSize() - 1);
         verify(groupNotificationService, times(1)).notifyAllGroupsAboutNewPostForExercise(createdPost, course);
     }
 
@@ -131,9 +135,11 @@ public class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         postToSave.setExercise(examExercise);
 
         request.postWithResponseBody("/api/courses/" + courseId + "/posts", postToSave, Post.class, HttpStatus.BAD_REQUEST);
-        assertThat(existingExercisePosts).hasSameSizeAs(postRepository.findPostsByExerciseId(exerciseId, false, false, false, null));
-        verify(groupNotificationService, times(0)).notifyAllGroupsAboutNewPostForExercise(any(), any());
 
+        PostContextFilter postContextFilter = new PostContextFilter();
+        postContextFilter.setExerciseId(exerciseId);
+        assertThat(existingExercisePosts).hasSameSizeAs(postRepository.findPosts(postContextFilter, null, false, null));
+        verify(groupNotificationService, times(0)).notifyAllGroupsAboutNewPostForExercise(any(), any());
     }
 
     @Test
@@ -146,7 +152,10 @@ public class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         Post createdPost = request.postWithResponseBody("/api/courses/" + courseId + "/posts", postToSave, Post.class, HttpStatus.CREATED);
         database.assertSensitiveInformationHidden(createdPost);
         checkCreatedPost(postToSave, createdPost);
-        assertThat(existingLecturePosts).hasSize(postRepository.findPostsByLectureId(lectureId, false, false, false, null).size() - 1);
+
+        PostContextFilter postContextFilter = new PostContextFilter();
+        postContextFilter.setLectureId(lectureId);
+        assertThat(existingLecturePosts).hasSize(postRepository.findPosts(postContextFilter, null, false, null).getSize() - 1);
         verify(groupNotificationService, times(1)).notifyAllGroupsAboutNewPostForLecture(createdPost, course);
     }
 
@@ -161,8 +170,10 @@ public class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         database.assertSensitiveInformationHidden(createdPost);
         checkCreatedPost(postToSave, createdPost);
 
-        List<Post> updatedCourseWidePosts = postRepository.findPostsForCourse(courseId, null, false, false, false, null).stream()
-                .filter(post -> post.getCourseWideContext() != null).toList();
+        PostContextFilter postContextFilter = new PostContextFilter();
+        postContextFilter.setCourseId(courseId);
+
+        List<Post> updatedCourseWidePosts = postRepository.findPosts(postContextFilter, null, false, null).stream().filter(post -> post.getCourseWideContext() != null).toList();
         assertThat(existingCourseWidePosts).hasSize(updatedCourseWidePosts.size() - 1);
         verify(groupNotificationService, times(1)).notifyAllGroupsAboutNewCoursePost(createdPost, course);
     }
@@ -179,8 +190,10 @@ public class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         postToSave.setDisplayPriority(DisplayPriority.PINNED);
         checkCreatedPost(postToSave, createdPost);
 
-        List<Post> updatedCourseWidePosts = postRepository.findPostsForCourse(courseId, null, false, false, false, null).stream()
-                .filter(post -> post.getCourseWideContext() != null).toList();
+        PostContextFilter postContextFilter = new PostContextFilter();
+        postContextFilter.setCourseId(courseId);
+
+        List<Post> updatedCourseWidePosts = postRepository.findPosts(postContextFilter, null, false, null).stream().filter(post -> post.getCourseWideContext() != null).toList();
         assertThat(existingCourseWidePosts).hasSize(updatedCourseWidePosts.size() - 1);
         verify(groupNotificationService, times(1)).notifyAllGroupsAboutNewAnnouncement(createdPost, course);
     }

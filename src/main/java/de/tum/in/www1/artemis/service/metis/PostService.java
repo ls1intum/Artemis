@@ -5,6 +5,7 @@ import static de.tum.in.www1.artemis.config.Constants.VOTE_EMOJI_ID;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 import javax.validation.Valid;
 import javax.ws.rs.ForbiddenException;
@@ -278,7 +279,10 @@ public class PostService extends PostingService {
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, null);
 
         // retrieve posts
-        List<Post> coursePosts = postRepository.findPostsForCourse(courseId, null, false, false, false, null);
+        PostContextFilter postContextFilter = new PostContextFilter();
+        postContextFilter.setCourseId(courseId);
+        List<Post> coursePosts = postRepository.findPosts(postContextFilter, null, false, null).stream().collect(Collectors.toList());
+
         // protect sample solution, grading instructions, etc.
         coursePosts.stream().map(Post::getExercise).filter(Objects::nonNull).forEach(Exercise::filterSensitiveInformation);
 
@@ -303,8 +307,7 @@ public class PostService extends PostingService {
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, null);
 
         // retrieve posts
-        Page<Post> coursePosts;
-        coursePosts = postRepository.getCoursePosts(postContextFilter, user.getId(), pagingEnabled, pageable);
+        Page<Post> coursePosts = postRepository.findPosts(postContextFilter, user.getId(), pagingEnabled, pageable);
 
         // protect sample solution, grading instructions, etc.
         coursePosts.stream().map(Post::getExercise).filter(Objects::nonNull).forEach(Exercise::filterSensitiveInformation);
@@ -330,9 +333,7 @@ public class PostService extends PostingService {
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, null);
 
         // retrieve posts
-        Page<Post> coursePosts;
-        // retrieve posts
-        coursePosts = postRepository.getCoursePosts(postContextFilter, user.getId(), pagingEnabled, pageable);
+        Page<Post> coursePosts = postRepository.findPosts(postContextFilter, user.getId(), pagingEnabled, pageable);
 
         // protect sample solution, grading instructions, etc.
         coursePosts.stream().map(Post::getExercise).filter(Objects::nonNull).forEach(Exercise::filterSensitiveInformation);
@@ -358,8 +359,7 @@ public class PostService extends PostingService {
         preCheckExercise(user, postContextFilter.getCourseId(), postContextFilter.getExerciseId());
 
         // retrieve posts
-        Page<Post> exercisePosts;
-        exercisePosts = postRepository.getCoursePosts(postContextFilter, user.getId(), pagingEnabled, pageable);
+        Page<Post> exercisePosts = postRepository.findPosts(postContextFilter, user.getId(), pagingEnabled, pageable);
 
         // protect sample solution, grading instructions, etc.
         exercisePosts.forEach(post -> post.getExercise().filterSensitiveInformation());
@@ -385,8 +385,7 @@ public class PostService extends PostingService {
         preCheckLecture(user, postContextFilter.getCourseId(), postContextFilter.getLectureId());
 
         // retrieve posts
-        Page<Post> lecturePosts;
-        lecturePosts = postRepository.getCoursePosts(postContextFilter, user.getId(), pagingEnabled, pageable);
+        Page<Post> lecturePosts = postRepository.findPosts(postContextFilter, user.getId(), pagingEnabled, pageable);
 
         // protect sample solution, grading instructions, etc.
         lecturePosts.stream().map(Post::getExercise).filter(Objects::nonNull).forEach(Exercise::filterSensitiveInformation);
