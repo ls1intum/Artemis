@@ -51,7 +51,7 @@
         <div class="switch-forward-placeholder"></div>
     </ng-template>
     <div class="col d-flex flex-column align-items-center justify-content-center ms-4">
-        <div *ngIf="typeFilter.typeSet.size + chartCategoryFilter.exerciseCategories.size > 0" class="filter mb-3" aria-label="Filter Dropdown" ngbDropdown>
+        <div class="filter mb-3" aria-label="Filter Dropdown" ngbDropdown>
             <button
                 class="btn"
                 [ngClass]="{ 'btn-secondary': typeFilter.numberOfActiveFilters === 0, 'btn-success': typeFilter.numberOfActiveFilters > 0 }"

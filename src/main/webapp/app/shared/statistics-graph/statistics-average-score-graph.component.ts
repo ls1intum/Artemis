@@ -363,14 +363,17 @@ export class StatisticsAverageScoreGraphComponent implements OnInit {
     }
 
     toggleAllCategories(): void {
-        if (this.categoryFilter.allCategoriesSelected) {
+        /*if (!this.typeFilter.typeSet.size) {
             const filteredAgainstCategories = this.categoryFilter.toggleAllCategoriesForCourseStatistics(this.exerciseScoresFilteredByPerformanceInterval);
             this.currentlyDisplayableExercises = this.orderAverageScores(this.typeFilter.updateFilterOptions(filteredAgainstCategories));
         } else {
             // if the user re-selects all categories, only those should be reselected that agree with the type filter selection
             const filteredAgainstType = this.typeFilter.applyCurrentFilter(this.exerciseScoresFilteredByPerformanceInterval);
             this.currentlyDisplayableExercises = this.orderAverageScores(this.categoryFilter.toggleAllCategoriesForCourseStatistics(filteredAgainstType));
-        }
+            this.typeFilter.updateFilterOptions(this.currentlyDisplayableExercises);
+        }*/
+        const filteredAgainstType = this.typeFilter.toggleAllTypes(this.exerciseScoresFilteredByPerformanceInterval);
+        this.currentlyDisplayableExercises = this.orderAverageScores(this.categoryFilter.toggleAllCategoriesForCourseStatistics(filteredAgainstType));
         this.initializeChartWithFilter();
     }
 

@@ -38,13 +38,20 @@ export class ChartExerciseTypeFilter extends ChartFilter {
         return this.applyCurrentFilter(exerciseScores);
     }
 
+    toggleAllTypes(exerciseScores: any[]): any[] {
+        let allTypesDisabled = true;
+        this.filterMap.forEach((value) => (allTypesDisabled = allTypesDisabled && !value));
+        this.filterMap.forEach((value, key) => this.filterMap.set(key, allTypesDisabled));
+        return this.applyCurrentFilter(exerciseScores);
+    }
+
     /**
      * Handles selection or deselection of specific exercise type
      * @param type the ExerciseType the user changed the filter for
      * @param exerciseScores the score objects the updated filter should be applied against
      * @returns the exerciseScores filtered against the current state of the chart filter
      */
-    toggleExerciseType(type: ExerciseType, exerciseScores: any[]): any {
+    toggleExerciseType(type: ExerciseType, exerciseScores: any[]): any[] {
         const convertedType = ChartExerciseTypeFilter.convertToMapKey(type);
         const isIncluded = this.filterMap.get(convertedType);
         this.filterMap.set(convertedType, !isIncluded);
@@ -52,7 +59,7 @@ export class ChartExerciseTypeFilter extends ChartFilter {
         return this.applyCurrentFilter(exerciseScores);
     }
 
-    applyCurrentFilter(exerciseScores: any[]) {
+    applyCurrentFilter(exerciseScores: any[]): any[] {
         return exerciseScores.filter((score) => this.filterMap.get(ChartExerciseTypeFilter.convertToMapKey(score.exerciseType)));
     }
 

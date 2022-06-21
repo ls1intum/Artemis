@@ -31,7 +31,6 @@ export class ChartCategoryFilter extends ChartFilter {
             .flatMap((exercise: CourseManagementStatisticsModel) => exercise.categories!)
             .map((category: ExerciseCategory) => category.category!);
         this.exerciseCategories = new Set(exerciseCategories);
-        console.log(exerciseCategories);
     }
 
     setupCategoryFilter(courseExercises: Exercise[]): void {
