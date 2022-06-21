@@ -1,223 +1,225 @@
 name: Build & Deploy
 
 on:
-  pull_request:
-    paths-ignore:
-    - 'README.md'
-    - 'CODE_OF_CONDUCT.md'
-    - 'CONTRIBUTING.md'
-    - 'LICENSE'
-    - 'SECURITY.md'
-    - 'docs/**'
-    - '.github/**'
-    - '!.github/workflows/build-deploy.yml'
-  push:
-    branches:
-    - develop
-    - main
-    - release/*
-    tags: '[0-9]+.[0-9]+.[0-9]+'
-    paths-ignore:
-    - 'README.md'
-    - 'CODE_OF_CONDUCT.md'
-    - 'CONTRIBUTING.md'
-    - 'LICENSE'
-    - 'SECURITY.md'
-    - 'docs/**'
-    - '.github/**'
-    - '!.github/workflows/build-deploy.yml'
-  release:
-    types:
-    - created
+    pull_request:
+        paths-ignore:
+            - 'README.md'
+            - 'CODE_OF_CONDUCT.md'
+            - 'CONTRIBUTING.md'
+            - 'LICENSE'
+            - 'SECURITY.md'
+            - 'docs/**'
+            - '.github/**'
+            - '!.github/workflows/build-deploy.yml'
+    push:
+        branches:
+            - develop
+            - main
+            - release/*
+        tags: '[0-9]+.[0-9]+.[0-9]+'
+        paths-ignore:
+            - 'README.md'
+            - 'CODE_OF_CONDUCT.md'
+            - 'CONTRIBUTING.md'
+            - 'LICENSE'
+            - 'SECURITY.md'
+            - 'docs/**'
+            - '.github/**'
+            - '!.github/workflows/build-deploy.yml'
+    release:
+        types:
+            - created
 
 # Keep in sync with codeql-analysis.yml and test.yml
 env:
-  CI: true
-  node: 16.x
-  java: 17
-  RAW_URL: https://raw.githubusercontent.com/${{ github.repository }}/${{ github.sha }}
+    CI: true
+    node: 16.x
+    java: 17
+    RAW_URL: https://raw.githubusercontent.com/${{ github.repository }}/${{ github.sha }}
 
 jobs:
 
-  build:
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v3
-    - name: Setup Node.js
-      uses: actions/setup-node@v3
-      with:
-        node-version: '${{ env.node }}'
-        cache: 'npm'
-    - name: Setup Java
-      uses: actions/setup-java@v3
-      with:
-        distribution: 'zulu'
-        java-version: '${{ env.java }}'
-        cache: 'gradle'
-    - name: Production Build
-      run: ./gradlew -Pprod -Pwar clean bootWar
-      env:
-        NODE_OPTIONS: --max_old_space_size=6144
-    - name: Upload Artifact
-      uses: actions/upload-artifact@v3
-      with:
-        name: Artemis.war
-        path: build/libs/Artemis-*.war
-    - name: Upload Release Artifact
-      if: github.event_name == 'release' && github.event.action == 'created'
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ github.event.release.upload_url }}
-        asset_path: build/libs/Artemis-${{ github.event.release.tag_name }}.war
-        asset_name: Artemis.war
-        asset_content_type: application/x-webarchive
+    build:
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v3
+            - name: Setup Node.js
+              uses: actions/setup-node@v3
+              with:
+                  node-version: '${{ env.node }}'
+                  cache: 'npm'
+            - name: Setup Java
+              uses: actions/setup-java@v3
+              with:
+                  distribution: 'zulu'
+                  java-version: '${{ env.java }}'
+                  cache: 'gradle'
+            - name: Production Build
+              run: ./gradlew -Pprod -Pwar clean bootWar
+              env:
+                  NODE_OPTIONS: --max_old_space_size=6144
+            - name: Upload Artifact
+              uses: actions/upload-artifact@v3
+              with:
+                  name: Artemis.war
+                  path: build/libs/Artemis-*.war
+            - name: Upload Release Artifact
+              if: github.event_name == 'release' && github.event.action == 'created'
+              uses: actions/upload-release-asset@v1
+              env:
+                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+              with:
+                  upload_url: ${{ github.event.release.upload_url }}
+                  asset_path: build/libs/Artemis-${{ github.event.release.tag_name }}.war
+                  asset_name: Artemis.war
+                  asset_content_type: application/x-webarchive
 
-  docker:
-    needs: build
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v3
-    - name: Download Artifact
-      uses: actions/download-artifact@v3
-      with:
-        name: Artemis.war
-    - name: Copy Dockerfile to Build Directory
-      run: cp src/main/docker/Dockerfile .
-    - name: Build Docker Image
-      run: docker build --build-arg WAR_PATH=. -t artemis .
+    docker:
+        needs: build
+        runs-on: ubuntu-latest
+        if: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == 'ls1intum/Artemis' }}
 
-    - name: Compute Tag
-      uses: actions/github-script@v6
-      id: compute-tag
-      with:
-        result-encoding: string
-        script: |
-          if (context.eventName === "pull_request") {
-            return "pr-" + context.issue.number;
-          }
-          if (context.eventName === "push") {
-            if (context.ref.startsWith("refs/tags/")) {
-              return context.ref.slice(10);
-            }
-            if (context.ref === "refs/heads/develop") {
-              return "latest";
-            }
-          }
-          return "FALSE";
+        steps:
+            - uses: actions/checkout@v3
+            - name: Download Artifact
+              uses: actions/download-artifact@v3
+              with:
+                  name: Artemis.war
+            - name: Copy Dockerfile to Build Directory
+              run: cp src/main/docker/Dockerfile .
+            - name: Build Docker Image
+              run: docker build --build-arg WAR_PATH=. -t artemis .
 
-    # Push to GitHub Container Registry
-    - name: Login to GitHub Container Registry
-      uses: docker/login-action@v2
-      with:
-        registry: ghcr.io
-        username: ${{ github.repository_owner }}
-        password: ${{ secrets.GITHUB_TOKEN }}
-      if: ${{ steps.compute-tag.outputs.result != 'FALSE' }}
-    - name: Push to GitHub Container Registry
-      env:
-        TAG: ${{ steps.compute-tag.outputs.result }}
-      run: |
-        docker tag artemis ghcr.io/ls1intum/artemis:$TAG
-        docker push ghcr.io/ls1intum/artemis:$TAG
-      if: ${{ steps.compute-tag.outputs.result != 'FALSE' }}
+            - name: Compute Tag
+              uses: actions/github-script@v6
+              id: compute-tag
+              with:
+                  result-encoding: string
+                  script: |
+                      if (context.eventName === "pull_request") {
+                        return "pr-" + context.issue.number;
+                      }
+                      if (context.eventName === "push") {
+                        if (context.ref.startsWith("refs/tags/")) {
+                          return context.ref.slice(10);
+                        }
+                        if (context.ref === "refs/heads/develop") {
+                          return "latest";
+                        }
+                      }
+                      return "FALSE";
 
-    # TODO: Push to Docker Hub (develop + tag)
+            # Push to GitHub Container Registry
+            - name: Login to GitHub Container Registry
+              uses: docker/login-action@v2
+              with:
+                  registry: ghcr.io
+                  username: ${{ github.repository_owner }}
+                  password: ${{ secrets.GITHUB_TOKEN }}
+              if: ${{ steps.compute-tag.outputs.result != 'FALSE' }}
+            - name: Push to GitHub Container Registry
+              env:
+                  TAG: ${{ steps.compute-tag.outputs.result }}
+              run: |
+                  docker tag artemis ghcr.io/ls1intum/artemis:$TAG
+                  docker push ghcr.io/ls1intum/artemis:$TAG
+              if: ${{ steps.compute-tag.outputs.result != 'FALSE' }}
 
-    # TODO: Push to Chair Habour (??)
+        # TODO: Push to Docker Hub (develop + tag)
 
-  deploy:
-    if: ${{ github.event_name == 'pull_request' }}
-    needs: build
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        include:
-          - environment: artemistest5
-            url: https://artemistest5.ase.in.tum.de
-    environment:
-      url: ${{ matrix.url }}
-      name: ${{ matrix.environment }}
-    steps:
-    - name: Check "lock:${{ matrix.environment }}" label
-      uses: actions/github-script@v6
-      with:
-        github-token: ${{ secrets.GITHUB_TOKEN }}
-        script: |
-          const opts = github.rest.issues.listForRepo.endpoint.merge({
-            owner: context.repo.owner,
-            repo: context.repo.repo,
-            labels: ['lock:${{ matrix.environment }}']
-          })
-          const issues = await github.paginate(opts)
-          if (issues.length == 1 && (!context.issue || issues[0].number != context.issue.number)) {
-            core.setFailed(`Testserver "${{ matrix.environment }}" is already in use by PR #${issues[0].number}.`);
-          } else if (issues.length > 1) {
-            core.setFailed('Testserver "${{ matrix.environment }}" is already in use by multiple PRs. Check PRs with label "lock:${{ matrix.environment }}"!');
-          } else if (context.issue && context.issue.number) {
-            await github.rest.issues.addLabels({
-              issue_number: context.issue.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              labels: ['lock:${{ matrix.environment }}']
-            })
-          }
+        # TODO: Push to Chair Habour (??)
 
-    - name: Download Artifact
-      uses: actions/download-artifact@v3
-      with:
-        name: Artemis.war
-    - name: Store Artifact Name
-      id: artifact-name
-      run: echo "::set-output name=war-file::$(ls)"
+    deploy:
+        if: ${{ github.event_name == 'pull_request' }}
+        needs: build
+        runs-on: ubuntu-latest
+        strategy:
+            matrix:
+                include:
+                    - environment: artemistest5
+                      url: https://artemistest5.ase.in.tum.de
+        environment:
+            url: ${{ matrix.url }}
+            name: ${{ matrix.environment }}
+        steps:
+            - name: Check "lock:${{ matrix.environment }}" label
+              uses: actions/github-script@v6
+              with:
+                  github-token: ${{ secrets.GITHUB_TOKEN }}
+                  script: |
+                      const opts = github.rest.issues.listForRepo.endpoint.merge({
+                        owner: context.repo.owner,
+                        repo: context.repo.repo,
+                        labels: ['lock:${{ matrix.environment }}']
+                      })
+                      const issues = await github.paginate(opts)
+                      if (issues.length == 1 && (!context.issue || issues[0].number != context.issue.number)) {
+                        core.setFailed(`Testserver "${{ matrix.environment }}" is already in use by PR #${issues[0].number}.`);
+                      } else if (issues.length > 1) {
+                        core.setFailed('Testserver "${{ matrix.environment }}" is already in use by multiple PRs. Check PRs with label "lock:${{ matrix.environment }}"!');
+                      } else if (context.issue && context.issue.number) {
+                        await github.rest.issues.addLabels({
+                          issue_number: context.issue.number,
+                          owner: context.repo.owner,
+                          repo: context.repo.repo,
+                          labels: ['lock:${{ matrix.environment }}']
+                        })
+                      }
 
-    # Download artemis-server-cli from GH without cloning the Repo
-    - name: Fetch Artemis CLI
-      run: |
-        wget ${{ env.RAW_URL }}/artemis-server-cli
-        chmod +x artemis-server-cli
+            - name: Download Artifact
+              uses: actions/download-artifact@v3
+              with:
+                  name: Artemis.war
+            - name: Store Artifact Name
+              id: artifact-name
+              run: echo "::set-output name=war-file::$(ls)"
 
-    - name: Install OpenVPN
-      run: sudo apt-get --assume-yes --no-install-recommends install openvpn
-    # Fill config from Secret (https://tum.eduvpn.lrz.de/vpn-user-portal/configurations)
-    - name: Configure LRZ eduVPN
-      run: echo "${{ secrets.LRZ_OVPN_CONFIG }}" > lrz.ovpn
-    - name: Connect VPN
-      run: sudo openvpn --config "lrz.ovpn" --log "vpn.log" --daemon
-    - name: Wait for a VPN connection. Ping nas.ads.mwn.de (only accessible inside MWN)
-      run: until ping -c1 nas.ads.mwn.de; do sleep 2; done
-      timeout-minutes: 2
+            # Download artemis-server-cli from GH without cloning the Repo
+            - name: Fetch Artemis CLI
+              run: |
+                  wget ${{ env.RAW_URL }}/artemis-server-cli
+                  chmod +x artemis-server-cli
 
-    # Configure SSH Key
-    - name: Setup SSH Keys and known_hosts
-      env:
-          SSH_AUTH_SOCK: /tmp/ssh_agent.sock
-          DEPLOYMENT_HOSTS: "${{ secrets.DEPLOYMENT_HOSTS }}"
-          SSH_PRIVATE_KEY: "${{ secrets.SSH_PRIVATE_KEY }}"
-      run: |
-          mkdir -p ~/.ssh
-          for host in $DEPLOYMENT_HOSTS; do
-            ssh-keyscan $host >> ~/.ssh/known_hosts
-          done
-          ssh-agent -a $SSH_AUTH_SOCK > /dev/null
-          ssh-add - <<< $SSH_PRIVATE_KEY
+            - name: Install OpenVPN
+              run: sudo apt-get --assume-yes --no-install-recommends install openvpn
+            # Fill config from Secret (https://tum.eduvpn.lrz.de/vpn-user-portal/configurations)
+            - name: Configure LRZ eduVPN
+              run: echo "${{ secrets.LRZ_OVPN_CONFIG }}" > lrz.ovpn
+            - name: Connect VPN
+              run: sudo openvpn --config "lrz.ovpn" --log "vpn.log" --daemon
+            - name: Wait for a VPN connection. Ping nas.ads.mwn.de (only accessible inside MWN)
+              run: until ping -c1 nas.ads.mwn.de; do sleep 2; done
+              timeout-minutes: 2
 
-    - name: Deploy Artemis WAR artifact
-      env:
-          SSH_AUTH_SOCK: /tmp/ssh_agent.sock
-          DEPLOYMENT_HOSTS: "${{ secrets.DEPLOYMENT_HOSTS }}"
-          DEPLOYMENT_USER: ${{ secrets.DEPLOYMENT_USER }}
-          WAR_FILE: ./${{steps.artifact-name.outputs.war-file}}
-      run: |
-        for host in $DEPLOYMENT_HOSTS; do
-          ./artemis-server-cli deploy $DEPLOYMENT_USER@$host -w $WAR_FILE -y
-          sleep 20
-        done
+            # Configure SSH Key
+            - name: Setup SSH Keys and known_hosts
+              env:
+                  SSH_AUTH_SOCK: /tmp/ssh_agent.sock
+                  DEPLOYMENT_HOSTS: "${{ secrets.DEPLOYMENT_HOSTS }}"
+                  SSH_PRIVATE_KEY: "${{ secrets.SSH_PRIVATE_KEY }}"
+              run: |
+                  mkdir -p ~/.ssh
+                  for host in $DEPLOYMENT_HOSTS; do
+                    ssh-keyscan $host >> ~/.ssh/known_hosts
+                  done
+                  ssh-agent -a $SSH_AUTH_SOCK > /dev/null
+                  ssh-add - <<< $SSH_PRIVATE_KEY
 
-    # Always disconnect from VPN
-    - name: Disconncet VPN
-      run: |
-        sudo killall openvpn
-        rm lrz.ovpn
-      if: always()
+            - name: Deploy Artemis WAR artifact
+              env:
+                  SSH_AUTH_SOCK: /tmp/ssh_agent.sock
+                  DEPLOYMENT_HOSTS: "${{ secrets.DEPLOYMENT_HOSTS }}"
+                  DEPLOYMENT_USER: ${{ secrets.DEPLOYMENT_USER }}
+                  WAR_FILE: ./${{steps.artifact-name.outputs.war-file}}
+              run: |
+                  for host in $DEPLOYMENT_HOSTS; do
+                    ./artemis-server-cli deploy $DEPLOYMENT_USER@$host -w $WAR_FILE -y
+                    sleep 20
+                  done
+
+            # Always disconnect from VPN
+            - name: Disconncet VPN
+              run: |
+                  sudo killall openvpn
+                  rm lrz.ovpn
+              if: always()
