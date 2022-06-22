@@ -26,7 +26,7 @@ import { TextExercise } from 'app/entities/text-exercise.model';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
-import { ExerciseType } from 'app/entities/exercise.model';
+import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { TextSubmission } from 'app/entities/text-submission.model';
 import { QuizSubmission } from 'app/entities/quiz/quiz-submission.model';
@@ -47,6 +47,7 @@ import { GradeType } from 'app/entities/grading-scale.model';
 import { ExamParticipationService } from 'app/exam/participate/exam-participation.service';
 import { StudentExamWithGradeDTO, StudentResult } from 'app/exam/exam-scores/exam-score-dtos.model';
 import { MockExamParticipationService } from '../../../../helpers/mocks/service/mock-exam-participation.service';
+import { SubmissionType } from 'app/entities/submission.model';
 
 let fixture: ComponentFixture<ExamParticipationSummaryComponent>;
 let component: ExamParticipationSummaryComponent;
@@ -200,5 +201,70 @@ describe('ExamParticipationSummaryComponent', () => {
         expect(serviceSpy).toHaveBeenCalledWith(courseId, studentExam.exam!.id);
         expect(component.studentExam).toEqual(studentExam);
         expect(component.studentExamGradeInfoDTO).toEqual({ ...gradeInfo, studentExam });
+    });
+
+    it.each([
+        [null, undefined],
+        [undefined, undefined],
+        [{}, undefined],
+        [{ studentParticipations: null }, undefined],
+        [{ studentParticipations: undefined }, undefined],
+        [{ studentParticipations: [] }, undefined],
+        [{ studentParticipations: [{ id: 1 }] }, ['/courses', undefined, 'undefined-exercises', undefined, 'participate', 1]],
+    ])('should handle missing/empty fields correctly for %o in generateLink', (exercise, expectedResult) => {
+        const link = component.generateLink(exercise as Exercise);
+        expect(link).toEqual(expectedResult);
+    });
+
+    it.each([
+        [{}, undefined],
+        [{ studentParticipations: null }, undefined],
+        [{ studentParticipations: undefined }, undefined],
+        [{ studentParticipations: [] }, undefined],
+        [{ studentParticipations: [null] }, undefined],
+        [{ studentParticipations: [undefined] }, undefined],
+        [{ studentParticipations: [{ id: 2 }] }, { id: 2 }],
+    ])('should handle missing/empty fields correctly for %o in getParticipationForExercise', (exercise, expectedResult) => {
+        const participation = component.getParticipationForExercise(exercise as Exercise);
+        expect(participation).toEqual(expectedResult);
+    });
+
+    it.each([
+        [null, undefined],
+        [undefined, undefined],
+        [{}, undefined],
+        [{ studentParticipations: null }, undefined],
+        [{ studentParticipations: undefined }, undefined],
+        [{ studentParticipations: [] }, undefined],
+        [{ studentParticipations: [null] }, undefined],
+        [{ studentParticipations: [undefined] }, undefined],
+        [{ studentParticipations: [{}] }, undefined],
+        [{ studentParticipations: [{ submissions: null }] }, undefined],
+        [{ studentParticipations: [{ submissions: undefined }] }, undefined],
+        [{ studentParticipations: [{ submissions: [{ id: 3 }] }] }, { id: 3 }],
+    ])('should handle missing/empty fields correctly for %o in getSubmissionForExercise', (exercise, expectedResult) => {
+        const submission = component.getSubmissionForExercise(exercise as Exercise);
+        expect(submission).toEqual(expectedResult);
+    });
+
+    it.each([
+        [{}, false],
+        [{ studentParticipations: null }, false],
+        [{ studentParticipations: undefined }, false],
+        [{ studentParticipations: [] }, false],
+        [{ studentParticipations: [{}] }, false],
+        [{ studentParticipations: [{ submissions: null }] }, false],
+        [{ studentParticipations: [{ submissions: undefined }] }, false],
+        [{ studentParticipations: [{ submissions: [{ type: SubmissionType.MANUAL }] }] }, false],
+        [{ studentParticipations: [{ submissions: [{ type: SubmissionType.ILLEGAL }] }] }, true],
+    ])('should handle missing/empty fields correctly for %o when displaying illegal submission badge', (exercise, shouldBeNonNull) => {
+        component.studentExam = { id: 1, exam, exercises: [exercise as Exercise] };
+        fixture.detectChanges();
+        const span = fixture.debugElement.query(By.css('.badge.bg-danger'));
+        if (shouldBeNonNull) {
+            expect(span).not.toBe(null);
+        } else {
+            expect(span).toBe(null);
+        }
     });
 });

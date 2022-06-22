@@ -116,6 +116,7 @@ export class ExamParticipationSummaryComponent implements OnInit {
         if (exercise?.studentParticipations?.length) {
             return ['/courses', this.courseId, `${exercise.type}-exercises`, exercise.id, 'participate', exercise.studentParticipations[0].id];
         }
+        return undefined;
     }
 
     /**
@@ -131,7 +132,7 @@ export class ExamParticipationSummaryComponent implements OnInit {
      * returns the students' submission for the exercise, undefined if no participation could be found
      */
     getParticipationForExercise(exercise: Exercise) {
-        return exercise.studentParticipations?.[0];
+        return exercise.studentParticipations?.[0] || undefined;
     }
 
     /**
