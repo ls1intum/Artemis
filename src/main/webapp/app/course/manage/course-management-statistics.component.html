@@ -32,6 +32,7 @@
         </div>
     </div>
     <div *ngFor="let graph of graphTypes; let i = index" id="graph-{{ i }}" class="graph">
+        <hr *ngIf="i !== 0" />
         <jhi-statistics-graph [graphType]="graph" [currentSpan]="currentSpan" [statisticsView]="statisticsView" [entityId]="courseId"> </jhi-statistics-graph>
     </div>
 </div>

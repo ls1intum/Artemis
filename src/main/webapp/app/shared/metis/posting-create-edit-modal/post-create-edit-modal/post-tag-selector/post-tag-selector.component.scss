@@ -9,16 +9,16 @@
 
         .custom-tag {
             padding: 0.15rem 0.45rem;
-            background: #0275d8;
+            background: var(--metis-blue);
             border-radius: 0.25rem;
-            color: #fff;
+            color: var(--colored-btn-font);
 
             &:hover {
                 opacity: 0.8;
             }
 
             .post-tag-remove {
-                color: #fff;
+                color: var(--colored-btn-font);
             }
         }
     }
@@ -29,9 +29,9 @@
 }
 
 .tag-option {
-    background: #fff;
+    background: var(--metis-post-tag-selector-tag-option-background);
 
     &:hover {
-        background: #ccc;
+        background: var(--metis-post-tag-selector-tag-option-hover-background);
     }
 }

@@ -29,13 +29,14 @@
             "import": {
                 "attention": "Achtung! ",
                 "markdownWarning": "Die Aufgabenstellung kann nach dem Import geändert werden.",
+                "search": "Suche nach einer Aufgabe",
                 "loading": "Lade...",
                 "table": {
                     "title": "Titel",
                     "language": "Programmiersprache",
                     "course": "Kurs",
                     "examQuestion": "Klausuraufgabe",
-                    "doImport": "Import"
+                    "doImport": "Importieren"
                 }
             },
             "exercise": "Aufgabe",
