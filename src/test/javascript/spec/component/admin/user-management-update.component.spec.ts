@@ -39,13 +39,7 @@ describe('User Management Update Component', () => {
     } as any as ActivatedRoute;
     const route = { parent: parentRoute } as any as ActivatedRoute;
 
-    const mockRouterState = {
-        routerState: {
-            snapshot: {
-                root: { firstChild: {}, data: {} },
-            },
-        } as RouterState,
-    };
+    let mockRouterState: RouterState;
 
     let modalService: NgbModal;
     let translateService: TranslateService;
@@ -74,6 +68,11 @@ describe('User Management Update Component', () => {
                 modalService = TestBed.inject(NgbModal);
                 titleService = TestBed.inject(Title);
                 translateService = TestBed.inject(TranslateService);
+                mockRouterState = {
+                    snapshot: {
+                        root: { firstChild: {}, data: {} },
+                    },
+                } as RouterState;
             });
     });
 
@@ -119,7 +118,7 @@ describe('User Management Update Component', () => {
             fakeAsync((languageHelper: JhiLanguageHelper) => {
                 // GIVEN
                 const routerMock: MockRouter = TestBed.inject<MockRouter>(Router as any);
-                routerMock.setRouterState(mockRouterState.routerState);
+                routerMock.setRouterState(mockRouterState);
 
                 // WHEN
                 translateService.use('en');
@@ -129,12 +128,39 @@ describe('User Management Update Component', () => {
             }),
         ));
 
+        it('should set page title based on router snapshot', inject(
+            [JhiLanguageHelper],
+            fakeAsync((languageHelper: JhiLanguageHelper) => {
+                // GIVEN
+                const routerMock: MockRouter = TestBed.inject<MockRouter>(Router as any);
+                mockRouterState.snapshot.root.data = { pageTitle: 'parent.page.test' };
+                mockRouterState.snapshot.root.firstChild!.data = { pageTitle: 'child.page.test' };
+                routerMock.setRouterState(mockRouterState);
+
+                const updateTitleSpy = jest.spyOn(languageHelper, 'updateTitle');
+                const getPageTitleSpy = jest.spyOn(languageHelper, 'getPageTitle');
+                const setTitleOnTitleServiceSpy = jest.spyOn(titleService, 'setTitle');
+
+                // WHEN
+                translateService.use('en');
+
+                // THEN
+                expect(updateTitleSpy).toHaveBeenCalledOnce();
+                expect(getPageTitleSpy).toHaveBeenCalledTimes(2);
+                expect(getPageTitleSpy).toHaveBeenNthCalledWith(1, mockRouterState.snapshot.root);
+                expect(getPageTitleSpy).toHaveBeenNthCalledWith(2, mockRouterState.snapshot.root.firstChild);
+                expect(getPageTitleSpy).toHaveLastReturnedWith('child.page.test');
+                expect(setTitleOnTitleServiceSpy).toHaveBeenCalledOnce();
+                expect(setTitleOnTitleServiceSpy).toHaveBeenCalledWith('child.page.test');
+            }),
+        ));
+
         it('should set page title to default', inject(
             [JhiLanguageHelper],
             fakeAsync((languageHelper: JhiLanguageHelper) => {
                 // GIVEN
                 const routerMock: MockRouter = TestBed.inject<MockRouter>(Router as any);
-                routerMock.setRouterState(mockRouterState.routerState);
+                routerMock.setRouterState(mockRouterState);
 
                 const updateTitleSpy = jest.spyOn(languageHelper, 'updateTitle');
                 const setTitleOnTitleServiceSpy = jest.spyOn(titleService, 'setTitle');
@@ -154,7 +180,7 @@ describe('User Management Update Component', () => {
             fakeAsync((languageHelper: JhiLanguageHelper) => {
                 // GIVEN
                 const routerMock: MockRouter = TestBed.inject<MockRouter>(Router as any);
-                routerMock.setRouterState(mockRouterState.routerState);
+                routerMock.setRouterState(mockRouterState);
 
                 const updateTitleSpy = jest.spyOn(languageHelper, 'updateTitle');
                 const getTranslationSpy = jest.spyOn(translateService, 'get').mockReturnValue(of(undefined));
