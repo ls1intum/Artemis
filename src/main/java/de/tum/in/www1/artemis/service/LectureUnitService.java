@@ -34,16 +34,28 @@ public class LectureUnitService {
     }
 
     /**
-     * Mark the lecture unit as completed by the given user
-     * @param lectureUnit The lecture unit to completed for the user
-     * @param user The user that completed the lecture unit
+     * Set the completion status of the lecture unit for the give user
+     * If the user completed the unit and completion status already exists, nothing happens
+     * @param lectureUnit The lecture unit for which set the completion flag
+     * @param user The user that completed/uncompleted the lecture unit
+     * @param completed True if the lecture unit was completed, false otherwise
      */
-    public void setLectureUnitCompleted(@NotNull LectureUnit lectureUnit, @NotNull User user) {
-        LectureUnitCompletion completion = new LectureUnitCompletion();
-        completion.setLectureUnit(lectureUnit);
-        completion.setUser(user);
-        completion.setCompletedAt(ZonedDateTime.now());
-        lectureUnitCompletionRepository.save(completion);
+    public void setLectureUnitCompletion(@NotNull LectureUnit lectureUnit, @NotNull User user, boolean completed) {
+        Optional<LectureUnitCompletion> existingCompletion = lectureUnitCompletionRepository.findByLectureUnitIdAndUserId(lectureUnit.getId(), user.getId());
+        if (completed) {
+            if (!existingCompletion.isPresent()) {
+                // Create a completion status for this lecture unit (only if it does not exist)
+                LectureUnitCompletion completion = new LectureUnitCompletion();
+                completion.setLectureUnit(lectureUnit);
+                completion.setUser(user);
+                completion.setCompletedAt(ZonedDateTime.now());
+                lectureUnitCompletionRepository.save(completion);
+            }
+        }
+        else {
+            // Delete the completion status for this lecture unit (if it exists)
+            existingCompletion.ifPresent(lectureUnitCompletionRepository::delete);
+        }
     }
 
     /**

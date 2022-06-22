@@ -15,6 +15,11 @@ import { AlertService } from 'app/core/util/alert.service';
 import { faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { LectureUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/lectureUnit.service';
 
+export interface LectureUnitCompletionEvent {
+    lectureUnit: LectureUnit;
+    completed: boolean;
+}
+
 @Component({
     selector: 'jhi-course-lecture-details',
     templateUrl: './course-lecture-details.component.html',
@@ -107,11 +112,11 @@ export class CourseLectureDetailsComponent implements OnInit {
         }
     }
 
-    completeLectureUnit(lectureUnit: LectureUnit): void {
-        if (this.lecture && !lectureUnit.completed && lectureUnit.visibleToStudents) {
-            this.lectureUnitService.complete(lectureUnit.id!, this.lecture.id!).subscribe({
+    completeLectureUnit(event: LectureUnitCompletionEvent): void {
+        if (this.lecture && event.lectureUnit.visibleToStudents && event.lectureUnit.completed !== event.completed) {
+            this.lectureUnitService.setCompletion(event.lectureUnit.id!, this.lecture.id!, event.completed).subscribe({
                 next: () => {
-                    lectureUnit.completed = true;
+                    event.lectureUnit.completed = event.completed;
                 },
                 error: (res: HttpErrorResponse) => onError(this.alertService, res),
             });

@@ -87,7 +87,7 @@ describe('AttachmentUnitComponent', () => {
     });
 
     it('should call complete callback when downloaded', (done) => {
-        attachmentUnitComponent.onComplete.subscribe((lectureUnit) => {
+        attachmentUnitComponent.onCompletion.subscribe((lectureUnit) => {
             expect(lectureUnit).toEqual(attachmentUnit);
             done();
         });

@@ -100,9 +100,9 @@ public class LectureUnitResource {
      * @param lectureUnitId the id of the lecture unit to mark as completed for the logged-in user
      * @return the ResponseEntity with status 200 (OK)
      */
-    @PostMapping("/lectures/{lectureId}/lecture-units/{lectureUnitId}/complete")
+    @PostMapping("/lectures/{lectureId}/lecture-units/{lectureUnitId}/completion")
     @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<Void> completeLectureUnit(@PathVariable Long lectureUnitId, @PathVariable Long lectureId) {
+    public ResponseEntity<Void> completeLectureUnit(@PathVariable Long lectureUnitId, @PathVariable Long lectureId, @RequestParam("completed") boolean completed) {
         log.info("REST request to mark lecture unit as completed: {}", lectureUnitId);
         LectureUnit lectureUnit = lectureUnitRepository.findById(lectureUnitId).orElseThrow(() -> new EntityNotFoundException("lectureUnit"));
 
@@ -119,10 +119,9 @@ public class LectureUnitResource {
         }
 
         User user = userRepository.getUserWithGroupsAndAuthorities();
-
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, lectureUnit.getLecture().getCourse(), user);
 
-        lectureUnitService.setLectureUnitCompleted(lectureUnit, user);
+        lectureUnitService.setLectureUnitCompletion(lectureUnit, user, completed);
 
         return ResponseEntity.ok().build();
     }

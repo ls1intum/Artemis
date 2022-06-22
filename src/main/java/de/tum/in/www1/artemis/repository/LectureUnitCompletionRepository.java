@@ -17,8 +17,8 @@ public interface LectureUnitCompletionRepository extends JpaRepository<LectureUn
             FROM LectureUnitCompletion lectureUnitCompletion
             LEFT JOIN FETCH lectureUnitCompletion.user
             LEFT JOIN FETCH lectureUnitCompletion.lectureUnit
-            WHERE lectureUnitCompletion.lectureUnit = :#{#lectureUnitId}
-            AND lectureUnitCompletion.user = :#{#userId}
+            WHERE lectureUnitCompletion.lectureUnit.id = :#{#lectureUnitId}
+            AND lectureUnitCompletion.user.id = :#{#userId}
             """)
     Optional<LectureUnitCompletion> findByLectureUnitIdAndUserId(@Param("lectureUnitId") Long lectureUnitId, @Param("userId") Long userId);
 

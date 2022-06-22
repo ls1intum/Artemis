@@ -91,7 +91,7 @@ describe('TextUnitFormComponent', () => {
     }));
 
     it('should call complete callback when clicked', (done) => {
-        textUnitComponent.onComplete.subscribe((lectureUnit) => {
+        textUnitComponent.onCompletion.subscribe((lectureUnit) => {
             expect(lectureUnit).toEqual(textUnit);
             done();
         });

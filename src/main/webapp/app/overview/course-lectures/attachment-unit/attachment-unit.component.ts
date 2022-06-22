@@ -1,8 +1,9 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
-import { faCheck, faFile, faFileArchive, faFileImage, faFilePdf } from '@fortawesome/free-solid-svg-icons';
+import { faDownload, faFile, faFileArchive, faFileImage, faFilePdf } from '@fortawesome/free-solid-svg-icons';
 import { AttachmentUnit } from 'app/entities/lecture-unit/attachmentUnit.model';
 import { FileService } from 'app/shared/http/file.service';
-import { LectureUnit } from 'app/entities/lecture-unit/lectureUnit.model';
+import { LectureUnitCompletionEvent } from 'app/overview/course-lectures/course-lecture-details.component';
+import { faSquare, faSquareCheck } from '@fortawesome/free-regular-svg-icons';
 
 @Component({
     selector: 'jhi-attachment-unit',
@@ -11,12 +12,15 @@ import { LectureUnit } from 'app/entities/lecture-unit/lectureUnit.model';
 })
 export class AttachmentUnitComponent {
     @Input() attachmentUnit: AttachmentUnit;
-    @Output() onComplete: EventEmitter<any> = new EventEmitter();
+    @Input() isPresentationMode = false;
+    @Output() onCompletion: EventEmitter<LectureUnitCompletionEvent> = new EventEmitter();
 
     isCollapsed = true;
 
     // Icons
-    faCheck = faCheck;
+    faDownload = faDownload;
+    faSquare = faSquare;
+    faSquareCheck = faSquareCheck;
 
     constructor(private fileService: FileService) {}
 
@@ -28,8 +32,13 @@ export class AttachmentUnitComponent {
     downloadAttachment() {
         if (this.attachmentUnit?.attachment?.link) {
             this.fileService.downloadFileWithAccessToken(this.attachmentUnit?.attachment?.link);
-            this.onComplete.emit(this.attachmentUnit as LectureUnit);
+            this.onCompletion.emit({ lectureUnit: this.attachmentUnit, completed: true });
         }
+    }
+
+    handleClick(event: Event, completed: boolean) {
+        event.stopPropagation();
+        this.onCompletion.emit({ lectureUnit: this.attachmentUnit, completed });
     }
 
     getFileName() {

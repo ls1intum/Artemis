@@ -78,7 +78,7 @@ describe('VideoUnitComponent', () => {
     });
 
     it('should call complete callback when clicked', (done) => {
-        videoUnitComponent.onComplete.subscribe((lectureUnit) => {
+        videoUnitComponent.onCompletion.subscribe((lectureUnit) => {
             expect(lectureUnit).toEqual(videoUnit);
             done();
         });
