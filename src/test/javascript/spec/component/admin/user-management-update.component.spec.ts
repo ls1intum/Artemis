@@ -24,6 +24,7 @@ import { MatChipInputEvent, MatChipsModule } from '@angular/material/chips';
 import { TranslateService } from '@ngx-translate/core';
 import { MockRouter } from '../../helpers/mocks/mock-router';
 import { Title } from '@angular/platform-browser';
+import * as Sentry from '@sentry/browser';
 
 import { LANGUAGES } from 'app/core/language/language.constants';
 
@@ -144,7 +145,30 @@ describe('User Management Update Component', () => {
                 // THEN
                 expect(updateTitleSpy).toHaveBeenCalledOnce();
                 expect(setTitleOnTitleServiceSpy).toHaveBeenCalledOnce();
-                expect(setTitleOnTitleServiceSpy).toHaveBeenCalledWith('artemisApp');
+                expect(setTitleOnTitleServiceSpy).toHaveBeenCalledWith('global.title');
+            }),
+        ));
+
+        it('should capture exception if title translation not found', inject(
+            [JhiLanguageHelper],
+            fakeAsync((languageHelper: JhiLanguageHelper) => {
+                // GIVEN
+                const routerMock: MockRouter = TestBed.inject<MockRouter>(Router as any);
+                routerMock.setRouterState(mockRouterState.routerState);
+
+                const updateTitleSpy = jest.spyOn(languageHelper, 'updateTitle');
+                const getTranslationSpy = jest.spyOn(translateService, 'get').mockReturnValue(of(undefined));
+                const setTitleOnTitleServiceSpy = jest.spyOn(titleService, 'setTitle');
+                const captureExceptionSpy = jest.spyOn(Sentry, 'captureException');
+
+                // WHEN
+                translateService.use('en');
+
+                // THEN
+                expect(updateTitleSpy).toHaveBeenCalledOnce();
+                expect(getTranslationSpy).toHaveBeenCalledOnce();
+                expect(captureExceptionSpy).toHaveBeenCalledOnce();
+                expect(setTitleOnTitleServiceSpy).not.toHaveBeenCalled();
             }),
         ));
     });
