@@ -98,6 +98,7 @@ public class LectureUnitResource {
      *
      * @param lectureId     the id of the lecture to which the unit belongs
      * @param lectureUnitId the id of the lecture unit to mark as completed for the logged-in user
+     * @param completed     true if the lecture unit should be marked as completed, false for uncompleted
      * @return the ResponseEntity with status 200 (OK)
      */
     @PostMapping("/lectures/{lectureId}/lecture-units/{lectureUnitId}/completion")
