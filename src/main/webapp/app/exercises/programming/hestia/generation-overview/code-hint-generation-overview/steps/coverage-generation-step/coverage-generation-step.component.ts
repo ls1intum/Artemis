@@ -22,6 +22,7 @@ export class CoverageGenerationStepComponent implements OnInit {
     constructor(private exerciseService: ProgrammingExerciseService) {}
 
     ngOnInit(): void {
+        this.isLoading = true;
         this.exerciseService.getSolutionRepositoryTestFilesWithContent(this.exercise.id!).subscribe({
             next: (response: Map<string, string>) => {
                 this.exerciseService.getLatestFullTestwiseCoverageReport(this.exercise.id!).subscribe({
@@ -31,7 +32,9 @@ export class CoverageGenerationStepComponent implements OnInit {
                         this.coverageReport = coverageReport;
                         this.fileContentByPath = response;
                     },
-                    error: () => {},
+                    error: () => {
+                        this.isLoading = false;
+                    },
                 });
             },
         });

@@ -5,6 +5,7 @@ import { SolutionEntryDetailsModalComponent } from 'app/exercises/programming/he
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
 import { ProgrammingExerciseTestCaseType } from 'app/entities/programming-exercise-test-case.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { AlertService, AlertType } from 'app/core/util/alert.service';
 
 @Component({
     selector: 'jhi-solution-entry-generation-step',
@@ -23,7 +24,7 @@ export class SolutionEntryGenerationStepComponent implements OnInit {
     solutionEntries: Map<ProgrammingExerciseSolutionEntry, boolean>;
     allEntriesSelected = true;
 
-    constructor(private modalService: NgbModal, private exerciseService: ProgrammingExerciseService) {}
+    constructor(private modalService: NgbModal, private exerciseService: ProgrammingExerciseService, private alertService: AlertService) {}
 
     ngOnInit() {
         this.exerciseService.getSolutionEntriesForExercise(this.exercise.id!).subscribe({
@@ -75,6 +76,10 @@ export class SolutionEntryGenerationStepComponent implements OnInit {
     onGenerateStructuralSolutionEntries() {
         this.exerciseService.createStructuralSolutionEntries(this.exercise.id!).subscribe({
             next: (updatedStructuralEntries) => {
+                this.alertService.addAlert({
+                    type: AlertType.SUCCESS,
+                    message: 'artemisApp.programmingExercise.createStructuralSolutionEntriesSuccess',
+                });
                 const updatedSolutionEntries = new Map<ProgrammingExerciseSolutionEntry, boolean>();
                 this.solutionEntries?.forEach((selected, entry) => {
                     if (entry.testCase?.type === ProgrammingExerciseTestCaseType.BEHAVIORAL) {
@@ -92,6 +97,10 @@ export class SolutionEntryGenerationStepComponent implements OnInit {
     onGenerateBehavioralSolutionEntries() {
         this.exerciseService.createBehavioralSolutionEntries(this.exercise.id!).subscribe({
             next: (updatedBehavioralEntries) => {
+                this.alertService.addAlert({
+                    type: AlertType.SUCCESS,
+                    message: 'artemisApp.programmingExercise.createBehavioralSolutionEntriesSuccess',
+                });
                 const updatedSolutionEntries = new Map<ProgrammingExerciseSolutionEntry, boolean>();
                 this.solutionEntries?.forEach((selected, entry) => {
                     if (entry.testCase?.type && entry.testCase?.type !== ProgrammingExerciseTestCaseType.BEHAVIORAL) {

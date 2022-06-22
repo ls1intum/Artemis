@@ -35,7 +35,9 @@ export class CodeHintGenerationStepComponent implements OnInit {
                 this.onCodeHintsLoaded.emit(this.codeHints);
                 this.isLoading = false;
             },
-            error: () => {},
+            error: () => {
+                this.isLoading = false;
+            },
         });
     }
 
@@ -51,7 +53,9 @@ export class CodeHintGenerationStepComponent implements OnInit {
                 this.onCodeHintsLoaded.emit(this.codeHints);
                 this.isLoading = false;
             },
-            error: () => {},
+            error: () => {
+                this.isLoading = false;
+            },
         });
     }
 }

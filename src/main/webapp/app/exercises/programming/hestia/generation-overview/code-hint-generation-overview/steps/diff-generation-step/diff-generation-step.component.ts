@@ -21,13 +21,16 @@ export class DiffGenerationStepComponent implements OnInit {
     constructor(private exerciseService: ProgrammingExerciseService) {}
 
     ngOnInit() {
+        this.isLoading = true;
         this.exerciseService.getFullDiffReport(this.exercise.id!).subscribe({
             next: (report) => {
                 this.gitDiffReport = report;
                 this.isLoading = false;
                 this.onGitDiffLoaded.emit(report);
             },
-            error: () => {},
+            error: () => {
+                this.isLoading = false;
+            },
         });
     }
 }

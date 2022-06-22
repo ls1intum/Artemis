@@ -9,7 +9,7 @@
         [ngbTooltip]="'artemisApp.codeHint.generation.step4.generateHintsButton.tooltip' | artemisTranslate"
         (click)="onGenerateCodeHints()"
     >
-        {{ codeHints?.length ? 'Re-' : '' }}Generate code hints
+        Generate code hints
     </button>
 </div>
 <mat-accordion *ngIf="codeHints?.length">
