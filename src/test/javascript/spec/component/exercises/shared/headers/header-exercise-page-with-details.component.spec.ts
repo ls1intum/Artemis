@@ -19,6 +19,7 @@ import { SubmissionType } from 'app/entities/submission.model';
 import { Result } from 'app/entities/result.model';
 import { LockRepositoryPolicy } from 'app/entities/submission-policy.model';
 import { Course } from 'app/entities/course.model';
+import { AssessmentType } from 'app/entities/assessment-type.model';
 
 describe('HeaderExercisePageWithDetails', () => {
     let component: HeaderExercisePageWithDetailsComponent;
@@ -107,7 +108,14 @@ describe('HeaderExercisePageWithDetails', () => {
         expect(component.isNextDueDate).toStrictEqual([false, false, true, false]);
         expect(component.statusBadges).toStrictEqual(['bg-danger', 'bg-danger', 'bg-success']);
 
+        participation.submissionCount = 1;
+        participation.results = [{ rated: false } as Result];
+        exercise.assessmentType = AssessmentType.MANUAL;
         exercise.dueDate = dayjs().subtract(3, 'months');
+        component.ngOnInit();
+        expect(component.isNextDueDate).toStrictEqual([false, false, false, true]);
+        expect(component.statusBadges).toStrictEqual(['bg-danger', 'bg-danger', 'bg-danger']);
+
         exercise.assessmentDueDate = dayjs().subtract(2, 'months');
         participation.results = [{ rated: true, completionDate: dayjs().subtract(1, 'month') } as Result];
         component.ngOnInit();
