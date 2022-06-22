@@ -3,6 +3,12 @@
         "codeHint": {
             "type": "Code Hint",
             "entry": "Entry",
+            "entryType": "Type (S/B)",
+            "entryTypeTooltip": "Defines whether this entry has been generated for a structural (S) or behavioral (B) test case.",
+            "entryAbbreviation": {
+                "structural": "S",
+                "behavioral": "B"
+            },
             "entries": "Entries",
             "removeEntryQuestion": "Are you sure you want to remove this entry?",
             "noEntries": "This code hint has no solution entries.",

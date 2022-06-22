@@ -3,6 +3,12 @@
         "codeHint": {
             "type": "Code-Hinweis",
             "entry": "Eintrag",
+            "entryType": "Typ (V/S)",
+            "entryTypeTooltip": "Definiert, ob dieser Eintrag für einen strukturellen (S) oder verhaltensweisen (V) Test erstellt wurde.",
+            "entryAbbreviation": {
+                "structural": "S",
+                "behavioral": "V"
+            },
             "entries": "Einträge",
             "removeEntryQuestion": "Soll dieser Eintrag wirklich entfernt werden?",
             "noEntries": "Dieser Code-Hinweis hat keine Einträge.",

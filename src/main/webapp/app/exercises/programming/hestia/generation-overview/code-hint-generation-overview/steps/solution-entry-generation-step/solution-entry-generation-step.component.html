@@ -6,7 +6,7 @@
         type="button"
         class="btn btn-secondary"
         jhiTranslate="artemisApp.codeHint.generation.step3.structuralEntriesButton.label"
-        [ngbTooltip]="'artemisApp.codeHint.generation.step3.structuralEntriesButton.description' | artemisTranslate"
+        [ngbTooltip]="'artemisApp.codeHint.generation.step3.structuralEntriesButton.tooltip' | artemisTranslate"
         (click)="onGenerateStructuralSolutionEntries()"
     >
         Generate structural entries
@@ -15,7 +15,7 @@
         type="button"
         class="btn btn-secondary"
         jhiTranslate="artemisApp.codeHint.generation.step3.behavioralEntriesButton.label"
-        [ngbTooltip]="'artemisApp.codeHint.generation.step3.behavioralEntriesButton.description' | artemisTranslate"
+        [ngbTooltip]="'artemisApp.codeHint.generation.step3.behavioralEntriesButton.tooltip' | artemisTranslate"
         (click)="onGenerateBehavioralSolutionEntries()"
     >
         Generate behavioral entries
@@ -25,7 +25,7 @@
         class="btn btn-danger"
         [disabled]="!solutionEntries?.size"
         jhiTranslate="artemisApp.codeHint.generation.step3.deleteAllEntriesButton.label"
-        [ngbTooltip]="'artemisApp.codeHint.generation.step3.deleteAllEntriesButton.description' | artemisTranslate"
+        [ngbTooltip]="'artemisApp.codeHint.generation.step3.deleteAllEntriesButton.tooltip' | artemisTranslate"
     >
         Delete all entries
     </button>
@@ -40,6 +40,10 @@
                 <th scope="col" class="text-left">{{ 'global.field.id' | artemisTranslate }}</th>
                 <th scope="col" class="text-left">{{ 'artemisApp.programmingExerciseTestCase.testName' | artemisTranslate }}</th>
                 <th scope="col" class="text-left">{{ 'artemisApp.exerciseHint.content' | artemisTranslate }}</th>
+                <th scope="col" class="text-left">
+                    <span jhiTranslate="artemisApp.codeHint.entryType">Type (S/B)</span>
+                    <jhi-help-icon placement="auto" text="artemisApp.codeHint.entryTypeTooltip"></jhi-help-icon>
+                </th>
             </tr>
         </thead>
         <tbody>
@@ -53,6 +57,7 @@
                     {{ mapEntry.key.code?.split('\n')?.length }}
                     {{ (mapEntry.key.code?.split('\n')?.length! === 1 ? 'artemisApp.codeHint.entry' : 'artemisApp.codeHint.entries') | artemisTranslate }}
                 </td>
+                <td class="text-left">{{ 'artemisApp.codeHint.entryAbbreviation.' + mapEntry.key.testCase?.type?.toString()?.toLocaleLowerCase() | artemisTranslate }}</td>
                 <td class="text-right">
                     <div class="d-flex justify-content-end button-row">
                         <button type="button" class="btn btn-primary" jhiTranslate="entity.action.view" (click)="onSolutionEntryView(mapEntry.key, false)">View</button>
