@@ -36,6 +36,7 @@ import { AlertService } from 'app/core/util/alert.service';
 import { AfterViewInit, Component, TemplateRef, ViewChild } from '@angular/core';
 import { By } from '@angular/platform-browser';
 import { TeamAssignmentPayload } from 'app/entities/team.model';
+import { Exam } from 'app/entities/exam.model';
 
 const endDate1 = dayjs().add(1, 'days');
 const visibleDate1 = dayjs().subtract(1, 'days');
@@ -58,10 +59,10 @@ const quizExercise: QuizExercise = { id: 7, numberOfAssessmentsOfCorrectionRound
 
 const courseEmpty: Course = {};
 
-const exam1 = { id: 3, endDate: endDate1, visibleDate: visibleDate1, course: courseEmpty };
-const exam2 = { id: 4, course: courseEmpty };
+const exam1: Exam = { id: 3, endDate: endDate1, visibleDate: visibleDate1, course: courseEmpty };
+const exam2: Exam = { id: 4, course: courseEmpty };
 const exams = [exam1, exam2];
-const course1 = {
+const course1: Course = {
     id: 1,
     exams,
     exercises: [exercise1],
@@ -69,7 +70,7 @@ const course1 = {
         'Nihilne te nocturnum praesidium Palati, nihil urbis vigiliae. Salutantibus vitae elit libero, a pharetra augue. Quam diu etiam furor iste tuus nos eludet? ' +
         'Fabio vel iudice vincam, sunt in culpa qui officia. Quam temere in vitiis, legem sancimus haerentia. Quisque ut dolor gravida, placerat libero vel, euismod.',
 };
-const course2 = { id: 2, exercises: [exercise2], exams: [exam2], description: 'Short description of course 2', shortName: 'shortName2' };
+const course2: Course = { id: 2, exercises: [exercise2], exams: [exam2], description: 'Short description of course 2', shortName: 'shortName2' };
 
 @Component({
     template: '<ng-template #controls><button id="test-button">TestButton</button></ng-template>',
@@ -147,7 +148,6 @@ describe('CourseOverviewComponent', () => {
         const getCourseStub = jest.spyOn(courseScoreCalculationService, 'getCourse');
         const subscribeToTeamAssignmentUpdatesStub = jest.spyOn(component, 'subscribeToTeamAssignmentUpdates');
         const subscribeForQuizChangesStub = jest.spyOn(component, 'subscribeForQuizChanges');
-        const adjustCourseDescriptionStub = jest.spyOn(component, 'adjustCourseDescription');
         const findOneForDashboardStub = jest.spyOn(courseService, 'findOneForDashboard');
         jest.spyOn(teamService, 'teamAssignmentUpdates', 'get').mockReturnValue(Promise.resolve(of(new TeamAssignmentPayload())));
         findOneForDashboardStub.mockReturnValue(of(new HttpResponse({ body: course1, headers: new HttpHeaders() })));
@@ -156,7 +156,6 @@ describe('CourseOverviewComponent', () => {
         await component.ngOnInit();
 
         expect(getCourseStub).toHaveBeenCalled();
-        expect(adjustCourseDescriptionStub).toHaveBeenCalled();
         expect(subscribeForQuizChangesStub).toHaveBeenCalled();
         expect(subscribeToTeamAssignmentUpdatesStub).toHaveBeenCalled();
     });
@@ -165,7 +164,6 @@ describe('CourseOverviewComponent', () => {
         const getCourseStub = jest.spyOn(courseScoreCalculationService, 'getCourse');
         const subscribeToTeamAssignmentUpdatesStub = jest.spyOn(component, 'subscribeToTeamAssignmentUpdates');
         const subscribeForQuizChangesStub = jest.spyOn(component, 'subscribeForQuizChanges');
-        const adjustCourseDescriptionStub = jest.spyOn(component, 'adjustCourseDescription');
         const findOneForDashboardStub = jest.spyOn(courseService, 'findOneForDashboard');
         findOneForDashboardStub.mockReturnValue(of(new HttpResponse({ body: course1, headers: new HttpHeaders() })));
         jest.spyOn(teamService, 'teamAssignmentUpdates', 'get').mockReturnValue(Promise.resolve(of(new TeamAssignmentPayload())));
@@ -173,31 +171,8 @@ describe('CourseOverviewComponent', () => {
         await component.ngOnInit();
 
         expect(getCourseStub).toHaveBeenCalled();
-        expect(adjustCourseDescriptionStub).toHaveBeenCalled();
         expect(subscribeForQuizChangesStub).toHaveBeenCalled();
         expect(subscribeToTeamAssignmentUpdatesStub).toHaveBeenCalled();
-    });
-
-    it('should toggle course description', () => {
-        const findOneForDashboardStub = jest.spyOn(courseService, 'findOneForDashboard');
-        const getCourseStub = jest.spyOn(courseScoreCalculationService, 'getCourse');
-        getCourseStub.mockReturnValue(course1);
-        findOneForDashboardStub.mockReturnValue(of(new HttpResponse({ body: course1, headers: new HttpHeaders() })));
-
-        component.ngOnInit();
-
-        expect(component.enableShowMore).toBeTrue();
-        expect(component.longDescriptionShown).toBeTrue();
-
-        component.toggleCourseDescription();
-
-        expect(component.longDescriptionShown).toBeFalse();
-        expect(component.courseDescription).toBe('Nihilne te nocturnum praesidium Palati, nihil urbi…');
-
-        component.toggleCourseDescription();
-
-        expect(component.longDescriptionShown).toBeTrue();
-        expect(component.courseDescription).toBe(course1.description);
     });
 
     it('should have visible exams', () => {
@@ -237,22 +212,6 @@ describe('CourseOverviewComponent', () => {
         component.ngOnInit();
 
         component.subscribeToTeamAssignmentUpdates();
-    });
-
-    it('should adjustCourseDescription', () => {
-        const findOneForDashboardStub = jest.spyOn(courseService, 'findOneForDashboard');
-        const getCourseStub = jest.spyOn(courseScoreCalculationService, 'getCourse');
-        const adjustCourseDescriptionStub = jest.spyOn(component, 'adjustCourseDescription');
-        getCourseStub.mockReturnValue(course2);
-        findOneForDashboardStub.mockReturnValue(of(new HttpResponse({ body: course2, headers: new HttpHeaders() })));
-
-        component.ngOnInit();
-
-        expect(adjustCourseDescriptionStub).toHaveBeenCalled();
-        expect(component.enableShowMore).toBeFalse();
-        expect(component.longDescriptionShown).toBeTrue();
-        expect(component.courseDescription).toBe(course2.description);
-        expect(localStorage.getItem('isDescriptionRead' + course2.shortName)).toBe('true');
     });
 
     it('should subscribeForQuizChanges', () => {
