@@ -189,21 +189,22 @@ public class PostSpecs {
                     }
                     else if (postSortCriterion == PostSortCriterion.ANSWER_COUNT) {
                         // sort by answer count
-                        Join<Post, AnswerPost> joinedAnswers = root.join(Post_.ANSWERS, JoinType.LEFT);
-                        joinedAnswers.on(criteriaBuilder.equal(root.get(Post_.ID), joinedAnswers.get(AnswerPost_.POST).get(Post_.ID)));
-                        query.groupBy(root.get(Post_.ID));
+                        Subquery<Long> subQuery = query.subquery(Long.class);
+                        Root<AnswerPost> subRoot = subQuery.from(AnswerPost.class);
+                        Predicate postBinder = criteriaBuilder.equal(root.get(Post_.ID), subRoot.get(AnswerPost_.POST).get(Post_.ID));
+                        subQuery.select(criteriaBuilder.count(subRoot.get(AnswerPost_.ID))).where(postBinder).groupBy(root.get(Post_.ID));
 
-                        sortCriterion = criteriaBuilder.count(joinedAnswers.get(AnswerPost_.ID));
+                        sortCriterion = criteriaBuilder.selectCase().when(criteriaBuilder.exists(subQuery).not(), 0).otherwise(subQuery.getSelection());
                     }
                     else if (postSortCriterion == PostSortCriterion.VOTES) {
                         // sort by votes via voteEmojiCount
-                        Join<Post, Reaction> joinedReactions = root.join(Post_.REACTIONS, JoinType.LEFT);
-                        joinedReactions.on(criteriaBuilder.and(criteriaBuilder.equal(root.get(Post_.ID), joinedReactions.get(Reaction_.POST).get(Post_.ID)),
-                                criteriaBuilder.equal(joinedReactions.get(Reaction_.EMOJI_ID), VOTE_EMOJI_ID)));
+                        Subquery<Long> subQuery = query.subquery(Long.class);
+                        Root<Reaction> subRoot = subQuery.from(Reaction.class);
+                        Predicate postBinder = criteriaBuilder.equal(root.get(Post_.ID), subRoot.get(Reaction_.POST).get(Post_.ID));
+                        Predicate upVotes = criteriaBuilder.equal(subRoot.get(Reaction_.EMOJI_ID), VOTE_EMOJI_ID);
+                        subQuery.select(criteriaBuilder.count(subRoot.get(Reaction_.ID))).where(criteriaBuilder.and(postBinder, upVotes)).groupBy(root.get(Post_.ID));
 
-                        query.groupBy(root.get(Post_.ID));
-
-                        sortCriterion = criteriaBuilder.count(joinedReactions.get(Reaction_.ID));
+                        sortCriterion = criteriaBuilder.selectCase().when(criteriaBuilder.exists(subQuery).not(), 0).otherwise(subQuery.getSelection());
                     }
                     orderList.add(sortingOrder == SortingOrder.ASCENDING ? criteriaBuilder.asc(sortCriterion) : criteriaBuilder.desc(sortCriterion));
                 }
@@ -213,5 +214,17 @@ public class PostSpecs {
 
             return null;
         });
+    }
+
+    /**
+     * Creates the specification to get distinct Posts
+     *
+     * @return specification that adds the keyword distinct to the query
+     */
+    public static Specification<Post> distinct() {
+        return (root, query, criteriaBuilder) -> {
+            query.distinct(true);
+            return null;
+        };
     }
 }

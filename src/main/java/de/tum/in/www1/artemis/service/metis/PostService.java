@@ -227,15 +227,9 @@ public class PostService extends PostingService {
     public Page<Post> getPostsInCourse(boolean pagingEnabled, Pageable pageable, @Valid PostContextFilter postContextFilter) {
 
         Page<Post> postsInCourse;
-        // no filter -> get all posts in course
-        if (postContextFilter.getCourseWideContext() == null && postContextFilter.getExerciseId() == null && postContextFilter.getLectureId() == null
-                && postContextFilter.getPlagiarismCaseId() == null) {
-            postsInCourse = this.getAllCoursePosts(postContextFilter, pagingEnabled, pageable);
-        }
-        // filter by course-wide context
-        else if (postContextFilter.getCourseWideContext() != null && postContextFilter.getExerciseId() == null && postContextFilter.getLectureId() == null
-                && postContextFilter.getPlagiarismCaseId() == null) {
-            postsInCourse = this.getAllPostsByCourseWideContext(postContextFilter, pagingEnabled, pageable);
+        // get all posts in course or filter by course-wide context
+        if (postContextFilter.getExerciseId() == null && postContextFilter.getLectureId() == null && postContextFilter.getPlagiarismCaseId() == null) {
+            postsInCourse = this.getCoursePosts(postContextFilter, pagingEnabled, pageable);
         }
         // filter by exercise
         else if (postContextFilter.getCourseWideContext() == null && postContextFilter.getExerciseId() != null && postContextFilter.getLectureId() == null
@@ -261,72 +255,19 @@ public class PostService extends PostingService {
 
     /**
      * Checks course, user and post validity,
-     * retrieves all posts for a course by its id
-     * and ensures that sensitive information is filtered out
-     *
-     * @param courseId id of the course the post belongs to
-     * @return list of posts that belong to the course
-     */
-    public List<Post> getAllCoursePosts(Long courseId) {
-        final User user = userRepository.getUserWithGroupsAndAuthorities();
-
-        // checks
-        final Course course = preCheckUserAndCourse(user, courseId);
-        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, null);
-
-        // retrieve posts
-        PostContextFilter postContextFilter = new PostContextFilter();
-        postContextFilter.setCourseId(courseId);
-        List<Post> coursePosts = postRepository.findPosts(postContextFilter, null, false, null).stream().collect(Collectors.toList());
-
-        // protect sample solution, grading instructions, etc.
-        coursePosts.stream().map(Post::getExercise).filter(Objects::nonNull).forEach(Exercise::filterSensitiveInformation);
-
-        return coursePosts;
-    }
-
-    /**
-     * Checks course, user and post validity,
-     * retrieves and filters posts for a course by its id
+     * retrieves and filters posts for a course by its id and optionally by its course-wide context
      * and ensures that sensitive information is filtered out
      *
      * @param postContextFilter filter object
-     * @param pagingEnabled
-     * @param pageable
+     * @param pagingEnabled     whether to return a page or all records
+     * @param pageable          page object describing page number and row count per page to be fetched
      * @return page of posts that belong to the course
      */
-    public Page<Post> getAllCoursePosts(PostContextFilter postContextFilter, boolean pagingEnabled, Pageable pageable) {
+    public Page<Post> getCoursePosts(PostContextFilter postContextFilter, boolean pagingEnabled, Pageable pageable) {
         final User user = userRepository.getUserWithGroupsAndAuthorities();
 
         // checks
-        final Course course = preCheckUserAndCourse(user, postContextFilter.getCourseId());
-        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, null);
-
-        // retrieve posts
-        Page<Post> coursePosts = postRepository.findPosts(postContextFilter, user.getId(), pagingEnabled, pageable);
-
-        // protect sample solution, grading instructions, etc.
-        coursePosts.stream().map(Post::getExercise).filter(Objects::nonNull).forEach(Exercise::filterSensitiveInformation);
-
-        return coursePosts;
-    }
-
-    /**
-     * Checks course, user and post validity,
-     * retrieves and filters posts with a certain course-wide context by course id
-     * and ensures that sensitive information is filtered out
-     *
-     * @param postContextFilter filter object
-     * @param pagingEnabled
-     * @param pageable
-     * @return page of posts for a certain course-wide context
-     */
-    public Page<Post> getAllPostsByCourseWideContext(PostContextFilter postContextFilter, boolean pagingEnabled, Pageable pageable) {
-        final User user = userRepository.getUserWithGroupsAndAuthorities();
-
-        // checks
-        final Course course = preCheckUserAndCourse(user, postContextFilter.getCourseId());
-        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, null);
+        preCheckUserAndCourse(user, postContextFilter.getCourseId());
 
         // retrieve posts
         Page<Post> coursePosts = postRepository.findPosts(postContextFilter, user.getId(), pagingEnabled, pageable);
@@ -565,7 +506,9 @@ public class PostService extends PostingService {
      * @return list of similar posts
      */
     public List<Post> getSimilarPosts(Long courseId, Post post) {
-        List<Post> coursePosts = this.getAllCoursePosts(courseId);
+        PostContextFilter postContextFilter = new PostContextFilter();
+        postContextFilter.setCourseId(courseId);
+        List<Post> coursePosts = this.getCoursePosts(postContextFilter, false, null).stream().collect(Collectors.toList());
 
         // sort course posts by calculated similarity scores
         coursePosts.sort(Comparator.comparing(coursePost -> postContentCompareStrategy.performSimilarityCheck(post, coursePost)));

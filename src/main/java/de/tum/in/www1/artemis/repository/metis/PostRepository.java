@@ -28,8 +28,8 @@ public interface PostRepository extends JpaRepository<Post, Long>, JpaSpecificat
     List<Post> findPostsByAuthorLogin(String login);
 
     default Page<Post> findPosts(PostContextFilter postContextFilter, Long userId, boolean pagingEnabled, Pageable pageable) {
-        Specification<Post> specification = Specification
-                .where(getCourseSpecification(postContextFilter.getCourseId(), postContextFilter.getLectureId(), postContextFilter.getExerciseId())
+        Specification<Post> specification = Specification.where(distinct())
+                .and(getCourseSpecification(postContextFilter.getCourseId(), postContextFilter.getLectureId(), postContextFilter.getExerciseId())
                         .and(getLectureSpecification(postContextFilter.getLectureId()).and(getExerciseSpecification(postContextFilter.getExerciseId()))
                                 .and(getSearchTextSpecification(postContextFilter.getSearchText())).and(getCourseWideContextSpecification(postContextFilter.getCourseWideContext()))
                                 .and(getOwnSpecification(postContextFilter.getFilterToOwn(), userId)))
