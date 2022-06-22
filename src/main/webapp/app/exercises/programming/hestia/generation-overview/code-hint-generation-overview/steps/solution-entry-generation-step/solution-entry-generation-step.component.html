@@ -68,4 +68,7 @@
             </tr>
         </tbody>
     </table>
+    <div *ngIf="!solutionEntries?.size" class="text-center mt-2">
+        <span jhiTranslate="artemisApp.codeHint.generation.step3.notGenerated">No solution entries have been generated yet.</span>
+    </div>
 </div>

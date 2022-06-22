@@ -31,6 +31,7 @@
                 "step3": {
                     "name": "Lösungs-Einträge",
                     "description": "In diesem Schritt kannst du die einzelnen Einträge auswählen, aus denen Code-Hinweise erstellt werden.",
+                    "notGenerated": "Bisher wurden keine Einträge generiert.",
                     "structuralEntriesButton": {
                         "label": "Strukturelle Einträge generieren",
                         "tooltip": "Erstellt Einträge für strukturelle Tests. Bereits existierende strukturelle Einträge werden überschrieben."
@@ -49,6 +50,7 @@
                     "description": "In diesem Schritt kannst du die Code-Hinweise generieren.",
                     "title": "Titel",
                     "task": "Aufgabe",
+                    "notGenerated": "Bisher wurden keine Code-Hinweise generiert.",
                     "generateHintsButton": {
                         "label": "Code-Hinweise generieren",
                         "tooltip": "Erstellt Code-Hinweise aus den ausgewählten Einträgen. Existierende Einträge werden überschrieben"

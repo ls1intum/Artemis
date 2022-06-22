@@ -31,6 +31,7 @@
                 "step3": {
                     "name": "Solution fragments",
                     "description": "This steps allows to select the individual solution fragments from which code hints are generated.",
+                    "notGenerated": "No solution entries have been generated yet.",
                     "structuralEntriesButton": {
                         "label": "Generate structural fragments",
                         "tooltip": "Generates fragments for structural test cases. Already existing structural fragments will be overwritten."
@@ -49,6 +50,7 @@
                     "description": "This step allows to generate the code hints.",
                     "title": "Title",
                     "task": "Task",
+                    "notGenerated": "No code hints have been generated yet.",
                     "generateHintsButton": {
                         "label": "Generate code hints",
                         "tooltip": "Generates code hints with the selected entries. Existing hints will be overwritten."

@@ -51,3 +51,6 @@
         </div>
     </mat-expansion-panel>
 </mat-accordion>
+<div *ngIf="!codeHints?.length" class="text-center mt-2">
+    <span jhiTranslate="artemisApp.codeHint.generation.step4.notGenerated">No code hints have been generated yet.</span>
+</div>
