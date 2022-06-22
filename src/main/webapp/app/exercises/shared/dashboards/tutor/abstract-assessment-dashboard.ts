@@ -55,6 +55,10 @@ export abstract class AbstractAssessmentDashboard {
                 });
                 break;
         }
+        // If no filter applies, we can omit the filter option and therefore hide the reset button
+        if (this.submissions.length === this.filteredSubmissions.length) {
+            this.filterOption = undefined;
+        }
     }
 
     /**
