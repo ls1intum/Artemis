@@ -1,0 +1,54 @@
+{
+    "artemisApp": {
+        "codeHint": {
+            "type": "Code Hint",
+            "entry": "Entry",
+            "entries": "Entries",
+            "removeEntryQuestion": "Are you sure you want to remove this entry?",
+            "noEntries": "This code hint has no solution entries.",
+            "deleted": "Deleted Code Hint with identifier {{ param }}",
+            "generation": {
+                "title": "Code Hint Generation",
+                "previous": "Back",
+                "next": "Next",
+                "nextTooltip": "The current step has to be performed to proceed.",
+                "step1": {
+                    "name": "Git-Diff Report",
+                    "description": "The git-diff report is created automatically for the template and solution repositories for every submission to either of the repositories.",
+                    "notGenerated": "The Git-Diff report has not been generated yet."
+                },
+                "step2": {
+                    "name": "Coverage Report",
+                    "description": "The coverage report is created automatically for every submission to the solution repository.",
+                    "notGenerated": "The coverage report has not been generated yet."
+                },
+                "step3": {
+                    "name": "Solution fragments",
+                    "description": "This steps allows to select the individual solution fragments from which code hints are generated.",
+                    "structuralEntriesButton": {
+                        "label": "Generate structural fragments",
+                        "tooltip": "Generates fragments for structural test cases. Already existing structural fragments will be overwritten."
+                    },
+                    "behavioralEntriesButton": {
+                        "label": "Generate behavioral fragments",
+                        "tooltip": "Generates fragments for behavioral test cases. Already existing behavioral fragments will be overwritten."
+                    },
+                    "deleteAllEntriesButton": {
+                        "label": "Delete all fragments",
+                        "tooltip": "Deletes all solution fragments."
+                    }
+                },
+                "step4": {
+                    "name": "Code Hints",
+                    "description": "This step allows to generate the code hints.",
+                    "title": "Title",
+                    "task": "Task",
+                    "generateHintsButton": {
+                        "label": "Generate code hints",
+                        "tooltip": "Generates code hints with the selected entries. Existing hints will be overwritten."
+                    }
+                }
+            }
+        }
+    }
+}

@@ -6,8 +6,8 @@
             <fa-icon *ngIf="!performedDiffStep" [icon]="faDotCircle" [ngClass]="currentStep === 0 ? 'current' : 'unset'"></fa-icon>
         </div>
         <div class="col status-step-content">
-            <span class="row text-center" [ngClass]="currentStep === 0 ? 'selected-label' : ''">Git-Diff Report</span>
-            <jhi-help-icon placement="auto" text="artemisApp.programmingExercise.titleTooltip"></jhi-help-icon>
+            <span class="row text-center" [ngClass]="currentStep === 0 ? 'selected-label' : ''" jhiTranslate="artemisApp.codeHint.generation.step1.name">Git-Diff Report</span>
+            <jhi-help-icon placement="auto" text="artemisApp.codeHint.generation.step1.description"></jhi-help-icon>
         </div>
     </div>
     <div class="connector" [ngClass]="currentStep > 0 ? (!performedCoverageStep ? 'current' : 'check') : 'unset'"></div>
@@ -18,8 +18,8 @@
             <fa-icon *ngIf="!performedCoverageStep" [icon]="faDotCircle" [ngClass]="currentStep === 1 ? 'current' : 'unset'"></fa-icon>
         </div>
         <div class="col status-step-content">
-            <span class="row text-center" [ngClass]="currentStep === 1 ? 'selected-label' : ''">Coverage Report</span>
-            <jhi-help-icon placement="auto" text="artemisApp.programmingExercise.titleTooltip"></jhi-help-icon>
+            <span class="row text-center" [ngClass]="currentStep === 1 ? 'selected-label' : ''" jhiTranslate="artemisApp.codeHint.generation.step2.name">Coverage Report</span>
+            <jhi-help-icon placement="auto" text="artemisApp.codeHint.generation.step2.description"></jhi-help-icon>
         </div>
     </div>
     <div class="connector" [ngClass]="currentStep > 1 ? (!performedSolutionEntryStep ? 'current' : 'check') : 'unset'"></div>
@@ -30,8 +30,8 @@
             <fa-icon *ngIf="!performedSolutionEntryStep" [icon]="faDotCircle" [ngClass]="currentStep === 2 ? 'current' : 'unset'"></fa-icon>
         </div>
         <div class="col status-step-content">
-            <span class="row text-center" [ngClass]="currentStep === 2 ? 'selected-label' : ''">Solution Entries</span>
-            <jhi-help-icon placement="auto" text="artemisApp.programmingExercise.titleTooltip"></jhi-help-icon>
+            <span class="row text-center" [ngClass]="currentStep === 2 ? 'selected-label' : ''" jhiTranslate="artemisApp.codeHint.generation.step3.name">Solution Entries</span>
+            <jhi-help-icon placement="auto" text="artemisApp.codeHint.generation.step3.description"></jhi-help-icon>
         </div>
     </div>
     <div class="connector" [ngClass]="currentStep > 2 ? (!performedCodeHintsStep ? 'current' : 'check') : 'unset'"></div>
@@ -42,8 +42,10 @@
             <fa-icon *ngIf="!performedCodeHintsStep" [icon]="faDotCircle" [ngClass]="currentStep === 3 ? 'current' : 'unset'"></fa-icon>
         </div>
         <div class="col status-step-content">
-            <span class="row JenkinsBuildPlanService.javatext-center" [ngClass]="currentStep === 3 ? 'selected-label' : ''">Code Hints</span>
-            <jhi-help-icon placement="auto" text="artemisApp.programmingExercise.titleTooltip"></jhi-help-icon>
+            <span class="row JenkinsBuildPlanService.javatext-center" [ngClass]="currentStep === 3 ? 'selected-label' : ''" jhiTranslate="artemisApp.codeHint.generation.step4.name"
+                >Code Hints</span
+            >
+            <jhi-help-icon placement="auto" text="artemisApp.codeHint.generation.step4.description"></jhi-help-icon>
         </div>
     </div>
 </div>

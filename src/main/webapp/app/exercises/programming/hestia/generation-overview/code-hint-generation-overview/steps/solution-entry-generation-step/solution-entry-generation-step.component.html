@@ -2,9 +2,33 @@
     <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
 </div>
 <div class="d-flex justify-content-start button-row">
-    <button class="btn btn-secondary" type="button" (click)="onGenerateStructuralSolutionEntries()">(Re-)Generate structural entries</button>
-    <button class="btn btn-secondary" type="button" (click)="onGenerateBehavioralSolutionEntries()">(Re-)Generate behavioral entries</button>
-    <button class="btn btn-danger" type="button" [disabled]="!solutionEntries?.size">Delete all entries</button>
+    <button
+        type="button"
+        class="btn btn-secondary"
+        jhiTranslate="artemisApp.codeHint.generation.step3.structuralEntriesButton.label"
+        [ngbTooltip]="'artemisApp.codeHint.generation.step3.structuralEntriesButton.description' | artemisTranslate"
+        (click)="onGenerateStructuralSolutionEntries()"
+    >
+        Generate structural entries
+    </button>
+    <button
+        type="button"
+        class="btn btn-secondary"
+        jhiTranslate="artemisApp.codeHint.generation.step3.behavioralEntriesButton.label"
+        [ngbTooltip]="'artemisApp.codeHint.generation.step3.behavioralEntriesButton.description' | artemisTranslate"
+        (click)="onGenerateBehavioralSolutionEntries()"
+    >
+        Generate behavioral entries
+    </button>
+    <button
+        type="button"
+        class="btn btn-danger"
+        [disabled]="!solutionEntries?.size"
+        jhiTranslate="artemisApp.codeHint.generation.step3.deleteAllEntriesButton.label"
+        [ngbTooltip]="'artemisApp.codeHint.generation.step3.deleteAllEntriesButton.description' | artemisTranslate"
+    >
+        Delete all entries
+    </button>
 </div>
 <div class="table-responsive" *ngIf="solutionEntries?.size">
     <table class="table table-striped" aria-describedby="showHealthLabel">
@@ -13,10 +37,9 @@
                 <th scope="col" class="text-left">
                     <input type="checkbox" [ngModel]="allEntriesSelected" (ngModelChange)="updateBulkEntrySelection()" class="form-check-input custom-control-input" />
                 </th>
-                <th scope="col" class="text-left">ID</th>
-                <th scope="col" class="text-left">Test case</th>
-                <th scope="col" class="text-left">Content</th>
-                <th scope="col" class="text-end">Actions</th>
+                <th scope="col" class="text-left">{{ 'global.field.id' | artemisTranslate }}</th>
+                <th scope="col" class="text-left">{{ 'artemisApp.programmingExerciseTestCase.testName' | artemisTranslate }}</th>
+                <th scope="col" class="text-left">{{ 'artemisApp.exerciseHint.content' | artemisTranslate }}</th>
             </tr>
         </thead>
         <tbody>
@@ -26,12 +49,15 @@
                 </td>
                 <td class="text-left">{{ mapEntry.key.id }}</td>
                 <td class="text-left">{{ mapEntry.key.testCase?.testName }}</td>
-                <td class="text-left">{{ mapEntry.key.code?.split('\n')?.length }} line(s) of code</td>
+                <td class="text-left">
+                    {{ mapEntry.key.code?.split('\n')?.length }}
+                    {{ (mapEntry.key.code?.split('\n')?.length! === 1 ? 'artemisApp.codeHint.entry' : 'artemisApp.codeHint.entries') | artemisTranslate }}
+                </td>
                 <td class="text-right">
                     <div class="d-flex justify-content-end button-row">
-                        <button class="btn btn-primary" type="button" (click)="onSolutionEntryView(mapEntry.key, false)">View</button>
-                        <button class="btn btn-warning" type="button" (click)="onSolutionEntryView(mapEntry.key, true)">Edit</button>
-                        <button class="btn btn-danger" type="button">Delete</button>
+                        <button type="button" class="btn btn-primary" jhiTranslate="entity.action.view" (click)="onSolutionEntryView(mapEntry.key, false)">View</button>
+                        <button type="button" class="btn btn-warning" jhiTranslate="entity.action.edit" (click)="onSolutionEntryView(mapEntry.key, true)">Edit</button>
+                        <button type="button" class="btn btn-danger" jhiTranslate="entity.action.delete">Delete</button>
                     </div>
                 </td>
             </tr>

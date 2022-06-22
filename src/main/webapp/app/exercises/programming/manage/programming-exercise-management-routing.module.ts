@@ -121,7 +121,7 @@ export const routes: Routes = [
         },
         data: {
             authorities: [Authority.TA, Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
-            pageTitle: 'code-hint-generation.title',
+            pageTitle: 'artemisApp.codeHint.generation.title',
         },
         canActivate: [UserRouteAccessService],
     },

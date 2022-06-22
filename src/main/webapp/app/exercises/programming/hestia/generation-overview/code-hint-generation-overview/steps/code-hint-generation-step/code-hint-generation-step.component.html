@@ -2,13 +2,21 @@
     <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
 </div>
 <div *ngIf="!isLoading" [class]="codeHints?.length ? '' : 'text-center'">
-    <button type="button" class="btn btn-primary" (click)="onGenerateCodeHints()">{{ codeHints?.length ? 'Re-' : '' }}Generate code hints</button>
+    <button
+        type="button"
+        class="btn btn-primary"
+        jhiTranslate="artemisApp.codeHint.generation.step4.generateHintsButton.label"
+        [ngbTooltip]="'artemisApp.codeHint.generation.step4.generateHintsButton.tooltip' | artemisTranslate"
+        (click)="onGenerateCodeHints()"
+    >
+        {{ codeHints?.length ? 'Re-' : '' }}Generate code hints
+    </button>
 </div>
 <mat-accordion *ngIf="codeHints?.length">
     <mat-expansion-panel [expanded]="false" [disabled]="true" class="code-hint-creation-expansion-panel-wrapper-header">
         <mat-expansion-panel-header>
-            <mat-panel-title>Title</mat-panel-title>
-            <mat-panel-description>Task</mat-panel-description>
+            <mat-panel-title>{{ 'artemisApp.codeHint.generation.step4.title' | artemisTranslate }}</mat-panel-title>
+            <mat-panel-description>{{ 'artemisApp.codeHint.generation.step4.task' | artemisTranslate }}</mat-panel-description>
         </mat-expansion-panel-header>
     </mat-expansion-panel>
     <mat-expansion-panel *ngFor="let codeHint of codeHints" class="code-hint-creation-expansion-panel-wrapper">

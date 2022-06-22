@@ -1,0 +1,54 @@
+{
+    "artemisApp": {
+        "codeHint": {
+            "type": "Code-Hinweis",
+            "entry": "Eintrag",
+            "entries": "Einträge",
+            "removeEntryQuestion": "Soll dieser Eintrag wirklich entfernt werden?",
+            "noEntries": "Dieser Code-Hinweis hat keine Einträge.",
+            "deleted": "Exercise Hint gelöscht mit ID {{ param }}",
+            "generation": {
+                "title": "Generierung von Code-Hinweisen",
+                "previous": "Zurück",
+                "next": "Weiter",
+                "nextTooltip": "Der aktuelle Schritt muss erfolgreich ausgeführt seien, damit fortgefahren werden kann.",
+                "step1": {
+                    "name": "Git-Diff Report",
+                    "description": "Der Git-Diff Report wird automatisch für das Template- und Lösungs-Repository erstellt.",
+                    "notGenerated": "Git-Diff Report wurde noch nicht erzeugt."
+                },
+                "step2": {
+                    "name": "Code-Abdeckung",
+                    "description": "Der Code-Abdeckungs-Report wird automatisch für jede Einreichung in Lösungs-Repository erstellt.",
+                    "notGenerated": "Der Code-Abdeckungs-Report wurde noch nicht erzeugt."
+                },
+                "step3": {
+                    "name": "Lösungs-Einträge",
+                    "description": "In diesem Schritt kannst du die einzelnen Einträge auswählen, aus denen Code-Hinweise erstellt werden.",
+                    "structuralEntriesButton": {
+                        "label": "Strukturelle Einträge generieren",
+                        "tooltip": "Erstellt Einträge für strukturelle Tests. Bereits existierende strukturelle Einträge werden überschrieben."
+                    },
+                    "behavioralEntriesButton": {
+                        "label": "Verhaltensweise Einträge generieren",
+                        "tooltip": "Erstellt Einträge für verhaltensweise Tests. Bereits existierende verhaltensweise Einträge werden überschrieben."
+                    },
+                    "deleteAllEntriesButton": {
+                        "label": "Alle Eintrage löschen",
+                        "tooltip": "Löscht alle Einträge."
+                    }
+                },
+                "step4": {
+                    "name": "Code-Hinweise",
+                    "description": "In diesem Schritt kannst du die Code-Hinweise generieren.",
+                    "title": "Titel",
+                    "task": "Aufgabe",
+                    "generateHintsButton": {
+                        "label": "Code-Hinweise generieren",
+                        "tooltip": "Erstellt Code-Hinweise aus den ausgewählten Einträgen. Existierende Einträge werden überschrieben"
+                    }
+                }
+            }
+        }
+    }
+}

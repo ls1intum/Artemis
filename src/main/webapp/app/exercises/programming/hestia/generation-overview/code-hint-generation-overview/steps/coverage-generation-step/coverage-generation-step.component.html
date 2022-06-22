@@ -3,5 +3,5 @@
 </div>
 <jhi-testwise-coverage-report *ngIf="coverageReport && fileContentByPath" [report]="coverageReport" [fileContentByPath]="fileContentByPath"></jhi-testwise-coverage-report>
 <div *ngIf="!(coverageReport || fileContentByPath)" class="text-center">
-    <span>Coverage report has not been generated yet.</span>
+    <span jhiTranslate="artemisApp.codeHint.generation.step1.notGenerated">Coverage report has not been generated yet.</span>
 </div>
