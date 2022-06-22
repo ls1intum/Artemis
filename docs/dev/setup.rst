@@ -369,7 +369,7 @@ You can find the latest Dockerfile with additional information `here <https://gi
 
 * The Dockerfile sets the correct permissions to the folders that are mounted to the volumes on startup (not recursive).
 
-* The startup script is located `here <https://github.com/ls1intum/Artemis/blob/develop/bootstrap.sh>`__.
+* The startup script is located `here <https://github.com/ls1intum/Artemis/blob/develop/src/main/docker/artemis/bootstrap.sh>`__.
 
 * The Dockerfile assumes that the mounted volumes are located on a file system with the following locale settings (see `#4439 <https://github.com/ls1intum/Artemis/issues/4439>`__ for more details):
 

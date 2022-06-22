@@ -38,7 +38,8 @@ WORKDIR /opt/artemis
 ARG WAR_PATH=build/libs
 COPY $WAR_PATH/*.war Artemis.war
 
-COPY bootstrap.sh /bootstrap.sh
+# Prepare Entrypoint boostrap.sh
+COPY src/main/docker/artemis/bootstrap.sh /bootstrap.sh
 
 RUN chmod +x /bootstrap.sh \
   && useradd -ms /bin/bash artemis
