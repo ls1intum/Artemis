@@ -1,4 +1,4 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed, tick } from '@angular/core/testing';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -77,11 +77,26 @@ describe('VideoUnitComponent', () => {
         handleCollapseSpy.mockRestore();
     });
 
-    it('should call complete callback when clicked', (done) => {
-        videoUnitComponent.onCompletion.subscribe((lectureUnit) => {
-            expect(lectureUnit).toEqual(videoUnit);
+    it('should call complete callback when uncollapsed after timeout', (done) => {
+        jest.useFakeTimers();
+        jest.spyOn(global, 'setTimeout');
+        videoUnitComponent.onCompletion.subscribe((event) => {
+            expect(event.lectureUnit).toEqual(videoUnit);
+            expect(event.completed).toEqual(true);
             done();
         });
         videoUnitComponent.handleCollapse(new Event('click'));
+        expect(setTimeout).toHaveBeenCalledTimes(1);
+        expect(setTimeout).toHaveBeenLastCalledWith(expect.any(Function), 1000 * 60 * 5);
+        jest.runAllTimers();
+    }, 1000);
+
+    it('should call completion callback when clicked', (done) => {
+        videoUnitComponent.onCompletion.subscribe((event) => {
+            expect(event.lectureUnit).toEqual(videoUnit);
+            expect(event.completed).toEqual(false);
+            done();
+        });
+        videoUnitComponent.handleClick(new Event('click'), false);
     }, 1000);
 });

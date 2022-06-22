@@ -130,6 +130,6 @@ public abstract class LectureUnit extends DomainObject implements Completable {
 
     @Override
     public Optional<ZonedDateTime> getCompletionDate(User user) {
-        return Optional.empty();
+        return getCompletedUsers().stream().filter(completion -> completion.getUser().getId().equals(user.getId())).map(LectureUnitCompletion::getCompletedAt).findFirst();
     }
 }

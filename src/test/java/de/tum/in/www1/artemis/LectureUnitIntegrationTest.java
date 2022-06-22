@@ -132,14 +132,36 @@ public class LectureUnitIntegrationTest extends AbstractSpringIntegrationBambooB
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void setLectureUnitCompleted() throws Exception {
-        request.postWithoutLocation("/api/lectures/" + lecture1.getId() + "/lecture-units/" + lecture1.getLectureUnits().get(0).getId() + "/complete", null, HttpStatus.OK, null);
+    public void setLectureUnitCompletion() throws Exception {
+        // Set lecture unit as completed for current user
+        request.postWithoutLocation("/api/lectures/" + lecture1.getId() + "/lecture-units/" + lecture1.getLectureUnits().get(0).getId() + "/completion?completed=true", null,
+                HttpStatus.OK, null);
 
         this.lecture1 = lectureRepository.findByIdWithPostsAndLectureUnitsAndLearningGoalsAndCompletionsElseThrow(lecture1.getId());
         LectureUnit lectureUnit = this.lecture1.getLectureUnits().get(0);
 
+        assertThat(lectureUnit.getCompletedUsers()).isNotEmpty();
         assertThat(lectureUnit.isCompletedFor(userRepo.getUser())).isTrue();
         assertThat(lectureUnit.getCompletionDate(userRepo.getUser())).isNotNull();
+
+        // Set lecture unit as uncompleted for user
+        request.postWithoutLocation("/api/lectures/" + lecture1.getId() + "/lecture-units/" + lecture1.getLectureUnits().get(0).getId() + "/completion?completed=false", null,
+                HttpStatus.OK, null);
+
+        this.lecture1 = lectureRepository.findByIdWithPostsAndLectureUnitsAndLearningGoalsAndCompletionsElseThrow(lecture1.getId());
+        lectureUnit = this.lecture1.getLectureUnits().get(0);
+
+        assertThat(lectureUnit.getCompletedUsers()).isEmpty();
+        assertThat(lectureUnit.isCompletedFor(userRepo.getUser())).isFalse();
+        assertThat(lectureUnit.getCompletionDate(userRepo.getUser())).isEmpty();
+    }
+
+    @Test
+    @WithMockUser(username = "student42", roles = "USER")
+    public void setLectureUnitCompletion_shouldReturnForbidden() throws Exception {
+        // User is not in same course as lecture unit
+        request.postWithoutLocation("/api/lectures/" + lecture1.getId() + "/lecture-units/" + lecture1.getLectureUnits().get(0).getId() + "/completion?completed=true", null,
+                HttpStatus.FORBIDDEN, null);
     }
 
 }

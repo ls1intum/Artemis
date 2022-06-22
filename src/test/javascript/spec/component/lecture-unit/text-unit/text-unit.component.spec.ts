@@ -90,11 +90,21 @@ describe('TextUnitFormComponent', () => {
         window.document.body.innerHTML = innerHtmlCopy;
     }));
 
-    it('should call complete callback when clicked', (done) => {
-        textUnitComponent.onCompletion.subscribe((lectureUnit) => {
-            expect(lectureUnit).toEqual(textUnit);
+    it('should call completion callback when uncollapsed', (done) => {
+        textUnitComponent.onCompletion.subscribe((event) => {
+            expect(event.lectureUnit).toEqual(textUnit);
+            expect(event.completed).toEqual(true);
             done();
         });
         textUnitComponent.handleCollapse(new Event('click'));
+    }, 1000);
+
+    it('should call completion callback when clicked', (done) => {
+        textUnitComponent.onCompletion.subscribe((event) => {
+            expect(event.lectureUnit).toEqual(textUnit);
+            expect(event.completed).toEqual(false);
+            done();
+        });
+        textUnitComponent.handleClick(new Event('click'), false);
     }, 1000);
 });
