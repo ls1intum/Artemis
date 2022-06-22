@@ -20,13 +20,13 @@ export class ChartExerciseTypeFilter extends ChartFilter {
     }
 
     updateFilterOptions(exerciseScores: any[]): any[] {
-        this.typeSet = new Set(exerciseScores.map((score) => score.exerciseType));
+        const updatedTypes = new Set(exerciseScores.map((score) => score.exerciseType));
         this.filterMap.forEach((value, key) => {
-            if (!this.typeSet.has(ChartExerciseTypeFilter.convertToExerciseType(key))) {
-                this.filterMap.delete(key);
+            if (!updatedTypes.has(ChartExerciseTypeFilter.convertToExerciseType(key))) {
+                this.filterMap.set(key, false);
             }
         });
-        this.typeSet.forEach((type) => {
+        updatedTypes.forEach((type) => {
             const convertedKey = ChartExerciseTypeFilter.convertToMapKey(type);
             if (this.filterMap.get(convertedKey) === undefined) {
                 this.filterMap.set(convertedKey, true);
@@ -38,10 +38,10 @@ export class ChartExerciseTypeFilter extends ChartFilter {
         return this.applyCurrentFilter(exerciseScores);
     }
 
-    toggleAllTypes(exerciseScores: any[]): any[] {
-        let allTypesDisabled = true;
-        this.filterMap.forEach((value) => (allTypesDisabled = allTypesDisabled && !value));
-        this.filterMap.forEach((value, key) => this.filterMap.set(key, allTypesDisabled));
+    toggleAllTypes(exerciseScores: any[], includeAll: boolean): any[] {
+        this.filterMap.forEach((value, key) => this.filterMap.set(key, includeAll));
+        this.numberOfActiveFilters = 0;
+        this.filterMap.forEach((value) => (this.numberOfActiveFilters += value ? 1 : 0));
         return this.applyCurrentFilter(exerciseScores);
     }
 

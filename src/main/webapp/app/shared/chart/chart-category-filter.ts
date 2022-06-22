@@ -1,5 +1,4 @@
 import { ChartFilter } from 'app/shared/chart/chart-filter';
-import { Exercise } from 'app/entities/exercise.model';
 import { Injectable } from '@angular/core';
 import { CourseManagementStatisticsModel } from 'app/entities/quiz/course-management-statistics-model';
 import { ExerciseCategory } from 'app/entities/exercise-category.model';
@@ -16,41 +15,40 @@ export class ChartCategoryFilter extends ChartFilter {
      * Collects all categories from the currently visible exercises (included or excluded the optional exercises depending on the prior state)
      * @private
      */
-    determineDisplayableCategories(courseExercises: Exercise[]): void {
+    determineDisplayableCategories(courseExercises: any[]): Set<any> {
         const exerciseCategories = courseExercises
             .filter((exercise) => exercise.categories)
             .flatMap((exercise) => exercise.categories!)
             .map((category) => category.category!);
-        this.exerciseCategories = new Set(exerciseCategories);
+        return new Set(exerciseCategories);
     }
 
-    determineDisplayableCategoriesForCourseStatistics(avgStatistics: CourseManagementStatisticsModel[]): void {
-        console.log(avgStatistics);
+    /*determineDisplayableCategoriesForCourseStatistics(avgStatistics: CourseManagementStatisticsModel[]): void {
         const exerciseCategories = avgStatistics
             .filter((exercise) => exercise.categories)
             .flatMap((exercise: CourseManagementStatisticsModel) => exercise.categories!)
             .map((category: ExerciseCategory) => category.category!);
         this.exerciseCategories = new Set(exerciseCategories);
-    }
+    }*/
 
-    setupCategoryFilter(courseExercises: Exercise[]): void {
-        this.determineDisplayableCategories(courseExercises);
+    setupCategoryFilter(courseExercises: any[]): void {
+        this.exerciseCategories = this.determineDisplayableCategories(courseExercises);
         this.performFilterSetup();
     }
 
-    setupCategoryFilterForCourseStatistics(avgStatistics: CourseManagementStatisticsModel[]): void {
+    /*setupCategoryFilterForCourseStatistics(avgStatistics: CourseManagementStatisticsModel[]): void {
         this.determineDisplayableCategoriesForCourseStatistics(avgStatistics);
         this.performFilterSetup();
-    }
+    }*/
 
     updateCategoryFilterForCourseStatistics(avgStatistics: CourseManagementStatisticsModel[]): CourseManagementStatisticsModel[] {
-        this.determineDisplayableCategoriesForCourseStatistics(avgStatistics);
+        const updatedSet = this.determineDisplayableCategories(avgStatistics);
         this.filterMap.forEach((value, key) => {
-            if (!this.exerciseCategories.has(key)) {
-                this.filterMap.delete(key);
+            if (!updatedSet.has(key)) {
+                this.filterMap.set(key, false);
             }
         });
-        this.exerciseCategories.forEach((category) => {
+        updatedSet.forEach((category) => {
             if (this.filterMap.get(category) === undefined) {
                 this.filterMap.set(category, true);
             }
@@ -61,7 +59,7 @@ export class ChartCategoryFilter extends ChartFilter {
         this.areAllCategoriesSelected(this.includeExercisesWithNoCategory);
         this.numberOfActiveFilters = this.includeExercisesWithNoCategory ? 1 : 0;
         this.filterMap.forEach((value) => (this.numberOfActiveFilters += value ? 1 : 0));
-        return this.applyCategoryFilterForCourseStatistics(avgStatistics);
+        return this.applyCategoryFilter(avgStatistics);
     }
 
     calculateNumberOfAppliedFilters(): void {
@@ -72,7 +70,7 @@ export class ChartCategoryFilter extends ChartFilter {
      * Handles the selection or deselection of a specific category and configures the filter accordingly
      * @param category the category that is selected or deselected
      */
-    toggleCategory(courseExercises: Exercise[], category: string): Exercise[] {
+    toggleCategory(courseExercises: any[], category: string): any[] {
         const isIncluded = this.filterMap.get(category)!;
         this.filterMap.set(category, !isIncluded);
         this.numberOfActiveFilters += !isIncluded ? 1 : -1;
@@ -80,18 +78,18 @@ export class ChartCategoryFilter extends ChartFilter {
         return this.applyCategoryFilter(courseExercises);
     }
 
-    toggleCategoryForCourseStatistics(avgStatistics: CourseManagementStatisticsModel[], category: string): CourseManagementStatisticsModel[] {
+    /*toggleCategoryForCourseStatistics(avgStatistics: CourseManagementStatisticsModel[], category: string): CourseManagementStatisticsModel[] {
         const isIncluded = this.filterMap.get(category)!;
         this.filterMap.set(category, !isIncluded);
         this.numberOfActiveFilters += !isIncluded ? 1 : -1;
         this.areAllCategoriesSelected(!isIncluded);
         return this.applyCategoryFilterForCourseStatistics(avgStatistics);
-    }
+    }*/
 
     /**
      * handles the selection and deselection of "exercises with no categories" filter option
      */
-    toggleExercisesWithNoCategory(courseExercises: Exercise[]): Exercise[] {
+    toggleExercisesWithNoCategory(courseExercises: any[]): any[] {
         this.numberOfActiveFilters += this.includeExercisesWithNoCategory ? -1 : 1;
         this.includeExercisesWithNoCategory = !this.includeExercisesWithNoCategory;
 
@@ -99,18 +97,18 @@ export class ChartCategoryFilter extends ChartFilter {
         return this.applyCategoryFilter(courseExercises);
     }
 
-    toggleExercisesWithNoCategoryForCourseStatistics(avgStatistics: CourseManagementStatisticsModel[]): CourseManagementStatisticsModel[] {
+    /*toggleExercisesWithNoCategoryForCourseStatistics(avgStatistics: CourseManagementStatisticsModel[]): CourseManagementStatisticsModel[] {
         this.numberOfActiveFilters += this.includeExercisesWithNoCategory ? -1 : 1;
         this.includeExercisesWithNoCategory = !this.includeExercisesWithNoCategory;
 
         this.areAllCategoriesSelected(this.includeExercisesWithNoCategory);
         return this.applyCategoryFilterForCourseStatistics(avgStatistics);
-    }
+    }*/
 
     /**
      * Handles the use case when the user selects or deselects the option "select all categories"
      */
-    toggleAllCategories(courseExercises: Exercise[]): Exercise[] {
+    toggleAllCategories(courseExercises: any[]): any[] {
         if (!this.allCategoriesSelected) {
             this.setupCategoryFilter(courseExercises);
             this.includeExercisesWithNoCategory = true;
@@ -124,7 +122,7 @@ export class ChartCategoryFilter extends ChartFilter {
         return this.applyCategoryFilter(courseExercises);
     }
 
-    toggleAllCategoriesForCourseStatistics(avgStatistics: CourseManagementStatisticsModel[]): CourseManagementStatisticsModel[] {
+    /*toggleAllCategoriesForCourseStatistics(avgStatistics: CourseManagementStatisticsModel[]): CourseManagementStatisticsModel[] {
         if (!this.allCategoriesSelected) {
             this.setupCategoryFilterForCourseStatistics(avgStatistics);
             this.includeExercisesWithNoCategory = true;
@@ -136,7 +134,7 @@ export class ChartCategoryFilter extends ChartFilter {
             this.includeExercisesWithNoCategory = false;
         }
         return this.applyCategoryFilterForCourseStatistics(avgStatistics);
-    }
+    }*/
 
     /**
      * Auxiliary method in order to reduce code duplication
@@ -145,23 +143,25 @@ export class ChartCategoryFilter extends ChartFilter {
      * Important note: As exercises can have no or multiple categories, the filter is designed to be non-exclusive. This means
      * as long as an exercise has at least one of the selected categories, it is displayed.
      */
-    applyCategoryFilter(courseExercises: Exercise[]): Exercise[] {
+    applyCategoryFilter(courseExercises: any[]): any[] {
         return courseExercises.filter((exercise) => {
             if (!exercise.categories) {
                 return this.includeExercisesWithNoCategory;
             }
-            return exercise.categories!.flatMap((category) => this.filterMap.get(category.category!)!).reduce((value1, value2) => value1 || value2);
+            return exercise
+                .categories!.flatMap((category: ExerciseCategory) => this.filterMap.get(category.category!)!)
+                .reduce((value1: boolean, value2: boolean) => value1 || value2);
         });
     }
 
-    applyCategoryFilterForCourseStatistics(avgStatistics: CourseManagementStatisticsModel[]): CourseManagementStatisticsModel[] {
+    /*applyCategoryFilterForCourseStatistics(avgStatistics: CourseManagementStatisticsModel[]): CourseManagementStatisticsModel[] {
         return avgStatistics.filter((exercise) => {
             if (!exercise.categories) {
                 return this.includeExercisesWithNoCategory;
             }
             return exercise.categories!.flatMap((category) => this.filterMap.get(category.category!)!).reduce((value1, value2) => value1 || value2);
         });
-    }
+    }*/
 
     /**
      * Auxiliary method that checks whether all possible categories are selected and updates the allCategoriesSelected flag accordingly

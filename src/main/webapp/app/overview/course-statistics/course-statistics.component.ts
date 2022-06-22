@@ -743,7 +743,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
 
         this.areAllCategoriesSelected(!isIncluded);*/
         const isIncluded = this.categoryFilter.getCurrentFilterState(category)!;
-        this.courseExercisesFilteredByCategories = this.categoryFilter.toggleCategory(this.courseExercises, category);
+        this.courseExercisesFilteredByCategories = this.categoryFilter.toggleCategory(this.courseExercises, category) as Exercise[];
         this.calculateNumberOfAppliedFilters();
         this.groupExercisesByType(this.courseExercisesFilteredByCategories);
         this.filterExerciseIDsForCategorySelection(!isIncluded!);
@@ -787,7 +787,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
             this.includeExercisesWithNoCategory = false;
         }
         this.applyCategoryFilter();*/
-        this.courseExercisesFilteredByCategories = this.categoryFilter.toggleAllCategories(this.courseExercises);
+        this.courseExercisesFilteredByCategories = this.categoryFilter.toggleAllCategories(this.courseExercises) as Exercise[];
         this.calculateNumberOfAppliedFilters();
         this.groupExercisesByType(this.courseExercisesFilteredByCategories);
         this.filterExerciseIDsForCategorySelection(this.categoryFilter.includeExercisesWithNoCategory);
@@ -802,7 +802,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
         this.applyCategoryFilter();
         this.areAllCategoriesSelected(this.includeExercisesWithNoCategory);
         this.filterExerciseIDsForCategorySelection(this.includeExercisesWithNoCategory);*/
-        this.courseExercisesFilteredByCategories = this.categoryFilter.toggleExercisesWithNoCategory(this.courseExercises);
+        this.courseExercisesFilteredByCategories = this.categoryFilter.toggleExercisesWithNoCategory(this.courseExercises) as Exercise[];
         this.calculateNumberOfAppliedFilters();
         this.groupExercisesByType(this.courseExercisesFilteredByCategories);
         this.filterExerciseIDsForCategorySelection(this.categoryFilter.includeExercisesWithNoCategory);
