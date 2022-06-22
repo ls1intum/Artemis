@@ -22,7 +22,7 @@ export class AboutUsComponent implements OnInit {
     email: string;
     data: AboutUsModel;
 
-    // 0: programming, 1: quiz, 2: modeling, 3: text, 4: upload
+    // Array of tuple containing list of details of section
     readonly numberOfDetails: [string, number[]][] = [
         ['exercises.programming', new Array<number>(8)],
         ['exercises.quiz', new Array<number>(2)],

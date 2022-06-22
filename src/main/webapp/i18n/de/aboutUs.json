@@ -1,35 +1,108 @@
 {
     "aboutUsOverview": {
-        "title": "Artemis: Interaktives Lernen mit individuellem Feedback",
+        "title": "Artemis: Interaktives Lernen mit Individuellem Feedback",
         "feature": "Haupteigenschaften",
         "exercises": {
-            "title": "Artemis unterstützt folgende Aufgabentypen",
-            "detail": {
-                "programmingExercises": "Programmierübungen mit Versionskontrolle und automatischer Bewertung anhand von Testfällen und kontinuierlicher Integration",
-                "quiz": "Quizübungen mit Multiple-Choice-, Drag & Drop- und Kurzantwort-Quizfragen",
-                "modelingExercises": "Modellierungsübungen mit halbautomatischer Bewertung unter Verwendung von Machine Learning Konzepten",
-                "textExercises": "Textübungen mit manueller (und experimenteller halbautomatischer) Bewertung",
-                "uploadExercises": "Übungen zum Hochladen von Dateien mit anschießender manueller Bewertung"
+            "programming": {
+                "text": "<a href=\"https://docs.artemis.ase.in.tum.de/user/exercises/programming/\">Programmierübungen</a> mit Versionskontrolle, automatischer individueller Rückmeldung (und Bewertung) auf der Grundlage von Testfällen und statischer Code-Analyse (durchgeführt mit kontinuierlicher Integration).",
+                "details": [
+                    "<b>Instant:</b> Die Studierenden erhalten sofortiges und individuelles Feedback zu ihren Abgaben. Dozenten können Feedback-Nachrichten leicht anpassen und Feedback während der Arbeitszeit ausblenden (z.B. bei versteckten Tests).",
+                    "<b>Interaktiv:</b> Dozenten integrieren interaktive Anweisungen auf Basis von Aufgaben und UML-Diagrammen direkt in die dynamischen Problemstellungen. Sie können Hinweise für schwierige Übungsteile definieren.",
+                    "<b>Unabhängig:</b> Dozenten können die Programmierübungen so anpassen, dass sie jede beliebige Programmiersprache unterstützen. Um die Einrichtung zu vereinfachen, enthält Artemis ausgereifte Vorlagen für die gängigsten Sprachen (z.B. Java, Python, C, Haskell, Kotlin, VHDL, Assembler, Swift, Ocaml, ...).",
+                    "<b>Lokal und online:</b> Die Studierenden können lokal in ihrer bevorzugten IDE oder im Online-Code-Editor (ohne jegliche Einrichtung) teilnehmen.",
+                    "<b>Manuelle Bewertungen</b> sind direkt im Online-Code-Editor möglich oder in <a href=\"https://github.com/ls1intum/Orion\">Orion</a>.",
+                    "<b>Richtlinien:</b> Dozenten können Richtlinien für die Abgabe festlegen (z. B. Strafen nach 10 Versuchen), um zu verhindern, dass die Studierenden alle Möglichkeiten unüberlegt ausprobieren.",
+                    "<b>Benotung:</b> Dozenten haben viele Möglichkeiten die Benotung zu konfigurieren, die Ergebnisse auf der Grundlage von Tests und statischen Codeanalysekategorien zu analysieren, und die Ergebnisse neu zu bewerten.",
+                    "<b>Sicher:</b> Testfälle und der Code der Studierenden werden in Docker-Umgebungen auf Build-Agenten ausgeführt. Test-Frameworks wie <a href=\"https://github.com/ls1intum/Ares\">Ares</a> vereinfachen die Erstellung von strukturellen und dynamischen Tests und verhindern, dass Studierende schummeln können."
+                ]
+            },
+            "quiz": {
+                "text": "<a href=\"https://docs.artemis.ase.in.tum.de/user/exercises/quiz/\">Quiz-Übungen</a> mit Multiple-Choice-, Drag-and-Drop- und Kurzantwort-Fragen.",
+                "details": [
+                    "<b>Modellierungsquizze:</b> Dozenten können auf einfache Weise Drag-and-Drop-Quizze auf der Grundlage von UML-Modellen erstellen.",
+                    "<b>Verschiedene Modi:</b> Quizze unterstützen einen Live-Modus (bewertet) während der Vorlesung, einen Übungsmodus, in dem die Studierenden das Quiz beliebig oft wiederholen können, und einen Prüfungsmodus (siehe unten)."
+                ]
+            },
+            "modeling": {
+                "text": "<a href=\"https://docs.artemis.ase.in.tum.de/user/exercises/modeling/\">Modellierungsübungen</a> basierend auf dem einfach zu bedienenden Online-Modellierungseditor <a href=\"https://apollon.ase.in.tum.de/\">Apollon</a> mit halbautomatischer Bewertung unter Verwendung von Konzepten des maschinellen Lernens.",
+                "details": [
+                    "<b>Mehrere Diagrammtypen:</b> Artemis unterstützt 7 UML-Diagrammtypen (z.B. Klassendiagramme) und 4 zusätzliche Diagramme (z.B. Flussdiagramme).",
+                    "<b>Einfache Bedienung:</b> Die Studierenden können die Modelle einfach per Drag & Drop erstellen und sie mit zusätzlichem Text erklären.",
+                    "<b>Integriertes Feedback:</b> Bewertungen können direkt neben den Modellelementen Feedback und Punkte vergeben."
+                ]
+            },
+            "text": {
+                "text": "<a href=\"https://docs.artemis.ase.in.tum.de/user/exercises/textual/\">Textübungen</a> mit manueller, halbautomatischer Bewertung auf der Grundlage von überwachtem maschinellen Lernen und natürlicher Sprachverarbeitung (NLP) mit <a href=\"https://github.com/ls1intum/Athena\">Athena</a>.",
+                "details": [
+                    "<b>Integriertes Feedback:</b> Bewertungen können direkt neben den Textabschnitten Feedback und Punkte vergeben.",
+                    "<b>Spracherkennung:</b> Artemis erkennt die Sprache des Beitrags und zeigt die Anzahl der Wörter und Zeichen an."
+                ]
+            },
+            "fileUpload": {
+                "text": "<a href=\"https://docs.artemis.ase.in.tum.de/user/exercises/file-upload/\">Übungen zum Hochladen von Dateien</a> mit manueller Bewertung.",
+                "details": []
             }
         },
         "exam": {
-            "title": "Artemis unterstützt folgende Features für Klausuren",
-            "detail": {
-                "supportedExerciseTypes": "Alle Aufgabentypen sind auch in der Klausur verfügbar",
-                "randomSelectionOfVariants": "Mehrere Varianten von Aufgaben können erstellt und den Studierenden zufällig zugewiesen werden",
-                "fullFeatureOverview": {
-                    "description": "Gesamter Überblick über alle Features:",
-                    "studentLink": "Überblick für Studierende",
-                    "instructorLink": "Überblick für Lehrende"
-                },
-                "instructions": {
-                    "description": "Anleitung für das Klausurfeature:",
-                    "studentLink": "Anleitung für Studierende",
-                    "instructorLink": "Anleitung für Lehrende"
-                }
-            }
+            "text": "<b>Prüfungsmodus:</b> Dozenten können Online-Prüfungen mit Übungsvarianten, integrierter Plagiatsprüfung, Testläufen und Studierendenbewertungen erstellen. Weitere Informationen finden Sie unter <a href=\"https://artemis.ase.in.tum.de/features/students\">Funktionen für Schüler im Prüfungsmodus</a> und unter <a href=\"https://artemis.ase.in.tum.de/features/instructors\">Funktionen für Dozenten im Prüfungsmodus</a>.",
+            "details": [
+                "Alle Übungen von oben sind auch für Prüfungen verfügbar.",
+                "Es können mehrere Varianten pro Übung erstellt und für jeden Studierenden zufällig ausgewählt werden."
+            ]
         },
-        "getInTouch": "Kontakt",
-        "contributors": "Mitwirkende"
+        "grading": {
+            "text": "<b>Benotung:</b> Dozenten können Notenschlüssel für Kurse und Prüfungen konfigurieren, um automatisch Noten zu berechnen und sie den Studierenden anzuzeigen. Die Noten können leicht als csv-Dateien exportiert werden, um sie in Universitätssysteme (wie Campus online) hochzuladen.",
+            "details": []
+        },
+        "assessment": {
+            "text": "<b>Bewertung:</b> Artemis verwendet eine Doppelblind-Bewertung und strukturierte Bewertungskriterien, um die Konsistenz und Fairness zu verbessern. Es integriert einen Bewertungs-Trainingsprozess (auf der Grundlage von Beispielaufgaben und vom Dozenten definierten Beispielbewertungen), verfügt über eine Bewertungs-Rangliste und ermöglicht den Studierenden, die Bewertungen zu bewerten. Die Studierenden können sich beschweren oder um mehr Feedback bitten.",
+            "details": []
+        },
+        "discussion": {
+            "text": "<a href=\"https://docs.artemis.ase.in.tum.de/user/discussion/\">Diskussion:</a> Dozenten können Ankündigungen veröffentlichen. Studierende können Fragen stellen, Kommentare abgeben und auf andere Beiträge reagieren. Tutoren können unbeantwortete Fragen filtern.",
+            "details": []
+        },
+        "notifications": {
+            "text": "<b>Benachrichtigungen:</b> Artemis unterstützt anpassbare Web- und E-Mail-Benachrichtigungen. Benutzer können verschiedene Benachrichtigungstypen aktivieren und deaktivieren.",
+            "details": []
+        },
+        "teamExercises": {
+            "text": "<b>Gruppenaufgaben:</b> Dozenten können Gruppenaufgaben mit Echtzeit-Zusammenarbeit und eigenen Tutoren pro Gruppe konfigurieren.",
+            "details": []
+        },
+        "lectures": {
+            "text": "<b>Vorlesungen:</b> Dozenten können Vorlesungsfolien hochladen, Vorlesungen in Einheiten unterteilen, Videostreams, Vorlesungsaufzeichnungen und Übungen in Vorlesungen integrieren und Lernziele definieren.",
+            "details": []
+        },
+        "integratedMarkdownEditor": {
+            "text": "<b>Integrierter Markdown-Editor:</b> Die Dozenten definieren Problemstellungen mit Markdown, um den Text einfach zu formatieren und Bilder und Links zu integrieren.",
+            "details": []
+        },
+        "plagiarismChecks": {
+            "text": "<b>Plagiatsüberprüfungen:</b> Artemis integriert Plagiatsprüfungen für Programmieraufgaben (basierend auf <a href=\"https://github.com/jplag/JPlag\">JPlag</a>) Text- und Modellierungsaufgaben. Es ermöglicht die Benachrichtigung der Studierenden über festgestellte Plagiate. Die Studierenden können die Behauptung überprüfen und kommentieren.",
+            "details": []
+        },
+        "learningAnalytics": {
+            "text": "<b>Lernanalytik:</b> Artemis hat verschiedene Statistiken integriert, mit denen sich die Studierenden mit dem Kursdurchschnitt vergleichen können. So können Dozenten die durchschnittliche Leistung der Studierenden anhand von Übungen und Lernzielen bewerten.",
+            "details": []
+        },
+        "scalable": {
+            "text": "<b>Skalierbar:</b> Artemis lässt sich auf mehrere Kurse mit Tausenden von Studierenden skalieren. Tatsächlich hatte der größte Kurs 2.400 Studierende. Administratoren können Artemis leicht mit zusätzlichen Build-Agenten in der kontinuierlichen Integrationsumgebung skalieren.",
+            "details": []
+        },
+        "highUserSatisfaction": {
+            "text": "<b>Hohe Benutzerzufriedenheit:</b> Artemis ist einfach zu bedienen und bietet geführte Tutorials. Die Entwickler konzentrieren sich auf Benutzerfreundlichkeit, Benutzererfahrung und Leistung.",
+            "details": []
+        },
+        "customizable": {
+            "text": "<b>Anpassbar:</b> Artemis unterstützt mehrere Dozenten, Bearbeitende und Tutoren pro Kurs und erlaubt den Dozenten, viele Kurseinstellungen anzupassen.",
+            "details": []
+        },
+        "openSource": {
+            "text": "<b>Open-source:</b> Kostenlos zu verwenden mit einer großen Gemeinschaft und vielen aktiven Betreuern.",
+            "details": []
+        },
+        "getInTouch": "Get in touch",
+        "contributors": "Individual contributors"
     }
 }
