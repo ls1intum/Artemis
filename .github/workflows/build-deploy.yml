@@ -85,7 +85,7 @@ jobs:
       with:
         name: Artemis.war
     - name: Copy Dockerfile to Build Directory
-      run: cp src/main/docker/Dockerfile .
+      run: cp src/main/docker/artemis/Dockerfile .
     - name: Build Docker Image
       run: docker build --build-arg WAR_PATH=. -t artemis .
 

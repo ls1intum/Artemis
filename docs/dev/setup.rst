@@ -358,7 +358,7 @@ You could use a compose file similar to this (as an example this deployment uses
             - subnet: 10.1.0.0/16 # Arbitrary, but set this to the IPs your department defines for local docker networks
 
 
-You can find the latest Dockerfile with additional information `here <https://github.com/ls1intum/Artemis/blob/develop/src/main/docker/Dockerfile>`__.
+You can find the latest Dockerfile with additional information `here <https://github.com/ls1intum/Artemis/blob/develop/src/main/docker/artemis/Dockerfile>`__.
 
 
 * The Dockerfile defines three Docker volumes

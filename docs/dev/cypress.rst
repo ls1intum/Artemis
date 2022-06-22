@@ -31,7 +31,7 @@ In total there are three Docker containers started in the Bamboo build agent:
 
 2. Artemis
 
-   The Docker image for the Artemis container is created from the already existing `Dockerfile <https://github.com/ls1intum/Artemis/blob/develop/src/main/docker/Dockerfile>`__. When the Bamboo build of the Cypress test suite starts, it retrieves the Artemis executable (.war file) from the `Artemis build plan <https://bamboo.ase.in.tum.de/browse/ARTEMIS-WEBAPP>`_.
+   The Docker image for the Artemis container is created from the already existing `Dockerfile <https://github.com/ls1intum/Artemis/blob/develop/src/main/docker/artemis/Dockerfile>`__. When the Bamboo build of the Cypress test suite starts, it retrieves the Artemis executable (.war file) from the `Artemis build plan <https://bamboo.ase.in.tum.de/browse/ARTEMIS-WEBAPP>`_.
    Upon creation of the Artemis Docker image the executable is copied into the image together with configuration files for the Artemis server.
 
    The main configuration of the Artemis server is contained in the `application.yml file <https://github.com/ls1intum/Artemis/blob/develop/src/main/docker/cypress/application.yml>`__.
