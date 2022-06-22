@@ -195,7 +195,7 @@ describe('CourseLectureDetails', () => {
     it('should set lecture unit as completed', fakeAsync(() => {
         const lectureUnitService = TestBed.inject(LectureUnitService);
         const completeSpy = jest.spyOn(lectureUnitService, 'setCompletion');
-        completeSpy.mockReturnValue(of(new HttpResponse()));
+        completeSpy.mockReturnValue(of(new HttpResponse<any>()));
 
         courseLecturesDetailsComponent.lecture = lecture;
         courseLecturesDetailsComponent.ngOnInit();
@@ -210,7 +210,7 @@ describe('CourseLectureDetails', () => {
     it('should set lecture unit as uncompleted', fakeAsync(() => {
         const lectureUnitService = TestBed.inject(LectureUnitService);
         const completeSpy = jest.spyOn(lectureUnitService, 'setCompletion');
-        completeSpy.mockReturnValue(of(new HttpResponse()));
+        completeSpy.mockReturnValue(of(new HttpResponse<any>()));
 
         lectureUnit3.completed = true;
         courseLecturesDetailsComponent.lecture = lecture;
@@ -226,7 +226,7 @@ describe('CourseLectureDetails', () => {
     it('should not set completion status if already completed', fakeAsync(() => {
         const lectureUnitService = TestBed.inject(LectureUnitService);
         const completeSpy = jest.spyOn(lectureUnitService, 'setCompletion');
-        completeSpy.mockReturnValue(of(new HttpResponse()));
+        completeSpy.mockReturnValue(of(new HttpResponse<any>()));
 
         courseLecturesDetailsComponent.lecture = lecture;
         courseLecturesDetailsComponent.ngOnInit();
@@ -240,7 +240,7 @@ describe('CourseLectureDetails', () => {
     it('should not set completion status if not visible', fakeAsync(() => {
         const lectureUnitService = TestBed.inject(LectureUnitService);
         const completeSpy = jest.spyOn(lectureUnitService, 'setCompletion');
-        completeSpy.mockReturnValue(of(new HttpResponse()));
+        completeSpy.mockReturnValue(of(new HttpResponse<any>()));
 
         courseLecturesDetailsComponent.lecture = lecture;
         courseLecturesDetailsComponent.ngOnInit();
