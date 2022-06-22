@@ -103,6 +103,34 @@ public class UserSpecs {
     }
 
     /**
+     * Creates the specification to look for the user without Registration Numbers.
+     *
+     * @param noRegistrationNumber true if the account should not have a registration number
+     * @param noRegistrationNumber false if the account should have a registration number
+     * @return specification used to chain database operations
+     */
+    public static Specification<User> getWithOrWithoutRegistrationNumberSpecification(Boolean noRegistrationNumber, Boolean withRegistrationNumber) {
+        if (!noRegistrationNumber && !withRegistrationNumber) {
+            return null;
+        }
+        else {
+            String emptyRegistrationNumber = "";
+            if (noRegistrationNumber == true) {
+                return (root, query, criteriaBuilder) -> {
+                    Predicate userWithoutRegistrationNumber = criteriaBuilder.equal(root.get(User_.REGISTRATION_NUMBER), emptyRegistrationNumber);
+                    return criteriaBuilder.and(userWithoutRegistrationNumber);
+                };
+            }
+            else {
+                return (root, query, criteriaBuilder) -> {
+                    Predicate userWithRegistrationNumber = criteriaBuilder.notEqual(root.get(User_.REGISTRATION_NUMBER), emptyRegistrationNumber);
+                    return criteriaBuilder.and(userWithRegistrationNumber);
+                };
+            }
+        }
+    }
+
+    /**
      * Creates the specification to match the state of the user (activated or deactivated).
      *
      * @param activated   true if the account should be activated

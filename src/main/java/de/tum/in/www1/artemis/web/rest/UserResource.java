@@ -189,6 +189,8 @@ public class UserResource {
         var updatedUser = userCreationService.updateUser(existingUser, managedUserVM);
         userService.updateUserInConnectorsAndAuthProvider(updatedUser, oldUserLogin, oldGroups, managedUserVM.getPassword());
 
+        userService.createUserFromLdap(updatedUser.getRegistrationNumber());
+
         if (shouldActivateUser) {
             userService.activateUser(updatedUser);
         }

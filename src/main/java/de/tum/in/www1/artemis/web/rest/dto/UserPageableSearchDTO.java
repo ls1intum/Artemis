@@ -27,6 +27,11 @@ public class UserPageableSearchDTO extends PageableSearchDTO<String> {
      */
     private Set<Long> courseIds;
 
+    /**
+     * Set of registrationNumbers users need to match
+     */
+    private Set<String> registrationNumbers;
+
     public Set<String> getAuthorities() {
         return authorities;
     }
@@ -57,5 +62,13 @@ public class UserPageableSearchDTO extends PageableSearchDTO<String> {
 
     public void setCourseIds(Set<Long> courseIds) {
         this.courseIds = courseIds;
+    }
+
+    public Set<String> getRegistrationNumbers() {
+        return registrationNumbers;
+    }
+
+    public void setRegistrationNumbers(Set<String> registrationNumbers) {
+        this.registrationNumbers = registrationNumbers;
     }
 }
