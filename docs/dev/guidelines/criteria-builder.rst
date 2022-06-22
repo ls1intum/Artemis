@@ -78,6 +78,7 @@ In order to use the Criteria Builder and the benefits of Specifications, we need
     Now we can create Specifications. We can achieve this in two ways:
 
     - Anonymous new Specification<User>():
+
         .. code-block:: java
 
             private Specification<User> getAllUsersMatchingEmptyCourses() {
@@ -168,6 +169,21 @@ Many different joins are available (e.g. Join, ListJoin, SetJoin, CollectionJoin
 
         Join<X, Z> join = root.join(X_.COLUMN, JoinType.LEFT).join(Y_.COLUMN, JoinType.LEFT);
 
+
+4. Sub-Queries
+==================================================
+
+Sub-queries are usually fine unless they are dependent sub-queries (also known as `correlated https://en.wikipedia.org/wiki/Correlated_subquery`_ sub queries).
+
+1. **Dependent Sub-Query:**
+    - If you have a dependent sub-query you might run into performance problems because a dependent sub-query typically needs to be run once for each row in the outer query.
+    - E.g. if your outer query has 1000 rows, the sub-query will be run 1000 times.
+
+2. **Independent Sub-Query:**
+    - If you have a independent sub-query and it is using appropriate indexes then it should run quickly.
+    - A independent sub-query typically only needs to be evaluated once.
+
+You can find additional information `here https://stackoverflow.com/questions/4799820/when-to-use-sql-sub-queries-versus-a-standard-join/4799847#4799847`_
 
 5. Examples
 ==================================================
