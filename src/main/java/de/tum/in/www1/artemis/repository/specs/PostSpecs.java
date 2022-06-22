@@ -16,6 +16,13 @@ import de.tum.in.www1.artemis.domain.metis.*;
 
 public class PostSpecs {
 
+    /**
+     * Creates a specification to fetch Posts belonging to a Course
+     * @param courseId      id of course the posts belong to
+     * @param lectureId     id of lecture the posts belong to, which is used to get the course id
+     * @param exerciseId    id of exercise the posts belong to, which is used to get the course id
+     * @return              specification used to chain DB operations
+     */
     public static Specification<Post> getCourseSpecification(Long courseId, Long lectureId, Long exerciseId) {
         return (root, query, criteriaBuilder) -> {
             if (lectureId != null || exerciseId != null) {
@@ -33,6 +40,11 @@ public class PostSpecs {
         };
     }
 
+    /**
+     * Specification to fetch Posts belonging to a Lecture
+     * @param lectureId id of the lecture the Posts belong to
+     * @return          specification used to chain DB operations
+     */
     public static Specification<Post> getLectureSpecification(Long lectureId) {
         return ((root, query, criteriaBuilder) -> {
             if (lectureId == null) {
@@ -44,6 +56,11 @@ public class PostSpecs {
         });
     }
 
+    /**
+     * Specification to fetch Posts belonging to an Exercise
+     * @param exerciseId id of the exercise the Posts belong to
+     * @return          specification used to chain DB operations
+     */
     public static Specification<Post> getExerciseSpecification(Long exerciseId) {
         return ((root, query, criteriaBuilder) -> {
             if (exerciseId == null) {
@@ -55,6 +72,11 @@ public class PostSpecs {
         });
     }
 
+    /**
+     * Specification to fetch Posts by CourseWideContext
+     * @param courseWideContext context of the Posts within the current course
+     * @return                  specification used to chain DB operations
+     */
     public static Specification<Post> getCourseWideContextSpecification(CourseWideContext courseWideContext) {
         return ((root, query, criteriaBuilder) -> {
             if (courseWideContext == null) {
@@ -66,6 +88,12 @@ public class PostSpecs {
         });
     }
 
+    /**
+     * Specification to fetch Posts of the calling user
+     * @param filterToOwn   whether only calling users own Posts should be fetched or not
+     * @param userId        id of the calling user
+     * @return              specification used to chain DB operations
+     */
     public static Specification<Post> getOwnSpecification(Boolean filterToOwn, Long userId) {
         return ((root, query, criteriaBuilder) -> {
             if (filterToOwn == null || !filterToOwn) {
@@ -77,6 +105,12 @@ public class PostSpecs {
         });
     }
 
+    /**
+     * Specification to fetch Posts the calling user has Answered or Reacted to
+     * @param answeredOrReacted whether only the Posts calling user has Answered or Reacted to should be fetched or not
+     * @param userId        id of the calling user
+     * @return              specification used to chain DB operations
+     */
     public static Specification<Post> getAnsweredOrReactedSpecification(Boolean answeredOrReacted, Long userId) {
         return ((root, query, criteriaBuilder) -> {
             if (answeredOrReacted == null || !answeredOrReacted) {
@@ -97,6 +131,11 @@ public class PostSpecs {
         });
     }
 
+    /**
+     * Specification to fetch Posts without any Resolving Answer
+     * @param unresolved    whether only the Posts without resolving answers should be fetched or not
+     * @return              specification used to chain DB operations
+     */
     public static Specification<Post> getUnresolvedSpecification(Boolean unresolved) {
         return ((root, query, criteriaBuilder) -> {
             if (unresolved == null || !unresolved) {
@@ -124,11 +163,10 @@ public class PostSpecs {
     }
 
     /**
-     * filters posts on a search string in a match-all-manner
+     * Specification which filters Posts according to a search string in a match-all-manner
      * post is only kept if the search string (which is not a #id pattern) is included in either the post title, content or tag (all strings lowercased)
-     *
-     * @param searchText text to be searched within posts
-     * @return boolean predicate if the post is kept (true) or filtered out (false)
+     * @param searchText    Text to be searched within posts
+     * @return              specification used to chain DB operations
      */
     public static Specification<Post> getSearchTextSpecification(String searchText) {
         return ((root, query, criteriaBuilder) -> {
@@ -154,16 +192,16 @@ public class PostSpecs {
     }
 
     /**
-     * sorts posts by following criteria
-     * 1. criterion: displayPriority is PINNED -> pinned posts come first
-     * 2. criterion: displayPriority is ARCHIVED  -> archived posts come last
-     * -- in between pinned and archived posts --
-     * 3. criterion: currently selected criterion in combination with currently selected order
+     * Specification which sorts Posts (only for Course Discussion page)
+     * 1. criterion: displayPriority is PINNED && Announcement  -> 1. precedence ASC
+     * 2. criterion: displayPriority is PINNED                  -> 2. precedence ASC
+     * 3. criterion: order by CREATION_DATE, #VOTES, #ANSWERS   -> 3 precedence  ASC/DESC
+     * 4. criterion: displayPriority is ARCHIVED                -> last precedence DESC
      *
-     * @param pagingEnabled
-     * @param postSortCriterion criterion to sort posts (CREATION_DATE, #VOTES,#ANSWERS)
+     * @param pagingEnabled     whether to sort the fetched Posts or not
+     * @param postSortCriterion criterion to sort posts (CREATION_DATE, #VOTES, #ANSWERS)
      * @param sortingOrder      direction of sorting (ASC, DESC)
-     * @return number indicating the order of two elements
+     * @return specification used to chain DB operations
      */
     public static Specification<Post> getSortSpecification(boolean pagingEnabled, PostSortCriterion postSortCriterion, SortingOrder sortingOrder) {
         return ((root, query, criteriaBuilder) -> {

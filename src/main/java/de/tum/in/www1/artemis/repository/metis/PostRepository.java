@@ -27,6 +27,14 @@ public interface PostRepository extends JpaRepository<Post, Long>, JpaSpecificat
 
     List<Post> findPostsByAuthorLogin(String login);
 
+    /**
+     * Generates SQL Query via specifications to filter and sort Posts
+     * @param postContextFilter filtering and sorting properties for Posts
+     * @param userId            id of the user performing the call, needed on certain filters
+     * @param pagingEnabled     whether a page of posts or all posts will be fetched
+     * @param pageable          paging object which contains the page number and number of records to fetch
+     * @return  returns a Page of Posts or all Posts within a Page, which is treated as a List by the client.
+     */
     default Page<Post> findPosts(PostContextFilter postContextFilter, Long userId, boolean pagingEnabled, Pageable pageable) {
         Specification<Post> specification = Specification.where(distinct())
                 .and(getCourseSpecification(postContextFilter.getCourseId(), postContextFilter.getLectureId(), postContextFilter.getExerciseId())
