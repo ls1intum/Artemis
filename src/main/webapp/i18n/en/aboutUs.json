@@ -1,34 +1,103 @@
 {
     "aboutUsOverview": {
-        "title": "Artemis: Interactive Learning with Individual Feedback\n",
-        "feature": "Main Features\n",
+        "title": "Artemis: Interactive Learning with Individual Feedback",
+        "feature": "Main Features",
         "exercises": {
-            "title": "Artemis supports the following exercises",
-            "detail": {
-                "programmingExercises": "Programming exercises with version control and automatic assessment with test cases and continuous integration",
-                "quiz": "Quiz exercises with multiple choice, drag and drop and short answer quiz questions",
-                "modelingExercises": "Modeling exercises with semi-automatic assessment using machine learning concepts",
-                "textExercises": "Textual exercises with manual (and experimental semi-automatic) assessment",
-                "uploadExercises": "File upload exercises with manual assessment"
+            "programming": {
+                "text": "<a href=\"https://docs.artemis.ase.in.tum.de/user/exercises/programming/\">Programming exercises</a> with version control, automatic individual feedback (and assessment) based on test cases and static code analysis (executed using continuous integration).",
+                "details": [
+                    "<b>Instant:</b> Students receive immediate and individual feedback on submissions. Instructors can customize feedback messages easily, hide feedback during the working time (e.g., with hidden tests)",
+                    "<b>Interactive:</b> Instructors integrate interactive instructions based on tasks and UML diagrams directly into the dynamic problem statements. They can define hints for difficult exercise parts.",
+                    "<b>Independent:</b> Instructors can customize programming exercises to support any programming language. To simplify the setup, Artemis includes sophisticated templates for the most common languages (e.g., Java, Python, C, Haskell, Kotlin, VHDL, Assembler, Swift, Ocaml, ...)",
+                    "<b>Local and online:</b> Students can participate locally in their preferred IDE or in the online code editor (without any setup)",
+                    "<b>Manual reviews</b> are possible directly in the online code editor or in <a href=\"https://github.com/ls1intum/Orion\">Orion</a>",
+                    "<b>Policies:</b> Instructors can define submission policies (e.g., penalties after 10 attempts) to prevent that students try out all possibilities without thinking.",
+                    "<b>Grading:</b> Instructors have many options to configure grading, analyze the results based on tests and static code analysis categories and re-evaluate the results",
+                    "<b>Secure:</b> Test cases and student code run in Docker environments on build agents. Test frameworks such as <a href=\"https://github.com/ls1intum/Ares\">Ares</a> simplify the creation of structural and dynamic tests and prevent that students can cheat."
+                ]
+            },
+            "quiz": {
+                "text": "<a href=\"https://docs.artemis.ase.in.tum.de/user/exercises/quiz/\">Quiz exercises</a> with multiple choice, drag and drop, and short answer questions.",
+                "details": [
+                    "<b>Modeling quizzes:</b> Instructors can easily create drag and drop quizzes based on UML models",
+                    "<b>Different modes:</b> Quizzes support a live mode (rated) during lectures, a practice mode for students to repeat the quiz as often as they want, and an exam mode (see below)"
+                ]
+            },
+            "modeling": {
+                "text": "<a href=\"https://docs.artemis.ase.in.tum.de/user/exercises/modeling/\">Modeling exercises</a> based on the easy-to-use online modeling editor <a href=\"https://apollon.ase.in.tum.de/\">Apollon</a> with semi-automatic assessment using machine learning concepts.",
+                "details": [
+                    "<b>Multiple diagram types:</b> Artemis supports 7 UML diagram types (e.g. class diagrams) and 4 additional diagrams (e.g. flow charts)",
+                    "<b>Easy to use:</b> Students can create models easily using drag and drop, they can explain the models using additional text.",
+                    "<b>Integrated feedback:</b> Reviews can provide feedback and points directly next to the model elements."
+                ]
+            },
+            "text": {
+                "text": "<a href=\"https://docs.artemis.ase.in.tum.de/user/exercises/textual/\">Text exercises</a> with manual, semi-automatic assessment based on supervised machine learning and natural language processing (NLP) using <a href=\"https://github.com/ls1intum/Athena\">Athena</a>.",
+                "details": [
+                    "<b>Integrated feedback:</b> Reviews can provide feedback and points directly next to the text segments.",
+                    "<b>Language detection:</b> Artemis detects the language of the submission and shows the word and character count."
+                ]
+            },
+            "fileUpload": {
+                "text": "<a href=\"https://docs.artemis.ase.in.tum.de/user/exercises/file-upload/\">File upload exercises</a> with manual assessment",
+                "details": []
             }
         },
+        "grading": {
+            "text": "<b>Grading:</b> Instructors can configure grade keys for courses and exams to automatically calculate grades and display them to students. Grades can be easily exported as csv files to upload them into university systems (such as Campus online)",
+            "details": []
+        },
+        "assessment": {
+            "text": "<b>Assessment:</b> Artemis uses double-blind grading and structured grading criteria to improve consistency and fairness. It integrates an assessment training process (based on example submissions and example assessments defined by the instructor), has a grading leader board, and allows students to rate the assessments. Students can complain or ask for more feedback.",
+            "details": []
+        },
+        "discussion": {
+            "text": "<a href=\"https://docs.artemis.ase.in.tum.de/user/discussion/\">Discussion:</a> Instructors can post announcements. Students can ask questions, post comments, and react to other posts. Tutors can filter unanswered questions.",
+            "details": []
+        },
+        "notifications": {
+            "text": "<b>Notifications:</b> Artemis supports customizable web and email notifications. Users can enable and disable different notification types.",
+            "details": []
+        },
+        "teamExercises": {
+            "text": "<b>Team exercises:</b> Instructors can configure team exercises with real time collaboration and dedicated tutors per team.",
+            "details": []
+        },
+        "lectures": {
+            "text": "<b>Lectures:</b> Instructors can upload lecture slides, divide lectures into units, integrate video streams, lecture recordings, and exercises into lectures, and define learning goals.",
+            "details": []
+        },
+        "integratedMarkdownEditor": {
+            "text": "<b>Integrated markdown editor:</b> Instructors define problem statements using Markdown to easily format the text and integrate images and links.",
+            "details": []
+        },
+        "plagiarismChecks": {
+            "text": "<b>Plagiarism checks:</b> Artemis integrates plagiarism checks for programming exercises (based on <a href=\"https://github.com/jplag/JPlag\">JPlag</a>), text exercises, and modeling exercises. It allows notifying students about identified plagiarism. Students can review and comment on the allegation.",
+            "details": []
+        },
+        "learningAnalytics": {
+            "text": "<b>Learning analytics:</b> Artemis integrated different statistics for students to compare themselves to the course average. It allows instructors to evaluate the average student performance based on exercises and learning goals.",
+            "details": []
+        },
+        "scalable": {
+            "text": "<b>Scalable:</b> Artemis scales to multiple courses with thousands of students. In fact, the largest course had 2,400 students. Administrators can easily scale Artemis with additional build agents in the continuous integration environment.",
+            "details": []
+        },
+        "highUserSatisfaction": {
+            "text": "<b>High user satisfaction:</b> Artemis is easy to use, provides guided tutorials. Developers focus on usability, user experience, and performance.",
+            "details": []
+        },
+        "customizable": {
+            "text": "<b>Customizable:</b> It supports multiple instructors, editors, and tutors per course and allows instructors to customize many course settings",
+            "details": []
+        },
+        "openSource": {
+            "text": "<b>Open-source:</b> Free to use with a large community and many active maintainers.",
+            "details": []
+        },
         "exam": {
-            "title": "Artemis supports the following features for exams",
-            "detail": {
-                "supportedExerciseTypes": "All exercises from above are also available for exams",
-                "randomSelectionOfVariants": "Multiple variants per exercise can be created and randomly selected for every student",
-
-                "fullFeatureOverview": {
-                    "description": "Complete overview of all features:",
-                    "studentLink": "Overview for students",
-                    "instructorLink": "Overview for instructors"
-                },
-                "instructions": {
-                    "description": "Guide for the exam feature:",
-                    "studentLink": "Instructions for students",
-                    "instructorLink": "Instructions for instructors"
-                }
-            }
+            "text": "<b>Exam mode:</b> Instructors can create online exams with exercise variants, integrated plagiarism checks, test runs and student reviews. You can find more information on <a href=\"https://artemis.ase.in.tum.de/features/students\">Exam mode student features</a> and on <a href=\"https://artemis.ase.in.tum.de/features/instructors\">Exam mode instructor features</a>.",
+            "details": ["All exercises from above are also available for exams", "Multiple variants per exercise can be created and randomly selected for every student"]
         },
         "getInTouch": "Get in touch",
         "contributors": "Individual contributors"

@@ -17,14 +17,33 @@ export class AboutUsComponent implements OnInit {
     private readonly issueBaseUrl = 'https://github.com/ls1intum/Artemis/issues/new?projects=ls1intum/1';
     readonly bugReportUrl = `${this.issueBaseUrl}&labels=bug&template=bug-report.yml`;
     readonly featureRequestUrl = `${this.issueBaseUrl}&labels=feature&template=feature-request.yml`;
-    readonly examFeatureOverviewUrlStudents = '../features/students/';
-    readonly examFeatureOverviewUrlInstructors = '../features/instructors/';
-    readonly examInstructionsUrlStudents = 'https://docs.artemis.ase.in.tum.de/user/exams/students_guide/';
-    readonly examInstructionsUrlInstructors = 'https://docs.artemis.ase.in.tum.de/user/exams/instructors_guide/';
     readonly releaseNotesUrl = `https://github.com/ls1intum/Artemis/releases/tag/${VERSION}`;
 
     email: string;
     data: AboutUsModel;
+
+    // 0: programming, 1: quiz, 2: modeling, 3: text, 4: upload
+    readonly numberOfDetails: [string, number[]][] = [
+        ['exercises.programming', new Array<number>(8)],
+        ['exercises.quiz', new Array<number>(2)],
+        ['exercises.modeling', new Array<number>(3)],
+        ['exercises.text', new Array<number>(2)],
+        ['exercises.fileUpload', []],
+        ['exam', new Array<number>(2)],
+        ['grading', []],
+        ['assessment', []],
+        ['discussion', []],
+        ['notifications', []],
+        ['teamExercises', []],
+        ['lectures', []],
+        ['integratedMarkdownEditor', []],
+        ['plagiarismChecks', []],
+        ['learningAnalytics', []],
+        ['scalable', []],
+        ['highUserSatisfaction', []],
+        ['customizable', []],
+        ['openSource', []],
+    ];
 
     readonly SERVER_API_URL = SERVER_API_URL;
 
