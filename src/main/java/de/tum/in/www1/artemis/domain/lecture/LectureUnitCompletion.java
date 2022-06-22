@@ -8,10 +8,17 @@ import javax.persistence.*;
 
 import de.tum.in.www1.artemis.domain.User;
 
+/**
+ * This class models the 'completion' association between a user and a lecture unit.
+ * Because we track some metadata (e.g., the completion date), this can not be modeled as a simple JPA relationship.
+ */
 @Entity
 @Table(name = "lecture_unit_user")
 public class LectureUnitCompletion {
 
+    /**
+     * The primary key of the association, composited through {@link LectureUnitUserId}.
+     */
     @EmbeddedId
     @SuppressWarnings("unused")
     private LectureUnitUserId id = new LectureUnitUserId();
@@ -51,6 +58,10 @@ public class LectureUnitCompletion {
         this.completedAt = completedAt;
     }
 
+    /**
+     * This class is used to create a composite primary key (user_id, lecture_unit_id).
+     * See also https://www.baeldung.com/spring-jpa-embedded-method-parameters
+     */
     @Embeddable
     @SuppressWarnings("unused")
     public static class LectureUnitUserId implements Serializable {
