@@ -22,109 +22,13 @@
     </div>
 </div>
 <hr />
-<ng-container [ngSwitch]="currentStepIndex">
-    <div *ngSwitchCase="0">
-        <div *ngIf="stepLoading[0]" class="text-center">
-            <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-        </div>
-        <jhi-git-diff-report *ngIf="gitDiffReport" [report]="gitDiffReport"></jhi-git-diff-report>
-        <div *ngIf="!stepLoading[0] && !gitDiffReport" class="text-center">
-            <span>Git-Diff report has not been generated yet.</span>
-        </div>
-    </div>
-    <div *ngSwitchCase="1">
-        <jhi-testwise-coverage-report *ngIf="coverageReport && fileContentByPath" [report]="coverageReport" [fileContentByPath]="fileContentByPath"></jhi-testwise-coverage-report>
-        <div *ngIf="!(coverageReport || fileContentByPath)" class="text-center">
-            <span>Coverage report has not been generated yet.</span>
-        </div>
-    </div>
-    <div *ngSwitchCase="2">
-        <div class="d-flex justify-content-start button-row">
-            <button class="btn btn-secondary" type="button" (click)="onGenerateStructuralSolutionEntries()">(Re-)Generate structural entries</button>
-            <button class="btn btn-secondary" type="button" (click)="onGenerateBehavioralSolutionEntries()">(Re-)Generate behavioral entries</button>
-            <button class="btn btn-danger" type="button" [disabled]="!solutionEntries?.size">Delete all entries</button>
-        </div>
-        <div class="table-responsive" *ngIf="solutionEntries?.size">
-            <table class="table table-striped" aria-describedby="showHealthLabel">
-                <thead>
-                    <tr>
-                        <th scope="col" class="text-left">
-                            <input type="checkbox" [ngModel]="selectedAllEntries" (ngModelChange)="updateBulkEntrySelection()" class="form-check-input custom-control-input" />
-                        </th>
-                        <th scope="col" class="text-left">ID</th>
-                        <th scope="col" class="text-left">Test case</th>
-                        <th scope="col" class="text-left">Content</th>
-                        <th scope="col" class="text-end">Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr *ngFor="let mapEntry of solutionEntries | keyvalue">
-                        <td class="text-left">
-                            <input
-                                type="checkbox"
-                                [checked]="mapEntry.value"
-                                (change)="selectSingleEntry(mapEntry.key, !mapEntry.value)"
-                                class="form-check-input custom-control-input"
-                            />
-                        </td>
-                        <td class="text-left">{{ mapEntry.key.id }}</td>
-                        <td class="text-left">{{ mapEntry.key.testCase?.testName }}</td>
-                        <td class="text-left">{{ mapEntry.key.code?.split('\n')?.length }} line(s) of code</td>
-                        <td class="text-right">
-                            <div class="d-flex justify-content-end button-row">
-                                <button class="btn btn-primary" type="button" (click)="onSolutionEntryView(mapEntry.key, false)">View</button>
-                                <button class="btn btn-warning" type="button" (click)="onSolutionEntryView(mapEntry.key, true)">Edit</button>
-                                <button class="btn btn-danger" type="button">Delete</button>
-                            </div>
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-    </div>
-    <div *ngSwitchCase="3">
-        <div *ngIf="!stepLoading[3]" [class]="codeHints?.length ? '' : 'text-center'">
-            <button type="button" class="btn btn-primary" (click)="onGenerateCodeHints()">{{ codeHints?.length ? 'Re-' : '' }}Generate code hints</button>
-        </div>
-        <mat-accordion *ngIf="codeHints?.length">
-            <mat-expansion-panel [expanded]="false" [disabled]="true" class="code-hint-creation-expansion-panel-wrapper-header">
-                <mat-expansion-panel-header>
-                    <mat-panel-title>Title</mat-panel-title>
-                    <mat-panel-description>Task</mat-panel-description>
-                </mat-expansion-panel-header>
-            </mat-expansion-panel>
-            <mat-expansion-panel *ngFor="let codeHint of codeHints" class="code-hint-creation-expansion-panel-wrapper">
-                <mat-expansion-panel-header>
-                    <mat-panel-title
-                        ><td>{{ codeHint.title }}</td></mat-panel-title
-                    >
-                    <mat-panel-description>
-                        {{ codeHint?.programmingExerciseTask?.taskName }}
-                    </mat-panel-description>
-                </mat-expansion-panel-header>
-                <div>
-                    <div *ngIf="codeHint?.solutionEntries">
-                        <jhi-code-hint-container [codeHint]="codeHint"></jhi-code-hint-container>
-                    </div>
-                    <div class="btn-group">
-                        <a
-                            [routerLink]="['/course-management', exercise?.course?.id, 'programming-exercises', exercise?.id, 'exercise-hints', codeHint.id]"
-                            class="btn btn-info btn-sm me-1"
-                        >
-                            <fa-icon [icon]="faEye"></fa-icon>
-                            <span class="d-none d-md-inline" jhiTranslate="entity.action.view">View</span>
-                        </a>
-                        <a
-                            [routerLink]="['/course-management', exercise?.course?.id, 'programming-exercises', exercise?.id, 'exercise-hints', codeHint.id, 'edit']"
-                            class="btn btn-warning btn-sm me-1"
-                        >
-                            <fa-icon [icon]="faWrench"></fa-icon>
-                            <span class="d-none d-md-inline" jhiTranslate="entity.action.edit">Edit</span>
-                        </a>
-                    </div>
-                    <hr />
-                </div>
-            </mat-expansion-panel>
-        </mat-accordion>
-    </div>
+<ng-container>
+    <jhi-diff-generation-step [hidden]="currentStepIndex !== 0" [exercise]="exercise!" (onGitDiffLoaded)="onDiffReportLoaded($event)"></jhi-diff-generation-step>
+    <jhi-coverage-generation-step [hidden]="currentStepIndex !== 1" [exercise]="exercise!" (onCoverageLoaded)="onCoverageReportLoaded($event)"></jhi-coverage-generation-step>
+    <jhi-solution-entry-generation-step
+        [hidden]="currentStepIndex !== 2"
+        [exercise]="exercise!"
+        (onSelectionChanges)="onSolutionEntryChanges($event)"
+    ></jhi-solution-entry-generation-step>
+    <jhi-code-hint-generation-step [hidden]="currentStepIndex !== 3" [exercise]="exercise!" (onCodeHintsLoaded)="onCodeHintsLoaded($event)"></jhi-code-hint-generation-step>
 </ng-container>

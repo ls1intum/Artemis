@@ -1,0 +1,45 @@
+<div *ngIf="isLoading" class="text-center">
+    <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+</div>
+<div *ngIf="!isLoading" [class]="codeHints?.length ? '' : 'text-center'">
+    <button type="button" class="btn btn-primary" (click)="onGenerateCodeHints()">{{ codeHints?.length ? 'Re-' : '' }}Generate code hints</button>
+</div>
+<mat-accordion *ngIf="codeHints?.length">
+    <mat-expansion-panel [expanded]="false" [disabled]="true" class="code-hint-creation-expansion-panel-wrapper-header">
+        <mat-expansion-panel-header>
+            <mat-panel-title>Title</mat-panel-title>
+            <mat-panel-description>Task</mat-panel-description>
+        </mat-expansion-panel-header>
+    </mat-expansion-panel>
+    <mat-expansion-panel *ngFor="let codeHint of codeHints" class="code-hint-creation-expansion-panel-wrapper">
+        <mat-expansion-panel-header>
+            <mat-panel-title
+                ><td>{{ codeHint.title }}</td></mat-panel-title
+            >
+            <mat-panel-description>
+                {{ codeHint?.programmingExerciseTask?.taskName }}
+            </mat-panel-description>
+        </mat-expansion-panel-header>
+        <div>
+            <div *ngIf="codeHint?.solutionEntries">
+                <jhi-code-hint-container [codeHint]="codeHint"></jhi-code-hint-container>
+            </div>
+            <div class="btn-group">
+                <a
+                    [routerLink]="['/course-management', exercise?.course?.id, 'programming-exercises', exercise?.id, 'exercise-hints', codeHint.id]"
+                    class="btn btn-info btn-sm me-1"
+                >
+                    <fa-icon [icon]="faEye"></fa-icon>
+                    <span class="d-none d-md-inline" jhiTranslate="entity.action.view">View</span>
+                </a>
+                <a
+                    [routerLink]="['/course-management', exercise?.course?.id, 'programming-exercises', exercise?.id, 'exercise-hints', codeHint.id, 'edit']"
+                    class="btn btn-warning btn-sm me-1"
+                >
+                    <fa-icon [icon]="faWrench"></fa-icon>
+                    <span class="d-none d-md-inline" jhiTranslate="entity.action.edit">Edit</span>
+                </a>
+            </div>
+        </div>
+    </mat-expansion-panel>
+</mat-accordion>
