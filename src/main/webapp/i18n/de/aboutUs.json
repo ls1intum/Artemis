@@ -44,7 +44,7 @@
             }
         },
         "exam": {
-            "text": "<b>Prüfungsmodus:</b> Dozenten können Online-Prüfungen mit Übungsvarianten, integrierter Plagiatsprüfung, Testläufen und Studierendenbewertungen erstellen. Weitere Informationen finden Sie unter <a href=\"https://artemis.ase.in.tum.de/features/students\">Funktionen für Schüler im Prüfungsmodus</a> und unter <a href=\"https://artemis.ase.in.tum.de/features/instructors\">Funktionen für Dozenten im Prüfungsmodus</a>.",
+            "text": "<b>Prüfungsmodus:</b> Dozenten können Online-Prüfungen mit Übungsvarianten, integrierter Plagiatsprüfung, Testläufen und Studierendenbewertungen erstellen. Weitere Informationen finden Sie unter <a href=\"https://artemis.ase.in.tum.de/features/students\">Funktionen für Studierende im Prüfungsmodus</a> und unter <a href=\"https://artemis.ase.in.tum.de/features/instructors\">Funktionen für Dozenten im Prüfungsmodus</a>.",
             "details": [
                 "Alle Übungen von oben sind auch für Prüfungen verfügbar.",
                 "Es können mehrere Varianten pro Übung erstellt und für jeden Studierenden zufällig ausgewählt werden."
