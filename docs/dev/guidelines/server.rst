@@ -286,7 +286,7 @@ Functionally both queries extract the same result set, but the first one is less
 20. Criteria Builder
 ==================================================
 
-For more details, please visit the :doc:`./criteria-builder.rst` page.
+For more details, please visit the :doc:`./criteria-builder` page.
 
 
 21. REST endpoint best practices for authorization
