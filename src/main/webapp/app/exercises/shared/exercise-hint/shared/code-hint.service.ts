@@ -49,4 +49,6 @@ export class CodeHintService implements ICodeHintService {
     removeSolutionEntryFromCodeHint(exerciseId: number, codeHintId: number, solutionEntryId: number): Observable<HttpResponse<void>> {
         return this.http.delete<void>(`${this.resourceUrl}/${exerciseId}/code-hints/${codeHintId}/solution-entries/${solutionEntryId}`, { observe: 'response' });
     }
+
+    // TODO: endpoint to get all solution entries
 }

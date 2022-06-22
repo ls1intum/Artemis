@@ -25,6 +25,14 @@ import { LoadingNotificationComponent } from 'app/shared/notification/loading-no
 import { NotificationPopupComponent } from 'app/shared/notification/notification-popup/notification-popup.component';
 import { UserSettingsModule } from 'app/shared/user-settings/user-settings.module';
 import { ThemeModule } from 'app/core/theme/theme.module';
+import { CodeHintGenerationOverviewComponent } from './exercises/programming/hestia/generation-overview/code-hint-generation-overview/code-hint-generation-overview.component';
+import { ArtemisCodeHintGenerationOverviewModule } from 'app/exercises/programming/hestia/generation-overview/code-hint-generation-overview/code-hint-generation-overview.module';
+import { GitDiffReportModule } from 'app/exercises/programming/hestia/git-diff-report/git-diff-report.module';
+import { TestwiseCoverageReportModule } from 'app/exercises/programming/hestia/testwise-coverage-report/testwise-coverage-report.module';
+import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
+import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
+import { ArtemisExerciseHintSharedModule } from 'app/exercises/shared/exercise-hint/shared/exercise-hint-shared.module';
+import { MatExpansionModule } from '@angular/material/expansion';
 
 // NOTE: this module should only include the most important modules for normal users, all course management, admin and account functionality should be lazy loaded if possible
 @NgModule({
@@ -45,6 +53,13 @@ import { ThemeModule } from 'app/core/theme/theme.module';
         ArtemisHeaderExercisePageWithDetailsModule,
         UserSettingsModule,
         ThemeModule,
+        ArtemisCodeHintGenerationOverviewModule,
+        GitDiffReportModule,
+        TestwiseCoverageReportModule,
+        ArtemisSharedComponentModule,
+        ArtemisMarkdownModule,
+        ArtemisExerciseHintSharedModule,
+        MatExpansionModule,
     ],
     declarations: [
         JhiMainComponent,
@@ -58,6 +73,7 @@ import { ThemeModule } from 'app/core/theme/theme.module';
         NotificationSidebarComponent,
         SystemNotificationComponent,
         LoadingNotificationComponent,
+        CodeHintGenerationOverviewComponent,
     ],
     bootstrap: [JhiMainComponent],
 })

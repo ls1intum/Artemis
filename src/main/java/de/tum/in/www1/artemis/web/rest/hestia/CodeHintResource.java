@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.hestia.CodeHint;
+import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseSolutionEntry;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.hestia.CodeHintRepository;
 import de.tum.in.www1.artemis.repository.hestia.ProgrammingExerciseSolutionEntryRepository;
@@ -46,6 +47,27 @@ public class CodeHintResource {
         this.solutionEntryRepository = solutionEntryRepository;
         this.codeHintRepository = codeHintRepository;
         this.codeHintService = codeHintService;
+    }
+
+    // TODO: remove after testing
+    @GetMapping("programming-exercises/{exerciseId}/code-hints")
+    @PreAuthorize("hasRole('EDITOR')")
+    public ResponseEntity<List<CodeHint>> getAllCodeHints(@PathVariable Long exerciseId) {
+        ProgrammingExercise exercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, exercise, null);
+
+        var result = codeHintRepository.findByExerciseId(exercise.getId());
+        return ResponseEntity.ok(result.stream().toList());
+    }
+
+    @GetMapping("programming-exercises/{exerciseId}/solution-entries")
+    @PreAuthorize("hasRole('EDITOR')")
+    public ResponseEntity<List<ProgrammingExerciseSolutionEntry>> getAllSolutionEntries(@PathVariable Long exerciseId) {
+        ProgrammingExercise exercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, exercise, null);
+
+        var result = solutionEntryRepository.findByExerciseId(exercise.getId());
+        return ResponseEntity.ok(result.stream().toList());
     }
 
     /**
