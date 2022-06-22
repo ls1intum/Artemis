@@ -174,11 +174,14 @@ Many different joins are available (e.g. Join, ListJoin, SetJoin, CollectionJoin
 ==================================================
 
 Sub-queries are usually fine unless they are dependent sub-queries (also known as `correlated <https://en.wikipedia.org/wiki/Correlated_subquery>`_ sub queries).
+
 1. **Dependent Sub-Query:**
-In a SQL database query, a correlated sub-query is a sub-query (a query nested inside another query) that uses values from the outer query. But with a dependent sub-query you might run into performance problems because a dependent sub-query typically needs to be run once for each row in the outer query, e.g. if your outer query has 1000 rows, the sub-query will be run 1000 times.
+
+    In a SQL database query, a correlated sub-query is a sub-query (a query nested inside another query) that uses values from the outer query. But with a dependent sub-query you might run into performance problems because a dependent sub-query typically needs to be run once for each row in the outer query, e.g. if your outer query has 1000 rows, the sub-query will be run 1000 times.
 
 2. **Independent Sub-Query:**
-An independent sub-query is a sub-query that can be run on its own, without the main (sub-)query. Therefore an independent sub-query typically only needs to be evaluated once.
+
+    An independent sub-query is a sub-query that can be run on its own, without the main (sub-)query. Therefore an independent sub-query typically only needs to be evaluated once.
 
 You can find additional information `here <https://stackoverflow.com/questions/4799820/when-to-use-sql-sub-queries-versus-a-standard-join/4799847#4799847>`_
 
