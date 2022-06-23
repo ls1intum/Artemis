@@ -41,6 +41,15 @@
             "resetFilter": "Reset filter",
             "loading": "Loading...",
             "fetchingResults": "Fetching plagiarism results...",
+            "cleanUp": {
+                "confirmDialog": {
+                    "title": "Clean up plagiarism comparisons",
+                    "question": "Are you sure that you want to delete all unused plagiarism comparisons? This cannot be undone.",
+                    "deleteAll": "Delete all plagiarism comparisons",
+                    "warning": "ALL plagiarism cases will be deleted including the plagiarism result and run details.",
+                    "submit": "Clean up"
+                }
+            },
             "plagiarismCases": {
                 "pageTitle": "Plagiarism Cases",
                 "plagiarismCases": "Plagiarism Cases",

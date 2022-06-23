@@ -7,6 +7,9 @@ import java.util.stream.Collectors;
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
 
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
+
 import de.jplag.JPlagComparison;
 import de.tum.in.www1.artemis.domain.DomainObject;
 import de.tum.in.www1.artemis.domain.plagiarism.text.TextSubmissionElement;
@@ -47,6 +50,8 @@ public class PlagiarismComparison<E extends PlagiarismSubmissionElement> extends
      */
     @CollectionTable(name = "plagiarism_comparison_matches", joinColumns = @JoinColumn(name = "plagiarism_comparison_id"))
     @ElementCollection(fetch = FetchType.EAGER)
+    @JoinColumn(name = "plagiarism_comparison_id")
+    @OnDelete(action = OnDeleteAction.CASCADE)
     protected Set<PlagiarismMatch> matches;
 
     /**
@@ -58,10 +63,6 @@ public class PlagiarismComparison<E extends PlagiarismSubmissionElement> extends
      * Status of this submission comparison.
      */
     private PlagiarismStatus status = PlagiarismStatus.NONE;
-
-    /**
-     * Instructor statement/message sent to student A, null if not sent
-     */
 
     /**
      * Create a new PlagiarismComparison instance from an existing JPlagComparison object.

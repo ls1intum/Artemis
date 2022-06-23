@@ -165,8 +165,8 @@ public class CourseService {
      * @param user     the user entity
      * @return the course including exercises, lectures and exams for the user
      */
-    public Course findOneWithExercisesAndLecturesAndExamsForUser(Long courseId, User user) {
-        Course course = courseRepository.findByIdWithLecturesAndExamsElseThrow(courseId);
+    public Course findOneWithExercisesAndLecturesAndExamsAndLearningGoalsForUser(Long courseId, User user) {
+        Course course = courseRepository.findByIdWithLecturesAndExamsAndLearningGoalsElseThrow(courseId);
         if (!authCheckService.isAtLeastStudentInCourse(course, user)) {
             throw new AccessForbiddenException();
         }
