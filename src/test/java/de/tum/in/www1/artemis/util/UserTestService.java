@@ -158,7 +158,7 @@ public class UserTestService {
 
         for (var user : users) {
             var deletedUser = userRepository.findById(user.getId());
-            if (deletedUser.isEmpty() || !deletedUser.get().getLogin().equals("admin")) {
+            if (deletedUser.isEmpty() || !"admin".equals(deletedUser.get().getLogin())) {
                 assertThat(deletedUser).isEmpty();
             }
         }

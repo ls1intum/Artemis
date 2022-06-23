@@ -466,9 +466,9 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
      */
     default boolean isCurrentUser(String login) {
         var currentUserLogin = SecurityUtils.getCurrentUserLogin();
-        ;
-        if (currentUserLogin.isEmpty())
+        if (currentUserLogin.isEmpty()) {
             return false;
+        }
         return currentUserLogin.get().equals(login);
     }
 }
