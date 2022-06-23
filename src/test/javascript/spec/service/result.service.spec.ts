@@ -22,6 +22,7 @@ import { AssessmentType } from 'app/entities/assessment-type.model';
 import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
 import { FeedbackType, STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER, SUBMISSION_POLICY_FEEDBACK_IDENTIFIER } from 'app/entities/feedback.model';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
+import * as Sentry from '@sentry/browser';
 
 describe('ResultService', () => {
     let resultService: ResultService;
@@ -213,6 +214,13 @@ describe('ResultService', () => {
                 maxPoints: 200,
             });
             expect(translateServiceSpy).toHaveBeenCalledWith('artemisApp.result.preliminary');
+        });
+
+        it('reports to Sentry if result or exercise is undefined', () => {
+            const captureExceptionSpy = jest.spyOn(Sentry, 'captureException');
+            expect(resultService.getResultString(undefined, undefined)).toEqual('');
+            expect(captureExceptionSpy).toHaveBeenCalledOnce();
+            expect(captureExceptionSpy).toHaveBeenCalledWith('Tried to generate a result string, but either the result or exercise was undefined');
         });
     });
 });

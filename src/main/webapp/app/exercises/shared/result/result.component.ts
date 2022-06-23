@@ -30,7 +30,7 @@ import { Feedback } from 'app/entities/feedback.model';
  * Enumeration object representing the possible options that
  * the status of the result's template can be in.
  */
-enum ResultTemplateStatus {
+export enum ResultTemplateStatus {
     /**
      * An automatic result is currectly being generated and should be available soon.
      * This is currently only relevant for programming exercises.
@@ -138,7 +138,7 @@ export class ResultComponent implements OnInit, OnChanges {
      */
     ngOnInit(): void {
         if (!this.result && this.participation) {
-            this.exercise = this.exercise || getExercise(this.participation);
+            this.exercise = this.exercise ?? getExercise(this.participation);
             this.participation.exercise = this.exercise;
 
             if (this.participation.results && this.participation.results.length > 0) {
@@ -165,10 +165,10 @@ export class ResultComponent implements OnInit, OnChanges {
         } else if (!this.participation && this.result && this.result.participation) {
             // make sure this.participation is initialized in case it was not passed
             this.participation = this.result.participation;
-            this.exercise = this.exercise || getExercise(this.participation);
+            this.exercise = this.exercise ?? getExercise(this.participation);
             this.participation.exercise = this.exercise;
         } else if (this.participation) {
-            this.exercise = this.exercise || getExercise(this.participation);
+            this.exercise = this.exercise ?? getExercise(this.participation);
             this.participation.exercise = this.exercise;
         } else if (!this.result?.exampleResult) {
             // result of example submission does not have participation
