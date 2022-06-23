@@ -13,7 +13,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { cloneDeep } from 'lodash-es';
 import { Submission } from 'app/entities/submission.model';
 import { ExerciseType } from 'app/entities/exercise.model';
-import { faCheckCircle } from '@fortawesome/free-regular-svg-icons';
+import { faCheckCircle, faQuestionCircle } from '@fortawesome/free-regular-svg-icons';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
@@ -32,7 +32,7 @@ describe('ResultComponent', () => {
         secondCorrectionEnabled: false,
         studentAssignedTeamIdComputed: false,
     };
-    const programmingParticipation: ProgrammingExerciseStudentParticipation = { id: 2, exercise: programmingExercise };
+    const programmingParticipation: ProgrammingExerciseStudentParticipation = { id: 2, type: ParticipationType.PROGRAMMING, exercise: programmingExercise };
 
     const modelingExercise: ModelingExercise = {
         id: 3,
@@ -83,9 +83,9 @@ describe('ResultComponent', () => {
         expect(component.result).toEqual(result1);
         expect(component.result!.participation).toEqual(participation1);
         expect(component.submission).toEqual(submission1);
-        expect(component.textColorClass).toEqual('text-danger');
+        expect(component.textColorClass).toEqual('text-secondary');
         expect(component.hasFeedback).toBeFalse();
-        expect(component.resultIconClass).toEqual(faCheckCircle);
+        expect(component.resultIconClass).toEqual(faQuestionCircle);
         expect(component.resultString).toEqual('artemisApp.result.resultStringProgramming (artemisApp.result.preliminary)');
     });
 
