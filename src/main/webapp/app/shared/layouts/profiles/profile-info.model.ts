@@ -36,4 +36,5 @@ export class ProfileInfo {
     public useExternal: boolean;
     public externalCredentialProvider: string;
     public externalPasswordResetLinkMap: Map<string, string>;
+    public disablePasswordLogin?: boolean;
 }

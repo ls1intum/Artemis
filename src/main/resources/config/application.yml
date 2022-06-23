@@ -219,6 +219,9 @@ info:
     # default value set to false
     text-assessment-analytics-enabled: false
     browser-fingerprints-enabled: true
+    # Disables the client login form, but leaves the API enabled.
+    # Can be used with alternative login flows.
+    disable-password-login: false
 
 # ===================================================================
 # JHipster specific properties

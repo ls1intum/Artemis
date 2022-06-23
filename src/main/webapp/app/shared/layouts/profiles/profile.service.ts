@@ -72,6 +72,9 @@ export class ProfileService {
                         profileInfo.useExternal = data.useExternal;
                         profileInfo.externalCredentialProvider = data.externalCredentialProvider;
                         profileInfo.externalPasswordResetLinkMap = data.externalPasswordResetLinkMap;
+
+                        profileInfo.disablePasswordLogin = data['disable-password-login'];
+
                         return profileInfo;
                     }),
                 )

@@ -27,7 +27,7 @@
                                 ></span>
                             </div>
                         </div>
-                        <div class="form-group">
+                        <div *ngIf="!profileInfo || !profileInfo.disablePasswordLogin" class="form-group">
                             <label class="font-weight-bold" for="username" jhiTranslate="global.form.username">Login</label>
                             <input
                                 type="text"
@@ -45,7 +45,7 @@
                                 <p class="text-primary small">Invalid username</p>
                             </div>
                         </div>
-                        <div class="form-group">
+                        <div *ngIf="!profileInfo || !profileInfo.disablePasswordLogin" class="form-group">
                             <label class="font-weight-bold" for="password" jhiTranslate="login.form.password">Password</label>
                             <input
                                 type="password"
@@ -57,7 +57,7 @@
                                 [(ngModel)]="password"
                             />
                         </div>
-                        <div class="form-group">
+                        <div *ngIf="!profileInfo || !profileInfo.disablePasswordLogin" class="form-group">
                             <div class="form-check">
                                 <label class="form-check-label" for="rememberMe">
                                     <input class="form-check-input" type="checkbox" name="rememberMe" id="rememberMe" [(ngModel)]="rememberMe" checked />
@@ -73,6 +73,7 @@
                         </div>
                         <div class="btn-toolbar">
                             <button
+                                *ngIf="!profileInfo || !profileInfo.disablePasswordLogin"
                                 type="submit"
                                 id="login-button"
                                 [disabled]="
@@ -106,7 +107,7 @@
                 <a class="alert-link" routerLink="account/register" jhiTranslate="global.messages.info.register.link">Register a new account</a>
             </div>
         </div>
-        <div class="d-flex justify-content-center">
+        <div *ngIf="!profileInfo || !profileInfo.disablePasswordLogin" class="d-flex justify-content-center">
             <a class="alert-link" routerLink="account/reset/request" jhiTranslate="login.password.forgot">Did you forget your password?</a>
         </div>
     </div>
