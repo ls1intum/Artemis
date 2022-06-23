@@ -42,7 +42,6 @@ function urlValidator(control: AbstractControl) {
 @Component({
     selector: 'jhi-video-unit-form',
     templateUrl: './video-unit-form.component.html',
-    styleUrls: ['./video-unit-form.component.scss'],
 })
 export class VideoUnitFormComponent implements OnInit, OnChanges {
     @Input()
