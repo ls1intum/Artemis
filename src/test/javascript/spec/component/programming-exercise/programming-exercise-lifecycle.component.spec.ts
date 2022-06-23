@@ -9,6 +9,8 @@ import { ProgrammingExerciseTestScheduleDatePickerComponent } from 'app/exercise
 import { NgModel } from '@angular/forms';
 import { TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.service';
 import { AssessmentType } from 'app/entities/assessment-type.model';
+import { SimpleChange } from '@angular/core';
+import { IncludedInOverallScore } from 'app/entities/exercise.model';
 
 describe('ProgrammingExerciseLifecycleComponent', () => {
     let comp: ProgrammingExerciseLifecycleComponent;
@@ -66,6 +68,7 @@ describe('ProgrammingExerciseLifecycleComponent', () => {
         const newRelease = dayjs().add(10, 'days');
         comp.updateReleaseDate(newRelease);
 
+        expect(comp.exercise.releaseDate).toEqual(newRelease);
         expect(comp.exercise.dueDate).toEqual(newRelease);
         expect(comp.exercise.buildAndTestStudentSubmissionsAfterDueDate).toEqual(newRelease);
         expect(comp.exercise.exampleSolutionPublicationDate).toEqual(newRelease);
@@ -105,5 +108,93 @@ describe('ProgrammingExerciseLifecycleComponent', () => {
 
         expect(comp.exercise.assessmentType).toBe(AssessmentType.AUTOMATIC);
         expect(comp.exercise.assessmentDueDate).toBe(undefined);
+    });
+
+    it('should not cascade date changes when updateReleaseDate is called when readOnly is true', () => {
+        comp.exercise = exercise;
+        const oldRelease = dayjs().add(10, 'days');
+        comp.updateReleaseDate(oldRelease);
+
+        expect(comp.exercise.releaseDate).toEqual(oldRelease);
+        expect(comp.exercise.dueDate).toEqual(oldRelease);
+        expect(comp.exercise.exampleSolutionPublicationDate).toEqual(oldRelease);
+
+        comp.readOnly = true;
+
+        const newRelease = dayjs().add(20, 'days');
+        comp.updateReleaseDate(newRelease);
+
+        expect(comp.exercise.releaseDate).toEqual(newRelease);
+        expect(comp.exercise.dueDate).toEqual(oldRelease);
+        expect(comp.exercise.exampleSolutionPublicationDate).toEqual(oldRelease);
+    });
+
+    it('should not cascade date changes when updateExampleSolutionPublicationDate is called when readOnly is true', () => {
+        const oldDueDate = dayjs().add(10, 'days');
+        comp.exercise = exercise;
+        exercise.dueDate = oldDueDate;
+        comp.updateExampleSolutionPublicationDate(oldDueDate);
+
+        expect(comp.exercise.exampleSolutionPublicationDate).toEqual(oldDueDate);
+
+        comp.readOnly = true;
+
+        const newDueDate = dayjs().add(20, 'days');
+        exercise.dueDate = newDueDate;
+        comp.updateExampleSolutionPublicationDate(newDueDate);
+
+        expect(comp.exercise.exampleSolutionPublicationDate).toEqual(oldDueDate);
+    });
+
+    it('should alert correct date when exampleSolutionPublicationDate is updated automatically', () => {
+        const alertSpy = jest.spyOn(window, 'alert');
+
+        const newExercise = { ...exercise };
+
+        const now = dayjs();
+        newExercise.dueDate = now.add(10, 'days');
+        newExercise.releaseDate = now.add(20, 'days');
+        comp.exercise = newExercise;
+
+        comp.updateExampleSolutionPublicationDate(newExercise.releaseDate);
+
+        expect(comp.exercise.exampleSolutionPublicationDate).toEqual(newExercise.releaseDate);
+        expect(alertSpy).toHaveBeenCalledOnce();
+        expect(alertSpy).lastCalledWith('artemisApp.programmingExercise.timeline.alertNewExampleSolutionPublicationDateAsReleaseDate');
+
+        newExercise.dueDate = now.add(40, 'days');
+        newExercise.releaseDate = now.add(30, 'days');
+        comp.updateExampleSolutionPublicationDate(newExercise.dueDate);
+
+        expect(comp.exercise.exampleSolutionPublicationDate).toEqual(newExercise.dueDate);
+        expect(alertSpy).toHaveBeenCalledTimes(2);
+        expect(alertSpy).lastCalledWith('artemisApp.programmingExercise.timeline.alertNewExampleSolutionPublicationDateAsDueDate');
+    });
+
+    it('should alert each distinct string only once ', () => {
+        const alertSpy = jest.spyOn(window, 'alert');
+
+        const newExercise = { ...exercise, includedInOverallScore: IncludedInOverallScore.INCLUDED_COMPLETELY };
+
+        const now = dayjs();
+        newExercise.dueDate = now.add(10, 'days');
+        newExercise.releaseDate = now.add(20, 'days');
+        comp.exercise = newExercise;
+
+        comp.ngOnChanges({ exercise: { currentValue: newExercise } as SimpleChange });
+
+        expect(alertSpy).toHaveBeenCalledTimes(3);
+        let nthCall = 0;
+        expect(alertSpy).toHaveBeenNthCalledWith(++nthCall, 'artemisApp.programmingExercise.timeline.alertNewDueDate');
+        expect(alertSpy).toHaveBeenNthCalledWith(++nthCall, 'artemisApp.programmingExercise.timeline.alertNewAfterDueDate');
+        expect(alertSpy).toHaveBeenNthCalledWith(++nthCall, 'artemisApp.programmingExercise.timeline.alertNewExampleSolutionPublicationDateAsDueDate');
+
+        const newerExercise = { ...newExercise };
+        newerExercise.dueDate = now.add(40, 'days');
+        comp.exercise = newerExercise;
+        comp.ngOnChanges({ exercise: { currentValue: newerExercise } as SimpleChange });
+
+        expect(alertSpy).toHaveBeenCalledTimes(nthCall + 1);
+        expect(alertSpy).toHaveBeenNthCalledWith(++nthCall, 'artemisApp.programmingExercise.timeline.alertNewExampleSolutionPublicationDateAsDueDate');
     });
 });
