@@ -40,7 +40,7 @@ export class TextUnitComponent implements OnInit {
         this.isCollapsed = !this.isCollapsed;
 
         if (!this.isCollapsed) {
-            // Mark the unit as completed when the user open the unit
+            // Mark the unit as completed when the user opens the unit
             this.onCompletion.emit({ lectureUnit: this.textUnit, completed: true });
         }
     }

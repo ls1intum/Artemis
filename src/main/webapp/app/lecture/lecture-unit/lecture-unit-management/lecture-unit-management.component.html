@@ -33,7 +33,7 @@
             </div>
             <jhi-video-unit *ngSwitchCase="LectureUnitType.VIDEO" [videoUnit]="lectureUnit" [isPresentationMode]="true"></jhi-video-unit>
             <jhi-text-unit *ngSwitchCase="LectureUnitType.TEXT" [textUnit]="lectureUnit" [isPresentationMode]="true"></jhi-text-unit>
-            <jhi-online-unit *ngSwitchCase="LectureUnitType.ONLINE" [onlineUnit]="lectureUnit"></jhi-online-unit>
+            <jhi-online-unit *ngSwitchCase="LectureUnitType.ONLINE" [onlineUnit]="lectureUnit" [isPresentationMode]="true"></jhi-online-unit>
         </div>
         <div class="col-1 my-auto" style="min-width: 100px">
             <div class="container">
