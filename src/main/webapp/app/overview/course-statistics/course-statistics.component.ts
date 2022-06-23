@@ -736,30 +736,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
         this.groupExercisesByType(this.courseExercisesFilteredByCategories);
         this.filterExerciseIDsForCategorySelection(!isIncluded!);
     }
-    /*
-    /!**
-     * Creates an initial filter setting by including all categories
-     * @private
-     *!/
-    private setupCategoryFilter(): void {
-        this.exerciseCategories.forEach((category) => this.exerciseCategoryFilters.set(category, true));
-        this.allCategoriesSelected = true;
-        this.includeExercisesWithNoCategory = true;
-        this.calculateNumberOfAppliedFilters();
-    }
 
-    /!**
-     * Collects all categories from the currently visible exercises (included or excluded the optional exercises depending on the prior state)
-     * @private
-     *!/
-    private determineDisplayableCategories(): void {
-        const exerciseCategories = this.courseExercises
-            .filter((exercise) => exercise.categories)
-            .flatMap((exercise) => exercise.categories!)
-            .map((category) => category.category!);
-        this.exerciseCategories = new Set(exerciseCategories);
-        this.setupCategoryFilter();
-    }*/
     /**
      * Handles the use case when the user selects or deselects the option "select all categories"
      */
@@ -778,23 +755,6 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
         this.groupExercisesByType(this.courseExercisesFilteredByCategories);
         this.filterExerciseIDsForCategorySelection(this.categoryFilter.includeExercisesWithNoCategory);
     }
-    /*
-    /!**
-     * Auxiliary method in order to reduce code duplication
-     * Takes the currently configured exerciseCategoryFilters and applies it to the course exercises
-     *
-     * Important note: As exercises can have no or multiple categories, the filter is designed to be non-exclusive. This means
-     * as long as an exercise has at least one of the selected categories, it is displayed.
-     *!/
-    private applyCategoryFilter(): void {
-        this.courseExercisesFilteredByCategories = this.courseExercises.filter((exercise) => {
-            if (!exercise.categories) {
-                return this.includeExercisesWithNoCategory;
-            }
-            return exercise.categories!.flatMap((category) => this.exerciseCategoryFilters.get(category.category!)!).reduce((value1, value2) => value1 || value2);
-        });
-        this.groupExercisesByType(this.courseExercisesFilteredByCategories);
-    }*/
 
     /**
      * Auxiliary method that updates the filtered exercise IDs. These are necessary in order to update the performance in exercises chart below
@@ -812,24 +772,6 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
             this.filteredExerciseIDs = this.filteredExerciseIDs.filter((id) => !this.courseExercisesFilteredByCategories.find((exercise) => exercise.id === id));
         }
     }
-    /*
-    /!**
-     * Auxiliary method that checks whether all possible categories are selected and updates the allCategoriesSelected flag accordingly
-     * @param newFilterStatement indicates whether the updated filter option got selected or deselected and updates the flag accordingly
-     * @private
-     *!/
-    private areAllCategoriesSelected(newFilterStatement: boolean): void {
-        if (newFilterStatement) {
-            if (!this.includeExercisesWithNoCategory) {
-                this.allCategoriesSelected = false;
-            } else {
-                this.allCategoriesSelected = true;
-                this.exerciseCategoryFilters.forEach((value) => (this.allCategoriesSelected = value && this.allCategoriesSelected));
-            }
-        } else {
-            this.allCategoriesSelected = false;
-        }
-    }*/
 
     private calculateNumberOfAppliedFilters(): void {
         this.numberOfAppliedFilters = this.categoryFilter.numberOfActiveFilters + (this.currentlyHidingNotIncludedInScoreExercises ? 1 : 0);

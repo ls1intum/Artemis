@@ -33,6 +33,11 @@ export class ChartExerciseTypeFilter extends ChartFilter {
         return this.applyCurrentFilter(exerciseScores);
     }
 
+    /**
+     * Applies the current filter setting to the provided exercise scores
+     * @param exerciseScores the exercise scores that should be filtered against the current filter setting
+     * @returns exerciseScores filtered against the current filter setting
+     */
     applyCurrentFilter(exerciseScores: any[]): any[] {
         return exerciseScores.filter((score) => this.filterMap.get(ChartExerciseTypeFilter.convertToMapKey(score.exerciseType)));
     }
@@ -40,6 +45,7 @@ export class ChartExerciseTypeFilter extends ChartFilter {
     /**
      * Converts a given exercise type to a map key and returns it
      * @param type the exercise type
+     * @returns string representation of the exercise type as it is stored in the Map
      */
     static convertToMapKey(type: ExerciseType) {
         return type.toLowerCase().replace('_', '-');
