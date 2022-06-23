@@ -781,9 +781,12 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
      * not the legend
      */
     navigateToExerciseSubmissionOverview(event: any): void {
-        if (!event.value || !this.accountService.hasAnyAuthorityDirect([Authority.INSTRUCTOR])) {
+        if (!this.accountService.hasAnyAuthorityDirect([Authority.INSTRUCTOR])) {
             return;
         }
+        // If the user selects a part in the pie, the corresponding event contains the name of the selected part as attribute
+        // If the user selects the legend entry, the event consists only of the legend label as string
+        const identifier = event.name ?? event;
         let index = 0;
         let route = ['course-management', this.courseId, this.exercise.type! + '-exercises', this.exerciseId, 'submissions'];
         if (this.isAutomaticAssessedProgrammingExercise) {
@@ -791,7 +794,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
             route = ['course-management', this.courseId, this.exercise.type! + '-exercises', this.exerciseId, 'complaints'];
         }
         this.assessments.forEach((data, i) => {
-            if (data.name === event.name) {
+            if (data.name === identifier) {
                 index += i;
             }
         });

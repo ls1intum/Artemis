@@ -3,12 +3,19 @@ import { Submission } from 'app/entities/submission.model';
 
 enum AssessmentFilter {
     UNASSESSED,
-    Manual,
+    MANUAL,
     SEMI_AUTOMATIC,
+}
+
+enum AssessmentTranslation {
+    UNASSESSED = 'unassessedSubmissions',
+    MANUAL = 'manuallyAssessedSubmissions',
+    SEMI_AUTOMATIC = 'semiAutomaticallyAssessedSubmissions',
 }
 
 export abstract class AbstractAssessmentDashboard {
     filterOption?: number;
+    translationString: string | undefined;
     submissions: Submission[];
     filteredSubmissions: Submission[];
     resetFilter = false;
@@ -24,6 +31,7 @@ export abstract class AbstractAssessmentDashboard {
         }
         switch (this.filterOption) {
             case AssessmentFilter.UNASSESSED:
+                this.translationString = AssessmentTranslation.UNASSESSED;
                 this.filteredSubmissions = submissions.filter((submission) => {
                     return (
                         !submission.results || submission.results.length === 0 || !submission.results.last()?.rated || submission.results.every((result) => !result.completionDate)
@@ -31,7 +39,8 @@ export abstract class AbstractAssessmentDashboard {
                 });
                 break;
 
-            case AssessmentFilter.Manual:
+            case AssessmentFilter.MANUAL:
+                this.translationString = AssessmentTranslation.MANUAL;
                 this.filteredSubmissions = submissions.filter((submission) => {
                     return (
                         submission.results &&
@@ -44,6 +53,7 @@ export abstract class AbstractAssessmentDashboard {
                 break;
 
             case AssessmentFilter.SEMI_AUTOMATIC:
+                this.translationString = AssessmentTranslation.SEMI_AUTOMATIC;
                 this.filteredSubmissions = submissions.filter((submission) => {
                     return (
                         submission.results &&
@@ -67,6 +77,7 @@ export abstract class AbstractAssessmentDashboard {
      */
     resetFilterOptions(): void {
         this.filterOption = undefined;
+        this.translationString = undefined;
         this.resetFilter = true;
         this.applyChartFilter(this.submissions);
     }
