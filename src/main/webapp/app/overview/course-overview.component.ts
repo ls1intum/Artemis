@@ -15,10 +15,7 @@ import { ArtemisServerDateService } from 'app/shared/server-date.service';
 import { AlertService, AlertType } from 'app/core/util/alert.service';
 import { faCircleNotch, faSync } from '@fortawesome/free-solid-svg-icons';
 import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
-import { ARTEMIS_DEFAULT_COLOR } from 'app/app.constants';
 import { LearningGoalService } from 'app/course/learning-goals/learningGoal.service';
-
-const DESCRIPTION_READ = 'isDescriptionRead';
 
 export interface BarControlConfiguration {
     subject?: Subject<TemplateRef<any>>;
