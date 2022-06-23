@@ -946,6 +946,7 @@ public class ProgrammingExerciseGradingService {
         result.setScore(0D);
         result.setTestCaseCount(0);
         result.setPassedTestCaseCount(0);
+        result.setCodeIssueCount(0);
     }
 
     /**

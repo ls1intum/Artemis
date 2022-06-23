@@ -147,13 +147,13 @@ describe('ResultService', () => {
         });
 
         it('should return correct string for non programming exercise', () => {
-            expect(resultService.getResultString(modelingResult, modelingExercise)).toEqual('artemisApp.result.resultStringNonProgramming');
+            expect(resultService.getResultString(modelingResult, modelingExercise)).toBe('artemisApp.result.resultStringNonProgramming');
             expect(translateServiceSpy).toHaveBeenCalledTimes(1);
             expect(translateServiceSpy).toHaveBeenCalledWith('artemisApp.result.resultStringNonProgramming', { relativeScore: 42, points: 21, maxPoints: 50 });
         });
 
         it('should return correct string for programming exercise with build failure', () => {
-            expect(resultService.getResultString(result1, programmingExercise)).toEqual('artemisApp.result.resultStringProgramming');
+            expect(resultService.getResultString(result1, programmingExercise)).toBe('artemisApp.result.resultStringProgramming');
             expect(translateServiceSpy).toHaveBeenCalledTimes(2);
             expect(translateServiceSpy).toHaveBeenCalledWith('artemisApp.result.resultStringBuildFailed');
             expect(translateServiceSpy).toHaveBeenCalledWith(`artemisApp.result.resultStringProgramming`, {
@@ -165,7 +165,7 @@ describe('ResultService', () => {
         });
 
         it('should return correct string for programming exercise with no tests', () => {
-            expect(resultService.getResultString(result2, programmingExercise)).toEqual('artemisApp.result.resultStringProgramming');
+            expect(resultService.getResultString(result2, programmingExercise)).toBe('artemisApp.result.resultStringProgramming');
             expect(translateServiceSpy).toHaveBeenCalledTimes(2);
             expect(translateServiceSpy).toHaveBeenCalledWith('artemisApp.result.resultStringBuildSuccessfulNoTests');
             expect(translateServiceSpy).toHaveBeenCalledWith(`artemisApp.result.resultStringProgramming`, {
@@ -177,7 +177,7 @@ describe('ResultService', () => {
         });
 
         it('should return correct string for programming exercise with tests', () => {
-            expect(resultService.getResultString(result3, programmingExercise)).toEqual('artemisApp.result.resultStringProgramming');
+            expect(resultService.getResultString(result3, programmingExercise)).toBe('artemisApp.result.resultStringProgramming');
             expect(translateServiceSpy).toHaveBeenCalledTimes(2);
             expect(translateServiceSpy).toHaveBeenCalledWith('artemisApp.result.resultStringBuildSuccessfulTests', { numberOfTestsPassed: 1, numberOfTestsTotal: 2 });
             expect(translateServiceSpy).toHaveBeenCalledWith(`artemisApp.result.resultStringProgramming`, {
@@ -189,7 +189,7 @@ describe('ResultService', () => {
         });
 
         it('should return correct string for programming exercise with code issues', () => {
-            expect(resultService.getResultString(result4, programmingExercise)).toEqual('artemisApp.result.resultStringProgrammingCodeIssues');
+            expect(resultService.getResultString(result4, programmingExercise)).toBe('artemisApp.result.resultStringProgrammingCodeIssues');
             expect(translateServiceSpy).toHaveBeenCalledTimes(2);
             expect(translateServiceSpy).toHaveBeenCalledWith('artemisApp.result.resultStringBuildSuccessfulTests', { numberOfTestsPassed: 1, numberOfTestsTotal: 2 });
             expect(translateServiceSpy).toHaveBeenCalledWith(`artemisApp.result.resultStringProgrammingCodeIssues`, {
@@ -204,7 +204,7 @@ describe('ResultService', () => {
         it('should return correct string for programming exercise preliminary', () => {
             programmingExercise.assessmentDueDate = dayjs().add(5, 'minutes');
 
-            expect(resultService.getResultString(result5, programmingExercise)).toEqual('artemisApp.result.resultStringProgramming (artemisApp.result.preliminary)');
+            expect(resultService.getResultString(result5, programmingExercise)).toBe('artemisApp.result.resultStringProgramming (artemisApp.result.preliminary)');
             expect(translateServiceSpy).toHaveBeenCalledTimes(3);
             expect(translateServiceSpy).toHaveBeenCalledWith('artemisApp.result.resultStringBuildSuccessfulNoTests');
             expect(translateServiceSpy).toHaveBeenCalledWith(`artemisApp.result.resultStringProgramming`, {
@@ -218,7 +218,7 @@ describe('ResultService', () => {
 
         it('reports to Sentry if result or exercise is undefined', () => {
             const captureExceptionSpy = jest.spyOn(Sentry, 'captureException');
-            expect(resultService.getResultString(undefined, undefined)).toEqual('');
+            expect(resultService.getResultString(undefined, undefined)).toBe('');
             expect(captureExceptionSpy).toHaveBeenCalledOnce();
             expect(captureExceptionSpy).toHaveBeenCalledWith('Tried to generate a result string, but either the result or exercise was undefined');
         });

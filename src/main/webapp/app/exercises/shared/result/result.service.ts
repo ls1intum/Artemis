@@ -45,7 +45,7 @@ export class ResultService implements IResultService {
         return this.http.get<Result>(`${this.resultResourceUrl}/${resultId}`, { observe: 'response' }).pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
     }
 
-    getResultString(result: Result | undefined, exercise: Exercise | undefined): string {
+    getResultString(result?: Result, exercise?: Exercise): string {
         if (result && exercise) {
             return this.getResultStringNotUndefined(result, exercise);
         } else {
