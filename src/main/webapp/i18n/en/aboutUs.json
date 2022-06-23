@@ -45,7 +45,7 @@
         },
         "exam": {
             "text": "<b>Exam mode:</b> Instructors can create online exams with exercise variants, integrated plagiarism checks, test runs and student reviews. You can find more information on <a href=\"https://artemis.ase.in.tum.de/features/students\">Exam mode student features</a> and on <a href=\"https://artemis.ase.in.tum.de/features/instructors\">Exam mode instructor features</a>.",
-            "details": ["All exercises from above are also available for exams.", "Multiple variants per exercise can be created and randomly selected for every student."]
+            "details": ["All mentioned exercise types are also available for exams.", "Multiple variants per exercise can be created and randomly selected for every student."]
         },
         "grading": {
             "text": "<b>Grading:</b> Instructors can configure grade keys for courses and exams to automatically calculate grades and display them to students. Grades can be easily exported as csv files to upload them into university systems (such as CAMPUSonline).",
