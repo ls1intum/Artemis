@@ -11,6 +11,7 @@ import { ExamMonitoringService } from 'app/exam/monitoring/exam-monitoring.servi
 import { createActions } from './exam-monitoring-helper';
 import * as Sentry from '@sentry/browser';
 import { CaptureContext } from '@sentry/types';
+import { BehaviorSubject } from 'rxjs';
 
 describe('ExamMonitoringService', () => {
     let examMonitoringService: ExamMonitoringService;
@@ -158,5 +159,37 @@ describe('ExamMonitoringService', () => {
         expect(spy).toHaveBeenCalledOnce();
         expect(captureExceptionSpy).toHaveBeenCalledOnce();
         expect(captureExceptionSpy).toHaveBeenCalledWith(error);
+    });
+
+    it('should notify exam subscribers', () => {
+        const examObservables = new Map<number, BehaviorSubject<Exam | undefined>>();
+        expect(examMonitoringService.examObservables).toEqual(examObservables);
+
+        examMonitoringService.notifyExamSubscribers(exam);
+
+        examObservables.set(exam.id!, new BehaviorSubject(exam));
+
+        expect(examMonitoringService.examObservables).toEqual(examObservables);
+
+        examMonitoringService.notifyExamSubscribers(exam);
+
+        examObservables.get(exam.id!)?.next(exam);
+        expect(examMonitoringService.examObservables).toEqual(examObservables);
+    });
+
+    it('should return exam behavior subject', () => {
+        const examObservables = new Map<number, BehaviorSubject<Exam | undefined>>();
+        expect(examMonitoringService.examObservables).toEqual(examObservables);
+
+        examMonitoringService.getExamBehaviorSubject(exam.id!);
+
+        expect(examMonitoringService.getExamBehaviorSubject(exam.id!)).toEqual(undefined);
+
+        const subject = new BehaviorSubject(exam);
+        examObservables.set(exam.id!, subject);
+
+        examMonitoringService.notifyExamSubscribers(exam);
+
+        expect(examMonitoringService.getExamBehaviorSubject(exam.id!)).toEqual(subject);
     });
 });

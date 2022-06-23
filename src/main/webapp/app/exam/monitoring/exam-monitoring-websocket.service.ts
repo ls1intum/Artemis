@@ -22,7 +22,7 @@ export class ExamMonitoringWebsocketService implements IExamMonitoringWebsocketS
      * @param exam received or updated exam
      * @param examAction received exam action
      */
-    private notifyExamActionSubscribers = (exam: Exam, examAction: ExamAction) => {
+    public notifyExamActionSubscribers = (exam: Exam, examAction: ExamAction) => {
         this.prepareAction(examAction);
         const examActionObservable = this.examActionObservables.get(exam.id!);
         if (!examActionObservable) {
@@ -85,7 +85,7 @@ export class ExamMonitoringWebsocketService implements IExamMonitoringWebsocketS
      * @param examAction received exam action
      * @private
      */
-    private prepareAction(examAction: ExamAction) {
+    public prepareAction(examAction: ExamAction) {
         examAction.timestamp = dayjs(examAction.timestamp);
         examAction.ceiledTimestamp = ceilDayjsSeconds(examAction.timestamp, 15);
     }

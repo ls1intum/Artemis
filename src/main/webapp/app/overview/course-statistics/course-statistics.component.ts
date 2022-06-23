@@ -18,7 +18,7 @@ import { faClipboard, faFilter, faQuestionCircle } from '@fortawesome/free-solid
 import { GraphColors } from 'app/entities/statistics.model';
 import { NgxChartsSingleSeriesDataEntry } from 'app/shared/chart/ngx-charts-datatypes';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
-import { BarControlConfiguration, BarControlConfigurationProvider } from 'app/overview/tab-bar';
+import { BarControlConfiguration, BarControlConfigurationProvider } from 'app/overview/tab-bar/tab-bar';
 
 const QUIZ_EXERCISE_COLOR = '#17a2b8';
 const PROGRAMMING_EXERCISE_COLOR = '#fd7e14';

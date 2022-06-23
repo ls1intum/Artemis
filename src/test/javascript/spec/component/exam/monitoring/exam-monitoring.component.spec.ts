@@ -14,13 +14,18 @@ import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ExamMonitoringComponent, TableContent } from 'app/exam/monitoring/exam-monitoring.component';
 import { ExamMonitoringService } from 'app/exam/monitoring/exam-monitoring.service';
 import dayjs from 'dayjs/esm';
-import { JhiWebsocketService } from '../../../../../../main/webapp/app/core/websocket/websocket.service';
+import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { MockWebsocketService } from '../../../helpers/mocks/service/mock-websocket.service';
+import { createTestExercises } from './exam-monitoring-helper';
+import { ExerciseGroup } from 'app/entities/exercise-group.model';
 
 describe('Exam Monitoring Component', () => {
     // Course
     const course = new Course();
     course.id = 1;
+
+    // exercises
+    const exercises = createTestExercises(3);
 
     // Exam
     const exam = new Exam();
@@ -105,6 +110,79 @@ describe('Exam Monitoring Component', () => {
             new TableContent('students', exam.numberOfRegisteredUsers),
             new TableContent('exercises', 0),
             new TableContent('exerciseGroups', exam.exerciseGroups?.length),
+        ];
+
+        // WHEN
+        comp.ngOnInit();
+
+        // THEN
+        expect(comp.table).toEqual(table);
+    });
+
+    it('should handle undefined exercise groups and init table', () => {
+        // GIVEN
+        const responseFakeExam = { body: exam as Exam } as HttpResponse<Exam>;
+        jest.spyOn(examManagementService, 'find').mockReturnValue(of(responseFakeExam));
+
+        exam.exerciseGroups = undefined;
+
+        const table: TableContent[] = [
+            new TableContent('title', exam.title),
+            new TableContent('start', pipe.transform(exam.startDate)),
+            new TableContent('end', pipe.transform(exam.endDate)),
+            new TableContent('students', exam.numberOfRegisteredUsers),
+            new TableContent('exercises', 0),
+            new TableContent('exerciseGroups', 0),
+        ];
+
+        // WHEN
+        comp.ngOnInit();
+
+        // THEN
+        expect(comp.table).toEqual(table);
+    });
+
+    it('should handle exercise groups with exercises and init table', () => {
+        // GIVEN
+        const responseFakeExam = { body: exam as Exam } as HttpResponse<Exam>;
+        jest.spyOn(examManagementService, 'find').mockReturnValue(of(responseFakeExam));
+
+        const exerciseGroup = new ExerciseGroup();
+        exerciseGroup.exercises = exercises;
+        exam.exerciseGroups = [exerciseGroup];
+
+        const table: TableContent[] = [
+            new TableContent('title', exam.title),
+            new TableContent('start', pipe.transform(exam.startDate)),
+            new TableContent('end', pipe.transform(exam.endDate)),
+            new TableContent('students', exam.numberOfRegisteredUsers),
+            new TableContent('exercises', 3),
+            new TableContent('exerciseGroups', 1),
+        ];
+
+        // WHEN
+        comp.ngOnInit();
+
+        // THEN
+        expect(comp.table).toEqual(table);
+    });
+
+    it('should handle exercise groups with undefined exercises and init table', () => {
+        // GIVEN
+        const responseFakeExam = { body: exam as Exam } as HttpResponse<Exam>;
+        jest.spyOn(examManagementService, 'find').mockReturnValue(of(responseFakeExam));
+
+        const exerciseGroup = new ExerciseGroup();
+        exerciseGroup.exercises = undefined;
+        exam.exerciseGroups = [exerciseGroup];
+
+        const table: TableContent[] = [
+            new TableContent('title', exam.title),
+            new TableContent('start', pipe.transform(exam.startDate)),
+            new TableContent('end', pipe.transform(exam.endDate)),
+            new TableContent('students', exam.numberOfRegisteredUsers),
+            new TableContent('exercises', 0),
+            new TableContent('exerciseGroups', 1),
         ];
 
         // WHEN

@@ -37,8 +37,8 @@ import { By } from '@angular/platform-browser';
 import { TeamAssignmentPayload } from 'app/entities/team.model';
 import { LearningGoalService } from 'app/course/learning-goals/learningGoal.service';
 import { LearningGoal } from 'app/entities/learningGoal.model';
-import { BarControlConfiguration, BarControlConfigurationProvider } from 'app/overview/tab-bar';
 import { CourseOverviewComponent } from 'app/overview/course-overview.component';
+import { BarControlConfiguration, BarControlConfigurationProvider } from 'app/overview/tab-bar/tab-bar';
 
 const endDate1 = dayjs().add(1, 'days');
 const visibleDate1 = dayjs().subtract(1, 'days');
@@ -137,6 +137,7 @@ describe('CourseOverviewComponent', () => {
                 courseService = TestBed.inject(CourseManagementService);
                 courseScoreCalculationService = TestBed.inject(CourseScoreCalculationService);
                 teamService = TestBed.inject(TeamService);
+                learningGoalService = TestBed.inject(LearningGoalService);
                 jhiWebsocketService = TestBed.inject(JhiWebsocketService);
             });
     }));

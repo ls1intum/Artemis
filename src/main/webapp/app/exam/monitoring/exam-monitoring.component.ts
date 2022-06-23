@@ -72,7 +72,7 @@ export class ExamMonitoringComponent implements OnInit, OnDestroy {
         this.exam.exerciseGroups?.forEach((group) => (amountOfExercises += group.exercises?.length ?? 0));
         const exercises = new TableContent('exercises', amountOfExercises);
 
-        const exerciseGroups = new TableContent('exerciseGroups', this.exam.exerciseGroups?.length);
+        const exerciseGroups = new TableContent('exerciseGroups', this.exam.exerciseGroups?.length ?? 0);
 
         this.table.push(title, start, end, students, exercises, exerciseGroups);
     }
