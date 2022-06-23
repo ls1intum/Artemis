@@ -34,7 +34,7 @@
             "text": {
                 "text": "<a href=\"https://docs.artemis.ase.in.tum.de/user/exercises/textual/\">Textübungen</a> mit manueller oder halbautomatischer Bewertung auf der Grundlage von überwachtem maschinellen Lernen und natürlicher Sprachverarbeitung (NLP) mit <a href=\"https://github.com/ls1intum/Athena\">Athena</a>.",
                 "details": [
-                    "<b>Integriertes Feedback:</b> Bewertungen können direkt neben den Textabschnitten Feedback und Punkte vergeben.",
+                    "<b>Integriertes Feedback:</b> Bei der Bewertung können direkt für Textabschnitte Feedback und Punkte vergeben werden.",
                     "<b>Spracherkennung:</b> Artemis erkennt die Sprache des Beitrags und zeigt die Anzahl der Wörter und Zeichen an."
                 ]
             },
