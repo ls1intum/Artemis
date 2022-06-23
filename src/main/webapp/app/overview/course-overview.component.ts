@@ -2,7 +2,7 @@ import { AfterViewInit, ChangeDetectorRef, Component, EmbeddedViewRef, OnDestroy
 import { Course } from 'app/entities/course.model';
 import { CourseManagementService } from '../course/manage/course-management.service';
 import { ActivatedRoute } from '@angular/router';
-import { Subject, Subscription } from 'rxjs';
+import { forkJoin, Subject, Subscription } from 'rxjs';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { CourseScoreCalculationService } from 'app/overview/course-score-calculation.service';
 import { TeamService } from 'app/exercises/shared/team/team.service';
@@ -15,6 +15,10 @@ import { ArtemisServerDateService } from 'app/shared/server-date.service';
 import { AlertService, AlertType } from 'app/core/util/alert.service';
 import { faCircleNotch, faSync } from '@fortawesome/free-solid-svg-icons';
 import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
+import { ARTEMIS_DEFAULT_COLOR } from 'app/app.constants';
+import { LearningGoalService } from 'app/course/learning-goals/learningGoal.service';
+
+const DESCRIPTION_READ = 'isDescriptionRead';
 
 export interface BarControlConfiguration {
     subject?: Subject<TemplateRef<any>>;
@@ -61,6 +65,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
         private courseService: CourseManagementService,
         private courseExerciseService: CourseExerciseService,
         private courseCalculationService: CourseScoreCalculationService,
+        private learningGoalService: LearningGoalService,
         private route: ActivatedRoute,
         private teamService: TeamService,
         private jhiWebsocketService: JhiWebsocketService,
@@ -77,6 +82,9 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
         this.course = this.courseCalculationService.getCourse(this.courseId);
         if (!this.course) {
             this.loadCourse();
+        } else if (!this.course.learningGoals || !this.course.prerequisites) {
+            // If the course is present but without learning goals (e.g. loaded in Artemis overview), we only need to fetch those
+            this.loadLearningGoals();
         }
         await this.subscribeToTeamAssignmentUpdates();
         this.subscribeForQuizChanges();
@@ -141,6 +149,10 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
         }
     }
 
+    /**
+     * Fetch the course from the server including all exercises, lectures, exams and learning goals
+     * @param refresh Whether this is a force refresh (displays loader animation)
+     */
     loadCourse(refresh = false) {
         this.refreshingCourse = refresh;
         this.courseService.findOneForDashboard(this.courseId).subscribe({
@@ -189,6 +201,19 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
         }
     }
 
+    loadLearningGoals() {
+        forkJoin([this.learningGoalService.getAllForCourse(this.courseId), this.learningGoalService.getAllPrerequisitesForCourse(this.courseId)]).subscribe({
+            next: ([learningGoals, prerequisites]) => {
+                if (this.course) {
+                    this.course.learningGoals = learningGoals.body!;
+                    this.course.prerequisites = prerequisites.body!;
+                    this.courseCalculationService.updateCourse(this.course);
+                }
+            },
+            error: () => {},
+        });
+    }
+
     /**
      * check if there is at least one exam which should be shown
      */
@@ -199,6 +224,13 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
             }
         }
         return false;
+    }
+
+    /**
+     * Check if the course has any learning goals or prerequisites
+     */
+    hasLearningGoals(): boolean {
+        return !!(this.course?.learningGoals?.length || this.course?.prerequisites?.length);
     }
 
     /**
