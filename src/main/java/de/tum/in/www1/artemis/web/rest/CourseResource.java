@@ -413,8 +413,8 @@ public class CourseResource {
     /**
      * GET /courses/{courseId}/for-dashboard
      *
-     * @param courseId the courseId for which exercises and lectures should be fetched
-     * @return a course which all exercises and lectures visible to the student
+     * @param courseId the courseId for which exercises, lectures, exams and learning goals should be fetched
+     * @return a course with all exercises, lectures, exams and learning goals visible to the student
      */
     @GetMapping("/courses/{courseId}/for-dashboard")
     @PreAuthorize("hasRole('USER')")
@@ -422,7 +422,7 @@ public class CourseResource {
         long start = System.currentTimeMillis();
         User user = userRepository.getUserWithGroupsAndAuthorities();
 
-        Course course = courseService.findOneWithExercisesAndLecturesAndExamsForUser(courseId, user);
+        Course course = courseService.findOneWithExercisesAndLecturesAndExamsAndLearningGoalsForUser(courseId, user);
         courseService.fetchParticipationsWithSubmissionsAndResultsForCourses(List.of(course), user, start);
         return course;
     }
