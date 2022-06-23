@@ -4,27 +4,27 @@
         "feature": "Haupteigenschaften",
         "exercises": {
             "programming": {
-                "text": "<a href=\"https://docs.artemis.ase.in.tum.de/user/exercises/programming/\">Programmierübungen</a> mit Versionskontrolle, automatischer individueller Rückmeldung (und Bewertung) auf der Grundlage von Testfällen und statischer Code-Analyse (durchgeführt mit kontinuierlicher Integration).",
+                "text": "<a href='{{ programmingUrl }}'>Programmierübungen</a> mit Versionskontrolle, automatischer individueller Rückmeldung (und Bewertung) auf der Grundlage von Testfällen und statischer Code-Analyse (durchgeführt mit kontinuierlicher Integration).",
                 "details": [
                     "<b>Unmittelbares Feedback:</b> Die Studierenden erhalten sofortiges und individuelles Feedback zu ihren Abgaben. Dozenten können Feedback-Nachrichten leicht anpassen und Feedback während der Arbeitszeit ausblenden (z.B. bei versteckten Tests).",
                     "<b>Interaktiv:</b> Dozenten integrieren interaktive Anweisungen auf Basis von Aufgaben und UML-Diagrammen direkt in die dynamischen Problemstellungen. Sie können Hinweise für schwierige Übungsteile definieren.",
                     "<b>Unabhängig:</b> Dozenten können die Programmierübungen so anpassen, dass sie jede beliebige Programmiersprache unterstützen. Um die Einrichtung zu vereinfachen, enthält Artemis ausgereifte Vorlagen für die gängigsten Sprachen (z.B. Java, Python, C, Haskell, Kotlin, VHDL, Assembler, Swift, Ocaml, ...).",
                     "<b>Lokal und online:</b> Die Studierenden können lokal in ihrer bevorzugten IDE oder im Online-Code-Editor (ohne jegliche Einrichtung) teilnehmen.",
-                    "<b>Manuelle Bewertungen</b> sind direkt im Online-Code-Editor möglich oder in <a href=\"https://github.com/ls1intum/Orion\">Orion</a>.",
+                    "<b>Manuelle Bewertungen</b> sind direkt im Online-Code-Editor möglich oder in <a href={{ orionUrl }}>Orion</a>.",
                     "<b>Richtlinien:</b> Dozenten können Richtlinien für die Abgabe festlegen (z. B. Punktabzüge nach mehr als 10 Versuchen), um zu verhindern, dass die Studierenden alle Möglichkeiten unüberlegt ausprobieren.",
                     "<b>Benotung:</b> Dozenten haben viele Möglichkeiten die Benotung zu konfigurieren, die Ergebnisse auf der Grundlage von Tests und statischen Codeanalysekategorien zu analysieren, und die Ergebnisse neu zu bewerten.",
-                    "<b>Sicher:</b> Testfälle und der Code der Studierenden werden in Docker-Umgebungen auf Build-Agenten ausgeführt. Test-Frameworks wie <a href=\"https://github.com/ls1intum/Ares\">Ares</a> vereinfachen die Erstellung von strukturellen und dynamischen Tests und verhindern, dass Studierende schummeln können."
+                    "<b>Sicher:</b> Testfälle und der Code der Studierenden werden in Docker-Umgebungen auf Build-Agenten ausgeführt. Test-Frameworks wie <a href={{ aresUrl }}>Ares</a> vereinfachen die Erstellung von strukturellen und dynamischen Tests und verhindern, dass Studierende schummeln können."
                 ]
             },
             "quiz": {
-                "text": "<a href=\"https://docs.artemis.ase.in.tum.de/user/exercises/quiz/\">Quiz-Übungen</a> mit Multiple-Choice-, Drag-and-Drop- und Freitext-Fragen.",
+                "text": "<a href={{ quizUrl }}>Quiz-Übungen</a> mit Multiple-Choice-, Drag-and-Drop- und Freitext-Fragen.",
                 "details": [
                     "<b>Modellierungsquizze:</b> Dozenten können auf einfache Weise Drag-and-Drop-Quizze auf der Grundlage von UML-Modellen erstellen.",
                     "<b>Verschiedene Modi:</b> Quizze unterstützen einen Live-Modus (bewertet) während der Vorlesung, einen Übungsmodus, in dem die Studierenden das Quiz beliebig oft wiederholen können, und einen Prüfungsmodus (siehe unten)."
                 ]
             },
             "modeling": {
-                "text": "<a href=\"https://docs.artemis.ase.in.tum.de/user/exercises/modeling/\">Modellierungsübungen</a> basierend auf dem einfach zu bedienenden Online-Modellierungseditor <a href=\"https://apollon.ase.in.tum.de/\">Apollon</a> mit halbautomatischer Bewertung unter Verwendung von Konzepten des maschinellen Lernens.",
+                "text": "<a href={{ modelingUrl }}>Modellierungsübungen</a> basierend auf dem einfach zu bedienenden Online-Modellierungseditor <a href={{ apollonUrl }}>Apollon</a> mit halbautomatischer Bewertung unter Verwendung von Konzepten des maschinellen Lernens.",
                 "details": [
                     "<b>Mehrere Diagrammtypen:</b> Artemis unterstützt sieben UML-Diagrammtypen (z.B. Klassendiagramme) und vier zusätzliche Diagrammarten (z.B. Flussdiagramme).",
                     "<b>Einfache Bedienung:</b> Die Studierenden können die Modelle einfach per Drag & Drop erstellen und sie mit zusätzlichem Text erklären.",
@@ -32,19 +32,19 @@
                 ]
             },
             "text": {
-                "text": "<a href=\"https://docs.artemis.ase.in.tum.de/user/exercises/textual/\">Textübungen</a> mit manueller oder halbautomatischer Bewertung auf der Grundlage von überwachtem maschinellen Lernen und natürlicher Sprachverarbeitung (NLP) mit <a href=\"https://github.com/ls1intum/Athena\">Athena</a>.",
+                "text": "<a href={{ textUrl }}>Textübungen</a> mit manueller oder halbautomatischer Bewertung auf der Grundlage von überwachtem maschinellen Lernen und natürlicher Sprachverarbeitung (NLP) mit <a href={{ athenaUrl }}>Athena</a>.",
                 "details": [
                     "<b>Integriertes Feedback:</b> Bei der Bewertung können direkt für Textabschnitte Feedback und Punkte vergeben werden.",
                     "<b>Spracherkennung:</b> Artemis erkennt die Sprache des Beitrags und zeigt die Anzahl der Wörter und Zeichen an."
                 ]
             },
             "fileUpload": {
-                "text": "<a href=\"https://docs.artemis.ase.in.tum.de/user/exercises/file-upload/\">Übungen zum Hochladen von Dateien</a> mit manueller Bewertung.",
+                "text": "<a href={{ fileUploadUrl }}>Übungen zum Hochladen von Dateien</a> mit manueller Bewertung.",
                 "details": []
             }
         },
         "exam": {
-            "text": "<b>Prüfungsmodus:</b> Dozenten können Online-Prüfungen mit Übungsvarianten, integrierter Plagiatsprüfung, Testläufen und Studierendenbewertungen erstellen. Weitere Informationen finden Sie unter <a href=\"https://artemis.ase.in.tum.de/features/students\">Funktionen für Studierende im Prüfungsmodus</a> und unter <a href=\"https://artemis.ase.in.tum.de/features/instructors\">Funktionen für Dozenten im Prüfungsmodus</a>.",
+            "text": "<b>Prüfungsmodus:</b> Dozenten können Online-Prüfungen mit Übungsvarianten, integrierter Plagiatsprüfung, Testläufen und Studierendenbewertungen erstellen. Weitere Informationen finden Sie unter <a href={{ studentFeatureUrl }}>Funktionen für Studierende im Prüfungsmodus</a> und unter <a href={{ instructorFeatureUrl }}>Funktionen für Dozenten im Prüfungsmodus</a>.",
             "details": [
                 "Alle genannten Übungskategorie sind auch für Prüfungen verfügbar.",
                 "Es können mehrere Varianten pro Übung erstellt und für jeden Studierenden zufällig ausgewählt werden."
@@ -59,7 +59,7 @@
             "details": []
         },
         "discussion": {
-            "text": "<a href=\"https://docs.artemis.ase.in.tum.de/user/discussion/\">Diskussion:</a> Dozenten können Ankündigungen veröffentlichen. Studierende können Fragen stellen, Kommentare abgeben und auf andere Beiträge reagieren. Tutoren können unbeantwortete Fragen filtern.",
+            "text": "<a href={{ discussionUrl }}>Diskussion:</a> Dozenten können Ankündigungen veröffentlichen. Studierende können Fragen stellen, Kommentare abgeben und auf andere Beiträge reagieren. Tutoren können unbeantwortete Fragen filtern.",
             "details": []
         },
         "notifications": {
@@ -79,7 +79,7 @@
             "details": []
         },
         "plagiarismChecks": {
-            "text": "<b>Plagiatsüberprüfungen:</b> Artemis integriert Plagiatsprüfungen für Programmieraufgaben (basierend auf <a href=\"https://github.com/jplag/JPlag\">JPlag</a>) Text- und Modellierungsaufgaben. Es ermöglicht die Benachrichtigung der Studierenden über festgestellte Plagiate. Die Studierenden können die Behauptung überprüfen und kommentieren.",
+            "text": "<b>Plagiatsüberprüfungen:</b> Artemis integriert Plagiatsprüfungen für Programmieraufgaben (basierend auf <a href={{ jPlagUrl }}>JPlag</a>) Text- und Modellierungsaufgaben. Es ermöglicht die Benachrichtigung der Studierenden über festgestellte Plagiate. Die Studierenden können die Behauptung überprüfen und kommentieren.",
             "details": []
         },
         "learningAnalytics": {

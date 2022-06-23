@@ -23,26 +23,34 @@ export class AboutUsComponent implements OnInit {
     data: AboutUsModel;
 
     // Array of tuple containing list of details of section
-    readonly numberOfDetails: [string, number[]][] = [
-        ['exercises.programming', new Array<number>(8)],
-        ['exercises.quiz', new Array<number>(2)],
-        ['exercises.modeling', new Array<number>(3)],
-        ['exercises.text', new Array<number>(2)],
-        ['exercises.fileUpload', []],
-        ['exam', new Array<number>(2)],
-        ['grading', []],
-        ['assessment', []],
-        ['discussion', []],
-        ['notifications', []],
-        ['teamExercises', []],
-        ['lectures', []],
-        ['integratedMarkdownEditor', []],
-        ['plagiarismChecks', []],
-        ['learningAnalytics', []],
-        ['scalable', []],
-        ['highUserSatisfaction', []],
-        ['customizable', []],
-        ['openSource', []],
+    readonly numberOfDetails: [string, number, { [key: string]: string }][] = [
+        [
+            'exercises.programming',
+            8,
+            {
+                programmingUrl: 'https://docs.artemis.ase.in.tum.de/user/exercises/programming/',
+                orionUrl: 'https://github.com/ls1intum/Orion',
+                aresUrl: 'https://github.com/ls1intum/Ares',
+            },
+        ],
+        ['exercises.quiz', 2, { quizUrl: 'https://docs.artemis.ase.in.tum.de/user/exercises/quiz/' }],
+        ['exercises.modeling', 3, { modelingUrl: 'https://docs.artemis.ase.in.tum.de/user/exercises/modeling/', apollonUrl: 'https://apollon.ase.in.tum.de/' }],
+        ['exercises.text', 2, { textUrl: 'https://docs.artemis.ase.in.tum.de/user/exercises/textual/', athenaUrl: 'https://github.com/ls1intum/Athena' }],
+        ['exercises.fileUpload', 0, { fileUploadUrl: 'https://docs.artemis.ase.in.tum.de/user/exercises/file-upload/', athenaUrl: 'https://github.com/ls1intum/Athena' }],
+        ['exam', 2, { studentFeatureUrl: 'https://artemis.ase.in.tum.de/features/students', instructorFeatureUrl: 'https://artemis.ase.in.tum.de/features/instructors' }],
+        ['grading', 0, {}],
+        ['assessment', 0, {}],
+        ['discussion', 0, { discussionUrl: 'https://docs.artemis.ase.in.tum.de/user/discussion/' }],
+        ['notifications', 0, {}],
+        ['teamExercises', 0, {}],
+        ['lectures', 0, {}],
+        ['integratedMarkdownEditor', 0, {}],
+        ['plagiarismChecks', 0, { jPlagUrl: 'https://github.com/jplag/JPlag' }],
+        ['learningAnalytics', 0, {}],
+        ['scalable', 0, {}],
+        ['highUserSatisfaction', 0, {}],
+        ['customizable', 0, {}],
+        ['openSource', 0, {}],
     ];
 
     readonly SERVER_API_URL = SERVER_API_URL;
