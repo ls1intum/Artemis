@@ -9,13 +9,8 @@
                 </h6>
             </ng-container>
         </div>
-        <div class="col-2 d-none d-lg-flex justify-content-end course-icon">
-            <jhi-secured-image
-                *ngIf="course.courseIcon"
-                [src]="course.courseIcon"
-                [cachingStrategy]="CachingStrategy.LOCAL_STORAGE"
-                [alt]="'artemisApp.courseOverview.noCourseIcon' | artemisTranslate"
-            >
+        <div class="col-2 d-none d-lg-flex justify-content-end course-icon" *ngIf="course.courseIcon">
+            <jhi-secured-image [src]="course.courseIcon" [cachingStrategy]="CachingStrategy.LOCAL_STORAGE" [alt]="'artemisApp.courseOverview.noCourseIcon' | artemisTranslate">
             </jhi-secured-image>
         </div>
     </div>

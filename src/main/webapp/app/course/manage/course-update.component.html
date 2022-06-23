@@ -75,9 +75,9 @@
                         </div>
                     </div>
                 </div>
-                <div class="form-group">
+                <div class="form-group" id="field_description">
                     <label class="form-control-label" jhiTranslate="artemisApp.course.description" for="field_description">Course Description</label>
-                    <input type="text" class="form-control" name="description" id="field_description" formControlName="description" />
+                    <jhi-markdown-editor class="markdown-editor" [(markdown)]="course.description" (markdownChange)="updateDescription($event)"> </jhi-markdown-editor>
                 </div>
                 <div class="form-group">
                     <label class="form-control-label" jhiTranslate="artemisApp.course.organizations">Course organizations</label>

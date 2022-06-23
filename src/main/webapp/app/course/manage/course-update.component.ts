@@ -451,6 +451,14 @@ export class CourseUpdateComponent implements OnInit {
     }
 
     /**
+     * Updates the course description on markdown change
+     * @param message new description
+     */
+    updateDescription(message: string) {
+        this.courseForm.controls['description'].setValue(message);
+    }
+
+    /**
      * Updates registrationConfirmationMessage on markdown change
      * @param message new registrationConfirmationMessage
      */
