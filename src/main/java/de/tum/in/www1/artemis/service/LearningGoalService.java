@@ -4,6 +4,8 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import javax.validation.constraints.NotNull;
+
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 
@@ -52,6 +54,41 @@ public class LearningGoalService {
         this.courseRepository = courseRepository;
         this.userRepository = userRepository;
         this.authCheckService = authCheckService;
+    }
+
+    /**
+     * Get all learning goals for a course, including the visible lecture units for the user.
+     * @param course The course for which the learning goals should be retrieved.
+     * @param user The user for whom to filter the visible lecture units attached to the learning goal.
+     * @return A list of learning goals with their lecture units (filtered for the user).
+     */
+    public Set<LearningGoal> findAllForCourse(@NotNull Course course, @NotNull User user) {
+        Set<LearningGoal> learningGoals = learningGoalRepository.findAllByCourseIdWithLectureUnitsUnidirectional(course.getId());
+        // if the user is a student the not yet released lecture units need to be filtered out
+        if (authCheckService.isOnlyStudentInCourse(course, user)) {
+            for (LearningGoal learningGoal : learningGoals) {
+                Set<LectureUnit> visibleLectureUnits = learningGoal.getLectureUnits().parallelStream().filter(LectureUnit::isVisibleToStudents).collect(Collectors.toSet());
+                learningGoal.setLectureUnits(visibleLectureUnits);
+            }
+        }
+        return learningGoals;
+    }
+
+    /**
+     * Get all prerequisites for a course. Lecture units are removed if the student is not part of the course.
+     * @param course The course for which the prerequisites should be retrieved.
+     * @param user The user that is requesting the prerequisites.
+     * @return A list of prerequisites (without lecture units if student is not part of course).
+     */
+    public Set<LearningGoal> findAllPrerequisitesForCourse(@NotNull Course course, @NotNull User user) {
+        Set<LearningGoal> prerequisites = learningGoalRepository.findPrerequisitesByCourseId(course.getId());
+        // Remove all lecture units if not a user of the course
+        if (!authCheckService.isAtLeastStudentInCourse(course, user)) {
+            for (LearningGoal prerequisite : prerequisites) {
+                prerequisite.setLectureUnits(Collections.emptySet());
+            }
+        }
+        return prerequisites;
     }
 
     /**
@@ -327,5 +364,4 @@ public class LearningGoalService {
                 .sum();
         return courseLearningGoalProgress;
     }
-
 }

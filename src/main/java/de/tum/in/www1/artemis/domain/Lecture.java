@@ -63,7 +63,10 @@ public class Lecture extends DomainObject implements Completable {
 
     @Override
     public Optional<ZonedDateTime> getCompletionDate(User user) {
-        return getLectureUnits().stream().sorted().map((lectureUnit) -> lectureUnit.getCompletionDate(user).get()).findFirst();
+        if (!isCompletedFor(user)) {
+            return Optional.empty();
+        }
+        return getLectureUnits().stream().map((lectureUnit) -> lectureUnit.getCompletionDate(user).get()).sorted().findFirst();
     }
 
     public String getTitle() {
