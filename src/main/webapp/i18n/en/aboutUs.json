@@ -48,7 +48,7 @@
             "details": ["All exercises from above are also available for exams.", "Multiple variants per exercise can be created and randomly selected for every student."]
         },
         "grading": {
-            "text": "<b>Grading:</b> Instructors can configure grade keys for courses and exams to automatically calculate grades and display them to students. Grades can be easily exported as csv files to upload them into university systems (such as Campus online).",
+            "text": "<b>Grading:</b> Instructors can configure grade keys for courses and exams to automatically calculate grades and display them to students. Grades can be easily exported as csv files to upload them into university systems (such as CAMPUSonline).",
             "details": []
         },
         "assessment": {
