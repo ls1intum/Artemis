@@ -6,6 +6,8 @@ import { Exercise } from 'app/entities/exercise.model';
  * Base result of any automatic plagiarism detection.
  */
 export abstract class PlagiarismResult<E extends PlagiarismSubmissionElement> {
+    id?: number;
+
     /**
      * List of detected comparisons whose similarity is above the specified threshold.
      */
