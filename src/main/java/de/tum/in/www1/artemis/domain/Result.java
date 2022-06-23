@@ -37,7 +37,7 @@ import de.tum.in.www1.artemis.service.listeners.ResultListener;
 public class Result extends DomainObject {
 
     /*
-     * IMPORTANT on removal: Mention in release notes that an intermediary upgrade to version 5.8.5 or later is necessary before updating to the current version, as otherwise the
+     * IMPORTANT on removal: Mention in release notes that an intermediary upgrade to version 5.8.6 or later is necessary before updating to the current version, as otherwise the
      * database migration can no longer convert the old data into the new representation.
      */
     @Column(name = "result_string")
