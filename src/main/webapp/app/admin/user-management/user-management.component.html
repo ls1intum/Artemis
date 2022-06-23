@@ -156,7 +156,7 @@
                             >
                                 <fa-icon [icon]="faTimes"></fa-icon>
                             </button>
-                            <button [entityTitle]="user" (ldapSync)="ldapSync(user)">
+                            <button (click)="ldapSync(user)">
                                 <a class="btn btn-close-white btn-sm"> <span class="d-none d-md-inline" jhiTranslate="entity.action.ldapSync">LDAP Sync</span> </a>
                             </button>
                         </div>
