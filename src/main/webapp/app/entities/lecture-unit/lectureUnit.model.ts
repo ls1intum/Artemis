@@ -10,6 +10,7 @@ export enum LectureUnitType {
     EXERCISE = 'exercise',
     TEXT = 'text',
     VIDEO = 'video',
+    ONLINE = 'online',
 }
 
 export abstract class LectureUnit implements BaseEntity {

@@ -83,7 +83,7 @@ describe('AttachmentUnitComponent', () => {
         const downloadButton = attachmentUnitComponentFixture.debugElement.nativeElement.querySelector('#downloadButton');
         expect(downloadButton).not.toBeNull();
         downloadButton.click();
-        expect(downloadFileStub).toHaveBeenCalledTimes(1);
+        expect(downloadFileStub).toHaveBeenCalledOnce();
     });
 
     it('should call completion callback when downloaded', (done) => {

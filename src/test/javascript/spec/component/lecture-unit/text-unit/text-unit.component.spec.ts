@@ -65,7 +65,7 @@ describe('TextUnitFormComponent', () => {
         tick(500);
 
         textUnitComponentFixture.whenStable().then(() => {
-            expect(handleCollapseSpy).toHaveBeenCalledTimes(1);
+            expect(handleCollapseSpy).toHaveBeenCalledOnce();
             expect(textUnitComponent.isCollapsed).toBeFalse();
         });
     }));
@@ -82,10 +82,10 @@ describe('TextUnitFormComponent', () => {
         const popButton = textUnitComponentFixture.debugElement.nativeElement.querySelector('#popupButton');
         popButton.click();
         expect(textUnitComponent).not.toBeNull();
-        expect(openStub).toHaveBeenCalledTimes(1);
+        expect(openStub).toHaveBeenCalledOnce();
         expect(writeStub).toHaveBeenCalledTimes(4);
-        expect(closeStub).toHaveBeenCalledTimes(1);
-        expect(focusStub).toHaveBeenCalledTimes(1);
+        expect(closeStub).toHaveBeenCalledOnce();
+        expect(focusStub).toHaveBeenCalledOnce();
         expect(window.document.body.innerHTML).toEqual(exampleHTML);
         window.document.body.innerHTML = innerHtmlCopy;
     }));
