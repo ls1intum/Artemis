@@ -169,10 +169,9 @@
     <include file="classpath:config/liquibase/changelog/20220503131200_changelog.xml" relativeToChangelogFile="false"/>
     <include file="classpath:config/liquibase/changelog/20220513194100_changelog.xml" relativeToChangelogFile="false"/>
     <include file="classpath:config/liquibase/changelog/20220420081504_changelog.xml" relativeToChangelogFile="false"/>
-    <include file="classpath:config/liquibase/changelog/20220519170000_changelog.xml" relativeToChangelogFile="false"/>  
+    <include file="classpath:config/liquibase/changelog/20220519170000_changelog.xml" relativeToChangelogFile="false"/>
     <include file="classpath:config/liquibase/changelog/20220520150000_changelog.xml" relativeToChangelogFile="false"/>
     <include file="classpath:config/liquibase/changelog/20220525121212_changelog.xml" relativeToChangelogFile="false"/>
-    <include file="classpath:config/liquibase/changelog/20220519170000_changelog.xml" relativeToChangelogFile="false"/>
     <include file="classpath:config/liquibase/changelog/20220602230300_changelog.xml" relativeToChangelogFile="false"/>
     <include file="classpath:config/liquibase/changelog/20220609095000_changelog.xml" relativeToChangelogFile="false"/>
 
