@@ -145,7 +145,7 @@ public class UserTestService {
     // Test
     public void deleteUsers() throws Exception {
         userRepository.deleteAll();
-        var users = database.addUsers(1, 1, 1, 1).stream().filter(user -> !"admin".equals(user.getLogin())).toList();
+        var users = database.addUsers(1, 1, 1, 1);
 
         for (var user : users) {
             mockDelegate.mockDeleteUserInUserManagement(user, true, false, false);
@@ -158,8 +158,19 @@ public class UserTestService {
 
         for (var user : users) {
             var deletedUser = userRepository.findById(user.getId());
-            assertThat(deletedUser).isEmpty();
+            if (deletedUser.isEmpty() || !deletedUser.get().getLogin().equals("admin")) {
+                assertThat(deletedUser).isEmpty();
+            }
         }
+
+        userRepository.deleteAll();
+        users = database.addUsers(1, 1, 1, 1);
+
+        for (var user : users) {
+            mockDelegate.mockDeleteUserInUserManagement(user, true, true, true);
+        }
+
+        request.delete("/api/users", HttpStatus.OK, params);
     }
 
     // Test
