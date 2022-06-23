@@ -176,6 +176,10 @@ public class JenkinsService extends AbstractContinuousIntegrationService {
         final var programmingLanguage = programmingExercise.getProgrammingLanguage();
         final var projectType = programmingExercise.getProjectType();
 
+        result.setTestCaseCount(0);
+        result.setPassedTestCaseCount(0);
+        result.setCodeIssueCount(0);
+
         // Extract test case feedback
         for (final var job : jobs) {
             for (final var testCase : job.getTestCases()) {
