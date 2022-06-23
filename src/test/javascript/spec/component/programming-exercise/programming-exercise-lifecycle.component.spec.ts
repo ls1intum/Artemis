@@ -19,12 +19,7 @@ describe('ProgrammingExerciseLifecycleComponent', () => {
     const nextDueDate = dayjs().add(5, 'days');
     const afterDueDate = dayjs().add(7, 'days');
     const exampleSolutionPublicationDate = dayjs().add(9, 'days');
-    const exercise = {
-        id: 42,
-        dueDate: nextDueDate,
-        buildAndTestStudentSubmissionsAfterDueDate: afterDueDate,
-        exampleSolutionPublicationDate,
-    } as ProgrammingExercise;
+    let exercise: ProgrammingExercise;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -41,7 +36,18 @@ describe('ProgrammingExerciseLifecycleComponent', () => {
             .then(() => {
                 fixture = TestBed.createComponent(ProgrammingExerciseLifecycleComponent);
                 comp = fixture.componentInstance;
+
+                exercise = {
+                    id: 42,
+                    dueDate: nextDueDate,
+                    buildAndTestStudentSubmissionsAfterDueDate: afterDueDate,
+                    exampleSolutionPublicationDate,
+                } as ProgrammingExercise;
             });
+    });
+
+    afterEach(() => {
+        jest.restoreAllMocks();
     });
 
     it('should do nothing if the release date is set to null', () => {
@@ -149,24 +155,22 @@ describe('ProgrammingExerciseLifecycleComponent', () => {
     it('should alert correct date when exampleSolutionPublicationDate is updated automatically', () => {
         const alertSpy = jest.spyOn(window, 'alert');
 
-        const newExercise = { ...exercise };
-
         const now = dayjs();
-        newExercise.dueDate = now.add(10, 'days');
-        newExercise.releaseDate = now.add(20, 'days');
-        comp.exercise = newExercise;
+        exercise.dueDate = now.add(10, 'days');
+        exercise.releaseDate = now.add(20, 'days');
+        comp.exercise = exercise;
 
-        comp.updateExampleSolutionPublicationDate(newExercise.releaseDate);
+        comp.updateExampleSolutionPublicationDate(exercise.releaseDate);
 
-        expect(comp.exercise.exampleSolutionPublicationDate).toEqual(newExercise.releaseDate);
+        expect(comp.exercise.exampleSolutionPublicationDate).toEqual(exercise.releaseDate);
         expect(alertSpy).toHaveBeenCalledOnce();
         expect(alertSpy).lastCalledWith('artemisApp.programmingExercise.timeline.alertNewExampleSolutionPublicationDateAsReleaseDate');
 
-        newExercise.dueDate = now.add(40, 'days');
-        newExercise.releaseDate = now.add(30, 'days');
-        comp.updateExampleSolutionPublicationDate(newExercise.dueDate);
+        exercise.dueDate = now.add(40, 'days');
+        exercise.releaseDate = now.add(30, 'days');
+        comp.updateExampleSolutionPublicationDate(exercise.dueDate);
 
-        expect(comp.exercise.exampleSolutionPublicationDate).toEqual(newExercise.dueDate);
+        expect(comp.exercise.exampleSolutionPublicationDate).toEqual(exercise.dueDate);
         expect(alertSpy).toHaveBeenCalledTimes(2);
         expect(alertSpy).lastCalledWith('artemisApp.programmingExercise.timeline.alertNewExampleSolutionPublicationDateAsDueDate');
     });
