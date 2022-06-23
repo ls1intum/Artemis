@@ -210,6 +210,21 @@
             <tr>
                 <td>7</td>
                 <td>
+                    <span>{{ 'artemisApp.examManagement.checklist.tableItem.examMonitoring' | artemisTranslate }}</span>
+                </td>
+                <td>
+                    <span>{{ 'artemisApp.examManagement.checklist.descriptionItem.examMonitoring' | artemisTranslate }}</span>
+                </td>
+                <td>
+                    <a [routerLink]="['monitoring']" class="btn btn-info" id="monitoring-button-{{ exam.id }}">
+                        <fa-icon [icon]="faEye"></fa-icon>
+                        <span class="d-none d-md-inline">{{ 'artemisApp.examManagement.examMonitoring' | artemisTranslate }}</span>
+                    </a>
+                </td>
+            </tr>
+            <tr>
+                <td>8</td>
+                <td>
                     <span>{{ 'artemisApp.examManagement.checklist.tableItem.conductExam' | artemisTranslate }}</span>
                 </td>
                 <td>
@@ -268,7 +283,7 @@
                 </td>
             </tr>
             <tr>
-                <td>8</td>
+                <td>9</td>
                 <td>
                     <span>{{ 'artemisApp.examManagement.checklist.tableItem.assessAllSubmissions' | artemisTranslate }}</span>
                 </td>
@@ -305,7 +320,7 @@
                 </td>
             </tr>
             <tr>
-                <td>9</td>
+                <td>10</td>
                 <td>
                     <span>{{ 'artemisApp.examManagement.checklist.tableItem.publishResults' | artemisTranslate }}</span>
                 </td>
@@ -329,7 +344,7 @@
                 </td>
             </tr>
             <tr>
-                <td>10</td>
+                <td>11</td>
                 <td>
                     <span>{{ 'artemisApp.examManagement.checklist.tableItem.examReview' | artemisTranslate }}</span>
                 </td>
@@ -359,7 +374,7 @@
                 </td>
             </tr>
             <tr>
-                <td>11</td>
+                <td>12</td>
                 <td>
                     <span>{{ 'artemisApp.examManagement.checklist.tableItem.resolveComplaints' | artemisTranslate }}</span>
                 </td>
@@ -389,7 +404,7 @@
                 </td>
             </tr>
             <tr>
-                <td>12</td>
+                <td>13</td>
                 <td>
                     <span>{{ 'artemisApp.examManagement.checklist.tableItem.exportResults' | artemisTranslate }}</span>
                 </td>

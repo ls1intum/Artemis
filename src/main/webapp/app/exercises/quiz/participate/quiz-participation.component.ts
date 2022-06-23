@@ -444,7 +444,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
     checkForQuizEnd() {
         const running = this.mode === 'live' && !!this.quizBatch && this.remainingTimeSeconds >= 0 && this.quizExercise?.quizMode !== QuizMode.SYNCHRONIZED;
         if (!running && this.previousRunning) {
-            if (!this.submission.submitted) {
+            if (!this.submission.submitted && this.submission.submissionDate) {
                 this.alertService.success('artemisApp.quizExercise.submitSuccess');
             }
         }
@@ -607,6 +607,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
             }
         } else {
             this.submission = new QuizSubmission();
+            this.initQuiz();
         }
     }
 
@@ -945,6 +946,10 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
             next: (res: HttpResponse<QuizExercise>) => {
                 const quizExercise = res.body!;
                 if (quizExercise.quizStarted) {
+                    if (quizExercise.quizEnded) {
+                        this.waitingForQuizStart = false;
+                        this.endDate = dayjs();
+                    }
                     this.quizExercise = quizExercise;
                     this.initLiveMode();
                 }
