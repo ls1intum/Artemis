@@ -89,7 +89,7 @@ describe('AttachmentUnitComponent', () => {
     it('should call completion callback when downloaded', (done) => {
         attachmentUnitComponent.onCompletion.subscribe((event) => {
             expect(event.lectureUnit).toEqual(attachmentUnit);
-            expect(event.completed).toEqual(true);
+            expect(event.completed).toBeTrue();
             done();
         });
         attachmentUnitComponent.downloadAttachment();
@@ -98,7 +98,7 @@ describe('AttachmentUnitComponent', () => {
     it('should call completion callback when clicked', (done) => {
         attachmentUnitComponent.onCompletion.subscribe((event) => {
             expect(event.lectureUnit).toEqual(attachmentUnit);
-            expect(event.completed).toEqual(false);
+            expect(event.completed).toBeFalse();
             done();
         });
         attachmentUnitComponent.handleClick(new Event('click'), false);

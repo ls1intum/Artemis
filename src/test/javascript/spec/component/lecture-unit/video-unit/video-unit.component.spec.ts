@@ -82,7 +82,7 @@ describe('VideoUnitComponent', () => {
         jest.spyOn(global, 'setTimeout');
         videoUnitComponent.onCompletion.subscribe((event) => {
             expect(event.lectureUnit).toEqual(videoUnit);
-            expect(event.completed).toEqual(true);
+            expect(event.completed).toBeTrue();
             done();
         });
         videoUnitComponent.handleCollapse(new Event('click'));
@@ -94,7 +94,7 @@ describe('VideoUnitComponent', () => {
     it('should call completion callback when clicked', (done) => {
         videoUnitComponent.onCompletion.subscribe((event) => {
             expect(event.lectureUnit).toEqual(videoUnit);
-            expect(event.completed).toEqual(false);
+            expect(event.completed).toBeFalse();
             done();
         });
         videoUnitComponent.handleClick(new Event('click'), false);

@@ -203,6 +203,7 @@ describe('CourseLectureDetails', () => {
 
         expect(lectureUnit3.completed).toBeFalsy();
         courseLecturesDetailsComponent.completeLectureUnit({ lectureUnit: lectureUnit3, completed: true });
+        expect(completeSpy).toHaveBeenCalledOnce();
         expect(completeSpy).toHaveBeenCalledWith(lectureUnit3.id, lecture.id, true);
         expect(lectureUnit3.completed).toBeTrue();
     }));
@@ -219,6 +220,7 @@ describe('CourseLectureDetails', () => {
 
         expect(lectureUnit3.completed).toBeTrue();
         courseLecturesDetailsComponent.completeLectureUnit({ lectureUnit: lectureUnit3, completed: false });
+        expect(completeSpy).toHaveBeenCalledOnce();
         expect(completeSpy).toHaveBeenCalledWith(lectureUnit3.id, lecture.id, false);
         expect(lectureUnit3.completed).toBeFalse();
     }));

@@ -93,7 +93,7 @@ describe('TextUnitFormComponent', () => {
     it('should call completion callback when uncollapsed', (done) => {
         textUnitComponent.onCompletion.subscribe((event) => {
             expect(event.lectureUnit).toEqual(textUnit);
-            expect(event.completed).toEqual(true);
+            expect(event.completed).toBeTrue();
             done();
         });
         textUnitComponent.handleCollapse(new Event('click'));
@@ -102,7 +102,7 @@ describe('TextUnitFormComponent', () => {
     it('should call completion callback when clicked', (done) => {
         textUnitComponent.onCompletion.subscribe((event) => {
             expect(event.lectureUnit).toEqual(textUnit);
-            expect(event.completed).toEqual(false);
+            expect(event.completed).toBeFalse();
             done();
         });
         textUnitComponent.handleClick(new Event('click'), false);
