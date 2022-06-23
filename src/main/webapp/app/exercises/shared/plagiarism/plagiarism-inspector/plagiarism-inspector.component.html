@@ -24,6 +24,36 @@
                 >
                     <span>{{ plagiarismResult ? ('artemisApp.plagiarism.rerun' | artemisTranslate) : ('artemisApp.plagiarism.detect' | artemisTranslate) }}</span>
                 </button>
+                <ng-template #toggleDeleteModal let-modal>
+                    <div class="modal-header">
+                        <h4 class="modal-title">
+                            <span jhiTranslate="artemisApp.plagiarism.cleanUp.confirmDialog.title">Clean up plagiarism results</span>
+                        </h4>
+                        <button type="button" class="btn-close" aria-label="Close" (click)="modal.dismiss()"></button>
+                    </div>
+                    <div class="modal-body">
+                        <p jhiTranslate="artemisApp.plagiarism.cleanUp.confirmDialog.question">Are you sure you want to delete the plagiarism comparisons?</p>
+                        <div class="form-check flex-grow-0">
+                            <input class="form-check-input" type="checkbox" [checked]="deleteAllPlagiarismComparisons" (change)="toggleDeleteAllPlagiarismComparisons()" />
+                            <label class="form-check-label">{{ 'artemisApp.plagiarism.cleanUp.confirmDialog.deleteAll' | artemisTranslate }}</label>
+                        </div>
+                        <p *ngIf="deleteAllPlagiarismComparisons" jhiTranslate="artemisApp.plagiarism.cleanUp.confirmDialog.warning" class="text-warning"></p>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-danger" (click)="modal.close('confirm')">
+                            <span jhiTranslate="artemisApp.plagiarism.cleanUp.confirmDialog.submit">Clean up</span>
+                        </button>
+                    </div>
+                </ng-template>
+                <button
+                    *ngIf="exercise.isAtLeastInstructor && plagiarismResult"
+                    [jhiFeatureToggle]="FeatureToggle.PlagiarismChecks"
+                    class="check-plagiarism btn btn-danger"
+                    (click)="openCleanUpModal(toggleDeleteModal)"
+                    [overwriteDisabled]="detectionInProgress"
+                >
+                    <span jhiTranslate="artemisApp.plagiarism.cleanUp.confirmDialog.submit">Clean up</span>
+                </button>
 
                 <div ngbDropdown *ngIf="plagiarismResult">
                     <button class="btn btn-secondary btn-block" id="download-plagiarism" ngbDropdownToggle>
