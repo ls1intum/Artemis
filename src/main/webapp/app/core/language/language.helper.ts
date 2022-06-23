@@ -5,6 +5,7 @@ import { TranslateService } from '@ngx-translate/core';
 
 import { LANGUAGES } from './language.constants';
 import { BehaviorSubject, Observable } from 'rxjs';
+import { captureException } from '@sentry/browser';
 
 @Injectable({ providedIn: 'root' })
 export class JhiLanguageHelper {
@@ -29,11 +30,10 @@ export class JhiLanguageHelper {
     }
 
     /**
-     * Update the window title using params in the following
-     * order:
-     * 1. titleKey parameter
-     * 2. $state.$current.data.pageTitle (current state page title)
-     * 3. 'global.title'
+     * Update the window title using a value from the following order:
+     * 1. The function's titleKey parameter
+     * 2. The return value of {@link getPageTitle}, extracting it from the router state or a fallback value
+     * If the translation doesn't exist, a Sentry exception is thrown.
      */
     updateTitle(titleKey?: string) {
         if (!titleKey) {
@@ -41,7 +41,11 @@ export class JhiLanguageHelper {
         }
 
         this.translateService.get(titleKey).subscribe((title) => {
-            this.titleService.setTitle(title);
+            if (title) {
+                this.titleService.setTitle(title);
+            } else {
+                captureException(new Error(`Translation key '${titleKey}' for page title not found`));
+            }
         });
     }
 
@@ -53,8 +57,13 @@ export class JhiLanguageHelper {
         });
     }
 
-    private getPageTitle(routeSnapshot: ActivatedRouteSnapshot) {
-        let title: string = routeSnapshot.data && routeSnapshot.data['pageTitle'] ? routeSnapshot.data['pageTitle'] : 'artemisApp';
+    /**
+     * Get the current page's title key based on the router state.
+     * Fallback to 'global.title' when no key is found.
+     * @param routeSnapshot The snapshot of the current route
+     */
+    getPageTitle(routeSnapshot: ActivatedRouteSnapshot) {
+        let title: string = routeSnapshot.data?.['pageTitle'] || 'global.title';
         if (routeSnapshot.firstChild) {
             title = this.getPageTitle(routeSnapshot.firstChild) || title;
         }

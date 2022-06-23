@@ -1,0 +1,61 @@
+<form class="container">
+    <form *ngIf="form" [formGroup]="form" (ngSubmit)="submitForm()">
+        <div class="form-group">
+            <label class="required" for="source">{{ 'artemisApp.onlineUnit.createOnlineUnit.source' | artemisTranslate }}*</label>
+            <input
+                type="text"
+                class="form-control"
+                id="source"
+                formControlName="source"
+                [placeholder]="'artemisApp.onlineUnit.createOnlineUnit.sourcePlaceHolder' | artemisTranslate"
+                (change)="onLinkChanged()"
+            />
+            <small id="urlHelperExplanation" class="form-text text-muted">{{ 'artemisApp.onlineUnit.createOnlineUnit.urlHelperPlaceholder' | artemisTranslate }}</small>
+            <div *ngIf="sourceControl?.invalid && (sourceControl?.dirty || sourceControl?.touched)" class="alert alert-danger">
+                <div *ngIf="sourceControl?.errors?.required">
+                    {{ 'artemisApp.onlineUnit.createOnlineUnit.sourceRequiredValidationError' | artemisTranslate }}
+                </div>
+                <div *ngIf="sourceControl?.errors?.invalidUrl">
+                    {{ 'artemisApp.onlineUnit.createOnlineUnit.sourceURLValidationError' | artemisTranslate }}
+                </div>
+            </div>
+        </div>
+        <div class="form-group">
+            <label class="required" for="name">{{ 'artemisApp.onlineUnit.createOnlineUnit.name' | artemisTranslate }} *</label>
+            <input type="text" class="form-control" id="name" formControlName="name" [placeholder]="'artemisApp.onlineUnit.createOnlineUnit.namePlaceHolder' | artemisTranslate" />
+            <div *ngIf="nameControl?.invalid && (nameControl?.dirty || nameControl?.touched)" class="alert alert-danger">
+                <div *ngIf="nameControl?.errors?.required">
+                    {{ 'artemisApp.onlineUnit.createOnlineUnit.nameRequiredValidationError' | artemisTranslate }}
+                </div>
+                <div *ngIf="nameControl?.errors?.maxlength">
+                    {{ 'artemisApp.onlineUnit.createOnlineUnit.nameMaxLengthValidationError' | artemisTranslate }}
+                </div>
+            </div>
+        </div>
+        <div class="form-group">
+            <label for="description">{{ 'artemisApp.onlineUnit.createOnlineUnit.description' | artemisTranslate }}</label>
+            <textarea
+                class="form-control"
+                id="description"
+                rows="3"
+                formControlName="description"
+                [placeholder]="'artemisApp.onlineUnit.createOnlineUnit.descriptionPlaceHolder' | artemisTranslate"
+            ></textarea>
+            <div *ngIf="descriptionControl?.invalid && (descriptionControl?.dirty || descriptionControl?.touched)" class="alert alert-danger">
+                <div *ngIf="descriptionControl?.errors?.maxlength">
+                    {{ 'artemisApp.onlineUnit.createOnlineUnit.descriptionMaxLengthValidationError' | artemisTranslate }}
+                </div>
+            </div>
+        </div>
+        <div class="form-group">
+            <jhi-date-time-picker [labelName]="'artemisApp.lectureUnit.releaseDate' | artemisTranslate" formControlName="releaseDate"></jhi-date-time-picker>
+        </div>
+        <div class="row">
+            <div class="col-12">
+                <button id="submitButton" class="btn btn-primary" type="submit" [disabled]="!isSubmitPossible">
+                    <span>{{ 'entity.action.submit' | artemisTranslate }}</span>
+                </button>
+            </div>
+        </div>
+    </form>
+</form>
