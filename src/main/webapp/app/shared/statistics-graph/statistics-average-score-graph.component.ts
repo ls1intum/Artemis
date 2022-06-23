@@ -6,7 +6,7 @@ import { Color, ScaleType } from '@swimlane/ngx-charts';
 import { ExerciseType } from 'app/entities/exercise.model';
 import { NgxChartsSingleSeriesDataEntry } from 'app/shared/chart/ngx-charts-datatypes';
 import { axisTickFormattingWithPercentageSign } from 'app/shared/statistics-graph/statistics-graph.utils';
-import { ChartExerciseTypeFilter } from 'app/shared/chart/chart-exercise-type-filter.directive';
+import { ChartExerciseTypeFilter } from 'app/shared/chart/chart-exercise-type-filter';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
 import { ThemeService } from 'app/core/theme/theme.service';
 import { ChartCategoryFilter } from 'app/shared/chart/chart-category-filter';
@@ -234,7 +234,7 @@ export class StatisticsAverageScoreGraphComponent implements OnInit {
      */
     toggleType(type: ExerciseType): void {
         const filteredAgainstType = this.typeFilter.toggleExerciseType(type, this.exerciseScoresFilteredByPerformanceInterval) as CourseManagementStatisticsModel[];
-        this.categoryFilter.updateCategoryFilterForCourseStatistics(filteredAgainstType);
+        // this.categoryFilter.updateCategoryFilterForCourseStatistics(filteredAgainstType);
         const filteredAgainstCategory = this.categoryFilter.applyCategoryFilter(this.exerciseScoresFilteredByPerformanceInterval) as CourseManagementStatisticsModel[];
         this.currentlyDisplayableExercises = this.orderAverageScores(filteredAgainstType.filter((score) => filteredAgainstCategory.includes(score)));
         this.initializeChartWithFilter();
@@ -358,40 +358,22 @@ export class StatisticsAverageScoreGraphComponent implements OnInit {
 
     toggleCategory(category: string): void {
         const filteredAgainstCategory = this.categoryFilter.toggleCategory(this.exerciseScoresFilteredByPerformanceInterval, category) as CourseManagementStatisticsModel[];
-        this.typeFilter.updateFilterOptions(filteredAgainstCategory);
         const filteredAgainstType = this.typeFilter.applyCurrentFilter(this.exerciseScoresFilteredByPerformanceInterval) as CourseManagementStatisticsModel[];
         this.currentlyDisplayableExercises = this.orderAverageScores(filteredAgainstCategory.filter((score) => filteredAgainstType.includes(score)));
         this.initializeChartWithFilter();
-        /*this.currentlyDisplayableExercises = this.orderAverageScores(this.categoryFilter.toggleCategory(filteredAgainstType, category));
-        this.typeFilter.updateFilterOptions(this.currentlyDisplayableExercises);
-        this.initializeChartWithFilter();*/
     }
 
     toggleAllCategories(): void {
-        /*if (!this.typeFilter.typeSet.size) {
-            const filteredAgainstCategories = this.categoryFilter.toggleAllCategoriesForCourseStatistics(this.exerciseScoresFilteredByPerformanceInterval);
-            this.currentlyDisplayableExercises = this.orderAverageScores(this.typeFilter.updateFilterOptions(filteredAgainstCategories));
-        } else {
-            // if the user re-selects all categories, only those should be reselected that agree with the type filter selection
-            const filteredAgainstType = this.typeFilter.applyCurrentFilter(this.exerciseScoresFilteredByPerformanceInterval);
-            this.currentlyDisplayableExercises = this.orderAverageScores(this.categoryFilter.toggleAllCategoriesForCourseStatistics(filteredAgainstType));
-            this.typeFilter.updateFilterOptions(this.currentlyDisplayableExercises);
-        }*/
         const filteredAgainstCategory = this.categoryFilter.toggleAllCategories(this.exerciseScoresFilteredByPerformanceInterval);
-        const filteredAgainstType = this.typeFilter.toggleAllTypes(this.exerciseScoresFilteredByPerformanceInterval, this.categoryFilter.allCategoriesSelected);
+        const filteredAgainstType = this.typeFilter.applyCurrentFilter(this.exerciseScoresFilteredByPerformanceInterval);
         this.currentlyDisplayableExercises = this.orderAverageScores(
             filteredAgainstCategory.filter((score) => filteredAgainstType.includes(score)),
         ) as CourseManagementStatisticsModel[];
-        // this.typeFilter.updateFilterOptions(this.currentlyDisplayableExercises);
         this.initializeChartWithFilter();
     }
 
     toggleExercisesWithNoCategory(): void {
-        /*const filteredAgainstCategory = this.categoryFilter.toggleExercisesWithNoCategory(this.exerciseScoresFilteredByPerformanceInterval) as CourseManagementStatisticsModel[];
-        this.currentlyDisplayableExercises = this.orderAverageScores(this.typeFilter.updateFilterOptions(filteredAgainstCategory));
-        this.initializeChartWithFilter();*/
         const filteredAgainstCategory = this.categoryFilter.toggleExercisesWithNoCategory(this.exerciseScoresFilteredByPerformanceInterval);
-        this.typeFilter.updateFilterOptions(filteredAgainstCategory);
         const filteredAgainstType = this.typeFilter.applyCurrentFilter(this.exerciseScoresFilteredByPerformanceInterval);
         this.currentlyDisplayableExercises = this.orderAverageScores(filteredAgainstCategory.filter((score) => filteredAgainstType.includes(score)));
         this.initializeChartWithFilter();

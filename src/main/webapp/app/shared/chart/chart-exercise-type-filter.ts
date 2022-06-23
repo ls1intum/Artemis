@@ -19,32 +19,6 @@ export class ChartExerciseTypeFilter extends ChartFilter {
         this.numberOfActiveFilters = this.typeSet.size;
     }
 
-    updateFilterOptions(exerciseScores: any[]): any[] {
-        const updatedTypes = new Set(exerciseScores.map((score) => score.exerciseType));
-        this.filterMap.forEach((value, key) => {
-            if (!updatedTypes.has(ChartExerciseTypeFilter.convertToExerciseType(key))) {
-                this.filterMap.set(key, false);
-            }
-        });
-        updatedTypes.forEach((type) => {
-            const convertedKey = ChartExerciseTypeFilter.convertToMapKey(type);
-            if (this.filterMap.get(convertedKey) === undefined) {
-                this.filterMap.set(convertedKey, true);
-            }
-        });
-
-        this.numberOfActiveFilters = 0;
-        this.filterMap.forEach((value) => (this.numberOfActiveFilters += value ? 1 : 0));
-        return this.applyCurrentFilter(exerciseScores);
-    }
-
-    toggleAllTypes(exerciseScores: any[], includeAll: boolean): any[] {
-        this.filterMap.forEach((value, key) => this.filterMap.set(key, includeAll));
-        this.numberOfActiveFilters = 0;
-        this.filterMap.forEach((value) => (this.numberOfActiveFilters += value ? 1 : 0));
-        return this.applyCurrentFilter(exerciseScores);
-    }
-
     /**
      * Handles selection or deselection of specific exercise type
      * @param type the ExerciseType the user changed the filter for
@@ -69,9 +43,5 @@ export class ChartExerciseTypeFilter extends ChartFilter {
      */
     static convertToMapKey(type: ExerciseType) {
         return type.toLowerCase().replace('_', '-');
-    }
-
-    static convertToExerciseType(type: string): ExerciseType {
-        return type.replace('-', '_').toUpperCase() as ExerciseType;
     }
 }

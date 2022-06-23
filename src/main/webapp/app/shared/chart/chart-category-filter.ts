@@ -8,8 +8,7 @@ export class ChartCategoryFilter extends ChartFilter {
     exerciseCategories: Set<string>;
     allCategoriesSelected = true;
     includeExercisesWithNoCategory = true;
-    // TODO: Include optional filtering as well?
-    // currentlyHidingNotIncludedInScoreExercises: boolean;
+    exercisesWithoutCategoriesPresent: boolean;
 
     /**
      * Collects all categories from the currently visible exercises (included or excluded the optional exercises depending on the prior state)
@@ -23,23 +22,11 @@ export class ChartCategoryFilter extends ChartFilter {
         return new Set(exerciseCategories);
     }
 
-    /*determineDisplayableCategoriesForCourseStatistics(avgStatistics: CourseManagementStatisticsModel[]): void {
-        const exerciseCategories = avgStatistics
-            .filter((exercise) => exercise.categories)
-            .flatMap((exercise: CourseManagementStatisticsModel) => exercise.categories!)
-            .map((category: ExerciseCategory) => category.category!);
-        this.exerciseCategories = new Set(exerciseCategories);
-    }*/
-
     setupCategoryFilter(courseExercises: any[]): void {
         this.exerciseCategories = this.determineDisplayableCategories(courseExercises);
+        this.exercisesWithoutCategoriesPresent = courseExercises.some((exercises) => !exercises.categories);
         this.performFilterSetup();
     }
-
-    /*setupCategoryFilterForCourseStatistics(avgStatistics: CourseManagementStatisticsModel[]): void {
-        this.determineDisplayableCategoriesForCourseStatistics(avgStatistics);
-        this.performFilterSetup();
-    }*/
 
     updateCategoryFilterForCourseStatistics(avgStatistics: CourseManagementStatisticsModel[]): CourseManagementStatisticsModel[] {
         const updatedSet = this.determineDisplayableCategories(avgStatistics);
@@ -48,14 +35,9 @@ export class ChartCategoryFilter extends ChartFilter {
                 this.filterMap.set(key, false);
             }
         });
-        updatedSet.forEach((category) => {
-            if (this.filterMap.get(category) === undefined) {
-                this.filterMap.set(category, true);
-            }
-        });
-        // TODO: Keine Kategorien da?
-        this.includeExercisesWithNoCategory = avgStatistics.some((exercise) => !exercise.categories);
-        // TODO: Alle ausgewählt?
+        if (!avgStatistics.length || avgStatistics.every((exercise) => !!exercise.categories)) {
+            this.includeExercisesWithNoCategory = false;
+        }
         this.areAllCategoriesSelected(this.includeExercisesWithNoCategory);
         this.numberOfActiveFilters = this.includeExercisesWithNoCategory ? 1 : 0;
         this.filterMap.forEach((value) => (this.numberOfActiveFilters += value ? 1 : 0));
@@ -77,15 +59,6 @@ export class ChartCategoryFilter extends ChartFilter {
         this.areAllCategoriesSelected(!isIncluded);
         return this.applyCategoryFilter(courseExercises);
     }
-
-    /*toggleCategoryForCourseStatistics(avgStatistics: CourseManagementStatisticsModel[], category: string): CourseManagementStatisticsModel[] {
-        const isIncluded = this.filterMap.get(category)!;
-        this.filterMap.set(category, !isIncluded);
-        this.numberOfActiveFilters += !isIncluded ? 1 : -1;
-        this.areAllCategoriesSelected(!isIncluded);
-        return this.applyCategoryFilterForCourseStatistics(avgStatistics);
-    }*/
-
     /**
      * handles the selection and deselection of "exercises with no categories" filter option
      */
@@ -96,14 +69,6 @@ export class ChartCategoryFilter extends ChartFilter {
         this.areAllCategoriesSelected(this.includeExercisesWithNoCategory);
         return this.applyCategoryFilter(courseExercises);
     }
-
-    /*toggleExercisesWithNoCategoryForCourseStatistics(avgStatistics: CourseManagementStatisticsModel[]): CourseManagementStatisticsModel[] {
-        this.numberOfActiveFilters += this.includeExercisesWithNoCategory ? -1 : 1;
-        this.includeExercisesWithNoCategory = !this.includeExercisesWithNoCategory;
-
-        this.areAllCategoriesSelected(this.includeExercisesWithNoCategory);
-        return this.applyCategoryFilterForCourseStatistics(avgStatistics);
-    }*/
 
     /**
      * Handles the use case when the user selects or deselects the option "select all categories"
@@ -121,20 +86,6 @@ export class ChartCategoryFilter extends ChartFilter {
         }
         return this.applyCategoryFilter(courseExercises);
     }
-
-    /*toggleAllCategoriesForCourseStatistics(avgStatistics: CourseManagementStatisticsModel[]): CourseManagementStatisticsModel[] {
-        if (!this.allCategoriesSelected) {
-            this.setupCategoryFilterForCourseStatistics(avgStatistics);
-            this.includeExercisesWithNoCategory = true;
-            this.calculateNumberOfAppliedFilters();
-        } else {
-            this.exerciseCategories.forEach((category) => this.filterMap.set(category, false));
-            this.numberOfActiveFilters -= this.exerciseCategories.size + 1;
-            this.allCategoriesSelected = !this.allCategoriesSelected;
-            this.includeExercisesWithNoCategory = false;
-        }
-        return this.applyCategoryFilterForCourseStatistics(avgStatistics);
-    }*/
 
     /**
      * Auxiliary method in order to reduce code duplication
@@ -154,15 +105,6 @@ export class ChartCategoryFilter extends ChartFilter {
         });
     }
 
-    /*applyCategoryFilterForCourseStatistics(avgStatistics: CourseManagementStatisticsModel[]): CourseManagementStatisticsModel[] {
-        return avgStatistics.filter((exercise) => {
-            if (!exercise.categories) {
-                return this.includeExercisesWithNoCategory;
-            }
-            return exercise.categories!.flatMap((category) => this.filterMap.get(category.category!)!).reduce((value1, value2) => value1 || value2);
-        });
-    }*/
-
     /**
      * Auxiliary method that checks whether all possible categories are selected and updates the allCategoriesSelected flag accordingly
      * @param newFilterStatement indicates whether the updated filter option got selected or deselected and updates the flag accordingly
@@ -170,7 +112,7 @@ export class ChartCategoryFilter extends ChartFilter {
      */
     private areAllCategoriesSelected(newFilterStatement: boolean): void {
         if (newFilterStatement) {
-            if (!this.includeExercisesWithNoCategory) {
+            if (this.exercisesWithoutCategoriesPresent && !this.includeExercisesWithNoCategory) {
                 this.allCategoriesSelected = false;
             } else {
                 this.allCategoriesSelected = true;
@@ -184,7 +126,7 @@ export class ChartCategoryFilter extends ChartFilter {
     private performFilterSetup(): void {
         this.exerciseCategories.forEach((category) => this.filterMap.set(category, true));
         this.allCategoriesSelected = true;
-        this.includeExercisesWithNoCategory = true;
+        this.includeExercisesWithNoCategory = this.exercisesWithoutCategoriesPresent;
         this.calculateNumberOfAppliedFilters();
     }
 }

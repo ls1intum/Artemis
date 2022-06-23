@@ -1,4 +1,4 @@
-import { ChartExerciseTypeFilter } from 'app/shared/chart/chart-exercise-type-filter.directive';
+import { ChartExerciseTypeFilter } from 'app/shared/chart/chart-exercise-type-filter';
 import { TestBed } from '@angular/core/testing';
 import { ExerciseType } from 'app/entities/exercise.model';
 

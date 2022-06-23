@@ -11,7 +11,7 @@ import { Color, ScaleType } from '@swimlane/ngx-charts';
 import { round } from 'app/shared/util/utils';
 import { ExerciseType } from 'app/entities/exercise.model';
 import { faFilter } from '@fortawesome/free-solid-svg-icons';
-import { ChartExerciseTypeFilter } from 'app/shared/chart/chart-exercise-type-filter.directive';
+import { ChartExerciseTypeFilter } from 'app/shared/chart/chart-exercise-type-filter';
 import { GraphColors } from 'app/entities/statistics.model';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
 

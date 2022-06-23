@@ -50,7 +50,10 @@
             <div class="filter my-3" aria-label="Filter Dropdown" ngbDropdown>
                 <button
                     class="btn"
-                    [ngClass]="{ 'btn-secondary': typeFilter.numberOfActiveFilters === 0, 'btn-success': typeFilter.numberOfActiveFilters > 0 }"
+                    [ngClass]="{
+                        'btn-secondary': !(chartCategoryFilter.numberOfActiveFilters + typeFilter.numberOfActiveFilters),
+                        'btn-success': chartCategoryFilter.numberOfActiveFilters + typeFilter.numberOfActiveFilters > 0
+                    }"
                     ngbDropdownToggle
                     id="filter-dropdown-button"
                 >
@@ -78,7 +81,7 @@
                             <b class="ms-2">{{ 'artemisApp.courseOverview.statistics.includeAllCategories' | artemisTranslate }}</b>
                         </label>
                     </li>
-                    <li>
+                    <li *ngIf="chartCategoryFilter.exercisesWithoutCategoriesPresent">
                         <label>
                             <input
                                 class="ms-2 form-check-input"
