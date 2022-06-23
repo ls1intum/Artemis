@@ -43,6 +43,7 @@
                                 deleteConfirmationText="userManagement.batch.delete.typeNumberToConfirm"
                                 (delete)="this.deleteAllSelectedUsers()"
                                 [dialogError]="this.dialogError"
+                                [disabled]="!this.selectedUsers.length"
                             >
                                 <fa-icon [icon]="faTimes"></fa-icon>
                             </button>

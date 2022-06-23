@@ -1,5 +1,5 @@
 import { ComponentFixture, fakeAsync, inject, TestBed, tick } from '@angular/core/testing';
-import { AuthorityFilter, OriginFilter, StatusFilter, UserManagementComponent, UserStorageKey } from 'app/admin/user-management/user-management.component';
+import { AuthorityFilter, OriginFilter, StatusFilter, UserFilter, UserManagementComponent, UserStorageKey } from 'app/admin/user-management/user-management.component';
 import { UserService } from 'app/core/user/user.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
@@ -373,6 +373,163 @@ describe('UserManagementComponent', () => {
         comp.toggleUser(user);
         expect(comp.selectedUsers).toEqual([user]);
         comp.toggleUser(user);
+        expect(comp.selectedUsers).toEqual([]);
+    });
+
+    it('should return number of applied filters', () => {
+        comp.filters = new UserFilter();
+        expect(comp.filters.numberOfAppliedFilters).toEqual(0);
+
+        comp.filters.noCourse = true;
+        comp.filters.noAuthority = true;
+        expect(comp.filters.numberOfAppliedFilters).toEqual(2);
+
+        comp.filters.authorityFilter.add(AuthorityFilter.ADMIN);
+        expect(comp.filters.numberOfAppliedFilters).toEqual(3);
+
+        comp.filters.authorityFilter.delete(AuthorityFilter.ADMIN);
+        expect(comp.filters.numberOfAppliedFilters).toEqual(2);
+    });
+
+    it('should toggle course filter', () => {
+        const spy = jest.spyOn(localStorageService, 'store');
+
+        comp.filters = new UserFilter();
+        comp.filters.noCourse = true;
+
+        comp.toggleCourseFilter(comp.filters.courseFilter, 1);
+
+        expect(comp.filters.courseFilter).toEqual(new Set<number>([1]));
+        expect(comp.filters.noCourse).toBeFalse();
+        expect(spy).toHaveBeenCalledOnce();
+        expect(spy).toHaveBeenCalledWith(UserStorageKey.NO_COURSE, false);
+
+        comp.toggleCourseFilter(comp.filters.courseFilter, 1);
+        expect(comp.filters.courseFilter).toEqual(new Set<number>());
+    });
+
+    it('should toggle authority filter', () => {
+        const spy = jest.spyOn(localStorageService, 'store');
+
+        comp.filters = new UserFilter();
+        comp.filters.noAuthority = true;
+
+        comp.toggleAuthorityFilter(comp.filters.authorityFilter, AuthorityFilter.ADMIN);
+
+        expect(comp.filters.authorityFilter).toEqual(new Set<AuthorityFilter>([AuthorityFilter.ADMIN]));
+        expect(comp.filters.noAuthority).toBeFalse();
+        expect(spy).toHaveBeenCalledTimes(2);
+        expect(spy).toHaveBeenCalledWith(UserStorageKey.NO_AUTHORITY, false);
+        expect(spy).toHaveBeenCalledWith(UserStorageKey.AUTHORITY, 'ADMIN');
+
+        comp.toggleAuthorityFilter(comp.filters.authorityFilter, AuthorityFilter.ADMIN);
+        expect(spy).toHaveBeenCalledTimes(4);
+        expect(spy).toHaveBeenCalledWith(UserStorageKey.NO_AUTHORITY, false);
+        expect(spy).toHaveBeenCalledWith(UserStorageKey.AUTHORITY, '');
+        expect(comp.filters.authorityFilter).toEqual(new Set<AuthorityFilter>());
+    });
+
+    it('should toggle origin filter', () => {
+        const spy = jest.spyOn(localStorageService, 'store');
+
+        comp.filters = new UserFilter();
+
+        comp.toggleOriginFilter(OriginFilter.EXTERNAL);
+
+        expect(comp.filters.originFilter).toEqual(new Set<OriginFilter>([OriginFilter.EXTERNAL]));
+        expect(spy).toHaveBeenCalledTimes(1);
+        expect(spy).toHaveBeenCalledWith(UserStorageKey.ORIGIN, 'EXTERNAL');
+
+        comp.toggleOriginFilter(OriginFilter.EXTERNAL);
+        expect(spy).toHaveBeenCalledWith(UserStorageKey.ORIGIN, '');
+        expect(comp.filters.authorityFilter).toEqual(new Set<OriginFilter>());
+    });
+
+    it('should toggle status filter', () => {
+        const spy = jest.spyOn(localStorageService, 'store');
+
+        comp.filters = new UserFilter();
+
+        comp.toggleStatusFilter(StatusFilter.DEACTIVATED);
+
+        expect(comp.filters.statusFilter).toEqual(new Set<StatusFilter>([StatusFilter.DEACTIVATED]));
+        expect(spy).toHaveBeenCalledTimes(1);
+        expect(spy).toHaveBeenCalledWith(UserStorageKey.STATUS, 'DEACTIVATED');
+
+        comp.toggleStatusFilter(StatusFilter.DEACTIVATED);
+        expect(spy).toHaveBeenCalledWith(UserStorageKey.STATUS, '');
+        expect(comp.filters.authorityFilter).toEqual(new Set<StatusFilter>());
+    });
+
+    it('should deselect filter', () => {
+        comp.filters = new UserFilter();
+
+        comp.filters.statusFilter.add(StatusFilter.DEACTIVATED);
+        comp.filters.originFilter.add(OriginFilter.INTERNAL);
+
+        comp.deselectFilter<StatusFilter>(comp.filters.statusFilter, comp.statusKey);
+        expect(comp.filters.statusFilter).toEqual(new Set());
+
+        comp.deselectFilter<OriginFilter>(comp.filters.originFilter, comp.originKey);
+        expect(comp.filters.originFilter).toEqual(new Set());
+    });
+
+    it('should select empty courses', () => {
+        comp.filters = new UserFilter();
+
+        comp.filters.courseFilter.add(1);
+        comp.filters.noCourse = false;
+
+        comp.selectEmptyCourses();
+        expect(comp.filters.courseFilter).toEqual(new Set());
+        expect(comp.filters.noCourse).toBeTrue();
+    });
+
+    it('should select empty roles', () => {
+        comp.filters = new UserFilter();
+
+        comp.filters.authorityFilter.add(AuthorityFilter.ADMIN);
+        comp.filters.noAuthority = false;
+
+        comp.selectEmptyRoles();
+        expect(comp.filters.authorityFilter).toEqual(new Set());
+        expect(comp.filters.noAuthority).toBeTrue();
+    });
+
+    it('should get users without current user', () => {
+        comp.filters = new UserFilter();
+
+        comp.currentAccount = new User();
+        comp.currentAccount.login = '1';
+
+        const users = ['1', '2', '3', '4', '5', '6'].map((login) => {
+            const user = new User();
+            user.login = login;
+            return user;
+        });
+        comp.users = [...users];
+
+        expect(comp.usersWithoutCurrentUser).toEqual(users.filter((user) => user.login !== '1'));
+    });
+
+    it('should toggle all users selection', () => {
+        comp.filters = new UserFilter();
+
+        comp.currentAccount = new User();
+        comp.currentAccount.login = '1';
+
+        const users = ['1', '2', '3', '4', '5', '6'].map((login) => {
+            const user = new User();
+            user.login = login;
+            return user;
+        });
+
+        comp.users = [...users];
+
+        comp.toggleAllUserSelection();
+        expect(comp.selectedUsers).toEqual(users.filter((user) => user.login !== '1'));
+
+        comp.toggleAllUserSelection();
         expect(comp.selectedUsers).toEqual([]);
     });
 });
