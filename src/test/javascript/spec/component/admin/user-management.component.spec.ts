@@ -4,7 +4,7 @@ import { UserService } from 'app/core/user/user.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
 import { ActivatedRoute, Router } from '@angular/router';
-import { HttpHeaders, HttpResponse } from '@angular/common/http';
+import { HttpHeaders, HttpParams, HttpResponse } from '@angular/common/http';
 import { User } from 'app/core/user/user.model';
 import { of, Subscription } from 'rxjs';
 import { AbstractControl, ReactiveFormsModule } from '@angular/forms';
@@ -531,5 +531,29 @@ describe('UserManagementComponent', () => {
 
         comp.toggleAllUserSelection();
         expect(comp.selectedUsers).toEqual([]);
+    });
+
+    it('should adjust options', () => {
+        let httpParams = new HttpParams();
+        comp.filters = new UserFilter();
+
+        httpParams = httpParams.append('authorities', 'NO_AUTHORITY').append('origins', '').append('status', '').append('courseIds', '');
+        comp.filters.noAuthority = true;
+
+        expect(comp.filters.adjustOptions(new HttpParams())).toEqual(httpParams);
+
+        comp.filters.noAuthority = false;
+        httpParams = new HttpParams().append('authorities', '').append('origins', '').append('status', '').append('courseIds', '');
+        expect(comp.filters.adjustOptions(new HttpParams())).toEqual(httpParams);
+
+        comp.filters.noCourse = true;
+        httpParams = new HttpParams().append('authorities', '').append('origins', '').append('status', '').append('courseIds', -1);
+        expect(comp.filters.adjustOptions(new HttpParams())).toEqual(httpParams);
+
+        comp.filters.originFilter.add(OriginFilter.INTERNAL);
+        comp.filters.authorityFilter.add(AuthorityFilter.ADMIN);
+        comp.filters.statusFilter.add(StatusFilter.ACTIVATED);
+        httpParams = new HttpParams().append('authorities', 'ADMIN').append('origins', 'INTERNAL').append('status', 'ACTIVATED').append('courseIds', -1);
+        expect(comp.filters.adjustOptions(new HttpParams())).toEqual(httpParams);
     });
 });
