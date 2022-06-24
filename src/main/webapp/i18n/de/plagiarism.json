@@ -41,6 +41,15 @@
             "resetFilter": "Filter zurücksetzen",
             "loading": "Laden...",
             "fetchingResults": "Plagiate werden geladen...",
+            "cleanUp": {
+                "confirmDialog": {
+                    "title": "Plagiatsvergleiche aufräumen",
+                    "question": "Bist du sicher, dass du alle unbenutzten Plagiatsvergleiche löschen willst? Dies kann nicht rückgängig gemacht werden.",
+                    "deleteAll": "Lösche alle Plagiatsvergleiche",
+                    "warning": "Es werden ALLE plagiatsvergleiche gelöscht, einschließlich des Ergebnisses der Plagiatskontrolle und der Statistiken.",
+                    "submit": "Aufräumen"
+                }
+            },
             "plagiarismCases": {
                 "pageTitle": "Plagiatsfälle",
                 "plagiarismCases": "Plagiatsfälle",
