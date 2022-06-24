@@ -319,6 +319,10 @@
         {
             "fullName": "Michael Allgaier",
             "photoDirectory": "public/images/about/Michael_Allgaier.jpg"
+        },
+        {
+            "fullName": "Florian Gareis",
+            "photoDirectory": "public/images/about/Florian_Gareis.jpg"
         }
     ]
 }
