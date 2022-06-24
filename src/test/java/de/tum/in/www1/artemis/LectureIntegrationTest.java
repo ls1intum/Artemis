@@ -275,30 +275,6 @@ public class LectureIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         assertThat(lectureOptional).isEmpty();
     }
 
-    /**
-     * We have to make sure to reorder the list of lecture units when we delete a lecture unit to prevent hibernate
-     * from entering nulls into the list to keep the order of lecture units
-     */
-    @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void deleteLectureUnit_FirstLectureUnit_ShouldReorderList() throws Exception {
-        Lecture lecture = lectureRepository.findByIdWithLectureUnitsAndLearningGoalsElseThrow(lecture1.getId());
-        assertThat(lecture.getLectureUnits()).hasSize(4);
-        LectureUnit firstLectureUnit = lecture.getLectureUnits().stream().findFirst().get();
-        request.delete("/api/lectures/" + lecture1.getId() + "/lecture-units/" + firstLectureUnit.getId(), HttpStatus.OK);
-        lecture = lectureRepository.findByIdWithLectureUnitsAndLearningGoalsElseThrow(lecture1.getId());
-        assertThat(lecture.getLectureUnits()).hasSize(3);
-        boolean nullFound = false;
-        for (LectureUnit lectureUnit : lecture.getLectureUnits()) {
-            if (Objects.isNull(lectureUnit)) {
-                nullFound = true;
-                break;
-            }
-        }
-        assertThat(nullFound).isFalse();
-
-    }
-
     @Test
     @WithMockUser(username = "instructor42", roles = "INSTRUCTOR")
     public void deleteLecture_asInstructorNotInCourse_shouldReturnForbidden() throws Exception {
