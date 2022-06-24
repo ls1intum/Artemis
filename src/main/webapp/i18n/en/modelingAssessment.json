@@ -12,11 +12,9 @@
             "heading": "Submissions and assessments of modeling exercise  \"{{ title }}\"",
             "actions": {
                 "open": "Assess model"
-            },
-            "progressDescription": "Progress: {{ percentageAssessed }} % ({{ numberAssessed }} out of {{ numberSubmissions }} submitted models assessed)"
+            }
         },
         "notFound": "We couldn't find any unassessed modeling submissions. Please return to the dashboard.",
-        "impactWarning": "This feedback might affect {{affectedSubmissionsCount}} other similar submission/s.",
-        "noSubmissions": "No Submissions for this exercise!"
+        "impactWarning": "This feedback might affect {{affectedSubmissionsCount}} other similar submission/s."
     }
 }

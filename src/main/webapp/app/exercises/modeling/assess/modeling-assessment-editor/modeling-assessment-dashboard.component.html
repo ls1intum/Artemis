@@ -4,7 +4,7 @@
     </h4>
     <jhi-assessment-filters (filterChange)="updateFilteredSubmissions($event)" [submissions]="submissions"></jhi-assessment-filters>
     <jhi-assessment-warning [exercise]="exercise" [submissions]="filteredSubmissions"></jhi-assessment-warning>
-    <jhi-assesment-progress-label *ngIf="submissions" [submissions]="submissions"></jhi-assesment-progress-label>
+    <jhi-assessment-progress-label *ngIf="submissions" [submissions]="submissions"></jhi-assessment-progress-label>
     <div *ngIf="submissions && submissions.length > 0" class="table-responsive">
         <table class="table table-striped exercise-table">
             <thead>
