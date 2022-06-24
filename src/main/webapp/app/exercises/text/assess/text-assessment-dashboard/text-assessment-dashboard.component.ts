@@ -88,7 +88,7 @@ export class TextAssessmentDashboardComponent implements OnInit {
         this.sortService.sortByProperty(this.submissions, this.predicate, this.reverse);
     }
 
-    private getSubmissions() {
+    private getSubmissions(): void {
         this.textSubmissionService
             .getTextSubmissionsForExerciseByCorrectionRound(this.exercise.id!, { submittedOnly: true })
             .pipe(

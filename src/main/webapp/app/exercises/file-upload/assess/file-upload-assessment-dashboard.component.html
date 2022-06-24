@@ -1,6 +1,6 @@
 <div *ngIf="exercise">
-    <h4 [translateValues]="{ exerciseTitle: exercise.title }" jhiTranslate="artemisApp.fileUploadAssessment.dashboard.heading"></h4>
-    <jhi-assessment-filters (filterChange)="updateFilteredSubmissions($event)" [submissions]="submissions"></jhi-assessment-filters>
+    <h4 jhiTranslate="artemisApp.fileUploadAssessment.dashboard.heading" [translateValues]="{ exerciseTitle: exercise.title }"></h4>
+    <jhi-assessment-filters [submissions]="submissions" (filterChange)="updateFilteredSubmissions($event)"></jhi-assessment-filters>
     <ng-container *ngIf="!busy"></ng-container>
     <jhi-assessment-warning [exercise]="exercise" [submissions]="filteredSubmissions"></jhi-assessment-warning>
     <jhi-assessment-progress-label *ngIf="submissions" [submissions]="submissions"></jhi-assessment-progress-label>
