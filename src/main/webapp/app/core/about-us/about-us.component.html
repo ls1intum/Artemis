@@ -4,11 +4,11 @@
     </div>
     <div class="mb-5 ms-2">
         <h3 class="mb-3 font-weight-bold">{{ 'aboutUsOverview.feature' | artemisTranslate }}</h3>
-        <ul>
+        <ol>
             <li *ngFor="let section of sections">
                 <span [jhiTranslate]="'aboutUsOverview.' + section[0] + '.text'" [translateValues]="section[1]"></span>
             </li>
-        </ul>
+        </ol>
     </div>
 
     <div class="row ms-4 me-4 mb-4" *ngIf="data && data.projectManagers">
