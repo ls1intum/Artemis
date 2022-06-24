@@ -8,8 +8,7 @@
             "assessInstruction": "Please click the \"Add new Feedback\" button.",
             "deleteAssessment": "Delete Assessment {{ index }} ?",
             "dashboard": {
-                "heading": "Submissions and assessments of file upload exercise \"{{exerciseTitle}}\"",
-                "progressDescription": "Progress: {{ percentageAssessed }} % ({{ numberAssessed }} out of {{ numberSubmissions }} File-Upload exercises assessed)"
+                "heading": "Submissions and assessments of file upload exercise \"{{exerciseTitle}}\""
             },
             "error": {
                 "invalidAssessments": "Your assessments are not valid!",
@@ -18,8 +17,7 @@
             },
             "messages": {
                 "lock": "You now have the lock on this submission. Only you can assess this submission. Please assess this submission before opening others."
-            },
-            "noSubmissions": "No Submissions for this exercise!"
+            }
         }
     }
 }

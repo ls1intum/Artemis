@@ -8,8 +8,7 @@
             "assessInstruction": "Bitte klicke auf \"Neues Feedback hinzufügen\".",
             "deleteAssessment": "Bewertung {{ index }} löschen ?",
             "dashboard": {
-                "heading": "Einreichungen und Bewertungen der Datei-Upload-Aufgabe \"{{exerciseTitle}}\"",
-                "progressDescription": "Fortschritt: {{ percentageAssessed }} % ({{ numberAssessed }} von {{ numberSubmissions }} eingereichten Datei-Uploads bewertet)"
+                "heading": "Einreichungen und Bewertungen der Datei-Upload-Aufgabe \"{{exerciseTitle}}\""
             },
             "messages": {
                 "lock": "Diese Datei Abgabe kann jetzt exklusiv nur noch von dir bewertet werden. Bitte bewerte diese Datei Abgabe bevor du eine neue öffnest."
@@ -18,8 +17,7 @@
                 "invalidAssessments": "Deine Bewertung ist nicht gültig!",
                 "invalidScoreMustBeNumber": "Das Punktzahl-Feld muss eine Zahl sein und darf nicht leer sein!",
                 "invalidNeedScore": "Jedes Feedback-Element muss mindestens eine Punktzahl enthalten."
-            },
-            "noSubmissions": "Keine Einreichungen für diese Übung!"
+            }
         }
     }
 }
