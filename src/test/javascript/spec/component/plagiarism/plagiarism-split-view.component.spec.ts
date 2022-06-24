@@ -82,8 +82,8 @@ describe('Plagiarism Split View Component', () => {
             exercise: { currentValue: modelingExercise } as SimpleChange,
         });
 
-        expect(comp.isModelingExercise).toEqual(true);
-        expect(comp.isProgrammingOrTextExercise).toEqual(false);
+        expect(comp.isModelingExercise).toBeTrue();
+        expect(comp.isProgrammingOrTextExercise).toBeFalse();
     });
 
     it('checks type of text exercise', () => {
@@ -91,8 +91,8 @@ describe('Plagiarism Split View Component', () => {
             exercise: { currentValue: textExercise } as SimpleChange,
         });
 
-        expect(comp.isProgrammingOrTextExercise).toEqual(true);
-        expect(comp.isModelingExercise).toEqual(false);
+        expect(comp.isProgrammingOrTextExercise).toBeTrue();
+        expect(comp.isModelingExercise).toBeFalse();
     });
 
     it('should parse text matches for comparison', fakeAsync(() => {

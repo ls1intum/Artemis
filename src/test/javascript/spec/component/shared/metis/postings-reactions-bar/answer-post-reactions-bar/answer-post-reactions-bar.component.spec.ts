@@ -78,7 +78,7 @@ describe('AnswerPostReactionsBarComponent', () => {
         reactionToCreate.answerPost = component.posting;
         component.addOrRemoveReaction(reactionToCreate.emojiId);
         expect(metisServiceCreateReactionSpy).toHaveBeenCalledWith(reactionToCreate);
-        expect(component.showReactionSelector).toEqual(false);
+        expect(component.showReactionSelector).toBeFalse();
     });
 
     it('should invoke metis service method with own reaction to delete it', () => {

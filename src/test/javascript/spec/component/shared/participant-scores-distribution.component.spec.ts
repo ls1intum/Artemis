@@ -184,6 +184,6 @@ describe('ParticipantScoresDistributionComponent', () => {
         window.dispatchEvent(new Event('resize'));
 
         expect(realignChartSpy).toHaveBeenCalledTimes(2);
-        expect(component.showYAxisLabel).toBe(false);
+        expect(component.showYAxisLabel).toBeFalse();
     });
 });

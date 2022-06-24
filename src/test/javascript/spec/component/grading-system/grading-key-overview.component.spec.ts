@@ -91,8 +91,8 @@ describe('GradeKeyOverviewComponent', () => {
         expect(comp.courseId).toEqual(345);
         expect(comp.studentGrade).toEqual('2.0');
         expect(comp.title).toEqual('Title');
-        expect(comp.isBonus).toEqual(true);
-        expect(comp.isExam).toEqual(true);
+        expect(comp.isBonus).toBeTrue();
+        expect(comp.isExam).toBeTrue();
         expect(comp.gradeSteps).toEqual([gradeStep1, gradeStep2]);
         expect(gradePointsSpy).toHaveBeenCalledWith([gradeStep1, gradeStep2], 100);
     });
@@ -109,7 +109,7 @@ describe('GradeKeyOverviewComponent', () => {
     it('should properly determine that points are not set', () => {
         comp.gradeSteps = gradeStepsDto.gradeSteps;
 
-        expect(comp.hasPointsSet()).toEqual(false);
+        expect(comp.hasPointsSet()).toBeFalse();
     });
 
     it('should properly determine that points are set', () => {
@@ -121,7 +121,7 @@ describe('GradeKeyOverviewComponent', () => {
         gradeStepWithPoints2.upperBoundPoints = 100;
         comp.gradeSteps = [gradeStepWithPoints1, gradeStepWithPoints2];
 
-        expect(comp.hasPointsSet()).toEqual(true);
+        expect(comp.hasPointsSet()).toBeTrue();
     });
 
     it('should round correctly', () => {
