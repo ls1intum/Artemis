@@ -3,7 +3,7 @@ import { getLatestSubmissionResult, Submission } from 'app/entities/submission.m
 import { Result } from 'app/entities/result.model';
 
 @Component({
-    selector: 'jhi-assesment-progress-label',
+    selector: 'jhi-assessment-progress-label',
     templateUrl: './assessment-progress-label.html',
 })
 export class AssessmentProgressLabelComponent implements OnChanges {

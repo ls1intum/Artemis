@@ -1,10 +1,10 @@
 <h4>
     <ng-container *ngIf="submissions && submissions.length === 0">
-        <small class="text-warning"> {{ 'artemisApp.textAssessment.noSubmissions' | artemisTranslate: {} }} </small>
+        <small class="text-warning"> {{ 'artemisApp.assessmentDashboard.noSubmissionFound' | artemisTranslate: {} }} </small>
     </ng-container>
     <ng-container *ngIf="submissions && submissions.length > 0">
         <small [ngClass]="numberAssessedSubmissions === submissions.length ? 'text-success' : 'text-warning'">
-            {{ 'artemisApp.textAssessment.dashboard.progressDescription' | artemisTranslate : { percentageAssessed: (numberAssessedSubmissions / submissions.length) * 100 | number:
+            {{ 'artemisApp.assessmentDashboard.progressDescription' | artemisTranslate : { percentageAssessed: (numberAssessedSubmissions / submissions.length) * 100 | number:
             '0.0-0', numberAssessed: numberAssessedSubmissions, numberSubmissions: submissions.length } }}
         </small>
     </ng-container>

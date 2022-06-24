@@ -17,7 +17,6 @@ import { areManualResultsAllowed } from 'app/exercises/shared/exercise/exercise.
 import { getLinkToSubmissionAssessment } from 'app/utils/navigation.utils';
 import { map } from 'rxjs/operators';
 import { faBan, faEdit, faFolderOpen, faSort } from '@fortawesome/free-solid-svg-icons';
-import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 
 @Component({
     templateUrl: './programming-exercise-submissions.component.html',

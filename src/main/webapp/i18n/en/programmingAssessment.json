@@ -2,8 +2,7 @@
     "artemisApp": {
         "programmingAssessment": {
             "dashboard": {
-                "heading": "Submissions and assessments of programming exercise \"{{exerciseTitle}}\"",
-                "progressDescription": "Progress: {{ percentageAssessed }} % ({{ numberAssessed }} out of {{ numberSubmissions }} programming exercises assessed)"
+                "heading": "Submissions and assessments of programming exercise \"{{exerciseTitle}}\""
             },
             "confirmCancel": "Are you sure you want to cancel the assessment? Your current assessment progress will be deleted and the submission will be available for assessment to other tutors again.",
             "notFound": "We couldn't find any unassessed programming submissions, please go back.",
@@ -12,8 +11,7 @@
             "deductions": "Deductions",
             "penaltyTooltip": "Penalty: {{ percentage }}% of all penalties.",
             "issuesTooltip": "Issues: {{ percentage }}% of all detected issues.",
-            "deductionsTooltip": "Deductions: {{ percentage }}% of all deducted points.",
-            "noSubmissions": "No submissions for this exercise!"
+            "deductionsTooltip": "Deductions: {{ percentage }}% of all deducted points."
         }
     }
 }
