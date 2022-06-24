@@ -45,6 +45,7 @@ import { MockFileService } from '../../../helpers/mocks/service/mock-file.servic
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { MockRouter } from '../../../helpers/mocks/mock-router';
 import { LectureUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/lectureUnit.service';
+import day from 'dayjs/esm';
 
 describe('CourseLectureDetails', () => {
     let fixture: ComponentFixture<CourseLectureDetailsComponent>;
@@ -181,6 +182,42 @@ describe('CourseLectureDetails', () => {
         expect(courseLecturesDetailsComponent.hasPdfLectureUnit).toBeFalse();
     }));
 
+    it('should check attachment release date', fakeAsync(() => {
+        const attachment = getAttachmentUnit(lecture, 1, dayjs().add(1, 'day')).attachment!;
+
+        expect(courseLecturesDetailsComponent.attachmentNotReleased(attachment)).toBeTrue();
+
+        attachment.releaseDate = dayjs().subtract(1, 'day');
+        expect(courseLecturesDetailsComponent.attachmentNotReleased(attachment)).toBeFalse();
+
+        attachment.releaseDate = undefined;
+        expect(courseLecturesDetailsComponent.attachmentNotReleased(attachment)).toBeFalse();
+    }));
+
+    it('should get the attachment extension', fakeAsync(() => {
+        const attachment = getAttachmentUnit(lecture, 1, dayjs()).attachment!;
+
+        expect(courseLecturesDetailsComponent.attachmentExtension(attachment)).toEqual('pdf');
+
+        attachment.link = '/path/to/file/test.test.docx';
+        expect(courseLecturesDetailsComponent.attachmentExtension(attachment)).toEqual('docx');
+
+        attachment.link = undefined;
+        expect(courseLecturesDetailsComponent.attachmentExtension(attachment)).toEqual('N/A');
+    }));
+
+    it('should download file for attachment', fakeAsync(() => {
+        const fileService = TestBed.inject(FileService);
+        const downloadFileSpy = jest.spyOn(fileService, 'downloadFileWithAccessToken');
+        const attachment = getAttachmentUnit(lecture, 1, dayjs()).attachment!;
+
+        courseLecturesDetailsComponent.downloadAttachment(attachment.link);
+
+        expect(downloadFileSpy).toHaveBeenCalledOnce();
+        expect(downloadFileSpy).toHaveBeenCalledWith(attachment.link);
+        expect(courseLecturesDetailsComponent.isDownloadingLink).toBeUndefined();
+    }));
+
     it('should download PDF file', fakeAsync(() => {
         fixture.detectChanges();
 
@@ -259,7 +296,7 @@ const getAttachmentUnit = (lecture: Lecture, id: number, releaseDate: dayjs.Dayj
     attachment.id = id;
     attachment.version = 1;
     attachment.attachmentType = AttachmentType.FILE;
-    attachment.releaseDate = dayjs().year(2020).month(3).date(5);
+    attachment.releaseDate = releaseDate;
     attachment.uploadDate = dayjs().year(2020).month(3).date(5);
     attachment.name = 'test';
     attachment.link = '/path/to/file/test.pdf';
@@ -267,7 +304,7 @@ const getAttachmentUnit = (lecture: Lecture, id: number, releaseDate: dayjs.Dayj
     const attachmentUnit = new AttachmentUnit();
     attachmentUnit.id = id;
     attachmentUnit.name = 'Unit 1';
-    attachmentUnit.releaseDate = releaseDate;
+    attachmentUnit.releaseDate = attachment.releaseDate;
     attachmentUnit.lecture = lecture;
     attachmentUnit.attachment = attachment;
     attachment.attachmentUnit = attachmentUnit;
