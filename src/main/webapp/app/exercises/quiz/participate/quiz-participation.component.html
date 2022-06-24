@@ -5,7 +5,7 @@
         <span *ngSwitchCase="'preview'" class="in-parentheses" jhiTranslate="artemisApp.quizExercise.previewMode"></span>
         <span *ngSwitchCase="'solution'" class="in-parentheses" jhiTranslate="artemisApp.quizExercise.solution"></span>
     </h2>
-    <p *ngIf="!waitingForQuizStart && !submission.submitted && !showingResult" jhiTranslate="artemisApp.quizExercise.quizInstructions.live"></p>
+    <p *ngIf="!waitingForQuizStart && !submission.submitted && !showingResult && remainingTimeSeconds >= 0" jhiTranslate="artemisApp.quizExercise.quizInstructions.live"></p>
     <p *ngIf="!waitingForQuizStart && submission.submitted && !showingResult" jhiTranslate="artemisApp.quizExercise.quizInstructions.wait"></p>
     <p
         *ngIf="!waitingForQuizStart && showingResult && mode !== 'solution'"
@@ -201,10 +201,7 @@
         </div>
     </div>
 </div>
-<div
-    class="quiz-is-over-overlay alert alert-info"
-    *ngIf="!waitingForQuizStart && !showingResult && !submission.submitted && remainingTimeSeconds < 0 && quizExercise?.quizMode === QuizMode.SYNCHRONIZED"
->
+<div class="quiz-is-over-overlay alert alert-info" *ngIf="!waitingForQuizStart && !showingResult && !submission.submitted && remainingTimeSeconds < 0">
     <span *ngIf="submission.submissionDate" jhiTranslate="artemisApp.quizExercise.quizIsOverText"></span>
     <span *ngIf="!submission.submissionDate" jhiTranslate="artemisApp.quizExercise.notParticipatedText"></span>
 </div>

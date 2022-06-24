@@ -20,9 +20,13 @@
                 <fa-icon [icon]="faVideo"></fa-icon>
                 <span class="ms-1" jhiTranslate="artemisApp.lectureUnit.unitCreationCard.video">Video</span>
             </a>
-            <a id="createFileUploadUnitButton" class="btn btn-lg btn-primary m-1 rounded-pill" [routerLink]="['attachment-units', 'create']">
+            <a id="createOnlineUnitButton" class="btn btn-lg btn-primary m-1 rounded-pill" [routerLink]="['online-units', 'create']">
+                <fa-icon [icon]="faLink"></fa-icon>
+                <span class="ms-1" jhiTranslate="artemisApp.lectureUnit.unitCreationCard.online">Online</span>
+            </a>
+            <a id="createAttachmentUnitButton" class="btn btn-lg btn-primary m-1 rounded-pill" [routerLink]="['attachment-units', 'create']">
                 <fa-icon [icon]="faFileUpload"></fa-icon>
-                <span class="ms-1" jhiTranslate="artemisApp.lectureUnit.unitCreationCard.file">File</span>
+                <span class="ms-1" jhiTranslate="artemisApp.lectureUnit.unitCreationCard.attachment">File</span>
             </a>
         </div>
     </div>
