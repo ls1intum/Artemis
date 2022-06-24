@@ -186,6 +186,12 @@ public class UserBambooBitbucketJiraIntegrationTest extends AbstractSpringIntegr
 
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
+    public void deleteUsersException() throws Exception {
+        userTestService.deleteUsersException();
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
     public void getUsers_asAdmin_isSuccessful() throws Exception {
         userTestService.getUsers_asAdmin_isSuccessful();
     }

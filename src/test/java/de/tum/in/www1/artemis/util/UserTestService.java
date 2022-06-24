@@ -162,9 +162,15 @@ public class UserTestService {
                 assertThat(deletedUser).isEmpty();
             }
         }
+    }
 
+    // Test
+    public void deleteUsersException() throws Exception {
         userRepository.deleteAll();
-        users = database.addUsers(1, 1, 1, 1);
+        var users = database.addUsers(1, 1, 1, 1);
+
+        LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+        users.stream().map(User::getLogin).forEach(login -> params.add("login", login));
 
         for (var user : users) {
             mockDelegate.mockDeleteUserInUserManagement(user, true, true, true);
