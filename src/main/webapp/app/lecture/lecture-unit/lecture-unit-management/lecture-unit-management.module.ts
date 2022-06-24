@@ -20,6 +20,9 @@ import { ArtemisMarkdownEditorModule } from 'app/shared/markdown-editor/markdown
 import { LectureUnitLayoutComponent } from './lecture-unit-layout/lecture-unit-layout.component';
 import { ArtemisLearningGoalsModule } from 'app/course/learning-goals/learning-goal.module';
 import { ArtemisLectureUnitsModule } from 'app/overview/course-lectures/lecture-units.module';
+import { EditOnlineUnitComponent } from 'app/lecture/lecture-unit/lecture-unit-management/edit-online-unit/edit-online-unit.component';
+import { CreateOnlineUnitComponent } from 'app/lecture/lecture-unit/lecture-unit-management/create-online-unit/create-online-unit.component';
+import { OnlineUnitFormComponent } from 'app/lecture/lecture-unit/lecture-unit-management/online-unit-form/online-unit-form.component';
 
 @NgModule({
     imports: [
@@ -35,17 +38,25 @@ import { ArtemisLectureUnitsModule } from 'app/overview/course-lectures/lecture-
     declarations: [
         LectureUnitManagementComponent,
         UnitCreationCardComponent,
+        LectureUnitLayoutComponent,
+        // Exercise
         CreateExerciseUnitComponent,
+        // Attachment
         CreateAttachmentUnitComponent,
-        AttachmentUnitFormComponent,
         EditAttachmentUnitComponent,
+        AttachmentUnitFormComponent,
+        // Video
         CreateVideoUnitComponent,
         EditVideoUnitComponent,
         VideoUnitFormComponent,
+        // Text
         CreateTextUnitComponent,
-        TextUnitFormComponent,
         EditTextUnitComponent,
-        LectureUnitLayoutComponent,
+        TextUnitFormComponent,
+        // Online
+        CreateOnlineUnitComponent,
+        EditOnlineUnitComponent,
+        OnlineUnitFormComponent,
     ],
 })
 export class ArtemisLectureUnitManagementModule {}

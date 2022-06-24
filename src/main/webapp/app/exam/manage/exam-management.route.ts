@@ -109,6 +109,10 @@ export const examManagementRoute: Routes = [
         canActivate: [UserRouteAccessService],
     },
     {
+        path: ':examId/monitoring',
+        loadChildren: () => import('../monitoring/exam-monitoring.module').then((m) => m.ArtemisExamMonitoringModule),
+    },
+    {
         path: ':examId/participant-scores',
         component: ExamParticipantScoresComponent,
         data: {
