@@ -53,7 +53,7 @@ export class ChartCategoryFilter extends ChartFilter {
         this.filterMap.set(category, !isIncluded);
         this.numberOfActiveFilters += !isIncluded ? 1 : -1;
         this.areAllCategoriesSelected(!isIncluded);
-        return this.applyCategoryFilter(exercisesScores);
+        return this.applyCurrentFilter(exercisesScores);
     }
     /**
      * Handles the selection and deselection of "exercises with no categories" filter option
@@ -64,7 +64,7 @@ export class ChartCategoryFilter extends ChartFilter {
         this.numberOfActiveFilters += this.includeExercisesWithNoCategory ? -1 : 1;
         this.includeExercisesWithNoCategory = !this.includeExercisesWithNoCategory;
         this.areAllCategoriesSelected(this.includeExercisesWithNoCategory);
-        return this.applyCategoryFilter(exerciseScores);
+        return this.applyCurrentFilter(exerciseScores);
     }
 
     /**
@@ -83,7 +83,7 @@ export class ChartCategoryFilter extends ChartFilter {
             this.allCategoriesSelected = !this.allCategoriesSelected;
             this.includeExercisesWithNoCategory = false;
         }
-        return this.applyCategoryFilter(exerciseScores);
+        return this.applyCurrentFilter(exerciseScores);
     }
 
     /**
@@ -95,7 +95,7 @@ export class ChartCategoryFilter extends ChartFilter {
      * @param exerciseScores the exercise scores the current filter setting should be applied to
      * @returns scores filtered against the updated filter setting
      */
-    applyCategoryFilter(exerciseScores: any[]): any[] {
+    applyCurrentFilter(exerciseScores: any[]): any[] {
         return exerciseScores.filter((exercise) => {
             if (!exercise.categories) {
                 return this.includeExercisesWithNoCategory;
