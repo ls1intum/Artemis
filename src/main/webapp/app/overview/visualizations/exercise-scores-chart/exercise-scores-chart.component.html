@@ -3,7 +3,8 @@
     <div *ngIf="typeFilter.typeSet.size > 0" class="filter mb-2" aria-label="Filter Dropdown" ngbDropdown>
         <button
             class="btn"
-            [ngClass]="{ 'btn-secondary': typeFilter.numberOfActiveFilters === 0, 'btn-success': typeFilter.numberOfActiveFilters > 0 }"
+            [class.btn-secondary]="typeFilter.numberOfActiveFilters === 0"
+            [class.btn-success]="typeFilter.numberOfActiveFilters > 0"
             ngbDropdownToggle
             id="filter-dropdown-button"
         >

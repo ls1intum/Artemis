@@ -10,7 +10,7 @@ export class ChartCategoryFilter extends ChartFilter {
     exercisesWithoutCategoriesPresent: boolean;
 
     /**
-     * Collects all categories from the currently visible exercises (included or excluded the optional exercises depending on the prior state)
+     * Collects all categories from the provided exercises
      * @private
      */
     determineDisplayableCategories(courseExercises: any[]): Set<any> {

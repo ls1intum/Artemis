@@ -13,7 +13,7 @@ import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
 import { GradeType } from 'app/entities/grading-scale.model';
 import { GradingSystemService } from 'app/grading-system/grading-system.service';
 import { GradeDTO } from 'app/entities/grade-step.model';
-import { Color, LegendPosition, ScaleType } from '@swimlane/ngx-charts';
+import { Color, ScaleType } from '@swimlane/ngx-charts';
 import { faClipboard, faFilter, faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 import { GraphColors } from 'app/entities/statistics.model';
 import { NgxChartsSingleSeriesDataEntry } from 'app/shared/chart/ngx-charts-datatypes';
@@ -158,12 +158,11 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
     } as Color;
 
     readonly roundScoreSpecifiedByCourseSettings = roundValueSpecifiedByCourseSettings;
-    readonly legendPosition = LegendPosition;
     readonly barChartTitle = ChartBarTitle;
     readonly chartHeight = 25;
     readonly barPadding = 4;
     readonly defaultSize = 50; // additional space for the x-axis and its labels
-    readonly filter = this.categoryFilter;
+    readonly chartCategoryFilter = this.categoryFilter;
 
     // array containing every non-empty exercise group
     ngxExerciseGroups: any[] = [];
@@ -733,9 +732,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
     toggleCategory(category: string) {
         const isIncluded = this.categoryFilter.getCurrentFilterState(category)!;
         this.courseExercisesFilteredByCategories = this.categoryFilter.toggleCategory(this.courseExercises, category) as Exercise[];
-        this.calculateNumberOfAppliedFilters();
-        this.groupExercisesByType(this.courseExercisesFilteredByCategories);
-        this.filterExerciseIDsForCategorySelection(!isIncluded!);
+        this.performFilteredChartSetup(!isIncluded);
     }
 
     /**
@@ -743,9 +740,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
      */
     toggleAllCategories(): void {
         this.courseExercisesFilteredByCategories = this.categoryFilter.toggleAllCategories(this.courseExercises) as Exercise[];
-        this.calculateNumberOfAppliedFilters();
-        this.groupExercisesByType(this.courseExercisesFilteredByCategories);
-        this.filterExerciseIDsForCategorySelection(this.categoryFilter.includeExercisesWithNoCategory);
+        this.performFilteredChartSetup(this.categoryFilter.includeExercisesWithNoCategory);
     }
 
     /**
@@ -753,9 +748,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
      */
     toggleExercisesWithNoCategory(): void {
         this.courseExercisesFilteredByCategories = this.categoryFilter.toggleExercisesWithNoCategory(this.courseExercises) as Exercise[];
-        this.calculateNumberOfAppliedFilters();
-        this.groupExercisesByType(this.courseExercisesFilteredByCategories);
-        this.filterExerciseIDsForCategorySelection(this.categoryFilter.includeExercisesWithNoCategory);
+        this.performFilteredChartSetup(this.categoryFilter.includeExercisesWithNoCategory);
     }
 
     /**
@@ -791,5 +784,16 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
         Finally, we need to add space for the x-axis and its ticks
          */
         return chartEntries * this.chartHeight + this.barPadding * (chartEntries - 1) + this.defaultSize;
+    }
+
+    /**
+     * Auxiliary method to reduce code duplication
+     * Calculates the number of applied filters, groups the updated set of exercises and updates the set of filtered IDs
+     * @param isIncluded indicates whether the updated filter is now selected or deselected and updates the filtered exercise IDs accordingly
+     */
+    performFilteredChartSetup(isIncluded: boolean) {
+        this.calculateNumberOfAppliedFilters();
+        this.groupExercisesByType(this.courseExercisesFilteredByCategories);
+        this.filterExerciseIDsForCategorySelection(!isIncluded);
     }
 }

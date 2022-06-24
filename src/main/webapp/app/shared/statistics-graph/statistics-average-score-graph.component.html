@@ -47,13 +47,11 @@
             <div class="switch-forward-placeholder"></div>
         </ng-template>
         <div class="col-lg-2 d-flex flex-column align-items-center justify-content-center">
-            <div class="filter my-3" aria-label="Filter Dropdown" ngbDropdown>
+            <div *ngIf="typeFilter.typeSet.size > 0" class="filter my-3" aria-label="Filter Dropdown" ngbDropdown>
                 <button
                     class="btn"
-                    [ngClass]="{
-                        'btn-secondary': !(chartCategoryFilter.numberOfActiveFilters + typeFilter.numberOfActiveFilters),
-                        'btn-success': chartCategoryFilter.numberOfActiveFilters + typeFilter.numberOfActiveFilters > 0
-                    }"
+                    [class.btn-secondary]="!(chartCategoryFilter.numberOfActiveFilters + typeFilter.numberOfActiveFilters)"
+                    [class.btn-success]="chartCategoryFilter.numberOfActiveFilters + typeFilter.numberOfActiveFilters > 0"
                     ngbDropdownToggle
                     id="filter-dropdown-button"
                 >
