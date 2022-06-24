@@ -39,8 +39,7 @@
                 "assess": "Bewerten"
             },
             "dashboard": {
-                "heading": "Einreichungen und Bewertungen der Textaufgabe \"{{exerciseTitle}}\"",
-                "progressDescription": "Fortschritt: {{ percentageAssessed }} % ({{ numberAssessed }} von {{ numberSubmissions }} eingereichten Abgaben bewertet)"
+                "heading": "Einreichungen und Bewertungen der Textaufgabe \"{{exerciseTitle}}\""
             },
             "notFound": "Wir haben keine neue Textvorlage ohne Bewertung gefunden, bitte gehe zurück zum Dashboard.",
             "updateAfterComplaintSuccessful": "Die Bewertung wurde erfolgreich aktualisiert.",
@@ -74,8 +73,7 @@
                     "INCONSISTENT_SCORE": "INKONSISTENTE PUNKTZAHL",
                     "INCONSISTENT_FEEDBACK": "INKONSISTENTES FEEDBACK"
                 }
-            },
-            "noSubmissions": "Keine Einreichungen für diese Übung!"
+            }
         }
     }
 }

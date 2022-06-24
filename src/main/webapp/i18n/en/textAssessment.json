@@ -39,8 +39,7 @@
                 "assess": "Assess"
             },
             "dashboard": {
-                "heading": "Submissions and assessments of text exercise \"{{exerciseTitle}}\"",
-                "progressDescription": "Progress: {{ percentageAssessed }} % ({{ numberAssessed }} out of {{ numberSubmissions }} submissions assessed)"
+                "heading": "Submissions and assessments of text exercise \"{{exerciseTitle}}\""
             },
             "notFound": "We couldn't find any unassessed text submissions. Please return to the dashboard.",
             "updateAfterComplaintSuccessful": "The Assessment was updated successfully.",
@@ -74,8 +73,7 @@
                     "INCONSISTENT_SCORE": "INCONSISTENT POINTS",
                     "INCONSISTENT_FEEDBACK": "INCONSISTENT FEEDBACK"
                 }
-            },
-            "noSubmissions": "No Submissions for this exercise!"
+            }
         }
     }
 }
