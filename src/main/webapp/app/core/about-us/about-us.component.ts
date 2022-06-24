@@ -22,8 +22,8 @@ export class AboutUsComponent implements OnInit {
     email: string;
     data: AboutUsModel;
 
-    // Array of tuple containing list of details of section
-    readonly numberOfDetails: [string, { [key: string]: string }][] = [
+    // Array of tuple containing translation keys and translation values
+    readonly sections: [string, { [key: string]: string }][] = [
         ['exercises.programming', { programmingUrl: 'https://docs.artemis.ase.in.tum.de/user/exercises/programming/' }],
         ['exercises.quiz', { quizUrl: 'https://docs.artemis.ase.in.tum.de/user/exercises/quiz/' }],
         ['exercises.modeling', { modelingUrl: 'https://docs.artemis.ase.in.tum.de/user/exercises/modeling/', apollonUrl: 'https://apollon.ase.in.tum.de/' }],

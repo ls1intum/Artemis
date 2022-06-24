@@ -20,34 +20,34 @@
             }
         },
         "exam": {
-            "text": "<b>Prüfungsmodus:</b> Dozenten können Online-Prüfungen mit Übungsvarianten, integrierter Plagiatsprüfung, Testläufen und Studierendenbewertungen erstellen. Weitere Informationen finden Sie unter <a href={{ studentFeatureUrl }}>Funktionen für Studierende im Prüfungsmodus</a> und unter <a href={{ instructorFeatureUrl }}>Funktionen für Dozenten im Prüfungsmodus</a>."
+            "text": "<b>Prüfungsmodus:</b> Lehrende können Online-Prüfungen mit Übungsvarianten, integrierter Plagiatsprüfung, Testläufen und Studierendenbewertungen erstellen. Weitere Informationen finden Sie unter <a href={{ studentFeatureUrl }}>Funktionen für Studierende im Prüfungsmodus</a> und unter <a href={{ instructorFeatureUrl }}>Funktionen für Lehrende im Prüfungsmodus</a>."
         },
         "grading": {
-            "text": "<b>Benotung:</b> Dozenten können Notenschlüssel für Kurse und Prüfungen konfigurieren, um automatisch Noten zu berechnen und sie den Studierenden anzuzeigen. Die Noten können leicht als csv-Dateien exportiert werden, um sie in Universitätssysteme (wie CAMPUSonline) hochzuladen."
+            "text": "<b>Benotung:</b> Lehrende können Notenschlüssel für Kurse und Prüfungen konfigurieren, um automatisch Noten zu berechnen und sie den Studierenden anzuzeigen. Die Noten können leicht als csv-Dateien exportiert werden, um sie in Universitätssysteme (wie CAMPUSonline) hochzuladen."
         },
         "assessment": {
-            "text": "<b>Bewertung:</b> Artemis verwendet eine Doppelblind-Bewertung und strukturierte Bewertungskriterien, um die Konsistenz und Fairness zu verbessern. Es integriert einen Bewertungstrainingsprozess (auf der Grundlage von Beispielaufgaben und vom Dozenten definierten Beispielbewertungen), verfügt über eine Bewertungsrangliste und ermöglicht den Studierenden, die Bewertungen zu bewerten. Die Studierenden können sich beschweren oder um mehr Feedback bitten."
+            "text": "<b>Bewertung:</b> Artemis verwendet eine Doppelblind-Bewertung und strukturierte Bewertungskriterien, um die Konsistenz und Fairness zu verbessern. Es integriert einen Bewertungstrainingsprozess (auf der Grundlage von Beispielaufgaben und vom Lehrenden definierten Beispielbewertungen), verfügt über eine Bewertungsrangliste und ermöglicht den Studierenden, die Bewertungen zu bewerten. Die Studierenden können sich beschweren oder um mehr Feedback bitten."
         },
         "discussion": {
-            "text": "<a href={{ discussionUrl }}>Diskussion:</a> Dozenten können Ankündigungen veröffentlichen. Studierende können Fragen stellen, Kommentare abgeben und auf andere Beiträge reagieren. Tutoren können unbeantwortete Fragen filtern."
+            "text": "<a href={{ discussionUrl }}>Diskussion:</a> Lehrende können Ankündigungen veröffentlichen. Studierende können Fragen stellen, Kommentare abgeben und auf andere Beiträge reagieren. Tutoren können unbeantwortete Fragen filtern."
         },
         "notifications": {
             "text": "<b>Benachrichtigungen:</b> Artemis unterstützt anpassbare Web- und E-Mail-Benachrichtigungen. Benutzer können verschiedene Benachrichtigungstypen aktivieren und deaktivieren."
         },
         "teamExercises": {
-            "text": "<b>Gruppenaufgaben:</b> Dozenten können Gruppenaufgaben mit Echtzeitzusammenarbeit und eigenen Tutoren pro Gruppe konfigurieren."
+            "text": "<b>Gruppenaufgaben:</b> Lehrende können Gruppenaufgaben mit Echtzeitzusammenarbeit und eigenen Tutoren pro Gruppe konfigurieren."
         },
         "lectures": {
-            "text": "<b>Vorlesungen:</b> Dozenten können Vorlesungsfolien hochladen, Vorlesungen in Einheiten unterteilen, Videostreams, Vorlesungsaufzeichnungen und Übungen in Vorlesungen integrieren und Lernziele definieren."
+            "text": "<b>Vorlesungen:</b> Lehrende können Vorlesungsfolien hochladen, Vorlesungen in Einheiten unterteilen, Videostreams, Vorlesungsaufzeichnungen und Übungen in Vorlesungen integrieren und Lernziele definieren."
         },
         "integratedMarkdownEditor": {
-            "text": "<b>Integrierter Markdown-Editor:</b> Die Dozenten können Problemstellungen im Markdown-Format definieren, um den Text einfach zu formatieren und Bilder und Links zu integrieren."
+            "text": "<b>Integrierter Markdown-Editor:</b> Die Lehrenden können Problemstellungen im Markdown-Format definieren, um den Text einfach zu formatieren und Bilder und Links zu integrieren."
         },
         "plagiarismChecks": {
             "text": "<b>Plagiatsüberprüfungen:</b> Artemis integriert Plagiatsprüfungen für Programmieraufgaben (basierend auf <a href={{ jPlagUrl }}>JPlag</a>) Text- und Modellierungsaufgaben. Es ermöglicht die Benachrichtigung der Studierenden über festgestellte Plagiate. Die Studierenden können die Behauptung überprüfen und kommentieren."
         },
         "learningAnalytics": {
-            "text": "<b>Lernanalytik:</b> Artemis stellt verschiedene Statistiken bereit, mit denen sich die Studierenden mit dem Kursdurchschnitt vergleichen können. So können Dozenten die durchschnittliche Leistung der Studierenden anhand von Übungen und Lernzielen bewerten."
+            "text": "<b>Lernanalytik:</b> Artemis stellt verschiedene Statistiken bereit, mit denen sich die Studierenden mit dem Kursdurchschnitt vergleichen können. So können Lehrende die durchschnittliche Leistung der Studierenden anhand von Übungen und Lernzielen bewerten."
         },
         "scalable": {
             "text": "<b>Skalierbar:</b> Artemis lässt sich auf mehrere Kurse mit Tausenden von Studierenden skalieren. Tatsächlich hatte der größte Kurs 2.400 Studierende. Administratoren können Artemis leicht mit zusätzlichen Build-Agenten in der kontinuierlichen Integrationsumgebung skalieren."
@@ -56,7 +56,7 @@
             "text": "<b>Hohe Benutzerzufriedenheit:</b> Artemis ist einfach zu bedienen und bietet geführte Tutorials. Die Entwickler konzentrieren sich auf Benutzerfreundlichkeit, Benutzererfahrung und Leistung."
         },
         "customizable": {
-            "text": "<b>Anpassbar:</b> Artemis unterstützt mehrere Dozenten, Bearbeitende und Tutoren pro Kurs und erlaubt den Dozenten viele Kurseinstellungen anzupassen."
+            "text": "<b>Anpassbar:</b> Artemis unterstützt mehrere Lehrende, Bearbeitende und Tutoren pro Kurs und erlaubt den Lehrenden viele Kurseinstellungen anzupassen."
         },
         "openSource": {
             "text": "<b>Open-source:</b> Kostenlos zu verwenden mit einer großen Gemeinschaft und vielen aktiven Entwicklern."
