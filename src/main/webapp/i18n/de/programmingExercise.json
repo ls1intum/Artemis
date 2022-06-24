@@ -364,7 +364,7 @@
                         "pattern": "Der Punktabzug muss eine Nummer größer als 0 sein.",
                         "required": "Der Punktabzug muss gesetzt sein."
                     },
-                    "penaltyInfoLabel": "Punktabzug je Überschreitung",
+                    "penaltyInfoLabel": "(Punktabzug je Überschreitung: {{points}} Punkte)",
                     "triggerAllInformation": "Wird der Punktabzug je Überschreitung des Abgabelimits oder das Abgabelimit selbst angepasst, muss nach dem Speichern der Abgaberichtlinie die 'Erneut Bewerten' Funktionalität genutzt werden, um die Ergebnisse der Teilnehmenden zu aktualisieren."
                 },
                 "submissionPolicyType": {
