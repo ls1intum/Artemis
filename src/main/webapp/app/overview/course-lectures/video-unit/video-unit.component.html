@@ -14,7 +14,7 @@
                     </span>
                 </h5>
             </div>
-            <div class="col-auto" *ngIf="!isPresentationMode">
+            <div class="col-auto" *ngIf="!isPresentationMode && videoUnit.visibleToStudents">
                 <fa-icon
                     *ngIf="videoUnit.completed; else uncompleted"
                     class="text-success"

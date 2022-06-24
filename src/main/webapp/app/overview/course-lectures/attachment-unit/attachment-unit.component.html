@@ -14,7 +14,7 @@
                     </span>
                 </h5>
             </div>
-            <div class="col-auto" *ngIf="!isPresentationMode">
+            <div class="col-auto" *ngIf="!isPresentationMode && attachmentUnit.visibleToStudents">
                 <fa-icon
                     *ngIf="attachmentUnit.completed; else uncompleted"
                     class="text-success"
