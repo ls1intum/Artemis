@@ -28,8 +28,8 @@
         "assessment": {
             "text": "<b>Assessment:</b> Double-blind grading with structured criteria, integrated training, a leader board, ratings, and complaints improve consistency and fairness."
         },
-        "discussion": {
-            "text": "<a href={{ discussionUrl }}>Communication:</a> Post announcements. Ask questions, post comments, and react to other posts. Filter unanswered questions."
+        "communication": {
+            "text": "<a href={{ communicationUrl }}>Communication:</a> Post announcements. Ask questions, post comments, and react to other posts. Filter unanswered questions."
         },
         "notifications": {
             "text": "<b>Notifications:</b> customizable for web and email. Users can enable and disable different notification types."
@@ -53,7 +53,7 @@
             "text": "<b>Scalable</b> to multiple courses with thousands of students. Configure additional build agents in the continuous integration environment."
         },
         "highUserSatisfaction": {
-            "text": "<b>High user satisfaction:</b> Artemis is easy to use, provides guided tutorials. Developers focus on usability, user experience, and performance."
+            "text": "<b>High user satisfaction:</b> Artemis is easy to use and provides guided tutorials. Developers focus on usability, user experience, and performance."
         },
         "customizable": {
             "text": "<b>Customizable:</b> It supports multiple instructors, editors, and tutors per course and allows instructors to customize many course settings."
