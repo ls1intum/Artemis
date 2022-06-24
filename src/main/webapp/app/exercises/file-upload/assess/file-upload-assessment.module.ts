@@ -9,7 +9,7 @@ import { ModelingAssessmentModule } from 'app/exercises/modeling/assess/modeling
 import { AssessmentInstructionsModule } from 'app/assessment/assessment-instructions/assessment-instructions.module';
 import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
 import { SubmissionResultStatusModule } from 'app/overview/submission-result-status.module';
-import { ArtemisTextSubmissionAssessmentModule } from 'app/exercises/text/assess/text-submission-assessment.module';
+import { ArtemisAssessmentProgressLabelModule } from 'app/exercises/shared/assessment-progress-label/assessment-progress-label.module';
 
 @NgModule({
     imports: [
@@ -21,7 +21,7 @@ import { ArtemisTextSubmissionAssessmentModule } from 'app/exercises/text/assess
         AssessmentInstructionsModule,
         ArtemisMarkdownModule,
         SubmissionResultStatusModule,
-        ArtemisTextSubmissionAssessmentModule,
+        ArtemisAssessmentProgressLabelModule,
     ],
     declarations: [FileUploadAssessmentComponent, FileUploadAssessmentDashboardComponent],
 })

@@ -9,7 +9,7 @@ import { RouterModule } from '@angular/router';
 import { ArtemisResultModule } from 'app/exercises/shared/result/result.module';
 import { ArtemisAssessmentSharedModule } from 'app/assessment/assessment-shared.module';
 import { SubmissionResultStatusModule } from 'app/overview/submission-result-status.module';
-import { ArtemisTextSubmissionAssessmentModule } from 'app/exercises/text/assess/text-submission-assessment.module';
+import { ArtemisAssessmentProgressLabelModule } from 'app/exercises/shared/assessment-progress-label/assessment-progress-label.module';
 
 @NgModule({
     imports: [
@@ -22,7 +22,7 @@ import { ArtemisTextSubmissionAssessmentModule } from 'app/exercises/text/assess
         ArtemisResultModule,
         ArtemisAssessmentSharedModule,
         SubmissionResultStatusModule,
-        ArtemisTextSubmissionAssessmentModule,
+        ArtemisAssessmentProgressLabelModule,
     ],
     declarations: [ProgrammingExerciseSubmissionsComponent],
 })
