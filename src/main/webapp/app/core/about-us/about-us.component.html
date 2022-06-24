@@ -6,12 +6,7 @@
         <h3 class="mb-3 font-weight-bold">{{ 'aboutUsOverview.feature' | artemisTranslate }}</h3>
         <ul>
             <li *ngFor="let section of numberOfDetails">
-                <span [jhiTranslate]="'aboutUsOverview.' + section[0] + '.text'" [translateValues]="section[2]"></span>
-                <ul>
-                    <li *ngFor="let details of [].constructor(section[1]); let i = index">
-                        <span [jhiTranslate]="'aboutUsOverview.' + section[0] + '.details.' + i" [translateValues]="section[2]"></span>
-                    </li>
-                </ul>
+                <span [jhiTranslate]="'aboutUsOverview.' + section[0] + '.text'" [translateValues]="section[1]"></span>
             </li>
         </ul>
     </div>

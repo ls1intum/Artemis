@@ -23,34 +23,26 @@ export class AboutUsComponent implements OnInit {
     data: AboutUsModel;
 
     // Array of tuple containing list of details of section
-    readonly numberOfDetails: [string, number, { [key: string]: string }][] = [
-        [
-            'exercises.programming',
-            8,
-            {
-                programmingUrl: 'https://docs.artemis.ase.in.tum.de/user/exercises/programming/',
-                orionUrl: 'https://github.com/ls1intum/Orion',
-                aresUrl: 'https://github.com/ls1intum/Ares',
-            },
-        ],
-        ['exercises.quiz', 2, { quizUrl: 'https://docs.artemis.ase.in.tum.de/user/exercises/quiz/' }],
-        ['exercises.modeling', 3, { modelingUrl: 'https://docs.artemis.ase.in.tum.de/user/exercises/modeling/', apollonUrl: 'https://apollon.ase.in.tum.de/' }],
-        ['exercises.text', 2, { textUrl: 'https://docs.artemis.ase.in.tum.de/user/exercises/textual/', athenaUrl: 'https://github.com/ls1intum/Athena' }],
-        ['exercises.fileUpload', 0, { fileUploadUrl: 'https://docs.artemis.ase.in.tum.de/user/exercises/file-upload/', athenaUrl: 'https://github.com/ls1intum/Athena' }],
-        ['exam', 2, { studentFeatureUrl: '/features/students', instructorFeatureUrl: '/features/instructors' }],
-        ['grading', 0, {}],
-        ['assessment', 0, {}],
-        ['discussion', 0, { discussionUrl: 'https://docs.artemis.ase.in.tum.de/user/discussion/' }],
-        ['notifications', 0, {}],
-        ['teamExercises', 0, {}],
-        ['lectures', 0, {}],
-        ['integratedMarkdownEditor', 0, {}],
-        ['plagiarismChecks', 0, { jPlagUrl: 'https://github.com/jplag/JPlag' }],
-        ['learningAnalytics', 0, {}],
-        ['scalable', 0, {}],
-        ['highUserSatisfaction', 0, {}],
-        ['customizable', 0, {}],
-        ['openSource', 0, {}],
+    readonly numberOfDetails: [string, { [key: string]: string }][] = [
+        ['exercises.programming', { programmingUrl: 'https://docs.artemis.ase.in.tum.de/user/exercises/programming/' }],
+        ['exercises.quiz', { quizUrl: 'https://docs.artemis.ase.in.tum.de/user/exercises/quiz/' }],
+        ['exercises.modeling', { modelingUrl: 'https://docs.artemis.ase.in.tum.de/user/exercises/modeling/', apollonUrl: 'https://apollon.ase.in.tum.de/' }],
+        ['exercises.text', { textUrl: 'https://docs.artemis.ase.in.tum.de/user/exercises/textual/', athenaUrl: 'https://github.com/ls1intum/Athena' }],
+        ['exercises.fileUpload', { fileUploadUrl: 'https://docs.artemis.ase.in.tum.de/user/exercises/file-upload/' }],
+        ['exam', { studentFeatureUrl: '/features/students', instructorFeatureUrl: '/features/instructors' }],
+        ['grading', {}],
+        ['assessment', {}],
+        ['discussion', { discussionUrl: 'https://docs.artemis.ase.in.tum.de/user/discussion/' }],
+        ['notifications', {}],
+        ['teamExercises', {}],
+        ['lectures', {}],
+        ['integratedMarkdownEditor', {}],
+        ['plagiarismChecks', { jPlagUrl: 'https://github.com/jplag/JPlag' }],
+        ['learningAnalytics', {}],
+        ['scalable', {}],
+        ['highUserSatisfaction', {}],
+        ['customizable', {}],
+        ['openSource', {}],
     ];
 
     readonly SERVER_API_URL = SERVER_API_URL;

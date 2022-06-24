@@ -4,100 +4,62 @@
         "feature": "Main Features",
         "exercises": {
             "programming": {
-                "text": "<a href='{{ programmingUrl }}'>Programming exercises</a> with version control, automatic individual feedback (and assessment) based on test cases and static code analysis (executed using continuous integration).",
-                "details": [
-                    "<b>Instant:</b> Students receive immediate and individual feedback on submissions. Instructors can customize feedback messages easily, hide feedback during the working time (e.g., with hidden tests).",
-                    "<b>Interactive:</b> Instructors integrate interactive instructions based on tasks and UML diagrams directly into the dynamic problem statements. They can define hints for difficult exercise parts.",
-                    "<b>Independent:</b> Instructors can customize programming exercises to support any programming language. To simplify the setup, Artemis includes sophisticated templates for the most common languages (e.g., Java, Python, C, Haskell, Kotlin, VHDL, Assembler, Swift, Ocaml, ...).",
-                    "<b>Local and online:</b> Students can participate locally in their preferred IDE or in the online code editor (without any setup).",
-                    "<b>Manual reviews</b> are possible directly in the online code editor or in <a href={{ orionUrl }}>Orion</a>.",
-                    "<b>Policies:</b> Instructors can define submission policies (e.g., penalties after 10 attempts) to prevent that students try out all possibilities without thinking.",
-                    "<b>Grading:</b> Instructors have many options to configure grading, analyze the results based on tests and static code analysis categories and re-evaluate the results.",
-                    "<b>Secure:</b> Test cases and student code run in Docker environments on build agents. Test frameworks such as <a href={{ aresUrl }}>Ares</a> simplify the creation of structural and dynamic tests and prevent that students can cheat."
-                ]
+                "text": "<a href='{{ programmingUrl }}'>Programming exercises</a> with version control, automatic individual feedback (and assessment) based on test cases and static code analysis (executed using continuous integration)."
             },
             "quiz": {
-                "text": "<a href={{ quizUrl }}>Quiz exercises</a> with multiple choice, drag and drop, and short answer questions.",
-                "details": [
-                    "<b>Modeling quizzes:</b> Instructors can easily create drag and drop quizzes based on UML models.",
-                    "<b>Different modes:</b> Quizzes support a live mode (rated) during lectures, a practice mode for students to repeat the quiz as often as they want, and an exam mode (see below)."
-                ]
+                "text": "<a href={{ quizUrl }}>Quiz exercises</a> with multiple choice, drag and drop, and short answer questions."
             },
             "modeling": {
-                "text": "<a href={{ modelingUrl }}>Modeling exercises</a> based on the easy-to-use online modeling editor <a href={{ apollonUrl }}>Apollon</a> with semi-automatic assessment using machine learning concepts.",
-                "details": [
-                    "<b>Multiple diagram types:</b> Artemis supports 7 UML diagram types (e.g. class diagrams) and 4 additional diagrams (e.g. flow charts).",
-                    "<b>Easy to use:</b> Students can create models easily using drag and drop, they can explain the models using additional text.",
-                    "<b>Integrated feedback:</b> Reviews can provide feedback and points directly next to the model elements."
-                ]
+                "text": "<a href={{ modelingUrl }}>Modeling exercises</a> based on the easy-to-use online modeling editor <a href={{ apollonUrl }}>Apollon</a> with semi-automatic assessment using machine learning concepts."
             },
             "text": {
-                "text": "<a href={{ textUrl }}>Text exercises</a> with manual, semi-automatic assessment based on supervised machine learning and natural language processing (NLP) using <a href={{ athenaUrl }}>Athena</a>.",
-                "details": [
-                    "<b>Integrated feedback:</b> Reviews can provide feedback and points directly next to the text segments.",
-                    "<b>Language detection:</b> Artemis detects the language of the submission and shows the word and character count."
-                ]
+                "text": "<a href={{ textUrl }}>Text exercises</a> with manual, semi-automatic assessment based on supervised machine learning and natural language processing (NLP) using <a href={{ athenaUrl }}>Athena</a>."
             },
             "fileUpload": {
-                "text": "<a href={{ fileUploadUrl }}>File upload exercises</a> with manual assessment",
-                "details": []
+                "text": "<a href={{ fileUploadUrl }}>File upload exercises</a> with manual assessment"
             }
         },
         "exam": {
-            "text": "<b>Exam mode:</b> Instructors can create online exams with exercise variants, integrated plagiarism checks, test runs and student reviews. You can find more information on <a href={{ studentFeatureUrl }}>Exam mode student features</a> and on <a href={{ instructorFeatureUrl }}>Exam mode instructor features</a>.",
-            "details": ["All mentioned exercise types are also available for exams.", "Multiple variants per exercise can be created and randomly selected for every student."]
+            "text": "<b>Exam mode:</b> Instructors can create online exams with exercise variants, integrated plagiarism checks, test runs and student reviews. You can find more information on <a href={{ studentFeatureUrl }}>Exam mode student features</a> and on <a href={{ instructorFeatureUrl }}>Exam mode instructor features</a>."
         },
         "grading": {
-            "text": "<b>Grading:</b> Instructors can configure grade keys for courses and exams to automatically calculate grades and display them to students. Grades can be easily exported as csv files to upload them into university systems (such as CAMPUSonline).",
-            "details": []
+            "text": "<b>Grading:</b> Instructors can configure grade keys for courses and exams to automatically calculate grades and display them to students. Grades can be easily exported as csv files to upload them into university systems (such as CAMPUSonline)."
         },
         "assessment": {
-            "text": "<b>Assessment:</b> Artemis uses double-blind grading and structured grading criteria to improve consistency and fairness. It integrates an assessment training process (based on example submissions and example assessments defined by the instructor), has a grading leader board, and allows students to rate the assessments. Students can complain or ask for more feedback.",
-            "details": []
+            "text": "<b>Assessment:</b> Artemis uses double-blind grading and structured grading criteria to improve consistency and fairness. It integrates an assessment training process (based on example submissions and example assessments defined by the instructor), has a grading leader board, and allows students to rate the assessments. Students can complain or ask for more feedback."
         },
         "discussion": {
-            "text": "<a href={{ discussionUrl }}>Discussion:</a> Instructors can post announcements. Students can ask questions, post comments, and react to other posts. Tutors can filter unanswered questions.",
-            "details": []
+            "text": "<a href={{ discussionUrl }}>Discussion:</a> Instructors can post announcements. Students can ask questions, post comments, and react to other posts. Tutors can filter unanswered questions."
         },
         "notifications": {
-            "text": "<b>Notifications:</b> Artemis supports customizable web and email notifications. Users can enable and disable different notification types.",
-            "details": []
+            "text": "<b>Notifications:</b> Artemis supports customizable web and email notifications. Users can enable and disable different notification types."
         },
         "teamExercises": {
-            "text": "<b>Team exercises:</b> Instructors can configure team exercises with real time collaboration and dedicated tutors per team.",
-            "details": []
+            "text": "<b>Team exercises:</b> Instructors can configure team exercises with real time collaboration and dedicated tutors per team."
         },
         "lectures": {
-            "text": "<b>Lectures:</b> Instructors can upload lecture slides, divide lectures into units, integrate video streams, lecture recordings, and exercises into lectures, and define learning goals.",
-            "details": []
+            "text": "<b>Lectures:</b> Instructors can upload lecture slides, divide lectures into units, integrate video streams, lecture recordings, and exercises into lectures, and define learning goals."
         },
         "integratedMarkdownEditor": {
-            "text": "<b>Integrated markdown editor:</b> Instructors define problem statements using Markdown to easily format the text and integrate images and links.",
-            "details": []
+            "text": "<b>Integrated markdown editor:</b> Instructors define problem statements using Markdown to easily format the text and integrate images and links."
         },
         "plagiarismChecks": {
-            "text": "<b>Plagiarism checks:</b> Artemis integrates plagiarism checks for programming exercises (based on <a href={{ jPlagUrl }}>JPlag</a>), text exercises, and modeling exercises. It allows notifying students about identified plagiarism. Students can review and comment on the allegation.",
-            "details": []
+            "text": "<b>Plagiarism checks:</b> Artemis integrates plagiarism checks for programming exercises (based on <a href={{ jPlagUrl }}>JPlag</a>), text exercises, and modeling exercises. It allows notifying students about identified plagiarism. Students can review and comment on the allegation."
         },
         "learningAnalytics": {
-            "text": "<b>Learning analytics:</b> Artemis integrated different statistics for students to compare themselves to the course average. It allows instructors to evaluate the average student performance based on exercises and learning goals.",
-            "details": []
+            "text": "<b>Learning analytics:</b> Artemis integrated different statistics for students to compare themselves to the course average. It allows instructors to evaluate the average student performance based on exercises and learning goals."
         },
         "scalable": {
-            "text": "<b>Scalable:</b> Artemis scales to multiple courses with thousands of students. In fact, the largest course had 2,400 students. Administrators can easily scale Artemis with additional build agents in the continuous integration environment.",
-            "details": []
+            "text": "<b>Scalable:</b> Artemis scales to multiple courses with thousands of students. In fact, the largest course had 2,400 students. Administrators can easily scale Artemis with additional build agents in the continuous integration environment."
         },
         "highUserSatisfaction": {
-            "text": "<b>High user satisfaction:</b> Artemis is easy to use, provides guided tutorials. Developers focus on usability, user experience, and performance.",
-            "details": []
+            "text": "<b>High user satisfaction:</b> Artemis is easy to use, provides guided tutorials. Developers focus on usability, user experience, and performance."
         },
         "customizable": {
-            "text": "<b>Customizable:</b> It supports multiple instructors, editors, and tutors per course and allows instructors to customize many course settings.",
-            "details": []
+            "text": "<b>Customizable:</b> It supports multiple instructors, editors, and tutors per course and allows instructors to customize many course settings."
         },
         "openSource": {
-            "text": "<b>Open-source:</b> Free to use with a large community and many active maintainers.",
-            "details": []
+            "text": "<b>Open-source:</b> Free to use with a large community and many active maintainers."
         },
         "getInTouch": "Get in touch",
         "contributors": "Individual contributors"
