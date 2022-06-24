@@ -215,6 +215,10 @@ public class Feedback extends DomainObject {
         this.positive = positive;
     }
 
+    public void setPositiveViaCredits() {
+        this.positive = credits != null && credits >= 0;
+    }
+
     public FeedbackType getType() {
         return type;
     }
