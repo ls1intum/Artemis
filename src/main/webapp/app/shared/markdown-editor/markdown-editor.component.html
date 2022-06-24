@@ -71,16 +71,25 @@
                     </div>
                     <!--multi option command-->
                     <ng-container *ngFor="let command of defaultCommands | typeCheck: MultiOptionCommand">
-                        <div ngbDropdown class="d-inline-block">
-                            <button class="btn btn-sm" type="button" ngbDropdownToggle>
+                        <div ngbDropdown class="dropdown">
+                            <button class="btn btn-sm dropdown-toggle" type="button" ngbDropdownToggle>
                                 {{ command.buttonTranslationString | artemisTranslate }}
                             </button>
-                            <div ngbDropdownMenu>
-                                <button *ngFor="let item of command.getValues()" class="btn-sm" type="button" (click)="command.execute(item.id)" ngbDropdownItem>
-                                    {{ item.value }}
+                            <ul class="dropdown-menu" ngbDropdownMenu>
+                                <button *ngIf="!command.getValues() || command.getValues().length === 0" [disabled]="true" ngbDropdownItem jhiTranslate="global.generic.emptyList">
+                                    No items available
                                 </button>
-                                <button *ngIf="!command.getValues().length" [disabled]="true" ngbDropdownItem jhiTranslate="global.generic.emptyList">No items available</button>
-                            </div>
+                                <li *ngFor="let item of command.getValues()">
+                                    <button class="btn-sm" type="button" (click)="command.execute(item.id, item.type)" ngbDropdownItem>
+                                        {{ item.value }}
+                                    </button>
+                                    <ng-container *ngFor="let nestedElement of item.elements">
+                                        <button class="btn-sm nested" type="button" (click)="command.execute(item.id, nestedElement.type, nestedElement.id)" ngbDropdownItem>
+                                            {{ nestedElement.value }}
+                                        </button>
+                                    </ng-container>
+                                </li>
+                            </ul>
                         </div>
                     </ng-container>
                     <!--color picker command -->
