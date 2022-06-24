@@ -437,7 +437,7 @@ describe('UserManagementComponent', () => {
         comp.toggleOriginFilter(OriginFilter.EXTERNAL);
 
         expect(comp.filters.originFilter).toEqual(new Set<OriginFilter>([OriginFilter.EXTERNAL]));
-        expect(spy).toHaveBeenCalledTimes(1);
+        expect(spy).toHaveBeenCalledOnce();
         expect(spy).toHaveBeenCalledWith(UserStorageKey.ORIGIN, 'EXTERNAL');
 
         comp.toggleOriginFilter(OriginFilter.EXTERNAL);
@@ -453,7 +453,7 @@ describe('UserManagementComponent', () => {
         comp.toggleStatusFilter(StatusFilter.DEACTIVATED);
 
         expect(comp.filters.statusFilter).toEqual(new Set<StatusFilter>([StatusFilter.DEACTIVATED]));
-        expect(spy).toHaveBeenCalledTimes(1);
+        expect(spy).toHaveBeenCalledOnce();
         expect(spy).toHaveBeenCalledWith(UserStorageKey.STATUS, 'DEACTIVATED');
 
         comp.toggleStatusFilter(StatusFilter.DEACTIVATED);
