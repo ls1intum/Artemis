@@ -131,6 +131,7 @@ export class CourseExerciseService {
                 exercise.releaseDate = exercise.releaseDate ? dayjs(exercise.releaseDate) : undefined;
                 exercise.dueDate = exercise.dueDate ? dayjs(exercise.dueDate) : undefined;
                 exercise.assessmentDueDate = exercise.assessmentDueDate ? dayjs(exercise.assessmentDueDate) : undefined;
+                exercise.exampleSolutionPublicationDate = exercise.exampleSolutionPublicationDate ? dayjs(exercise.exampleSolutionPublicationDate) : undefined;
             });
         }
         return res;

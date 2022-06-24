@@ -4,7 +4,7 @@ import { faAngleDown, faAngleUp } from '@fortawesome/free-solid-svg-icons';
 import { Post } from 'app/entities/metis/post.model';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { Subscription } from 'rxjs';
-import { PatternMatch, PostingContentPart } from '../metis.util';
+import { PatternMatch, PostingContentPart, ReferenceType } from '../metis.util';
 
 @Component({
     selector: 'jhi-posting-content',
@@ -56,14 +56,39 @@ export class PostingContentComponent implements OnInit, OnDestroy {
         if (patternMatches && patternMatches.length > 0) {
             patternMatches.forEach((patternMatch: PatternMatch, index: number) => {
                 const referencedId = this.content!.substring(patternMatch.startIndex + 1, patternMatch.endIndex); // e.g. post id 6
-                const referenceStr = this.content!.substring(patternMatch.startIndex, patternMatch.endIndex); // e.g. '#6'
-
-                // if the referenced Id is within the currently loaded posts, we can create the context-specific link to that post
-                // by invoking the respective metis service methods for link and query params and passing the post object;
-                // if not, we do not want to fetch the post from the DB and rather always navigate to the course discussion page with the referenceStr as search text
-                const referencedPostInLoadedPosts = this.currentlyLoadedPosts.find((post: Post) => post.id! === +referencedId);
-                const linkToReference = this.metisService.getLinkForPost(referencedPostInLoadedPosts);
-                const queryParams = referencedPostInLoadedPosts ? this.metisService.getQueryParamsForPost(referencedPostInLoadedPosts) : ({ searchText: referenceStr } as Params);
+                const referenceType = patternMatch.referenceType;
+                let referenceStr; // e.g. '#6', 'Lecture-1.pdf', 'Modeling Exercise'
+                let linkToReference;
+                let attachmentToReference;
+                let queryParams;
+                if (ReferenceType.POST === referenceType) {
+                    // if the referenced Id is within the currently loaded posts, we can create the context-specific link to that post
+                    // by invoking the respective metis service methods for link and query params and passing the post object;
+                    // if not, we do not want to fetch the post from the DB and rather always navigate to the course discussion page with the referenceStr as search text
+                    const referencedPostInLoadedPosts = this.currentlyLoadedPosts.find((post: Post) => post.id! === +referencedId);
+                    referenceStr = this.content!.substring(patternMatch.startIndex, patternMatch.endIndex);
+                    linkToReference = this.metisService.getLinkForPost(referencedPostInLoadedPosts);
+                    queryParams = referencedPostInLoadedPosts ? this.metisService.getQueryParamsForPost(referencedPostInLoadedPosts) : ({ searchText: referenceStr } as Params);
+                } else if (
+                    ReferenceType.LECTURE === referenceType ||
+                    ReferenceType.PROGRAMMING === referenceType ||
+                    ReferenceType.MODELING === referenceType ||
+                    ReferenceType.QUIZ === referenceType ||
+                    ReferenceType.TEXT === referenceType ||
+                    ReferenceType.FILE_UPLOAD === referenceType
+                ) {
+                    // reference opening tag: [{referenceType}] (wrapped between 2 characters)
+                    // reference closing tag: [/referenceType] (wrapped between 3 characters)
+                    // referenceStr: string to be displayed for the reference
+                    // linkToReference: link to be navigated to on reference click
+                    referenceStr = this.content!.substring(this.content?.indexOf(']', patternMatch.startIndex)! + 1, this.content?.indexOf('(', patternMatch.startIndex)!);
+                    linkToReference = [this.content!.substring(this.content?.indexOf('(', patternMatch.startIndex)! + 1, this.content?.indexOf(')', patternMatch.startIndex))];
+                } else if (ReferenceType.ATTACHMENT === referenceType) {
+                    // referenceStr: string to be displayed for the reference
+                    // attachmentToReference: location of attachment to be opened on reference click
+                    referenceStr = this.content!.substring(this.content?.indexOf(']', patternMatch.startIndex)! + 1, this.content?.indexOf('(', patternMatch.startIndex)!);
+                    attachmentToReference = this.content!.substring(this.content?.indexOf('(', patternMatch.startIndex)! + 1, this.content?.indexOf(')', patternMatch.startIndex));
+                }
 
                 // determining the endIndex of the content after the reference
                 let endIndexOfContentAfterReference;
@@ -81,8 +106,10 @@ export class PostingContentComponent implements OnInit, OnDestroy {
                 const contentPart: PostingContentPart = {
                     contentBeforeReference: index === 0 ? this.content!.substring(0, patternMatch.startIndex) : undefined, // only defined for the first match
                     linkToReference,
+                    attachmentToReference,
                     queryParams,
                     referenceStr,
+                    referenceType,
                     contentAfterReference: this.content!.substring(patternMatch.endIndex, endIndexOfContentAfterReference),
                 };
                 this.postingContentParts.push(contentPart);
@@ -95,6 +122,7 @@ export class PostingContentComponent implements OnInit, OnDestroy {
                 linkToReference: undefined,
                 queryParams: undefined,
                 referenceStr: undefined,
+                referenceType: undefined,
                 contentAfterReference: undefined,
             };
             this.postingContentParts.push(contentLink);
@@ -105,8 +133,16 @@ export class PostingContentComponent implements OnInit, OnDestroy {
      * searches a regex pattern within a string and returns an array containing a PatternMatch Object per match
      */
     getPatternMatches(): PatternMatch[] {
-        // reference pattern #{PostId}, globally searched for, i.e. no return after first match
-        const pattern = /(#\d+)/g;
+        // Group 1: reference pattern for Posts: #{PostId} Ex: (#45)
+        // Group 2: reference pattern for Programming Exercises
+        // Group 3: reference pattern for Modeling Exercises
+        // Group 4: reference pattern for Text Exercises
+        // Group 5: reference pattern for File Upload Exercises
+        // Group 6: reference pattern for Lectures
+        // Group 7: reference pattern for Lecture Attachments
+        // globally searched for, i.e. no return after first match
+        const pattern =
+            /(?<POST>#\d+)|(?<PROGRAMMING>\[programming].*?\[\/programming])|(?<MODELING>\[modeling].*?\[\/modeling])|(?<QUIZ>\[quiz].*?\[\/quiz])|(?<TEXT>\[text].*?\[\/text])|(?<FILE_UPLOAD>\[file-upload].*?\[\/file-upload])|(?<LECTURE>\[lecture].*?\[\/lecture])|(?<ATTACHMENT>\[attachment].*?\[\/attachment])/g;
 
         // array with PatternMatch objects per reference found in the posting content
         const patternMatches: PatternMatch[] = [];
@@ -117,7 +153,20 @@ export class PostingContentComponent implements OnInit, OnDestroy {
             if (!match) {
                 break;
             }
-            patternMatches.push({ startIndex: match.index, endIndex: pattern.lastIndex } as PatternMatch);
+
+            let group: ReferenceType;
+
+            for (const groupsKey in match.groups) {
+                if (match.groups[groupsKey]) {
+                    group = ReferenceType[groupsKey as keyof typeof ReferenceType];
+                }
+            }
+
+            patternMatches.push({
+                startIndex: match.index,
+                endIndex: pattern.lastIndex,
+                referenceType: group!,
+            } as PatternMatch);
         }
         return patternMatches;
     }

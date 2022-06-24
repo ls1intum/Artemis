@@ -38,7 +38,9 @@
             "searchEmoji": "Emoji suchen",
             "courseEmojiSelectionCategory": "Ausgewählte Emojis für diesen Kurs",
             "editor": {
-                "exercise": "Aufgabe"
+                "reference": "Referenz",
+                "exercise": "Aufgabe",
+                "lecture": "Vortrag"
             },
             "discussion": {
                 "label": "Diskussion",

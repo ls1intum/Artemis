@@ -15,10 +15,10 @@ import { GradingSystemService } from 'app/grading-system/grading-system.service'
 import { GradeDTO } from 'app/entities/grade-step.model';
 import { Color, LegendPosition, ScaleType } from '@swimlane/ngx-charts';
 import { faClipboard, faFilter, faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
-import { BarControlConfiguration, BarControlConfigurationProvider } from 'app/overview/course-overview.component';
 import { GraphColors } from 'app/entities/statistics.model';
 import { NgxChartsSingleSeriesDataEntry } from 'app/shared/chart/ngx-charts-datatypes';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
+import { BarControlConfiguration, BarControlConfigurationProvider } from 'app/overview/tab-bar/tab-bar';
 import { ChartCategoryFilter } from 'app/shared/chart/chart-category-filter';
 
 const QUIZ_EXERCISE_COLOR = '#17a2b8';
@@ -725,6 +725,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
     onSelect(event: any) {
         this.navigationUtilService.routeInNewTab(['courses', this.course!.id!, 'exercises', event.exerciseId]);
     }
+
     /**
      * Handles the selection or deselection of a specific category and configures the filter accordingly
      * @param category the category that is selected or deselected
@@ -746,6 +747,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
         this.groupExercisesByType(this.courseExercisesFilteredByCategories);
         this.filterExerciseIDsForCategorySelection(this.categoryFilter.includeExercisesWithNoCategory);
     }
+
     /**
      * handles the selection and deselection of "exercises with no categories" filter option
      */

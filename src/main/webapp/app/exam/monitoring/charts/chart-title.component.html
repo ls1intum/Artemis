@@ -1,0 +1,11 @@
+<div class="row justify-content-center">
+    <div class="d-inline-flex flex-nowrap justify-content-center">
+        <a *ngIf="routerLink" [routerLink]="this.routerLink" class="text-center">
+            <h5>{{ this.nameTranslationValue | artemisTranslate }}</h5>
+        </a>
+        <div *ngIf="!routerLink" class="text-center">
+            <h5>{{ this.nameTranslationValue | artemisTranslate }}</h5>
+        </div>
+        <jhi-help-icon class="chart-explanation-tooltip ps-1" placement="right auto" [text]="this.tooltipTranslationValue"></jhi-help-icon>
+    </div>
+</div>
