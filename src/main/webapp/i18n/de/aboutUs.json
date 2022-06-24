@@ -13,7 +13,7 @@
                 "text": "<a href={{ modelingUrl }}>Modellierungsübungen</a> basierend auf dem einfach zu bedienenden Online-Modellierungseditor <a href={{ apollonUrl }}>Apollon</a> mit halbautomatischer Bewertung."
             },
             "text": {
-                "text": "<a href={{ textUrl }}>Textübungen</a> halbautomatischer Bewertung (NLP) mit <a href={{ athenaUrl }}>Athena</a>."
+                "text": "<a href={{ textUrl }}>Textübungen</a> mit halbautomatischer Bewertung (NLP) mit <a href={{ athenaUrl }}>Athena</a>."
             },
             "fileUpload": {
                 "text": "<a href={{ fileUploadUrl }}>Übungen zum Hochladen von Dateien</a> mit manueller Bewertung."
