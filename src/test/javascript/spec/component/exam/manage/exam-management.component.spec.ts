@@ -123,7 +123,7 @@ describe('Exam Management Component', () => {
         expect(comp.exams[0].latestIndividualEndDate).toEqual(examInformationDTO.latestIndividualEndDate);
     });
 
-    it('should call findAllExamsForCourse on examListModification event being fired after registering for exam changes ', () => {
+    it('should call findAllExamsForCourse on examListModification event being fired after registering for exam changes', () => {
         // GIVEN
         comp.course = course;
         const responseFakeExams = { body: [exam] } as HttpResponse<Exam[]>;
@@ -138,7 +138,7 @@ describe('Exam Management Component', () => {
         expect(comp.exams).toEqual([exam]);
     });
 
-    it('should return false for examHasFinished when component has no exam information ', () => {
+    it('should return false for examHasFinished when component has no exam information', () => {
         // GIVEN
         exam.latestIndividualEndDate = undefined;
 
@@ -149,7 +149,7 @@ describe('Exam Management Component', () => {
         expect(examHasFinished).toBeFalse();
     });
 
-    it('should return true for examHasFinished when exam is in the past ', () => {
+    it('should return true for examHasFinished when exam is in the past', () => {
         // GIVEN
         exam.latestIndividualEndDate = dayjs().subtract(1, 'days');
 
@@ -160,7 +160,7 @@ describe('Exam Management Component', () => {
         expect(examHasFinished).toBeTrue();
     });
 
-    it('should return false for examHasFinished when exam is in the future ', () => {
+    it('should return false for examHasFinished when exam is in the future', () => {
         // GIVEN
         exam.latestIndividualEndDate = dayjs().add(1, 'minute');
 
@@ -171,7 +171,7 @@ describe('Exam Management Component', () => {
         expect(examHasFinished).toBeFalse();
     });
 
-    it('should return exam.id, when item in the exam table is being tracked ', () => {
+    it('should return exam.id, when item in the exam table is being tracked', () => {
         // WHEN
         const itemId = comp.trackId(0, exam);
 
@@ -179,7 +179,7 @@ describe('Exam Management Component', () => {
         expect(itemId).toEqual(exam.id);
     });
 
-    it('should call sortService when sortRows is called ', () => {
+    it('should call sortService when sortRows is called', () => {
         // GIVEN
         jest.spyOn(sortService, 'sortByProperty').mockReturnValue([]);
 

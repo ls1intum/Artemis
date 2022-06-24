@@ -264,7 +264,7 @@ describe('ExampleTextSubmissionComponent', () => {
         expect(comp.unusedTextBlockRefs).toHaveLength(0);
     }));
 
-    it('it should verify correct tutorial submission', fakeAsync(() => {
+    it('should verify correct tutorial submission', fakeAsync(() => {
         // GIVEN
         // @ts-ignore
         activatedRouteSnapshot.paramMap.params = { exerciseId: EXERCISE_ID, exampleSubmissionId: EXAMPLE_SUBMISSION_ID };

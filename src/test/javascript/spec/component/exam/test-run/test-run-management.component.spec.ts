@@ -175,7 +175,7 @@ describe('Test Run Management Component', () => {
     });
 
     describe('sort rows', () => {
-        it('should forward request to ', fakeAsync(() => {
+        it('should forward request to', fakeAsync(() => {
             const sortService = TestBed.inject(SortService);
             jest.spyOn(sortService, 'sortByProperty').mockReturnValue(studentExams);
             fixture.detectChanges();

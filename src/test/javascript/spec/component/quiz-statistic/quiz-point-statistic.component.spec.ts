@@ -119,7 +119,7 @@ describe('QuizExercise Point Statistic Component', () => {
     });
 
     describe('updateDisplayedTimes', () => {
-        it('should update remaining time ', () => {
+        it('should update remaining time', () => {
             // setup
             quizExercise.dueDate = dayjs();
             comp.quizExercise = quizExercise;

@@ -67,7 +67,7 @@ describe('MultipleChoiceQuestionEditComponent', () => {
         );
     });
 
-    it('should parse answer options but not question titles ', () => {
+    it('should parse answer options but not question titles', () => {
         component.domainCommandsFound([
             ['text1', new TestCaseCommand()],
             ['text2', new CorrectOptionCommand()],
@@ -105,7 +105,7 @@ describe('MultipleChoiceQuestionEditComponent', () => {
         expect(component.showMultipleChoiceQuestionPreview).toBeTrue();
     });
 
-    it('should parse answer options with question titles ', () => {
+    it('should parse answer options with question titles', () => {
         component.domainCommandsFound([
             ['text1', new ExplanationCommand()],
             ['text2', new HintCommand()],

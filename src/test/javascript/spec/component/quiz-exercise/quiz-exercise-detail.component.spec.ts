@@ -875,7 +875,7 @@ describe('QuizExercise Management Detail Component', () => {
                 expect(changeDetectorDetectChangesStub).toBeCalled();
             });
 
-            it('should import MC question ', async () => {
+            it('should import MC question', async () => {
                 const { question, answerOption1, answerOption2 } = createValidMCQuestion();
                 await importQuestionAndExpectOneMoreQuestionInQuestions(question);
                 const lastAddedQuestion = comp.quizExercise.quizQuestions![comp.quizExercise.quizQuestions!.length - 1] as MultipleChoiceQuestion;
@@ -1617,7 +1617,7 @@ describe('QuizExercise Management Detail Component', () => {
                     comp.quizExercise.quizQuestions = [question];
                 });
 
-                it('should put reason for negative score ', () => {
+                it('should put reason for negative score', () => {
                     question.points = -1;
                     filterReasonAndExpectMoreThanOneInArray('artemisApp.quizExercise.invalidReasons.questionScore');
                 });
@@ -1708,17 +1708,17 @@ describe('QuizExercise Management Detail Component', () => {
                     jest.restoreAllMocks();
                 });
 
-                it('should put reason for no correct mappings ', () => {
+                it('should put reason for no correct mappings', () => {
                     question.correctMappings = [];
                     filterReasonAndExpectMoreThanOneInArray('artemisApp.quizExercise.invalidReasons.questionCorrectMapping');
                 });
 
-                it('should put reason for unsolvable ', () => {
+                it('should put reason for unsolvable', () => {
                     jest.spyOn(dragAndDropQuestionUtil, 'solve').mockReturnValue([]);
                     filterReasonAndExpectMoreThanOneInArray('artemisApp.quizExercise.invalidReasons.questionUnsolvable');
                 });
 
-                it('should put reason for misleading correct mappings ', () => {
+                it('should put reason for misleading correct mappings', () => {
                     jest.spyOn(dragAndDropQuestionUtil, 'validateNoMisleadingCorrectMapping').mockReturnValue(false);
                     filterReasonAndExpectMoreThanOneInArray('artemisApp.quizExercise.invalidReasons.misleadingCorrectMapping');
                 });
@@ -1770,27 +1770,27 @@ describe('QuizExercise Management Detail Component', () => {
                     jest.restoreAllMocks();
                 });
 
-                it('should put reason for no correct mappings ', () => {
+                it('should put reason for no correct mappings', () => {
                     question.correctMappings = [];
                     filterReasonAndExpectMoreThanOneInArray('artemisApp.quizExercise.invalidReasons.questionCorrectMapping');
                 });
 
-                it('should put reason for misleading correct mappings ', () => {
+                it('should put reason for misleading correct mappings', () => {
                     jest.spyOn(shortAnswerQuestionUtil, 'validateNoMisleadingShortAnswerMapping').mockReturnValue(false);
                     filterReasonAndExpectMoreThanOneInArray('artemisApp.quizExercise.invalidReasons.misleadingCorrectMapping');
                 });
 
-                it('should put reason when every spot has a solution ', () => {
+                it('should put reason when every spot has a solution', () => {
                     jest.spyOn(shortAnswerQuestionUtil, 'everySpotHasASolution').mockReturnValue(false);
                     filterReasonAndExpectMoreThanOneInArray('artemisApp.quizExercise.invalidReasons.shortAnswerQuestionEverySpotHasASolution');
                 });
 
-                it('should put reason when every mapped solution has a spot ', () => {
+                it('should put reason when every mapped solution has a spot', () => {
                     jest.spyOn(shortAnswerQuestionUtil, 'everyMappedSolutionHasASpot').mockReturnValue(false);
                     filterReasonAndExpectMoreThanOneInArray('artemisApp.quizExercise.invalidReasons.shortAnswerQuestionEveryMappedSolutionHasASpot');
                 });
 
-                it('should put reason when there is an empty solution ', () => {
+                it('should put reason when there is an empty solution', () => {
                     shortAnswerSolution1.text = '';
                     filterReasonAndExpectMoreThanOneInArray('artemisApp.quizExercise.invalidReasons.shortAnswerQuestionSolutionHasNoValue');
                 });

@@ -307,7 +307,7 @@ describe('Course Management Service', () => {
         tick();
     }));
 
-    it('should delete a course ', fakeAsync(() => {
+    it('should delete a course', fakeAsync(() => {
         courseManagementService
             .delete(course.id!)
             .pipe(take(1))
@@ -317,7 +317,7 @@ describe('Course Management Service', () => {
         tick();
     }));
 
-    it('should get all exercise details ', fakeAsync(() => {
+    it('should get all exercise details', fakeAsync(() => {
         returnedFromService = [{ ...course }] as Course[];
         courseManagementService
             .getExercisesForManagementOverview(true)

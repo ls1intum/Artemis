@@ -44,7 +44,7 @@ describe('Create Test Run Modal Component', () => {
     });
 
     describe('OnInit', () => {
-        it('should initialise the working time form ', fakeAsync(() => {
+        it('should initialise the working time form', fakeAsync(() => {
             comp.exam = exam;
             // WHEN
             comp.ngOnInit();

@@ -164,7 +164,7 @@ describe('QuizExamSubmissionComponent', () => {
         expect(windowSpy).toHaveBeenCalled();
     });
 
-    it('should create multiple choice submission from users selection ', () => {
+    it('should create multiple choice submission from users selection', () => {
         exercise.quizQuestions = [multipleChoiceQuestion, dragAndDropQuestion, shortAnswerQuestion];
         component.studentSubmission = new QuizSubmission();
         component.exercise = exercise;
