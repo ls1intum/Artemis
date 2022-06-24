@@ -25,16 +25,19 @@ describe('ChartExerciseTypeFilter', () => {
 
         expect(exerciseTypeFilter.numberOfActiveFilters).toBe(5);
 
-        exerciseTypes.forEach((exerciseType, index) => {
+        exerciseTypes.forEach((exerciseType) => {
             expect(exerciseTypeFilter.typeSet.has(exerciseType)).toBeTrue();
             expect(exerciseTypeFilter.filterMap.get(exerciseType)).toBeTrue();
 
             results = exerciseTypeFilter.toggleExerciseType(exerciseType, exercises);
 
-            expect(exerciseTypeFilter.numberOfActiveFilters).toBe(4 - index);
+            expect(exerciseTypeFilter.numberOfActiveFilters).toBe(4);
             expect(exerciseTypeFilter.filterMap.get(exerciseType)).toBeFalse();
 
             expect(results.filter((exercise) => exercise.exerciseType === exerciseType)).toBeEmpty();
+
+            results = exerciseTypeFilter.toggleExerciseType(exerciseType, exercises);
+            expect(exerciseTypeFilter.filterMap.get(exerciseType)).toBeTrue();
         });
     });
 });
