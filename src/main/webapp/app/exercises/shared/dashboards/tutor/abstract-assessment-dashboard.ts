@@ -2,9 +2,9 @@ import { AssessmentType } from 'app/entities/assessment-type.model';
 import { Submission } from 'app/entities/submission.model';
 
 enum AssessmentFilter {
-    UNASSESSED,
-    MANUAL,
-    SEMI_AUTOMATIC,
+    UNASSESSED = 0,
+    MANUAL = 1,
+    SEMI_AUTOMATIC = 2,
 }
 
 enum AssessmentTranslation {

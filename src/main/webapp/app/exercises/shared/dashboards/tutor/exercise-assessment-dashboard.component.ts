@@ -788,10 +788,12 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
         // If the user selects the legend entry, the event consists only of the legend label as string
         const identifier = event.name ?? event;
         let index = 0;
-        let route = ['course-management', this.courseId, this.exercise.type! + '-exercises', this.exerciseId, 'submissions'];
+        const route = ['course-management', this.courseId, this.exercise.type! + '-exercises', this.exerciseId, 'submissions'];
         if (this.isAutomaticAssessedProgrammingExercise) {
+            // the filter option for complaints are an element of {3,4}.
+            // We give an offset of 3 in advance to determine the correct filter option via the chart part names
             index = 3;
-            route = ['course-management', this.courseId, this.exercise.type! + '-exercises', this.exerciseId, 'complaints'];
+            route[5] = 'complaints';
         }
         this.assessments.forEach((data, i) => {
             if (data.name === identifier) {
