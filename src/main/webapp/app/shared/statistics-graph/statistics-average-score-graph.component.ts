@@ -234,8 +234,7 @@ export class StatisticsAverageScoreGraphComponent implements OnInit {
      */
     toggleType(type: ExerciseType): void {
         const filteredAgainstType = this.typeFilter.toggleExerciseType(type, this.exerciseScoresFilteredByPerformanceInterval) as CourseManagementStatisticsModel[];
-        // this.categoryFilter.updateCategoryFilterForCourseStatistics(filteredAgainstType);
-        const filteredAgainstCategory = this.categoryFilter.applyCategoryFilter(this.exerciseScoresFilteredByPerformanceInterval) as CourseManagementStatisticsModel[];
+        const filteredAgainstCategory = this.categoryFilter.applyCurrentFilter(this.exerciseScoresFilteredByPerformanceInterval) as CourseManagementStatisticsModel[];
         this.currentlyDisplayableExercises = this.orderAverageScores(filteredAgainstType.filter((score) => filteredAgainstCategory.includes(score)));
         this.initializeChartWithFilter();
     }
