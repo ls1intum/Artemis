@@ -23,10 +23,10 @@
             "text": "<b>Prüfungsmodus:</b> <a href={{ instructorFeatureUrl }}>Lehrende</a> können Online-Prüfungen mit Übungsvarianten, integrierter Plagiatsprüfung, Testläufen und Studierendenbewertungen erstellen. <a href={{ studentFeatureUrl }}>Studierende</a> nehmen problemlos teil."
         },
         "grading": {
-            "text": "<b>Benotung:</b> Berechnen und Anzeigen von Noten mit konfigurierbaren Notenschlüsseln für Kurse und Prüfungen. Export als csv-Dateien zu Hochschulsysteme (z.B. CAMPUSonline)."
+            "text": "<b>Benotung:</b> Berechnen/Anzeigen von Noten mit konfigurierbaren Notenschlüsseln für Kurse/Prüfungen. Export als csv-Dateien zu Hochschulsysteme (z.B. CAMPUSonline)."
         },
         "assessment": {
-            "text": "<b>Bewertung:</b> Eine Doppelblind-Bewertung mit strukturierten Bewertungskriterien, einer Bewertungsrangliste sowie Bewertungen und Beschwerden verbessert die Konsistenz und Fairness."
+            "text": "<b>Bewertung:</b> Doppelblind-Bewertung mit strukturierten Bewertungskriterien, Ranglisten sowie Bewertungen/Beschwerden verbessert die Konsistenz/Fairness."
         },
         "communication": {
             "text": "<a href={{ communicationUrl }}>Kommunikation:</a> Ankündigungen veröffentlichen. Fragen stellen, Kommentare abgeben und auf andere Beiträge reagieren. Fragen filtern."
@@ -41,7 +41,7 @@
             "text": "<b>Vorlesungen:</b> Hochladen von Vorlesungsfolien für mehrere Einheiten, integrieren von Videostreams, Vorlesungsaufzeichnungen und Übungen in Vorlesungen und definieren von Lernzielen."
         },
         "integratedMarkdownEditor": {
-            "text": "<b>Integrierter Markdown-Editor:</b> Die Lehrenden können Problemstellungen im Markdown-Format definieren, um den Text einfach zu formatieren und Bilder und Links zu integrieren."
+            "text": "<b>Integrierter Markdown-Editor:</b> Die Lehrenden können Problemstellungen im Markdown-Format definieren und zudem Bilder und Links integrieren."
         },
         "plagiarismChecks": {
             "text": "<b>Plagiatsüberprüfungen:</b> Artemis integriert Plagiatsprüfungen für Programmieraufgaben (basierend auf <a href={{ jPlagUrl }}>JPlag</a>), Text- und Modellierungsaufgaben."
