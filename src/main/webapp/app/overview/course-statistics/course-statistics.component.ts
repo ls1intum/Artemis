@@ -790,8 +790,9 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
      * Auxiliary method to reduce code duplication
      * Calculates the number of applied filters, groups the updated set of exercises and updates the set of filtered IDs
      * @param isIncluded indicates whether the updated filter is now selected or deselected and updates the filtered exercise IDs accordingly
+     * @private
      */
-    performFilteredChartSetup(isIncluded: boolean) {
+    private performFilteredChartSetup(isIncluded: boolean) {
         this.calculateNumberOfAppliedFilters();
         this.groupExercisesByType(this.courseExercisesFilteredByCategories);
         this.filterExerciseIDsForCategorySelection(!isIncluded);
