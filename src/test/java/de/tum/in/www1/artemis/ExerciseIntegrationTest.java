@@ -663,4 +663,34 @@ public class ExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitb
     public void testGetExerciseTitleForNonExistingExercise() throws Exception {
         request.get("/api/exercises/12312321321/title", HttpStatus.NOT_FOUND, String.class);
     }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void testGetLatestDueDate() throws Exception {
+        Course courseWithOneReleasedTextExercise = database.addCourseWithOneReleasedTextExercise();
+        Exercise exercise = (Exercise) courseWithOneReleasedTextExercise.getExercises().toArray()[0];
+        database.createAndSaveParticipationForExercise(exercise, "student1");
+        StudentParticipation studentParticipation2 = database.createAndSaveParticipationForExercise(exercise, "student2");
+        StudentParticipation studentParticipation3 = database.createAndSaveParticipationForExercise(exercise, "student3");
+
+        studentParticipation2.setIndividualDueDate(exercise.getDueDate().plusHours(2));
+        studentParticipation3.setIndividualDueDate(exercise.getDueDate().plusHours(4));
+        participationRepository.save(studentParticipation2);
+        participationRepository.save(studentParticipation3);
+
+        ZonedDateTime latestDueDate = request.get("/api/exercises/" + exercise.getId() + "/latest-due-date", HttpStatus.OK, ZonedDateTime.class);
+        assertThat(latestDueDate).isEqualToIgnoringNanos(studentParticipation3.getIndividualDueDate());
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void testGetLatestDueDateWhenNoIndividualDeadline() throws Exception {
+        Course courseWithOneReleasedTextExercise = database.addCourseWithOneReleasedTextExercise();
+        Exercise exercise = (Exercise) courseWithOneReleasedTextExercise.getExercises().toArray()[0];
+        database.createAndSaveParticipationForExercise(exercise, "student1");
+        database.createAndSaveParticipationForExercise(exercise, "student2");
+
+        ZonedDateTime latestDueDate = request.get("/api/exercises/" + exercise.getId() + "/latest-due-date", HttpStatus.OK, ZonedDateTime.class);
+        assertThat(latestDueDate).isEqualToIgnoringNanos(exercise.getDueDate());
+    }
 }
