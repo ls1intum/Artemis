@@ -9,10 +9,13 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismComparison;
+import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismStatus;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismComparisonRepository;
+import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismResultRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.plagiarism.PlagiarismService;
@@ -39,13 +42,20 @@ public class PlagiarismResource {
 
     private final PlagiarismService plagiarismService;
 
+    private final PlagiarismResultRepository plagiarismResultRepository;
+
+    private final ExerciseRepository exerciseRepository;
+
     public PlagiarismResource(PlagiarismComparisonRepository plagiarismComparisonRepository, CourseRepository courseRepository,
-            AuthorizationCheckService authenticationCheckService, UserRepository userRepository, PlagiarismService plagiarismService) {
+            AuthorizationCheckService authenticationCheckService, UserRepository userRepository, PlagiarismService plagiarismService,
+            PlagiarismResultRepository plagiarismResultRepository, ExerciseRepository exerciseRepository) {
         this.plagiarismComparisonRepository = plagiarismComparisonRepository;
         this.courseRepository = courseRepository;
         this.authenticationCheckService = authenticationCheckService;
         this.userRepository = userRepository;
         this.plagiarismService = plagiarismService;
+        this.plagiarismResultRepository = plagiarismResultRepository;
+        this.exerciseRepository = exerciseRepository;
     }
 
     /**
@@ -110,5 +120,36 @@ public class PlagiarismResource {
         comparisonA.getSubmissionA().setPlagiarismComparison(null);
         comparisonB.getSubmissionB().setPlagiarismComparison(null);
         return ResponseEntity.ok(comparisonA);
+    }
+
+    /**
+     * Cleans up plagiarism results and comparisons
+     * If deleteAll is set to true, all plagiarism results belonging to the exercise are deleted, otherwise only plagiarism comparisons or with status DENIED or CONFIRMED are deleted and old results are deleted as well.
+     *
+     * @param exerciseId the id of the exercise
+     * @param plagiarismResultId the id of plagiarism result
+     * @param deleteAll optional parameter whether all plagiarism results belonging to the exercise and all dependent data should be deleted
+     * @return the ResponseEntity with status 200 (Ok) or with status 400 (Bad Request) if the parameters are invalid
+     */
+    @DeleteMapping("exercises/{exerciseId}/plagiarism-results/{plagiarismResultId}/plagiarism-comparisons")
+    @PreAuthorize("hasRole('INSTRUCTOR')")
+    public ResponseEntity<Void> deletePlagiarismComparisons(@PathVariable("exerciseId") long exerciseId, @PathVariable("plagiarismResultId") long plagiarismResultId,
+            @RequestParam() boolean deleteAll) {
+        log.info("REST request to clean up plagiarism comparisons for exercise with id: {}", exerciseId);
+        Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
+        if (!authenticationCheckService.isAtLeastInstructorForExercise(exercise)) {
+            throw new AccessForbiddenException("Only instructors for this course can access these plaiarism results and comparisons.");
+        }
+        if (deleteAll) {
+            // delete all elements for the given exercise
+            plagiarismResultRepository.deletePlagiarismResultsByExerciseId(exerciseId);
+        }
+        else {
+            // delete all plagiarism comparisons which are not approved or denied
+            plagiarismComparisonRepository.deletePlagiarismComparisonsByPlagiarismResultIdAndStatus(plagiarismResultId, PlagiarismStatus.NONE);
+            // also clean up any old and unused plagiarism results
+            plagiarismResultRepository.deletePlagiarismResultsByIdNotAndExerciseId(plagiarismResultId, exerciseId);
+        }
+        return ResponseEntity.ok().build();
     }
 }
