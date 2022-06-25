@@ -501,6 +501,11 @@ public class TextExerciseResource {
         log.info("Start textPlagiarismDetectionService.checkPlagiarism for exercise {}", exerciseId);
         long start = System.nanoTime();
         TextPlagiarismResult result = textPlagiarismDetectionService.checkPlagiarism(textExercise, similarityThreshold, minimumScore, minimumSize);
+
+        if (result == null) {
+            throw new BadRequestAlertException("Only one active plagiarism check per course allowed", "PlagiarismCheck", "oneActivePlagiarismCheck");
+        }
+
         log.info("Finished textPlagiarismDetectionService.checkPlagiarism for exercise {} with {} comparisons in {}", exerciseId, result.getComparisons().size(),
                 TimeLogUtil.formatDurationFrom(start));
         // TODO: limit the amount temporarily because of database issues

@@ -437,6 +437,11 @@ public class ModelingExerciseResource {
         long start = System.nanoTime();
         log.info("Start modelingPlagiarismDetectionService.checkPlagiarism for exercise {}", exerciseId);
         ModelingPlagiarismResult result = modelingPlagiarismDetectionService.checkPlagiarism(modelingExercise, similarityThreshold / 100, minimumSize, minimumScore);
+
+        if (result == null) {
+            throw new BadRequestAlertException("Only one active plagiarism check per course allowed", "PlagiarismCheck", "oneActivePlagiarismCheck");
+        }
+
         log.info("Finished modelingPlagiarismDetectionService.checkPlagiarism call for {} comparisons in {}", result.getComparisons().size(),
                 TimeLogUtil.formatDurationFrom(start));
         // TODO: limit the amount temporarily because of database issues
