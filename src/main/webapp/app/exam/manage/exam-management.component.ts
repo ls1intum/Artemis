@@ -21,6 +21,7 @@ import { ExamImportComponent } from 'app/exam/manage/exams/exam-import/exam-impo
 @Component({
     selector: 'jhi-exam-management',
     templateUrl: './exam-management.component.html',
+    styleUrls: ['./exam-management.component.scss'],
 })
 export class ExamManagementComponent implements OnInit, OnDestroy {
     course: Course;
