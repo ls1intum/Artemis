@@ -369,26 +369,26 @@ describe('UserManagementComponent', () => {
         const user = new User();
         user.login = '1';
 
-        expect(comp.selectedUsers).toEqual([]);
+        expect(comp.selectedUsers).toBe([]);
         comp.toggleUser(user);
-        expect(comp.selectedUsers).toEqual([user]);
+        expect(comp.selectedUsers).toBe([user]);
         comp.toggleUser(user);
-        expect(comp.selectedUsers).toEqual([]);
+        expect(comp.selectedUsers).toBe([]);
     });
 
     it('should return number of applied filters', () => {
         comp.filters = new UserFilter();
-        expect(comp.filters.numberOfAppliedFilters).toEqual(0);
+        expect(comp.filters.numberOfAppliedFilters).toBe(0);
 
         comp.filters.noCourse = true;
         comp.filters.noAuthority = true;
-        expect(comp.filters.numberOfAppliedFilters).toEqual(2);
+        expect(comp.filters.numberOfAppliedFilters).toBe(2);
 
         comp.filters.authorityFilter.add(AuthorityFilter.ADMIN);
-        expect(comp.filters.numberOfAppliedFilters).toEqual(3);
+        expect(comp.filters.numberOfAppliedFilters).toBe(3);
 
         comp.filters.authorityFilter.delete(AuthorityFilter.ADMIN);
-        expect(comp.filters.numberOfAppliedFilters).toEqual(2);
+        expect(comp.filters.numberOfAppliedFilters).toBe(2);
     });
 
     it('should toggle course filter', () => {
@@ -530,7 +530,7 @@ describe('UserManagementComponent', () => {
         expect(comp.selectedUsers).toEqual(users.filter((user) => user.login !== '1'));
 
         comp.toggleAllUserSelection();
-        expect(comp.selectedUsers).toEqual([]);
+        expect(comp.selectedUsers).toBe([]);
     });
 
     it('should adjust options', () => {

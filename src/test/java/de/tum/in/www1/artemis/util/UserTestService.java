@@ -177,6 +177,10 @@ public class UserTestService {
         }
 
         request.delete("/api/users", HttpStatus.OK, params);
+        for (var user : users) {
+            var receivedUser = userRepository.findById(user.getId());
+            assertThat(receivedUser.isPresent()).isTrue();
+        }
     }
 
     // Test
