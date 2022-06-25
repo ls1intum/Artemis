@@ -59,7 +59,7 @@ public class FeedbackSelector {
 
         Feedback feedback = new Feedback();
         feedback.setCredits(roundCredits(maxCountCredits));
-        feedback.setPositive(feedback.getCredits() >= 0);
+        feedback.setPositiveViaCredits();
         feedback.setReference(buildReferenceString(modelElement));
         feedback.setType(FeedbackType.AUTOMATIC);
         feedback.setResult(result);

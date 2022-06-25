@@ -246,6 +246,9 @@ public class DatabaseUtilService {
     private VideoUnitRepository videoUnitRepository;
 
     @Autowired
+    private OnlineUnitRepository onlineUnitRepository;
+
+    @Autowired
     private OrganizationRepository organizationRepository;
 
     @Autowired
@@ -619,6 +622,13 @@ public class DatabaseUtilService {
         videoUnit.setDescription("Lorem Ipsum");
         videoUnit.setSource("http://video.fake");
         return videoUnitRepository.save(videoUnit);
+    }
+
+    public OnlineUnit createOnlineUnit() {
+        OnlineUnit onlineUnit = new OnlineUnit();
+        onlineUnit.setDescription("Lorem Ipsum");
+        onlineUnit.setSource("http://video.fake");
+        return onlineUnitRepository.save(onlineUnit);
     }
 
     public List<Course> createCoursesWithExercisesAndLectures(boolean withParticipations) throws Exception {
