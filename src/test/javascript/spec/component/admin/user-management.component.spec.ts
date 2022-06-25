@@ -369,11 +369,11 @@ describe('UserManagementComponent', () => {
         const user = new User();
         user.login = '1';
 
-        expect(comp.selectedUsers).toBe([]);
+        expect(comp.selectedUsers).toEqual([]);
         comp.toggleUser(user);
-        expect(comp.selectedUsers).toBe([user]);
+        expect(comp.selectedUsers).toEqual([user]);
         comp.toggleUser(user);
-        expect(comp.selectedUsers).toBe([]);
+        expect(comp.selectedUsers).toEqual([]);
     });
 
     it('should return number of applied filters', () => {
