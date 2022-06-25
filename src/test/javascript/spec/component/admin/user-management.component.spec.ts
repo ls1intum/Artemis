@@ -530,7 +530,7 @@ describe('UserManagementComponent', () => {
         expect(comp.selectedUsers).toEqual(users.filter((user) => user.login !== '1'));
 
         comp.toggleAllUserSelection();
-        expect(comp.selectedUsers).toBe([]);
+        expect(comp.selectedUsers).toEqual([]);
     });
 
     it('should adjust options', () => {
