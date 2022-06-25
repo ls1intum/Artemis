@@ -43,10 +43,20 @@ public class PlagiarismCache {
         // @formatter:on
     }
 
+    /**
+     * Returns the status of the course.
+     * @param courseId courseId used to identify the table entry
+     * @return true if there is an active plagiarism check
+     */
     public boolean isActivePlagiarismCheck(Long courseId) {
         return Optional.ofNullable(activePlagiarismChecksPerCourse.get(courseId)).orElse(false);
     }
 
+    /**
+     * Set the status of the current plagiarism check of each course.
+     * @param courseId used to identify the table entry
+     * @param active if there is a plagiarism check in the course
+     */
     public void setActivePlagiarismCheck(Long courseId, boolean active) {
         activePlagiarismChecksPerCourse.lock(courseId);
         try {
