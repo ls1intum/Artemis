@@ -16,7 +16,7 @@
                 class="col-1 px-0 d-flex justify-content-end align-items-center"
                 role="button"
                 (click)="switchTimeSpan(LEFT)"
-                [ngClass]="{ 'hide-arrow': startDateDisplayed }"
+                [class.hide-arrow]="startDateDisplayed"
             ></fa-icon>
             <div #containerRef class="chart col-md-10 mt-1 justify-content-center align-items-start h-99" [ngClass]="showsCurrentWeek && startDateDisplayed ? 'col-12' : 'col-10'">
                 <ngx-charts-line-chart
@@ -69,7 +69,8 @@
                 <div class="btn-group">
                     <div
                         class="btn"
-                        [ngClass]="{ 'btn-primary selected': !showLifetimeOverview, 'btn-default': showLifetimeOverview }"
+                        [class.btn-primary.selected]="!showLifetimeOverview"
+                        [class.btn-default]="showLifetimeOverview"
                         (click)="displayDefaultChartScope()"
                         ngbTooltip="{{ 'artemisApp.courseStatistics.scopeButton.recentWeekTooltip' | artemisTranslate }}"
                     >
@@ -77,7 +78,8 @@
                     </div>
                     <div
                         class="btn"
-                        [ngClass]="{ 'btn-primary selected': showLifetimeOverview, 'btn-default': !showLifetimeOverview }"
+                        [class.btn-primary.selected]="showLifetimeOverview"
+                        [class.btn-default]="!showLifetimeOverview"
                         (click)="displayLifetimeOverview()"
                         ngbTooltip="{{ 'artemisApp.courseStatistics.scopeButton.lifetimeOverviewTooltip' | artemisTranslate }}"
                     >

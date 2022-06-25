@@ -124,7 +124,7 @@ export class CourseDetailLineChartComponent extends ActiveStudentsChart implemen
             this.average.name = currentAverage.toFixed(2) + '%';
             this.average.value = currentAverage;
         } else {
-            for (let i = 0; i < this.displayedNumberOfWeeks; i++) {
+            for (let i = 0; i < this.currentSpanSize; i++) {
                 this.dataCopy[0].series[i]['value'] = 0;
                 this.absoluteSeries[i]['absoluteValue'] = 0;
             }
