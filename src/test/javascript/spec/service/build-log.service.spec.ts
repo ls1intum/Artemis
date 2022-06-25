@@ -7,7 +7,7 @@ describe('Build Log Service', () => {
     let service: BuildLogService;
     let httpMock: HttpTestingController;
 
-    const resourceUrl = SERVER_API_URL + '/api/repository/42/buildlogs';
+    const resourceUrl = SERVER_API_URL + 'api/repository/42/buildlogs';
 
     beforeEach(() => {
         TestBed.configureTestingModule({

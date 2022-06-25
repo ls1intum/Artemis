@@ -38,7 +38,7 @@ describe('EmojiPickerComponent', () => {
 
         expect(comp.singleImageFunction({ unified: '1F519' } as EmojiData)).toBe('');
         mockThemeService.applyThemeExplicitly(Theme.DARK);
-        expect(comp.singleImageFunction({ unified: '1F519' } as EmojiData)).toBe(SERVER_API_URL + '/public/emoji/1f519.png');
+        expect(comp.singleImageFunction({ unified: '1F519' } as EmojiData)).toBe(SERVER_API_URL + 'public/emoji/1f519.png');
 
         const subSpy = jest.spyOn(comp.themeSubscription, 'unsubscribe');
 

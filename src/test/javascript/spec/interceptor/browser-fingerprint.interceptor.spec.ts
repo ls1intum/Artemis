@@ -23,7 +23,7 @@ describe(`BrowserFingerprintInterceptor`, () => {
     });
 
     const testExpectedFingerprintAndInstanceID = (localFingerprint: string, localInstanceIdentifier: string) => {
-        const requestMock = new HttpRequest('GET', `${SERVER_API_URL}/test`);
+        const requestMock = new HttpRequest('GET', `${SERVER_API_URL}test`);
         const cloneSpy = jest.spyOn(requestMock, 'clone');
         const mockHandler = {
             handle: jest.fn(),
@@ -51,7 +51,7 @@ describe(`BrowserFingerprintInterceptor`, () => {
             instanceIdentifier: of(undefined),
         } as any as BrowserFingerprintService);
 
-        const requestMock = new HttpRequest('GET', `${SERVER_API_URL}/test`);
+        const requestMock = new HttpRequest('GET', `${SERVER_API_URL}test`);
         const cloneSpy = jest.spyOn(requestMock, 'clone');
         const mockHandler = {
             handle: jest.fn(),

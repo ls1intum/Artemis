@@ -314,7 +314,7 @@ export class TextAssessmentService {
 
             // The request is directly routed to athene via nginx
             this.http
-                .post(`${SERVER_API_URL}/athene-tracking/text-exercise-assessment`, trackingObject, {
+                .post(`${SERVER_API_URL}athene-tracking/text-exercise-assessment`, trackingObject, {
                     headers: { 'X-Athene-Tracking-Authorization': submission.atheneTextAssessmentTrackingToken },
                 })
                 .subscribe();

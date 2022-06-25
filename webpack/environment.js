@@ -1,5 +1,7 @@
 module.exports = {
     I18N_HASH: 'generated_hash',
+    // The root URL for API calls, ending with a '/' - for example: `"https://www.jhipster.tech:8081/myservice/"`.
+    // See usage in webpack.custom.js for more info
     SERVER_API_URL: '',
     __VERSION__: process.env.APP_VERSION || inferVersion(),
     __DEBUG_INFO_ENABLED__: false,

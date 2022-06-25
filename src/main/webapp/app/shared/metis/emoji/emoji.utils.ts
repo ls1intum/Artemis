@@ -1,6 +1,6 @@
 import { EmojiData } from '@ctrl/ngx-emoji-mart/ngx-emoji';
 
-const EMOJI_URL = SERVER_API_URL + '/public/emoji/';
+const EMOJI_URL = SERVER_API_URL + 'public/emoji/';
 
 const EMOJIS_TO_REPLACE = [
     '1F519', // back 🔙

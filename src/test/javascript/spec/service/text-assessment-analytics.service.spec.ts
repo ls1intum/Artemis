@@ -50,13 +50,13 @@ describe('TextAssessmentAnalytics Service', () => {
     it('should send assessment event if artemis analytics is enabled', fakeAsync(() => {
         service.analyticsEnabled = true;
         service.sendAssessmentEvent(TextAssessmentEventType.VIEW_AUTOMATIC_SUGGESTION_ORIGIN, FeedbackType.AUTOMATIC, TextBlockType.AUTOMATIC);
-        httpMock.expectOne({ url: `${SERVER_API_URL}/api/analytics/text-assessment/events`, method: 'POST' });
+        httpMock.expectOne({ url: `${SERVER_API_URL}api/analytics/text-assessment/events`, method: 'POST' });
     }));
 
     it('should not send assessment event if artemis analytics is enabled', fakeAsync(() => {
         service.analyticsEnabled = false;
         service.sendAssessmentEvent(TextAssessmentEventType.VIEW_AUTOMATIC_SUGGESTION_ORIGIN, FeedbackType.AUTOMATIC, TextBlockType.AUTOMATIC);
-        httpMock.expectNone({ url: `${SERVER_API_URL}/api/analytics/text-assessment/events`, method: 'POST' });
+        httpMock.expectNone({ url: `${SERVER_API_URL}api/analytics/text-assessment/events`, method: 'POST' });
     }));
 
     it('should subscribe to route parameters if artemis analytics is enabled', fakeAsync(() => {
