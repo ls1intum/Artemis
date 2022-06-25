@@ -24,6 +24,7 @@ import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.plagiarism.text.TextPlagiarismResult;
 import de.tum.in.www1.artemis.service.TextSubmissionExportService;
+import de.tum.in.www1.artemis.service.plagiarism.cache.PlagiarismCacheService;
 import de.tum.in.www1.artemis.service.util.TimeLogUtil;
 
 @Service
@@ -35,9 +36,13 @@ public class TextPlagiarismDetectionService {
 
     private final PlagiarismWebsocketService plagiarismWebsocketService;
 
-    public TextPlagiarismDetectionService(TextSubmissionExportService textSubmissionExportService, PlagiarismWebsocketService plagiarismWebsocketService) {
+    private final PlagiarismCacheService plagiarismCacheService;
+
+    public TextPlagiarismDetectionService(TextSubmissionExportService textSubmissionExportService, PlagiarismWebsocketService plagiarismWebsocketService,
+            PlagiarismCacheService plagiarismCacheService) {
         this.textSubmissionExportService = textSubmissionExportService;
         this.plagiarismWebsocketService = plagiarismWebsocketService;
+        this.plagiarismCacheService = plagiarismCacheService;
     }
 
     /**
@@ -72,6 +77,13 @@ public class TextPlagiarismDetectionService {
      * @throws ExitException is thrown if JPlag exits unexpectedly
      */
     public TextPlagiarismResult checkPlagiarism(TextExercise textExercise, float similarityThreshold, int minimumScore, int minimumSize) throws ExitException {
+        // Only one plagiarism check per course allowed
+        var courseId = textExercise.getCourseViaExerciseGroupOrCourseMember().getId();
+        if (plagiarismCacheService.isActivePlagiarismCheck(courseId)) {
+            return null;
+        }
+        plagiarismCacheService.enablePlagiarismCheck(courseId);
+
         long start = System.nanoTime();
         String topic = plagiarismWebsocketService.getTextExercisePlagiarismCheckTopic(textExercise.getId());
 
@@ -90,6 +102,7 @@ public class TextPlagiarismDetectionService {
             textPlagiarismResult.setExercise(textExercise);
             textPlagiarismResult.setSimilarityDistribution(new int[0]);
 
+            plagiarismCacheService.disablePlagiarismCheck(courseId);
             return textPlagiarismResult;
         }
 
@@ -143,6 +156,7 @@ public class TextPlagiarismDetectionService {
 
         log.info("JPlag text comparison for {} submissions done in {}", submissionsSize, TimeLogUtil.formatDurationFrom(start));
         plagiarismWebsocketService.notifyInstructorAboutPlagiarismState(topic, PlagiarismCheckState.COMPLETED, List.of());
+        plagiarismCacheService.disablePlagiarismCheck(courseId);
         return textPlagiarismResult;
     }
 }

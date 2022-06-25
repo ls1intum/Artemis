@@ -23,6 +23,7 @@ import de.tum.in.www1.artemis.domain.plagiarism.modeling.ModelingPlagiarismResul
 import de.tum.in.www1.artemis.domain.plagiarism.modeling.ModelingSubmissionElement;
 import de.tum.in.www1.artemis.service.compass.umlmodel.UMLDiagram;
 import de.tum.in.www1.artemis.service.compass.umlmodel.parsers.UMLModelParser;
+import de.tum.in.www1.artemis.service.plagiarism.cache.PlagiarismCacheService;
 
 @Service
 public class ModelingPlagiarismDetectionService {
@@ -31,8 +32,11 @@ public class ModelingPlagiarismDetectionService {
 
     private final PlagiarismWebsocketService plagiarismWebsocketService;
 
-    public ModelingPlagiarismDetectionService(PlagiarismWebsocketService plagiarismWebsocketService) {
+    private final PlagiarismCacheService plagiarismCacheService;
+
+    public ModelingPlagiarismDetectionService(PlagiarismWebsocketService plagiarismWebsocketService, PlagiarismCacheService plagiarismCacheService) {
         this.plagiarismWebsocketService = plagiarismWebsocketService;
+        this.plagiarismCacheService = plagiarismCacheService;
     }
 
     /**
@@ -46,6 +50,12 @@ public class ModelingPlagiarismDetectionService {
      */
     public ModelingPlagiarismResult checkPlagiarism(ModelingExercise exerciseWithParticipationsSubmissionsResults, double minimumSimilarity, int minimumModelSize,
             int minimumScore) {
+        var courseId = exerciseWithParticipationsSubmissionsResults.getCourseViaExerciseGroupOrCourseMember().getId();
+        if (plagiarismCacheService.isActivePlagiarismCheck(courseId)) {
+            return null;
+        }
+        plagiarismCacheService.enablePlagiarismCheck(courseId);
+
         final List<ModelingSubmission> modelingSubmissions = modelingSubmissionsForComparison(exerciseWithParticipationsSubmissionsResults);
 
         log.info("Found {} modeling submissions in exercise {}", modelingSubmissions.size(), exerciseWithParticipationsSubmissionsResults.getId());
@@ -54,6 +64,8 @@ public class ModelingPlagiarismDetectionService {
         ModelingPlagiarismResult result = checkPlagiarism(modelingSubmissions, minimumSimilarity, minimumModelSize, minimumScore, exerciseId);
 
         result.setExercise(exerciseWithParticipationsSubmissionsResults);
+
+        plagiarismCacheService.disablePlagiarismCheck(courseId);
 
         return result;
     }
