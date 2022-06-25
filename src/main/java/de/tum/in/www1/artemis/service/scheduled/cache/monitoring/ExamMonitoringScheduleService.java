@@ -119,6 +119,23 @@ public class ExamMonitoringScheduleService {
     }
 
     /**
+     * Send all exam actions to specific user.
+     *
+     * @param examId    identifies the cache
+     * @param login     user to send
+     */
+    public void sendAllExamActionsToUser(Long examId, String login) {
+        var examActivities = ((ExamMonitoringCache) examCache.getTransientWriteCacheFor(examId)).getActivities();
+
+        for (var examActivity : examActivities.values()) {
+            for (var examAction : examActivity.getExamActions()) {
+                // messagingService.sendMessage("/topic/exam-monitoring/" + examId + "/action", examAction);
+                messagingService.convertAndSendToUser(login, "/topic/exam-monitoring/" + examId + "/action", examAction);
+            }
+        }
+    }
+
+    /**
      * This method schedules all exam activity save tasks after a server (re-)start.
      */
     public void startSchedule() {

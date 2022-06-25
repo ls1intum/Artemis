@@ -1,6 +1,6 @@
 import {
     getColor,
-    getCurrentAmountOfStudentsPerExercises,
+    getCurrentExercisePerStudent,
     getSavedExerciseActionsGroupedByActivityId,
     groupActionsByActivityId,
     groupActionsByTimestamp,
@@ -72,14 +72,14 @@ describe('Monitoring charts helper methods', () => {
     });
 
     it('should get current amount of students per exercise - 0', () => {
-        const amount = getCurrentAmountOfStudentsPerExercises([]);
+        const amount = getCurrentExercisePerStudent([]);
         expect(amount).toEqual(new Map());
     });
 
     it('should get current amount of students per exercise - 1', () => {
         const action = createExamActionBasedOnType(ExamActionType.SWITCHED_EXERCISE);
         action.examActivityId = 0;
-        const amount = getCurrentAmountOfStudentsPerExercises([action]);
+        const amount = getCurrentExercisePerStudent([action]);
         const expectedMap = new Map();
         expectedMap.set(0, 1);
         expect(amount).toEqual(expectedMap);
@@ -90,7 +90,7 @@ describe('Monitoring charts helper methods', () => {
         action1.timestamp = dayjs();
         const action2 = new SwitchedExerciseAction(1);
         action2.timestamp = dayjs().add(1, 'hour');
-        const amount = getCurrentAmountOfStudentsPerExercises([action1, action2]);
+        const amount = getCurrentExercisePerStudent([action1, action2]);
         const expectedMap = new Map();
         expectedMap.set(1, 1);
         expect(amount).toEqual(expectedMap);
@@ -101,7 +101,7 @@ describe('Monitoring charts helper methods', () => {
         action1.examActivityId = 1;
         const action2 = new SwitchedExerciseAction(2);
         action2.examActivityId = 2;
-        const amount = getCurrentAmountOfStudentsPerExercises([action1, action2]);
+        const amount = getCurrentExercisePerStudent([action1, action2]);
         const expectedMap = new Map();
         expectedMap.set(1, 1);
         expectedMap.set(2, 1);

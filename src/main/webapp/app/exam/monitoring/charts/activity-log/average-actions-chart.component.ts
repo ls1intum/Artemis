@@ -36,6 +36,7 @@ export class AverageActionsChartComponent extends ChartComponent implements OnIn
      * Create and initialize the data for the chart.
      */
     override initData() {
+        super.initData();
         this.createChartData();
     }
 

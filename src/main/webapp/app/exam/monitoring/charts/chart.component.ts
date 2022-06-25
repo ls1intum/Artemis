@@ -34,7 +34,7 @@ export abstract class ChartComponent {
 
     protected constructor(
         private route: ActivatedRoute,
-        private examMonitoringWebsocketService: ExamMonitoringWebsocketService,
+        protected examMonitoringWebsocketService: ExamMonitoringWebsocketService,
         chartIdentifierKey: string,
         legend: boolean,
         colors?: string[],
@@ -61,8 +61,8 @@ export abstract class ChartComponent {
         });
 
         this.examActionSubscription = this.examMonitoringWebsocketService.getExamMonitoringObservable(this.examId)?.subscribe((examAction) => {
-            if (examAction) {
-                this.filteredExamActions.push(examAction);
+            if (examAction && this.filterRenderedData(examAction)) {
+                this.evaluateAndAddAction(examAction);
             }
         });
     }
@@ -78,7 +78,6 @@ export abstract class ChartComponent {
     protected initRenderRate(seconds: number) {
         // Trigger change detection every x seconds and filter the data
         setInterval(() => {
-            this.filteredExamActions = [...this.filteredExamActions.filter((action) => this.filterRenderedData(action))];
             this.updateData();
         }, seconds * 1000);
     }
@@ -86,7 +85,10 @@ export abstract class ChartComponent {
     /**
      * Create and initialize the data for the chart.
      */
-    abstract initData(): void;
+    initData(): void {
+        this.filteredExamActions.push(...(this.examMonitoringWebsocketService.cachedExamActions.get(this.examId) ?? []));
+        this.filteredExamActions = [...this.filteredExamActions.filter((action) => this.filterRenderedData(action))];
+    }
 
     /**
      * Updates the data for the chart.
@@ -99,6 +101,14 @@ export abstract class ChartComponent {
      */
     filterRenderedData(examAction: ExamAction): boolean {
         return true;
+    }
+
+    /**
+     * The default case is that we don't evaluate the action in this place and simply add it. This evaluation is adapted in subclasses.
+     * @param examAction
+     */
+    evaluateAndAddAction(examAction: ExamAction) {
+        this.filteredExamActions.push(examAction);
     }
 
     /**

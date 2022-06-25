@@ -32,6 +32,7 @@ export class CategoryActionsChartComponent extends ChartComponent implements OnI
      * Create and initialize the data for the chart.
      */
     override initData() {
+        super.initData();
         this.createChartData();
     }
 

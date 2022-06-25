@@ -5,6 +5,7 @@ import { ChartComponent } from 'app/exam/monitoring/charts/chart.component';
 import { NgxChartsSingleSeriesDataEntry } from 'app/shared/chart/ngx-charts-datatypes';
 import { ExamMonitoringWebsocketService } from '../../exam-monitoring-websocket.service';
 import { ActivatedRoute } from '@angular/router';
+import { ExamAction } from '../../../../entities/exam-user-activity.model';
 
 @Component({
     selector: 'jhi-total-actions-chart',
@@ -31,6 +32,7 @@ export class TotalActionsChartComponent extends ChartComponent implements OnInit
      * Create and initialize the data for the chart.
      */
     override initData() {
+        super.initData();
         this.createChartData();
     }
 
@@ -46,10 +48,11 @@ export class TotalActionsChartComponent extends ChartComponent implements OnInit
      * @private
      */
     private createChartData() {
+        const lastXTimestamps = this.getLastXTimestamps();
         const groupedByTimestamp = groupActionsByTimestamp(this.filteredExamActions);
         const chartData: NgxChartsSingleSeriesDataEntry[] = [];
         let amount = 0;
-        for (const timestamp of this.getLastXTimestamps()) {
+        for (const timestamp of lastXTimestamps) {
             const key = timestamp.toString();
             if (key in groupedByTimestamp) {
                 amount += groupedByTimestamp[key].length;

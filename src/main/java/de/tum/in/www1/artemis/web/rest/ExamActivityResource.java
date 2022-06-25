@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.web.rest;
 
+import java.security.Principal;
+
 import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
@@ -29,5 +31,15 @@ public class ExamActivityResource {
     @MessageMapping("/topic/exam-monitoring/{examId}/actions")
     public void updatePerformedExamActions(@DestinationVariable Long examId, @Payload ExamAction action) {
         examMonitoringScheduleService.addExamActions(examId, action);
+    }
+
+    /**
+     * Receives a request by the user to send the initial actions to the users' client
+     *
+     * @param examId    the exam to which the student exams belong to
+     */
+    @MessageMapping("/topic/exam-monitoring/{examId}/load-actions")
+    public void loadAllActions(@DestinationVariable Long examId, Principal principal) {
+        examMonitoringScheduleService.sendAllExamActionsToUser(examId, principal.getName());
     }
 }

@@ -6,6 +6,8 @@ import { Exam } from 'app/entities/exam.model';
 import { HttpResponse } from '@angular/common/http';
 import { ExamMonitoringService } from './exam-monitoring.service';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { ExamAction } from '../../entities/exam-user-activity.model';
+import { ExamMonitoringWebsocketService } from './exam-monitoring-websocket.service';
 
 export class TableContent {
     translateValue: string;
@@ -31,9 +33,13 @@ export class ExamMonitoringComponent implements OnInit, OnDestroy {
 
     // Subscriptions
     private routeSubscription?: Subscription;
+    private examMonitoringSubscription?: Subscription;
 
     private examId: number;
     private courseId: number;
+
+    // Exam Actions
+    examActions: ExamAction[] = [];
 
     exam: Exam;
 
@@ -41,6 +47,7 @@ export class ExamMonitoringComponent implements OnInit, OnDestroy {
         private route: ActivatedRoute,
         private examManagementService: ExamManagementService,
         private examMonitoringService: ExamMonitoringService,
+        private examMonitoringWebsocketService: ExamMonitoringWebsocketService,
         private artemisDataPipe: ArtemisDatePipe,
     ) {}
 
@@ -54,7 +61,16 @@ export class ExamMonitoringComponent implements OnInit, OnDestroy {
             this.exam = examResponse.body!;
             this.examMonitoringService.notifyExamSubscribers(this.exam);
 
+            this.examMonitoringSubscription = this.examMonitoringWebsocketService.subscribeForLatestExamAction(this.exam!).subscribe((examAction) => {
+                if (examAction) {
+                    this.examActions.push(examAction);
+                }
+            });
+
             this.initTable();
+
+            // Load initial data once all subscriptions are ready
+            setTimeout(() => this.examMonitoringWebsocketService.loadInitialActions(this.exam), 5 * 1000);
         });
     }
 
@@ -79,5 +95,6 @@ export class ExamMonitoringComponent implements OnInit, OnDestroy {
 
     ngOnDestroy() {
         this.routeSubscription?.unsubscribe();
+        this.examMonitoringWebsocketService.unsubscribeForExamAction(this.exam!);
     }
 }
