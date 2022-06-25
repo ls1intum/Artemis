@@ -4,6 +4,8 @@
             "type": "Code-Hinweis",
             "entry": "Eintrag",
             "entryType": "Typ (V/S)",
+            "lineOfCode": "1 Code-Zeile",
+            "linesOfCode": "{{ lines }} Code-Zeilen",
             "entryTypeTooltip": "Definiert, ob dieser Eintrag für einen strukturellen (S) oder verhaltensweisen (V) Test erstellt wurde.",
             "entryAbbreviation": {
                 "structural": "S",

@@ -2,33 +2,49 @@
     <span jhiTranslate="artemisApp.codeHint.generation.title"></span>
 </h2>
 <hr class="mb-4" />
-<div class="row">
-    <div class="col">
-        <button *ngIf="currentStepIndex > 0" class="btn btn-primary" type="button" (click)="onPreviousStep()">Previous</button>
+<div *ngIf="isPerformedByStep?.size && currentStep !== undefined && exercise">
+    <div class="row">
+        <div class="col">
+            <button *ngIf="allowBehavioralEntryGeneration ? currentStep !== 0 : currentStep !== 2" class="btn btn-primary" type="button" (click)="onPreviousStep()">
+                Previous
+            </button>
+        </div>
+        <div class="col text-center status-wrapper">
+            <jhi-code-hint-generation-status
+                [currentStep]="currentStep.valueOf()"
+                [isPerformedByStep]="isPerformedByStep"
+                (onStepChange)="onStepChange($event)"
+            ></jhi-code-hint-generation-status>
+        </div>
+        <div class="col text-end">
+            <jhi-help-icon *ngIf="!isNextStepAvailable()" placement="auto" text="artemisApp.codeHint.generation.nextTooltip"></jhi-help-icon>
+            <button *ngIf="currentStep !== 3" class="btn btn-primary" type="button" [disabled]="!isNextStepAvailable()" (click)="onNextStep()">Next</button>
+        </div>
     </div>
-    <div class="col text-center status-wrapper">
-        <jhi-code-hint-generation-status
-            [currentStep]="currentStepIndex"
-            [performedDiffStep]="stepStatus[0]"
-            [performedCoverageStep]="stepStatus[1]"
-            [performedSolutionEntryStep]="stepStatus[2]"
-            [performedCodeHintsStep]="stepStatus[3]"
-            (onStepChange)="onStepChange($event)"
-        ></jhi-code-hint-generation-status>
-    </div>
-    <div class="col text-end">
-        <jhi-help-icon *ngIf="!isNextStepAvailable()" placement="auto" text="artemisApp.codeHint.generation.nextTooltip"></jhi-help-icon>
-        <button *ngIf="currentStepIndex < 3" class="btn btn-primary" type="button" [disabled]="!isNextStepAvailable()" (click)="onNextStep()">Next</button>
-    </div>
+
+    <hr />
+    <ng-container *ngIf="exercise">
+        <jhi-diff-generation-step
+            *ngIf="allowBehavioralEntryGeneration"
+            [hidden]="currentStep.valueOf() !== GenerationStep.GIT_DIFF.valueOf()"
+            [exercise]="exercise!"
+            (onGitDiffLoaded)="onDiffReportLoaded($event)"
+        ></jhi-diff-generation-step>
+        <jhi-coverage-generation-step
+            *ngIf="allowBehavioralEntryGeneration"
+            [hidden]="currentStep !== GenerationStep.COVERAGE"
+            [exercise]="exercise!"
+            (onCoverageLoaded)="onCoverageReportLoaded($event)"
+        ></jhi-coverage-generation-step>
+        <jhi-solution-entry-generation-step
+            [hidden]="currentStep !== GenerationStep.SOLUTION_ENTRIES"
+            [exercise]="exercise!"
+            (onSelectionChanges)="onSolutionEntryChanges($event)"
+        ></jhi-solution-entry-generation-step>
+        <jhi-code-hint-generation-step
+            [hidden]="currentStep !== GenerationStep.CODE_HINTS"
+            [exercise]="exercise!"
+            (onCodeHintsLoaded)="onCodeHintsLoaded($event)"
+        ></jhi-code-hint-generation-step>
+    </ng-container>
 </div>
-<hr />
-<ng-container>
-    <jhi-diff-generation-step [hidden]="currentStepIndex !== 0" [exercise]="exercise!" (onGitDiffLoaded)="onDiffReportLoaded($event)"></jhi-diff-generation-step>
-    <jhi-coverage-generation-step [hidden]="currentStepIndex !== 1" [exercise]="exercise!" (onCoverageLoaded)="onCoverageReportLoaded($event)"></jhi-coverage-generation-step>
-    <jhi-solution-entry-generation-step
-        [hidden]="currentStepIndex !== 2"
-        [exercise]="exercise!"
-        (onSelectionChanges)="onSolutionEntryChanges($event)"
-    ></jhi-solution-entry-generation-step>
-    <jhi-code-hint-generation-step [hidden]="currentStepIndex !== 3" [exercise]="exercise!" (onCodeHintsLoaded)="onCodeHintsLoaded($event)"></jhi-code-hint-generation-step>
-</ng-container>

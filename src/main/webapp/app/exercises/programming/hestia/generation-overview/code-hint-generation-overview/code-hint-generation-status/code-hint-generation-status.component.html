@@ -1,51 +1,51 @@
 <div class="code-hint-generation-wrapper">
     <!-- 1. Step: Git-Diff Report -->
-    <div class="status-step">
-        <div class="d-flex justify-content-center header-icon" (click)="onSelectStep(0)">
-            <fa-icon *ngIf="performedDiffStep" [icon]="faCheck" size="lg" class="check"></fa-icon>
-            <fa-icon *ngIf="!performedDiffStep" [icon]="faDotCircle" [ngClass]="currentStep === 0 ? 'current' : 'unset'"></fa-icon>
-        </div>
-        <div class="col status-step-content">
-            <span class="row text-center" [ngClass]="currentStep === 0 ? 'selected-label' : ''" jhiTranslate="artemisApp.codeHint.generation.step1.name">Git-Diff Report</span>
-            <jhi-help-icon placement="auto" text="artemisApp.codeHint.generation.step1.description"></jhi-help-icon>
-        </div>
-    </div>
-    <div class="connector" [ngClass]="currentStep > 0 ? (!performedCoverageStep ? 'current' : 'check') : 'unset'"></div>
+    <jhi-code-hint-generation-status-step
+        *ngIf="isPerformedByStep.get(GenerationStep.GIT_DIFF) !== undefined"
+        [currentlySelected]="currentStep === GenerationStep.GIT_DIFF"
+        [isPerformed]="isPerformedByStep.get(GenerationStep.GIT_DIFF)!"
+        [labelTranslationKey]="'artemisApp.codeHint.generation.step1.name'"
+        [descriptionTranslationKey]="'artemisApp.codeHint.generation.step1.description'"
+        (click)="onSelectStep(GenerationStep.COVERAGE)"
+    ></jhi-code-hint-generation-status-step>
+
+    <div
+        class="connector"
+        *ngIf="isPerformedByStep.get(GenerationStep.GIT_DIFF) !== undefined"
+        [ngClass]="currentStep > 0 ? (!isPerformedByStep.get(GenerationStep.COVERAGE)! ? 'current' : 'check') : 'unset'"
+    ></div>
+
     <!-- 2. Step: Testwise Coverage Report -->
-    <div class="status-step">
-        <div class="d-flex justify-content-center header-icon" (click)="onSelectStep(1)">
-            <fa-icon *ngIf="performedCoverageStep" [icon]="faCheck" class="check"></fa-icon>
-            <fa-icon *ngIf="!performedCoverageStep" [icon]="faDotCircle" [ngClass]="currentStep === 1 ? 'current' : 'unset'"></fa-icon>
-        </div>
-        <div class="col status-step-content">
-            <span class="row text-center" [ngClass]="currentStep === 1 ? 'selected-label' : ''" jhiTranslate="artemisApp.codeHint.generation.step2.name">Coverage Report</span>
-            <jhi-help-icon placement="auto" text="artemisApp.codeHint.generation.step2.description"></jhi-help-icon>
-        </div>
-    </div>
-    <div class="connector" [ngClass]="currentStep > 1 ? (!performedSolutionEntryStep ? 'current' : 'check') : 'unset'"></div>
+    <jhi-code-hint-generation-status-step
+        *ngIf="isPerformedByStep.get(GenerationStep.COVERAGE) !== undefined"
+        [currentlySelected]="currentStep === GenerationStep.COVERAGE"
+        [isPerformed]="isPerformedByStep.get(GenerationStep.COVERAGE)!"
+        [labelTranslationKey]="'artemisApp.codeHint.generation.step2.name'"
+        [descriptionTranslationKey]="'artemisApp.codeHint.generation.step2.description'"
+        (click)="onSelectStep(GenerationStep.COVERAGE)"
+    ></jhi-code-hint-generation-status-step>
+    <div
+        class="connector"
+        *ngIf="isPerformedByStep.get(GenerationStep.COVERAGE) !== undefined"
+        [ngClass]="currentStep > 1 ? (!isPerformedByStep.get(GenerationStep.SOLUTION_ENTRIES)! ? 'current' : 'check') : 'unset'"
+    ></div>
+
     <!-- 3. Step: Solution Entries -->
-    <div class="status-step">
-        <div class="d-flex justify-content-center header-icon" (click)="onSelectStep(2)">
-            <fa-icon *ngIf="performedSolutionEntryStep" [icon]="faCheck" class="check"></fa-icon>
-            <fa-icon *ngIf="!performedSolutionEntryStep" [icon]="faDotCircle" [ngClass]="currentStep === 2 ? 'current' : 'unset'"></fa-icon>
-        </div>
-        <div class="col status-step-content">
-            <span class="row text-center" [ngClass]="currentStep === 2 ? 'selected-label' : ''" jhiTranslate="artemisApp.codeHint.generation.step3.name">Solution Entries</span>
-            <jhi-help-icon placement="auto" text="artemisApp.codeHint.generation.step3.description"></jhi-help-icon>
-        </div>
-    </div>
-    <div class="connector" [ngClass]="currentStep > 2 ? (!performedCodeHintsStep ? 'current' : 'check') : 'unset'"></div>
+    <jhi-code-hint-generation-status-step
+        [currentlySelected]="currentStep === GenerationStep.SOLUTION_ENTRIES"
+        [isPerformed]="isPerformedByStep.get(GenerationStep.SOLUTION_ENTRIES)!"
+        [labelTranslationKey]="'artemisApp.codeHint.generation.step3.name'"
+        [descriptionTranslationKey]="'artemisApp.codeHint.generation.step3.description'"
+        (click)="onSelectStep(GenerationStep.SOLUTION_ENTRIES)"
+    ></jhi-code-hint-generation-status-step>
+    <div class="connector" [ngClass]="currentStep > 2 ? (!isPerformedByStep.get(GenerationStep.CODE_HINTS)! ? 'current' : 'check') : 'unset'"></div>
+
     <!-- 4. Step: Code Hints -->
-    <div class="status-step">
-        <div class="d-flex justify-content-center header-icon" (click)="onSelectStep(3)">
-            <fa-icon *ngIf="performedCodeHintsStep" [icon]="faCheck" class="check"></fa-icon>
-            <fa-icon *ngIf="!performedCodeHintsStep" [icon]="faDotCircle" [ngClass]="currentStep === 3 ? 'current' : 'unset'"></fa-icon>
-        </div>
-        <div class="col status-step-content">
-            <span class="row JenkinsBuildPlanService.javatext-center" [ngClass]="currentStep === 3 ? 'selected-label' : ''" jhiTranslate="artemisApp.codeHint.generation.step4.name"
-                >Code Hints</span
-            >
-            <jhi-help-icon placement="auto" text="artemisApp.codeHint.generation.step4.description"></jhi-help-icon>
-        </div>
-    </div>
+    <jhi-code-hint-generation-status-step
+        [currentlySelected]="currentStep === GenerationStep.CODE_HINTS"
+        [isPerformed]="isPerformedByStep.get(GenerationStep.CODE_HINTS)!"
+        [labelTranslationKey]="'artemisApp.codeHint.generation.step4.name'"
+        [descriptionTranslationKey]="'artemisApp.codeHint.generation.step4.description'"
+        (click)="onSelectStep(GenerationStep.CODE_HINTS)"
+    ></jhi-code-hint-generation-status-step>
 </div>

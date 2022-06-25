@@ -26,22 +26,22 @@
         border-top: 2px solid;
         margin-top: 1em;
     }
+}
 
-    .status-step {
-        width: 25px;
-        overflow-x: visible;
-        justify-content: flex-start;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
+.status-step {
+    width: 25px;
+    overflow-x: visible;
+    justify-content: flex-start;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
 
-        .status-step-content {
-            min-width: fit-content;
-            white-space: nowrap;
+    .status-step-content {
+        min-width: fit-content;
+        white-space: nowrap;
 
-            .selected-label {
-                font-weight: bold;
-            }
+        .selected-label {
+            font-weight: bold;
         }
     }
 

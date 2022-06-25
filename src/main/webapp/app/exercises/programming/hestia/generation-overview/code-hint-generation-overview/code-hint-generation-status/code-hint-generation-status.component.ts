@@ -1,53 +1,33 @@
-import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
-import { faCheck, faDotCircle } from '@fortawesome/free-solid-svg-icons';
+import { Component, EventEmitter, Input, Output } from '@angular/core';
 
+// using this duplicated enumeration is a workaround, because importing the enum from the exporting component
+// causes the problem that the whole template is not rendered
+enum Copy {
+    GIT_DIFF,
+    COVERAGE,
+    SOLUTION_ENTRIES,
+    CODE_HINTS,
+}
 @Component({
     selector: 'jhi-code-hint-generation-status',
     templateUrl: './code-hint-generation-status.component.html',
     styleUrls: ['./code-hint-generation-status.component.scss'],
 })
-export class CodeHintGenerationStatusComponent implements OnInit {
-    @Input() currentStep: number;
+export class CodeHintGenerationStatusComponent {
+    @Input()
+    currentStep: Copy;
 
-    @Input() performedDiffStep: boolean;
-    @Input() performedCoverageStep: boolean;
-    @Input() performedSolutionEntryStep: boolean;
-    @Input() performedCodeHintsStep: boolean;
+    @Input()
+    isPerformedByStep: Map<Copy, boolean>;
 
-    @Output() onStepChange = new EventEmitter<number>();
+    @Output()
+    onStepChange = new EventEmitter<Copy>();
 
-    faCheck = faCheck;
-    faDotCircle = faDotCircle;
+    readonly GenerationStep = Copy;
 
     constructor() {}
 
-    ngOnInit(): void {}
-
-    onSelectStep(index: number) {
-        if (index === this.currentStep) {
-            return;
-        }
-
-        let allowStepSelection;
-        switch (index) {
-            case 0:
-                allowStepSelection = true;
-                break;
-            case 1:
-                allowStepSelection = this.performedDiffStep;
-                break;
-            case 2:
-                allowStepSelection = this.performedDiffStep && this.performedCoverageStep;
-                break;
-            case 3:
-                allowStepSelection = this.performedDiffStep && this.performedCoverageStep && this.performedSolutionEntryStep;
-                break;
-            default:
-                allowStepSelection = false;
-                break;
-        }
-        if (allowStepSelection) {
-            this.onStepChange.emit(index);
-        }
+    onSelectStep(step: Copy) {
+        this.onStepChange.emit(step);
     }
 }

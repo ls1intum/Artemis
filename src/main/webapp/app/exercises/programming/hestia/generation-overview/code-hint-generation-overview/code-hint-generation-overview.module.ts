@@ -14,6 +14,7 @@ import { CodeHintGenerationOverviewComponent } from 'app/exercises/programming/h
 import { RouterModule } from '@angular/router';
 import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
 import { MatExpansionModule } from '@angular/material/expansion';
+import { CodeHintGenerationStatusStepComponent } from 'app/exercises/programming/hestia/generation-overview/code-hint-generation-overview/code-hint-generation-status/code-hint-generation-status-step.component';
 
 @NgModule({
     imports: [
@@ -38,13 +39,17 @@ import { MatExpansionModule } from '@angular/material/expansion';
         SolutionEntryGenerationStepComponent,
         CodeHintGenerationStepComponent,
         CodeHintGenerationOverviewComponent,
+        CodeHintGenerationStatusStepComponent,
     ],
     exports: [
         CodeHintGenerationStatusComponent,
+        SolutionEntryDetailsModalComponent,
         DiffGenerationStepComponent,
         CoverageGenerationStepComponent,
         SolutionEntryGenerationStepComponent,
         CodeHintGenerationStepComponent,
+        CodeHintGenerationOverviewComponent,
+        CodeHintGenerationStatusStepComponent,
     ],
 })
 export class ArtemisCodeHintGenerationOverviewModule {}

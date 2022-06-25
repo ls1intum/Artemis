@@ -6,6 +6,12 @@ import { ProgrammingExerciseSolutionEntry } from 'app/entities/hestia/programmin
 import { ProgrammingExerciseFullGitDiffReport } from 'app/entities/hestia/programming-exercise-full-git-diff-report.model';
 import { CodeHint } from 'app/entities/hestia/code-hint-model';
 
+export enum CodeHintGenerationStep {
+    GIT_DIFF,
+    COVERAGE,
+    SOLUTION_ENTRIES,
+    CODE_HINTS,
+}
 @Component({
     selector: 'jhi-code-hint-generation-overview',
     templateUrl: './code-hint-generation-overview.component.html',
@@ -14,48 +20,76 @@ import { CodeHint } from 'app/entities/hestia/code-hint-model';
 export class CodeHintGenerationOverviewComponent implements OnInit {
     exercise?: ProgrammingExercise;
 
-    currentStepIndex = 0;
-    stepStatus = [false, false, false, false];
+    currentStep: CodeHintGenerationStep;
+    isPerformedByStep: Map<any, boolean>;
     selectedSolutionEntries?: ProgrammingExerciseSolutionEntry[];
+
+    allowBehavioralEntryGeneration = false;
+
+    readonly GenerationStep = CodeHintGenerationStep;
 
     constructor(private route: ActivatedRoute, private router: Router) {}
 
     ngOnInit() {
         this.route.data.subscribe(({ exercise }) => {
             this.exercise = exercise;
+            // set all steps to unperformed initially
+            this.isPerformedByStep = new Map<CodeHintGenerationStep, boolean>();
+            this.isPerformedByStep.set(CodeHintGenerationStep.SOLUTION_ENTRIES, false);
+            this.isPerformedByStep.set(CodeHintGenerationStep.CODE_HINTS, false);
+            if (exercise.testwiseCoverageEnabled) {
+                this.currentStep = CodeHintGenerationStep.GIT_DIFF;
+                this.allowBehavioralEntryGeneration = true;
+                this.isPerformedByStep.set(CodeHintGenerationStep.GIT_DIFF, false);
+                this.isPerformedByStep.set(CodeHintGenerationStep.COVERAGE, false);
+            } else {
+                this.currentStep = CodeHintGenerationStep.SOLUTION_ENTRIES;
+            }
         });
     }
 
+    setLatestPerformedStep() {
+        const optionalEntry = Array.from(this.isPerformedByStep.entries())
+            .filter((a) => a[1])
+            .sort((a, b) => b[0] - a[0])
+            .first();
+        this.currentStep = optionalEntry === undefined ? this.currentStep : optionalEntry![0];
+    }
+
     isNextStepAvailable(): boolean {
-        return this.stepStatus[this.currentStepIndex];
+        return this.isPerformedByStep.get(this.currentStep) ?? false;
     }
 
     onNextStep() {
-        this.currentStepIndex++;
+        this.currentStep = this.currentStep + 1;
     }
 
     onPreviousStep() {
-        this.currentStepIndex--;
+        this.currentStep = this.currentStep - 1;
     }
 
-    onStepChange(index: number) {
-        this.currentStepIndex = index;
+    onStepChange(step: any) {
+        this.currentStep = step.valueOf();
     }
 
     onDiffReportLoaded(diffReport?: ProgrammingExerciseFullGitDiffReport) {
-        this.stepStatus[0] = diffReport !== undefined;
+        this.isPerformedByStep.set(CodeHintGenerationStep.GIT_DIFF, diffReport !== undefined);
+        this.setLatestPerformedStep();
     }
 
     onCoverageReportLoaded(coverageReport?: CoverageReport) {
-        this.stepStatus[1] = coverageReport !== undefined;
+        this.isPerformedByStep.set(CodeHintGenerationStep.COVERAGE, coverageReport !== undefined);
+        this.setLatestPerformedStep();
     }
 
     onSolutionEntryChanges(entries?: ProgrammingExerciseSolutionEntry[]) {
         this.selectedSolutionEntries = entries;
-        this.stepStatus[2] = entries !== undefined && entries!.length > 0;
+        this.isPerformedByStep.set(CodeHintGenerationStep.SOLUTION_ENTRIES, entries !== undefined && entries!.length > 0);
+        this.setLatestPerformedStep();
     }
 
     onCodeHintsLoaded(codeHints?: CodeHint[]) {
-        this.stepStatus[3] = codeHints !== undefined;
+        this.isPerformedByStep.set(CodeHintGenerationStep.CODE_HINTS, codeHints !== undefined && codeHints!.length > 0);
+        this.setLatestPerformedStep();
     }
 }

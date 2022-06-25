@@ -4,6 +4,8 @@
             "type": "Code Hint",
             "entry": "Entry",
             "entryType": "Type (S/B)",
+            "lineOfCode": "1 line of code",
+            "linesOfCode": "{{ lines }} lines of code",
             "entryTypeTooltip": "Defines whether this entry has been generated for a structural (S) or behavioral (B) test case.",
             "entryAbbreviation": {
                 "structural": "S",

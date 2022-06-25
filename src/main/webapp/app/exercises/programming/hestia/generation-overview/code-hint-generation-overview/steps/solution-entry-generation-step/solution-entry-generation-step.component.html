@@ -12,6 +12,7 @@
         Generate structural entries
     </button>
     <button
+        *ngIf="!!exercise?.testwiseCoverageEnabled"
         type="button"
         class="btn btn-secondary"
         jhiTranslate="artemisApp.codeHint.generation.step3.behavioralEntriesButton.label"
@@ -30,7 +31,7 @@
         Delete all entries
     </button>
 </div>
-<div class="table-responsive" *ngIf="solutionEntries?.size">
+<div class="table-responsive">
     <table class="table table-striped" aria-describedby="showHealthLabel">
         <thead>
             <tr>
@@ -54,8 +55,10 @@
                 <td class="text-left">{{ mapEntry.key.id }}</td>
                 <td class="text-left">{{ mapEntry.key.testCase?.testName }}</td>
                 <td class="text-left">
-                    {{ mapEntry.key.code?.split('\n')?.length }}
-                    {{ (mapEntry.key.code?.split('\n')?.length! === 1 ? 'artemisApp.codeHint.entry' : 'artemisApp.codeHint.entries') | artemisTranslate }}
+                    {{
+                        (mapEntry.key.code?.split('\n')?.length! === 1 ? 'artemisApp.codeHint.lineOfCode' : 'artemisApp.codeHint.linesOfCode')
+                            | artemisTranslate: { lines: mapEntry.key.code?.split('\n')?.length! }
+                    }}
                 </td>
                 <td class="text-left">{{ 'artemisApp.codeHint.entryAbbreviation.' + mapEntry.key.testCase?.type?.toString()?.toLocaleLowerCase() | artemisTranslate }}</td>
                 <td class="text-right">

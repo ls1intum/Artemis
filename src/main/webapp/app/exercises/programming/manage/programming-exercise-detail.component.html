@@ -174,15 +174,17 @@
                             <span jhiTranslate="artemisApp.programmingExercise.createBehavioralSolutionEntriesTitle">Create Behavioral Solution Entries</span>
                         </button>
                     </span>
-                    <a
-                        *ngIf="programmingExercise.isAtLeastTutor && !isExamExercise"
-                        [jhiFeatureToggleLink]="FeatureToggle.ProgrammingExercises"
-                        class="btn btn-outline-primary btn-sm me-1"
-                        [routerLink]="['/course-management', programmingExercise.course?.id, 'programming-exercises', programmingExercise.id, 'code-hint-generation']"
-                        style="margin-bottom: 10px"
-                    >
-                        <span jhiTranslate="artemisApp.programmingExercise.generateCodeHints">Generate Code Hints</span>
-                    </a>
+                    <span class="me-1">
+                        <button
+                            *ngIf="programmingExercise.isAtLeastTutor && !isExamExercise"
+                            [jhiFeatureToggleLink]="FeatureToggle.ProgrammingExercises"
+                            class="btn btn-secondary btn-sm"
+                            [routerLink]="['/course-management', programmingExercise.course?.id, 'programming-exercises', programmingExercise.id, 'code-hint-generation']"
+                            [ngbTooltip]="'artemisApp.programmingExercise.generateCodeHintsTooltip'"
+                        >
+                            <span jhiTranslate="artemisApp.programmingExercise.generateCodeHintsTitle">Generate Code Hints</span>
+                        </button>
+                    </span>
                 </div>
                 <div *ngIf="programmingExercise.isAtLeastEditor">
                     <span class="me-1">

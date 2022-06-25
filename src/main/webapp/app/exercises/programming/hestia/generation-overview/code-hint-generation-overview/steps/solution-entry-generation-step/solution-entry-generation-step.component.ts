@@ -89,6 +89,7 @@ export class SolutionEntryGenerationStepComponent implements OnInit {
                 updatedStructuralEntries.forEach((entry) => updatedSolutionEntries.set(entry, true));
                 this.solutionEntries = updatedSolutionEntries;
                 this.allEntriesSelected = true;
+                this.onSelectionChanges.emit(this.getSelectedEntries());
             },
             error: () => {},
         });
@@ -110,6 +111,7 @@ export class SolutionEntryGenerationStepComponent implements OnInit {
                 updatedBehavioralEntries.forEach((entry) => updatedSolutionEntries.set(entry, true));
                 this.solutionEntries = updatedSolutionEntries;
                 this.allEntriesSelected = true;
+                this.onSelectionChanges.emit(this.getSelectedEntries());
             },
             error: () => {},
         });
