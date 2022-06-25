@@ -131,7 +131,7 @@ describe('ExerciseHint Management Update Component', () => {
 
             // THEN
             expect(service.update).toHaveBeenCalledWith(2, entity);
-            expect(comp.isSaving).toEqual(false);
+            expect(comp.isSaving).toBeFalse();
         }));
 
         it('Should call create service on save for new entity', fakeAsync(() => {
@@ -148,7 +148,7 @@ describe('ExerciseHint Management Update Component', () => {
 
             // THEN
             expect(service.create).toHaveBeenCalledWith(2, entity);
-            expect(comp.isSaving).toEqual(false);
+            expect(comp.isSaving).toBeFalse();
         }));
     });
 });
