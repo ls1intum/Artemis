@@ -354,7 +354,7 @@ describe('TextAssessment Service', () => {
             .subscribe((resp) => expect(resp).toBe(responseNumberOfTutors));
 
         const req = httpMock.expectOne({
-            url: `/api/analytics/text-assessment/courses/1/text-exercises/1/tutors-involved`,
+            url: `${SERVER_API_URL}api/analytics/text-assessment/courses/1/text-exercises/1/tutors-involved`,
             method: 'GET',
         });
         req.flush(responseNumberOfTutors);
