@@ -2,7 +2,16 @@
     <h6>{{ solutionEntry.filePath }}</h6>
 </div>
 <div class="d-flex flex-row">
-    <jhi-ace-editor #editor [mode]="'java'" [readOnly]="true" [hidden]="false" [autoUpdateContent]="true" class="jhi-solution-entry-editor"> </jhi-ace-editor>
+    <jhi-ace-editor
+        #editor
+        [mode]="'java'"
+        [readOnly]="!enableEditing"
+        [hidden]="false"
+        [autoUpdateContent]="true"
+        (textChange)="onEditorContentChange($event)"
+        class="jhi-solution-entry-editor"
+    >
+    </jhi-ace-editor>
     <div *ngIf="enableEditing" class="ps-2">
         <button
             jhiDeleteButton

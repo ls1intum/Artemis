@@ -22,7 +22,7 @@ export class SolutionEntryComponent implements OnInit {
     dialogError: Observable<string>;
 
     @Output()
-    onRemoveEntry: EventEmitter<any> = new EventEmitter();
+    onRemoveEntry: EventEmitter<void> = new EventEmitter();
 
     faTimes = faTimes;
 
@@ -34,6 +34,10 @@ export class SolutionEntryComponent implements OnInit {
 
     emitRemovalEvent() {
         this.onRemoveEntry.emit();
+    }
+
+    onEditorContentChange(value: any) {
+        this.solutionEntry.code = value;
     }
 
     private setupEditor() {
