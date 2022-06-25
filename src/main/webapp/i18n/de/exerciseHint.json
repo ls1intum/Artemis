@@ -20,7 +20,7 @@
             "title": "Titel",
             "task": "Task",
             "taskTooltip": "Es wird nicht empfohlen, Code-Hinweise anderen Tasks zuzuweisen, weil die Hinweise speziell für einen Task erstellt wurden.",
-            "displayThreshold": "Anzeige Schwellenwert",
+            "displayThreshold": "Freischalten nach sovielen erfolglosen Einreichungen",
             "displayThresholdTooltip": "Die Anzahl der erfolglosen Einreichungen für eine Aufgabe, nach der dieser Hinweis verfügbar sein soll. Wird dieser Wert auf Null gesetzt, ist der Hinweis immer sichtbar.",
             "description": "Beschreibung",
             "descriptionTooltip": "Dieser Text wird Studierenden angezeigt, die diesen Hint angezeigt bekommen.",
