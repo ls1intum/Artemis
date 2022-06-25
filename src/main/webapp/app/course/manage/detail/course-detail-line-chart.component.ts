@@ -128,6 +128,8 @@ export class CourseDetailLineChartComponent extends ActiveStudentsChart implemen
                 this.dataCopy[0].series[i]['value'] = 0;
                 this.absoluteSeries[i]['absoluteValue'] = 0;
             }
+            this.average.name = '0.00%';
+            this.average.value = 0;
         }
         this.loading = false;
     }
