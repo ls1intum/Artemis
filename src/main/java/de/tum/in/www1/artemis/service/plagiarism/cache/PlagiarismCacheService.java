@@ -2,7 +2,6 @@ package de.tum.in.www1.artemis.service.plagiarism.cache;
 
 import org.springframework.stereotype.Service;
 
-import com.hazelcast.config.Config;
 import com.hazelcast.core.HazelcastInstance;
 
 @Service
@@ -12,10 +11,6 @@ public class PlagiarismCacheService {
 
     public PlagiarismCacheService(HazelcastInstance hazelcastInstance) {
         plagiarismCache = new PlagiarismCache(hazelcastInstance);
-    }
-
-    public static void configureHazelcast(Config config) {
-        PlagiarismCache.configureHazelcast(config);
     }
 
     /**
@@ -32,7 +27,7 @@ public class PlagiarismCacheService {
      * @param courseId current course
      */
     public void setActivePlagiarismCheck(Long courseId) {
-        plagiarismCache.setActivePlagiarismCheck(courseId, true);
+        plagiarismCache.setActivePlagiarismCheck(courseId);
     }
 
     /**
@@ -40,6 +35,6 @@ public class PlagiarismCacheService {
      * @param courseId current course
      */
     public void setInactivePlagiarismCheck(Long courseId) {
-        plagiarismCache.setActivePlagiarismCheck(courseId, false);
+        plagiarismCache.setInactivePlagiarismCheck(courseId);
     }
 }

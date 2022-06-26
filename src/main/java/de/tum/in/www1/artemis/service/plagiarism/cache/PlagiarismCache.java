@@ -2,46 +2,21 @@ package de.tum.in.www1.artemis.service.plagiarism.cache;
 
 import static de.tum.in.www1.artemis.config.Constants.HAZELCAST_ACTIVE_PLAGIARISM_CHECKS_PER_COURSE_CACHE;
 
-import java.util.Optional;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.hazelcast.config.*;
+import com.hazelcast.collection.ISet;
 import com.hazelcast.core.HazelcastInstance;
-import com.hazelcast.map.IMap;
 
 public class PlagiarismCache {
 
     private final Logger logger = LoggerFactory.getLogger(PlagiarismCache.class);
 
-    // We store for each course if there is currently a plagiarism check. Long means the courseId and Boolean indicates whether there is an active plagiarism check or not.
-    private final IMap<Long, Boolean> activePlagiarismChecksPerCourse;
+    // Every course in this set is currently doing a plagiarism check
+    private final ISet<Long> activePlagiarismChecksPerCourse;
 
     public PlagiarismCache(HazelcastInstance hazelcastInstance) {
-        this.activePlagiarismChecksPerCourse = hazelcastInstance.getMap(HAZELCAST_ACTIVE_PLAGIARISM_CHECKS_PER_COURSE_CACHE);
-    }
-
-    /**
-     * Configures Hazelcast for the ExamCache before the HazelcastInstance is created.
-     *
-     * @param config the {@link Config} the ExamCache-specific configuration should be added to
-     */
-    static void configureHazelcast(Config config) {
-        // Important to avoid continuous serialization and de-serialization and the implications on transient fields
-        // of PlagiarismCache
-        // @formatter:off
-        EvictionConfig evictionConfig = new EvictionConfig().setEvictionPolicy(EvictionPolicy.NONE);
-        NearCacheConfig nearCacheConfig = new NearCacheConfig()
-            .setName(HAZELCAST_ACTIVE_PLAGIARISM_CHECKS_PER_COURSE_CACHE + "-local")
-            .setInMemoryFormat(InMemoryFormat.OBJECT).setSerializeKeys(true)
-            .setInvalidateOnChange(true)
-            .setTimeToLiveSeconds(0)
-            .setMaxIdleSeconds(0)
-            .setEvictionConfig(evictionConfig)
-            .setCacheLocalEntries(true);
-        config.getMapConfig(HAZELCAST_ACTIVE_PLAGIARISM_CHECKS_PER_COURSE_CACHE).setNearCacheConfig(nearCacheConfig);
-        // @formatter:on
+        this.activePlagiarismChecksPerCourse = hazelcastInstance.getSet(HAZELCAST_ACTIVE_PLAGIARISM_CHECKS_PER_COURSE_CACHE);
     }
 
     /**
@@ -50,24 +25,22 @@ public class PlagiarismCache {
      * @return true if there is an active plagiarism check
      */
     public boolean isActivePlagiarismCheck(Long courseId) {
-        return Optional.ofNullable(activePlagiarismChecksPerCourse.get(courseId)).orElse(false);
+        return activePlagiarismChecksPerCourse.contains(courseId);
     }
 
     /**
-     * Set the status of the current plagiarism check of each course.
-     * @param courseId used to identify the table entry
-     * @param active if there is a plagiarism check in the course
+     * There is an active plagiarism check in this course. The course id is added.
+     * @param courseId current course
      */
-    public void setActivePlagiarismCheck(Long courseId, boolean active) {
-        activePlagiarismChecksPerCourse.lock(courseId);
-        try {
-            logger.info("Write cache {}", courseId);
-            activePlagiarismChecksPerCourse.set(courseId, active);
-            // We do this get here to deserialize and load the newly written instance into the near cache directly after the writing operation
-            activePlagiarismChecksPerCourse.get(courseId);
-        }
-        finally {
-            activePlagiarismChecksPerCourse.unlock(courseId);
-        }
+    public void setActivePlagiarismCheck(Long courseId) {
+        activePlagiarismChecksPerCourse.add(courseId);
+    }
+
+    /**
+     * There is no active plagiarism check anymore. The course id is removed.
+     * @param courseId current course
+     */
+    public void setInactivePlagiarismCheck(Long courseId) {
+        activePlagiarismChecksPerCourse.remove(courseId);
     }
 }

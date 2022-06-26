@@ -26,7 +26,6 @@ import com.hazelcast.core.Hazelcast;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.spring.context.SpringManagedContext;
 
-import de.tum.in.www1.artemis.service.plagiarism.cache.PlagiarismCacheService;
 import de.tum.in.www1.artemis.service.scheduled.cache.monitoring.ExamMonitoringScheduleService;
 import de.tum.in.www1.artemis.service.scheduled.cache.quiz.QuizScheduleService;
 import tech.jhipster.config.JHipsterProperties;
@@ -160,7 +159,6 @@ public class CacheConfiguration {
 
         QuizScheduleService.configureHazelcast(config);
         ExamMonitoringScheduleService.configureHazelcast(config);
-        PlagiarismCacheService.configureHazelcast(config);
 
         return Hazelcast.newHazelcastInstance(config);
     }
