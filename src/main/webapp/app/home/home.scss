@@ -30,8 +30,9 @@ Main page styles
     }
 }
 
-.login-form {
-    width: 350px;
+.login-col {
+    min-width: 33%;
+    min-height: 150px;
 }
 
 .registration-link {
@@ -42,12 +43,74 @@ Main page styles
     margin-right: 5px;
 }
 
-@media (max-width: 768px) {
-    .col-md-8 {
-        width: 100% !important;
+.row-divided {
+    position: relative;
+}
+
+/* Inspired by https://bootsnipp.com/snippets/AVbzx */
+.vertical-divider {
+    position: absolute;
+    height: calc(50% - 0.5rem);
+    width: auto;
+    top: 50%;
+    left: 50%;
+    margin: 0;
+    padding: 0;
+    line-height: 0;
+    text-align: center;
+    text-transform: uppercase;
+    transform: translateX(-50%);
+
+    &:before,
+    &:after {
+        content: '';
+        position: absolute;
+        left: 50%;
+        z-index: -1;
+        border-left: 1px solid var(--border-color);
+        border-right: 1px solid var(--border-color);
+        width: 0;
+        height: calc(100% - 1rem);
     }
 
-    .col-md-6 {
-        width: 100% !important;
+    &:before {
+        top: -100%;
+    }
+
+    &:after {
+        top: auto;
+        bottom: 0;
+    }
+}
+
+// Inspired by https://stackoverflow.com/a/26634224
+.horizontal-divider {
+    display: flex;
+    align-items: center;
+    text-align: center;
+    margin: 0;
+    padding: 0;
+    line-height: 0;
+    text-transform: uppercase;
+
+    &:before,
+    &:after {
+        content: '';
+        flex: 1;
+        border-bottom: 2px solid var(--border-color);
+    }
+
+    &:before {
+        margin-right: 1em;
+    }
+
+    &:after {
+        margin-left: 1em;
+    }
+}
+
+@media (min-width: 768px) {
+    .saml2-center {
+        margin-top: -40px;
     }
 }

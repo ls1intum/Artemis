@@ -17,6 +17,7 @@ import { PASSWORD_MIN_LENGTH, USERNAME_MIN_LENGTH } from 'app/app.constants';
 import { EventManager } from 'app/core/util/event-manager.service';
 import { AlertService } from 'app/core/util/alert.service';
 import { faCircleNotch } from '@fortawesome/free-solid-svg-icons';
+import { Saml2Config } from 'app/home/saml2-login/saml2.config';
 
 @Component({
     selector: 'jhi-home',
@@ -39,6 +40,8 @@ export class HomeComponent implements OnInit, AfterViewChecked {
     captchaRequired = false;
     credentials: Credentials;
     isRegistrationEnabled = false;
+    passwordLoginDisabled = false;
+    saml2Config: Saml2Config | undefined;
     loading = true;
     inputFocused = false;
 
@@ -53,7 +56,7 @@ export class HomeComponent implements OnInit, AfterViewChecked {
 
     isSubmittingLogin = false;
 
-    profileInfo: ProfileInfo | undefined = undefined;
+    private profileInfo: ProfileInfo | undefined = undefined;
 
     // Icons
     faCircleNotch = faCircleNotch;
@@ -114,8 +117,10 @@ export class HomeComponent implements OnInit, AfterViewChecked {
             this.errorMessageUsername = 'home.errors.tumWarning';
         }
 
+        this.saml2Config = profileInfo?.saml2;
         this.isRegistrationEnabled = !!profileInfo.registrationEnabled;
         this.needsToAcceptTerms = !!profileInfo.needsToAcceptTerms;
+        this.passwordLoginDisabled = !!profileInfo.passwordLoginDisabled && !!this.saml2Config;
     }
 
     registerAuthenticationSuccess() {
@@ -135,11 +140,19 @@ export class HomeComponent implements OnInit, AfterViewChecked {
             return;
         }
 
-        // Focus on the input as soon as it is visible
-        const input = this.renderer.selectRootElement('#username', true);
-        if (input) {
-            input.focus();
-            this.inputFocused = true;
+        // Focus on the main element as soon as it is visible
+        if (!this.passwordLoginDisabled) {
+            const input = this.renderer.selectRootElement('#username', true);
+            if (input) {
+                input.focus();
+                this.inputFocused = true;
+            }
+        } else if (this.saml2Config) {
+            const btn = this.renderer.selectRootElement('#saml2Button', true);
+            if (btn) {
+                btn.focus();
+                this.inputFocused = true;
+            }
         }
 
         // If the session expired or similar display a warning

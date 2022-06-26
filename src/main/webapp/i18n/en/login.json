@@ -1,6 +1,7 @@
 {
     "login": {
         "title": "Sign in",
+        "divider": "or",
         "form": {
             "password": "Password",
             "password.placeholder": "Your password",

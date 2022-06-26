@@ -1,11 +1,17 @@
 {
     "home": {
         "title": "Welcome to Artemis!",
-        "login": "Login",
         "subtitle": "Interactive Learning with Individual Feedback",
-        "please": "Please",
-        "pleaseSignInAccount": "Please sign in with your {{account}} account.",
-        "pleaseSignIn": "Please sign in with your account.",
+        "login": {
+            "traditional": {
+                "pleaseSignInAccount": "Please sign in with your {{account}} account.",
+                "pleaseSignIn": "Please sign in with your account."
+            },
+            "saml2": {
+                "pleaseSignInProvider": "Please sign in with {{provider}}.",
+                "pleaseSignIn": "Please sign in using Single Sign-on."
+            }
+        },
         "logged": {
             "message": "You are logged in as user \"{{username}}\"."
         },
