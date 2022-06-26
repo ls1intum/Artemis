@@ -60,7 +60,7 @@ public abstract class LectureUnit extends DomainObject implements Completable {
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     public Set<LearningGoal> learningGoals = new HashSet<>();
 
-    @OneToMany(mappedBy = "lectureUnit", fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "lectureUnit", fetch = FetchType.LAZY, cascade = CascadeType.REMOVE, orphanRemoval = true)
     @JsonIgnore
     private Set<LectureUnitCompletion> completedUsers = new HashSet<>();
 

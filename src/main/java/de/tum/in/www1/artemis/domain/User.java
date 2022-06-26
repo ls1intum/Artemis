@@ -147,7 +147,7 @@ public class User extends AbstractAuditingEntity implements Participant {
     @JsonIgnoreProperties("user")
     private Set<Organization> organizations = new HashSet<>();
 
-    @OneToMany(mappedBy = "user", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "user", fetch = FetchType.LAZY, cascade = CascadeType.REMOVE, orphanRemoval = true)
     private Set<LectureUnitCompletion> completedLectureUnits = new HashSet<>();
 
     public String getLogin() {

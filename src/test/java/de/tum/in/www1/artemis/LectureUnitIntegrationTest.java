@@ -16,10 +16,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.DomainObject;
 import de.tum.in.www1.artemis.domain.Lecture;
-import de.tum.in.www1.artemis.domain.lecture.AttachmentUnit;
-import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
-import de.tum.in.www1.artemis.domain.lecture.OnlineUnit;
-import de.tum.in.www1.artemis.domain.lecture.TextUnit;
+import de.tum.in.www1.artemis.domain.lecture.*;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.util.ModelFactory;
 
@@ -36,6 +33,9 @@ public class LectureUnitIntegrationTest extends AbstractSpringIntegrationBambooB
 
     @Autowired
     private LectureRepository lectureRepository;
+
+    @Autowired
+    private LectureUnitCompletionRepository lectureUnitCompletionRepository;
 
     private Lecture lecture1;
 
@@ -94,11 +94,32 @@ public class LectureUnitIntegrationTest extends AbstractSpringIntegrationBambooB
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void delteLectureUnit() throws Exception {
+    public void deleteLectureUnit() throws Exception {
         var lectureUnitId = lecture1.getLectureUnits().get(0).getId();
         request.delete("/api/lectures/" + lecture1.getId() + "/lecture-units/" + lectureUnitId, HttpStatus.OK);
         this.lecture1 = lectureRepository.findByIdWithLectureUnitsElseThrow(lecture1.getId());
         assertThat(this.lecture1.getLectureUnits().stream().map(DomainObject::getId)).doesNotContain(lectureUnitId);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void deleteLectureUnit_shouldRemoveCompletions() throws Exception {
+        var lectureUnit = lecture1.getLectureUnits().get(0);
+        var user = userRepo.findOneByLogin("student1").get();
+
+        LectureUnitCompletion completion = new LectureUnitCompletion();
+        completion.setLectureUnit(lectureUnit);
+        completion.setUser(user);
+        completion.setCompletedAt(ZonedDateTime.now().minusDays(1));
+        lectureUnitCompletionRepository.save(completion);
+
+        assertThat(lectureUnitCompletionRepository.findByLectureUnitIdAndUserId(lectureUnit.getId(), user.getId())).isPresent();
+
+        request.delete("/api/lectures/" + lecture1.getId() + "/lecture-units/" + lectureUnit.getId(), HttpStatus.OK);
+
+        this.lecture1 = lectureRepository.findByIdWithLectureUnitsElseThrow(lecture1.getId());
+        assertThat(this.lecture1.getLectureUnits().stream().map(DomainObject::getId)).doesNotContain(lectureUnit.getId());
+        assertThat(lectureUnitCompletionRepository.findByLectureUnitIdAndUserId(lectureUnit.getId(), user.getId())).isEmpty();
     }
 
     @Test
