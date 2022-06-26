@@ -26,6 +26,7 @@ import de.tum.in.www1.artemis.domain.plagiarism.text.TextPlagiarismResult;
 import de.tum.in.www1.artemis.service.TextSubmissionExportService;
 import de.tum.in.www1.artemis.service.plagiarism.cache.PlagiarismCacheService;
 import de.tum.in.www1.artemis.service.util.TimeLogUtil;
+import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 
 @Service
 public class TextPlagiarismDetectionService {
@@ -82,7 +83,7 @@ public class TextPlagiarismDetectionService {
 
         try {
             if (plagiarismCacheService.isActivePlagiarismCheck(courseId)) {
-                return null;
+                throw new BadRequestAlertException("Only one active plagiarism check per course allowed", "PlagiarismCheck", "oneActivePlagiarismCheck");
             }
             plagiarismCacheService.setActivePlagiarismCheck(courseId);
 

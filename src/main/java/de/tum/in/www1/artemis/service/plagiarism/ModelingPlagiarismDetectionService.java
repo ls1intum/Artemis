@@ -24,6 +24,7 @@ import de.tum.in.www1.artemis.domain.plagiarism.modeling.ModelingSubmissionEleme
 import de.tum.in.www1.artemis.service.compass.umlmodel.UMLDiagram;
 import de.tum.in.www1.artemis.service.compass.umlmodel.parsers.UMLModelParser;
 import de.tum.in.www1.artemis.service.plagiarism.cache.PlagiarismCacheService;
+import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 
 @Service
 public class ModelingPlagiarismDetectionService {
@@ -54,7 +55,7 @@ public class ModelingPlagiarismDetectionService {
 
         try {
             if (plagiarismCacheService.isActivePlagiarismCheck(courseId)) {
-                return null;
+                throw new BadRequestAlertException("Only one active plagiarism check per course allowed", "PlagiarismCheck", "oneActivePlagiarismCheck");
             }
             plagiarismCacheService.setActivePlagiarismCheck(courseId);
 
