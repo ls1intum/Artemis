@@ -261,9 +261,9 @@ describe('EditAttachmentUnitComponent', () => {
         attachmentUnitFormStubComponent.formSubmitted.emit(formData);
 
         editAttachmentUnitComponentFixture.whenStable().then(() => {
-            expect(navigateSpy).toHaveBeenCalledTimes(1);
-            expect(updateAttachmentUnitSpy).toHaveBeenCalledTimes(1);
-            expect(updateAttachmentSpy).toHaveBeenCalledTimes(1);
+            expect(navigateSpy).toHaveBeenCalledOnce();
+            expect(updateAttachmentUnitSpy).toHaveBeenCalledOnce();
+            expect(updateAttachmentSpy).toHaveBeenCalledOnce();
             navigateSpy.mockRestore();
         });
     }));

@@ -712,7 +712,7 @@ public class ProgrammingExerciseGradingService {
     /**
      * Update the score given the positive tests score divided by all tests' score.
      * Takes weight, bonus multiplier and absolute bonus points into account.
-     * All tests in this case does not include ones with visibility=never.
+     * All tests in this case do not include ones with visibility=never.
      * @param result                     of the build run.
      * @param allTestCases               of a given programming exercise.
      * @param successfulTestCases        test cases with positive feedback.
@@ -786,7 +786,7 @@ public class ProgrammingExerciseGradingService {
     private double calculateSuccessfulTestPoints(final ProgrammingExercise programmingExercise, final Result result, final Set<ProgrammingExerciseTestCase> successfulTestCases,
             int totalTestCaseCount, double weightSum) {
         double successfulTestPoints = successfulTestCases.stream().mapToDouble(test -> {
-            double credits = calculatePointsForSuccessfulTestCase(result, programmingExercise, test, totalTestCaseCount, weightSum);
+            double credits = calculatePointsForTestCase(result, programmingExercise, test, totalTestCaseCount, weightSum);
             setCreditsForTestCaseFeedback(result, test, credits);
             return credits;
         }).sum();
@@ -841,8 +841,8 @@ public class ProgrammingExerciseGradingService {
      * @param weightSum of all test cases in the exercise.
      * @return the points which should be awarded for successfully completing the test case.
      */
-    private double calculatePointsForSuccessfulTestCase(final Result result, final ProgrammingExercise programmingExercise, final ProgrammingExerciseTestCase test,
-            int totalTestCaseCount, double weightSum) {
+    private double calculatePointsForTestCase(final Result result, final ProgrammingExercise programmingExercise, final ProgrammingExerciseTestCase test, int totalTestCaseCount,
+            double weightSum) {
         final boolean isWeightSumZero = Precision.equals(weightSum, 0, 1E-8);
         final double testPoints;
 
