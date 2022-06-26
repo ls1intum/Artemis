@@ -133,11 +133,11 @@ export function updateCurrentExerciseOfStudent(examAction: ExamAction, currentEx
  */
 export function convertCurrentExercisePerStudentMapToNumberOfStudentsPerExerciseMap(currentExercisePerStudent: Map<number, number | undefined>) {
     const numberOfStudentsPerExercise: Map<number, number> = new Map();
-    currentExercisePerStudent.forEach((student, exercise) => {
-        if (exercise) {
+    for (const exercise of currentExercisePerStudent.values()) {
+        if (exercise !== undefined) {
             numberOfStudentsPerExercise.set(exercise, (numberOfStudentsPerExercise.get(exercise) ?? 0) + 1);
         }
-    });
+    }
     return numberOfStudentsPerExercise;
 }
 

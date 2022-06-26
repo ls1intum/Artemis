@@ -86,8 +86,7 @@ export abstract class ChartComponent {
      * Create and initialize the data for the chart.
      */
     initData(): void {
-        this.filteredExamActions.push(...(this.examMonitoringWebsocketService.cachedExamActions.get(this.examId) ?? []));
-        this.filteredExamActions = [...this.filteredExamActions.filter((action) => this.filterRenderedData(action))];
+        this.filteredExamActions.push(...(this.examMonitoringWebsocketService.cachedExamActions.get(this.examId) ?? []).filter((action) => this.filterRenderedData(action)));
     }
 
     /**

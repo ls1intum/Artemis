@@ -76,36 +76,38 @@ describe('Monitoring charts helper methods', () => {
         expect(amount).toEqual(new Map());
     });
 
-    it('should get current amount of students per exercise - 1', () => {
+    it('should get current exercise of student - 1', () => {
         const action = createExamActionBasedOnType(ExamActionType.SWITCHED_EXERCISE);
         action.examActivityId = 0;
-        const amount = getCurrentExercisePerStudent([action]);
+        const currentExercisePerStudent = getCurrentExercisePerStudent([action]);
         const expectedMap = new Map();
-        expectedMap.set(0, 1);
-        expect(amount).toEqual(expectedMap);
+        expectedMap.set(0, 0);
+        expect(currentExercisePerStudent).toEqual(expectedMap);
     });
 
-    it('should get current amount of students per exercise - ignore multiple switches', () => {
+    it('should get current exercise of student - ignore multiple switches', () => {
         const action1 = new SwitchedExerciseAction(1);
+        action1.examActivityId = 0;
         action1.timestamp = dayjs();
         const action2 = new SwitchedExerciseAction(1);
+        action2.examActivityId = 0;
         action2.timestamp = dayjs().add(1, 'hour');
-        const amount = getCurrentExercisePerStudent([action1, action2]);
+        const currentExercisePerStudent = getCurrentExercisePerStudent([action1, action2]);
         const expectedMap = new Map();
-        expectedMap.set(1, 1);
-        expect(amount).toEqual(expectedMap);
+        expectedMap.set(0, 1);
+        expect(currentExercisePerStudent).toEqual(expectedMap);
     });
 
-    it('should get current amount of students per exercise - multiple values', () => {
+    it('should get current exercise of students - multiple values', () => {
         const action1 = new SwitchedExerciseAction(1);
         action1.examActivityId = 1;
         const action2 = new SwitchedExerciseAction(2);
         action2.examActivityId = 2;
-        const amount = getCurrentExercisePerStudent([action1, action2]);
+        const currentExercisePerStudent = getCurrentExercisePerStudent([action1, action2]);
         const expectedMap = new Map();
         expectedMap.set(1, 1);
-        expectedMap.set(2, 1);
-        expect(amount).toEqual(expectedMap);
+        expectedMap.set(2, 2);
+        expect(currentExercisePerStudent).toEqual(expectedMap);
     });
 
     it('should insert chart data and color for exercise map', () => {

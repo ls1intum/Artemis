@@ -66,7 +66,7 @@ export class ExerciseNavigationChartComponent extends ChartComponent implements 
         const exerciseAmountMap: Map<number, number> = new Map();
         for (const exercises of this.navigatedToPerStudent.values()) {
             exercises.forEach((exercise) => {
-                if (exercise) {
+                if (exercise !== undefined) {
                     exerciseAmountMap.set(exercise, (exerciseAmountMap.get(exercise) ?? 0) + 1);
                 }
             });
