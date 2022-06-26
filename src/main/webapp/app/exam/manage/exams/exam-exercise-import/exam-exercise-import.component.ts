@@ -5,6 +5,7 @@ import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { shortNamePattern } from 'app/shared/constants/input.constants';
+import { AlertService } from 'app/core/util/alert.service';
 
 @Component({
     selector: 'jhi-exam-exercise-import',
@@ -26,7 +27,7 @@ export class ExamExerciseImportComponent implements OnInit {
     // Patterns
     // length of < 3 is also accepted in order to provide more accurate validation error messages
     readonly shortNamePattern = RegExp('(^(?![\\s\\S]))|^[a-zA-Z][a-zA-Z0-9]*$|' + shortNamePattern); // must start with a letter and cannot contain special characters
-    readonly titleNamePattern = '^[a-zA-Z0-9-_ ]+'; // must only contain alphanumeric characters, or whitespaces, or '_' or '-'
+    readonly titleNamePattern = RegExp('^[a-zA-Z0-9-_ ]+'); // must only contain alphanumeric characters, or whitespaces, or '_' or '-'
 
     // Icons
     faCheckDouble = faCheckDouble;
@@ -73,6 +74,7 @@ export class ExamExerciseImportComponent implements OnInit {
         this.containsProgrammingExercises.clear();
         this.initializeMaps();
     }
+
     /**
      * Sets the selected exercise for an exercise group in the selectedExercises Map-
      * The ExerciseGroup is the Key in the Map, the Exercises are stored as a Set as the value.
@@ -147,6 +149,34 @@ export class ExamExerciseImportComponent implements OnInit {
             }
         });
         return exerciseGroups;
+    }
+
+    /**
+     * Method to iterate over all exercise groups and exercises to validate, if the exerciseGroup.title & exercise.title & exercise.shortName are correctly set
+     */
+    public validateUserInput(): boolean {
+        let validConfiguration = true;
+        this.selectedExercises?.forEach((value, key) => {
+            if (!(key.title?.length! > 0)) {
+                validConfiguration = false;
+            }
+            if (value.size > 0) {
+                value.forEach((exercise) => {
+                    let correctTitle;
+                    let correctShortName = true;
+                    if (exercise.type === ExerciseType.PROGRAMMING) {
+                        correctShortName = this.shortNamePattern.test(exercise.shortName!);
+                        correctTitle = this.titleNamePattern.test(exercise.title!);
+                    } else {
+                        correctTitle = exercise.title?.length! > 0;
+                    }
+                    if (!correctTitle || !correctShortName) {
+                        validConfiguration = false;
+                    }
+                });
+            }
+        });
+        return validConfiguration;
     }
 
     /**

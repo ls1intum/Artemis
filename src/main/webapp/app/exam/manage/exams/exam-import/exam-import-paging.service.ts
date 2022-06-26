@@ -8,11 +8,16 @@ import { Exam } from 'app/entities/exam.model';
 type EntityResponseType = SearchResult<Exam>;
 
 @Injectable({ providedIn: 'root' })
-export class ExamPagingService {
+export class ExamImportPagingService {
     public resourceUrl = SERVER_API_URL + 'api/exams';
 
     constructor(private http: HttpClient) {}
 
+    /**
+     * Method to get (possible) exams for import from the server
+     * @param pageable object specifying search parameters
+     * @param withExercises if only exams with exercises should be included in the results
+     */
     searchForExams(pageable: PageableSearch, withExercises: boolean): Observable<EntityResponseType> {
         const params = new HttpParams()
             .set('pageSize', String(pageable.pageSize))

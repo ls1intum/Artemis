@@ -10,28 +10,28 @@ import { FormsModule } from '@angular/forms';
 import { SortDirective } from 'app/shared/sort/sort.directive';
 import { SearchResult } from 'app/shared/table/pageable-table';
 import { ExamImportComponent } from 'app/exam/manage/exams/exam-import/exam-import.component';
-import { ExamPagingService } from 'app/exam/manage/exams/exam-import/exam-paging.service';
+import { ExamImportPagingService } from 'app/exam/manage/exams/exam-import/exam-paging.service';
 import { Exam } from 'app/entities/exam.model';
 
 describe('Exam Import Component', () => {
     let component: ExamImportComponent;
     let fixture: ComponentFixture<ExamImportComponent>;
     let sortService: SortService;
-    let pagingService: ExamPagingService;
+    let pagingService: ExamImportPagingService;
     let activeModal: NgbActiveModal;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, MockModule(FormsModule)],
             declarations: [ExamImportComponent, MockComponent(NgbPagination), MockPipe(ArtemisTranslatePipe), MockDirective(SortByDirective), MockDirective(SortDirective)],
-            providers: [MockProvider(SortService), MockProvider(ExamPagingService), MockProvider(NgbActiveModal)],
+            providers: [MockProvider(SortService), MockProvider(ExamImportPagingService), MockProvider(NgbActiveModal)],
         })
             .compileComponents()
             .then(() => {
                 fixture = TestBed.createComponent(ExamImportComponent);
                 component = fixture.componentInstance;
                 sortService = fixture.debugElement.injector.get(SortService);
-                pagingService = fixture.debugElement.injector.get(ExamPagingService);
+                pagingService = fixture.debugElement.injector.get(ExamImportPagingService);
                 activeModal = TestBed.inject(NgbActiveModal);
             });
     });
@@ -78,7 +78,7 @@ describe('Exam Import Component', () => {
         const activeModalSpy = jest.spyOn(activeModal, 'close');
         const exam = { id: 1 } as Exam;
         // WHEN
-        component.openImport(exam);
+        component.forwardSelectedExam(exam);
 
         // THEN
         expect(activeModalSpy).toHaveBeenCalledOnce();

@@ -96,6 +96,12 @@ export class ExamUpdateComponent implements OnInit {
     save() {
         this.isSaving = true;
         if (this.isImport) {
+            // We validate the user input for the exercise group selection here, so it is only called once the user desires to import the exam
+            if (!this.examExerciseImportComponent.validateUserInput()) {
+                this.alertService.error('artemisApp.examManagement.exerciseImport.invalidExerciseConfiguration');
+                this.isSaving = false;
+                return;
+            }
             this.exam.exerciseGroups = this.examExerciseImportComponent.mapSelectedExercisesToExam();
             console.log(this.exam.exerciseGroups);
             this.subscribeToSaveResponse(this.examManagementService.import(this.course.id!, this.exam));
@@ -124,7 +130,7 @@ export class ExamUpdateComponent implements OnInit {
             // The update() Method is called to update the exercises
             this.examExerciseImportComponent.updateMapsAfterRejectedImport();
             const numberOfInvalidProgrammingExercises = httpErrorResponse.error.numberOfInvalidProgrammingExercises;
-            this.alertService.warning('artemisApp.examManagement.exerciseImport.invalidShortName', { number: numberOfInvalidProgrammingExercises });
+            this.alertService.error('artemisApp.examManagement.exerciseImport.invalidShortName', { number: numberOfInvalidProgrammingExercises });
         } else {
             onError(this.alertService, httpErrorResponse);
         }

@@ -48,7 +48,11 @@
                         <span class="badge bg-primary" *ngIf="exam.testExam">{{ 'artemisApp.examManagement.testExam.testExam' | artemisTranslate }}</span>
                     </td>
                     <td class="col-1">
-                        <jhi-button *ngIf="!subsequentExerciseGroupSelection" (onClick)="openImport(exam)" [title]="'artemisApp.exercise.import.table.doImport'"></jhi-button>
+                        <jhi-button
+                            *ngIf="!subsequentExerciseGroupSelection"
+                            (onClick)="forwardSelectedExam(exam)"
+                            [title]="'artemisApp.exercise.import.table.doImport'"
+                        ></jhi-button>
                         <jhi-button
                             *ngIf="subsequentExerciseGroupSelection"
                             (onClick)="openExerciseSelection(exam)"

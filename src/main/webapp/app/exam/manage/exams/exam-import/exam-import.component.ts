@@ -6,9 +6,7 @@ import { PageableSearch, SearchResult, SortingOrder } from 'app/shared/table/pag
 import { SortService } from 'app/shared/service/sort.service';
 import { faCheck, faSort } from '@fortawesome/free-solid-svg-icons';
 import { Exam } from 'app/entities/exam.model';
-import { ExamPagingService } from 'app/exam/manage/exams/exam-import/exam-paging.service';
-import { ExerciseGroup } from 'app/entities/exercise-group.model';
-import { Exercise } from 'app/entities/exercise.model';
+import { ExamImportPagingService } from 'app/exam/manage/exams/exam-import/exam-import-paging.service';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { onError } from 'app/shared/util/global.utils';
@@ -34,6 +32,7 @@ export class ExamImportComponent implements OnInit {
 
     // boolean to indicate, if the import modal should include the exerciseGroup selection
     @Input() subsequentExerciseGroupSelection: boolean;
+    // Values to specify the target of the exercise group import
     @Input() targetCourseId?: number;
     @Input() targetExamId?: number;
 
@@ -56,7 +55,7 @@ export class ExamImportComponent implements OnInit {
     faCheck = faCheck;
 
     constructor(
-        private pagingService: ExamPagingService,
+        private pagingService: ExamImportPagingService,
         private sortService: SortService,
         private activeModal: NgbActiveModal,
         private examManagementService: ExamManagementService,
@@ -67,6 +66,46 @@ export class ExamImportComponent implements OnInit {
         this.content = { resultsOnPage: [], numberOfPages: 0 };
         this.performSearch(this.sort, 0);
         this.performSearch(this.search, 300);
+    }
+
+    /**
+     * After the user has chosen an Exam, this method is called to load the exercise groups for the selected exam
+     * @param exam the exam for which the exercise groups should be loaded
+     */
+    openExerciseSelection(exam: Exam) {
+        this.examManagementService.findWithExercisesAndWithoutCourseId(exam.id!).subscribe({
+            next: (examRes: HttpResponse<Exam>) => {
+                this.exam = examRes.body!;
+            },
+            error: (res: HttpErrorResponse) => onError(this.alertService, res),
+        });
+    }
+
+    /**
+     * Method to map the Map<ExerciseGroup, Set<Exercises>> selectedExercises to an ExerciseGroup[] with Exercises[] each
+     * and to perform the REST-Call to import the ExerciseGroups to the specified exam.
+     * Called once when user is importing the exam
+     */
+    performImportOfExerciseGroups() {
+        if (!this.examExerciseImportComponent.validateUserInput()) {
+            this.alertService.error('artemisApp.examManagement.exerciseImport.invalidExerciseConfiguration');
+            return;
+        }
+        this.exam!.exerciseGroups = this.examExerciseImportComponent.mapSelectedExercisesToExam();
+        this.examManagementService.importExerciseGroup(this.targetCourseId!, this.targetExamId!, this.exam!.exerciseGroups!).subscribe({
+            next: () => this.activeModal.close(),
+            error: (httpErrorResponse: HttpErrorResponse) => {
+                if (httpErrorResponse.error?.errorKey === 'examContainsProgrammingExercisesWithInvalidShortName') {
+                    this.exam!.exerciseGroups = httpErrorResponse.error.params.exerciseGroups!;
+                    // The updateMapsAfterRejectedImport Method is called to update the exercises
+                    this.examExerciseImportComponent.updateMapsAfterRejectedImport();
+                    const numberOfInvalidProgrammingExercises = httpErrorResponse.error.numberOfInvalidProgrammingExercises;
+                    this.alertService.error('artemisApp.examManagement.exerciseImport.invalidShortName', { number: numberOfInvalidProgrammingExercises });
+                } else {
+                    onError(this.alertService, httpErrorResponse);
+                }
+            },
+        });
     }
 
     /** Method to perform the search based on a search subject
@@ -151,44 +190,8 @@ export class ExamImportComponent implements OnInit {
      *
      * @param exam The exercise which was selected by the user for the import.
      */
-    openImport(exam: Exam) {
+    forwardSelectedExam(exam: Exam) {
         this.activeModal.close(exam);
-    }
-
-    /**
-     * After the user has chosen an Exam, this method is called to load the exercise groups for the selected exam
-     * @param exam the exam for which the exercise groups should be loaded
-     */
-    openExerciseSelection(exam: Exam) {
-        this.examManagementService.findWithExercisesAndWithoutCourseId(exam.id!).subscribe({
-            next: (examRes: HttpResponse<Exam>) => {
-                this.exam = examRes.body!;
-            },
-            error: (res: HttpErrorResponse) => onError(this.alertService, res),
-        });
-    }
-
-    /**
-     * Helper method to map the Map<ExerciseGroup, Set<Exercises>> selectedExercises to an ExerciseGroup[] with Exercises[] each.
-     * Called once when user is importing the exam
-     * @private
-     */
-    performImportOfExerciseGroups() {
-        this.exam!.exerciseGroups = this.examExerciseImportComponent.mapSelectedExercisesToExam();
-        this.examManagementService.importExerciseGroup(this.targetCourseId!, this.targetExamId!, this.exam!.exerciseGroups!).subscribe({
-            next: () => this.activeModal.close(),
-            error: (httpErrorResponse: HttpErrorResponse) => {
-                if (httpErrorResponse.error?.errorKey === 'examContainsProgrammingExercisesWithInvalidShortName') {
-                    this.exam!.exerciseGroups = httpErrorResponse.error.params.exerciseGroups!;
-                    // The updateMapsAfterRejectedImport Method is called to update the exercises
-                    this.examExerciseImportComponent.updateMapsAfterRejectedImport();
-                    const numberOfInvalidProgrammingExercises = httpErrorResponse.error.numberOfInvalidProgrammingExercises;
-                    this.alertService.warning('artemisApp.examManagement.exerciseImport.invalidShortName', { number: numberOfInvalidProgrammingExercises });
-                } else {
-                    onError(this.alertService, httpErrorResponse);
-                }
-            },
-        });
     }
 
     /**

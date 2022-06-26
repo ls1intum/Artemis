@@ -6,11 +6,11 @@ import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { take } from 'rxjs/operators';
 import { MockSyncStorage } from '../helpers/mocks/service/mock-sync-storage.service';
 import { MockTranslateService } from '../helpers/mocks/service/mock-translate.service';
-import { ExamPagingService } from 'app/exam/manage/exams/exam-import/exam-paging.service';
+import { ExamImportPagingService } from 'app/exam/manage/exams/exam-import/exam-paging.service';
 import { Exam } from 'app/entities/exam.model';
 
 describe('Exam Paging Service', () => {
-    let service: ExamPagingService;
+    let service: ExamImportPagingService;
     let httpMock: HttpTestingController;
 
     const exam = {
@@ -29,7 +29,7 @@ describe('Exam Paging Service', () => {
                 { provide: LocalStorageService, useClass: MockSyncStorage },
             ],
         });
-        service = TestBed.inject(ExamPagingService);
+        service = TestBed.inject(ExamImportPagingService);
         service.resourceUrl = 'resourceUrl';
         httpMock = TestBed.inject(HttpTestingController);
     });
