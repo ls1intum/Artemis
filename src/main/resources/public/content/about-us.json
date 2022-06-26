@@ -321,6 +321,10 @@
             "photoDirectory": "public/images/about/Michael_Allgaier.jpg"
         },
         {
+            "fullName": "Manuel Manso",
+            "photoDirectory": "public/images/about/Manuel_Manso.jpg"
+        },
+        {
             "fullName": "Florian Gareis",
             "photoDirectory": "public/images/about/Florian_Gareis.jpg"
         }
