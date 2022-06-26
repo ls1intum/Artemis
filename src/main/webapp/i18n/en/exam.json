@@ -300,7 +300,8 @@
                 "selected": "Selected",
                 "exerciseGroupTooltip": "The title of an exercise group can be changed before the import",
                 "exerciseTitleTooltip": "The title of an exercise can be changed before the import. Further changes are possible after the import",
-                "shortNameTooltip": "The shortname of a programming task must be unique. The short name of the exercise can NOT be edited after creating the exercise! Together with the course short name, it is used as a unique identifier for the exercise in all parts of Artemis (incl. repositories and build plans)"
+                "shortNameTooltip": "The shortname of a programming task must be unique. The short name of the exercise can NOT be edited after creating the exercise! The short name must begin with a letter, must not contain any special characters and must be at least 3 characters long",
+                "invalidShortName": "The chosen short name and title of {{ number }} programming exercise(s) already exists. Please insert a new short name and title for the corresponding programming exercise(s)"
             },
             "numberOfExerciseGroups": "Number of exercise groups:",
             "numberOfExercisesInExam": "Number of exercises in exam",

@@ -332,13 +332,15 @@ public class ExamResource {
     /**
      * GET /exams : Find all exams the user is allowed to access
      *
+     * @param withExercises if only exams with at least one exercise Groups should be considered
+     * @param search Pagable with all relevant information
      * @return the ResponseEntity with status 200 (OK) and a list of exams. The list can be empty
      */
     @GetMapping("/exams")
     @PreAuthorize("hasRole('INSTRUCTOR')")
-    public ResponseEntity<SearchResultPageDTO<Exam>> getAllExamsOnPage(PageableSearchDTO<String> search) {
+    public ResponseEntity<SearchResultPageDTO<Exam>> getAllExamsOnPage(@RequestParam(defaultValue = "false") boolean withExercises, PageableSearchDTO<String> search) {
         final var user = userRepository.getUserWithGroupsAndAuthorities();
-        return ResponseEntity.ok(examService.getAllOnPageWithSize(search, user));
+        return ResponseEntity.ok(examService.getAllOnPageWithSize(search, user, withExercises));
     }
 
     /**

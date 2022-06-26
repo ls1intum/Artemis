@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { Exam } from 'app/entities/exam.model';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
@@ -13,8 +13,8 @@ import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
 import { faBan, faCheckDouble, faExclamationTriangle, faSave, faFont } from '@fortawesome/free-solid-svg-icons';
 import { AccountService } from 'app/core/auth/account.service';
 import { tap } from 'rxjs/operators';
-import { Exercise, ExerciseType } from 'app/entities/exercise.model';
-import { ExerciseGroup } from 'app/entities/exercise-group.model';
+import { ExerciseType } from 'app/entities/exercise.model';
+import { ExamExerciseImportComponent } from 'app/exam/manage/exams/exam-exercise-import/exam-exercise-import.component';
 
 @Component({
     selector: 'jhi-exam-update',
@@ -31,10 +31,10 @@ export class ExamUpdateComponent implements OnInit {
     // Interims-boolean to hide the option to create an TestExam in production, as the feature is not yet fully implemented
     isAdmin: boolean;
     isImport = false;
-    // Map to determine, which exercises should be imported alongside an exam
-    selectedExercises?: Map<ExerciseGroup, Set<Exercise>>;
     // Expose enums to the template
     exerciseType = ExerciseType;
+    // Link to the component enabling the selection of exercise groups and exercises for import
+    @ViewChild(ExamExerciseImportComponent) examExerciseImportComponent: ExamExerciseImportComponent;
 
     // Icons
     faSave = faSave;
@@ -61,11 +61,6 @@ export class ExamUpdateComponent implements OnInit {
 
             if (this.isImport) {
                 this.resetIdAndDatesForImport();
-                // Initializing the map for the exam import
-                this.selectedExercises = new Map<ExerciseGroup, Set<Exercise>>();
-                this.exam.exerciseGroups?.forEach((exerciseGroup) => {
-                    this.selectedExercises!.set(exerciseGroup, new Set<Exercise>(exerciseGroup.exercises!));
-                });
             }
 
             this.courseManagementService.find(Number(this.route.snapshot.paramMap.get('courseId'))).subscribe({
@@ -101,7 +96,8 @@ export class ExamUpdateComponent implements OnInit {
     save() {
         this.isSaving = true;
         if (this.isImport) {
-            this.mapSelectedExercisesToExam();
+            this.exam.exerciseGroups = this.examExerciseImportComponent.mapSelectedExercisesToExam();
+            console.log(this.exam.exerciseGroups);
             this.subscribeToSaveResponse(this.examManagementService.import(this.course.id!, this.exam));
         } else if (this.exam.id !== undefined) {
             this.subscribeToSaveResponse(this.examManagementService.update(this.course.id!, this.exam));
@@ -122,25 +118,17 @@ export class ExamUpdateComponent implements OnInit {
         this.previousState();
     }
 
-    private onSaveError(error: HttpErrorResponse) {
-        onError(this.alertService, error);
+    private onSaveError(httpErrorResponse: HttpErrorResponse) {
+        if (httpErrorResponse.error?.errorKey === 'examContainsProgrammingExercisesWithInvalidShortName') {
+            this.exam.exerciseGroups = httpErrorResponse.error.params.exerciseGroups!;
+            // The update() Method is called to update the exercises
+            this.examExerciseImportComponent.updateMapsAfterRejectedImport();
+            const numberOfInvalidProgrammingExercises = httpErrorResponse.error.numberOfInvalidProgrammingExercises;
+            this.alertService.warning('artemisApp.examManagement.exerciseImport.invalidShortName', { number: numberOfInvalidProgrammingExercises });
+        } else {
+            onError(this.alertService, httpErrorResponse);
+        }
         this.isSaving = false;
-    }
-
-    /**
-     * Helper method to map the Map<ExerciseGroup, Set<Exercises>> selectedExercises to an ExerciseGroup[] with Exercises[] each.
-     * Called once when user is importing the exam
-     * @private
-     */
-    private mapSelectedExercisesToExam() {
-        const exerciseGroups: ExerciseGroup[] = [];
-        this.selectedExercises?.forEach((value, key) => {
-            if (value.size > 0) {
-                key.exercises = Array.from(value.values());
-                exerciseGroups.push(key);
-            }
-        });
-        this.exam.exerciseGroups = exerciseGroups;
     }
 
     get isValidConfiguration(): boolean {

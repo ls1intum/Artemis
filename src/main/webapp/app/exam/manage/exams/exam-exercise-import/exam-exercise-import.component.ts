@@ -1,9 +1,10 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { Exam } from 'app/entities/exam.model';
-import { faCheckDouble, faFileUpload, faKeyboard, faProjectDiagram, faX, faCheck, faFont } from '@fortawesome/free-solid-svg-icons';
+import { faCheckDouble, faFileUpload, faFont, faKeyboard, faProjectDiagram } from '@fortawesome/free-solid-svg-icons';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
+import { shortNamePattern } from 'app/shared/constants/input.constants';
 
 @Component({
     selector: 'jhi-exam-exercise-import',
@@ -12,12 +13,20 @@ import { IconProp } from '@fortawesome/fontawesome-svg-core';
 })
 export class ExamExerciseImportComponent implements OnInit {
     @Input() exam: Exam;
-    // Map to determine, which exercises should be imported alongside an exam
-    @Input() selectedExercises?: Map<ExerciseGroup, Set<Exercise>>;
-    // The shortName of the course to be displayed next to the shortName of a Programming Exercise to form the vcs key
-    @Input() courseShortName?: string;
+    // Map to determine, which exercises the user has selected and therefore should be imported alongside an exam
+    selectedExercises = new Map<ExerciseGroup, Set<Exercise>>();
+    // Map with the title and shortName of the programming exercises to be displayed as a placeholder in case of a rejected import
+    titleAndShortNameOfProgrammingExercises = new Map<number, String[]>();
     // Expose enums to the template
     exerciseType = ExerciseType;
+    // Map to determine, if an exercise group contains at least one programming exercise.
+    // I.E. the short name must be displayed in the corresponding table
+    containsProgrammingExercises = new Map<ExerciseGroup, boolean>();
+
+    // Patterns
+    // length of < 3 is also accepted in order to provide more accurate validation error messages
+    readonly shortNamePattern = RegExp('(^(?![\\s\\S]))|^[a-zA-Z][a-zA-Z0-9]*$|' + shortNamePattern); // must start with a letter and cannot contain special characters
+    readonly titleNamePattern = '^[a-zA-Z0-9-_ ]+'; // must only contain alphanumeric characters, or whitespaces, or '_' or '-'
 
     // Icons
     faCheckDouble = faCheckDouble;
@@ -25,17 +34,45 @@ export class ExamExerciseImportComponent implements OnInit {
     faProjectDiagram = faProjectDiagram;
     faKeyboard = faKeyboard;
     faFont = faFont;
-    faCheck = faCheck;
-    faX = faX;
 
     constructor() {}
 
     ngOnInit(): void {
-        if (!this.courseShortName) {
-            this.courseShortName = this.exam.course!.shortName;
-        }
+        this.initializeMaps();
     }
 
+    /**
+     * Method to initialize the Maps selectedExercises and containsProgrammingExercises
+     */
+    initializeMaps() {
+        // Initialize selectedExercises
+        this.exam.exerciseGroups?.forEach((exerciseGroup) => {
+            this.selectedExercises!.set(exerciseGroup, new Set<Exercise>(exerciseGroup.exercises!));
+        });
+        // Initialize containsProgrammingExercises
+        this.exam.exerciseGroups!.forEach((exerciseGroup) => {
+            const hasProgrammingExercises = !!exerciseGroup.exercises?.some((value) => value.type === ExerciseType.PROGRAMMING);
+            this.containsProgrammingExercises?.set(exerciseGroup, hasProgrammingExercises);
+        });
+    }
+
+    /**
+     * Method to update the Maps after a rejected import due to invalid project key(s) of programming exercise(s)
+     * Called by the parent component
+     */
+    updateMapsAfterRejectedImport() {
+        // The title and short name of the programming exercises are added to the map to display the rejected title and short name to the user
+        this.selectedExercises.forEach((value) => {
+            value.forEach((exercise) => {
+                if (exercise.type === ExerciseType.PROGRAMMING) {
+                    this.titleAndShortNameOfProgrammingExercises?.set(exercise.id!, [exercise.title!, exercise.shortName!]);
+                }
+            });
+        });
+        this.selectedExercises.clear();
+        this.containsProgrammingExercises.clear();
+        this.initializeMaps();
+    }
     /**
      * Sets the selected exercise for an exercise group in the selectedExercises Map-
      * The ExerciseGroup is the Key in the Map, the Exercises are stored as a Set as the value.
@@ -68,6 +105,48 @@ export class ExamExerciseImportComponent implements OnInit {
      */
     exerciseGroupContainsExercises(exerciseGroup: ExerciseGroup): boolean {
         return this.selectedExercises!.get(exerciseGroup)!.size > 0;
+    }
+
+    /**
+     * Returns if an exercise Group contains at least one programming exercise
+     * I.E. the short name must be displayed in the selection menu
+     * @param exerciseGroup the corresponding exercise group
+     */
+    exerciseGroupContainsProgrammingExercises(exerciseGroup: ExerciseGroup): boolean {
+        return !!this.containsProgrammingExercises!.get(exerciseGroup);
+    }
+
+    /**
+     * Returns the placeholder title (i.e. the one rejected by the server) for the programming exercise
+     * @param exerciseId the corresponding exercise
+     */
+    getPlaceholderTitleOfProgrammingExercise(exerciseId: number): String {
+        const title = this.titleAndShortNameOfProgrammingExercises?.get(exerciseId)?.first();
+        return title ? title! : ``;
+    }
+
+    /**
+     * Returns the placeholder shortName (i.e. the one rejected by the server) for the programming exercise
+     * @param exerciseId the corresponding exercise
+     */
+    getPlaceholderShortNameOfProgrammingExercise(exerciseId: number): String {
+        const shortName = this.titleAndShortNameOfProgrammingExercises?.get(exerciseId)?.last();
+        return shortName ? shortName! : ``;
+    }
+
+    /**
+     * Helper method to map the Map<ExerciseGroup, Set<Exercises>> selectedExercises to an ExerciseGroup[] with Exercises[] each.
+     * Called once by the parent component when the user desires to import the exam / exercise groups
+     */
+    public mapSelectedExercisesToExam(): ExerciseGroup[] {
+        const exerciseGroups: ExerciseGroup[] = [];
+        this.selectedExercises?.forEach((value, key) => {
+            if (value.size > 0) {
+                key.exercises = Array.from(value.values());
+                exerciseGroups.push(key);
+            }
+        });
+        return exerciseGroups;
     }
 
     /**

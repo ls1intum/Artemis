@@ -299,7 +299,8 @@
                 "selected": "Ausgewählt",
                 "exerciseGroupTooltip": "Der Titel der Aufgabengruppe kann vor dem Import angepasst werden",
                 "exerciseTitleTooltip": "Der Titel der Aufgabe kann vor dem Import angepasst werden. Weitere Änderungen an der Aufgabe sind nach dem Import möglich",
-                "shortNameTooltip": "Der Kurzname einer Programmieraufgabe muss einzigartig sein. Der Kurzname der Aufgabe kann NICHT im Nachhinein bearbeitet werden! Zusammen mit dem Kurs-Kurznamen wird er als eindeutiger Schlüssel für die Aufgabe in Artemis genutzt (inkl. Repositories und Build Pläne)"
+                "shortNameTooltip": "Der Kurzname einer Programmieraufgabe muss einzigartig sein. Der Kurzname der Aufgabe kann NICHT im Nachhinein bearbeitet werden! Der Kurzname muss mit einem Buchstaben beginnen, darf keine speziellen Zeichen enthalten und muss mindestens 3 Zeichen lang sein!",
+                "invalidShortName": "Der eingegebene Kurzname und Titel von {{ number }} Programmieraufgabe(n) existiert bereits. Wähle für die betreffende(n) Aufgabe(n) bitte einen anderen Kurznamen und Titel"
             },
             "numberOfExerciseGroups": "Anzahl Aufgabengruppen:",
             "numberOfExercisesInExam": "Anzahl an Aufgaben in der Klausur",

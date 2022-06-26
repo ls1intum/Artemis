@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input, OnInit, ViewChild } from '@angular/core';
 import { debounceTime, switchMap, tap } from 'rxjs/operators';
 import { Subject } from 'rxjs';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
@@ -13,6 +13,7 @@ import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { onError } from 'app/shared/util/global.utils';
 import { AlertService } from 'app/core/util/alert.service';
+import { ExamExerciseImportComponent } from 'app/exam/manage/exams/exam-exercise-import/exam-exercise-import.component';
 
 enum TableColumn {
     ID = 'ID',
@@ -32,9 +33,12 @@ export class ExamImportComponent implements OnInit {
     private sort = new Subject<void>();
 
     // boolean to indicate, if the import modal should include the exerciseGroup selection
-    @Input() withExerciseGroupSelection: boolean;
-    @Input() courseShortName: string;
-    selectedExercises?: Map<ExerciseGroup, Set<Exercise>>;
+    @Input() subsequentExerciseGroupSelection: boolean;
+    @Input() targetCourseId?: number;
+    @Input() targetExamId?: number;
+
+    @ViewChild(ExamExerciseImportComponent) examExerciseImportComponent: ExamExerciseImportComponent;
+
     exam?: Exam;
     loading = false;
     content: SearchResult<Exam>;
@@ -63,9 +67,6 @@ export class ExamImportComponent implements OnInit {
         this.content = { resultsOnPage: [], numberOfPages: 0 };
         this.performSearch(this.sort, 0);
         this.performSearch(this.search, 300);
-        if (this.withExerciseGroupSelection) {
-            this.selectedExercises = new Map<ExerciseGroup, Set<Exercise>>();
-        }
     }
 
     /** Method to perform the search based on a search subject
@@ -78,7 +79,7 @@ export class ExamImportComponent implements OnInit {
             .pipe(
                 debounceTime(debounce),
                 tap(() => (this.loading = true)),
-                switchMap(() => this.pagingService.searchForExams(this.state)),
+                switchMap(() => this.pagingService.searchForExams(this.state, this.subsequentExerciseGroupSelection)),
             )
             .subscribe((response) => {
                 this.content = response;
@@ -162,14 +163,6 @@ export class ExamImportComponent implements OnInit {
         this.examManagementService.findWithExercisesAndWithoutCourseId(exam.id!).subscribe({
             next: (examRes: HttpResponse<Exam>) => {
                 this.exam = examRes.body!;
-                if (this.exam!.exerciseGroups?.length! > 0) {
-                    this.exam!.exerciseGroups!.forEach((exerciseGroup) => {
-                        this.selectedExercises!.set(exerciseGroup, new Set<Exercise>(exerciseGroup.exercises!));
-                    });
-                } else {
-                    this.alertService.info('artemisApp.examManagement.exerciseGroup.noExerciseGroup', { examTitle: exam.title });
-                    this.exam = undefined;
-                }
             },
             error: (res: HttpErrorResponse) => onError(this.alertService, res),
         });
@@ -181,15 +174,21 @@ export class ExamImportComponent implements OnInit {
      * @private
      */
     performImportOfExerciseGroups() {
-        const exerciseGroups: ExerciseGroup[] = [];
-        this.selectedExercises?.forEach((value, key) => {
-            if (value.size > 0) {
-                key.exercises = Array.from(value.values());
-                exerciseGroups.push(key);
-            }
+        this.exam!.exerciseGroups = this.examExerciseImportComponent.mapSelectedExercisesToExam();
+        this.examManagementService.importExerciseGroup(this.targetCourseId!, this.targetExamId!, this.exam!.exerciseGroups!).subscribe({
+            next: () => this.activeModal.close(),
+            error: (httpErrorResponse: HttpErrorResponse) => {
+                if (httpErrorResponse.error?.errorKey === 'examContainsProgrammingExercisesWithInvalidShortName') {
+                    this.exam!.exerciseGroups = httpErrorResponse.error.params.exerciseGroups!;
+                    // The updateMapsAfterRejectedImport Method is called to update the exercises
+                    this.examExerciseImportComponent.updateMapsAfterRejectedImport();
+                    const numberOfInvalidProgrammingExercises = httpErrorResponse.error.numberOfInvalidProgrammingExercises;
+                    this.alertService.warning('artemisApp.examManagement.exerciseImport.invalidShortName', { number: numberOfInvalidProgrammingExercises });
+                } else {
+                    onError(this.alertService, httpErrorResponse);
+                }
+            },
         });
-        this.exam!.exerciseGroups = exerciseGroups;
-        this.activeModal.close(this.exam);
     }
 
     /**

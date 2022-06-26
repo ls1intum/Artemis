@@ -13,13 +13,15 @@ export class ExamPagingService {
 
     constructor(private http: HttpClient) {}
 
-    searchForExams(pageable: PageableSearch): Observable<EntityResponseType> {
+    searchForExams(pageable: PageableSearch, withExercises: boolean): Observable<EntityResponseType> {
         const params = new HttpParams()
             .set('pageSize', String(pageable.pageSize))
             .set('page', String(pageable.page))
             .set('sortingOrder', pageable.sortingOrder)
             .set('searchTerm', pageable.searchTerm)
             .set('sortedColumn', pageable.sortedColumn);
-        return this.http.get(`${this.resourceUrl}`, { params, observe: 'response' }).pipe(map((resp: HttpResponse<EntityResponseType>) => resp && resp.body!));
+        return this.http
+            .get(`${this.resourceUrl}?withExercises=${withExercises}`, { params, observe: 'response' })
+            .pipe(map((resp: HttpResponse<EntityResponseType>) => resp && resp.body!));
     }
 }

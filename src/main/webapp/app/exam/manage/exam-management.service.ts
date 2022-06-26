@@ -16,6 +16,7 @@ import { ExamChecklist } from 'app/entities/exam-checklist.model';
 import { StatsForDashboard } from 'app/course/dashboards/stats-for-dashboard.model';
 import { reconnectSubmissions, Submission } from 'app/entities/submission.model';
 import { AccountService } from 'app/core/auth/account.service';
+import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 
 type EntityResponseType = HttpResponse<Exam>;
 type EntityArrayResponseType = HttpResponse<Exam[]>;
@@ -69,7 +70,7 @@ export class ExamManagementService {
      * @param exerciseGroups the exercise groups to be added to the exam
      */
     importExerciseGroup(courseId: number, examId: number, exerciseGroups: ExerciseGroup[]): Observable<HttpResponse<ExerciseGroup[]>> {
-        return this.http.post<ExerciseGroup[]>(`${this.resourceUrl}/${courseId}/exams}${examId}/import-exercise-group`, exerciseGroups, { observe: 'response' });
+        return this.http.post<ExerciseGroup[]>(`${this.resourceUrl}/${courseId}/exams/${examId}/import-exercise-group`, exerciseGroups, { observe: 'response' });
     }
 
     /**

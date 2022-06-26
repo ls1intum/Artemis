@@ -816,19 +816,30 @@ public class ExamService {
      * meaning that there is only a predefined portion of the result returned to the user, so that the server doesn't
      * have to send hundreds/thousands of exams if there are that many in Artemis.
      *
-     * @param search The search query defining the search term and the size of the returned page
-     * @param user   The user for whom to fetch all available exercises
+     * @param search        The search query defining the search term and the size of the returned page
+     * @param user          The user for whom to fetch all available exercises
+     * @param withExercises If only exams with exercises should be searched
      * @return A wrapper object containing a list of all found exercises and the total number of pages
      */
-    public SearchResultPageDTO<Exam> getAllOnPageWithSize(final PageableSearchDTO<String> search, final User user) {
+    public SearchResultPageDTO<Exam> getAllOnPageWithSize(final PageableSearchDTO<String> search, final User user, final boolean withExercises) {
         final var pageable = PageUtil.createExamPageRequest(search);
         final var searchTerm = search.getSearchTerm();
         final Page<Exam> examPage;
         if (authorizationCheckService.isAdmin(user)) {
-            examPage = examRepository.findByTitleInExamOrCourse(searchTerm, searchTerm, pageable);
+            if (withExercises) {
+                examPage = examRepository.findByTitleInExamOrCourseWithAtLeastOneExerciseGroup(searchTerm, searchTerm, pageable);
+            }
+            else {
+                examPage = examRepository.findByTitleInExamOrCourse(searchTerm, searchTerm, pageable);
+            }
         }
         else {
-            examPage = examRepository.findByTitleInExamOrCourseAndUserHasAccessToCourse(searchTerm, searchTerm, user.getGroups(), pageable);
+            if (withExercises) {
+                examPage = examRepository.findByTitleInExamOrCourseAndAtLeastOneExerciseGroupAndUserHasAccessToCourse(searchTerm, searchTerm, user.getGroups(), pageable);
+            }
+            else {
+                examPage = examRepository.findByTitleInExamOrCourseAndUserHasAccessToCourse(searchTerm, searchTerm, user.getGroups(), pageable);
+            }
         }
         return new SearchResultPageDTO<>(examPage.getContent(), examPage.getTotalPages());
     }

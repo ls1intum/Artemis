@@ -289,15 +289,14 @@ export class ExerciseGroupsComponent implements OnInit {
             backdrop: 'static',
         });
         // The Exercise Group selection is performed within the exam-update.component afterwards
-        examImportModalRef.componentInstance.withExerciseGroupSelection = true;
-        examImportModalRef.componentInstance.courseShortName = this.course.shortName;
-
-        const importBaseRoute = ['/course-management', this.course.id, 'exams', this.examId, 'exercise-groups'];
+        examImportModalRef.componentInstance.subsequentExerciseGroupSelection = true;
+        examImportModalRef.componentInstance.targetCourseId = this.courseId;
+        examImportModalRef.componentInstance.targetExamId = this.examId;
 
         examImportModalRef.result.then(
-            (exam: Exam) => {
-                if (this.exam.exerciseGroups) {
-                    this.examManagementService.importExerciseGroup(this.courseId, this.examId, exam.exerciseGroups!);
+            (exerciseGroups: ExerciseGroup[]) => {
+                if (exerciseGroups) {
+                    this.examManagementService.importExerciseGroup(this.courseId, this.examId, exerciseGroups);
                     // Reload the page after the import
                     this.ngOnInit();
                 }

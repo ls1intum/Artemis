@@ -57,17 +57,17 @@
             </td>
             <td>
                 <!-- Display a List of all Exercises to the right -->
-                <table class="table table-hover table-striped text-center" *ngFor="let exercise of exerciseGroup.exercises">
+                <table class="table table-hover table-striped text-center">
                     <thead>
                         <tr>
                             <th class="smallbox" jhiTranslate="artemisApp.examManagement.exerciseImport.selected">Selected</th>
                             <th class="smallbox">#</th>
                             <th class="smallbox" jhiTranslate="artemisApp.exercise.type">Type</th>
-                            <th [class]="exercise.type! === exerciseType.PROGRAMMING ? 'mediumbox' : 'largebox'">
+                            <th [class]="exerciseGroupContainsProgrammingExercises(exerciseGroup) ? 'mediumbox' : 'largebox'">
                                 <label jhiTranslate="artemisApp.exercise.title">Title</label>
                                 <jhi-help-icon placement="top" text="artemisApp.examManagement.exerciseImport.exerciseTitleTooltip"></jhi-help-icon>
                             </th>
-                            <th *ngIf="exercise.type! === exerciseType.PROGRAMMING" class="mediumbox">
+                            <th *ngIf="exerciseGroupContainsProgrammingExercises(exerciseGroup)" class="mediumbox">
                                 <label class="label-narrow" jhiTranslate="artemisApp.exercise.shortName">Short Name</label>
                                 <jhi-help-icon placement="auto" text="artemisApp.examManagement.exerciseImport.shortNameTooltip"></jhi-help-icon>
                             </th>
@@ -75,9 +75,16 @@
                         </tr>
                     </thead>
                     <tbody>
-                        <tr [ngClass]="{ selectedRow: exerciseIsSelected(exercise, exerciseGroup) }" [id]="'exercise-' + exercise.id">
-                            <td (click)="onSelectExercise(exercise, exerciseGroup)">
-                                <fa-icon size="2x" [icon]="exerciseIsSelected(exercise, exerciseGroup) ? faCheck : faX"></fa-icon>
+                        <tr *ngFor="let exercise of exerciseGroup.exercises" [id]="'exercise-' + exercise.id">
+                            <td>
+                                <h4 class="form-check d-flex justify-content-center">
+                                    <input
+                                        type="checkbox"
+                                        class="form-check-input"
+                                        [checked]="exerciseIsSelected(exercise, exerciseGroup)"
+                                        (click)="onSelectExercise(exercise, exerciseGroup)"
+                                    />
+                                </h4>
                             </td>
                             <td>{{ exercise.id }}</td>
                             <td>
@@ -85,6 +92,7 @@
                             </td>
                             <td>
                                 <input
+                                    *ngIf="exercise.type! !== exerciseType.PROGRAMMING"
                                     class="form-control"
                                     required
                                     type="text"
@@ -92,21 +100,30 @@
                                     [name]="'exercise-' + exercise.id + '-title'"
                                     [(ngModel)]="exercise.title"
                                 />
+                                <input
+                                    *ngIf="exercise.type! === exerciseType.PROGRAMMING"
+                                    class="form-control"
+                                    required
+                                    type="text"
+                                    [id]="'exercise-' + exercise.id + '-title'"
+                                    [name]="'exercise-' + exercise.id + '-title'"
+                                    [placeholder]="getPlaceholderTitleOfProgrammingExercise(exercise.id!)"
+                                    [(ngModel)]="exercise.title"
+                                    [pattern]="titleNamePattern"
+                                />
                             </td>
                             <td *ngIf="exercise.type! === exerciseType.PROGRAMMING">
-                                <div class="input-group">
-                                    <div class="input-group-prepend">
-                                        <div class="input-group-text">{{ courseShortName }}</div>
-                                    </div>
-                                    <input
-                                        class="form-control"
-                                        required
-                                        type="text"
-                                        [id]="'programming-exercise-' + exercise.id + '-shortName'"
-                                        [name]="'programming-exercise-' + exercise.id + '-shortName'"
-                                        [(ngModel)]="exercise.shortName"
-                                    />
-                                </div>
+                                <input
+                                    class="form-control"
+                                    required
+                                    type="text"
+                                    minlength="3"
+                                    [id]="'programming-exercise-' + exercise.id + '-shortName'"
+                                    [name]="'programming-exercise-' + exercise.id + '-shortName'"
+                                    [placeholder]="getPlaceholderShortNameOfProgrammingExercise(exercise.id!)"
+                                    [pattern]="shortNamePattern"
+                                    [(ngModel)]="exercise.shortName"
+                                />
                             </td>
                             <td>
                                 <jhi-difficulty-badge class="me-1" [exercise]="exercise" [showNoLevel]="false"></jhi-difficulty-badge>

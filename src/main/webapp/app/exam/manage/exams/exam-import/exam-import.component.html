@@ -1,7 +1,7 @@
 <form>
     <div class="modal-header">
-        <h4 class="modal-title" *ngIf="!withExerciseGroupSelection">{{ 'artemisApp.examManagement.importExam' | artemisTranslate }}</h4>
-        <h4 class="modal-title" *ngIf="withExerciseGroupSelection">{{ 'artemisApp.examManagement.exerciseGroup.import' | artemisTranslate }}</h4>
+        <h4 class="modal-title" *ngIf="!subsequentExerciseGroupSelection">{{ 'artemisApp.examManagement.importExam' | artemisTranslate }}</h4>
+        <h4 class="modal-title" *ngIf="subsequentExerciseGroupSelection">{{ 'artemisApp.examManagement.exerciseGroup.import' | artemisTranslate }}</h4>
         <button type="button" class="btn-close" data-dismiss="modal" aria-hidden="true" (click)="clear()"></button>
     </div>
     <div *ngIf="!exam" class="modal-body">
@@ -48,9 +48,9 @@
                         <span class="badge bg-primary" *ngIf="exam.testExam">{{ 'artemisApp.examManagement.testExam.testExam' | artemisTranslate }}</span>
                     </td>
                     <td class="col-1">
-                        <jhi-button *ngIf="!withExerciseGroupSelection" (onClick)="openImport(exam)" [title]="'artemisApp.exercise.import.table.doImport'"></jhi-button>
+                        <jhi-button *ngIf="!subsequentExerciseGroupSelection" (onClick)="openImport(exam)" [title]="'artemisApp.exercise.import.table.doImport'"></jhi-button>
                         <jhi-button
-                            *ngIf="withExerciseGroupSelection"
+                            *ngIf="subsequentExerciseGroupSelection"
                             (onClick)="openExerciseSelection(exam)"
                             [title]="'artemisApp.examManagement.exerciseGroup.selectExerciseGroup'"
                         ></jhi-button>
@@ -71,7 +71,7 @@
                     Select the individual exercises, which should be imported alongside the exercise groups, by clicking on it
                 </p>
             </div>
-            <jhi-exam-exercise-import [exam]="exam!" [selectedExercises]="selectedExercises" [courseShortName]="courseShortName"></jhi-exam-exercise-import>
+            <jhi-exam-exercise-import [exam]="exam!"></jhi-exam-exercise-import>
         </div>
         <div class="modal-footer">
             <jhi-button (onClick)="performImportOfExerciseGroups()" [title]="'artemisApp.exercise.import.table.doImport'"></jhi-button>
