@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { HttpResponse } from '@angular/common/http';
-import { of } from 'rxjs';
+import { BehaviorSubject, of } from 'rxjs';
 import { ArtemisTestModule } from '../../../test.module';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
@@ -18,6 +18,8 @@ import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { MockWebsocketService } from '../../../helpers/mocks/service/mock-websocket.service';
 import { createTestExercises } from './exam-monitoring-helper';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
+import { EndedExamAction } from 'app/entities/exam-user-activity.model';
+import { ExamMonitoringWebsocketService } from 'app/exam/monitoring/exam-monitoring-websocket.service';
 
 describe('Exam Monitoring Component', () => {
     // Course
@@ -40,6 +42,7 @@ describe('Exam Monitoring Component', () => {
     let fixture: ComponentFixture<ExamMonitoringComponent>;
     let examMonitoringService: ExamMonitoringService;
     let examManagementService: ExamManagementService;
+    let examMonitoringWebsocketService: ExamMonitoringWebsocketService;
     let pipe: ArtemisDatePipe;
 
     const route = { params: of({ courseId: course.id, examId: exam.id }) };
@@ -62,6 +65,7 @@ describe('Exam Monitoring Component', () => {
                 comp = fixture.componentInstance;
                 examMonitoringService = TestBed.inject(ExamMonitoringService);
                 examManagementService = TestBed.inject(ExamManagementService);
+                examMonitoringWebsocketService = TestBed.inject(ExamMonitoringWebsocketService);
             });
     });
 
@@ -190,5 +194,20 @@ describe('Exam Monitoring Component', () => {
 
         // THEN
         expect(comp.table).toEqual(table);
+    });
+
+    it('should call subscribeForLatestExamAction of examMonitoringWebsocketService to get the latest actions on init', () => {
+        // GIVEN
+        const responseFakeExam = { body: exam as Exam } as HttpResponse<Exam>;
+        jest.spyOn(examManagementService, 'find').mockReturnValue(of(responseFakeExam));
+        const action = new EndedExamAction();
+        jest.spyOn(examMonitoringWebsocketService, 'subscribeForLatestExamAction').mockReturnValue(new BehaviorSubject(action));
+
+        // WHEN
+        comp.ngOnInit();
+
+        // THEN
+        expect(examMonitoringWebsocketService.subscribeForLatestExamAction).toHaveBeenCalledOnce();
+        expect(examMonitoringWebsocketService.subscribeForLatestExamAction).toHaveBeenCalledWith(exam);
     });
 });
