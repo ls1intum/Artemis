@@ -302,7 +302,7 @@ public class SubmissionService {
     private void copyFeedbackToResult(Result result, List<Feedback> feedbacks) {
         feedbacks.forEach(feedback -> {
             Feedback newFeedback = feedback.copyFeedback();
-            newFeedback.setPositive(newFeedback.getCredits() > 0);
+            newFeedback.setPositiveViaCredits();
             result.addFeedback(newFeedback);
         });
         resultRepository.save(result);

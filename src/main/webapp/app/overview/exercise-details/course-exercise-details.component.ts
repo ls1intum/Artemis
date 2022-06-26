@@ -59,7 +59,7 @@ const MAX_RESULT_HISTORY_LENGTH = 5;
 @Component({
     selector: 'jhi-course-exercise-details',
     templateUrl: './course-exercise-details.component.html',
-    styleUrls: ['../course-overview.scss'],
+    styleUrls: ['../course-overview.scss', '../tab-bar/tab-bar.scss'],
 })
 export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     readonly AssessmentType = AssessmentType;
@@ -70,6 +70,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     readonly MODELING = ExerciseType.MODELING;
     readonly TEXT = ExerciseType.TEXT;
     readonly FILE_UPLOAD = ExerciseType.FILE_UPLOAD;
+
     private currentUser: User;
     private exerciseId: number;
     public courseId: number;
