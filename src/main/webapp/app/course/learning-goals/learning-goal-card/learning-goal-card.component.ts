@@ -1,4 +1,4 @@
-import { Component, Input, OnChanges, OnDestroy } from '@angular/core';
+import { Component, Input, OnDestroy, OnInit } from '@angular/core';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
 import { LearningGoal } from 'app/entities/learningGoal.model';
@@ -14,7 +14,7 @@ import { round } from 'app/shared/util/utils';
     templateUrl: './learning-goal-card.component.html',
     styleUrls: ['./learning-goal-card.component.scss'],
 })
-export class LearningGoalCardComponent implements OnChanges, OnDestroy {
+export class LearningGoalCardComponent implements OnInit, OnDestroy {
     @Input()
     learningGoal: LearningGoal;
     @Input()
@@ -35,7 +35,7 @@ export class LearningGoalCardComponent implements OnChanges, OnDestroy {
 
     constructor(private modalService: NgbModal, public lectureUnitService: LectureUnitService, public translateService: TranslateService) {}
 
-    ngOnChanges(): void {
+    ngOnInit(): void {
         if (this.isPrerequisite || !this.learningGoalProgress) {
             this.isProgressAvailable = false;
         } else {
