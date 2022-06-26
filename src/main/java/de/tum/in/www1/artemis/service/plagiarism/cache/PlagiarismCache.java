@@ -15,6 +15,7 @@ public class PlagiarismCache {
 
     private final Logger logger = LoggerFactory.getLogger(PlagiarismCache.class);
 
+    // We store for each course if there is currently a plagiarism check. Long means the courseId and Boolean indicates whether there is an active plagiarism check or not.
     private final IMap<Long, Boolean> activePlagiarismChecksPerCourse;
 
     public PlagiarismCache(HazelcastInstance hazelcastInstance) {

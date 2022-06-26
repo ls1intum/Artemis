@@ -31,7 +31,7 @@ public class PlagiarismCacheService {
      * There is an active plagiarism check in this course. The entry is set to true.
      * @param courseId current course
      */
-    public void enablePlagiarismCheck(Long courseId) {
+    public void setActivePlagiarismCheck(Long courseId) {
         plagiarismCache.setActivePlagiarismCheck(courseId, true);
     }
 
@@ -39,7 +39,7 @@ public class PlagiarismCacheService {
      * There is no active plagiarism check anymore. The entry is set to false.
      * @param courseId current course
      */
-    public void disablePlagiarismCheck(Long courseId) {
+    public void setInactivePlagiarismCheck(Long courseId) {
         plagiarismCache.setActivePlagiarismCheck(courseId, false);
     }
 }

@@ -107,36 +107,40 @@ public class ProgrammingPlagiarismDetectionService {
 
         // Only one plagiarism check per course allowed
         var courseId = programmingExercise.getCourseViaExerciseGroupOrCourseMember().getId();
-        if (plagiarismCacheService.isActivePlagiarismCheck(courseId)) {
-            return null;
-        }
-        plagiarismCacheService.enablePlagiarismCheck(courseId);
 
-        JPlagResult result = getJPlagResult(programmingExercise, similarityThreshold, minimumScore);
-        if (result == null) {
-            log.info("Insufficient amount of submissions for plagiarism detection. Return empty result.");
+        try {
+            if (plagiarismCacheService.isActivePlagiarismCheck(courseId)) {
+                throw new BadRequestAlertException("Only one active plagiarism check per course allowed", "PlagiarismCheck", "oneActivePlagiarismCheck");
+            }
+            plagiarismCacheService.setActivePlagiarismCheck(courseId);
+
+            JPlagResult result = getJPlagResult(programmingExercise, similarityThreshold, minimumScore);
+            if (result == null) {
+                log.info("Insufficient amount of submissions for plagiarism detection. Return empty result.");
+                TextPlagiarismResult textPlagiarismResult = new TextPlagiarismResult();
+                textPlagiarismResult.setExercise(programmingExercise);
+                textPlagiarismResult.setSimilarityDistribution(new int[0]);
+
+                log.info("Finished programmingExerciseExportService.checkPlagiarism call for {} comparisons in {}", textPlagiarismResult.getComparisons().size(),
+                        TimeLogUtil.formatDurationFrom(start));
+                limitAndSavePlagiarismResult(textPlagiarismResult);
+                log.info("Finished plagiarismResultRepository.savePlagiarismResultAndRemovePrevious call in {}", TimeLogUtil.formatDurationFrom(start));
+                return textPlagiarismResult;
+            }
+
+            log.info("JPlag programming comparison finished with {} comparisons for programming exercise {}", result.getComparisons().size(), programmingExerciseId);
             TextPlagiarismResult textPlagiarismResult = new TextPlagiarismResult();
+            textPlagiarismResult.convertJPlagResult(result);
             textPlagiarismResult.setExercise(programmingExercise);
-            textPlagiarismResult.setSimilarityDistribution(new int[0]);
 
-            log.info("Finished programmingExerciseExportService.checkPlagiarism call for {} comparisons in {}", textPlagiarismResult.getComparisons().size(),
-                    TimeLogUtil.formatDurationFrom(start));
+            log.info("JPlag programming comparison done in {}", TimeLogUtil.formatDurationFrom(start));
+            plagiarismWebsocketService.notifyInstructorAboutPlagiarismState(topic, PlagiarismCheckState.COMPLETED, List.of());
             limitAndSavePlagiarismResult(textPlagiarismResult);
-            log.info("Finished plagiarismResultRepository.savePlagiarismResultAndRemovePrevious call in {}", TimeLogUtil.formatDurationFrom(start));
-            plagiarismCacheService.disablePlagiarismCheck(courseId);
             return textPlagiarismResult;
         }
-
-        log.info("JPlag programming comparison finished with {} comparisons for programming exercise {}", result.getComparisons().size(), programmingExerciseId);
-        TextPlagiarismResult textPlagiarismResult = new TextPlagiarismResult();
-        textPlagiarismResult.convertJPlagResult(result);
-        textPlagiarismResult.setExercise(programmingExercise);
-
-        log.info("JPlag programming comparison done in {}", TimeLogUtil.formatDurationFrom(start));
-        plagiarismWebsocketService.notifyInstructorAboutPlagiarismState(topic, PlagiarismCheckState.COMPLETED, List.of());
-        limitAndSavePlagiarismResult(textPlagiarismResult);
-        plagiarismCacheService.disablePlagiarismCheck(courseId);
-        return textPlagiarismResult;
+        finally {
+            plagiarismCacheService.setInactivePlagiarismCheck(courseId);
+        }
     }
 
     /**

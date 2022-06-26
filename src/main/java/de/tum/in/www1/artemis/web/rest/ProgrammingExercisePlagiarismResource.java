@@ -31,7 +31,6 @@ import de.tum.in.www1.artemis.service.plagiarism.ProgrammingPlagiarismDetectionS
 import de.tum.in.www1.artemis.service.programming.ProgrammingLanguageFeature;
 import de.tum.in.www1.artemis.service.programming.ProgrammingLanguageFeatureService;
 import de.tum.in.www1.artemis.service.util.TimeLogUtil;
-import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 
 /**
@@ -120,11 +119,6 @@ public class ProgrammingExercisePlagiarismResource {
         long start = System.nanoTime();
         log.info("Start programmingPlagiarismDetectionService.checkPlagiarism for exercise {}", exerciseId);
         TextPlagiarismResult result = programmingPlagiarismDetectionService.checkPlagiarism(exerciseId, similarityThreshold, minimumScore);
-
-        if (result == null) {
-            throw new BadRequestAlertException("Only one active plagiarism check per course allowed", "PlagiarismCheck", "oneActivePlagiarismCheck");
-        }
-
         log.info("Finished programmingExerciseExportService.checkPlagiarism call for {} comparisons in {}", result.getComparisons().size(), TimeLogUtil.formatDurationFrom(start));
         for (var comparison : result.getComparisons()) {
             comparison.setPlagiarismResult(null);

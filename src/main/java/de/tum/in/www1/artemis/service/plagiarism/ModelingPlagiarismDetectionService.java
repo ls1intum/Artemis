@@ -51,23 +51,27 @@ public class ModelingPlagiarismDetectionService {
     public ModelingPlagiarismResult checkPlagiarism(ModelingExercise exerciseWithParticipationsSubmissionsResults, double minimumSimilarity, int minimumModelSize,
             int minimumScore) {
         var courseId = exerciseWithParticipationsSubmissionsResults.getCourseViaExerciseGroupOrCourseMember().getId();
-        if (plagiarismCacheService.isActivePlagiarismCheck(courseId)) {
-            return null;
+
+        try {
+            if (plagiarismCacheService.isActivePlagiarismCheck(courseId)) {
+                return null;
+            }
+            plagiarismCacheService.setActivePlagiarismCheck(courseId);
+
+            final List<ModelingSubmission> modelingSubmissions = modelingSubmissionsForComparison(exerciseWithParticipationsSubmissionsResults);
+
+            log.info("Found {} modeling submissions in exercise {}", modelingSubmissions.size(), exerciseWithParticipationsSubmissionsResults.getId());
+
+            Long exerciseId = exerciseWithParticipationsSubmissionsResults.getId();
+            ModelingPlagiarismResult result = checkPlagiarism(modelingSubmissions, minimumSimilarity, minimumModelSize, minimumScore, exerciseId);
+
+            result.setExercise(exerciseWithParticipationsSubmissionsResults);
+
+            return result;
         }
-        plagiarismCacheService.enablePlagiarismCheck(courseId);
-
-        final List<ModelingSubmission> modelingSubmissions = modelingSubmissionsForComparison(exerciseWithParticipationsSubmissionsResults);
-
-        log.info("Found {} modeling submissions in exercise {}", modelingSubmissions.size(), exerciseWithParticipationsSubmissionsResults.getId());
-
-        Long exerciseId = exerciseWithParticipationsSubmissionsResults.getId();
-        ModelingPlagiarismResult result = checkPlagiarism(modelingSubmissions, minimumSimilarity, minimumModelSize, minimumScore, exerciseId);
-
-        result.setExercise(exerciseWithParticipationsSubmissionsResults);
-
-        plagiarismCacheService.disablePlagiarismCheck(courseId);
-
-        return result;
+        finally {
+            plagiarismCacheService.setInactivePlagiarismCheck(courseId);
+        }
     }
 
     /**

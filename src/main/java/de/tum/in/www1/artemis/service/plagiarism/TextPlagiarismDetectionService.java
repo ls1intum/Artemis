@@ -79,84 +79,88 @@ public class TextPlagiarismDetectionService {
     public TextPlagiarismResult checkPlagiarism(TextExercise textExercise, float similarityThreshold, int minimumScore, int minimumSize) throws ExitException {
         // Only one plagiarism check per course allowed
         var courseId = textExercise.getCourseViaExerciseGroupOrCourseMember().getId();
-        if (plagiarismCacheService.isActivePlagiarismCheck(courseId)) {
-            return null;
-        }
-        plagiarismCacheService.enablePlagiarismCheck(courseId);
 
-        long start = System.nanoTime();
-        String topic = plagiarismWebsocketService.getTextExercisePlagiarismCheckTopic(textExercise.getId());
+        try {
+            if (plagiarismCacheService.isActivePlagiarismCheck(courseId)) {
+                return null;
+            }
+            plagiarismCacheService.setActivePlagiarismCheck(courseId);
 
-        // TODO: why do we have such a strange folder name?
-        final var submissionsFolderName = "./tmp/submissions";
-        final var submissionFolderFile = new File(submissionsFolderName);
-        submissionFolderFile.mkdirs();
+            long start = System.nanoTime();
+            String topic = plagiarismWebsocketService.getTextExercisePlagiarismCheckTopic(textExercise.getId());
 
-        final List<TextSubmission> textSubmissions = textSubmissionsForComparison(textExercise, minimumScore, minimumSize);
-        final var submissionsSize = textSubmissions.size();
-        log.info("Save text submissions for JPlag text comparison with {} submissions", submissionsSize);
+            // TODO: why do we have such a strange folder name?
+            final var submissionsFolderName = "./tmp/submissions";
+            final var submissionFolderFile = new File(submissionsFolderName);
+            submissionFolderFile.mkdirs();
 
-        if (textSubmissions.size() < 2) {
-            log.info("Insufficient amount of submissions for plagiarism detection. Return empty result.");
+            final List<TextSubmission> textSubmissions = textSubmissionsForComparison(textExercise, minimumScore, minimumSize);
+            final var submissionsSize = textSubmissions.size();
+            log.info("Save text submissions for JPlag text comparison with {} submissions", submissionsSize);
+
+            if (textSubmissions.size() < 2) {
+                log.info("Insufficient amount of submissions for plagiarism detection. Return empty result.");
+                TextPlagiarismResult textPlagiarismResult = new TextPlagiarismResult();
+                textPlagiarismResult.setExercise(textExercise);
+                textPlagiarismResult.setSimilarityDistribution(new int[0]);
+
+                return textPlagiarismResult;
+            }
+
+            AtomicInteger processedSubmissionCount = new AtomicInteger(1);
+            textSubmissions.forEach(submission -> {
+                var progressMessage = "Getting submission: " + processedSubmissionCount + "/" + textSubmissions.size();
+                plagiarismWebsocketService.notifyInstructorAboutPlagiarismState(topic, PlagiarismCheckState.RUNNING, List.of(progressMessage));
+                submission.setResults(new ArrayList<>());
+
+                StudentParticipation participation = (StudentParticipation) submission.getParticipation();
+                participation.setExercise(null);
+                participation.setSubmissions(null);
+
+                String participantIdentifier = participation.getParticipantIdentifier();
+                if (participantIdentifier == null) {
+                    participantIdentifier = "unknown";
+                }
+
+                try {
+                    textSubmissionExportService.saveSubmissionToFile(submission, participantIdentifier, submissionsFolderName);
+                }
+                catch (IOException e) {
+                    log.error(e.getMessage());
+                }
+
+                processedSubmissionCount.getAndIncrement();
+            });
+
+            log.info("Saving text submissions done");
+
+            JPlagOptions options = new JPlagOptions(submissionsFolderName, LanguageOption.TEXT);
+            options.setMinimumTokenMatch(minimumSize);
+
+            // Important: for large courses with more than 1000 students, we might get more than one million results and 10 million files in the file system due to many 0% results,
+            // therefore we limit the results to at least 50% or 0.5 similarity, the passed threshold is between 0 and 100%
+            options.setSimilarityThreshold(similarityThreshold);
+
+            log.info("Start JPlag Text comparison");
+            JPlag jplag = new JPlag(options);
+            JPlagResult jPlagResult = jplag.run();
+            log.info("JPlag Text comparison finished with {} comparisons. Will limit the number of comparisons to 500", jPlagResult.getComparisons().size());
+
+            log.info("Delete submission folder");
+            if (submissionFolderFile.exists()) {
+                FileSystemUtils.deleteRecursively(submissionFolderFile);
+            }
+
             TextPlagiarismResult textPlagiarismResult = new TextPlagiarismResult();
+            textPlagiarismResult.convertJPlagResult(jPlagResult);
             textPlagiarismResult.setExercise(textExercise);
-            textPlagiarismResult.setSimilarityDistribution(new int[0]);
 
-            plagiarismCacheService.disablePlagiarismCheck(courseId);
+            log.info("JPlag text comparison for {} submissions done in {}", submissionsSize, TimeLogUtil.formatDurationFrom(start));
+            plagiarismWebsocketService.notifyInstructorAboutPlagiarismState(topic, PlagiarismCheckState.COMPLETED, List.of());
             return textPlagiarismResult;
         }
-
-        AtomicInteger processedSubmissionCount = new AtomicInteger(1);
-        textSubmissions.forEach(submission -> {
-            var progressMessage = "Getting submission: " + processedSubmissionCount + "/" + textSubmissions.size();
-            plagiarismWebsocketService.notifyInstructorAboutPlagiarismState(topic, PlagiarismCheckState.RUNNING, List.of(progressMessage));
-            submission.setResults(new ArrayList<>());
-
-            StudentParticipation participation = (StudentParticipation) submission.getParticipation();
-            participation.setExercise(null);
-            participation.setSubmissions(null);
-
-            String participantIdentifier = participation.getParticipantIdentifier();
-            if (participantIdentifier == null) {
-                participantIdentifier = "unknown";
-            }
-
-            try {
-                textSubmissionExportService.saveSubmissionToFile(submission, participantIdentifier, submissionsFolderName);
-            }
-            catch (IOException e) {
-                log.error(e.getMessage());
-            }
-
-            processedSubmissionCount.getAndIncrement();
-        });
-
-        log.info("Saving text submissions done");
-
-        JPlagOptions options = new JPlagOptions(submissionsFolderName, LanguageOption.TEXT);
-        options.setMinimumTokenMatch(minimumSize);
-
-        // Important: for large courses with more than 1000 students, we might get more than one million results and 10 million files in the file system due to many 0% results,
-        // therefore we limit the results to at least 50% or 0.5 similarity, the passed threshold is between 0 and 100%
-        options.setSimilarityThreshold(similarityThreshold);
-
-        log.info("Start JPlag Text comparison");
-        JPlag jplag = new JPlag(options);
-        JPlagResult jPlagResult = jplag.run();
-        log.info("JPlag Text comparison finished with {} comparisons. Will limit the number of comparisons to 500", jPlagResult.getComparisons().size());
-
-        log.info("Delete submission folder");
-        if (submissionFolderFile.exists()) {
-            FileSystemUtils.deleteRecursively(submissionFolderFile);
+        finally {
+            plagiarismCacheService.setInactivePlagiarismCheck(courseId);
         }
-
-        TextPlagiarismResult textPlagiarismResult = new TextPlagiarismResult();
-        textPlagiarismResult.convertJPlagResult(jPlagResult);
-        textPlagiarismResult.setExercise(textExercise);
-
-        log.info("JPlag text comparison for {} submissions done in {}", submissionsSize, TimeLogUtil.formatDurationFrom(start));
-        plagiarismWebsocketService.notifyInstructorAboutPlagiarismState(topic, PlagiarismCheckState.COMPLETED, List.of());
-        plagiarismCacheService.disablePlagiarismCheck(courseId);
-        return textPlagiarismResult;
     }
 }
