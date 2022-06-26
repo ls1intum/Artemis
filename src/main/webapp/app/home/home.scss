@@ -2,25 +2,6 @@
 Main page styles
 ========================================================================== */
 
-.hipster {
-    display: inline-block;
-    width: 347px;
-    height: 497px;
-    background-size: contain;
-}
-
-/* wait autoprefixer update to allow simple generation of high pixel density media query */
-@media only screen and (-webkit-min-device-pixel-ratio: 2),
-    only screen and (min--moz-device-pixel-ratio: 2),
-    only screen and (-o-min-device-pixel-ratio: 2/1),
-    only screen and (min-device-pixel-ratio: 2),
-    only screen and (min-resolution: 192dpi),
-    only screen and (min-resolution: 2dppx) {
-    .hipster {
-        background-size: contain;
-    }
-}
-
 @media (max-width: 576px) {
     h1 {
         font-size: 1.6rem;
@@ -33,14 +14,6 @@ Main page styles
 .login-col {
     min-width: 33%;
     min-height: 150px;
-}
-
-.registration-link {
-    width: 450px;
-}
-
-.btn-space {
-    margin-right: 5px;
 }
 
 .row-divided {
@@ -61,8 +34,8 @@ Main page styles
     text-transform: uppercase;
     transform: translateX(-50%);
 
-    &:before,
-    &:after {
+    &::before,
+    &::after {
         content: '';
         position: absolute;
         left: 50%;
@@ -73,17 +46,17 @@ Main page styles
         height: calc(100% - 1rem);
     }
 
-    &:before {
+    &::before {
         top: -100%;
     }
 
-    &:after {
+    &::after {
         top: auto;
         bottom: 0;
     }
 }
 
-// Inspired by https://stackoverflow.com/a/26634224
+/* Inspired by https://stackoverflow.com/a/26634224 */
 .horizontal-divider {
     display: flex;
     align-items: center;
@@ -93,18 +66,18 @@ Main page styles
     line-height: 0;
     text-transform: uppercase;
 
-    &:before,
-    &:after {
+    &::before,
+    &::after {
         content: '';
         flex: 1;
         border-bottom: 2px solid var(--border-color);
     }
 
-    &:before {
+    &::before {
         margin-right: 1em;
     }
 
-    &:after {
+    &::after {
         margin-left: 1em;
     }
 }
