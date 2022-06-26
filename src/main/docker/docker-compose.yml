@@ -6,16 +6,226 @@ services:
         build:
             context: ../../..
             dockerfile: src/main/docker/Dockerfile
-        volumes:
-            - ../resources/config/application-dev.yml:/opt/artemis/application-dev.yml:ro
-            - ../resources/config/application-artemis.yml:/opt/artemis/application-artemis.yml:ro
+        env_file: .env
         environment:
-            _JAVA_OPTIONS: -Xmx5120m -Xms2560m
-            SPRING_PROFILES_ACTIVE: dev,bamboo,bitbucket,jira,artemis,scheduling,athene,local
-            SPRING_DATASOURCE_URL: jdbc:mysql://artemis-mysql:3306/Artemis?createDatabaseIfNotExist=true&allowPublicKeyRetrieval=true&useUnicode=true&characterEncoding=utf8&useSSL=false&useLegacyDatetimeCode=false&serverTimezone=UTC
-            SPRING_DATASOURCE_USERNAME: root
-            SPRING_DATASOURCE_PASSWORD:
-            JHIPSTER_SLEEP: 30 # gives time for other services to boot before the application
+            # ===================================================================
+            # Artemis specific properties
+            # ===================================================================
+
+            artemis.course-archives-path: ./exports/courses         # a folder in which archived courses and exams are stored.
+            artemis.repo-clone-path: ./repos                        # a folder in which git repos for the online code editor are stored. In a multi node setup, this folder should be in a shared file system area (e.g. based on NFS), so that user can access the same files over multiple nodes
+            artemis.repo-download-clone-path: ./repos-download      # a temporary folder, in which git repos are downloaded that are immediately deleted afterwards (e.g. exports, plagiarism checks), should NOT be in a shared file system area
+            artemis.encryption-password: <encrypt-password>         # LEGACY: arbitrary password for encrypting database values
+            artemis.bcrypt-salt-rounds: 11  # The number of salt rounds for the bcrypt password hashing. Lower numbers make it faster but more unsecure and vice versa.
+                                            # Please use the bcrypt benchmark tool to determine the best number of rounds for your system. https://github.com/ls1intum/bcrypt-Benchmark
+
+            # Use of external authentication system for user management
+            artemis.user-management.use-external: true
+
+            # User management password reset
+            artemis.user-management.password-reset:
+            artemis.user-management.password-reset.credential-provider: TUMonline # The credential provider which users can log in though (e.g. TUMonline)
+                # The password reset links for different languages
+            artemis.user-management.password-reset.links.en: '<link>'
+            artemis.user-management.password-reset.links.de: '<link>'
+
+            # External user management
+            artemis.user-management.external.url: https://jira.ase.in.tum.de
+            artemis.user-management.external.user:         # e.g. ga12abc
+            artemis.user-management.external.password:
+            artemis.user-management.external.admin-group-name: tumuser
+
+            # LDAP user management
+                # the whole section is optional: whether user details (such as the registration number) can be obtained from a LDAP service
+            artemis.user-management.ldap.url: <url>
+            artemis.user-management.ldap.user-dn: <user-dn>
+            artemis.user-management.ldap.password: <password>
+            artemis.user-management.ldap.base: <base>
+            artemis.user-management.ldap.allowed-username-pattern: '^([a-z]{2}\d{2}[a-z]{3})$$'    # example for a TUM identifier, e.g. ab12cde
+
+            # Internal user management
+            artemis.user-management.internal-admin.username: artemis_admin
+            artemis.user-management.internal-admin.password: artemis_admin
+
+            # User management registration. The whole section is optional: whether user can register in Artemis
+            artemis.user-management.registration.enabled: false
+            artemis.user-management.registration.allowed-email-pattern: '[a-zA-Z0-9_\-\.\+]+@(tum\.de|in\.tum\.de|mytum\.de)'
+            artemis.user-management.registration.allowed-email-pattern-readable: '@tum.de, @in.tum.de, @mytum.de'
+            artemis.user-management.registration.cleanup-time-minutes: 60 # The amount of time until non-activated accounts are deleted automatically
+            artemis.user-management.accept-terms: false     # whether users have to accept terms before they can login, from a privacy point of view this is not needed during education, therefore the default value is false
+
+            # the whole section is optional: whether there is a restriction for the self-registration of students in courses
+            artemis.user-management.course-registration.allowed-username-pattern: '^([a-z]{2}\d{2}[a-z]{3})$$'    # example for a TUM identifier, e.g. ab12cde
+            artemis.user-management.login.account-name: TUM                   # optional: customization for the welcome page "please sign in with your <account-name> account"
+
+            # Artemis version control
+            artemis.version-control.url: https://bitbucket.ase.in.tum.de
+            artemis.version-control.user: <username>                # e.g. ga12abc
+            artemis.version-control.password: <password>
+            artemis.version-control.token: <token>                # VCS API token giving Artemis full Admin access.
+            artemis.version-control.ci-token: <token from the CI>   # Token generated by the CI (e.g. Jenkins) for webhooks from the VCS to the CI. Not needed for Bamboo+Bitbucket
+            artemis.version-control.ssh-template-clone-url: ssh://git@bitbucket.ase.in.tum.de:7999/    # Url Stem for cloning via ssh, for gitlab use 'ssh://git@artemistest2gitlab.ase.in.tum.de:2222/'
+            artemis.version-control.ssh-keys-url-path: /plugins/servlet/ssh/account/keys  # Url Path to access a users ssh keys, for gitlab this is '/-/profile/keys'
+            #        artemis.version-control.ssh-private-key-folder-path: <ssh-private-key-folder-path>       # the path to the folder in which the private ssh key file (e.g. id_rsa) is stored that can be used to clone git repos on the version control server
+            #        artemis.version-control.ssh-private-key-password: <ssh-private-key-password>        # the password for the private ssh key
+            artemis.version-control.default-branch: main            # The branch that should be used as default branch for all newly created repositories. This does NOT have to be equal to the default branch of the VCS
+            artemis.version-control.version-control-access-token: false # only for Gitlab setups: a Gitlab-API token can be generated for each user and used as part of the Git clone URL shown to students to allow for password-less Git operations via HTTP
+
+            # Artemis continous integration
+            artemis.continuous-integration.user: <username>                # e.g. ga12abc
+            artemis.continuous-integration.password: <password>
+            artemis.continuous-integration.token: <token>                  # Enter a valid token generated in Bamboo giving Artemis full Admin access
+            artemis.continuous-integration.url: https://bamboo.ase.in.tum.de
+            artemis.continuous-integration.vcs-application-link-name: LS1 Bitbucket Server     # If the VCS and CI are directly linked (normally only for Bitbucket + Bamboo)
+            artemis.continuous-integration.empty-commit-necessary: true                        # Do we need an empty commit for new exercises/repositories in order for the CI to register the repo
+            # Hash/key of the ci-token, equivalent e.g. to the ci-token in version-control
+            # Some CI systems, like Jenkins, offer a specific token that gets checked against any incoming notifications
+            # from a VCS trying to trigger a build plan. Only if the notification request contains the correct token, the plan
+            # is triggered. This can be seen as an alternative to sending an authenticated request to a REST API and then
+            # triggering the plan.
+            # In the case of Artemis, this is only really needed for the Jenkins + GitLab setup, since the GitLab plugin in
+            # Jenkins only allows triggering the Jenkins jobs using such a token. Furthermore, in this case, the value of the
+            # hudson.util.Secret is stored in the build plan, so you also have to specify this encrypted string here and NOT the actual token value itself!
+            # You can get this by GETting any job.xml for a job with an activated GitLab step and your token value of choice.
+            artemis.continuous-integration.secret-push-token: <token hash>
+            # Key of the saved credentials for the VCS service
+            # Bamboo: not needed
+            # Jenkins: You have to specify the key from the credentials page in Jenkins under which the user and
+            #          password for the VCS are stored
+            artemis.continuous-integration.vcs-credentials: <credentials key>
+            # Key of the credentials for the Artemis notification token
+            # Bamboo: not needed
+            # Jenkins: You have to specify the key from the credentials page in Jenkins under which the authentication-token is stored
+            artemis.continuous-integration.artemis-authentication-token-key: <credentials key>
+            # The actual value of the notification token to check against in Artemis. This is the token that gets send with
+            # every request the CI system makes to Artemis containing a new result after a build.
+            # Bamboo: The token value you use for the Server Notification Plugin
+            # Jenkins: The token value you use for the Server Notification Plugin and is stored under the notification-token credential above
+            artemis.continuous-integration.artemis-authentication-token-value: <token>
+            artemis.continuous-integration.build-timeout: 30 # Does cancel jenkins builds after 30 minutes to remove build that get stuck
+
+            # Artemis LTI
+                # only important for online courses that use LTI, can typically be ignored
+            artemis.lti.id: artemis_lti
+            artemis.lti.oauth-key: artemis_lti_key
+            artemis.lti.oauth-secret: <secret>
+            artemis.lti.user-prefix-edx: edx_
+            artemis.lti.user-prefix-u4i: u4i_
+            artemis.lti.user-group-name-edx: edx
+            artemis.lti.user-group-name-u4i: u4i
+            artemis.git.name: Artemis
+            artemis.git.email: artemis.in@tum.de
+            artemis.athene.url: http://localhost
+            artemis.athene.base64-secret: YWVuaXF1YWRpNWNlaXJpNmFlbTZkb283dXphaVF1b29oM3J1MWNoYWlyNHRoZWUzb2huZ2FpM211bGVlM0VpcAo=
+            artemis.athene.token-validity-in-seconds: 10800
+            artemis.apollon.conversion-service-url: http://localhost:8080
+
+            # ===================================================================
+            # Spring Boot configuration for the "dev" profile.
+            #
+            # This configuration overrides the application.yml file.
+            #
+            # More information on profiles: https://www.jhipster.tech/profiles/
+            # More information on configuration properties: https://www.jhipster.tech/common-application-properties/
+            # ===================================================================
+
+            # ===================================================================
+            # Standard Spring Boot properties.
+            # Full reference is available at:
+            # http://docs.spring.io/spring-boot/docs/current/reference/html/common-application-properties.html
+            # ===================================================================
+
+            logging.level.ROOT: DEBUG
+            logging.level.de.tum.in.www1.artemis: DEBUG
+            logging.level.tech.jhipster: DEBUG
+            logging.level.liquibase: ERROR
+
+            spring.devtools.restart.enabled: true
+            spring.devtools.livereload.enabled: false # we use Webpack dev server + BrowserSync for livereload
+            spring.jackson.serialization.indent-output: true
+
+            spring.datasource.type: com.zaxxer.hikari.HikariDataSource
+            spring.datasource.url: jdbc:mysql://localhost:3306/Artemis?createDatabaseIfNotExist=true&allowPublicKeyRetrieval=true&useUnicode=true&characterEncoding=utf8&useSSL=false&useLegacyDatetimeCode=false&serverTimezone=UTC
+            spring.datasource.username: root
+            spring.datasource.password:
+            spring.datasource.hikari.poolName: Hikari
+            spring.datasource.hikari.auto-commit: false
+            spring.datasource.hikari.data-source-properties.cachePrepStmts: true
+            spring.datasource.hikari.data-source-properties.prepStmtCacheSize: 250
+            spring.datasource.hikari.data-source-properties.prepStmtCacheSqlLimit: 2048
+            spring.datasource.hikari.data-source-properties.useServerPrepStmts: true
+
+            spring.jpa.database-platform: org.hibernate.dialect.MySQL8Dialect
+            spring.jpa.database: MYSQL
+            spring.jpa.show-sql: false
+
+            spring.liquibase.contexts: dev
+
+            spring.mail.host: localhost
+            spring.mail.port: 25
+            spring.mail.username:
+            spring.mail.password:
+
+            spring.messages.cache-duration: PT1S # 1 second, see the ISO 8601 standard
+
+            spring.thymeleaf.cache: false
+
+            spring.hazelcast.localInstances: true
+
+            server.port: 8080
+            server.url: https://artemislocal.ase.in.tum.de
+
+            # ===================================================================
+            # JHipster specific properties
+            #
+            # Full reference is available at: https://www.jhipster.tech/common-application-properties/
+            # ===================================================================
+
+                # CORS is only enabled by default with the "dev" profile, so BrowserSync can access the API
+            jhipster.cors.allowed-origin-patterns: "*"
+            jhipster.cors.allowed-methods: "*"
+            jhipster.cors.allowed-headers: "*"
+            jhipster.cors.exposed-headers: "Authorization,Link,X-Total-Count"
+            jhipster.cors.allow-credentials: true
+            jhipster.cors.max-age: 1800
+            # This token must be encoded using Base64 (you can type `echo 'secret-key'|base64` on your command line)
+            jhipster.security.authentication.jwt.base64-secret: bXktc2VjcmV0LWtleS13aGljaC1zaG91bGQtYmUtY2hhbmdlZC1pbi1wcm9kdWN0aW9uLWFuZC1iZS1iYXNlNjQtZW5jb2RlZAo=
+                            # Token is valid 24 hours
+            jhipster.security.authentication.jwt.token-validity-in-seconds: 86400
+            jhipster.security.authentication.jwt.token-validity-in-seconds-for-remember-me: 2592000
+            # specific JHipster mail property, for standard properties see MailProperties
+            jhipster.mail.from: artemis@localhost
+            jhipster.mail.base-url: http://127.0.0.1:8080
+            jhipster.logging.use-json-format: false # By default, logs are not in Json format
+            # Forward logs to logstash over a socket, used by LoggingConfiguration
+            jhipster.logging.logstash.enabled: false
+            jhipster.logging.logstash.host: localhost
+            jhipster.logging.logstash.port: 5000
+            jhipster.logging.logstash.queue-size: 512
+            jhipster.audit-events.retention-period: 120 # Number of days before audit events are deleted.
+
+            # Properties to be exposed on the /info management endpoint
+            # Names of the tutorial groups that will be automatically added to newly created users
+            info.guided-tour.course-group-students: 'artemis-artemistutorial-students'
+            info.guided-tour.courseShortName: 'artemistutorial'
+            info.guided-tour.tours.cancel_tour: ''
+            info.guided-tour.tours.code_editor_tour: 'test'
+            info.guided-tour.tours.course_overview_tour: ''
+            info.guided-tour.tours.course_exercise_overview_tour: 'test'
+            info.guided-tour.tours.modeling_tour: 'UML Class Diagram'
+            info.guided-tour.tours.programming_exercise_fail_tour: 'test'
+            info.guided-tour.tours.programming_exercise_success_tour: 'test'
+            info.guided-tour.tours.tutor_assessment_tour: 'Patterns in Software Engineering'
+            info.contact: artemis.in@tum.de  #default value, can be overridden if needed
+                # Specifies whether text assessment analytics service (TextAssessmentEventResource) is enabled/disabled
+                # default value set to true for development environment
+            info.text-assessment-analytics-enabled: true
+
+            # Eureka configuration
+            eureka.instance.prefer-ip-address: true
+            eureka.instance.client.enabled: false # By default, the JHipster Registry is not used in the "dev" profile
+            eureka.instance.client.service-url.defaultZone: http://admin:$${jhipster.registry.password}@localhost:8761/eureka/
+
         ports:
             - 8080:8080
         networks:
