@@ -41,11 +41,10 @@ import {
     faUsers,
     faWrench,
 } from '@fortawesome/free-solid-svg-icons';
-import { Task } from 'app/exercises/programming/shared/instructions-render/task/programming-exercise-task.model';
 import { FullGitDiffReportModalComponent } from 'app/exercises/programming/hestia/git-diff-report/full-git-diff-report-modal.component';
 import { TestwiseCoverageReportModalComponent } from 'app/exercises/programming/hestia/testwise-coverage-report/testwise-coverage-report-modal.component';
 import { CodeEditorRepositoryFileService } from 'app/exercises/programming/shared/code-editor/service/code-editor-repository.service';
-import { ProgrammingExerciseSolutionEntry } from 'app/entities/hestia/programming-exercise-solution-entry.model';
+import { CodeHintService } from 'app/exercises/shared/exercise-hint/shared/code-hint.service';
 
 @Component({
     selector: 'jhi-programming-exercise-detail',
@@ -110,6 +109,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
         private statisticsService: StatisticsService,
         private sortService: SortService,
         private programmingExerciseGradingService: ProgrammingExerciseGradingService,
+        private codeHintService: CodeHintService,
         private router: Router,
     ) {}
 
@@ -278,47 +278,6 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * Get tasks and corresponding test cases extracted from the problem statement for this exercise
-     */
-    getExtractedTasksAndTestsFromProblemStatement(): void {
-        this.programmingExerciseService.getTasksAndTestsExtractedFromProblemStatement(this.programmingExercise.id!).subscribe({
-            next: (res) => {
-                const numberTests = res.map((task) => task.tests.length).reduce((numberTests1, numberTests2) => numberTests1 + numberTests2, 0);
-                this.alertService.addAlert({
-                    type: AlertType.SUCCESS,
-                    message: 'artemisApp.programmingExercise.extractTasksFromProblemStatementSuccess',
-                    translationParams: {
-                        numberTasks: res.length,
-                        numberTestCases: numberTests,
-                        detailedResult: ProgrammingExerciseDetailComponent.buildTaskCreationMessage(res),
-                    },
-                    timeout: 0,
-                });
-            },
-            error: (error) => this.dialogErrorSource.next(error.message),
-        });
-    }
-
-    private static buildTaskCreationMessage(tasks: Task[]): string {
-        return tasks.map((task) => '"' + task.taskName + '": ' + task.tests).join('\n');
-    }
-
-    /**
-     * Delete all tasks and solution entries for this exercise
-     */
-    deleteTasksWithSolutionEntries(): void {
-        this.programmingExerciseService.deleteTasksWithSolutionEntries(this.programmingExercise.id!).subscribe({
-            next: () => {
-                this.alertService.addAlert({
-                    type: AlertType.SUCCESS,
-                    message: 'artemisApp.programmingExercise.deleteTasksAndSolutionEntriesSuccess',
-                });
-            },
-            error: (error) => this.dialogErrorSource.next(error.message),
-        });
-    }
-
-    /**
      * Cleans up programming exercise
      * @param event contains additional checks from the dialog
      */
@@ -471,12 +430,11 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
 
     createStructuralSolutionEntries() {
         this.programmingExerciseService.createStructuralSolutionEntries(this.programmingExercise.id!).subscribe({
-            next: (res) => {
+            next: () => {
                 this.alertService.addAlert({
                     type: AlertType.SUCCESS,
                     message: 'artemisApp.programmingExercise.createStructuralSolutionEntriesSuccess',
                 });
-                console.log(ProgrammingExerciseDetailComponent.buildStructuralSolutionEntriesMessage(res));
             },
             error: (err) => {
                 this.onError(err);
@@ -484,8 +442,32 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
         });
     }
 
-    private static buildStructuralSolutionEntriesMessage(solutionEntries: ProgrammingExerciseSolutionEntry[]): string {
-        return solutionEntries.map((solutionEntry) => `${solutionEntry.filePath}:\n${solutionEntry.code}`).join('\n\n');
+    createBehavioralSolutionEntries() {
+        this.programmingExerciseService.createBehavioralSolutionEntries(this.programmingExercise.id!).subscribe({
+            next: () => {
+                this.alertService.addAlert({
+                    type: AlertType.SUCCESS,
+                    message: 'artemisApp.programmingExercise.createBehavioralSolutionEntriesSuccess',
+                });
+            },
+            error: (err) => {
+                this.onError(err);
+            },
+        });
+    }
+
+    generateCodeHints() {
+        this.codeHintService.generateCodeHintsForExercise(this.programmingExercise.id!, true).subscribe({
+            next: () => {
+                this.alertService.addAlert({
+                    type: AlertType.SUCCESS,
+                    message: 'artemisApp.programmingExercise.generateCodeHintsSuccess',
+                });
+            },
+            error: (err) => {
+                this.onError(err);
+            },
+        });
     }
 
     /**

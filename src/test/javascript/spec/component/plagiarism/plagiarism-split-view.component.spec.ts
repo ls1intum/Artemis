@@ -16,7 +16,7 @@ import { MockComponent, MockPipe } from 'ng-mocks';
 import { ModelingSubmissionViewerComponent } from 'app/exercises/shared/plagiarism/plagiarism-split-view/modeling-submission-viewer/modeling-submission-viewer.component';
 import { TextSubmissionViewerComponent } from 'app/exercises/shared/plagiarism/plagiarism-split-view/text-submission-viewer/text-submission-viewer.component';
 import { PlagiarismStatus } from 'app/exercises/shared/plagiarism/types/PlagiarismStatus';
-import { PlagiarismCasesService } from 'app/course/plagiarism-cases/plagiarism-cases.service';
+import { PlagiarismCasesService } from 'app/course/plagiarism-cases/shared/plagiarism-cases.service';
 import { ArtemisTestModule } from '../../test.module';
 import { ModelingSubmissionElement } from 'app/exercises/shared/plagiarism/types/modeling/ModelingSubmissionElement';
 import { HttpResponse } from '@angular/common/http';
@@ -108,9 +108,9 @@ describe('Plagiarism Split View Component', () => {
 
         tick();
 
-        expect(comp.isProgrammingOrTextExercise).toBe(true);
-        expect(comp.isModelingExercise).toBe(false);
-        expect(comp.parseTextMatches).toHaveBeenCalledTimes(1);
+        expect(comp.isProgrammingOrTextExercise).toBeTrue();
+        expect(comp.isModelingExercise).toBeFalse();
+        expect(comp.parseTextMatches).toHaveBeenCalledOnce();
     }));
 
     it('should subscribe to the split control subject', () => {
@@ -120,7 +120,7 @@ describe('Plagiarism Split View Component', () => {
         comp.ngOnInit();
 
         // eslint-disable-next-line deprecation/deprecation
-        expect(comp.splitControlSubject.subscribe).toHaveBeenCalledTimes(1);
+        expect(comp.splitControlSubject.subscribe).toHaveBeenCalledOnce();
     });
 
     it('should collapse the left pane', () => {

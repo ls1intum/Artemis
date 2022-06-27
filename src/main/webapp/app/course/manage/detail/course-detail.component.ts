@@ -4,12 +4,10 @@ import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Subscription } from 'rxjs';
 import { Course } from 'app/entities/course.model';
 import { CourseManagementService } from '../course-management.service';
-import { CachingStrategy } from 'app/shared/image/secured-image.component';
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
 import { Subject } from 'rxjs';
 import { ButtonSize } from 'app/shared/components/button.component';
 import { CourseManagementDetailViewDto } from 'app/course/manage/course-management-detail-view-dto.model';
-import { ARTEMIS_DEFAULT_COLOR } from 'app/app.constants';
 import { onError } from 'app/shared/util/global.utils';
 import { AlertService } from 'app/core/util/alert.service';
 import { EventManager } from 'app/core/util/event-manager.service';
@@ -45,16 +43,15 @@ export enum DoughnutChartType {
     styleUrls: ['./course-detail.component.scss'],
 })
 export class CourseDetailComponent implements OnInit, OnDestroy {
-    readonly ARTEMIS_DEFAULT_COLOR = ARTEMIS_DEFAULT_COLOR;
     readonly DoughnutChartType = DoughnutChartType;
 
     ButtonSize = ButtonSize;
     ActionType = ActionType;
-    CachingStrategy = CachingStrategy;
 
     courseDTO: CourseManagementDetailViewDto;
     activeStudents: number[];
     course: Course;
+
     private eventSubscriber: Subscription;
 
     private dialogErrorSource = new Subject<string>();

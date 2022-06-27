@@ -71,7 +71,7 @@ describe('SystemNotificationManagementComponent', () => {
         button.click();
 
         tick();
-        expect(router.navigateByUrl).toHaveBeenCalledTimes(1);
+        expect(router.navigateByUrl).toHaveBeenCalledOnce();
         expect(router.navigateByUrl.mock.calls[0][0]).toEqual(['./', notification.id]);
     }));
 
@@ -87,14 +87,14 @@ describe('SystemNotificationManagementComponent', () => {
         button.click();
 
         tick();
-        expect(router.navigateByUrl).toHaveBeenCalledTimes(1);
+        expect(router.navigateByUrl).toHaveBeenCalledOnce();
         expect(router.navigateByUrl.mock.calls[0][0]).toEqual(['./', notification.id, 'edit']);
     }));
 
     it('should unsubscribe on destroy', () => {
         const routeDataSpy = jest.spyOn(managementComponent.routeData, 'unsubscribe');
         managementComponentFixture.destroy();
-        expect(routeDataSpy).toHaveBeenCalledTimes(1);
+        expect(routeDataSpy).toHaveBeenCalledOnce();
     });
 
     it('should transition on page change', fakeAsync(() => {

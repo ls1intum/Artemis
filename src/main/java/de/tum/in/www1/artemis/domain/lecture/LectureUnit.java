@@ -27,7 +27,8 @@ import de.tum.in.www1.artemis.domain.Lecture;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 // Annotation necessary to distinguish between concrete implementations of lecture-content when deserializing from JSON
 @JsonSubTypes({ @JsonSubTypes.Type(value = AttachmentUnit.class, name = "attachment"), @JsonSubTypes.Type(value = ExerciseUnit.class, name = "exercise"),
-        @JsonSubTypes.Type(value = TextUnit.class, name = "text"), @JsonSubTypes.Type(value = VideoUnit.class, name = "video"), })
+        @JsonSubTypes.Type(value = TextUnit.class, name = "text"), @JsonSubTypes.Type(value = VideoUnit.class, name = "video"),
+        @JsonSubTypes.Type(value = OnlineUnit.class, name = "online") })
 public abstract class LectureUnit extends DomainObject {
 
     @Transient
@@ -42,7 +43,7 @@ public abstract class LectureUnit extends DomainObject {
     // This is explicitly required by Hibernate for the indexed collection (OrderColumn)
     // https://docs.jboss.org/hibernate/stable/annotations/reference/en/html_single/#entity-hibspec-collection-extratype-indexbidir
     @Column(name = "lecture_unit_order")
-    @JsonIgnore
+    @Transient
     private int order;
 
     @ManyToOne
@@ -65,10 +66,6 @@ public abstract class LectureUnit extends DomainObject {
 
     public int getOrder() {
         return order;
-    }
-
-    public void setOrder(int order) {
-        this.order = order;
     }
 
     public Lecture getLecture() {

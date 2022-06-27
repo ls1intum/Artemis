@@ -43,11 +43,6 @@ describe('LearningGoalCardComponent', () => {
         jest.restoreAllMocks();
     });
 
-    it('should initialize', () => {
-        learningGoalCardComponentFixture.detectChanges();
-        expect(learningGoalCardComponent).toBeDefined();
-    });
-
     it('should display progress bar when progress is available', () => {
         const learningGoal = new LearningGoal();
         learningGoal.id = 1;
@@ -88,6 +83,6 @@ describe('LearningGoalCardComponent', () => {
         const modalService = TestBed.inject(NgbModal);
         const openSpy = jest.spyOn(modalService, 'open');
         card.click();
-        expect(openSpy).toHaveBeenCalledTimes(1);
+        expect(openSpy).toHaveBeenCalledOnce();
     });
 });

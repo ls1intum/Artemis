@@ -351,7 +351,7 @@ public class ProgrammingExerciseTestService {
         if (language == SWIFT) {
             exercise.setPackageName("swiftTest");
         }
-        exercise.setProjectType(programmingLanguageFeature.getProjectTypes().size() > 0 ? programmingLanguageFeature.getProjectTypes().get(0) : null);
+        exercise.setProjectType(programmingLanguageFeature.getProjectTypes().isEmpty() ? null : programmingLanguageFeature.getProjectTypes().get(0));
         mockDelegate.mockConnectorRequestsForSetup(exercise, false);
         validateProgrammingExercise(request.postWithResponseBody(ROOT + SETUP, exercise, ProgrammingExercise.class, HttpStatus.CREATED));
     }
@@ -379,7 +379,7 @@ public class ProgrammingExerciseTestService {
             exercise.setProjectType(ProjectType.GCC);
         }
         else {
-            exercise.setProjectType(programmingLanguageFeature.getProjectTypes().size() > 0 ? programmingLanguageFeature.getProjectTypes().get(0) : null);
+            exercise.setProjectType(programmingLanguageFeature.getProjectTypes().isEmpty() ? null : programmingLanguageFeature.getProjectTypes().get(0));
         }
         mockDelegate.mockConnectorRequestsForSetup(exercise, false);
         var generatedExercise = request.postWithResponseBody(ROOT + SETUP, exercise, ProgrammingExercise.class);
@@ -460,7 +460,6 @@ public class ProgrammingExerciseTestService {
         // Setup exercises for import
         database.addTestCasesToProgrammingExercise(sourceExercise);
         database.addHintsToExercise(sourceExercise);
-        database.addHintsToProblemStatement(sourceExercise);
 
         // Reset because we will add mocks for new requests
         mockDelegate.resetMockProvider();
@@ -514,7 +513,6 @@ public class ProgrammingExerciseTestService {
         sourceExercise.setStaticCodeAnalysisEnabled(staticCodeAnalysisEnabled);
         database.addTestCasesToProgrammingExercise(sourceExercise);
         database.addHintsToExercise(sourceExercise);
-        database.addHintsToProblemStatement(sourceExercise);
         sourceExercise = database.loadProgrammingExerciseWithEagerReferences(sourceExercise);
         commonImportSetup(sourceExercise);
         ProgrammingExercise exerciseToBeImported = ModelFactory.generateToBeImportedProgrammingExercise("ImportTitle", "imported", sourceExercise, database.addEmptyCourse());
@@ -557,7 +555,7 @@ public class ProgrammingExerciseTestService {
         var importedHintIds = importedExercise.getExerciseHints().stream().map(ExerciseHint::getId).collect(Collectors.toList());
         var sourceHintIds = sourceExercise.getExerciseHints().stream().map(ExerciseHint::getId).collect(Collectors.toList());
         assertThat(importedHintIds).doesNotContainAnyElementsOf(sourceHintIds);
-        assertThat(importedExercise.getExerciseHints()).usingRecursiveFieldByFieldElementComparator().usingElementComparatorIgnoringFields("id", "exercise")
+        assertThat(importedExercise.getExerciseHints()).usingRecursiveFieldByFieldElementComparatorIgnoringFields("id", "exercise", "exerciseHintActivations")
                 .containsExactlyInAnyOrderElementsOf(sourceExercise.getExerciseHints());
     }
 
@@ -616,7 +614,6 @@ public class ProgrammingExerciseTestService {
         sourceExercise.setMode(ExerciseMode.INDIVIDUAL);
         database.addTestCasesToProgrammingExercise(sourceExercise);
         database.addHintsToExercise(sourceExercise);
-        database.addHintsToProblemStatement(sourceExercise);
         sourceExercise = database.loadProgrammingExerciseWithEagerReferences(sourceExercise);
         sourceExercise.setCourse(sourceExercise.getCourseViaExerciseGroupOrCourseMember());
         programmingExerciseRepository.save(sourceExercise);
@@ -655,7 +652,6 @@ public class ProgrammingExerciseTestService {
         sourceExercise.setMode(TEAM);
         database.addTestCasesToProgrammingExercise(sourceExercise);
         database.addHintsToExercise(sourceExercise);
-        database.addHintsToProblemStatement(sourceExercise);
         sourceExercise = database.loadProgrammingExerciseWithEagerReferences(sourceExercise);
         var teamAssignmentConfig = new TeamAssignmentConfig();
         teamAssignmentConfig.setExercise(sourceExercise);
@@ -1437,6 +1433,7 @@ public class ProgrammingExerciseTestService {
         var participantRepoTestUrl = ModelFactory.getMockFileRepositoryUrl(studentTeamRepo);
         final var teamLocalPath = studentTeamRepo.localRepoFile.toPath();
         doReturn(teamLocalPath).when(gitService).getDefaultLocalPathOfRepo(participantRepoTestUrl);
+        doReturn(defaultBranch).when(versionControlService).getOrRetrieveBranchOfExercise(exercise);
         doThrow(new CanceledException("Checkout got interrupted!")).when(gitService).getOrCheckoutRepositoryIntoTargetDirectory(any(), any(), anyBoolean());
 
         // the local repo should exist before startExercise()
@@ -1659,7 +1656,7 @@ public class ProgrammingExerciseTestService {
         ProgrammingExercise sourceExercise = database.addProgrammingExerciseToCourse(course1, false);
         ProgrammingExercise exerciseToBeImported = ModelFactory.generateToBeImportedProgrammingExercise("ImportTitle", "Imported", sourceExercise, course2);
 
-        exerciseToBeImported.setExampleSolutionPublicationDate(ZonedDateTime.now());
+        exerciseToBeImported.setExampleSolutionPublicationDate(sourceExercise.getDueDate().plusDays(1));
 
         // Mock requests
         mockDelegate.mockConnectorRequestsForImport(sourceExercise, exerciseToBeImported, false);
@@ -1674,6 +1671,44 @@ public class ProgrammingExerciseTestService {
         ProgrammingExercise newProgrammingExerciseFromDatabase = programmingExerciseRepository.findById(newProgrammingExercise.getId()).get();
         assertThat(newProgrammingExerciseFromDatabase.getExampleSolutionPublicationDate())
                 .as("programming example solution publication date was correctly set to null in the database").isNull();
+    }
+
+    // TEST
+    public void createProgrammingExercise_setInvalidExampleSolutionPublicationDate_badRequest() throws Exception {
+        final var baseTime = ZonedDateTime.now();
+
+        exercise.setAssessmentDueDate(null);
+
+        exercise.setReleaseDate(baseTime.plusHours(1));
+        exercise.setDueDate(baseTime.plusHours(3));
+        exercise.setExampleSolutionPublicationDate(baseTime.plusHours(2));
+
+        mockDelegate.mockConnectorRequestsForSetup(exercise, false);
+
+        request.postWithResponseBody(ROOT + SETUP, exercise, ProgrammingExercise.class, HttpStatus.BAD_REQUEST);
+
+        exercise.setReleaseDate(baseTime.plusHours(3));
+        exercise.setDueDate(null);
+        exercise.setExampleSolutionPublicationDate(baseTime.plusHours(2));
+
+        request.postWithResponseBody(ROOT + SETUP, exercise, ProgrammingExercise.class, HttpStatus.BAD_REQUEST);
+    }
+
+    // TEST
+    public void createProgrammingExercise_setValidExampleSolutionPublicationDate() throws Exception {
+        final var baseTime = ZonedDateTime.now();
+
+        exercise.setAssessmentDueDate(null);
+
+        exercise.setReleaseDate(baseTime.plusHours(1));
+        exercise.setDueDate(baseTime.plusHours(2));
+        var exampleSolutionPublicationDate = baseTime.plusHours(3);
+        exercise.setExampleSolutionPublicationDate(exampleSolutionPublicationDate);
+
+        mockDelegate.mockConnectorRequestsForSetup(exercise, false);
+
+        var result = request.postWithResponseBody(ROOT + SETUP, exercise, ProgrammingExercise.class, HttpStatus.CREATED);
+        assertThat(result.getExampleSolutionPublicationDate()).isEqualTo(exampleSolutionPublicationDate);
     }
 
     // TEST

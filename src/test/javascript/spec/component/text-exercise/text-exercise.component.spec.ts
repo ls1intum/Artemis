@@ -70,7 +70,7 @@ describe('TextExercise Management Component', () => {
         comp.ngOnInit();
 
         // THEN
-        expect(courseExerciseService.findAllTextExercisesForCourse).toHaveBeenCalledTimes(1);
+        expect(courseExerciseService.findAllTextExercisesForCourse).toHaveBeenCalledOnce();
     });
 
     it('Should open modal', () => {
@@ -79,7 +79,7 @@ describe('TextExercise Management Component', () => {
 
         comp.openImportModal();
         expect(modalService.open).toHaveBeenCalledWith(TextExerciseImportComponent, { size: 'lg', backdrop: 'static' });
-        expect(modalService.open).toHaveBeenCalledTimes(1);
+        expect(modalService.open).toHaveBeenCalledOnce();
     });
 
     it('Should return exercise id', () => {

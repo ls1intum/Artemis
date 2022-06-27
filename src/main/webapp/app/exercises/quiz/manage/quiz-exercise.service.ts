@@ -30,6 +30,22 @@ export class QuizExerciseService {
     }
 
     /**
+     * Imports a quiz exercise by cloning the entity itself plus example solutions and example submissions
+     *
+     * @param adaptedSourceQuizExercise The exercise that should be imported, including adapted values for the
+     * new exercise. E.g. with another title than the original exercise. Old values that should get discarded
+     * (like the old ID) will be handled by the server.
+     */
+    import(adaptedSourceQuizExercise: QuizExercise) {
+        let copy = ExerciseService.convertDateFromClient(adaptedSourceQuizExercise);
+        copy = ExerciseService.setBonusPointsConstrainedByIncludedInOverallScore(copy);
+        copy.categories = ExerciseService.stringifyExerciseCategories(copy);
+        return this.http
+            .post<QuizExercise>(`${this.resourceUrl}/import/${adaptedSourceQuizExercise.id}`, copy, { observe: 'response' })
+            .pipe(map((res: EntityResponseType) => this.exerciseService.processExerciseEntityResponse(res)));
+    }
+
+    /**
      * Update the given quiz exercise
      * @param quizExercise the quiz exercise that should be updated
      * @param req Additional parameters that should be passed to the server when updating the exercise
@@ -215,7 +231,7 @@ export class QuizExerciseService {
      */
     getStatus(quizExercise: QuizExercise) {
         if (!quizExercise.quizStarted) {
-            return QuizStatus.HIDDEN;
+            return QuizStatus.INVISIBLE;
         }
         if (quizExercise.quizEnded) {
             return quizExercise.isOpenForPractice ? QuizStatus.OPEN_FOR_PRACTICE : QuizStatus.CLOSED;

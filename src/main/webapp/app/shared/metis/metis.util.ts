@@ -21,6 +21,7 @@ export enum DisplayPriority {
 export enum PageType {
     OVERVIEW = 'OVERVIEW',
     PAGE_SECTION = 'PAGE_SECTION',
+    PLAGIARISM_CASE = 'PLAGIARISM_CASE',
 }
 
 export const VOTE_EMOJI_ID = 'heavy_plus_sign';
@@ -47,6 +48,7 @@ export interface PostContextFilter {
     courseWideContext?: CourseWideContext;
     exerciseId?: number;
     lectureId?: number;
+    plagiarismCaseId?: number;
     searchText?: string;
     filterToUnresolved?: boolean;
     filterToOwn?: boolean;
@@ -76,8 +78,10 @@ export interface PostContextFilter {
 export interface PostingContentPart {
     contentBeforeReference?: string; // string before occurrence of reference pattern -> only for the first PostContentPart in the content of a posting
     linkToReference?: RouteComponents; // link the reference navigates to
+    attachmentToReference?: string; // attachment link the reference opens
     queryParams?: Params; // params that are required for navigating
     referenceStr?: string; // string that is within the anchor tag
+    referenceType?: ReferenceType; // type of artifact to reference
     contentAfterReference?: string; // string after occurrence of reference pattern
 }
 
@@ -89,11 +93,23 @@ export interface PostingContentPart {
 export interface PatternMatch {
     startIndex: number;
     endIndex: number;
+    referenceType: ReferenceType;
+}
+
+export enum ReferenceType {
+    POST = 'POST',
+    LECTURE = 'LECTURE',
+    ATTACHMENT = 'ATTACHMENT',
+    PROGRAMMING = 'programming',
+    MODELING = 'modeling',
+    QUIZ = 'quiz',
+    TEXT = 'text',
+    FILE_UPLOAD = 'file-upload',
 }
 
 /**
  * The context information of a post contains - for exercise and lecture context - an array of link components to be used by the Router to navigate to the context,
- * and the display name, i.e. the string that is linked, e.g the lecture title
+ * and the display name, i.e. the string that is linked, e.g. the lecture title
  */
 export interface ContextInformation {
     routerLinkComponents?: RouteComponents;

@@ -4,6 +4,8 @@
             "home": {
                 "title": "Quiz",
                 "createLabel": "Quiz erstellen",
+                "editLabel": "Quiz bearbeiten",
+                "importLabel": "Quiz importieren",
                 "createModelDragAndDrop": "Drag-And-Drop Model Quiz erstellen",
                 "createOrEditLabel": "Quiz erstellen oder bearbeiten",
                 "exportLabel": "Quizübungen exportieren"
@@ -17,6 +19,9 @@
             "reset": {
                 "question": "Soll das Quiz <strong>{{ title }}</strong> wirklich zurückgesetzt werden? Diese Aktion kann NICHT rückgängig gemacht werden! <br> Das bedeutet, dass alle Teilnehmenden, Ergebnisse und Statistiken gelöscht werden, aber die Fragen des Quizzes bestehen bleiben. Dann kannst du das Quiz erneut starten."
             },
+            "endNow": {
+                "question": "Soll das Quiz <strong>{{ title }}</strong> wirklich jetzt beendet werden? Diese Aktion kann NICHT rückgängig gemacht werden! <br> Dies verhindert alle weiteren Abgaben und startet die Veröffentlichung der Ergebnisse."
+            },
             "edit": {
                 "title": "Quiz für {{ param }} bearbeiten",
                 "addQuestion": "Frage hinzufügen",
@@ -29,9 +34,6 @@
                 "testRunSubmissionsExist": "Dieses Quiz enthält Abgaben für einen der Testläufe der Klausur. Lösche den Testlauf, um die Antwortoptionen zu bearbeiten."
             },
             "saveError": "Beim Speichern ist ein Fehler ist aufgetreten. Bitte überprüfe deine Eingabe und versuche es später noch einmal.",
-            "new": {
-                "title": "Quiz für {{ param }} erstellen"
-            },
             "export": {
                 "title": "Alle Quizfragen zum Kurs {{ param }}",
                 "export": "Export",
@@ -46,7 +48,7 @@
             },
             "quizStatus": {
                 "closed": "Geschlossen",
-                "hidden": "Verborgen",
+                "invisible": "Unsichtbar",
                 "openForPractice": "Zur Übung freigegeben",
                 "active": "Aktiv",
                 "visible": "Sichtbar"
@@ -61,8 +63,8 @@
             "isOpenForPractice": "Zum Üben freigegeben",
             "isPlannedToStart": "Geplante Startzeit",
             "openForPractice": "Zum Üben Freigeben",
-            "startNow": "Jetzt Starten",
-            "endNow": "Jetzt Beenden",
+            "startQuiz": "Quiz starten",
+            "startBatch": "Gruppe starten",
             "showNow": "Für Studierende Anzeigen",
             "duration": "Dauer",
             "minutes": "Minuten",
@@ -89,7 +91,12 @@
             "addSelectedQuestions": "Ausgewählte Fragen hinzufügen",
             "status": "Status",
             "quizPointStatistic": "Quiz-Punkte-Statistik",
-            "startTime": "Startzeit",
+            "releaseDate": "Sichtbar ab",
+            "startTime": "Bearbeitungszeit ab",
+            "startTimeErrorSynchronized": "Beginn der Arbeitszeit sollte nach \"Sichtbar ab\" sein",
+            "startTimeError": "Der Beginn der Arbeitszeit sollte nach \"Sichtbar ab\" und vor dem Fälligkeitsdatum liegen",
+            "setStartTime": "Start des Quiz planen",
+            "dueDateError": "Das Fälligkeitsdatum muss nach \"Sichtbar ab\" liegen. Bitte überprüfe deine Auswahl noch einmal",
             "quiz": "Quiz",
             "totalPoints": "Gesamtpunktzahl",
             "totalScore": "Ergebnis",
@@ -259,8 +266,14 @@
                 "synchronized": "Synchronisiert",
                 "batched": "Gruppiert",
                 "individual": "Einzeln",
-                "explanation": "Ausführungsmodus bestimmt wie Studierende an einem Quiz teilnehmen können.\n\nSynchronisiert: Alle Studierenden nehmen gleichzeitig an dem Quiz teil.\nGruppiert: Es gibt mehrere Gruppen an denen Studierende mit einem Passwort teilnehmen können.\nEinzeln: Studierende können jederzeit selbstständig an dem Quiz teilnehmen."
+                "explanation": "Der Ausführungsmodus bestimmt wie Studierende an einem Quiz teilnehmen können.\n\nSynchronisiert: Alle Studierenden nehmen gleichzeitig an dem Quiz teil.\nGruppiert: Es gibt mehrere Gruppen an denen Studierende mit einem Passwort teilnehmen können.\nEinzeln: Studierende können jederzeit selbstständig an dem Quiz teilnehmen."
             },
+            "releaseDateExplanation": {
+                "SYNCHRONIZED": "Synchronisiert: Das Datum, ab dem das Quiz für die Studierenden in der Aufgabenübersicht sichtbar wird. Die Studierenden können die Fragen erst ab dem Startdatum sehen.",
+                "BATCHED": "Gruppiert: Das Datum, ab dem das Quiz für die Studierenden in der Aufgabenübersicht sichtbar wird. Die Studierenden können die Fragen erst sehen, wenn eine Gruppe gestartet wird und sie das Passwort dafür eingeben.",
+                "INDIVIDUAL": "Einzeln: Das Datum, ab dem das Quiz für die Studierenden in der Aufgabenübersicht sichtbar wird. Die Studierenden können ab diesem Zeitpunkt mit der Bearbeitung beginnen."
+            },
+            "startTimeExplanation": "Setzen des Zeitpunktes, ab dem die Studierenden die Fragen sehen und mit der Beantwortung beginnen können.",
             "addBatch": "Gruppe hinzufügen",
             "join": "Bearbeiten",
             "joinFailed": "Dem Quiz konnte nicht beigetreten werden.",

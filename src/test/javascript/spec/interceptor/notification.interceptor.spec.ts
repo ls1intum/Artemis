@@ -36,7 +36,7 @@ describe(`NotificationInterceptor`, () => {
 
         notificationInterceptor.intercept(requestMock, mockHandler).subscribe();
 
-        expect(alertServiceMock.success).toHaveBeenCalledTimes(1);
+        expect(alertServiceMock.success).toHaveBeenCalledOnce();
         expect(alertServiceMock.success).toHaveBeenCalledWith('Test', { param: 'ABC' });
     });
 

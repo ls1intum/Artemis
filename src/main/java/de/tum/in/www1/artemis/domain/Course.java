@@ -158,6 +158,7 @@ public class Course extends DomainObject {
     private Integer maxPoints;
 
     @Column(name = "accuracy_of_scores")
+    @JsonView(QuizView.Before.class)
     private Integer accuracyOfScores;
 
     @OneToMany(mappedBy = "course", fetch = FetchType.LAZY)
@@ -169,7 +170,7 @@ public class Course extends DomainObject {
     @JsonIgnoreProperties(value = "course", allowSetters = true)
     private Set<Lecture> lectures = new HashSet<>();
 
-    @OneToMany(mappedBy = "course", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "course", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
     @JsonIgnoreProperties("course")
     @OrderBy("title")
     private Set<LearningGoal> learningGoals = new HashSet<>();
@@ -190,6 +191,12 @@ public class Course extends DomainObject {
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     @JsonIgnoreProperties("course")
     private Set<Organization> organizations = new HashSet<>();
+
+    @ManyToMany
+    @JoinTable(name = "learning_goal_course", joinColumns = @JoinColumn(name = "course_id", referencedColumnName = "id"), inverseJoinColumns = @JoinColumn(name = "learning_goal_id", referencedColumnName = "id"))
+    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
+    @JsonIgnoreProperties("consecutiveCourses")
+    private Set<LearningGoal> prerequisites = new HashSet<>();
 
     // NOTE: Helpers variable names must be different from Getter name, so that Jackson ignores the @Transient annotation, but Hibernate still respects it
     @Transient
@@ -508,6 +515,25 @@ public class Course extends DomainObject {
     public void setOrganizations(Set<Organization> organizations) {
         this.organizations = organizations;
     }
+
+    public Set<LearningGoal> getPrerequisites() {
+        return prerequisites;
+    }
+
+    public void setPrerequisites(Set<LearningGoal> prerequisites) {
+        this.prerequisites = prerequisites;
+    }
+
+    public void addPrerequisite(LearningGoal learningGoal) {
+        this.prerequisites.add(learningGoal);
+        learningGoal.getConsecutiveCourses().add(this);
+    }
+
+    public void removePrerequisite(LearningGoal learningGoal) {
+        this.prerequisites.remove(learningGoal);
+        learningGoal.getConsecutiveCourses().remove(this);
+    }
+
     /*
      * NOTE: The file management is necessary to differentiate between temporary and used files and to delete used files when the corresponding course is deleted, or it is replaced
      * by another file. The workflow is as follows 1. user uploads a file -> this is a temporary file, because at this point the corresponding course might not exist yet. 2. user
@@ -603,16 +629,6 @@ public class Course extends DomainObject {
 
     public void setLearningGoals(Set<LearningGoal> learningGoals) {
         this.learningGoals = learningGoals;
-    }
-
-    public void addLearningGoal(LearningGoal learningGoal) {
-        this.learningGoals.add(learningGoal);
-        learningGoal.setCourse(this);
-    }
-
-    public void removeLearningGoal(LearningGoal learningGoal) {
-        this.learningGoals.remove(learningGoal);
-        learningGoal.setCourse(null);
     }
 
     public boolean hasCourseArchive() {
@@ -727,6 +743,14 @@ public class Course extends DomainObject {
             throw new BadRequestAlertException("Confirmation registration message must be shorter than 2000 characters", ENTITY_NAME, "confirmationRegistrationMessageInvalid",
                     true);
         }
+    }
+
+    /**
+     * Returns true if the start and end date of the course fulfill all requirements
+     * @return true if the dates are valid
+     */
+    public boolean isValidStartAndEndDate() {
+        return getStartDate() == null || getEndDate() == null || this.getEndDate().isAfter(this.getStartDate());
     }
 
     /**

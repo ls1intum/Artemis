@@ -156,7 +156,7 @@ export class LectureService {
 
     /**
      * Besides the within the lecture included variables for access rights the access rights of the
-     * respective course are set aswell.
+     * respective course are set as well.
      *
      * @param lecture for which the access rights shall be set
      * @return lecture that with set access rights if the course was set

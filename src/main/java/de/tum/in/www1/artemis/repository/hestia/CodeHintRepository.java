@@ -1,12 +1,12 @@
 package de.tum.in.www1.artemis.repository.hestia;
 
+import java.util.Optional;
 import java.util.Set;
 
 import javax.validation.constraints.NotNull;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
 
 import de.tum.in.www1.artemis.domain.hestia.CodeHint;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
@@ -18,23 +18,31 @@ public interface CodeHintRepository extends JpaRepository<CodeHint, Long> {
 
     Set<CodeHint> findByExerciseId(Long exerciseId);
 
-    Set<CodeHint> findByTaskId(Long taskId);
-
     @NotNull
     default CodeHint findByIdElseThrow(long exerciseHintId) throws EntityNotFoundException {
         return findById(exerciseHintId).orElseThrow(() -> new EntityNotFoundException("Code Hint", exerciseHintId));
     }
 
-    /**
-     * Returns the title of the code hint with the given id
-     *
-     * @param hintId the id of the hint
-     * @return the name/title of the hint or null if the hint does not exist
-     */
+    @NotNull
+    default CodeHint findByIdWithSolutionEntriesElseThrow(long exerciseHintId) throws EntityNotFoundException {
+        return findByIdWithSolutionEntries(exerciseHintId).orElseThrow(() -> new EntityNotFoundException("Code Hint", exerciseHintId));
+    }
+
     @Query("""
-            SELECT h.title
+            SELECT h
             FROM CodeHint h
-            WHERE h.id = :#{#hintId}
+            LEFT JOIN FETCH h.task t
+            LEFT JOIN FETCH h.solutionEntries tc
+            WHERE h.id = :codeHintId
             """)
-    String getHintTitle(@Param("hintId") Long hintId);
+    Optional<CodeHint> findByIdWithSolutionEntries(Long codeHintId);
+
+    @Query("""
+            SELECT h
+            FROM CodeHint h
+            LEFT JOIN FETCH h.task t
+            LEFT JOIN FETCH h.solutionEntries tc
+            WHERE t.id = :taskId
+            """)
+    Set<CodeHint> findByTaskIdWithSolutionEntries(Long taskId);
 }

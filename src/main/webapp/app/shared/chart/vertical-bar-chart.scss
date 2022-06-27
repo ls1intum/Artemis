@@ -1,7 +1,15 @@
 :host::ng-deep .textDataLabel {
     font-weight: bolder;
-    font-size: medium !important;
-    transform: rotate(0deg);
-    alignment-baseline: baseline;
-    text-anchor: middle;
+    font-size: small !important;
+    alignment-baseline: middle;
+    text-anchor: start;
+}
+
+@media (min-width: 1420px) {
+    :host::ng-deep .textDataLabel {
+        transform: rotate(0deg);
+        font-size: medium !important;
+        alignment-baseline: baseline;
+        text-anchor: middle;
+    }
 }

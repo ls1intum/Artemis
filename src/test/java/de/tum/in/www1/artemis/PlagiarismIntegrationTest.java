@@ -2,6 +2,8 @@ package de.tum.in.www1.artemis;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.util.Optional;
+
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -11,14 +13,16 @@ import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.TextExercise;
+import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismCase;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismComparison;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismStatus;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismSubmission;
 import de.tum.in.www1.artemis.domain.plagiarism.text.TextPlagiarismResult;
 import de.tum.in.www1.artemis.domain.plagiarism.text.TextSubmissionElement;
 import de.tum.in.www1.artemis.repository.*;
-import de.tum.in.www1.artemis.web.rest.PlagiarismResource;
-import de.tum.in.www1.artemis.web.rest.dto.PlagiarismCaseDTO;
+import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismCaseRepository;
+import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismComparisonRepository;
+import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismResultRepository;
 import de.tum.in.www1.artemis.web.rest.dto.PlagiarismComparisonStatusDTO;
 
 public class PlagiarismIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
@@ -29,13 +33,56 @@ public class PlagiarismIntegrationTest extends AbstractSpringIntegrationBambooBi
     @Autowired
     private TextExerciseRepository textExerciseRepository;
 
-    private static final String INSTRUCTOR_STATEMENT_A = "instructor Statement A";
+    @Autowired
+    private PlagiarismCaseRepository plagiarismCaseRepository;
 
-    private static final String INSTRUCTOR_STATEMENT_B = "instructor Statement B";
+    @Autowired
+    private PlagiarismResultRepository plagiarismResultRepository;
+
+    private static Course course;
+
+    private static TextExercise textExercise;
+
+    private static TextPlagiarismResult textPlagiarismResult;
+
+    private static PlagiarismComparison<TextSubmissionElement> plagiarismComparison1;
+
+    private static PlagiarismSubmission<TextSubmissionElement> plagiarismSubmissionA1;
+
+    private static PlagiarismSubmission<TextSubmissionElement> plagiarismSubmissionB1;
+
+    private static PlagiarismComparison<TextSubmissionElement> plagiarismComparison2;
+
+    private static PlagiarismSubmission<TextSubmissionElement> plagiarismSubmissionA2;
+
+    private static PlagiarismSubmission<TextSubmissionElement> plagiarismSubmissionB2;
 
     @BeforeEach
     public void initTestCase() {
         database.addUsers(3, 1, 1, 1);
+        course = database.addCourseWithOneFinishedTextExercise();
+        textExercise = textExerciseRepository.findByCourseIdWithCategories(course.getId()).get(0);
+        textPlagiarismResult = database.createTextPlagiarismResultForExercise(textExercise);
+        plagiarismComparison1 = new PlagiarismComparison<>();
+        plagiarismComparison1.setPlagiarismResult(textPlagiarismResult);
+        plagiarismComparison1.setStatus(PlagiarismStatus.CONFIRMED);
+        plagiarismSubmissionA1 = new PlagiarismSubmission<>();
+        plagiarismSubmissionA1.setStudentLogin("student1");
+        plagiarismSubmissionB1 = new PlagiarismSubmission<>();
+        plagiarismSubmissionB1.setStudentLogin("student2");
+        plagiarismComparison1.setSubmissionA(plagiarismSubmissionA1);
+        plagiarismComparison1.setSubmissionB(plagiarismSubmissionB1);
+        plagiarismComparison1 = plagiarismComparisonRepository.save(plagiarismComparison1);
+        plagiarismComparison2 = new PlagiarismComparison<>();
+        plagiarismComparison2.setPlagiarismResult(textPlagiarismResult);
+        plagiarismComparison2.setStatus(PlagiarismStatus.NONE);
+        plagiarismSubmissionA2 = new PlagiarismSubmission<>();
+        plagiarismSubmissionA2.setStudentLogin("student2");
+        plagiarismSubmissionB2 = new PlagiarismSubmission<>();
+        plagiarismSubmissionB2.setStudentLogin("student3");
+        plagiarismComparison2.setSubmissionA(plagiarismSubmissionA2);
+        plagiarismComparison2.setSubmissionB(plagiarismSubmissionB2);
+        plagiarismComparison2 = plagiarismComparisonRepository.save(plagiarismComparison2);
     }
 
     @AfterEach
@@ -43,303 +90,100 @@ public class PlagiarismIntegrationTest extends AbstractSpringIntegrationBambooBi
         database.resetDatabase();
     }
 
-    /**
-     * Checks the method updatePlagiarismComparisonFinalStatus as student
-     */
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void updatePlagiarismComparisonFinalStatus_student() throws Exception {
-        request.put("/api/courses/1/plagiarism-comparisons/1/final-status/student1", new PlagiarismComparisonStatusDTO(), HttpStatus.FORBIDDEN);
+    public void testUpdatePlagiarismComparisonStatus_forbidden_student() throws Exception {
+        request.put("/api/courses/1/plagiarism-comparisons/1/status", new PlagiarismComparisonStatusDTO(), HttpStatus.FORBIDDEN);
     }
 
-    /**
-     * Checks the method updatePlagiarismComparisonFinalStatus as editor
-     */
     @Test
-    @WithMockUser(username = "editor1", roles = "EDITOR")
-    public void updatePlagiarismComparisonFinalStatus_editor() throws Exception {
-        request.put("/api/courses/1/plagiarism-comparisons/1/final-status/student1", new PlagiarismComparisonStatusDTO(), HttpStatus.FORBIDDEN);
-    }
-
-    /**
-     * Checks the method updatePlagiarismComparisonFinalStatus as instructor
-     */
-    @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void updatePlagiarismComparisonFinalStatusForStudentA() throws Exception {
-        Course course = database.addCourseWithOneFinishedTextExercise();
-        TextExercise textExercise = textExerciseRepository.findByCourseIdWithCategories(course.getId()).get(0);
-        TextPlagiarismResult textPlagiarismResult = database.createTextPlagiarismResultForExercise(textExercise);
-        PlagiarismComparison<TextSubmissionElement> plagiarismComparison = new PlagiarismComparison<>();
-        PlagiarismSubmission<TextSubmissionElement> submissionA = new PlagiarismSubmission<>();
-        submissionA.setStudentLogin("student1");
-        plagiarismComparison.setInstructorStatementA(INSTRUCTOR_STATEMENT_A);
-        plagiarismComparison.setPlagiarismResult(textPlagiarismResult);
-        plagiarismComparison.setStatusA(PlagiarismStatus.NONE);
-        plagiarismComparison.setSubmissionA(submissionA);
-        plagiarismComparisonRepository.save(plagiarismComparison);
-        var plagiarismComparisonStatus = new PlagiarismComparisonStatusDTO();
-        plagiarismComparisonStatus.setStatus(PlagiarismStatus.CONFIRMED);
-
-        request.put("/api/courses/" + course.getId() + "/plagiarism-comparisons/" + plagiarismComparison.getId() + "/final-status/student1", plagiarismComparisonStatus,
-                HttpStatus.OK);
-        var updatedPlagiarismComparison = plagiarismComparisonRepository.findByIdWithSubmissionsStudentsElseThrow(plagiarismComparison.getId());
-        assertThat(updatedPlagiarismComparison.getStatusA()).as("should update status for studentA").isEqualTo(PlagiarismStatus.CONFIRMED);
-    }
-
-    /**
-     * Checks the method updatePlagiarismComparisonFinalStatus for second (B) user
-     */
-    @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void updatePlagiarismComparisonFinalStatusForStudentB() throws Exception {
-        Course course = database.addCourseWithOneFinishedTextExercise();
-        TextExercise textExercise = textExerciseRepository.findByCourseIdWithCategories(course.getId()).get(0);
-        TextPlagiarismResult textPlagiarismResult = database.createTextPlagiarismResultForExercise(textExercise);
-        PlagiarismComparison<TextSubmissionElement> plagiarismComparison = new PlagiarismComparison<>();
-        PlagiarismSubmission<TextSubmissionElement> submissionA = new PlagiarismSubmission<>();
-        submissionA.setStudentLogin("student1");
-        PlagiarismSubmission<TextSubmissionElement> submissionB = new PlagiarismSubmission<>();
-        submissionB.setStudentLogin("student2");
-        plagiarismComparison.setInstructorStatementB(INSTRUCTOR_STATEMENT_B);
-        plagiarismComparison.setPlagiarismResult(textPlagiarismResult);
-        plagiarismComparison.setStatusB(PlagiarismStatus.NONE);
-        plagiarismComparison.setSubmissionA(submissionA);
-        plagiarismComparison.setSubmissionB(submissionB);
-        plagiarismComparisonRepository.save(plagiarismComparison);
-        var plagiarismComparisonStatus = new PlagiarismComparisonStatusDTO();
-        plagiarismComparisonStatus.setStatus(PlagiarismStatus.CONFIRMED);
-
-        request.put("/api/courses/" + course.getId() + "/plagiarism-comparisons/" + plagiarismComparison.getId() + "/final-status/student2", plagiarismComparisonStatus,
-                HttpStatus.OK);
-        var updatedPlagiarismComparison = plagiarismComparisonRepository.findByIdWithSubmissionsStudentsElseThrow(plagiarismComparison.getId());
-        assertThat(updatedPlagiarismComparison.getStatusB()).as("should update status for studentB").isEqualTo(PlagiarismStatus.CONFIRMED);
-    }
-
-    /**
-     * Checks the method updatePlagiarismComparisonFinalStatus for unknown student
-     */
-    @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void updatePlagiarismComparisonFinalStatusForUnknownStudent() throws Exception {
-        Course course = database.addCourseWithOneFinishedTextExercise();
-        TextExercise textExercise = textExerciseRepository.findByCourseIdWithCategories(course.getId()).get(0);
-        TextPlagiarismResult textPlagiarismResult = database.createTextPlagiarismResultForExercise(textExercise);
-        PlagiarismComparison<TextSubmissionElement> plagiarismComparison = new PlagiarismComparison<>();
-        PlagiarismSubmission<TextSubmissionElement> submissionA = new PlagiarismSubmission<>();
-        submissionA.setStudentLogin("student1");
-        PlagiarismSubmission<TextSubmissionElement> submissionB = new PlagiarismSubmission<>();
-        submissionB.setStudentLogin("student2");
-        plagiarismComparison.setInstructorStatementB(INSTRUCTOR_STATEMENT_B);
-        plagiarismComparison.setPlagiarismResult(textPlagiarismResult);
-        plagiarismComparison.setStatusB(PlagiarismStatus.NONE);
-        plagiarismComparison.setSubmissionA(submissionA);
-        plagiarismComparison.setSubmissionB(submissionB);
-        plagiarismComparisonRepository.save(plagiarismComparison);
-
-        request.put("/api/courses/" + course.getId() + "/plagiarism-comparisons/" + plagiarismComparison.getId() + "/final-status/student42", new PlagiarismComparisonStatusDTO(),
-                HttpStatus.NOT_FOUND);
-    }
-
-    /**
-     * Checks the method getPlagiarismComparisonsForCourse as student
-     */
-    @Test
-    @WithMockUser(username = "student1", roles = "USER")
-    public void getPlagiarismComparisonsForCourse_student() throws Exception {
-        request.getList("/api/courses/" + 1L + "/plagiarism-cases", HttpStatus.FORBIDDEN, PlagiarismCaseDTO.class);
-    }
-
-    /**
-     * Checks the method getPlagiarismComparisonsForCourse as tutor
-     */
-    @Test
-    @WithMockUser(username = "tutor1", roles = "TUTOR")
-    public void getPlagiarismComparisonsForCourse_tutor() throws Exception {
-        request.getList("/api/courses/" + 1L + "/plagiarism-cases", HttpStatus.FORBIDDEN, PlagiarismCaseDTO.class);
-    }
-
-    /**
-     * Checks the method getPlagiarismComparisonsForCourse as instructor
-     */
-    @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void getPlagiarismComparisonsForCourse_instructor() throws Exception {
-        Course course = database.addCourseWithOneFinishedTextExercise();
-        TextExercise textExercise = textExerciseRepository.findByCourseIdWithCategories(course.getId()).get(0);
-        TextPlagiarismResult textPlagiarismResult = database.createTextPlagiarismResultForExercise(textExercise);
-        PlagiarismComparison<TextSubmissionElement> plagiarismComparison1 = new PlagiarismComparison<>();
-        plagiarismComparison1.setPlagiarismResult(textPlagiarismResult);
-        plagiarismComparison1.setStatus(PlagiarismStatus.CONFIRMED);
-        PlagiarismComparison<TextSubmissionElement> plagiarismComparison2 = new PlagiarismComparison<>();
-        plagiarismComparison2.setPlagiarismResult(textPlagiarismResult);
-        plagiarismComparison2.setStatus(PlagiarismStatus.CONFIRMED);
-        plagiarismComparisonRepository.save(plagiarismComparison1);
-        plagiarismComparisonRepository.save(plagiarismComparison2);
-
-        var comparisons = request.getList("/api/courses/" + course.getId() + "/plagiarism-cases", HttpStatus.OK, plagiarismComparison1.getClass());
-        assertThat(comparisons).hasSize(2);
+    @WithMockUser(username = "tutor1", roles = "TA")
+    public void testUpdatePlagiarismComparisonStatus_forbidden_tutor() throws Exception {
+        request.put("/api/courses/1/plagiarism-comparisons/1/status", new PlagiarismComparisonStatusDTO(), HttpStatus.FORBIDDEN);
     }
 
     @Test
     @WithMockUser(username = "editor1", roles = "EDITOR")
-    public void getPlagiarismComparisonsForEditor() throws Exception {
-        Course course = database.addCourseWithOneFinishedTextExercise();
-        TextExercise textExercise = textExerciseRepository.findByCourseIdWithCategories(course.getId()).get(0);
-        TextPlagiarismResult textPlagiarismResult = database.createTextPlagiarismResultForExercise(textExercise);
-        PlagiarismComparison<TextSubmissionElement> plagiarismComparison1 = new PlagiarismComparison<>();
-        plagiarismComparison1.setPlagiarismResult(textPlagiarismResult);
-        plagiarismComparison1.setStatus(PlagiarismStatus.CONFIRMED);
-        var savedComparison = plagiarismComparisonRepository.save(plagiarismComparison1);
+    public void testUpdatePlagiarismComparisonStatus() throws Exception {
+        var plagiarismComparisonStatusDTOConfirmed1 = new PlagiarismComparisonStatusDTO();
+        plagiarismComparisonStatusDTOConfirmed1.setStatus(PlagiarismStatus.CONFIRMED);
+        request.put("/api/courses/" + course.getId() + "/plagiarism-comparisons/" + plagiarismComparison1.getId() + "/status", plagiarismComparisonStatusDTOConfirmed1,
+                HttpStatus.OK);
+        var updatedComparisonConfirmed = plagiarismComparisonRepository.findByIdWithSubmissionsStudentsElseThrow(plagiarismComparison1.getId());
+        assertThat(updatedComparisonConfirmed.getStatus()).as("should update plagiarism comparison status").isEqualTo(PlagiarismStatus.CONFIRMED);
+        Optional<PlagiarismCase> plagiarismCaseOptionalPresent = plagiarismCaseRepository.findByStudentLoginAndExerciseIdWithPlagiarismSubmissions("student1",
+                textExercise.getId());
+        assertThat(plagiarismCaseOptionalPresent.isPresent()).as("should create new plagiarism case").isTrue();
 
-        var comparison = request.get("/api/courses/" + course.getId() + "/plagiarism-comparisons/" + savedComparison.getId() + "/for-split-view", HttpStatus.OK,
+        var plagiarismComparisonStatusDTOConfirmed2 = new PlagiarismComparisonStatusDTO();
+        plagiarismComparisonStatusDTOConfirmed2.setStatus(PlagiarismStatus.CONFIRMED);
+        request.put("/api/courses/" + course.getId() + "/plagiarism-comparisons/" + plagiarismComparison2.getId() + "/status", plagiarismComparisonStatusDTOConfirmed2,
+                HttpStatus.OK);
+        var updatedComparisonConfirmed2 = plagiarismComparisonRepository.findByIdWithSubmissionsStudentsElseThrow(plagiarismComparison2.getId());
+        assertThat(updatedComparisonConfirmed2.getStatus()).as("should update plagiarism comparison status").isEqualTo(PlagiarismStatus.CONFIRMED);
+        Optional<PlagiarismCase> plagiarismCaseOptionalPresent2 = plagiarismCaseRepository.findByStudentLoginAndExerciseIdWithPlagiarismSubmissions("student1",
+                textExercise.getId());
+        assertThat(plagiarismCaseOptionalPresent2.isPresent()).as("should add to existing plagiarism case").isTrue();
+
+        var plagiarismComparisonStatusDTODenied = new PlagiarismComparisonStatusDTO();
+        plagiarismComparisonStatusDTODenied.setStatus(PlagiarismStatus.DENIED);
+        request.put("/api/courses/" + course.getId() + "/plagiarism-comparisons/" + plagiarismComparison1.getId() + "/status", plagiarismComparisonStatusDTODenied, HttpStatus.OK);
+        var updatedComparisonDenied = plagiarismComparisonRepository.findByIdWithSubmissionsStudentsElseThrow(plagiarismComparison1.getId());
+        assertThat(updatedComparisonDenied.getStatus()).as("should update plagiarism comparison status").isEqualTo(PlagiarismStatus.DENIED);
+        Optional<PlagiarismCase> plagiarismCaseOptionalEmpty = plagiarismCaseRepository.findByStudentLoginAndExerciseIdWithPlagiarismSubmissions("student1", textExercise.getId());
+        assertThat(plagiarismCaseOptionalEmpty.isEmpty()).as("should remove plagiarism case").isTrue();
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void testGetPlagiarismComparisonsForSplitView_student() throws Exception {
+        var comparison = request.get("/api/courses/" + course.getId() + "/plagiarism-comparisons/" + plagiarismComparison1.getId() + "/for-split-view?studentLogin=student1",
+                HttpStatus.OK, plagiarismComparison1.getClass());
+        assertThat(comparison.getPlagiarismResult()).isEqualTo(textPlagiarismResult);
+        assertThat(comparison.getSubmissionA().getStudentLogin()).as("should anonymize plagiarism comparison").isIn("Your submission", "Other submission");
+        assertThat(comparison.getSubmissionB().getStudentLogin()).as("should anonymize plagiarism comparison").isIn("Your submission", "Other submission");
+    }
+
+    @Test
+    @WithMockUser(username = "editor1", roles = "EDITOR")
+    public void testGetPlagiarismComparisonsForSplitView_editor() throws Exception {
+        var comparison = request.get("/api/courses/" + course.getId() + "/plagiarism-comparisons/" + plagiarismComparison1.getId() + "/for-split-view", HttpStatus.OK,
                 plagiarismComparison1.getClass());
         assertThat(comparison.getPlagiarismResult()).isEqualTo(textPlagiarismResult);
     }
 
-    /**
-     * Checks the method updatePlagiarismComparisonStudentStatement for student A
-     */
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void saveStudentStatementForStudentA() throws Exception {
-        Course course = database.addCourseWithOneFinishedTextExercise();
-        TextExercise textExercise = textExerciseRepository.findByCourseIdWithCategories(course.getId()).get(0);
-        TextPlagiarismResult textPlagiarismResult = database.createTextPlagiarismResultForExercise(textExercise);
-        PlagiarismComparison<TextSubmissionElement> plagiarismComparison = new PlagiarismComparison<>();
-        plagiarismComparison.setPlagiarismResult(textPlagiarismResult);
-        plagiarismComparison.setInstructorStatementA(INSTRUCTOR_STATEMENT_A);
-        PlagiarismSubmission<TextSubmissionElement> submissionA = new PlagiarismSubmission<>();
-        submissionA.setStudentLogin("student1");
-        plagiarismComparison.setSubmissionA(submissionA);
-        plagiarismComparisonRepository.save(plagiarismComparison);
-        var statement = new PlagiarismResource.PlagiarismStatementDTO();
-        statement.statement = "test statement";
-
-        request.put("/api/courses/" + course.getId() + "/plagiarism-comparisons/" + plagiarismComparison.getId() + "/student-statement", statement, HttpStatus.OK);
-        var comparison = plagiarismComparisonRepository.findByIdWithSubmissionsStudentsElseThrow(plagiarismComparison.getId());
-        assertThat(comparison.getStudentStatementA()).as("should update student statement").isEqualTo("test statement");
+    public void testDeletePlagiarismComparisons_student() throws Exception {
+        request.delete("/api/exercises/1/plagiarism-results/1/plagiarism-comparisons?deleteAll=false", HttpStatus.FORBIDDEN);
     }
 
-    /**
-     * Checks the method updatePlagiarismComparisonStudentStatement for student B
-     */
     @Test
-    @WithMockUser(username = "student2", roles = "USER")
-    public void saveStudentStatementForStudentB() throws Exception {
-        Course course = database.addCourseWithOneFinishedTextExercise();
-        TextExercise textExercise = textExerciseRepository.findByCourseIdWithCategories(course.getId()).get(0);
-        TextPlagiarismResult textPlagiarismResult = database.createTextPlagiarismResultForExercise(textExercise);
-        PlagiarismComparison<TextSubmissionElement> plagiarismComparison = new PlagiarismComparison<>();
-        plagiarismComparison.setPlagiarismResult(textPlagiarismResult);
-        plagiarismComparison.setInstructorStatementB(INSTRUCTOR_STATEMENT_B);
-        PlagiarismSubmission<TextSubmissionElement> submissionB = new PlagiarismSubmission<>();
-        submissionB.setStudentLogin("student2");
-        plagiarismComparison.setSubmissionB(submissionB);
-        plagiarismComparisonRepository.save(plagiarismComparison);
-        var statement = new PlagiarismResource.PlagiarismStatementDTO();
-        statement.statement = "test statement";
-
-        request.put("/api/courses/" + course.getId() + "/plagiarism-comparisons/" + plagiarismComparison.getId() + "/student-statement", statement, HttpStatus.OK);
-        var comparison = plagiarismComparisonRepository.findByIdWithSubmissionsStudentsElseThrow(plagiarismComparison.getId());
-        assertThat(comparison.getStudentStatementB()).as("should update student statement").isEqualTo("test statement");
+    @WithMockUser(username = "tutor1", roles = "TA")
+    public void testDeletePlagiarismComparisons_tutor() throws Exception {
+        request.delete("/api/exercises/1/plagiarism-results/1/plagiarism-comparisons?deleteAll=false", HttpStatus.FORBIDDEN);
     }
 
-    /**
-     * Checks the method updatePlagiarismComparisonStudentStatement for unknown student
-     */
     @Test
-    @WithMockUser(username = "student3", roles = "USER")
-    public void saveStudentStatementForUnknownStudent() throws Exception {
-        Course course = database.addCourseWithOneFinishedTextExercise();
-        TextExercise textExercise = textExerciseRepository.findByCourseIdWithCategories(course.getId()).get(0);
-        TextPlagiarismResult textPlagiarismResult = database.createTextPlagiarismResultForExercise(textExercise);
-        PlagiarismComparison<TextSubmissionElement> plagiarismComparison = new PlagiarismComparison<>();
-        PlagiarismSubmission<TextSubmissionElement> submissionA = new PlagiarismSubmission<>();
-        plagiarismComparison.setPlagiarismResult(textPlagiarismResult);
-        submissionA.setStudentLogin("student1");
-        plagiarismComparison.setSubmissionA(submissionA);
-        plagiarismComparison.setInstructorStatementA(INSTRUCTOR_STATEMENT_A);
-        PlagiarismSubmission<TextSubmissionElement> submissionB = new PlagiarismSubmission<>();
-        submissionB.setStudentLogin("student2");
-        plagiarismComparison.setSubmissionB(submissionB);
-        plagiarismComparison.setInstructorStatementB(INSTRUCTOR_STATEMENT_B);
-        plagiarismComparisonRepository.save(plagiarismComparison);
-        var statement = new PlagiarismResource.PlagiarismStatementDTO();
-        statement.statement = "test statement";
-
-        request.put("/api/courses/" + course.getId() + "/plagiarism-comparisons/" + plagiarismComparison.getId() + "/student-statement", statement, HttpStatus.FORBIDDEN);
+    @WithMockUser(username = "editor1", roles = "EDITOR")
+    public void testDeletePlagiarismComparisons_editor() throws Exception {
+        request.delete("/api/exercises/1/plagiarism-results/1/plagiarism-comparisons?deleteAll=false", HttpStatus.FORBIDDEN);
     }
 
-    /**
-     * Checks the method updatePlagiarismComparisonInstructorStatement for student A
-     */
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void saveInstructorStatementForStudentA() throws Exception {
-        Course course = database.addCourseWithOneFinishedTextExercise();
-        TextExercise textExercise = textExerciseRepository.findByCourseIdWithCategories(course.getId()).get(0);
-        TextPlagiarismResult textPlagiarismResult = database.createTextPlagiarismResultForExercise(textExercise);
-        PlagiarismComparison<TextSubmissionElement> plagiarismComparison = new PlagiarismComparison<>();
-        plagiarismComparison.setPlagiarismResult(textPlagiarismResult);
-        PlagiarismSubmission<TextSubmissionElement> submissionA = new PlagiarismSubmission<>();
-        submissionA.setStudentLogin("student1");
-        plagiarismComparison.setSubmissionA(submissionA);
-        plagiarismComparisonRepository.save(plagiarismComparison);
-        var statement = new PlagiarismResource.PlagiarismStatementDTO();
-        statement.statement = "test statement";
-
-        request.put("/api/courses/" + course.getId() + "/plagiarism-comparisons/" + plagiarismComparison.getId() + "/instructor-statement/student1", statement, HttpStatus.OK);
-        var comparison = plagiarismComparisonRepository.findByIdWithSubmissionsStudentsElseThrow(plagiarismComparison.getId());
-        assertThat(comparison.getInstructorStatementA()).as("should update instructor statement").isEqualTo("test statement");
+    public void testDeletePlagiarismComparisons_instructor() throws Exception {
+        request.delete("/api/exercises/" + textExercise.getId() + "/plagiarism-results/" + textPlagiarismResult.getId() + "/plagiarism-comparisons?deleteAll=false", HttpStatus.OK);
+        var result = plagiarismResultRepository.findFirstByExerciseIdOrderByLastModifiedDateDescOrNull(textExercise.getId());
+        assert result != null;
+        assertThat(result.getComparisons().size()).isEqualTo(1);
     }
 
-    /**
-     * Checks the method updatePlagiarismComparisonInstructorStatement for student B
-     */
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void saveInstructorStatementForStudentB() throws Exception {
-        Course course = database.addCourseWithOneFinishedTextExercise();
-        TextExercise textExercise = textExerciseRepository.findByCourseIdWithCategories(course.getId()).get(0);
-        TextPlagiarismResult textPlagiarismResult = database.createTextPlagiarismResultForExercise(textExercise);
-        PlagiarismComparison<TextSubmissionElement> plagiarismComparison = new PlagiarismComparison<>();
-        plagiarismComparison.setPlagiarismResult(textPlagiarismResult);
-        PlagiarismSubmission<TextSubmissionElement> submissionA = new PlagiarismSubmission<>();
-        PlagiarismSubmission<TextSubmissionElement> submissionB = new PlagiarismSubmission<>();
-        submissionA.setStudentLogin("student1");
-        submissionB.setStudentLogin("student2");
-        plagiarismComparison.setSubmissionA(submissionA);
-        plagiarismComparison.setSubmissionB(submissionB);
-        plagiarismComparisonRepository.save(plagiarismComparison);
-        var statement = new PlagiarismResource.PlagiarismStatementDTO();
-        statement.statement = "test statement";
-
-        request.put("/api/courses/" + course.getId() + "/plagiarism-comparisons/" + plagiarismComparison.getId() + "/instructor-statement/student2", statement, HttpStatus.OK);
-        var comparison = plagiarismComparisonRepository.findByIdWithSubmissionsStudentsElseThrow(plagiarismComparison.getId());
-        assertThat(comparison.getInstructorStatementB()).as("should update instructor statement").isEqualTo("test statement");
-    }
-
-    /**
-     * Checks the method updatePlagiarismComparisonInstructorStatement for unknown student
-     */
-    @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void saveInstructorStatementForUnknownStudent() throws Exception {
-        Course course = database.addCourseWithOneFinishedTextExercise();
-        TextExercise textExercise = textExerciseRepository.findByCourseIdWithCategories(course.getId()).get(0);
-        TextPlagiarismResult textPlagiarismResult = database.createTextPlagiarismResultForExercise(textExercise);
-        PlagiarismComparison<TextSubmissionElement> plagiarismComparison = new PlagiarismComparison<>();
-        plagiarismComparison.setPlagiarismResult(textPlagiarismResult);
-        PlagiarismSubmission<TextSubmissionElement> submissionA = new PlagiarismSubmission<>();
-        PlagiarismSubmission<TextSubmissionElement> submissionB = new PlagiarismSubmission<>();
-        submissionA.setStudentLogin("student1");
-        submissionB.setStudentLogin("student2");
-        plagiarismComparison.setSubmissionA(submissionA);
-        plagiarismComparison.setSubmissionB(submissionB);
-        plagiarismComparisonRepository.save(plagiarismComparison);
-
-        request.put("/api/courses/" + course.getId() + "/plagiarism-comparisons/" + plagiarismComparison.getId() + "/instructor-statement/student42",
-                new PlagiarismResource.PlagiarismStatementDTO(), HttpStatus.NOT_FOUND);
+    public void testDeletePlagiarismComparisons_instructor_deleteAll() throws Exception {
+        request.delete("/api/exercises/" + textExercise.getId() + "/plagiarism-results/" + textPlagiarismResult.getId() + "/plagiarism-comparisons?deleteAll=true", HttpStatus.OK);
+        var result = plagiarismResultRepository.findFirstByExerciseIdOrderByLastModifiedDateDescOrNull(textExercise.getId());
+        assertThat(result).isNull();
     }
 }

@@ -16,12 +16,12 @@ import com.fasterxml.jackson.annotation.*;
 import de.tum.in.www1.artemis.domain.enumeration.*;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
-import de.tum.in.www1.artemis.domain.hestia.ExerciseHint;
 import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.TutorParticipation;
+import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismCase;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.domain.view.QuizView;
 import de.tum.in.www1.artemis.web.rest.dto.DueDateStat;
@@ -126,7 +126,9 @@ public abstract class Exercise extends BaseExercise {
     private Set<Post> posts = new HashSet<>();
 
     @OneToMany(mappedBy = "exercise", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
-    private Set<ExerciseHint> exerciseHints = new HashSet<>();
+    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
+    @JsonIncludeProperties({ "id" })
+    private Set<PlagiarismCase> plagiarismCases = new HashSet<>();
 
     // NOTE: Helpers variable names must be different from Getter name, so that Jackson ignores the @Transient annotation, but Hibernate still respects it
     @Transient
@@ -353,12 +355,12 @@ public abstract class Exercise extends BaseExercise {
         this.posts = posts;
     }
 
-    public Set<ExerciseHint> getExerciseHints() {
-        return exerciseHints;
+    public Set<PlagiarismCase> getPlagiarismCases() {
+        return plagiarismCases;
     }
 
-    public void setExerciseHints(Set<ExerciseHint> exerciseHints) {
-        this.exerciseHints = exerciseHints;
+    public void setPlagiarismCases(Set<PlagiarismCase> plagiarismCases) {
+        this.plagiarismCases = plagiarismCases;
     }
 
     // jhipster-needle-entity-add-getters-setters - JHipster will add getters and setters here, do not remove
@@ -548,7 +550,7 @@ public abstract class Exercise extends BaseExercise {
             }
         }
 
-        if (submissionsWithRatedResult.size() > 0) {
+        if (!submissionsWithRatedResult.isEmpty()) {
             if (submissionsWithRatedResult.size() == 1) {
                 return submissionsWithRatedResult.get(0);
             }
@@ -557,7 +559,7 @@ public abstract class Exercise extends BaseExercise {
                 return submissionsWithRatedResult.stream().filter(s -> s.getSubmissionDate() != null).max(Comparator.comparing(Submission::getSubmissionDate)).orElse(null);
             }
         }
-        else if (submissionsWithUnratedResult.size() > 0) {
+        else if (!submissionsWithUnratedResult.isEmpty()) {
             if (this instanceof ProgrammingExercise) {
                 // this is an edge case that is treated differently: the student has not submitted before the due date and the client would otherwise think
                 // that there is no result for the submission and would display a red trigger button.
@@ -571,7 +573,7 @@ public abstract class Exercise extends BaseExercise {
                 return submissionsWithUnratedResult.stream().filter(s -> s.getSubmissionDate() != null).max(Comparator.comparing(Submission::getSubmissionDate)).orElse(null);
             }
         }
-        else if (submissionsWithoutResult.size() > 0) {
+        else if (!submissionsWithoutResult.isEmpty()) {
             if (submissionsWithoutResult.size() == 1) {
                 return submissionsWithoutResult.get(0);
             }
@@ -835,6 +837,29 @@ public abstract class Exercise extends BaseExercise {
             gradingInstructionCopyTracker.put(originalGradingInstruction.getId(), newGradingInstruction);
         }
         return newGradingInstructions;
+    }
+
+    /**
+     * This method is used to validate the dates of an exercise. A date is valid if there is no dueDateError or assessmentDueDateError
+     *
+     * @throws BadRequestAlertException if the dates are not valid
+     */
+    public void validateDates() {
+        // All fields are optional, so there is no error if none of them is set
+        if (getReleaseDate() == null && getDueDate() == null && getAssessmentDueDate() == null && getExampleSolutionPublicationDate() == null) {
+            return;
+        }
+        if (isExamExercise()) {
+            throw new BadRequestAlertException("An exam exercise may not have any dates set!", getTitle(), "invalidDatesForExamExercise");
+        }
+
+        // at least one is set, so we have to check the three possible errors
+        boolean areDatesValid = isNotAfterAndNotNull(getReleaseDate(), getDueDate()) && isValidAssessmentDueDate(getReleaseDate(), getDueDate(), getAssessmentDueDate())
+                && isValidExampleSolutionPublicationDate(getReleaseDate(), getDueDate(), getExampleSolutionPublicationDate(), getIncludedInOverallScore());
+
+        if (!areDatesValid) {
+            throw new BadRequestAlertException("The exercise dates are not valid", getTitle(), "noValidDates");
+        }
     }
 
     /**

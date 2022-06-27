@@ -28,7 +28,7 @@ describe(`ErrorHandlerInterceptor`, () => {
 
         errorHandlerInterceptor.intercept({} as HttpRequest<any>, mockHandler).subscribe();
 
-        expect(eventManagerMock.broadcast).toHaveBeenCalledTimes(1);
+        expect(eventManagerMock.broadcast).toHaveBeenCalledOnce();
         expect(eventManagerMock.broadcast).toHaveBeenCalledWith({
             name: 'artemisApp.httpError',
             content: error,

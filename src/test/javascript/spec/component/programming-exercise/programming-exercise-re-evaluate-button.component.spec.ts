@@ -48,7 +48,7 @@ describe('ProgrammingExercise Re-Evaluate Button Component', () => {
         const button = fixture.debugElement.nativeElement.querySelector('#re-evaluate-button button');
         button.click();
 
-        expect(gradingService.reEvaluate).toHaveBeenCalledTimes(1);
+        expect(gradingService.reEvaluate).toHaveBeenCalledOnce();
         expect(gradingService.reEvaluate).toHaveBeenCalledWith(programmingExercise.id);
     });
 });

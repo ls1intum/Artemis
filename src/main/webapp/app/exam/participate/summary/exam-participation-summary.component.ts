@@ -14,7 +14,7 @@ import { ThemeService } from 'app/core/theme/theme.service';
 @Component({
     selector: 'jhi-exam-participation-summary',
     templateUrl: './exam-participation-summary.component.html',
-    styleUrls: ['../../../course/manage/course-exercise-card.component.scss', '../../../exercises/quiz/shared/quiz.scss'],
+    styleUrls: ['../../../course/manage/course-exercise-card.component.scss', '../../../exercises/quiz/shared/quiz.scss', 'exam-participation-summary.component.scss'],
 })
 export class ExamParticipationSummaryComponent implements OnInit {
     // make constants available to html for comparison
@@ -97,7 +97,7 @@ export class ExamParticipationSummaryComponent implements OnInit {
 
     /**
      * @param exercise
-     * returns the students submission for the exercise, undefined if no participation could be found
+     * returns the students' submission for the exercise, undefined if no participation could be found
      */
     getSubmissionForExercise(exercise: Exercise) {
         if (
@@ -113,7 +113,7 @@ export class ExamParticipationSummaryComponent implements OnInit {
 
     /**
      * @param exercise
-     * returns the students submission for the exercise, undefined if no participation could be found
+     * returns the students' submission for the exercise, undefined if no participation could be found
      */
     getParticipationForExercise(exercise: Exercise) {
         if (exercise.studentParticipations && exercise.studentParticipations[0]) {

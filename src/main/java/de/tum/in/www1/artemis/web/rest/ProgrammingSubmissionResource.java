@@ -1,9 +1,6 @@
 package de.tum.in.www1.artemis.web.rest;
 
-import java.util.HashSet;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -349,7 +346,7 @@ public class ProgrammingSubmissionResource {
     }
 
     /**
-     * GET /programming-submissions/:submissionId/lock : get the programmingSubmissions participation by it's id and locks the corresponding submission for assessment
+     * GET /programming-submissions/:submissionId/lock : get the programmingSubmissions participation by its id and locks the corresponding submission for assessment
      *
      * @param submissionId the id of the participation to retrieve
      * @param correctionRound correction round for which we prepare the submission
@@ -398,9 +395,17 @@ public class ProgrammingSubmissionResource {
         participation.setExercise(programmingExercise);
         // prepare programming submission for response
         programmingSubmissionService.hideDetails(programmingSubmission, user);
+
         // remove automatic results before sending to client
-        programmingSubmission.setResults(programmingSubmission.getManualResults());
+        var manualResults = programmingSubmission.getManualResults();
+        if (correctionRound >= manualResults.size()) {
+            programmingSubmission.setResults(Collections.emptyList());
+        }
+        else {
+            programmingSubmission.setResults(Collections.singletonList(manualResults.get(correctionRound)));
+        }
         programmingSubmission.getParticipation().setResults(new HashSet<>(programmingSubmission.getResults()));
+
         return ResponseEntity.ok(programmingSubmission);
     }
 

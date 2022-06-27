@@ -18,6 +18,7 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.plagiarism.modeling.ModelingPlagiarismResult;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismResultRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.feature.Feature;
@@ -406,6 +407,8 @@ public class ModelingExerciseResource {
         if (plagiarismResult != null) {
             for (var comparison : plagiarismResult.getComparisons()) {
                 comparison.setPlagiarismResult(null);
+                comparison.getSubmissionA().setPlagiarismComparison(null);
+                comparison.getSubmissionB().setPlagiarismComparison(null);
             }
         }
         return ResponseEntity.ok((ModelingPlagiarismResult) plagiarismResult);
@@ -436,7 +439,8 @@ public class ModelingExerciseResource {
         ModelingPlagiarismResult result = modelingPlagiarismDetectionService.checkPlagiarism(modelingExercise, similarityThreshold / 100, minimumSize, minimumScore);
         log.info("Finished modelingPlagiarismDetectionService.checkPlagiarism call for {} comparisons in {}", result.getComparisons().size(),
                 TimeLogUtil.formatDurationFrom(start));
-        result.sortAndLimit(500);
+        // TODO: limit the amount temporarily because of database issues
+        result.sortAndLimit(100);
         log.info("Limited number of comparisons to {} to avoid performance issues when saving to database", result.getComparisons().size());
         start = System.nanoTime();
         plagiarismResultRepository.savePlagiarismResultAndRemovePrevious(result);

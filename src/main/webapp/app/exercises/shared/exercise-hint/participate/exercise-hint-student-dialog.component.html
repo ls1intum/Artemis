@@ -3,8 +3,20 @@
     <button type="button" class="btn-close" data-dismiss="modal" aria-hidden="true" (click)="clear()"></button>
 </div>
 <div class="modal-body">
-    <div *ngFor="let hint of exerciseHints; index as i" class="mb-4">
-        <h3 class="mb-3">Hint {{ i + 1 }}: {{ hint.title }}</h3>
-        <div class="p-3 border border-1 border-secondary bg-light" [innerHTML]="hint.content | htmlForMarkdown"></div>
+    <div *ngIf="availableExerciseHints?.length" class="mb-3">
+        <h2 jhiTranslate="artemisApp.exerciseHint.studentDialog.availableHintsTitle">New available hints</h2>
+        <span class="mb-5">{{
+            'artemisApp.exerciseHint.studentDialog.availableHintTaskDescription' | artemisTranslate: { taskName: availableExerciseHints.first()!.programmingExerciseTask!.taskName }
+        }}</span>
+        <div *ngFor="let hint of availableExerciseHints" class="mb-3">
+            <jhi-exercise-hint-expandable [exerciseHint]="hint" [hasUsed]="false" (onHintActivated)="this.onHintActivated.emit($event)"></jhi-exercise-hint-expandable>
+        </div>
+        <hr />
+    </div>
+    <div *ngIf="activatedExerciseHints?.length" class="mb-3">
+        <h2 jhiTranslate="artemisApp.exerciseHint.studentDialog.activatedHintsTitle">Already activated hints</h2>
+        <div *ngFor="let hint of activatedExerciseHints" class="mb-3">
+            <jhi-exercise-hint-expandable [exerciseHint]="hint" [hasUsed]="true"></jhi-exercise-hint-expandable>
+        </div>
     </div>
 </div>

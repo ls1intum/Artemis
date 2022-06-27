@@ -17,10 +17,8 @@
             </div>
         </div>
     </div>
-    <hr [hidden]="!learningGoals || learningGoals.length === 0" />
-    <div class="row row-cols-auto">
+    <div class="d-flex my-3 flex-wrap gap-3 justify-content-evenly" style="min-height: 100px">
         <jhi-learning-goal-card
-            class="mx-auto col"
             *ngFor="let learningGoal of learningGoals; index as i; trackBy: identify"
             [learningGoal]="learningGoal"
             [learningGoalProgress]="getLearningGoalCourseProgress(learningGoal)"
@@ -44,6 +42,26 @@
                 <fa-icon [icon]="faPencilAlt"></fa-icon>
                 <span class="d-none d-md-inline">{{ 'entity.action.edit' | artemisTranslate }}</span>
             </a>
+        </jhi-learning-goal-card>
+    </div>
+    <hr />
+    <div class="container">
+        <div class="row">
+            <div class="col-6 offset-3 my-auto">
+                <h3 class="text-center">{{ 'artemisApp.learningGoal.prerequisite.managePrerequisites.title' | artemisTranslate }}</h3>
+            </div>
+            <div class="col-3 align-self-start">
+                <a class="btn btn-primary btn-circle grow center-link" (click)="openImportModal()">
+                    <fa-icon [icon]="faPlus"></fa-icon>
+                </a>
+            </div>
+        </div>
+    </div>
+    <div class="d-flex my-3 flex-wrap gap-3 justify-content-evenly" style="min-height: 100px">
+        <jhi-learning-goal-card *ngFor="let prerequisite of prerequisites; index as i; trackBy: identify" [learningGoal]="prerequisite" [isPrerequisite]="true">
+            <button *jhiHasAnyAuthority="['ROLE_INSTRUCTOR', 'ROLE_ADMIN']" id="removeButton" class="btn btn-secondary btn-sm" (click)="removePrerequisite(prerequisite.id!)">
+                <fa-icon [icon]="faTimes"></fa-icon> {{ 'artemisApp.learningGoal.learningGoalCard.remove' | artemisTranslate }}
+            </button>
         </jhi-learning-goal-card>
     </div>
 </div>

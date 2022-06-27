@@ -69,7 +69,7 @@ describe('OrionExerciseAssessmentDashboardComponent', () => {
 
         comp.openAssessmentInOrion();
 
-        expect(assessExerciseSpy).toHaveBeenCalledTimes(1);
+        expect(assessExerciseSpy).toHaveBeenCalledOnce();
         expect(assessExerciseSpy).toHaveBeenCalledWith(programmingExercise);
     });
 
@@ -78,7 +78,7 @@ describe('OrionExerciseAssessmentDashboardComponent', () => {
 
         comp.downloadSubmissionInOrion(programmingSubmission, 2);
 
-        expect(downloadSubmissionSpy).toHaveBeenCalledTimes(1);
+        expect(downloadSubmissionSpy).toHaveBeenCalledOnce();
         expect(downloadSubmissionSpy).toHaveBeenCalledWith(comp.exerciseId, programmingSubmission, 2, false);
     });
 
@@ -97,9 +97,9 @@ describe('OrionExerciseAssessmentDashboardComponent', () => {
         expect(comp.exercise).toEqual(programmingExercise);
         expect(comp.orionState).toEqual(orionState);
 
-        expect(getForTutorsStub).toHaveBeenCalledTimes(1);
+        expect(getForTutorsStub).toHaveBeenCalledOnce();
         expect(getForTutorsStub).toHaveBeenCalledWith(10);
-        expect(orionStateStub).toHaveBeenCalledTimes(1);
+        expect(orionStateStub).toHaveBeenCalledOnce();
         expect(orionStateStub).toHaveBeenCalledWith();
     }));
 
@@ -122,11 +122,11 @@ describe('OrionExerciseAssessmentDashboardComponent', () => {
         expect(comp.exercise).toBe(undefined);
         expect(comp.orionState).toEqual(orionState);
 
-        expect(getForTutorsStub).toHaveBeenCalledTimes(1);
+        expect(getForTutorsStub).toHaveBeenCalledOnce();
         expect(getForTutorsStub).toHaveBeenCalledWith(10);
-        expect(orionStateStub).toHaveBeenCalledTimes(1);
+        expect(orionStateStub).toHaveBeenCalledOnce();
         expect(orionStateStub).toHaveBeenCalledWith();
-        expect(errorSpy).toHaveBeenCalledTimes(1);
+        expect(errorSpy).toHaveBeenCalledOnce();
         expect(errorSpy).toHaveBeenCalledWith('error.http.400');
     }));
 });

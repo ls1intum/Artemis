@@ -30,7 +30,7 @@ export class ResizeableContainerComponent implements AfterViewInit {
 
     /**
      * Performed after full initialization of the view.
-     * Handles the resizable layout with collapsible panel on the right hand side.
+     * Handles the resizable layout with collapsible panel on the right-hand side.
      */
     ngAfterViewInit() {
         interact('.expanded')

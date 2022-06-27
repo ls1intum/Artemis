@@ -165,6 +165,9 @@ $reaction-button-reacted-color: $metis-light-blue;
 $reaction-button-reacted-accent-color: $metis-blue;
 $reaction-button-emoji-count-color: black;
 
+$metis-post-tag-selector-tag-option-background: white;
+$metis-post-tag-selector-tag-option-hover-background: $gray-200;
+
 // Component: plagiarism-inspector.component.scss
 $plagiarism-inspector-darker-artemis-dark: darken($artemis-dark, 4);
 
@@ -268,7 +271,7 @@ $mc-question-answer-option-hover-background: #fafafa;
 $programming-exercise-instruction-step-wizard-card-header-background: #f5f5f5;
 $programming-exercise-instruction-step-wizard-card-header-border: #ddd;
 $programming-exercise-instruction-step-wizard-row-before-background: #ccc;
-$programming-exercise-instruction-step-wizard-btn-circle-light-border-color: #ccc;
+$programming-exercise-instruction-step-wizard-btn-border-color: #ccc;
 $programming-exercise-instruction-step-wizard-circle-not-done-color: $secondary;
 $programming-exercise-instruction-step-wizard-test-passing-hover-color: #f8f9fa;
 
@@ -286,6 +289,8 @@ $code-editor-file-browser-header-border: #ddd;
 $code-editor-file-browser-tree-hover: #f5f5f5;
 $code-editor-file-browser-input-background: white;
 $code-editor-file-browser-input-color: black;
+$code-editor-diff-newline-background: rgba(63, 185, 80, 0.4);
+$code-editor-gutter-newline-background: rgba(63, 185, 80, 0.8);
 
 // Overview variables
 $overview-border-color: $border-color;
@@ -340,6 +345,18 @@ $data-table-icon-right: white;
 $data-table-transitioning-container-active-background-color: rgba(255, 255, 255, 0.5);
 $data-table-dropdown-item-selected-background-color: $primary;
 
+// Team Participation Table
+$team-participation-table-last-row-border-bottom: #d1d4d7;
+$team-participation-table-even-row-background: #f2f2f2;
+$team-participation-table-header-inner-background: white;
+$team-participation-table-current-exercise-bg: lighten(#d4edda, 5%);
+$team-participation-table-current-exercise-text: #155724;
+$team-participation-table-box-shadow-color: gray;
+
+// Team Short Name
+$team-short-name-background: rgba(0, 0, 180, 0.05);
+$team-short-name-color: #053d97;
+
 // Exam
 $exam-navigation-bar-background-color: #ecebe7;
 $exam-navigation-bar-synced-color: white;
@@ -358,6 +375,10 @@ $exam-participation-footer-box-shadow: rgba(0, 0, 0, 0.7);
 $exam-participation-footer-connected-background: #d1ecf1;
 $exam-participation-footer-disconnected-background: #fff2cc;
 $exam-text-exam-summary-background: #f8f9fa;
+
+// Exam Monitoring
+$exam-monitoring-card-border-color: $border-color;
+$exam-monitoring-card-footer-background-color: rgba($black, 0.02);
 
 // Assessment
 $textblock-assessment-span-hover-background: $gray-300;
@@ -380,6 +401,7 @@ $textblock-feedback-editor-feedback-neutral-color: $gray-900;
 $textblock-feedback-editor-feedback-neutral-background-color: $gray-100;
 $textblock-feedback-editor-reused-feedback-preview-border: rgba(228, 228, 228, 0.87);
 $textblock-feedback-editor-dropdown-hover: #e9ecef;
+$manual-text-selection-span-hover-background-color: $gray-300;
 
 // Guided tour
 $gt-tour-step-bg-color: #ffffff;
@@ -444,3 +466,7 @@ $graph-green: rgba(40, 164, 40, 1);
 $graph-red: rgba(204, 0, 0, 1);
 $graph-yellow: rgba(230, 174, 6, 1);
 $graph-black: rgba(53, 61, 71, 1);
+
+// User-Management
+$user-management-background-color: rgba($black, 0.02);
+$user-management-border-color: rgba($black, 0.15);

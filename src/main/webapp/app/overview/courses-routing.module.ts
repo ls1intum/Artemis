@@ -7,6 +7,7 @@ import { CourseExamsComponent } from 'app/overview/course-exams/course-exams.com
 import { NgModule } from '@angular/core';
 import { Authority } from 'app/shared/constants/authority.constants';
 import { CourseExercisesComponent } from 'app/overview/course-exercises/course-exercises.component';
+import { GradingKeyOverviewComponent } from 'app/grading-system/grading-key-overview/grading-key-overview.component';
 
 const routes: Routes = [
     {
@@ -54,6 +55,10 @@ const routes: Routes = [
                 loadChildren: () => import('./course-statistics/course-statistics.module').then((m) => m.CourseStatisticsModule),
             },
             {
+                path: 'learning-goals',
+                loadChildren: () => import('../overview/course-learning-goals/course-learning-goals.module').then((m) => m.CourseLearningGoalsModule),
+            },
+            {
                 path: 'discussion',
                 loadChildren: () => import('../overview/course-discussion/course-discussion.module').then((m) => m.CourseDiscussionModule),
             },
@@ -67,6 +72,10 @@ const routes: Routes = [
                 canActivate: [UserRouteAccessService],
             },
             {
+                path: 'plagiarism-cases',
+                loadChildren: () => import('../course/plagiarism-cases/student-view/plagiarism-cases-student-view.module').then((m) => m.ArtemisPlagiarismCasesStudentViewModule),
+            },
+            {
                 path: '',
                 redirectTo: 'exercises',
                 pathMatch: 'full',
@@ -74,8 +83,13 @@ const routes: Routes = [
         ],
     },
     {
-        path: 'courses/:courseId/plagiarism',
-        loadChildren: () => import('app/course/plagiarism-cases/plagiarism-cases.module').then((m) => m.PlagiarismCasesModule),
+        path: 'courses/:courseId/statistics/grading-key',
+        component: GradingKeyOverviewComponent,
+        data: {
+            authorities: [Authority.USER],
+            pageTitle: 'artemisApp.gradingSystem.title',
+        },
+        canActivate: [UserRouteAccessService],
     },
 ];
 

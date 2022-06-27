@@ -35,9 +35,10 @@ public interface PostRepository extends JpaRepository<Post, Long> {
                 OR answer.author.id = :#{#userId}
                 OR reaction.user.id = :#{#userId})
             AND (:#{#unresolved} = false
-                OR NOT EXISTS (SELECT answerPost FROM post.answers answerPost
-                    WHERE answerPost.resolvesPost = true
-                    AND answerPost.post.id = post.id))
+                OR ((post.courseWideContext IS NULL OR post.courseWideContext <> 'ANNOUNCEMENT')
+                    AND NOT EXISTS (SELECT answerPost FROM post.answers answerPost
+                        WHERE answerPost.resolvesPost = true
+                        AND answerPost.post.id = post.id)))
             """)
     List<Post> findPostsForCourse(@Param("courseId") Long courseId, @Param("courseWideContext") CourseWideContext courseWideContext, @Param("unresolved") boolean unresolved,
             @Param("own") boolean own, @Param("reactedOrReplied") boolean reactedOrReplied, @Param("userId") Long userId);
@@ -61,10 +62,11 @@ public interface PostRepository extends JpaRepository<Post, Long> {
                 OR answer.author.id = :#{#userId}
                 OR reaction.user.id = :#{#userId})
             AND (:#{#unresolved} = false
-                OR NOT EXISTS (SELECT answerPost FROM post.answers answerPost
-                    WHERE answerPost.resolvesPost = true
-                    AND answerPost.post.id = post.id))
-                """)
+                 OR ((post.courseWideContext IS NULL OR post.courseWideContext <> 'ANNOUNCEMENT')
+                    AND NOT EXISTS (SELECT answerPost FROM post.answers answerPost
+                        WHERE answerPost.resolvesPost = true
+                        AND answerPost.post.id = post.id)))
+            """)
     List<Post> findPostsByLectureId(@Param("lectureId") Long lectureId, @Param("unresolved") boolean unresolved, @Param("own") boolean own,
             @Param("reactedOrReplied") boolean reactedOrReplied, @Param("userId") Long userId);
 
@@ -78,12 +80,20 @@ public interface PostRepository extends JpaRepository<Post, Long> {
                 OR answer.author.id = :#{#userId}
                 OR reaction.user.id = :#{#userId})
             AND (:#{#unresolved} = false
-                OR NOT EXISTS (SELECT answerPost FROM post.answers answerPost
-                    WHERE answerPost.resolvesPost = true
-                    AND answerPost.post.id = post.id))
+                 OR ((post.courseWideContext IS NULL OR post.courseWideContext <> 'ANNOUNCEMENT')
+                    AND NOT EXISTS (SELECT answerPost FROM post.answers answerPost
+                        WHERE answerPost.resolvesPost = true
+                        AND answerPost.post.id = post.id)))
             """)
     List<Post> findPostsByExerciseId(@Param("exerciseId") Long exerciseId, @Param("unresolved") boolean unresolved, @Param("own") boolean own,
             @Param("reactedOrReplied") boolean reactedOrReplied, @Param("userId") Long userId);
+
+    @Query("""
+            SELECT DISTINCT post FROM Post post
+            LEFT JOIN post.answers answer LEFT JOIN post.reactions reaction
+            WHERE post.plagiarismCase.id = :#{#plagiarismCaseId}
+            """)
+    List<Post> findPostsByPlagiarismCaseId(@Param("plagiarismCaseId") Long plagiarismCaseId);
 
     default Post findByIdElseThrow(Long postId) throws EntityNotFoundException {
         return findById(postId).orElseThrow(() -> new EntityNotFoundException("Post", postId));
