@@ -69,8 +69,7 @@
                 <div class="btn-group">
                     <div
                         class="btn"
-                        [class.btn-primary.selected]="!showLifetimeOverview"
-                        [class.btn-default]="showLifetimeOverview"
+                        [ngClass]="!showLifetimeOverview ? 'btn-primary selected' : 'btn-default'"
                         (click)="displayDefaultChartScope()"
                         ngbTooltip="{{ 'artemisApp.courseStatistics.scopeButton.recentWeekTooltip' | artemisTranslate }}"
                     >
@@ -78,8 +77,7 @@
                     </div>
                     <div
                         class="btn"
-                        [class.btn-primary.selected]="showLifetimeOverview"
-                        [class.btn-default]="!showLifetimeOverview"
+                        [ngClass]="showLifetimeOverview ? 'btn-primary selected' : 'btn-default'"
                         (click)="displayLifetimeOverview()"
                         ngbTooltip="{{ 'artemisApp.courseStatistics.scopeButton.lifetimeOverviewTooltip' | artemisTranslate }}"
                     >
@@ -89,7 +87,7 @@
             </div>
             <div class="form-check flex-grow-0">
                 <input class="form-check-input" type="checkbox" [checked]="showAverage" (change)="toggleAverageLine()" />
-                <label class="form-check-label">{{ 'artemisApp.courseStatistics.averageReferenceLineCheckboxLabel' | artemisTranslate }}</label>
+                <label class="form-check-label">{{ 'artemisApp.courseStatistics.meanReferenceLineCheckboxLabel' | artemisTranslate }}</label>
             </div>
         </div>
     </ng-container>
