@@ -119,6 +119,16 @@ public class ExamMonitoringScheduleService {
     }
 
     /**
+     * Used to update monitoring during the exam.
+     *
+     * @param examId        identifies the cache
+     * @param monitoring    new exam action
+     */
+    public void notifyMonitoringUpdate(Long examId, boolean monitoring) {
+        messagingService.sendMessage("/topic/exam-monitoring/" + examId + "/update", monitoring);
+    }
+
+    /**
      * This method schedules all exam activity save tasks after a server (re-)start.
      */
     public void startSchedule() {

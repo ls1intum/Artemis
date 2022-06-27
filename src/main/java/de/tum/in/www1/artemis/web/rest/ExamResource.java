@@ -179,6 +179,11 @@ public class ExamResource {
 
         if (updatedExam.isMonitoring()) {
             examMonitoringScheduleService.scheduleExamActivitySave(result.getId());
+            examMonitoringScheduleService.notifyMonitoringUpdate(result.getId(), true);
+        }
+        else {
+            examMonitoringScheduleService.cancelExamActivitySave(result.getId());
+            examMonitoringScheduleService.notifyMonitoringUpdate(result.getId(), false);
         }
 
         // We can't test dates for equality as the dates retrieved from the database lose precision. Also use instant to take timezones into account
