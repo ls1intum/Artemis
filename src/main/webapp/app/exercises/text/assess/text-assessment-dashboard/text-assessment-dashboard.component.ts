@@ -109,7 +109,6 @@ export class TextAssessmentDashboardComponent implements OnInit {
             )
             .subscribe((submissions: TextSubmission[]) => {
                 this.submissions = submissions;
-                this.filteredSubmissions = this.submissions;
                 this.filteredSubmissions = submissions;
                 this.busy = false;
             });
