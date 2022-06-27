@@ -129,8 +129,7 @@ public class ExamMonitoringScheduleService {
 
         for (var examActivity : examActivities.values()) {
             for (var examAction : examActivity.getExamActions()) {
-                // messagingService.sendMessage("/topic/exam-monitoring/" + examId + "/action", examAction);
-                messagingService.convertAndSendToUser(login, "/topic/exam-monitoring/" + examId + "/action", examAction);
+                messagingService.sendMessageToUser(login, "/topic/exam-monitoring/" + examId + "/action", examAction);
             }
         }
     }

@@ -51,7 +51,7 @@ public class WebsocketMessagingService {
      * @param destination the destination to send the message to
      * @param payload the payload to send
      */
-    public void convertAndSendToUser(String user, String destination, Object payload) {
+    public void sendMessageToUser(String user, String destination, Object payload) {
         messagingTemplate.convertAndSendToUser(user, destination, payload);
     }
 

@@ -37,6 +37,7 @@ public class ExamActivityResource {
      * Receives a request by the user to send the initial actions to the users' client
      *
      * @param examId    the exam to which the student exams belong to
+     * @param principal the user principal
      */
     @MessageMapping("/topic/exam-monitoring/{examId}/load-actions")
     public void loadAllActions(@DestinationVariable Long examId, Principal principal) {

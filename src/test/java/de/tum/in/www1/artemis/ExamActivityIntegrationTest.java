@@ -1,7 +1,11 @@
 package de.tum.in.www1.artemis;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.verify;
 
+import java.security.Principal;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -12,6 +16,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
+import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithMockUser;
 
@@ -112,6 +117,7 @@ public class ExamActivityIntegrationTest extends AbstractSpringIntegrationBamboo
         ExamAction examAction = createExamActionBasedOnType(examActionType);
 
         examActivityResource.updatePerformedExamActions(exam.getId(), examAction);
+        verify(this.websocketMessagingService).sendMessage("/topic/exam-monitoring/" + exam.getId() + "/action", examAction);
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
@@ -121,6 +127,7 @@ public class ExamActivityIntegrationTest extends AbstractSpringIntegrationBamboo
         ExamAction examAction = createExamActionBasedOnType(examActionType);
 
         examActivityResource.updatePerformedExamActions(exam.getId(), examAction);
+        verify(this.websocketMessagingService).sendMessage("/topic/exam-monitoring/" + exam.getId() + "/action", examAction);
 
         var examActivity = examMonitoringScheduleService.getExamActivityFromCache(exam.getId(), studentExam.getId());
         assertThat(examActivity).isNotNull();
@@ -135,6 +142,7 @@ public class ExamActivityIntegrationTest extends AbstractSpringIntegrationBamboo
         ExamAction examAction = createExamActionBasedOnType(examActionType);
 
         examActivityResource.updatePerformedExamActions(exam.getId(), examAction);
+        verify(this.websocketMessagingService).sendMessage("/topic/exam-monitoring/" + exam.getId() + "/action", examAction);
 
         examMonitoringScheduleService.executeExamActivitySaveTask(exam.getId());
 
@@ -149,6 +157,7 @@ public class ExamActivityIntegrationTest extends AbstractSpringIntegrationBamboo
 
         for (ExamAction examAction : examActions) {
             examActivityResource.updatePerformedExamActions(exam.getId(), examAction);
+            verify(this.websocketMessagingService).sendMessage("/topic/exam-monitoring/" + exam.getId() + "/action", examAction);
         }
 
         var examActivity = examMonitoringScheduleService.getExamActivityFromCache(exam.getId(), studentExam.getId());
@@ -170,10 +179,35 @@ public class ExamActivityIntegrationTest extends AbstractSpringIntegrationBamboo
 
         examActivityResource.updatePerformedExamActions(exam.getId(), examAction);
 
+        verify(this.websocketMessagingService).sendMessage("/topic/exam-monitoring/" + exam.getId() + "/action", examAction);
+
         // Currently, we don't apply any filtering - so there should be an activity and action in the cache
         var examActivity = examMonitoringScheduleService.getExamActivityFromCache(exam.getId(), studentExam.getId());
         assertThat(examActivity).isNotNull();
         assertThat(examActivity.getExamActions().size()).isEqualTo(1);
         assertThat(new ArrayList<>(examActivity.getExamActions()).get(0).getType()).isEqualTo(examActionType);
+    }
+
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
+    @WithMockUser(username = "student1", roles = "USER")
+    @EnumSource(ExamActionType.class)
+    public void testSendExamActionsToUser(ExamActionType examActionType) {
+        ExamAction examAction = createExamActionBasedOnType(examActionType);
+
+        examActivityResource.updatePerformedExamActions(exam.getId(), examAction);
+
+        verify(this.websocketMessagingService).sendMessage("/topic/exam-monitoring/" + exam.getId() + "/action", examAction);
+
+        final Principal principal = () -> "admin";
+        examActivityResource.loadAllActions(exam.getId(), principal);
+
+        ArgumentCaptor<ExamAction> argument = ArgumentCaptor.forClass(ExamAction.class);
+        verify(this.websocketMessagingService).sendMessageToUser(eq("admin"), eq("/topic/exam-monitoring/" + exam.getId() + "/action"), argument.capture());
+        // We need to validate those values to be equal.
+        assertEquals(examAction.getExamActivityId(), argument.getValue().getExamActivityId());
+        assertEquals(examAction.getStudentExamId(), argument.getValue().getStudentExamId());
+        assertEquals(examAction.getId(), argument.getValue().getId());
+        assertEquals(examAction.getType(), argument.getValue().getType());
+        assertEquals(examAction.getTimestamp(), argument.getValue().getTimestamp());
     }
 }
