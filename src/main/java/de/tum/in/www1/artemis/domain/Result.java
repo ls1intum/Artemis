@@ -599,4 +599,14 @@ public class Result extends DomainObject {
         double totalPoints = calculateTotalPointsForProgrammingExercises();
         setScore(totalPoints, exercise.getMaxPoints(), exercise.getCourseViaExerciseGroupOrCourseMember());
     }
+
+    /**
+     * Copies the relevant counters for programming exercises i.e. amount of (passed) test cases and code issues into this result
+     * @param originalResult the source for the values
+     */
+    public void copyProgrammingExerciseCounters(Result originalResult) {
+        setTestCaseCount(originalResult.getTestCaseCount());
+        setPassedTestCaseCount(originalResult.getPassedTestCaseCount());
+        setCodeIssueCount(originalResult.getCodeIssueCount());
+    }
 }

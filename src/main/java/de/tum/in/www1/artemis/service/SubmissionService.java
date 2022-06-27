@@ -356,9 +356,7 @@ public class SubmissionService {
         newResult.setScore(oldResult.getScore());
         newResult.setHasFeedback(oldResult.getHasFeedback());
         newResult.setRated(oldResult.isRated());
-        newResult.setTestCaseCount(oldResult.getTestCaseCount());
-        newResult.setPassedTestCaseCount(oldResult.getPassedTestCaseCount());
-        newResult.setCodeIssueCount(oldResult.getCodeIssueCount());
+        newResult.copyProgrammingExerciseCounters(oldResult);
         var savedResult = resultRepository.save(newResult);
         savedResult.setSubmission(submission);
         submission.addResult(savedResult);

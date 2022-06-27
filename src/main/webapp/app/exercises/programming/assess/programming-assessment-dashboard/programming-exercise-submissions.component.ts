@@ -101,7 +101,6 @@ export class ProgrammingExerciseSubmissionsComponent implements OnInit {
                         setLatestSubmissionResult(submission, tmpResult);
                         if (tmpResult) {
                             // reconnect some associations
-                            tmpResult.submission = submission;
                             tmpResult.participation = submission.participation;
                             submission.participation!.results = [tmpResult];
                         }
@@ -114,7 +113,7 @@ export class ProgrammingExerciseSubmissionsComponent implements OnInit {
                 this.submissions = submissions;
                 this.filteredSubmissions = submissions;
                 this.filteredSubmissions.forEach((sub) => {
-                    if (sub.results && sub.results.length > 0) {
+                    if (sub.results?.length) {
                         sub.results = sub.results.filter((r) => r.assessmentType !== AssessmentType.AUTOMATIC);
                     }
                 });

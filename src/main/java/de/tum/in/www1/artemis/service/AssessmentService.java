@@ -95,9 +95,7 @@ public class AssessmentService {
             newResult.setCompletionDate(ZonedDateTime.now());
             newResult.setHasFeedback(true);
             newResult.setRated(true);
-            newResult.setTestCaseCount(originalResult.getTestCaseCount());
-            newResult.setPassedTestCaseCount(originalResult.getPassedTestCaseCount());
-            newResult.setCodeIssueCount(originalResult.getCodeIssueCount());
+            newResult.copyProgrammingExerciseCounters(originalResult);
 
             Result savedResult = resultRepository.save(newResult);
             return resultRepository.findByIdWithEagerAssessor(savedResult.getId()).orElseThrow(); // to eagerly load assessor
