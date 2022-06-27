@@ -3,8 +3,11 @@
     *ngIf="postingContentPart.contentBeforeReference"
     [innerHTML]="postingContentPart.contentBeforeReference | htmlForPostingMarkdown: true:allowedHtmlTags:allowedHtmlAttributes"
 ></span>
-<a class="reference-hash" *ngIf="postingContentPart.linkToReference" [routerLink]="postingContentPart.linkToReference" [queryParams]="postingContentPart.queryParams">
-    {{ postingContentPart.referenceStr }}
+<a class="reference" *ngIf="postingContentPart.linkToReference" [routerLink]="postingContentPart.linkToReference" [queryParams]="postingContentPart.queryParams">
+    <fa-icon class="px-1" [icon]="referenceIcon(postingContentPart.referenceType!)"></fa-icon>{{ postingContentPart.referenceStr }}
+</a>
+<a class="reference" *ngIf="postingContentPart.attachmentToReference" (click)="openAttachment(postingContentPart.attachmentToReference)">
+    <fa-icon class="px-1" [icon]="faFile"></fa-icon>{{ postingContentPart.referenceStr }}
 </a>
 <span
     class="markdown-preview"

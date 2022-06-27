@@ -52,7 +52,7 @@ function computeEventHash(event: Event): string {
     }
 
     // If event has stack trace, add filename and line of each frame
-    const frames = (exception && exception.stacktrace?.frames) || event.stacktrace?.frames;
+    const frames = exception && exception.stacktrace?.frames;
     if (frames) {
         frames.forEach((frame) => (valueSequence += frame.filename ?? ''));
         frames.forEach((frame) => (valueSequence += frame.lineno ?? ''));

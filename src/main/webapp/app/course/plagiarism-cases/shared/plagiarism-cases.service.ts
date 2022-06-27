@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpResponse } from '@angular/common/http';
+import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { PlagiarismCase } from 'app/exercises/shared/plagiarism/types/PlagiarismCase';
 import { PlagiarismStatus } from 'app/exercises/shared/plagiarism/types/PlagiarismStatus';
@@ -14,6 +14,7 @@ export type StatementEntityResponseType = HttpResponse<string>;
 @Injectable({ providedIn: 'root' })
 export class PlagiarismCasesService {
     private resourceUrl = SERVER_API_URL + 'api/courses';
+    private resourceUrlExercises = SERVER_API_URL + 'api/exercises';
 
     constructor(private http: HttpClient) {}
 
@@ -97,5 +98,22 @@ export class PlagiarismCasesService {
      */
     public updatePlagiarismComparisonStatus(courseId: number, plagiarismComparisonId: number, status: PlagiarismStatus): Observable<HttpResponse<void>> {
         return this.http.put<void>(`${this.resourceUrl}/${courseId}/plagiarism-comparisons/${plagiarismComparisonId}/status`, { status }, { observe: 'response' });
+    }
+
+    /**
+     * Clean up plagiarism results and comparisons
+     * If deleteAll is set to true, all plagiarism results belonging to the exercise are deleted,
+     * otherwise only plagiarism comparisons or with status DENIED or CONFIRMED are deleted and old results are deleted as well.
+     *
+     * @param { number } exerciseId
+     * @param {number} plagiarismResultId
+     * @param { boolean } deleteAll
+     */
+    public cleanUpPlagiarism(exerciseId: number, plagiarismResultId: number, deleteAll = false): Observable<HttpResponse<void>> {
+        const params = new HttpParams().append('deleteAll', deleteAll ? 'true' : 'false');
+        return this.http.delete<void>(`${this.resourceUrlExercises}/${exerciseId}/plagiarism-results/${plagiarismResultId}/plagiarism-comparisons`, {
+            params,
+            observe: 'response',
+        });
     }
 }
