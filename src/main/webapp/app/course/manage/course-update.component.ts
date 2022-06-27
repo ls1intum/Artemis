@@ -60,8 +60,9 @@ export class CourseUpdateComponent implements OnInit {
 
     // NOTE: These constants are used to define the maximum length of complaints and complaint responses.
     // This is the maximum value allowed in our database. These values must be the same as in Constants.java
-    readonly COMPLAINT_RESPONSE_TEXT_LIMIT = 5000;
-    readonly COMPLAINT_TEXT_LIMIT = 5000;
+    // Currently set to 65535 as this is the limit of TEXT
+    readonly COMPLAINT_RESPONSE_TEXT_LIMIT = 65535;
+    readonly COMPLAINT_TEXT_LIMIT = 65535;
 
     constructor(
         private courseService: CourseManagementService,
@@ -463,10 +464,19 @@ export class CourseUpdateComponent implements OnInit {
      */
     get isValidDate(): boolean {
         // allow instructors to set startDate and endDate later
-        if (!this.course.startDate || !this.course.endDate) {
+        if (this.atLeastOneDateNotExisting()) {
             return true;
         }
         return dayjs(this.course.startDate).isBefore(this.course.endDate);
+    }
+
+    /**
+     * Auxiliary method checking if at least one date is not set or simply deleted by the user
+     * @private
+     */
+    private atLeastOneDateNotExisting(): boolean {
+        // we need to take into account that the date is only deleted by the user, which leads to a invalid state of the date
+        return !this.course.startDate || !this.course.endDate || !this.course.startDate.isValid() || !this.course.endDate.isValid();
     }
 
     get isValidConfiguration(): boolean {

@@ -37,6 +37,11 @@
             "reactedTooltipTrimmed": " und {{ number }} weitere Person(en) haben reagiert.",
             "searchEmoji": "Emoji suchen",
             "courseEmojiSelectionCategory": "Ausgewählte Emojis für diesen Kurs",
+            "editor": {
+                "reference": "Referenz",
+                "exercise": "Aufgabe",
+                "lecture": "Vortrag"
+            },
             "discussion": {
                 "label": "Diskussion",
                 "show": "Diskussion anzeigen",

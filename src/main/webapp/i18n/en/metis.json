@@ -37,6 +37,11 @@
             "reactedTooltipTrimmed": " and {{ number }} more reacted.",
             "searchEmoji": "Search emoji",
             "courseEmojiSelectionCategory": "Selected emojis for this course",
+            "editor": {
+                "reference": "Reference",
+                "exercise": "Exercise",
+                "lecture": "Lecture"
+            },
             "discussion": {
                 "label": "Discussion",
                 "show": "Show discussion",

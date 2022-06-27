@@ -71,6 +71,10 @@ public interface PlagiarismComparisonRepository extends JpaRepository<Plagiarism
     @EntityGraph(type = LOAD, attributePaths = { "submissionA", "submissionA.plagiarismCase", "submissionB", "submissionB.plagiarismCase" })
     Optional<Set<PlagiarismComparison<?>>> findBySubmissionA_SubmissionIdOrSubmissionB_SubmissionId(long submissionA_submissionId, long submissionB_submissionId);
 
+    @Modifying
+    @Transactional // ok because of modifying query
+    void deletePlagiarismComparisonsByPlagiarismResultIdAndStatus(Long plagiarismResultId, PlagiarismStatus plagiarismStatus);
+
     // we can't simply call save() on plagiarismComparisons because the plagiarismComparisonMatches have no id
     // and would be recreated. Therefore, we need some update methods:
 

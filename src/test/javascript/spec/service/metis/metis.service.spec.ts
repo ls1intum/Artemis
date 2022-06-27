@@ -333,7 +333,7 @@ describe('Metis Service', () => {
         const emptyPost = metisService.createEmptyPostForContext(undefined, undefined, metisLecture);
         expect(emptyPost.courseWideContext).toEqual(undefined);
         expect(emptyPost.exercise).toEqual(undefined);
-        expect(emptyPost.lecture).toEqual(metisLecture);
+        expect(emptyPost.lecture).toEqual({ ...metisLecture, attachments: undefined });
     });
 
     it('should determine the link components for a reference to a post with course-wide context', () => {
@@ -352,6 +352,18 @@ describe('Metis Service', () => {
         metisService.setCourse(course);
         const referenceLinkComponents = metisService.getLinkForPost(metisLecturePosts[0]);
         expect(referenceLinkComponents).toEqual(['/courses', metisCourse.id, 'lectures', metisLecture.id]);
+    });
+
+    it('should determine the router link required for referencing an exercise page within posting', () => {
+        metisService.setCourse(course);
+        const referenceRouterLink = metisService.getLinkForExercise(metisExercise.id!.toString());
+        expect(referenceRouterLink).toEqual(`/courses/${metisCourse.id}/exercises/${metisExercise.id!.toString()}`);
+    });
+
+    it('should determine the router link required for referencing a lecture page within posting', () => {
+        metisService.setCourse(course);
+        const referenceRouterLink = metisService.getLinkForLecture(metisLecture.id!.toString());
+        expect(referenceRouterLink).toEqual(`/courses/${metisCourse.id}/lectures/${metisLecture.id!.toString()}`);
     });
 
     it('should determine the query param for a reference to a post with course-wide context', () => {

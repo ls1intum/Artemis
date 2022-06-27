@@ -32,7 +32,8 @@ import { DomainCommand } from 'app/shared/markdown-editor/domainCommands/domainC
 import { UnorderedListCommand } from 'app/shared/markdown-editor/commands/unorderedListCommand';
 import { HeadingThreeCommand } from 'app/shared/markdown-editor/commands/headingThree.command';
 import { CodeBlockCommand } from 'app/shared/markdown-editor/commands/codeblock.command';
-import { faGripLines, faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
+import { faAngleRight, faGripLines, faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
+import { MultiOptionCommand } from 'app/shared/markdown-editor/commands/multiOptionCommand';
 
 export enum MarkdownEditorHeight {
     INLINE = 100,
@@ -64,6 +65,7 @@ const getAceMode = (mode: EditorMode) => {
     encapsulation: ViewEncapsulation.None,
 })
 export class MarkdownEditorComponent implements AfterViewInit {
+    public MultiOptionCommand = MultiOptionCommand;
     public DomainMultiOptionCommand = DomainMultiOptionCommand;
     public DomainTagCommand = DomainTagCommand;
     // This ref is used for entering the fullscreen mode.
@@ -121,6 +123,7 @@ export class MarkdownEditorComponent implements AfterViewInit {
     @Output() textWithDomainCommandsFound = new EventEmitter<[string, DomainCommand | null][]>();
 
     @Output() onPreviewSelect = new EventEmitter();
+    @Output() onEditSelect = new EventEmitter();
 
     /** {showPreviewButton}
      * 1. true -> the preview of the editor is used
@@ -159,6 +162,7 @@ export class MarkdownEditorComponent implements AfterViewInit {
     // Icons
     faQuestionCircle = faQuestionCircle;
     faGripLines = faGripLines;
+    faAngleRight = faAngleRight;
 
     constructor(private artemisMarkdown: ArtemisMarkdownService, private fileUploaderService: FileUploaderService, private alertService: AlertService) {}
 
@@ -370,6 +374,8 @@ export class MarkdownEditorComponent implements AfterViewInit {
         this.previewMode = !this.previewMode;
         if (this.previewMode) {
             this.onPreviewSelect.emit();
+        } else {
+            this.onEditSelect.emit();
         }
         // The text must only be parsed when the active tab before event was edit, otherwise the text can't have changed.
         if (event.activeId === 'editor_edit') {

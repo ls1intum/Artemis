@@ -8,7 +8,7 @@ import { Subscription } from 'rxjs';
 import { captureException } from '@sentry/browser';
 import { faCheckCircle, faExclamationCircle, faExclamationTriangle, faInfoCircle, IconDefinition } from '@fortawesome/free-solid-svg-icons';
 import { HttpErrorResponse } from '@angular/common/http';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 
 export class AlertType {
     public static readonly SUCCESS = new AlertType(faCheckCircle, 'success', 'btn-success');
@@ -61,6 +61,8 @@ export class AlertService {
 
     errorListener: Subscription;
     httpErrorListener: Subscription;
+
+    readonly conflictErrorKeysToSkip: string[] = ['cannotRegisterInstructor'];
 
     constructor(private sanitizer: DomSanitizer, private ngZone: NgZone, private translateService: TranslateService, private eventManager: EventManager) {
         this.errorListener = eventManager.subscribe('artemisApp.error', (response: EventWithContent<unknown> | string) => {
@@ -117,6 +119,10 @@ export class AlertService {
 
                 default:
                     if (httpErrorResponse.error && httpErrorResponse.error.title) {
+                        // To avoid displaying this alerts twice, we need to filter the received errors. In this case, we filter for the cannot register instructor error.
+                        if (httpErrorResponse.status === 403 && this.conflictErrorKeysToSkip.includes(httpErrorResponse.error.errorKey)) {
+                            break;
+                        }
                         this.addErrorAlert(httpErrorResponse.error.title, httpErrorResponse.error.message, httpErrorResponse.error.params);
                     }
             }
