@@ -658,7 +658,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
      */
     showQuizResultAfterQuizEnd(participation: StudentParticipation) {
         const quizExercise = participation.exercise as QuizExercise;
-        if (participation.results?.first()?.score !== undefined && quizExercise.quizEnded) {
+        if (participation.results?.first()?.submission !== undefined && quizExercise.quizEnded) {
             // quiz has ended and results are available
             this.submission = participation.results[0].submission as QuizSubmission;
 
