@@ -123,6 +123,12 @@ export type RouteComponents = (string | number)[];
 
 export const MetisWebsocketChannelPrefix = '/topic/metis/';
 
+/**
+ * whitespace accepted only together with a character excluding newline character
+ */
 export const PostTitleValidationPattern = Validators.pattern(/^(.)*\S+(.)*$/);
 
+/**
+ * whitespace accepted only together with a character including newline character
+ * */
 export const PostContentValidationPattern = Validators.pattern(/^(\n|\r|.)*\S+(\n|\r|.)*$/);
