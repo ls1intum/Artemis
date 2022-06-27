@@ -43,7 +43,7 @@ export class HomeComponent implements OnInit, AfterViewChecked {
     passwordLoginDisabled = false;
     saml2Config: Saml2Config | undefined;
     loading = true;
-    inputFocused = false;
+    mainElementFocused = false;
 
     // if the server is not connected to an external user management such as JIRA, we accept all valid username patterns
     usernameRegexPattern = /^[a-z0-9_-]{3,50}$/; // default, might be overridden in ngOnInit
@@ -136,23 +136,15 @@ export class HomeComponent implements OnInit, AfterViewChecked {
 
     ngAfterViewChecked() {
         // Only focus the username input once, not on every update
-        if (this.inputFocused || this.loading) {
+        if (this.mainElementFocused || this.loading) {
             return;
         }
 
         // Focus on the main element as soon as it is visible
-        if (!this.passwordLoginDisabled) {
-            const input = this.renderer.selectRootElement('#username', true);
-            if (input) {
-                input.focus();
-                this.inputFocused = true;
-            }
-        } else if (this.saml2Config) {
-            const btn = this.renderer.selectRootElement('#saml2Button', true);
-            if (btn) {
-                btn.focus();
-                this.inputFocused = true;
-            }
+        const mainElement = this.renderer.selectRootElement(this.passwordLoginDisabled ? '#saml2Button' : '#username', true);
+        if (mainElement) {
+            mainElement.focus();
+            this.mainElementFocused = true;
         }
 
         // If the session expired or similar display a warning

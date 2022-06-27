@@ -47,9 +47,9 @@ saml2:
         #   registrationid: <id>
         #   entityid: <id>
 
-# The name of the SAML2 identity provider (optional)
+# The name of the SAML2 identity provider shown on the login page (optional)
 info.saml2.identity-provider-name:
-# String used for the SAML2 login button. E.g. 'Shibboleth Login'
+# The label for the SAML2 login button (e.g., 'Shibboleth Login')
 info.saml2.button-label: 'SAML2 Login'
 # Sends an e-mail to the new user with a link to set the Artemis password. This password allows login to Artemis and its
 # services such as GitLab and Jenkins. This allows the users to use password-based Git workflows.
