@@ -14,8 +14,6 @@ import { AssessmentType } from 'app/entities/assessment-type.model';
 import { ComplaintService } from 'app/complaints/complaint.service';
 import { SubmissionType } from 'app/entities/submission.model';
 import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
-import { SubmissionType } from 'app/entities/submission.model';
-import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
 
 @Component({
     selector: 'jhi-header-exercise-page-with-details',
