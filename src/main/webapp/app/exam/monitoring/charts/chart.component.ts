@@ -98,6 +98,7 @@ export abstract class ChartComponent {
      * The default case is that we don't filter any actions. This filter is adapted in subclasses.
      * @param examAction
      */
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     filterRenderedData(examAction: ExamAction): boolean {
         return true;
     }
