@@ -474,10 +474,23 @@ public class StudentExamResource {
         fetchParticipationsSubmissionsAndResultsForStudentExam(studentExam, currentUser);
 
         // 4th create new exam session
-        final var ipAddress = !storeSessionDataInStudentExamSession ? null : HttpRequestUtils.getIpAddressFromRequest(request).orElse(null);
-        final String browserFingerprint = !storeSessionDataInStudentExamSession ? null : request.getHeader("X-Artemis-Client-Fingerprint");
-        final String instanceId = !storeSessionDataInStudentExamSession ? null : request.getHeader("X-Artemis-Client-Instance-ID");
-        final String userAgent = !storeSessionDataInStudentExamSession ? null : request.getHeader("User-Agent");
+        final IPAddress ipAddress;
+        final String browserFingerprint;
+        final String instanceId;
+        final String userAgent;
+
+        if (storeSessionDataInStudentExamSession) {
+            ipAddress = HttpRequestUtils.getIpAddressFromRequest(request).orElse(null);
+            browserFingerprint = request.getHeader("X-Artemis-Client-Fingerprint");
+            instanceId = request.getHeader("X-Artemis-Client-Instance-ID");
+            userAgent = request.getHeader("User-Agent");
+        } else {
+            ipAddress = null;
+            browserFingerprint = null;
+            instanceId = null;
+            userAgent = null;
+        }
+
         ExamSession examSession = this.examSessionService.startExamSession(studentExam, browserFingerprint, userAgent, instanceId, ipAddress);
         examSession.hideDetails();
         examSession.setInitialSession(this.examSessionService.checkExamSessionIsInitial(studentExam.getId()));
