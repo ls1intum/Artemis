@@ -249,7 +249,7 @@ export class ComplaintService implements IComplaintService {
             return undefined;
         }
 
-        return complaintStartDate!.add(course.maxComplaintTimeDays!, 'days');
+        return dayjs(complaintStartDate).add(course.maxComplaintTimeDays!, 'days');
     }
 
     private requestComplaintsFromUrl(url: string): Observable<EntityResponseTypeArray> {
