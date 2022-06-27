@@ -17,7 +17,7 @@ public class ExamConfigurationException extends BadRequestAlertException {
     @Serial
     private static final long serialVersionUID = 1L;
 
-    private static final String ERROR_KEY = "examContainsProgrammingExercisesWithInvalidShortName";
+    private static final String ERROR_KEY = "examContainsProgrammingExercisesWithInvalidKey";
 
     public ExamConfigurationException(List<ExerciseGroup> exerciseGroupList, int numberOfInvalidProgrammingExercises) {
         super(ErrorConstants.EXAM_PROGRAMMING_EXERCISE_SHORT_NAME_INVALID, "Exam contains programming exercise(s) with invalid short name.", "ExamResource", ERROR_KEY,

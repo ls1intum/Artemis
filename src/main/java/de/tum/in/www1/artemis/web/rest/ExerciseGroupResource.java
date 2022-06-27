@@ -150,8 +150,7 @@ public class ExerciseGroupResource {
 
         List<ExerciseGroup> result = examImportService.importExerciseGroupsWithExercisesToExistingExam(updatedExerciseGroup, examId, courseId);
 
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, "Number of imported exercise groups: " + result.size()))
-                .body(result);
+        return ResponseEntity.ok(result);
     }
 
     /**

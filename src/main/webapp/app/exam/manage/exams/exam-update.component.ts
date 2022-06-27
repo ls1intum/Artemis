@@ -98,11 +98,11 @@ export class ExamUpdateComponent implements OnInit {
         if (this.isImport) {
             // We validate the user input for the exercise group selection here, so it is only called once the user desires to import the exam
             if (!this.examExerciseImportComponent.validateUserInput()) {
-                this.alertService.error('artemisApp.examManagement.exerciseImport.invalidExerciseConfiguration');
+                this.alertService.error('artemisApp.examManagement.exerciseGroup.importModal.invalidExerciseConfiguration');
                 this.isSaving = false;
                 return;
             }
-            this.exam.exerciseGroups = this.examExerciseImportComponent.mapSelectedExercisesToExam();
+            this.exam.exerciseGroups = this.examExerciseImportComponent.mapSelectedExercisesToExerciseGroups();
             console.log(this.exam.exerciseGroups);
             this.subscribeToSaveResponse(this.examManagementService.import(this.course.id!, this.exam));
         } else if (this.exam.id !== undefined) {
@@ -125,12 +125,12 @@ export class ExamUpdateComponent implements OnInit {
     }
 
     private onSaveError(httpErrorResponse: HttpErrorResponse) {
-        if (httpErrorResponse.error?.errorKey === 'examContainsProgrammingExercisesWithInvalidShortName') {
+        if (httpErrorResponse.error?.errorKey === 'examContainsProgrammingExercisesWithInvalidKey') {
             this.exam.exerciseGroups = httpErrorResponse.error.params.exerciseGroups!;
             // The update() Method is called to update the exercises
             this.examExerciseImportComponent.updateMapsAfterRejectedImport();
             const numberOfInvalidProgrammingExercises = httpErrorResponse.error.numberOfInvalidProgrammingExercises;
-            this.alertService.error('artemisApp.examManagement.exerciseImport.invalidShortName', { number: numberOfInvalidProgrammingExercises });
+            this.alertService.error('artemisApp.examManagement.exerciseGroup.importModal.invalidKey', { number: numberOfInvalidProgrammingExercises });
         } else {
             onError(this.alertService, httpErrorResponse);
         }

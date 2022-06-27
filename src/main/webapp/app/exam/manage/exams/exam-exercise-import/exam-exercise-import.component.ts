@@ -14,6 +14,7 @@ import { AlertService } from 'app/core/util/alert.service';
 })
 export class ExamExerciseImportComponent implements OnInit {
     @Input() exam: Exam;
+    @Input() importInSameCourse = false;
     // Map to determine, which exercises the user has selected and therefore should be imported alongside an exam
     selectedExercises = new Map<ExerciseGroup, Set<Exercise>>();
     // Map with the title and shortName of the programming exercises to be displayed as a placeholder in case of a rejected import
@@ -39,13 +40,27 @@ export class ExamExerciseImportComponent implements OnInit {
     constructor() {}
 
     ngOnInit(): void {
-        this.initializeMaps();
+        this.initializeSelectedExercisesAndContainsProgrammingExercisesMaps();
+        if (this.importInSameCourse) {
+            this.initializeTitleAndShortNameMap();
+        }
+    }
+
+    /**
+     * Method to update the Maps after a rejected import due to invalid project key(s) of programming exercise(s)
+     * Called by the parent component
+     */
+    updateMapsAfterRejectedImport() {
+        this.initializeTitleAndShortNameMap();
+        this.selectedExercises.clear();
+        this.containsProgrammingExercises.clear();
+        this.initializeSelectedExercisesAndContainsProgrammingExercisesMaps();
     }
 
     /**
      * Method to initialize the Maps selectedExercises and containsProgrammingExercises
      */
-    initializeMaps() {
+    initializeSelectedExercisesAndContainsProgrammingExercisesMaps() {
         // Initialize selectedExercises
         this.exam.exerciseGroups?.forEach((exerciseGroup) => {
             this.selectedExercises!.set(exerciseGroup, new Set<Exercise>(exerciseGroup.exercises!));
@@ -57,11 +72,7 @@ export class ExamExerciseImportComponent implements OnInit {
         });
     }
 
-    /**
-     * Method to update the Maps after a rejected import due to invalid project key(s) of programming exercise(s)
-     * Called by the parent component
-     */
-    updateMapsAfterRejectedImport() {
+    initializeTitleAndShortNameMap() {
         // The title and short name of the programming exercises are added to the map to display the rejected title and short name to the user
         this.selectedExercises.forEach((value) => {
             value.forEach((exercise) => {
@@ -70,9 +81,6 @@ export class ExamExerciseImportComponent implements OnInit {
                 }
             });
         });
-        this.selectedExercises.clear();
-        this.containsProgrammingExercises.clear();
-        this.initializeMaps();
     }
 
     /**
@@ -140,7 +148,7 @@ export class ExamExerciseImportComponent implements OnInit {
      * Helper method to map the Map<ExerciseGroup, Set<Exercises>> selectedExercises to an ExerciseGroup[] with Exercises[] each.
      * Called once by the parent component when the user desires to import the exam / exercise groups
      */
-    public mapSelectedExercisesToExam(): ExerciseGroup[] {
+    public mapSelectedExercisesToExerciseGroups(): ExerciseGroup[] {
         const exerciseGroups: ExerciseGroup[] = [];
         this.selectedExercises?.forEach((value, key) => {
             if (value.size > 0) {
@@ -165,8 +173,9 @@ export class ExamExerciseImportComponent implements OnInit {
                     let correctTitle;
                     let correctShortName = true;
                     if (exercise.type === ExerciseType.PROGRAMMING) {
-                        correctShortName = this.shortNamePattern.test(exercise.shortName!);
-                        correctTitle = this.titleNamePattern.test(exercise.title!);
+                        correctShortName =
+                            this.shortNamePattern.test(exercise.shortName!) && exercise.shortName !== this.getPlaceholderShortNameOfProgrammingExercise(exercise.id!);
+                        correctTitle = this.titleNamePattern.test(exercise.title!) && exercise.title !== this.getPlaceholderTitleOfProgrammingExercise(exercise.id!);
                     } else {
                         correctTitle = exercise.title?.length! > 0;
                     }

@@ -8,26 +8,29 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.validation.constraints.NotNull;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
-import de.tum.in.www1.artemis.domain.Course;
-import de.tum.in.www1.artemis.domain.Exercise;
-import de.tum.in.www1.artemis.domain.ProgrammingExercise;
-import de.tum.in.www1.artemis.domain.TextExercise;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.ExerciseType;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.service.FileUploadImportService;
 import de.tum.in.www1.artemis.service.ModelingExerciseImportService;
 import de.tum.in.www1.artemis.service.QuizExerciseImportService;
 import de.tum.in.www1.artemis.service.TextExerciseImportService;
+import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseImportService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseService;
 import de.tum.in.www1.artemis.web.rest.errors.ExamConfigurationException;
 
 @Service
 public class ExamImportService {
+
+    private final Logger log = LoggerFactory.getLogger(ExamImportService.class);
 
     private final TextExerciseImportService textExerciseImportService;
 
@@ -51,11 +54,21 @@ public class ExamImportService {
 
     private final ProgrammingExerciseService programmingExerciseService;
 
+    private final ProgrammingExerciseRepository programmingExerciseRepository;
+
+    private final ProgrammingExerciseImportService programmingExerciseImportService;
+
+    private final FileUploadExerciseRepository fileUploadExerciseRepository;
+
+    private final FileUploadImportService fileUploadImportService;
+
     public ExamImportService(TextExerciseImportService textExerciseImportService, TextExerciseRepository textExerciseRepository,
             ModelingExerciseImportService modelingExerciseImportService, ModelingExerciseRepository modelingExerciseRepository, ExamRepository examRepository,
             ExerciseGroupRepository exerciseGroupRepository, ExamAccessService examAccessService, QuizExerciseRepository quizExerciseRepository,
             QuizExerciseImportService importQuizExercise, CourseRepository courseRepository, ProgrammingExerciseService programmingExerciseService,
-            ProgrammingExerciseService programmingExerciseService1) {
+            ProgrammingExerciseService programmingExerciseService1, ProgrammingExerciseRepository programmingExerciseRepository,
+            ProgrammingExerciseImportService programmingExerciseImportService, FileUploadExerciseRepository fileUploadExerciseRepository,
+            FileUploadImportService fileUploadImportService) {
         this.textExerciseImportService = textExerciseImportService;
         this.textExerciseRepository = textExerciseRepository;
         this.modelingExerciseImportService = modelingExerciseImportService;
@@ -67,6 +80,10 @@ public class ExamImportService {
         this.quizExerciseImportService = importQuizExercise;
         this.courseRepository = courseRepository;
         this.programmingExerciseService = programmingExerciseService1;
+        this.programmingExerciseRepository = programmingExerciseRepository;
+        this.programmingExerciseImportService = programmingExerciseImportService;
+        this.fileUploadExerciseRepository = fileUploadExerciseRepository;
+        this.fileUploadImportService = fileUploadImportService;
     }
 
     /**
@@ -86,12 +103,13 @@ public class ExamImportService {
 
         // 1st: Save the exam without exercises to the database
         List<ExerciseGroup> exerciseGroupsToCopy = examToCopy.getExerciseGroups();
+        examToCopy.setExerciseGroups(new ArrayList<>());
         Exam examCopied = createCopyOfExamWithoutConductionSpecificAttributes(examToCopy, targetCourse);
 
         // 2nd: Copy the exercise groups to the exam
-        examCopied = copyExerciseGroupsWithExercisesToExam(exerciseGroupsToCopy, examCopied);
+        copyExerciseGroupsWithExercisesToExam(exerciseGroupsToCopy, examCopied);
 
-        return examCopied;
+        return examRepository.findWithExerciseGroupsAndExercisesByIdOrElseThrow(examCopied.getId());
     }
 
     /**
@@ -111,12 +129,12 @@ public class ExamImportService {
 
         preCheckProgrammingExercisesForShortNameUniqueness(exerciseGroupsToCopy, targetCourse.getShortName());
 
-        Exam targetExam = examRepository.findByIdElseThrow(targetExamId);
+        Exam targetExam = examRepository.findWithExerciseGroupsAndExercisesByIdOrElseThrow(targetExamId);
 
         // The Exam is used to ensure the connection ExerciseGroups <-> Exam
-        targetExam = copyExerciseGroupsWithExercisesToExam(exerciseGroupsToCopy, targetExam);
+        copyExerciseGroupsWithExercisesToExam(exerciseGroupsToCopy, targetExam);
 
-        return targetExam.getExerciseGroups();
+        return exerciseGroupRepository.findWithExamAndExercisesByExamId(targetExamId);
     }
 
     /**
@@ -128,20 +146,19 @@ public class ExamImportService {
      */
     private void preCheckProgrammingExercisesForShortNameUniqueness(List<ExerciseGroup> exerciseGroupList, String targetCourseShortName) {
         // Flag to determine, if a programming exercise with an invalid shortName was found
-        AtomicInteger numberOfInvalidProgrammingExercises = new AtomicInteger();
+        AtomicInteger numberOfInvalidProgrammingExercises = new AtomicInteger(0);
         // Iterate over all exercises
         exerciseGroupList.forEach(exerciseGroup -> {
             exerciseGroup.getExercises().forEach(exercise -> {
                 if (exercise.getExerciseType() == ExerciseType.PROGRAMMING) {
                     // Method to check, if the project already exists.
-                    // boolean validShortName = programmingExerciseService.checkIfProjectExistsOnVCSOrCI((ProgrammingExercise) exercise, false);
-                    // if (!validShortName) {
-                    // If the project already exists and thus the short name isn't valid, it is removed
-                    boolean validShortName = programmingExerciseService.preCheckProjectExistsOnVCSOrCI((ProgrammingExercise) exercise, targetCourseShortName);
-                    exercise.setShortName("");
-                    exercise.setTitle("");
-                    numberOfInvalidProgrammingExercises.getAndIncrement();
-                    // }
+                    boolean invalidShortName = programmingExerciseService.preCheckProjectExistsOnVCSOrCI((ProgrammingExercise) exercise, targetCourseShortName);
+                    if (invalidShortName) {
+                        // If the project already exists and thus the short name isn't valid, it is removed
+                        exercise.setShortName("");
+                        exercise.setTitle("");
+                        numberOfInvalidProgrammingExercises.getAndIncrement();
+                    }
                 }
             });
         });
@@ -156,20 +173,13 @@ public class ExamImportService {
      *
      * @param exerciseGroupsToCopy the exerciseGroups to be copied
      * @param targetExam           the nex exam to which the new exerciseGroups should be linked
-     * @return the targetExam with the copied exerciseGroups and exercises
      */
-    @NotNull
-    private Exam copyExerciseGroupsWithExercisesToExam(List<ExerciseGroup> exerciseGroupsToCopy, Exam targetExam) {
+    private void copyExerciseGroupsWithExercisesToExam(List<ExerciseGroup> exerciseGroupsToCopy, Exam targetExam) {
         // Copy each exerciseGroup containing exercises
-        List<ExerciseGroup> exerciseGroupsCopied = exerciseGroupsToCopy.stream().filter(exerciseGroup -> !exerciseGroup.getExercises().isEmpty()).map(exerciseGroupToCopy -> {
+        exerciseGroupsToCopy.stream().filter(exerciseGroup -> !exerciseGroup.getExercises().isEmpty()).forEach(exerciseGroupToCopy -> {
             // Helper Method to copy the single Exercise Group and the exercises
-            return copySingleExerciseGroupWithExercises(exerciseGroupToCopy, targetExam);
-        }).toList();
-
-        // Attach the new Exercise Group with the newly created Exercise to the Exam
-        exerciseGroupsCopied.forEach(targetExam::addExerciseGroup);
-        // Save the exam to ensure the connection ExerciseGroups <-> Exam
-        return examRepository.save(targetExam);
+            copySingleExerciseGroupWithExercises(exerciseGroupToCopy, targetExam);
+        });
     }
 
     /**
@@ -177,10 +187,8 @@ public class ExamImportService {
      *
      * @param exerciseGroupToCopy the exercise group to copy
      * @param examCopied          the already copied exam to attach to the exercise group
-     * @return a new exercise group with the same properties and copied exercises
      */
-    @NotNull
-    private ExerciseGroup copySingleExerciseGroupWithExercises(ExerciseGroup exerciseGroupToCopy, Exam examCopied) {
+    private void copySingleExerciseGroupWithExercises(ExerciseGroup exerciseGroupToCopy, Exam examCopied) {
         // Create a new ExerciseGroup with the same name and boolean:mandatory
         ExerciseGroup exerciseGroupCopied = copyExerciseGroupWithTitleAndIsMandatory(exerciseGroupToCopy, examCopied);
         // Copy each exercise within the existing Exercise Group
@@ -210,11 +218,24 @@ public class ExamImportService {
                 }
 
                 case PROGRAMMING -> {
-                    return;
+                    final Optional<ProgrammingExercise> optionalOriginalProgrammingExercise = programmingExerciseRepository
+                            .findByIdWithEagerTestCasesStaticCodeAnalysisCategoriesHintsAndTemplateAndSolutionParticipationsAndAuxReposAndTasksWithTestCases(
+                                    exerciseToCopy.getId());
+                    // We do not want to abort the whole exam import process, we only skip the relevant exercise
+                    if (optionalOriginalProgrammingExercise.isEmpty()) {
+                        return;
+                    }
+                    exerciseCopied = programmingExerciseImportService.importProgrammingExerciseComplete(optionalOriginalProgrammingExercise.get(),
+                            (ProgrammingExercise) exerciseToCopy);
                 }
 
                 case FILE_UPLOAD -> {
-                    return;
+                    final Optional<FileUploadExercise> optionalFileUploadExercise = fileUploadExerciseRepository.findById(exerciseToCopy.getId());
+                    // We do not want to abort the whole exam import process, we only skip the relevant exercise
+                    if (optionalFileUploadExercise.isEmpty()) {
+                        return;
+                    }
+                    exerciseCopied = fileUploadImportService.importFileUploadExercise(optionalFileUploadExercise.get(), (FileUploadExercise) exerciseToCopy);
                 }
 
                 case QUIZ -> {
@@ -231,9 +252,11 @@ public class ExamImportService {
                 }
             }
             // Attach the newly created Exercise to the new Exercise Group
-            exerciseGroupCopied.addExercise(exerciseCopied);
+            if (exerciseCopied != null) {
+                exerciseGroupCopied.addExercise(exerciseCopied);
+            }
         });
-        return exerciseGroupRepository.save(exerciseGroupCopied);
+        exerciseGroupRepository.save(exerciseGroupCopied);
     }
 
     /**
@@ -247,8 +270,10 @@ public class ExamImportService {
         ExerciseGroup exerciseGroupCopied = new ExerciseGroup();
         exerciseGroupCopied.setTitle(exerciseGroupToCopy.getTitle());
         exerciseGroupCopied.setIsMandatory(exerciseGroupToCopy.getIsMandatory());
-        exerciseGroupCopied.setExam(targetExam);
-        return exerciseGroupRepository.save(exerciseGroupCopied);
+        targetExam.addExerciseGroup(exerciseGroupCopied);
+        targetExam = examRepository.save(targetExam);
+        exerciseGroupCopied = targetExam.getExerciseGroups().get(targetExam.getExerciseGroups().size() - 1);
+        return exerciseGroupCopied;
     }
 
     /**

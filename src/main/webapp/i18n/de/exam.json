@@ -293,16 +293,6 @@
                 "title": "Erreichbare Punktzahl",
                 "warning": "Durch die Aktualisierung dieses Feldes wird der Notenschlüssel für die Prüfung aktualisiert (falls er existiert), sodass die Punktzahl für die Notenstufen weiterhin den Prozentsätzen entspricht, angepasst an die neue maximale Punktzahl."
             },
-            "exerciseImport": {
-                "title": "Import von Klausuraufgaben",
-                "explanation": "Wähle durch Klicken die individuellen Aufgaben aus, welche mit der Klausur importiert werden sollen",
-                "selected": "Ausgewählt",
-                "exerciseGroupTooltip": "Der Titel der Aufgabengruppe kann vor dem Import angepasst werden",
-                "exerciseTitleTooltip": "Der Titel der Aufgabe kann vor dem Import angepasst werden. Weitere Änderungen an der Aufgabe sind nach dem Import möglich",
-                "shortNameTooltip": "Der Kurzname einer Programmieraufgabe muss einzigartig sein. Der Kurzname der Aufgabe kann NICHT im Nachhinein bearbeitet werden! Der Kurzname muss mit einem Buchstaben beginnen, darf keine speziellen Zeichen enthalten und muss mindestens 3 Zeichen lang sein!",
-                "invalidShortName": "Der eingegebene Kurzname und Titel von {{ number }} Programmieraufgabe(n) existiert bereits. Wähle für die betreffende(n) Aufgabe(n) bitte einen anderen Kurznamen und Titel",
-                "invalidExerciseConfiguration": "Ein oder mehrere eingegebene Werte liegen außerhalb des zulässigen Bereiches. Bitte passe diese vor dem Import an"
-            },
             "numberOfExerciseGroups": "Anzahl Aufgabengruppen:",
             "numberOfExercisesInExam": "Anzahl an Aufgaben in der Klausur",
             "numberOfCorrectionRoundsInExam": "Anzahl der Korrekturrunden der Klausur",
@@ -398,7 +388,18 @@
                 "addFileUploadExercise": "Datei-Upload-Aufgabe hinzufügen",
                 "addModelingExercise": "Modellierungsaufgabe hinzufügen",
                 "addProgrammingExercise": "Programmieraufgabe hinzufügen",
-                "orderCouldNotBeSaved": "Die Reihenfolge konnte nicht gespeichert werden."
+                "orderCouldNotBeSaved": "Die Reihenfolge konnte nicht gespeichert werden.",
+                "importModal": {
+                    "title": "Import von Klausuraufgaben",
+                    "explanation": "Wähle durch Klicken die individuellen Aufgaben aus, welche mit der Klausur importiert werden sollen",
+                    "selected": "Ausgewählt",
+                    "exerciseGroupTooltip": "Der Titel der Aufgabengruppe kann vor dem Import angepasst werden",
+                    "exerciseTitleTooltip": "Der Titel der Aufgabe kann vor dem Import angepasst werden. Weitere Änderungen an der Aufgabe sind nach dem Import möglich",
+                    "shortNameTooltip": "Der Kurzname einer Programmieraufgabe muss einzigartig sein. Der Kurzname der Aufgabe kann NICHT im Nachhinein bearbeitet werden! Der Kurzname muss mit einem Buchstaben beginnen, darf keine speziellen Zeichen enthalten und muss mindestens 3 Zeichen lang sein!",
+                    "invalidKey": "Der eingegebene Kurzname und Titel von {{ number }} Programmieraufgabe(n) existiert bereits. Wähle für die betreffende(n) Aufgabe(n) bitte einen anderen Kurznamen und Titel",
+                    "invalidExerciseConfiguration": "Ein oder mehrere eingegebene Werte liegen außerhalb des zulässigen Bereiches. Bitte passe diese vor dem Import an",
+                    "isImporting": "Der Import der Aufgabengruppen und der Aufgaben wird derzeit auf dem Server durchgeführt. Dies kann etwas Zeit in Anspruch nehmen."
+                }
             },
             "delete": {
                 "question": "Soll die Klausur <strong>{{ title }}</strong> wirklich dauerhaft gelöscht werden? Alle zugehörigen Elemente werden gelöscht, inklusive der Klausuren der Studierenden. Diese Aktion kann NICHT rückgängig gemacht werden!",

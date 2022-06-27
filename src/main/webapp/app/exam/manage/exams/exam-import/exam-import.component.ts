@@ -12,6 +12,7 @@ import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { onError } from 'app/shared/util/global.utils';
 import { AlertService } from 'app/core/util/alert.service';
 import { ExamExerciseImportComponent } from 'app/exam/manage/exams/exam-exercise-import/exam-exercise-import.component';
+import { ExerciseGroup } from 'app/entities/exercise-group.model';
 
 enum TableColumn {
     ID = 'ID',
@@ -30,7 +31,7 @@ export class ExamImportComponent implements OnInit {
     private search = new Subject<void>();
     private sort = new Subject<void>();
 
-    // boolean to indicate, if the import modal should include the exerciseGroup selection
+    // boolean to indicate, if the import modal should include the exerciseGroup selection subsequently.
     @Input() subsequentExerciseGroupSelection: boolean;
     // Values to specify the target of the exercise group import
     @Input() targetCourseId?: number;
@@ -40,6 +41,8 @@ export class ExamImportComponent implements OnInit {
 
     exam?: Exam;
     loading = false;
+    isImportingExercises = false;
+
     content: SearchResult<Exam>;
     total = 0;
     state: PageableSearch = {
@@ -87,25 +90,37 @@ export class ExamImportComponent implements OnInit {
      * Called once when user is importing the exam
      */
     performImportOfExerciseGroups() {
-        if (!this.examExerciseImportComponent.validateUserInput()) {
-            this.alertService.error('artemisApp.examManagement.exerciseImport.invalidExerciseConfiguration');
-            return;
+        if (this.subsequentExerciseGroupSelection && this.exam && this.targetExamId && this.targetCourseId) {
+            // The validation of the selected exercises is only called when the user desires to import the exam
+            if (!this.examExerciseImportComponent.validateUserInput()) {
+                this.alertService.error('artemisApp.examManagement.exerciseGroup.importModal.invalidExerciseConfiguration');
+                return;
+            }
+            this.isImportingExercises = true;
+            // The child component provides us with the selected exercise groups and exercises
+            this.exam.exerciseGroups = this.examExerciseImportComponent.mapSelectedExercisesToExerciseGroups();
+            this.examManagementService.importExerciseGroup(this.targetCourseId, this.targetExamId, this.exam.exerciseGroups!).subscribe({
+                next: (httpResponse: HttpResponse<ExerciseGroup[]>) => {
+                    this.isImportingExercises = false;
+                    // Close-Variant 2: Provide the component with all the exercise groups and exercises of the exam
+                    this.activeModal.close(httpResponse.body!);
+                },
+                error: (httpErrorResponse: HttpErrorResponse) => {
+                    // Case: Server-Site Validation of the Programming Exercises failed
+                    if (httpErrorResponse.error?.errorKey === 'examContainsProgrammingExercisesWithInvalidKey') {
+                        // The Server sends back all the exercise groups and exercises and removed the shortName / title for all conflicting programming exercises
+                        this.exam!.exerciseGroups = httpErrorResponse.error.params.exerciseGroups!;
+                        // The updateMapsAfterRejectedImport Method is called to update the displayed exercises in the child component
+                        this.examExerciseImportComponent.updateMapsAfterRejectedImport();
+                        const numberOfInvalidProgrammingExercises = httpErrorResponse.error.numberOfInvalidProgrammingExercises;
+                        this.alertService.error('artemisApp.examManagement.exerciseGroup.importModal.invalidKey', { number: numberOfInvalidProgrammingExercises });
+                    } else {
+                        onError(this.alertService, httpErrorResponse);
+                    }
+                    this.isImportingExercises = false;
+                },
+            });
         }
-        this.exam!.exerciseGroups = this.examExerciseImportComponent.mapSelectedExercisesToExam();
-        this.examManagementService.importExerciseGroup(this.targetCourseId!, this.targetExamId!, this.exam!.exerciseGroups!).subscribe({
-            next: () => this.activeModal.close(),
-            error: (httpErrorResponse: HttpErrorResponse) => {
-                if (httpErrorResponse.error?.errorKey === 'examContainsProgrammingExercisesWithInvalidShortName') {
-                    this.exam!.exerciseGroups = httpErrorResponse.error.params.exerciseGroups!;
-                    // The updateMapsAfterRejectedImport Method is called to update the exercises
-                    this.examExerciseImportComponent.updateMapsAfterRejectedImport();
-                    const numberOfInvalidProgrammingExercises = httpErrorResponse.error.numberOfInvalidProgrammingExercises;
-                    this.alertService.error('artemisApp.examManagement.exerciseImport.invalidShortName', { number: numberOfInvalidProgrammingExercises });
-                } else {
-                    onError(this.alertService, httpErrorResponse);
-                }
-            },
-        });
     }
 
     /** Method to perform the search based on a search subject

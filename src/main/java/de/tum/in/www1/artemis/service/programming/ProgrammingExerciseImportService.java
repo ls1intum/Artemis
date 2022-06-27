@@ -570,4 +570,44 @@ public class ProgrammingExerciseImportService {
         gitService.commitAndPush(repository, "Template adjusted by Artemis", false, user);
         repository.setFiles(null); // Clear cache to avoid multiple commits when Artemis server is not restarted between attempts
     }
+
+    /**
+     * Imports a programming exercise creating a new entity, copying all basic values and saving it in the database.
+     * All basic include everything except for repositories, or build plans on a remote version control server, or
+     * continuous integration server. <br>
+     * There are however, a couple of things that will never get copied:
+     * <ul>
+     *     <li>The ID</li>
+     *     <li>The template and solution participation</li>
+     *     <li>The number of complaints, assessments and more feedback requests</li>
+     *     <li>The tutor/student participations</li>
+     *     <li>The questions asked by students</li>
+     *     <li>The example submissions</li>
+     * </ul>
+     *
+     * @param templateExercise The template exercise which should get imported
+     * @param newExercise      The new exercise already containing values which should not get copied, i.e. overwritten
+     * @return The newly created exercise
+     */
+    public ProgrammingExercise importProgrammingExerciseComplete(final ProgrammingExercise templateExercise, final ProgrammingExercise newExercise) {
+
+        newExercise.generateAndSetProjectKey();
+        // programmingExerciseService.checkIfProjectExists(newExercise);
+
+        ProgrammingExercise importedProgrammingExercise = importProgrammingExerciseBasis(templateExercise, newExercise);
+        importRepositories(templateExercise, importedProgrammingExercise);
+        importBuildPlans(templateExercise, importedProgrammingExercise);
+
+        programmingExerciseService.scheduleOperations(importedProgrammingExercise.getId());
+
+        // Remove unnecessary fields
+        importedProgrammingExercise.setTestCases(null);
+        importedProgrammingExercise.setStaticCodeAnalysisCategories(null);
+        importedProgrammingExercise.setTemplateParticipation(null);
+        importedProgrammingExercise.setSolutionParticipation(null);
+        importedProgrammingExercise.setExerciseHints(null);
+        importedProgrammingExercise.setTasks(null);
+
+        return importedProgrammingExercise;
+    }
 }

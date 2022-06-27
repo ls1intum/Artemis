@@ -296,9 +296,9 @@ export class ExerciseGroupsComponent implements OnInit {
         examImportModalRef.result.then(
             (exerciseGroups: ExerciseGroup[]) => {
                 if (exerciseGroups) {
-                    this.examManagementService.importExerciseGroup(this.courseId, this.examId, exerciseGroups);
-                    // Reload the page after the import
-                    this.ngOnInit();
+                    this.exerciseGroups = exerciseGroups;
+                    console.log(exerciseGroups);
+                    this.alertService.success('Imported!');
                 }
             },
             () => {},
