@@ -113,7 +113,7 @@ export class CourseDetailLineChartComponent extends ActiveStudentsChart implemen
      * Takes the data, converts it into percentage and sets it accordingly
      */
     private processDataAndCreateChart(array: number[]) {
-        let currentAverage = 0;
+        let currentMean = 0;
         if (this.numberOfStudentsInCourse > 0) {
             const allValues = [];
             for (let i = 0; i < array.length; i++) {
