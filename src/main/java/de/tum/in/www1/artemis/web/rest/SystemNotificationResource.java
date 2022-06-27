@@ -60,7 +60,7 @@ public class SystemNotificationResource {
     public ResponseEntity<Notification> createSystemNotification(@RequestBody SystemNotification systemNotification) throws URISyntaxException {
         log.debug("REST request to save SystemNotification : {}", systemNotification);
         if (systemNotification.getId() != null) {
-            throw new BadRequestAlertException("A new system notification cannot already have an ID", ENTITY_NAME, "idexists");
+            throw new BadRequestAlertException("A new system notification cannot already have an ID", ENTITY_NAME, "idExists");
         }
         SystemNotification result = systemNotificationRepository.save(systemNotification);
         systemNotificationService.sendNotification(systemNotification);
@@ -80,7 +80,7 @@ public class SystemNotificationResource {
     public ResponseEntity<SystemNotification> updateSystemNotification(@RequestBody SystemNotification systemNotification) {
         log.debug("REST request to update SystemNotification : {}", systemNotification);
         if (systemNotification.getId() == null) {
-            throw new BadRequestAlertException("Invalid id", ENTITY_NAME, "idnull");
+            throw new BadRequestAlertException("Invalid id", ENTITY_NAME, "idNull");
         }
         SystemNotification result = systemNotificationRepository.save(systemNotification);
         systemNotificationService.sendNotification(result);

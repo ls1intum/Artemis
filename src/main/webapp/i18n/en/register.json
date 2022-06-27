@@ -16,8 +16,8 @@
             "success": "<strong>Registration saved!</strong> Please check your email for confirmation.",
             "error": {
                 "fail": "<strong>Registration failed!</strong> Please try again later.",
-                "userexists": "<strong>Login name already registered!</strong> Please choose another one.",
-                "emailexists": "<strong>Email is already in use!</strong> Please choose another one.",
+                "userExists": "<strong>Login name already registered!</strong> Please choose another one.",
+                "emailExists": "<strong>Email is already in use!</strong> Please choose another one.",
                 "blocked": "<strong>Registration is blocked for the email and/or login!</strong> Please try again later."
             }
         }

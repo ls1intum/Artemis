@@ -53,11 +53,10 @@
         "url.not.found": "Nicht gefunden",
         "NotNull": "Feld {{fieldName}} darf nicht leer sein!",
         "size": "Feld {{fieldName}} erfüllt nicht die minimalen/maximalen Längenanforderungen!",
-        "userexists": "Login bereits vergeben!",
-        "emailexists": "E-Mail wird bereits verwendet!",
-        "idexists": "Ein neuer {{entityName}} kann noch keine ID haben",
+        "userExists": "Login bereits vergeben!",
+        "emailExists": "E-Mail wird bereits verwendet!",
+        "idExists": "Ein neuer {{entityName}} kann noch keine ID haben",
         "ambiguousContext": "Ein neuer {{entityName}} muss einen eindeutigen Kontext haben",
-        "missingname": "Ein neues {{entityName}} braucht einen Namen",
         "invalid": {
             "template": {
                 "build.plan.id": "Die Vorlagen-Build-Plan-ID scheint ungültig zu sein. Stelle bitte sicher, dass sie existiert und für Artemis zugänglich ist.",
@@ -76,7 +75,7 @@
             "testcases.weights": "Vor Deaktivierung der manuellen Bewertung muss für mindestens einen Testfall die Bewertungsgewichtung größer Null gesetzt werden.",
             "page.request": "Die Seitenanforderung scheint ungültig zu sein. Stelle bitte sicher, dass genügend {{entityName}}-Entitäten vorhanden sind, damit die Anforderungsseite erstellt werden kann."
         },
-        "idnull": "Ungültige ID",
+        "idNull": "Ungültige ID",
         "unexpectedError": "Ein unerwarteter Fehler ist aufgetreten: {{error}}",
         "manualCodeHintOperation": "Dieser Endpunkt erlaubt keine manuelle Bearbeitung von Codehinweisen.",
         "exerciseNotDefined": "Die Aufgabe ist nicht definiert.",

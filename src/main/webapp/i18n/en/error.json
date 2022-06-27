@@ -53,11 +53,10 @@
         "url.not.found": "Not found",
         "NotNull": "Field {{ fieldName }} cannot be empty!",
         "size": "Field {{ fieldName }} does not meet min/max size requirements!",
-        "userexists": "Login name already in use!",
-        "emailexists": "Email is already in use!",
-        "idexists": "A new {{ entityName }} cannot already have an ID",
+        "userExists": "Login name already in use!",
+        "emailExists": "Email is already in use!",
+        "idExists": "A new {{ entityName }} cannot already have an ID",
         "ambiguousContext": "A new {{entityName}} must have an unambiguous context",
-        "missingname": "A new {{entityName}} needs a name",
         "invalid": {
             "template": {
                 "build.plan.id": "The Template Build Plan ID seems to be invalid. Please make sure it exists and is accessible for Artemis.",
@@ -76,7 +75,7 @@
             "testcases.weights": "Before deactivating manual feedback, please give at least one test case a weight greater than zero.",
             "page.request": "The page request seems to be invalid. Please make sure that enough number of {{entityName}} entities exist, so that the request page can be created."
         },
-        "idnull": "Invalid ID",
+        "idNull": "Invalid ID",
         "unexpectedError": "An unexpected error occurred: {{error}}",
         "manualCodeHintOperation": "This endpoint does not allow to change code hints manually.",
         "exerciseNotDefined": "The exercise is not defined.",

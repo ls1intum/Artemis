@@ -62,7 +62,7 @@ public class ApollonDiagramResource {
         log.debug("REST request to save ApollonDiagram : {}", apollonDiagram);
 
         if (apollonDiagram.getId() != null) {
-            throw new BadRequestAlertException("A new apollonDiagram cannot already have an ID", ENTITY_NAME, "idexists");
+            throw new BadRequestAlertException("A new apollonDiagram cannot already have an ID", ENTITY_NAME, "idExists");
         }
 
         if (!Objects.equals(apollonDiagram.getCourseId(), courseId)) {
