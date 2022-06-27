@@ -76,6 +76,9 @@ public class StudentExamResource {
 
     private final ExamMonitoringScheduleService examMonitoringScheduleService;
 
+    @Value("${info.student-exam-store-session-data:#{true}}")
+    private boolean storeSessionDataInStudentExamSession;
+
     @Value("${info.browser-fingerprints-enabled:#{true}}")
     private boolean fingerprintingEnabled;
 
@@ -474,10 +477,10 @@ public class StudentExamResource {
         fetchParticipationsSubmissionsAndResultsForStudentExam(studentExam, currentUser);
 
         // 4th create new exam session
-        final var ipAddress = HttpRequestUtils.getIpAddressFromRequest(request).orElse(null);
-        final String browserFingerprint = !fingerprintingEnabled ? null : request.getHeader("X-Artemis-Client-Fingerprint");
-        final String instanceId = !fingerprintingEnabled ? null : request.getHeader("X-Artemis-Client-Instance-ID");
-        final String userAgent = request.getHeader("User-Agent");
+        final var ipAddress = !storeSessionDataInStudentExamSession ? null : HttpRequestUtils.getIpAddressFromRequest(request).orElse(null);
+        final String browserFingerprint = !storeSessionDataInStudentExamSession || !fingerprintingEnabled ? null : request.getHeader("X-Artemis-Client-Fingerprint");
+        final String instanceId = !storeSessionDataInStudentExamSession || !fingerprintingEnabled ? null : request.getHeader("X-Artemis-Client-Instance-ID");
+        final String userAgent = !storeSessionDataInStudentExamSession ? null : request.getHeader("User-Agent");
         ExamSession examSession = this.examSessionService.startExamSession(studentExam, browserFingerprint, userAgent, instanceId, ipAddress);
         examSession.hideDetails();
         examSession.setInitialSession(this.examSessionService.checkExamSessionIsInitial(studentExam.getId()));
