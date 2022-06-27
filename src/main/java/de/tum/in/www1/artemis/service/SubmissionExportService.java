@@ -62,7 +62,7 @@ public abstract class SubmissionExportService {
      */
     public File exportStudentSubmissionsElseThrow(Long exerciseId, SubmissionExportOptionsDTO submissionExportOptions) {
         return exportStudentSubmissions(exerciseId, submissionExportOptions)
-                .orElseThrow(() -> new BadRequestAlertException("Failed to export student submissions.", "SubmissionExport", "nosubmissions"));
+                .orElseThrow(() -> new BadRequestAlertException("Failed to export student submissions.", "SubmissionExport", "noSubmissions"));
     }
 
     /**

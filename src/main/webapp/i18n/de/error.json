@@ -33,7 +33,7 @@
         "emptyFile": "Die hochgeladene Datei {{ fileName }} ist leer. Bitte überprüfe die Datei und versuche es erneut.",
         "externalSubmissionBeforeDueDate": "Externe Einreichungen können nur nach der Abgabefrist erstellt werden.",
         "externalSubmissionForQuizExercise": "Externe Einreichungen können nicht für Quiz Übungen erstellt werden.",
-        "nosubmissions": "Nutzer:in existiert nicht oder es gibt keine Abgaben.",
+        "noSubmissions": "Nutzer:in existiert nicht oder es gibt keine Abgaben.",
         "feedbackCreditsNull": "Fehler! Wenn Feedback vorhanden ist, muss das Feedback eine Punktzahl haben.",
         "invalidGradeStepFormat": "Eine oder mehrere Notenstufen folgen nicht dem richtigen Format. Klicke auf das \"?\" für mehr Informationen.",
         "invalidGradeStepAdjacency": "Die Notenstufen bilden keinen gültigen Notenschlüssel ab. Klicke auf das \"?\" für mehr Informationen.",
