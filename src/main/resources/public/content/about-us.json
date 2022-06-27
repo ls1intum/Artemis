@@ -323,6 +323,10 @@
         {
             "fullName": "Florian Gareis",
             "photoDirectory": "public/images/about/Florian_Gareis.jpg"
+        },
+        {
+            "fullName": "Daniel Gomes da Costa",
+            "photoDirectory": "public/images/about/Daniel_Gomes_da_Costa.jpg"
         }
     ]
 }
