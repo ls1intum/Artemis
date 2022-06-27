@@ -4,6 +4,7 @@ import static de.tum.in.www1.artemis.config.Constants.ASSIGNMENT_CHECKOUT_PATH;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -155,7 +156,7 @@ public class AuxiliaryRepositoryService {
     private void validateAuxiliaryRepositoryDescriptionLength(AuxiliaryRepository auxiliaryRepository) {
         if (auxiliaryRepository.getDescription() != null && auxiliaryRepository.getDescription().length() > AuxiliaryRepository.MAX_DESCRIPTION_LENGTH) {
             throw new BadRequestAlertException("The provided description is too long!", AUX_REPO_ENTITY_NAME,
-                    ProgrammingExerciseResourceErrorKeys.INVALID_AUXILIARY_REPOSITORY_DESCRIPTION);
+                    ProgrammingExerciseResourceErrorKeys.INVALID_AUXILIARY_REPOSITORY_DESCRIPTION, Map.of("maxLength", AuxiliaryRepository.MAX_DESCRIPTION_LENGTH));
         }
     }
 

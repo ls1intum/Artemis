@@ -90,7 +90,7 @@
                 </ngx-datatable-column>
                 <ngx-datatable-column name="Description" prop="description">
                     <ng-template ngx-datatable-cell-template let-row="row">
-                        <textarea class="form-control table-editable-field__input me-2" [id]="row.id + '-description'" [(ngModel)]="row.description"> </textarea>
+                        <textarea class="form-control table-editable-field__input me-2" [id]="row.id + '-description'" [(ngModel)]="row.description" name="description"> </textarea>
                     </ng-template>
                 </ngx-datatable-column>
                 <ngx-datatable-column name="" prop="removeButton">
