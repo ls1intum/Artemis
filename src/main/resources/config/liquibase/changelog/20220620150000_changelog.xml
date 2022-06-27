@@ -7,7 +7,7 @@
     -->
     <changeSet author="timor-morrien" id="20220620150000">
         <addColumn tableName="exercise_hint">
-            <column name="display_threshold" type="INTEGER" defaultValueNumeric="3">
+            <column name="display_threshold" type="TINYINT" defaultValueNumeric="3">
                 <constraints nullable="false"/>
             </column>
         </addColumn>

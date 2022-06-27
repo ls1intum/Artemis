@@ -4,6 +4,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 import javax.persistence.*;
+import javax.validation.constraints.Max;
 import javax.validation.constraints.Min;
 
 import org.hibernate.annotations.Cache;
@@ -52,9 +53,10 @@ public class ExerciseHint extends DomainObject {
     @JsonIgnore
     private Set<ExerciseHintActivation> exerciseHintActivations = new HashSet<>();
 
-    @Column(name = "display_threshold")
+    @Column(name = "display_threshold", columnDefinition = "TINYINT")
     @Min(0)
-    private int displayThreshold = 3;
+    @Max(100)
+    private short displayThreshold = 3;
 
     @Transient
     private Integer currentUserRatingTransient;
@@ -146,11 +148,11 @@ public class ExerciseHint extends DomainObject {
      *
      * @return the display threshold value
      */
-    public int getDisplayThreshold() {
+    public short getDisplayThreshold() {
         return displayThreshold;
     }
 
-    public void setDisplayThreshold(int displayThreshold) {
+    public void setDisplayThreshold(short displayThreshold) {
         this.displayThreshold = displayThreshold;
     }
 
