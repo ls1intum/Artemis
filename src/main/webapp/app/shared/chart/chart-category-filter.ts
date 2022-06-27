@@ -1,6 +1,10 @@
 import { ChartFilter } from 'app/shared/chart/chart-filter';
 import { Injectable } from '@angular/core';
 import { ExerciseCategory } from 'app/entities/exercise-category.model';
+import { CourseManagementStatisticsModel } from 'app/entities/quiz/course-management-statistics-model';
+import { Exercise } from 'app/entities/exercise.model';
+
+type CategoryFilterOperatingType = CourseManagementStatisticsModel | Exercise;
 
 @Injectable({ providedIn: 'root' })
 export class ChartCategoryFilter extends ChartFilter {
@@ -13,7 +17,7 @@ export class ChartCategoryFilter extends ChartFilter {
      * Collects all categories from the provided exercises
      * @private
      */
-    determineDisplayableCategories(courseExercises: any[]): Set<any> {
+    determineDisplayableCategories(courseExercises: CategoryFilterOperatingType[]): Set<string> {
         const exerciseCategories = courseExercises
             .filter((exercise) => exercise.categories)
             .flatMap((exercise) => exercise.categories!)
@@ -25,7 +29,7 @@ export class ChartCategoryFilter extends ChartFilter {
      * Creates an initial filter setting by including all categories
      * @param exercisesScores the score objects the categories are derived from
      */
-    setupCategoryFilter(exercisesScores: any[]): void {
+    setupCategoryFilter(exercisesScores: CategoryFilterOperatingType[]): void {
         this.exerciseCategories = this.determineDisplayableCategories(exercisesScores);
         this.exercisesWithoutCategoriesPresent = exercisesScores.some((exercises) => !exercises.categories);
         this.exerciseCategories.forEach((category) => this.filterMap.set(category, true));
@@ -48,23 +52,23 @@ export class ChartCategoryFilter extends ChartFilter {
      * @param category the category that is selected or deselected
      * @returns scores filtered against the updated filter setting
      */
-    toggleCategory(exercisesScores: any[], category: string): any[] {
+    toggleCategory<E extends CategoryFilterOperatingType>(exercisesScores: CategoryFilterOperatingType[], category: string): Array<E> {
         const isIncluded = this.filterMap.get(category)!;
         this.filterMap.set(category, !isIncluded);
         this.numberOfActiveFilters += !isIncluded ? 1 : -1;
         this.areAllCategoriesSelected(!isIncluded);
-        return this.applyCurrentFilter(exercisesScores);
+        return this.applyCurrentFilter<E>(exercisesScores);
     }
     /**
      * Handles the selection and deselection of "exercises with no categories" filter option
      * @param exerciseScores the scores the updated filter should apply to
      * @returns scores filtered against the updated filter setting
      */
-    toggleExercisesWithNoCategory(exerciseScores: any[]): any[] {
+    toggleExercisesWithNoCategory<E extends CategoryFilterOperatingType>(exerciseScores: CategoryFilterOperatingType[]): Array<E> {
         this.numberOfActiveFilters += this.includeExercisesWithNoCategory ? -1 : 1;
         this.includeExercisesWithNoCategory = !this.includeExercisesWithNoCategory;
         this.areAllCategoriesSelected(this.includeExercisesWithNoCategory);
-        return this.applyCurrentFilter(exerciseScores);
+        return this.applyCurrentFilter<E>(exerciseScores);
     }
 
     /**
@@ -72,7 +76,7 @@ export class ChartCategoryFilter extends ChartFilter {
      * @param exerciseScores the scores the updated filter should apply to
      * @returns scores filtered against the updated filter setting
      */
-    toggleAllCategories(exerciseScores: any[]): any[] {
+    toggleAllCategories<E extends CategoryFilterOperatingType>(exerciseScores: CategoryFilterOperatingType[]): Array<E> {
         if (!this.allCategoriesSelected) {
             this.setupCategoryFilter(exerciseScores);
             this.includeExercisesWithNoCategory = true;
@@ -83,7 +87,7 @@ export class ChartCategoryFilter extends ChartFilter {
             this.allCategoriesSelected = !this.allCategoriesSelected;
             this.includeExercisesWithNoCategory = false;
         }
-        return this.applyCurrentFilter(exerciseScores);
+        return this.applyCurrentFilter<E>(exerciseScores);
     }
 
     /**
@@ -95,7 +99,7 @@ export class ChartCategoryFilter extends ChartFilter {
      * @param exerciseScores the exercise scores the current filter setting should be applied to
      * @returns scores filtered against the updated filter setting
      */
-    applyCurrentFilter(exerciseScores: any[]): any[] {
+    applyCurrentFilter<E extends CategoryFilterOperatingType>(exerciseScores: CategoryFilterOperatingType[]): Array<E> {
         return exerciseScores.filter((exercise) => {
             if (!exercise.categories) {
                 return this.includeExercisesWithNoCategory;
@@ -103,7 +107,7 @@ export class ChartCategoryFilter extends ChartFilter {
             return exercise
                 .categories!.flatMap((category: ExerciseCategory) => this.filterMap.get(category.category!)!)
                 .reduce((value1: boolean, value2: boolean) => value1 || value2);
-        });
+        }) as Array<E>;
     }
 
     /**

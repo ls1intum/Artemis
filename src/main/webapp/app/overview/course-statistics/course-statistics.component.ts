@@ -731,24 +731,24 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
      */
     toggleCategory(category: string) {
         const isIncluded = this.categoryFilter.getCurrentFilterState(category)!;
-        this.courseExercisesFilteredByCategories = this.categoryFilter.toggleCategory(this.courseExercises, category) as Exercise[];
-        this.performFilteredChartSetup(!isIncluded);
+        this.courseExercisesFilteredByCategories = this.categoryFilter.toggleCategory<Exercise>(this.courseExercises, category);
+        this.setupFilteredChart(!isIncluded);
     }
 
     /**
      * Handles the use case when the user selects or deselects the option "select all categories"
      */
     toggleAllCategories(): void {
-        this.courseExercisesFilteredByCategories = this.categoryFilter.toggleAllCategories(this.courseExercises) as Exercise[];
-        this.performFilteredChartSetup(this.categoryFilter.includeExercisesWithNoCategory);
+        this.courseExercisesFilteredByCategories = this.categoryFilter.toggleAllCategories<Exercise>(this.courseExercises);
+        this.setupFilteredChart(this.categoryFilter.includeExercisesWithNoCategory);
     }
 
     /**
      * handles the selection and deselection of "exercises with no categories" filter option
      */
     toggleExercisesWithNoCategory(): void {
-        this.courseExercisesFilteredByCategories = this.categoryFilter.toggleExercisesWithNoCategory(this.courseExercises) as Exercise[];
-        this.performFilteredChartSetup(this.categoryFilter.includeExercisesWithNoCategory);
+        this.courseExercisesFilteredByCategories = this.categoryFilter.toggleExercisesWithNoCategory<Exercise>(this.courseExercises);
+        this.setupFilteredChart(this.categoryFilter.includeExercisesWithNoCategory);
     }
 
     /**
@@ -792,7 +792,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
      * @param isIncluded indicates whether the updated filter is now selected or deselected and updates the filtered exercise IDs accordingly
      * @private
      */
-    private performFilteredChartSetup(isIncluded: boolean) {
+    private setupFilteredChart(isIncluded: boolean) {
         this.calculateNumberOfAppliedFilters();
         this.groupExercisesByType(this.courseExercisesFilteredByCategories);
         this.filterExerciseIDsForCategorySelection(!isIncluded);
