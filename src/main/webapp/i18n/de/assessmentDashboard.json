@@ -6,6 +6,7 @@
             },
             "title": "Bewertungsübersicht",
             "noSubmissionFound": "Keine Abgaben gefunden",
+            "progressDescription": "Fortschritt: {{ percentageAssessed }} % ({{ numberAssessed }} von {{ numberSubmissions }} eingereichten Aufgaben bewertet)",
             "assessmentInformation": "Bewertungsinformationen",
             "submissions": "Einreichungen",
             "pageHeader": "Bewertungs-Dashboard für den Kurs",
