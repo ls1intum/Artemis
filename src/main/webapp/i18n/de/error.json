@@ -57,7 +57,7 @@
         "emailexists": "E-Mail wird bereits verwendet!",
         "idexists": "Ein neuer {{entityName}} kann noch keine ID haben",
         "ambiguousContext": "Ein neuer {{entityName}} muss einen eindeutigen Kontext haben",
-        "missingname": "Ein neues {{entityName}} braucht einen namen",
+        "missingname": "Ein neues {{entityName}} braucht einen Namen",
         "invalid": {
             "template": {
                 "build.plan.id": "Die Vorlagen-Build-Plan-ID scheint ungültig zu sein. Stelle bitte sicher, dass sie existiert und für Artemis zugänglich ist.",
