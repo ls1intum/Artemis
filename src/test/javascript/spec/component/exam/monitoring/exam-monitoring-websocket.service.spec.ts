@@ -12,6 +12,7 @@ import dayjs from 'dayjs/esm';
 
 describe('ExamMonitoringWebsocketService', () => {
     let examMonitoringWebsocketService: ExamMonitoringWebsocketService;
+    let websocketService: JhiWebsocketService;
     let exam: Exam;
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -21,6 +22,7 @@ describe('ExamMonitoringWebsocketService', () => {
             .compileComponents()
             .then(() => {
                 examMonitoringWebsocketService = TestBed.inject(ExamMonitoringWebsocketService);
+                websocketService = TestBed.inject(JhiWebsocketService);
             });
     });
 
@@ -35,6 +37,7 @@ describe('ExamMonitoringWebsocketService', () => {
         jest.restoreAllMocks();
     });
 
+    // Notify subscribers
     it.each(createActions())('should notify exam subscribers', (examAction: ExamAction) => {
         const spy = jest.spyOn(examMonitoringWebsocketService, 'prepareAction').mockImplementation((action) => action);
 
@@ -55,6 +58,7 @@ describe('ExamMonitoringWebsocketService', () => {
         expect(examMonitoringWebsocketService.examActionObservables).toEqual(examActionObservables);
     });
 
+    // Additional methods
     it.each(createActions())('should prepare action', (examAction: ExamAction) => {
         const now = dayjs().set('seconds', 8).set('ms', 0);
         examAction.timestamp = now;
@@ -64,5 +68,21 @@ describe('ExamMonitoringWebsocketService', () => {
         expect(examAction.timestamp).toEqual(now);
         examAction.ceiledTimestamp!.set('ms', 0);
         expect(examAction.ceiledTimestamp).toEqual(now.set('seconds', 15));
+    });
+
+    it('should load initial actions', () => {
+        const spy = jest.spyOn(websocketService, 'send');
+        const topic = `/topic/exam-monitoring/${exam.id}/load-actions`;
+        const initialActionsLoaded = new Map<number, boolean>();
+
+        expect(examMonitoringWebsocketService.initialActionsLoaded).toEqual(initialActionsLoaded);
+
+        examMonitoringWebsocketService.loadInitialActions(exam);
+
+        initialActionsLoaded.set(exam.id!, true);
+
+        expect(spy).toHaveBeenCalledOnce();
+        expect(spy).toHaveBeenCalledWith(topic, null);
+        expect(examMonitoringWebsocketService.initialActionsLoaded).toEqual(initialActionsLoaded);
     });
 });

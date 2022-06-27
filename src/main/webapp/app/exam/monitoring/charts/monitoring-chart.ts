@@ -120,7 +120,7 @@ export function updateCurrentExerciseOfStudent(examAction: ExamAction, currentEx
         typedAction = examAction as SavedExerciseAction;
     }
     if (typedAction && typedAction.exerciseId !== undefined) {
-        currentExercisePerStudent.set(typedAction.exerciseId, typedAction.exerciseId);
+        currentExercisePerStudent.set(typedAction.examActivityId!, typedAction.exerciseId);
     } else {
         currentExercisePerStudent.set(examAction.examActivityId!, undefined);
     }

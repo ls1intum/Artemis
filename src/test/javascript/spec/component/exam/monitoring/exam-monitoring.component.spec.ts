@@ -1,4 +1,4 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed, tick, fakeAsync } from '@angular/core/testing';
 import { HttpResponse } from '@angular/common/http';
 import { BehaviorSubject, of } from 'rxjs';
 import { ArtemisTestModule } from '../../../test.module';
@@ -74,6 +74,7 @@ describe('Exam Monitoring Component', () => {
         jest.restoreAllMocks();
     });
 
+    // On init
     it('should call find of examManagementService to get the exam on init', () => {
         // GIVEN
         const responseFakeExam = { body: exam as Exam } as HttpResponse<Exam>;
@@ -210,4 +211,20 @@ describe('Exam Monitoring Component', () => {
         expect(examMonitoringWebsocketService.subscribeForLatestExamAction).toHaveBeenCalledOnce();
         expect(examMonitoringWebsocketService.subscribeForLatestExamAction).toHaveBeenCalledWith(exam);
     });
+
+    it('should call loadInitialActions of examMonitoringWebsocketService to get the initial actions on init', fakeAsync(() => {
+        // GIVEN
+        const responseFakeExam = { body: exam as Exam } as HttpResponse<Exam>;
+        jest.spyOn(examManagementService, 'find').mockReturnValue(of(responseFakeExam));
+        jest.spyOn(examMonitoringWebsocketService, 'loadInitialActions');
+
+        // WHEN
+        comp.ngOnInit();
+
+        tick(10000);
+
+        // THEN
+        expect(examMonitoringWebsocketService.loadInitialActions).toHaveBeenCalledOnce();
+        expect(examMonitoringWebsocketService.loadInitialActions).toHaveBeenCalledWith(exam);
+    }));
 });
