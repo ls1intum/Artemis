@@ -6,6 +6,7 @@
             },
             "title": "Assessment Dashboard",
             "noSubmissionFound": "No submission found",
+            "progressDescription": "Progress: {{ percentageAssessed }} % ({{ numberAssessed }} out of {{ numberSubmissions }} submissions assessed)",
             "assessmentInformation": "Assessment Information",
             "submissions": "Submissions",
             "pageHeader": "Assessment Dashboard for course",
