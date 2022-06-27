@@ -123,6 +123,6 @@ export type RouteComponents = (string | number)[];
 
 export const MetisWebsocketChannelPrefix = '/topic/metis/';
 
-export const PostTitleValidationPattern = Validators.pattern(/^(\n|.)*\S+(\n|.)*$/);
+export const PostTitleValidationPattern = Validators.pattern(/^(.)*\S+(.)*$/);
 
 export const PostContentValidationPattern = Validators.pattern(/^(\n|\r|.)*\S+(\n|\r|.)*$/);
