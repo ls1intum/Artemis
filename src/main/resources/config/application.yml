@@ -219,7 +219,6 @@ info:
     # default value set to false
     text-assessment-analytics-enabled: false
     student-exam-store-session-data: true
-    browser-fingerprints-enabled: true
 
 # ===================================================================
 # JHipster specific properties

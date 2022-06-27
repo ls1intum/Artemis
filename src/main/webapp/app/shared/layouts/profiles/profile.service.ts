@@ -67,7 +67,7 @@ export class ProfileService {
                         profileInfo.versionControlAccessToken = data.versionControlAccessToken;
                         profileInfo.programmingLanguageFeatures = data.programmingLanguageFeatures;
                         profileInfo.textAssessmentAnalyticsEnabled = data['text-assessment-analytics-enabled'];
-                        profileInfo.browserFingerprintsEnabled = data['browser-fingerprints-enabled'];
+                        profileInfo.browserFingerprintsEnabled = data['student-exam-store-session-data'];
 
                         profileInfo.useExternal = data.useExternal;
                         profileInfo.externalCredentialProvider = data.externalCredentialProvider;
