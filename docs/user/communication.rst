@@ -1,7 +1,7 @@
 .. _communication:
 
 Communication
-==========
+=============
 
 .. contents:: Content of this document
     :local:
@@ -16,7 +16,7 @@ Communication can be made in different contexts, namely for lectures, exercises,
 Below, you can find more information on specific features and how to use them.
 
 Enabling Communication
-^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^
 
 Artemis courses will by default enable all the communication features.
 In case you do not want to provide users with these features, you can disable this feature on course creation by unchecking the respective checkbox (``Enable postings by students``) - it can also be edited afterwards.
@@ -44,7 +44,7 @@ Exemplary exercise detail page with posts:
 |exercise-posts|
 
 Course-wide Posts & Course Communication Overview
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Besides lecture or exercise related questions, Artemis offers a third type of posts: posts with course-wide topics, such as ``Organization`` or ``Tech Support``.
 These posts can only be created on the course communication overview which is shown in the screenshot below.
