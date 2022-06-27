@@ -310,7 +310,8 @@ public class UserResource {
                 log.error(exception.getMessage(), exception);
             }
         }
-        return ResponseEntity.ok().headers(HeaderUtil.createAlert(applicationName, "artemisApp.userManagement.batch.deleted", String.valueOf(deletedUsers.size()))).body(deletedUsers);
+        return ResponseEntity.ok().headers(HeaderUtil.createAlert(applicationName, "artemisApp.userManagement.batch.deleted", String.valueOf(deletedUsers.size())))
+                .body(deletedUsers);
     }
 
     @PutMapping("users/notification-date")
