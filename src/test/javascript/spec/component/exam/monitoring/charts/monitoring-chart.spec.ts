@@ -127,12 +127,12 @@ describe('Monitoring charts helper methods', () => {
         ${new SwitchedExerciseAction(1)} | ${1}
         ${new EndedExamAction()}         | ${undefined}
     `('should update the current exercise of student', (param: { input: ExamAction; expect: number | undefined }) => {
-        const action = param.input[0];
+        const action = param.input;
         action.examActivityId = 0;
         const currentExercisePerStudent = new Map<number, number | undefined>();
         updateCurrentExerciseOfStudent(param.input, currentExercisePerStudent);
         const expectedMap = new Map();
-        expectedMap.set(1, param.expect);
+        expectedMap.set(0, param.expect);
         expect(currentExercisePerStudent).toEqual(expectedMap);
     });
 
