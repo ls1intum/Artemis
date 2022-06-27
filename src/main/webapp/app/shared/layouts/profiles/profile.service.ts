@@ -67,7 +67,7 @@ export class ProfileService {
                         profileInfo.versionControlAccessToken = data.versionControlAccessToken;
                         profileInfo.programmingLanguageFeatures = data.programmingLanguageFeatures;
                         profileInfo.textAssessmentAnalyticsEnabled = data['text-assessment-analytics-enabled'];
-                        profileInfo.browserFingerprintsEnabled = data['student-exam-store-session-data'];
+                        profileInfo.studentExamStoreSessionData = data['student-exam-store-session-data'];
 
                         profileInfo.useExternal = data.useExternal;
                         profileInfo.externalCredentialProvider = data.externalCredentialProvider;
@@ -78,7 +78,7 @@ export class ProfileService {
                 .subscribe((profileInfo: ProfileInfo) => {
                     this.profileInfo.next(profileInfo);
                     this.featureToggleService.initializeFeatureToggles(profileInfo.features);
-                    this.browserFingerprintService.initialize(profileInfo.browserFingerprintsEnabled);
+                    this.browserFingerprintService.initialize(profileInfo.studentExamStoreSessionData);
                 });
         }
 

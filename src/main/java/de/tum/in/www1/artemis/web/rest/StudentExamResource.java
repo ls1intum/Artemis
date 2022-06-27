@@ -4,7 +4,10 @@ import static de.tum.in.www1.artemis.config.Constants.EXAM_START_WAIT_TIME_MINUT
 import static de.tum.in.www1.artemis.service.util.TimeLogUtil.formatDurationFrom;
 
 import java.time.ZonedDateTime;
-import java.util.*;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.BadRequestException;
@@ -38,6 +41,7 @@ import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
+import inet.ipaddr.IPAddress;
 
 /**
  * REST controller for managing ExerciseGroup.
@@ -267,9 +271,9 @@ public class StudentExamResource {
      * and with the student participation and with the submissions.
      * NOTE: when this is called it will also mark the test run as started
      *
-     * @param courseId the course to which the test run belongs to
-     * @param examId   the exam to which the test run belongs to
-     * @param request  the http request, used to extract headers
+     * @param courseId  the course to which the test run belongs to
+     * @param examId    the exam to which the test run belongs to
+     * @param request   the http request, used to extract headers
      * @param testRunId the id of the student exam of the test run
      * @return the ResponseEntity with status 200 (OK) and with the found test run as body
      */
@@ -300,8 +304,8 @@ public class StudentExamResource {
      * This will be used to display the summary of the exam. The student exam will be returned with the exercises
      * and with the student participation and with the submissions.
      *
-     * @param courseId  the course to which the student exam belongs to
-     * @param examId    the exam to which the student exam belongs to
+     * @param courseId the course to which the student exam belongs to
+     * @param examId   the exam to which the student exam belongs to
      * @return the ResponseEntity with status 200 (OK) and with the found student exam as body
      */
     @GetMapping("/courses/{courseId}/exams/{examId}/student-exams/summary")
@@ -336,8 +340,9 @@ public class StudentExamResource {
 
     /**
      * GET /courses/{courseId}/exams/{examId}/test-runs : Find all test runs for the exam
+     *
      * @param courseId the id of the course
-     * @param examId the id of the exam
+     * @param examId   the id of the exam
      * @return the list of test runs
      */
     @GetMapping("courses/{courseId}/exams/{examId}/test-runs")
@@ -353,8 +358,9 @@ public class StudentExamResource {
 
     /**
      * POST /courses/{courseId}/exams/{examId}/test-run : Create a test run
-     * @param courseId the id of the course
-     * @param examId the id of the exam
+     *
+     * @param courseId             the id of the course
+     * @param examId               the id of the exam
      * @param testRunConfiguration the desired student exam configuration for the test run
      * @return the created test run student exam
      */
@@ -373,14 +379,14 @@ public class StudentExamResource {
 
     /**
      * POST /courses/{courseId}/exams/{examId}/student-exams/assess-unsubmitted-and-empty-student-exams : Assess unsubmitted student exams and empty submissions.
-     *
+     * <p>
      * Finds student exams which the students did not submit on time i.e. {@link StudentExam#isSubmitted()} is false and assesses all exercises with 0 points in {@link StudentExamService#assessUnsubmittedStudentExams}.
      * Additionally assess all empty exercises with 0 points in {@link StudentExamService#assessEmptySubmissionsOfStudentExams}.
-     *
+     * <p>
      * NOTE: A result with 0 points is only added if no other result is present for the latest submission of a relevant StudentParticipation.
      *
      * @param courseId the id of the course
-     * @param examId the id of the exam
+     * @param examId   the id of the exam
      * @return {@link HttpStatus#BAD_REQUEST} if the exam is not over yet | {@link HttpStatus#FORBIDDEN} if the user is not an instructor
      */
     @PostMapping("/courses/{courseId}/exams/{examId}/student-exams/assess-unsubmitted-and-empty-student-exams")
@@ -412,8 +418,9 @@ public class StudentExamResource {
 
     /**
      * DELETE /courses/{courseId}/exams/{examId}/test-run/{testRunId} : Delete a test run
-     * @param courseId the id of the course
-     * @param examId the id of the exam
+     *
+     * @param courseId  the id of the course
+     * @param examId    the id of the exam
      * @param testRunId the id of the student exam of the test run
      * @return the deleted test run student exam
      */
@@ -456,7 +463,8 @@ public class StudentExamResource {
      * Calls {@link StudentExamResource#fetchParticipationsSubmissionsAndResultsForStudentExam} to set up the exercises.
      * Starts an exam session for the request
      * Filters out unnecessary attributes.
-     * @param request the http request for the conduction
+     *
+     * @param request     the http request for the conduction
      * @param currentUser the current user
      * @param studentExam the student exam to be prepared
      */
@@ -474,30 +482,26 @@ public class StudentExamResource {
         fetchParticipationsSubmissionsAndResultsForStudentExam(studentExam, currentUser);
 
         // 4th create new exam session
-        final IPAddress ipAddress;
-        final String browserFingerprint;
-        final String instanceId;
-        final String userAgent;
-
-        if (storeSessionDataInStudentExamSession) {
-            ipAddress = HttpRequestUtils.getIpAddressFromRequest(request).orElse(null);
-            browserFingerprint = request.getHeader("X-Artemis-Client-Fingerprint");
-            instanceId = request.getHeader("X-Artemis-Client-Instance-ID");
-            userAgent = request.getHeader("User-Agent");
-        } else {
-            ipAddress = null;
-            browserFingerprint = null;
-            instanceId = null;
-            userAgent = null;
-        }
-
-        ExamSession examSession = this.examSessionService.startExamSession(studentExam, browserFingerprint, userAgent, instanceId, ipAddress);
+        ExamSession examSession = startExamSessionByRequestAndStudentExam(request, studentExam);
         examSession.hideDetails();
         examSession.setInitialSession(this.examSessionService.checkExamSessionIsInitial(studentExam.getId()));
         studentExam.setExamSessions(Set.of(examSession));
 
         // not needed
         studentExam.getExam().setCourse(null);
+    }
+
+    private ExamSession startExamSessionByRequestAndStudentExam(HttpServletRequest request, StudentExam studentExam) {
+        if (storeSessionDataInStudentExamSession) {
+            final IPAddress ipAddress = HttpRequestUtils.getIpAddressFromRequest(request).orElse(null);
+            final String browserFingerprint = request.getHeader("X-Artemis-Client-Fingerprint");
+            final String instanceId = request.getHeader("X-Artemis-Client-Instance-ID");
+            final String userAgent = request.getHeader("User-Agent");
+            return this.examSessionService.startExamSession(studentExam, browserFingerprint, userAgent, instanceId, ipAddress);
+        }
+        else {
+            return this.examSessionService.startExamSession(studentExam, null, null, null, null);
+        }
     }
 
     /**
@@ -525,9 +529,10 @@ public class StudentExamResource {
      * This ensures all relevant associations are available.
      * Handles setting the participation results using {@link StudentExamResource#setResultIfNecessary(StudentExam, StudentParticipation, boolean)}.
      * Filters sensitive information using {@link Exercise#filterSensitiveInformation()} and {@link QuizSubmission#filterForExam(boolean, boolean)} for quiz exercises.
-     * @param studentExam the given student exam
-     * @param exercise the exercise for which the user participation should be filtered
-     * @param participations the set of participations, wherein to search for the relevant participation
+     *
+     * @param studentExam         the given student exam
+     * @param exercise            the exercise for which the user participation should be filtered
+     * @param participations      the set of participations, wherein to search for the relevant participation
      * @param isAtLeastInstructor flag for instructor access privileges
      */
     private void filterParticipationForExercise(StudentExam studentExam, Exercise exercise, List<StudentParticipation> participations, boolean isAtLeastInstructor) {
@@ -575,8 +580,9 @@ public class StudentExamResource {
      * Helper method which attaches the result to its participation.
      * For direct automatic feedback during the exam conduction for {@link ProgrammingExercise}, we need to attach the results.
      * We also attach the result if the results are already published for the exam. See {@link StudentExam#areResultsPublishedYet}
-     * @param studentExam the given studentExam
-     * @param participation the given participation of the student
+     *
+     * @param studentExam         the given studentExam
+     * @param participation       the given participation of the student
      * @param isAtLeastInstructor flag for instructor access privileges
      */
     private void setResultIfNecessary(StudentExam studentExam, StudentParticipation participation, boolean isAtLeastInstructor) {
