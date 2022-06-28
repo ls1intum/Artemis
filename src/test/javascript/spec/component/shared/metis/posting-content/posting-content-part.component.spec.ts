@@ -1,23 +1,40 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { DebugElement } from '@angular/core';
+import { Router } from '@angular/router';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { PostingContentPartComponent } from 'app/shared/metis/posting-content/posting-content-part/posting-content-part.components';
-import { PostingContentPart } from 'app/shared/metis/metis.util';
+import { PostingContentPart, ReferenceType } from 'app/shared/metis/metis.util';
 import { HtmlForPostingMarkdownPipe } from 'app/shared/pipes/html-for-posting-markdown.pipe';
 import { getElement, getElements } from '../../../../helpers/utils/general.utils';
 import { MockQueryParamsDirective, MockRouterLinkDirective } from '../../../../helpers/mocks/directive/mock-router-link.directive';
+import { FileService } from 'app/shared/http/file.service';
+import { MockFileService } from '../../../../helpers/mocks/service/mock-file.service';
+import { MockRouter } from '../../../../helpers/mocks/mock-router';
 
 describe('PostingContentPartComponent', () => {
     let component: PostingContentPartComponent;
     let fixture: ComponentFixture<PostingContentPartComponent>;
     let debugElement: DebugElement;
+    let router: Router;
+    let fileService: FileService;
+    let openAttachmentSpy: jest.SpyInstance;
+    let navigateByUrlSpy: jest.SpyInstance;
+
+    let contentBeforeReference: string;
+    let contentAfterReference: string;
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
             declarations: [
                 PostingContentPartComponent,
                 HtmlForPostingMarkdownPipe, // we want to test against the rendered string, therefore we cannot mock the pipe
+                FaIconComponent, // we want to test the type of rendered icons, therefore we cannot mock the component
                 MockRouterLinkDirective,
                 MockQueryParamsDirective,
+            ],
+            providers: [
+                { provide: FileService, useClass: MockFileService },
+                { provide: Router, useClass: MockRouter },
             ],
         })
             .compileComponents()
@@ -25,6 +42,14 @@ describe('PostingContentPartComponent', () => {
                 fixture = TestBed.createComponent(PostingContentPartComponent);
                 component = fixture.componentInstance;
                 debugElement = fixture.debugElement;
+                router = TestBed.inject(Router);
+                fileService = TestBed.inject(FileService);
+
+                navigateByUrlSpy = jest.spyOn(router, 'navigateByUrl');
+                openAttachmentSpy = jest.spyOn(fileService, 'downloadFileWithAccessToken');
+
+                contentBeforeReference = '**Be aware**\n\n I want to reference the following Post ';
+                contentAfterReference = 'in my content,\n\n does it *actually* work?';
             });
     });
 
@@ -49,15 +74,14 @@ describe('PostingContentPartComponent', () => {
     });
 
     describe('For posting with reference', () => {
-        it('should contain a reference and markdown content before and after', () => {
-            const contentBeforeReference = '**Be aware**\n\n I want to reference the following Post ';
-            const contentAfterReference = 'in my content,\n\n does it *actually* work?';
+        it('should contain a post reference with icon and markdown content before and after', () => {
             const referenceStr = '#7';
             component.postingContentPart = {
                 contentBeforeReference,
                 linkToReference: ['/whatever'],
                 queryParams: { searchText: referenceStr },
-                referenceStr,
+                referenceStr: '#7',
+                referenceType: ReferenceType.POST,
                 contentAfterReference,
             } as PostingContentPart;
             fixture.detectChanges();
@@ -68,9 +92,83 @@ describe('PostingContentPartComponent', () => {
             expect(markdownRenderedTexts![0].innerHTML).toInclude('<p class="inline-paragraph">I want to reference the following Post </p>'); // last paragraph before reference
             expect(markdownRenderedTexts![1].innerHTML).toInclude('<p class="inline-paragraph">in my content,</p>'); // first paragraph after reference
             expect(markdownRenderedTexts![1].innerHTML).toInclude('<p>does it <em>actually</em> work?</p>');
-            const referenceLink = getElement(debugElement, '.reference-hash');
+
+            // should display post number to user
+            const referenceLink = getElement(debugElement, '.reference');
             expect(referenceLink).not.toBe(null);
             expect(referenceLink.innerHTML).toInclude(referenceStr);
+
+            // should display relevant icon for post
+            const icon = getElement(debugElement, 'fa-icon');
+            expect(icon).not.toBe(null);
+            expect(icon.innerHTML).toInclude('fa fa-message');
+
+            // on click should navigate to referenced post within current tab
+            referenceLink.click();
+            expect(navigateByUrlSpy).toHaveBeenCalledOnce();
+            expect(openAttachmentSpy).toBeCalledTimes(0);
+        });
+
+        it.each([
+            ['File Upload Exercise', '/courses/1/exercises/30', ReferenceType.FILE_UPLOAD, 'fa fa-file-arrow-up'],
+            ['Modeling Exercise', '/courses/1/exercises/29', ReferenceType.MODELING, 'fa fa-diagram-project'],
+            ['Quiz Exercise', '/courses/1/exercises/61', ReferenceType.QUIZ, 'fa fa-check-double'],
+            ['Programming Exercise', '/courses/1/exercises/53', ReferenceType.PROGRAMMING, 'fa fa-keyboard'],
+            ['Text Exercise', '/courses/1/exercises/28', ReferenceType.TEXT, 'fa fa-font'],
+            ['Exercise', '/courses/1/exercises/28', undefined, 'fa fa-paperclip'],
+            ['Test Lecture', '/courses/1/lectures/1/', ReferenceType.LECTURE, 'fa fa-chalkboard-user'],
+        ])('should contain a reference to artifact with icon', (referenceStr, linkToReference, referenceType, faIcon) => {
+            component.postingContentPart = {
+                contentBeforeReference,
+                linkToReference: [linkToReference],
+                referenceStr,
+                referenceType,
+                contentAfterReference,
+            } as PostingContentPart;
+            fixture.detectChanges();
+
+            // should display artifact name to user
+            const referenceLink = getElement(debugElement, '.reference');
+            expect(referenceLink).not.toBe(null);
+            expect(referenceLink.innerHTML).toInclude(referenceStr);
+
+            // should display relevant icon for artifact according to its type
+            const icon = getElement(debugElement, 'fa-icon');
+            expect(icon).not.toBe(null);
+            expect(icon.innerHTML).toInclude(faIcon);
+
+            // on click should navigate to referenced artifact within current tab
+            referenceLink.click();
+            expect(navigateByUrlSpy).toHaveBeenCalledOnce();
+            expect(openAttachmentSpy).toBeCalledTimes(0);
+        });
+
+        it('should contain a reference to attachment with icon', () => {
+            const referenceStr = 'Lecture 1 - Slide';
+            const attachmentURL = '/api/files/attachments/lecture/1/Lecture-1.pdf';
+            component.postingContentPart = {
+                contentBeforeReference,
+                referenceStr,
+                referenceType: ReferenceType.ATTACHMENT,
+                attachmentToReference: attachmentURL,
+                contentAfterReference,
+            } as PostingContentPart;
+            fixture.detectChanges();
+
+            // should display file name to user
+            const referenceLink = getElement(debugElement, '.reference');
+            expect(referenceLink).not.toBe(null);
+            expect(referenceLink.innerHTML).toInclude(referenceStr);
+
+            // should display relevant icon for attachment
+            const icon = getElement(debugElement, 'fa-icon');
+            expect(icon).not.toBe(null);
+            expect(icon.innerHTML).toInclude('fa fa-file');
+
+            // on click should open referenced attachment within new tab
+            referenceLink.click();
+            expect(openAttachmentSpy).toBeCalledTimes(1);
+            expect(openAttachmentSpy).toBeCalledWith(attachmentURL);
         });
     });
 });

@@ -5,12 +5,21 @@
         (markdownChange)="updateField($event)"
         [enableResize]="true"
         [resizableMinHeight]="editorHeight"
+        (onEditSelect)="previewMode = false"
+        (onPreviewSelect)="previewMode = true"
         [metaCommands]="[]"
         [headerCommands]="[]"
         [defaultCommands]="defaultCommands"
         [enableFileUpload]="false"
         [colorCommands]="[]"
-    ></jhi-markdown-editor>
+    >
+        <!-- Preview -->
+        <ng-container #preview>
+            <jhi-posting-content *ngIf="previewMode" [content]="content"></jhi-posting-content>
+            <hr />
+        </ng-container>
+        <!-- End of Preview-->
+    </jhi-markdown-editor>
 </div>
 <div class="col text-end" *ngIf="isInputLengthDisplayed">
     <p class="small my-0 ms-2" [ngStyle]="{ color: content?.length! > maxContentLength || content?.length! == 0 ? 'red' : 'inherit' }">

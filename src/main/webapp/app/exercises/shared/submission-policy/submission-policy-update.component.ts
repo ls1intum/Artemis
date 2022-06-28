@@ -28,7 +28,7 @@ import { FormControl, FormGroup, Validators } from '@angular/forms';
                 <div class="col">
                     <ng-container>
                         <label class="label-narrow" jhiTranslate="artemisApp.programmingExercise.submissionPolicy.submissionLimitTitle" for="field_submissionLimitExceededPenalty"
-                            >Submission Limit</label
+                            >Submission limit</label
                         >
                         <jhi-help-icon placement="top" text="artemisApp.programmingExercise.submissionPolicy.submissionLimitDescription"></jhi-help-icon>
                         <div class="input-group">
@@ -56,7 +56,7 @@ import { FormControl, FormGroup, Validators } from '@angular/forms';
                             class="label-narrow"
                             jhiTranslate="artemisApp.programmingExercise.submissionPolicy.submissionPenalty.penaltyInputFieldTitle"
                             for="field_submissionLimitExceededPenalty"
-                            >Penalty after Exceeding Submission Limit</label
+                            >Penalty after Exceeding Submission limit</label
                         >
                         <jhi-help-icon placement="top" text="artemisApp.programmingExercise.submissionPolicy.submissionPenalty.exceedingLimitDescription"></jhi-help-icon>
                         <div class="input-group">
