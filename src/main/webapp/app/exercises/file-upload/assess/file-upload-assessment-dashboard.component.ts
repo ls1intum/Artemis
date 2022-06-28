@@ -111,6 +111,7 @@ export class FileUploadAssessmentDashboardComponent extends AbstractAssessmentDa
             .subscribe((submissions: FileUploadSubmission[]) => {
                 this.submissions = submissions;
                 this.applyChartFilter(submissions);
+                this.busy = false;
             });
     }
 

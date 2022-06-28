@@ -4,45 +4,11 @@
     </div>
     <div class="mb-5 ms-2">
         <h3 class="mb-3 font-weight-bold">{{ 'aboutUsOverview.feature' | artemisTranslate }}</h3>
-        <h6>{{ 'aboutUsOverview.exercises.title' | artemisTranslate }}</h6>
-        <ul>
-            <li>{{ 'aboutUsOverview.exercises.detail.programmingExercises' | artemisTranslate }}</li>
-            <li>{{ 'aboutUsOverview.exercises.detail.quiz' | artemisTranslate }}</li>
-            <li>{{ 'aboutUsOverview.exercises.detail.modelingExercises' | artemisTranslate }}</li>
-            <li>{{ 'aboutUsOverview.exercises.detail.textExercises' | artemisTranslate }}</li>
-            <li>{{ 'aboutUsOverview.exercises.detail.uploadExercises' | artemisTranslate }}</li>
-        </ul>
-        <h6>{{ 'aboutUsOverview.exam.title' | artemisTranslate }}</h6>
-        <ul>
-            <li>{{ 'aboutUsOverview.exam.detail.supportedExerciseTypes' | artemisTranslate }}</li>
-            <li>{{ 'aboutUsOverview.exam.detail.randomSelectionOfVariants' | artemisTranslate }}</li>
-            <li>{{ 'aboutUsOverview.exam.detail.fullFeatureOverview.description' | artemisTranslate }}</li>
-            <ul>
-                <li>
-                    <a [href]="examFeatureOverviewUrlStudents" rel="noreferrer noopener" class="footer-text ms-3" target="_blank">{{
-                        'aboutUsOverview.exam.detail.fullFeatureOverview.studentLink' | artemisTranslate
-                    }}</a>
-                </li>
-                <li>
-                    <a [href]="examFeatureOverviewUrlInstructors" rel="noreferrer noopener" class="footer-text ms-3" target="_blank">{{
-                        'aboutUsOverview.exam.detail.fullFeatureOverview.instructorLink' | artemisTranslate
-                    }}</a>
-                </li>
-            </ul>
-            <li>{{ 'aboutUsOverview.exam.detail.instructions.description' | artemisTranslate }}</li>
-            <ul>
-                <li>
-                    <a [href]="examInstructionsUrlStudents" rel="noreferrer noopener" class="footer-text ms-3" target="_blank">{{
-                        'aboutUsOverview.exam.detail.instructions.studentLink' | artemisTranslate
-                    }}</a>
-                </li>
-                <li>
-                    <a [href]="examInstructionsUrlInstructors" rel="noreferrer noopener" class="footer-text ms-3" target="_blank">{{
-                        'aboutUsOverview.exam.detail.instructions.instructorLink' | artemisTranslate
-                    }}</a>
-                </li>
-            </ul>
-        </ul>
+        <ol>
+            <li *ngFor="let section of sections">
+                <span [jhiTranslate]="'aboutUsOverview.' + section[0] + '.text'" [translateValues]="section[1]"></span>
+            </li>
+        </ol>
     </div>
 
     <div class="row ms-4 me-4 mb-4" *ngIf="data && data.projectManagers">

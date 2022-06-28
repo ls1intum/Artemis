@@ -23,7 +23,8 @@ import { AbstractAssessmentDashboard } from 'app/exercises/shared/dashboards/tut
     templateUrl: './programming-exercise-submissions.component.html',
 })
 export class ProgrammingExerciseSubmissionsComponent extends AbstractAssessmentDashboard implements OnInit {
-    ExerciseType = ExerciseType;
+    readonly ExerciseType = ExerciseType;
+    readonly AssessmentType = AssessmentType;
     exercise: ProgrammingExercise;
     submissions: ProgrammingSubmission[] = [];
     filteredSubmissions: ProgrammingSubmission[] = [];
