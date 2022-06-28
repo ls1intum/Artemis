@@ -33,9 +33,7 @@ export abstract class AbstractAssessmentDashboard {
             case AssessmentFilter.UNASSESSED:
                 this.translationString = AssessmentTranslation.UNASSESSED;
                 this.filteredSubmissions = submissions.filter((submission) => {
-                    return (
-                        !submission.results || submission.results.length === 0 || !submission.results.last()?.rated || submission.results.every((result) => !result.completionDate)
-                    );
+                    return !submission.results || !submission.results.length || !submission.results.last()?.rated || submission.results.every((result) => !result.completionDate);
                 });
                 break;
 
@@ -44,7 +42,7 @@ export abstract class AbstractAssessmentDashboard {
                 this.filteredSubmissions = submissions.filter((submission) => {
                     return (
                         submission.results &&
-                        submission.results.length > 0 &&
+                        submission.results.length &&
                         submission.results.last()!.rated &&
                         submission.results.last()!.assessmentType === AssessmentType.MANUAL &&
                         submission.results.last()!.completionDate
@@ -57,7 +55,7 @@ export abstract class AbstractAssessmentDashboard {
                 this.filteredSubmissions = submissions.filter((submission) => {
                     return (
                         submission.results &&
-                        submission.results.length > 0 &&
+                        submission.results.length &&
                         submission.results.last()!.rated &&
                         submission.results.last()!.assessmentType === AssessmentType.SEMI_AUTOMATIC &&
                         submission.results.last()!.completionDate
