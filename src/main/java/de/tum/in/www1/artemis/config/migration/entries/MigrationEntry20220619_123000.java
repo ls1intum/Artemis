@@ -121,7 +121,7 @@ public class MigrationEntry20220619_123000 extends MigrationEntry {
             return (String) resultString.get(result);
         }
         catch (IllegalAccessException e) {
-            throw new RuntimeException("Could not access the field \"resultString\" of the class Result during the migration!");
+            throw new IllegalStateException("Could not access the field \"resultString\" of the class Result during the migration even though it was not removed yet!");
         }
     }
 
