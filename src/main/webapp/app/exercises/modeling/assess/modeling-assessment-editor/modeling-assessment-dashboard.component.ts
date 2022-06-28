@@ -9,7 +9,7 @@ import { HttpResponse } from '@angular/common/http';
 import { TranslateService } from '@ngx-translate/core';
 import { ModelingSubmissionService } from 'app/exercises/modeling/participate/modeling-submission.service';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
-import { getLatestSubmissionResult, setLatestSubmissionResult, Submission } from 'app/entities/submission.model';
+import { getLatestSubmissionResult, Submission } from 'app/entities/submission.model';
 import { ModelingAssessmentService } from 'app/exercises/modeling/assess/modeling-assessment.service';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { ModelingSubmission } from 'app/entities/modeling-submission.model';
@@ -32,7 +32,6 @@ export class ModelingAssessmentDashboardComponent implements OnInit, OnDestroy {
     // make constants available to html for comparison
     ExerciseType = ExerciseType;
     AssessmentType = AssessmentType;
-
     course: Course;
     exercise: ModelingExercise;
     paramSub: Subscription;
@@ -49,9 +48,7 @@ export class ModelingAssessmentDashboardComponent implements OnInit, OnDestroy {
     // all available submissions
     submissions: ModelingSubmission[];
     filteredSubmissions: ModelingSubmission[];
-
     eventSubscriber: Subscription;
-    assessedSubmissions: number;
     busy: boolean;
     userId: number;
     canOverrideAssessments: boolean;
@@ -140,11 +137,6 @@ export class ModelingAssessmentDashboardComponent implements OnInit, OnDestroy {
                     }
                 });
                 this.filteredSubmissions = this.submissions;
-                this.assessedSubmissions = this.submissions.filter((submission) => {
-                    const result = getLatestSubmissionResult(submission);
-                    setLatestSubmissionResult(submission, result);
-                    return !!result;
-                }).length;
             });
     }
 
