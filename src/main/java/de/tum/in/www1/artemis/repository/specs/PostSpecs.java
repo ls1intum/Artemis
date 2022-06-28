@@ -203,7 +203,7 @@ public class PostSpecs {
      */
     public static Specification<Post> getSortSpecification(boolean pagingEnabled, PostSortCriterion postSortCriterion, SortingOrder sortingOrder) {
         return ((root, query, criteriaBuilder) -> {
-            if (pagingEnabled) {
+            if (pagingEnabled && postSortCriterion != null && sortingOrder != null) {
 
                 List<Order> orderList = new ArrayList<>();
 
