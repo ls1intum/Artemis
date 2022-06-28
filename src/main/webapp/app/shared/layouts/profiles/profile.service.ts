@@ -72,7 +72,6 @@ export class ProfileService {
                         profileInfo.useExternal = data.useExternal;
                         profileInfo.externalCredentialProvider = data.externalCredentialProvider;
                         profileInfo.externalPasswordResetLinkMap = data.externalPasswordResetLinkMap;
-                        profileInfo.passwordLoginDisabled = data['password-login-disabled'];
 
                         return profileInfo;
                     }),
@@ -109,6 +108,7 @@ export class ProfileService {
             profileInfo.saml2 = new Saml2Config();
             profileInfo.saml2.identityProviderName = data.saml2['identity-provider-name'];
             profileInfo.saml2.buttonLabel = data.saml2['button-label'] || 'SAML2 Login';
+            profileInfo.saml2.passwordLoginDisabled = data.saml2['password-login-disabled'] || false;
             profileInfo.saml2.enablePassword = data.saml2['enable-password'] || false;
         }
     }

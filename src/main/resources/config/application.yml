@@ -219,9 +219,6 @@ info:
     # default value set to false
     text-assessment-analytics-enabled: false
     browser-fingerprints-enabled: true
-    # Disables the password-based login user interface, but leaves the API enabled.
-    # Can be useful with alternative login flows (e.g., SAML2).
-    password-login-disabled: false
 
 # ===================================================================
 # JHipster specific properties

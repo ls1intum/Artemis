@@ -1,6 +1,6 @@
 import { AfterViewChecked, Component, ElementRef, OnInit, Renderer2 } from '@angular/core';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { User } from 'app/core/user/user.model';
 import { Credentials } from 'app/core/auth/auth-jwt.service';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -41,6 +41,7 @@ export class HomeComponent implements OnInit, AfterViewChecked {
     credentials: Credentials;
     isRegistrationEnabled = false;
     passwordLoginDisabled = false;
+    loginFormOverride = false;
     saml2Config: Saml2Config | undefined;
     loading = true;
     mainElementFocused = false;
@@ -63,6 +64,7 @@ export class HomeComponent implements OnInit, AfterViewChecked {
 
     constructor(
         private router: Router,
+        private activatedRoute: ActivatedRoute,
         private accountService: AccountService,
         private loginService: LoginService,
         private stateStorageService: StateStorageService,
@@ -77,6 +79,9 @@ export class HomeComponent implements OnInit, AfterViewChecked {
     ) {}
 
     ngOnInit() {
+        this.activatedRoute.queryParams.subscribe((params) => {
+            this.loginFormOverride = params.hasOwnProperty('showLoginForm');
+        });
         this.profileService.getProfileInfo().subscribe((profileInfo) => {
             if (profileInfo) {
                 this.initializeWithProfileInfo(profileInfo);
@@ -120,7 +125,7 @@ export class HomeComponent implements OnInit, AfterViewChecked {
         this.saml2Config = profileInfo?.saml2;
         this.isRegistrationEnabled = !!profileInfo.registrationEnabled;
         this.needsToAcceptTerms = !!profileInfo.needsToAcceptTerms;
-        this.passwordLoginDisabled = !!profileInfo.passwordLoginDisabled && !!this.saml2Config;
+        this.passwordLoginDisabled = !!this.saml2Config && this.saml2Config.passwordLoginDisabled && !this.loginFormOverride;
     }
 
     registerAuthenticationSuccess() {
