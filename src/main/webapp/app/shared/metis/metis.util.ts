@@ -1,3 +1,4 @@
+import { Validators } from '@angular/forms';
 import { Params } from '@angular/router';
 
 export enum PostingEditType {
@@ -33,8 +34,6 @@ export enum SortDirection {
 
 export enum PostSortCriterion {
     CREATION_DATE = 'CREATION_DATE',
-    VOTES = 'VOTES',
-    ANSWER_COUNT = 'ANSWER_COUNT',
 }
 
 export enum MetisPostAction {
@@ -123,3 +122,13 @@ export interface ContextInformation {
 export type RouteComponents = (string | number)[];
 
 export const MetisWebsocketChannelPrefix = '/topic/metis/';
+
+/**
+ * whitespace accepted only together with a character excluding newline character
+ */
+export const PostTitleValidationPattern = Validators.pattern(/^(.)*\S+(.)*$/);
+
+/**
+ * whitespace accepted only together with a character including newline character
+ * */
+export const PostContentValidationPattern = Validators.pattern(/^(\n|\r|.)*\S+(\n|\r|.)*$/);
