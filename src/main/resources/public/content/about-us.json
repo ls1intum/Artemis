@@ -331,6 +331,10 @@
         {
             "fullName": "Daniel Gomes da Costa",
             "photoDirectory": "public/images/about/Daniel_Gomes_da_Costa.jpg"
+        },
+        {
+            "fullName": "Maximilian Sölch",
+            "photoDirectory": "public/images/about/Maximilian_Soelch.jpg"
         }
     ]
 }
