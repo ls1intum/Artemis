@@ -142,8 +142,6 @@ public class PostSpecs {
                 return null;
             }
             else {
-                root.join(Post_.ANSWERS, JoinType.LEFT);
-
                 Predicate postsWithoutCourseWideContext = criteriaBuilder.isNull(root.get(Post_.COURSE_WIDE_CONTEXT));
                 Predicate notAnnouncementPosts = criteriaBuilder.notEqual(root.get(Post_.COURSE_WIDE_CONTEXT), CourseWideContext.ANNOUNCEMENT);
 
@@ -184,7 +182,7 @@ public class PostSpecs {
 
                 Predicate searchInPostTitle = criteriaBuilder.like(criteriaBuilder.lower(root.get(Post_.TITLE)), searchTextLiteral);
                 Predicate searchInPostContent = criteriaBuilder.like(criteriaBuilder.lower(root.get(Post_.CONTENT)), searchTextLiteral);
-                Predicate searchInPostTags = criteriaBuilder.like(criteriaBuilder.lower(criteriaBuilder.concat(root.join(Post_.TAGS), " ")), searchTextLiteral);
+                Predicate searchInPostTags = criteriaBuilder.like(criteriaBuilder.lower(criteriaBuilder.concat(root.join(Post_.TAGS, JoinType.LEFT), " ")), searchTextLiteral);
 
                 return criteriaBuilder.or(searchInPostTitle, searchInPostContent, searchInPostTags);
             }
