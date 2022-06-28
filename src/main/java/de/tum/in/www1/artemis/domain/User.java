@@ -315,6 +315,14 @@ public class User extends AbstractAuditingEntity implements Participant {
         this.organizations = organizations;
     }
 
+    public Set<LectureUnitCompletion> getCompletedLectureUnits() {
+        return completedLectureUnits;
+    }
+
+    public void setCompletedLectureUnits(Set<LectureUnitCompletion> completedLectureUnits) {
+        this.completedLectureUnits = completedLectureUnits;
+    }
+
     public Set<GuidedTourSetting> getGuidedTourSettings() {
         return this.guidedTourSettings;
     }
