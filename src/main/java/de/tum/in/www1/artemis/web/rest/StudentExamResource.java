@@ -342,7 +342,8 @@ public class StudentExamResource {
 
     /**
      * GET /courses/{courseId}/exams/{examId}/student-exams/grade-summary : Return student exam result, aggregate points, assessment result
-     * for a student exam and grade calculations if the exam is assessed.
+     * for a student exam and grade calculations if the exam is assessed. Only instructors can use userId parameter to get exam results of other users,
+     * if the caller is a student, userId should either be the user id of the caller or empty.
      *
      * Does not return the student exam itself to save bandwidth.
      *
@@ -350,11 +351,13 @@ public class StudentExamResource {
      *
      * @param courseId  the course to which the student exam belongs to
      * @param examId    the exam to which the student exam belongs to
+     * @param userId    the user id of the student whose grade summary is requested
      * @return the ResponseEntity with status 200 (OK) and with the StudentExamWithGradeDTO instance without the student exam as body
      */
     @GetMapping("/courses/{courseId}/exams/{examId}/student-exams/grade-summary")
     @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<StudentExamWithGradeDTO> getStudentExamGradesForSummary(@PathVariable Long courseId, @PathVariable Long examId, @RequestParam Long userId) {
+    public ResponseEntity<StudentExamWithGradeDTO> getStudentExamGradesForSummary(@PathVariable Long courseId, @PathVariable Long examId,
+            @RequestParam(required = false) Long userId) {
         long start = System.currentTimeMillis();
         User currentUser = userRepository.getUserWithGroupsAndAuthorities();
         log.debug("REST request to get the student exam grades of user with id {} for exam {} by user {}", userId, examId, currentUser.getLogin());

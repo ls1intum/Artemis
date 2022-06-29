@@ -198,7 +198,7 @@ describe('ExamParticipationSummaryComponent', () => {
 
         const courseId = 1;
         expect(serviceSpy).toHaveBeenCalledOnce();
-        expect(serviceSpy).toHaveBeenCalledWith(courseId, studentExam.exam!.id);
+        expect(serviceSpy).toHaveBeenCalledWith(courseId, studentExam.exam!.id, studentExam.user!.id);
         expect(component.studentExam).toEqual(studentExam);
         expect(component.studentExamGradeInfoDTO).toEqual({ ...gradeInfo, studentExam });
     });
@@ -258,7 +258,7 @@ describe('ExamParticipationSummaryComponent', () => {
         [{ studentParticipations: [{ submissions: [{ type: SubmissionType.MANUAL }] }] }, false],
         [{ studentParticipations: [{ submissions: [{ type: SubmissionType.ILLEGAL }] }] }, true],
     ])('should handle missing/empty fields correctly for %o when displaying illegal submission badge', (exercise, shouldBeNonNull) => {
-        component.studentExam = { id: 1, exam, exercises: [exercise as Exercise] };
+        component.studentExam = { id: 1, exam, user, exercises: [exercise as Exercise] };
         fixture.detectChanges();
         const span = fixture.debugElement.query(By.css('.badge.bg-danger'));
         if (shouldBeNonNull) {
