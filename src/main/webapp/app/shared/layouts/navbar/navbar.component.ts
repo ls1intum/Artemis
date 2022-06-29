@@ -134,7 +134,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
         this.onResize();
     }
 
-    @HostListener('window:resize', ['$event'])
+    @HostListener('window:resize')
     onResize() {
         this.isCollapsed = window.innerWidth < 1200;
     }
