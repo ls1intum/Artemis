@@ -1,5 +1,6 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, EventEmitter, Input, Output, OnChanges } from '@angular/core';
 import { getLatestSubmissionResult, Submission } from 'app/entities/submission.model';
+import { Result } from 'app/entities/result.model';
 
 /**
  * filters for all or only locked submissions
@@ -13,12 +14,14 @@ enum FilterProp {
     selector: 'jhi-assessment-filters',
     templateUrl: './assessment-filters.component.html',
 })
-export class AssessmentFiltersComponent {
+export class AssessmentFiltersComponent implements OnChanges {
     FilterProp = FilterProp;
 
     filterProp: FilterProp = FilterProp.ALL;
 
-    @Input() submissions: Submission[] = [];
+    @Input()
+    submissions: Submission[] = [];
+    filteredSubmissions: number;
 
     @Output() filterChange = new EventEmitter<Submission[]>();
 
@@ -47,5 +50,11 @@ export class AssessmentFiltersComponent {
 
     private static isSubmissionLocked(submission: Submission) {
         return submission && getLatestSubmissionResult(submission) && !getLatestSubmissionResult(submission)!.completionDate;
+    }
+    ngOnChanges() {
+        this.filteredSubmissions = this.submissions.filter((submission) => {
+            const result = getLatestSubmissionResult(submission);
+            return submission && getLatestSubmissionResult(submission) && !getLatestSubmissionResult(submission)!.completionDate;
+        }).length;
     }
 }
