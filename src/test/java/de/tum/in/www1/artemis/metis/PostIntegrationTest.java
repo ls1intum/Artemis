@@ -624,7 +624,7 @@ public class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     @WithMockUser(username = "student1", roles = "USER")
     public void testGetPostsForCourse_OrderByCreationDateDESC() throws Exception {
         // TODO: Disabled until next refactoring due to incompatibility of DISTINCT & ORDER BY in H2 DB during testing
-        // TODO: https://github.com/ls1intum/Artemis/pull/5289
+        // TODO: https://github.com/h2database/h2database/issues/408
 
         // PostSortCriterion sortCriterion = PostSortCriterion.CREATION_DATE;
         // SortingOrder sortingOrder = SortingOrder.DESCENDING;
@@ -650,7 +650,7 @@ public class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     @WithMockUser(username = "student1", roles = "USER")
     public void testGetPostsForCourse_OrderByCreationDateASC() throws Exception {
         // TODO: Disabled until next refactoring due to incompatibility of DISTINCT & ORDER BY in H2 DB during testing
-        // TODO: https://github.com/ls1intum/Artemis/pull/5289
+        // TODO: https://github.com/h2database/h2database/issues/408
 
         // PostSortCriterion sortCriterion = PostSortCriterion.CREATION_DATE;
         // SortingOrder sortingOrder = SortingOrder.ASCENDING;

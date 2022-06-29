@@ -203,7 +203,7 @@ public class ReactionIntegrationTest extends AbstractSpringIntegrationBambooBitb
     @WithMockUser(username = "student1", roles = "USER")
     public void testGetPostsForCourse_OrderByVoteCountDESC() throws Exception {
         // TODO: Disabled until next refactoring due to incompatibility of DISTINCT & ORDER BY in H2 DB during testing
-        // TODO: https://github.com/ls1intum/Artemis/pull/5289
+        // TODO: https://github.com/h2database/h2database/issues/408
 
         // PostSortCriterion sortCriterion = PostSortCriterion.VOTES;
         // SortingOrder sortingOrder = SortingOrder.DESCENDING;
@@ -243,7 +243,7 @@ public class ReactionIntegrationTest extends AbstractSpringIntegrationBambooBitb
     @WithMockUser(username = "student1", roles = "USER")
     public void testGetPostsForCourse_OrderByVoteCountASC() throws Exception {
         // TODO: Disabled until next refactoring due to incompatibility of DISTINCT & ORDER BY in H2 DB during testing
-        // TODO: https://github.com/ls1intum/Artemis/pull/5289
+        // TODO: https://github.com/h2database/h2database/issues/408
 
         // PostSortCriterion sortCriterion = PostSortCriterion.VOTES;
         // SortingOrder sortingOrder = SortingOrder.ASCENDING;

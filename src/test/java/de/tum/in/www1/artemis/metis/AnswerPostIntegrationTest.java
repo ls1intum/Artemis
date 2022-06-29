@@ -268,7 +268,7 @@ public class AnswerPostIntegrationTest extends AbstractSpringIntegrationBambooBi
     @WithMockUser(username = "student1", roles = "USER")
     public void testGetPostsForCourse_OrderByAnswerCountDESC() throws Exception {
         // TODO: Disabled until next refactoring due to incompatibility of DISTINCT & ORDER BY in H2 DB during testing
-        // TODO: https://github.com/ls1intum/Artemis/pull/5289
+        // TODO: https://github.com/h2database/h2database/issues/408
 
         // PostSortCriterion sortCriterion = PostSortCriterion.ANSWER_COUNT;
         // SortingOrder sortingOrder = SortingOrder.DESCENDING;
@@ -297,7 +297,7 @@ public class AnswerPostIntegrationTest extends AbstractSpringIntegrationBambooBi
     @WithMockUser(username = "student1", roles = "USER")
     public void testGetPostsForCourse_OrderByAnswerCountASC() throws Exception {
         // TODO: Disabled until next refactoring due to incompatibility of DISTINCT & ORDER BY in H2 DB during testing
-        // TODO: https://github.com/ls1intum/Artemis/pull/5289
+        // TODO: https://github.com/h2database/h2database/issues/408
 
         // PostSortCriterion sortCriterion = PostSortCriterion.ANSWER_COUNT;
         // SortingOrder sortingOrder = SortingOrder.ASCENDING;
