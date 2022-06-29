@@ -20,7 +20,7 @@ export class MockExamParticipationService {
         return examParticipationSubjectMock;
     }
 
-    loadStudentExamGradeInfoForSummary(courseId: number, examId: number): Observable<StudentExamWithGradeDTO> {
+    loadStudentExamGradeInfoForSummary(courseId: number, examId: number, userId?: number): Observable<StudentExamWithGradeDTO> {
         return of({} as StudentExamWithGradeDTO);
     }
 

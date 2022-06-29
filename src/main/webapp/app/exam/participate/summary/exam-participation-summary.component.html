@@ -18,7 +18,7 @@
         {{ 'artemisApp.exam.studentReviewEnabled' | artemisTranslate }}
     </a>
 </div>
-<div class="mb-4 container exam-points-summary-container" *ngIf="studentExam && studentExam.exercises && studentExam.exam && studentExam.exam.course">
+<div class="mb-4 container exam-points-summary-container" *ngIf="studentExam && studentExam.exercises && studentExam.exam?.course && studentExamGradeInfoDTO">
     <jhi-exam-points-summary [studentExamWithGrade]="studentExamGradeInfoDTO"></jhi-exam-points-summary>
 </div>
 <div *ngIf="!resultsPublished" class="mb-0">

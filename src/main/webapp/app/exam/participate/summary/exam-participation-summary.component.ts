@@ -32,8 +32,19 @@ export class ExamParticipationSummaryComponent implements OnInit {
     /**
      * Current student's exam.
      */
+    private _studentExam: StudentExam;
+
+    get studentExam(): StudentExam {
+        return this._studentExam;
+    }
+
     @Input()
-    studentExam: StudentExam;
+    set studentExam(studentExam: StudentExam) {
+        this._studentExam = studentExam;
+        if (this.studentExamGradeInfoDTO) {
+            this.studentExamGradeInfoDTO.studentExam = studentExam;
+        }
+    }
 
     /**
      * Grade info for current student's exam.
@@ -78,10 +89,15 @@ export class ExamParticipationSummaryComponent implements OnInit {
         if (!this.studentExam?.exam?.id) {
             throw new Error('studentExam.exam.id should be present to fetch grade info');
         }
-        this.examParticipationService.loadStudentExamGradeInfoForSummary(this.courseId, this.studentExam.exam.id).subscribe((studentExamWithGrade: StudentExamWithGradeDTO) => {
-            studentExamWithGrade.studentExam = this.studentExam;
-            this.studentExamGradeInfoDTO = studentExamWithGrade;
-        });
+        if (!this.studentExam?.user?.id) {
+            throw new Error('studentExam.user.id should be present to fetch grade info');
+        }
+        this.examParticipationService
+            .loadStudentExamGradeInfoForSummary(this.courseId, this.studentExam.exam.id, this.studentExam.user.id)
+            .subscribe((studentExamWithGrade: StudentExamWithGradeDTO) => {
+                studentExamWithGrade.studentExam = this.studentExam;
+                this.studentExamGradeInfoDTO = studentExamWithGrade;
+            });
 
         this.setExamWithOnlyIdAndStudentReviewPeriod();
     }

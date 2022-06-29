@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { Observable, of, Subject, throwError } from 'rxjs';
 import { StudentExam } from 'app/entities/student-exam.model';
-import { HttpClient, HttpErrorResponse } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse, HttpParams } from '@angular/common/http';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { QuizSubmission } from 'app/entities/quiz/quiz-submission.model';
 import { catchError, map } from 'rxjs/operators';
@@ -86,10 +86,15 @@ export class ExamParticipationService {
      *
      * @param courseId the id of the course the exam is created in
      * @param examId the id of the exam
+     * @param userId the id of the student if the current caller is an instructor, the grade info for current user's exam will be retrieved if this argument is empty
      */
-    public loadStudentExamGradeInfoForSummary(courseId: number, examId: number): Observable<StudentExamWithGradeDTO> {
+    public loadStudentExamGradeInfoForSummary(courseId: number, examId: number, userId?: number): Observable<StudentExamWithGradeDTO> {
+        let params = new HttpParams();
+        if (userId) {
+            params = params.set('userId', userId.toString());
+        }
         const url = this.getResourceURL(courseId, examId) + '/student-exams/grade-summary';
-        return this.httpClient.get<StudentExamWithGradeDTO>(url);
+        return this.httpClient.get<StudentExamWithGradeDTO>(url, { params });
     }
 
     /**

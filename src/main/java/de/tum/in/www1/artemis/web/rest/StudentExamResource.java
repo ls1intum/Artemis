@@ -354,11 +354,18 @@ public class StudentExamResource {
      */
     @GetMapping("/courses/{courseId}/exams/{examId}/student-exams/grade-summary")
     @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<StudentExamWithGradeDTO> getStudentExamGradesForSummary(@PathVariable Long courseId, @PathVariable Long examId) {
+    public ResponseEntity<StudentExamWithGradeDTO> getStudentExamGradesForSummary(@PathVariable Long courseId, @PathVariable Long examId, @RequestParam Long userId) {
         long start = System.currentTimeMillis();
-        User user = userRepository.getUserWithGroupsAndAuthorities();
-        log.debug("REST request to get the student exam grades of user {} for exam {}", user.getLogin(), examId);
-        StudentExam studentExam = findStudentExamWithExercisesElseThrow(user, examId, courseId);
+        User currentUser = userRepository.getUserWithGroupsAndAuthorities();
+        log.debug("REST request to get the student exam grades of user with id {} for exam {} by user {}", userId, examId, currentUser.getLogin());
+
+        User targetUser = userId == null ? currentUser : userRepository.findByIdWithGroupsAndAuthoritiesElseThrow(userId);
+        StudentExam studentExam = findStudentExamWithExercisesElseThrow(targetUser, examId, courseId);
+
+        boolean isAtLeastInstructor = authorizationCheckService.isAtLeastInstructorInCourse(studentExam.getExam().getCourse(), currentUser);
+        if (!isAtLeastInstructor && !currentUser.getId().equals(targetUser.getId())) {
+            throw new AccessForbiddenException("Current user cannot access grade info for target user");
+        }
 
         // check that the studentExam has been submitted, otherwise /student-exams/conduction should be used
         if (!studentExam.isSubmitted() || !studentExam.areResultsPublishedYet()) {
@@ -368,7 +375,7 @@ public class StudentExamResource {
         loadExercisesForStudentExam(studentExam);
 
         // 3rd fetch participations, submissions and results and connect them to the studentExam
-        fetchParticipationsSubmissionsAndResultsForStudentExam(studentExam, user);
+        fetchParticipationsSubmissionsAndResultsForStudentExam(studentExam, targetUser);
 
         List<StudentParticipation> participations = studentExam.getExercises().stream().flatMap(exercise -> exercise.getStudentParticipations().stream())
                 .collect(Collectors.toList());
@@ -376,8 +383,8 @@ public class StudentExamResource {
         StudentExamWithGradeDTO studentExamWithGradeDTO = examService.calculateStudentResultWithGradeAndPoints(studentExam, participations);
         studentExamWithGradeDTO.studentExam = null;  // To save bandwidth.
 
-        log.info("getStudentExamGradesForSummary done in {}ms for {} exercises for user {}", System.currentTimeMillis() - start, studentExam.getExercises().size(),
-                user.getLogin());
+        log.info("getStudentExamGradesForSummary done in {}ms for {} exercises for target user {} by caller user {}", System.currentTimeMillis() - start,
+                studentExam.getExercises().size(), targetUser.getLogin(), currentUser.getLogin());
         return ResponseEntity.ok(studentExamWithGradeDTO);
     }
 
