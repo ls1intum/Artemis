@@ -1,5 +1,13 @@
 {
     "userManagement": {
+        "batch": {
+            "all": "All",
+            "delete": {
+                "question": "Are you sure you want to permanently delete <strong>{{ title }}</strong> users? This action can NOT be undone!",
+                "typeNumberToConfirm": "Please type in the number of users to confirm."
+            },
+            "deleted": "Deleted {{ param }} Users"
+        },
         "filter": {
             "modal": {
                 "open": "Filter ({{ num }})",

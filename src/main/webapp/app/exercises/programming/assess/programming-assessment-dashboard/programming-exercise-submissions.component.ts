@@ -22,7 +22,8 @@ import { faBan, faEdit, faFolderOpen, faSort } from '@fortawesome/free-solid-svg
     templateUrl: './programming-exercise-submissions.component.html',
 })
 export class ProgrammingExerciseSubmissionsComponent implements OnInit {
-    ExerciseType = ExerciseType;
+    readonly ExerciseType = ExerciseType;
+    readonly AssessmentType = AssessmentType;
     exercise: ProgrammingExercise;
     submissions: ProgrammingSubmission[] = [];
     filteredSubmissions: ProgrammingSubmission[] = [];
