@@ -39,7 +39,7 @@
                     <h3>{{ 'artemisApp.courseOverview.lectureDetails.lectureUnits' | artemisTranslate }}</h3>
                 </div>
                 <button id="downloadButton" *ngIf="hasPdfLectureUnit" class="col-auto btn btn-primary btn-sm rounded-pill" (click)="downloadMergedFiles()">
-                    {{ 'artemisApp.courseOverview.lectureDetails.downloadPdf' | artemisTranslate }}
+                    {{ 'artemisApp.courseOverview.lectureDetails.downloadMergedPdf' | artemisTranslate }}
                 </button>
             </div>
             <div class="row m-0" *ngFor="let lectureUnit of lectureUnits">

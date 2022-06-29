@@ -105,6 +105,7 @@ export class FileUploadAssessmentDashboardComponent implements OnInit {
             .subscribe((submissions: FileUploadSubmission[]) => {
                 this.submissions = submissions;
                 this.filteredSubmissions = submissions;
+                this.busy = false;
             });
     }
 
