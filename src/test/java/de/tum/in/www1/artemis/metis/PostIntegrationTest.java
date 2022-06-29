@@ -15,6 +15,8 @@ import javax.validation.Validator;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
@@ -598,11 +600,24 @@ public class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
         var params = new LinkedMultiValueMap<String, String>();
         params.add("searchText", "#1");
-        params.add("pagingEnabled", "true"); // search by text, only available in course discussions page where paging is enabled
+        params.add("pagingEnabled", "true"); // search by text
 
         List<Post> returnedPosts = request.getList("/api/courses/" + courseId + "/posts", HttpStatus.OK, Post.class, params);
         database.assertSensitiveInformationHidden(returnedPosts);
         assertThat(returnedPosts).isEqualTo(existingPosts.stream().filter(post -> post.getId() == 1).collect(Collectors.toList()));
+    }
+
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
+    @ValueSource(strings = { "Title Post 1", "Content Post 1", "Tag 1" })
+    @WithMockUser(username = "student1", roles = "USER")
+    public void testGetPostsForCourse_SearchByTitleOrContentOrTag(String searchText) throws Exception {
+        var params = new LinkedMultiValueMap<String, String>();
+        params.add("searchText", searchText);
+        params.add("pagingEnabled", "true"); // search by text
+
+        List<Post> returnedPosts = request.getList("/api/courses/" + courseId + "/posts", HttpStatus.OK, Post.class, params);
+        database.assertSensitiveInformationHidden(returnedPosts);
+        assertThat(returnedPosts).hasSize(3);
     }
 
     @Test
