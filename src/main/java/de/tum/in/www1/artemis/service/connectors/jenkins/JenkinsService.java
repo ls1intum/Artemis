@@ -67,7 +67,7 @@ public class JenkinsService extends AbstractContinuousIntegrationService {
     @Override
     public void createBuildPlanForExercise(ProgrammingExercise exercise, String planKey, VcsRepositoryUrl repositoryURL, VcsRepositoryUrl testRepositoryURL,
             VcsRepositoryUrl solutionRepositoryURL) {
-        jenkinsBuildPlanService.createBuildPlanForExercise(exercise, planKey, repositoryURL, testRepositoryURL);
+        jenkinsBuildPlanService.createBuildPlanForExercise(exercise, planKey, repositoryURL);
     }
 
     @Override
@@ -81,9 +81,8 @@ public class JenkinsService extends AbstractContinuousIntegrationService {
         deleteBuildPlan(projectKey, exercise.getTemplateBuildPlanId());
         deleteBuildPlan(projectKey, exercise.getSolutionBuildPlanId());
 
-        final VcsRepositoryUrl testsRepositoryUrl = exercise.getRepositoryURL(RepositoryType.TESTS);
-        jenkinsBuildPlanService.createBuildPlanForExercise(exercise, BuildPlanType.TEMPLATE.getName(), exercise.getRepositoryURL(RepositoryType.TEMPLATE), testsRepositoryUrl);
-        jenkinsBuildPlanService.createBuildPlanForExercise(exercise, BuildPlanType.SOLUTION.getName(), exercise.getRepositoryURL(RepositoryType.SOLUTION), testsRepositoryUrl);
+        jenkinsBuildPlanService.createBuildPlanForExercise(exercise, BuildPlanType.TEMPLATE.getName(), exercise.getRepositoryURL(RepositoryType.TEMPLATE));
+        jenkinsBuildPlanService.createBuildPlanForExercise(exercise, BuildPlanType.SOLUTION.getName(), exercise.getRepositoryURL(RepositoryType.SOLUTION));
     }
 
     @Override

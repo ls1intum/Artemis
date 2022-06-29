@@ -40,7 +40,7 @@ artemis:
                 PYTHON: "ls1tum/artemis-python-docker:latest"
                 C: "ls1tum/artemis-c-docker:latest"
                 C_FACT: "sharingcodeability/fact:latest"
-                HASKELL: "tumfpv/fpv-stack:8.8.4"
+                HASKELL: "ghcr.io/b-fein/artemis-haskell:main"
                 VHDL: "tizianleonhardt/era-artemis-vhdl:latest"
                 ASSEMBLER: "tizianleonhardt/era-artemis-assembler:latest"
                 SWIFT: "norionomura/swiftlint:latest"

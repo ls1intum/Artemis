@@ -1,0 +1,54 @@
+// ARTEMIS: JenkinsPipeline
+
+pipeline {
+    options {
+        timeout(time: #jenkinsTimeout, unit: 'MINUTES')
+    }
+    agent {
+        docker {
+            image '#dockerImage'
+            label 'docker'
+        }
+    }
+    stages {
+        stage('Checkout') {
+            steps {
+                checkout([$class: 'GitSCM', branches: [[name: '**']], doGenerateSubmoduleConfigurations: false, extensions: [], submoduleCfg: [], userRemoteConfigs: [[credentialsId: '#gitCredentials', name: 'tests', url: '#testRepository']]])
+                dir('#assignmentCheckoutPath') {
+                    checkout([$class: 'GitSCM', branches: [[name: '**']], doGenerateSubmoduleConfigurations: false, extensions: [], submoduleCfg: [], userRemoteConfigs: [[credentialsId: '#gitCredentials', name: 'assignment', url: '#assignmentRepository']]])
+                }
+                dir('#solutionCheckoutPath') {
+                    checkout([$class: 'GitSCM', branches: [[name: '**']], doGenerateSubmoduleConfigurations: false, extensions: [], submoduleCfg: [], userRemoteConfigs: [[credentialsId: '#gitCredentials', name: 'solution', url: '#solutionRepository']]])
+                }
+            }
+        }
+        stage('Build') {
+            steps {
+                timestamps {
+                    sh  '''
+                        # keep in sync with the STACK_ROOT as defined in the Dockerfile
+                        export STACK_ROOT=/stack_cache
+
+                        chmod +x run.sh
+                        ./run.sh -s
+                        '''
+                }
+            }
+        }
+    }
+    post {
+        cleanup {
+            sh  '''
+                rm -rf results
+                mkdir results
+                if [ -e test-reports/results.xml ]
+                then
+                    sed -i 's/<testsuites[^>]*>//g ; s/<\/testsuites>//g' test-reports/results.xml
+                fi
+                cp test-reports/*.xml $WORKSPACE/results/ || true
+                '''
+            sendTestResults credentialsId: '#jenkinsNotificationToken', notificationUrl: '#notificationsUrl'
+            cleanWs()
+        }
+    }
+}

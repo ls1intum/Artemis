@@ -19,7 +19,6 @@ import org.springframework.util.StreamUtils;
 import org.w3c.dom.Document;
 
 import de.tum.in.www1.artemis.config.Constants;
-import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
 import de.tum.in.www1.artemis.domain.enumeration.StaticCodeAnalysisTool;
@@ -41,11 +40,15 @@ public class JenkinsBuildPlanCreator implements JenkinsXmlConfigBuilder {
 
     private static final String REPLACE_ASSIGNMENT_REPO = "#assignmentRepository";
 
+    private static final String REPLACE_SOLUTION_REPO = "#solutionRepository";
+
     private static final String REPLACE_GIT_CREDENTIALS = "#gitCredentials";
 
     private static final String REPLACE_ASSIGNMENT_CHECKOUT_PATH = "#assignmentCheckoutPath";
 
     private static final String REPLACE_TESTS_CHECKOUT_PATH = "#testsCheckoutPath";
+
+    private static final String REPLACE_SOLUTION_CHECKOUT_PATH = "#solutionCheckoutPath";
 
     private static final String REPLACE_PUSH_TOKEN = "#secretPushToken";
 
@@ -90,21 +93,23 @@ public class JenkinsBuildPlanCreator implements JenkinsXmlConfigBuilder {
         this.artemisNotificationUrl = ARTEMIS_SERVER_URL + Constants.NEW_RESULT_RESOURCE_API_PATH;
     }
 
-    public String getPipelineScript(ProgrammingLanguage programmingLanguage, Optional<ProjectType> projectType, VcsRepositoryUrl testRepositoryURL,
-            VcsRepositoryUrl assignmentRepositoryURL, boolean isStaticCodeAnalysisEnabled, boolean isSequentialRuns) {
+    public String getPipelineScript(ProgrammingLanguage programmingLanguage, Optional<ProjectType> projectType, InternalVcsRepositoryURLs internalVcsRepositoryURLs,
+            boolean isStaticCodeAnalysisEnabled, boolean isSequentialRuns) {
         var pipelinePath = getResourcePath(programmingLanguage, projectType, isStaticCodeAnalysisEnabled, isSequentialRuns);
-        var replacements = getReplacements(programmingLanguage, projectType, testRepositoryURL, assignmentRepositoryURL, isStaticCodeAnalysisEnabled);
+        var replacements = getReplacements(programmingLanguage, projectType, internalVcsRepositoryURLs, isStaticCodeAnalysisEnabled);
         return replacePipelineScriptParameters(pipelinePath, replacements);
     }
 
-    private Map<String, String> getReplacements(ProgrammingLanguage programmingLanguage, Optional<ProjectType> projectType, VcsRepositoryUrl testRepositoryURL,
-            VcsRepositoryUrl assignmentRepositoryURL, boolean isStaticCodeAnalysisEnabled) {
+    private Map<String, String> getReplacements(ProgrammingLanguage programmingLanguage, Optional<ProjectType> projectType, InternalVcsRepositoryURLs internalVcsRepositoryURLs,
+            boolean isStaticCodeAnalysisEnabled) {
         Map<String, String> replacements = new HashMap<>();
-        replacements.put(REPLACE_TEST_REPO, testRepositoryURL.getURI().toString());
-        replacements.put(REPLACE_ASSIGNMENT_REPO, assignmentRepositoryURL.getURI().toString());
+        replacements.put(REPLACE_TEST_REPO, internalVcsRepositoryURLs.testRepositoryUrl().getURI().toString());
+        replacements.put(REPLACE_ASSIGNMENT_REPO, internalVcsRepositoryURLs.assignmentRepositoryUrl().getURI().toString());
+        replacements.put(REPLACE_SOLUTION_REPO, internalVcsRepositoryURLs.solutionRepositoryUrl().getURI().toString());
         replacements.put(REPLACE_GIT_CREDENTIALS, gitCredentialsKey);
         replacements.put(REPLACE_ASSIGNMENT_CHECKOUT_PATH, Constants.ASSIGNMENT_CHECKOUT_PATH);
         replacements.put(REPLACE_TESTS_CHECKOUT_PATH, Constants.TESTS_CHECKOUT_PATH);
+        replacements.put(REPLACE_SOLUTION_CHECKOUT_PATH, Constants.SOLUTION_CHECKOUT_PATH);
         replacements.put(REPLACE_ARTEMIS_NOTIFICATION_URL, artemisNotificationUrl);
         replacements.put(REPLACE_NOTIFICATIONS_TOKEN, ARTEMIS_AUTHENTICATION_TOKEN_KEY);
         replacements.put(REPLACE_DOCKER_IMAGE_NAME, programmingLanguageConfiguration.getImage(programmingLanguage, projectType));
@@ -149,11 +154,11 @@ public class JenkinsBuildPlanCreator implements JenkinsXmlConfigBuilder {
     }
 
     @Override
-    public Document buildBasicConfig(ProgrammingLanguage programmingLanguage, Optional<ProjectType> projectType, VcsRepositoryUrl testRepositoryURL,
-            VcsRepositoryUrl assignmentRepositoryURL, boolean isStaticCodeAnalysisEnabled, boolean isSequentialRuns) {
+    public Document buildBasicConfig(ProgrammingLanguage programmingLanguage, Optional<ProjectType> projectType, InternalVcsRepositoryURLs internalVcsRepositoryURLs,
+            boolean isStaticCodeAnalysisEnabled, boolean isSequentialRuns) {
         final var resourcePath = Path.of("templates", "jenkins", "config.xml");
 
-        String pipeLineScript = getPipelineScript(programmingLanguage, projectType, testRepositoryURL, assignmentRepositoryURL, isStaticCodeAnalysisEnabled, isSequentialRuns);
+        String pipeLineScript = getPipelineScript(programmingLanguage, projectType, internalVcsRepositoryURLs, isStaticCodeAnalysisEnabled, isSequentialRuns);
         pipeLineScript = pipeLineScript.replace("'", "&apos;");
         pipeLineScript = pipeLineScript.replace("<", "&lt;");
         pipeLineScript = pipeLineScript.replace(">", "&gt;");
