@@ -614,6 +614,10 @@ public class BambooService extends AbstractContinuousIntegrationService {
 
             // Relevant feedback is negative
             result.setHasFeedback(result.getFeedbacks().stream().anyMatch(feedback -> !feedback.isPositive()));
+            log.warn("LOGGING FEEDBACK for result " + result.getId());
+            result.getFeedbacks().forEach(f -> {
+                log.warn("Feedback " + f.getId() + " with positive " + f.isPositive() + " and text " + f.getText() + " and detail text " + f.getDetailText());
+            });
         }
     }
 
