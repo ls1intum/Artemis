@@ -365,7 +365,7 @@
                         "pattern": "The penalty must be a number greater than 0.",
                         "required": "The penalty must be set."
                     },
-                    "penaltyInfoLabel": "Exceeding Penalty",
+                    "penaltyInfoLabel": "(Exceeding Penalty: {{points}} points)",
                     "triggerAllInformation": "If the exceeding submission limit penalty or the submission limit is updated, the 'Re-evaluate' functionality must be used to update the participants' results."
                 },
                 "submissionPolicyType": {
@@ -382,7 +382,7 @@
                         "tooltip": "The system deducts points from your score for each submission that exceeds the submission limit. Try to stay within the submission limit to avoid penalties!"
                     }
                 },
-                "submissionLimitTitle": "Submission Limit",
+                "submissionLimitTitle": "Submission limit",
                 "submissionLimitDescription": "The amount of submissions a participant can make before the system enforces the selected policy.",
                 "editInGradingInformation": "The submission policy can only be edited and toggled on the grading page of the programming exercise!",
                 "submissionLimitWarning": {

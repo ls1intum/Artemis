@@ -20,6 +20,7 @@ import { Course } from 'app/entities/course.model';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { TemplateRef, ViewChild } from '@angular/core';
 import { HttpParams } from '@angular/common/http';
+import { ButtonSize } from 'app/shared/components/button.component';
 
 export class UserFilter {
     authorityFilter: Set<AuthorityFilter> = new Set();
@@ -98,6 +99,7 @@ export class UserManagementComponent implements OnInit, OnDestroy {
     loadingSearchResult = false;
     currentAccount?: User;
     users: User[];
+    selectedUsers: User[] = [];
     userListSubscription?: Subscription;
     totalItems = 0;
     itemsPerPage = ITEMS_PER_PAGE;
@@ -124,6 +126,8 @@ export class UserManagementComponent implements OnInit, OnDestroy {
     faTimes = faTimes;
     faEye = faEye;
     faWrench = faWrench;
+
+    readonly medium = ButtonSize.MEDIUM;
 
     constructor(
         private userService: UserService,
@@ -420,6 +424,58 @@ export class UserManagementComponent implements OnInit, OnDestroy {
     }
 
     /**
+     * Selects/Unselects all (filtered) users.
+     */
+    toggleAllUserSelection() {
+        const usersWithoutCurrentUser = this.usersWithoutCurrentUser;
+        if (this.selectedUsers.length === usersWithoutCurrentUser.length) {
+            // Clear all users
+            this.selectedUsers = [];
+        } else {
+            // Add all users
+            this.selectedUsers = [...usersWithoutCurrentUser];
+        }
+    }
+
+    /**
+     * Gets the users without the current user.
+     */
+    get usersWithoutCurrentUser() {
+        return this.users.filter((user) => this.currentAccount && this.currentAccount.login !== user.login);
+    }
+
+    /**
+     * Selects/Unselects a user.
+     */
+    toggleUser(user: User) {
+        const index = this.selectedUsers.indexOf(user);
+        if (index > -1) {
+            this.selectedUsers.splice(index, 1);
+        } else {
+            // Add all users
+            this.selectedUsers.push(user);
+        }
+    }
+
+    /**
+     * Delete all selected users.
+     */
+    deleteAllSelectedUsers() {
+        const logins = this.selectedUsers.map((user) => user.login!);
+        this.userService.deleteUsers(logins).subscribe({
+            next: () => {
+                this.eventManager.broadcast({
+                    name: 'userListModification',
+                    content: 'Deleted users',
+                });
+                this.selectedUsers = [];
+                this.dialogErrorSource.next('');
+            },
+            error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
+        });
+    }
+
+    /**
      * Retrieve the list of users from the user service for a single page in the user management based on the page, size and sort configuration
      */
     loadAll() {
@@ -469,7 +525,7 @@ export class UserManagementComponent implements OnInit, OnDestroy {
      * @param login of the user that should be deleted
      */
     deleteUser(login: string) {
-        this.userService.delete(login).subscribe({
+        this.userService.deleteUser(login).subscribe({
             next: () => {
                 this.eventManager.broadcast({
                     name: 'userListModification',

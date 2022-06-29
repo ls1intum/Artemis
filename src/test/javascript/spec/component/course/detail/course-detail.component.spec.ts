@@ -21,6 +21,7 @@ import { UsersImportButtonComponent } from 'app/shared/import/users-import-butto
 import { EventManager } from 'app/core/util/event-manager.service';
 import { MockRouter } from '../../../helpers/mocks/mock-router';
 import { FullscreenComponent } from 'app/shared/fullscreen/fullscreen.component';
+import { Course } from 'app/entities/course.model';
 
 describe('Course Management Detail Component', () => {
     let component: CourseDetailComponent;
@@ -29,7 +30,7 @@ describe('Course Management Detail Component', () => {
     let eventManager: EventManager;
 
     const route = { params: of({ courseId: 1 }) };
-    const course = {
+    const course: Course = {
         id: 123,
         title: 'Course Title',
         description: 'Cras mattis iudicium purus sit amet fermentum. Gallia est omnis divisa in partes tres, quarum.',
@@ -37,7 +38,7 @@ describe('Course Management Detail Component', () => {
         endDate: dayjs().subtract(5, 'minutes'),
         courseArchivePath: 'some-path',
     };
-    const dtoMock = {
+    const dtoMock: CourseManagementDetailViewDto = {
         numberOfStudentsInCourse: 100,
         numberOfTeachingAssistantsInCourse: 5,
         numberOfEditorsInCourse: 5,
@@ -59,7 +60,7 @@ describe('Course Management Detail Component', () => {
         currentAbsoluteAverageScore: 90,
         currentMaxAverageScore: 100,
         activeStudents: [4, 10, 14, 35],
-    } as CourseManagementDetailViewDto;
+    };
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -129,22 +130,5 @@ describe('Course Management Detail Component', () => {
             name: 'courseListModification',
             content: 'Deleted an course',
         });
-    });
-
-    it('should toggle course description', () => {
-        component.ngOnInit();
-
-        expect(component.enableShowMore).toBeTrue();
-        expect(component.longDescriptionShown).toBeFalse();
-
-        component.toggleCourseDescription();
-
-        expect(component.longDescriptionShown).toBeTrue();
-        expect(component.courseDescription).toBe(course.description);
-
-        component.toggleCourseDescription();
-
-        expect(component.longDescriptionShown).toBeFalse();
-        expect(component.courseDescription).toBe('Cras mattis iudicium purus sit amet fermentum. Gal…');
     });
 });
