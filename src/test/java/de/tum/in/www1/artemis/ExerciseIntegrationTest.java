@@ -15,6 +15,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
+import com.yannbriancon.interceptor.HibernateQueryInterceptor;
+
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.*;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
@@ -56,6 +58,9 @@ public class ExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitb
 
     @Autowired
     private ExerciseService exerciseService;
+
+    @Autowired
+    private HibernateQueryInterceptor hibernateQueryInterceptor;
 
     @BeforeEach
     public void init() {
@@ -158,7 +163,10 @@ public class ExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitb
         List<Course> courses = database.createCoursesWithExercisesAndLectures(true);
         for (Course course : courses) {
             for (Exercise exercise : course.getExercises()) {
+
+                hibernateQueryInterceptor.startQueryCount();
                 Exercise exerciseServer = request.get("/api/exercises/" + exercise.getId(), HttpStatus.OK, Exercise.class);
+                assertThat(hibernateQueryInterceptor.getQueryCount()).isEqualTo(3);
 
                 // Test that certain properties were set correctly
                 assertThat(exerciseServer.getReleaseDate()).as("Release date is present").isNotNull();

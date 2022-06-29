@@ -687,7 +687,13 @@ public class CourseTestService {
 
         assertThat(courses).as("Exactly one course is returned").hasSize(1);
         assertThat(courses.get(0)).as("Active course is returned").isEqualTo(courseActive);
+
+        hibernateQueryInterceptor.startQueryCount();
+
         List<Course> coursesForNotifications = request.getList("/api/courses/for-notifications", HttpStatus.OK, Course.class);
+
+        assertThat(hibernateQueryInterceptor.getQueryCount()).isEqualTo(2);
+
         assertThat(coursesForNotifications).as("Exactly one course is returned").hasSize(1);
         assertThat(coursesForNotifications.get(0)).as("Active course is returned").isEqualTo(courseActive);
     }

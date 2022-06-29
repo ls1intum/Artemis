@@ -22,6 +22,8 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 
+import com.yannbriancon.interceptor.HibernateQueryInterceptor;
+
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Exercise;
@@ -40,6 +42,9 @@ public class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
     @Autowired
     private PostRepository postRepository;
+
+    @Autowired
+    private HibernateQueryInterceptor hibernateQueryInterceptor;
 
     private List<Post> existingPosts;
 
@@ -541,7 +546,9 @@ public class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     @Test
     @WithMockUser(username = "student1", roles = "USER")
     public void testGetPostTagsForCourse() throws Exception {
+        hibernateQueryInterceptor.startQueryCount();
         List<String> returnedTags = request.getList("/api/courses/" + courseId + "/posts/tags", HttpStatus.OK, String.class);
+        assertThat(hibernateQueryInterceptor.getQueryCount()).isEqualTo(3);
         // 4 different tags were used for the posts
         assertThat(returnedTags).hasSameSizeAs(postRepository.findPostTagsForCourse(courseId));
     }
