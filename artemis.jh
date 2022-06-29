@@ -231,7 +231,6 @@ entity LtiUserId (lti_user_id) {
 }
 
 entity ExerciseResult (result) {
-    resultString String,
     completionDate ZonedDateTime,
     successful Boolean,
     buildArtifact Boolean,

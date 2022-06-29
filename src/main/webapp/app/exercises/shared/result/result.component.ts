@@ -210,8 +210,6 @@ export class ResultComponent implements OnInit, OnChanges {
             // When the result was building and is not building anymore, we evaluate the result status.
         } else if (changes.isBuilding && changes.isBuilding.previousValue && !changes.isBuilding.currentValue) {
             this.evaluate();
-        } else {
-            console.log(changes);
         }
     }
 

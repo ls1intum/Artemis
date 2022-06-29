@@ -35,6 +35,7 @@ import { getExerciseDashboardLink, getLinkToSubmissionAssessment } from 'app/uti
 import { getLatestSubmissionResult, SubmissionType } from 'app/entities/submission.model';
 import { isAllowedToModifyFeedback } from 'app/assessment/assessment.service';
 import { faTimesCircle } from '@fortawesome/free-solid-svg-icons';
+import { cloneDeep } from 'lodash-es';
 
 @Component({
     selector: 'jhi-code-editor-tutor-assessment',
@@ -549,6 +550,8 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
         this.isFirstAssessment = false;
 
         this.manualResult!.score = (totalScore / this.exercise.maxPoints!) * 100;
+        // This is done to update the result string in result.component.ts
+        this.manualResult = cloneDeep(this.manualResult);
     }
 
     private avoidCircularStructure() {
