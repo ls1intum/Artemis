@@ -17,7 +17,6 @@ import { PASSWORD_MIN_LENGTH, USERNAME_MIN_LENGTH } from 'app/app.constants';
 import { EventManager } from 'app/core/util/event-manager.service';
 import { AlertService } from 'app/core/util/alert.service';
 import { faCircleNotch } from '@fortawesome/free-solid-svg-icons';
-import { Saml2Config } from 'app/home/saml2-login/saml2.config';
 
 @Component({
     selector: 'jhi-home',
@@ -40,9 +39,7 @@ export class HomeComponent implements OnInit, AfterViewChecked {
     captchaRequired = false;
     credentials: Credentials;
     isRegistrationEnabled = false;
-    passwordLoginDisabled = false;
-    loginFormOverride = false;
-    saml2Config: Saml2Config | undefined;
+    isPasswordLoginDisabled = false;
     loading = true;
     mainElementFocused = false;
 
@@ -57,7 +54,7 @@ export class HomeComponent implements OnInit, AfterViewChecked {
 
     isSubmittingLogin = false;
 
-    private profileInfo: ProfileInfo | undefined = undefined;
+    profileInfo: ProfileInfo | undefined = undefined;
 
     // Icons
     faCircleNotch = faCircleNotch;
@@ -79,9 +76,6 @@ export class HomeComponent implements OnInit, AfterViewChecked {
     ) {}
 
     ngOnInit() {
-        this.activatedRoute.queryParams.subscribe((params) => {
-            this.loginFormOverride = params.hasOwnProperty('showLoginForm');
-        });
         this.profileService.getProfileInfo().subscribe((profileInfo) => {
             if (profileInfo) {
                 this.initializeWithProfileInfo(profileInfo);
@@ -122,10 +116,12 @@ export class HomeComponent implements OnInit, AfterViewChecked {
             this.errorMessageUsername = 'home.errors.tumWarning';
         }
 
-        this.saml2Config = profileInfo?.saml2;
         this.isRegistrationEnabled = !!profileInfo.registrationEnabled;
         this.needsToAcceptTerms = !!profileInfo.needsToAcceptTerms;
-        this.passwordLoginDisabled = !!this.saml2Config && this.saml2Config.passwordLoginDisabled && !this.loginFormOverride;
+        this.activatedRoute.queryParams.subscribe((params) => {
+            const loginFormOverride = params.hasOwnProperty('showLoginForm');
+            this.isPasswordLoginDisabled = !!this.profileInfo?.saml2 && this.profileInfo.saml2.passwordLoginDisabled && !loginFormOverride;
+        });
     }
 
     registerAuthenticationSuccess() {
@@ -146,7 +142,7 @@ export class HomeComponent implements OnInit, AfterViewChecked {
         }
 
         // Focus on the main element as soon as it is visible
-        const mainElement = this.renderer.selectRootElement(this.passwordLoginDisabled ? '#saml2Button' : '#username', true);
+        const mainElement = this.renderer.selectRootElement(this.isPasswordLoginDisabled ? '#saml2Button' : '#username', true);
         if (mainElement) {
             mainElement.focus();
             this.mainElementFocused = true;
