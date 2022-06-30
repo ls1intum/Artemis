@@ -51,10 +51,11 @@ export class AssessmentFiltersComponent implements OnChanges {
     private static isSubmissionLocked(submission: Submission) {
         return submission && getLatestSubmissionResult(submission) && !getLatestSubmissionResult(submission)!.completionDate;
     }
+
     ngOnChanges() {
         this.filteredSubmissions = this.submissions.filter((submission) => {
             const result = getLatestSubmissionResult(submission);
-            return submission && getLatestSubmissionResult(submission) && !getLatestSubmissionResult(submission)!.completionDate;
+            return !result?.completionDate;
         }).length;
     }
 }
