@@ -14,7 +14,6 @@ import { HttpClient } from '@angular/common/http';
 
 describe('ExamActionService', () => {
     let examActionService: ExamActionService;
-    let websocketService: JhiWebsocketService;
     let httpClient: HttpClient;
     let exam: Exam;
     beforeEach(() => {
@@ -30,7 +29,6 @@ describe('ExamActionService', () => {
             .compileComponents()
             .then(() => {
                 examActionService = TestBed.inject(ExamActionService);
-                websocketService = TestBed.inject(JhiWebsocketService);
                 httpClient = TestBed.inject(HttpClient);
             });
     });

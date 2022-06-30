@@ -5,8 +5,7 @@ import { Exam } from 'app/entities/exam.model';
 import { ExamAction } from 'app/entities/exam-user-activity.model';
 import dayjs from 'dayjs/esm';
 import { ceilDayjsSeconds } from 'app/exam/monitoring/charts/monitoring-chart';
-import { map } from 'rxjs/operators';
-import { HttpClient, HttpResponse } from '@angular/common/http';
+import { HttpClient } from '@angular/common/http';
 
 const EXAM_MONITORING_TOPIC = (examId: number) => `/topic/exam-monitoring/${examId}/action`;
 const EXAM_MONITORING_USER_TOPIC = (examId: number) => `/user/topic/exam-monitoring/${examId}/action`;
