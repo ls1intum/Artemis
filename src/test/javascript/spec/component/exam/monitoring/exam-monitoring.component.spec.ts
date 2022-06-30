@@ -1,4 +1,4 @@
-import { ComponentFixture, TestBed, tick, fakeAsync } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync } from '@angular/core/testing';
 import { HttpResponse } from '@angular/common/http';
 import { BehaviorSubject, of } from 'rxjs';
 import { ArtemisTestModule } from '../../../test.module';
