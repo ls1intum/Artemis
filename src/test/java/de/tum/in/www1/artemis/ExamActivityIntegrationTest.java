@@ -204,7 +204,7 @@ public class ExamActivityIntegrationTest extends AbstractSpringIntegrationBamboo
 
         assertEquals(1, examActions.size());
 
-        var receivedAction = (ExamAction) examActions.get(0);
+        var receivedAction = examActions.get(0);
         // We need to validate those values to be equal.
         assertEquals(examAction.getExamActivityId(), receivedAction.getExamActivityId());
         assertEquals(examAction.getStudentExamId(), receivedAction.getStudentExamId());
