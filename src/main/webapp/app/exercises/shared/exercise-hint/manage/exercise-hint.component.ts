@@ -8,7 +8,7 @@ import { ExerciseHintService } from '../shared/exercise-hint.service';
 import { onError } from 'app/shared/util/global.utils';
 import { AlertService } from 'app/core/util/alert.service';
 import { EventManager } from 'app/core/util/event-manager.service';
-import { faEye, faPlus, faTimes, faWrench, faFont, faCode } from '@fortawesome/free-solid-svg-icons';
+import { faArrowsRotate, faCode, faEye, faFont, faPlus, faTimes, faWrench } from '@fortawesome/free-solid-svg-icons';
 import { ExerciseHint, HintType } from 'app/entities/hestia/exercise-hint.model';
 import { ExerciseType } from 'app/entities/exercise.model';
 
@@ -21,6 +21,7 @@ export class ExerciseHintComponent implements OnInit, OnDestroy {
     ExerciseType = ExerciseType;
     exerciseId: number;
     exerciseHints: ExerciseHint[];
+    containsCodeHints: boolean;
     eventSubscriber: Subscription;
 
     private dialogErrorSource = new Subject<string>();
@@ -35,6 +36,7 @@ export class ExerciseHintComponent implements OnInit, OnDestroy {
     faWrench = faWrench;
     faText = faFont;
     faCode = faCode;
+    faArrowsRotate = faArrowsRotate;
 
     constructor(private route: ActivatedRoute, protected exerciseHintService: ExerciseHintService, private alertService: AlertService, protected eventManager: EventManager) {}
 
@@ -73,6 +75,7 @@ export class ExerciseHintComponent implements OnInit, OnDestroy {
             .subscribe({
                 next: (res: ExerciseHint[]) => {
                     this.exerciseHints = res;
+                    this.containsCodeHints = this.exerciseHints?.some((hint) => hint.type === HintType.CODE);
                 },
                 error: (res: HttpErrorResponse) => onError(this.alertService, res),
             });

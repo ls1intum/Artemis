@@ -21,6 +21,4 @@ export class CodeHintGenerationStatusStepComponent {
 
     faCheck = faCheck;
     faDotCircle = faDotCircle;
-
-    constructor() {}
 }

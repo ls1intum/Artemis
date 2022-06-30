@@ -1,0 +1,34 @@
+<div>
+    <div class="modal-header">
+        <h4 class="modal-title"><span>Solution Entry</span></h4>
+        <button type="button" class="btn-close" (click)="clear()"></button>
+    </div>
+    <div class="modal-body">
+        <div class="form-group">
+            <div>
+                <label class="label-narrow" for="field_test">Test</label>
+                <jhi-help-icon placement="auto" text=""></jhi-help-icon>
+            </div>
+            <select *ngIf="testCases?.length" class="form-select" required name="test" [(ngModel)]="this.solutionEntry.testCase" id="field_test">
+                <option *ngFor="let testCase of testCases" [ngValue]="testCase">{{ testCase?.testName }}</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <div>
+                <label class="label-narrow" for="field_path">File</label>
+                <jhi-help-icon placement="auto" text=""></jhi-help-icon>
+            </div>
+            <select *ngIf="solutionRepositoryFilesWithContent?.size" class="form-select" required name="path" [(ngModel)]="this.solutionEntry.filePath" id="field_path">
+                <option *ngFor="let mapEntry of solutionRepositoryFilesWithContent | keyvalue" [ngValue]="mapEntry?.key">{{ mapEntry?.key }}</option>
+            </select>
+        </div>
+        <div class="d-flex flex-row">
+            <jhi-solution-entry class="flex-grow-1" [solutionEntry]="solutionEntry" [enableEditing]="true"></jhi-solution-entry>
+            <div class="ps-2 flex-grow-0">
+                <button type="button" class="btn btn-primary" [disabled]="!(solutionEntry?.code && solutionEntry.testCase && solutionEntry.filePath)" (click)="onCreateEntry()">
+                    Save
+                </button>
+            </div>
+        </div>
+    </div>
+</div>

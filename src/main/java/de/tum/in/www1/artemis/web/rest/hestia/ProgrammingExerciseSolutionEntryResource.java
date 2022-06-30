@@ -95,6 +95,21 @@ public class ProgrammingExerciseSolutionEntryResource {
     }
 
     /**
+     * GET programming-exercises/{exerciseId}/solution-entries: Get all solution entries with test cases for a programming exercise
+     * @param exerciseId of the exercise
+     * @return the {@link ResponseEntity} with status {@code 200} and with body the solution entries with test cases.
+     */
+    @GetMapping("programming-exercises/{exerciseId}/solution-entries")
+    @PreAuthorize("hasRole('EDITOR')")
+    public ResponseEntity<Set<ProgrammingExerciseSolutionEntry>> getAllSolutionEntries(@PathVariable Long exerciseId) {
+        ProgrammingExercise exercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, exercise, null);
+
+        var result = programmingExerciseSolutionEntryRepository.findByExerciseIdWithTestCases(exercise.getId());
+        return ResponseEntity.ok(result);
+    }
+
+    /**
      * GET programming-exercises/:exerciseId/code-hints/:codeHintId/solution-entries : Get all solution entries for a given code hint
      * @param exerciseId of the exercise
      * @param codeHintId of the code hint
@@ -220,6 +235,25 @@ public class ProgrammingExerciseSolutionEntryResource {
 
         programmingExerciseSolutionEntryRepository.deleteById(solutionEntryId);
         return ResponseEntity.noContent().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, solutionEntry.toString())).build();
+    }
+
+    /**
+     * DELETE programming-exercises/:exerciseId/solution-entries
+     * @param exerciseId of the exercise
+     * @return the {@link ResponseEntity} with status {@code 204},
+     * or with status {@code 404} if the exerciseId is not valid.
+     */
+    @DeleteMapping("programming-exercises/{exerciseId}/solution-entries")
+    @PreAuthorize("hasRole('EDITOR')")
+    public ResponseEntity<Void> deleteAllSolutionEntriesForExercise(@PathVariable Long exerciseId) {
+        log.debug("REST request to delete all SolutionEntries for exercise with id: {}", exerciseId);
+        ProgrammingExercise exercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, exercise, null);
+
+        var entriesToDelete = programmingExerciseSolutionEntryRepository.findByExerciseIdWithTestCases(exercise.getId());
+
+        programmingExerciseSolutionEntryRepository.deleteAll(entriesToDelete);
+        return ResponseEntity.noContent().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, "programmingExercise", exerciseId.toString())).build();
     }
 
     /**

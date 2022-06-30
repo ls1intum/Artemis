@@ -119,39 +119,45 @@ public class CodeHintService {
     }
 
     /**
-     * Returns the updated solution entries for a code hint. The solution entries are loaded from the database and can result in three scenarios:
+     * Persists the updated solution entries for a code hint. The solution entries are loaded from the database and can result in three scenarios:
      * 1. The code or test case for an existing entry is updated.
      * 2. A new solution entry is created.
      * 3. A removed entry gets deleted.
      *
      * @param hint the code hint containing the solution entries to be updated
      */
-    public void updatedSolutionEntries(CodeHint hint) {
+    public void updateSolutionEntriesForCodeHint(CodeHint hint) {
         var savedSolutionEntries = solutionEntryRepository.findByCodeHintId(hint.getId());
 
-        var result = new HashSet<ProgrammingExerciseSolutionEntry>();
-        var newEntries = hint.getSolutionEntries().stream().filter(entry -> entry.getId() == null).collect(Collectors.toSet());
-        var updatedEntries = new HashSet<>(hint.getSolutionEntries());
-        updatedEntries.removeAll(newEntries);
+        var newEntries = hint.getSolutionEntries().stream().filter(entry -> savedSolutionEntries.stream().noneMatch(savedEntry -> savedEntry.getId().equals(entry.getId())))
+                .peek(entry -> entry.setCodeHint(hint)).toList();
+        var result = new HashSet<ProgrammingExerciseSolutionEntry>(newEntries);
 
-        var deletedEntries = new HashSet<>(savedSolutionEntries);
-        deletedEntries.removeIf(entry -> newEntries.stream().anyMatch(newEntry -> entry.getId().equals(newEntry.getId())));
-        deletedEntries.removeIf(entry -> updatedEntries.stream().anyMatch(updatedEntry -> entry.getId().equals(updatedEntry.getId())));
+        var updatedEntries = new HashSet<>(hint.getSolutionEntries());
+        newEntries.forEach(updatedEntries::remove);
+
+        var removedEntries = savedSolutionEntries.stream()
+                .filter(savedEntry -> hint.getSolutionEntries().stream().noneMatch(updatedEntry -> savedEntry.getId().equals(updatedEntry.getId())))
+                .peek(entryToRemove -> entryToRemove.setCodeHint(null)).toList();
 
         updatedEntries.forEach(updatedEntry -> {
             var optionalMatch = savedSolutionEntries.stream().filter(savedEntry -> savedEntry.getId().equals(updatedEntry.getId())).findFirst();
             if (optionalMatch.isPresent()) {
                 var match = optionalMatch.get();
+                match.setLine(updatedEntry.getLine());
+                match.setPreviousLine(updatedEntry.getPreviousLine());
+                match.setFilePath(updatedEntry.getFilePath());
                 match.setCode(updatedEntry.getCode());
+                match.setPreviousCode(updatedEntry.getPreviousCode());
+
                 // update test case if defined
                 match.setTestCase(updatedEntry.getTestCase() != null ? updatedEntry.getTestCase() : match.getTestCase());
                 result.add(match);
             }
         });
-        result.addAll(newEntries);
         hint.setSolutionEntries(result);
         solutionEntryRepository.saveAll(result);
-        solutionEntryRepository.deleteAll(deletedEntries);
+        solutionEntryRepository.saveAll(removedEntries);
 
         codeHintRepository.save(hint);
     }

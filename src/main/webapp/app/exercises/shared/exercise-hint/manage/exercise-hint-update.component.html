@@ -46,6 +46,9 @@
                 <div *ngIf="exerciseHint.type === HintType.CODE" class="form-group hint-form__editor-wrapper">
                     <jhi-code-hint-container [codeHint]="exerciseHint | castToCodeHint" [enableEditing]="true"></jhi-code-hint-container>
                 </div>
+                <div *ngIf="exerciseHint.type === HintType.CODE" class="btn-group">
+                    <button type="button" class="btn btn-primary" (click)="onOpenManualEntryCreationModal()">Create new solution entry</button>
+                </div>
                 <div *ngIf="exerciseHint?.exercise?.id" class="form-group">
                     <label class="form-control-label" jhiTranslate="artemisApp.exerciseHint.exercise" for="field_exercise">Exercise</label>
                     <input

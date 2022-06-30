@@ -15,8 +15,8 @@
             "removeEntryQuestion": "Are you sure you want to remove this entry?",
             "noEntries": "This code hint has no solution entries.",
             "deleted": "Deleted Code Hint with identifier {{ param }}",
-            "generation": {
-                "title": "Code Hint Generation",
+            "management": {
+                "title": "Code Hint Management",
                 "previous": "Back",
                 "next": "Next",
                 "nextTooltip": "The current step has to be performed to proceed.",
@@ -53,9 +53,13 @@
                     "title": "Title",
                     "task": "Task",
                     "notGenerated": "No code hints have been generated yet.",
-                    "generateHintsButton": {
-                        "label": "Generate code hints",
-                        "tooltip": "Generates code hints with the selected entries. Existing hints will be overwritten."
+                    "updateHintsButton": {
+                        "label": "Update code hints",
+                        "tooltip": "Update existing code hints by re-assigning the existing solution fragments. The title, description, and content retain."
+                    },
+                    "recreateHintsButton": {
+                        "label": "Recreate code hints",
+                        "tooltip": "Recreate code hints from the existing solution fragments. Existing hints will be overwritten."
                     }
                 }
             }

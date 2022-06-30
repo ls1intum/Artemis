@@ -15,8 +15,8 @@
             "removeEntryQuestion": "Soll dieser Eintrag wirklich entfernt werden?",
             "noEntries": "Dieser Code-Hinweis hat keine Einträge.",
             "deleted": "Exercise Hint gelöscht mit ID {{ param }}",
-            "generation": {
-                "title": "Generierung von Code-Hinweisen",
+            "management": {
+                "title": "Code-Hinweise verwalten",
                 "previous": "Zurück",
                 "next": "Weiter",
                 "nextTooltip": "Der aktuelle Schritt muss erfolgreich ausgeführt seien, damit fortgefahren werden kann.",
@@ -53,9 +53,13 @@
                     "title": "Titel",
                     "task": "Aufgabe",
                     "notGenerated": "Bisher wurden keine Code-Hinweise generiert.",
-                    "generateHintsButton": {
-                        "label": "Code-Hinweise generieren",
-                        "tooltip": "Erstellt Code-Hinweise aus den ausgewählten Einträgen. Existierende Einträge werden überschrieben"
+                    "recreateHintsButton": {
+                        "label": "Code-Hinweise neu erstellen",
+                        "tooltip": "Erstellt Code-Hinweise aus den ausgewählten Einträgen. Existierende Einträge werden überschrieben."
+                    },
+                    "updateHintsButton": {
+                        "label": "Code-Hinweise aktualisieren",
+                        "tooltip": "Aktualisiert die Code-Hinweise, indem die existierenden Lösungsfragmente neu zugewiesen werden. Der Titel, Beschreibung und Inhalt bleiben unverändert."
                     }
                 }
             }

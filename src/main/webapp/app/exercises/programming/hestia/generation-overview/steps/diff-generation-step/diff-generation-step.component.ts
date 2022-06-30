@@ -6,7 +6,7 @@ import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 @Component({
     selector: 'jhi-diff-generation-step',
     templateUrl: './diff-generation-step.component.html',
-    styleUrls: ['../../code-hint-generation-overview.component.scss'],
+    styleUrls: ['../../code-hint-generation-overview/code-hint-generation-overview.component.scss'],
 })
 export class DiffGenerationStepComponent implements OnInit {
     @Input()

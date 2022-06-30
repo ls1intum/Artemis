@@ -19,6 +19,7 @@ import { CoverageReport } from 'app/entities/hestia/coverage-report.model';
 import { ProgrammingExerciseSolutionEntry } from 'app/entities/hestia/programming-exercise-solution-entry.model';
 import { ProgrammingExerciseServerSideTask } from 'app/entities/hestia/programming-exercise-task.model';
 import { ExerciseHint } from 'app/entities/hestia/exercise-hint.model';
+import { ProgrammingExerciseTestCase } from 'app/entities/programming-exercise-test-case.model';
 
 export type EntityResponseType = HttpResponse<ProgrammingExercise>;
 export type EntityArrayResponseType = HttpResponse<ProgrammingExercise[]>;
@@ -480,10 +481,6 @@ export class ProgrammingExerciseService {
         );
     }
 
-    getSolutionEntriesForExercise(exerciseId: number): Observable<ProgrammingExerciseSolutionEntry[]> {
-        return this.http.get<ProgrammingExerciseSolutionEntry[]>(`${this.resourceUrl}/${exerciseId}/solution-entries`);
-    }
-
     getCodeHintsForExercise(exerciseId: number): Observable<ExerciseHint[]> {
         return this.http.get<ExerciseHint[]>(`${this.resourceUrl}/${exerciseId}/exercise-hints`);
     }
@@ -494,5 +491,9 @@ export class ProgrammingExerciseService {
 
     createBehavioralSolutionEntries(exerciseId: number): Observable<ProgrammingExerciseSolutionEntry[]> {
         return this.http.post<ProgrammingExerciseSolutionEntry[]>(`${this.resourceUrl}/${exerciseId}/behavioral-solution-entries`, null);
+    }
+
+    getAllTestCases(exerciseId: number): Observable<ProgrammingExerciseTestCase[]> {
+        return this.http.get<ProgrammingExerciseTestCase[]>(`api/programming-exercise/${exerciseId}/test-cases`);
     }
 }

@@ -1,5 +1,5 @@
 <h2>
-    <span jhiTranslate="artemisApp.codeHint.generation.title"></span>
+    <span jhiTranslate="artemisApp.codeHint.management.title"></span>
 </h2>
 <hr class="mb-4" />
 <div *ngIf="isPerformedByStep?.size && currentStep !== undefined && exercise">
@@ -17,7 +17,7 @@
             ></jhi-code-hint-generation-status>
         </div>
         <div class="col text-end">
-            <jhi-help-icon *ngIf="!isNextStepAvailable()" placement="auto" text="artemisApp.codeHint.generation.nextTooltip"></jhi-help-icon>
+            <jhi-help-icon *ngIf="!isNextStepAvailable()" placement="auto" text="artemisApp.codeHint.management.nextTooltip"></jhi-help-icon>
             <button *ngIf="currentStep !== 3" class="btn btn-primary" type="button" [disabled]="!isNextStepAvailable()" (click)="onNextStep()">Next</button>
         </div>
     </div>
@@ -39,7 +39,7 @@
         <jhi-solution-entry-generation-step
             [hidden]="currentStep !== GenerationStep.SOLUTION_ENTRIES"
             [exercise]="exercise!"
-            (onSelectionChanges)="onSolutionEntryChanges($event)"
+            (onEntryUpdate)="onSolutionEntryChanges($event)"
         ></jhi-solution-entry-generation-step>
         <jhi-code-hint-generation-step
             [hidden]="currentStep !== GenerationStep.CODE_HINTS"

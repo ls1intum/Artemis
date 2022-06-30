@@ -48,7 +48,7 @@ public interface ProgrammingExerciseSolutionEntryRepository extends JpaRepositor
             LEFT JOIN FETCH tc.exercise pe
             WHERE pe.id = :exerciseId
             """)
-    Set<ProgrammingExerciseSolutionEntry> findByExerciseId(@Param("exerciseId") long exerciseId);
+    Set<ProgrammingExerciseSolutionEntry> findByExerciseIdWithTestCases(@Param("exerciseId") long exerciseId);
 
     /**
      * Gets a solution entry with its test cases and programming exercise

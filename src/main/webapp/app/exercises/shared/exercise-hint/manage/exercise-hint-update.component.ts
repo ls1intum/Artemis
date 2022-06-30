@@ -15,6 +15,9 @@ import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { ProgrammingExerciseServerSideTask } from 'app/entities/hestia/programming-exercise-task.model';
 import { onError } from 'app/shared/util/global.utils';
 import { Exercise } from 'app/entities/exercise.model';
+import { ManualSolutionEntryCreationModalComponent } from 'app/exercises/programming/hestia/generation-overview/manual-solution-entry-creation-modal/manual-solution-entry-creation-modal.component';
+import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
+import { CodeHint } from 'app/entities/hestia/code-hint-model';
 
 @Component({
     selector: 'jhi-exercise-hint-update',
@@ -47,6 +50,7 @@ export class ExerciseHintUpdateComponent implements OnInit, OnDestroy {
     constructor(
         private route: ActivatedRoute,
         protected alertService: AlertService,
+        private modalService: NgbModal,
         protected exerciseHintService: ExerciseHintService,
         private programmingExerciseService: ProgrammingExerciseService,
         private navigationUtilService: ArtemisNavigationUtilService,
@@ -90,6 +94,15 @@ export class ExerciseHintUpdateComponent implements OnInit, OnDestroy {
                     this.exerciseHint.programmingExerciseTask = this.tasks[0];
                 }
             });
+        });
+    }
+
+    onOpenManualEntryCreationModal() {
+        const modalRef: NgbModalRef = this.modalService.open(ManualSolutionEntryCreationModalComponent as Component, { size: 'lg', backdrop: 'static' });
+        modalRef.componentInstance.exerciseId = this.exerciseId;
+        modalRef.componentInstance.codeHint = this.exerciseHint as CodeHint;
+        modalRef.componentInstance.onEntryCreated.subscribe((createdEntry: ProgrammingExerciseSolutionEntry) => {
+            (this.exerciseHint as CodeHint)!.solutionEntries!.push(createdEntry);
         });
     }
 

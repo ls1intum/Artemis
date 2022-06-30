@@ -1,6 +1,5 @@
 import { Component, OnInit, ViewChild, Input, Output, EventEmitter } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { Observable } from 'rxjs';
 
 import { AceEditorComponent } from 'app/shared/markdown-editor/ace-editor/ace-editor.component';
 import { faTimes } from '@fortawesome/free-solid-svg-icons';
@@ -18,8 +17,6 @@ export class SolutionEntryComponent implements OnInit {
     solutionEntry: ProgrammingExerciseSolutionEntry;
     @Input()
     enableEditing: boolean;
-    @Input()
-    dialogError: Observable<string>;
 
     @Output()
     onRemoveEntry: EventEmitter<void> = new EventEmitter();

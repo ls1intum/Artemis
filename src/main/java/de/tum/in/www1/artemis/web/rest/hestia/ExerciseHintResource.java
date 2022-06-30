@@ -145,7 +145,7 @@ public class ExerciseHintResource {
         }
 
         if (exerciseHint instanceof CodeHint codeHint) {
-            codeHintService.updatedSolutionEntries(codeHint);
+            codeHintService.updateSolutionEntriesForCodeHint(codeHint);
         }
         exerciseHint.setExerciseHintActivations(hintBeforeSaving.getExerciseHintActivations());
         ExerciseHint result = exerciseHintRepository.save(exerciseHint);

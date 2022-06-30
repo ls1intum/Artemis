@@ -4,14 +4,8 @@ import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { CoverageReport } from 'app/entities/hestia/coverage-report.model';
 import { ProgrammingExerciseSolutionEntry } from 'app/entities/hestia/programming-exercise-solution-entry.model';
 import { ProgrammingExerciseFullGitDiffReport } from 'app/entities/hestia/programming-exercise-full-git-diff-report.model';
-import { CodeHint } from 'app/entities/hestia/code-hint-model';
+import { CodeHint, CodeHintGenerationStep } from 'app/entities/hestia/code-hint-model';
 
-export enum CodeHintGenerationStep {
-    GIT_DIFF,
-    COVERAGE,
-    SOLUTION_ENTRIES,
-    CODE_HINTS,
-}
 @Component({
     selector: 'jhi-code-hint-generation-overview',
     templateUrl: './code-hint-generation-overview.component.html',
@@ -48,7 +42,10 @@ export class CodeHintGenerationOverviewComponent implements OnInit {
         });
     }
 
-    setLatestPerformedStep() {
+    setLatestPerformedStep(latestUpdatedStep: CodeHintGenerationStep) {
+        if (this.currentStep >= latestUpdatedStep) {
+            return;
+        }
         const optionalEntry = Array.from(this.isPerformedByStep.entries())
             .filter((a) => a[1])
             .sort((a, b) => b[0] - a[0])
@@ -68,28 +65,28 @@ export class CodeHintGenerationOverviewComponent implements OnInit {
         this.currentStep = this.currentStep - 1;
     }
 
-    onStepChange(step: any) {
-        this.currentStep = step.valueOf();
+    onStepChange(step: CodeHintGenerationStep) {
+        this.currentStep = step;
     }
 
     onDiffReportLoaded(diffReport?: ProgrammingExerciseFullGitDiffReport) {
         this.isPerformedByStep.set(CodeHintGenerationStep.GIT_DIFF, diffReport !== undefined);
-        this.setLatestPerformedStep();
+        this.setLatestPerformedStep(CodeHintGenerationStep.GIT_DIFF);
     }
 
     onCoverageReportLoaded(coverageReport?: CoverageReport) {
         this.isPerformedByStep.set(CodeHintGenerationStep.COVERAGE, coverageReport !== undefined);
-        this.setLatestPerformedStep();
+        this.setLatestPerformedStep(CodeHintGenerationStep.COVERAGE);
     }
 
     onSolutionEntryChanges(entries?: ProgrammingExerciseSolutionEntry[]) {
         this.selectedSolutionEntries = entries;
         this.isPerformedByStep.set(CodeHintGenerationStep.SOLUTION_ENTRIES, entries !== undefined && entries!.length > 0);
-        this.setLatestPerformedStep();
+        this.setLatestPerformedStep(CodeHintGenerationStep.SOLUTION_ENTRIES);
     }
 
     onCodeHintsLoaded(codeHints?: CodeHint[]) {
         this.isPerformedByStep.set(CodeHintGenerationStep.CODE_HINTS, codeHints !== undefined && codeHints!.length > 0);
-        this.setLatestPerformedStep();
+        this.setLatestPerformedStep(CodeHintGenerationStep.CODE_HINTS);
     }
 }

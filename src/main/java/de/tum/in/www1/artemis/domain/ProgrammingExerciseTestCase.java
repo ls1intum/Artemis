@@ -50,7 +50,7 @@ public class ProgrammingExerciseTestCase extends DomainObject {
     private Set<ProgrammingExerciseTask> tasks = new HashSet<>();
 
     @OneToMany(mappedBy = "testCase", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
-    @JsonIgnoreProperties("testCase")
+    @JsonIgnoreProperties(value = "testCase", allowSetters = true)
     private Set<ProgrammingExerciseSolutionEntry> solutionEntries = new HashSet<>();
 
     @ManyToOne(fetch = FetchType.LAZY)

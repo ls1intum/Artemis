@@ -114,14 +114,14 @@ export const routes: Routes = [
         canActivate: [UserRouteAccessService],
     },
     {
-        path: ':courseId/programming-exercises/:exerciseId/code-hint-generation',
+        path: ':courseId/programming-exercises/:exerciseId/exercise-hints/code-hint-management',
         component: CodeHintGenerationOverviewComponent,
         resolve: {
             exercise: ProgrammingExerciseResolve,
         },
         data: {
             authorities: [Authority.TA, Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
-            pageTitle: 'artemisApp.codeHint.generation.title',
+            pageTitle: 'artemisApp.codeHint.management.title',
         },
         canActivate: [UserRouteAccessService],
     },

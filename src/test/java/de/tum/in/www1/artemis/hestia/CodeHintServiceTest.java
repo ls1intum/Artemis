@@ -90,6 +90,19 @@ public class CodeHintServiceTest extends AbstractSpringIntegrationBambooBitbucke
         return task;
     }
 
+    private CodeHint addCodeHintToTask(String name, ProgrammingExerciseTask task, Set<ProgrammingExerciseSolutionEntry> solutionEntries) {
+        var codeHint = new CodeHint();
+        codeHint.setTitle(name);
+        codeHint.setProgrammingExerciseTask(task);
+        codeHint.setExercise(exercise);
+        codeHint.setSolutionEntries(solutionEntries);
+
+        solutionEntries.forEach(entry -> entry.setCodeHint(codeHint));
+        var createdHint = codeHintRepository.save(codeHint);
+        solutionEntryRepository.saveAll(solutionEntries);
+        return createdHint;
+    }
+
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testGenerationWithNoSolutionEntry() {
@@ -150,5 +163,81 @@ public class CodeHintServiceTest extends AbstractSpringIntegrationBambooBitbucke
         assertThat(codeHints.get(0).getProgrammingExerciseTask()).isEqualTo(task);
         assertThat(codeHints.get(0).getSolutionEntries()).containsExactly(solutionEntry);
         assertThat(codeHintRepository.findAll()).containsExactlyInAnyOrder(codeHint, codeHints.get(0));
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testUpdateTestCaseOfSolutionEntry() {
+        var testCase1 = addTestCaseToExercise("testCase1");
+        var testCase2 = addTestCaseToExercise("testCase2");
+        var entry = addSolutionEntryToTestCase(testCase1);
+        var task = addTaskToExercise("task", new ArrayList<>(List.of(testCase1)));
+        var codeHint = addCodeHintToTask("codeHint1", task, new HashSet<>(Set.of(entry)));
+
+        var entryToUpdate = codeHint.getSolutionEntries().stream().findFirst().orElseThrow();
+        entryToUpdate.setTestCase(testCase2);
+        codeHintService.updateSolutionEntriesForCodeHint(codeHint);
+
+        var allEntries = solutionEntryRepository.findAll();
+        assertThat(allEntries).hasSize(1);
+        assertThat(allEntries.get(0).getTestCase().getId()).isEqualTo(testCase2.getId());
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testUpdatedContentOfSolutionEntry() {
+        var testCase1 = addTestCaseToExercise("testCase");
+        var entry = addSolutionEntryToTestCase(testCase1);
+        var task = addTaskToExercise("task", new ArrayList<>(List.of(testCase1)));
+        var codeHint = addCodeHintToTask("codeHint", task, new HashSet<>(Set.of(entry)));
+
+        var entryToUpdate = codeHint.getSolutionEntries().stream().findFirst().orElseThrow();
+        entryToUpdate.setLine(120);
+        entry.setPreviousLine(130);
+        entryToUpdate.setCode("Updated code");
+        entry.setPreviousCode("Updated previous code");
+        entry.setFilePath("Updated file path");
+        codeHintService.updateSolutionEntriesForCodeHint(codeHint);
+
+        var allEntries = solutionEntryRepository.findAll();
+        assertThat(allEntries).hasSize(1);
+        assertThat(allEntries.get(0)).isEqualTo(entryToUpdate);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testSaveWithNewSolutionEntry() {
+        // the entry has been created and persisted, but not assigned to the hint yet
+        var testCase = addTestCaseToExercise("testCase");
+        var manuallyCreatedEntry = addSolutionEntryToTestCase(testCase);
+        var task = addTaskToExercise("task", new ArrayList<>(List.of(testCase)));
+        var codeHint = addCodeHintToTask("codeHint", task, new HashSet<>(Collections.emptySet()));
+
+        codeHint.setSolutionEntries(new HashSet<>(Set.of(manuallyCreatedEntry)));
+        codeHintService.updateSolutionEntriesForCodeHint(codeHint);
+
+        var allEntries = solutionEntryRepository.findByExerciseIdWithTestCases(exercise.getId());
+        assertThat(allEntries).hasSize(1);
+        assertThat(allEntries).contains(manuallyCreatedEntry);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testSaveWithRemovedSolutionEntry() {
+        // the entry has been created and persisted, but not assigned to the hint yet
+        var testCase = addTestCaseToExercise("testCase");
+        var entryToRemove = addSolutionEntryToTestCase(testCase);
+        var task = addTaskToExercise("task", new ArrayList<>(List.of(testCase)));
+        var codeHint = addCodeHintToTask("codeHint", task, new HashSet<>(Set.of(entryToRemove)));
+
+        codeHint.setSolutionEntries(new HashSet<>(Collections.emptySet()));
+        codeHintService.updateSolutionEntriesForCodeHint(codeHint);
+
+        var entriesForHint = solutionEntryRepository.findByCodeHintId(codeHint.getId());
+        assertThat(entriesForHint).isEmpty();
+
+        var allEntries = solutionEntryRepository.findByExerciseIdWithTestCases(exercise.getId());
+        assertThat(allEntries).hasSize(1);
+        assertThat(allEntries).contains(entryToRemove);
     }
 }
