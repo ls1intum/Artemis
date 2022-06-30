@@ -4,7 +4,6 @@ import { AccountInformationComponent } from 'app/shared/user-settings/account-in
 import { NotificationSettingsComponent } from 'app/shared/user-settings/notification-settings/notification-settings.component';
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
 import { Authority } from 'app/shared/constants/authority.constants';
-import { PersonalAccessTokensComponent } from './personal-access-tokens/personal-access-tokens.component';
 
 export const userSettingsState: Routes = [
     {
@@ -37,7 +36,7 @@ export const userSettingsState: Routes = [
             },
             {
                 path: 'personal-access-tokens',
-                component: PersonalAccessTokensComponent,
+                loadChildren: () => import('./personal-access-tokens/personal-access-tokens.module').then((m) => m.PersonalAccessTokensModule),
                 data: {
                     pageTitle: 'artemisApp.userSettings.personalAccessTokens.title',
                 },

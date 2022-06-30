@@ -5,11 +5,9 @@ import { NotificationSettingsComponent } from 'app/shared/user-settings/notifica
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { RouterModule } from '@angular/router';
 import { userSettingsState } from 'app/shared/user-settings/user-settings.route';
-import { PersonalAccessTokensComponent } from './personal-access-tokens/personal-access-tokens.component';
-import { ClipboardModule } from '@angular/cdk/clipboard';
 
 @NgModule({
-    imports: [RouterModule.forChild(userSettingsState), ArtemisSharedModule, ClipboardModule],
-    declarations: [UserSettingsContainerComponent, AccountInformationComponent, NotificationSettingsComponent, PersonalAccessTokensComponent],
+    imports: [RouterModule.forChild(userSettingsState), ArtemisSharedModule],
+    declarations: [UserSettingsContainerComponent, AccountInformationComponent, NotificationSettingsComponent],
 })
 export class UserSettingsModule {}
