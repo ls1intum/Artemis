@@ -147,7 +147,7 @@ public class SubmissionService {
      * @param tutor - the tutor we are interested in
      * @param examMode - flag should be set to ignore the test run submissions
      * @param <T> the submission type
-     * @return an unmodifiable list of submissions
+     * @return list of submissions
      */
     public <T extends Submission> List<T> getAllSubmissionsAssessedByTutorForCorrectionRoundAndExercise(Long exerciseId, User tutor, boolean examMode, int correctionRound) {
         List<T> submissions;

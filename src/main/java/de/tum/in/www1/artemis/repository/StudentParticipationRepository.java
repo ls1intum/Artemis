@@ -705,7 +705,7 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
     default List<StudentParticipation> findByExamIdWithSubmissionRelevantResult(Long examId) {
         var participations = findByExamIdWithEagerLegalSubmissionsRatedResults(examId); // without test run participations
         // filter out the participations of test runs which can only be made by instructors
-        participations = participations.stream().filter(studentParticipation -> !studentParticipation.isTestRun()).collect(Collectors.toCollection(ArrayList::new));
+        participations = participations.stream().filter(studentParticipation -> !studentParticipation.isTestRun()).toList();
         return filterParticipationsWithRelevantResults(participations, true);
     }
 

@@ -180,9 +180,6 @@ public abstract class Submission extends DomainObject {
         return results;
     }
 
-    /**
-     * @return an unmodifiable list of all manual results
-     */
     @JsonIgnore
     public List<Result> getManualResults() {
         return results.stream().filter(result -> result != null && !result.isAutomatic()).collect(Collectors.toCollection(ArrayList::new));
