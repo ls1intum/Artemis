@@ -92,14 +92,22 @@ export class ExamParticipationSummaryComponent implements OnInit {
         if (!this.studentExam?.user?.id) {
             throw new Error('studentExam.user.id should be present to fetch grade info');
         }
-        this.examParticipationService
-            .loadStudentExamGradeInfoForSummary(this.courseId, this.studentExam.exam.id, this.studentExam.user.id)
-            .subscribe((studentExamWithGrade: StudentExamWithGradeDTO) => {
-                studentExamWithGrade.studentExam = this.studentExam;
-                this.studentExamGradeInfoDTO = studentExamWithGrade;
-            });
+
+        if (this.isExamResultPublished()) {
+            this.examParticipationService
+                .loadStudentExamGradeInfoForSummary(this.courseId, this.studentExam.exam.id, this.studentExam.user.id)
+                .subscribe((studentExamWithGrade: StudentExamWithGradeDTO) => {
+                    studentExamWithGrade.studentExam = this.studentExam;
+                    this.studentExamGradeInfoDTO = studentExamWithGrade;
+                });
+        }
 
         this.setExamWithOnlyIdAndStudentReviewPeriod();
+    }
+
+    private isExamResultPublished() {
+        const exam = this.studentExam.exam;
+        return exam && exam.publishResultsDate && dayjs(exam.publishResultsDate).isBefore(this.serverDateService.now());
     }
 
     getIcon(exerciseType: ExerciseType) {
