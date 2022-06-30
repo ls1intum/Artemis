@@ -61,9 +61,9 @@
     </div>
     <!-- start discussion -->
     <div class="col-auto p-0" *ngIf="sortedAnswerPosts.length === 0">
-        <button class="reaction-button clickable start-discussion-btn" (click)="openPostingCreateEditModal.emit()">
+        <button class="reaction-button clickable reply-btn" (click)="openPostingCreateEditModal.emit()">
             <jhi-emoji [emoji]="speechBalloonId"></jhi-emoji>
-            <span class="emoji-count">{{ 'artemisApp.metis.startDiscussion' | artemisTranslate }}</span>
+            <span class="emoji-count">{{ 'artemisApp.metis.reply' | artemisTranslate }}</span>
         </button>
     </div>
     <!-- expand answers -->

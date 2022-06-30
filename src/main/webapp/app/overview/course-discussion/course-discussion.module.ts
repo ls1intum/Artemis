@@ -11,7 +11,7 @@ const routes: Routes = [
         path: '',
         pathMatch: 'full',
         data: {
-            pageTitle: 'artemisApp.metis.discussion.label',
+            pageTitle: 'artemisApp.metis.communication.label',
         },
         component: CourseDiscussionComponent,
     },

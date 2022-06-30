@@ -340,7 +340,7 @@ describe('Plagiarism Inspector Component', () => {
 
         expect(cleanUpPlagiarismSpy).toHaveBeenCalledWith(textExercise.id, textPlagiarismResult.id, false);
         expect(getLatestPlagiarismResultSpy).toHaveBeenCalledOnce();
-        expect(comp.deleteAllPlagiarismComparisons).toBe(false);
+        expect(comp.deleteAllPlagiarismComparisons).toBeFalse();
     }));
 
     it('should clean up plagiarism and delete all plagiarism comparisons', fakeAsync(() => {
@@ -354,7 +354,7 @@ describe('Plagiarism Inspector Component', () => {
         tick();
 
         expect(cleanUpPlagiarismSpy).toHaveBeenCalledWith(textExercise.id, textPlagiarismResult.id, true);
-        expect(comp.deleteAllPlagiarismComparisons).toBe(false);
+        expect(comp.deleteAllPlagiarismComparisons).toBeFalse();
         expect(comp.plagiarismResult).toBe(undefined);
     }));
 

@@ -83,7 +83,7 @@ public class TextUnitIntegrationTest extends AbstractSpringIntegrationBambooBitb
     @WithMockUser(username = "editor42", roles = "EDITOR")
     public void createTextUnit_EditorNotInCourse_shouldReturnForbidden() throws Exception {
         request.postWithResponseBody("/api/lectures/" + this.lecture.getId() + "/text-units", textUnit, TextUnit.class, HttpStatus.FORBIDDEN);
-        request.postWithResponseBody("/api/lectures/" + "2379812738912" + "/text-units", textUnit, TextUnit.class, HttpStatus.BAD_REQUEST);
+        request.postWithResponseBody("/api/lectures/" + "2379812738912" + "/text-units", textUnit, TextUnit.class, HttpStatus.NOT_FOUND);
         textUnit.setLecture(new Lecture());
         request.postWithResponseBody("/api/lectures/" + this.lecture.getId() + "/text-units", textUnit, TextUnit.class, HttpStatus.CONFLICT);
         textUnit.setId(21312321L);
@@ -151,9 +151,9 @@ public class TextUnitIntegrationTest extends AbstractSpringIntegrationBambooBitb
 
     private void persistTextUnitWithLecture() {
         this.textUnit = textUnitRepository.save(this.textUnit);
-        lecture = lectureRepository.findByIdWithPostsAndLectureUnitsAndLearningGoals(lecture.getId()).get();
+        lecture = lectureRepository.findByIdWithLectureUnits(lecture.getId()).get();
         lecture.addLectureUnit(this.textUnit);
         lecture = lectureRepository.save(lecture);
-        this.textUnit = (TextUnit) lectureRepository.findByIdWithPostsAndLectureUnitsAndLearningGoals(lecture.getId()).get().getLectureUnits().stream().findFirst().get();
+        this.textUnit = (TextUnit) lectureRepository.findByIdWithLectureUnits(lecture.getId()).get().getLectureUnits().stream().findFirst().get();
     }
 }

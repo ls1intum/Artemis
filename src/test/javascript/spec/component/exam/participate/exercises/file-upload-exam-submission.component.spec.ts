@@ -176,11 +176,11 @@ describe('FileUploadExamSubmissionComponent', () => {
         });
         it('should return true if isSynced false', () => {
             comp.studentSubmission.isSynced = false;
-            expect(comp.hasUnsavedChanges()).toEqual(true);
+            expect(comp.hasUnsavedChanges()).toBeTrue();
         });
         it('should return false if isSynced true', () => {
             comp.studentSubmission.isSynced = true;
-            expect(comp.hasUnsavedChanges()).toEqual(false);
+            expect(comp.hasUnsavedChanges()).toBeFalse();
         });
     });
 

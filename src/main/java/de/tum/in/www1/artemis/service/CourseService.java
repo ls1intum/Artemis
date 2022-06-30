@@ -91,6 +91,8 @@ public class CourseService {
 
     private final AuditEventRepository auditEventRepository;
 
+    private final LearningGoalService learningGoalService;
+
     private final LearningGoalRepository learningGoalRepository;
 
     private final GradingScaleRepository gradingScaleRepository;
@@ -103,7 +105,7 @@ public class CourseService {
             ExerciseDeletionService exerciseDeletionService, AuthorizationCheckService authCheckService, UserRepository userRepository, LectureService lectureService,
             GroupNotificationRepository groupNotificationRepository, ExerciseGroupRepository exerciseGroupRepository, AuditEventRepository auditEventRepository,
             UserService userService, LearningGoalRepository learningGoalRepository, GroupNotificationService groupNotificationService, ExamService examService,
-            ExamRepository examRepository, CourseExamExportService courseExamExportService, GradingScaleRepository gradingScaleRepository,
+            ExamRepository examRepository, CourseExamExportService courseExamExportService, LearningGoalService learningGoalService, GradingScaleRepository gradingScaleRepository,
             StatisticsRepository statisticsRepository, StudentParticipationRepository studentParticipationRepository) {
         this.env = env;
         this.artemisAuthenticationProvider = artemisAuthenticationProvider;
@@ -122,6 +124,7 @@ public class CourseService {
         this.examService = examService;
         this.examRepository = examRepository;
         this.courseExamExportService = courseExamExportService;
+        this.learningGoalService = learningGoalService;
         this.gradingScaleRepository = gradingScaleRepository;
         this.statisticsRepository = statisticsRepository;
         this.studentParticipationRepository = studentParticipationRepository;
@@ -166,12 +169,14 @@ public class CourseService {
      * @return the course including exercises, lectures and exams for the user
      */
     public Course findOneWithExercisesAndLecturesAndExamsAndLearningGoalsForUser(Long courseId, User user) {
-        Course course = courseRepository.findByIdWithLecturesAndExamsAndLearningGoalsElseThrow(courseId);
+        Course course = courseRepository.findByIdWithLecturesAndExamsElseThrow(courseId);
         if (!authCheckService.isAtLeastStudentInCourse(course, user)) {
             throw new AccessForbiddenException();
         }
         course.setExercises(exerciseService.findAllForCourse(course, user));
         course.setLectures(lectureService.filterActiveAttachments(course.getLectures(), user));
+        course.setLearningGoals(learningGoalService.findAllForCourse(course, user));
+        course.setPrerequisites(learningGoalService.findAllPrerequisitesForCourse(course, user));
         if (authCheckService.isOnlyStudentInCourse(course, user)) {
             course.setExams(examRepository.filterVisibleExams(course.getExams()));
         }
