@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.service.scheduled.cache.monitoring;
 
 import java.time.Duration;
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -119,19 +120,20 @@ public class ExamMonitoringScheduleService {
     }
 
     /**
-     * Send all exam actions to specific user.
+     * Returns all exam actions.
      *
-     * @param examId    identifies the cache
-     * @param login     user to send
+     * @param examId identifies the cache
+     * @return all exam actions of the exam
      */
-    public void sendAllExamActionsToUser(Long examId, String login) {
+    public List<ExamAction> getAllExamActions(Long examId) {
         var examActivities = ((ExamMonitoringCache) examCache.getTransientWriteCacheFor(examId)).getActivities();
+        var examActions = new ArrayList<ExamAction>();
 
         for (var examActivity : examActivities.values()) {
-            for (var examAction : examActivity.getExamActions()) {
-                messagingService.sendMessageToUser(login, "/topic/exam-monitoring/" + examId + "/action", examAction);
-            }
+            examActions.addAll(examActivity.getExamActions());
         }
+
+        return examActions;
     }
 
     /**

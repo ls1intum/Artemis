@@ -3,7 +3,7 @@ import { Exam } from 'app/entities/exam.model';
 import { getSwitchedExerciseActionsGroupedByActivityId, insertNgxDataAndColorForExerciseMap } from 'app/exam/monitoring/charts/monitoring-chart';
 import { ExamAction, ExamActionType, SwitchedExerciseAction } from 'app/entities/exam-user-activity.model';
 import { ChartComponent } from 'app/exam/monitoring/charts/chart.component';
-import { ExamMonitoringWebsocketService } from '../../exam-monitoring-websocket.service';
+import { ExamActionService } from '../../exam-action.service';
 import { ActivatedRoute } from '@angular/router';
 
 @Component({
@@ -19,8 +19,8 @@ export class ExerciseNavigationChartComponent extends ChartComponent implements 
 
     navigatedToPerStudent: Map<number, Set<number | undefined>> = new Map();
 
-    constructor(route: ActivatedRoute, examMonitoringWebsocketService: ExamMonitoringWebsocketService) {
-        super(route, examMonitoringWebsocketService, 'exercise-navigation-chart', false);
+    constructor(route: ActivatedRoute, examActionService: ExamActionService) {
+        super(route, examActionService, 'exercise-navigation-chart', false);
     }
 
     ngOnInit() {

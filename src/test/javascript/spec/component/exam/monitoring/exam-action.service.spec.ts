@@ -7,22 +7,31 @@ import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { MockWebsocketService } from '../../../helpers/mocks/service/mock-websocket.service';
 import { createActions } from './exam-monitoring-helper';
 import { BehaviorSubject } from 'rxjs';
-import { ExamMonitoringWebsocketService } from 'app/exam/monitoring/exam-monitoring-websocket.service';
+import { ExamActionService } from 'app/exam/monitoring/exam-action.service';
 import dayjs from 'dayjs/esm';
+import { MockHttpService } from '../../../helpers/mocks/service/mock-http.service';
+import { HttpClient } from '@angular/common/http';
 
-describe('ExamMonitoringWebsocketService', () => {
-    let examMonitoringWebsocketService: ExamMonitoringWebsocketService;
+describe('ExamActionService', () => {
+    let examActionService: ExamActionService;
     let websocketService: JhiWebsocketService;
+    let httpClient: HttpClient;
     let exam: Exam;
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule],
-            providers: [ArtemisServerDateService, ExamMonitoringWebsocketService, { provide: JhiWebsocketService, useClass: MockWebsocketService }],
+            providers: [
+                ArtemisServerDateService,
+                ExamActionService,
+                { provide: JhiWebsocketService, useClass: MockWebsocketService },
+                { provide: HttpClient, useClass: MockHttpService },
+            ],
         })
             .compileComponents()
             .then(() => {
-                examMonitoringWebsocketService = TestBed.inject(ExamMonitoringWebsocketService);
+                examActionService = TestBed.inject(ExamActionService);
                 websocketService = TestBed.inject(JhiWebsocketService);
+                httpClient = TestBed.inject(HttpClient);
             });
     });
 
@@ -39,23 +48,23 @@ describe('ExamMonitoringWebsocketService', () => {
 
     // Notify subscribers
     it.each(createActions())('should notify exam subscribers', (examAction: ExamAction) => {
-        const spy = jest.spyOn(examMonitoringWebsocketService, 'prepareAction').mockImplementation((action) => action);
+        const spy = jest.spyOn(examActionService, 'prepareAction').mockImplementation((action) => action);
 
         const examActionObservables = new Map<number, BehaviorSubject<ExamAction | undefined>>();
-        expect(examMonitoringWebsocketService.examActionObservables).toEqual(examActionObservables);
+        expect(examActionService.examActionObservables).toEqual(examActionObservables);
 
-        examMonitoringWebsocketService.notifyExamActionSubscribers(exam, examAction);
+        examActionService.notifyExamActionSubscribers(exam, examAction);
 
         examActionObservables.set(exam.id!, new BehaviorSubject(examAction));
 
         expect(spy).toHaveBeenCalledOnce();
         expect(spy).toHaveBeenCalledWith(examAction);
-        expect(examMonitoringWebsocketService.examActionObservables).toEqual(examActionObservables);
+        expect(examActionService.examActionObservables).toEqual(examActionObservables);
 
-        examMonitoringWebsocketService.notifyExamActionSubscribers(exam, examAction);
+        examActionService.notifyExamActionSubscribers(exam, examAction);
 
         examActionObservables.get(exam.id!)?.next(examAction);
-        expect(examMonitoringWebsocketService.examActionObservables).toEqual(examActionObservables);
+        expect(examActionService.examActionObservables).toEqual(examActionObservables);
     });
 
     // Additional methods
@@ -63,7 +72,7 @@ describe('ExamMonitoringWebsocketService', () => {
         const now = dayjs().set('seconds', 8).set('ms', 0);
         examAction.timestamp = now;
 
-        examMonitoringWebsocketService.prepareAction(examAction);
+        examActionService.prepareAction(examAction);
 
         expect(examAction.timestamp).toEqual(now);
         examAction.ceiledTimestamp!.set('ms', 0);
@@ -71,18 +80,17 @@ describe('ExamMonitoringWebsocketService', () => {
     });
 
     it('should load initial actions', () => {
-        const spy = jest.spyOn(websocketService, 'send');
-        const topic = `/topic/exam-monitoring/${exam.id}/load-actions`;
+        const spy = jest.spyOn(httpClient, 'get');
         const initialActionsLoaded = new Map<number, boolean>();
 
-        expect(examMonitoringWebsocketService.initialActionsLoaded).toEqual(initialActionsLoaded);
+        expect(examActionService.initialActionsLoaded).toEqual(initialActionsLoaded);
 
-        examMonitoringWebsocketService.loadInitialActions(exam);
+        examActionService.loadInitialActions(exam);
 
         initialActionsLoaded.set(exam.id!, true);
 
         expect(spy).toHaveBeenCalledOnce();
-        expect(spy).toHaveBeenCalledWith(topic, null);
-        expect(examMonitoringWebsocketService.initialActionsLoaded).toEqual(initialActionsLoaded);
+        expect(spy).toHaveBeenCalledWith(`api/exam-monitoring/${exam.id}/load-actions`);
+        expect(examActionService.initialActionsLoaded).toEqual(initialActionsLoaded);
     });
 });

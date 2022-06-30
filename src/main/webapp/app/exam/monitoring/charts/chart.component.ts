@@ -2,7 +2,7 @@ import { Color, ScaleType } from '@swimlane/ngx-charts';
 import * as shape from 'd3-shape';
 import { NgxChartsEntry } from 'app/shared/chart/ngx-charts-datatypes';
 import { Subscription } from 'rxjs';
-import { ExamMonitoringWebsocketService } from '../exam-monitoring-websocket.service';
+import { ExamActionService } from '../exam-action.service';
 import { ActivatedRoute } from '@angular/router';
 import { ExamAction } from 'app/entities/exam-user-activity.model';
 import dayjs from 'dayjs/esm';
@@ -32,13 +32,7 @@ export abstract class ChartComponent {
     legend: boolean;
     routerLink: any[];
 
-    protected constructor(
-        private route: ActivatedRoute,
-        protected examMonitoringWebsocketService: ExamMonitoringWebsocketService,
-        chartIdentifierKey: string,
-        legend: boolean,
-        colors?: string[],
-    ) {
+    protected constructor(private route: ActivatedRoute, protected examActionService: ExamActionService, chartIdentifierKey: string, legend: boolean, colors?: string[]) {
         this.chartIdentifierKey = chartIdentifierKey;
         this.legend = legend;
 
@@ -60,7 +54,7 @@ export abstract class ChartComponent {
             this.courseId = Number(params['courseId']);
         });
 
-        this.examActionSubscription = this.examMonitoringWebsocketService.getExamMonitoringObservable(this.examId)?.subscribe((examAction) => {
+        this.examActionSubscription = this.examActionService.getExamMonitoringObservable(this.examId)?.subscribe((examAction) => {
             if (examAction && this.filterRenderedData(examAction)) {
                 this.evaluateAndAddAction(examAction);
             }
@@ -86,7 +80,7 @@ export abstract class ChartComponent {
      * Create and initialize the data for the chart.
      */
     initData(): void {
-        this.filteredExamActions.push(...(this.examMonitoringWebsocketService.cachedExamActions.get(this.examId) ?? []).filter((action) => this.filterRenderedData(action)));
+        this.filteredExamActions.push(...(this.examActionService.cachedExamActions.get(this.examId) ?? []).filter((action) => this.filterRenderedData(action)));
     }
 
     /**

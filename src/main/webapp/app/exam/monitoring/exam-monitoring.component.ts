@@ -6,8 +6,8 @@ import { Exam } from 'app/entities/exam.model';
 import { HttpResponse } from '@angular/common/http';
 import { ExamMonitoringService } from './exam-monitoring.service';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
-import { ExamAction } from '../../entities/exam-user-activity.model';
-import { ExamMonitoringWebsocketService } from './exam-monitoring-websocket.service';
+import { ExamAction } from 'app/entities/exam-user-activity.model';
+import { ExamActionService } from './exam-action.service';
 
 export class TableContent {
     translateValue: string;
@@ -34,6 +34,7 @@ export class ExamMonitoringComponent implements OnInit, OnDestroy {
     // Subscriptions
     private routeSubscription?: Subscription;
     private examMonitoringSubscription?: Subscription;
+    private initialLoadSubscription?: Subscription;
 
     private examId: number;
     private courseId: number;
@@ -47,7 +48,7 @@ export class ExamMonitoringComponent implements OnInit, OnDestroy {
         private route: ActivatedRoute,
         private examManagementService: ExamManagementService,
         private examMonitoringService: ExamMonitoringService,
-        private examMonitoringWebsocketService: ExamMonitoringWebsocketService,
+        private examActionService: ExamActionService,
         private artemisDataPipe: ArtemisDatePipe,
     ) {}
 
@@ -61,16 +62,17 @@ export class ExamMonitoringComponent implements OnInit, OnDestroy {
             this.exam = examResponse.body!;
             this.examMonitoringService.notifyExamSubscribers(this.exam);
 
-            this.examMonitoringSubscription = this.examMonitoringWebsocketService.subscribeForLatestExamAction(this.exam!).subscribe((examAction) => {
+            this.examMonitoringSubscription = this.examActionService.subscribeForLatestExamAction(this.exam!).subscribe((examAction) => {
                 if (examAction) {
                     this.examActions.push(examAction);
                 }
             });
 
-            this.initTable();
+            this.initialLoadSubscription = this.examActionService.loadInitialActions(this.exam).subscribe((examActions: ExamAction[]) => {
+                examActions.forEach((action) => this.examActionService.notifyExamActionSubscribers(this.exam, action));
+            });
 
-            // Load initial data once all subscriptions are ready
-            setTimeout(() => this.examMonitoringWebsocketService.loadInitialActions(this.exam), 5 * 1000);
+            this.initTable();
         });
     }
 
@@ -95,6 +97,6 @@ export class ExamMonitoringComponent implements OnInit, OnDestroy {
 
     ngOnDestroy() {
         this.routeSubscription?.unsubscribe();
-        this.examMonitoringWebsocketService.unsubscribeForExamAction(this.exam!);
+        this.examActionService.unsubscribeForExamAction(this.exam!);
     }
 }

@@ -8,7 +8,7 @@ import {
 } from 'app/exam/monitoring/charts/monitoring-chart';
 import { ExamAction, ExamActionType } from 'app/entities/exam-user-activity.model';
 import { ChartComponent } from 'app/exam/monitoring/charts/chart.component';
-import { ExamMonitoringWebsocketService } from '../../exam-monitoring-websocket.service';
+import { ExamActionService } from '../../exam-action.service';
 import { ActivatedRoute } from '@angular/router';
 
 @Component({
@@ -24,8 +24,8 @@ export class ExerciseChartComponent extends ChartComponent implements OnInit, On
 
     readonly renderRate = 5;
 
-    constructor(route: ActivatedRoute, examMonitoringWebsocketService: ExamMonitoringWebsocketService) {
-        super(route, examMonitoringWebsocketService, 'exercise-chart', false);
+    constructor(route: ActivatedRoute, examActionService: ExamActionService) {
+        super(route, examActionService, 'exercise-chart', false);
     }
 
     ngOnInit() {

@@ -3,7 +3,7 @@ import { getColor, groupActionsByTimestamp } from 'app/exam/monitoring/charts/mo
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ChartComponent } from 'app/exam/monitoring/charts/chart.component';
 import { NgxChartsSingleSeriesDataEntry } from 'app/shared/chart/ngx-charts-datatypes';
-import { ExamMonitoringWebsocketService } from '../../exam-monitoring-websocket.service';
+import { ExamActionService } from '../../exam-action.service';
 import { ActivatedRoute } from '@angular/router';
 import { ExamAction } from 'app/entities/exam-user-activity.model';
 import dayjs from 'dayjs/esm';
@@ -17,8 +17,8 @@ export class TotalActionsChartComponent extends ChartComponent implements OnInit
 
     actionsPerTimestamp: Map<string, number> = new Map();
 
-    constructor(route: ActivatedRoute, examMonitoringWebsocketService: ExamMonitoringWebsocketService, private artemisDatePipe: ArtemisDatePipe) {
-        super(route, examMonitoringWebsocketService, 'total-actions-chart', false, [getColor(2)]);
+    constructor(route: ActivatedRoute, examActionService: ExamActionService, private artemisDatePipe: ArtemisDatePipe) {
+        super(route, examActionService, 'total-actions-chart', false, [getColor(2)]);
     }
 
     ngOnInit() {
