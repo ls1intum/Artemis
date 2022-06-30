@@ -100,7 +100,7 @@ describe('ModelingExamSubmissionComponent', () => {
             const modelingEditor = fixture.debugElement.query(By.directive(ModelingEditorComponent));
             expect(modelingEditor).not.toBeNull();
             expect(modelingEditor.componentInstance.umlModel).toEqual({ model: true });
-            expect(modelingEditor.componentInstance.withExplanation).toEqual(true);
+            expect(modelingEditor.componentInstance.withExplanation).toBeTrue();
             expect(modelingEditor.componentInstance.explanation).toEqual(mockSubmission.explanationText);
             expect(modelingEditor.componentInstance.diagramType).toEqual(UMLDiagramType.ClassDiagram);
         });
@@ -199,11 +199,11 @@ describe('ModelingExamSubmissionComponent', () => {
         });
         it('should return true if isSynced false', () => {
             comp.studentSubmission.isSynced = false;
-            expect(comp.hasUnsavedChanges()).toEqual(true);
+            expect(comp.hasUnsavedChanges()).toBeTrue();
         });
         it('should return false if isSynced true', () => {
             comp.studentSubmission.isSynced = true;
-            expect(comp.hasUnsavedChanges()).toEqual(false);
+            expect(comp.hasUnsavedChanges()).toBeFalse();
         });
     });
 
@@ -214,7 +214,7 @@ describe('ModelingExamSubmissionComponent', () => {
         it('should set isSynced to false', () => {
             comp.studentSubmission.isSynced = true;
             comp.modelChanged({} as UMLModel);
-            expect(comp.studentSubmission.isSynced).toEqual(false);
+            expect(comp.studentSubmission.isSynced).toBeFalse();
         });
     });
 
@@ -226,7 +226,7 @@ describe('ModelingExamSubmissionComponent', () => {
             const explanationText = 'New Explanation Text';
             comp.studentSubmission.isSynced = true;
             comp.explanationChanged(explanationText);
-            expect(comp.studentSubmission.isSynced).toEqual(false);
+            expect(comp.studentSubmission.isSynced).toBeFalse();
             expect(comp.explanationText).toEqual(explanationText);
         });
     });
