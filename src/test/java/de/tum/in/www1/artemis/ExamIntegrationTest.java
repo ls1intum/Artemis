@@ -1606,14 +1606,14 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
                     submission = participation.getSubmissions().iterator().next();
                 }
                 // Create results
-                var firstResult = new Result().score(correctionResultScore).rated(true).resultString("Good").completionDate(ZonedDateTime.now().minusMinutes(5));
+                var firstResult = new Result().score(correctionResultScore).rated(true).resultString("Good").completionDate(now().minusMinutes(5));
                 firstResult.setParticipation(participation);
                 firstResult.setAssessor(instructor);
                 firstResult = resultRepository.save(firstResult);
                 firstResult.setSubmission(submission);
                 submission.addResult(firstResult);
 
-                var correctionResult = new Result().score(resultScore).rated(true).resultString("Average").completionDate(ZonedDateTime.now().minusMinutes(5));
+                var correctionResult = new Result().score(resultScore).rated(true).resultString("Average").completionDate(now().minusMinutes(5));
                 correctionResult.setParticipation(participation);
                 correctionResult.setAssessor(instructor);
                 correctionResult = resultRepository.save(correctionResult);

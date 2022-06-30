@@ -16,7 +16,6 @@ import de.tum.in.www1.artemis.domain.exam.StudentExam;
  * and {@link de.tum.in.www1.artemis.domain.GradingScale} for the exam. The calculations are done in the server and returned with this DTO so that the client
  * does not need to repeat the same filtering and calculation logic. Also this removes the need for client to send an extra request to {@link de.tum.in.www1.artemis.web.rest.GradeStepResource#getGradeStepByPercentageForExam(Long, Long, Double)}
  * by including the grade in {@link ExamScoresDTO.StudentResult#overallGrade}.
- *
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class StudentExamWithGradeDTO {
@@ -33,10 +32,8 @@ public class StudentExamWithGradeDTO {
 
     public Map<Long, Double> achievedPointsPerExercise = new HashMap<>();
 
-    /**
-     * Empty constructor is needed by Jackson
-     */
     public StudentExamWithGradeDTO() {
+        // Empty constructor is needed by Jackson
     }
 
     public StudentExamWithGradeDTO(StudentExam studentExam, ExamScoresDTO.StudentResult studentResult) {
