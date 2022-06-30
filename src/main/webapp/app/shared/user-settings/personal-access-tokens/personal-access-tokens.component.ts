@@ -1,5 +1,4 @@
 import { Component, OnInit } from '@angular/core';
-import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { PersonalAccessTokenService } from 'app/shared/user-settings/personal-access-tokens/personal-access-tokens.service';
 
 @Component({
@@ -8,7 +7,6 @@ import { PersonalAccessTokenService } from 'app/shared/user-settings/personal-ac
     styleUrls: ['../user-settings.scss'],
 })
 export class PersonalAccessTokensComponent implements OnInit {
-    FeatureToggle = FeatureToggle;
     tokenMaxLifetimeDays: number;
     newTokenLifetimeDays = 1;
     newTokenLifetimeMillis: number;

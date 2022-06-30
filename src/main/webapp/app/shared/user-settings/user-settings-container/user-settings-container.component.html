@@ -24,12 +24,7 @@
                     <!--Notification Settings-->
                     {{ 'artemisApp.userSettings.notificationSettings' | artemisTranslate }}
                 </a>
-                <a
-                    class="list-group-item btn btn-outline-primary"
-                    routerLink="personal-access-tokens"
-                    routerLinkActive="active"
-                    [jhiFeatureToggleLink]="FeatureToggle.PersonalAccessTokens"
-                >
+                <a *ngIf="patEnabled" class="list-group-item btn btn-outline-primary" routerLink="personal-access-tokens" routerLinkActive="active">
                     <!--Personal Access Tokens-->
                     {{ 'artemisApp.userSettings.personalAccessTokens.title' | artemisTranslate }}
                 </a>

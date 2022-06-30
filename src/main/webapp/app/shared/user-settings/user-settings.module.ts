@@ -6,11 +6,10 @@ import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { RouterModule } from '@angular/router';
 import { userSettingsState } from 'app/shared/user-settings/user-settings.route';
 import { PersonalAccessTokensComponent } from './personal-access-tokens/personal-access-tokens.component';
-import { FeatureToggleModule } from '../feature-toggle/feature-toggle.module';
 import { ClipboardModule } from '@angular/cdk/clipboard';
 
 @NgModule({
-    imports: [RouterModule.forChild(userSettingsState), ArtemisSharedModule, FeatureToggleModule, ClipboardModule],
+    imports: [RouterModule.forChild(userSettingsState), ArtemisSharedModule, ClipboardModule],
     declarations: [UserSettingsContainerComponent, AccountInformationComponent, NotificationSettingsComponent, PersonalAccessTokensComponent],
 })
 export class UserSettingsModule {}
