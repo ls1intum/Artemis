@@ -1,7 +1,5 @@
 package de.tum.in.www1.artemis.authentication;
 
-import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
-
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -10,13 +8,11 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithAnonymousUser;
 import org.springframework.security.test.context.support.WithMockUser;
-import org.springframework.test.context.ActiveProfiles;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationJenkinsGitlabTest;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.repository.UserRepository;
 
-@ActiveProfiles({ SPRING_PROFILE_TEST, "artemis", "pat" })
 public class PersonalAccessTokensTest extends AbstractSpringIntegrationJenkinsGitlabTest {
 
     private static final String TOKEN_API_URL = "/api/personal-access-token";
