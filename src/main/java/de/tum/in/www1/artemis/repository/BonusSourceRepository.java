@@ -49,6 +49,13 @@ public interface BonusSourceRepository extends JpaRepository<BonusSource, Long> 
             """)
     Optional<BonusSource> findBySourceExamId(@Param("examId") Long examId);
 
+    @Query("""
+            SELECT bonusSource
+            FROM BonusSource bonusSource
+            WHERE bonusSource.targetGradingScale.exam.id = :#{#examId}
+            """)
+    Optional<BonusSource> findByTargetExamId(@Param("examId") Long examId);
+
     // /**
     // * Finds a bonus source for course by id or throws an exception if no such bonus source exists.
     // * If there is more the one bonus source for the course, all but the first one saved will get deleted

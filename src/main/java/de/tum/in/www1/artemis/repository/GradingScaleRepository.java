@@ -123,6 +123,8 @@ public interface GradingScaleRepository extends JpaRepository<GradingScale, Long
             """)
     Page<GradingScale> findByTitleInCourseOrExamAndUserHasAccessToCourse(@Param("partialTitle") String partialTitle, @Param("groups") Set<String> groups, Pageable pageable);
 
+    // Page<GradingScale> findByCourse_TitleIgnoreCaseContainingOrExam_TitleIgnoreCaseContaining(String partialCourseTitle, String partialExamTitle, Pageable pageable);
+
     /**
      * Maps a grade percentage to a valid grade step within the grading scale or throws an exception if no match was found
      *

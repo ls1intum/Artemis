@@ -18,9 +18,12 @@ import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.ExamRepository;
 import de.tum.in.www1.artemis.repository.GradingScaleRepository;
+import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.GradingScaleService;
+import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
+import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 
@@ -48,13 +51,16 @@ public class GradingScaleResource {
 
     private final AuthorizationCheckService authCheckService;
 
+    private final UserRepository userRepository;
+
     public GradingScaleResource(GradingScaleService gradingScaleService, GradingScaleRepository gradingScaleRepository, CourseRepository courseRepository,
-            ExamRepository examRepository, AuthorizationCheckService authCheckService) {
+            ExamRepository examRepository, AuthorizationCheckService authCheckService, UserRepository userRepository) {
         this.gradingScaleService = gradingScaleService;
         this.gradingScaleRepository = gradingScaleRepository;
         this.courseRepository = courseRepository;
         this.examRepository = examRepository;
         this.authCheckService = authCheckService;
+        this.userRepository = userRepository;
     }
 
     /**
@@ -88,6 +94,20 @@ public class GradingScaleResource {
         Optional<GradingScale> gradingScale = gradingScaleRepository.findByExamId(examId);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
         return gradingScale.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.ok(null));
+    }
+
+    /**
+     * Search for all modeling exercises by title and course title. The result is pageable since there might be hundreds
+     * of exercises in the DB.
+     *
+     * @param search The pageable search containing the page size, page number and query string
+     * @return The desired page, sorted and matching the given query
+     */
+    @GetMapping("grading-scales")
+    @PreAuthorize("hasRole('INSTRUCTOR')")
+    public ResponseEntity<SearchResultPageDTO<GradingScale>> getAllGradingScalesInInstructorGroupOnPage(PageableSearchDTO<String> search) {
+        final var user = userRepository.getUserWithGroupsAndAuthorities();
+        return ResponseEntity.ok(gradingScaleService.getAllOnPageWithSize(search, user));
     }
 
     /**

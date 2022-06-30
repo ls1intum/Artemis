@@ -83,4 +83,23 @@ public class GradingScale extends DomainObject {
     public void setBonusFrom(Set<BonusSource> bonusFrom) {
         this.bonusFrom = bonusFrom;
     }
+
+    /**
+     * Columns for which we allow a pageable search. For example see {@see de.tum.in.www1.artemis.service.TextExerciseService#getAllOnPageWithSize(PageableSearchDTO, User)}}
+     * method. This ensures, that we can't search in columns that don't exist, or we do not want to be searchable.
+     */
+    public enum GradingScaleSearchColumn {
+
+        ID("id"), COURSE_TITLE("course.title"), EXAM_TITLE("exam.title");
+
+        private final String mappedColumnName;
+
+        GradingScaleSearchColumn(String mappedColumnName) {
+            this.mappedColumnName = mappedColumnName;
+        }
+
+        public String getMappedColumnName() {
+            return mappedColumnName;
+        }
+    }
 }

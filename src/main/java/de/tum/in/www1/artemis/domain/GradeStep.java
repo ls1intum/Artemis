@@ -1,10 +1,15 @@
 package de.tum.in.www1.artemis.domain;
 
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 import javax.persistence.*;
 
 import org.apache.commons.math3.util.Precision;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -17,6 +22,10 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class GradeStep extends DomainObject {
+
+    private static final Pattern NUMERIC_VALUE_PATTERN = Pattern.compile("\\d+\\.?\\d+");
+
+    private static final Logger log = LoggerFactory.getLogger(GradeStep.class);
 
     @ManyToOne
     @JsonIgnoreProperties(value = "gradeSteps", allowSetters = true)
@@ -134,6 +143,21 @@ public class GradeStep extends DomainObject {
     public boolean checkValidity() {
         boolean validOrder = lowerBoundPercentage < upperBoundPercentage || lowerBoundPercentage == upperBoundPercentage && lowerBoundInclusive && upperBoundInclusive;
         return getId() == null && !gradeName.isBlank() && lowerBoundPercentage >= 0 && validOrder;
+    }
+
+    public Double getNumericValue() {
+        try {
+            String normalizedGradeName = gradeName.replace(',', '.');
+            Matcher matcher = NUMERIC_VALUE_PATTERN.matcher(normalizedGradeName);
+            if (matcher.find()) {
+                String numberString = matcher.group(1);
+                return Double.valueOf(numberString);
+            }
+        }
+        catch (Exception e) {
+            log.debug("getNumericValue failed for: " + this.gradeName, e);
+        }
+        return null;
     }
 
     /**

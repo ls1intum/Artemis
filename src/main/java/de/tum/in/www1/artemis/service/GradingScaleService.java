@@ -5,12 +5,17 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.IntStream;
 
+import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.GradeStep;
 import de.tum.in.www1.artemis.domain.GradingScale;
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.repository.GradingScaleRepository;
+import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
+import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
+import de.tum.in.www1.artemis.web.rest.util.PageUtil;
 
 @Service
 public class GradingScaleService {
@@ -40,6 +45,29 @@ public class GradingScaleService {
         }
         gradingScale.setGradeSteps(gradeSteps);
         return gradingScaleRepository.save(gradingScale);
+    }
+
+    /**
+     * Search for all modeling exercises fitting a {@link PageableSearchDTO search query}. The result is paged,
+     * meaning that there is only a predefined portion of the result returned to the user, so that the server doesn't
+     * have to send hundreds/thousands of exercises if there are that many in Artemis.
+     *
+     * @param search The search query defining the search term and the size of the returned page
+     * @param user The user for whom to fetch all available exercises
+     * @return A wrapper object containing a list of all found exercises and the total number of pages
+     */
+    public SearchResultPageDTO<GradingScale> getAllOnPageWithSize(final PageableSearchDTO<String> search, final User user) {
+        final var pageable = PageUtil.createGradingScaleRequest(search);
+        final var searchTerm = search.getSearchTerm();
+        final Page<GradingScale> gradingScalePage;
+        // if (authCheckService.isAdmin(user)) {
+        // gradingScalePage = gradingScaleRepository
+        // .findByCourse_TitleIgnoreCaseContainingOrExam_TitleIgnoreCaseContaining(searchTerm, searchTerm, pageable);
+        // }
+        // else {
+        gradingScalePage = gradingScaleRepository.findByTitleInCourseOrExamAndUserHasAccessToCourse(searchTerm, user.getGroups(), pageable);
+        // }
+        return new SearchResultPageDTO<>(gradingScalePage.getContent(), gradingScalePage.getTotalPages());
     }
 
     /**
