@@ -4,13 +4,8 @@
     </h4>
     <jhi-assessment-filters (filterChange)="updateFilteredSubmissions($event)" [submissions]="submissions"></jhi-assessment-filters>
     <jhi-assessment-warning [exercise]="exercise" [submissions]="filteredSubmissions"></jhi-assessment-warning>
-    <h4>
-        <small [ngStyle]="assessedSubmissions === submissions.length && submissions.length > 0 ? { color: '#5cb85c' } : {}">
-            <strong>Progress: {{ (assessedSubmissions / submissions.length) * 100 | number: '0.0-0' }} % </strong>({{ assessedSubmissions }} out of
-            {{ submissions.length }} submitted models assessed)
-        </small>
-    </h4>
-    <div class="table-responsive">
+    <jhi-assessment-progress-label *ngIf="submissions" [submissions]="submissions"></jhi-assessment-progress-label>
+    <div *ngIf="submissions?.length" class="table-responsive">
         <table class="table table-striped exercise-table">
             <thead>
                 <tr [(ascending)]="reverse" [(predicate)]="predicate" (sortChange)="sortRows()" jhiSort>

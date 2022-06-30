@@ -134,7 +134,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
         this.onResize();
     }
 
-    @HostListener('window:resize', ['$event'])
+    @HostListener('window:resize')
     onResize() {
         this.isCollapsed = window.innerWidth < 1200;
     }
@@ -219,7 +219,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
         goal_management: 'artemisApp.learningGoal.manageLearningGoals.title',
         assessment_locks: 'artemisApp.assessment.locks.home.title',
         apollon_diagrams: 'artemisApp.apollonDiagram.home.title',
-        discussion: 'artemisApp.metis.discussion.label',
+        communication: 'artemisApp.metis.communication.label',
         scores: 'entity.action.scores',
         assessment: 'artemisApp.assessment.assessment',
         export: 'artemisApp.quizExercise.export.export',
