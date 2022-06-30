@@ -196,6 +196,37 @@ describe('QuizParticipationComponent', () => {
             expect(updateSpy).toHaveBeenCalled();
         }));
 
+        it('should check quiz end in intervals', fakeAsync(() => {
+            fixture.detectChanges();
+
+            const checkQuizEndSpy = jest.spyOn(component, 'checkForQuizEnd');
+            tick(5000);
+            fixture.detectChanges();
+            discardPeriodicTasks();
+
+            expect(checkQuizEndSpy).toHaveBeenCalled();
+        }));
+
+        it('should add alert on quiz end', fakeAsync(() => {
+            fixture.detectChanges();
+
+            component.endDate = dayjs().add(1, 'seconds');
+            component.quizExercise.quizMode = QuizMode.BATCHED;
+            component.submission.submissionDate = dayjs();
+
+            const alertService = fixture.debugElement.injector.get(AlertService);
+            const alertSpy = jest.spyOn(alertService, 'success');
+
+            const checkQuizEndSpy = jest.spyOn(component, 'checkForQuizEnd');
+
+            tick(2000);
+            fixture.detectChanges();
+            discardPeriodicTasks();
+
+            expect(checkQuizEndSpy).toHaveBeenCalled();
+            expect(alertSpy).toHaveBeenCalledOnce();
+        }));
+
         it('should refresh quiz', () => {
             exerciseService = fixture.debugElement.injector.get(QuizExerciseService);
             fixture.detectChanges();

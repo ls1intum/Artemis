@@ -861,7 +861,6 @@ public class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBa
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testImportModelingExercise_setGradingInstructionForCopiedFeedback() throws Exception {
-
         var now = ZonedDateTime.now();
         Course course1 = database.addEmptyCourse();
         Course course2 = database.addEmptyCourse();

@@ -21,7 +21,7 @@ We **always** use ``FetchType.LAZY``, unless there is a very strong case to be m
 
 A relationship is a reference from one object to another. In a relational database relationships are defined through foreign keys. The source row contains the primary key of the target row to define the relationship (and sometimes the inverse). A query must be performed to read the target objects of the relationship using the foreign key and primary key information. If there is a relationship to a collection of other objects, a ``Collection`` or ``array`` type is used to hold the contents of the relationship. In a relational database, collection relations are either defined by the target objects having a foreign key back to the source object's primary key, or by having an intermediate join table to store the relationship (containing both objects' primary keys). |br|
 
-In this section, we depict common entity relationships we use in Artemis and show some code snippets. 
+In this section, we depict common entity relationships we use in Artemis and show some code snippets.
 
 * **OneToOne** A unique reference from one object to another. It is also inverse of itself. Example: one ``Complaint`` has a reference to one ``Result``.
 
@@ -45,7 +45,7 @@ In this section, we depict common entity relationships we use in Artemis and sho
     private List<Feedback> feedbacks = new ArrayList<>();
 
 
-* **ManyToOne** A reference from one object to another. It is the inverse of an **OneToMany** relationship. Example: one ``Feedback`` has a reference to one ``Result``. 
+* **ManyToOne** A reference from one object to another. It is the inverse of an **OneToMany** relationship. Example: one ``Feedback`` has a reference to one ``Result``.
 
  .. code:: java
 
@@ -70,15 +70,30 @@ In this section, we depict common entity relationships we use in Artemis and sho
     private Set<Exercise> exercises = new HashSet<>();
 
 
- .. warning::
-        For **OneToMany**, **ManyToOne**, and **ManyToMany** relationships you must not forget to mark the associated elements with ``@JsonIgnoreProperties()``. Without this, the object serialization process will be stuck in an endless loop and throw an error. For more information check out the examples listed above and see: `Jackson and JsonIgnoreType <https://www.concretepage.com/jackson-api/jackson-jsonignore-jsonignoreproperties-and-jsonignoretype>`_. 
+.. warning::
+    For **OneToMany**, **ManyToOne**, and **ManyToMany** relationships you must not forget to mark the associated elements with ``@JsonIgnoreProperties()``. Without this, the object serialization process will be stuck in an endless loop and throw an error. For more information check out the examples listed above and see: `Jackson and JsonIgnoreType <https://www.concretepage.com/jackson-api/jackson-jsonignore-jsonignoreproperties-and-jsonignoretype>`_.
+
+.. admonition:: Lazy relationships
+
+    Lazy relationships in Artemis may require some additional special handling to work correctly:
+
+    * Lazy **OneToOne** relationships require the additional presence of the ``@JoinColumn`` annotation and only work in one direction.
+      They can only lazily load the child of the relationship, not the parent. The parent is the entity whose database table owns the foreign key.
+
+      E.g., You can lazily load ``ProgrammingExercise::solutionParticipation`` but not ``SolutionProgrammingExerciseParticipation::programmingExercise``, as the foreign key is part of the ``exercise`` table.
+
+    * Lazy **ManyToOne** relationships require the additional presence of the ``@JoinColumn`` annotation.
+
+    * Lazy **OneToMany** and **ManyToMany** relationships work without further changes.
 
 
-2. Cascade Types
+
+
+3. Cascade Types
 ================
 Entity relationships often depend on the existence of another entity — for example, the Result-Feedback relationship. Without the Result, the Feedback entity doesn't have any meaning of its own. When we delete the Result entity, our Feedback entity should also get deleted. For more information see: `jpa cascade types <https://www.baeldung.com/jpa-cascade-types>`_.
 
-* ``CascadeType.ALL`` Propagates all operations mentioned below from the parent object to the to child object. 
+* ``CascadeType.ALL`` Propagates all operations mentioned below from the parent object to the to child object.
 
  .. code-block:: java
 
@@ -120,7 +135,7 @@ Entity relationships often depend on the existence of another entity — for exa
     @JsonIgnoreProperties({ "submission", "participation" })
     @JoinColumn(unique = true)
     private Result result;
- 
+
 
 * ``CascadeType.REFRESH`` If the source entity is refreshed, it cascades the refresh to the target of the association. This is used to refresh the data in the object and its associations. This is useful for cases where there is a change which needs to be synchronized FROM the database.
 
@@ -175,7 +190,7 @@ Best Practices
            // restore the association to the parent object
            feedback.setResult(result);
            savedFeedbacks.add(feedback);
-        });  
+        });
 
         // set the association of the parent to its child objects which are now persisted in the database
         result.setFeedbacks(savedFeedbacks);
@@ -197,8 +212,8 @@ Solutions for known issues
 
 * ``JpaSystemException: null index column for collection`` caused by ``@OrderColumn`` annotation:
 
- There is a problem with the way you save the associated objects. You must follow this procedure: 
- 
+ There is a problem with the way you save the associated objects. You must follow this procedure:
+
  #. Save the child entity (e.g., `Feedback <https://github.com/ls1intum/Artemis/blob/develop/src/main/java/de/tum/in/www1/artemis/domain/Feedback.java>`_) without connection to the parent entity (e.g., `Result <https://github.com/ls1intum/Artemis/blob/develop/src/main/java/de/tum/in/www1/artemis/domain/Result.java>`_)
  #. Add back the connection of the child entity to the parent entity.
  #. Save the parent entity.
@@ -211,7 +226,7 @@ Solutions for known issues
 * There are ``null`` values in your ordered collection: You must annotate the ordered collection with ``CascadeType.ALL`` and ``orphanRemoval = true``. E.g:
 
    .. code-block:: java
-    
+
     //Result.java
     @OneToMany(mappedBy = "result", cascade = CascadeType.ALL, orphanRemoval = true)
     @OrderColumn
@@ -222,5 +237,5 @@ Solutions for known issues
 
 
 .. |br| raw:: html
-    
+
     <br />

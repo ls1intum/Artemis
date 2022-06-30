@@ -4,9 +4,20 @@
         "AssessmentType": {
             "null": "",
             "undefined": "",
-            "AUTOMATIC": "Automatisch",
-            "SEMI_AUTOMATIC": "Halbautomatisch",
-            "MANUAL": "Manuell"
+            "AUTOMATIC": "automatisch",
+            "SEMI_AUTOMATIC": "halbautomatisch",
+            "MANUAL": "manuell",
+            "forExerciseHeader": {
+                "AUTOMATIC": "automatisch",
+                "SEMI_AUTOMATIC": "manuell"
+            },
+            "tooltip": {
+                "null": "Es steht kein Bewertungsmodus fest.",
+                "undefined": "Es steht kein Bewertungsmodus fest.",
+                "AUTOMATIC": "Diese Aufgabe wird nur automatisch und nicht von Tutor:innen bewertet.",
+                "SEMI_AUTOMATIC": "Diese Aufgabe wird von Tutor:innen bewertet, jedoch werden Bewertungsvorschläge automatisch erstellt. Diese Vorschläge können zum Beispiel Testfälle bei Programmieraufgaben sein.",
+                "MANUAL": "Diese Aufgabe wird manuell von Tutor:innen bewertet."
+            }
         }
     }
 }

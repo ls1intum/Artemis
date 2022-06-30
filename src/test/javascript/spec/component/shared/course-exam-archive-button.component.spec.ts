@@ -89,9 +89,9 @@ describe('Course Exam Archive Button Component', () => {
             comp.ngOnInit();
             tick();
 
-            expect(comp.canArchive()).toEqual(false);
-            expect(comp.canCleanupCourse()).toEqual(false);
-            expect(comp.canDownloadArchive()).toEqual(false);
+            expect(comp.canArchive()).toBeFalse();
+            expect(comp.canCleanupCourse()).toBeFalse();
+            expect(comp.canDownloadArchive()).toBeFalse();
         }));
     });
 
@@ -109,9 +109,9 @@ describe('Course Exam Archive Button Component', () => {
             comp.ngOnInit();
             tick();
 
-            expect(comp.canArchive()).toEqual(false);
-            expect(comp.canCleanupCourse()).toEqual(false);
-            expect(comp.canDownloadArchive()).toEqual(false);
+            expect(comp.canArchive()).toBeFalse();
+            expect(comp.canCleanupCourse()).toBeFalse();
+            expect(comp.canDownloadArchive()).toBeFalse();
         }));
     });
 
@@ -127,9 +127,9 @@ describe('Course Exam Archive Button Component', () => {
             comp.ngOnInit();
             tick();
 
-            expect(comp.canArchive()).toEqual(true);
-            expect(comp.canCleanupCourse()).toEqual(false);
-            expect(comp.canDownloadArchive()).toEqual(false);
+            expect(comp.canArchive()).toBeTrue();
+            expect(comp.canCleanupCourse()).toBeFalse();
+            expect(comp.canDownloadArchive()).toBeFalse();
         }));
     });
 
@@ -149,9 +149,9 @@ describe('Course Exam Archive Button Component', () => {
         });
 
         it('should not display an archive course button', fakeAsync(() => {
-            expect(comp.canArchive()).toEqual(true);
-            expect(comp.canCleanupCourse()).toEqual(true);
-            expect(comp.canDownloadArchive()).toEqual(true);
+            expect(comp.canArchive()).toBeTrue();
+            expect(comp.canCleanupCourse()).toBeTrue();
+            expect(comp.canDownloadArchive()).toBeTrue();
         }));
 
         it('should cleanup archive for course', fakeAsync(() => {
@@ -235,9 +235,9 @@ describe('Course Exam Archive Button Component', () => {
         });
 
         it('should display an archive button', fakeAsync(() => {
-            expect(comp.canArchive()).toEqual(true);
-            expect(comp.canCleanupCourse()).toEqual(false);
-            expect(comp.canDownloadArchive()).toEqual(true);
+            expect(comp.canArchive()).toBeTrue();
+            expect(comp.canCleanupCourse()).toBeFalse();
+            expect(comp.canDownloadArchive()).toBeTrue();
         }));
 
         it('should not cleanup archive for exam', fakeAsync(() => {
