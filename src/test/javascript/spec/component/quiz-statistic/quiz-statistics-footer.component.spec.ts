@@ -96,7 +96,7 @@ describe('QuizExercise Statistic Footer Component', () => {
         expect(accountSpy).toHaveBeenCalled();
         expect(comp.quizExercise).toEqual(quizExercise);
         expect(comp.question).toEqual(question);
-        expect(comp.waitingForQuizStart).toEqual(false);
+        expect(comp.waitingForQuizStart).toBeFalse();
     });
 
     it('should return remaining Time', () => {

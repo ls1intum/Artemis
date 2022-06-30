@@ -276,7 +276,7 @@ describe('AssessmentHeaderComponent', () => {
         component.toggleHighlightDifferences();
 
         expect(component.highlightDifferencesChange.emit).toHaveBeenCalled();
-        expect(component.highlightDifferences).toEqual(true);
+        expect(component.highlightDifferences).toBeTrue();
     });
 
     it('should set highlightDifferences to false', () => {
@@ -286,7 +286,7 @@ describe('AssessmentHeaderComponent', () => {
         component.toggleHighlightDifferences();
 
         expect(component.highlightDifferencesChange.emit).toHaveBeenCalled();
-        expect(component.highlightDifferences).toEqual(false);
+        expect(component.highlightDifferences).toBeFalse();
     });
 
     it('should send assessment event on assess next button click when exercise set to Text', () => {
