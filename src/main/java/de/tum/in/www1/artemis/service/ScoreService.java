@@ -4,7 +4,6 @@ import static de.tum.in.www1.artemis.service.util.RoundingUtil.roundScoreSpecifi
 
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -277,13 +276,13 @@ public class ScoreService {
             StudentScore studentScore = (StudentScore) participantScore;
             resultOrdered = resultRepository
                     .getResultsOrderedByParticipationIdLegalSubmissionIdResultIdDescForStudent(participantScore.getExercise().getId(), studentScore.getUser().getId()).stream()
-                    .filter(r -> !participantScore.getLastResult().equals(r)).collect(Collectors.toList());
+                    .filter(r -> !participantScore.getLastResult().equals(r)).toList();
         }
         else {
             TeamScore teamScore = (TeamScore) participantScore;
             resultOrdered = resultRepository
                     .getResultsOrderedByParticipationIdLegalSubmissionIdResultIdDescForTeam(participantScore.getExercise().getId(), teamScore.getTeam().getId()).stream()
-                    .filter(r -> !participantScore.getLastResult().equals(r)).collect(Collectors.toList());
+                    .filter(r -> !participantScore.getLastResult().equals(r)).toList();
         }
         // the new last result (result with the highest id of submission with the highest id) will be at the beginning of the list
         return resultOrdered.isEmpty() ? Optional.empty() : Optional.of(resultOrdered.get(0));
@@ -302,13 +301,13 @@ public class ScoreService {
             StudentScore studentScore = (StudentScore) participantScore;
             ratedResultsOrdered = resultRepository
                     .getRatedResultsOrderedByParticipationIdLegalSubmissionIdResultIdDescForStudent(participantScore.getExercise().getId(), studentScore.getUser().getId()).stream()
-                    .filter(r -> !participantScore.getLastRatedResult().equals(r)).collect(Collectors.toList());
+                    .filter(r -> !participantScore.getLastRatedResult().equals(r)).toList();
         }
         else {
             TeamScore teamScore = (TeamScore) participantScore;
             ratedResultsOrdered = resultRepository
                     .getRatedResultsOrderedByParticipationIdLegalSubmissionIdResultIdDescForTeam(participantScore.getExercise().getId(), teamScore.getTeam().getId()).stream()
-                    .filter(r -> !participantScore.getLastRatedResult().equals(r)).collect(Collectors.toList());
+                    .filter(r -> !participantScore.getLastRatedResult().equals(r)).toList();
         }
         // the new last rated result (rated result with the highest id of submission with the highest id) will be at the beginning of the list
         return ratedResultsOrdered.isEmpty() ? Optional.empty() : Optional.of(ratedResultsOrdered.get(0));

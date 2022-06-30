@@ -1,7 +1,6 @@
 package de.tum.in.www1.artemis.web.rest;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -22,7 +21,7 @@ public class LogsResource {
     @GetMapping("/logs")
     public List<LoggerVM> getList() {
         LoggerContext context = (LoggerContext) LoggerFactory.getILoggerFactory();
-        return context.getLoggerList().stream().map(LoggerVM::new).collect(Collectors.toList());
+        return context.getLoggerList().stream().map(LoggerVM::new).toList();
     }
 
     @PutMapping("/logs")

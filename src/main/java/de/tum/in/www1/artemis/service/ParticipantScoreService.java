@@ -155,7 +155,7 @@ public class ParticipantScoreService {
      *
      * @param pageable  pageable object to specify paging
      * @param exercises exercises for which to get all the participant scores
-     * @return all participant scores of the exercises converted to DTOs
+     * @return an unmodifiable list of all participant scores of the exercises converted to DTOs
      */
     public List<ParticipantScoreDTO> getParticipantScoreDTOs(Pageable pageable, Set<Exercise> exercises) {
         Set<Exercise> individualExercisesOfCourse = exercises.stream().filter(exercise -> exercise.getMode().equals(ExerciseMode.INDIVIDUAL)).collect(Collectors.toSet());
@@ -165,14 +165,14 @@ public class ParticipantScoreService {
                 .map(ParticipantScoreDTO::generateFromParticipantScore).toList();
         List<ParticipantScoreDTO> resultsTeamExercises = teamScoreRepository.findAllByExerciseIn(teamExercisesOfCourse, pageable).stream()
                 .map(ParticipantScoreDTO::generateFromParticipantScore).toList();
-        return Stream.concat(resultsIndividualExercises.stream(), resultsTeamExercises.stream()).collect(Collectors.toList());
+        return Stream.concat(resultsIndividualExercises.stream(), resultsTeamExercises.stream()).toList();
     }
 
     /**
      * Calculates various average statistics for every user / team that participated in the given exercises
      *
      * @param exercises exercises for which to calculate the statistics
-     * @return DTOs containing the statistics for every user / team
+     * @return an unmodifiable list of DTOs containing the statistics for every user / team
      */
     public List<ParticipantScoreAverageDTO> getParticipantScoreAverageDTOs(Set<Exercise> exercises) {
         Set<Exercise> individualExercises = exercises.stream().filter(exercise -> exercise.getMode().equals(ExerciseMode.INDIVIDUAL)).collect(Collectors.toSet());
@@ -181,7 +181,7 @@ public class ParticipantScoreService {
         List<ParticipantScoreAverageDTO> resultsIndividualExercises = studentScoreRepository.getAvgScoreOfStudentsInExercises(individualExercises);
         List<ParticipantScoreAverageDTO> resultsTeamExercises = teamScoreRepository.getAvgScoreOfTeamInExercises(teamExercises);
 
-        return Stream.concat(resultsIndividualExercises.stream(), resultsTeamExercises.stream()).collect(Collectors.toList());
+        return Stream.concat(resultsIndividualExercises.stream(), resultsTeamExercises.stream()).toList();
     }
 
     /**

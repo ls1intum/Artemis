@@ -41,7 +41,7 @@ public class CreateOnlyStrategy extends TeamImportStrategy {
      *
      * @param sourceExercise Exercise from which to take the teams for the import
      * @param destinationExercise Exercise in which to import the teams into
-     * @return list of those source teams that have no conflicts
+     * @return an unmodifiable list of those source teams that have no conflicts
      */
     private List<Team> getExerciseTeamsAndFindConflictFreeSourceTeams(Exercise sourceExercise, Exercise destinationExercise) {
         // Get all teams from the source exercise and from the destination exercise
@@ -60,7 +60,7 @@ public class CreateOnlyStrategy extends TeamImportStrategy {
      *
      * @param exercise Exercise from which to take the teams for the import
      * @param teams Teams which will be added into exercise
-     * @return list of those source teams that have no conflicts
+     * @return an unmodifiable list of those source teams that have no conflicts
      */
     private List<Team> getExerciseTeamsAndFindConflictFreeSourceTeams(Exercise exercise, List<Team> teams) {
         // Get all teams from the given exercise
@@ -78,7 +78,7 @@ public class CreateOnlyStrategy extends TeamImportStrategy {
      *
      * @param existingTeams Teams that are already in the exercise
      * @param newTeams Teams which will be added into exercise
-     * @return list of those source teams that have no conflicts
+     * @return an unmodifiable list of those source teams that have no conflicts
      */
     private List<Team> getConflictFreeTeams(List<Team> existingTeams, List<Team> newTeams) {
         Set<String> existingTeamShortNames = existingTeams.stream().map(Team::getShortName).collect(Collectors.toSet());
@@ -91,6 +91,6 @@ public class CreateOnlyStrategy extends TeamImportStrategy {
             return noShortNameConflict && noStudentConflict;
         });
 
-        return conflictFreeSourceTeams.collect(Collectors.toList());
+        return conflictFreeSourceTeams.toList();
     }
 }

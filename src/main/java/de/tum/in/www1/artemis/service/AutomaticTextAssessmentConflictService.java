@@ -1,9 +1,8 @@
 package de.tum.in.www1.artemis.service;
 
-import static java.util.stream.Collectors.*;
-
 import java.time.ZonedDateTime;
 import java.util.*;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.slf4j.Logger;
@@ -72,7 +71,7 @@ public class AutomaticTextAssessmentConflictService {
             else {
                 return Stream.empty();
             }
-        }).collect(toList());
+        }).toList();
 
         if (textFeedbackConflictRequestDTOS.isEmpty()) {
             return;
@@ -143,9 +142,9 @@ public class AutomaticTextAssessmentConflictService {
                 textSubmission.setResults(List.of(conflict.getFirstFeedback().getResult()));
                 return textSubmission;
             }
-        }).collect(toSet());
-        final var allTextBlocks = textBlockRepository.findAllBySubmissionIdIn(textSubmissionSet.stream().map(TextSubmission::getId).collect(toSet()));
-        final var textBlockGroupedBySubmissionId = allTextBlocks.stream().collect(groupingBy(block -> block.getSubmission().getId(), toSet()));
+        }).collect(Collectors.toSet());
+        final var allTextBlocks = textBlockRepository.findAllBySubmissionIdIn(textSubmissionSet.stream().map(TextSubmission::getId).collect(Collectors.toSet()));
+        final var textBlockGroupedBySubmissionId = allTextBlocks.stream().collect(Collectors.groupingBy(block -> block.getSubmission().getId(), Collectors.toSet()));
         textSubmissionSet.forEach(textSubmission -> textSubmission.setBlocks(textBlockGroupedBySubmissionId.get(textSubmission.getId())));
         return textSubmissionSet;
     }
@@ -172,7 +171,7 @@ public class AutomaticTextAssessmentConflictService {
      */
     private List<FeedbackConflict> findSolvedConflictsInResponse(List<TextFeedbackConflictRequestDTO> textFeedbackConflictRequestDTOS,
             List<FeedbackConflictResponseDTO> feedbackConflictResponseDTOS) {
-        List<Long> feedbackIds = textFeedbackConflictRequestDTOS.stream().map(TextFeedbackConflictRequestDTO::getFeedbackId).collect(toList());
+        List<Long> feedbackIds = textFeedbackConflictRequestDTOS.stream().map(TextFeedbackConflictRequestDTO::getFeedbackId).toList();
         List<FeedbackConflict> storedConflicts = this.feedbackConflictRepository.findAllConflictsByFeedbackList(feedbackIds);
 
         storedConflicts.forEach(conflict -> {

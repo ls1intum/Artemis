@@ -10,7 +10,6 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.time.ZonedDateTime;
 import java.util.*;
-import java.util.stream.Collectors;
 
 import org.gitlab4j.api.*;
 import org.gitlab4j.api.models.*;
@@ -428,9 +427,9 @@ public class GitlabRequestMockProvider {
         if (user.getGroups() != null && !user.getGroups().isEmpty()) {
             final var instructorExercises = programmingExerciseRepository.findAllByCourse_InstructorGroupNameIn(user.getGroups());
             final var editorExercises = programmingExerciseRepository.findAllByCourse_EditorGroupNameIn(user.getGroups()).stream()
-                    .filter(programmingExercise -> !instructorExercises.contains(programmingExercise)).collect(Collectors.toList());
+                    .filter(programmingExercise -> !instructorExercises.contains(programmingExercise)).toList();
             final var teachingAssistantExercises = programmingExerciseRepository.findAllByCourse_TeachingAssistantGroupNameIn(user.getGroups()).stream()
-                    .filter(programmingExercise -> !instructorExercises.contains(programmingExercise)).collect(Collectors.toList());
+                    .filter(programmingExercise -> !instructorExercises.contains(programmingExercise)).toList();
             mockAddUserToGroups(userId, instructorExercises, MAINTAINER);
             mockAddUserToGroups(userId, editorExercises, DEVELOPER);
             mockAddUserToGroups(userId, teachingAssistantExercises, GUEST);

@@ -6,8 +6,6 @@ import java.security.SecureRandom;
 import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.*;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import javax.annotation.Nullable;
 import javax.validation.constraints.NotNull;
@@ -301,7 +299,7 @@ public interface StudentExamRepository extends JpaRepository<StudentExam, Long> 
         // Add as many optional indices as numberOfOptionalExercises
         if (numberOfOptionalExercises > 0) {
             Collections.shuffle(optionalIndices);
-            indices = Stream.concat(indices.stream(), optionalIndices.stream().limit(numberOfOptionalExercises)).collect(Collectors.toList());
+            indices.addAll(optionalIndices.stream().limit(numberOfOptionalExercises).toList());
         }
 
         // Sort the indices to preserve the original order

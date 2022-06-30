@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.service.metis;
 
 import static de.tum.in.www1.artemis.config.Constants.VOTE_EMOJI_ID;
 
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
@@ -262,7 +263,7 @@ public class PostService extends PostingService {
 
         // search by text or #post
         if (postContextFilter.getSearchText() != null) {
-            postsInCourse = postsInCourse.stream().filter(post -> postFilter(post, postContextFilter.getSearchText())).collect(Collectors.toList());
+            postsInCourse = postsInCourse.stream().filter(post -> postFilter(post, postContextFilter.getSearchText())).collect(Collectors.toCollection(ArrayList::new));
         }
 
         final Page<Post> postsPage;

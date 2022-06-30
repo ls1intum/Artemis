@@ -47,7 +47,7 @@ public class ExerciseScoresChartService {
      *
      * @param user      the user for whom to get the individual score
      * @param exercises the exercises to consider
-     * @return list of the exercise scores
+     * @return an unmodifiable list of the exercise scores
      */
     public List<ExerciseScoresDTO> getExerciseScores(Set<Exercise> exercises, User user) {
         if (user == null || exercises == null) {
@@ -66,8 +66,7 @@ public class ExerciseScoresChartService {
                 .collect(Collectors.toMap(ExerciseScoresAggregatedInformation::getExerciseId, exerciseScoresAggregatedInformation -> exerciseScoresAggregatedInformation));
 
         return exercises.stream()
-                .map(exercise -> createExerciseScoreDTO(exerciseIdToAggregatedInformation, individualExerciseIdToStudentScore, teamExerciseIdToTeamScore, exercise))
-                .collect(Collectors.toList());
+                .map(exercise -> createExerciseScoreDTO(exerciseIdToAggregatedInformation, individualExerciseIdToStudentScore, teamExerciseIdToTeamScore, exercise)).toList();
     }
 
     private Map<Long, TeamScore> getScoreOfStudentForTeamExercises(User user, Set<Exercise> teamExercises) {

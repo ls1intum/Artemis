@@ -71,7 +71,7 @@ public class AtheneIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
         final var segments = textSubmissions.stream().map(textBlockService::splitSubmissionIntoBlocks).flatMap(Collection::stream)
                 .map(block -> Segment.newBuilder().setId(block.getId()).setSubmissionId(block.getSubmission().getId().intValue()).setText(block.getText())
                         .setStartIndex(block.getStartIndex()).setEndIndex(block.getEndIndex()).build())
-                .collect(Collectors.toList());
+                .collect(Collectors.toCollection(ArrayList::new));
         atheneResultBuilder.addAllSegments(segments);
 
         List.of(0, 1, 2).forEach(cid -> {

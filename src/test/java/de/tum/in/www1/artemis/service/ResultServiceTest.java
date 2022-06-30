@@ -4,7 +4,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.ZonedDateTime;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -100,7 +99,7 @@ public class ResultServiceTest extends AbstractSpringIntegrationBambooBitbucketJ
         Result result = database.addResultToParticipation(null, null, examStudentParticipation);
         result = database.addVariousVisibilityFeedbackToResults(result);
 
-        List<Feedback> expectedFeedbacks = result.getFeedbacks().stream().filter(feedback -> !feedback.isInvisible() && !feedback.isAfterDueDate()).collect(Collectors.toList());
+        List<Feedback> expectedFeedbacks = result.getFeedbacks().stream().filter(feedback -> !feedback.isInvisible() && !feedback.isAfterDueDate()).toList();
 
         assertThat(resultService.getFeedbacksForResult(result)).isEqualTo(expectedFeedbacks);
     }
@@ -114,7 +113,7 @@ public class ResultServiceTest extends AbstractSpringIntegrationBambooBitbucketJ
         Result result = database.addResultToParticipation(null, null, examStudentParticipation);
         result = database.addVariousVisibilityFeedbackToResults(result);
 
-        List<Feedback> expectedFeedbacks = result.getFeedbacks().stream().filter(feedback -> !feedback.isInvisible()).collect(Collectors.toList());
+        List<Feedback> expectedFeedbacks = result.getFeedbacks().stream().filter(feedback -> !feedback.isInvisible()).toList();
 
         assertThat(resultService.getFeedbacksForResult(result)).isEqualTo(expectedFeedbacks);
     }
@@ -127,7 +126,7 @@ public class ResultServiceTest extends AbstractSpringIntegrationBambooBitbucketJ
         Result result = database.addResultToParticipation(null, null, programmingExerciseStudentParticipation);
         result = database.addVariousVisibilityFeedbackToResults(result);
 
-        List<Feedback> expectedFeedbacks = result.getFeedbacks().stream().filter(feedback -> !feedback.isInvisible() && !feedback.isAfterDueDate()).collect(Collectors.toList());
+        List<Feedback> expectedFeedbacks = result.getFeedbacks().stream().filter(feedback -> !feedback.isInvisible() && !feedback.isAfterDueDate()).toList();
 
         assertThat(resultService.getFeedbacksForResult(result)).isEqualTo(expectedFeedbacks);
     }
@@ -140,7 +139,7 @@ public class ResultServiceTest extends AbstractSpringIntegrationBambooBitbucketJ
         Result result = database.addResultToParticipation(null, null, programmingExerciseStudentParticipation);
         result = database.addVariousVisibilityFeedbackToResults(result);
 
-        List<Feedback> expectedFeedbacks = result.getFeedbacks().stream().filter(feedback -> !feedback.isInvisible()).collect(Collectors.toList());
+        List<Feedback> expectedFeedbacks = result.getFeedbacks().stream().filter(feedback -> !feedback.isInvisible()).toList();
 
         assertThat(resultService.getFeedbacksForResult(result)).isEqualTo(expectedFeedbacks);
     }
@@ -156,7 +155,7 @@ public class ResultServiceTest extends AbstractSpringIntegrationBambooBitbucketJ
         result = database.addFeedbackToResult(ModelFactory.createPositiveFeedback(FeedbackType.MANUAL), result);
 
         List<Feedback> expectedFeedbacks = result.getFeedbacks().stream()
-                .filter(feedback -> !feedback.isInvisible() && feedback.getType() != null && feedback.getType().equals(FeedbackType.AUTOMATIC)).collect(Collectors.toList());
+                .filter(feedback -> !feedback.isInvisible() && feedback.getType() != null && feedback.getType().equals(FeedbackType.AUTOMATIC)).toList();
 
         assertThat(resultService.getFeedbacksForResult(result)).isEqualTo(expectedFeedbacks);
     }
@@ -171,7 +170,7 @@ public class ResultServiceTest extends AbstractSpringIntegrationBambooBitbucketJ
         result = database.addVariousVisibilityFeedbackToResults(result);
         result = database.addFeedbackToResult(ModelFactory.createPositiveFeedback(FeedbackType.MANUAL), result);
 
-        List<Feedback> expectedFeedbacks = result.getFeedbacks().stream().filter(feedback -> !feedback.isInvisible()).collect(Collectors.toList());
+        List<Feedback> expectedFeedbacks = result.getFeedbacks().stream().filter(feedback -> !feedback.isInvisible()).toList();
 
         assertThat(resultService.getFeedbacksForResult(result)).isEqualTo(expectedFeedbacks);
     }
@@ -186,7 +185,7 @@ public class ResultServiceTest extends AbstractSpringIntegrationBambooBitbucketJ
         result = database.addVariousVisibilityFeedbackToResults(result);
         result = database.addFeedbackToResult(ModelFactory.createPositiveFeedback(FeedbackType.MANUAL), result);
 
-        List<Feedback> expectedFeedbacks = result.getFeedbacks().stream().filter(feedback -> !feedback.isInvisible()).collect(Collectors.toList());
+        List<Feedback> expectedFeedbacks = result.getFeedbacks().stream().filter(feedback -> !feedback.isInvisible()).toList();
 
         assertThat(resultService.getFeedbacksForResult(result)).isEqualTo(expectedFeedbacks);
     }
@@ -209,11 +208,11 @@ public class ResultServiceTest extends AbstractSpringIntegrationBambooBitbucketJ
 
         List<Feedback> expectedFeedbacks;
         if (AssessmentType.AUTOMATIC == assessmentType) {
-            expectedFeedbacks = result.getFeedbacks().stream().filter(feedback -> !feedback.isInvisible() && !feedback.isAfterDueDate()).collect(Collectors.toList());
+            expectedFeedbacks = result.getFeedbacks().stream().filter(feedback -> !feedback.isInvisible() && !feedback.isAfterDueDate()).toList();
             assertThat(expectedFeedbacks).hasSize(2);
         }
         else {
-            expectedFeedbacks = result.getFeedbacks().stream().filter(feedback -> !feedback.isInvisible()).collect(Collectors.toList());
+            expectedFeedbacks = result.getFeedbacks().stream().filter(feedback -> !feedback.isInvisible()).toList();
             assertThat(expectedFeedbacks).hasSize(3);
         }
         assertThat(resultService.getFeedbacksForResult(result)).isEqualTo(expectedFeedbacks);
@@ -236,7 +235,7 @@ public class ResultServiceTest extends AbstractSpringIntegrationBambooBitbucketJ
         result = database.addFeedbackToResult(ModelFactory.createPositiveFeedback(FeedbackType.MANUAL), result);
 
         List<Feedback> expectedFeedbacks;
-        expectedFeedbacks = result.getFeedbacks().stream().filter(feedback -> !feedback.isInvisible()).collect(Collectors.toList());
+        expectedFeedbacks = result.getFeedbacks().stream().filter(feedback -> !feedback.isInvisible()).toList();
         assertThat(expectedFeedbacks).hasSize(3);
         assertThat(resultService.getFeedbacksForResult(result)).isEqualTo(expectedFeedbacks);
     }

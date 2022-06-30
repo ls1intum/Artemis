@@ -59,7 +59,7 @@ public class StructuralTestCaseService {
      * This includes solution entries for classes, attributes, methods and constructors.
      *
      * @param programmingExercise The programming exercise
-     * @return The new structural solution entries
+     * @return an unmodifiable list of new structural solution entries
      * @throws StructuralSolutionEntryGenerationException If there was an error while generating the solution entries
      */
     public List<ProgrammingExerciseSolutionEntry> generateStructuralSolutionEntries(ProgrammingExercise programmingExercise) throws StructuralSolutionEntryGenerationException {
@@ -121,7 +121,7 @@ public class StructuralTestCaseService {
      * @param solutionRepository The solution repository of the programming exercise
      * @param classElements      The entries from the test.json file
      * @param solutionClasses    The classes read with QDox
-     * @return The new structural solution entries
+     * @return an unmodifiable list of new structural solution entries
      */
     private List<ProgrammingExerciseSolutionEntry> generateStructuralSolutionEntries(Set<ProgrammingExerciseTestCase> testCases, Repository solutionRepository,
             StructuralClassElements[] classElements, Map<String, JavaClass> solutionClasses) {
@@ -147,7 +147,7 @@ public class StructuralTestCaseService {
                     createSolutionEntry(filePath, String.join("\n\n", attributesSolutionCode), findStructuralTestCase("Attributes", name, testCases)),
                     createSolutionEntry(filePath, String.join("\n\n", constructorsSolutionCode), findStructuralTestCase("Constructors", name, testCases)),
                     createSolutionEntry(filePath, String.join("\n\n", methodsSolutionCode), findStructuralTestCase("Methods", name, testCases)));
-        }).filter(Objects::nonNull).collect(Collectors.toList());
+        }).filter(Objects::nonNull).toList();
     }
 
     /**

@@ -170,6 +170,7 @@ Additional notes on the controller methods:
 * Always qualify a static class member reference with its class name and not with a reference or expression of that class's type.
 * Prefer using primitive types to classes, e.g. ``long`` instead of ``Long``.
 * Use ``./gradlew spotlessCheck`` and ``./gradlew spotlessApply`` to check Java code style and to automatically fix it.
+* Don't use ``.collect(Collectors.toList())``. Instead use only ``.toList()`` for an unmodifiable list or ``.collect(Collectors.toCollection(ArrayList::new))`` to explicitly create a new ArrayList.
 
 16. Avoid service dependencies
 ==============================

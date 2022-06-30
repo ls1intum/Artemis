@@ -5,7 +5,6 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -81,8 +80,8 @@ public class BitbucketBambooUpdateService implements ContinuousIntegrationUpdate
             // Overwrite triggers if needed, incl workaround for different repo names, triggered by is present means that the exercise (the BASE build plan) is imported from a
             // previous exercise
             if (optionalTriggeredByRepositories.isPresent() && bambooRepository.getName().equals(OLD_ASSIGNMENT_REPO_NAME)) {
-                optionalTriggeredByRepositories = Optional.of(optionalTriggeredByRepositories.get().stream()
-                        .map(trigger -> trigger.replace(Constants.ASSIGNMENT_REPO_NAME, OLD_ASSIGNMENT_REPO_NAME)).collect(Collectors.toList()));
+                optionalTriggeredByRepositories = Optional
+                        .of(optionalTriggeredByRepositories.get().stream().map(trigger -> trigger.replace(Constants.ASSIGNMENT_REPO_NAME, OLD_ASSIGNMENT_REPO_NAME)).toList());
             }
             optionalTriggeredByRepositories.ifPresent(triggeredByRepositories -> overwriteTriggers(buildPlanKey, triggeredByRepositories));
 

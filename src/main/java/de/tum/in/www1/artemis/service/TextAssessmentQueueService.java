@@ -1,8 +1,7 @@
 package de.tum.in.www1.artemis.service;
 
-import static java.util.stream.Collectors.*;
-
 import java.util.*;
+import java.util.stream.Collectors;
 
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
@@ -65,18 +64,17 @@ public class TextAssessmentQueueService {
      * Return all TextSubmission which are the latest TextSubmission of a Participation and doesn't have a Result so far
      * The corresponding TextBlocks and Participations are retrieved from the database
      * @param exercise Exercise for which all assessed submissions should be retrieved
-     * @return List of all TextSubmission which aren't assessed at the Moment, but need assessment in the future.
-     *
+     * @return an unmodifiable list of all TextSubmission which aren't assessed at the Moment, but need assessment in the future.
      */
     public List<TextSubmission> getAllOpenTextSubmissions(TextExercise exercise) {
         final List<TextSubmission> submissions = textSubmissionRepository.findByParticipation_ExerciseIdAndResultsIsNullAndSubmittedIsTrue(exercise.getId());
 
         final Set<Long> clusterIds = submissions.stream().flatMap(submission -> submission.getBlocks().stream()).map(TextBlock::getCluster).filter(Objects::nonNull)
-                .map(TextCluster::getId).collect(toSet());
+                .map(TextCluster::getId).collect(Collectors.toSet());
 
         // To prevent lazy loading many elements later on, we fetch all clusters with text blocks here.
         final Map<Long, TextCluster> textClusterMap = textClusterRepository.findAllByIdsWithEagerTextBlocks(clusterIds).stream()
-                .collect(toMap(TextCluster::getId, textCluster -> textCluster));
+                .collect(Collectors.toMap(TextCluster::getId, textCluster -> textCluster));
 
         // link up clusters with eager blocks
         submissions.stream().flatMap(submission -> submission.getBlocks().stream()).forEach(textBlock -> {
@@ -87,7 +85,7 @@ public class TextAssessmentQueueService {
 
         return submissions.stream()
                 .filter(submission -> submission.getParticipation().findLatestSubmission().isPresent() && submission == submission.getParticipation().findLatestSubmission().get())
-                .collect(toList());
+                .toList();
     }
 
     /**

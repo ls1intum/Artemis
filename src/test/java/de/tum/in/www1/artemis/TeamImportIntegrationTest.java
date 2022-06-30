@@ -3,7 +3,6 @@ package de.tum.in.www1.artemis;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.*;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.junit.jupiter.api.AfterEach;
@@ -228,7 +227,7 @@ public class TeamImportIntegrationTest extends AbstractSpringIntegrationBambooBi
             List<Team> teamsWithConflicts) throws Exception {
         TeamImportStrategyType strategyType = TeamImportStrategyType.CREATE_ONLY;
         List<Team> destinationTeamsBefore = teamRepo
-                .saveAll(teamsWithConflicts.stream().map(team -> team.exercise(destinationExercise).shortName("other" + team.getShortName())).collect(Collectors.toList()));
+                .saveAll(teamsWithConflicts.stream().map(team -> team.exercise(destinationExercise).shortName("other" + team.getShortName())).toList());
         // destination teams before + conflict-free source teams = destination teams after
         testImportTeamsIntoExercise(type, strategyType, body, addLists(destinationTeamsBefore, teamsWithoutConflict));
     }
@@ -293,7 +292,7 @@ public class TeamImportIntegrationTest extends AbstractSpringIntegrationBambooBi
         request.put(importFromListUrl(), getTeamsIntoLoginOnlyTeams(teams), HttpStatus.BAD_REQUEST);
 
         // If user does not have an identifier: registration number or login, the request should fail
-        userRepo.saveAll(teams.stream().map(Team::getStudents).flatMap(Collection::stream).collect(Collectors.toList()));
+        userRepo.saveAll(teams.stream().map(Team::getStudents).flatMap(Collection::stream).toList());
         request.put(importFromListUrl(), getTeamsIntoOneIdentifierTeams(teams, null), HttpStatus.BAD_REQUEST);
 
         // If user's registration number points to same user with a login in request, it should fail
@@ -347,15 +346,15 @@ public class TeamImportIntegrationTest extends AbstractSpringIntegrationBambooBi
     }
 
     static <T> List<T> addLists(List<T> a, List<T> b) {
-        return Stream.of(a, b).flatMap(Collection::stream).collect(Collectors.toList());
+        return Stream.of(a, b).flatMap(Collection::stream).toList();
     }
 
     private Pair<List<Team>, List<Team>> getImportedTeamsAndBody(String shortNamePrefix, String loginPrefix, String registrationPrefix) {
         List<Team> generatedTeams = ModelFactory.generateTeamsForExercise(destinationExercise, shortNamePrefix, loginPrefix, 3, null, "instructor1", registrationPrefix);
-        userRepo.saveAll(generatedTeams.stream().map(Team::getStudents).flatMap(Collection::stream).collect(Collectors.toList()));
+        userRepo.saveAll(generatedTeams.stream().map(Team::getStudents).flatMap(Collection::stream).toList());
         List<Team> teamsWithLogins = getTeamsIntoLoginOnlyTeams(generatedTeams.subList(0, 2));
         List<Team> teamsWithRegistrationNumbers = getTeamsIntoRegistrationNumberOnlyTeams(generatedTeams.subList(2, 3));
-        List<Team> body = Stream.concat(teamsWithLogins.stream(), teamsWithRegistrationNumbers.stream()).collect(Collectors.toList());
+        List<Team> body = Stream.concat(teamsWithLogins.stream(), teamsWithRegistrationNumbers.stream()).toList();
         return Pair.of(generatedTeams, body);
     }
 
@@ -387,6 +386,6 @@ public class TeamImportIntegrationTest extends AbstractSpringIntegrationBambooBi
             }).toList();
             newTeam.setStudents(new HashSet<>(newStudents));
             return newTeam;
-        }).collect(Collectors.toList());
+        }).toList();
     }
 }
