@@ -78,11 +78,11 @@ describe('Exam Navigation Bar Component', () => {
         jest.spyOn(repositoryService, 'getStatus').mockReturnValue(of({ repositoryStatus: CommitState.UNCOMMITTED_CHANGES }));
 
         // When
-        expect(ExamParticipationService.getSubmissionForExercise(exerciseToBeSynced)!.isSynced).toEqual(true);
+        expect(ExamParticipationService.getSubmissionForExercise(exerciseToBeSynced)!.isSynced).toBeTrue();
         comp.ngOnInit();
 
         // Then
-        expect(ExamParticipationService.getSubmissionForExercise(exerciseToBeSynced)!.isSynced).toEqual(false);
+        expect(ExamParticipationService.getSubmissionForExercise(exerciseToBeSynced)!.isSynced).toBeFalse();
     });
 
     it('trigger when the exam is about to end', () => {

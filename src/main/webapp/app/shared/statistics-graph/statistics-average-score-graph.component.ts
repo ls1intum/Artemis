@@ -65,6 +65,7 @@ export class StatisticsAverageScoreGraphComponent implements OnInit {
     readonly CRITICAL_CLASS = 'critical-color';
     readonly MEDIAN_CLASS = 'median-color';
     readonly BEST_CLASS = 'best-color';
+    readonly maxSpanSize = 10; // The maximum amount of exercises displayable in one scope
 
     weakestThirdUpperBoundary: number;
     bestThirdLowerBoundary: number;

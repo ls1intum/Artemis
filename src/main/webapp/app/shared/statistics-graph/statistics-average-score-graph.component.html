@@ -10,7 +10,7 @@
             class="col-1 d-flex align-items-center justify-content-end"
             role="button"
             (click)="switchTimeSpan(LEFT)"
-            [ngClass]="{ hidden: !(currentSize > 10 && currentPeriod > 0) }"
+            [class.hidden]="!(currentSize > maxSpanSize && currentPeriod > 0)"
         ></fa-icon>
         <div #containerRef class="col-lg-8 ps-0 chart-container">
             <ngx-charts-bar-vertical
@@ -41,7 +41,7 @@
             class="col-1 d-flex align-items-center switch-forward"
             role="button"
             (click)="switchTimeSpan(RIGHT)"
-            [ngClass]="{ hidden: !(currentSize > 10 + currentPeriod) }"
+            [class.hidden]="!(currentSize > maxSpanSize + currentPeriod)"
         ></fa-icon>
         <ng-template #placeholder>
             <div class="switch-forward-placeholder"></div>
