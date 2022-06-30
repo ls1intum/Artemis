@@ -55,7 +55,7 @@ export class AssessmentFiltersComponent implements OnChanges {
     ngOnChanges() {
         this.filteredSubmissions = this.submissions.filter((submission) => {
             const result = getLatestSubmissionResult(submission);
-            return !result?.completionDate;
+            return result && !result.completionDate;
         }).length;
     }
 }
