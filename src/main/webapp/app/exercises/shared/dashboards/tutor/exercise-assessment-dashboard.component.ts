@@ -793,7 +793,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
             // the filter option for complaints are an element of {3,4}.
             // We give an offset of 3 in advance to determine the correct filter option via the chart part names
             index = 3;
-            route[5] = 'complaints';
+            route[4] = 'complaints';
         }
         this.assessments.forEach((data, i) => {
             if (data.name === identifier) {
