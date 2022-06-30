@@ -83,4 +83,19 @@ describe('Plagiarism Run Details', () => {
         expect(similaritySelectedStub).toHaveBeenCalledWith({ minimumSimilarity: minimumBorder, maximumSimilarity: maximumBorder });
         jest.restoreAllMocks();
     });
+
+    it.each([1, 2, 3])('return correct bucketDTO', (label: number) => {
+        comp.ngxChartLabels = ['1', '2', '3'];
+        comp.bucketDTOs = [
+            { confirmed: 1, denied: 1, open: 1 },
+            { confirmed: 2, denied: 2, open: 2 },
+            { confirmed: 3, denied: 3, open: 3 },
+        ];
+
+        const result = comp.getBucketDTO(label.toString());
+
+        expect(result.confirmed).toBe(label);
+        expect(result.denied).toBe(label);
+        expect(result.open).toBe(label);
+    });
 });
