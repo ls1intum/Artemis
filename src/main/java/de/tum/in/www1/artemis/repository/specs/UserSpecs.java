@@ -114,19 +114,16 @@ public class UserSpecs {
             return null;
         }
         else {
-            String emptyRegistrationNumber = "";
-            if (noRegistrationNumber == true) {
-                return (root, query, criteriaBuilder) -> {
-                    Predicate userWithoutRegistrationNumber = criteriaBuilder.equal(root.get(User_.REGISTRATION_NUMBER), emptyRegistrationNumber);
+            return (root, query, criteriaBuilder) -> {
+                if (noRegistrationNumber == true) {
+                    Predicate userWithoutRegistrationNumber = criteriaBuilder.isNull(root.get(User_.REGISTRATION_NUMBER));
                     return criteriaBuilder.and(userWithoutRegistrationNumber);
-                };
-            }
-            else {
-                return (root, query, criteriaBuilder) -> {
-                    Predicate userWithRegistrationNumber = criteriaBuilder.notEqual(root.get(User_.REGISTRATION_NUMBER), emptyRegistrationNumber);
+                }
+                else {
+                    Predicate userWithRegistrationNumber = criteriaBuilder.notEqual(root.get(User_.REGISTRATION_NUMBER), "");
                     return criteriaBuilder.and(userWithRegistrationNumber);
-                };
-            }
+                }
+            };
         }
     }
 
