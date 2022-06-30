@@ -51,15 +51,6 @@
             </label>
         </div>
     </div>
-    <button
-        *ngIf="filterOption === FilterOptionAddressedComplaints"
-        type="button"
-        class="row btn btn-primary"
-        (click)="resetFilterOptions()"
-        jhiTranslate="artemisApp.assessment.dashboard.resetFilter"
-    >
-        Reset submission filter
-    </button>
     <div class="row table-responsive pt-3">
         <table class="table" [hidden]="complaintsToShow.length === 0">
             <thead>
