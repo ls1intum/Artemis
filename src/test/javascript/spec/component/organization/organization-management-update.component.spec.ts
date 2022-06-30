@@ -67,7 +67,7 @@ describe('OrganizationManagementUpdateComponent', () => {
             tick();
 
             expect(organizationService.update).toHaveBeenCalledWith(organization1);
-            expect(component.isSaving).toEqual(false);
+            expect(component.isSaving).toBeFalse();
         }));
 
         it('should add the current created organization', fakeAsync(() => {
@@ -83,7 +83,7 @@ describe('OrganizationManagementUpdateComponent', () => {
             tick();
 
             expect(organizationService.add).toHaveBeenCalledWith(newOrganization);
-            expect(component.isSaving).toEqual(false);
+            expect(component.isSaving).toBeFalse();
         }));
     });
 });

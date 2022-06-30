@@ -39,6 +39,15 @@ public interface LearningGoalRepository extends JpaRepository<LearningGoal, Long
     @Query("""
             SELECT learningGoal
             FROM LearningGoal learningGoal
+            LEFT JOIN FETCH learningGoal.lectureUnits lu
+            LEFT JOIN FETCH lu.completedUsers
+            WHERE learningGoal.id = :#{#learningGoalId}
+            """)
+    Optional<LearningGoal> findByIdWithLectureUnitsAndCompletions(@Param("learningGoalId") long learningGoalId);
+
+    @Query("""
+            SELECT learningGoal
+            FROM LearningGoal learningGoal
             LEFT JOIN FETCH learningGoal.consecutiveCourses courses
             WHERE learningGoal.id = :#{#learningGoalId}
             """)
@@ -76,6 +85,10 @@ public interface LearningGoalRepository extends JpaRepository<LearningGoal, Long
 
     default LearningGoal findByIdWithLectureUnitsBidirectionalElseThrow(long learningGoalId) {
         return findByIdWithLectureUnitsBidirectional(learningGoalId).orElseThrow(() -> new EntityNotFoundException("LearningGoal", learningGoalId));
+    }
+
+    default LearningGoal findByIdWithLectureUnitsAndCompletionsElseThrow(long learningGoalId) {
+        return findByIdWithLectureUnitsAndCompletions(learningGoalId).orElseThrow(() -> new EntityNotFoundException("LearningGoal", learningGoalId));
     }
 
     default LearningGoal findByIdWithConsecutiveCoursesElseThrow(long learningGoalId) {

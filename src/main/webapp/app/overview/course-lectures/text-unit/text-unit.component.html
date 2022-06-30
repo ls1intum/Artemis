@@ -1,9 +1,9 @@
 <div class="row align-items-center mb-2 mt-2">
     <div class="card unit-card">
-        <div class="unit-card-header card-header row align-content-center justify-content-between" (click)="handleCollapse($event)">
+        <div class="card-header unit-card-header row align-content-center justify-content-between" (click)="handleCollapse($event)">
             <div class="col-auto row align-content-center">
                 <h5 class="m-0 fw-medium">
-                    <fa-icon class="me-2" [icon]="faScroll" [ngbTooltip]="'artemisApp.textUnit.tooltip' | artemisTranslate"> </fa-icon>
+                    <fa-icon class="me-2" [icon]="faScroll" [ngbTooltip]="'artemisApp.textUnit.tooltip' | artemisTranslate"></fa-icon>
                     {{ textUnit?.name ? textUnit.name : '' }}
                     <span
                         *ngIf="!textUnit?.visibleToStudents"
@@ -14,13 +14,35 @@
                     </span>
                 </h5>
             </div>
-            <div class="col-auto">
-                <button id="popupButton" type="button" style="max-height: 40px" class="btn btn-sm btn-primary rounded-pill" (click)="openPopup($event)">
-                    <fa-icon [icon]="faExternalLinkAlt"></fa-icon>
-                    <span class="d-none d-md-inline" jhiTranslate="artemisApp.textUnit.isolated">View in Popup</span>
-                </button>
+            <div class="col-auto" *ngIf="!isPresentationMode && textUnit.visibleToStudents">
+                <fa-icon
+                    *ngIf="textUnit.completed; else uncompleted"
+                    class="text-success"
+                    size="lg"
+                    [icon]="faSquareCheck"
+                    [ngbTooltip]="'artemisApp.lectureUnit.completedTooltip' | artemisTranslate"
+                    (click)="handleClick($event, false)"
+                ></fa-icon>
+                <ng-template #uncompleted>
+                    <fa-icon
+                        class="text-muted"
+                        size="lg"
+                        [icon]="faSquare"
+                        [ngbTooltip]="'artemisApp.lectureUnit.uncompletedTooltip' | artemisTranslate"
+                        (click)="handleClick($event, true)"
+                    ></fa-icon>
+                </ng-template>
             </div>
         </div>
-        <div class="card-body unit-card-body markdown-preview" id="printContent" [ngbCollapse]="isCollapsed" [innerHtml]="formattedContent"></div>
+        <div class="card-body unit-card-body" [ngbCollapse]="isCollapsed">
+            <div *ngIf="formattedContent">
+                <div class="markdown-preview" id="printContent" [innerHtml]="formattedContent"></div>
+                <hr />
+            </div>
+            <button id="popupButton" class="btn btn-sm btn-primary rounded-pill" (click)="openPopup($event)">
+                <fa-icon [icon]="faExternalLinkAlt"></fa-icon>
+                <span class="d-none d-md-inline" jhiTranslate="artemisApp.textUnit.isolated">View Isolated</span>
+            </button>
+        </div>
     </div>
 </div>

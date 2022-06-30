@@ -195,6 +195,6 @@ describe('ExamStudentsComponent', () => {
 
     it('should test on error', () => {
         component.onError('ErrorString');
-        expect(component.isTransitioning).toEqual(false);
+        expect(component.isTransitioning).toBeFalse();
     });
 });
