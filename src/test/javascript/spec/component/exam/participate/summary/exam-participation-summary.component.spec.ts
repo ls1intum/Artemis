@@ -267,4 +267,20 @@ describe('ExamParticipationSummaryComponent', () => {
             expect(span).toBe(null);
         }
     });
+
+    it('should update student exam correctly', () => {
+        const studentExam2 = { id: 2 } as StudentExam;
+        component.studentExam = studentExam2;
+        expect(component.studentExamGradeInfoDTO).toBeUndefined();
+
+        component.studentExam = studentExam;
+        fixture.detectChanges();
+
+        expect(component.studentExam).toEqual(studentExam);
+        expect(component.studentExamGradeInfoDTO.studentExam).toEqual(studentExam);
+
+        const studentExam3 = { id: 3 } as StudentExam;
+        component.studentExam = studentExam3;
+        expect(component.studentExamGradeInfoDTO.studentExam).toEqual(studentExam3);
+    });
 });

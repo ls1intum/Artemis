@@ -1487,6 +1487,72 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testGradedStudentExamSummaryWithGradingScaleAsStudentAfterPublishResultsWithOwnUserId() throws Exception {
+        StudentExam studentExam = createStudentExamWithResultsAndAssessments();
+
+        GradingScale gradingScale = createGradeScale();
+        gradingScale.setExam(exam2);
+        gradingScaleRepository.save(gradingScale);
+
+        // users tries to access exam summary after results are published
+        database.changeUser(studentExam.getUser().getLogin());
+
+        var studentExamGradeInfoFromServerForUserId = request.get(
+                "/api/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/student-exams/grade-summary?userId=" + studentExam.getUser().getId(), HttpStatus.OK,
+                StudentExamWithGradeDTO.class);
+
+        var studentExamGradeInfoFromServer = request.get("/api/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/student-exams/grade-summary", HttpStatus.OK,
+                StudentExamWithGradeDTO.class);
+
+        assertThat(studentExamGradeInfoFromServerForUserId.gradeType).isEqualTo(studentExamGradeInfoFromServer.gradeType);
+        assertThat(studentExamGradeInfoFromServerForUserId.studentResult.overallGrade).isEqualTo(studentExamGradeInfoFromServer.studentResult.overallGrade);
+        assertThat(studentExamGradeInfoFromServerForUserId.studentResult.overallPointsAchieved).isEqualTo(studentExamGradeInfoFromServer.studentResult.overallPointsAchieved);
+        assertThat(studentExamGradeInfoFromServerForUserId.studentResult.hasPassed).isEqualTo(studentExamGradeInfoFromServer.studentResult.hasPassed);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testGradedStudentExamSummaryWithGradingScaleAsStudentAfterPublishResultsWithOtherUserId() throws Exception {
+        StudentExam studentExam = createStudentExamWithResultsAndAssessments();
+
+        GradingScale gradingScale = createGradeScale();
+        gradingScale.setExam(exam2);
+        gradingScaleRepository.save(gradingScale);
+
+        // users tries to access exam summary after results are published
+        database.changeUser(studentExam.getUser().getLogin());
+
+        User student3 = database.getUserByLogin("student3");
+
+        request.get("/api/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/student-exams/grade-summary?userId=" + student3.getId(), HttpStatus.FORBIDDEN,
+                StudentExamWithGradeDTO.class);
+
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testGradedStudentExamSummaryWithGradingScaleAsInstructorAfterPublishResultsWithOtherUserId() throws Exception {
+        StudentExam studentExam = createStudentExamWithResultsAndAssessments();
+
+        GradingScale gradingScale = createGradeScale();
+        gradingScale.setExam(exam2);
+        gradingScaleRepository.save(gradingScale);
+
+        var studentExamGradeInfoFromServer = request.get(
+                "/api/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/student-exams/grade-summary?userId=" + studentExam.getUser().getId(), HttpStatus.OK,
+                StudentExamWithGradeDTO.class);
+
+        assertThat(studentExamGradeInfoFromServer.maxPoints).isEqualTo(29.0);
+        assertThat(studentExamGradeInfoFromServer.maxBonusPoints).isEqualTo(5.0);
+        assertThat(studentExamGradeInfoFromServer.gradeType).isEqualTo(GradeType.GRADE);
+        assertThat(studentExamGradeInfoFromServer.studentResult.overallPointsAchieved).isEqualTo(29.0);
+        assertThat(studentExamGradeInfoFromServer.studentResult.overallScoreAchieved).isEqualTo(100.0);
+        assertThat(studentExamGradeInfoFromServer.studentResult.overallGrade).isEqualTo("1.0");
+        assertThat(studentExamGradeInfoFromServer.studentResult.hasPassed).isTrue();
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testDeleteExamWithStudentExamsAfterConductionAndEvaluation() throws Exception {
         StudentExam studentExam = prepareStudentExamsForConduction(false).get(0);
 
