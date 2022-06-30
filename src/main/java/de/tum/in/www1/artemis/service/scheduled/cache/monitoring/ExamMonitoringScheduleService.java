@@ -74,19 +74,6 @@ public class ExamMonitoringScheduleService {
     }
 
     /**
-     * Used to set the exam activity fort a specific student exam in the cache.
-     *
-     * @param examId        identifies the cache
-     * @param studentExamId identifies the exam activity
-     * @param examActivity  new or updated exam activity in the cache
-     */
-    public void updateExamActivity(Long examId, long studentExamId, ExamActivity examActivity) {
-        if (examActivity != null) {
-            ((ExamMonitoringCache) examCache.getTransientWriteCacheFor(examId)).getActivities().put(studentExamId, examActivity);
-        }
-    }
-
-    /**
      * Used to handle the received actions.
      *
      * @param examId    identifies the cache
@@ -96,22 +83,27 @@ public class ExamMonitoringScheduleService {
         if (action != null && action.getStudentExamId() != null) {
             Long studentExamId = action.getStudentExamId();
 
-            // Retrieve the activity from the cache
-            ExamActivity examActivity = ((ExamMonitoringCache) examCache.getTransientWriteCacheFor(examId)).getActivities().get(studentExamId);
+            // save scheduled future in HashMap
+            examCache.performCacheWrite(examId, examMonitoringCache -> {
+                ExamActivity examActivity = ((ExamMonitoringCache) examMonitoringCache).getActivities().get(studentExamId);
 
-            if (examActivity == null) {
-                examActivity = new ExamActivity();
-                examActivity.setStudentExamId(studentExamId);
-                // Since we don't store the activity in the database at the moment, we reuse the student exam id
-                examActivity.setId(studentExamId);
-                // TODO: Save Activity
-            }
+                if (examActivity == null) {
+                    examActivity = new ExamActivity();
+                    examActivity.setStudentExamId(studentExamId);
+                    // Since we don't store the activity in the database at the moment, we reuse the student exam id
+                    examActivity.setId(studentExamId);
+                    // TODO: Save Activity
+                }
 
-            // Connect action and activity
-            action.setExamActivityId(examActivity.getId());
+                // Connect action and activity
+                action.setExamActivityId(examActivity.getId());
 
-            examActivity.addExamAction(action);
-            updateExamActivity(examId, studentExamId, examActivity);
+                examActivity.addExamAction(action);
+
+                ((ExamMonitoringCache) examMonitoringCache).getActivities().put(studentExamId, examActivity);
+
+                return examMonitoringCache;
+            });
 
             // send message to subscribers
             messagingService.sendMessage("/topic/exam-monitoring/" + examId + "/action", action);
