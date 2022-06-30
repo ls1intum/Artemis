@@ -740,7 +740,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
      */
     toggleAllCategories(): void {
         this.courseExercisesFilteredByCategories = this.categoryFilter.toggleAllCategories<Exercise>(this.courseExercises);
-        this.setupFilteredChart(this.categoryFilter.includeExercisesWithNoCategory);
+        this.setupFilteredChart(this.categoryFilter.allCategoriesSelected);
     }
 
     /**
@@ -795,6 +795,6 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
     private setupFilteredChart(isIncluded: boolean) {
         this.calculateNumberOfAppliedFilters();
         this.groupExercisesByType(this.courseExercisesFilteredByCategories);
-        this.filterExerciseIDsForCategorySelection(!isIncluded);
+        this.filterExerciseIDsForCategorySelection(isIncluded);
     }
 }

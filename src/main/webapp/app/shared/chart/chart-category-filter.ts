@@ -84,7 +84,7 @@ export class ChartCategoryFilter extends ChartFilter {
         } else {
             this.exerciseCategories.forEach((category) => this.filterMap.set(category, false));
             this.numberOfActiveFilters -= this.exerciseCategories.size + 1;
-            this.allCategoriesSelected = !this.allCategoriesSelected;
+            this.allCategoriesSelected = false;
             this.includeExercisesWithNoCategory = false;
         }
         return this.applyCurrentFilter<E>(exerciseScores);
