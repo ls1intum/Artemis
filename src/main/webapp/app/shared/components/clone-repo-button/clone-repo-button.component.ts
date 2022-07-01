@@ -107,7 +107,7 @@ export class CloneRepoButtonComponent implements OnInit {
 
         const token = insertPlaceholder ? '**********' : vcsAccessToken;
         const urlUserInfoPart = `://${this.user.login}:${token}@`;
-        if (url.indexOf('@') === -1) {
+        if (!url.includes('@')) {
             // the url has the format https://vcs-server.com
             return url.replace('://', urlUserInfoPart);
         } else {
