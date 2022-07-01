@@ -16,7 +16,7 @@
             </a>
             <a *ngIf="course.postsEnabled && course.isAtLeastTutor" [routerLink]="['/courses', course.id, 'discussion']" class="tab-item btn btn-primary btn-md ms-1">
                 <fa-icon [icon]="faComments"></fa-icon>
-                <span jhiTranslate="artemisApp.metis.discussion.label">Discussion</span>
+                <span jhiTranslate="artemisApp.metis.communication.label">Communication</span>
             </a>
             <a *ngIf="course.isAtLeastInstructor" [routerLink]="['/course-management', course.id, 'goal-management']" class="tab-item btn btn-primary btn-md ms-1">
                 <fa-icon [icon]="faFlag"></fa-icon>

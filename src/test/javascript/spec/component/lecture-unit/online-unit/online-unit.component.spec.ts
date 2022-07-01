@@ -41,6 +41,7 @@ describe('OnlineUnitComponent', () => {
             .then(() => {
                 onlineUnitComponentFixture = TestBed.createComponent(OnlineUnitComponent);
                 onlineUnitComponent = onlineUnitComponentFixture.componentInstance;
+                onlineUnitComponent.onlineUnit = onlineUnit;
             });
     });
 
@@ -49,8 +50,7 @@ describe('OnlineUnitComponent', () => {
     });
 
     it('should collapse when clicked', () => {
-        onlineUnitComponent.onlineUnit = onlineUnit;
-        onlineUnitComponentFixture.detectChanges(); // ngInit
+        onlineUnitComponentFixture.detectChanges();
         expect(onlineUnitComponent.isCollapsed).toBeTrue();
         const handleCollapseSpy = jest.spyOn(onlineUnitComponent, 'handleCollapse');
 
@@ -63,4 +63,27 @@ describe('OnlineUnitComponent', () => {
 
         handleCollapseSpy.mockRestore();
     });
+
+    it('should call completion callback when opening link', (done) => {
+        const windowSpy = jest.spyOn(window, 'open').mockImplementation(() => {
+            return null;
+        });
+        onlineUnitComponent.onCompletion.subscribe((event) => {
+            expect(event.lectureUnit).toEqual(onlineUnit);
+            expect(event.completed).toBeTrue();
+            done();
+        });
+        onlineUnitComponent.openLink(new Event('click'));
+        expect(windowSpy).toHaveBeenCalledOnce();
+        expect(windowSpy).toHaveBeenCalledWith(exampleSource, '_blank');
+    }, 1000);
+
+    it('should call completion callback when clicked', (done) => {
+        onlineUnitComponent.onCompletion.subscribe((event) => {
+            expect(event.lectureUnit).toEqual(onlineUnit);
+            expect(event.completed).toBeFalse();
+            done();
+        });
+        onlineUnitComponent.handleClick(new Event('click'), false);
+    }, 1000);
 });

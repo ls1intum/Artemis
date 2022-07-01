@@ -7,7 +7,6 @@ import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { MockCourseExerciseService } from '../../../helpers/mocks/service/mock-course-exercise.service';
 import { MockParticipationWebsocketService } from '../../../helpers/mocks/service/mock-participation-websocket.service';
 import { Result } from 'app/entities/result.model';
-import { DeviceDetectorService } from 'ngx-device-detector';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../../../helpers/mocks/service/mock-account.service';
 import dayjs from 'dayjs/esm';
@@ -69,7 +68,6 @@ describe('CourseExerciseRowComponent', () => {
                 DummyComponent,
             ],
             providers: [
-                DeviceDetectorService,
                 { provide: ParticipationWebsocketService, useClass: MockParticipationWebsocketService },
                 { provide: CourseManagementService, useClass: MockCourseService },
                 { provide: CourseExerciseService, useClass: MockCourseExerciseService },
