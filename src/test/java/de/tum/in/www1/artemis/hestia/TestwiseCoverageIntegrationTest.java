@@ -29,7 +29,7 @@ import de.tum.in.www1.artemis.repository.hestia.CoverageReportRepository;
 import de.tum.in.www1.artemis.repository.hestia.TestwiseCoverageReportEntryRepository;
 import de.tum.in.www1.artemis.util.RequestUtilService;
 
-public class TestwiseCoverageIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+class TestwiseCoverageIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
     private ProgrammingExerciseRepository programmingExerciseRepository;
@@ -62,7 +62,7 @@ public class TestwiseCoverageIntegrationTest extends AbstractSpringIntegrationBa
     private CoverageReport latestReport;
 
     @BeforeEach
-    public void setup() {
+    void setup() {
         database.addCourseWithOneProgrammingExercise(false, true, ProgrammingLanguage.JAVA);
         database.addUsers(1, 1, 0, 0);
         programmingExercise = programmingExerciseRepository.findAll().get(0);
@@ -83,19 +83,19 @@ public class TestwiseCoverageIntegrationTest extends AbstractSpringIntegrationBa
     }
 
     @AfterEach
-    public void tearDown() {
+    void tearDown() {
         database.resetDatabase();
     }
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void getLatestFullCoverageReportAsStudent() throws Exception {
+    void getLatestFullCoverageReportAsStudent() throws Exception {
         request.get("/api/programming-exercises/" + programmingExercise.getId() + "/full-testwise-coverage-report", HttpStatus.FORBIDDEN, CoverageReport.class);
     }
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void getLatestFullCoverageReportAsTutor() throws Exception {
+    void getLatestFullCoverageReportAsTutor() throws Exception {
         var fullReport = request.get("/api/programming-exercises/" + programmingExercise.getId() + "/full-testwise-coverage-report", HttpStatus.OK, CoverageReport.class);
         assertThat(fullReport.getCoveredLineRatio()).isEqualTo(latestReport.getCoveredLineRatio());
         var fileReports = fullReport.getFileReports();
@@ -111,13 +111,13 @@ public class TestwiseCoverageIntegrationTest extends AbstractSpringIntegrationBa
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void getLatestCoverageReportAsStudent() throws Exception {
+    void getLatestCoverageReportAsStudent() throws Exception {
         request.get("/api/programming-exercises/" + programmingExercise.getId() + "/testwise-coverage-report", HttpStatus.FORBIDDEN, CoverageReport.class);
     }
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void getLatestCoverageReportAsTutor() throws Exception {
+    void getLatestCoverageReportAsTutor() throws Exception {
         var report = request.get("/api/programming-exercises/" + programmingExercise.getId() + "/testwise-coverage-report", HttpStatus.OK, CoverageReport.class);
         assertThat(report.getFileReports()).isNull();
         assertThat(report.getCoveredLineRatio()).isEqualTo(0.4);

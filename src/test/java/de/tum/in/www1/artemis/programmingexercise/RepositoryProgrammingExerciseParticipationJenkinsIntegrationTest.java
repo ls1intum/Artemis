@@ -27,7 +27,7 @@ import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
 import de.tum.in.www1.artemis.util.TestConstants;
 
-public class RepositoryProgrammingExerciseParticipationJenkinsIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest {
+class RepositoryProgrammingExerciseParticipationJenkinsIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest {
 
     @Autowired
     private ProgrammingExerciseRepository programmingExerciseRepository;
@@ -39,19 +39,19 @@ public class RepositoryProgrammingExerciseParticipationJenkinsIntegrationTest ex
     private BuildLogEntryRepository buildLogEntryRepository;
 
     @BeforeEach
-    public void setup() throws Exception {
+    void setup() throws Exception {
         database.addUsers(1, 1, 0, 1);
         database.addCourseWithOneProgrammingExerciseAndTestCases();
     }
 
     @AfterEach
-    public void tearDown() throws IOException {
+    void tearDown() throws IOException {
         database.resetDatabase();
     }
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void testGetLatestBuildLogsFails() throws Exception {
+    void testGetLatestBuildLogsFails() throws Exception {
         var programmingExercise = programmingExerciseRepository.findAllWithEagerParticipations().get(0);
         database.addStudentParticipationForProgrammingExercise(programmingExercise, "student1");
 

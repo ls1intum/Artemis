@@ -20,7 +20,7 @@ import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.dto.FeedbackConflictResponseDTO;
 import de.tum.in.www1.artemis.util.ModelFactory;
 
-public class AutomaticFeedbackConflictServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+class AutomaticFeedbackConflictServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
     private FeedbackConflictRepository feedbackConflictRepository;
@@ -46,14 +46,14 @@ public class AutomaticFeedbackConflictServiceTest extends AbstractSpringIntegrat
     private TextExercise textExercise;
 
     @BeforeEach
-    public void init() {
+    void init() {
         database.addUsers(2, 1, 0, 0);
         textExercise = (TextExercise) database.addCourseWithOneFinishedTextExercise().getExercises().iterator().next();
         atheneRequestMockProvider.enableMockingOfRequests();
     }
 
     @AfterEach
-    public void tearDown() {
+    void tearDown() {
         database.resetDatabase();
         atheneRequestMockProvider.reset();
     }
@@ -65,7 +65,7 @@ public class AutomaticFeedbackConflictServiceTest extends AbstractSpringIntegrat
      */
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void createFeedbackConflicts() {
+    void createFeedbackConflicts() {
         TextSubmission textSubmission1 = ModelFactory.generateTextSubmission("first text submission", Language.ENGLISH, true);
         TextSubmission textSubmission2 = ModelFactory.generateTextSubmission("second text submission", Language.ENGLISH, true);
         database.saveTextSubmission(textExercise, textSubmission1, "student1");
@@ -110,7 +110,7 @@ public class AutomaticFeedbackConflictServiceTest extends AbstractSpringIntegrat
      */
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void changedFeedbackConflictsType() {
+    void changedFeedbackConflictsType() {
         TextSubmission textSubmission = ModelFactory.generateTextSubmission("text submission", Language.ENGLISH, true);
         database.saveTextSubmission(textExercise, textSubmission, "student1");
 
@@ -150,7 +150,7 @@ public class AutomaticFeedbackConflictServiceTest extends AbstractSpringIntegrat
      */
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void solveFeedbackConflicts() {
+    void solveFeedbackConflicts() {
         TextSubmission textSubmission = ModelFactory.generateTextSubmission("text submission", Language.ENGLISH, true);
         database.saveTextSubmission(textExercise, textSubmission, "student1");
 
@@ -187,7 +187,7 @@ public class AutomaticFeedbackConflictServiceTest extends AbstractSpringIntegrat
      */
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void testSubmissionDelete() {
+    void testSubmissionDelete() {
         TextSubmission textSubmission = createTextSubmissionWithResultFeedbackAndConflicts();
         textSubmissionRepository.deleteById(textSubmission.getId());
         assertThat(feedbackConflictRepository.findAll()).isEmpty();
@@ -198,7 +198,7 @@ public class AutomaticFeedbackConflictServiceTest extends AbstractSpringIntegrat
      */
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void testResultDelete() {
+    void testResultDelete() {
         TextSubmission textSubmission = createTextSubmissionWithResultFeedbackAndConflicts();
         resultRepository.deleteById(textSubmission.getLatestResult().getId());
         assertThat(feedbackConflictRepository.findAll()).isEmpty();
@@ -209,7 +209,7 @@ public class AutomaticFeedbackConflictServiceTest extends AbstractSpringIntegrat
      */
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void testFeedbackDelete() {
+    void testFeedbackDelete() {
         this.createTextSubmissionWithResultFeedbackAndConflicts();
         feedbackRepository.deleteAll();
         assertThat(feedbackConflictRepository.findAll()).isEmpty();
@@ -220,7 +220,7 @@ public class AutomaticFeedbackConflictServiceTest extends AbstractSpringIntegrat
      */
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void testFeedbackConflictDelete() {
+    void testFeedbackConflictDelete() {
         createTextSubmissionWithResultFeedbackAndConflicts();
         feedbackConflictRepository.deleteAll();
         assertThat(feedbackRepository.findAll()).hasSize(2);

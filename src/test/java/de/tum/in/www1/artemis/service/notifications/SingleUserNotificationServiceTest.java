@@ -28,7 +28,7 @@ import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.util.ModelFactory;
 
-public class SingleUserNotificationServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+class SingleUserNotificationServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
     private SingleUserNotificationService singleUserNotificationService;
@@ -62,7 +62,7 @@ public class SingleUserNotificationServiceTest extends AbstractSpringIntegration
      * Sets up all needed mocks and their wanted behavior
      */
     @BeforeEach
-    public void setUp() {
+    void setUp() {
         SecurityUtils.setAuthorizationObject();
 
         course = database.createCourse();
@@ -107,7 +107,7 @@ public class SingleUserNotificationServiceTest extends AbstractSpringIntegration
     }
 
     @AfterEach
-    public void resetDatabase() {
+    void resetDatabase() {
         database.resetDatabase();
     }
 
@@ -128,7 +128,7 @@ public class SingleUserNotificationServiceTest extends AbstractSpringIntegration
      * However, the notification has to be saved to the DB
      */
     @Test
-    public void testSendNoNotificationOrEmailWhenSettingsAreDeactivated() {
+    void testSendNoNotificationOrEmailWhenSettingsAreDeactivated() {
         notificationSettingRepository.save(new NotificationSetting(user, false, true, NOTIFICATION__EXERCISE_NOTIFICATION__NEW_REPLY_FOR_EXERCISE_POST));
         assertThat(notificationRepository.findAll()).as("No notifications should be present prior to the method call").isEmpty();
 
@@ -143,7 +143,7 @@ public class SingleUserNotificationServiceTest extends AbstractSpringIntegration
      * Test for notifyStudentGroupAboutAttachmentChange method
      */
     @Test
-    public void testNotifyUserAboutNewAnswerForExercise() {
+    void testNotifyUserAboutNewAnswerForExercise() {
         singleUserNotificationService.notifyUserAboutNewReplyForExercise(post, course);
         verifyRepositoryCallWithCorrectNotification(NEW_REPLY_FOR_EXERCISE_POST_TITLE);
     }
@@ -152,7 +152,7 @@ public class SingleUserNotificationServiceTest extends AbstractSpringIntegration
      * Test for notifyUserAboutNewAnswerForLecture method
      */
     @Test
-    public void testNotifyUserAboutNewAnswerForLecture() {
+    void testNotifyUserAboutNewAnswerForLecture() {
         singleUserNotificationService.notifyUserAboutNewReplyForLecture(post, course);
         verifyRepositoryCallWithCorrectNotification(NEW_REPLY_FOR_LECTURE_POST_TITLE);
     }
@@ -161,7 +161,7 @@ public class SingleUserNotificationServiceTest extends AbstractSpringIntegration
      * Test for notifyUserAboutNewAnswerForCoursePost method
      */
     @Test
-    public void testNotifyUserAboutNewAnswerForCoursePost() {
+    void testNotifyUserAboutNewAnswerForCoursePost() {
         singleUserNotificationService.notifyUserAboutNewReplyForCoursePost(post, course);
         verifyRepositoryCallWithCorrectNotification(NEW_REPLY_FOR_COURSE_POST_TITLE);
     }
@@ -170,7 +170,7 @@ public class SingleUserNotificationServiceTest extends AbstractSpringIntegration
      * Test for notifyUserAboutSuccessfulFileUploadSubmission method
      */
     @Test
-    public void testNotifyUserAboutSuccessfulFileUploadSubmission() {
+    void testNotifyUserAboutSuccessfulFileUploadSubmission() {
         notificationSettingRepository.save(new NotificationSetting(user, true, true, NOTIFICATION__EXERCISE_NOTIFICATION__FILE_SUBMISSION_SUCCESSFUL));
         singleUserNotificationService.notifyUserAboutSuccessfulFileUploadSubmission(fileUploadExercise, user);
         verifyRepositoryCallWithCorrectNotification(FILE_SUBMISSION_SUCCESSFUL_TITLE);
@@ -183,7 +183,7 @@ public class SingleUserNotificationServiceTest extends AbstractSpringIntegration
      * Test for notifyUserAboutAssessedExerciseSubmission method
      */
     @Test
-    public void testNotifyUserAboutAssessedExerciseSubmission() {
+    void testNotifyUserAboutAssessedExerciseSubmission() {
         NotificationSetting notificationSetting = new NotificationSetting(user, true, true, NOTIFICATION__EXERCISE_NOTIFICATION__EXERCISE_SUBMISSION_ASSESSED);
         notificationSettingRepository.save(notificationSetting);
 
@@ -197,7 +197,7 @@ public class SingleUserNotificationServiceTest extends AbstractSpringIntegration
      * Test for checkNotificationForAssessmentExerciseSubmission method with an undefined release date
      */
     @Test
-    public void testCheckNotificationForAssessmentExerciseSubmission_undefinedAssessmentDueDate() {
+    void testCheckNotificationForAssessmentExerciseSubmission_undefinedAssessmentDueDate() {
         exercise = ModelFactory.generateTextExercise(null, null, null, course);
         singleUserNotificationService.checkNotificationForAssessmentExerciseSubmission(exercise, user, result);
         verify(singleUserNotificationService, times(1)).checkNotificationForAssessmentExerciseSubmission(exercise, user, result);
@@ -207,7 +207,7 @@ public class SingleUserNotificationServiceTest extends AbstractSpringIntegration
      * Test for checkNotificationForExerciseRelease method with a current or past release date
      */
     @Test
-    public void testCheckNotificationForAssessmentExerciseSubmission_currentOrPastAssessmentDueDate() {
+    void testCheckNotificationForAssessmentExerciseSubmission_currentOrPastAssessmentDueDate() {
         exercise = ModelFactory.generateTextExercise(null, null, ZonedDateTime.now(), course);
         singleUserNotificationService.checkNotificationForAssessmentExerciseSubmission(exercise, user, result);
         assertThat(notificationRepository.findAll()).as("One new notification should have been created").hasSize(1);
@@ -217,14 +217,14 @@ public class SingleUserNotificationServiceTest extends AbstractSpringIntegration
      * Test for checkNotificationForExerciseRelease method with a future release date
      */
     @Test
-    public void testCheckNotificationForAssessmentExerciseSubmission_futureAssessmentDueDate() {
+    void testCheckNotificationForAssessmentExerciseSubmission_futureAssessmentDueDate() {
         exercise = ModelFactory.generateTextExercise(null, null, ZonedDateTime.now().plusHours(1), course);
         singleUserNotificationService.checkNotificationForAssessmentExerciseSubmission(exercise, user, result);
         assertThat(notificationRepository.findAll()).as("No new notification should have been created").isEmpty();
     }
 
     @Test
-    public void testNotifyUsersAboutAssessedExerciseSubmission() {
+    void testNotifyUsersAboutAssessedExerciseSubmission() {
         Course testCourse = database.addCourseWithFileUploadExercise();
         Exercise testExercise = testCourse.getExercises().iterator().next();
 
@@ -248,7 +248,7 @@ public class SingleUserNotificationServiceTest extends AbstractSpringIntegration
      * Test for notifyUserAboutNewPossiblePlagiarismCase method
      */
     @Test
-    public void testNotifyUserAboutNewPossiblePlagiarismCase() {
+    void testNotifyUserAboutNewPossiblePlagiarismCase() {
         // explicitly change the user to prevent issues in the following server call due to userRepository.getUser() (@WithMockUser is not working here)
         database.changeUser("student1");
         singleUserNotificationService.notifyUserAboutNewPlagiarismCase(plagiarismCase, user);
@@ -259,7 +259,7 @@ public class SingleUserNotificationServiceTest extends AbstractSpringIntegration
      * Test for notifyUserAboutFinalPlagiarismState method
      */
     @Test
-    public void testNotifyUserAboutFinalPlagiarismState() {
+    void testNotifyUserAboutFinalPlagiarismState() {
         // explicitly change the user to prevent issues in the following server call due to userRepository.getUser() (@WithMockUser is not working here)
         database.changeUser("student1");
         singleUserNotificationService.notifyUserAboutPlagiarismCaseVerdict(plagiarismCase, user);

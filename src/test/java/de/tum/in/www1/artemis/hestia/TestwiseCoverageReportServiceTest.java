@@ -22,7 +22,7 @@ import de.tum.in.www1.artemis.service.hestia.TestwiseCoverageService;
 import de.tum.in.www1.artemis.util.HestiaUtilTestService;
 import de.tum.in.www1.artemis.util.LocalRepository;
 
-public class TestwiseCoverageReportServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+class TestwiseCoverageReportServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
     private TestwiseCoverageService testwiseCoverageService;
@@ -49,7 +49,7 @@ public class TestwiseCoverageReportServiceTest extends AbstractSpringIntegration
     private final LocalRepository solutionRepo = new LocalRepository("main");
 
     @BeforeEach
-    public void setup() throws Exception {
+    void setup() throws Exception {
         database.addUsers(1, 0, 0, 1);
         database.addCourseWithOneProgrammingExercise(false, true, ProgrammingLanguage.JAVA);
         programmingExercise = programmingExerciseRepository.findAll().get(0);
@@ -68,13 +68,13 @@ public class TestwiseCoverageReportServiceTest extends AbstractSpringIntegration
     }
 
     @AfterEach
-    public void tearDown() {
+    void tearDown() {
         database.resetDatabase();
     }
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void shouldCreateFullTestwiseCoverageReport() {
+    void shouldCreateFullTestwiseCoverageReport() {
         var fileReportsByTestName = TestwiseCoverageTestUtil.generateCoverageFileReportByTestName();
         testwiseCoverageService.createTestwiseCoverageReport(fileReportsByTestName, programmingExercise, solutionSubmission);
 

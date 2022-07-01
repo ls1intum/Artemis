@@ -17,7 +17,7 @@ import de.tum.in.www1.artemis.AbstractSpringIntegrationJenkinsGitlabTest;
 import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
 import de.tum.in.www1.artemis.service.connectors.jenkins.JenkinsInternalUrlService;
 
-public class JenkinsInternalUrlServiceTest extends AbstractSpringIntegrationJenkinsGitlabTest {
+class JenkinsInternalUrlServiceTest extends AbstractSpringIntegrationJenkinsGitlabTest {
 
     @Autowired
     private JenkinsInternalUrlService jenkinsInternalUrlService;
@@ -31,7 +31,7 @@ public class JenkinsInternalUrlServiceTest extends AbstractSpringIntegrationJenk
     private URL internalCiUrl;
 
     @BeforeEach
-    public void initTestCase() throws Exception {
+    void initTestCase() throws Exception {
         vcsRepositoryUrl = new VcsRepositoryUrl("http://localhost:80/some-repo.git");
         ciUrl = "http://localhost:8080/some-ci-path";
         internalVcsUrl = new URL("http://1.2.3.4:123");
@@ -42,14 +42,14 @@ public class JenkinsInternalUrlServiceTest extends AbstractSpringIntegrationJenk
 
     @Test
     @WithMockUser(username = "student1")
-    public void testGetVcsUrlOnInternalVcsUrlEmpty() {
+    void testGetVcsUrlOnInternalVcsUrlEmpty() {
         var newVcsUrl = jenkinsInternalUrlService.toInternalVcsUrl(vcsRepositoryUrl);
         assertThat(newVcsUrl).hasToString(vcsRepositoryUrl.toString());
     }
 
     @Test
     @WithMockUser(username = "student1")
-    public void testGetVcsUrlOnInternalVcsUrl() {
+    void testGetVcsUrlOnInternalVcsUrl() {
         ReflectionTestUtils.setField(jenkinsInternalUrlService, "internalVcsUrl", Optional.of(internalVcsUrl));
 
         var newVcsUrl = jenkinsInternalUrlService.toInternalVcsUrl(vcsRepositoryUrl);
@@ -65,7 +65,7 @@ public class JenkinsInternalUrlServiceTest extends AbstractSpringIntegrationJenk
 
     @Test
     @WithMockUser(username = "student1")
-    public void testGetVcsUrlOnInternalVcsUrlMalformed() {
+    void testGetVcsUrlOnInternalVcsUrlMalformed() {
         var jenkinsInternalUrlServiceSpy = spy(jenkinsInternalUrlService);
         ReflectionTestUtils.setField(jenkinsInternalUrlServiceSpy, "internalVcsUrl", Optional.of(internalVcsUrl));
 
@@ -77,14 +77,14 @@ public class JenkinsInternalUrlServiceTest extends AbstractSpringIntegrationJenk
 
     @Test
     @WithMockUser(username = "student1")
-    public void testGetCiUrlOnInternalCiUrlEmpty() {
+    void testGetCiUrlOnInternalCiUrlEmpty() {
         var newCiUrl = jenkinsInternalUrlService.toInternalCiUrl(ciUrl);
         assertThat(newCiUrl).hasToString(ciUrl);
     }
 
     @Test
     @WithMockUser(username = "student1")
-    public void testGetCiUrlOnInternalCiUrl() {
+    void testGetCiUrlOnInternalCiUrl() {
         ReflectionTestUtils.setField(jenkinsInternalUrlService, "internalCiUrl", Optional.of(internalCiUrl));
 
         var newCiUrl = jenkinsInternalUrlService.toInternalCiUrl(ciUrl);
@@ -95,7 +95,7 @@ public class JenkinsInternalUrlServiceTest extends AbstractSpringIntegrationJenk
 
     @Test
     @WithMockUser(username = "student1")
-    public void testGetUrlOnInternalUrlWithoutPort() throws Exception {
+    void testGetUrlOnInternalUrlWithoutPort() throws Exception {
         ReflectionTestUtils.setField(jenkinsInternalUrlService, "internalCiUrl", Optional.of(new URL("http://www.host.name.com/")));
         ReflectionTestUtils.setField(jenkinsInternalUrlService, "internalVcsUrl", Optional.of(new URL("http://www.hostname.com/")));
 

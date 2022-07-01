@@ -4,27 +4,16 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.List;
 
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import de.tum.in.www1.artemis.domain.Feedback;
 import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.modeling.ModelElement;
 
-public class FeedbackSelectorTest {
-
-    @BeforeEach
-    public void initTestCase() throws Exception {
-    }
-
-    @AfterEach
-    public void tearDown() {
-
-    }
+class FeedbackSelectorTest {
 
     @Test
-    public void testLongestFeedbackTextSelection() {
+    void testLongestFeedbackTextSelection() {
         Feedback feedback1 = new Feedback().credits(1.0).reference("Class:6aba5764-d102-4740-9675-b2bd0a4f2123").text("feedback text");
         Feedback feedback2 = new Feedback().credits(1.0).reference("Class:6aba5764-d102-4740-9675-b2bd0a4f2124").text("short");
         Feedback feedback3 = new Feedback().credits(1.0).reference("Class:6aba5764-d102-4740-9675-b2bd0a4f2125").text("very long feedback text");
@@ -47,7 +36,7 @@ public class FeedbackSelectorTest {
     }
 
     @Test
-    public void testConfidenceThreshold() {
+    void testConfidenceThreshold() {
         Feedback feedback1 = new Feedback().credits(1.0).reference("Class:6aba5764-d102-4740-9675-b2bd0a4f2121");
         Feedback feedback2 = new Feedback().credits(20.0).reference("Class:6aba5764-d102-4740-9675-b2bd0a4f2122").text("wrong text");
 

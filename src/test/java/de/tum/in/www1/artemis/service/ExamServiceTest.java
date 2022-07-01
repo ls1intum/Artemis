@@ -28,7 +28,7 @@ import de.tum.in.www1.artemis.service.exam.ExamService;
 import de.tum.in.www1.artemis.web.rest.dto.ExamChecklistDTO;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 
-public class ExamServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+class ExamServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
     private ExamService examService;
@@ -61,7 +61,7 @@ public class ExamServiceTest extends AbstractSpringIntegrationBambooBitbucketJir
     }
 
     @AfterEach
-    public void resetDatabase() {
+    void resetDatabase() {
         exam1.removeExerciseGroup(exerciseGroup1);
         examRepository.save(exam1);
         database.resetDatabase();
@@ -69,7 +69,7 @@ public class ExamServiceTest extends AbstractSpringIntegrationBambooBitbucketJir
 
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
-    public void testSetExamProperties() {
+    void testSetExamProperties() {
         StudentParticipation studentParticipation = new StudentParticipation();
         studentParticipation.setTestRun(true);
         QuizExercise exercise = new QuizExercise();
@@ -92,7 +92,7 @@ public class ExamServiceTest extends AbstractSpringIntegrationBambooBitbucketJir
     }
 
     @Test
-    public void testForNullIndexColumnError() {
+    void testForNullIndexColumnError() {
         Exam examResult = examRepository.findByIdElseThrow(exam1.getId());
         assertThat(examResult).isEqualTo(exam1);
         examResult = examRepository.findByIdWithExerciseGroupsElseThrow(exam1.getId());
@@ -102,14 +102,14 @@ public class ExamServiceTest extends AbstractSpringIntegrationBambooBitbucketJir
 
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
-    public void testCanGetCurrentAndUpcomingExams() {
+    void testCanGetCurrentAndUpcomingExams() {
         List<Exam> exams = examRepository.findAllCurrentAndUpcomingExams();
         assertThat(exams).hasSize(2).contains(exam1, examInTheFuture).doesNotContain(examInThePast);
     }
 
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
-    public void validateForStudentExamGeneration_differentCalculationTypesInExerciseGroup_shouldThrowException() {
+    void validateForStudentExamGeneration_differentCalculationTypesInExerciseGroup_shouldThrowException() {
         Exam exam = createExam(1, 1L, 10);
         ExerciseGroup exerciseGroup = addExerciseGroupToExam(exam, 1L, true);
         TextExercise includedTextExercise = addNewTextExerciseToExerciseGroup(exerciseGroup, 1L, 5.0, 5.0, IncludedInOverallScore.INCLUDED_COMPLETELY);
@@ -125,7 +125,7 @@ public class ExamServiceTest extends AbstractSpringIntegrationBambooBitbucketJir
 
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
-    public void validateForStudentExamGeneration_differentPointsInExerciseGroup_shouldThrowException() {
+    void validateForStudentExamGeneration_differentPointsInExerciseGroup_shouldThrowException() {
         Exam exam = createExam(1, 1L, 9);
         ExerciseGroup exerciseGroup = addExerciseGroupToExam(exam, 1L, true);
         TextExercise exercise1 = addNewTextExerciseToExerciseGroup(exerciseGroup, 1L, 4.0, 5.0, IncludedInOverallScore.INCLUDED_COMPLETELY);
@@ -141,7 +141,7 @@ public class ExamServiceTest extends AbstractSpringIntegrationBambooBitbucketJir
 
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
-    public void validateForStudentExamGeneration_differentBonusInExerciseGroup_shouldThrowException() {
+    void validateForStudentExamGeneration_differentBonusInExerciseGroup_shouldThrowException() {
         Exam exam = createExam(1, 1L, 10);
         ExerciseGroup exerciseGroup = addExerciseGroupToExam(exam, 1L, true);
         TextExercise exercise1 = addNewTextExerciseToExerciseGroup(exerciseGroup, 1L, 5.0, 5.0, IncludedInOverallScore.INCLUDED_COMPLETELY);
@@ -157,7 +157,7 @@ public class ExamServiceTest extends AbstractSpringIntegrationBambooBitbucketJir
 
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
-    public void validateForStudentExamGeneration_tooManyPointsInMandatoryExercises_shouldThrowException() {
+    void validateForStudentExamGeneration_tooManyPointsInMandatoryExercises_shouldThrowException() {
         Exam exam = createExam(1, 1L, 10);
         ExerciseGroup exerciseGroup = addExerciseGroupToExam(exam, 1L, true);
         TextExercise exercise1 = addNewTextExerciseToExerciseGroup(exerciseGroup, 1L, 20.0, 5.0, IncludedInOverallScore.INCLUDED_COMPLETELY);
@@ -173,7 +173,7 @@ public class ExamServiceTest extends AbstractSpringIntegrationBambooBitbucketJir
 
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
-    public void validateForStudentExamGeneration_tooFewPointsInExercisesGroups_shouldThrowException() {
+    void validateForStudentExamGeneration_tooFewPointsInExercisesGroups_shouldThrowException() {
         Exam exam = createExam(1, 1L, 10);
         ExerciseGroup exerciseGroup = addExerciseGroupToExam(exam, 1L, true);
         TextExercise exercise1 = addNewTextExerciseToExerciseGroup(exerciseGroup, 1L, 5.0, 5.0, IncludedInOverallScore.INCLUDED_COMPLETELY);
@@ -189,7 +189,7 @@ public class ExamServiceTest extends AbstractSpringIntegrationBambooBitbucketJir
 
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
-    public void getChecklistStatsEmpty() {
+    void getChecklistStatsEmpty() {
         // check if general method works. More sophisticated test are within the ExamIntegrationTests
         ExamChecklistDTO examChecklistDTO = examService.getStatsForChecklist(exam1, true);
         assertThat(examChecklistDTO).isNotNull();

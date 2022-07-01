@@ -13,7 +13,7 @@ import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.connector.AtheneRequestMockProvider;
 import de.tum.in.www1.artemis.service.connectors.athene.AtheneHealthIndicator;
 
-public class AtheneHealthIndicatorTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+class AtheneHealthIndicatorTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
     private AtheneRequestMockProvider atheneRequestMockProvider;
@@ -22,12 +22,12 @@ public class AtheneHealthIndicatorTest extends AbstractSpringIntegrationBambooBi
     private AtheneHealthIndicator atheneHealthIndicator;
 
     @BeforeEach
-    public void initTestCase() {
+    void initTestCase() {
         atheneRequestMockProvider.enableMockingOfRequests();
     }
 
     @AfterEach
-    public void tearDown() {
+    void tearDown() {
         atheneRequestMockProvider.reset();
     }
 

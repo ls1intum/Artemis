@@ -17,7 +17,7 @@ import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.repository.*;
 
-public class ProgrammingExerciseSubmissionAndResultSimulationIntegrationTest extends AbstractSpringDevelopmentTest {
+class ProgrammingExerciseSubmissionAndResultSimulationIntegrationTest extends AbstractSpringDevelopmentTest {
 
     @Autowired
     ProgrammingSubmissionRepository submissionRepository;
@@ -46,7 +46,7 @@ public class ProgrammingExerciseSubmissionAndResultSimulationIntegrationTest ext
     }
 
     @AfterEach
-    public void tearDown() {
+    void tearDown() {
         database.resetDatabase();
     }
 

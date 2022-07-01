@@ -8,10 +8,10 @@ import de.tum.in.www1.artemis.domain.quiz.ShortAnswerQuestion;
 import de.tum.in.www1.artemis.domain.quiz.ShortAnswerSubmittedAnswer;
 import de.tum.in.www1.artemis.domain.quiz.ShortAnswerSubmittedText;
 
-public class ShortAnswerQuestionTest {
+class ShortAnswerQuestionTest {
 
     @Test
-    public void checkSolutionsAreTrimmed() {
+    void checkSolutionsAreTrimmed() {
         var shortAnswerSubmittedText = new ShortAnswerSubmittedText();
         var shortAnswerSubmittedAnswer = new ShortAnswerSubmittedAnswer();
         var shortAnswerQuestion = new ShortAnswerQuestion();

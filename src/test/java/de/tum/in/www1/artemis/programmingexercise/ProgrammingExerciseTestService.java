@@ -608,7 +608,7 @@ public class ProgrammingExerciseTestService {
     }
 
     // TEST
-    public void testImportProgrammingExercise_team_modeChange() throws Exception {
+    void testImportProgrammingExercise_team_modeChange() throws Exception {
         // Setup exercises for import
         ProgrammingExercise sourceExercise = database.addCourseWithOneProgrammingExerciseAndStaticCodeAnalysisCategories();
         sourceExercise.setMode(ExerciseMode.INDIVIDUAL);
@@ -646,7 +646,7 @@ public class ProgrammingExerciseTestService {
     }
 
     // TEST
-    public void testImportProgrammingExercise_individual_modeChange() throws Exception {
+    void testImportProgrammingExercise_individual_modeChange() throws Exception {
         // Setup exercises for import
         ProgrammingExercise sourceExercise = database.addCourseWithOneProgrammingExerciseAndStaticCodeAnalysisCategories();
         sourceExercise.setMode(TEAM);
@@ -684,7 +684,7 @@ public class ProgrammingExerciseTestService {
     }
 
     // TEST
-    public void testImportProgrammingExercise_scaChange() throws Exception {
+    void testImportProgrammingExercise_scaChange() throws Exception {
         // Setup exercises for import
         ProgrammingExercise sourceExercise = database.addCourseWithOneProgrammingExerciseAndStaticCodeAnalysisCategories();
         database.addTestCasesToProgrammingExercise(sourceExercise);
@@ -709,7 +709,7 @@ public class ProgrammingExerciseTestService {
         assertThat(exerciseToBeImported.getMaxStaticCodeAnalysisPenalty()).isNull();
     }
 
-    public void testImportProgrammingExercise_scaChange_activated() throws Exception {
+    void testImportProgrammingExercise_scaChange_activated() throws Exception {
         // Setup exercises for import
         ProgrammingExercise sourceExercise = (ProgrammingExercise) database.addCourseWithOneProgrammingExercise(false).getExercises().iterator().next();
         database.addTestCasesToProgrammingExercise(sourceExercise);
@@ -1074,7 +1074,7 @@ public class ProgrammingExerciseTestService {
     }
 
     // Test
-    public void testArchiveCourseWithProgrammingExercise() throws Exception {
+    void testArchiveCourseWithProgrammingExercise() throws Exception {
         course.setEndDate(ZonedDateTime.now().minusMinutes(4));
         course.setCourseArchivePath(null);
         course.setExercises(Set.of(exercise));
@@ -1123,19 +1123,19 @@ public class ProgrammingExerciseTestService {
     }
 
     // Test
-    public void testExportCourseCannotExportSingleParticipationCanceledException() throws Exception {
+    void testExportCourseCannotExportSingleParticipationCanceledException() throws Exception {
         createCourseWithProgrammingExerciseAndParticipationWithFiles();
         testExportCourseWithFaultyParticipationCannotGetOrCheckoutRepository(new CanceledException("Checkout canceled"));
     }
 
     // Test
-    public void testExportCourseCannotExportSingleParticipationGitApiException() throws Exception {
+    void testExportCourseCannotExportSingleParticipationGitApiException() throws Exception {
         createCourseWithProgrammingExerciseAndParticipationWithFiles();
         testExportCourseWithFaultyParticipationCannotGetOrCheckoutRepository(new InvalidRemoteException("InvalidRemoteException"));
     }
 
     // Test
-    public void testExportCourseCannotExportSingleParticipationGitException() throws Exception {
+    void testExportCourseCannotExportSingleParticipationGitException() throws Exception {
         createCourseWithProgrammingExerciseAndParticipationWithFiles();
         testExportCourseWithFaultyParticipationCannotGetOrCheckoutRepository(new GitException("GitException"));
     }
@@ -1237,7 +1237,7 @@ public class ProgrammingExerciseTestService {
     }
 
     // Test
-    public void testDownloadCourseArchiveAsInstructor() throws Exception {
+    void testDownloadCourseArchiveAsInstructor() throws Exception {
         // Archive the course and wait until it's complete
         testArchiveCourseWithProgrammingExercise();
 
@@ -1712,7 +1712,7 @@ public class ProgrammingExerciseTestService {
     }
 
     // TEST
-    public void testGetProgrammingExercise_exampleSolutionVisibility(boolean isStudent, String username) throws Exception {
+    void testGetProgrammingExercise_exampleSolutionVisibility(boolean isStudent, String username) throws Exception {
 
         if (isStudent) {
             assertEquals(studentLogin, username, "The setup is done according to studentLogin value, another username may not work as expected");

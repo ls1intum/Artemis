@@ -62,7 +62,7 @@ public abstract class AbstractSpringIntegrationSaml2Test {
     protected SAML2Service saml2Service;
 
     @BeforeEach
-    public void setUp() throws Exception {
+    void setUp() throws Exception {
         doReturn(Map.of()).when(programmingLanguageFeatureService).getProgrammingLanguageFeatures();
         doReturn(null).when(programmingLanguageFeatureService).getProgrammingLanguageFeatures(any(ProgrammingLanguage.class));
         doReturn(null).when(relyingPartyRegistrationRepository).findByRegistrationId(anyString());
@@ -70,7 +70,7 @@ public abstract class AbstractSpringIntegrationSaml2Test {
     }
 
     @AfterEach
-    public void resetSpyBeans() {
+    void resetSpyBeans() {
         Mockito.reset(relyingPartyRegistrationRepository, programmingLanguageFeatureService, mailService);
     }
 

@@ -38,7 +38,7 @@ import de.tum.in.www1.artemis.web.rest.dto.LtiLaunchRequestDTO;
 import de.tum.in.www1.artemis.web.rest.vm.LoginVM;
 import de.tum.in.www1.artemis.web.rest.vm.ManagedUserVM;
 
-public class InternalAuthenticationIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest {
+class InternalAuthenticationIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest {
 
     @Autowired
     private PasswordService passwordService;
@@ -91,7 +91,7 @@ public class InternalAuthenticationIntegrationTest extends AbstractSpringIntegra
     private LtiLaunchRequestDTO ltiLaunchRequest;
 
     @BeforeEach
-    public void setUp() {
+    void setUp() {
         jenkinsRequestMockProvider.enableMockingOfRequests(jenkinsServer);
 
         database.addUsers(1, 0, 0, 0);
@@ -115,12 +115,12 @@ public class InternalAuthenticationIntegrationTest extends AbstractSpringIntegra
     }
 
     @AfterEach
-    public void teardown() {
+    void teardown() {
         database.resetDatabase();
     }
 
     @Test
-    public void launchLtiRequest_authViaEmail_success() throws Exception {
+    void launchLtiRequest_authViaEmail_success() throws Exception {
         ltiLaunchRequest.setCustom_lookup_user_by_email(true);
         request.postForm("/api/lti/launch/" + programmingExercise.getId(), ltiLaunchRequest, HttpStatus.FOUND);
 
@@ -140,7 +140,7 @@ public class InternalAuthenticationIntegrationTest extends AbstractSpringIntegra
 
     @Test
     @WithAnonymousUser
-    public void authenticateAfterLtiRequest_success() throws Exception {
+    void authenticateAfterLtiRequest_success() throws Exception {
         launchLtiRequest_authViaEmail_success();
 
         final var auth = new TestingAuthenticationToken(student.getLogin(), USER_PASSWORD);
@@ -152,7 +152,7 @@ public class InternalAuthenticationIntegrationTest extends AbstractSpringIntegra
 
     @Test
     @WithMockUser(username = "ab12cde")
-    public void registerForCourse_internalAuth_success() throws Exception {
+    void registerForCourse_internalAuth_success() throws Exception {
         gitlabRequestMockProvider.enableMockingOfRequests();
         final var student = ModelFactory.generateActivatedUser("ab12cde");
         userRepository.save(student);
@@ -218,35 +218,35 @@ public class InternalAuthenticationIntegrationTest extends AbstractSpringIntegra
 
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
-    public void createUserWithInternalUserManagementAndAutomatedTutorialGroupsAssignment() throws Exception {
+    void createUserWithInternalUserManagementAndAutomatedTutorialGroupsAssignment() throws Exception {
         final User user = createUserWithRestApi(Set.of(USER_AUTHORITY));
         assertUserGroups(user, true, false, false, false);
     }
 
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
-    public void createTutorWithInternalUserManagementAndAutomatedTutorialGroupsAssignment() throws Exception {
+    void createTutorWithInternalUserManagementAndAutomatedTutorialGroupsAssignment() throws Exception {
         final User user = createUserWithRestApi(Set.of(USER_AUTHORITY, TA_AUTHORITY));
         assertUserGroups(user, true, true, false, false);
     }
 
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
-    public void createEditorWithInternalUserManagementAndAutomatedTutorialGroupsAssignment() throws Exception {
+    void createEditorWithInternalUserManagementAndAutomatedTutorialGroupsAssignment() throws Exception {
         final User user = createUserWithRestApi(Set.of(USER_AUTHORITY, TA_AUTHORITY, EDITOR_AUTHORITY));
         assertUserGroups(user, true, true, true, false);
     }
 
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
-    public void createInstructorWithInternalUserManagementAndAutomatedTutorialGroupsAssignment() throws Exception {
+    void createInstructorWithInternalUserManagementAndAutomatedTutorialGroupsAssignment() throws Exception {
         final User user = createUserWithRestApi(Set.of(USER_AUTHORITY, TA_AUTHORITY, EDITOR_AUTHORITY, INSTRUCTOR_AUTHORITY));
         assertUserGroups(user, true, true, true, true);
     }
 
     @Test
     @WithAnonymousUser
-    public void testJWTAuthentication() throws Exception {
+    void testJWTAuthentication() throws Exception {
         LoginVM loginVM = new LoginVM();
         loginVM.setUsername(USERNAME);
         loginVM.setPassword(USER_PASSWORD);
@@ -262,7 +262,7 @@ public class InternalAuthenticationIntegrationTest extends AbstractSpringIntegra
 
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
-    public void updateUserWithRemovedGroups_internalAuth_successful() throws Exception {
+    void updateUserWithRemovedGroups_internalAuth_successful() throws Exception {
         gitlabRequestMockProvider.enableMockingOfRequests();
         gitlabRequestMockProvider.mockUpdateUser();
 

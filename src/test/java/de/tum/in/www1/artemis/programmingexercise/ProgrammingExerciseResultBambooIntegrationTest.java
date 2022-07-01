@@ -57,7 +57,7 @@ class ProgrammingExerciseResultBambooIntegrationTest extends AbstractSpringInteg
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void shouldUpdateTestCasesAndResultScoreFromSolutionParticipationResult() throws JsonProcessingException {
+    void shouldUpdateTestCasesAndResultScoreFromSolutionParticipationResult() throws JsonProcessingException {
         var notification = ModelFactory.generateBambooBuildResult(Constants.ASSIGNMENT_REPO_NAME, List.of("test1", "test2", "test4"), List.of());
         bitbucketRequestMockProvider.mockGetPushDate(programmingExerciseResultTestService.getProgrammingExercise().getProjectKey(), TestConstants.COMMIT_HASH_STRING,
                 ZonedDateTime.now());
@@ -66,7 +66,7 @@ class ProgrammingExerciseResultBambooIntegrationTest extends AbstractSpringInteg
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void shouldUpdateTestCasesAndResultScoreFromSolutionParticipationResultWithFailedTest() throws JsonProcessingException {
+    void shouldUpdateTestCasesAndResultScoreFromSolutionParticipationResultWithFailedTest() throws JsonProcessingException {
         var notification = ModelFactory.generateBambooBuildResult(Constants.ASSIGNMENT_REPO_NAME, List.of("test1", "test2", "test4"), List.of("test3"));
         bitbucketRequestMockProvider.mockGetPushDate(programmingExerciseResultTestService.getProgrammingExercise().getProjectKey(), TestConstants.COMMIT_HASH_STRING,
                 ZonedDateTime.now());
@@ -76,7 +76,7 @@ class ProgrammingExerciseResultBambooIntegrationTest extends AbstractSpringInteg
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @EnumSource(value = ProgrammingLanguage.class, names = { "JAVA", "SWIFT" })
     @WithMockUser(username = "student1", roles = "USER")
-    public void shouldStoreFeedbackForResultWithStaticCodeAnalysisReport(ProgrammingLanguage programmingLanguage) throws JsonProcessingException {
+    void shouldStoreFeedbackForResultWithStaticCodeAnalysisReport(ProgrammingLanguage programmingLanguage) throws JsonProcessingException {
         programmingExerciseResultTestService.setupForProgrammingLanguage(programmingLanguage);
         var notification = ModelFactory.generateBambooBuildResultWithStaticCodeAnalysisReport(Constants.ASSIGNMENT_REPO_NAME, List.of("test1"), List.of(), programmingLanguage);
         bitbucketRequestMockProvider.mockGetPushDate(programmingExerciseResultTestService.getProgrammingExerciseWithStaticCodeAnalysis().getProjectKey(),
@@ -100,7 +100,7 @@ class ProgrammingExerciseResultBambooIntegrationTest extends AbstractSpringInteg
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void shouldStoreBuildLogsForSubmission() throws JsonProcessingException {
+    void shouldStoreBuildLogsForSubmission() throws JsonProcessingException {
         var resultNotification = ModelFactory.generateBambooBuildResultWithLogs(Constants.ASSIGNMENT_REPO_NAME, List.of("test1"), List.of());
         bitbucketRequestMockProvider.mockGetPushDate(programmingExerciseResultTestService.getProgrammingExercise().getProjectKey(), TestConstants.COMMIT_HASH_STRING,
                 ZonedDateTime.now());
@@ -109,7 +109,7 @@ class ProgrammingExerciseResultBambooIntegrationTest extends AbstractSpringInteg
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void shouldSaveBuildLogsForSuccessfulBuildInBuildLogRepository() throws JsonProcessingException {
+    void shouldSaveBuildLogsForSuccessfulBuildInBuildLogRepository() throws JsonProcessingException {
         var resultNotification = ModelFactory.generateBambooBuildResultWithLogs(Constants.ASSIGNMENT_REPO_NAME, List.of("test1"), List.of());
         bitbucketRequestMockProvider.mockGetPushDate(programmingExerciseResultTestService.getProgrammingExercise().getProjectKey(), TestConstants.COMMIT_HASH_STRING,
                 ZonedDateTime.now());
@@ -118,7 +118,7 @@ class ProgrammingExerciseResultBambooIntegrationTest extends AbstractSpringInteg
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void shouldSaveBuildLogsForFailedBuildInBuildLogRepository() throws JsonProcessingException {
+    void shouldSaveBuildLogsForFailedBuildInBuildLogRepository() throws JsonProcessingException {
         var resultNotification = ModelFactory.generateBambooBuildResultWithLogs(Constants.ASSIGNMENT_REPO_NAME, List.of("test1"), List.of("test2"));
         bitbucketRequestMockProvider.mockGetPushDate(programmingExerciseResultTestService.getProgrammingExercise().getProjectKey(), TestConstants.COMMIT_HASH_STRING,
                 ZonedDateTime.now());
@@ -127,14 +127,14 @@ class ProgrammingExerciseResultBambooIntegrationTest extends AbstractSpringInteg
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void shouldGenerateNewManualResultIfManualAssessmentExists() {
+    void shouldGenerateNewManualResultIfManualAssessmentExists() {
         var notification = ModelFactory.generateBambooBuildResult(Constants.ASSIGNMENT_REPO_NAME, List.of("test1", "test2", "test4"), List.of());
         programmingExerciseResultTestService.shouldGenerateNewManualResultIfManualAssessmentExists(notification);
     }
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void shouldGenerateTestwiseCoverageFileReport() throws Exception {
+    void shouldGenerateTestwiseCoverageFileReport() throws Exception {
         var resultNotification = TestwiseCoverageTestUtil.generateBambooBuildResultWithCoverage();
         programmingExerciseResultTestService.shouldGenerateTestwiseCoverageFileReports(resultNotification);
     }

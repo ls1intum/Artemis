@@ -27,7 +27,7 @@ import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.web.rest.dto.SubmissionExportOptionsDTO;
 
-public class SubmissionExportIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+class SubmissionExportIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     private ModelingExercise modelingExercise;
 
@@ -58,7 +58,7 @@ public class SubmissionExportIntegrationTest extends AbstractSpringIntegrationBa
     private final long NOT_EXISTING_EXERCISE_ID = 5489218954L;
 
     @BeforeEach
-    public void initTestCase() {
+    void initTestCase() {
         List<User> users = database.addUsers(3, 1, 0, 1);
         users.remove(database.getUserByLogin("admin"));
         Course course1 = database.addCourseWithModelingAndTextAndFileUploadExercise();
@@ -126,7 +126,7 @@ public class SubmissionExportIntegrationTest extends AbstractSpringIntegrationBa
     }
 
     @AfterEach
-    public void resetDatabase() throws Exception {
+    void resetDatabase() throws Exception {
         // change back to instructor user
         database.changeUser("instructor1");
         database.resetDatabase();
@@ -134,7 +134,7 @@ public class SubmissionExportIntegrationTest extends AbstractSpringIntegrationBa
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void testAll_asStudent() throws Exception {
+    void testAll_asStudent() throws Exception {
         this.testAllPreAuthorize();
     }
 
@@ -146,7 +146,7 @@ public class SubmissionExportIntegrationTest extends AbstractSpringIntegrationBa
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testNoSubmissionsForStudent_asInstructor() throws Exception {
+    void testNoSubmissionsForStudent_asInstructor() throws Exception {
         baseExportOptions.setExportAllParticipants(false);
         baseExportOptions.setParticipantIdentifierList("nonexistentstudent");
         request.post("/api/text-exercises/" + textExercise.getId() + "/export-submissions", baseExportOptions, HttpStatus.BAD_REQUEST);
@@ -156,7 +156,7 @@ public class SubmissionExportIntegrationTest extends AbstractSpringIntegrationBa
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testNoSubmissionsForStudent_asInstructorNotInGroup() throws Exception {
+    void testNoSubmissionsForStudent_asInstructorNotInGroup() throws Exception {
         baseExportOptions.setExportAllParticipants(false);
         baseExportOptions.setParticipantIdentifierList("nonexistentstudent");
         Course course = textExercise.getCourseViaExerciseGroupOrCourseMember();
@@ -169,7 +169,7 @@ public class SubmissionExportIntegrationTest extends AbstractSpringIntegrationBa
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void testNoSubmissionsForStudent_asTutor() throws Exception {
+    void testNoSubmissionsForStudent_asTutor() throws Exception {
         baseExportOptions.setExportAllParticipants(true);
         baseExportOptions.setParticipantIdentifierList("nonexistentstudent");
         request.post("/api/text-exercises/" + textExercise.getId() + "/export-submissions", baseExportOptions, HttpStatus.FORBIDDEN);
@@ -179,7 +179,7 @@ public class SubmissionExportIntegrationTest extends AbstractSpringIntegrationBa
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testWrongExerciseId_asInstructor() throws Exception {
+    void testWrongExerciseId_asInstructor() throws Exception {
         baseExportOptions.setExportAllParticipants(false);
         baseExportOptions.setParticipantIdentifierList("nonexistentstudent");
         request.post("/api/text-exercises/" + NOT_EXISTING_EXERCISE_ID + "/export-submissions", baseExportOptions, HttpStatus.NOT_FOUND);
@@ -189,7 +189,7 @@ public class SubmissionExportIntegrationTest extends AbstractSpringIntegrationBa
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testNoSubmissionsForDate_asInstructor() throws Exception {
+    void testNoSubmissionsForDate_asInstructor() throws Exception {
         baseExportOptions.setFilterLateSubmissions(true);
         baseExportOptions.setFilterLateSubmissionsDate(ZonedDateTime.now().minusDays(2));
         request.post("/api/text-exercises/" + textExercise.getId() + "/export-submissions", baseExportOptions, HttpStatus.BAD_REQUEST);
@@ -199,7 +199,7 @@ public class SubmissionExportIntegrationTest extends AbstractSpringIntegrationBa
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testExportAll() throws Exception {
+    void testExportAll() throws Exception {
         File textZip = request.postWithResponseBodyFile("/api/text-exercises/" + textExercise.getId() + "/export-submissions", baseExportOptions, HttpStatus.OK);
         assertZipContains(textZip, textSubmission1, textSubmission2, textSubmission3);
 
@@ -212,7 +212,7 @@ public class SubmissionExportIntegrationTest extends AbstractSpringIntegrationBa
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testExportAll_IOException() throws Exception {
+    void testExportAll_IOException() throws Exception {
         MockedStatic<Files> mockedFiles = mockStatic(Files.class);
         mockedFiles.when(() -> Files.newOutputStream(any(), any())).thenThrow(IOException.class);
         request.postWithResponseBodyFile("/api/file-upload-exercises/" + fileUploadExercise.getId() + "/export-submissions", baseExportOptions, HttpStatus.BAD_REQUEST);
@@ -222,7 +222,7 @@ public class SubmissionExportIntegrationTest extends AbstractSpringIntegrationBa
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testExportTextExerciseSubmission_IOException() throws Exception {
+    void testExportTextExerciseSubmission_IOException() throws Exception {
         MockedStatic<Files> mockedFiles = mockStatic(Files.class);
         mockedFiles.when(() -> Files.newOutputStream(any(), any())).thenThrow(IOException.class);
         request.postWithResponseBodyFile("/api/text-exercises/" + textExercise.getId() + "/export-submissions", baseExportOptions, HttpStatus.BAD_REQUEST);

@@ -20,7 +20,7 @@ import de.tum.in.www1.artemis.domain.enumeration.ParticipationLifecycle;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 
-public class ParticipationLifecycleServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+class ParticipationLifecycleServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
     private ParticipationLifecycleService participationLifecycleService;
@@ -33,7 +33,7 @@ public class ParticipationLifecycleServiceTest extends AbstractSpringIntegration
     };
 
     @BeforeEach
-    public void reset() {
+    void reset() {
         SecurityUtils.setAuthorizationObject();
 
         database.addUsers(1, 1, 1, 1);
@@ -43,12 +43,12 @@ public class ParticipationLifecycleServiceTest extends AbstractSpringIntegration
     }
 
     @AfterEach
-    public void tearDown() {
+    void tearDown() {
         database.resetDatabase();
     }
 
     @Test
-    public void scheduleTaskNoBuildAndTestDate() {
+    void scheduleTaskNoBuildAndTestDate() {
         setupExerciseAndParticipation(null, ZonedDateTime.now().plusHours(1));
 
         // should not be scheduled at all
@@ -57,7 +57,7 @@ public class ParticipationLifecycleServiceTest extends AbstractSpringIntegration
     }
 
     @Test
-    public void scheduleTaskOnlyBuildAndTestAfterDueDate() {
+    void scheduleTaskOnlyBuildAndTestAfterDueDate() {
         setupExerciseAndParticipation(ZonedDateTime.now().plusHours(1), null);
 
         // should still be scheduled even if no individual due date affects the scheduling
@@ -66,7 +66,7 @@ public class ParticipationLifecycleServiceTest extends AbstractSpringIntegration
     }
 
     @Test
-    public void scheduleTaskDueDateBeforeBuildAndTestDate() {
+    void scheduleTaskDueDateBeforeBuildAndTestDate() {
         setupExerciseAndParticipation(ZonedDateTime.now().plusHours(2), ZonedDateTime.now().plusHours(1));
 
         // scheduling should choose proper build and test after due date as date
@@ -75,7 +75,7 @@ public class ParticipationLifecycleServiceTest extends AbstractSpringIntegration
     }
 
     @Test
-    public void scheduleTaskDueDateAfterBuildAndTestDate() {
+    void scheduleTaskDueDateAfterBuildAndTestDate() {
         setupExerciseAndParticipation(ZonedDateTime.now().plusHours(1), ZonedDateTime.now().plusHours(2));
 
         // scheduling should choose individual due date (after build and test date) as scheduling date
@@ -84,7 +84,7 @@ public class ParticipationLifecycleServiceTest extends AbstractSpringIntegration
     }
 
     @Test
-    public void scheduleOnIndividualDueDate() {
+    void scheduleOnIndividualDueDate() {
         setupExerciseAndParticipation(null, ZonedDateTime.now().plusHours(2));
 
         // scheduling should choose individual due date as scheduling date
@@ -93,7 +93,7 @@ public class ParticipationLifecycleServiceTest extends AbstractSpringIntegration
     }
 
     @Test
-    public void scheduleNoDueDate() {
+    void scheduleNoDueDate() {
         setupExerciseAndParticipation(null, null);
         programmingExercise.setDueDate(null);
 

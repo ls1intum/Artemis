@@ -32,7 +32,7 @@ import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.metis.PostRepository;
 import de.tum.in.www1.artemis.repository.metis.ReactionRepository;
 
-public class ReactionIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+class ReactionIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
     private ReactionRepository reactionRepository;
@@ -54,7 +54,7 @@ public class ReactionIntegrationTest extends AbstractSpringIntegrationBambooBitb
     private static final int MAX_POSTS_PER_PAGE = 20;
 
     @BeforeEach
-    public void initTestCase() {
+    void initTestCase() {
 
         // used to test hibernate validation using custom ReactionConstraintValidator
         validator = Validation.buildDefaultValidatorFactory().getValidator();
@@ -72,7 +72,7 @@ public class ReactionIntegrationTest extends AbstractSpringIntegrationBambooBitb
     }
 
     @AfterEach
-    public void tearDown() {
+    void tearDown() {
         database.resetDatabase();
     }
 
@@ -80,7 +80,7 @@ public class ReactionIntegrationTest extends AbstractSpringIntegrationBambooBitb
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void testCreateOwnPostReaction() throws Exception {
+    void testCreateOwnPostReaction() throws Exception {
         // student 1 is the author of the post and reacts on this post
         Post postReactedOn = existingPostsWithAnswers.get(0);
         Reaction reactionToSaveOnPost = createReactionOnPost(postReactedOn);
@@ -92,7 +92,7 @@ public class ReactionIntegrationTest extends AbstractSpringIntegrationBambooBitb
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void testCreateMultipleOwnPostReaction_internalServerError() throws Exception {
+    void testCreateMultipleOwnPostReaction_internalServerError() throws Exception {
         // student 1 is the author of the post and reacts on this post
         Post postReactedOn = existingPostsWithAnswers.get(0);
         Reaction reactionToSaveOnPost = createReactionOnPost(postReactedOn);
@@ -107,7 +107,7 @@ public class ReactionIntegrationTest extends AbstractSpringIntegrationBambooBitb
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void testCreateOwnAnswerPostReaction() throws Exception {
+    void testCreateOwnAnswerPostReaction() throws Exception {
         // student 1 is the author of the answer post and reacts on this answer post
         AnswerPost answerPostReactedOn = existingAnswerPosts.get(0);
         Reaction reactionToSaveOnAnswerPost = createReactionOnAnswerPost(answerPostReactedOn);
@@ -119,7 +119,7 @@ public class ReactionIntegrationTest extends AbstractSpringIntegrationBambooBitb
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void testCreateMultipleOwnAnswerPostReaction_internalServerError() throws Exception {
+    void testCreateMultipleOwnAnswerPostReaction_internalServerError() throws Exception {
         // student 1 is the author of the answer post and reacts on this answer post
         AnswerPost answerPostReactedOn = existingAnswerPosts.get(0);
         Reaction reactionToSaveOnAnswerPost = createReactionOnAnswerPost(answerPostReactedOn);
@@ -134,7 +134,7 @@ public class ReactionIntegrationTest extends AbstractSpringIntegrationBambooBitb
 
     @Test
     @WithMockUser(username = "student2", roles = "USER")
-    public void testCreatePostReactions() throws Exception {
+    void testCreatePostReactions() throws Exception {
         // student 1 is the author of the post and student 2 reacts on this post
         AnswerPost answerPostReactedOn = existingAnswerPosts.get(0);
         Reaction reactionToSaveOnAnswerPost = createReactionOnAnswerPost(answerPostReactedOn);
@@ -157,7 +157,7 @@ public class ReactionIntegrationTest extends AbstractSpringIntegrationBambooBitb
 
     @Test
     @WithMockUser(username = "student2", roles = "USER")
-    public void testCreateAnswerPostReactions() throws Exception {
+    void testCreateAnswerPostReactions() throws Exception {
         // student 1 is the author of the answer post and student 2 reacts on this answer post
         AnswerPost answerPostReactedOn = existingAnswerPosts.get(0);
         Reaction reactionToSaveOnAnswerPost = createReactionOnAnswerPost(answerPostReactedOn);
@@ -180,7 +180,7 @@ public class ReactionIntegrationTest extends AbstractSpringIntegrationBambooBitb
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void testCreateExistingReaction_badRequest() throws Exception {
+    void testCreateExistingReaction_badRequest() throws Exception {
         // student 1 is the author of the answer post and reacts on this answer post
         AnswerPost answerPostReactedOn = existingAnswerPosts.get(0);
         Reaction reactionToSaveOnAnswerPost = createReactionOnAnswerPost(answerPostReactedOn);
@@ -193,7 +193,7 @@ public class ReactionIntegrationTest extends AbstractSpringIntegrationBambooBitb
 
     @Test
     @WithMockUser(username = "student2", roles = "USER")
-    public void testValidateReactionConstraintViolation() throws Exception {
+    void testValidateReactionConstraintViolation() throws Exception {
         Reaction invalidReaction = createInvalidReaction();
 
         request.postWithResponseBody("/api/courses/" + courseId + "/postings/reactions", invalidReaction, Reaction.class, HttpStatus.BAD_REQUEST);
@@ -205,7 +205,7 @@ public class ReactionIntegrationTest extends AbstractSpringIntegrationBambooBitb
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void testGetPostsForCourse_OrderByVoteCountDESC() throws Exception {
+    void testGetPostsForCourse_OrderByVoteCountDESC() throws Exception {
         PostSortCriterion sortCriterion = PostSortCriterion.VOTES;
         SortingOrder sortingOrder = SortingOrder.DESCENDING;
 
@@ -243,7 +243,7 @@ public class ReactionIntegrationTest extends AbstractSpringIntegrationBambooBitb
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void testGetPostsForCourse_OrderByVoteCountASC() throws Exception {
+    void testGetPostsForCourse_OrderByVoteCountASC() throws Exception {
         PostSortCriterion sortCriterion = PostSortCriterion.VOTES;
         SortingOrder sortingOrder = SortingOrder.ASCENDING;
 
@@ -281,7 +281,7 @@ public class ReactionIntegrationTest extends AbstractSpringIntegrationBambooBitb
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void testDeleteOwnPostReaction() throws Exception {
+    void testDeleteOwnPostReaction() throws Exception {
         // student 1 is the author of the post and reacts on this post
         Post postReactedOn = existingPostsWithAnswers.get(0);
         Reaction reactionToSaveOnPost = createReactionOnPost(postReactedOn);
@@ -297,7 +297,7 @@ public class ReactionIntegrationTest extends AbstractSpringIntegrationBambooBitb
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void testDeleteOwnAnswerPostReaction() throws Exception {
+    void testDeleteOwnAnswerPostReaction() throws Exception {
         // student 1 is the author of the post and reacts on this post
         AnswerPost answerPostReactedOn = existingAnswerPosts.get(0);
         Reaction reactionToSaveOnPost = createReactionOnAnswerPost(answerPostReactedOn);
@@ -312,7 +312,7 @@ public class ReactionIntegrationTest extends AbstractSpringIntegrationBambooBitb
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void testDeletePostReactionOfOthers_forbidden() throws Exception {
+    void testDeletePostReactionOfOthers_forbidden() throws Exception {
         // student 1 is the author of the post and student 2 reacts on this post
         Post postReactedOn = existingPostsWithAnswers.get(0);
         Reaction reactionSaveOnPost = saveReactionOfOtherUserOnPost(postReactedOn);
@@ -324,7 +324,7 @@ public class ReactionIntegrationTest extends AbstractSpringIntegrationBambooBitb
 
     @Test
     @WithMockUser(username = "student2", roles = "USER")
-    public void testDeletePostReactionWithWrongCourseId_badRequest() throws Exception {
+    void testDeletePostReactionWithWrongCourseId_badRequest() throws Exception {
         Course dummyCourse = database.createCourse();
         Post postToReactOn = existingPostsWithAnswers.get(0);
         Reaction reactionToSaveOnPost = createReactionOnPost(postToReactOn);
@@ -335,7 +335,7 @@ public class ReactionIntegrationTest extends AbstractSpringIntegrationBambooBitb
 
     @Test
     @WithMockUser(username = "student2", roles = "USER")
-    public void testDeletePostReaction() throws Exception {
+    void testDeletePostReaction() throws Exception {
         // student 1 is the author of the post and student 2 reacts on this post
         Post postReactedOn = existingPostsWithAnswers.get(0);
         Reaction reactionToSaveOnPost = createReactionOnPost(postReactedOn);

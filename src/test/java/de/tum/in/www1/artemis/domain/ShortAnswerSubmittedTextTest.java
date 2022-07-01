@@ -9,7 +9,7 @@ import de.tum.in.www1.artemis.domain.quiz.ShortAnswerQuestion;
 import de.tum.in.www1.artemis.domain.quiz.ShortAnswerSubmittedAnswer;
 import de.tum.in.www1.artemis.domain.quiz.ShortAnswerSubmittedText;
 
-public class ShortAnswerSubmittedTextTest {
+class ShortAnswerSubmittedTextTest {
 
     private ShortAnswerSubmittedText shortAnswerSubmittedText;
 
@@ -20,7 +20,7 @@ public class ShortAnswerSubmittedTextTest {
      * @desc initialize attributes for test cases
      */
     @BeforeEach
-    public void init() {
+    void init() {
         shortAnswerQuestion = new ShortAnswerQuestion();
         ShortAnswerSubmittedAnswer shortAnswerSubmittedAnswer = new ShortAnswerSubmittedAnswer();
         shortAnswerSubmittedAnswer.setQuizQuestion(shortAnswerQuestion);
@@ -33,7 +33,7 @@ public class ShortAnswerSubmittedTextTest {
      * @desc tests {@link ShortAnswerSubmittedText#isSubmittedTextCorrect(String, String)} with similarity value 100 and letter case matching
      */
     @Test
-    public void testSubmissionWithMatchingLetterCaseAndExactMatching() {
+    void testSubmissionWithMatchingLetterCaseAndExactMatching() {
         shortAnswerQuestion.setMatchLetterCase(true);
         shortAnswerQuestion.setSimilarityValue(100);
 
@@ -61,7 +61,7 @@ public class ShortAnswerSubmittedTextTest {
      * @desc tests {@link ShortAnswerSubmittedText#isSubmittedTextCorrect(String, String)} with similarity value 100 and without letter case matching
      */
     @Test
-    public void testSubmissionWithoutMatchingLetterCaseAndExactMatching() {
+    void testSubmissionWithoutMatchingLetterCaseAndExactMatching() {
         shortAnswerQuestion.setMatchLetterCase(false);
         shortAnswerQuestion.setSimilarityValue(100);
 
@@ -89,7 +89,7 @@ public class ShortAnswerSubmittedTextTest {
      * @desc tests {@link ShortAnswerSubmittedText#isSubmittedTextCorrect(String, String)} with similarity value 70 and without letter case matching
      */
     @Test
-    public void testSubmissionWithNonExactMatching() {
+    void testSubmissionWithNonExactMatching() {
         shortAnswerQuestion.setMatchLetterCase(false);
         shortAnswerQuestion.setSimilarityValue(70);
 

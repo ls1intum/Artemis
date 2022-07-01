@@ -19,7 +19,7 @@ import de.tum.in.www1.artemis.repository.ExampleSubmissionRepository;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.TutorParticipationRepository;
 
-public class TutorParticipationResourceIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+class TutorParticipationResourceIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
     private ExerciseRepository exerciseRepository;
@@ -33,20 +33,20 @@ public class TutorParticipationResourceIntegrationTest extends AbstractSpringInt
     private Exercise exercise;
 
     @BeforeEach
-    public void initTestCase() throws Exception {
+    void initTestCase() throws Exception {
         database.addUsers(1, 5, 0, 1);
         database.createCoursesWithExercisesAndLectures(true);
         exercise = exerciseRepository.findAll().get(0);
     }
 
     @AfterEach
-    public void tearDown() {
+    void tearDown() {
         database.resetDatabase();
     }
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void testRemoveTutorParticipationForGuidedTour() throws Exception {
+    void testRemoveTutorParticipationForGuidedTour() throws Exception {
         assertThat(tutorParticipationRepository.findAll()).hasSize(5);
 
         User tutor = database.getUserByLogin("tutor1");
@@ -70,7 +70,7 @@ public class TutorParticipationResourceIntegrationTest extends AbstractSpringInt
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void testRemoveTutorParticipationForGuidedTour_noMatchingExercise() throws Exception {
+    void testRemoveTutorParticipationForGuidedTour_noMatchingExercise() throws Exception {
         exercise.setTitle("Patterns in Software Engineering");
         exerciseRepository.save(exercise);
         request.delete("/api/guided-tour/exercises/" + exercise.getId() + "/example-submission", HttpStatus.OK);
@@ -79,7 +79,7 @@ public class TutorParticipationResourceIntegrationTest extends AbstractSpringInt
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void testRemoveTutorParticipationForGuidedTour_forbidden() throws Exception {
+    void testRemoveTutorParticipationForGuidedTour_forbidden() throws Exception {
         request.delete("/api/guided-tour/exercises/" + exercise.getId() + "/example-submission", HttpStatus.FORBIDDEN);
 
         exercise.setTitle("Patterns in Software Engineering");

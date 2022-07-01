@@ -51,7 +51,7 @@ import de.tum.in.www1.artemis.web.rest.dto.ProgrammingExerciseGradingStatisticsD
  * <li>{@link ExamProgrammingExerciseGradingServiceTest} - for exercises in an exam setting.</li>
  * </ul>
  */
-public abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
     private ProgrammingExerciseTestCaseRepository testCaseRepository;
@@ -86,7 +86,7 @@ public abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpri
     private final Double offsetByTenThousandth = 0.0001;
 
     @BeforeEach
-    public void setUp() {
+    void setUp() {
         database.addUsers(5, 1, 0, 1);
         database.addCourseWithOneProgrammingExerciseAndTestCases();
 
@@ -183,14 +183,14 @@ public abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpri
     }
 
     @AfterEach
-    public void tearDown() {
+    void tearDown() {
         database.resetDatabase();
         bambooRequestMockProvider.reset();
     }
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void shouldNotUpdateResultIfNoTestCasesExist() {
+    void shouldNotUpdateResultIfNoTestCasesExist() {
         testCaseRepository.deleteAll();
 
         Double scoreBeforeUpdate = result.getScore();
@@ -201,7 +201,7 @@ public abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpri
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void shouldAddFeedbackForDuplicateTestCases() {
+    void shouldAddFeedbackForDuplicateTestCases() {
         // Adjust existing test cases to our need
         var testCases = testCaseService.findByExerciseId(programmingExercise.getId()).stream()
                 .collect(Collectors.toMap(ProgrammingExerciseTestCase::getTestName, Function.identity()));
@@ -237,7 +237,7 @@ public abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpri
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void shouldRecalculateScoreBasedOnTestCasesWeightAutomatic() {
+    void shouldRecalculateScoreBasedOnTestCasesWeightAutomatic() {
         List<Feedback> feedbacks = new ArrayList<>();
         feedbacks.add(new Feedback().text("test1").positive(true).type(FeedbackType.AUTOMATIC));
         feedbacks.add(new Feedback().text("test2").positive(true).type(FeedbackType.AUTOMATIC));
@@ -259,7 +259,7 @@ public abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpri
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void shouldRecalculateScoreBasedOnTestCasesWeightManual() {
+    void shouldRecalculateScoreBasedOnTestCasesWeightManual() {
         List<Feedback> feedbacks = new ArrayList<>();
         // we deliberately don't set the credits here, null must work as well
         feedbacks.add(new Feedback().text("test1").positive(true).type(FeedbackType.AUTOMATIC));
@@ -287,7 +287,7 @@ public abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpri
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void shouldSetScoreCorrectlyIfWeightSumIsReallyBigOrReallySmall() {
+    void shouldSetScoreCorrectlyIfWeightSumIsReallyBigOrReallySmall() {
         var testCases = testCaseService.findByExerciseId(programmingExercise.getId()).stream()
                 .collect(Collectors.toMap(ProgrammingExerciseTestCase::getTestName, Function.identity()));
         testCases.get("test1").active(true).visibility(Visibility.ALWAYS).weight(0.);
@@ -311,7 +311,7 @@ public abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpri
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void shouldRecalculateScoreWithTestCaseBonusButNoExerciseBonus() {
+    void shouldRecalculateScoreWithTestCaseBonusButNoExerciseBonus() {
         // Set up test cases with bonus
         var testCases = testCaseService.findByExerciseId(programmingExercise.getId()).stream()
                 .collect(Collectors.toMap(ProgrammingExerciseTestCase::getTestName, Function.identity()));
@@ -420,7 +420,7 @@ public abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpri
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void shouldRecalculateScoreWithTestCaseBonusAndExerciseBonus() {
+    void shouldRecalculateScoreWithTestCaseBonusAndExerciseBonus() {
         // Set up test cases with bonus
         var testCases = testCaseService.findByExerciseId(programmingExercise.getId()).stream()
                 .collect(Collectors.toMap(ProgrammingExerciseTestCase::getTestName, Function.identity()));
@@ -482,7 +482,7 @@ public abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpri
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void shouldRemoveTestsWithAfterDueDateFlagIfDueDateHasNotPassed() {
+    void shouldRemoveTestsWithAfterDueDateFlagIfDueDateHasNotPassed() {
         // Set programming exercise due date in future.
         programmingExercise = changeRelevantExerciseEndDate(programmingExercise, ZonedDateTime.now().plusHours(10));
 
@@ -510,7 +510,7 @@ public abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpri
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void shouldNotIncludeTestsInResultWithAfterDueDateFlagIfDueDateHasNotPassedForNonStudentParticipation() {
+    void shouldNotIncludeTestsInResultWithAfterDueDateFlagIfDueDateHasNotPassedForNonStudentParticipation() {
         // Set programming exercise due date in future.
         programmingExercise = changeRelevantExerciseEndDate(programmingExercise, ZonedDateTime.now().plusHours(10));
 
@@ -538,7 +538,7 @@ public abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpri
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void shouldKeepTestsWithAfterDueDateFlagIfDueDateHasPassed() {
+    void shouldKeepTestsWithAfterDueDateFlagIfDueDateHasPassed() {
         // Set programming exercise due date in the past.
         programmingExercise = changeRelevantExerciseEndDate(programmingExercise, ZonedDateTime.now().minusHours(10));
         result.getParticipation().setExercise(programmingExercise);
@@ -567,7 +567,7 @@ public abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpri
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void shouldReEvaluateScoreOfTheCorrectResults() throws Exception {
+    void shouldReEvaluateScoreOfTheCorrectResults() throws Exception {
         programmingExercise = (ProgrammingExercise) database.addMaxScoreAndBonusPointsToExercise(programmingExercise);
         programmingExercise = database.addTemplateParticipationForProgrammingExercise(programmingExercise);
         programmingExercise = database.addSolutionParticipationForProgrammingExercise(programmingExercise);
@@ -614,7 +614,7 @@ public abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpri
     @ValueSource(booleans = { false, true })
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void shouldNotIncludeTestsMarkedAsNeverVisibleInScoreCalculation(boolean isAfterDueDate) throws Exception {
+    void shouldNotIncludeTestsMarkedAsNeverVisibleInScoreCalculation(boolean isAfterDueDate) throws Exception {
         // test case marked as never should not affect score for students neither before nor after due date
         if (isAfterDueDate) {
             programmingExercise = changeRelevantExerciseEndDate(programmingExercise, ZonedDateTime.now().minusHours(10));
@@ -674,7 +674,7 @@ public abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpri
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void shouldUpdateTheLatestResultOfASingleParticipation() {
+    void shouldUpdateTheLatestResultOfASingleParticipation() {
         programmingExercise = (ProgrammingExercise) database.addMaxScoreAndBonusPointsToExercise(programmingExercise);
         programmingExercise = database.addTemplateParticipationForProgrammingExercise(programmingExercise);
         programmingExercise = database.addSolutionParticipationForProgrammingExercise(programmingExercise);
@@ -695,7 +695,7 @@ public abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpri
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void shouldUpdateOnlyResultsForParticipationsWithoutIndividualDueDate() {
+    void shouldUpdateOnlyResultsForParticipationsWithoutIndividualDueDate() {
         programmingExercise = (ProgrammingExercise) database.addMaxScoreAndBonusPointsToExercise(programmingExercise);
         programmingExercise = database.addTemplateParticipationForProgrammingExercise(programmingExercise);
         programmingExercise = database.addSolutionParticipationForProgrammingExercise(programmingExercise);
@@ -722,7 +722,7 @@ public abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpri
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testWeightSumZero() {
+    void testWeightSumZero() {
         programmingExercise = (ProgrammingExercise) database.addMaxScoreAndBonusPointsToExercise(programmingExercise);
         programmingExercise = database.addTemplateParticipationForProgrammingExercise(programmingExercise);
         programmingExercise = database.addSolutionParticipationForProgrammingExercise(programmingExercise);
@@ -939,7 +939,7 @@ public abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpri
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void shouldRemoveInvisibleStaticCodeAnalysisFeedbackOnGrading() throws Exception {
+    void shouldRemoveInvisibleStaticCodeAnalysisFeedbackOnGrading() throws Exception {
         var participation1 = database.addStudentParticipationForProgrammingExercise(programmingExerciseSCAEnabled, "student1");
         var result1 = new Result().participation(participation1).resultString("x of y passed").successful(false).rated(true).score(100D);
         // Add some positive test case feedback otherwise the service method won't execute
@@ -964,7 +964,7 @@ public abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpri
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void shouldCalculateScoreWithStaticCodeAnalysisPenaltiesWithoutCaps() {
+    void shouldCalculateScoreWithStaticCodeAnalysisPenaltiesWithoutCaps() {
         activateAllTestCases(false);
 
         // Remove category penalty limits
@@ -1045,7 +1045,7 @@ public abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpri
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void shouldCalculateScoreWithStaticCodeAnalysisPenaltiesWithBonus() {
+    void shouldCalculateScoreWithStaticCodeAnalysisPenaltiesWithBonus() {
         activateAllTestCases(true);
 
         // Set bonus points for exercise
@@ -1103,7 +1103,7 @@ public abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpri
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void shouldCalculateScoreWithStaticCodeAnalysisPenalties() {
+    void shouldCalculateScoreWithStaticCodeAnalysisPenalties() {
         activateAllTestCases(false);
 
         var participations = createTestParticipationsWithResults();
@@ -1153,7 +1153,7 @@ public abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpri
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void shouldCalculateCorrectStatistics() throws Exception {
+    void shouldCalculateCorrectStatistics() throws Exception {
         activateAllTestCases(false);
         createTestParticipationsWithResults();
 
@@ -1185,12 +1185,11 @@ public abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpri
         categoryIssuesMap.put("Miscellaneous", Map.of());
 
         assertThat(statistics.getCategoryIssuesMap()).containsExactlyInAnyOrderEntriesOf(categoryIssuesMap);
-
     }
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void shouldGetCorrectLatestAutomaticResults() {
+    void shouldGetCorrectLatestAutomaticResults() {
         createTestParticipationsWithResults();
         var results = resultRepository.findLatestAutomaticResultsWithEagerFeedbacksForExercise(programmingExerciseSCAEnabled.getId());
         assertThat(results).hasSize(5);
@@ -1198,7 +1197,7 @@ public abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpri
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void shouldGetCorrectLatestAutomaticResultsWithMultipleResults() {
+    void shouldGetCorrectLatestAutomaticResultsWithMultipleResults() {
         createTestParticipationsWithMultipleResults();
         // this method is tested. It should probably be improved as there is an inner query
         var results = resultRepository.findLatestAutomaticResultsWithEagerFeedbacksForExercise(programmingExerciseSCAEnabled.getId());

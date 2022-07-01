@@ -12,14 +12,14 @@ import de.tum.in.www1.artemis.service.hestia.behavioral.BehavioralBlackboard;
 import de.tum.in.www1.artemis.service.hestia.behavioral.GroupedFile;
 import de.tum.in.www1.artemis.service.hestia.behavioral.knowledgesource.FindCommonLines;
 
-public class FindCommonLinesTest {
+class FindCommonLinesTest {
 
     private FindCommonLines findCommonLines;
 
     private GroupedFile groupedFile;
 
     @BeforeEach
-    public void initBlackboard() {
+    void initBlackboard() {
         BehavioralBlackboard blackboard = new BehavioralBlackboard(null, null, null);
         var groupedFiles = new ArrayList<GroupedFile>();
         blackboard.setGroupedFiles(groupedFiles);
@@ -30,12 +30,12 @@ public class FindCommonLinesTest {
     }
 
     @Test
-    public void testNoAction() {
+    void testNoAction() {
         assertThat(findCommonLines.executeCondition()).isFalse();
     }
 
     @Test
-    public void testFindCommonLines() {
+    void testFindCommonLines() {
         groupedFile.setCoveredLines(Set.of(1, 2, 3));
         groupedFile.setChangedLines(Set.of(2, 3, 4));
 
@@ -45,7 +45,7 @@ public class FindCommonLinesTest {
     }
 
     @Test
-    public void testFindNoCommonLines() {
+    void testFindNoCommonLines() {
         groupedFile.setCoveredLines(Set.of(1, 2, 3));
         groupedFile.setChangedLines(Set.of(4, 5, 6));
 

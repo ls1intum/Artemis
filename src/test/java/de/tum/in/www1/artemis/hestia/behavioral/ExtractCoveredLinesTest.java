@@ -15,7 +15,7 @@ import de.tum.in.www1.artemis.service.hestia.behavioral.BehavioralBlackboard;
 import de.tum.in.www1.artemis.service.hestia.behavioral.GroupedFile;
 import de.tum.in.www1.artemis.service.hestia.behavioral.knowledgesource.ExtractCoveredLines;
 
-public class ExtractCoveredLinesTest {
+class ExtractCoveredLinesTest {
 
     private ExtractCoveredLines extractCoveredLines;
 
@@ -24,7 +24,7 @@ public class ExtractCoveredLinesTest {
     private Set<TestwiseCoverageReportEntry> coverageReportEntries;
 
     @BeforeEach
-    public void initBlackboard() {
+    void initBlackboard() {
         BehavioralBlackboard blackboard = new BehavioralBlackboard(null, null, null);
         var groupedFiles = new ArrayList<GroupedFile>();
         blackboard.setGroupedFiles(groupedFiles);
@@ -36,13 +36,13 @@ public class ExtractCoveredLinesTest {
     }
 
     @Test
-    public void testNoAction() {
+    void testNoAction() {
         groupedFile.setCoveredLines(Collections.emptySet());
         assertThat(extractCoveredLines.executeCondition()).isFalse();
     }
 
     @Test
-    public void testExtractChangedLines1() {
+    void testExtractChangedLines1() {
         var reportEntry = new TestwiseCoverageReportEntry();
         reportEntry.setStartLine(3);
         reportEntry.setLineCount(2);
@@ -54,7 +54,7 @@ public class ExtractCoveredLinesTest {
     }
 
     @Test
-    public void testExtractChangedLines2() {
+    void testExtractChangedLines2() {
         var reportEntry1 = new TestwiseCoverageReportEntry();
         reportEntry1.setStartLine(3);
         reportEntry1.setLineCount(2);

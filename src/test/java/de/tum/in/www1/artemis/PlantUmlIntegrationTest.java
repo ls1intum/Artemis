@@ -23,7 +23,7 @@ import org.springframework.util.LinkedMultiValueMap;
 import net.sourceforge.plantuml.SourceStringReader;
 import net.sourceforge.plantuml.core.DiagramDescription;
 
-public class PlantUmlIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+class PlantUmlIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     private static final String UML_DIAGRAM_STRING = "@somePlantUml";
 
@@ -34,18 +34,18 @@ public class PlantUmlIntegrationTest extends AbstractSpringIntegrationBambooBitb
     private final byte[] UML_PNG = new byte[] { 3, 4, 2, 1 };
 
     @BeforeEach
-    public void setUp() throws IOException {
+    void setUp() throws IOException {
         database.addUsers(1, 0, 0, 0);
     }
 
     @AfterEach
-    public void tearDown() {
+    void tearDown() {
         database.resetDatabase();
     }
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void generatePng_asStudent_success() throws Exception {
+    void generatePng_asStudent_success() throws Exception {
         try (var ignored = Mockito.mockConstruction(ByteArrayOutputStream.class, (bosMock, context) -> doReturn(UML_PNG).when(bosMock).toByteArray())) {
             try (var ignored2 = Mockito.mockConstruction(SourceStringReader.class, (readerMock, context) -> doReturn(description).when(readerMock).outputImage(any(), any()))) {
                 final var paramMap = new LinkedMultiValueMap<String, String>();
@@ -58,7 +58,7 @@ public class PlantUmlIntegrationTest extends AbstractSpringIntegrationBambooBitb
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void generateSvg_asStudent_success() throws Exception {
+    void generateSvg_asStudent_success() throws Exception {
         // Mock the method outputImage, so that it simply writes the expected value into the byte array output stream
         Answer<DiagramDescription> answer = invocation -> {
             ByteArrayOutputStream bos = invocation.getArgument(0);
@@ -75,7 +75,7 @@ public class PlantUmlIntegrationTest extends AbstractSpringIntegrationBambooBitb
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void generateSvg_asStudent_error() throws Exception {
+    void generateSvg_asStudent_error() throws Exception {
         final var paramMap = new LinkedMultiValueMap<String, String>();
         paramMap.setAll(Map.of("plantuml", ""));    // empty string
         request.get(ROOT + GENERATE_SVG, HttpStatus.INTERNAL_SERVER_ERROR, String.class, paramMap);

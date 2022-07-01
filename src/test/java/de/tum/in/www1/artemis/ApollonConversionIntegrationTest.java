@@ -22,7 +22,7 @@ import de.tum.in.www1.artemis.connector.apollon.ApollonRequestMockProvider;
 import de.tum.in.www1.artemis.service.connectors.apollon.ApollonConversionService;
 import de.tum.in.www1.artemis.service.connectors.apollon.dto.ApollonModelDTO;
 
-public class ApollonConversionIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+class ApollonConversionIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
     private ApollonRequestMockProvider apollonRequestMockProvider;
@@ -41,7 +41,7 @@ public class ApollonConversionIntegrationTest extends AbstractSpringIntegrationB
      * Initializes atheneService and example exercise
      */
     @BeforeEach
-    public void init() {
+    void init() {
         // Create atheneService and inject @Value fields
         apollonConversionService.setRestTemplate(restTemplate);
         ReflectionTestUtils.setField(apollonConversionService, "apollonConversionUrl", apollonConversionUrl);
@@ -50,7 +50,7 @@ public class ApollonConversionIntegrationTest extends AbstractSpringIntegrationB
     }
 
     @AfterEach
-    public void tearDown() {
+    void tearDown() {
         apollonRequestMockProvider.reset();
     }
 
@@ -59,7 +59,7 @@ public class ApollonConversionIntegrationTest extends AbstractSpringIntegrationB
      */
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testConvertingModel() throws Exception {
+    void testConvertingModel() throws Exception {
 
         String mockPdf = "This is my pdf file";
         InputStream inputStream = new ByteArrayInputStream(mockPdf.getBytes());

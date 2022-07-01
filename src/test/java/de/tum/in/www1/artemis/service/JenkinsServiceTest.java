@@ -32,7 +32,7 @@ import de.tum.in.www1.artemis.exception.JenkinsException;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseImportService;
 
-public class JenkinsServiceTest extends AbstractSpringIntegrationJenkinsGitlabTest {
+class JenkinsServiceTest extends AbstractSpringIntegrationJenkinsGitlabTest {
 
     @Autowired
     private ContinuousIntegrationTestService continuousIntegrationTestService;
@@ -47,14 +47,14 @@ public class JenkinsServiceTest extends AbstractSpringIntegrationJenkinsGitlabTe
      * This method initializes the test case by setting up a local repo
      */
     @BeforeEach
-    public void initTestCase() throws Exception {
+    void initTestCase() throws Exception {
         jenkinsRequestMockProvider.enableMockingOfRequests(jenkinsServer);
         gitlabRequestMockProvider.enableMockingOfRequests();
         continuousIntegrationTestService.setup(this, continuousIntegrationService);
     }
 
     @AfterEach
-    public void tearDown() throws IOException {
+    void tearDown() throws IOException {
         gitlabRequestMockProvider.reset();
         jenkinsRequestMockProvider.reset();
         continuousIntegrationTestService.tearDown();
@@ -62,61 +62,61 @@ public class JenkinsServiceTest extends AbstractSpringIntegrationJenkinsGitlabTe
 
     @Test
     @WithMockUser(username = "student1")
-    public void testGetBuildStatusNotFound() throws Exception {
+    void testGetBuildStatusNotFound() throws Exception {
         continuousIntegrationTestService.testGetBuildStatusNotFound();
     }
 
     @Test
     @WithMockUser(username = "student1")
-    public void testGetBuildStatusInactive1() throws Exception {
+    void testGetBuildStatusInactive1() throws Exception {
         continuousIntegrationTestService.testGetBuildStatusInactive1();
     }
 
     @Test
     @WithMockUser(username = "student1")
-    public void testGetBuildStatusInactive2() throws Exception {
+    void testGetBuildStatusInactive2() throws Exception {
         continuousIntegrationTestService.testGetBuildStatusInactive2();
     }
 
     @Test
     @WithMockUser(username = "student1")
-    public void testGetBuildStatusQueued() throws Exception {
+    void testGetBuildStatusQueued() throws Exception {
         continuousIntegrationTestService.testGetBuildStatusQueued();
     }
 
     @Test
     @WithMockUser(username = "student1")
-    public void testGetBuildStatusBuilding() throws Exception {
+    void testGetBuildStatusBuilding() throws Exception {
         continuousIntegrationTestService.testGetBuildStatusBuilding();
     }
 
     @Test
     @WithMockUser(username = "student1")
-    public void testGetBuildStatusFails() throws Exception {
+    void testGetBuildStatusFails() throws Exception {
         continuousIntegrationTestService.testGetBuildStatusFails();
     }
 
     @Test
     @WithMockUser(username = "student1")
-    public void testHealthRunning() throws Exception {
+    void testHealthRunning() throws Exception {
         continuousIntegrationTestService.testHealthRunning();
     }
 
     @Test
     @WithMockUser(username = "student1")
-    public void testHealthNotRunning() throws Exception {
+    void testHealthNotRunning() throws Exception {
         continuousIntegrationTestService.testHealthNotRunning();
     }
 
     @Test
     @WithMockUser(username = "student1")
-    public void testHealthException() throws Exception {
+    void testHealthException() throws Exception {
         continuousIntegrationTestService.testHealthException();
     }
 
     @Test
     @WithMockUser(roles = "INSTRUCTOR", username = "instructor1")
-    public void testCreateBuildPlanForExerciseThrowsExceptionOnTemplateError() throws Exception {
+    void testCreateBuildPlanForExerciseThrowsExceptionOnTemplateError() throws Exception {
         var programmingExercise = continuousIntegrationTestService.programmingExercise;
         database.addTemplateParticipationForProgrammingExercise(programmingExercise);
         database.addSolutionParticipationForProgrammingExercise(programmingExercise);
@@ -140,7 +140,7 @@ public class JenkinsServiceTest extends AbstractSpringIntegrationJenkinsGitlabTe
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @EnumSource(value = ProgrammingLanguage.class, names = { "VHDL", "ASSEMBLER", "OCAML" }, mode = EnumSource.Mode.INCLUDE)
     @WithMockUser(roles = "INSTRUCTOR", username = "instructor1")
-    public void testCreateBuildPlanForExerciseThrowsExceptionOnTemplateError(ProgrammingLanguage programmingLanguage) throws Exception {
+    void testCreateBuildPlanForExerciseThrowsExceptionOnTemplateError(ProgrammingLanguage programmingLanguage) throws Exception {
         var programmingExercise = continuousIntegrationTestService.programmingExercise;
         programmingExercise.setProgrammingLanguage(programmingLanguage);
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
@@ -163,7 +163,7 @@ public class JenkinsServiceTest extends AbstractSpringIntegrationJenkinsGitlabTe
 
     @Test
     @WithMockUser(roles = "INSTRUCTOR", username = "instructor1")
-    public void testImportBuildPlansThrowsExceptionOnGivePermissions() throws Exception {
+    void testImportBuildPlansThrowsExceptionOnGivePermissions() throws Exception {
         var programmingExercise = continuousIntegrationTestService.programmingExercise;
         database.addTemplateParticipationForProgrammingExercise(programmingExercise);
         database.addSolutionParticipationForProgrammingExercise(programmingExercise);
@@ -182,7 +182,7 @@ public class JenkinsServiceTest extends AbstractSpringIntegrationJenkinsGitlabTe
 
     @Test
     @WithMockUser(roles = "INSTRUCTOR", username = "instructor1")
-    public void testDeleteBuildPlan() throws Exception {
+    void testDeleteBuildPlan() throws Exception {
         var programmingExercise = continuousIntegrationTestService.programmingExercise;
         database.addTemplateParticipationForProgrammingExercise(programmingExercise);
         database.addSolutionParticipationForProgrammingExercise(programmingExercise);
@@ -201,7 +201,7 @@ public class JenkinsServiceTest extends AbstractSpringIntegrationJenkinsGitlabTe
 
     @Test
     @WithMockUser(roles = "INSTRUCTOR", username = "instructor1")
-    public void testRecreateBuildPlanDeletedFolder() throws Exception {
+    void testRecreateBuildPlanDeletedFolder() throws Exception {
         var programmingExercise = continuousIntegrationTestService.programmingExercise;
         database.addTemplateParticipationForProgrammingExercise(programmingExercise);
         database.addSolutionParticipationForProgrammingExercise(programmingExercise);
@@ -225,13 +225,13 @@ public class JenkinsServiceTest extends AbstractSpringIntegrationJenkinsGitlabTe
 
     @Test
     @WithMockUser(roles = "INSTRUCTOR", username = "instructor1")
-    public void testFailToUpdatePlanRepositoryBadRequest() throws Exception {
+    void testFailToUpdatePlanRepositoryBadRequest() throws Exception {
         testFailToUpdatePlanRepositoryRestClientException(HttpStatus.BAD_REQUEST);
     }
 
     @Test
     @WithMockUser(roles = "INSTRUCTOR", username = "instructor1")
-    public void testFailToUpdatePlanRepositoryInternalError() throws Exception {
+    void testFailToUpdatePlanRepositoryInternalError() throws Exception {
         testFailToUpdatePlanRepositoryRestClientException(HttpStatus.INTERNAL_SERVER_ERROR);
     }
 

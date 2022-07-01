@@ -12,10 +12,10 @@ import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.Language;
 import de.tum.in.www1.artemis.domain.enumeration.Weekday;
 
-public class TutorGroupIntegrationTest {
+class TutorGroupIntegrationTest {
 
     @Test
-    public void testTutorGroup() {
+    void testTutorGroup() {
         var tutor = new User();
         var course = new Course();
 

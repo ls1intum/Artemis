@@ -19,7 +19,7 @@ import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.LectureRepository;
 
-public class LectureImportServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+class LectureImportServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
     private LectureImportService lectureImportService;
@@ -35,7 +35,7 @@ public class LectureImportServiceTest extends AbstractSpringIntegrationBambooBit
     private Course course2;
 
     @BeforeEach
-    public void initTestCase() throws Exception {
+    void initTestCase() throws Exception {
         database.addUsers(0, 0, 0, 1);
         List<Course> courses = this.database.createCoursesWithExercisesAndLecturesAndLectureUnits(false, true);
         Course course1 = this.courseRepository.findByIdWithExercisesAndLecturesElseThrow(courses.get(0).getId());
@@ -48,7 +48,7 @@ public class LectureImportServiceTest extends AbstractSpringIntegrationBambooBit
     }
 
     @AfterEach
-    public void tearDown() {
+    void tearDown() {
         // Delete lecture, which removes testing files on disk for associated attachments
         lectureRepository.delete(this.lecture1);
         database.resetDatabase();
@@ -56,7 +56,7 @@ public class LectureImportServiceTest extends AbstractSpringIntegrationBambooBit
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testImportLectureToCourse() {
+    void testImportLectureToCourse() {
         int lectureCount = this.course2.getLectures().size();
 
         lectureImportService.importLecture(this.lecture1, this.course2);

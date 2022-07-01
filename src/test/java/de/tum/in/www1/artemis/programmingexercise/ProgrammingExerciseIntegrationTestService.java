@@ -221,7 +221,7 @@ public class ProgrammingExerciseIntegrationTestService {
         }
     }
 
-    public void testProgrammingExerciseIsReleased_IsReleasedAndHasResults() throws Exception {
+    void testProgrammingExerciseIsReleased_IsReleasedAndHasResults() throws Exception {
         programmingExercise.setReleaseDate(ZonedDateTime.now().minusHours(5L));
         programmingExerciseRepository.save(programmingExercise);
         StudentParticipation participation = database.createAndSaveParticipationForExercise(programmingExercise, "student1");
@@ -234,7 +234,7 @@ public class ProgrammingExerciseIntegrationTestService {
         assertThat(releaseStateDTO.isTestCasesChanged()).isFalse();
     }
 
-    public void testProgrammingExerciseIsReleased_IsNotReleasedAndHasResults() throws Exception {
+    void testProgrammingExerciseIsReleased_IsNotReleasedAndHasResults() throws Exception {
         programmingExercise.setReleaseDate(ZonedDateTime.now().plusHours(5L));
         programmingExerciseRepository.save(programmingExercise);
         StudentParticipation participation = database.createAndSaveParticipationForExercise(programmingExercise, "student1");
@@ -259,11 +259,11 @@ public class ProgrammingExerciseIntegrationTestService {
         assertThat(releaseStateDTO.isTestCasesChanged()).isTrue();
     }
 
-    public void testProgrammingExerciseIsReleased_forbidden() throws Exception {
+    void testProgrammingExerciseIsReleased_forbidden() throws Exception {
         request.get("/api/programming-exercises/" + programmingExercise.getId() + "/test-case-state", HttpStatus.FORBIDDEN, Boolean.class);
     }
 
-    public void testExportSubmissionsByParticipationIds_addParticipantIdentifierToProjectName() throws Exception {
+    void testExportSubmissionsByParticipationIds_addParticipantIdentifierToProjectName() throws Exception {
         var repository1 = gitService.getExistingCheckedOutRepositoryByLocalPath(localRepoFile.toPath(), null);
         var repository2 = gitService.getExistingCheckedOutRepositoryByLocalPath(localRepoFile2.toPath(), null);
 
@@ -306,7 +306,7 @@ public class ProgrammingExerciseIntegrationTestService {
         Files.deleteIfExists(pomPath);
     }
 
-    public void testExportSubmissionsByParticipationIds_addParticipantIdentifierToProjectNameError() throws Exception {
+    void testExportSubmissionsByParticipationIds_addParticipantIdentifierToProjectNameError() throws Exception {
         var repository1 = gitService.getExistingCheckedOutRepositoryByLocalPath(localRepoFile.toPath(), null);
         var repository2 = gitService.getExistingCheckedOutRepositoryByLocalPath(localRepoFile2.toPath(), null);
 
@@ -350,7 +350,7 @@ public class ProgrammingExerciseIntegrationTestService {
         Files.deleteIfExists(pomPath);
     }
 
-    public void testExportSubmissionsByParticipationIds() throws Exception {
+    void testExportSubmissionsByParticipationIds() throws Exception {
         var repository1 = gitService.getExistingCheckedOutRepositoryByLocalPath(localRepoFile.toPath(), null);
         var repository2 = gitService.getExistingCheckedOutRepositoryByLocalPath(localRepoFile2.toPath(), null);
         doReturn(repository1).when(gitService).getOrCheckoutRepository(eq(participation1.getVcsRepositoryUrl()), anyString(), anyBoolean());
@@ -373,7 +373,7 @@ public class ProgrammingExerciseIntegrationTestService {
                 .anyMatch(entry -> entry.toString().endsWith(Path.of("student2", ".git").toString()));
     }
 
-    public void testExportSubmissionAnonymizationCombining() throws Exception {
+    void testExportSubmissionAnonymizationCombining() throws Exception {
         // provide repositories
         var repository = gitService.getExistingCheckedOutRepositoryByLocalPath(localRepoFile.toPath(), null);
         doReturn(repository).when(gitService).getOrCheckoutRepository(eq(participation1.getVcsRepositoryUrl()), anyString(), anyBoolean());
@@ -422,12 +422,12 @@ public class ProgrammingExerciseIntegrationTestService {
         }
     }
 
-    public void testExportSubmissionsByParticipationIds_invalidParticipationId_badRequest() throws Exception {
+    void testExportSubmissionsByParticipationIds_invalidParticipationId_badRequest() throws Exception {
         final var path = ROOT + EXPORT_SUBMISSIONS_BY_PARTICIPATIONS.replace("{exerciseId}", String.valueOf(programmingExercise.getId())).replace("{participationIds}", "10");
         request.postWithResponseBodyFile(path, getOptions(), HttpStatus.BAD_REQUEST);
     }
 
-    public void testExportSubmissionsByParticipationIds_instructorNotInCourse_forbidden() throws Exception {
+    void testExportSubmissionsByParticipationIds_instructorNotInCourse_forbidden() throws Exception {
         database.addInstructor("other-instructors", "instructoralt");
         var participationIds = programmingExerciseStudentParticipationRepository.findAll().stream().map(participation -> participation.getId().toString())
                 .collect(Collectors.toList());
@@ -436,13 +436,13 @@ public class ProgrammingExerciseIntegrationTestService {
         request.postWithResponseBodyFile(path, getOptions(), HttpStatus.FORBIDDEN);
     }
 
-    public void testExportSubmissionsByStudentLogins() throws Exception {
+    void testExportSubmissionsByStudentLogins() throws Exception {
         File downloadedFile = exportSubmissionsByStudentLogins(HttpStatus.OK);
         assertThat(downloadedFile).exists();
         // TODO: unzip the files and add some checks
     }
 
-    public void testExportSubmissionsByStudentLogins_failToCreateZip() throws Exception {
+    void testExportSubmissionsByStudentLogins_failToCreateZip() throws Exception {
         exportSubmissionsByStudentLogins(HttpStatus.BAD_REQUEST);
     }
 
@@ -466,7 +466,7 @@ public class ProgrammingExerciseIntegrationTestService {
         return repositoryExportOptions;
     }
 
-    public void testProgrammingExerciseDelete() throws Exception {
+    void testProgrammingExerciseDelete() throws Exception {
         final var projectKey = programmingExercise.getProjectKey();
         final var path = ROOT + PROGRAMMING_EXERCISE.replace("{exerciseId}", String.valueOf(programmingExercise.getId()));
         var params = new LinkedMultiValueMap<String, String>();
@@ -486,7 +486,7 @@ public class ProgrammingExerciseIntegrationTestService {
         request.delete(path, HttpStatus.OK, params);
     }
 
-    public void testProgrammingExerciseDelete_failToDeleteBuildPlan() throws Exception {
+    void testProgrammingExerciseDelete_failToDeleteBuildPlan() throws Exception {
         final var projectKey = programmingExercise.getProjectKey();
         final var path = ROOT + PROGRAMMING_EXERCISE.replace("{exerciseId}", String.valueOf(programmingExercise.getId()));
         var params = new LinkedMultiValueMap<String, String>();
@@ -501,7 +501,7 @@ public class ProgrammingExerciseIntegrationTestService {
         request.delete(path, HttpStatus.INTERNAL_SERVER_ERROR, params);
     }
 
-    public void testProgrammingExerciseDelete_buildPlanDoesntExist() throws Exception {
+    void testProgrammingExerciseDelete_buildPlanDoesntExist() throws Exception {
         final var projectKey = programmingExercise.getProjectKey();
         final var path = ROOT + PROGRAMMING_EXERCISE.replace("{exerciseId}", String.valueOf(programmingExercise.getId()));
         var params = new LinkedMultiValueMap<String, String>();
@@ -516,7 +516,7 @@ public class ProgrammingExerciseIntegrationTestService {
         request.delete(path, HttpStatus.OK, params);
     }
 
-    public void testProgrammingExerciseDelete_failToDeleteCiProject() throws Exception {
+    void testProgrammingExerciseDelete_failToDeleteCiProject() throws Exception {
         final var projectKey = programmingExercise.getProjectKey();
         final var path = ROOT + PROGRAMMING_EXERCISE.replace("{exerciseId}", String.valueOf(programmingExercise.getId()));
         var params = new LinkedMultiValueMap<String, String>();
@@ -531,7 +531,7 @@ public class ProgrammingExerciseIntegrationTestService {
         request.delete(path, HttpStatus.INTERNAL_SERVER_ERROR, params);
     }
 
-    public void testProgrammingExerciseDelete_failToDeleteVcsProject() throws Exception {
+    void testProgrammingExerciseDelete_failToDeleteVcsProject() throws Exception {
         final var projectKey = programmingExercise.getProjectKey();
         final var path = ROOT + PROGRAMMING_EXERCISE.replace("{exerciseId}", String.valueOf(programmingExercise.getId()));
         var params = new LinkedMultiValueMap<String, String>();
@@ -551,7 +551,7 @@ public class ProgrammingExerciseIntegrationTestService {
         request.delete(path, HttpStatus.INTERNAL_SERVER_ERROR, params);
     }
 
-    public void testProgrammingExerciseDelete_failToDeleteVcsRepositories() throws Exception {
+    void testProgrammingExerciseDelete_failToDeleteVcsRepositories() throws Exception {
         final var projectKey = programmingExercise.getProjectKey();
         final var path = ROOT + PROGRAMMING_EXERCISE.replace("{exerciseId}", String.valueOf(programmingExercise.getId()));
         var params = new LinkedMultiValueMap<String, String>();
@@ -571,26 +571,26 @@ public class ProgrammingExerciseIntegrationTestService {
         request.delete(path, HttpStatus.INTERNAL_SERVER_ERROR, params);
     }
 
-    public void testProgrammingExerciseDelete_invalidId_notFound() throws Exception {
+    void testProgrammingExerciseDelete_invalidId_notFound() throws Exception {
         programmingExercise.setId(20L);
         final var path = ROOT + PROGRAMMING_EXERCISE.replace("{exerciseId}", String.valueOf(programmingExercise.getId()));
         request.delete(path, HttpStatus.NOT_FOUND);
     }
 
-    public void testProgrammingExerciseDelete_instructorNotInCourse_forbidden() throws Exception {
+    void testProgrammingExerciseDelete_instructorNotInCourse_forbidden() throws Exception {
         database.addInstructor("other-instructors", "instructoralt");
         final var path = ROOT + PROGRAMMING_EXERCISE.replace("{exerciseId}", String.valueOf(programmingExercise.getId()));
         request.delete(path, HttpStatus.FORBIDDEN);
     }
 
-    public void testGetProgrammingExercise() throws Exception {
+    void testGetProgrammingExercise() throws Exception {
         final var path = ROOT + PROGRAMMING_EXERCISE.replace("{exerciseId}", String.valueOf(programmingExercise.getId()));
         var programmingExerciseServer = request.get(path, HttpStatus.OK, ProgrammingExercise.class);
         assertThat(programmingExerciseServer.getTitle()).isEqualTo(programmingExercise.getTitle());
         // TODO add more assertions
     }
 
-    public void testGetProgrammingExerciseWithStructuredGradingInstruction() throws Exception {
+    void testGetProgrammingExerciseWithStructuredGradingInstruction() throws Exception {
         final var path = ROOT + PROGRAMMING_EXERCISE.replace("{exerciseId}", String.valueOf(programmingExercise.getId()));
         var programmingExerciseServer = request.get(path, HttpStatus.OK, ProgrammingExercise.class);
         assertThat(programmingExerciseServer.getTitle()).isEqualTo(programmingExercise.getTitle());
@@ -606,13 +606,13 @@ public class ProgrammingExerciseIntegrationTestService {
                 .isEqualTo("created first instruction with empty criteria for testing");
     }
 
-    public void testGetProgrammingExercise_instructorNotInCourse_forbidden() throws Exception {
+    void testGetProgrammingExercise_instructorNotInCourse_forbidden() throws Exception {
         database.addInstructor("other-instructors", "instructoralt");
         final var path = ROOT + PROGRAMMING_EXERCISE.replace("{exerciseId}", String.valueOf(programmingExercise.getId()));
         request.get(path, HttpStatus.FORBIDDEN, ProgrammingExercise.class);
     }
 
-    public void testGetProgrammingExerciseWithSetupParticipations() throws Exception {
+    void testGetProgrammingExerciseWithSetupParticipations() throws Exception {
         database.addStudentParticipationForProgrammingExercise(programmingExercise, "instructor1");
         final var path = ROOT + PROGRAMMING_EXERCISE_WITH_PARTICIPATIONS.replace("{exerciseId}", String.valueOf(programmingExercise.getId()));
         var programmingExerciseServer = request.get(path, HttpStatus.OK, ProgrammingExercise.class);
@@ -623,7 +623,7 @@ public class ProgrammingExerciseIntegrationTestService {
         // TODO add more assertions
     }
 
-    public void testGetProgrammingExerciseWithJustTemplateAndSolutionParticipation() throws Exception {
+    void testGetProgrammingExerciseWithJustTemplateAndSolutionParticipation() throws Exception {
         database.addStudentParticipationForProgrammingExercise(programmingExercise, "tutor1");
         final var path = ROOT + PROGRAMMING_EXERCISE_WITH_TEMPLATE_AND_SOLUTION_PARTICIPATION.replace("{exerciseId}", String.valueOf(programmingExercise.getId()));
         var programmingExerciseServer = request.get(path, HttpStatus.OK, ProgrammingExercise.class);
@@ -632,32 +632,32 @@ public class ProgrammingExerciseIntegrationTestService {
         assertThat(programmingExerciseServer.getTemplateParticipation().getId()).isNotNull();
     }
 
-    public void testGetProgrammingExerciseWithSetupParticipations_instructorNotInCourse_forbidden() throws Exception {
+    void testGetProgrammingExerciseWithSetupParticipations_instructorNotInCourse_forbidden() throws Exception {
         database.addInstructor("other-instructors", "instructoralt");
         final var path = ROOT + PROGRAMMING_EXERCISE_WITH_PARTICIPATIONS.replace("{exerciseId}", String.valueOf(programmingExercise.getId()));
         request.get(path, HttpStatus.FORBIDDEN, ProgrammingExercise.class);
     }
 
-    public void testGetProgrammingExerciseWithSetupParticipations_invalidId_notFound() throws Exception {
+    void testGetProgrammingExerciseWithSetupParticipations_invalidId_notFound() throws Exception {
         programmingExercise.setId(20L);
         final var path = ROOT + PROGRAMMING_EXERCISE_WITH_PARTICIPATIONS.replace("{exerciseId}", String.valueOf(programmingExercise.getId()));
         request.get(path, HttpStatus.NOT_FOUND, ProgrammingExercise.class);
     }
 
-    public void testGetProgrammingExercisesForCourse() throws Exception {
+    void testGetProgrammingExercisesForCourse() throws Exception {
         final var path = ROOT + GET_FOR_COURSE.replace("{courseId}", String.valueOf(programmingExercise.getCourseViaExerciseGroupOrCourseMember().getId()));
         var programmingExercisesServer = request.getList(path, HttpStatus.OK, ProgrammingExercise.class);
         assertThat(programmingExercisesServer).isNotEmpty();
         // TODO add more assertions
     }
 
-    public void testGetProgrammingExercisesForCourse_instructorNotInCourse_forbidden() throws Exception {
+    void testGetProgrammingExercisesForCourse_instructorNotInCourse_forbidden() throws Exception {
         database.addInstructor("other-instructors", "instructoralt");
         final var path = ROOT + GET_FOR_COURSE.replace("{courseId}", String.valueOf(programmingExercise.getCourseViaExerciseGroupOrCourseMember().getId()));
         request.getList(path, HttpStatus.FORBIDDEN, ProgrammingExercise.class);
     }
 
-    public void testGenerateStructureOracle() throws Exception {
+    void testGenerateStructureOracle() throws Exception {
         var repository = gitService.getExistingCheckedOutRepositoryByLocalPath(localRepoFile.toPath(), null);
         doReturn(repository).when(gitService).getOrCheckoutRepository(any(VcsRepositoryUrl.class), anyString(), anyBoolean());
         final var path = ROOT + GENERATE_TESTS.replace("{exerciseId}", String.valueOf(programmingExercise.getId()));
@@ -1529,7 +1529,7 @@ public class ProgrammingExerciseIntegrationTestService {
                 .noneMatch(n -> n.getText().contains(Constants.PROGRAMMING_EXERCISE_FAILED_UNLOCK_OPERATIONS_NOTIFICATION));
     }
 
-    public void testCheckPlagiarism() throws Exception {
+    void testCheckPlagiarism() throws Exception {
         database.addCourseWithOneProgrammingExercise();
         var programmingExercise = programmingExerciseRepository.findAllWithEagerTemplateAndSolutionParticipations().get(0);
         prepareTwoRepositoriesForPlagiarismChecks(programmingExercise);
@@ -1539,7 +1539,7 @@ public class ProgrammingExerciseIntegrationTestService {
         assertPlagiarismResult(programmingExercise, result, 100.0);
     }
 
-    public void testCheckPlagiarismJplagReport() throws Exception {
+    void testCheckPlagiarismJplagReport() throws Exception {
         database.addCourseWithOneProgrammingExercise();
         var programmingExercise = programmingExerciseRepository.findAllWithEagerTemplateAndSolutionParticipations().get(0);
         prepareTwoRepositoriesForPlagiarismChecks(programmingExercise);
@@ -1626,7 +1626,7 @@ public class ProgrammingExerciseIntegrationTestService {
         doReturn(repository2).when(gitService).getOrCheckoutRepository(eq(participation2.getVcsRepositoryUrl()), anyString(), anyBoolean());
     }
 
-    public void testGetPlagiarismResult() throws Exception {
+    void testGetPlagiarismResult() throws Exception {
         database.addCourseWithOneProgrammingExercise();
         ProgrammingExercise programmingExercise = this.programmingExerciseRepository.findAllWithEagerTemplateAndSolutionParticipations().get(0);
 
@@ -1636,89 +1636,89 @@ public class ProgrammingExerciseIntegrationTestService {
         assertThat(result.getId()).isEqualTo(expectedResult.getId());
     }
 
-    public void testGetPlagiarismResultWithoutResult() throws Exception {
+    void testGetPlagiarismResultWithoutResult() throws Exception {
         database.addCourseWithOneProgrammingExercise();
         ProgrammingExercise programmingExercise = programmingExerciseRepository.findAllWithEagerTemplateAndSolutionParticipations().get(0);
         var result = request.get("/api/programming-exercises/" + programmingExercise.getId() + "/plagiarism-result", HttpStatus.OK, String.class);
         assertThat(result).isNullOrEmpty();
     }
 
-    public void testGetPlagiarismResultWithoutExercise() throws Exception {
+    void testGetPlagiarismResultWithoutExercise() throws Exception {
         TextPlagiarismResult result = request.get("/api/programming-exercises/" + 1 + "/plagiarism-result", HttpStatus.NOT_FOUND, TextPlagiarismResult.class);
         assertThat(result).isNull();
     }
 
-    public void testValidateValidAuxiliaryRepository() throws Exception {
+    void testValidateValidAuxiliaryRepository() throws Exception {
         AuxiliaryRepositoryBuilder auxRepoBuilder = AuxiliaryRepositoryBuilder.defaults();
         testAuxRepo(auxRepoBuilder, HttpStatus.CREATED);
     }
 
-    public void testValidateAuxiliaryRepositoryIdSetOnRequest() throws Exception {
+    void testValidateAuxiliaryRepositoryIdSetOnRequest() throws Exception {
         testAuxRepo(AuxiliaryRepositoryBuilder.defaults().withId(0L), HttpStatus.BAD_REQUEST);
 
     }
 
-    public void testValidateAuxiliaryRepositoryWithoutName() throws Exception {
+    void testValidateAuxiliaryRepositoryWithoutName() throws Exception {
         testAuxRepo(AuxiliaryRepositoryBuilder.defaults().withoutName(), HttpStatus.BAD_REQUEST);
         testAuxRepo(AuxiliaryRepositoryBuilder.defaults().withName(""), HttpStatus.BAD_REQUEST);
     }
 
-    public void testValidateAuxiliaryRepositoryWithTooLongName() throws Exception {
+    void testValidateAuxiliaryRepositoryWithTooLongName() throws Exception {
         testAuxRepo(AuxiliaryRepositoryBuilder.defaults().withName(generateStringWithMoreThanNCharacters(AuxiliaryRepository.MAX_NAME_LENGTH)), HttpStatus.BAD_REQUEST);
     }
 
-    public void testValidateAuxiliaryRepositoryWithDuplicatedName() throws Exception {
+    void testValidateAuxiliaryRepositoryWithDuplicatedName() throws Exception {
         testAuxRepo(List.of(AuxiliaryRepositoryBuilder.defaults().get(), AuxiliaryRepositoryBuilder.defaults().withoutCheckoutDirectory().get()), HttpStatus.BAD_REQUEST);
     }
 
-    public void testValidateAuxiliaryRepositoryWithRestrictedName() throws Exception {
+    void testValidateAuxiliaryRepositoryWithRestrictedName() throws Exception {
         for (RepositoryType repositoryType : RepositoryType.values()) {
             testAuxRepo(AuxiliaryRepositoryBuilder.defaults().withName(repositoryType.getName()), HttpStatus.BAD_REQUEST);
         }
     }
 
-    public void testValidateAuxiliaryRepositoryWithInvalidCheckoutDirectory() throws Exception {
+    void testValidateAuxiliaryRepositoryWithInvalidCheckoutDirectory() throws Exception {
         testAuxRepo(AuxiliaryRepositoryBuilder.defaults().withCheckoutDirectory("..."), HttpStatus.BAD_REQUEST);
     }
 
-    public void testValidateAuxiliaryRepositoryWithoutCheckoutDirectory() throws Exception {
+    void testValidateAuxiliaryRepositoryWithoutCheckoutDirectory() throws Exception {
         AuxiliaryRepositoryBuilder auxRepoBuilder = AuxiliaryRepositoryBuilder.defaults().withoutCheckoutDirectory();
         testAuxRepo(auxRepoBuilder, HttpStatus.CREATED);
     }
 
-    public void testValidateAuxiliaryRepositoryWithBlankCheckoutDirectory() throws Exception {
+    void testValidateAuxiliaryRepositoryWithBlankCheckoutDirectory() throws Exception {
         AuxiliaryRepositoryBuilder auxRepoBuilder = AuxiliaryRepositoryBuilder.defaults().withCheckoutDirectory("   ");
         testAuxRepo(auxRepoBuilder, HttpStatus.CREATED);
     }
 
-    public void testValidateAuxiliaryRepositoryWithTooLongCheckoutDirectory() throws Exception {
+    void testValidateAuxiliaryRepositoryWithTooLongCheckoutDirectory() throws Exception {
         testAuxRepo(AuxiliaryRepositoryBuilder.defaults().withCheckoutDirectory(generateStringWithMoreThanNCharacters(AuxiliaryRepository.MAX_CHECKOUT_DIRECTORY_LENGTH)),
                 HttpStatus.BAD_REQUEST);
     }
 
-    public void testValidateAuxiliaryRepositoryWithDuplicatedCheckoutDirectory() throws Exception {
+    void testValidateAuxiliaryRepositoryWithDuplicatedCheckoutDirectory() throws Exception {
         testAuxRepo(List.of(AuxiliaryRepositoryBuilder.defaults().get(), AuxiliaryRepositoryBuilder.defaults().withDifferentName().get()), HttpStatus.BAD_REQUEST);
     }
 
-    public void testValidateAuxiliaryRepositoryWithNullCheckoutDirectory() throws Exception {
+    void testValidateAuxiliaryRepositoryWithNullCheckoutDirectory() throws Exception {
         testAuxRepo(List.of(AuxiliaryRepositoryBuilder.defaults().get(), AuxiliaryRepositoryBuilder.defaults().withDifferentName().withoutCheckoutDirectory().get(),
                 AuxiliaryRepositoryBuilder.defaults().get()), HttpStatus.BAD_REQUEST);
     }
 
-    public void testValidateAuxiliaryRepositoryWithTooLongDescription() throws Exception {
+    void testValidateAuxiliaryRepositoryWithTooLongDescription() throws Exception {
         testAuxRepo(AuxiliaryRepositoryBuilder.defaults().withDescription(generateStringWithMoreThanNCharacters(500)), HttpStatus.BAD_REQUEST);
     }
 
-    public void testValidateAuxiliaryRepositoryWithoutDescription() throws Exception {
+    void testValidateAuxiliaryRepositoryWithoutDescription() throws Exception {
         AuxiliaryRepositoryBuilder auxRepoBuilder = AuxiliaryRepositoryBuilder.defaults().withoutDescription();
         testAuxRepo(auxRepoBuilder, HttpStatus.CREATED);
     }
 
-    public void testGetAuxiliaryRepositoriesMissingExercise() throws Exception {
+    void testGetAuxiliaryRepositoriesMissingExercise() throws Exception {
         request.get(defaultGetAuxReposEndpoint(-1L), HttpStatus.NOT_FOUND, List.class);
     }
 
-    public void testGetAuxiliaryRepositoriesOk() throws Exception {
+    void testGetAuxiliaryRepositoriesOk() throws Exception {
         programmingExercise = programmingExerciseRepository.findWithAuxiliaryRepositoriesById(programmingExercise.getId()).orElseThrow();
         programmingExercise.addAuxiliaryRepository(auxiliaryRepositoryRepository.save(AuxiliaryRepositoryBuilder.defaults().get()));
         programmingExercise
@@ -1728,25 +1728,25 @@ public class ProgrammingExerciseIntegrationTestService {
         assertThat(returnedAuxiliaryRepositories).hasSize(2);
     }
 
-    public void testGetAuxiliaryRepositoriesEmptyOk() throws Exception {
+    void testGetAuxiliaryRepositoriesEmptyOk() throws Exception {
         programmingExercise = programmingExerciseRepository.findWithAuxiliaryRepositoriesById(programmingExercise.getId()).orElseThrow();
         var returnedAuxiliaryRepositories = request.get(defaultGetAuxReposEndpoint(), HttpStatus.OK, List.class);
         assertThat(returnedAuxiliaryRepositories).isEmpty();
     }
 
-    public void testGetAuxiliaryRepositoriesForbidden() throws Exception {
+    void testGetAuxiliaryRepositoriesForbidden() throws Exception {
         request.get(defaultGetAuxReposEndpoint(), HttpStatus.FORBIDDEN, List.class);
     }
 
-    public void testRecreateBuildPlansForbidden() throws Exception {
+    void testRecreateBuildPlansForbidden() throws Exception {
         request.put(defaultRecreateBuildPlanEndpoint(), programmingExercise, HttpStatus.FORBIDDEN);
     }
 
-    public void testRecreateBuildPlansExerciseNotFound() throws Exception {
+    void testRecreateBuildPlansExerciseNotFound() throws Exception {
         request.put(defaultRecreateBuildPlanEndpoint(-1L), programmingExercise, HttpStatus.NOT_FOUND);
     }
 
-    public void testRecreateBuildPlansExerciseSuccess() throws Exception {
+    void testRecreateBuildPlansExerciseSuccess() throws Exception {
         addAuxiliaryRepositoryToExercise();
         mockDelegate.mockGetProjectKeyFromAnyUrl(programmingExercise.getProjectKey());
         String templateBuildPlanName = programmingExercise.getProjectKey() + "-" + TEMPLATE.getName();
@@ -1759,21 +1759,21 @@ public class ProgrammingExerciseIntegrationTestService {
         request.put(defaultRecreateBuildPlanEndpoint(), programmingExercise, HttpStatus.OK);
     }
 
-    public void testExportAuxiliaryRepositoryForbidden() throws Exception {
+    void testExportAuxiliaryRepositoryForbidden() throws Exception {
         AuxiliaryRepository repository = addAuxiliaryRepositoryToExercise();
         request.get(defaultExportInstructorAuxiliaryRepository(repository), HttpStatus.FORBIDDEN, File.class);
     }
 
-    public void testExportAuxiliaryRepositoryBadRequest() throws Exception {
+    void testExportAuxiliaryRepositoryBadRequest() throws Exception {
         AuxiliaryRepository repository = addAuxiliaryRepositoryToExercise();
         request.get(defaultExportInstructorAuxiliaryRepository(repository), HttpStatus.BAD_REQUEST, File.class);
     }
 
-    public void testExportAuxiliaryRepositoryExerciseNotFound() throws Exception {
+    void testExportAuxiliaryRepositoryExerciseNotFound() throws Exception {
         request.get(defaultExportInstructorAuxiliaryRepository(-1L, 1L), HttpStatus.NOT_FOUND, File.class);
     }
 
-    public void testExportAuxiliaryRepositoryRepositoryNotFound() throws Exception {
+    void testExportAuxiliaryRepositoryRepositoryNotFound() throws Exception {
         request.get(defaultExportInstructorAuxiliaryRepository(programmingExercise.getId(), -1L), HttpStatus.NOT_FOUND, File.class);
     }
 
@@ -1908,18 +1908,18 @@ public class ProgrammingExerciseIntegrationTestService {
         }
     }
 
-    public void testReEvaluateAndUpdateProgrammingExercise_instructorNotInCourse_forbidden() throws Exception {
+    void testReEvaluateAndUpdateProgrammingExercise_instructorNotInCourse_forbidden() throws Exception {
         database.addInstructor("other-instructors", "instructoralt");
         database.addCourseWithOneProgrammingExercise();
         ProgrammingExercise programmingExercise = programmingExerciseRepository.findAllWithEagerTemplateAndSolutionParticipations().get(0);
         request.put("/api/programming-exercises/" + programmingExercise.getId() + "/re-evaluate", programmingExercise, HttpStatus.FORBIDDEN);
     }
 
-    public void testReEvaluateAndUpdateProgrammingExercise_notFound() throws Exception {
+    void testReEvaluateAndUpdateProgrammingExercise_notFound() throws Exception {
         request.put("/api/programming-exercises/" + 123456789 + "/re-evaluate", programmingExercise, HttpStatus.NOT_FOUND);
     }
 
-    public void testReEvaluateAndUpdateProgrammingExercise_isNotSameGivenExerciseIdInRequestBody_conflict() throws Exception {
+    void testReEvaluateAndUpdateProgrammingExercise_isNotSameGivenExerciseIdInRequestBody_conflict() throws Exception {
         database.addCourseWithOneProgrammingExercise();
         database.addCourseWithOneProgrammingExercise();
         ProgrammingExercise programmingExercise = programmingExerciseRepository.findAllWithEagerTemplateAndSolutionParticipations().get(0);

@@ -23,7 +23,7 @@ import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.web.rest.dto.GradeDTO;
 import de.tum.in.www1.artemis.web.rest.dto.GradeStepsDTO;
 
-public class GradeStepIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+class GradeStepIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
     private GradingScaleRepository gradingScaleRepository;
@@ -51,7 +51,7 @@ public class GradeStepIntegrationTest extends AbstractSpringIntegrationBambooBit
      * Initialize attributes
      */
     @BeforeEach
-    public void init() {
+    void init() {
         database.addUsers(1, 0, 0, 1);
 
         // Student not belonging to any course
@@ -70,7 +70,7 @@ public class GradeStepIntegrationTest extends AbstractSpringIntegrationBambooBit
     }
 
     @AfterEach
-    public void tearDown() {
+    void tearDown() {
         database.resetDatabase();
     }
 
@@ -81,13 +81,13 @@ public class GradeStepIntegrationTest extends AbstractSpringIntegrationBambooBit
      */
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void testGetAllGradeStepsForCourseNoGradingScaleExists() throws Exception {
+    void testGetAllGradeStepsForCourseNoGradingScaleExists() throws Exception {
         request.get("/api/courses/" + course.getId() + "/grading-scale/grade-steps", HttpStatus.NOT_FOUND, GradeStepsDTO.class);
     }
 
     @Test
     @WithMockUser(username = "student2", roles = "USER")
-    public void testGetAllGradeStepsForCourseStudentNotInCourse() throws Exception {
+    void testGetAllGradeStepsForCourseStudentNotInCourse() throws Exception {
         createGradeScale();
         request.get("/api/courses/" + course.getId() + "/grading-scale/grade-steps", HttpStatus.FORBIDDEN, GradeStepsDTO.class);
     }
@@ -99,7 +99,7 @@ public class GradeStepIntegrationTest extends AbstractSpringIntegrationBambooBit
      */
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void testGetAllGradeStepsForCourse() throws Exception {
+    void testGetAllGradeStepsForCourse() throws Exception {
         createGradeScale();
 
         GradeStepsDTO gradeStepsDTO = request.get("/api/courses/" + course.getId() + "/grading-scale/grade-steps", HttpStatus.OK, GradeStepsDTO.class);
@@ -135,7 +135,7 @@ public class GradeStepIntegrationTest extends AbstractSpringIntegrationBambooBit
      */
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void testGetAllGradeStepsForExamNoGradingScaleExists() throws Exception {
+    void testGetAllGradeStepsForExamNoGradingScaleExists() throws Exception {
         request.get("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/grading-scale/grade-steps", HttpStatus.NOT_FOUND, GradeStepsDTO.class);
     }
 
@@ -147,7 +147,7 @@ public class GradeStepIntegrationTest extends AbstractSpringIntegrationBambooBit
      */
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void testGetAllGradeStepsForExamForbidden() throws Exception {
+    void testGetAllGradeStepsForExamForbidden() throws Exception {
         gradingScaleRepository.save(examGradingScale);
 
         request.get("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/grading-scale/grade-steps", HttpStatus.FORBIDDEN, GradeStepsDTO.class);
@@ -160,7 +160,7 @@ public class GradeStepIntegrationTest extends AbstractSpringIntegrationBambooBit
      */
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void testGetAllGradeStepsForExam() throws Exception {
+    void testGetAllGradeStepsForExam() throws Exception {
         exam.setPublishResultsDate(ZonedDateTime.now());
         examRepository.save(exam);
         GradeStep gradeStep1 = new GradeStep();
@@ -194,7 +194,7 @@ public class GradeStepIntegrationTest extends AbstractSpringIntegrationBambooBit
      */
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testGetGradeStepByIdForCourseNoGradingScaleExists() throws Exception {
+    void testGetGradeStepByIdForCourseNoGradingScaleExists() throws Exception {
         request.get("/api/courses/" + course.getId() + "/grading-scale/grade-steps/1", HttpStatus.NOT_FOUND, GradeStep.class);
     }
 
@@ -205,7 +205,7 @@ public class GradeStepIntegrationTest extends AbstractSpringIntegrationBambooBit
      */
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testGetGradeStepByIdForCourse() throws Exception {
+    void testGetGradeStepByIdForCourse() throws Exception {
         GradeStep gradeStep = new GradeStep();
         gradeStep.setGradeName("Name");
         gradeStep.setLowerBoundPercentage(0);
@@ -228,7 +228,7 @@ public class GradeStepIntegrationTest extends AbstractSpringIntegrationBambooBit
      */
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testGetGradeStepByIdForExamNoGradingScaleExists() throws Exception {
+    void testGetGradeStepByIdForExamNoGradingScaleExists() throws Exception {
         request.get("/api/courses/" + course.getId() + "/grading-scale/grade-steps/1", HttpStatus.NOT_FOUND, GradeStep.class);
     }
 
@@ -239,7 +239,7 @@ public class GradeStepIntegrationTest extends AbstractSpringIntegrationBambooBit
      */
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testGetGradeStepByIdForExam() throws Exception {
+    void testGetGradeStepByIdForExam() throws Exception {
         GradeStep gradeStep = new GradeStep();
         gradeStep.setGradeName("Name");
         gradeStep.setLowerBoundPercentage(0);
@@ -263,7 +263,7 @@ public class GradeStepIntegrationTest extends AbstractSpringIntegrationBambooBit
      */
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void testGetGradeStepByPercentageForCourseNoGradingScaleExists() throws Exception {
+    void testGetGradeStepByPercentageForCourseNoGradingScaleExists() throws Exception {
         request.get("/api/courses/" + course.getId() + "/grading-scale/match-grade-step?gradePercentage=70", HttpStatus.OK, Void.class);
     }
 
@@ -274,7 +274,7 @@ public class GradeStepIntegrationTest extends AbstractSpringIntegrationBambooBit
      */
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void testGetGradeStepByPercentageForCourse() throws Exception {
+    void testGetGradeStepByPercentageForCourse() throws Exception {
         GradeStep gradeStep = new GradeStep();
         gradeStep.setGradeName("Name");
         gradeStep.setLowerBoundPercentage(60);
@@ -300,7 +300,7 @@ public class GradeStepIntegrationTest extends AbstractSpringIntegrationBambooBit
      */
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void testGetGradeStepByPercentageForExamNoGradingScaleExists() throws Exception {
+    void testGetGradeStepByPercentageForExamNoGradingScaleExists() throws Exception {
         request.get("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/grading-scale/match-grade-step?gradePercentage=70", HttpStatus.OK, Void.class);
     }
 
@@ -312,7 +312,7 @@ public class GradeStepIntegrationTest extends AbstractSpringIntegrationBambooBit
      */
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void testGetGradeStepByPercentageForExamForbidden() throws Exception {
+    void testGetGradeStepByPercentageForExamForbidden() throws Exception {
         gradingScaleRepository.save(examGradingScale);
 
         request.get("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/grading-scale/match-grade-step?gradePercentage=70", HttpStatus.FORBIDDEN, GradeDTO.class);
@@ -325,7 +325,7 @@ public class GradeStepIntegrationTest extends AbstractSpringIntegrationBambooBit
      */
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void testGetGradeStepByPercentageForExam() throws Exception {
+    void testGetGradeStepByPercentageForExam() throws Exception {
         GradeStep gradeStep = new GradeStep();
         gradeStep.setGradeName("Test grade");
         gradeStep.setLowerBoundPercentage(0);

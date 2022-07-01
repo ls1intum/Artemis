@@ -37,7 +37,7 @@ import de.tum.in.www1.artemis.web.rest.dto.CourseLearningGoalProgress;
 import de.tum.in.www1.artemis.web.rest.dto.IndividualLearningGoalProgress;
 import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
 
-public class LearningGoalIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+class LearningGoalIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
     private CourseRepository courseRepository;
@@ -109,12 +109,12 @@ public class LearningGoalIntegrationTest extends AbstractSpringIntegrationBamboo
     private List<Team> teams;
 
     @AfterEach
-    public void resetDatabase() {
+    void resetDatabase() {
         database.resetDatabase();
     }
 
     @BeforeEach
-    public void setupTestScenario() {
+    void setupTestScenario() {
         ZonedDateTime pastTimestamp = ZonedDateTime.now().minusDays(5);
         // creating the users student1-student5, tutor1-tutor10 and instructors1-instructor10
         this.database.addUsers(5, 10, 0, 10);
@@ -345,38 +345,38 @@ public class LearningGoalIntegrationTest extends AbstractSpringIntegrationBamboo
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void testAll_asTutor() throws Exception {
+    void testAll_asTutor() throws Exception {
         this.testAllPreAuthorize();
     }
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void testAll_asStudent() throws Exception {
+    void testAll_asStudent() throws Exception {
         this.testAllPreAuthorize();
     }
 
     @Test
     @WithMockUser(username = "editor1", roles = "EDITOR")
-    public void testAll_asEditor() throws Exception {
+    void testAll_asEditor() throws Exception {
         this.testAllPreAuthorize();
     }
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void getLearningGoal_asInstructor_shouldReturnLearningGoal() throws Exception {
+    void getLearningGoal_asInstructor_shouldReturnLearningGoal() throws Exception {
         LearningGoal learningGoal = request.get("/api/courses/" + idOfCourse + "/goals/" + idOfLearningGoal, HttpStatus.OK, LearningGoal.class);
         assertThat(learningGoal.getId()).isEqualTo(idOfLearningGoal);
     }
 
     @Test
     @WithMockUser(username = "instructor42", roles = "INSTRUCTOR")
-    public void getLearningGoal_asInstructorNotInCourse_shouldReturnForbidden() throws Exception {
+    void getLearningGoal_asInstructorNotInCourse_shouldReturnForbidden() throws Exception {
         request.get("/api/courses/" + idOfCourse + "/goals/" + idOfLearningGoal, HttpStatus.FORBIDDEN, LearningGoal.class);
     }
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void getLearningGoalsOfCourse_asStudent1_shouldReturnLearningGoals() throws Exception {
+    void getLearningGoalsOfCourse_asStudent1_shouldReturnLearningGoals() throws Exception {
         List<LearningGoal> learningGoalsOfCourse = request.getList("/api/courses/" + idOfCourse + "/goals", HttpStatus.OK, LearningGoal.class);
         assertThat(learningGoalsOfCourse).hasSize(1);
         assertThat(learningGoalsOfCourse.get(0).getId()).isEqualTo(idOfLearningGoal);
@@ -384,33 +384,33 @@ public class LearningGoalIntegrationTest extends AbstractSpringIntegrationBamboo
 
     @Test
     @WithMockUser(username = "student42", roles = "USER")
-    public void getLearningGoalsOfCourse_asStudentNotInCourse_shouldReturnForbidden() throws Exception {
+    void getLearningGoalsOfCourse_asStudentNotInCourse_shouldReturnForbidden() throws Exception {
         request.getList("/api/courses/" + idOfCourse + "/goals", HttpStatus.FORBIDDEN, LearningGoal.class);
     }
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void deleteLearningGoal_asInstructor_shouldDeleteLearningGoal() throws Exception {
+    void deleteLearningGoal_asInstructor_shouldDeleteLearningGoal() throws Exception {
         request.delete("/api/courses/" + idOfCourse + "/goals/" + idOfLearningGoal, HttpStatus.OK);
         request.get("/api/courses/" + idOfCourse + "/goals/" + idOfLearningGoal, HttpStatus.NOT_FOUND, LearningGoal.class);
     }
 
     @Test
     @WithMockUser(username = "instructor42", roles = "INSTRUCTOR")
-    public void deleteLearningGoal_asInstructorNotInCourse_shouldReturnForbidden() throws Exception {
+    void deleteLearningGoal_asInstructorNotInCourse_shouldReturnForbidden() throws Exception {
         request.delete("/api/courses/" + idOfCourse + "/goals/" + idOfLearningGoal, HttpStatus.FORBIDDEN);
     }
 
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
-    public void deleteCourse_asAdmin_shouldAlsoDeleteLearningGoal() throws Exception {
+    void deleteCourse_asAdmin_shouldAlsoDeleteLearningGoal() throws Exception {
         request.delete("/api/courses/" + idOfCourse, HttpStatus.OK);
         request.get("/api/courses/" + idOfCourse + "/goals/" + idOfLearningGoal, HttpStatus.NOT_FOUND, LearningGoal.class);
     }
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void deleteLecture_asInstructor_shouldUpdateLearningGoal() throws Exception {
+    void deleteLecture_asInstructor_shouldUpdateLearningGoal() throws Exception {
         request.delete("/api/lectures/" + idOfLectureTwo, HttpStatus.OK);
         LearningGoal learningGoal = request.get("/api/courses/" + idOfCourse + "/goals/" + idOfLearningGoal, HttpStatus.OK, LearningGoal.class);
         assertThat(learningGoal.getLectureUnits().stream().map(DomainObject::getId))
@@ -422,7 +422,7 @@ public class LearningGoalIntegrationTest extends AbstractSpringIntegrationBamboo
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void deleteLectureUnit_asInstructor_shouldUpdateLearningGoal() throws Exception {
+    void deleteLectureUnit_asInstructor_shouldUpdateLearningGoal() throws Exception {
         request.delete("/api/lectures/" + idOfLectureTwo + "/lecture-units/" + idOfTextUnitOfLectureTwo, HttpStatus.OK);
         LearningGoal learningGoal = request.get("/api/courses/" + idOfCourse + "/goals/" + idOfLearningGoal, HttpStatus.OK, LearningGoal.class);
         assertThat(learningGoal.getLectureUnits().stream().map(DomainObject::getId)).containsAll(Set.of(idOfTextUnitOfLectureOne, idOfExerciseUnitTextOfLectureOne,
@@ -433,7 +433,7 @@ public class LearningGoalIntegrationTest extends AbstractSpringIntegrationBamboo
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void getLearningGoalProgress_asStudent1_shouldReturnProgressTenOutOfTwenty() throws Exception {
+    void getLearningGoalProgress_asStudent1_shouldReturnProgressTenOutOfTwenty() throws Exception {
         IndividualLearningGoalProgress individualLearningGoalProgress = request.get("/api/courses/" + idOfCourse + "/goals/" + idOfLearningGoal + "/individual-progress",
                 HttpStatus.OK, IndividualLearningGoalProgress.class);
         assertThat(individualLearningGoalProgress.totalPointsAchievableByStudentsInLearningGoal).isEqualTo(30.0);
@@ -442,7 +442,7 @@ public class LearningGoalIntegrationTest extends AbstractSpringIntegrationBamboo
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void getLearningGoalProgress_asStudent1_usingParticipantScores_shouldReturnProgressTenOutOfTwenty() throws Exception {
+    void getLearningGoalProgress_asStudent1_usingParticipantScores_shouldReturnProgressTenOutOfTwenty() throws Exception {
         IndividualLearningGoalProgress individualLearningGoalProgress = request.get(
                 "/api/courses/" + idOfCourse + "/goals/" + idOfLearningGoal + "/individual-progress?useParticipantScoreTable=true", HttpStatus.OK,
                 IndividualLearningGoalProgress.class);
@@ -452,7 +452,7 @@ public class LearningGoalIntegrationTest extends AbstractSpringIntegrationBamboo
 
     @Test
     @WithMockUser(username = "team1student1", roles = "USER")
-    public void getLearningGoalProgress_asTeam1Student1_shouldReturnProgressTenOutOfThirty() throws Exception {
+    void getLearningGoalProgress_asTeam1Student1_shouldReturnProgressTenOutOfThirty() throws Exception {
         IndividualLearningGoalProgress individualLearningGoalProgress = request.get("/api/courses/" + idOfCourse + "/goals/" + idOfLearningGoal + "/individual-progress",
                 HttpStatus.OK, IndividualLearningGoalProgress.class);
         assertThat(individualLearningGoalProgress.totalPointsAchievableByStudentsInLearningGoal).isEqualTo(30.0);
@@ -461,7 +461,7 @@ public class LearningGoalIntegrationTest extends AbstractSpringIntegrationBamboo
 
     @Test
     @WithMockUser(username = "team1student1", roles = "USER")
-    public void getLearningGoalProgress_asTeam1Student1_usingParticipantScores_shouldReturnProgressTenOutOfThirty() throws Exception {
+    void getLearningGoalProgress_asTeam1Student1_usingParticipantScores_shouldReturnProgressTenOutOfThirty() throws Exception {
         IndividualLearningGoalProgress individualLearningGoalProgress = request.get(
                 "/api/courses/" + idOfCourse + "/goals/" + idOfLearningGoal + "/individual-progress?useParticipantScoreTable=true", HttpStatus.OK,
                 IndividualLearningGoalProgress.class);
@@ -471,7 +471,7 @@ public class LearningGoalIntegrationTest extends AbstractSpringIntegrationBamboo
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void getLearningGoalCourseProgressTeamsTest_asInstructorOne() throws Exception {
+    void getLearningGoalCourseProgressTeamsTest_asInstructorOne() throws Exception {
         cleanUpInitialParticipations();
 
         createParticipationSubmissionAndResult(idOfTeamTextExercise, teams.get(0), 10.0, 0.0, 100, true);  // will be ignored in favor of last submission from team
@@ -495,7 +495,7 @@ public class LearningGoalIntegrationTest extends AbstractSpringIntegrationBamboo
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void getLearningGoalCourseProgressIndividualTest_asInstructorOne() throws Exception {
+    void getLearningGoalCourseProgressIndividualTest_asInstructorOne() throws Exception {
         cleanUpInitialParticipations();
         User student1 = userRepository.findOneByLogin("student1").get();
         User student2 = userRepository.findOneByLogin("student2").get();
@@ -525,7 +525,7 @@ public class LearningGoalIntegrationTest extends AbstractSpringIntegrationBamboo
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void getLearningGoalCourseProgressIndividualTest_asInstructorOne_usingParticipantScoreTable() throws Exception {
+    void getLearningGoalCourseProgressIndividualTest_asInstructorOne_usingParticipantScoreTable() throws Exception {
         cleanUpInitialParticipations();
         User student1 = userRepository.findOneByLogin("student1").get();
         User student2 = userRepository.findOneByLogin("student2").get();
@@ -553,7 +553,7 @@ public class LearningGoalIntegrationTest extends AbstractSpringIntegrationBamboo
         assertThatSpecificCourseLectureUnitProgressExists(courseLearningGoalProgress, 20.0, 4, 30.0);
     }
 
-    public void assertThatSpecificCourseLectureUnitProgressExists(CourseLearningGoalProgress courseLearningGoalProgress, double expectedParticipationRate,
+    private void assertThatSpecificCourseLectureUnitProgressExists(CourseLearningGoalProgress courseLearningGoalProgress, double expectedParticipationRate,
             int expectedNoOfParticipants, double expectedAverageScore) {
         boolean foundProgressWithCorrectNumbers = false;
         for (CourseLearningGoalProgress.CourseLectureUnitProgress courseLectureUnitProgress : courseLearningGoalProgress.progressInLectureUnits) {
@@ -575,13 +575,13 @@ public class LearningGoalIntegrationTest extends AbstractSpringIntegrationBamboo
 
     @Test
     @WithMockUser(username = "student42", roles = "USER")
-    public void getLearningGoalProgress_asStudentNotInCourse_shouldReturnProgressTenOutOfTwenty() throws Exception {
+    void getLearningGoalProgress_asStudentNotInCourse_shouldReturnProgressTenOutOfTwenty() throws Exception {
         request.get("/api/courses/" + idOfCourse + "/goals/" + idOfLearningGoal + "/individual-progress", HttpStatus.FORBIDDEN, IndividualLearningGoalProgress.class);
     }
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void updateLearningGoal_asInstructor_shouldUpdateLearningGoal() throws Exception {
+    void updateLearningGoal_asInstructor_shouldUpdateLearningGoal() throws Exception {
         LearningGoal existingLearningGoal = learningGoalRepository.findByIdWithLectureUnitsBidirectionalElseThrow(idOfLearningGoal);
         LectureUnit textLectureUnit = lectureUnitRepository.findByIdWithLearningGoalsBidirectionalElseThrow(idOfTextUnitOfLectureOne);
         existingLearningGoal.setTitle("Updated");
@@ -597,7 +597,7 @@ public class LearningGoalIntegrationTest extends AbstractSpringIntegrationBamboo
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void createLearningGoal_asInstructor_shouldCreateLearningGoal() throws Exception {
+    void createLearningGoal_asInstructor_shouldCreateLearningGoal() throws Exception {
         Course course = courseRepository.findWithEagerLearningGoalsById(idOfCourse).get();
         LearningGoal learningGoal = new LearningGoal();
         learningGoal.setTitle("FreshlyCreatedLearningGoal");
@@ -613,7 +613,7 @@ public class LearningGoalIntegrationTest extends AbstractSpringIntegrationBamboo
 
     @Test
     @WithMockUser(username = "instructor42", roles = "INSTRUCTOR")
-    public void createLearningGoal_instructorNotInCourse_shouldReturnForbidden() throws Exception {
+    void createLearningGoal_instructorNotInCourse_shouldReturnForbidden() throws Exception {
         LearningGoal learningGoal = new LearningGoal();
         learningGoal.setTitle("Example Title");
         request.postWithResponseBody("/api/courses/" + idOfCourse + "/goals", learningGoal, LearningGoal.class, HttpStatus.FORBIDDEN);
@@ -621,7 +621,7 @@ public class LearningGoalIntegrationTest extends AbstractSpringIntegrationBamboo
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void createLearningGoal_goalWithNameAlreadyExists_shouldReturnBadRequest() throws Exception {
+    void createLearningGoal_goalWithNameAlreadyExists_shouldReturnBadRequest() throws Exception {
         Course course = courseRepository.findWithEagerLearningGoalsById(idOfCourse).get();
         LearningGoal existingLearningGoal = learningGoalRepository.findById(idOfLearningGoal).get();
         LearningGoal learningGoal = new LearningGoal();
@@ -636,7 +636,7 @@ public class LearningGoalIntegrationTest extends AbstractSpringIntegrationBamboo
 
     @Test
     @WithMockUser(username = "instructor42", roles = "INSTRUCTOR")
-    public void testInstructorGetsOnlyResultsFromOwningCourses() throws Exception {
+    void testInstructorGetsOnlyResultsFromOwningCourses() throws Exception {
         final var search = database.configureSearch("");
         final var result = request.get("/api/learning-goals/", HttpStatus.OK, SearchResultPageDTO.class, database.searchMapping(search));
         assertThat(result.getResultsOnPage()).isNullOrEmpty();
@@ -644,7 +644,7 @@ public class LearningGoalIntegrationTest extends AbstractSpringIntegrationBamboo
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testInstructorGetsResultsFromOwningCoursesNotEmpty() throws Exception {
+    void testInstructorGetsResultsFromOwningCoursesNotEmpty() throws Exception {
         LearningGoal learningGoal = learningGoalRepository.findById(idOfLearningGoal).get();
         final var search = database.configureSearch(learningGoal.getTitle());
         final var result = request.get("/api/learning-goals/", HttpStatus.OK, SearchResultPageDTO.class, database.searchMapping(search));
@@ -653,7 +653,7 @@ public class LearningGoalIntegrationTest extends AbstractSpringIntegrationBamboo
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void getPrerequisites() throws Exception {
+    void getPrerequisites() throws Exception {
         LearningGoal learningGoal = learningGoalRepository.findById(idOfLearningGoal).get();
         List<LearningGoal> prerequisites = request.getList("/api/courses/" + idOfCourseTwo + "/prerequisites", HttpStatus.OK, LearningGoal.class);
         assertThat(prerequisites).containsExactly(learningGoal);
@@ -661,7 +661,7 @@ public class LearningGoalIntegrationTest extends AbstractSpringIntegrationBamboo
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void addPrerequisite() throws Exception {
+    void addPrerequisite() throws Exception {
         Course courseTwo = courseRepository.findById(idOfCourseTwo).get();
         LearningGoal learningGoal = new LearningGoal();
         learningGoal.setTitle("LearningGoalTwo");
@@ -679,13 +679,13 @@ public class LearningGoalIntegrationTest extends AbstractSpringIntegrationBamboo
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void addPrerequisite_unauthorized() throws Exception {
+    void addPrerequisite_unauthorized() throws Exception {
         request.postWithResponseBody("/api/courses/" + idOfCourse + "/prerequisites/99", null, LearningGoal.class, HttpStatus.FORBIDDEN);
     }
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void removePrerequisite() throws Exception {
+    void removePrerequisite() throws Exception {
         LearningGoal learningGoal = learningGoalRepository.findById(idOfLearningGoal).get();
         request.delete("/api/courses/" + idOfCourseTwo + "/prerequisites/" + idOfLearningGoal, HttpStatus.OK);
 
@@ -695,13 +695,13 @@ public class LearningGoalIntegrationTest extends AbstractSpringIntegrationBamboo
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void removePrerequisite_unauthorized() throws Exception {
+    void removePrerequisite_unauthorized() throws Exception {
         request.delete("/api/courses/" + idOfCourseTwo + "/prerequisites/" + idOfLearningGoal, HttpStatus.FORBIDDEN);
     }
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void addPrerequisite_doNotAllowCycle() throws Exception {
+    void addPrerequisite_doNotAllowCycle() throws Exception {
         // Test that a learning goal of a course can not be a prerequisite to the same course
         LearningGoal learningGoal = learningGoalRepository.findById(idOfLearningGoal).get();
         request.postWithResponseBody("/api/courses/" + idOfCourse + "/prerequisites/" + idOfLearningGoal, learningGoal, LearningGoal.class, HttpStatus.CONFLICT);

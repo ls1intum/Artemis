@@ -25,7 +25,7 @@ import de.tum.in.www1.artemis.repository.NotificationRepository;
 import de.tum.in.www1.artemis.repository.NotificationSettingRepository;
 import de.tum.in.www1.artemis.service.messaging.InstanceMessageReceiveService;
 
-public class NotificationScheduleServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+class NotificationScheduleServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
     private InstanceMessageReceiveService instanceMessageReceiveService;
@@ -44,7 +44,7 @@ public class NotificationScheduleServiceTest extends AbstractSpringIntegrationBa
     private User user;
 
     @BeforeEach
-    public void init() {
+    void init() {
         database.addUsers(1, 1, 1, 1);
         user = database.getUserByLogin("student1");
         database.addCourseWithFileUploadExercise();
@@ -58,7 +58,7 @@ public class NotificationScheduleServiceTest extends AbstractSpringIntegrationBa
     }
 
     @AfterEach
-    public void tearDown() {
+    void tearDown() {
         database.resetDatabase();
     }
 

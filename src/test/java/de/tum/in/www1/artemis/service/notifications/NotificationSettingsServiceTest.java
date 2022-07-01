@@ -22,7 +22,7 @@ import de.tum.in.www1.artemis.domain.notification.NotificationTitleTypeConstants
 import de.tum.in.www1.artemis.repository.NotificationSettingRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 
-public class NotificationSettingsServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+class NotificationSettingsServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
     private NotificationSettingsService notificationSettingsService;
@@ -44,7 +44,7 @@ public class NotificationSettingsServiceTest extends AbstractSpringIntegrationBa
      * Prepares the needed values and objects for testing
      */
     @BeforeEach
-    public void setUp() {
+    void setUp() {
         SecurityUtils.setAuthorizationObject();
 
         List<User> users = database.addUsers(1, 0, 0, 0);
@@ -67,7 +67,7 @@ public class NotificationSettingsServiceTest extends AbstractSpringIntegrationBa
     }
 
     @AfterEach
-    public void resetDatabase() {
+    void resetDatabase() {
         database.resetDatabase();
     }
 
@@ -76,7 +76,7 @@ public class NotificationSettingsServiceTest extends AbstractSpringIntegrationBa
      * Each provided notification setting should have the same user afterwards
      */
     @Test
-    public void testSetCurrentUser() {
+    void testSetCurrentUser() {
         NotificationSetting[] tmpNotificationSettings = Arrays.copyOf(unsavedNotificationSettings, unsavedNotificationSettings.length);
 
         notificationSettingsService.setCurrentUser(unsavedNotificationSettings, student1);
@@ -92,7 +92,7 @@ public class NotificationSettingsServiceTest extends AbstractSpringIntegrationBa
      * & convertNotificationSettingsToNotificationTypesWithActivationStatus
      */
     @Test
-    public void testFindDeactivatedNotificationTypes() {
+    void testFindDeactivatedNotificationTypes() {
         NotificationSetting[] tmpNotificationSettingsArray = Arrays.copyOf(savedNotificationSettings, savedNotificationSettings.length);
         Set<NotificationSetting> tmpNotificationSettingsSet = new HashSet<>(Arrays.asList(tmpNotificationSettingsArray));
         Set<NotificationType> resultingTypeSet = notificationSettingsService.findDeactivatedNotificationTypes(NotificationSettingsCommunicationChannel.WEBAPP,
@@ -111,7 +111,7 @@ public class NotificationSettingsServiceTest extends AbstractSpringIntegrationBa
      * Checks if the given user should receive an email based on the specific notification (type) or not based on the user's notification settings
      */
     @Test
-    public void testCheckIfNotificationEmailIsAllowedBySettingsForGivenUser() {
+    void testCheckIfNotificationEmailIsAllowedBySettingsForGivenUser() {
         notification.setTitle(NotificationTitleTypeConstants.findCorrespondingNotificationTitle(ATTACHMENT_CHANGE));
         assertThat(notificationSettingsService.checkIfNotificationOrEmailIsAllowedBySettingsForGivenUser(notification, student1, EMAIL))
                 .as("Emails with type ATTACHMENT_CHANGE should be allowed for the given user").isTrue();
@@ -129,7 +129,7 @@ public class NotificationSettingsServiceTest extends AbstractSpringIntegrationBa
      * Tests the method checkLoadedNotificationSettingsForCorrectness with an empty input
      */
     @Test
-    public void testCheckLoadedNotificationSettingsForCorrectness_empty() {
+    void testCheckLoadedNotificationSettingsForCorrectness_empty() {
         Set<NotificationSetting> testSet = new HashSet<>();
         testSet = notificationSettingsService.checkLoadedNotificationSettingsForCorrectness(testSet);
         assertThat(testSet).as("The default notification settings should be returned").isEqualTo(DEFAULT_NOTIFICATION_SETTINGS);
@@ -139,7 +139,7 @@ public class NotificationSettingsServiceTest extends AbstractSpringIntegrationBa
      * Tests the method checkLoadedNotificationSettingsForCorrectness with an incomplete input
      */
     @Test
-    public void testCheckLoadedNotificationSettingsForCorrectness_incomplete() {
+    void testCheckLoadedNotificationSettingsForCorrectness_incomplete() {
         Set<NotificationSetting> testSet = new HashSet<>();
         testSet.add(completeNotificationSettingA);
         testSet = notificationSettingsService.checkLoadedNotificationSettingsForCorrectness(testSet);
@@ -151,7 +151,7 @@ public class NotificationSettingsServiceTest extends AbstractSpringIntegrationBa
      * Tests the method checkLoadedNotificationSettingsForCorrectness with a correct input
      */
     @Test
-    public void testCheckLoadedNotificationSettingsForCorrectness_correct() {
+    void testCheckLoadedNotificationSettingsForCorrectness_correct() {
         Set<NotificationSetting> testSet = new HashSet<>(DEFAULT_NOTIFICATION_SETTINGS);
         testSet = notificationSettingsService.checkLoadedNotificationSettingsForCorrectness(testSet);
         assertThat(testSet).as("The number of loaded Settings should be equals to the number of default settings").hasSameSizeAs(DEFAULT_NOTIFICATION_SETTINGS);
@@ -161,7 +161,7 @@ public class NotificationSettingsServiceTest extends AbstractSpringIntegrationBa
      * Tests the method checkLoadedNotificationSettingsForCorrectness with an outdated input
      */
     @Test
-    public void testCheckLoadedNotificationSettingsForCorrectness_outdated() {
+    void testCheckLoadedNotificationSettingsForCorrectness_outdated() {
         NotificationSetting outdatedSetting = new NotificationSetting(student1, false, true, "Outdated Settings ID");
         notificationSettingRepository.save(outdatedSetting);
 

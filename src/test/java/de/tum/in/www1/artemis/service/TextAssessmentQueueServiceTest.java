@@ -17,7 +17,7 @@ import de.tum.in.www1.artemis.repository.TextBlockRepository;
 import de.tum.in.www1.artemis.repository.TextClusterRepository;
 import de.tum.in.www1.artemis.util.TextExerciseUtilService;
 
-public class TextAssessmentQueueServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+class TextAssessmentQueueServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
     private TextAssessmentQueueService textAssessmentQueueService;
@@ -41,14 +41,14 @@ public class TextAssessmentQueueServiceTest extends AbstractSpringIntegrationBam
     private Course course;
 
     @BeforeEach
-    public void init() {
+    void init() {
         course = database.addCourseWithOneReleasedTextExercise();
         random = new Random();
         errorRate = Percentage.withPercentage(0.0001);
     }
 
     @Test
-    public void calculateAddedDistancesTest() {
+    void calculateAddedDistancesTest() {
         var textBlocks = new ArrayList<>(textExerciseUtilService.generateTextBlocks(4));
         TextCluster textCluster = addTextBlocksToRandomCluster(textBlocks, 1).get(0);
         double[][] distanceMatrix = new double[][] { { 0, 0.1, 0.2, 0.3 }, { 0.1, 0, 0.4, 0.5 }, { 0.2, 0.4, 0, 0.6 }, { 0.3, 0.5, 0.6, 0 } };
@@ -61,7 +61,7 @@ public class TextAssessmentQueueServiceTest extends AbstractSpringIntegrationBam
     }
 
     @Test
-    public void testTextBlockProbabilities() {
+    void testTextBlockProbabilities() {
         var textBlocks = new ArrayList<>(textExerciseUtilService.generateTextBlocks(4));
         TextCluster textCluster = addTextBlocksToRandomCluster(textBlocks, 1).get(0);
         var probabilities = new double[] { 1.0d, 2.0d };
@@ -75,7 +75,7 @@ public class TextAssessmentQueueServiceTest extends AbstractSpringIntegrationBam
     // TODO: we should remove transactions in the corresponding production code and make sure to eagerly load text blocks with the submission in such a case
     @Transactional(readOnly = true)
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void calculateSmallerClusterPercentageTest() {
+    void calculateSmallerClusterPercentageTest() {
         int submissionCount = 5;
         int submissionSize = 4;
         int[] clusterSizes = new int[] { 4, 5, 10, 1 };

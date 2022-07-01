@@ -17,13 +17,13 @@ import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.TextExercise;
 import de.tum.in.www1.artemis.domain.enumeration.ExerciseLifecycle;
 
-public class ExerciseLifecycleServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+class ExerciseLifecycleServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
     private ExerciseLifecycleService exerciseLifecycleService;
 
     @Test
-    public void testScheduleExerciseOnReleaseTask() {
+    void testScheduleExerciseOnReleaseTask() {
         final ZonedDateTime now = ZonedDateTime.now();
 
         Exercise exercise = new TextExercise();
@@ -80,7 +80,7 @@ public class ExerciseLifecycleServiceTest extends AbstractSpringIntegrationBambo
     }
 
     @Test
-    public void testCancellationOfScheduledTask() {
+    void testCancellationOfScheduledTask() {
         Exercise exercise = new TextExercise();
         exercise.setTitle("ExerciseLifecycleServiceTest:testCancellationOfScheduledTask");
         exercise.setDueDate(ZonedDateTime.now().plus(200, ChronoUnit.MILLIS));

@@ -19,7 +19,7 @@ import de.tum.in.www1.artemis.repository.TextUnitRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.util.ModelFactory;
 
-public class TextUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+class TextUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
     private UserRepository userRepository;
@@ -35,7 +35,7 @@ public class TextUnitIntegrationTest extends AbstractSpringIntegrationBambooBitb
     private TextUnit textUnit;
 
     @BeforeEach
-    public void initTestCase() throws Exception {
+    void initTestCase() throws Exception {
         this.database.addUsers(1, 1, 1, 1);
         this.lecture = this.database.createCourseWithLecture(true);
         this.textUnit = new TextUnit();
@@ -56,32 +56,32 @@ public class TextUnitIntegrationTest extends AbstractSpringIntegrationBambooBitb
     }
 
     @AfterEach
-    public void resetDatabase() {
+    void resetDatabase() {
         database.resetDatabase();
     }
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void testAll_asTutor() throws Exception {
+    void testAll_asTutor() throws Exception {
         this.testAllPreAuthorize();
     }
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void testAll_asStudent() throws Exception {
+    void testAll_asStudent() throws Exception {
         this.testAllPreAuthorize();
     }
 
     @Test
     @WithMockUser(username = "editor1", roles = "EDITOR")
-    public void createTextUnit_asEditor_shouldCreateTextUnitUnit() throws Exception {
+    void createTextUnit_asEditor_shouldCreateTextUnitUnit() throws Exception {
         var persistedTextUnit = request.postWithResponseBody("/api/lectures/" + this.lecture.getId() + "/text-units", textUnit, TextUnit.class, HttpStatus.CREATED);
         assertThat(persistedTextUnit.getId()).isNotNull();
     }
 
     @Test
     @WithMockUser(username = "editor42", roles = "EDITOR")
-    public void createTextUnit_EditorNotInCourse_shouldReturnForbidden() throws Exception {
+    void createTextUnit_EditorNotInCourse_shouldReturnForbidden() throws Exception {
         request.postWithResponseBody("/api/lectures/" + this.lecture.getId() + "/text-units", textUnit, TextUnit.class, HttpStatus.FORBIDDEN);
         request.postWithResponseBody("/api/lectures/" + "2379812738912" + "/text-units", textUnit, TextUnit.class, HttpStatus.NOT_FOUND);
         textUnit.setLecture(new Lecture());
@@ -92,7 +92,7 @@ public class TextUnitIntegrationTest extends AbstractSpringIntegrationBambooBitb
 
     @Test
     @WithMockUser(username = "editor1", roles = "EDITOR")
-    public void updateTextUnit_asEditor_shouldUpdateTextUnit() throws Exception {
+    void updateTextUnit_asEditor_shouldUpdateTextUnit() throws Exception {
         persistTextUnitWithLecture();
         TextUnit textUnitFromRequest = request.get("/api/lectures/" + lecture.getId() + "/text-units/" + this.textUnit.getId(), HttpStatus.OK, TextUnit.class);
         textUnitFromRequest.setContent("Changed");
@@ -104,7 +104,7 @@ public class TextUnitIntegrationTest extends AbstractSpringIntegrationBambooBitb
 
     @Test
     @WithMockUser(username = "editor1", roles = "EDITOR")
-    public void updateTextUnit_asEditor_shouldKeepOrdering() throws Exception {
+    void updateTextUnit_asEditor_shouldKeepOrdering() throws Exception {
         persistTextUnitWithLecture();
 
         // Add a second lecture unit
@@ -123,7 +123,7 @@ public class TextUnitIntegrationTest extends AbstractSpringIntegrationBambooBitb
 
     @Test
     @WithMockUser(username = "editor1", roles = "EDITOR")
-    public void updateTextUnit_noId_shouldReturnBadRequest() throws Exception {
+    void updateTextUnit_noId_shouldReturnBadRequest() throws Exception {
         persistTextUnitWithLecture();
         TextUnit textUnitFromRequest = request.get("/api/lectures/" + lecture.getId() + "/text-units/" + this.textUnit.getId(), HttpStatus.OK, TextUnit.class);
         textUnitFromRequest.setId(null);
@@ -134,7 +134,7 @@ public class TextUnitIntegrationTest extends AbstractSpringIntegrationBambooBitb
 
     @Test
     @WithMockUser(username = "editor1", roles = "EDITOR")
-    public void getTextUnit_correctId_shouldReturnTextUnit() throws Exception {
+    void getTextUnit_correctId_shouldReturnTextUnit() throws Exception {
         persistTextUnitWithLecture();
         TextUnit textUnitFromRequest = request.get("/api/lectures/" + lecture.getId() + "/text-units/" + this.textUnit.getId(), HttpStatus.OK, TextUnit.class);
         assertThat(this.textUnit.getId()).isEqualTo(textUnitFromRequest.getId());
@@ -142,7 +142,7 @@ public class TextUnitIntegrationTest extends AbstractSpringIntegrationBambooBitb
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void deleteTextUnit_correctId_shouldDeleteTextUnit() throws Exception {
+    void deleteTextUnit_correctId_shouldDeleteTextUnit() throws Exception {
         persistTextUnitWithLecture();
         assertThat(this.textUnit.getId()).isNotNull();
         request.delete("/api/lectures/" + lecture.getId() + "/lecture-units/" + this.textUnit.getId(), HttpStatus.OK);

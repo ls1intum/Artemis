@@ -24,7 +24,7 @@ import de.tum.in.www1.artemis.repository.TextAssessmentEventRepository;
 import de.tum.in.www1.artemis.repository.TextSubmissionRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 
-public class TutorEffortIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+class TutorEffortIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
     private UserRepository userRepository;
@@ -50,7 +50,7 @@ public class TutorEffortIntegrationTest extends AbstractSpringIntegrationBambooB
      * Initializes the database with a course that contains a tutor and a text submission
      */
     @BeforeEach
-    public void initTestCase() {
+    void initTestCase() {
         course = database.createCourseWithTutor("tutor1");
         exercise = course.getExercises().iterator().next();
         studentParticipation = studentParticipationRepository.findAll().get(0);
@@ -62,7 +62,7 @@ public class TutorEffortIntegrationTest extends AbstractSpringIntegrationBambooB
     }
 
     @AfterEach
-    public void resetDatabase() {
+    void resetDatabase() {
         database.resetDatabase();
     }
 
@@ -73,7 +73,7 @@ public class TutorEffortIntegrationTest extends AbstractSpringIntegrationBambooB
      */
     @Test
     @WithMockUser(username = "instructor", roles = "INSTRUCTOR")
-    public void testCalculateTutorEfforts0MinutesOneTimestamp() throws Exception {
+    void testCalculateTutorEfforts0MinutesOneTimestamp() throws Exception {
         List<TextAssessmentEvent> events = createTextAssessmentEventsInIntervals(1, 1);
 
         textAssessmentEventRepository.saveAll(events);
@@ -93,7 +93,7 @@ public class TutorEffortIntegrationTest extends AbstractSpringIntegrationBambooB
      */
     @Test
     @WithMockUser(username = "instructor", roles = "INSTRUCTOR")
-    public void testCalculateTutorEffortsDistance5Minutes() throws Exception {
+    void testCalculateTutorEffortsDistance5Minutes() throws Exception {
         List<TextAssessmentEvent> events = createTextAssessmentEventsInIntervals(6, 5);
 
         textAssessmentEventRepository.saveAll(events);
@@ -114,7 +114,7 @@ public class TutorEffortIntegrationTest extends AbstractSpringIntegrationBambooB
      */
     @Test
     @WithMockUser(username = "instructor", roles = "INSTRUCTOR")
-    public void testCalculateTutorEffortsDistance10Minutes() throws Exception {
+    void testCalculateTutorEffortsDistance10Minutes() throws Exception {
         List<TextAssessmentEvent> events = createTextAssessmentEventsInIntervals(11, 10);
         textAssessmentEventRepository.saveAll(events);
 

@@ -23,7 +23,7 @@ import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.web.rest.ProgrammingExerciseSimulationResource;
 
-public class ProgrammingExerciseSimulationIntegrationTest extends AbstractSpringDevelopmentTest {
+class ProgrammingExerciseSimulationIntegrationTest extends AbstractSpringDevelopmentTest {
 
     @Autowired
     private ProgrammingExerciseRepository programmingExerciseRepository;
@@ -35,27 +35,27 @@ public class ProgrammingExerciseSimulationIntegrationTest extends AbstractSpring
     private static final int numberOfStudents = 2;
 
     @BeforeEach
-    public void setup() {
+    void setup() {
         database.addUsers(numberOfStudents, 1, 0, 1);
         course = database.addEmptyCourse();
         exercise = ModelFactory.generateProgrammingExercise(ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(7), course);
     }
 
     @AfterEach
-    public void tearDown() {
+    void tearDown() {
         database.resetDatabase();
     }
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void createProgrammingExerciseWithoutConnectionToVCSandCI_exerciseIsNull_badRequest() throws Exception {
+    void createProgrammingExerciseWithoutConnectionToVCSandCI_exerciseIsNull_badRequest() throws Exception {
         request.post(ROOT + EXERCISES_SIMULATION, null, HttpStatus.BAD_REQUEST);
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @EnumSource(ExerciseMode.class)
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void createProgrammingExerciseWithoutConnectionToVCSandCI_validExercise_created(ExerciseMode mode) throws Exception {
+    void createProgrammingExerciseWithoutConnectionToVCSandCI_validExercise_created(ExerciseMode mode) throws Exception {
         exercise.setMode(mode);
         assertThat(programmingExerciseRepository.count()).isZero();
         database.addSubmissionPolicyToExercise(ModelFactory.generateLockRepositoryPolicy(1, true), exercise);

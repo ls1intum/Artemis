@@ -21,9 +21,9 @@ package de.tum.in.www1.artemis.util;
  *     public List<Verifiable> setUpSomeMoreMocks() {...}
  * }
  *
- * public class TestBar {
+ * class TestBar {
  *     @Test
- *     public void testSomeStuff() {
+ *     void testSomeStuff() {
  *          final var verifications = new ArrayList<Verifiable>();
  *          verifications.addAll(fooMockService.setUpSomeMocks());
  *          verifications.addAll(fooMockService.setUpSomeMoreMocks());

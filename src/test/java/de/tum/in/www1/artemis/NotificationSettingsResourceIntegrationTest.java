@@ -16,7 +16,7 @@ import de.tum.in.www1.artemis.domain.NotificationSetting;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.repository.*;
 
-public class NotificationSettingsResourceIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+class NotificationSettingsResourceIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
     private UserRepository userRepository;
@@ -34,7 +34,7 @@ public class NotificationSettingsResourceIntegrationTest extends AbstractSpringI
      * Prepares the common variables and data for testing
      */
     @BeforeEach
-    public void initTestCase() {
+    void initTestCase() {
         List<User> users = database.addUsers(2, 1, 1, 1);
 
         student1 = users.get(0);
@@ -49,7 +49,7 @@ public class NotificationSettingsResourceIntegrationTest extends AbstractSpringI
      * Cleans the test environment to make sure different test do not influence each other
      */
     @AfterEach
-    public void tearDown() {
+    void tearDown() {
         database.resetDatabase();
         notificationSettingRepository.deleteAll();
     }
@@ -59,7 +59,7 @@ public class NotificationSettingsResourceIntegrationTest extends AbstractSpringI
      */
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void testGetNotificationSettingsForCurrentUserWith_DB_NOT_EMPTY() throws Exception {
+    void testGetNotificationSettingsForCurrentUserWith_DB_NOT_EMPTY() throws Exception {
         notificationSettingRepository.save(settingA);
         notificationSettingRepository.save(settingsB);
 
@@ -76,7 +76,7 @@ public class NotificationSettingsResourceIntegrationTest extends AbstractSpringI
      */
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void testGetNotificationSettingsForCurrentUserWith_DB_EMTPY() throws Exception {
+    void testGetNotificationSettingsForCurrentUserWith_DB_EMTPY() throws Exception {
         List<NotificationSetting> notificationSettings = request.getList("/api/notification-settings", HttpStatus.OK, NotificationSetting.class);
         assertThat(notificationSettings).hasSameSizeAs(DEFAULT_NOTIFICATION_SETTINGS);
     }
@@ -86,7 +86,7 @@ public class NotificationSettingsResourceIntegrationTest extends AbstractSpringI
      */
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void testSaveNotificationSettingsForCurrentUser_OK() throws Exception {
+    void testSaveNotificationSettingsForCurrentUser_OK() throws Exception {
         NotificationSetting[] newlyChangedSettingsToSave = { settingA, settingsB };
 
         NotificationSetting[] notificationSettingsResponse = request.putWithResponseBody("/api/notification-settings", newlyChangedSettingsToSave, NotificationSetting[].class,
@@ -111,7 +111,7 @@ public class NotificationSettingsResourceIntegrationTest extends AbstractSpringI
      */
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void testSaveNotificationSettingsForCurrentUser_BAD_REQUEST() throws Exception {
+    void testSaveNotificationSettingsForCurrentUser_BAD_REQUEST() throws Exception {
         request.putWithResponseBody("/api/notification-settings", null, NotificationSetting[].class, HttpStatus.BAD_REQUEST);
     }
 }

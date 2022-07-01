@@ -9,10 +9,10 @@ import org.junit.jupiter.api.Test;
 
 import de.tum.in.www1.artemis.service.util.HttpRequestUtils;
 
-public class HttpRequestUtilsTest {
+class HttpRequestUtilsTest {
 
     @Test
-    public void testIPv4String() {
+    void testIPv4String() {
         HttpServletRequest request = httpRequestMockWithIp("192.0.2.235");
         final var ipAddress = HttpRequestUtils.getIpAddressFromRequest(request).get();
         assertThat(ipAddress.toFullString()).isEqualTo("192.000.002.235");

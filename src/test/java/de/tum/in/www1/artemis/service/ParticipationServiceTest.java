@@ -21,7 +21,7 @@ import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.UserRepository;
 
-public class ParticipationServiceTest extends AbstractSpringIntegrationJenkinsGitlabTest {
+class ParticipationServiceTest extends AbstractSpringIntegrationJenkinsGitlabTest {
 
     @Autowired
     private ParticipationService participationService;
@@ -53,7 +53,7 @@ public class ParticipationServiceTest extends AbstractSpringIntegrationJenkinsGi
      */
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testCreateParticipationForExternalSubmission() throws Exception {
+    void testCreateParticipationForExternalSubmission() throws Exception {
         Optional<User> student = userRepository.findOneWithGroupsAndAuthoritiesByLogin("student1");
         var someURL = new VcsRepositoryUrl("http://vcs.fake.fake");
         // Copy Repository in ParticipationService#copyRepository(..)

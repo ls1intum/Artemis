@@ -22,7 +22,7 @@ import de.tum.in.www1.artemis.domain.enumeration.TeamImportStrategyType;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.util.ModelFactory;
 
-public class TeamImportIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+class TeamImportIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
     private CourseRepository courseRepo;
@@ -85,7 +85,7 @@ public class TeamImportIntegrationTest extends AbstractSpringIntegrationBambooBi
     }
 
     @BeforeEach
-    public void initTestCase() {
+    void initTestCase() {
         database.addUsers(0, 5, 0, 1);
         course = database.addCourseWithModelingAndTextExercise();
 
@@ -104,7 +104,7 @@ public class TeamImportIntegrationTest extends AbstractSpringIntegrationBambooBi
     }
 
     @AfterEach
-    public void tearDown() {
+    void tearDown() {
         database.resetDatabase();
     }
 
@@ -124,7 +124,7 @@ public class TeamImportIntegrationTest extends AbstractSpringIntegrationBambooBi
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @EnumSource(TeamImportStrategyType.class)
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testImportTeamsFromExerciseIntoEmptyExercise(TeamImportStrategyType importStrategyType) throws Exception {
+    void testImportTeamsFromExerciseIntoEmptyExercise(TeamImportStrategyType importStrategyType) throws Exception {
         List<Team> sourceTeams = database.addTeamsForExercise(sourceExercise, 3, tutor);
         testImportTeamsIntoExercise(ImportType.FROM_EXERCISE, importStrategyType, null, sourceTeams);
     }
@@ -132,7 +132,7 @@ public class TeamImportIntegrationTest extends AbstractSpringIntegrationBambooBi
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @EnumSource(TeamImportStrategyType.class)
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testImportTeamsFromListIntoEmptyExercise(TeamImportStrategyType importStrategyType) throws Exception {
+    void testImportTeamsFromListIntoEmptyExercise(TeamImportStrategyType importStrategyType) throws Exception {
         testImportTeamsIntoExercise(ImportType.FROM_LIST, importStrategyType, importedTeamsBody, importedTeams);
     }
 
@@ -144,14 +144,14 @@ public class TeamImportIntegrationTest extends AbstractSpringIntegrationBambooBi
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testImportTeamsFromExerciseIntoExerciseWithNoConflictsUsingPurgeExistingStrategy() throws Exception {
+    void testImportTeamsFromExerciseIntoExerciseWithNoConflictsUsingPurgeExistingStrategy() throws Exception {
         List<Team> sourceTeams = database.addTeamsForExercise(sourceExercise, "sourceTeam", 2, tutor);
         testImportTeamsIntoExerciseWithNoConflictsUsingPurgeExistingStrategy(ImportType.FROM_EXERCISE, null, sourceTeams);
     }
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testImportTeamsFromListWithNoConflictsUsingPurgeExistingStrategy() throws Exception {
+    void testImportTeamsFromListWithNoConflictsUsingPurgeExistingStrategy() throws Exception {
         testImportTeamsIntoExerciseWithNoConflictsUsingPurgeExistingStrategy(ImportType.FROM_LIST, importedTeamsBody, importedTeams);
     }
 
@@ -164,7 +164,7 @@ public class TeamImportIntegrationTest extends AbstractSpringIntegrationBambooBi
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testImportTeamsFromExerciseIntoExerciseWithNoConflictsUsingCreateOnlyStrategy() throws Exception {
+    void testImportTeamsFromExerciseIntoExerciseWithNoConflictsUsingCreateOnlyStrategy() throws Exception {
         List<Team> sourceTeams = database.addTeamsForExercise(sourceExercise, "sourceTeam", 3, tutor);
         // destination teams before + source teams = destination teams after
         testImportTeamsIntoExerciseWithNoConflictsUsingCreateOnlyStrategy(ImportType.FROM_EXERCISE, null, sourceTeams);
@@ -172,7 +172,7 @@ public class TeamImportIntegrationTest extends AbstractSpringIntegrationBambooBi
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testImportTeamsFromListIntoExerciseWithNoConflictsUsingCreateOnlyStrategy() throws Exception {
+    void testImportTeamsFromListIntoExerciseWithNoConflictsUsingCreateOnlyStrategy() throws Exception {
         // destination teams before + imported teams = destination teams after
         testImportTeamsIntoExerciseWithNoConflictsUsingCreateOnlyStrategy(ImportType.FROM_LIST, importedTeamsBody, importedTeams);
     }
@@ -186,14 +186,14 @@ public class TeamImportIntegrationTest extends AbstractSpringIntegrationBambooBi
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testImportTeamsFromExerciseIntoExerciseWithConflictsUsingPurgeExistingStrategy() throws Exception {
+    void testImportTeamsFromExerciseIntoExerciseWithConflictsUsingPurgeExistingStrategy() throws Exception {
         List<Team> sourceTeams = database.addTeamsForExercise(sourceExercise, "sameShortName", "other", 3, tutor);
         testImportTeamsIntoExerciseWithConflictsUsingPurgeExistingStrategy(ImportType.FROM_EXERCISE, null, sourceTeams);
     }
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testImportFromListIntoExerciseWithConflictsUsingPurgeExistingStrategy() throws Exception {
+    void testImportFromListIntoExerciseWithConflictsUsingPurgeExistingStrategy() throws Exception {
         Pair<List<Team>, List<Team>> importedTeamsWithBody = getImportedTeamsAndBody("sameShortName", "other", "O");
         importedTeams = importedTeamsWithBody.getFirst();
         importedTeamsBody = importedTeamsWithBody.getSecond();
@@ -209,7 +209,7 @@ public class TeamImportIntegrationTest extends AbstractSpringIntegrationBambooBi
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testImportTeamsFromExerciseIntoExerciseWithTeamShortNameConflictsUsingCreateOnlyStrategy() throws Exception {
+    void testImportTeamsFromExerciseIntoExerciseWithTeamShortNameConflictsUsingCreateOnlyStrategy() throws Exception {
         List<Team> sourceTeamsWithoutConflict = database.addTeamsForExercise(sourceExercise, "sourceTeam", 1, tutor);
         database.addTeamsForExercise(sourceExercise, "sameShortName", "other", 2, tutor);
         testImportTeamsIntoExerciseWithTeamShortNameConflictsUsingCreateOnlyStrategy(ImportType.FROM_EXERCISE, null, sourceTeamsWithoutConflict);
@@ -217,7 +217,7 @@ public class TeamImportIntegrationTest extends AbstractSpringIntegrationBambooBi
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testImportFromListIntoExerciseWithTeamShortNameConflictsUsingCreateOnlyStrategy() throws Exception {
+    void testImportFromListIntoExerciseWithTeamShortNameConflictsUsingCreateOnlyStrategy() throws Exception {
         Pair<List<Team>, List<Team>> importedTeamsWithConflictAndBody = getImportedTeamsAndBody("sameShortName", "other", "O");
         List<Team> importedTeamsWithConflictBody = importedTeamsWithConflictAndBody.getSecond();
         testImportTeamsIntoExerciseWithTeamShortNameConflictsUsingCreateOnlyStrategy(ImportType.FROM_LIST, addLists(importedTeamsWithConflictBody, importedTeamsBody),
@@ -235,7 +235,7 @@ public class TeamImportIntegrationTest extends AbstractSpringIntegrationBambooBi
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testImportTeamsFromExerciseIntoExerciseWithStudentConflictsUsingCreateOnlyStrategy() throws Exception {
+    void testImportTeamsFromExerciseIntoExerciseWithStudentConflictsUsingCreateOnlyStrategy() throws Exception {
         List<Team> sourceTeamsWithoutConflict = database.addTeamsForExercise(sourceExercise, "sourceTeamOther", 1, tutor);
         List<Team> sourceTeamsWithStudentConflict = database.addTeamsForExercise(sourceExercise, "sourceTeam", 3, tutor);
         // destination teams before + conflict-free source teams = destination teams after
@@ -244,7 +244,7 @@ public class TeamImportIntegrationTest extends AbstractSpringIntegrationBambooBi
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testImportTeamsFromListIntoExerciseWithStudentConflictsUsingCreateOnlyStrategy() throws Exception {
+    void testImportTeamsFromListIntoExerciseWithStudentConflictsUsingCreateOnlyStrategy() throws Exception {
         Pair<List<Team>, List<Team>> importedTeamsWithStudentConflictAndBody = getImportedTeamsAndBody("withConflict", "import", "R");
         List<Team> importedTeamsWithStudentConflict = importedTeamsWithStudentConflictAndBody.getFirst();
         List<Team> importedTeamsWithStudentConflictBody = importedTeamsWithStudentConflictAndBody.getSecond();
@@ -255,7 +255,7 @@ public class TeamImportIntegrationTest extends AbstractSpringIntegrationBambooBi
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testImportTeamsFromExerciseBadRequests() throws Exception {
+    void testImportTeamsFromExerciseBadRequests() throws Exception {
         // Specifying the destination exercise to also be the source exercise should fail
         request.put(importFromExerciseUrl(destinationExercise), null, HttpStatus.BAD_REQUEST);
 
@@ -274,7 +274,7 @@ public class TeamImportIntegrationTest extends AbstractSpringIntegrationBambooBi
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testImportTeamsFromListBadRequests() throws Exception {
+    void testImportTeamsFromListBadRequests() throws Exception {
         // If the destination exercise is not a team exercise, the request should fail
         destinationExercise.setMode(ExerciseMode.INDIVIDUAL);
         exerciseRepo.save(destinationExercise);
@@ -302,19 +302,19 @@ public class TeamImportIntegrationTest extends AbstractSpringIntegrationBambooBi
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void testImportTeamsFromExerciseForbiddenAsTutor() throws Exception {
+    void testImportTeamsFromExerciseForbiddenAsTutor() throws Exception {
         request.put(importFromSourceExerciseUrl(), null, HttpStatus.FORBIDDEN);
     }
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void testImportTeamsFromListForbiddenAsTutor() throws Exception {
+    void testImportTeamsFromListForbiddenAsTutor() throws Exception {
         request.put(importFromListUrl(), importedTeamsBody, HttpStatus.FORBIDDEN);
     }
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testImportTeamsFromExerciseForbiddenAsInstructorOfOtherCourse() throws Exception {
+    void testImportTeamsFromExerciseForbiddenAsInstructorOfOtherCourse() throws Exception {
         // If the instructor is not part of the correct course instructor group anymore, he should not be able to import teams
         course.setInstructorGroupName("Different group name");
         courseRepo.save(course);
@@ -324,7 +324,7 @@ public class TeamImportIntegrationTest extends AbstractSpringIntegrationBambooBi
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testImportTeamsFromListForbiddenAsInstructorOfOtherCourse() throws Exception {
+    void testImportTeamsFromListForbiddenAsInstructorOfOtherCourse() throws Exception {
         // If the instructor is not part of the correct course instructor group anymore, he should not be able to import teams
         course.setInstructorGroupName("Different group name");
         courseRepo.save(course);

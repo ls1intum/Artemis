@@ -21,7 +21,7 @@ import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.util.TextExerciseUtilService;
 import de.tum.in.www1.artemis.web.rest.dto.TextClusterStatisticsDTO;
 
-public class TextClusterResourceIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+class TextClusterResourceIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
     private FeedbackRepository feedbackRepository;
@@ -50,7 +50,7 @@ public class TextClusterResourceIntegrationTest extends AbstractSpringIntegratio
      * Initializes the database with a course that contains a tutor and a text submission
      */
     @BeforeEach
-    public void initTestCase() throws Error {
+    void initTestCase() throws Error {
         Course course = database.createCourseWithInstructorAndTextExercise();
 
         exercise = course.getExercises().iterator().next();
@@ -81,7 +81,7 @@ public class TextClusterResourceIntegrationTest extends AbstractSpringIntegratio
     }
 
     @AfterEach
-    public void resetDatabase() {
+    void resetDatabase() {
         database.resetDatabase();
     }
 
@@ -90,7 +90,7 @@ public class TextClusterResourceIntegrationTest extends AbstractSpringIntegratio
     */
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testGetClusterStats_forAllValuesSet() throws Exception {
+    void testGetClusterStats_forAllValuesSet() throws Exception {
         List<TextClusterStatisticsDTO> textClusterStatistics = request.getList("/api/text-exercises/" + exercise.getId() + "/cluster-statistics", HttpStatus.OK,
                 TextClusterStatisticsDTO.class);
 
@@ -111,7 +111,7 @@ public class TextClusterResourceIntegrationTest extends AbstractSpringIntegratio
      */
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testGetClusterStats_withEnabledCluster() throws Exception {
+    void testGetClusterStats_withEnabledCluster() throws Exception {
         TextCluster cluster = textClusterRepository.findAll().get(0);
         cluster.setDisabled(false);
         textClusterRepository.save(cluster);
@@ -130,7 +130,7 @@ public class TextClusterResourceIntegrationTest extends AbstractSpringIntegratio
      */
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testGetClusterStats_withAddedAutoFeedback() throws Exception {
+    void testGetClusterStats_withAddedAutoFeedback() throws Exception {
         Result result = resultRepository.findAll().get(0);
         TextBlock textBlock = textBlockRepository.findAll().get(0);
         Feedback feedback = new Feedback().type(FeedbackType.AUTOMATIC).detailText("feedback").result(result).reference(textBlock.getId());
@@ -151,7 +151,7 @@ public class TextClusterResourceIntegrationTest extends AbstractSpringIntegratio
      */
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testToggleClusterDisabledPredicate_withDisabledAndEnabledCluster() throws Exception {
+    void testToggleClusterDisabledPredicate_withDisabledAndEnabledCluster() throws Exception {
         TextCluster cluster = textClusterRepository.findAll().get(0);
         // set predicate to false
         request.patch("/api/text-exercises/" + exercise.getId() + "/text-clusters/" + cluster.getId() + "?disabled=false", "{}", HttpStatus.OK);

@@ -18,7 +18,7 @@ import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.web.rest.TextAssessmentEventResource;
 
-public class TextExerciseAnalyticsIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+class TextExerciseAnalyticsIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
     private UserRepository userRepository;
@@ -49,7 +49,7 @@ public class TextExerciseAnalyticsIntegrationTest extends AbstractSpringIntegrat
      * Initializes the database with a course that contains a tutor and a text submission
      */
     @BeforeEach
-    public void initTestCase() {
+    void initTestCase() {
         course = database.createCourseWithTutor("tutor1");
         tutor = userRepository.getUserByLoginElseThrow("tutor1");
         exercise = course.getExercises().iterator().next();
@@ -58,7 +58,7 @@ public class TextExerciseAnalyticsIntegrationTest extends AbstractSpringIntegrat
     }
 
     @AfterEach
-    public void resetDatabase() {
+    void resetDatabase() {
         database.resetDatabase();
     }
 
@@ -67,7 +67,7 @@ public class TextExerciseAnalyticsIntegrationTest extends AbstractSpringIntegrat
      */
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void testAddMultipleCompleteAssessmentEvents() {
+    void testAddMultipleCompleteAssessmentEvents() {
         List<TextAssessmentEvent> events = ModelFactory.generateMultipleTextAssessmentEvents(course.getId(), tutor.getId(), exercise.getId(), studentParticipation.getId(),
                 textSubmission.getId());
         for (TextAssessmentEvent event : events) {
@@ -81,7 +81,7 @@ public class TextExerciseAnalyticsIntegrationTest extends AbstractSpringIntegrat
      */
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void testAddSingleCompleteAssessmentEvent() {
+    void testAddSingleCompleteAssessmentEvent() {
         expectEventAddedWithResponse(HttpStatus.OK, tutor.getId());
     }
 
@@ -90,7 +90,7 @@ public class TextExerciseAnalyticsIntegrationTest extends AbstractSpringIntegrat
      */
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void testAddSingleCompleteAssessmentEvent_withTutorNotInCourse() {
+    void testAddSingleCompleteAssessmentEvent_withTutorNotInCourse() {
         // Tutor with tutor1 id incremented is not part of the course, therefore forbidden to access this resource
         expectEventAddedWithResponse(HttpStatus.BAD_REQUEST, tutor.getId() + 1);
     }
@@ -112,7 +112,7 @@ public class TextExerciseAnalyticsIntegrationTest extends AbstractSpringIntegrat
      */
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void testAddSingleCompleteAssessmentEvent_withNotNullEventId() {
+    void testAddSingleCompleteAssessmentEvent_withNotNullEventId() {
         TextAssessmentEvent event = database.createSingleTextAssessmentEvent(course.getId(), tutor.getId(), exercise.getId(), studentParticipation.getId(), textSubmission.getId());
         event.setId(1L);
         ResponseEntity<Void> responseEntity = textAssessmentEventResource.addAssessmentEvent(event);
@@ -124,7 +124,7 @@ public class TextExerciseAnalyticsIntegrationTest extends AbstractSpringIntegrat
      */
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
-    public void testGetAllEventsByCourseId() {
+    void testGetAllEventsByCourseId() {
         User user = new User();
         user.setLogin("admin");
         user.setGroups(Set.of(course.getTeachingAssistantGroupName()));
@@ -143,7 +143,7 @@ public class TextExerciseAnalyticsIntegrationTest extends AbstractSpringIntegrat
      */
     @Test
     @WithMockUser(username = "instructor", roles = "INSTRUCTOR")
-    public void testGetNumberOfTutorsInvolvedInAssessingByExerciseAndCourseId() throws Exception {
+    void testGetNumberOfTutorsInvolvedInAssessingByExerciseAndCourseId() throws Exception {
         User user = new User();
         user.setLogin("instructor");
         user.setGroups(Set.of(course.getInstructorGroupName()));

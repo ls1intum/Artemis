@@ -23,7 +23,7 @@ import de.tum.in.www1.artemis.domain.enumeration.StatisticsView;
 import de.tum.in.www1.artemis.domain.statistics.StatisticsEntry;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 
-public class StatisticsRepositoryTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+class StatisticsRepositoryTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
     private StatisticsRepository statisticsRepository;
@@ -34,7 +34,7 @@ public class StatisticsRepositoryTest extends AbstractSpringIntegrationBambooBit
     private ZonedDateTime startDate;
 
     @BeforeEach
-    public void setup() {
+    void setup() {
         startDate = ZonedDateTime.of(2021, 11, 15, 0, 0, 0, 0, ZonedDateTime.now().getZone());
     }
 
@@ -44,7 +44,7 @@ public class StatisticsRepositoryTest extends AbstractSpringIntegrationBambooBit
      */
     @ParameterizedTest
     @EnumSource(value = SpanType.class, names = { "WEEK", "QUARTER" })
-    public void testFilterDuplicatedUsers_GraphType_LoggedInUsers(SpanType spanType) {
+    void testFilterDuplicatedUsers_GraphType_LoggedInUsers(SpanType spanType) {
         // we need an authorization object for the database queries
         SecurityUtils.setAuthorizationObject();
         // end date for the method call
@@ -94,7 +94,7 @@ public class StatisticsRepositoryTest extends AbstractSpringIntegrationBambooBit
     @ParameterizedTest
     @EnumSource(value = GraphType.class, names = { "RELEASED_EXERCISES", "EXERCISES_DUE", "CONDUCTED_EXAMS", "EXAM_PARTICIPATIONS", "EXAM_REGISTRATIONS", "POSTS",
             "RESOLVED_POSTS" })
-    public void testGetNumberOfEntriesPerTimeSlot_forInvalidView(GraphType graphType) {
+    void testGetNumberOfEntriesPerTimeSlot_forInvalidView(GraphType graphType) {
         var endDate = startDate.plusDays(7);
 
         // depending on the graph type, we inject the view that is not supported for it
@@ -106,7 +106,7 @@ public class StatisticsRepositoryTest extends AbstractSpringIntegrationBambooBit
      * Tests mergeResultsIntoArrayForYear() if start date is in a different year than the statistics entry date
      */
     @Test
-    public void testDSortDataIntoMonths_differentYear() {
+    void testDSortDataIntoMonths_differentYear() {
         List<StatisticsEntry> outcome = setupStatisticsEntryList();
         // the start time is in a different year
         ZonedDateTime date = ZonedDateTime.of(2021, 12, 1, 0, 0, 0, 0, startDate.getZone());
@@ -121,7 +121,7 @@ public class StatisticsRepositoryTest extends AbstractSpringIntegrationBambooBit
      * Tests mergeResultsIntoArrayForQuarter() if start date is in a different year than the statistics entry date
      */
     @Test
-    public void testSortDataIntoWeeks_differentYear() {
+    void testSortDataIntoWeeks_differentYear() {
         // the start time is in a different year
         List<StatisticsEntry> outcome = setupStatisticsEntryList();
         List<Integer> resultYear = new ArrayList<>();

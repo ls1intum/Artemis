@@ -18,7 +18,7 @@ import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.ParticipationService;
 import de.tum.in.www1.artemis.web.rest.dto.ExerciseScoresDTO;
 
-public class ExerciseScoresChartIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+class ExerciseScoresChartIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     Long idOfCourse;
 
@@ -60,12 +60,12 @@ public class ExerciseScoresChartIntegrationTest extends AbstractSpringIntegratio
     TeamRepository teamRepository;
 
     @AfterEach
-    public void resetDatabase() {
+    void resetDatabase() {
         database.resetDatabase();
     }
 
     @BeforeEach
-    public void setupTestScenario() {
+    void setupTestScenario() {
         ZonedDateTime pastTimestamp = ZonedDateTime.now().minusDays(5);
         // creating the users student1-student5, tutor1-tutor10 and instructors1-instructor10
         this.database.addUsers(5, 10, 0, 10);
@@ -105,7 +105,7 @@ public class ExerciseScoresChartIntegrationTest extends AbstractSpringIntegratio
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void getCourseExerciseScores_asStudent_shouldReturnCorrectIndividualAverageAndMaxScores() throws Exception {
+    void getCourseExerciseScores_asStudent_shouldReturnCorrectIndividualAverageAndMaxScores() throws Exception {
         List<ExerciseScoresDTO> exerciseScores = request.getList(getEndpointUrl(idOfCourse), HttpStatus.OK, ExerciseScoresDTO.class);
         assertThat(exerciseScores).hasSize(3);
         ExerciseScoresDTO individualTextExercise = exerciseScores.stream().filter(exerciseScoresDTO -> exerciseScoresDTO.exerciseId.equals(idOfIndividualTextExercise)).findFirst()

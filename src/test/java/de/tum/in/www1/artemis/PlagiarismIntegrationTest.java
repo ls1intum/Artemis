@@ -25,7 +25,7 @@ import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismComparisonReposito
 import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismResultRepository;
 import de.tum.in.www1.artemis.web.rest.dto.PlagiarismComparisonStatusDTO;
 
-public class PlagiarismIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+class PlagiarismIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
     private PlagiarismComparisonRepository plagiarismComparisonRepository;
@@ -58,7 +58,7 @@ public class PlagiarismIntegrationTest extends AbstractSpringIntegrationBambooBi
     private static PlagiarismSubmission<TextSubmissionElement> plagiarismSubmissionB2;
 
     @BeforeEach
-    public void initTestCase() {
+    void initTestCase() {
         database.addUsers(3, 1, 1, 1);
         course = database.addCourseWithOneFinishedTextExercise();
         textExercise = textExerciseRepository.findByCourseIdWithCategories(course.getId()).get(0);
@@ -86,25 +86,25 @@ public class PlagiarismIntegrationTest extends AbstractSpringIntegrationBambooBi
     }
 
     @AfterEach
-    public void tearDown() {
+    void tearDown() {
         database.resetDatabase();
     }
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void testUpdatePlagiarismComparisonStatus_forbidden_student() throws Exception {
+    void testUpdatePlagiarismComparisonStatus_forbidden_student() throws Exception {
         request.put("/api/courses/1/plagiarism-comparisons/1/status", new PlagiarismComparisonStatusDTO(), HttpStatus.FORBIDDEN);
     }
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void testUpdatePlagiarismComparisonStatus_forbidden_tutor() throws Exception {
+    void testUpdatePlagiarismComparisonStatus_forbidden_tutor() throws Exception {
         request.put("/api/courses/1/plagiarism-comparisons/1/status", new PlagiarismComparisonStatusDTO(), HttpStatus.FORBIDDEN);
     }
 
     @Test
     @WithMockUser(username = "editor1", roles = "EDITOR")
-    public void testUpdatePlagiarismComparisonStatus() throws Exception {
+    void testUpdatePlagiarismComparisonStatus() throws Exception {
         var plagiarismComparisonStatusDTOConfirmed1 = new PlagiarismComparisonStatusDTO();
         plagiarismComparisonStatusDTOConfirmed1.setStatus(PlagiarismStatus.CONFIRMED);
         request.put("/api/courses/" + course.getId() + "/plagiarism-comparisons/" + plagiarismComparison1.getId() + "/status", plagiarismComparisonStatusDTOConfirmed1,
@@ -136,7 +136,7 @@ public class PlagiarismIntegrationTest extends AbstractSpringIntegrationBambooBi
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void testGetPlagiarismComparisonsForSplitView_student() throws Exception {
+    void testGetPlagiarismComparisonsForSplitView_student() throws Exception {
         var comparison = request.get("/api/courses/" + course.getId() + "/plagiarism-comparisons/" + plagiarismComparison1.getId() + "/for-split-view?studentLogin=student1",
                 HttpStatus.OK, plagiarismComparison1.getClass());
         assertThat(comparison.getPlagiarismResult()).isEqualTo(textPlagiarismResult);
@@ -146,7 +146,7 @@ public class PlagiarismIntegrationTest extends AbstractSpringIntegrationBambooBi
 
     @Test
     @WithMockUser(username = "editor1", roles = "EDITOR")
-    public void testGetPlagiarismComparisonsForSplitView_editor() throws Exception {
+    void testGetPlagiarismComparisonsForSplitView_editor() throws Exception {
         var comparison = request.get("/api/courses/" + course.getId() + "/plagiarism-comparisons/" + plagiarismComparison1.getId() + "/for-split-view", HttpStatus.OK,
                 plagiarismComparison1.getClass());
         assertThat(comparison.getPlagiarismResult()).isEqualTo(textPlagiarismResult);
@@ -154,25 +154,25 @@ public class PlagiarismIntegrationTest extends AbstractSpringIntegrationBambooBi
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void testDeletePlagiarismComparisons_student() throws Exception {
+    void testDeletePlagiarismComparisons_student() throws Exception {
         request.delete("/api/exercises/1/plagiarism-results/1/plagiarism-comparisons?deleteAll=false", HttpStatus.FORBIDDEN);
     }
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void testDeletePlagiarismComparisons_tutor() throws Exception {
+    void testDeletePlagiarismComparisons_tutor() throws Exception {
         request.delete("/api/exercises/1/plagiarism-results/1/plagiarism-comparisons?deleteAll=false", HttpStatus.FORBIDDEN);
     }
 
     @Test
     @WithMockUser(username = "editor1", roles = "EDITOR")
-    public void testDeletePlagiarismComparisons_editor() throws Exception {
+    void testDeletePlagiarismComparisons_editor() throws Exception {
         request.delete("/api/exercises/1/plagiarism-results/1/plagiarism-comparisons?deleteAll=false", HttpStatus.FORBIDDEN);
     }
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testDeletePlagiarismComparisons_instructor() throws Exception {
+    void testDeletePlagiarismComparisons_instructor() throws Exception {
         request.delete("/api/exercises/" + textExercise.getId() + "/plagiarism-results/" + textPlagiarismResult.getId() + "/plagiarism-comparisons?deleteAll=false", HttpStatus.OK);
         var result = plagiarismResultRepository.findFirstByExerciseIdOrderByLastModifiedDateDescOrNull(textExercise.getId());
         assert result != null;
@@ -181,7 +181,7 @@ public class PlagiarismIntegrationTest extends AbstractSpringIntegrationBambooBi
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testDeletePlagiarismComparisons_instructor_deleteAll() throws Exception {
+    void testDeletePlagiarismComparisons_instructor_deleteAll() throws Exception {
         request.delete("/api/exercises/" + textExercise.getId() + "/plagiarism-results/" + textPlagiarismResult.getId() + "/plagiarism-comparisons?deleteAll=true", HttpStatus.OK);
         var result = plagiarismResultRepository.findFirstByExerciseIdOrderByLastModifiedDateDescOrNull(textExercise.getId());
         assertThat(result).isNull();

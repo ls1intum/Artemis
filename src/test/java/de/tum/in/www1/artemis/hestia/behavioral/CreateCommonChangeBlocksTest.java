@@ -14,14 +14,14 @@ import de.tum.in.www1.artemis.service.hestia.behavioral.BehavioralBlackboard;
 import de.tum.in.www1.artemis.service.hestia.behavioral.GroupedFile;
 import de.tum.in.www1.artemis.service.hestia.behavioral.knowledgesource.CreateCommonChangeBlocks;
 
-public class CreateCommonChangeBlocksTest {
+class CreateCommonChangeBlocksTest {
 
     private CreateCommonChangeBlocks createCommonChangeBlocks;
 
     private GroupedFile groupedFile;
 
     @BeforeEach
-    public void initBlackboard() {
+    void initBlackboard() {
         BehavioralBlackboard blackboard = new BehavioralBlackboard(null, null, null);
         var groupedFiles = new ArrayList<GroupedFile>();
         blackboard.setGroupedFiles(groupedFiles);
@@ -32,14 +32,14 @@ public class CreateCommonChangeBlocksTest {
     }
 
     @Test
-    public void testNoAction() {
+    void testNoAction() {
         groupedFile.setCommonLines(Collections.emptyList());
         groupedFile.setCommonChanges(Collections.emptyList());
         assertThat(createCommonChangeBlocks.executeCondition()).isFalse();
     }
 
     @Test
-    public void testCreateOneChangeBlock() {
+    void testCreateOneChangeBlock() {
         groupedFile.setCommonLines(Set.of(1, 2, 3));
 
         assertThat(createCommonChangeBlocks.executeCondition()).isTrue();
@@ -48,7 +48,7 @@ public class CreateCommonChangeBlocksTest {
     }
 
     @Test
-    public void testCreateTwoChangeBlocks() {
+    void testCreateTwoChangeBlocks() {
         groupedFile.setCommonLines(Set.of(1, 2, 4, 5));
 
         assertThat(createCommonChangeBlocks.executeCondition()).isTrue();

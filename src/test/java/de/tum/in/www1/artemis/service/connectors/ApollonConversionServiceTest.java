@@ -21,7 +21,7 @@ import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.connector.apollon.ApollonRequestMockProvider;
 import de.tum.in.www1.artemis.service.connectors.apollon.ApollonConversionService;
 
-public class ApollonConversionServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+class ApollonConversionServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
     private ApollonRequestMockProvider apollonRequestMockProvider;
@@ -39,7 +39,7 @@ public class ApollonConversionServiceTest extends AbstractSpringIntegrationBambo
      * Initializes apollonConversionService
      */
     @BeforeEach
-    public void init() {
+    void init() {
         // Create atheneService and inject @Value fields
         apollonConversionService = new ApollonConversionService(restTemplate);
         ReflectionTestUtils.setField(apollonConversionService, "apollonConversionUrl", apollonConversionUrl);
@@ -48,7 +48,7 @@ public class ApollonConversionServiceTest extends AbstractSpringIntegrationBambo
     }
 
     @AfterEach
-    public void tearDown() {
+    void tearDown() {
         apollonRequestMockProvider.reset();
     }
 
@@ -56,7 +56,7 @@ public class ApollonConversionServiceTest extends AbstractSpringIntegrationBambo
      * Converts the model to pdf
      */
     @Test
-    public void testConvertingModel() throws IOException {
+    void testConvertingModel() throws IOException {
         String mockPdf = "This is my pdf file";
         InputStream inputStream = new ByteArrayInputStream(mockPdf.getBytes());
         Resource mockResource = Mockito.mock(Resource.class);
