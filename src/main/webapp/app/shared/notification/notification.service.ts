@@ -25,6 +25,7 @@ import { CourseManagementService } from 'app/course/manage/course-management.ser
 import { QuizExercise, QuizMode } from 'app/entities/quiz/quiz-exercise.model';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { RouteComponents } from 'app/shared/metis/metis.util';
+import { convertDateFromServer } from 'app/utils/date.utils';
 
 @Injectable({ providedIn: 'root' })
 export class NotificationService {
@@ -53,7 +54,7 @@ export class NotificationService {
         const options = createRequestOption(req);
         return this.http
             .get<Notification[]>(this.resourceUrl, { params: options, observe: 'response' })
-            .pipe(map((res: HttpResponse<Notification[]>) => this.convertDateArrayFromServer(res)));
+            .pipe(map((res: HttpResponse<Notification[]>) => this.convertNotificationResponseArrayDateFromServer(res)));
     }
 
     /**
@@ -225,10 +226,10 @@ export class NotificationService {
         }
     }
 
-    private convertDateArrayFromServer(res: HttpResponse<Notification[]>): HttpResponse<Notification[]> {
+    private convertNotificationResponseArrayDateFromServer(res: HttpResponse<Notification[]>): HttpResponse<Notification[]> {
         if (res.body) {
             res.body.forEach((notification: Notification) => {
-                notification.notificationDate = notification.notificationDate ? dayjs(notification.notificationDate) : undefined;
+                notification.notificationDate = convertDateFromServer(notification.notificationDate);
             });
         }
         return res;

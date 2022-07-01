@@ -90,7 +90,7 @@ export class ExerciseHintService implements IExerciseHintService {
      * @param exerciseHint Exercise hint to create
      */
     create(exerciseId: number, exerciseHint: ExerciseHint): Observable<ExerciseHintResponse> {
-        exerciseHint.exercise = ExerciseService.convertDateFromClient(exerciseHint.exercise!);
+        exerciseHint.exercise = ExerciseService.convertExerciseDatesFromClient(exerciseHint.exercise!);
         exerciseHint.type = HintType.TEXT;
         if (exerciseHint.exercise.categories) {
             exerciseHint.exercise.categories = ExerciseService.stringifyExerciseCategories(exerciseHint.exercise);
@@ -104,7 +104,7 @@ export class ExerciseHintService implements IExerciseHintService {
      * @param exerciseHint Exercise hint to update
      */
     update(exerciseId: number, exerciseHint: ExerciseHint): Observable<ExerciseHintResponse> {
-        exerciseHint.exercise = ExerciseService.convertDateFromClient(exerciseHint.exercise!);
+        exerciseHint.exercise = ExerciseService.convertExerciseDatesFromClient(exerciseHint.exercise!);
         exerciseHint.exercise.categories = ExerciseService.stringifyExerciseCategories(exerciseHint.exercise);
         return this.http.put<ExerciseHint>(`${this.resourceUrl}/${exerciseId}/exercise-hints/${exerciseHint.id}`, exerciseHint, { observe: 'response' });
     }

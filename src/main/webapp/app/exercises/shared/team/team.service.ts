@@ -9,10 +9,10 @@ import { StudentWithTeam, Team, TeamAssignmentPayload, TeamImportStrategyType } 
 import { TeamSearchUser } from 'app/entities/team-search-user.model';
 import { downloadFile } from 'app/shared/util/download.util';
 import { createRequestOption } from 'app/shared/util/request.util';
-import dayjs from 'dayjs/esm';
 import { Observable, Subscription } from 'rxjs';
 import { filter, map, shareReplay } from 'rxjs/operators';
 import { EntityResponseType } from 'app/exercises/shared/exercise/exercise.service';
+import { convertDateFromClient, convertDateFromServer } from 'app/utils/date.utils';
 
 export type TeamResponse = HttpResponse<Team>;
 export type TeamArrayResponse = HttpResponse<Team[]>;
@@ -123,8 +123,10 @@ export class TeamService implements ITeamService, OnDestroy {
      * @param {Team} team - Team to create
      */
     create(exercise: Exercise, team: Team): Observable<TeamResponse> {
-        const copy = TeamService.convertDateFromClient(team);
-        return this.http.post<Team>(TeamService.resourceUrl(exercise.id!), copy, { observe: 'response' }).pipe(map((res: TeamResponse) => TeamService.convertDateFromServer(res)));
+        const copy = TeamService.convertTeamDatesFromClient(team);
+        return this.http
+            .post<Team>(TeamService.resourceUrl(exercise.id!), copy, { observe: 'response' })
+            .pipe(map((res: TeamResponse) => TeamService.convertTeamResponseDatesFromServer(res)));
     }
 
     /**
@@ -133,10 +135,10 @@ export class TeamService implements ITeamService, OnDestroy {
      * @param {Team} team - Team to update
      */
     update(exercise: Exercise, team: Team): Observable<TeamResponse> {
-        const copy = TeamService.convertDateFromClient(team);
+        const copy = TeamService.convertTeamDatesFromClient(team);
         return this.http
             .put<Team>(`${TeamService.resourceUrl(exercise.id!)}/${team.id}`, copy, { observe: 'response' })
-            .pipe(map((res: TeamResponse) => TeamService.convertDateFromServer(res)));
+            .pipe(map((res: TeamResponse) => TeamService.convertTeamResponseDatesFromServer(res)));
     }
 
     /**
@@ -147,7 +149,7 @@ export class TeamService implements ITeamService, OnDestroy {
     find(exercise: Exercise, teamId: number): Observable<TeamResponse> {
         return this.http
             .get<Team>(`${TeamService.resourceUrl(exercise.id!)}/${teamId}`, { observe: 'response' })
-            .pipe(map((res: TeamResponse) => TeamService.convertDateFromServer(res)));
+            .pipe(map((res: TeamResponse) => TeamService.convertTeamResponseDatesFromServer(res)));
     }
 
     /**
@@ -162,7 +164,7 @@ export class TeamService implements ITeamService, OnDestroy {
                 params: options,
                 observe: 'response',
             })
-            .pipe(map((res: TeamArrayResponse) => TeamService.convertDateArrayFromServer(res)));
+            .pipe(map((res: TeamArrayResponse) => TeamService.convertTeamArrayResponseDatesFromServer(res)));
     }
 
     /**
@@ -200,7 +202,7 @@ export class TeamService implements ITeamService, OnDestroy {
      * @param {Team[]} teams - Teams that should be imported into the exercise
      */
     importTeams(exercise: Exercise, teams: Team[], importStrategyType: TeamImportStrategyType) {
-        const copy = teams.map((team) => TeamService.convertDateFromClient(team));
+        const copy = teams.map((team) => TeamService.convertTeamDatesFromClient(team));
         return this.http.put<Team[]>(`${TeamService.resourceUrl(exercise.id!)}/import-from-list?importStrategyType=${importStrategyType}`, copy, {
             observe: 'response',
         });
@@ -306,31 +308,31 @@ export class TeamService implements ITeamService, OnDestroy {
     /**
      * Helper methods for date conversion from server and client
      */
-    private static convertDateArrayFromServer(res: TeamArrayResponse): TeamArrayResponse {
+    private static convertTeamArrayResponseDatesFromServer(res: TeamArrayResponse): TeamArrayResponse {
         if (res.body) {
-            res.body.map((team: Team) => this.convertDatesForTeamFromServer(team));
+            res.body.map((team: Team) => this.convertTeamDatesFromServer(team));
         }
         return res;
     }
 
-    private static convertDateFromServer(res: TeamResponse): TeamResponse {
+    private static convertTeamResponseDatesFromServer(res: TeamResponse): TeamResponse {
         if (res.body) {
-            res.body.createdDate = dayjs(res.body.createdDate);
-            res.body.lastModifiedDate = res.body.lastModifiedDate ? dayjs(res.body.lastModifiedDate) : undefined;
+            res.body.createdDate = convertDateFromServer(res.body.createdDate);
+            res.body.lastModifiedDate = convertDateFromServer(res.body.lastModifiedDate);
         }
         return res;
     }
 
-    private static convertDatesForTeamFromServer(team: Team): Team {
-        team.createdDate = dayjs(team.createdDate);
-        team.lastModifiedDate = team.lastModifiedDate ? dayjs(team.lastModifiedDate) : undefined;
+    private static convertTeamDatesFromServer(team: Team): Team {
+        team.createdDate = convertDateFromServer(team.createdDate);
+        team.lastModifiedDate = convertDateFromServer(team.lastModifiedDate);
         return team;
     }
 
-    private static convertDateFromClient(team: Team): Team {
+    private static convertTeamDatesFromClient(team: Team): Team {
         return Object.assign({}, team, {
-            createdDate: dayjs(team.createdDate).isValid() ? dayjs(team.createdDate).toJSON() : undefined,
-            lastModifiedDate: team.lastModifiedDate && dayjs(team.lastModifiedDate).isValid() ? dayjs(team.lastModifiedDate).toJSON() : undefined,
+            createdDate: convertDateFromClient(team.createdDate),
+            lastModifiedDate: convertDateFromClient(team.lastModifiedDate),
         });
     }
 

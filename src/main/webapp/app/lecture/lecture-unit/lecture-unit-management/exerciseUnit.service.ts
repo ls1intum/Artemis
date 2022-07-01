@@ -24,12 +24,12 @@ export class ExerciseUnitService {
 
         return this.httpClient
             .post<ExerciseUnit>(`${this.resourceURL}/lectures/${lectureId}/exercise-units`, exerciseUnit, { observe: 'response' })
-            .pipe(map((res: EntityResponseType) => this.lectureUnitService.convertDateFromServerResponse(res)));
+            .pipe(map((res: EntityResponseType) => this.lectureUnitService.convertLectureUnitResponseDatesFromServer(res)));
     }
 
     findAllByLectureId(lectureId: number): Observable<EntityArrayResponseType> {
         return this.httpClient
             .get<ExerciseUnit[]>(`${this.resourceURL}/lectures/${lectureId}/exercise-units`, { observe: 'response' })
-            .pipe(map((res: EntityArrayResponseType) => this.lectureUnitService.convertDateArrayFromServerResponse(res)));
+            .pipe(map((res: EntityArrayResponseType) => this.lectureUnitService.convertLectureUnitResponseArrayDatesFromServer(res)));
     }
 }

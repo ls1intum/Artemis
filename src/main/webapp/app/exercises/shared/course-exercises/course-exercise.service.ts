@@ -11,6 +11,7 @@ import { map, Observable } from 'rxjs';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import dayjs from 'dayjs/esm';
+import { convertDateFromServer } from 'app/utils/date.utils';
 
 @Injectable({ providedIn: 'root' })
 export class CourseExerciseService {
@@ -68,7 +69,7 @@ export class CourseExerciseService {
      * @private
      */
     private processExercisesHttpResponses(exercisesRes: HttpResponse<Exercise[]>): HttpResponse<Exercise[]> {
-        this.convertDateArrayFromServer(exercisesRes);
+        this.convertExerciseResponseArrayDatesFromServer(exercisesRes);
         ExerciseService.convertExerciseCategoryArrayFromServer(exercisesRes);
         if (exercisesRes.body) {
             exercisesRes.body.forEach((exercise) => this.accountService.setAccessRightsForExercise(exercise));
@@ -119,19 +120,19 @@ export class CourseExerciseService {
         return participation;
     }
 
-    convertDateFromServer<T extends Exercise>(res: T): T {
-        res.releaseDate = res.releaseDate ? dayjs(res.releaseDate) : undefined;
-        res.dueDate = res.dueDate ? dayjs(res.dueDate) : undefined;
+    convertExerciseDatesFromServer<T extends Exercise>(res: T): T {
+        res.releaseDate = convertDateFromServer(res.releaseDate);
+        res.dueDate = convertDateFromServer(res.dueDate);
         return res;
     }
 
-    protected convertDateArrayFromServer<T extends Exercise>(res: HttpResponse<T[]>): HttpResponse<T[]> {
+    protected convertExerciseResponseArrayDatesFromServer<T extends Exercise>(res: HttpResponse<T[]>): HttpResponse<T[]> {
         if (res.body) {
             res.body.forEach((exercise: T) => {
-                exercise.releaseDate = exercise.releaseDate ? dayjs(exercise.releaseDate) : undefined;
-                exercise.dueDate = exercise.dueDate ? dayjs(exercise.dueDate) : undefined;
-                exercise.assessmentDueDate = exercise.assessmentDueDate ? dayjs(exercise.assessmentDueDate) : undefined;
-                exercise.exampleSolutionPublicationDate = exercise.exampleSolutionPublicationDate ? dayjs(exercise.exampleSolutionPublicationDate) : undefined;
+                exercise.releaseDate = convertDateFromServer(exercise.releaseDate);
+                exercise.dueDate = convertDateFromServer(exercise.dueDate);
+                exercise.assessmentDueDate = convertDateFromServer(exercise.assessmentDueDate);
+                exercise.exampleSolutionPublicationDate = convertDateFromServer(exercise.exampleSolutionPublicationDate);
             });
         }
         return res;

@@ -20,7 +20,7 @@ describe('VideoUnitService', () => {
             imports: [HttpClientTestingModule],
             providers: [
                 MockProvider(LectureUnitService, {
-                    convertDateFromServerResponse<T extends LectureUnit>(res: HttpResponse<T>): HttpResponse<T> {
+                    convertLectureUnitResponseDatesFromServer<T extends LectureUnit>(res: HttpResponse<T>): HttpResponse<T> {
                         if (res.body) {
                             res.body.releaseDate = res.body.releaseDate ? dayjs(res.body.releaseDate) : undefined;
                         }

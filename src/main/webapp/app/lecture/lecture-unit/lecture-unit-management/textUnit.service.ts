@@ -18,18 +18,18 @@ export class TextUnitService {
     create(textUnit: TextUnit, lectureId: number): Observable<EntityResponseType> {
         return this.httpClient
             .post<TextUnit>(`${this.resourceURL}/lectures/${lectureId}/text-units`, textUnit, { observe: 'response' })
-            .pipe(map((res: EntityResponseType) => this.lectureUnitService.convertDateFromServerResponse(res)));
+            .pipe(map((res: EntityResponseType) => this.lectureUnitService.convertLectureUnitResponseDatesFromServer(res)));
     }
 
     findById(textUnitId: number, lectureId: number) {
         return this.httpClient
             .get<TextUnit>(`${this.resourceURL}/lectures/${lectureId}/text-units/${textUnitId}`, { observe: 'response' })
-            .pipe(map((res: EntityResponseType) => this.lectureUnitService.convertDateFromServerResponse(res)));
+            .pipe(map((res: EntityResponseType) => this.lectureUnitService.convertLectureUnitResponseDatesFromServer(res)));
     }
 
     update(textUnit: TextUnit, lectureId: number): Observable<EntityResponseType> {
         return this.httpClient
             .put<TextUnit>(`${this.resourceURL}/lectures/${lectureId}/text-units`, textUnit, { observe: 'response' })
-            .pipe(map((res: EntityResponseType) => this.lectureUnitService.convertDateFromServerResponse(res)));
+            .pipe(map((res: EntityResponseType) => this.lectureUnitService.convertLectureUnitResponseDatesFromServer(res)));
     }
 }

@@ -23,10 +23,10 @@ describe('ExerciseUnitService', () => {
             imports: [HttpClientTestingModule],
             providers: [
                 MockProvider(LectureUnitService, {
-                    convertDateFromServerResponse<T extends LectureUnit>(res: HttpResponse<T>): HttpResponse<T> {
+                    convertLectureUnitResponseDatesFromServer<T extends LectureUnit>(res: HttpResponse<T>): HttpResponse<T> {
                         return res;
                     },
-                    convertDateArrayFromServerResponse<T extends LectureUnit>(res: HttpResponse<T[]>): HttpResponse<T[]> {
+                    convertLectureUnitResponseArrayDatesFromServer<T extends LectureUnit>(res: HttpResponse<T[]>): HttpResponse<T[]> {
                         return res;
                     },
                 }),

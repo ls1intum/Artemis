@@ -27,7 +27,7 @@ export class ProgrammingExerciseSimulationService {
         copy = ExerciseService.setBonusPointsConstrainedByIncludedInOverallScore(copy);
         return this.http
             .post<ProgrammingExercise>(this.resourceUrl + '/no-vcs-and-ci-available', copy, { observe: 'response' })
-            .pipe(map((res: EntityResponseType) => ProgrammingExerciseService.convertDateFromServer(res)));
+            .pipe(map((res: EntityResponseType) => ProgrammingExerciseService.convertProgrammingExerciseResponseDatesFromServer(res)));
     }
 
     /**

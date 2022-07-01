@@ -26,7 +26,7 @@ describe('External Submission Service', () => {
 
     it('submits a new result to the server correctly', () => {
         const resultService = TestBed.inject(ResultService);
-        const convertDateFromServerSpy = jest.spyOn(resultService, 'convertDateFromServer').mockImplementation((param) => param);
+        const convertDateFromServerSpy = jest.spyOn(resultService, 'convertResultResponseDatesFromServer').mockImplementation((param) => param);
 
         const exercise = { id: 1, type: ExerciseType.PROGRAMMING } as Exercise;
         const user = { id: 2, login: 'ab12cde' } as User;

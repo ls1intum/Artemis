@@ -180,7 +180,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
             // quizExercise channel => react to changes made to quizExercise (e.g. start date)
             this.jhiWebsocketService.subscribe(this.quizExercisesChannel);
             this.jhiWebsocketService.receive(this.quizExercisesChannel).subscribe((quizExercise: QuizExercise) => {
-                quizExercise = this.courseExerciseService.convertDateFromServer(quizExercise);
+                quizExercise = this.courseExerciseService.convertExerciseDatesFromServer(quizExercise);
                 // the quiz was set to visible or started, we should add it to the exercise list and display it at the top
                 if (this.course && this.course.exercises) {
                     this.course.exercises = this.course.exercises.filter((exercise) => exercise.id !== quizExercise.id);

@@ -1,7 +1,7 @@
 import { HttpResponse } from '@angular/common/http';
-import dayjs from 'dayjs/esm';
 import { Posting } from 'app/entities/metis/posting.model';
 import { Observable } from 'rxjs';
+import { convertDateFromClient, convertDateFromServer } from 'app/utils/date.utils';
 
 export abstract class PostingService<T extends Posting> {
     abstract create(courseId: number, posting: T): Observable<HttpResponse<T>>;
@@ -15,10 +15,10 @@ export abstract class PostingService<T extends Posting> {
      * @param   {T} posting
      * @return  {T}
      */
-    protected convertDateFromClient(posting: T): T {
+    protected convertPostingDateFromClient(posting: T): T {
         return {
             ...posting,
-            creationDate: posting.creationDate && dayjs(posting.creationDate).isValid() ? dayjs(posting.creationDate).toJSON() : undefined,
+            creationDate: convertDateFromClient(posting.creationDate),
         };
     }
 
@@ -27,9 +27,9 @@ export abstract class PostingService<T extends Posting> {
      * @param   {HttpResponse<T>} res
      * @return  {HttpResponse<T>}
      */
-    protected convertDateFromServer(res: HttpResponse<T>): HttpResponse<T> {
+    protected convertPostingResponseDateFromServer(res: HttpResponse<T>): HttpResponse<T> {
         if (res.body) {
-            res.body.creationDate = res.body.creationDate ? dayjs(res.body.creationDate) : undefined;
+            res.body.creationDate = convertDateFromServer(res.body.creationDate);
         }
         return res;
     }

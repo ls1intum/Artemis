@@ -16,6 +16,7 @@ import { ExamChecklist } from 'app/entities/exam-checklist.model';
 import { StatsForDashboard } from 'app/course/dashboards/stats-for-dashboard.model';
 import { reconnectSubmissions, Submission } from 'app/entities/submission.model';
 import { AccountService } from 'app/core/auth/account.service';
+import { convertDateFromClient, convertDateFromServer } from 'app/utils/date.utils';
 
 type EntityResponseType = HttpResponse<Exam>;
 type EntityArrayResponseType = HttpResponse<Exam[]>;
@@ -32,10 +33,10 @@ export class ExamManagementService {
      * @param exam The exam to create.
      */
     create(courseId: number, exam: Exam): Observable<EntityResponseType> {
-        const copy = ExamManagementService.convertDateFromClient(exam);
+        const copy = ExamManagementService.convertExamDatesFromClient(exam);
         return this.http
             .post<Exam>(`${this.resourceUrl}/${courseId}/exams`, copy, { observe: 'response' })
-            .pipe(map((res: EntityResponseType) => ExamManagementService.convertDateFromServer(res)));
+            .pipe(map((res: EntityResponseType) => ExamManagementService.convertCourseResponseDateFromServer(res)));
     }
 
     /**
@@ -44,10 +45,10 @@ export class ExamManagementService {
      * @param exam The exam to update.
      */
     update(courseId: number, exam: Exam): Observable<EntityResponseType> {
-        const copy = ExamManagementService.convertDateFromClient(exam);
+        const copy = ExamManagementService.convertExamDatesFromClient(exam);
         return this.http
             .put<Exam>(`${this.resourceUrl}/${courseId}/exams`, copy, { observe: 'response' })
-            .pipe(map((res: EntityResponseType) => ExamManagementService.convertDateFromServer(res)));
+            .pipe(map((res: EntityResponseType) => ExamManagementService.convertCourseResponseDateFromServer(res)));
     }
 
     /**
@@ -61,7 +62,7 @@ export class ExamManagementService {
         const options = createRequestOption({ withStudents, withExerciseGroups });
         return this.http
             .get<Exam>(`${this.resourceUrl}/${courseId}/exams/${examId}`, { params: options, observe: 'response' })
-            .pipe(map((res: EntityResponseType) => ExamManagementService.convertDateFromServer(res)))
+            .pipe(map((res: EntityResponseType) => ExamManagementService.convertCourseResponseDateFromServer(res)))
             .pipe(
                 tap((res: EntityResponseType) => {
                     if (res.body?.course) {
@@ -115,7 +116,7 @@ export class ExamManagementService {
     findAllExamsForCourse(courseId: number): Observable<EntityArrayResponseType> {
         return this.http
             .get<Exam[]>(`${this.resourceUrl}/${courseId}/exams`, { observe: 'response' })
-            .pipe(map((res: EntityArrayResponseType) => ExamManagementService.convertDateArrayFromServer(res)));
+            .pipe(map((res: EntityArrayResponseType) => ExamManagementService.convertCourseArrayResponseDatesFromServer(res)));
     }
 
     /**
@@ -125,7 +126,7 @@ export class ExamManagementService {
     findAllExamsAccessibleToUser(courseId: number): Observable<EntityArrayResponseType> {
         return this.http
             .get<Exam[]>(`${this.resourceUrl}/${courseId}/exams-for-user`, { observe: 'response' })
-            .pipe(map((res: EntityArrayResponseType) => ExamManagementService.convertDateArrayFromServer(res)));
+            .pipe(map((res: EntityArrayResponseType) => ExamManagementService.convertCourseArrayResponseDatesFromServer(res)));
     }
 
     /**
@@ -134,7 +135,7 @@ export class ExamManagementService {
     findAllCurrentAndUpcomingExams(): Observable<EntityArrayResponseType> {
         return this.http
             .get<Exam[]>(`${this.resourceUrl}/upcoming-exams`, { observe: 'response' })
-            .pipe(map((res: EntityArrayResponseType) => ExamManagementService.convertDateArrayFromServer(res)));
+            .pipe(map((res: EntityArrayResponseType) => ExamManagementService.convertCourseArrayResponseDatesFromServer(res)));
     }
 
     /**
@@ -150,7 +151,7 @@ export class ExamManagementService {
         } else {
             url = `${this.resourceUrl}/${courseId}/exams/${examId}/exam-for-assessment-dashboard`;
         }
-        return this.http.get<Exam>(url, { observe: 'response' }).pipe(map((res: EntityResponseType) => ExamManagementService.convertDateFromServer(res)));
+        return this.http.get<Exam>(url, { observe: 'response' }).pipe(map((res: EntityResponseType) => ExamManagementService.convertCourseResponseDateFromServer(res)));
     }
 
     getLatestIndividualEndDateOfExam(courseId: number, examId: number): Observable<HttpResponse<ExamInformationDTO>> {
@@ -351,38 +352,38 @@ export class ExamManagementService {
         return this.http.delete<Exam>(`${this.resourceUrl}/${courseId}/exams/${examId}/reset`, { observe: 'response' });
     }
 
-    public static convertDateFromClient(exam: Exam): Exam {
+    public static convertExamDatesFromClient(exam: Exam): Exam {
         return Object.assign({}, exam, {
-            startDate: exam.startDate && dayjs(exam.startDate).isValid() ? exam.startDate.toJSON() : undefined,
-            endDate: exam.endDate && dayjs(exam.endDate).isValid() ? exam.endDate.toJSON() : undefined,
-            visibleDate: exam.visibleDate && dayjs(exam.visibleDate).isValid() ? exam.visibleDate.toJSON() : undefined,
-            publishResultsDate: exam.publishResultsDate && dayjs(exam.publishResultsDate).isValid() ? exam.publishResultsDate.toJSON() : undefined,
-            examStudentReviewStart: exam.examStudentReviewStart && dayjs(exam.examStudentReviewStart).isValid() ? exam.examStudentReviewStart.toJSON() : undefined,
-            examStudentReviewEnd: exam.examStudentReviewEnd && dayjs(exam.examStudentReviewEnd).isValid() ? exam.examStudentReviewEnd.toJSON() : undefined,
+            startDate: convertDateFromClient(exam.startDate),
+            endDate: convertDateFromClient(exam.endDate),
+            visibleDate: convertDateFromClient(exam.visibleDate),
+            publishResultsDate: convertDateFromClient(exam.publishResultsDate),
+            examStudentReviewStart: convertDateFromClient(exam.examStudentReviewStart),
+            examStudentReviewEnd: convertDateFromClient(exam.examStudentReviewEnd),
         });
     }
 
-    private static convertDateFromServer(res: EntityResponseType): EntityResponseType {
+    private static convertCourseResponseDateFromServer(res: EntityResponseType): EntityResponseType {
         if (res.body) {
-            this.convertExamDate(res.body);
+            this.convertExamDatesFromServer(res.body);
         }
         return res;
     }
 
-    private static convertDateArrayFromServer(res: EntityArrayResponseType): EntityArrayResponseType {
+    private static convertCourseArrayResponseDatesFromServer(res: EntityArrayResponseType): EntityArrayResponseType {
         if (res.body) {
-            res.body.forEach(this.convertExamDate);
+            res.body.forEach(this.convertExamDatesFromServer);
         }
         return res;
     }
 
-    private static convertExamDate(exam: Exam) {
-        exam.startDate = exam.startDate ? dayjs(exam.startDate) : undefined;
-        exam.endDate = exam.endDate ? dayjs(exam.endDate) : undefined;
-        exam.visibleDate = exam.visibleDate ? dayjs(exam.visibleDate) : undefined;
-        exam.publishResultsDate = exam.publishResultsDate ? dayjs(exam.publishResultsDate) : undefined;
-        exam.examStudentReviewStart = exam.examStudentReviewStart ? dayjs(exam.examStudentReviewStart) : undefined;
-        exam.examStudentReviewEnd = exam.examStudentReviewEnd ? dayjs(exam.examStudentReviewEnd) : undefined;
+    private static convertExamDatesFromServer(exam: Exam) {
+        exam.startDate = convertDateFromServer(exam.startDate);
+        exam.endDate = convertDateFromServer(exam.endDate);
+        exam.visibleDate = convertDateFromServer(exam.visibleDate);
+        exam.publishResultsDate = convertDateFromServer(exam.publishResultsDate);
+        exam.examStudentReviewStart = convertDateFromServer(exam.examStudentReviewStart);
+        exam.examStudentReviewEnd = convertDateFromServer(exam.examStudentReviewEnd);
     }
 
     findAllLockedSubmissionsOfExam(courseId: number, examId: number) {

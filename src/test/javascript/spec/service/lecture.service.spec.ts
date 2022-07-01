@@ -156,7 +156,7 @@ describe('Lecture Service', () => {
         });
 
         it('should convert Dates from server', async () => {
-            const results = service.convertDatesForLecturesFromServer([elemDefault, elemDefault]);
+            const results = service.convertLectureArrayDatesFromServer([elemDefault, elemDefault]);
             expect(results).toEqual([elemDefault, elemDefault]);
         });
     });

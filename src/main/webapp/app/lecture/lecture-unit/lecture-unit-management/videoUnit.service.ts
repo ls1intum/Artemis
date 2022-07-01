@@ -18,18 +18,18 @@ export class VideoUnitService {
     create(videoUnit: VideoUnit, lectureId: number): Observable<EntityResponseType> {
         return this.httpClient
             .post<VideoUnit>(`${this.resourceURL}/lectures/${lectureId}/video-units`, videoUnit, { observe: 'response' })
-            .pipe(map((res: EntityResponseType) => this.lectureUnitService.convertDateFromServerResponse(res)));
+            .pipe(map((res: EntityResponseType) => this.lectureUnitService.convertLectureUnitResponseDatesFromServer(res)));
     }
 
     findById(videoUnitId: number, lectureId: number) {
         return this.httpClient
             .get<VideoUnit>(`${this.resourceURL}/lectures/${lectureId}/video-units/${videoUnitId}`, { observe: 'response' })
-            .pipe(map((res: EntityResponseType) => this.lectureUnitService.convertDateFromServerResponse(res)));
+            .pipe(map((res: EntityResponseType) => this.lectureUnitService.convertLectureUnitResponseDatesFromServer(res)));
     }
 
     update(videoUnit: VideoUnit, lectureId: number): Observable<EntityResponseType> {
         return this.httpClient
             .put<VideoUnit>(`${this.resourceURL}/lectures/${lectureId}/video-units`, videoUnit, { observe: 'response' })
-            .pipe(map((res: EntityResponseType) => this.lectureUnitService.convertDateFromServerResponse(res)));
+            .pipe(map((res: EntityResponseType) => this.lectureUnitService.convertLectureUnitResponseDatesFromServer(res)));
     }
 }

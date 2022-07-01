@@ -21,7 +21,7 @@ describe('AttachmentUnitService', () => {
             imports: [HttpClientTestingModule],
             providers: [
                 MockProvider(LectureUnitService, {
-                    convertDateFromServerResponse<T extends LectureUnit>(res: HttpResponse<T>): HttpResponse<T> {
+                    convertLectureUnitResponseDatesFromServer<T extends LectureUnit>(res: HttpResponse<T>): HttpResponse<T> {
                         return res;
                     },
                 }),

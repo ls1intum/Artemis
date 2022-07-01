@@ -22,7 +22,7 @@ export class QuizExerciseService {
      * @param quizExercise the quiz exercise that should be created
      */
     create(quizExercise: QuizExercise): Observable<EntityResponseType> {
-        const copy = ExerciseService.convertDateFromClient(quizExercise);
+        const copy = ExerciseService.convertExerciseDatesFromClient(quizExercise);
         copy.categories = ExerciseService.stringifyExerciseCategories(copy);
         return this.http
             .post<QuizExercise>(this.resourceUrl, copy, { observe: 'response' })
@@ -37,7 +37,7 @@ export class QuizExerciseService {
      * (like the old ID) will be handled by the server.
      */
     import(adaptedSourceQuizExercise: QuizExercise) {
-        let copy = ExerciseService.convertDateFromClient(adaptedSourceQuizExercise);
+        let copy = ExerciseService.convertExerciseDatesFromClient(adaptedSourceQuizExercise);
         copy = ExerciseService.setBonusPointsConstrainedByIncludedInOverallScore(copy);
         copy.categories = ExerciseService.stringifyExerciseCategories(copy);
         return this.http
@@ -52,7 +52,7 @@ export class QuizExerciseService {
      */
     update(quizExercise: QuizExercise, req?: any): Observable<EntityResponseType> {
         const options = createRequestOption(req);
-        const copy = ExerciseService.convertDateFromClient(quizExercise);
+        const copy = ExerciseService.convertExerciseDatesFromClient(quizExercise);
         copy.categories = ExerciseService.stringifyExerciseCategories(copy);
         return this.http
             .put<QuizExercise>(this.resourceUrl, copy, { params: options, observe: 'response' })

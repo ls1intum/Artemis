@@ -6,7 +6,7 @@ import { CourseManagementStatisticsDTO } from 'app/course/manage/course-manageme
 import { ExerciseManagementStatisticsDto } from 'app/exercises/shared/statistics/exercise-management-statistics-dto';
 import { map } from 'rxjs/operators';
 import { round } from 'app/shared/util/utils';
-import dayjs from 'dayjs/esm';
+import { convertDateFromServer } from 'app/utils/date.utils';
 
 @Injectable({ providedIn: 'root' })
 export class StatisticsService {
@@ -45,7 +45,7 @@ export class StatisticsService {
         const params = new HttpParams().set('courseId', '' + courseId);
         return this.http
             .get<CourseManagementStatisticsDTO>(`${this.resourceUrl}course-statistics`, { params })
-            .pipe(map((res: CourseManagementStatisticsDTO) => StatisticsService.convertDatesFromServer(res)));
+            .pipe(map((res: CourseManagementStatisticsDTO) => StatisticsService.convertCourseManagementStatisticDatesFromServer(res)));
     }
 
     /**
@@ -65,9 +65,9 @@ export class StatisticsService {
         return stats;
     }
 
-    private static convertDatesFromServer(dto: CourseManagementStatisticsDTO): CourseManagementStatisticsDTO {
+    private static convertCourseManagementStatisticDatesFromServer(dto: CourseManagementStatisticsDTO): CourseManagementStatisticsDTO {
         dto.averageScoresOfExercises.forEach((averageScores) => {
-            averageScores.releaseDate = averageScores.releaseDate !== null ? dayjs(averageScores.releaseDate) : undefined;
+            averageScores.releaseDate = convertDateFromServer(averageScores.releaseDate);
         });
         return dto;
     }

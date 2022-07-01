@@ -22,8 +22,8 @@ export class AnswerPostService extends PostingService<AnswerPost> {
      * @return {Observable<EntityResponseType>}
      */
     create(courseId: number, answerPost: AnswerPost): Observable<EntityResponseType> {
-        const copy = this.convertDateFromClient(answerPost);
-        return this.http.post<AnswerPost>(`${this.resourceUrl}${courseId}/answer-posts`, copy, { observe: 'response' }).pipe(map(this.convertDateFromServer));
+        const copy = this.convertPostingDateFromClient(answerPost);
+        return this.http.post<AnswerPost>(`${this.resourceUrl}${courseId}/answer-posts`, copy, { observe: 'response' }).pipe(map(this.convertPostingResponseDateFromServer));
     }
 
     /**
@@ -33,8 +33,10 @@ export class AnswerPostService extends PostingService<AnswerPost> {
      * @return {Observable<EntityResponseType>}
      */
     update(courseId: number, answerPost: AnswerPost): Observable<EntityResponseType> {
-        const copy = this.convertDateFromClient(answerPost);
-        return this.http.put<AnswerPost>(`${this.resourceUrl}${courseId}/answer-posts/${answerPost.id}`, copy, { observe: 'response' }).pipe(map(this.convertDateFromServer));
+        const copy = this.convertPostingDateFromClient(answerPost);
+        return this.http
+            .put<AnswerPost>(`${this.resourceUrl}${courseId}/answer-posts/${answerPost.id}`, copy, { observe: 'response' })
+            .pipe(map(this.convertPostingResponseDateFromServer));
     }
 
     /**
