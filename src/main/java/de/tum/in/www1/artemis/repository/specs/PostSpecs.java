@@ -18,14 +18,16 @@ public class PostSpecs {
 
     /**
      * Creates a specification to fetch Posts belonging to a Course
-     * @param courseId      id of course the posts belong to
-     * @param lectureId     id of lecture the posts belong to, which is used to get the course id
-     * @param exerciseId    id of exercise the posts belong to, which is used to get the course id
-     * @return              specification used to chain DB operations
+     *
+     * @param courseId   id of course the posts belong to
+     * @param lectureId  id of lecture the posts belong to
+     * @param exerciseId id of exercise the posts belong to
+     * @return specification used to chain DB operations
      */
     public static Specification<Post> getCourseSpecification(Long courseId, Long lectureId, Long exerciseId) {
         return (root, query, criteriaBuilder) -> {
             if (lectureId != null || exerciseId != null) {
+                // if lectureId or exerciseId is provided, lecture/exercise specifications will be activated to fetch lecture/exercise posts
                 return null;
             }
             else {
@@ -42,8 +44,9 @@ public class PostSpecs {
 
     /**
      * Specification to fetch Posts belonging to a Lecture
+     *
      * @param lectureId id of the lecture the Posts belong to
-     * @return          specification used to chain DB operations
+     * @return specification used to chain DB operations
      */
     public static Specification<Post> getLectureSpecification(Long lectureId) {
         return ((root, query, criteriaBuilder) -> {
@@ -58,8 +61,9 @@ public class PostSpecs {
 
     /**
      * Specification to fetch Posts belonging to an Exercise
+     *
      * @param exerciseId id of the exercise the Posts belong to
-     * @return          specification used to chain DB operations
+     * @return specification used to chain DB operations
      */
     public static Specification<Post> getExerciseSpecification(Long exerciseId) {
         return ((root, query, criteriaBuilder) -> {
@@ -74,8 +78,9 @@ public class PostSpecs {
 
     /**
      * Specification to fetch Posts by CourseWideContext
+     *
      * @param courseWideContext context of the Posts within the current course
-     * @return                  specification used to chain DB operations
+     * @return specification used to chain DB operations
      */
     public static Specification<Post> getCourseWideContextSpecification(CourseWideContext courseWideContext) {
         return ((root, query, criteriaBuilder) -> {
@@ -90,13 +95,14 @@ public class PostSpecs {
 
     /**
      * Specification to fetch Posts of the calling user
-     * @param filterToOwn   whether only calling users own Posts should be fetched or not
-     * @param userId        id of the calling user
-     * @return              specification used to chain DB operations
+     *
+     * @param filterToOwn whether only calling users own Posts should be fetched or not
+     * @param userId      id of the calling user
+     * @return specification used to chain DB operations
      */
-    public static Specification<Post> getOwnSpecification(Boolean filterToOwn, Long userId) {
+    public static Specification<Post> getOwnSpecification(boolean filterToOwn, Long userId) {
         return ((root, query, criteriaBuilder) -> {
-            if (filterToOwn == null || !filterToOwn) {
+            if (!filterToOwn) {
                 return null;
             }
             else {
@@ -107,13 +113,14 @@ public class PostSpecs {
 
     /**
      * Specification to fetch Posts the calling user has Answered or Reacted to
+     *
      * @param answeredOrReacted whether only the Posts calling user has Answered or Reacted to should be fetched or not
-     * @param userId        id of the calling user
-     * @return              specification used to chain DB operations
+     * @param userId            id of the calling user
+     * @return specification used to chain DB operations
      */
-    public static Specification<Post> getAnsweredOrReactedSpecification(Boolean answeredOrReacted, Long userId) {
+    public static Specification<Post> getAnsweredOrReactedSpecification(boolean answeredOrReacted, Long userId) {
         return ((root, query, criteriaBuilder) -> {
-            if (answeredOrReacted == null || !answeredOrReacted) {
+            if (!answeredOrReacted) {
                 return null;
             }
             else {
@@ -133,12 +140,13 @@ public class PostSpecs {
 
     /**
      * Specification to fetch Posts without any Resolving Answer
-     * @param unresolved    whether only the Posts without resolving answers should be fetched or not
-     * @return              specification used to chain DB operations
+     *
+     * @param unresolved whether only the Posts without resolving answers should be fetched or not
+     * @return specification used to chain DB operations
      */
-    public static Specification<Post> getUnresolvedSpecification(Boolean unresolved) {
+    public static Specification<Post> getUnresolvedSpecification(boolean unresolved) {
         return ((root, query, criteriaBuilder) -> {
-            if (unresolved == null || !unresolved) {
+            if (!unresolved) {
                 return null;
             }
             else {
@@ -163,8 +171,9 @@ public class PostSpecs {
     /**
      * Specification which filters Posts according to a search string in a match-all-manner
      * post is only kept if the search string (which is not a #id pattern) is included in either the post title, content or tag (all strings lowercased)
-     * @param searchText    Text to be searched within posts
-     * @return              specification used to chain DB operations
+     *
+     * @param searchText Text to be searched within posts
+     * @return specification used to chain DB operations
      */
     public static Specification<Post> getSearchTextSpecification(String searchText) {
         return ((root, query, criteriaBuilder) -> {
@@ -216,35 +225,33 @@ public class PostSpecs {
                         .when(criteriaBuilder.equal(root.get(Post_.DISPLAY_PRIORITY), criteriaBuilder.literal(DisplayPriority.ARCHIVED)), 4);
                 orderList.add(criteriaBuilder.asc(pinnedFirstThenAnnouncementsArchivedLast));
 
-                if (postSortCriterion != null) {
-                    Expression<?> sortCriterion = null;
+                Expression<?> sortCriterion = null;
 
-                    if (postSortCriterion == PostSortCriterion.CREATION_DATE) {
-                        // sort by creation date
-                        sortCriterion = root.get(Post_.CREATION_DATE);
-                    }
-                    else if (postSortCriterion == PostSortCriterion.ANSWER_COUNT) {
-                        // sort by answer count
-                        Subquery<Long> subQuery = query.subquery(Long.class);
-                        Root<AnswerPost> subRoot = subQuery.from(AnswerPost.class);
-                        Predicate postBinder = criteriaBuilder.equal(root.get(Post_.ID), subRoot.get(AnswerPost_.POST).get(Post_.ID));
-                        subQuery.select(criteriaBuilder.count(subRoot.get(AnswerPost_.ID))).where(postBinder).groupBy(root.get(Post_.ID));
+                if (postSortCriterion == PostSortCriterion.CREATION_DATE) {
+                    // sort by creation date
+                    sortCriterion = root.get(Post_.CREATION_DATE);
+                }
+                else if (postSortCriterion == PostSortCriterion.ANSWER_COUNT) {
+                    // sort by answer count
+                    Subquery<Long> subQuery = query.subquery(Long.class);
+                    Root<AnswerPost> subRoot = subQuery.from(AnswerPost.class);
+                    Predicate postBinder = criteriaBuilder.equal(root.get(Post_.ID), subRoot.get(AnswerPost_.POST).get(Post_.ID));
+                    subQuery.select(criteriaBuilder.count(subRoot.get(AnswerPost_.ID))).where(postBinder).groupBy(root.get(Post_.ID));
 
-                        sortCriterion = criteriaBuilder.selectCase().when(criteriaBuilder.exists(subQuery).not(), 0).otherwise(subQuery.getSelection());
-                    }
-                    else if (postSortCriterion == PostSortCriterion.VOTES) {
-                        // sort by votes via voteEmojiCount
-                        Subquery<Long> subQuery = query.subquery(Long.class);
-                        Root<Reaction> subRoot = subQuery.from(Reaction.class);
-                        Predicate postBinder = criteriaBuilder.equal(root.get(Post_.ID), subRoot.get(Reaction_.POST).get(Post_.ID));
-                        Predicate upVotes = criteriaBuilder.equal(subRoot.get(Reaction_.EMOJI_ID), VOTE_EMOJI_ID);
-                        subQuery.select(criteriaBuilder.count(subRoot.get(Reaction_.ID))).where(criteriaBuilder.and(postBinder, upVotes)).groupBy(root.get(Post_.ID));
+                    sortCriterion = criteriaBuilder.selectCase().when(criteriaBuilder.exists(subQuery).not(), 0).otherwise(subQuery.getSelection());
+                }
+                else if (postSortCriterion == PostSortCriterion.VOTES) {
+                    // sort by votes via voteEmojiCount
+                    Subquery<Long> subQuery = query.subquery(Long.class);
+                    Root<Reaction> subRoot = subQuery.from(Reaction.class);
+                    Predicate postBinder = criteriaBuilder.equal(root.get(Post_.ID), subRoot.get(Reaction_.POST).get(Post_.ID));
+                    Predicate upVotes = criteriaBuilder.equal(subRoot.get(Reaction_.EMOJI_ID), VOTE_EMOJI_ID);
+                    subQuery.select(criteriaBuilder.count(subRoot.get(Reaction_.ID))).where(criteriaBuilder.and(postBinder, upVotes)).groupBy(root.get(Post_.ID));
 
-                        sortCriterion = criteriaBuilder.selectCase().when(criteriaBuilder.exists(subQuery).not(), 0).otherwise(subQuery.getSelection());
-                    }
-                    orderList.add(sortingOrder == SortingOrder.ASCENDING ? criteriaBuilder.asc(sortCriterion) : criteriaBuilder.desc(sortCriterion));
+                    sortCriterion = criteriaBuilder.selectCase().when(criteriaBuilder.exists(subQuery).not(), 0).otherwise(subQuery.getSelection());
                 }
 
+                orderList.add(sortingOrder == SortingOrder.ASCENDING ? criteriaBuilder.asc(sortCriterion) : criteriaBuilder.desc(sortCriterion));
                 query.orderBy(orderList);
             }
 
