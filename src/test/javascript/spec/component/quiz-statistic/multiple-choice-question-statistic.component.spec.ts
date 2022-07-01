@@ -3,7 +3,7 @@ import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.s
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { QuizExerciseService } from 'app/exercises/quiz/manage/quiz-exercise.service';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { TranslateService } from '@ngx-translate/core';
 import { Course } from 'app/entities/course.model';
@@ -19,6 +19,8 @@ import { AnswerCounter } from 'app/entities/quiz/answer-counter.model';
 import { AnswerOption } from 'app/entities/quiz/answer-option.model';
 import { MockProvider } from 'ng-mocks';
 import { ChangeDetectorRef } from '@angular/core';
+import { QuizQuestionStatistic } from 'app/entities/quiz/quiz-question-statistic.model';
+import { greenColor, greyColor, redColor } from 'app/exercises/quiz/manage/statistics/question-statistic.component';
 
 const route = { params: of({ courseId: 3, exerciseId: 22, questionId: 1 }) };
 const answerOption1 = { id: 5 } as AnswerOption;
@@ -33,6 +35,7 @@ describe('QuizExercise Multiple Choice Question Statistic Component', () => {
     let fixture: ComponentFixture<MultipleChoiceQuestionStatisticComponent>;
     let quizService: QuizExerciseService;
     let accountService: AccountService;
+    let router: Router;
     let accountSpy: jest.SpyInstance;
     let quizServiceFindSpy: jest.SpyInstance;
 
@@ -47,6 +50,7 @@ describe('QuizExercise Multiple Choice Question Statistic Component', () => {
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: AccountService, useClass: MockAccountService },
                 MockProvider(ChangeDetectorRef),
+                MockProvider(Router),
             ],
         })
             .overrideTemplate(MultipleChoiceQuestionStatisticComponent, '')
@@ -57,6 +61,7 @@ describe('QuizExercise Multiple Choice Question Statistic Component', () => {
                 quizService = fixture.debugElement.injector.get(QuizExerciseService);
                 accountService = fixture.debugElement.injector.get(AccountService);
                 quizServiceFindSpy = jest.spyOn(quizService, 'find').mockReturnValue(of(new HttpResponse({ body: quizExercise })));
+                router = TestBed.inject(Router);
             });
     });
 
@@ -109,6 +114,12 @@ describe('QuizExercise Multiple Choice Question Statistic Component', () => {
     });
 
     describe('loadData', () => {
+        let backgroundColors: string[];
+        let labels: string[];
+        beforeEach(() => {
+            backgroundColors = ['#fcba03', '#035efc', '#fc03d2', '#fc5203'];
+            labels = ['test', 'test2', 'test3', 'test4'];
+        });
         it('should call functions from loadData', () => {
             accountSpy = jest.spyOn(accountService, 'hasAnyAuthorityDirect').mockReturnValue(true);
             const resetDataSpy = jest.spyOn(comp, 'resetData');
@@ -121,6 +132,64 @@ describe('QuizExercise Multiple Choice Question Statistic Component', () => {
             expect(resetDataSpy).toHaveBeenCalled();
             expect(addDataSpy).toHaveBeenCalled();
             expect(updateDataSpy).toHaveBeenCalled();
+        });
+
+        it('should load solution data in diagram', () => {
+            comp.showSolution = true;
+            comp.backgroundSolutionColors = backgroundColors;
+            comp.questionStatistic = new QuizQuestionStatistic();
+            comp.rated = true;
+            comp.ratedCorrectData = 42;
+            comp.solutionLabels = labels;
+
+            comp.loadDataInDiagram();
+
+            expect(comp.ngxColor.domain).toEqual(backgroundColors);
+            expect(comp.data).toEqual([42]);
+            expect(comp.chartLabels).toEqual(labels);
+        });
+
+        it('should mark option as invalid', () => {
+            const elements = [{ invalid: false }, { invalid: true }, { invalid: false }, { invalid: true }];
+            comp.backgroundColors = backgroundColors;
+            comp.backgroundSolutionColors = backgroundColors;
+            comp.labels = labels;
+
+            comp.loadInvalidLayout(elements);
+
+            expect(comp.backgroundColors).toEqual(['#fcba03', greyColor, '#fc03d2', greyColor]);
+            expect(comp.backgroundSolutionColors).toEqual(['#fcba03', greyColor, '#fc03d2', greyColor]);
+            expect(comp.labels).toEqual(['test', 'B. showStatistic.invalid', 'test3', 'D. showStatistic.invalid']);
+        });
+
+        it('should navigate back if the quiz does not contain any questions', () => {
+            accountSpy = jest.spyOn(accountService, 'hasAnyAuthorityDirect').mockReturnValue(true);
+            const navigateByUrlMock = jest.spyOn(router, 'navigateByUrl').mockImplementation();
+            const emptyQuizExercise = new QuizExercise(undefined, undefined);
+
+            const result = comp.loadQuizCommon(emptyQuizExercise);
+
+            expect(navigateByUrlMock).toHaveBeenCalledOnce;
+            expect(navigateByUrlMock).toHaveBeenCalledWith('courses');
+            expect(result).toBeUndefined();
+        });
+
+        it('should load the layout for the solution', () => {
+            const mcQuestion = new MultipleChoiceQuestion();
+            mcQuestion.answerOptions = [
+                { isCorrect: true, invalid: false },
+                { isCorrect: false, invalid: false },
+                { isCorrect: true, invalid: true },
+                { isCorrect: false, invalid: true },
+            ];
+            comp.question = mcQuestion;
+            comp.backgroundSolutionColors = backgroundColors;
+            comp.solutionLabels = labels;
+
+            comp.loadSolutionLayout();
+
+            expect(comp.backgroundSolutionColors).toEqual([greenColor, redColor, '#fc03d2', '#fc5203']);
+            expect(comp.solutionLabels).toEqual(['A. (showStatistic.questionStatistic.correct)', 'B. (showStatistic.questionStatistic.incorrect)', 'test3', 'test4']);
         });
     });
 });
