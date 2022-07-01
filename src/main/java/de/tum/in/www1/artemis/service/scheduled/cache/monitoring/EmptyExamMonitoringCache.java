@@ -2,13 +2,13 @@ package de.tum.in.www1.artemis.service.scheduled.cache.monitoring;
 
 import java.util.List;
 import java.util.Map;
+import java.util.function.UnaryOperator;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.hazelcast.scheduledexecutor.ScheduledTaskHandler;
 
-import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.monitoring.ExamActivity;
 
 /**
@@ -32,19 +32,14 @@ public class EmptyExamMonitoringCache extends ExamMonitoringCache {
     }
 
     @Override
-    Exam getExam() {
-        return null;
-    }
-
-    @Override
-    void setExam(Exam exam) {
-        logger.error("EmptyExamMonitoringCache cannot have an exam");
-        throwModificationAttemptException();
-    }
-
-    @Override
     Map<Long, ExamActivity> getActivities() {
         return Map.of();
+    }
+
+    @Override
+    void updateActivity(Long activityId, UnaryOperator<ExamActivity> writeOperation) {
+        logger.error("EmptyExamMonitoringCache cannot be updated");
+        throwModificationAttemptException();
     }
 
     @Override

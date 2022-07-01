@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.service.scheduled.cache.monitoring;
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.function.UnaryOperator;
 
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
@@ -20,7 +21,6 @@ import com.hazelcast.nio.serialization.StreamSerializer;
 import com.hazelcast.scheduledexecutor.ScheduledTaskHandler;
 
 import de.tum.in.www1.artemis.config.Constants;
-import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.monitoring.ExamActivity;
 
 /**
@@ -45,37 +45,20 @@ public class ExamMonitoringDistributedCache extends ExamMonitoringCache implemen
      */
     List<ScheduledTaskHandler> examActivitySaveHandler;
 
-    private transient Exam exam;
-
     /**
      * This IMap is a distributed Hazelcast object and must not be (de-)serialized, it is set in the
      * setHazelcastInstance method.
      */
     private transient IMap<Long, ExamActivity> activities;
 
-    public ExamMonitoringDistributedCache(Long examId, List<ScheduledTaskHandler> examActivitySaveHandler, Exam exam) {
+    public ExamMonitoringDistributedCache(Long examId, List<ScheduledTaskHandler> examActivitySaveHandler) {
         super(Objects.requireNonNull(examId, "examId must not be null"));
-        setExam(exam);
         setExamActivitySaveHandler(examActivitySaveHandler);
         logger.debug("Creating new ExamMonitoringDistributedCache, id {}", getExamId());
     }
 
-    public ExamMonitoringDistributedCache(Long examId, List<ScheduledTaskHandler> examActivitySaveHandler) {
-        this(examId, examActivitySaveHandler, null);
-    }
-
     public ExamMonitoringDistributedCache(Long examId) {
         this(examId, getEmptyExamActivitySaveHandler());
-    }
-
-    @Override
-    Exam getExam() {
-        return exam;
-    }
-
-    @Override
-    void setExam(Exam exam) {
-        this.exam = exam;
     }
 
     @Override
@@ -105,7 +88,6 @@ public class ExamMonitoringDistributedCache extends ExamMonitoringCache implemen
             logger.warn("Cache for Exam {} destroyed with {} activities cached", getExamId(), activitiesSize);
         }
         activities.destroy();
-        this.setExam(null);
     }
 
     @Override
@@ -135,8 +117,7 @@ public class ExamMonitoringDistributedCache extends ExamMonitoringCache implemen
             Long examId = input.readLong();
             List<ScheduledTaskHandler> examActivitySaveHandler = input.readObject();
 
-            // see class JavaDoc why the exam is null here.
-            return new ExamMonitoringDistributedCache(examId, examActivitySaveHandler, null);
+            return new ExamMonitoringDistributedCache(examId, examActivitySaveHandler);
         }
     }
 
@@ -145,5 +126,17 @@ public class ExamMonitoringDistributedCache extends ExamMonitoringCache implemen
         serializerConfig.setTypeClass(ExamMonitoringDistributedCache.class);
         serializerConfig.setImplementation(new ExamMonitoringDistributedCacheStreamSerializer());
         config.getSerializationConfig().addSerializerConfig(serializerConfig);
+    }
+
+    @Override
+    public void updateActivity(Long activityId, UnaryOperator<ExamActivity> writeOperation) {
+        activities.lock(activityId);
+        try {
+            logger.info("Update activity {}", activityId);
+            activities.set(activityId, writeOperation.apply(activities.get(activityId)));
+        }
+        finally {
+            activities.unlock(activityId);
+        }
     }
 }

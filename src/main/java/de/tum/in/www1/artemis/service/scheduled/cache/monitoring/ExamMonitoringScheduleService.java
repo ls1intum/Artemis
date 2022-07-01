@@ -83,26 +83,21 @@ public class ExamMonitoringScheduleService {
         if (action != null && action.getStudentExamId() != null) {
             Long studentExamId = action.getStudentExamId();
 
-            // save scheduled future in HashMap
-            examCache.performCacheWrite(examId, examMonitoringCache -> {
-                ExamActivity examActivity = ((ExamMonitoringCache) examMonitoringCache).getActivities().get(studentExamId);
-
-                if (examActivity == null) {
-                    examActivity = new ExamActivity();
-                    examActivity.setStudentExamId(studentExamId);
+            ((ExamMonitoringCache) examCache.getTransientWriteCacheFor(examId)).updateActivity(studentExamId, activity -> {
+                if (activity == null) {
+                    activity = new ExamActivity();
+                    activity.setStudentExamId(studentExamId);
                     // Since we don't store the activity in the database at the moment, we reuse the student exam id
-                    examActivity.setId(studentExamId);
+                    activity.setId(studentExamId);
                     // TODO: Save Activity
                 }
 
                 // Connect action and activity
-                action.setExamActivityId(examActivity.getId());
+                action.setExamActivityId(activity.getId());
 
-                examActivity.addExamAction(action);
+                activity.addExamAction(action);
 
-                ((ExamMonitoringCache) examMonitoringCache).getActivities().put(studentExamId, examActivity);
-
-                return examMonitoringCache;
+                return activity;
             });
 
             // send message to subscribers
