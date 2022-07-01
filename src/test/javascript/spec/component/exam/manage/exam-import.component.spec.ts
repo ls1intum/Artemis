@@ -10,7 +10,7 @@ import { FormsModule } from '@angular/forms';
 import { SortDirective } from 'app/shared/sort/sort.directive';
 import { SearchResult } from 'app/shared/table/pageable-table';
 import { ExamImportComponent } from 'app/exam/manage/exams/exam-import/exam-import.component';
-import { ExamImportPagingService } from 'app/exam/manage/exams/exam-import/exam-paging.service';
+import { ExamImportPagingService } from 'app/exam/manage/exams/exam-import/exam-import-paging.service';
 import { Exam } from 'app/entities/exam.model';
 
 describe('Exam Import Component', () => {
