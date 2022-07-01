@@ -1,6 +1,5 @@
 import { NgModule } from '@angular/core';
 import { RouterModule } from '@angular/router';
-import { DeviceDetectorService } from 'ngx-device-detector';
 import { quizParticipationRoute } from './quiz-participation.route';
 import { QuizParticipationComponent } from './quiz-participation.component';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
@@ -9,7 +8,6 @@ import { ArtemisQuizQuestionTypesModule } from 'app/exercises/quiz/shared/questi
 
 @NgModule({
     imports: [ArtemisSharedModule, RouterModule.forChild(quizParticipationRoute), ArtemisSharedComponentModule, ArtemisQuizQuestionTypesModule],
-    providers: [DeviceDetectorService],
     declarations: [QuizParticipationComponent],
 })
 export class ArtemisQuizParticipationModule {}
