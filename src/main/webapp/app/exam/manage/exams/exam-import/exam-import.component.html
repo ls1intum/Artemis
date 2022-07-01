@@ -76,14 +76,19 @@
                 <p *ngIf="!isImportingExercises" jhiTranslate="artemisApp.examManagement.exerciseGroup.selectExerciseGroupExplanation">
                     Select the individual exercises, which should be imported alongside the exercise groups, by clicking on it
                 </p>
-                <h6 *ngIf="isImportingExercises" jhiTranslate="artemisApp.examManagement.exerciseGroup.importModal.isImporting">
+                <p *ngIf="isImportingExercises" jhiTranslate="artemisApp.examManagement.exerciseGroup.importModal.isImporting">
                     The import of the exercise groups and the exercises is currently done on the server. This may take some time
-                </h6>
+                </p>
             </div>
             <jhi-exam-exercise-import [exam]="exam!"></jhi-exam-exercise-import>
         </div>
         <div class="modal-footer">
-            <jhi-button (onClick)="performImportOfExerciseGroups()" [title]="'artemisApp.exercise.import.table.doImport'" [disabled]="isImportingExercises"></jhi-button>
+            <jhi-button
+                (onClick)="performImportOfExerciseGroups()"
+                [title]="'artemisApp.exercise.import.table.doImport'"
+                [disabled]="isImportingExercises"
+                [isLoading]="isImportingExercises"
+            ></jhi-button>
         </div>
     </ng-container>
 </form>
