@@ -183,6 +183,17 @@ describe('JhiCloneRepoButtonComponent', () => {
         expect(url).toBe(`https://${component.user.login}:token@bitbucket.ase.in.tum.de/scm/ITCPLEASE1/itcplease1-exercise-team1.git`);
     });
 
+    it('should add the user login and token to the URL', () => {
+        component.user = { login: 'user1', guidedTourSettings: [], internal: true, vcsAccessToken: 'token' };
+        component.repositoryUrl = `https://bitbucket.ase.in.tum.de/scm/ITCPLEASE1/itcplease1-exercise-team1.git`;
+        component.useSsh = false;
+        component.isTeamParticipation = false;
+        component.versionControlAccessTokenRequired = true;
+
+        const url = component.getHttpOrSshRepositoryUrl();
+        expect(url).toBe(`https://${component.user.login}:**********@bitbucket.ase.in.tum.de/scm/ITCPLEASE1/itcplease1-exercise-team1.git`);
+    });
+
     it('should fetch and store ssh preference', fakeAsync(() => {
         stubServices();
 
