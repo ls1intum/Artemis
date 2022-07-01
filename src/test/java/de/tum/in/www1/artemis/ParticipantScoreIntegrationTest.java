@@ -92,7 +92,7 @@ public class ParticipantScoreIntegrationTest extends AbstractSpringIntegrationBa
         TextExercise textExercise = database.createIndividualTextExercise(course, pastTimestamp, pastTimestamp, pastTimestamp);
         ExerciseUnit exerciseUnit = database.createExerciseUnit(textExercise);
         database.addLectureUnitsToLecture(lecture, Set.of(exerciseUnit));
-        lecture = lectureRepository.findByIdWithPostsAndLectureUnitsAndLearningGoals(lecture.getId()).get();
+        lecture = lectureRepository.findByIdWithLectureUnitsAndLearningGoalsElseThrow(lecture.getId());
         exerciseUnit = (ExerciseUnit) lecture.getLectureUnits().get(0);
         idOfExerciseUnit = exerciseUnit.getId();
         LearningGoal learningGoal = new LearningGoal();

@@ -103,7 +103,7 @@ describe('ProgrammingAssessmentDashboardComponent', () => {
         // test for init values
         expect(component).toBeTruthy();
         expect(component.submissions).toEqual([]);
-        expect(component.reverse).toEqual(false);
+        expect(component.reverse).toBeFalse();
         expect(component.predicate).toEqual('id');
         expect(component.filteredSubmissions).toEqual([]);
 

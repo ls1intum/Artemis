@@ -86,11 +86,11 @@ export class CourseLearningGoalsComponent implements OnInit {
         const progressObservable = this.learningGoals.map((lg) => {
             return this.learningGoalService.getProgress(lg.id!, this.courseId, false);
         });
-
         const progressObservableUsingParticipantScore = this.learningGoals.map((lg) => {
             return this.learningGoalService.getProgress(lg.id!, this.courseId, true);
         });
 
+        this.isLoading = true;
         forkJoin([forkJoin(progressObservable), forkJoin(progressObservableUsingParticipantScore)]).subscribe({
             next: ([learningGoalProgressResponses, learningGoalProgressResponsesUsingParticipantScores]) => {
                 for (const learningGoalProgressResponse of learningGoalProgressResponses) {
@@ -101,6 +101,7 @@ export class CourseLearningGoalsComponent implements OnInit {
                     const learningGoalProgress = learningGoalProgressResponse.body!;
                     this.learningGoalIdToLearningGoalProgressUsingParticipantScoresTables.set(learningGoalProgress.learningGoalId, learningGoalProgress);
                 }
+                this.isLoading = false;
                 this.testIfScoreUsingParticipantScoresTableDiffers();
             },
             error: (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),
