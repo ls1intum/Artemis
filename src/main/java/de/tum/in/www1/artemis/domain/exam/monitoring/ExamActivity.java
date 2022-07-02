@@ -1,7 +1,7 @@
 package de.tum.in.www1.artemis.domain.exam.monitoring;
 
-import java.util.HashSet;
-import java.util.Set;
+import java.util.ArrayList;
+import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
@@ -24,7 +24,7 @@ public class ExamActivity extends DomainObject {
      * A set of unique actions performed by the student during the exam.
      */
     @JsonManagedReference
-    private Set<ExamAction> examActions = new HashSet<>();
+    private final List<ExamAction> examActions = new ArrayList<>();
 
     public Long getStudentExamId() {
         return studentExamId;
@@ -38,7 +38,11 @@ public class ExamActivity extends DomainObject {
         this.examActions.add(examAction);
     }
 
-    public Set<ExamAction> getExamActions() {
+    public void addExamActions(List<ExamAction> examActions) {
+        this.examActions.addAll(examActions);
+    }
+
+    public List<ExamAction> getExamActions() {
         return examActions;
     }
 

@@ -54,10 +54,12 @@ export abstract class ChartComponent {
             this.courseId = Number(params['courseId']);
         });
 
-        this.examActionSubscription = this.examActionService.getExamMonitoringObservable(this.examId)?.subscribe((examAction) => {
-            if (examAction && this.filterRenderedData(examAction)) {
-                this.evaluateAndAddAction(examAction);
-            }
+        this.examActionSubscription = this.examActionService.getExamMonitoringObservable(this.examId)?.subscribe((examActions: ExamAction[]) => {
+            examActions.forEach((action) => {
+                if (action && this.filterRenderedData(action)) {
+                    this.evaluateAndAddAction(action);
+                }
+            });
         });
     }
 
