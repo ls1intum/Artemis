@@ -44,7 +44,7 @@ import {
     SwitchedExerciseAction,
 } from 'app/entities/exam-user-activity.model';
 import { ExamMonitoringService } from 'app/exam/monitoring/exam-monitoring.service';
-import { ExamMonitoringWebsocketService } from 'app/exam/monitoring/exam-monitoring-websocket.service';
+import { ExamActionService } from 'app/exam/monitoring/exam-action.service';
 
 type GenerateParticipationStatus = 'generating' | 'failed' | 'success';
 
@@ -135,7 +135,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         private alertService: AlertService,
         private courseExerciseService: CourseExerciseService,
         private examMonitoringService: ExamMonitoringService,
-        private examMonitoringWebsocketService: ExamMonitoringWebsocketService,
+        private examActionService: ExamActionService,
     ) {
         // show only one synchronization error every 5s
         this.errorSubscription = this.synchronizationAlert.pipe(throttleTime(5000)).subscribe(() => {
@@ -174,7 +174,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                         this.initIndividualEndDates(this.exam.startDate!);
 
                         // Listen to exam monitoring updates to disable monitoring
-                        this.examMonitoringUpdateSubscription = this.examMonitoringWebsocketService.subscribeForExamMonitoringUpdate(this.exam).subscribe((status: boolean) => {
+                        this.examMonitoringUpdateSubscription = this.examActionService.subscribeForExamMonitoringUpdate(this.exam).subscribe((status: boolean) => {
                             this.exam.monitoring = status;
                         });
 
@@ -486,7 +486,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         this.errorSubscription.unsubscribe();
         this.websocketSubscription?.unsubscribe();
         this.examMonitoringUpdateSubscription?.unsubscribe();
-        this.examMonitoringWebsocketService.unsubscribeForExamMonitoringUpdate(this.exam);
+        this.examActionService.unsubscribeForExamMonitoringUpdate(this.exam);
         window.clearInterval(this.autoSaveInterval);
     }
 
