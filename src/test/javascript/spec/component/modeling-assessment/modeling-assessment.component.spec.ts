@@ -161,7 +161,7 @@ describe('ModelingAssessmentComponent', () => {
         const explanationEditor = fixture.debugElement.query(By.directive(ModelingExplanationEditorComponent));
         expect(explanationEditor).not.toBeNull();
         expect(explanationEditor.componentInstance.explanation).toEqual(explanation);
-        expect(explanationEditor.componentInstance.readOnly).toEqual(true);
+        expect(explanationEditor.componentInstance.readOnly).toBeTrue();
     });
 
     it('should initialize apollon editor', () => {

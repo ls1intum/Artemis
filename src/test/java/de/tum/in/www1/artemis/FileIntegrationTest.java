@@ -402,7 +402,7 @@ public class FileIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     }
 
     private AttachmentUnit uploadAttachmentUnit(MockMultipartFile file, Long lectureId, HttpStatus expectedStatus) throws Exception {
-        Lecture lecture = lectureRepo.findByIdWithPostsAndLectureUnitsAndLearningGoals(lectureId).get();
+        Lecture lecture = lectureRepo.findByIdWithLectureUnits(lectureId).get();
 
         AttachmentUnit attachmentUnit = database.createAttachmentUnit(false);
 

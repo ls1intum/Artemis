@@ -1,9 +1,14 @@
 import { Component, Input, OnDestroy, OnInit } from '@angular/core';
 import { Exam } from 'app/entities/exam.model';
-import { getColor, getCurrentAmountOfStudentsPerExercises } from 'app/exam/monitoring/charts/monitoring-chart';
+import {
+    convertCurrentExercisePerStudentMapToNumberOfStudentsPerExerciseMap,
+    getColor,
+    getCurrentExercisePerStudent,
+    updateCurrentExerciseOfStudent,
+} from 'app/exam/monitoring/charts/monitoring-chart';
 import { ExamAction, ExamActionType } from 'app/entities/exam-user-activity.model';
 import { ChartComponent } from 'app/exam/monitoring/charts/chart.component';
-import { ExamMonitoringWebsocketService } from '../../exam-monitoring-websocket.service';
+import { ExamActionService } from '../../exam-action.service';
 import { ActivatedRoute } from '@angular/router';
 
 @Component({
@@ -15,10 +20,12 @@ export class ExerciseGroupChartComponent extends ChartComponent implements OnIni
     @Input()
     exam: Exam;
 
+    currentExercisePerStudent: Map<number, number | undefined> = new Map();
+
     readonly renderRate = 5;
 
-    constructor(route: ActivatedRoute, examMonitoringWebsocketService: ExamMonitoringWebsocketService) {
-        super(route, examMonitoringWebsocketService, 'exercise-group-chart', false);
+    constructor(route: ActivatedRoute, examActionService: ExamActionService) {
+        super(route, examActionService, 'exercise-group-chart', false);
     }
 
     ngOnInit() {
@@ -35,6 +42,8 @@ export class ExerciseGroupChartComponent extends ChartComponent implements OnIni
      * Create and initialize the data for the chart.
      */
     override initData() {
+        super.initData();
+        this.currentExercisePerStudent = getCurrentExercisePerStudent(this.filteredExamActions);
         this.createChartData();
     }
 
@@ -52,7 +61,7 @@ export class ExerciseGroupChartComponent extends ChartComponent implements OnIni
     private createChartData() {
         this.ngxData = [];
         this.ngxColor.domain = [];
-        const exerciseAmountMap = getCurrentAmountOfStudentsPerExercises(this.filteredExamActions);
+        const exerciseAmountMap = convertCurrentExercisePerStudentMapToNumberOfStudentsPerExerciseMap(this.currentExercisePerStudent);
         this.exam?.exerciseGroups!.forEach((group, index) => {
             let amount = 0;
             group.exercises?.forEach((exercise) => {
@@ -63,6 +72,11 @@ export class ExerciseGroupChartComponent extends ChartComponent implements OnIni
         });
         // Re-trigger change detection
         this.ngxData = [...this.ngxData];
+    }
+
+    override evaluateAndAddAction(examAction: ExamAction) {
+        super.evaluateAndAddAction(examAction);
+        updateCurrentExerciseOfStudent(examAction, this.currentExercisePerStudent);
     }
 
     filterRenderedData(examAction: ExamAction) {

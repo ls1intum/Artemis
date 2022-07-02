@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { NavigationEnd, Router } from '@angular/router';
+import { NavigationEnd, Params, Router } from '@angular/router';
 import { Location } from '@angular/common';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { filter, skip, take } from 'rxjs/operators';
@@ -76,9 +76,10 @@ export class ArtemisNavigationUtilService {
     /**
      * Opens the target page in a new tab
      * @param route the target route
+     * @param params the query params of the target route
      */
-    routeInNewTab(route: any[]): void {
-        const url = this.router.serializeUrl(this.router.createUrlTree(route));
+    routeInNewTab(route: any[], params?: Params): void {
+        const url = this.router.serializeUrl(this.router.createUrlTree(route, params));
         window.open(url, '_blank');
     }
 }

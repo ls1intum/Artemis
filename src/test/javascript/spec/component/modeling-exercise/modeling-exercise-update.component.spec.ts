@@ -75,7 +75,7 @@ describe('ModelingExercise Management Update Component', () => {
 
                 // THEN
                 expect(service.create).toHaveBeenCalledWith(entity);
-                expect(comp.isSaving).toEqual(false);
+                expect(comp.isSaving).toBeFalse();
             }));
         });
 
@@ -104,7 +104,7 @@ describe('ModelingExercise Management Update Component', () => {
 
                 // THEN
                 expect(service.update).toHaveBeenCalledWith(entity, {});
-                expect(comp.isSaving).toEqual(false);
+                expect(comp.isSaving).toBeFalse();
             }));
         });
     });
@@ -131,8 +131,8 @@ describe('ModelingExercise Management Update Component', () => {
             comp.ngOnInit();
             tick(); // simulate async
             // THEN
-            expect(comp.isImport).toEqual(true);
-            expect(comp.isExamMode).toEqual(false);
+            expect(comp.isImport).toBeTrue();
+            expect(comp.isExamMode).toBeFalse();
             expect(comp.modelingExercise.assessmentDueDate).toEqual(undefined);
             expect(comp.modelingExercise.releaseDate).toEqual(undefined);
             expect(comp.modelingExercise.dueDate).toEqual(undefined);
@@ -167,8 +167,8 @@ describe('ModelingExercise Management Update Component', () => {
             comp.ngOnInit();
             tick(); // simulate async
             // THEN
-            expect(comp.isImport).toEqual(true);
-            expect(comp.isExamMode).toEqual(false);
+            expect(comp.isImport).toBeTrue();
+            expect(comp.isExamMode).toBeFalse();
             expect(comp.modelingExercise.assessmentDueDate).toEqual(undefined);
             expect(comp.modelingExercise.releaseDate).toEqual(undefined);
             expect(comp.modelingExercise.dueDate).toEqual(undefined);
@@ -197,8 +197,8 @@ describe('ModelingExercise Management Update Component', () => {
             comp.ngOnInit();
             tick(); // simulate async
             // THEN
-            expect(comp.isImport).toEqual(true);
-            expect(comp.isExamMode).toEqual(true);
+            expect(comp.isImport).toBeTrue();
+            expect(comp.isExamMode).toBeTrue();
             expect(comp.modelingExercise.course).toEqual(undefined);
             expect(comp.modelingExercise.assessmentDueDate).toEqual(undefined);
             expect(comp.modelingExercise.releaseDate).toEqual(undefined);
@@ -227,8 +227,8 @@ describe('ModelingExercise Management Update Component', () => {
             comp.ngOnInit();
             tick(); // simulate async
             // THEN
-            expect(comp.isImport).toEqual(true);
-            expect(comp.isExamMode).toEqual(true);
+            expect(comp.isImport).toBeTrue();
+            expect(comp.isExamMode).toBeTrue();
             expect(comp.modelingExercise.assessmentDueDate).toEqual(undefined);
             expect(comp.modelingExercise.releaseDate).toEqual(undefined);
             expect(comp.modelingExercise.dueDate).toEqual(undefined);

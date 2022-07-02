@@ -13,6 +13,12 @@ import { onError } from 'app/shared/util/global.utils';
 import { finalize } from 'rxjs/operators';
 import { AlertService } from 'app/core/util/alert.service';
 import { faSpinner } from '@fortawesome/free-solid-svg-icons';
+import { LectureUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/lectureUnit.service';
+
+export interface LectureUnitCompletionEvent {
+    lectureUnit: LectureUnit;
+    completed: boolean;
+}
 
 @Component({
     selector: 'jhi-course-lecture-details',
@@ -33,7 +39,13 @@ export class CourseLectureDetailsComponent implements OnInit {
     // Icons
     faSpinner = faSpinner;
 
-    constructor(private alertService: AlertService, private lectureService: LectureService, private activatedRoute: ActivatedRoute, private fileService: FileService) {}
+    constructor(
+        private alertService: AlertService,
+        private lectureService: LectureService,
+        private lectureUnitService: LectureUnitService,
+        private activatedRoute: ActivatedRoute,
+        private fileService: FileService,
+    ) {}
 
     ngOnInit(): void {
         this.activatedRoute.params.subscribe((params) => {
@@ -73,6 +85,7 @@ export class CourseLectureDetailsComponent implements OnInit {
                 error: (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),
             });
     }
+
     attachmentNotReleased(attachment: Attachment): boolean {
         return attachment.releaseDate != undefined && !dayjs(attachment.releaseDate).isBefore(dayjs())!;
     }
@@ -96,6 +109,17 @@ export class CourseLectureDetailsComponent implements OnInit {
     downloadMergedFiles(): void {
         if (this.lecture?.course?.id && this.lectureId) {
             this.fileService.downloadMergedFileWithAccessToken(this.lecture.course.id, this.lectureId);
+        }
+    }
+
+    completeLectureUnit(event: LectureUnitCompletionEvent): void {
+        if (this.lecture && event.lectureUnit.visibleToStudents && event.lectureUnit.completed !== event.completed) {
+            this.lectureUnitService.setCompletion(event.lectureUnit.id!, this.lecture.id!, event.completed).subscribe({
+                next: () => {
+                    event.lectureUnit.completed = event.completed;
+                },
+                error: (res: HttpErrorResponse) => onError(this.alertService, res),
+            });
         }
     }
 

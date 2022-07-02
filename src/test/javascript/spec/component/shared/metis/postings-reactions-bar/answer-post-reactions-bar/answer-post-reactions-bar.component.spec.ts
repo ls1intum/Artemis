@@ -78,7 +78,7 @@ describe('AnswerPostReactionsBarComponent', () => {
         reactionToCreate.answerPost = component.posting;
         component.addOrRemoveReaction(reactionToCreate.emojiId);
         expect(metisServiceCreateReactionSpy).toHaveBeenCalledWith(reactionToCreate);
-        expect(component.showReactionSelector).toEqual(false);
+        expect(component.showReactionSelector).toBeFalse();
     });
 
     it('should invoke metis service method with own reaction to delete it', () => {
@@ -101,7 +101,7 @@ describe('AnswerPostReactionsBarComponent', () => {
         component.posting = post;
         component.isLastAnswer = false;
         fixture.detectChanges();
-        const answerNowButton = fixture.debugElement.query(By.css('.answer-now-btn'));
+        const answerNowButton = fixture.debugElement.query(By.css('.reply-btn'));
         expect(answerNowButton).toBeNull();
     });
 
@@ -110,7 +110,7 @@ describe('AnswerPostReactionsBarComponent', () => {
         component.isLastAnswer = true;
         component.ngOnInit();
         fixture.detectChanges();
-        const answerNowButton = fixture.debugElement.query(By.css('.answer-now-btn')).nativeElement;
-        expect(answerNowButton.innerHTML).toContain('answerNow');
+        const answerNowButton = fixture.debugElement.query(By.css('.reply-btn')).nativeElement;
+        expect(answerNowButton.innerHTML).toContain('reply');
     });
 });
