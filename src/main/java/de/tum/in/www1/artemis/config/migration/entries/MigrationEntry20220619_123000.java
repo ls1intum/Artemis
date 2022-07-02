@@ -89,7 +89,7 @@ public class MigrationEntry20220619_123000 extends MigrationEntry {
             boolean unsuccessful = true;
             for (String resultStringPart : resultStringParts) {
                 // Matches e.g. "21 of 42 passed"
-                if (resultStringPart.matches(".*of.*passed.*")) {
+                if (resultStringPart.matches("\\d* of \\d* passed")) {
                     String[] testCaseParts = resultStringPart.split(" ");
                     int passedTestCasesAmount = Integer.parseInt(testCaseParts[0]);
                     int testCasesAmount = Integer.parseInt(testCaseParts[2]);
@@ -101,7 +101,7 @@ public class MigrationEntry20220619_123000 extends MigrationEntry {
                     unsuccessful = false;
                 }
                 // Matches e.g. "9 issues"
-                else if (resultStringPart.contains("issue")) {
+                else if (resultStringPart.contains("\\d issue")) {
                     String[] issueParts = resultStringPart.split(" ");
                     int codeIssueCount = Integer.parseInt(issueParts[0]);
 
