@@ -8,54 +8,65 @@ export class OrderedListCommand extends Command {
 
     /**
      * @function execute
-     * @desc Use the markdown language for creating/removing an ordered list
+     * @desc Use the Markdown language for creating/removing an ordered list
      */
     execute(): void {
-        const selectedText = this.getSelectedText();
-        this.splitText(selectedText);
+        const extendedText = this.getExtendedSelectedText();
+        this.handleManipulation(extendedText);
     }
 
     /**
-     * @function splitText
-     * @desc 1. Split the text at the line break into an array
-     *       2. Assign each line the position it has in the array
-     *       3. Call for each textLine the replaceText method
-     * @param selectedText the selected text by the cursor
+     * Performs the necessary manipulations.
+     * @param extendedText the extended text
      */
-    splitText(selectedText: string): void {
-        const parseArray = selectedText.split('\n');
-        let addAmount = parseArray.length - 1;
-        for (const element of parseArray) {
-            this.replaceText(element, parseArray.length - addAmount);
-            addAmount--;
-        }
+    handleManipulation(extendedText: string[]): void {
+        let manipulatedText = '';
+        let position = 1;
+
+        extendedText.forEach((line, index) => {
+            // Special case: Single empty line
+            if (line === '') {
+                if (extendedText.length === 1) {
+                    manipulatedText = '1. ';
+                    return;
+                }
+            } else {
+                // Manipulate the line, e.g. remove the number or add the number.
+                manipulatedText += this.manipulateLine(line, position);
+                position++;
+            }
+
+            if (index !== extendedText.length - 1) {
+                manipulatedText += '\n';
+            }
+        });
+        this.replace(this.getRange(), manipulatedText);
     }
 
     /**
-     * @function replaceText
-     * @desc 1. Check if the selected text includes (.) because the ordered counting includes always a number followed by a dot
-     *       2. If included, reduce the selected text by 3 (number, dot, whitespace) and replace the selected text by textToAdd
-     *       3. If not included, place the position {number} before the selected text {string} and add them to the editor
-     *       4. An ordered list in markdown language appears
-     * @param element textLine {string}
-     * @param position {number} it has in the overall selectedText{array}
+     * Manipulates a given line and adds or removes the numbers at the beginning.
+     * @param line to manipulate
+     * @param position of the line in the ordered list
+     * @return manipulated line
      */
-    replaceText(element: string, position: number): void {
-        /** case 1: text is formed in as an ordered list and the list should be unformed by deleting number + (.) + whitespace */
-        if (element.includes('.')) {
-            const textToAdd = element.slice(3);
-            const text = `${textToAdd}\n`;
-            this.insertText(text);
-            /** case 2: start a new ordered list from scratch  */
-        } else if (element === '') {
-            const range = this.getRange();
-            element = `1. ${element}`;
-            this.replace(range, element);
-            this.focus();
-        } else {
-            /** case 3: formate existing text into an ordered list by inserting the position of the array before the text*/
-            element = `${position}. ${element}\n`;
-            this.insertText(element);
+    manipulateLine(line: string, position: number): string {
+        const index = line.indexOf('.');
+
+        // Calc leading whitespaces
+        const whitespaces = line.search(/\S|$/);
+
+        // There is a dot in this line
+        if (index !== -1) {
+            const elements = [line.slice(whitespaces, index), line.slice(index + 1)];
+
+            // Check if this is really a number
+            if (elements[0] !== '' && !isNaN(Number(elements[0]))) {
+                // Add whitespaces and remove first whitespace after the dot
+                return ' '.repeat(whitespaces) + elements[1].substring(1);
+            }
         }
+
+        // Add the position of the list element
+        return ' '.repeat(whitespaces) + `${position}. ${line.substring(whitespaces)}`;
     }
 }

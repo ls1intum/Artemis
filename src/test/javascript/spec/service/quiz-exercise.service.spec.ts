@@ -138,7 +138,7 @@ describe('QuizExercise Service', () => {
     });
 
     it.each([
-        [QuizStatus.HIDDEN, false, false, false, false],
+        [QuizStatus.INVISIBLE, false, false, false, false],
         [QuizStatus.VISIBLE, true, false, false, false],
         [QuizStatus.CLOSED, true, true, false, false],
         [QuizStatus.OPEN_FOR_PRACTICE, true, true, false, true],
@@ -204,7 +204,7 @@ describe('QuizExercise Service', () => {
         if (count === 0) {
             expect(spy).toHaveBeenCalledTimes(0);
         } else {
-            expect(spy).toHaveBeenCalledTimes(1);
+            expect(spy).toHaveBeenCalledOnce();
             const [blob, file] = spy.mock.calls[0];
             const data = await new Promise((resolve) => {
                 const reader = new FileReader();

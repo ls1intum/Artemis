@@ -6,7 +6,6 @@ import {
     EventEmitter,
     Input,
     OnChanges,
-    OnDestroy,
     OnInit,
     Output,
     SimpleChanges,
@@ -29,8 +28,6 @@ import { QuizQuestion } from 'app/entities/quiz/quiz-question.model';
 import { markdownForHtml } from 'app/shared/util/markdown.conversion.util';
 import { generateExerciseHintExplanation, parseExerciseHintExplanation } from 'app/shared/util/markdown.util';
 import { faAngleDown, faAngleRight, faBan, faBars, faChevronDown, faChevronUp, faTrash, faUndo, faUnlink } from '@fortawesome/free-solid-svg-icons';
-import { Theme, ThemeService } from 'app/core/theme/theme.service';
-import { Subscription } from 'rxjs';
 
 @Component({
     selector: 'jhi-short-answer-question-edit',
@@ -38,7 +35,7 @@ import { Subscription } from 'rxjs';
     styleUrls: ['./short-answer-question-edit.component.scss', '../quiz-exercise.scss', '../../shared/quiz.scss'],
     encapsulation: ViewEncapsulation.None,
 })
-export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, AfterViewInit, OnDestroy, QuizQuestionEdit {
+export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, AfterViewInit, QuizQuestionEdit {
     @ViewChild('questionEditor', { static: false })
     private questionEditor: AceEditorComponent;
     @ViewChild('clickLayer', { static: false })
@@ -88,8 +85,6 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
 
     backupQuestion: ShortAnswerQuestion;
 
-    themeSubscription: Subscription;
-
     // Icons
     faBan = faBan;
     faTrash = faTrash;
@@ -106,7 +101,6 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
         public shortAnswerQuestionUtil: ShortAnswerQuestionUtil,
         private modalService: NgbModal,
         private changeDetector: ChangeDetectorRef,
-        private themeService: ThemeService,
     ) {}
 
     ngOnInit(): void {
@@ -144,10 +138,6 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
         if (!this.reEvaluationInProgress) {
             requestAnimationFrame(this.setupQuestionEditor.bind(this));
         }
-    }
-
-    ngOnDestroy(): void {
-        this.themeSubscription?.unsubscribe();
     }
 
     /**
@@ -190,12 +180,6 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
         this.numberOfSpot = this.shortAnswerQuestion.spots!.length + 1;
 
         // Default editor settings for inline markup editor
-        this.themeSubscription = this.themeService.getCurrentThemeObservable().subscribe((theme: Theme) => {
-            if (!this.questionEditor) {
-                return;
-            }
-            this.questionEditor.setTheme(theme.markdownAceTheme);
-        });
         this.questionEditor.getEditor().renderer.setShowGutter(false);
         this.questionEditor.getEditor().renderer.setPadding(10);
         this.questionEditor.getEditor().renderer.setScrollMargin(8, 8);
@@ -278,11 +262,11 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
      * Note: Existing IDs for solutions and spots are reused in the original order.
      */
     parseMarkdown(text: string): void {
-        // First split up by "[-option " tag and seperate first part of the split as text and second part as solutionParts
+        // First split up by "[-option " tag and separate first part of the split as text and second part as solutionParts
         const questionParts = text.split(/\[-option /g);
         const questionText = questionParts[0];
 
-        // Split into spots to generated this structure: {"1","2","3"}
+        // Split into spots to generate this structure: {"1","2","3"}
         const spotParts = questionText
             .split(/\[-spot/g)
             .map((splitText) => splitText.split(/\]/g))
@@ -417,7 +401,7 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
 
     /**
      * @function addSpotAtCursorVisualMode
-     * @desc Add a input field on the current selected location and add the solution option accordingly
+     * @desc Add an input field on the current selected location and add the solution option accordingly
      */
     addSpotAtCursorVisualMode(): void {
         // check if selection is on the correct div

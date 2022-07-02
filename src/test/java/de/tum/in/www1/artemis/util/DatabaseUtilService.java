@@ -44,7 +44,10 @@ import de.tum.in.www1.artemis.domain.enumeration.*;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
+import de.tum.in.www1.artemis.domain.hestia.CodeHint;
 import de.tum.in.www1.artemis.domain.hestia.ExerciseHint;
+import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseSolutionEntry;
+import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseTask;
 import de.tum.in.www1.artemis.domain.lecture.*;
 import de.tum.in.www1.artemis.domain.metis.*;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
@@ -55,9 +58,13 @@ import de.tum.in.www1.artemis.domain.plagiarism.text.TextPlagiarismResult;
 import de.tum.in.www1.artemis.domain.quiz.*;
 import de.tum.in.www1.artemis.domain.submissionpolicy.SubmissionPolicy;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.hestia.CodeHintRepository;
 import de.tum.in.www1.artemis.repository.hestia.ExerciseHintRepository;
+import de.tum.in.www1.artemis.repository.hestia.ProgrammingExerciseSolutionEntryRepository;
+import de.tum.in.www1.artemis.repository.hestia.ProgrammingExerciseTaskRepository;
 import de.tum.in.www1.artemis.repository.metis.AnswerPostRepository;
 import de.tum.in.www1.artemis.repository.metis.PostRepository;
+import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismResultRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.user.PasswordService;
@@ -102,6 +109,9 @@ public class DatabaseUtilService {
 
     @Autowired
     private LectureRepository lectureRepo;
+
+    @Autowired
+    private LearningGoalRepository learningGoalRepo;
 
     @Autowired
     private ExerciseRepository exerciseRepo;
@@ -236,6 +246,9 @@ public class DatabaseUtilService {
     private VideoUnitRepository videoUnitRepository;
 
     @Autowired
+    private OnlineUnitRepository onlineUnitRepository;
+
+    @Autowired
     private OrganizationRepository organizationRepository;
 
     @Autowired
@@ -249,6 +262,15 @@ public class DatabaseUtilService {
 
     @Autowired
     private SubmissionPolicyRepository submissionPolicyRepository;
+
+    @Autowired
+    private ProgrammingExerciseTaskRepository programmingExerciseTaskRepository;
+
+    @Autowired
+    private ProgrammingExerciseSolutionEntryRepository solutionEntryRepository;
+
+    @Autowired
+    private CodeHintRepository codeHintRepository;
 
     @Autowired
     private RatingRepository ratingRepo;
@@ -449,6 +471,14 @@ public class DatabaseUtilService {
         return createCourseWithOrganizations("organization1", "org1", "org.org", "This is organization1", null, "^.*@matching.*$");
     }
 
+    public LearningGoal createLearningGoal(Course course) {
+        LearningGoal learningGoal = new LearningGoal();
+        learningGoal.setTitle("Example Competency");
+        learningGoal.setDescription("Magna pars studiorum, prodita quaerimus.");
+        learningGoal.setCourse(course);
+        return learningGoalRepo.save(learningGoal);
+    }
+
     public TextExercise createIndividualTextExercise(Course course, ZonedDateTime pastTimestamp, ZonedDateTime futureTimestamp, ZonedDateTime futureFutureTimestamp) {
         TextExercise textExercise = ModelFactory.generateTextExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, course);
         textExercise.setMaxPoints(10.0);
@@ -556,7 +586,7 @@ public class DatabaseUtilService {
     }
 
     public Lecture addLectureUnitsToLecture(Lecture lecture, Set<LectureUnit> lectureUnits) {
-        Lecture l = lectureRepo.findByIdWithPostsAndLectureUnitsAndLearningGoals(lecture.getId()).get();
+        Lecture l = lectureRepo.findByIdWithLectureUnits(lecture.getId()).get();
         for (LectureUnit lectureUnit : lectureUnits) {
             l.addLectureUnit(lectureUnit);
         }
@@ -592,6 +622,13 @@ public class DatabaseUtilService {
         videoUnit.setDescription("Lorem Ipsum");
         videoUnit.setSource("http://video.fake");
         return videoUnitRepository.save(videoUnit);
+    }
+
+    public OnlineUnit createOnlineUnit() {
+        OnlineUnit onlineUnit = new OnlineUnit();
+        onlineUnit.setDescription("Lorem Ipsum");
+        onlineUnit.setSource("http://video.fake");
+        return onlineUnitRepository.save(onlineUnit);
     }
 
     public List<Course> createCoursesWithExercisesAndLectures(boolean withParticipations) throws Exception {
@@ -758,7 +795,8 @@ public class DatabaseUtilService {
         posts.addAll(createBasicPosts(lecture));
 
         // add posts to course with different course-wide contexts provided in input array
-        CourseWideContext[] courseWideContexts = new CourseWideContext[] { CourseWideContext.ORGANIZATION, CourseWideContext.RANDOM, CourseWideContext.TECH_SUPPORT };
+        CourseWideContext[] courseWideContexts = new CourseWideContext[] { CourseWideContext.ORGANIZATION, CourseWideContext.RANDOM, CourseWideContext.TECH_SUPPORT,
+                CourseWideContext.ANNOUNCEMENT };
         posts.addAll(createBasicPosts(course1, courseWideContexts));
 
         return posts;
@@ -808,7 +846,7 @@ public class DatabaseUtilService {
 
     private List<Post> createBasicPosts(Course courseContext, CourseWideContext[] courseWideContexts) {
         List<Post> posts = new ArrayList<>();
-        for (int i = 0; i < 3; i++) {
+        for (int i = 0; i < courseWideContexts.length; i++) {
             Post postToAdd = createBasicPost(i);
             postToAdd.setCourse(courseContext);
             postToAdd.setCourseWideContext(courseWideContexts[i]);
@@ -1730,14 +1768,21 @@ public class DatabaseUtilService {
         return createProgrammingSubmission(participation, buildFailed, TestConstants.COMMIT_HASH_STRING);
     }
 
-    public TextExercise addCourseExamExerciseGroupWithOneTextExercise() {
+    public TextExercise addCourseExamExerciseGroupWithOneTextExercise(String title) {
         ExerciseGroup exerciseGroup = addExerciseGroupWithExamAndCourse(true);
         TextExercise textExercise = ModelFactory.generateTextExerciseForExam(exerciseGroup);
+        if (title != null) {
+            textExercise.setTitle(title);
+        }
         final var exercisesNrBefore = exerciseRepo.count();
         textExercise.setKnowledge(textAssessmentKnowledgeService.createNewKnowledge());
         exerciseRepo.save(textExercise);
         assertThat(exercisesNrBefore + 1).as("one exercise got stored").isEqualTo(exerciseRepo.count());
         return textExercise;
+    }
+
+    public TextExercise addCourseExamExerciseGroupWithOneTextExercise() {
+        return addCourseExamExerciseGroupWithOneTextExercise(null);
     }
 
     public TextExercise addCourseExamWithReviewDatesExerciseGroupWithOneTextExercise() {
@@ -2037,7 +2082,7 @@ public class DatabaseUtilService {
     }
 
     /**
-     * @return A empty course
+     * @return An empty course
      */
     public Course addEmptyCourse() {
         Course course = ModelFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
@@ -2997,7 +3042,7 @@ public class DatabaseUtilService {
         }
     }
 
-    public void addHintsToExercise(Exercise exercise) {
+    public void addHintsToExercise(ProgrammingExercise exercise) {
         ExerciseHint exerciseHint1 = new ExerciseHint().content("content 1").exercise(exercise).title("title 1");
         ExerciseHint exerciseHint2 = new ExerciseHint().content("content 2").exercise(exercise).title("title 2");
         ExerciseHint exerciseHint3 = new ExerciseHint().content("content 3").exercise(exercise).title("title 3");
@@ -3007,17 +3052,63 @@ public class DatabaseUtilService {
         hints.add(exerciseHint3);
         exercise.setExerciseHints(hints);
         exerciseHintRepository.saveAll(hints);
+        programmingExerciseRepository.save(exercise);
+    }
+
+    public void addTasksToProgrammingExercise(ProgrammingExercise programmingExercise) {
+        StringBuilder problemStatement = new StringBuilder(programmingExercise.getProblemStatement());
+        problemStatement.append('\n');
+
+        var tasks = programmingExercise.getTestCases().stream().map(testCase -> {
+            var task = new ProgrammingExerciseTask();
+            task.setTaskName("Task for " + testCase.getTestName());
+            task.setExercise(programmingExercise);
+            task.setTestCases(Collections.singleton(testCase));
+            testCase.setTasks(Collections.singleton(task));
+            problemStatement.append("[task][").append(task.getTaskName()).append("](")
+                    .append(task.getTestCases().stream().map(ProgrammingExerciseTestCase::getTestName).collect(Collectors.joining(","))).append(")\n");
+            return task;
+        }).toList();
+        programmingExercise.setTasks(tasks);
+        programmingExercise.setProblemStatement(problemStatement.toString());
+        programmingExerciseTaskRepository.saveAll(tasks);
+        programmingExerciseRepository.save(programmingExercise);
+    }
+
+    public void addSolutionEntriesToProgrammingExercise(ProgrammingExercise programmingExercise) {
+        for (ProgrammingExerciseTestCase testCase : programmingExercise.getTestCases()) {
+            var solutionEntry = new ProgrammingExerciseSolutionEntry();
+            solutionEntry.setFilePath("test.txt");
+            solutionEntry.setLine(1);
+            solutionEntry.setCode("Line for " + testCase.getTestName());
+            solutionEntry.setTestCase(testCase);
+
+            testCase.setSolutionEntries(Collections.singleton(solutionEntry));
+            solutionEntryRepository.save(solutionEntry);
+        }
+    }
+
+    public void addCodeHintsToProgrammingExercise(ProgrammingExercise programmingExercise) {
+        for (ProgrammingExerciseTask task : programmingExercise.getTasks()) {
+            var solutionEntries = task.getTestCases().stream().flatMap(testCase -> testCase.getSolutionEntries().stream()).collect(Collectors.toSet());
+            var codeHint = new CodeHint();
+            codeHint.setTitle("Code Hint for " + task.getTaskName());
+            codeHint.setContent("Content for " + task.getTaskName());
+            codeHint.setExercise(programmingExercise);
+            codeHint.setSolutionEntries(solutionEntries);
+            codeHint.setProgrammingExerciseTask(task);
+
+            programmingExercise.getExerciseHints().add(codeHint);
+            codeHintRepository.save(codeHint);
+            for (ProgrammingExerciseSolutionEntry solutionEntry : solutionEntries) {
+                solutionEntry.setCodeHint(codeHint);
+                solutionEntryRepository.save(solutionEntry);
+            }
+        }
     }
 
     public ProgrammingExercise loadProgrammingExerciseWithEagerReferences(ProgrammingExercise lazyExercise) {
         return programmingExerciseTestRepository.findOneWithEagerEverything(lazyExercise.getId());
-    }
-
-    public <T extends Exercise> void addHintsToProblemStatement(T exercise) {
-        final var statement = exercise.getProblemStatement() == null ? "" : exercise.getProblemStatement();
-        final var hintsInStatement = exercise.getExerciseHints().stream().map(ExerciseHint::getId).map(Object::toString).collect(Collectors.joining(", ", "{", "}"));
-        exercise.setProblemStatement(statement + hintsInStatement);
-        exerciseRepo.save(exercise);
     }
 
     /**

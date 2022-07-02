@@ -50,7 +50,7 @@ public class UserJWTController {
     }
 
     /**
-     * Authorizes an User
+     * Authorizes a User
      * @param loginVM user credentials View Mode
      * @param userAgent User Agent
      * @return a JWT Token if the authorization is successful
@@ -81,7 +81,7 @@ public class UserJWTController {
     }
 
     /**
-     * Authorizes an User logged in with SAML2
+     * Authorizes a User logged in with SAML2
      *
      * @param body the body of the request. "true" to remember the user.
      * @return a JWT Token if the authorization is successful

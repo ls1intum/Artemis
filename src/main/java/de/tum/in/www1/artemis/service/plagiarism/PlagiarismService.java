@@ -4,7 +4,8 @@ import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Submission;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismComparison;
-import de.tum.in.www1.artemis.repository.PlagiarismComparisonRepository;
+import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismStatus;
+import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismComparisonRepository;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 
 @Service
@@ -17,8 +18,11 @@ public class PlagiarismService {
 
     private final PlagiarismComparisonRepository plagiarismComparisonRepository;
 
-    public PlagiarismService(PlagiarismComparisonRepository plagiarismComparisonRepository) {
+    private final PlagiarismCaseService plagiarismCaseService;
+
+    public PlagiarismService(PlagiarismComparisonRepository plagiarismComparisonRepository, PlagiarismCaseService plagiarismCaseService) {
         this.plagiarismComparisonRepository = plagiarismComparisonRepository;
+        this.plagiarismCaseService = plagiarismCaseService;
     }
 
     /**
@@ -27,18 +31,16 @@ public class PlagiarismService {
      *
      * @param comparison to anonymize.
      * @param userLogin of the student asking to see his plagiarism comparison.
-     * @return the anoymized plagiarism comparison for the given student
+     * @return the anonymized plagiarism comparison for the given student
      */
-    public PlagiarismComparison anonymizeComparisonForStudentView(PlagiarismComparison comparison, String userLogin) {
+    public PlagiarismComparison anonymizeComparisonForStudent(PlagiarismComparison comparison, String userLogin) {
         if (comparison.getSubmissionA().getStudentLogin().equals(userLogin)) {
             comparison.getSubmissionA().setStudentLogin(YOUR_SUBMISSION);
             comparison.getSubmissionB().setStudentLogin(OTHER_SUBMISSION);
-            comparison.setInstructorStatementB(null);
         }
         else if (comparison.getSubmissionB().getStudentLogin().equals(userLogin)) {
             comparison.getSubmissionA().setStudentLogin(OTHER_SUBMISSION);
             comparison.getSubmissionB().setStudentLogin(YOUR_SUBMISSION);
-            comparison.setInstructorStatementA(null);
         }
         else {
             throw new AccessForbiddenException("This plagiarism comparison is not related to the requesting user.");
@@ -50,11 +52,11 @@ public class PlagiarismService {
      * Anonymize the submission for the student view.
      * A student should not see sensitive information but be able to retrieve both answers from both students for the comparison
      *
-     * @param submission to anonymize.
-     * @param userLogin of the student asking to see his plagiarism comparison.
-     * @return the anoymized submission for the given student
+     * @param submission    the submission to anonymize.
+     * @param userLogin     the user login of the student asking to see his plagiarism comparison.
+     * @return the anonymized submission for the given student
      */
-    public Submission anonymizeSubmissionForStudentView(Submission submission, String userLogin) {
+    public Submission anonymizeSubmissionForStudent(Submission submission, String userLogin) {
         var comparisonOptional = plagiarismComparisonRepository.findBySubmissionA_SubmissionIdOrSubmissionB_SubmissionId(submission.getId(), submission.getId());
 
         // disallow requests from users who are not notified about this case:
@@ -62,8 +64,12 @@ public class PlagiarismService {
         if (comparisonOptional.isPresent()) {
             var comparisons = comparisonOptional.get();
             isUserNotifiedByInstructor = comparisons.stream()
-                    .anyMatch(comparison -> (comparison.getInstructorStatementA() != null && (comparison.getSubmissionA().getStudentLogin().equals(userLogin)))
-                            || (comparison.getInstructorStatementB() != null && (comparison.getSubmissionB().getStudentLogin().equals(userLogin))));
+                    .anyMatch(comparison -> (comparison.getSubmissionA().getPlagiarismCase() != null
+                            && (comparison.getSubmissionA().getPlagiarismCase().getPost() != null || comparison.getSubmissionA().getPlagiarismCase().getVerdict() != null)
+                            && (comparison.getSubmissionA().getStudentLogin().equals(userLogin)))
+                            || (comparison.getSubmissionB().getPlagiarismCase() != null
+                                    && (comparison.getSubmissionB().getPlagiarismCase().getPost() != null || comparison.getSubmissionB().getPlagiarismCase().getVerdict() != null)
+                                    && (comparison.getSubmissionB().getStudentLogin().equals(userLogin))));
         }
         if (!isUserNotifiedByInstructor) {
             throw new AccessForbiddenException("This plagiarism submission is not related to the requesting user or the user has not been notified yet.");
@@ -72,5 +78,21 @@ public class PlagiarismService {
         submission.setResults(null);
         submission.setSubmissionDate(null);
         return submission;
+    }
+
+    /**
+     * Update the status of the plagiarism comparison.
+     *
+     * @param plagiarismComparisonId    the ID of the plagiarism comparison
+     * @param plagiarismStatus          the status to be set
+     */
+    public void updatePlagiarismComparisonStatus(long plagiarismComparisonId, PlagiarismStatus plagiarismStatus) {
+        plagiarismComparisonRepository.updatePlagiarismComparisonStatus(plagiarismComparisonId, plagiarismStatus);
+        if (plagiarismStatus.equals(PlagiarismStatus.CONFIRMED)) {
+            plagiarismCaseService.createOrAddToPlagiarismCasesForComparison(plagiarismComparisonId);
+        }
+        else if (plagiarismStatus.equals(PlagiarismStatus.DENIED)) {
+            plagiarismCaseService.removeSubmissionsInPlagiarismCasesForComparison(plagiarismComparisonId);
+        }
     }
 }

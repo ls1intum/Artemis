@@ -4,9 +4,9 @@
 
 .team-short-name {
     padding: 0.3rem 0.6rem 0;
-    background: rgba(0, 0, 180, 0.05);
+    background: var(--team-short-name-background);
     border-radius: 3px;
     font-size: 100%;
     line-height: 1.2;
-    color: #053d97;
+    color: var(--team-short-name-color);
 }

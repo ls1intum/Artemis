@@ -6,7 +6,7 @@ import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { Result } from 'app/entities/result.model';
 import { User } from 'app/core/user/user.model';
 import { EntityResponseType, ResultService } from 'app/exercises/shared/result/result.service';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 
 describe('External Submission Service', () => {
     let httpMock: HttpTestingController;
@@ -37,7 +37,7 @@ describe('External Submission Service', () => {
         const req = httpMock.expectOne({ url: `${SERVER_API_URL}api/exercises/1/external-submission-results?studentLogin=ab12cde`, method: 'POST' });
         const returned = { ...result, id: 4 };
         req.flush(returned);
-        expect(convertDateFromServerSpy).toHaveBeenCalledTimes(1);
+        expect(convertDateFromServerSpy).toHaveBeenCalledOnce();
         expect(convertDateFromServerSpy).toHaveBeenCalledWith(createResult);
         expect(createResult).not.toBe(undefined);
         expect(createResult!.body).toEqual(returned);
@@ -49,8 +49,8 @@ describe('External Submission Service', () => {
         expect(result.completionDate).not.toBe(undefined);
         // a maximum delay of 1s between creation and assertion is unlikely but accurate enough for an assertion of ‘approximately now’ here
         expect(dayjs().diff(result.completionDate, 'ms')).toBeLessThan(1000);
-        expect(result.successful).toBe(true);
+        expect(result.successful).toBeTrue();
         expect(result.score).toBe(100);
-        expect(result.rated).toBe(true);
+        expect(result.rated).toBeTrue();
     });
 });

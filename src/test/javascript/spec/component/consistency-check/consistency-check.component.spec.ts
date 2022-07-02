@@ -61,7 +61,7 @@ describe('ConsistencyCheckComponent', () => {
         fixture.detectChanges();
 
         // THEN
-        expect(checkConsistencyForProgrammingExerciseStub).toHaveBeenCalledTimes(1);
+        expect(checkConsistencyForProgrammingExerciseStub).toHaveBeenCalledOnce();
         expect(component.inconsistencies).toEqual(consistencyErrors);
     });
 

@@ -8,7 +8,6 @@ import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
 import { GuidedTourComponent } from 'app/guided-tour/guided-tour.component';
 import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
 import { AccountService } from 'app/core/auth/account.service';
-import { DeviceDetectorService } from 'ngx-device-detector';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { RouterTestingModule } from '@angular/router/testing';
 import { courseOverviewTour } from 'app/guided-tour/tours/course-overview-tour';
@@ -94,7 +93,6 @@ describe('Guided tour integration', () => {
             ],
             providers: [
                 { provide: AccountService, useClass: MockAccountService },
-                { provide: DeviceDetectorService },
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: TranslateService, useClass: MockTranslateService },
@@ -160,13 +158,13 @@ describe('Guided tour integration', () => {
             courseCardComponentFixture.autoDetectChanges(true);
             navBarComponentFixture.autoDetectChanges(true);
 
-            expect(guidedTourService.isOnFirstStep).toBe(true);
+            expect(guidedTourService.isOnFirstStep).toBeTrue();
             expect(guidedTourSteps).toBe(9);
 
             // Click through tour steps in NavComponent
             for (let i = 1; i < 6; i++) {
                 guidedTourService.nextStep();
-                expect(guidedTourService.isOnFirstStep).toBe(false);
+                expect(guidedTourService.isOnFirstStep).toBeFalse();
                 guidedTourComponent.currentTourStep = guidedTourService['currentStep'];
 
                 if (guidedTourComponent.currentTourStep.highlightSelector) {
@@ -197,7 +195,7 @@ describe('Guided tour integration', () => {
                 }
             }
 
-            expect(guidedTourService.isOnLastStep).toBe(true);
+            expect(guidedTourService.isOnLastStep).toBeTrue();
         });
     });
 });

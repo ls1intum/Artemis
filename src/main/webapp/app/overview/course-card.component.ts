@@ -11,6 +11,7 @@ import { CachingStrategy } from 'app/shared/image/secured-image.component';
 import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
 import dayjs from 'dayjs/esm';
 import { getExerciseDueDate } from 'app/exercises/shared/exercise/exercise.utils';
+import { GraphColors } from 'app/entities/statistics.model';
 
 @Component({
     selector: 'jhi-overview-course-card',
@@ -45,7 +46,7 @@ export class CourseCardComponent implements OnChanges {
         name: 'vivid',
         selectable: true,
         group: ScaleType.Ordinal,
-        domain: ['#32cd32', '#ff0000'], // colors: green, red
+        domain: [GraphColors.GREEN, GraphColors.RED],
     } as Color;
 
     constructor(

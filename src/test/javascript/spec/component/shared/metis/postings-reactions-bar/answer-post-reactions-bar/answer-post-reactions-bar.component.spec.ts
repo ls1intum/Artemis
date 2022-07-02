@@ -1,6 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MetisService } from 'app/shared/metis/metis.service';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { OverlayModule } from '@angular/cdk/overlay';
 import { Reaction } from 'app/entities/metis/reaction.model';
@@ -16,13 +15,14 @@ import { PickerModule } from '@ctrl/ngx-emoji-mart';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
-import { MockTranslateService } from '../../../../../helpers/mocks/service/mock-translate.service';
+import { MockTranslateService, TranslatePipeMock } from '../../../../../helpers/mocks/service/mock-translate.service';
 import { Router } from '@angular/router';
 import { MockRouter } from '../../../../../helpers/mocks/mock-router';
 import { MockLocalStorageService } from '../../../../../helpers/mocks/service/mock-local-storage.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { ReactingUsersOnPostingPipe } from 'app/shared/pipes/reacting-users-on-posting.pipe';
-import { metisCourse, metisUser1 } from '../../../../../helpers/sample/metis-sample-data';
+import { By } from '@angular/platform-browser';
+import { metisCourse, metisUser1, post } from '../../../../../helpers/sample/metis-sample-data';
 
 describe('AnswerPostReactionsBarComponent', () => {
     let component: AnswerPostReactionsBarComponent;
@@ -35,13 +35,7 @@ describe('AnswerPostReactionsBarComponent', () => {
     beforeEach(() => {
         return TestBed.configureTestingModule({
             imports: [HttpClientTestingModule, MockModule(OverlayModule), MockModule(EmojiModule), MockModule(PickerModule)],
-            declarations: [
-                AnswerPostReactionsBarComponent,
-                MockPipe(ReactingUsersOnPostingPipe),
-                MockPipe(ArtemisTranslatePipe),
-                MockComponent(FaIconComponent),
-                MockDirective(NgbTooltip),
-            ],
+            declarations: [AnswerPostReactionsBarComponent, TranslatePipeMock, MockPipe(ReactingUsersOnPostingPipe), MockComponent(FaIconComponent), MockDirective(NgbTooltip)],
             providers: [
                 MockProvider(SessionStorageService),
                 { provide: MetisService, useClass: MetisService },
@@ -84,7 +78,7 @@ describe('AnswerPostReactionsBarComponent', () => {
         reactionToCreate.answerPost = component.posting;
         component.addOrRemoveReaction(reactionToCreate.emojiId);
         expect(metisServiceCreateReactionSpy).toHaveBeenCalledWith(reactionToCreate);
-        expect(component.showReactionSelector).toEqual(false);
+        expect(component.showReactionSelector).toBeFalse();
     });
 
     it('should invoke metis service method with own reaction to delete it', () => {
@@ -101,5 +95,22 @@ describe('AnswerPostReactionsBarComponent', () => {
         const addOrRemoveSpy = jest.spyOn(component, 'addOrRemoveReaction');
         component.updateReaction(reactionToDelete.emojiId!);
         expect(addOrRemoveSpy).toHaveBeenCalledWith(reactionToDelete.emojiId!);
+    });
+
+    it('answer now button should be invisible if answer is not the last one', () => {
+        component.posting = post;
+        component.isLastAnswer = false;
+        fixture.detectChanges();
+        const answerNowButton = fixture.debugElement.query(By.css('.reply-btn'));
+        expect(answerNowButton).toBeNull();
+    });
+
+    it('answer now button should be visible if answer is the last one', () => {
+        component.posting = post;
+        component.isLastAnswer = true;
+        component.ngOnInit();
+        fixture.detectChanges();
+        const answerNowButton = fixture.debugElement.query(By.css('.reply-btn')).nativeElement;
+        expect(answerNowButton.innerHTML).toContain('reply');
     });
 });

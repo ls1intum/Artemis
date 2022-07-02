@@ -18,7 +18,11 @@ import { faCheckCircle, faSync, faTimesCircle } from '@fortawesome/free-solid-sv
     selector: 'jhi-drag-and-drop-question-statistic',
     templateUrl: './drag-and-drop-question-statistic.component.html',
     providers: [QuizStatisticUtil, DragAndDropQuestionUtil],
-    styleUrls: ['../quiz-point-statistic/quiz-point-statistic.component.scss', './drag-and-drop-question-statistic.component.scss'],
+    styleUrls: [
+        '../../../../../shared/chart/vertical-bar-chart.scss',
+        '../quiz-point-statistic/quiz-point-statistic.component.scss',
+        './drag-and-drop-question-statistic.component.scss',
+    ],
     encapsulation: ViewEncapsulation.None,
 })
 export class DragAndDropQuestionStatisticComponent extends QuestionStatisticComponent {
@@ -64,7 +68,7 @@ export class DragAndDropQuestionStatisticComponent extends QuestionStatisticComp
     }
 
     /**
-     * build the Chart-Layout based on the the Json-entity (questionStatistic)
+     * build the Chart-Layout based on the Json-entity (questionStatistic)
      */
     loadLayout() {
         this.orderDropLocationByPos();

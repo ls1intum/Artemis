@@ -30,6 +30,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.in.www1.artemis.config.Constants;
+import de.tum.in.www1.artemis.domain.lecture.LectureUnitCompletion;
 import de.tum.in.www1.artemis.domain.participation.Participant;
 
 /**
@@ -146,6 +147,9 @@ public class User extends AbstractAuditingEntity implements Participant {
     @JsonIgnoreProperties("user")
     private Set<Organization> organizations = new HashSet<>();
 
+    @OneToMany(mappedBy = "user", fetch = FetchType.LAZY, cascade = CascadeType.REMOVE, orphanRemoval = true)
+    private Set<LectureUnitCompletion> completedLectureUnits = new HashSet<>();
+
     public String getLogin() {
         return login;
     }
@@ -187,7 +191,7 @@ public class User extends AbstractAuditingEntity implements Participant {
      * @return name as a concatenation of first name and last name
      */
     public String getName() {
-        if (lastName != null && !lastName.equals("")) {
+        if (lastName != null && !lastName.isEmpty()) {
             return firstName + " " + lastName;
         }
         else {
@@ -309,6 +313,14 @@ public class User extends AbstractAuditingEntity implements Participant {
 
     public void setOrganizations(Set<Organization> organizations) {
         this.organizations = organizations;
+    }
+
+    public Set<LectureUnitCompletion> getCompletedLectureUnits() {
+        return completedLectureUnits;
+    }
+
+    public void setCompletedLectureUnits(Set<LectureUnitCompletion> completedLectureUnits) {
+        this.completedLectureUnits = completedLectureUnits;
     }
 
     public Set<GuidedTourSetting> getGuidedTourSettings() {

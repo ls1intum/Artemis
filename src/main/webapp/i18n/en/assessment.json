@@ -43,7 +43,11 @@
                 "feedback": "Feedback",
                 "feedbackWithColon": "Feedback:",
                 "scoreFor": "Assessment for",
-                "tutorComment": "Tutor Comment:"
+                "tutorComment": "Tutor Comment:",
+                "points": {
+                    "one": "{{points}} Point",
+                    "many": "{{points}} Points"
+                }
             },
             "useAsExampleSubmissionVerificationQuestion": "Are you sure to import this submission as an example submission?",
             "messages": {
@@ -86,7 +90,12 @@
                     "showAll": "Show all",
                     "showLocked": "Show locked"
                 },
-                "bonusPointExplanation": "In this exercise there are {{maxPoints}} points and {{maxBonusPoints}} bonus points, so students can achieve a maximum of {{maxPointsWithBonus}} points, which would correspond to a score of {{maxPercentage}}%."
+                "bonusPointExplanation": "In this exercise there are {{maxPoints}} points and {{maxBonusPoints}} bonus points, so students can achieve a maximum of {{maxPointsWithBonus}} points, which would correspond to a score of {{maxPercentage}}%.",
+                "resetFilter": "Reset filter",
+                "activeFilter": "Active Filter",
+                "unassessedSubmissions": "Showing only unassessed submissions",
+                "manuallyAssessedSubmissions": "Showing only manually assessed submissions",
+                "semiAutomaticallyAssessedSubmissions": "Showing only submissions assessed with automatic assistance"
             },
             "locks": {
                 "home": {

@@ -4,18 +4,21 @@ import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Subject, Subscription } from 'rxjs';
 import { filter, map } from 'rxjs/operators';
 
-import { ExerciseHintService } from './exercise-hint.service';
+import { ExerciseHintService } from '../shared/exercise-hint.service';
 import { onError } from 'app/shared/util/global.utils';
 import { AlertService } from 'app/core/util/alert.service';
 import { EventManager } from 'app/core/util/event-manager.service';
-import { faEye, faPlus, faTimes, faWrench } from '@fortawesome/free-solid-svg-icons';
-import { ExerciseHint } from 'app/entities/hestia/exercise-hint.model';
+import { faEye, faPlus, faTimes, faWrench, faFont, faCode } from '@fortawesome/free-solid-svg-icons';
+import { ExerciseHint, HintType } from 'app/entities/hestia/exercise-hint.model';
+import { ExerciseType } from 'app/entities/exercise.model';
 
 @Component({
     selector: 'jhi-exercise-hint',
     templateUrl: './exercise-hint.component.html',
 })
 export class ExerciseHintComponent implements OnInit, OnDestroy {
+    readonly HintType = HintType;
+    ExerciseType = ExerciseType;
     exerciseId: number;
     exerciseHints: ExerciseHint[];
     eventSubscriber: Subscription;
@@ -30,6 +33,8 @@ export class ExerciseHintComponent implements OnInit, OnDestroy {
     faTimes = faTimes;
     faEye = faEye;
     faWrench = faWrench;
+    faText = faFont;
+    faCode = faCode;
 
     constructor(private route: ActivatedRoute, protected exerciseHintService: ExerciseHintService, private alertService: AlertService, protected eventManager: EventManager) {}
 

@@ -49,7 +49,7 @@ class JavaClassDiffSerializer {
         if (!javaClassDiff.superClassNameDiff.isEmpty()) {
             classJSON.addProperty("superclass", javaClassDiff.superClassNameDiff);
         }
-        if (javaClassDiff.superInterfacesDiff.size() > 0) {
+        if (!javaClassDiff.superInterfacesDiff.isEmpty()) {
             JsonArray superInterfaces = new JsonArray();
 
             for (JavaClass superInterface : javaClassDiff.superInterfacesDiff) {
@@ -57,7 +57,7 @@ class JavaClassDiffSerializer {
             }
             classJSON.add("interfaces", superInterfaces);
         }
-        if (javaClassDiff.annotationsDiff.size() > 0) {
+        if (!javaClassDiff.annotationsDiff.isEmpty()) {
             JsonArray annotations = new JsonArray();
 
             for (JavaAnnotation annotation : javaClassDiff.annotationsDiff) {

@@ -29,7 +29,7 @@
                 >
                 <span class="context-information" *ngIf="!contextInformation.routerLinkComponents">{{ contextInformation.displayName }}:</span>
             </span>
-            <span class="col-auto">
+            <span *ngIf="pageType !== PageType.PLAGIARISM_CASE" class="col-auto">
                 <a
                     class="post-title"
                     [routerLink]="metisService.getLinkForPost(posting)"
@@ -48,4 +48,4 @@
         ></jhi-posting-content>
     </div>
 </div>
-<jhi-post-footer [modalRef]="modalRef" [previewMode]="previewMode" [posting]="posting"></jhi-post-footer>
+<jhi-post-footer [modalRef]="modalRef" [previewMode]="previewMode" [posting]="posting" [showAnswers]="showAnswers"></jhi-post-footer>

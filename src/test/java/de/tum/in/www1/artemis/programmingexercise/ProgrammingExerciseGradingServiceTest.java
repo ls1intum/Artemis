@@ -243,9 +243,9 @@ public abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpri
         feedbacks.add(new Feedback().text("test2").positive(true).type(FeedbackType.AUTOMATIC));
         feedbacks.add(new Feedback().text("test3").positive(false).type(FeedbackType.AUTOMATIC));
         feedbacks.add(new Feedback().text("test4").positive(false).type(FeedbackType.AUTOMATIC));
-        result.feedbacks(feedbacks);
-        result.successful(false);
-        result.assessmentType(AssessmentType.AUTOMATIC);
+        result.setFeedbacks(feedbacks);
+        result.setSuccessful(false);
+        result.setAssessmentType(AssessmentType.AUTOMATIC);
         Double scoreBeforeUpdate = result.getScore();
 
         gradingService.calculateScoreForResult(result, programmingExercise, true);
@@ -298,11 +298,7 @@ public abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpri
         Result result = new Result();
         result.addFeedback(new Feedback().result(result).text("test1").positive(false).type(FeedbackType.AUTOMATIC));
         result.addFeedback(new Feedback().result(result).text("test2").positive(true).type(FeedbackType.AUTOMATIC));
-        result.rated(true) //
-                .hasFeedback(true) //
-                .successful(false) //
-                .completionDate(ZonedDateTime.now()) //
-                .assessmentType(AssessmentType.AUTOMATIC);
+        result.rated(true).hasFeedback(true).successful(false).completionDate(ZonedDateTime.now()).assessmentType(AssessmentType.AUTOMATIC);
 
         result = gradingService.calculateScoreForResult(result, programmingExercise, false);
         assertThat(result.getScore()).isZero();
@@ -311,7 +307,6 @@ public abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpri
 
         result = gradingService.calculateScoreForResult(result, programmingExercise, false);
         assertThat(result.getScore()).isPositive();
-
     }
 
     @Test
@@ -754,12 +749,11 @@ public abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpri
         assertThat(updatedStudentResults).hasSize(5);
 
         for (final var result : updatedStudentResults) {
-            final var automaticPositiveFeedbacks = result.getFeedbacks().stream().filter(feedback -> Boolean.TRUE.equals(feedback.isPositive()))
-                    .filter(feedback -> FeedbackType.AUTOMATIC.equals(feedback.getType())).toList();
-            for (final var feedback : automaticPositiveFeedbacks) {
-                double bonusPoints = testCases.get(feedback.getText()).getBonusPoints();
-                assertThat(feedback.getCredits()).isEqualTo(bonusPoints);
-            }
+            result.getFeedbacks().stream().filter(feedback -> Boolean.TRUE.equals(feedback.isPositive())).filter(feedback -> FeedbackType.AUTOMATIC.equals(feedback.getType()))
+                    .forEach(feedback -> {
+                        double bonusPoints = testCases.get(feedback.getText()).getBonusPoints();
+                        assertThat(feedback.getCredits()).isEqualTo(bonusPoints);
+                    });
         }
     }
 
@@ -1322,9 +1316,9 @@ public abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpri
 
     private void updateAndSaveAutomaticResult(Result result, boolean test1Passes, boolean test2Passes, boolean test3Passes, int issuesCategory1, int issuesCategory2,
             ZonedDateTime completionDate) {
-        result.addFeedback(new Feedback().result(result).text("test1").positive(test1Passes).type(FeedbackType.AUTOMATIC));
-        result.addFeedback(new Feedback().result(result).text("test2").positive(test2Passes).type(FeedbackType.AUTOMATIC));
-        result.addFeedback(new Feedback().result(result).text("test3").positive(test3Passes).type(FeedbackType.AUTOMATIC));
+        result.addFeedback(new Feedback().result(result).text("test1").positive(test1Passes).positive(test1Passes).type(FeedbackType.AUTOMATIC));
+        result.addFeedback(new Feedback().result(result).text("test2").positive(test2Passes).positive(test2Passes).type(FeedbackType.AUTOMATIC));
+        result.addFeedback(new Feedback().result(result).text("test3").positive(test3Passes).positive(test3Passes).type(FeedbackType.AUTOMATIC));
 
         for (int i = 0; i < issuesCategory1; i++) {
             result.addFeedback(new Feedback().result(result).text(Feedback.STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER).reference("SPOTBUGS")

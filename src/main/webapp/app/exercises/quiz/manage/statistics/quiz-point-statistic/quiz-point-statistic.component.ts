@@ -12,7 +12,7 @@ import { Authority } from 'app/shared/constants/authority.constants';
 import { blueColor } from 'app/exercises/quiz/manage/statistics/question-statistic.component';
 import { UI_RELOAD_TIME } from 'app/shared/constants/exercise-exam-constants';
 import { round } from 'app/shared/util/utils';
-import { QuizStatisticsDirective } from 'app/exercises/quiz/manage/statistics/quiz-statistics.directive';
+import { QuizStatistics } from 'app/exercises/quiz/manage/statistics/quiz-statistics';
 import { TranslateService } from '@ngx-translate/core';
 import { faSync } from '@fortawesome/free-solid-svg-icons';
 import { calculateMaxScore } from 'app/exercises/quiz/manage/statistics/quiz-statistic/quiz-statistics.utils';
@@ -23,7 +23,7 @@ import { ArtemisServerDateService } from 'app/shared/server-date.service';
     templateUrl: './quiz-point-statistic.component.html',
     styleUrls: ['./quiz-point-statistic.component.scss', '../../../../../shared/chart/vertical-bar-chart.scss'],
 })
-export class QuizPointStatisticComponent extends QuizStatisticsDirective implements OnInit, OnDestroy {
+export class QuizPointStatisticComponent extends QuizStatistics implements OnInit, OnDestroy {
     readonly round = round;
 
     quizExercise: QuizExercise;
@@ -72,6 +72,9 @@ export class QuizPointStatisticComponent extends QuizStatisticsDirective impleme
         private serverDateService: ArtemisServerDateService,
     ) {
         super(translateService);
+        this.translateService.onLangChange.subscribe(() => {
+            this.setAxisLabels('showStatistic.quizPointStatistic.xAxes', 'showStatistic.quizPointStatistic.yAxes');
+        });
     }
 
     ngOnInit() {
@@ -181,7 +184,7 @@ export class QuizPointStatisticComponent extends QuizStatisticsDirective impleme
      */
     loadQuizSuccess(quizExercise: QuizExercise) {
         // if the Student finds a way to the Website
-        //      -> the Student will be send back to Courses
+        //      -> the Student will be sent back to Courses
         if (!this.accountService.hasAnyAuthorityDirect([Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TA])) {
             this.router.navigate(['courses']);
         }

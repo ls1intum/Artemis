@@ -113,7 +113,7 @@ public class BambooRequestMockProvider {
      *
      * @param exercise   the programming exercise that might already exist
      * @param exists     whether the programming exercise with the same title exists
-     * @param shouldFail if the request to get latest project should fail
+     * @param shouldFail if the request to get the latest project should fail
      * @throws IOException        an IO exception when reading test files
      * @throws URISyntaxException exceptions related to URI handling in test REST calls
      */

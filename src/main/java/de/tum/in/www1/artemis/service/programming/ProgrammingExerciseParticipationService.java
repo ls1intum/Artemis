@@ -135,7 +135,7 @@ public class ProgrammingExerciseParticipationService {
     }
 
     /**
-     * Check if the currently logged in user can access a given participation by accessing the exercise and course connected to this participation
+     * Check if the currently logged-in user can access a given participation by accessing the exercise and course connected to this participation
      * The method will treat the participation types differently:
      * - ProgrammingExerciseStudentParticipations should only be accessible by its owner (student) or users with at least the role TA in the courses.
      * - Template/SolutionParticipations should only be accessible for users with at least the role TA in the courses.
@@ -221,7 +221,7 @@ public class ProgrammingExerciseParticipationService {
      */
     public void unlockStudentRepository(ProgrammingExercise programmingExercise, ProgrammingExerciseStudentParticipation participation) {
         if (participation.getInitializationState().hasCompletedState(InitializationState.REPO_CONFIGURED)) {
-            versionControlService.get().configureRepository(programmingExercise, participation.getVcsRepositoryUrl(), participation.getStudents(), true);
+            versionControlService.get().configureRepository(programmingExercise, participation, true);
         }
         else {
             log.warn("Cannot unlock student repository for participation {} because the repository was not copied yet!", participation.getId());

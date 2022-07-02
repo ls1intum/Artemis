@@ -201,10 +201,10 @@ public class ExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitb
 
                 // Test that the exercise does not have more than one participation.
                 assertThat(exerciseServer.getStudentParticipations()).as("At most one participation for exercise").hasSizeLessThanOrEqualTo(1);
-                if (exerciseServer.getStudentParticipations().size() > 0) {
+                if (!exerciseServer.getStudentParticipations().isEmpty()) {
                     // Buffer participation so that null checking is easier.
                     Participation participation = exerciseServer.getStudentParticipations().iterator().next();
-                    if (participation.getSubmissions().size() > 0) {
+                    if (!participation.getSubmissions().isEmpty()) {
                         // The call filters participations by submissions and their result. After the call each participation shouldn't have more than one submission.
                         assertThat(participation.getSubmissions()).as("At most one submission for participation").hasSizeLessThanOrEqualTo(1);
                         Submission submission = participation.getSubmissions().iterator().next();
@@ -662,5 +662,35 @@ public class ExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitb
     @WithMockUser(username = "user1", roles = "USER")
     public void testGetExerciseTitleForNonExistingExercise() throws Exception {
         request.get("/api/exercises/12312321321/title", HttpStatus.NOT_FOUND, String.class);
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void testGetLatestDueDate() throws Exception {
+        Course courseWithOneReleasedTextExercise = database.addCourseWithOneReleasedTextExercise();
+        Exercise exercise = (Exercise) courseWithOneReleasedTextExercise.getExercises().toArray()[0];
+        database.createAndSaveParticipationForExercise(exercise, "student1");
+        StudentParticipation studentParticipation2 = database.createAndSaveParticipationForExercise(exercise, "student2");
+        StudentParticipation studentParticipation3 = database.createAndSaveParticipationForExercise(exercise, "student3");
+
+        studentParticipation2.setIndividualDueDate(exercise.getDueDate().plusHours(2));
+        studentParticipation3.setIndividualDueDate(exercise.getDueDate().plusHours(4));
+        participationRepository.save(studentParticipation2);
+        participationRepository.save(studentParticipation3);
+
+        ZonedDateTime latestDueDate = request.get("/api/exercises/" + exercise.getId() + "/latest-due-date", HttpStatus.OK, ZonedDateTime.class);
+        assertThat(latestDueDate).isEqualToIgnoringNanos(studentParticipation3.getIndividualDueDate());
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void testGetLatestDueDateWhenNoIndividualDeadline() throws Exception {
+        Course courseWithOneReleasedTextExercise = database.addCourseWithOneReleasedTextExercise();
+        Exercise exercise = (Exercise) courseWithOneReleasedTextExercise.getExercises().toArray()[0];
+        database.createAndSaveParticipationForExercise(exercise, "student1");
+        database.createAndSaveParticipationForExercise(exercise, "student2");
+
+        ZonedDateTime latestDueDate = request.get("/api/exercises/" + exercise.getId() + "/latest-due-date", HttpStatus.OK, ZonedDateTime.class);
+        assertThat(latestDueDate).isEqualToIgnoringNanos(exercise.getDueDate());
     }
 }

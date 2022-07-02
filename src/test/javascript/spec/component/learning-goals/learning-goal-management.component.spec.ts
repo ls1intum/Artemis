@@ -23,6 +23,7 @@ import * as Sentry from '@sentry/browser';
 class LearningGoalCardStubComponent {
     @Input() learningGoal: LearningGoal;
     @Input() learningGoalProgress: CourseLearningGoalProgress;
+    @Input() isPrerequisite: Boolean;
 }
 
 describe('LearningGoalManagementComponent', () => {
@@ -67,11 +68,6 @@ describe('LearningGoalManagementComponent', () => {
         jest.restoreAllMocks();
     });
 
-    it('should initialize', () => {
-        learningGoalManagementComponentFixture.detectChanges();
-        expect(learningGoalManagementComponent).toBeDefined();
-    });
-
     it('should load learning goal and associated progress and display a card for each of them', () => {
         const learningGoalService = TestBed.inject(LearningGoalService);
         const learningGoal = new LearningGoal();
@@ -104,9 +100,14 @@ describe('LearningGoalManagementComponent', () => {
             body: courseProgressParticipantScores,
             status: 200,
         });
+        const prerequisitesOfCourseResponse: HttpResponse<LearningGoal[]> = new HttpResponse({
+            body: [],
+            status: 200,
+        });
 
         const getAllForCourseSpy = jest.spyOn(learningGoalService, 'getAllForCourse').mockReturnValue(of(learningGoalsOfCourseResponse));
         const getProgressSpy = jest.spyOn(learningGoalService, 'getCourseProgress');
+        jest.spyOn(learningGoalService, 'getAllPrerequisitesForCourse').mockReturnValue(of(prerequisitesOfCourseResponse));
         getProgressSpy.mockReturnValueOnce(of(learningGoalProgressResponse)); // when useParticipantScoreTable = false
         getProgressSpy.mockReturnValueOnce(of(learningGoalProgressResponse)); // when useParticipantScoreTable = false
         getProgressSpy.mockReturnValueOnce(of(learningGoalProgressParticipantScoreResponse)); // when useParticipantScoreTable = true
@@ -118,11 +119,37 @@ describe('LearningGoalManagementComponent', () => {
 
         const learningGoalCards = learningGoalManagementComponentFixture.debugElement.queryAll(By.directive(LearningGoalCardStubComponent));
         expect(learningGoalCards).toHaveLength(2);
-        expect(getAllForCourseSpy).toHaveBeenCalledTimes(1);
+        expect(getAllForCourseSpy).toHaveBeenCalledOnce();
         expect(getProgressSpy).toHaveBeenCalledTimes(4);
         expect(learningGoalManagementComponent.learningGoals).toHaveLength(2);
-        expect(learningGoalManagementComponent.learningGoalIdToLearningGoalCourseProgress.has(1)).toEqual(true);
-        expect(learningGoalManagementComponent.learningGoalIdToLearningGoalCourseProgressUsingParticipantScoresTables.has(1)).toEqual(true);
-        expect(captureExceptionSpy).toHaveBeenCalledTimes(1);
+        expect(learningGoalManagementComponent.learningGoalIdToLearningGoalCourseProgress.has(1)).toBeTrue();
+        expect(learningGoalManagementComponent.learningGoalIdToLearningGoalCourseProgressUsingParticipantScoresTables.has(1)).toBeTrue();
+        expect(captureExceptionSpy).toHaveBeenCalledOnce();
+    });
+
+    it('should load prerequisites and display a card for each of them', () => {
+        const learningGoalService = TestBed.inject(LearningGoalService);
+        const learningGoal = new LearningGoal();
+        learningGoal.id = 1;
+        learningGoal.description = 'test';
+
+        const learningGoalsOfCourseResponse: HttpResponse<LearningGoal[]> = new HttpResponse({
+            body: [],
+            status: 200,
+        });
+        const prerequisitesOfCourseResponse: HttpResponse<LearningGoal[]> = new HttpResponse({
+            body: [learningGoal, new LearningGoal()],
+            status: 200,
+        });
+
+        jest.spyOn(learningGoalService, 'getAllForCourse').mockReturnValue(of(learningGoalsOfCourseResponse));
+        const getAllPrerequisitesForCourseSpy = jest.spyOn(learningGoalService, 'getAllPrerequisitesForCourse').mockReturnValue(of(prerequisitesOfCourseResponse));
+
+        learningGoalManagementComponentFixture.detectChanges();
+
+        const prerequisiteCards = learningGoalManagementComponentFixture.debugElement.queryAll(By.directive(LearningGoalCardStubComponent));
+        expect(prerequisiteCards).toHaveLength(2);
+        expect(getAllPrerequisitesForCourseSpy).toHaveBeenCalledOnce();
+        expect(learningGoalManagementComponent.prerequisites).toHaveLength(2);
     });
 });

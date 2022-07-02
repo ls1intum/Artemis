@@ -11,7 +11,7 @@ export abstract class ExamSubmissionComponent extends ExamPageComponent {
 
     /**
      * updates the submission with the values from the displayed content.
-     * This is called when the submission is save, so that the latest state is synchronized with the server
+     * This is called when the submission is saved, so that the latest state is synchronized with the server
      */
     abstract updateSubmissionFromView(): void;
 

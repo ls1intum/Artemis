@@ -7,12 +7,11 @@ import { Exercise } from 'app/entities/exercise.model';
 import { Lecture } from 'app/entities/lecture.model';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { Post } from 'app/entities/metis/post.model';
-import { FormBuilder, FormGroup } from '@angular/forms';
-import { ButtonType } from 'app/shared/components/button.component';
+import { FormBuilder } from '@angular/forms';
 import { HttpResponse } from '@angular/common/http';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
-import { faFilter, faLongArrowAltDown, faLongArrowAltUp, faPlus, faSearch, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { ITEMS_PER_PAGE } from 'app/shared/constants/pagination.constants';
+import { CourseDiscussionDirective } from 'app/shared/metis/course-discussion.directive';
 
 @Component({
     selector: 'jhi-course-discussion',
@@ -20,50 +19,31 @@ import { ITEMS_PER_PAGE } from 'app/shared/constants/pagination.constants';
     styleUrls: ['./course-discussion.component.scss'],
     providers: [MetisService],
 })
-export class CourseDiscussionComponent implements OnInit, OnDestroy {
+export class CourseDiscussionComponent extends CourseDiscussionDirective implements OnInit, OnDestroy {
     entitiesPerPageTranslation = 'organizationManagement.userSearch.usersPerPage';
     showAllEntitiesTranslation = 'organizationManagement.userSearch.showAllUsers';
 
-    course?: Course;
     exercises?: Exercise[];
     lectures?: Lecture[];
-    currentPostContextFilter: PostContextFilter;
-    currentSortCriterion = PostSortCriterion.CREATION_DATE;
     currentSortDirection = SortDirection.DESCENDING;
-    searchText?: string;
-    formGroup: FormGroup;
-    createdPost: Post;
-    posts: Post[];
-    isLoading = true;
     totalItems = 0;
     pagingEnabled = true;
     itemsPerPage = ITEMS_PER_PAGE;
     page = 1;
     readonly CourseWideContext = CourseWideContext;
-    readonly SortBy = PostSortCriterion;
-    readonly SortDirection = SortDirection;
     readonly PageType = PageType;
-    readonly ButtonType = ButtonType;
     readonly pageType = PageType.OVERVIEW;
 
-    private postsSubscription: Subscription;
-    private paramSubscription: Subscription;
     private totalItemsSubscription: Subscription;
-
-    // Icons
-    faPlus = faPlus;
-    faTimes = faTimes;
-    faFilter = faFilter;
-    faSearch = faSearch;
-    faLongArrowAltUp = faLongArrowAltUp;
-    faLongArrowAltDown = faLongArrowAltDown;
 
     constructor(
         protected metisService: MetisService,
         private activatedRoute: ActivatedRoute,
         private courseManagementService: CourseManagementService,
         private formBuilder: FormBuilder,
-    ) {}
+    ) {
+        super(metisService);
+    }
 
     /**
      * on initialization: initializes the metis service, fetches the posts for the course, resets all user inputs and selects the defaults,
@@ -126,8 +106,7 @@ export class CourseDiscussionComponent implements OnInit, OnDestroy {
     }
 
     ngOnDestroy(): void {
-        this.paramSubscription?.unsubscribe();
-        this.postsSubscription?.unsubscribe();
+        super.onDestroy();
         this.totalItemsSubscription?.unsubscribe();
     }
 
@@ -141,12 +120,11 @@ export class CourseDiscussionComponent implements OnInit, OnDestroy {
 
     /**
      * on changing any filter, the metis service is invoked to deliver the first page of posts for the
-     * currently set context, filtered and sorted on the backend
+     * currently set context, filtered and sorted on the server
      */
     onSelectContext(): void {
         this.page = 1;
-        this.setFilterAndSort();
-        this.metisService.getFilteredPosts(this.currentPostContextFilter);
+        super.onSelectContext();
     }
 
     /**
@@ -220,7 +198,7 @@ export class CourseDiscussionComponent implements OnInit, OnDestroy {
     /**
      * sets the filter and sort options after receiving user input
      */
-    private setFilterAndSort(): void {
+    setFilterAndSort(): void {
         this.currentPostContextFilter = {
             courseId: undefined,
             courseWideContext: undefined,

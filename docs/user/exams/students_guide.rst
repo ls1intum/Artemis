@@ -335,9 +335,10 @@ Grades
 - You will see your obtained points along with the maximum achievable points for each individual exercise.
 - If the instructor defined a grading key for your exam, you will also see your grade.
 
-.. figure:: student/exam_grade.png
+.. figure:: student/student_grade.png
    :alt: Exam Grade
    :align: center
+
    Exam Grade
 
     .. note::
@@ -347,9 +348,10 @@ Grades
 - A square bracket ``[`` or ``]`` in the interval of a grade step means the bound is included in the current grade step, and a parenthesis ``(`` or ``)`` means it is excluded.
 - For example, if the grade step for ``2.0`` shows the percentage interval as ``[80 - 85)`` this means that a student achieving ``80%`` has the grade ``2.0``, whereas a student achieving ``85%`` receives the grade right above ``2.0`` (i.e. ``1.7`` if the default grading key is used).
 
-.. figure:: student/exam_grade_key.png
+.. figure:: student/student_grade_key.png
    :alt: Exam Grading Key
    :align: center
+
    Exam Grading Key for a student receiving 135 points out of 150
 
 |

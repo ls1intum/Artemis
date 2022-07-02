@@ -1,28 +1,51 @@
 {
     "artemisApp": {
         "exerciseHint": {
+            "textHint": "Text Hinweis",
             "home": {
-                "title": "Exercise Hints",
-                "createLabel": "Exercise Hint erstellen",
-                "createOrEditLabel": "Exercise Hint erstellen oder bearbeiten",
-                "notFound": "No Exercise Hint found"
+                "title": "Aufgabenhinweise",
+                "createLabel": "Aufgabenhinweis erstellen",
+                "editLabel": "Aufgabenhinweis bearbeiten",
+                "notFound": "Kein Aufgabenhinweis gefunden"
             },
-            "created": "Exercise Hint erstellt mit ID {{ param }}",
-            "updated": "Exercise Hint aktualisiert mit ID {{ param }}",
-            "deleted": "Exercise Hint gelöscht mit ID {{ param }}",
+            "created": "Aufgabenhinweis erstellt mit ID {{ param }}",
+            "updated": "Aufgabenhinweis aktualisiert mit ID {{ param }}",
+            "deleted": "Aufgabenhinweis gelöscht mit ID {{ param }}",
             "delete": {
-                "question": "Soll Exercise Hint \"{{ title }}\" wirklich dauerhaft gelöscht werden?"
+                "question": "Soll Aufgabenhinweis \"{{ title }}\" wirklich dauerhaft gelöscht werden?"
             },
             "detail": {
-                "title": "Exercise Hint"
+                "title": "Aufgabenhinweis"
             },
-            "title": "Title",
-            "content": "Content",
-            "exercise": "Exercise",
+            "title": "Titel",
+            "task": "Task",
+            "taskTooltip": "Es wird nicht empfohlen, Code-Hinweise anderen Tasks zuzuweisen, weil die Hinweise speziell für einen Task erstellt wurden.",
+            "description": "Beschreibung",
+            "descriptionTooltip": "Dieser Text wird Studierenden angezeigt, die diesen Hint angezeigt bekommen.",
+            "content": "Inhalt",
+            "exercise": "Aufgabe",
+            "exerciseHintButtonTooltip": "Verfügbare und aktivierte Hinweise für diese Aufgabe anzeigen.",
+            "availableHintsAlertMessage": "Neue Hinweise für Aufgabe '{{ taskName }}' verfügbar.",
             "studentDialog": {
                 "title": "Hinweise zur Übung",
-                "tooltip": "Hinweise zu dieser Übung öffnen"
+                "tooltip": "Hinweise zu dieser Übung öffnen",
+                "activate": "Aktivieren",
+                "activatedHintsTitle": "Aktivierte Hinweise",
+                "availableHintsTitle": "Neue Hinweise",
+                "activateTooltip": "Der Hinweis wird aktiviert und den angezeigten Hinweisen hinzugefügt.",
+                "display": "Anzeigen",
+                "collapse": "Verbergen",
+                "rateHintQuestion": "Wie hilfreich war dieser Hinweis?",
+                "availableHintTaskDescription": "Hast Du Probleme mit der Aufgabe '{{ taskName }}'? Hier kannst Du Dir die Musterlösung anzeigen lassen."
             }
+        },
+        "codeHint": {
+            "type": "Code Hinweis",
+            "entry": "Eintrag",
+            "entries": "Einträge",
+            "removeEntryQuestion": "Soll dieser Eintrag wirklich entfernt werden?",
+            "noEntries": "Dieser Code-Hinweis hat keine Einträge.",
+            "deleted": "Exercise Hint gelöscht mit ID {{ param }}"
         }
     }
 }

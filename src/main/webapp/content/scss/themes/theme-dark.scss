@@ -96,6 +96,14 @@ html {
     border-color: $gray-300;
 }
 
+.ngx-datatable.bootstrap .datatable-body .datatable-body-row.datatable-row-even {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.ngx-datatable.bootstrap .datatable-body .datatable-body-row {
+    border-top-color: $gray-700;
+}
+
 .mat-form-field-outline {
     color: $border-color;
 }
@@ -106,8 +114,8 @@ html {
 .form-select[readonly],
 .form-check-input:disabled:not(:checked),
 .form-check-input[readonly]:not(:checked) {
-    background: $gray-700 !important;
-    color: $gray-400;
+    background-color: $gray-800 !important;
+    color: $gray-500 !important;
 }
 
 .form-control,
@@ -176,12 +184,20 @@ html {
     }
 }
 
-.ace-dracula {
+.ace_editor.ace_dark.ace-dracula {
     background-color: $neutral-dark !important;
-}
 
-.ace_gutter {
-    background-color: #242724;
+    .ace_gutter {
+        background-color: #242724;
+    }
+
+    .ace_comment {
+        color: #8497ce;
+    }
+
+    .ace_active-line {
+        background: transparentize(#44475a, 0.7);
+    }
 }
 
 // ==================

@@ -1,12 +1,11 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { HttpResponse } from '@angular/common/http';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { TranslateModule } from '@ngx-translate/core';
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
 import { AccountService } from 'app/core/auth/account.service';
 import { ChangeDetectorRef, DebugElement } from '@angular/core';
 import { ActivatedRoute, Params, Router } from '@angular/router';
-import { BehaviorSubject, Observable, of, Subject, throwError } from 'rxjs';
+import { BehaviorSubject, of, Subject, throwError } from 'rxjs';
 import * as ace from 'brace';
 import { ArtemisTestModule } from '../../test.module';
 import { ProgrammingExerciseParticipationService } from 'app/exercises/programming/manage/services/programming-exercise-participation.service';
@@ -16,8 +15,6 @@ import { MockAccountService } from '../../helpers/mocks/service/mock-account.ser
 import { MockRouter } from '../../helpers/mocks/mock-router';
 import { problemStatement } from '../../helpers/sample/problemStatement.json';
 import { MockProgrammingExerciseParticipationService } from '../../helpers/mocks/service/mock-programming-exercise-participation.service';
-import { ExerciseHint } from 'app/entities/hestia/exercise-hint.model';
-import { DeviceDetectorService } from 'ngx-device-detector';
 import { CodeEditorInstructorAndEditorContainerComponent } from 'app/exercises/programming/manage/code-editor/code-editor-instructor-and-editor-container.component';
 import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
 import { MockCourseExerciseService } from '../../helpers/mocks/service/mock-course-exercise.service';
@@ -51,7 +48,6 @@ import { IncludedInScoreBadgeComponent } from 'app/exercises/shared/exercise-hea
 import { ProgrammingExerciseInstructorExerciseStatusComponent } from 'app/exercises/programming/manage/status/programming-exercise-instructor-exercise-status.component';
 import { UpdatingResultComponent } from 'app/exercises/shared/result/updating-result.component';
 import { ProgrammingExerciseStudentTriggerBuildButtonComponent } from 'app/exercises/programming/shared/actions/programming-exercise-student-trigger-build-button.component';
-import { ExerciseHintStudentComponent } from 'app/exercises/shared/exercise-hint/participate/exercise-hint-student-dialog.component';
 import { ProgrammingExerciseEditableInstructionComponent } from 'app/exercises/programming/manage/instructions-editor/programming-exercise-editable-instruction.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { CodeEditorGridComponent } from 'app/exercises/programming/shared/code-editor/layout/code-editor-grid.component';
@@ -69,8 +65,6 @@ import { ProgrammingExerciseInstructionAnalysisComponent } from 'app/exercises/p
 import { ResultComponent } from 'app/exercises/shared/result/result.component';
 import { ProgrammingExerciseInstructionStepWizardComponent } from 'app/exercises/programming/shared/instructions-render/step-wizard/programming-exercise-instruction-step-wizard.component';
 import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
-import { MockExerciseHintService } from '../../helpers/mocks/service/mock-exercise-hint.service';
-import { ExerciseHintService } from 'app/exercises/shared/exercise-hint/manage/exercise-hint.service';
 
 describe('CodeEditorInstructorIntegration', () => {
     // needed to make sure ace is defined
@@ -88,15 +82,12 @@ describe('CodeEditorInstructorIntegration', () => {
     let getBuildLogsStub: jest.SpyInstance;
     let findWithParticipationsStub: jest.SpyInstance;
     let getLatestResultWithFeedbacksStub: jest.SpyInstance;
-    let getHintsForExerciseStub: jest.SpyInstance;
 
     let checkIfRepositoryIsCleanSubject: Subject<{ isClean: boolean }>;
     let getRepositoryContentSubject: Subject<{ [fileName: string]: FileType }>;
     let subscribeForLatestResultOfParticipationSubject: BehaviorSubject<Result | null>;
     let findWithParticipationsSubject: Subject<{ body: ProgrammingExercise }>;
     let routeSubject: Subject<Params>;
-
-    const exerciseHints = [{ id: 1 }, { id: 2 }];
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
@@ -116,7 +107,6 @@ describe('CodeEditorInstructorIntegration', () => {
                 ProgrammingExerciseInstructorExerciseStatusComponent,
                 UpdatingResultComponent,
                 MockComponent(ProgrammingExerciseStudentTriggerBuildButtonComponent),
-                MockComponent(ExerciseHintStudentComponent),
                 ProgrammingExerciseEditableInstructionComponent,
                 MockComponent(MarkdownEditorComponent),
                 ProgrammingExerciseInstructionComponent,
@@ -129,7 +119,6 @@ describe('CodeEditorInstructorIntegration', () => {
             providers: [
                 JhiLanguageHelper,
                 ChangeDetectorRef,
-                DeviceDetectorService,
                 { provide: Router, useClass: MockRouter },
                 { provide: AccountService, useClass: MockAccountService },
                 { provide: ActivatedRoute, useClass: MockActivatedRouteWithSubjects },
@@ -145,7 +134,6 @@ describe('CodeEditorInstructorIntegration', () => {
                 { provide: ParticipationService, useClass: MockParticipationService },
                 { provide: ProgrammingExerciseParticipationService, useClass: MockProgrammingExerciseParticipationService },
                 { provide: ProgrammingExerciseService, useClass: MockProgrammingExerciseService },
-                { provide: ExerciseHintService, useClass: MockExerciseHintService },
                 { provide: JhiWebsocketService, useClass: MockWebsocketService },
             ],
         })
@@ -164,7 +152,6 @@ describe('CodeEditorInstructorIntegration', () => {
                 const programmingExerciseService = containerDebugElement.injector.get(ProgrammingExerciseService);
                 domainService = containerDebugElement.injector.get(DomainService);
                 route = containerDebugElement.injector.get(ActivatedRoute);
-                const exerciseHintService = containerDebugElement.injector.get(ExerciseHintService);
                 containerDebugElement.injector.get(Router);
 
                 checkIfRepositoryIsCleanSubject = new Subject<{ isClean: boolean }>();
@@ -184,9 +171,6 @@ describe('CodeEditorInstructorIntegration', () => {
                     .spyOn(programmingExerciseParticipationService, 'getLatestResultWithFeedback')
                     .mockReturnValue(throwError(() => new Error('no result')));
                 getBuildLogsStub = jest.spyOn(buildLogService, 'getBuildLogs');
-                getHintsForExerciseStub = jest
-                    .spyOn(exerciseHintService, 'findByExerciseId')
-                    .mockReturnValue(of({ body: exerciseHints }) as Observable<HttpResponse<ExerciseHint[]>>);
 
                 findWithParticipationsStub = jest.spyOn(programmingExerciseService, 'findWithTemplateAndSolutionParticipationAndResults');
                 findWithParticipationsStub.mockReturnValue(findWithParticipationsSubject);
@@ -221,7 +205,7 @@ describe('CodeEditorInstructorIntegration', () => {
         container.ngOnInit();
         routeSubject.next({ exerciseId: 1 });
         expect(container.codeEditorContainer).toBe(undefined); // Have to use this as it's a component
-        expect(findWithParticipationsStub).toHaveBeenCalledTimes(1);
+        expect(findWithParticipationsStub).toHaveBeenCalledOnce();
         expect(findWithParticipationsStub).toHaveBeenCalledWith(exercise.id);
         expect(container.loadingState).toBe(container.LOADING_STATE.INITIALIZING);
     };
@@ -253,7 +237,7 @@ describe('CodeEditorInstructorIntegration', () => {
         findWithParticipationsSubject.next({ body: exercise });
 
         expect(getLatestResultWithFeedbacksStub).not.toHaveBeenCalled();
-        expect(setDomainSpy).toHaveBeenCalledTimes(1);
+        expect(setDomainSpy).toHaveBeenCalledOnce();
         expect(setDomainSpy).toHaveBeenCalledWith([DomainType.PARTICIPATION, exercise.templateParticipation]);
         expect(container.exercise).toEqual(exercise);
         expect(container.selectedRepository).toBe(container.REPOSITORY.TEMPLATE);
@@ -280,14 +264,9 @@ describe('CodeEditorInstructorIntegration', () => {
         expect(container.editableInstructions.participation).toEqual(exercise.templateParticipation);
         expect(container.resultComp).not.toBe(undefined); // Have to use this as it's a component
         expect(container.codeEditorContainer.buildOutput).not.toBe(undefined); // Have to use this as it's a component
-        expect(container.editableInstructions.exerciseHints).toEqual(exerciseHints);
 
         // Called once by each build-output, instructions, result and twice by instructor-exercise-status (=templateParticipation,solutionParticipation) &
         expect(subscribeForLatestResultOfParticipationStub).toHaveBeenCalledTimes(5);
-
-        // called once by instructions (hints are only visible if assignment repo is selected).
-        expect(getHintsForExerciseStub).toHaveBeenCalledTimes(1);
-        expect(getHintsForExerciseStub).toHaveBeenCalledWith(exercise.id);
     });
 
     it('should go into error state when loading the exercise failed', () => {
@@ -322,7 +301,7 @@ describe('CodeEditorInstructorIntegration', () => {
 
         findWithParticipationsSubject.next({ body: exercise });
 
-        expect(setDomainSpy).toHaveBeenCalledTimes(1);
+        expect(setDomainSpy).toHaveBeenCalledOnce();
         expect(setDomainSpy).toHaveBeenCalledWith([DomainType.TEST_REPOSITORY, exercise]);
         expect(container.selectedParticipation).toBe(undefined);
         expect(container.selectedRepository).toBe(container.REPOSITORY.TEST);
@@ -390,7 +369,7 @@ describe('CodeEditorInstructorIntegration', () => {
 
         checkSolutionRepository(exercise);
 
-        expect(findWithParticipationsStub).toHaveBeenCalledTimes(1);
+        expect(findWithParticipationsStub).toHaveBeenCalledOnce();
         expect(findWithParticipationsStub).toHaveBeenCalledWith(exercise.id);
         expect(setDomainSpy).toHaveBeenCalledTimes(2);
         expect(setDomainSpy).toHaveBeenNthCalledWith(1, [DomainType.PARTICIPATION, exercise.studentParticipations[0]]);
@@ -420,7 +399,7 @@ describe('CodeEditorInstructorIntegration', () => {
 
         containerFixture.detectChanges();
 
-        expect(setDomainSpy).toHaveBeenCalledTimes(1);
+        expect(setDomainSpy).toHaveBeenCalledOnce();
         expect(setDomainSpy).toHaveBeenCalledWith([DomainType.PARTICIPATION, exercise.solutionParticipation]);
         checkSolutionRepository(exercise);
     });

@@ -77,14 +77,14 @@ export class CourseManagementOverviewStatisticsComponent extends ActiveStudentsC
             });
         } else {
             this.lineChartLabels.forEach((label) => {
-                set.push({ name: label, value: 0 });
+                set.push({ name: label, value: 0, absoluteValue: 0 });
             });
         }
         this.ngxData.push({ name: 'active students', series: set });
     }
 
     /**
-     * Appends a percentage sign to every tick on the y axis
+     * Appends a percentage sign to every tick on the y-axis
      * @param value the default tick
      */
     formatYAxis(value: any): string {
