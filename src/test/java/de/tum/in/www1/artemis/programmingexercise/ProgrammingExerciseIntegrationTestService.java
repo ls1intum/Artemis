@@ -121,7 +121,7 @@ class ProgrammingExerciseIntegrationTestService {
 
     private Course course;
 
-    private ProgrammingExercise programmingExercise;
+    public ProgrammingExercise programmingExercise;
 
     private ProgrammingExercise programmingExerciseInExam;
 
