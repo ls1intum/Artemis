@@ -35,10 +35,10 @@ Once the changes in your pull request are approved by one of our reviewers, they
 
 - **Check out the code and test it**: Testing the feature/enhancement/bugfix helps to understand the code.
 - **Respect the PR scope**: Bugfixes, enhancements or implementations that are unrelated to the PRs topic should not be enforced in a code review. 
-In this case the reviewer or PR maintainer needs to make sure to create an issue for this topic on Github or the internal task tracking tool so it is not lost.
+In this case the reviewer or PR maintainer needs to make sure to create an issue for this topic on GitHub or the internal task tracking tool so it is not lost.
 - **Code style is not part of a code review**: Code style and linting issues are not part of the review process. If issues in code style or linting arise, the linters and auto formatters used in our CI tools need to be updated.
 - **Enforce guidelines**: Enforcing technical & design guidelines is an integral part of the code review (e.g. consistent REST urls).
-- **Mark optional items**: Review items that are optional from the reviewers perspective should be marked as such (e.g. "Optional: You could also do this with...")
+- **Mark optional items**: Review items that are optional from the reviewers' perspective should be marked as such (e.g. "Optional: You could also do this with...")
 - **Explain your rational**: If the reviewer requests a change, the reasoning behind the change should be explained (e.g. not "Please change X to Y", but "Please change X to Y, because this would improve Z")
 
 ## Development Workflow
@@ -51,7 +51,7 @@ Find here [a guide](docs/dev/setup.rst) on how to setup your local development e
 - The routes should follow the general structure entity > entityId > sub-entity ... (e.g. "/exercises/{exerciseId}/participations")
 - Use **plural for server route's** entities and **singular for client route's** entities
 - Specify the key entity at the end of the route (e.g. "text-editor/participations/{participationId}" should be changed to "participations/{participationId}/text-editor")
-- Never specify an id that is used only for consistency and not used in the code (e.g. GET "/courses/{courseId}/exercises{exerciseId}/participations/{participationId}/submissions/{submissionId}" can be simplified to GET "/submissions/{submissionId}" because all other entities than the submission are either not needed or can be loaded without the need to specify the id)
+- Never specify an id that is used only for consistency and not used in the code (e.g. GET "/courses/{courseId}/exercises/{exerciseId}/participations/{participationId}/submissions/{submissionId}" can be simplified to GET "/submissions/{submissionId}" because all other entities than the submission are either not needed or can be loaded without the need to specify the id)
 
 ## CSS Guidelines
 
@@ -108,3 +108,15 @@ The folder structure is further divided into:
 - service
 
 The tests located in the folder `/app` are not working at the moment and are not included in the test runs.
+
+### Mutation Testing (Server-only)
+
+We (partially) use [PIT Mutation Testing](https://pitest.org/) for mutation testing on server side. It mutates the code to break or modify functionality and re-runs the tests to see if the tests can catch (kill) the mutations by failing. The test quality is assessed by checking the percentage of the mutations killed.
+
+Since there will be multiple mutations and re-runs, it can take significantly longer to execute compared to other server tests.
+
+Location of test files: `src/test/java` (Uses the same files in Server Testing)
+
+Execution command:      `./gradlew pitest -x webapp`
+
+The report will be at:   `build/reports/pitest/index.html`

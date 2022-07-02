@@ -9,7 +9,7 @@ import { HttpResponse } from '@angular/common/http';
 import { TranslateService } from '@ngx-translate/core';
 import { ModelingSubmissionService } from 'app/exercises/modeling/participate/modeling-submission.service';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
-import { getLatestSubmissionResult, setLatestSubmissionResult, Submission } from 'app/entities/submission.model';
+import { getLatestSubmissionResult, Submission } from 'app/entities/submission.model';
 import { ModelingAssessmentService } from 'app/exercises/modeling/assess/modeling-assessment.service';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { ModelingSubmission } from 'app/entities/modeling-submission.model';
@@ -22,17 +22,17 @@ import { getLinkToSubmissionAssessment } from 'app/utils/navigation.utils';
 import { AlertService } from 'app/core/util/alert.service';
 import { EventManager } from 'app/core/util/event-manager.service';
 import { faEdit, faBan, faFolderOpen, faSort } from '@fortawesome/free-solid-svg-icons';
+import { AbstractAssessmentDashboard } from 'app/exercises/shared/dashboards/tutor/abstract-assessment-dashboard';
 
 @Component({
     selector: 'jhi-assessment-dashboard',
     templateUrl: './modeling-assessment-dashboard.component.html',
     providers: [],
 })
-export class ModelingAssessmentDashboardComponent implements OnInit, OnDestroy {
+export class ModelingAssessmentDashboardComponent extends AbstractAssessmentDashboard implements OnInit, OnDestroy {
     // make constants available to html for comparison
     ExerciseType = ExerciseType;
     AssessmentType = AssessmentType;
-
     course: Course;
     exercise: ModelingExercise;
     paramSub: Subscription;
@@ -49,9 +49,7 @@ export class ModelingAssessmentDashboardComponent implements OnInit, OnDestroy {
     // all available submissions
     submissions: ModelingSubmission[];
     filteredSubmissions: ModelingSubmission[];
-
     eventSubscriber: Subscription;
-    assessedSubmissions: number;
     busy: boolean;
     userId: number;
     canOverrideAssessments: boolean;
@@ -77,6 +75,7 @@ export class ModelingAssessmentDashboardComponent implements OnInit, OnDestroy {
         private translateService: TranslateService,
         private sortService: SortService,
     ) {
+        super();
         this.reverse = false;
         this.predicate = 'id';
         this.submissions = [];
@@ -93,6 +92,11 @@ export class ModelingAssessmentDashboardComponent implements OnInit, OnDestroy {
             this.courseId = params['courseId'];
             this.courseService.find(this.courseId).subscribe((res: HttpResponse<Course>) => {
                 this.course = res.body!;
+            });
+            this.route.queryParams.subscribe((queryParams) => {
+                if (queryParams['filterOption']) {
+                    this.filterOption = Number(queryParams['filterOption']);
+                }
             });
             this.exerciseId = params['exerciseId'];
             this.exerciseService.find(this.exerciseId).subscribe((res: HttpResponse<Exercise>) => {
@@ -139,17 +143,8 @@ export class ModelingAssessmentDashboardComponent implements OnInit, OnDestroy {
                         }
                     }
                 });
-                this.filteredSubmissions = this.submissions;
-                this.assessedSubmissions = this.submissions.filter((submission) => {
-                    const result = getLatestSubmissionResult(submission);
-                    setLatestSubmissionResult(submission, result);
-                    return !!result;
-                }).length;
+                this.applyChartFilter(this.submissions);
             });
-    }
-
-    updateFilteredSubmissions(filteredSubmissions: Submission[]) {
-        this.filteredSubmissions = filteredSubmissions as ModelingSubmission[];
     }
 
     getAssessmentRouterLink(participationId: number, submissionId: number): string[] {

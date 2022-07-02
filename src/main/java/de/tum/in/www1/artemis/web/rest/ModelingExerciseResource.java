@@ -439,7 +439,8 @@ public class ModelingExerciseResource {
         ModelingPlagiarismResult result = modelingPlagiarismDetectionService.checkPlagiarism(modelingExercise, similarityThreshold / 100, minimumSize, minimumScore);
         log.info("Finished modelingPlagiarismDetectionService.checkPlagiarism call for {} comparisons in {}", result.getComparisons().size(),
                 TimeLogUtil.formatDurationFrom(start));
-        result.sortAndLimit(500);
+        // TODO: limit the amount temporarily because of database issues
+        result.sortAndLimit(100);
         log.info("Limited number of comparisons to {} to avoid performance issues when saving to database", result.getComparisons().size());
         start = System.nanoTime();
         plagiarismResultRepository.savePlagiarismResultAndRemovePrevious(result);

@@ -30,7 +30,6 @@ import { Feedback } from 'app/entities/feedback.model';
 import { Course } from 'app/entities/course.model';
 import { faFileAlt } from '@fortawesome/free-regular-svg-icons';
 import { faCircleNotch, faGear, faPlusSquare } from '@fortawesome/free-solid-svg-icons';
-import { ThemeService } from 'app/core/theme/theme.service';
 
 export type Annotation = { fileName: string; row: number; column: number; text: string; type: string; timestamp: number; hash?: string | null };
 
@@ -103,29 +102,19 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
     gutterHighlights: Map<number, string[]> = new Map<number, string[]>();
     tabSize = 4;
 
-    themeSubscription: Subscription;
-
     // Icons
     farFileAlt = faFileAlt;
     faPlusSquare = faPlusSquare;
     faCircleNotch = faCircleNotch;
     faGear = faGear;
 
-    constructor(
-        private repositoryFileService: CodeEditorRepositoryFileService,
-        private fileService: CodeEditorFileService,
-        protected localStorageService: LocalStorageService,
-        private themeService: ThemeService,
-    ) {}
+    constructor(private repositoryFileService: CodeEditorRepositoryFileService, private fileService: CodeEditorFileService, protected localStorageService: LocalStorageService) {}
 
     /**
      * @function ngAfterViewInit
      * @desc Sets the theme and other editor options
      */
     ngAfterViewInit(): void {
-        this.themeSubscription = this.themeService.getCurrentThemeObservable().subscribe((theme) => {
-            this.editor.setTheme(theme.codeAceTheme);
-        });
         this.editor.getEditor().setOptions({
             animatedScroll: true,
             enableBasicAutocompletion: true,
@@ -295,7 +284,6 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
         if (this.annotationChange) {
             this.annotationChange.unsubscribe();
         }
-        this.themeSubscription?.unsubscribe();
     }
 
     /**
@@ -510,7 +498,7 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
     }
 
     /**
-     * Called whenever a inline feedback element is emitted. Updates existing feedbacks or adds onto it
+     * Called whenever an inline feedback element is emitted. Updates existing feedbacks or adds onto it
      * @param feedback Newly created inline feedback.
      */
     updateFeedback(feedback: Feedback) {
@@ -529,7 +517,7 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
     }
 
     /**
-     * Called whenever a inline feedback is cancelled. Removes it from ace editor or just aligns height.
+     * Called whenever an inline feedback is cancelled. Removes it from ace editor or just aligns height.
      * @param line
      */
     cancelFeedback(line: number) {

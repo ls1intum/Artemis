@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnChanges, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, HostListener, Input, OnChanges, OnInit, Output } from '@angular/core';
 import { Color, ScaleType } from '@swimlane/ngx-charts';
 import { NgxChartsSingleSeriesDataEntry } from 'app/shared/chart/ngx-charts-datatypes';
 import { GradeType, GradingScale } from 'app/entities/grading-scale.model';
@@ -43,6 +43,7 @@ export class ParticipantScoresDistributionComponent implements OnInit, OnChanges
     yScaleMax: number;
     height = 500;
 
+    showYAxisLabel = true;
     yAxisLabel = this.translateService.instant('artemisApp.examScores.yAxes');
     xAxisLabel = this.translateService.instant('artemisApp.examScores.xAxes');
 
@@ -64,6 +65,7 @@ export class ParticipantScoresDistributionComponent implements OnInit, OnChanges
         this.translateService.onLangChange.subscribe(() => {
             this.setupAxisLabels();
         });
+        this.realignChart();
     }
 
     ngOnChanges() {
@@ -79,6 +81,20 @@ export class ParticipantScoresDistributionComponent implements OnInit, OnChanges
         this.yScaleMax = this.calculateTickMax();
         this.helpIconTooltip = this.determineHelpIconTooltip();
         this.highlightScore();
+    }
+
+    /**
+     * Handles the appearance adaption for smaller screens.
+     * If the screen width is below 700px, the y axis label consumes too much space.
+     * In this case, the corresponding configuration flag changes so that ngx-charts hides the label.
+     */
+    @HostListener('window:resize')
+    realignChart() {
+        if (window.innerWidth < 700 && this.showYAxisLabel) {
+            this.showYAxisLabel = false;
+        } else if (window.innerWidth > 700 && !this.showYAxisLabel) {
+            this.showYAxisLabel = true;
+        }
     }
 
     /**
@@ -111,7 +127,7 @@ export class ParticipantScoresDistributionComponent implements OnInit, OnChanges
     }
 
     /**
-     * Creates the chart labels displaying the intervals each bar covers depending of the existence and state of a grading key
+     * Creates the chart labels displaying the intervals each bar covers depending on the existence and state of a grading key
      * @private
      */
     private createChartLabels(): void {
@@ -180,7 +196,7 @@ export class ParticipantScoresDistributionComponent implements OnInit, OnChanges
     }
 
     /**
-     * Determines and returns the maximum value displayed on the Y axis
+     * Determines and returns the maximum value displayed on the y-axis
      * @private
      */
     private calculateTickMax(): number {

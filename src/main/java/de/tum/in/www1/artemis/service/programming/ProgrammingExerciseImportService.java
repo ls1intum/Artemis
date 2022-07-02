@@ -1,9 +1,9 @@
 package de.tum.in.www1.artemis.service.programming;
 
-import static de.tum.in.www1.artemis.config.Constants.*;
+import static de.tum.in.www1.artemis.config.Constants.ASSIGNMENT_REPO_NAME;
+import static de.tum.in.www1.artemis.config.Constants.TEST_REPO_NAME;
 
 import java.io.IOException;
-import java.net.URISyntaxException;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -17,6 +17,8 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.BuildPlanType;
 import de.tum.in.www1.artemis.domain.enumeration.ExerciseMode;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
+import de.tum.in.www1.artemis.domain.hestia.CodeHint;
+import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseSolutionEntry;
 import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseTask;
 import de.tum.in.www1.artemis.domain.participation.AbstractBaseProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.SolutionProgrammingExerciseParticipation;
@@ -25,6 +27,7 @@ import de.tum.in.www1.artemis.domain.submissionpolicy.SubmissionPolicy;
 import de.tum.in.www1.artemis.exception.ContinuousIntegrationException;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.repository.hestia.ExerciseHintRepository;
+import de.tum.in.www1.artemis.repository.hestia.ProgrammingExerciseSolutionEntryRepository;
 import de.tum.in.www1.artemis.repository.hestia.ProgrammingExerciseTaskRepository;
 import de.tum.in.www1.artemis.service.FileService;
 import de.tum.in.www1.artemis.service.StaticCodeAnalysisService;
@@ -32,11 +35,14 @@ import de.tum.in.www1.artemis.service.UrlService;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.VersionControlService;
+import de.tum.in.www1.artemis.service.hestia.ExerciseHintService;
 
 @Service
 public class ProgrammingExerciseImportService {
 
     private final Logger log = LoggerFactory.getLogger(ProgrammingExerciseImportService.class);
+
+    private final ExerciseHintService exerciseHintService;
 
     private final ExerciseHintRepository exerciseHintRepository;
 
@@ -68,14 +74,18 @@ public class ProgrammingExerciseImportService {
 
     private final ProgrammingExerciseTaskRepository programmingExerciseTaskRepository;
 
+    private final ProgrammingExerciseSolutionEntryRepository solutionEntryRepository;
+
     private final UrlService urlService;
 
-    public ProgrammingExerciseImportService(ExerciseHintRepository exerciseHintRepository, Optional<VersionControlService> versionControlService,
-            Optional<ContinuousIntegrationService> continuousIntegrationService, ProgrammingExerciseParticipationService programmingExerciseParticipationService,
-            ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository, StaticCodeAnalysisCategoryRepository staticCodeAnalysisCategoryRepository,
-            ProgrammingExerciseRepository programmingExerciseRepository, ProgrammingExerciseService programmingExerciseService, GitService gitService, FileService fileService,
-            UserRepository userRepository, StaticCodeAnalysisService staticCodeAnalysisService, AuxiliaryRepositoryRepository auxiliaryRepositoryRepository,
-            SubmissionPolicyRepository submissionPolicyRepository, UrlService urlService, ProgrammingExerciseTaskRepository programmingExerciseTaskRepository) {
+    public ProgrammingExerciseImportService(ExerciseHintService exerciseHintService, ExerciseHintRepository exerciseHintRepository,
+            Optional<VersionControlService> versionControlService, Optional<ContinuousIntegrationService> continuousIntegrationService,
+            ProgrammingExerciseParticipationService programmingExerciseParticipationService, ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository,
+            StaticCodeAnalysisCategoryRepository staticCodeAnalysisCategoryRepository, ProgrammingExerciseRepository programmingExerciseRepository,
+            ProgrammingExerciseService programmingExerciseService, GitService gitService, FileService fileService, UserRepository userRepository,
+            StaticCodeAnalysisService staticCodeAnalysisService, AuxiliaryRepositoryRepository auxiliaryRepositoryRepository, SubmissionPolicyRepository submissionPolicyRepository,
+            UrlService urlService, ProgrammingExerciseTaskRepository programmingExerciseTaskRepository, ProgrammingExerciseSolutionEntryRepository solutionEntryRepository) {
+        this.exerciseHintService = exerciseHintService;
         this.exerciseHintRepository = exerciseHintRepository;
         this.versionControlService = versionControlService;
         this.continuousIntegrationService = continuousIntegrationService;
@@ -92,6 +102,7 @@ public class ProgrammingExerciseImportService {
         this.submissionPolicyRepository = submissionPolicyRepository;
         this.urlService = urlService;
         this.programmingExerciseTaskRepository = programmingExerciseTaskRepository;
+        this.solutionEntryRepository = solutionEntryRepository;
     }
 
     /**
@@ -109,13 +120,15 @@ public class ProgrammingExerciseImportService {
      * </ul>
      *
      * @param templateExercise The template exercise which should get imported
-     * @param newExercise The new exercise already containing values which should not get copied, i.e. overwritten
+     * @param newExercise      The new exercise already containing values which should not get copied, i.e. overwritten
      * @return The newly created exercise
      */
-    @Transactional // ok because we create many objects in a rather complex way and need a rollback in case of exceptions
+    @Transactional
+    // ok because we create many objects in a rather complex way and need a rollback in case of exceptions
     public ProgrammingExercise importProgrammingExerciseBasis(final ProgrammingExercise templateExercise, final ProgrammingExercise newExercise) {
         // Set values we don't want to copy to null
         setupExerciseForImport(newExercise);
+        newExercise.setBranch(versionControlService.get().getDefaultBranchOfArtemis());
 
         // Note: same order as when creating an exercise
         programmingExerciseParticipationService.setupInitialTemplateParticipation(newExercise);
@@ -124,11 +137,12 @@ public class ProgrammingExerciseImportService {
         programmingExerciseService.initParticipations(newExercise);
 
         // Hints, tasks, test cases and static code analysis categories
-        exerciseHintRepository.copyExerciseHints(templateExercise, newExercise);
+        Map<Long, Long> newHintIdByOldId = exerciseHintService.copyExerciseHints(templateExercise, newExercise);
         programmingExerciseRepository.save(newExercise);
         Map<Long, Long> newTestCaseIdByOldId = importTestCases(templateExercise, newExercise);
-        importTasks(templateExercise, newExercise, newTestCaseIdByOldId);
-        // TODO: importing code hints and solution entries is not supported yet but will be added at a later stage of HESTIA
+        Map<Long, Long> newTaskIdByOldId = importTasks(templateExercise, newExercise, newTestCaseIdByOldId);
+        updateTaskExerciseHintReferences(templateExercise, newExercise, newTaskIdByOldId, newHintIdByOldId);
+        importSolutionEntries(templateExercise, newExercise, newTestCaseIdByOldId, newHintIdByOldId);
 
         // Copy or create SCA categories
         if (Boolean.TRUE.equals(newExercise.isStaticCodeAnalysisEnabled() && Boolean.TRUE.equals(templateExercise.isStaticCodeAnalysisEnabled()))) {
@@ -165,7 +179,7 @@ public class ProgrammingExerciseImportService {
      * repository. Participation repositories from students or tutors will not get copied!
      *
      * @param templateExercise The template exercise having a reference to all base repositories
-     * @param newExercise The new exercise without any repositories
+     * @param newExercise      The new exercise without any repositories
      */
     public void importRepositories(final ProgrammingExercise templateExercise, final ProgrammingExercise newExercise) {
         final var targetProjectKey = newExercise.getProjectKey();
@@ -174,28 +188,30 @@ public class ProgrammingExerciseImportService {
         // First, create a new project for our imported exercise
         versionControlService.get().createProjectForExercise(newExercise);
         // Copy all repositories
-        var templateRepoName = urlService.getRepositorySlugFromRepositoryUrlString(templateExercise.getTemplateRepositoryUrl());
-        var testRepoName = urlService.getRepositorySlugFromRepositoryUrlString(templateExercise.getTestRepositoryUrl());
-        var solutionRepoName = urlService.getRepositorySlugFromRepositoryUrlString(templateExercise.getSolutionRepositoryUrl());
+        String templateRepoName = urlService.getRepositorySlugFromRepositoryUrlString(templateExercise.getTemplateRepositoryUrl());
+        String testRepoName = urlService.getRepositorySlugFromRepositoryUrlString(templateExercise.getTestRepositoryUrl());
+        String solutionRepoName = urlService.getRepositorySlugFromRepositoryUrlString(templateExercise.getSolutionRepositoryUrl());
 
-        versionControlService.get().copyRepository(sourceProjectKey, templateRepoName, targetProjectKey, RepositoryType.TEMPLATE.getName());
-        versionControlService.get().copyRepository(sourceProjectKey, solutionRepoName, targetProjectKey, RepositoryType.SOLUTION.getName());
-        versionControlService.get().copyRepository(sourceProjectKey, testRepoName, targetProjectKey, RepositoryType.TESTS.getName());
+        String sourceBranch = versionControlService.get().getOrRetrieveBranchOfExercise(templateExercise);
+
+        versionControlService.get().copyRepository(sourceProjectKey, templateRepoName, sourceBranch, targetProjectKey, RepositoryType.TEMPLATE.getName());
+        versionControlService.get().copyRepository(sourceProjectKey, solutionRepoName, sourceBranch, targetProjectKey, RepositoryType.SOLUTION.getName());
+        versionControlService.get().copyRepository(sourceProjectKey, testRepoName, sourceBranch, targetProjectKey, RepositoryType.TESTS.getName());
 
         List<AuxiliaryRepository> auxiliaryRepositories = templateExercise.getAuxiliaryRepositories();
         for (int i = 0; i < auxiliaryRepositories.size(); i++) {
             AuxiliaryRepository auxiliaryRepository = auxiliaryRepositories.get(i);
             String repositoryUrl = versionControlService.get()
-                    .copyRepository(sourceProjectKey, auxiliaryRepository.getRepositoryName(), targetProjectKey, auxiliaryRepository.getName()).toString();
+                    .copyRepository(sourceProjectKey, auxiliaryRepository.getRepositoryName(), sourceBranch, targetProjectKey, auxiliaryRepository.getName()).toString();
             AuxiliaryRepository newAuxiliaryRepository = newExercise.getAuxiliaryRepositories().get(i);
             newAuxiliaryRepository.setRepositoryUrl(repositoryUrl);
             auxiliaryRepositoryRepository.save(newAuxiliaryRepository);
         }
 
         // Unprotect the default branch of the template exercise repo.
-        var templateVcsRepositoryUrl = newExercise.getVcsTemplateRepositoryUrl();
-        var templateVcsRepositoryDefaultBranch = versionControlService.get().getDefaultBranchOfRepository(templateVcsRepositoryUrl);
-        versionControlService.get().unprotectBranch(templateVcsRepositoryUrl, templateVcsRepositoryDefaultBranch);
+        VcsRepositoryUrl templateVcsRepositoryUrl = newExercise.getVcsTemplateRepositoryUrl();
+        String templateVcsRepositoryBranch = versionControlService.get().getOrRetrieveBranchOfExercise(templateExercise);
+        versionControlService.get().unprotectBranch(templateVcsRepositoryUrl, templateVcsRepositoryBranch);
 
         // Add the necessary hooks notifying Artemis about changes after commits have been pushed
         versionControlService.get().addWebHooksForExercise(newExercise);
@@ -214,7 +230,7 @@ public class ProgrammingExerciseImportService {
      * any participation plans!
      *
      * @param templateExercise The template exercise which plans should get copied
-     * @param newExercise The new exercise to which all plans should get copied
+     * @param newExercise      The new exercise to which all plans should get copied
      */
     public void importBuildPlans(final ProgrammingExercise templateExercise, final ProgrammingExercise newExercise) {
         final var templateParticipation = newExercise.getTemplateParticipation();
@@ -241,48 +257,36 @@ public class ProgrammingExerciseImportService {
     private void updatePlanRepositoriesInBuildPlans(ProgrammingExercise newExercise, TemplateProgrammingExerciseParticipation templateParticipation,
             SolutionProgrammingExerciseParticipation solutionParticipation, String targetExerciseProjectKey, String oldExerciseRepoUrl, String oldSolutionRepoUrl,
             String oldTestRepoUrl, List<AuxiliaryRepository> oldBuildPlanAuxiliaryRepositories) {
-        try {
-            String templateDefaultBranch = versionControlService.get().getDefaultBranchOfRepository(new VcsRepositoryUrl(newExercise.getTemplateRepositoryUrl()));
-            String testDefaultBranch = versionControlService.get().getDefaultBranchOfRepository(new VcsRepositoryUrl(newExercise.getTestRepositoryUrl()));
-            String solutionDefaultBranch = versionControlService.get().getDefaultBranchOfRepository(new VcsRepositoryUrl(newExercise.getSolutionRepositoryUrl()));
+        String newExerciseBranch = versionControlService.get().getOrRetrieveBranchOfExercise(newExercise);
 
-            // update 2 repositories for the BASE build plan --> adapt the triggers so that only the assignment repo (and not the tests' repo) will trigger the BASE build plan
-            continuousIntegrationService.get().updatePlanRepository(targetExerciseProjectKey, templateParticipation.getBuildPlanId(), ASSIGNMENT_REPO_NAME,
-                    targetExerciseProjectKey, newExercise.getTemplateRepositoryUrl(), oldExerciseRepoUrl, templateDefaultBranch, Optional.of(List.of(ASSIGNMENT_REPO_NAME)));
+        // update 2 repositories for the BASE build plan --> adapt the triggers so that only the assignment repo (and not the tests' repo) will trigger the BASE build plan
+        continuousIntegrationService.get().updatePlanRepository(targetExerciseProjectKey, templateParticipation.getBuildPlanId(), ASSIGNMENT_REPO_NAME, targetExerciseProjectKey,
+                newExercise.getTemplateRepositoryUrl(), oldExerciseRepoUrl, newExerciseBranch, Optional.of(List.of(ASSIGNMENT_REPO_NAME)));
 
-            continuousIntegrationService.get().updatePlanRepository(targetExerciseProjectKey, templateParticipation.getBuildPlanId(), TEST_REPO_NAME, targetExerciseProjectKey,
-                    newExercise.getTestRepositoryUrl(), oldTestRepoUrl, testDefaultBranch, Optional.empty());
+        continuousIntegrationService.get().updatePlanRepository(targetExerciseProjectKey, templateParticipation.getBuildPlanId(), TEST_REPO_NAME, targetExerciseProjectKey,
+                newExercise.getTestRepositoryUrl(), oldTestRepoUrl, newExerciseBranch, Optional.empty());
 
-            updateAuxiliaryRepositoriesForNewExercise(newExercise.getAuxiliaryRepositoriesForBuildPlan(), oldBuildPlanAuxiliaryRepositories, templateParticipation,
-                    targetExerciseProjectKey);
+        updateAuxiliaryRepositoriesForNewExercise(newExercise.getAuxiliaryRepositoriesForBuildPlan(), oldBuildPlanAuxiliaryRepositories, templateParticipation,
+                targetExerciseProjectKey, newExercise);
 
-            // update 2 repositories for the SOLUTION build plan
-            continuousIntegrationService.get().updatePlanRepository(targetExerciseProjectKey, solutionParticipation.getBuildPlanId(), ASSIGNMENT_REPO_NAME,
-                    targetExerciseProjectKey, newExercise.getSolutionRepositoryUrl(), oldSolutionRepoUrl, solutionDefaultBranch, Optional.empty());
-            continuousIntegrationService.get().updatePlanRepository(targetExerciseProjectKey, solutionParticipation.getBuildPlanId(), TEST_REPO_NAME, targetExerciseProjectKey,
-                    newExercise.getTestRepositoryUrl(), oldTestRepoUrl, testDefaultBranch, Optional.empty());
+        // update 2 repositories for the SOLUTION build plan
+        continuousIntegrationService.get().updatePlanRepository(targetExerciseProjectKey, solutionParticipation.getBuildPlanId(), ASSIGNMENT_REPO_NAME, targetExerciseProjectKey,
+                newExercise.getSolutionRepositoryUrl(), oldSolutionRepoUrl, newExerciseBranch, Optional.empty());
+        continuousIntegrationService.get().updatePlanRepository(targetExerciseProjectKey, solutionParticipation.getBuildPlanId(), TEST_REPO_NAME, targetExerciseProjectKey,
+                newExercise.getTestRepositoryUrl(), oldTestRepoUrl, newExerciseBranch, Optional.empty());
 
-            updateAuxiliaryRepositoriesForNewExercise(newExercise.getAuxiliaryRepositoriesForBuildPlan(), oldBuildPlanAuxiliaryRepositories, solutionParticipation,
-                    targetExerciseProjectKey);
-        }
-        catch (URISyntaxException ex) {
-            log.error(ex.getMessage(), ex);
-        }
+        updateAuxiliaryRepositoriesForNewExercise(newExercise.getAuxiliaryRepositoriesForBuildPlan(), oldBuildPlanAuxiliaryRepositories, solutionParticipation,
+                targetExerciseProjectKey, newExercise);
     }
 
     private void updateAuxiliaryRepositoriesForNewExercise(List<AuxiliaryRepository> newRepositories, List<AuxiliaryRepository> oldRepositories,
-            AbstractBaseProgrammingExerciseParticipation participation, String targetExerciseProjectKey) {
+            AbstractBaseProgrammingExerciseParticipation participation, String targetExerciseProjectKey, ProgrammingExercise newExercise) {
         for (int i = 0; i < newRepositories.size(); i++) {
             AuxiliaryRepository newAuxiliaryRepository = newRepositories.get(i);
             AuxiliaryRepository oldAuxiliaryRepository = oldRepositories.get(i);
-            try {
-                String auxiliaryDefaultBranch = versionControlService.get().getDefaultBranchOfRepository(new VcsRepositoryUrl(newAuxiliaryRepository.getRepositoryUrl()));
-                continuousIntegrationService.get().updatePlanRepository(targetExerciseProjectKey, participation.getBuildPlanId(), newAuxiliaryRepository.getName(),
-                        targetExerciseProjectKey, newAuxiliaryRepository.getRepositoryUrl(), oldAuxiliaryRepository.getRepositoryUrl(), auxiliaryDefaultBranch, Optional.empty());
-            }
-            catch (URISyntaxException ex) {
-                log.error(ex.getMessage(), ex);
-            }
+            String auxiliaryBranch = versionControlService.get().getOrRetrieveBranchOfExercise(newExercise);
+            continuousIntegrationService.get().updatePlanRepository(targetExerciseProjectKey, participation.getBuildPlanId(), newAuxiliaryRepository.getName(),
+                    targetExerciseProjectKey, newAuxiliaryRepository.getRepositoryUrl(), oldAuxiliaryRepository.getRepositoryUrl(), auxiliaryBranch, Optional.empty());
         }
     }
 
@@ -310,8 +314,8 @@ public class ProgrammingExerciseImportService {
      * The remaining contents stay the same, especially the weights.
      *
      * @param templateExercise The template exercise which test cases should get copied
-     * @param targetExercise The new exercise to which all test cases should get copied to
-     * @return a map with the old test case id as a key and the new test case id as value
+     * @param targetExercise   The new exercise to which all test cases should get copied to
+     * @return A map with the old test case id as a key and the new test case id as value
      */
     private Map<Long, Long> importTestCases(final ProgrammingExercise templateExercise, final ProgrammingExercise targetExercise) {
         Map<Long, Long> newIdByOldId = new HashMap<>();
@@ -338,11 +342,14 @@ public class ProgrammingExerciseImportService {
     /**
      * Copies tasks from one exercise to another. Because the tasks from the template exercise references its test cases, the
      * references between tasks and test cases also need to be changed.
-     * @param templateExercise The template exercise which tasks should be copied
-     * @param targetExercise The new exercise to which all tasks should get copied to
-     * @param newTestCaseIdByOldId a map with the old test case id as a key and the new test case id as a value
+     *
+     * @param templateExercise     The template exercise which tasks should be copied
+     * @param targetExercise       The new exercise to which all tasks should get copied to
+     * @param newTestCaseIdByOldId A map with the old test case id as a key and the new test case id as a value
+     * @return A map with the old task id as a key and the new task id as value
      */
-    private void importTasks(final ProgrammingExercise templateExercise, final ProgrammingExercise targetExercise, Map<Long, Long> newTestCaseIdByOldId) {
+    private Map<Long, Long> importTasks(final ProgrammingExercise templateExercise, final ProgrammingExercise targetExercise, Map<Long, Long> newTestCaseIdByOldId) {
+        Map<Long, Long> newIdByOldId = new HashMap<>();
         targetExercise.setTasks(templateExercise.getTasks().stream().map(task -> {
             final var copy = new ProgrammingExerciseTask();
 
@@ -356,8 +363,74 @@ public class ProgrammingExerciseImportService {
             }).collect(Collectors.toSet()));
             copy.setExercise(targetExercise);
             programmingExerciseTaskRepository.save(copy);
+            newIdByOldId.put(task.getId(), copy.getId());
             return copy;
-        }).collect(Collectors.toSet()));
+        }).collect(Collectors.toList()));
+        return newIdByOldId;
+    }
+
+    /**
+     * Updates the newly imported exercise hints to reference the newly imported tasks they belong to.
+     *
+     * @param templateExercise The template exercise which tasks should be copied
+     * @param targetExercise   The new exercise to which all tasks should get copied to
+     * @param newTaskIdByOldId A map with the old task id as a key and the new task id as a value
+     * @param newHintIdByOldId A map with the old hint id as a key and the new hint id as a value
+     */
+    private void updateTaskExerciseHintReferences(final ProgrammingExercise templateExercise, final ProgrammingExercise targetExercise, Map<Long, Long> newTaskIdByOldId,
+            Map<Long, Long> newHintIdByOldId) {
+        templateExercise.getExerciseHints().forEach(templateExerciseHint -> {
+            var templateTask = templateExerciseHint.getProgrammingExerciseTask();
+            if (templateTask == null) {
+                return;
+            }
+            var targetTask = targetExercise.getTasks().stream().filter(newTask -> Objects.equals(newTask.getId(), newTaskIdByOldId.get(templateTask.getId()))).findAny()
+                    .orElseThrow();
+            var targetExerciseHint = targetExercise.getExerciseHints().stream()
+                    .filter(newHint -> Objects.equals(newHint.getId(), newHintIdByOldId.get(templateExerciseHint.getId()))).findAny().orElseThrow();
+
+            targetExerciseHint.setProgrammingExerciseTask(targetTask);
+            exerciseHintRepository.save(targetExerciseHint);
+            targetTask.getExerciseHints().add(targetExerciseHint);
+        });
+    }
+
+    /**
+     * Copies solution entries from one exercise to another. Because the solution entries from the template exercise
+     * references its test cases and code hint, the references between them also need to be changed.
+     *
+     * @param templateExercise     The template exercise which tasks should be copied
+     * @param targetExercise       The new exercise to which all tasks should get copied to
+     * @param newTestCaseIdByOldId A map with the old test case id as a key and the new test case id as a value
+     * @param newHintIdByOldId     A map with the old hint id as a key and the new hint id as a value
+     */
+    private void importSolutionEntries(final ProgrammingExercise templateExercise, final ProgrammingExercise targetExercise, Map<Long, Long> newTestCaseIdByOldId,
+            Map<Long, Long> newHintIdByOldId) {
+        templateExercise.getTestCases().forEach(testCase -> {
+            var newSolutionEntries = solutionEntryRepository.findByTestCaseIdWithCodeHint(testCase.getId()).stream().map(solutionEntry -> {
+                Long newTestCaseId = newTestCaseIdByOldId.get(testCase.getId());
+                var targetTestCase = targetExercise.getTestCases().stream().filter(newTestCase -> Objects.equals(newTestCaseId, newTestCase.getId())).findFirst().orElseThrow();
+
+                CodeHint codeHint = null;
+                if (solutionEntry.getCodeHint() != null) {
+                    Long newHintId = newHintIdByOldId.get(solutionEntry.getCodeHint().getId());
+                    codeHint = (CodeHint) targetExercise.getExerciseHints().stream().filter(newHint -> Objects.equals(newHintId, newHint.getId())).findFirst().orElseThrow();
+                }
+                var copy = new ProgrammingExerciseSolutionEntry();
+                copy.setCode(solutionEntry.getCode());
+                copy.setPreviousCode(solutionEntry.getPreviousCode());
+                copy.setLine(solutionEntry.getLine());
+                copy.setPreviousLine(solutionEntry.getPreviousLine());
+                copy.setTestCase(targetTestCase);
+                targetTestCase.getSolutionEntries().add(copy);
+                copy.setCodeHint(codeHint);
+                if (codeHint != null) {
+                    codeHint.getSolutionEntries().add(copy);
+                }
+                return copy;
+            }).collect(Collectors.toSet());
+            solutionEntryRepository.saveAll(newSolutionEntries);
+        });
     }
 
     /**
@@ -365,7 +438,7 @@ public class ProgrammingExerciseImportService {
      * appropriate fields.
      *
      * @param templateExercise with static code analysis categories which should get copied
-     * @param targetExercise for which static code analysis categories will be copied
+     * @param targetExercise   for which static code analysis categories will be copied
      */
     private void importStaticCodeAnalysisCategories(final ProgrammingExercise templateExercise, final ProgrammingExercise targetExercise) {
         targetExercise.setStaticCodeAnalysisCategories(templateExercise.getStaticCodeAnalysisCategories().stream().map(originalCategory -> {
@@ -447,10 +520,11 @@ public class ProgrammingExerciseImportService {
     /**
      * Adjust project names in imported exercise for TEST, BASE and SOLUTION repositories.
      * Replace values inserted in {@link ProgrammingExerciseService#replacePlaceholders(ProgrammingExercise, Repository)}.
+     *
      * @param templateExercise the exercise from which the values that should be replaced are extracted
-     * @param newExercise the exercise from which the values that should be inserted are extracted
+     * @param newExercise      the exercise from which the values that should be inserted are extracted
      * @throws GitAPIException If the checkout/push of one repository fails
-     * @throws IOException If the values in the files could not be replaced
+     * @throws IOException     If the values in the files could not be replaced
      */
     private void adjustProjectNames(ProgrammingExercise templateExercise, ProgrammingExercise newExercise) throws GitAPIException, IOException {
         final var projectKey = newExercise.getProjectKey();
@@ -479,12 +553,13 @@ public class ProgrammingExerciseImportService {
     /**
      * Adjust project names in imported exercise for specific repository.
      * Replace values inserted in {@link ProgrammingExerciseService#replacePlaceholders(ProgrammingExercise, Repository)}.
-     * @param replacements the replacements that should be applied
-     * @param projectKey the project key of the new exercise
+     *
+     * @param replacements   the replacements that should be applied
+     * @param projectKey     the project key of the new exercise
      * @param repositoryName the name of the repository that should be adjusted
-     * @param user the user which performed the action (used as Git author)
+     * @param user           the user which performed the action (used as Git author)
      * @throws GitAPIException If the checkout/push of one repository fails
-     * @throws IOException If the values in the files could not be replaced
+     * @throws IOException     If the values in the files could not be replaced
      */
     private void adjustProjectName(Map<String, String> replacements, String projectKey, String repositoryName, User user) throws GitAPIException, IOException {
         final var repositoryUrl = versionControlService.get().getCloneRepositoryUrl(projectKey, repositoryName);

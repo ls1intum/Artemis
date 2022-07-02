@@ -51,13 +51,15 @@ import { TextExercise } from 'app/entities/text-exercise.model';
 import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
 import { PlagiarismCasesService } from 'app/course/plagiarism-cases/shared/plagiarism-cases.service';
 import { PlagiarismCase } from 'app/exercises/shared/plagiarism/types/PlagiarismCase';
+import { ExerciseHintService } from 'app/exercises/shared/exercise-hint/shared/exercise-hint.service';
+import { ExerciseHint } from 'app/entities/hestia/exercise-hint.model';
 
 const MAX_RESULT_HISTORY_LENGTH = 5;
 
 @Component({
     selector: 'jhi-course-exercise-details',
     templateUrl: './course-exercise-details.component.html',
-    styleUrls: ['../course-overview.scss'],
+    styleUrls: ['../course-overview.scss', '../tab-bar/tab-bar.scss'],
 })
 export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     readonly AssessmentType = AssessmentType;
@@ -68,6 +70,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     readonly MODELING = ExerciseType.MODELING;
     readonly TEXT = ExerciseType.TEXT;
     readonly FILE_UPLOAD = ExerciseType.FILE_UPLOAD;
+
     private currentUser: User;
     private exerciseId: number;
     public courseId: number;
@@ -93,6 +96,8 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     submissionPolicy: SubmissionPolicy;
     exampleSolutionCollapsed: boolean;
     plagiarismCase?: PlagiarismCase;
+    availableExerciseHints: ExerciseHint[];
+    activatedExerciseHints: ExerciseHint[];
 
     public modelingExercise?: ModelingExercise;
     public exampleSolution?: SafeHtml;
@@ -146,6 +151,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         private navigationUtilService: ArtemisNavigationUtilService,
         private artemisMarkdown: ArtemisMarkdownService,
         private plagiarismCaseService: PlagiarismCasesService,
+        private exerciseHintService: ExerciseHintService,
     ) {}
 
     ngOnInit() {
@@ -373,6 +379,24 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
                         ? this.exercise.studentParticipations.map((el) => (el.id === changedParticipation.id ? changedParticipation : el))
                         : [changedParticipation];
                 this.mergeResultsAndSubmissionsForParticipations();
+
+                if (ExerciseType.PROGRAMMING === this.exercise?.type) {
+                    this.exerciseHintService.getActivatedExerciseHints(this.exerciseId).subscribe((activatedRes?: HttpResponse<ExerciseHint[]>) => {
+                        this.activatedExerciseHints = activatedRes!.body!;
+
+                        this.exerciseHintService.getAvailableExerciseHints(this.exerciseId).subscribe((availableRes?: HttpResponse<ExerciseHint[]>) => {
+                            // filter out the activated hints from the available hints
+                            this.availableExerciseHints = availableRes!.body!.filter(
+                                (availableHint) => !this.activatedExerciseHints.some((activatedHint) => availableHint.id === activatedHint.id),
+                            );
+                            if (this.availableExerciseHints.length) {
+                                this.alertService.info('artemisApp.exerciseHint.availableHintsAlertMessage', {
+                                    taskName: this.availableExerciseHints.first()?.programmingExerciseTask?.taskName,
+                                });
+                            }
+                        });
+                    });
+                }
             }
         });
     }
@@ -498,10 +522,15 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         this.alertService.error(error);
     }
 
+    onHintActivated(exerciseHint: ExerciseHint) {
+        this.availableExerciseHints = this.availableExerciseHints.filter((hint) => hint.id !== exerciseHint.id);
+        this.activatedExerciseHints.push(exerciseHint);
+    }
+
     // ################## ONLY FOR LOCAL TESTING PURPOSE -- START ##################
 
     /**
-     * Triggers the simulation of a participation and submission for the currently logged in user
+     * Triggers the simulation of a participation and submission for the currently logged-in user
      * This method will fail if used in production
      * This functionality is only for testing purposes(noVersionControlAndContinuousIntegrationAvailable)
      */
@@ -519,7 +548,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * Triggers the simulation of a result for the currently logged in user
+     * Triggers the simulation of a result for the currently logged-in user
      * This method will fail if used in production
      * This functionality is only for testing purposes(noVersionControlAndContinuousIntegrationAvailable)
      */

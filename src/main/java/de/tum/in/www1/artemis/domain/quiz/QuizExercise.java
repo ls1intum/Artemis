@@ -77,7 +77,7 @@ public class QuizExercise extends Exercise {
     @JsonView(QuizView.During.class)
     private List<QuizQuestion> quizQuestions = new ArrayList<>();
 
-    @OneToMany(mappedBy = "quizExercise", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "quizExercise", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     @JsonView(QuizView.Before.class)
     private Set<QuizBatch> quizBatches = new HashSet<>();
@@ -194,7 +194,7 @@ public class QuizExercise extends Exercise {
     @JsonIgnore
     public Boolean isValid() {
         // check title
-        if (getTitle() == null || getTitle().equals("")) {
+        if (getTitle() == null || getTitle().isEmpty()) {
             return false;
         }
 

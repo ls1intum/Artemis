@@ -10,6 +10,10 @@ import { CodeBlockCommand } from 'app/shared/markdown-editor/commands/codeblock.
 import { LinkCommand } from 'app/shared/markdown-editor/commands/link.command';
 import { getElement } from '../../../../helpers/utils/general.utils';
 import { By } from '@angular/platform-browser';
+import { MetisService } from 'app/shared/metis/metis.service';
+import { MockMetisService } from '../../../../helpers/mocks/service/mock-metis-service.service';
+import { ExerciseReferenceCommand } from 'app/shared/markdown-editor/commands/courseArtifactReferenceCommands/exerciseReferenceCommand';
+import { LectureAttachmentReferenceCommand } from 'app/shared/markdown-editor/commands/courseArtifactReferenceCommands/lectureAttachmentReferenceCommand';
 import { metisAnswerPostUser2, metisPostExerciseUser1 } from '../../../../helpers/sample/metis-sample-data';
 
 // tslint:disable-next-line:directive-selector
@@ -24,9 +28,11 @@ describe('PostingsMarkdownEditor', () => {
     let mockMarkdownEditorDirective: MockMarkdownEditorDirective;
     let fixture: ComponentFixture<PostingMarkdownEditorComponent>;
     let debugElement: DebugElement;
+    let metisService: MetisService;
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
+            providers: [{ provide: MetisService, useClass: MockMetisService }],
             declarations: [PostingMarkdownEditorComponent, MockMarkdownEditorDirective],
             schemas: [CUSTOM_ELEMENTS_SCHEMA], // required because we mock the nested MarkdownEditorComponent
         })
@@ -36,6 +42,7 @@ describe('PostingsMarkdownEditor', () => {
                 fixture.autoDetectChanges();
                 component = fixture.componentInstance;
                 debugElement = fixture.debugElement;
+                metisService = TestBed.inject(MetisService);
                 const mockMarkdownEditorElement = fixture.debugElement.query(By.directive(MockMarkdownEditorDirective));
                 mockMarkdownEditorDirective = mockMarkdownEditorElement.injector.get(MockMarkdownEditorDirective) as MockMarkdownEditorDirective;
                 component.ngOnInit();
@@ -45,6 +52,7 @@ describe('PostingsMarkdownEditor', () => {
 
     it('should have set the correct default commands on init', () => {
         component.ngOnInit();
+
         expect(component.defaultCommands).toEqual([
             new BoldCommand(),
             new ItalicCommand(),
@@ -53,6 +61,8 @@ describe('PostingsMarkdownEditor', () => {
             new CodeCommand(),
             new CodeBlockCommand(),
             new LinkCommand(),
+            new ExerciseReferenceCommand(metisService),
+            new LectureAttachmentReferenceCommand(metisService),
         ]);
     });
 

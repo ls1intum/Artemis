@@ -50,7 +50,7 @@ import {
     faUserPlus,
     faWrench,
 } from '@fortawesome/free-solid-svg-icons';
-import { ExerciseHintService } from 'app/exercises/shared/exercise-hint/manage/exercise-hint.service';
+import { ExerciseHintService } from 'app/exercises/shared/exercise-hint/shared/exercise-hint.service';
 import { Exercise } from 'app/entities/exercise.model';
 import { ThemeService } from 'app/core/theme/theme.service';
 
@@ -134,7 +134,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
         this.onResize();
     }
 
-    @HostListener('window:resize', ['$event'])
+    @HostListener('window:resize')
     onResize() {
         this.isCollapsed = window.innerWidth < 1200;
     }
@@ -149,7 +149,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
 
         this.subscribeForGuidedTourAvailability();
 
-        // The current user is needed to hide menu items for not logged in users.
+        // The current user is needed to hide menu items for not logged-in users.
         this.authStateSubscription = this.accountService
             .getAuthenticationState()
             .pipe(
@@ -219,7 +219,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
         goal_management: 'artemisApp.learningGoal.manageLearningGoals.title',
         assessment_locks: 'artemisApp.assessment.locks.home.title',
         apollon_diagrams: 'artemisApp.apollonDiagram.home.title',
-        discussion: 'artemisApp.metis.discussion.label',
+        communication: 'artemisApp.metis.communication.label',
         scores: 'entity.action.scores',
         assessment: 'artemisApp.assessment.assessment',
         export: 'artemisApp.quizExercise.export.export',
@@ -246,6 +246,9 @@ export class NavbarComponent implements OnInit, OnDestroy {
         tutors: 'artemisApp.course.tutors',
         instructors: 'artemisApp.course.instructors',
         test_runs: 'artemisApp.examManagement.testRun.testRun',
+        monitoring: 'artemisApp.examMonitoring.title',
+        overview: 'artemisApp.examMonitoring.menu.overview.title',
+        activity_log: 'artemisApp.examMonitoring.menu.activity-log.title',
         assess: 'artemisApp.examManagement.assessmentDashboard',
         summary: 'artemisApp.exam.summary',
         conduction: 'artemisApp.exam.title',
@@ -431,10 +434,10 @@ export class NavbarComponent implements OnInit, OnDestroy {
                     this.addTranslationAsCrumb(currentPath, 'grading');
                     break;
                 } else if (this.lastRouteUrlSegment === 'code-editor' && segment === 'new') {
-                    // - This route is bogus an needs to be replaced in the future, display no crumb
+                    // - This route is bogus and needs to be replaced in the future, display no crumb
                     break;
                 } else if (this.lastRouteUrlSegment === 'programming-exercises' && segment === 'import') {
-                    // - This route is bogus an needs to be replaced in the future, display no crumb
+                    // - This route is bogus and needs to be replaced in the future, display no crumb
                     break;
                 } else if (this.lastRouteUrlSegment === 'exercise-groups') {
                     // - Don't display '<type>-exercises' because it has no associated route

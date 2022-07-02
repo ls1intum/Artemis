@@ -88,9 +88,11 @@ export class CoursesComponent implements OnInit, OnChanges, OnDestroy {
                         });
                     }
                 });
-
+                // Used as constant to limit the number of calls
+                const timeNow = this.serverDateService.now();
                 this.nextRelevantExams = this.exams.filter(
-                    (exam) => this.serverDateService.now().isBefore(exam.endDate!) && this.serverDateService.now().isAfter(exam.visibleDate!),
+                    // TestExams should not be displayed as upcoming exams
+                    (exam) => !exam.testExam! && timeNow.isBefore(exam.endDate!) && timeNow.isAfter(exam.visibleDate!),
                 );
                 this.nextRelevantExercise = this.findNextRelevantExercise();
             },

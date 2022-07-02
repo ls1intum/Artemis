@@ -54,7 +54,7 @@ describe('SystemNotificationManagementUpdateComponent', () => {
         button.click();
 
         tick();
-        expect(previousStateSpy).toHaveBeenCalledTimes(1);
+        expect(previousStateSpy).toHaveBeenCalledOnce();
     }));
 
     it('should update if save is clicked', fakeAsync(() => {
@@ -66,7 +66,7 @@ describe('SystemNotificationManagementUpdateComponent', () => {
         button.click();
 
         tick();
-        expect(saveSpy).toHaveBeenCalledTimes(1);
+        expect(saveSpy).toHaveBeenCalledOnce();
     }));
 
     it('should create if save is clicked', fakeAsync(() => {
@@ -82,6 +82,6 @@ describe('SystemNotificationManagementUpdateComponent', () => {
         button.click();
 
         tick();
-        expect(saveSpy).toHaveBeenCalledTimes(1);
+        expect(saveSpy).toHaveBeenCalledOnce();
     }));
 });

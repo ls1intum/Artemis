@@ -162,6 +162,12 @@ public class CourseBitbucketBambooJiraIntegrationTest extends AbstractSpringInte
     }
 
     @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testEditCourseShouldPreserveAssociations() throws Exception {
+        courseTestService.testEditCourseShouldPreserveAssociations();
+    }
+
+    @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     public void testUpdateCourseGroups() throws Exception {
         bitbucketRequestMockProvider.mockRevokeGroupPermissionFromAnyProject("instructor");
@@ -395,6 +401,12 @@ public class CourseBitbucketBambooJiraIntegrationTest extends AbstractSpringInte
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testGetAllStudentsOrTutorsOrInstructorsInCourse() throws Exception {
         courseTestService.testGetAllStudentsOrTutorsOrInstructorsInCourse();
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testGetAllEditorsInCourse() throws Exception {
+        courseTestService.testGetAllEditorsInCourse();
     }
 
     @Test
@@ -661,5 +673,17 @@ public class CourseBitbucketBambooJiraIntegrationTest extends AbstractSpringInte
         doReturn(Optional.empty()).when(ldapUserService).findByRegistrationNumber(registrationNumber1);
         doReturn(Optional.empty()).when(ldapUserService).findByRegistrationNumber(registrationNumber2);
         courseTestService.testAddUsersToCourseGroup(group, registrationNumber1, registrationNumber2);
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    public void testCreateCourseWithValidStartAndEndDate() throws Exception {
+        courseTestService.testCreateCourseWithValidStartAndEndDate();
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    public void testCreateCourseWithInvalidStartAndEndDate() throws Exception {
+        courseTestService.testCreateCourseWithInvalidStartAndEndDate();
     }
 }

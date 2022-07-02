@@ -37,20 +37,20 @@ jhi-secured-image {
     }
 }
 
-.course-icon {
-    ::ng-deep {
-        img {
-            border-radius: 50%;
-            max-width: 100%;
-            max-height: 130px;
-        }
-    }
-}
-
 .doughnut-container {
     min-width: 200px;
 }
 
 .fullscreen {
     margin-top: 4px;
+}
+
+@media (min-width: 1400px) {
+    .col-xxl-4 {
+        width: 1/3%;
+    }
+
+    .col-xxl-8 {
+        width: 2/3%;
+    }
 }

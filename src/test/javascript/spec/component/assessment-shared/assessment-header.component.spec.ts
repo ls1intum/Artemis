@@ -170,16 +170,16 @@ describe('AssessmentHeaderComponent', () => {
 
         jest.spyOn(component.save, 'emit');
         saveButtonSpan.nativeElement.click();
-        expect(component.save.emit).toHaveBeenCalledTimes(1);
+        expect(component.save.emit).toHaveBeenCalledOnce();
 
         jest.spyOn(component.submit, 'emit');
         submitButtonSpan.nativeElement.click();
-        expect(component.submit.emit).toHaveBeenCalledTimes(1);
+        expect(component.submit.emit).toHaveBeenCalledOnce();
 
         const cancelButtonSpan = fixture.debugElement.query(By.css('[jhiTranslate$=cancel]'));
         jest.spyOn(component.cancel, 'emit');
         cancelButtonSpan.nativeElement.click();
-        expect(component.cancel.emit).toHaveBeenCalledTimes(1);
+        expect(component.cancel.emit).toHaveBeenCalledOnce();
     });
 
     it('should show override button when result is present', () => {
@@ -204,7 +204,7 @@ describe('AssessmentHeaderComponent', () => {
 
         jest.spyOn(component.submit, 'emit');
         overrideAssessmentButtonSpan.nativeElement.click();
-        expect(component.submit.emit).toHaveBeenCalledTimes(1);
+        expect(component.submit.emit).toHaveBeenCalledOnce();
     });
 
     it('should show next submission if assessor or instructor, result is present and no complaint', () => {
@@ -259,7 +259,7 @@ describe('AssessmentHeaderComponent', () => {
         fixture.detectChanges();
         nextSubmissionButtonSpan = fixture.debugElement.query(By.css('[jhiTranslate$=nextSubmission]'));
         nextSubmissionButtonSpan.nativeElement.click();
-        expect(component.nextSubmission.emit).toHaveBeenCalledTimes(1);
+        expect(component.nextSubmission.emit).toHaveBeenCalledOnce();
     });
     it('should not show assess next button if is test run mode', () => {
         component.isTestRun = true;
@@ -276,7 +276,7 @@ describe('AssessmentHeaderComponent', () => {
         component.toggleHighlightDifferences();
 
         expect(component.highlightDifferencesChange.emit).toHaveBeenCalled();
-        expect(component.highlightDifferences).toEqual(true);
+        expect(component.highlightDifferences).toBeTrue();
     });
 
     it('should set highlightDifferences to false', () => {
@@ -286,7 +286,7 @@ describe('AssessmentHeaderComponent', () => {
         component.toggleHighlightDifferences();
 
         expect(component.highlightDifferencesChange.emit).toHaveBeenCalled();
-        expect(component.highlightDifferences).toEqual(false);
+        expect(component.highlightDifferences).toBeFalse();
     });
 
     it('should send assessment event on assess next button click when exercise set to Text', () => {
@@ -343,8 +343,8 @@ describe('AssessmentHeaderComponent', () => {
         const saveSpy = jest.spyOn(component.save, 'emit');
         document.dispatchEvent(eventMock);
 
-        expect(spyOnControlAndS).toHaveBeenCalledTimes(1);
-        expect(saveSpy).toHaveBeenCalledTimes(1);
+        expect(spyOnControlAndS).toHaveBeenCalledOnce();
+        expect(saveSpy).toHaveBeenCalledOnce();
     });
 
     it('should submit assessment on control and enter', () => {
@@ -361,8 +361,8 @@ describe('AssessmentHeaderComponent', () => {
         const submitSpy = jest.spyOn(component.submit, 'emit');
         document.dispatchEvent(eventMock);
 
-        expect(spyOnControlAndEnter).toHaveBeenCalledTimes(1);
-        expect(submitSpy).toHaveBeenCalledTimes(1);
+        expect(spyOnControlAndEnter).toHaveBeenCalledOnce();
+        expect(submitSpy).toHaveBeenCalledOnce();
     });
 
     it('should override assessment on control and enter', () => {
@@ -378,8 +378,8 @@ describe('AssessmentHeaderComponent', () => {
         const submitSpy = jest.spyOn(component.submit, 'emit');
         document.dispatchEvent(eventMock);
 
-        expect(spyOnControlAndEnter).toHaveBeenCalledTimes(1);
-        expect(submitSpy).toHaveBeenCalledTimes(1);
+        expect(spyOnControlAndEnter).toHaveBeenCalledOnce();
+        expect(submitSpy).toHaveBeenCalledOnce();
     });
 
     it('should assess next submission on control, shift and arrow right', () => {
@@ -395,7 +395,7 @@ describe('AssessmentHeaderComponent', () => {
         const nextSpy = jest.spyOn(component.nextSubmission, 'emit');
         document.dispatchEvent(eventMock);
 
-        expect(spyOnControlShiftAndArrowRight).toHaveBeenCalledTimes(1);
-        expect(nextSpy).toHaveBeenCalledTimes(1);
+        expect(spyOnControlShiftAndArrowRight).toHaveBeenCalledOnce();
+        expect(nextSpy).toHaveBeenCalledOnce();
     });
 });

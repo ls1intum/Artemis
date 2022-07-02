@@ -5,7 +5,7 @@
         <span *ngSwitchCase="'preview'" class="in-parentheses" jhiTranslate="artemisApp.quizExercise.previewMode"></span>
         <span *ngSwitchCase="'solution'" class="in-parentheses" jhiTranslate="artemisApp.quizExercise.solution"></span>
     </h2>
-    <p *ngIf="!waitingForQuizStart && !submission.submitted && !showingResult" jhiTranslate="artemisApp.quizExercise.quizInstructions.live"></p>
+    <p *ngIf="!waitingForQuizStart && !submission.submitted && !showingResult && remainingTimeSeconds >= 0" jhiTranslate="artemisApp.quizExercise.quizInstructions.live"></p>
     <p *ngIf="!waitingForQuizStart && submission.submitted && !showingResult" jhiTranslate="artemisApp.quizExercise.quizInstructions.wait"></p>
     <p
         *ngIf="!waitingForQuizStart && showingResult && mode !== 'solution'"
@@ -109,11 +109,11 @@
                         <ng-template #tooltipNotExplanationTranslate>{{ 'artemisApp.quizExercise.explanationNotAnswered' | artemisTranslate }}</ng-template>
                     </div>
                 </div>
-                <div *ngIf="quizExercise.quizQuestions && !this.isMobile()" class="align-text hide-mobile">
+                <div *ngIf="quizExercise.quizQuestions && !this.isMobile" class="align-text hide-mobile">
                     {{ quizExercise.quizQuestions ? quizExercise.quizQuestions.length : 0 }} <span jhiTranslate="artemisApp.quizExercise.questions"></span>, {{ totalScore }}
                     <span jhiTranslate="artemisApp.quizExercise.totalPoints"></span>
                 </div>
-                <div *ngIf="quizExercise.quizQuestions && this.isMobile()" class="align-text show-mobile">
+                <div *ngIf="quizExercise.quizQuestions && this.isMobile" class="align-text show-mobile">
                     {{ quizExercise.quizQuestions ? quizExercise.quizQuestions.length : 0 }} Q / {{ totalScore }} P
                 </div>
             </div>
@@ -134,7 +134,7 @@
                     <span jhiTranslate="artemisApp.quizExercise.waitingForStart"></span>
                 </div>
                 <div *ngIf="mode === 'live' && !waitingForQuizStart">
-                    <span *ngIf="!isMobile()" ngbTooltip="{{ submission.submissionDate | artemisDate: 'long':true }}" placement="right">
+                    <span *ngIf="!isMobile" ngbTooltip="{{ submission.submissionDate | artemisDate: 'long':true }}" placement="right">
                         <span *ngIf="!submission.submitted" jhiTranslate="artemisApp.quizExercise.lastSaved" class="colon-suffix"></span>
                         <span *ngIf="submission.submitted" jhiTranslate="artemisApp.quizExercise.submitted" class="colon-suffix"></span>
                         <span *ngIf="justSaved" jhiTranslate="justNow"></span>
@@ -142,7 +142,7 @@
                         <span *ngIf="!justSaved && lastSavedTimeText === ''" jhiTranslate="artemisApp.quizExercise.lastSavedTimeNever"></span>
                     </span>
                     <!-- Only display save and submission hint without time stamps for mobile -->
-                    <span *ngIf="isMobile()" ngbTooltip="{{ submission.submissionDate | artemisDate: 'long':true }}" placement="right">
+                    <span *ngIf="isMobile" ngbTooltip="{{ submission.submissionDate | artemisDate: 'long':true }}" placement="right">
                         <span *ngIf="!submission.submitted" jhiTranslate="artemisApp.quizExercise.lastSaved"></span>
                         <span *ngIf="submission.submitted" jhiTranslate="artemisApp.quizExercise.submitted"></span>
                     </span>
@@ -181,7 +181,7 @@
                 *ngIf="mode === 'live' && !quizBatch?.started && !quizBatch?.startTime"
                 id="refresh-quiz"
                 (onClick)="refreshQuiz(true)"
-                [btnSize]="isMobile() ? ButtonSize.SMALL : ButtonSize.LARGE"
+                [btnSize]="isMobile ? ButtonSize.SMALL : ButtonSize.LARGE"
                 [btnType]="ButtonType.PRIMARY"
                 [title]="'artemisApp.exercise.refresh'"
                 [disabled]="refreshingQuiz"
@@ -192,7 +192,7 @@
                     *ngIf="!showingResult"
                     id="submit-quiz"
                     (onClick)="onSubmit()"
-                    [btnSize]="isMobile() ? ButtonSize.SMALL : ButtonSize.LARGE"
+                    [btnSize]="isMobile ? ButtonSize.SMALL : ButtonSize.LARGE"
                     [btnType]="ButtonType.SUCCESS"
                     [title]="submission.submitted ? 'artemisApp.quizExercise.submitted' : 'entity.action.submit'"
                     [disabled]="submission.submitted || isSubmitting || waitingForQuizStart || remainingTimeSeconds < 0"
@@ -201,10 +201,7 @@
         </div>
     </div>
 </div>
-<div
-    class="quiz-is-over-overlay alert alert-info"
-    *ngIf="!waitingForQuizStart && !showingResult && !submission.submitted && remainingTimeSeconds < 0 && quizExercise?.quizMode === QuizMode.SYNCHRONIZED"
->
+<div class="quiz-is-over-overlay alert alert-info" *ngIf="!waitingForQuizStart && !showingResult && !submission.submitted && remainingTimeSeconds < 0">
     <span *ngIf="submission.submissionDate" jhiTranslate="artemisApp.quizExercise.quizIsOverText"></span>
     <span *ngIf="!submission.submissionDate" jhiTranslate="artemisApp.quizExercise.notParticipatedText"></span>
 </div>

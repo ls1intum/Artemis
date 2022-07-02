@@ -30,7 +30,7 @@ describe('FormDateTimePickerComponent', () => {
 
         component.valueChanged();
 
-        expect(emitStub).toHaveBeenCalledTimes(1);
+        expect(emitStub).toHaveBeenCalledOnce();
     });
 
     describe('test date conversion', () => {
@@ -50,7 +50,7 @@ describe('FormDateTimePickerComponent', () => {
         it('should return null if dayjs is invalid', () => {
             const unconvertedDate = dayjs('2022-31-02T00:00+00:00');
 
-            expect(unconvertedDate.isValid()).toBe(false);
+            expect(unconvertedDate.isValid()).toBeFalse();
 
             convertedDate = component.convert(unconvertedDate);
 
@@ -59,7 +59,7 @@ describe('FormDateTimePickerComponent', () => {
     });
 
     describe('test date writing', () => {
-        it('should write the correct date if date is dayjs', () => {
+        it('should write the correct date if date is dayjs object', () => {
             component.writeValue(normalDate);
 
             expect(component.value).toEqual(normalDateAsDateObject);
@@ -89,8 +89,8 @@ describe('FormDateTimePickerComponent', () => {
         component.updateField(newDate);
 
         expect(component.value).toEqual(newDate);
-        expect(onChangeSpy).toHaveBeenCalledTimes(1);
+        expect(onChangeSpy).toHaveBeenCalledOnce();
         expect(onChangeSpy).toHaveBeenCalledWith(newDate);
-        expect(valueChangedStub).toHaveBeenCalledTimes(1);
+        expect(valueChangedStub).toHaveBeenCalledOnce();
     });
 });

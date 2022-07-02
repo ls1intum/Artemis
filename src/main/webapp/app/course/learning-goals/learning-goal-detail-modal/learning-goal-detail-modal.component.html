@@ -5,77 +5,83 @@
 <div class="modal-body">
     <p *ngIf="learningGoal?.description">{{ learningGoal?.description }}</p>
     <!-- Table for connected lecture units -->
-    <ng-template #elseBlock>{{ 'artemisApp.learningGoal.learningGoalCard.noUnitsConnected' | artemisTranslate }}</ng-template>
-    <div *ngIf="learningGoal?.lectureUnits && learningGoal!.lectureUnits!.length > 0; else elseBlock">
-        <h5>{{ 'artemisApp.learningGoal.learningGoalCard.connectedLectureUnits' | artemisTranslate }}</h5>
-        <p>
-            {{ 'artemisApp.learningGoal.learningGoalCard.connectedLectureUnitsExplanation' | artemisTranslate }}
-        </p>
-        <div class="table-responsive">
-            <table class="table table-bordered">
-                <thead class="thead-dark">
-                    <tr jhiSort [(predicate)]="connectedLectureUnitsPredicate" [(ascending)]="connectedLectureUnitsReverse" (sortChange)="sortConnectedLectureUnits()">
-                        <th id="connectedLectureUnitLectureUnitNameHeader" class="bg-primary">
-                            {{ 'artemisApp.learningGoal.createLearningGoal.lectureUnitTable.name' | artemisTranslate }}
-                        </th>
-                        <th jhiSortBy="type" id="connectedLectureUnitTypeHeader">
-                            {{ 'artemisApp.learningGoal.createLearningGoal.lectureUnitTable.type' | artemisTranslate }}
-                            <fa-icon [icon]="faSort"></fa-icon>
-                        </th>
-                        <th jhiSortBy="lecture.title" id="connectedLectureUnitLectureTitleHeader">
-                            {{ 'artemisApp.learningGoal.createLearningGoal.lectureUnitTable.lecture' | artemisTranslate }}
-                            <fa-icon [icon]="faSort"></fa-icon>
-                        </th>
-                        <th id="connectedLectureUnitScoreAchievedHeader">
-                            {{ 'artemisApp.learningGoal.createLearningGoal.lectureUnitTable.scoreAchievedByStudent' | artemisTranslate }}
-                        </th>
-                        <th id="connectedLectureUnitPointsAchievableHeader">
-                            {{ 'artemisApp.learningGoal.createLearningGoal.lectureUnitTable.totalPointsAchievable' | artemisTranslate }}
-                        </th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr *ngFor="let lectureUnit of learningGoal.lectureUnits">
-                        <td>
-                            <a [routerLink]="['/courses', learningGoal?.course?.id, 'lectures', lectureUnit.lecture?.id]">
-                                {{ lectureUnitService.getLectureUnitName(lectureUnit) ? lectureUnitService.getLectureUnitName(lectureUnit) : '' }}
-                            </a>
-                        </td>
-                        <td>{{ lectureUnit.type ? lectureUnit.type : '' }}</td>
-                        <td>
-                            <a [routerLink]="['/courses', learningGoal?.course?.id, 'lectures', lectureUnit.lecture?.id]"
-                                >{{ lectureUnit.lecture?.title ? lectureUnit.lecture?.title : '' }}
-                            </a>
-                        </td>
-                        <td>
-                            {{
-                                getLectureUnitProgress(lectureUnit.id!) === undefined
-                                    ? '-'
-                                    : round(getLectureUnitProgress(lectureUnit.id!).scoreAchievedByStudentInLectureUnit) + ' %'
-                            }}
-                        </td>
-                        <td>
-                            {{ getLectureUnitProgress(lectureUnit.id!) === undefined ? '-' : getLectureUnitProgress(lectureUnit.id!).totalPointsAchievableByStudentsInLectureUnit }}
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
+    <div *ngIf="!isPrerequisite">
+        <ng-template #elseBlock>{{ 'artemisApp.learningGoal.learningGoalCard.noUnitsConnected' | artemisTranslate }}</ng-template>
+        <div *ngIf="learningGoal?.lectureUnits && learningGoal!.lectureUnits!.length > 0; else elseBlock">
+            <h5>{{ 'artemisApp.learningGoal.learningGoalCard.connectedLectureUnits' | artemisTranslate }}</h5>
+            <p>
+                {{ 'artemisApp.learningGoal.learningGoalCard.connectedLectureUnitsExplanation' | artemisTranslate }}
+            </p>
+            <div class="table-responsive">
+                <table class="table table-bordered">
+                    <thead class="thead-dark">
+                        <tr jhiSort [(predicate)]="connectedLectureUnitsPredicate" [(ascending)]="connectedLectureUnitsReverse" (sortChange)="sortConnectedLectureUnits()">
+                            <th id="connectedLectureUnitLectureUnitNameHeader" class="bg-primary">
+                                {{ 'artemisApp.learningGoal.createLearningGoal.lectureUnitTable.name' | artemisTranslate }}
+                            </th>
+                            <th jhiSortBy="type" id="connectedLectureUnitTypeHeader">
+                                {{ 'artemisApp.learningGoal.createLearningGoal.lectureUnitTable.type' | artemisTranslate }}
+                                <fa-icon [icon]="faSort"></fa-icon>
+                            </th>
+                            <th jhiSortBy="lecture.title" id="connectedLectureUnitLectureTitleHeader">
+                                {{ 'artemisApp.learningGoal.createLearningGoal.lectureUnitTable.lecture' | artemisTranslate }}
+                                <fa-icon [icon]="faSort"></fa-icon>
+                            </th>
+                            <th id="connectedLectureUnitScoreAchievedHeader">
+                                {{ 'artemisApp.learningGoal.createLearningGoal.lectureUnitTable.scoreAchievedByStudent' | artemisTranslate }}
+                            </th>
+                            <th id="connectedLectureUnitPointsAchievableHeader">
+                                {{ 'artemisApp.learningGoal.createLearningGoal.lectureUnitTable.totalPointsAchievable' | artemisTranslate }}
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr *ngFor="let lectureUnit of learningGoal.lectureUnits">
+                            <td>
+                                <a [routerLink]="['/courses', lectureUnit?.lecture?.course?.id, 'lectures', lectureUnit.lecture?.id]">
+                                    {{ lectureUnitService.getLectureUnitName(lectureUnit) ? lectureUnitService.getLectureUnitName(lectureUnit) : '' }}
+                                </a>
+                            </td>
+                            <td>{{ lectureUnit.type ? lectureUnit.type : '' }}</td>
+                            <td>
+                                <a [routerLink]="['/courses', lectureUnit?.lecture?.course?.id, 'lectures', lectureUnit.lecture?.id]"
+                                    >{{ lectureUnit.lecture?.title ? lectureUnit.lecture?.title : '' }}
+                                </a>
+                            </td>
+                            <td>
+                                {{
+                                    getLectureUnitProgress(lectureUnit.id!) === undefined
+                                        ? '-'
+                                        : round(getLectureUnitProgress(lectureUnit.id!).scoreAchievedByStudentInLectureUnit) + ' %'
+                                }}
+                            </td>
+                            <td>
+                                {{
+                                    getLectureUnitProgress(lectureUnit.id!) === undefined
+                                        ? '-'
+                                        : getLectureUnitProgress(lectureUnit.id!).totalPointsAchievableByStudentsInLectureUnit
+                                }}
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
         </div>
-    </div>
-    <div *ngIf="isProgressAvailable">
-        <p class="text-muted">
-            <span class="badge bg-info">Info</span>
-            {{ 'artemisApp.learningGoal.learningGoalCard.exerciseNote' | artemisTranslate }}
-        </p>
-        <div>
-            <h5
-                [jhiTranslate]="'artemisApp.learningGoal.learningGoalCard.progressExplanation'"
-                class="text-primary"
-                [translateValues]="{
-                    points: learningGoalProgress.totalPointsAchievableByStudentsInLearningGoal,
-                    progress: progressInPercent
-                }"
-            ></h5>
+        <div *ngIf="isProgressAvailable">
+            <p class="text-muted">
+                <span class="badge bg-info">Info</span>
+                {{ 'artemisApp.learningGoal.learningGoalCard.exerciseNote' | artemisTranslate }}
+            </p>
+            <div>
+                <h5
+                    [jhiTranslate]="'artemisApp.learningGoal.learningGoalCard.progressExplanation'"
+                    class="text-primary"
+                    [translateValues]="{
+                        points: learningGoalProgress.totalPointsAchievableByStudentsInLearningGoal,
+                        progress: progressInPercent
+                    }"
+                ></h5>
+            </div>
         </div>
     </div>
 </div>

@@ -1,4 +1,4 @@
-import { AfterContentChecked, ChangeDetectorRef, Component, EventEmitter, forwardRef, Input, OnInit, Output } from '@angular/core';
+import { AfterContentChecked, ChangeDetectorRef, Component, EventEmitter, forwardRef, Input, OnInit, Output, ViewEncapsulation } from '@angular/core';
 import { Command } from 'app/shared/markdown-editor/commands/command';
 import { BoldCommand } from 'app/shared/markdown-editor/commands/bold.command';
 import { ItalicCommand } from 'app/shared/markdown-editor/commands/italic.command';
@@ -8,6 +8,10 @@ import { CodeBlockCommand } from 'app/shared/markdown-editor/commands/codeblock.
 import { CodeCommand } from 'app/shared/markdown-editor/commands/code.command';
 import { LinkCommand } from 'app/shared/markdown-editor/commands/link.command';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
+import { MarkdownEditorHeight } from 'app/shared/markdown-editor/markdown-editor.component';
+import { MetisService } from 'app/shared/metis/metis.service';
+import { ExerciseReferenceCommand } from 'app/shared/markdown-editor/commands/courseArtifactReferenceCommands/exerciseReferenceCommand';
+import { LectureAttachmentReferenceCommand } from 'app/shared/markdown-editor/commands/courseArtifactReferenceCommands/lectureAttachmentReferenceCommand';
 
 @Component({
     selector: 'jhi-posting-markdown-editor',
@@ -19,14 +23,18 @@ import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
             multi: true,
         },
     ],
+    encapsulation: ViewEncapsulation.None,
 })
 export class PostingMarkdownEditorComponent implements OnInit, ControlValueAccessor, AfterContentChecked {
     @Input() maxContentLength: number;
+    @Input() editorHeight: MarkdownEditorHeight;
+    @Input() isInputLengthDisplayed = true;
     @Output() valueChange = new EventEmitter();
     defaultCommands: Command[];
     content?: string;
+    previewMode = false;
 
-    constructor(private cdref: ChangeDetectorRef) {}
+    constructor(private cdref: ChangeDetectorRef, private metisService: MetisService) {}
 
     /**
      * on initialization: sets commands that will be available as formatting buttons during creation/editing of postings
@@ -40,6 +48,8 @@ export class PostingMarkdownEditorComponent implements OnInit, ControlValueAcces
             new CodeCommand(),
             new CodeBlockCommand(),
             new LinkCommand(),
+            new ExerciseReferenceCommand(this.metisService),
+            new LectureAttachmentReferenceCommand(this.metisService),
         ];
     }
 

@@ -1,23 +1,19 @@
-<ng-template #postingEditor let-d="dismiss">
+<ng-template #postingEditor>
     <form [formGroup]="formGroup" (ngSubmit)="confirm()">
-        <div class="modal-header">
-            <h4 class="modal-title">{{ modalTitle | artemisTranslate }}</h4>
-            <button type="button" class="btn-close" aria-label="Close" (click)="d('Cross click')"></button>
-        </div>
-        <div class="modal-body">
-            <div class="row mb-2">
-                <jhi-posting-markdown-editor formControlName="content" [maxContentLength]="maxContentLength"></jhi-posting-markdown-editor>
+        <div class="markdown-editor-wrapper">
+            <jhi-posting-markdown-editor formControlName="content" [editorHeight]="editorHeight" [maxContentLength]="maxContentLength" [isInputLengthDisplayed]="false">
+            </jhi-posting-markdown-editor>
+            <div class="col text-end">
+                <button jhi-posting-button [buttonLabel]="'artemisApp.metis.cancel' | artemisTranslate" class="btn btn-sm btn-outline-secondary" (click)="close()"></button>
+                <button
+                    jhi-posting-button
+                    [buttonLoading]="isLoading"
+                    [disabled]="!formGroup.valid"
+                    [buttonLabel]="'artemisApp.metis.savePosting' | artemisTranslate"
+                    class="btn btn-sm btn-outline-secondary"
+                    type="submit"
+                ></button>
             </div>
-        </div>
-        <div class="modal-footer">
-            <button
-                jhi-posting-button
-                [buttonLoading]="isLoading"
-                [disabled]="!formGroup.valid"
-                [buttonLabel]="'artemisApp.metis.savePosting' | artemisTranslate"
-                class="btn btn-sm btn-outline-secondary"
-                type="submit"
-            ></button>
         </div>
     </form>
 </ng-template>
