@@ -58,20 +58,20 @@ describe('NotificationSettingsComponent', () => {
                 id: settingId,
             },
         };
-        expect(comp.settingsChanged).toBe(false);
-        expect(notificationSettingA.changed).toBe(false);
+        expect(comp.settingsChanged).toBeFalse();
+        expect(notificationSettingA.changed).toBeFalse();
 
         comp.toggleSetting(event, NotificationSettingsCommunicationChannel.WEBAPP);
 
         expect(notificationSettingA.webapp).not.toEqual(webappStatus);
-        expect(notificationSettingA.changed).toBe(true);
-        expect(comp.settingsChanged).toBe(true);
+        expect(notificationSettingA.changed).toBeTrue();
+        expect(comp.settingsChanged).toBeTrue();
     });
 
     it('should reuse settings via service if they were already loaded', () => {
         const settingGetMock = jest.spyOn(notificationSettingsServiceMock, 'getNotificationSettings').mockReturnValue([notificationSettingA]);
         comp.ngOnInit();
-        expect(settingGetMock).toHaveBeenCalledTimes(1);
+        expect(settingGetMock).toHaveBeenCalledOnce();
         // check if current settings are not empty
         expect(comp.userSettings).toEqual(notificationSettingsStructure);
     });

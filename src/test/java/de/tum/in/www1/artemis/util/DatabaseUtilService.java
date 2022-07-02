@@ -246,6 +246,9 @@ public class DatabaseUtilService {
     private VideoUnitRepository videoUnitRepository;
 
     @Autowired
+    private OnlineUnitRepository onlineUnitRepository;
+
+    @Autowired
     private OrganizationRepository organizationRepository;
 
     @Autowired
@@ -583,7 +586,7 @@ public class DatabaseUtilService {
     }
 
     public Lecture addLectureUnitsToLecture(Lecture lecture, Set<LectureUnit> lectureUnits) {
-        Lecture l = lectureRepo.findByIdWithPostsAndLectureUnitsAndLearningGoals(lecture.getId()).get();
+        Lecture l = lectureRepo.findByIdWithLectureUnits(lecture.getId()).get();
         for (LectureUnit lectureUnit : lectureUnits) {
             l.addLectureUnit(lectureUnit);
         }
@@ -619,6 +622,13 @@ public class DatabaseUtilService {
         videoUnit.setDescription("Lorem Ipsum");
         videoUnit.setSource("http://video.fake");
         return videoUnitRepository.save(videoUnit);
+    }
+
+    public OnlineUnit createOnlineUnit() {
+        OnlineUnit onlineUnit = new OnlineUnit();
+        onlineUnit.setDescription("Lorem Ipsum");
+        onlineUnit.setSource("http://video.fake");
+        return onlineUnitRepository.save(onlineUnit);
     }
 
     public List<Course> createCoursesWithExercisesAndLectures(boolean withParticipations) throws Exception {
@@ -785,7 +795,8 @@ public class DatabaseUtilService {
         posts.addAll(createBasicPosts(lecture));
 
         // add posts to course with different course-wide contexts provided in input array
-        CourseWideContext[] courseWideContexts = new CourseWideContext[] { CourseWideContext.ORGANIZATION, CourseWideContext.RANDOM, CourseWideContext.TECH_SUPPORT };
+        CourseWideContext[] courseWideContexts = new CourseWideContext[] { CourseWideContext.ORGANIZATION, CourseWideContext.RANDOM, CourseWideContext.TECH_SUPPORT,
+                CourseWideContext.ANNOUNCEMENT };
         posts.addAll(createBasicPosts(course1, courseWideContexts));
 
         return posts;
@@ -835,7 +846,7 @@ public class DatabaseUtilService {
 
     private List<Post> createBasicPosts(Course courseContext, CourseWideContext[] courseWideContexts) {
         List<Post> posts = new ArrayList<>();
-        for (int i = 0; i < 3; i++) {
+        for (int i = 0; i < courseWideContexts.length; i++) {
             Post postToAdd = createBasicPost(i);
             postToAdd.setCourse(courseContext);
             postToAdd.setCourseWideContext(courseWideContexts[i]);
@@ -1757,14 +1768,21 @@ public class DatabaseUtilService {
         return createProgrammingSubmission(participation, buildFailed, TestConstants.COMMIT_HASH_STRING);
     }
 
-    public TextExercise addCourseExamExerciseGroupWithOneTextExercise() {
+    public TextExercise addCourseExamExerciseGroupWithOneTextExercise(String title) {
         ExerciseGroup exerciseGroup = addExerciseGroupWithExamAndCourse(true);
         TextExercise textExercise = ModelFactory.generateTextExerciseForExam(exerciseGroup);
+        if (title != null) {
+            textExercise.setTitle(title);
+        }
         final var exercisesNrBefore = exerciseRepo.count();
         textExercise.setKnowledge(textAssessmentKnowledgeService.createNewKnowledge());
         exerciseRepo.save(textExercise);
         assertThat(exercisesNrBefore + 1).as("one exercise got stored").isEqualTo(exerciseRepo.count());
         return textExercise;
+    }
+
+    public TextExercise addCourseExamExerciseGroupWithOneTextExercise() {
+        return addCourseExamExerciseGroupWithOneTextExercise(null);
     }
 
     public TextExercise addCourseExamWithReviewDatesExerciseGroupWithOneTextExercise() {
@@ -2064,7 +2082,7 @@ public class DatabaseUtilService {
     }
 
     /**
-     * @return A empty course
+     * @return An empty course
      */
     public Course addEmptyCourse() {
         Course course = ModelFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
@@ -3024,7 +3042,7 @@ public class DatabaseUtilService {
         }
     }
 
-    public void addHintsToExercise(Exercise exercise) {
+    public void addHintsToExercise(ProgrammingExercise exercise) {
         ExerciseHint exerciseHint1 = new ExerciseHint().content("content 1").exercise(exercise).title("title 1");
         ExerciseHint exerciseHint2 = new ExerciseHint().content("content 2").exercise(exercise).title("title 2");
         ExerciseHint exerciseHint3 = new ExerciseHint().content("content 3").exercise(exercise).title("title 3");
@@ -3034,19 +3052,27 @@ public class DatabaseUtilService {
         hints.add(exerciseHint3);
         exercise.setExerciseHints(hints);
         exerciseHintRepository.saveAll(hints);
+        programmingExerciseRepository.save(exercise);
     }
 
     public void addTasksToProgrammingExercise(ProgrammingExercise programmingExercise) {
+        StringBuilder problemStatement = new StringBuilder(programmingExercise.getProblemStatement());
+        problemStatement.append('\n');
+
         var tasks = programmingExercise.getTestCases().stream().map(testCase -> {
             var task = new ProgrammingExerciseTask();
             task.setTaskName("Task for " + testCase.getTestName());
             task.setExercise(programmingExercise);
             task.setTestCases(Collections.singleton(testCase));
             testCase.setTasks(Collections.singleton(task));
+            problemStatement.append("[task][").append(task.getTaskName()).append("](")
+                    .append(task.getTestCases().stream().map(ProgrammingExerciseTestCase::getTestName).collect(Collectors.joining(","))).append(")\n");
             return task;
-        }).collect(Collectors.toSet());
+        }).toList();
         programmingExercise.setTasks(tasks);
+        programmingExercise.setProblemStatement(problemStatement.toString());
         programmingExerciseTaskRepository.saveAll(tasks);
+        programmingExerciseRepository.save(programmingExercise);
     }
 
     public void addSolutionEntriesToProgrammingExercise(ProgrammingExercise programmingExercise) {
@@ -3083,13 +3109,6 @@ public class DatabaseUtilService {
 
     public ProgrammingExercise loadProgrammingExerciseWithEagerReferences(ProgrammingExercise lazyExercise) {
         return programmingExerciseTestRepository.findOneWithEagerEverything(lazyExercise.getId());
-    }
-
-    public <T extends Exercise> void addHintsToProblemStatement(T exercise) {
-        final var statement = exercise.getProblemStatement() == null ? "" : exercise.getProblemStatement();
-        final var hintsInStatement = exercise.getExerciseHints().stream().map(ExerciseHint::getId).map(Object::toString).collect(Collectors.joining("}{", "{", "}"));
-        exercise.setProblemStatement(statement + hintsInStatement);
-        exerciseRepo.save(exercise);
     }
 
     /**

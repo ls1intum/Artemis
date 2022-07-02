@@ -10,7 +10,6 @@ import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.stereotype.Controller;
 
-import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
 import de.tum.in.www1.artemis.exception.QuizSubmissionException;
 import de.tum.in.www1.artemis.repository.UserRepository;
@@ -58,9 +57,8 @@ public class QuizSubmissionWebsocketService {
     public void saveSubmission(@DestinationVariable Long exerciseId, @Payload QuizSubmission quizSubmission, Principal principal) {
         // Without this, custom jpa repository methods don't work in websocket channel.
         SecurityUtils.setAuthorizationObject();
-        User user = userRepository.getUserByLoginElseThrow(principal.getName());
         try {
-            QuizSubmission updatedQuizSubmission = quizSubmissionService.saveSubmissionForLiveMode(exerciseId, quizSubmission, user, false);
+            QuizSubmission updatedQuizSubmission = quizSubmissionService.saveSubmissionForLiveMode(exerciseId, quizSubmission, principal.getName(), false);
             // send updated submission over websocket (use a thread to prevent that the outbound channel blocks the inbound channel (e.g. due a slow client))
             // to improve the performance, this is currently deactivated: slow clients might lead to bottlenecks so that more important messages can not be distributed any more
             // new Thread(() -> sendSubmissionToUser(username, exerciseId, quizSubmission)).start();
@@ -69,7 +67,7 @@ public class QuizSubmissionWebsocketService {
         }
         catch (QuizSubmissionException ex) {
             // send error message over websocket (use a thread to prevent that the outbound channel blocks the inbound channel (e.g. due a slow client))
-            new Thread(() -> messagingTemplate.convertAndSendToUser(user.getLogin(), "/topic/quizExercise/" + exerciseId + "/submission", new WebsocketError(ex.getMessage())))
+            new Thread(() -> messagingTemplate.convertAndSendToUser(principal.getName(), "/topic/quizExercise/" + exerciseId + "/submission", new WebsocketError(ex.getMessage())))
                     .start();
         }
     }

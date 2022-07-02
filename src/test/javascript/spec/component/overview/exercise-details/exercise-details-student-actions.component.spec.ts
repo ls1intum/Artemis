@@ -147,7 +147,7 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
         tick();
 
         expect(comp.participationStatusWrapper()).toEqual(ParticipationStatus.UNINITIALIZED);
-        expect(startExerciseStub).toHaveBeenCalledTimes(1);
+        expect(startExerciseStub).toHaveBeenCalledOnce();
         participationSubject.next(initPart);
 
         fixture.detectChanges();

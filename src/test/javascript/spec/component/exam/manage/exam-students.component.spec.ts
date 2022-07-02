@@ -98,7 +98,7 @@ describe('ExamStudentsComponent', () => {
         expect(examServiceStub).toHaveBeenCalledWith(course.id, examWithCourse.id, user3.login);
         expect(component.allRegisteredUsers).toEqual([user1, user2, user3]);
         expect(callbackSpy).toHaveBeenCalledWith(user3);
-        expect(flashSpy).toHaveBeenCalledTimes(1);
+        expect(flashSpy).toHaveBeenCalledOnce();
         expect(component.isTransitioning).toBeFalse();
     });
 
@@ -116,7 +116,7 @@ describe('ExamStudentsComponent', () => {
             expect(component.searchFailed).toBeFalse();
         });
 
-        expect(userServiceStub).toHaveBeenCalledTimes(1);
+        expect(userServiceStub).toHaveBeenCalledOnce();
     });
 
     it('should reload with only registered users', () => {
@@ -195,6 +195,6 @@ describe('ExamStudentsComponent', () => {
 
     it('should test on error', () => {
         component.onError('ErrorString');
-        expect(component.isTransitioning).toEqual(false);
+        expect(component.isTransitioning).toBeFalse();
     });
 });

@@ -33,7 +33,7 @@ import de.tum.in.www1.artemis.service.dto.UserDTO;
 import de.tum.in.www1.artemis.service.dto.UserInitializationDTO;
 import de.tum.in.www1.artemis.service.user.UserCreationService;
 import de.tum.in.www1.artemis.service.user.UserService;
-import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
+import de.tum.in.www1.artemis.web.rest.dto.UserPageableSearchDTO;
 import de.tum.in.www1.artemis.web.rest.errors.*;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 import de.tum.in.www1.artemis.web.rest.vm.ManagedUserVM;
@@ -115,7 +115,7 @@ public class UserResource {
     /**
      * POST users : Creates a new user.
      * <p>
-     * Creates a new user if the login and email are not already used, and sends an mail with an activation link. The user needs to be activated on creation.
+     * Creates a new user if the login and email are not already used, and sends an email with an activation link. The user needs to be activated on creation.
      *
      * @param managedUserVM the user to create. If the password is null, a random one will be generated
      * @return the ResponseEntity with status 201 (Created) and with body the new user, or with status 400 (Bad Request) if the login or email is already in use
@@ -204,7 +204,7 @@ public class UserResource {
      */
     @GetMapping("users")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<List<UserDTO>> getAllUsers(@ApiParam PageableSearchDTO<String> userSearch) {
+    public ResponseEntity<List<UserDTO>> getAllUsers(@ApiParam UserPageableSearchDTO userSearch) {
         final Page<UserDTO> page = userRepository.getAllManagedUsers(userSearch);
         HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), page);
         return new ResponseEntity<>(page.getContent(), headers, HttpStatus.OK);
@@ -274,14 +274,49 @@ public class UserResource {
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> deleteUser(@PathVariable String login) {
         log.debug("REST request to delete User: {}", login);
+        if (userRepository.isCurrentUser(login)) {
+            throw new BadRequestAlertException("You cannot delete yourself", "userManagement", "cannotDeleteYourself");
+        }
         userService.deleteUser(login);
         return ResponseEntity.ok().headers(HeaderUtil.createAlert(applicationName, "userManagement.deleted", login)).build();
+    }
+
+    /**
+     * Delete users: deletes the provided users
+     *
+     * @param logins user logins to delete
+     * @return the ResponseEntity with status 200 (OK)
+     */
+    @DeleteMapping("users")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<List<String>> deleteUsers(@RequestParam(name = "login") List<String> logins) {
+        log.debug("REST request to delete {} users", logins.size());
+        List<String> deletedUsers = new java.util.ArrayList<>();
+
+        // Get current user and remove current user from list of logins
+        var currentUser = userRepository.getUser();
+        logins.remove(currentUser.getLogin());
+
+        for (String login : logins) {
+            try {
+                if (!userRepository.isCurrentUser(login)) {
+                    userService.deleteUser(login);
+                    deletedUsers.add(login);
+                }
+            }
+            catch (Exception exception) {
+                // In order to handle all users even if some users produce exceptions, we catch them and ignore them and proceed with the remaining users
+                log.error("REST request to delete user {} failed", login);
+                log.error(exception.getMessage(), exception);
+            }
+        }
+        return ResponseEntity.ok().headers(HeaderUtil.createAlert(applicationName, "userManagement.batch.deleted", String.valueOf(deletedUsers.size()))).body(deletedUsers);
     }
 
     @PutMapping("users/notification-date")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Void> updateUserNotificationDate() {
-        log.debug("REST request to update notification date for logged in user");
+        log.debug("REST request to update notification date for logged-in user");
         User user = userRepository.getUser();
         userRepository.updateUserNotificationReadDate(user.getId());
         return ResponseEntity.ok().build();
@@ -296,7 +331,7 @@ public class UserResource {
     @PutMapping("users/notification-visibility")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Void> updateUserNotificationVisibility(@RequestBody boolean showAllNotifications) {
-        log.debug("REST request to update notification visibility for logged in user");
+        log.debug("REST request to update notification visibility for logged-in user");
         User user = userRepository.getUser();
         // if all notifications (regardless of their creation date) should be shown hideUntil should be null
         ZonedDateTime hideUntil = showAllNotifications ? null : ZonedDateTime.now();

@@ -128,7 +128,7 @@ export class ExerciseService {
     }
 
     /**
-     * Get exercise details including all results for the currently logged in user
+     * Get exercise details including all results for the currently logged-in user
      * @param { number } exerciseId - Id of the exercise to get the repos from
      */
     getExerciseDetails(exerciseId: number): Observable<EntityResponseType> {
@@ -138,9 +138,6 @@ export class ExerciseService {
 
                 if (res.body) {
                     // insert an empty list to avoid additional calls in case the list is empty on the server (because then it would be undefined in the client)
-                    if (res.body.exerciseHints === undefined) {
-                        res.body.exerciseHints = [];
-                    }
                     if (res.body.posts === undefined) {
                         res.body.posts = [];
                     }
@@ -457,6 +454,12 @@ export class ExerciseService {
             this.accountService.setAccessRightsForExerciseAndReferencedCourse(res.body as Exercise);
         }
         return res;
+    }
+
+    public getLatestDueDate(exerciseId: number): Observable<dayjs.Dayjs | undefined> {
+        return this.http
+            .get<dayjs.Dayjs>(`${this.resourceUrl}/${exerciseId}/latest-due-date`, { observe: 'response' })
+            .pipe(map((res: HttpResponse<dayjs.Dayjs>) => (res.body ? dayjs(res.body) : undefined)));
     }
 }
 

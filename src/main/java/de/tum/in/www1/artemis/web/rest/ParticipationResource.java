@@ -39,7 +39,7 @@ import de.tum.in.www1.artemis.service.feature.FeatureToggle;
 import de.tum.in.www1.artemis.service.feature.FeatureToggleService;
 import de.tum.in.www1.artemis.service.messaging.InstanceMessageSendService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseParticipationService;
-import de.tum.in.www1.artemis.service.scheduled.quiz.QuizScheduleService;
+import de.tum.in.www1.artemis.service.scheduled.cache.quiz.QuizScheduleService;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
@@ -304,7 +304,6 @@ public class ParticipationResource {
         if (exercise.isExamExercise()) {
             throw new BadRequestAlertException("Cannot set individual due dates for exam exercises", ENTITY_NAME, "examexercise");
         }
-
         if (exercise instanceof QuizExercise) {
             throw new BadRequestAlertException("Cannot set individual due dates for quiz exercises", ENTITY_NAME, "quizexercise");
         }
@@ -421,7 +420,7 @@ public class ParticipationResource {
             resultCount += participation.getResults().size();
         }
         long end = System.currentTimeMillis();
-        log.info("Found {} particpations with {} results in {}ms", participations.size(), resultCount, end - start);
+        log.info("Found {} participations with {} results in {}ms", participations.size(), resultCount, end - start);
         return ResponseEntity.ok().body(participations);
     }
 
@@ -543,7 +542,7 @@ public class ParticipationResource {
             return new MappingJacksonValue(participation);
         }
         quizExercise.setQuizBatches(null); // not available here
-        var quizBatch = quizBatchService.getQuizBatchForStudent(quizExercise, user);
+        var quizBatch = quizBatchService.getQuizBatchForStudentByLogin(quizExercise, user.getLogin());
 
         if (quizBatch.isPresent() && quizBatch.get().isSubmissionAllowed()) {
             // Quiz is active => construct Participation from
@@ -565,7 +564,7 @@ public class ParticipationResource {
             quizExercise.filterSensitiveInformation();
             quizExercise.setQuizBatches(quizBatch.stream().collect(Collectors.toSet()));
             if (quizExercise.getAllowedNumberOfAttempts() != null) {
-                var attempts = submissionRepository.countByExerciseIdAndStudentId(quizExercise.getId(), user.getId());
+                var attempts = submissionRepository.countByExerciseIdAndStudentLogin(quizExercise.getId(), user.getLogin());
                 quizExercise.setRemainingNumberOfAttempts(quizExercise.getAllowedNumberOfAttempts() - attempts);
             }
             StudentParticipation participation = new StudentParticipation().exercise(quizExercise);

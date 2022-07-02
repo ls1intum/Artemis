@@ -6,10 +6,10 @@
         </div>
         <div class="card">
             <!-- header -->
-            <div class="card-header text-white" [ngbTooltip]="'artemisApp.metis.discussion.hide' | artemisTranslate" (click)="collapsed = true">
+            <div class="card-header text-white" [ngbTooltip]="'artemisApp.metis.communication.hide' | artemisTranslate" (click)="collapsed = true">
                 <div class="row flex-grow-1">
                     <div class="col">
-                        <h5 class="mb-0 fw-medium" jhiTranslate="artemisApp.metis.discussion.label">Discussion</h5>
+                        <h5 class="mb-0 fw-medium" jhiTranslate="artemisApp.metis.communication.label">Communication</h5>
                     </div>
                     <div class="col-auto">
                         <fa-icon [icon]="faChevronRight"></fa-icon>
@@ -42,6 +42,86 @@
                     </div>
                 </div>
                 <ng-template #threadView>
+                    <div class="row ps-0">
+                        <!-- search bar -->
+                        <div class="input-group px-0 my-2">
+                            <input
+                                name="searchText"
+                                [(ngModel)]="searchText"
+                                class="form-control"
+                                (keyup.enter)="onSelectContext()"
+                                placeholder="{{ 'artemisApp.metis.discussionSection.searchBarDefault' | artemisTranslate }}"
+                            />
+                            <jhi-button [btnType]="ButtonType.SECONDARY" [icon]="faTimes" (onClick)="searchText = ''; onSelectContext()"></jhi-button>
+                            <jhi-button class="ms-1" [icon]="faSearch" (onClick)="onSelectContext()"></jhi-button>
+                        </div>
+                    </div>
+
+                    <form [formGroup]="formGroup">
+                        <!-- filter and sort controls -->
+                        <div class="row justify-content-between">
+                            <!-- filter -->
+                            <div class="col-auto">
+                                <div class="row">
+                                    <!-- attribute filter -->
+                                    <div class="col-auto px-0 selection-prefix">
+                                        <fa-icon [icon]="faFilter"></fa-icon>
+                                        <input
+                                            class="form-check-input"
+                                            type="checkbox"
+                                            formControlName="filterToUnresolved"
+                                            name="filterToUnresolved"
+                                            (change)="onSelectContext()"
+                                        />
+                                        <span class="px-1">{{ 'artemisApp.metis.overview.filterToUnresolved' | artemisTranslate }}</span>
+                                        <input class="form-check-input" type="checkbox" formControlName="filterToOwn" name="filterToOwn" (change)="onSelectContext()" />
+                                        <span class="px-1">{{ 'artemisApp.metis.overview.filterToOwn' | artemisTranslate }}</span>
+                                        <input
+                                            class="form-check-input"
+                                            type="checkbox"
+                                            formControlName="filterToAnsweredOrReacted"
+                                            name="filterToAnsweredOrReacted"
+                                            (change)="onSelectContext()"
+                                        />
+                                        <span class="px-1">{{ 'artemisApp.metis.overview.filterToAnsweredOrReacted' | artemisTranslate }}</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- sort dropdown -->
+                            <div class="col-auto ps-0">
+                                <div class="row align-items-baseline">
+                                    <div class="col-auto pe-1">
+                                        <span>{{ 'artemisApp.metis.discussionSection.sortByDate' | artemisTranslate }}</span>
+                                    </div>
+                                    <div class="col-auto p-0 clickable" *ngIf="!currentSortDirection" (click)="onChangeSortDir()">
+                                        <fa-icon [icon]="faLongArrowRight" [ngbTooltip]="'artemisApp.metis.discussionSection.defaultSortCriterion' | artemisTranslate"> </fa-icon>
+                                    </div>
+                                    <div class="col-auto p-0 clickable" *ngIf="currentSortDirection" (click)="onChangeSortDir()">
+                                        <fa-icon
+                                            [icon]="currentSortDirection === SortDirection.ASCENDING ? faLongArrowAltUp : faLongArrowAltDown"
+                                            [ngbTooltip]="
+                                                currentSortDirection === SortDirection.ASCENDING
+                                                    ? ('artemisApp.metis.overview.sortAscending' | artemisTranslate)
+                                                    : ('artemisApp.metis.overview.sortDescending' | artemisTranslate)
+                                            "
+                                        >
+                                        </fa-icon>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                    <div class="bold-line row mt-1 mb-2"></div>
+                    <!-- new post button -->
+                    <div class="row mt-2" *ngIf="createdPost && this.posts?.length! > 2">
+                        <div class="col-12">
+                            <button class="btn btn-sm btn-primary" (click)="createEditModal.open()">
+                                <fa-icon [icon]="faPlus"></fa-icon>
+                                <span class="d-none d-md-inline">{{ 'artemisApp.metis.addNewPost' | artemisTranslate }}</span>
+                            </button>
+                            <jhi-post-create-edit-modal #createEditModal [posting]="createdPost" (onCreate)="createEmptyPost()"></jhi-post-create-edit-modal>
+                        </div>
+                    </div>
                     <jhi-posting-thread *ngFor="let post of posts; trackBy: postsTrackByFn" [post]="post" [showAnswers]="posts.length === 1"></jhi-posting-thread>
                 </ng-template>
             </div>
@@ -49,9 +129,9 @@
     </div>
     <!-- collapsed posts -->
     <ng-template #collapsedPosts>
-        <div class="postings-container collapsed-discussion text-white" (click)="collapsed = false" [ngbTooltip]="'artemisApp.metis.discussion.show' | artemisTranslate">
+        <div class="postings-container collapsed-discussion text-white" (click)="collapsed = false" [ngbTooltip]="'artemisApp.metis.communication.show' | artemisTranslate">
             <fa-icon class="expand-postings-icon" [icon]="faChevronLeft"></fa-icon>
-            <span class="h5" jhiTranslate="artemisApp.metis.discussion.label"></span>
+            <span class="h5" jhiTranslate="artemisApp.metis.communication.label"></span>
             <fa-icon class="expand-postings-icon" [icon]="faChevronLeft"></fa-icon>
         </div>
     </ng-template>

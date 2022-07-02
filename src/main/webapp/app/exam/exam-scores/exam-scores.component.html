@@ -281,16 +281,18 @@
                 </label>
             </div>
             <!-- Histogram -->
-            <jhi-participant-scores-distribution
-                [scores]="scores"
-                [scoreToHighlight]="highlightedValue"
-                [gradingScale]="gradingScale"
-                [isCourseScore]="false"
-                [dataLabelFormatting]="dataLabelFormatting"
-                (onSelect)="onSelect()"
-                class="row"
-            >
-            </jhi-participant-scores-distribution>
+            <div class="row d-flex justify-content-center">
+                <jhi-participant-scores-distribution
+                    [scores]="scores"
+                    [scoreToHighlight]="highlightedValue"
+                    [gradingScale]="gradingScale"
+                    [isCourseScore]="false"
+                    [dataLabelFormatting]="dataLabelFormatting"
+                    (onSelect)="onSelect()"
+                    class="col-lg-11"
+                >
+                </jhi-participant-scores-distribution>
+            </div>
         </div>
 
         <!-- Exercise Statistics -->

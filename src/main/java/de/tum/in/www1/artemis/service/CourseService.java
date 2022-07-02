@@ -91,6 +91,8 @@ public class CourseService {
 
     private final AuditEventRepository auditEventRepository;
 
+    private final LearningGoalService learningGoalService;
+
     private final LearningGoalRepository learningGoalRepository;
 
     private final GradingScaleRepository gradingScaleRepository;
@@ -103,7 +105,7 @@ public class CourseService {
             ExerciseDeletionService exerciseDeletionService, AuthorizationCheckService authCheckService, UserRepository userRepository, LectureService lectureService,
             GroupNotificationRepository groupNotificationRepository, ExerciseGroupRepository exerciseGroupRepository, AuditEventRepository auditEventRepository,
             UserService userService, LearningGoalRepository learningGoalRepository, GroupNotificationService groupNotificationService, ExamService examService,
-            ExamRepository examRepository, CourseExamExportService courseExamExportService, GradingScaleRepository gradingScaleRepository,
+            ExamRepository examRepository, CourseExamExportService courseExamExportService, LearningGoalService learningGoalService, GradingScaleRepository gradingScaleRepository,
             StatisticsRepository statisticsRepository, StudentParticipationRepository studentParticipationRepository) {
         this.env = env;
         this.artemisAuthenticationProvider = artemisAuthenticationProvider;
@@ -122,6 +124,7 @@ public class CourseService {
         this.examService = examService;
         this.examRepository = examRepository;
         this.courseExamExportService = courseExamExportService;
+        this.learningGoalService = learningGoalService;
         this.gradingScaleRepository = gradingScaleRepository;
         this.statisticsRepository = statisticsRepository;
         this.studentParticipationRepository = studentParticipationRepository;
@@ -165,13 +168,15 @@ public class CourseService {
      * @param user     the user entity
      * @return the course including exercises, lectures and exams for the user
      */
-    public Course findOneWithExercisesAndLecturesAndExamsForUser(Long courseId, User user) {
+    public Course findOneWithExercisesAndLecturesAndExamsAndLearningGoalsForUser(Long courseId, User user) {
         Course course = courseRepository.findByIdWithLecturesAndExamsElseThrow(courseId);
         if (!authCheckService.isAtLeastStudentInCourse(course, user)) {
             throw new AccessForbiddenException();
         }
         course.setExercises(exerciseService.findAllForCourse(course, user));
         course.setLectures(lectureService.filterActiveAttachments(course.getLectures(), user));
+        course.setLearningGoals(learningGoalService.findAllForCourse(course, user));
+        course.setPrerequisites(learningGoalService.findAllPrerequisitesForCourse(course, user));
         if (authCheckService.isOnlyStudentInCourse(course, user)) {
             course.setExams(examRepository.filterVisibleExams(course.getExams()));
         }
@@ -558,6 +563,8 @@ public class CourseService {
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
         var usersInGroup = userRepository.findAllInGroup(groupName);
         usersInGroup.forEach(user -> {
+            // explicitly set the registration number
+            user.setVisibleRegistrationNumber(user.getRegistrationNumber());
             // remove some values which are not needed in the client
             user.setLastNotificationRead(null);
             user.setActivationKey(null);
@@ -703,11 +710,22 @@ public class CourseService {
     public int determineTimeSpanSizeForActiveStudents(Course course, ZonedDateTime endDate, int maximalSize) {
         var spanTime = maximalSize;
         if (course.getStartDate() != null) {
-            var mondayInWeekOfStart = course.getStartDate().with(DayOfWeek.MONDAY).withHour(0).withMinute(0).withSecond(0).withNano(0);
-            var mondayInWeekOfEnd = endDate.plusWeeks(1).with(DayOfWeek.MONDAY).withHour(0).withMinute(0).withSecond(0).withNano(0);
-            var amountOfWeeksBetween = mondayInWeekOfStart.until(mondayInWeekOfEnd, ChronoUnit.WEEKS);
+            long amountOfWeeksBetween = calculateWeeksBetweenDates(course.getStartDate(), endDate);
             spanTime = Math.toIntExact(Math.min(maximalSize, amountOfWeeksBetween));
         }
         return spanTime;
+    }
+
+    /**
+     * Auxiliary method that returns the number of weeks between two dates
+     * Note: The calculation includes the week of the end date. This is needed for the active students line charts
+     * @param startDate the start date of the period to calculate
+     * @param endDate the end date of the period to calculate
+     * @return the number of weeks the period contains + one week
+     */
+    public long calculateWeeksBetweenDates(ZonedDateTime startDate, ZonedDateTime endDate) {
+        var mondayInWeekOfStart = startDate.with(DayOfWeek.MONDAY).withHour(0).withMinute(0).withSecond(0).withNano(0);
+        var mondayInWeekOfEnd = endDate.plusWeeks(1).with(DayOfWeek.MONDAY).withHour(0).withMinute(0).withSecond(0).withNano(0);
+        return mondayInWeekOfStart.until(mondayInWeekOfEnd, ChronoUnit.WEEKS);
     }
 }

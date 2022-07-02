@@ -16,7 +16,6 @@ import com.fasterxml.jackson.annotation.*;
 import de.tum.in.www1.artemis.domain.enumeration.*;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
-import de.tum.in.www1.artemis.domain.hestia.ExerciseHint;
 import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.participation.Participation;
@@ -44,7 +43,7 @@ import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
         @JsonSubTypes.Type(value = QuizExercise.class, name = "quiz"), @JsonSubTypes.Type(value = TextExercise.class, name = "text"),
         @JsonSubTypes.Type(value = FileUploadExercise.class, name = "file-upload"), })
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public abstract class Exercise extends BaseExercise {
+public abstract class Exercise extends BaseExercise implements Completable {
 
     @Column(name = "allow_complaints_for_automatic_assessments")
     private boolean allowComplaintsForAutomaticAssessments;
@@ -131,9 +130,6 @@ public abstract class Exercise extends BaseExercise {
     @JsonIncludeProperties({ "id" })
     private Set<PlagiarismCase> plagiarismCases = new HashSet<>();
 
-    @OneToMany(mappedBy = "exercise", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
-    private Set<ExerciseHint> exerciseHints = new HashSet<>();
-
     // NOTE: Helpers variable names must be different from Getter name, so that Jackson ignores the @Transient annotation, but Hibernate still respects it
     @Transient
     private DueDateStat numberOfSubmissionsTransient;
@@ -176,6 +172,16 @@ public abstract class Exercise extends BaseExercise {
 
     @Transient
     private Long numberOfRatingsTransient;
+
+    @Override
+    public boolean isCompletedFor(User user) {
+        return this.getStudentParticipations().stream().anyMatch((participation) -> participation.getStudents().contains(user));
+    }
+
+    @Override
+    public Optional<ZonedDateTime> getCompletionDate(User user) {
+        return this.getStudentParticipations().stream().filter((participation) -> participation.getStudents().contains(user)).map(Participation::getInitializationDate).findFirst();
+    }
 
     public boolean getAllowComplaintsForAutomaticAssessments() {
         return allowComplaintsForAutomaticAssessments;
@@ -365,14 +371,6 @@ public abstract class Exercise extends BaseExercise {
 
     public void setPlagiarismCases(Set<PlagiarismCase> plagiarismCases) {
         this.plagiarismCases = plagiarismCases;
-    }
-
-    public Set<ExerciseHint> getExerciseHints() {
-        return exerciseHints;
-    }
-
-    public void setExerciseHints(Set<ExerciseHint> exerciseHints) {
-        this.exerciseHints = exerciseHints;
     }
 
     // jhipster-needle-entity-add-getters-setters - JHipster will add getters and setters here, do not remove

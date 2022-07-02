@@ -15,7 +15,7 @@ export class TextResultBlock {
     public readonly text: string;
 
     constructor(public textBlock: TextBlock, public feedback?: Feedback) {
-        this.text = convertToHtmlLinebreaks(escapeString(textBlock.text!));
+        this.text = convertToHtmlLinebreaks(escapeString(textBlock.text ?? ''));
     }
 
     get length(): number {

@@ -35,7 +35,7 @@ artemis:
             allowed-email-pattern: '[a-zA-Z0-9_\-\.\+]+@(tum\.de|in\.tum\.de|mytum\.de)'
             allowed-email-pattern-readable: '@tum.de, @in.tum.de, @mytum.de'
             cleanup-time-minutes: 60 # The amount of time until non-activated accounts are deleted automatically
-        accept-terms: false     # whether users have to accept terms before they can login, from a privacy point of view this is not needed during education, therefore the default value is false
+        accept-terms: false     # whether users have to accept terms before they can log in, from a privacy point of view this is not needed during education, therefore the default value is false
         course-registration:                    # the whole section is optional: whether there is a restriction for the self-registration of students in courses
             allowed-username-pattern: '^([a-z]{2}\d{2}[a-z]{3})$'    # example for a TUM identifier, e.g. ab12cde
         login:

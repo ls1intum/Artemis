@@ -10,9 +10,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.ProgrammingExerciseTestCase;
-import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
-import de.tum.in.www1.artemis.repository.ProgrammingExerciseTestCaseRepository;
-import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseService;
@@ -20,7 +18,7 @@ import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseTestCaseSer
 import de.tum.in.www1.artemis.web.rest.dto.ProgrammingExerciseTestCaseDTO;
 
 /**
- * REST controller for managing ProgrammingExerciseTestCase. Test cases are created automatically from build run results which is why there are not endpoints available for POST,
+ * REST controller for managing ProgrammingExerciseTestCase. Test cases are created automatically from build run results which is why there are no endpoints available for POST,
  * PUT or DELETE.
  */
 @RestController
@@ -53,9 +51,9 @@ public class ProgrammingExerciseTestCaseResource {
     }
 
     /**
-     * Get the exercise's test cases for the the given exercise id.
+     * Get the exercise's test cases for the given exercise id.
      *
-     * @param exerciseId of the the exercise.
+     * @param exerciseId of the exercise.
      * @return the found test cases or an empty list if no test cases were found.
      */
     @GetMapping(Endpoints.TEST_CASES)
@@ -64,6 +62,7 @@ public class ProgrammingExerciseTestCaseResource {
         log.debug("REST request to get test cases for programming exercise {}", exerciseId);
         var programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exerciseId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, programmingExercise, null);
+
         Set<ProgrammingExerciseTestCase> testCases = programmingExerciseTestCaseRepository.findByExerciseId(exerciseId);
         return ResponseEntity.ok(testCases);
     }

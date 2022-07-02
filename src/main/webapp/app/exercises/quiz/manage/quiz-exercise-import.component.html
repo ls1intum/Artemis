@@ -1,0 +1,60 @@
+<form>
+    <div class="modal-header">
+        <h4 class="modal-title" jhiTranslate="artemisApp.quizExercise.home.importLabel">Import a Quiz Exercise</h4>
+        <button type="button" class="btn-close" data-dismiss="modal" aria-hidden="true" (click)="clear()"></button>
+    </div>
+    <div class="modal-body">
+        <div class="form-group form-inline">
+            <span jhiTranslate="artemisApp.exercise.import.search">Search for exercise</span>:
+            <input class="form-control ms-2" type="text" name="searchExcercise" [(ngModel)]="searchTerm" />
+            <span class="ms-3" *ngIf="loading" jhiTranslate="artemisApp.exercise.import.loading">Loading...</span>
+        </div>
+        <table class="table table-striped flex">
+            <thead class="thead-dark">
+                <tr jhiSort [(predicate)]="sortedColumn" [(ascending)]="listSorting" (sortChange)="sortRows()" class="flex-row">
+                    <th jhiSortBy="{{ column.ID }}" class="col-1">
+                        <span>#</span>
+                        <fa-icon [icon]="faSort"></fa-icon>
+                    </th>
+                    <th jhiSortBy="{{ column.TITLE }}" class="col-4">
+                        <span jhiTranslate="artemisApp.exercise.import.table.title">Title</span>
+                        <fa-icon [icon]="faSort"></fa-icon>
+                    </th>
+                    <th jhiSortBy="{{ column.COURSE_TITLE }}" class="col-4">
+                        <span jhiTranslate="artemisApp.exercise.import.table.course">Course</span>
+                        <fa-icon [icon]="faSort"></fa-icon>
+                    </th>
+                    <th class="col-2">
+                        <span jhiTranslate="artemisApp.exercise.import.table.examQuestion">Exam Question</span>
+                    </th>
+                    <th class="col-1"></th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr *ngFor="let exercise of content.resultsOnPage; trackBy: trackId" class="flex-row">
+                    <td class="col-1">
+                        <span>{{ exercise.id }}</span>
+                    </td>
+                    <td class="text-break col-4">
+                        <ngb-highlight [result]="exercise.title" [term]="searchTerm"></ngb-highlight>
+                    </td>
+                    <td class="text-break col-4">
+                        <ngb-highlight [result]="exercise | courseTitle" [term]="searchTerm"></ngb-highlight>
+                    </td>
+                    <td class="col-2">
+                        <div style="text-align: center; vertical-align: middle">
+                            <fa-icon *ngIf="exercise.exerciseGroup" [icon]="faCheck"></fa-icon>
+                        </div>
+                    </td>
+                    <td class="col-1">
+                        <jhi-button (onClick)="openImport(exercise)" [title]="'artemisApp.exercise.import.table.doImport'"> </jhi-button>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+        <div class="d-flex justify-content-between p-2">
+            <ngb-pagination [maxSize]="10" [rotate]="true" [collectionSize]="total" [(page)]="state.page" [pageSize]="state.pageSize" (pageChange)="onPageChange($event)">
+            </ngb-pagination>
+        </div>
+    </div>
+</form>

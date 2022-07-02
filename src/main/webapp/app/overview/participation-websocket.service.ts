@@ -163,7 +163,7 @@ export class ParticipationWebsocketService implements IParticipationWebsocketSer
                     this.openPersonalWebsocketSubscription = undefined;
                 }
             } else {
-                // The subscriptions was an non-personal subscriptions, so it should only be removed if it was the last for this exercise
+                // The subscriptions are non-personal subscriptions, so it should only be removed if it was the last for this exercise
                 const openSubscriptionsForExercise = this.subscribedExercises.get(exerciseId!);
                 if (openSubscriptionsForExercise) {
                     openSubscriptionsForExercise.delete(participationId);

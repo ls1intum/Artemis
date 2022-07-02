@@ -159,6 +159,7 @@
                 "searchForUsers": "Nutzer:in zu dieser Kursgruppe hinzufügen durch Suchen nach Login oder Namen",
                 "searchNoResults": "Kein:e Nutzer:innen gefunden",
                 "login": "Login",
+                "registrationNumber": "Matrikelnummer",
                 "name": "Name",
                 "email": "E-Mail",
                 "removeFromGroup": {
@@ -198,7 +199,7 @@
             "activeStudents": "Aktive Studierende",
             "activeStudentsExplanation": "Aktive Studierende sind Studierende, die in der entsprechenden Woche mindestens eine Lösung eingereicht haben.",
             "average": "Durchschnitt: ",
-            "averageReferenceLineCheckboxLabel": "Zeige den Durchschnitt als Referenz-Linie",
+            "meanReferenceLineCheckboxLabel": "Zeige den Durchschnitt als Referenz-Linie",
             "exerciseType": "Aufgabentyp",
             "programming": "Programmierung",
             "quiz": "Quiz",
@@ -209,6 +210,13 @@
                 "lowest": "Unteres Performance-Drittel",
                 "average": "Durchschnittliches Performance-Drittel",
                 "best": "Bestes Performance-Drittel"
+            },
+            "calendarWeek": "Kalenderwoche",
+            "scopeButton": {
+                "recentWeekButton": "Jüngste Aktivität",
+                "recentWeekTooltip": "Zeigt die Aktivität der letzten 17 Wochen. Begann der Kurs vor weniger als 17 Wochen, beginnt die Anzeige zum Startdatum.",
+                "lifetimeOverviewButtonLabel": "Kursdauerüberblick",
+                "lifetimeOverviewTooltip": "Zeigt die Periode von Kurstart bis jetzt. Ist der Kurs bereits beendet, endet die Anzeige zum Enddatum des Kurses."
             }
         }
     }

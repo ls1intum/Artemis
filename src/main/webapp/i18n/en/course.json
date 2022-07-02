@@ -159,6 +159,7 @@
                 "searchForUsers": "Add a user to this course group by searching for login or name",
                 "searchNoResults": "No users found",
                 "login": "Login",
+                "registrationNumber": "Registration Number",
                 "name": "Name",
                 "email": "Email",
                 "removeFromGroup": {
@@ -198,7 +199,7 @@
             "activeStudents": "Active students",
             "activeStudentsExplanation": "Active students are students that submitted at least once in the corresponding week.",
             "average": "Average: ",
-            "averageReferenceLineCheckboxLabel": "Show average as reference line",
+            "meanReferenceLineCheckboxLabel": "Show mean as reference line",
             "exerciseType": "Exercise type",
             "programming": "Programming",
             "quiz": "Quiz",
@@ -209,6 +210,13 @@
                 "lowest": "Lowest performing third",
                 "average": "Average performing third",
                 "best": "Best performing third"
+            },
+            "calendarWeek": "Calendar Week",
+            "scopeButton": {
+                "recentWeekButton": "Recent activity",
+                "recentWeekTooltip": "Includes the activity of the last 17 weeks. If the course started less than 17 weeks ago, the data starts at its start date.",
+                "lifetimeOverviewButtonLabel": "Lifetime overview",
+                "lifetimeOverviewTooltip": "Shows the period starting from the course start date until the current date. If the course is already finished, the data ends at its end date."
             }
         }
     }

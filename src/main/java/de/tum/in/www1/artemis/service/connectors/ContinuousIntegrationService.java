@@ -106,8 +106,8 @@ public interface ContinuousIntegrationService {
 
     /**
      * Get the plan key of the finished build, the information of the build gets passed via the requestBody. The requestBody must match the information passed from the
-     * (bamboo|jenkins)-server-notification-plugin, the body is described here: https://github.com/ls1intum/bamboo-server-notification-plugin or here:
-     * https://github.com/ls1intum/jenkins-server-notification-plugin
+     * (bamboo|jenkins)-server-notification-plugin, the body is described here: <a href="https://github.com/ls1intum/bamboo-server-notification-plugin">...</a> or here:
+     * <a href="https://github.com/ls1intum/jenkins-server-notification-plugin">...</a>
      *
      * @param requestBody The request Body received from the CI-Server.
      * @return the plan key of the build
@@ -197,7 +197,7 @@ public interface ContinuousIntegrationService {
             Optional<List<String>> optionalTriggeredByRepositories);
 
     /**
-     * Gives overall roles permissions for the defined project. A role can e.g. be all logged in users
+     * Gives overall roles permissions for the defined project. A role can e.g. be all logged-in users
      *
      * @param projectKey The key of the project to grant permissions to
      * @param groups The role of the users that should have the permissions
