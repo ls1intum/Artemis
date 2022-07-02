@@ -46,6 +46,7 @@
                 "accepted": "Angenommen",
                 "rejected": "Abgelehnt",
                 "showAddressedComplaints": "Adressierte Beschwerden anzeigen",
+                "showOnlyAddressedComplaints": "Ausschließlich adressierte Beschwerden anzeigen",
                 "hideAddressedComplaints": "Adressierte Beschwerden ausblenden",
                 "loadAllComplaints": "Alle Beschwerden laden",
                 "loadAllComplaintsExplanation": "Die Liste zeigt nur eingereichte Beschwerden über dich an. Mittels des Buttons können alle Beschwerden über alle Reviewer:innen geladen werden: ",
