@@ -1,11 +1,10 @@
-version: '2.4'
 services:
     artemis-app:
         platform: linux/x86_64
         image: ghcr.io/ls1intum/artemis
         build:
             context: ../../..
-            dockerfile: src/main/docker/Dockerfile
+            dockerfile: src/main/docker/artemis/Dockerfile
         env_file: .env
         ports:
             - 8080:8080

@@ -1,4 +1,3 @@
-version: '2.4'
 services:
     artemis-mysql:
         # Use this for arm64 processors (and remove the platform: linux/x86_64
