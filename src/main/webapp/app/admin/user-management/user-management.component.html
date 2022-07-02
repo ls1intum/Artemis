@@ -353,7 +353,7 @@
                                     [checked]="this.filters.courseFilter.size === this.courses.length && !this.filters.noCourse"
                                 />
                                 <label class="form-check-label ps-1">
-                                    {{ 'userManagement.filter.all' | artemisTranslate }}
+                                    {{ 'artemisApp.userManagement.filter.all' | artemisTranslate }}
                                 </label>
                             </div>
                             <div class="form-check col-6 d-flex justify-content-center">
@@ -364,7 +364,7 @@
                                     [checked]="this.filters.courseFilter.size === 0 && this.filters.noCourse"
                                 />
                                 <label class="form-check-label ps-1">
-                                    {{ 'userManagement.filter.course.without' | artemisTranslate }}
+                                    {{ 'artemisApp.userManagement.filter.course.without' | artemisTranslate }}
                                 </label>
                                 <jhi-help-icon class="ps-1" placement="top" text="artemisApp.userManagement.filter.course.withoutTooltip"></jhi-help-icon>
                             </div>
@@ -376,7 +376,7 @@
                                     [checked]="this.filters.courseFilter.size === 0 && !this.filters.noCourse"
                                 />
                                 <label class="form-check-label ps-1">
-                                    {{ 'userManagement.filter.none' | artemisTranslate }}
+                                    {{ 'artemisApp.userManagement.filter.none' | artemisTranslate }}
                                 </label>
                             </div>
                         </div>
@@ -404,7 +404,7 @@
     </div>
     <div class="modal-footer">
         <button type="button" class="btn btn-secondary" (click)="modal.close()">
-            {{ 'userManagement.filter.modal.close' | artemisTranslate }}
+            {{ 'artemisApp.userManagement.filter.modal.close' | artemisTranslate }}
         </button>
         <button class="btn btn-primary" (click)="applyFilter()">
             <span jhiTranslate="artemisApp.userManagement.filter.apply">Apply</span>
