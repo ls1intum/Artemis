@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.domain.lecture;
 import java.io.Serial;
 import java.io.Serializable;
 import java.time.ZonedDateTime;
+import java.util.Objects;
 
 import javax.persistence.*;
 
@@ -72,6 +73,23 @@ public class LectureUnitCompletion {
         private Long userId;
 
         private Long lectureUnitId;
+
+        @Override
+        public boolean equals(Object obj) {
+            if (this == obj) {
+                return true;
+            }
+            if (obj == null || getClass() != obj.getClass()) {
+                return false;
+            }
+            LectureUnitUserId that = (LectureUnitUserId) obj;
+            return userId.equals(that.userId) && lectureUnitId.equals(that.lectureUnitId);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(userId, lectureUnitId);
+        }
     }
 
 }
