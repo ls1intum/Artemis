@@ -3,7 +3,7 @@ import { getColor, groupActionsByTimestamp } from 'app/exam/monitoring/charts/mo
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ChartComponent } from 'app/exam/monitoring/charts/chart.component';
 import { NgxChartsSingleSeriesDataEntry } from 'app/shared/chart/ngx-charts-datatypes';
-import { ExamMonitoringWebsocketService } from '../../exam-monitoring-websocket.service';
+import { ExamActionService } from '../../exam-action.service';
 import { ActivatedRoute } from '@angular/router';
 import { ExamAction } from 'app/entities/exam-user-activity.model';
 
@@ -18,8 +18,8 @@ export class AverageActionsChartComponent extends ChartComponent implements OnIn
 
     readonly renderRate = 10;
 
-    constructor(route: ActivatedRoute, examMonitoringWebsocketService: ExamMonitoringWebsocketService, private artemisDatePipe: ArtemisDatePipe) {
-        super(route, examMonitoringWebsocketService, 'average-actions-chart', false, [getColor(2)]);
+    constructor(route: ActivatedRoute, examActionService: ExamActionService, private artemisDatePipe: ArtemisDatePipe) {
+        super(route, examActionService, 'average-actions-chart', false, [getColor(2)]);
     }
 
     ngOnInit() {
@@ -36,6 +36,7 @@ export class AverageActionsChartComponent extends ChartComponent implements OnIn
      * Create and initialize the data for the chart.
      */
     override initData() {
+        super.initData();
         this.createChartData();
     }
 

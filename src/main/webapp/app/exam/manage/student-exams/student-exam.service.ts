@@ -1,9 +1,10 @@
 import { Injectable } from '@angular/core';
 import { Router } from '@angular/router';
 import { HttpClient, HttpResponse } from '@angular/common/http';
-import { map, Observable } from 'rxjs';
+import { map, Observable, tap } from 'rxjs';
 import { StudentExam } from 'app/entities/student-exam.model';
 import { AccountService } from 'app/core/auth/account.service';
+import { StudentExamWithGradeDTO } from 'app/exam/exam-scores/exam-score-dtos.model';
 
 type EntityResponseType = HttpResponse<StudentExam>;
 type EntityArrayResponseType = HttpResponse<StudentExam[]>;
@@ -20,10 +21,10 @@ export class StudentExamService {
      * @param examId The exam id.
      * @param studentExamId The id of the student exam to get.
      */
-    find(courseId: number, examId: number, studentExamId: number): Observable<EntityResponseType> {
+    find(courseId: number, examId: number, studentExamId: number): Observable<HttpResponse<StudentExamWithGradeDTO>> {
         return this.http
-            .get<StudentExam>(`${this.resourceUrl}/${courseId}/exams/${examId}/student-exams/${studentExamId}`, { observe: 'response' })
-            .pipe(map((res: EntityResponseType) => this.processStudentExam(res)));
+            .get<StudentExamWithGradeDTO>(`${this.resourceUrl}/${courseId}/exams/${examId}/student-exams/${studentExamId}`, { observe: 'response' })
+            .pipe(tap((res: HttpResponse<StudentExamWithGradeDTO>) => this.processStudentExam(res?.body?.studentExam)));
     }
 
     /**
@@ -47,7 +48,7 @@ export class StudentExamService {
     updateWorkingTime(courseId: number, examId: number, studentExamId: number, workingTime: number): Observable<EntityResponseType> {
         return this.http
             .patch<StudentExam>(`${this.resourceUrl}/${courseId}/exams/${examId}/student-exams/${studentExamId}/working-time`, workingTime, { observe: 'response' })
-            .pipe(map((res: EntityResponseType) => this.processStudentExam(res)));
+            .pipe(tap((res: EntityResponseType) => this.processStudentExam(res?.body ?? undefined)));
     }
 
     toggleSubmittedState(courseId: number, examId: number, studentExamId: number, unsubmit: boolean): Observable<EntityResponseType> {
@@ -59,11 +60,10 @@ export class StudentExamService {
         }
     }
 
-    private processStudentExam(studentExamResponse: EntityResponseType) {
-        if (studentExamResponse.body?.exam?.course) {
-            this.accountService.setAccessRightsForCourse(studentExamResponse.body.exam.course);
+    private processStudentExam(studentExam?: StudentExam) {
+        if (studentExam?.exam?.course) {
+            this.accountService.setAccessRightsForCourse(studentExam.exam.course);
         }
-        return studentExamResponse;
     }
 
     private processStudentExams(studentExamsResponse: EntityArrayResponseType) {

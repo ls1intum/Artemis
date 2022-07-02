@@ -102,7 +102,7 @@ describe('ExamChecklistExerciseGroupTableComponent', () => {
             expect(examChecklistExerciseGroupTableComponent.exerciseGroupVariantColumns.length).toEqual(2);
             expect(examChecklistExerciseGroupTableComponent.exerciseGroupVariantColumns[0].indexExerciseGroup).toEqual(1);
             expect(examChecklistExerciseGroupTableComponent.exerciseGroupVariantColumns[0].indexExercise).toEqual(1);
-            expect(examChecklistExerciseGroupTableComponent.exerciseGroupVariantColumns[0].exerciseGroupPointsEqual).toEqual(false);
+            expect(examChecklistExerciseGroupTableComponent.exerciseGroupVariantColumns[0].exerciseGroupPointsEqual).toBeFalse();
             expect(examChecklistExerciseGroupTableComponent.exerciseGroupVariantColumns[0].exerciseTitle).toEqual('A');
             expect(examChecklistExerciseGroupTableComponent.exerciseGroupVariantColumns[0].exerciseMaxPoints).toEqual(50);
             expect(examChecklistExerciseGroupTableComponent.exerciseGroupVariantColumns[0].exerciseNumberOfParticipations).toEqual(23);
@@ -121,7 +121,7 @@ describe('ExamChecklistExerciseGroupTableComponent', () => {
             expect(examChecklistExerciseGroupTableComponent.exerciseGroupVariantColumns.length).not.toEqual(0);
             expect(examChecklistExerciseGroupTableComponent.exerciseGroupVariantColumns[0].indexExerciseGroup).toEqual(1);
             expect(examChecklistExerciseGroupTableComponent.exerciseGroupVariantColumns[0].indexExercise).toEqual(1);
-            expect(examChecklistExerciseGroupTableComponent.exerciseGroupVariantColumns[0].exerciseGroupPointsEqual).toEqual(true);
+            expect(examChecklistExerciseGroupTableComponent.exerciseGroupVariantColumns[0].exerciseGroupPointsEqual).toBeTrue();
             expect(examChecklistExerciseGroupTableComponent.exerciseGroupVariantColumns[0].exerciseTitle).toEqual('A');
             expect(examChecklistExerciseGroupTableComponent.exerciseGroupVariantColumns[0].exerciseMaxPoints).toEqual(101);
             expect(examChecklistExerciseGroupTableComponent.exerciseGroupVariantColumns[0].exerciseNumberOfParticipations).toEqual(23);
