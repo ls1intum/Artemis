@@ -19,6 +19,7 @@ import { Exam } from 'app/entities/exam.model';
 import { of } from 'rxjs';
 import { ActivatedRoute } from '@angular/router';
 import { ceilDayjsSeconds } from 'app/exam/monitoring/charts/monitoring-chart';
+import { ExamAction } from 'app/entities/exam-user-activity.model';
 
 describe('Total Actions Chart Component', () => {
     let comp: TotalActionsChartComponent;
@@ -32,6 +33,9 @@ describe('Total Actions Chart Component', () => {
     // Exam
     const exam = new Exam();
     exam.id = 1;
+
+    const now = dayjs();
+    let ceiledNow: dayjs.Dayjs;
 
     const route = { parent: { params: of({ courseId: course.id, examId: exam.id }) } };
 
@@ -47,10 +51,12 @@ describe('Total Actions Chart Component', () => {
             ],
         })
             .compileComponents()
-            .then(() => {});
-        pipe = new ArtemisDatePipe(TestBed.inject(TranslateService));
-        fixture = TestBed.createComponent(TotalActionsChartComponent);
-        comp = fixture.componentInstance;
+            .then(() => {
+                pipe = new ArtemisDatePipe(TestBed.inject(TranslateService));
+                fixture = TestBed.createComponent(TotalActionsChartComponent);
+                comp = fixture.componentInstance;
+                ceiledNow = ceilDayjsSeconds(now, comp.timeStampGapInSeconds);
+            });
     });
 
     afterEach(() => {
@@ -58,6 +64,7 @@ describe('Total Actions Chart Component', () => {
         jest.restoreAllMocks();
     });
 
+    // On init
     it('should call initData on init without actions', () => {
         expect(comp.ngxData).toEqual([]);
 
@@ -71,9 +78,6 @@ describe('Total Actions Chart Component', () => {
     });
 
     it('should call initData on init with actions', () => {
-        const now = dayjs();
-        const ceiledNow = ceilDayjsSeconds(now, comp.timeStampGapInSeconds);
-
         // Create series
         const series = createSingleSeriesDataEntriesWithTimestamps(comp.getLastXTimestamps(), pipe);
 
@@ -92,5 +96,20 @@ describe('Total Actions Chart Component', () => {
 
         // THEN
         expect(comp.ngxData).toEqual([{ name: 'actions', series }]);
+    });
+
+    // Evaluate and add action
+    it.each(createActions())('should evaluate and add action', (action: ExamAction) => {
+        expect(comp.filteredExamActions).toEqual([]);
+
+        action.ceiledTimestamp = ceiledNow;
+
+        comp.evaluateAndAddAction(action);
+
+        const expectedMap = new Map();
+        expectedMap.set(ceiledNow.toString(), 1);
+
+        expect(comp.filteredExamActions).toEqual([action]);
+        expect(comp.actionsPerTimestamp).toEqual(expectedMap);
     });
 });
