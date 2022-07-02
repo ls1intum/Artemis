@@ -4,7 +4,7 @@ import { ExamAction, ExamActionType } from 'app/entities/exam-user-activity.mode
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ChartComponent } from 'app/exam/monitoring/charts/chart.component';
 import { NgxChartsMultiSeriesDataEntry, NgxChartsSingleSeriesDataEntry } from 'app/shared/chart/ngx-charts-datatypes';
-import { ExamMonitoringWebsocketService } from '../../exam-monitoring-websocket.service';
+import { ExamActionService } from '../../exam-action.service';
 import { ActivatedRoute } from '@angular/router';
 
 @Component({
@@ -14,8 +14,8 @@ import { ActivatedRoute } from '@angular/router';
 export class CategoryActionsChartComponent extends ChartComponent implements OnInit, OnDestroy {
     readonly renderRate = 10;
 
-    constructor(route: ActivatedRoute, examMonitoringWebsocketService: ExamMonitoringWebsocketService, private artemisDatePipe: ArtemisDatePipe) {
-        super(route, examMonitoringWebsocketService, 'category-actions-chart', true, [getColor(0), getColor(1), getColor(2), getColor(3), getColor(4)]);
+    constructor(route: ActivatedRoute, examActionService: ExamActionService, private artemisDatePipe: ArtemisDatePipe) {
+        super(route, examActionService, 'category-actions-chart', true, [getColor(0), getColor(1), getColor(2), getColor(3), getColor(4)]);
     }
 
     ngOnInit() {
@@ -32,6 +32,7 @@ export class CategoryActionsChartComponent extends ChartComponent implements OnI
      * Create and initialize the data for the chart.
      */
     override initData() {
+        super.initData();
         this.createChartData();
     }
 
