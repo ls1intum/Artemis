@@ -72,7 +72,7 @@ import de.tum.in.www1.artemis.web.websocket.dto.ProgrammingExerciseTestCaseState
  * 2) Jenkins + Gitlab
  */
 @Service
-public class ProgrammingExerciseIntegrationTestService {
+class ProgrammingExerciseIntegrationTestService {
 
     @Value("${artemis.version-control.default-branch:main}")
     private String defaultBranch;
@@ -121,7 +121,7 @@ public class ProgrammingExerciseIntegrationTestService {
 
     private Course course;
 
-    public ProgrammingExercise programmingExercise;
+    private ProgrammingExercise programmingExercise;
 
     private ProgrammingExercise programmingExerciseInExam;
 
@@ -148,7 +148,7 @@ public class ProgrammingExerciseIntegrationTestService {
     // this will be a SpyBean because it was configured as SpyBean in the super class of the actual test class (see AbstractArtemisIntegrationTest)
     private VersionControlService versionControlService;
 
-    public void setup(MockDelegate mockDelegate, VersionControlService versionControlService) throws Exception {
+    void setup(MockDelegate mockDelegate, VersionControlService versionControlService) throws Exception {
         this.mockDelegate = mockDelegate;
         this.versionControlService = versionControlService; // this can be used like a SpyBean
 
@@ -196,7 +196,7 @@ public class ProgrammingExerciseIntegrationTestService {
         doReturn(new GitUtilService.MockFileRepositoryUrl(originRepoFile)).when(versionControlService).getCloneRepositoryUrl(anyString(), anyString());
     }
 
-    public void tearDown() throws IOException {
+    void tearDown() throws IOException {
         database.resetDatabase();
         if (downloadedFile != null && downloadedFile.exists()) {
             FileUtils.forceDelete(downloadedFile);
@@ -247,7 +247,7 @@ public class ProgrammingExerciseIntegrationTestService {
         assertThat(releaseStateDTO.isTestCasesChanged()).isFalse();
     }
 
-    public void checkIfProgrammingExerciseIsReleased_IsReleasedAndHasNoResults() throws Exception {
+    void checkIfProgrammingExerciseIsReleased_IsReleasedAndHasNoResults() throws Exception {
         programmingExercise.setReleaseDate(ZonedDateTime.now().minusHours(5L));
         programmingExercise.setTestCasesChanged(true);
         programmingExerciseRepository.save(programmingExercise);
@@ -666,19 +666,19 @@ public class ProgrammingExerciseIntegrationTestService {
         request.putWithResponseBody(path, programmingExercise, String.class, HttpStatus.BAD_REQUEST);
     }
 
-    public void updateProgrammingExercise_invalidTemplateBuildPlan_badRequest() throws Exception {
+    void updateProgrammingExercise_invalidTemplateBuildPlan_badRequest() throws Exception {
         database.addTemplateParticipationForProgrammingExercise(programmingExercise);
         mockDelegate.mockCheckIfBuildPlanExists(programmingExercise.getProjectKey(), programmingExercise.getTemplateBuildPlanId(), false, false);
         request.putAndExpectError(ROOT + PROGRAMMING_EXERCISES, programmingExercise, HttpStatus.BAD_REQUEST, INVALID_TEMPLATE_BUILD_PLAN_ID);
     }
 
-    public void updateProgrammingExercise_idIsNull_badRequest() throws Exception {
+    void updateProgrammingExercise_idIsNull_badRequest() throws Exception {
         database.addTemplateParticipationForProgrammingExercise(programmingExercise);
         programmingExercise.setId(null);
         request.put(ROOT + PROGRAMMING_EXERCISES, programmingExercise, HttpStatus.BAD_REQUEST);
     }
 
-    public void updateProgrammingExercise_eitherCourseOrExerciseGroupSet_badRequest() throws Exception {
+    void updateProgrammingExercise_eitherCourseOrExerciseGroupSet_badRequest() throws Exception {
         // both values are not set --> bad request
         programmingExercise.setCourse(null);
         request.put(ROOT + PROGRAMMING_EXERCISES, programmingExercise, HttpStatus.BAD_REQUEST);
@@ -694,13 +694,13 @@ public class ProgrammingExerciseIntegrationTestService {
         mockDelegate.mockRepositoryUrlIsValid(programmingExercise.getVcsSolutionRepositoryUrl(), programmingExercise.getProjectKey(), true);
     }
 
-    public void updateProgrammingExercise_staticCodeAnalysisMustNotChange_falseToTrue_badRequest() throws Exception {
+    void updateProgrammingExercise_staticCodeAnalysisMustNotChange_falseToTrue_badRequest() throws Exception {
         mockBuildPlanAndRepositoryCheck(programmingExercise);
         programmingExercise.setStaticCodeAnalysisEnabled(true);
         request.put(ROOT + PROGRAMMING_EXERCISES, programmingExercise, HttpStatus.BAD_REQUEST);
     }
 
-    public void updateProgrammingExercise_staticCodeAnalysisMustNotChange_trueToFalse_badRequest() throws Exception {
+    void updateProgrammingExercise_staticCodeAnalysisMustNotChange_trueToFalse_badRequest() throws Exception {
         mockBuildPlanAndRepositoryCheck(programmingExercise);
         programmingExercise.setStaticCodeAnalysisEnabled(true);
         programmingExerciseRepository.save(programmingExercise);
@@ -708,12 +708,12 @@ public class ProgrammingExerciseIntegrationTestService {
         request.put(ROOT + PROGRAMMING_EXERCISES, programmingExercise, HttpStatus.BAD_REQUEST);
     }
 
-    public void updateProgrammingExercise_instructorNotInCourse_forbidden() throws Exception {
+    void updateProgrammingExercise_instructorNotInCourse_forbidden() throws Exception {
         database.addInstructor("other-instructors", "instructoralt");
         request.put(ROOT + PROGRAMMING_EXERCISES, programmingExercise, HttpStatus.FORBIDDEN);
     }
 
-    public void updateProgrammingExercise_invalidTemplateVcs_badRequest() throws Exception {
+    void updateProgrammingExercise_invalidTemplateVcs_badRequest() throws Exception {
         database.addTemplateParticipationForProgrammingExercise(programmingExercise);
         mockDelegate.mockCheckIfBuildPlanExists(programmingExercise.getProjectKey(), programmingExercise.getTemplateBuildPlanId(), true, false);
         mockDelegate.mockRepositoryUrlIsValid(programmingExercise.getVcsTemplateRepositoryUrl(), programmingExercise.getProjectKey(), false);
@@ -721,7 +721,7 @@ public class ProgrammingExerciseIntegrationTestService {
         request.putAndExpectError(ROOT + PROGRAMMING_EXERCISES, programmingExercise, HttpStatus.BAD_REQUEST, INVALID_TEMPLATE_REPOSITORY_URL);
     }
 
-    public void updateProgrammingExercise_invalidSolutionBuildPlan_badRequest() throws Exception {
+    void updateProgrammingExercise_invalidSolutionBuildPlan_badRequest() throws Exception {
         database.addTemplateParticipationForProgrammingExercise(programmingExercise);
         database.addSolutionParticipationForProgrammingExercise(programmingExercise);
         mockDelegate.mockCheckIfBuildPlanExists(programmingExercise.getProjectKey(), programmingExercise.getTemplateBuildPlanId(), true, false);
@@ -731,7 +731,7 @@ public class ProgrammingExerciseIntegrationTestService {
         request.putAndExpectError(ROOT + PROGRAMMING_EXERCISES, programmingExercise, HttpStatus.BAD_REQUEST, INVALID_SOLUTION_BUILD_PLAN_ID);
     }
 
-    public void updateProgrammingExercise_invalidSolutionRepository_badRequest() throws Exception {
+    void updateProgrammingExercise_invalidSolutionRepository_badRequest() throws Exception {
         database.addTemplateParticipationForProgrammingExercise(programmingExercise);
         database.addSolutionParticipationForProgrammingExercise(programmingExercise);
         mockDelegate.mockCheckIfBuildPlanExists(programmingExercise.getProjectKey(), programmingExercise.getTemplateBuildPlanId(), true, false);
@@ -742,7 +742,7 @@ public class ProgrammingExerciseIntegrationTestService {
         request.putAndExpectError(ROOT + PROGRAMMING_EXERCISES, programmingExercise, HttpStatus.BAD_REQUEST, INVALID_SOLUTION_REPOSITORY_URL);
     }
 
-    public void updateProgrammingExercise_checkIfBuildPlanExistsFails_badRequest() throws Exception {
+    void updateProgrammingExercise_checkIfBuildPlanExistsFails_badRequest() throws Exception {
         database.addTemplateParticipationForProgrammingExercise(programmingExercise);
         mockDelegate.mockCheckIfBuildPlanExists(programmingExercise.getProjectKey(), programmingExercise.getTemplateBuildPlanId(), true, true);
         mockDelegate.mockRepositoryUrlIsValid(programmingExercise.getVcsTemplateRepositoryUrl(), programmingExercise.getProjectKey(), true);
@@ -753,7 +753,7 @@ public class ProgrammingExerciseIntegrationTestService {
      * This test checks that it is not allowed to change the courseId of an exercise
      * in an update request. The request should fail with 'HttpStatus.CONFLICT'.
      */
-    public void updateProgrammingExerciseShouldFailWithConflictWhenUpdatingCourseId() throws Exception {
+    void updateProgrammingExerciseShouldFailWithConflictWhenUpdatingCourseId() throws Exception {
         // Create a programming exercise.
         mockBuildPlanAndRepositoryCheck(programmingExercise);
 
@@ -770,7 +770,7 @@ public class ProgrammingExerciseIntegrationTestService {
         request.put(ROOT + PROGRAMMING_EXERCISES, newProgrammingExercise, HttpStatus.CONFLICT);
     }
 
-    public void updateExerciseDueDateWithIndividualDueDateUpdate() throws Exception {
+    void updateExerciseDueDateWithIndividualDueDateUpdate() throws Exception {
         mockBuildPlanAndRepositoryCheck(programmingExercise);
 
         final ZonedDateTime individualDueDate = ZonedDateTime.now().plusHours(20);
@@ -797,7 +797,7 @@ public class ProgrammingExerciseIntegrationTestService {
         }
     }
 
-    public void updateExerciseRemoveDueDate() throws Exception {
+    void updateExerciseRemoveDueDate() throws Exception {
         mockBuildPlanAndRepositoryCheck(programmingExercise);
 
         {
@@ -819,7 +819,7 @@ public class ProgrammingExerciseIntegrationTestService {
         }
     }
 
-    public void updateTimeline_intructorNotInCourse_forbidden() throws Exception {
+    void updateTimeline_intructorNotInCourse_forbidden() throws Exception {
         database.addInstructor("other-instructors", "instructoralt");
         final var endpoint = "/api" + TIMELINE;
         MultiValueMap<String, String> params = new HttpHeaders();
@@ -827,7 +827,7 @@ public class ProgrammingExerciseIntegrationTestService {
         request.putWithResponseBodyAndParams(endpoint, programmingExercise, ProgrammingExercise.class, HttpStatus.FORBIDDEN, params);
     }
 
-    public void updateTimeline_invalidId_notFound() throws Exception {
+    void updateTimeline_invalidId_notFound() throws Exception {
         programmingExercise.setId(20L);
         final var endpoint = "/api" + TIMELINE;
         MultiValueMap<String, String> params = new HttpHeaders();
@@ -835,59 +835,59 @@ public class ProgrammingExerciseIntegrationTestService {
         request.putWithResponseBodyAndParams(endpoint, programmingExercise, ProgrammingExercise.class, HttpStatus.NOT_FOUND, params);
     }
 
-    public void updateTimeline_ok() throws Exception {
+    void updateTimeline_ok() throws Exception {
         final var endpoint = "/api" + TIMELINE;
         MultiValueMap<String, String> params = new HttpHeaders();
         params.add("notificationText", "The notification text");
         request.putWithResponseBodyAndParams(endpoint, programmingExercise, ProgrammingExercise.class, HttpStatus.OK, params);
     }
 
-    public void updateProblemStatement_instructorNotInCourse_forbidden() throws Exception {
+    void updateProblemStatement_instructorNotInCourse_forbidden() throws Exception {
         database.addInstructor("other-instructors", "instructoralt");
         final var endpoint = "/api" + ProgrammingExerciseResourceEndpoints.PROBLEM.replace("{exerciseId}", String.valueOf(programmingExercise.getId()));
         request.patchWithResponseBody(endpoint, "a new problem statement", ProgrammingExercise.class, HttpStatus.FORBIDDEN, MediaType.TEXT_PLAIN);
     }
 
-    public void updateProblemStatement_invalidId_notFound() throws Exception {
+    void updateProblemStatement_invalidId_notFound() throws Exception {
         programmingExercise.setId(20L);
         final var endpoint = "/api" + ProgrammingExerciseResourceEndpoints.PROBLEM.replace("{exerciseId}", String.valueOf(programmingExercise.getId()));
         request.patchWithResponseBody(endpoint, "a new problem statement", ProgrammingExercise.class, HttpStatus.NOT_FOUND, MediaType.TEXT_PLAIN);
     }
 
-    public void createProgrammingExercise_exerciseIsNull_badRequest() throws Exception {
+    void createProgrammingExercise_exerciseIsNull_badRequest() throws Exception {
         request.post(ROOT + SETUP, null, HttpStatus.BAD_REQUEST);
     }
 
-    public void createProgrammingExercise_idIsNotNull_badRequest() throws Exception {
+    void createProgrammingExercise_idIsNotNull_badRequest() throws Exception {
         request.post(ROOT + SETUP, programmingExercise, HttpStatus.BAD_REQUEST);
     }
 
-    public void createProgrammingExercise_eitherCourseOrExerciseGroupSet_badRequest() throws Exception {
+    void createProgrammingExercise_eitherCourseOrExerciseGroupSet_badRequest() throws Exception {
         programmingExercise.setCourse(null);
         request.post(ROOT + SETUP, programmingExercise, HttpStatus.BAD_REQUEST);
         programmingExerciseInExam.setCourse(programmingExercise.getCourseViaExerciseGroupOrCourseMember());
         request.post(ROOT + SETUP, programmingExerciseInExam, HttpStatus.BAD_REQUEST);
     }
 
-    public void createProgrammingExercise_instructorNotInCourse_forbidden() throws Exception {
+    void createProgrammingExercise_instructorNotInCourse_forbidden() throws Exception {
         database.addInstructor("other-instructors", "instructoralt");
         programmingExercise.setId(null);
         request.post(ROOT + SETUP, programmingExercise, HttpStatus.FORBIDDEN);
     }
 
-    public void createProgrammingExercise_titleNull_badRequest() throws Exception {
+    void createProgrammingExercise_titleNull_badRequest() throws Exception {
         programmingExercise.setId(null);
         programmingExercise.setTitle(null);
         request.post(ROOT + SETUP, programmingExercise, HttpStatus.BAD_REQUEST);
     }
 
-    public void createProgrammingExercise_titleContainsBadCharacter_badRequest() throws Exception {
+    void createProgrammingExercise_titleContainsBadCharacter_badRequest() throws Exception {
         programmingExercise.setId(null);
         programmingExercise.setTitle("abc?=§ ``+##");
         request.post(ROOT + SETUP, programmingExercise, HttpStatus.BAD_REQUEST);
     }
 
-    public void createProgrammingExercise_invalidShortName_badRequest() throws Exception {
+    void createProgrammingExercise_invalidShortName_badRequest() throws Exception {
         programmingExercise.setId(null);
         programmingExercise.setTitle("New title");
         programmingExercise.setShortName(null);
@@ -896,7 +896,7 @@ public class ProgrammingExerciseIntegrationTestService {
         request.post(ROOT + SETUP, programmingExercise, HttpStatus.BAD_REQUEST);
     }
 
-    public void createProgrammingExercise_invalidCourseShortName_badRequest() throws Exception {
+    void createProgrammingExercise_invalidCourseShortName_badRequest() throws Exception {
         programmingExercise.setId(null);
         programmingExercise.setTitle("New title");
         course.setShortName(null);
@@ -907,7 +907,7 @@ public class ProgrammingExerciseIntegrationTestService {
         request.post(ROOT + SETUP, programmingExercise, HttpStatus.BAD_REQUEST);
     }
 
-    public void createProgrammingExercise_sameShortNameInCourse_badRequest() throws Exception {
+    void createProgrammingExercise_sameShortNameInCourse_badRequest() throws Exception {
         programmingExerciseInExam.setId(null);
         programmingExercise.setTitle("New title");
         programmingExercise.setId(null);
@@ -915,63 +915,63 @@ public class ProgrammingExerciseIntegrationTestService {
         request.post(ROOT + SETUP, programmingExercise, HttpStatus.BAD_REQUEST);
     }
 
-    public void createProgrammingExercise_shortNameContainsBadCharacters_badRequest() throws Exception {
+    void createProgrammingExercise_shortNameContainsBadCharacters_badRequest() throws Exception {
         programmingExercise.setId(null);
         programmingExercise.setTitle("New title");
         programmingExercise.setShortName("asdb ³¼²½¼³`` ");
         request.post(ROOT + SETUP, programmingExercise, HttpStatus.BAD_REQUEST);
     }
 
-    public void createProgrammingExercise_noProgrammingLanguageSet_badRequest() throws Exception {
+    void createProgrammingExercise_noProgrammingLanguageSet_badRequest() throws Exception {
         programmingExercise.setId(null);
         programmingExercise.setShortName("testShortName");
         programmingExercise.setProgrammingLanguage(null);
         request.post(ROOT + SETUP, programmingExercise, HttpStatus.BAD_REQUEST);
     }
 
-    public void createProgrammingExercise_packageNameContainsBadCharacters_badRequest() throws Exception {
+    void createProgrammingExercise_packageNameContainsBadCharacters_badRequest() throws Exception {
         programmingExercise.setId(null);
         programmingExercise.setPackageName("..asd. ß?");
         programmingExercise.setShortName("testShortName");
         request.post(ROOT + SETUP, programmingExercise, HttpStatus.BAD_REQUEST);
     }
 
-    public void createProgrammingExercise_packageNameContainsKeyword_badRequest() throws Exception {
+    void createProgrammingExercise_packageNameContainsKeyword_badRequest() throws Exception {
         programmingExercise.setId(null);
         programmingExercise.setPackageName("abc.final.xyz");
         programmingExercise.setShortName("testShortName");
         request.post(ROOT + SETUP, programmingExercise, HttpStatus.BAD_REQUEST);
     }
 
-    public void createProgrammingExercise_packageNameElementBeginsWithDigit_badRequest() throws Exception {
+    void createProgrammingExercise_packageNameElementBeginsWithDigit_badRequest() throws Exception {
         programmingExercise.setId(null);
         programmingExercise.setPackageName("eist.2020something");
         programmingExercise.setShortName("testShortName");
         request.post(ROOT + SETUP, programmingExercise, HttpStatus.BAD_REQUEST);
     }
 
-    public void createProgrammingExercise_packageNameIsNull_badRequest() throws Exception {
+    void createProgrammingExercise_packageNameIsNull_badRequest() throws Exception {
         programmingExercise.setId(null);
         programmingExercise.setPackageName(null);
         programmingExercise.setShortName("testShortName");
         request.post(ROOT + SETUP, programmingExercise, HttpStatus.BAD_REQUEST);
     }
 
-    public void createProgrammingExercise_maxScoreIsNull_badRequest() throws Exception {
+    void createProgrammingExercise_maxScoreIsNull_badRequest() throws Exception {
         programmingExercise.setId(null);
         programmingExercise.setMaxPoints(null);
         programmingExercise.setShortName("testShortName");
         request.post(ROOT + SETUP, programmingExercise, HttpStatus.BAD_REQUEST);
     }
 
-    public void createProgrammingExercise_noParticipationModeSelected_badRequest() throws Exception {
+    void createProgrammingExercise_noParticipationModeSelected_badRequest() throws Exception {
         programmingExercise.setId(null);
         programmingExercise.setAllowOfflineIde(false);
         programmingExercise.setAllowOnlineEditor(false);
         request.post(ROOT + SETUP, programmingExercise, HttpStatus.BAD_REQUEST);
     }
 
-    public void createProgrammingExercise_staticCodeAnalysisMustBeSet_badRequest() throws Exception {
+    void createProgrammingExercise_staticCodeAnalysisMustBeSet_badRequest() throws Exception {
         programmingExercise.setId(null);
         programmingExercise.setTitle("New title");
         programmingExercise.setShortName("NewShortname");
@@ -979,7 +979,7 @@ public class ProgrammingExerciseIntegrationTestService {
         request.post(ROOT + SETUP, programmingExercise, HttpStatus.BAD_REQUEST);
     }
 
-    public void createProgrammingExercise_staticCodeAnalysisAndSequential_badRequest() throws Exception {
+    void createProgrammingExercise_staticCodeAnalysisAndSequential_badRequest() throws Exception {
         programmingExercise.setId(null);
         programmingExercise.setTitle("New title");
         programmingExercise.setShortName("NewShortname");
@@ -988,7 +988,7 @@ public class ProgrammingExerciseIntegrationTestService {
         request.post(ROOT + SETUP, programmingExercise, HttpStatus.BAD_REQUEST);
     }
 
-    public void createProgrammingExercise_unsupportedProgrammingLanguageForStaticCodeAnalysis_badRequest() throws Exception {
+    void createProgrammingExercise_unsupportedProgrammingLanguageForStaticCodeAnalysis_badRequest() throws Exception {
         programmingExercise.setId(null);
         programmingExercise.setTitle("New title");
         programmingExercise.setShortName("NewShortname");
@@ -998,7 +998,7 @@ public class ProgrammingExerciseIntegrationTestService {
         request.post(ROOT + SETUP, programmingExercise, HttpStatus.BAD_REQUEST);
     }
 
-    public void createProgrammingExercise_noStaticCodeAnalysisButMaxPenalty_badRequest() throws Exception {
+    void createProgrammingExercise_noStaticCodeAnalysisButMaxPenalty_badRequest() throws Exception {
         programmingExercise.setId(null);
         programmingExercise.setTitle("New title");
         programmingExercise.setShortName("NewShortname");
@@ -1007,7 +1007,7 @@ public class ProgrammingExerciseIntegrationTestService {
         request.post(ROOT + SETUP, programmingExercise, HttpStatus.BAD_REQUEST);
     }
 
-    public void createProgrammingExercise_maxStaticCodePenaltyNegative_badRequest() throws Exception {
+    void createProgrammingExercise_maxStaticCodePenaltyNegative_badRequest() throws Exception {
         programmingExercise.setId(null);
         programmingExercise.setTitle("New title");
         programmingExercise.setShortName("NewShortname");
@@ -1016,7 +1016,7 @@ public class ProgrammingExerciseIntegrationTestService {
         request.post(ROOT + SETUP, programmingExercise, HttpStatus.BAD_REQUEST);
     }
 
-    public void createProgrammingExercise_vcsProjectWithSameKeyAlreadyExists_badRequest() throws Exception {
+    void createProgrammingExercise_vcsProjectWithSameKeyAlreadyExists_badRequest() throws Exception {
         programmingExercise.setId(null);
         programmingExercise.setTitle("testTitle");
         programmingExercise.setShortName("testShortName");
@@ -1024,7 +1024,7 @@ public class ProgrammingExerciseIntegrationTestService {
         request.post(ROOT + SETUP, programmingExercise, HttpStatus.BAD_REQUEST);
     }
 
-    public void createProgrammingExercise_bambooProjectWithSameKeyAlreadyExists_badRequest() throws Exception {
+    void createProgrammingExercise_bambooProjectWithSameKeyAlreadyExists_badRequest() throws Exception {
         programmingExercise.setId(null);
         programmingExercise.setTitle("testTitle");
         programmingExercise.setShortName("testShortName");
@@ -1033,7 +1033,7 @@ public class ProgrammingExerciseIntegrationTestService {
         request.post(ROOT + SETUP, programmingExercise, HttpStatus.BAD_REQUEST);
     }
 
-    public void createProgrammingExercise_vcsProjectWithSameTitleAlreadyExists_badRequest() throws Exception {
+    void createProgrammingExercise_vcsProjectWithSameTitleAlreadyExists_badRequest() throws Exception {
         programmingExercise.setId(null);
         programmingExercise.setTitle("testTitle");
         programmingExercise.setShortName("testShortName");
@@ -1041,7 +1041,7 @@ public class ProgrammingExerciseIntegrationTestService {
         request.post(ROOT + SETUP, programmingExercise, HttpStatus.BAD_REQUEST);
     }
 
-    public void createProgrammingExercise_bambooProjectWithSameTitleAlreadyExists_badRequest() throws Exception {
+    void createProgrammingExercise_bambooProjectWithSameTitleAlreadyExists_badRequest() throws Exception {
         programmingExercise.setId(null);
         programmingExercise.setTitle("testTitle");
         programmingExercise.setShortName("testShortName");
@@ -1050,7 +1050,7 @@ public class ProgrammingExerciseIntegrationTestService {
         request.post(ROOT + SETUP, programmingExercise, HttpStatus.BAD_REQUEST);
     }
 
-    public void createProgrammingExercise_failToCheckIfProjectExistsInCi() throws Exception {
+    void createProgrammingExercise_failToCheckIfProjectExistsInCi() throws Exception {
         programmingExercise.setId(null);
         programmingExercise.setTitle("unique-title");
         programmingExercise.setShortName("testuniqueshortname");
@@ -1059,7 +1059,7 @@ public class ProgrammingExerciseIntegrationTestService {
         request.post(ROOT + SETUP, programmingExercise, HttpStatus.BAD_REQUEST);
     }
 
-    public void createProgrammingExercise_projectTypeMissing_badRequest() throws Exception {
+    void createProgrammingExercise_projectTypeMissing_badRequest() throws Exception {
         programmingExercise.setId(null);
         programmingExercise.setTitle("New title");
         programmingExercise.setShortName("NewShortname");
@@ -1068,7 +1068,7 @@ public class ProgrammingExerciseIntegrationTestService {
         request.post(ROOT + SETUP, programmingExercise, HttpStatus.BAD_REQUEST);
     }
 
-    public void createProgrammingExercise_projectTypeNotExpected_badRequest() throws Exception {
+    void createProgrammingExercise_projectTypeNotExpected_badRequest() throws Exception {
         programmingExercise.setId(null);
         programmingExercise.setTitle("New title");
         programmingExercise.setShortName("NewShortname");
@@ -1077,7 +1077,7 @@ public class ProgrammingExerciseIntegrationTestService {
         request.post(ROOT + SETUP, programmingExercise, HttpStatus.BAD_REQUEST);
     }
 
-    public void createProgrammingExercise_onlineCodeEditorNotExpected_badRequest() throws Exception {
+    void createProgrammingExercise_onlineCodeEditorNotExpected_badRequest() throws Exception {
         programmingExercise.setId(null);
         programmingExercise.setTitle("New title");
         programmingExercise.setShortName("NewShortname");
@@ -1087,7 +1087,7 @@ public class ProgrammingExerciseIntegrationTestService {
         request.post(ROOT + SETUP, programmingExercise, HttpStatus.BAD_REQUEST);
     }
 
-    public void createProgrammingExercise_checkoutSolutionRepositoryProgrammingLanguageNotSupported_badRequest(ProgrammingLanguage programmingLanguage) throws Exception {
+    void createProgrammingExercise_checkoutSolutionRepositoryProgrammingLanguageNotSupported_badRequest(ProgrammingLanguage programmingLanguage) throws Exception {
         programmingExercise.setId(null);
         programmingExercise.setTitle("New title");
         programmingExercise.setShortName("NewShortname");
@@ -1096,14 +1096,14 @@ public class ProgrammingExerciseIntegrationTestService {
         request.post(ROOT + SETUP, programmingExercise, HttpStatus.BAD_REQUEST);
     }
 
-    public void createProgrammingExercise_invalidMaxScore_badRequest() throws Exception {
+    void createProgrammingExercise_invalidMaxScore_badRequest() throws Exception {
         database.addInstructor("other-instructors", "instructoralt");
         programmingExercise.setId(null);
         programmingExercise.setMaxPoints(0.0);
         request.post(ROOT + SETUP, programmingExercise, HttpStatus.BAD_REQUEST);
     }
 
-    public void createProgrammingExercise_includedAsBonus_invalidBonusPoints_badRequest() throws Exception {
+    void createProgrammingExercise_includedAsBonus_invalidBonusPoints_badRequest() throws Exception {
         database.addInstructor("other-instructors", "instructoralt");
         programmingExercise.setId(null);
         programmingExercise.setMaxPoints(10.0);
@@ -1112,7 +1112,7 @@ public class ProgrammingExerciseIntegrationTestService {
         request.post(ROOT + SETUP, programmingExercise, HttpStatus.BAD_REQUEST);
     }
 
-    public void createProgrammingExercise_notIncluded_invalidBonusPoints_badRequest() throws Exception {
+    void createProgrammingExercise_notIncluded_invalidBonusPoints_badRequest() throws Exception {
         database.addInstructor("other-instructors", "instructoralt");
         programmingExercise.setId(null);
         programmingExercise.setMaxPoints(10.0);
@@ -1121,39 +1121,39 @@ public class ProgrammingExerciseIntegrationTestService {
         request.post(ROOT + SETUP, programmingExercise, HttpStatus.BAD_REQUEST);
     }
 
-    public void importProgrammingExercise_sourceExerciseIdNegative_badRequest() throws Exception {
+    void importProgrammingExercise_sourceExerciseIdNegative_badRequest() throws Exception {
         programmingExercise.setId(-1L);
         request.post(ROOT + IMPORT.replace("{sourceExerciseId}", programmingExercise.getId().toString()), programmingExercise, HttpStatus.BAD_REQUEST);
     }
 
-    public void importProgrammingExerciseMaxScoreNullBadRequest() throws Exception {
+    void importProgrammingExerciseMaxScoreNullBadRequest() throws Exception {
         programmingExercise.setMaxPoints(null);
         request.post(ROOT + IMPORT.replace("{sourceExerciseId}", programmingExercise.getId().toString()), programmingExercise, HttpStatus.BAD_REQUEST);
     }
 
-    public void importProgrammingExercise_noParticipationModeSelected_badRequest() throws Exception {
+    void importProgrammingExercise_noParticipationModeSelected_badRequest() throws Exception {
         programmingExercise.setAllowOfflineIde(false);
         programmingExercise.setAllowOnlineEditor(false);
         request.post(ROOT + IMPORT.replace("{sourceExerciseId}", programmingExercise.getId().toString()), programmingExercise, HttpStatus.BAD_REQUEST);
     }
 
-    public void importProgrammingExercise_noProgrammingLanguage_badRequest() throws Exception {
+    void importProgrammingExercise_noProgrammingLanguage_badRequest() throws Exception {
         programmingExercise.setProgrammingLanguage(null);
         request.post(ROOT + IMPORT.replace("{sourceExerciseId}", programmingExercise.getId().toString()), programmingExercise, HttpStatus.BAD_REQUEST);
     }
 
-    public void importProgrammingExercise_instructorNotInCourse_forbidden() throws Exception {
+    void importProgrammingExercise_instructorNotInCourse_forbidden() throws Exception {
         database.addInstructor("other-instructors", "instructoralt");
         request.post(ROOT + IMPORT.replace("{sourceExerciseId}", programmingExercise.getId().toString()), programmingExercise, HttpStatus.FORBIDDEN);
     }
 
-    public void importProgrammingExercise_templateIdDoesNotExist_notFound() throws Exception {
+    void importProgrammingExercise_templateIdDoesNotExist_notFound() throws Exception {
         programmingExercise.setShortName("newShortName");
         programmingExercise.setTitle("newTitle");
         request.post(ROOT + IMPORT.replace("{sourceExerciseId}", "1337"), programmingExercise, HttpStatus.NOT_FOUND);
     }
 
-    public void importProgrammingExercise_sameShortNameInCourse_badRequest() throws Exception {
+    void importProgrammingExercise_sameShortNameInCourse_badRequest() throws Exception {
         programmingExercise.setId(null);
         programmingExercise.setTitle(programmingExercise.getTitle() + "change");
         programmingExerciseInExam.setId(null);
@@ -1163,7 +1163,7 @@ public class ProgrammingExerciseIntegrationTestService {
         request.post(ROOT + IMPORT.replace("{sourceExerciseId}", "1337"), programmingExerciseInExam, HttpStatus.BAD_REQUEST);
     }
 
-    public void importProgrammingExercise_sameTitleInCourse_badRequest() throws Exception {
+    void importProgrammingExercise_sameTitleInCourse_badRequest() throws Exception {
         programmingExercise.setId(null);
         programmingExercise.setShortName(programmingExercise.getShortName() + "change");
         programmingExerciseInExam.setId(null);
@@ -1173,14 +1173,14 @@ public class ProgrammingExerciseIntegrationTestService {
         request.post(ROOT + IMPORT.replace("{sourceExerciseId}", "1337"), programmingExerciseInExam, HttpStatus.BAD_REQUEST);
     }
 
-    public void importProgrammingExercise_staticCodeAnalysisMustBeSet_badRequest() throws Exception {
+    void importProgrammingExercise_staticCodeAnalysisMustBeSet_badRequest() throws Exception {
         var id = programmingExercise.getId();
         programmingExercise.setId(null);
         programmingExercise.setStaticCodeAnalysisEnabled(null);
         request.post(ROOT + IMPORT.replace("{sourceExerciseId}", String.valueOf(id)), programmingExercise, HttpStatus.BAD_REQUEST);
     }
 
-    public void importProgrammingExercise_scaChanged_badRequest(boolean recreateBuildPlan, boolean updateTemplate) throws Exception {
+    void importProgrammingExercise_scaChanged_badRequest(boolean recreateBuildPlan, boolean updateTemplate) throws Exception {
         var params = new LinkedMultiValueMap<String, String>();
         params.add("recreateBuildPlans", String.valueOf(recreateBuildPlan));
         params.add("updateTemplate", String.valueOf(updateTemplate));
@@ -1206,21 +1206,21 @@ public class ProgrammingExerciseIntegrationTestService {
                 HttpStatus.BAD_REQUEST);
     }
 
-    public void importProgrammingExercise_eitherCourseOrExerciseGroupSet_badRequest() throws Exception {
+    void importProgrammingExercise_eitherCourseOrExerciseGroupSet_badRequest() throws Exception {
         programmingExercise.setCourse(null);
         request.post(ROOT + IMPORT.replace("{sourceExerciseId}", "1337"), programmingExercise, HttpStatus.BAD_REQUEST);
         programmingExerciseInExam.setCourse(programmingExercise.getCourseViaExerciseGroupOrCourseMember());
         request.post(ROOT + IMPORT.replace("{sourceExerciseId}", "1337"), programmingExerciseInExam, HttpStatus.BAD_REQUEST);
     }
 
-    public void importProgrammingExercise_vcsProjectWithSameKeyAlreadyExists_badRequest() throws Exception {
+    void importProgrammingExercise_vcsProjectWithSameKeyAlreadyExists_badRequest() throws Exception {
         programmingExercise.setId(null);
         programmingExercise.setShortName("testShortName");
         mockDelegate.mockCheckIfProjectExistsInVcs(programmingExercise, true);
         request.post(ROOT + IMPORT.replace("{sourceExerciseId}", "1337"), programmingExercise, HttpStatus.BAD_REQUEST);
     }
 
-    public void importProgrammingExercise_bambooProjectWithSameKeyAlreadyExists_badRequest() throws Exception {
+    void importProgrammingExercise_bambooProjectWithSameKeyAlreadyExists_badRequest() throws Exception {
         programmingExercise.setId(null);
         programmingExercise.setShortName("testShortName");
         mockDelegate.mockCheckIfProjectExistsInVcs(programmingExercise, false);
@@ -1228,14 +1228,14 @@ public class ProgrammingExerciseIntegrationTestService {
         request.post(ROOT + IMPORT.replace("{sourceExerciseId}", "1337"), programmingExercise, HttpStatus.BAD_REQUEST);
     }
 
-    public void importProgrammingExercise_vcsProjectWithSameTitleAlreadyExists_badRequest() throws Exception {
+    void importProgrammingExercise_vcsProjectWithSameTitleAlreadyExists_badRequest() throws Exception {
         programmingExercise.setId(null);
         programmingExercise.setShortName("testShortName");
         mockDelegate.mockCheckIfProjectExistsInVcs(programmingExercise, true);
         request.post(ROOT + IMPORT.replace("{sourceExerciseId}", "1337"), programmingExercise, HttpStatus.BAD_REQUEST);
     }
 
-    public void importProgrammingExercise_bambooProjectWithSameTitleAlreadyExists_badRequest() throws Exception {
+    void importProgrammingExercise_bambooProjectWithSameTitleAlreadyExists_badRequest() throws Exception {
         programmingExercise.setId(null);
         programmingExercise.setShortName("testShortName");
         mockDelegate.mockCheckIfProjectExistsInVcs(programmingExercise, false);
@@ -1243,7 +1243,7 @@ public class ProgrammingExerciseIntegrationTestService {
         request.post(ROOT + IMPORT.replace("{sourceExerciseId}", "1337"), programmingExercise, HttpStatus.BAD_REQUEST);
     }
 
-    public void exportSubmissionsByStudentLogins_notInstructorForExercise_forbidden() throws Exception {
+    void exportSubmissionsByStudentLogins_notInstructorForExercise_forbidden() throws Exception {
         database.addInstructor("other-instructors", "instructoralt");
         request.post(getDefaultAPIEndpointForExportRepos(), getOptions(), HttpStatus.FORBIDDEN);
     }
@@ -1253,22 +1253,22 @@ public class ProgrammingExerciseIntegrationTestService {
         return ROOT + EXPORT_SUBMISSIONS_BY_PARTICIPANTS.replace("{exerciseId}", String.valueOf(programmingExercise.getId())).replace("{participantIdentifiers}", "1,2,3");
     }
 
-    public void exportSubmissionsByStudentLogins_exportAllAsTutor_forbidden() throws Exception {
+    void exportSubmissionsByStudentLogins_exportAllAsTutor_forbidden() throws Exception {
         final var options = getOptions();
         options.setExportAllParticipants(true);
         request.post(getDefaultAPIEndpointForExportRepos(), options, HttpStatus.FORBIDDEN);
     }
 
-    public void generateStructureOracleForExercise_exerciseDoesNotExist_badRequest() throws Exception {
+    void generateStructureOracleForExercise_exerciseDoesNotExist_badRequest() throws Exception {
         request.put(ROOT + GENERATE_TESTS.replace("{exerciseId}", String.valueOf(programmingExercise.getId() + 8337)), programmingExercise, HttpStatus.NOT_FOUND);
     }
 
-    public void generateStructureOracleForExercise_userIsNotAdminInCourse_badRequest() throws Exception {
+    void generateStructureOracleForExercise_userIsNotAdminInCourse_badRequest() throws Exception {
         database.addInstructor("other-instructors", "instructoralt");
         request.put(ROOT + GENERATE_TESTS.replace("{exerciseId}", String.valueOf(programmingExercise.getId())), programmingExercise, HttpStatus.FORBIDDEN);
     }
 
-    public void generateStructureOracleForExercise_invalidPackageName_badRequest() throws Exception {
+    void generateStructureOracleForExercise_invalidPackageName_badRequest() throws Exception {
         programmingExercise.setPackageName(null);
         programmingExerciseRepository.saveAndFlush(programmingExercise);
         request.put(ROOT + GENERATE_TESTS.replace("{exerciseId}", String.valueOf(programmingExercise.getId())), programmingExercise, HttpStatus.BAD_REQUEST);
@@ -1278,16 +1278,16 @@ public class ProgrammingExerciseIntegrationTestService {
         request.put(ROOT + GENERATE_TESTS.replace("{exerciseId}", String.valueOf(programmingExercise.getId())), programmingExercise, HttpStatus.BAD_REQUEST);
     }
 
-    public void hasAtLeastOneStudentResult_exerciseDoesNotExist_notFound() throws Exception {
+    void hasAtLeastOneStudentResult_exerciseDoesNotExist_notFound() throws Exception {
         request.get(ROOT + TEST_CASE_STATE.replace("{exerciseId}", String.valueOf(programmingExercise.getId() + 1337)), HttpStatus.NOT_FOUND, String.class);
     }
 
-    public void hasAtLeastOneStudentResult_isNotTeachingAssistant_forbidden() throws Exception {
+    void hasAtLeastOneStudentResult_isNotTeachingAssistant_forbidden() throws Exception {
         database.addTeachingAssistant("other-tutors", "tutoralt");
         request.get(ROOT + TEST_CASE_STATE.replace("{exerciseId}", String.valueOf(programmingExercise.getId())), HttpStatus.FORBIDDEN, String.class);
     }
 
-    public void getTestCases_asTutor() throws Exception {
+    void getTestCases_asTutor() throws Exception {
         final var endpoint = ProgrammingExerciseTestCaseResource.Endpoints.TEST_CASES.replace("{exerciseId}", String.valueOf(programmingExercise.getId()));
         final List<ProgrammingExerciseTestCase> returnedTests = request.getList(ROOT + endpoint, HttpStatus.OK, ProgrammingExerciseTestCase.class);
         final List<ProgrammingExerciseTestCase> testsInDB = new ArrayList<>(programmingExerciseTestCaseRepository.findByExerciseId(programmingExercise.getId()));
@@ -1295,19 +1295,19 @@ public class ProgrammingExerciseIntegrationTestService {
         assertThat(returnedTests).containsExactlyInAnyOrderElementsOf(testsInDB);
     }
 
-    public void getTestCases_asStudent_forbidden() throws Exception {
+    void getTestCases_asStudent_forbidden() throws Exception {
         final var endpoint = ProgrammingExerciseTestCaseResource.Endpoints.TEST_CASES.replace("{exerciseId}", String.valueOf(programmingExercise.getId()));
         request.getList(ROOT + endpoint, HttpStatus.FORBIDDEN, ProgrammingExerciseTestCase.class);
     }
 
-    public void getTestCases_tutorInOtherCourse_forbidden() throws Exception {
+    void getTestCases_tutorInOtherCourse_forbidden() throws Exception {
         database.addTeachingAssistant("other-teaching-assistants", "other-teaching-assistant");
         final var endpoint = ProgrammingExerciseTestCaseResource.Endpoints.TEST_CASES.replace("{exerciseId}", String.valueOf(programmingExercise.getId()));
 
         request.getList(ROOT + endpoint, HttpStatus.FORBIDDEN, ProgrammingExerciseTestCase.class);
     }
 
-    public void updateTestCases_asInstrutor() throws Exception {
+    void updateTestCases_asInstrutor() throws Exception {
         programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesById(programmingExercise.getId()).get();
         mockDelegate.mockTriggerBuild(programmingExercise.getSolutionParticipation());
         mockDelegate.mockTriggerBuild(programmingExercise.getTemplateParticipation());
@@ -1338,7 +1338,7 @@ public class ProgrammingExerciseIntegrationTestService {
         });
     }
 
-    public void updateTestCases_asInstrutor_triggerBuildFails() throws Exception {
+    void updateTestCases_asInstrutor_triggerBuildFails() throws Exception {
         programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesById(programmingExercise.getId()).get();
         mockDelegate.mockTriggerBuildFailed(programmingExercise.getSolutionParticipation());
         mockDelegate.mockTriggerBuildFailed(programmingExercise.getTemplateParticipation());
@@ -1361,13 +1361,13 @@ public class ProgrammingExerciseIntegrationTestService {
         assertThat(testCasesResponse).isNotNull();
     }
 
-    public void updateTestCases_nonExistingExercise_notFound() throws Exception {
+    void updateTestCases_nonExistingExercise_notFound() throws Exception {
         final var update = new ProgrammingExerciseTestCaseDTO();
         final var endpoint = ProgrammingExerciseTestCaseResource.Endpoints.UPDATE_TEST_CASES.replace("{exerciseId}", String.valueOf(programmingExercise.getId() + 1337));
         request.patchWithResponseBody(ROOT + endpoint, List.of(update), String.class, HttpStatus.NOT_FOUND);
     }
 
-    public void updateTestCases_instructorInWrongCourse_forbidden() throws Exception {
+    void updateTestCases_instructorInWrongCourse_forbidden() throws Exception {
         database.addInstructor("other-instructors", "other-instructor");
         final var update = new ProgrammingExerciseTestCaseDTO();
         final var endpoint = ProgrammingExerciseTestCaseResource.Endpoints.UPDATE_TEST_CASES.replace("{exerciseId}", String.valueOf(programmingExercise.getId()));
@@ -1375,7 +1375,7 @@ public class ProgrammingExerciseIntegrationTestService {
         request.patchWithResponseBody(ROOT + endpoint, List.of(update), String.class, HttpStatus.FORBIDDEN);
     }
 
-    public void updateTestCases_testCaseWeightSmallerThanZero_badRequest() throws Exception {
+    void updateTestCases_testCaseWeightSmallerThanZero_badRequest() throws Exception {
         final var testCases = programmingExerciseTestCaseRepository.findByExerciseId(programmingExercise.getId());
         final var updates = testCases.stream().map(testCase -> {
             final var testCaseUpdate = new ProgrammingExerciseTestCaseDTO();
@@ -1391,7 +1391,7 @@ public class ProgrammingExerciseIntegrationTestService {
         request.patchWithResponseBody(ROOT + endpoint, updates, String.class, HttpStatus.BAD_REQUEST);
     }
 
-    public void updateTestCases_testCaseMultiplierSmallerThanZero_badRequest() throws Exception {
+    void updateTestCases_testCaseMultiplierSmallerThanZero_badRequest() throws Exception {
         final var testCases = List.copyOf(programmingExerciseTestCaseRepository.findByExerciseId(programmingExercise.getId()));
         final var updates = transformTestCasesToDto(testCases);
         updates.get(0).setBonusMultiplier(-1.0);
@@ -1408,7 +1408,7 @@ public class ProgrammingExerciseIntegrationTestService {
     /**
      * Setting the bonus points to {@code null} is okay, as {@link ProgrammingExerciseTestCase#getBonusPoints()} will replace that with 0.
      */
-    public void updateTestCases_testCaseBonusPointsNull() throws Exception {
+    void updateTestCases_testCaseBonusPointsNull() throws Exception {
         {
             final var originalTestCases = programmingExerciseTestCaseRepository.findByExerciseId(programmingExercise.getId());
             originalTestCases.forEach(testCase -> testCase.setBonusPoints(1d));
@@ -1442,7 +1442,7 @@ public class ProgrammingExerciseIntegrationTestService {
         }).collect(Collectors.toList());
     }
 
-    public void resetTestCaseWeights_asInstructor() throws Exception {
+    void resetTestCaseWeights_asInstructor() throws Exception {
         programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesById(programmingExercise.getId()).get();
         mockDelegate.mockTriggerBuild(programmingExercise.getSolutionParticipation());
         mockDelegate.mockTriggerBuild(programmingExercise.getTemplateParticipation());
@@ -1464,23 +1464,23 @@ public class ProgrammingExerciseIntegrationTestService {
         assertThat(testsInDB).allSatisfy(test -> assertThat(test.getBonusPoints()).isEqualTo(0.0));
     }
 
-    public void resetTestCaseWeights_instructorInWrongCourse_forbidden() throws Exception {
+    void resetTestCaseWeights_instructorInWrongCourse_forbidden() throws Exception {
         database.addInstructor("other-instructors", "other-instructor");
         final var endpoint = ProgrammingExerciseTestCaseResource.Endpoints.RESET.replace("{exerciseId}", String.valueOf(programmingExercise.getId()));
         request.patchWithResponseBody(ROOT + endpoint, "{}", String.class, HttpStatus.FORBIDDEN);
     }
 
-    public void lockAllRepositories_asStudent_forbidden() throws Exception {
+    void lockAllRepositories_asStudent_forbidden() throws Exception {
         final var endpoint = ProgrammingExerciseResourceEndpoints.LOCK_ALL_REPOSITORIES.replace("{exerciseId}", String.valueOf(programmingExercise.getId()));
         request.put(ROOT + endpoint, null, HttpStatus.FORBIDDEN);
     }
 
-    public void lockAllRepositories_asTutor_forbidden() throws Exception {
+    void lockAllRepositories_asTutor_forbidden() throws Exception {
         final var endpoint = ProgrammingExerciseResourceEndpoints.LOCK_ALL_REPOSITORIES.replace("{exerciseId}", String.valueOf(programmingExercise.getId()));
         request.put(ROOT + endpoint, null, HttpStatus.FORBIDDEN);
     }
 
-    public void lockAllRepositories() throws Exception {
+    void lockAllRepositories() throws Exception {
         mockDelegate.mockSetRepositoryPermissionsToReadOnly(participation1.getVcsRepositoryUrl(), programmingExercise.getProjectKey(), participation1.getStudents());
         mockDelegate.mockSetRepositoryPermissionsToReadOnly(participation2.getVcsRepositoryUrl(), programmingExercise.getProjectKey(), participation2.getStudents());
 
@@ -1500,17 +1500,17 @@ public class ProgrammingExerciseIntegrationTestService {
                 .noneMatch(n -> n.getText().contains(Constants.PROGRAMMING_EXERCISE_FAILED_LOCK_OPERATIONS_NOTIFICATION));
     }
 
-    public void unlockAllRepositories_asStudent_forbidden() throws Exception {
+    void unlockAllRepositories_asStudent_forbidden() throws Exception {
         final var endpoint = ProgrammingExerciseResourceEndpoints.UNLOCK_ALL_REPOSITORIES.replace("{exerciseId}", String.valueOf(programmingExercise.getId()));
         request.put(ROOT + endpoint, null, HttpStatus.FORBIDDEN);
     }
 
-    public void unlockAllRepositories_asTutor_forbidden() throws Exception {
+    void unlockAllRepositories_asTutor_forbidden() throws Exception {
         final var endpoint = ProgrammingExerciseResourceEndpoints.UNLOCK_ALL_REPOSITORIES.replace("{exerciseId}", String.valueOf(programmingExercise.getId()));
         request.put(ROOT + endpoint, null, HttpStatus.FORBIDDEN);
     }
 
-    public void unlockAllRepositories() throws Exception {
+    void unlockAllRepositories() throws Exception {
         mockDelegate.mockConfigureRepository(programmingExercise, participation1.getParticipantIdentifier(), participation1.getStudents(), true);
         mockDelegate.mockConfigureRepository(programmingExercise, participation2.getParticipantIdentifier(), participation2.getStudents(), true);
         mockDelegate.mockDefaultBranch(programmingExercise);
@@ -1853,57 +1853,57 @@ public class ProgrammingExerciseIntegrationTestService {
             return of().withoutId().withName("defaultname").withCheckoutDirectory("directory").withDescription("DefaultDescription");
         }
 
-        public AuxiliaryRepositoryBuilder withName(String name) {
+        AuxiliaryRepositoryBuilder withName(String name) {
             repository.setName(name);
             return this;
         }
 
-        public AuxiliaryRepositoryBuilder withoutName() {
+        AuxiliaryRepositoryBuilder withoutName() {
             repository.setName(null);
             return this;
         }
 
-        public AuxiliaryRepositoryBuilder withDifferentName() {
+        AuxiliaryRepositoryBuilder withDifferentName() {
             repository.setName("differentname");
             return this;
         }
 
-        public AuxiliaryRepositoryBuilder withDescription(String description) {
+        AuxiliaryRepositoryBuilder withDescription(String description) {
             repository.setDescription(description);
             return this;
         }
 
-        public AuxiliaryRepositoryBuilder withoutDescription() {
+        AuxiliaryRepositoryBuilder withoutDescription() {
             repository.setDescription(null);
             return this;
         }
 
-        public AuxiliaryRepositoryBuilder withCheckoutDirectory(String checkoutDirectory) {
+        AuxiliaryRepositoryBuilder withCheckoutDirectory(String checkoutDirectory) {
             repository.setCheckoutDirectory(checkoutDirectory);
             return this;
         }
 
-        public AuxiliaryRepositoryBuilder withoutCheckoutDirectory() {
+        AuxiliaryRepositoryBuilder withoutCheckoutDirectory() {
             repository.setCheckoutDirectory(null);
             return this;
         }
 
-        public AuxiliaryRepositoryBuilder withDifferentCheckoutDirectory() {
+        AuxiliaryRepositoryBuilder withDifferentCheckoutDirectory() {
             repository.setCheckoutDirectory("differentcheckoutdirectory");
             return this;
         }
 
-        public AuxiliaryRepositoryBuilder withId(Long id) {
+        AuxiliaryRepositoryBuilder withId(Long id) {
             repository.setId(id);
             return this;
         }
 
-        public AuxiliaryRepositoryBuilder withoutId() {
+        AuxiliaryRepositoryBuilder withoutId() {
             repository.setId(null);
             return this;
         }
 
-        public AuxiliaryRepository get() {
+        AuxiliaryRepository get() {
             return repository;
         }
     }
