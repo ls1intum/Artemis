@@ -12,7 +12,7 @@ import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
 describe('StatisticsScoreDistributionGraphComponent', () => {
     let fixture: ComponentFixture<StatisticsScoreDistributionGraphComponent>;
     let component: StatisticsScoreDistributionGraphComponent;
-    let routeInNewTabStub = jest.SpyInstance;
+    let routeInNewTabStub: jest.SpyInstance;
 
     const expectedLabels = ['[0, 10)', '[10, 20)', '[20, 30)', '[30, 40)', '[40, 50)', '[50, 60)', '[60, 70)', '[70, 80)', '[80, 90)', '[90, 100]'];
     beforeEach(() => {
