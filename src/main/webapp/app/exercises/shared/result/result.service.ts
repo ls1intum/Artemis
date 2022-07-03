@@ -45,16 +45,29 @@ export class ResultService implements IResultService {
         return this.http.get<Result>(`${this.resultResourceUrl}/${resultId}`, { observe: 'response' }).pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
     }
 
+    /**
+     * Generates the result string for the given exercise and result.
+     * Contains the score, achieved points and if it's a programming exercise the tests and code issues as well
+     * If either of the arguments is undefined the error is forwarded to sentry and an empty string is returned
+     * @param result the result containing all necessary information like the achieved points
+     * @param exercise the exercise where the result belongs to
+     */
     getResultString(result?: Result, exercise?: Exercise): string {
         if (result && exercise) {
-            return this.getResultStringNotUndefined(result, exercise);
+            return this.getResultStringDefinedParameters(result, exercise);
         } else {
             captureException('Tried to generate a result string, but either the result or exercise was undefined');
             return '';
         }
     }
 
-    private getResultStringNotUndefined(result: Result, exercise: Exercise): string {
+    /**
+     * Generates the result string for the given exercise and result.
+     * Contains the score, achieved points and if it's a programming exercise the tests and code issues as well
+     * @param result the result containing all necessary information like the achieved points
+     * @param exercise the exercise where the result belongs to
+     */
+    private getResultStringDefinedParameters(result: Result, exercise: Exercise): string {
         const relativeScore = roundValueSpecifiedByCourseSettings(result.score!, getCourseFromExercise(exercise));
         const points = roundValueSpecifiedByCourseSettings((result.score! * exercise.maxPoints!) / 100, getCourseFromExercise(exercise));
         if (exercise.type === ExerciseType.PROGRAMMING) {
@@ -68,6 +81,14 @@ export class ResultService implements IResultService {
         }
     }
 
+    /**
+     * Generates the result string for a programming exercise. Contains the score, achieved points and the tests and code issues as well.
+     * If the result is a build failure or no tests were executed, the string replaces some parts with a helpful explanation
+     * @param result the result containing all necessary information like the achieved points
+     * @param exercise the exercise where the result belongs to
+     * @param relativeScore the achieved score in percent
+     * @param points the amount of achieved points
+     */
     private getResultStringProgrammingExercise(result: Result, exercise: ProgrammingExercise, relativeScore: number, points: number): string {
         let buildAndTestMessage: string;
         if (result.submission && (result.submission as ProgrammingSubmission).buildFailed) {
@@ -90,6 +111,15 @@ export class ResultService implements IResultService {
         return resultString;
     }
 
+    /**
+     * Generates the result string for a programming exercise
+     * @param result the result containing all necessary information like the achieved points
+     * @param exercise the exercise where the result belongs to
+     * @param relativeScore the achieved score in percent
+     * @param points the amount of achieved points
+     * @param buildAndTestMessage the string containing information about the build. Either about the build failure or the passed tests
+     * @private
+     */
     private getBaseResultStringProgrammingExercise(result: Result, exercise: ProgrammingExercise, relativeScore: number, points: number, buildAndTestMessage: string): string {
         if (result.codeIssueCount && result.codeIssueCount > 0) {
             return this.translateService.instant('artemisApp.result.resultStringProgrammingCodeIssues', {
