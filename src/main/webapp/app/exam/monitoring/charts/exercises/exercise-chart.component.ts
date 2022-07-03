@@ -42,8 +42,7 @@ export class ExerciseChartComponent extends ChartComponent implements OnInit, On
      * Create and initialize the data for the chart.
      */
     override initData() {
-        super.initData();
-        this.currentExercisePerStudent = getCurrentExercisePerStudent(this.filteredExamActions);
+        this.currentExercisePerStudent = getCurrentExercisePerStudent(this.examActionService.cachedLastActionPerStudent.get(this.examId) ?? new Map());
         this.createChartData();
     }
 
@@ -71,8 +70,10 @@ export class ExerciseChartComponent extends ChartComponent implements OnInit, On
         this.ngxData = [...this.ngxData];
     }
 
-    override evaluateAndAddAction(examAction: ExamAction) {
-        updateCurrentExerciseOfStudent(examAction, this.currentExercisePerStudent);
+    override evaluateAndAddAction(examActions: ExamAction[]) {
+        for (const action of examActions) {
+            updateCurrentExerciseOfStudent(action, this.currentExercisePerStudent);
+        }
     }
 
     filterRenderedData(examAction: ExamAction) {

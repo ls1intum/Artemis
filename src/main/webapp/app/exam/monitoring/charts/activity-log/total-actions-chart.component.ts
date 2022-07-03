@@ -1,5 +1,5 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
-import { getColor, groupActionsByTimestamp } from 'app/exam/monitoring/charts/monitoring-chart';
+import { getColor } from 'app/exam/monitoring/charts/monitoring-chart';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ChartComponent } from 'app/exam/monitoring/charts/chart.component';
 import { NgxChartsSingleSeriesDataEntry } from 'app/shared/chart/ngx-charts-datatypes';
@@ -7,6 +7,7 @@ import { ExamActionService } from '../../exam-action.service';
 import { ActivatedRoute } from '@angular/router';
 import { ExamAction } from 'app/entities/exam-user-activity.model';
 import dayjs from 'dayjs/esm';
+import cloneDeep from 'lodash-es/cloneDeep';
 
 @Component({
     selector: 'jhi-total-actions-chart',
@@ -36,13 +37,7 @@ export class TotalActionsChartComponent extends ChartComponent implements OnInit
      * Create and initialize the data for the chart.
      */
     override initData() {
-        super.initData();
-        const groupedByTimestamp = groupActionsByTimestamp(this.filteredExamActions);
-
-        for (const [timestamp, actions] of Object.entries(groupedByTimestamp)) {
-            this.actionsPerTimestamp.set(timestamp, actions.length);
-        }
-
+        this.actionsPerTimestamp = cloneDeep(this.examActionService.cachedExamActionsGroupedByTimestamp.get(this.examId) ?? new Map());
         this.createChartData();
     }
 
@@ -92,8 +87,10 @@ export class TotalActionsChartComponent extends ChartComponent implements OnInit
         this.ngxData = [{ name: 'actions', series: chartData }];
     }
 
-    override evaluateAndAddAction(examAction: ExamAction) {
-        const key = examAction.ceiledTimestamp!.toString();
-        this.actionsPerTimestamp.set(key, (this.actionsPerTimestamp.get(key) ?? 0) + 1);
+    override evaluateAndAddAction(examActions: ExamAction[]) {
+        for (const action of examActions) {
+            const key = action.ceiledTimestamp!.toString();
+            this.actionsPerTimestamp.set(key, (this.actionsPerTimestamp.get(key) ?? 0) + 1);
+        }
     }
 }

@@ -84,14 +84,13 @@ export function getSwitchedExerciseActionsGroupedByActivityId(examActions: ExamA
 
 /**
  * Returns the current exercise of student.
- * @param examActions array of actions
+ * @param lastActionPerStudent last actions per student
  * @return current exercise of student as map
  */
-export function getCurrentExercisePerStudent(examActions: ExamAction[]) {
+export function getCurrentExercisePerStudent(lastActionPerStudent: Map<number, ExamAction>) {
     const currentExercisePerStudent: Map<number, number | undefined> = new Map();
-    const groupedByActivityId = getLastActionGroupedByActivityId(examActions);
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    for (const [_, action] of groupedByActivityId) {
+    for (const [_, action] of lastActionPerStudent) {
         let typedAction = undefined;
         if (action.type === ExamActionType.SWITCHED_EXERCISE) {
             typedAction = action as SwitchedExerciseAction;

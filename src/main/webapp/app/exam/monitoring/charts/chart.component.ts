@@ -55,11 +55,7 @@ export abstract class ChartComponent {
         });
 
         this.examActionSubscription = this.examActionService.getExamMonitoringObservable(this.examId)?.subscribe((examActions: ExamAction[]) => {
-            examActions.forEach((action) => {
-                if (action && this.filterRenderedData(action)) {
-                    this.evaluateAndAddAction(action);
-                }
-            });
+            this.evaluateAndAddAction(examActions.filter((action) => action && this.filterRenderedData(action)));
         });
     }
 
@@ -81,7 +77,7 @@ export abstract class ChartComponent {
     /**
      * Create and initialize the data for the chart.
      */
-    initData(): void {
+    initData() {
         this.filteredExamActions = (this.examActionService.cachedExamActions.get(this.examId) ?? []).filter((action) => this.filterRenderedData(action));
     }
 
@@ -101,10 +97,10 @@ export abstract class ChartComponent {
 
     /**
      * The default case is that we don't evaluate the action in this place and simply add it. This evaluation is adapted in subclasses.
-     * @param examAction
+     * @param examActions
      */
-    evaluateAndAddAction(examAction: ExamAction) {
-        this.filteredExamActions.push(examAction);
+    evaluateAndAddAction(examActions: ExamAction[]) {
+        this.filteredExamActions.push(...examActions);
     }
 
     /**

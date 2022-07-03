@@ -6,6 +6,7 @@ import { NgxChartsSingleSeriesDataEntry } from 'app/shared/chart/ngx-charts-data
 import { ExamActionService } from '../../exam-action.service';
 import { ActivatedRoute } from '@angular/router';
 import { ExamAction } from 'app/entities/exam-user-activity.model';
+import cloneDeep from 'lodash-es/cloneDeep';
 
 @Component({
     selector: 'jhi-average-actions-chart',
@@ -38,13 +39,7 @@ export class AverageActionsChartComponent extends ChartComponent implements OnIn
      * Create and initialize the data for the chart.
      */
     override initData() {
-        super.initData();
-        const groupedByTimestamp = groupActionsByTimestamp(this.filteredExamActions);
-
-        for (const [timestamp, actions] of Object.entries(groupedByTimestamp)) {
-            this.actionsPerTimestamp.set(timestamp, actions.length);
-        }
-
+        this.actionsPerTimestamp = cloneDeep(this.examActionService.cachedExamActionsGroupedByTimestamp.get(this.examId)) ?? new Map();
         this.createChartData();
     }
 
@@ -84,9 +79,11 @@ export class AverageActionsChartComponent extends ChartComponent implements OnIn
         this.ngxData = [{ name: 'actions', series: chartData }];
     }
 
-    override evaluateAndAddAction(examAction: ExamAction) {
-        const key = examAction.ceiledTimestamp!.toString();
-        this.actionsPerTimestamp.set(key, (this.actionsPerTimestamp.get(key) ?? 0) + 1);
+    override evaluateAndAddAction(examActions: ExamAction[]) {
+        for (const action of examActions) {
+            const key = action.ceiledTimestamp!.toString();
+            this.actionsPerTimestamp.set(key, (this.actionsPerTimestamp.get(key) ?? 0) + 1);
+        }
     }
 
     filterRenderedData(examAction: ExamAction) {

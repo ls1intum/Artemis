@@ -1,11 +1,12 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
-import { getColor, groupActionsByTimestamp, groupActionsByType } from 'app/exam/monitoring/charts/monitoring-chart';
+import { getColor, groupActionsByType } from 'app/exam/monitoring/charts/monitoring-chart';
 import { ExamAction, ExamActionType } from 'app/entities/exam-user-activity.model';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ChartComponent } from 'app/exam/monitoring/charts/chart.component';
 import { NgxChartsMultiSeriesDataEntry, NgxChartsSingleSeriesDataEntry } from 'app/shared/chart/ngx-charts-datatypes';
 import { ExamActionService } from '../../exam-action.service';
 import { ActivatedRoute } from '@angular/router';
+import cloneDeep from 'lodash-es/cloneDeep';
 
 @Component({
     selector: 'jhi-category-actions-chart',
@@ -34,9 +35,7 @@ export class CategoryActionsChartComponent extends ChartComponent implements OnI
      * Create and initialize the data for the chart.
      */
     override initData() {
-        super.initData();
-
-        const groupedByTimestamp = groupActionsByTimestamp(this.filteredExamActions);
+        const groupedByTimestamp = cloneDeep(this.examActionService.cachedExamActionsGroupedByTimestamp.get(this.examId)) ?? new Map();
 
         for (const [timestamp, actions] of Object.entries(groupedByTimestamp)) {
             const categories = new Map<string, number>();
@@ -107,18 +106,20 @@ export class CategoryActionsChartComponent extends ChartComponent implements OnI
         this.ngxData = chartSeriesData;
     }
 
-    override evaluateAndAddAction(examAction: ExamAction) {
-        const key = examAction.ceiledTimestamp!.toString();
-        let categories = this.actionsPerTimestamp.get(key);
+    override evaluateAndAddAction(examActions: ExamAction[]) {
+        for (const action of examActions) {
+            const key = action.ceiledTimestamp!.toString();
+            let categories = this.actionsPerTimestamp.get(key);
 
-        if (!categories) {
-            categories = new Map<string, number>();
-            Object.keys(ExamActionType).forEach((type) => {
-                categories!.set(type, 0);
-            });
+            if (!categories) {
+                categories = new Map<string, number>();
+                Object.keys(ExamActionType).forEach((type) => {
+                    categories!.set(type, 0);
+                });
+            }
+            categories.set(action.type, (categories.get(action.type) ?? 0) + 1);
+            this.actionsPerTimestamp.set(key, categories);
         }
-        categories.set(examAction.type, (categories.get(examAction.type) ?? 0) + 1);
-        this.actionsPerTimestamp.set(key, categories);
     }
 
     filterRenderedData(examAction: ExamAction) {
