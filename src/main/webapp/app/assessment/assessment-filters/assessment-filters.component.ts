@@ -18,9 +18,8 @@ export class AssessmentFiltersComponent implements OnChanges {
 
     filterProp: FilterProp = FilterProp.ALL;
 
-    @Input()
-    submissions: Submission[] = [];
-    filteredSubmissions: number;
+    @Input() submissions: Submission[] = [];
+    amountFilteredSubmissions: number;
 
     @Output() filterChange = new EventEmitter<Submission[]>();
 
@@ -52,9 +51,8 @@ export class AssessmentFiltersComponent implements OnChanges {
     }
 
     ngOnChanges() {
-        this.filteredSubmissions = this.submissions.filter((submission) => {
-            const result = getLatestSubmissionResult(submission);
-            return result && !result.completionDate;
+        this.amountFilteredSubmissions = this.submissions.filter((submission) => {
+            return AssessmentFiltersComponent.isSubmissionLocked(submission);
         }).length;
     }
 }

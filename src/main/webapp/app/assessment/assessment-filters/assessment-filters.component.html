@@ -1,12 +1,10 @@
-<ng-container *ngIf="submissions?.length && filteredSubmissions > 0">
-    <div class="d-flex align-items-center my-2">
-        <label class="radio-inline mb-0 d-flex align-items-center">
-            <input type="radio" [ngModel]="filterProp" (click)="updateFilter(FilterProp.ALL)" [value]="FilterProp.ALL" />
-            <span class="ms-1">{{ 'artemisApp.assessment.dashboard.filters.showAll' | artemisTranslate }}</span>
-        </label>
-        <label class="radio-inline ms-2 mb-0 d-flex align-items-center">
-            <input type="radio" [ngModel]="filterProp" (click)="updateFilter(FilterProp.LOCKED)" [value]="FilterProp.LOCKED" />
-            <span class="ms-1">{{ 'artemisApp.assessment.dashboard.filters.showLocked' | artemisTranslate }}</span>
-        </label>
-    </div>
-</ng-container>
+<div *ngIf="submissions?.length && amountFilteredSubmissions > 0" class="d-flex align-items-center my-2">
+    <label class="radio-inline mb-0 d-flex align-items-center">
+        <input type="radio" [ngModel]="filterProp" (click)="updateFilter(FilterProp.ALL)" [value]="FilterProp.ALL" />
+        <span class="ms-1">{{ 'artemisApp.assessment.dashboard.filters.showAll' | artemisTranslate }}</span>
+    </label>
+    <label class="radio-inline ms-2 mb-0 d-flex align-items-center">
+        <input type="radio" [ngModel]="filterProp" (click)="updateFilter(FilterProp.LOCKED)" [value]="FilterProp.LOCKED" />
+        <span class="ms-1">{{ 'artemisApp.assessment.dashboard.filters.showLocked' | artemisTranslate }}</span>
+    </label>
+</div>
