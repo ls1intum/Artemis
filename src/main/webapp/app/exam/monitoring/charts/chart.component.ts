@@ -82,7 +82,7 @@ export abstract class ChartComponent {
      * Create and initialize the data for the chart.
      */
     initData(): void {
-        this.filteredExamActions.push(...(this.examActionService.cachedExamActions.get(this.examId) ?? []).filter((action) => this.filterRenderedData(action)));
+        this.filteredExamActions = (this.examActionService.cachedExamActions.get(this.examId) ?? []).filter((action) => this.filterRenderedData(action));
     }
 
     /**
