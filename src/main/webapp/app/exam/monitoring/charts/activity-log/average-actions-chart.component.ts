@@ -55,7 +55,7 @@ export class AverageActionsChartComponent extends ChartComponent implements OnIn
 
         const chartData: NgxChartsSingleSeriesDataEntry[] = [];
         for (const timestamp of lastXTimestamps) {
-            chartData.push({ name: this.artemisDatePipe.transform(timestamp, 'time', true), value: actionsPerTimestamp.get(timestamp) ?? 0 });
+            chartData.push({ name: this.artemisDatePipe.transform(timestamp, 'time', true), value: (actionsPerTimestamp.get(timestamp) ?? 0) / this.registeredStudents });
         }
 
         this.ngxData = [{ name: 'actions', series: chartData }];
