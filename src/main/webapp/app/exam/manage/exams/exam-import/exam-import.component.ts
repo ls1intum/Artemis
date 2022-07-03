@@ -37,7 +37,8 @@ export class ExamImportComponent implements OnInit {
     @Input() targetCourseId?: number;
     @Input() targetExamId?: number;
 
-    @ViewChild(ExamExerciseImportComponent) examExerciseImportComponent: ExamExerciseImportComponent;
+    @ViewChild(ExamExerciseImportComponent)
+    examExerciseImportComponent: ExamExerciseImportComponent;
 
     exam?: Exam;
     loading = false;

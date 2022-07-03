@@ -152,8 +152,8 @@ describe('Exam Exercise Import Component', () => {
 
         // Check if titleAndShortNameOfProgrammingExercises contains the rejected title + shortName
         expect(component.titleAndShortNameOfProgrammingExercises.size).toEqual(1);
-        expect(component.getPlaceholderTitleOfProgrammingExercise(programmingExercise.id)).toEqual(formerProgrammingExerciseTitle);
-        expect(component.titleAndShortNameOfProgrammingExercises.get(programmingExercise.id)).toEqual([formerProgrammingExerciseTitle, formerProgrammingExerciseShortName]);
+        expect(component.getPlaceholderTitleOfProgrammingExercise(programmingExercise.id!)).toEqual(formerProgrammingExerciseTitle);
+        expect(component.titleAndShortNameOfProgrammingExercises.get(programmingExercise.id!)).toEqual([formerProgrammingExerciseTitle, formerProgrammingExerciseShortName]);
 
         expect(component.selectedExercises.size).toEqual(5);
         expect(component.selectedExercises.get(exerciseGroup1)).toEqual(new Set<Exercise>().add(modelingExercise));
@@ -256,7 +256,7 @@ describe('Exam Exercise Import Component', () => {
         component.ngOnInit();
 
         // Programming Exercises with this title and short name should not be accepted
-        component.titleAndShortNameOfProgrammingExercises.set(programmingExercise.id, ['rejectedTitle', 'rejectedShortName']);
+        component.titleAndShortNameOfProgrammingExercises.set(programmingExercise.id!, ['rejectedTitle', 'rejectedShortName']);
 
         expect(component.validateUserInput()).toBeTrue();
 

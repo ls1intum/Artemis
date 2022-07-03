@@ -1,5 +1,5 @@
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
-import { of, Subject } from 'rxjs';
+import { of, Subject, throwError } from 'rxjs';
 import { ArtemisTestModule } from '../../../test.module';
 import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
@@ -12,6 +12,16 @@ import { SearchResult } from 'app/shared/table/pageable-table';
 import { ExamImportComponent } from 'app/exam/manage/exams/exam-import/exam-import.component';
 import { ExamImportPagingService } from 'app/exam/manage/exams/exam-import/exam-import-paging.service';
 import { Exam } from 'app/entities/exam.model';
+import { AlertService } from 'app/core/util/alert.service';
+import { ExerciseGroup } from 'app/entities/exercise-group.model';
+import { ModelingExercise, UMLDiagramType } from 'app/entities/modeling-exercise.model';
+import { ExamManagementService } from 'app/exam/manage/exam-management.service';
+import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { ExamExerciseImportComponent } from 'app/exam/manage/exams/exam-exercise-import/exam-exercise-import.component';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { ButtonComponent } from 'app/shared/components/button.component';
+import { HelpIconComponent } from 'app/shared/components/help-icon.component';
+import { DifficultyBadgeComponent } from 'app/exercises/shared/exercise-headers/difficulty-badge.component';
 
 describe('Exam Import Component', () => {
     let component: ExamImportComponent;
@@ -19,12 +29,41 @@ describe('Exam Import Component', () => {
     let sortService: SortService;
     let pagingService: ExamImportPagingService;
     let activeModal: NgbActiveModal;
+    let examManagementService: ExamManagementService;
+    let alertService: AlertService;
+
+    let exam1 = { id: 1 } as Exam;
+
+    // Initializing one Exercise Group per Exercise Type
+    let exerciseGroup1 = { title: 'exerciseGroup1' } as ExerciseGroup;
+    let modelingExercise = new ModelingExercise(UMLDiagramType.ClassDiagram, undefined, exerciseGroup1);
+    modelingExercise.id = 1;
+    modelingExercise.title = 'ModelingExercise';
+    exerciseGroup1.exercises = [modelingExercise];
+    let exam1WithExercises = { id: 1, exerciseGroups: [exerciseGroup1] } as Exam;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, MockModule(FormsModule)],
-            declarations: [ExamImportComponent, MockComponent(NgbPagination), MockPipe(ArtemisTranslatePipe), MockDirective(SortByDirective), MockDirective(SortDirective)],
-            providers: [MockProvider(SortService), MockProvider(ExamImportPagingService), MockProvider(NgbActiveModal)],
+            declarations: [
+                ExamImportComponent,
+                ExamExerciseImportComponent,
+                MockComponent(NgbPagination),
+                MockPipe(ArtemisTranslatePipe),
+                MockDirective(SortByDirective),
+                MockDirective(SortDirective),
+                MockComponent(FaIconComponent),
+                MockComponent(ButtonComponent),
+                MockComponent(HelpIconComponent),
+                MockComponent(DifficultyBadgeComponent),
+            ],
+            providers: [
+                MockProvider(SortService),
+                MockProvider(ExamImportPagingService),
+                MockProvider(NgbActiveModal),
+                MockProvider(ExamManagementService),
+                MockProvider(AlertService),
+            ],
         })
             .compileComponents()
             .then(() => {
@@ -33,11 +72,150 @@ describe('Exam Import Component', () => {
                 sortService = fixture.debugElement.injector.get(SortService);
                 pagingService = fixture.debugElement.injector.get(ExamImportPagingService);
                 activeModal = TestBed.inject(NgbActiveModal);
+                examManagementService = fixture.debugElement.injector.get(ExamManagementService);
+                alertService = fixture.debugElement.injector.get(AlertService);
             });
     });
 
     afterEach(() => {
         jest.restoreAllMocks();
+    });
+
+    it('should correctly open the exercise selection', () => {
+        jest.spyOn(examManagementService, 'findWithExercisesAndWithoutCourseId').mockReturnValue(of(new HttpResponse({ body: exam1WithExercises })));
+        component.openExerciseSelection(exam1);
+        expect(component.exam).toEqual(exam1WithExercises);
+    });
+
+    it('should correctly show an error for the exercise selection, if the server throws an error', () => {
+        const error = new HttpErrorResponse({
+            status: 400,
+        });
+        jest.spyOn(examManagementService, 'findWithExercisesAndWithoutCourseId').mockReturnValue(throwError(() => error));
+        const alertSpy = jest.spyOn(alertService, 'error');
+        component.openExerciseSelection(exam1);
+        expect(component.exam).toBeUndefined();
+        expect(alertSpy).toHaveBeenCalledOnce();
+    });
+
+    it('should only perform input of exercise groups if prerequisites are met', () => {
+        const importSpy = jest.spyOn(examManagementService, 'importExerciseGroup');
+        const alertSpy = jest.spyOn(alertService, 'error');
+        const modalSpy = jest.spyOn(activeModal, 'close');
+
+        component.subsequentExerciseGroupSelection = false;
+        component.performImportOfExerciseGroups();
+
+        component.subsequentExerciseGroupSelection = true;
+        component.exam = undefined;
+        component.performImportOfExerciseGroups();
+
+        component.exam = exam1WithExercises;
+        component.targetExamId = undefined;
+        component.performImportOfExerciseGroups();
+
+        component.targetExamId = 1;
+        component.targetCourseId = undefined;
+        component.performImportOfExerciseGroups();
+
+        expect(importSpy).toHaveBeenCalledTimes(0);
+        expect(alertSpy).toHaveBeenCalledTimes(0);
+        expect(modalSpy).toHaveBeenCalledTimes(0);
+    });
+
+    it('should  perform input of exercise groups successfully', () => {
+        const importSpy = jest.spyOn(examManagementService, 'importExerciseGroup').mockReturnValue(
+            of(
+                new HttpResponse({
+                    status: 200,
+                    body: [exerciseGroup1],
+                }),
+            ),
+        );
+        const alertSpy = jest.spyOn(alertService, 'error');
+        const modalSpy = jest.spyOn(activeModal, 'close');
+
+        component.subsequentExerciseGroupSelection = true;
+        component.exam = exam1WithExercises;
+        component.targetCourseId = 1;
+        component.targetExamId = 2;
+        fixture.detectChanges();
+        component.performImportOfExerciseGroups();
+        expect(importSpy).toHaveBeenCalledOnce();
+        expect(importSpy).toHaveBeenCalledWith(1, 2, [exerciseGroup1]);
+        expect(alertSpy).toHaveBeenCalledTimes(0);
+        expect(modalSpy).toHaveBeenCalledOnce();
+        expect(modalSpy).toHaveBeenCalledWith([exerciseGroup1]);
+    });
+
+    it('should  trigger an alarm for a wrong user input', () => {
+        const importSpy = jest.spyOn(examManagementService, 'importExerciseGroup').mockReturnValue(
+            of(
+                new HttpResponse({
+                    status: 200,
+                    body: [exerciseGroup1],
+                }),
+            ),
+        );
+        const alertSpy = jest.spyOn(alertService, 'error');
+        const modalSpy = jest.spyOn(activeModal, 'close');
+
+        component.subsequentExerciseGroupSelection = true;
+        let exerciseGroup2 = { title: 'exerciseGroup2' } as ExerciseGroup;
+        let modelingExercise2 = new ModelingExercise(UMLDiagramType.ClassDiagram, undefined, exerciseGroup2);
+        modelingExercise2.id = 2;
+        exerciseGroup2.exercises = [modelingExercise2];
+        let exam2WithExercises = { id: 1, exerciseGroups: [exerciseGroup2] } as Exam;
+        component.exam = exam2WithExercises;
+        component.targetCourseId = 1;
+        component.targetExamId = 3;
+        fixture.detectChanges();
+        component.performImportOfExerciseGroups();
+        expect(importSpy).toHaveBeenCalledTimes(0);
+        expect(alertSpy).toHaveBeenCalledOnce();
+        expect(modalSpy).toHaveBeenCalledTimes(0);
+    });
+
+    it('should perform input of exercise groups AND correctly process conflict exception from server', () => {
+        const preCheckError = new HttpErrorResponse({
+            error: { errorKey: 'examContainsProgrammingExercisesWithInvalidKey', numberOfInvalidProgrammingExercises: 2, params: { exerciseGroups: [exerciseGroup1] } },
+            status: 400,
+        });
+        const importSpy = jest.spyOn(examManagementService, 'importExerciseGroup').mockReturnValue(throwError(() => preCheckError));
+        const alertSpy = jest.spyOn(alertService, 'error');
+        const modalSpy = jest.spyOn(activeModal, 'close');
+
+        component.subsequentExerciseGroupSelection = true;
+        component.exam = exam1WithExercises;
+        component.targetCourseId = 1;
+        component.targetExamId = 2;
+        fixture.detectChanges();
+        component.performImportOfExerciseGroups();
+        expect(importSpy).toHaveBeenCalledOnce();
+        expect(importSpy).toHaveBeenCalledWith(1, 2, [exerciseGroup1]);
+        expect(alertSpy).toHaveBeenCalledOnce();
+        expect(alertSpy).toHaveBeenCalledWith('artemisApp.examManagement.exerciseGroup.importModal.invalidKey', { number: 2 });
+        expect(modalSpy).toHaveBeenCalledTimes(0);
+    });
+
+    it('should perform input of exercise groups AND correctly process arbitrary exception from server', () => {
+        const error = new HttpErrorResponse({
+            status: 400,
+        });
+        const importSpy = jest.spyOn(examManagementService, 'importExerciseGroup').mockReturnValue(throwError(() => error));
+        const alertSpy = jest.spyOn(alertService, 'error');
+        const modalSpy = jest.spyOn(activeModal, 'close');
+
+        component.subsequentExerciseGroupSelection = true;
+        component.exam = exam1WithExercises;
+        component.targetCourseId = 1;
+        component.targetExamId = 2;
+        fixture.detectChanges();
+        component.performImportOfExerciseGroups();
+        expect(importSpy).toHaveBeenCalledOnce();
+        expect(importSpy).toHaveBeenCalledWith(1, 2, [exerciseGroup1]);
+        expect(alertSpy).toHaveBeenCalledOnce();
+        expect(modalSpy).toHaveBeenCalledTimes(0);
     });
 
     it('should initialize the subjects', () => {
