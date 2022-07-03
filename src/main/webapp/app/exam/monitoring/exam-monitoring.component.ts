@@ -68,7 +68,6 @@ export class ExamMonitoringComponent implements OnInit, OnDestroy {
 
             this.initialLoadSubscription = this.examActionService.loadInitialActions(this.exam).subscribe((examActions: ExamAction[]) => {
                 this.examActionService.notifyExamActionSubscribers(this.exam, examActions);
-                console.log('done!');
             });
 
             this.initTable();
