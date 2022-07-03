@@ -147,3 +147,14 @@ export const splitCamelCase = (word: string) => {
 export const isDate = (input: any) => {
     return input instanceof Date || Object.prototype.toString.call(input) === '[object Date]';
 };
+
+/**
+ * Represents the inclusive range with a lower and upper bound
+ */
+export class Range {
+    constructor(public lowerBound: number, public upperBound: number) {}
+
+    toString(): string {
+        return '[' + this.lowerBound + '%, ' + this.upperBound + '%' + (this.upperBound === 100 ? ']' : ')');
+    }
+}

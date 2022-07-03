@@ -19,7 +19,7 @@ import { tap } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
 import { faChevronRight, faExclamationTriangle, faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
-import { SimilarityRange } from 'app/exercises/shared/plagiarism/plagiarism-run-details/plagiarism-run-details.component';
+import { Range } from 'app/shared/util/utils';
 import { PlagiarismInspectorService } from 'app/exercises/shared/plagiarism/plagiarism-inspector/plagiarism-inspector.service';
 import { PlagiarismCasesService } from 'app/course/plagiarism-cases/shared/plagiarism-cases.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
@@ -388,7 +388,7 @@ export class PlagiarismInspectorComponent implements OnInit {
      * selected by the user in the chart
      * @param range the range selected by the user in the chart by clicking on a chart bar
      */
-    filterByChart(range: SimilarityRange): void {
+    filterByChart(range: Range): void {
         this.visibleComparisons = this.inspectorService.filterComparisons(range, this.plagiarismResult?.comparisons);
         const index = this.plagiarismResult?.comparisons.indexOf(this.visibleComparisons[0]) ?? 0;
         this.sidebarOffset = index !== -1 ? index : 0;

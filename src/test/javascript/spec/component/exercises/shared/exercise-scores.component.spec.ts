@@ -35,6 +35,7 @@ import { MockProfileService } from '../../../helpers/mocks/service/mock-profile.
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { MockCourseManagementService } from '../../../helpers/mocks/service/mock-course-management.service';
 import { MockProgrammingSubmissionService } from '../../../helpers/mocks/service/mock-programming-submission.service';
+import { Range } from 'app/shared/util/utils';
 
 describe('Exercise Scores Component', () => {
     let component: ExerciseScoresComponent;
@@ -81,6 +82,19 @@ describe('Exercise Scores Component', () => {
     };
     result.participation = participation;
     result.assessmentType = AssessmentType.MANUAL;
+    const resultsToFilter = [{ score: 3 }, { score: 11 }, { score: 22 }, { score: 33 }, { score: 44 }, { score: 55 }, { score: 66 }, { score: 77 }, { score: 88 }, { score: 99 }];
+    const filterRanges = [
+        new Range(0, 10),
+        new Range(10, 20),
+        new Range(20, 30),
+        new Range(30, 40),
+        new Range(40, 50),
+        new Range(50, 60),
+        new Range(60, 70),
+        new Range(70, 80),
+        new Range(80, 90),
+        new Range(90, 100),
+    ];
 
     const route = { data: of({ courseId: 1 }), children: [] } as any as ActivatedRoute;
 
@@ -293,5 +307,19 @@ describe('Exercise Scores Component', () => {
         expect(component.formatDate(date)).toBe('2021-05-08 21:47:17');
 
         expect(component.formatDate(undefined)).toBe('');
+    });
+
+    it.each(filterRanges)('should filter results correctly and reset the filter', (rangeFilter: Range) => {
+        component.rangeFilter = rangeFilter;
+        component.results = [result];
+
+        const returnedResults = component.filterByScoreRange(resultsToFilter);
+
+        expect(returnedResults).toEqual([resultsToFilter[filterRanges.indexOf(rangeFilter)]]);
+
+        component.resetFilterOptions();
+
+        expect(component.rangeFilter).toBeUndefined();
+        expect(component.filteredResults).toEqual([result]);
     });
 });

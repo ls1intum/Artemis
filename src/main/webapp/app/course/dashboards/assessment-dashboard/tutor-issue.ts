@@ -1,4 +1,4 @@
-import { round } from 'app/shared/util/utils';
+import { Range, round } from 'app/shared/util/utils';
 
 export class TutorIssue {
     constructor(
@@ -9,13 +9,6 @@ export class TutorIssue {
         public allowedRange: Range,
         public translationKey: string,
     ) {}
-}
-
-/**
- * Represents the inclusive range with a lower and upper bound
- */
-export class Range {
-    constructor(public lowerBound: number, public upperBound: number) {}
 }
 
 /**

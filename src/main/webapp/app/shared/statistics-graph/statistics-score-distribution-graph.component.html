@@ -12,6 +12,7 @@
             [yScaleMax]="100"
             [showDataLabel]="true"
             [yAxisTickFormatting]="yAxisTickFormatting"
+            (select)="selectChartBar($event)"
         >
             <ng-template #tooltipTemplate let-model="model">
                 <b>{{ model.name }}</b> <br />
