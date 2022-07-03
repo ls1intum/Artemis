@@ -6,7 +6,6 @@ import { ExamAction } from 'app/entities/exam-user-activity.model';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { MockWebsocketService } from '../../../helpers/mocks/service/mock-websocket.service';
 import { createActions } from './exam-monitoring-helper';
-import { BehaviorSubject } from 'rxjs';
 import { ExamActionService } from 'app/exam/monitoring/exam-action.service';
 import dayjs from 'dayjs/esm';
 import { MockHttpService } from '../../../helpers/mocks/service/mock-http.service';
@@ -42,27 +41,6 @@ describe('ExamActionService', () => {
 
     afterEach(() => {
         jest.restoreAllMocks();
-    });
-
-    // Notify subscribers
-    it.each(createActions())('should notify exam subscribers', (examAction: ExamAction) => {
-        const spy = jest.spyOn(examActionService, 'prepareAction').mockImplementation((action) => action);
-
-        const examActionObservables = new Map<number, BehaviorSubject<ExamAction[]>>();
-        expect(examActionService.examActionObservables).toEqual(examActionObservables);
-
-        examActionService.notifyExamActionSubscribers(exam, [examAction]);
-
-        examActionObservables.set(exam.id!, new BehaviorSubject([examAction]));
-
-        expect(spy).toHaveBeenCalledOnce();
-        expect(spy).toHaveBeenCalledWith(examAction);
-        expect(examActionService.examActionObservables).toEqual(examActionObservables);
-
-        examActionService.notifyExamActionSubscribers(exam, [examAction]);
-
-        examActionObservables.get(exam.id!)?.next([examAction]);
-        expect(examActionService.examActionObservables).toEqual(examActionObservables);
     });
 
     // Additional methods

@@ -49,23 +49,17 @@ export class TotalActionsChartComponent extends ChartComponent implements OnInit
     private createChartData() {
         const lastXTimestamps = this.getLastXTimestamps().map((timestamp) => timestamp.toString());
 
+        let totalTimestamps = 0;
         const cachedExamActionsGroupedByTimestamp = this.examActionService.cachedExamActionsGroupedByTimestamp.get(this.examId) ?? new Map();
-        const chartData: NgxChartsSingleSeriesDataEntry[] = [];
-
-        let actionsPerTimestamp = new Map([...cachedExamActionsGroupedByTimestamp.entries()]);
-
-        for (const timestamp of lastXTimestamps) {
-            if (!cachedExamActionsGroupedByTimestamp.has(timestamp)) {
-                actionsPerTimestamp.set(timestamp, 0);
+        for (const [timestamp, amount] of cachedExamActionsGroupedByTimestamp) {
+            if (!lastXTimestamps.includes(timestamp) && !dayjs(timestamp).isAfter(lastXTimestamps.last())) {
+                totalTimestamps += amount;
             }
         }
+        const chartData: NgxChartsSingleSeriesDataEntry[] = [];
 
-        // We sort the map via keys in order to get the correct total amount of actions in each timestamp
-        actionsPerTimestamp = new Map([...actionsPerTimestamp].sort((a, b) => (dayjs(a[0]).isBefore(dayjs(b[0])) ? -1 : 1)));
-
-        let totalTimestamps = 0;
-        for (const [timestamp, number] of actionsPerTimestamp.entries()) {
-            totalTimestamps += number;
+        for (const timestamp of lastXTimestamps) {
+            totalTimestamps += cachedExamActionsGroupedByTimestamp.get(timestamp) ?? 0;
             if (lastXTimestamps.includes(timestamp)) {
                 chartData.push({ name: this.artemisDatePipe.transform(timestamp, 'time', true), value: totalTimestamps });
             }

@@ -56,7 +56,7 @@ public class ExamActivityResource {
         var actions = examMonitoringScheduleService.getAllExamActions(examId);
         if (actions.isEmpty()) {
             var generatedActions = new ArrayList<ExamAction>();
-            for (int i = 0; i < 500000; i++) {
+            for (int i = 0; i < 2000000; i++) {
                 var action = new StartedExamAction();
                 action.setSessionId(0L);
                 action.setStudentExamId(17L);

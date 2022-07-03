@@ -4,7 +4,6 @@ import { NgxChartsEntry } from 'app/shared/chart/ngx-charts-datatypes';
 import { Subscription } from 'rxjs';
 import { ExamActionService } from '../exam-action.service';
 import { ActivatedRoute } from '@angular/router';
-import { ExamAction } from 'app/entities/exam-user-activity.model';
 import dayjs from 'dayjs/esm';
 import { ceilDayjsSeconds } from 'app/exam/monitoring/charts/monitoring-chart';
 
@@ -15,9 +14,6 @@ export abstract class ChartComponent {
     // Exam
     protected examId: number;
     protected courseId: number;
-
-    // Actions
-    filteredExamActions: ExamAction[] = [];
 
     chartIdentifierKey = '';
 

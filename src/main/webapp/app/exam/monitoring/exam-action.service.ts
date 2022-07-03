@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { BehaviorSubject, Observable, of } from 'rxjs';
+import { Observable, of } from 'rxjs';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { Exam } from 'app/entities/exam.model';
 import { ExamAction, ExamActionType, SavedExerciseAction, SwitchedExerciseAction } from 'app/entities/exam-user-activity.model';
@@ -13,7 +13,6 @@ export interface IExamActionService {}
 
 @Injectable({ providedIn: 'root' })
 export class ExamActionService implements IExamActionService {
-    examActionObservables: Map<number, BehaviorSubject<ExamAction[]>> = new Map<number, BehaviorSubject<ExamAction[]>>();
     cachedExamActions: Map<number, ExamAction[]> = new Map<number, ExamAction[]>();
     cachedExamActionsGroupedByTimestamp: Map<number, Map<string, number>> = new Map<number, Map<string, number>>();
     cachedExamActionsGroupedByTimestampAndCategory: Map<number, Map<string, Map<string, number>>> = new Map<number, Map<string, Map<string, number>>>();
@@ -30,7 +29,7 @@ export class ExamActionService implements IExamActionService {
      * @param exam received or updated exam
      * @param examActions received exam actions
      */
-    public notifyExamActionSubscribers = (exam: Exam, examActions: ExamAction[]) => {
+    public updateCachedActions = (exam: Exam, examActions: ExamAction[]) => {
         // Cache and group actions
         const actionsPerTimestamp = this.cachedExamActionsGroupedByTimestamp.get(exam.id!) ?? new Map();
         const actionsPerTimestampAndCategory = this.cachedExamActionsGroupedByTimestampAndCategory.get(exam.id!) ?? new Map();
@@ -54,9 +53,9 @@ export class ExamActionService implements IExamActionService {
             categories.set(action.type, categories.get(action.type)! + 1);
             actionsPerTimestampAndCategory.set(key, categories);
 
-            const lastAction = lastActionPerStudent.get(action.studentExamId!);
+            const lastAction = lastActionPerStudent.get(action.examActivityId!);
             if (!lastAction || lastAction.timestamp!.isBefore(action.timestamp!)) {
-                lastActionPerStudent.set(action.studentExamId!, action);
+                lastActionPerStudent.set(action.examActivityId!, action);
             }
 
             if (action.type === ExamActionType.SWITCHED_EXERCISE) {
@@ -78,13 +77,6 @@ export class ExamActionService implements IExamActionService {
         this.cachedLastActionPerStudent.set(exam.id!, lastActionPerStudent);
         this.cachedNavigationsPerStudent.set(exam.id!, navigatedToPerStudent);
         this.cachedSubmissionsPerStudent.set(exam.id!, submittedPerStudent);
-
-        const examActionObservable = this.examActionObservables.get(exam.id!);
-        if (!examActionObservable) {
-            this.examActionObservables.set(exam.id!, new BehaviorSubject(examActions));
-        } else {
-            examActionObservable.next(examActions);
-        }
     };
 
     /**
@@ -97,7 +89,7 @@ export class ExamActionService implements IExamActionService {
         this.openExamMonitoringWebsocketSubscriptions.set(exam.id!, topic);
 
         this.jhiWebsocketService.subscribe(topic);
-        this.jhiWebsocketService.receive(topic).subscribe((exmAction: ExamAction) => this.notifyExamActionSubscribers(exam, [exmAction]));
+        this.jhiWebsocketService.receive(topic).subscribe((exmAction: ExamAction) => this.updateCachedActions(exam, [exmAction]));
     }
 
     /**
@@ -107,14 +99,8 @@ export class ExamActionService implements IExamActionService {
      *
      * @param exam the exam to observe
      */
-    public subscribeForLatestExamAction = (exam: Exam): BehaviorSubject<ExamAction[]> => {
+    public subscribeForLatestExamAction = (exam: Exam): void => {
         this.openExamMonitoringWebsocketSubscriptionIfNotExisting(exam);
-        let examActionObservable = this.examActionObservables.get(exam.id!)!;
-        if (!examActionObservable) {
-            examActionObservable = new BehaviorSubject<ExamAction[]>([]);
-            this.examActionObservables.set(exam.id!, examActionObservable);
-        }
-        return examActionObservable;
     };
 
     /**

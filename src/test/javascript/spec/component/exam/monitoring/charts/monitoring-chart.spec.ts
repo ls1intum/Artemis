@@ -79,27 +79,32 @@ describe('Monitoring charts helper methods', () => {
 
     // Get current exercise of students
     it('should get current exercise per student - 0', () => {
-        const currentExercisePerStudent = getCurrentExercisePerStudent([]);
+        const currentExercisePerStudent = getCurrentExercisePerStudent(new Map());
         expect(currentExercisePerStudent).toEqual(new Map());
     });
 
     it('should get current exercise of student - 1', () => {
+        const lastActionPerStudent = new Map();
         const action = createExamActionBasedOnType(ExamActionType.SWITCHED_EXERCISE);
         action.examActivityId = 0;
-        const currentExercisePerStudent = getCurrentExercisePerStudent([action]);
+        lastActionPerStudent.set(action.examActivityId, action);
+        const currentExercisePerStudent = getCurrentExercisePerStudent(lastActionPerStudent);
         const expectedMap = new Map();
         expectedMap.set(0, 0);
         expect(currentExercisePerStudent).toEqual(expectedMap);
     });
 
     it('should get current exercise of student - ignore multiple switches', () => {
+        const lastActionPerStudent = new Map();
         const action1 = new SwitchedExerciseAction(1);
         action1.examActivityId = 0;
         action1.timestamp = dayjs();
+        lastActionPerStudent.set(action1.examActivityId, action1);
         const action2 = new SwitchedExerciseAction(1);
         action2.examActivityId = 0;
         action2.timestamp = dayjs().add(1, 'hour');
-        const currentExercisePerStudent = getCurrentExercisePerStudent([action1, action2]);
+        lastActionPerStudent.set(action2.examActivityId, action2);
+        const currentExercisePerStudent = getCurrentExercisePerStudent(lastActionPerStudent);
         const expectedMap = new Map();
         expectedMap.set(0, 1);
         expect(currentExercisePerStudent).toEqual(expectedMap);
@@ -110,11 +115,14 @@ describe('Monitoring charts helper methods', () => {
         ${[new SwitchedExerciseAction(1), new SwitchedExerciseAction(2)]} | ${[1, 2]}
         ${[new EndedExamAction(), new SwitchedExerciseAction(2)]}         | ${[undefined, 2]}
     `('should get current exercise of students - multiple values', (param: { input: ExamAction[]; expect: (number | undefined)[] }) => {
+        const lastActionPerStudent = new Map();
         const action1 = param.input[0];
         action1.examActivityId = 1;
+        lastActionPerStudent.set(action1.examActivityId, action1);
         const action2 = param.input[1];
         action2.examActivityId = 2;
-        const currentExercisePerStudent = getCurrentExercisePerStudent([action1, action2]);
+        lastActionPerStudent.set(action2.examActivityId, action2);
+        const currentExercisePerStudent = getCurrentExercisePerStudent(lastActionPerStudent);
         const expectedMap = new Map();
         expectedMap.set(1, param.expect[0]);
         expectedMap.set(2, param.expect[1]);
