@@ -72,7 +72,6 @@ export class ExerciseChartComponent extends ChartComponent implements OnInit, On
     }
 
     override evaluateAndAddAction(examAction: ExamAction) {
-        super.evaluateAndAddAction(examAction);
         updateCurrentExerciseOfStudent(examAction, this.currentExercisePerStudent);
     }
 

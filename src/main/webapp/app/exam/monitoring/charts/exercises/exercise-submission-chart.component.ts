@@ -77,7 +77,6 @@ export class ExerciseSubmissionChartComponent extends ChartComponent implements 
     }
 
     override evaluateAndAddAction(examAction: ExamAction) {
-        super.evaluateAndAddAction(examAction);
         const submitted = this.submittedPerStudent.get(examAction.examActivityId!) ?? new Set();
         submitted.add((examAction as SavedExerciseAction).exerciseId!);
         this.submittedPerStudent.set(examAction.examActivityId!, submitted);

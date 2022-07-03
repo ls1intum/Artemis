@@ -75,7 +75,6 @@ export class ExerciseGroupChartComponent extends ChartComponent implements OnIni
     }
 
     override evaluateAndAddAction(examAction: ExamAction) {
-        super.evaluateAndAddAction(examAction);
         updateCurrentExerciseOfStudent(examAction, this.currentExercisePerStudent);
     }
 

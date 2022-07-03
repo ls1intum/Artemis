@@ -18,6 +18,8 @@ export class AverageActionsChartComponent extends ChartComponent implements OnIn
 
     readonly renderRate = 10;
 
+    actionsPerTimestamp: Map<string, number> = new Map();
+
     constructor(route: ActivatedRoute, examActionService: ExamActionService, private artemisDatePipe: ArtemisDatePipe) {
         super(route, examActionService, 'average-actions-chart', false, [getColor(2)]);
     }
@@ -37,6 +39,12 @@ export class AverageActionsChartComponent extends ChartComponent implements OnIn
      */
     override initData() {
         super.initData();
+        const groupedByTimestamp = groupActionsByTimestamp(this.filteredExamActions);
+
+        for (const [timestamp, actions] of Object.entries(groupedByTimestamp)) {
+            this.actionsPerTimestamp.set(timestamp, actions.length);
+        }
+
         this.createChartData();
     }
 
@@ -52,19 +60,33 @@ export class AverageActionsChartComponent extends ChartComponent implements OnIn
      * @private
      */
     private createChartData() {
-        const groupedByTimestamp = groupActionsByTimestamp(this.filteredExamActions);
-        const chartData: NgxChartsSingleSeriesDataEntry[] = [];
-        for (const timestamp of this.getLastXTimestamps()) {
-            const key = timestamp.toString();
-            let value = 0;
-            if (key in groupedByTimestamp) {
-                // Divide actions per timestamp by amount of registered students
-                value = groupedByTimestamp[key].length / this.registeredStudents;
+        const lastXTimestamps = this.getLastXTimestamps().map((timestamp) => timestamp.toString());
+
+        for (const timestamp of lastXTimestamps) {
+            if (!this.actionsPerTimestamp.has(timestamp)) {
+                this.actionsPerTimestamp.set(timestamp, 0);
             }
-            chartData.push({ name: this.artemisDatePipe.transform(key, 'time', true), value });
+        }
+
+        const chartData: NgxChartsSingleSeriesDataEntry[] = [];
+        for (const timestamp of lastXTimestamps) {
+            chartData.push({ name: this.artemisDatePipe.transform(timestamp, 'time', true), value: this.actionsPerTimestamp.get(timestamp) ?? 0 });
+        }
+
+        // Remove actions out of timespan
+        const keys = [...this.actionsPerTimestamp.keys()];
+        for (const key of keys) {
+            if (!lastXTimestamps.includes(key)) {
+                this.actionsPerTimestamp.delete(key);
+            }
         }
 
         this.ngxData = [{ name: 'actions', series: chartData }];
+    }
+
+    override evaluateAndAddAction(examAction: ExamAction) {
+        const key = examAction.ceiledTimestamp!.toString();
+        this.actionsPerTimestamp.set(key, (this.actionsPerTimestamp.get(key) ?? 0) + 1);
     }
 
     filterRenderedData(examAction: ExamAction) {

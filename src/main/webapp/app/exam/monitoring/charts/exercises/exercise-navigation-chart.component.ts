@@ -77,7 +77,6 @@ export class ExerciseNavigationChartComponent extends ChartComponent implements 
     }
 
     override evaluateAndAddAction(examAction: ExamAction) {
-        super.evaluateAndAddAction(examAction);
         const navigatedTo = this.navigatedToPerStudent.get(examAction.examActivityId!) ?? new Set();
         navigatedTo.add((examAction as SwitchedExerciseAction).exerciseId);
         this.navigatedToPerStudent.set(examAction.examActivityId!, navigatedTo);

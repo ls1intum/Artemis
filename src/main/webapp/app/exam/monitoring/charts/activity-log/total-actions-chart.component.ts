@@ -16,6 +16,7 @@ export class TotalActionsChartComponent extends ChartComponent implements OnInit
     readonly renderRate = 10;
 
     actionsPerTimestamp: Map<string, number> = new Map();
+    currentAmountOfActionsBeforeTheFirstTimeStamp = 0;
 
     constructor(route: ActivatedRoute, examActionService: ExamActionService, private artemisDatePipe: ArtemisDatePipe) {
         super(route, examActionService, 'total-actions-chart', false, [getColor(2)]);
@@ -65,7 +66,7 @@ export class TotalActionsChartComponent extends ChartComponent implements OnInit
             }
         }
 
-        let totalTimestamps = 0;
+        let totalTimestamps = this.currentAmountOfActionsBeforeTheFirstTimeStamp;
         const chartData: NgxChartsSingleSeriesDataEntry[] = [];
 
         // We sort the map via keys in order to get the correct total amount of actions in each timestamp
@@ -75,13 +76,23 @@ export class TotalActionsChartComponent extends ChartComponent implements OnInit
             totalTimestamps += number;
             if (lastXTimestamps.includes(timestamp)) {
                 chartData.push({ name: this.artemisDatePipe.transform(timestamp, 'time', true), value: totalTimestamps });
+            } else {
+                this.currentAmountOfActionsBeforeTheFirstTimeStamp = totalTimestamps;
             }
         }
+
+        // Remove actions out of timespan
+        const keys = [...sortedMap.keys()];
+        for (const key of keys) {
+            if (!lastXTimestamps.includes(key)) {
+                this.actionsPerTimestamp.delete(key);
+            }
+        }
+
         this.ngxData = [{ name: 'actions', series: chartData }];
     }
 
     override evaluateAndAddAction(examAction: ExamAction) {
-        super.evaluateAndAddAction(examAction);
         const key = examAction.ceiledTimestamp!.toString();
         this.actionsPerTimestamp.set(key, (this.actionsPerTimestamp.get(key) ?? 0) + 1);
     }

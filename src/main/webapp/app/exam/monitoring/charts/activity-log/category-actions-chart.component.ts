@@ -14,6 +14,8 @@ import { ActivatedRoute } from '@angular/router';
 export class CategoryActionsChartComponent extends ChartComponent implements OnInit, OnDestroy {
     readonly renderRate = 10;
 
+    actionsPerTimestamp: Map<string, Map<string, number>> = new Map();
+
     constructor(route: ActivatedRoute, examActionService: ExamActionService, private artemisDatePipe: ArtemisDatePipe) {
         super(route, examActionService, 'category-actions-chart', true, [getColor(0), getColor(1), getColor(2), getColor(3), getColor(4)]);
     }
@@ -33,6 +35,21 @@ export class CategoryActionsChartComponent extends ChartComponent implements OnI
      */
     override initData() {
         super.initData();
+
+        const groupedByTimestamp = groupActionsByTimestamp(this.filteredExamActions);
+
+        for (const [timestamp, actions] of Object.entries(groupedByTimestamp)) {
+            const categories = new Map<string, number>();
+            Object.keys(ExamActionType).forEach((type) => {
+                categories.set(type, 0);
+            });
+            const groupedByType = groupActionsByType(actions);
+            for (const [type, typeActions] of Object.entries(groupedByType)) {
+                categories.set(type, typeActions.length);
+            }
+            this.actionsPerTimestamp.set(timestamp, categories);
+        }
+
         this.createChartData();
     }
 
@@ -48,11 +65,18 @@ export class CategoryActionsChartComponent extends ChartComponent implements OnI
      * @private
      */
     private createChartData() {
-        // Categories
-        const categories: Map<string, number> = new Map();
+        const lastXTimestamps = this.getLastXTimestamps().map((timestamp) => timestamp.toString());
 
-        // Group actions by timestamp
-        const groupedByTimestamp = groupActionsByTimestamp(this.filteredExamActions);
+        for (const timestamp of lastXTimestamps) {
+            if (!this.actionsPerTimestamp.has(timestamp)) {
+                const categories = new Map<string, number>();
+                Object.keys(ExamActionType).forEach((type) => {
+                    categories!.set(type, 0);
+                });
+                this.actionsPerTimestamp.set(timestamp, categories);
+            }
+        }
+
         const chartSeriesData: NgxChartsMultiSeriesDataEntry[] = [];
         const chartData: Map<string, NgxChartsSingleSeriesDataEntry[]> = new Map();
 
@@ -60,31 +84,41 @@ export class CategoryActionsChartComponent extends ChartComponent implements OnI
             chartData.set(type, []);
         });
 
-        for (const timestamp of this.getLastXTimestamps()) {
-            Object.keys(ExamActionType).forEach((type) => {
-                categories.set(type, 0);
-            });
-
-            const key = timestamp.toString();
-            if (key in groupedByTimestamp) {
-                // Group actions by type
-                const groupedByType = groupActionsByType(groupedByTimestamp[key]);
-
-                for (const [typeKey, typeValue] of Object.entries(groupedByType)) {
-                    categories.set(typeKey, typeValue.length);
-                }
-            }
-
-            for (const [category, amount] of categories.entries()) {
+        for (const timestamp of lastXTimestamps) {
+            const categories = this.actionsPerTimestamp.get(timestamp);
+            for (const [category, amount] of categories!.entries()) {
                 chartData.set(category, [...(chartData.get(category) ?? []), { name: this.artemisDatePipe.transform(timestamp, 'time', true), value: amount }]);
             }
         }
 
-        for (const category of categories.keys()) {
+        for (const category of Object.keys(ExamActionType)) {
             chartSeriesData.push({ name: category, series: chartData.get(category)! });
             this.ngxColor.domain.push(getColor(Object.keys(ExamActionType).indexOf(category)));
         }
+
+        // Remove actions out of timespan
+        const keys = [...this.actionsPerTimestamp.keys()];
+        for (const key of keys) {
+            if (!lastXTimestamps.includes(key)) {
+                this.actionsPerTimestamp.delete(key);
+            }
+        }
+
         this.ngxData = chartSeriesData;
+    }
+
+    override evaluateAndAddAction(examAction: ExamAction) {
+        const key = examAction.ceiledTimestamp!.toString();
+        let categories = this.actionsPerTimestamp.get(key);
+
+        if (!categories) {
+            categories = new Map<string, number>();
+            Object.keys(ExamActionType).forEach((type) => {
+                categories!.set(type, 0);
+            });
+        }
+        categories.set(examAction.type, (categories.get(examAction.type) ?? 0) + 1);
+        this.actionsPerTimestamp.set(key, categories);
     }
 
     filterRenderedData(examAction: ExamAction) {
