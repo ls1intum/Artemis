@@ -336,6 +336,11 @@ public class ProgrammingExercise extends Exercise {
         this.projectKey = (course.getShortName() + this.getShortName()).toUpperCase().replaceAll("\\s+", "");
     }
 
+    public void forceNewProjectKey() {
+        Course course = getCourseViaExerciseGroupOrCourseMember();
+        this.projectKey = (course.getShortName() + this.getShortName()).toUpperCase().replaceAll("\\s+", "");
+    }
+
     /**
      * Get the latest (potentially) graded submission for a programming exercise.
      * Programming submissions work differently in this regard as a submission without a result does not mean it is not rated/assessed,

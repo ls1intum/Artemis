@@ -58,6 +58,8 @@ public class ExamImportService {
 
     private final ProgrammingExerciseImportService programmingExerciseImportService;
 
+    private final GradingCriterionRepository gradingCriterionRepository;
+
     private final FileUploadExerciseRepository fileUploadExerciseRepository;
 
     private final FileUploadImportService fileUploadImportService;
@@ -67,8 +69,8 @@ public class ExamImportService {
             ExerciseGroupRepository exerciseGroupRepository, ExamAccessService examAccessService, QuizExerciseRepository quizExerciseRepository,
             QuizExerciseImportService importQuizExercise, CourseRepository courseRepository, ProgrammingExerciseService programmingExerciseService,
             ProgrammingExerciseService programmingExerciseService1, ProgrammingExerciseRepository programmingExerciseRepository,
-            ProgrammingExerciseImportService programmingExerciseImportService, FileUploadExerciseRepository fileUploadExerciseRepository,
-            FileUploadImportService fileUploadImportService) {
+            ProgrammingExerciseImportService programmingExerciseImportService, GradingCriterionRepository gradingCriterionRepository,
+            FileUploadExerciseRepository fileUploadExerciseRepository, FileUploadImportService fileUploadImportService) {
         this.textExerciseImportService = textExerciseImportService;
         this.textExerciseRepository = textExerciseRepository;
         this.modelingExerciseImportService = modelingExerciseImportService;
@@ -82,6 +84,7 @@ public class ExamImportService {
         this.programmingExerciseService = programmingExerciseService1;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.programmingExerciseImportService = programmingExerciseImportService;
+        this.gradingCriterionRepository = gradingCriterionRepository;
         this.fileUploadExerciseRepository = fileUploadExerciseRepository;
         this.fileUploadImportService = fileUploadImportService;
     }
@@ -225,7 +228,7 @@ public class ExamImportService {
                     if (optionalOriginalProgrammingExercise.isEmpty()) {
                         return;
                     }
-                    exerciseCopied = programmingExerciseImportService.importProgrammingExerciseComplete(optionalOriginalProgrammingExercise.get(),
+                    exerciseCopied = programmingExerciseImportService.importProgrammingExerciseForExamImport(optionalOriginalProgrammingExercise.get(),
                             (ProgrammingExercise) exerciseToCopy);
                 }
 

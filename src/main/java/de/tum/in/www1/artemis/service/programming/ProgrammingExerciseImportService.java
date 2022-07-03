@@ -76,6 +76,8 @@ public class ProgrammingExerciseImportService {
 
     private final ProgrammingExerciseSolutionEntryRepository solutionEntryRepository;
 
+    private final GradingCriterionRepository gradingCriterionRepository;
+
     private final UrlService urlService;
 
     public ProgrammingExerciseImportService(ExerciseHintService exerciseHintService, ExerciseHintRepository exerciseHintRepository,
@@ -84,7 +86,8 @@ public class ProgrammingExerciseImportService {
             StaticCodeAnalysisCategoryRepository staticCodeAnalysisCategoryRepository, ProgrammingExerciseRepository programmingExerciseRepository,
             ProgrammingExerciseService programmingExerciseService, GitService gitService, FileService fileService, UserRepository userRepository,
             StaticCodeAnalysisService staticCodeAnalysisService, AuxiliaryRepositoryRepository auxiliaryRepositoryRepository, SubmissionPolicyRepository submissionPolicyRepository,
-            UrlService urlService, ProgrammingExerciseTaskRepository programmingExerciseTaskRepository, ProgrammingExerciseSolutionEntryRepository solutionEntryRepository) {
+            UrlService urlService, ProgrammingExerciseTaskRepository programmingExerciseTaskRepository, ProgrammingExerciseSolutionEntryRepository solutionEntryRepository,
+            GradingCriterionRepository gradingCriterionRepository) {
         this.exerciseHintService = exerciseHintService;
         this.exerciseHintRepository = exerciseHintRepository;
         this.versionControlService = versionControlService;
@@ -103,6 +106,7 @@ public class ProgrammingExerciseImportService {
         this.urlService = urlService;
         this.programmingExerciseTaskRepository = programmingExerciseTaskRepository;
         this.solutionEntryRepository = solutionEntryRepository;
+        this.gradingCriterionRepository = gradingCriterionRepository;
     }
 
     /**
@@ -589,18 +593,21 @@ public class ProgrammingExerciseImportService {
      * @param newExercise      The new exercise already containing values which should not get copied, i.e. overwritten
      * @return The newly created exercise
      */
-    public ProgrammingExercise importProgrammingExerciseComplete(final ProgrammingExercise templateExercise, final ProgrammingExercise newExercise) {
+    public ProgrammingExercise importProgrammingExerciseForExamImport(final ProgrammingExercise templateExercise, final ProgrammingExercise newExercise) {
 
-        newExercise.generateAndSetProjectKey();
-        // programmingExerciseService.checkIfProjectExists(newExercise);
+        // Fetch grading criterion into exercise of participation
+        List<GradingCriterion> gradingCriteria = gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(newExercise.getId());
+        newExercise.setGradingCriteria(gradingCriteria);
 
-        ProgrammingExercise importedProgrammingExercise = importProgrammingExerciseBasis(templateExercise, newExercise);
+        newExercise.forceNewProjectKey();
+
+        final ProgrammingExercise importedProgrammingExercise = importProgrammingExerciseBasis(templateExercise, newExercise);
         importRepositories(templateExercise, importedProgrammingExercise);
         importBuildPlans(templateExercise, importedProgrammingExercise);
 
         programmingExerciseService.scheduleOperations(importedProgrammingExercise.getId());
 
-        // Remove unnecessary fields
+        // Remove unnecessary fields before returing it to the client
         importedProgrammingExercise.setTestCases(null);
         importedProgrammingExercise.setStaticCodeAnalysisCategories(null);
         importedProgrammingExercise.setTemplateParticipation(null);

@@ -5,7 +5,6 @@ import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { shortNamePattern } from 'app/shared/constants/input.constants';
-import { AlertService } from 'app/core/util/alert.service';
 
 @Component({
     selector: 'jhi-exam-exercise-import',
@@ -51,6 +50,7 @@ export class ExamExerciseImportComponent implements OnInit {
      * Called by the parent component
      */
     updateMapsAfterRejectedImport() {
+        this.titleAndShortNameOfProgrammingExercises.clear();
         this.initializeTitleAndShortNameMap();
         this.selectedExercises.clear();
         this.containsProgrammingExercises.clear();
@@ -68,7 +68,7 @@ export class ExamExerciseImportComponent implements OnInit {
         // Initialize containsProgrammingExercises
         this.exam.exerciseGroups!.forEach((exerciseGroup) => {
             const hasProgrammingExercises = !!exerciseGroup.exercises?.some((value) => value.type === ExerciseType.PROGRAMMING);
-            this.containsProgrammingExercises?.set(exerciseGroup, hasProgrammingExercises);
+            this.containsProgrammingExercises.set(exerciseGroup, hasProgrammingExercises);
         });
     }
 
@@ -77,7 +77,7 @@ export class ExamExerciseImportComponent implements OnInit {
         this.selectedExercises.forEach((value) => {
             value.forEach((exercise) => {
                 if (exercise.type === ExerciseType.PROGRAMMING) {
-                    this.titleAndShortNameOfProgrammingExercises?.set(exercise.id!, [exercise.title!, exercise.shortName!]);
+                    this.titleAndShortNameOfProgrammingExercises.set(exercise.id!, [exercise.title!, exercise.shortName!]);
                 }
             });
         });
@@ -131,7 +131,7 @@ export class ExamExerciseImportComponent implements OnInit {
      * @param exerciseId the corresponding exercise
      */
     getPlaceholderTitleOfProgrammingExercise(exerciseId: number): String {
-        const title = this.titleAndShortNameOfProgrammingExercises?.get(exerciseId)?.first();
+        const title = this.titleAndShortNameOfProgrammingExercises.get(exerciseId)?.first();
         return title ? title! : ``;
     }
 
@@ -140,7 +140,7 @@ export class ExamExerciseImportComponent implements OnInit {
      * @param exerciseId the corresponding exercise
      */
     getPlaceholderShortNameOfProgrammingExercise(exerciseId: number): String {
-        const shortName = this.titleAndShortNameOfProgrammingExercises?.get(exerciseId)?.last();
+        const shortName = this.titleAndShortNameOfProgrammingExercises.get(exerciseId)?.last();
         return shortName ? shortName! : ``;
     }
 
@@ -174,8 +174,13 @@ export class ExamExerciseImportComponent implements OnInit {
                     let correctShortName = true;
                     if (exercise.type === ExerciseType.PROGRAMMING) {
                         correctShortName =
-                            this.shortNamePattern.test(exercise.shortName!) && exercise.shortName !== this.getPlaceholderShortNameOfProgrammingExercise(exercise.id!);
-                        correctTitle = this.titleNamePattern.test(exercise.title!) && exercise.title !== this.getPlaceholderTitleOfProgrammingExercise(exercise.id!);
+                            exercise.shortName?.length! > 2 &&
+                            this.shortNamePattern.test(exercise.shortName!) &&
+                            exercise.shortName !== this.getPlaceholderShortNameOfProgrammingExercise(exercise.id!);
+                        correctTitle =
+                            exercise.title?.length! > 0 &&
+                            this.titleNamePattern.test(exercise.title!) &&
+                            exercise.title !== this.getPlaceholderTitleOfProgrammingExercise(exercise.id!);
                     } else {
                         correctTitle = exercise.title?.length! > 0;
                     }
