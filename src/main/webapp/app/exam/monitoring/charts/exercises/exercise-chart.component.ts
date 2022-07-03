@@ -4,9 +4,7 @@ import {
     convertCurrentExercisePerStudentMapToNumberOfStudentsPerExerciseMap,
     getCurrentExercisePerStudent,
     insertNgxDataAndColorForExerciseMap,
-    updateCurrentExerciseOfStudent,
 } from 'app/exam/monitoring/charts/monitoring-chart';
-import { ExamAction, ExamActionType } from 'app/entities/exam-user-activity.model';
 import { ChartComponent } from 'app/exam/monitoring/charts/chart.component';
 import { ExamActionService } from '../../exam-action.service';
 import { ActivatedRoute } from '@angular/router';
@@ -19,8 +17,6 @@ export class ExerciseChartComponent extends ChartComponent implements OnInit, On
     // Input
     @Input()
     exam: Exam;
-
-    currentExercisePerStudent: Map<number, number | undefined> = new Map();
 
     readonly renderRate = 5;
 
@@ -42,7 +38,6 @@ export class ExerciseChartComponent extends ChartComponent implements OnInit, On
      * Create and initialize the data for the chart.
      */
     override initData() {
-        this.currentExercisePerStudent = getCurrentExercisePerStudent(this.examActionService.cachedLastActionPerStudent.get(this.examId) ?? new Map());
         this.createChartData();
     }
 
@@ -60,28 +55,9 @@ export class ExerciseChartComponent extends ChartComponent implements OnInit, On
     private createChartData() {
         this.ngxData = [];
         this.ngxColor.domain = [];
-        insertNgxDataAndColorForExerciseMap(
-            this.exam,
-            convertCurrentExercisePerStudentMapToNumberOfStudentsPerExerciseMap(this.currentExercisePerStudent),
-            this.ngxData,
-            this.ngxColor,
-        );
+        const currentExercisePerStudent = getCurrentExercisePerStudent(this.examActionService.cachedLastActionPerStudent.get(this.examId) ?? new Map());
+        insertNgxDataAndColorForExerciseMap(this.exam, convertCurrentExercisePerStudentMapToNumberOfStudentsPerExerciseMap(currentExercisePerStudent), this.ngxData, this.ngxColor);
         // Re-trigger change detection
         this.ngxData = [...this.ngxData];
-    }
-
-    override evaluateAndAddAction(examActions: ExamAction[]) {
-        for (const action of examActions) {
-            updateCurrentExerciseOfStudent(action, this.currentExercisePerStudent);
-        }
-    }
-
-    filterRenderedData(examAction: ExamAction) {
-        return (
-            examAction.type === ExamActionType.SWITCHED_EXERCISE ||
-            examAction.type === ExamActionType.SAVED_EXERCISE ||
-            examAction.type === ExamActionType.ENDED_EXAM ||
-            examAction.type === ExamActionType.HANDED_IN_EARLY
-        );
     }
 }

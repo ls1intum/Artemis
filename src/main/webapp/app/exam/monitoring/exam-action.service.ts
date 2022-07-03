@@ -15,7 +15,8 @@ export interface IExamActionService {}
 export class ExamActionService implements IExamActionService {
     examActionObservables: Map<number, BehaviorSubject<ExamAction[]>> = new Map<number, BehaviorSubject<ExamAction[]>>();
     cachedExamActions: Map<number, ExamAction[]> = new Map<number, ExamAction[]>();
-    cachedExamActionsGroupedByTimestamp: Map<number, Map<string, Map<string, number>>> = new Map<number, Map<string, Map<string, number>>>();
+    cachedExamActionsGroupedByTimestamp: Map<number, Map<string, number>> = new Map<number, Map<string, number>>();
+    cachedExamActionsGroupedByTimestampAndCategory: Map<number, Map<string, Map<string, number>>> = new Map<number, Map<string, Map<string, number>>>();
     cachedLastActionPerStudent: Map<number, Map<number, ExamAction>> = new Map<number, Map<number, ExamAction>>();
     cachedNavigationsPerStudent: Map<number, Map<number, Set<number | undefined>>> = new Map<number, Map<number, Set<number | undefined>>>();
     cachedSubmissionsPerStudent: Map<number, Map<number, Set<number | undefined>>> = new Map<number, Map<number, Set<number | undefined>>>();
@@ -32,6 +33,7 @@ export class ExamActionService implements IExamActionService {
     public notifyExamActionSubscribers = (exam: Exam, examActions: ExamAction[]) => {
         // Cache and group actions
         const actionsPerTimestamp = this.cachedExamActionsGroupedByTimestamp.get(exam.id!) ?? new Map();
+        const actionsPerTimestampAndCategory = this.cachedExamActionsGroupedByTimestampAndCategory.get(exam.id!) ?? new Map();
         const lastActionPerStudent = this.cachedLastActionPerStudent.get(exam.id!) ?? new Map();
         const navigatedToPerStudent = this.cachedNavigationsPerStudent.get(exam.id!) ?? new Map();
         const submittedPerStudent = this.cachedSubmissionsPerStudent.get(exam.id!) ?? new Map();
@@ -41,6 +43,16 @@ export class ExamActionService implements IExamActionService {
             const key = action.ceiledTimestamp!.toString();
 
             actionsPerTimestamp.set(key, (actionsPerTimestamp.get(key) ?? 0) + 1);
+
+            let categories = actionsPerTimestampAndCategory.get(key);
+            if (!categories) {
+                categories = new Map();
+                Object.keys(ExamActionType).forEach((type) => {
+                    categories.set(type, 0);
+                });
+            }
+            categories.set(action.type, categories.get(action.type)! + 1);
+            actionsPerTimestampAndCategory.set(key, categories);
 
             const lastAction = lastActionPerStudent.get(action.studentExamId!);
             if (!lastAction || lastAction.timestamp!.isBefore(action.timestamp!)) {
@@ -62,6 +74,7 @@ export class ExamActionService implements IExamActionService {
 
         this.cachedExamActions.set(exam.id!, [...(this.cachedExamActions.get(exam.id!) ?? []), ...examActions]);
         this.cachedExamActionsGroupedByTimestamp.set(exam.id!, actionsPerTimestamp);
+        this.cachedExamActionsGroupedByTimestampAndCategory.set(exam.id!, actionsPerTimestampAndCategory);
         this.cachedLastActionPerStudent.set(exam.id!, lastActionPerStudent);
         this.cachedNavigationsPerStudent.set(exam.id!, navigatedToPerStudent);
         this.cachedSubmissionsPerStudent.set(exam.id!, submittedPerStudent);
@@ -112,6 +125,7 @@ export class ExamActionService implements IExamActionService {
         const topic = EXAM_MONITORING_TOPIC(exam.id!);
         this.cachedExamActions.set(exam.id!, []);
         this.cachedExamActionsGroupedByTimestamp.set(exam.id!, new Map());
+        this.cachedExamActionsGroupedByTimestampAndCategory.set(exam.id!, new Map());
         this.cachedLastActionPerStudent.set(exam.id!, new Map());
         this.cachedNavigationsPerStudent.set(exam.id!, new Map());
         this.cachedSubmissionsPerStudent.set(exam.id!, new Map());
@@ -139,14 +153,6 @@ export class ExamActionService implements IExamActionService {
      */
     public static loadActionsEndpoint(examId: number): string {
         return `${SERVER_API_URL}api/exam-monitoring/${examId}/load-actions`;
-    }
-
-    /**
-     * Returns the exam as observable.
-     * @param examId corresponding exam id
-     */
-    public getExamMonitoringObservable(examId: number): BehaviorSubject<ExamAction[]> | undefined {
-        return this.examActionObservables.get(examId);
     }
 
     /**

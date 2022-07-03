@@ -109,7 +109,7 @@ describe('Exercise Submission Chart Component', () => {
         const action = createExamActionBasedOnType(ExamActionType.SAVED_EXERCISE);
         expect(comp.filteredExamActions).toEqual([]);
 
-        comp.evaluateAndAddAction(action);
+        comp.evaluateAction(action);
 
         const expectedMap = new Map();
         expectedMap.set(action.examActivityId, new Set([0]));
@@ -120,6 +120,6 @@ describe('Exercise Submission Chart Component', () => {
 
     // Filter actions
     it.each(createActions())('should filter action', (action: ExamAction) => {
-        expect(comp.filterRenderedData(action)).toBe(action.type === ExamActionType.SAVED_EXERCISE);
+        expect(comp.applyFilter(action)).toBe(action.type === ExamActionType.SAVED_EXERCISE);
     });
 });

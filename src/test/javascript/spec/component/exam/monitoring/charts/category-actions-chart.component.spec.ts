@@ -109,10 +109,10 @@ describe('Category Actions Chart Component', () => {
     it.each(createActions())('should filter action', (action: ExamAction) => {
         action.ceiledTimestamp = dayjs().subtract(1, 'hour');
 
-        expect(comp.filterRenderedData(action)).toBeFalse();
+        expect(comp.applyFilter(action)).toBeFalse();
 
         action.ceiledTimestamp = ceiledNow;
 
-        expect(comp.filterRenderedData(action)).toBeTrue();
+        expect(comp.applyFilter(action)).toBeTrue();
     });
 });

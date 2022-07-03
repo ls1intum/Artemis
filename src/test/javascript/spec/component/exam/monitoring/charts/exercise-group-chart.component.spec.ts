@@ -112,7 +112,7 @@ describe('Exercise Group Chart Component', () => {
         const action = createExamActionBasedOnType(ExamActionType.ENDED_EXAM);
         expect(comp.filteredExamActions).toEqual([]);
 
-        comp.evaluateAndAddAction(action);
+        comp.evaluateAction(action);
 
         const expectedMap = new Map();
         expectedMap.set(action.examActivityId, undefined);
@@ -123,7 +123,7 @@ describe('Exercise Group Chart Component', () => {
 
     // Filter actions
     it.each(createActions())('should filter action', (action: ExamAction) => {
-        expect(comp.filterRenderedData(action)).toBe(
+        expect(comp.applyFilter(action)).toBe(
             action.type === ExamActionType.SWITCHED_EXERCISE ||
                 action.type === ExamActionType.SAVED_EXERCISE ||
                 action.type === ExamActionType.ENDED_EXAM ||

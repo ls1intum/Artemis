@@ -164,3 +164,11 @@ export function insertNgxDataAndColorForExerciseMap(exam: Exam | undefined, exer
 export function ceilDayjsSeconds(timestamp: dayjs.Dayjs, seconds: number) {
     return timestamp.add(seconds - (timestamp.get('seconds') % seconds), 'seconds').startOf('seconds');
 }
+
+export function getEmptyCategories() {
+    const categories = new Map<string, number>();
+    Object.keys(ExamActionType).forEach((type) => {
+        categories!.set(type, 0);
+    });
+    return categories;
+}

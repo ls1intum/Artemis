@@ -104,7 +104,7 @@ describe('Total Actions Chart Component', () => {
 
         action.ceiledTimestamp = ceiledNow;
 
-        comp.evaluateAndAddAction(action);
+        comp.evaluateAction(action);
 
         const expectedMap = new Map();
         expectedMap.set(ceiledNow.toString(), 1);

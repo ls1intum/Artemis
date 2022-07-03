@@ -1,7 +1,6 @@
 import { Component, Input, OnDestroy, OnInit } from '@angular/core';
 import { Exam } from 'app/entities/exam.model';
 import { insertNgxDataAndColorForExerciseMap } from 'app/exam/monitoring/charts/monitoring-chart';
-import { ExamAction } from 'app/entities/exam-user-activity.model';
 import { ChartComponent } from 'app/exam/monitoring/charts/chart.component';
 import { ExamActionService } from '../../exam-action.service';
 import { ActivatedRoute } from '@angular/router';
@@ -65,13 +64,5 @@ export class ExerciseNavigationChartComponent extends ChartComponent implements 
         insertNgxDataAndColorForExerciseMap(this.exam, exerciseAmountMap, this.ngxData, this.ngxColor);
         // Re-trigger change detection
         this.ngxData = [...this.ngxData];
-    }
-
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    override evaluateAndAddAction(examActions: ExamAction[]) {}
-
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    filterRenderedData(examAction: ExamAction) {
-        return false;
     }
 }
