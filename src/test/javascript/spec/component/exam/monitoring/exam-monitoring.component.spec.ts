@@ -202,7 +202,7 @@ describe('Exam Monitoring Component', () => {
         const responseFakeExam = { body: exam as Exam } as HttpResponse<Exam>;
         jest.spyOn(examManagementService, 'find').mockReturnValue(of(responseFakeExam));
         const action = new EndedExamAction();
-        jest.spyOn(examActionService, 'subscribeForLatestExamAction').mockReturnValue(new BehaviorSubject(action));
+        jest.spyOn(examActionService, 'subscribeForLatestExamAction').mockReturnValue(new BehaviorSubject([action]));
 
         // WHEN
         comp.ngOnInit();

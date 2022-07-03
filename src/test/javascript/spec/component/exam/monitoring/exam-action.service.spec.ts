@@ -48,20 +48,20 @@ describe('ExamActionService', () => {
     it.each(createActions())('should notify exam subscribers', (examAction: ExamAction) => {
         const spy = jest.spyOn(examActionService, 'prepareAction').mockImplementation((action) => action);
 
-        const examActionObservables = new Map<number, BehaviorSubject<ExamAction | undefined>>();
+        const examActionObservables = new Map<number, BehaviorSubject<ExamAction[]>>();
         expect(examActionService.examActionObservables).toEqual(examActionObservables);
 
-        examActionService.notifyExamActionSubscribers(exam, examAction);
+        examActionService.notifyExamActionSubscribers(exam, [examAction]);
 
-        examActionObservables.set(exam.id!, new BehaviorSubject(examAction));
+        examActionObservables.set(exam.id!, new BehaviorSubject([examAction]));
 
         expect(spy).toHaveBeenCalledOnce();
         expect(spy).toHaveBeenCalledWith(examAction);
         expect(examActionService.examActionObservables).toEqual(examActionObservables);
 
-        examActionService.notifyExamActionSubscribers(exam, examAction);
+        examActionService.notifyExamActionSubscribers(exam, [examAction]);
 
-        examActionObservables.get(exam.id!)?.next(examAction);
+        examActionObservables.get(exam.id!)?.next([examAction]);
         expect(examActionService.examActionObservables).toEqual(examActionObservables);
     });
 
