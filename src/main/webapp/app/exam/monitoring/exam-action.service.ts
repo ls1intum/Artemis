@@ -1,21 +1,26 @@
 import { Injectable } from '@angular/core';
-import { BehaviorSubject } from 'rxjs';
+import { BehaviorSubject, Observable, of } from 'rxjs';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { Exam } from 'app/entities/exam.model';
 import { ExamAction } from 'app/entities/exam-user-activity.model';
 import dayjs from 'dayjs/esm';
 import { ceilDayjsSeconds } from 'app/exam/monitoring/charts/monitoring-chart';
+import { HttpClient } from '@angular/common/http';
 
 const EXAM_MONITORING_TOPIC = (examId: number) => `/topic/exam-monitoring/${examId}/action`;
+const EXAM_MONITORING_USER_TOPIC = (examId: number) => `/user/topic/exam-monitoring/${examId}/action`;
 
-export interface IExamMonitoringWebsocketService {}
+export interface IExamActionService {}
 
 @Injectable({ providedIn: 'root' })
-export class ExamMonitoringWebsocketService implements IExamMonitoringWebsocketService {
+export class ExamActionService implements IExamActionService {
     examActionObservables: Map<number, BehaviorSubject<ExamAction | undefined>> = new Map<number, BehaviorSubject<ExamAction | undefined>>();
+    cachedExamActions: Map<number, ExamAction[]> = new Map<number, ExamAction[]>();
+    initialActionsLoaded: Map<number, boolean> = new Map<number, boolean>();
     openExamMonitoringWebsocketSubscriptions: Map<number, string> = new Map<number, string>();
+    openExamMonitoringUserWebsocketSubscriptions: Map<number, string> = new Map<number, string>();
 
-    constructor(private jhiWebsocketService: JhiWebsocketService) {}
+    constructor(private jhiWebsocketService: JhiWebsocketService, private http: HttpClient) {}
 
     /**
      * Notify all exam action subscribers with the newest exam action provided.
@@ -24,6 +29,7 @@ export class ExamMonitoringWebsocketService implements IExamMonitoringWebsocketS
      */
     public notifyExamActionSubscribers = (exam: Exam, examAction: ExamAction) => {
         this.prepareAction(examAction);
+        this.cachedExamActions.set(exam.id!, [...(this.cachedExamActions.get(exam.id!) ?? []), examAction]);
         const examActionObservable = this.examActionObservables.get(exam.id!);
         if (!examActionObservable) {
             this.examActionObservables.set(exam.id!, new BehaviorSubject(examAction));
@@ -39,10 +45,14 @@ export class ExamMonitoringWebsocketService implements IExamMonitoringWebsocketS
      */
     private openExamMonitoringWebsocketSubscriptionIfNotExisting(exam: Exam) {
         const topic = EXAM_MONITORING_TOPIC(exam.id!);
+        const userTopic = EXAM_MONITORING_USER_TOPIC(exam.id!);
         this.openExamMonitoringWebsocketSubscriptions.set(exam.id!, topic);
+        this.openExamMonitoringUserWebsocketSubscriptions.set(exam.id!, userTopic);
 
         this.jhiWebsocketService.subscribe(topic);
+        this.jhiWebsocketService.subscribe(userTopic);
         this.jhiWebsocketService.receive(topic).subscribe((exmAction: ExamAction) => this.notifyExamActionSubscribers(exam, exmAction));
+        this.jhiWebsocketService.receive(userTopic).subscribe((exmAction: ExamAction) => this.notifyExamActionSubscribers(exam, exmAction));
     }
 
     /**
@@ -68,8 +78,33 @@ export class ExamMonitoringWebsocketService implements IExamMonitoringWebsocketS
      * */
     public unsubscribeForExamAction(exam: Exam): void {
         const topic = EXAM_MONITORING_TOPIC(exam.id!);
+        const userTopic = EXAM_MONITORING_USER_TOPIC(exam.id!);
+        this.cachedExamActions.set(exam.id!, []);
+        this.initialActionsLoaded.delete(exam.id!);
         this.jhiWebsocketService.unsubscribe(topic);
+        this.jhiWebsocketService.unsubscribe(userTopic);
         this.openExamMonitoringWebsocketSubscriptions.delete(exam.id!);
+    }
+
+    /**
+     * Loads the initial exam actions.
+     * @param exam exam to which the actions belong
+     * */
+    public loadInitialActions(exam: Exam): Observable<ExamAction[]> {
+        if (!this.initialActionsLoaded.get(exam.id!)) {
+            this.initialActionsLoaded.set(exam.id!, true);
+            return this.http.get<ExamAction[]>(ExamActionService.loadActionsEndpoint(exam.id!));
+        }
+        return of([]);
+    }
+
+    /**
+     * Returns the load actions endpoint.
+     * @param examId of the current exam
+     * @return the load actions endpoint
+     */
+    public static loadActionsEndpoint(examId: number): string {
+        return `${SERVER_API_URL}api/exam-monitoring/${examId}/load-actions`;
     }
 
     /**

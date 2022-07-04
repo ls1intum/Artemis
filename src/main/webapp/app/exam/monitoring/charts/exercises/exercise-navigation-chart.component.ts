@@ -1,9 +1,9 @@
 import { Component, Input, OnDestroy, OnInit } from '@angular/core';
 import { Exam } from 'app/entities/exam.model';
 import { getSwitchedExerciseActionsGroupedByActivityId, insertNgxDataAndColorForExerciseMap } from 'app/exam/monitoring/charts/monitoring-chart';
-import { SwitchedExerciseAction } from 'app/entities/exam-user-activity.model';
+import { ExamAction, ExamActionType, SwitchedExerciseAction } from 'app/entities/exam-user-activity.model';
 import { ChartComponent } from 'app/exam/monitoring/charts/chart.component';
-import { ExamMonitoringWebsocketService } from '../../exam-monitoring-websocket.service';
+import { ExamActionService } from '../../exam-action.service';
 import { ActivatedRoute } from '@angular/router';
 
 @Component({
@@ -17,8 +17,10 @@ export class ExerciseNavigationChartComponent extends ChartComponent implements 
 
     readonly renderRate = 5;
 
-    constructor(route: ActivatedRoute, examMonitoringWebsocketService: ExamMonitoringWebsocketService) {
-        super(route, examMonitoringWebsocketService, 'exercise-navigation-chart', false);
+    navigatedToPerStudent: Map<number, Set<number | undefined>> = new Map();
+
+    constructor(route: ActivatedRoute, examActionService: ExamActionService) {
+        super(route, examActionService, 'exercise-navigation-chart', false);
     }
 
     ngOnInit() {
@@ -35,6 +37,14 @@ export class ExerciseNavigationChartComponent extends ChartComponent implements 
      * Create and initialize the data for the chart.
      */
     override initData() {
+        super.initData();
+        const groupedByActivityId = getSwitchedExerciseActionsGroupedByActivityId(this.filteredExamActions);
+
+        for (const [activityId, values] of Object.entries(groupedByActivityId)) {
+            const navigatedTo: Set<number> = new Set();
+            values.forEach((action: SwitchedExerciseAction) => navigatedTo.add(action.exerciseId!));
+            this.navigatedToPerStudent.set(Number(activityId), navigatedTo);
+        }
         this.createChartData();
     }
 
@@ -52,18 +62,28 @@ export class ExerciseNavigationChartComponent extends ChartComponent implements 
     private createChartData() {
         this.ngxData = [];
         this.ngxColor.domain = [];
-        const exerciseAmountMap: Map<number, number> = new Map();
-        const groupedByActivityId = getSwitchedExerciseActionsGroupedByActivityId(this.filteredExamActions);
 
-        for (const value of Object.values(groupedByActivityId)) {
-            const navigatedTo: Map<number, number> = new Map();
-            value.forEach((action: SwitchedExerciseAction) => navigatedTo.set(action.exerciseId!, 1));
-            for (const key of navigatedTo.keys()) {
-                exerciseAmountMap.set(key, (exerciseAmountMap.get(key) ?? 0) + 1);
-            }
+        const exerciseAmountMap: Map<number, number> = new Map();
+        for (const exercises of this.navigatedToPerStudent.values()) {
+            exercises.forEach((exercise) => {
+                if (exercise !== undefined) {
+                    exerciseAmountMap.set(exercise, (exerciseAmountMap.get(exercise) ?? 0) + 1);
+                }
+            });
         }
         insertNgxDataAndColorForExerciseMap(this.exam, exerciseAmountMap, this.ngxData, this.ngxColor);
         // Re-trigger change detection
         this.ngxData = [...this.ngxData];
+    }
+
+    override evaluateAndAddAction(examAction: ExamAction) {
+        super.evaluateAndAddAction(examAction);
+        const navigatedTo = this.navigatedToPerStudent.get(examAction.examActivityId!) ?? new Set();
+        navigatedTo.add((examAction as SwitchedExerciseAction).exerciseId);
+        this.navigatedToPerStudent.set(examAction.examActivityId!, navigatedTo);
+    }
+
+    filterRenderedData(examAction: ExamAction) {
+        return examAction.type === ExamActionType.SWITCHED_EXERCISE;
     }
 }
