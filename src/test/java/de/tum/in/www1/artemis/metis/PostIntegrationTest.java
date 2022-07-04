@@ -704,7 +704,7 @@ public class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         database.assertSensitiveInformationHidden(returnedPosts);
         existingCoursePosts.sort(Comparator.comparing(Post::getCreationDate).reversed());
 
-        assertThat(returnedPosts).isEqualTo(existingPosts);
+        assertThat(returnedPosts).isEqualTo(existingCoursePosts);
     }
 
     @Test
@@ -727,7 +727,7 @@ public class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         database.assertSensitiveInformationHidden(returnedPosts);
         existingCoursePosts.sort(Comparator.comparing(Post::getCreationDate));
 
-        assertThat(returnedPosts).isEqualTo(existingPosts);
+        assertThat(returnedPosts).isEqualTo(existingCoursePosts);
     }
 
     @Test
