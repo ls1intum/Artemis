@@ -1,5 +1,5 @@
 import { Component, Input, OnInit, ViewEncapsulation } from '@angular/core';
-import { DeviceDetectorService, DeviceInfo } from 'ngx-device-detector';
+import isMobile from 'ismobilejs-es5';
 import { DragItem } from 'app/entities/quiz/drag-item.model';
 
 @Component({
@@ -13,16 +13,14 @@ export class DragItemComponent implements OnInit {
     @Input() dragItem: DragItem;
     @Input() clickDisabled: boolean;
     @Input() invalid: boolean;
-    deviceInfo: DeviceInfo;
     isMobile = false;
 
-    constructor(private deviceService: DeviceDetectorService) {}
+    constructor() {}
 
     /**
      * Initializes device information and whether the device is a mobile device
      */
     ngOnInit(): void {
-        this.deviceInfo = this.deviceService.getDeviceInfo();
-        this.isMobile = this.deviceService.isMobile();
+        this.isMobile = isMobile(window.navigator.userAgent).any;
     }
 }

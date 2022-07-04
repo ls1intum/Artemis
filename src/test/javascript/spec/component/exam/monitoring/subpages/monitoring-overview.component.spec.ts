@@ -8,8 +8,6 @@ import { ExamMonitoringService } from 'app/exam/monitoring/exam-monitoring.servi
 import { ActivatedRoute } from '@angular/router';
 import { MockSyncStorage } from '../../../../helpers/mocks/service/mock-sync-storage.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { ExamMonitoringWebsocketService } from 'app/exam/monitoring/exam-monitoring-websocket.service';
-import { EndedExamAction } from 'app/entities/exam-user-activity.model';
 
 describe('Monitoring Overview Component', () => {
     // Course
@@ -23,7 +21,6 @@ describe('Monitoring Overview Component', () => {
     let comp: MonitoringOverviewComponent;
     let fixture: ComponentFixture<MonitoringOverviewComponent>;
     let examMonitoringService: ExamMonitoringService;
-    let examMonitoringWebsocketService: ExamMonitoringWebsocketService;
 
     const route = { parent: { params: of({ courseId: course.id, examId: exam.id }) } };
 
@@ -42,7 +39,6 @@ describe('Monitoring Overview Component', () => {
                 fixture = TestBed.createComponent(MonitoringOverviewComponent);
                 comp = fixture.componentInstance;
                 examMonitoringService = TestBed.inject(ExamMonitoringService);
-                examMonitoringWebsocketService = TestBed.inject(ExamMonitoringWebsocketService);
             });
     });
 
@@ -62,20 +58,5 @@ describe('Monitoring Overview Component', () => {
         expect(examMonitoringService.getExamBehaviorSubject).toHaveBeenCalledOnce();
         expect(examMonitoringService.getExamBehaviorSubject).toHaveBeenCalledWith(exam.id);
         expect(comp.exam).toEqual(exam);
-    });
-
-    it('should call subscribeForLatestExamAction of examMonitoringWebsocketService to get the latest actions on init', () => {
-        // GIVEN
-        jest.spyOn(examMonitoringService, 'getExamBehaviorSubject').mockReturnValue(new BehaviorSubject(exam));
-        const action = new EndedExamAction();
-        jest.spyOn(examMonitoringWebsocketService, 'subscribeForLatestExamAction').mockReturnValue(new BehaviorSubject(action));
-
-        // WHEN
-        comp.ngOnInit();
-
-        // THEN
-        expect(examMonitoringWebsocketService.subscribeForLatestExamAction).toHaveBeenCalledOnce();
-        expect(examMonitoringWebsocketService.subscribeForLatestExamAction).toHaveBeenCalledWith(exam);
-        expect(comp.examActions).toEqual([action]);
     });
 });

@@ -90,7 +90,7 @@ public class ScoreService {
         }
         else {
             ParticipantScore updatedParticipantScore = participantScoreRepository.saveAndFlush(associatedParticipantScore);
-            logger.info("Updated an existing participant score. Was: " + originalParticipantScoreStructure + ". Is: " + updatedParticipantScore);
+            logger.debug("Updated an existing participant score. Was: " + originalParticipantScoreStructure + ". Is: " + updatedParticipantScore);
         }
     }
 
@@ -261,7 +261,7 @@ public class ScoreService {
             setLastRatedAttributes(participantScore, null, exercise);
         }
         participantScoreRepository.saveAndFlush(participantScore);
-        logger.info("Updated an existing participant score. Was: " + originalParticipantScoreStructure + ". Is: " + participantScore);
+        logger.debug("Updated an existing participant score. Was: " + originalParticipantScoreStructure + ". Is: " + participantScore);
     }
 
     /**
