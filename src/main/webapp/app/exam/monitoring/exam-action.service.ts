@@ -25,7 +25,7 @@ export class ExamActionService implements IExamActionService {
     constructor(private jhiWebsocketService: JhiWebsocketService, private http: HttpClient) {}
 
     /**
-     * Notify all exam action subscribers with the newest exam action provided.
+     * Update, prepare and evaluate actions and insert into cache.
      * @param exam received or updated exam
      * @param examActions received exam actions
      */

@@ -10,6 +10,7 @@ import { ExamActionService } from 'app/exam/monitoring/exam-action.service';
 import dayjs from 'dayjs/esm';
 import { MockHttpService } from '../../../helpers/mocks/service/mock-http.service';
 import { HttpClient } from '@angular/common/http';
+import { ceilDayjsSeconds } from 'app/exam/monitoring/charts/monitoring-chart';
 
 describe('ExamActionService', () => {
     let examActionService: ExamActionService;
@@ -69,6 +70,56 @@ describe('ExamActionService', () => {
         expect(spy).toHaveBeenCalledOnce();
         expect(spy).toHaveBeenCalledWith(`api/exam-monitoring/${exam.id}/load-actions`);
         expect(examActionService.initialActionsLoaded).toEqual(initialActionsLoaded);
+    });
+
+    // updated cached by timestamp
+    it.each(createActions())('should update cached actions', (action: ExamAction) => {
+        action.timestamp = dayjs();
+        action.ceiledTimestamp = ceilDayjsSeconds(action.timestamp, 15);
+        action.examActivityId = 1;
+
+        const actionsPerTimestamp = examActionService.cachedExamActionsGroupedByTimestamp.get(exam.id!) ?? new Map();
+        const actionsPerTimestampAndCategory = examActionService.cachedExamActionsGroupedByTimestampAndCategory.get(exam.id!) ?? new Map();
+        const lastActionPerStudent = examActionService.cachedLastActionPerStudent.get(exam.id!) ?? new Map();
+        const navigatedToPerStudent = examActionService.cachedNavigationsPerStudent.get(exam.id!) ?? new Map();
+        const submittedPerStudent = examActionService.cachedSubmissionsPerStudent.get(exam.id!) ?? new Map();
+
+        const increaseActionByTimestampSpy = jest.spyOn(examActionService, 'increaseActionByTimestamp');
+        const increaseActionByTimestampAndCategorySpy = jest.spyOn(examActionService, 'increaseActionByTimestampAndCategory');
+        const updateLastActionPerStudentSpy = jest.spyOn(examActionService, 'updateLastActionPerStudent');
+        const updateNavigationsPerStudentSpy = jest.spyOn(examActionService, 'updateNavigationsPerStudent');
+        const updateSubmissionsPerStudentSpy = jest.spyOn(examActionService, 'updateSubmissionsPerStudent');
+
+        examActionService.updateCachedActions(exam, [action]);
+
+        expect(increaseActionByTimestampSpy).toHaveBeenCalledOnce();
+        actionsPerTimestamp.set(action.ceiledTimestamp.toString(), 1);
+        expect(increaseActionByTimestampSpy).toHaveBeenCalledWith(action.ceiledTimestamp.toString(), actionsPerTimestamp);
+
+        expect(increaseActionByTimestampAndCategorySpy).toHaveBeenCalledOnce();
+        const categories = new Map();
+        Object.keys(ExamActionType).forEach((type) => {
+            categories!.set(type, 0);
+        });
+        categories.set(action.type, 1);
+        actionsPerTimestampAndCategory.set(action.ceiledTimestamp.toString(), categories);
+        expect(increaseActionByTimestampAndCategorySpy).toHaveBeenCalledWith(action.ceiledTimestamp.toString(), action, actionsPerTimestampAndCategory);
+
+        expect(updateLastActionPerStudentSpy).toHaveBeenCalledOnce();
+        lastActionPerStudent.set(action.examActivityId, action);
+        expect(updateLastActionPerStudentSpy).toHaveBeenCalledWith(action, lastActionPerStudent);
+
+        expect(updateNavigationsPerStudentSpy).toHaveBeenCalledOnce();
+        if (action.type === ExamActionType.SWITCHED_EXERCISE) {
+            navigatedToPerStudent.set(action.examActivityId, new Set([(action as SwitchedExerciseAction).exerciseId]));
+        }
+        expect(updateNavigationsPerStudentSpy).toHaveBeenCalledWith(action, navigatedToPerStudent);
+
+        expect(updateSubmissionsPerStudentSpy).toHaveBeenCalledOnce();
+        if (action.type === ExamActionType.SWITCHED_EXERCISE) {
+            submittedPerStudent.set(action.examActivityId, new Set([(action as SwitchedExerciseAction).exerciseId]));
+        }
+        expect(updateSubmissionsPerStudentSpy).toHaveBeenCalledWith(action, submittedPerStudent);
     });
 
     // increase action by timestamp
