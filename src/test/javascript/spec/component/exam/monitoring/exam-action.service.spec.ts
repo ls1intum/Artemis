@@ -116,8 +116,8 @@ describe('ExamActionService', () => {
         expect(updateNavigationsPerStudentSpy).toHaveBeenCalledWith(action, navigatedToPerStudent);
 
         expect(updateSubmissionsPerStudentSpy).toHaveBeenCalledOnce();
-        if (action.type === ExamActionType.SWITCHED_EXERCISE) {
-            submittedPerStudent.set(action.examActivityId, new Set([(action as SwitchedExerciseAction).exerciseId]));
+        if (action.type === ExamActionType.SAVED_EXERCISE) {
+            submittedPerStudent.set(action.examActivityId, new Set([(action as SavedExerciseAction).exerciseId]));
         }
         expect(updateSubmissionsPerStudentSpy).toHaveBeenCalledWith(action, submittedPerStudent);
 
