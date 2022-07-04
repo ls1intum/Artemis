@@ -77,7 +77,7 @@ export class CourseManagementOverviewStatisticsComponent extends ActiveStudentsC
             });
         } else {
             this.lineChartLabels.forEach((label) => {
-                set.push({ name: label, value: 0 });
+                set.push({ name: label, value: 0, absoluteValue: 0 });
             });
         }
         this.ngxData.push({ name: 'active students', series: set });

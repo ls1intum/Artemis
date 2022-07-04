@@ -190,8 +190,8 @@ describe('CourseLearningGoals', () => {
         expect(getAllForCourseSpy).toHaveBeenCalledOnce();
         expect(getProgressSpy).toHaveBeenCalledTimes(4);
         expect(courseLearningGoalsComponent.learningGoals).toHaveLength(2);
-        expect(courseLearningGoalsComponent.learningGoalIdToLearningGoalProgressUsingParticipantScoresTables.has(1)).toEqual(true);
-        expect(courseLearningGoalsComponent.learningGoalIdToLearningGoalProgress.has(1)).toEqual(true);
+        expect(courseLearningGoalsComponent.learningGoalIdToLearningGoalProgressUsingParticipantScoresTables.has(1)).toBeTrue();
+        expect(courseLearningGoalsComponent.learningGoalIdToLearningGoalProgress.has(1)).toBeTrue();
         expect(captureExceptionSpy).toHaveBeenCalledOnce();
     });
 });

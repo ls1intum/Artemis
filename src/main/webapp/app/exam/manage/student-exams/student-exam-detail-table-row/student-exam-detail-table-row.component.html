@@ -8,18 +8,18 @@
     {{ exercise?.title }}
 </td>
 <td class="align-middle">
-    <ng-container class="score" *ngIf="result && result.score != undefined && exercise && exercise.maxPoints; else scoreNotDefined">
-        {{ roundScoreSpecifiedByCourseSettings((result.score * exercise.maxPoints) / 100, course) }}
+    <ng-container class="score" *ngIf="exercise && achievedPointsPerExercise?.[exercise.id!] != undefined; else scoreNotDefined">
+        {{ achievedPointsPerExercise?.[exercise.id!] }}
     </ng-container>
     <ng-template #scoreNotDefined>
         {{ 'N/A' }}
     </ng-template>
 </td>
 <td class="align-middle">
-    {{ exercise?.maxPoints }}
+    {{ getMaxPoints(exercise) }}
 </td>
 <td class="align-middle">
-    {{ exercise?.bonusPoints }}
+    {{ getBonusPoints(exercise) }}
 </td>
 <td class="align-middle">
     <ng-container *ngIf="result?.assessor; else noAssessor">

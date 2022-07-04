@@ -67,8 +67,8 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
             """)
     List<Course> findAllActiveWithLecturesAndExams(@Param("now") ZonedDateTime now);
 
-    @EntityGraph(type = LOAD, attributePaths = { "lectures", "lectures.attachments", "exams", "learningGoals", "prerequisites" })
-    Optional<Course> findWithEagerLecturesAndExamsAndLearningGoalsById(long courseId);
+    @EntityGraph(type = LOAD, attributePaths = { "lectures", "lectures.attachments", "exams" })
+    Optional<Course> findWithEagerLecturesAndExamsById(long courseId);
 
     // Note: this is currently only used for testing purposes
     @Query("""
@@ -244,8 +244,8 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
      * @return the entity
      */
     @NotNull
-    default Course findByIdWithLecturesAndExamsAndLearningGoalsElseThrow(long courseId) {
-        return findWithEagerLecturesAndExamsAndLearningGoalsById(courseId).orElseThrow(() -> new EntityNotFoundException("Course", courseId));
+    default Course findByIdWithLecturesAndExamsElseThrow(long courseId) {
+        return findWithEagerLecturesAndExamsById(courseId).orElseThrow(() -> new EntityNotFoundException("Course", courseId));
     }
 
     /**

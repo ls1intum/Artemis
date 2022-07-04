@@ -67,14 +67,15 @@ describe('Navigation Util Service', () => {
 
     it('should route correctly', () => {
         const route = ['course-management', 17];
+        const queryParam = { filterOption: 30 };
         const urlTreeMock = { path: 'testValue' } as unknown as UrlTree;
         const creationMock = jest.spyOn(router, 'createUrlTree');
         const serializationMock = jest.spyOn(router, 'serializeUrl');
         const windowStub = jest.spyOn(window, 'open').mockImplementation();
 
-        service.routeInNewTab(['course-management', 17]);
+        service.routeInNewTab(['course-management', 17], queryParam);
 
-        expect(creationMock).toHaveBeenCalledWith(route);
+        expect(creationMock).toHaveBeenCalledWith(route, queryParam);
         expect(creationMock).toHaveBeenCalledOnce();
         expect(serializationMock).toHaveBeenCalledWith(urlTreeMock);
         expect(windowStub).toHaveBeenCalledWith('testValue', '_blank');
