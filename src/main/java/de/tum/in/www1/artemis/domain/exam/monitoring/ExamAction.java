@@ -2,7 +2,6 @@ package de.tum.in.www1.artemis.domain.exam.monitoring;
 
 import java.time.ZonedDateTime;
 
-import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
@@ -34,10 +33,10 @@ public class ExamAction extends DomainObject {
     protected Long studentExamId;
 
     /**
-     * Multiple ExamActions are part of one ExamActivity.
+     * In order to avoid DTOs, we use this value to identify the correct exam activity.
+     * This value is used for this purpose only. There is no guarantee that this value is always correct in other cases.
      */
-    @JsonBackReference
-    protected ExamActivity examActivity;
+    protected Long examActivityId;
 
     /**
      * Define the time when this action was performed.
@@ -48,10 +47,6 @@ public class ExamAction extends DomainObject {
      * Defines the type of the performed action (necessary to avoid DTOs)
      */
     protected ExamActionType type;
-
-    public void setExamActivity(ExamActivity examActivity) {
-        this.examActivity = examActivity;
-    }
 
     public ZonedDateTime getTimestamp() {
         return timestamp;
@@ -75,5 +70,13 @@ public class ExamAction extends DomainObject {
 
     public void setStudentExamId(Long studentExamId) {
         this.studentExamId = studentExamId;
+    }
+
+    public Long getExamActivityId() {
+        return examActivityId;
+    }
+
+    public void setExamActivityId(Long examActivityId) {
+        this.examActivityId = examActivityId;
     }
 }

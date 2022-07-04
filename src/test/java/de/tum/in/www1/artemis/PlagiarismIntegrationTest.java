@@ -22,6 +22,7 @@ import de.tum.in.www1.artemis.domain.plagiarism.text.TextSubmissionElement;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismCaseRepository;
 import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismComparisonRepository;
+import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismResultRepository;
 import de.tum.in.www1.artemis.web.rest.dto.PlagiarismComparisonStatusDTO;
 
 public class PlagiarismIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
@@ -34,6 +35,9 @@ public class PlagiarismIntegrationTest extends AbstractSpringIntegrationBambooBi
 
     @Autowired
     private PlagiarismCaseRepository plagiarismCaseRepository;
+
+    @Autowired
+    private PlagiarismResultRepository plagiarismResultRepository;
 
     private static Course course;
 
@@ -61,7 +65,7 @@ public class PlagiarismIntegrationTest extends AbstractSpringIntegrationBambooBi
         textPlagiarismResult = database.createTextPlagiarismResultForExercise(textExercise);
         plagiarismComparison1 = new PlagiarismComparison<>();
         plagiarismComparison1.setPlagiarismResult(textPlagiarismResult);
-        plagiarismComparison1.setStatus(PlagiarismStatus.NONE);
+        plagiarismComparison1.setStatus(PlagiarismStatus.CONFIRMED);
         plagiarismSubmissionA1 = new PlagiarismSubmission<>();
         plagiarismSubmissionA1.setStudentLogin("student1");
         plagiarismSubmissionB1 = new PlagiarismSubmission<>();
@@ -146,5 +150,40 @@ public class PlagiarismIntegrationTest extends AbstractSpringIntegrationBambooBi
         var comparison = request.get("/api/courses/" + course.getId() + "/plagiarism-comparisons/" + plagiarismComparison1.getId() + "/for-split-view", HttpStatus.OK,
                 plagiarismComparison1.getClass());
         assertThat(comparison.getPlagiarismResult()).isEqualTo(textPlagiarismResult);
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void testDeletePlagiarismComparisons_student() throws Exception {
+        request.delete("/api/exercises/1/plagiarism-results/1/plagiarism-comparisons?deleteAll=false", HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(username = "tutor1", roles = "TA")
+    public void testDeletePlagiarismComparisons_tutor() throws Exception {
+        request.delete("/api/exercises/1/plagiarism-results/1/plagiarism-comparisons?deleteAll=false", HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(username = "editor1", roles = "EDITOR")
+    public void testDeletePlagiarismComparisons_editor() throws Exception {
+        request.delete("/api/exercises/1/plagiarism-results/1/plagiarism-comparisons?deleteAll=false", HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testDeletePlagiarismComparisons_instructor() throws Exception {
+        request.delete("/api/exercises/" + textExercise.getId() + "/plagiarism-results/" + textPlagiarismResult.getId() + "/plagiarism-comparisons?deleteAll=false", HttpStatus.OK);
+        var result = plagiarismResultRepository.findFirstByExerciseIdOrderByLastModifiedDateDescOrNull(textExercise.getId());
+        assert result != null;
+        assertThat(result.getComparisons().size()).isEqualTo(1);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testDeletePlagiarismComparisons_instructor_deleteAll() throws Exception {
+        request.delete("/api/exercises/" + textExercise.getId() + "/plagiarism-results/" + textPlagiarismResult.getId() + "/plagiarism-comparisons?deleteAll=true", HttpStatus.OK);
+        var result = plagiarismResultRepository.findFirstByExerciseIdOrderByLastModifiedDateDescOrNull(textExercise.getId());
+        assertThat(result).isNull();
     }
 }

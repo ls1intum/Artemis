@@ -141,7 +141,7 @@ describe('LectureUnitManagementComponent', () => {
         const downButton = lectureUnitManagementComponentFixture.debugElement.query(By.css('#down-0'));
         expect(downButton).toBeDefined;
         downButton.nativeElement.click();
-        expect(moveDownSpy).toHaveBeenCalledTimes(1);
+        expect(moveDownSpy).toHaveBeenCalledOnce();
         expect(lectureUnitManagementComponent.lectureUnits[0].id).toEqual(originalOrder[1].id);
         expect(lectureUnitManagementComponent.lectureUnits[1].id).toEqual(originalOrder[0].id);
     });
@@ -161,7 +161,7 @@ describe('LectureUnitManagementComponent', () => {
         const upButton = lectureUnitManagementComponentFixture.debugElement.query(By.css(`#up-${lastPosition}`));
         expect(upButton).toBeDefined;
         upButton.nativeElement.click();
-        expect(moveUpSpy).toHaveBeenCalledTimes(1);
+        expect(moveUpSpy).toHaveBeenCalledOnce();
         expect(lectureUnitManagementComponent.lectureUnits[lastPosition].id).toEqual(originalOrder[lastPosition - 1].id);
     });
 

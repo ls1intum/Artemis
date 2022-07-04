@@ -1,116 +1,121 @@
 <div class="course-info-bar" *ngIf="exercise" id="exercise-header">
-    <div class="row">
-        <div class="col general-info">
-            <h3>
+    <div class="left-col">
+        <div class="title-row">
+            <div class="inner-row">
                 <fa-icon *ngIf="displayBackButton" [icon]="faArrowLeft" (click)="onBackClick()" class="back-button me-2"></fa-icon>
+                <fa-icon *ngIf="exercise.type" [icon]="getIcon(exercise.type)" [ngbTooltip]="getIconTooltip(exercise.type) | artemisTranslate" container="body"></fa-icon>
+                &nbsp;
                 <ng-content select="[pagetitle]"></ng-content>
-                <jhi-not-released-tag [exercise]="exercise"></jhi-not-released-tag>
-            </h3>
-
-            <ng-template [ngIf]="isExamMode" [ngIfElse]="courseMode">
-                <h4>
-                    <span class="me-2" *ngIf="!isTestRun"> {{ 'artemisApp.exam.endDate' | artemisTranslate }} : {{ exam?.endDate | artemisDate }} </span>
-                    <span *ngIf="exam?.endDate && !isTestRun" [ngClass]="exerciseStatusBadge" class="badge">
+            </div>
+            <div class="badge-row" *ngIf="(exercise.releaseDate && dayjs(exercise.releaseDate).isAfter(dayjs())) || exercise.difficulty || exerciseCategories?.length">
+                <jhi-not-released-tag [exercise]="exercise" [noMargin]="true"></jhi-not-released-tag>
+                <jhi-difficulty-badge *ngIf="exercise.difficulty" class="me-3" [exercise]="exercise" [showNoLevel]="false"></jhi-difficulty-badge>
+                <div class="exercise-categories" *ngIf="exerciseCategories?.length">
+                    <span *ngFor="let category of exerciseCategories">
+                        <span class="badge text-white" [ngStyle]="{ backgroundColor: category.color }">{{ category.category }}</span>
+                    </span>
+                </div>
+            </div>
+        </div>
+        <div class="points-row" *ngIf="exercise.maxPoints">
+            <span class="me-2">
+                {{ 'artemisApp.courseOverview.exerciseDetails.points' | artemisTranslate }}
+                {{ exercise.maxPoints }}
+                <span *ngIf="exercise.bonusPoints">({{ 'artemisApp.courseOverview.exerciseDetails.bonus' | artemisTranslate }} {{ exercise.bonusPoints }})</span>
+            </span>
+            <jhi-included-in-score-badge
+                *ngIf="exercise.includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY"
+                [includedInOverallScore]="exercise.includedInOverallScore"
+                class="me-2"
+            ></jhi-included-in-score-badge>
+        </div>
+        <div class="assessment-row" *ngIf="exercise.assessmentType && exercise.type === ExerciseType.PROGRAMMING">
+            <div>
+                {{ 'artemisApp.courseOverview.exerciseDetails.assessmentType' | artemisTranslate }}
+            </div>
+            <div>
+                {{ 'artemisApp.AssessmentType.forExerciseHeader.' + exercise.assessmentType | artemisTranslate }}
+                <fa-icon [icon]="faQuestionCircle" ngbTooltip="{{ 'artemisApp.AssessmentType.tooltip.' + exercise.assessmentType | artemisTranslate }}"></fa-icon>
+            </div>
+        </div>
+        <div class="submission-row" *ngIf="submissionPolicy">
+            <div>{{ 'artemisApp.programmingExercise.submissionPolicy.submissionLimitTitle' | artemisTranslate }}:</div>
+            <div>
+                {{
+                    numberOfSubmissions +
+                        '/' +
+                        submissionPolicy.submissionLimit +
+                        (submissionPolicy.exceedingPenalty
+                            ? ('artemisApp.programmingExercise.submissionPolicy.submissionPenalty.penaltyInfoLabel'
+                              | artemisTranslate: { points: submissionPolicy.exceedingPenalty })
+                            : '')
+                }}
+                <fa-icon
+                    [icon]="faQuestionCircle"
+                    ngbTooltip="{{ 'artemisApp.programmingExercise.submissionPolicy.submissionPolicyType.' + submissionPolicy.type + '.tooltip' | artemisTranslate }}"
+                ></fa-icon>
+            </div>
+        </div>
+    </div>
+    <div class="right-col">
+        <ng-template [ngIf]="exam" [ngIfElse]="courseMode">
+            <ng-container *ngIf="!isTestRun">
+                <div [class.fw-500]="isNextDueDate[0]">
+                    {{ 'artemisApp.exam.endDate' | artemisTranslate }}
+                    {{ exam?.endDate | artemisDate }}
+                    <span *ngIf="exam?.endDate && !isTestRun" [ngClass]="statusBadges[0]" class="badge">
                         {{ exam?.endDate | artemisTimeAgo }}
                     </span>
-                </h4>
-                <h4 *ngIf="!isTestRun">
-                    <span class="me-2"> {{ 'artemisApp.exam.publishResultsDate' | artemisTranslate }} : {{ exam?.publishResultsDate | artemisDate }} </span>
-                    <span *ngIf="exam?.publishResultsDate" [ngClass]="exerciseStatusBadge" class="badge">
+                </div>
+                <div [class.fw-500]="isNextDueDate[1]">
+                    {{ 'artemisApp.exam.publishResultsDate' | artemisTranslate }}
+                    {{ exam?.publishResultsDate | artemisDate }}
+                    <span *ngIf="exam?.publishResultsDate" [ngClass]="statusBadges[1]" class="badge">
                         {{ exam?.publishResultsDate | artemisTimeAgo }}
                     </span>
-                </h4>
-            </ng-template>
-            <ng-template #courseMode>
-                <h4>
-                    <span class="me-2"> {{ 'artemisApp.courseOverview.exerciseDetails.dueDate' | artemisTranslate }} {{ (dueDate | artemisDate) || 'N/A' }} </span>
-                    <span *ngIf="dueDate" [ngClass]="exerciseStatusBadge" class="badge">
-                        {{ dueDate | artemisTimeAgo }}
-                    </span>
-                </h4>
-                <h4 *ngIf="exercise.assessmentDueDate">
-                    <span class="me-2"> {{ 'artemisApp.exercise.assessmentDueDate' | artemisTranslate }} : {{ (exercise.assessmentDueDate | artemisDate) || 'N/A' }} </span>
-                    <span [ngClass]="exerciseStatusBadge" class="badge">
-                        {{ exercise.assessmentDueDate | artemisTimeAgo }}
-                    </span>
-                </h4>
-            </ng-template>
-
-            <div class="d-md-flex" *ngIf="exercise.categories">
-                <h4 class="me-1">{{ 'artemisApp.courseOverview.exerciseDetails.categories' | artemisTranslate }}</h4>
-                <h4 *ngFor="let category of exerciseCategories">
-                    <span class="badge text-white me-1" [ngStyle]="{ backgroundColor: category.color }">{{ category.category }}</span>
-                </h4>
+                </div>
+            </ng-container>
+        </ng-template>
+        <ng-template #courseMode>
+            <div *ngIf="dueDate" [class.fw-500]="isNextDueDate[0]">
+                {{ 'artemisApp.courseOverview.exerciseDetails.submissionDue' | artemisTranslate }}
+                <span
+                    [ngClass]="statusBadges[0]"
+                    class="badge"
+                    [ngbTooltip]="'artemisApp.courseOverview.exerciseDetails.submissionDueTooltip' | artemisTranslate: { date: dueDate | artemisDate }"
+                >
+                    {{ dueDate | artemisTimeAgo }}
+                </span>
             </div>
-        </div>
-        <div class="col-12 col-md-6 col-lg-4">
-            <div class="row" *ngIf="exercise.type">
-                <div class="col-6">
-                    <h5>{{ 'artemisApp.courseOverview.exerciseDetails.type' | artemisTranslate }}</h5>
-                </div>
-                <div class="col-6">
-                    <h5>
-                        {{ exercise.type | exerciseTypeLabel }}
-                        <fa-icon *ngIf="icon" [icon]="icon" placement="right"></fa-icon>
-                    </h5>
-                </div>
+            <div *ngIf="exercise.assessmentDueDate" [class.fw-500]="isNextDueDate[1]">
+                {{ 'artemisApp.courseOverview.exerciseDetails.assessmentDue' | artemisTranslate }}
+                <span
+                    [ngClass]="statusBadges[1]"
+                    class="badge"
+                    [ngbTooltip]="'artemisApp.courseOverview.exerciseDetails.assessmentDueTooltip' | artemisTranslate: { date: exercise.assessmentDueDate | artemisDate }"
+                >
+                    {{ exercise.assessmentDueDate | artemisTimeAgo }}
+                </span>
             </div>
-            <div class="row" *ngIf="exercise.difficulty">
-                <div class="col-6">
-                    <h5>{{ 'artemisApp.courseOverview.exerciseDetails.difficulty' | artemisTranslate }}</h5>
-                </div>
-                <div class="col-6">
-                    <h5>
-                        <jhi-difficulty-badge [exercise]="exercise"></jhi-difficulty-badge>
-                    </h5>
-                </div>
+            <div *ngIf="individualComplaintDeadline" [class.fw-500]="isNextDueDate[2]">
+                {{ 'artemisApp.courseOverview.exerciseDetails.complaintDue' | artemisTranslate }}
+                <span
+                    [ngClass]="statusBadges[2]"
+                    class="badge"
+                    [ngbTooltip]="'artemisApp.courseOverview.exerciseDetails.complaintDueTooltip' | artemisTranslate: { date: individualComplaintDeadline | artemisDate }"
+                >
+                    {{ individualComplaintDeadline | artemisTimeAgo }}
+                </span>
             </div>
-            <div class="row" *ngIf="exercise.maxPoints != undefined">
-                <div class="col-6">
-                    <h5>{{ 'artemisApp.courseOverview.exerciseDetails.points' | artemisTranslate }}</h5>
-                </div>
-                <div class="col-6">
-                    <h5>
-                        {{ exercise.maxPoints }}
-                        <span *ngIf="exercise.bonusPoints">({{ 'artemisApp.courseOverview.exerciseDetails.bonus' | artemisTranslate }} {{ exercise.bonusPoints }})</span>
-                    </h5>
-                </div>
+            <div *ngIf="canComplainLaterOn" [class.fw-500]="isNextDueDate[3]">
+                {{ 'artemisApp.courseOverview.exerciseDetails.complaintPossible' | artemisTranslate }}
+                <span class="badge bg-success" [ngbTooltip]="'artemisApp.courseOverview.exerciseDetails.complaintPossibleTooltip' | artemisTranslate">
+                    {{
+                        (exercise.allowComplaintsForAutomaticAssessments || exercise.assessmentType !== AssessmentType.AUTOMATIC ? 'global.generic.yes' : 'global.generic.no')
+                            | artemisTranslate
+                    }}
+                </span>
             </div>
-            <div class="row" *ngIf="submissionPolicy != undefined">
-                <div class="col-6">
-                    <h5>{{ 'artemisApp.programmingExercise.submissionPolicy.submissionLimitTitle' | artemisTranslate }}:</h5>
-                </div>
-                <div class="col-6">
-                    <h5>
-                        {{
-                            submissionPolicy.submissionLimit +
-                                (submissionPolicy.exceedingPenalty != undefined
-                                    ? ' (' +
-                                      ('artemisApp.programmingExercise.submissionPolicy.submissionPenalty.penaltyInfoLabel' | artemisTranslate) +
-                                      ': ' +
-                                      submissionPolicy.exceedingPenalty +
-                                      'P' +
-                                      ')'
-                                    : '')
-                        }}
-                        <fa-icon
-                            [icon]="faQuestionCircle"
-                            ngbTooltip="{{ 'artemisApp.programmingExercise.submissionPolicy.submissionPolicyType.' + submissionPolicy.type + '.tooltip' | artemisTranslate }}"
-                            placement="top"
-                        ></fa-icon>
-                    </h5>
-                </div>
-            </div>
-            <div class="row" *ngIf="exercise.includedInOverallScore != undefined && exercise.includedInOverallScore != IncludedInOverallScore.INCLUDED_COMPLETELY">
-                <div class="col-6">
-                    <h5>{{ 'artemisApp.exercise.includedInOverallScore' | artemisTranslate }}:</h5>
-                </div>
-                <div class="col-6">
-                    <h5>
-                        <jhi-included-in-score-badge [includedInOverallScore]="exercise.includedInOverallScore"></jhi-included-in-score-badge>
-                    </h5>
-                </div>
-            </div>
-        </div>
+        </ng-template>
     </div>
 </div>

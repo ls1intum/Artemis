@@ -1,0 +1,24 @@
+<div>
+    <jhi-chart-title
+        nameTranslationValue="artemisApp.examMonitoring.charts.{{ chartIdentifierKey }}.name"
+        tooltipTranslationValue="artemisApp.examMonitoring.charts.{{ chartIdentifierKey }}.tooltip"
+    ></jhi-chart-title>
+    <div #containerRef class="line-chart">
+        <ngx-charts-line-chart
+            [view]="[containerRef.offsetWidth, 300]"
+            [scheme]="ngxColor"
+            [legend]="legend"
+            [showXAxisLabel]="true"
+            [showYAxisLabel]="true"
+            [xAxis]="true"
+            [yAxis]="true"
+            [xAxisLabel]="'artemisApp.examMonitoring.charts.' + chartIdentifierKey + '.xAxisLabel' | artemisTranslate"
+            [yAxisLabel]="'artemisApp.examMonitoring.charts.' + chartIdentifierKey + '.yAxisLabel' | artemisTranslate"
+            [legendTitle]="'artemisApp.examMonitoring.charts.' + chartIdentifierKey + '.legendTitle' | artemisTranslate"
+            [timeline]="false"
+            [results]="ngxData"
+            [curve]="curve"
+        >
+        </ngx-charts-line-chart>
+    </div>
+</div>

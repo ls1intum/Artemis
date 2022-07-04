@@ -364,13 +364,13 @@ public class FileResource {
                         .toString())
                 .toList();
 
-        Optional<byte[]> file = fileService.mergePdfFiles(attachmentLinks);
+        Optional<byte[]> file = fileService.mergePdfFiles(attachmentLinks, lectureRepository.getLectureTitle(lectureId));
         if (file.isEmpty()) {
             log.error("Failed to merge PDF lecture units for lecture with id : " + lectureId);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
-        return ResponseEntity.ok().contentType(MediaType.APPLICATION_PDF).body(file.get());
 
+        return ResponseEntity.ok().contentType(MediaType.APPLICATION_PDF).body(file.get());
     }
 
     /**

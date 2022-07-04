@@ -1,0 +1,30 @@
+<?xml version="1.1" encoding="UTF-8" standalone="no"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog" xmlns:ext="http://www.liquibase.org/xml/ns/dbchangelog-ext" xmlns:pro="http://www.liquibase.org/xml/ns/pro" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog-ext http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-ext.xsd http://www.liquibase.org/xml/ns/pro http://www.liquibase.org/xml/ns/pro/liquibase-pro-3.9.xsd http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.9.xsd">
+    <changeSet author="filipgregurevic" id="20220520150000-1">
+        <addColumn tableName="plagiarism_submission_element">
+            <column name="plagiarism_submission_id" type="BIGINT" />
+        </addColumn>
+        <addForeignKeyConstraint
+            baseTableName="plagiarism_submission_element"
+            baseColumnNames="plagiarism_submission_id"
+            constraintName="fk_20220520150000"
+            deferrable="false"
+            initiallyDeferred="false"
+            referencedTableName="plagiarism_submission"
+            referencedColumnNames="id"
+         />
+    </changeSet>
+    <changeSet author="filipgregurevic" id="20220520150000-2">
+        <sql>
+            update plagiarism_submission_element pse
+            set pse.plagiarism_submission_id = (
+                select pses.plagiarism_submission_id
+                from plagiarism_submission_elements pses
+                where pse.id = pses.plagiarism_submission_element_id
+            )
+        </sql>
+    </changeSet>
+    <changeSet author="filipgregurevic" id="20220520150000-3" >
+        <dropTable tableName="plagiarism_submission_elements" />
+    </changeSet>
+</databaseChangeLog>

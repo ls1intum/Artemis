@@ -111,3 +111,16 @@
     min-height: 150px;
     overflow: scroll;
 }
+
+.dropdown-menu {
+    max-height: 300px;
+    overflow-y: auto;
+
+    li {
+        position: relative;
+    }
+}
+
+.nested {
+    padding-left: 30px;
+}

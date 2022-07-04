@@ -2,15 +2,17 @@
     <h4>
         {{ 'modelingAssessment.dashboard.heading' | artemisTranslate: { title: exercise.title } }}
     </h4>
-    <jhi-assessment-filters (filterChange)="updateFilteredSubmissions($event)" [submissions]="submissions"></jhi-assessment-filters>
-    <jhi-assessment-warning [exercise]="exercise" [submissions]="filteredSubmissions"></jhi-assessment-warning>
-    <h4>
-        <small [ngStyle]="assessedSubmissions === submissions.length && submissions.length > 0 ? { color: '#5cb85c' } : {}">
-            <strong>Progress: {{ (assessedSubmissions / submissions.length) * 100 | number: '0.0-0' }} % </strong>({{ assessedSubmissions }} out of
-            {{ submissions.length }} submitted models assessed)
-        </small>
+    <h4 *ngIf="translationString" class="d-flex align-items-center">
+        <span class="me-2">
+            <strong class="text-primary"> {{ 'artemisApp.assessment.dashboard.activeFilter' | artemisTranslate }}: </strong>
+            <span> {{ 'artemisApp.assessment.dashboard.' + translationString | artemisTranslate }} </span>
+        </span>
+        <button type="button" class="btn btn-primary" (click)="resetFilterOptions()" jhiTranslate="artemisApp.assessment.dashboard.resetFilter">Reset submission filter</button>
     </h4>
-    <div class="table-responsive">
+    <jhi-assessment-filters (filterChange)="applyChartFilter($event)" [submissions]="submissions" [resetFilter]="resetFilter"></jhi-assessment-filters>
+    <jhi-assessment-warning [exercise]="exercise" [submissions]="filteredSubmissions"></jhi-assessment-warning>
+    <jhi-assessment-progress-label *ngIf="submissions" [submissions]="submissions"></jhi-assessment-progress-label>
+    <div *ngIf="submissions?.length" class="table-responsive">
         <table class="table table-striped exercise-table">
             <thead>
                 <tr [(ascending)]="reverse" [(predicate)]="predicate" (sortChange)="sortRows()" jhiSort>

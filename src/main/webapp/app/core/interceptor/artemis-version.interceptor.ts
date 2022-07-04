@@ -37,7 +37,7 @@ export class ArtemisVersionInterceptor implements HttpInterceptor {
         const updateInterval = interval(60 * 1000); // every 60s
         const updateIntervalOnceAppIsStable$ = concat(appIsStableOrTimeout, updateInterval);
 
-        updateIntervalOnceAppIsStable$.subscribe(() => this.checkForUpdates());
+        updateIntervalOnceAppIsStable$.subscribe(() => this.checkForUpdates(false));
     }
 
     intercept(request: HttpRequest<any>, nextHandler: HttpHandler): Observable<HttpEvent<any>> {
@@ -48,7 +48,7 @@ export class ArtemisVersionInterceptor implements HttpInterceptor {
                     const serverVersion = response.headers.get(ARTEMIS_VERSION_HEADER);
                     if (VERSION && serverVersion && VERSION !== serverVersion && !isTranslationStringsRequest) {
                         // Version mismatch detected from HTTP headers. Let SW look for updates!
-                        this.checkForUpdates();
+                        this.checkForUpdates(true);
                     }
 
                     // only invoke the time call if the call was not already the time call to prevent recursion here
@@ -67,12 +67,18 @@ export class ArtemisVersionInterceptor implements HttpInterceptor {
      * - the first condition was ever true since the app loaded (aka last reload)
      *
      * We need to have this second option because the "checkForUpdate()" call sometimes starts to return false after a while, even though we didn't reload / update yet.
+     * And if service workers are not available we can't actually check for updates, so we have to rely on ever having seen a different version number in a request
+     *
+     * @param hasUpdate if it is known that there is an update, only relevant if service workers are not available
      *
      * @private
      */
-    private checkForUpdates() {
+    private checkForUpdates(hasUpdate: boolean) {
+        // don't spam errors when service workers are not available, instead rely on the Content-Version header of responses
+        const update = this.updates.isEnabled ? this.updates.checkForUpdate() : Promise.resolve(hasUpdate);
+
         // first update the service worker
-        this.updates.checkForUpdate().then((updateAvailable: boolean) => {
+        update.then((updateAvailable: boolean) => {
             if (this.hasSeenOutdatedInThisSession || updateAvailable) {
                 this.hasSeenOutdatedInThisSession = true;
 

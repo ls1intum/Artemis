@@ -1,0 +1,19 @@
+<?xml version="1.1" encoding="UTF-8" standalone="no"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog" xmlns:ext="http://www.liquibase.org/xml/ns/dbchangelog-ext" xmlns:pro="http://www.liquibase.org/xml/ns/pro" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog-ext http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-ext.xsd http://www.liquibase.org/xml/ns/pro http://www.liquibase.org/xml/ns/pro/liquibase-pro-3.9.xsd http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.9.xsd">
+    <changeSet author="filipgregurevic" id="20220525121212-1">
+        <dropForeignKeyConstraint baseTableName="plagiarism_comparison_matches" constraintName="fk_plagiarism_comparison_matches" />
+        <addForeignKeyConstraint baseTableName="plagiarism_comparison_matches"
+                                 baseColumnNames="plagiarism_comparison_id" constraintName="fk_plagiarism_comparison_matches"
+                                 referencedTableName="plagiarism_comparison"
+                                 referencedColumnNames="id"
+                                 onDelete="CASCADE" />
+    </changeSet>
+    <changeSet author="filipgregurevic" id="20220525121212-2">
+        <dropForeignKeyConstraint baseTableName="plagiarism_submission_element" constraintName="fk_20220520150000" />
+        <addForeignKeyConstraint baseTableName="plagiarism_submission_element"
+                                 baseColumnNames="plagiarism_submission_id" constraintName="fk_plagiarism_submission_elements"
+                                 referencedTableName="plagiarism_submission"
+                                 referencedColumnNames="id"
+                                 onDelete="CASCADE" />
+    </changeSet>
+</databaseChangeLog>

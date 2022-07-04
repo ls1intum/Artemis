@@ -463,6 +463,10 @@ $exam-participation-footer-connected-background: #114d4f;
 $exam-participation-footer-disconnected-background: #6c4e05;
 $exam-text-exam-summary-background: transparent;
 
+// Exam Monitoring
+$exam-monitoring-card-border-color: $border-color;
+$exam-monitoring-card-footer-background-color: rgba($white, 0.02);
+
 // Assessment
 $textblock-assessment-span-hover-background: $gray-700;
 $textblock-assessment-text-feedback-positive-color: $success;

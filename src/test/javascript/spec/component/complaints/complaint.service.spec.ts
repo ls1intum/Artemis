@@ -9,6 +9,9 @@ import { MockAccountService } from '../../helpers/mocks/service/mock-account.ser
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import dayjs from 'dayjs/esm';
 import { Result } from 'app/entities/result.model';
+import { Exercise } from 'app/entities/exercise.model';
+import { StudentParticipation } from 'app/entities/participation/student-participation.model';
+import { Course } from 'app/entities/course.model';
 
 describe('ComplaintService', () => {
     let complaintService: ComplaintService;
@@ -19,6 +22,7 @@ describe('ComplaintService', () => {
     const stringTime1 = '2022-04-14T10:35:12.332Z';
     const dayjsTime2 = dayjs().utc().year(2022).month(4).date(12).hour(18).minute(12).second(11).millisecond(140);
     const stringTime2 = '2022-05-12T18:12:11.140Z';
+    const dayjsTime3 = dayjs();
 
     const clientComplaint1 = new Complaint();
     clientComplaint1.id = 42;
@@ -37,6 +41,17 @@ describe('ComplaintService', () => {
     clientComplaint2.complaintText = 'Another test text';
 
     const serverComplaint2 = { ...clientComplaint2, submittedTime: stringTime2 };
+
+    const exercise: Exercise = {
+        numberOfAssessmentsOfCorrectionRounds: [],
+        secondCorrectionEnabled: false,
+        studentAssignedTeamIdComputed: false,
+    };
+    const emptyResult = new Result();
+    const studentParticipation = new StudentParticipation();
+    const course: Course = {
+        maxComplaintTimeDays: 7,
+    };
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -233,6 +248,68 @@ describe('ComplaintService', () => {
             const result = complaintService.shouldHighlightComplaint(complaint);
 
             expect(result).toBeTrue();
+        });
+    });
+
+    describe('getIndividualComplaintDueDate', () => {
+        it('should return undefined for no results', () => {
+            studentParticipation.results = [];
+            const individualComplaintDueDate = complaintService.getIndividualComplaintDueDate(exercise, course, studentParticipation);
+            expect(individualComplaintDueDate).toEqual(undefined);
+        });
+
+        it('should calculate the correct complaint due date for automatic assessment', () => {
+            studentParticipation.results = [emptyResult];
+            exercise.allowComplaintsForAutomaticAssessments = true;
+            exercise.dueDate = dayjsTime3;
+
+            const individualComplaintDueDate = complaintService.getIndividualComplaintDueDate(exercise, course, studentParticipation);
+            expect(individualComplaintDueDate).toEqual(dayjsTime3.add(7, 'days'));
+        });
+
+        it('should return undefined for complaint due date for automatic assessment before dueDate', () => {
+            studentParticipation.results = [emptyResult];
+            exercise.allowComplaintsForAutomaticAssessments = true;
+            exercise.dueDate = dayjsTime3.add(1, 'days');
+            const individualComplaintDueDate = complaintService.getIndividualComplaintDueDate(exercise, course, studentParticipation);
+            expect(individualComplaintDueDate).toEqual(undefined);
+        });
+
+        it('should calculate the correct complaint due date after assessmentDueDate', () => {
+            emptyResult.rated = true;
+            emptyResult.completionDate = dayjsTime3.subtract(2, 'days');
+            studentParticipation.results = [emptyResult];
+            exercise.allowComplaintsForAutomaticAssessments = false;
+            exercise.assessmentDueDate = dayjsTime3.subtract(1, 'days');
+            const individualComplaintDueDate = complaintService.getIndividualComplaintDueDate(exercise, course, studentParticipation);
+            expect(individualComplaintDueDate).toEqual(dayjsTime3.add(6, 'days'));
+        });
+
+        it('should calculate the correct complaint due date after assessmentDueDate for late feedback', () => {
+            emptyResult.rated = true;
+            emptyResult.completionDate = dayjsTime3;
+            studentParticipation.results = [emptyResult];
+            exercise.allowComplaintsForAutomaticAssessments = false;
+            exercise.assessmentDueDate = dayjsTime3.subtract(1, 'days');
+            const individualComplaintDueDate = complaintService.getIndividualComplaintDueDate(exercise, course, studentParticipation);
+            expect(individualComplaintDueDate).toEqual(dayjsTime3.add(7, 'days'));
+        });
+
+        it('should return undefined for complaint due date before assessment dueDate', () => {
+            studentParticipation.results = [emptyResult];
+            exercise.allowComplaintsForAutomaticAssessments = false;
+            exercise.assessmentDueDate = dayjsTime3.add(1, 'days');
+            const individualComplaintDueDate = complaintService.getIndividualComplaintDueDate(exercise, course, studentParticipation);
+            expect(individualComplaintDueDate).toEqual(undefined);
+        });
+
+        it('should return undefined for complaint due date for unrated result after assessment dueDate', () => {
+            emptyResult.rated = false;
+            studentParticipation.results = [emptyResult];
+            exercise.allowComplaintsForAutomaticAssessments = false;
+            exercise.assessmentDueDate = dayjsTime3.subtract(1, 'days');
+            const individualComplaintDueDate = complaintService.getIndividualComplaintDueDate(exercise, course, studentParticipation);
+            expect(individualComplaintDueDate).toEqual(undefined);
         });
     });
 

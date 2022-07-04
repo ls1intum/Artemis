@@ -329,14 +329,22 @@ public class GitLabService extends AbstractVersionControlService {
     public Commit getLastCommitDetails(Object requestBody) throws VersionControlException {
         final var details = GitLabPushNotificationDTO.convert(requestBody);
         final var commit = new Commit();
-        // We will notify for every commit, so we can just use the first commit in the notification list
-        final var gitLabCommit = details.getCommits().get(0);
-        commit.setMessage(gitLabCommit.getMessage());
-        commit.setAuthorEmail(gitLabCommit.getAuthor().getEmail());
-        commit.setAuthorName(gitLabCommit.getAuthor().getName());
-        final var ref = details.getRef().split("/");
-        commit.setBranch(ref[ref.length - 1]);
-        commit.setCommitHash(gitLabCommit.getHash());
+        // Gitlab specifically provide the previous latest commit and the new latest commit after the given push event
+        // Here we retrieve the hash of the new latest commit
+        final var gitLabCommitHash = details.getNewHash();
+        commit.setCommitHash(gitLabCommitHash);
+        // Here we search for the commit details for the given commit hash
+        // Technically these details should always be present but as this could change, we handle the edge case
+        final var firstMatchingCommit = details.getCommits().stream().filter(com -> gitLabCommitHash.equals(com.getHash())).findFirst();
+        if (firstMatchingCommit.isPresent()) {
+            // Fill commit with commit details
+            final var gitLabCommit = firstMatchingCommit.get();
+            commit.setMessage(gitLabCommit.getMessage());
+            commit.setAuthorEmail(gitLabCommit.getAuthor().getEmail());
+            commit.setAuthorName(gitLabCommit.getAuthor().getName());
+            final var ref = details.getRef().split("/");
+            commit.setBranch(ref[ref.length - 1]);
+        }
 
         return commit;
     }

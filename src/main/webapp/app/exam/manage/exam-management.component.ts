@@ -19,6 +19,7 @@ import { faClipboard, faEye, faListAlt, faPlus, faSort, faThList, faTimes, faUse
 @Component({
     selector: 'jhi-exam-management',
     templateUrl: './exam-management.component.html',
+    styleUrls: ['./exam-management.component.scss'],
 })
 export class ExamManagementComponent implements OnInit, OnDestroy {
     course: Course;

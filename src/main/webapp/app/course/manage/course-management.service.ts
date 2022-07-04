@@ -417,6 +417,7 @@ export class CourseManagementService {
      */
     private processCourseEntityResponseType(courseRes: EntityResponseType): EntityResponseType {
         this.convertDateFromServer(courseRes);
+        this.setLearningGoalsIfNone(courseRes);
         this.setAccessRightsCourseEntityResponseType(courseRes);
         this.convertExerciseCategoriesFromServer(courseRes);
         return courseRes;
@@ -497,6 +498,19 @@ export class CourseManagementService {
         course.endDate = course.endDate ? dayjs(course.endDate) : undefined;
         course.exercises = ExerciseService.convertExercisesDateFromServer(course.exercises);
         course.lectures = this.lectureService.convertDatesForLecturesFromServer(course.lectures);
+    }
+
+    /**
+     * Set the learning goals and prerequisites to an empty array if undefined
+     * We late distinguish between undefined (not yet fetched) and an empty array (fetched but course has none)
+     * @param res The server response containing a course object
+     */
+    private setLearningGoalsIfNone(res: EntityResponseType): EntityResponseType {
+        if (res.body) {
+            res.body.learningGoals = res.body.learningGoals || [];
+            res.body.prerequisites = res.body.prerequisites || [];
+        }
+        return res;
     }
 
     private setAccessRightsCourseEntityArrayResponseType(res: EntityArrayResponseType): EntityArrayResponseType {
