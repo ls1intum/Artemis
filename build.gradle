@@ -25,10 +25,11 @@ plugins {
     // this allows us to find outdated dependencies via ./gradlew dependencyUpdates
     id "com.github.ben-manes.versions" version "0.42.0"
     id "com.github.andygoossens.modernizer" version "1.6.2"
+    id 'info.solidsoft.pitest' version '1.7.4'
 }
 
 group = "de.tum.in.www1.artemis"
-version = "5.8.7"
+version = "5.9.0"
 description = "Interactive Learning with Individual Feedback"
 
 sourceCompatibility=17
@@ -381,6 +382,20 @@ tasks.named("dependencyUpdates").configure {
     }
 }
 
+pitest {
+    targetClasses = ['de.tum.in.www1.artemis.service.exam.ExamService']
+    targetTests = [
+        'de.tum.in.www1.artemis.StudentExamIntegrationTest',
+        'de.tum.in.www1.artemis.ExamIntegrationTest',
+    ]
+    outputFormats = ['XML', 'HTML']
+    timestampedReports = false
+    junit5PluginVersion = '0.15'
+    timeoutFactor = 1.5
+    timeoutConstInMillis = 10000
+    useClasspathFile = true
+}
+
 // Available commands:
 //
 // 1) Build production:                             ./gradlew -Pprod -Pwar clean bootWar
@@ -395,3 +410,4 @@ tasks.named("dependencyUpdates").configure {
 // 8) Clear Liquibase checksums:                    ./gradlew liquibaseClearChecksums
 // 9) Verify code coverage (after tests):           ./gradlew jacocoTestCoverageVerification
 // 10) Detects uses of legacy code:                 ./gradlew modernizer -x webapp
+// 11) Run PIT Mutation Tests:                      ./gradlew pitest -x webapp
