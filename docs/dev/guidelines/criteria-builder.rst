@@ -58,31 +58,31 @@ In order to use Criteria Builder and benefit from Specifications, we need to adj
 
         List<T> findAll(Specification<T> spec, Sort sort);
 
-2. **Defining the initial Specification:** To generate a query with multiple Specifications, we can use the `and()` method for concatenation. However, the first Specification must always be called via the `where()` method as a rule.
+2. **Defining the initial Specification:** To generate a query with multiple Specifications, we can use the ``and()`` method for concatenation. However, the first Specification must always be called via the ``where()`` method as a rule.
 
     .. code-block:: java
 
         Specification<T> specification = Specification.where(getFirstSpecification()).and(getSecondSpecification()).and(getThirdSpecification())...and(getNthSpecification());
         return findAll(specification, sort/pageable);
 
-3. **Defining Specifications:** A specification is a functional interface with a single method. This method has three parameter - a root, a query and a criteria builder. You don't need to specify these arguments manually because they are provided during chaining.
+3. **Defining Specifications:** A specification is a functional interface with a single method. This method has three parameters - a root, a query and a criteria builder. You don't need to specify these arguments manually because they are provided during chaining.
 
     .. code-block:: java
 
         public interface Specification<T> {
-          Predicate toPredicate(Root<T> root, CriteriaQuery query, CriteriaBuilder cb);
+            Predicate toPredicate(Root<T> root, CriteriaQuery query, CriteriaBuilder cb);
         }
 
     Now we can create Specifications. We can achieve this in two ways:
 
-    - Anonymous new Specification<User>():
+    - Anonymous ``new Specification<User>()``:
 
         .. code-block:: java
 
             private Specification<User> getAllUsersMatchingEmptyCourses() {
                 return new Specification<User>() {
-                     @Override
-                     public Predicate toPredicate(Root<User> root, CriteriaQuery<?> query, CriteriaBuilder criteriaBuilder) {
+                    @Override
+                    public Predicate toPredicate(Root<User> root, CriteriaQuery<?> query, CriteriaBuilder criteriaBuilder) {
                         return criteriaBuilder.isEmpty(root.get(User_.GROUPS));
                     }
                 };
@@ -93,25 +93,25 @@ In order to use Criteria Builder and benefit from Specifications, we need to adj
         .. code-block:: java
 
             private Specification<User> getAllUsersMatchingEmptyCourses() {
-            	return (root, query, criteriaBuilder) -> criteriaBuilder.isEmpty(root.get(User_.GROUPS));
+                return (root, query, criteriaBuilder) -> criteriaBuilder.isEmpty(root.get(User_.GROUPS));
             }
 
 
 3. Operations
 =============
 
-- **AND:** We can perform the `and` operation on an arbitrary number of predicates via the criteriaBuilder object, which results in a new Predicate.
+- **AND:** We can perform the ``and`` operation on an arbitrary number of predicates via the ``criteriaBuilder`` object, which results in a new ``Predicate``.
 
     .. code-block:: java
 
         return (root, query, criteriaBuilder) -> {
-        	Predicate one = criteriaBuilder.equal(x, z);
-        	Predicate two = criteriaBuilder.notEqual(a, b);
+            Predicate one = criteriaBuilder.equal(x, z);
+            Predicate two = criteriaBuilder.notEqual(a, b);
 
-        	return criteriaBuilder.and(one, two, ...);
+            return criteriaBuilder.and(one, two, ...);
         };
 
-- **OR:** We can perform the `or` operation on an arbitrary number of predicates via the criteriaBuilder object, which results in a new Predicate.
+- **OR:** We can perform the ``or`` operation on an arbitrary number of predicates via the ``criteriaBuilder`` object, which results in a new ``Predicate``.
 
     .. code-block:: java
 
@@ -127,10 +127,10 @@ In order to use Criteria Builder and benefit from Specifications, we need to adj
     .. code-block:: java
 
         return (root, query, criteriaBuilder) -> {
-         	Predicate one = criteriaBuilder.equal(root.get(User_.IS_INTERNAL), true);
-        	Predicate two = criteriaBuilder.notEqual(root.get(User_.ACTIVATED), true);
+            Predicate one = criteriaBuilder.equal(root.get(User_.IS_INTERNAL), true);
+            Predicate two = criteriaBuilder.notEqual(root.get(User_.ACTIVATED), true);
 
-        	return criteriaBuilder.and(one, two, ...);
+            return criteriaBuilder.and(one, two, ...);
         };
 
 - **NOT:**
@@ -149,7 +149,7 @@ In order to use Criteria Builder and benefit from Specifications, we need to adj
     .. code-block:: java
 
         return (root, query, criteriaBuilder) -> {
-         	Predicate in = criteriaBuilder.in(root.get(User_.ID)).value(ids);
+            Predicate in = criteriaBuilder.in(root.get(User_.ID)).value(ids);
             return in;
         };
 
@@ -157,9 +157,9 @@ In order to use Criteria Builder and benefit from Specifications, we need to adj
 4. Joins
 ========
 
-Many different joins are available (e.g. Join, ListJoin, SetJoin, CollectionJoin, ...) - please choose the right one.
+Different joins are available (e.g. Join, ListJoin, SetJoin, CollectionJoin, ...) - please choose the right one.
 
-- If we want to join from X to Y, we need to define the column and the join type. Please mind that when the join type is not specified, Inner Join is made by default.
+- If we want to join from X to Y, we need to define the column and the join type. Please mind that when the join type is not specified an Inner Join is made by default.
 
     .. code-block:: java
 
@@ -185,10 +185,10 @@ Many different joins are available (e.g. Join, ListJoin, SetJoin, CollectionJoin
 Sub-queries are usually fine unless they are dependent sub-queries (also known as `correlated <https://en.wikipedia.org/wiki/Correlated_subquery>`_ sub queries).
 
 1. **Dependent Sub-Query:**
-    In a SQL database query, a correlated sub-query is a sub-query (a query nested inside another query) that uses values from the outer query. But with a dependent sub-query you might run into performance problems because a dependent sub-query typically needs to be run once for each row in the outer query, e.g. if your outer query has 1000 rows, the sub-query will be run 1000 times.
+    In an SQL database query, a correlated sub-query is a sub-query (a query nested inside another query) that uses values from the outer query. But with a dependent sub-query you might run into performance problems because a dependent sub-query typically needs to be run once for each row in the outer query, e.g. if your outer query has 1000 rows, the sub-query will be run 1000 times.
 
 2. **Independent Sub-Query:**
-    An independent sub-query is a sub-query that can be run on its own, without the main (sub-)query. Therefore an independent sub-query typically only needs to be evaluated once.
+    An independent sub-query is a sub-query that can be run on its own, without the main (sub-)query. Therefore, an independent sub-query typically only needs to be evaluated once.
 
 You can find additional information on dependent sub-queries and how to identify them `here <https://stackoverflow.com/questions/4799820/when-to-use-sql-sub-queries-versus-a-standard-join/4799847#4799847>`_.
 
@@ -223,8 +223,8 @@ You can find additional information on dependent sub-queries and how to identify
     .. code-block:: java
 
         public static Specification<User> getAllUsersMatchingCourses(Set<Long> courseIds) {
-        	return (root, query, criteriaBuilder) -> {
-            	Root<Course> courseRoot = query.from(Course.class);
+            return (root, query, criteriaBuilder) -> {
+                Root<Course> courseRoot = query.from(Course.class);
 
                 Join<User, String> group = root.join(User_.GROUPS, JoinType.LEFT);
 
@@ -239,7 +239,7 @@ You can find additional information on dependent sub-queries and how to identify
 
                 query.groupBy(root.get(User_.ID)).having(criteriaBuilder.equal(criteriaBuilder.count(group), courseIds.size()));          
 
-        		return criteriaBuilder.in(courseRoot.get(Course_.ID)).value(courseIds);
+        	    return criteriaBuilder.in(courseRoot.get(Course_.ID)).value(courseIds);
             }
         }
 
@@ -267,21 +267,21 @@ You can find additional information on dependent sub-queries and how to identify
     .. code-block:: java
 
         public static Specification<User> distinct() {
-        	return (root, query, criteriaBuilder) -> {
-        		query.distinct(true);
+            return (root, query, criteriaBuilder) -> {
+                query.distinct(true);
                 return null;
             };
         }
 
     .. code-block:: sql
 
-        SELECT DISTINCT ...
+       SELECT DISTINCT ...
 
 
 6. Limitations
 ==============
 
-- Executing simple queries becomes more complex - but reusable.
+- Executing simple queries becomes more complex — but reusable.
 - Multiple "group by" are not combined but overwritten → you need a specification that combines them.
 - Pagination feature of Spring Data JPA does not support the use of specifications with "group by". See `issue <https://github.com/spring-projects/spring-data-jpa/issues/2361>`_.
 
