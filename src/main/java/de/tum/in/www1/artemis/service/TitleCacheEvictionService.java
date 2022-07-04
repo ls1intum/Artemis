@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.service;
 
 import javax.persistence.EntityManagerFactory;
 
+import org.apache.commons.lang3.ArrayUtils;
 import org.hibernate.event.service.spi.EventListenerRegistry;
 import org.hibernate.event.spi.*;
 import org.hibernate.internal.SessionFactoryImpl;
@@ -30,7 +31,6 @@ public class TitleCacheEvictionService implements PostInsertEventListener, PostU
         this.cacheManager = cacheManager;
 
         var eventListenerRegistry = entityManagerFactory.unwrap(SessionFactoryImpl.class).getServiceRegistry().getService(EventListenerRegistry.class);
-        eventListenerRegistry.appendListeners(EventType.POST_INSERT, this);
         eventListenerRegistry.appendListeners(EventType.POST_UPDATE, this);
         eventListenerRegistry.appendListeners(EventType.POST_DELETE, this);
         log.info("Registered Hibernate listeners");
@@ -42,12 +42,10 @@ public class TitleCacheEvictionService implements PostInsertEventListener, PostU
     }
 
     @Override
-    public void onPostInsert(PostInsertEvent event) {
-        evictEntityTitle(event.getEntity());
-    }
-
-    @Override
     public void onPostUpdate(PostUpdateEvent event) {
+        int index = ArrayUtils.indexOf(event.getPersister().getPropertyNames(), event.getEntity() instanceof Organization ? "name" : "title");
+        if (index < 0 || !ArrayUtils.contains(event.getDirtyProperties(), index))
+            return;
         evictEntityTitle(event.getEntity());
     }
 

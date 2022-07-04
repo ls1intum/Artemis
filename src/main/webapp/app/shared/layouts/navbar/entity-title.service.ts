@@ -63,6 +63,7 @@ export class EntityTitleService {
      * @param title the title of the entity
      */
     public setTitle(type: EntityType, ids: (number | undefined)[], title: string | undefined) {
+        return;
         // We want to be very defensive here, therefore we wrap everything in a try/catch
         try {
             if (!ids?.length || ids.some((id) => !id && id !== 0) || !title) {
