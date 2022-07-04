@@ -20,7 +20,7 @@ export class ManualSolutionEntryCreationModalComponent implements OnInit, OnDest
     onEntryCreated = new EventEmitter<ProgrammingExerciseSolutionEntry>();
 
     testCases?: ProgrammingExerciseTestCase[];
-    solutionRepositoryFilesWithContent?: Map<string, string>;
+    solutionRepositoryFileNames?: string[];
 
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
@@ -47,10 +47,9 @@ export class ManualSolutionEntryCreationModalComponent implements OnInit, OnDest
             },
             error: (error) => this.dialogErrorSource.error(error.message),
         });
-        // TODO: change to only return the file names
-        this.exerciseService.getSolutionRepositoryTestFilesWithContent(this.exerciseId).subscribe({
-            next: (res) => {
-                this.solutionRepositoryFilesWithContent = res;
+        this.exerciseService.getSolutionFileNames(this.exerciseId).subscribe({
+            next: (fileNames) => {
+                this.solutionRepositoryFileNames = fileNames;
             },
             error: (error) => this.dialogErrorSource.error(error.message),
         });

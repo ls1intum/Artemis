@@ -17,10 +17,10 @@ describe('ManualSolutionEntryCreationModal Component', () => {
     let modalService: NgbActiveModal;
 
     let testCases: ProgrammingExerciseTestCase[];
-    let solutionFiles: Map<string, string>;
+    const solutionFiles = ['A.java', 'B.java'];
 
     let testCaseSpy: jest.SpyInstance;
-    let getFileSpy: jest.SpyInstance;
+    let getFileNamesSpy: jest.SpyInstance;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -40,10 +40,7 @@ describe('ManualSolutionEntryCreationModal Component', () => {
         testCases = [testCase1, testCase2];
         testCaseSpy = jest.spyOn(exerciseService, 'getAllTestCases').mockReturnValue(of(testCases));
 
-        solutionFiles = new Map<string, string>();
-        solutionFiles.set('A.java', 'abc');
-        solutionFiles.set('B.java', 'def');
-        getFileSpy = jest.spyOn(exerciseService, 'getSolutionRepositoryTestFilesWithContent').mockReturnValue(of(solutionFiles));
+        getFileNamesSpy = jest.spyOn(exerciseService, 'getSolutionFileNames').mockReturnValue(of(solutionFiles));
 
         comp.exerciseId = 1;
     });
@@ -58,9 +55,9 @@ describe('ManualSolutionEntryCreationModal Component', () => {
         expect(testCaseSpy).toHaveBeenCalledOnce();
         expect(testCaseSpy).toHaveBeenCalledWith(1);
         expect(comp.testCases).toEqual(testCases);
-        expect(getFileSpy).toHaveBeenCalledOnce();
-        expect(getFileSpy).toHaveBeenCalledWith(1);
-        expect(comp.solutionRepositoryFilesWithContent).toEqual(solutionFiles);
+        expect(getFileNamesSpy).toHaveBeenCalledOnce();
+        expect(getFileNamesSpy).toHaveBeenCalledWith(1);
+        expect(comp.solutionRepositoryFileNames).toEqual(solutionFiles);
     });
 
     it('should create manual entry', () => {

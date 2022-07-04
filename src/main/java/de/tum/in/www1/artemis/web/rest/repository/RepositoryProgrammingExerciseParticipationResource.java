@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.web.rest.repository;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -222,6 +223,26 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
             Repository repository = getRepository(participationId, RepositoryActionType.READ, true);
             var filesWithContent = super.repositoryService.getFilesWithContent(repository);
             return new ResponseEntity<>(filesWithContent, HttpStatus.OK);
+        });
+    }
+
+    /**
+     * GET /repository/{participationId}/file-names
+     *
+     * Gets the file names of the repository
+     *
+     * @param participationId participation of the student/template/solution
+     * @return the ResponseEntity with status 200 (OK) and a set of file names
+     */
+    @GetMapping(value = "/repository/{participationId}/file-names", produces = MediaType.APPLICATION_JSON_VALUE)
+    @PreAuthorize("hasRole('TA')")
+    public ResponseEntity<Set<String>> getFileNames(@PathVariable Long participationId) {
+        return super.executeAndCheckForExceptions(() -> {
+            Repository repository = getRepository(participationId, RepositoryActionType.READ, true);
+            var nonFolderFileNames = super.repositoryService.getFiles(repository).entrySet().stream().filter(mapEntry -> mapEntry.getValue().equals(FileType.FILE))
+                    .map(Map.Entry::getKey).collect(Collectors.toSet());
+
+            return new ResponseEntity<>(nonFolderFileNames, HttpStatus.OK);
         });
     }
 

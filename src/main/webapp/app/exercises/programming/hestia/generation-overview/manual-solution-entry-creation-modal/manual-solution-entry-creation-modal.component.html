@@ -18,8 +18,8 @@
                 <label class="label-narrow" for="field_path">File</label>
                 <jhi-help-icon placement="auto" text=""></jhi-help-icon>
             </div>
-            <select *ngIf="solutionRepositoryFilesWithContent?.size" class="form-select" required name="path" [(ngModel)]="this.solutionEntry.filePath" id="field_path">
-                <option *ngFor="let mapEntry of solutionRepositoryFilesWithContent | keyvalue" [ngValue]="mapEntry?.key">{{ mapEntry?.key }}</option>
+            <select *ngIf="solutionRepositoryFileNames?.length" class="form-select" required name="path" [(ngModel)]="this.solutionEntry.filePath" id="field_path">
+                <option *ngFor="let fileName of solutionRepositoryFileNames" [ngValue]="fileName">{{ fileName }}</option>
             </select>
         </div>
         <div class="d-flex flex-row">

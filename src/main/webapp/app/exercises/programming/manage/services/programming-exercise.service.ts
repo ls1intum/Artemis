@@ -481,6 +481,10 @@ export class ProgrammingExerciseService {
         );
     }
 
+    getSolutionFileNames(exerciseId: number): Observable<string[]> {
+        return this.http.get<string[]>(`${this.resourceUrl}/${exerciseId}/file-names`);
+    }
+
     getCodeHintsForExercise(exerciseId: number): Observable<ExerciseHint[]> {
         return this.http.get<ExerciseHint[]>(`${this.resourceUrl}/${exerciseId}/exercise-hints`);
     }
