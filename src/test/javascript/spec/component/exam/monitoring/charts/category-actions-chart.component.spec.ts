@@ -20,6 +20,7 @@ import { ActivatedRoute } from '@angular/router';
 import { ceilDayjsSeconds } from 'app/exam/monitoring/charts/monitoring-chart';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { MockWebsocketService } from '../../../../helpers/mocks/service/mock-websocket.service';
+import { ExamAction } from 'app/entities/exam-user-activity.model';
 
 describe('Category Actions Chart Component', () => {
     let comp: CategoryActionsChartComponent;
@@ -33,6 +34,9 @@ describe('Category Actions Chart Component', () => {
     // Exam
     const exam = new Exam();
     exam.id = 1;
+
+    const now = dayjs();
+    let ceiledNow: dayjs.Dayjs;
 
     const route = { parent: { params: of({ courseId: course.id, examId: exam.id }) } };
 
@@ -48,10 +52,12 @@ describe('Category Actions Chart Component', () => {
             ],
         })
             .compileComponents()
-            .then(() => {});
-        pipe = new ArtemisDatePipe(TestBed.inject(TranslateService));
-        fixture = TestBed.createComponent(CategoryActionsChartComponent);
-        comp = fixture.componentInstance;
+            .then(() => {
+                pipe = new ArtemisDatePipe(TestBed.inject(TranslateService));
+                fixture = TestBed.createComponent(CategoryActionsChartComponent);
+                comp = fixture.componentInstance;
+                ceiledNow = ceilDayjsSeconds(now, comp.timeStampGapInSeconds);
+            });
     });
 
     afterEach(() => {
@@ -59,6 +65,7 @@ describe('Category Actions Chart Component', () => {
         jest.restoreAllMocks();
     });
 
+    // On init
     it('should call initData on init without actions', () => {
         expect(comp.ngxData).toEqual([]);
 
@@ -75,9 +82,6 @@ describe('Category Actions Chart Component', () => {
     });
 
     it('should call initData on init with actions', () => {
-        const now = dayjs();
-        const ceiledNow = ceilDayjsSeconds(now, comp.timeStampGapInSeconds);
-
         // GIVEN
         comp.filteredExamActions = createActions().map((action) => {
             action.timestamp = now;
@@ -99,5 +103,16 @@ describe('Category Actions Chart Component', () => {
 
         // THEN
         expect(comp.ngxData).toEqual(chartSeriesData);
+    });
+
+    // Filter actions
+    it.each(createActions())('should filter action', (action: ExamAction) => {
+        action.ceiledTimestamp = dayjs().subtract(1, 'hour');
+
+        expect(comp.filterRenderedData(action)).toBeFalse();
+
+        action.ceiledTimestamp = ceiledNow;
+
+        expect(comp.filterRenderedData(action)).toBeTrue();
     });
 });
