@@ -1,6 +1,6 @@
 package de.tum.in.www1.artemis.domain;
 
-import static de.tum.in.www1.artemis.config.Constants.MAX_VALUE_PROGRAMMING_RESULT_INTS;
+import static de.tum.in.www1.artemis.config.Constants.SIZE_OF_UNSIGNED_TINYINT;
 import static de.tum.in.www1.artemis.service.util.RoundingUtil.*;
 
 import java.time.ZonedDateTime;
@@ -35,15 +35,6 @@ import de.tum.in.www1.artemis.service.listeners.ResultListener;
 @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class Result extends DomainObject {
-
-    /*
-     * IMPORTANT on removal: Mention in release notes that an intermediary upgrade to version 5.8.6 or later is necessary before updating to the current version, as otherwise the
-     * database migration can no longer convert the old data into the new representation.
-     */
-    @Column(name = "result_string")
-    @JsonView(QuizView.After.class)
-    @Deprecated
-    private String resultString;
 
     @Column(name = "completion_date")
     @JsonView(QuizView.Before.class)
@@ -453,7 +444,7 @@ public class Result extends DomainObject {
     }
 
     public void setTestCaseCount(int testCaseCount) {
-        this.testCaseCount = Math.min(testCaseCount, MAX_VALUE_PROGRAMMING_RESULT_INTS);
+        this.testCaseCount = Math.min(testCaseCount, SIZE_OF_UNSIGNED_TINYINT);
     }
 
     public Integer getPassedTestCaseCount() {
@@ -461,7 +452,7 @@ public class Result extends DomainObject {
     }
 
     public void setPassedTestCaseCount(int passedTestCaseCount) {
-        this.passedTestCaseCount = Math.min(passedTestCaseCount, MAX_VALUE_PROGRAMMING_RESULT_INTS);
+        this.passedTestCaseCount = Math.min(passedTestCaseCount, SIZE_OF_UNSIGNED_TINYINT);
     }
 
     public Integer getCodeIssueCount() {
@@ -469,7 +460,7 @@ public class Result extends DomainObject {
     }
 
     public void setCodeIssueCount(int codeIssueCount) {
-        this.codeIssueCount = Math.min(codeIssueCount, MAX_VALUE_PROGRAMMING_RESULT_INTS);
+        this.codeIssueCount = Math.min(codeIssueCount, SIZE_OF_UNSIGNED_TINYINT);
     }
 
     public Map<String, Set<CoverageFileReport>> getCoverageFileReportsByTestCaseName() {
