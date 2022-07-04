@@ -13,6 +13,5 @@ import { ArtemisSharedComponentModule } from 'app/shared/components/shared-compo
     declarations: [GradingSystemComponent, DetailedGradingSystemComponent, IntervalGradingSystemComponent, GradingSystemInfoModalComponent],
     imports: [ArtemisSharedModule, RouterModule.forChild(gradingSystemState), ArtemisModePickerModule, ArtemisSharedComponentModule],
     exports: [GradingSystemComponent, GradingSystemInfoModalComponent],
-    entryComponents: [GradingSystemComponent],
 })
 export class GradingSystemModule {}
