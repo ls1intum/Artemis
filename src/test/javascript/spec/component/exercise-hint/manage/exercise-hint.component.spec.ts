@@ -69,6 +69,7 @@ describe('ExerciseHint Management Component', () => {
         const exerciseHint = new ExerciseHint();
         exerciseHint.id = 123;
         comp.exerciseHints = [exerciseHint];
+        comp.exercise = programmingExercise;
 
         comp.deleteExerciseHint(123);
 

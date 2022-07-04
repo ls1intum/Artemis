@@ -6,7 +6,6 @@ import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { SolutionEntryGenerationStepComponent } from 'app/exercises/programming/hestia/generation-overview/steps/solution-entry-generation-step/solution-entry-generation-step.component';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { AlertService } from 'app/core/util/alert.service';
-import { CodeHintService } from 'app/exercises/shared/exercise-hint/services/code-hint.service';
 import { ProgrammingExerciseSolutionEntryService } from 'app/exercises/shared/exercise-hint/services/programming-exercise-solution-entry.service';
 import { ProgrammingExerciseSolutionEntry } from 'app/entities/hestia/programming-exercise-solution-entry.model';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
@@ -22,7 +21,6 @@ describe('SolutionEntryGenerationStep Component', () => {
     let exerciseService: ProgrammingExerciseService;
     let modalService: NgbModal;
     let alertService: AlertService;
-    let codeHintService: CodeHintService;
     let solutionEntryService: ProgrammingExerciseSolutionEntryService;
 
     let onEntryUpdatedSpy: jest.SpyInstance;
@@ -36,7 +34,7 @@ describe('SolutionEntryGenerationStep Component', () => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule],
             declarations: [SolutionEntryGenerationStepComponent, MockPipe(ArtemisTranslatePipe)],
-            providers: [MockProvider(NgbModal), MockProvider(AlertService)],
+            providers: [MockProvider(NgbModal), MockProvider(AlertService), MockProvider(ArtemisTranslatePipe)],
         }).compileComponents();
         fixture = TestBed.createComponent(SolutionEntryGenerationStepComponent);
         comp = fixture.componentInstance;
@@ -44,7 +42,6 @@ describe('SolutionEntryGenerationStep Component', () => {
         exerciseService = TestBed.inject(ProgrammingExerciseService);
         modalService = TestBed.inject(NgbModal);
         alertService = TestBed.inject(AlertService);
-        codeHintService = TestBed.inject(CodeHintService);
         solutionEntryService = TestBed.inject(ProgrammingExerciseSolutionEntryService);
 
         onEntryUpdatedSpy = jest.spyOn(comp.onEntryUpdate, 'emit');
