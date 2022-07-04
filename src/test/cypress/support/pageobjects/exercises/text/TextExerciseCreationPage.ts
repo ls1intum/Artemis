@@ -1,4 +1,4 @@
-import { BASE_API } from './../../../constants';
+import { BASE_API } from '../../../constants';
 import { Dayjs } from 'dayjs/esm';
 import { POST } from '../../../constants';
 import { dayjsToString } from '../../../utils';

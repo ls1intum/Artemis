@@ -98,7 +98,7 @@ describe('ModelingAssessmentDashboardComponent', () => {
         // test for init values
         expect(component).toBeTruthy();
         expect(component.submissions).toEqual([]);
-        expect(component.reverse).toEqual(false);
+        expect(component.reverse).toBeFalse();
         expect(component.predicate).toEqual('id');
         expect(component.filteredSubmissions).toEqual([]);
 
@@ -132,7 +132,7 @@ describe('ModelingAssessmentDashboardComponent', () => {
     it('should update filtered submissions', () => {
         // setup
         component.ngOnInit();
-        component.updateFilteredSubmissions([modelingSubmission]);
+        component.applyChartFilter([modelingSubmission]);
 
         // check
         expect(component.filteredSubmissions).toEqual([modelingSubmission]);
