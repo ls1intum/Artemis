@@ -1,5 +1,5 @@
-import { COURSE_BASE } from './../requests/CourseManagementRequests';
-import { GET } from './../constants';
+import { COURSE_BASE } from '../requests/CourseManagementRequests';
+import { GET } from '../constants';
 /**
  * A class which encapsulates UI selectors and actions for the navigation bar at the top.
  */
