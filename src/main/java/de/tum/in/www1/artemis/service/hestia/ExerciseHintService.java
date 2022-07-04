@@ -276,6 +276,6 @@ public class ExerciseHintService {
             throw new ConflictException("An exercise hint can only be retrieved if the exerciseIds match.", "exerciseHint", "exerciseIdsMismatch");
         }
 
-        return hint.getTitle() == null ? null : hint.getTitle();
+        return hint.getTitle();
     }
 }
