@@ -1,8 +1,5 @@
 package de.tum.in.www1.artemis.web.rest;
 
-import java.time.ZonedDateTime;
-import java.time.temporal.ChronoUnit;
-import java.util.ArrayList;
 import java.util.List;
 
 import org.springframework.http.ResponseEntity;
@@ -15,9 +12,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RestController;
 
-import de.tum.in.www1.artemis.domain.enumeration.ExamActionType;
 import de.tum.in.www1.artemis.domain.exam.monitoring.ExamAction;
-import de.tum.in.www1.artemis.domain.exam.monitoring.actions.StartedExamAction;
 import de.tum.in.www1.artemis.service.scheduled.cache.monitoring.ExamMonitoringScheduleService;
 
 /**
@@ -53,21 +48,6 @@ public class ExamActivityResource {
     @GetMapping("api/exam-monitoring/{examId}/load-actions")
     @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<List<ExamAction>> loadAllActions(@PathVariable Long examId) {
-        var actions = examMonitoringScheduleService.getAllExamActions(examId);
-        if (actions.isEmpty()) {
-            var generatedActions = new ArrayList<ExamAction>();
-            for (int i = 0; i < 2000000; i++) {
-                var action = new StartedExamAction();
-                action.setSessionId(0L);
-                action.setStudentExamId(17L);
-                action.setExamActivityId(17L);
-                action.setType(ExamActionType.STARTED_EXAM);
-                action.setTimestamp(ZonedDateTime.now().plus(1, ChronoUnit.MINUTES));
-                generatedActions.add(action);
-            }
-            examMonitoringScheduleService.addExamActions(examId, generatedActions);
-            actions = examMonitoringScheduleService.getAllExamActions(examId);
-        }
-        return ResponseEntity.ok().body(actions);
+        return ResponseEntity.ok().body(examMonitoringScheduleService.getAllExamActions(examId));
     }
 }
