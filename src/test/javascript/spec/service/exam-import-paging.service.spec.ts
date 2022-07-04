@@ -6,10 +6,10 @@ import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { take } from 'rxjs/operators';
 import { MockSyncStorage } from '../helpers/mocks/service/mock-sync-storage.service';
 import { MockTranslateService } from '../helpers/mocks/service/mock-translate.service';
-import { ExamImportPagingService } from 'app/exam/manage/exams/exam-import/exam-paging.service';
 import { Exam } from 'app/entities/exam.model';
+import { ExamImportPagingService } from 'app/exam/manage/exams/exam-import/exam-import-paging.service';
 
-describe('Exam Paging Service', () => {
+describe('Exam Import Paging Service', () => {
     let service: ExamImportPagingService;
     let httpMock: HttpTestingController;
 
@@ -38,7 +38,7 @@ describe('Exam Paging Service', () => {
         const searchResult = { resultsOnPage: [exam], numberOfPages: 5 };
         const pageable = { pageSize: 2, page: 4, sortingOrder: SortingOrder.DESCENDING, searchTerm: 'ExamSearch', sortedColumn: 'testSortedColumn' };
         service
-            .searchForExams(pageable)
+            .searchForExams(pageable, false)
             .pipe(take(1))
             .subscribe((resp) => expect(resp).toEqual(searchResult));
         const req = httpMock.expectOne({ method: 'GET' });
