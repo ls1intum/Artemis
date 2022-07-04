@@ -12,6 +12,7 @@ import { HttpResponse } from '@angular/common/http';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { ITEMS_PER_PAGE } from 'app/shared/constants/pagination.constants';
 import { CourseDiscussionDirective } from 'app/shared/metis/course-discussion.directive';
+import { faCircleNotch } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-course-discussion',
@@ -35,6 +36,9 @@ export class CourseDiscussionComponent extends CourseDiscussionDirective impleme
     readonly pageType = PageType.OVERVIEW;
 
     private totalItemsSubscription: Subscription;
+
+    // Icons
+    faCircleNotch = faCircleNotch;
 
     constructor(
         protected metisService: MetisService,
@@ -240,6 +244,7 @@ export class CourseDiscussionComponent extends CourseDiscussionDirective impleme
      */
     fetchNextPage() {
         if (this.posts.length < this.totalItems) {
+            this.isLoading = true;
             this.page += 1;
             this.onSelectPage();
         }
