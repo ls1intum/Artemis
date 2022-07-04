@@ -233,11 +233,11 @@ export class ComplaintService implements IComplaintService {
      */
     getIndividualComplaintDueDate(exercise: Exercise, course: Course, studentParticipation?: StudentParticipation): dayjs.Dayjs | undefined {
         const lastResult = studentParticipation?.results?.last();
-        const now = dayjs();
-        if (!lastResult) {
+        if (!lastResult || !exercise.dueDate) {
             return undefined;
         }
 
+        const now = dayjs();
         let complaintStartDate;
         if (exercise.allowComplaintsForAutomaticAssessments && now.isAfter(exercise.dueDate)) {
             complaintStartDate = exercise.dueDate;
