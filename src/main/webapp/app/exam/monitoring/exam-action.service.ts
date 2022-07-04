@@ -39,36 +39,13 @@ export class ExamActionService implements IExamActionService {
 
         for (const action of examActions) {
             this.prepareAction(action);
-            const key = action.ceiledTimestamp!.toString();
+            const timestamp = action.ceiledTimestamp!.toString();
 
-            actionsPerTimestamp.set(key, (actionsPerTimestamp.get(key) ?? 0) + 1);
-
-            let categories = actionsPerTimestampAndCategory.get(key);
-            if (!categories) {
-                categories = new Map();
-                Object.keys(ExamActionType).forEach((type) => {
-                    categories.set(type, 0);
-                });
-            }
-            categories.set(action.type, categories.get(action.type)! + 1);
-            actionsPerTimestampAndCategory.set(key, categories);
-
-            const lastAction = lastActionPerStudent.get(action.examActivityId!);
-            if (!lastAction || lastAction.timestamp!.isBefore(action.timestamp!)) {
-                lastActionPerStudent.set(action.examActivityId!, action);
-            }
-
-            if (action.type === ExamActionType.SWITCHED_EXERCISE) {
-                const navigatedTo = navigatedToPerStudent.get(action.studentExamId!) ?? new Set();
-                navigatedTo.add((action as SwitchedExerciseAction).exerciseId);
-                navigatedToPerStudent.set(action.studentExamId!, navigatedTo);
-            }
-
-            if (action.type === ExamActionType.SAVED_EXERCISE) {
-                const submitted = submittedPerStudent.get(action.studentExamId!) ?? new Set();
-                submitted.add((action as SavedExerciseAction).exerciseId);
-                submittedPerStudent.set(action.studentExamId!, submitted);
-            }
+            this.increaseActionByTimestamp(timestamp, actionsPerTimestamp);
+            this.increaseActionByTimestampAndCategory(timestamp, action, actionsPerTimestampAndCategory);
+            this.updateLastActionPerStudent(action, lastActionPerStudent);
+            this.updateNavigationsPerStudent(action, navigatedToPerStudent);
+            this.updateSubmissionsPerStudent(action, submittedPerStudent);
         }
 
         this.cachedExamActions.set(exam.id!, [...(this.cachedExamActions.get(exam.id!) ?? []), ...examActions]);
@@ -78,6 +55,76 @@ export class ExamActionService implements IExamActionService {
         this.cachedNavigationsPerStudent.set(exam.id!, navigatedToPerStudent);
         this.cachedSubmissionsPerStudent.set(exam.id!, submittedPerStudent);
     };
+
+    /**
+     * Increase the actions grouped by timestamp and updates the map.
+     * @param timestamp timestamp of the action
+     * @param actionsPerTimestamp number of actions per timestamp
+     * @private
+     */
+    public increaseActionByTimestamp(timestamp: string, actionsPerTimestamp: Map<string, number>) {
+        actionsPerTimestamp.set(timestamp, (actionsPerTimestamp.get(timestamp) ?? 0) + 1);
+    }
+
+    /**
+     * Increase the actions grouped by timestamp and category and updates the map.
+     * @param timestamp timestamp of the action
+     * @param action received action
+     * @param actionsPerTimestampAndCategory number of actions per timestamp and category
+     * @private
+     */
+    public increaseActionByTimestampAndCategory(timestamp: string, action: ExamAction, actionsPerTimestampAndCategory: Map<string, Map<string, number>>) {
+        let categories = actionsPerTimestampAndCategory.get(timestamp);
+        if (!categories) {
+            categories = new Map();
+            Object.keys(ExamActionType).forEach((type) => {
+                categories!.set(type, 0);
+            });
+        }
+        categories.set(action.type, categories.get(action.type)! + 1);
+        actionsPerTimestampAndCategory.set(timestamp, categories);
+    }
+
+    /**
+     * Updates the last action performed by the student.
+     * @param action received action
+     * @param lastActionPerStudent last action per student
+     * @private
+     */
+    public updateLastActionPerStudent(action: ExamAction, lastActionPerStudent: Map<number, ExamAction>) {
+        const lastAction = lastActionPerStudent.get(action.examActivityId!);
+        if (!lastAction || lastAction.timestamp!.isBefore(action.timestamp!)) {
+            lastActionPerStudent.set(action.examActivityId!, action);
+        }
+    }
+
+    /**
+     * Updates the navigations per student.
+     * @param action received action
+     * @param navigatedToPerStudent navigations per student
+     * @private
+     */
+    public updateNavigationsPerStudent(action: ExamAction, navigatedToPerStudent: Map<number, Set<number | undefined>>) {
+        if (action.type === ExamActionType.SWITCHED_EXERCISE) {
+            const navigatedTo = navigatedToPerStudent.get(action.examActivityId!) ?? new Set();
+            navigatedTo.add((action as SwitchedExerciseAction).exerciseId);
+            navigatedToPerStudent.set(action.examActivityId!, navigatedTo);
+        }
+    }
+
+    /**
+     * Updates the submissions per student.
+     * @param action received action
+     * @param submittedPerStudent submissions per student
+     * @private
+     */
+    public updateSubmissionsPerStudent(action: ExamAction, submittedPerStudent: Map<number, Set<number | undefined>>) {
+        if (action.type === ExamActionType.SAVED_EXERCISE) {
+            const submitted = submittedPerStudent.get(action.examActivityId!) ?? new Set();
+            submitted.add((action as SavedExerciseAction).exerciseId);
+            submittedPerStudent.set(action.examActivityId!, submitted);
+        }
+    }
 
     /**
      * Checks if a websocket connection for the exam monitoring to the server already exists.
