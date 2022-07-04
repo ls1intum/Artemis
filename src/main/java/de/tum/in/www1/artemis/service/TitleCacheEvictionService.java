@@ -75,7 +75,8 @@ public class TitleCacheEvictionService implements PostInsertEventListener, PostU
                 log.warn("Unable to clear title of exercise hint {}: Exercise not present", hint.getId());
                 return;
             }
-            var combinedId = hint.getExercise().getId() + '-' + hint.getId();
+
+            var combinedId = hint.getExercise().getId() + "-" + hint.getId();
             evictIdFromCache("exerciseHintTitle", combinedId);
         }
     }
