@@ -134,7 +134,7 @@ describe('ExamScoresAverageScoresGraphComponent', () => {
             expect(navigateToExerciseMock).toHaveBeenCalledTimes(0);
         });
 
-        it('should navigate if exercise type is missing', () => {
+        it('should not navigate if exercise type is missing', () => {
             component.lookup['test'] = { exerciseId: 42 };
 
             component.onSelect(event);
