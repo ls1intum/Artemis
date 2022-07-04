@@ -50,6 +50,7 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
     readonly FilterProp = FilterProp;
     readonly ExerciseType = ExerciseType;
     readonly FeatureToggle = FeatureToggle;
+    // represents all intervals selectable in the score distribution on the exercise statistics
     readonly scoreRanges = [
         new Range(0, 10),
         new Range(10, 20),

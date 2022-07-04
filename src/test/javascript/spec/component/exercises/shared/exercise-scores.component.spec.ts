@@ -42,6 +42,8 @@ describe('Exercise Scores Component', () => {
     let fixture: ComponentFixture<ExerciseScoresComponent>;
     let resultService: ResultService;
     let programmingSubmissionService: ProgrammingSubmissionService;
+    let courseService: CourseManagementService;
+    let exerciseService: ExerciseService;
 
     const exercise: Exercise = {
         id: 1,
@@ -96,7 +98,12 @@ describe('Exercise Scores Component', () => {
         new Range(90, 100),
     ];
 
-    const route = { data: of({ courseId: 1 }), children: [] } as any as ActivatedRoute;
+    const route = {
+        data: of({ courseId: 1 }),
+        children: [],
+        params: of({ courseId: 1, exerciseId: 2 }),
+        snapshot: { queryParamMap: { get: () => undefined } },
+    } as any as ActivatedRoute;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -130,6 +137,8 @@ describe('Exercise Scores Component', () => {
                 component = fixture.componentInstance;
                 resultService = TestBed.inject(ResultService);
                 programmingSubmissionService = TestBed.inject(ProgrammingSubmissionService);
+                courseService = TestBed.inject(CourseManagementService);
+                exerciseService = TestBed.inject(ExerciseService);
                 component.exercise = exercise;
                 jest.spyOn(programmingSubmissionService, 'unsubscribeAllWebsocketTopics');
                 component.paramSub = new Subscription();
@@ -139,6 +148,23 @@ describe('Exercise Scores Component', () => {
     afterEach(() => {
         jest.restoreAllMocks();
     });
+
+    it('should be correctly set onInit', fakeAsync(() => {
+        const findCourseSpy = jest.spyOn(courseService, 'find');
+        const findExerciseSpy = jest.spyOn(exerciseService, 'find');
+        const getResultsMock = jest.spyOn(resultService, 'getResults').mockReturnValue(of(new HttpResponse<Result[]>({ body: resultsToFilter })));
+
+        component.ngOnInit();
+        tick();
+
+        expect(findCourseSpy).toHaveBeenCalledOnce();
+        expect(findCourseSpy).toHaveBeenCalledWith(1);
+        expect(findExerciseSpy).toHaveBeenCalledOnce();
+        expect(findExerciseSpy).toHaveBeenCalledWith(2);
+        expect(getResultsMock).toHaveBeenCalledOnce();
+        expect(getResultsMock).toHaveBeenCalledWith({ id: 2 });
+        expect(component.filteredResults).toEqual(resultsToFilter);
+    }));
 
     it('should get exercise participation link for exercise without an exercise group', () => {
         const expectedLink = ['/course-management', course.id!.toString(), 'text-exercises', exercise.id!.toString(), 'participations', '1', 'submissions'];
