@@ -120,6 +120,12 @@ describe('ExamActionService', () => {
             submittedPerStudent.set(action.examActivityId, new Set([(action as SwitchedExerciseAction).exerciseId]));
         }
         expect(updateSubmissionsPerStudentSpy).toHaveBeenCalledWith(action, submittedPerStudent);
+
+        expect(examActionService.cachedExamActionsGroupedByTimestamp).toEqual(new Map([[exam.id!, actionsPerTimestamp]]));
+        expect(examActionService.cachedExamActionsGroupedByTimestampAndCategory).toEqual(new Map([[exam.id!, actionsPerTimestampAndCategory]]));
+        expect(examActionService.cachedLastActionPerStudent).toEqual(new Map([[exam.id!, lastActionPerStudent]]));
+        expect(examActionService.cachedNavigationsPerStudent).toEqual(new Map([[exam.id!, navigatedToPerStudent]]));
+        expect(examActionService.cachedSubmissionsPerStudent).toEqual(new Map([[exam.id!, submittedPerStudent]]));
     });
 
     // increase action by timestamp
