@@ -1,4 +1,3 @@
-import { StudentExam } from 'app/entities/student-exam.model';
 import { StudentExamService } from 'app/exam/manage/student-exams/student-exam.service';
 import { Exam } from 'app/entities/exam.model';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
@@ -8,6 +7,7 @@ import { Injectable } from '@angular/core';
 import { ActivatedRouteSnapshot, Resolve } from '@angular/router';
 import { filter, map, Observable, of } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
+import { StudentExamWithGradeDTO } from 'app/exam/exam-scores/exam-score-dtos.model';
 
 @Injectable({ providedIn: 'root' })
 export class ExamResolve implements Resolve<Exam> {
@@ -65,7 +65,7 @@ export class ExerciseGroupResolve implements Resolve<ExerciseGroup> {
 }
 
 @Injectable({ providedIn: 'root' })
-export class StudentExamResolve implements Resolve<StudentExam> {
+export class StudentExamResolve implements Resolve<StudentExamWithGradeDTO> {
     constructor(private studentExamService: StudentExamService) {}
 
     /**
@@ -73,16 +73,16 @@ export class StudentExamResolve implements Resolve<StudentExam> {
      * or creates a new student exam otherwise.
      * @param route Contains the information about the route to be resolved
      */
-    resolve(route: ActivatedRouteSnapshot): Observable<StudentExam> {
+    resolve(route: ActivatedRouteSnapshot): Observable<StudentExamWithGradeDTO> {
         const courseId = route.params['courseId'] || undefined;
         const examId = route.params['examId'] || undefined;
         const studentExamId = route.params['studentExamId'] ? route.params['studentExamId'] : route.params['testRunId'];
         if (courseId && examId && studentExamId) {
             return this.studentExamService.find(courseId, examId, studentExamId).pipe(
-                filter((response: HttpResponse<StudentExam>) => response.ok),
-                map((response: HttpResponse<StudentExam>) => response.body!),
+                filter((response) => response.ok),
+                map((response) => response.body!),
             );
         }
-        return of(new StudentExam());
+        return of(new StudentExamWithGradeDTO());
     }
 }

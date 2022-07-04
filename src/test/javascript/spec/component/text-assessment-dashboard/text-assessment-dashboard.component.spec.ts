@@ -12,7 +12,7 @@ import { TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.se
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
 import { HttpHeaders, HttpResponse } from '@angular/common/http';
-import { of } from 'rxjs';
+import { BehaviorSubject, of } from 'rxjs';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { MockExerciseService } from '../../helpers/mocks/service/mock-exercise.service';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
@@ -24,6 +24,7 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { SortDirective } from 'app/shared/sort/sort.directive';
 import { MockQueryParamsDirective, MockRouterLinkDirective } from '../../helpers/mocks/directive/mock-router-link.directive';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import dayjs from 'dayjs/esm';
 
 const textExercise = {
     id: 22,
@@ -43,7 +44,25 @@ const textExerciseOfExam = {
     numberOfAssessmentsOfCorrectionRounds: [],
     secondCorrectionEnabled: true,
 };
-const textSubmission = { id: 1, submitted: true, results: [{ id: 10, assessor: { id: 20, guidedTourSettings: [], internal: true } }], participation: { id: 1 } };
+const textSubmission = {
+    id: 1,
+    submitted: true,
+    results: [{ id: 10, assessor: { id: 20, guidedTourSettings: [], internal: true }, assessmentType: AssessmentType.MANUAL, completionDate: dayjs(), rated: true }],
+    participation: { id: 1 },
+};
+
+const unassessedSubmission = {
+    id: 2,
+    submitted: true,
+    participation: { id: 2 },
+};
+
+const semiautomaticAssessedSubmission = {
+    id: 3,
+    submitted: true,
+    results: [{ id: 30, assessor: { id: 20, guidedTourSettings: [], internal: true }, assessmentType: AssessmentType.SEMI_AUTOMATIC, completionDate: dayjs(), rated: true }],
+    participation: { id: 1 },
+};
 
 describe('TextAssessmentDashboardComponent', () => {
     let component: TextAssessmentDashboardComponent;
@@ -53,6 +72,7 @@ describe('TextAssessmentDashboardComponent', () => {
     let textAssessmentService: TextAssessmentService;
     let accountService: AccountService;
     let sortService: SortService;
+    let route: ActivatedRoute;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -86,6 +106,7 @@ describe('TextAssessmentDashboardComponent', () => {
                                 examId: 2,
                             }),
                         },
+                        queryParams: new BehaviorSubject({ submissionFilter: 1 }),
                     },
                 },
             ],
@@ -99,6 +120,7 @@ describe('TextAssessmentDashboardComponent', () => {
                 textAssessmentService = TestBed.inject(TextAssessmentService);
                 accountService = TestBed.inject(AccountService);
                 sortService = TestBed.inject(SortService);
+                route = TestBed.inject(ActivatedRoute);
             });
     });
 
@@ -168,7 +190,7 @@ describe('TextAssessmentDashboardComponent', () => {
     it('should update filtered submissions', () => {
         // setup
         component.ngOnInit();
-        component.updateFilteredSubmissions([textSubmission]);
+        component.applyChartFilter([textSubmission]);
         // check
         expect(component.filteredSubmissions).toEqual([textSubmission]);
     });
@@ -250,4 +272,32 @@ describe('TextAssessmentDashboardComponent', () => {
             'assessment',
         ]);
     });
+
+    it.each(['0', '1', '2'])(
+        'should reset the chart filter',
+        fakeAsync((filterOption: string) => {
+            // test getSubmissions
+            const body = [unassessedSubmission, textSubmission, semiautomaticAssessedSubmission];
+            jest.spyOn(exerciseService, 'find').mockReturnValue(of(new HttpResponse({ body: textExercise })));
+            const getTextSubmissionStub = jest
+                .spyOn(textSubmissionService, 'getTextSubmissionsForExerciseByCorrectionRound')
+                .mockReturnValue(of(new HttpResponse({ body, headers: new HttpHeaders() })));
+            jest.spyOn(accountService, 'isAtLeastInstructorInCourse').mockReturnValue(true);
+            route.queryParams = new BehaviorSubject({ filterOption });
+
+            // call
+            component.ngOnInit();
+            tick(100);
+            // check
+            expect(component.filterOption).toBe(Number(filterOption));
+            expect(getTextSubmissionStub).toHaveBeenCalledOnce();
+            expect(getTextSubmissionStub).toHaveBeenCalledWith(textExercise.id, { submittedOnly: true });
+            expect(component.submissions).toEqual(body);
+            expect(component.filteredSubmissions).toEqual([body[Number(filterOption)]]);
+
+            component.resetFilterOptions();
+
+            expect(component.filteredSubmissions).toEqual(body);
+        }),
+    );
 });
