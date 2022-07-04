@@ -19,7 +19,7 @@ import { HasAnyAuthorityDirective } from 'app/shared/auth/has-any-authority.dire
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import dayjs from 'dayjs/esm';
-import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
+import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { of } from 'rxjs';
 import { MockNgbModalService } from '../../../../helpers/mocks/service/mock-ngb-modal.service';
 import { MockRouter } from '../../../../helpers/mocks/mock-router';
@@ -32,6 +32,7 @@ import { EventManager } from 'app/core/util/event-manager.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { RouterTestingModule } from '@angular/router/testing';
 import { faCheckDouble, faFileUpload, faFont, faKeyboard, faProjectDiagram } from '@fortawesome/free-solid-svg-icons';
+import { AlertService } from 'app/core/util/alert.service';
 
 describe('Exercise Groups Component', () => {
     const course = new Course();
@@ -51,6 +52,7 @@ describe('Exercise Groups Component', () => {
     let eventManager: EventManager;
     let modalService: NgbModal;
     let router: Router;
+    let alertService: AlertService;
 
     const data = of({ exam });
     const route = { snapshot: { paramMap: convertToParamMap({ courseId: course.id, examId: exam.id }) }, data } as any as ActivatedRoute;
@@ -73,6 +75,7 @@ describe('Exercise Groups Component', () => {
                 MockDirective(TranslateDirective),
             ],
             providers: [
+                MockProvider(AlertService),
                 { provide: ActivatedRoute, useValue: route },
                 { provide: Router, useClass: MockRouter },
                 { provide: NgbModal, useClass: MockNgbModalService },
@@ -87,6 +90,7 @@ describe('Exercise Groups Component', () => {
                 examManagementService = TestBed.inject(ExamManagementService);
                 eventManager = TestBed.inject(EventManager);
                 modalService = TestBed.inject(NgbModal);
+                alertService = TestBed.inject(AlertService);
                 router = TestBed.inject(Router);
 
                 groups = [
@@ -265,4 +269,24 @@ describe('Exercise Groups Component', () => {
         expect(map.size).toBe(groups.length);
         expect(map.get(firstGroupId)).toEqual(expectedResult);
     });
+
+    it('opens the import modal for exercise groups', fakeAsync(() => {
+        const alertSpy = jest.spyOn(alertService, 'success');
+        const exerciseGroup = { id: 1 } as ExerciseGroup;
+        const mockReturnValue = {
+            componentInstance: {
+                subsequentExerciseGroupSelection: undefined,
+                targetCourseId: undefined,
+                targetExamId: undefined,
+            },
+            result: Promise.resolve([exerciseGroup]),
+        } as NgbModalRef;
+        jest.spyOn(modalService, 'open').mockReturnValue(mockReturnValue);
+        comp.openExerciseGroupImportModal();
+        tick();
+
+        expect(modalService.open).toHaveBeenCalled();
+        expect(comp.exerciseGroups).toEqual([exerciseGroup]);
+        expect(alertSpy).toHaveBeenCalledTimes(1);
+    }));
 });

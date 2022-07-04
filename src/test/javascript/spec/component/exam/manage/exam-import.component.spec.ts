@@ -175,7 +175,7 @@ describe('Exam Import Component', () => {
         expect(modalSpy).toHaveBeenCalledTimes(0);
     });
 
-    it('should perform input of exercise groups AND correctly process conflict exception from server', () => {
+    it('should perform import of exercise groups AND correctly process conflict exception from server', () => {
         const preCheckError = new HttpErrorResponse({
             error: { errorKey: 'examContainsProgrammingExercisesWithInvalidKey', numberOfInvalidProgrammingExercises: 2, params: { exerciseGroups: [exerciseGroup1] } },
             status: 400,
@@ -197,7 +197,7 @@ describe('Exam Import Component', () => {
         expect(modalSpy).toHaveBeenCalledTimes(0);
     });
 
-    it('should perform input of exercise groups AND correctly process arbitrary exception from server', () => {
+    it('should perform import of exercise groups AND correctly process arbitrary exception from server', () => {
         const error = new HttpErrorResponse({
             status: 400,
         });

@@ -297,8 +297,7 @@ export class ExerciseGroupsComponent implements OnInit {
             (exerciseGroups: ExerciseGroup[]) => {
                 if (exerciseGroups) {
                     this.exerciseGroups = exerciseGroups;
-                    console.log(exerciseGroups);
-                    this.alertService.success('Imported!');
+                    this.alertService.success('artemisApp.examManagement.exerciseGroup.importSuccessful');
                 }
             },
             () => {},

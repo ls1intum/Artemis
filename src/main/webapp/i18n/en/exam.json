@@ -401,7 +401,8 @@
                     "invalidExerciseConfiguration": "One or more of the values specified are invalid. Please change them before importing",
                     "isImporting": "The import of the exercise groups and the exercises is currently done on the server. This may take some time",
                     "infoProgrammingExercises": "Programming exercises are imported using their initial configuration. This import functionality cannot be used for changing the submission policy, for activating / deactivating the static code analysis or for creating new build plans. In this case, please import the tasks individually into the exercise groups."
-                }
+                },
+                "importSuccessful": "Import der Aufgabengruppen erfolgreich!"
             },
             "delete": {
                 "question": "Are you sure you want to permanently delete the Exam <strong>{{ title }}</strong>? All associated elements will be deleted including the Student Exams. This action can NOT be undone!",

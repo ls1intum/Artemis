@@ -95,7 +95,7 @@ describe('Exam Update Component', () => {
                             data: {
                                 subscribe: (fn: (value: Params) => void) =>
                                     fn({
-                                        exam,
+                                        exam: exam,
                                     }),
                             },
                             snapshot: {
@@ -506,7 +506,7 @@ describe('Exam Update Component', () => {
             expect(component.exam.studentExams).toBeUndefined();
         });
 
-        it('should  perform input of exercise groups successfully', () => {
+        it('should  perform input of an exam with exercises successfully', () => {
             const importSpy = jest.spyOn(examManagementService, 'import').mockReturnValue(
                 of(
                     new HttpResponse({
@@ -523,7 +523,7 @@ describe('Exam Update Component', () => {
             expect(alertSpy).toHaveBeenCalledTimes(0);
         });
 
-        it('should  trigger an alarm for a wrong user input', () => {
+        it('should  trigger an alarm for a wrong user input in the exam exercises', () => {
             const importSpy = jest.spyOn(examManagementService, 'import').mockReturnValue(
                 of(
                     new HttpResponse({
@@ -536,6 +536,7 @@ describe('Exam Update Component', () => {
 
             fixture.detectChanges();
 
+            // We need to "fake" a wrong user input here. To not affect the other tests, the wrong exam is a deep clone of the examForImport
             let exerciseGroup2 = { title: 'exerciseGroup2' } as ExerciseGroup;
             let modelingExercise2 = new ModelingExercise(UMLDiagramType.ClassDiagram, undefined, exerciseGroup2);
             modelingExercise2.id = 2;
@@ -546,6 +547,7 @@ describe('Exam Update Component', () => {
             component.exam = examWithError;
             component.examExerciseImportComponent.exam = examWithError;
             component.examExerciseImportComponent.ngOnInit();
+
             fixture.detectChanges();
             component.save();
 
@@ -553,7 +555,7 @@ describe('Exam Update Component', () => {
             expect(alertSpy).toHaveBeenCalledOnce();
         });
 
-        it('should perform input of exercise groups AND correctly process conflict exception from server', () => {
+        it('should perform import of exam AND correctly process conflict exception from server', () => {
             const preCheckError = new HttpErrorResponse({
                 error: { errorKey: 'examContainsProgrammingExercisesWithInvalidKey', numberOfInvalidProgrammingExercises: 2, params: { exerciseGroups: [exerciseGroup1] } },
                 status: 400,
