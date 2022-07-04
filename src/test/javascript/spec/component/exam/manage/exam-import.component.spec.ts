@@ -34,7 +34,7 @@ describe('Exam Import Component', () => {
 
     let exam1 = { id: 1 } as Exam;
 
-    // Initializing one Exercise Group per Exercise Type
+    // Initializing one Exercise Group
     let exerciseGroup1 = { title: 'exerciseGroup1' } as ExerciseGroup;
     let modelingExercise = new ModelingExercise(UMLDiagramType.ClassDiagram, undefined, exerciseGroup1);
     modelingExercise.id = 1;
@@ -165,8 +165,7 @@ describe('Exam Import Component', () => {
         let modelingExercise2 = new ModelingExercise(UMLDiagramType.ClassDiagram, undefined, exerciseGroup2);
         modelingExercise2.id = 2;
         exerciseGroup2.exercises = [modelingExercise2];
-        let exam2WithExercises = { id: 1, exerciseGroups: [exerciseGroup2] } as Exam;
-        component.exam = exam2WithExercises;
+        component.exam = { id: 1, exerciseGroups: [exerciseGroup2] } as Exam;
         component.targetCourseId = 1;
         component.targetExamId = 3;
         fixture.detectChanges();

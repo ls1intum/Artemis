@@ -103,7 +103,6 @@ export class ExamUpdateComponent implements OnInit {
                 return;
             }
             this.exam.exerciseGroups = this.examExerciseImportComponent.mapSelectedExercisesToExerciseGroups();
-            console.log(this.exam.exerciseGroups);
             this.subscribeToSaveResponse(this.examManagementService.import(this.course.id!, this.exam));
         } else if (this.exam.id !== undefined) {
             this.subscribeToSaveResponse(this.examManagementService.update(this.course.id!, this.exam));
@@ -281,5 +280,7 @@ export class ExamUpdateComponent implements OnInit {
         this.exam.publishResultsDate = undefined;
         this.exam.examStudentReviewStart = undefined;
         this.exam.examStudentReviewEnd = undefined;
+        this.exam.registeredUsers = undefined;
+        this.exam.studentExams = undefined;
     }
 }
