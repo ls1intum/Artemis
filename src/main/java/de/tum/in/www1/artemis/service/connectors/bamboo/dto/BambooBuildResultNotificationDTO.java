@@ -121,8 +121,6 @@ public class BambooBuildResultNotificationDTO extends AbstractBuildResultNotific
             }
         }
 
-        extractBuildLogStatistics(programmingSubmission, buildLogEntries);
-
         return buildLogEntries;
     }
 

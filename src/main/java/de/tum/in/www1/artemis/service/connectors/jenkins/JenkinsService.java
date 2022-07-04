@@ -153,6 +153,11 @@ public class JenkinsService extends AbstractContinuousIntegrationService {
     }
 
     @Override
+    public void extractBuildLogStatistics(ProgrammingSubmission programmingSubmission, List<BuildLogEntry> buildLogEntries) {
+
+    }
+
+    @Override
     public BuildStatus getBuildStatus(ProgrammingExerciseParticipation participation) {
         if (participation.getBuildPlanId() == null) {
             // The build plan does not exist, the build status cannot be retrieved

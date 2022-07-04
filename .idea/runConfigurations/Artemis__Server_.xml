@@ -2,7 +2,7 @@
   <configuration default="false" name="Artemis (Server)" type="SpringBootApplicationConfigurationType" factoryName="Spring Boot">
     <module name="Artemis.main" />
     <option name="SPRING_BOOT_MAIN_CLASS" value="de.tum.in.www1.artemis.ArtemisApp" />
-    <option name="ACTIVE_PROFILES" value="dev,bamboo,bitbucket,jira,artemis,scheduling,local" />
+    <option name="ACTIVE_PROFILES" value="dev,bamboo,bitbucket,jira,artemis,scheduling,local4" />
     <option name="VM_PARAMETERS" value="--illegal-access=warn -Duser.country=US -Duser.language=en" />
     <option name="ALTERNATIVE_JRE_PATH" />
     <option name="SHORTEN_COMMAND_LINE" value="MANIFEST" />
