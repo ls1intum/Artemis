@@ -49,6 +49,11 @@ public class CodeHintResource {
         this.codeHintService = codeHintService;
     }
 
+    /**
+     * GET programming-exercises/{exerciseId}/code-hints: Retrieve all code hints for a programming exercise.
+     * @param exerciseId of the exercise
+     * @return the {@link ResponseEntity} with status {@code 200 (Ok)} and with body the code hints for the exercise
+     */
     @GetMapping("programming-exercises/{exerciseId}/code-hints")
     @PreAuthorize("hasRole('EDITOR')")
     public ResponseEntity<Set<CodeHint>> getAllCodeHints(@PathVariable Long exerciseId) {
@@ -64,7 +69,7 @@ public class CodeHintResource {
      *
      * @param exerciseId the exerciseId of the exercise of which to create the exerciseHint
      * @param deleteOldCodeHints Whether old code hints should be deleted
-     * @return the {@link ResponseEntity} with status {@code 200 (Ok)} and with body the new code hints,
+     * @return the {@link ResponseEntity} with status {@code 200 (Ok)} and with body the new code hints
      */
     @PostMapping("programming-exercises/{exerciseId}/code-hints")
     @PreAuthorize("hasRole('EDITOR')")
