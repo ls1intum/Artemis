@@ -1,9 +1,8 @@
 import { Component, Input, OnChanges } from '@angular/core';
-import { Exercise, ExerciseType, getIcon } from 'app/entities/exercise.model';
+import { Exercise, ExerciseType, getIcon, IncludedInOverallScore } from 'app/entities/exercise.model';
 import { Submission } from 'app/entities/submission.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { getExerciseSubmissionsLink, getLinkToSubmissionAssessment } from 'app/utils/navigation.utils';
-import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
 import { Course } from 'app/entities/course.model';
 import { Result } from 'app/entities/result.model';
 import { StudentExam } from 'app/entities/student-exam.model';
@@ -22,6 +21,7 @@ export class StudentExamDetailTableRowComponent implements OnChanges {
     @Input() course: Course;
     @Input() busy: boolean;
     @Input() studentExam: StudentExam;
+    @Input() achievedPointsPerExercise: { [exerciseId: number]: number };
 
     courseId: number;
     studentParticipation: StudentParticipation;
@@ -30,8 +30,6 @@ export class StudentExamDetailTableRowComponent implements OnChanges {
     openingAssessmentEditorForNewSubmission = false;
     readonly ExerciseType = ExerciseType;
     getIcon = getIcon;
-
-    readonly roundScoreSpecifiedByCourseSettings = roundValueSpecifiedByCourseSettings;
 
     // Icons
     faFolderOpen = faFolderOpen;
@@ -71,5 +69,40 @@ export class StudentExamDetailTableRowComponent implements OnChanges {
             this.openingAssessmentEditorForNewSubmission = false;
         }
         return route;
+    }
+
+    /**
+     * Gets the bonus points from the given exercise according to its includedInOverallScore value.
+     * @param exercise exercise with or without bonus points
+     */
+    getBonusPoints(exercise?: Exercise): number | undefined {
+        if (!exercise) {
+            return 0;
+        }
+        switch (exercise.includedInOverallScore) {
+            case IncludedInOverallScore.INCLUDED_COMPLETELY:
+                return exercise.bonusPoints;
+            case IncludedInOverallScore.INCLUDED_AS_BONUS:
+                return exercise.maxPoints;
+            default:
+                return 0;
+        }
+    }
+
+    /**
+     * Gets the max points from the given exercise according to its includedInOverallScore value.
+     * @param exercise relevant exercise
+     */
+    getMaxPoints(exercise?: Exercise): number | undefined {
+        if (!exercise) {
+            return 0;
+        }
+        switch (exercise.includedInOverallScore) {
+            case IncludedInOverallScore.INCLUDED_COMPLETELY:
+                return exercise.maxPoints;
+            case IncludedInOverallScore.INCLUDED_AS_BONUS:
+            default:
+                return 0;
+        }
     }
 }

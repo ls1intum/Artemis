@@ -8,7 +8,6 @@ import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
 import { GuidedTourComponent } from 'app/guided-tour/guided-tour.component';
 import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
 import { AccountService } from 'app/core/auth/account.service';
-import { DeviceDetectorService } from 'ngx-device-detector';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { RouterTestingModule } from '@angular/router/testing';
 import { courseOverviewTour } from 'app/guided-tour/tours/course-overview-tour';
@@ -94,7 +93,6 @@ describe('Guided tour integration', () => {
             ],
             providers: [
                 { provide: AccountService, useClass: MockAccountService },
-                { provide: DeviceDetectorService },
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: TranslateService, useClass: MockTranslateService },

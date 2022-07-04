@@ -44,7 +44,9 @@
                 (ngModelChange)="triggerAddressedComplaints()"
             />
             <label class="form-check-label" for="field_showAddressedComplaint">
-                <span *ngIf="complaintType === ComplaintType.COMPLAINT">{{ 'artemisApp.complaint.listOfComplaints.showAddressedComplaints' | artemisTranslate }}</span>
+                <span *ngIf="complaintType === ComplaintType.COMPLAINT">{{
+                    'artemisApp.complaint.listOfComplaints.show' + (filterOption === FilterOptionAddressedComplaints ? 'Only' : '') + 'AddressedComplaints' | artemisTranslate
+                }}</span>
                 <span *ngIf="complaintType === ComplaintType.MORE_FEEDBACK">{{ 'artemisApp.moreFeedback.list.showAnsweredRequests' | artemisTranslate }}</span>
             </label>
         </div>
