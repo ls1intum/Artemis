@@ -268,10 +268,9 @@ public class ExerciseHintService {
      *
      * @throws ConflictException if the provided exercise id does not match the one stored in the hint
      */
-    @Cacheable(cacheNames = "exerciseHintTitle", key = "#{exerciseId + '-' + exerciseHintId}", unless = "#result == null")
+    @Cacheable(cacheNames = "exerciseHintTitle", key = "''.concat(#exerciseId).concat('-').concat(#exerciseHintId)", unless = "#result == null")
     public String getExerciseHintTitle(Long exerciseId, Long exerciseHintId) {
         final var hint = exerciseHintRepository.findByIdElseThrow(exerciseHintId);
-
         if (hint.getExercise() == null || !hint.getExercise().getId().equals(exerciseId)) {
             throw new ConflictException("An exercise hint can only be retrieved if the exerciseIds match.", "exerciseHint", "exerciseIdsMismatch");
         }
