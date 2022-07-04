@@ -81,15 +81,15 @@ public class TitleCacheEvictionService implements PostInsertEventListener, PostU
         }
     }
 
-    private void evictIdFromCache(String cacheName, Object id) {
+    private void evictIdFromCache(String cacheName, Object entityId) {
         var cache = cacheManager.getCache(cacheName);
         if (cache == null) {
             log.warn("Unable to evict entry in title cache: Cache {} not found", cacheName);
             return;
         }
 
-        cache.evict(id);
-        log.info("Evicted entry '{}' from title cache '{}'", id, cacheName);
+        cache.evict(entityId);
+        log.info("Evicted entry '{}' from title cache '{}'", entityId, cacheName);
     }
 
     @Override
