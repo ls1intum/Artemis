@@ -21,7 +21,7 @@ import de.tum.in.www1.artemis.domain.hestia.ExerciseHint;
 import de.tum.in.www1.artemis.domain.modeling.ApollonDiagram;
 
 @Service
-public class TitleCacheEvictionService implements PostInsertEventListener, PostUpdateEventListener, PostDeleteEventListener {
+public class TitleCacheEvictionService implements PostUpdateEventListener, PostDeleteEventListener {
 
     private final Logger log = LoggerFactory.getLogger(TitleCacheEvictionService.class);
 
