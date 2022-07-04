@@ -46,6 +46,16 @@ public class WebsocketMessagingService {
     }
 
     /**
+     * Wrapper method to send a message over websocket to the given topic to a specific user
+     * @param user the user that should receive the message.
+     * @param destination the destination to send the message to
+     * @param payload the payload to send
+     */
+    public void sendMessageToUser(String user, String destination, Object payload) {
+        messagingTemplate.convertAndSendToUser(user, destination, payload);
+    }
+
+    /**
      * Broadcast a new result to the client.
      *
      * @param participation the id is used in the destination (so that only clients who have subscribed the specific participation will receive the result)

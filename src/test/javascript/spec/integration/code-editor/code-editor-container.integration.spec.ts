@@ -16,7 +16,6 @@ import { problemStatement } from '../../helpers/sample/problemStatement.json';
 import { MockProgrammingExerciseParticipationService } from '../../helpers/mocks/service/mock-programming-exercise-participation.service';
 import { ProgrammingSubmissionService, ProgrammingSubmissionState, ProgrammingSubmissionStateObj } from 'app/exercises/programming/participate/programming-submission.service';
 import { MockProgrammingSubmissionService } from '../../helpers/mocks/service/mock-programming-submission.service';
-import { DeviceDetectorService } from 'ngx-device-detector';
 import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
 import { GuidedTourMapping } from 'app/guided-tour/guided-tour-setting.model';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
@@ -118,7 +117,6 @@ describe('CodeEditorContainerIntegration', () => {
             ],
             providers: [
                 ChangeDetectorRef,
-                DeviceDetectorService,
                 CodeEditorConflictStateService,
                 { provide: ActivatedRoute, useClass: MockActivatedRouteWithSubjects },
                 { provide: JhiWebsocketService, useClass: MockWebsocketService },

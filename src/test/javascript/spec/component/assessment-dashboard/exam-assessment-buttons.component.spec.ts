@@ -147,8 +147,8 @@ describe('ExamAssessmentButtons', () => {
         course.isAtLeastInstructor = true;
 
         examAssessmentButtonsFixture.detectChanges();
-        expect(examAssessmentButtonsComponent.isLoading).toEqual(false);
-        expect(examAssessmentButtonsComponent.isExamOver).toEqual(true);
+        expect(examAssessmentButtonsComponent.isLoading).toBeFalse();
+        expect(examAssessmentButtonsComponent.isExamOver).toBeTrue();
         expect(course).toBeTruthy();
         const assessSpy = jest.spyOn(examManagementService, 'assessUnsubmittedExamModelingAndTextParticipations');
         const assessButton = examAssessmentButtonsFixture.debugElement.query(By.css('#assessUnsubmittedExamModelingAndTextParticipationsButton'));
@@ -168,8 +168,8 @@ describe('ExamAssessmentButtons', () => {
 
         examAssessmentButtonsFixture.detectChanges();
         const alertServiceSpy = jest.spyOn(alertService, 'error');
-        expect(examAssessmentButtonsComponent.isLoading).toEqual(false);
-        expect(examAssessmentButtonsComponent.isExamOver).toEqual(true);
+        expect(examAssessmentButtonsComponent.isLoading).toBeFalse();
+        expect(examAssessmentButtonsComponent.isExamOver).toBeTrue();
         expect(course).toBeTruthy();
         jest.spyOn(examManagementService, 'assessUnsubmittedExamModelingAndTextParticipations').mockReturnValue(throwError(() => httpError));
         const assessButton = examAssessmentButtonsFixture.debugElement.query(By.css('#assessUnsubmittedExamModelingAndTextParticipationsButton'));
@@ -184,15 +184,15 @@ describe('ExamAssessmentButtons', () => {
         exam.endDate = dayjs().subtract(100, 'seconds');
 
         examAssessmentButtonsFixture.detectChanges();
-        expect(examAssessmentButtonsComponent.isLoading).toEqual(false);
-        expect(examAssessmentButtonsComponent.isExamOver).toEqual(true);
-        expect(examAssessmentButtonsComponent.course.isAtLeastInstructor).toEqual(true);
+        expect(examAssessmentButtonsComponent.isLoading).toBeFalse();
+        expect(examAssessmentButtonsComponent.isExamOver).toBeTrue();
+        expect(examAssessmentButtonsComponent.course.isAtLeastInstructor).toBeTrue();
         expect(course).toBeTruthy();
         const evaluateQuizExercises = jest.spyOn(examManagementService, 'evaluateQuizExercises');
         const evaluateQuizExercisesButton = examAssessmentButtonsFixture.debugElement.query(By.css('#evaluateQuizExercisesButton'));
 
         expect(evaluateQuizExercisesButton).toBeTruthy();
-        expect(evaluateQuizExercisesButton.nativeElement.disabled).toEqual(false);
+        expect(evaluateQuizExercisesButton.nativeElement.disabled).toBeFalse();
 
         evaluateQuizExercisesButton.nativeElement.click();
         expect(evaluateQuizExercises).toBeCalled();
@@ -205,9 +205,9 @@ describe('ExamAssessmentButtons', () => {
         const alertService = TestBed.inject(AlertService);
 
         examAssessmentButtonsFixture.detectChanges();
-        expect(examAssessmentButtonsComponent.isLoading).toEqual(false);
-        expect(examAssessmentButtonsComponent.isExamOver).toEqual(true);
-        expect(examAssessmentButtonsComponent.course.isAtLeastInstructor).toEqual(true);
+        expect(examAssessmentButtonsComponent.isLoading).toBeFalse();
+        expect(examAssessmentButtonsComponent.isExamOver).toBeTrue();
+        expect(examAssessmentButtonsComponent.course.isAtLeastInstructor).toBeTrue();
         expect(course).toBeTruthy();
 
         const httpError = new HttpErrorResponse({ error: 'Forbidden', status: 403 });
@@ -217,7 +217,7 @@ describe('ExamAssessmentButtons', () => {
         const alertServiceSpy = jest.spyOn(alertService, 'error');
         const evaluateQuizExercisesButton = examAssessmentButtonsFixture.debugElement.query(By.css('#evaluateQuizExercisesButton'));
         expect(evaluateQuizExercisesButton).toBeTruthy();
-        expect(evaluateQuizExercisesButton.nativeElement.disabled).toEqual(false);
+        expect(evaluateQuizExercisesButton.nativeElement.disabled).toBeFalse();
         evaluateQuizExercisesButton.nativeElement.click();
         expect(alertServiceSpy).toBeCalled();
     });
@@ -236,6 +236,6 @@ describe('ExamAssessmentButtons', () => {
         examAssessmentButtonsFixture.detectChanges();
         const assessButton = examAssessmentButtonsFixture.debugElement.query(By.css('#assessUnsubmittedExamModelingAndTextParticipationsButton'));
         expect(assessButton).toBeTruthy();
-        expect(assessButton.nativeElement.disabled).toEqual(true);
+        expect(assessButton.nativeElement.disabled).toBeTrue();
     });
 });

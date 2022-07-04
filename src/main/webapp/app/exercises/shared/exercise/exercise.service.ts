@@ -461,6 +461,12 @@ export class ExerciseService {
             this.entityTitleService.setTitle(EntityType.COURSE, [exercise.course.id], exercise.course.title);
         }
     }
+
+    public getLatestDueDate(exerciseId: number): Observable<dayjs.Dayjs | undefined> {
+        return this.http
+            .get<dayjs.Dayjs>(`${this.resourceUrl}/${exerciseId}/latest-due-date`, { observe: 'response' })
+            .pipe(map((res: HttpResponse<dayjs.Dayjs>) => (res.body ? dayjs(res.body) : undefined)));
+    }
 }
 
 @Injectable({ providedIn: 'root' })

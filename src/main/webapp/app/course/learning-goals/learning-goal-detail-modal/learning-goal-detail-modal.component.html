@@ -38,13 +38,13 @@
                     <tbody>
                         <tr *ngFor="let lectureUnit of learningGoal.lectureUnits">
                             <td>
-                                <a [routerLink]="['/courses', learningGoal?.course?.id, 'lectures', lectureUnit.lecture?.id]">
+                                <a [routerLink]="['/courses', lectureUnit?.lecture?.course?.id, 'lectures', lectureUnit.lecture?.id]">
                                     {{ lectureUnitService.getLectureUnitName(lectureUnit) ? lectureUnitService.getLectureUnitName(lectureUnit) : '' }}
                                 </a>
                             </td>
                             <td>{{ lectureUnit.type ? lectureUnit.type : '' }}</td>
                             <td>
-                                <a [routerLink]="['/courses', learningGoal?.course?.id, 'lectures', lectureUnit.lecture?.id]"
+                                <a [routerLink]="['/courses', lectureUnit?.lecture?.course?.id, 'lectures', lectureUnit.lecture?.id]"
                                     >{{ lectureUnit.lecture?.title ? lectureUnit.lecture?.title : '' }}
                                 </a>
                             </td>

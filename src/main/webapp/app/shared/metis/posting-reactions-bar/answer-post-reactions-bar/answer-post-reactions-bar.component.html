@@ -39,9 +39,9 @@
     </ng-template>
     <!-- add new answer to expanded discussion -->
     <div class="col-auto p-0" *ngIf="isLastAnswer">
-        <button class="reaction-button clickable answer-now-btn" (click)="openPostingCreateEditModal.emit()">
+        <button class="reaction-button clickable reply-btn" (click)="openPostingCreateEditModal.emit()">
             <jhi-emoji [emoji]="speechBalloonId"></jhi-emoji>
-            <span class="emoji-count">{{ 'artemisApp.metis.answerNow' | artemisTranslate }}</span>
+            <span class="emoji-count">{{ 'artemisApp.metis.reply' | artemisTranslate }}</span>
         </button>
     </div>
 </div>
