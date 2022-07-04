@@ -1,15 +1,13 @@
-**********************
+****************
 Criteria Builder
-**********************
-
-WORK IN PROGRESS
+****************
 
 1. Requirements
-==================================================
+===============
 
-In order to use the Criteria Builder and the benefits of Specifications, we need to adjust the Repository.
+In order to use Criteria Builder and benefit from Specifications, we need to adjust the Repository.
 
-1. **Metamodel:** Each class needs to have a metamodel (we fulfill this requirement)
+1. **Metamodel:** The metamodel is used to refer to the columns of a table, in an object-oriented way. For this, each entity needs to have a corresponding metamodel class. (Artemis already fulfills this requirement)
 
     .. code-block:: java
 
@@ -29,7 +27,7 @@ In order to use the Criteria Builder and the benefits of Specifications, we need
             ...
         }
 
-2. **JpaSpecificationExecutor:** To execute Specifications we need to extend the JpaSpecificationExecutor interface in our Spring Data JPA Repository.
+2. **JpaSpecificationExecutor:** To execute Specifications and generate SQL statements, we need to extend the JpaSpecificationExecutor interface in our Spring Data JPA Repository.
 
     .. code-block:: java
 
@@ -37,7 +35,7 @@ In order to use the Criteria Builder and the benefits of Specifications, we need
         public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificationExecutor<User> {
         }
 
-3. **(Optional) Show queries:** To see the executed queries, you can enable the output.
+3. **(Optional) Show queries:** To ease debugging, generated queries can be displayed by enabling the output of executed SQL probes.
 
     .. code-block:: yaml
 
@@ -47,10 +45,10 @@ In order to use the Criteria Builder and the benefits of Specifications, we need
             show-sql: true
 
 
-2. Perform the query
-==================================================
+2. Performing the query
+=======================
 
-1. **Perform Query:** In most cases it is enough to perform one of the following methods:
+1. **Perform Query:** In most occasions, it is sufficient to perform any one of the following methods:
 
     .. code-block:: java
 
@@ -60,14 +58,14 @@ In order to use the Criteria Builder and the benefits of Specifications, we need
 
         List<T> findAll(Specification<T> spec, Sort sort);
 
-2. **JDefine entry Specification:** To perform a query with multiple Specifications, we can concatenate them using the and method. The first Specification must be called via the where method.
+2. **Defining the initial Specification:** To perform a query with multiple Specifications, we can use the `and()` method for concatenation. However, the first Specification must always be called via the `where()` method as a rule.
 
     .. code-block:: java
 
         Specification<T> specification = Specification.where(getFirstSpecification()).and(getSecondSpecification()).and(getThirdSpecification())...and(getNthSpecification());
         return findAll(specification, sort/pageable);
 
-3. **Define Specification:** A specification is a functional interface with a single method. This method has three parameter - a root, a query and a criteria builder. You don't need to specify these arguments manually because they are provided during chaining.
+3. **Defining Specifications:** A specification is a functional interface with a single method. This method has three parameter - a root, a query and a criteria builder. You don't need to specify these arguments manually because they are provided during chaining.
 
     .. code-block:: java
 
@@ -100,9 +98,9 @@ In order to use the Criteria Builder and the benefits of Specifications, we need
 
 
 3. Operations
-==================================================
+=============
 
-- **AND:** We can and Predicates via the Criteria Builder which results in as new Predicate.
+- **AND:** We can perform the `and` operation on an arbitrary number of predicates via the criteriaBuilder object, which results in a new Predicate.
 
     .. code-block:: java
 
@@ -113,7 +111,7 @@ In order to use the Criteria Builder and the benefits of Specifications, we need
         	return criteriaBuilder.and(one, two, ...);
         };
 
-- **OR:** We can or Predicates via the Criteria Builder which results in as new Predicate.
+- **OR:** We can perform the `or` operation on an arbitrary number of predicates via the criteriaBuilder object, which results in a new Predicate.
 
     .. code-block:: java
 
@@ -124,7 +122,7 @@ In order to use the Criteria Builder and the benefits of Specifications, we need
             return criteriaBuilder.or(one, two, ...);
         };
 
-- **EQUAL/NOTEQUAL:**
+- **EQUAL / NOT EQUAL:**
 
     .. code-block:: java
 
@@ -133,6 +131,17 @@ In order to use the Criteria Builder and the benefits of Specifications, we need
         	Predicate two = criteriaBuilder.notEqual(root.get(User_.ACTIVATED), true);
 
         	return criteriaBuilder.and(one, two, ...);
+        };
+
+- **NOT:**
+
+    .. code-block:: java
+
+        return (root, query, criteriaBuilder) -> {
+            ...
+            Predicate predicate = criteriaBuilder.exists(subQuery).not();
+
+            return criteriaBuilder.equals(predicate);
         };
 
 - **IN:** To check if the collection contains a value.
@@ -146,17 +155,17 @@ In order to use the Criteria Builder and the benefits of Specifications, we need
 
 
 4. Joins
-==================================================
+========
 
 Many different joins are available (e.g. Join, ListJoin, SetJoin, CollectionJoin, ...) - please choose the right one.
 
-- If we want to join from X to Y, we need to define the column and the join type.
+- If we want to join from X to Y, we need to define the column and the join type. Please mind that when the join type is not specified, Inner Join is made by default.
 
     .. code-block:: java
 
         Join<X, Y> join = root.join(X_.COLUMN, JoinType.LEFT);
 
-- We can define custom on clauses to specify the join.
+- We can define custom on clauses to specify the join condition.
 
     .. code-block:: java
 
@@ -171,7 +180,7 @@ Many different joins are available (e.g. Join, ListJoin, SetJoin, CollectionJoin
 
 
 4. Sub-Queries
-==================================================
+==============
 
 Sub-queries are usually fine unless they are dependent sub-queries (also known as `correlated <https://en.wikipedia.org/wiki/Correlated_subquery>`_ sub queries).
 
@@ -181,10 +190,10 @@ Sub-queries are usually fine unless they are dependent sub-queries (also known a
 2. **Independent Sub-Query:**
     An independent sub-query is a sub-query that can be run on its own, without the main (sub-)query. Therefore an independent sub-query typically only needs to be evaluated once.
 
-You can find additional information `here <https://stackoverflow.com/questions/4799820/when-to-use-sql-sub-queries-versus-a-standard-join/4799847#4799847>`_
+You can find additional information on dependent sub-queries and how to identify them `here <https://stackoverflow.com/questions/4799820/when-to-use-sql-sub-queries-versus-a-standard-join/4799847#4799847>`_.
 
 5. Examples
-==================================================
+===========
 
 - Specification that matches the specified string:
 
@@ -270,14 +279,15 @@ You can find additional information `here <https://stackoverflow.com/questions/4
 
 
 6. Limitations
-==================================================
+==============
 
-- Simple queries are getting more complex - but reusable.
+- Executing simple queries becomes more complex - but reusable.
 - Multiple "group by" are not combined but overwritten → you need a specification that combines them.
+- Pagination feature of Spring Data JPA does not support the use of specifications with "group by". See `issue <https://github.com/spring-projects/spring-data-jpa/issues/2361>`_.
 
 
 7. Additional links
-==================================================
+===================
 
 - https://spring.io/blog/2011/04/26/advanced-spring-data-jpa-specifications-and-querydsl
 - https://www.baeldung.com/hibernate-criteria-queries
