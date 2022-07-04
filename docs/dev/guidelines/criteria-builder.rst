@@ -45,10 +45,10 @@ In order to use Criteria Builder and benefit from Specifications, we need to adj
             show-sql: true
 
 
-2. Performing the query
+2. Generating the query
 =======================
 
-1. **Perform Query:** In most occasions, it is sufficient to perform any one of the following methods:
+1. **Query Generation:** In most occasions, it is sufficient to execute any one of the following methods:
 
     .. code-block:: java
 
@@ -58,7 +58,7 @@ In order to use Criteria Builder and benefit from Specifications, we need to adj
 
         List<T> findAll(Specification<T> spec, Sort sort);
 
-2. **Defining the initial Specification:** To perform a query with multiple Specifications, we can use the `and()` method for concatenation. However, the first Specification must always be called via the `where()` method as a rule.
+2. **Defining the initial Specification:** To generate a query with multiple Specifications, we can use the `and()` method for concatenation. However, the first Specification must always be called via the `where()` method as a rule.
 
     .. code-block:: java
 
