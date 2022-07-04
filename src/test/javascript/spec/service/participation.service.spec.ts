@@ -13,9 +13,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockRouter } from '../helpers/mocks/mock-router';
 import { Router } from '@angular/router';
-import { TextExercise } from 'app/entities/text-exercise.model';
 import { Course } from 'app/entities/course.model';
-import { Exercise } from 'app/entities/exercise.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 
 describe('Participation Service', () => {

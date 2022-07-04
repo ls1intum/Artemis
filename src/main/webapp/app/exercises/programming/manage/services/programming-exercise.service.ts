@@ -18,7 +18,7 @@ import { ProgrammingExerciseGitDiffReport } from 'app/entities/hestia/programmin
 import { CoverageReport } from 'app/entities/hestia/coverage-report.model';
 import { ProgrammingExerciseSolutionEntry } from 'app/entities/hestia/programming-exercise-solution-entry.model';
 import { ProgrammingExerciseServerSideTask } from 'app/entities/hestia/programming-exercise-task.model';
-import { convertDateFromServer } from 'app/utils/date.utils';
+import { convertDateFromClient, convertDateFromServer } from 'app/utils/date.utils';
 
 export type EntityResponseType = HttpResponse<ProgrammingExercise>;
 export type EntityArrayResponseType = HttpResponse<ProgrammingExercise[]>;
@@ -295,10 +295,7 @@ export class ProgrammingExerciseService {
     convertDataFromClient(exercise: ProgrammingExercise) {
         const copy = {
             ...ExerciseService.convertExerciseDatesFromClient(exercise),
-            buildAndTestStudentSubmissionsAfterDueDate:
-                exercise.buildAndTestStudentSubmissionsAfterDueDate && dayjs(exercise.buildAndTestStudentSubmissionsAfterDueDate).isValid()
-                    ? dayjs(exercise.buildAndTestStudentSubmissionsAfterDueDate).toJSON()
-                    : undefined,
+            buildAndTestStudentSubmissionsAfterDueDate: convertDateFromClient(exercise.buildAndTestStudentSubmissionsAfterDueDate),
         };
         // Remove exercise from template & solution participation to avoid circular dependency issues.
         // Also remove the results, as they can have circular structures as well and don't have to be saved here.

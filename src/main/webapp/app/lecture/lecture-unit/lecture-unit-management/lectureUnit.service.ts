@@ -2,13 +2,12 @@ import { LectureUnit, LectureUnitType } from 'app/entities/lecture-unit/lectureU
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
-import dayjs from 'dayjs/esm';
 import { Injectable } from '@angular/core';
 import { AttachmentUnit } from 'app/entities/lecture-unit/attachmentUnit.model';
 import { AttachmentService } from 'app/lecture/attachment.service';
 import { ExerciseUnit } from 'app/entities/lecture-unit/exerciseUnit.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
-import { convertDateFromServer } from 'app/utils/date.utils';
+import { convertDateFromClient, convertDateFromServer } from 'app/utils/date.utils';
 
 type EntityArrayResponseType = HttpResponse<LectureUnit[]>;
 
@@ -52,7 +51,7 @@ export class LectureUnitService {
             }
         }
         return Object.assign({}, lectureUnit, {
-            releaseDate: lectureUnit.releaseDate && dayjs(lectureUnit.releaseDate).isValid() ? lectureUnit.releaseDate.toJSON() : undefined,
+            releaseDate: convertDateFromClient(lectureUnit.releaseDate),
         });
     }
 

@@ -2,7 +2,7 @@ import { of, Observable } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
 import { Exercise } from 'app/entities/exercise.model';
 import { EntityArrayResponseType, EntityResponseType } from 'app/exercises/shared/exercise/exercise.service';
-import dayjs from 'dayjs/esm';
+import { convertDateFromClient } from 'app/utils/date.utils';
 
 export class MockExerciseService {
     find(exerciseId: number) {
@@ -36,9 +36,9 @@ export class MockExerciseService {
 
     static convertExerciseDatesFromClient<E extends Exercise>(exercise: E): E {
         return Object.assign({}, exercise, {
-            releaseDate: exercise.releaseDate && dayjs(exercise.releaseDate).isValid() ? dayjs(exercise.releaseDate).toJSON() : undefined,
-            dueDate: exercise.dueDate && dayjs(exercise.dueDate).isValid() ? dayjs(exercise.dueDate).toJSON() : undefined,
-            assessmentDueDate: exercise.assessmentDueDate && dayjs(exercise.assessmentDueDate).isValid() ? dayjs(exercise.assessmentDueDate).toJSON() : undefined,
+            releaseDate: convertDateFromClient(exercise.releaseDate),
+            dueDate: convertDateFromClient(exercise.dueDate),
+            assessmentDueDate: convertDateFromClient(exercise.assessmentDueDate),
         });
     }
 
