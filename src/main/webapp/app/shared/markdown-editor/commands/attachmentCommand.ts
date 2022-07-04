@@ -12,7 +12,7 @@ export class AttachmentCommand extends Command {
      *       1. Check if the selected text includes ('![](http://)')
      *       2. If included reduce the selected text by this elements and replace the selected text by textToAdd
      *       3. If not included add ('![](http://)') at the cursor position in the editor
-     *       4. Attachment in markdown language appears
+     *       4. Attachment in Markdown language appears
      */
     execute(): void {
         let selectedText = this.getSelectedText();

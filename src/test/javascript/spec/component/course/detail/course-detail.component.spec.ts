@@ -21,6 +21,7 @@ import { UsersImportButtonComponent } from 'app/shared/import/users-import-butto
 import { EventManager } from 'app/core/util/event-manager.service';
 import { MockRouter } from '../../../helpers/mocks/mock-router';
 import { FullscreenComponent } from 'app/shared/fullscreen/fullscreen.component';
+import { Course } from 'app/entities/course.model';
 
 describe('Course Management Detail Component', () => {
     let component: CourseDetailComponent;
@@ -29,8 +30,15 @@ describe('Course Management Detail Component', () => {
     let eventManager: EventManager;
 
     const route = { params: of({ courseId: 1 }) };
-    const course = { id: 123, title: 'Course Title', isAtLeastInstructor: true, endDate: dayjs().subtract(5, 'minutes'), courseArchivePath: 'some-path' };
-    const dtoMock = {
+    const course: Course = {
+        id: 123,
+        title: 'Course Title',
+        description: 'Cras mattis iudicium purus sit amet fermentum. Gallia est omnis divisa in partes tres, quarum.',
+        isAtLeastInstructor: true,
+        endDate: dayjs().subtract(5, 'minutes'),
+        courseArchivePath: 'some-path',
+    };
+    const dtoMock: CourseManagementDetailViewDto = {
         numberOfStudentsInCourse: 100,
         numberOfTeachingAssistantsInCourse: 5,
         numberOfEditorsInCourse: 5,
@@ -52,7 +60,7 @@ describe('Course Management Detail Component', () => {
         currentAbsoluteAverageScore: 90,
         currentMaxAverageScore: 100,
         activeStudents: [4, 10, 14, 35],
-    } as CourseManagementDetailViewDto;
+    };
 
     beforeEach(() => {
         TestBed.configureTestingModule({

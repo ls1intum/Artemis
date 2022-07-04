@@ -34,43 +34,16 @@
                 <div *ngIf="!shortAnswerQuestionUtil.isInputField(element)" [innerHTML]="element"></div>
                 <div
                     class="short-answer-question-container"
-                    id="sa-question-container-B"
-                    *ngIf="
-                        shortAnswerQuestionUtil.isInputField(element) &&
-                        !showingSampleSolution &&
-                        !shortAnswerQuestionUtil.getSpot(shortAnswerQuestionUtil.getSpotNr(element), shortAnswerQuestion).invalid
-                    "
+                    *ngIf="shortAnswerQuestionUtil.isInputField(element)"
+                    [ngbTooltip]="classifyInputField(element) === 'invalid' ? ('artemisApp.shortAnswerSpot.invalidSpot' | artemisTranslate) : undefined"
                 >
                     <input
-                        class="short-answer-question-container__input"
+                        class="short-answer-question-container__input {{ classifyInputField(element) }}"
                         disabled
-                        [style.background]="getBackgroundColourForInputField(element)"
-                        value="{{ getSubmittedTextForSpotAsString(element) }}"
-                        size="{{ getSubmittedTextSizeForSpot(element) }}"
-                    />
-                    <div
-                        *ngIf="shortAnswerQuestionUtil.getSpot(shortAnswerQuestionUtil.getSpotNr(element), shortAnswerQuestion).invalid"
-                        [ngbTooltip]="'artemisApp.shortAnswerSpot.invalidSpot' | artemisTranslate"
-                    >
-                        <input
-                            class="short-answer-question-container__input"
-                            style="background: grey"
-                            disabled
-                            value="{{ getSubmittedTextForSpotAsString(element) }}"
-                            size="{{ getSubmittedTextSizeForSpot(element) }}"
-                        />
-                    </div>
-                </div>
-                <div class="short-answer-question-container" id="sa-question-container-C" *ngIf="shortAnswerQuestionUtil.isInputField(element) && showingSampleSolution">
-                    <input
-                        class="short-answer-question-container__input"
-                        disabled
-                        [style.background]="'lightgreen'"
-                        value="{{ getSampleSolutionForSpotAsString(element) }}"
-                        size="{{ getSampleSolutionSizeForSpot(element) }}"
+                        value="{{ getTextForSpotAsString(element) }}"
+                        size="{{ getSizeForSpot(element) }}"
                     />
                 </div>
-                &nbsp;
             </div>
             <br />
         </div>

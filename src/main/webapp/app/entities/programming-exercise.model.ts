@@ -7,6 +7,7 @@ import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { AuxiliaryRepository } from 'app/entities/programming-exercise-auxiliary-repository-model';
 import { SubmissionPolicy } from 'app/entities/submission-policy.model';
 import { ProgrammingExerciseGitDiffReport } from 'app/entities/hestia/programming-exercise-git-diff-report.model';
+import { ExerciseHint } from 'app/entities/hestia/exercise-hint.model';
 
 export enum ProgrammingLanguage {
     JAVA = 'JAVA',
@@ -50,6 +51,7 @@ export class ProgrammingExercise extends Exercise {
     public checkoutSolutionRepository?: boolean;
     public auxiliaryRepositories?: AuxiliaryRepository[];
     public submissionPolicy?: SubmissionPolicy;
+    public exerciseHints?: ExerciseHint[];
     public gitDiffReport?: ProgrammingExerciseGitDiffReport;
 
     public buildAndTestStudentSubmissionsAfterDueDate?: dayjs.Dayjs;
@@ -57,7 +59,12 @@ export class ProgrammingExercise extends Exercise {
 
     public projectType?: ProjectType;
 
+    public testwiseCoverageEnabled?: boolean;
+
     // helper attributes
+
+    // this attribute is used to display the covered lines ratio
+    public coveredLinesRatio?: number;
 
     /**
      * This attribute is used to generate a programming exercise with no connection to the VCS and CI.
@@ -81,5 +88,6 @@ export class ProgrammingExercise extends Exercise {
         this.checkoutSolutionRepository = false; // default value
         this.projectType = ProjectType.PLAIN_MAVEN; // default value
         this.showTestNamesToStudents = false; // default value
+        this.testwiseCoverageEnabled = false; // default value
     }
 }

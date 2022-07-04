@@ -7,7 +7,7 @@
                     data-toggle="tooltip"
                     data-placement="bottom"
                     title="{{ step.title }}"
-                    class="btn btn-light btn-circle stepwizard-circle"
+                    class="btn btn-circle"
                     [class.stepwizard-step--success]="step.done === TestCaseState.SUCCESS"
                     [class.stepwizard-step--failed]="step.done === TestCaseState.FAIL"
                     [class.stepwizard-step--not-executed]="step.done === TestCaseState.NOT_EXECUTED"
@@ -16,12 +16,7 @@
                 >
                     <fa-icon [icon]="faCheck" size="lg" class="text-success" *ngIf="step.done === TestCaseState.SUCCESS"></fa-icon>
                     <fa-icon [icon]="faTimes" size="lg" class="text-danger" *ngIf="step.done === TestCaseState.FAIL"></fa-icon>
-                    <fa-icon
-                        [icon]="faQuestion"
-                        size="lg"
-                        class="text-secondary"
-                        *ngIf="step.done === TestCaseState.NOT_EXECUTED || step.done === TestCaseState.NO_RESULT"
-                    ></fa-icon>
+                    <fa-icon [icon]="faQuestion" size="lg" class="not-done" *ngIf="step.done === TestCaseState.NOT_EXECUTED || step.done === TestCaseState.NO_RESULT"></fa-icon>
                 </div>
             </div>
         </div>

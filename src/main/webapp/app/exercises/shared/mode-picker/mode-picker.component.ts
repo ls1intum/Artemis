@@ -1,28 +1,30 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
-import { Exercise, ExerciseMode } from 'app/entities/exercise.model';
+
+export type ModePickerOption<TMode> = {
+    value: TMode;
+    labelKey: string;
+    btnClass: string;
+};
 
 @Component({
     selector: 'jhi-mode-picker',
     templateUrl: './mode-picker.component.html',
     styles: ['.btn.disabled { pointer-events: none }', '.btn-group.disabled { cursor: not-allowed; }'],
 })
-export class ModePickerComponent {
-    readonly INDIVIDUAL = ExerciseMode.INDIVIDUAL;
-    readonly TEAM = ExerciseMode.TEAM;
-
-    @Input() exercise: Exercise;
+export class ModePickerComponent<TMode> {
+    @Input() options: ModePickerOption<TMode>[];
     @Input() disabled = false;
 
-    @Output() ngModelChange = new EventEmitter<ExerciseMode>();
+    @Input() value: TMode;
+    @Output() valueChange = new EventEmitter<TMode>();
 
     /**
      * Set the mode and emit the changes to the parent component to notice changes
-     * @param mode chosen exercise solving mode of type {ExerciseMode}
+     * @param mode chosen mode of type {TMode}
      */
-    setMode(mode: ExerciseMode) {
-        if (!this.disabled && mode !== this.exercise.mode) {
-            this.exercise.mode = mode;
-            this.ngModelChange.emit(mode);
+    setMode(mode: TMode) {
+        if (!this.disabled && mode !== this.value) {
+            this.valueChange.emit(mode);
         }
     }
 }

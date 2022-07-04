@@ -15,7 +15,6 @@ import { CourseManagementStatisticsComponent } from './course-management-statist
 import { GradingSystemComponent } from 'app/grading-system/grading-system.component';
 import { isOrion } from 'app/shared/orion/orion';
 import { OrionCourseManagementExercisesComponent } from 'app/orion/management/orion-course-management-exercises.component';
-import { PlagiarismCasesComponent } from 'app/course/plagiarism-cases/plagiarism-cases.component';
 import { CourseManagementResolve } from 'app/course/manage/course-management-resolve.service';
 
 export const courseManagementState: Routes = [
@@ -66,15 +65,11 @@ export const courseManagementState: Routes = [
             pageTitle: 'artemisApp.course.gradingSystem',
         },
         canActivate: [UserRouteAccessService],
+        loadChildren: () => import('app/grading-system/grading-system.module').then((m) => m.GradingSystemModule),
     },
     {
         path: ':courseId/plagiarism-cases',
-        component: PlagiarismCasesComponent,
-        data: {
-            authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
-            pageTitle: 'artemisApp.plagiarism.cases.pageTitle',
-        },
-        canActivate: [UserRouteAccessService],
+        loadChildren: () => import('../plagiarism-cases/instructor-view/plagiarism-cases-instructor-view.module').then((m) => m.ArtemisPlagiarismCasesInstructorViewModule),
     },
     {
         // Create a new path without a component defined to prevent resolver caching and the CourseDetailComponent from being always rendered

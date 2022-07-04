@@ -49,7 +49,7 @@ describe(`AuthExpiredInterceptor`, () => {
 
         authInterceptor.intercept({} as HttpRequest<any>, mockHandler).subscribe();
 
-        expect(tokenSpy).toHaveBeenCalledTimes(1);
+        expect(tokenSpy).toHaveBeenCalledOnce();
         expect(loginServiceMock.logout).toHaveBeenCalledWith(false);
         expect(stateStorageServiceMock.storeUrl).toHaveBeenCalledWith('https://example.com');
     });
@@ -62,7 +62,7 @@ describe(`AuthExpiredInterceptor`, () => {
 
         authInterceptor.intercept({} as HttpRequest<any>, mockHandler).subscribe();
 
-        expect(tokenSpy).toHaveBeenCalledTimes(1);
+        expect(tokenSpy).toHaveBeenCalledOnce();
         expect(loginServiceMock.logout).toHaveBeenCalledTimes(0);
         expect(stateStorageServiceMock.storeUrl).toHaveBeenCalledTimes(0);
     });

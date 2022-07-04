@@ -83,7 +83,7 @@ export class CourseExerciseRowComponent implements OnInit, OnDestroy, OnChanges 
         if (this.exercise.type === ExerciseType.QUIZ) {
             const quizExercise = this.exercise as QuizExercise;
             quizExercise.isActiveQuiz = this.exerciseService.isActiveQuiz(this.exercise);
-            quizExercise.isPracticeModeAvailable = quizExercise.isPlannedToStart && quizExercise.isOpenForPractice && dayjs(this.exercise.dueDate!).isBefore(dayjs());
+            quizExercise.isPracticeModeAvailable = quizExercise.isOpenForPractice && quizExercise.quizEnded;
             this.exercise = quizExercise;
         }
         this.exerciseCategories = this.exercise.categories || [];

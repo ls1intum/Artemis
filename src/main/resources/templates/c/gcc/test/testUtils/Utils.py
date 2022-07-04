@@ -1,15 +1,15 @@
 import os
-from os import chmod
+import select
 import signal
-from pty import openpty
-from subprocess import Popen
-from time import sleep
-from typing import Dict, List, Optional, Tuple, Any
 from datetime import datetime
 from io import TextIOWrapper
-from threading import Thread
-from select import select
+from pty import openpty
 from pwd import getpwnam, struct_passwd
+from subprocess import Popen
+from termios import ONLCR, tcgetattr, TCSANOW, tcsetattr
+from threading import Thread
+from time import sleep
+from typing import Any, Dict, List, Optional
 
 
 def studSaveStrComp(ref: str, other: str, strip: bool = True, ignoreCase: bool = True, ignoreNonAlNum=True):
@@ -114,6 +114,17 @@ def getTesterOutput():
     return "\n".join(testerOutputCache)
 
 
+startTime: datetime = datetime.now()
+
+
+def __getCurSeconds():
+    """
+    Returns the total seconds passed, since the tester started as a string with a precision of two digits.
+    """
+    seconds: float = (datetime.now() - startTime).total_seconds()
+    return str(round(seconds, 2))
+
+
 def __getCurDateTimeStr():
     """
     Returns the current date and time string (e.g. 11.10.2019_17:02:33)
@@ -123,11 +134,11 @@ def __getCurDateTimeStr():
 
 def printTester(text: str, addToCache: bool = True):
     """
-    Prints the given string with the '[TESTER]: ' tag in front.
+    Prints the given string with the '[T]: ' tag in front.
     Should be used instead of print() to make it easier for students
     to determine what came from the tester and what from their program.
     """
-    msg: str = f"[{__getCurDateTimeStr()}][TESTER]: {text}"
+    msg: str = f"[{__getCurSeconds()}][T]: {text}"
     __printStdout(msg)
     if addToCache:
         testerOutputCache.append(msg)
@@ -135,11 +146,11 @@ def printTester(text: str, addToCache: bool = True):
 
 def printProg(text: str, addToCache: bool = True):
     """
-    Prints the given string with the '[PROG]: ' tag in front.
+    Prints the given string with the '[P]: ' tag in front.
     Should be used instead of print() to make it easier for students
     to determine what came from the tester and what from their program.
     """
-    msg: str = f"[{__getCurDateTimeStr()}][PROG]: {text.rstrip()}"
+    msg: str = f"[{__getCurSeconds()}][P]: {text.rstrip()}"
     __printStdout(msg)
     if addToCache:
         testerOutputCache.append(msg)
@@ -158,8 +169,7 @@ def shortenText(text: str, maxNumChars: int):
         if l > 0:
             return f"{text[:l]}{s}"
         else:
-            printTester("Unable to limit output to {} chars! Not enough space.".format(
-                maxNumChars), False)
+            printTester(f"Unable to limit output to {maxNumChars} chars! Not enough space.", False)
             return ""
     return text
 
@@ -169,6 +179,7 @@ class ReadCache(Thread):
     Helper class that makes sure we only get one line (separated by '\n')
     if we read multiple lines at once.
     """
+
     __cacheList: List[str]
     __cacheFile: TextIOWrapper
 
@@ -179,7 +190,6 @@ class ReadCache(Thread):
         Thread.__init__(self)
         self.__cacheList = []
         self.__cacheFile = open(filePath, "w")
-        self.__shouldRun = False
 
         # Emulate a terminal:
         self.__outFd, self.__outSlaveFd = openpty()
@@ -189,7 +199,7 @@ class ReadCache(Thread):
     def fileno(self):
         return self.__outFd
 
-    def join(self):
+    def join(self, timeout: float = None):
         try:
             os.close(self.__outFd)
         except OSError as e:
@@ -198,8 +208,7 @@ class ReadCache(Thread):
             os.close(self.__outSlaveFd)
         except OSError as e:
             printTester(f"Closing stdout slave FD failed with: {e}")
-        self.__shouldRun = False
-        Thread.join(self)
+        Thread.join(self, timeout)
 
     @staticmethod
     def __isFdValid(fd: int):
@@ -208,7 +217,7 @@ class ReadCache(Thread):
         except OSError:
             return False
         return True
-    
+
     @staticmethod
     def __decode(data: bytes):
         """
@@ -228,30 +237,28 @@ class ReadCache(Thread):
             return data.decode("ascii", "replace")
 
     def run(self):
-        self.__shouldRun = True
-        while self.__shouldRun and self.__isFdValid(self.__outSlaveFd):
+        pollObj = select.poll()
+        pollObj.register(self.__outSlaveFd, select.POLLIN)
+        while self.__isFdValid(self.__outSlaveFd):
             try:
-                # Wait with a timeout for self.__outSlaveFd to be ready to read from:
-                result: Tuple[List[Any], List[Any], List[Any]] = select(
-                    [self.__outSlaveFd], list(), list(), 0)
-                if self.__outSlaveFd in result[0]:
-                    data: bytes = os.read(self.__outSlaveFd, 4096)
-                else:
-                    # Nothing to read:
-                    continue
+                for fd, mask in pollObj.poll(100):
+                    if fd != self.__outSlaveFd:
+                        continue
+                    if mask & (select.POLLHUP | select.POLLERR | select.POLLNVAL):
+                        return
+                    if mask & select.POLLIN:
+                        data: bytes = os.read(self.__outSlaveFd, 4096)
+                        dataStr: str = self.__decode(data)
+                        try:
+                            self.__cacheFile.write(dataStr)
+                        except UnicodeEncodeError:
+                            printTester("Invalid ASCII character read. Skipping line...")
+                            continue
+                        self.__cacheFile.flush()
+                        self.__cache(dataStr)
+                        printProg(dataStr)
             except OSError:
                 break
-            if data is not None:
-                dataStr: str = self.__decode(data)
-                try:
-                    self.__cacheFile.write(dataStr)
-                except UnicodeEncodeError:
-                    printTester(
-                        "Invalid ASCII character read. Skipping line...")
-                    continue
-                self.__cacheFile.flush()
-                self.__cache(dataStr)
-                printProg(dataStr)
 
     def canReadLine(self):
         return len(self.__cacheList) > 0
@@ -282,8 +289,7 @@ class PWrap:
 
     __terminatedTime: Optional[datetime]
 
-    def __init__(self, cmd: List[str], stdoutFilePath: str = "/tmp/stdout.txt", stderrFilePath: str = "/tmp/stderr.txt",
-                 cwd: Optional[str] = None):
+    def __init__(self, cmd: List[str], stdoutFilePath: str = "/tmp/stdout.txt", stderrFilePath: str = "/tmp/stderr.txt", cwd: Optional[str] = None):
         self.cmd = cmd
         self.prog = None
         self.cwd: str = os.getcwd() if cwd is None else cwd
@@ -300,13 +306,13 @@ class PWrap:
             os.close(self.__stdinFd)
         except OSError as e:
             printTester(f"Closing stdin FD failed with: {e}")
-        except AttributeError as e:
+        except AttributeError:
             pass
         try:
             os.close(self.__stdinMasterFd)
         except OSError as e:
             printTester(f"Closing stdin master FD failed with: {e}")
-        except AttributeError as e:
+        except AttributeError:
             pass
 
     def start(self, userName: Optional[str] = None):
@@ -322,7 +328,12 @@ class PWrap:
         # Emulate a terminal for stdin:
         self.__stdinMasterFd, self.__stdinFd = openpty()
 
-        if not userName is None:
+        # Transform "\r\n" to '\n' for data send to stdin:
+        tsettings: List[Any] = tcgetattr(self.__stdinFd)
+        tsettings[1] &= ~ONLCR
+        tcsetattr(self.__stdinFd, TCSANOW, tsettings)
+
+        if userName is not None:
             # Check for root privileges:
             self.__checkForRootPrivileges()
 
@@ -336,33 +347,39 @@ class PWrap:
             printTester(f"Starting process as: {pwRecord.pw_name}")
 
             # Start the actual process:
-            self.prog = Popen(self.cmd,
-                              stdout=self.__stdOutLineCache.fileno(),
-                              stdin=self.__stdinMasterFd,
-                              stderr=self.__stdErrLineCache.fileno(),
-                              universal_newlines=True,
-                              cwd=self.cwd,
-                              env=env,
-                              preexec_fn=self.__demote(pwRecord.pw_uid, pwRecord.pw_gid, pwRecord.pw_name))
+            self.prog = Popen(
+                self.cmd,
+                stdout=self.__stdOutLineCache.fileno(),
+                stdin=self.__stdinMasterFd,
+                stderr=self.__stdErrLineCache.fileno(),
+                universal_newlines=True,
+                cwd=self.cwd,
+                env=env,
+                preexec_fn=self.__demote(pwRecord.pw_uid, pwRecord.pw_gid, pwRecord.pw_name),
+            )
         else:
             # Start the actual process:
-            self.prog = Popen(self.cmd,
-                              stdout=self.__stdOutLineCache.fileno(),
-                              stdin=self.__stdinMasterFd,
-                              stderr=self.__stdErrLineCache.fileno(),
-                              universal_newlines=True,
-                              cwd=self.cwd,
-                              preexec_fn=os.setsid)  # Make sure we store the process group id
+            self.prog = Popen(
+                self.cmd,
+                stdout=self.__stdOutLineCache.fileno(),
+                stdin=self.__stdinMasterFd,
+                stderr=self.__stdErrLineCache.fileno(),
+                universal_newlines=True,
+                cwd=self.cwd,
+                preexec_fn=os.setsid,
+            )  # Make sure we store the process group id
 
     def __demote(self, userUid: int, userGid: int, userName: str):
         """
         Returns a call, demoting the calling process to the given user, UID and GID.
         """
+
         def result():
             # self.__printIds("Starting demotion...") # Will print inside the new process and reports via the __stdOutLineCache
             os.initgroups(userName, userGid)
             os.setuid(userUid)
             # self.__printIds("Finished demotion.") # Will print inside the new process and reports via the __stdOutLineCache
+
         return result
 
     @staticmethod
@@ -499,8 +516,7 @@ class PWrap:
             os.killpg(os.getpgid(self.prog.pid), signal)
             return True
         except ProcessLookupError:
-            printTester(
-                "No need to kill process. Process does not exist any more.")
+            printTester("No need to kill process. Process does not exist any more.")
         return False
 
     def cleanup(self):

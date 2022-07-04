@@ -52,7 +52,7 @@ describe('Exam participation', () => {
                     courseRequests.createTextExercise({ exerciseGroup: groupResponse.body }, textExerciseTitle);
                 });
                 courseRequests.addExerciseGroupForExam(exam).then((groupResponse) => {
-                    courseRequests.createProgrammingExercise({ exerciseGroup: groupResponse.body }, undefined, undefined, undefined, undefined, undefined, packageName);
+                    courseRequests.createProgrammingExercise({ exerciseGroup: groupResponse.body }, undefined, false, undefined, undefined, undefined, undefined, packageName);
                 });
                 courseRequests.addExerciseGroupForExam(exam).then((groupResponse) => {
                     courseRequests.createModelingExercise({ exerciseGroup: groupResponse.body });

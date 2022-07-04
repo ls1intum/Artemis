@@ -1,7 +1,7 @@
 package de.tum.in.www1.artemis.programmingexercise;
 
 import static de.tum.in.www1.artemis.programmingexercise.ProgrammingExerciseTestService.studentLogin;
-import static de.tum.in.www1.artemis.programmingexercise.ProgrammingSubmissionConstants.BITBUCKET_REQUEST;
+import static de.tum.in.www1.artemis.programmingexercise.ProgrammingSubmissionConstants.BITBUCKET_PUSH_EVENT_REQUEST;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.doThrow;
 
@@ -184,7 +184,7 @@ public class ProgrammingExerciseBitbucketBambooIntegrationTest extends AbstractS
     @EnumSource(ExerciseMode.class)
     @WithMockUser(username = studentLogin, roles = "USER")
     public void resumeProgrammingExerciseByPushingIntoRepo_correctInitializationState(ExerciseMode exerciseMode) throws Exception {
-        final String requestAsArtemisUser = BITBUCKET_REQUEST.replace("\"name\": \"admin\"", "\"name\": \"Artemis\"").replace("\"displayName\": \"Admin\"",
+        final String requestAsArtemisUser = BITBUCKET_PUSH_EVENT_REQUEST.replace("\"name\": \"admin\"", "\"name\": \"Artemis\"").replace("\"displayName\": \"Admin\"",
                 "\"displayName\": \"Artemis\"");
         Object body = new JSONParser().parse(requestAsArtemisUser);
         programmingExerciseTestService.resumeProgrammingExerciseByPushingIntoRepo_correctInitializationState(exerciseMode, body);
@@ -343,8 +343,8 @@ public class ProgrammingExerciseBitbucketBambooIntegrationTest extends AbstractS
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testExportCourseCannotExportSingleParticipationInterruptException() throws Exception {
-        programmingExerciseTestService.testExportCourseCannotExportSingleParticipationInterruptException();
+    public void testExportCourseCannotExportSingleParticipationCanceledException() throws Exception {
+        programmingExerciseTestService.testExportCourseCannotExportSingleParticipationCanceledException();
     }
 
     @Test
@@ -376,4 +376,41 @@ public class ProgrammingExerciseBitbucketBambooIntegrationTest extends AbstractS
     public void testAutomaticCleanupGitRepositories() {
         programmingExerciseTestService.automaticCleanupGitRepositories();
     }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void importProgrammingExerciseFromCourseToCourse_exampleSolutionPublicationDate() throws Exception {
+        programmingExerciseTestService.importProgrammingExerciseFromCourseToCourse_exampleSolutionPublicationDate();
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void createProgrammingExercise_setInvalidExampleSolutionPublicationDate_badRequest() throws Exception {
+        programmingExerciseTestService.createProgrammingExercise_setInvalidExampleSolutionPublicationDate_badRequest();
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void createProgrammingExercise_setValidExampleSolutionPublicationDate() throws Exception {
+        programmingExerciseTestService.createProgrammingExercise_setValidExampleSolutionPublicationDate();
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void testGetProgrammingExercise_asStudent_exampleSolutionVisibility() throws Exception {
+        programmingExerciseTestService.testGetProgrammingExercise_exampleSolutionVisibility(true, "student1");
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testGetProgrammingExercise_asInstructor_exampleSolutionVisibility() throws Exception {
+        programmingExerciseTestService.testGetProgrammingExercise_exampleSolutionVisibility(false, "instructor1");
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void testExportSolutionRepository_shouldReturnFileOrForbidden() throws Exception {
+        programmingExerciseTestService.exportSolutionRepository_shouldReturnFileOrForbidden();
+    }
+
 }

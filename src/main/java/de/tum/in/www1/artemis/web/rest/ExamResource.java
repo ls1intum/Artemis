@@ -9,6 +9,7 @@ import java.io.FileNotFoundException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
+import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
@@ -35,11 +36,9 @@ import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.dto.StudentDTO;
 import de.tum.in.www1.artemis.service.exam.*;
 import de.tum.in.www1.artemis.service.messaging.InstanceMessageSendService;
+import de.tum.in.www1.artemis.service.scheduled.cache.monitoring.ExamMonitoringScheduleService;
 import de.tum.in.www1.artemis.web.rest.dto.*;
-import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
-import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
-import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
-import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
+import de.tum.in.www1.artemis.web.rest.errors.*;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 
 /**
@@ -85,10 +84,12 @@ public class ExamResource {
 
     private final StudentExamRepository studentExamRepository;
 
+    private final ExamMonitoringScheduleService examMonitoringScheduleService;
+
     public ExamResource(UserRepository userRepository, CourseRepository courseRepository, ExamService examService, ExamAccessService examAccessService,
             InstanceMessageSendService instanceMessageSendService, ExamRepository examRepository, SubmissionService submissionService, AuthorizationCheckService authCheckService,
             ExamDateService examDateService, TutorParticipationRepository tutorParticipationRepository, AssessmentDashboardService assessmentDashboardService,
-            ExamRegistrationService examRegistrationService, StudentExamRepository studentExamRepository) {
+            ExamRegistrationService examRegistrationService, StudentExamRepository studentExamRepository, ExamMonitoringScheduleService examMonitoringScheduleService) {
         this.userRepository = userRepository;
         this.courseRepository = courseRepository;
         this.examService = examService;
@@ -102,13 +103,14 @@ public class ExamResource {
         this.tutorParticipationRepository = tutorParticipationRepository;
         this.assessmentDashboardService = assessmentDashboardService;
         this.studentExamRepository = studentExamRepository;
+        this.examMonitoringScheduleService = examMonitoringScheduleService;
     }
 
     /**
      * POST /courses/{courseId}/exams : Create a new exam.
      *
-     * @param courseId  the course to which the exam belongs
-     * @param exam      the exam to create
+     * @param courseId the course to which the exam belongs
+     * @param exam     the exam to create
      * @return the ResponseEntity with status 201 (Created) and with body the new exam, or with status 400 (Bad Request) if the exam has already an ID
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
@@ -121,7 +123,6 @@ public class ExamResource {
         }
 
         checkForExamConflictsElseThrow(courseId, exam);
-        checkExamPointsElseThrow(exam);
 
         // Check that exerciseGroups are not set to prevent manipulation of associated exerciseGroups
         if (!exam.getExerciseGroups().isEmpty()) {
@@ -131,6 +132,11 @@ public class ExamResource {
         examAccessService.checkCourseAccessForInstructorElseThrow(courseId);
 
         Exam result = examRepository.save(exam);
+
+        if (result.isMonitoring()) {
+            examMonitoringScheduleService.scheduleExamActivitySave(result.getId());
+        }
+
         return ResponseEntity.created(new URI("/api/courses/" + courseId + "/exams/" + result.getId()))
                 .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, result.getTitle())).body(result);
     }
@@ -139,8 +145,8 @@ public class ExamResource {
      * PUT /courses/{courseId}/exams : Updates an existing exam.
      * This route does not save changes to the exercise groups. This should be done via the ExerciseGroupResource.
      *
-     * @param courseId      the course to which the exam belongs
-     * @param updatedExam   the exam to update
+     * @param courseId    the course to which the exam belongs
+     * @param updatedExam the exam to update
      * @return the ResponseEntity with status 200 (OK) and with body the updated exam
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
@@ -153,12 +159,16 @@ public class ExamResource {
         }
 
         checkForExamConflictsElseThrow(courseId, updatedExam);
-        checkExamPointsElseThrow(updatedExam);
 
         examAccessService.checkCourseAndExamAccessForInstructorElseThrow(courseId, updatedExam.getId());
 
         // Make sure that the original references are preserved.
         Exam originalExam = examRepository.findByIdElseThrow(updatedExam.getId());
+
+        // The Exam Mode cannot be changed after creation -> Compare request with version in the database
+        if (updatedExam.isTestExam() != originalExam.isTestExam()) {
+            throw new ConflictException("The Exam Mode cannot be changed after creation", ENTITY_NAME, "examModeMismatch");
+        }
 
         // NOTE: Make sure that all references are preserved here
         updatedExam.setExerciseGroups(originalExam.getExerciseGroups());
@@ -166,6 +176,10 @@ public class ExamResource {
         updatedExam.setRegisteredUsers(originalExam.getRegisteredUsers());
 
         Exam result = examRepository.save(updatedExam);
+
+        if (updatedExam.isMonitoring()) {
+            examMonitoringScheduleService.scheduleExamActivitySave(result.getId());
+        }
 
         // We can't test dates for equality as the dates retrieved from the database lose precision. Also use instant to take timezones into account
         Comparator<ZonedDateTime> comparator = Comparator.comparing(date -> date.truncatedTo(ChronoUnit.SECONDS).toInstant());
@@ -188,42 +202,103 @@ public class ExamResource {
     }
 
     /**
-     * Checks that the correct course is set in the exam and that the visible/start/end-dates are in the correct order.
+     * Checks if the input values are set correctly. More details in the corresponding methods
+     *
      * @param courseId the exam should belong to.
-     * @param exam which should be checked.
+     * @param exam     which should be checked.
      */
     private void checkForExamConflictsElseThrow(Long courseId, Exam exam) {
-        if (exam.getCourse() == null) {
-            throw new ConflictException("An exam has to belong to a course.", ENTITY_NAME, "noCourse");
-        }
 
         checkExamCourseIdElseThrow(courseId, exam);
 
-        if (exam.getVisibleDate() == null || exam.getStartDate() == null || exam.getEndDate() == null || !exam.getVisibleDate().isBefore(exam.getStartDate())
-                || !exam.getStartDate().isBefore(exam.getEndDate())) {
-            throw new ConflictException("An exam has to have times when it becomes visible, starts, and ends.", ENTITY_NAME, "examTimes");
+        checkExamForDatesConflictsElseThrow(exam);
+
+        checkExamForWorkingTimeConflictsElseThrow(exam);
+
+        checkExamPointsElseThrow(exam);
+    }
+
+    /**
+     * Checks that the correct course is present and set
+     *
+     * @param courseId the course to which the exam should be linked
+     * @param exam     the exam to be checked
+     */
+    private void checkExamCourseIdElseThrow(Long courseId, Exam exam) {
+        if (exam.getCourse() == null) {
+            throw new BadRequestAlertException("An exam has to belong to a course.", ENTITY_NAME, "noCourse");
+        }
+
+        if (!exam.getCourse().getId().equals(courseId)) {
+            throw new BadRequestAlertException("The course id does not match the id of the course connected to the exam.", ENTITY_NAME, "wrongCourseId");
         }
     }
 
+    /**
+     * Checks that the visible/start/end-dates are present and in the correct order.
+     * For RealExams: visibleDate < startDate < endDate
+     * For TestExams: visibleDate <= startDate < endDate
+     *
+     * @param exam the exam to be checked
+     */
+    private void checkExamForDatesConflictsElseThrow(Exam exam) {
+        if (exam.getVisibleDate() == null || exam.getStartDate() == null || exam.getEndDate() == null) {
+            throw new BadRequestAlertException("An exam has to have times when it becomes visible, starts, and ends as well as a working time.", ENTITY_NAME, "examTimes");
+        }
+
+        if (exam.isTestExam()) {
+            if (!(exam.getVisibleDate().isBefore(exam.getStartDate()) || exam.getVisibleDate().isEqual(exam.getStartDate())) || !exam.getStartDate().isBefore(exam.getEndDate())) {
+                throw new BadRequestAlertException("For TestExams, the visible Date has to be before or equal to the start Date and the start Date has to be before the End Date",
+                        ENTITY_NAME, "examTimes");
+            }
+        }
+        else if (!exam.getVisibleDate().isBefore(exam.getStartDate()) || !exam.getStartDate().isBefore(exam.getEndDate())) {
+            throw new BadRequestAlertException("For RealExams, the visible Date has to be before the start Date and the start Date has to be before the end Date", ENTITY_NAME,
+                    "examTimes");
+        }
+    }
+
+    /**
+     * Validates the working time, which should be equal (RealExams) or smaller / equal (TestExams) to the
+     * difference between start- and endDate.
+     *
+     * @param exam the exam to be checked
+     */
+    private void checkExamForWorkingTimeConflictsElseThrow(Exam exam) {
+        int differenceStartEndDate = Math.toIntExact(Duration.between(exam.getStartDate(), exam.getEndDate()).toSeconds());
+
+        if (exam.isTestExam()) {
+            if (exam.getWorkingTime() > differenceStartEndDate || exam.getWorkingTime() < 1) {
+                throw new BadRequestAlertException("For TestExams, the working time must be at least 1 and at most the duration of the working window.", ENTITY_NAME, "examTimes");
+            }
+        }
+        else if (exam.getWorkingTime() != differenceStartEndDate) {
+            /*
+             * Set the working time to the time difference for RealExams, if not done by the client. This can be an issue if the working time calculation in the client is not
+             * performed (e.g. for Cypress-2E2-Tests). However, since the working time currently depends on the start- and end-date, we can do a server-side assignment
+             */
+            exam.setWorkingTime(differenceStartEndDate);
+        }
+    }
+
+    /**
+     * Checks if the exam has at least one point achievable
+     *
+     * @param exam the exam to be checked
+     */
     private void checkExamPointsElseThrow(Exam exam) {
         if (exam.getMaxPoints() <= 0) {
             throw new BadRequestAlertException("An exam cannot have negative points.", ENTITY_NAME, "negativePoints");
         }
     }
 
-    private void checkExamCourseIdElseThrow(Long courseId, Exam exam) {
-        if (!exam.getCourse().getId().equals(courseId)) {
-            throw new ConflictException("The course id does not match the id of the course connected to the exam.", ENTITY_NAME, "wrongCourseId");
-        }
-    }
-
     /**
      * GET /courses/{courseId}/exams/{examId} : Find an exam by id.
      *
-     * @param courseId              the course to which the exam belongs
-     * @param examId                the exam to find
-     * @param withStudents          boolean flag whether to include all students registered for the exam
-     * @param withExerciseGroups    boolean flag whether to include all exercise groups of the exam
+     * @param courseId           the course to which the exam belongs
+     * @param examId             the exam to find
+     * @param withStudents       boolean flag whether to include all students registered for the exam
+     * @param withExerciseGroups boolean flag whether to include all exercise groups of the exam
      * @return the ResponseEntity with status 200 (OK) and with the found exam as body
      */
     @GetMapping("/courses/{courseId}/exams/{examId}")
@@ -277,8 +352,8 @@ public class ExamResource {
     /**
      * GET /courses/{courseId}/exams/{examId} : Find an exam by id.
      *
-     * @param courseId              the course to which the exam belongs
-     * @param examId                the exam to find
+     * @param courseId the course to which the exam belongs
+     * @param examId   the exam to find
      * @return the ResponseEntity with status 200 (OK) and with the found exam as body
      */
     @GetMapping("/courses/{courseId}/exams/{examId}/statistics")
@@ -300,8 +375,8 @@ public class ExamResource {
     /**
      * GET /courses/{courseId}/exams/{examId}/scores : Find scores for an exam by id.
      *
-     * @param courseId              the course to which the exam belongs
-     * @param examId                the exam to find
+     * @param courseId the course to which the exam belongs
+     * @param examId   the exam to find
      * @return the ResponseEntity with status 200 (OK) and with the found ExamScoreDTO as body
      */
     @GetMapping("/courses/{courseId}/exams/{examId}/scores")
@@ -319,7 +394,7 @@ public class ExamResource {
      * GET /courses/:courseId/exams/:examId/exam-for-assessment-dashboard
      *
      * @param courseId the id of the course to retrieve
-     * @param examId the id of the exam that contains the exercises
+     * @param examId   the id of the exam that contains the exercises
      * @return data about a course including all exercises, plus some data for the tutor as tutor status for assessment
      */
     @GetMapping("/courses/{courseId}/exams/{examId}/exam-for-assessment-dashboard")
@@ -356,8 +431,8 @@ public class ExamResource {
      * GET /courses/:courseId/exams/:examId/exam-for-test-run-assessment-dashboard
      *
      * @param courseId the id of the course to retrieve
-     * @param examId the id of the exam that contains the exercises
-     * @return data about a exam test run including all exercises, plus some data for the tutor as tutor status for assessment
+     * @param examId   the id of the exam that contains the exercises
+     * @return data about an exam test run including all exercises, plus some data for the tutor as tutor status for assessment
      */
     @GetMapping("/courses/{courseId}/exams/{examId}/exam-for-test-run-assessment-dashboard")
     @PreAuthorize("hasRole('INSTRUCTOR')")
@@ -457,8 +532,8 @@ public class ExamResource {
      * DELETE /courses/{courseId}/exams/{examId} : Delete the exam with the given id.
      * The delete operation cascades to all student exams, exercise group, exercises and their participations.
      *
-     * @param courseId  the course to which the exam belongs
-     * @param examId    the id of the exam to delete
+     * @param courseId the course to which the exam belongs
+     * @param examId   the id of the exam to delete
      * @return the ResponseEntity with status 200 (OK)
      */
     @DeleteMapping("/courses/{courseId}/exams/{examId}")
@@ -469,6 +544,11 @@ public class ExamResource {
         var exam = examRepository.findByIdElseThrow(examId);
         examAccessService.checkCourseAndExamAccessForInstructorElseThrow(courseId, examId);
 
+        if (exam.isMonitoring()) {
+            // Cancel schedule of exam monitoring
+            examMonitoringScheduleService.cancelExamActivitySave(examId);
+        }
+
         examService.delete(examId);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, exam.getTitle())).build();
     }
@@ -477,8 +557,8 @@ public class ExamResource {
      * DELETE /courses/{courseId}/exams/{examId}/reset : Reset the exam with the given id.
      * The reset operation deletes all studentExams, participations, submissions and feedback.
      *
-     * @param courseId  the course to which the exam belongs
-     * @param examId    the id of the exam to reset
+     * @param courseId the course to which the exam belongs
+     * @param examId   the id of the exam to reset
      * @return the ResponseEntity with status 200 (OK)
      */
     @DeleteMapping("/courses/{courseId}/exams/{examId}/reset")
@@ -489,9 +569,20 @@ public class ExamResource {
         var exam = examRepository.findByIdElseThrow(examId);
         examAccessService.checkCourseAndExamAccessForInstructorElseThrow(courseId, examId);
 
+        if (exam.isMonitoring()) {
+            // Cancel schedule of exam monitoring
+            examMonitoringScheduleService.cancelExamActivitySave(examId);
+        }
+
         examService.reset(exam.getId());
         Exam returnExam = examService.findByIdWithExerciseGroupsAndExercisesElseThrow(examId);
         examService.setExamProperties(returnExam);
+
+        if (returnExam.isMonitoring()) {
+            // Schedule exam monitoring
+            examMonitoringScheduleService.scheduleExamActivitySave(examId);
+        }
+
         return ResponseEntity.ok(returnExam);
     }
 
@@ -517,7 +608,7 @@ public class ExamResource {
                 .orElseThrow(() -> new EntityNotFoundException("User with login: \"" + studentLogin + "\" does not exist"));
 
         if (student.getGroups().contains(exam.getCourse().getInstructorGroupName()) || authCheckService.isAdmin(student)) {
-            throw new AccessForbiddenException("You cannot register instructors or administrators to exams.");
+            throw new AccessForbiddenAlertException("You cannot register instructors or administrators to exams.", ENTITY_NAME, "cannotRegisterInstructor");
         }
 
         examRegistrationService.registerStudentToExam(course, exam, student);
@@ -532,8 +623,8 @@ public class ExamResource {
     /**
      * POST /courses/:courseId/exams/:examId/generate-student-exams : Generates the student exams randomly based on the exam configuration and the exercise groups
      *
-     * @param courseId      the id of the course
-     * @param examId        the id of the exam
+     * @param courseId the id of the course
+     * @param examId   the id of the exam
      * @return the list of student exams with their corresponding users
      */
     @PostMapping(value = "/courses/{courseId}/exams/{examId}/generate-student-exams")
@@ -558,6 +649,10 @@ public class ExamResource {
             studentExam.getExam().setExerciseGroups(null);
             studentExam.getExam().setStudentExams(null);
         }
+
+        // Reschedule after creation (possible longer working time)
+        examMonitoringScheduleService.scheduleExamActivitySave(examId);
+
         log.info("Generated {} student exams in {} for exam {}", studentExams.size(), formatDurationFrom(start), examId);
         return ResponseEntity.ok().body(studentExams);
     }
@@ -567,8 +662,8 @@ public class ExamResource {
      * Generates exams for students, who don't have an individual exam yet.
      * They are created randomly based on the exam configuration and the exercise groups.
      *
-     * @param courseId      the id of the course
-     * @param examId        the id of the exam
+     * @param courseId the id of the course
+     * @param examId   the id of the exam
      * @return the list of student exams with their corresponding users
      */
     @PostMapping(value = "/courses/{courseId}/exams/{examId}/generate-missing-student-exams")
@@ -590,6 +685,9 @@ public class ExamResource {
             studentExam.getExam().setExerciseGroups(null);
             studentExam.getExam().setStudentExams(null);
         }
+
+        // Reschedule after creation (possible longer working time)
+        examMonitoringScheduleService.scheduleExamActivitySave(examId);
 
         log.info("Generated {} missing student exams for exam {}", studentExams.size(), examId);
         return ResponseEntity.ok().body(studentExams);
@@ -670,9 +768,9 @@ public class ExamResource {
      * This method first tries to find the student in the internal Artemis user database (because the user is most probably already using Artemis).
      * In case the user cannot be found, we additionally search the (TUM) LDAP in case it is configured properly.
      *
-     * @param courseId      the id of the course
-     * @param examId        the id of the exam
-     * @param studentDtos   the list of students (with at least registration number) who should get access to the exam
+     * @param courseId    the id of the course
+     * @param examId      the id of the exam
+     * @param studentDtos the list of students (with at least registration number) who should get access to the exam
      * @return the list of students who could not be registered for the exam, because they could NOT be found in the Artemis database and could NOT be found in the TUM LDAP
      */
     @PostMapping(value = "/courses/{courseId}/exams/{examId}/students")
@@ -689,10 +787,10 @@ public class ExamResource {
     /**
      * POST /courses/:courseId/exams/:examId/register-course-students : Add all users which are enrolled in the course to the exam so that the student can access the exam
      *
-     * @param courseId     the id of the course
-     * @param examId       the id of the exam
+     * @param courseId the id of the course
+     * @param examId   the id of the exam
      * @return empty ResponseEntity with status 200 (OK) or with status 404 (Not Found)
-    */
+     */
     @PostMapping(value = "/courses/{courseId}/exams/{examId}/register-course-students")
     @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<Void> registerCourseStudents(@PathVariable Long courseId, @PathVariable Long examId) {
@@ -707,12 +805,12 @@ public class ExamResource {
 
     /**
      * DELETE /courses/:courseId/exams/:examId/students/:studentLogin :
-     * Remove one single given user (based on the login) from the students of the exam so that the student cannot access the exam any more.
+     * Remove one single given user (based on the login) from the students of the exam so that the student cannot access the exam anymore.
      * Optionally, also deletes participations and submissions of the student in the student exam.
      *
-     * @param courseId     the id of the course
-     * @param examId       the id of the exam
-     * @param studentLogin the login of the user who should lose student access
+     * @param courseId                        the id of the course
+     * @param examId                          the id of the exam
+     * @param studentLogin                    the login of the user who should lose student access
      * @param withParticipationsAndSubmission request param deciding whether participations and submissions should also be deleted
      * @return empty ResponseEntity with status 200 (OK) or with status 404 (Not Found)
      */
@@ -735,13 +833,12 @@ public class ExamResource {
 
     /**
      * DELETE /courses/{courseId}/exams/{examId}/allstudents :
-     * Remove all students of the exam so that they cannot access the exam any more.
+     * Remove all students of the exam so that they cannot access the exam anymore.
      * Optionally, also deletes participations and submissions of all students in their student exams.
      *
-     * @param courseId     the id of the course
-     * @param examId       the id of the exam
+     * @param courseId                        the id of the course
+     * @param examId                          the id of the exam
      * @param withParticipationsAndSubmission request param deciding whether participations and submissions should also be deleted
-     *
      * @return empty ResponseEntity with status 200 (OK) or with status 404 (Not Found)
      */
     @DeleteMapping(value = "/courses/{courseId}/exams/{examId}/students")
@@ -759,8 +856,8 @@ public class ExamResource {
     /**
      * GET /courses/{courseId}/exams/{examId}/start : Get an exam for the exam start.
      *
-     * @param courseId  the id of the course
-     * @param examId    the id of the exam
+     * @param courseId the id of the course
+     * @param examId   the id of the exam
      * @return the ResponseEntity with status 200 (OK) and with the found student exam (without exercises) as body
      */
     @GetMapping("/courses/{courseId}/exams/{examId}/start")
@@ -834,8 +931,8 @@ public class ExamResource {
     /**
      * GET /courses/:courseId/exams/:examId/lockedSubmissions Get locked submissions for exam for user
      *
-     * @param courseId  - the id of the course
-     * @param examId    - the id of the exam
+     * @param courseId - the id of the course
+     * @param examId   - the id of the exam
      * @return the ResponseEntity with status 200 (OK) and with body the course, or with status 404 (Not Found)
      */
     @GetMapping("/courses/{courseId}/exams/{examId}/lockedSubmissions")
@@ -861,7 +958,7 @@ public class ExamResource {
      * It immediately returns and runs this task asynchronously. When the task is done, the exam is marked as archived, which means the zip file can be downloaded.
      *
      * @param courseId the id of the course
-     * @param examId the id of the exam to archive
+     * @param examId   the id of the exam to archive
      * @return empty
      */
     @PutMapping("/courses/{courseId}/exams/{examId}/archive")
@@ -889,7 +986,7 @@ public class ExamResource {
      * Downloads the zip file of the archived exam if it exists. Throws a 404 if the exam doesn't exist.
      *
      * @param courseId The course id of the course
-     * @param examId The id of the archived exam
+     * @param examId   The id of the archived exam
      * @return ResponseEntity with status
      */
     @GetMapping("/courses/{courseId}/exams/{examId}/download-archive")

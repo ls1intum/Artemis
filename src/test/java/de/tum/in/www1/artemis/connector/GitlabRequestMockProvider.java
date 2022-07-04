@@ -8,6 +8,7 @@ import static org.springframework.test.web.client.response.MockRestResponseCreat
 
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -35,12 +36,14 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
+import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.UrlService;
 import de.tum.in.www1.artemis.service.connectors.gitlab.GitLabException;
 import de.tum.in.www1.artemis.service.connectors.gitlab.GitLabUserDoesNotExistException;
 import de.tum.in.www1.artemis.service.connectors.gitlab.GitLabUserManagementService;
+import de.tum.in.www1.artemis.service.connectors.gitlab.dto.GitLabPersonalAccessTokenResponseDTO;
 
 @Component
 @Profile("gitlab")
@@ -74,6 +77,9 @@ public class GitlabRequestMockProvider {
     private UserApi userApi;
 
     @Mock
+    private EventsApi eventsApi;
+
+    @Mock
     private RepositoryApi repositoryApi;
 
     @Mock
@@ -105,6 +111,13 @@ public class GitlabRequestMockProvider {
 
     public void reset() {
         mockServer.reset();
+    }
+
+    /**
+     * Verify that the mocked REST-calls were called
+     */
+    public void verifyMocks() {
+        mockServer.verify();
     }
 
     public void mockCreateProjectForExercise(ProgrammingExercise exercise) throws GitLabApiException {
@@ -167,6 +180,36 @@ public class GitlabRequestMockProvider {
         doReturn(result).when(projectApi).getProjects(exercise.getProjectKey());
     }
 
+    /**
+     * Mocks the call on the events API to receive all qualifying push events to get the push dates of certain commits.
+     *
+     * @param participation         Affected participation
+     * @param commitHashPushDateMap A map mapping the commit hashes to their push date. We expect here that only one commit is pushed at a time and the order of the map is the
+     *                              order of the commits
+     * @throws GitLabApiException if events API fails
+     */
+    public void mockGetPushDate(ProgrammingExerciseParticipation participation, Map<String, ZonedDateTime> commitHashPushDateMap) throws GitLabApiException {
+        if (commitHashPushDateMap.isEmpty()) {
+            return;
+        }
+        List<String> commits = new ArrayList<>(commitHashPushDateMap.keySet());
+        commits.add(0, "7".repeat(40));
+        List<Event> events = new ArrayList<>();
+        for (int i = 0; i < commits.size() - 1; i++) {
+            PushData pushData = new PushData();
+            pushData.setAction(Constants.ActionType.PUSHED);
+            pushData.setCommitCount(1);
+            pushData.setCommitFrom(commits.get(i));
+            pushData.setCommitTo(commits.get(i + 1));
+            Event event = new Event().withCreatedAt(Date.from(commitHashPushDateMap.get(commits.get(i + 1)).toInstant()));
+            event.setPushData(pushData);
+            events.add(0, event); // The latest event has to be at the front
+        }
+        var path = urlService.getRepositoryPathFromRepositoryUrl(participation.getVcsRepositoryUrl());
+        doAnswer((invocation) -> events.stream()).when(eventsApi).getProjectEventsStream(eq(path), eq(Constants.ActionType.PUSHED), eq(null), eq(null), eq(null),
+                eq(Constants.SortOrder.DESC));
+    }
+
     public void mockAddAuthenticatedWebHook() throws GitLabApiException {
         final var hook = new ProjectHook().withPushEvents(true).withIssuesEvents(false).withMergeRequestsEvents(false).withWikiPageEvents(false);
         doReturn(hook).when(projectApi).addHook(any(), anyString(), any(ProjectHook.class), anyBoolean(), anyString());
@@ -184,15 +227,25 @@ public class GitlabRequestMockProvider {
      * @param login Login of the user who's creation is mocked
      * @throws GitLabApiException Never
      */
-    public void mockCreationOfUser(String login) throws GitLabApiException {
+    public void mockCreationOfUser(String login) throws GitLabApiException, JsonProcessingException {
+        var userId = 1234L;
         UserApi userApi = mock(UserApi.class);
         doReturn(userApi).when(gitLabApi).getUserApi();
         doReturn(null).when(userApi).getUser(eq(login));
         doAnswer(invocation -> {
             User user = (User) invocation.getArguments()[0];
-            user.setId(1234L);
+            user.setId(userId);
             return user;
         }).when(userApi).createUser(any(), any(), anyBoolean());
+
+        var accessTokenResponseDTO = new GitLabPersonalAccessTokenResponseDTO();
+        accessTokenResponseDTO.setName("acccess-token-name");
+        accessTokenResponseDTO.setToken("acccess-token-value");
+        accessTokenResponseDTO.setUserId(userId);
+        final var response = new ObjectMapper().writeValueAsString(accessTokenResponseDTO);
+
+        mockServer.expect(requestTo(gitLabApi.getGitLabServerUrl() + "/api/v4/users/" + userId + "/personal_access_tokens")).andExpect(method(HttpMethod.POST))
+                .andRespond(withStatus(HttpStatus.OK).contentType(MediaType.APPLICATION_JSON).body(response));
     }
 
     public void mockCopyRepositoryForParticipation(ProgrammingExercise exercise, String username) throws GitLabApiException {
@@ -294,7 +347,7 @@ public class GitlabRequestMockProvider {
         if (removedGroups != null && !removedGroups.isEmpty()) {
             final var exercisesWithOutdatedGroups = programmingExerciseRepository.findAllByInstructorOrEditorOrTAGroupNameIn(removedGroups);
             for (final var exercise : exercisesWithOutdatedGroups) {
-                // If the the user is still in another group for the exercise (TA -> INSTRUCTOR or INSTRUCTOR -> TA),
+                // If the user is still in another group for the exercise (TA -> INSTRUCTOR or INSTRUCTOR -> TA),
                 // then we have to add him as a member with the new access level
                 final var course = exercise.getCourseViaExerciseGroupOrCourseMember();
                 if (user.getGroups().contains(course.getInstructorGroupName())) {
@@ -304,7 +357,7 @@ public class GitlabRequestMockProvider {
                     doReturn(new Member()).when(groupApi).updateMember(eq(exercise.getProjectKey()), anyLong(), eq(GUEST));
                 }
                 else {
-                    // If the user is not a member of any relevant group any more, we can remove him from the exercise
+                    // If the user is not a member of any relevant group anymore, we can remove him from the exercise
                     doNothing().when(groupApi).removeMember(eq(exercise.getProjectKey()), anyLong());
                 }
             }
@@ -372,7 +425,7 @@ public class GitlabRequestMockProvider {
         var userId = mockGetUserIdCreateIfNotExist(user, false, shouldFail);
 
         // Add user to existing exercises
-        if (user.getGroups() != null && user.getGroups().size() > 0) {
+        if (user.getGroups() != null && !user.getGroups().isEmpty()) {
             final var instructorExercises = programmingExerciseRepository.findAllByCourse_InstructorGroupNameIn(user.getGroups());
             final var editorExercises = programmingExerciseRepository.findAllByCourse_EditorGroupNameIn(user.getGroups()).stream()
                     .filter(programmingExercise -> !instructorExercises.contains(programmingExercise)).collect(Collectors.toList());
@@ -546,7 +599,7 @@ public class GitlabRequestMockProvider {
     }
 
     public void mockRepositoryUrlIsValid(VcsRepositoryUrl repositoryUrl, boolean isUrlValid) throws GitLabApiException {
-        if (repositoryUrl == null || repositoryUrl.getURL() == null) {
+        if (repositoryUrl == null || repositoryUrl.getURI() == null) {
             return;
         }
 

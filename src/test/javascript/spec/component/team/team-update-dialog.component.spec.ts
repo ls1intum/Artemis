@@ -60,7 +60,7 @@ describe('TeamUpdateDialogComponent', () => {
         const closeButton = debugElement.query(By.css('button.btn-close'));
         expect(closeButton).not.toBeNull();
         closeButton.nativeElement.click();
-        expect(dismissSpy).toHaveBeenCalledTimes(1);
+        expect(dismissSpy).toHaveBeenCalledOnce();
 
         const cancelButton = debugElement.query(By.css('button.cancel'));
         expect(cancelButton).not.toBeNull();

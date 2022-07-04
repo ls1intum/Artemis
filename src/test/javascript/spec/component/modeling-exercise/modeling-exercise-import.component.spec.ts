@@ -36,8 +36,6 @@ describe('ModelingExerciseImportComponent', () => {
                 MockDirective(SortByDirective),
                 MockDirective(SortDirective),
             ],
-            providers: [],
-            schemas: [],
         })
             .compileComponents()
             .then(() => {
@@ -54,18 +52,13 @@ describe('ModelingExerciseImportComponent', () => {
         jest.restoreAllMocks();
     });
 
-    it('should initialize', () => {
-        fixture.detectChanges();
-        expect(ModelingExerciseImportComponent).not.toBeNull();
-    });
-
     beforeEach(() => {
         fixture.detectChanges();
         modelingExercise = new ModelingExercise(UMLDiagramType.ClassDiagram, undefined, undefined);
         modelingExercise.id = 5;
         searchResult = { numberOfPages: 3, resultsOnPage: [modelingExercise] };
         state = {
-            page: 0,
+            page: 1,
             pageSize: 10,
             searchTerm: 'initialSearchTerm',
             sortingOrder: SortingOrder.DESCENDING,
@@ -85,17 +78,17 @@ describe('ModelingExerciseImportComponent', () => {
     };
 
     it('should set content to paging result on sort', fakeAsync(() => {
-        expect(comp.listSorting).toEqual(false);
+        expect(comp.listSorting).toBeFalse();
         setStateAndCallOnInit(() => {
             comp.listSorting = true;
             tick(10);
             expect(searchForExercisesStub).toHaveBeenCalledWith({ ...state, sortingOrder: SortingOrder.ASCENDING });
-            expect(comp.listSorting).toEqual(true);
+            expect(comp.listSorting).toBeTrue();
         });
     }));
 
     it('should set content to paging result on pageChange', fakeAsync(() => {
-        expect(comp.page).toEqual(0);
+        expect(comp.page).toEqual(1);
         setStateAndCallOnInit(() => {
             comp.onPageChange(5);
             tick(10);

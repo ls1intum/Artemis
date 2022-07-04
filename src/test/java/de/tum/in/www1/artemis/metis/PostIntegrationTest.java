@@ -118,7 +118,7 @@ public class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         Post createdPost = request.postWithResponseBody("/api/courses/" + courseId + "/posts", postToSave, Post.class, HttpStatus.CREATED);
         database.assertSensitiveInformationHidden(createdPost);
         checkCreatedPost(postToSave, createdPost);
-        assertThat(existingExercisePosts).hasSize(postRepository.findPostsByExerciseId(exerciseId, null, null, null, null).size() - 1);
+        assertThat(existingExercisePosts).hasSize(postRepository.findPostsByExerciseId(exerciseId, false, false, false, null).size() - 1);
         verify(groupNotificationService, times(1)).notifyAllGroupsAboutNewPostForExercise(createdPost, course);
     }
 
@@ -131,7 +131,7 @@ public class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         postToSave.setExercise(examExercise);
 
         request.postWithResponseBody("/api/courses/" + courseId + "/posts", postToSave, Post.class, HttpStatus.BAD_REQUEST);
-        assertThat(existingExercisePosts).hasSameSizeAs(postRepository.findPostsByExerciseId(exerciseId, null, null, null, null));
+        assertThat(existingExercisePosts).hasSameSizeAs(postRepository.findPostsByExerciseId(exerciseId, false, false, false, null));
         verify(groupNotificationService, times(0)).notifyAllGroupsAboutNewPostForExercise(any(), any());
 
     }
@@ -146,7 +146,7 @@ public class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         Post createdPost = request.postWithResponseBody("/api/courses/" + courseId + "/posts", postToSave, Post.class, HttpStatus.CREATED);
         database.assertSensitiveInformationHidden(createdPost);
         checkCreatedPost(postToSave, createdPost);
-        assertThat(existingLecturePosts).hasSize(postRepository.findPostsByLectureId(lectureId, null, null, null, null).size() - 1);
+        assertThat(existingLecturePosts).hasSize(postRepository.findPostsByLectureId(lectureId, false, false, false, null).size() - 1);
         verify(groupNotificationService, times(1)).notifyAllGroupsAboutNewPostForLecture(createdPost, course);
     }
 
@@ -161,8 +161,8 @@ public class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         database.assertSensitiveInformationHidden(createdPost);
         checkCreatedPost(postToSave, createdPost);
 
-        List<Post> updatedCourseWidePosts = postRepository.findPostsForCourse(courseId, null, null, null, null, null).stream().filter(post -> post.getCourseWideContext() != null)
-                .toList();
+        List<Post> updatedCourseWidePosts = postRepository.findPostsForCourse(courseId, null, false, false, false, null).stream()
+                .filter(post -> post.getCourseWideContext() != null).toList();
         assertThat(existingCourseWidePosts).hasSize(updatedCourseWidePosts.size() - 1);
         verify(groupNotificationService, times(1)).notifyAllGroupsAboutNewCoursePost(createdPost, course);
     }
@@ -179,8 +179,8 @@ public class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         postToSave.setDisplayPriority(DisplayPriority.PINNED);
         checkCreatedPost(postToSave, createdPost);
 
-        List<Post> updatedCourseWidePosts = postRepository.findPostsForCourse(courseId, null, null, null, null, null).stream().filter(post -> post.getCourseWideContext() != null)
-                .toList();
+        List<Post> updatedCourseWidePosts = postRepository.findPostsForCourse(courseId, null, false, false, false, null).stream()
+                .filter(post -> post.getCourseWideContext() != null).toList();
         assertThat(existingCourseWidePosts).hasSize(updatedCourseWidePosts.size() - 1);
         verify(groupNotificationService, times(1)).notifyAllGroupsAboutNewAnnouncement(createdPost, course);
     }
@@ -564,6 +564,22 @@ public class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         database.assertSensitiveInformationHidden(returnedPosts);
         // get posts of current user and compare
         assertThat(returnedPosts).isEqualTo(existingPosts.stream().filter(post -> student1.getId().equals(post.getAuthor().getId())).toList());
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void testGetUnresolvedPostsPostsForCourse_AnnouncementsFilteredOut() throws Exception {
+        // filterToUnresolved set true; will filter out announcements as they are resolved by default
+        var params = new LinkedMultiValueMap<String, String>();
+        params.add("filterToUnresolved", "true");
+
+        List<Post> returnedPosts = request.getList("/api/courses/" + courseId + "/posts", HttpStatus.OK, Post.class, params);
+        database.assertSensitiveInformationHidden(returnedPosts);
+        // get posts of current user without announcements and compare
+        List<Post> postsWithoutAnnouncements = existingPosts.stream()
+                .filter(post -> (post.getCourseWideContext() == null || !post.getCourseWideContext().equals(CourseWideContext.ANNOUNCEMENT))).toList();
+
+        assertThat(returnedPosts).isEqualTo(postsWithoutAnnouncements);
     }
 
     @Test

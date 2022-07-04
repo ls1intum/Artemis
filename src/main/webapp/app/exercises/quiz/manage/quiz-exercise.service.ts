@@ -2,8 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
-
-import { QuizExercise, QuizStatus } from 'app/entities/quiz/quiz-exercise.model';
+import { QuizBatch, QuizExercise, QuizStatus } from 'app/entities/quiz/quiz-exercise.model';
 import { createRequestOption } from 'app/shared/util/request.util';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { QuizQuestion } from 'app/entities/quiz/quiz-question.model';
@@ -27,6 +26,22 @@ export class QuizExerciseService {
         copy.categories = ExerciseService.stringifyExerciseCategories(copy);
         return this.http
             .post<QuizExercise>(this.resourceUrl, copy, { observe: 'response' })
+            .pipe(map((res: EntityResponseType) => this.exerciseService.processExerciseEntityResponse(res)));
+    }
+
+    /**
+     * Imports a quiz exercise by cloning the entity itself plus example solutions and example submissions
+     *
+     * @param adaptedSourceQuizExercise The exercise that should be imported, including adapted values for the
+     * new exercise. E.g. with another title than the original exercise. Old values that should get discarded
+     * (like the old ID) will be handled by the server.
+     */
+    import(adaptedSourceQuizExercise: QuizExercise) {
+        let copy = ExerciseService.convertDateFromClient(adaptedSourceQuizExercise);
+        copy = ExerciseService.setBonusPointsConstrainedByIncludedInOverallScore(copy);
+        copy.categories = ExerciseService.stringifyExerciseCategories(copy);
+        return this.http
+            .post<QuizExercise>(`${this.resourceUrl}/import/${adaptedSourceQuizExercise.id}`, copy, { observe: 'response' })
             .pipe(map((res: EntityResponseType) => this.exerciseService.processExerciseEntityResponse(res)));
     }
 
@@ -119,6 +134,16 @@ export class QuizExerciseService {
     }
 
     /**
+     * End a quiz exercise
+     * @param quizExerciseId the id of the quiz exercise that should be stopped
+     */
+    end(quizExerciseId: number): Observable<EntityResponseType> {
+        return this.http
+            .put<QuizExercise>(`${this.resourceUrl}/${quizExerciseId}/end-now`, null, { observe: 'response' })
+            .pipe(map((res: EntityResponseType) => this.exerciseService.processExerciseEntityResponse(res)));
+    }
+
+    /**
      * Set a quiz exercise visible
      * @param quizExerciseId the id of the quiz exercise that should be set visible
      */
@@ -126,6 +151,22 @@ export class QuizExerciseService {
         return this.http
             .put<QuizExercise>(`${this.resourceUrl}/${quizExerciseId}/set-visible`, null, { observe: 'response' })
             .pipe(map((res: EntityResponseType) => this.exerciseService.processExerciseEntityResponse(res)));
+    }
+
+    /**
+     * Start a quiz batch
+     * @param quizBatchId the id of the quiz batch that should be started
+     */
+    startBatch(quizBatchId: number): Observable<HttpResponse<QuizBatch>> {
+        return this.http.put<QuizBatch>(`${this.resourceUrl}/${quizBatchId}/start-batch`, null, { observe: 'response' });
+    }
+
+    /**
+     * Start a quiz batch
+     * @param quizExerciseId the id of the quiz exercise that should be started
+     */
+    addBatch(quizExerciseId: number): Observable<HttpResponse<QuizBatch>> {
+        return this.http.put<QuizBatch>(`${this.resourceUrl}/${quizExerciseId}/add-batch`, null, { observe: 'response' });
     }
 
     /**
@@ -151,6 +192,10 @@ export class QuizExerciseService {
      */
     reset(quizExerciseId: number): Observable<HttpResponse<{}>> {
         return this.http.delete(`${SERVER_API_URL + 'api/exercises'}/${quizExerciseId}/reset`, { observe: 'response' });
+    }
+
+    join(quizExerciseId: number, password: string): Observable<HttpResponse<QuizBatch>> {
+        return this.http.post<QuizExercise>(`${this.resourceUrl}/${quizExerciseId}/join`, { password }, { observe: 'response' });
     }
 
     /**
@@ -185,15 +230,15 @@ export class QuizExerciseService {
      * @return the status of the quiz
      */
     getStatus(quizExercise: QuizExercise) {
-        if (quizExercise.isPlannedToStart && quizExercise.remainingTime != undefined) {
-            if (quizExercise.remainingTime <= 0) {
-                // the quiz is over
-                return quizExercise.isOpenForPractice ? QuizStatus.OPEN_FOR_PRACTICE : QuizStatus.CLOSED;
-            } else {
-                return QuizStatus.ACTIVE;
-            }
+        if (!quizExercise.quizStarted) {
+            return QuizStatus.INVISIBLE;
         }
-        // the quiz hasn't started yet
-        return quizExercise.isVisibleBeforeStart ? QuizStatus.VISIBLE : QuizStatus.HIDDEN;
+        if (quizExercise.quizEnded) {
+            return quizExercise.isOpenForPractice ? QuizStatus.OPEN_FOR_PRACTICE : QuizStatus.CLOSED;
+        }
+        if (quizExercise.quizBatches && quizExercise.quizBatches.some((batch) => batch.started)) {
+            return QuizStatus.ACTIVE;
+        }
+        return QuizStatus.VISIBLE;
     }
 }

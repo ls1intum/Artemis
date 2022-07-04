@@ -18,6 +18,8 @@ import org.springframework.security.test.context.support.WithMockUser;
 import com.fasterxml.jackson.core.JsonProcessingException;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
+import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
 
 public class BitbucketServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
@@ -66,9 +68,22 @@ public class BitbucketServiceTest extends AbstractSpringIntegrationBambooBitbuck
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @ValueSource(strings = { "master", "main", "someOtherName" })
-    public void testGetDefaultBranch(String defaultBranch) throws IOException {
+    public void testGetDefaultBranch(String defaultBranch) throws IOException, URISyntaxException {
         bitbucketRequestMockProvider.mockDefaultBranch(defaultBranch, "PROJECTNAME");
         String actualDefaultBranch = versionControlService.getDefaultBranchOfRepository(new VcsRepositoryUrl("http://some.test.url/scm/PROJECTNAME/REPONAME-exercise.git"));
         assertThat(actualDefaultBranch).isEqualTo(defaultBranch);
+    }
+
+    @Test
+    public void testGetOrRetrieveDefaultBranch() throws IOException {
+        Course course = database.addCourseWithOneProgrammingExercise();
+        ProgrammingExercise programmingExercise = (ProgrammingExercise) course.getExercises().stream().findAny().get();
+        database.addTemplateParticipationForProgrammingExercise(programmingExercise);
+        database.addSolutionParticipationForProgrammingExercise(programmingExercise);
+        bitbucketRequestMockProvider.mockGetDefaultBranch(defaultBranch, programmingExercise.getProjectKey(), 1);
+        versionControlService.getOrRetrieveBranchOfParticipation(programmingExercise.getSolutionParticipation());
+        // If we have to retrieve the default branch again, the mockProvider would fail
+        versionControlService.getOrRetrieveBranchOfParticipation(programmingExercise.getSolutionParticipation());
+        bitbucketRequestMockProvider.verifyMocks();
     }
 }

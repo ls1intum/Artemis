@@ -18,12 +18,8 @@ public class CodeHint extends ExerciseHint {
 
     // No CascadeType.REMOVE here, as we want to retain the solution entries when a code hint is deleted
     @OneToMany(mappedBy = "codeHint", fetch = FetchType.LAZY)
-    @JsonIgnoreProperties("codeHint")
+    @JsonIgnoreProperties({ "codeHint", "testCase" })
     private Set<ProgrammingExerciseSolutionEntry> solutionEntries = new HashSet<>();
-
-    @ManyToOne
-    @JsonIgnoreProperties("codeHint")
-    private ProgrammingExerciseTask task;
 
     public Set<ProgrammingExerciseSolutionEntry> getSolutionEntries() {
         return this.solutionEntries;
@@ -31,14 +27,6 @@ public class CodeHint extends ExerciseHint {
 
     public void setSolutionEntries(Set<ProgrammingExerciseSolutionEntry> solutionEntries) {
         this.solutionEntries = solutionEntries;
-    }
-
-    public ProgrammingExerciseTask getProgrammingExerciseTask() {
-        return task;
-    }
-
-    public void setProgrammingExerciseTask(ProgrammingExerciseTask programmingExerciseTask) {
-        this.task = programmingExerciseTask;
     }
 
     /**
@@ -50,7 +38,28 @@ public class CodeHint extends ExerciseHint {
     }
 
     @Override
+    public void removeContent() {
+        super.removeContent();
+        setSolutionEntries(new HashSet<>());
+    }
+
+    @Override
     public String toString() {
         return "CodeHint{" + "id=" + getId() + ", title='" + getTitle() + "}";
+    }
+
+    /**
+     * Creates a copy of this hint including basic attributes, but excluding attributes referencing other models
+     *
+     * @return The copied hint
+     */
+    @Override
+    public CodeHint createCopy() {
+        CodeHint copiedHint = new CodeHint();
+
+        copiedHint.setDescription(this.getDescription());
+        copiedHint.setContent(this.getContent());
+        copiedHint.setTitle(this.getTitle());
+        return copiedHint;
     }
 }

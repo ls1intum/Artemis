@@ -1,5 +1,6 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { round } from 'app/shared/util/utils';
+import { Theme, ThemeService } from 'app/core/theme/theme.service';
 
 @Component({
     selector: 'jhi-progress-bar',
@@ -10,6 +11,8 @@ export class ProgressBarComponent implements OnInit {
     @Input() public percentage: number;
     @Input() public numerator: number;
     @Input() public denominator: number;
+
+    constructor(private themeService: ThemeService) {}
 
     ngOnInit() {
         this.percentage = round(this.percentage);
@@ -34,9 +37,15 @@ export class ProgressBarComponent implements OnInit {
      * @param percentage The completed percentage of the progress bar
      */
     chooseProgressBarTextColor(percentage: number) {
-        if (percentage < 100) {
-            return 'text-dark';
+        switch (this.themeService.getCurrentTheme()) {
+            case Theme.DARK:
+                return 'text-white';
+            case Theme.LIGHT:
+            default:
+                if (percentage < 100) {
+                    return 'text-dark';
+                }
+                return 'text-white';
         }
-        return 'text-white';
     }
 }

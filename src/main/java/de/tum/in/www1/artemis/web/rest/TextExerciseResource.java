@@ -22,6 +22,7 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.plagiarism.text.TextPlagiarismResult;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismResultRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.feature.Feature;
@@ -472,6 +473,8 @@ public class TextExerciseResource {
         if (plagiarismResult != null) {
             for (var comparison : plagiarismResult.getComparisons()) {
                 comparison.setPlagiarismResult(null);
+                comparison.getSubmissionA().setPlagiarismComparison(null);
+                comparison.getSubmissionB().setPlagiarismComparison(null);
             }
         }
         return ResponseEntity.ok((TextPlagiarismResult) plagiarismResult);
@@ -500,13 +503,16 @@ public class TextExerciseResource {
         TextPlagiarismResult result = textPlagiarismDetectionService.checkPlagiarism(textExercise, similarityThreshold, minimumScore, minimumSize);
         log.info("Finished textPlagiarismDetectionService.checkPlagiarism for exercise {} with {} comparisons in {}", exerciseId, result.getComparisons().size(),
                 TimeLogUtil.formatDurationFrom(start));
-        result.sortAndLimit(500);
+        // TODO: limit the amount temporarily because of database issues
+        result.sortAndLimit(100);
         log.info("Limited number of comparisons to {} to avoid performance issues when saving to database", result.getComparisons().size());
         start = System.nanoTime();
         plagiarismResultRepository.savePlagiarismResultAndRemovePrevious(result);
         log.info("Finished plagiarismResultRepository.savePlagiarismResultAndRemovePrevious call in {}", TimeLogUtil.formatDurationFrom(start));
         for (var comparison : result.getComparisons()) {
             comparison.setPlagiarismResult(null);
+            comparison.getSubmissionA().setPlagiarismComparison(null);
+            comparison.getSubmissionB().setPlagiarismComparison(null);
         }
         return ResponseEntity.ok(result);
     }

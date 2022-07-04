@@ -1,0 +1,29 @@
+<label class="form-control-label col" *ngIf="labelName">
+    {{ labelName }}
+</label>
+<fa-stack *ngIf="labelTooltip" class="text-secondary icon-full-size" placement="top" [ngbTooltip]="labelTooltip">
+    <fa-icon [icon]="faQuestionCircle" stackItemSize="1x"></fa-icon>
+</fa-stack>
+<fa-stack *ngIf="shouldDisplayTimeZoneWarning" placement="top" ngbTooltip="{{ 'entity.timeZoneWarning' | artemisTranslate: { timeZone: currentTimeZone } }}" class="icon-full-size">
+    <fa-icon [icon]="faGlobe" stackItemSize="1x" class="text-lightgrey"></fa-icon>
+    <fa-icon [icon]="faClock" stackItemSize="1x" transform="shrink-6 down-5 right-5" class="text-secondary"></fa-icon>
+</fa-stack>
+<div class="d-flex">
+    <input
+        #dateInput="ngModel"
+        class="form-control position-relative ps-5"
+        id="date-input-field"
+        [ngClass]="{ 'is-invalid': error }"
+        [ngModel]="value"
+        [disabled]="disabled"
+        [min]="convert(min)"
+        [max]="convert(max)"
+        (ngModelChange)="updateField($event)"
+        [owlDateTime]="dt"
+        name="datePicker"
+    />
+    <button [owlDateTimeTrigger]="dt" class="btn position-absolute" type="button">
+        <fa-icon [icon]="faCalendarAlt"></fa-icon>
+    </button>
+    <owl-date-time [startAt]="convert(startAt)" #dt></owl-date-time>
+</div>

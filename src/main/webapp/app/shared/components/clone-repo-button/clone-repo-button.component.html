@@ -2,7 +2,7 @@
     <button
         jhi-exercise-action-button
         [buttonIcon]="faDownload"
-        class="ms-2 clone-repository"
+        class="clone-repository"
         [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
         [buttonLabel]="'artemisApp.exerciseActions.cloneRepository' | artemisTranslate"
         [buttonLoading]="loading"
@@ -33,7 +33,7 @@
                 [ngClass]="
                     sshEnabled && !useSsh ? 'url-box-remove-line-left url-box-remove-line-right' : sshEnabled && useSsh ? 'url-box-remove-line-left' : 'url-box-remove-line-right'
                 "
-                [cdkCopyToClipboard]="getHttpOrSshRepositoryUrl()"
+                [cdkCopyToClipboard]="getHttpOrSshRepositoryUrl(false)"
                 (cdkCopyToClipboardCopied)="onCopyFinished($event)"
                 >{{ getHttpOrSshRepositoryUrl() }} </pre
             >
@@ -48,7 +48,7 @@
             {{ 'artemisApp.exerciseActions.hoverToShow' | artemisTranslate }}
         </p>
         <button
-            [cdkCopyToClipboard]="getHttpOrSshRepositoryUrl()"
+            [cdkCopyToClipboard]="getHttpOrSshRepositoryUrl(false)"
             (cdkCopyToClipboardCopied)="onCopyFinished($event)"
             [class.btn-success]="wasCopied"
             class="btn btn-primary btn-sm me-2"

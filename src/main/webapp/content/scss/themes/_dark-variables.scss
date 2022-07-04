@@ -1,0 +1,559 @@
+// === BOOTSTRAP ===
+// Mostly stolen from Bootswatch Darkly 5.1.3
+
+$white: #fff;
+$gray-100: #f8f9fa;
+$gray-200: #ebebeb;
+$gray-300: #dee2e6;
+$gray-400: #ced4da;
+$gray-500: #adb5bd;
+$gray-600: #888;
+$gray-700: #444;
+$gray-800: #303030;
+$gray-900: #222;
+$black: #000;
+
+$blue: #3e8acc;
+$indigo: #6610f2;
+$purple: #6f42c1;
+$pink: #e83e8c;
+$red: #e74c3c;
+$orange: #fd7e14;
+$yellow: #f39c12;
+$green: #00bc8c;
+$teal: #20c997;
+$cyan: #17a2b8;
+
+$primary: $blue;
+$secondary: $gray-600;
+$success: $green;
+$info: $cyan;
+$warning: $yellow;
+$danger: $red;
+$light: $gray-500;
+$dark: $gray-800;
+
+$min-contrast-ratio: 1.9;
+
+$body-color: $white;
+$text-muted: $gray-600;
+$body-bg: $gray-900;
+
+$input-color: $gray-800;
+$input-border-color: $body-bg;
+$input-group-addon-color: $gray-500;
+$input-group-addon-bg: $gray-700;
+$form-check-input-border: none;
+$form-file-button-color: $white;
+
+$dropdown-bg: $gray-900;
+$dropdown-border-color: $gray-700;
+$dropdown-divider-bg: $gray-700;
+$dropdown-link-color: $white;
+$dropdown-link-hover-color: $white;
+$dropdown-link-hover-bg: $primary;
+
+$nav-link-disabled-color: $gray-500;
+$nav-tabs-border-color: $gray-700;
+$nav-tabs-link-hover-border-color: $nav-tabs-border-color $nav-tabs-border-color transparent;
+$nav-tabs-link-active-color: $white;
+$nav-tabs-link-active-border-color: $nav-tabs-border-color $nav-tabs-border-color transparent;
+
+$navbar-dark-color: rgba($white, 0.6);
+$navbar-dark-hover-color: $white;
+$navbar-light-color: rgba($gray-900, 0.7);
+$navbar-light-hover-color: $gray-900;
+$navbar-light-active-color: $gray-900;
+$navbar-light-toggler-border-color: rgba($gray-900, 0.1);
+
+$pagination-color: $white;
+$pagination-bg: $blue;
+$pagination-border-width: 0;
+$pagination-border-color: transparent;
+$pagination-hover-color: $white;
+$pagination-hover-bg: lighten($blue, 10%);
+$pagination-hover-border-color: transparent;
+$pagination-active-bg: $pagination-hover-bg;
+$pagination-active-border-color: transparent;
+$pagination-disabled-color: $white;
+$pagination-disabled-bg: darken($blue, 15%);
+$pagination-disabled-border-color: transparent;
+
+$toast-background-color: $gray-700;
+$toast-header-background-color: $gray-800;
+
+$modal-content-bg: $gray-800;
+$modal-content-border-color: $gray-700;
+$modal-header-border-color: $gray-700;
+
+$list-group-color: $body-color;
+$list-group-bg: $gray-800;
+$list-group-border-color: $gray-700;
+$list-group-hover-bg: $gray-700;
+$list-group-action-hover-color: $list-group-color;
+$list-group-action-active-bg: $gray-900;
+
+$breadcrumb-bg: $gray-700;
+$progress-bg: $gray-700;
+
+$btn-close-color: $white;
+$btn-close-opacity: 0.4;
+$btn-close-hover-opacity: 1;
+
+$pre-color: inherit;
+
+$table-bg-scale: 0;
+$table-border-color: $gray-700;
+$table-striped-bg: rgba($white, 0.02);
+
+// Global colors
+$artemis-dark: #353d47; // (not bootstrap)
+$link-color: #3e8acc;
+
+// Border
+$border-color: lighten($body-bg, 10);
+
+// Base for dark spaces
+$neutral-dark: rgb(24, 26, 24); // (not bootstrap)
+
+$neutral-dark-l-5: lighten($neutral-dark, 5%);
+$neutral-dark-l-10: lighten($neutral-dark, 10%);
+$neutral-dark-l-15: lighten($neutral-dark, 15%);
+$neutral-dark-l-20: lighten($neutral-dark, 20%);
+
+// Footer
+$footer-bg: $neutral-dark;
+
+// Cards
+$card-bg: $neutral-dark;
+$card-cap-bg: $neutral-dark-l-5;
+$card-border-color: $border-color;
+
+// Navbar
+$navbar-foreground: $body-color;
+$navbar-bg: $artemis-dark;
+$navbar-item-active-hover-bg: $artemis-dark;
+$navbar-breadcrumb-background: $body-bg;
+$navbar-breadcrumb-color: $primary;
+
+// === END BOOTSTRAP ===
+
+// Backgrounds
+$darker-body-bg: darken($body-bg, 20);
+$slightly-darker-body-bg: darken($body-bg, 10);
+$brighter-body-bg: lighten($body-bg, 10);
+
+$dropdown-bg: $neutral-dark;
+$popover-bg: $neutral-dark-l-5;
+$popover-header-bg: $gray-700;
+$modal-content-bg: $neutral-dark;
+
+// Borders
+$theme-switch-box-border-color: $neutral-dark-l-15;
+
+// Global.scss colors
+$colored-btn-font: #fff;
+$default-btn-font: white;
+$default-btn-background: $artemis-dark;
+$default-btn-border: lighten($artemis-dark, 20%);
+
+$border-lightgrey: rgba(0, 0, 0, 0.125);
+$text-lightgrey: rgba(0, 0, 0, 0.125);
+$form-control-focus-background: transparentize(#fff, 0.9);
+$form-control-color: $white;
+$browserupgrade-color: black;
+$browserupgrade-color-background: #ccc;
+$ng-valid-border: green;
+$ng-invalid-border: red;
+$gutter-background: #bbb;
+$error-color: white;
+$error-background: red;
+$readonly-background: #eee;
+$jh-entity-details-dd-border: #eee;
+$editor-outline-background: transparent;
+$btn-total-score-color: #337ab7;
+
+$result-orange: orange;
+$result-late: gray;
+
+$negative-color: $danger;
+$negative-background: $gray-800;
+$positive-color: $success;
+$positive-background: $gray-800;
+
+$artemis-pre-color: white;
+$artemis-pre-background: $neutral-dark-l-10;
+$artemis-pre-border: $neutral-dark-l-20;
+
+$code-success-color: green;
+$code-success-background: #f2f9f2;
+$code-error-color: #c7254e;
+$code-error-background: #f9f2f4;
+$code-warning-color: #e68a00;
+$code-warning-background: #fff5e6;
+
+$code-password: transparent;
+$code-password-background: black;
+$code-password-selection: white;
+$code-password-selection-background: #3297fd;
+$code-password-hover: white;
+
+$unreferenced-feedback-background: transparentize(#fff, 0.95);
+$displaycolor-background: #f8f9fa;
+
+$markdown-preview-editor-background: transparent;
+$markdown-preview-red: #ca2024;
+$markdown-preview-green: #3ea119;
+$markdown-preview-white: #ffffff;
+$markdown-preview-black: #000000;
+$markdown-preview-yellow: #fffa5c;
+$markdown-preview-blue: #0d3cc2;
+$markdown-preview-lila: #b05db8;
+$markdown-preview-orange: #d86b1f;
+$markdown-preview-blockquote: #6a737d;
+$markdown-preview-blockquote-border: #dfe2e5;
+
+$connection-status: $success;
+$connection-status-disconnected: $danger;
+
+$mat-autocomplete-visible-box-shadow: black;
+$mat-form-field-outline: #ccc;
+
+// Feature Overview
+$fo-wrapper-background: $neutral-dark;
+$fo-container-box-icon-background: $neutral-dark-l-10;
+$fo-blue-font-color: #4188d3;
+
+// Header Participation
+$header-participation-page-info-bar-background: saturate(lighten($artemis-dark, 5%), 15%);
+
+// Markdown Editor
+$md-wrapper-body-bg: $body-bg;
+$md-wrapper-color: white;
+$md-tab-list-bg: $body-bg;
+$md-editor-background: $body-bg;
+$md-file-input-border-color: $border-color;
+$md-resize-icon-color: $gray-400;
+
+// Metis
+$metis-light-gray: #979797;
+$metis-gray: #6a737d;
+$metis-blue: $link-color;
+$metis-light-blue: #0e252d;
+$metis-green: #33cd32;
+$metis-course-discussion-select-bg: $neutral-dark;
+
+$metis-answer-post-background-color: rgba(255, 255, 255, 0.02);
+
+$reaction-button-default-color: $gray-800;
+$reaction-button-hover-color: $gray-700;
+$reaction-button-reacted-color: $gray-800;
+$reaction-button-reacted-color: $gray-800;
+$reaction-button-reacted-accent-color: $metis-blue;
+$reaction-button-emoji-count-color: $gray-200;
+
+$metis-post-tag-selector-tag-option-background: $neutral-dark;
+$metis-post-tag-selector-tag-option-hover-background: $neutral-dark-l-5;
+
+// Component: plagiarism-inspector.component.scss
+$plagiarism-inspector-darker-artemis-dark: darken($artemis-dark, 4);
+
+// Component: course-exercise-card
+$course-exercise-card-border-color: $border-color;
+$course-exercise-card-background: $neutral-dark;
+
+// Component: color selector
+$color-selector-background: $neutral-dark-l-10;
+$color-selector-border: $neutral-dark-l-20;
+$color-selector-box-shadow: rgba(0, 0, 0, 0.3);
+
+// Component: Statistics average score graph
+$stat-av-sc-legend-background: $brighter-body-bg;
+// These are from graph colors
+$stat-av-sc-legend-critical: rgba(204, 0, 0, 1);
+$stat-av-sc-legend-median: rgba(127, 127, 127, 255);
+$stat-av-sc-legend-best: rgba(40, 164, 40, 1);
+
+// Programming Exercise Form (scss)
+$update-programming-exercise-footer-background: $brighter-body-bg;
+$update-programming-exercise-footer-box-shadow: rgba(0, 0, 0, 0.7);
+$update-programming-exercise-plan-preview-box-background: transparentize(#fff, 0.95);
+
+// Edit Quiz
+$quiz-mapping-letter-number-mixin-color: white;
+
+$edit-quiz-footer-background: $brighter-body-bg;
+$edit-quiz-footer-box-shadow: rgba(0, 0, 0, 0.7);
+$quiz-exercise-detail-max-score-background: $artemis-dark;
+$quiz-exercise-detail-max-score-color: white;
+$quiz-edit-question-border: $neutral-dark-l-10;
+$quiz-edit-question-background: $neutral-dark;
+
+$edit-quiz-q-dnd-drop-location-background: white;
+$edit-quiz-q-dnd-drop-location-color: black;
+$edit-quiz-q-dnd-drop-location-hover-bg: rgba(255, 255, 255, 0.8);
+
+// Quiz Exercises
+$quiz-drag-items-background: $neutral-dark-l-5;
+$quiz-drag-item-background: $neutral-dark-l-10;
+$quiz-drag-item-border: $neutral-dark-l-20;
+$quiz-drag-item-color: white;
+
+$quiz-navigation-background: $neutral-dark;
+
+$quiz-participation-footer-background: $brighter-body-bg;
+$quiz-participation-footer-box-shadow: rgba(0, 0, 0, 0.7);
+$quiz-participation-footer-dnd-background: #296773;
+$quiz-participation-footer-mc-background: #9d8a1e;
+$quiz-participation-footer-sa-background: #703e20;
+$quiz-participation-footer-changed-background: #527cd7;
+$quiz-participation-footer-content-quiz-score-color: $success;
+$quiz-participation-footer-content-quiz-score-incorrect-color: white;
+$quiz-participation-footer-content-time-warning-color: $warning;
+$quiz-participation-footer-content-time-critical-color: $danger;
+$quiz-participation-quiz-is-over-border-color: #3c763d;
+$quiz-participation-refresh-overlay-active-background: rgba(255, 255, 255, 0.6);
+$quiz-participation-btn-circle-light-border-color: transparent;
+
+$quiz-participation-question-disabled-color: $gray-600;
+$quiz-participation-question-disabled-background: transparentize(#fff, 0.9);
+$quiz-participation-question-result-border-color: $success;
+$quiz-participation-question-result-incorrect-border-color: $warning;
+$quiz-participation-question-h2-span-color: grey;
+$quiz-participation-question-score-result: $success;
+$quiz-participation-question-score-incorrect-result: $warning;
+
+$quiz-scoring-info-student-modal-question-correct: $success;
+$quiz-scoring-info-student-modal-question-wrong: $warning;
+
+$quiz-question-background: $neutral-dark;
+$quiz-question-border-color: $neutral-dark-l-20;
+
+$dnd-question-drop-location-background: white;
+$dnd-question-drop-location-border-color: black;
+$dnd-question-drop-location-results-border-color: $success;
+$dnd-question-drop-location-results-background: rgb(170, 255, 170);
+$dnd-question-drop-location-results-incorrect-border-color: $danger;
+$dnd-question-drop-location-results-incorrect-background: rgb(255, 170, 170);
+$dnd-question-drop-location-results-sample-border-color: black;
+$dnd-question-drop-location-results-sample-background: white;
+$dnd-question-drop-location-result-symbol-color: $warning;
+$dnd-question-drop-location-result-invalid-color: $danger;
+$dnd-question-drop-location-drag-item-background: white;
+$dnd-question-dnd-items-drag-items-background: $neutral-dark-l-10;
+$dnd-question-drop-list-receiving-background: rgba(173, 216, 230, 0.8);
+$dnd-question-drop-list-dragging-background: rgb(144, 238, 144);
+
+$sa-question-container-input-background: transparentize(#fff, 0.95);
+$sa-question-container-input-border: transparentize(#fff, 0.9);
+$sa-question-input-invalid-background: $gray-700;
+$sa-question-input-wrong-background: $danger;
+$sa-question-input-correct-background: $warning;
+$sa-question-input-completely-correct-background: $success;
+
+$mc-question-answer-option-border: transparentize(#fff, 0.8);
+$mc-question-answer-option-hover-background: transparentize(#fff, 0.97);
+
+// Programming Exercises
+$programming-exercise-instruction-step-wizard-card-header-background: $neutral-dark-l-5;
+$programming-exercise-instruction-step-wizard-card-header-border: $neutral-dark-l-10;
+$programming-exercise-instruction-step-wizard-row-before-background: #ccc;
+$programming-exercise-instruction-step-wizard-btn-border-color: #ccc;
+$programming-exercise-instruction-step-wizard-circle-not-done-color: $gray-700;
+$programming-exercise-instruction-step-wizard-test-passing-hover-color: #f8f9fa;
+
+// SGI
+$edit-sqi-grading-instructions-update-border: $border-color;
+$edit-sqi-criterion-title-row-background: $neutral-dark-l-5;
+
+$sgi-assessment-layout-zero-background: darken($warning, 40);
+$sgi-assessment-layout-positive-background: darken($success, 30);
+$sgi-assessment-layout-negative-background: darken($danger, 45);
+
+// Code Editor
+$code-editor-file-browser-header-background: $neutral-dark-l-5;
+$code-editor-file-browser-header-border: $neutral-dark-l-10;
+$code-editor-file-browser-tree-hover: $neutral-dark-l-5;
+$code-editor-file-browser-input-background: darken($neutral-dark, 10%);
+$code-editor-file-browser-input-color: white;
+$code-editor-diff-newline-background: rgba(46, 160, 67, 0.22);
+$code-editor-gutter-newline-background: rgba(46, 160, 67, 0.6);
+
+// Overview variables
+$overview-border-color: $border-color;
+$overview-light-border-color: darken($overview-border-color, 5%);
+$overview-light-background-color: rgba($overview-light-border-color, 0.3);
+$overview-light-primary-background-color: rgba($primary, 0.3);
+$overview-blue-border-color: darken($primary, 20);
+$overview-tab-active-border-color: $body-color;
+$overview-refresh-overlay-bg-color: transparentize($neutral-dark, 0.5);
+$overview-refresh-overlay-color: $gray-400;
+
+// Lecture Unit
+$lecture-unit-card-body-background: $neutral-dark;
+$lecture-unit-card-header-background: $neutral-dark-l-5;
+$lecture-unit-card-shadow: rgba(0, 0, 0, 0.25);
+$lecture-unit-card-hover-shadow: $primary;
+
+// Notification sidebar
+$notification-sb-background: $body-bg;
+$notification-sb-overlay-bg: rgba(0, 0, 0, 0.2);
+$notification-sb-box-shadow: rgba(0, 0, 0, 0.5);
+$notification-sb-even-child-bg: $brighter-body-bg;
+$notification-sb-hover-child-bg: rgba(62, 138, 204, 0.2);
+$notification-sb-icon-color: var(--bs-body-color);
+
+// Text Editor
+$text-editor-background: $gray-900;
+$text-editor-focus-background: $gray-900;
+$text-editor-color: $white;
+$text-editor-border-color: $gray-800;
+
+// Exam (Manage)
+$exam-checklist-exercise-group-table-background: $gray-800;
+
+$exercise-group-border-color: $neutral-dark-l-10;
+$exercise-group-header-background: $neutral-dark-l-5;
+$exercise-group-header-badge-color: $warning;
+
+// Grading system
+$base-grading-system-input-color: white;
+$base-grading-system-input-background: $form-control-focus-background;
+
+// Exam students
+$exam-students-dropdown-item-active: $success;
+$exam-students-dropdown-item-already-registered-color: #212529;
+$exam-students-dropdown-item-already-registered-background-color: #e9f6ec;
+$exam-students-dropdown-item-already-registered-background-hover-color: #daf2e0;
+$exam-students-datatable-row-newly-registered-background-color: $neutral-dark-l-20;
+
+// Data table
+$data-table-icon-right: white;
+$data-table-transitioning-container-active-background-color: rgba(0, 0, 0, 0.5);
+$data-table-dropdown-item-selected-background-color: $primary;
+
+// Team Participation Table
+$team-participation-table-last-row-border-bottom: $gray-700;
+$team-participation-table-even-row-background: $gray-700;
+$team-participation-table-header-inner-background: $neutral-dark;
+$team-participation-table-current-exercise-bg: mix($success, $neutral-dark, 10%);
+$team-participation-table-current-exercise-text: $success;
+$team-participation-table-box-shadow-color: black;
+
+// Team Short Name
+$team-short-name-background: transparentize($blue, 0.85);
+$team-short-name-color: $blue;
+
+// Exam
+$exam-navigation-bar-background-color: $neutral-dark-l-5;
+$exam-navigation-bar-synced-color: white;
+$exam-navigation-bar-synced-background-color: #3e8acc;
+$exam-navigation-bar-not-synced-color: #1a1a1a;
+$exam-navigation-bar-not-synced-background-color: $warning;
+$exam-navigation-bar-inactive-background: gray;
+$exam-navigation-bar-active-background: #276091;
+$exam-navigation-bar-exercise-index-color: white;
+$exam-timer-label-color: white;
+$exam-timer-remaining-time-background: black;
+$exam-timer-critical-background: $warning;
+$exam-exercise-overview-table-background: $neutral-dark-l-5;
+$exam-participation-footer-background: $neutral-dark;
+$exam-participation-footer-box-shadow: rgba(0, 0, 0, 0.7);
+$exam-participation-footer-connected-background: #114d4f;
+$exam-participation-footer-disconnected-background: #6c4e05;
+$exam-text-exam-summary-background: transparent;
+
+// Exam Monitoring
+$exam-monitoring-card-border-color: $border-color;
+$exam-monitoring-card-footer-background-color: rgba($white, 0.02);
+
+// Assessment
+$textblock-assessment-span-hover-background: $gray-700;
+$textblock-assessment-text-feedback-positive-color: $success;
+$textblock-assessment-text-feedback-positive-background: $gray-800;
+$textblock-assessment-text-feedback-positive-active-decoration: $success;
+$textblock-assessment-text-feedback-negative-color: $danger;
+$textblock-assessment-text-feedback-negative-background: $gray-800;
+$textblock-assessment-text-feedback-negative-active-decoration: $danger;
+$textblock-assessment-text-feedback-neutral-color: $gray-100;
+$textblock-assessment-text-feedback-neutral-background: $gray-800;
+$textblock-assessment-text-feedback-neutral-active-decoration: $gray-100;
+$textblock-assessment-text-feedback-conflicting-color: $gray-100;
+$textblock-assessment-text-feedback-conflicting-background: $warning;
+$textblock-assessment-text-feedback-conflicting-active-decoration: $gray-100;
+$textblock-assessment-textblock-feedback-editor-active-border: $gray-600;
+$textblock-feedback-editor-feedback-positive-color: #3579b2;
+$textblock-feedback-editor-feedback-positive-background-color: $gray-800;
+$textblock-feedback-editor-feedback-neutral-color: $gray-100;
+$textblock-feedback-editor-feedback-neutral-background-color: $gray-900;
+$textblock-feedback-editor-reused-feedback-preview-border: rgba(228, 228, 228, 0.87);
+$textblock-feedback-editor-dropdown-hover: $gray-700;
+$manual-text-selection-span-hover-background-color: $gray-700;
+
+// Guided tour
+$gt-tour-step-bg-color: $gray-700;
+$gt-tour-text-color: $white;
+$gt-tour-border-color: #17a2b8;
+$gt-tour-next-button-color: #17a2b8;
+$gt-tour-next-button-hover: #117a8b;
+$gt-tour-back-button-color: #17a2b8;
+$gt-tour-back-button-hover: #117a8b;
+$gt-tour-restart-button-color: #28a745;
+$gt-tour-restart-button-hover: #1e7e34;
+$gt-tour-button-color-disabled: #808080;
+$gt-tour-button-text-color: #ffffff;
+$gt-tour-button-text-disabled: #c2c2c2;
+$gt-tour-shadow-color: $black;
+$gt-overlay-background: black;
+$gt-tour-block-after-background: #231f1f;
+$gt-tour-block-content-tt-background: $gray-600;
+$gt-tour-block-content-red: #ca2024;
+$gt-tour-block-step-hint-not-interaction-background: $gray-800;
+$gt-tour-block-step-hint-interaction-background: rgb(23, 162, 184, 0.3);
+
+// Alerts
+$artemis-alert-info-color: lighten($info, 15);
+$artemis-alert-info-background: darken($info, 30);
+$artemis-alert-info-border: darken($info, 5);
+$artemis-alert-danger-color: lighten($danger, 15);
+$artemis-alert-danger-background: darken($danger, 45);
+$artemis-alert-danger-border: darken($danger, 5);
+$artemis-alert-warning-color: $warning;
+$artemis-alert-warning-background: darken($warning, 40);
+$artemis-alert-warning-border: darken($warning, 5);
+$artemis-alert-success-color: $success;
+$artemis-alert-success-background: darken($success, 30);
+$artemis-alert-success-border: darken($success, 5);
+$artemis-alert-neutral-color: white;
+$artemis-alert-neutral-background: darken($gray-600, 20%);
+$artemis-alert-neutral-border: $gray-600;
+
+$close-circle-color: white;
+$close-circle-background: $gray-900;
+$close-circle-border: rgba($gray-400, 0.8);
+$close-circle-opacity: 0.9;
+
+// Apollon
+$apollon-primary: $link-color;
+$apollon-primary-contrast: white;
+$apollon-secondary: $gray-600;
+$apollon-warning-yellow: $warning;
+$apollon-background: $neutral-dark;
+$apollon-background-variant: $neutral-dark-l-10;
+$apollon-gray: $neutral-dark-l-5;
+$apollon-gray-variant: $gray-100;
+
+// NGX Graph Colors
+$graph-light-grey: rgb(182, 182, 182);
+$graph-grey: rgb(150, 150, 150);
+$graph-dark-blue: rgb(159, 186, 248);
+$graph-blue: rgba(93, 138, 201, 1);
+$graph-light-blue: rgb(58, 96, 141);
+$graph-green: rgba(40, 164, 40, 1);
+$graph-red: rgba(204, 0, 0, 1);
+$graph-yellow: rgba(230, 174, 6, 1);
+$graph-black: rgb(229, 229, 229);
+
+// User-Management
+$user-management-background-color: rgba($white, 0.02);
+$user-management-border-color: rgba($white, 0.15);

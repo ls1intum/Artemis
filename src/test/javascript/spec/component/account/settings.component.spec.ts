@@ -95,7 +95,7 @@ describe('SettingsComponent', () => {
             tick();
 
             // THEN
-            expect(comp.success).toBe(true);
+            expect(comp.success).toBeTrue();
         }),
     ));
 
@@ -114,7 +114,7 @@ describe('SettingsComponent', () => {
             tick();
 
             // THEN
-            expect(comp.success).toBe(false);
+            expect(comp.success).toBeFalse();
         }),
     ));
 });

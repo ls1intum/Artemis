@@ -18,6 +18,10 @@ public enum JenkinsJobPermission {
         return name;
     }
 
+    public static Set<JenkinsJobPermission> getStudentPermissions() {
+        return Set.of(JOB_BUILD, JOB_READ);
+    }
+
     public static Set<JenkinsJobPermission> getTeachingAssistantPermissions() {
         return Set.of(JOB_BUILD, JOB_CANCEL, JOB_READ, RUN_UPDATE);
     }

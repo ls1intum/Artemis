@@ -9,11 +9,14 @@ import { AssessmentType } from 'app/entities/assessment-type.model';
 import { SubmissionType } from 'app/entities/submission.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { faAngleDown, faAngleRight, faFolderOpen, faInfoCircle, faPrint } from '@fortawesome/free-solid-svg-icons';
+import { ThemeService } from 'app/core/theme/theme.service';
+import { StudentExamWithGradeDTO } from 'app/exam/exam-scores/exam-score-dtos.model';
+import { ExamParticipationService } from 'app/exam/participate/exam-participation.service';
 
 @Component({
     selector: 'jhi-exam-participation-summary',
     templateUrl: './exam-participation-summary.component.html',
-    styleUrls: ['../../../course/manage/course-exercise-card.component.scss', '../../../exercises/quiz/shared/quiz.scss'],
+    styleUrls: ['../../../course/manage/course-exercise-card.component.scss', '../../../exercises/quiz/shared/quiz.scss', 'exam-participation-summary.component.scss'],
 })
 export class ExamParticipationSummaryComponent implements OnInit {
     // make constants available to html for comparison
@@ -26,8 +29,27 @@ export class ExamParticipationSummaryComponent implements OnInit {
     readonly IncludedInOverallScore = IncludedInOverallScore;
     readonly SUBMISSION_TYPE_ILLEGAL = SubmissionType.ILLEGAL;
 
+    /**
+     * Current student's exam.
+     */
+    private _studentExam: StudentExam;
+
+    get studentExam(): StudentExam {
+        return this._studentExam;
+    }
+
     @Input()
-    studentExam: StudentExam;
+    set studentExam(studentExam: StudentExam) {
+        this._studentExam = studentExam;
+        if (this.studentExamGradeInfoDTO) {
+            this.studentExamGradeInfoDTO.studentExam = studentExam;
+        }
+    }
+
+    /**
+     * Grade info for current student's exam.
+     */
+    studentExamGradeInfoDTO: StudentExamWithGradeDTO;
 
     @Input()
     instructorView = false;
@@ -49,7 +71,12 @@ export class ExamParticipationSummaryComponent implements OnInit {
     faAngleRight = faAngleRight;
     faAngleDown = faAngleDown;
 
-    constructor(private route: ActivatedRoute, private serverDateService: ArtemisServerDateService) {}
+    constructor(
+        private route: ActivatedRoute,
+        private serverDateService: ArtemisServerDateService,
+        private themeService: ThemeService,
+        private examParticipationService: ExamParticipationService,
+    ) {}
 
     /**
      * Initialise the courseId from the current url
@@ -59,7 +86,28 @@ export class ExamParticipationSummaryComponent implements OnInit {
         this.isTestRun = this.route.snapshot.url[1]?.toString() === 'test-runs';
         this.testRunConduction = this.isTestRun && this.route.snapshot.url[3]?.toString() === 'conduction';
         this.courseId = Number(this.route.snapshot.paramMap.get('courseId'));
+        if (!this.studentExam?.exam?.id) {
+            throw new Error('studentExam.exam.id should be present to fetch grade info');
+        }
+        if (!this.studentExam?.user?.id) {
+            throw new Error('studentExam.user.id should be present to fetch grade info');
+        }
+
+        if (this.isExamResultPublished()) {
+            this.examParticipationService
+                .loadStudentExamGradeInfoForSummary(this.courseId, this.studentExam.exam.id, this.studentExam.user.id)
+                .subscribe((studentExamWithGrade: StudentExamWithGradeDTO) => {
+                    studentExamWithGrade.studentExam = this.studentExam;
+                    this.studentExamGradeInfoDTO = studentExamWithGrade;
+                });
+        }
+
         this.setExamWithOnlyIdAndStudentReviewPeriod();
+    }
+
+    private isExamResultPublished() {
+        const exam = this.studentExam.exam;
+        return exam && exam.publishResultsDate && dayjs(exam.publishResultsDate).isBefore(this.serverDateService.now());
     }
 
     getIcon(exerciseType: ExerciseType) {
@@ -85,39 +133,30 @@ export class ExamParticipationSummaryComponent implements OnInit {
     printPDF() {
         // expand all exercises before printing
         this.collapsedExerciseIds = [];
-        setTimeout(() => window.print());
+        setTimeout(() => this.themeService.print());
     }
 
     public generateLink(exercise: Exercise) {
-        if (exercise && exercise.studentParticipations && exercise.studentParticipations.length > 0) {
+        if (exercise?.studentParticipations?.length) {
             return ['/courses', this.courseId, `${exercise.type}-exercises`, exercise.id, 'participate', exercise.studentParticipations[0].id];
         }
+        return undefined;
     }
 
     /**
      * @param exercise
-     * returns the students submission for the exercise, undefined if no participation could be found
+     * returns the students' submission for the exercise, undefined if no participation could be found
      */
     getSubmissionForExercise(exercise: Exercise) {
-        if (
-            exercise &&
-            exercise.studentParticipations &&
-            exercise.studentParticipations.length > 0 &&
-            exercise.studentParticipations[0].submissions &&
-            exercise.studentParticipations[0].submissions.length > 0
-        ) {
-            return exercise.studentParticipations[0].submissions[0];
-        }
+        return exercise?.studentParticipations?.[0]?.submissions?.[0];
     }
 
     /**
      * @param exercise
-     * returns the students submission for the exercise, undefined if no participation could be found
+     * returns the students' submission for the exercise, undefined if no participation could be found
      */
     getParticipationForExercise(exercise: Exercise) {
-        if (exercise.studentParticipations && exercise.studentParticipations[0]) {
-            return exercise.studentParticipations[0];
-        }
+        return exercise.studentParticipations?.[0] || undefined;
     }
 
     /**

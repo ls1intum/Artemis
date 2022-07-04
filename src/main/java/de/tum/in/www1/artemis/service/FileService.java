@@ -5,7 +5,9 @@ import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
 import java.io.*;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.concurrent.*;
@@ -22,6 +24,7 @@ import org.apache.commons.io.filefilter.IOFileFilter;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.apache.pdfbox.io.MemoryUsageSetting;
 import org.apache.pdfbox.multipdf.PDFMergerUtility;
+import org.apache.pdfbox.pdmodel.PDDocumentInformation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.DisposableBean;
@@ -55,8 +58,6 @@ public class FileService implements DisposableBean {
         Map.entry("git.ignore.file", ".gitignore"),
         Map.entry("git.attributes.file", ".gitattributes"),
         Map.entry("Makefile.file", "Makefile"),
-        Map.entry("project.file", ".project"),
-        Map.entry("classpath.file", ".classpath"),
         Map.entry("dune.file", "dune"),
         Map.entry("Fast.file", "Fastfile"),
         Map.entry("App.file", "Appfile"),
@@ -101,13 +102,40 @@ public class FileService implements DisposableBean {
     }
 
     /**
+     * Copies an existing file (if not a temporary file) to a target location. Returns the public path for the resulting file.
+     *
+     * @param oldFilePath  the old file path
+     * @param targetFolder the folder that a file should be copied to
+     * @param entityId     id of the entity this file belongs to (needed to generate public path). If this is null, a placeholder will be inserted where the id would be
+     * @return the resulting public path
+     */
+    public String copyExistingFileToTarget(String oldFilePath, String targetFolder, Long entityId) {
+        if (oldFilePath != null && !oldFilePath.contains("files/temp")) {
+            try {
+                Path source = Path.of(actualPathForPublicPath(oldFilePath));
+                File targetFile = generateTargetFile(oldFilePath, targetFolder, false);
+                Path target = targetFile.toPath();
+                Files.copy(source, target, REPLACE_EXISTING);
+                String newFilePath = publicPathForActualPath(target.toString(), entityId);
+                log.debug("Moved File from {} to {}", source, target);
+                return newFilePath;
+            }
+            catch (IOException e) {
+                log.error("Error moving file: {}", oldFilePath);
+            }
+        }
+        return oldFilePath;
+    }
+
+    /**
      * Takes care of any changes that have to be made to the filesystem (deleting old files, moving temporary files into their proper location) and returns the public path for the
      * resulting file (as it might have been moved from newFilePath to another path)
      *
      * @param oldFilePath  the old file path (this file will be deleted if not null and different from newFilePath)
      * @param newFilePath  the new file path (this file will be moved into its proper location, if it was a temporary file)
      * @param targetFolder the folder that a temporary file should be moved to
-     * @param entityId     id of the entity this file belongs to (needed to generate public path). If this is null, a placeholder will be inserted where the id would be
+     * @param entityId     id of the entity this file belongs to (needed to generate
+     *                    public path). If this is null, a placeholder will be inserted where the id would be
      * @return the resulting public path (is identical to newFilePath, if file didn't need to be moved)
      */
     public String manageFilesForUpdatedFilePath(String oldFilePath, String newFilePath, String targetFolder, Long entityId) {
@@ -153,7 +181,7 @@ public class FileService implements DisposableBean {
         if (newFilePath != null && newFilePath.contains("files/temp")) {
             // rename and move file
             try {
-                Path source = Paths.get(actualPathForPublicPath(newFilePath));
+                Path source = Path.of(actualPathForPublicPath(newFilePath));
                 File targetFile = generateTargetFile(newFilePath, targetFolder, keepFileName);
                 Path target = targetFile.toPath();
                 Files.move(source, target, REPLACE_EXISTING);
@@ -179,24 +207,24 @@ public class FileService implements DisposableBean {
 
         // check for known path to convert
         if (publicPath.contains("files/temp")) {
-            return Paths.get(FilePathService.getTempFilePath(), filename).toString();
+            return Path.of(FilePathService.getTempFilePath(), filename).toString();
         }
         if (publicPath.contains("files/drag-and-drop/backgrounds")) {
-            return Paths.get(FilePathService.getDragAndDropBackgroundFilePath(), filename).toString();
+            return Path.of(FilePathService.getDragAndDropBackgroundFilePath(), filename).toString();
         }
         if (publicPath.contains("files/drag-and-drop/drag-items")) {
-            return Paths.get(FilePathService.getDragItemFilePath(), filename).toString();
+            return Path.of(FilePathService.getDragItemFilePath(), filename).toString();
         }
         if (publicPath.contains("files/course/icons")) {
-            return Paths.get(FilePathService.getCourseIconFilePath(), filename).toString();
+            return Path.of(FilePathService.getCourseIconFilePath(), filename).toString();
         }
         if (publicPath.contains("files/attachments/lecture")) {
             String lectureId = publicPath.replace(filename, "").replace("/api/files/attachments/lecture/", "");
-            return Paths.get(FilePathService.getLectureAttachmentFilePath(), lectureId, filename).toString();
+            return Path.of(FilePathService.getLectureAttachmentFilePath(), lectureId, filename).toString();
         }
         if (publicPath.contains("files/attachments/attachment-unit")) {
             String attachmentUnitId = publicPath.replace(filename, "").replace("/api/files/attachments/attachment-unit/", "");
-            return Paths.get(FilePathService.getAttachmentUnitFilePath(), attachmentUnitId, filename).toString();
+            return Path.of(FilePathService.getAttachmentUnitFilePath(), attachmentUnitId, filename).toString();
         }
         if (publicPath.contains("files/file-upload-exercises")) {
             final var uploadSubPath = publicPath.replace(filename, "").replace("/api/files/file-upload-exercises/", "").split("/");
@@ -207,7 +235,7 @@ public class FileService implements DisposableBean {
             }
             final var exerciseId = Long.parseLong(shouldBeExerciseId);
             final var submissionId = Long.parseLong(shouldBeSubmissionId);
-            return Paths.get(FileUploadSubmission.buildFilePath(exerciseId, submissionId), filename).toString();
+            return Path.of(FileUploadSubmission.buildFilePath(exerciseId, submissionId), filename).toString();
         }
 
         // path is unknown => cannot convert
@@ -223,7 +251,7 @@ public class FileService implements DisposableBean {
      */
     public String publicPathForActualPath(String actualPath, @Nullable Long entityId) {
         // first extract filename
-        String filename = Paths.get(actualPath).getFileName().toString();
+        String filename = Path.of(actualPath).getFileName().toString();
 
         // generate part for id
         String id = entityId == null ? Constants.FILEPATH_ID_PLACEHOLDER : entityId.toString();
@@ -248,7 +276,7 @@ public class FileService implements DisposableBean {
             return "/api/files/attachments/attachment-unit/" + id + "/" + filename;
         }
         if (actualPath.contains(FilePathService.getFileUploadExercisesFilePath())) {
-            final var path = Paths.get(actualPath);
+            final var path = Path.of(actualPath);
             final long exerciseId;
             try {
                 // The last name is the file name, the one before that is the submissionId and the one before that is the exerciseId, in which we are interested
@@ -319,7 +347,7 @@ public class FileService implements DisposableBean {
                 filename = filenameBase + ZonedDateTime.now().toString().substring(0, 23).replaceAll("[:.]", "-") + "_" + UUID.randomUUID().toString().substring(0, 8) + "."
                         + fileExtension;
             }
-            var path = Paths.get(targetFolder, filename).toString();
+            var path = Path.of(targetFolder, filename).toString();
 
             newFile = new File(path);
             if (keepFileName && newFile.exists()) {
@@ -355,7 +383,7 @@ public class FileService implements DisposableBean {
                 continue;
             }
 
-            Path copyPath = Paths.get(targetDirectoryPath + targetFilePath);
+            Path copyPath = Path.of(targetDirectoryPath + targetFilePath);
             File parentFolder = copyPath.toFile().getParentFile();
             if (!parentFolder.exists()) {
                 Files.createDirectories(parentFolder.toPath());
@@ -535,7 +563,7 @@ public class FileService implements DisposableBean {
 
         if (subDirectories != null) {
             for (String subDirectory : subDirectories) {
-                replaceVariablesInDirectoryName(Paths.get(directory.getAbsolutePath(), subDirectory).toString(), targetString, replacementString);
+                replaceVariablesInDirectoryName(Path.of(directory.getAbsolutePath(), subDirectory).toString(), targetString, replacementString);
             }
         }
     }
@@ -573,8 +601,8 @@ public class FileService implements DisposableBean {
      * <p>
      * {@link #replaceVariablesInFile(String, Map) replaceVariablesInFile}
      *
-     * @param startPath     the path where the start directory is located
-     * @param replacements  the replacements that should be applied
+     * @param startPath    the path where the start directory is located
+     * @param replacements the replacements that should be applied
      * @throws IOException if an issue occurs on file access for the replacement of the variables.
      */
     public void replaceVariablesInFileRecursive(String startPath, Map<String, String> replacements) throws IOException {
@@ -604,7 +632,7 @@ public class FileService implements DisposableBean {
             // filter out files that should be ignored
             files = Arrays.stream(files).filter(Predicate.not(filesToIgnore::contains)).toArray(String[]::new);
             for (String file : files) {
-                replaceVariablesInFile(Paths.get(directory.getAbsolutePath(), file).toString(), replacements);
+                replaceVariablesInFile(Path.of(directory.getAbsolutePath(), file).toString(), replacements);
             }
         }
 
@@ -616,7 +644,7 @@ public class FileService implements DisposableBean {
                     // ignore files in the '.git' folder
                     continue;
                 }
-                replaceVariablesInFileRecursive(Paths.get(directory.getAbsolutePath(), subDirectory).toString(), replacements, filesToIgnore);
+                replaceVariablesInFileRecursive(Path.of(directory.getAbsolutePath(), subDirectory).toString(), replacements, filesToIgnore);
             }
         }
     }
@@ -632,7 +660,7 @@ public class FileService implements DisposableBean {
     public void replaceVariablesInFile(String filePath, Map<String, String> replacements) throws IOException {
         log.debug("Replacing {} in file {}", replacements, filePath);
         // https://stackoverflow.com/questions/3935791/find-and-replace-words-lines-in-a-file
-        Path replaceFilePath = Paths.get(filePath);
+        Path replaceFilePath = Path.of(filePath);
         Charset charset = StandardCharsets.UTF_8;
 
         String fileContent = Files.readString(replaceFilePath, charset);
@@ -678,7 +706,7 @@ public class FileService implements DisposableBean {
     public void normalizeLineEndings(String filePath) throws IOException {
         log.debug("Normalizing line endings in file {}", filePath);
         // https://stackoverflow.com/questions/3776923/how-can-i-normalize-the-eol-character-in-java
-        Path replaceFilePath = Paths.get(filePath);
+        Path replaceFilePath = Path.of(filePath);
         Charset charset = StandardCharsets.UTF_8;
 
         String fileContent = Files.readString(replaceFilePath, charset);
@@ -720,7 +748,7 @@ public class FileService implements DisposableBean {
      */
     public void convertToUTF8(String filePath) throws IOException {
         log.debug("Converting file {} to UTF-8", filePath);
-        Path replaceFilePath = Paths.get(filePath);
+        Path replaceFilePath = Path.of(filePath);
         byte[] contentArray = Files.readAllBytes(replaceFilePath);
 
         Charset charset = detectCharset(contentArray);
@@ -809,7 +837,7 @@ public class FileService implements DisposableBean {
      * @return the unique path, e.g. /opt/artemis/repos-download/1609579674868
      */
     public Path getUniquePath(String path) {
-        var uniquePath = Paths.get(path, String.valueOf(System.currentTimeMillis()));
+        var uniquePath = Path.of(path, String.valueOf(System.currentTimeMillis()));
         if (!Files.exists(uniquePath) && Files.isDirectory(uniquePath)) {
             try {
                 Files.createDirectories(uniquePath);
@@ -825,6 +853,7 @@ public class FileService implements DisposableBean {
      * Removes illegal characters for filenames from the string.
      *
      * See: https://stackoverflow.com/questions/15075890/replacing-illegal-character-in-filename/15075907#15075907
+     *
      * @param string the string with the characters
      * @return stripped string
      */
@@ -850,8 +879,8 @@ public class FileService implements DisposableBean {
     /**
      * Write a given string into a file at a given path
      *
-     * @param stringToWrite     The string that will be written into a file
-     * @param path              The path where the file will be written to
+     * @param stringToWrite The string that will be written into a file
+     * @param path          The path where the file will be written to
      * @return Path to the written file
      */
     public Path writeStringToFile(String stringToWrite, Path path) {
@@ -870,9 +899,9 @@ public class FileService implements DisposableBean {
     /**
      * Serialize an object and write into file at a given path
      *
-     * @param object        The object that is serialized and written into a file
-     * @param objectMapper  The objectMapper that is used for serialization
-     * @param path          The path where the file will be written to
+     * @param object       The object that is serialized and written into a file
+     * @param objectMapper The objectMapper that is used for serialization
+     * @param path         The path where the file will be written to
      * @return Path to the written file
      */
     public Path writeObjectToJsonFile(Object object, ObjectMapper objectMapper, Path path) {
@@ -888,10 +917,11 @@ public class FileService implements DisposableBean {
     /**
      * Merge the PDF files located in the given paths.
      *
-     * @param paths list of paths to merge
+     * @param paths             list of paths to merge
+     * @param mergedPdfFileName title of merged pdf file
      * @return byte array of the merged file
      */
-    public Optional<byte[]> mergePdfFiles(List<String> paths) {
+    public Optional<byte[]> mergePdfFiles(List<String> paths, String mergedPdfFileName) {
         if (paths == null || paths.isEmpty()) {
             return Optional.empty();
         }
@@ -905,8 +935,14 @@ public class FileService implements DisposableBean {
                     pdfMerger.addSource(new File(path));
                 }
             }
+
+            PDDocumentInformation pdDocumentInformation = new PDDocumentInformation();
+            pdDocumentInformation.setTitle(mergedPdfFileName);
+            pdfMerger.setDestinationDocumentInformation(pdDocumentInformation);
+
             pdfMerger.setDestinationStream(outputStream);
             pdfMerger.mergeDocuments(MemoryUsageSetting.setupTempFileOnly());
+
         }
         catch (IOException e) {
             log.warn("Could not merge files");
@@ -918,6 +954,7 @@ public class FileService implements DisposableBean {
 
     /**
      * Deletes all specified files.
+     *
      * @param filePaths A list of all paths to the files that should be deleted
      */
     public void deleteFiles(List<Path> filePaths) {

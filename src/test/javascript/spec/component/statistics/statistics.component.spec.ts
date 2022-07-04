@@ -54,7 +54,7 @@ describe('StatisticsComponent', () => {
         button.click();
 
         tick();
-        expect(tabSpy).toHaveBeenCalledTimes(1);
+        expect(tabSpy).toHaveBeenCalledOnce();
         expect(component.currentSpan).toEqual(SpanType.MONTH);
         tabSpy.mockRestore();
     }));

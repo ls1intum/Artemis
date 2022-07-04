@@ -1,25 +1,6 @@
 <div class="row justify-content-center">
     <div *ngIf="course" class="col-12">
-        <div class="course-info-bar" [ngStyle]="{ backgroundColor: course.color || ARTEMIS_DEFAULT_COLOR }" id="course-detail-info-bar">
-            <div class="row">
-                <div class="col general-info">
-                    <h3>{{ course.title }}</h3>
-                    <h4 class="d-none d-sm-inline">{{ course.description || ('artemisApp.courseOverview.noDescription' | artemisTranslate) }}</h4>
-                    <h4 class="d-sm-none">{{ 'artemisApp.courseOverview.noDescription' | artemisTranslate }}</h4>
-                    <h6 class="d-sm-none">{{ 'artemisApp.courseOverview.showMore' | artemisTranslate }}</h6>
-                    <h6 class="d-sm-none">{{ 'artemisApp.courseOverview.showLess' | artemisTranslate }}</h6>
-                </div>
-                <div class="col-4 d-none d-md-flex justify-content-end course-icon">
-                    <jhi-secured-image
-                        *ngIf="course.courseIcon"
-                        [src]="course.courseIcon"
-                        [cachingStrategy]="CachingStrategy.LOCAL_STORAGE"
-                        [alt]="'artemisApp.courseOverview.noCourseIcon' | artemisTranslate"
-                    >
-                    </jhi-secured-image>
-                </div>
-            </div>
-        </div>
+        <jhi-header-course [course]="course"></jhi-header-course>
         <div class="tab-bar tab-bar-course-detail">
             <a [routerLink]="['/course-management', course.id, 'exercises']" class="tab-item btn btn-primary btn-md ms-1">
                 <fa-icon [icon]="faListAlt"></fa-icon>
@@ -35,7 +16,7 @@
             </a>
             <a *ngIf="course.postsEnabled && course.isAtLeastTutor" [routerLink]="['/courses', course.id, 'discussion']" class="tab-item btn btn-primary btn-md ms-1">
                 <fa-icon [icon]="faComments"></fa-icon>
-                <span jhiTranslate="artemisApp.metis.discussion.label">Discussion</span>
+                <span jhiTranslate="artemisApp.metis.communication.label">Communication</span>
             </a>
             <a *ngIf="course.isAtLeastInstructor" [routerLink]="['/course-management', course.id, 'goal-management']" class="tab-item btn btn-primary btn-md ms-1">
                 <fa-icon [icon]="faFlag"></fa-icon>
@@ -91,7 +72,7 @@
             </div>
         </div>
         <div class="row">
-            <div class="col-md-4">
+            <div class="col-xxl-4">
                 <div class="row">
                     <jhi-course-detail-doughnut-chart
                         class="doughnut-container col-md-6 my-3"
@@ -129,14 +110,12 @@
                     ></jhi-course-detail-doughnut-chart>
                 </div>
             </div>
-            <jhi-fullscreen class="col-md-8 fullscreen align-items-center">
-                <jhi-course-detail-line-chart
-                    class="col-12"
-                    [course]="course"
-                    [numberOfStudentsInCourse]="course.numberOfStudents!"
-                    [initialStats]="activeStudents"
-                ></jhi-course-detail-line-chart>
-            </jhi-fullscreen>
+            <jhi-course-detail-line-chart
+                class="col-xxl-8"
+                [course]="course"
+                [numberOfStudentsInCourse]="course.numberOfStudents!"
+                [initialStats]="activeStudents"
+            ></jhi-course-detail-line-chart>
         </div>
         <hr />
         <div>
@@ -204,6 +183,11 @@
             <dd>
                 <span *ngIf="course.semester && course.semester !== ''">{{ course.semester }}</span>
                 <span *ngIf="!course.semester || course.semester === ''">{{ 'global.generic.unset' | artemisTranslate }}</span>
+            </dd>
+            <dt><span jhiTranslate="artemisApp.course.defaultProgrammingLanguage">Default Programming Language</span></dt>
+            <dd>
+                <span *ngIf="course.defaultProgrammingLanguage">{{ course.defaultProgrammingLanguage }}</span>
+                <span *ngIf="!course.defaultProgrammingLanguage">{{ 'global.generic.unset' | artemisTranslate }}</span>
             </dd>
             <dt><span jhiTranslate="artemisApp.course.testCourse.title">Test Course</span></dt>
             <dd>

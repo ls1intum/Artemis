@@ -1,13 +1,11 @@
-@import 'src/main/webapp/content/scss/artemis-variables';
-
 .split-pane-header {
     z-index: 1;
     position: absolute;
     top: 0;
     left: 0;
     width: 100%;
-    background-color: white;
-    border-bottom: 1px solid $body-bg;
+    background-color: var(--bs-body-bg);
+    border-bottom: 1px solid var(--body-bg);
 
     &-top {
         display: flex;
@@ -36,6 +34,10 @@
         }
     }
 
+    &-file-with-match {
+        font-weight: bold;
+    }
+
     &-file-name {
         white-space: nowrap;
     }
@@ -44,5 +46,7 @@
         list-style: none;
         margin: 0.5rem 0;
         padding: 0;
+        max-height: 300px;
+        overflow: scroll;
     }
 }

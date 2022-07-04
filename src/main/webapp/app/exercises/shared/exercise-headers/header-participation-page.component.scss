@@ -2,14 +2,12 @@
 
 .course-info-bar--participation {
     $margin: calc(-1rem - 1px);
-    $background-color: saturate(lighten($artemis-dark, 10%), 15%);
     $top-border-radius: 3px;
 
     min-height: unset;
     padding: 15px 25px;
     margin: $margin $margin 0 $margin;
-
-    background-color: $background-color;
+    background-color: var(--header-participation-page-info-bar-background);
     border-top-left-radius: $top-border-radius;
     border-top-right-radius: $top-border-radius;
 

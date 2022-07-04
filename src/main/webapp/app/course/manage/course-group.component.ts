@@ -88,7 +88,7 @@ export class CourseGroupComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * Load all users of given cours group.
+     * Load all users of given course group.
      * Redirect to course-management when given course group is in predefined standard course groups.
      */
     loadAll() {

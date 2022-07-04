@@ -2,10 +2,10 @@
 
 .toggle-content {
     font-size: smaller;
-    color: $metis-light-gray;
+    color: var(--metis-light-gray);
 }
 
 .announcement-post {
-    background-color: $metis-light-blue;
+    background-color: var(--metis-light-blue);
     border-radius: 7px;
 }

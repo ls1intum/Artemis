@@ -12,7 +12,7 @@ import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.web.rest.TeamResource;
 
 /**
- * Exception that will be thrown if the user tries to imports teams that contains students who appears in another imported team. The error response will
+ * Exception that will be thrown if the user tries to import teams that contain students who appear in another imported team. The error response will
  * contain a list of login-registration number pairs.
  */
 public class StudentsAppearMultipleTimesException extends BadRequestAlertException {

@@ -106,9 +106,15 @@
             "deleteTasksAndSolutionEntriesWarning": "Only for testing purpose: Delete all tasks and solution entries.",
             "deleteTasksAndSolutionEntriesSuccess": "Successfully deleted all tasks and solution entries.",
             "deleteTasksAndSolutionEntriesTitle": "Delete Tasks",
+            "generateCodeHintsTooltip": "Generates code hints for all tasks in this exercise using the already created solution entries.",
+            "generateCodeHintsTitle": "Generate code hints",
+            "generateCodeHintsSuccess": "Code hints have been generated",
             "createStructuralSolutionEntriesTooltip": "Creates solution entries for all structural test cases of this exercise.",
             "createStructuralSolutionEntriesTitle": "Create structural solution entries",
             "createStructuralSolutionEntriesSuccess": "Structural solution entries have been created successfully",
+            "createBehavioralSolutionEntriesTooltip": "Creates solution entries for all behavioral test cases of this exercise.",
+            "createBehavioralSolutionEntriesTitle": "Create behavioral solution entries",
+            "createBehavioralSolutionEntriesSuccess": "Behavioral solution entries have been created successfully",
             "editable": {
                 "unsaved": "Unsaved.",
                 "unsavedTooltip": "There are unsaved changes in the problem statement.",
@@ -120,8 +126,7 @@
             "problemStatement": {
                 "title": "Problem Statement",
                 "taskCommand": "Task",
-                "testCaseCommand": "Insert Test Case",
-                "exerciseHintCommand": "Add task specific hint"
+                "testCaseCommand": "Insert Test Case"
             },
             "status": {
                 "solutionFailsTest": "The Solution Repository does not fulfill one or more test cases. This could indicate an issue with the Solution Repository or the test cases.",
@@ -266,6 +271,8 @@
                 "afterDueDateTooltip": "Activate this setting to build & test all student submissions on the selected date. This date must be set after the due date. These generated results will be marked as 'graded' even though the due date has passed.",
                 "alertNewDueDate": "The due date has been set to the release date!",
                 "alertNewAfterDueDate": "The date of the additional test runs has been set to the release date!",
+                "alertNewExampleSolutionPublicationDateAsReleaseDate": "The example solution publication date has been set to the release date!",
+                "alertNewExampleSolutionPublicationDateAsDueDate": "The example solution publication date has been set to the due date!",
                 "assessmentDueDate": "Assessment Due Date",
                 "assessmentDueDateTooltip": "The deadline for manual reviews. As soon as the specified date passes, all manual assessments will be released to students!",
                 "notSet": "not set",
@@ -273,7 +280,8 @@
                 "allowComplaintOnAutomaticAssessmentTooltip": "Students can complain after receiving an automatic assessment",
                 "disallowComplaintOnAutomaticAssessmentTooltip": "Students cannot complain after receiving an automatic assessment",
                 "complaintOnAutomaticAssessmentEnabled": "Complaints are possible",
-                "complaintOnAutomaticAssessmentDisabled": "Complaints are not possible"
+                "complaintOnAutomaticAssessmentDisabled": "Complaints are not possible",
+                "exampleSolutionPublicationDateTooltip": "The date when the Solution Repository becomes available to download for students. Leave blank to disable."
             },
             "repositoryIsLocked": {
                 "title": "Your repository is locked.",
@@ -357,7 +365,7 @@
                         "pattern": "The penalty must be a number greater than 0.",
                         "required": "The penalty must be set."
                     },
-                    "penaltyInfoLabel": "Exceeding Penalty",
+                    "penaltyInfoLabel": "(Exceeding Penalty: {{points}} points)",
                     "triggerAllInformation": "If the exceeding submission limit penalty or the submission limit is updated, the 'Re-evaluate' functionality must be used to update the participants' results."
                 },
                 "submissionPolicyType": {
@@ -374,7 +382,7 @@
                         "tooltip": "The system deducts points from your score for each submission that exceeds the submission limit. Try to stay within the submission limit to avoid penalties!"
                     }
                 },
-                "submissionLimitTitle": "Submission Limit",
+                "submissionLimitTitle": "Submission limit",
                 "submissionLimitDescription": "The amount of submissions a participant can make before the system enforces the selected policy.",
                 "editInGradingInformation": "The submission policy can only be edited and toggled on the grading page of the programming exercise!",
                 "submissionLimitWarning": {
@@ -388,7 +396,33 @@
                 "title": "Template-Solution-Diff",
                 "template": "Template",
                 "solution": "Solution",
-                "404": "Template-Solution-Diff has not been generated yet. Please do a push to the template or solution repository to generate it."
+                "404": "Template-Solution-Diff has not been generated yet. Please do a push to the template or solution repository to generate it.",
+                "lineStatLabel": "Lines added/removed between template and solution",
+                "lineStatTooltipDetailPage": "Unfiltered lines that were added and removed when comparing the template and solution repositories",
+                "lineStatTooltipFullReport": "Filtered lines that were added and removed when comparing the template and solution repositories. This excludes empty lines.",
+                "lineStatTooltipFullEntry": "Filtered lines that were added and removed when comparing the template and solution versions of this file. This excludes empty lines."
+            },
+            "projectTypes": {
+                "PLAIN_MAVEN": "Maven",
+                "PLAIN_GRADLE": "Gradle",
+                "PLAIN": "Plain",
+                "XCODE": "Xcode",
+                "FACT": "FACT",
+                "GCC": "GCC"
+            },
+            "withDependencies": "With exemplary dependency",
+            "withDependenciesTooltip": "Adds an external Apache commons-lang dependency to the generated project as an example how Maven dependencies should be used with Artemis exercises.",
+            "recordTestwiseCoverage": "Record Testwise Coverage",
+            "recordTestwiseCoverageTooltip": "Activate this option to record the testwise coverage for the solution repository. This option is only available for Java-Gradle-projects with non-sequential test runs.",
+            "coveredLineRatio": "Ratio Test-Covered Lines",
+            "testwiseCoverageReport": {
+                "button": "Show testwise coverage",
+                "tooltip": "Shows the testwise coverage for the solution repository.",
+                "title": "Testwise Coverage",
+                "404": "Testwise Coverage has not been generated yet. Please do a push to the solution or test repository to generate the report.",
+                "selectTests": "Select the tests for which the covered lines are marked:",
+                "filePath": "File Path",
+                "coveredLines": "Covered Lines"
             }
         },
         "error": {

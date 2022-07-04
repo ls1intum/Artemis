@@ -31,7 +31,7 @@ public class InvalidExamExerciseDatesArgumentProvider implements ArgumentsProvid
     }
 
     /**
-     * A exercise date attribute configuration that is invalid for exam exercises. It consists of the {@link #releaseDate()}, the {@link #dueDate()} and the {@link #assessmentDueDate()}.
+     * An exercise date attribute configuration that is invalid for exam exercises. It consists of the {@link #releaseDate()}, the {@link #dueDate()} and the {@link #assessmentDueDate()}.
      */
     public record InvalidExamExerciseDateConfiguration(ZonedDateTime releaseDate, ZonedDateTime dueDate, ZonedDateTime assessmentDueDate,
             ZonedDateTime exampleSolutionPublicationDate) implements InvalidExerciseConfiguration<Exercise> {

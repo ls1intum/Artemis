@@ -1,5 +1,3 @@
-@import 'src/main/webapp/content/scss/artemis-variables';
-
 .chart-wrapper {
     width: 90%;
 }
@@ -12,28 +10,71 @@
     height: 350px;
 }
 
+.line-chart-container {
+    width: 75%;
+}
+
+:host::ng-deep .ngx-charts-axis-label {
+    font-weight: bolder;
+}
+
 :host::ng-deep .chart-legend {
-    padding: 104px 0 0 0 !important;
+    padding-top: 104px;
 
     .legend-labels {
+        overflow: visible;
         background-color: transparent !important;
     }
 
     .legend-label {
-        color: $artemis-dark;
+        color: var(--artemis-dark);
 
         :hover {
-            color: $primary !important;
+            color: var(--primary) !important;
+        }
+
+        .legend-label-color {
+            width: 20px;
+            height: 20px;
         }
     }
 
     .legend-label-text {
         font-weight: bolder;
+        font-size: 1.125rem;
+        line-height: 21px;
     }
 }
 
 :host::ng-deep.line-series {
     path {
         stroke-width: 2px;
+    }
+}
+
+@media (max-width: 1300px) {
+    .line-chart-container {
+        width: 100% !important;
+    }
+
+    :host::ng-deep.ngx-charts-outer {
+        display: flex;
+        flex-direction: column;
+    }
+
+    :host::ng-deep .chart-legend {
+        padding: 0 !important;
+
+        > div:first-child {
+            width: 100% !important;
+        }
+
+        .legend-labels {
+            max-width: 100%;
+            display: flex;
+            justify-content: center;
+            flex-direction: column;
+            overflow: visible;
+        }
     }
 }

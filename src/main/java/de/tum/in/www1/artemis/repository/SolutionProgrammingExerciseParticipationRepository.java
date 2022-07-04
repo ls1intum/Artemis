@@ -11,6 +11,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import de.tum.in.www1.artemis.domain.participation.SolutionProgrammingExerciseParticipation;
+import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 /**
  * Spring Data JPA repository for the Participation entity.
@@ -30,4 +31,9 @@ public interface SolutionProgrammingExerciseParticipationRepository extends JpaR
     Optional<SolutionProgrammingExerciseParticipation> findWithEagerResultsAndFeedbacksAndSubmissionsByProgrammingExerciseId(Long exerciseId);
 
     Optional<SolutionProgrammingExerciseParticipation> findByProgrammingExerciseId(Long programmingExerciseId);
+
+    default SolutionProgrammingExerciseParticipation findByProgrammingExerciseIdElseThrow(Long programmingExerciseId) {
+        var optional = findByProgrammingExerciseId(programmingExerciseId);
+        return optional.orElseThrow(() -> new EntityNotFoundException("Solution Programming Exercise Participation", programmingExerciseId));
+    }
 }

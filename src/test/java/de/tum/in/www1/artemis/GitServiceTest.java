@@ -20,6 +20,8 @@ import org.eclipse.jgit.revwalk.RevCommit;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.condition.DisabledOnOs;
+import org.junit.jupiter.api.condition.OS;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -62,7 +64,7 @@ public class GitServiceTest extends AbstractSpringIntegrationBambooBitbucketJira
     }
 
     @Test
-    public void testCheckoutRepositoryAlreadyOnServer() throws GitAPIException, InterruptedException {
+    public void testCheckoutRepositoryAlreadyOnServer() throws GitAPIException {
         gitUtilService.initRepo(defaultBranch);
         var repoUrl = gitUtilService.getRepoUrlByType(GitUtilService.REPOS.REMOTE);
         String newFileContent = "const a = arr.reduce(sum)";
@@ -76,7 +78,7 @@ public class GitServiceTest extends AbstractSpringIntegrationBambooBitbucketJira
     }
 
     @Test
-    public void testCheckoutRepositoryNotOnServer() throws GitAPIException, InterruptedException, IOException {
+    public void testCheckoutRepositoryNotOnServer() throws GitAPIException, IOException {
         var repoUrl = gitUtilService.getRepoUrlByType(GitUtilService.REPOS.REMOTE);
         gitUtilService.deleteRepo(GitUtilService.REPOS.LOCAL);
         gitUtilService.reinitializeLocalRepository();
@@ -152,6 +154,7 @@ public class GitServiceTest extends AbstractSpringIntegrationBambooBitbucketJira
     }
 
     @Test
+    @DisabledOnOs(OS.WINDOWS) // git file locking issues
     public void testGetExistingCheckedOutRepositoryByLocalPathRemovesEmptyRepo() throws IOException {
         Repository localRepo = gitUtilService.getRepoByType(GitUtilService.REPOS.LOCAL);
 
@@ -172,6 +175,7 @@ public class GitServiceTest extends AbstractSpringIntegrationBambooBitbucketJira
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
+    @DisabledOnOs(OS.WINDOWS) // git file locking issues
     @MethodSource("getBranchCombinationsToTest")
     public void testGetExistingCheckedOutRepositoryByLocalPathSetsBranchCorrectly(String defaultBranchVCS, String defaultBranchArtemis) throws IOException {
         gitUtilService.initRepo(defaultBranchVCS);

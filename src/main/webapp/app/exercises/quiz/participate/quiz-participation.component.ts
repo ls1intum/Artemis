@@ -1,5 +1,6 @@
 import { Component, OnDestroy, OnInit, QueryList, ViewChildren } from '@angular/core';
 import dayjs from 'dayjs/esm';
+import isMobile from 'ismobilejs-es5';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Subscription } from 'rxjs';
 import { ActivatedRoute } from '@angular/router';
@@ -13,7 +14,6 @@ import { ShortAnswerQuestionComponent } from 'app/exercises/quiz/shared/question
 import { TranslateService } from '@ngx-translate/core';
 import * as smoothscroll from 'smoothscroll-polyfill';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
-import { DeviceDetectorService } from 'ngx-device-detector';
 import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { ShortAnswerSubmittedAnswer } from 'app/entities/quiz/short-answer-submitted-answer.model';
@@ -23,7 +23,7 @@ import { AnswerOption } from 'app/entities/quiz/answer-option.model';
 import { ShortAnswerSubmittedText } from 'app/entities/quiz/short-answer-submitted-text.model';
 import { QuizParticipationService } from 'app/exercises/quiz/participate/quiz-participation.service';
 import { MultipleChoiceQuestion } from 'app/entities/quiz/multiple-choice-question.model';
-import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
+import { QuizBatch, QuizExercise, QuizMode } from 'app/entities/quiz/quiz-exercise.model';
 import { DragAndDropSubmittedAnswer } from 'app/entities/quiz/drag-and-drop-submitted-answer.model';
 import { QuizSubmission } from 'app/entities/quiz/quiz-submission.model';
 import { ShortAnswerQuestion } from 'app/entities/quiz/short-answer-question.model';
@@ -38,6 +38,7 @@ import { debounce } from 'lodash-es';
 import { captureException } from '@sentry/browser';
 import { getCourseFromExercise } from 'app/entities/exercise.model';
 import { faCircleNotch, faSync } from '@fortawesome/free-solid-svg-icons';
+import { ArtemisServerDateService } from 'app/shared/server-date.service';
 
 @Component({
     selector: 'jhi-quiz',
@@ -52,6 +53,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
     readonly SHORT_ANSWER = QuizQuestionType.SHORT_ANSWER;
     readonly ButtonSize = ButtonSize;
     readonly ButtonType = ButtonType;
+    readonly QuizMode = QuizMode;
     readonly roundScoreSpecifiedByCourseSettings = roundValueSpecifiedByCourseSettings;
     readonly getCourseFromExercise = getCourseFromExercise;
 
@@ -66,9 +68,6 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
 
     private subscription: Subscription;
     private subscriptionData: Subscription;
-
-    // Difference between server and client time
-    timeDifference = 0;
 
     runningTimeouts = new Array<any>(); // actually the function type setTimeout(): (handler: any, timeout?: any, ...args: any[]): number
 
@@ -92,6 +91,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
     mode: string;
     submission = new QuizSubmission();
     quizExercise: QuizExercise;
+    quizBatch?: QuizBatch;
     totalScore: number;
     selectedAnswerOptions = new Map<number, AnswerOption[]>();
     dragAndDropMappings = new Map<number, DragAndDropMapping[]>();
@@ -102,6 +102,11 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
     courseId: number;
     interval: any;
     quizStarted = false;
+    startDate: dayjs.Dayjs | undefined;
+    endDate: dayjs.Dayjs | undefined;
+    password = '';
+    previousRunning = false;
+    isMobile = false;
 
     /**
      * Websocket channels
@@ -109,6 +114,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
     submissionChannel: string;
     participationChannel: string;
     quizExerciseChannel: string;
+    quizBatchChannel: string;
     websocketSubscription?: Subscription;
 
     /**
@@ -132,13 +138,14 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
         private alertService: AlertService,
         private quizParticipationService: QuizParticipationService,
         private translateService: TranslateService,
-        private deviceService: DeviceDetectorService,
         private quizService: ArtemisQuizService,
+        private serverDateService: ArtemisServerDateService,
     ) {
         smoothscroll.polyfill();
     }
 
     ngOnInit() {
+        this.isMobile = isMobile(window.navigator.userAgent).any;
         // set correct mode
         this.subscriptionData = this.route.data.subscribe((data) => {
             this.mode = data.mode;
@@ -165,6 +172,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
         // update displayed times in UI regularly
         this.interval = setInterval(() => {
             this.updateDisplayedTimes();
+            this.checkForQuizEnd();
         }, UI_RELOAD_TIME);
     }
 
@@ -207,9 +215,9 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
                     this.onSelectionChanged();
                 }
                 // if the quiz was not yet started, we might have missed the quiz start => refresh
-                if (this.quizExercise && !this.quizExercise.started) {
+                if (this.quizBatch && !this.quizBatch.started) {
                     this.refreshQuiz(true);
-                } else if (this.quizExercise && this.quizExercise.adjustedDueDate && this.quizExercise.adjustedDueDate.isBefore(dayjs())) {
+                } else if (this.quizBatch && this.endDate && this.endDate.isBefore(this.serverDateService.now())) {
                     // if the quiz has ended, we might have missed to load the results => refresh
                     this.refreshQuiz(true);
                 }
@@ -284,7 +292,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
         this.submission = new QuizSubmission();
 
         // adjust end date
-        this.quizExercise.adjustedDueDate = dayjs().add(this.quizExercise.duration!, 'seconds');
+        this.endDate = dayjs().add(this.quizExercise.duration!, 'seconds');
 
         // auto submit when time is up
         this.runningTimeouts.push(
@@ -340,7 +348,6 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
 
         if (!this.quizExerciseChannel) {
             this.quizExerciseChannel = '/topic/courses/' + this.courseId + '/quizExercises';
-
             // quizExercise channel => react to changes made to quizExercise (e.g. start date)
             this.jhiWebsocketService.subscribe(this.quizExerciseChannel);
             this.jhiWebsocketService.receive(this.quizExerciseChannel).subscribe((quiz) => {
@@ -348,6 +355,17 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
                     this.applyQuizFull(quiz);
                 }
             });
+        }
+
+        if (this.quizBatch && !this.quizBatch.started) {
+            const batchChannel = this.quizExerciseChannel + '/' + this.quizBatch.id;
+            if (this.quizBatchChannel !== batchChannel) {
+                this.quizBatchChannel = batchChannel;
+                this.jhiWebsocketService.subscribe(this.quizBatchChannel);
+                this.jhiWebsocketService.receive(this.quizBatchChannel).subscribe((quiz) => {
+                    this.applyQuizFull(quiz);
+                });
+            }
         }
     }
 
@@ -357,11 +375,11 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
     updateDisplayedTimes() {
         const translationBasePath = 'showStatistic.';
         // update remaining time
-        if (this.quizExercise && this.quizExercise.adjustedDueDate) {
-            const endDate = this.quizExercise.adjustedDueDate;
-            if (endDate.isAfter(dayjs())) {
+        if (this.endDate) {
+            const endDate = this.endDate;
+            if (endDate.isAfter(this.serverDateService.now())) {
                 // quiz is still running => calculate remaining seconds and generate text based on that
-                this.remainingTimeSeconds = endDate.diff(dayjs(), 'seconds');
+                this.remainingTimeSeconds = endDate.diff(this.serverDateService.now(), 'seconds');
                 this.remainingTimeText = this.relativeTimeText(this.remainingTimeSeconds);
             } else {
                 // quiz is over => set remaining seconds to negative, to deactivate 'Submit' button
@@ -375,27 +393,32 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
         }
 
         // update submission time
-        if (this.submission && this.submission.adjustedSubmissionDate) {
+        if (this.submission && this.submission.submissionDate) {
             // exact value is not important => use default relative time from dayjs for better readability and less distraction
-            this.lastSavedTimeText = dayjs(this.submission.adjustedSubmissionDate).fromNow();
+            this.lastSavedTimeText = dayjs(this.submission.submissionDate).fromNow();
         }
 
         // update time until start
-        if (this.quizExercise && this.quizExercise.adjustedReleaseDate) {
-            if (this.quizExercise.adjustedReleaseDate.isAfter(dayjs())) {
-                this.timeUntilStart = this.relativeTimeText(this.quizExercise.adjustedReleaseDate.diff(dayjs(), 'seconds'));
+        if (this.quizBatch && this.startDate) {
+            if (this.startDate.isAfter(this.serverDateService.now())) {
+                this.timeUntilStart = this.relativeTimeText(this.startDate.diff(this.serverDateService.now(), 'seconds'));
             } else {
                 this.timeUntilStart = this.translateService.instant(translationBasePath + 'now');
                 // Check if websocket has updated the quiz exercise and check that following block is only executed once
-                if (!this.quizExercise.started && !this.quizStarted) {
+                if (!this.quizBatch.started && !this.quizStarted) {
                     this.quizStarted = true;
-                    // Refresh quiz after 5 seconds when client did not receive websocket message to start the quiz
-                    setTimeout(() => {
-                        // Check again if websocket has updated the quiz exercise within the 5 seconds
-                        if (!this.quizExercise.started) {
-                            this.refreshQuiz(true);
-                        }
-                    }, 5000);
+                    if (this.quizExercise.quizMode === QuizMode.INDIVIDUAL) {
+                        // there is not websocket notification for INDIVIDUAL mode so just load the quiz
+                        this.refreshQuiz(true);
+                    } else {
+                        // Refresh quiz after 5 seconds when client did not receive websocket message to start the quiz
+                        setTimeout(() => {
+                            // Check again if websocket has updated the quiz exercise within the 5 seconds
+                            if (!this.quizBatch || !this.quizBatch.started) {
+                                this.refreshQuiz(true);
+                            }
+                        }, 5000);
+                    }
                 }
             }
         } else {
@@ -417,6 +440,16 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
         } else {
             return remainingTimeSeconds + ' s';
         }
+    }
+
+    checkForQuizEnd() {
+        const running = this.mode === 'live' && !!this.quizBatch && this.remainingTimeSeconds >= 0 && this.quizExercise?.quizMode !== QuizMode.SYNCHRONIZED;
+        if (!running && this.previousRunning) {
+            if (!this.submission.submitted && this.submission.submissionDate) {
+                this.alertService.success('artemisApp.quizExercise.submitSuccess');
+            }
+        }
+        this.previousRunning = running;
     }
 
     /**
@@ -569,12 +602,13 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
             // show submission answers in UI
             this.applySubmission();
 
-            if (participation.results[0].resultString && this.quizExercise.ended) {
+            if (participation.results[0].resultString && this.quizExercise.quizEnded) {
                 // quiz has ended and results are available
                 this.showResult(participation.results[0]);
             }
         } else {
             this.submission = new QuizSubmission();
+            this.initQuiz();
         }
     }
 
@@ -586,34 +620,36 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
         this.quizExercise = quizExercise;
         this.initQuiz();
 
-        // check if quiz has started
-        if (this.quizExercise.started) {
-            // quiz has started
+        this.quizBatch = this.quizExercise.quizBatches?.[0];
+        if (this.quizExercise.quizEnded) {
+            // quiz is done
             this.waitingForQuizStart = false;
-
-            // update timeDifference
-            this.quizExercise.adjustedDueDate = dayjs().add(this.quizExercise.remainingTime!, 'seconds');
-            this.timeDifference = dayjs(this.quizExercise.dueDate!).diff(this.quizExercise.adjustedDueDate, 'seconds');
-
-            // check if quiz hasn't ended
-            if (!this.quizExercise.ended) {
-                // enable automatic websocket reconnect
-                this.jhiWebsocketService.enableReconnect();
-
-                // apply randomized order where necessary
-                this.quizService.randomizeOrder(this.quizExercise);
-            }
-        } else {
+        } else if (!this.quizBatch || !this.quizBatch.started) {
             // quiz hasn't started yet
             this.waitingForQuizStart = true;
 
             // enable automatic websocket reconnect
             this.jhiWebsocketService.enableReconnect();
 
-            if (this.quizExercise.isPlannedToStart) {
+            if (this.quizBatch && this.quizBatch.startTime) {
                 // synchronize time with server
-                this.quizExercise.releaseDate = dayjs(this.quizExercise.releaseDate!);
-                this.quizExercise.adjustedReleaseDate = dayjs().add(this.quizExercise.timeUntilPlannedStart!, 'seconds');
+                this.startDate = dayjs(this.quizBatch.startTime ?? this.serverDateService.now());
+            }
+        } else {
+            // quiz has started
+            this.waitingForQuizStart = false;
+
+            // update timeDifference
+            this.startDate = dayjs(this.quizBatch.startTime ?? this.serverDateService.now());
+            this.endDate = this.startDate.add(this.quizExercise.duration!, 'seconds');
+
+            // check if quiz hasn't ended
+            if (!this.quizBatch.ended) {
+                // enable automatic websocket reconnect
+                this.jhiWebsocketService.enableReconnect();
+
+                // apply randomized order where necessary
+                this.quizService.randomizeOrder(this.quizExercise);
             }
         }
     }
@@ -623,7 +659,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
      */
     showQuizResultAfterQuizEnd(participation: StudentParticipation) {
         const quizExercise = participation.exercise as QuizExercise;
-        if (participation.results?.length && participation.results[0].resultString && quizExercise.ended) {
+        if (participation.results?.length && participation.results[0].resultString && quizExercise.quizEnded) {
             // quiz has ended and results are available
             this.submission = participation.results[0].submission as QuizSubmission;
 
@@ -713,8 +749,8 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
 
             // create dictionary with scores for each question
             this.questionScores = {};
-            this.submission.submittedAnswers!.forEach((submittedAnswer) => {
-                // limit decimal places to 2
+            this.submission.submittedAnswers?.forEach((submittedAnswer) => {
+                // limit decimal places
                 this.questionScores[submittedAnswer.quizQuestion!.id!] = roundValueSpecifiedByCourseSettings(submittedAnswer.scoreInPoints!, course);
             }, this);
         }
@@ -728,7 +764,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
         if (this.sendWebsocket) {
             if (!this.disconnected) {
                 // this.isSaving = true;
-                this.submission.submissionDate = dayjs().add(this.timeDifference, 'seconds');
+                this.submission.submissionDate = this.serverDateService.now();
                 this.sendWebsocket(this.submission);
                 this.unsavedChanges = false;
                 this.updateSubmissionTime();
@@ -743,8 +779,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
      */
     updateSubmissionTime() {
         if (this.submission.submissionDate) {
-            this.submission.adjustedSubmissionDate = dayjs(this.submission.submissionDate).subtract(this.timeDifference, 'seconds').toDate();
-            if (Math.abs(dayjs(this.submission.adjustedSubmissionDate).diff(dayjs(), 'seconds')) < 2) {
+            if (Math.abs(dayjs(this.submission.submissionDate).diff(this.serverDateService.now(), 'seconds')) < 2) {
                 this.justSaved = true;
                 this.timeoutJustSaved();
             }
@@ -847,6 +882,9 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
                             this.isSubmitting = false;
                             this.updateSubmissionTime();
                             this.applySubmission();
+                            if (this.quizExercise.quizMode !== QuizMode.SYNCHRONIZED) {
+                                this.alertService.success('artemisApp.quizExercise.submitSuccess');
+                            }
                         },
                         error: (error: HttpErrorResponse) => this.onSubmitError(error),
                     });
@@ -894,13 +932,6 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * Determines if the current device is a mobile device
-     */
-    isMobile(): boolean {
-        return this.deviceService.isMobile();
-    }
-
-    /**
      * Refresh quiz
      */
     refreshQuiz(refresh = false) {
@@ -908,14 +939,42 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
         this.quizExerciseService.findForStudent(this.quizId).subscribe({
             next: (res: HttpResponse<QuizExercise>) => {
                 const quizExercise = res.body!;
-                if (quizExercise.started) {
+                if (quizExercise.quizStarted) {
+                    if (quizExercise.quizEnded) {
+                        this.waitingForQuizStart = false;
+                        this.endDate = dayjs();
+                    }
                     this.quizExercise = quizExercise;
+                    this.initQuiz();
                     this.initLiveMode();
                 }
                 setTimeout(() => (this.refreshingQuiz = false), 500); // ensure min animation duration
             },
             error: () => {
                 setTimeout(() => (this.refreshingQuiz = false), 500); // ensure min animation duration
+            },
+        });
+    }
+
+    joinBatch() {
+        this.quizExerciseService.join(this.quizId, this.password).subscribe({
+            next: (res: HttpResponse<QuizBatch>) => {
+                if (res.body) {
+                    this.quizBatch = res.body;
+                    if (this.quizBatch?.started) {
+                        this.refreshQuiz();
+                    } else {
+                        this.subscribeToWebsocketChannels();
+                    }
+                }
+            },
+            error: (error: HttpErrorResponse) => {
+                const errorMessage = 'Joining the quiz was not possible: ' + error.headers?.get('X-artemisApp-message') || error.message;
+                this.alertService.addAlert({
+                    type: AlertType.DANGER,
+                    message: errorMessage,
+                    disableTranslation: true,
+                });
             },
         });
     }

@@ -211,7 +211,7 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
                 zip(loadExercise, loadExerciseTestCaseState)
                     .pipe(take(1))
                     .subscribe(() => {
-                        // This subscription e.g. adds new new tests to the table that were just created.
+                        // This subscription e.g. adds new tests to the table that were just created.
                         this.subscribeForTestCaseUpdates();
                         // This subscription is used to determine if the programming exercise's properties necessitate build runs after the test cases are changed.
                         this.subscribeForExerciseTestCasesChangedUpdates();

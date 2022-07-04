@@ -9,25 +9,40 @@
                 <ul ngbDropdownMenu class="checkbox-menu text-nowrap pe-2" aria-labelledby="filter-dropdown-button">
                     <li *ngIf="course.isAtLeastTutor">
                         <label>
-                            <input class="ms-2" (change)="toggleFilters([filterType.UNRELEASED])" [checked]="activeFilters.has(filterType.UNRELEASED)" type="checkbox" />
+                            <input
+                                class="ms-2 form-check-input"
+                                (change)="toggleFilters([filterType.UNRELEASED])"
+                                [checked]="activeFilters.has(filterType.UNRELEASED)"
+                                type="checkbox"
+                            />
                             <span class="ms-2" jhiTranslate="artemisApp.courseOverview.exerciseList.unreleased">Hide unreleased</span>
                         </label>
                     </li>
                     <li>
                         <label>
-                            <input class="ms-2" (change)="toggleFilters([filterType.OVERDUE])" [checked]="activeFilters.has(filterType.OVERDUE)" type="checkbox" />
+                            <input class="ms-2 form-check-input" (change)="toggleFilters([filterType.OVERDUE])" [checked]="activeFilters.has(filterType.OVERDUE)" type="checkbox" />
                             <span class="ms-2" jhiTranslate="artemisApp.courseOverview.exerciseList.overdue">Hide overdue</span>
                         </label>
                     </li>
                     <li>
                         <label>
-                            <input class="ms-2" (change)="toggleFilters([filterType.NEEDS_WORK])" [checked]="activeFilters.has(filterType.NEEDS_WORK)" type="checkbox" />
+                            <input
+                                class="ms-2 form-check-input"
+                                (change)="toggleFilters([filterType.NEEDS_WORK])"
+                                [checked]="activeFilters.has(filterType.NEEDS_WORK)"
+                                type="checkbox"
+                            />
                             <span class="ms-2" jhiTranslate="artemisApp.courseOverview.exerciseList.fullScore">Hide full score</span>
                         </label>
                     </li>
                     <li>
                         <label>
-                            <input class="ms-2" (change)="toggleFilters([filterType.OPTIONAL])" [checked]="activeFilters.has(filterType.OPTIONAL)" type="checkbox" />
+                            <input
+                                class="ms-2 form-check-input"
+                                (change)="toggleFilters([filterType.OPTIONAL])"
+                                [checked]="activeFilters.has(filterType.OPTIONAL)"
+                                type="checkbox"
+                            />
                             <span class="ms-2" jhiTranslate="artemisApp.courseOverview.exerciseList.optional">Hide optional</span>
                         </label>
                     </li>

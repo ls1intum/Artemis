@@ -3,7 +3,7 @@ import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
 import { DoughnutChartType } from './course-detail.component';
 import { Router } from '@angular/router';
 import { Course } from 'app/entities/course.model';
-import { ScaleType, Color } from '@swimlane/ngx-charts';
+import { Color, ScaleType } from '@swimlane/ngx-charts';
 import { faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { NgxChartsSingleSeriesDataEntry } from 'app/shared/chart/ngx-charts-datatypes';
 import { GraphColors } from 'app/entities/statistics.model';
@@ -98,7 +98,7 @@ export class CourseDetailDoughnutChartComponent implements OnChanges, OnInit {
     }
 
     /**
-     * Asigns a given array of numbers to ngxData
+     * Assigns a given array of numbers to ngxData
      * @param values the values that should be displayed by the chart
      * @private
      */

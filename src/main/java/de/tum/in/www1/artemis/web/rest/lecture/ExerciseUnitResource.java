@@ -1,10 +1,10 @@
 package de.tum.in.www1.artemis.web.rest.lecture;
 
-import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.*;
-
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
+
+import javax.ws.rs.BadRequestException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,6 +19,7 @@ import de.tum.in.www1.artemis.repository.ExerciseUnitRepository;
 import de.tum.in.www1.artemis.repository.LectureRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
+import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 
 @RestController
@@ -57,11 +58,11 @@ public class ExerciseUnitResource {
     public ResponseEntity<ExerciseUnit> createExerciseUnit(@PathVariable Long lectureId, @RequestBody ExerciseUnit exerciseUnit) throws URISyntaxException {
         log.debug("REST request to create ExerciseUnit : {}", exerciseUnit);
         if (exerciseUnit.getId() != null) {
-            return badRequest();
+            throw new BadRequestException();
         }
-        Lecture lecture = lectureRepository.findByIdWithPostsAndLectureUnitsAndLearningGoalsElseThrow(lectureId);
+        Lecture lecture = lectureRepository.findByIdWithLectureUnitsElseThrow(lectureId);
         if (lecture.getCourse() == null) {
-            return conflict();
+            throw new ConflictException("Specified lecture is not part of a course", "ExerciseUnit", "courseMissing");
         }
         authorizationCheckService.checkHasAtLeastRoleForLectureElseThrow(Role.EDITOR, lecture, null);
 
@@ -75,11 +76,10 @@ public class ExerciseUnitResource {
 
         return ResponseEntity.created(new URI("/api/exercise-units/" + persistedExerciseUnit.getId()))
                 .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, "")).body(persistedExerciseUnit);
-
     }
 
     /**
-     * GET /lectures/:lectureId/exercise-units : gets the exercise units associated with an lecture
+     * GET /lectures/:lectureId/exercise-units : gets the exercise units associated with a lecture
      *
      * @param lectureId the id of the lecture to get the exercise-units for
      * @return the ResponseEntity with status 200 (OK) and with body the found exercise units
@@ -88,9 +88,9 @@ public class ExerciseUnitResource {
     @PreAuthorize("hasRole('EDITOR')")
     public ResponseEntity<List<ExerciseUnit>> getAllExerciseUnitsOfLecture(@PathVariable Long lectureId) {
         log.debug("REST request to get all exercise units for lecture : {}", lectureId);
-        Lecture lecture = lectureRepository.findByIdWithPostsAndLectureUnitsAndLearningGoalsElseThrow(lectureId);
+        Lecture lecture = lectureRepository.findByIdWithLectureUnitsAndLearningGoalsElseThrow(lectureId);
         if (lecture.getCourse() == null) {
-            return conflict();
+            throw new ConflictException("Specified lecture is not part of a course", "ExerciseUnit", "courseMissing");
         }
         authorizationCheckService.checkHasAtLeastRoleForLectureElseThrow(Role.EDITOR, lecture, null);
         List<ExerciseUnit> exerciseUnitsOfLecture = exerciseUnitRepository.findByLectureId(lectureId);

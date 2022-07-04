@@ -5,6 +5,8 @@ import { Authority } from 'app/shared/constants/authority.constants';
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
+import { CoursePrerequisitesModalComponent } from 'app/overview/course-registration/course-prerequisites-modal.component';
+import { ArtemisLearningGoalsModule } from 'app/course/learning-goals/learning-goal.module';
 
 const routes: Routes = [
     {
@@ -19,7 +21,7 @@ const routes: Routes = [
 ];
 
 @NgModule({
-    imports: [ArtemisSharedModule, ArtemisSharedComponentModule, RouterModule.forChild(routes)],
-    declarations: [CourseRegistrationComponent],
+    imports: [ArtemisSharedModule, ArtemisSharedComponentModule, RouterModule.forChild(routes), ArtemisLearningGoalsModule],
+    declarations: [CourseRegistrationComponent, CoursePrerequisitesModalComponent],
 })
 export class CourseRegistrationModule {}

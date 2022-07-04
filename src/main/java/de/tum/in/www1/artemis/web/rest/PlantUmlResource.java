@@ -31,13 +31,15 @@ public class PlantUmlResource {
      * Generate PNG diagram for given PlantUML commands
      *
      * @param plantuml PlantUML command(s)
+     * @param useDarkTheme whether the dark theme should be used
      * @return ResponseEntity PNG stream
      * @throws IOException if generateImage can't create the PNG
      */
     @GetMapping(value = Endpoints.GENERATE_PNG)
-    public ResponseEntity<byte[]> generatePng(@RequestParam("plantuml") String plantuml) throws IOException {
+    public ResponseEntity<byte[]> generatePng(@RequestParam("plantuml") String plantuml, @RequestParam(value = "useDarkTheme", defaultValue = "false") boolean useDarkTheme)
+            throws IOException {
         long start = System.currentTimeMillis();
-        final var png = plantUmlService.generatePng(plantuml);
+        final var png = plantUmlService.generatePng(plantuml, useDarkTheme);
         final var responseHeaders = new HttpHeaders();
         responseHeaders.setContentType(MediaType.IMAGE_PNG);
         log.info("PlantUml.generatePng took {}ms", System.currentTimeMillis() - start);
@@ -48,13 +50,15 @@ public class PlantUmlResource {
      * Generate svn diagram for given PlantUML commands
      *
      * @param plantuml PlantUML command(s)
+     * @param useDarkTheme whether the dark theme should be used
      * @return ResponseEntity PNG stream
      * @throws IOException if generateImage can't create the PNG
      */
     @GetMapping(Endpoints.GENERATE_SVG)
-    public ResponseEntity<String> generateSvg(@RequestParam("plantuml") String plantuml) throws IOException {
+    public ResponseEntity<String> generateSvg(@RequestParam("plantuml") String plantuml, @RequestParam(value = "useDarkTheme", defaultValue = "false") boolean useDarkTheme)
+            throws IOException {
         long start = System.currentTimeMillis();
-        final var svg = plantUmlService.generateSvg(plantuml);
+        final var svg = plantUmlService.generateSvg(plantuml, useDarkTheme);
         log.info("PlantUml.generateSvg took {}ms", System.currentTimeMillis() - start);
         return new ResponseEntity<>(svg, HttpStatus.OK);
     }

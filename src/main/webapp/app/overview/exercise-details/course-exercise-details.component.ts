@@ -22,7 +22,6 @@ import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service'
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { getExerciseDueDate, hasExerciseDueDatePassed, participationStatus } from 'app/exercises/shared/exercise/exercise.utils';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
-import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { GradingCriterion } from 'app/exercises/shared/structured-grading-criterion/grading-criterion.model';
 import { CourseExerciseSubmissionResultSimulationService } from 'app/course/manage/course-exercise-submission-result-simulation.service';
@@ -47,16 +46,20 @@ import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { UMLModel } from '@ls1intum/apollon';
 import { SafeHtml } from '@angular/platform-browser';
-import { faBook, faExternalLinkAlt, faEye, faFileSignature, faListAlt, faSignal, faTable, faWrench } from '@fortawesome/free-solid-svg-icons';
+import { faBook, faExternalLinkAlt, faEye, faFileSignature, faListAlt, faSignal, faTable, faWrench, faAngleDown, faAngleUp } from '@fortawesome/free-solid-svg-icons';
 import { TextExercise } from 'app/entities/text-exercise.model';
 import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
+import { PlagiarismCasesService } from 'app/course/plagiarism-cases/shared/plagiarism-cases.service';
+import { PlagiarismCase } from 'app/exercises/shared/plagiarism/types/PlagiarismCase';
+import { ExerciseHintService } from 'app/exercises/shared/exercise-hint/shared/exercise-hint.service';
+import { ExerciseHint } from 'app/entities/hestia/exercise-hint.model';
 
 const MAX_RESULT_HISTORY_LENGTH = 5;
 
 @Component({
     selector: 'jhi-course-exercise-details',
     templateUrl: './course-exercise-details.component.html',
-    styleUrls: ['../course-overview.scss'],
+    styleUrls: ['../course-overview.scss', '../tab-bar/tab-bar.scss'],
 })
 export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     readonly AssessmentType = AssessmentType;
@@ -67,6 +70,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     readonly MODELING = ExerciseType.MODELING;
     readonly TEXT = ExerciseType.TEXT;
     readonly FILE_UPLOAD = ExerciseType.FILE_UPLOAD;
+
     private currentUser: User;
     private exerciseId: number;
     public courseId: number;
@@ -90,10 +94,15 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     isExamExercise: boolean;
     hasSubmissionPolicy: boolean;
     submissionPolicy: SubmissionPolicy;
+    exampleSolutionCollapsed: boolean;
+    plagiarismCase?: PlagiarismCase;
+    availableExerciseHints: ExerciseHint[];
+    activatedExerciseHints: ExerciseHint[];
 
     public modelingExercise?: ModelingExercise;
     public exampleSolution?: SafeHtml;
     public exampleSolutionUML?: UMLModel;
+    public isProgrammingExerciseExampleSolutionPublished = false;
 
     // extension points, see shared/extension-point
     @ContentChild('overrideStudentActions') overrideStudentActions: TemplateRef<any>;
@@ -114,6 +123,8 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     faSignal = faSignal;
     faExternalLinkAlt = faExternalLinkAlt;
     faFileSignature = faFileSignature;
+    faAngleDown = faAngleDown;
+    faAngleUp = faAngleUp;
 
     constructor(
         private exerciseService: ExerciseService,
@@ -139,6 +150,8 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         private complaintService: ComplaintService,
         private navigationUtilService: ArtemisNavigationUtilService,
         private artemisMarkdown: ArtemisMarkdownService,
+        private plagiarismCaseService: PlagiarismCasesService,
+        private exerciseHintService: ExerciseHintService,
     ) {}
 
     ngOnInit() {
@@ -185,6 +198,9 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         this.exerciseService.getExerciseDetails(this.exerciseId).subscribe((exerciseResponse: HttpResponse<Exercise>) => {
             this.handleNewExercise(exerciseResponse.body!);
             this.getLatestRatedResult();
+        });
+        this.plagiarismCaseService.getPlagiarismCaseForStudent(this.courseId, this.exerciseId).subscribe((res: HttpResponse<PlagiarismCase>) => {
+            this.plagiarismCase = res.body!;
         });
     }
 
@@ -250,6 +266,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         this.modelingExercise = undefined;
         this.exampleSolution = undefined;
         this.exampleSolutionUML = undefined;
+        this.isProgrammingExerciseExampleSolutionPublished = false;
 
         if (newExercise.type === ExerciseType.MODELING) {
             this.modelingExercise = newExercise as ModelingExercise;
@@ -261,7 +278,12 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
             if (exercise.exampleSolution) {
                 this.exampleSolution = this.artemisMarkdown.safeHtmlForMarkdown(exercise.exampleSolution);
             }
+        } else if (newExercise.type === ExerciseType.PROGRAMMING) {
+            const exercise = newExercise as ProgrammingExercise;
+            this.isProgrammingExerciseExampleSolutionPublished = exercise.exampleSolutionPublished || false;
         }
+        // For TAs the example solution is collapsed on default to avoid spoiling, as the example solution is always shown to TAs
+        this.exampleSolutionCollapsed = !!this.exercise?.isAtLeastTutor;
     }
 
     /**
@@ -357,6 +379,24 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
                         ? this.exercise.studentParticipations.map((el) => (el.id === changedParticipation.id ? changedParticipation : el))
                         : [changedParticipation];
                 this.mergeResultsAndSubmissionsForParticipations();
+
+                if (ExerciseType.PROGRAMMING === this.exercise?.type) {
+                    this.exerciseHintService.getActivatedExerciseHints(this.exerciseId).subscribe((activatedRes?: HttpResponse<ExerciseHint[]>) => {
+                        this.activatedExerciseHints = activatedRes!.body!;
+
+                        this.exerciseHintService.getAvailableExerciseHints(this.exerciseId).subscribe((availableRes?: HttpResponse<ExerciseHint[]>) => {
+                            // filter out the activated hints from the available hints
+                            this.availableExerciseHints = availableRes!.body!.filter(
+                                (availableHint) => !this.activatedExerciseHints.some((activatedHint) => availableHint.id === activatedHint.id),
+                            );
+                            if (this.availableExerciseHints.length) {
+                                this.alertService.info('artemisApp.exerciseHint.availableHintsAlertMessage', {
+                                    taskName: this.availableExerciseHints.first()?.programmingExerciseTask?.taskName,
+                                });
+                            }
+                        });
+                    });
+                }
             }
         });
     }
@@ -456,31 +496,6 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         }
     }
 
-    publishBuildPlanUrl() {
-        return (this.exercise as ProgrammingExercise).publishBuildPlanUrl;
-    }
-
-    buildPlanActive() {
-        return (
-            !!this.exercise &&
-            this.exercise.studentParticipations &&
-            this.exercise.studentParticipations.length > 0 &&
-            this.exercise.studentParticipations[0].initializationState !== InitializationState.INACTIVE
-        );
-    }
-
-    buildPlanUrl(participation: StudentParticipation) {
-        return (participation as ProgrammingExerciseStudentParticipation).buildPlanUrl;
-    }
-
-    projectKey(): string {
-        return (this.exercise as ProgrammingExercise).projectKey!;
-    }
-
-    buildPlanId(participation: Participation) {
-        return (participation! as ProgrammingExerciseStudentParticipation).buildPlanId;
-    }
-
     /**
      * Returns the status of the exercise if it is a quiz exercise or undefined otherwise.
      */
@@ -507,10 +522,15 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         this.alertService.error(error);
     }
 
+    onHintActivated(exerciseHint: ExerciseHint) {
+        this.availableExerciseHints = this.availableExerciseHints.filter((hint) => hint.id !== exerciseHint.id);
+        this.activatedExerciseHints.push(exerciseHint);
+    }
+
     // ################## ONLY FOR LOCAL TESTING PURPOSE -- START ##################
 
     /**
-     * Triggers the simulation of a participation and submission for the currently logged in user
+     * Triggers the simulation of a participation and submission for the currently logged-in user
      * This method will fail if used in production
      * This functionality is only for testing purposes(noVersionControlAndContinuousIntegrationAvailable)
      */
@@ -528,7 +548,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * Triggers the simulation of a result for the currently logged in user
+     * Triggers the simulation of a result for the currently logged-in user
      * This method will fail if used in production
      * This functionality is only for testing purposes(noVersionControlAndContinuousIntegrationAvailable)
      */
@@ -551,6 +571,13 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
                 this.alertService.error('artemisApp.exercise.resultCreationUnsuccessful');
             },
         });
+    }
+
+    /**
+     * Used to change the boolean value for the example solution dropdown menu
+     */
+    changeExampleSolution() {
+        this.exampleSolutionCollapsed = !this.exampleSolutionCollapsed;
     }
 
     // ################## ONLY FOR LOCAL TESTING PURPOSE -- END ##################

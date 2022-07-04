@@ -6,28 +6,16 @@ import { HttpResponse } from '@angular/common/http';
 import { Subject } from 'rxjs';
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
-import { TranslateService } from '@ngx-translate/core';
 import { Exam } from 'app/entities/exam.model';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { StudentDTO } from 'app/entities/student-dto.model';
 import { parse } from 'papaparse';
 import { faBan, faCheck, faCircleNotch, faSpinner, faUpload } from '@fortawesome/free-solid-svg-icons';
 
-const csvColumns = Object.freeze({
-    registrationNumber: 'registrationnumber',
-    matrikelNummer: 'matrikelnummer',
-    matriculationNumber: 'matriculationnumber',
-    firstNameOfUser: 'firstname',
-    familyNameOfUser: 'familyname',
-    firstName: 'firstname',
-    familyName: 'familyname',
-    lastName: 'lastname',
-    login: 'login',
-    username: 'username',
-    user: 'user',
-    benutzer: 'benutzer',
-    benutzerName: 'benutzername',
-});
+const POSSIBLE_REGISTRATION_NUMBER_HEADERS = ['registrationnumber', 'matriculationnumber', 'matrikelnummer', 'number'];
+const POSSIBLE_LOGIN_HEADERS = ['login', 'user', 'username', 'benutzer', 'benutzername'];
+const POSSIBLE_FIRST_NAME_HEADERS = ['firstname', 'firstnameofstudent', 'givenname', 'forename', 'vorname'];
+const POSSIBLE_LAST_NAME_HEADERS = ['familyname', 'lastname', 'familynameofstudent', 'surname', 'nachname', 'familienname', 'name'];
 
 type CsvUser = object;
 
@@ -69,7 +57,6 @@ export class UsersImportDialogComponent implements OnDestroy {
         private alertService: AlertService,
         private examManagementService: ExamManagementService,
         private courseManagementService: CourseManagementService,
-        private translateService: TranslateService,
     ) {}
 
     ngOnDestroy(): void {
@@ -113,13 +100,21 @@ export class UsersImportDialogComponent implements OnDestroy {
             event.target.value = ''; // remove selected file so user can fix the file and select it again
             return [];
         }
+
+        const usedHeaders = Object.keys(csvUsers.first() || []);
+
+        const registrationNumberHeader = usedHeaders.find((value) => POSSIBLE_REGISTRATION_NUMBER_HEADERS.includes(value)) || '';
+        const loginHeader = usedHeaders.find((value) => POSSIBLE_LOGIN_HEADERS.includes(value)) || '';
+        const firstNameHeader = usedHeaders.find((value) => POSSIBLE_FIRST_NAME_HEADERS.includes(value)) || '';
+        const lastNameHeader = usedHeaders.find((value) => POSSIBLE_LAST_NAME_HEADERS.includes(value)) || '';
+
         return csvUsers.map(
             (users) =>
                 ({
-                    registrationNumber: users[csvColumns.registrationNumber] || users[csvColumns.matrikelNummer] || users[csvColumns.matriculationNumber] || '',
-                    login: users[csvColumns.login] || users[csvColumns.username] || users[csvColumns.user] || users[csvColumns.benutzer] || users[csvColumns.benutzerName] || '',
-                    firstName: users[csvColumns.firstName] || users[csvColumns.firstNameOfUser] || '',
-                    lastName: users[csvColumns.lastName] || users[csvColumns.familyName] || users[csvColumns.familyNameOfUser] || '',
+                    registrationNumber: users[registrationNumberHeader]?.trim() || '',
+                    login: users[loginHeader]?.trim() || '',
+                    firstName: users[firstNameHeader]?.trim() || '',
+                    lastName: users[lastNameHeader]?.trim() || '',
                 } as StudentDTO),
         );
     }
@@ -135,9 +130,17 @@ export class UsersImportDialogComponent implements OnDestroy {
         const invalidUserEntries = this.computeInvalidUserEntries(csvUsers);
         if (invalidUserEntries) {
             const maxLength = 30;
-            const entriesFormatted = invalidUserEntries.length <= maxLength ? invalidUserEntries : invalidUserEntries.slice(0, maxLength) + '...';
-            this.validationError = entriesFormatted;
+            this.validationError = invalidUserEntries.length <= maxLength ? invalidUserEntries : invalidUserEntries.slice(0, maxLength) + '...';
         }
+    }
+
+    /**
+     * Checks if the csv entry contains one of the supplied keys.
+     * @param entry which should be checked if it contains one of the keys.
+     * @param keys that should be checked for in the entry.
+     */
+    checkIfEntryContainsKey(entry: CsvUser, keys: string[]): boolean {
+        return keys.some((key) => entry[key] !== undefined && entry[key] !== '');
     }
 
     /**
@@ -147,16 +150,9 @@ export class UsersImportDialogComponent implements OnDestroy {
     computeInvalidUserEntries(csvUsers: CsvUser[]): string | undefined {
         const invalidList: number[] = [];
         for (const [i, user] of csvUsers.entries()) {
-            if (
-                !user[csvColumns.registrationNumber] &&
-                !user[csvColumns.matrikelNummer] &&
-                !user[csvColumns.matriculationNumber] &&
-                !user[csvColumns.login] &&
-                !user[csvColumns.user] &&
-                !user[csvColumns.username] &&
-                !user[csvColumns.benutzer] &&
-                !user[csvColumns.benutzerName]
-            ) {
+            const hasLogin = this.checkIfEntryContainsKey(user, POSSIBLE_LOGIN_HEADERS);
+            const hasRegistrationNumber = this.checkIfEntryContainsKey(user, POSSIBLE_REGISTRATION_NUMBER_HEADERS);
+            if (!hasLogin && !hasRegistrationNumber) {
                 // '+ 2' instead of '+ 1' due to the header column in the csv file
                 invalidList.push(i + 2);
             }
@@ -172,7 +168,7 @@ export class UsersImportDialogComponent implements OnDestroy {
         return new Promise((resolve, reject) => {
             parse(csvFile, {
                 header: true,
-                transformHeader: (header: string) => header.toLowerCase().replace(' ', '').replace('_', ''),
+                transformHeader: (header: string) => header.toLowerCase().replaceAll(' ', '').replaceAll('_', '').replaceAll('-', ''),
                 skipEmptyLines: true,
                 complete: (results) => resolve(results.data as CsvUser[]),
                 error: (error) => reject(error),

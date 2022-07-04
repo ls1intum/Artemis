@@ -17,7 +17,7 @@ import { Complaint, ComplaintType } from 'app/entities/complaint.model';
 import { getLatestSubmissionResult, getSubmissionResultByCorrectionRound, setLatestSubmissionResult, Submission, SubmissionExerciseType } from 'app/entities/submission.model';
 import { ModelingSubmissionService } from 'app/exercises/modeling/participate/modeling-submission.service';
 import { Observable, of } from 'rxjs';
-import { map } from 'rxjs/operators';
+import { finalize, map } from 'rxjs/operators';
 import { StatsForDashboard } from 'app/course/dashboards/stats-for-dashboard.model';
 import { TranslateService } from '@ngx-translate/core';
 import { FileUploadSubmissionService } from 'app/exercises/file-upload/participate/file-upload-submission.service';
@@ -38,13 +38,13 @@ import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { SortService } from 'app/shared/service/sort.service';
 import { onError } from 'app/shared/util/global.utils';
 import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
-import { getExerciseSubmissionsLink, getLinkToSubmissionAssessment } from 'app/utils/navigation.utils';
+import { ArtemisNavigationUtilService, getExerciseSubmissionsLink, getLinkToSubmissionAssessment } from 'app/utils/navigation.utils';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { LegendPosition } from '@swimlane/ngx-charts';
 import { AssessmentDashboardInformationEntry } from 'app/course/dashboards/assessment-dashboard/assessment-dashboard-information.component';
 import { Result } from 'app/entities/result.model';
 import dayjs from 'dayjs/esm';
-import { faCheckCircle, faFolderOpen, faQuestionCircle, faSpinner, faSort, faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
+import { faCheckCircle, faExclamationTriangle, faFolderOpen, faQuestionCircle, faSort, faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { Authority } from 'app/shared/constants/authority.constants';
 import { GraphColors } from 'app/entities/statistics.model';
 
@@ -72,6 +72,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
     isExamMode = false;
     isTestRun = false;
     isAtLeastInstructor = false;
+    isLoading = false;
 
     statsForDashboard = new StatsForDashboard();
 
@@ -149,6 +150,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
     legendPosition = LegendPosition.Below;
     assessments: any[];
     customColors: any[];
+    isAutomaticAssessedProgrammingExercise = false;
 
     // links
     submissionsLink: any[];
@@ -185,6 +187,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
         private guidedTourService: GuidedTourService,
         private artemisDatePipe: ArtemisDatePipe,
         private sortService: SortService,
+        private navigationUtilService: ArtemisNavigationUtilService,
     ) {}
 
     /**
@@ -214,6 +217,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
         if (this.programmingExercise && this.programmingExercise.assessmentType === AssessmentType.AUTOMATIC && this.programmingExercise.allowComplaintsForAutomaticAssessments) {
             const numberOfComplaintsLabel = this.translateService.instant('artemisApp.exerciseAssessmentDashboard.numberOfOpenComplaints');
             const numberOfResolvedComplaintsLabel = this.translateService.instant('artemisApp.exerciseAssessmentDashboard.numberOfResolvedComplaints');
+            this.isAutomaticAssessedProgrammingExercise = true;
             this.customColors = [
                 { name: numberOfComplaintsLabel, value: GraphColors.YELLOW },
                 { name: numberOfResolvedComplaintsLabel, value: GraphColors.GREEN },
@@ -533,7 +537,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
     };
 
     /**
-     * Get all submissions that dont have an assessment for all correction rounds
+     * Get all submissions that don't have an assessment for all correction rounds
      * If not in examMode correction rounds defaults to 0.
      * @private
      */
@@ -612,14 +616,18 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
      * Called after the tutor has read the instructions and creates a new tutor participation
      */
     readInstruction() {
-        this.tutorParticipationService.create(this.tutorParticipation, this.exerciseId).subscribe({
-            next: (res: HttpResponse<TutorParticipation>) => {
-                this.tutorParticipation = res.body!;
-                this.tutorParticipationStatus = this.tutorParticipation.status!;
-                this.alertService.success('artemisApp.exerciseAssessmentDashboard.participation.instructionsReviewed');
-            },
-            error: this.onError,
-        });
+        this.isLoading = true;
+        this.tutorParticipationService
+            .create(this.tutorParticipation, this.exerciseId)
+            .pipe(finalize(() => (this.isLoading = false)))
+            .subscribe({
+                next: (res: HttpResponse<TutorParticipation>) => {
+                    this.tutorParticipation = res.body!;
+                    this.tutorParticipationStatus = this.tutorParticipation.status!;
+                    this.alertService.success('artemisApp.exerciseAssessmentDashboard.participation.instructionsReviewed');
+                },
+                error: this.onError,
+            });
     }
 
     /**
@@ -773,9 +781,27 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
      * not the legend
      */
     navigateToExerciseSubmissionOverview(event: any): void {
-        if (event.value && this.accountService.hasAnyAuthorityDirect([Authority.INSTRUCTOR])) {
-            this.router.navigate(['course-management', this.courseId, this.exercise.type! + '-exercises', this.exerciseId, 'submissions']);
+        if (!this.accountService.hasAnyAuthorityDirect([Authority.INSTRUCTOR])) {
+            return;
         }
+        // If the user selects a part in the pie, the corresponding event contains the name of the selected part as attribute
+        // If the user selects the legend entry, the event consists only of the legend label as string
+        const identifier = event.name ?? event;
+        let index = 0;
+        const route = ['course-management', this.courseId, this.exercise.type! + '-exercises', this.exerciseId, 'submissions'];
+        if (this.isAutomaticAssessedProgrammingExercise) {
+            // the filter option for complaints are an element of {3,4}.
+            // We give an offset of 3 in advance to determine the correct filter option via the chart part names
+            index = 3;
+            route[4] = 'complaints';
+        }
+        this.assessments.forEach((data, i) => {
+            if (data.name === identifier) {
+                index += i;
+            }
+        });
+
+        this.navigationUtilService.routeInNewTab(route, { queryParams: { filterOption: index } });
     }
 
     sortSubmissionRows(correctionRound: number) {

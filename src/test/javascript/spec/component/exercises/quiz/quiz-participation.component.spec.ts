@@ -6,7 +6,7 @@ import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
-import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
+import { QuizBatch, QuizExercise, QuizMode } from 'app/entities/quiz/quiz-exercise.model';
 import { QuizQuestion, QuizQuestionType } from 'app/entities/quiz/quiz-question.model';
 import { QuizSubmission } from 'app/entities/quiz/quiz-submission.model';
 import { SubmittedAnswer } from 'app/entities/quiz/submitted-answer.model';
@@ -48,37 +48,47 @@ const quizExercise = {
     id: 1,
     quizQuestions: [question1, question2, question3],
     releaseDate: dayjs(now).subtract(2, 'minutes'),
-    adjustedReleaseDate: dayjs(now).subtract(2, 'minutes'),
+    duration: 60 * 4,
     dueDate: dayjs(now).add(2, 'minutes'),
-    adjustedDueDate: dayjs(now).add(2, 'minutes'),
-    started: true,
+    quizStarted: true,
+    quizBatches: [
+        {
+            startTime: dayjs(now).subtract(2, 'minutes'),
+            started: true,
+        },
+    ],
+    quizMode: QuizMode.SYNCHRONIZED,
 } as QuizExercise;
 const quizExerciseForPractice = {
     id: 1,
     quizQuestions: [question1, question2, question3],
     releaseDate: dayjs(now).subtract(4, 'minutes'),
-    adjustedReleaseDate: dayjs(now).subtract(4, 'minutes'),
     dueDate: dayjs(now).subtract(2, 'minutes'),
-    adjustedDueDate: dayjs(now).subtract(2, 'minutes'),
+    quizStarted: true,
+    quizEnded: true,
     isOpenForPractice: true,
 } as QuizExercise;
 const quizExerciseForResults = {
     id: 1,
     quizQuestions: [question1, question2, question3],
     releaseDate: dayjs(now).subtract(4, 'minutes'),
-    adjustedReleaseDate: dayjs(now).subtract(4, 'minutes'),
     dueDate: dayjs(now).subtract(2, 'minutes'),
-    adjustedDueDate: dayjs(now).subtract(2, 'minutes'),
-    ended: true,
+    duration: 60 * 2,
+    quizStarted: true,
+    quizEnded: true,
+    quizBatches: [
+        {
+            startTime: dayjs(now).subtract(4, 'minutes'),
+            started: true,
+        },
+    ],
+    quizMode: QuizMode.SYNCHRONIZED,
 } as QuizExercise;
 const quizExerciseUnreleased = {
     id: 1,
     quizQuestions: [question1, question2, question3],
     releaseDate: dayjs(now).add(2, 'days'),
-    adjustedReleaseDate: dayjs(now).add(2, 'days'),
     dueDate: dayjs(now).add(4, 'days'),
-    adjustedDueDate: dayjs(now).add(4, 'days'),
-    ended: true,
 } as QuizExercise;
 
 const testBedDeclarations = [
@@ -140,7 +150,7 @@ describe('QuizParticipationComponent', () => {
                     component = fixture.componentInstance;
 
                     const participationService = fixture.debugElement.injector.get(ParticipationService);
-                    const participation = { exercise: quizExercise } as StudentParticipation;
+                    const participation = { exercise: { ...quizExercise } } as StudentParticipation;
                     participationSpy = jest
                         .spyOn(participationService, 'findParticipationForCurrentUser')
                         .mockReturnValue(of({ body: participation } as HttpResponse<StudentParticipation>));
@@ -167,7 +177,7 @@ describe('QuizParticipationComponent', () => {
 
             expect(participationSpy).toHaveBeenCalledWith(quizExercise.id);
             expect(component.quizExercise).toEqual(quizExercise);
-            expect(component.waitingForQuizStart).toBe(false);
+            expect(component.waitingForQuizStart).toBeFalse();
             expect(component.totalScore).toBe(6);
             expect(component.dragAndDropMappings.get(question1.id!)).toEqual([]);
             expect(component.selectedAnswerOptions.get(question2.id!)).toEqual([]);
@@ -186,15 +196,50 @@ describe('QuizParticipationComponent', () => {
             expect(updateSpy).toHaveBeenCalled();
         }));
 
+        it('should check quiz end in intervals', fakeAsync(() => {
+            fixture.detectChanges();
+
+            const checkQuizEndSpy = jest.spyOn(component, 'checkForQuizEnd');
+            tick(5000);
+            fixture.detectChanges();
+            discardPeriodicTasks();
+
+            expect(checkQuizEndSpy).toHaveBeenCalled();
+        }));
+
+        it('should add alert on quiz end', fakeAsync(() => {
+            fixture.detectChanges();
+
+            component.endDate = dayjs().add(1, 'seconds');
+            component.quizExercise.quizMode = QuizMode.BATCHED;
+            component.submission.submissionDate = dayjs();
+
+            const alertService = fixture.debugElement.injector.get(AlertService);
+            const alertSpy = jest.spyOn(alertService, 'success');
+
+            const checkQuizEndSpy = jest.spyOn(component, 'checkForQuizEnd');
+
+            tick(2000);
+            fixture.detectChanges();
+            discardPeriodicTasks();
+
+            expect(checkQuizEndSpy).toHaveBeenCalled();
+            expect(alertSpy).toHaveBeenCalledOnce();
+        }));
+
         it('should refresh quiz', () => {
             exerciseService = fixture.debugElement.injector.get(QuizExerciseService);
             fixture.detectChanges();
 
-            component.quizExercise.started = false;
+            component.quizExercise.quizStarted = false;
+            component.quizBatch!.started = false;
+            component.quizBatch!.startTime = undefined;
 
             // Returns the started exercise
             const findStudentSpy = jest.spyOn(exerciseService, 'findForStudent').mockReturnValue(of({ body: quizExercise } as HttpResponse<QuizExercise>));
             fixture.detectChanges();
+
+            const initLiveModeSpy = jest.spyOn(component, 'initLiveMode');
 
             const refreshButton = fixture.debugElement.nativeElement.querySelector('#refresh-quiz button');
             expect(refreshButton).not.toBe(null);
@@ -202,7 +247,40 @@ describe('QuizParticipationComponent', () => {
             refreshButton.click();
             fixture.detectChanges();
 
+            expect(initLiveModeSpy).toHaveBeenCalledOnce();
             expect(findStudentSpy).toHaveBeenCalledWith(quizExercise.id);
+            expect(participationSpy).toHaveBeenCalledWith(quizExercise.id);
+        });
+
+        it.each([
+            [QuizMode.BATCHED, false],
+            [QuizMode.BATCHED, true],
+            [QuizMode.INDIVIDUAL, false],
+            [QuizMode.INDIVIDUAL, true],
+        ])('should join %s batches that have started %p', (quizMode, started) => {
+            exerciseService = fixture.debugElement.injector.get(QuizExerciseService);
+            const participationService = fixture.debugElement.injector.get(ParticipationService);
+            const participation = { exercise: { ...quizExercise, quizBatches: [], quizMode, quizStarted: false } as QuizExercise } as StudentParticipation;
+            participationSpy = jest
+                .spyOn(participationService, 'findParticipationForCurrentUser')
+                .mockReturnValue(of({ body: participation } as HttpResponse<StudentParticipation>));
+
+            fixture.detectChanges();
+
+            // Returns the started exercise
+            const joinBatchSpy = jest.spyOn(exerciseService, 'join').mockReturnValue(of({ body: { started } } as HttpResponse<QuizBatch>));
+            fixture.detectChanges();
+
+            const refreshQuizSpy = jest.spyOn(component, 'refreshQuiz').mockReturnValue();
+
+            const joinButton = fixture.debugElement.nativeElement.querySelector(quizMode === QuizMode.BATCHED ? '#join-batch button' : '#start-batch button');
+            expect(joinButton).not.toBe(null);
+
+            joinButton.click();
+            fixture.detectChanges();
+
+            expect(refreshQuizSpy).toHaveBeenCalledTimes(started ? 1 : 0);
+            expect(joinBatchSpy).toHaveBeenCalledWith(quizExercise.id, '');
             expect(participationSpy).toHaveBeenCalledWith(quizExercise.id);
         });
 
@@ -221,28 +299,28 @@ describe('QuizParticipationComponent', () => {
             fixture.detectChanges();
 
             expect(participationSpy).toHaveBeenCalledWith(quizExercise.id);
-            expect(component.isSubmitting).toBe(false);
+            expect(component.isSubmitting).toBeFalse();
         });
 
         it('should return true if student didnt interact with any question', () => {
             component.quizExercise = { ...quizExercise, quizQuestions: undefined };
-            expect(component.areAllQuestionsAnswered()).toBe(true);
+            expect(component.areAllQuestionsAnswered()).toBeTrue();
 
             component.quizExercise = quizExercise;
             component.selectedAnswerOptions = new Map<number, AnswerOption[]>();
             component.selectedAnswerOptions.set(2, []);
-            expect(component.areAllQuestionsAnswered()).toBe(false);
+            expect(component.areAllQuestionsAnswered()).toBeFalse();
 
             component.selectedAnswerOptions = new Map<number, AnswerOption[]>();
             component.dragAndDropMappings = new Map<number, DragAndDropMapping[]>();
             component.dragAndDropMappings.set(1, []);
-            expect(component.areAllQuestionsAnswered()).toBe(false);
+            expect(component.areAllQuestionsAnswered()).toBeFalse();
 
             component.selectedAnswerOptions = new Map<number, AnswerOption[]>();
             component.dragAndDropMappings = new Map<number, DragAndDropMapping[]>();
             component.shortAnswerSubmittedTexts = new Map<number, ShortAnswerSubmittedText[]>();
             component.shortAnswerSubmittedTexts.set(3, []);
-            expect(component.areAllQuestionsAnswered()).toBe(false);
+            expect(component.areAllQuestionsAnswered()).toBeFalse();
         });
 
         it('should show warning on submit', () => {
@@ -265,7 +343,7 @@ describe('QuizParticipationComponent', () => {
 
             expect(confirmSpy).toHaveBeenCalled();
             expect(participationSpy).toHaveBeenCalledWith(quizExercise.id);
-            expect(component.isSubmitting).toBe(false);
+            expect(component.isSubmitting).toBeFalse();
         });
 
         it('should show results after ending', () => {
@@ -280,7 +358,7 @@ describe('QuizParticipationComponent', () => {
             expect(participationSpy).toHaveBeenCalledWith(quizExercise.id);
             expect(component.questionScores[question2.id!]).toBe(answer.scoreInPoints);
             expect(component.userScore).toBe(quizSubmission.scoreInPoints);
-            expect(component.showingResult).toBe(true);
+            expect(component.showingResult).toBeTrue();
         });
 
         it('should update on selection changes', () => {
@@ -301,11 +379,11 @@ describe('QuizParticipationComponent', () => {
             fixture.detectChanges();
 
             component.onSubmitError({ message: 'error' } as any);
-            expect(component.isSubmitting).toBe(false);
+            expect(component.isSubmitting).toBeFalse();
 
             component.onSaveError('error');
-            expect(component.isSubmitting).toBe(false);
-            expect(component.unsavedChanges).toBe(true);
+            expect(component.isSubmitting).toBeFalse();
+            expect(component.unsavedChanges).toBeTrue();
 
             expect(alertSpy).toHaveBeenCalled();
         });
@@ -329,15 +407,14 @@ describe('QuizParticipationComponent', () => {
         it('should apply participation', () => {
             const submission: QuizSubmission = { id: 1, submissionDate: dayjs().subtract(10, 'minutes'), submittedAnswers: [] };
             const result: Result = { id: 1, submission, resultString: 'result-string' };
-            const endedQuizExercise = { ...quizExercise, ended: true };
+            const endedQuizExercise = { ...quizExercise, quizEnded: true };
             const participation: StudentParticipation = { exercise: endedQuizExercise, results: [result] };
 
             component.quizExercise = quizExercise;
-            component.timeDifference = 10;
             component.updateParticipationFromServer(participation);
 
             expect(component.submission.id).toBe(submission.id);
-            expect(component.quizExercise.ended).toBe(true);
+            expect(component.quizExercise.quizEnded).toBeTrue();
         });
     });
 
@@ -550,11 +627,12 @@ describe('QuizParticipationComponent', () => {
             fixture.detectChanges();
 
             expect(resultForSolutionServiceSpy).toHaveBeenCalledWith(quizExerciseForPractice.id);
-            expect(component.showingResult).toBe(true);
+            expect(component.showingResult).toBeTrue();
             expect(component.totalScore).toBe(6);
         });
 
         it('should update time', () => {
+            // TODO: this test is really weird in how it tests things and should probably be re-written
             fixture.detectChanges();
 
             // Test the error branches first
@@ -574,12 +652,13 @@ describe('QuizParticipationComponent', () => {
             fixture.detectChanges();
 
             component.quizExercise = quizExerciseForResults;
+            component.endDate = component.quizExercise.dueDate;
             component.submission = { submissionDate: now, submitted: true } as QuizSubmission;
             component.updateDisplayedTimes();
             fixture.detectChanges();
 
             expect(component.remainingTimeText).toBe('showStatistic.quizHasEnded');
-            expect(component.timeUntilStart).toBe('showStatistic.now');
+            expect(component.timeUntilStart).toBe('');
         });
     });
 });

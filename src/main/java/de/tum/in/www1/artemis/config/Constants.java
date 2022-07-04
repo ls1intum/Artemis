@@ -118,15 +118,15 @@ public final class Constants {
 
     public static final int FEEDBACK_DETAIL_TEXT_MAX_CHARACTERS = 5000;
 
-    // Used to define the maximum allowed complaint response text limit.
-    // This value must be similar to the allowed value in the database.
+    // This value limits the amount of characters allowed for a complaint response text.
+    // Set to 65535 as the db-column has type TEXT which can hold up to 65535 characters.
     // Also, the value on the client side must match this value.
-    public static final int COMPLAINT_RESPONSE_TEXT_LIMIT = 5000;
+    public static final int COMPLAINT_RESPONSE_TEXT_LIMIT = 65535;
 
-    // Used to define the maximum allowed complaint text limit.
-    // This value must be similar to the allowed value in the database.
+    // This value limits the amount of characters allowed for a complaint text.
+    // Set to 65535 as the db-column has type TEXT which can hold up to 65535 characters.
     // Also, the value on the client side must match this value.
-    public static final int COMPLAINT_TEXT_LIMIT = 5000;
+    public static final int COMPLAINT_TEXT_LIMIT = 65535;
 
     public static final String ASSIGNMENT_CHECKOUT_PATH = "assignment";
 
@@ -185,6 +185,8 @@ public final class Constants {
 
     public static final String INFO_SSH_KEYS_URL_DETAIL = "sshKeysURL";
 
+    public static final String INFO_VERSION_CONTROL_ACCESS_TOKEN_DETAIL = "versionControlAccessToken";
+
     public static final String EXTERNAL_USER_MANAGEMENT_URL = "externalUserManagementURL";
 
     public static final String EXTERNAL_USER_MANAGEMENT_NAME = "externalUserManagementName";
@@ -211,7 +213,21 @@ public final class Constants {
 
     public static final String HAZELCAST_EXERCISE_CACHE = HAZELCAST_QUIZ_PREFIX + "exercise-cache";
 
+    public static final long MONITORING_CACHE_RESET_DELAY = 1000 * 60 * 30; // 30 minutes in milliseconds
+
+    public static final String HAZELCAST_MONITORING_PREFIX = "monitoring-";
+
+    public static final String HAZELCAST_MONITORING_CACHE = HAZELCAST_MONITORING_PREFIX + "activity-cache";
+
+    public static final String HAZELCAST_MONITORING_SCHEDULER = "monitoringScheduleServiceExecutor";
+
+    public static final int HAZELCAST_MONITORING_CACHE_SERIALIZER_ID = 2;
+
     public static final int HAZELCAST_QUIZ_EXERCISE_CACHE_SERIALIZER_ID = 1;
+
+    public static final String HAZELCAST_PLAGIARISM_PREFIX = "plagiarism-";
+
+    public static final String HAZELCAST_ACTIVE_PLAGIARISM_CHECKS_PER_COURSE_CACHE = HAZELCAST_PLAGIARISM_PREFIX + "active-plagiarism-checks-per-course-cache";
 
     public static final String VERSION_CONTROL_URL = "versionControlUrl";
 

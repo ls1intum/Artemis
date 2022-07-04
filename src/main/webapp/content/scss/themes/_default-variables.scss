@@ -1,0 +1,472 @@
+// === BOOTSTRAP ===
+// Mostly default values, including them here for completeness and comparison
+
+$white: #fff;
+$gray-100: #f8f9fa;
+$gray-200: #e9ecef;
+$gray-300: #dee2e6;
+$gray-400: #ced4da;
+$gray-500: #adb5bd;
+$gray-600: #6c757d;
+$gray-700: #495057;
+$gray-800: #343a40;
+$gray-900: #212529;
+$black: #000;
+
+$blue: #3e8acc;
+$indigo: #6610f2;
+$purple: #6f42c1;
+$pink: #d63384;
+$red: #dc3545;
+$orange: #fd7e14;
+$yellow: #ffc107;
+$green: #28a745;
+$teal: #20c997;
+$cyan: #17a2b8;
+
+$primary: $blue;
+$secondary: $gray-600;
+$success: $green;
+$info: $cyan;
+$warning: $yellow;
+$danger: $red;
+$light: $gray-100;
+$dark: $gray-900;
+
+$body-bg: #e4e5e6;
+
+$navbar-dark-color: rgba($white, 0.6);
+$navbar-dark-hover-color: $white;
+
+// Global colors
+$artemis-dark: #353d47; // (not bootstrap)
+$link-color: $primary;
+
+// Border
+$border-color: #dee2e6;
+
+// Footer
+$footer-bg: #fff;
+
+// Navbar
+$navbar-foreground: #ccc;
+$navbar-bg: $artemis-dark;
+$navbar-item-active-hover-bg: $artemis-dark;
+$navbar-breadcrumb-background: #e4e5e6;
+$navbar-breadcrumb-color: #0065bd;
+
+// === END BOOTSTRAP ===
+
+// Backgrounds
+$darker-body-bg: darken($body-bg, 20);
+$slightly-darker-body-bg: darken($body-bg, 10);
+$brighter-body-bg: lighten($body-bg, 20);
+
+// Borders
+$theme-switch-box-border-color: $border-color;
+
+// Global.scss colors
+$colored-btn-font: #fff;
+$default-btn-font: #333;
+$default-btn-background: #fff;
+$default-btn-border: #ccc;
+
+$border-lightgrey: rgba(0, 0, 0, 0.125);
+$text-lightgrey: rgba(0, 0, 0, 0.125);
+$form-control-focus-background: white;
+$form-control-color: #303030;
+$browserupgrade-color: black;
+$browserupgrade-color-background: #ccc;
+$ng-valid-border: green;
+$ng-invalid-border: red;
+$gutter-background: #f1f1f1;
+$error-color: white;
+$error-background: red;
+$readonly-background: #eee;
+$jh-entity-details-dd-border: #eee;
+$editor-outline-background: #f8f9fa;
+$btn-total-score-color: #337ab7;
+
+$result-orange: orange;
+$result-late: gray;
+
+$negative-color: #c7254e;
+$negative-background: #f9f2f4;
+$positive-color: green;
+$positive-background: #f2f9f2;
+
+$artemis-pre-color: #333;
+$artemis-pre-background: #f5f5f5;
+$artemis-pre-border: #ccc;
+
+$code-success-color: green;
+$code-success-background: #f2f9f2;
+$code-error-color: #c7254e;
+$code-error-background: #f9f2f4;
+$code-warning-color: #e68a00;
+$code-warning-background: #fff5e6;
+
+$code-password: transparent;
+$code-password-background: black;
+$code-password-selection: white;
+$code-password-selection-background: #3297fd;
+$code-password-hover: white;
+
+$unreferenced-feedback-background: whitesmoke;
+$displaycolor-background: #f8f9fa;
+
+$markdown-preview-editor-background: #f8f9fa;
+$markdown-preview-red: #ca2024;
+$markdown-preview-green: #3ea119;
+$markdown-preview-white: #ffffff;
+$markdown-preview-black: #000000;
+$markdown-preview-yellow: #fffa5c;
+$markdown-preview-blue: #0d3cc2;
+$markdown-preview-lila: #b05db8;
+$markdown-preview-orange: #d86b1f;
+$markdown-preview-blockquote: #6a737d;
+$markdown-preview-blockquote-border: #dfe2e5;
+
+$connection-status: $success;
+$connection-status-disconnected: $danger;
+
+$mat-autocomplete-visible-box-shadow: rgb(100 100 100);
+$mat-form-field-outline: #ccc;
+
+// Feature Overview
+$fo-wrapper-background: white;
+$fo-container-box-icon-background: #f2f2f2;
+$fo-blue-font-color: #3070b3;
+
+// Header Participation
+$header-participation-page-info-bar-background: saturate(lighten($artemis-dark, 10%), 15%);
+
+// Markdown Editor
+$md-wrapper-body-bg: white;
+$md-wrapper-color: $artemis-dark;
+$md-tab-list-bg: white;
+$md-editor-background: white;
+$md-file-input-border-color: $border-color;
+$md-resize-icon-color: rgba(0, 0, 0, 0.125);
+
+// Metis
+$metis-light-gray: #979797;
+$metis-gray: #6a737d;
+$metis-blue: $link-color;
+$metis-light-blue: #e3ecf3;
+$metis-green: #33cd32;
+$metis-course-discussion-select-bg: white;
+
+$metis-answer-post-background-color: rgba(0, 0, 0, 0.02);
+
+$reaction-button-default-color: rgba(242, 242, 242);
+$reaction-button-hover-color: rgba(255, 255, 255);
+$reaction-button-reacted-color: $metis-light-blue;
+$reaction-button-reacted-accent-color: $metis-blue;
+$reaction-button-emoji-count-color: black;
+
+$metis-post-tag-selector-tag-option-background: white;
+$metis-post-tag-selector-tag-option-hover-background: $gray-200;
+
+// Component: plagiarism-inspector.component.scss
+$plagiarism-inspector-darker-artemis-dark: darken($artemis-dark, 4);
+
+// Component: course-exercise-card
+$course-exercise-card-border-color: lightgrey;
+$course-exercise-card-background: #fefefe;
+
+// Component: color selector
+$color-selector-background: white;
+$color-selector-border: #ced4da;
+$color-selector-box-shadow: rgba(0, 0, 0, 0.175);
+
+// Component: Statistics average score graph
+$stat-av-sc-legend-background: whitesmoke;
+// These are from graph colors
+$stat-av-sc-legend-critical: rgba(204, 0, 0, 1);
+$stat-av-sc-legend-median: rgba(127, 127, 127, 255);
+$stat-av-sc-legend-best: rgba(40, 164, 40, 1);
+
+// Programming Exercise Form
+$update-programming-exercise-footer-background: white;
+$update-programming-exercise-footer-box-shadow: rgba(0, 0, 0, 0.7);
+$update-programming-exercise-plan-preview-box-background: transparentize(black, 0.95);
+
+// Edit Quiz
+$quiz-mapping-letter-number-mixin-color: white;
+
+$edit-quiz-footer-background: white;
+$edit-quiz-footer-box-shadow: rgba(0, 0, 0, 0.7);
+$quiz-exercise-detail-max-score-background: whitesmoke;
+$quiz-exercise-detail-max-score-color: black;
+$quiz-edit-question-border: lightgrey;
+$quiz-edit-question-background: #fefefe;
+
+$edit-quiz-q-dnd-drop-location-background: white;
+$edit-quiz-q-dnd-drop-location-color: black;
+$edit-quiz-q-dnd-drop-location-hover-bg: rgba(255, 255, 255, 0.8);
+
+// Quiz Exercises
+$quiz-drag-items-background: white;
+$quiz-drag-item-background: #fafafa;
+$quiz-drag-item-border: #696969;
+$quiz-drag-item-color: black;
+
+$quiz-navigation-background: white;
+
+$quiz-participation-footer-background: white;
+$quiz-participation-footer-box-shadow: rgba(0, 0, 0, 0.7);
+$quiz-participation-footer-dnd-background: #86ccd5;
+$quiz-participation-footer-mc-background: #eee066;
+$quiz-participation-footer-sa-background: #d8956c;
+$quiz-participation-footer-changed-background: #527cd7;
+$quiz-participation-footer-content-quiz-score-color: $success;
+$quiz-participation-footer-content-quiz-score-incorrect-color: black;
+$quiz-participation-footer-content-time-warning-color: $warning;
+$quiz-participation-footer-content-time-critical-color: $danger;
+$quiz-participation-quiz-is-over-border-color: #3c763d;
+$quiz-participation-refresh-overlay-active-background: rgba(255, 255, 255, 0.6);
+$quiz-participation-btn-circle-light-border-color: white;
+
+$quiz-participation-question-disabled-color: #696969;
+$quiz-participation-question-disabled-background: #fafafa;
+$quiz-participation-question-result-border-color: $success;
+$quiz-participation-question-result-incorrect-border-color: $warning;
+$quiz-participation-question-h2-span-color: grey;
+$quiz-participation-question-score-result: $success;
+$quiz-participation-question-score-incorrect-result: $warning;
+
+$quiz-scoring-info-student-modal-question-correct: $success;
+$quiz-scoring-info-student-modal-question-wrong: $warning;
+
+$quiz-question-background: #fefefe;
+$quiz-question-border-color: lightgrey;
+
+$dnd-question-drop-location-background: white;
+$dnd-question-drop-location-border-color: black;
+$dnd-question-drop-location-results-border-color: $success;
+$dnd-question-drop-location-results-background: rgb(170, 255, 170);
+$dnd-question-drop-location-results-incorrect-border-color: $danger;
+$dnd-question-drop-location-results-incorrect-background: rgb(255, 170, 170);
+$dnd-question-drop-location-results-sample-border-color: black;
+$dnd-question-drop-location-results-sample-background: white;
+$dnd-question-drop-location-result-symbol-color: $warning;
+$dnd-question-drop-location-result-invalid-color: $danger;
+$dnd-question-drop-location-drag-item-background: white;
+$dnd-question-dnd-items-drag-items-background: #eee;
+$dnd-question-drop-list-receiving-background: rgba(173, 216, 230, 0.8);
+$dnd-question-drop-list-dragging-background: rgb(144, 238, 144);
+
+$sa-question-container-input-background: white;
+$sa-question-container-input-border: #ced4da;
+$sa-question-input-invalid-background: lightgray;
+$sa-question-input-wrong-backgroud: red;
+$sa-question-input-correct-backgroud: orange;
+$sa-question-input-completely-correct-backgroud: lightgreen;
+
+$mc-question-answer-option-border: lightgrey;
+$mc-question-answer-option-hover-background: #fafafa;
+
+// Programming Exercises
+$programming-exercise-instruction-step-wizard-card-header-background: #f5f5f5;
+$programming-exercise-instruction-step-wizard-card-header-border: #ddd;
+$programming-exercise-instruction-step-wizard-row-before-background: #ccc;
+$programming-exercise-instruction-step-wizard-btn-border-color: #ccc;
+$programming-exercise-instruction-step-wizard-circle-not-done-color: $secondary;
+$programming-exercise-instruction-step-wizard-test-passing-hover-color: #f8f9fa;
+
+// SGI
+$edit-sqi-grading-instructions-update-border: lightgray;
+$edit-sqi-criterion-title-row-background: rgb(242 242 242);
+
+$sgi-assessment-layout-zero-background: #fff2cc;
+$sgi-assessment-layout-positive-background: #e3f0da;
+$sgi-assessment-layout-negative-background: #fbe5d6;
+
+// Code Editor
+$code-editor-file-browser-header-background: #f5f5f5;
+$code-editor-file-browser-header-border: #ddd;
+$code-editor-file-browser-tree-hover: #f5f5f5;
+$code-editor-file-browser-input-background: white;
+$code-editor-file-browser-input-color: black;
+$code-editor-diff-newline-background: rgba(63, 185, 80, 0.4);
+$code-editor-gutter-newline-background: rgba(63, 185, 80, 0.8);
+
+// Overview variables
+$overview-border-color: $border-color;
+$overview-light-border-color: lighten($overview-border-color, 5%);
+$overview-light-background-color: rgba($overview-light-border-color, 0.3);
+$overview-light-primary-background-color: rgba($primary, 0.3);
+$overview-blue-border-color: $primary;
+$overview-tab-active-border-color: $artemis-dark;
+$overview-refresh-overlay-bg-color: rgba(255, 255, 255, 0.6);
+$overview-refresh-overlay-color: $artemis-dark;
+
+// Lecture Unit
+$lecture-unit-card-body-background: white;
+$lecture-unit-card-header-background: rgba($overview-light-border-color, 0.3);
+$lecture-unit-card-shadow: rgba(0, 0, 0, 0.25);
+$lecture-unit-card-hover-shadow: $primary;
+
+// Notification sidebar
+$notification-sb-background: $brighter-body-bg;
+$notification-sb-overlay-bg: rgba(0, 0, 0, 0.2);
+$notification-sb-box-shadow: rgba(0, 0, 0, 0.5);
+$notification-sb-even-child-bg: #f1f1f1;
+$notification-sb-hover-child-bg: rgba(62, 138, 204, 0.2);
+$notification-sb-icon-color: var(--bs-body-color);
+
+// Text Editor
+$text-editor-background: #f9f9f9;
+$text-editor-focus-background: #fbfbfb;
+$text-editor-color: black;
+$text-editor-border-color: #d5d5d5;
+
+// Exam (Manage)
+$exam-checklist-exercise-group-table-background: white;
+
+$exercise-group-border-color: #cccccc;
+$exercise-group-header-background: #e1e1e1;
+$exercise-group-header-badge-color: $warning;
+
+// Grading system
+$base-grading-system-input-color: black;
+$base-grading-system-input-background: white;
+
+// Exam students
+$exam-students-dropdown-item-active: $success;
+$exam-students-dropdown-item-already-registered-color: #212529;
+$exam-students-dropdown-item-already-registered-background-color: #e9f6ec;
+$exam-students-dropdown-item-already-registered-background-hover-color: #daf2e0;
+$exam-students-datatable-row-newly-registered-background-color: #c4e7cc;
+
+// Data table
+$data-table-icon-right: white;
+$data-table-transitioning-container-active-background-color: rgba(255, 255, 255, 0.5);
+$data-table-dropdown-item-selected-background-color: $primary;
+
+// Team Participation Table
+$team-participation-table-last-row-border-bottom: #d1d4d7;
+$team-participation-table-even-row-background: #f2f2f2;
+$team-participation-table-header-inner-background: white;
+$team-participation-table-current-exercise-bg: lighten(#d4edda, 5%);
+$team-participation-table-current-exercise-text: #155724;
+$team-participation-table-box-shadow-color: gray;
+
+// Team Short Name
+$team-short-name-background: rgba(0, 0, 180, 0.05);
+$team-short-name-color: #053d97;
+
+// Exam
+$exam-navigation-bar-background-color: #ecebe7;
+$exam-navigation-bar-synced-color: white;
+$exam-navigation-bar-synced-background-color: #3e8acc;
+$exam-navigation-bar-not-synced-color: #1a1a1a;
+$exam-navigation-bar-not-synced-background-color: #e8bf48;
+$exam-navigation-bar-inactive-background: gray;
+$exam-navigation-bar-active-background: #276091;
+$exam-navigation-bar-exercise-index-color: black;
+$exam-timer-label-color: #212529;
+$exam-timer-remaining-time-background: white;
+$exam-timer-critical-background: $warning;
+$exam-exercise-overview-table-background: white;
+$exam-participation-footer-background: white;
+$exam-participation-footer-box-shadow: rgba(0, 0, 0, 0.7);
+$exam-participation-footer-connected-background: #d1ecf1;
+$exam-participation-footer-disconnected-background: #fff2cc;
+$exam-text-exam-summary-background: #f8f9fa;
+
+// Exam Monitoring
+$exam-monitoring-card-border-color: $border-color;
+$exam-monitoring-card-footer-background-color: rgba($black, 0.02);
+
+// Assessment
+$textblock-assessment-span-hover-background: $gray-300;
+$textblock-assessment-text-feedback-positive-color: $success;
+$textblock-assessment-text-feedback-positive-background: $gray-100;
+$textblock-assessment-text-feedback-positive-active-decoration: $success;
+$textblock-assessment-text-feedback-negative-color: $danger;
+$textblock-assessment-text-feedback-negative-background: $gray-100;
+$textblock-assessment-text-feedback-negative-active-decoration: $danger;
+$textblock-assessment-text-feedback-neutral-color: $gray-900;
+$textblock-assessment-text-feedback-neutral-background: $gray-100;
+$textblock-assessment-text-feedback-neutral-active-decoration: $gray-900;
+$textblock-assessment-text-feedback-conflicting-color: $gray-900;
+$textblock-assessment-text-feedback-conflicting-background: $warning;
+$textblock-assessment-text-feedback-conflicting-active-decoration: $gray-900;
+$textblock-assessment-textblock-feedback-editor-active-border: $gray-500;
+$textblock-feedback-editor-feedback-positive-color: #25537a;
+$textblock-feedback-editor-feedback-positive-background-color: #d8e8f5;
+$textblock-feedback-editor-feedback-neutral-color: $gray-900;
+$textblock-feedback-editor-feedback-neutral-background-color: $gray-100;
+$textblock-feedback-editor-reused-feedback-preview-border: rgba(228, 228, 228, 0.87);
+$textblock-feedback-editor-dropdown-hover: #e9ecef;
+$manual-text-selection-span-hover-background-color: $gray-300;
+
+// Guided tour
+$gt-tour-step-bg-color: #ffffff;
+$gt-tour-text-color: #231f1f;
+$gt-tour-border-color: #17a2b8;
+$gt-tour-next-button-color: #17a2b8;
+$gt-tour-next-button-hover: #117a8b;
+$gt-tour-back-button-color: #17a2b8;
+$gt-tour-back-button-hover: #117a8b;
+$gt-tour-restart-button-color: #28a745;
+$gt-tour-restart-button-hover: #1e7e34;
+$gt-tour-button-color-disabled: #f2f2f2;
+$gt-tour-button-text-color: #ffffff;
+$gt-tour-button-text-disabled: #a3a3a3;
+$gt-tour-shadow-color: #4c4c4c;
+$gt-overlay-background: black;
+$gt-tour-block-after-background: #231f1f;
+$gt-tour-block-content-tt-background: #f2f2f2;
+$gt-tour-block-content-red: #ca2024;
+$gt-tour-block-step-hint-not-interaction-background: #f0f0f0;
+$gt-tour-block-step-hint-interaction-background: rgb(23, 162, 184, 0.3);
+
+// Alerts
+$artemis-alert-info-color: #0c5460;
+$artemis-alert-info-background: #d1ecf1;
+$artemis-alert-info-border: #1295ab;
+$artemis-alert-danger-color: #600c0c;
+$artemis-alert-danger-background: #f1d1d1;
+$artemis-alert-danger-border: #bb2d3b;
+$artemis-alert-warning-color: #604c0c;
+$artemis-alert-warning-background: #f1e8d1;
+$artemis-alert-warning-border: #cc9c12;
+$artemis-alert-success-color: #21600c;
+$artemis-alert-success-background: #d9f1d1;
+$artemis-alert-success-border: #3eb058;
+$artemis-alert-neutral-color: black;
+$artemis-alert-neutral-background: $gray-300;
+$artemis-alert-neutral-border: $gray-500;
+
+$close-circle-color: black;
+$close-circle-background: white;
+$close-circle-border: rgba(93, 93, 93, 0.65);
+$close-circle-opacity: 0.7;
+
+// Apollon
+$apollon-primary: $primary;
+$apollon-primary-contrast: $gray-900;
+$apollon-secondary: $gray-600;
+$apollon-warning-yellow: $warning;
+$apollon-background: white;
+$apollon-background-variant: $gray-100;
+$apollon-gray: $gray-200;
+$apollon-gray-variant: $gray-700;
+
+// NGX Graph Colors
+$graph-light-grey: rgba(153, 153, 153, 1);
+$graph-grey: rgba(127, 127, 127, 255);
+$graph-dark-blue: rgba(53, 61, 71, 1);
+$graph-blue: rgba(93, 138, 201, 1);
+$graph-light-blue: rgba(135, 206, 250, 1);
+$graph-green: rgba(40, 164, 40, 1);
+$graph-red: rgba(204, 0, 0, 1);
+$graph-yellow: rgba(230, 174, 6, 1);
+$graph-black: rgba(53, 61, 71, 1);
+
+// User-Management
+$user-management-background-color: rgba($black, 0.02);
+$user-management-border-color: rgba($black, 0.15);

@@ -1,10 +1,8 @@
 package de.tum.in.www1.artemis.web.rest.lecture;
 
-import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.*;
-
+import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
-import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -14,14 +12,17 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.Lecture;
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.lecture.AttachmentUnit;
 import de.tum.in.www1.artemis.domain.lecture.ExerciseUnit;
 import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
 import de.tum.in.www1.artemis.repository.LectureRepository;
 import de.tum.in.www1.artemis.repository.LectureUnitRepository;
+import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.LectureUnitService;
+import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 
@@ -38,15 +39,18 @@ public class LectureUnitResource {
 
     private final AuthorizationCheckService authorizationCheckService;
 
+    private final UserRepository userRepository;
+
     private final LectureUnitRepository lectureUnitRepository;
 
     private final LectureRepository lectureRepository;
 
     private final LectureUnitService lectureUnitService;
 
-    public LectureUnitResource(AuthorizationCheckService authorizationCheckService, LectureRepository lectureRepository, LectureUnitRepository lectureUnitRepository,
-            LectureUnitService lectureUnitService) {
+    public LectureUnitResource(AuthorizationCheckService authorizationCheckService, UserRepository userRepository, LectureRepository lectureRepository,
+            LectureUnitRepository lectureUnitRepository, LectureUnitService lectureUnitService) {
         this.authorizationCheckService = authorizationCheckService;
+        this.userRepository = userRepository;
         this.lectureUnitRepository = lectureUnitRepository;
         this.lectureRepository = lectureRepository;
         this.lectureUnitService = lectureUnitService;
@@ -55,48 +59,72 @@ public class LectureUnitResource {
     /**
      * PUT /lectures/:lectureId/lecture-units-order
      *
-     * @param lectureId           the id of the lecture for which to update the lecture unit order
-     * @param orderedLectureUnits ordered lecture units
+     * @param lectureId             the id of the lecture for which to update the lecture unit order
+     * @param orderedLectureUnitIds ordered list of ids of lecture units
      * @return the ResponseEntity with status 200 (OK) and with body the ordered lecture units
      */
     @PutMapping("/lectures/{lectureId}/lecture-units-order")
     @PreAuthorize("hasRole('EDITOR')")
-    public ResponseEntity<List<LectureUnit>> updateLectureUnitsOrder(@PathVariable Long lectureId, @RequestBody List<LectureUnit> orderedLectureUnits) {
+    public ResponseEntity<List<LectureUnit>> updateLectureUnitsOrder(@PathVariable Long lectureId, @RequestBody List<Long> orderedLectureUnitIds) {
         log.debug("REST request to update the order of lecture units of lecture: {}", lectureId);
-        Optional<Lecture> lectureOptional = lectureRepository.findByIdWithPostsAndLectureUnitsAndLearningGoals(lectureId);
-        if (lectureOptional.isEmpty()) {
-            throw new EntityNotFoundException("Lecture", lectureId);
-        }
-        Lecture lecture = lectureOptional.get();
+        final Lecture lecture = lectureRepository.findByIdWithLectureUnitsElseThrow(lectureId);
+
         if (lecture.getCourse() == null) {
-            return conflict();
+            throw new ConflictException("Specified lecture is not part of a course", "LectureUnit", "courseMissing");
         }
 
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, lecture.getCourse(), null);
 
-        // Ensure that exactly as many lecture units have been received as are currently related to the lecture
-        if (orderedLectureUnits.size() != lecture.getLectureUnits().size()) {
-            return conflict();
+        List<LectureUnit> lectureUnits = lecture.getLectureUnits();
+
+        // Ensure that exactly as many lecture unit ids have been received as are currently related to the lecture
+        if (orderedLectureUnitIds.size() != lectureUnits.size()) {
+            throw new ConflictException("Received wrong size of lecture unit ids", "LectureUnit", "lectureUnitsSizeMismatch");
         }
 
-        // Ensure that all received lecture units are already related to the lecture
-        for (LectureUnit lectureUnit : orderedLectureUnits) {
-            if (!lecture.getLectureUnits().contains(lectureUnit)) {
-                return conflict();
-            }
-            // Set the lecture manually as it won't be included in orderedLectureUnits
-            lectureUnit.setLecture(lecture);
-
-            // keep bidirectional mapping between attachment unit and attachment
-            if (lectureUnit instanceof AttachmentUnit) {
-                ((AttachmentUnit) lectureUnit).getAttachment().setAttachmentUnit((AttachmentUnit) lectureUnit);
-            }
-
+        // Ensure that all received lecture unit ids are already part of the lecture
+        if (!lectureUnits.stream().map(LectureUnit::getId).toList().containsAll(orderedLectureUnitIds)) {
+            throw new ConflictException("Received lecture unit is not part of the lecture", "LectureUnit", "lectureMismatch");
         }
 
-        lecture.setLectureUnits(orderedLectureUnits);
+        lectureUnits.sort(Comparator.comparing(unit -> orderedLectureUnitIds.indexOf(unit.getId())));
+
         Lecture persistedLecture = lectureRepository.save(lecture);
         return ResponseEntity.ok(persistedLecture.getLectureUnits());
+    }
+
+    /**
+     * POST lectures/:lectureId/lecture-units/:lectureUnitId/complete
+     *
+     * @param lectureId     the id of the lecture to which the unit belongs
+     * @param lectureUnitId the id of the lecture unit to mark as completed for the logged-in user
+     * @param completed     true if the lecture unit should be marked as completed, false for uncompleted
+     * @return the ResponseEntity with status 200 (OK)
+     */
+    @PostMapping("/lectures/{lectureId}/lecture-units/{lectureUnitId}/completion")
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<Void> completeLectureUnit(@PathVariable Long lectureUnitId, @PathVariable Long lectureId, @RequestParam("completed") boolean completed) {
+        log.info("REST request to mark lecture unit as completed: {}", lectureUnitId);
+        LectureUnit lectureUnit = lectureUnitRepository.findById(lectureUnitId).orElseThrow(() -> new EntityNotFoundException("lectureUnit"));
+
+        if (lectureUnit.getLecture() == null || lectureUnit.getLecture().getCourse() == null) {
+            throw new ConflictException("Lecture unit must be associated to a lecture of a course", "LectureUnit", "lectureOrCourseMissing");
+        }
+
+        if (!lectureUnit.getLecture().getId().equals(lectureId)) {
+            throw new ConflictException("Requested lecture unit is not part of the specified lecture", "LectureUnit", "lectureIdMismatch");
+        }
+
+        if (!lectureUnit.isVisibleToStudents()) {
+            throw new ConflictException("Requested lecture unit is not yet visible for students", "LectureUnit", "lectureUnitNotReleased");
+        }
+
+        User user = userRepository.getUserWithGroupsAndAuthorities();
+        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, lectureUnit.getLecture().getCourse(), user);
+
+        lectureUnitService.setLectureUnitCompletion(lectureUnit, user, completed);
+
+        return ResponseEntity.ok().build();
     }
 
     /**
@@ -112,10 +140,10 @@ public class LectureUnitResource {
         log.info("REST request to delete lecture unit: {}", lectureUnitId);
         LectureUnit lectureUnit = lectureUnitRepository.findByIdWithLearningGoalsBidirectionalElseThrow(lectureUnitId);
         if (lectureUnit.getLecture() == null || lectureUnit.getLecture().getCourse() == null) {
-            return conflict();
+            throw new ConflictException("Lecture unit must be associated to a lecture of a course", "LectureUnit", "lectureOrCourseMissing");
         }
         if (!lectureUnit.getLecture().getId().equals(lectureId)) {
-            return conflict();
+            throw new ConflictException("Requested lecture unit is not part of the specified lecture", "LectureUnit", "lectureIdMismatch");
         }
 
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, lectureUnit.getLecture().getCourse(), null);

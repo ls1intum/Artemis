@@ -6,7 +6,7 @@ import { RenderedQuizQuestionMarkDownElement } from 'app/entities/quiz/quiz-ques
 import { Result } from 'app/entities/result.model';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { faExclamationCircle, faExclamationTriangle, faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
-import { faCheckSquare, faSquare } from '@fortawesome/free-regular-svg-icons';
+import { faCheckSquare, faSquare, faDotCircle, faCircle } from '@fortawesome/free-regular-svg-icons';
 
 @Component({
     selector: 'jhi-multiple-choice-question',
@@ -54,8 +54,10 @@ export class MultipleChoiceQuestionComponent {
     faQuestionCircle = faQuestionCircle;
     faExclamationTriangle = faExclamationTriangle;
     faExclamationCircle = faExclamationCircle;
-    farSquare = faSquare;
-    farCheckSquare = faCheckSquare;
+    faSquare = faSquare;
+    faCheckSquare = faCheckSquare;
+    faCircle = faCircle;
+    faDotCircle = faDotCircle;
 
     constructor(private artemisMarkdown: ArtemisMarkdownService) {}
 
@@ -87,6 +89,8 @@ export class MultipleChoiceQuestionComponent {
         }
         if (this.isAnswerOptionSelected(answerOption)) {
             this.selectedAnswerOptions = this.selectedAnswerOptions.filter((selectedAnswerOption) => selectedAnswerOption.id !== answerOption.id);
+        } else if (this.isSingleChoice) {
+            this.selectedAnswerOptions = [answerOption];
         } else {
             this.selectedAnswerOptions.push(answerOption);
         }
@@ -107,5 +111,9 @@ export class MultipleChoiceQuestionComponent {
                 return selected.id === answerOption.id;
             }) !== -1
         );
+    }
+
+    get isSingleChoice() {
+        return this.question.singleChoice;
     }
 }

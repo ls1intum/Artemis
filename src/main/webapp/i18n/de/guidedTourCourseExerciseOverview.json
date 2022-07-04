@@ -51,6 +51,14 @@
                 "headline": "Beginne mit deiner ersten Programmieraufgabe",
                 "content": "Klicke auf den Button <tt>Aufgabe starten</tt>, um an deiner Aufgabe zu arbeiten. Der Vorgang dauert einige Sekunden, da ein persönliches Repository für dich im Hintergrund aufgesetzt wird."
             },
+            "startExerciseWait": {
+                "headline": "Beginne mit deiner ersten Programmieraufgabe",
+                "content": "Bitte warte, während Artemis dein persönliches Repository erstellt..."
+            },
+            "repositoryCreated": {
+                "headline": "Dein Repository wurde erstellt",
+                "content": "Dein Repository ist bereit und kann ab jetzt geklont werden. Fahre mit dem nächsten Schritt fort, um mehr zu erfahren."
+            },
             "cloneRepository": {
                 "headline": "Klone das Repository in SourceTree",
                 "content": "Schau dir das folgende Video an, um zu verstehen, wie man ein Git Repository in SourceTree klont. Danach solltest du auf das <tt>X</tt> oben rechts klicken, um das Tutorial zu stoppen und die im Video angezeigten Schritte durchzuführen. Danach kannst du das Tutorial wieder von deinem Konto-Menü aus fortsetzen.",

@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.domain.lecture;
 
+import java.time.ZonedDateTime;
+
 import javax.persistence.*;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -45,5 +47,25 @@ public class AttachmentUnit extends LectureUnit {
 
     public void setAttachment(Attachment attachment) {
         this.attachment = attachment;
+    }
+
+    @Override
+    public String getName() {
+        return attachment == null ? null : attachment.getName();
+    }
+
+    @Override
+    public void setName(String name) {
+        // Should be set in associated attachment
+    }
+
+    @Override
+    public ZonedDateTime getReleaseDate() {
+        return attachment == null ? null : attachment.getReleaseDate();
+    }
+
+    @Override
+    public void setReleaseDate(ZonedDateTime releaseDate) {
+        // Should be set in associated attachment
     }
 }

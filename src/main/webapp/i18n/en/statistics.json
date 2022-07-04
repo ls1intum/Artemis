@@ -42,10 +42,9 @@
     },
     "calendar_week": "CW",
     "overview": {
-        "3_weeks_ago": "3 weeks ago",
-        "2_weeks_ago": "2 weeks ago",
-        "1_weeks_ago": "1 week ago",
-        "0_weeks_ago": "current week"
+        "weeksAgo": "{{ amount }} weeks ago",
+        "weekAgo": "1 week ago",
+        "currentWeek": "current week"
     },
     "weekdays": {
         "monday": "Monday",

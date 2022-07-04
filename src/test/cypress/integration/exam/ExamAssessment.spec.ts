@@ -72,7 +72,18 @@ describe('Exam assessment', () => {
 
         beforeEach('Create exam, exercise and submission', () => {
             courseManagementRequests
-                .createProgrammingExercise({ exerciseGroup }, undefined, undefined, undefined, undefined, undefined, undefined, undefined, CypressAssessmentType.SEMI_AUTOMATIC)
+                .createProgrammingExercise(
+                    { exerciseGroup },
+                    undefined,
+                    false,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    undefined,
+                    CypressAssessmentType.SEMI_AUTOMATIC,
+                )
                 .then((progRespone) => {
                     const programmingExercise = progRespone.body;
                     courseManagementRequests.generateMissingIndividualExams(exam);

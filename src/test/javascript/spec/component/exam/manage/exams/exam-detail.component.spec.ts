@@ -213,7 +213,7 @@ describe('ExamDetailComponent', () => {
         examDetailComponent.resetExam();
 
         // THEN
-        expect(service.reset).toHaveBeenCalledTimes(1);
+        expect(service.reset).toHaveBeenCalledOnce();
         expect(examDetailComponent.exam).toEqual(exam);
     });
 
@@ -229,6 +229,6 @@ describe('ExamDetailComponent', () => {
         examDetailComponent.deleteExam(exam.id!);
 
         // THEN
-        expect(service.delete).toHaveBeenCalledTimes(1);
+        expect(service.delete).toHaveBeenCalledOnce();
     });
 });

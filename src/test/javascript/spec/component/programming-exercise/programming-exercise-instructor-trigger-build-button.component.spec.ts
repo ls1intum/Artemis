@@ -66,13 +66,13 @@ describe('ProgrammingExercise Instructor Trigger Build Component', () => {
 
         comp.triggerBuild({ stopPropagation: jest.fn() });
 
-        expect(modalService.open).toHaveBeenCalledTimes(1);
+        expect(modalService.open).toHaveBeenCalledOnce();
         expect(modalService.open).toHaveBeenCalledWith(ConfirmAutofocusModalComponent, {
             size: 'lg',
             keyboard: true,
         });
 
-        expect(submissionService.triggerBuild).toHaveBeenCalledTimes(1);
+        expect(submissionService.triggerBuild).toHaveBeenCalledOnce();
         expect(submissionService.triggerBuild).toHaveBeenCalledWith(participation.id, SubmissionType.INSTRUCTOR);
     });
 });

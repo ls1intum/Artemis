@@ -24,10 +24,13 @@ import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { AlertService } from 'app/core/util/alert.service';
 import { EventManager } from 'app/core/util/event-manager.service';
 import { faAngleDown, faAngleUp, faCheckDouble, faFileUpload, faFont, faKeyboard, faPlus, faProjectDiagram, faTimes, faWrench } from '@fortawesome/free-solid-svg-icons';
+import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
+import { QuizExerciseImportComponent } from 'app/exercises/quiz/manage/quiz-exercise-import.component';
 
 @Component({
     selector: 'jhi-exercise-groups',
     templateUrl: './exercise-groups.component.html',
+    styleUrls: ['./exercise-groups.component.scss'],
 })
 export class ExerciseGroupsComponent implements OnInit {
     participationType = ProgrammingExerciseParticipationType;
@@ -191,6 +194,19 @@ export class ExerciseGroupsComponent implements OnInit {
                 });
                 textImportModalRef.result.then(
                     (result: TextExercise) => {
+                        importBaseRoute.push(result.id);
+                        this.router.navigate(importBaseRoute);
+                    },
+                    () => {},
+                );
+                break;
+            case ExerciseType.QUIZ:
+                const quizImportModalRef = this.modalService.open(QuizExerciseImportComponent, {
+                    size: 'lg',
+                    backdrop: 'static',
+                });
+                quizImportModalRef.result.then(
+                    (result: QuizExercise) => {
                         importBaseRoute.push(result.id);
                         this.router.navigate(importBaseRoute);
                     },

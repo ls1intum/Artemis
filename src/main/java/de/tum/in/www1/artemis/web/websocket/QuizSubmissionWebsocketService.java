@@ -12,6 +12,7 @@ import org.springframework.stereotype.Controller;
 
 import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
 import de.tum.in.www1.artemis.exception.QuizSubmissionException;
+import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.ParticipationService;
 import de.tum.in.www1.artemis.service.QuizExerciseService;
@@ -31,12 +32,15 @@ public class QuizSubmissionWebsocketService {
 
     private final SimpMessageSendingOperations messagingTemplate;
 
+    private final UserRepository userRepository;
+
     public QuizSubmissionWebsocketService(QuizExerciseService quizExerciseService, ParticipationService participationService, SimpMessageSendingOperations messagingTemplate,
-            QuizSubmissionService quizSubmissionService) {
+            QuizSubmissionService quizSubmissionService, UserRepository userRepository) {
         this.quizExerciseService = quizExerciseService;
         this.participationService = participationService;
         this.messagingTemplate = messagingTemplate;
         this.quizSubmissionService = quizSubmissionService;
+        this.userRepository = userRepository;
     }
 
     // TODO it would be nice to have some kind of startQuiz call that creates the participation with an initialization date. This should happen when the quiz is first shown
@@ -53,9 +57,8 @@ public class QuizSubmissionWebsocketService {
     public void saveSubmission(@DestinationVariable Long exerciseId, @Payload QuizSubmission quizSubmission, Principal principal) {
         // Without this, custom jpa repository methods don't work in websocket channel.
         SecurityUtils.setAuthorizationObject();
-        String username = principal.getName();
         try {
-            QuizSubmission updatedQuizSubmission = quizSubmissionService.saveSubmissionForLiveMode(exerciseId, quizSubmission, username, false);
+            QuizSubmission updatedQuizSubmission = quizSubmissionService.saveSubmissionForLiveMode(exerciseId, quizSubmission, principal.getName(), false);
             // send updated submission over websocket (use a thread to prevent that the outbound channel blocks the inbound channel (e.g. due a slow client))
             // to improve the performance, this is currently deactivated: slow clients might lead to bottlenecks so that more important messages can not be distributed any more
             // new Thread(() -> sendSubmissionToUser(username, exerciseId, quizSubmission)).start();
@@ -64,7 +67,8 @@ public class QuizSubmissionWebsocketService {
         }
         catch (QuizSubmissionException ex) {
             // send error message over websocket (use a thread to prevent that the outbound channel blocks the inbound channel (e.g. due a slow client))
-            new Thread(() -> messagingTemplate.convertAndSendToUser(username, "/topic/quizExercise/" + exerciseId + "/submission", new WebsocketError(ex.getMessage()))).start();
+            new Thread(() -> messagingTemplate.convertAndSendToUser(principal.getName(), "/topic/quizExercise/" + exerciseId + "/submission", new WebsocketError(ex.getMessage())))
+                    .start();
         }
     }
 

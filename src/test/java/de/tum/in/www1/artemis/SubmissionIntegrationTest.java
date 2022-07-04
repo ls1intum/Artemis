@@ -149,7 +149,7 @@ public class SubmissionIntegrationTest extends AbstractSpringIntegrationBambooBi
         PageableSearchDTO<String> search = database.configureStudentParticipationSearch("");
 
         var resultPage = request.get("/api/exercises/" + textExercise.getId() + "/submissions-for-import", HttpStatus.OK, SearchResultPageDTO.class,
-                database.exerciseSearchMapping(search));
+                database.searchMapping(search));
         assertThat(resultPage.getResultsOnPage()).hasSize(1);
     }
 
@@ -158,7 +158,7 @@ public class SubmissionIntegrationTest extends AbstractSpringIntegrationBambooBi
     public void testGetSubmissionsOnPageWithSize_exerciseNotFound() throws Exception {
         long randomExerciseId = 12345L;
         PageableSearchDTO<String> search = database.configureStudentParticipationSearch("");
-        request.get("/api/exercises/" + randomExerciseId + "/submissions-for-import", HttpStatus.NOT_FOUND, SearchResultPageDTO.class, database.exerciseSearchMapping(search));
+        request.get("/api/exercises/" + randomExerciseId + "/submissions-for-import", HttpStatus.NOT_FOUND, SearchResultPageDTO.class, database.searchMapping(search));
     }
 
     @Test
@@ -170,7 +170,7 @@ public class SubmissionIntegrationTest extends AbstractSpringIntegrationBambooBi
         course.setInstructorGroupName("test");
         courseRepository.save(course);
         PageableSearchDTO<String> search = database.configureStudentParticipationSearch("");
-        request.get("/api/exercises/" + textExercise.getId() + "/submissions-for-import", HttpStatus.FORBIDDEN, SearchResultPageDTO.class, database.exerciseSearchMapping(search));
+        request.get("/api/exercises/" + textExercise.getId() + "/submissions-for-import", HttpStatus.FORBIDDEN, SearchResultPageDTO.class, database.searchMapping(search));
     }
 
 }

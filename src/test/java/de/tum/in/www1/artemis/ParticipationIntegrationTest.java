@@ -5,14 +5,21 @@ import static org.mockito.Mockito.*;
 
 import java.net.URI;
 import java.time.ZonedDateTime;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Optional;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
 
@@ -20,6 +27,7 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.ExerciseMode;
 import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.enumeration.Language;
+import de.tum.in.www1.artemis.domain.enumeration.QuizMode;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.Participation;
@@ -28,10 +36,13 @@ import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.ParticipationService;
 import de.tum.in.www1.artemis.service.feature.Feature;
 import de.tum.in.www1.artemis.service.feature.FeatureToggleService;
+import de.tum.in.www1.artemis.util.LocalRepository;
 import de.tum.in.www1.artemis.util.ModelFactory;
+import de.tum.in.www1.artemis.util.QuizUtilService;
 
 public class ParticipationIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
@@ -61,6 +72,12 @@ public class ParticipationIntegrationTest extends AbstractSpringIntegrationBambo
 
     @Autowired
     private ParticipationService participationService;
+
+    @Autowired
+    private QuizUtilService quizUtilService;
+
+    @Value("${artemis.version-control.default-branch:main}")
+    private String defaultBranch;
 
     private Course course;
 
@@ -96,8 +113,9 @@ public class ParticipationIntegrationTest extends AbstractSpringIntegrationBambo
         course.addExercises(programmingExercise);
         course = courseRepo.save(course);
 
+        doReturn(defaultBranch).when(versionControlService).getDefaultBranchOfRepository(any());
         doReturn("Success").when(continuousIntegrationService).copyBuildPlan(any(), any(), any(), any(), any(), anyBoolean());
-        doNothing().when(continuousIntegrationService).configureBuildPlan(any());
+        doNothing().when(continuousIntegrationService).configureBuildPlan(any(), any());
         doNothing().when(continuousIntegrationService).performEmptySetupCommit(any());
     }
 
@@ -292,7 +310,11 @@ public class ParticipationIntegrationTest extends AbstractSpringIntegrationBambo
     @WithMockUser(username = "student1", roles = "USER")
     public void resumeProgrammingExerciseParticipation() throws Exception {
         var participation = ModelFactory.generateProgrammingExerciseStudentParticipation(InitializationState.INACTIVE, programmingExercise, database.getUserByLogin("student1"));
+        var localRepo = new LocalRepository(defaultBranch);
+        localRepo.configureRepos("testLocalRepo", "testOriginRepo");
+        participation.setRepositoryUrl(ModelFactory.getMockFileRepositoryUrl(localRepo).getURI().toString());
         participationRepo.save(participation);
+        gitService.getDefaultLocalPathOfRepo(participation.getVcsRepositoryUrl());
         var updatedParticipation = request.putWithResponseBody("/api/exercises/" + programmingExercise.getId() + "/resume-programming-participation", null,
                 ProgrammingExerciseStudentParticipation.class, HttpStatus.OK);
         assertThat(updatedParticipation.getInitializationState()).isEqualTo(InitializationState.INITIALIZED);
@@ -357,7 +379,7 @@ public class ParticipationIntegrationTest extends AbstractSpringIntegrationBambo
         database.createAndSaveParticipationForExercise(programmingExercise, "student1");
         database.createAndSaveParticipationForExercise(textExercise, "student2");
         database.createAndSaveParticipationForExercise(modelingExercise, "student1");
-        var quizEx = ModelFactory.generateQuizExercise(ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(1), course);
+        var quizEx = ModelFactory.generateQuizExercise(ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(1), QuizMode.SYNCHRONIZED, course);
         exerciseRepo.save(quizEx);
         database.createAndSaveParticipationForExercise(quizEx, "student2");
 
@@ -486,6 +508,7 @@ public class ParticipationIntegrationTest extends AbstractSpringIntegrationBambo
         final var participationsToUpdate = new StudentParticipationList((StudentParticipation) submission.getParticipation());
         final var response = request.putWithResponseBodyList(String.format("/api/exercises/%d/participations/update-individual-due-date", exercise.getId()), participationsToUpdate,
                 StudentParticipation.class, HttpStatus.OK);
+        exercise = (FileUploadExercise) exerciseRepo.findByIdElseThrow(exercise.getId());
 
         assertThat(response).hasSize(1);
         assertThat(response.get(0).getIndividualDueDate()).isEqualToIgnoringNanos(submission.getParticipation().getIndividualDueDate());
@@ -811,28 +834,31 @@ public class ParticipationIntegrationTest extends AbstractSpringIntegrationBambo
         return exerciseRepo.save(exercise);
     }
 
-    @Test
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @WithMockUser(username = "student1", roles = "USER")
-    public void getParticipation_quizExerciseNotStarted() throws Exception {
-        var quizEx = ModelFactory.generateQuizExercise(ZonedDateTime.now().plusHours(2), ZonedDateTime.now().plusDays(1), course).isPlannedToStart(false);
+    @EnumSource(QuizMode.class)
+    public void getParticipation_quizExerciseNotStarted(QuizMode quizMode) throws Exception {
+        var quizEx = ModelFactory.generateQuizExercise(ZonedDateTime.now().plusHours(2), ZonedDateTime.now().plusDays(1), quizMode, course);
         quizEx = exerciseRepo.save(quizEx);
-        var actualParticipation = request.get("/api/exercises/" + quizEx.getId() + "/participation", HttpStatus.OK, StudentParticipation.class);
-        assertThat(actualParticipation.getExercise()).isEqualTo(quizEx);
+        request.get("/api/exercises/" + quizEx.getId() + "/participation", HttpStatus.FORBIDDEN, StudentParticipation.class);
     }
 
-    @Test
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @WithMockUser(username = "student1", roles = "USER")
-    public void getParticipation_quizExerciseStartedAndNoParticipation() throws Exception {
-        var quizEx = ModelFactory.generateQuizExercise(ZonedDateTime.now().minusMinutes(2), ZonedDateTime.now().plusMinutes(10), course).isPlannedToStart(true);
+    @EnumSource(QuizMode.class)
+    public void getParticipation_quizExerciseStartedAndNoParticipation(QuizMode quizMode) throws Exception {
+        var quizEx = ModelFactory.generateQuizExercise(ZonedDateTime.now().minusMinutes(2), ZonedDateTime.now().minusMinutes(1), quizMode, course);
         quizEx = exerciseRepo.save(quizEx);
         request.getNullable("/api/exercises/" + quizEx.getId() + "/participation", HttpStatus.NO_CONTENT, StudentParticipation.class);
     }
 
-    @Test
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @WithMockUser(username = "student1", roles = "USER")
-    public void getParticipation_quizExerciseStartedAndSubmissionAllowed() throws Exception {
-        var quizEx = ModelFactory.generateQuizExercise(ZonedDateTime.now().minusMinutes(1), ZonedDateTime.now().plusMinutes(5), course).isPlannedToStart(true).duration(360);
+    @EnumSource(QuizMode.class)
+    public void getParticipation_quizExerciseStartedAndSubmissionAllowed(QuizMode quizMode) throws Exception {
+        var quizEx = ModelFactory.generateQuizExercise(ZonedDateTime.now().minusMinutes(1), ZonedDateTime.now().plusMinutes(5), quizMode, course).duration(360);
         quizEx = exerciseRepo.save(quizEx);
+        quizUtilService.prepareBatchForSubmitting(quizEx, SecurityUtils.makeAuthorizationObject("instructor1"), SecurityContextHolder.getContext().getAuthentication());
         var participation = request.get("/api/exercises/" + quizEx.getId() + "/participation", HttpStatus.OK, StudentParticipation.class);
         assertThat(participation.getExercise()).as("Participation contains exercise").isEqualTo(quizEx);
         assertThat(participation.getResults()).as("New result was added to the participation").hasSize(1);
@@ -841,8 +867,18 @@ public class ParticipationIntegrationTest extends AbstractSpringIntegrationBambo
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void getParticipation_quizExerciseFinished() throws Exception {
-        var quizEx = ModelFactory.generateQuizExercise(ZonedDateTime.now().minusMinutes(20), ZonedDateTime.now().minusMinutes(20), course).isPlannedToStart(true);
+    public void getParticipation_quizBatchNotPresent() throws Exception {
+        var quizEx = ModelFactory.generateQuizExercise(ZonedDateTime.now().minusMinutes(1), ZonedDateTime.now().plusMinutes(5), QuizMode.INDIVIDUAL, course).duration(360);
+        quizEx = exerciseRepo.save(quizEx);
+        var participation = request.get("/api/exercises/" + quizEx.getId() + "/participation", HttpStatus.OK, StudentParticipation.class);
+        assertThat(participation.getExercise()).as("Participation contains exercise").isEqualTo(quizEx);
+    }
+
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
+    @WithMockUser(username = "student1", roles = "USER")
+    @EnumSource(QuizMode.class)
+    public void getParticipation_quizExerciseFinished(QuizMode quizMode) throws Exception {
+        var quizEx = ModelFactory.generateQuizExercise(ZonedDateTime.now().minusMinutes(20), ZonedDateTime.now().minusMinutes(20), quizMode, course);
         quizEx = exerciseRepo.save(quizEx);
         var participation = database.createAndSaveParticipationForExercise(quizEx, "student1");
         var submission = database.addSubmission(participation, new QuizSubmission().scoreInPoints(11D).submitted(true));

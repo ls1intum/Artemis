@@ -1,0 +1,92 @@
+<?xml version="1.1" encoding="UTF-8" standalone="no"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog" xmlns:ext="http://www.liquibase.org/xml/ns/dbchangelog-ext" xmlns:pro="http://www.liquibase.org/xml/ns/pro" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog-ext http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-ext.xsd http://www.liquibase.org/xml/ns/pro http://www.liquibase.org/xml/ns/pro/liquibase-pro-3.9.xsd http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.9.xsd">
+    <changeSet author="filipgregurevic" id="20220309161633-1">
+        <createTable tableName="plagiarism_case">
+            <column name="id" type="BIGINT" autoIncrement="${autoIncrement}">
+                <constraints primaryKey="true" primaryKeyName="plagiarism_casePK"/>
+            </column>
+            <column name="exercise_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="student_id" type="BIGINT" />
+            <column name="team_id" type="BIGINT" />
+            <column name="created_by" type="VARCHAR(50)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_date" defaultValueComputed="CURRENT_TIMESTAMP" type="TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="last_modified_by" type="VARCHAR(50)"/>
+            <column name="last_modified_date" type="TIMESTAMP"/>
+            <column name="verdict" type="VARCHAR(255)"/>
+            <column name="verdict_by_id" type="VARCHAR(255)"/>
+            <column name="verdict_date" type="TIMESTAMP"/>
+            <column name="verdict_message" type="LONGTEXT"/>
+            <column name="verdict_point_deduction" type="INT"/>
+        </createTable>
+        <addColumn tableName="post">
+            <column name="plagiarism_case_id" type="BIGINT"/>
+        </addColumn>
+        <addColumn tableName="plagiarism_submission">
+            <column name="plagiarism_case_id" type="BIGINT"/>
+            <column name="plagiarism_comparison_id" type="BIGINT"/>
+        </addColumn>
+        <addForeignKeyConstraint
+            baseTableName="plagiarism_case"
+            baseColumnNames="exercise_id"
+            constraintName="fk_plagiarism_case_exercise_id"
+            referencedColumnNames="id"
+            referencedTableName="exercise"
+        />
+        <addForeignKeyConstraint
+            baseTableName="plagiarism_case"
+            baseColumnNames="student_id"
+            constraintName="fk_plagiarism_case_student_id"
+            referencedColumnNames="id"
+            referencedTableName="jhi_user"
+        />
+        <addForeignKeyConstraint
+            baseTableName="plagiarism_case"
+            baseColumnNames="team_id"
+            constraintName="fk_plagiarism_case_team_id"
+            referencedColumnNames="id"
+            referencedTableName="team"
+        />
+        <addForeignKeyConstraint
+            baseTableName="post"
+            baseColumnNames="plagiarism_case_id"
+            constraintName="fk_post_plagiarism_case_id"
+            referencedColumnNames="id"
+            referencedTableName="plagiarism_case"
+        />
+        <addForeignKeyConstraint
+            baseTableName="plagiarism_submission"
+            baseColumnNames="plagiarism_case_id"
+            constraintName="fk_plagiarism_submission_plagiarism_case_id"
+            referencedColumnNames="id"
+            referencedTableName="plagiarism_case"
+        />
+        <addForeignKeyConstraint
+            baseTableName="plagiarism_submission"
+            baseColumnNames="plagiarism_comparison_id"
+            constraintName="fk_plagiarism_submission_plagiarism_comparison_id"
+            referencedColumnNames="id"
+            referencedTableName="plagiarism_comparison"
+        />
+    </changeSet>
+    <changeSet author="filipgregurevic" id="20220309161633-2">
+        <sqlFile
+            encoding="UTF-8"
+            relativeToChangelogFile="true"
+            path="../migrationSQL/newPlagiarismCases.sql"
+        />
+    </changeSet>
+    <changeSet author="filipgregurevic" id="20220309161633-3">
+        <dropColumn tableName="plagiarism_comparison" columnName="student_statement_a"/>
+        <dropColumn tableName="plagiarism_comparison" columnName="student_statement_b"/>
+        <dropColumn tableName="plagiarism_comparison" columnName="status_a"/>
+        <dropColumn tableName="plagiarism_comparison" columnName="status_b"/>
+        <dropColumn tableName="plagiarism_comparison" columnName="instructor_statement_a"/>
+        <dropColumn tableName="plagiarism_comparison" columnName="instructor_statement_b"/>
+    </changeSet>
+</databaseChangeLog>

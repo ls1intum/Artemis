@@ -9,7 +9,7 @@ import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.NotificationType;
 import de.tum.in.www1.artemis.domain.metis.Post;
-import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismComparison;
+import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismCase;
 
 public class SingleUserNotificationFactory {
 
@@ -80,30 +80,29 @@ public class SingleUserNotificationFactory {
     /**
      * Creates an instance of SingleUserNotification based on plagiarisms.
      *
-     * @param plagiarismComparison that hold the major information for the plagiarism case
+     * @param plagiarismCase that hold the major information for the plagiarism case
      * @param notificationType type of the notification that should be created
      * @param student who should be notified or is the author (depends if the student or instructor should be notified)
      * @param instructor who should be notified or is the author
      * @return an instance of SingleUserNotification
      */
-    public static SingleUserNotification createNotification(PlagiarismComparison plagiarismComparison, NotificationType notificationType, User student, User instructor) {
+    public static SingleUserNotification createNotification(PlagiarismCase plagiarismCase, NotificationType notificationType, User student, User instructor) {
         String title;
         String notificationText;
         SingleUserNotification notification;
         Long courseId;
-        Exercise affectedExercise = plagiarismComparison.getPlagiarismResult().getExercise();
+        Exercise affectedExercise = plagiarismCase.getExercise();
 
         switch (notificationType) {
-            case NEW_POSSIBLE_PLAGIARISM_CASE_STUDENT -> {
-                title = NEW_POSSIBLE_PLAGIARISM_CASE_STUDENT_TITLE;
-                // pick the correct instructorStatement for the user that should be notified (A or B)
-                notificationText = (plagiarismComparison.getSubmissionA().getStudentLogin().equals(student.getLogin())) ? plagiarismComparison.getInstructorStatementA()
-                        : plagiarismComparison.getInstructorStatementB();
+            case NEW_PLAGIARISM_CASE_STUDENT -> {
+                title = NEW_PLAGIARISM_CASE_STUDENT_TITLE;
+                notificationText = "New plagiarism case concerning the " + affectedExercise.getExerciseType().toString().toLowerCase() + " exercise \""
+                        + affectedExercise.getTitle() + "\".";
             }
-            case PLAGIARISM_CASE_FINAL_STATE_STUDENT -> {
-                title = PLAGIARISM_CASE_FINAL_STATE_STUDENT_TITLE;
+            case PLAGIARISM_CASE_VERDICT_STUDENT -> {
+                title = PLAGIARISM_CASE_VERDICT_STUDENT_TITLE;
                 notificationText = "Your plagiarism case concerning the " + affectedExercise.getExerciseType().toString().toLowerCase() + " exercise \""
-                        + affectedExercise.getTitle() + "\"" + " has a final verdict.";
+                        + affectedExercise.getTitle() + "\"" + " has a verdict.";
             }
             default -> throw new UnsupportedOperationException("Unsupported NotificationType: " + notificationType);
         }
@@ -113,7 +112,7 @@ public class SingleUserNotificationFactory {
         notification = new SingleUserNotification(student, title, notificationText);
         notification.setPriority(HIGH);
         notification.setAuthor(instructor);
-        notification.setTransientAndStringTarget(createPlagiarismCaseTarget(plagiarismComparison.getId(), courseId));
+        notification.setTransientAndStringTarget(createPlagiarismCaseTarget(plagiarismCase.getId(), courseId));
         return notification;
     }
 }

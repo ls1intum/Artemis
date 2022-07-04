@@ -1,7 +1,7 @@
 <div class="edit-mc-question">
     <div class="question-options card-header question-card-header" [hidden]="showPreview">
         <button
-            class="btn btn-light question-collapse"
+            class="btn question-collapse"
             (click)="isQuestionCollapsed = !isQuestionCollapsed"
             [attr.aria-expanded]="!isQuestionCollapsed"
             [attr.aria-controls]="'collapseQuestion' + questionIndex"
@@ -31,7 +31,13 @@
         <div class="question-options" [hidden]="showPreview">
             <div class="form-group">
                 <span jhiTranslate="artemisApp.quizQuestion.scoringType" class="colon-suffix no-flex-shrink"></span>
-                <select class="form-select" [(ngModel)]="question.scoringType" (ngModelChange)="questionUpdated.emit()" title="scoring type">
+                <select
+                    class="form-select"
+                    [(ngModel)]="question.scoringType"
+                    (ngModelChange)="questionUpdated.emit()"
+                    [disabled]="question.singleChoice ?? false"
+                    title="scoring type"
+                >
                     <option value="ALL_OR_NOTHING">{{ 'artemisApp.quizExercise.scoringType.all_or_nothing' | artemisTranslate }}</option>
                     <option value="PROPORTIONAL_WITH_PENALTY">{{ 'artemisApp.quizExercise.scoringType.proportional_with_penalty' | artemisTranslate }}</option>
                     <option value="PROPORTIONAL_WITHOUT_PENALTY">{{ 'artemisApp.quizExercise.scoringType.proportional_without_penalty' | artemisTranslate }}</option>
@@ -53,6 +59,24 @@
                         jhiTranslate="artemisApp.multipleChoiceQuestion.randomizeOrder"
                     >
                     </label>
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="form-check custom-control custom-checkbox">
+                    <input
+                        type="checkbox"
+                        id="{{ 'cbSingleChoiceMC' + questionIndex }}"
+                        [(ngModel)]="question.singleChoice"
+                        (ngModelChange)="onSingleChoiceChanged(); questionUpdated.emit()"
+                        class="form-check-input custom-control-input"
+                    />
+                    <label
+                        class="form-check-label custom-control-label"
+                        for="{{ 'cbSingleChoiceMC' + questionIndex }}"
+                        jhiTranslate="artemisApp.multipleChoiceQuestion.singleChoice"
+                    >
+                    </label>
+                    <fa-icon [icon]="faQuestionCircle" [ngbTooltip]="'artemisApp.multipleChoiceQuestion.singleChoiceInfo' | artemisTranslate"></fa-icon>
                 </div>
             </div>
             <div class="form-group">

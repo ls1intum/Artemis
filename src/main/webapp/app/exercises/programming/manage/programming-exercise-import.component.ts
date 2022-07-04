@@ -8,7 +8,7 @@ import { ProgrammingExercisePagingService } from 'app/exercises/programming/mana
 import { SortService } from 'app/shared/service/sort.service';
 import { faSort } from '@fortawesome/free-solid-svg-icons';
 
-enum TableColumn {
+export enum TableColumn {
     ID = 'ID',
     TITLE = 'TITLE',
     PROGRAMMING_LANGUAGE = 'PROGRAMMING_LANGUAGE',
@@ -29,7 +29,7 @@ export class ProgrammingExerciseImportComponent implements OnInit {
     content: SearchResult<ProgrammingExercise>;
     total = 0;
     state: PageableSearch = {
-        page: 0,
+        page: 1,
         pageSize: 10,
         searchTerm: '',
         sortingOrder: SortingOrder.DESCENDING,
@@ -108,7 +108,7 @@ export class ProgrammingExerciseImportComponent implements OnInit {
     /**
      * Gives the ID for any programming exercise in the table, so that it can be tracked/identified by ngFor
      *
-     * @param index The index of the elemnt in the ngFor
+     * @param index The index of the element in the ngFor
      * @param item The exercise itself
      * @returns The ID of the programming exercise
      */

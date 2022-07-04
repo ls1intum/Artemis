@@ -48,6 +48,7 @@ export class FileUploadSubmissionComponent implements OnInit, ComponentCanDeacti
     isAfterAssessmentDueDate: boolean;
     isSaving: boolean;
     isOwnerOfParticipation: boolean;
+    examMode = false;
 
     acceptedFileExtensions: string;
 
@@ -56,7 +57,6 @@ export class FileUploadSubmissionComponent implements OnInit, ComponentCanDeacti
     readonly ButtonType = ButtonType;
 
     private submissionConfirmationText: string;
-    private examMode = false;
 
     // Icons
     farListAlt = faListAlt;

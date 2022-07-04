@@ -14,6 +14,7 @@
                 "registerSuccessful": "Anmeldung erfolgreich",
                 "signUpForCourse": "Anmelden",
                 "cancel": "Abbrechen",
+                "coursePrerequisites": "Voraussetzungen",
                 "noCourse": "Keine Kurse für eine Registrierung verfügbar",
                 "courseLoading": "Kurse werden geladen...",
                 "courseSignupConfirmationTitle": "Bestätigung der Kursteilnahme"
@@ -21,7 +22,6 @@
             "course": "Kurs"
         },
         "courseOverview": {
-            "noDescription": "Keine Beschreibung verfügbar",
             "noCourseIcon": "Kein Kurs Icon verfügbar",
             "showMore": "Mehr anzeigen",
             "showLess": "Weniger anzeigen",
@@ -29,8 +29,10 @@
                 "exercises": "Aufgaben",
                 "statistics": "Statistiken",
                 "lectures": "Vorlesungen",
+                "learningGoals": "Lernziele",
                 "exams": "Klausuren",
-                "discussion": "Diskussion"
+                "communication": "Kommunikation",
+                "plagiarismCases": "Plagiatsfälle"
             },
             "exerciseList": {
                 "filter": "Filter ({{ num }})",
@@ -128,7 +130,11 @@
                 "includeStandardCategories": "Verberge Artemis Standard-Kategorien:",
                 "includeIndividualCategories": "Zeige kurs-spezifische Kategorien:",
                 "includeAllCategories": "Wähle alle Optionen",
-                "exercisesWithNoCategories": "Aufgaben ohne Kategorien"
+                "exercisesWithNoCategories": "Aufgaben ohne Kategorien",
+                "pointsPerExercise": "Punkte pro Aufgabe"
+            },
+            "learningGoals": {
+                "noData": "Es sind keine Lernziele für diesen Kurs vorhanden."
             },
             "lectureList": {
                 "lectureGroupHeader": "Vorlesungen: {{ total }}",
@@ -147,10 +153,12 @@
                 "notReleased": "Nicht freigegeben",
                 "version": "Version",
                 "isDownloading": "Wird heruntergeladen...",
-                "downloadPdf": "PDF Herunterladen"
+                "downloadMergedPdf": "Vollständiges PDF herunterladen"
             },
             "exerciseDetails": {
                 "dueDate": "Einreichungsfrist:",
+                "runTestsAfterDueDate": "Testdurchlauf nach Einreichungsfrist:",
+                "complaintDeadline": "Beschwerdefrist:",
                 "categories": "Kategorien:",
                 "type": "Typ:",
                 "difficulty": "Schwierigkeit:",
@@ -161,6 +169,7 @@
                 "noResults": "Du hast noch keine Ergebnisse",
                 "instructorActions": {
                     "title": "Aktionen für Lehrende:",
+                    "titleTutor": "Aktionen für Tutor:innen",
                     "scores": "Bewertungen",
                     "submissions": "Einreichungen",
                     "statistics": "Statistiken"
@@ -175,7 +184,16 @@
                 "graded": "Bewertet",
                 "notGraded": "Nicht bewertet",
                 "rated": "Bewertet",
-                "practice": "Übung"
+                "practice": "Übung",
+                "assessmentType": "Bewertung:",
+                "submissionDue": "Abgabe bis:",
+                "submissionDueTooltip": "Die Abgabe ist bis {{date}} möglich.",
+                "assessmentDue": "Bewertung bis:",
+                "assessmentDueTooltip": "Die Frist für die Bewertung ist am {{date}}.",
+                "complaintDue": "Beschwerde bis:",
+                "complaintDueTooltip": "Du kannst eine Beschwerde bis {{date}} einreichen.",
+                "complaintPossible": "Beschwerde möglich:",
+                "complaintPossibleTooltip": "Eine Beschwerde wird später möglich sein."
             }
         }
     }

@@ -6,7 +6,7 @@ import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service'
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { ExerciseHint } from 'app/entities/hestia/exercise-hint.model';
 import { MockExerciseService } from '../helpers/mocks/service/mock-exercise.service';
-import { ExerciseHintService } from 'app/exercises/shared/exercise-hint/manage/exercise-hint.service';
+import { ExerciseHintService } from 'app/exercises/shared/exercise-hint/shared/exercise-hint.service';
 
 describe('ExerciseHint Service', () => {
     let service: ExerciseHintService;
@@ -102,7 +102,7 @@ describe('ExerciseHint Service', () => {
 
         const req = httpMock.expectOne({ method: 'DELETE' });
         req.flush({ status: 200 });
-        expect(expectedResult).toBe(true);
+        expect(expectedResult).toBeTrue();
     });
 
     afterEach(() => {

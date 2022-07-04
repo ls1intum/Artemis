@@ -1,5 +1,3 @@
-@import 'src/main/webapp/app/overview/overview-vars';
-
 .exercise-unit {
     .exercise-row {
         .course-exercise-row {
@@ -9,7 +7,7 @@
         }
 
         .course-exercise-row:hover {
-            box-shadow: 0 2px 4px 0 $primary !important;
+            box-shadow: 0 2px 4px 0 var(--primary) !important;
         }
     }
 }

@@ -16,6 +16,8 @@ import { AlertService } from 'app/core/util/alert.service';
 import { TranslateService } from '@ngx-translate/core';
 import { ParseLinks } from 'app/core/util/parse-links.service';
 import { MockTranslateService } from './helpers/mocks/service/mock-translate.service';
+import { ThemeService } from 'app/core/theme/theme.service';
+import { MockThemeService } from './helpers/mocks/service/mock-theme.service';
 
 @NgModule({
     imports: [HttpClientTestingModule, FontAwesomeModule],
@@ -52,6 +54,10 @@ import { MockTranslateService } from './helpers/mocks/service/mock-translate.ser
         {
             provide: NgbModal,
             useValue: null,
+        },
+        {
+            provide: ThemeService,
+            useClass: MockThemeService,
         },
     ],
     declarations: [MockComponent(FaIconComponent)],

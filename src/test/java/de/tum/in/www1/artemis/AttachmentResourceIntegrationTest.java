@@ -12,8 +12,8 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
 
 import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.enumeration.AttachmentType;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.util.ModelFactory;
 
 public class AttachmentResourceIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
@@ -39,11 +39,15 @@ public class AttachmentResourceIntegrationTest extends AbstractSpringIntegration
     public void initTestCase() {
         database.addUsers(0, 1, 0, 1);
 
-        attachment = new Attachment().attachmentType(AttachmentType.FILE).link("files/temp/example.txt").name("example");
+        attachment = ModelFactory.generateAttachment(null);
+        attachment.setLink("files/temp/example.txt");
 
         var course = database.addCourseWithOneReleasedTextExercise();
         textExercise = (TextExercise) exerciseRepository.findAll().get(0);
-        lecture = new Lecture().title("test").description("test").course(course);
+        lecture = new Lecture();
+        lecture.setTitle("test");
+        lecture.setDescription("test");
+        lecture.setCourse(course);
         lecture = lectureRepository.save(lecture);
         attachment.setLecture(lecture);
     }

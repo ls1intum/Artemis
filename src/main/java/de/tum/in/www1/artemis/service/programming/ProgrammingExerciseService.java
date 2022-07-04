@@ -8,7 +8,6 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -153,15 +152,15 @@ public class ProgrammingExerciseService {
      *
      * @param programmingExercise The programmingExercise that should be setup
      * @return The new setup exercise
-     * @throws InterruptedException If something during the communication with the remote Git repository went wrong
      * @throws GitAPIException      If something during the communication with the remote Git repository went wrong
      * @throws IOException          If the template files couldn't be read
      */
     @Transactional // ok because we create many objects in a rather complex way and need a rollback in case of exceptions
-    public ProgrammingExercise createProgrammingExercise(ProgrammingExercise programmingExercise) throws InterruptedException, GitAPIException, IOException {
+    public ProgrammingExercise createProgrammingExercise(ProgrammingExercise programmingExercise) throws GitAPIException, IOException {
         programmingExercise.generateAndSetProjectKey();
         final User exerciseCreator = userRepository.getUser();
 
+        programmingExercise.setBranch(versionControlService.get().getDefaultBranchOfArtemis());
         createRepositoriesForNewExercise(programmingExercise);
         initParticipations(programmingExercise);
         setURLsAndBuildPlanIDsForNewExercise(programmingExercise);
@@ -288,7 +287,7 @@ public class ProgrammingExerciseService {
      * @param programmingExercise the programming exercise that should be set up
      * @param exerciseCreator     the User that performed the action (used as Git commit author)
      */
-    private void setupExerciseTemplate(ProgrammingExercise programmingExercise, User exerciseCreator) throws GitAPIException, InterruptedException {
+    private void setupExerciseTemplate(ProgrammingExercise programmingExercise, User exerciseCreator) throws GitAPIException {
 
         // Get URLs for repos
         var exerciseRepoUrl = programmingExercise.getVcsTemplateRepositoryUrl();
@@ -361,8 +360,8 @@ public class ProgrammingExerciseService {
                     exerciseCreator);
             // The template repo can be re-written, so we can unprotect the default branch.
             var templateVcsRepositoryUrl = programmingExercise.getVcsTemplateRepositoryUrl();
-            String templateVcsRepositoryDefaultBranch = versionControlService.get().getDefaultBranchOfRepository(templateVcsRepositoryUrl);
-            versionControlService.get().unprotectBranch(templateVcsRepositoryUrl, templateVcsRepositoryDefaultBranch);
+            String templateBranch = versionControlService.get().getOrRetrieveBranchOfExercise(programmingExercise);
+            versionControlService.get().unprotectBranch(templateVcsRepositoryUrl, templateBranch);
 
             setupTemplateAndPush(solutionRepo, solutionResources, solutionPrefix, projectTypeSolutionResources, projectTypeSolutionPrefix, "Solution", programmingExercise,
                     exerciseCreator);
@@ -373,9 +372,9 @@ public class ProgrammingExerciseService {
             // if any exception occurs, try to at least push an empty commit, so that the
             // repositories can be used by the build plans
             log.warn("An exception occurred while setting up the repositories", ex);
-            gitService.commitAndPush(exerciseRepo, "Empty Setup by Artemis", exerciseCreator);
-            gitService.commitAndPush(testRepo, "Empty Setup by Artemis", exerciseCreator);
-            gitService.commitAndPush(solutionRepo, "Empty Setup by Artemis", exerciseCreator);
+            gitService.commitAndPush(exerciseRepo, "Empty Setup by Artemis", true, exerciseCreator);
+            gitService.commitAndPush(testRepo, "Empty Setup by Artemis", true, exerciseCreator);
+            gitService.commitAndPush(solutionRepo, "Empty Setup by Artemis", true, exerciseCreator);
         }
     }
 
@@ -387,7 +386,7 @@ public class ProgrammingExerciseService {
         return "templates/" + programmingLanguage.name().toLowerCase();
     }
 
-    private void createRepositoriesForNewExercise(ProgrammingExercise programmingExercise) throws GitAPIException, InterruptedException {
+    private void createRepositoriesForNewExercise(ProgrammingExercise programmingExercise) throws GitAPIException {
         final String projectKey = programmingExercise.getProjectKey();
         versionControlService.get().createProjectForExercise(programmingExercise); // Create project
         versionControlService.get().createRepository(projectKey, programmingExercise.generateRepositoryName(RepositoryType.TEMPLATE), null); // Create template repository
@@ -398,13 +397,13 @@ public class ProgrammingExerciseService {
         createAndInitializeAuxiliaryRepositories(projectKey, programmingExercise);
     }
 
-    private void createAndInitializeAuxiliaryRepositories(String projectKey, ProgrammingExercise programmingExercise) throws GitAPIException, InterruptedException {
+    private void createAndInitializeAuxiliaryRepositories(String projectKey, ProgrammingExercise programmingExercise) throws GitAPIException {
         for (AuxiliaryRepository repo : programmingExercise.getAuxiliaryRepositories()) {
             String repositoryName = programmingExercise.generateRepositoryName(repo.getName());
             versionControlService.get().createRepository(projectKey, repositoryName, null);
             repo.setRepositoryUrl(versionControlService.get().getCloneRepositoryUrl(programmingExercise.getProjectKey(), repositoryName).toString());
             Repository vcsRepository = gitService.getOrCheckoutRepository(repo.getVcsRepositoryUrl(), true);
-            gitService.commitAndPush(vcsRepository, SETUP_COMMIT_MESSAGE, null);
+            gitService.commitAndPush(vcsRepository, SETUP_COMMIT_MESSAGE, true, null);
         }
     }
 
@@ -475,7 +474,7 @@ public class ProgrammingExerciseService {
      */
     private void setupTemplateAndPush(Repository repository, Resource[] resources, String prefix, @Nullable Resource[] projectTypeResources, String projectTypePrefix,
             String templateName, ProgrammingExercise programmingExercise, User user) throws Exception {
-        if (gitService.listFiles(repository).size() == 0) { // Only copy template if repo is empty
+        if (gitService.listFiles(repository).isEmpty()) { // Only copy template if repo is empty
             fileService.copyResources(resources, prefix, repository.getLocalPath().toAbsolutePath().toString(), true);
             // Also copy project type specific files AFTERWARDS (so that they might overwrite the default files)
             if (projectTypeResources != null) {
@@ -483,7 +482,7 @@ public class ProgrammingExerciseService {
             }
 
             replacePlaceholders(programmingExercise, repository);
-            commitAndPushRepository(repository, templateName + "-Template pushed by Artemis", user);
+            commitAndPushRepository(repository, templateName + "-Template pushed by Artemis", true, user);
         }
     }
 
@@ -501,7 +500,7 @@ public class ProgrammingExerciseService {
     private void setupTestTemplateAndPush(Repository repository, Resource[] resources, String prefix, Resource[] projectTypeResources, String projectTypePrefix,
             String templateName, ProgrammingExercise programmingExercise, User user) throws Exception {
         // Only copy template if repo is empty
-        if (gitService.listFiles(repository).size() == 0
+        if (gitService.listFiles(repository).isEmpty()
                 && (programmingExercise.getProgrammingLanguage() == ProgrammingLanguage.JAVA || programmingExercise.getProgrammingLanguage() == ProgrammingLanguage.KOTLIN)) {
             // First get files that are not dependent on the project type
             String templatePath = getProgrammingLanguageTemplatePath(programmingExercise.getProgrammingLanguage()) + "/test";
@@ -535,13 +534,16 @@ public class ProgrammingExerciseService {
 
             Map<String, Boolean> sectionsMap = new HashMap<>();
 
-            // Keep or delete static code analysis configuration in pom.xml
+            // Keep or delete static code analysis configuration in the build configuration file
             sectionsMap.put("static-code-analysis", Boolean.TRUE.equals(programmingExercise.isStaticCodeAnalysisEnabled()));
+
+            // Keep or delete testwise coverage configuration in the build file
+            sectionsMap.put("record-testwise-coverage", Boolean.TRUE.equals(programmingExercise.isTestwiseCoverageEnabled()));
 
             if (!programmingExercise.hasSequentialTestRuns()) {
                 String testFilePath = templatePath + "/testFiles/**/*.*";
                 Resource[] testFileResources = resourceLoaderService.getResources(testFilePath);
-                String packagePath = Paths.get(repository.getLocalPath().toAbsolutePath().toString(), "test", "${packageNameFolder}").toAbsolutePath().toString();
+                String packagePath = Path.of(repository.getLocalPath().toAbsolutePath().toString(), "test", "${packageNameFolder}").toAbsolutePath().toString();
 
                 sectionsMap.put("non-sequential", true);
                 sectionsMap.put("sequential", false);
@@ -554,7 +556,7 @@ public class ProgrammingExerciseService {
                 else {
                     projectFileFileName = "pom.xml";
                 }
-                fileService.replacePlaceholderSections(Paths.get(repository.getLocalPath().toAbsolutePath().toString(), projectFileFileName).toAbsolutePath().toString(),
+                fileService.replacePlaceholderSections(Path.of(repository.getLocalPath().toAbsolutePath().toString(), projectFileFileName).toAbsolutePath().toString(),
                         sectionsMap);
 
                 fileService.copyResources(testFileResources, prefix, packagePath, false);
@@ -565,7 +567,7 @@ public class ProgrammingExerciseService {
 
                     try {
                         Resource[] projectTypeTestFileResources = resourceLoaderService.getResources(projectTypeTemplatePath);
-                        // filter non existing resources to avoid exceptions
+                        // filter non-existing resources to avoid exceptions
                         List<Resource> existingProjectTypeTestFileResources = new ArrayList<>();
                         for (Resource resource : projectTypeTestFileResources) {
                             if (resource.exists()) {
@@ -600,7 +602,7 @@ public class ProgrammingExerciseService {
                 else {
                     projectFileName = "build.gradle";
                 }
-                fileService.replacePlaceholderSections(Paths.get(repository.getLocalPath().toAbsolutePath().toString(), projectFileName).toAbsolutePath().toString(), sectionsMap);
+                fileService.replacePlaceholderSections(Path.of(repository.getLocalPath().toAbsolutePath().toString(), projectFileName).toAbsolutePath().toString(), sectionsMap);
 
                 // staging project files are only required for maven
                 Resource stagePomXml = null;
@@ -619,16 +621,16 @@ public class ProgrammingExerciseService {
 
                 for (String buildStage : sequentialTestTasks) {
 
-                    Path buildStagePath = Paths.get(repository.getLocalPath().toAbsolutePath().toString(), buildStage);
+                    Path buildStagePath = Path.of(repository.getLocalPath().toAbsolutePath().toString(), buildStage);
                     Files.createDirectory(buildStagePath);
 
                     String buildStageResourcesPath = templatePath + "/testFiles/" + buildStage + "/**/*.*";
                     Resource[] buildStageResources = resourceLoaderService.getResources(buildStageResourcesPath);
 
-                    Files.createDirectory(Paths.get(buildStagePath.toAbsolutePath().toString(), "test"));
-                    Files.createDirectory(Paths.get(buildStagePath.toAbsolutePath().toString(), "test", "${packageNameFolder}"));
+                    Files.createDirectory(Path.of(buildStagePath.toAbsolutePath().toString(), "test"));
+                    Files.createDirectory(Path.of(buildStagePath.toAbsolutePath().toString(), "test", "${packageNameFolder}"));
 
-                    String packagePath = Paths.get(buildStagePath.toAbsolutePath().toString(), "test", "${packageNameFolder}").toAbsolutePath().toString();
+                    String packagePath = Path.of(buildStagePath.toAbsolutePath().toString(), "test", "${packageNameFolder}").toAbsolutePath().toString();
 
                     // staging project files are only required for maven
                     if (isMaven && stagePomXml != null) {
@@ -651,7 +653,7 @@ public class ProgrammingExerciseService {
             }
 
             replacePlaceholders(programmingExercise, repository);
-            commitAndPushRepository(repository, templateName + "-Template pushed by Artemis", user);
+            commitAndPushRepository(repository, templateName + "-Template pushed by Artemis", true, user);
         }
         else {
             // If there is no special test structure for a programming language, just copy all the test files.
@@ -706,14 +708,15 @@ public class ProgrammingExerciseService {
     /**
      * Stage, commit and push.
      *
-     * @param repository The repository to which the changes should get pushed
-     * @param message    The commit message
-     * @param user       the user who has initiated the generation of the programming exercise
+     * @param repository  The repository to which the changes should get pushed
+     * @param message     The commit message
+     * @param emptyCommit whether an empty commit should be created or not
+     * @param user        the user who has initiated the generation of the programming exercise
      * @throws GitAPIException If committing, or pushing to the repo throws an exception
      */
-    public void commitAndPushRepository(Repository repository, String message, User user) throws GitAPIException {
+    public void commitAndPushRepository(Repository repository, String message, boolean emptyCommit, User user) throws GitAPIException {
         gitService.stageAllChanges(repository);
-        gitService.commitAndPush(repository, message, user);
+        gitService.commitAndPush(repository, message, emptyCommit, user);
         repository.setFiles(null); // Clear cache to avoid multiple commits when Artemis server is not restarted between attempts
     }
 
@@ -736,6 +739,10 @@ public class ProgrammingExerciseService {
         programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(updatedProgrammingExercise.getBuildAndTestStudentSubmissionsAfterDueDate());
         programmingExercise.setAssessmentType(updatedProgrammingExercise.getAssessmentType());
         programmingExercise.setAssessmentDueDate(updatedProgrammingExercise.getAssessmentDueDate());
+        programmingExercise.setExampleSolutionPublicationDate(updatedProgrammingExercise.getExampleSolutionPublicationDate());
+
+        programmingExercise.validateDates();
+
         ProgrammingExercise savedProgrammingExercise = programmingExerciseRepository.save(programmingExercise);
 
         groupNotificationService.checkAndCreateAppropriateNotificationsWhenUpdatingExercise(programmingExerciseBeforeUpdate, savedProgrammingExercise, notificationText,
@@ -777,11 +784,10 @@ public class ProgrammingExerciseService {
      * @param user            The user who has initiated the action
      * @return True, if the structure oracle was successfully generated or updated, false if no changes to the file were made.
      * @throws IOException          If the URLs cannot be converted to actual {@link Path paths}
-     * @throws InterruptedException If the checkout fails
      * @throws GitAPIException      If the checkout fails
      */
     public boolean generateStructureOracleFile(VcsRepositoryUrl solutionRepoURL, VcsRepositoryUrl exerciseRepoURL, VcsRepositoryUrl testRepoURL, String testsPath, User user)
-            throws IOException, GitAPIException, InterruptedException {
+            throws IOException, GitAPIException {
         Repository solutionRepository = gitService.getOrCheckoutRepository(solutionRepoURL, true);
         Repository exerciseRepository = gitService.getOrCheckoutRepository(exerciseRepoURL, true);
         Repository testRepository = gitService.getOrCheckoutRepository(testRepoURL, true);
@@ -795,7 +801,7 @@ public class ProgrammingExerciseService {
 
         Path solutionRepositoryPath = solutionRepository.getLocalPath().toRealPath();
         Path exerciseRepositoryPath = exerciseRepository.getLocalPath().toRealPath();
-        Path structureOraclePath = Paths.get(testRepository.getLocalPath().toRealPath().toString(), testsPath, "test.json");
+        Path structureOraclePath = Path.of(testRepository.getLocalPath().toRealPath().toString(), testsPath, "test.json");
 
         String structureOracleJSON = OracleGenerator.generateStructureOracleJSON(solutionRepositoryPath, exerciseRepositoryPath);
         return saveAndPushStructuralOracle(user, testRepository, structureOraclePath, structureOracleJSON);
@@ -810,7 +816,7 @@ public class ProgrammingExerciseService {
             try {
                 Files.write(structureOraclePath, structureOracleJSON.getBytes());
                 gitService.stageAllChanges(testRepository);
-                gitService.commitAndPush(testRepository, "Generate the structure oracle file.", user);
+                gitService.commitAndPush(testRepository, "Generate the structure oracle file.", true, user);
                 return true;
             }
             catch (GitAPIException e) {
@@ -830,7 +836,7 @@ public class ProgrammingExerciseService {
                 try {
                     Files.write(structureOraclePath, structureOracleJSON.getBytes());
                     gitService.stageAllChanges(testRepository);
-                    gitService.commitAndPush(testRepository, "Update the structure oracle file.", user);
+                    gitService.commitAndPush(testRepository, "Update the structure oracle file.", true, user);
                     return true;
                 }
                 catch (GitAPIException e) {
@@ -908,7 +914,6 @@ public class ProgrammingExerciseService {
         }
 
         programmingExerciseGitDiffReportRepository.deleteByProgrammingExerciseId(programmingExerciseId);
-        programmingExercise.setGitDiffReport(null);
 
         SolutionProgrammingExerciseParticipation solutionProgrammingExerciseParticipation = programmingExercise.getSolutionParticipation();
         TemplateProgrammingExerciseParticipation templateProgrammingExerciseParticipation = programmingExercise.getTemplateParticipation();
@@ -942,7 +947,7 @@ public class ProgrammingExerciseService {
      * @return A wrapper object containing a list of all found exercises and the total number of pages
      */
     public SearchResultPageDTO<ProgrammingExercise> getAllOnPageWithSize(final PageableSearchDTO<String> search, final User user) {
-        final var pageable = PageUtil.createPageRequest(search);
+        final var pageable = PageUtil.createExercisePageRequest(search);
         final var searchTerm = search.getSearchTerm();
 
         final var exercisePage = authCheckService.isAdmin(user)

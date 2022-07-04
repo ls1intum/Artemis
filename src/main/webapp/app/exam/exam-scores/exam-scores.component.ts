@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnIni
 import { forkJoin, of, Subscription } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute } from '@angular/router';
 import { SortService } from 'app/shared/service/sort.service';
 import { ExportToCsv } from 'export-to-csv';
 import {
@@ -28,10 +28,33 @@ import { GradeType, GradingScale } from 'app/entities/grading-scale.model';
 import { declareExerciseType } from 'app/entities/exercise.model';
 import { mean, median, standardDeviation } from 'simple-statistics';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
+import { ButtonSize } from 'app/shared/components/button.component';
 import { faCheckCircle, faDownload, faSort, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { Course } from 'app/entities/course.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { Authority } from 'app/shared/constants/authority.constants';
+import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
+import { CsvExportRowBuilder } from 'app/shared/export/csv-export-row-builder';
+import { ExcelExportRowBuilder } from 'app/shared/export/excel-export-row-builder';
+import { CsvExportOptions } from 'app/shared/export/export-modal.component';
+import { ExportRow, ExportRowBuilder } from 'app/shared/export/export-row-builder';
+import * as XLSX from 'xlsx';
+import { VERSION } from 'app/app.constants';
+import {
+    BONUS_KEY,
+    EMAIL_KEY,
+    EXAM_ACHIEVED_POINTS,
+    EXAM_ACHIEVED_SCORE,
+    EXAM_ASSIGNED_EXERCISE,
+    EXAM_PASSED,
+    EXAM_SUBMITTED,
+    GRADE_KEY,
+    NAME_KEY,
+    EXAM_OVERALL_POINTS_KEY,
+    EXAM_OVERALL_SCORE_KEY,
+    REGISTRATION_NUMBER_KEY,
+    USERNAME_KEY,
+} from 'app/shared/export/export-constants';
 
 export enum MedianType {
     PASSED,
@@ -71,6 +94,7 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
 
     readonly roundScoreSpecifiedByCourseSettings = roundValueSpecifiedByCourseSettings;
     readonly medianType = MedianType;
+    readonly ButtonSize = ButtonSize;
 
     // exam score dtos
     studentIdToExamScoreDTOs: Map<number, ScoresDTO> = new Map<number, ScoresDTO>();
@@ -108,7 +132,7 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
         private participantScoresService: ParticipantScoresService,
         private gradingSystemService: GradingSystemService,
         private courseManagementService: CourseManagementService,
-        private router: Router,
+        private navigationUtilService: ArtemisNavigationUtilService,
         private accountService: AccountService,
     ) {}
 
@@ -167,7 +191,7 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
                         this.calculateFilterDependentStatistics();
                         const medianType = this.gradingScaleExists && !this.isBonus ? MedianType.PASSED : MedianType.OVERALL;
                         // if a grading scale exists and the scoring type is not bonus, per default the median of all passed exams is shown.
-                        // We need to set the value for the overall median in order to show it next to the check box
+                        // We need to set the value for the overall median in order to show it next to the checkbox
                         if (medianType === MedianType.PASSED) {
                             // We pass MedianType.OVERALL since we want the median of all exams to be shown, not only of the submitted exams
                             this.setOverallChartMedianDependingOfExamsIncluded(MedianType.OVERALL);
@@ -294,7 +318,7 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
                 // Update the exerciseGroup statistic
                 const exGroupResult = groupIdToGroupResults.get(Number(exGroupId));
                 if (!exGroupResult) {
-                    // This should never been thrown. Indicates that the information in the ExamScoresDTO is inconsistent
+                    // This should never be thrown. Indicates that the information in the ExamScoresDTO is inconsistent
                     throw new Error(`ExerciseGroup with id ${exGroupId} does not exist in this exam!`);
                 }
                 exGroupResult.noOfParticipantsWithFilter++;
@@ -303,7 +327,7 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
                 // Update the specific exercise statistic
                 const exerciseResult = exGroupResult.exerciseResults.find((exResult) => exResult.exerciseId === studentExerciseResult.exerciseId);
                 if (!exerciseResult) {
-                    // This should never been thrown. Indicates that the information in the ExamScoresDTO is inconsistent
+                    // This should never be thrown. Indicates that the information in the ExamScoresDTO is inconsistent
                     throw new Error(`Exercise with id ${studentExerciseResult.exerciseId} does not exist in this exam!`);
                 } else {
                     exerciseResult.noOfParticipantsWithFilter++;
@@ -340,7 +364,7 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
         const studentGradesSubmittedInFirstCorrectionRound: number[] = [];
         const studentGradesTotalInFirstCorrectionRound: number[] = [];
 
-        // Collect student points independent from the filter settings
+        // Collect student points independent of the filter settings
         for (const studentResult of this.studentResults) {
             studentPointsTotal.push(studentResult.overallPointsAchieved!);
             studentPointsTotalInFirstCorrectionRound.push(studentResult.overallPointsAchievedInFirstCorrection!);
@@ -568,44 +592,63 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
         this.changeDetector.detectChanges();
     }
 
-    exportToCsv() {
-        const headers = ['Name', 'Login', 'E-Mail', 'Matriculation Number'];
-        this.exerciseGroups.forEach((exerciseGroup) => {
-            headers.push(exerciseGroup.title + ' Assigned Exercise');
-            headers.push(exerciseGroup.title + ' Achieved Points');
-            headers.push(exerciseGroup.title + ' Achieved Score (%)');
-        });
-        headers.push('Overall Points');
-        headers.push('Overall Score (%)');
-        if (this.gradingScaleExists) {
-            headers.push(this.isBonus ? 'Overall Bonus Points' : 'Overall Grade');
-        }
-        headers.push('Submitted');
-        if (this.gradingScaleExists && !this.isBonus) {
-            headers.push('Passed');
-        }
+    /**
+     * Method for exporting exam results
+     * @param customCsvOptions If present, a CSV file is exported, otherwise an Excel file.
+     */
+    exportExamResults(customCsvOptions?: CsvExportOptions) {
+        const headers = this.generateExportColumnNames();
 
         const rows = this.studentResults.map((studentResult) => {
-            return this.convertToCSVRow(studentResult);
+            return this.convertToExportRow(studentResult, customCsvOptions);
         });
 
-        this.exportAsCsv(rows, headers);
+        if (customCsvOptions) {
+            // required because the currently used library for exporting to csv does not quote the header fields (keys)
+            const quotedKeys = headers.map((header) => customCsvOptions.quoteStrings + header + customCsvOptions.quoteStrings);
+            this.exportAsCsv(quotedKeys, rows, customCsvOptions);
+        } else {
+            this.exportAsExcel(headers, rows);
+        }
     }
 
-    exportAsCsv(rows: any[], headers: string[]) {
+    /**
+     * Builds an Excel workbook and starts the download.
+     * @param keys The column names used for the export.
+     * @param rows The data rows that should be part of the Excel file.
+     */
+    exportAsExcel(keys: string[], rows: ExportRow[]) {
+        const workbook = XLSX.utils.book_new();
+        const ws = XLSX.utils.json_to_sheet(rows, { header: keys });
+        const worksheetName = 'Exam Scores';
+        XLSX.utils.book_append_sheet(workbook, ws, worksheetName);
+
+        const workbookProps = {
+            Title: `${this.examScoreDTO.title} Scores`,
+            Author: `Artemis ${VERSION ?? ''}`,
+        };
+        const fileName = `${this.examScoreDTO.title} Exam Results.xlsx`;
+        XLSX.writeFile(workbook, fileName, { Props: workbookProps, compression: true });
+    }
+
+    /**
+     * Builds the CSV from the rows and starts the download.
+     * @param headers The column names of the CSV.
+     * @param rows The data rows that should be part of the CSV.
+     * @param customOptions Custom csv options that should be used for export.
+     */
+    exportAsCsv(headers: string[], rows: ExportRow[], customOptions: CsvExportOptions) {
         const options = {
-            fieldSeparator: ';',
-            quoteStrings: '"',
-            decimalSeparator: 'locale',
             showLabels: true,
-            title: this.examScoreDTO.title,
-            filename: this.examScoreDTO.title + 'Results',
+            showTitle: false,
+            filename: `${this.examScoreDTO.title} Exam Results`,
             useTextFile: false,
             useBom: true,
             headers,
         };
 
-        const csvExporter = new ExportToCsv(options);
+        const combinedOptions = Object.assign(options, customOptions);
+        const csvExporter = new ExportToCsv(combinedOptions);
         csvExporter.generateCsv(rows);
     }
 
@@ -616,45 +659,81 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
         return this.localeConversionService.toLocaleString(numberToLocalize, this.course!.accuracyOfScores!);
     }
 
-    private convertToCSVRow(studentResult: StudentResult) {
-        const csvRow: any = {
-            name: studentResult.name ? studentResult.name : '',
-            login: studentResult.login ? studentResult.login : '',
-            eMail: studentResult.eMail ? studentResult.eMail : '',
-            registrationNumber: studentResult.registrationNumber ? studentResult.registrationNumber : '',
-        };
+    /**
+     * Generates the list of columns that should be part of the exported file.
+     * @private
+     */
+    private generateExportColumnNames(): Array<string> {
+        const headers = [NAME_KEY, USERNAME_KEY, EMAIL_KEY, REGISTRATION_NUMBER_KEY];
+        this.exerciseGroups.forEach((exerciseGroup) => {
+            headers.push(`${exerciseGroup.title} ${EXAM_ASSIGNED_EXERCISE}`);
+            headers.push(`${exerciseGroup.title} ${EXAM_ACHIEVED_POINTS}`);
+            headers.push(`${exerciseGroup.title} ${EXAM_ACHIEVED_SCORE}`);
+        });
+        headers.push(EXAM_OVERALL_POINTS_KEY);
+        headers.push(EXAM_OVERALL_SCORE_KEY);
+        if (this.gradingScaleExists) {
+            headers.push(this.isBonus ? BONUS_KEY : GRADE_KEY);
+        }
+        headers.push(EXAM_SUBMITTED);
+        if (this.gradingScaleExists && !this.isBonus) {
+            headers.push(EXAM_PASSED);
+        }
+
+        return headers;
+    }
+
+    /**
+     * Constructs a new export row builder for an export row.
+     * @param csvExportOptions If present, constructs a CSV row builder with these options, otherwise an Excel row builder is returned.
+     * @private
+     */
+    private newRowBuilder(csvExportOptions?: CsvExportOptions): ExportRowBuilder {
+        if (csvExportOptions) {
+            return new CsvExportRowBuilder(csvExportOptions.decimalSeparator, this.course?.accuracyOfScores);
+        } else {
+            return new ExcelExportRowBuilder(this.course?.accuracyOfScores);
+        }
+    }
+
+    /**
+     * Generates the export rows from a student's result
+     * @param studentResult
+     * @param csvExportOptions If present, this method generates a CSV row with these options, otherwise an Excel row is returned.
+     * @private
+     */
+    private convertToExportRow(studentResult: StudentResult, csvExportOptions?: CsvExportOptions): ExportRow {
+        const rowData = this.newRowBuilder(csvExportOptions);
+
+        rowData.setUserInformation(studentResult.name, studentResult.login, studentResult.eMail, studentResult.registrationNumber);
 
         this.exerciseGroups.forEach((exerciseGroup) => {
             const exerciseResult = studentResult.exerciseGroupIdToExerciseResult?.[exerciseGroup.id];
             if (exerciseResult) {
-                csvRow[exerciseGroup.title + ' Assigned Exercise'] = exerciseResult.title ? exerciseResult.title : '';
-                csvRow[exerciseGroup.title + ' Achieved Points'] =
-                    exerciseResult.achievedPoints == undefined ? '' : this.localize(roundValueSpecifiedByCourseSettings(exerciseResult.achievedPoints, this.course));
-                csvRow[exerciseGroup.title + ' Achieved Score (%)'] =
-                    exerciseResult.achievedScore == undefined ? '' : this.localize(roundValueSpecifiedByCourseSettings(exerciseResult.achievedScore, this.course));
+                rowData.set(`${exerciseGroup.title} ${EXAM_ASSIGNED_EXERCISE}`, exerciseResult.title);
+                rowData.setPoints(`${exerciseGroup.title} ${EXAM_ACHIEVED_POINTS}`, exerciseResult.achievedPoints);
+                rowData.setScore(`${exerciseGroup.title} ${EXAM_ACHIEVED_SCORE}`, exerciseResult.achievedScore);
             } else {
-                csvRow[exerciseGroup.title + ' Assigned Exercise'] = '';
-                csvRow[exerciseGroup.title + ' Achieved Points'] = '';
-                csvRow[exerciseGroup.title + ' Achieved Score (%)'] = '';
+                rowData.set(`${exerciseGroup.title} ${EXAM_ASSIGNED_EXERCISE}`, '');
+                rowData.set(`${exerciseGroup.title} ${EXAM_ACHIEVED_POINTS}`, '');
+                rowData.set(`${exerciseGroup.title} ${EXAM_ACHIEVED_SCORE}`, '');
             }
         });
 
-        csvRow.overAllPoints =
-            studentResult.overallPointsAchieved == undefined ? '' : this.localize(roundValueSpecifiedByCourseSettings(studentResult.overallPointsAchieved, this.course));
-        csvRow.overAllScore =
-            studentResult.overallScoreAchieved == undefined ? '' : this.localize(roundValueSpecifiedByCourseSettings(studentResult.overallScoreAchieved, this.course));
+        rowData.setPoints(EXAM_OVERALL_POINTS_KEY, studentResult.overallPointsAchieved);
+        rowData.setScore(EXAM_OVERALL_SCORE_KEY, studentResult.overallScoreAchieved);
         if (this.gradingScaleExists) {
             if (this.isBonus) {
-                csvRow['Overall Bonus Points'] = studentResult.overallGrade;
+                rowData.set(BONUS_KEY, studentResult.overallGrade);
             } else {
-                csvRow['Overall Grade'] = studentResult.overallGrade;
+                rowData.set(GRADE_KEY, studentResult.overallGrade);
             }
         }
-        csvRow.submitted = studentResult.submitted ? 'yes' : 'no';
+        rowData.set(EXAM_SUBMITTED, studentResult.submitted ? 'yes' : 'no');
         if (this.gradingScaleExists && !this.isBonus) {
-            csvRow['Passed'] = studentResult.hasPassed ? 'yes' : 'no';
+            rowData.set(EXAM_PASSED, studentResult.hasPassed ? 'yes' : 'no');
         }
-        return csvRow;
+        return rowData.build();
     }
 
     /**
@@ -734,7 +813,7 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
      */
     onSelect() {
         if (this.accountService.hasAnyAuthorityDirect([Authority.INSTRUCTOR])) {
-            this.router.navigate(['course-management', this.course!.id, 'exams', this.examScoreDTO.examId, 'participant-scores']);
+            this.navigationUtilService.routeInNewTab(['course-management', this.course!.id, 'exams', this.examScoreDTO.examId, 'participant-scores']);
         }
     }
 
@@ -852,7 +931,7 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
      * @private
      */
     private determineSubmittedAndNonEmptyValues(): void {
-        // If one value is not undefined, all other values have been computed as well and we take the cached results instead of recalcuating every time
+        // If one value is not undefined, all other values have been computed as well and we take the cached results instead of recalculating every time
         if (this.aggregatedExamResults.meanPointsSubmittedAndNonEmpty) {
             return;
         }

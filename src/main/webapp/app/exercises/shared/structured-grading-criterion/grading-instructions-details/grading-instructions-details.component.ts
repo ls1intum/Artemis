@@ -324,7 +324,7 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterContent
     /**
      * @function setInstructionParameters
      * @desc 1. Gets a tuple of text and domainCommandIdentifiers not including GradingCriterionCommandIdentifiers and assigns text values according to the domainCommandIdentifiers
-     *       2. The tupple order is the same as the order of the commands in the markdown text inserted by the user
+     *       2. The tuple order is the same as the order of the commands in the markdown text inserted by the user
      *       instruction objects must be created before the method gets triggered
      * @param domainCommands containing tuples of [text, domainCommandIdentifiers]
      */
@@ -353,7 +353,7 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterContent
     /**
      * @function domainCommandsFound
      * @desc 1. Gets a tuple of text and domainCommandIdentifiers and assigns text values according to the domainCommandIdentifiers
-     *       2. The tupple order is the same as the order of the commands in the markdown text inserted by the user
+     *       2. The tuple order is the same as the order of the commands in the markdown text inserted by the user
      * @param domainCommands containing tuples of [text, domainCommandIdentifiers]
      */
     domainCommandsFound(domainCommands: [string, DomainCommand | null][]): void {
@@ -366,7 +366,7 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterContent
     /**
      * @function onInstructionChange
      * @desc 1. Gets a tuple of text and domainCommandIdentifiers and assigns text values according to the domainCommandIdentifiers
-     *       2. The tupple order is the same as the order of the commands in the markdown text inserted by the user
+     *       2. The tuple order is the same as the order of the commands in the markdown text inserted by the user
      * @param domainCommands containing tuples of [text, domainCommandIdentifiers]
      * @param {GradingInstruction} instruction
      * @param {GradingCriterion} criteria
@@ -523,7 +523,7 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterContent
      * Updates given grading instruction in exercise
      *
      * @param gradingInstruction needs to be updated
-     * @param criterion includes instruction needs to be update
+     * @param criterion includes instruction needs to be updated
      */
     updateGradingInstruction(instruction: GradingInstruction, criterion: GradingCriterion) {
         const criterionIndex = this.exercise.gradingCriteria!.indexOf(criterion);

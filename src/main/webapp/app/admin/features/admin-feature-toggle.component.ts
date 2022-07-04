@@ -19,7 +19,7 @@ type FeatureToggleState = {
             </ngx-datatable-column>
             <ngx-datatable-column name="Active" prop="isActive">
                 <ng-template ngx-datatable-cell-template let-row="row" let-value="value">
-                    <input type="checkbox" [checked]="value" (change)="onFeatureToggle($event, row)" />
+                    <input class="form-check-input" type="checkbox" [checked]="value" (change)="onFeatureToggle($event, row)" />
                 </ng-template>
             </ngx-datatable-column>
         </ngx-datatable>

@@ -15,7 +15,6 @@ import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
@@ -186,7 +185,7 @@ public class ProgrammingExerciseIntegrationTestService {
         // so that e.g. addStudentIdToProjectName in ProgrammingExerciseExportService is tested properly as well
 
         // the following 2 lines prepare the generation of the structural test oracle
-        var testjsonFilePath = Paths.get(localRepoFile.getPath(), "test", programmingExercise.getPackageFolderName(), "test.json");
+        var testjsonFilePath = Path.of(localRepoFile.getPath(), "test", programmingExercise.getPackageFolderName(), "test.json");
         gitUtilService.writeEmptyJsonFileToPath(testjsonFilePath);
         // create two empty commits
         localGit.commit().setMessage("empty").setAllowEmpty(true).setSign(false).setAuthor("test", "test@test.com").call();
@@ -370,8 +369,8 @@ public class ProgrammingExerciseIntegrationTestService {
         List<Path> entries = unzipExportedFile();
 
         // Make sure both repositories are present
-        assertThat(entries).anyMatch(entry -> entry.toString().endsWith(Paths.get("student1", ".git").toString()))
-                .anyMatch(entry -> entry.toString().endsWith(Paths.get("student2", ".git").toString()));
+        assertThat(entries).anyMatch(entry -> entry.toString().endsWith(Path.of("student1", ".git").toString()))
+                .anyMatch(entry -> entry.toString().endsWith(Path.of("student2", ".git").toString()));
     }
 
     public void testExportSubmissionAnonymizationCombining() throws Exception {
@@ -401,7 +400,7 @@ public class ProgrammingExerciseIntegrationTestService {
 
         // Checks
         assertThat(entries).anyMatch(entry -> entry.endsWith("Test.java"));
-        Optional<Path> extractedRepo1 = entries.stream().filter(entry -> entry.toString().endsWith(Paths.get("student1", ".git").toString())).findFirst();
+        Optional<Path> extractedRepo1 = entries.stream().filter(entry -> entry.toString().endsWith(Path.of("student1", ".git").toString())).findFirst();
         assertThat(extractedRepo1).isPresent();
         try (Git downloadedGit = Git.open(extractedRepo1.get().toFile())) {
             RevCommit commit = downloadedGit.log().setMaxCount(1).call().iterator().next();
@@ -417,7 +416,7 @@ public class ProgrammingExerciseIntegrationTestService {
      */
     private List<Path> unzipExportedFile() throws Exception {
         (new ZipFileTestUtilService()).extractZipFileRecursively(downloadedFile.getAbsolutePath());
-        Path extractedZipDir = Paths.get(downloadedFile.getPath().substring(0, downloadedFile.getPath().length() - 4));
+        Path extractedZipDir = Path.of(downloadedFile.getPath().substring(0, downloadedFile.getPath().length() - 4));
         try (var files = Files.walk(extractedZipDir)) {
             return files.toList();
         }
@@ -784,6 +783,7 @@ public class ProgrammingExerciseIntegrationTestService {
         }
 
         programmingExercise.setDueDate(ZonedDateTime.now().plusHours(12));
+        programmingExercise.setReleaseDate(programmingExercise.getDueDate().minusDays(1));
         request.put(ROOT + PROGRAMMING_EXERCISES, programmingExercise, HttpStatus.OK);
 
         {
@@ -809,6 +809,7 @@ public class ProgrammingExerciseIntegrationTestService {
         }
 
         programmingExercise.setDueDate(null);
+        programmingExercise.setAssessmentDueDate(null);
         request.put(ROOT + PROGRAMMING_EXERCISES, programmingExercise, HttpStatus.OK);
 
         {
@@ -1327,7 +1328,7 @@ public class ProgrammingExerciseIntegrationTestService {
         testCasesResponse.forEach(testCase -> testCase.setExercise(programmingExercise));
         final var testCasesInDB = programmingExerciseTestCaseRepository.findByExerciseId(programmingExercise.getId());
 
-        assertThat(new HashSet<>(testCasesResponse)).usingElementComparatorIgnoringFields("exercise", "tasks", "solutionEntries")
+        assertThat(new HashSet<>(testCasesResponse)).usingElementComparatorIgnoringFields("exercise", "tasks", "solutionEntries", "coverageEntries")
                 .containsExactlyInAnyOrderElementsOf(testCasesInDB);
         assertThat(testCasesResponse).allSatisfy(testCase -> {
             assertThat(testCase.isAfterDueDate()).isTrue();
@@ -1517,8 +1518,8 @@ public class ProgrammingExerciseIntegrationTestService {
         final var endpoint = ProgrammingExerciseResourceEndpoints.UNLOCK_ALL_REPOSITORIES.replace("{exerciseId}", String.valueOf(programmingExercise.getId()));
         request.put(ROOT + endpoint, null, HttpStatus.OK);
 
-        verify(versionControlService, times(1)).configureRepository(programmingExercise, participation1.getVcsRepositoryUrl(), participation1.getStudents(), true);
-        verify(versionControlService, times(1)).configureRepository(programmingExercise, participation2.getVcsRepositoryUrl(), participation2.getStudents(), true);
+        verify(versionControlService, times(1)).configureRepository(programmingExercise, participation1, true);
+        verify(versionControlService, times(1)).configureRepository(programmingExercise, participation2, true);
 
         database.changeUser("instructor1");
 
@@ -1566,7 +1567,7 @@ public class ProgrammingExerciseIntegrationTestService {
         assertThat(comparison.getMatches()).hasSize(1);
     }
 
-    private void prepareTwoRepositoriesForPlagiarismChecks(ProgrammingExercise programmingExercise) throws IOException, InterruptedException, GitAPIException {
+    private void prepareTwoRepositoriesForPlagiarismChecks(ProgrammingExercise programmingExercise) throws IOException, GitAPIException {
         var participationStudent1 = database.addStudentParticipationForProgrammingExercise(programmingExercise, "student1");
         var participationStudent2 = database.addStudentParticipationForProgrammingExercise(programmingExercise, "student2");
         var submissionStudent1 = database.createProgrammingSubmission(participationStudent1, false);

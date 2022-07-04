@@ -2,9 +2,12 @@ package de.tum.in.www1.artemis.programmingexercise;
 
 import static org.mockito.Mockito.doReturn;
 
+import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.Map;
 
 import org.eclipse.jgit.lib.ObjectId;
+import org.gitlab4j.api.GitLabApiException;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -18,6 +21,7 @@ import de.tum.in.www1.artemis.AbstractSpringIntegrationJenkinsGitlabTest;
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.util.ModelFactory;
+import de.tum.in.www1.artemis.util.TestConstants;
 
 class ProgrammingExerciseResultJenkinsIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest {
 
@@ -27,6 +31,7 @@ class ProgrammingExerciseResultJenkinsIntegrationTest extends AbstractSpringInte
     @BeforeEach
     void setup() {
         programmingExerciseResultTestService.setup();
+        gitlabRequestMockProvider.enableMockingOfRequests();
 
         String dummyHash = "9b3a9bd71a0d80e5bbc42204c319ed3d1d4f0d6d";
         doReturn(ObjectId.fromString(dummyHash)).when(gitService).getLastCommitHash(ArgumentMatchers.any());
@@ -35,6 +40,7 @@ class ProgrammingExerciseResultJenkinsIntegrationTest extends AbstractSpringInte
     @AfterEach
     void tearDown() {
         programmingExerciseResultTestService.tearDown();
+        gitlabRequestMockProvider.reset();
     }
 
     @Test
@@ -51,15 +57,17 @@ class ProgrammingExerciseResultJenkinsIntegrationTest extends AbstractSpringInte
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void shouldUpdateTestCasesAndResultScoreFromSolutionParticipationResult() {
+    public void shouldUpdateTestCasesAndResultScoreFromSolutionParticipationResult() throws GitLabApiException {
         var notification = ModelFactory.generateTestResultDTO(Constants.ASSIGNMENT_REPO_NAME, List.of("test1", "test2", "test4"), List.of(), ProgrammingLanguage.JAVA, true);
+        gitlabRequestMockProvider.mockGetPushDate(programmingExerciseResultTestService.getSolutionParticipation(), Map.of(TestConstants.COMMIT_HASH_STRING, ZonedDateTime.now()));
         programmingExerciseResultTestService.shouldUpdateTestCasesAndResultScoreFromSolutionParticipationResult(notification, false);
     }
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void shouldUpdateTestCasesAndResultScoreFromSolutionParticipationResultWithFailedTests() {
+    public void shouldUpdateTestCasesAndResultScoreFromSolutionParticipationResultWithFailedTests() throws GitLabApiException {
         var notification = ModelFactory.generateTestResultDTO(Constants.ASSIGNMENT_REPO_NAME, List.of("test1", "test2", "test4"), List.of("test3"), ProgrammingLanguage.JAVA, true);
+        gitlabRequestMockProvider.mockGetPushDate(programmingExerciseResultTestService.getSolutionParticipation(), Map.of(TestConstants.COMMIT_HASH_STRING, ZonedDateTime.now()));
         programmingExerciseResultTestService.shouldUpdateTestCasesAndResultScoreFromSolutionParticipationResult(notification, true);
     }
 

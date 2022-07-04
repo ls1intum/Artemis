@@ -1,7 +1,7 @@
 package de.tum.in.www1.artemis.domain.participation;
 
-import java.net.MalformedURLException;
-import java.net.URL;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.time.ZonedDateTime;
 import java.util.Set;
 
@@ -47,11 +47,11 @@ public interface ProgrammingExerciseParticipation extends ParticipationInterface
             return null;
         }
         try {
-            URL repoUrl = new URL(getRepositoryUrl());
+            URI repoUrl = new URI(getRepositoryUrl());
             // Note: the following line reconstructs the URL without using the authority, it removes ’username@' before the host
-            return new URL(repoUrl.getProtocol(), repoUrl.getHost(), repoUrl.getPort(), repoUrl.getFile()).toString();
+            return new URI(repoUrl.getScheme(), null, repoUrl.getHost(), repoUrl.getPort(), repoUrl.getPath(), null, null).toString();
         }
-        catch (MalformedURLException e) {
+        catch (URISyntaxException e) {
             log.debug("Cannot create user independent repository url from {} due to malformed URL exception", getRepositoryUrl(), e);
             return null;
         }
@@ -70,7 +70,7 @@ public interface ProgrammingExerciseParticipation extends ParticipationInterface
         try {
             return new VcsRepositoryUrl(repoUrl);
         }
-        catch (MalformedURLException e) {
+        catch (URISyntaxException e) {
             e.printStackTrace();
         }
         return null;
@@ -82,7 +82,7 @@ public interface ProgrammingExerciseParticipation extends ParticipationInterface
      * the buildAndTestAfterDueDate of the exercise is set and the due date has passed,
      * or if manual correction is involved and the due date has passed.
      *
-     * Locked means that the student can't make any changes to their repository any more.
+     * Locked means that the student can't make any changes to their repository anymore.
      * While we can control this easily in the remote VCS, we need to check this manually
      * for the local repository on the Artemis server.
      *

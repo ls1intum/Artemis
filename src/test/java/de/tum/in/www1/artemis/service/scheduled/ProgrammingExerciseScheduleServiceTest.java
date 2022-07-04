@@ -114,7 +114,7 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractSpringIntegrationBa
         }
     }
 
-    private void mockStudentRepoLocks() throws URISyntaxException, GitAPIException, InterruptedException {
+    private void mockStudentRepoLocks() throws URISyntaxException, GitAPIException {
         for (final var participation : programmingExercise.getStudentParticipations()) {
             final var repositorySlug = (programmingExercise.getProjectKey() + "-" + participation.getParticipantIdentifier()).toLowerCase();
             bitbucketRequestMockProvider.mockSetRepositoryPermissionsToReadOnly(repositorySlug, programmingExercise.getProjectKey(), participation.getStudents());

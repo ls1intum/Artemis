@@ -43,6 +43,6 @@ describe('FileUploadExamSummaryComponent', () => {
         const downloadFile = fixture.debugElement.query(By.css('#downloadFileButton'));
         expect(downloadFile).not.toBeNull();
         downloadFile.nativeElement.click();
-        expect(downloadFileSpy).toHaveBeenCalledTimes(1);
+        expect(downloadFileSpy).toHaveBeenCalledOnce();
     });
 });

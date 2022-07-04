@@ -36,7 +36,7 @@ export class AssessmentDetailComponent {
         this.assessmentChange.emit(this.assessment);
     }
     /**
-     * Emits the delete of an assessment
+     * Emits the deletion of an assessment
      */
     public delete() {
         const text: string = this.translateService.instant('artemisApp.feedback.delete.question', { id: this.assessment.id ?? '' });

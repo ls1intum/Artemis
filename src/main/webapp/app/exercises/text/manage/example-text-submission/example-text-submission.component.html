@@ -8,69 +8,65 @@
             </h2>
         </div>
 
-        <div class="col-4 text-end" *ngIf="(exercise?.isAtLeastEditor || false) && !readOnly && !toComplete && exercise">
-            <div class="row">
-                <div class="form-check col-12 align-baseline">
-                    <input
-                        type="checkbox"
-                        name="usedForTutorial"
-                        id="field_usedForTutorial"
-                        [(ngModel)]="exampleSubmission.usedForTutorial"
-                        (ngModelChange)="unsavedSubmissionChanges = true"
-                    />
-                    <label class="form-check-label" for="field_usedForTutorial">{{ 'artemisApp.exampleSubmission.usedForTutorial' | artemisTranslate }}</label>
-                </div>
+        <div class="col-4 text-end d-flex align-items-center gap-2 justify-content-end" *ngIf="(exercise?.isAtLeastEditor || false) && !readOnly && !toComplete && exercise">
+            <div class="form-check align-baseline">
+                <input
+                    type="checkbox"
+                    class="form-check-input"
+                    name="usedForTutorial"
+                    id="field_usedForTutorial"
+                    [(ngModel)]="exampleSubmission.usedForTutorial"
+                    (ngModelChange)="unsavedSubmissionChanges = true"
+                />
+                <label class="form-check-label" for="field_usedForTutorial">{{ 'artemisApp.exampleSubmission.usedForTutorial' | artemisTranslate }}</label>
             </div>
+            <ng-container [ngSwitch]="state.submissionEditButton">
+                <button id="create-example-submission" *ngSwitchCase="SubmissionButtonStates.NEW" (click)="createNewExampleTextSubmission()" class="btn btn-primary col-auto">
+                    <fa-icon [icon]="faSave"></fa-icon>
+                    {{ 'artemisApp.exampleSubmission.createNewSubmission' | artemisTranslate }}
+                </button>
+                <button
+                    *ngSwitchCase="SubmissionButtonStates.UPDATE"
+                    (click)="updateExampleTextSubmission()"
+                    class="btn btn-primary col-auto"
+                    [disabled]="!unsavedSubmissionChanges"
+                >
+                    <fa-icon [icon]="faSave"></fa-icon>
+                    {{ 'artemisApp.exampleSubmission.updateExampleSubmission' | artemisTranslate }}
+                </button>
+                <button *ngSwitchCase="SubmissionButtonStates.EDIT" (click)="editSubmission()" class="btn btn-danger col-auto" id="editSampleSolution">
+                    <fa-icon [icon]="faEdit"></fa-icon>
+                    {{ 'artemisApp.exampleSubmission.editExampleSubmission' | artemisTranslate }}
+                </button>
+            </ng-container>
 
-            <div class="row">
-                <ng-container [ngSwitch]="state.submissionEditButton">
-                    <button id="create-example-submission" *ngSwitchCase="SubmissionButtonStates.NEW" (click)="createNewExampleTextSubmission()" class="btn btn-primary col-auto">
-                        <fa-icon [icon]="faSave"></fa-icon>
-                        {{ 'artemisApp.exampleSubmission.createNewSubmission' | artemisTranslate }}
-                    </button>
-                    <button
-                        *ngSwitchCase="SubmissionButtonStates.UPDATE"
-                        (click)="updateExampleTextSubmission()"
-                        class="btn btn-primary col-auto"
-                        [disabled]="!unsavedSubmissionChanges"
-                    >
-                        <fa-icon [icon]="faSave"></fa-icon>
-                        {{ 'artemisApp.exampleSubmission.updateExampleSubmission' | artemisTranslate }}
-                    </button>
-                    <button *ngSwitchCase="SubmissionButtonStates.EDIT" (click)="editSubmission()" class="btn btn-danger col-auto" id="editSampleSolution">
-                        <fa-icon [icon]="faEdit"></fa-icon>
-                        {{ 'artemisApp.exampleSubmission.editExampleSubmission' | artemisTranslate }}
-                    </button>
-                </ng-container>
-
-                <ng-container [ngSwitch]="state.assessButton">
-                    <!--TODO: Disable Button if unsaved changes in submission -->
-                    <button
-                        *ngSwitchCase="AssessButtonStates.ASSESS"
-                        (click)="startAssessment()"
-                        class="btn btn-primary col-auto ms-auto me-3"
-                        id="createNewAssessment"
-                        [disabled]="unsavedSubmissionChanges"
-                    >
-                        <fa-icon [icon]="faSave"></fa-icon>
-                        {{ 'artemisApp.exampleSubmission.createNewAssessment' | artemisTranslate }}
-                    </button>
-                    <button
-                        *ngSwitchCase="AssessButtonStates.CREATE"
-                        (click)="saveAssessments()"
-                        [disabled]="!assessmentsAreValid"
-                        class="btn btn-primary col-auto ms-auto me-3"
-                        id="saveNewAssessment"
-                    >
-                        <fa-icon [icon]="faSave"></fa-icon>
-                        {{ 'artemisApp.exampleSubmission.saveNewAssessment' | artemisTranslate }}
-                    </button>
-                    <button *ngSwitchCase="AssessButtonStates.UPDATE" (click)="saveAssessments()" [disabled]="!assessmentsAreValid" class="btn btn-primary col-auto ms-auto me-3">
-                        <fa-icon [icon]="faSave"></fa-icon>
-                        {{ 'artemisApp.exampleSubmission.updateAssessment' | artemisTranslate }}
-                    </button>
-                </ng-container>
-            </div>
+            <ng-container [ngSwitch]="state.assessButton">
+                <!--TODO: Disable Button if unsaved changes in submission -->
+                <button
+                    *ngSwitchCase="AssessButtonStates.ASSESS"
+                    (click)="startAssessment()"
+                    class="btn btn-primary col-auto ms-auto me-3"
+                    id="createNewAssessment"
+                    [disabled]="unsavedSubmissionChanges"
+                >
+                    <fa-icon [icon]="faSave"></fa-icon>
+                    {{ 'artemisApp.exampleSubmission.createNewAssessment' | artemisTranslate }}
+                </button>
+                <button
+                    *ngSwitchCase="AssessButtonStates.CREATE"
+                    (click)="saveAssessments()"
+                    [disabled]="!assessmentsAreValid"
+                    class="btn btn-primary col-auto ms-auto me-3"
+                    id="saveNewAssessment"
+                >
+                    <fa-icon [icon]="faSave"></fa-icon>
+                    {{ 'artemisApp.exampleSubmission.saveNewAssessment' | artemisTranslate }}
+                </button>
+                <button *ngSwitchCase="AssessButtonStates.UPDATE" (click)="saveAssessments()" [disabled]="!assessmentsAreValid" class="btn btn-primary col-auto ms-auto me-3">
+                    <fa-icon [icon]="faSave"></fa-icon>
+                    {{ 'artemisApp.exampleSubmission.updateAssessment' | artemisTranslate }}
+                </button>
+            </ng-container>
         </div>
     </div>
 </div>

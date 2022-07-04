@@ -1,0 +1,13 @@
+<span jhiTranslate="artemisApp.programmingExercise.testwiseCoverageReport.selectTests">Select the tests for which the covered lines are displayed:</span>
+<div *ngFor="let entry of displayedTestCaseNames | keyvalue" class="mt-2">
+    <input class="form-check-input" type="checkbox" [ngModel]="entry.value" (change)="changeReportsBySelectedTestCases(entry.key)" />
+    <span>{{ entry.key }}</span>
+</div>
+<hr class="mt-2 mb-3" />
+<div class="d-flex justify-content-between">
+    <h5 jhiTranslate="artemisApp.programmingExercise.testwiseCoverageReport.filePath">File Path</h5>
+    <h5 jhiTranslate="artemisApp.programmingExercise.testwiseCoverageReport.coveredLines">Covered Lines</h5>
+</div>
+<div *ngFor="let entry of fileReportByFileName | keyvalue; trackBy: identifyCoverageFileComponent" class="mt-2">
+    <jhi-testwise-coverage-file [fileContent]="fileContentByPath.get(entry.key)!" [fileName]="entry.key" [fileReport]="entry.value"> </jhi-testwise-coverage-file>
+</div>

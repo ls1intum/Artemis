@@ -93,7 +93,7 @@ export class ModelingExamSubmissionComponent extends ExamSubmissionComponent imp
     }
 
     /**
-     * Checks whether there are pending changes in the current model. Returns true if there are unsaved changes (i.e. the subission is NOT synced), false otherwise.
+     * Checks whether there are pending changes in the current model. Returns true if there are unsaved changes (i.e. the submission is NOT synced), false otherwise.
      */
     public hasUnsavedChanges(): boolean {
         return !this.studentSubmission.isSynced!;

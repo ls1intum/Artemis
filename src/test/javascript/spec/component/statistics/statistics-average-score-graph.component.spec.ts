@@ -1,20 +1,19 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ArtemisTestModule } from '../../test.module';
 import { RouterTestingModule } from '@angular/router/testing';
-import { MockModule, MockPipe } from 'ng-mocks';
+import { MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { PerformanceInterval, StatisticsAverageScoreGraphComponent } from 'app/shared/statistics-graph/statistics-average-score-graph.component';
 import { BarChartModule } from '@swimlane/ngx-charts';
 import { ExerciseType } from 'app/entities/exercise.model';
 import { GraphColors } from 'app/entities/statistics.model';
-import { MockRouter } from '../../helpers/mocks/mock-router';
-import { Router } from '@angular/router';
 import { CourseManagementStatisticsModel } from 'app/entities/quiz/course-management-statistics-model';
+import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
 
 describe('StatisticsAverageScoreGraphComponent', () => {
     let fixture: ComponentFixture<StatisticsAverageScoreGraphComponent>;
     let component: StatisticsAverageScoreGraphComponent;
-    let router: Router;
+    let routingStub: jest.SpyInstance;
 
     const exercise1 = { exerciseId: 1, exerciseName: 'FarcadePattern', averageScore: 0, exerciseType: ExerciseType.TEXT };
     const exercise2 = { exerciseId: 2, exerciseName: 'BridgePattern', averageScore: 20, exerciseType: ExerciseType.PROGRAMMING };
@@ -39,13 +38,14 @@ describe('StatisticsAverageScoreGraphComponent', () => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, RouterTestingModule.withRoutes([]), MockModule(BarChartModule)],
             declarations: [StatisticsAverageScoreGraphComponent, MockPipe(ArtemisTranslatePipe)],
-            providers: [{ provide: Router, useClass: MockRouter }],
+            providers: [MockProvider(ArtemisNavigationUtilService)],
         })
             .compileComponents()
             .then(() => {
                 fixture = TestBed.createComponent(StatisticsAverageScoreGraphComponent);
                 component = fixture.componentInstance;
-                router = fixture.debugElement.injector.get(Router);
+                const routingService = TestBed.inject(ArtemisNavigationUtilService);
+                routingStub = jest.spyOn(routingService, 'routeInNewTab');
 
                 component.exerciseAverageScores = returnValue;
                 component.courseAverage = courseAverageScore;
@@ -98,7 +98,6 @@ describe('StatisticsAverageScoreGraphComponent', () => {
     });
 
     it('should delegate the user to the correct pages', () => {
-        const routerMock = jest.spyOn(router, 'navigate');
         component.courseId = 42;
 
         let event: any;
@@ -110,7 +109,7 @@ describe('StatisticsAverageScoreGraphComponent', () => {
                 path[4] = 'quiz-point-statistic';
             }
             component.onSelect(event);
-            expect(routerMock).toHaveBeenCalledWith(path);
+            expect(routingStub).toHaveBeenCalledWith(path);
         }
     });
 

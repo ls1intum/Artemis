@@ -180,7 +180,7 @@ describe('TextSubmissionAssessmentComponent', () => {
         component['activatedRoute'] = route();
         component.ngOnInit();
         tick();
-        expect(component.isTestRun).toBe(false);
+        expect(component.isTestRun).toBeFalse();
         expect(component.exerciseId).toBe(1);
         expect(component.examId).toBe(2);
     }));
@@ -322,8 +322,8 @@ describe('TextSubmissionAssessmentComponent', () => {
 
         component.save();
 
-        expect(errorStub).toHaveBeenCalledTimes(1);
-        expect(component.saveBusy).toBe(false);
+        expect(errorStub).toHaveBeenCalledOnce();
+        expect(component.saveBusy).toBeFalse();
     });
 
     it('should invoke import example submission', () => {
@@ -335,7 +335,7 @@ describe('TextSubmissionAssessmentComponent', () => {
 
         component.useStudentSubmissionAsExampleSubmission();
 
-        expect(importStub).toHaveBeenCalledTimes(1);
+        expect(importStub).toHaveBeenCalledOnce();
         expect(importStub).toHaveBeenCalledWith(submission.id, exercise.id);
     });
 
@@ -349,9 +349,9 @@ describe('TextSubmissionAssessmentComponent', () => {
 
         component.cancel();
 
-        expect(windowConfirmStub).toHaveBeenCalledTimes(1);
-        expect(navigateBackSpy).toHaveBeenCalledTimes(1);
-        expect(cancelAssessmentStub).toHaveBeenCalledTimes(1);
+        expect(windowConfirmStub).toHaveBeenCalledOnce();
+        expect(navigateBackSpy).toHaveBeenCalledOnce();
+        expect(cancelAssessmentStub).toHaveBeenCalledOnce();
         expect(cancelAssessmentStub).toHaveBeenCalledWith(participation?.id, submission.id);
     });
 
@@ -380,7 +380,7 @@ describe('TextSubmissionAssessmentComponent', () => {
         const queryParams = { queryParams: { 'correction-round': 0 } };
 
         component.nextSubmission();
-        expect(routerSpy).toHaveBeenCalledTimes(1);
+        expect(routerSpy).toHaveBeenCalledOnce();
         expect(routerSpy).toHaveBeenCalledWith(url, queryParams);
     }));
 
@@ -404,7 +404,7 @@ describe('TextSubmissionAssessmentComponent', () => {
 
         component.navigateToConflictingSubmissions(1);
 
-        expect(routerSpy).toHaveBeenCalledTimes(1);
+        expect(routerSpy).toHaveBeenCalledOnce();
         expect(routerSpy).toHaveBeenCalledWith(url, { state: { submission } });
     });
 });

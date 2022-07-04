@@ -676,7 +676,7 @@ public class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrat
         ProgrammingSubmission submissionWithoutFirstAssessment = request.get("/api/exercises/" + exerciseWithParticipation.getId() + "/programming-submission-without-assessment",
                 HttpStatus.OK, ProgrammingSubmission.class, params);
         // verify that a new submission was created
-        // We want to get the third Submission, as it is the latest one, and contains a automatic result;
+        // We want to get the third Submission, as it is the latest one, and contains an automatic result;
         assertThat(submissionWithoutFirstAssessment).isNotEqualTo(firstSubmission).isNotEqualTo(secondSubmission).isEqualTo(thirdSubmission);
         // verify that the lock has been set
         assertThat(submissionWithoutFirstAssessment.getLatestResult()).isNotNull();
@@ -893,7 +893,7 @@ public class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrat
         assertThat(overwrittenResult.hasComplaint()).isFalse(); // The result has no complaint, as it is the answer for one
         assertThat(initialResult.hasComplaint()).isTrue(); // Very important: It must not be overwritten whether the result actually had a complaint
 
-        // Also check that its correctly saved in the database
+        // Also check that it's correctly saved in the database
         ProgrammingSubmission savedSubmission = programmingSubmissionRepository.findWithEagerResultsById(programmingSubmission.getId()).orElse(null);
         assertThat(savedSubmission).isNotNull();
         assertThat(savedSubmission.getLatestResult().getScore()).isEqualTo(10D);

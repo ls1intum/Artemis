@@ -2,7 +2,7 @@
     <nav ngbNav #nav="ngbNav" class="nav-tabs" [destroyOnHide]="false" (navChange)="togglePreview($event)">
         <!-- editor -->
         <ng-container ngbNavItem="editor_edit">
-            <a ngbNavLink class="btn-sm text-dark" *ngIf="showEditButton">{{ 'entity.action.edit' | artemisTranslate }}</a>
+            <a ngbNavLink class="btn-sm text-normal" *ngIf="showEditButton">{{ 'entity.action.edit' | artemisTranslate }}</a>
             <ng-template ngbNavContent>
                 <div class="height-100 border-0 markdown-editor d-flex flex-column">
                     <jhi-ace-editor
@@ -30,13 +30,13 @@
                         </label>
                     </ng-container>
                     <!-- Required for resizing; don't remove empty span -->
-                    <fa-icon *ngIf="enableResize" [icon]="faGripLines" class="rg-bottom text-lightgrey"><span></span></fa-icon>
+                    <fa-icon *ngIf="enableResize" [icon]="faGripLines" class="rg-bottom md-resize-icon"><span></span></fa-icon>
                 </div>
             </ng-template>
         </ng-container>
         <!-- preview -->
         <ng-container ngbNavItem="editor_preview">
-            <a ngbNavLink class="btn-sm text-dark" *ngIf="showPreviewButton">{{ 'entity.action.preview' | artemisTranslate }}</a>
+            <a ngbNavLink class="btn-sm text-normal" *ngIf="showPreviewButton">{{ 'entity.action.preview' | artemisTranslate }}</a>
             <ng-template ngbNavContent>
                 <ng-content></ng-content>
                 <div class="pt-1 background-editor-high markdown-preview" *ngIf="showDefaultPreview" [innerHTML]="previewTextAsHtml">Preview</div>
@@ -48,7 +48,7 @@
                 <div class="markdown-editor__commands-default">
                     <!--default commands (e.g. bold)-->
                     <button
-                        *ngFor="let command of defaultCommands"
+                        *ngFor="let command of defaultCommands | negatedTypeCheck: MultiOptionCommand"
                         type="button"
                         class="btn btn-sm"
                         (click)="command.execute()"
@@ -69,6 +69,29 @@
                             >
                         </div>
                     </div>
+                    <!--multi option command-->
+                    <ng-container *ngFor="let command of defaultCommands | typeCheck: MultiOptionCommand">
+                        <div ngbDropdown class="dropdown">
+                            <button class="btn btn-sm dropdown-toggle" type="button" ngbDropdownToggle>
+                                {{ command.buttonTranslationString | artemisTranslate }}
+                            </button>
+                            <ul class="dropdown-menu" ngbDropdownMenu>
+                                <button *ngIf="!command.getValues() || command.getValues().length === 0" [disabled]="true" ngbDropdownItem jhiTranslate="global.generic.emptyList">
+                                    No items available
+                                </button>
+                                <li *ngFor="let item of command.getValues()">
+                                    <button class="btn-sm" type="button" (click)="command.execute(item.id, item.type)" ngbDropdownItem>
+                                        {{ item.value }}
+                                    </button>
+                                    <ng-container *ngFor="let nestedElement of item.elements">
+                                        <button class="btn-sm nested" type="button" (click)="command.execute(item.id, nestedElement.type, nestedElement.id)" ngbDropdownItem>
+                                            {{ nestedElement.value }}
+                                        </button>
+                                    </ng-container>
+                                </li>
+                            </ul>
+                        </div>
+                    </ng-container>
                     <!--color picker command -->
                     <div class="btn-group col-xs-6" *ngIf="colorCommands.length > 0">
                         <div class="color-preview btn btn-sm" (click)="openColorSelector($event)">{{ 'artemisApp.markdownEditor.color' | artemisTranslate }}</div>

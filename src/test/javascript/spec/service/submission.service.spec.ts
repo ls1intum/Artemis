@@ -72,7 +72,7 @@ describe('Submission Service', () => {
         req.flush({ status: 200 });
         tick();
 
-        expect(expectedResult).toBe(true);
+        expect(expectedResult).toBeTrue();
     }));
 
     it('should find all submissions of a given participation', fakeAsync(() => {

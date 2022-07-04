@@ -1,4 +1,6 @@
 import { ExerciseType } from 'app/entities/exercise.model';
+import { GradeType } from 'app/entities/grading-scale.model';
+import { StudentExam } from 'app/entities/student-exam.model';
 
 export class ExamScoreDTO {
     public examId: number;
@@ -48,6 +50,15 @@ export class StudentResult {
     public exerciseGroupIdToExerciseResult: { [key: number]: ExerciseResult };
 
     constructor() {}
+}
+
+export class StudentExamWithGradeDTO {
+    public maxPoints: number;
+    public maxBonusPoints: number;
+    public gradeType?: GradeType;
+    public studentExam?: StudentExam;
+    public studentResult: StudentResult;
+    public achievedPointsPerExercise: { [exerciseId: number]: number };
 }
 
 export class ExerciseResult {

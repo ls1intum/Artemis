@@ -1,5 +1,5 @@
 import { AfterViewInit, Component, OnDestroy, OnInit, TemplateRef, ViewChild } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute } from '@angular/router';
 import { Subject, Subscription } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
 import { sortBy } from 'lodash-es';
@@ -13,10 +13,12 @@ import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
 import { GradeType } from 'app/entities/grading-scale.model';
 import { GradingSystemService } from 'app/grading-system/grading-system.service';
 import { GradeDTO } from 'app/entities/grade-step.model';
-import { Color, ScaleType } from '@swimlane/ngx-charts';
+import { Color, LegendPosition, ScaleType } from '@swimlane/ngx-charts';
 import { faClipboard, faFilter, faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
-import { BarControlConfiguration, BarControlConfigurationProvider } from 'app/overview/course-overview.component';
 import { GraphColors } from 'app/entities/statistics.model';
+import { NgxChartsSingleSeriesDataEntry } from 'app/shared/chart/ngx-charts-datatypes';
+import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
+import { BarControlConfiguration, BarControlConfigurationProvider } from 'app/overview/tab-bar/tab-bar';
 
 const QUIZ_EXERCISE_COLOR = '#17a2b8';
 const PROGRAMMING_EXERCISE_COLOR = '#fd7e14';
@@ -27,6 +29,10 @@ const FILE_UPLOAD_EXERCISE_COLOR = '#2D9C88';
 type ExerciseTypeMap = {
     [type in ExerciseType]: number;
 };
+
+interface YourOverallPointsEntry extends NgxChartsSingleSeriesDataEntry {
+    color: string;
+}
 
 enum ChartBarTitle {
     NO_DUE_DATE = 'No due date',
@@ -115,7 +121,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
     };
 
     // ngx-charts
-    ngxDoughnutData: any[] = [];
+    ngxDoughnutData: YourOverallPointsEntry[] = [];
 
     // Labels for the different parts in Your overall points chart
     programmingPointLabel = 'programmingPointLabel';
@@ -124,12 +130,13 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
     textPointLabel = 'textPointLabel';
     fileUploadPointLabel = 'fileUploadPointLabel';
     missingPointsLabel = 'missingPointsLabel';
+    labels = [this.programmingPointLabel, this.quizPointLabel, this.modelingPointLabel, this.textPointLabel, this.fileUploadPointLabel, this.missingPointsLabel];
 
     ngxDoughnutColor = {
         name: 'Your overall points color',
         selectable: true,
         group: ScaleType.Ordinal,
-        domain: this.doughnutChartColors, // colors: orange, turquoise, violet, bordeaux, green, red
+        domain: [], // colors: orange, turquoise, violet, bordeaux, green, red
     } as Color;
 
     // arrays representing each exercise group
@@ -154,10 +161,11 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
     } as Color;
 
     readonly roundScoreSpecifiedByCourseSettings = roundValueSpecifiedByCourseSettings;
+    readonly legendPosition = LegendPosition;
     readonly barChartTitle = ChartBarTitle;
-    readonly chartHeight = 45;
-    readonly barPadding = 6;
-    readonly defaultSize = 50; // additional space for the x axis and its labels
+    readonly chartHeight = 25;
+    readonly barPadding = 4;
+    readonly defaultSize = 50; // additional space for the x-axis and its labels
 
     // array containing every non-empty exercise group
     ngxExerciseGroups: any[] = [];
@@ -184,7 +192,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
         private translateService: TranslateService,
         private route: ActivatedRoute,
         private gradingSystemService: GradingSystemService,
-        private router: Router,
+        private navigationUtilService: ArtemisNavigationUtilService,
     ) {}
 
     ngOnInit() {
@@ -404,6 +412,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
         if (totalMissedPoints < 0) {
             totalMissedPoints = 0;
         }
+        const scores = [programmingExerciseTotalScore, quizzesTotalScore, modelingExerciseTotalScore, textExerciseTotalScore, fileUploadExerciseTotalScore, totalMissedPoints];
         const absoluteScores = {} as ExerciseTypeMap;
         absoluteScores[ExerciseType.QUIZ] = quizzesTotalScore;
         absoluteScores[ExerciseType.PROGRAMMING] = programmingExerciseTotalScore;
@@ -411,12 +420,17 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
         absoluteScores[ExerciseType.TEXT] = textExerciseTotalScore;
         absoluteScores[ExerciseType.FILE_UPLOAD] = fileUploadExerciseTotalScore;
         this.overallPointsPerExercise = absoluteScores;
-        this.ngxDoughnutData.push({ name: this.programmingPointLabel, value: programmingExerciseTotalScore });
-        this.ngxDoughnutData.push({ name: this.quizPointLabel, value: quizzesTotalScore });
-        this.ngxDoughnutData.push({ name: this.modelingPointLabel, value: modelingExerciseTotalScore });
-        this.ngxDoughnutData.push({ name: this.textPointLabel, value: textExerciseTotalScore });
-        this.ngxDoughnutData.push({ name: this.fileUploadPointLabel, value: fileUploadExerciseTotalScore });
-        this.ngxDoughnutData.push({ name: this.missingPointsLabel, value: totalMissedPoints });
+        scores.forEach((score, index) => {
+            if (score > 0) {
+                this.ngxDoughnutData.push({
+                    name: 'artemisApp.courseOverview.statistics.' + this.labels[index],
+                    value: score,
+                    color: this.doughnutChartColors[index],
+                });
+                this.ngxDoughnutColor.domain.push(this.doughnutChartColors[index]);
+            }
+        });
+
         this.ngxDoughnutData = [...this.ngxDoughnutData];
     }
 
@@ -536,7 +550,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
 
     /**
      * Calculates an arbitrary score type for an arbitrary exercise type
-     * @param exerciseType the exercise type for which the score should be calculates. Must be an element of {Programming, Modeling, Quiz, Text, File upload}
+     * @param exerciseType the exercise type for which the score should be calculated. Must be an element of {Programming, Modeling, Quiz, Text, File upload}
      * @param scoreType the score type that should be calculated. Element of {Absolute score, Max points,Current relative score,Presentation score,Reachable points,Relative score}
      * @returns requested score value
      * @private
@@ -573,9 +587,9 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
 
     /**
      * Depending on the type of the exercise, it adds a new object containing
-     * the different scores of the correspnding exercise group of the chart
+     * the different scores of the corresponding exercise group of the chart
      * @param exercise an arbitrary exercise of a course
-     * @param series an array of dedicated objects containing the students performance in this exercise that is visualized by the chart
+     * @param series an array of dedicated objects containing the students' performance in this exercise that is visualized by the chart
      * @private
      */
     private pushToData(exercise: Exercise, series: any[]): void {
@@ -622,7 +636,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
     }
 
     /**
-     * Adds some meta data to every non-empty exercise group and pushes it to ngxExerciseGroups
+     * Adds some metadata to every non-empty exercise group and pushes it to ngxExerciseGroups
      * @param exerciseGroups array containing the exercise groups
      * @param types array containing all possible exercise types (programming, modeling, quiz, text, file upload)
      * @private
@@ -689,7 +703,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
     }
 
     /**
-     * Sets the maximum scale on the x axis if there are exercises with > 100%
+     * Sets the maximum scale on the x-axis if there are exercises with > 100%
      * @param exerciseGroup the exercise group
      * @private
      * @returns maximum value visible on xAxis
@@ -705,11 +719,11 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
 
     /**
      * Handles the event fired if the user clicks on an arbitrary bar in the vertical bar charts.
-     * Delegates the user to the corresponding exercise detail page
+     * Delegates the user to the corresponding exercise detail page in a new tab
      * @param event the event that is fired by ngx-charts
      */
     onSelect(event: any) {
-        this.router.navigate(['courses', this.course!.id!, 'exercises', event.exerciseId]);
+        this.navigationUtilService.routeInNewTab(['courses', this.course!.id!, 'exercises', event.exerciseId]);
     }
 
     /**
@@ -845,7 +859,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
         /*
         Each chart bar should have a height of 45px
         Furthermore we have to take the bar padding between the bars into account
-        Finally, we need to add space for the x axis and its ticks
+        Finally, we need to add space for the x-axis and its ticks
          */
         return chartEntries * this.chartHeight + this.barPadding * (chartEntries - 1) + this.defaultSize;
     }

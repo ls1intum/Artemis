@@ -322,7 +322,7 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
 
         const saveButton = debugElement.query(By.css(saveTableButton));
         expect(saveButton).not.toBe(null);
-        expect(saveButton.nativeElement.disabled).toBe(true);
+        expect(saveButton.nativeElement.disabled).toBeTrue();
     });
 
     it('should create a datatable with the correct amount of rows when test cases come in (show inactive tests)', () => {
@@ -338,7 +338,7 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
 
         const saveButton = debugElement.query(By.css(saveTableButton));
         expect(saveButton).not.toBe(null);
-        expect(saveButton.nativeElement.disabled).toBe(true);
+        expect(saveButton.nativeElement.disabled).toBeTrue();
     });
 
     it('should update test case when an input field is updated', () => {
@@ -391,7 +391,7 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
         fixture.detectChanges();
 
         let testThatWasUpdated = sortedTestCases(comp.testCases)[0];
-        expect(updateTestCasesStub).toHaveBeenCalledTimes(1);
+        expect(updateTestCasesStub).toHaveBeenCalledOnce();
         expect(updateTestCasesStub).toHaveBeenCalledWith(exerciseId, [new ProgrammingExerciseTestCaseUpdate(testThatWasUpdated.id, 20, 1, 2, testThatWasUpdated.visibility)]);
         expect(testThatWasUpdated.weight).toBe(20);
         expect(testThatWasUpdated.bonusMultiplier).toBe(2);
@@ -400,7 +400,7 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
 
         testCasesChangedSubject.next(true);
         // Trigger button is now enabled because the tests were saved.
-        expect(comp.hasUpdatedGradingConfig).toBe(true);
+        expect(comp.hasUpdatedGradingConfig).toBeTrue();
 
         fixture.detectChanges();
 
@@ -432,7 +432,7 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
         fixture.detectChanges();
 
         testThatWasUpdated = sortedTestCases(comp.testCases)[0];
-        expect(updateTestCasesStub).toHaveBeenCalledTimes(1);
+        expect(updateTestCasesStub).toHaveBeenCalledOnce();
         expect(updateTestCasesStub).toHaveBeenCalledWith(exerciseId, [new ProgrammingExerciseTestCaseUpdate(testThatWasUpdated.id, 20, 1, 1, testThatWasUpdated.visibility)]);
         expect(testThatWasUpdated.weight).toBe(20);
         expect(testThatWasUpdated.bonusMultiplier).toBe(1);
@@ -486,7 +486,7 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
         saveButton.click();
 
         if (assessmentType === AssessmentType.AUTOMATIC) {
-            expect(alertServiceSpy).toHaveBeenCalledTimes(1);
+            expect(alertServiceSpy).toHaveBeenCalledOnce();
             expect(alertServiceSpy).toHaveBeenCalledWith('artemisApp.programmingExercise.configureGrading.testCases.weightSumError');
         } else {
             expect(alertServiceSpy).not.toHaveBeenCalled();
@@ -530,13 +530,13 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
         updateTestCasesStub.mockReturnValue(of({ ...orderedTests[0], afterDueDate: true }));
         const saveTestCases = debugElement.query(By.css(saveTableButton));
         expect(saveTestCases).not.toBe(null);
-        expect(saveTestCases.nativeElement.disabled).toBe(false);
+        expect(saveTestCases.nativeElement.disabled).toBeFalse();
         saveTestCases.nativeElement.click();
 
         fixture.detectChanges();
 
         const testThatWasUpdated = sortedTestCases(comp.testCases)[0];
-        expect(updateTestCasesStub).toHaveBeenCalledTimes(1);
+        expect(updateTestCasesStub).toHaveBeenCalledOnce();
         expect(updateTestCasesStub).toHaveBeenCalledWith(exerciseId, [ProgrammingExerciseTestCaseUpdate.from(testThatWasUpdated)]);
     });
 
@@ -613,13 +613,13 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
 
         fixture.detectChanges();
 
-        expect(updateTestCasesStub).toHaveBeenCalledTimes(1);
+        expect(updateTestCasesStub).toHaveBeenCalledOnce();
 
         expect(comp.changedTestCaseIds).toHaveLength(0);
         testCasesChangedSubject.next(true);
 
         // Reset button is now enabled because the tests were saved.
-        expect(comp.hasUpdatedGradingConfig).toBe(true);
+        expect(comp.hasUpdatedGradingConfig).toBeTrue();
 
         fixture.detectChanges();
 
@@ -631,7 +631,7 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
 
         fixture.detectChanges();
 
-        expect(resetTestCasesStub).toHaveBeenCalledTimes(1);
+        expect(resetTestCasesStub).toHaveBeenCalledOnce();
         expect(resetTestCasesStub).toHaveBeenCalledWith(exerciseId);
         expect(comp.testCases).toEqual(testCases1);
         expect(comp.changedTestCaseIds).toHaveLength(0);
@@ -662,13 +662,13 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
 
         fixture.detectChanges();
 
-        expect(updateCategoriesStub).toHaveBeenCalledTimes(1);
+        expect(updateCategoriesStub).toHaveBeenCalledOnce();
         expect(comp.changedCategoryIds).toHaveLength(0);
 
         testCasesChangedSubject.next(true);
 
         // Reset button is now enabled because the categories were saved.
-        expect(comp.hasUpdatedGradingConfig).toBe(true);
+        expect(comp.hasUpdatedGradingConfig).toBeTrue();
 
         fixture.detectChanges();
 
@@ -683,9 +683,9 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
 
         fixture.detectChanges();
 
-        expect(resetCategoriesStub).toHaveBeenCalledTimes(1);
+        expect(resetCategoriesStub).toHaveBeenCalledOnce();
         expect(resetCategoriesStub).toHaveBeenCalledWith(exerciseId);
-        expect(loadStatisticsStub).toHaveBeenCalledTimes(1);
+        expect(loadStatisticsStub).toHaveBeenCalledOnce();
         expect(loadStatisticsStub).toHaveBeenCalledWith(exerciseId);
         expect(comp.staticCodeAnalysisCategoriesForTable).toEqual(codeAnalysisCategories1);
         expect(comp.changedCategoryIds).toHaveLength(0);
@@ -734,7 +734,7 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
 
         fixture.detectChanges();
 
-        expect(updateCategoriesStub).toHaveBeenCalledTimes(1);
+        expect(updateCategoriesStub).toHaveBeenCalledOnce();
         expect(updateCategoriesStub).toHaveBeenCalledWith(exerciseId, [StaticCodeAnalysisCategoryUpdate.from(updatedCategory)]);
 
         const categoryThatWasUpdated = comp.staticCodeAnalysisCategoriesForTable.find((category) => category.id === updatedCategory.id)!;
@@ -744,7 +744,7 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
 
         testCasesChangedSubject.next(true);
         // Trigger button is now enabled because the tests were saved.
-        expect(comp.hasUpdatedGradingConfig).toBe(true);
+        expect(comp.hasUpdatedGradingConfig).toBeTrue();
     });
 
     it('should load the grading statistics correctly', () => {

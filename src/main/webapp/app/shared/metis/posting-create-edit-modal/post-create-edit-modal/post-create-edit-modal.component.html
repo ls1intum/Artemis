@@ -62,7 +62,7 @@
                 </div>
             </div>
             <!-- tags -->
-            <div class="position-relative mb-3">
+            <div *ngIf="pageType !== PageType.PLAGIARISM_CASE" class="position-relative mb-3">
                 <div>
                     <label jhiTranslate="artemisApp.metis.post.tags">Tags</label>
                     <jhi-help-icon placement="top auto" text="artemisApp.metis.post.tagsTooltip"></jhi-help-icon>

@@ -41,9 +41,10 @@ import {
     faUsers,
     faWrench,
 } from '@fortawesome/free-solid-svg-icons';
-import { Task } from 'app/exercises/programming/shared/instructions-render/task/programming-exercise-task.model';
 import { FullGitDiffReportModalComponent } from 'app/exercises/programming/hestia/git-diff-report/full-git-diff-report-modal.component';
-import { ProgrammingExerciseSolutionEntry } from 'app/entities/hestia/programming-exercise-solution-entry.model';
+import { TestwiseCoverageReportModalComponent } from 'app/exercises/programming/hestia/testwise-coverage-report/testwise-coverage-report-modal.component';
+import { CodeEditorRepositoryFileService } from 'app/exercises/programming/shared/code-editor/service/code-editor-repository.service';
+import { CodeHintService } from 'app/exercises/shared/exercise-hint/shared/code-hint.service';
 
 @Component({
     selector: 'jhi-programming-exercise-detail',
@@ -72,6 +73,8 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     doughnutStats: ExerciseManagementStatisticsDto;
 
     isAdmin = false;
+    addedLineCount: number;
+    removedLineCount: number;
 
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
@@ -98,6 +101,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
         private alertService: AlertService,
         private programmingExerciseParticipationService: ProgrammingExerciseParticipationService,
         private programmingExerciseSubmissionPolicyService: SubmissionPolicyService,
+        private repositoryFileService: CodeEditorRepositoryFileService,
         private eventManager: EventManager,
         private modalService: NgbModal,
         private translateService: TranslateService,
@@ -105,6 +109,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
         private statisticsService: StatisticsService,
         private sortService: SortService,
         private programmingExerciseGradingService: ProgrammingExerciseGradingService,
+        private codeHintService: CodeHintService,
         private router: Router,
     ) {}
 
@@ -115,10 +120,14 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
             this.courseId = this.isExamExercise ? this.programmingExercise.exerciseGroup!.exam!.course!.id! : this.programmingExercise.course!.id!;
             this.isAdmin = this.accountService.isAdmin();
 
-            const auxiliaryRepositories = this.programmingExercise.auxiliaryRepositories;
             this.programmingExerciseService.findWithTemplateAndSolutionParticipation(programmingExercise.id!, true).subscribe((updatedProgrammingExercise) => {
+                // Copy over previous information
+                const previousExercise = this.programmingExercise;
                 this.programmingExercise = updatedProgrammingExercise.body!;
-                this.programmingExercise.auxiliaryRepositories = auxiliaryRepositories;
+                this.programmingExercise.gitDiffReport = previousExercise.gitDiffReport;
+                this.programmingExercise.auxiliaryRepositories = previousExercise.auxiliaryRepositories;
+                this.programmingExercise.submissionPolicy = previousExercise.submissionPolicy;
+
                 // get the latest results for further processing
                 if (this.programmingExercise.templateParticipation) {
                     const latestTemplateResult = this.getLatestResult(this.programmingExercise.templateParticipation.submissions);
@@ -136,6 +145,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                     // This is needed to access the exercise in the result details
                     this.programmingExercise.solutionParticipation.programmingExercise = this.programmingExercise;
                 }
+                this.setLatestCoveredLineRatio();
                 this.loadingTemplateParticipationResults = false;
                 this.loadingSolutionParticipationResults = false;
 
@@ -183,7 +193,23 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                 }
             });
 
-            this.programmingExerciseService.getDiffReport(programmingExercise.id).subscribe((gitDiffReport) => (this.programmingExercise.gitDiffReport = gitDiffReport));
+            this.programmingExerciseService.getDiffReport(programmingExercise.id).subscribe((gitDiffReport) => {
+                this.programmingExercise.gitDiffReport = gitDiffReport;
+                if (gitDiffReport) {
+                    this.addedLineCount = gitDiffReport.entries
+                        .map((entry) => entry.lineCount)
+                        .filter((lineCount) => lineCount)
+                        .map((lineCount) => lineCount!)
+                        .reduce((lineCount1, lineCount2) => lineCount1 + lineCount2, 0);
+                    this.removedLineCount = gitDiffReport.entries
+                        .map((entry) => entry.previousLineCount)
+                        .filter((lineCount) => lineCount)
+                        .map((lineCount) => lineCount!)
+                        .reduce((lineCount1, lineCount2) => lineCount1 + lineCount2, 0);
+                }
+            });
+
+            this.setLatestCoveredLineRatio();
         });
     }
 
@@ -252,47 +278,6 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                 this.dialogErrorSource.next('');
             },
             error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
-        });
-    }
-
-    /**
-     * Get tasks and corresponding test cases extracted from the problem statement for this exercise
-     */
-    getExtractedTasksAndTestsFromProblemStatement(): void {
-        this.programmingExerciseService.getTasksAndTestsExtractedFromProblemStatement(this.programmingExercise.id!).subscribe({
-            next: (res) => {
-                const numberTests = res.map((task) => task.tests.length).reduce((numberTests1, numberTests2) => numberTests1 + numberTests2, 0);
-                this.alertService.addAlert({
-                    type: AlertType.SUCCESS,
-                    message: 'artemisApp.programmingExercise.extractTasksFromProblemStatementSuccess',
-                    translationParams: {
-                        numberTasks: res.length,
-                        numberTestCases: numberTests,
-                        detailedResult: this.buildTaskCreationMessage(res),
-                    },
-                    timeout: 0,
-                });
-            },
-            error: (error) => this.dialogErrorSource.next(error.message),
-        });
-    }
-
-    private buildTaskCreationMessage(tasks: Task[]): string {
-        return tasks.map((task) => '"' + task.taskName + '": ' + task.tests).join('\n');
-    }
-
-    /**
-     * Delete all tasks and solution entries for this exercise
-     */
-    deleteTasksWithSolutionEntries(): void {
-        this.programmingExerciseService.deleteTasksWithSolutionEntries(this.programmingExercise.id!).subscribe({
-            next: () => {
-                this.alertService.addAlert({
-                    type: AlertType.SUCCESS,
-                    message: 'artemisApp.programmingExercise.deleteTasksAndSolutionEntriesSuccess',
-                });
-            },
-            error: (error) => this.dialogErrorSource.next(error.message),
         });
     }
 
@@ -449,12 +434,11 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
 
     createStructuralSolutionEntries() {
         this.programmingExerciseService.createStructuralSolutionEntries(this.programmingExercise.id!).subscribe({
-            next: (res) => {
+            next: () => {
                 this.alertService.addAlert({
                     type: AlertType.SUCCESS,
                     message: 'artemisApp.programmingExercise.createStructuralSolutionEntriesSuccess',
                 });
-                console.log(this.buildStructuralSolutionEntriesMessage(res));
             },
             error: (err) => {
                 this.onError(err);
@@ -462,7 +446,70 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
         });
     }
 
-    private buildStructuralSolutionEntriesMessage(solutionEntries: ProgrammingExerciseSolutionEntry[]): string {
-        return solutionEntries.map((solutionEntry) => `${solutionEntry.filePath}:\n${solutionEntry.code}`).join('\n\n');
+    createBehavioralSolutionEntries() {
+        this.programmingExerciseService.createBehavioralSolutionEntries(this.programmingExercise.id!).subscribe({
+            next: () => {
+                this.alertService.addAlert({
+                    type: AlertType.SUCCESS,
+                    message: 'artemisApp.programmingExercise.createBehavioralSolutionEntriesSuccess',
+                });
+            },
+            error: (err) => {
+                this.onError(err);
+            },
+        });
+    }
+
+    generateCodeHints() {
+        this.codeHintService.generateCodeHintsForExercise(this.programmingExercise.id!, true).subscribe({
+            next: () => {
+                this.alertService.addAlert({
+                    type: AlertType.SUCCESS,
+                    message: 'artemisApp.programmingExercise.generateCodeHintsSuccess',
+                });
+            },
+            error: (err) => {
+                this.onError(err);
+            },
+        });
+    }
+
+    /**
+     * Returns undefined if the last solution submission was not successful or no report exists yet
+     */
+    private setLatestCoveredLineRatio() {
+        const latestSolutionSubmissionSuccessful = this.getLatestResult(this.programmingExercise?.solutionParticipation?.submissions)?.successful;
+        if (this.programmingExercise.testwiseCoverageEnabled && !!latestSolutionSubmissionSuccessful) {
+            this.programmingExerciseService.getLatestTestwiseCoverageReport(this.programmingExercise.id!).subscribe((coverageReport) => {
+                this.programmingExercise.coveredLinesRatio = coverageReport.coveredLineRatio;
+            });
+        }
+    }
+
+    /**
+     * Gets the testwise coverage reports from the server and displays it in a modal.
+     */
+    getAndShowTestwiseCoverage() {
+        this.programmingExerciseService.getSolutionRepositoryTestFilesWithContent(this.programmingExercise.id!).subscribe({
+            next: (response: Map<string, string>) => {
+                this.programmingExerciseService.getLatestFullTestwiseCoverageReport(this.programmingExercise.id!).subscribe({
+                    next: (coverageReport) => {
+                        const modalRef = this.modalService.open(TestwiseCoverageReportModalComponent, {
+                            size: 'xl',
+                            backdrop: 'static',
+                        });
+                        modalRef.componentInstance.report = coverageReport;
+                        modalRef.componentInstance.fileContentByPath = response;
+                    },
+                    error: (err: HttpErrorResponse) => {
+                        if (err.status === 404) {
+                            this.alertService.error('artemisApp.programmingExercise.testwiseCoverageReport.404');
+                        } else {
+                            this.onError(err);
+                        }
+                    },
+                });
+            },
+        });
     }
 }

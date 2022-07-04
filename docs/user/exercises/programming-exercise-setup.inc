@@ -38,29 +38,29 @@ Instructors can still use those templates to generate programming exercises and 
   Depending on the feature set, some options might not be available during the creation of the programming exercise.
   The table below provides an overview of the supported features:
 
-  +----------------------+----------------------+----------------------+------------------+--------------+--------------+------------------------------+
-  | Programming Language | Sequential Test Runs | Static Code Analysis | Plagiarism Check | Package Name | Project Type | Solution Repository Checkout |
-  +======================+======================+======================+==================+==============+==============+==============================+
-  | Java                 | yes                  | yes                  | yes              | yes          | yes          | no                           |
-  +----------------------+----------------------+----------------------+------------------+--------------+--------------+------------------------------+
-  | Python               | yes                  | no                   | yes              | no           | no           | no                           |
-  +----------------------+----------------------+----------------------+------------------+--------------+--------------+------------------------------+
-  | C                    | no                   | yes                  | yes              | no           | no           | no                           |
-  +----------------------+----------------------+----------------------+------------------+--------------+--------------+------------------------------+
-  | C (FACT framework)   | no                   | no                   | no               | no           | no           | no                           |
-  +----------------------+----------------------+----------------------+------------------+--------------+--------------+------------------------------+
-  | Haskell              | yes                  | no                   | no               | no           | no           | yes                          |
-  +----------------------+----------------------+----------------------+------------------+--------------+--------------+------------------------------+
-  | Kotlin               | yes                  | no                   | no               | yes          | no           | no                           |
-  +----------------------+----------------------+----------------------+------------------+--------------+--------------+------------------------------+
-  | VHDL                 | no                   | no                   | no               | no           | no           | no                           |
-  +----------------------+----------------------+----------------------+------------------+--------------+--------------+------------------------------+
-  | Assembler            | no                   | no                   | no               | no           | no           | no                           |
-  +----------------------+----------------------+----------------------+------------------+--------------+--------------+------------------------------+
-  | Swift                | no                   | no                   | no               | no           | no           | no                           |
-  +----------------------+----------------------+----------------------+------------------+--------------+--------------+------------------------------+
-  | OCaml                | no                   | no                   | no               | no           | no           | yes                          |
-  +----------------------+----------------------+----------------------+------------------+--------------+--------------+------------------------------+
+  +----------------------+----------------------+----------------------+------------------+--------------+--------------+------------------------------+--------------------------------------------+
+  | Programming Language | Sequential Test Runs | Static Code Analysis | Plagiarism Check | Package Name | Project Type | Solution Repository Checkout | Testwise Coverage Analysis                 |
+  +======================+======================+======================+==================+==============+==============+==============================+============================================+
+  | Java                 | yes                  | yes                  | yes              | yes          | yes          | no                           | yes (only for Gradle on Atlassian Setup)   |
+  +----------------------+----------------------+----------------------+------------------+--------------+--------------+------------------------------+--------------------------------------------+
+  | Python               | yes                  | no                   | yes              | no           | no           | no                           | no                                         |
+  +----------------------+----------------------+----------------------+------------------+--------------+--------------+------------------------------+--------------------------------------------+
+  | C                    | no                   | yes                  | yes              | no           | no           | no                           | no                                         |
+  +----------------------+----------------------+----------------------+------------------+--------------+--------------+------------------------------+--------------------------------------------+
+  | C (FACT framework)   | no                   | no                   | no               | no           | no           | no                           | no                                         |
+  +----------------------+----------------------+----------------------+------------------+--------------+--------------+------------------------------+--------------------------------------------+
+  | Haskell              | yes                  | no                   | no               | no           | no           | yes                          | no                                         |
+  +----------------------+----------------------+----------------------+------------------+--------------+--------------+------------------------------+--------------------------------------------+
+  | Kotlin               | yes                  | no                   | no               | yes          | no           | no                           | no                                         |
+  +----------------------+----------------------+----------------------+------------------+--------------+--------------+------------------------------+--------------------------------------------+
+  | VHDL                 | no                   | no                   | no               | no           | no           | no                           | no                                         |
+  +----------------------+----------------------+----------------------+------------------+--------------+--------------+------------------------------+--------------------------------------------+
+  | Assembler            | no                   | no                   | no               | no           | no           | no                           | no                                         |
+  +----------------------+----------------------+----------------------+------------------+--------------+--------------+------------------------------+--------------------------------------------+
+  | Swift                | no                   | no                   | no               | no           | no           | no                           | no                                         |
+  +----------------------+----------------------+----------------------+------------------+--------------+--------------+------------------------------+--------------------------------------------+
+  | OCaml                | no                   | no                   | no               | no           | no           | yes                          | no                                         |
+  +----------------------+----------------------+----------------------+------------------+--------------+--------------+------------------------------+--------------------------------------------+
 
   - *Sequential Test Runs*: ``Artemis`` can generate a build plan which first executes structural and then behavioral tests. This feature can help students to better concentrate on the immediate challenge at hand.
   - *Static Code Analysis*: ``Artemis`` can generate a build plan which additionally executes static code analysis tools.
@@ -68,6 +68,8 @@ Instructors can still use those templates to generate programming exercises and 
   - *Plagiarism Checks*: ``Artemis`` is able to automatically calculate the similarity between student submissions. A side-by-side view of similar submissions is available to confirm the plagiarism suspicion.
   - *Package Name*: A package name has to be provided
   - *Solution Repository Checkout*: Instructors are able to compare a student submission against a sample solution in the solution repository
+  - *Testwise Coverage Analysis*: ``Artemis`` can generate a build plan which additionally executes a testwise coverage analysis.
+    ``Artemis`` aggregates the recorded data into different metrics. This feature allows instructors to check which code in the solution submission is how often executed by the test cases.
 
 .. note::
   Only some ``templates`` for ``Bamboo`` support ``Sequential Test Runs`` at the moment.
@@ -76,12 +78,15 @@ Instructors can still use those templates to generate programming exercises and 
   Static Code Analysis for ``C`` exercises is only supported for ``Bamboo`` at the moment.
 
 .. note::
+  Testwise Coverage Analysis is only supported for ``Bamboo`` and exercises with regular test runs at the moment.
+
+.. note::
   Instructors are still able to extend the generated programming exercises with additional features that are not available in one specific template.
 
 .. note::
   Documentation for FACT framework can be found here: https://fact.readthedocs.io/en/latest/
 
-We encourage instructors to contribute improvements to the existing ``templates`` or to provide new templates. Please contact Stephan Krusche and/or create Pull Requests in the Github repository.
+We encourage instructors to contribute improvements to the existing ``templates`` or to provide new templates. Please contact Stephan Krusche and/or create Pull Requests in the GitHub repository.
 
 Exercise Creation
 ^^^^^^^^^^^^^^^^^
@@ -154,6 +159,8 @@ Exercise Creation
     - **Programming Language:** The programming language for the exercise. Artemis chooses the template accordingly.
       Refer to the :ref:`programming exercise features <programming_features>` for an overview of the supported features for each template.
     - **Project Type:** Determines the project structure of the template. Not available for all programming languages.
+    - **With exemplary dependency:** Adds an external Apache commons-lang dependency to the generated project as an example
+      how maven dependencies should be used with Artemis exercises. Only available for Java exercises.
     - **Package Name:** The package name used for this exercise. Not available for all programming languages.
 
     |
@@ -252,6 +259,8 @@ Exercise Creation
       This option is useful to compare the student's submission with the sample solution. This option is not available for all programming languages.
     - **Allow Offline IDE:** Allow students to clone their personal repository and work on the exercise with their preferred IDE.
     - **Allow Online Editor:** Allow students to work on the exercise using the Artemis Online Code Editor.
+    - **Record Testwise Coverage:** Activate this option to record the testwise coverage for the solution repository.
+      This option is only available for Java-Gradle-projects with non-sequential test runs.
 
       .. note::
         At least one of the options **Allow Offline IDE:** and **Allow Online Editor:** must be active
@@ -374,7 +383,7 @@ Exercise Creation
       git clone "$BASE-solution.git" "$NAME/solution"
 
       # hardlink the various assignment interfaces to ensure they stay in sync
-      # the version in the solution repositiory is authoritive in case of conflict
+      # the version in the solution repository is authoritative in case of conflict
       rm "$NAME/template/src/assignment.mli"
       rm "$NAME/tests/assignment/assignment.mli"
       rm "$NAME/tests/solution/solution.mli"
@@ -430,21 +439,21 @@ Exercise Creation
 - On exercise import, Artemis copies the configuration files from the imported exercise
 - The following table depicts the supported static code analysis tools for each programming language, the dependency mechanism used to execute the tools and the name of their respective configuration files
 
-+----------------------+-------------------------+-------------------------------+------------------------------+
-| Programming Language | Execution Mechanism     | Supported Tools               | Configuration File           |
-+======================+=========================+===============================+==============================+
-| Java                 | Maven plugins (pom.xml) | Spotbugs                      | spotbugs-exclusions.xml      |
-|                      |                         +-------------------------------+------------------------------+
-|                      |                         | Checkstyle                    | checkstyle-configuration.xml |
-|                      |                         +-------------------------------+------------------------------+
-|                      |                         | PMD                           | pmd-configuration.xml        |
-|                      |                         +-------------------------------+------------------------------+
-|                      |                         | PMD Copy/Paste Detector (CPD) |                              |
-+----------------------+-------------------------+-------------------------------+------------------------------+
-| Swift                | Script                  | SwiftLint                     | .swiftlint.yml               |
-+----------------------+-------------------------+-------------------------------+------------------------------+
-| C                    | Script                  | GCC                           |                              |
-+----------------------+-------------------------+-------------------------------+------------------------------+
++----------------------+---------------------------+-------------------------------+------------------------------+
+| Programming Language | Execution Mechanism       | Supported Tools               | Configuration File           |
++======================+===========================+===============================+==============================+
+| Java                 | Maven plugins             | Spotbugs                      | spotbugs-exclusions.xml      |
+|                      | (pom.xml or build.gradle) +-------------------------------+------------------------------+
+|                      |                           | Checkstyle                    | checkstyle-configuration.xml |
+|                      |                           +-------------------------------+------------------------------+
+|                      |                           | PMD                           | pmd-configuration.xml        |
+|                      |                           +-------------------------------+------------------------------+
+|                      |                           | PMD Copy/Paste Detector (CPD) |                              |
++----------------------+---------------------------+-------------------------------+------------------------------+
+| Swift                | Script                    | SwiftLint                     | .swiftlint.yml               |
++----------------------+---------------------------+-------------------------------+------------------------------+
+| C                    | Script                    | GCC                           |                              |
++----------------------+---------------------------+-------------------------------+------------------------------+
 
 .. note::
   The Maven plugins for the Java static code analysis tools provide additional configuration options.
@@ -456,7 +465,7 @@ Exercise Creation
 
 .. note::
   Instructors are able to completely disable the usage of a specific static code analysis tool by removing the plugin/dependency from the execution mechanism.
-  In case of Maven plugins, instructors can remove the unwanted tools from the *pom.xml*.
+  In case of Maven plugins, instructors can remove the unwanted tools from the *pom.xml* or *build.gradle*.
   Alternatively, instructors can alter the task/script that executes the tools in the build plan.
   PMD and PMD CPD are a special case as both tools share a common plugin. To disable one or the other, instructors must delete the execution of a tool from the build plan.
 

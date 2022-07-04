@@ -1,8 +1,6 @@
-@import 'src/main/webapp/app/overview/overview-vars';
-
 .course-item {
-    border: 1px solid $blue-border-color;
-    background-color: $light-background-color;
+    border: 1px solid var(--overview-blue-border-color);
+    background-color: var(--overview-light-background-color);
     border-radius: 0.1rem;
     display: flex;
     align-items: center;
@@ -78,7 +76,7 @@
     .calender-icon-circle {
         width: 19px;
         height: 19px;
-        background-color: $light-border-color;
+        background-color: var(--overview-light-border-color);
         border-radius: 25px;
         display: flex;
         justify-content: center;

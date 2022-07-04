@@ -2,6 +2,8 @@ package de.tum.in.www1.artemis;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.util.List;
+
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -11,8 +13,8 @@ import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.domain.Attachment;
 import de.tum.in.www1.artemis.domain.Lecture;
-import de.tum.in.www1.artemis.domain.enumeration.AttachmentType;
 import de.tum.in.www1.artemis.domain.lecture.AttachmentUnit;
+import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.util.ModelFactory;
 
@@ -39,7 +41,8 @@ public class AttachmentUnitIntegrationTest extends AbstractSpringIntegrationBamb
     @BeforeEach
     public void initTestCase() throws Exception {
         this.database.addUsers(1, 1, 0, 1);
-        this.attachment = new Attachment().attachmentType(AttachmentType.FILE).link("files/temp/example.txt").name("example");
+        this.attachment = ModelFactory.generateAttachment(null);
+        this.attachment.setLink("files/temp/example.txt");
         this.lecture1 = this.database.createCourseWithLecture(true);
         this.attachmentUnit = new AttachmentUnit();
         this.attachmentUnit.setDescription("Lorem Ipsum");
@@ -109,13 +112,31 @@ public class AttachmentUnitIntegrationTest extends AbstractSpringIntegrationBamb
         assertThat(this.attachment.getAttachmentUnit()).isEqualTo(this.attachmentUnit);
     }
 
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void updateAttachmentUnit_asInstructor_shouldKeepOrdering() throws Exception {
+        persistAttachmentUnitWithLecture();
+
+        // Add a second lecture unit
+        AttachmentUnit attachmentUnit = database.createAttachmentUnit(false);
+        lecture1.addLectureUnit(attachmentUnit);
+        lecture1 = lectureRepository.save(lecture1);
+
+        List<LectureUnit> orderedUnits = lecture1.getLectureUnits();
+
+        // Updating the lecture unit should not influence order
+        request.putWithResponseBody("/api/lectures/" + lecture1.getId() + "/attachment-units", attachmentUnit, AttachmentUnit.class, HttpStatus.OK);
+
+        List<LectureUnit> updatedOrderedUnits = lectureRepository.findByIdWithLectureUnits(lecture1.getId()).get().getLectureUnits();
+        assertThat(updatedOrderedUnits).containsExactlyElementsOf(orderedUnits);
+    }
+
     private void persistAttachmentUnitWithLecture() {
         this.attachmentUnit = attachmentUnitRepository.save(this.attachmentUnit);
-        lecture1 = lectureRepository.findByIdWithPostsAndLectureUnitsAndLearningGoals(lecture1.getId()).get();
+        lecture1 = lectureRepository.findByIdWithLectureUnits(lecture1.getId()).get();
         lecture1.addLectureUnit(this.attachmentUnit);
         lecture1 = lectureRepository.save(lecture1);
-        this.attachmentUnit = (AttachmentUnit) lectureRepository.findByIdWithPostsAndLectureUnitsAndLearningGoals(lecture1.getId()).get().getLectureUnits().stream().findFirst()
-                .get();
+        this.attachmentUnit = (AttachmentUnit) lectureRepository.findByIdWithLectureUnits(lecture1.getId()).get().getLectureUnits().stream().findFirst().get();
     }
 
     @Test

@@ -1,10 +1,13 @@
 package de.tum.in.www1.artemis.domain.hestia;
 
+import java.util.Objects;
+
 import javax.persistence.*;
 
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
@@ -57,7 +60,7 @@ public class ProgrammingExerciseSolutionEntry extends DomainObject {
 
     // Fetched lazily, as we never need the code hint when fetching solution entries
     @ManyToOne(fetch = FetchType.LAZY)
-    @JsonIgnoreProperties("solutionEntries")
+    @JsonIgnore
     private CodeHint codeHint;
 
     @ManyToOne
@@ -121,7 +124,24 @@ public class ProgrammingExerciseSolutionEntry extends DomainObject {
     }
 
     @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (obj == null || getClass() != obj.getClass()) {
+            return false;
+        }
+        if (!super.equals(obj)) {
+            return false;
+        }
+        ProgrammingExerciseSolutionEntry that = (ProgrammingExerciseSolutionEntry) obj;
+        return Objects.equals(filePath, that.filePath) && Objects.equals(previousLine, that.previousLine) && Objects.equals(line, that.line)
+                && Objects.equals(previousCode, that.previousCode) && Objects.equals(code, that.code);
+    }
+
+    @Override
     public String toString() {
-        return "ProgrammingExerciseSolutionEntry (" + filePath + "):\n" + previousCode + "\n>>>>>>>>>>>>>\n" + code;
+        return "ProgrammingExerciseSolutionEntry{" + "id=" + getId() + '\'' + ", filePath='" + filePath + '\'' + ", previousLine=" + previousLine + ", line=" + line
+                + ", previousCode='" + previousCode + '\'' + ", code='" + code + '\'' + '}';
     }
 }

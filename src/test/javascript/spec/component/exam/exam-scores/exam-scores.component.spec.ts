@@ -38,6 +38,21 @@ import { Course } from 'app/entities/course.model';
 import { MockRouterLinkDirective } from '../../../helpers/mocks/directive/mock-router-link.directive';
 import { ParticipantScoresDistributionComponent } from 'app/shared/participant-scores/participant-scores-distribution/participant-scores-distribution.component';
 import { LocaleConversionService } from 'app/shared/service/locale-conversion.service';
+import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
+import { CsvDecimalSeparator, CsvExportOptions, CsvFieldSeparator, CsvQuoteStrings } from 'app/shared/export/export-modal.component';
+import {
+    EMAIL_KEY,
+    EXAM_ACHIEVED_POINTS,
+    EXAM_ACHIEVED_SCORE,
+    EXAM_ASSIGNED_EXERCISE,
+    EXAM_OVERALL_POINTS_KEY,
+    EXAM_OVERALL_SCORE_KEY,
+    EXAM_SUBMITTED,
+    NAME_KEY,
+    REGISTRATION_NUMBER_KEY,
+    USERNAME_KEY,
+} from 'app/shared/export/export-constants';
+import { ExportButtonComponent } from 'app/shared/export/export-button.component';
 
 describe('ExamScoresComponent', () => {
     let fixture: ComponentFixture<ExamScoresComponent>;
@@ -45,9 +60,8 @@ describe('ExamScoresComponent', () => {
     let examService: ExamManagementService;
     let gradingSystemService: GradingSystemService;
     let accountService: AccountService;
-    let router: Router;
 
-    let navigateSpy: jest.SpyInstance;
+    let routingStub: jest.SpyInstance;
 
     const gradeStep1: GradeStep = {
         isPassingGrade: false,
@@ -232,6 +246,7 @@ describe('ExamScoresComponent', () => {
                 MockPipe(ArtemisTranslatePipe),
                 MockComponent(FaIconComponent),
                 MockComponent(HelpIconComponent),
+                MockComponent(ExportButtonComponent),
                 MockDirective(TranslateDirective),
                 MockDirective(SortByDirective),
                 MockDirective(SortDirective),
@@ -244,6 +259,7 @@ describe('ExamScoresComponent', () => {
                 { provide: ActivatedRoute, useValue: { params: of({ courseId: 1, examId: 1 }) } },
                 { provide: Router, useClass: MockRouter },
                 MockProvider(AccountService),
+                MockProvider(ArtemisNavigationUtilService),
                 MockProvider(TranslateService),
                 MockProvider(ExamManagementService),
                 MockProvider(SortService),
@@ -289,9 +305,9 @@ describe('ExamScoresComponent', () => {
                     .spyOn(participationScoreService, 'findExamScores')
                     .mockReturnValue(of(new HttpResponse({ body: [examScoreStudent1, examScoreStudent2, examScoreStudent3] })));
                 accountService = TestBed.inject(AccountService);
-                router = TestBed.inject(Router);
+                const navigationUtilService = TestBed.inject(ArtemisNavigationUtilService);
 
-                navigateSpy = jest.spyOn(router, 'navigate').mockImplementation();
+                routingStub = jest.spyOn(navigationUtilService, 'routeInNewTab');
             });
     });
 
@@ -533,9 +549,14 @@ describe('ExamScoresComponent', () => {
 
         const exportAsCsvStub = jest.spyOn(comp, 'exportAsCsv');
         // create csv
-        comp.exportToCsv();
+        const testOptions: CsvExportOptions = {
+            fieldSeparator: CsvFieldSeparator.SEMICOLON,
+            quoteStrings: CsvQuoteStrings.QUOTES_DOUBLE,
+            decimalSeparator: CsvDecimalSeparator.PERIOD,
+        };
+        comp.exportExamResults(testOptions);
 
-        const generatedRows = exportAsCsvStub.mock.calls[0][0];
+        const generatedRows = exportAsCsvStub.mock.calls[0][1];
         expect(generatedRows.length).toBe(noOfSubmittedExercises);
         const user1Row = generatedRows[0];
         validateUserRow(
@@ -546,9 +567,9 @@ describe('ExamScoresComponent', () => {
             studentResult1.registrationNumber,
             'exResult1_1',
             '100',
+            '100%',
             '100',
-            '100',
-            '100',
+            '100%',
             studentResult1.submitted ? 'yes' : 'no',
         );
         const user2Row = generatedRows[1];
@@ -560,9 +581,9 @@ describe('ExamScoresComponent', () => {
             studentResult2.registrationNumber,
             'exResult1_2',
             '20',
+            '20%',
             '20',
-            '20',
-            '20',
+            '20%',
             studentResult2.submitted ? 'yes' : 'no',
         );
         const user3Row = generatedRows[2];
@@ -574,9 +595,9 @@ describe('ExamScoresComponent', () => {
             studentResult3.registrationNumber,
             'exResult1_2',
             '50',
+            '50%',
             '50',
-            '50',
-            '50',
+            '50%',
             studentResult3.submitted ? 'yes' : 'no',
         );
     });
@@ -585,7 +606,12 @@ describe('ExamScoresComponent', () => {
         jest.spyOn(examService, 'getExamScores').mockReturnValue(of(new HttpResponse({ body: examScoreDTO })));
         fixture.detectChanges();
 
-        comp.exportToCsv();
+        const testOptions: CsvExportOptions = {
+            fieldSeparator: CsvFieldSeparator.SEMICOLON,
+            quoteStrings: CsvQuoteStrings.QUOTES_DOUBLE,
+            decimalSeparator: CsvDecimalSeparator.PERIOD,
+        };
+        comp.exportExamResults(testOptions);
     });
 
     it('should set grading scale properties', () => {
@@ -596,9 +622,9 @@ describe('ExamScoresComponent', () => {
         jest.spyOn(gradingSystemService, 'findMatchingGradeStep').mockReturnValue(gradingScale.gradeSteps[0]);
         fixture.detectChanges();
 
-        expect(comp.gradingScaleExists).toBe(true);
+        expect(comp.gradingScaleExists).toBeTrue();
         expect(comp.gradingScale).toEqual(gradingScale);
-        expect(comp.isBonus).toBe(false);
+        expect(comp.isBonus).toBeFalse();
     });
 
     it('should filter non-empty submissions', () => {
@@ -615,7 +641,7 @@ describe('ExamScoresComponent', () => {
 
         comp.toggleFilterForNonEmptySubmission();
 
-        expect(comp.filterForNonEmptySubmissions).toBe(true);
+        expect(comp.filterForNonEmptySubmissions).toBeTrue();
     });
 
     describe('test table filtering', () => {
@@ -767,7 +793,7 @@ describe('ExamScoresComponent', () => {
 
         comp.onSelect();
 
-        expect(navigateSpy).not.toHaveBeenCalled();
+        expect(routingStub).not.toHaveBeenCalled();
     });
 
     it('should delegate user if authorisation is sufficient', () => {
@@ -777,7 +803,7 @@ describe('ExamScoresComponent', () => {
 
         comp.onSelect();
 
-        expect(navigateSpy).toHaveBeenCalledWith(['course-management', 42, 'exams', 1, 'participant-scores']);
+        expect(routingStub).toHaveBeenCalledWith(['course-management', 42, 'exams', 1, 'participant-scores']);
     });
 
     it('should toggle median correctly', () => {
@@ -785,21 +811,21 @@ describe('ExamScoresComponent', () => {
         comp.isBonus = false;
         fixture.detectChanges();
 
-        expect(comp.showPassedMedian).toBe(true);
+        expect(comp.showPassedMedian).toBeTrue();
 
         comp.toggleMedian(MedianType.PASSED);
 
-        expect(comp.showPassedMedian).toBe(false);
+        expect(comp.showPassedMedian).toBeFalse();
 
         comp.toggleMedian(MedianType.OVERALL);
 
         expect(comp.overallChartMedian).toBe(50);
-        expect(comp.showOverallMedian).toBe(true);
+        expect(comp.showOverallMedian).toBeTrue();
 
         comp.toggleMedian(MedianType.PASSED);
 
-        expect(comp.showPassedMedian).toBe(true);
-        expect(comp.showOverallMedian).toBe(false);
+        expect(comp.showPassedMedian).toBeTrue();
+        expect(comp.showOverallMedian).toBeFalse();
     });
 
     it('should return data label correctly if noOfExamsFiltered is 0', () => {
@@ -830,14 +856,14 @@ function validateUserRow(
     expectedOverAllScore: string,
     expectedSubmitted: string,
 ) {
-    expect(userRow.name).toBe(expectedName);
-    expect(userRow.login).toBe(expectedUsername);
-    expect(userRow.eMail).toBe(expectedEmail);
-    expect(userRow.registrationNumber).toBe(expectedRegistrationNumber);
-    expect(userRow['group Assigned Exercise']).toBe(expectedExerciseTitle);
-    expect(userRow['group Achieved Points']).toBe(expectedAchievedPoints);
-    expect(userRow['group Achieved Score (%)']).toBe(expectedAchievedScore);
-    expect(userRow.overAllPoints).toBe(expectedOverAllPoints);
-    expect(userRow.overAllScore).toBe(expectedOverAllScore);
-    expect(userRow.submitted).toBe(expectedSubmitted);
+    expect(userRow[NAME_KEY]).toBe(expectedName);
+    expect(userRow[USERNAME_KEY]).toBe(expectedUsername);
+    expect(userRow[EMAIL_KEY]).toBe(expectedEmail);
+    expect(userRow[REGISTRATION_NUMBER_KEY]).toBe(expectedRegistrationNumber);
+    expect(userRow[`group ${EXAM_ASSIGNED_EXERCISE}`]).toBe(expectedExerciseTitle);
+    expect(userRow[`group ${EXAM_ACHIEVED_POINTS}`]).toBe(expectedAchievedPoints);
+    expect(userRow[`group ${EXAM_ACHIEVED_SCORE}`]).toBe(expectedAchievedScore);
+    expect(userRow[EXAM_OVERALL_POINTS_KEY]).toBe(expectedOverAllPoints);
+    expect(userRow[EXAM_OVERALL_SCORE_KEY]).toBe(expectedOverAllScore);
+    expect(userRow[EXAM_SUBMITTED]).toBe(expectedSubmitted);
 }

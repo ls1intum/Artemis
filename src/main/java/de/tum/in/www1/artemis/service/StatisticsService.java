@@ -56,11 +56,11 @@ public class StatisticsService {
      * which then contains the date in the ZonedDateFormat as Integer and the amount as Long
      * It then collects the amounts in an array, depending on the span value, and returns it
      *
-     * @param span DAY,WEEK,MONTH or YEAR depending on the active tab in the view
+     * @param span        DAY,WEEK,MONTH or YEAR depending on the active tab in the view
      * @param periodIndex an index indicating which time period, 0 is current week, -1 is one week in the past, -2 is two weeks in the past ...
-     * @param graphType the type of graph the data should be fetched
-     * @param view the view in which the data will be displayed (Artemis, Course, Exercise)
-     * @param entityId the entityId. Only set if we fetch value for the course statistics
+     * @param graphType   the type of graph the data should be fetched
+     * @param view        the view in which the data will be displayed (Artemis, Course, Exercise)
+     * @param entityId    the entityId. Only set if we fetch value for the course statistics
      * @return an array, containing the values for each bar in the graph
      */
     public List<Integer> getChartData(SpanType span, Integer periodIndex, GraphType graphType, StatisticsView view, @Nullable Long entityId) {
@@ -87,7 +87,7 @@ public class StatisticsService {
                 this.statisticsRepository.sortDataIntoDays(outcome, result, startDate);
             }
             case MONTH -> {
-                startDate = now.minusMonths(1 - periodIndex).withHour(0).withMinute(0).withSecond(0).withNano(0);
+                startDate = now.minusMonths(1L - periodIndex).withHour(0).withMinute(0).withSecond(0).withNano(0);
                 endDate = now.minusMonths(-periodIndex).withHour(23).withMinute(59).withSecond(59);
                 result = new ArrayList<>(Collections.nCopies((int) ChronoUnit.DAYS.between(startDate, endDate), 0));
                 outcome = this.statisticsRepository.getNumberOfEntriesPerTimeSlot(graphType, span, startDate.plusDays(1), endDate, view, entityId);
@@ -104,7 +104,7 @@ public class StatisticsService {
                 this.statisticsRepository.sortDataIntoWeeks(outcome, result, startDate);
             }
             case YEAR -> {
-                startDate = now.minusYears(1 - periodIndex).plusMonths(1).withDayOfMonth(1).withHour(0).withMinute(0).withSecond(0).withNano(0);
+                startDate = now.minusYears(1L - periodIndex).plusMonths(1).withDayOfMonth(1).withHour(0).withMinute(0).withSecond(0).withNano(0);
                 lengthOfMonth = YearMonth.of(now.minusYears(-periodIndex).getYear(), now.minusYears(-periodIndex).getMonth()).lengthOfMonth();
                 endDate = now.minusYears(-periodIndex).withDayOfMonth(lengthOfMonth).withHour(23).withMinute(59).withSecond(59);
                 outcome = this.statisticsRepository.getNumberOfEntriesPerTimeSlot(graphType, span, startDate, endDate, view, entityId);
@@ -122,14 +122,22 @@ public class StatisticsService {
     /**
      * Get the average score of the course and all exercises for the course statistics
      *
-     * @param courseId    the id of the course for which the data should be fetched
+     * @param courseId the id of the course for which the data should be fetched
      * @return a custom CourseManagementStatisticsDTO, which contains the relevant data
      */
     public CourseManagementStatisticsDTO getCourseStatistics(Long courseId) {
 
         var courseManagementStatisticsDTO = new CourseManagementStatisticsDTO();
         Set<Exercise> exercises = statisticsRepository.findExercisesByCourseId(courseId);
-        Course course = exercises.stream().findAny().get().getCourseViaExerciseGroupOrCourseMember();
+
+        if (exercises.isEmpty()) {
+            // Handle newly created courses that have no exercises
+            courseManagementStatisticsDTO.setAverageScoreOfCourse(0.0);
+            courseManagementStatisticsDTO.setAverageScoresOfExercises(Collections.emptyList());
+            return courseManagementStatisticsDTO;
+        }
+
+        Course course = exercises.stream().findFirst().orElseThrow().getCourseViaExerciseGroupOrCourseMember();
         var includedExercises = exercises.stream().filter(Exercise::isCourseExercise)
                 .filter(exercise -> !exercise.getIncludedInOverallScore().equals(IncludedInOverallScore.NOT_INCLUDED)).collect(Collectors.toSet());
         Double averageScoreForCourse = participantScoreRepository.findAvgScore(includedExercises);
@@ -138,7 +146,7 @@ public class StatisticsService {
         averageScoreForExercises.forEach(exercise -> {
             var roundedAverageScore = roundScoreSpecifiedByCourseSettings(exercise.getAverageScore(), course);
             exercise.setAverageScore(roundedAverageScore);
-            var fittingExercise = includedExercises.stream().filter(includedExercise -> includedExercise.getId() == exercise.getExerciseId()).findAny().get();
+            var fittingExercise = includedExercises.stream().filter(includedExercise -> includedExercise.getId() == exercise.getExerciseId()).findAny().orElseThrow();
             exercise.setExerciseType(fittingExercise.getExerciseType());
         });
 
@@ -149,11 +157,11 @@ public class StatisticsService {
             courseManagementStatisticsDTO.setAverageScoreOfCourse(0.0);
         }
 
-        if (averageScoreForExercises.size() > 0) {
+        if (!averageScoreForExercises.isEmpty()) {
             courseManagementStatisticsDTO.setAverageScoresOfExercises(averageScoreForExercises);
         }
         else {
-            courseManagementStatisticsDTO.setAverageScoresOfExercises(new ArrayList<>());
+            courseManagementStatisticsDTO.setAverageScoresOfExercises(Collections.emptyList());
         }
 
         return courseManagementStatisticsDTO;
@@ -162,7 +170,7 @@ public class StatisticsService {
     /**
      * Get statistics regarding a specific exercise
      *
-     * @param exercise    the exercise for which the data should be fetched
+     * @param exercise the exercise for which the data should be fetched
      * @return a custom ExerciseManagementStatisticsDTO, which contains the relevant data
      */
     public ExerciseManagementStatisticsDTO getExerciseStatistics(Exercise exercise) throws EntityNotFoundException {
@@ -221,6 +229,7 @@ public class StatisticsService {
 
     /**
      * Sorting averageScores for release dates
+     *
      * @param exercises the exercises which we want to sort
      */
     private void sortAfterReleaseDate(List<CourseStatisticsAverageScore> exercises) {

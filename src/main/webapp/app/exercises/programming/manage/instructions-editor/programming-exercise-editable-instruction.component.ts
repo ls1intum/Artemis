@@ -7,7 +7,6 @@ import { catchError, map as rxMap, switchMap, tap } from 'rxjs/operators';
 import { TaskCommand } from 'app/shared/markdown-editor/domainCommands/programming-exercise/task.command';
 import { TestCaseCommand } from 'app/shared/markdown-editor/domainCommands/programming-exercise/testCase.command';
 import { ProgrammingExerciseTestCase } from 'app/entities/programming-exercise-test-case.model';
-import { ExerciseHintCommand } from 'app/shared/markdown-editor/domainCommands/programming-exercise/exercise-hint.command';
 import { ProblemStatementAnalysis } from 'app/exercises/programming/manage/instructions-editor/analysis/programming-exercise-instruction-analysis.model';
 import { Participation } from 'app/entities/participation/participation.model';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
@@ -18,10 +17,8 @@ import { ProgrammingExerciseParticipationService } from 'app/exercises/programmi
 import { DomainCommand } from 'app/shared/markdown-editor/domainCommands/domainCommand';
 import { ProgrammingExerciseGradingService } from 'app/exercises/programming/manage/services/programming-exercise-grading.service';
 import { KatexCommand } from 'app/shared/markdown-editor/commands/katex.command';
-import { ExerciseHintService } from 'app/exercises/shared/exercise-hint/manage/exercise-hint.service';
 import { Result } from 'app/entities/result.model';
 import { faCheckCircle, faCircleNotch, faExclamationTriangle, faGripLines, faSave } from '@fortawesome/free-solid-svg-icons';
-import { ExerciseHint } from 'app/entities/hestia/exercise-hint.model';
 
 @Component({
     selector: 'jhi-programming-exercise-editable-instructions',
@@ -34,14 +31,12 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
     programmingExercise: ProgrammingExercise;
 
     exerciseTestCases: string[] = [];
-    exerciseHints: ExerciseHint[];
 
     taskCommand = new TaskCommand();
     taskRegex = this.taskCommand.getTagRegex('g');
     testCaseCommand = new TestCaseCommand();
-    exerciseHintCommand = new ExerciseHintCommand();
     katexCommand = new KatexCommand();
-    domainCommands: DomainCommand[] = [this.katexCommand, this.taskCommand, this.testCaseCommand, this.exerciseHintCommand];
+    domainCommands: DomainCommand[] = [this.katexCommand, this.taskCommand, this.testCaseCommand];
 
     savingInstructions = false;
     unsavedChangesValue = false;
@@ -84,13 +79,7 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
             this.unsavedChanges = true;
         }
         this.programmingExercise = exercise;
-        const isExamExercise = !!this.programmingExercise.exerciseGroup;
-        if (isExamExercise) {
-            // Note: Exam exercises do not include hints at the moment, therefore, the markdown editor should not offer this command
-            this.domainCommands = [this.katexCommand, this.taskCommand, this.testCaseCommand];
-        } else {
-            this.domainCommands = [this.katexCommand, this.taskCommand, this.testCaseCommand, this.exerciseHintCommand];
-        }
+        this.domainCommands = [this.katexCommand, this.taskCommand, this.testCaseCommand];
         this.exerciseChange.emit(this.programmingExercise);
     }
 
@@ -113,22 +102,11 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
         private alertService: AlertService,
         private programmingExerciseParticipationService: ProgrammingExerciseParticipationService,
         private testCaseService: ProgrammingExerciseGradingService,
-        private exerciseHintService: ExerciseHintService,
     ) {}
 
     ngOnChanges(changes: SimpleChanges): void {
         if (hasExerciseChanged(changes)) {
             this.setupTestCaseSubscription();
-            if (this.exercise.exerciseHints) {
-                this.exerciseHints = this.exercise.exerciseHints;
-                this.prepareTaskHints();
-            } else {
-                if (this.exercise.id) {
-                    this.loadExerciseHints(this.exercise.id);
-                } else {
-                    this.exerciseHints = [];
-                }
-            }
         }
     }
 
@@ -176,28 +154,6 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
         if (this.forceRender) {
             this.forceRenderSubscription = this.forceRender.subscribe(() => this.generateHtml());
         }
-    }
-
-    /**
-     * Load the exercise hints and assign them to the task hint command.
-     *
-     * @param exerciseId for which to load the exercise hints.
-     */
-    loadExerciseHints(exerciseId: number) {
-        this.exerciseHintService
-            .findByExerciseId(exerciseId)
-            .pipe(rxMap(({ body }) => body || []))
-            .subscribe((exerciseHints: ExerciseHint[]) => {
-                this.exerciseHints = exerciseHints;
-                this.prepareTaskHints();
-            });
-    }
-
-    /**
-     * Prepares the task hints using exerciseHints
-     */
-    private prepareTaskHints() {
-        this.exerciseHintCommand.setValues(this.exerciseHints.map(({ id, title }) => ({ id: id!.toString(10), value: title! })));
     }
 
     /** Save the problem statement on the server.
@@ -303,18 +259,15 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
     };
 
     private mapAnalysisToWarnings = (analysis: ProblemStatementAnalysis) => {
-        return Array.from(analysis.values()).flatMap(({ lineNumber, invalidTestCases, invalidHints }) => this.mapIssuesToAnnotations(lineNumber, invalidTestCases, invalidHints));
+        return Array.from(analysis.values()).flatMap(({ lineNumber, invalidTestCases }) => this.mapIssuesToAnnotations(lineNumber, invalidTestCases));
     };
 
-    private mapIssuesToAnnotations = (lineNumber: number, invalidTestCases?: string[], invalidHints?: string[]) => {
+    private mapIssuesToAnnotations = (lineNumber: number, invalidTestCases?: string[]) => {
         const mapIssues = (issues: string[]) => ({ row: lineNumber, column: 0, text: ' - ' + issues.join('\n - '), type: 'warning' });
 
         const annotations = [];
         if (invalidTestCases) {
             annotations.push(mapIssues(invalidTestCases));
-        }
-        if (invalidHints) {
-            annotations.push(mapIssues(invalidHints));
         }
 
         return annotations;

@@ -5,23 +5,23 @@
 
     &.positive-feedback {
         text-decoration-style: double;
-        text-decoration-color: green;
-        color: green;
-        background-color: #f2f9f2;
+        text-decoration-color: var(--textblock-assessment-text-feedback-positive-active-decoration);
+        color: var(--textblock-assessment-text-feedback-positive-color);
+        background-color: var(--textblock-assessment-text-feedback-positive-background);
     }
 
     &.negative-feedback {
         text-decoration-style: wavy;
-        text-decoration-color: #c7254e;
-        color: #c7254e;
-        background-color: #f9f2f4;
+        text-decoration-color: var(--textblock-assessment-text-feedback-negative-active-decoration);
+        color: var(--textblock-assessment-text-feedback-negative-color);
+        background-color: var(--textblock-assessment-text-feedback-negative-background);
     }
 
     &.neutral-feedback {
         text-decoration-style: dashed;
-        text-decoration-color: #1a1a1a;
-        background-color: #f2f2f2;
-        color: #1a1a1a;
+        text-decoration-color: var(--textblock-assessment-text-feedback-neutral-active-decoration);
+        color: var(--textblock-assessment-text-feedback-neutral-color);
+        background-color: var(--textblock-assessment-text-feedback-neutral-background);
     }
 
     b {
@@ -31,12 +31,16 @@
 
 .feedback-icon {
     &.positive-feedback {
-        color: #3d9970;
+        color: var(--textblock-assessment-text-feedback-positive-color);
     }
 
     &.negative-feedback {
-        color: #ff4136;
+        color: var(--textblock-assessment-text-feedback-negative-color);
     }
+}
+
+.feedback-points {
+    font-weight: bold;
 }
 
 .white-space {

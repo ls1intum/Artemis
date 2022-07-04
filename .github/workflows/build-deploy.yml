@@ -59,7 +59,7 @@ jobs:
       env:
         NODE_OPTIONS: --max_old_space_size=6144
     - name: Upload Artifact
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v3
       with:
         name: Artemis.war
         path: build/libs/Artemis-*.war
@@ -78,15 +78,16 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
     steps:
+    - uses: actions/checkout@v3
     - name: Download Artifact
-      uses: actions/download-artifact@v2
+      uses: actions/download-artifact@v3
       with:
         name: Artemis.war
-    - name: Download Dockerfile
-      run: curl -O ${{ env.RAW_URL }}/src/main/docker/Dockerfile -O ${{ env.RAW_URL }}/src/main/docker/entrypoint.sh
+    - name: Copy Dockerfile to Build Directory
+      run: cp src/main/docker/Dockerfile .
     - name: Build Docker Image
       run: docker build --build-arg WAR_PATH=. -t artemis .
-    
+
     - name: Compute Tag
       uses: actions/github-script@v6
       id: compute-tag
@@ -98,7 +99,7 @@ jobs:
           }
           if (context.eventName === "push") {
             if (context.ref.startsWith("refs/tags/")) {
-              return context.ref.slice(10); 
+              return context.ref.slice(10);
             }
             if (context.ref === "refs/heads/develop") {
               return "latest";
@@ -108,10 +109,10 @@ jobs:
 
     # Push to GitHub Container Registry
     - name: Login to GitHub Container Registry
-      uses: docker/login-action@v1
+      uses: docker/login-action@v2
       with:
         registry: ghcr.io
-        username: ${{ github.actor }}
+        username: ${{ github.repository_owner }}
         password: ${{ secrets.GITHUB_TOKEN }}
       if: ${{ steps.compute-tag.outputs.result != 'FALSE' }}
     - name: Push to GitHub Container Registry
@@ -164,14 +165,14 @@ jobs:
           }
 
     - name: Download Artifact
-      uses: actions/download-artifact@v2
+      uses: actions/download-artifact@v3
       with:
         name: Artemis.war
     - name: Store Artifact Name
       id: artifact-name
       run: echo "::set-output name=war-file::$(ls)"
 
-    # Downlaod artemis-server-cli from GH without cloning the Repo
+    # Download artemis-server-cli from GH without cloning the Repo
     - name: Fetch Artemis CLI
       run: |
         wget ${{ env.RAW_URL }}/artemis-server-cli

@@ -20,13 +20,15 @@ public class PostContextFilter {
 
     private Long lectureId;
 
+    private Long plagiarismCaseId;
+
     private String searchText;
 
-    private Boolean filterToUnresolved;
+    private boolean filterToUnresolved = false;
 
-    private Boolean filterToOwn;
+    private boolean filterToOwn = false;
 
-    private Boolean filterToAnsweredOrReacted;
+    private boolean filterToAnsweredOrReacted = false;
 
     private PostSortCriterion postSortCriterion;
 
@@ -64,6 +66,14 @@ public class PostContextFilter {
         this.lectureId = lectureId;
     }
 
+    public Long getPlagiarismCaseId() {
+        return plagiarismCaseId;
+    }
+
+    public void setPlagiarismCaseId(Long plagiarismCaseId) {
+        this.plagiarismCaseId = plagiarismCaseId;
+    }
+
     public String getSearchText() {
         return searchText;
     }
@@ -72,27 +82,27 @@ public class PostContextFilter {
         this.searchText = searchText;
     }
 
-    public Boolean getFilterToUnresolved() {
+    public boolean getFilterToUnresolved() {
         return filterToUnresolved;
     }
 
-    public void setFilterToUnresolved(Boolean filterToUnresolved) {
+    public void setFilterToUnresolved(boolean filterToUnresolved) {
         this.filterToUnresolved = filterToUnresolved;
     }
 
-    public Boolean getFilterToOwn() {
+    public boolean getFilterToOwn() {
         return filterToOwn;
     }
 
-    public void setFilterToOwn(Boolean filterToOwn) {
+    public void setFilterToOwn(boolean filterToOwn) {
         this.filterToOwn = filterToOwn;
     }
 
-    public Boolean getFilterToAnsweredOrReacted() {
+    public boolean getFilterToAnsweredOrReacted() {
         return filterToAnsweredOrReacted;
     }
 
-    public void setFilterToAnsweredOrReacted(Boolean filterToAnsweredOrReacted) {
+    public void setFilterToAnsweredOrReacted(boolean filterToAnsweredOrReacted) {
         this.filterToAnsweredOrReacted = filterToAnsweredOrReacted;
     }
 

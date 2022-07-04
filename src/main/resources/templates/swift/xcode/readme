@@ -56,17 +56,6 @@ For a clean and tidy code you should implement a `ListItemModifier` to surround 
 
 @startuml
 
-skinparam ArrowFontSize 16
-skinparam shadowing false
-skinparam classAttributeIconSize 0
-skinparam class {
-    FontSize 20
-    BackgroundColor white
-    AttributeFontSize 16
-    BorderColor black
-    ArrowColor black
-}
-
 class Client {
 }
 

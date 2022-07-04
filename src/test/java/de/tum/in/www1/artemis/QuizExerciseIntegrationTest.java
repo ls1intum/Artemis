@@ -1,18 +1,21 @@
 package de.tum.in.www1.artemis;
 
-import static org.assertj.core.api.Assertions.*;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.byLessThan;
+import static org.junit.jupiter.api.Assertions.*;
 
 import java.security.Principal;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.EnumSource;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
@@ -20,15 +23,17 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
 
-import de.tum.in.www1.artemis.domain.Course;
-import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.*;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.quiz.*;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.QuizExerciseService;
-import de.tum.in.www1.artemis.service.scheduled.quiz.QuizScheduleService;
+import de.tum.in.www1.artemis.service.scheduled.cache.quiz.QuizScheduleService;
 import de.tum.in.www1.artemis.util.ModelFactory;
+import de.tum.in.www1.artemis.util.QuizUtilService;
+import de.tum.in.www1.artemis.web.rest.dto.QuizBatchJoinDTO;
 import de.tum.in.www1.artemis.web.websocket.QuizSubmissionWebsocketService;
 
 public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
@@ -62,6 +67,15 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
 
     @Autowired
     private CourseRepository courseRepo;
+
+    @Autowired
+    private QuizUtilService quizUtilService;
+
+    @Autowired
+    private QuizBatchRepository quizBatchRepository;
+
+    @Autowired
+    private TeamRepository teamRepository;
 
     private QuizExercise quizExercise;
 
@@ -103,10 +117,11 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
         quizScheduleService.clearAllQuizData();
     }
 
-    @Test
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testCreateQuizExercise() throws Exception {
-        quizExercise = createQuizOnServer(ZonedDateTime.now().plusHours(5), null);
+    @EnumSource(QuizMode.class)
+    public void testCreateQuizExercise(QuizMode quizMode) throws Exception {
+        quizExercise = createQuizOnServer(ZonedDateTime.now().plusHours(5), null, quizMode);
 
         // General assertions
         assertThat(quizExercise.getQuizQuestions()).as("Quiz questions were saved").hasSize(3);
@@ -263,15 +278,23 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void createQuizExercise_InvalidMaxScore() throws Exception {
-        quizExercise = createQuizOnServer(ZonedDateTime.now().plusHours(5), null);
+        quizExercise = createQuizOnServer(ZonedDateTime.now().plusHours(5), null, QuizMode.SYNCHRONIZED);
         quizExercise.setMaxPoints(0.0);
         request.postWithResponseBody("/api/quiz-exercises", quizExercise, QuizExercise.class, HttpStatus.BAD_REQUEST);
     }
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void createQuizExercise_InvalidDates_badRequest() throws Exception {
+        quizExercise = createQuizOnServer(ZonedDateTime.now().plusHours(5), null, QuizMode.SYNCHRONIZED);
+        quizExercise.getQuizBatches().forEach(batch -> batch.setStartTime(ZonedDateTime.now()));
+        request.postWithResponseBody("/api/quiz-exercises", quizExercise, QuizExercise.class, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void createQuizExercise_IncludedAsBonusInvalidBonusPoints() throws Exception {
-        quizExercise = createQuizOnServer(ZonedDateTime.now().plusHours(5), null);
+        quizExercise = createQuizOnServer(ZonedDateTime.now().plusHours(5), null, QuizMode.SYNCHRONIZED);
         quizExercise.setMaxPoints(10.0);
         quizExercise.setBonusPoints(1.0);
         quizExercise.setIncludedInOverallScore(IncludedInOverallScore.INCLUDED_AS_BONUS);
@@ -281,17 +304,18 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void createQuizExercise_NotIncludedInvalidBonusPoints() throws Exception {
-        quizExercise = createQuizOnServer(ZonedDateTime.now().plusHours(5), null);
+        quizExercise = createQuizOnServer(ZonedDateTime.now().plusHours(5), null, QuizMode.SYNCHRONIZED);
         quizExercise.setMaxPoints(10.0);
         quizExercise.setBonusPoints(1.0);
         quizExercise.setIncludedInOverallScore(IncludedInOverallScore.NOT_INCLUDED);
         request.postWithResponseBody("/api/quiz-exercises", quizExercise, QuizExercise.class, HttpStatus.BAD_REQUEST);
     }
 
-    @Test
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testEditQuizExercise() throws Exception {
-        quizExercise = createQuizOnServer(ZonedDateTime.now().plusHours(5), null);
+    @EnumSource(QuizMode.class)
+    public void testEditQuizExercise(QuizMode quizMode) throws Exception {
+        quizExercise = createQuizOnServer(ZonedDateTime.now().plusHours(5), null, quizMode);
 
         MultipleChoiceQuestion mc = (MultipleChoiceQuestion) quizExercise.getQuizQuestions().get(0);
         mc.getAnswerOptions().remove(0);
@@ -363,6 +387,45 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
                 assertThat(solutions.get(0).getText()).as("Text for solution is correct").isEqualTo("long");
             }
         }
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testEditQuizExercise_SingleChoiceMC_AllOrNothing() throws Exception {
+        quizExercise = createQuizOnServer(ZonedDateTime.now().plusHours(5), null, QuizMode.SYNCHRONIZED);
+
+        MultipleChoiceQuestion mc = (MultipleChoiceQuestion) quizExercise.getQuizQuestions().get(0);
+        mc.setSingleChoice(true);
+        mc.setScoringType(ScoringType.ALL_OR_NOTHING);
+        quizExercise = request.putWithResponseBody("/api/quiz-exercises", quizExercise, QuizExercise.class, HttpStatus.OK);
+        assertThat(quizExercise.getQuizQuestions().get(0).getScoringType()).as("Scoring type was changed").isEqualTo(ScoringType.ALL_OR_NOTHING);
+
+        // multiple correct answers are not allowed
+        mc = (MultipleChoiceQuestion) quizExercise.getQuizQuestions().get(0);
+        mc.getAnswerOptions().get(1).setIsCorrect(true);
+        quizExercise = request.putWithResponseBody("/api/quiz-exercises", quizExercise, QuizExercise.class, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testEditQuizExercise_SingleChoiceMC_Proportional() throws Exception {
+        quizExercise = createQuizOnServer(ZonedDateTime.now().plusHours(5), null, QuizMode.SYNCHRONIZED);
+
+        MultipleChoiceQuestion mc = (MultipleChoiceQuestion) quizExercise.getQuizQuestions().get(0);
+        mc.setSingleChoice(true);
+        mc.setScoringType(ScoringType.PROPORTIONAL_WITHOUT_PENALTY);
+        quizExercise = request.putWithResponseBody("/api/quiz-exercises", quizExercise, QuizExercise.class, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testEditQuizExercise_SingleChoiceMC_ProportionalPenalty() throws Exception {
+        quizExercise = createQuizOnServer(ZonedDateTime.now().plusHours(5), null, QuizMode.SYNCHRONIZED);
+
+        MultipleChoiceQuestion mc = (MultipleChoiceQuestion) quizExercise.getQuizQuestions().get(0);
+        mc.setSingleChoice(true);
+        mc.setScoringType(ScoringType.PROPORTIONAL_WITH_PENALTY);
+        quizExercise = request.putWithResponseBody("/api/quiz-exercises", quizExercise, QuizExercise.class, HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -446,7 +509,7 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void updateQuizExercise_setCourseAndExerciseGroup_badRequest() throws Exception {
         ExerciseGroup exerciseGroup = database.addExerciseGroupWithExamAndCourse(true);
-        QuizExercise quizExercise = createQuizOnServer(ZonedDateTime.now().plusHours(5), null);
+        QuizExercise quizExercise = createQuizOnServer(ZonedDateTime.now().plusHours(5), null, QuizMode.SYNCHRONIZED);
         quizExercise.setExerciseGroup(exerciseGroup);
 
         request.putWithResponseBody("/api/quiz-exercises/", quizExercise, QuizExercise.class, HttpStatus.BAD_REQUEST);
@@ -455,7 +518,7 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void updateQuizExercise_setNeitherCourseAndExerciseGroup_badRequest() throws Exception {
-        QuizExercise quizExercise = createQuizOnServer(ZonedDateTime.now().plusHours(5), null);
+        QuizExercise quizExercise = createQuizOnServer(ZonedDateTime.now().plusHours(5), null, QuizMode.SYNCHRONIZED);
         quizExercise.setCourse(null);
 
         request.putWithResponseBody("/api/quiz-exercises/", quizExercise, QuizExercise.class, HttpStatus.BAD_REQUEST);
@@ -463,8 +526,16 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void updateQuizExercise_InvalidDates_badRequest() throws Exception {
+        QuizExercise quizExercise = createQuizOnServer(ZonedDateTime.now().plusHours(5), null, QuizMode.SYNCHRONIZED);
+        quizExercise.getQuizBatches().forEach(batch -> batch.setStartTime(ZonedDateTime.now()));
+        request.putWithResponseBody("/api/quiz-exercises/", quizExercise, QuizExercise.class, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void updateQuizExercise_convertFromCourseToExamExercise_badRequest() throws Exception {
-        QuizExercise quizExercise = createQuizOnServer(ZonedDateTime.now().plusHours(5), null);
+        QuizExercise quizExercise = createQuizOnServer(ZonedDateTime.now().plusHours(5), null, QuizMode.SYNCHRONIZED);
         ExerciseGroup exerciseGroup = database.addExerciseGroupWithExamAndCourse(true);
 
         quizExercise.setCourse(null);
@@ -486,10 +557,10 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
         request.putWithResponseBody("/api/quiz-exercises/", quizExercise, QuizExercise.class, HttpStatus.BAD_REQUEST);
     }
 
-    private QuizExercise createQuizOnServer(ZonedDateTime releaseDate, ZonedDateTime dueDate) throws Exception {
+    private QuizExercise createQuizOnServer(ZonedDateTime releaseDate, ZonedDateTime dueDate, QuizMode quizMode) throws Exception {
         Course course = database.createCourse();
 
-        QuizExercise quizExercise = database.createQuiz(course, releaseDate, dueDate);
+        QuizExercise quizExercise = database.createQuiz(course, releaseDate, dueDate, quizMode);
         quizExercise.setDuration(3600);
         QuizExercise quizExerciseServer = request.postWithResponseBody("/api/quiz-exercises", quizExercise, QuizExercise.class, HttpStatus.CREATED);
         QuizExercise quizExerciseDatabase = quizExerciseRepository.findOneWithQuestionsAndStatistics(quizExerciseServer.getId());
@@ -548,20 +619,22 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
         return quizExerciseServer;
     }
 
-    @Test
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testDeleteQuizExercise() throws Exception {
-        quizExercise = createQuizOnServer(ZonedDateTime.now().plusHours(5), null);
+    @EnumSource(QuizMode.class)
+    public void testDeleteQuizExercise(QuizMode quizMode) throws Exception {
+        quizExercise = createQuizOnServer(ZonedDateTime.now().plusHours(5), null, quizMode);
 
         assertThat(quizExerciseRepository.findOneWithQuestionsAndStatistics(quizExercise.getId())).as("Exercise is created correctly").isNotNull();
         request.delete("/api/quiz-exercises/" + quizExercise.getId(), HttpStatus.OK);
         assertThat(quizExerciseRepository.findOneWithQuestionsAndStatistics(quizExercise.getId())).as("Exercise is deleted correctly").isNull();
     }
 
-    @Test
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testDeleteQuizExerciseWithSubmittedAnswers() throws Exception {
-        quizExercise = createQuizOnServer(ZonedDateTime.now(), ZonedDateTime.now().plusMinutes(1));
+    @EnumSource(QuizMode.class)
+    public void testDeleteQuizExerciseWithSubmittedAnswers(QuizMode quizMode) throws Exception {
+        quizExercise = createQuizOnServer(ZonedDateTime.now(), ZonedDateTime.now().plusMinutes(1), quizMode);
 
         assertThat(quizExerciseRepository.findOneWithQuestionsAndStatistics(quizExercise.getId())).as("Exercise is created correctly").isNotNull();
 
@@ -570,6 +643,7 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
         QuizSubmission quizSubmission = database.generateSubmissionForThreeQuestions(quizExercise, 1, true, null);
 
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        quizUtilService.prepareBatchForSubmitting(quizExercise, authentication, SecurityUtils.makeAuthorizationObject(username));
         quizSubmissionWebsocketService.saveSubmission(quizExercise.getId(), quizSubmission, principal);
         SecurityContextHolder.getContext().setAuthentication(authentication);
 
@@ -589,7 +663,7 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testUpdateNotExistingQuizExercise() throws Exception {
         Course course = database.createCourse();
-        QuizExercise quizExercise = database.createQuiz(course, ZonedDateTime.now().plusHours(5), null);
+        QuizExercise quizExercise = database.createQuiz(course, ZonedDateTime.now().plusHours(5), null, QuizMode.SYNCHRONIZED);
         QuizExercise quizExerciseServer = request.putWithResponseBody("/api/quiz-exercises", quizExercise, QuizExercise.class, HttpStatus.CREATED);
         assertThat(quizExerciseServer.getId()).isNotNull();
         assertThat(quizExerciseServer.getQuizQuestions()).hasSize(quizExercise.getQuizQuestions().size());
@@ -603,7 +677,7 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
     public void testUpdateRunningQuizExercise() throws Exception {
         Course course = database.createCourse();
         // create QuizExercise that already started
-        QuizExercise startedQuizExercise = database.createQuiz(course, ZonedDateTime.now().minusHours(1), null);
+        QuizExercise startedQuizExercise = database.createQuiz(course, ZonedDateTime.now().minusHours(1), null, QuizMode.SYNCHRONIZED);
         QuizExercise startedQuizExerciseServer = request.postWithResponseBody("/api/quiz-exercises", startedQuizExercise, QuizExercise.class, HttpStatus.CREATED);
 
         MultipleChoiceQuestion mc = (MultipleChoiceQuestion) startedQuizExerciseServer.getQuizQuestions().get(0);
@@ -618,19 +692,24 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testCreateExistingQuizExercise() throws Exception {
-        quizExercise = createQuizOnServer(ZonedDateTime.now().plusHours(5), null);
+        quizExercise = createQuizOnServer(ZonedDateTime.now().plusHours(5), null, QuizMode.SYNCHRONIZED);
 
         QuizExercise newQuizExerciseServer = request.postWithResponseBody("/api/quiz-exercises", quizExercise, QuizExercise.class, HttpStatus.BAD_REQUEST);
         assertThat(newQuizExerciseServer).isNull();
     }
 
-    @Test
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testGetQuizExercise() throws Exception {
-        quizExercise = createQuizOnServer(ZonedDateTime.now().plusHours(5), null);
+    @EnumSource(QuizMode.class)
+    public void testGetQuizExercise(QuizMode quizMode) throws Exception {
+        quizExercise = createQuizOnServer(ZonedDateTime.now().plusHours(5), null, quizMode);
 
         QuizExercise quizExerciseGet = request.get("/api/quiz-exercises/" + quizExercise.getId(), HttpStatus.OK, QuizExercise.class);
         checkQuizExercises(quizExercise, quizExerciseGet);
+        // Start Date picker at Quiz Edit page should be populated correctly
+        if (quizMode == QuizMode.SYNCHRONIZED) {
+            assertThat(quizExerciseGet.getQuizBatches()).isNotEmpty();
+        }
 
         // get all exercises for a course
         List<QuizExercise> allQuizExercisesForCourse = request.getList("/api/courses/" + quizExercise.getCourseViaExerciseGroupOrCourseMember().getId() + "/quiz-exercises",
@@ -639,12 +718,14 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
         assertThat(allQuizExercisesForCourse.get(0)).isEqualTo(quizExercise);
     }
 
-    @Test
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @WithMockUser(username = "student1", roles = "USER")
-    public void testGetQuizExercise_asStudent() throws Exception {
+    @EnumSource(QuizMode.class)
+    public void testGetQuizExercise_asStudent(QuizMode quizMode) throws Exception {
         Course course = database.createCourse();
-        QuizExercise quizExercise = database.createQuiz(course, ZonedDateTime.now().plusHours(5), null);
+        QuizExercise quizExercise = database.createQuiz(course, ZonedDateTime.now().minusHours(5), null, quizMode);
         quizExercise.setDuration(360);
+        quizExercise.getQuizBatches().forEach(batch -> batch.setStartTime(ZonedDateTime.now().plusHours(5)));
         quizExercise = quizExerciseService.save(quizExercise);
 
         // get not started exercise for students
@@ -652,25 +733,57 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
         checkQuizExerciseForStudent(quizExerciseForStudent_notStarted);
 
         // get started exercise for students
-        quizExercise.setReleaseDate(ZonedDateTime.now().minusMinutes(5));
-        quizExercise.setDueDate(ZonedDateTime.now().plusMinutes(1)); // total 6min = 360s
+        quizExercise.getQuizBatches().forEach(batch -> batch.setStartTime(ZonedDateTime.now().minusMinutes(5)));
         quizExercise = quizExerciseService.save(quizExercise);
-        assertThat(quizExercise.isSubmissionAllowed()).isTrue();
-        assertThat(quizExercise.isStarted()).isTrue();
+        assertThat(quizExercise.getQuizBatches()).allMatch(QuizBatch::isStarted);
+        assertThat(quizExercise.getQuizBatches()).allMatch(QuizBatch::isSubmissionAllowed);
 
         QuizExercise quizExerciseForStudent_Started = request.get("/api/quiz-exercises/" + quizExercise.getId() + "/for-student", HttpStatus.OK, QuizExercise.class);
         checkQuizExerciseForStudent(quizExerciseForStudent_Started);
 
         // get finished exercise for students
-        quizExercise.setReleaseDate(ZonedDateTime.now().minusMinutes(5));
-        quizExercise.setDueDate(ZonedDateTime.now().minusMinutes(2));
-        quizExercise.setDuration(180);
+        quizExerciseService.endQuiz(quizExercise, ZonedDateTime.now().minusMinutes(2));
         quizExercise = quizExerciseService.save(quizExercise);
-        assertThat(quizExercise.isSubmissionAllowed()).isFalse();
-        assertThat(quizExercise.isStarted()).isTrue();
+        assertThat(quizExercise.getQuizBatches()).allMatch(QuizBatch::isStarted);
+        assertThat(quizExercise.getQuizBatches()).noneMatch(QuizBatch::isSubmissionAllowed);
 
         QuizExercise quizExerciseForStudent_Finished = request.get("/api/quiz-exercises/" + quizExercise.getId() + "/for-student", HttpStatus.OK, QuizExercise.class);
         checkQuizExerciseForStudent(quizExerciseForStudent_Finished);
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void testSetQuizBatchStartTimeForNonSynchronizedQuizExercises_asStudent() throws Exception {
+        Course course = database.createCourse();
+        QuizExercise quizExercise = database.createQuizWithQuizBatchedExercises(course, ZonedDateTime.now().minusHours(5), null, QuizMode.INDIVIDUAL);
+        quizExercise.setDuration(400);
+        // get started exercise for students
+        quizExercise.getQuizBatches().forEach(batch -> batch.setStartTime(ZonedDateTime.now().minusMinutes(5)));
+        quizExercise = quizExerciseService.save(quizExercise);
+
+        // when exercise due date is null
+        QuizExercise quizExerciseForStudent = request.get("/api/quiz-exercises/" + quizExercise.getId() + "/for-student", HttpStatus.OK, QuizExercise.class);
+        assertThat(quizExerciseForStudent.getQuizBatches().stream().allMatch(quizBatch -> quizBatch.getStartTime() != null)).isTrue();
+
+        // when exercise due date is later than now
+        quizExercise.setDueDate(ZonedDateTime.now().plusHours(1));
+        quizExerciseService.save(quizExercise);
+        quizExerciseForStudent = request.get("/api/quiz-exercises/" + quizExercise.getId() + "/for-student", HttpStatus.OK, QuizExercise.class);
+        assertThat(quizExerciseForStudent.getQuizBatches().stream().allMatch(quizBatch -> quizBatch.getStartTime() != null)).isTrue();
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void testCreateQuizExerciseWithoutQuizBatchForSynchronizedQuiz_asStudent() throws Exception {
+        Course course = database.createCourse();
+        QuizExercise quizExercise = database.createQuiz(course, ZonedDateTime.now().minusHours(4), null, QuizMode.SYNCHRONIZED);
+        quizExercise.setDuration(400);
+        quizExercise.setQuizBatches(null);
+        quizExercise = quizExerciseService.save(quizExercise);
+
+        QuizExercise quizExerciseForStudent = request.get("/api/quiz-exercises/" + quizExercise.getId() + "/for-student", HttpStatus.OK, QuizExercise.class);
+        assertThat(quizExerciseForStudent.getQuizBatches()).hasSize(1);
+        checkQuizExerciseForStudent(quizExerciseForStudent);
     }
 
     @Test
@@ -693,6 +806,7 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
 
         assertThat(quizExerciseGet).as("Quiz exercise was retrieved").isEqualTo(quizExercise).isNotNull();
         assertThat(quizExerciseGet.getId()).as("Quiz exercise with the right id was retrieved").isEqualTo(quizExerciseGet.getId());
+        assertThat(quizExerciseGet.getQuizBatches()).isEmpty();
     }
 
     @Test
@@ -707,7 +821,7 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testRecalculateStatistics() throws Exception {
-        quizExercise = createQuizOnServer(ZonedDateTime.now().plusHours(5), null);
+        quizExercise = createQuizOnServer(ZonedDateTime.now().plusHours(5), null, QuizMode.SYNCHRONIZED);
 
         quizExercise.setReleaseDate(ZonedDateTime.now().minusHours(5));
         quizExercise.setDueDate(ZonedDateTime.now().minusHours(2));
@@ -784,13 +898,12 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testReevaluateStatistics() throws Exception {
-        quizExercise = createQuizOnServer(ZonedDateTime.now().plusSeconds(5), null);
+        quizExercise = createQuizOnServer(ZonedDateTime.now().plusSeconds(5), null, QuizMode.SYNCHRONIZED);
 
         // we expect a bad request because the quiz has not ended yet
         request.putWithResponseBody("/api/quiz-exercises/" + quizExercise.getId() + "/re-evaluate/", quizExercise, QuizExercise.class, HttpStatus.BAD_REQUEST);
         quizExercise.setReleaseDate(ZonedDateTime.now().minusHours(5));
-        quizExercise.setDueDate(ZonedDateTime.now().minusMinutes(1));
-        // quizExercise.setDuration(3600);
+        quizExerciseService.endQuiz(quizExercise, ZonedDateTime.now().minusMinutes(1));
         quizExercise = request.putWithResponseBody("/api/quiz-exercises", quizExercise, QuizExercise.class, HttpStatus.OK);
 
         // generate rated submissions for each student
@@ -891,7 +1004,7 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testReevaluateStatistics_Practice() throws Exception {
 
-        quizExercise = createQuizOnServer(ZonedDateTime.now().plusSeconds(5), null);
+        quizExercise = createQuizOnServer(ZonedDateTime.now().plusSeconds(5), null, QuizMode.SYNCHRONIZED);
         // use the exact other scoring types to cover all combinations in the tests
         quizExercise.getQuizQuestions().get(0).setScoringType(ScoringType.PROPORTIONAL_WITH_PENALTY);   // MC
         quizExercise.getQuizQuestions().get(1).setScoringType(ScoringType.ALL_OR_NOTHING);              // DnD
@@ -900,8 +1013,8 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
         // we expect a bad request because the quiz has not ended yet
         request.putWithResponseBody("/api/quiz-exercises/" + quizExercise.getId() + "/re-evaluate/", quizExercise, QuizExercise.class, HttpStatus.BAD_REQUEST);
         quizExercise.setReleaseDate(ZonedDateTime.now().minusHours(2));
-        quizExercise.setDueDate(ZonedDateTime.now().minusHours(1));
         quizExercise.setDuration(3600);
+        quizExerciseService.endQuiz(quizExercise, ZonedDateTime.now().minusHours(1));
         quizExercise.setIsOpenForPractice(true);
         quizExercise = request.putWithResponseBody("/api/quiz-exercises", quizExercise, QuizExercise.class, HttpStatus.OK);
 
@@ -1006,7 +1119,7 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testReEvaluateQuizQuestionWithMoreSolutions() throws Exception {
-        quizExercise = createQuizOnServer(ZonedDateTime.now().minusHours(5), ZonedDateTime.now().minusHours(2));
+        quizExercise = createQuizOnServer(ZonedDateTime.now().minusHours(5), ZonedDateTime.now().minusHours(2), QuizMode.SYNCHRONIZED);
         QuizQuestion question = quizExercise.getQuizQuestions().get(2);
 
         if (question instanceof ShortAnswerQuestion shortAnswerQuestion) {
@@ -1014,7 +1127,7 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
             assertThat(shortAnswerQuestion.getCorrectMappings()).hasSize(2);
             assertThat(shortAnswerQuestion.getCorrectMappings()).hasSize(2);
 
-            // add a solution with an mapping onto spot number 0
+            // add a solution with a mapping onto spot number 0
             ShortAnswerSolution newSolution = new ShortAnswerSolution();
             newSolution.setText("text");
             newSolution.setId(3L);
@@ -1043,54 +1156,132 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testPerformStartNow() throws Exception {
-        quizExercise = createQuizOnServer(ZonedDateTime.now().plusHours(5), null);
+        quizExercise = createQuizOnServer(ZonedDateTime.now().plusHours(5), null, QuizMode.SYNCHRONIZED);
+        quizExercise.setReleaseDate(ZonedDateTime.now().minusHours(5));
+        quizExercise = quizExerciseService.save(quizExercise);
 
         QuizExercise updatedQuizExercise = request.putWithResponseBody("/api/quiz-exercises/" + quizExercise.getId() + "/start-now", quizExercise, QuizExercise.class,
                 HttpStatus.OK);
-        long millis = ChronoUnit.MILLIS.between(updatedQuizExercise.getReleaseDate(), ZonedDateTime.now());
+        long millis = ChronoUnit.MILLIS.between(updatedQuizExercise.getQuizBatches().stream().findAny().get().getStartTime(), ZonedDateTime.now());
         // actually the two dates should be "exactly" the same, but for the sake of slow CI testing machines and to prevent flaky tests, we live with the following rule
         assertThat(millis).isCloseTo(0, byLessThan(2000L));
-        assertThat(updatedQuizExercise.isIsPlannedToStart()).isTrue();
+        assertThat(updatedQuizExercise.getQuizBatches()).allMatch(QuizBatch::isStarted);
     }
 
-    @Test
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testPerformSetVisible() throws Exception {
-        quizExercise = createQuizOnServer(ZonedDateTime.now().plusHours(5), null);
+    @EnumSource(value = QuizMode.class, names = { "SYNCHRONIZED" }, mode = EnumSource.Mode.EXCLUDE)
+    public void testPerformStartNow_invalidMode(QuizMode quizMode) throws Exception {
+        quizExercise = createQuizOnServer(ZonedDateTime.now().plusHours(5), null, quizMode);
+        quizExercise.setReleaseDate(ZonedDateTime.now().minusHours(5));
+        quizExercise = quizExerciseService.save(quizExercise);
+
+        request.putWithResponseBody("/api/quiz-exercises/" + quizExercise.getId() + "/start-now", quizExercise, QuizExercise.class, HttpStatus.BAD_REQUEST);
+    }
+
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @EnumSource(QuizMode.class)
+    public void testPerformSetVisible(QuizMode quizMode) throws Exception {
+        quizExercise = createQuizOnServer(ZonedDateTime.now().minusHours(5), null, quizMode);
 
         // we expect a bad request because the quiz is already visible
         request.putWithResponseBody("/api/quiz-exercises/" + quizExercise.getId() + "/set-visible", quizExercise, QuizExercise.class, HttpStatus.BAD_REQUEST);
-        quizExercise.setIsVisibleBeforeStart(false);
+        quizExercise.setReleaseDate(ZonedDateTime.now().plusDays(1));
         quizExerciseService.save(quizExercise);
         QuizExercise updatedQuizExercise = request.putWithResponseBody("/api/quiz-exercises/" + quizExercise.getId() + "/set-visible", quizExercise, QuizExercise.class,
                 HttpStatus.OK);
         assertThat(updatedQuizExercise.isVisibleToStudents()).isTrue();
     }
 
-    @Test
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testPerformOpenForPractice() throws Exception {
-        quizExercise = createQuizOnServer(ZonedDateTime.now().plusHours(5), null);
+    @EnumSource(QuizMode.class)
+    public void testPerformOpenForPractice(QuizMode quizMode) throws Exception {
+        quizExercise = createQuizOnServer(ZonedDateTime.now().plusHours(5), null, quizMode);
 
         // we expect a bad request because the quiz has not ended yet
         request.putWithResponseBody("/api/quiz-exercises/" + quizExercise.getId() + "/open-for-practice", quizExercise, QuizExercise.class, HttpStatus.BAD_REQUEST);
-        quizExercise.setReleaseDate(ZonedDateTime.now().minusMinutes(5));
-        quizExercise.setDueDate(ZonedDateTime.now().minusMinutes(2));
         quizExercise.setDuration(180);
+        quizExerciseService.endQuiz(quizExercise, ZonedDateTime.now().minusMinutes(2));
         quizExerciseService.save(quizExercise);
         QuizExercise updatedQuizExercise = request.putWithResponseBody("/api/quiz-exercises/" + quizExercise.getId() + "/open-for-practice", quizExercise, QuizExercise.class,
                 HttpStatus.OK);
         assertThat(updatedQuizExercise.isIsOpenForPractice()).isTrue();
     }
 
+    private static List<Arguments> testPerformJoin_args() {
+        var now = ZonedDateTime.now();
+        var longPast = now.minusHours(4);
+        var past = now.minusMinutes(30);
+        var future = now.plusMinutes(30);
+        var longFuture = now.plusHours(4);
+
+        var batchLongPast = new QuizBatch();
+        batchLongPast.setStartTime(longPast);
+        batchLongPast.setPassword("12345678");
+        var batchPast = new QuizBatch();
+        batchPast.setStartTime(past);
+        batchPast.setPassword("12345678");
+        var batchFuture = new QuizBatch();
+        batchFuture.setStartTime(future);
+        batchFuture.setPassword("12345678");
+
+        return List.of(Arguments.of(QuizMode.SYNCHRONIZED, future, null, null, null, HttpStatus.FORBIDDEN), // start in future
+                Arguments.of(QuizMode.SYNCHRONIZED, past, null, null, null, HttpStatus.NOT_FOUND), // synchronized
+                Arguments.of(QuizMode.SYNCHRONIZED, past, null, null, "12345678", HttpStatus.NOT_FOUND), // synchronized
+                Arguments.of(QuizMode.SYNCHRONIZED, longPast, past, null, null, HttpStatus.FORBIDDEN), // due date passed
+                Arguments.of(QuizMode.INDIVIDUAL, future, null, null, null, HttpStatus.FORBIDDEN), // start in future
+                Arguments.of(QuizMode.INDIVIDUAL, longPast, null, null, null, HttpStatus.OK), Arguments.of(QuizMode.INDIVIDUAL, longPast, longFuture, null, null, HttpStatus.OK),
+                Arguments.of(QuizMode.INDIVIDUAL, longPast, future, null, null, HttpStatus.OK), // NOTE: reduced working time because of due date
+                Arguments.of(QuizMode.INDIVIDUAL, longPast, past, null, null, HttpStatus.FORBIDDEN), // after due date
+                Arguments.of(QuizMode.BATCHED, future, null, null, null, HttpStatus.FORBIDDEN), // start in future
+                Arguments.of(QuizMode.BATCHED, longPast, null, null, null, HttpStatus.NOT_FOUND), // no pw
+                Arguments.of(QuizMode.BATCHED, longPast, longFuture, null, null, HttpStatus.NOT_FOUND), // no pw
+                Arguments.of(QuizMode.BATCHED, longPast, future, null, null, HttpStatus.NOT_FOUND), // no pw
+                Arguments.of(QuizMode.BATCHED, longPast, past, null, null, HttpStatus.FORBIDDEN), // after due date
+                Arguments.of(QuizMode.BATCHED, longPast, null, batchLongPast, null, HttpStatus.NOT_FOUND), // no pw
+                Arguments.of(QuizMode.BATCHED, longPast, null, batchPast, null, HttpStatus.NOT_FOUND), // no pw
+                Arguments.of(QuizMode.BATCHED, longPast, null, batchFuture, null, HttpStatus.NOT_FOUND), // no pw
+                Arguments.of(QuizMode.BATCHED, longPast, null, batchLongPast, "87654321", HttpStatus.NOT_FOUND), // wrong pw
+                Arguments.of(QuizMode.BATCHED, longPast, null, batchPast, "87654321", HttpStatus.NOT_FOUND), // wrong pw
+                Arguments.of(QuizMode.BATCHED, longPast, null, batchFuture, "87654321", HttpStatus.NOT_FOUND), // wrong pw
+                Arguments.of(QuizMode.BATCHED, longPast, null, batchLongPast, "12345678", HttpStatus.NOT_FOUND), // batch done
+                Arguments.of(QuizMode.BATCHED, longPast, null, batchPast, "12345678", HttpStatus.OK), // NOTE: reduced working time because batch had already started
+                Arguments.of(QuizMode.BATCHED, longPast, null, batchFuture, "12345678", HttpStatus.OK));
+    }
+
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @MethodSource(value = "testPerformJoin_args")
+    public void testPerformJoin(QuizMode quizMode, ZonedDateTime release, ZonedDateTime due, QuizBatch batch, String password, HttpStatus result) throws Exception {
+        quizExercise = createQuizOnServer(release, due, quizMode);
+        if (batch != null) {
+            batch.setQuizExercise(quizExercise);
+            quizBatchRepository.saveAndFlush(batch);
+        }
+
+        // switch to student
+        SecurityContextHolder.getContext().setAuthentication(SecurityUtils.makeAuthorizationObject("student1"));
+
+        request.postWithResponseBody("/api/quiz-exercises/" + quizExercise.getId() + "/join", new QuizBatchJoinDTO(password), QuizBatch.class, result);
+
+        if (result == HttpStatus.OK) {
+            // if joining was successful repeating the request should fail, otherwise with the same reason as the first attempt
+            result = HttpStatus.BAD_REQUEST;
+        }
+
+        request.postWithResponseBody("/api/quiz-exercises/" + quizExercise.getId() + "/join", new QuizBatchJoinDTO(password), QuizBatch.class, result);
+    }
+
     /**
-     * test non instructors cant create quiz exercises
+     * test non-instructors cant create quiz exercises
      * */
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testCreateQuizExerciseAsTutorForbidden() throws Exception {
         final Course course = database.createCourse();
-        QuizExercise quizExercise = database.createQuiz(course, ZonedDateTime.now(), ZonedDateTime.now().plusHours(5));
+        QuizExercise quizExercise = database.createQuiz(course, ZonedDateTime.now(), ZonedDateTime.now().plusHours(5), QuizMode.SYNCHRONIZED);
         // remove instructor rights
         User user = database.getUserByLogin("instructor1");
         user.setGroups(Collections.emptySet());
@@ -1100,7 +1291,7 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
     }
 
     /**
-     * test non instructors cant get all quiz exercises
+     * test non-instructors cant get all quiz exercises
      * */
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
@@ -1117,7 +1308,7 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
     }
 
     /**
-     * test non instructors cant perform start-now, set-visible or open-for-practice on quiz exercises
+     * test non-instructors can't perform start-now, set-visible or open-for-practice on quiz exercises
      * */
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
@@ -1136,7 +1327,7 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
     }
 
     /**
-     * test non instructors cant see the exercise if it is not set to visible
+     * test non-instructors can't see the exercise if it is not set to visible
      * */
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
@@ -1152,7 +1343,7 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
     }
 
     /**
-     * test non instructors cant delete an exercise
+     * test non-instructors cant delete an exercise
      * */
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
@@ -1182,7 +1373,7 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
     }
 
     /**
-     * test students not in course cant get quiz exercises
+     * test students not in course can't get quiz exercises
      * */
     @Test
     @WithMockUser(username = "student1", roles = "USER")
@@ -1197,18 +1388,18 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
     }
 
     /**
-     * test non instructors in this course cant re-evaluate quiz exercises
+     * test non-instructors in this course cant re-evaluate quiz exercises
      * */
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testReEvaluateQuizAsNonInstructorForbidden() throws Exception {
         final Course course = database.createCourse();
-        quizExercise = database.createQuiz(course, ZonedDateTime.now().minusDays(2), ZonedDateTime.now().minusHours(1));
+        quizExercise = database.createQuiz(course, ZonedDateTime.now().minusDays(2), ZonedDateTime.now().minusHours(1), QuizMode.SYNCHRONIZED);
         quizExercise.setTitle("Titel");
         quizExercise.setDuration(200);
         assertThat(quizExercise.isValid()).as("is not valid!").isTrue();
         assertThat(quizExercise.isExamExercise()).as("Is an exam exercise!").isFalse();
-        assertThat(quizExercise.isEnded()).as("Is not ended!").isTrue();
+        assertThat(quizExercise.isQuizEnded()).as("Is not ended!").isTrue();
         course.addExercises(quizExercise);
 
         courseRepo.save(course);
@@ -1242,18 +1433,17 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testUpdateQuizExerciseAsNonEditorForbidden() throws Exception {
         final Course course = database.createCourse();
-        quizExercise = database.createQuiz(course, ZonedDateTime.now().minusDays(2), ZonedDateTime.now().minusHours(1));
+        quizExercise = database.createQuiz(course, ZonedDateTime.now().minusDays(2), ZonedDateTime.now().minusHours(1), QuizMode.SYNCHRONIZED);
         quizExercise.setTitle("Titel");
         quizExercise.setDuration(200);
         assertThat(quizExercise.isValid()).as("is not valid!").isTrue();
         assertThat(quizExercise.isExamExercise()).as("Is an exam exercise!").isFalse();
-        assertThat(quizExercise.isEnded()).as("Is not ended!").isTrue();
+        assertThat(quizExercise.isQuizEnded()).as("Is not ended!").isTrue();
         course.addExercises(quizExercise);
         courseRepo.save(course);
         quizExerciseRepository.save(quizExercise);
         // change some stuff
         quizExercise.setTitle("new Titel");
-        quizExercise.setIsVisibleBeforeStart(true);
         // remove instructor rights in course
         User user = database.getUserByLogin("instructor1");
         user.setGroups(Collections.emptySet());
@@ -1268,12 +1458,12 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testUpdateQuizExerciseInvalidBadRequest() throws Exception {
         final Course course = database.createCourse();
-        quizExercise = database.createQuiz(course, ZonedDateTime.now().minusDays(2), ZonedDateTime.now().minusHours(1));
+        quizExercise = database.createQuiz(course, ZonedDateTime.now().minusDays(2), ZonedDateTime.now().minusHours(1), QuizMode.SYNCHRONIZED);
         quizExercise.setTitle("Titel");
         quizExercise.setDuration(200);
         assertThat(quizExercise.isValid()).as("is not valid!").isTrue();
         assertThat(quizExercise.isExamExercise()).as("Is an exam exercise!").isFalse();
-        assertThat(quizExercise.isEnded()).as("Is not ended!").isTrue();
+        assertThat(quizExercise.isQuizEnded()).as("Is not ended!").isTrue();
         course.addExercises(quizExercise);
         courseRepo.save(course);
         quizExerciseRepository.save(quizExercise);
@@ -1289,7 +1479,7 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testUpdateQuizExerciseWithNotificationText() throws Exception {
-        quizExercise = createQuizOnServer(ZonedDateTime.now().plusHours(5), null);
+        quizExercise = createQuizOnServer(ZonedDateTime.now().plusHours(5), null, QuizMode.SYNCHRONIZED);
 
         MultipleChoiceQuestion mc = (MultipleChoiceQuestion) quizExercise.getQuizQuestions().get(0);
         mc.getAnswerOptions().remove(0);
@@ -1313,25 +1503,273 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
     }
 
     /**
+     * test import quiz exercise to same course and check if fields are correctly set for import
+     * */
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void importQuizExerciseToSameCourse() throws Exception {
+        var now = ZonedDateTime.now();
+        Course course = database.addEmptyCourse();
+        quizExercise = database.createQuiz(course, now.plusHours(2), null, QuizMode.SYNCHRONIZED);
+        quizExerciseService.save(quizExercise);
+
+        QuizExercise changedQuiz = quizExerciseRepository.findOneWithQuestionsAndStatistics(quizExercise.getId());
+        assertThat(changedQuiz).isNotNull();
+        changedQuiz.setTitle("New title");
+        changedQuiz.setReleaseDate(now);
+        QuizExercise importedExercise = request.postWithResponseBody("/api/quiz-exercises/import/" + changedQuiz.getId(), changedQuiz, QuizExercise.class, HttpStatus.CREATED);
+
+        assertThat(importedExercise.getId()).as("Imported exercise has different id").isNotEqualTo(quizExercise.getId());
+        assertThat(importedExercise.getTitle()).as("Imported exercise has updated title").isEqualTo("New title");
+        assertThat(importedExercise.getReleaseDate()).as("Imported exercise has updated release data").isEqualTo(now);
+        assertThat(importedExercise.getCourseViaExerciseGroupOrCourseMember().getId()).as("Imported exercise has same course")
+                .isEqualTo(quizExercise.getCourseViaExerciseGroupOrCourseMember().getId());
+        assertThat(importedExercise.getQuizQuestions().size()).as("Imported exercise has same number of questions").isEqualTo(quizExercise.getQuizQuestions().size());
+    }
+
+    /**
+     * test import quiz exercise to a different course
+     * */
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void importQuizExerciseFromCourseToCourseT() throws Exception {
+        var now = ZonedDateTime.now();
+        Course course1 = database.addEmptyCourse();
+        Course course2 = database.addEmptyCourse();
+        quizExercise = database.createQuiz(course1, now.plusHours(2), null, QuizMode.SYNCHRONIZED);
+        quizExerciseService.save(quizExercise);
+        quizExercise.setCourse(course2);
+
+        QuizExercise importedExercise = request.postWithResponseBody("/api/quiz-exercises/import/" + quizExercise.getId(), quizExercise, QuizExercise.class, HttpStatus.CREATED);
+
+        assertThat(importedExercise.getCourseViaExerciseGroupOrCourseMember()).as("Quiz was imported for different course").isEqualTo(course2);
+    }
+
+    /**
+     * test import quiz exercise from a course to an exam
+     * */
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void importQuizExerciseFromCourseToExam() throws Exception {
+        var now = ZonedDateTime.now();
+        Course course1 = database.addEmptyCourse();
+        ExerciseGroup exerciseGroup1 = database.addExerciseGroupWithExamAndCourse(true);
+        quizExercise = database.createQuiz(course1, now.plusHours(2), null, QuizMode.SYNCHRONIZED);
+        quizExerciseService.save(quizExercise);
+        quizExercise.setReleaseDate(null);
+        quizExercise.setCourse(null);
+        quizExercise.setDueDate(null);
+        quizExercise.setAssessmentDueDate(null);
+        quizExercise.setQuizBatches(new HashSet<>());
+        quizExercise.setExerciseGroup(exerciseGroup1);
+
+        QuizExercise importedExercise = request.postWithResponseBody("/api/quiz-exercises/import/" + quizExercise.getId(), quizExercise, QuizExercise.class, HttpStatus.CREATED);
+
+        assertThat(importedExercise.getExerciseGroup()).as("Quiz was imported for different exercise group").isEqualTo(exerciseGroup1);
+    }
+
+    /**
+     * test import quiz exercise to exam with invalid roles
+     * */
+    @Test
+    @WithMockUser(username = "instructor1", roles = "TA")
+    public void importQuizExerciseFromCourseToExam_forbidden() throws Exception {
+        var now = ZonedDateTime.now();
+        Course course1 = database.addEmptyCourse();
+        ExerciseGroup exerciseGroup1 = database.addExerciseGroupWithExamAndCourse(true);
+        quizExercise = database.createQuiz(course1, now.plusHours(2), null, QuizMode.SYNCHRONIZED);
+        quizExerciseService.save(quizExercise);
+        quizExercise.setCourse(null);
+        quizExercise.setExerciseGroup(exerciseGroup1);
+
+        request.postWithResponseBody("/api/quiz-exercises/import/" + quizExercise.getId(), quizExercise, QuizExercise.class, HttpStatus.FORBIDDEN);
+    }
+
+    /**
+     * test import quiz exercise from exam to course
+     * */
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void importQuizExerciseFromExamToCourse() throws Exception {
+        ExerciseGroup exerciseGroup1 = database.addExerciseGroupWithExamAndCourse(true);
+        quizExercise = database.createQuizForExam(exerciseGroup1);
+        Course course1 = database.addEmptyCourse();
+        quizExerciseService.save(quizExercise);
+        quizExercise.setCourse(course1);
+        quizExercise.setExerciseGroup(null);
+
+        request.postWithResponseBody("/api/quiz-exercises/import/" + quizExercise.getId(), quizExercise, QuizExercise.class, HttpStatus.CREATED);
+    }
+
+    /**
+     * test import quiz exercise from exam to course with invalid roles
+     * */
+    @Test
+    @WithMockUser(username = "instructor1", roles = "TA")
+    public void importQuizExerciseFromExamToCourse_forbidden() throws Exception {
+        ExerciseGroup exerciseGroup1 = database.addExerciseGroupWithExamAndCourse(true);
+        quizExercise = database.createQuizForExam(exerciseGroup1);
+        Course course1 = database.addEmptyCourse();
+        quizExerciseService.save(quizExercise);
+        quizExercise.setCourse(course1);
+        quizExercise.setExerciseGroup(null);
+
+        request.postWithResponseBody("/api/quiz-exercises/import/" + quizExercise.getId(), quizExercise, QuizExercise.class, HttpStatus.FORBIDDEN);
+    }
+
+    /**
+     * test import quiz exercise from one exam to a different exam
+     * */
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void importQuizExerciseFromExamToExam() throws Exception {
+        ExerciseGroup exerciseGroup1 = database.addExerciseGroupWithExamAndCourse(true);
+        ExerciseGroup exerciseGroup2 = database.addExerciseGroupWithExamAndCourse(true);
+        quizExercise = database.createQuizForExam(exerciseGroup1);
+        quizExerciseService.save(quizExercise);
+        quizExercise.setExerciseGroup(exerciseGroup2);
+
+        QuizExercise importedExercise = request.postWithResponseBody("/api/quiz-exercises/import/" + quizExercise.getId(), quizExercise, QuizExercise.class, HttpStatus.CREATED);
+
+        assertThat(importedExercise.getExerciseGroup()).as("Quiz was imported for different exercise group").isEqualTo(exerciseGroup2);
+    }
+
+    /**
+     * test import quiz exercise with a bad request (no course or exam)
+     * */
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void importTextExerciseFromCourseToCourse_badRequest() throws Exception {
+        var now = ZonedDateTime.now();
+        Course course1 = database.addEmptyCourse();
+        quizExercise = database.createQuiz(course1, now.plusHours(2), null, QuizMode.SYNCHRONIZED);
+        quizExerciseService.save(quizExercise);
+        quizExercise.setCourse(null);
+
+        request.postWithResponseBody("/api/quiz-exercises/import/" + quizExercise.getId(), quizExercise, QuizExercise.class, HttpStatus.BAD_REQUEST);
+    }
+
+    /**
+     * test import quiz exercise with changed team mode
+     * */
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testImportQuizExercise_team_modeChange() throws Exception {
+        var now = ZonedDateTime.now();
+        Course course1 = database.addEmptyCourse();
+        Course course2 = database.addEmptyCourse();
+        quizExercise = database.createQuiz(course1, now.plusHours(2), null, QuizMode.SYNCHRONIZED);
+        quizExerciseService.save(quizExercise);
+
+        QuizExercise changedQuiz = quizExerciseRepository.findOneWithQuestionsAndStatistics(quizExercise.getId());
+        assertThat(changedQuiz).isNotNull();
+        changedQuiz.setMode(ExerciseMode.TEAM);
+
+        var teamAssignmentConfig = new TeamAssignmentConfig();
+        teamAssignmentConfig.setExercise(changedQuiz);
+        teamAssignmentConfig.setMinTeamSize(1);
+        teamAssignmentConfig.setMaxTeamSize(10);
+        changedQuiz.setTeamAssignmentConfig(teamAssignmentConfig);
+        changedQuiz.setCourse(course2);
+        changedQuiz.setMaxPoints(1.0);
+
+        changedQuiz = request.postWithResponseBody("/api/quiz-exercises/import/" + quizExercise.getId(), changedQuiz, QuizExercise.class, HttpStatus.CREATED);
+
+        assertEquals(course2.getId(), changedQuiz.getCourseViaExerciseGroupOrCourseMember().getId(), course2.getId());
+        assertEquals(ExerciseMode.TEAM, changedQuiz.getMode());
+        assertEquals(teamAssignmentConfig.getMinTeamSize(), changedQuiz.getTeamAssignmentConfig().getMinTeamSize());
+        assertEquals(teamAssignmentConfig.getMaxTeamSize(), changedQuiz.getTeamAssignmentConfig().getMaxTeamSize());
+        assertEquals(0, teamRepository.findAllByExerciseIdWithEagerStudents(changedQuiz, null).size());
+
+        quizExercise = quizExerciseRepository.findById(quizExercise.getId()).get();
+        assertEquals(course1.getId(), quizExercise.getCourseViaExerciseGroupOrCourseMember().getId());
+        assertEquals(ExerciseMode.INDIVIDUAL, quizExercise.getMode());
+        assertNull(quizExercise.getTeamAssignmentConfig());
+        assertEquals(0, teamRepository.findAllByExerciseIdWithEagerStudents(quizExercise, null).size());
+    }
+
+    /**
+     * test import quiz exercise with changed team mode
+     * */
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testImportQuizExercise_individual_modeChange() throws Exception {
+        var now = ZonedDateTime.now();
+        Course course1 = database.addEmptyCourse();
+        Course course2 = database.addEmptyCourse();
+        quizExercise = database.createQuiz(course1, now.plusHours(2), null, QuizMode.SYNCHRONIZED);
+        quizExercise.setMode(ExerciseMode.TEAM);
+        var teamAssignmentConfig = new TeamAssignmentConfig();
+        teamAssignmentConfig.setExercise(quizExercise);
+        teamAssignmentConfig.setMinTeamSize(1);
+        teamAssignmentConfig.setMaxTeamSize(10);
+        quizExercise.setTeamAssignmentConfig(teamAssignmentConfig);
+        quizExercise.setCourse(course1);  // remove line
+
+        quizExercise = quizExerciseService.save(quizExercise);
+        teamRepository.save(quizExercise, new Team());
+
+        QuizExercise changedQuiz = quizExerciseRepository.findOneWithQuestionsAndStatistics(quizExercise.getId());
+        assertThat(changedQuiz).isNotNull();
+        changedQuiz.setMode(ExerciseMode.INDIVIDUAL);
+        changedQuiz.setCourse(course2);
+        changedQuiz.setMaxPoints(1.0);
+
+        changedQuiz = request.postWithResponseBody("/api/quiz-exercises/import/" + quizExercise.getId(), changedQuiz, QuizExercise.class, HttpStatus.CREATED);
+
+        assertEquals(course2.getId(), changedQuiz.getCourseViaExerciseGroupOrCourseMember().getId(), course2.getId());
+        assertEquals(ExerciseMode.INDIVIDUAL, changedQuiz.getMode());
+        assertNull(changedQuiz.getTeamAssignmentConfig());
+        assertEquals(0, teamRepository.findAllByExerciseIdWithEagerStudents(changedQuiz, null).size());
+
+        quizExercise = quizExerciseRepository.findById(quizExercise.getId()).get();
+        assertEquals(course1.getId(), quizExercise.getCourseViaExerciseGroupOrCourseMember().getId());
+        assertEquals(ExerciseMode.TEAM, quizExercise.getMode());
+        assertEquals(1, teamRepository.findAllByExerciseIdWithEagerStudents(quizExercise, null).size());
+    }
+
+    /**
+     * test import quiz exercise with changed quiz mode
+     * */
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testImportQuizExerciseChangeQuizMode() throws Exception {
+        var now = ZonedDateTime.now();
+        Course course = database.addEmptyCourse();
+        quizExercise = database.createQuiz(course, now.plusHours(2), null, QuizMode.SYNCHRONIZED);
+        quizExerciseService.save(quizExercise);
+
+        QuizExercise changedQuiz = quizExerciseRepository.findOneWithQuestionsAndStatistics(quizExercise.getId());
+        assertThat(changedQuiz).isNotNull();
+        changedQuiz.setQuizMode(QuizMode.INDIVIDUAL);
+        changedQuiz.setReleaseDate(now);
+        QuizExercise importedExercise = request.postWithResponseBody("/api/quiz-exercises/import/" + changedQuiz.getId(), changedQuiz, QuizExercise.class, HttpStatus.CREATED);
+
+        assertThat(importedExercise.getId()).as("Imported exercise has different id").isNotEqualTo(quizExercise.getId());
+        assertThat(importedExercise.getQuizMode()).as("Imported exercise has different quiz mode").isEqualTo(QuizMode.INDIVIDUAL);
+        assertThat(importedExercise.getReleaseDate()).as("Imported exercise has updated release data").isEqualTo(now);
+    }
+
+    /**
      * test redundant actions performed on quiz exercises will result in bad request
      * */
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testRedundantActionsBadRequest() throws Exception {
         // set-visible
-        quizExercise = createQuizOnServer(ZonedDateTime.now().plusHours(5), null);
+        quizExercise = createQuizOnServer(ZonedDateTime.now().minusHours(5), null, QuizMode.SYNCHRONIZED);
         request.putWithResponseBody("/api/quiz-exercises/" + quizExercise.getId() + "/set-visible", quizExercise, QuizExercise.class, HttpStatus.BAD_REQUEST);
         // start-now
-        quizExercise = createQuizOnServer(ZonedDateTime.now().minusDays(1), null);
-        assertThat(quizExercise.isStarted()).isTrue();
+        quizExercise = createQuizOnServer(ZonedDateTime.now().minusDays(1), null, QuizMode.SYNCHRONIZED);
+        assertThat(quizExercise.isQuizStarted()).isTrue();
         request.putWithResponseBody("/api/quiz-exercises/" + quizExercise.getId() + "/start-now", quizExercise, QuizExercise.class, HttpStatus.BAD_REQUEST);
         // open-for-practice
-        quizExercise = createQuizOnServer(ZonedDateTime.now().minusDays(1), null);
+        quizExercise = createQuizOnServer(ZonedDateTime.now().minusDays(1), null, QuizMode.SYNCHRONIZED);
         quizExercise.setIsOpenForPractice(true);
         quizExerciseRepository.save(quizExercise);
         request.putWithResponseBody("/api/quiz-exercises/" + quizExercise.getId() + "/open-for-practice", quizExercise, QuizExercise.class, HttpStatus.BAD_REQUEST);
         // misspelled request
-        quizExercise = createQuizOnServer(ZonedDateTime.now().minusDays(1), null);
+        quizExercise = createQuizOnServer(ZonedDateTime.now().minusDays(1), null, QuizMode.SYNCHRONIZED);
         request.putWithResponseBody("/api/quiz-exercises/" + quizExercise.getId() + "/lorem-ipsum", quizExercise, QuizExercise.class, HttpStatus.BAD_REQUEST);
     }
 
@@ -1400,7 +1838,7 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
     private QuizExercise createMultipleChoiceQuizExerciseDummy() {
         Course course = database.createCourse();
         MultipleChoiceQuestion question = (MultipleChoiceQuestion) new MultipleChoiceQuestion().title("MC").score(4).text("Q1");
-        QuizExercise quizExercise = ModelFactory.generateQuizExercise(ZonedDateTime.now().plusHours(5), null, course);
+        QuizExercise quizExercise = ModelFactory.generateQuizExercise(ZonedDateTime.now().plusHours(5), null, QuizMode.SYNCHRONIZED, course);
 
         question.setScoringType(ScoringType.ALL_OR_NOTHING);
         question.getAnswerOptions().add(new AnswerOption().text("A").hint("H1").explanation("E1").isCorrect(true));
@@ -1478,15 +1916,14 @@ public class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
         assertThat(quizExercise.getQuizPointStatistic()).isNull();
         assertThat(quizExercise.getGradingInstructions()).isNull();
         assertThat(quizExercise.getGradingCriteria()).isEmpty();
-        if (quizExercise.isStarted()) {
+        if (!quizExercise.isQuizEnded()) {
             for (QuizQuestion question : quizExercise.getQuizQuestions()) {
                 assertThat(question.getExplanation()).isNull();
                 assertThat(question.getQuizQuestionStatistic()).isNull();
             }
         }
-        else {
+        else if (!quizExercise.isQuizStarted()) {
             assertThat(quizExercise.getQuizQuestions()).isEmpty();
         }
-
     }
 }

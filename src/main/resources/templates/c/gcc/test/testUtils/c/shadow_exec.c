@@ -2,13 +2,12 @@
  * Shadows all exec commands if compiled with
  **/
 
+#include <fcntl.h>
 #include <signal.h>
 #include <stdio.h>
-#include <sys/types.h>
 #include <sys/stat.h>
-#include <fcntl.h>
+#include <sys/types.h>
 #include <unistd.h>
-
 
 // TODO Overloading malloc seems to cause problems with asan:
 // ==25708==AddressSanitizer CHECK failed: ../../../../src/libsanitizer/asan/asan_posix.cc:50 "((tsd_key_inited)) != (0)" (0x0, 0x0)

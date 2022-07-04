@@ -5,7 +5,6 @@ import { ShortAnswerQuestionUtil } from 'app/exercises/quiz/shared/short-answer-
 import { TranslateService } from '@ngx-translate/core';
 import { Subscription } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
-import dayjs from 'dayjs/esm';
 import { AccountService } from 'app/core/auth/account.service';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { QuizQuestion, QuizQuestionType } from 'app/entities/quiz/quiz-question.model';
@@ -16,6 +15,7 @@ import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { Authority } from 'app/shared/constants/authority.constants';
 import { UI_RELOAD_TIME } from 'app/shared/constants/exercise-exam-constants';
 import { faListAlt } from '@fortawesome/free-regular-svg-icons';
+import { ArtemisServerDateService } from 'app/shared/server-date.service';
 
 @Component({
     selector: 'jhi-quiz-statistics-footer',
@@ -55,6 +55,7 @@ export class QuizStatisticsFooterComponent implements OnInit, OnDestroy {
         private quizExerciseService: QuizExerciseService,
         private quizStatisticUtil: QuizStatisticUtil,
         private jhiWebsocketService: JhiWebsocketService,
+        private serverDateService: ArtemisServerDateService,
     ) {}
 
     ngOnInit() {
@@ -79,11 +80,11 @@ export class QuizStatisticsFooterComponent implements OnInit, OnDestroy {
     updateDisplayedTimes() {
         const translationBasePath = 'showStatistic.';
         // update remaining time
-        if (this.quizExercise && this.quizExercise.adjustedDueDate) {
-            const endDate = this.quizExercise.adjustedDueDate;
-            if (endDate.isAfter(dayjs())) {
+        if (this.quizExercise && this.quizExercise.dueDate) {
+            const endDate = this.quizExercise.dueDate;
+            if (endDate.isAfter(this.serverDateService.now())) {
                 // quiz is still running => calculate remaining seconds and generate text based on that
-                this.remainingTimeSeconds = endDate.diff(dayjs(), 'seconds');
+                this.remainingTimeSeconds = endDate.diff(this.serverDateService.now(), 'seconds');
                 this.remainingTimeText = this.relativeTimeText(this.remainingTimeSeconds);
             } else {
                 // quiz is over => set remaining seconds to negative, to deactivate 'Submit' button
@@ -122,18 +123,17 @@ export class QuizStatisticsFooterComponent implements OnInit, OnDestroy {
      * This functions loads the Quiz, which is necessary to build the Web-Template
      * And it loads the new Data if the Websocket has been notified
      *
-     * @param {QuizExercise} quiz: the quizExercise, which the this quiz-statistic presents.
+     * @param {QuizExercise} quiz: the quizExercise, which this quiz-statistic presents.
      */
     loadQuiz(quiz: QuizExercise) {
-        // if the Student finds a way to the Website -> the Student will be send back to Courses
+        // if the Student finds a way to the Website -> the Student will be sent back to Courses
         if (!this.accountService.hasAnyAuthorityDirect([Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TA])) {
             this.router.navigate(['/courses']);
         }
         this.quizExercise = quiz;
         const updatedQuestion = this.quizExercise.quizQuestions?.filter((question) => this.questionIdParam === question.id)[0];
         this.question = updatedQuestion as QuizQuestion;
-        this.quizExercise.adjustedDueDate = dayjs().add(this.quizExercise.remainingTime!, 'seconds');
-        this.waitingForQuizStart = !this.quizExercise.started;
+        this.waitingForQuizStart = !this.quizExercise.quizStarted;
     }
 
     /**

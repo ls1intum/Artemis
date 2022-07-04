@@ -19,6 +19,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.ArgumentMatchers;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -276,12 +277,13 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambo
                 Arguments.of(false, dateInFuture, SubmissionType.MANUAL, dateInPast));
     }
 
-    @Test
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testGetResultsForQuizExercise() throws Exception {
+    @EnumSource(QuizMode.class)
+    public void testGetResultsForQuizExercise(QuizMode quizMode) throws Exception {
         var now = ZonedDateTime.now();
 
-        QuizExercise quizExercise = database.createQuiz(course, now.minusMinutes(5), now.minusMinutes(2));
+        QuizExercise quizExercise = database.createQuiz(course, now.minusHours(5), now.minusMinutes(2), quizMode);
         quizExerciseRepository.save(quizExercise);
 
         for (int i = 1; i <= 10; i++) {
@@ -718,11 +720,12 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambo
         // TODO: we should assert that the result has been created with all corresponding objects in the database
     }
 
-    @Test
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void createResultForExternalSubmission_quizExercise() throws Exception {
+    @EnumSource(QuizMode.class)
+    public void createResultForExternalSubmission_quizExercise(QuizMode quizMode) throws Exception {
         var now = ZonedDateTime.now();
-        var quizExercise = ModelFactory.generateQuizExercise(now.minusDays(1), now.minusHours(2), course);
+        var quizExercise = ModelFactory.generateQuizExercise(now.minusDays(1), now.minusHours(2), quizMode, course);
         course.addExercises(quizExercise);
         quizExerciseRepository.save(quizExercise);
         Result result = new Result().rated(false);

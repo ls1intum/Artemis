@@ -22,7 +22,7 @@ public class HazelcastHealthIndicator implements HealthIndicator {
     public Health health() {
 
         var members = hazelcastInstance.getCluster().getMembers();
-        final var health = members.size() > 0 ? Health.up() : Health.down();
+        final var health = members.isEmpty() ? Health.down() : Health.up();
         Map<String, String> details = new HashMap<>();
         for (var member : members) {
             details.put("Member uuid " + member.getUuid().toString(), "Member address " + member.getAddress().toString());

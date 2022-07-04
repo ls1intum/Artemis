@@ -15,7 +15,7 @@ import { DragAndDropQuestion } from 'app/entities/quiz/drag-and-drop-question.mo
 import { DragItem } from 'app/entities/quiz/drag-item.model';
 import { DropLocation } from 'app/entities/quiz/drop-location.model';
 import { MultipleChoiceQuestion } from 'app/entities/quiz/multiple-choice-question.model';
-import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
+import { QuizBatch, QuizExercise, QuizMode } from 'app/entities/quiz/quiz-exercise.model';
 import { QuizQuestion, QuizQuestionType } from 'app/entities/quiz/quiz-question.model';
 import { ShortAnswerMapping } from 'app/entities/quiz/short-answer-mapping.model';
 import { ShortAnswerQuestion } from 'app/entities/quiz/short-answer-question.model';
@@ -40,6 +40,7 @@ import { ArtemisTestModule } from '../../test.module';
 import { Exam } from 'app/entities/exam.model';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { MockProvider } from 'ng-mocks';
+import { Duration } from 'app/exercises/quiz/manage/quiz-exercise-interfaces';
 
 describe('QuizExercise Management Detail Component', () => {
     let comp: QuizExerciseDetailComponent;
@@ -59,6 +60,7 @@ describe('QuizExercise Management Detail Component', () => {
 
     const course: Course = { id: 123 } as Course;
     const quizExercise = new QuizExercise(course, undefined);
+    const quizBatch = new QuizBatch();
     const mcQuestion = new MultipleChoiceQuestion();
     const answerOption = new AnswerOption();
     const exam = new Exam();
@@ -73,8 +75,9 @@ describe('QuizExercise Management Detail Component', () => {
         mcQuestion.points = 10;
         mcQuestion.answerOptions = [answerOption];
         quizExercise.quizQuestions = [mcQuestion];
-        quizExercise.isPlannedToStart = false;
+        quizExercise.quizBatches = [];
         quizExercise.releaseDate = undefined;
+        quizExercise.quizMode = QuizMode.SYNCHRONIZED;
     };
 
     resetQuizExercise();
@@ -85,14 +88,14 @@ describe('QuizExercise Management Detail Component', () => {
         const question = new MultipleChoiceQuestion();
         question.title = 'test';
         const answerOption1 = new AnswerOption();
-        answerOption1.text = 'wrong answer';
-        answerOption1.explanation = 'wrong explanation';
-        answerOption1.hint = 'wrong hint';
-        answerOption1.isCorrect = false;
-        const answerOption2 = new AnswerOption();
         answerOption1.text = 'right answer';
         answerOption1.explanation = 'right explanation';
         answerOption1.isCorrect = true;
+        const answerOption2 = new AnswerOption();
+        answerOption2.text = 'wrong answer';
+        answerOption2.explanation = 'wrong explanation';
+        answerOption2.hint = 'wrong hint';
+        answerOption2.isCorrect = false;
         question.answerOptions = [answerOption1, answerOption2];
         question.points = 10;
         return { question, answerOption1, answerOption2 };
@@ -273,6 +276,80 @@ describe('QuizExercise Management Detail Component', () => {
                 jest.clearAllMocks();
             });
         });
+
+        describe('validate dates', () => {
+            // setup
+            beforeEach(() => {
+                resetQuizExercise();
+                comp.course = course;
+                comp.init();
+                comp.quizExercise = quizExercise;
+                comp.duration = new Duration(5, 15);
+                comp.scheduleQuizStart = true;
+            });
+
+            it.each([[QuizMode.SYNCHRONIZED], [QuizMode.BATCHED], [QuizMode.INDIVIDUAL]])('should set errors to false for valid dates for %s mode', (quizMode) => {
+                comp.quizExercise.quizMode = quizMode;
+                comp.cacheValidation();
+
+                if (quizMode !== QuizMode.SYNCHRONIZED) {
+                    comp.addQuizBatch();
+                }
+
+                const now = dayjs();
+                comp.quizExercise.releaseDate = now;
+
+                comp.validateDate();
+                expect(comp.quizExercise.dueDateError).toBeFalse();
+                expect(comp.hasErrorInQuizBatches()).toBeFalse();
+
+                comp.quizExercise!.quizBatches![0].startTime = now.add(1, 'days');
+
+                comp.validateDate();
+                expect(comp.quizExercise.dueDateError).toBeFalse();
+                expect(comp.hasErrorInQuizBatches()).toBeFalse();
+
+                comp.quizExercise.dueDate = now.add(2, 'days');
+
+                comp.validateDate();
+                expect(comp.quizExercise.dueDateError).toBeFalse();
+                expect(comp.hasErrorInQuizBatches()).toBeFalse();
+            });
+
+            it.each([[QuizMode.SYNCHRONIZED], [QuizMode.BATCHED], [QuizMode.INDIVIDUAL]])('should set errors to true for invalid dates for %s mode', (quizMode) => {
+                comp.quizExercise.quizMode = quizMode;
+                comp.cacheValidation();
+
+                if (quizMode !== QuizMode.SYNCHRONIZED) {
+                    comp.addQuizBatch();
+                }
+
+                const now = dayjs();
+                comp.quizExercise.releaseDate = now;
+
+                comp.quizExercise!.quizBatches![0].startTime = now.add(-1, 'days');
+
+                comp.validateDate();
+                expect(comp.quizExercise.dueDateError).toBeFalse();
+                expect(comp.hasErrorInQuizBatches()).toBeTrue();
+
+                comp.quizExercise.dueDate = now.add(-2, 'days');
+
+                comp.validateDate();
+                expect(comp.quizExercise.dueDateError).toBeTrue();
+                expect(comp.hasErrorInQuizBatches()).toBeTrue();
+
+                comp.quizExercise!.quizBatches![0].startTime = now.add(1, 'days');
+                comp.quizExercise.dueDate = now.add(1, 'days');
+
+                comp.validateDate();
+                expect(comp.quizExercise.dueDateError).toBeFalse();
+                if (quizMode !== QuizMode.SYNCHRONIZED) {
+                    // dueDate for SYNCHRONIZED quizzes are calculated so no need to validate.
+                    expect(comp.hasErrorInQuizBatches()).toBeTrue();
+                }
+            });
+        });
     });
 
     describe('without routeChange', () => {
@@ -290,6 +367,7 @@ describe('QuizExercise Management Detail Component', () => {
             let alertServiceStub: jest.SpyInstance;
             beforeEach(() => {
                 comp.course = course;
+                comp.courseId = course.id;
                 courseServiceStub = jest.spyOn(courseManagementService, 'findAllCategoriesOfCourse');
                 courseServiceStub.mockReturnValue(of(new HttpResponse<string[]>({ body: ['category1', 'category2'] })));
                 exerciseServiceCategoriesAsStringStub = jest.spyOn(exerciseService, 'convertExerciseCategoriesAsStringFromServer');
@@ -416,7 +494,7 @@ describe('QuizExercise Management Detail Component', () => {
             const resetQuizExerciseAndSet = () => {
                 resetQuizExercise();
                 comp.quizExercise = quizExercise;
-                comp.quizExercise.isPlannedToStart = true;
+                quizExercise.quizBatches = [quizBatch];
             };
 
             it('should return isVisibleBeforeStart if no quizExercise', () => {
@@ -426,21 +504,21 @@ describe('QuizExercise Management Detail Component', () => {
 
             it('should return isVisibleBeforeStart if quizExercise not planned to start', () => {
                 resetQuizExerciseAndSet();
-                comp.quizExercise.isPlannedToStart = false;
+                quizExercise.quizBatches = [];
                 expect(comp.showDropdown).toBe('isVisibleBeforeStart');
             });
 
             it('should return if end of exercise is in the past', () => {
                 resetQuizExerciseAndSet();
-                comp.quizExercise.releaseDate = dayjs().subtract(20, 's');
-                comp.quizExercise.duration = 10;
+                comp.quizExercise.quizStarted = true;
+                comp.quizExercise.quizEnded = true;
                 expect(comp.showDropdown).toBe('isOpenForPractice');
             });
 
             it('should return if end of exercise is in the future but release date is in the past', () => {
                 resetQuizExerciseAndSet();
-                comp.quizExercise.releaseDate = dayjs().subtract(20, 's');
-                comp.quizExercise.duration = 50;
+                comp.quizExercise.quizStarted = true;
+                comp.quizExercise.quizEnded = false;
                 expect(comp.showDropdown).toBe('active');
             });
         });
@@ -448,9 +526,9 @@ describe('QuizExercise Management Detail Component', () => {
         describe('unloading notification and can deactivate', () => {
             it('should return opposite of pendingChangesCache', () => {
                 comp.pendingChangesCache = true;
-                expect(comp.canDeactivate()).toBe(false);
+                expect(comp.canDeactivate()).toBeFalse();
                 comp.pendingChangesCache = false;
-                expect(comp.canDeactivate()).toBe(true);
+                expect(comp.canDeactivate()).toBeTrue();
             });
 
             it('should set event return value to translate if not canDeactivate', () => {
@@ -478,20 +556,20 @@ describe('QuizExercise Management Detail Component', () => {
             });
 
             it('should return true if given month is before month we are in', () => {
-                expect(comp.isDateInPast(tomorrow, { month: 10 })).toBe(true);
+                expect(comp.isDateInPast(tomorrow, { month: 10 })).toBeTrue();
             });
 
             it('should return false if given month is same or after month we are in', () => {
-                expect(comp.isDateInPast(tomorrow, { month: 11 })).toBe(false);
+                expect(comp.isDateInPast(tomorrow, { month: 11 })).toBeFalse();
             });
 
             it('should return true if given date is before now', () => {
                 const past = new NgbDate(2020, 11, 10);
-                expect(comp.isDateInPast(past, { month: 11 })).toBe(true);
+                expect(comp.isDateInPast(past, { month: 11 })).toBeTrue();
             });
 
             it('should return false if given date is before now', () => {
-                expect(comp.isDateInPast(tomorrow, { month: 11 })).toBe(false);
+                expect(comp.isDateInPast(tomorrow, { month: 11 })).toBeFalse();
             });
         });
 
@@ -585,8 +663,8 @@ describe('QuizExercise Management Detail Component', () => {
                 comp.addExistingQuestions();
                 expect(verifyAndImportQuestionsStub).toBeCalledWith([exportedQuestion]);
                 expect(cacheValidationStub).toBeCalled();
-                expect(comp.showExistingQuestions).toBe(false);
-                expect(comp.showExistingQuestionsFromCourse).toBe(true);
+                expect(comp.showExistingQuestions).toBeFalse();
+                expect(comp.showExistingQuestionsFromCourse).toBeTrue();
                 expect(comp.selectedCourseId).toBeUndefined();
                 expect(comp.allExistingQuestions).toEqual([]);
                 expect(comp.existingQuestions).toEqual([]);
@@ -602,6 +680,7 @@ describe('QuizExercise Management Detail Component', () => {
                 const { question: shortQuestion } = createValidSAQuestion();
 
                 beforeEach(() => {
+                    comp.quizExercise = quizExercise;
                     comp.allExistingQuestions = [multiChoiceQuestion, dndQuestion, shortQuestion];
                     comp.mcqFilterEnabled = false;
                     comp.dndFilterEnabled = false;
@@ -845,14 +924,14 @@ describe('QuizExercise Management Detail Component', () => {
                 question.title = '';
                 comp.quizExercise.quizQuestions = [question];
                 comp.cacheValidation();
-                expect(comp.quizIsValid).toBe(false);
+                expect(comp.quizIsValid).toBeFalse();
             };
 
             const removeCorrectMappingsAndExpectInvalidQuiz = (question: DragAndDropQuestion | ShortAnswerQuestion) => {
                 question.correctMappings = [];
                 comp.quizExercise.quizQuestions = [question];
                 comp.cacheValidation();
-                expect(comp.quizIsValid).toBe(false);
+                expect(comp.quizIsValid).toBeFalse();
             };
 
             beforeEach(() => {
@@ -862,13 +941,13 @@ describe('QuizExercise Management Detail Component', () => {
 
             it('should be valid with default test setting', () => {
                 comp.cacheValidation();
-                expect(comp.quizIsValid).toBe(true);
+                expect(comp.quizIsValid).toBeTrue();
             });
 
             it('should not be valid without a quiz title', () => {
                 quizExercise.title = '';
                 comp.cacheValidation();
-                expect(comp.quizIsValid).toBe(false);
+                expect(comp.quizIsValid).toBeFalse();
             });
 
             describe('unknown question type', () => {
@@ -883,13 +962,13 @@ describe('QuizExercise Management Detail Component', () => {
                 it('should be valid if a question has unknown type and a title', () => {
                     question.title = 'test';
                     comp.cacheValidation();
-                    expect(comp.quizIsValid).toBe(true);
+                    expect(comp.quizIsValid).toBeTrue();
                 });
 
                 it('should not be valid if a question has unknown type and no title', () => {
                     question.title = '';
                     comp.cacheValidation();
-                    expect(comp.quizIsValid).toBe(false);
+                    expect(comp.quizIsValid).toBeFalse();
                 });
             });
 
@@ -898,14 +977,14 @@ describe('QuizExercise Management Detail Component', () => {
                 question.points = -1;
                 comp.quizExercise.quizQuestions = [question];
                 comp.cacheValidation();
-                expect(comp.quizIsValid).toBe(false);
+                expect(comp.quizIsValid).toBeFalse();
             });
 
             it('should be valid with valid MC question', () => {
                 const { question } = createValidMCQuestion();
                 comp.quizExercise.quizQuestions = [question];
                 comp.cacheValidation();
-                expect(comp.quizIsValid).toBe(true);
+                expect(comp.quizIsValid).toBeTrue();
             });
 
             it('should not be valid if MC question has no title', () => {
@@ -918,7 +997,7 @@ describe('QuizExercise Management Detail Component', () => {
                 question.answerOptions = [];
                 comp.quizExercise.quizQuestions = [question];
                 comp.cacheValidation();
-                expect(comp.quizIsValid).toBe(false);
+                expect(comp.quizIsValid).toBeFalse();
             });
 
             it('should be valid if MC question hint is <= 255 characters', () => {
@@ -926,7 +1005,7 @@ describe('QuizExercise Management Detail Component', () => {
                 question.hint = 'This is an example hint';
                 comp.quizExercise.quizQuestions = [question];
                 comp.cacheValidation();
-                expect(comp.quizIsValid).toBe(true);
+                expect(comp.quizIsValid).toBeTrue();
             });
 
             it('should be valid if MC question explanation is <= 500 characters', () => {
@@ -934,7 +1013,7 @@ describe('QuizExercise Management Detail Component', () => {
                 question.explanation = 'This is an example explanation';
                 comp.quizExercise.quizQuestions = [question];
                 comp.cacheValidation();
-                expect(comp.quizIsValid).toBe(true);
+                expect(comp.quizIsValid).toBeTrue();
             });
 
             it('should be valid if MC question hint has exactly 255 characters', () => {
@@ -942,7 +1021,7 @@ describe('QuizExercise Management Detail Component', () => {
                 question.hint = 'f'.repeat(255);
                 comp.quizExercise.quizQuestions = [question];
                 comp.cacheValidation();
-                expect(comp.quizIsValid).toBe(true);
+                expect(comp.quizIsValid).toBeTrue();
             });
 
             it('should be valid if MC question explanation has exactly 500 characters', () => {
@@ -950,7 +1029,7 @@ describe('QuizExercise Management Detail Component', () => {
                 question.explanation = 'f'.repeat(500);
                 comp.quizExercise.quizQuestions = [question];
                 comp.cacheValidation();
-                expect(comp.quizIsValid).toBe(true);
+                expect(comp.quizIsValid).toBeTrue();
             });
 
             it('should not be valid if MC question hint has more than 255 characters', () => {
@@ -958,7 +1037,7 @@ describe('QuizExercise Management Detail Component', () => {
                 question.hint = 'f'.repeat(255 + 1);
                 comp.quizExercise.quizQuestions = [question];
                 comp.cacheValidation();
-                expect(comp.quizIsValid).toBe(false);
+                expect(comp.quizIsValid).toBeFalse();
             });
 
             it('should not be valid if MC question explanation has more than 500 characters', () => {
@@ -966,7 +1045,7 @@ describe('QuizExercise Management Detail Component', () => {
                 question.explanation = 'f'.repeat(500 + 1);
                 comp.quizExercise.quizQuestions = [question];
                 comp.cacheValidation();
-                expect(comp.quizIsValid).toBe(false);
+                expect(comp.quizIsValid).toBeFalse();
             });
 
             it('should be valid if MC answer option hint has exactly 255 characters', () => {
@@ -974,7 +1053,7 @@ describe('QuizExercise Management Detail Component', () => {
                 question.answerOptions![0]!.hint = 'f'.repeat(255);
                 comp.quizExercise.quizQuestions = [question];
                 comp.cacheValidation();
-                expect(comp.quizIsValid).toBe(true);
+                expect(comp.quizIsValid).toBeTrue();
             });
 
             it('should be valid if MC answer option explanation has exactly 500 characters', () => {
@@ -982,7 +1061,7 @@ describe('QuizExercise Management Detail Component', () => {
                 question.answerOptions![0]!.explanation = 'f'.repeat(500);
                 comp.quizExercise.quizQuestions = [question];
                 comp.cacheValidation();
-                expect(comp.quizIsValid).toBe(true);
+                expect(comp.quizIsValid).toBeTrue();
             });
 
             it('should not be valid if MC answer option hint has more than 255 characters', () => {
@@ -990,7 +1069,7 @@ describe('QuizExercise Management Detail Component', () => {
                 question.answerOptions![0]!.hint = 'f'.repeat(255 + 1);
                 comp.quizExercise.quizQuestions = [question];
                 comp.cacheValidation();
-                expect(comp.quizIsValid).toBe(false);
+                expect(comp.quizIsValid).toBeFalse();
             });
 
             it('should not be valid if MC answer option explanation has more than 1000 characters', () => {
@@ -998,14 +1077,31 @@ describe('QuizExercise Management Detail Component', () => {
                 question.answerOptions![0]!.explanation = 'f'.repeat(500 + 1);
                 comp.quizExercise.quizQuestions = [question];
                 comp.cacheValidation();
-                expect(comp.quizIsValid).toBe(false);
+                expect(comp.quizIsValid).toBeFalse();
+            });
+
+            it('should be valid if MC question has scoring type single choice', () => {
+                const { question } = createValidMCQuestion();
+                question.singleChoice = true;
+                comp.quizExercise.quizQuestions = [question];
+                comp.cacheValidation();
+                expect(comp.quizIsValid).toBeTrue();
+            });
+
+            it('should not be valid if MC single choice question has multiple correct answers', () => {
+                const { question } = createValidMCQuestion();
+                question.singleChoice = true;
+                question.answerOptions![1]!.isCorrect = true;
+                comp.quizExercise.quizQuestions = [question];
+                comp.cacheValidation();
+                expect(comp.quizIsValid).toBeFalse();
             });
 
             it('should be valid with valid DnD question', () => {
                 const { question } = createValidDnDQuestion();
                 comp.quizExercise.quizQuestions = [question];
                 comp.cacheValidation();
-                expect(comp.quizIsValid).toBe(true);
+                expect(comp.quizIsValid).toBeTrue();
             });
 
             it('should not be valid if DnD question has no title', () => {
@@ -1023,7 +1119,7 @@ describe('QuizExercise Management Detail Component', () => {
                 question.hint = 'f'.repeat(255);
                 comp.quizExercise.quizQuestions = [question];
                 comp.cacheValidation();
-                expect(comp.quizIsValid).toBe(true);
+                expect(comp.quizIsValid).toBeTrue();
             });
 
             it('should be valid if DnD question explanation has exactly 500 characters', () => {
@@ -1031,7 +1127,7 @@ describe('QuizExercise Management Detail Component', () => {
                 question.explanation = 'f'.repeat(500);
                 comp.quizExercise.quizQuestions = [question];
                 comp.cacheValidation();
-                expect(comp.quizIsValid).toBe(true);
+                expect(comp.quizIsValid).toBeTrue();
             });
 
             it('should not be valid if DnD question hint has more than 255 characters', () => {
@@ -1039,7 +1135,7 @@ describe('QuizExercise Management Detail Component', () => {
                 question.hint = 'f'.repeat(255 + 1);
                 comp.quizExercise.quizQuestions = [question];
                 comp.cacheValidation();
-                expect(comp.quizIsValid).toBe(false);
+                expect(comp.quizIsValid).toBeFalse();
             });
 
             it('should not be valid if DnD question explanation has more than 500 characters', () => {
@@ -1047,14 +1143,14 @@ describe('QuizExercise Management Detail Component', () => {
                 question.explanation = 'f'.repeat(500 + 1);
                 comp.quizExercise.quizQuestions = [question];
                 comp.cacheValidation();
-                expect(comp.quizIsValid).toBe(false);
+                expect(comp.quizIsValid).toBeFalse();
             });
 
             it('should be valid with valid SA question', () => {
                 const { question } = createValidSAQuestion();
                 comp.quizExercise.quizQuestions = [question];
                 comp.cacheValidation();
-                expect(comp.quizIsValid).toBe(true);
+                expect(comp.quizIsValid).toBeTrue();
             });
 
             it('should not be valid if SA question has no title', () => {
@@ -1068,7 +1164,7 @@ describe('QuizExercise Management Detail Component', () => {
                 question.solutions[0].text = 'a'.repeat(250);
                 comp.quizExercise.quizQuestions = [question];
                 comp.cacheValidation();
-                expect(comp.quizIsValid).toEqual(false);
+                expect(comp.quizIsValid).toBeFalse();
             });
 
             it('should not be valid if SA question has no correct mapping', () => {
@@ -1093,7 +1189,7 @@ describe('QuizExercise Management Detail Component', () => {
                 alertServiceStub = jest.spyOn(alertService, 'error');
                 saveQuizWithPendingChangesCache();
                 expect(alertServiceStub).toBeCalled();
-                expect(comp.isSaving).toBe(false);
+                expect(comp.isSaving).toBeFalse();
                 jestExpect(console.error).toHaveBeenCalled();
             };
 
@@ -1190,7 +1286,7 @@ describe('QuizExercise Management Detail Component', () => {
 
             it('should go back to quiz exercise page on cancel', () => {
                 comp.cancel();
-                expect(routerSpy).toBeCalledWith(['/course-management', comp.quizExercise.course!.id, 'quiz-exercises']);
+                expect(routerSpy).toBeCalledWith(['/course-management', comp.courseId, 'quiz-exercises']);
             });
 
             it('should go back to quiz exercise page on cancel', () => {
@@ -1221,6 +1317,55 @@ describe('QuizExercise Management Detail Component', () => {
             });
         });
 
+        describe('quiz mode', () => {
+            const b1 = new QuizBatch();
+            const b2 = new QuizBatch();
+            const b3 = new QuizBatch();
+            b1.id = 1;
+            b2.id = 2;
+            b3.id = 3;
+
+            beforeEach(() => {
+                resetQuizExercise();
+                comp.quizExercise = quizExercise;
+            });
+
+            it('should manage batches for synchronized mode', () => {
+                comp.cacheValidation();
+                expect(quizExercise.quizBatches).toBeArrayOfSize(0);
+                comp.scheduleQuizStart = true;
+                comp.cacheValidation();
+                expect(quizExercise.quizBatches).toBeArrayOfSize(1);
+                comp.scheduleQuizStart = false;
+                comp.cacheValidation();
+                expect(quizExercise.quizBatches).toBeArrayOfSize(0);
+            });
+
+            it('should add batches', () => {
+                expect(quizExercise.quizBatches).toBeArrayOfSize(0);
+                comp.addQuizBatch();
+                expect(quizExercise.quizBatches).toBeArrayOfSize(1);
+            });
+
+            it('should add batches when none exist', () => {
+                quizExercise.quizBatches = undefined;
+                comp.addQuizBatch();
+                expect(quizExercise.quizBatches).toBeArrayOfSize(1);
+            });
+
+            it('should remove batches', () => {
+                quizExercise.quizBatches = [b1, b2, b3];
+                comp.removeQuizBatch(b2);
+                expect(quizExercise.quizBatches).toEqual([b1, b3]);
+            });
+
+            it('should not remove batches when they dont exist', () => {
+                quizExercise.quizBatches = [b1, b3];
+                comp.removeQuizBatch(b2);
+                expect(quizExercise.quizBatches).toEqual([b1, b3]);
+            });
+        });
+
         describe('show existing questions', () => {
             let courseManagementServiceStub: jest.SpyInstance;
             let examManagementServiceStub: jest.SpyInstance;
@@ -1241,7 +1386,7 @@ describe('QuizExercise Management Detail Component', () => {
                 comp.showHideExistingQuestions();
                 expect(courseManagementServiceStub).toBeCalled();
                 expect(examManagementServiceStub).toBeCalled();
-                expect(comp.showExistingQuestions).toBe(true);
+                expect(comp.showExistingQuestions).toBeTrue();
                 expect(setQuestionsFromCourseSpy).toBeCalled();
             });
 
@@ -1264,7 +1409,7 @@ describe('QuizExercise Management Detail Component', () => {
             it('should hide existing questions if already shown', () => {
                 comp.showExistingQuestions = true;
                 comp.showHideExistingQuestions();
-                expect(comp.showExistingQuestions).toBe(false);
+                expect(comp.showExistingQuestions).toBeFalse();
             });
 
             it('should set showExistingQuestionsFromCourse to given value', () => {
@@ -1272,17 +1417,17 @@ describe('QuizExercise Management Detail Component', () => {
                 const control = { ...element, value: 'test' };
                 const getElementStub = jest.spyOn(document, 'getElementById').mockReturnValue(control);
                 comp.setExistingQuestionSourceToCourse();
-                expect(comp.showExistingQuestionsFromCourse).toBe(true);
-                expect(comp.showExistingQuestionsFromFile).toBe(false);
-                expect(comp.showExistingQuestionsFromExam).toBe(false);
+                expect(comp.showExistingQuestionsFromCourse).toBeTrue();
+                expect(comp.showExistingQuestionsFromFile).toBeFalse();
+                expect(comp.showExistingQuestionsFromExam).toBeFalse();
                 comp.setExistingQuestionSourceToFile();
-                expect(comp.showExistingQuestionsFromCourse).toBe(false);
-                expect(comp.showExistingQuestionsFromFile).toBe(true);
-                expect(comp.showExistingQuestionsFromExam).toBe(false);
+                expect(comp.showExistingQuestionsFromCourse).toBeFalse();
+                expect(comp.showExistingQuestionsFromFile).toBeTrue();
+                expect(comp.showExistingQuestionsFromExam).toBeFalse();
                 comp.setExistingQuestionSourceToExam();
-                expect(comp.showExistingQuestionsFromCourse).toBe(false);
-                expect(comp.showExistingQuestionsFromFile).toBe(false);
-                expect(comp.showExistingQuestionsFromExam).toBe(true);
+                expect(comp.showExistingQuestionsFromCourse).toBeFalse();
+                expect(comp.showExistingQuestionsFromFile).toBeFalse();
+                expect(comp.showExistingQuestionsFromExam).toBeTrue();
                 expect(getElementStub).toBeCalled();
                 expect(control.value).toBe('');
             });
@@ -1327,6 +1472,7 @@ describe('QuizExercise Management Detail Component', () => {
             const control = { ...element, value: 'test' };
             beforeEach(() => {
                 comp.importFile = fakeFile;
+                comp.quizExercise = quizExercise;
                 verifyStub = jest.spyOn(comp, 'verifyAndImportQuestions').mockImplementation();
                 readAsText = jest.fn();
                 reader = new FileReader();
@@ -1453,18 +1599,6 @@ describe('QuizExercise Management Detail Component', () => {
                 it('should put reason for no questions', () => {
                     quizExercise.quizQuestions = [];
                     filterReasonAndExpectMoreThanOneInArray('artemisApp.quizExercise.invalidReasons.noQuestion');
-                });
-
-                it('should put reason for invalid release time', () => {
-                    quizExercise.isPlannedToStart = true;
-                    quizExercise.releaseDate = undefined;
-                    filterReasonAndExpectMoreThanOneInArray('artemisApp.quizExercise.invalidReasons.invalidStartTime');
-                });
-
-                it('should put reason if release time is before now', () => {
-                    quizExercise.isPlannedToStart = true;
-                    quizExercise.releaseDate = dayjs().subtract(1500, 's');
-                    filterReasonAndExpectMoreThanOneInArray('artemisApp.quizExercise.invalidReasons.startTimeInPast');
                 });
             });
 

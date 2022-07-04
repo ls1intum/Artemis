@@ -22,5 +22,6 @@
     "isPracticeModeAvailable": true,
     "title": "<some title>",
     "duration": 600,
-    "quizQuestions": []
+    "quizQuestions": [],
+    "quizMode": "SYNCHRONIZED"
 }

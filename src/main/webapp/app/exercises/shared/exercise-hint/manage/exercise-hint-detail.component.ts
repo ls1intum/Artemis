@@ -3,13 +3,15 @@ import { ActivatedRoute } from '@angular/router';
 import { Subscription } from 'rxjs';
 
 import { faWrench } from '@fortawesome/free-solid-svg-icons';
-import { ExerciseHint } from 'app/entities/hestia/exercise-hint.model';
+import { ExerciseHint, HintType } from 'app/entities/hestia/exercise-hint.model';
 
 @Component({
     selector: 'jhi-exercise-hint-detail',
     templateUrl: './exercise-hint-detail.component.html',
 })
 export class ExerciseHintDetailComponent implements OnInit, OnDestroy {
+    readonly HintType = HintType;
+
     exerciseHint: ExerciseHint;
 
     courseId: number;

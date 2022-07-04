@@ -6,12 +6,12 @@ import { isRequestToArtemisServer } from './interceptor.util';
 
 @Injectable()
 export class BrowserFingerprintInterceptor implements HttpInterceptor {
-    private fingerprint: string;
-    private instanceIdentifier: string;
+    private fingerprint?: string;
+    private instanceIdentifier?: string;
 
     constructor(private browserFingerprintService: BrowserFingerprintService) {
-        browserFingerprintService.fingerprint.subscribe((fingerprint) => (this.fingerprint = fingerprint || ''));
-        browserFingerprintService.instanceIdentifier.subscribe((instanceIdentifier) => (this.instanceIdentifier = instanceIdentifier || ''));
+        browserFingerprintService.fingerprint.subscribe((fingerprint) => (this.fingerprint = fingerprint));
+        browserFingerprintService.instanceIdentifier.subscribe((instanceIdentifier) => (this.instanceIdentifier = instanceIdentifier));
     }
 
     /**
@@ -22,11 +22,11 @@ export class BrowserFingerprintInterceptor implements HttpInterceptor {
      * @returns An observable of the event stream.
      */
     intercept(request: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
-        if (isRequestToArtemisServer(request)) {
+        if (isRequestToArtemisServer(request) && (this.instanceIdentifier || this.fingerprint)) {
             request = request.clone({
                 setHeaders: {
-                    'X-Artemis-Client-Instance-ID': this.instanceIdentifier,
-                    'X-Artemis-Client-Fingerprint': this.fingerprint,
+                    'X-Artemis-Client-Instance-ID': this.instanceIdentifier ?? '',
+                    'X-Artemis-Client-Fingerprint': this.fingerprint ?? '',
                 },
             });
         }

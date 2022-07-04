@@ -1,7 +1,5 @@
 package de.tum.in.www1.artemis.web.rest;
 
-import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.*;
-
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
@@ -21,6 +19,7 @@ import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
+import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 
 /**
@@ -67,7 +66,7 @@ public class ApollonDiagramResource {
         }
 
         if (!Objects.equals(apollonDiagram.getCourseId(), courseId)) {
-            return conflict();
+            throw new ConflictException("Specified course id does not match request payload", "ApollonDiagram", "courseMismatch");
         }
 
         Course course = courseRepository.findByIdElseThrow(courseId);
@@ -97,7 +96,7 @@ public class ApollonDiagramResource {
         }
 
         if (!Objects.equals(apollonDiagram.getCourseId(), courseId)) {
-            return conflict();
+            throw new ConflictException("Specified course id does not match request payload", "ApollonDiagram", "courseMismatch");
         }
         Course course = courseRepository.findByIdElseThrow(courseId);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, course, null);
@@ -172,7 +171,7 @@ public class ApollonDiagramResource {
         Course course = courseRepository.findByIdElseThrow(courseId);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, course, null);
 
-        apollonDiagramRepository.deleteById(apollonDiagramId);
+        apollonDiagramRepository.delete(apollonDiagram);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, apollonDiagramId.toString())).build();
     }
 }

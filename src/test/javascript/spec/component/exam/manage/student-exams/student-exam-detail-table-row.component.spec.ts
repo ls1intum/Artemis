@@ -88,7 +88,7 @@ describe('StudentExamDetailTableRowComponent', () => {
             type: ExerciseType.PROGRAMMING,
         };
         const route = studentExamDetailTableRowComponent.getAssessmentLink(programmingExercise);
-        expect(getAssessmentLinkSpy).toHaveBeenCalledTimes(1);
+        expect(getAssessmentLinkSpy).toHaveBeenCalledOnce();
         expect(route).toEqual(['/course-management', '23', 'exams', '1', 'exercise-groups', '13', 'programming-exercises', '12', 'submissions']);
     });
 
@@ -107,7 +107,7 @@ describe('StudentExamDetailTableRowComponent', () => {
         };
         const submission = { id: 14 };
         const route = studentExamDetailTableRowComponent.getAssessmentLink(modelingExercise, submission);
-        expect(getAssessmentLinkSpy).toHaveBeenCalledTimes(1);
+        expect(getAssessmentLinkSpy).toHaveBeenCalledOnce();
         expect(route).toEqual(['/course-management', '23', 'exams', '1', 'exercise-groups', '12', 'modeling-exercises', '12', 'submissions', '14', 'assessment']);
     });
 });

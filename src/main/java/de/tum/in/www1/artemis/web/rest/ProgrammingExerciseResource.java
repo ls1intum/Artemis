@@ -5,7 +5,7 @@ import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResourceEndpoin
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.nio.file.Paths;
+import java.nio.file.Path;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -20,6 +20,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.ModelAndView;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
@@ -83,7 +84,7 @@ public class ProgrammingExerciseResource {
 
     private final GradingCriterionRepository gradingCriterionRepository;
 
-    private final ProgrammingLanguageFeatureService programmingLanguageFeatureService;
+    private final Optional<ProgrammingLanguageFeatureService> programmingLanguageFeatureService;
 
     private final CourseRepository courseRepository;
 
@@ -93,17 +94,19 @@ public class ProgrammingExerciseResource {
 
     private final SubmissionPolicyService submissionPolicyService;
 
-    /**
-     * Java package name Regex according to Java 14 JLS (https://docs.oracle.com/javase/specs/jls/se14/html/jls-7.html#jls-7.4.1),
-     * with the restriction to a-z,A-Z,_ as "Java letter" and 0-9 as digits due to JavaScript/Browser Unicode character class limitations
-     */
-    private static final String packageNameRegex = "^(?!.*(?:\\.|^)(?:abstract|continue|for|new|switch|assert|default|if|package|synchronized|boolean|do|goto|private|this|break|double|implements|protected|throw|byte|else|import|public|throws|case|enum|instanceof|return|transient|catch|extends|int|short|try|char|final|interface|static|void|class|finally|long|strictfp|volatile|const|float|native|super|while|_|true|false|null)(?:\\.|$))[A-Z_a-z][0-9A-Z_a-z]*(?:\\.[A-Z_a-z][0-9A-Z_a-z]*)*$";
+    private final SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository;
 
     /**
-     * Swift package name Regex derived from (https://docs.swift.org/swift-book/ReferenceManual/LexicalStructure.html#ID412),
+     * Java package name Regex according to Java 14 JLS (<a href="https://docs.oracle.com/javase/specs/jls/se14/html/jls-7.html#jls-7.4.1">https://docs.oracle.com/javase/specs/jls/se14/html/jls-7.html#jls-7.4.1</a>),
+     * with the restriction to a-z,A-Z,_ as "Java letter" and 0-9 as digits due to JavaScript/Browser Unicode character class limitations
+     */
+    private static final String packageNameRegex = "^(?!.*(?:\\.|^)(?:abstract|continue|for|new|switch|assert|default|if|package|synchronized|boolean|do|goto|private|this|break|double|implements|protected|throw|byte|else|import|public|throws|case|enum|instanceof|return|transient|catch|extends|int|short|try|char|final|interface|static|void|class|finally|long|strictfp|volatile|const|float|native|super|while|_|true|false|null)(?:\\.|$))[A-Z_a-z]\\w*(?:\\.[A-Z_a-z]\\w*)*$";
+
+    /**
+     * Swift package name Regex derived from (<a href="https://docs.swift.org/swift-book/ReferenceManual/LexicalStructure.html#ID412">https://docs.swift.org/swift-book/ReferenceManual/LexicalStructure.html#ID412</a>),
      * with the restriction to a-z,A-Z as "Swift letter" and 0-9 as digits where no separators are allowed
      */
-    private static final String packageNameRegexForSwift = "^(?!(?:associatedtype|class|deinit|enum|extension|fileprivate|func|import|init|inout|internal|let|open|operator|private|protocol|public|rethrows|static|struct|subscript|typealias|var|break|case|continue|default|defer|do|else|fallthrough|for|guard|if|in|repeat|return|switch|where|while|as|Any|catch|false|is|nil|super|self|Self|throw|throws|true|try|_|[sS]wift)$)[A-Za-z][0-9A-Za-z]*$";
+    private static final String packageNameRegexForSwift = "^(?!(?:associatedtype|class|deinit|enum|extension|fileprivate|func|import|init|inout|internal|let|open|operator|private|protocol|public|rethrows|static|struct|subscript|typealias|var|break|case|continue|default|defer|do|else|fallthrough|for|guard|if|in|repeat|return|switch|where|while|as|Any|catch|false|is|nil|super|self|Self|throw|throws|true|try|_|[sS]wift)$)[A-Za-z][\\dA-Za-z]*$";
 
     private final Pattern packageNamePattern = Pattern.compile(packageNameRegex);
 
@@ -114,8 +117,9 @@ public class ProgrammingExerciseResource {
             Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService, ExerciseService exerciseService,
             ExerciseDeletionService exerciseDeletionService, ProgrammingExerciseService programmingExerciseService, StudentParticipationRepository studentParticipationRepository,
             StaticCodeAnalysisService staticCodeAnalysisService, GradingCriterionRepository gradingCriterionRepository,
-            ProgrammingLanguageFeatureService programmingLanguageFeatureService, CourseRepository courseRepository, GitService gitService,
-            AuxiliaryRepositoryService auxiliaryRepositoryService, SubmissionPolicyService submissionPolicyService) {
+            Optional<ProgrammingLanguageFeatureService> programmingLanguageFeatureService, CourseRepository courseRepository, GitService gitService,
+            AuxiliaryRepositoryService auxiliaryRepositoryService, SubmissionPolicyService submissionPolicyService,
+            SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.programmingExerciseTestCaseRepository = programmingExerciseTestCaseRepository;
         this.userRepository = userRepository;
@@ -134,6 +138,7 @@ public class ProgrammingExerciseResource {
         this.gitService = gitService;
         this.auxiliaryRepositoryService = auxiliaryRepositoryService;
         this.submissionPolicyService = submissionPolicyService;
+        this.solutionProgrammingExerciseParticipationRepository = solutionProgrammingExerciseParticipationRepository;
     }
 
     /**
@@ -173,7 +178,8 @@ public class ProgrammingExerciseResource {
      * @param programmingExercise exercise to validate
      */
     private void validateStaticCodeAnalysisSettings(ProgrammingExercise programmingExercise) {
-        ProgrammingLanguageFeature programmingLanguageFeature = programmingLanguageFeatureService.getProgrammingLanguageFeatures(programmingExercise.getProgrammingLanguage());
+        ProgrammingLanguageFeature programmingLanguageFeature = programmingLanguageFeatureService.get()
+                .getProgrammingLanguageFeatures(programmingExercise.getProgrammingLanguage());
         programmingExercise.validateStaticCodeAnalysisSettings(programmingLanguageFeature);
     }
 
@@ -202,7 +208,8 @@ public class ProgrammingExerciseResource {
         auxiliaryRepositoryService.validateAndAddAuxiliaryRepositoriesOfProgrammingExercise(programmingExercise, programmingExercise.getAuxiliaryRepositories());
         submissionPolicyService.validateSubmissionPolicyCreation(programmingExercise);
 
-        ProgrammingLanguageFeature programmingLanguageFeature = programmingLanguageFeatureService.getProgrammingLanguageFeatures(programmingExercise.getProgrammingLanguage());
+        ProgrammingLanguageFeature programmingLanguageFeature = programmingLanguageFeatureService.get()
+                .getProgrammingLanguageFeatures(programmingExercise.getProgrammingLanguage());
 
         // Check if package name is set
         if (programmingLanguageFeature.isPackageNameRequired()) {
@@ -224,7 +231,7 @@ public class ProgrammingExerciseResource {
         }
 
         // Check if project type is selected
-        if (programmingLanguageFeature.getProjectTypes().size() > 0) {
+        if (!programmingLanguageFeature.getProjectTypes().isEmpty()) {
             if (programmingExercise.getProjectType() == null) {
                 return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName, "The project type is not set", "projectTypeNotSet")).body(null);
             }
@@ -262,7 +269,7 @@ public class ProgrammingExerciseResource {
             return ResponseEntity.created(new URI("/api/programming-exercises" + newProgrammingExercise.getId()))
                     .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, newProgrammingExercise.getTitle())).body(newProgrammingExercise);
         }
-        catch (IOException | URISyntaxException | InterruptedException | GitAPIException | ContinuousIntegrationException e) {
+        catch (IOException | URISyntaxException | GitAPIException | ContinuousIntegrationException e) {
             log.error("Error while setting up programming exercise", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .headers(HeaderUtil.createAlert(applicationName, "An error occurred while setting up the exercise: " + e.getMessage(), "errorProgrammingExercise")).body(null);
@@ -286,6 +293,8 @@ public class ProgrammingExerciseResource {
         if (updatedProgrammingExercise.getId() == null) {
             throw new BadRequestAlertException("Programming exercise cannot have an empty id when updating", ENTITY_NAME, "noProgrammingExerciseId");
         }
+
+        updatedProgrammingExercise.validateGeneralSettings();
 
         // Valid exercises have set either a course or an exerciseGroup
         updatedProgrammingExercise.checkCourseAndExerciseGroupExclusivity(ENTITY_NAME);
@@ -521,7 +530,7 @@ public class ProgrammingExerciseResource {
             gitService.combineAllCommitsOfRepositoryIntoOne(exerciseRepoURL);
             return new ResponseEntity<>(HttpStatus.OK);
         }
-        catch (IllegalStateException | InterruptedException | GitAPIException ex) {
+        catch (IllegalStateException | GitAPIException ex) {
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
@@ -550,9 +559,9 @@ public class ProgrammingExerciseResource {
         var testRepoURL = programmingExercise.getVcsTestRepositoryUrl();
 
         try {
-            String testsPath = Paths.get("test", programmingExercise.getPackageFolderName()).toString();
+            String testsPath = Path.of("test", programmingExercise.getPackageFolderName()).toString();
             // Atm we only have one folder that can have structural tests, but this could change.
-            testsPath = programmingExercise.hasSequentialTestRuns() ? Paths.get("structural", testsPath).toString() : testsPath;
+            testsPath = programmingExercise.hasSequentialTestRuns() ? Path.of("structural", testsPath).toString() : testsPath;
             boolean didGenerateOracle = programmingExerciseService.generateStructureOracleFile(solutionRepoURL, exerciseRepoURL, testRepoURL, testsPath, user);
 
             if (didGenerateOracle) {
@@ -718,5 +727,27 @@ public class ProgrammingExerciseResource {
 
         programmingExerciseService.deleteTasksWithSolutionEntries(exercise.getId());
         return ResponseEntity.noContent().build();
+    }
+
+    /**
+     * GET programming-exercise/:exerciseId/solution-files-content
+     *
+     * Returns the solution repository files with content for a given programming exercise.
+     * Note: This endpoint redirects the request to the ProgrammingExerciseParticipationService. This is required if
+     * the solution participation id is not known for the client.
+     * @param exerciseId the exercise for which the solution repository files should be retrieved
+     * @return a redirect to the endpoint returning the files with content
+     */
+    @GetMapping(SOLUTION_REPOSITORY_FILES_WITH_CONTENT)
+    @PreAuthorize("hasRole('TA')")
+    @FeatureToggle(Feature.ProgrammingExercises)
+    public ModelAndView redirectGetSolutionRepositoryFiles(@PathVariable Long exerciseId) {
+        log.debug("REST request to get latest Solution Repository Files for ProgrammingExercise with id : {}", exerciseId);
+        ProgrammingExercise exercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, exercise, null);
+
+        var participation = solutionProgrammingExerciseParticipationRepository.findByProgrammingExerciseIdElseThrow(exerciseId);
+
+        return new ModelAndView("forward:/api/repository/" + participation.getId() + "/files-content");
     }
 }

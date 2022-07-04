@@ -30,6 +30,7 @@ import de.tum.in.www1.artemis.connector.JenkinsRequestMockProvider;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.domain.participation.AbstractBaseProgrammingExerciseParticipation;
+import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooBuildResultDTO;
 import de.tum.in.www1.artemis.service.connectors.gitlab.GitLabService;
@@ -194,13 +195,12 @@ public abstract class AbstractSpringIntegrationJenkinsGitlabTest extends Abstrac
 
     @Override
     public void mockConnectorRequestsForResumeParticipation(ProgrammingExercise exercise, String username, Set<User> users, boolean ltiUserExists) throws Exception {
+        gitlabRequestMockProvider.mockGetDefaultBranch(defaultBranch);
         // Step 2a)
         jenkinsRequestMockProvider.mockCopyBuildPlanForParticipation(exercise, username);
         // Step 2b)
         jenkinsRequestMockProvider.mockConfigureBuildPlan(exercise, username);
         // Note: Step 2c) is not needed in the Jenkins setup
-
-        gitlabRequestMockProvider.mockGetDefaultBranch(defaultBranch);
     }
 
     @Override
@@ -273,6 +273,11 @@ public abstract class AbstractSpringIntegrationJenkinsGitlabTest extends Abstrac
         mockCopyBuildPlan(participation);
         mockConfigureBuildPlan(participation);
         jenkinsRequestMockProvider.mockTriggerBuild(projectKey, buildPlanId, false);
+    }
+
+    @Override
+    public void mockGrantReadAccess(ProgrammingExerciseStudentParticipation participation) throws URISyntaxException {
+        // Not needed here
     }
 
     @Override
@@ -392,6 +397,11 @@ public abstract class AbstractSpringIntegrationJenkinsGitlabTest extends Abstrac
     }
 
     @Override
+    public void mockConfigureBuildPlan(ProgrammingExerciseParticipation participation, String defaultBranch) throws Exception {
+        // Not needed here
+    }
+
+    @Override
     public void mockCheckIfProjectExistsInVcs(ProgrammingExercise exercise, boolean existsInVcs) throws Exception {
         gitlabRequestMockProvider.mockCheckIfProjectExists(exercise, existsInVcs);
     }
@@ -444,5 +454,14 @@ public abstract class AbstractSpringIntegrationJenkinsGitlabTest extends Abstrac
     public void resetMockProvider() {
         gitlabRequestMockProvider.reset();
         jenkinsRequestMockProvider.reset();
+    }
+
+    @Override
+    /**
+     * Verify that the mocked REST-calls were called
+     */
+    public void verifyMocks() {
+        gitlabRequestMockProvider.verifyMocks();
+        jenkinsRequestMockProvider.verifyMocks();
     }
 }

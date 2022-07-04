@@ -7,7 +7,7 @@ import { ApollonDiagram } from 'app/entities/apollon-diagram.model';
 import { UMLDiagramType } from 'app/entities/modeling-exercise.model';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { UMLModel } from '@ls1intum/apollon';
-import { Text } from '@ls1intum/apollon/lib/utils/svg/text';
+import { Text } from '@ls1intum/apollon/lib/es5/utils/svg/text';
 import { ModelingEditorComponent } from 'app/exercises/modeling/shared/modeling-editor.component';
 import * as testClassDiagram from '../../util/modeling/test-models/class-diagram.json';
 import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
@@ -107,7 +107,7 @@ describe('ModelingEditorComponent', () => {
     it('isFullScreen false', () => {
         // test
         const fullScreen = component.isFullScreen;
-        expect(fullScreen).toBe(false);
+        expect(fullScreen).toBeFalse();
     });
 
     it('getCurrentModel', () => {
@@ -235,7 +235,7 @@ describe('ModelingEditorComponent', () => {
         const newExplanation = 'New Explanation';
         component.onExplanationInput(newExplanation);
 
-        expect(spy).toHaveBeenCalledTimes(1);
+        expect(spy).toHaveBeenCalledOnce();
         expect(spy).toHaveBeenCalledWith(newExplanation);
         expect(component.explanation).toBe(newExplanation);
     });

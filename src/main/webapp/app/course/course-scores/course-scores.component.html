@@ -11,14 +11,20 @@
         ><fa-icon [icon]="faSpinner" [spin]="true"></fa-icon>&nbsp;<span jhitranslate="instructorDashboard.loadingStudents">Loading the results of all students...</span></span
     >
     <div class="row d-flex align-items-center">
-        <div class="col-9">
+        <div class="col-lg-9">
             <div class="text-center">
                 <h4 jhiTranslate="instructorDashboard.courseScoreChart.scoreDistribution">Course score distribution</h4>
             </div>
-            <jhi-participant-scores-distribution *ngIf="scoresToDisplay" [gradingScale]="gradingScale" [scores]="scoresToDisplay" [scoreToHighlight]="valueToHighlight">
+            <jhi-participant-scores-distribution
+                *ngIf="scoresToDisplay"
+                [gradingScale]="gradingScale"
+                [scores]="scoresToDisplay"
+                [scoreToHighlight]="valueToHighlight"
+                (onSelect)="accessParticipantScores()"
+            >
             </jhi-participant-scores-distribution>
         </div>
-        <div class="col-3">
+        <div class="col-lg-3 mt-3">
             <table class="table table-bordered table-sm table-striped">
                 <thead class="table-dark">
                     <tr>
@@ -41,15 +47,16 @@
                     </tr>
                     <tr>
                         <th>
-                            <label class="d-flex align-items-center">
+                            <div class="form-check">
                                 <input
                                     type="checkbox"
+                                    class="form-check-input"
                                     [checked]="highlightedType === highlightType.AVERAGE"
                                     (click)="highlightBar(highlightType.AVERAGE)"
                                     ngbTooltip="{{ 'instructorDashboard.statisticsTable.highlightInChart' | artemisTranslate }}"
                                 />
-                                <span class="ms-1" jhiTranslate="instructorDashboard.statisticsTable.averagePoints">Average points (score)</span>
-                            </label>
+                                <label class="form-check-label" jhiTranslate="instructorDashboard.statisticsTable.averagePoints">Average points (score)</label>
+                            </div>
                         </th>
                         <td id="average_points" [ngClass]="highlightedType">
                             {{ roundValueSpecifiedByCourseSettings(this.averageNumberOfOverallPoints, course) }} ({{ this.averageScoreIncluded }}%)
@@ -58,15 +65,16 @@
                     </tr>
                     <tr>
                         <th>
-                            <label class="d-flex align-items-center">
+                            <div class="form-check">
                                 <input
                                     type="checkbox"
+                                    class="form-check-input"
                                     [checked]="highlightedType === highlightType.MEDIAN"
                                     (click)="highlightBar(highlightType.MEDIAN)"
                                     ngbTooltip="{{ 'instructorDashboard.statisticsTable.highlightInChart' | artemisTranslate }}"
                                 />
-                                <span class="ms-1" jhiTranslate="instructorDashboard.statisticsTable.medianPoints">Median points (score)</span>
-                            </label>
+                                <label class="form-check-label" jhiTranslate="instructorDashboard.statisticsTable.medianPoints">Median points (score)</label>
+                            </div>
                         </th>
                         <td id="median_points" [ngClass]="highlightedType">{{ this.medianPointsIncluded }} ({{ this.medianScoreIncluded }}%)</td>
                         <td>{{ this.medianPointsTotal }} ({{ this.medianScoreTotal }}%)</td>
@@ -86,7 +94,7 @@
     <div class="d-flex justify-content-end">
         <jhi-csv-export-button
             *ngIf="exportReady"
-            title="instructorDashboard.exportCSV"
+            title="entity.action.export"
             [icon]="faDownload"
             [disabled]="!(students.length > 0)"
             [buttonSize]="ButtonSize.SMALL"

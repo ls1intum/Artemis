@@ -1,8 +1,8 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import dayjs from 'dayjs/esm';
-import { MockComponent, MockDirective, MockModule } from 'ng-mocks';
+import { MockComponent, MockDirective, MockModule, MockProvider } from 'ng-mocks';
 import { ArtemisTestModule } from '../../../test.module';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute } from '@angular/router';
 import { By } from '@angular/platform-browser';
 import { Course } from 'app/entities/course.model';
 import { CourseScoreCalculationService } from 'app/overview/course-score-calculation.service';
@@ -23,8 +23,8 @@ import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { TreeviewModule } from 'app/exercises/programming/shared/code-editor/treeview/treeview.module';
-import { MockRouter } from '../../../helpers/mocks/mock-router';
 import { ExerciseCategory } from 'app/entities/exercise-category.model';
+import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
 
 describe('CourseStatisticsComponent', () => {
     let comp: CourseStatisticsComponent;
@@ -339,10 +339,7 @@ describe('CourseStatisticsComponent', () => {
                 ArtemisTranslatePipe,
                 MockDirective(NgbTooltip),
             ],
-            providers: [
-                { provide: ActivatedRoute, useValue: { parent: { params: of(1) } } },
-                { provide: Router, useClass: MockRouter },
-            ],
+            providers: [MockProvider(ArtemisNavigationUtilService), { provide: ActivatedRoute, useValue: { parent: { params: of(1) } } }],
         })
             .compileComponents()
             .then(() => {
@@ -369,8 +366,8 @@ describe('CourseStatisticsComponent', () => {
         fixture.detectChanges();
         expect(comp.ngxExerciseGroups.length).toBe(4);
         const modelingWrapper = fixture.debugElement.query(By.css('#modeling-wrapper'));
-        expect(modelingWrapper.query(By.css('h2')).nativeElement.textContent).toBe(' artemisApp.courseOverview.statistics.exerciseCount ');
-        expect(modelingWrapper.query(By.css('#absolute-score')).nativeElement.textContent).toBe('artemisApp.courseOverview.statistics.yourPoints');
+        expect(modelingWrapper.query(By.css('h4')).nativeElement.textContent).toBe(' artemisApp.courseOverview.statistics.exerciseCount ');
+        expect(modelingWrapper.query(By.css('#absolute-score')).nativeElement.textContent).toBe(' artemisApp.courseOverview.statistics.yourPoints ');
         expect(modelingWrapper.query(By.css('#reachable-score')).nativeElement.textContent).toBe(' artemisApp.courseOverview.statistics.reachablePoints ');
         expect(modelingWrapper.query(By.css('#max-score')).nativeElement.textContent).toBe(' artemisApp.courseOverview.statistics.totalPoints ');
         expect(fixture.debugElement.query(By.css('#presentation-score')).nativeElement.textContent).toBe(' artemisApp.courseOverview.statistics.presentationScore ');
@@ -379,7 +376,7 @@ describe('CourseStatisticsComponent', () => {
         // as it is not included, the presentation score should be 0
         expect(programming.presentationScore).toBe(0);
         expect(programming.series).toHaveLength(6);
-        expect(programming.series[2].isProgrammingExercise).toBe(true);
+        expect(programming.series[2].isProgrammingExercise).toBeTrue();
         expect(programming.series[2].absoluteValue).toBe(17);
 
         const quiz: any = comp.ngxExerciseGroups[1][0];
@@ -529,7 +526,7 @@ describe('CourseStatisticsComponent', () => {
 
         // check that html file displays the correct elements
         let debugElement = fixture.debugElement.query(By.css('#absolute-course-score'));
-        expect(debugElement.nativeElement.textContent).toBe('artemisApp.courseOverview.statistics.yourPoints');
+        expect(debugElement.nativeElement.textContent).toBe(' artemisApp.courseOverview.statistics.yourPoints ');
         debugElement = fixture.debugElement.query(By.css('#reachable-course-score'));
         expect(debugElement.nativeElement.textContent).toBe(' artemisApp.courseOverview.statistics.reachablePoints ');
         debugElement = fixture.debugElement.query(By.css('#max-course-score'));
@@ -539,13 +536,13 @@ describe('CourseStatisticsComponent', () => {
     it('should delegate the user correctly', () => {
         const clickEvent = { exerciseId: 42 };
         jest.spyOn(courseScoreCalculationService, 'getCourse').mockReturnValue(course);
-        const router = TestBed.inject(Router);
-        const routerSpy = jest.spyOn(router, 'navigate');
+        const routingService = TestBed.inject(ArtemisNavigationUtilService);
+        const routingStub = jest.spyOn(routingService, 'routeInNewTab').mockImplementation();
         comp.ngOnInit();
 
         comp.onSelect(clickEvent);
 
-        expect(routerSpy).toHaveBeenCalledWith(['courses', 64, 'exercises', 42]);
+        expect(routingStub).toHaveBeenCalledWith(['courses', 64, 'exercises', 42]);
     });
 
     it('should deselect and select all categories', () => {
@@ -553,14 +550,14 @@ describe('CourseStatisticsComponent', () => {
 
         // 3 Filters: Hide optional, Exercises with no categories and quiz1
         expect(comp.numberOfAppliedFilters).toBe(3);
-        expect(comp.exerciseCategoryFilters.get('quiz1')).toBe(true);
+        expect(comp.exerciseCategoryFilters.get('quiz1')).toBeTrue();
         expect(comp.exerciseCategoryFilters.get('programming1')).toBe(undefined);
-        expect(comp.allCategoriesSelected).toBe(true);
+        expect(comp.allCategoriesSelected).toBeTrue();
 
         comp.toggleAllCategories();
 
-        expect(comp.allCategoriesSelected).toBe(false);
-        expect(comp.exerciseCategoryFilters.get('quiz1')).toBe(false);
+        expect(comp.allCategoriesSelected).toBeFalse();
+        expect(comp.exerciseCategoryFilters.get('quiz1')).toBeFalse();
         expect(comp.numberOfAppliedFilters).toBe(1);
         comp.ngxExerciseGroups.forEach((group) => {
             expect(group).toHaveLength(0);
@@ -568,8 +565,8 @@ describe('CourseStatisticsComponent', () => {
 
         comp.toggleAllCategories();
 
-        expect(comp.allCategoriesSelected).toBe(true);
-        expect(comp.exerciseCategoryFilters.get('quiz1')).toBe(true);
+        expect(comp.allCategoriesSelected).toBeTrue();
+        expect(comp.exerciseCategoryFilters.get('quiz1')).toBeTrue();
         expect(comp.numberOfAppliedFilters).toBe(3);
         expect(comp.ngxExerciseGroups).toHaveLength(2);
     });
@@ -579,25 +576,25 @@ describe('CourseStatisticsComponent', () => {
 
         comp.toggleNotIncludedInScoreExercises();
 
-        expect(comp.currentlyHidingNotIncludedInScoreExercises).toBe(false);
+        expect(comp.currentlyHidingNotIncludedInScoreExercises).toBeFalse();
         expect(comp.numberOfAppliedFilters).toBe(3);
-        expect(comp.exerciseCategoryFilters.get('programming1')).toBe(true);
-        expect(comp.exerciseCategoryFilters.get('quiz1')).toBe(true);
+        expect(comp.exerciseCategoryFilters.get('programming1')).toBeTrue();
+        expect(comp.exerciseCategoryFilters.get('quiz1')).toBeTrue();
         expect(comp.ngxExerciseGroups).toHaveLength(3);
         expect(comp.ngxExerciseGroups[0][0].name).toBe('Until 18:20 too');
 
         comp.toggleCategory('programming1');
 
         expect(comp.numberOfAppliedFilters).toBe(2);
-        expect(comp.exerciseCategoryFilters.get('programming1')).toBe(false);
+        expect(comp.exerciseCategoryFilters.get('programming1')).toBeFalse();
         expect(comp.ngxExerciseGroups).toHaveLength(2);
         expect(comp.ngxExerciseGroups.filter((group) => group[0].type === ExerciseType.PROGRAMMING)).toHaveLength(0);
 
         comp.toggleCategory('quiz1');
 
         expect(comp.numberOfAppliedFilters).toBe(1);
-        expect(comp.exerciseCategoryFilters.get('programming1')).toBe(false);
-        expect(comp.exerciseCategoryFilters.get('quiz1')).toBe(false);
+        expect(comp.exerciseCategoryFilters.get('programming1')).toBeFalse();
+        expect(comp.exerciseCategoryFilters.get('quiz1')).toBeFalse();
         expect(comp.ngxExerciseGroups).toHaveLength(1);
         expect(comp.ngxExerciseGroups.filter((group) => group[0].type === ExerciseType.PROGRAMMING)).toHaveLength(0);
         expect(comp.ngxExerciseGroups.filter((group) => group[0].type === ExerciseType.QUIZ)).toHaveLength(0);
@@ -610,7 +607,7 @@ describe('CourseStatisticsComponent', () => {
         comp.toggleCategory('programming1');
 
         expect(comp.numberOfAppliedFilters).toBe(1);
-        expect(comp.exerciseCategoryFilters.get('programming1')).toBe(true);
+        expect(comp.exerciseCategoryFilters.get('programming1')).toBeTrue();
         expect(comp.ngxExerciseGroups).toHaveLength(1);
     });
 

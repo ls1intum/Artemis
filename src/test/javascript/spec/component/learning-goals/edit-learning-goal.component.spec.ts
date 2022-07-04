@@ -117,8 +117,8 @@ describe('EditLearningGoalComponent', () => {
         const learningGoalFormStubComponent: LearningGoalFormStubComponent = editLearningGoalComponentFixture.debugElement.query(
             By.directive(LearningGoalFormStubComponent),
         ).componentInstance;
-        expect(findByIdSpy).toHaveBeenCalledTimes(1);
-        expect(findAllByCourseSpy).toHaveBeenCalledTimes(1);
+        expect(findByIdSpy).toHaveBeenCalledOnce();
+        expect(findAllByCourseSpy).toHaveBeenCalledOnce();
 
         expect(editLearningGoalComponent.formData.title).toEqual(learningGoalOfResponse.title);
         expect(editLearningGoalComponent.formData.description).toEqual(learningGoalOfResponse.description);
@@ -154,7 +154,7 @@ describe('EditLearningGoalComponent', () => {
             ),
         );
         editLearningGoalComponentFixture.detectChanges();
-        expect(findByIdSpy).toHaveBeenCalledTimes(1);
+        expect(findByIdSpy).toHaveBeenCalledOnce();
         expect(editLearningGoalComponent.learningGoal).toEqual(learningGoalDatabase);
 
         const changedUnit: LearningGoal = {
@@ -176,7 +176,7 @@ describe('EditLearningGoalComponent', () => {
             connectedLectureUnits: changedUnit.lectureUnits,
         });
 
-        expect(updatedSpy).toHaveBeenCalledTimes(1);
-        expect(navigateSpy).toHaveBeenCalledTimes(1);
+        expect(updatedSpy).toHaveBeenCalledOnce();
+        expect(navigateSpy).toHaveBeenCalledOnce();
     });
 });

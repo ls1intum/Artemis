@@ -1,10 +1,8 @@
-@import 'src/main/webapp/app/overview/overview-vars';
-
 .exam-container {
     cursor: pointer;
     transition: box-shadow 0.1s linear;
-    border: 1px solid $blue-border-color;
-    background-color: $light-background-color;
+    border: 1px solid var(--overview-blue-border-color);
+    background-color: var(--overview-light-background-color);
     border-radius: 3px;
 }
 .exam-container:hover {

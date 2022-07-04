@@ -29,18 +29,19 @@ public interface PostRepository extends JpaRepository<Post, Long> {
                 OR post.course.id = :#{#courseId})
             AND (:#{#courseWideContext} IS NULL
                 OR post.courseWideContext = :#{#courseWideContext})
-            AND (:#{#own} IS NULL
+            AND (:#{#own} = false
                 OR post.author.id = :#{#userId})
-            AND (:#{#reactedOrReplied} IS NULL
+            AND (:#{#reactedOrReplied} = false
                 OR answer.author.id = :#{#userId}
                 OR reaction.user.id = :#{#userId})
-            AND (:#{#unresolved} IS NULL
-                OR NOT EXISTS (SELECT answerPost FROM AnswerPost answerPost
-                    WHERE answerPost.resolvesPost = true
-                    AND answerPost.post.id = post.id))
+            AND (:#{#unresolved} = false
+                OR ((post.courseWideContext IS NULL OR post.courseWideContext <> 'ANNOUNCEMENT')
+                    AND NOT EXISTS (SELECT answerPost FROM post.answers answerPost
+                        WHERE answerPost.resolvesPost = true
+                        AND answerPost.post.id = post.id)))
             """)
-    List<Post> findPostsForCourse(@Param("courseId") Long courseId, @Param("courseWideContext") CourseWideContext courseWideContext, @Param("unresolved") Boolean unresolved,
-            @Param("own") Boolean own, @Param("reactedOrReplied") Boolean reactedOrReplied, @Param("userId") Long userId);
+    List<Post> findPostsForCourse(@Param("courseId") Long courseId, @Param("courseWideContext") CourseWideContext courseWideContext, @Param("unresolved") boolean unresolved,
+            @Param("own") boolean own, @Param("reactedOrReplied") boolean reactedOrReplied, @Param("userId") Long userId);
 
     @Query("""
             SELECT DISTINCT tag FROM Post post
@@ -55,35 +56,44 @@ public interface PostRepository extends JpaRepository<Post, Long> {
             SELECT DISTINCT post FROM Post post
             LEFT JOIN post.answers answer LEFT JOIN post.reactions reaction
             WHERE post.lecture.id = :#{#lectureId}
-            AND (:#{#own} IS NULL
+            AND (:#{#own} = false
                 OR post.author.id = :#{#userId})
-            AND (:#{#reactedOrReplied} IS NULL
+            AND (:#{#reactedOrReplied} = false
                 OR answer.author.id = :#{#userId}
                 OR reaction.user.id = :#{#userId})
-            AND (:#{#unresolved} IS NULL
-                OR NOT EXISTS (SELECT answerPost FROM AnswerPost answerPost
-                    WHERE answerPost.resolvesPost = true
-                    AND answerPost.post.id = post.id))
-                """)
-    List<Post> findPostsByLectureId(@Param("lectureId") Long lectureId, @Param("unresolved") Boolean unresolved, @Param("own") Boolean own,
-            @Param("reactedOrReplied") Boolean reactedOrReplied, @Param("userId") Long userId);
+            AND (:#{#unresolved} = false
+                 OR ((post.courseWideContext IS NULL OR post.courseWideContext <> 'ANNOUNCEMENT')
+                    AND NOT EXISTS (SELECT answerPost FROM post.answers answerPost
+                        WHERE answerPost.resolvesPost = true
+                        AND answerPost.post.id = post.id)))
+            """)
+    List<Post> findPostsByLectureId(@Param("lectureId") Long lectureId, @Param("unresolved") boolean unresolved, @Param("own") boolean own,
+            @Param("reactedOrReplied") boolean reactedOrReplied, @Param("userId") Long userId);
 
     @Query("""
             SELECT DISTINCT post FROM Post post
             LEFT JOIN post.answers answer LEFT JOIN post.reactions reaction
             WHERE post.exercise.id = :#{#exerciseId}
-            AND (:#{#own} IS NULL
+            AND (:#{#own} = false
                 OR post.author.id = :#{#userId})
-            AND (:#{#reactedOrReplied} IS NULL
+            AND (:#{#reactedOrReplied} = false
                 OR answer.author.id = :#{#userId}
                 OR reaction.user.id = :#{#userId})
-            AND (:#{#unresolved} IS NULL
-                OR NOT EXISTS (SELECT answerPost FROM AnswerPost answerPost
-                    WHERE answerPost.resolvesPost = true
-                    AND answerPost.post.id = post.id))
+            AND (:#{#unresolved} = false
+                 OR ((post.courseWideContext IS NULL OR post.courseWideContext <> 'ANNOUNCEMENT')
+                    AND NOT EXISTS (SELECT answerPost FROM post.answers answerPost
+                        WHERE answerPost.resolvesPost = true
+                        AND answerPost.post.id = post.id)))
             """)
-    List<Post> findPostsByExerciseId(@Param("exerciseId") Long exerciseId, @Param("unresolved") Boolean unresolved, @Param("own") Boolean own,
-            @Param("reactedOrReplied") Boolean reactedOrReplied, @Param("userId") Long userId);
+    List<Post> findPostsByExerciseId(@Param("exerciseId") Long exerciseId, @Param("unresolved") boolean unresolved, @Param("own") boolean own,
+            @Param("reactedOrReplied") boolean reactedOrReplied, @Param("userId") Long userId);
+
+    @Query("""
+            SELECT DISTINCT post FROM Post post
+            LEFT JOIN post.answers answer LEFT JOIN post.reactions reaction
+            WHERE post.plagiarismCase.id = :#{#plagiarismCaseId}
+            """)
+    List<Post> findPostsByPlagiarismCaseId(@Param("plagiarismCaseId") Long plagiarismCaseId);
 
     default Post findByIdElseThrow(Long postId) throws EntityNotFoundException {
         return findById(postId).orElseThrow(() -> new EntityNotFoundException("Post", postId));

@@ -2,19 +2,19 @@
 .mc-question,
 .sa-question {
     &.disabled {
-        color: #696969;
-        background: #fafafa;
+        color: var(--quiz-participation-question-disabled-color);
+        background: var(--quiz-participation-question-disabled-background);
     }
 
     &.result {
-        border-color: green;
+        border-color: var(--quiz-participation-question-result-border-color);
 
         .show-explanation {
             display: inline-block;
         }
 
         &.incorrect {
-            border-color: orange;
+            border-color: var(--quiz-participation-question-result-incorrect-border-color);
         }
     }
 
@@ -22,7 +22,7 @@
         margin: 0 90px 0 0;
 
         span {
-            color: grey;
+            color: var(--quiz-participation-question-h2-span-color);
         }
     }
 
@@ -50,10 +50,10 @@
 
         &.result {
             font-weight: bold;
-            color: green;
+            color: var(--quiz-participation-question-score-result);
 
             &.incorrect {
-                color: orange;
+                color: var(--quiz-participation-question-score-incorrect-result);
             }
         }
     }

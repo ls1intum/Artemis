@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, OnChanges } from '@angular/core';
+import { Component, OnChanges, OnDestroy, OnInit } from '@angular/core';
 import { Course } from 'app/entities/course.model';
 import { CourseManagementService } from '../course/manage/course-management.service';
 import { HttpResponse } from '@angular/common/http';
@@ -10,7 +10,7 @@ import { CourseScoreCalculationService } from 'app/overview/course-score-calcula
 import { Exercise } from 'app/entities/exercise.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { TeamService } from 'app/exercises/shared/team/team.service';
-import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
+import { QuizExercise, QuizMode } from 'app/entities/quiz/quiz-exercise.model';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import dayjs from 'dayjs/esm';
 import { Exam } from 'app/entities/exam.model';
@@ -88,9 +88,11 @@ export class CoursesComponent implements OnInit, OnChanges, OnDestroy {
                         });
                     }
                 });
-
+                // Used as constant to limit the number of calls
+                const timeNow = this.serverDateService.now();
                 this.nextRelevantExams = this.exams.filter(
-                    (exam) => this.serverDateService.now().isBefore(exam.endDate!) && this.serverDateService.now().isAfter(exam.visibleDate!),
+                    // TestExams should not be displayed as upcoming exams
+                    (exam) => !exam.testExam! && timeNow.isBefore(exam.endDate!) && timeNow.isAfter(exam.visibleDate!),
                 );
                 this.nextRelevantExercise = this.findNextRelevantExercise();
             },
@@ -120,9 +122,9 @@ export class CoursesComponent implements OnInit, OnChanges, OnDestroy {
             } else {
                 relevantExercise =
                     // 1st priority is an active quiz
-                    relevantExercises.find((exercise: QuizExercise) => exercise.isActiveQuiz) ||
+                    relevantExercises.find((exercise: QuizExercise) => exercise.quizMode === QuizMode.SYNCHRONIZED && exercise.isActiveQuiz) ||
                     // 2nd priority is a visible quiz
-                    relevantExercises.find((exercise: QuizExercise) => exercise.isVisibleBeforeStart) ||
+                    relevantExercises.find((exercise: QuizExercise) => exercise.quizMode === QuizMode.SYNCHRONIZED && exercise.visibleToStudents) ||
                     // 3rd priority is the next due exercise
                     relevantExercises.sort((a, b) => {
                         return dayjs(a.dueDate).valueOf() - dayjs(b.dueDate).valueOf();

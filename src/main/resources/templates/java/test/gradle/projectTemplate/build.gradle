@@ -1,11 +1,19 @@
 plugins {
-    id 'java'
     // %static-code-analysis-start%
     id 'checkstyle'
     id 'pmd'
     id 'com.github.spotbugs' version '5.0.6'
     // %static-code-analysis-stop%
+    // %record-testwise-coverage-start%
+    id "com.teamscale" version "23.0.0"
+    // %record-testwise-coverage-stop%
 }
+
+apply plugin: 'java'
+sourceCompatibility = 17
+version = '1.0.0'
+compileJava.options.encoding = 'UTF-8'
+compileTestJava.options.encoding = 'UTF-8'
 
 repositories {
     mavenCentral()
@@ -13,8 +21,11 @@ repositories {
 }
 
 dependencies {
-    testImplementation 'de.tum.in.ase:artemis-java-test-sandbox:1.9.2'
+    testImplementation 'de.tum.in.ase:artemis-java-test-sandbox:1.10.1'
     implementation 'org.apache.commons:commons-lang3:3.12.0'
+
+    // testImplementation(':${exerciseNamePomXml}')
+    // testImplementation(':${exerciseNamePomXml}-Solution')
 }
 
 def assignmentSrcDir = "assignment/src"
@@ -23,18 +34,14 @@ def studentOutputDir = sourceSets.main.java.destinationDirectory.get()
 def scaConfigDirectory = "$projectDir/staticCodeAnalysisConfig"
 // %static-code-analysis-stop%
 
-tasks.withType(JavaCompile) {
-    options.encoding = 'UTF-8'
-}
-
 sourceSets {
     // %non-sequential-start%
     test {
         java {
-            srcDir "test"
+            srcDir 'test'
         }
         resources {
-            srcDir "test"
+            srcDir 'test'
         }
     }
     // %non-sequential-stop%
@@ -89,6 +96,14 @@ def forbiddenPackageFolders = [ //(2)
                                 "$studentOutputDir/org/opentest4j/",
                                 "$studentOutputDir/sun/",
                                 "$studentOutputDir/worker/org/gradle/"
+                                // %record-testwise-coverage-start%
+                                ,"$studentOutputDir/com/teamscale/",
+                                "$studentOutputDir/okhttp3/",
+                                "$studentOutputDir/retrofit2/",
+                                "$studentOutputDir/shadow/",
+                                "$studentOutputDir/com/squareup/",
+                                "$studentOutputDir/okio/"
+                                // %record-testwise-coverage-stop%
 ]
 test {
     doFirst { //(1)
@@ -96,6 +111,7 @@ test {
             assert !file(packageFolder).exists(): "$packageFolder must not exist within the submission."
         }
     }
+    defaultCharacterEncoding = 'UTF-8'
     useJUnitPlatform()
 }
 
@@ -158,3 +174,20 @@ pmd {
     }
 }
 // %static-code-analysis-stop%
+
+
+// %record-testwise-coverage-start%
+tasks.register('tiaTests', com.teamscale.TestImpacted) {
+    systemProperty "ares.security.trustedpackages", "okhttp3,com.teamscale,retrofit2,shadow,com.squareup,okio"
+    useJUnitPlatform()
+    filter {
+        excludeTestsMatching "AttributeTest"
+        excludeTestsMatching "ConstructorTest"
+        excludeTestsMatching "ClassTest"
+        excludeTestsMatching "MethodTest"
+    }
+    jacoco {
+        includes = ["${packageName}.*"]
+    }
+}
+// %record-testwise-coverage-stop%

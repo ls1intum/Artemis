@@ -8,7 +8,6 @@ import { ExampleSubmission } from 'app/entities/example-submission.model';
 import { Attachment } from 'app/entities/attachment.model';
 import { Post } from 'app/entities/metis/post.model';
 import { TeamAssignmentConfig } from 'app/entities/team-assignment-config.model';
-import { ExerciseHint } from 'app/entities/hestia/exercise-hint.model';
 import { GradingCriterion } from 'app/exercises/shared/structured-grading-criterion/grading-criterion.model';
 import { Team } from 'app/entities/team.model';
 import { DueDateStat } from 'app/course/dashboards/due-date-stat.model';
@@ -98,7 +97,6 @@ export abstract class Exercise implements BaseEntity {
     public exampleSubmissions?: ExampleSubmission[];
     public attachments?: Attachment[];
     public posts?: Post[];
-    public exerciseHints?: ExerciseHint[];
     public gradingCriteria?: GradingCriterion[];
     public exerciseGroup?: ExerciseGroup;
     public learningGoals?: LearningGoal[];
@@ -126,12 +124,15 @@ export abstract class Exercise implements BaseEntity {
     public teamMode?: boolean;
     public assessmentDueDateError?: boolean;
     public dueDateError?: boolean;
+    public exampleSolutionPublicationDateError?: boolean;
+    public exampleSolutionPublicationDateWarning?: boolean;
     public loading?: boolean;
     public numberOfParticipationsWithRatedResult?: number;
     public numberOfSuccessfulParticipations?: number;
     public averagePoints?: number;
     public presentationScoreEnabled?: boolean;
     public gradingInstructionFeedbackUsed?: boolean;
+    public exampleSolutionPublished?: boolean;
 
     protected constructor(type: ExerciseType) {
         this.type = type;
@@ -142,6 +143,7 @@ export abstract class Exercise implements BaseEntity {
         this.teamMode = false; // default value
         this.assessmentDueDateError = false;
         this.dueDateError = false;
+        this.exampleSolutionPublicationDateError = false;
         this.presentationScoreEnabled = false; // default value;
         this.allowComplaintsForAutomaticAssessments = false; // default value;
     }

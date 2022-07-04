@@ -1,7 +1,6 @@
 import { Injectable } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { uniq } from 'lodash-es';
-import { ExerciseHint } from 'app/entities/hestia/exercise-hint.model';
 import { matchRegexWithLineNumbers, RegExpLineNumberMatchArray } from 'app/shared/util/global.utils';
 import {
     AnalysisItem,
@@ -14,31 +13,27 @@ import {
  */
 @Injectable()
 export class ProgrammingExerciseInstructionAnalysisService {
-    private readonly TEST_CASE_REGEX = new RegExp('.*?\\((.*)\\)');
-    private readonly HINT_REGEX = new RegExp('.*{(.*)}');
+    private readonly TEST_CASE_REGEX = /.*?\[.*]\((.*)\)/;
     private readonly INVALID_TEST_CASE_TRANSLATION = 'artemisApp.programmingExercise.testCaseAnalysis.invalidTestCase';
-    private readonly INVALID_HINT_TRANSLATION = 'artemisApp.programmingExercise.hintsAnalysis.invalidHint';
 
     constructor(private translateService: TranslateService) {}
 
     /**
-     * Given a programming exercise's problem statement, analyze the test cases and hints contained (or not contained!) in it.
-     * Will give out a mixed object that contains singular analysis for test cases / hints and a accumulated analysis object.
+     * Given a programming exercise's problem statement, analyze the test cases contained (or not contained!) in it.
+     * Will give out a mixed object that contains singular analysis for test cases and an accumulated analysis object.
      *
      * @param problemStatement  multiline string.
      * @param taskRegex         identifies tasks in a problem statement.
      * @param exerciseTestCases used to check if a test case is valid / missing.
-     * @param exerciseHints     used to check if a hint is valid.
      */
-    public analyzeProblemStatement = (problemStatement: string, taskRegex: RegExp, exerciseTestCases: string[], exerciseHints: ExerciseHint[]) => {
+    public analyzeProblemStatement = (problemStatement: string, taskRegex: RegExp, exerciseTestCases: string[]) => {
         // Look for task regex matches in the problem statement including their line numbers.
         const tasksFromProblemStatement = matchRegexWithLineNumbers(problemStatement, taskRegex);
 
         const { invalidTestCases, missingTestCases, invalidTestCaseAnalysis } = this.analyzeTestCases(tasksFromProblemStatement, exerciseTestCases);
-        const { invalidHints, invalidHintAnalysis } = this.analyzeExerciseHints(tasksFromProblemStatement, exerciseHints);
 
-        const completeAnalysis: ProblemStatementAnalysis = this.mergeAnalysis(invalidTestCaseAnalysis, invalidHintAnalysis);
-        return { invalidTestCases, missingTestCases, invalidHints, completeAnalysis };
+        const completeAnalysis: ProblemStatementAnalysis = this.mergeAnalysis(invalidTestCaseAnalysis);
+        return { invalidTestCases, missingTestCases, completeAnalysis };
     };
 
     /**
@@ -76,32 +71,6 @@ export class ProgrammingExerciseInstructionAnalysisService {
     };
 
     /**
-     * Analyze the hints for the following criteria:
-     * - Are hints in the problem statement that don't exist for the exercise?
-     *
-     * Will also set the invalidHints attribute of the component.
-     *
-     * @param tasksFromProblemStatement to check if they contain hints.
-     * @param exerciseHints to double check the exercise hints found in the problem statement.
-     */
-    private analyzeExerciseHints = (tasksFromProblemStatement: RegExpLineNumberMatchArray, exerciseHints: ExerciseHint[]) => {
-        const hintsInMarkdown = this.extractRegexFromTasks(tasksFromProblemStatement, this.HINT_REGEX);
-        const invalidHintAnalysis = hintsInMarkdown
-            .map(
-                ([lineNumber, hints]): AnalysisItem => [
-                    lineNumber,
-                    hints.filter((hint) => !exerciseHints.some((exerciseHint) => exerciseHint.id!.toString(10) === hint)),
-                    ProblemStatementIssue.INVALID_HINTS,
-                ],
-            )
-            .filter(([, hints]) => !!hints.length);
-
-        const invalidHints = invalidHintAnalysis.flatMap(([, testCases]) => testCases);
-
-        return { invalidHints, invalidHintAnalysis };
-    };
-
-    /**
      * Merges multiple AnalyseItem[] into one accumulated ProblemStatementAnalysis.
      *
      * @param analysis arbitrary number of analysis objects to be merged into one.
@@ -133,8 +102,6 @@ export class ProgrammingExerciseInstructionAnalysisService {
         switch (issueType) {
             case ProblemStatementIssue.INVALID_TEST_CASES:
                 return this.INVALID_TEST_CASE_TRANSLATION;
-            case ProblemStatementIssue.INVALID_HINTS:
-                return this.INVALID_HINT_TRANSLATION;
             default:
                 return '';
         }

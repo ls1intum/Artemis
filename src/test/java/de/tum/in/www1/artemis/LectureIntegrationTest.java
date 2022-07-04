@@ -14,10 +14,10 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.enumeration.AttachmentType;
 import de.tum.in.www1.artemis.domain.lecture.*;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.util.ModelFactory;
+import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
 
 public class LectureIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
@@ -49,7 +49,7 @@ public class LectureIntegrationTest extends AbstractSpringIntegrationBambooBitbu
     @BeforeEach
     public void initTestCase() throws Exception {
         this.database.addUsers(10, 10, 0, 10);
-        List<Course> courses = this.database.createCoursesWithExercisesAndLectures(true);
+        List<Course> courses = this.database.createCoursesWithExercisesAndLectures(true, true);
         this.course1 = this.courseRepository.findByIdWithExercisesAndLecturesElseThrow(courses.get(0).getId());
         this.lecture1 = this.course1.getLectures().stream().findFirst().get();
         this.textExercise = textExerciseRepository.findByCourseIdWithCategories(course1.getId()).stream().findFirst().get();
@@ -60,7 +60,7 @@ public class LectureIntegrationTest extends AbstractSpringIntegrationBambooBitbu
 
         // Setting up a lecture with various kinds of content
         ExerciseUnit exerciseUnit = database.createExerciseUnit(textExercise);
-        AttachmentUnit attachmentUnit = database.createAttachmentUnit();
+        AttachmentUnit attachmentUnit = database.createAttachmentUnit(true);
         this.attachmentOfAttachmentUnit = attachmentUnit.getAttachment();
         VideoUnit videoUnit = database.createVideoUnit();
         TextUnit textUnit = database.createTextUnit();
@@ -69,8 +69,14 @@ public class LectureIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         this.lecture1 = database.addLectureUnitsToLecture(this.lecture1, Set.of(exerciseUnit, attachmentUnit, videoUnit, textUnit));
     }
 
+    @AfterEach
+    public void resetDatabase() {
+        database.resetDatabase();
+    }
+
     private void addAttachmentToLecture() {
-        this.attachmentDirectOfLecture = new Attachment().attachmentType(AttachmentType.FILE).link("files/temp/example2.txt").name("example2");
+        this.attachmentDirectOfLecture = ModelFactory.generateAttachment(null);
+        this.attachmentDirectOfLecture.setLink("files/temp/example2.txt");
         this.attachmentDirectOfLecture.setLecture(this.lecture1);
         this.attachmentDirectOfLecture = attachmentRepository.save(this.attachmentDirectOfLecture);
         this.lecture1.addAttachments(this.attachmentDirectOfLecture);
@@ -82,6 +88,7 @@ public class LectureIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         request.putWithResponseBody("/api/lectures", new Lecture(), Lecture.class, HttpStatus.FORBIDDEN);
         request.getList("/api/courses/" + course1.getId() + "/lectures", HttpStatus.FORBIDDEN, Lecture.class);
         request.delete("/api/lectures/" + lecture1.getId(), HttpStatus.FORBIDDEN);
+        request.postWithResponseBody("/api/lectures/import/" + lecture1.getId() + "?courseId=" + course1.getId(), null, Lecture.class, HttpStatus.FORBIDDEN);
     }
 
     @Test
@@ -96,18 +103,13 @@ public class LectureIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         this.testAllPreAuthorize();
     }
 
-    @AfterEach
-    public void resetDatabase() {
-        database.resetDatabase();
-    }
-
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void createLecture_correctRequestBody_shouldCreateLecture() throws Exception {
         Course course = courseRepository.findByIdElseThrow(this.course1.getId());
 
         Lecture lecture = new Lecture();
-        lecture.title("loremIpsum");
+        lecture.setTitle("loremIpsum");
         lecture.setCourse(course);
         lecture.setDescription("loremIpsum");
         Lecture returnedLecture = request.postWithResponseBody("/api/lectures", lecture, Lecture.class, HttpStatus.CREATED);
@@ -130,7 +132,7 @@ public class LectureIntegrationTest extends AbstractSpringIntegrationBambooBitbu
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void updateLecture_correctRequestBody_shouldUpdateLecture() throws Exception {
-        Lecture originalLecture = lectureRepository.findByIdWithPostsAndLectureUnitsAndLearningGoals(lecture1.getId()).get();
+        Lecture originalLecture = lectureRepository.findByIdWithLectureUnits(lecture1.getId()).get();
         originalLecture.setTitle("Updated");
         originalLecture.setDescription("Updated");
         Lecture updatedLecture = request.putWithResponseBody("/api/lectures", originalLecture, Lecture.class, HttpStatus.OK);
@@ -141,7 +143,7 @@ public class LectureIntegrationTest extends AbstractSpringIntegrationBambooBitbu
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void updateLecture_NoId_shouldReturnBadRequest() throws Exception {
-        Lecture originalLecture = lectureRepository.findByIdWithPostsAndLectureUnitsAndLearningGoals(lecture1.getId()).get();
+        Lecture originalLecture = lectureRepository.findByIdWithLectureUnits(lecture1.getId()).get();
         originalLecture.setId(null);
         request.putWithResponseBody("/api/lectures", originalLecture, Lecture.class, HttpStatus.BAD_REQUEST);
     }
@@ -254,7 +256,7 @@ public class LectureIntegrationTest extends AbstractSpringIntegrationBambooBitbu
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void deleteLecture_NullInListOfLectureUnits_shouldDeleteLecture() throws Exception {
-        Lecture lecture = lectureRepository.findByIdWithPostsAndLectureUnitsAndLearningGoalsElseThrow(lecture1.getId());
+        Lecture lecture = lectureRepository.findByIdWithLectureUnitsAndLearningGoalsElseThrow(lecture1.getId());
         List<LectureUnit> lectureUnits = lecture.getLectureUnits();
         assertThat(lectureUnits).hasSize(4);
         ArrayList<LectureUnit> lectureUnitsWithNulls = new ArrayList<>();
@@ -265,36 +267,12 @@ public class LectureIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         lecture.getLectureUnits().clear();
         lecture.getLectureUnits().addAll(lectureUnitsWithNulls);
         lectureRepository.saveAndFlush(lecture);
-        lecture = lectureRepository.findByIdWithPostsAndLectureUnitsAndLearningGoalsElseThrow(lecture1.getId());
+        lecture = lectureRepository.findByIdWithLectureUnitsAndLearningGoalsElseThrow(lecture1.getId());
         lectureUnits = lecture.getLectureUnits();
         assertThat(lectureUnits).hasSize(8);
         request.delete("/api/lectures/" + lecture1.getId(), HttpStatus.OK);
         Optional<Lecture> lectureOptional = lectureRepository.findById(lecture1.getId());
         assertThat(lectureOptional).isEmpty();
-    }
-
-    /**
-     * We have to make sure to reorder the list of lecture units when we delete a lecture unit to prevent hibernate
-     * from entering nulls into the list to keep the order of lecture units
-     */
-    @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void deleteLectureUnit_FirstLectureUnit_ShouldReorderList() throws Exception {
-        Lecture lecture = lectureRepository.findByIdWithPostsAndLectureUnitsAndLearningGoalsElseThrow(lecture1.getId());
-        assertThat(lecture.getLectureUnits()).hasSize(4);
-        LectureUnit firstLectureUnit = lecture.getLectureUnits().stream().findFirst().get();
-        request.delete("/api/lectures/" + lecture1.getId() + "/lecture-units/" + firstLectureUnit.getId(), HttpStatus.OK);
-        lecture = lectureRepository.findByIdWithPostsAndLectureUnitsAndLearningGoalsElseThrow(lecture1.getId());
-        assertThat(lecture.getLectureUnits()).hasSize(3);
-        boolean nullFound = false;
-        for (LectureUnit lectureUnit : lecture.getLectureUnits()) {
-            if (Objects.isNull(lectureUnit)) {
-                nullFound = true;
-                break;
-            }
-        }
-        assertThat(nullFound).isFalse();
-
     }
 
     @Test
@@ -332,7 +310,7 @@ public class LectureIntegrationTest extends AbstractSpringIntegrationBambooBitbu
 
     private void testGetLectureTitle() throws Exception {
         Lecture lecture = new Lecture();
-        lecture.title("Test Lecture");
+        lecture.setTitle("Test Lecture");
         lectureRepository.save(lecture);
 
         final var title = request.get("/api/lectures/" + lecture.getId() + "/title", HttpStatus.OK, String.class);
@@ -343,5 +321,36 @@ public class LectureIntegrationTest extends AbstractSpringIntegrationBambooBitbu
     @WithMockUser(username = "user1", roles = "USER")
     public void testGetLectureTitleForNonExistingLecture() throws Exception {
         request.get("/api/lectures/123124123123/title", HttpStatus.NOT_FOUND, String.class);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor42", roles = "INSTRUCTOR")
+    public void testInstructorGetsOnlyResultsFromOwningCourses() throws Exception {
+        final var search = database.configureSearch("");
+        final var result = request.get("/api/lectures/", HttpStatus.OK, SearchResultPageDTO.class, database.searchMapping(search));
+        assertThat(result.getResultsOnPage()).isNullOrEmpty();
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testInstructorGetsResultsFromOwningCoursesNotEmpty() throws Exception {
+        final var search = database.configureSearch(lecture1.getTitle());
+        final var result = request.get("/api/lectures/", HttpStatus.OK, SearchResultPageDTO.class, database.searchMapping(search));
+        assertThat(result.getResultsOnPage()).hasSize(2);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testImport() throws Exception {
+        Course course2 = this.database.addEmptyCourse();
+
+        Lecture lecture2 = request.postWithResponseBody("/api/lectures/import/" + lecture1.getId() + "?courseId=" + course2.getId(), null, Lecture.class, HttpStatus.CREATED);
+
+        // Assert that all lecture units (except exercise units) were copied
+        assertThat(lecture2.getLectureUnits().stream().map(LectureUnit::getName).toList()).containsExactlyElementsOf(
+                this.lecture1.getLectureUnits().stream().filter(lectureUnit -> !(lectureUnit instanceof ExerciseUnit)).map(LectureUnit::getName).toList());
+
+        assertThat(lecture2.getAttachments().stream().map(Attachment::getName).toList())
+                .containsExactlyElementsOf(this.lecture1.getAttachments().stream().map(Attachment::getName).toList());
     }
 }

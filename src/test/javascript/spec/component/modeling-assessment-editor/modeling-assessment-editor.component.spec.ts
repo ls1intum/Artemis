@@ -156,7 +156,7 @@ describe('ModelingAssessmentEditorComponent', () => {
 
             component.ngOnInit();
             tick(500);
-            expect(modelingSubmissionSpy).toHaveBeenCalledTimes(1);
+            expect(modelingSubmissionSpy).toHaveBeenCalledOnce();
             expect(component.isLoading).toBeFalse();
             expect(component.complaint).toEqual(complaint);
             modelingSubmissionSpy.mockRestore();
@@ -170,7 +170,7 @@ describe('ModelingAssessmentEditorComponent', () => {
 
             component.ngOnInit();
             tick(500);
-            expect(modelingSubmissionSpy).toHaveBeenCalledTimes(1);
+            expect(modelingSubmissionSpy).toHaveBeenCalledOnce();
             modelingSubmissionSpy.mockRestore();
         }));
     });
@@ -204,12 +204,11 @@ describe('ModelingAssessmentEditorComponent', () => {
     });
 
     it('should save assessment', fakeAsync(() => {
-        const feedback = new Feedback();
-        feedback.id = 2;
-        feedback.text = 'This is a test feedback';
-        feedback.detailText = 'Feedback';
-        feedback.credits = 1;
-        feedback.type = FeedbackType.MANUAL_UNREFERENCED;
+        const course = new Course();
+        component.modelingExercise = new ModelingExercise(UMLDiagramType.ClassDiagram, course, undefined);
+        component.modelingExercise.maxPoints = 10;
+
+        const feedback = createTestFeedback();
         component.unreferencedFeedback = [feedback];
 
         component.result = {
@@ -240,7 +239,7 @@ describe('ModelingAssessmentEditorComponent', () => {
         component.ngOnInit();
         tick(500);
         component.onSaveAssessment();
-        expect(saveAssessmentSpy).toHaveBeenCalledTimes(1);
+        expect(saveAssessmentSpy).toHaveBeenCalledOnce();
     }));
 
     it('should try to submit assessment', fakeAsync(() => {
@@ -249,12 +248,7 @@ describe('ModelingAssessmentEditorComponent', () => {
         component.modelingExercise.assessmentDueDate = dayjs().subtract(2, 'days');
 
         // make sure feedback is valid
-        const feedback = new Feedback();
-        feedback.id = 2;
-        feedback.text = 'This is a test feedback';
-        feedback.detailText = 'Feedback';
-        feedback.credits = 1;
-        feedback.type = FeedbackType.MANUAL_UNREFERENCED;
+        const feedback = createTestFeedback();
         component.unreferencedFeedback = [feedback];
 
         component.submission = {
@@ -288,9 +282,19 @@ describe('ModelingAssessmentEditorComponent', () => {
 
         component.onSubmitAssessment();
 
-        expect(window.confirm).toHaveBeenCalledTimes(1);
+        expect(window.confirm).toHaveBeenCalledOnce();
         expect(component.highlightMissingFeedback).toBeTrue();
     }));
+
+    const createTestFeedback = (): Feedback => {
+        const feedback = new Feedback();
+        feedback.id = 2;
+        feedback.text = 'This is a test feedback';
+        feedback.detailText = 'Feedback';
+        feedback.credits = 1;
+        feedback.type = FeedbackType.MANUAL_UNREFERENCED;
+        return feedback;
+    };
 
     it('should update assessment after complaint', fakeAsync(() => {
         const complaintResponse = new ComplaintResponse();
@@ -323,7 +327,7 @@ describe('ModelingAssessmentEditorComponent', () => {
         tick(500);
 
         component.onUpdateAssessmentAfterComplaint(complaintResponse);
-        expect(serviceSpy).toHaveBeenCalledTimes(1);
+        expect(serviceSpy).toHaveBeenCalledOnce();
         expect(component.result?.participation?.results).toEqual([changedResult]);
     }));
 
@@ -343,8 +347,8 @@ describe('ModelingAssessmentEditorComponent', () => {
         tick(500);
 
         component.onCancelAssessment();
-        expect(windowSpy).toHaveBeenCalledTimes(1);
-        expect(serviceSpy).toHaveBeenCalledTimes(1);
+        expect(windowSpy).toHaveBeenCalledOnce();
+        expect(serviceSpy).toHaveBeenCalledOnce();
     }));
 
     it('should handle changed feedback', fakeAsync(() => {
@@ -371,7 +375,7 @@ describe('ModelingAssessmentEditorComponent', () => {
         component.onFeedbackChanged(feedbacks);
         expect(component.referencedFeedback).toHaveLength(1);
         expect(component.totalScore).toBe(3);
-        expect(handleFeedbackSpy).toHaveBeenCalledTimes(1);
+        expect(handleFeedbackSpy).toHaveBeenCalledOnce();
     }));
 
     describe('test assessNext', () => {
@@ -400,7 +404,7 @@ describe('ModelingAssessmentEditorComponent', () => {
             component.assessNext();
             tick(500);
 
-            expect(serviceSpy).toHaveBeenCalledTimes(1);
+            expect(serviceSpy).toHaveBeenCalledOnce();
             expect(routerSpy).toHaveBeenCalledWith(url, queryParams);
         }));
 
@@ -417,7 +421,7 @@ describe('ModelingAssessmentEditorComponent', () => {
             component.ngOnInit();
             tick(500);
             component.assessNext();
-            expect(serviceSpy).toHaveBeenCalledTimes(1);
+            expect(serviceSpy).toHaveBeenCalledOnce();
         }));
     });
 
@@ -436,7 +440,7 @@ describe('ModelingAssessmentEditorComponent', () => {
 
         component.useStudentSubmissionAsExampleSubmission();
 
-        expect(importSpy).toHaveBeenCalledTimes(1);
+        expect(importSpy).toHaveBeenCalledOnce();
         expect(importSpy).toHaveBeenCalledWith(component.submission.id, component.modelingExercise!.id);
     });
 });

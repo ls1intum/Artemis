@@ -15,6 +15,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
+import de.tum.in.www1.artemis.domain.DomainObject;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseGitDiffEntry;
 import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseGitDiffReport;
@@ -78,7 +79,7 @@ public class ProgrammingExerciseGitDiffReportService {
      */
     public ProgrammingExerciseFullGitDiffReportDTO getFullReport(ProgrammingExercise programmingExercise) {
         try {
-            var report = programmingExerciseGitDiffReportRepository.findByProgrammingExerciseId(programmingExercise.getId());
+            var report = this.getReportOfExercise(programmingExercise);
             if (report == null) {
                 // Generate the report if it does not exist yet
                 report = updateReport(programmingExercise);
@@ -112,7 +113,7 @@ public class ProgrammingExerciseGitDiffReportService {
 
             return fullReport;
         }
-        catch (InterruptedException | GitAPIException e) {
+        catch (GitAPIException e) {
             log.error("Exception while generating full git diff report", e);
             throw new InternalServerErrorException("Error while generating full git-diff: " + e.getMessage());
         }
@@ -120,8 +121,6 @@ public class ProgrammingExerciseGitDiffReportService {
 
     /**
      * Converts a normal git-diff entry to a full git-diff entry containing the actual code block of the change it represents.
-     * This method should not be called twice for the same programming exercise at the same time, as this will result in
-     * the creation of 2 reports. See https://github.com/ls1intum/Artemis/pull/4893 for more information about it.
      *
      * @param entry The normal git-diff entry
      * @param templateRepoFiles The files of the solution repository
@@ -157,6 +156,8 @@ public class ProgrammingExerciseGitDiffReportService {
      * Updates the ProgrammingExerciseGitDiffReport of a programming exercise.
      * If there were no changes since the last report was created this will not do anything.
      * If there were changes to at least one of the repositories a new report will be created.
+     * This method should not be called twice for the same programming exercise at the same time, as this will result in
+     * the creation of 2 reports. See https://github.com/ls1intum/Artemis/pull/4893 for more information about it.
      *
      * @param programmingExercise The programming exercise
      * @return The git-diff report for the given programming exercise
@@ -180,7 +181,7 @@ public class ProgrammingExerciseGitDiffReportService {
 
         var templateHash = templateSubmission.getCommitHash();
         var solutionHash = solutionSubmission.getCommitHash();
-        var existingReport = programmingExerciseGitDiffReportRepository.findByProgrammingExerciseId(programmingExercise.getId());
+        var existingReport = this.getReportOfExercise(programmingExercise);
         if (existingReport != null && canUseExistingReport(existingReport, templateHash, solutionHash)) {
             return existingReport;
         }
@@ -195,14 +196,36 @@ public class ProgrammingExerciseGitDiffReportService {
                 programmingExerciseGitDiffReportRepository.delete(existingReport);
             }
             newReport = programmingExerciseGitDiffReportRepository.save(newReport);
-            programmingExercise.setGitDiffReport(newReport);
             programmingExerciseRepository.save(programmingExercise);
             return newReport;
         }
-        catch (InterruptedException | GitAPIException | IOException e) {
+        catch (GitAPIException | IOException e) {
             log.error("Exception while generating git diff report", e);
             throw new InternalServerErrorException("Error while generating git-diff: " + e.getMessage());
         }
+    }
+
+    /**
+     * Obtain the {@link ProgrammingExerciseGitDiffReport} of a programming exercise.
+     * Contains proper error handling in case more than one report exists.
+     *
+     * @param programmingExercise The programming exercise
+     * @return The report or null if none exists
+     */
+    public ProgrammingExerciseGitDiffReport getReportOfExercise(ProgrammingExercise programmingExercise) {
+        var reports = programmingExerciseGitDiffReportRepository.findByProgrammingExerciseId(programmingExercise.getId());
+        if (reports.isEmpty()) {
+            return null;
+        }
+        else if (reports.size() == 1) {
+            return reports.get(0);
+        }
+        // Error handling in case more than one reports exist for the exercise
+        var latestReport = reports.stream().max(Comparator.comparing(DomainObject::getId)).get();
+        var reportsToDelete = new ArrayList<>(reports);
+        reportsToDelete.remove(latestReport);
+        programmingExerciseGitDiffReportRepository.deleteAll(reportsToDelete);
+        return latestReport;
     }
 
     /**
@@ -215,7 +238,7 @@ public class ProgrammingExerciseGitDiffReportService {
      * @throws GitAPIException If there was an issue with JGit
      */
     private ProgrammingExerciseGitDiffReport generateReport(TemplateProgrammingExerciseParticipation templateParticipation,
-            SolutionProgrammingExerciseParticipation solutionParticipation) throws GitAPIException, InterruptedException, IOException {
+            SolutionProgrammingExerciseParticipation solutionParticipation) throws GitAPIException, IOException {
         var templateRepo = gitService.getOrCheckoutRepository(templateParticipation.getVcsRepositoryUrl(), true);
         var solutionRepo = gitService.getOrCheckoutRepository(solutionParticipation.getVcsRepositoryUrl(), true);
 
@@ -227,8 +250,7 @@ public class ProgrammingExerciseGitDiffReportService {
         var oldTreeParser = new FileTreeIterator(templateRepo);
         var newTreeParser = new FileTreeIterator(solutionRepo);
 
-        try (ByteArrayOutputStream diffOutputStream = new ByteArrayOutputStream()) {
-            Git git = Git.wrap(templateRepo);
+        try (ByteArrayOutputStream diffOutputStream = new ByteArrayOutputStream(); Git git = Git.wrap(templateRepo)) {
             git.diff().setOldTree(oldTreeParser).setNewTree(newTreeParser).setOutputStream(diffOutputStream).call();
             var diff = diffOutputStream.toString();
             var programmingExerciseGitDiffEntries = extractDiffEntries(diff);

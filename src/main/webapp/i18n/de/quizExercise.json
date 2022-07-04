@@ -4,6 +4,8 @@
             "home": {
                 "title": "Quiz",
                 "createLabel": "Quiz erstellen",
+                "editLabel": "Quiz bearbeiten",
+                "importLabel": "Quiz importieren",
                 "createModelDragAndDrop": "Drag-And-Drop Model Quiz erstellen",
                 "createOrEditLabel": "Quiz erstellen oder bearbeiten",
                 "exportLabel": "Quizübungen exportieren"
@@ -17,6 +19,9 @@
             "reset": {
                 "question": "Soll das Quiz <strong>{{ title }}</strong> wirklich zurückgesetzt werden? Diese Aktion kann NICHT rückgängig gemacht werden! <br> Das bedeutet, dass alle Teilnehmenden, Ergebnisse und Statistiken gelöscht werden, aber die Fragen des Quizzes bestehen bleiben. Dann kannst du das Quiz erneut starten."
             },
+            "endNow": {
+                "question": "Soll das Quiz <strong>{{ title }}</strong> wirklich jetzt beendet werden? Diese Aktion kann NICHT rückgängig gemacht werden! <br> Dies verhindert alle weiteren Abgaben und startet die Veröffentlichung der Ergebnisse."
+            },
             "edit": {
                 "title": "Quiz für {{ param }} bearbeiten",
                 "addQuestion": "Frage hinzufügen",
@@ -29,9 +34,6 @@
                 "testRunSubmissionsExist": "Dieses Quiz enthält Abgaben für einen der Testläufe der Klausur. Lösche den Testlauf, um die Antwortoptionen zu bearbeiten."
             },
             "saveError": "Beim Speichern ist ein Fehler ist aufgetreten. Bitte überprüfe deine Eingabe und versuche es später noch einmal.",
-            "new": {
-                "title": "Quiz für {{ param }} erstellen"
-            },
             "export": {
                 "title": "Alle Quizfragen zum Kurs {{ param }}",
                 "export": "Export",
@@ -46,7 +48,7 @@
             },
             "quizStatus": {
                 "closed": "Geschlossen",
-                "hidden": "Verborgen",
+                "invisible": "Unsichtbar",
                 "openForPractice": "Zur Übung freigegeben",
                 "active": "Aktiv",
                 "visible": "Sichtbar"
@@ -61,7 +63,8 @@
             "isOpenForPractice": "Zum Üben freigegeben",
             "isPlannedToStart": "Geplante Startzeit",
             "openForPractice": "Zum Üben Freigeben",
-            "startNow": "Jetzt Starten",
+            "startQuiz": "Quiz starten",
+            "startBatch": "Gruppe starten",
             "showNow": "Für Studierende Anzeigen",
             "duration": "Dauer",
             "minutes": "Minuten",
@@ -88,7 +91,12 @@
             "addSelectedQuestions": "Ausgewählte Fragen hinzufügen",
             "status": "Status",
             "quizPointStatistic": "Quiz-Punkte-Statistik",
-            "startTime": "Startzeit",
+            "releaseDate": "Sichtbar ab",
+            "startTime": "Bearbeitungszeit ab",
+            "startTimeErrorSynchronized": "Beginn der Arbeitszeit sollte nach \"Sichtbar ab\" sein",
+            "startTimeError": "Der Beginn der Arbeitszeit sollte nach \"Sichtbar ab\" und vor dem Fälligkeitsdatum liegen",
+            "setStartTime": "Start des Quiz planen",
+            "dueDateError": "Das Fälligkeitsdatum muss nach \"Sichtbar ab\" liegen. Bitte überprüfe deine Auswahl noch einmal",
             "quiz": "Quiz",
             "totalPoints": "Gesamtpunktzahl",
             "totalScore": "Ergebnis",
@@ -101,7 +109,11 @@
                 "wait": "Warte bis das Quiz beendet ist, um deine Ergebnisse zu sehen.",
                 "result": "Du hast das Quiz mit {{userScore}} von {{maxScore}} Punkten abgeschlossen ({{percentage}} %).",
                 "waitForStart": "Bitte warte.<br><br>Diese Seite lädt automatisch neu, sobald das Quiz beginnt.",
-                "timeUntilPlannedStart": "Zeit bis zum geplanten Start:"
+                "timeUntilPlannedStart": "Zeit bis zum geplanten Start:",
+                "enterPassword": "Passwort eingeben um das Quiz zu bearbeiten.",
+                "startNow": "Quiz jetzt bearbeiten",
+                "noMoreAttempts": "Du hast bereits alle deine Versuche für dieses Quiz verwendet.",
+                "alreadyAttempted": "Du hast bereits an diesem Quiz teilgenommen."
             },
             "isSaving": "Wird gespeichert...",
             "lastSaved": "Gespeichert",
@@ -165,6 +177,7 @@
                 "questionTitle": "Frage {{index}}: Der Titel fehlt.",
                 "questionScore": "Frage {{index}}: Mindestens einen Punkt pro Aufgabe erforderlich.",
                 "questionCorrectAnswerOption": "Frage {{index}}: Es existiert keine korrekte Antwortmöglichkeit.",
+                "questionSingleChoiceCorrectAnswerOptions": "Frage {{index}}: Es existieren mehrere korrekte Antwortmöglichkeiten bei einer Frage mit Einfachauswahl.",
                 "questionCorrectMapping": "Frage {{index}}: Es existiert keine korrekte Zuordnung.",
                 "questionUnsolvable": "Frage {{index}}: Es gibt Drag Items, die auf mehrere Drop Locations gleichzeitig platziert werden müssten, um die Frage richtig zu beantworten.",
                 "misleadingCorrectMapping": "Frage {{index}}: Es gibt mindestens eine korrekte Zuordnung (oder Kombination an korrekten Zuordnungen), die wenn sie verwendet wird, keine korrekte Gesamtlösung mehr zulässt.",
@@ -211,11 +224,15 @@
                 "scoringTypeProportional": "Verteilung Anteilig mit Abzügen: ",
                 "scoringTypeProportionalWithout": "Verteilung Anteilig ohne Abzügen: ",
                 "scoringTypeAllOrNothing": "Verteilung Alles-oder-Nichts: ",
+                "scoringTypeSingleChoice": "Verteilung Einfachauswahl: ",
                 "scoringTypeProportionalExplanation": "Jede richtige Antwort gibt positive Punkte, jeder Fehler gibt negative Punkte, um Rätselraten zu vermeiden. ",
                 "scoringTypeProportionalWithoutExplanation": "Jede richtige Antwort gibt positive Punkte. Für Fehler werden keine Punkte abgezogen. ",
                 "scoringTypeAllOrNothingExplanation": "Du erhältst entweder alle oder gar keine Punkte.",
+                "scoringTypeSingleChoiceExplanation": "Es gibt nur eine korrekte Antwort.",
                 "multipleChoiceAllOrNothingCorrect": "Du hast {{paramScore}} {{paramPoint}} der {{paramQuestionScore}} möglichen {{paramScorePoint}} erreicht. Da du alle Antwortoptionen richtig ausgewählt hast, hast du in dieser Übung alle Punkte erreicht. Tolle Arbeit!",
                 "multipleChoiceAllOrNothingNotCorrect": "Du hast {{paramScore}} {{paramPoint}} der {{paramQuestionScore}} möglichen {{paramScorePoint}} erreicht, da du {{paramInTotalWrongOptions}} {{wrongOption}} falsch und {{paramInTotalRightOptions}} {{rightOption}} richtig ausgewählt hast. Versuchen es weiter! ",
+                "multipleChoiceSingleChoiceCorrect": "Du hast {{paramScore}} {{paramPoint}} der {{paramQuestionScore}} möglichen {{paramScorePoint}} erreicht. Da du die richtige Antwortoption ausgewählt hast, hast du in dieser Übung alle Punkte erreicht. Tolle Arbeit!",
+                "multipleChoiceSingleChoiceNotCorrect": "Du hast {{paramScore}} {{paramPoint}} der {{paramQuestionScore}} möglichen {{paramScorePoint}} erreicht, da du nicht die richtige Antwortoption ausgewählt hast. Versuchen es weiter! ",
                 "multipleChoiceProp": "Du hast {{paramScore}} {{paramPoint}} der {{paramQuestionScore}} möglichen {{paramScorePoint}} erreicht. Jede der {{paramAmountOfAnswerOptions}} Antwortmöglichkeiten gewährt dir {{paramQuestionScore}}/{{paramAmountOfAnswerOptions}} Punkte, wenn du die Antwortmöglichkeiten richtig ausgewählt hast. Du hast {{paramInTotalWrongOptions}} {{wrongOption}} falsch und {{paramInTotalRightOptions}} {{rightOption}} korrekt ausgewählt. Insgesamt hast du",
                 "dragAndDropAllOrNothingCorrect": "Du hast {{paramScore}} {{paramPoint}} der {{paramQuestionScore}} möglichen {{paramScorePoint}} erreicht. Da du alle Elemente korrekt zugeordnet hast, hast du in dieser Übung alle Punkte erreicht. Tolle Arbeit!",
                 "dragAndDropAllOrNothingNotCorrect": "Du hast {{paramScore}} {{paramPoint}} der {{paramQuestionScore}} möglichen {{paramScorePoint}} erreicht, da du {{paramRightMapping}} {{rightMap}} korrekt zugeordnet hast, aber {{paramWrongMappedItems}} {{wrongMap}} falsch zugeordnet hast. Versuchen es weiter!",
@@ -243,7 +260,24 @@
                 "explanationTitle": "Ähnlichkeit",
                 "explanation": "Legt die erforderliche Ähnlichkeit zwischen vordefinierten Lösungen und Antworten von Studierenden in der Auswertung für jede Lücke fest. Der Wert (zwischen 50 % und 100 %) gibt an, ob nur exakt richtige Antworten (100 %) als richtig behandelt werden oder ob Studierende Tippfehler in ihren Antworten haben dürfen. Je niedriger der Wert ist, desto mehr Tippfehler sind in den Antworten erlaubt (basierend auf der Levenshtein-Distanz https://de.wikipedia.org/wiki/Levenshtein-Distanz). Beispiel: Ein Wert von 85 % würde 1 Tippfehler in einem Wort mit 5 Zeichen und 2 Tippfehler in einem Wort mit 10 Zeichen zulassen. Bitte verwende die Vorschaufunktion für das Quiz, um verschiedene Werte auszuprobieren."
             },
-            "matchingInfoModalTitle": "Optionen zum Bewerten von Antworten"
+            "matchingInfoModalTitle": "Optionen zum Bewerten von Antworten",
+            "quizMode": {
+                "title": "Ausführungsmodus",
+                "synchronized": "Synchronisiert",
+                "batched": "Gruppiert",
+                "individual": "Einzeln",
+                "explanation": "Der Ausführungsmodus bestimmt wie Studierende an einem Quiz teilnehmen können.\n\nSynchronisiert: Alle Studierenden nehmen gleichzeitig an dem Quiz teil.\nGruppiert: Es gibt mehrere Gruppen an denen Studierende mit einem Passwort teilnehmen können.\nEinzeln: Studierende können jederzeit selbstständig an dem Quiz teilnehmen."
+            },
+            "releaseDateExplanation": {
+                "SYNCHRONIZED": "Synchronisiert: Das Datum, ab dem das Quiz für die Studierenden in der Aufgabenübersicht sichtbar wird. Die Studierenden können die Fragen erst ab dem Startdatum sehen.",
+                "BATCHED": "Gruppiert: Das Datum, ab dem das Quiz für die Studierenden in der Aufgabenübersicht sichtbar wird. Die Studierenden können die Fragen erst sehen, wenn eine Gruppe gestartet wird und sie das Passwort dafür eingeben.",
+                "INDIVIDUAL": "Einzeln: Das Datum, ab dem das Quiz für die Studierenden in der Aufgabenübersicht sichtbar wird. Die Studierenden können ab diesem Zeitpunkt mit der Bearbeitung beginnen."
+            },
+            "startTimeExplanation": "Setzen des Zeitpunktes, ab dem die Studierenden die Fragen sehen und mit der Beantwortung beginnen können.",
+            "addBatch": "Gruppe hinzufügen",
+            "join": "Bearbeiten",
+            "joinFailed": "Dem Quiz konnte nicht beigetreten werden.",
+            "submitSuccess": "Deine Antworten wurden erfolgreich abgegeben.<br><br>Die Ergebnisse sind verfügbar, nachdem das Quiz beendet ist."
         },
         "quizLiveModal": {
             "title": "Go-Live einer neuen Quiz-Übung",

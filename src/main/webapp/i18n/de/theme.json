@@ -1,0 +1,22 @@
+{
+    "artemisApp": {
+        "theme": {
+            "darkMode": "Dunkler Modus",
+            "experimental": "EXPERIMENTELL",
+            "tryDarkMode": "Probiere den dunklen Modus aus und entlaste deine Augen.",
+            "darkModeAutoEnabled": "Der dunkle Modus wurde basierend auf den Einstellungen deines Betriebssystems automatisch aktiviert.",
+            "clickAnyTime": {
+                "partA": "Du kannst jederzeit auf dieses Symbol klicken, um",
+                "partB": {
+                    "autoDetected": "ihn",
+                    "manual": "den dunklen Modus"
+                },
+                "partC": "zu deaktivieren, falls es Probleme gibt."
+            },
+            "enableNow": "Jetzt aktivieren",
+            "noThanks": "Nein, danke",
+            "gotIt": "Alles klar!",
+            "sync": "Mit Betriebssystem synchronisieren"
+        }
+    }
+}

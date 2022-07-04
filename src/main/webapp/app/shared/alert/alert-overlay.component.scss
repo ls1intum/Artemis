@@ -67,59 +67,20 @@
             }
         }
 
-        .info {
-            color: #0c5460;
-            background-color: #d1ecf1;
-            border-color: #1295ab;
+        $alert-types: 'info', 'danger', 'warning', 'success';
+        @each $type in $alert-types {
+            .#{$type} {
+                color: var(--artemis-alert-#{$type}-color);
+                background-color: var(--artemis-alert-#{$type}-background);
+                border-color: var(--artemis-alert-#{$type}-border);
 
-            .left > .ng-fa-icon {
-                color: #1295ab;
-            }
+                .left > .ng-fa-icon {
+                    color: var(--artemis-alert-#{$type}-border);
+                }
 
-            .time-bar {
-                background-color: #1295ab;
-            }
-        }
-
-        .danger {
-            color: #600c0c;
-            background-color: #f1d1d1;
-            border-color: #bb2d3b;
-
-            .left > .ng-fa-icon {
-                color: #bb2d3b;
-            }
-
-            .time-bar {
-                background-color: #bb2d3b;
-            }
-        }
-
-        .warning {
-            color: #604c0c;
-            background-color: #f1e8d1;
-            border-color: #cc9c12;
-
-            .left > .ng-fa-icon {
-                color: #cc9c12;
-            }
-
-            .time-bar {
-                background-color: #cc9c12;
-            }
-        }
-
-        .success {
-            color: #21600c;
-            background-color: #d9f1d1;
-            border-color: #3eb058;
-
-            .left > .ng-fa-icon {
-                color: #3eb058;
-            }
-
-            .time-bar {
-                background-color: #3eb058;
+                .time-bar {
+                    background-color: var(--artemis-alert-#{$type}-border);
+                }
             }
         }
     }

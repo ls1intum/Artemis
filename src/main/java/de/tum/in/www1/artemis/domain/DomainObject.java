@@ -36,19 +36,19 @@ public abstract class DomainObject implements Serializable {
     }
 
     /**
-     * this methods checks for database equality based on the id
-     * @param o another object
+     * this method checks for database equality based on the id
+     * @param obj another object
      * @return whether this and the other object are equal based on the database id
      */
     @Override
-    public boolean equals(Object o) {
-        if (this == o) {
+    public boolean equals(Object obj) {
+        if (this == obj) {
             return true;
         }
-        if (o == null || getClass() != o.getClass()) {
+        if (obj == null || getClass() != obj.getClass()) {
             return false;
         }
-        DomainObject domainObject = (DomainObject) o;
+        DomainObject domainObject = (DomainObject) obj;
         if (domainObject.getId() == null || getId() == null) {
             return false;
         }

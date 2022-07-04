@@ -22,9 +22,12 @@ public class TextExerciseImportService extends ExerciseImportService {
 
     private final FeedbackRepository feedbackRepository;
 
+    private final TextBlockRepository textBlockRepository;
+
     public TextExerciseImportService(TextExerciseRepository textExerciseRepository, ExampleSubmissionRepository exampleSubmissionRepository,
             SubmissionRepository submissionRepository, ResultRepository resultRepository, TextBlockRepository textBlockRepository, FeedbackRepository feedbackRepository) {
-        super(exampleSubmissionRepository, submissionRepository, resultRepository, textBlockRepository);
+        super(exampleSubmissionRepository, submissionRepository, resultRepository);
+        this.textBlockRepository = textBlockRepository;
         this.textExerciseRepository = textExerciseRepository;
         this.feedbackRepository = feedbackRepository;
     }
@@ -50,7 +53,7 @@ public class TextExerciseImportService extends ExerciseImportService {
     }
 
     /** This helper method copies all attributes of the {@code importedExercise} into the new exercise.
-     * Here we ignore all external entities as well as the start-, end-, and asseessment due date.
+     * Here we ignore all external entities as well as the start-, end-, and assessment due date.
      *
      * @param importedExercise The exercise from which to copy the basis
      * @return the cloned TextExercise basis
@@ -60,7 +63,7 @@ public class TextExerciseImportService extends ExerciseImportService {
         log.debug("Copying the exercise basis from {}", importedExercise);
         TextExercise newExercise = new TextExercise();
 
-        super.copyExerciseBasis(newExercise, importedExercise);
+        super.copyExerciseBasis(newExercise, importedExercise, new HashMap<>());
         newExercise.setExampleSolution(importedExercise.getExampleSolution());
         return newExercise;
     }
@@ -96,7 +99,6 @@ public class TextExerciseImportService extends ExerciseImportService {
      * @param newExercise The new exercise in which we will insert the example submissions
      * @return The cloned set of example submissions
      */
-    @Override
     Set<ExampleSubmission> copyExampleSubmission(Exercise templateExercise, Exercise newExercise) {
         log.debug("Copying the ExampleSubmissions to new Exercise: {}", newExercise);
         Set<ExampleSubmission> newExampleSubmissions = new HashSet<>();
@@ -117,12 +119,11 @@ public class TextExerciseImportService extends ExerciseImportService {
 
     /** This helper function does a hard copy of the {@code originalSubmission} and stores the values in {@code newSubmission}.
      * To copy the TextBlocks and the submission results this function calls {@link #copyTextBlocks(Set, TextSubmission)} and
-     * {@link #copyExampleResult(Result, Submission)} respectively.
+     * {@link ExerciseImportService#copyExampleResult(Result, Submission, Map)} respectively.
      *
      * @param originalSubmission The original submission to be copied.
      * @return The cloned submission
      */
-    @Override
     TextSubmission copySubmission(final Submission originalSubmission) {
         TextSubmission newSubmission = new TextSubmission();
         if (originalSubmission != null) {
@@ -135,7 +136,7 @@ public class TextExerciseImportService extends ExerciseImportService {
             newSubmission.setText(((TextSubmission) originalSubmission).getText());
             newSubmission = submissionRepository.saveAndFlush(newSubmission);
             newSubmission.setBlocks(copyTextBlocks(((TextSubmission) originalSubmission).getBlocks(), newSubmission));
-            newSubmission.addResult(copyExampleResult(originalSubmission.getLatestResult(), newSubmission));
+            newSubmission.addResult(copyExampleResult(originalSubmission.getLatestResult(), newSubmission, new HashMap<>()));
             newSubmission = submissionRepository.saveAndFlush(newSubmission);
             updateFeedbackReferencesWithNewTextBlockIds(((TextSubmission) originalSubmission).getBlocks(), newSubmission);
         }

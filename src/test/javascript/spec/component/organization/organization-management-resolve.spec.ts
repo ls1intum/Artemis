@@ -21,7 +21,7 @@ describe('OrganizationManagementResolve', () => {
         // @ts-ignore
         organizationManagementResolve.resolve({ params: { id: 1 } } as any as ActivatedRouteSnapshot).subscribe((org) => (result = org));
         expect(result).toBe(toReturn);
-        expect(spy).toHaveBeenCalledTimes(1);
+        expect(spy).toHaveBeenCalledOnce();
         expect(spy).toHaveBeenCalledWith(1);
     });
 

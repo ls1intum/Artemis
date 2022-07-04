@@ -1,14 +1,21 @@
 package de.tum.in.www1.artemis.programmingexercise;
 
 import static de.tum.in.www1.artemis.config.Constants.NEW_RESULT_RESOURCE_PATH;
+import static de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage.JAVA;
+import static de.tum.in.www1.artemis.programmingexercise.ProgrammingSubmissionConstants.GITLAB_PUSH_EVENT_REQUEST;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Stream;
 
+import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -30,8 +37,12 @@ import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
 import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
-import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseStudentParticipationRepository;
+import de.tum.in.www1.artemis.repository.ProgrammingSubmissionRepository;
+import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
+import de.tum.in.www1.artemis.service.connectors.jenkins.dto.CommitDTO;
 import de.tum.in.www1.artemis.service.connectors.jenkins.dto.TestResultsDTO;
 import de.tum.in.www1.artemis.util.ModelFactory;
 
@@ -53,6 +64,9 @@ public class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends 
     private ResultRepository resultRepository;
 
     private ProgrammingExercise exercise;
+
+    @Autowired
+    private ProgrammingSubmissionAndResultIntegrationTestService testService;
 
     @BeforeEach
     void setUp() {
@@ -81,7 +95,7 @@ public class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends 
     void shouldReceiveBuildLogsOnNewStudentParticipationResult() throws Exception {
         // Precondition: Database has participation and a programming submission.
         String userLogin = "student1";
-        database.addCourseWithOneProgrammingExercise(false, ProgrammingLanguage.JAVA);
+        database.addCourseWithOneProgrammingExercise(false, false, ProgrammingLanguage.JAVA);
         ProgrammingExercise exercise = programmingExerciseRepository.findAllWithEagerParticipationsAndLegalSubmissions().get(1);
         var participation = database.addStudentParticipationForProgrammingExercise(exercise, userLogin);
         var submission = database.createProgrammingSubmission(participation, false);
@@ -110,7 +124,7 @@ public class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends 
     void shouldParseLegacyBuildLogsWhenPipelineLogsNotPresent() throws Exception {
         // Precondition: Database has participation and a programming submission.
         String userLogin = "student1";
-        database.addCourseWithOneProgrammingExercise(false, ProgrammingLanguage.JAVA);
+        database.addCourseWithOneProgrammingExercise(false, false, ProgrammingLanguage.JAVA);
         ProgrammingExercise exercise = programmingExerciseRepository.findAllWithEagerParticipationsAndLegalSubmissions().get(1);
         var participation = database.addStudentParticipationForProgrammingExercise(exercise, userLogin);
         database.createProgrammingSubmission(participation, true);
@@ -132,7 +146,7 @@ public class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends 
     void shouldReturnBadRequestWhenPlanKeyDoesntExist(ProgrammingLanguage programmingLanguage, boolean enableStaticCodeAnalysis) throws Exception {
         // Precondition: Database has participation and a programming submission.
         String userLogin = "student1";
-        database.addCourseWithOneProgrammingExercise(enableStaticCodeAnalysis, programmingLanguage);
+        database.addCourseWithOneProgrammingExercise(enableStaticCodeAnalysis, false, programmingLanguage);
         ProgrammingExercise exercise = programmingExerciseRepository.findAllWithEagerParticipationsAndLegalSubmissions().get(1);
         var participation = database.addStudentParticipationForProgrammingExercise(exercise, userLogin);
 
@@ -144,13 +158,61 @@ public class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends 
         assertThat(results).isEmpty();
     }
 
+    /**
+     * This test results from a bug where the first push event wasn't received by Artemis but all build events.
+     * This test ensures that in such a situation, the submission dates are set according to the commit dates and are therefore in the correct order.
+     */
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void shouldSetSubmissionDateForBuildCorrectlyIfOnlyOnePushIsReceived() throws Exception {
+        testService.setUp_shouldSetSubmissionDateForBuildCorrectlyIfOnlyOnePushIsReceived();
+        String userLogin = "student1";
+        var pushJSON = (JSONObject) new JSONParser().parse(GITLAB_PUSH_EVENT_REQUEST);
+        var firstCommitHash = (String) pushJSON.get("before");
+        var secondCommitHash = (String) pushJSON.get("after");
+        var firstCommitDate = ZonedDateTime.now().minusSeconds(60);
+        var secondCommitDate = ZonedDateTime.now().minusSeconds(30);
+
+        gitlabRequestMockProvider.mockGetDefaultBranch(defaultBranch);
+        gitlabRequestMockProvider.mockGetPushDate(testService.participation, Map.of(firstCommitHash, firstCommitDate, secondCommitHash, secondCommitDate));
+
+        // First commit is pushed but not recorded
+
+        // Second commit is pushed and recorded
+        postSubmission(testService.participation.getId(), HttpStatus.OK);
+
+        // Build result for first commit is received
+        var firstBuildCompleteDate = ZonedDateTime.now();
+        var firstVcsDTO = new CommitDTO();
+        firstVcsDTO.setRepositorySlug(urlService.getRepositorySlugFromRepositoryUrl(testService.participation.getVcsRepositoryUrl()));
+        firstVcsDTO.setHash(firstCommitHash);
+        var notificationDTOFirstCommit = createJenkinsNewResultNotification(testService.programmingExercise.getProjectKey(), userLogin, JAVA, List.of());
+        notificationDTOFirstCommit.setRunDate(firstBuildCompleteDate);
+        notificationDTOFirstCommit.setCommits(List.of(firstVcsDTO));
+
+        postResult(notificationDTOFirstCommit, HttpStatus.OK);
+
+        // Build result for second commit is received
+        var secondBuildCompleteDate = ZonedDateTime.now();
+        var secondVcsDTO = new CommitDTO();
+        secondVcsDTO.setRepositorySlug(urlService.getRepositorySlugFromRepositoryUrl(testService.participation.getVcsRepositoryUrl()));
+        secondVcsDTO.setHash(secondCommitHash);
+        var notificationDTOSecondCommit = createJenkinsNewResultNotification(testService.programmingExercise.getProjectKey(), userLogin, JAVA, List.of());
+        notificationDTOSecondCommit.setRunDate(secondBuildCompleteDate);
+        notificationDTOSecondCommit.setCommits(List.of(secondVcsDTO));
+
+        postResult(notificationDTOSecondCommit, HttpStatus.OK);
+
+        testService.shouldSetSubmissionDateForBuildCorrectlyIfOnlyOnePushIsReceived(firstCommitHash, firstCommitDate, secondCommitHash, secondCommitDate);
+    }
+
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @MethodSource("shouldSaveBuildLogsOnStudentParticipationArguments")
     @WithMockUser(username = "student1", roles = "USER")
     void shouldNotReceiveBuildLogsOnStudentParticipationWithoutResult(ProgrammingLanguage programmingLanguage, boolean enableStaticCodeAnalysis) throws Exception {
         // Precondition: Database has participation and a programming submission.
         String userLogin = "student1";
-        database.addCourseWithOneProgrammingExercise(enableStaticCodeAnalysis, programmingLanguage);
+        database.addCourseWithOneProgrammingExercise(enableStaticCodeAnalysis, false, programmingLanguage);
         ProgrammingExercise exercise = programmingExerciseRepository.findAllWithEagerParticipationsAndLegalSubmissions().get(1);
         var participation = database.addStudentParticipationForProgrammingExercise(exercise, userLogin);
         var submission = database.createProgrammingSubmission(participation, false);
@@ -173,7 +235,7 @@ public class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends 
     void shouldNotReceiveBuildLogsOnStudentParticipationWithoutSubmissionNorResult(ProgrammingLanguage programmingLanguage, boolean enableStaticCodeAnalysis) throws Exception {
         // Precondition: Database has participation without result and a programming
         String userLogin = "student1";
-        database.addCourseWithOneProgrammingExercise(enableStaticCodeAnalysis, programmingLanguage);
+        database.addCourseWithOneProgrammingExercise(enableStaticCodeAnalysis, false, programmingLanguage);
         ProgrammingExercise exercise = programmingExerciseRepository.findAllWithEagerParticipationsAndLegalSubmissions().get(1);
         var participation = database.addStudentParticipationForProgrammingExercise(exercise, userLogin);
 
@@ -233,6 +295,13 @@ public class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends 
         }
 
         return result;
+    }
+
+    /**
+     * This is the simulated request from the VCS to Artemis on a new commit.
+     */
+    private ProgrammingSubmission postSubmission(Long participationId, HttpStatus expectedStatus) throws Exception {
+        return testService.postSubmission(participationId, expectedStatus, GITLAB_PUSH_EVENT_REQUEST);
     }
 
     private void assertNoNewSubmissions(ProgrammingSubmission existingSubmission) {

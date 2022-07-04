@@ -26,6 +26,7 @@
                 "modelingExercise": "Modeling Exercise",
                 "quizExercise": "Quiz Exercise",
                 "lecture": "Lecture",
+                "learningGoal": "Learning Goal",
                 "ltiOutcomeUrl": "Lti Outcome Url",
                 "submittedAnswer": "Submitted Answer",
                 "quizQuestion": "Question",
@@ -242,7 +243,8 @@
             "addExternalSubmission": "Add External Submission",
             "addAuxiliaryRepository": "Add Auxiliary Repository",
             "toggleToUnsubmitted": "Change Student Exam to Unsubmitted",
-            "toggleToSubmitted": "Change Student Exam to Submitted"
+            "toggleToSubmitted": "Change Student Exam to Submitted",
+            "endNow": "End Now"
         },
         "detail": {
             "field": "Field",
@@ -259,6 +261,9 @@
         },
         "noButtonTextDelete": {
             "title": "Confirm delete operation"
+        },
+        "endNow": {
+            "title": "Confirm end now operation"
         },
         "cleanup": {
             "title": "Confirm cleanup operation"
@@ -327,10 +332,11 @@
         "aboutUs": "About us",
         "course": "Course details",
         "lectures": "Lectures",
+        "learningGoals": "Learning Goals",
         "exercise": "Exercise details",
         "statistics": "Course statistics",
         "exams": "Exams",
-        "discussion": "Discussion"
+        "communication": "Communication"
     },
     "connectionStatus": {
         "connected": "Connected",

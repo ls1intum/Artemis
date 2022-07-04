@@ -3,7 +3,6 @@ package de.tum.in.www1.artemis.service;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -59,7 +58,7 @@ public abstract class SubmissionExportService {
      *
      * @param exerciseId the id   of the exercise to be exported
      * @param submissionExportOptions the options for the export
-     * @return the zippped file with the exported submissions
+     * @return the zipped file with the exported submissions
      */
     public File exportStudentSubmissionsElseThrow(Long exerciseId, SubmissionExportOptionsDTO submissionExportOptions) {
         return exportStudentSubmissions(exerciseId, submissionExportOptions)
@@ -72,7 +71,7 @@ public abstract class SubmissionExportService {
      *
      * @param exerciseId the id   of the exercise to be exported
      * @param submissionExportOptions the options for the export
-     * @return the zippped file with the exported submissions
+     * @return the zipped file with the exported submissions
      */
     public Optional<File> exportStudentSubmissions(Long exerciseId, SubmissionExportOptionsDTO submissionExportOptions) {
         Path outputDir = Path.of(fileService.getUniquePathString(submissionExportPath));
@@ -171,8 +170,8 @@ public abstract class SubmissionExportService {
         String zipFileName = cleanZipGroupName + "-" + ZonedDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd-Hmss")) + ".zip";
 
         // Create directory
-        Path submissionsFolderPath = Paths.get(outputDir.toString(), "zippedSubmissions", zipGroupName);
-        Path zipFilePath = Paths.get(outputDir.toString(), "zippedSubmissions", zipFileName);
+        Path submissionsFolderPath = Path.of(outputDir.toString(), "zippedSubmissions", zipGroupName);
+        Path zipFilePath = Path.of(outputDir.toString(), "zippedSubmissions", zipFileName);
 
         File submissionFolder = submissionsFolderPath.toFile();
         if (!submissionFolder.exists() && !submissionFolder.mkdirs()) {
@@ -195,7 +194,7 @@ public abstract class SubmissionExportService {
             // create file path
             String submissionFileName = exercise.getTitle() + "-" + participation.getParticipantIdentifier() + "-" + latestSubmission.getId()
                     + this.getFileEndingForSubmission(latestSubmission);
-            Path submissionFilePath = Paths.get(submissionsFolderPath.toString(), submissionFileName);
+            Path submissionFilePath = Path.of(submissionsFolderPath.toString(), submissionFileName);
 
             // store file
             try {

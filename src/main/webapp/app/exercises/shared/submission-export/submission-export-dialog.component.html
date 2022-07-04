@@ -21,7 +21,7 @@
         <ng-container *ngIf="exercise.isAtLeastInstructor">
             <div *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR']" class="checkbox">
                 <label class="control-label">
-                    <input type="checkbox" name="allStudents" [(ngModel)]="submissionExportOptions.exportAllParticipants" />
+                    <input class="form-check-input" type="checkbox" name="allStudents" [(ngModel)]="submissionExportOptions.exportAllParticipants" />
                     <strong [jhiTranslate]="'instructorDashboard.exportSubmissions.downloadAllStudents'"> Or download the submissions of all students }} </strong>
                 </label>
             </div>
@@ -29,7 +29,7 @@
         <ng-container>
             <div class="checkbox">
                 <label class="control-label">
-                    <input type="checkbox" name="filterLateSubmissions" [(ngModel)]="this.submissionExportOptions.filterLateSubmissions" />
+                    <input class="form-check-input" type="checkbox" name="filterLateSubmissions" [(ngModel)]="this.submissionExportOptions.filterLateSubmissions" />
                     <strong jhiTranslate="instructorDashboard.exportSubmissions.filterLateSubmissions">Filter late submissions</strong>
                 </label>
             </div>

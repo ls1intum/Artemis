@@ -1,20 +1,24 @@
 package de.tum.in.www1.artemis.web.rest;
 
-import java.util.*;
+import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
+import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
-import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.ParticipationRepository;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseStudentParticipationRepository;
+import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.ExerciseDateService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseParticipationService;
@@ -25,8 +29,6 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 @RestController
 @RequestMapping("/api")
 public class ProgrammingExerciseParticipationResource {
-
-    private final Logger log = LoggerFactory.getLogger(ProgrammingExerciseParticipationResource.class);
 
     private final ParticipationRepository participationRepository;
 
@@ -83,7 +85,7 @@ public class ProgrammingExerciseParticipationResource {
     }
 
     /**
-     * Get the latest result for a given programming exercise participation including it's result.
+     * Get the latest result for a given programming exercise participation including its result.
      *
      * @param participationId for which to retrieve the programming exercise participation with latest result and feedbacks.
      * @param withSubmission flag determining whether the corresponding submission should also be returned

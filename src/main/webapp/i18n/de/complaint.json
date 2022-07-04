@@ -46,6 +46,11 @@
                 "accepted": "Angenommen",
                 "rejected": "Abgelehnt",
                 "showAddressedComplaints": "Adressierte Beschwerden anzeigen",
+                "showOnlyAddressedComplaints": "Ausschließlich adressierte Beschwerden anzeigen",
+                "hideAddressedComplaints": "Adressierte Beschwerden ausblenden",
+                "loadAllComplaints": "Alle Beschwerden laden",
+                "loadAllComplaintsExplanation": "Die Liste zeigt nur eingereichte Beschwerden über dich an. Mittels des Buttons können alle Beschwerden über alle Reviewer:innen geladen werden: ",
+                "allComplaintsLoaded": "Alle Beschwerden geladen",
                 "noComplaintsToShow": "Es gibt im Moment keine anzeigbaren Beschwerden."
             },
             "review": "Beschwerde überprüfen",
@@ -73,6 +78,10 @@
             "list": {
                 "title": "Liste der Feedbackanfragen",
                 "showAnsweredRequests": "Beantwortete Feedbackanfragen anzeigen",
+                "hideAnsweredRequests": "Beantwortete Feedbackanfragen ausblenden",
+                "loadAllRequests": "Alle Feedbackanfragen laden",
+                "loadAllRequestsExplanation": "Die Liste zeigt nur eingerechte Feedbackanfragen über deine Bewertungen an. Mittels des Buttons können alle Feedbackanfragen über alle Reviewer:innen geladen werden: ",
+                "allRequestsLoaded": "Alle Feedbackanfragen geladen",
                 "noRequestsToShow": "Es gibt im Moment keine Feedbackanfragen zu zeigen."
             }
         }

@@ -74,11 +74,10 @@ public class SystemNotificationResource {
      * @param systemNotification the system notification to update
      * @return the ResponseEntity with status 200 (OK) and with body the updated notification, or with status 400 (Bad Request) if the system notification is not valid, or with
      *         status 500 (Internal Server Error) if the system notification couldn't be updated
-     * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PutMapping("/system-notifications")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<SystemNotification> updateSystemNotification(@RequestBody SystemNotification systemNotification) throws URISyntaxException {
+    public ResponseEntity<SystemNotification> updateSystemNotification(@RequestBody SystemNotification systemNotification) {
         log.debug("REST request to update SystemNotification : {}", systemNotification);
         if (systemNotification.getId() == null) {
             throw new BadRequestAlertException("Invalid id", ENTITY_NAME, "idnull");

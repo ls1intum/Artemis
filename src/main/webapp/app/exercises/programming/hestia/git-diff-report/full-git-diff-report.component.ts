@@ -11,6 +11,8 @@ export class FullGitDiffReportComponent implements OnInit {
     report: ProgrammingExerciseFullGitDiffReport;
 
     entries: ProgrammingExerciseFullGitDiffEntry[];
+    addedLineCount: number;
+    removedLineCount: number;
 
     constructor() {}
 
@@ -26,5 +28,8 @@ export class FullGitDiffReportComponent implements OnInit {
             }
             return (a.line ?? a.previousLine ?? 0) - (b.line ?? b.previousLine ?? 0);
         });
+
+        this.addedLineCount = this.entries.flatMap((entry) => entry.code?.split('\n')).filter((line) => line && line.trim().length !== 0).length;
+        this.removedLineCount = this.entries.flatMap((entry) => entry.previousCode?.split('\n')).filter((line) => line && line.trim().length !== 0).length;
     }
 }

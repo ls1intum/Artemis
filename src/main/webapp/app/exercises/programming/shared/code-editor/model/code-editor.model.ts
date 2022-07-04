@@ -42,7 +42,7 @@ export enum DomainType {
 }
 
 /**
- * Enumeration defining whether the is a conflict while checking out.
+ * Enumeration defining whether there is a conflict while checking out.
  */
 export enum RepositoryError {
     CHECKOUT_CONFLICT = 'checkoutConflict',

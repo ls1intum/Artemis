@@ -1,0 +1,20 @@
+.dropdown-container {
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+    margin: 1em 0;
+}
+
+.dropdown-container .form-group .form-control {
+    margin-top: 0.25em;
+}
+
+.grading-scale-table-row td {
+    width: 17%;
+
+    input {
+        min-width: 50%;
+        background: var(--base-grading-system-input-background);
+        color: var(--base-grading-system-input-color);
+    }
+}

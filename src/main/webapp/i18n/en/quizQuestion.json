@@ -32,7 +32,8 @@
             "failed": "Sorry, the image could not be loaded. Please try again",
             "showSampleSolution": "Show Sample Solution",
             "hideSampleSolution": "Hide Sample Solution",
-            "allOptions": "Please choose all correct answer options"
+            "allOptions": "Please choose all correct answer options",
+            "singleOption": "Please choose the correct answer option"
         }
     }
 }

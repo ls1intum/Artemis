@@ -1,5 +1,3 @@
-import { Color, ScaleType } from '@swimlane/ngx-charts';
-
 export enum SpanType {
     DAY = 'DAY',
     WEEK = 'WEEK',
@@ -38,21 +36,20 @@ export enum StatisticsView {
     EXAM = 'EXAM',
 }
 
+/**
+ * Graph colors using CSS variables.
+ * See theme variables scss files for exact colors.
+ * Color names refer to the default theme; might not return what you expect in other themes
+ * to account for background colors etc.
+ */
 export enum GraphColors {
-    LIGHT_GREY = 'rgba(153,153,153,1)',
-    GREY = 'rgba(127,127,127,255)',
-    DARK_BLUE = 'rgba(53,61,71,1)',
-    BLUE = 'rgba(93,138,201,1)',
-    LIGHT_BLUE = 'rgba(135, 206, 250, 1)',
-    TRANSPARENT = 'rgba(93,138,201,0)',
-    GREEN = 'rgba(40,164,40,1)',
-    RED = 'rgba(204,0,0,1)',
-    YELLOW = 'rgba(230, 174, 6, 1)',
+    LIGHT_GREY = 'var(--graph-light-grey)',
+    GREY = 'var(--graph-grey)',
+    DARK_BLUE = 'var(--graph-dark-blue)',
+    BLUE = 'var(--graph-blue)',
+    LIGHT_BLUE = 'var(--graph-light-blue)',
+    GREEN = 'var(--graph-green)',
+    RED = 'var(--graph-red)',
+    YELLOW = 'var(--graph-yellow)',
+    BLACK = 'var(--graph-black)',
 }
-
-export const ngxColor = {
-    name: 'Statistics',
-    selectable: true,
-    group: ScaleType.Ordinal,
-    domain: [GraphColors.DARK_BLUE],
-} as Color;

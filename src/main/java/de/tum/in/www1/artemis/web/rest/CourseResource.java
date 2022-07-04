@@ -156,7 +156,7 @@ public class CourseResource {
         course.validateShortName();
 
         List<Course> coursesWithSameShortName = courseRepository.findAllByShortName(course.getShortName());
-        if (coursesWithSameShortName.size() > 0) {
+        if (!coursesWithSameShortName.isEmpty()) {
             return ResponseEntity.badRequest().headers(
                     HeaderUtil.createAlert(applicationName, "A course with the same short name already exists. Please choose a different short name.", "shortnameAlreadyExists"))
                     .body(null);
@@ -166,6 +166,9 @@ public class CourseResource {
         course.validateComplaintsAndRequestMoreFeedbackConfig();
         course.validateOnlineCourseAndRegistrationEnabled();
         course.validateAccuracyOfScores();
+        if (!course.isValidStartAndEndDate()) {
+            throw new BadRequestAlertException("For Courses, the start date has to be before the end date", Course.ENTITY_NAME, "invalidCourseStartDate", true);
+        }
 
         courseService.createOrValidateGroups(course);
         Course result = courseRepository.save(course);
@@ -194,7 +197,7 @@ public class CourseResource {
             }
         }
 
-        var existingCourse = courseRepository.findByIdElseThrow(updatedCourse.getId());
+        var existingCourse = courseRepository.findByIdWithOrganizationsAndLearningGoalsElseThrow(updatedCourse.getId());
         if (!Objects.equals(existingCourse.getShortName(), updatedCourse.getShortName())) {
             throw new BadRequestAlertException("The course short name cannot be changed", Course.ENTITY_NAME, "shortNameCannotChange", true);
         }
@@ -242,11 +245,17 @@ public class CourseResource {
             }
         }
 
+        // Make sure to preserve associations in updated entity
+        updatedCourse.setPrerequisites(existingCourse.getPrerequisites());
+
         updatedCourse.validateRegistrationConfirmationMessage();
         updatedCourse.validateComplaintsAndRequestMoreFeedbackConfig();
         updatedCourse.validateOnlineCourseAndRegistrationEnabled();
         updatedCourse.validateShortName();
         updatedCourse.validateAccuracyOfScores();
+        if (!updatedCourse.isValidStartAndEndDate()) {
+            throw new BadRequestAlertException("For Courses, the start date has to be before the end date", Course.ENTITY_NAME, "invalidCourseStartDate", true);
+        }
 
         // Based on the old instructors, editors and TAs, we can update all exercises in the course in the VCS (if necessary)
         // We need the old instructors, editors and TAs, so that the VCS user management service can determine which
@@ -294,7 +303,7 @@ public class CourseResource {
             return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, false, Course.ENTITY_NAME, "registrationDisabled",
                     "The course does not allow registration. Cannot register user")).body(null);
         }
-        if (course.getOrganizations() != null && course.getOrganizations().size() > 0 && !courseRepository.checkIfUserIsMemberOfCourseOrganizations(user, course)) {
+        if (course.getOrganizations() != null && !course.getOrganizations().isEmpty() && !courseRepository.checkIfUserIsMemberOfCourseOrganizations(user, course)) {
             return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, false, Course.ENTITY_NAME, "registrationNotAllowed",
                     "User is not member of any organization of this course. Cannot register user")).body(null);
         }
@@ -374,7 +383,8 @@ public class CourseResource {
     }
 
     /**
-     * GET /courses/for-registration : get all courses that the current user can register to. Decided by the start and end date and if the registrationEnabled flag is set correctly
+     * GET /courses/for-registration : get all courses that the current user can register to.
+     * Decided by the start and end date and if the registrationEnabled flag is set correctly
      *
      * @return the list of courses which are active
      */
@@ -385,11 +395,11 @@ public class CourseResource {
         User user = userRepository.getUserWithGroupsAndAuthoritiesAndOrganizations();
 
         List<Course> allRegisteredCourses = courseService.findAllActiveForUser(user);
-        List<Course> allCoursesToRegister = courseRepository.findAllCurrentlyActiveNotOnlineAndRegistrationEnabledWithOrganizations();
+        List<Course> allCoursesToRegister = courseRepository.findAllCurrentlyActiveNotOnlineAndRegistrationEnabledWithOrganizationsAndPrerequisites();
         List<Course> registrableCourses = allCoursesToRegister.stream().filter(course -> {
             // further, check if the course has been assigned to any organization and if yes,
             // check if user is member of at least one of them
-            if (course.getOrganizations() != null && course.getOrganizations().size() > 0) {
+            if (course.getOrganizations() != null && !course.getOrganizations().isEmpty()) {
                 return courseRepository.checkIfUserIsMemberOfCourseOrganizations(user, course);
             }
             else {
@@ -403,8 +413,8 @@ public class CourseResource {
     /**
      * GET /courses/{courseId}/for-dashboard
      *
-     * @param courseId the courseId for which exercises and lectures should be fetched
-     * @return a course which all exercises and lectures visible to the student
+     * @param courseId the courseId for which exercises, lectures, exams and learning goals should be fetched
+     * @return a course with all exercises, lectures, exams and learning goals visible to the student
      */
     @GetMapping("/courses/{courseId}/for-dashboard")
     @PreAuthorize("hasRole('USER')")
@@ -412,7 +422,7 @@ public class CourseResource {
         long start = System.currentTimeMillis();
         User user = userRepository.getUserWithGroupsAndAuthorities();
 
-        Course course = courseService.findOneWithExercisesAndLecturesAndExamsForUser(courseId, user);
+        Course course = courseService.findOneWithExercisesAndLecturesAndExamsAndLearningGoalsForUser(courseId, user);
         courseService.fetchParticipationsWithSubmissionsAndResultsForCourses(List.of(course), user, start);
         return course;
     }
@@ -677,7 +687,9 @@ public class CourseResource {
             courseDTO.setExerciseDTOS(exerciseService.getStatisticsForCourseManagementOverview(courseId, amountOfStudentsInCourse));
 
             var exerciseIds = exerciseRepository.findAllIdsByCourseId(courseId);
-            courseDTO.setActiveStudents(courseService.getActiveStudents(exerciseIds, 0, 4, ZonedDateTime.now()));
+            var endDate = this.courseService.determineEndDateForActiveStudents(course);
+            var timeSpanSize = this.courseService.determineTimeSpanSizeForActiveStudents(course, endDate, 4);
+            courseDTO.setActiveStudents(courseService.getActiveStudents(exerciseIds, 0, timeSpanSize, endDate));
             courseDTOs.add(courseDTO);
         }
 
@@ -694,7 +706,7 @@ public class CourseResource {
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> deleteCourse(@PathVariable long courseId) {
         log.info("REST request to delete Course : {}", courseId);
-        Course course = courseRepository.findWithEagerExercisesAndLecturesAndLectureUnitsAndLearningGoalsById(courseId);
+        Course course = courseRepository.findByIdWithExercisesAndLecturesAndLectureUnitsAndLearningGoalsElseThrow(courseId);
         if (course == null) {
             throw new EntityNotFoundException("Course", courseId);
         }
@@ -1123,9 +1135,36 @@ public class CourseResource {
     @GetMapping("courses/{courseId}/statistics")
     @PreAuthorize("hasRole('TA')")
     public ResponseEntity<List<Integer>> getActiveStudentsForCourseDetailView(@PathVariable Long courseId, @RequestParam Long periodIndex) {
+        var course = courseRepository.findByIdElseThrow(courseId);
+        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, course, null);
+        var exerciseIds = exerciseRepository.findAllIdsByCourseId(courseId);
+        var chartEndDate = this.courseService.determineEndDateForActiveStudents(course);
+        var spanEndDate = chartEndDate.plusWeeks(17 * periodIndex);
+        var returnedSpanSize = this.courseService.determineTimeSpanSizeForActiveStudents(course, spanEndDate, 17);
+        var activeStudents = courseService.getActiveStudents(exerciseIds, periodIndex, 17, chartEndDate);
+        // We omit data concerning the time before the start date
+        return ResponseEntity.ok(activeStudents.subList(activeStudents.size() - returnedSpanSize, activeStudents.size()));
+    }
+
+    /**
+     * GET /courses/:courseId/statistics-lifetime-overview : Get the active students for this particular course over its whole lifetime
+     *
+     * @param courseId the id of the course
+     * @return the ResponseEntity with status 200 (OK) and the data in body, or status 404 (Not Found)
+     */
+    @GetMapping("courses/{courseId}/statistics-lifetime-overview")
+    @PreAuthorize("hasRole('TA')")
+    public ResponseEntity<List<Integer>> getActiveStudentsForCourseLivetime(@PathVariable Long courseId) {
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, courseRepository.findByIdElseThrow(courseId), null);
         var exerciseIds = exerciseRepository.findAllIdsByCourseId(courseId);
-        return ResponseEntity.ok(courseService.getActiveStudents(exerciseIds, periodIndex, 17, ZonedDateTime.now()));
+        var course = courseRepository.findByIdElseThrow(courseId);
+        if (course.getStartDate() == null) {
+            throw new IllegalArgumentException("Course does not contain start date");
+        }
+        var endDate = this.courseService.determineEndDateForActiveStudents(course);
+        var returnedSpanSize = this.courseService.calculateWeeksBetweenDates(course.getStartDate(), endDate);
+        var activeStudents = courseService.getActiveStudents(exerciseIds, 0, Math.toIntExact(returnedSpanSize), endDate);
+        return ResponseEntity.ok(activeStudents);
     }
 
     /**

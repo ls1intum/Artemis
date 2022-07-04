@@ -41,9 +41,6 @@ public class AccountResource {
     @Value("${artemis.user-management.registration.allowed-email-pattern:#{null}}")
     private Optional<Pattern> allowedEmailPattern;
 
-    @Value("${info.saml2.enable-password:#{null}}")
-    private Optional<Boolean> saml2EnablePassword;
-
     private final Logger log = LoggerFactory.getLogger(AccountResource.class);
 
     private final UserRepository userRepository;
@@ -63,21 +60,12 @@ public class AccountResource {
 
     /**
      * the registration is only enabled when the configuration artemis.user-management.registration.enabled is set to true.
-     * A non existing entry or false mean that the registration is not enabled
+     * A non-existing entry or false mean that the registration is not enabled
      *
      * @return whether the registration is enabled or not
      */
     private boolean isRegistrationDisabled() {
         return registrationEnabled.isEmpty() || Boolean.FALSE.equals(registrationEnabled.get());
-    }
-
-    /**
-     * Returns true if saml2 app password is disabled, false otherwise.
-     *
-     * @return true if saml2 app password is disabled, false otherwise
-     */
-    private boolean isSAML2Disabled() {
-        return !(saml2EnablePassword.isPresent() && Boolean.TRUE.equals(saml2EnablePassword.get()));
     }
 
     /**
@@ -219,7 +207,7 @@ public class AccountResource {
         else {
             // Pretend the request has been successful to prevent checking which emails or usernames really exist
             // but log that an invalid attempt has been made
-            log.warn("Password reset requested for non existing mail or username '{}'", mailUsername);
+            log.warn("Password reset requested for non-existing mail or username '{}'", mailUsername);
         }
     }
 

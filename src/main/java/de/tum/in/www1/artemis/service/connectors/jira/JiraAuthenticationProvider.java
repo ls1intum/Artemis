@@ -130,7 +130,7 @@ public class JiraAuthenticationProvider extends ArtemisAuthenticationProviderImp
             // If we want to skip the password check, we can just use the ADMIN auth, which is already injected in the default restTemplate
             // Otherwise, we create our own authorization and use the credentials of the user.
             if (skipPasswordCheck) {
-                // this is only the case if the systems wants to login a user automatically (e.g. based on Oauth in LTI)
+                // this is only the case if the systems wants to log in a user automatically (e.g. based on Oauth in LTI)
                 // when we provide null, the default restTemplate header will be used automatically
                 authenticationResponse = restTemplate.exchange(path, HttpMethod.GET, null, JiraUserDTO.class);
             }
@@ -197,7 +197,7 @@ public class JiraAuthenticationProvider extends ArtemisAuthenticationProviderImp
     @Override
     public void addUserToGroup(User user, String group) throws ArtemisAuthenticationException {
         // then we also make sure to add it into JIRA so that the synchronization during the next login does not remove the group again
-        log.info("Add user {} to group {} in JIRA", user.getLogin(), group);
+        log.debug("Add user {} to group {} in JIRA", user.getLogin(), group);
         if (!isGroupAvailable(group)) {
             throw new IllegalArgumentException("Jira does not have a group: " + group);
         }
@@ -281,7 +281,7 @@ public class JiraAuthenticationProvider extends ArtemisAuthenticationProviderImp
     @Override
     public void removeUserFromGroup(User user, String group) {
         // then we also make sure to remove it in JIRA so that the synchronization during the next login does not add the group again
-        log.info("Remove user {} from group {}", user.getLogin(), group);
+        log.debug("Remove user {} from group {}", user.getLogin(), group);
         try {
             final var path = UriComponentsBuilder.fromUri(jiraUrl.toURI()).path("/rest/api/2/group/user").queryParam("groupname", group).queryParam("username", user.getLogin())
                     .build().toUri();
@@ -290,6 +290,10 @@ public class JiraAuthenticationProvider extends ArtemisAuthenticationProviderImp
         catch (HttpClientErrorException e) {
             if (HttpStatus.NOT_FOUND.equals(e.getStatusCode())) {
                 log.warn("Could not delete user {} from group {} as the user doesn't exist.", user.getLogin(), group);
+                return;
+            }
+            if (HttpStatus.BAD_REQUEST.equals(e.getStatusCode()) && e.getResponseBodyAsString().contains("since user is not a member of")) {
+                log.warn("Could not remove user {} from group {} since it is not a member.", user.getLogin(), group);
                 return;
             }
             log.error("Could not delete user {} from group {}; Error: {}", user.getLogin(), group, e.getMessage());
@@ -333,7 +337,7 @@ public class JiraAuthenticationProvider extends ArtemisAuthenticationProviderImp
                     });
 
             var results = authenticationResponse.getBody();
-            if (results == null || results.size() == 0) {
+            if (results == null || results.isEmpty()) {
                 // no result
                 return Optional.empty();
             }

@@ -259,6 +259,13 @@
         "examManagement": {
             "reviewDatesInvalidWarning": "End of Student Review is set incorrect or missing",
             "reviewDatesInvalidExplanation": "If the Begin of Student Review is set, the End of Student Review has to be set as well. Furthermore, the End of Student Review has to be chronologically after its Begin.",
+            "sections": {
+                "configuration": "Exam Configuration",
+                "conduction": "Exam Conduction",
+                "assessment": "Exam Assessment and Student Review",
+                "exercises": "Exam Exercises",
+                "text": "Exam Texts"
+            },
             "title": "Exam Management",
             "createExam": "Create a new exam",
             "editExam": "Edit an existing exam",
@@ -266,10 +273,16 @@
             "examId": "Exam ID",
             "examTitle": "Exam Title",
             "visibleDate": "Visible from",
+            "visibleDateTooltip": "Students can see the exam and open the start page from this time onwards, but cannot access the exercises",
             "startDate": "Start of working time",
+            "startDateTooltip": "Students can participate in the exam from this time onwards",
             "endDate": "End of working time",
+            "endDateTooltip": "Students can participate in the exam until this time",
+            "workingTime": "Working Time (minutes)",
+            "workingTimeTooltip": "The working time is computed based on the start and end time",
             "publishResultsDate": "Release Date of Results",
             "gracePeriod": "Grace period (seconds)",
+            "gracePeriodTooltip": "The time given to students to hand in their exam after the working time. No new submissions are possible during the grace period",
             "examiner": "Examiner",
             "moduleNumber": "Module number",
             "courseName": "Course name",
@@ -289,9 +302,25 @@
             "confirmationEndText": "Exam end confirmation text",
             "assessmentDashboard": "Assessment",
             "examChecklist": "Exam Checklist",
+            "examMonitoring": "Exam live statistics",
             "studentExams": "Student Exams",
             "students": "Students",
             "gradingSystem": "Grading Key",
+            "testExam": {
+                "realExam": "Exam",
+                "testExam": "Test Exam",
+                "examMode": "Exam Mode",
+                "examModeTooltip": "Test Exams can be conducted multiple times within the working window. Students recieve automated feedback after every run. NOTE: This cannot be changed later on!",
+                "startDate": "Start of working window",
+                "endDate": "End of working window",
+                "workingTimeTooltip": "The working time allowed to the students per run"
+            },
+            "monitoring": {
+                "enable": {
+                    "title": "Enable exam live statistics",
+                    "description": "The exam live statistics collects the student's interactions with the exam and provides further opportunities for statistics."
+                }
+            },
             "testRun": {
                 "testRun": "Test Run",
                 "title": "Test Run Management: ",
@@ -376,6 +405,7 @@
                     "generateStudentExams": "Generate all student exams",
                     "prepareExerciseStart": "Prepare exercise start",
                     "examDetails": "Fill out all exam details",
+                    "examMonitoring": "Exam live statistics dashboard",
                     "conductExam": "Conduct the exam",
                     "assessAllSubmissions": "Assess all submissions",
                     "publishResults": "Publish the exam results",
@@ -390,6 +420,7 @@
                     "generateStudentExams": "You need to generate exams for all registered students before starting the exam. Their working time can be adjusted individually.\nAdditionally, the commits of the templates in programming exercises will be combined into one commit.",
                     "prepareExerciseStart": "You need to prepare the exercises before the exam starts.",
                     "examDetails": "Before conducting an exam, please make sure to have filled out all exam details. (Start text, dates, etc.)",
+                    "examMonitoring": "You can view students' actions during the exam and analyze the resulting data. To use this feature, you must enable it in the exam configuration.",
                     "conductExam": "On the student exam page you can see which students have already submitted their exam.",
                     "assessAllSubmissions": "The number of correction rounds per exercise depends on the exam's number of correction rounds.",
                     "publishResults": "Publishing the results makes them available to students. Student exams are published on the publishing date for results within the exam.",
@@ -428,6 +459,83 @@
                     "points": "Points",
                     "numberParticipants": "Participants",
                     "variants": "Variants"
+                }
+            }
+        },
+        "examMonitoring": {
+            "title": "Exam live statistics",
+            "description": "The exam live statistics dashboard allows instructors to view students' actions during the exam and analyze the resulting data.",
+            "table": {
+                "panelHeader": "Exam Information",
+                "panelDescriptionHeader": "Details",
+                "title": "Title",
+                "start": "Start",
+                "end": "End",
+                "students": "Registered students",
+                "exercises": "Exercises",
+                "exerciseGroups": "Exercise groups"
+            },
+            "menu": {
+                "overview": {
+                    "title": "Overview"
+                },
+                "exercises": {
+                    "title": "Exercises",
+                    "description": "Shows the current participation of the students in the respective exercise and exercise groups",
+                    "groups": "Exercise Groups"
+                },
+                "activity-log": {
+                    "title": "Activity log",
+                    "description": "Shows the past and current activities of active students"
+                }
+            },
+            "charts": {
+                "exercise-chart": {
+                    "name": "Current number of students per exercise grouped by exercise group",
+                    "tooltip": "Shows the current number of students per exercise grouped by exercise group",
+                    "xAxisLabel": "Number of students",
+                    "yAxisLabel": "Exercises",
+                    "legendTitle": "Exercises"
+                },
+                "exercise-group-chart": {
+                    "name": "Current number of students per exercise group",
+                    "tooltip": "Shows the current number of students per exercise group",
+                    "xAxisLabel": "Number of students",
+                    "yAxisLabel": "Exercise Groups",
+                    "legendTitle": "Exercise Groups"
+                },
+                "exercise-submission-chart": {
+                    "name": "Number of first submissions per exercise",
+                    "tooltip": "Shows the number of first submissions per exercise",
+                    "xAxisLabel": "Amount of submissions",
+                    "yAxisLabel": "Exercises",
+                    "legendTitle": "Exercises"
+                },
+                "exercise-navigation-chart": {
+                    "name": "Number of first navigations per exercise",
+                    "tooltip": "Shows the number of first navigations per exercise",
+                    "xAxisLabel": "Amount of navigations",
+                    "yAxisLabel": "Exercises",
+                    "legendTitle": "Exercises"
+                },
+                "average-actions-chart": {
+                    "name": "Average number of actions per student",
+                    "tooltip": "Shows the average number of actions per student",
+                    "xAxisLabel": "Timestamp",
+                    "yAxisLabel": "Actions"
+                },
+                "total-actions-chart": {
+                    "name": "Total number of actions",
+                    "tooltip": "Shows the total number of actions",
+                    "xAxisLabel": "Timestamp",
+                    "yAxisLabel": "Actions"
+                },
+                "category-actions-chart": {
+                    "name": "Total number of actions per category",
+                    "tooltip": "Shows the total number of actions per category",
+                    "xAxisLabel": "Timestamp",
+                    "yAxisLabel": "Actions",
+                    "legendTitle": "Categories"
                 }
             }
         },

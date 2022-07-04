@@ -22,6 +22,7 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.ComplaintType;
 import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
 import de.tum.in.www1.artemis.domain.enumeration.Language;
+import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
@@ -735,7 +736,27 @@ public class AssessmentComplaintIntegrationTest extends AbstractSpringIntegratio
         final var examExerciseComplaint = new Complaint().result(null).complaintText("This is not fair").complaintType(ComplaintType.COMPLAINT);
         final String url = "/api/complaints/exam/{examId}".replace("{examId}", String.valueOf(examId));
         request.post(url, examExerciseComplaint, HttpStatus.BAD_REQUEST);
+    }
 
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void submitComplaintForCourseExerciseUsingTheExamExerciseCall_badRequest() throws Exception {
+        // "Mock Exam" which id is used to call the wrong REST-Call
+        final Exam exam = ModelFactory.generateExam(course);
+        // The complaint is about a course exercise, not an exam exercise
+        request.post("/api/complaints/exam/" + exam.getId(), complaint, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void submitComplaintForExamExerciseUsingTheCourseExerciseCall_badRequest() throws Exception {
+        // Set up Exam, Exercise, Participation and Complaint
+        final TextExercise examExercise = database.addCourseExamExerciseGroupWithOneTextExercise();
+        final TextSubmission textSubmission = ModelFactory.generateTextSubmission("This is my submission", Language.ENGLISH, true);
+        database.saveTextSubmissionWithResultAndAssessor(examExercise, textSubmission, "student1", "tutor1");
+        final var examExerciseComplaint = new Complaint().result(textSubmission.getLatestResult()).complaintText("This is not fair").complaintType(ComplaintType.COMPLAINT);
+        // The complaint is about an exam exercise, but the REST-Call for course exercises is used
+        request.post("/api/complaints", examExerciseComplaint, HttpStatus.BAD_REQUEST);
     }
 
     @Test

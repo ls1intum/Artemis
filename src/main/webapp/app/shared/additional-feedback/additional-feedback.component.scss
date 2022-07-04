@@ -1,16 +1,23 @@
 div {
     &.positive-feedback {
-        color: #155724;
-        background-color: #d4edda;
+        color: var(--artemis-alert-success-color);
+        background-color: var(--artemis-alert-success-background);
+        border-color: var(--artemis-alert-success-broder);
     }
 
     &.negative-feedback {
-        color: #721c24;
-        background-color: #f8d7da;
+        color: var(--artemis-alert-danger-color);
+        background-color: var(--artemis-alert-danger-background);
+        border-color: var(--artemis-alert-danger-broder);
     }
 
     &.neutral-feedback {
-        color: #383d41;
-        background-color: #e2e3e5;
+        color: var(--artemis-alert-neutral-color);
+        background-color: var(--artemis-alert-neutral-background);
+        border-color: var(--artemis-alert-neutral-border);
     }
+}
+
+.feedback-points {
+    font-weight: bold;
 }

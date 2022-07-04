@@ -1,7 +1,8 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { round } from 'app/shared/util/utils';
-import { ngxColor } from 'app/entities/statistics.model';
+import { GraphColors } from 'app/entities/statistics.model';
 import { axisTickFormattingWithPercentageSign } from 'app/shared/statistics-graph/statistics-graph.utils';
+import { Color, ScaleType } from '@swimlane/ngx-charts';
 
 @Component({
     selector: 'jhi-statistics-score-distribution-graph',
@@ -23,7 +24,12 @@ export class StatisticsScoreDistributionGraphComponent implements OnInit {
 
     // ngx
     ngxData: any[] = [];
-    readonly ngxColor = ngxColor;
+    ngxColor: Color = {
+        name: 'Statistics',
+        selectable: true,
+        group: ScaleType.Ordinal,
+        domain: [GraphColors.DARK_BLUE],
+    };
     yAxisTickFormatting = axisTickFormattingWithPercentageSign;
 
     // Data

@@ -2,7 +2,7 @@
     <div
         class="btn"
         [ngClass]="{
-            'btn-primary': includedInOverallScore === IncludedInOverallScore.INCLUDED_COMPLETELY,
+            'btn-primary selected': includedInOverallScore === IncludedInOverallScore.INCLUDED_COMPLETELY,
             'btn-default': includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY
         }"
         (click)="change(IncludedInOverallScore.INCLUDED_COMPLETELY)"
@@ -12,7 +12,7 @@
     <div
         class="btn btn-default"
         [ngClass]="{
-            'btn-primary': includedInOverallScore === IncludedInOverallScore.INCLUDED_AS_BONUS,
+            'btn-primary selected': includedInOverallScore === IncludedInOverallScore.INCLUDED_AS_BONUS,
             'btn-default': includedInOverallScore !== IncludedInOverallScore.INCLUDED_AS_BONUS
         }"
         (click)="change(IncludedInOverallScore.INCLUDED_AS_BONUS)"
@@ -23,7 +23,7 @@
         *ngIf="allowNotIncluded"
         class="btn btn-default"
         [ngClass]="{
-            'btn-primary': includedInOverallScore === IncludedInOverallScore.NOT_INCLUDED,
+            'btn-primary selected': includedInOverallScore === IncludedInOverallScore.NOT_INCLUDED,
             'btn-default': includedInOverallScore !== IncludedInOverallScore.NOT_INCLUDED
         }"
         (click)="change(IncludedInOverallScore.NOT_INCLUDED)"

@@ -1,7 +1,5 @@
-@import 'src/main/webapp/content/scss/artemis-variables';
-
 :host {
-    white-space: initial;
+    white-space: nowrap;
 }
 
 .light-button {
@@ -17,7 +15,7 @@
     left: 0;
     right: 0;
     bottom: 0;
-    background-color: rgba(70, 70, 70, 0.5);
+    background-color: var(--notification-sb-overlay-bg);
     &.show {
         display: block;
     }
@@ -32,8 +30,8 @@
     z-index: 999;
     transition: 0.3s;
     overflow-y: hidden;
-    background-color: #ffffff;
-    box-shadow: 0 0 4px 0 rgba(136, 136, 136, 1);
+    background-color: var(--notification-sb-background);
+    box-shadow: 0 0 20px 0 var(--notification-sb-box-shadow);
     &.show {
         right: 0;
         transition: 0.3s;
@@ -47,10 +45,10 @@
         .notification-item {
             cursor: pointer;
             &:nth-child(even) {
-                background-color: #f1f1f1;
+                background-color: var(--notification-sb-even-child-bg);
             }
             &:hover {
-                background-color: rgba(62, 138, 204, 0.2);
+                background-color: var(--notification-sb-hover-child-bg);
             }
             h5 {
                 font-size: 1rem;
@@ -66,6 +64,6 @@
     }
 
     .ng-fa-icon {
-        color: $artemis-dark;
+        color: var(--notification-sb-icon-color);
     }
 }

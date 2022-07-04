@@ -1,11 +1,11 @@
-from testUtils.AbstractProgramTest import AbstractProgramTest
 from os.path import join
 from typing import List
+
+from testUtils.AbstractProgramTest import AbstractProgramTest
 from testUtils.Utils import printTester, studSaveStrComp
 
 
 class TestOutput(AbstractProgramTest):
-
     def __init__(self, makefileLocation: str, requirements: List[str] = None, name: str = "TestOutput", executable: str = "helloWorld.out"):
         super(TestOutput, self).__init__(name, makefileLocation, executable, requirements, timeoutSec=10)
 

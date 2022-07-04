@@ -14,6 +14,7 @@ import 'brace/mode/kotlin';
 import 'brace/mode/assembly_x86';
 import 'brace/mode/vhdl';
 import 'brace/theme/dreamweaver';
+import 'brace/theme/dracula';
 import { AceEditorComponent, MAX_TAB_SIZE } from 'app/shared/markdown-editor/ace-editor/ace-editor.component';
 import { AfterViewInit, Component, EventEmitter, Input, OnChanges, OnDestroy, Output, SimpleChanges, ViewChild, ViewEncapsulation } from '@angular/core';
 import { fromEvent, of, Subscription } from 'rxjs';
@@ -48,10 +49,12 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
     sessionId: number | string;
     @Input()
     readOnlyManualFeedback: boolean;
+
     @Input()
     set annotations(annotations: Array<Annotation>) {
         this.setAnnotations(annotations);
     }
+
     @Input()
     readonly commitState: CommitState;
     @Input()
@@ -96,6 +99,7 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
     fileFeedbackPerLine: { [line: number]: Feedback } = {};
     editorSession: any;
     markerIds: number[] = [];
+    gutterHighlights: Map<number, string[]> = new Map<number, string[]>();
     tabSize = 4;
 
     // Icons
@@ -111,7 +115,6 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
      * @desc Sets the theme and other editor options
      */
     ngAfterViewInit(): void {
-        this.editor.setTheme('dreamweaver');
         this.editor.getEditor().setOptions({
             animatedScroll: true,
             enableBasicAutocompletion: true,
@@ -217,6 +220,10 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
             if (this.markerIds.length > 0) {
                 this.markerIds.forEach((markerId) => this.editorSession.removeMarker(markerId));
                 this.markerIds = [];
+            }
+            if (this.gutterHighlights.size > 0) {
+                this.gutterHighlights.forEach((classes, row) => classes.forEach((className) => this.editorSession.removeGutterDecoration(row, className)));
+                this.gutterHighlights.clear();
             }
             this.onFileLoad.emit(this.selectedFile);
         }
@@ -330,6 +337,25 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
         }
 
         this.displayAnnotations();
+    }
+
+    /**
+     * Highlights lines using a marker and / or a gutter decorator.
+     * @param firstLine the first line to highlight
+     * @param lastLine the last line to highlight
+     * @param lineHightlightClassName the classname to use for the highlight of the line in the editor content area, or undefined if it should not be highlighted
+     * @param gutterHightlightClassName the classname to use for the highlight of the line number gutter, or undefined if the gutter should not be highlighted
+     */
+    highlightLines(firstLine: number, lastLine: number, lineHightlightClassName: string | undefined, gutterHightlightClassName: string | undefined) {
+        if (lineHightlightClassName) {
+            this.markerIds.push(this.editorSession.addMarker(new this.Range(firstLine, 0, lastLine, 1), lineHightlightClassName, 'fullLine'));
+        }
+        if (gutterHightlightClassName) {
+            for (let i = firstLine; i <= lastLine; ++i) {
+                this.editorSession.addGutterDecoration(i, gutterHightlightClassName);
+                this.gutterHighlights.computeIfAbsent(i, () => []).push(gutterHightlightClassName);
+            }
+        }
     }
 
     /**
@@ -472,7 +498,7 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
     }
 
     /**
-     * Called whenever a inline feedback element is emitted. Updates existing feedbacks or adds onto it
+     * Called whenever an inline feedback element is emitted. Updates existing feedbacks or adds onto it
      * @param feedback Newly created inline feedback.
      */
     updateFeedback(feedback: Feedback) {
@@ -491,7 +517,7 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
     }
 
     /**
-     * Called whenever a inline feedback is cancelled. Removes it from ace editor or just aligns height.
+     * Called whenever an inline feedback is cancelled. Removes it from ace editor or just aligns height.
      * @param line
      */
     cancelFeedback(line: number) {

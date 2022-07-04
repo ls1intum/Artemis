@@ -57,8 +57,8 @@ describe('TextAssessmentAreaComponent', () => {
         const eventMock = new KeyboardEvent('keydown', { key: 'Alt' });
 
         component.onAltToggle(eventMock, false);
-        expect(spyOnAlt).toHaveBeenCalledTimes(1);
-        expect(component.autoTextBlockAssessment).toBe(false);
+        expect(spyOnAlt).toHaveBeenCalledOnce();
+        expect(component.autoTextBlockAssessment).toBeFalse();
     });
 
     it('should add TextBlockRef if text block is added manually', () => {
@@ -68,7 +68,7 @@ describe('TextAssessmentAreaComponent', () => {
         component.addTextBlockRef(TextBlockRef.new());
         fixture.detectChanges();
 
-        expect(component.textBlockRefsAddedRemoved.emit).toHaveBeenCalledTimes(1);
+        expect(component.textBlockRefsAddedRemoved.emit).toHaveBeenCalledOnce();
         expect(component.textBlockRefs).toHaveLength(5);
     });
 
@@ -79,7 +79,7 @@ describe('TextAssessmentAreaComponent', () => {
         component.removeTextBlockRef(component.textBlockRefs[0]);
         fixture.detectChanges();
 
-        expect(component.textBlockRefsAddedRemoved.emit).toHaveBeenCalledTimes(1);
+        expect(component.textBlockRefsAddedRemoved.emit).toHaveBeenCalledOnce();
         expect(component.textBlockRefs).toHaveLength(3);
     });
 });

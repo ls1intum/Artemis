@@ -26,12 +26,16 @@ import org.springframework.security.test.context.support.WithMockUser;
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Result;
+import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.enumeration.QuizMode;
 import de.tum.in.www1.artemis.domain.enumeration.ScoringType;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.quiz.*;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.service.QuizBatchService;
 import de.tum.in.www1.artemis.service.QuizExerciseService;
-import de.tum.in.www1.artemis.service.scheduled.quiz.QuizScheduleService;
+import de.tum.in.www1.artemis.service.scheduled.cache.quiz.QuizScheduleService;
+import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.web.websocket.QuizSubmissionWebsocketService;
 
 public class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
@@ -67,6 +71,9 @@ public class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
 
     @Autowired
     private ResultRepository resultRepository;
+
+    @Autowired
+    private QuizBatchService quizBatchService;
 
     private final int multiplier = 10;
 
@@ -118,8 +125,10 @@ public class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
 
         // End the quiz right now so that results can be processed
         quizExercise = quizExerciseRepository.findOneWithQuestionsAndStatistics(quizExercise.getId());
+        final var exercise = quizExercise;
         assertThat(quizExercise).isNotNull();
-        quizExercise.setDuration((int) (Duration.between(quizExercise.getReleaseDate(), ZonedDateTime.now()).getSeconds() - Constants.QUIZ_GRACE_PERIOD_IN_SECONDS));
+        quizExercise.setDueDate(ZonedDateTime.now());
+        quizExercise.getQuizBatches().forEach(batch -> batch.setStartTime(quizBatchService.quizBatchStartDate(exercise, batch.getStartTime())));
         exerciseRepository.saveAndFlush(quizExercise);
 
         quizScheduleService.processCachedQuizSubmissions();
@@ -265,12 +274,14 @@ public class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
         }
     }
 
-    @Test
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @WithMockUser(username = "student1", roles = "USER")
-    public void testQuizSubmitLiveMode() throws Exception {
+    @EnumSource(QuizMode.class)
+    public void testQuizSubmitLiveMode(QuizMode quizMode) throws Exception {
         List<Course> courses = database.createCoursesWithExercisesAndLectures(false);
         Course course = courses.get(0);
-        QuizExercise quizExercise = database.createQuiz(course, ZonedDateTime.now().minusSeconds(10), null);
+        QuizExercise quizExercise = database.createQuiz(course, ZonedDateTime.now().minusSeconds(10), null, quizMode);
+        quizExercise.setDuration(600);
         quizExercise = quizExerciseService.save(quizExercise);
 
         // at the beginning there are no submissions and no participants
@@ -278,6 +289,13 @@ public class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
         assertThat(participationRepository.findAll()).isEmpty();
 
         int numberOfParticipants = 10;
+
+        if (quizMode != QuizMode.SYNCHRONIZED) {
+            var batch = quizBatchService.save(ModelFactory.generateQuizBatch(quizExercise, ZonedDateTime.now().minusSeconds(10)));
+            for (int i = 1; i <= numberOfParticipants; i++) {
+                joinQuizBatch(quizExercise, batch, "student" + i);
+            }
+        }
 
         for (int i = 1; i <= numberOfParticipants; i++) {
             database.changeUser("student" + i);
@@ -303,27 +321,46 @@ public class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
         assertThat(participationRepository.findAll()).hasSize(numberOfParticipants);
     }
 
-    @Test
+    private void joinQuizBatch(QuizExercise quizExercise, QuizBatch batch, String username) {
+        var user = new User();
+        user.setLogin(username);
+        quizScheduleService.joinQuizBatch(quizExercise, batch, user);
+    }
+
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @WithMockUser(username = "student1", roles = "USER")
-    public void testQuizSubmitLiveMode_badRequest_notActive() throws Exception {
+    @EnumSource(QuizMode.class)
+    public void testQuizSubmitLiveMode_badRequest_notActive(QuizMode quizMode) throws Exception {
         List<Course> courses = database.createCoursesWithExercisesAndLectures(false);
         Course course = courses.get(0);
-        QuizExercise quizExercise = database.createQuiz(course, ZonedDateTime.now().plusSeconds(20), ZonedDateTime.now().plusSeconds(30));
+        QuizExercise quizExercise = database.createQuiz(course, ZonedDateTime.now().plusSeconds(20), ZonedDateTime.now().plusSeconds(30), quizMode);
         quizExercise.setDuration(10);
         quizExercise = quizExerciseService.save(quizExercise);
-        quizExercise.setIsPlannedToStart(true);
+
+        if (quizMode != QuizMode.SYNCHRONIZED) {
+            var batch = quizBatchService.save(ModelFactory.generateQuizBatch(quizExercise, ZonedDateTime.now().plusSeconds(10)));
+            joinQuizBatch(quizExercise, batch, "student1");
+        }
+
         QuizSubmission quizSubmission = database.generateSubmissionForThreeQuestions(quizExercise, 1, false, null);
         request.postWithResponseBody("/api/exercises/" + quizExercise.getId() + "/submissions/live", quizSubmission, Result.class, HttpStatus.BAD_REQUEST);
     }
 
-    @Test
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @WithMockUser(username = "student1", roles = "USER")
-    public void testQuizSubmitLiveMode_badRequest_alreadySubmitted() throws Exception {
+    @EnumSource(QuizMode.class)
+    public void testQuizSubmitLiveMode_badRequest_alreadySubmitted(QuizMode quizMode) throws Exception {
         List<Course> courses = database.createCoursesWithExercisesAndLectures(false);
         Course course = courses.get(0);
-        QuizExercise quizExercise = database.createQuiz(course, ZonedDateTime.now(), ZonedDateTime.now().plusSeconds(10));
+        QuizExercise quizExercise = database.createQuiz(course, ZonedDateTime.now().minusSeconds(5), ZonedDateTime.now().plusSeconds(10), quizMode);
         quizExercise.setDuration(10);
         quizExercise = quizExerciseService.save(quizExercise);
+
+        if (quizMode != QuizMode.SYNCHRONIZED) {
+            var batch = quizBatchService.save(ModelFactory.generateQuizBatch(quizExercise, ZonedDateTime.now().minusSeconds(5)));
+            joinQuizBatch(quizExercise, batch, "student1");
+        }
+
         QuizSubmission quizSubmission = database.generateSubmissionForThreeQuestions(quizExercise, 1, false, ZonedDateTime.now());
         // submit quiz for the first time, expected status = OK
         request.postWithResponseBody("/api/exercises/" + quizExercise.getId() + "/submissions/live", quizSubmission, Result.class, HttpStatus.OK);
@@ -333,15 +370,60 @@ public class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void testQuizSubmitPractice() throws Exception {
+    public void testQuizSubmitEmptyQuizInLiveMode() throws Exception {
+        int invalidExerciseId = -1;
+
+        Course course = database.createCourse();
+        QuizExercise quizExercise = database.createQuiz(course, ZonedDateTime.now().minusHours(5), null, QuizMode.SYNCHRONIZED);
+        quizExercise.setDuration(350);
+        quizExercise.getQuizBatches().forEach(batch -> batch.setStartTime(ZonedDateTime.now().minusMinutes(5)));
+        quizExerciseService.save(quizExercise);
+
+        quizScheduleService.clearAllQuizData();
+        quizScheduleService.clearQuizData(quizExercise.getId());
+
+        QuizSubmission quizSubmission = database.generateSubmissionForThreeQuestions(quizExercise, 1, false, ZonedDateTime.now());
+
+        // submit quiz more times than the allowed number of attempts, expected status = BAD_REQUEST
+        request.postWithResponseBody("/api/exercises/" + invalidExerciseId + "/submissions/live", quizSubmission, Result.class, HttpStatus.NOT_FOUND);
+    }
+
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
+    @WithMockUser(username = "student1", roles = "USER")
+    @EnumSource(QuizMode.class)
+    public void testQuizSubmitNoDatabaseRequests(QuizMode quizMode) throws Exception {
+        Course course = database.createCourse();
+        QuizExercise quizExercise = database.createQuiz(course, ZonedDateTime.now().minusHours(5), null, quizMode);
+        quizExercise.setDuration(360);
+        quizExercise.getQuizBatches().forEach(batch -> batch.setStartTime(ZonedDateTime.now().minusMinutes(5)));
+        quizExerciseService.save(quizExercise);
+
+        if (quizMode != QuizMode.SYNCHRONIZED) {
+            var batch = quizBatchService.save(ModelFactory.generateQuizBatch(quizExercise, ZonedDateTime.now().minusSeconds(5)));
+            joinQuizBatch(quizExercise, batch, "student1");
+        }
+
+        QuizSubmission quizSubmission = database.generateSubmissionForThreeQuestions(quizExercise, 1, false, ZonedDateTime.now());
+
+        // this database request cause no database queries
+        // TODO: how can this be checked in the tests?
+        // These things that help would need to be configured globally show-sql configuration, hibernate Inspector and StatementInterceptor, H2 logging
+        // the mysql general query log can be enabled on the fly but mysql is not the database backend for the tests
+
+        request.postWithResponseBody("/api/exercises/" + quizExercise.getId() + "/submissions/live", quizSubmission, Result.class, HttpStatus.OK);
+
+    }
+
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
+    @WithMockUser(username = "student1", roles = "USER")
+    @EnumSource(QuizMode.class)
+    public void testQuizSubmitPractice(QuizMode quizMode) throws Exception {
 
         List<Course> courses = database.createCoursesWithExercisesAndLectures(false);
         Course course = courses.get(0);
-        QuizExercise quizExercise = database.createQuiz(course, ZonedDateTime.now().minusSeconds(10), null);
+        QuizExercise quizExercise = database.createQuiz(course, ZonedDateTime.now().minusSeconds(10), null, quizMode);
         quizExercise.setDueDate(ZonedDateTime.now().minusSeconds(8));
         quizExercise.setDuration(2);
-        quizExercise.setIsPlannedToStart(true);
-        quizExercise.setIsVisibleBeforeStart(true);
         quizExercise.setIsOpenForPractice(true);
         quizExerciseService.save(quizExercise);
 
@@ -415,11 +497,9 @@ public class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
     public void testQuizSubmitPractice_badRequest() throws Exception {
         List<Course> courses = database.createCoursesWithExercisesAndLectures(true);
         Course course = courses.get(0);
-        QuizExercise quizExerciseServer = database.createQuiz(course, ZonedDateTime.now().minusSeconds(4), null);
+        QuizExercise quizExerciseServer = database.createQuiz(course, ZonedDateTime.now().minusSeconds(4), null, QuizMode.SYNCHRONIZED);
         quizExerciseServer.setDueDate(ZonedDateTime.now().minusSeconds(2));
         quizExerciseServer.setDuration(2);
-        quizExerciseServer.setIsPlannedToStart(true);
-        quizExerciseServer.setIsVisibleBeforeStart(true);
         quizExerciseServer.setIsOpenForPractice(false);
         quizExerciseService.save(quizExerciseServer);
 
@@ -465,7 +545,7 @@ public class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
     public void testQuizSubmitPreview_forbidden() throws Exception {
         List<Course> courses = database.createCoursesWithExercisesAndLectures(true);
         Course course = courses.get(0);
-        QuizExercise quizExercise = database.createQuiz(course, ZonedDateTime.now().minusSeconds(4), null);
+        QuizExercise quizExercise = database.createQuiz(course, ZonedDateTime.now().minusSeconds(4), null, QuizMode.SYNCHRONIZED);
         quizExerciseService.save(quizExercise);
         request.postWithResponseBody("/api/exercises/" + quizExercise.getId() + "/submissions/preview", new QuizSubmission(), Result.class, HttpStatus.FORBIDDEN);
     }
@@ -477,7 +557,7 @@ public class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
         Course course = courses.get(0);
         course.setStudentGroupName("abc");
         courseRepository.save(course);
-        QuizExercise quizExercise = database.createQuiz(course, ZonedDateTime.now().minusSeconds(4), null);
+        QuizExercise quizExercise = database.createQuiz(course, ZonedDateTime.now().minusSeconds(4), null, QuizMode.SYNCHRONIZED);
         quizExerciseService.save(quizExercise);
         request.postWithResponseBody("/api/exercises/" + quizExercise.getId() + "/submissions/practice", new QuizSubmission(), Result.class, HttpStatus.FORBIDDEN);
         verifyNoInteractions(messagingTemplate);
@@ -490,7 +570,7 @@ public class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
         Course course = courses.get(0);
         course.setTeachingAssistantGroupName("tutor2");
         courseRepository.save(course);
-        QuizExercise quizExercise = database.createQuiz(course, ZonedDateTime.now().minusSeconds(4), null);
+        QuizExercise quizExercise = database.createQuiz(course, ZonedDateTime.now().minusSeconds(4), null, QuizMode.SYNCHRONIZED);
         quizExerciseService.save(quizExercise);
         request.postWithResponseBody("/api/exercises/" + quizExercise.getId() + "/submissions/preview", new QuizSubmission(), Result.class, HttpStatus.FORBIDDEN);
     }
@@ -512,7 +592,7 @@ public class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
     public void testQuizSubmitPreview_badRequest_submissionId() throws Exception {
         List<Course> courses = database.createCoursesWithExercisesAndLectures(true);
         Course course = courses.get(0);
-        QuizExercise quizExercise = database.createQuiz(course, ZonedDateTime.now().minusSeconds(4), null);
+        QuizExercise quizExercise = database.createQuiz(course, ZonedDateTime.now().minusSeconds(4), null, QuizMode.SYNCHRONIZED);
         quizExerciseService.save(quizExercise);
         var quizSubmission = new QuizSubmission();
         quizSubmission.setId(1L);
@@ -524,19 +604,20 @@ public class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
     public void testQuizSubmitPractice_badRequest_submissionId() throws Exception {
         List<Course> courses = database.createCoursesWithExercisesAndLectures(true);
         Course course = courses.get(0);
-        QuizExercise quizExercise = database.createQuiz(course, ZonedDateTime.now().minusSeconds(4), null);
+        QuizExercise quizExercise = database.createQuiz(course, ZonedDateTime.now().minusSeconds(4), null, QuizMode.SYNCHRONIZED);
         quizExerciseService.save(quizExercise);
         var quizSubmission = new QuizSubmission();
         quizSubmission.setId(1L);
         request.postWithResponseBody("/api/exercises/" + quizExercise.getId() + "/submissions/practice", quizSubmission, Result.class, HttpStatus.BAD_REQUEST);
     }
 
-    @Test
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testQuizSubmitPreview() throws Exception {
+    @EnumSource(QuizMode.class)
+    public void testQuizSubmitPreview(QuizMode quizMode) throws Exception {
         List<Course> courses = database.createCoursesWithExercisesAndLectures(true);
         Course course = courses.get(0);
-        QuizExercise quizExercise = database.createQuiz(course, ZonedDateTime.now().minusSeconds(4), null);
+        QuizExercise quizExercise = database.createQuiz(course, ZonedDateTime.now().minusSeconds(4), null, quizMode);
         quizExerciseService.save(quizExercise);
 
         int numberOfParticipants = 10;
@@ -590,11 +671,10 @@ public class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
         Course course = courses.get(0);
         String publishQuizPath = "/topic/courses/" + course.getId() + "/quizExercises";
         log.debug("// Creating the quiz exercise 2s in the future");
-        var releaseDate = ZonedDateTime.now().plus(2, ChronoUnit.SECONDS);
-        QuizExercise quizExercise = database.createQuiz(course, ZonedDateTime.now().plus(2000, ChronoUnit.MILLIS), null);
+        var initialReleaseDate = ZonedDateTime.now().plus(2, ChronoUnit.SECONDS);
+        QuizExercise quizExercise = database.createQuiz(course, ZonedDateTime.now(), null, QuizMode.SYNCHRONIZED);
+        quizExercise.getQuizBatches().forEach(batch -> batch.setStartTime(initialReleaseDate));
         quizExercise.duration(60);
-        quizExercise.setIsPlannedToStart(true);
-        quizExercise.setIsVisibleBeforeStart(true);
 
         // also schedules the quiz
         log.debug("// Saving the quiz initially");
@@ -608,8 +688,8 @@ public class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
 
         // reschedule
         log.debug("// Rescheduling the quiz for another 2s into the future");
-        releaseDate = releaseDate.plus(2000, ChronoUnit.MILLIS);
-        quizExercise.setReleaseDate(releaseDate);
+        var adjustedReleaseDate = initialReleaseDate.plus(2000, ChronoUnit.MILLIS);
+        quizExercise.getQuizBatches().forEach(batch -> batch.setStartTime(adjustedReleaseDate));
         quizExercise = quizExerciseService.save(quizExercise);
 
         // wait for the old release date to pass
@@ -676,10 +756,8 @@ public class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
     @WithMockUser(username = "student1", roles = "USER")
     public void testQuizScoringTypes() {
         Course course = database.createCourse();
-        QuizExercise quizExercise = database.createQuiz(course, ZonedDateTime.now().minusMinutes(1), null);
+        QuizExercise quizExercise = database.createQuiz(course, ZonedDateTime.now().minusMinutes(1), null, QuizMode.SYNCHRONIZED);
         quizExercise.duration(60);
-        quizExercise.setIsPlannedToStart(true);
-        quizExercise.setIsVisibleBeforeStart(true);
         quizExercise = quizExerciseService.save(quizExercise);
 
         QuizSubmission quizSubmission = new QuizSubmission();
@@ -727,10 +805,8 @@ public class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
     @WithMockUser(username = "student1", roles = "USER")
     public void testQuizScoringType(ScoringType scoringType) {
         Course course = database.createCourse();
-        QuizExercise quizExercise = database.createQuiz(course, ZonedDateTime.now().minusMinutes(1), null);
+        QuizExercise quizExercise = database.createQuiz(course, ZonedDateTime.now().minusMinutes(1), null, QuizMode.SYNCHRONIZED);
         quizExercise.duration(60);
-        quizExercise.setIsPlannedToStart(true);
-        quizExercise.setIsVisibleBeforeStart(true);
         quizExercise.setQuizQuestions(quizExercise.getQuizQuestions().stream().peek(quizQuestion -> quizQuestion.setScoringType(scoringType)).collect(Collectors.toList()));
         quizExercise = quizExerciseService.save(quizExercise);
 
@@ -809,10 +885,8 @@ public class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
         // change config to make test faster
         List<Course> courses = database.createCoursesWithExercisesAndLectures(true);
         Course course = courses.get(0);
-        QuizExercise quizExercise = database.createQuiz(course, ZonedDateTime.now(), null);
+        QuizExercise quizExercise = database.createQuiz(course, ZonedDateTime.now(), null, QuizMode.SYNCHRONIZED);
         quizExercise.duration(240);
-        quizExercise.setIsPlannedToStart(true);
-        quizExercise.setIsVisibleBeforeStart(true);
 
         return quizExercise;
     }

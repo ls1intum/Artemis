@@ -27,6 +27,7 @@ public class MigrationRegistry {
         migrationEntryMap.put(0, MigrationEntry20211214_184200.class);
         migrationEntryMap.put(1, MigrationEntry20220210_160300.class);
         migrationEntryMap.put(2, MigrationEntry20220302_164200.class);
+        migrationEntryMap.put(3, MigrationEntry20220516_180000.class);
         this.migrationService = migrationService;
     }
 

@@ -3,20 +3,19 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { ScaCategoryDistributionChartComponent } from 'app/exercises/programming/manage/grading/charts/sca-category-distribution-chart.component';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { MockModule, MockPipe } from 'ng-mocks';
+import { MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { BarChartModule } from '@swimlane/ngx-charts';
 import { TranslateService } from '@ngx-translate/core';
 import { StaticCodeAnalysisCategory, StaticCodeAnalysisCategoryState } from 'app/entities/static-code-analysis-category.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { CategoryIssuesMap } from 'app/entities/programming-exercise-test-case-statistics.model';
-import { Router } from '@angular/router';
-import { MockRouter } from '../../helpers/mocks/mock-router';
+import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
 
 describe('SCA category distribution chart', () => {
     let component: ScaCategoryDistributionChartComponent;
     let fixture: ComponentFixture<ScaCategoryDistributionChartComponent>;
 
-    let router: Router;
+    let routingStub: jest.SpyInstance;
 
     const category1 = {
         id: 1,
@@ -57,15 +56,13 @@ describe('SCA category distribution chart', () => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, MockModule(BarChartModule)],
             declarations: [ScaCategoryDistributionChartComponent, MockPipe(ArtemisTranslatePipe)],
-            providers: [
-                { provide: TranslateService, useClass: MockTranslateService },
-                { provide: Router, useClass: MockRouter },
-            ],
+            providers: [MockProvider(ArtemisNavigationUtilService), { provide: TranslateService, useClass: MockTranslateService }],
         }).compileComponents();
 
         fixture = TestBed.createComponent(ScaCategoryDistributionChartComponent);
         component = fixture.componentInstance;
-        router = TestBed.inject(Router);
+        const routingService = TestBed.inject(ArtemisNavigationUtilService);
+        routingStub = jest.spyOn(routingService, 'routeInNewTab').mockImplementation();
     });
 
     it('should process the categories correctly', () => {
@@ -142,13 +139,12 @@ describe('SCA category distribution chart', () => {
             programmingExercerise.course = { id: 7 };
             programmingExercerise.id = 10;
             component.exercise = programmingExercerise;
-            const navigateSpy = jest.spyOn(router, 'navigate');
             const expectedUrl = ['course-management', 7, 'programming-exercises', 10, 'scores'];
             event = {};
 
             component.onSelect(event);
 
-            expect(navigateSpy).toHaveBeenCalledWith(expectedUrl);
+            expect(routingStub).toHaveBeenCalledWith(expectedUrl);
         });
 
         it('should emit the correct test case id', () => {
@@ -157,7 +153,7 @@ describe('SCA category distribution chart', () => {
             component.onSelect(event);
 
             expect(emitStub).toHaveBeenCalledWith(77);
-            expect(component.tableFiltered).toBe(true);
+            expect(component.tableFiltered).toBeTrue();
         });
 
         it('should reset the table correctly', () => {
@@ -166,7 +162,7 @@ describe('SCA category distribution chart', () => {
             component.resetTableFilter();
 
             expect(emitStub).toHaveBeenCalledWith(-5);
-            expect(component.tableFiltered).toBe(false);
+            expect(component.tableFiltered).toBeFalse();
         });
     });
 });

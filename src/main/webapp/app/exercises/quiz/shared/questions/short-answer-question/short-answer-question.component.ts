@@ -175,15 +175,50 @@ export class ShortAnswerQuestionComponent {
     }
 
     /**
-     * Returns the background color for the input field of the given spot tag
-     * @param spotTag Spot tag for which to return the input field's background color
+     * Returns the text that should be shown for the given spot tag
+     * @param spotTag Spot tag for which to get the text
      */
-    getBackgroundColourForInputField(spotTag: string): string {
-        const submittedTextForSpot = this.getSubmittedTextForSpot(spotTag);
-        if (submittedTextForSpot === undefined) {
-            return 'red';
+    getTextForSpotAsString(spotTag: string): string {
+        if (this.showingSampleSolution) {
+            return this.getSampleSolutionForSpotAsString(spotTag);
         }
-        return submittedTextForSpot.isCorrect ? (this.isSubmittedTextCompletelyCorrect(spotTag) ? 'lightgreen' : 'yellow') : 'red';
+        return this.getSubmittedTextForSpotAsString(spotTag);
+    }
+
+    /**
+     * Returns the size of the input for the given spot tag
+     * @param spotTag Spot tag for which to get the size
+     */
+    getSizeForSpot(spotTag: string): number {
+        if (this.showingSampleSolution) {
+            return this.getSampleSolutionSizeForSpot(spotTag);
+        }
+        return this.getSubmittedTextSizeForSpot(spotTag);
+    }
+
+    /**
+     * Returns the class for the input field of the given spot tag
+     * @param spotTag Spot tag for which to return the input field's class
+     */
+    classifyInputField(spotTag: string): string {
+        if (this.shortAnswerQuestion.invalid) {
+            return 'invalid';
+        }
+        const spot = this.shortAnswerQuestionUtil.getSpot(this.shortAnswerQuestionUtil.getSpotNr(spotTag), this.shortAnswerQuestion);
+        if (spot.invalid) {
+            return 'invalid';
+        }
+        if (this.showingSampleSolution) {
+            return 'completely-correct';
+        }
+        const submittedTextForSpot = this.getSubmittedTextForSpot(spotTag);
+        if (submittedTextForSpot?.isCorrect !== true) {
+            return 'wrong';
+        }
+        if (this.isSubmittedTextCompletelyCorrect(spotTag)) {
+            return 'completely-correct';
+        }
+        return 'correct';
     }
 
     /**

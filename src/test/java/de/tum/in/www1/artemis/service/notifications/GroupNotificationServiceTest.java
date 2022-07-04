@@ -19,6 +19,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.enumeration.QuizMode;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.metis.AnswerPost;
@@ -130,7 +131,7 @@ public class GroupNotificationServiceTest extends AbstractSpringIntegrationBambo
         examExercise.setExerciseGroup(exerciseGroup);
         examExercise.setProblemStatement(EXAM_PROBLEM_STATEMENT);
 
-        quizExercise = database.createQuiz(course, null, null);
+        quizExercise = database.createQuiz(course, null, null, QuizMode.SYNCHRONIZED);
         exerciseRepository.save(quizExercise);
 
         programmingExercise = new ProgrammingExercise();

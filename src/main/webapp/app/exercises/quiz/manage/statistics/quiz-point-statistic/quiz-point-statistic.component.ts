@@ -1,7 +1,6 @@
 import { ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Subscription } from 'rxjs';
-import dayjs from 'dayjs/esm';
 import { QuizStatisticUtil } from 'app/exercises/quiz/shared/quiz-statistic-util.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
@@ -13,17 +12,18 @@ import { Authority } from 'app/shared/constants/authority.constants';
 import { blueColor } from 'app/exercises/quiz/manage/statistics/question-statistic.component';
 import { UI_RELOAD_TIME } from 'app/shared/constants/exercise-exam-constants';
 import { round } from 'app/shared/util/utils';
-import { QuizStatisticsDirective } from 'app/exercises/quiz/manage/statistics/quiz-statistics.directive';
+import { QuizStatistics } from 'app/exercises/quiz/manage/statistics/quiz-statistics';
 import { TranslateService } from '@ngx-translate/core';
 import { faSync } from '@fortawesome/free-solid-svg-icons';
 import { calculateMaxScore } from 'app/exercises/quiz/manage/statistics/quiz-statistic/quiz-statistics.utils';
+import { ArtemisServerDateService } from 'app/shared/server-date.service';
 
 @Component({
     selector: 'jhi-quiz-point-statistic',
     templateUrl: './quiz-point-statistic.component.html',
     styleUrls: ['./quiz-point-statistic.component.scss', '../../../../../shared/chart/vertical-bar-chart.scss'],
 })
-export class QuizPointStatisticComponent extends QuizStatisticsDirective implements OnInit, OnDestroy {
+export class QuizPointStatisticComponent extends QuizStatistics implements OnInit, OnDestroy {
     readonly round = round;
 
     quizExercise: QuizExercise;
@@ -69,8 +69,12 @@ export class QuizPointStatisticComponent extends QuizStatisticsDirective impleme
         private quizStatisticUtil: QuizStatisticUtil,
         private jhiWebsocketService: JhiWebsocketService,
         protected changeDetector: ChangeDetectorRef,
+        private serverDateService: ArtemisServerDateService,
     ) {
         super(translateService);
+        this.translateService.onLangChange.subscribe(() => {
+            this.setAxisLabels('showStatistic.quizPointStatistic.xAxes', 'showStatistic.quizPointStatistic.yAxes');
+        });
     }
 
     ngOnInit() {
@@ -117,11 +121,11 @@ export class QuizPointStatisticComponent extends QuizStatisticsDirective impleme
     updateDisplayedTimes() {
         const translationBasePath = 'showStatistic.';
         // update remaining time
-        if (this.quizExercise && this.quizExercise.adjustedDueDate) {
-            const endDate = this.quizExercise.adjustedDueDate;
-            if (endDate.isAfter(dayjs())) {
+        if (this.quizExercise && this.quizExercise.dueDate) {
+            const endDate = this.quizExercise.dueDate;
+            if (endDate.isAfter(this.serverDateService.now())) {
                 // quiz is still running => calculate remaining seconds and generate text based on that
-                this.remainingTimeSeconds = endDate.diff(dayjs(), 'seconds');
+                this.remainingTimeSeconds = endDate.diff(this.serverDateService.now(), 'seconds');
                 this.remainingTimeText = this.relativeTimeText(this.remainingTimeSeconds);
             } else {
                 // quiz is over => set remaining seconds to negative, to deactivate 'Submit' button
@@ -180,13 +184,12 @@ export class QuizPointStatisticComponent extends QuizStatisticsDirective impleme
      */
     loadQuizSuccess(quizExercise: QuizExercise) {
         // if the Student finds a way to the Website
-        //      -> the Student will be send back to Courses
+        //      -> the Student will be sent back to Courses
         if (!this.accountService.hasAnyAuthorityDirect([Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TA])) {
             this.router.navigate(['courses']);
         }
         this.quizExercise = quizExercise;
-        this.quizExercise.adjustedDueDate = dayjs().add(this.quizExercise.remainingTime!, 'seconds');
-        this.waitingForQuizStart = !this.quizExercise.started;
+        this.waitingForQuizStart = !this.quizExercise.quizStarted;
         this.quizPointStatistic = this.quizExercise.quizPointStatistic!;
         this.maxScore = calculateMaxScore(this.quizExercise);
 

@@ -58,7 +58,7 @@ public class ExerciseLifecycleService {
     public Set<ScheduledFuture<?>> scheduleMultipleTasks(Exercise exercise, ExerciseLifecycle lifecycle, Set<Tuple<ZonedDateTime, Runnable>> tasks) {
         final Set<ScheduledFuture<?>> futures = new HashSet<>();
         for (var task : tasks) {
-            var future = scheduler.schedule(task.y, task.x.toInstant());
+            var future = scheduler.schedule(task.y(), task.x().toInstant());
             futures.add(future);
         }
         log.debug("Scheduled {} Tasks for Exercise \"{}\" (#{}) to trigger on {}.", tasks.size(), exercise.getTitle(), exercise.getId(), lifecycle.toString());

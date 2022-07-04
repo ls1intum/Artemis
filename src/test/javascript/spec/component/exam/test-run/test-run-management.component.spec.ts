@@ -93,7 +93,7 @@ describe('Test Run Management Component', () => {
 
             expect(examManagementService.find).toHaveBeenCalledWith(course.id!, exam.id!, false, true);
             expect(examManagementService.findAllTestRunsForExam).toHaveBeenCalledWith(course.id!, exam.id!);
-            expect(userSpy).toHaveBeenCalledTimes(1);
+            expect(userSpy).toHaveBeenCalledOnce();
 
             expect(component.exam).toEqual(exam);
             expect(component.isExamStarted).toEqual(exam.started!);
@@ -160,7 +160,7 @@ describe('Test Run Management Component', () => {
     });
 
     describe('Assessment of test runs', () => {
-        it('should not be able to assess test run because the logged in user does not have a test run which is submitted', () => {
+        it('should not be able to assess test run because the logged-in user does not have a test run which is submitted', () => {
             studentExams[0].submitted = false;
             fixture.detectChanges();
             expect(component.testRunCanBeAssessed).toBeFalsy();

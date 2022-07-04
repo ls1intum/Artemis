@@ -1,10 +1,11 @@
-import { Component, OnChanges, OnInit } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, OnInit, Output } from '@angular/core';
 import { Reaction } from 'app/entities/metis/reaction.model';
 import { Post } from 'app/entities/metis/post.model';
 import { PostingsReactionsBarDirective } from 'app/shared/metis/posting-reactions-bar/posting-reactions-bar.component';
 import { DisplayPriority } from 'app/shared/metis/metis.util';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { faSmile } from '@fortawesome/free-regular-svg-icons';
+import { AnswerPost } from 'app/entities/metis/answer-post.model';
 
 @Component({
     selector: 'jhi-post-reactions-bar',
@@ -19,6 +20,10 @@ export class PostReactionsBarComponent extends PostingsReactionsBarDirective<Pos
 
     // Icons
     farSmile = faSmile;
+    @Input() showAnswers: boolean;
+    @Input() sortedAnswerPosts: AnswerPost[];
+    @Output() showAnswersChange = new EventEmitter<boolean>();
+    @Output() openPostingCreateEditModal = new EventEmitter<void>();
 
     constructor(metisService: MetisService) {
         super(metisService);
@@ -52,8 +57,8 @@ export class PostReactionsBarComponent extends PostingsReactionsBarDirective<Pos
     }
 
     /**
-     * changes the the state of the displayPriority property on a post to PINNED by invoking the metis service
-     * in case the displayPriority is already set to PINNED, it will changed to NONE
+     * changes the state of the displayPriority property on a post to PINNED by invoking the metis service
+     * in case the displayPriority is already set to PINNED, it will be changed to NONE
      */
     togglePin() {
         if (this.displayPriority === DisplayPriority.PINNED) {
@@ -66,8 +71,8 @@ export class PostReactionsBarComponent extends PostingsReactionsBarDirective<Pos
     }
 
     /**
-     * changes the the state of the displayPriority property on a post to ARCHIVED by invoking the metis service,
-     * in case the displayPriority is already set to ARCHIVED, it will changed to NONE
+     * changes the state of the displayPriority property on a post to ARCHIVED by invoking the metis service,
+     * in case the displayPriority is already set to ARCHIVED, it will be changed to NONE
      */
     toggleArchive() {
         if (this.displayPriority === DisplayPriority.ARCHIVED) {

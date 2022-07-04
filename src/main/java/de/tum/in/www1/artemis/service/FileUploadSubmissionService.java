@@ -3,7 +3,7 @@ package de.tum.in.www1.artemis.service;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
-import java.nio.file.Paths;
+import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.security.Principal;
 import java.time.ZonedDateTime;
@@ -120,7 +120,7 @@ public class FileUploadSubmissionService extends SubmissionService {
         final var newFilePath = fileService.publicPathForActualPath(newLocalFilePath, fileUploadSubmission.getId());
 
         // We need to ensure that we can access the store file and the stored file is the same as was passed to us in the request
-        final var storedFileHash = DigestUtils.md5Hex(Files.newInputStream(Paths.get(newLocalFilePath)));
+        final var storedFileHash = DigestUtils.md5Hex(Files.newInputStream(Path.of(newLocalFilePath)));
         if (!multipartFileHash.equals(storedFileHash)) {
             throw new IOException("The file " + file.getName() + "could not be stored");
         }
@@ -185,7 +185,7 @@ public class FileUploadSubmissionService extends SubmissionService {
             filename = "file" + filename;
         }
         final var dirPath = FileUploadSubmission.buildFilePath(exerciseId, submissionId);
-        final var filePath = Paths.get(dirPath, filename).toString();
+        final var filePath = Path.of(dirPath, filename).toString();
         final var savedFile = new File(filePath);
         final var dir = new File(dirPath);
 

@@ -41,7 +41,7 @@ public class ExamSubmissionService {
     }
 
     /**
-     * Check if the submission is a exam submission and if so, check that the current user is allowed to submit.
+     * Check if the submission is an exam submission and if so, check that the current user is allowed to submit.
      *
      * @param exercise  the exercise for which a submission should be saved
      * @param user      the user that wants to submit
@@ -82,7 +82,7 @@ public class ExamSubmissionService {
                 return false;
             }
 
-            // if the student exam was already submitted, the user cannot save any more
+            // if the student exam was already submitted, the user cannot save anymore
             if (Boolean.TRUE.equals(studentExam.isSubmitted()) || studentExam.getSubmissionDate() != null) {
                 return false;
             }
@@ -128,7 +128,7 @@ public class ExamSubmissionService {
      * @return the submission. If a submission already exists for the exercise we will set the id
      */
     public Submission preventMultipleSubmissions(Exercise exercise, Submission submission, User user) {
-        // Return immediately if it is not a exam submissions or if it is a programming exercise
+        // Return immediately if it is not an exam submissions or if it is a programming exercise
         if (!isExamSubmission(exercise) || exercise instanceof ProgrammingExercise) {
             return submission;
         }

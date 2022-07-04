@@ -1,5 +1,6 @@
 import { Result } from 'app/entities/result.model';
 import { UMLElementType, UMLModel, UMLRelationshipType } from '@ls1intum/apollon';
+import { Feedback } from 'app/entities/feedback.model';
 
 /**
  * Creates the labels for the assessment elements for displaying them in the modeling and assessment editor.
@@ -104,4 +105,24 @@ export function getNamesForAssessments(result: Result, model: UMLModel): Map<str
         }
     }
     return assessmentsNames;
+}
+
+/**
+ * Removes feedback elements for which the corresponding model element does not exist in the model anymore.
+ * @param feedbacks the list of feedback to filter
+ * @param umlModel the UML model containing the references
+ */
+export function filterInvalidFeedback(feedbacks: Feedback[], umlModel: UMLModel): Feedback[] {
+    if (!feedbacks) {
+        return feedbacks;
+    }
+    if (!umlModel || !umlModel.elements) {
+        return [];
+    }
+
+    let availableIds: string[] = umlModel.elements.map((element) => element.id);
+    if (umlModel.relationships) {
+        availableIds = availableIds.concat(umlModel.relationships.map((relationship) => relationship.id));
+    }
+    return feedbacks.filter((feedback) => availableIds.includes(feedback.referenceId!));
 }

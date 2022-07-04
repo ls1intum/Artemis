@@ -1,47 +1,35 @@
 @import 'src/main/webapp/app/shared/metis/metis.component';
 
-$reaction-button-default-color: rgba(242, 242, 242);
-$reaction-button-hover-color: rgba(255, 255, 255);
-$reaction-button-reacted-color: $metis-light-blue;
-$reaction-button-reacted-accent-color: $metis-blue;
-
-.emoji-mart {
-    font-size: smaller;
-}
-
-.emoji {
-    vertical-align: middle;
-    height: 16px;
-}
-
 .reaction-button {
     font-size: 16px;
     line-height: 16px;
     padding: 4px 6px;
     display: inline-flex;
-    background: $reaction-button-default-color;
+    background: var(--reaction-button-default-color);
     border: none;
     border-radius: 12px;
     margin-right: 5px;
     margin-bottom: 5px;
 
     &.open-selector {
-        box-shadow: inset 0 0 0 1px $metis-gray;
-        background: $reaction-button-hover-color;
+        box-shadow: inset 0 0 0 1px var(--metis-gray);
+        background: var(--reaction-button-hover-color);
     }
 
     .emoji-count {
         font-size: 11px;
+        color: var(--reaction-button-emoji-count-color);
+        padding-left: 0.2em;
 
         &.reaction-count--reacted {
             font-weight: bold;
-            color: $reaction-button-reacted-accent-color;
+            color: var(--reaction-button-reacted-accent-color);
         }
     }
 
     &:not(.reaction-button--not-hoverable):hover {
-        box-shadow: inset 0 0 0 1px $metis-gray;
-        background: $reaction-button-hover-color;
+        box-shadow: inset 0 0 0 1px var(--metis-gray);
+        background: var(--reaction-button-hover-color);
     }
 
     &:active {
@@ -49,7 +37,7 @@ $reaction-button-reacted-accent-color: $metis-blue;
     }
 
     &.reaction-button--reacted {
-        box-shadow: inset 0 0 0 1px $reaction-button-reacted-accent-color;
-        background: $reaction-button-reacted-color;
+        box-shadow: inset 0 0 0 1px var(--reaction-button-reacted-accent-color);
+        background: var(--reaction-button-reacted-color);
     }
 }

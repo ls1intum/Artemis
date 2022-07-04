@@ -31,7 +31,7 @@ describe('Exercise Filter Test', () => {
 
     it('should be empty on create', () => {
         const filter = new ExerciseFilter();
-        expect(filter.isEmpty()).toBe(true);
+        expect(filter.isEmpty()).toBeTrue();
     });
 
     it('should filter by name', () => {

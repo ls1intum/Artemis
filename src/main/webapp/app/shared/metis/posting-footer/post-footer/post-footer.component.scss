@@ -4,10 +4,10 @@
     max-width: 150px;
     overflow: hidden;
     text-overflow: ellipsis;
-    background-color: $metis-light-blue;
+    background-color: var(--metis-light-blue);
     border-radius: 3px;
     white-space: nowrap;
     font-size: smaller;
-    color: $metis-blue;
+    color: var(--metis-blue);
     padding-bottom: 0.1rem;
 }

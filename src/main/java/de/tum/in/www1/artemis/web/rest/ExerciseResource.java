@@ -1,9 +1,8 @@
 package de.tum.in.www1.artemis.web.rest;
 
-import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.*;
-
 import java.time.ZonedDateTime;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,6 +18,7 @@ import de.tum.in.www1.artemis.domain.enumeration.TutorParticipationStatus;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.TutorParticipation;
+import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.domain.submissionpolicy.SubmissionPolicy;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.Role;
@@ -28,6 +28,7 @@ import de.tum.in.www1.artemis.service.feature.Feature;
 import de.tum.in.www1.artemis.service.feature.FeatureToggle;
 import de.tum.in.www1.artemis.web.rest.dto.StatsForDashboardDTO;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
+import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 import tech.jhipster.web.util.ResponseUtil;
 
@@ -66,10 +67,15 @@ public class ExerciseResource {
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
+    private final QuizBatchService quizBatchService;
+
+    private final ParticipationRepository participationRepository;
+
     public ExerciseResource(ExerciseService exerciseService, ExerciseDeletionService exerciseDeletionService, ParticipationService participationService,
             UserRepository userRepository, ExamDateService examDateService, AuthorizationCheckService authCheckService, TutorParticipationService tutorParticipationService,
             ExampleSubmissionRepository exampleSubmissionRepository, ProgrammingExerciseRepository programmingExerciseRepository,
-            GradingCriterionRepository gradingCriterionRepository, ExerciseRepository exerciseRepository) {
+            GradingCriterionRepository gradingCriterionRepository, ExerciseRepository exerciseRepository, QuizBatchService quizBatchService,
+            ParticipationRepository participationRepository) {
         this.exerciseService = exerciseService;
         this.exerciseDeletionService = exerciseDeletionService;
         this.participationService = participationService;
@@ -81,6 +87,8 @@ public class ExerciseResource {
         this.examDateService = examDateService;
         this.exerciseRepository = exerciseRepository;
         this.programmingExerciseRepository = programmingExerciseRepository;
+        this.quizBatchService = quizBatchService;
+        this.participationRepository = participationRepository;
     }
 
     /**
@@ -149,12 +157,13 @@ public class ExerciseResource {
         if (exercise instanceof ProgrammingExercise) {
             // Programming exercises with only automatic assessment should *NOT* be available on the assessment dashboard!
             if (exercise.getAssessmentType() == AssessmentType.AUTOMATIC && !exercise.getAllowComplaintsForAutomaticAssessments()) {
-                return badRequest();
+                throw new BadRequestAlertException("Programming exercises with only automatic assessment should NOT be available on the assessment dashboard", "Exercise",
+                        "programmingExerciseWithOnlyAutomaticAssessment");
             }
             exercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesElseThrow(exerciseId);
         }
 
-        Set<ExampleSubmission> exampleSubmissions = this.exampleSubmissionRepository.findAllWithResultByExerciseId(exerciseId);
+        Set<ExampleSubmission> exampleSubmissions = exampleSubmissionRepository.findAllWithResultByExerciseId(exerciseId);
         // Do not provide example submissions without any assessment
         exampleSubmissions.removeIf(exampleSubmission -> exampleSubmission.getSubmission().getLatestResult() == null);
         exercise.setExampleSubmissions(exampleSubmissions);
@@ -163,11 +172,10 @@ public class ExerciseResource {
         exercise.setGradingCriteria(gradingCriteria);
 
         TutorParticipation tutorParticipation = tutorParticipationService.findByExerciseAndTutor(exercise, user);
-        if (exampleSubmissions.size() == 0 && tutorParticipation.getStatus().equals(TutorParticipationStatus.REVIEWED_INSTRUCTIONS)) {
+        if (exampleSubmissions.isEmpty() && tutorParticipation.getStatus().equals(TutorParticipationStatus.REVIEWED_INSTRUCTIONS)) {
             tutorParticipation.setStatus(TutorParticipationStatus.TRAINED);
         }
         exercise.setTutorParticipations(Collections.singleton(tutorParticipation));
-
         return ResponseUtil.wrapOrNotFound(Optional.of(exercise));
     }
 
@@ -191,7 +199,7 @@ public class ExerciseResource {
      * @param exerciseId the id of the exercise
      * @return the title of the exercise wrapped in an ResponseEntity or 404 Not Found if no exercise with that id exists
      */
-    @GetMapping(value = "/exercises/{exerciseId}/title")
+    @GetMapping("/exercises/{exerciseId}/title")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<String> getExerciseTitle(@PathVariable Long exerciseId) {
         final var title = exerciseRepository.getExerciseTitle(exerciseId);
@@ -219,7 +227,7 @@ public class ExerciseResource {
      * @param exerciseId exercise to delete
      * @return the ResponseEntity with status 200 (OK)
      */
-    @DeleteMapping(value = "/exercises/{exerciseId}/reset")
+    @DeleteMapping("/exercises/{exerciseId}/reset")
     @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<Void> reset(@PathVariable Long exerciseId) {
         log.debug("REST request to reset Exercise : {}", exerciseId);
@@ -236,7 +244,7 @@ public class ExerciseResource {
      * @param deleteRepositories whether repositories should be deleted or not
      * @return ResponseEntity with status
      */
-    @DeleteMapping(value = "/exercises/{exerciseId}/cleanup")
+    @DeleteMapping("/exercises/{exerciseId}/cleanup")
     @PreAuthorize("hasRole('INSTRUCTOR')")
     @FeatureToggle(Feature.ProgrammingExercises)
     public ResponseEntity<Resource> cleanup(@PathVariable Long exerciseId, @RequestParam(defaultValue = "false") boolean deleteRepositories) {
@@ -254,7 +262,7 @@ public class ExerciseResource {
      * @param exerciseId the exerciseId of the exercise to get the repos from
      * @return the ResponseEntity with status 200 (OK) and with body the exercise, or with status 404 (Not Found)
      */
-    @GetMapping(value = "/exercises/{exerciseId}/details")
+    @GetMapping("/exercises/{exerciseId}/details")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Exercise> getExerciseDetails(@PathVariable Long exerciseId) {
         User user = userRepository.getUserWithGroupsAndAuthorities();
@@ -284,6 +292,10 @@ public class ExerciseResource {
             exercise.addParticipation(participation);
         }
 
+        if (exercise instanceof QuizExercise quizExercise) {
+            quizExercise.setQuizBatches(null);
+            quizExercise.setQuizBatches(quizBatchService.getQuizBatchForStudentByLogin(quizExercise, user.getLogin()).stream().collect(Collectors.toSet()));
+        }
         if (exercise instanceof ProgrammingExercise programmingExercise) {
             // TODO: instead fetch the policy without programming exercise, should be faster
             SubmissionPolicy policy = programmingExerciseRepository.findWithSubmissionPolicyById(programmingExercise.getId()).get().getSubmissionPolicy();
@@ -301,12 +313,12 @@ public class ExerciseResource {
     }
 
     /**
-     * GET /exercises/:exerciseId/toggle-second-correction
+     * PUT /exercises/:exerciseId/toggle-second-correction
      *
-     * @param exerciseId the exerciseId of the exercise to get the repos from
-     * @return the ResponseEntity with status 200 (OK) and with body the exercise, or with status 404 (Not Found)
+     * @param exerciseId the exerciseId of the exercise to toggle the second correction
+     * @return the ResponseEntity with status 200 (OK) and new state of the correction toggle state
      */
-    @PutMapping(value = "/exercises/{exerciseId}/toggle-second-correction")
+    @PutMapping("/exercises/{exerciseId}/toggle-second-correction")
     @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<Boolean> toggleSecondCorrectionEnabled(@PathVariable Long exerciseId) {
         log.debug("toggleSecondCorrectionEnabled for exercise with id: {}", exerciseId);
@@ -315,4 +327,18 @@ public class ExerciseResource {
         return ResponseEntity.ok(exerciseRepository.toggleSecondCorrection(exercise));
     }
 
+    /**
+     * GET /exercises/{exerciseId}/latest-due-date
+     *
+     * @param exerciseId the exerciseId of the exercise to get the latest due date from
+     * @return the ResponseEntity with status 200 (OK) and the latest due date
+     */
+    @GetMapping("/exercises/{exerciseId}/latest-due-date")
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<ZonedDateTime> getLatestDueDate(@PathVariable Long exerciseId) {
+        log.debug("getLatestDueDate for exercise with id: {}", exerciseId);
+        Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.STUDENT, exercise, null);
+        return ResponseEntity.ok(participationRepository.findLatestIndividualDueDate(exerciseId).orElse(exercise.getDueDate()));
+    }
 }

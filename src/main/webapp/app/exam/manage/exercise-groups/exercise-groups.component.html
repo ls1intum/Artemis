@@ -12,8 +12,8 @@
 <div class="mt-3 text-end" id="number-groups" style="font-size: 0.85rem">
     {{ 'artemisApp.examManagement.numberOfExerciseGroups' | artemisTranslate }} {{ exerciseGroups ? exerciseGroups.length : 0 }}
 </div>
-<div *ngFor="let exerciseGroup of exerciseGroups; let i = index" class="mt-3" style="border: 1px solid #cccccc">
-    <div class="d-flex p-3" style="background-color: #e1e1e1">
+<div *ngFor="let exerciseGroup of exerciseGroups; let i = index" class="exercise-group mt-3">
+    <div class="d-flex p-3 header">
         <div class="me-3 d-flex justify-content-center" style="align-items: center">
             <a (click)="moveUp(i)" [class.disabled]="i == 0" class="border-0 p-0 me-1 bg-transparent">
                 <fa-icon [icon]="faAngleUp" style="font-size: 1.3rem"></fa-icon>
@@ -26,7 +26,7 @@
             <h5 class="font-weight-bold mb-0">{{ exerciseGroup.title }}</h5>
         </div>
         <div class="d-flex flex-column justify-content-center ms-3">
-            <span class="d-block rounded px-2 py-1" style="font-size: 0.85rem; background-color: #ffc107">
+            <span class="d-block rounded px-2 py-1 opt-badge" style="font-size: 0.85rem">
                 {{
                     (exerciseGroup.isMandatory ? 'artemisApp.examManagement.exerciseGroup.mandatory' : 'artemisApp.examManagement.exerciseGroup.optional')
                         | artemisTranslate
@@ -38,13 +38,6 @@
             <div class="d-flex flex-column justify-content-center">
                 <div class="btn-group flex-btn-group-container">
                     <div class="btn-group-vertical me-1 mb-1" *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_EDITOR']" style="justify-content: end">
-                        <a *ngIf="course?.isAtLeastEditor" [routerLink]="[exerciseGroup.id, 'quiz-exercises', 'new']" class="btn btn-info btn-sm me-1 mb-1" style="max-height: 44%">
-                            <fa-icon [icon]="faPlus"></fa-icon>
-                            <fa-icon class="d-xl-none" [icon]="faCheckDouble"></fa-icon>
-                            <span class="d-none d-xl-inline">{{ 'artemisApp.examManagement.exerciseGroup.addQuizExercise' | artemisTranslate }}</span>
-                        </a>
-                    </div>
-                    <div class="btn-group-vertical me-1 mb-1" *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_EDITOR']" style="justify-content: end">
                         <a
                             *ngIf="course?.isAtLeastEditor"
                             [routerLink]="[exerciseGroup.id, 'file-upload-exercises', 'new']"
@@ -54,6 +47,18 @@
                             <fa-icon [icon]="faPlus"></fa-icon>
                             <fa-icon class="d-xl-none" [icon]="faFileUpload"></fa-icon>
                             <span class="d-none d-xl-inline">{{ 'artemisApp.examManagement.exerciseGroup.addFileUploadExercise' | artemisTranslate }}</span>
+                        </a>
+                    </div>
+                    <div class="btn-group-vertical me-1 mb-1" *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_EDITOR']" style="justify-content: end">
+                        <a *ngIf="course?.isAtLeastEditor" (click)="openImportModal(exerciseGroup, exerciseType.QUIZ)" class="btn btn-info btn-sm me-1 mb-1">
+                            <fa-icon [icon]="faPlus"></fa-icon>
+                            <fa-icon class="d-xl-none" [icon]="faFont"></fa-icon>
+                            <span class="d-none d-xl-inline">{{ 'artemisApp.quizExercise.home.importLabel' | artemisTranslate }}</span>
+                        </a>
+                        <a *ngIf="course?.isAtLeastEditor" [routerLink]="[exerciseGroup.id, 'quiz-exercises', 'new']" class="btn btn-info btn-sm me-1 mb-1" style="max-height: 44%">
+                            <fa-icon [icon]="faPlus"></fa-icon>
+                            <fa-icon class="d-xl-none" [icon]="faCheckDouble"></fa-icon>
+                            <span class="d-none d-xl-inline">{{ 'artemisApp.examManagement.exerciseGroup.addQuizExercise' | artemisTranslate }}</span>
                         </a>
                     </div>
                     <div class="btn-group-vertical me-1 mb-1" *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_EDITOR']">

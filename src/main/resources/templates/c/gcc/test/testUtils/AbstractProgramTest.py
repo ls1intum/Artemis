@@ -1,5 +1,6 @@
-from testUtils.AbstractTest import AbstractTest
 from typing import List, Optional
+
+from testUtils.AbstractTest import AbstractTest
 from testUtils.Utils import PWrap
 
 

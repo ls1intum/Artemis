@@ -9,7 +9,7 @@ package de.tum.in.www1.artemis.domain.view;
  *           the domain object itself. (Alternatively ResponseEntity<MappingJacksonValue>) create it like this (replace 'QuizView.During' with the view you want to use): Object
  *           yourDomainObject = ...; MappingJacksonValue payload = new MappingJacksonValue(yourDomainObject); Class view = QuizView.During.class;
  *           payload.setSerializationView(view); return payload; To use it in a WebSocket message, make it write the value as bytes and send those directly: - use
- *           messagingTemplate.send() instead of messagingTemplate.convertAndSend() - objectMapper should be the the mapper used by the injected MappingJackson2HttpMessageConverter
+ *           messagingTemplate.send() instead of messagingTemplate.convertAndSend() - objectMapper should be the mapper used by the injected MappingJackson2HttpMessageConverter
  *           Object yourDomainObject = ...; Class view = QuizView.During.class; byte[] payload = objectMapper.writerWithView(view).writeValueAsBytes(yourDomainObject);
  *           messagingTemplate.send("/topic/some/path/", MessageBuilder.withPayload(payload).build());
  */

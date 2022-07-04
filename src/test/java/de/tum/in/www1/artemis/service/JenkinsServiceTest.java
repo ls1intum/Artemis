@@ -249,7 +249,7 @@ public class JenkinsServiceTest extends AbstractSpringIntegrationJenkinsGitlabTe
 
         Exception exception = assertThrows(JenkinsException.class, () -> {
             String templateRepoUrl = programmingExercise.getTemplateRepositoryUrl();
-            continuousIntegrationService.updatePlanRepository(projectKey, planName, ASSIGNMENT_REPO_NAME, null, participation.getRepositoryUrl(), templateRepoUrl,
+            continuousIntegrationService.updatePlanRepository(projectKey, planName, ASSIGNMENT_REPO_NAME, null, participation.getRepositoryUrl(), templateRepoUrl, "main",
                     Optional.empty());
         });
         assertThat(exception.getMessage()).startsWith("Error trying to configure build plan in Jenkins");

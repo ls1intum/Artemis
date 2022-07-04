@@ -44,7 +44,7 @@ describe('Component Tests', () => {
         });
 
         it('should define its initial state', () => {
-            expect(comp.initialized).toBe(true);
+            expect(comp.initialized).toBeTrue();
             expect(comp.key).toEqual('XYZPDQ');
         });
 
@@ -68,7 +68,7 @@ describe('Component Tests', () => {
 
             comp.finishReset();
 
-            expect(comp.doNotMatch).toBe(true);
+            expect(comp.doNotMatch).toBeTrue();
         });
 
         it('should update success to true after resetting password', inject(
@@ -84,7 +84,7 @@ describe('Component Tests', () => {
                 tick();
 
                 expect(service.save).toHaveBeenCalledWith('XYZPDQ', 'password');
-                expect(comp.success).toBe(true);
+                expect(comp.success).toBeTrue();
             }),
         ));
 
@@ -101,8 +101,8 @@ describe('Component Tests', () => {
                 tick();
 
                 expect(service.save).toHaveBeenCalledWith('XYZPDQ', 'password');
-                expect(comp.success).toBe(false);
-                expect(comp.error).toBe(true);
+                expect(comp.success).toBeFalse();
+                expect(comp.error).toBeTrue();
             }),
         ));
     });

@@ -7,9 +7,14 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+import org.apache.commons.lang.StringEscapeUtils;
+
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
+import de.tum.in.www1.artemis.domain.BuildLogEntry;
+import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.service.dto.AbstractBuildResultNotificationDTO;
 import de.tum.in.www1.artemis.service.dto.StaticCodeAnalysisReportDTO;
 
@@ -94,6 +99,33 @@ public class BambooBuildResultNotificationDTO extends AbstractBuildResultNotific
         return String.format("%d of %d passed", passed, total);
     }
 
+    @Override
+    public boolean hasArtifact() {
+        return getBuild().isArtifact();
+    }
+
+    @Override
+    public boolean hasLogs() {
+        return getBuild().getJobs().stream().anyMatch(job -> !job.getLogs().isEmpty());
+    }
+
+    @Override
+    public List<BuildLogEntry> extractBuildLogs(ProgrammingLanguage programmingLanguage) {
+        List<BuildLogEntry> buildLogEntries = new ArrayList<>();
+
+        // Store logs into database. Append logs of multiple jobs.
+        for (var job : getBuild().getJobs()) {
+            for (var bambooLog : job.getLogs()) {
+                // We have to unescape the HTML as otherwise symbols like '<' are not displayed correctly
+                buildLogEntries.add(new BuildLogEntry(bambooLog.getDate(), StringEscapeUtils.unescapeHtml(bambooLog.getLog())));
+            }
+        }
+
+        extractBuildLogStatistics(programmingSubmission, buildLogEntries);
+
+        return buildLogEntries;
+    }
+
     private Optional<String> getCommitHashFromRepo(String repoName) {
         var repo = getBuild().getVcs().stream().filter(vcs -> vcs.getRepositoryName().equalsIgnoreCase(repoName)).findFirst();
         return repo.map(BambooVCSDTO::getId);
@@ -116,7 +148,7 @@ public class BambooBuildResultNotificationDTO extends AbstractBuildResultNotific
 
         private List<BambooVCSDTO> vcs;
 
-        private List<BambooJobDTO> jobs;
+        private List<BambooJobDTO> jobs = new ArrayList<>();
 
         public boolean isArtifact() {
             return artifact;
@@ -186,7 +218,7 @@ public class BambooBuildResultNotificationDTO extends AbstractBuildResultNotific
     @JsonIgnoreProperties(ignoreUnknown = true)
     public static final class BambooTestSummaryDTO {
 
-        // We don't even know what unit this. It's doesn't align at all with the value displayed in Bamboo.
+        // We don't even know what unit this. It doesn't align at all with the value displayed in Bamboo.
         // E.g. we got a value of 246 for an 8 second run?
         private int duration;
 
@@ -368,6 +400,10 @@ public class BambooBuildResultNotificationDTO extends AbstractBuildResultNotific
 
         private List<StaticCodeAnalysisReportDTO> staticCodeAnalysisReports = new ArrayList<>();
 
+        // For an unknown reason, the deserialization only works with this annotation
+        @JsonProperty("testwiseCoverageReport")
+        private List<TestwiseCoverageReportDTO> testwiseCoverageReport = new ArrayList<>();
+
         private List<BambooBuildLogDTO> logs = new ArrayList<>();
 
         public List<BambooTestJobDTO> getSuccessfulTests() {
@@ -400,6 +436,14 @@ public class BambooBuildResultNotificationDTO extends AbstractBuildResultNotific
 
         public void setStaticCodeAnalysisReports(List<StaticCodeAnalysisReportDTO> staticCodeAnalysisReports) {
             this.staticCodeAnalysisReports = staticCodeAnalysisReports;
+        }
+
+        public List<TestwiseCoverageReportDTO> getTestwiseCoverageReports() {
+            return testwiseCoverageReport;
+        }
+
+        public void setTestwiseCoverageReports(List<TestwiseCoverageReportDTO> testwiseCoverageReport) {
+            this.testwiseCoverageReport = testwiseCoverageReport;
         }
 
         public List<BambooBuildLogDTO> getLogs() {

@@ -203,12 +203,12 @@ public class AssessmentTeamComplaintIntegrationTest extends AbstractSpringIntegr
         assertThat(((StudentParticipation) receivedResult.getParticipation()).getStudent()).as("student is hidden in response").isEmpty();
         Complaint storedComplaint = complaintRepo.findByResultId(modelingAssessment.getId()).get();
         assertThat(storedComplaint.isAccepted()).as("complaint is accepted").isTrue();
-        Result restultOfComplaint = storedComplaint.getResult();
+        Result resultOfComplaint = storedComplaint.getResult();
         // set dates to UTC and round to milliseconds for comparison
-        restultOfComplaint.setCompletionDate(ZonedDateTime.ofInstant(restultOfComplaint.getCompletionDate().truncatedTo(ChronoUnit.MILLIS).toInstant(), ZoneId.of("UTC")));
+        resultOfComplaint.setCompletionDate(ZonedDateTime.ofInstant(resultOfComplaint.getCompletionDate().truncatedTo(ChronoUnit.MILLIS).toInstant(), ZoneId.of("UTC")));
         modelingAssessment.setCompletionDate(ZonedDateTime.ofInstant(modelingAssessment.getCompletionDate().truncatedTo(ChronoUnit.MILLIS).toInstant(), ZoneId.of("UTC")));
-        assertThat(restultOfComplaint.getAssessor()).isEqualTo(modelingAssessment.getAssessor());
-        assertThat(restultOfComplaint).isEqualTo(modelingAssessment);
+        assertThat(resultOfComplaint.getAssessor()).isEqualTo(modelingAssessment.getAssessor());
+        assertThat(resultOfComplaint).isEqualTo(modelingAssessment);
         String[] ignoringFields = { "participation", "submission", "feedbacks", "assessor" };
         Submission submission = submissionRepository.findOneWithEagerResultAndFeedback(modelingAssessment.getSubmission().getId());
         assertThat(submission.getLatestResult()).isNotNull();

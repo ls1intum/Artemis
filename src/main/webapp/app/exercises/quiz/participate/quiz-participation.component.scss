@@ -21,24 +21,24 @@
     left: 0;
     right: 0;
     z-index: 10;
-    box-shadow: 0 0 3px rgba(0, 0, 0, 0.7);
-    background: white;
+    box-shadow: 0 0 3px var(--quiz-participation-footer-box-shadow);
+    background: var(--quiz-participation-footer-background);
 
     .container {
         height: 100%;
     }
 
     .draganddropcolor-question {
-        background-color: #86ccd5 !important;
+        background-color: var(--quiz-participation-footer-dnd-background) !important;
     }
     .multiplechoicecolor-question {
-        background-color: #eee066 !important;
+        background-color: var(--quiz-participation-footer-mc-background) !important;
     }
     .shortanswercolor-question {
-        background-color: #d8956c !important;
+        background-color: var(--quiz-participation-footer-sa-background) !important;
     }
     .changed-question {
-        background-color: #527cd7 !important;
+        background-color: var(--quiz-participation-footer-changed-background) !important;
     }
 }
 
@@ -102,19 +102,19 @@
     #quiz-score {
         text-align: center;
         font-weight: bold;
-        color: green;
+        color: var(--quiz-participation-footer-content-quiz-score-color);
 
         &.incorrect {
-            color: black;
+            color: var(--quiz-participation-footer-content-quiz-score-incorrect-color);
         }
     }
 
     .time-warning {
-        color: orange;
+        color: var(--quiz-participation-footer-content-time-warning-color);
     }
 
     .time-critical {
-        color: red;
+        color: var(--quiz-participation-footer-content-time-critical-color);
     }
 
     .connection-status-quiz {
@@ -144,7 +144,7 @@
     font-size: 16px;
     text-align: center;
     font-weight: bold;
-    border-color: #3c763d;
+    border-color: var(--quiz-participation-quiz-is-over-border-color);
     z-index: 8;
 }
 
@@ -227,7 +227,7 @@
     transition: 0.1s ease-out opacity;
 
     &.active {
-        background-color: rgba(255, 255, 255, 0.6);
+        background-color: var(--quiz-participation-refresh-overlay-active-background);
         opacity: 1;
         pointer-events: none;
         transition: 0.2s ease-in opacity;
@@ -250,7 +250,7 @@
     border-spacing: 5px;
     padding: 6px 0;
     &.btn-light {
-        border-color: #ffffff;
+        border-color: var(--quiz-participation-btn-circle-light-border-color);
     }
 
     @media (max-width: 990px) {

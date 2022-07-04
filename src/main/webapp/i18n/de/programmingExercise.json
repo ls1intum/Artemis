@@ -106,9 +106,15 @@
             "deleteTasksAndSolutionEntriesSuccess": "Alle Aufgaben und Solution Entries wurden gelöscht.",
             "deleteTasksAndSolutionEntriesWarning": "Nur zu Testzwecken: Lösche alle Aufgaben und Solution Entries.",
             "deleteTasksAndSolutionEntriesTitle": "Lösche Aufgaben",
+            "generateCodeHintsTooltip": "Generiert Code Hinweise für alle Tasks dieser Aufgabe unter Verwendung der bereits erstellten Solution Entries",
+            "generateCodeHintsTitle": "Generiere Code Hinweise",
+            "generateCodeHintsSuccess": "Code Hinweise wurden erfolgreich generiert",
             "createStructuralSolutionEntriesTooltip": "Erstellt Solution Entries für alle strukturellen Tests dieser Aufgabe.",
             "createStructuralSolutionEntriesTitle": "Erstelle strukturelle Solution Entries",
             "createStructuralSolutionEntriesSuccess": "Strukturelle Solution Entries wurden erfolgreich erstellt",
+            "createBehavioralSolutionEntriesTooltip": "Erstellt Solution Entries für alle Verhaltenstests dieser Aufgabe.",
+            "createBehavioralSolutionEntriesTitle": "Erstelle verhaltensweise Solution Entries",
+            "createBehavioralSolutionEntriesSuccess": "Verhaltensweise Solution Entries wurden erfolgreich erstellt",
             "editable": {
                 "unsaved": "Ungespeichert.",
                 "unsavedTooltip": "Es gibt ungespeicherte Änderungen in der Aufgabenstellung.",
@@ -120,8 +126,7 @@
             "problemStatement": {
                 "title": "Aufgabenstellung",
                 "taskCommand": "Aufgabe",
-                "testCaseCommand": "Testfall einfügen",
-                "exerciseHintCommand": "Aufgaben-spezifischen Hinweis hinzufügen"
+                "testCaseCommand": "Testfall einfügen"
             },
             "status": {
                 "solutionFailsTest": "Das Solution-Repository erfüllt einen oder mehrere Testfälle nicht. Das könnte auf ein Problem mit dem Solution-Repository oder den Testfällen hinweisen.",
@@ -266,6 +271,8 @@
                 "afterDueDateTooltip": "Aktiviere diese Option, um alle Abgaben von Studierenden nach der Einreichungsfrist zu bewerten. Durch diese Einstellung werden zum angegebenen Datum für alle Abgaben von Studierenden ein Build & Testlauf ausgeführt. Die hierdurch generierten Ergebnisse werden als 'bewertet' gekennzeichnet obwohl die Einreichungsfrist abgelaufen ist",
                 "alertNewDueDate": "Die Einreichungsfrist wurde auf das Veröffentlichungsdatum gesetzt!",
                 "alertNewAfterDueDate": "Das Datum der zusätzlichen Testläufe wurde auf das Releasedatum gesetzt!",
+                "alertNewExampleSolutionPublicationDateAsReleaseDate": "Das Veröffentlichungsdatum der Beispiellösung wurde auf das Datum der Veröffentlichung gesetzt!",
+                "alertNewExampleSolutionPublicationDateAsDueDate": "Das Veröffentlichungsdatum der Beispiellösung wurde auf das Fälligkeitsdatum gesetzt!",
                 "assessmentDueDate": "Einreichungsfrist der Bewertung",
                 "assessmentDueDateTooltip": "Die Frist für manuelle Reviews. Sobald das Datum erreicht ist, werden alle manuellen Ergebnisse an die Studierenden veröffentlicht!",
                 "notSet": "nicht gesetzt",
@@ -273,7 +280,8 @@
                 "allowComplaintOnAutomaticAssessmentTooltip": "Die Studierenden dürfen eine Beschwerde nach einer automatischen Bewertung einlegen",
                 "disallowComplaintOnAutomaticAssessmentTooltip": "Die Studierenden dürfen keine Beschwerde nach einer automatischen Bewertung einlegen",
                 "complaintOnAutomaticAssessmentEnabled": "Beschwerden sind möglich",
-                "complaintOnAutomaticAssessmentDisabled": "Beschwerden sind nicht möglich"
+                "complaintOnAutomaticAssessmentDisabled": "Beschwerden sind nicht möglich",
+                "exampleSolutionPublicationDateTooltip": "Das Datum, an dem das Lösungsrepository für Studenten zum Herunterladen verfügbar wird. Zum Deaktivieren leer lassen."
             },
             "repositoryIsLocked": {
                 "title": "Dein Repository ist gesperrt.",
@@ -356,7 +364,7 @@
                         "pattern": "Der Punktabzug muss eine Nummer größer als 0 sein.",
                         "required": "Der Punktabzug muss gesetzt sein."
                     },
-                    "penaltyInfoLabel": "Punktabzug je Überschreitung",
+                    "penaltyInfoLabel": "(Punktabzug je Überschreitung: {{points}} Punkte)",
                     "triggerAllInformation": "Wird der Punktabzug je Überschreitung des Abgabelimits oder das Abgabelimit selbst angepasst, muss nach dem Speichern der Abgaberichtlinie die 'Erneut Bewerten' Funktionalität genutzt werden, um die Ergebnisse der Teilnehmenden zu aktualisieren."
                 },
                 "submissionPolicyType": {
@@ -387,7 +395,33 @@
                 "title": "Template-Lösungs-Diff",
                 "template": "Template",
                 "solution": "Lösung",
-                "404": "Template-Lösungs-Diff wurde noch nicht generiert. Bitte pusche etwas in die Template- oder Lösungs-Repositories um ihn zu erstellen."
+                "404": "Template-Lösungs-Diff wurde noch nicht generiert. Bitte pusche etwas in die Template- oder Lösungs-Repositories, um ihn zu erstellen.",
+                "lineStatLabel": "Zeilen, die zwischen Vorlage und Lösung hinzugefügt/entfernt wurden",
+                "lineStatTooltipDetailPage": "Ungefilterte Zeilen, die beim Vergleich der Template- und Lösungs-Repositories hinzugefügt und entfernt wurden",
+                "lineStatTooltipFullReport": "Gefilterte Zeilen, die beim Vergleich der Vorlagen- und Lösungs-Repositories hinzugefügt und entfernt wurden. Leere Zeilen werden ausgeschlossen.",
+                "lineStatTooltipFullEntry": "Gefilterte Zeilen, die beim Vergleich der Vorlagen- und Lösungsversionen dieser Datei hinzugefügt und entfernt wurden. Leere Zeilen werden ausgeschlossen."
+            },
+            "projectTypes": {
+                "PLAIN_MAVEN": "Maven",
+                "PLAIN_GRADLE": "Gradle",
+                "PLAIN": "Plain",
+                "XCODE": "Xcode",
+                "FACT": "FACT",
+                "GCC": "GCC"
+            },
+            "withDependencies": "Mit beispielhafter Abhängigkeit",
+            "withDependenciesTooltip": "Fügt dem generierten Projekt eine externe Apache commons-lang-Abhängigkeit als Beispiel dafür hinzu, wie Maven-Abhängigkeiten mit Artemis-Aufgaben verwendet werden sollten.",
+            "recordTestwiseCoverage": "Testweise Test-Abdeckung aufzeichnen",
+            "recordTestwiseCoverageTooltip": "Durch Aktivierung dieser Option wird die testweise Test-Abdeckung für das Lösungs-Repository aufgezeichnet. Diese Option ist nur für Java-Gradle-Projekte mit nicht-sequentiellen Testläufen verfügbar.",
+            "coveredLineRatio": "Anteil Test-Abgedeckter Zeilen",
+            "testwiseCoverageReport": {
+                "button": "Testweise Test-Abdeckung anzeigen",
+                "tooltip": "Zeigt die testwise Test-Abdeckung für das Lösungs-Repository.",
+                "title": "Testweise Test-Abdeckung",
+                "404": "Testweise Test-Abdeckung wurde noch nicht generiert. Bitte pushe etwas in die Lösungs- oder Test-Repositories um den Report zu erstellen.",
+                "selectTests": "Wähle die Tests aus, für die die Test-abgedeckten Zeilen markiert werden:",
+                "filePath": "Datei-Pfad",
+                "coveredLines": "Abgedeckte Zeilen"
             }
         },
         "error": {

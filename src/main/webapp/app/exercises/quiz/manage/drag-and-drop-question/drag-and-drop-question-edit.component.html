@@ -1,7 +1,7 @@
 <div class="edit-dnd-question" [hidden]="showPreview" (mousemove)="mouseMove($event)" (mouseup)="mouseUp()">
     <div class="question-options card-header question-card-header" *ngIf="!reEvaluationInProgress">
         <button
-            class="btn btn-light question-collapse"
+            class="btn question-collapse"
             (click)="isQuestionCollapsed = !isQuestionCollapsed"
             [attr.aria-expanded]="!isQuestionCollapsed"
             [attr.aria-controls]="'collapseQuestion' + questionIndex"
@@ -330,11 +330,11 @@
         <ng-container *ngIf="!reEvaluationInProgress">
             <hr />
             <div class="question-options">
-                <div class="form-group">
-                    <div class="btn btn-outline-secondary" (click)="togglePreview()">
+                <div ngbTooltip="{{ 'artemisApp.dragAndDropQuestion.disabledPreviewTooltip' | artemisTranslate }}" [disableTooltip]="!!question.backgroundFilePath">
+                    <button class="btn btn-outline-secondary" [disabled]="!question.backgroundFilePath" (click)="togglePreview()">
                         <fa-icon [icon]="faEye"></fa-icon>
                         <span jhiTranslate="entity.action.preview"></span>
-                    </div>
+                    </button>
                 </div>
             </div>
         </ng-container>

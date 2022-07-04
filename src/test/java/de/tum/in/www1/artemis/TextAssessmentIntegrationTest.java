@@ -31,7 +31,6 @@ import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.AutomaticTextFeedbackService;
 import de.tum.in.www1.artemis.service.TextAssessmentService;
-import de.tum.in.www1.artemis.service.TextBlockService;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.util.TextExerciseUtilService;
 import de.tum.in.www1.artemis.web.rest.dto.TextAssessmentDTO;
@@ -89,12 +88,6 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
 
     @Autowired
     private TextAssessmentService textAssessmentService;
-
-    @Autowired
-    private TextBlockService textBlockService;
-
-    @Autowired
-    private TextExerciseRepository textExerciseRepository;
 
     private TextExercise textExercise;
 
@@ -1533,5 +1526,60 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
         textBlockRepository.findAll().forEach(textBlock -> {
             assertThat(textBlock.getFeedback().getId()).isNotNull();
         });
+    }
+
+    @Test
+    @WithMockUser(username = "tutor1", roles = "TA")
+    public void testConsecutiveSaveFailsAfterAddingOrRemovingReferencedFeedback() throws Exception {
+
+        List<TextSubmission> textSubmissions = prepareTextSubmissionsWithFeedbackForAutomaticFeedback();
+        final Map<String, TextBlock> blocksSubmission1 = textSubmissions.get(0).getBlocks().stream().collect(Collectors.toMap(TextBlock::getId, block -> block));
+
+        LinkedMultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
+        parameters.add("lock", "true");
+        TextSubmission textSubmissionWithoutAssessment = request.get("/api/exercises/" + textExercise.getId() + "/text-submission-without-assessment", HttpStatus.OK,
+                TextSubmission.class, parameters);
+
+        final var newTextBlocksToSimulateAngularSerialization = textSubmissionWithoutAssessment.getBlocks().stream().map(oldBlock -> {
+            var newBlock = new TextBlock();
+            newBlock.setText(oldBlock.getText());
+            newBlock.setStartIndex(oldBlock.getStartIndex());
+            newBlock.setEndIndex(oldBlock.getEndIndex());
+            newBlock.setId(oldBlock.getId());
+            return newBlock;
+        }).collect(Collectors.toSet());
+
+        final TextAssessmentDTO dto = new TextAssessmentDTO();
+        dto.setTextBlocks(newTextBlocksToSimulateAngularSerialization);
+
+        List<Feedback> feedbacks = new ArrayList<>();
+        feedbacks.add(new Feedback().credits(20.00).type(FeedbackType.MANUAL).detailText("nice submission 3").reference(ModelFactory.generateTextBlock(0, 15, "test3").getId()));
+        dto.setFeedbacks(feedbacks);
+
+        // These two lines ensure the call count verification near the end of this test can spot the call
+        // made during the PUT /api/participations/:id/text-assessment request and not other places.
+        int irrelevantCallCount = 1;
+        verify(textBlockService, times(irrelevantCallCount)).findAllBySubmissionId(textSubmissionWithoutAssessment.getId());
+
+        request.putWithResponseBody("/api/participations/" + textSubmissionWithoutAssessment.getParticipation().getId() + "/results/"
+                + textSubmissionWithoutAssessment.getLatestResult().getId() + "/text-assessment", dto, Result.class, HttpStatus.OK);
+
+        feedbacks.remove(0);
+
+        request.putWithResponseBody("/api/participations/" + textSubmissionWithoutAssessment.getParticipation().getId() + "/results/"
+                + textSubmissionWithoutAssessment.getLatestResult().getId() + "/text-assessment", dto, Result.class, HttpStatus.OK);
+
+        var result = request.putWithResponseBody("/api/participations/" + textSubmissionWithoutAssessment.getParticipation().getId() + "/results/"
+                + textSubmissionWithoutAssessment.getLatestResult().getId() + "/text-assessment", dto, Result.class, HttpStatus.OK);
+
+        final var textSubmission = textSubmissionRepository.getTextSubmissionWithResultAndTextBlocksAndFeedbackByResultIdElseThrow(result.getId());
+
+        // This is to ensure the fix for https://github.com/ls1intum/Artemis/issues/4962 is not removed. Please ensure that problem is not occurring
+        // if you remove or change this verification. This test uses a spy because the error was caused by and EntityNotFound exception related to MySQL
+        // however the intergration tests use H2 in-memory database so same code did not produce the same error.
+        verify(textBlockService, times(irrelevantCallCount + 3)).findAllBySubmissionId(textSubmission.getId());
+
+        textBlockRepository.findAllWithEagerClusterBySubmissionId(textSubmissionWithoutAssessment.getId())
+                .forEach(block -> assertThat(block).isEqualToComparingFieldByField(blocksSubmission1.get(block.getId())));
     }
 }

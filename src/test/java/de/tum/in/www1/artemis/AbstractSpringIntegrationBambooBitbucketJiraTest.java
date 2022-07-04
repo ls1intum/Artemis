@@ -35,7 +35,9 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.BuildPlanType;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.domain.participation.AbstractBaseProgrammingExerciseParticipation;
+import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
+import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.service.TimeService;
 import de.tum.in.www1.artemis.service.connectors.BitbucketBambooUpdateService;
 import de.tum.in.www1.artemis.service.connectors.bamboo.BambooService;
@@ -93,7 +95,7 @@ public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest extends A
 
     @AfterEach
     public void resetSpyBeans() {
-        Mockito.reset(ldapUserService, continuousIntegrationUpdateService, continuousIntegrationService, versionControlService, bambooServer);
+        Mockito.reset(ldapUserService, continuousIntegrationUpdateService, continuousIntegrationService, versionControlService, bambooServer, textBlockService);
         super.resetSpyBeans();
     }
 
@@ -365,6 +367,16 @@ public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest extends A
     }
 
     @Override
+    public void mockGrantReadAccess(ProgrammingExerciseStudentParticipation participation) throws URISyntaxException {
+        for (User user : participation.getParticipant().getParticipants()) {
+            String buildPlanId = participation.getBuildPlanId();
+            String projectKey = buildPlanId.split("-")[0];
+
+            bambooRequestMockProvider.mockGrantReadAccess(buildPlanId, projectKey, user);
+        }
+    }
+
+    @Override
     public void mockNotifyPush(ProgrammingExerciseStudentParticipation participation) throws Exception {
         final String slug = "test201904bprogrammingexercise6-exercise-testuser";
         final String hash = "9b3a9bd71a0d80e5bbc42204c319ed3d1d4f0d6d";
@@ -403,7 +415,7 @@ public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest extends A
         groupsToAdd.removeAll(oldGroups);
         Set<String> groupsToRemove = new HashSet<>(oldGroups);
         groupsToRemove.removeAll(user.getGroups());
-        if (groupsToAdd.size() > 0) {
+        if (!groupsToAdd.isEmpty()) {
             bitbucketRequestMockProvider.mockAddUserToGroups();
         }
         for (String group : groupsToRemove) {
@@ -497,6 +509,22 @@ public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest extends A
     }
 
     @Override
+    public void mockConfigureBuildPlan(ProgrammingExerciseParticipation participation, String defaultBranch) throws Exception {
+        // Make sure that all REST calls are necessary
+        continuousIntegrationUpdateService.clearCachedApplicationLinks();
+
+        String buildPlanId = participation.getBuildPlanId();
+        VcsRepositoryUrl repositoryUrl = participation.getVcsRepositoryUrl();
+        String projectKey = buildPlanId.split("-")[0];
+        String repoProjectName = urlService.getProjectKeyFromRepositoryUrl(repositoryUrl);
+        bambooRequestMockProvider.mockUpdatePlanRepository(buildPlanId, "assignment", repoProjectName, defaultBranch);
+        bambooRequestMockProvider.mockEnablePlan(projectKey, buildPlanId.split("-")[1], true, false);
+        for (User user : ((StudentParticipation) participation).getParticipant().getParticipants()) {
+            bambooRequestMockProvider.mockGrantReadAccess(buildPlanId, projectKey, user);
+        }
+    }
+
+    @Override
     public void mockCheckIfProjectExistsInVcs(ProgrammingExercise exercise, boolean existsInVcs) throws Exception {
         bitbucketRequestMockProvider.mockCheckIfProjectExists(exercise, existsInVcs);
     }
@@ -547,5 +575,14 @@ public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest extends A
     public void resetMockProvider() {
         bitbucketRequestMockProvider.reset();
         bambooRequestMockProvider.reset();
+    }
+
+    @Override
+    /**
+     * Verify that the mocked REST-calls were called
+     */
+    public void verifyMocks() {
+        bitbucketRequestMockProvider.verifyMocks();
+        bambooRequestMockProvider.verifyMocks();
     }
 }

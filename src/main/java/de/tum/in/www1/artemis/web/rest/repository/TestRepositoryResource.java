@@ -45,8 +45,8 @@ public class TestRepositoryResource extends RepositoryResource {
     }
 
     @Override
-    Repository getRepository(Long exerciseId, RepositoryActionType repositoryActionType, boolean pullOnGet) throws IllegalAccessException, InterruptedException, GitAPIException {
-        final var exercise = (ProgrammingExercise) programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exerciseId);
+    Repository getRepository(Long exerciseId, RepositoryActionType repositoryActionType, boolean pullOnGet) throws IllegalAccessException, GitAPIException {
+        final var exercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exerciseId);
         final var repoUrl = exercise.getVcsTestRepositoryUrl();
         return repositoryService.checkoutRepositoryByName(exercise, repoUrl, pullOnGet);
     }
@@ -61,6 +61,12 @@ public class TestRepositoryResource extends RepositoryResource {
     boolean canAccessRepository(Long exerciseId) {
         ProgrammingExercise exercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exerciseId);
         return authCheckService.isAtLeastEditorInCourse(exercise.getCourseViaExerciseGroupOrCourseMember(), userRepository.getUserWithGroupsAndAuthorities());
+    }
+
+    @Override
+    String getOrRetrieveBranchOfDomainObject(Long exerciseId) {
+        ProgrammingExercise exercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
+        return versionControlService.get().getOrRetrieveBranchOfExercise(exercise);
     }
 
     @Override
@@ -125,7 +131,7 @@ public class TestRepositoryResource extends RepositoryResource {
 
     @Override
     @GetMapping(value = "/test-repository/{exerciseId}", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<RepositoryStatusDTO> getStatus(@PathVariable Long exerciseId) throws GitAPIException, InterruptedException {
+    public ResponseEntity<RepositoryStatusDTO> getStatus(@PathVariable Long exerciseId) throws GitAPIException {
         return super.getStatus(exerciseId);
     }
 
@@ -159,7 +165,7 @@ public class TestRepositoryResource extends RepositoryResource {
             FileSubmissionError error = new FileSubmissionError(exerciseId, "checkoutConflict");
             throw new ResponseStatusException(HttpStatus.CONFLICT, error.getMessage(), error);
         }
-        catch (GitAPIException | InterruptedException ex) {
+        catch (GitAPIException ex) {
             FileSubmissionError error = new FileSubmissionError(exerciseId, "checkoutFailed");
             throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, error.getMessage(), error);
         }

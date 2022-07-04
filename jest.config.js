@@ -2,7 +2,7 @@ const esModules = ['lodash-es', 'franc-min', 'trigram-utils', 'n-gram', 'collaps
     '@angular/compiler', '@angular/core', '@angular/forms', '@angular/localize', '@angular/platform-browser', '@angular/platform-browser-dynamic', '@angular/router',
     '@ngx-translate/core', '@ngx-translate/http-loader', '@fortawesome/angular-fontawesome', '@angular/cdk', '@angular/material', '@angular/cdk', 'dayjs/esm',
     'rxjs/operators', '@ng-bootstrap/ng-bootstrap', 'ngx-webstorage', '@ctrl/ngx-emoji-mart', 'ngx-device-detector', '@swimlane/ngx-charts',
-    '@angular/service-worker'].join('|');
+    '@angular/service-worker', '@danielmoncada/angular-datetime-picker'].join('|');
 
 const {
     compilerOptions: { baseUrl = './' },
@@ -55,10 +55,10 @@ module.exports = {
     coverageThreshold: {
         global: {
             // TODO: in the future, the following values should be increase to at least 85%
-            statements: 83.0,
-            branches: 69.5,
-            functions: 75.5,
-            lines: 82.7,
+            statements: 83.9,
+            branches: 70.8,
+            functions: 76.7,
+            lines: 83.7,
         },
     },
     setupFilesAfterEnv: ['<rootDir>/src/test/javascript/spec/jest-test-setup.ts', 'jest-extended/all'],

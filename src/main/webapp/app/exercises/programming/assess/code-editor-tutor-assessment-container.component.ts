@@ -254,9 +254,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
             // When the selectedFile is not part of the template, then this is a new file and all lines in code editor are highlighted
             if (!this.templateFileSession[selectedFile]) {
                 const lastLine = this.codeEditorContainer.aceEditor.editorSession.getLength() - 1;
-                this.codeEditorContainer.aceEditor.markerIds.push(
-                    this.codeEditorContainer.aceEditor.editorSession.addMarker(new this.codeEditorContainer.aceEditor.Range(0, 0, lastLine, 1), 'diff-newLine', 'fullLine'),
-                );
+                this.highlightLines(0, lastLine);
             } else {
                 // Calculation of the diff, see: https://github.com/google/diff-match-patch/wiki/Line-or-Word-Diffs
                 const diffArray = this.diffMatchPatch.diff_linesToChars(this.templateFileSession[selectedFile], this.codeEditorContainer.aceEditor.editorSession.getValue());
@@ -279,18 +277,16 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
                         const lines = diffElement[1].split(/\r?\n/).filter(Boolean);
                         const firstLineToHighlight = counter;
                         const lastLineToHighlight = counter + lines.length - 1;
-                        this.codeEditorContainer.aceEditor.markerIds.push(
-                            this.codeEditorContainer.aceEditor.editorSession.addMarker(
-                                new this.codeEditorContainer.aceEditor.Range(firstLineToHighlight, 0, lastLineToHighlight, 1),
-                                'diff-newLine',
-                                'fullLine',
-                            ),
-                        );
+                        this.highlightLines(firstLineToHighlight, lastLineToHighlight);
                         counter += lines.length;
                     }
                 });
             }
         }
+    }
+
+    private highlightLines(firstLine: number, lastLine: number) {
+        this.codeEditorContainer.aceEditor.highlightLines(firstLine, lastLine, 'diff-newLine', 'gutter-diff-newLine');
     }
 
     /**

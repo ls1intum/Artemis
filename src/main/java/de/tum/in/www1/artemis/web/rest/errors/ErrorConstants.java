@@ -4,6 +4,8 @@ import java.net.URI;
 
 public final class ErrorConstants {
 
+    public static final String REQ_400_REASON = "The request message was malformed";
+
     public static final String REQ_404_REASON = "Requested resource does not exist.";
 
     public static final String REQ_403_REASON = "Insufficient permission to perform this request";

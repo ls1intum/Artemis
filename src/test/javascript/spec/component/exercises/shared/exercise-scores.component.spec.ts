@@ -155,46 +155,46 @@ describe('Exercise Scores Component', () => {
     it('should update result', fakeAsync(() => {
         component.updateResultFilter(component.FilterProp.SUCCESSFUL);
 
-        expect(component.isLoading).toBe(true);
+        expect(component.isLoading).toBeTrue();
         tick();
         expect(component.resultCriteria.filterProp).toBe(component.FilterProp.SUCCESSFUL);
-        expect(component.isLoading).toBe(false);
+        expect(component.isLoading).toBeFalse();
     }));
 
     it('should filter result prop "successful"', () => {
         component.resultCriteria.filterProp = component.FilterProp.SUCCESSFUL;
         result.successful = true;
 
-        expect(component.filterResultByProp(result)).toBe(true);
+        expect(component.filterResultByProp(result)).toBeTrue();
     });
 
     it('should filter result prop "unsuccessful"', () => {
         component.resultCriteria.filterProp = component.FilterProp.UNSUCCESSFUL;
         result.successful = true;
 
-        expect(component.filterResultByProp(result)).toBe(false);
+        expect(component.filterResultByProp(result)).toBeFalse();
     });
 
     it('should filter result prop "build failed"', () => {
         component.resultCriteria.filterProp = component.FilterProp.BUILD_FAILED;
 
-        expect(component.filterResultByProp(result)).toBe(false);
+        expect(component.filterResultByProp(result)).toBeFalse();
     });
 
     it('should filter result prop "manual"', () => {
         component.resultCriteria.filterProp = component.FilterProp.MANUAL;
 
-        expect(component.filterResultByProp(result)).toBe(true);
+        expect(component.filterResultByProp(result)).toBeTrue();
     });
 
     it('should filter result prop "automatic"', () => {
         component.resultCriteria.filterProp = component.FilterProp.AUTOMATIC;
 
-        expect(component.filterResultByProp(result)).toBe(false);
+        expect(component.filterResultByProp(result)).toBeFalse();
     });
 
     it('should filter result prop default value', () => {
-        expect(component.filterResultByProp(result)).toBe(true);
+        expect(component.filterResultByProp(result)).toBeTrue();
     });
 
     it('should handle result size change', () => {
@@ -229,7 +229,7 @@ describe('Exercise Scores Component', () => {
 
         component.exportNames();
 
-        expect(resultServiceStub).toHaveBeenCalledTimes(1);
+        expect(resultServiceStub).toHaveBeenCalledOnce();
         expect(resultServiceStub).toHaveBeenCalledWith(rows, 'results-names.csv');
     });
 
@@ -241,7 +241,7 @@ describe('Exercise Scores Component', () => {
 
         component.exportNames();
 
-        expect(resultServiceStub).toHaveBeenCalledTimes(1);
+        expect(resultServiceStub).toHaveBeenCalledOnce();
         expect(resultServiceStub).toHaveBeenCalledWith(rows, 'results-names.csv');
         participation.team = undefined;
     });
@@ -281,10 +281,10 @@ describe('Exercise Scores Component', () => {
 
         component.refresh();
 
-        expect(resultServiceStub).toHaveBeenCalledTimes(1);
+        expect(resultServiceStub).toHaveBeenCalledOnce();
         expect(resultServiceStub).toHaveBeenCalledWith(component.exercise);
         expect(component.results).toEqual([result]);
-        expect(component.isLoading).toBe(false);
+        expect(component.isLoading).toBeFalse();
     });
 
     it('should format date correctly', () => {

@@ -378,6 +378,20 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
     long countByExerciseIdSubmitted(@Param("exerciseId") long exerciseId);
 
     /**
+     * Calculate the number of submissions for the given exercise by the given student.
+     * @param exerciseId the exercise id we are interested in
+     * @param studentLogin the login of the student we are interested in
+     * @return the number of submissions belonging to the exercise and student id
+     */
+    @Query("""
+            SELECT COUNT (DISTINCT s)
+            FROM StudentParticipation p JOIN p.submissions s
+            WHERE p.exercise.id = :#{#exerciseId}
+                AND p.student.login = :#{#studentLogin}
+            """)
+    int countByExerciseIdAndStudentLogin(@Param("exerciseId") long exerciseId, @Param("studentLogin") String studentLogin);
+
+    /**
      * @param exerciseIds the exercise ids we are interested in
      * @return the numbers of submissions belonging to each exercise id, which have the submitted flag set to true and the submission date after the exercise due date
      */
@@ -396,7 +410,7 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
     List<ExerciseMapEntry> countByExerciseIdsSubmittedAfterDueDate(@Param("exerciseIds") Set<Long> exerciseIds);
 
     /**
-     * Returns submissions for a exercise. Returns only a submission that has a result with a matching assessor. Since the results list may also contain
+     * Returns submissions for an exercise. Returns only a submission that has a result with a matching assessor. Since the results list may also contain
      * automatic results but those results do not have an assessor, hibernate simply sets null values for them. Make sure to use a different query if you need
      * your submission to have all its results set.
      *

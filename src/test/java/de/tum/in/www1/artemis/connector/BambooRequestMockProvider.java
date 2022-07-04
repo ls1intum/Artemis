@@ -5,7 +5,10 @@ import static org.springframework.test.web.client.match.MockRestRequestMatchers.
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withStatus;
 
 import java.io.IOException;
-import java.net.*;
+import java.net.MalformedURLException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URL;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Map;
@@ -31,6 +34,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.BuildPlanType;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.service.connectors.bamboo.dto.*;
@@ -88,6 +92,13 @@ public class BambooRequestMockProvider {
     }
 
     /**
+     * Verify that the mocked REST-calls were called
+     */
+    public void verifyMocks() {
+        mockServer.verify();
+    }
+
+    /**
      * This method mocks that the programming exercise with the same project key (based on the course + programming exercise short name) already exists
      *
      * @param exercise the programming exercise that already exists
@@ -100,9 +111,9 @@ public class BambooRequestMockProvider {
     /**
      * This method mocks that the programming exercise with the same project name already exists (depending on the boolean input exists), based on the programming exercise title
      *
-     * @param exercise the programming exercise that might already exist
-     * @param exists   whether the programming exercise with the same title exists
-     * @param shouldFail if the request to get latest project should fail
+     * @param exercise   the programming exercise that might already exist
+     * @param exists     whether the programming exercise with the same title exists
+     * @param shouldFail if the request to get the latest project should fail
      * @throws IOException        an IO exception when reading test files
      * @throws URISyntaxException exceptions related to URI handling in test REST calls
      */
@@ -329,11 +340,11 @@ public class BambooRequestMockProvider {
     /**
      * This method mocks that the artifact page the latest build result is empty
      */
-    public void mockRetrieveEmptyArtifactPage() throws URISyntaxException, MalformedURLException {
+    public void mockRetrieveEmptyArtifactPage() throws URISyntaxException {
         var indexOfResponse = "href=\"/download/1\"";
         var noArtifactsResponse = "";
-        final var uri = new URL(bambooServerUrl + "/download/").toURI();
-        final var uri2 = new URL(bambooServerUrl + "/download/1").toURI();
+        final var uri = new URI(bambooServerUrl + "/download/");
+        final var uri2 = new URI(bambooServerUrl + "/download/1");
 
         mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.GET)).andRespond(withStatus(HttpStatus.OK).contentType(MediaType.TEXT_HTML).body(indexOfResponse));
         mockServer.expect(requestTo(uri2)).andExpect(method(HttpMethod.GET))
@@ -478,6 +489,21 @@ public class BambooRequestMockProvider {
 
         var status = !planExistsInCi || shouldPlanEnableFail ? HttpStatus.NOT_FOUND : HttpStatus.OK;
         mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.POST)).andRespond(withStatus(status));
+    }
+
+    /**
+     * Mocks the Rest calls for granting read access to the build plan
+     * @param buildPlanId the Bamboo build plan ID
+     * @param projectKey the Bamboo project key
+     * @param user the user that should get read access
+     * @throws URISyntaxException
+     */
+    public void mockGrantReadAccess(String buildPlanId, String projectKey, User user) throws URISyntaxException {
+        URI uri = UriComponentsBuilder.fromUri(bambooServerUrl.toURI()).path("/rest/api/latest/permissions/project/" + projectKey + "/users/" + user.getLogin()).build().toUri();
+        mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.PUT)).andRespond(withStatus(HttpStatus.NO_CONTENT));
+
+        uri = UriComponentsBuilder.fromUri(bambooServerUrl.toURI()).path("/rest/api/latest/permissions/plan/" + buildPlanId + "/users/" + user.getLogin()).build().toUri();
+        mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.PUT)).andRespond(withStatus(HttpStatus.NO_CONTENT));
     }
 
     public void mockDeleteBambooBuildProject(String projectKey) throws URISyntaxException, JsonProcessingException {

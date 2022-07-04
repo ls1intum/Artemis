@@ -1,16 +1,16 @@
 import { Injectable } from '@angular/core';
+import isMobile from 'ismobilejs-es5';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { NavigationEnd, NavigationStart, Router } from '@angular/router';
 import { cloneDeep } from 'lodash-es';
 import { AlertService } from 'app/core/util/alert.service';
 import { BehaviorSubject, fromEvent, Observable, Subject } from 'rxjs';
-import { filter, mergeMap, map, switchMap, debounceTime, distinctUntilChanged } from 'rxjs/operators';
+import { debounceTime, distinctUntilChanged, filter, map, mergeMap, switchMap } from 'rxjs/operators';
 import { GuidedTourMapping, GuidedTourSetting } from 'app/guided-tour/guided-tour-setting.model';
 import { GuidedTourState, Orientation, OrientationConfiguration, ResetParticipation, UserInteractionEvent } from './guided-tour.constants';
 import { User } from 'app/core/user/user.model';
 import { TextTourStep, TourStep, UserInterActionTourStep, VideoTourStep } from 'app/guided-tour/guided-tour-step.model';
 import { GuidedTour } from 'app/guided-tour/guided-tour.model';
-import { DeviceDetectorService } from 'ngx-device-detector';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { Course } from 'app/entities/course.model';
 import { checkPageUrlEnding, clickOnElement, determineUrlMatching, getUrlParams } from 'app/guided-tour/guided-tour.utils';
@@ -59,12 +59,13 @@ export class GuidedTourService {
     public isBackPageNavigation = new BehaviorSubject<boolean>(false);
     private isComponentPageLoaded = new Subject<boolean>();
 
+    private isMobile = false;
+
     constructor(
         private http: HttpClient,
         private alertService: AlertService,
         private accountService: AccountService,
         private router: Router,
-        private deviceService: DeviceDetectorService,
         private profileService: ProfileService,
         private participationService: ParticipationService,
         private tutorParticipationService: TutorParticipationService,
@@ -75,6 +76,7 @@ export class GuidedTourService {
      * Init method for guided tour settings to retrieve the guided tour settings and subscribe to window resize events
      */
     public init() {
+        this.isMobile = isMobile(window.navigator.userAgent).any;
         // Retrieve the guided tour setting from the account service after the user is logged in
         this.accountService.getAuthenticationState().subscribe((user: User | undefined) => {
             if (user) {
@@ -125,7 +127,8 @@ export class GuidedTourService {
         fromEvent(window, 'resize')
             .pipe(debounceTime(200))
             .subscribe(() => {
-                if (this.currentTour && this.deviceService.isDesktop()) {
+                // TODO: we should use responsive design here instead of checking for mobile/desktop
+                if (this.currentTour && !this.isMobile) {
                     // Show resize tour step if the window size falls below the defined minimum tour size, except for VideoTourSteps
                     if (this.tourMinimumScreenSize >= window.innerWidth && !(this.currentTour.steps[this.currentTourStepIndex] instanceof VideoTourStep)) {
                         this.onResizeMessage = true;
@@ -190,7 +193,8 @@ export class GuidedTourService {
     public getGuidedTourAvailabilityStream(): Observable<boolean> {
         // The guided tour is currently disabled for mobile devices and tablets
         // TODO optimize guided tour layout for mobile devices and tablets
-        return this.guidedTourAvailabilitySubject.pipe(map((isTourAvailable) => isTourAvailable && this.deviceService.isDesktop()));
+        // TODO: we should use responsive design here instead of checking for mobile/desktop
+        return this.guidedTourAvailabilitySubject.pipe(map((isTourAvailable) => isTourAvailable && !this.isMobile));
     }
 
     /**
@@ -534,7 +538,7 @@ export class GuidedTourService {
 
     /**
      * Determines if the tour step stored in the database is valid for the current tour
-     * It might be that tour steps have been removed in the mean time
+     * It might be that tour steps have been removed in the meantime
      * @param tourSettings  the tour setting that is stored for the current tour
      */
     private hasValidTourStepNumber(tourSettings: GuidedTourSetting[]): boolean {
@@ -620,7 +624,7 @@ export class GuidedTourService {
         if (userInteraction === UserInteractionEvent.WAIT_FOR_SELECTOR) {
             const nextStep = this.currentTour.steps[this.currentTourStepIndex + 1];
             const afterNextStep = this.currentTour.steps[this.currentTourStepIndex + 2];
-            this.handleWaitForSelectorEvent(nextStep, afterNextStep);
+            this.handleWaitForSelectorEvent(currentStep, nextStep, afterNextStep);
         } else {
             /** At a minimum one of childList, attributes, and characterData must be true, otherwise, a TypeError exception will be thrown. */
             let options: MutationObserverInit = { attributes: true, childList: true, characterData: true };
@@ -679,16 +683,13 @@ export class GuidedTourService {
     /**
      * Enables the next step click if the highlightSelector of the next step or
      * the highlightSelector of the after next step are visible
+     * @param currentStep  current tour step
      * @param nextStep  next tour step
      * @param afterNextStep the tour step after the next tour step
      */
-    private handleWaitForSelectorEvent(nextStep: TourStep | undefined, afterNextStep: TourStep | undefined) {
+    private handleWaitForSelectorEvent(currentStep: UserInterActionTourStep, nextStep: TourStep | undefined, afterNextStep: TourStep | undefined) {
         if (nextStep && nextStep.highlightSelector) {
-            if (afterNextStep && afterNextStep.highlightSelector) {
-                this.waitForElement(nextStep.highlightSelector, afterNextStep.highlightSelector);
-            } else {
-                this.waitForElement(nextStep.highlightSelector);
-            }
+            this.waitForElement(nextStep.highlightSelector, afterNextStep?.highlightSelector, currentStep.triggerNextStep);
         } else {
             this.enableNextStepClick();
         }
@@ -714,14 +715,19 @@ export class GuidedTourService {
      * Wait for the next step selector to appear in the DOM and continue with the next step
      * @param nextStepSelector the selector string of the next element that should appear in the DOM
      * @param afterNextStepSelector if the nextSelector does not show up in the DOM then wait for the step afterwards as well
+     * @param triggerNextStep if the next step should be called as soon as the element is found
      */
-    private waitForElement(nextStepSelector: string, afterNextStepSelector?: string) {
+    private waitForElement(nextStepSelector: string, afterNextStepSelector?: string, triggerNextStep?: boolean) {
         const interval = setInterval(() => {
             const nextElement = document.querySelector(nextStepSelector);
             const afterNextElement = afterNextStepSelector ? document.querySelector(afterNextStepSelector) : undefined;
             if (nextElement || afterNextElement) {
                 clearInterval(interval);
-                this.enableNextStepClick();
+                if (triggerNextStep) {
+                    this.nextStep();
+                } else {
+                    this.enableNextStepClick();
+                }
             }
         }, 1000);
     }
@@ -880,7 +886,7 @@ export class GuidedTourService {
             return false;
         }
 
-        return !!currentTourStep.highlightSelector && !!document.querySelector(currentTourStep.highlightSelector);
+        return !currentTourStep.highlightSelector || !!document.querySelector(currentTourStep.highlightSelector);
     }
 
     /**
@@ -943,7 +949,7 @@ export class GuidedTourService {
         }
         return this.checkSelectorValidity()
             ? this.setTourOrientation(this.currentTour.steps[this.currentTourStepIndex])
-            : this.setStepAlreadyFinishedHint(this.currentTour.steps[this.currentTourStepIndex]);
+            : GuidedTourService.setStepAlreadyFinishedHint(this.currentTour.steps[this.currentTourStepIndex]);
     }
 
     /**
@@ -994,7 +1000,7 @@ export class GuidedTourService {
     /** If the current tour step cannot be displayed because it has already been successfully completed, then this
      * extra TourStep should be displayed instead
      */
-    private setStepAlreadyFinishedHint(step: any): TourStep | undefined {
+    private static setStepAlreadyFinishedHint(step: any): TourStep | undefined {
         if (step.skipStepIfNoSelector) {
             return undefined;
         }
@@ -1015,7 +1021,7 @@ export class GuidedTourService {
     private updateGuidedTourSettings(guidedTourKey: string, guidedTourStep: number, guidedTourState: GuidedTourState): Observable<EntityResponseType> {
         if (!this.guidedTourSettings) {
             this.resetTour();
-            throw new Error('Cannot update non existing guided tour settings');
+            throw new Error('Cannot update non-existing guided tour settings');
         }
         const existingSettingIndex = this.guidedTourSettings.findIndex((setting) => setting.guidedTourKey === guidedTourKey);
         if (existingSettingIndex !== -1) {
@@ -1035,7 +1041,7 @@ export class GuidedTourService {
     private deleteGuidedTourSetting(guidedTourKey: string): Observable<EntityResponseType> {
         if (!this.guidedTourSettings) {
             this.resetTour();
-            throw new Error('Cannot update non existing guided tour settings');
+            throw new Error('Cannot update non-existing guided tour settings');
         }
 
         const index = this.guidedTourSettings.findIndex((setting) => setting.guidedTourKey === guidedTourKey);

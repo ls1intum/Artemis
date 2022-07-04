@@ -1,5 +1,3 @@
-@import 'src/main/webapp/content/scss/artemis-variables';
-
 $card-body-padding: 1.25rem;
 $navbar-height: 57px;
 $breadcrumbs-height: 41px;
@@ -13,7 +11,7 @@ $footer-height: 31px;
     margin: -1.25rem;
 
     .plagiarism-header {
-        background-color: $artemis-dark;
+        background-color: var(--artemis-dark);
         color: white;
         flex-shrink: 0;
 
@@ -62,10 +60,11 @@ $footer-height: 31px;
 
         &-options {
             align-items: center;
-            background-color: darken($artemis-dark, 4);
+            background-color: var(--plagiarism-inspector-darker-artemis-dark);
             display: flex;
             flex-wrap: wrap;
             padding: 1rem 1.5rem;
+            white-space: nowrap;
 
             & > :not(:last-child) {
                 margin-right: 1.5rem;
@@ -120,7 +119,7 @@ $footer-height: 31px;
     .plagiarism-warning {
         align-items: center;
         display: flex;
-        color: darken($body-bg, 20);
+        color: white;
         padding-top: 1px;
 
         #plagiarismCaution {
@@ -129,8 +128,6 @@ $footer-height: 31px;
     }
 
     .plagiarism-checkbox {
-        align-items: center;
-        display: flex;
         margin: 0;
         flex-shrink: 0;
 

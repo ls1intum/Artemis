@@ -83,10 +83,11 @@ lsan: FORCE
 # -std=c11              Set C standard
 # -O0:					Do not optimize the program
 # $(WFLAGS)             Warning flags
+# -Werror:				Treat all warnings as errors
 # -fanalyzer:			GCC static analysis (for GCC >= 10.0 only)
 #                       (https://developers.redhat.com/blog/2020/03/26/static-analysis-in-gcc-10/)
 staticAnalysis: FORCE
-	$(CC) $(SOURCE) $(INCLUDEDIRS:%=-I%) -o $@.out -std=c11 -O0 $(WFLAGS) -fanalyzer
+	$(CC) $(SOURCE) $(INCLUDEDIRS:%=-I%) -o $@.out -std=c11 -O0 $(WFLAGS) -Werror -fanalyzer
 
 # Execute the compiled program
 run:

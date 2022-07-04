@@ -3,11 +3,12 @@ import { GraphColors, SpanType } from 'app/entities/statistics.model';
 import { CourseManagementStatisticsModel } from 'app/entities/quiz/course-management-statistics-model';
 import { faArrowLeft, faArrowRight, faFilter } from '@fortawesome/free-solid-svg-icons';
 import { Color, ScaleType } from '@swimlane/ngx-charts';
-import { Router } from '@angular/router';
 import { ExerciseType } from 'app/entities/exercise.model';
 import { NgxChartsSingleSeriesDataEntry } from 'app/shared/chart/ngx-charts-datatypes';
 import { axisTickFormattingWithPercentageSign } from 'app/shared/statistics-graph/statistics-graph.utils';
 import { ChartExerciseTypeFilterDirective } from 'app/shared/chart/chart-exercise-type-filter.directive';
+import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
+import { ThemeService } from 'app/core/theme/theme.service';
 
 interface ExerciseStatisticsEntry extends NgxChartsSingleSeriesDataEntry {
     exerciseType: ExerciseType;
@@ -61,6 +62,7 @@ export class StatisticsAverageScoreGraphComponent extends ChartExerciseTypeFilte
     readonly CRITICAL_CLASS = 'critical-color';
     readonly MEDIAN_CLASS = 'median-color';
     readonly BEST_CLASS = 'best-color';
+    readonly maxSpanSize = 10; // The maximum amount of exercises displayable in one scope
 
     weakestThirdUpperBoundary: number;
     bestThirdLowerBoundary: number;
@@ -74,7 +76,7 @@ export class StatisticsAverageScoreGraphComponent extends ChartExerciseTypeFilte
     faArrowRight = faArrowRight;
     faFilter = faFilter;
 
-    constructor(private router: Router) {
+    constructor(private themeService: ThemeService, private navigationUtilService: ArtemisNavigationUtilService) {
         super();
     }
 
@@ -110,9 +112,8 @@ export class StatisticsAverageScoreGraphComponent extends ChartExerciseTypeFilte
             return GraphColors.GREEN;
         } else if (score < this.weakestThirdUpperBoundary) {
             return GraphColors.RED;
-        } else {
-            return GraphColors.GREY;
         }
+        return GraphColors.GREY;
     }
 
     /**
@@ -132,7 +133,7 @@ export class StatisticsAverageScoreGraphComponent extends ChartExerciseTypeFilte
                 type = 'file-upload';
             }
             route[2] = type + '-exercises';
-            this.router.navigate(route);
+            this.navigationUtilService.routeInNewTab(route);
         }
     }
 

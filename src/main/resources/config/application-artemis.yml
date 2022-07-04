@@ -35,7 +35,7 @@ artemis:
             allowed-email-pattern: '[a-zA-Z0-9_\-\.\+]+@(tum\.de|in\.tum\.de|mytum\.de)'
             allowed-email-pattern-readable: '@tum.de, @in.tum.de, @mytum.de'
             cleanup-time-minutes: 60 # The amount of time until non-activated accounts are deleted automatically
-        accept-terms: false     # whether users have to accept terms before they can login, from a privacy point of view this is not needed during education, therefore the default value is false
+        accept-terms: false     # whether users have to accept terms before they can log in, from a privacy point of view this is not needed during education, therefore the default value is false
         course-registration:                    # the whole section is optional: whether there is a restriction for the self-registration of students in courses
             allowed-username-pattern: '^([a-z]{2}\d{2}[a-z]{3})$'    # example for a TUM identifier, e.g. ab12cde
         login:
@@ -51,6 +51,7 @@ artemis:
 #        ssh-private-key-folder-path: <ssh-private-key-folder-path>       # the path to the folder in which the private ssh key file (e.g. id_rsa) is stored that can be used to clone git repos on the version control server
 #        ssh-private-key-password: <ssh-private-key-password>        # the password for the private ssh key
         default-branch: main            # The branch that should be used as default branch for all newly created repositories. This does NOT have to be equal to the default branch of the VCS
+        version-control-access-token: false # only for Gitlab setups: a Gitlab-API token can be generated for each user and used as part of the Git clone URL shown to students to allow for password-less Git operations via HTTP
     continuous-integration:
         user: <username>                # e.g. ga12abc
         password: <password>

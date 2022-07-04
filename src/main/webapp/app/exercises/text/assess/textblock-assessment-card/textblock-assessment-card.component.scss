@@ -8,7 +8,7 @@ span {
     white-space: pre-wrap;
 
     &:hover {
-        background: $gray-300;
+        background: var(--textblock-assessment-span-hover-background);
         padding: 2px 4px;
         border-radius: 4px;
     }
@@ -22,42 +22,42 @@ span {
         }
 
         &.positive-feedback {
-            color: green;
-            background-color: #f2f9f2;
+            color: var(--textblock-assessment-text-feedback-positive-color);
+            background-color: var(--textblock-assessment-text-feedback-positive-background);
 
             &.active {
                 text-decoration-style: double;
-                text-decoration-color: green;
+                text-decoration-color: var(--textblock-assessment-text-feedback-positive-active-decoration);
             }
         }
 
         &.negative-feedback {
-            color: #c7254e;
-            background-color: #f9f2f4;
+            color: var(--textblock-assessment-text-feedback-negative-color);
+            background-color: var(--textblock-assessment-text-feedback-negative-background);
 
             &.active {
                 text-decoration-style: wavy;
-                text-decoration-color: #c7254e;
+                text-decoration-color: var(--textblock-assessment-text-feedback-negative-active-decoration);
             }
         }
 
         &.neutral-feedback {
-            color: #1a1a1a;
-            background-color: #f2f2f2;
+            color: var(--textblock-assessment-text-feedback-neutral-color);
+            background-color: var(--textblock-assessment-text-feedback-neutral-background);
 
             &.active {
                 text-decoration-style: dashed;
-                text-decoration-color: #1a1a1a;
+                text-decoration-color: var(--textblock-assessment-text-feedback-neutral-active-decoration);
             }
         }
 
         &.conflicting-feedback {
-            color: #1a1a1a;
-            background-color: #ffd20a;
+            color: var(--textblock-assessment-text-feedback-conflicting-color);
+            background-color: var(--textblock-assessment-text-feedback-conflicting-background);
 
             &.active {
                 text-decoration-style: dashed;
-                text-decoration-color: #1a1a1a;
+                text-decoration-color: var(--textblock-assessment-text-feedback-conflicting-active-decoration);
             }
         }
     }
@@ -68,6 +68,6 @@ jhi-textblock-feedback-editor {
     border-width: 0;
 
     &.active {
-        border: 2px $gray-500 solid;
+        border: 2px var(--textblock-assessment-textblock-feedback-editor-active-border) solid;
     }
 }

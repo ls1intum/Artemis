@@ -7,14 +7,14 @@ services:
             context: ../../..
             dockerfile: src/main/docker/Dockerfile
         volumes:
-            - ../resources/config/application-dev.yml:/home/artemis/application-dev.yml:ro
-            - ../resources/config/application-artemis.yml:/home/artemis/application-artemis.yml:ro
+            - ../resources/config/application-dev.yml:/opt/artemis/application-dev.yml:ro
+            - ../resources/config/application-artemis.yml:/opt/artemis/application-artemis.yml:ro
         environment:
             _JAVA_OPTIONS: -Xmx5120m -Xms2560m
             SPRING_PROFILES_ACTIVE: dev,bamboo,bitbucket,jira,artemis,scheduling,athene,local
             SPRING_DATASOURCE_URL: jdbc:mysql://artemis-mysql:3306/Artemis?createDatabaseIfNotExist=true&allowPublicKeyRetrieval=true&useUnicode=true&characterEncoding=utf8&useSSL=false&useLegacyDatetimeCode=false&serverTimezone=UTC
             SPRING_DATASOURCE_USERNAME: root
-            SPRING_DATASOURCE_PASSWORD: 
+            SPRING_DATASOURCE_PASSWORD:
             JHIPSTER_SLEEP: 30 # gives time for other services to boot before the application
         ports:
             - 8080:8080

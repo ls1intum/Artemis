@@ -3,11 +3,14 @@
         "title": "Error page!",
         "http": {
             "400": "Bad request.",
+            "401": "You are not authenticated to access this page.",
             "403": "You are not authorized to access this page.",
             "404": "The page does not exist.",
             "405": "The HTTP verb you used is not supported for this URL.",
+            "409": "There was a conflict while processing your request.",
             "500": "Internal server error."
         },
+        "cannotDeleteYourself": "You cannot delete your own account!",
         "fileUploadSavingError": "Error! The upload failed. Make sure you are connected to the Internet!",
         "concurrencyFailure": "Another user modified this data at the same time as you. Your changes were rejected.",
         "validation": "Validation error on the server.",
@@ -43,6 +46,7 @@
         "submissionPolicyAlreadyDisabled": "The submission policy could not be disabled, because it is already inactive.",
         "submissionPolicyToggleFailedPolicyNotExist": "The submission policy could not be toggled, because the programming exercise does not have a submission policy.",
         "submissionPolicyActiveNull": "Submission policies must be activated or deactivated. Activation cannot be null.",
-        "submissionPolicyUpdateFailedPolicyNotExist": "The submission policy could not be updated, because the programming exercise does not have a submission policy."
+        "submissionPolicyUpdateFailedPolicyNotExist": "The submission policy could not be updated, because the programming exercise does not have a submission policy.",
+        "oneActivePlagiarismCheck": "Please wait until the current plagiarism check in this course has finished until you start another one."
     }
 }

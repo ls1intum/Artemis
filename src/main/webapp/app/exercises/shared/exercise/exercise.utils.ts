@@ -5,13 +5,14 @@ import { InitializationState, Participation } from 'app/entities/participation/p
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
-import { Observable, of, from } from 'rxjs';
+import { from, Observable, of } from 'rxjs';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ExerciseUpdateWarningService } from 'app/exercises/shared/exercise-update-warning/exercise-update-warning.service';
 import { ExerciseServicable } from 'app/exercises/shared/exercise/exercise.service';
-import { map, mergeWith, mergeMap, takeUntil } from 'rxjs/operators';
+import { map, mergeMap, mergeWith, takeUntil } from 'rxjs/operators';
 import { ExerciseUpdateWarningComponent } from 'app/exercises/shared/exercise-update-warning/exercise-update-warning.component';
 import { hasResults } from 'app/exercises/shared/participation/participation.utils';
+import { AlertService, AlertType } from 'app/core/util/alert.service';
 
 export enum EditType {
     IMPORT,
@@ -26,6 +27,7 @@ export class SaveExerciseCommand<T extends Exercise> {
         private exerciseService: ExerciseServicable<T>,
         private backupExercise: T,
         private editType: EditType,
+        private alertService: AlertService,
     ) {}
 
     save(exercise: T, notificationText?: string): Observable<T> {
@@ -37,6 +39,13 @@ export class SaveExerciseCommand<T extends Exercise> {
                     return {};
             }
         };
+
+        if (exercise.exampleSolutionPublicationDateWarning) {
+            this.alertService.addAlert({
+                type: AlertType.WARNING,
+                message: 'artemisApp.exercise.exampleSolutionPublicationDateWarning',
+            });
+        }
 
         const callServer = ([shouldReevaluate, requestOptions]: [boolean, any?]) => {
             const ex = Exercise.sanitize(exercise);
@@ -202,19 +211,21 @@ export const isStartExerciseAvailable = (exercise: ProgrammingExercise): boolean
  */
 const participationStatusForQuizExercise = (exercise: Exercise): ParticipationStatus => {
     const quizExercise = exercise as QuizExercise;
-    if ((!quizExercise.isPlannedToStart || dayjs(quizExercise.releaseDate!).isAfter(dayjs())) && quizExercise.visibleToStudents) {
-        return ParticipationStatus.QUIZ_NOT_STARTED;
-    } else if (!hasStudentParticipations(exercise) && (!quizExercise.isPlannedToStart || dayjs(quizExercise.dueDate!).isAfter(dayjs())) && quizExercise.visibleToStudents) {
-        return ParticipationStatus.QUIZ_UNINITIALIZED;
-    } else if (!hasStudentParticipations(exercise)) {
+    if (quizExercise.quizEnded) {
+        if (hasStudentParticipations(exercise) && hasResults(exercise.studentParticipations![0])) {
+            return ParticipationStatus.QUIZ_FINISHED;
+        }
         return ParticipationStatus.QUIZ_NOT_PARTICIPATED;
-    } else if (exercise.studentParticipations![0].initializationState === InitializationState.INITIALIZED && dayjs(exercise.dueDate!).isAfter(dayjs())) {
-        return ParticipationStatus.QUIZ_ACTIVE;
-    } else if (exercise.studentParticipations![0].initializationState === InitializationState.FINISHED && dayjs(exercise.dueDate!).isAfter(dayjs())) {
-        return ParticipationStatus.QUIZ_SUBMITTED;
-    } else {
-        return !hasResults(exercise.studentParticipations![0]) ? ParticipationStatus.QUIZ_NOT_PARTICIPATED : ParticipationStatus.QUIZ_FINISHED;
+    } else if (hasStudentParticipations(exercise)) {
+        if (exercise.studentParticipations![0].initializationState === InitializationState.INITIALIZED) {
+            return ParticipationStatus.QUIZ_ACTIVE;
+        } else if (exercise.studentParticipations![0].initializationState === InitializationState.FINISHED) {
+            return ParticipationStatus.QUIZ_SUBMITTED;
+        }
+    } else if (quizExercise?.quizBatches?.some((batch) => batch.started)) {
+        return ParticipationStatus.QUIZ_UNINITIALIZED;
     }
+    return ParticipationStatus.QUIZ_NOT_STARTED;
 };
 
 /**

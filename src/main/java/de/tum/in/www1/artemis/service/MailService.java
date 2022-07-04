@@ -31,6 +31,7 @@ import de.tum.in.www1.artemis.domain.notification.GroupNotification;
 import de.tum.in.www1.artemis.domain.notification.Notification;
 import de.tum.in.www1.artemis.domain.notification.NotificationTitleTypeConstants;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
+import de.tum.in.www1.artemis.exception.ArtemisMailException;
 import tech.jhipster.config.JHipsterProperties;
 
 /**
@@ -74,7 +75,7 @@ public class MailService {
 
     private static final String RELATIVE_SCORE = "relativeScore";
 
-    // Translation that can not be done via i18n Recource Bundle (for Thymeleaf) but has to be set in this service via Java
+    // Translation that can not be done via i18n Resource Bundle (for Thymeleaf) but has to be set in this service via Java
     private final String newAnnouncementEN = "New announcement \"%s\" in course \"%s\"";
 
     private final String newAnnouncementDE = "Neue Ankündigung \"%s\" im Kurs \"%s\"";
@@ -120,7 +121,8 @@ public class MailService {
             log.info("Sent email with subject '{}' to User '{}'", subject, recipient);
         }
         catch (MailException | MessagingException e) {
-            log.warn("Email could not be sent to user '{}'", recipient, e);
+            log.error("Email could not be sent to user '{}'", recipient, e);
+            throw new ArtemisMailException("Email could not be sent to user", e);
         }
     }
 

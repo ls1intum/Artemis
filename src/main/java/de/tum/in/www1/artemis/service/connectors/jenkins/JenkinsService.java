@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.stream.Stream;
 
 import org.apache.commons.collections.CollectionUtils;
 import org.jsoup.Jsoup;
@@ -23,7 +22,6 @@ import com.offbytwo.jenkins.JenkinsServer;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.BuildPlanType;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
-import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.exception.ContinuousIntegrationException;
@@ -31,7 +29,6 @@ import de.tum.in.www1.artemis.exception.JenkinsException;
 import de.tum.in.www1.artemis.repository.FeedbackRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingSubmissionRepository;
 import de.tum.in.www1.artemis.service.BuildLogEntryService;
-import de.tum.in.www1.artemis.service.ExerciseDateService;
 import de.tum.in.www1.artemis.service.connectors.AbstractContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.CIPermission;
 import de.tum.in.www1.artemis.service.connectors.ConnectorHealth;
@@ -57,18 +54,14 @@ public class JenkinsService extends AbstractContinuousIntegrationService {
 
     private final JenkinsInternalUrlService jenkinsInternalUrlService;
 
-    private final ExerciseDateService exerciseDateService;
-
     public JenkinsService(@Qualifier("jenkinsRestTemplate") RestTemplate restTemplate, JenkinsServer jenkinsServer, ProgrammingSubmissionRepository programmingSubmissionRepository,
             FeedbackRepository feedbackRepository, @Qualifier("shortTimeoutJenkinsRestTemplate") RestTemplate shortTimeoutRestTemplate, BuildLogEntryService buildLogService,
-            JenkinsBuildPlanService jenkinsBuildPlanService, JenkinsJobService jenkinsJobService, JenkinsInternalUrlService jenkinsInternalUrlService,
-            ExerciseDateService exerciseDateService) {
+            JenkinsBuildPlanService jenkinsBuildPlanService, JenkinsJobService jenkinsJobService, JenkinsInternalUrlService jenkinsInternalUrlService) {
         super(programmingSubmissionRepository, feedbackRepository, buildLogService, restTemplate, shortTimeoutRestTemplate);
         this.jenkinsServer = jenkinsServer;
         this.jenkinsBuildPlanService = jenkinsBuildPlanService;
         this.jenkinsJobService = jenkinsJobService;
         this.jenkinsInternalUrlService = jenkinsInternalUrlService;
-        this.exerciseDateService = exerciseDateService;
     }
 
     @Override
@@ -110,13 +103,13 @@ public class JenkinsService extends AbstractContinuousIntegrationService {
     }
 
     @Override
-    public void configureBuildPlan(ProgrammingExerciseParticipation participation) {
+    public void configureBuildPlan(ProgrammingExerciseParticipation participation, String branch) {
         jenkinsBuildPlanService.configureBuildPlanForParticipation(participation);
     }
 
     @Override
     public void updatePlanRepository(String buildProjectKey, String buildPlanKey, String ciRepoName, String repoProjectKey, String newRepoUrl, String existingRepoUrl,
-            Optional<List<String>> optionalTriggeredByRepositories) {
+            String newDefaultBranch, Optional<List<String>> optionalTriggeredByRepositories) {
         jenkinsBuildPlanService.updateBuildPlanRepositories(buildProjectKey, buildPlanKey, ciRepoName, newRepoUrl, existingRepoUrl);
     }
 
@@ -149,30 +142,8 @@ public class JenkinsService extends AbstractContinuousIntegrationService {
     }
 
     @Override
-    public Result onBuildCompleted(ProgrammingExerciseParticipation participation, Object requestBody) {
-        final var buildResult = TestResultsDTO.convert(requestBody);
-        var newResult = createResultFromBuildResult(buildResult, participation);
-
-        // Fetch submission or create a fallback
-        var latestSubmission = super.getSubmissionForBuildResult(participation.getId(), buildResult).orElseGet(() -> createAndSaveFallbackSubmission(participation, buildResult));
-        latestSubmission.setBuildFailed("No tests found".equals(newResult.getResultString()));
-
-        // Parse, filter, and save the build logs if they exist
-        if (buildResult.getLogs() != null) {
-            ProgrammingLanguage programmingLanguage = participation.getProgrammingExercise().getProgrammingLanguage();
-            List<BuildLogEntry> buildLogEntries = JenkinsBuildLogParseUtils.parseBuildLogsFromJenkinsLogs(buildResult.getLogs());
-            buildLogEntries = filterUnnecessaryLogs(buildLogEntries, programmingLanguage);
-            buildLogEntries = buildLogService.saveBuildLogs(buildLogEntries, latestSubmission);
-
-            // Set the received logs in order to avoid duplicate entries (this removes existing logs)
-            latestSubmission.setBuildLogEntries(buildLogEntries);
-        }
-
-        // Note: we only set one side of the relationship because we don't know yet whether the result will actually be saved
-        newResult.setSubmission(latestSubmission);
-        newResult.setRatedIfNotExceeded(exerciseDateService.getDueDate(participation).orElse(null), latestSubmission);
-
-        return newResult;
+    public AbstractBuildResultNotificationDTO convertBuildResult(Object requestBody) {
+        return TestResultsDTO.convert(requestBody);
     }
 
     @Override
@@ -200,10 +171,10 @@ public class JenkinsService extends AbstractContinuousIntegrationService {
 
     @Override
     protected void addFeedbackToResult(Result result, AbstractBuildResultNotificationDTO buildResult) {
-        final ProgrammingExercise programmingExercise = (ProgrammingExercise) result.getParticipation().getExercise();
-        final ProgrammingLanguage programmingLanguage = programmingExercise.getProgrammingLanguage();
-        final ProjectType projectType = programmingExercise.getProjectType();
         final var jobs = ((TestResultsDTO) buildResult).getResults();
+        final var programmingExercise = (ProgrammingExercise) result.getParticipation().getExercise();
+        final var programmingLanguage = programmingExercise.getProgrammingLanguage();
+        final var projectType = programmingExercise.getProjectType();
 
         // Extract test case feedback
         for (final var job : jobs) {
@@ -215,14 +186,14 @@ public class JenkinsService extends AbstractContinuousIntegrationService {
         }
 
         // Extract static code analysis feedback if option was enabled
-        var staticCodeAnalysisReports = ((TestResultsDTO) buildResult).getStaticCodeAnalysisReports();
+        final var staticCodeAnalysisReports = ((TestResultsDTO) buildResult).getStaticCodeAnalysisReports();
         if (Boolean.TRUE.equals(programmingExercise.isStaticCodeAnalysisEnabled()) && staticCodeAnalysisReports != null && !staticCodeAnalysisReports.isEmpty()) {
-            var scaFeedback = feedbackRepository.createFeedbackFromStaticCodeAnalysisReports(staticCodeAnalysisReports);
-            result.addFeedbacks(scaFeedback);
+            var scaFeedbackList = feedbackRepository.createFeedbackFromStaticCodeAnalysisReports(staticCodeAnalysisReports);
+            result.addFeedbacks(scaFeedbackList);
         }
 
         // Relevant feedback is negative, or positive with a message
-        result.setHasFeedback(result.getFeedbacks().stream().anyMatch(fb -> !fb.isPositive() || fb.getDetailText() != null));
+        result.setHasFeedback(result.getFeedbacks().stream().anyMatch(feedback -> !feedback.isPositive() || feedback.getDetailText() != null));
     }
 
     /**
@@ -304,22 +275,9 @@ public class JenkinsService extends AbstractContinuousIntegrationService {
      * @return filtered build logs
      */
     private List<BuildLogEntry> filterUnnecessaryLogs(List<BuildLogEntry> buildLogEntries, ProgrammingLanguage programmingLanguage) {
-        // There are color codes in the logs that need to be filtered out.
-        // This is needed for old programming exercises
-        // For example:[[1;34mINFO[m] is changed to [INFO]
-        Stream<BuildLogEntry> filteredBuildLogs = buildLogEntries.stream().peek(buildLog -> {
-            String log = buildLog.getLog();
-            log = log.replace("\u001B[1;34m", "");
-            log = log.replace("\u001B[m", "");
-            log = log.replace("\u001B[1;31m", "");
-            buildLog.setLog(log);
-        });
-
-        // Jenkins outputs each executed shell command with '+ <shell command>'
-        filteredBuildLogs = filteredBuildLogs.filter(buildLog -> !buildLog.getLog().startsWith("+"));
-
+        var filteredBuildLogs = TestResultsDTO.filterBuildLogs(buildLogEntries);
         // Filter out the remainder of unnecessary logs
-        return removeUnnecessaryLogsForProgrammingLanguage(filteredBuildLogs.toList(), programmingLanguage);
+        return buildLogService.removeUnnecessaryLogsForProgrammingLanguage(filteredBuildLogs, programmingLanguage);
     }
 
     @Override

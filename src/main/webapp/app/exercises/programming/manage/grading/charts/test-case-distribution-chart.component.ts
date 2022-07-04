@@ -4,9 +4,9 @@ import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { TestCaseStatsMap } from 'app/entities/programming-exercise-test-case-statistics.model';
 import { TranslateService } from '@ngx-translate/core';
 import { getColor } from 'app/exercises/programming/manage/grading/charts/programming-grading-charts.utils';
-import { Router } from '@angular/router';
 import { ProgrammingGradingChartsDirective } from 'app/exercises/programming/manage/grading/charts/programming-grading-charts.directive';
 import { NgxChartsMultiSeriesDataEntry } from 'app/shared/chart/ngx-charts-datatypes';
+import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
 
 enum TestCaseBarTitle {
     WEIGHT_EN = 'Weight',
@@ -124,7 +124,7 @@ export class TestCaseDistributionChartComponent extends ProgrammingGradingCharts
         { name: this.translateService.instant('artemisApp.programmingExercise.configureGrading.charts.testCasePoints.points'), series: [] as any[] },
     ];
 
-    constructor(private translateService: TranslateService, private router: Router) {
+    constructor(private translateService: TranslateService, private navigationUtilService: ArtemisNavigationUtilService) {
         super();
         this.translateService.onLangChange.subscribe(() => {
             this.updateTranslation();
@@ -227,8 +227,7 @@ export class TestCaseDistributionChartComponent extends ProgrammingGradingCharts
      * Delegates the user to the statistics page of the programming exercise
      */
     onSelectPoints(): void {
-        const url = ['course-management', this.exercise.course!.id, 'programming-exercises', this.exercise.id, 'exercise-statistics'];
-        this.router.navigate(url);
+        this.navigationUtilService.routeInNewTab(['course-management', this.exercise.course!.id, 'programming-exercises', this.exercise.id, 'exercise-statistics']);
     }
 
     /**

@@ -2,7 +2,6 @@ package de.tum.in.www1.artemis.hestia;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Comparator;
 
@@ -13,13 +12,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
-import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseGitDiffEntry;
+import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseGitDiffReport;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
+import de.tum.in.www1.artemis.repository.hestia.ProgrammingExerciseGitDiffReportRepository;
 import de.tum.in.www1.artemis.service.hestia.ProgrammingExerciseGitDiffReportService;
 import de.tum.in.www1.artemis.util.HestiaUtilTestService;
 import de.tum.in.www1.artemis.util.LocalRepository;
-import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.web.rest.dto.hestia.ProgrammingExerciseFullGitDiffEntryDTO;
 
 /**
@@ -41,11 +41,17 @@ public class ProgrammingExerciseGitDiffReportServiceTest extends AbstractSpringI
     @Autowired
     private ProgrammingExerciseGitDiffReportService reportService;
 
+    @Autowired
+    private ProgrammingExerciseGitDiffReportRepository reportRepository;
+
+    @Autowired
+    private ProgrammingExerciseRepository programmingExerciseRepository;
+
     @BeforeEach
     public void initTestCase() throws Exception {
-        Course course = database.addEmptyCourse();
         database.addUsers(1, 1, 1, 1);
-        exercise = ModelFactory.generateProgrammingExercise(ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(7), course);
+        database.addCourseWithOneProgrammingExercise();
+        exercise = programmingExerciseRepository.findAll().get(0);
     }
 
     @AfterEach
@@ -206,5 +212,25 @@ public class ProgrammingExerciseGitDiffReportServiceTest extends AbstractSpringI
         var report2 = reportService.updateReport(exercise);
         assertThat(report2.getEntries()).hasSize(1);
         assertThat(report1.getId()).isEqualTo(report2.getId());
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void ensureDeletionOfDuplicateReports() {
+        var report1 = new ProgrammingExerciseGitDiffReport();
+        report1.setProgrammingExercise(exercise);
+        report1.setTemplateRepositoryCommitHash("123");
+        report1.setSolutionRepositoryCommitHash("456");
+        reportRepository.save(report1);
+        var report2 = new ProgrammingExerciseGitDiffReport();
+        report2.setProgrammingExercise(exercise);
+        report2.setTemplateRepositoryCommitHash("123");
+        report2.setSolutionRepositoryCommitHash("789");
+        report2 = reportRepository.save(report2);
+
+        assertThat(reportRepository.findAll()).hasSize(2);
+        var returnedReport = reportService.getReportOfExercise(exercise);
+        assertThat(returnedReport).isEqualTo(report2);
+        assertThat(reportRepository.findAll()).hasSize(1);
     }
 }

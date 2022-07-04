@@ -1,9 +1,11 @@
 package de.tum.in.www1.artemis.domain;
 
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
 import javax.persistence.*;
+import javax.validation.constraints.NotNull;
 
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
@@ -12,6 +14,8 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
+import de.tum.in.www1.artemis.domain.participation.Participation;
+import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 
 /**
  * A ProgrammingSubmission.
@@ -36,6 +40,31 @@ public class ProgrammingSubmission extends Submission {
     @JsonIgnoreProperties(value = "programmingSubmission", allowSetters = true)
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     private List<BuildLogEntry> buildLogEntries = new ArrayList<>();
+
+    /**
+     * There can be two reasons for the case that there is no programmingSubmission:
+     * 1) Manual build triggered from CI (e.g. by the instructor)
+     * 2) An unknown error that caused the programming submission not to be created when the code commits have been pushed.
+     * we can still get the commit hash from the payload of the CI build result and "reverse engineer" the programming submission object to be consistent
+     *
+     * @param participation the corresponding participation to which the submission will correspond
+     * @param submissionDate the date when the commit was pushed to the version control server
+     * @param commitHash the hash of the corresponding commit in the git repository in the version control system
+     * @return the newly created programming submission
+     *
+     */
+    @NotNull
+    public static ProgrammingSubmission createFallbackSubmission(ProgrammingExerciseParticipation participation, ZonedDateTime submissionDate, String commitHash) {
+        ProgrammingSubmission submission = new ProgrammingSubmission();
+        submission.setParticipation((Participation) participation);
+        submission.setSubmitted(true);
+        // We set this to manual because all programming submissions should correspond to a student commit in the git history.
+        // In case we cannot find the appropriate submission, it means something has not worked before, but there will still be a commit in the student repository
+        submission.setType(SubmissionType.MANUAL);
+        submission.setCommitHash(commitHash);
+        submission.setSubmissionDate(submissionDate);
+        return submission;
+    }
 
     public String getCommitHash() {
         return commitHash;

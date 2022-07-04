@@ -71,7 +71,7 @@ describe('ProgrammingExerciseTestScheduleDatePickerComponent', () => {
         comp.writeValue(updatedDayJsTime);
 
         expect(comp.selectedDate?.getDate()).toBe(updatedDateNumber);
-        expect(spy).toHaveBeenCalledTimes(1);
+        expect(spy).toHaveBeenCalledOnce();
     });
 
     it('should update date with date object and invoke change', () => {
@@ -81,7 +81,7 @@ describe('ProgrammingExerciseTestScheduleDatePickerComponent', () => {
         comp.writeValue(updatedDayJsTime);
 
         expect(comp.selectedDate?.getDate()).toBe(updatedDateNumber);
-        expect(spy).toHaveBeenCalledTimes(1);
+        expect(spy).toHaveBeenCalledOnce();
     });
 
     it('should reset date and emit reset event', () => {

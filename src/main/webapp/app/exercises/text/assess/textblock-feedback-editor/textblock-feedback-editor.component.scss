@@ -10,7 +10,7 @@ textarea.form-control:focus,
 input.form-control,
 input.form-control:focus {
     width: 100%;
-    background: rgba(255, 255, 255, 0.5);
+    background: var(--form-control-focus-background);
 }
 
 textarea {
@@ -59,16 +59,16 @@ label {
 
     &.positive-feedback {
         text-decoration-style: double;
-        text-decoration-color: #25537a;
-        color: #25537a;
-        background-color: #d8e8f5;
+        text-decoration-color: var(--textblock-feedback-editor-feedback-positive-color);
+        color: var(--textblock-feedback-editor-feedback-positive-color);
+        background-color: var(--textblock-feedback-editor-feedback-positive-background-color);
     }
 
     &.neutral-feedback {
         text-decoration-style: solid;
-        text-decoration-color: #1a1a1a;
-        background-color: #f2f2f2;
-        color: #1a1a1a;
+        text-decoration-color: var(--textblock-feedback-editor-feedback-neutral-color);
+        background-color: var(--textblock-feedback-editor-feedback-neutral-background-color);
+        color: var(--textblock-feedback-editor-feedback-neutral-color);
     }
 
     b {
@@ -85,7 +85,50 @@ label {
 }
 
 .reused-feedback-preview {
-    border: 2px solid rgba(228, 228, 228, 0.87);
+    border: 2px solid var(--textblock-feedback-editor-reused-feedback-preview-border);
     border-radius: 2px;
     padding: 10px;
+}
+
+.btn {
+    position: relative;
+    flex: none;
+    z-index: auto;
+}
+
+.dropdown {
+    position: static;
+    width: 100%;
+    overflow: auto;
+}
+
+.dropdown-menu {
+    position: absolute;
+    padding: 0.2rem 0;
+    cursor: pointer;
+
+    .dropdown-item {
+        padding: 0.25rem 0.75rem;
+    }
+
+    li {
+        position: relative;
+
+        &:hover {
+            background-color: var(--textblock-feedback-editor-dropdown-hover);
+        }
+
+        &:hover > .dropdown-submenu {
+            display: block;
+            position: absolute;
+            left: 100%;
+            top: 0;
+            padding: 0;
+        }
+    }
+}
+
+a:hover {
+    text-decoration: none !important;
+    color: var(--bs-body-color);
 }

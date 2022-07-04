@@ -12,6 +12,7 @@ import { lastValueFrom } from 'rxjs';
 import { TextAssessmentEventType } from 'app/entities/text-assesment-event.model';
 import { TextAssessmentAnalytics } from 'app/exercises/text/assess/analytics/text-assesment-analytics.service';
 import {
+    faAngleRight,
     faBalanceScaleRight,
     faEdit,
     faExclamation,
@@ -23,6 +24,7 @@ import {
     faTimes,
     faTrash,
 } from '@fortawesome/free-solid-svg-icons';
+import { GradingCriterion } from 'app/exercises/shared/structured-grading-criterion/grading-criterion.model';
 
 @Component({
     selector: 'jhi-textblock-feedback-editor',
@@ -47,6 +49,7 @@ export class TextblockFeedbackEditorComponent implements AfterViewInit {
     @Input() isLeftConflictingFeedback: boolean;
     @Input() isSelectedConflict: boolean;
     @Input() highlightDifferences: boolean;
+    @Input() criteria?: GradingCriterion[];
     private textareaElement: HTMLTextAreaElement;
     listOfBlocksWithFeedback: any[];
 
@@ -83,6 +86,7 @@ export class TextblockFeedbackEditorComponent implements AfterViewInit {
     faBalanceScaleRight = faBalanceScaleRight;
     faTimes = faTimes;
     faTrash = faTrash;
+    faAngleRight = faAngleRight;
 
     constructor(
         public structuredGradingCriterionService: StructuredGradingCriterionService,

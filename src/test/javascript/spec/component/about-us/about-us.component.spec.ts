@@ -45,7 +45,7 @@ describe('AboutUsComponent', () => {
         fixture.detectChanges();
         tick();
         fixture.whenStable().then(() => {
-            expect(getStaticJsonFromArtemisServerStub).toHaveBeenCalledTimes(1);
+            expect(getStaticJsonFromArtemisServerStub).toHaveBeenCalledOnce();
         });
     }));
 
@@ -58,7 +58,7 @@ describe('AboutUsComponent', () => {
         const role = 'ADMIN';
         const website = 'www.website.de';
 
-        const contributors = [new ContributorModel(fullName, photoDirectory, role, website)];
+        const contributors = [new ContributorModel(fullName, photoDirectory, undefined, role, website)];
 
         const getStaticJsonFromArtemisServerStub = jest.spyOn(staticContentService, 'getStaticJsonFromArtemisServer').mockReturnValue(of(new AboutUsModel([], contributors)));
         const getProfileInfoStub = jest
@@ -68,8 +68,8 @@ describe('AboutUsComponent', () => {
         fixture.detectChanges();
         tick();
         fixture.whenStable().then(() => {
-            expect(getStaticJsonFromArtemisServerStub).toHaveBeenCalledTimes(1);
-            expect(getProfileInfoStub).toHaveBeenCalledTimes(1);
+            expect(getStaticJsonFromArtemisServerStub).toHaveBeenCalledOnce();
+            expect(getProfileInfoStub).toHaveBeenCalledOnce();
             expect(fixture.debugElement.nativeElement.querySelector('#contributorsName').innerHTML).toBe(fullName);
         });
     }));

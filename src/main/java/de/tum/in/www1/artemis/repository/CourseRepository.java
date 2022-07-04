@@ -87,17 +87,26 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
     @EntityGraph(type = LOAD, attributePaths = { "exercises", "exercises.categories", "exercises.teamAssignmentConfig" })
     Course findWithEagerExercisesById(long courseId);
 
-    @EntityGraph(type = LOAD, attributePaths = { "learningGoals" })
+    @EntityGraph(type = LOAD, attributePaths = { "learningGoals", "prerequisites" })
     Optional<Course> findWithEagerLearningGoalsById(long courseId);
+
+    @EntityGraph(type = LOAD, attributePaths = { "lectures" })
+    Optional<Course> findWithEagerLecturesById(long courseId);
 
     @EntityGraph(type = LOAD, attributePaths = { "exercises", "lectures" })
     Optional<Course> findWithEagerExercisesAndLecturesById(long courseId);
 
-    @EntityGraph(type = LOAD, attributePaths = { "exercises", "lectures", "lectures.lectureUnits", "learningGoals" })
-    Course findWithEagerExercisesAndLecturesAndLectureUnitsAndLearningGoalsById(long courseId);
+    @EntityGraph(type = LOAD, attributePaths = { "lectures", "lectures.lectureUnits" })
+    Optional<Course> findWithEagerLecturesAndLectureUnitsById(long courseId);
 
-    @Query("select distinct course from Course course left join fetch course.organizations co where (course.startDate is null or course.startDate <= :#{#now}) and (course.endDate is null or course.endDate >= :#{#now}) and course.onlineCourse = false and course.registrationEnabled = true")
-    List<Course> findAllCurrentlyActiveNotOnlineAndRegistrationEnabledWithOrganizations(@Param("now") ZonedDateTime now);
+    @EntityGraph(type = LOAD, attributePaths = { "organizations", "learningGoals", "prerequisites" })
+    Optional<Course> findWithEagerOrganizationsAndLearningGoalsById(long courseId);
+
+    @EntityGraph(type = LOAD, attributePaths = { "exercises", "lectures", "lectures.lectureUnits", "learningGoals", "prerequisites" })
+    Optional<Course> findWithEagerExercisesAndLecturesAndLectureUnitsAndLearningGoalsById(long courseId);
+
+    @Query("select distinct course from Course course left join fetch course.organizations organizations left join fetch course.prerequisites prerequisites where (course.startDate is null or course.startDate <= :#{#now}) and (course.endDate is null or course.endDate >= :#{#now}) and course.onlineCourse = false and course.registrationEnabled = true")
+    List<Course> findAllCurrentlyActiveNotOnlineAndRegistrationEnabledWithOrganizationsAndPrerequisites(@Param("now") ZonedDateTime now);
 
     @Query("select course from Course course left join fetch course.organizations co where course.id = :#{#courseId}")
     Optional<Course> findWithEagerOrganizations(@Param("courseId") long courseId);
@@ -220,12 +229,12 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
     }
 
     /**
-     * Get all the courses to register with eagerly loaded organizations.
+     * Get all the courses to register with eagerly loaded organizations and prerequisites.
      *
      * @return the list of course entities
      */
-    default List<Course> findAllCurrentlyActiveNotOnlineAndRegistrationEnabledWithOrganizations() {
-        return findAllCurrentlyActiveNotOnlineAndRegistrationEnabledWithOrganizations(ZonedDateTime.now());
+    default List<Course> findAllCurrentlyActiveNotOnlineAndRegistrationEnabledWithOrganizationsAndPrerequisites() {
+        return findAllCurrentlyActiveNotOnlineAndRegistrationEnabledWithOrganizationsAndPrerequisites(ZonedDateTime.now());
     }
 
     /**
@@ -270,6 +279,26 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
     @NotNull
     default Course findByIdWithExercisesAndLecturesElseThrow(long courseId) {
         return findWithEagerExercisesAndLecturesById(courseId).orElseThrow(() -> new EntityNotFoundException("Course", courseId));
+    }
+
+    @NotNull
+    default Course findByIdWithLecturesElseThrow(long courseId) {
+        return findWithEagerLecturesById(courseId).orElseThrow(() -> new EntityNotFoundException("Course", courseId));
+    }
+
+    @NotNull
+    default Course findByIdWithLecturesAndLectureUnitsElseThrow(long courseId) {
+        return findWithEagerLecturesAndLectureUnitsById(courseId).orElseThrow(() -> new EntityNotFoundException("Course", courseId));
+    }
+
+    @NotNull
+    default Course findByIdWithOrganizationsAndLearningGoalsElseThrow(long courseId) {
+        return findWithEagerOrganizationsAndLearningGoalsById(courseId).orElseThrow(() -> new EntityNotFoundException("Course", courseId));
+    }
+
+    @NotNull
+    default Course findByIdWithExercisesAndLecturesAndLectureUnitsAndLearningGoalsElseThrow(long courseId) {
+        return findWithEagerExercisesAndLecturesAndLectureUnitsAndLearningGoalsById(courseId).orElseThrow(() -> new EntityNotFoundException("Course", courseId));
     }
 
     /**

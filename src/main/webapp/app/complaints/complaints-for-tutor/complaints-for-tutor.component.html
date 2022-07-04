@@ -37,14 +37,14 @@
                     }}
                 </span>
                 <small *ngIf="handled">
-                    <span *ngIf="complaint?.accepted" class="text-light bg-success small">
+                    <span *ngIf="complaint?.accepted" class="badge bg-success">
                         &nbsp;{{
                             complaint.complaintType === ComplaintType.MORE_FEEDBACK
                                 ? ('artemisApp.moreFeedback.accepted' | artemisTranslate)
                                 : ('artemisApp.complaint.accepted' | artemisTranslate)
                         }}&nbsp;
                     </span>
-                    <span *ngIf="!complaint?.accepted" class="text-light bg-danger small"> &nbsp;{{ 'artemisApp.complaint.rejected' | artemisTranslate }}&nbsp; </span>
+                    <span *ngIf="!complaint?.accepted" class="badge bg-danger"> &nbsp;{{ 'artemisApp.complaint.rejected' | artemisTranslate }}&nbsp; </span>
                 </small>
             </h4>
             <textarea id="complaintTextArea" class="col-12 px-1" rows="4" [(ngModel)]="complaintText" [readonly]="true" [disabled]="true"></textarea>
@@ -58,16 +58,21 @@
                         : ('artemisApp.complaintResponse.title' | artemisTranslate)
                 }}
             </h3>
-            <textarea
-                id="responseTextArea"
-                class="col-12 px-1"
-                rows="4"
-                [maxlength]="this.course!.maxComplaintResponseTextLimit!"
-                [(ngModel)]="complaintResponse.responseText"
-                [readonly]="handled || isLockedForLoggedInUser"
-                [disabled]="handled || isLockedForLoggedInUser"
-            ></textarea>
-            <div *ngIf="!handled && complaint.complaintType === ComplaintType.COMPLAINT" class="d-flex flex-wrap gap-1 justify-content-between mt-3">
+            <div class="d-flex flex-column">
+                <textarea
+                    id="responseTextArea"
+                    class="col-12 px-1"
+                    rows="4"
+                    [maxlength]="this.course!.maxComplaintResponseTextLimit!"
+                    [(ngModel)]="complaintResponse.responseText"
+                    [readonly]="handled || isLockedForLoggedInUser"
+                    [disabled]="handled || isLockedForLoggedInUser"
+                >
+                </textarea>
+                <jhi-textarea-counter [maxLength]="this.course!.maxComplaintResponseTextLimit!" [content]="complaintResponse.responseText" [visible]="!handled">
+                </jhi-textarea-counter>
+            </div>
+            <div *ngIf="!handled && complaint.complaintType === ComplaintType.COMPLAINT" class="d-flex flex-wrap gap-1 justify-content-between mt-1">
                 <button
                     id="acceptComplaintButton"
                     type="button"

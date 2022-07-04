@@ -26,7 +26,6 @@ export interface FileProperties {
 @Component({
     selector: 'jhi-attachment-unit-form',
     templateUrl: './attachment-unit-form.component.html',
-    styleUrls: ['./attachment-unit-form.component.scss'],
 })
 export class AttachmentUnitFormComponent implements OnInit, OnChanges {
     @Input()

@@ -41,6 +41,12 @@ public class LearningGoal extends DomainObject {
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     private Set<LectureUnit> lectureUnits = new HashSet<>();
 
+    @ManyToMany
+    @JoinTable(name = "learning_goal_course", joinColumns = @JoinColumn(name = "learning_goal_id", referencedColumnName = "id"), inverseJoinColumns = @JoinColumn(name = "course_id", referencedColumnName = "id"))
+    @JsonIgnoreProperties({ "learningGoals", "prerequisites" })
+    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
+    private Set<Course> consecutiveCourses = new HashSet<>();
+
     public String getTitle() {
         return title;
     }
@@ -99,5 +105,28 @@ public class LearningGoal extends DomainObject {
     public void removeLectureUnit(LectureUnit lectureUnit) {
         this.lectureUnits.remove(lectureUnit);
         lectureUnit.getLearningGoals().remove(this);
+    }
+
+    public Set<Course> getConsecutiveCourses() {
+        return consecutiveCourses;
+    }
+
+    public void setConsecutiveCourses(Set<Course> consecutiveCourses) {
+        this.consecutiveCourses = consecutiveCourses;
+    }
+
+    public enum LearningGoalSearchColumn {
+
+        ID("id"), TITLE("title"), COURSE_TITLE("course.title"), SEMESTER("course.semester");
+
+        private final String mappedColumnName;
+
+        LearningGoalSearchColumn(String mappedColumnName) {
+            this.mappedColumnName = mappedColumnName;
+        }
+
+        public String getMappedColumnName() {
+            return mappedColumnName;
+        }
     }
 }

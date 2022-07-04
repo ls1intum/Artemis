@@ -9,7 +9,7 @@
         </ul>
 
         <div class="warning-info" *ngIf="instructionDeleted">
-            <input type="checkbox" name="deleteFeedback" id="deleteFeedback" [ngModel]="deleteFeedback" (ngModelChange)="toggleDeleteFeedback()" />
+            <input class="form-check-input" type="checkbox" name="deleteFeedback" id="deleteFeedback" [ngModel]="deleteFeedback" (ngModelChange)="toggleDeleteFeedback()" />
             <label class="form-check-label text-danger" for="deleteFeedback">
                 {{ 'artemisApp.exercise.update.warning.deleteFeedback' | artemisTranslate }}
             </label>

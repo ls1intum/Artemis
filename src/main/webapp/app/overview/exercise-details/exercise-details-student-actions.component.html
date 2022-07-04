@@ -203,6 +203,7 @@
                 <button
                     [id]="'open-exercise-' + exercise.id"
                     jhi-exercise-action-button
+                    class="me-2"
                     [buttonIcon]="faFolderOpen"
                     [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
                     [buttonLabel]="'artemisApp.exerciseActions.openCodeEditor' | artemisTranslate"
@@ -235,6 +236,18 @@
             *ngIf="participationStatusWrapper() === ParticipationStatus.INACTIVE && isStartExerciseAvailable()"
             (click)="resumeProgrammingExercise()"
         ></button>
+        <a
+            class="btn btn-primary me-1"
+            [ngClass]="smallButtons ? 'btn-sm' : ''"
+            style="margin-left: 8px"
+            target="_blank"
+            rel="noreferrer"
+            href="{{ buildPlanUrl(exercise.studentParticipations![0]) }}"
+            *ngIf="publishBuildPlanUrl() && buildPlanActive()"
+        >
+            <fa-icon class="me-1" [icon]="faExternalLinkAlt" [fixedWidth]="true"></fa-icon>
+            <span class="d-none d-md-inline" jhiTranslate="artemisApp.exerciseActions.goToBuildPlan">Go to build plan</span>
+        </a>
     </div>
     <!-- ACTION END -->
 </div>

@@ -42,11 +42,10 @@
                 <span class="text-danger" *ngIf="score.dirty && score.invalid" jhiTranslate="artemisApp.result.invalidScore">Score is required and should be a number.</span>
             </div>
             <div class="checkbox col-md-6">
-                <label class="artemis-label">
-                    <input type="checkbox" name="successful" [(ngModel)]="result.successful" [disabled]="true" />&nbsp;<span jhiTranslate="artemisApp.result.successful"
-                        >Successful</span
-                    >
-                </label>
+                <div class="artemis-label form-check">
+                    <input class="form-check-input" type="checkbox" name="successful" [(ngModel)]="result.successful" [disabled]="true" />
+                    <span class="form-check-label" jhiTranslate="artemisApp.result.successful">Successful</span>
+                </div>
             </div>
         </div>
         <div class="form-group mb-2">
@@ -71,8 +70,9 @@
                         <textarea type="text" class="form-control" id="feedbackErrorText" name="feedbackErrorText{{ i }}" [(ngModel)]="feedback.detailText"></textarea>
                     </div>
                     <div class="checkbox col-md-6">
-                        <label class="artemis-label">
-                            <input type="checkbox" name="positive{{ i }}" [(ngModel)]="feedback.positive" />&nbsp;<span jhiTranslate="artemisApp.result.positive">Positive</span>
+                        <label class="artemis-label form-check">
+                            <input class="form-check-input" type="checkbox" name="positive{{ i }}" [(ngModel)]="feedback.positive" />
+                            <span class="form-check-label" jhiTranslate="artemisApp.result.positive">Positive</span>
                         </label>
                     </div>
                 </div>
@@ -87,11 +87,9 @@
                 <span jhiTranslate="artemisApp.result.deleteFeedback">Less feedback</span>
             </button>
         </div>
-        <div class="form-group">
-            <h4 class="control-label" jhiTranslate="artemisApp.result.rated">Rated</h4>
-            <label class="artemis-label">
-                <input type="checkbox" name="resultRated" id="resultRated" [(ngModel)]="result.rated" #resultRated="ngModel" />
-            </label>
+        <div class="form-check mt-3">
+            <input class="form-check-input" type="checkbox" name="resultRated" id="resultRated" [(ngModel)]="result.rated" #resultRated="ngModel" />
+            <label class="form-check-label" jhiTranslate="artemisApp.result.rated">Rated</label>
         </div>
     </div>
     <div class="modal-footer">

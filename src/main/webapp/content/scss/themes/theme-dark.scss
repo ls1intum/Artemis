@@ -1,0 +1,272 @@
+/* stylelint-disable */
+@use 'sass:meta';
+@use 'generate-css-vars';
+
+@import 'dark-variables';
+
+html {
+    @include generate-css-vars.generate('dark-variables');
+}
+
+@import '../global';
+
+// Needed for highlighting code in the markdown editor
+@import '~highlight.js/styles/monokai.css';
+
+.blockquote {
+    &-footer {
+        color: $gray-600;
+    }
+}
+
+.input-group-addon {
+    color: $white;
+}
+
+.form-floating > label {
+    color: $gray-700;
+}
+
+.nav-tabs,
+.nav-pills {
+    .nav-link,
+    .nav-link.active,
+    .nav-link.active:focus,
+    .nav-link.active:hover,
+    .nav-item.open .nav-link,
+    .nav-item.open .nav-link:focus,
+    .nav-item.open .nav-link:hover {
+        color: $white;
+    }
+}
+
+.pagination {
+    a:hover {
+        text-decoration: none;
+    }
+}
+
+.alert {
+    color: $white;
+
+    a,
+    .alert-link {
+        color: $white;
+        text-decoration: underline;
+    }
+
+    // Do defaults for all colors
+    @each $color, $value in $theme-colors {
+        $blackened: darken($value, 20%);
+        &-#{$color} {
+            background: $blackened;
+            border-color: $value;
+        }
+    }
+
+    // For some alerts, we specified own overrides
+    $custom-alerts: 'info', 'danger', 'warning', 'success', 'neutral';
+    @each $type in $custom-alerts {
+        &-#{$type} {
+            background: var(--artemis-alert-#{$type}-background);
+            border-color: var(--artemis-alert-#{$type}-border);
+            color: var(--artemis-alert-#{$type}-color);
+        }
+    }
+}
+
+.btn-outline-primary:not(.list-group-item) {
+    color: $link-color;
+}
+
+.btn-outline-primary:not(.list-group-item):hover {
+    color: white;
+}
+
+.btn-outline-secondary:not(.list-group-item) {
+    color: $gray-400;
+}
+
+.btn-outline-secondary:not(.list-group-item):hover {
+    color: white;
+}
+
+.btn-outline-dark:not(.list-group-item) {
+    color: $gray-200;
+    border-color: $gray-300;
+}
+
+.ngx-datatable.bootstrap .datatable-body .datatable-body-row.datatable-row-even {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.ngx-datatable.bootstrap .datatable-body .datatable-body-row {
+    border-top-color: $gray-700;
+}
+
+.mat-form-field-outline {
+    color: $border-color;
+}
+
+.form-control:disabled,
+.form-control[readonly],
+.form-select:disabled,
+.form-select[readonly],
+.form-check-input:disabled:not(:checked),
+.form-check-input[readonly]:not(:checked) {
+    background-color: $gray-800 !important;
+    color: $gray-500 !important;
+}
+
+.form-control,
+.form-select {
+    border-color: lighten($neutral-dark, 10%);
+}
+
+.form-select {
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='gray' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M2 5l6 6 6-6'/%3e%3c/svg%3e");
+}
+
+.text-lightgrey {
+    color: $gray-400;
+}
+
+.text-primary {
+    color: lighten($primary, 30) !important;
+}
+
+.owl-dt-control-button {
+    color: white !important;
+
+    .owl-dt-control-button-arrow {
+        svg {
+            fill: white !important;
+        }
+    }
+}
+
+.owl-dt-timer-content .owl-dt-timer-input {
+    background: transparentize(#fff, 0.95) !important;
+    color: white !important;
+}
+
+.owl-dt-calendar-table .owl-dt-calendar-cell-today:not(.owl-dt-calendar-cell-selected) {
+    border-color: rgba(255, 255, 255, 0.2);
+}
+
+.owl-dt-container {
+    background-color: lighten($neutral-dark, 5) !important;
+}
+
+.owl-dt-calendar-table {
+    .owl-dt-calendar-header {
+        color: $gray-300 !important;
+    }
+
+    .owl-dt-calendar-cell-content {
+        color: white !important;
+    }
+}
+
+.bg-light {
+    background: transparentize(white, 0.95) !important;
+}
+
+.form-select option {
+    background-color: $neutral-dark !important;
+}
+
+.cdk-overlay-container .tag-option {
+    background: mix($neutral-dark, $white, 90%);
+
+    &:hover {
+        background: mix($neutral-dark, $white, 80%);
+    }
+}
+
+.ace_editor.ace_dark.ace-dracula {
+    background-color: $neutral-dark !important;
+
+    .ace_gutter {
+        background-color: #242724;
+    }
+
+    .ace_comment {
+        color: #8497ce;
+    }
+
+    .ace_active-line {
+        background: transparentize(#44475a, 0.7);
+    }
+}
+
+// ==================
+// NGX CHARTS STYLING
+// ==================
+.ngx-charts text {
+    fill: #a0aabe;
+}
+.ngx-charts .tooltip-anchor {
+    fill: #fff;
+}
+.ngx-charts .gridline-path {
+    stroke: #2f3646 !important;
+}
+.ngx-charts .refline-path {
+    stroke: #455066;
+}
+.ngx-charts .reference-area {
+    fill: #fff;
+}
+.ngx-charts .grid-panel.odd rect {
+    fill: #ffffff0d;
+}
+.ngx-charts .number-card p {
+    color: #f0f1f6;
+}
+.ngx-charts .gauge .background-arc path {
+    fill: #2f3646;
+}
+.ngx-charts .gauge .gauge-tick path {
+    stroke: #a0aabe;
+}
+.ngx-charts .gauge .gauge-tick text {
+    fill: #a0aabe;
+}
+.ngx-charts .linear-gauge .background-bar path {
+    fill: #2f3646;
+}
+.ngx-charts .linear-gauge .units {
+    fill: #72809b;
+}
+.ngx-charts .timeline .brush-background {
+    fill: #ffffff0d;
+}
+.ngx-charts .timeline .brush .selection {
+    fill: #ffffff1a;
+    stroke: #aaa;
+}
+.ngx-charts .polar-chart .polar-chart-background {
+    fill: #1e222e;
+}
+.chart-legend .legend-labels {
+    background: rgba(255, 255, 255, 0.05) !important;
+}
+.chart-legend .legend-item:hover {
+    color: #fff;
+}
+.chart-legend .legend-label:hover,
+.chart-legend .legend-label .legend-label-text {
+    color: #fff !important;
+}
+.chart-legend .scale-legend-label,
+.advanced-pie-legend {
+    color: #a0aabe;
+}
+.advanced-pie-legend .legend-item:hover {
+    color: #fff !important;
+}
+.number-card .number-card-label {
+    font-size: 0.8em;
+    color: #a0aabe;
+}

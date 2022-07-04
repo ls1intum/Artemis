@@ -33,6 +33,8 @@ import { MatChipsModule } from '@angular/material/chips';
 import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import { MatSelectModule } from '@angular/material/select';
 import { MatFormFieldModule } from '@angular/material/form-field';
+import { EmojiComponent } from 'app/shared/metis/emoji/emoji.component';
+import { EmojiPickerComponent } from 'app/shared/metis/emoji/emoji-picker.component';
 
 @NgModule({
     imports: [
@@ -73,6 +75,8 @@ import { MatFormFieldModule } from '@angular/material/form-field';
         AnswerPostReactionsBarComponent,
         HtmlForPostingMarkdownPipe,
         ReactingUsersOnPostingPipe,
+        EmojiComponent,
+        EmojiPickerComponent,
     ],
     exports: [
         PostingThreadComponent,
@@ -92,6 +96,8 @@ import { MatFormFieldModule } from '@angular/material/form-field';
         PostReactionsBarComponent,
         AnswerPostReactionsBarComponent,
         HtmlForPostingMarkdownPipe,
+        EmojiComponent,
+        EmojiPickerComponent,
     ],
 })
 export class MetisModule {}

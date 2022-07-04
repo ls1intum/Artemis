@@ -40,28 +40,28 @@ describe('Exercise Update Warning Service', () => {
         exercise.gradingCriteria = [gradingCriterionWithoutInstruction];
         backupExercise.gradingCriteria = [gradingCriterion];
         updateWarningService.loadExercise(exercise, backupExercise);
-        expect(updateWarningService.instructionDeleted).toBe(true);
+        expect(updateWarningService.instructionDeleted).toBeTrue();
     });
 
     it('should set instructionDeleted as true when gradingCriteria is undefined', () => {
         exercise.gradingCriteria = undefined;
         backupExercise.gradingCriteria = [gradingCriterion];
         updateWarningService.loadExercise(exercise, backupExercise);
-        expect(updateWarningService.instructionDeleted).toBe(true);
+        expect(updateWarningService.instructionDeleted).toBeTrue();
     });
 
     it('should set creditChanged as true', () => {
         exercise.gradingCriteria = [gradingCriterionCreditsChanged];
         backupExercise.gradingCriteria = [gradingCriterion];
         updateWarningService.loadExercise(exercise, backupExercise);
-        expect(updateWarningService.creditChanged).toBe(true);
+        expect(updateWarningService.creditChanged).toBeTrue();
     });
 
     it('should set usageCountChanged as true', () => {
         exercise.gradingCriteria = [gradingCriterionUsageCountChanged];
         backupExercise.gradingCriteria = [gradingCriterion];
         updateWarningService.loadExercise(exercise, backupExercise);
-        expect(updateWarningService.usageCountChanged).toBe(true);
+        expect(updateWarningService.usageCountChanged).toBeTrue();
     });
 
     it('should loadExercise and not open warning modal', () => {
@@ -69,11 +69,11 @@ describe('Exercise Update Warning Service', () => {
         backupExercise.gradingCriteria = [gradingCriterion];
         updateWarningService.checkExerciseBeforeUpdate(exercise, backupExercise);
 
-        expect(updateWarningService.instructionDeleted).toBe(false);
-        expect(updateWarningService.creditChanged).toBe(false);
-        expect(updateWarningService.usageCountChanged).toBe(false);
+        expect(updateWarningService.instructionDeleted).toBeFalse();
+        expect(updateWarningService.creditChanged).toBeFalse();
+        expect(updateWarningService.usageCountChanged).toBeFalse();
 
-        expect(loadExerciseSpy).toHaveBeenCalledTimes(1);
+        expect(loadExerciseSpy).toHaveBeenCalledOnce();
         expect(loadExerciseSpy).toHaveBeenCalledWith(exercise, backupExercise);
         expect(openSpy).toHaveBeenCalledTimes(0);
     });
@@ -84,8 +84,8 @@ describe('Exercise Update Warning Service', () => {
         updateWarningService.checkExerciseBeforeUpdate(exercise, backupExercise);
 
         expect(loadExerciseSpy).toHaveBeenCalledWith(exercise, backupExercise);
-        expect(loadExerciseSpy).toHaveBeenCalledTimes(1);
+        expect(loadExerciseSpy).toHaveBeenCalledOnce();
         expect(openSpy).toHaveBeenCalledWith(ExerciseUpdateWarningComponent as Component);
-        expect(openSpy).toHaveBeenCalledTimes(1);
+        expect(openSpy).toHaveBeenCalledOnce();
     });
 });

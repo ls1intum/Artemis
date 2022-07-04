@@ -31,7 +31,7 @@
     height: 30px;
     line-height: 30px;
     background-color: $color;
-    color: white;
+    color: var(--quiz-mapping-letter-number-mixin-color);
     border-radius: 50%;
     text-align: center;
 }

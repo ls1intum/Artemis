@@ -193,7 +193,7 @@ class StaticCodeAnalysisIntegrationTest extends AbstractSpringIntegrationBambooB
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testResetCategories(ProgrammingLanguage programmingLanguage) throws Exception {
         // Create a programming exercise with real categories
-        var course = database.addCourseWithOneProgrammingExercise(true, programmingLanguage);
+        var course = database.addCourseWithOneProgrammingExercise(true, false, programmingLanguage);
         ProgrammingExercise exercise = programmingExerciseRepository
                 .findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesById(course.getExercises().iterator().next().getId()).get();
         bambooRequestMockProvider.mockTriggerBuild(exercise.getSolutionParticipation());

@@ -86,7 +86,7 @@ describe('ShortAnswerQuestionComponent', () => {
         component.question = alternativeQuestion;
         component.setSubmittedText();
 
-        expect(getNavigationStub).toHaveBeenCalledTimes(1);
+        expect(getNavigationStub).toHaveBeenCalledOnce();
         expect(component.submittedTexts.length).toBe(1);
         expect(component.submittedTexts[0].text).toStrictEqual(text);
         expect(component.submittedTexts[0].spot).toStrictEqual(spot);
@@ -110,7 +110,7 @@ describe('ShortAnswerQuestionComponent', () => {
 
         expect(component.sampleSolutions.length).toBe(1);
         expect(component.sampleSolutions[0]).toStrictEqual(solution);
-        expect(component.showingSampleSolution).toBe(true);
+        expect(component.showingSampleSolution).toBeTrue();
     });
 
     it('should toggle show sample solution', () => {
@@ -120,11 +120,11 @@ describe('ShortAnswerQuestionComponent', () => {
         component.showResult = true;
         component.showingSampleSolution = true;
         component.forceSampleSolution = true;
-        expect(component.showingSampleSolution).toBe(true);
+        expect(component.showingSampleSolution).toBeTrue();
         component.forceSampleSolution = false;
         component.hideSampleSolution();
 
-        expect(component.showingSampleSolution).toBe(false);
+        expect(component.showingSampleSolution).toBeFalse();
     });
 
     it('should get submitted text size for spot', () => {
@@ -176,10 +176,17 @@ describe('ShortAnswerQuestionComponent', () => {
         alternativeQuestion.correctMappings = [mapping];
 
         component.shortAnswerQuestion = alternativeQuestion;
-        expect(component.getBackgroundColourForInputField(tag)).toStrictEqual('lightgreen');
+        expect(component.classifyInputField(tag)).toStrictEqual('completely-correct');
+        submittedText.text += '!';
+        expect(component.classifyInputField(tag)).toStrictEqual('correct');
         component.shortAnswerQuestion.correctMappings = [];
-        expect(component.getBackgroundColourForInputField(tag)).toStrictEqual('yellow');
+        expect(component.classifyInputField(tag)).toStrictEqual('correct');
         component.submittedTexts = [];
-        expect(component.getBackgroundColourForInputField(tag)).toStrictEqual('red');
+        expect(component.classifyInputField(tag)).toStrictEqual('wrong');
+        spot.invalid = true;
+        expect(component.classifyInputField(tag)).toStrictEqual('invalid');
+        spot.invalid = false;
+        alternativeQuestion.invalid = true;
+        expect(component.classifyInputField(tag)).toStrictEqual('invalid');
     });
 });

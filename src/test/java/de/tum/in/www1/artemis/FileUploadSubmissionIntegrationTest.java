@@ -4,7 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.nio.file.Files;
-import java.nio.file.Paths;
+import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.util.List;
 
@@ -128,24 +128,24 @@ public class FileUploadSubmissionIntegrationTest extends AbstractSpringIntegrati
         String actualFilePath;
 
         if (differentFilePath) {
-            actualFilePath = Paths.get(FileUploadSubmission.buildFilePath(releasedFileUploadExercise.getId(), returnedSubmission.getId()), filename).toString();
+            actualFilePath = Path.of(FileUploadSubmission.buildFilePath(releasedFileUploadExercise.getId(), returnedSubmission.getId()), filename).toString();
         }
         else {
             if (filename.length() < 5) {
-                actualFilePath = Paths.get(FileUploadSubmission.buildFilePath(releasedFileUploadExercise.getId(), returnedSubmission.getId()), "file" + filename).toString();
+                actualFilePath = Path.of(FileUploadSubmission.buildFilePath(releasedFileUploadExercise.getId(), returnedSubmission.getId()), "file" + filename).toString();
             }
             else if (filename.contains("\\")) {
-                actualFilePath = Paths.get(FileUploadSubmission.buildFilePath(releasedFileUploadExercise.getId(), returnedSubmission.getId()), "file.png").toString();
+                actualFilePath = Path.of(FileUploadSubmission.buildFilePath(releasedFileUploadExercise.getId(), returnedSubmission.getId()), "file.png").toString();
             }
             else {
-                actualFilePath = Paths.get(FileUploadSubmission.buildFilePath(releasedFileUploadExercise.getId(), returnedSubmission.getId()), filename).toString();
+                actualFilePath = Path.of(FileUploadSubmission.buildFilePath(releasedFileUploadExercise.getId(), returnedSubmission.getId()), filename).toString();
             }
         }
 
         String publicFilePath = fileService.publicPathForActualPath(actualFilePath, returnedSubmission.getId());
         assertThat(returnedSubmission).as("submission correctly posted").isNotNull();
         assertThat(returnedSubmission.getFilePath()).isEqualTo(publicFilePath);
-        var fileBytes = Files.readAllBytes(Paths.get(actualFilePath));
+        var fileBytes = Files.readAllBytes(Path.of(actualFilePath));
         assertThat(fileBytes.length > 0).as("Stored file has content").isTrue();
         checkDetailsHidden(returnedSubmission, true);
     }

@@ -1,12 +1,10 @@
 package de.tum.in.www1.artemis.util;
 
 import java.io.*;
-import java.net.MalformedURLException;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.Collection;
 
 import org.apache.commons.io.FileUtils;
@@ -28,7 +26,7 @@ public class GitUtilService {
     private String defaultBranch;
 
     // Note: the first string has to be same as artemis.repo-clone-path (see src/test/resources/config/application-artemis.yml) because here local git repos will be cloned
-    private final Path localPath = Paths.get("./repos/server-integration-test").resolve("test-repository").normalize();
+    private final Path localPath = Path.of(".", "repos", "server-integration-test").resolve("test-repository").normalize();
 
     private final Path remotePath = Files.createTempDirectory("remotegittest").resolve("scm/test-repository");
 
@@ -154,7 +152,7 @@ public class GitUtilService {
 
     public void updateFile(REPOS repo, FILES fileToUpdate, String content) {
         try {
-            var fileName = Paths.get(getCompleteRepoPathStringByType(repo), fileToUpdate.toString()).toString();
+            var fileName = Path.of(getCompleteRepoPathStringByType(repo), fileToUpdate.toString()).toString();
             PrintWriter writer = new PrintWriter(fileName, StandardCharsets.UTF_8);
             writer.print(content);
             writer.close();
@@ -164,13 +162,13 @@ public class GitUtilService {
     }
 
     public File getFile(REPOS repo, FILES fileToRead) {
-        Path path = Paths.get(getCompleteRepoPathStringByType(repo), fileToRead.toString());
+        Path path = Path.of(getCompleteRepoPathStringByType(repo), fileToRead.toString());
         return path.toFile();
     }
 
     public String getFileContent(REPOS repo, FILES fileToRead) {
         try {
-            Path path = Paths.get(getCompleteRepoPathStringByType(repo), fileToRead.toString());
+            Path path = Path.of(getCompleteRepoPathStringByType(repo), fileToRead.toString());
             byte[] encoded = Files.readAllBytes(path);
             return new String(encoded, Charset.defaultCharset());
         }
@@ -201,7 +199,7 @@ public class GitUtilService {
     /**
      * @param repo The repository on which the action should be operated
      * @param branch The branch that should be checked out
-     * @param createBranch indicator if a non existing branch should get created
+     * @param createBranch indicator if a non-existing branch should get created
      */
     public void checkoutBranch(REPOS repo, String branch, boolean createBranch) {
         try {
@@ -243,18 +241,13 @@ public class GitUtilService {
     }
 
     public VcsRepositoryUrl getRepoUrlByType(REPOS repo) {
-        try {
-            return new VcsRepositoryUrl("file://" + getCompleteRepoPathStringByType(repo));
-        }
-        catch (MalformedURLException ignored) {
-        }
-        return null;
+        return new VcsRepositoryUrl(new File(getCompleteRepoPathStringByType(repo)));
     }
 
     public static final class MockFileRepositoryUrl extends VcsRepositoryUrl {
 
-        public MockFileRepositoryUrl(File file) throws MalformedURLException {
-            super(file.toURI().toURL().toString());
+        public MockFileRepositoryUrl(File file) {
+            super(file);
         }
 
         @Override
@@ -262,6 +255,7 @@ public class GitUtilService {
             // the mocked url should already include the user specific part
             return this;
         }
+
     }
 
     public void writeEmptyJsonFileToPath(Path path) throws Exception {

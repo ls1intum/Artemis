@@ -39,6 +39,7 @@ public class BitbucketAuthorizationInterceptor implements ClientHttpRequestInter
         if (request.getHeaders().getContentType() == null) {
             request.getHeaders().setContentType(MediaType.APPLICATION_JSON);
         }
+
         // prefer bitbucket token if it is available
         if (bitbucketToken.isPresent() && !needsBasicAuth(request)) {
             request.getHeaders().setBearerAuth(bitbucketToken.get());

@@ -28,7 +28,7 @@ describe('ItemCountComponent test', () => {
 
         it('should set range from 0 to 0, total 0 if there are no elements', () => {
             // GIVEN
-            comp.params = { page: 0, totalItems: 0, itemsPerPage: 10 };
+            comp.params = { page: 1, totalItems: 0, itemsPerPage: 10 };
 
             // THEN
             expect(comp.itemRangeBegin).toBe(0);

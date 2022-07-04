@@ -18,19 +18,19 @@
     left: 0;
     right: 0;
     z-index: 8;
-    background: white;
+    background: var(--quiz-navigation-background);
 
     .draganddropcolor-question {
-        background-color: #86ccd5 !important;
+        background-color: var(--quiz-participation-footer-dnd-background) !important;
     }
     .multiplechoicecolor-question {
-        background-color: #eee066 !important;
+        background-color: var(--quiz-participation-footer-mc-background) !important;
     }
     .shortanswercolor-question {
-        background-color: #d8956c !important;
+        background-color: var(--quiz-participation-footer-sa-background) !important;
     }
     .changed-question {
-        background-color: #527cd7 !important;
+        background-color: var(--quiz-participation-footer-changed-background) !important;
     }
 }
 

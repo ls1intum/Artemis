@@ -1,14 +1,19 @@
 <div class="card course-goal-card grow" (click)="openLearningGoalDetailsModal()">
     <div class="card-header text-center course-goal-card-header container">
-        <span class="font-weight-bold">{{ learningGoal?.title }}</span>
+        <h6 class="m-0">{{ learningGoal?.title }}</h6>
     </div>
     <div class="card-body">
-        <div *ngIf="isProgressAvailable; else elseBlock">
-            <jhi-circular-progress-bar [progressInPercent]="progressInPercent" [progressText]="progressText"></jhi-circular-progress-bar>
+        <div *ngIf="isPrerequisite; else learningGoalBlock">
+            {{ learningGoal.description }}
         </div>
-        <ng-template #elseBlock>{{ 'artemisApp.learningGoal.learningGoalCard.progressUnavailable' | artemisTranslate }}</ng-template>
+        <ng-template #learningGoalBlock>
+            <div *ngIf="isProgressAvailable; else noProgressBlock">
+                <jhi-circular-progress-bar [progressInPercent]="progressInPercent" [progressText]="progressText"></jhi-circular-progress-bar>
+            </div>
+            <ng-template #noProgressBlock>{{ 'artemisApp.learningGoal.learningGoalCard.progressUnavailable' | artemisTranslate }}</ng-template>
+        </ng-template>
     </div>
-    <div class="card-footer course-goal-card-footer" (click)="$event.stopPropagation()">
+    <div *ngIf="!displayOnly" class="card-footer course-goal-card-footer" (click)="$event.stopPropagation()">
         <ng-content></ng-content>
     </div>
 </div>

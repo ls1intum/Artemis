@@ -28,7 +28,7 @@ export class TextExerciseImportComponent implements OnInit {
     content: SearchResult<TextExercise>;
     total = 0;
     state: PageableSearch = {
-        page: 0,
+        page: 1,
         pageSize: 10,
         searchTerm: '',
         sortingOrder: SortingOrder.DESCENDING,
@@ -51,7 +51,7 @@ export class TextExerciseImportComponent implements OnInit {
     /** Method to perform the search based on a search subject
      *
      * @param searchSubject The search subject which we use to search.
-     * @param debounce The delay we apply to deley the feedback / wait for input
+     * @param debounce The delay we apply to delay the feedback / wait for input
      */
     private performSearch(searchSubject: Subject<void>, debounce: number) {
         searchSubject
@@ -80,11 +80,11 @@ export class TextExerciseImportComponent implements OnInit {
     }
 
     /**
-     * Gives the ID for any programming exercise in the table, so that it can be tracked/identified by ngFor
+     * Gives the ID for any text exercise in the table, so that it can be tracked/identified by ngFor
      *
-     * @param index The index of the elemnt in the ngFor
+     * @param index The index of the element in the ngFor
      * @param item The exercise itself
-     * @returns The ID of the programming exercise
+     * @returns The ID of the text exercise
      */
     trackId(index: number, item: TextExercise): number {
         return item.id!;

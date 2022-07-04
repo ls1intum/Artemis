@@ -74,6 +74,7 @@
                 "warning": "Updating this field will update the grading key for the course if such exists, such that the points values for the grade steps still match the percentages, adjusted for the new maximum points value"
             },
             "accuracyOfScores": "Amount of decimal places used for calculating the scores",
+            "defaultProgrammingLanguage": "Default Programming Language",
             "gradingSystem": "Grading Key",
             "testCourse": {
                 "title": "Test Course",
@@ -136,6 +137,12 @@
                 "shortname": {
                     "minlength": "Short Name must contain at least 3 characters.",
                     "forbidden": "Short Name must start with a letter and cannot contain special characters."
+                },
+                "startDate": {
+                    "invalid": "Must be before the end date of the course"
+                },
+                "endDate": {
+                    "invalid": "Must be after the start date of the course"
                 }
             },
             "courseDashboard": "Course Dashboard",
@@ -152,6 +159,7 @@
                 "searchForUsers": "Add a user to this course group by searching for login or name",
                 "searchNoResults": "No users found",
                 "login": "Login",
+                "registrationNumber": "Registration Number",
                 "name": "Name",
                 "email": "Email",
                 "removeFromGroup": {
@@ -179,7 +187,8 @@
                 "moreFeedbackTitle": "More Feedback Requests",
                 "averageStudentScoreTitle": "Average Student Score"
             },
-            "activeStudents": "Active students: {{ students }}"
+            "activeStudents": "Active students: {{ students }}",
+            "notStartedYet": "The course has not officially started yet. Official course start:"
         },
         "courseStatistics": {
             "statistics": "Statistics",
@@ -190,7 +199,7 @@
             "activeStudents": "Active students",
             "activeStudentsExplanation": "Active students are students that submitted at least once in the corresponding week.",
             "average": "Average: ",
-            "averageReferenceLineCheckboxLabel": "Show average as reference line",
+            "meanReferenceLineCheckboxLabel": "Show mean as reference line",
             "exerciseType": "Exercise type",
             "programming": "Programming",
             "quiz": "Quiz",
@@ -201,6 +210,13 @@
                 "lowest": "Lowest performing third",
                 "average": "Average performing third",
                 "best": "Best performing third"
+            },
+            "calendarWeek": "Calendar Week",
+            "scopeButton": {
+                "recentWeekButton": "Recent activity",
+                "recentWeekTooltip": "Includes the activity of the last 17 weeks. If the course started less than 17 weeks ago, the data starts at its start date.",
+                "lifetimeOverviewButtonLabel": "Lifetime overview",
+                "lifetimeOverviewTooltip": "Shows the period starting from the course start date until the current date. If the course is already finished, the data ends at its end date."
             }
         }
     }

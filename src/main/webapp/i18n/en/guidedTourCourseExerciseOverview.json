@@ -51,6 +51,14 @@
                 "headline": "Start with your first programming exercise",
                 "content": "Click on the <tt>Start exercise</tt> button to start working on the exercise. This action takes a few seconds, since a personal repository is being set up for you in the background"
             },
+            "startExerciseWait": {
+                "headline": "Start with your first programming exercise",
+                "content": "Please stand by while Artemis sets up your personal repository..."
+            },
+            "repositoryCreated": {
+                "headline": "Your repository has been created",
+                "content": "Your repository is ready to be cloned. Proceed with the next step to learn more."
+            },
             "cloneRepository": {
                 "headline": "Clone repository in SourceTree",
                 "content": "Watch the following video to learn how to clone a git repository in SourceTree. After this step, you should click on the <tt>X</tt> button in the top right to stop the tutorial and apply the steps you saw in the video. Afterwards, resume the tutorial from your account menu",

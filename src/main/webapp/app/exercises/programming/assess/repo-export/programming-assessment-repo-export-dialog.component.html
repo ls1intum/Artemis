@@ -44,7 +44,7 @@
         <ng-container *ngIf="exercise.isAtLeastInstructor && !singleParticipantMode && !isRepoExportForMultipleExercises">
             <div *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR']" class="checkbox">
                 <label class="control-label">
-                    <input type="checkbox" name="allStudents" [(ngModel)]="repositoryExportOptions.exportAllParticipants" />
+                    <input class="form-check-input" type="checkbox" name="allStudents" [(ngModel)]="repositoryExportOptions.exportAllParticipants" />
                     <strong [jhiTranslate]="'artemisApp.programmingExercise.export.' + (exercise.teamMode ? 'downloadAllTeams' : 'downloadAllStudents')">
                         Or download the repositories of all {{ exercise.teamMode ? 'teams' : 'students' }}
                     </strong>
@@ -54,7 +54,7 @@
         <ng-container *ngIf="!singleParticipantMode">
             <div class="checkbox">
                 <label class="control-label">
-                    <input type="checkbox" name="filterLateSubmissions" [(ngModel)]="this.repositoryExportOptions.filterLateSubmissions" />
+                    <input class="form-check-input" type="checkbox" name="filterLateSubmissions" [(ngModel)]="this.repositoryExportOptions.filterLateSubmissions" />
                     <strong jhiTranslate="artemisApp.programmingExercise.export.filterLateSubmissions">Filter late submissions</strong>
                 </label>
             </div>
@@ -72,7 +72,7 @@
         </ng-container>
         <div *ngIf="!singleParticipantMode" class="checkbox">
             <label class="control-label">
-                <input type="checkbox" name="addParticipantName" [(ngModel)]="this.repositoryExportOptions.addParticipantName" />
+                <input class="form-check-input" type="checkbox" name="addParticipantName" [(ngModel)]="this.repositoryExportOptions.addParticipantName" />
                 <strong
                     *ngIf="!isRepoExportForMultipleExercises"
                     [jhiTranslate]="'artemisApp.programmingExercise.export.' + (!isRepoExportForMultipleExercises && exercise.teamMode ? 'addTeamName' : 'addStudentName')"
@@ -86,21 +86,21 @@
         </div>
         <div class="checkbox">
             <label class="control-label">
-                <input type="checkbox" name="combineStudentCommits" [(ngModel)]="this.repositoryExportOptions.combineStudentCommits" />
+                <input class="form-check-input" type="checkbox" name="combineStudentCommits" [(ngModel)]="this.repositoryExportOptions.combineStudentCommits" />
                 <strong jhiTranslate="artemisApp.programmingExercise.export.combineStudentCommits">Combine all changes after instructor into one commit</strong>
             </label>
         </div>
         <ng-container *ngIf="exercise.isAtLeastInstructor">
             <div class="checkbox">
                 <label class="control-label">
-                    <input type="checkbox" name="anonymizeStudentCommits" [(ngModel)]="this.repositoryExportOptions.anonymizeStudentCommits" checked />
+                    <input class="form-check-input" type="checkbox" name="anonymizeStudentCommits" [(ngModel)]="this.repositoryExportOptions.anonymizeStudentCommits" checked />
                     <strong jhiTranslate="artemisApp.programmingExercise.export.anonymizeStudentCommits">Anonymize all of the student's commits</strong>
                 </label>
             </div>
         </ng-container>
         <div class="checkbox">
             <label class="control-label">
-                <input type="checkbox" name="normalizeCodeStyle" [(ngModel)]="this.repositoryExportOptions.normalizeCodeStyle" />
+                <input class="form-check-input" type="checkbox" name="normalizeCodeStyle" [(ngModel)]="this.repositoryExportOptions.normalizeCodeStyle" />
                 <strong jhiTranslate="artemisApp.programmingExercise.export.normalizeCodeStyle">Normalize code style (line endings, encoding)</strong>
             </label>
         </div>

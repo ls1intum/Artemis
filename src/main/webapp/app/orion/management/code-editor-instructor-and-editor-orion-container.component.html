@@ -70,7 +70,6 @@
                 [participation]="selectedParticipation!"
                 [btnSize]="ButtonSize.MEDIUM"
             ></jhi-programming-exercise-student-trigger-build-button>
-            <jhi-exercise-hint-student *ngIf="exercise && this.selectedRepository === REPOSITORY.ASSIGNMENT" [exerciseId]="exercise.id!" class="me-2"></jhi-exercise-hint-student>
             <jhi-ide-button class="ms-1" [buttonLoading]="orionState.building" buttonLabel="{{ 'artemisApp.editor.submit' | artemisTranslate }}" (clickHandler)="submit()">
             </jhi-ide-button>
             <jhi-ide-button

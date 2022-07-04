@@ -1,16 +1,25 @@
 package de.tum.in.www1.artemis.service;
 
+import java.time.ZonedDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 
+import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.Result;
+import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.enumeration.QuizMode;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.*;
 import de.tum.in.www1.artemis.repository.*;
-import de.tum.in.www1.artemis.service.scheduled.quiz.QuizScheduleService;
+import de.tum.in.www1.artemis.service.scheduled.cache.quiz.QuizScheduleService;
+import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
+import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
+import de.tum.in.www1.artemis.web.rest.util.PageUtil;
 
 @Service
 public class QuizExerciseService {
@@ -31,9 +40,13 @@ public class QuizExerciseService {
 
     private final QuizStatisticService quizStatisticService;
 
+    private final QuizBatchService quizBatchService;
+
+    private final AuthorizationCheckService authCheckService;
+
     public QuizExerciseService(QuizExerciseRepository quizExerciseRepository, DragAndDropMappingRepository dragAndDropMappingRepository, ResultRepository resultRepository,
             ShortAnswerMappingRepository shortAnswerMappingRepository, QuizSubmissionRepository quizSubmissionRepository, QuizScheduleService quizScheduleService,
-            QuizStatisticService quizStatisticService) {
+            QuizStatisticService quizStatisticService, QuizBatchService quizBatchService, AuthorizationCheckService authCheckService) {
         this.quizExerciseRepository = quizExerciseRepository;
         this.dragAndDropMappingRepository = dragAndDropMappingRepository;
         this.shortAnswerMappingRepository = shortAnswerMappingRepository;
@@ -41,6 +54,8 @@ public class QuizExerciseService {
         this.quizSubmissionRepository = quizSubmissionRepository;
         this.quizScheduleService = quizScheduleService;
         this.quizStatisticService = quizStatisticService;
+        this.quizBatchService = quizBatchService;
+        this.authCheckService = authCheckService;
     }
 
     /**
@@ -145,6 +160,20 @@ public class QuizExerciseService {
             }
         }
 
+        if (quizExercise.getQuizBatches() != null) {
+            for (QuizBatch quizBatch : quizExercise.getQuizBatches()) {
+                quizBatch.setQuizExercise(quizExercise);
+                if (quizExercise.getQuizMode() == QuizMode.SYNCHRONIZED) {
+                    if (quizBatch.getStartTime() != null) {
+                        quizExercise.setDueDate(quizBatch.getStartTime().plusSeconds(quizExercise.getDuration() + Constants.QUIZ_GRACE_PERIOD_IN_SECONDS));
+                    }
+                }
+                else {
+                    quizBatch.setStartTime(quizBatchService.quizBatchStartDate(quizExercise, quizBatch.getStartTime()));
+                }
+            }
+        }
+
         // Note: save will automatically remove deleted questions from the exercise and deleted answer options from the questions
         // and delete the now orphaned entries from the database
         log.debug("Save quiz to database: {}", quizExercise);
@@ -198,7 +227,7 @@ public class QuizExerciseService {
             // update Successful-Flag in Result
             StudentParticipation studentParticipation = (StudentParticipation) result.getParticipation();
             studentParticipation.setExercise(quizExercise);
-            result.evaluateSubmission();
+            result.evaluateQuizSubmission();
 
             submissions.add(quizSubmission);
         }
@@ -380,11 +409,10 @@ public class QuizExerciseService {
         QuizExercise quizExercise = quizExerciseRepository.findByIdWithQuestionsAndStatisticsElseThrow(exerciseId);
 
         // for quizzes, we need to delete the statistics, and we need to reset the quiz to its original state
-        quizExercise.setIsVisibleBeforeStart(Boolean.FALSE);
-        quizExercise.setIsPlannedToStart(Boolean.FALSE);
-        quizExercise.setAllowedNumberOfAttempts(null);
         quizExercise.setIsOpenForPractice(Boolean.FALSE);
-        quizExercise.setReleaseDate(null);
+        quizExercise.setReleaseDate(ZonedDateTime.now().plusYears(1));
+        quizExercise.setDueDate(null);
+        quizExercise.setQuizBatches(Set.of());
 
         quizExercise = save(quizExercise);
 
@@ -399,5 +427,39 @@ public class QuizExerciseService {
     public void cancelScheduledQuiz(Long quizExerciseId) {
         quizScheduleService.cancelScheduledQuizStart(quizExerciseId);
         quizScheduleService.clearQuizData(quizExerciseId);
+    }
+
+    /**
+     * Update a QuizExercise so that it ends at a specific date and moves the start date of the batches as required. Does not save the quiz.
+     * @param quizExercise  The quiz to end
+     * @param endDate       When the quize should end
+     */
+    public void endQuiz(QuizExercise quizExercise, ZonedDateTime endDate) {
+        quizExercise.setDueDate(ZonedDateTime.now().truncatedTo(ChronoUnit.SECONDS));
+        quizExercise.getQuizBatches().forEach(batch -> batch.setStartTime(quizBatchService.quizBatchStartDate(quizExercise, batch.getStartTime())));
+    }
+
+    /**
+     * Search for all quiz exercises fitting a {@link PageableSearchDTO search query}. The result is paged,
+     * meaning that there is only a predefined portion of the result returned to the user, so that the server doesn't
+     * have to send hundreds/thousands of exercises if there are that many in Artemis.
+     *
+     * @param search The search query defining the search term and the size of the returned page
+     * @param user The user for whom to fetch all available exercises
+     * @return A wrapper object containing a list of all found exercises and the total number of pages
+     */
+    public SearchResultPageDTO<QuizExercise> getAllOnPageWithSize(final PageableSearchDTO<String> search, final User user) {
+        final var pageable = PageUtil.createExercisePageRequest(search);
+        final var searchTerm = search.getSearchTerm();
+        final Page<QuizExercise> exercisePage;
+        if (authCheckService.isAdmin(user)) {
+            exercisePage = quizExerciseRepository
+                    .findByTitleIgnoreCaseContainingOrCourse_TitleIgnoreCaseContainingOrExerciseGroup_Exam_TitleIgnoreCaseContainingOrExerciseGroup_Exam_Course_TitleIgnoreCaseContaining(
+                            searchTerm, searchTerm, searchTerm, searchTerm, pageable);
+        }
+        else {
+            exercisePage = quizExerciseRepository.findByTitleInExerciseOrCourseAndUserHasAccessToCourse(searchTerm, searchTerm, user.getGroups(), pageable);
+        }
+        return new SearchResultPageDTO<>(exercisePage.getContent(), exercisePage.getTotalPages());
     }
 }

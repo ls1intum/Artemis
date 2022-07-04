@@ -74,7 +74,7 @@ export class CodeEditorSubmissionService extends DomainDependentService implemen
     }
 
     /**
-     * Returns building state of tis service.
+     * Returns building state of this service.
      */
     getBuildingState() {
         return this.isBuildingSubject.asObservable();

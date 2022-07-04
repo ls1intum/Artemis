@@ -11,7 +11,8 @@ import { CorrectOptionCommand } from 'app/shared/markdown-editor/domainCommands/
 import { DomainCommand } from 'app/shared/markdown-editor/domainCommands/domainCommand';
 import { QuizQuestionEdit } from 'app/exercises/quiz/manage/quiz-question-edit.interface';
 import { generateExerciseHintExplanation } from 'app/shared/util/markdown.util';
-import { faAngleDown, faAngleRight, faTrash } from '@fortawesome/free-solid-svg-icons';
+import { faAngleDown, faAngleRight, faTrash, faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
+import { ScoringType } from 'app/entities/quiz/quiz-question.model';
 
 @Component({
     selector: 'jhi-multiple-choice-question-edit',
@@ -56,6 +57,7 @@ export class MultipleChoiceQuestionEditComponent implements OnInit, QuizQuestion
     faTrash = faTrash;
     faAngleRight = faAngleRight;
     faAngleDown = faAngleDown;
+    faQuestionCircle = faQuestionCircle;
 
     constructor(private artemisMarkdown: ArtemisMarkdownService, private modalService: NgbModal, private changeDetector: ChangeDetectorRef) {}
 
@@ -78,6 +80,12 @@ export class MultipleChoiceQuestionEditComponent implements OnInit, QuizQuestion
             '\n\n' +
             this.question.answerOptions!.map((answerOption) => (answerOption.isCorrect ? '[correct]' : '[wrong]') + ' ' + generateExerciseHintExplanation(answerOption)).join('\n');
         return markdownText;
+    }
+
+    onSingleChoiceChanged(): void {
+        if (this.question.singleChoice) {
+            this.question.scoringType = ScoringType.ALL_OR_NOTHING;
+        }
     }
 
     /**
@@ -125,7 +133,7 @@ export class MultipleChoiceQuestionEditComponent implements OnInit, QuizQuestion
      * 1. Gets a tuple of text and domainCommandIdentifiers and assigns text values according to the domainCommandIdentifiers a
      *    multiple choice question the to the multiple choice question attributes.
      *   (question text, explanation, hint, answerOption (correct/wrong)
-     * 2. The tupple order is the same as the order of the commands in the markdown text inserted by the user
+     * 2. The tuple order is the same as the order of the commands in the markdown text inserted by the user
      * 3. resetMultipleChoicePreview() is triggered to notify the parent component
      *    about the changes within the question and to cacheValidation() since the assigned values have changed
      * @param domainCommands containing tuples of [text, domainCommandIdentifiers]

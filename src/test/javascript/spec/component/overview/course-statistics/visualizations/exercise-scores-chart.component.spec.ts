@@ -5,7 +5,7 @@ import { MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { ExerciseScoresChartComponent } from 'app/overview/visualizations/exercise-scores-chart/exercise-scores-chart.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { of } from 'rxjs';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute } from '@angular/router';
 import { ExerciseScoresChartService, ExerciseScoresDTO } from 'app/overview/visualizations/exercise-scores-chart.service';
 import { RouterTestingModule } from '@angular/router/testing';
 import { ExerciseType } from 'app/entities/exercise.model';
@@ -15,8 +15,9 @@ import { LineChartModule } from '@swimlane/ngx-charts';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { MockTranslateService } from '../../../../helpers/mocks/service/mock-translate.service';
-import { MockRouter } from '../../../../helpers/mocks/mock-router';
 import { GraphColors } from 'app/entities/statistics.model';
+import { ArtemisTestModule } from '../../../../test.module';
+import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
 
 class MockActivatedRoute {
     parent: any;
@@ -42,12 +43,12 @@ describe('ExerciseScoresChartComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [MockModule(LineChartModule), RouterTestingModule.withRoutes([]), MockModule(BrowserAnimationsModule)],
+            imports: [ArtemisTestModule, MockModule(LineChartModule), RouterTestingModule.withRoutes([]), MockModule(BrowserAnimationsModule)],
             declarations: [ExerciseScoresChartComponent, MockPipe(ArtemisTranslatePipe), MockDirective(TranslateDirective)],
             providers: [
                 MockProvider(AlertService),
+                MockProvider(ArtemisNavigationUtilService),
                 { provide: TranslateService, useClass: MockTranslateService },
-                { provide: Router, useClass: MockRouter },
                 MockProvider(ExerciseScoresChartService),
 
                 {
@@ -77,7 +78,7 @@ describe('ExerciseScoresChartComponent', () => {
         const secondExercise = generateExerciseScoresDTO(ExerciseType.QUIZ, 2, 40, 80, 90, dayjs().add(5, 'days'), 'Second Exercise');
 
         const getScoresStub = setUpServiceAndStartComponent([firstExercise, secondExercise]);
-        expect(getScoresStub).toHaveBeenCalledTimes(1);
+        expect(getScoresStub).toHaveBeenCalledOnce();
         expect(component.ngxData).toHaveLength(3);
 
         // datasets[0] is student score
@@ -110,19 +111,19 @@ describe('ExerciseScoresChartComponent', () => {
 
         const getScoresStub = setUpServiceAndStartComponent(exercises);
 
-        expect(getScoresStub).toHaveBeenCalledTimes(1);
+        expect(getScoresStub).toHaveBeenCalledOnce();
         expect(component.ngxData[0].series.map((exercise: any) => exercise.exerciseId)).toEqual([0, 1, 2, 3, 4, 5, 6, 7, 8, 9]);
 
         component.filteredExerciseIDs = [2, 4, 5];
         component.ngOnChanges();
         // should not have to reload the data from the server
-        expect(getScoresStub).toHaveBeenCalledTimes(1);
+        expect(getScoresStub).toHaveBeenCalledOnce();
         // should only contain the not filtered exercises
         expect(component.ngxData[0].series.map((exercise: any) => exercise.exerciseId)).toEqual([0, 1, 3, 6, 7, 8, 9]);
 
         component.filteredExerciseIDs = [];
         component.ngOnChanges();
-        expect(getScoresStub).toHaveBeenCalledTimes(1);
+        expect(getScoresStub).toHaveBeenCalledOnce();
         expect(component.ngxData[0].series.map((exercise: any) => exercise.exerciseId)).toEqual([0, 1, 2, 3, 4, 5, 6, 7, 8, 9]);
     });
 
@@ -147,19 +148,19 @@ describe('ExerciseScoresChartComponent', () => {
         const secondExercise = generateExerciseScoresDTO(ExerciseType.QUIZ, 2, 43, 31, 70, dayjs(), 'second exercise');
 
         setUpServiceAndStartComponent([firstExercise, secondExercise]);
-        const routerMock = TestBed.inject(Router);
-        const routerSpy = jest.spyOn(routerMock, 'navigate');
+        const routingService = TestBed.inject(ArtemisNavigationUtilService);
+        const routingStub = jest.spyOn(routingService, 'routeInNewTab');
         const pointClickEvent = { exerciseId: 2 };
 
         component.onSelect(pointClickEvent);
 
-        expect(routerSpy).toHaveBeenCalledWith(['courses', 1, 'exercises', 2]);
+        expect(routingStub).toHaveBeenCalledWith(['courses', 1, 'exercises', 2]);
 
         pointClickEvent.exerciseId = 1;
 
         component.onSelect(pointClickEvent);
 
-        expect(routerSpy).toHaveBeenCalledWith(['courses', 1, 'exercises', 1]);
+        expect(routingStub).toHaveBeenCalledWith(['courses', 1, 'exercises', 1]);
     });
 
     it('should setup and execute exercise type filter correctly', () => {
@@ -174,13 +175,13 @@ describe('ExerciseScoresChartComponent', () => {
         expect(component.numberOfActiveFilters).toBe(5);
 
         exerciseTypes.forEach((type, index) => {
-            expect(component.typeSet.has(type)).toBe(true);
-            expect(component.chartFilter.get(type)).toBe(true);
+            expect(component.typeSet.has(type)).toBeTrue();
+            expect(component.chartFilter.get(type)).toBeTrue();
 
             component.toggleType(type);
 
             expect(component.numberOfActiveFilters).toBe(4 - index);
-            expect(component.chartFilter.get(type)).toBe(false);
+            expect(component.chartFilter.get(type)).toBeFalse();
 
             component.ngxData.forEach((line: any) => {
                 expect(line.series.filter((exerciseEntry: any) => exerciseEntry.exerciseType === exerciseDTOs[index].exerciseType)).toHaveLength(0);

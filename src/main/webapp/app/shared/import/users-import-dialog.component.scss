@@ -34,7 +34,7 @@ $error-bg-color: #f8d7da;
     }
 }
 
-.import-success {
+table.table.table-striped .import-success {
     td,
     th {
         color: $success-text-color;
@@ -42,7 +42,7 @@ $error-bg-color: #f8d7da;
     }
 }
 
-.import-fail {
+table.table.table-striped .import-fail {
     td,
     th {
         color: $error-text-color;

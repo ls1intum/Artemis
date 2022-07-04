@@ -74,6 +74,7 @@
                 "warning": "Durch die Aktualisierung dieses Feldes wird der Notenschlüssel für den Kurs aktualisiert (falls er existiert), sodass die Punktzahl für die Notenstufen weiterhin den Prozentsätzen entspricht, angepasst an die neue maximale Punktzahl"
             },
             "accuracyOfScores": "Anzahl der Nachkommastellen bei der Berechnung von Punktzahlen",
+            "defaultProgrammingLanguage": "Standard-Programmiersprache",
             "gradingSystem": "Notenschlüssel",
             "testCourse": {
                 "title": "Testkurs",
@@ -136,6 +137,12 @@
                 "shortname": {
                     "minlength": "Der Kurzname muss mindestens 3 Zeichen lang sein.",
                     "forbidden": "Der Kurzname muss mit einem Buchstaben beginnen und darf keine Sonderzeichen beinhalten."
+                },
+                "startDate": {
+                    "invalid": "Muss vor dem Enddatum des Kurses liegen"
+                },
+                "endDate": {
+                    "invalid": "Muss nach dem Startdatum des Kurses liegen"
                 }
             },
             "courseDashboard": "Kurs-Dashboard",
@@ -152,6 +159,7 @@
                 "searchForUsers": "Nutzer:in zu dieser Kursgruppe hinzufügen durch Suchen nach Login oder Namen",
                 "searchNoResults": "Kein:e Nutzer:innen gefunden",
                 "login": "Login",
+                "registrationNumber": "Matrikelnummer",
                 "name": "Name",
                 "email": "E-Mail",
                 "removeFromGroup": {
@@ -179,7 +187,8 @@
                 "moreFeedbackTitle": "Insgesamte Feedbackanfragen",
                 "averageStudentScoreTitle": "Durchschnittliche Punktzahl der Studierenden"
             },
-            "activeStudents": "Aktive Studierende: {{ students }}"
+            "activeStudents": "Aktive Studierende: {{ students }}",
+            "notStartedYet": "Der Kurs hat noch nicht offiziell begonnen. Offizieller Kursstart:"
         },
         "courseStatistics": {
             "statistics": "Statistiken",
@@ -190,7 +199,7 @@
             "activeStudents": "Aktive Studierende",
             "activeStudentsExplanation": "Aktive Studierende sind Studierende, die in der entsprechenden Woche mindestens eine Lösung eingereicht haben.",
             "average": "Durchschnitt: ",
-            "averageReferenceLineCheckboxLabel": "Zeige den Durchschnitt als Referenz-Linie",
+            "meanReferenceLineCheckboxLabel": "Zeige den Durchschnitt als Referenz-Linie",
             "exerciseType": "Aufgabentyp",
             "programming": "Programmierung",
             "quiz": "Quiz",
@@ -201,6 +210,13 @@
                 "lowest": "Unteres Performance-Drittel",
                 "average": "Durchschnittliches Performance-Drittel",
                 "best": "Bestes Performance-Drittel"
+            },
+            "calendarWeek": "Kalenderwoche",
+            "scopeButton": {
+                "recentWeekButton": "Jüngste Aktivität",
+                "recentWeekTooltip": "Zeigt die Aktivität der letzten 17 Wochen. Begann der Kurs vor weniger als 17 Wochen, beginnt die Anzeige zum Startdatum.",
+                "lifetimeOverviewButtonLabel": "Kursdauerüberblick",
+                "lifetimeOverviewTooltip": "Zeigt die Periode von Kurstart bis jetzt. Ist der Kurs bereits beendet, endet die Anzeige zum Enddatum des Kurses."
             }
         }
     }

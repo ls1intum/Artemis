@@ -1,0 +1,14 @@
+/* stylelint-disable */
+@use 'sass:meta';
+@use 'generate-css-vars';
+
+@import 'default-variables';
+
+html {
+    @include generate-css-vars.generate('default-variables');
+}
+
+@import '../global';
+
+// Needed for highlighting code in the markdown editor
+@import '~highlight.js/styles/vs.css';

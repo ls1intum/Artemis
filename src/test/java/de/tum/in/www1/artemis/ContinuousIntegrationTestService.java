@@ -8,7 +8,6 @@ import java.net.URL;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 
 import org.apache.commons.io.FileUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -71,17 +70,17 @@ public class ContinuousIntegrationTestService {
         String currentLocalFolderName = "currentFolderName";
         localRepo.configureRepos("testLocalRepo", "testOriginRepo");
         // add file to the repository folder
-        Path filePath = Paths.get(localRepo.localRepoFile + "/" + currentLocalFileName);
+        Path filePath = Path.of(localRepo.localRepoFile + "/" + currentLocalFileName);
         var file = Files.createFile(filePath).toFile();
         // write content to the created file
         FileUtils.write(file, currentLocalFileContent, Charset.defaultCharset());
         // add folder to the repository folder
-        filePath = Paths.get(localRepo.localRepoFile + "/" + currentLocalFolderName);
+        filePath = Path.of(localRepo.localRepoFile + "/" + currentLocalFolderName);
         Files.createDirectory(filePath).toFile();
 
         GitUtilService.MockFileRepositoryUrl localRepoUrl = new GitUtilService.MockFileRepositoryUrl(localRepo.localRepoFile);
         // create a participation
-        participation = database.addStudentParticipationForProgrammingExerciseForLocalRepo(programmingExercise, "student1", localRepoUrl.getURL());
+        participation = database.addStudentParticipationForProgrammingExerciseForLocalRepo(programmingExercise, "student1", localRepoUrl.getURI());
         assertThat(programmingExercise).as("Exercise was correctly set").isEqualTo(participation.getProgrammingExercise());
 
         // mock return of git path
@@ -178,5 +177,11 @@ public class ContinuousIntegrationTestService {
         assertThat(health.getAdditionalInfo()).containsEntry("url", ciServerUrl);
         assertThat(health.isUp()).isFalse();
         assertThat(health.getException()).isNotNull();
+    }
+
+    public void testConfigureBuildPlan() throws Exception {
+        mockDelegate.mockConfigureBuildPlan(participation, defaultBranch);
+        continuousIntegrationService.configureBuildPlan(participation, defaultBranch);
+        mockDelegate.verifyMocks();
     }
 }

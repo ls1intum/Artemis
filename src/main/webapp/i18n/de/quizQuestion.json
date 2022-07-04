@@ -32,7 +32,8 @@
             "failed": "Es tut uns leid, dass das Bild nicht geladen werden konnte. Bitte versuche es erneut, indem du auf den Button klickst.",
             "showSampleSolution": "Blende die Musterlösung ein",
             "hideSampleSolution": "Blende die Musterlösung aus",
-            "allOptions": "Wähle bitte alle richtigen Antwortmöglichkeiten aus."
+            "allOptions": "Wähle bitte alle richtigen Antwortmöglichkeiten aus.",
+            "singleOption": "Wähle bitte die richtige Antwortmöglichkeit aus."
         }
     }
 }

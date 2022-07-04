@@ -1,8 +1,6 @@
-@import 'src/main/webapp/app/overview/overview-vars';
-
 .course-table {
     padding: 5px 0;
-    background-color: $light-background-color;
+    background-color: var(--overview-light-background-color);
     border-radius: 3px;
     transition: box-shadow 0.1s linear;
 }
@@ -21,7 +19,7 @@
         margin-top: 16px;
         margin-left: -12px;
         margin-right: -12px;
-        border-bottom: 1px solid $light-border-color;
+        border-bottom: 1px solid var(--overview-light-border-color);
     }
 }
 

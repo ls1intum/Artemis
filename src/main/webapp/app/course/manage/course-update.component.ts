@@ -22,6 +22,7 @@ import { OrganizationSelectorComponent } from 'app/shared/organization-selector/
 import { faBan, faExclamationTriangle, faQuestionCircle, faSave, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { base64StringToBlob } from 'app/utils/blob-util';
 import { ImageCroppedEvent } from 'app/shared/image-cropper/interfaces/image-cropped-event.interface';
+import { ProgrammingLanguage } from 'app/entities/programming-exercise.model';
 
 @Component({
     selector: 'jhi-course-update',
@@ -30,6 +31,7 @@ import { ImageCroppedEvent } from 'app/shared/image-cropper/interfaces/image-cro
 })
 export class CourseUpdateComponent implements OnInit {
     CachingStrategy = CachingStrategy;
+    ProgrammingLanguage = ProgrammingLanguage;
 
     @ViewChild(ColorSelectorComponent, { static: false }) colorSelector: ColorSelectorComponent;
     readonly ARTEMIS_DEFAULT_COLOR = ARTEMIS_DEFAULT_COLOR;
@@ -58,8 +60,9 @@ export class CourseUpdateComponent implements OnInit {
 
     // NOTE: These constants are used to define the maximum length of complaints and complaint responses.
     // This is the maximum value allowed in our database. These values must be the same as in Constants.java
-    readonly COMPLAINT_RESPONSE_TEXT_LIMIT = 5000;
-    readonly COMPLAINT_TEXT_LIMIT = 5000;
+    // Currently set to 65535 as this is the limit of TEXT
+    readonly COMPLAINT_RESPONSE_TEXT_LIMIT = 65535;
+    readonly COMPLAINT_TEXT_LIMIT = 65535;
 
     constructor(
         private courseService: CourseManagementService,
@@ -148,6 +151,7 @@ export class CourseUpdateComponent implements OnInit {
                 accuracyOfScores: new FormControl(this.course.accuracyOfScores, {
                     validators: [Validators.min(1)],
                 }),
+                defaultProgrammingLanguage: new FormControl(this.course.defaultProgrammingLanguage),
                 maxComplaints: new FormControl(this.course.maxComplaints, {
                     validators: [Validators.required, Validators.min(0)],
                 }),
@@ -452,6 +456,31 @@ export class CourseUpdateComponent implements OnInit {
      */
     updateRegistrationConfirmationMessage(message: string) {
         this.courseForm.controls['registrationConfirmationMessage'].setValue(message);
+    }
+
+    /**
+     * Returns whether the dates are valid or not
+     * @return true if the dats are valid
+     */
+    get isValidDate(): boolean {
+        // allow instructors to set startDate and endDate later
+        if (this.atLeastOneDateNotExisting()) {
+            return true;
+        }
+        return dayjs(this.course.startDate).isBefore(this.course.endDate);
+    }
+
+    /**
+     * Auxiliary method checking if at least one date is not set or simply deleted by the user
+     * @private
+     */
+    private atLeastOneDateNotExisting(): boolean {
+        // we need to take into account that the date is only deleted by the user, which leads to a invalid state of the date
+        return !this.course.startDate || !this.course.endDate || !this.course.startDate.isValid() || !this.course.endDate.isValid();
+    }
+
+    get isValidConfiguration(): boolean {
+        return this.isValidDate;
     }
 }
 

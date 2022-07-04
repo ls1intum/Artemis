@@ -4,9 +4,11 @@
             "home": {
                 "title": "Quiz Exercises",
                 "createLabel": "Create Quiz",
+                "editLabel": "Edit Quiz",
+                "importLabel": "Import a Quiz",
+                "exportLabel": "Export Quiz Exercises",
                 "createModelDragAndDrop": "Create Drag and Drop Model Quiz",
-                "createOrEditLabel": "Create or edit a Quiz Exercise",
-                "exportLabel": "Export Quiz Exercises"
+                "createOrEditLabel": "Create or edit a Quiz Exercise"
             },
             "created": "Created new Quiz Exercise with identifier {{ param }}",
             "updated": "Updated Quiz Exercise with identifier {{ param }}",
@@ -16,6 +18,9 @@
             },
             "reset": {
                 "question": "Are you sure you want to reset the quiz <strong>{{ title }}</strong>? This action can NOT be undone! <br> This means that all participation, results, and statistics will be deleted, but the quiz questions will remain. Then you can start the quiz again."
+            },
+            "endNow": {
+                "question": "Are you sure you want to end the quiz <strong>{{ title }}</strong> now? This action can NOT be undone! <br> This prevents any further submissions and starts to publish the results."
             },
             "edit": {
                 "title": "Edit Quiz Exercise for {{ param }}",
@@ -29,9 +34,6 @@
                 "testRunSubmissionsExist": "This quiz contains submissions in one of the test runs for this exam. Delete the test run to edit the answer options."
             },
             "saveError": "An error occurred while saving. Please review your input data and try again later.",
-            "new": {
-                "title": "New Quiz Exercise for {{ param }}"
-            },
             "export": {
                 "title": "All quiz questions for course {{ param }}",
                 "export": "Export",
@@ -46,7 +48,7 @@
             },
             "quizStatus": {
                 "closed": "Closed",
-                "hidden": "Hidden",
+                "invisible": "Invisible",
                 "openForPractice": "Open for practice",
                 "active": "Active",
                 "visible": "Visible"
@@ -61,7 +63,8 @@
             "isOpenForPractice": "Is Open For Practice",
             "isPlannedToStart": "Is Planned To Start",
             "openForPractice": "Release For Practice",
-            "startNow": "Start Now",
+            "startQuiz": "Start Quiz",
+            "startBatch": "Start Batch",
             "showNow": "Set Visible",
             "duration": "Duration",
             "minutes": "minutes",
@@ -87,7 +90,12 @@
             "selectExam": "Select an Exam",
             "selectQuizExercise": "Select a Quiz Exercise",
             "status": "Status",
-            "startTime": "Start Time",
+            "releaseDate": "Visible from",
+            "startTime": "Start of working time",
+            "startTimeErrorSynchronized": "Start of working time should be after Visible from",
+            "startTimeError": "Start of working time should be after Visible from and before the Due Date",
+            "setStartTime": "Schedule Quiz Start",
+            "dueDateError": "Due Date must be after Visible from. Please check your selection again",
             "quizPointStatistic": "Quiz Point Statistic",
             "quiz": "Quiz",
             "totalPoints": "Overall Points",
@@ -101,7 +109,11 @@
                 "wait": "Please wait until the quiz has ended to see your results.",
                 "result": "You completed the quiz with {{userScore}} out of {{maxScore}} points ({{percentage}} %).",
                 "waitForStart": "Please wait.<br><br>This page will refresh automatically, when the quiz starts.",
-                "timeUntilPlannedStart": "Time until planned start:"
+                "timeUntilPlannedStart": "Time until planned start:",
+                "enterPassword": "Enter the password to join the quiz:",
+                "startNow": "Start your quiz run now",
+                "noMoreAttempts": "You have already used all your allowed attempts at this quiz.",
+                "alreadyAttempted": "You have already participated in this quiz."
             },
             "isSaving": "Saving answers...",
             "lastSaved": "Saved",
@@ -165,6 +177,7 @@
                 "questionTitle": "Question {{index}}: The title is missing.",
                 "questionScore": "Question {{index}}: At least one point is required per question.",
                 "questionCorrectAnswerOption": "Question {{index}}: No answer option is correct.",
+                "questionSingleChoiceCorrectAnswerOptions": "Question {{index}}: Multiple answer options are correct for a single choice question.",
                 "questionCorrectMapping": "Question {{index}}: No correct mapping.",
                 "questionUnsolvable": "Question {{index}}: The question cannot be answered correctly without using a drag item twice.",
                 "misleadingCorrectMapping": "Question {{index}}: You have defined at least one correct mapping (or group of correct mappings), that when used, makes it impossible to answer the question correctly.",
@@ -211,11 +224,15 @@
                 "scoringTypeProportional": "Scoring Proportional with Penalty: ",
                 "scoringTypeProportionalWithout": "Scoring Proportional without Penalty: ",
                 "scoringTypeAllOrNothing": "Scoring All or Nothing: ",
+                "scoringTypeSingleChoice": "Scoring Single Choice: ",
                 "scoringTypeProportionalExplanation": "Every correct answer is awarded with points, every mistake results in a point penalty to prevent guesswork. ",
                 "scoringTypeProportionalWithoutExplanation": "Every correct answer is awarded with points. No points are deducted for mistakes. ",
                 "scoringTypeAllOrNothingExplanation": "You either get all points or none at all.",
+                "scoringTypeSingleChoiceExplanation": "There is only one correct answer.",
                 "multipleChoiceAllOrNothingCorrect": "You have achieved {{paramScore}} {{paramPoint}} of the {{paramQuestionScore}} possible {{paramScorePoint}}. Since you selected all answer options correctly you have received full credit for this question. Great Job!",
                 "multipleChoiceAllOrNothingNotCorrect": "You have achieved {{paramScore}} {{paramPoint}} of the {{paramQuestionScore}} possible {{paramScorePoint}}, since you selected {{paramInTotalRightOptions}} answer {{rightOption}} correctly and {{paramInTotalWrongOptions}} answer {{wrongOption}} incorrectly. Keep trying!",
+                "multipleChoiceSingleChoiceCorrect": "You have achieved {{paramScore}} {{paramPoint}} of the {{paramQuestionScore}} possible {{paramScorePoint}}. Since you selected the correct answer option you have received full credit for this question. Great Job!",
+                "multipleChoiceSingleChoiceNotCorrect": "You have achieved {{paramScore}} {{paramPoint}} of the {{paramQuestionScore}} possible {{paramScorePoint}}, since you didn't select the correct answer option. Keep trying!",
                 "multipleChoiceProp": "You have achieved {{paramScore}} {{paramPoint}} of the {{paramQuestionScore}} possible {{paramScorePoint}}. Each of the {{paramAmountOfAnswerOptions}} options grants you {{paramQuestionScore}}/{{paramAmountOfAnswerOptions}} points for selecting the answer options correctly. You selected {{paramInTotalRightOptions}} answer {{rightOption}} correctly and {{paramInTotalWrongOptions}} answer {{wrongOption}} incorrectly. In total you have",
                 "dragAndDropAllOrNothingCorrect": "You have achieved {{paramScore}} {{paramPoint}} of the {{paramQuestionScore}} possible {{paramScorePoint}}. Since you mapped all the items correctly you have received full credit for this question. Great Job!",
                 "dragAndDropAllOrNothingNotCorrect": "You have achieved {{paramScore}} {{paramPoint}} of the {{paramQuestionScore}} possible {{paramScorePoint}}, since you mapped {{paramRightMapping}} {{rightMap}} correctly and mapped {{paramWrongMappedItems}} {{wrongMap}} incorrectly. Keep trying!",
@@ -249,7 +266,24 @@
                 "explanationTitle": "Similarity",
                 "explanation": "Determines the required similarity between predefined solutions and student solutions in the evaluation for each spot. The value (between 50% and 100%) indicates whether only exactly correct answers (100%) are treated as correct or whether students can have typo(s) in their solutions. The lower the value is, the more typos are allowed in the student solutions (based on the Levenshtein distance https://en.wikipedia.org/wiki/Levenshtein_distance). Example: a value of 85% would allow 1 typo in a word with 5 characters and 2 typos in a word with 10 characters. Please use the preview feature for the quiz if you would like to try out different values."
             },
-            "matchingInfoModalTitle": "Answer Matching Options"
+            "matchingInfoModalTitle": "Answer Matching Options",
+            "quizMode": {
+                "title": "Batch Mode",
+                "synchronized": "Synchronized",
+                "batched": "Batched",
+                "individual": "Individual",
+                "explanation": "Batch Mode controls how students can participate in the quiz.\n\nSynchronized: There is exactly opportunity for all students to participate in the quiz at once.\nBatched: There are multiple opportunities for students to participate in the quiz by using a password.\nIndividual: Students can participate in the quiz by themselves at any time while it is released."
+            },
+            "releaseDateExplanation": {
+                "SYNCHRONIZED": "Synchronized: The date when the quiz becomes visible to students. Students cannot see the questions until the start date.",
+                "BATCHED": "Batched: The date when the quiz becomes visible to students. Students cannot see the questions until a batch is started and they enter the password for it.",
+                "INDIVIDUAL": "Individual: The date when the quiz becomes visible to students. Students can start working on the quiz from this time onward"
+            },
+            "startTimeExplanation": "Set the time when the students are able to see the questions and start answering.",
+            "addBatch": "Add Batch",
+            "join": "Join",
+            "joinFailed": "Unable to join the quiz.",
+            "submitSuccess": "Your answers have been successfully submitted!<br><br>The results will be available after the due date"
         }
     }
 }

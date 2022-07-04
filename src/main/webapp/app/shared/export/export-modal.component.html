@@ -1,0 +1,91 @@
+<form id="csvExportOptionsForm" name="exportOptionForm" role="form" novalidate>
+    <div class="modal-header">
+        <h4 class="modal-title">
+            <span [jhiTranslate]="'export.dialogTitle'"> Export Options </span>
+        </h4>
+        <button type="button" class="btn-close" data-dismiss="modal" aria-hidden="true" (click)="cancel()"></button>
+    </div>
+    <nav ngbNav #nav="ngbNav" [(activeId)]="activeTab" class="nav-tabs">
+        <ng-container ngbNavItem [ngbNavItem]="1">
+            <a ngbNavLink>Excel</a>
+            <ng-template ngbNavContent>
+                <div class="form-group">
+                    <p class="intro-text" jhiTranslate="export.excelFile.introText">Export course scores as an Excel file (.xlsx).</p>
+                </div>
+            </ng-template>
+        </ng-container>
+        <ng-container ngbNavItem [ngbNavItem]="2">
+            <a ngbNavLink>CSV</a>
+            <ng-template ngbNavContent>
+                <div class="form-group">
+                    <p class="intro-text" jhiTranslate="export.csvFile.introText">Select the options used for generating the .csv file.</p>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-control-label" jhiTranslate="export.csvFile.fieldSeparator.label">Field Separator</label>
+                    <div>
+                        <div class="btn-group">
+                            <div
+                                *ngFor="let fieldSeparator of CsvFieldSeparator | keyvalue"
+                                class="btn"
+                                [ngClass]="{ 'btn-primary': options.fieldSeparator === fieldSeparator.value, 'btn-default': options.fieldSeparator !== fieldSeparator.value }"
+                                (click)="setCsvFieldSeparator(fieldSeparator.value)"
+                            >
+                                {{ 'export.csvFile.fieldSeparator.' + fieldSeparator.key.toLowerCase() | artemisTranslate }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-control-label" jhiTranslate="export.csvFile.quoteStrings.label">Quote Strings</label>
+                    <div>
+                        <div class="btn-group">
+                            <div
+                                *ngFor="let quoteString of CsvQuoteStrings | keyvalue"
+                                class="btn"
+                                [ngClass]="{ 'btn-primary': options.quoteStrings === quoteString.value, 'btn-default': options.quoteStrings !== quoteString.value }"
+                                (click)="setCsvQuoteString(quoteString.value)"
+                            >
+                                {{ 'export.csvFile.quoteStrings.' + quoteString.key.toLowerCase() | artemisTranslate }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-control-label" jhiTranslate="export.csvFile.decimalSeparator.label">Decimal Separator</label>
+                    <div>
+                        <div class="btn-group">
+                            <div
+                                *ngFor="let separator of CsvDecimalSeparator | keyvalue"
+                                class="btn"
+                                [ngClass]="{ 'btn-primary': options.decimalSeparator === separator.value, 'btn-default': options.decimalSeparator !== separator.value }"
+                                (click)="setCsvDecimalSeparator(separator.value)"
+                            >
+                                {{ 'export.csvFile.decimalSeparator.' + separator.key.toLowerCase() | artemisTranslate }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </ng-template>
+        </ng-container>
+    </nav>
+    <div class="modal-body">
+        <div [ngbNavOutlet]="nav" class="mt-2"></div>
+    </div>
+    <div class="modal-footer justify-content-between">
+        <div class="flex-grow-1 d-flex justify-content-end">
+            <button type="button" class="btn btn-default cancel me-1" data-dismiss="modal" (click)="cancel()">
+                <fa-icon [icon]="faBan"></fa-icon>&nbsp;<span jhiTranslate="entity.action.cancel">Cancel</span>
+            </button>
+            <button class="btn btn-success" id="finish-button" (click)="onFinish()">
+                <fa-icon [icon]="faDownload" class="me-2"></fa-icon>
+                <span *ngIf="activeTab === 1; else csvExport" jhiTranslate="export.excelFile.buttonText">Export as Excel</span>
+                <ng-template #csvExport>
+                    <span jhiTranslate="export.csvFile.buttonText">Export as CSV</span>
+                </ng-template>
+            </button>
+        </div>
+    </div>
+</form>

@@ -6,14 +6,14 @@
                 : ('artemisApp.moreFeedback.alreadySubmittedSubmissionAuthor' | artemisTranslate)
         }}
         <span [ngbTooltip]="complaint.submittedTime | artemisDate">{{ complaint.submittedTime | artemisTimeAgo }}</span>
-        <span *ngIf="complaint.accepted === true" class="text-light bg-success">
+        <span *ngIf="complaint.accepted === true" class="badge bg-success">
             {{
                 complaint.complaintType === ComplaintType.COMPLAINT
                     ? ('artemisApp.complaint.acceptedLong' | artemisTranslate)
                     : ('artemisApp.moreFeedback.acceptedLong' | artemisTranslate)
             }}
         </span>
-        <span *ngIf="complaint.accepted === false" class="text-light bg-danger">
+        <span *ngIf="complaint.accepted === false" class="badge bg-danger">
             {{ 'artemisApp.complaint.rejectedLong' | artemisTranslate }}
         </span>
     </p>

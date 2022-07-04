@@ -8,12 +8,10 @@
         <div class="mb-3">
             <h5><span jhiTranslate="artemisApp.studentExams.workingTime">Working time</span></h5>
             <p jhiTranslate="artemisApp.examManagement.testRun.setWorkingTime">Set the working time:</p>
-            <form class="d-flex" [formGroup]="workingTimeForm">
-                <div class="me-2">
-                    <input formControlName="minutes" type="number" style="width: 60px; height: 35px" class="text-center" min="0" step="1" required />
-                    :
-                    <input formControlName="seconds" type="number" style="width: 60px; height: 35px" class="text-center" min="0" max="59" step="1" required />
-                </div>
+            <form class="d-flex gap-1 align-items-center" [formGroup]="workingTimeForm">
+                <input formControlName="minutes" type="number" style="width: 70px; height: 35px" class="form-control" min="0" step="1" required />
+                :
+                <input formControlName="seconds" type="number" style="width: 70px; height: 35px" class="form-control" min="0" max="59" step="1" required />
             </form>
         </div>
 

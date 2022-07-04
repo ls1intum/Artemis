@@ -34,12 +34,17 @@ export class ListOfComplaintsComponent implements OnInit {
     complaintsReverseOrder = false;
     complaintsToShow: Complaint[] = [];
     showAddressedComplaints = false;
+    allComplaintsForTutorLoaded = false;
+    isLoadingAllComplaints = false;
+    filterOption?: number;
 
     loading = true;
     // Icons
     faSort = faSort;
     faFolderOpen = faFolderOpen;
     faExclamationTriangle = faExclamationTriangle;
+
+    readonly FilterOptionAddressedComplaints = 4; // the number passed by the chart through the route indicating that only addressed complaints should be shown
 
     constructor(
         public complaintService: ComplaintService,
@@ -63,6 +68,11 @@ export class ListOfComplaintsComponent implements OnInit {
             this.correctionRound = Number(queryParams['correctionRound']);
         });
         this.route.data.subscribe((data) => (this.complaintType = data.complaintType));
+        this.route.queryParams.subscribe((queryParams) => {
+            if (queryParams['filterOption']) {
+                this.filterOption = Number(queryParams['filterOption']);
+            }
+        });
         this.loadComplaints();
     }
 
@@ -87,11 +97,24 @@ export class ListOfComplaintsComponent implements OnInit {
                 complaintResponse = this.complaintService.findAllByCourseId(this.courseId, this.complaintType);
             }
         }
+        this.subscribeToComplaintResponse(complaintResponse);
+    }
 
+    subscribeToComplaintResponse(complaintResponse: Observable<HttpResponse<Complaint[]>>) {
         complaintResponse.subscribe({
             next: (res) => {
                 this.complaints = res.body!;
-                this.complaintsToShow = this.complaints.filter((complaint) => complaint.accepted === undefined);
+                if (this.filterOption === this.FilterOptionAddressedComplaints) {
+                    this.showAddressedComplaints = true;
+                }
+
+                if (!this.showAddressedComplaints) {
+                    this.complaintsToShow = this.complaints.filter((complaint) => complaint.accepted === undefined);
+                } else if (this.filterOption === this.FilterOptionAddressedComplaints) {
+                    this.complaintsToShow = this.complaints.filter((complaint) => complaint.accepted !== undefined);
+                } else {
+                    this.complaintsToShow = this.complaints;
+                }
 
                 if (this.complaints.some((complaint) => complaint.student)) {
                     this.hasStudentInformation = true;
@@ -151,8 +174,20 @@ export class ListOfComplaintsComponent implements OnInit {
         if (this.showAddressedComplaints) {
             this.complaintsToShow = this.complaints;
         } else {
-            this.complaintsToShow = this.complaints.filter((complaint) => complaint.accepted === undefined);
+            this.resetFilterOptions();
         }
+    }
+
+    /**
+     * Used to lazy-load all complaints from the server for a tutor or editor.
+     */
+    triggerShowAllComplaints() {
+        this.isLoadingAllComplaints = true;
+        let complaintResponse: Observable<HttpResponse<Complaint[]>>;
+        complaintResponse = this.complaintService.findAllWithoutStudentInformationForCourseId(this.courseId, this.complaintType);
+        this.subscribeToComplaintResponse(complaintResponse);
+        this.isLoadingAllComplaints = false;
+        this.allComplaintsForTutorLoaded = true;
     }
 
     calculateComplaintLockStatus(complaint: Complaint) {
@@ -174,5 +209,15 @@ export class ListOfComplaintsComponent implements OnInit {
         } else {
             return this.translateService.instant('artemisApp.locks.notUnlocked');
         }
+    }
+
+    updateFilteredComplaints(complaints: Complaint[]) {
+        this.complaintsToShow = complaints.filter((complaint) => complaint.accepted === undefined);
+    }
+
+    resetFilterOptions(): void {
+        this.updateFilteredComplaints(this.complaints);
+        this.showAddressedComplaints = false;
+        this.filterOption = undefined;
     }
 }

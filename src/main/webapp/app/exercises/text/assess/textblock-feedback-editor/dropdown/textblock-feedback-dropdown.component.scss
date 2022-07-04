@@ -1,0 +1,37 @@
+.dropdown-item {
+    padding: 0;
+}
+
+a:hover {
+    text-decoration: none !important;
+    color: var(--bs-body-color);
+}
+
+.table > :not(caption) > * > * {
+    padding: 0.25rem 0.3rem;
+}
+
+.layout-table {
+    margin-bottom: 0;
+
+    .td-score {
+        min-width: 44px;
+        width: 44px;
+        padding-right: 0 !important;
+    }
+
+    .td-usage-count {
+        width: 37px;
+    }
+
+    .td-instruction {
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: break-spaces;
+        width: max-content;
+        max-width: 30vw;
+    }
+}

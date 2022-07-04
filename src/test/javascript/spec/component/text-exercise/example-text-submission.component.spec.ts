@@ -2,7 +2,7 @@ import { HttpErrorResponse, HttpHeaders, HttpResponse } from '@angular/common/ht
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { FormsModule } from '@angular/forms';
 import { By } from '@angular/platform-browser';
-import { ActivatedRoute, ActivatedRouteSnapshot, convertToParamMap } from '@angular/router';
+import { ActivatedRoute, ActivatedRouteSnapshot, convertToParamMap, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { AssessmentInstructionsComponent } from 'app/assessment/assessment-instructions/assessment-instructions/assessment-instructions.component';
 import { ExampleSubmission } from 'app/entities/example-submission.model';
@@ -29,9 +29,11 @@ import { ArtemisTestModule } from '../../test.module';
 import { TextBlockRef } from 'app/entities/text-block-ref.model';
 import { UnreferencedFeedbackComponent } from 'app/exercises/shared/unreferenced-feedback/unreferenced-feedback.component';
 import { AlertService } from 'app/core/util/alert.service';
+import { DebugElement } from '@angular/core';
 
 describe('ExampleTextSubmissionComponent', () => {
     let fixture: ComponentFixture<ExampleTextSubmissionComponent>;
+    let debugElement: DebugElement;
     let comp: ExampleTextSubmissionComponent;
     let exerciseService: ExerciseService;
     let exampleSubmissionService: ExampleSubmissionService;
@@ -50,7 +52,7 @@ describe('ExampleTextSubmissionComponent', () => {
     beforeEach(() => {
         const route: ActivatedRoute = {
             snapshot: {
-                paramMap: convertToParamMap({}),
+                paramMap: convertToParamMap({ exerciseId: EXERCISE_ID }),
                 queryParamMap: convertToParamMap({}),
             },
         } as any;
@@ -79,11 +81,12 @@ describe('ExampleTextSubmissionComponent', () => {
 
         fixture = TestBed.createComponent(ExampleTextSubmissionComponent);
         comp = fixture.componentInstance;
-        activatedRouteSnapshot = fixture.debugElement.injector.get(ActivatedRoute).snapshot;
-        exerciseService = fixture.debugElement.injector.get(ExerciseService);
-        exampleSubmissionService = fixture.debugElement.injector.get(ExampleSubmissionService);
-        assessmentsService = fixture.debugElement.injector.get(TextAssessmentService);
-        alertService = TestBed.inject(AlertService);
+        debugElement = fixture.debugElement;
+        activatedRouteSnapshot = debugElement.injector.get(ActivatedRoute).snapshot;
+        exerciseService = debugElement.injector.get(ExerciseService);
+        exampleSubmissionService = debugElement.injector.get(ExampleSubmissionService);
+        assessmentsService = debugElement.injector.get(TextAssessmentService);
+        alertService = debugElement.injector.get(AlertService);
         exercise = new TextExercise(undefined, undefined);
         exercise.id = EXERCISE_ID;
         exercise.title = 'Test case exercise';
@@ -115,6 +118,23 @@ describe('ExampleTextSubmissionComponent', () => {
         expect(exampleSubmissionService.get).toHaveBeenCalledWith(EXAMPLE_SUBMISSION_ID);
         expect(assessmentsService.getExampleResult).toHaveBeenCalledWith(EXERCISE_ID, SUBMISSION_ID);
         expect(comp.state.constructor.name).toBe('EditState');
+    }));
+
+    it('should not fail while fetching submission with null result for existing example submission in tutorial submission mode', fakeAsync(() => {
+        // GIVEN
+        // @ts-ignore
+        activatedRouteSnapshot.paramMap.params = { toComplete: 'true' };
+        jest.spyOn(exampleSubmissionService, 'get').mockReturnValue(httpResponse(exampleSubmission));
+        // @ts-ignore
+        jest.spyOn(assessmentsService, 'getExampleResult').mockReturnValue(of(null));
+
+        // WHEN
+        comp.ngOnInit();
+        tick();
+
+        // THEN
+        expect(comp.result).not.toBeNull();
+        expect(comp.result!.submission).toBe(comp.submission);
     }));
 
     it('should only fetch exercise for new example submission and stay in new state', fakeAsync(() => {
@@ -188,7 +208,7 @@ describe('ExampleTextSubmissionComponent', () => {
 
         // WHEN
         fixture.detectChanges();
-        fixture.debugElement.query(By.css('#saveNewAssessment')).nativeElement.click();
+        debugElement.query(By.css('#saveNewAssessment')).nativeElement.click();
 
         // THEN
         expect(assessmentsService.saveExampleAssessment).toHaveBeenCalledWith(EXERCISE_ID, EXAMPLE_SUBMISSION_ID, [feedback], [textBlock1]);
@@ -198,7 +218,7 @@ describe('ExampleTextSubmissionComponent', () => {
         const alertErrorSpy = jest.spyOn(alertService, 'error');
         comp.saveAssessments();
 
-        expect(alertErrorSpy).toHaveBeenCalledTimes(1);
+        expect(alertErrorSpy).toHaveBeenCalledOnce();
     });
 
     it('editing submission from assessment state switches state', fakeAsync(() => {
@@ -230,7 +250,7 @@ describe('ExampleTextSubmissionComponent', () => {
         // WHEN
         fixture.detectChanges();
         tick();
-        fixture.debugElement.query(By.css('#editSampleSolution')).nativeElement.click();
+        debugElement.query(By.css('#editSampleSolution')).nativeElement.click();
         tick();
 
         // THEN
@@ -271,12 +291,12 @@ describe('ExampleTextSubmissionComponent', () => {
         comp.textBlockRefs[0].initFeedback();
         comp.textBlockRefs[0].feedback!.credits = 2;
         comp.validateFeedback();
-        const tutorParticipationService = fixture.debugElement.injector.get(TutorParticipationService);
+        const tutorParticipationService = debugElement.injector.get(TutorParticipationService);
         jest.spyOn(tutorParticipationService, 'assessExampleSubmission').mockReturnValue(httpResponse(null));
 
         // WHEN
         fixture.detectChanges();
-        fixture.debugElement.query(By.css('#checkAssessment')).nativeElement.click();
+        debugElement.query(By.css('#checkAssessment')).nativeElement.click();
 
         // THEN
         expect(exerciseService.find).toHaveBeenCalledWith(EXERCISE_ID);
@@ -289,7 +309,7 @@ describe('ExampleTextSubmissionComponent', () => {
         const alertErrorSpy = jest.spyOn(alertService, 'error');
         comp.checkAssessment();
 
-        expect(alertErrorSpy).toHaveBeenCalledTimes(1);
+        expect(alertErrorSpy).toHaveBeenCalledOnce();
     });
 
     it('when wrong tutor assessment, upon server response should mark feedback as incorrect', fakeAsync(() => {
@@ -311,7 +331,7 @@ describe('ExampleTextSubmissionComponent', () => {
         expect(feedbackA.correctionStatus).toBe(undefined);
         expect(feedbackB.correctionStatus).toBe(undefined);
 
-        const tutorParticipationService = fixture.debugElement.injector.get(TutorParticipationService);
+        const tutorParticipationService = debugElement.injector.get(TutorParticipationService);
         const feedbackError = {
             reference: feedbackA.reference,
             type: FeedbackCorrectionErrorType.INCORRECT_SCORE,
@@ -345,8 +365,8 @@ describe('ExampleTextSubmissionComponent', () => {
         comp.createNewExampleTextSubmission();
         tick();
 
-        expect(createStub).toHaveBeenCalledTimes(1);
-        expect(alertSuccessSpy).toHaveBeenCalledTimes(1);
+        expect(createStub).toHaveBeenCalledOnce();
+        expect(alertSuccessSpy).toHaveBeenCalledOnce();
     }));
 
     it('should not create example submission', fakeAsync(() => {
@@ -358,9 +378,96 @@ describe('ExampleTextSubmissionComponent', () => {
         comp.createNewExampleTextSubmission();
         tick();
 
-        expect(createStub).toHaveBeenCalledTimes(1);
-        expect(alertErrorSpy).toHaveBeenCalledTimes(1);
+        expect(createStub).toHaveBeenCalledOnce();
+        expect(alertErrorSpy).toHaveBeenCalledOnce();
     }));
+
+    it('should read and understood', () => {
+        // GIVEN
+        const tutorParticipationService = debugElement.injector.get(TutorParticipationService);
+        jest.spyOn(tutorParticipationService, 'assessExampleSubmission').mockReturnValue(of(new HttpResponse({ body: {} })));
+        const alertSpy = jest.spyOn(alertService, 'success');
+
+        const router = debugElement.injector.get(Router);
+        const routerSpy = jest.spyOn(router, 'navigate');
+        comp.exercise = exercise;
+        comp.exampleSubmission = exampleSubmission;
+
+        // WHEN
+        fixture.detectChanges();
+        comp.readAndUnderstood();
+
+        // THEN
+        expect(alertSpy).toHaveBeenCalledOnce();
+        expect(alertSpy).toHaveBeenCalledWith('artemisApp.exampleSubmission.readSuccessfully');
+        expect(routerSpy).toHaveBeenCalledOnce();
+    });
+
+    it('should go back with exam', fakeAsync(() => {
+        // GIVEN
+        const router = debugElement.injector.get(Router);
+        const routerSpy = jest.spyOn(router, 'navigate');
+        const examExercise = {
+            id: EXERCISE_ID,
+            exerciseGroup: {
+                id: 20,
+                exam: {
+                    id: 30,
+                    course: { id: 40 },
+                },
+            },
+        } as TextExercise;
+
+        comp.exercise = examExercise;
+
+        // WHEN
+        fixture.detectChanges();
+        tick();
+
+        comp.toComplete = true;
+
+        comp.back();
+        tick();
+
+        comp.toComplete = false;
+
+        comp.back();
+        tick();
+
+        // THEN
+        expect(routerSpy).toHaveBeenCalledTimes(2);
+        expect(routerSpy).toHaveBeenNthCalledWith(1, ['/course-management', examExercise.exerciseGroup?.exam?.course?.id, 'assessment-dashboard', examExercise.id]);
+
+        expect(routerSpy).toHaveBeenNthCalledWith(2, [
+            '/course-management',
+            examExercise.exerciseGroup?.exam?.course?.id,
+            'exams',
+            examExercise.exerciseGroup?.exam?.id,
+            'exercise-groups',
+            examExercise.exerciseGroup?.id,
+            'text-exercises',
+            examExercise.id,
+            'example-submissions',
+        ]);
+    }));
+
+    it('should update example text submission', () => {
+        // GIVEN
+        const alertSuccessSpy = jest.spyOn(alertService, 'success');
+        const exampleSubmissionServiceSpy = jest.spyOn(exampleSubmissionService, 'update');
+        exampleSubmissionServiceSpy.mockReturnValue(httpResponse(exampleSubmission));
+        comp.unsavedSubmissionChanges = true;
+
+        // WHEN
+        comp.updateExampleTextSubmission();
+
+        // THEN
+        expect(exampleSubmissionServiceSpy).toHaveBeenCalledOnce();
+        expect(comp.exampleSubmission).toEqual(exampleSubmission);
+        expect(comp.unsavedSubmissionChanges).toBeFalse();
+        expect(alertSuccessSpy).toHaveBeenCalledOnce();
+        expect(alertSuccessSpy).toHaveBeenCalledWith('artemisApp.exampleSubmission.saveSuccessful');
+    });
 
     const httpResponse = (body: any) => of(new HttpResponse({ body }));
 });

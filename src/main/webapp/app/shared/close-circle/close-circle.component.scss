@@ -4,12 +4,12 @@
     top: 0;
     right: 0;
 
-    color: black;
+    color: var(--close-circle-color);
     border-radius: 20px;
-    background: white;
+    background: var(--close-circle-background);
     width: 20px;
     height: 20px;
-    border: 1px solid rgba(93, 93, 93, 0.65);
+    border: 1px solid var(--close-circle-border);
     text-align: center;
     vertical-align: center;
     padding: 4.5px 0;
@@ -23,7 +23,7 @@
 
     cursor: pointer;
     transition: all 0.25s;
-    opacity: 0.7;
+    opacity: var(--close-circle-opacity);
 
     .ng-fa-icon {
         transform: rotate(0.0000001deg);
@@ -32,5 +32,5 @@
 
 :host:hover {
     opacity: 1;
-    background: #d2d2d2;
+    background: var(--close-circle-background);
 }

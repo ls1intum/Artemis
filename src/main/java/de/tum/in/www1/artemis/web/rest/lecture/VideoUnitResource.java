@@ -1,11 +1,11 @@
 package de.tum.in.www1.artemis.web.rest.lecture;
 
-import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.*;
-
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+
+import javax.ws.rs.BadRequestException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,7 +20,7 @@ import de.tum.in.www1.artemis.repository.LectureRepository;
 import de.tum.in.www1.artemis.repository.VideoUnitRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
-import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
+import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 
 @RestController
@@ -40,6 +40,30 @@ public class VideoUnitResource {
 
     private final AuthorizationCheckService authorizationCheckService;
 
+    /**
+     * Normalizes the provided video Url.
+     * @param videoUnit provided video unit
+     */
+    private void normalizeVideoUrl(VideoUnit videoUnit) {
+        // Remove leading and trailing whitespaces
+        if (videoUnit.getSource() != null) {
+            videoUnit.setSource(videoUnit.getSource().strip());
+        }
+    }
+
+    /**
+     * Validates the provided video Url.
+     * @param videoUnit provided video unit
+     */
+    private void validateVideoUrl(VideoUnit videoUnit) {
+        try {
+            new URL(videoUnit.getSource());
+        }
+        catch (MalformedURLException exception) {
+            throw new BadRequestException();
+        }
+    }
+
     public VideoUnitResource(LectureRepository lectureRepository, AuthorizationCheckService authorizationCheckService, VideoUnitRepository videoUnitRepository) {
         this.lectureRepository = lectureRepository;
         this.authorizationCheckService = authorizationCheckService;
@@ -57,12 +81,12 @@ public class VideoUnitResource {
     @PreAuthorize("hasRole('EDITOR')")
     public ResponseEntity<VideoUnit> getVideoUnit(@PathVariable Long videoUnitId, @PathVariable Long lectureId) {
         log.debug("REST request to get VideoUnit : {}", videoUnitId);
-        var videoUnit = videoUnitRepository.findById(videoUnitId).orElseThrow(() -> new EntityNotFoundException("VideoUnit", videoUnitId));
+        var videoUnit = videoUnitRepository.findByIdElseThrow(videoUnitId);
         if (videoUnit.getLecture() == null || videoUnit.getLecture().getCourse() == null) {
-            return conflict();
+            throw new ConflictException("Lecture unit must be associated to a lecture of a course", "VideoUnit", "lectureOrCourseMissing");
         }
         if (!videoUnit.getLecture().getId().equals(lectureId)) {
-            return conflict();
+            throw new ConflictException("Requested lecture unit is not part of the specified lecture", "VideoUnit", "lectureIdMismatch");
         }
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, videoUnit.getLecture().getCourse(), null);
         return ResponseEntity.ok().body(videoUnit);
@@ -80,25 +104,20 @@ public class VideoUnitResource {
     public ResponseEntity<VideoUnit> updateVideoUnit(@PathVariable Long lectureId, @RequestBody VideoUnit videoUnit) {
         log.debug("REST request to update an video unit : {}", videoUnit);
         if (videoUnit.getId() == null) {
-            return badRequest();
+            throw new BadRequestException();
         }
 
         if (videoUnit.getLecture() == null || videoUnit.getLecture().getCourse() == null) {
-            return conflict();
+            throw new ConflictException("Lecture unit must be associated to a lecture of a course", "VideoUnit", "lectureOrCourseMissing");
         }
 
-        // Validate the URL
-        try {
-            new URL(videoUnit.getSource());
-        }
-        catch (MalformedURLException exception) {
-            return badRequest();
-        }
+        normalizeVideoUrl(videoUnit);
+        validateVideoUrl(videoUnit);
 
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, videoUnit.getLecture().getCourse(), null);
 
         if (!videoUnit.getLecture().getId().equals(lectureId)) {
-            return conflict();
+            throw new ConflictException("Requested lecture unit is not part of the specified lecture", "VideoUnit", "lectureIdMismatch");
         }
 
         VideoUnit result = videoUnitRepository.save(videoUnit);
@@ -118,20 +137,15 @@ public class VideoUnitResource {
     public ResponseEntity<VideoUnit> createVideoUnit(@PathVariable Long lectureId, @RequestBody VideoUnit videoUnit) throws URISyntaxException {
         log.debug("REST request to create VideoUnit : {}", videoUnit);
         if (videoUnit.getId() != null) {
-            return badRequest();
+            throw new BadRequestException();
         }
 
-        // Validate the URL
-        try {
-            new URL(videoUnit.getSource());
-        }
-        catch (MalformedURLException exception) {
-            return badRequest();
-        }
+        normalizeVideoUrl(videoUnit);
+        validateVideoUrl(videoUnit);
 
-        Lecture lecture = lectureRepository.findByIdWithPostsAndLectureUnitsAndLearningGoalsElseThrow(lectureId);
+        Lecture lecture = lectureRepository.findByIdWithLectureUnitsElseThrow(lectureId);
         if (lecture.getCourse() == null) {
-            return conflict();
+            throw new ConflictException("Specified lecture is not part of a course", "VideoUnit", "courseMissing");
         }
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, lecture.getCourse(), null);
 
@@ -145,7 +159,6 @@ public class VideoUnitResource {
 
         return ResponseEntity.created(new URI("/api/video-units/" + persistedVideoUnit.getId()))
                 .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, "")).body(persistedVideoUnit);
-
     }
 
 }

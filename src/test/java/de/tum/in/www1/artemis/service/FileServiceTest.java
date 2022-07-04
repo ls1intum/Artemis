@@ -1,9 +1,11 @@
 package de.tum.in.www1.artemis.service;
 
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.fail;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.mockStatic;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -56,7 +58,7 @@ public class FileServiceTest extends AbstractSpringIntegrationBambooBitbucketJir
 
     private void copyFile(String filePath, String destinationPath) {
         try {
-            FileUtils.copyFile(ResourceUtils.getFile("classpath:test-data/repository-export/" + filePath), new File("./exportTest/" + destinationPath));
+            FileUtils.copyFile(ResourceUtils.getFile("classpath:test-data/repository-export/" + filePath), Path.of(".", "exportTest", destinationPath).toFile());
         }
         catch (IOException ex) {
             fail("Failed while copying test files", ex);
@@ -65,7 +67,7 @@ public class FileServiceTest extends AbstractSpringIntegrationBambooBitbucketJir
 
     private void writeFile(String destinationPath, String content) {
         try {
-            FileUtils.writeByteArrayToFile(new File("./exportTest/" + destinationPath), content.getBytes(StandardCharsets.UTF_8));
+            FileUtils.writeByteArrayToFile(Path.of(".", "exportTest", destinationPath).toFile(), content.getBytes(StandardCharsets.UTF_8));
         }
         catch (IOException ex) {
             fail("Failed while writing test files", ex);
@@ -75,67 +77,67 @@ public class FileServiceTest extends AbstractSpringIntegrationBambooBitbucketJir
     @AfterEach
     @BeforeEach
     void deleteFiles() throws IOException {
-        FileUtils.deleteDirectory(new File("./exportTest/"));
+        FileUtils.deleteDirectory(Path.of(".", "exportTest").toFile());
     }
 
     @Test
     public void normalizeFileEndingsUnix_noChange() throws IOException {
         writeFile("LineEndingsUnix.java", FILE_WITH_UNIX_LINE_ENDINGS);
-        int size = Files.readAllBytes(new File("./exportTest/LineEndingsUnix.java").toPath()).length;
+        int size = Files.readAllBytes(Path.of(".", "exportTest", "LineEndingsUnix.java")).length;
         assertThat(size).isEqualTo(129);
     }
 
     @Test
     public void normalizeFileEndingsUnix_normalized() throws IOException {
         writeFile("LineEndingsUnix.java", FILE_WITH_UNIX_LINE_ENDINGS);
-        int size = Files.readAllBytes(new File("./exportTest/LineEndingsUnix.java").toPath()).length;
+        int size = Files.readAllBytes(Path.of(".", "exportTest", "LineEndingsUnix.java")).length;
         assertThat(size).isEqualTo(129);
 
-        fileService.normalizeLineEndings("./exportTest/LineEndingsUnix.java");
-        size = Files.readAllBytes(new File("./exportTest/LineEndingsUnix.java").toPath()).length;
+        fileService.normalizeLineEndings(Path.of(".", "exportTest", "LineEndingsUnix.java").toString());
+        size = Files.readAllBytes(Path.of(".", "exportTest", "LineEndingsUnix.java")).length;
         assertThat(size).isEqualTo(129);
     }
 
     @Test
     public void normalizeFileEndingsWindows_noChange() throws IOException {
         writeFile("LineEndingsWindows.java", FILE_WITH_WINDOWS_LINE_ENDINGS);
-        int size = Files.readAllBytes(new File("./exportTest/LineEndingsWindows.java").toPath()).length;
+        int size = Files.readAllBytes(Path.of(".", "exportTest", "LineEndingsWindows.java")).length;
         assertThat(size).isEqualTo(136);
     }
 
     @Test
     public void normalizeFileEndingsWindows_normalized() throws IOException {
         writeFile("LineEndingsWindows.java", FILE_WITH_WINDOWS_LINE_ENDINGS);
-        int size = Files.readAllBytes(new File("./exportTest/LineEndingsWindows.java").toPath()).length;
+        int size = Files.readAllBytes(Path.of(".", "exportTest", "LineEndingsWindows.java")).length;
         assertThat(size).isEqualTo(136);
 
-        fileService.normalizeLineEndings("./exportTest/LineEndingsWindows.java");
-        size = Files.readAllBytes(new File("./exportTest/LineEndingsWindows.java").toPath()).length;
+        fileService.normalizeLineEndings(Path.of(".", "exportTest", "LineEndingsWindows.java").toString());
+        size = Files.readAllBytes(Path.of(".", "exportTest", "LineEndingsWindows.java")).length;
         assertThat(size).isEqualTo(129);
     }
 
     @Test
     public void normalizeEncodingUTF8() throws IOException {
         copyFile("EncodingUTF8.java", "EncodingUTF8.java");
-        Charset charset = fileService.detectCharset(Files.readAllBytes(new File("./exportTest/EncodingUTF8.java").toPath()));
+        Charset charset = fileService.detectCharset(Files.readAllBytes(Path.of(".", "exportTest", "EncodingUTF8.java")));
         assertThat(charset).isEqualTo(StandardCharsets.UTF_8);
     }
 
     @Test
     public void normalizeEncodingISO_8559_1() throws IOException {
         copyFile("EncodingISO_8559_1.java", "EncodingISO_8559_1.java");
-        Charset charset = fileService.detectCharset(Files.readAllBytes(new File("./exportTest/EncodingISO_8559_1.java").toPath()));
+        Charset charset = fileService.detectCharset(Files.readAllBytes(Path.of(".", "exportTest", "EncodingISO_8559_1.java")));
         assertThat(charset).isEqualTo(StandardCharsets.ISO_8859_1);
 
-        fileService.convertToUTF8("./exportTest/EncodingISO_8559_1.java");
-        charset = fileService.detectCharset(Files.readAllBytes(new File("./exportTest/EncodingISO_8559_1.java").toPath()));
+        fileService.convertToUTF8(Path.of(".", "exportTest", "EncodingISO_8559_1.java").toString());
+        charset = fileService.detectCharset(Files.readAllBytes(Path.of(".", "exportTest", "EncodingISO_8559_1.java")));
         assertThat(charset).isEqualTo(StandardCharsets.UTF_8);
     }
 
     @Test
     public void replacePlaceHolder() throws IOException {
         copyFile("pom.xml", "pom.xml");
-        File pomXml = new File("./exportTest/pom.xml");
+        File pomXml = Path.of(".", "exportTest", "pom.xml").toFile();
         String fileContent = FileUtils.readFileToString(pomXml, Charset.defaultCharset());
 
         assertThat(fileContent).contains("${exerciseName}").doesNotContain("SomeCoolExerciseName");
@@ -152,7 +154,7 @@ public class FileServiceTest extends AbstractSpringIntegrationBambooBitbucketJir
     @Test
     public void replacePlaceHolderIgnoreNames() throws IOException {
         copyFile("pom.xml", "pom.xml");
-        File pomXml = new File("./exportTest/pom.xml");
+        File pomXml = Path.of(".", "exportTest", "pom.xml").toFile();
         String fileContent = FileUtils.readFileToString(pomXml, Charset.defaultCharset());
 
         assertThat(fileContent).contains("${exerciseName}").doesNotContain("SomeCoolExerciseName");
@@ -168,13 +170,13 @@ public class FileServiceTest extends AbstractSpringIntegrationBambooBitbucketJir
 
     @Test
     public void testMergePdf_nullInput_shouldReturnEmptyOptional() {
-        Optional<byte[]> result = fileService.mergePdfFiles(null);
+        Optional<byte[]> result = fileService.mergePdfFiles(null, "");
         assertThat(result).isEmpty();
     }
 
     @Test
     public void testMergePdf_emptyList_shouldReturnEmptyOptional() {
-        Optional<byte[]> result = fileService.mergePdfFiles(new ArrayList<>());
+        Optional<byte[]> result = fileService.mergePdfFiles(new ArrayList<>(), "list_of_pdfs");
         assertThat(result).isEmpty();
     }
 
@@ -199,10 +201,10 @@ public class FileServiceTest extends AbstractSpringIntegrationBambooBitbucketJir
 
         writeFile("testfile2.pdf", outputStream.toString());
 
-        paths.add("./exportTest/testfile1.pdf");
-        paths.add("./exportTest/testfile2.pdf");
+        paths.add(Path.of(".", "exportTest", "testfile1.pdf").toString());
+        paths.add(Path.of(".", "exportTest", "testfile2.pdf").toString());
 
-        Optional<byte[]> mergedFile = fileService.mergePdfFiles(paths);
+        Optional<byte[]> mergedFile = fileService.mergePdfFiles(paths, "list_of_pdfs");
         assertThat(mergedFile).isPresent();
         assertThat(mergedFile.get()).isNotEmpty();
         PDDocument mergedDoc = PDDocument.load(mergedFile.get());
@@ -219,19 +221,19 @@ public class FileServiceTest extends AbstractSpringIntegrationBambooBitbucketJir
     @Test
     public void testActualPathForPublicPath() {
         String actualPath = fileService.actualPathForPublicPath("asdasdfiles/drag-and-drop/backgrounds");
-        assertThat(actualPath).isEqualTo("uploads/images/drag-and-drop/backgrounds/backgrounds");
+        assertThat(actualPath).isEqualTo(Path.of("uploads", "images", "drag-and-drop", "backgrounds", "backgrounds").toString());
 
         actualPath = fileService.actualPathForPublicPath("asdasdfiles/drag-and-drop/drag-items");
-        assertThat(actualPath).isEqualTo("uploads/images/drag-and-drop/drag-items/drag-items");
+        assertThat(actualPath).isEqualTo(Path.of("uploads", "images", "drag-and-drop", "drag-items", "drag-items").toString());
 
         actualPath = fileService.actualPathForPublicPath("asdasdfiles/course/icons");
-        assertThat(actualPath).isEqualTo("uploads/images/course/icons/icons");
+        assertThat(actualPath).isEqualTo(Path.of("uploads", "images", "course", "icons", "icons").toString());
 
         actualPath = fileService.actualPathForPublicPath("asdasdfiles/attachments/lecture");
-        assertThat(actualPath).isEqualTo("uploads/attachments/lecture/asdasdfiles/attachments/lecture");
+        assertThat(actualPath).isEqualTo(Path.of("uploads", "attachments", "lecture", "asdasdfiles", "attachments", "lecture").toString());
 
         actualPath = fileService.actualPathForPublicPath("asdasdfiles/attachments/attachment-unit");
-        assertThat(actualPath).isEqualTo("uploads/attachments/attachment-unit/asdasdfiles/attachments/attachment-unit");
+        assertThat(actualPath).isEqualTo(Path.of("uploads", "attachments", "attachment-unit", "asdasdfiles", "attachments", "attachment-unit").toString());
     }
 
     @Test
@@ -258,7 +260,7 @@ public class FileServiceTest extends AbstractSpringIntegrationBambooBitbucketJir
         });
         assertThat(exception.getMessage()).startsWith("Unexpected String in upload file path. Exercise ID should be present here:");
 
-        exception = assertThrows(FilePathParsingException.class, () -> fileService.publicPathForActualPath("asdasdfiles/file-asd-exercises", 1L));
+        exception = assertThrows(FilePathParsingException.class, () -> fileService.publicPathForActualPath(Path.of("asdasdfiles", "file-asd-exercises").toString(), 1L));
         assertThat(exception.getMessage()).startsWith("Unknown Filepath:");
     }
 

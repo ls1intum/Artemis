@@ -14,14 +14,14 @@
 }
 
 .legend-container {
-    background: whitesmoke;
+    background: var(--stat-av-sc-legend-background);
     padding: 5px;
     border-radius: 5px;
     max-width: 300px;
 }
 
 .switch-forward {
-    max-width: 60px;
+    max-width: 30px !important;
 }
 
 .switch-forward-placeholder {
@@ -29,14 +29,29 @@
     height: 300px;
 }
 
+.hidden {
+    visibility: hidden;
+}
+
 .critical-color {
-    background: rgba(204, 0, 0, 1);
+    background: var(--stat-av-sc-legend-critical);
 }
 
 .median-color {
-    background: rgba(127, 127, 127, 255);
+    background: var(--stat-av-sc-legend-median);
 }
 
 .best-color {
-    background: rgba(40, 164, 40, 1);
+    background: var(--stat-av-sc-legend-best);
+}
+
+.chart-container {
+    max-width: 83%;
+}
+
+.chart-row {
+    > * {
+        padding-left: 0;
+        padding-right: 0;
+    }
 }

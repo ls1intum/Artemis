@@ -7,57 +7,92 @@
             <jhi-help-icon class="chart-explanation-tooltip" placement="right auto" text="artemisApp.courseStatistics.activeStudentsExplanation"></jhi-help-icon>
         </div>
     </div>
-    <div class="row d-flex justify-content-center align-items-center flex-nowrap" style="flex: 1">
-        <fa-icon [icon]="faArrowLeft" size="2x" class="col-md-1 d-flex justify-content-end align-items-center" role="button" (click)="switchTimeSpan(LEFT)"></fa-icon>
-        <div #containerRef class="chart col-md-9 mt-1 justify-content-center h-99">
-            <ngx-charts-line-chart
-                [view]="[containerRef.offsetWidth, 500]"
-                [scheme]="chartColor"
-                [legend]="legend"
-                [showXAxisLabel]="showXAxisLabel"
-                [showYAxisLabel]="showYAxisLabel"
-                [xAxis]="xAxis"
-                [yAxis]="yAxis"
-                [xAxisLabel]="xAxisLabel"
-                [yAxisLabel]="yAxisLabel"
-                [timeline]="timeline"
-                [results]="data"
-                [yScaleMin]="0"
-                [yScaleMax]="100"
-                [yAxisTickFormatting]="formatYAxis"
-                [curve]="curve"
-                [referenceLines]="[average]"
-                [showRefLines]="showAverage"
-                [showRefLabels]="showAverage"
-            >
-                <ng-template #tooltipTemplate let-model="model">
-                    <span>{{ model.series }} in {{ model.name }}: </span><br />
-                    <b class="tooltip-header">{{ findAbsoluteValue(model) }} ({{ model.value }}%)</b>
-                </ng-template>
-                <ng-template #seriesTooltipTemplate let-model="model">
-                    <ng-container *ngIf="model.length">
-                        <span> {{ model[0].name }}: {{ findAbsoluteValue(model[0]) }} </span>
-                    </ng-container>
-                </ng-template>
-            </ngx-charts-line-chart>
+    <ng-container *ngIf="startDateAlreadyPassed; else courseNotStartedYet">
+        <div class="row d-flex justify-content-center align-items-center flex-nowrap" style="flex: 1">
+            <fa-icon
+                *ngIf="!startDateDisplayed || !showsCurrentWeek"
+                [icon]="faArrowLeft"
+                size="2x"
+                class="col-1 px-0 d-flex justify-content-end align-items-center"
+                role="button"
+                (click)="switchTimeSpan(LEFT)"
+                [class.hide-arrow]="startDateDisplayed"
+            ></fa-icon>
+            <div #containerRef class="chart col-md-10 mt-1 justify-content-center align-items-start h-99" [ngClass]="showsCurrentWeek && startDateDisplayed ? 'col-12' : 'col-10'">
+                <ngx-charts-line-chart
+                    [view]="[containerRef.offsetWidth, 500]"
+                    [scheme]="chartColor"
+                    [legend]="legend"
+                    [showXAxisLabel]="showXAxisLabel"
+                    [showYAxisLabel]="showYAxisLabel"
+                    [xAxis]="xAxis"
+                    [yAxis]="yAxis"
+                    [xAxisLabel]="xAxisLabel"
+                    [yAxisLabel]="yAxisLabel"
+                    [timeline]="timeline"
+                    [results]="data"
+                    [yScaleMin]="0"
+                    [yScaleMax]="100"
+                    [yAxisTickFormatting]="formatYAxis"
+                    [curve]="curve"
+                    [referenceLines]="[average]"
+                    [showRefLines]="showAverage"
+                    [showRefLabels]="showAverage"
+                >
+                    <ng-template #tooltipTemplate let-model="model">
+                        <span>{{ model.series }} in {{ model.name }}: </span><br />
+                        <b class="tooltip-header">{{ findAbsoluteValue(model) }} ({{ model.value }}%)</b>
+                    </ng-template>
+                    <ng-template #seriesTooltipTemplate let-model="model">
+                        <ng-container *ngIf="model.length">
+                            <span> {{ model[0].name }}: {{ findAbsoluteValue(model[0]) }} </span>
+                        </ng-container>
+                    </ng-template>
+                </ngx-charts-line-chart>
+            </div>
+            <h1 *ngIf="loading" class="spinner">
+                <fa-icon [icon]="faSpinner" [spin]="true">&nbsp;</fa-icon>
+            </h1>
+            <fa-icon
+                [icon]="faArrowRight"
+                *ngIf="!startDateDisplayed || !showsCurrentWeek"
+                size="2x"
+                class="col-1 px-0 d-flex justify-content-start align-items-center"
+                role="button"
+                (click)="switchTimeSpan(RIGHT)"
+                [ngClass]="{ 'hide-arrow': showsCurrentWeek }"
+            ></fa-icon>
         </div>
-        <h1 *ngIf="loading" class="spinner">
-            <fa-icon [icon]="faSpinner" [spin]="true">&nbsp;</fa-icon>
-        </h1>
-        <fa-icon
-            [icon]="faArrowRight"
-            size="2x"
-            class="col-md-1 d-flex justify-content-start align-items-center"
-            role="button"
-            (click)="switchTimeSpan(RIGHT)"
-            [ngClass]="showsCurrentWeek ? 'hide-arrow' : ''"
-        ></fa-icon>
-    </div>
-    <div class="col-md-10 offset-md-1 text-center mt-4 justify-content-center">
-        <h5>{{ chartTime }}</h5>
-        <div class="d-flex align-items-center justify-content-center">
-            <input type="checkbox" [checked]="showAverage" (change)="toggleAverageLine()" />
-            <label class="checkbox-label">{{ 'artemisApp.courseStatistics.averageReferenceLineCheckboxLabel' | artemisTranslate }}</label>
+        <div class="col-md-10 offset-md-1 mt-4 justify-content-center d-flex align-items-center flex-column">
+            <h5>{{ chartTime }}</h5>
+            <div *ngIf="course.startDate" class="mb-2">
+                <div class="btn-group">
+                    <div
+                        class="btn"
+                        [ngClass]="!showLifetimeOverview ? 'btn-primary selected' : 'btn-default'"
+                        (click)="displayDefaultChartScope()"
+                        ngbTooltip="{{ 'artemisApp.courseStatistics.scopeButton.recentWeekTooltip' | artemisTranslate }}"
+                    >
+                        {{ 'artemisApp.courseStatistics.scopeButton.recentWeekButton' | artemisTranslate }}
+                    </div>
+                    <div
+                        class="btn"
+                        [ngClass]="showLifetimeOverview ? 'btn-primary selected' : 'btn-default'"
+                        (click)="displayLifetimeOverview()"
+                        ngbTooltip="{{ 'artemisApp.courseStatistics.scopeButton.lifetimeOverviewTooltip' | artemisTranslate }}"
+                    >
+                        {{ 'artemisApp.courseStatistics.scopeButton.lifetimeOverviewButtonLabel' | artemisTranslate }}
+                    </div>
+                </div>
+            </div>
+            <div class="form-check flex-grow-0">
+                <input class="form-check-input" type="checkbox" [checked]="showAverage" (change)="toggleAverageLine()" />
+                <label class="form-check-label">{{ 'artemisApp.courseStatistics.meanReferenceLineCheckboxLabel' | artemisTranslate }}</label>
+            </div>
         </div>
-    </div>
+    </ng-container>
+    <ng-template #courseNotStartedYet>
+        <h4 class="text-center mt-3">{{ 'artemisApp.course.notStartedYet' | artemisTranslate }}</h4>
+        <h3 class="text-center">{{ course.startDate | artemisDate }}</h3>
+    </ng-template>
 </div>

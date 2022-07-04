@@ -22,7 +22,7 @@ import de.tum.in.www1.artemis.domain.metis.Post;
 @Table(name = "lecture")
 @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public class Lecture extends DomainObject {
+public class Lecture extends DomainObject implements Completable {
 
     @Column(name = "title")
     private String title;
@@ -56,13 +56,21 @@ public class Lecture extends DomainObject {
     @JsonIgnoreProperties(value = { "lectures", "exercises", "posts" }, allowSetters = true)
     private Course course;
 
-    public String getTitle() {
-        return title;
+    @Override
+    public boolean isCompletedFor(User user) {
+        return getLectureUnits().stream().allMatch((lectureUnit) -> lectureUnit.isCompletedFor(user));
     }
 
-    public Lecture title(String title) {
-        this.title = title;
-        return this;
+    @Override
+    public Optional<ZonedDateTime> getCompletionDate(User user) {
+        if (!isCompletedFor(user)) {
+            return Optional.empty();
+        }
+        return getLectureUnits().stream().map((lectureUnit) -> lectureUnit.getCompletionDate(user).get()).sorted().findFirst();
+    }
+
+    public String getTitle() {
+        return title;
     }
 
     public void setTitle(String title) {
@@ -71,11 +79,6 @@ public class Lecture extends DomainObject {
 
     public String getDescription() {
         return description;
-    }
-
-    public Lecture description(String description) {
-        this.description = description;
-        return this;
     }
 
     public void setDescription(String description) {
@@ -136,11 +139,6 @@ public class Lecture extends DomainObject {
         return course;
     }
 
-    public Lecture course(Course course) {
-        this.course = course;
-        return this;
-    }
-
     public void setCourse(Course course) {
         this.course = course;
     }
@@ -149,5 +147,20 @@ public class Lecture extends DomainObject {
     public String toString() {
         return "Lecture{" + "id=" + getId() + ", title='" + getTitle() + "'" + ", description='" + getDescription() + "'" + ", startDate='" + getStartDate() + "'" + ", endDate='"
                 + getEndDate() + "'" + "}";
+    }
+
+    public enum LectureSearchColumn {
+
+        ID("id"), TITLE("title"), COURSE_TITLE("course.title"), SEMESTER("course.semester");
+
+        private final String mappedColumnName;
+
+        LectureSearchColumn(String mappedColumnName) {
+            this.mappedColumnName = mappedColumnName;
+        }
+
+        public String getMappedColumnName() {
+            return mappedColumnName;
+        }
     }
 }

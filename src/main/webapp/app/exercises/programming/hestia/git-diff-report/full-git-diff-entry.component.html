@@ -3,8 +3,15 @@
         <div class="col-6">
             <h6>{{ diffEntry.previousFilePath }}</h6>
         </div>
-        <div class="col-6">
+        <div class="col-4">
             <h6>{{ diffEntry.filePath }}</h6>
+        </div>
+        <div class="col-2 text-end">
+            <jhi-git-diff-line-stat
+                [addedLineCount]="addedLineCount"
+                [removedLineCount]="removedLineCount"
+                ngbTooltip="{{ 'artemisApp.programmingExercise.diffReport.lineStatTooltipFullEntry' | artemisTranslate }}"
+            ></jhi-git-diff-line-stat>
         </div>
     </div>
     <div class="row">

@@ -8,6 +8,7 @@ import { Router } from '@angular/router';
 import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { ProgrammingLanguage, ProjectType } from 'app/entities/programming-exercise.model';
+import { BrowserFingerprintService } from 'app/shared/fingerprint/browser-fingerprint.service';
 
 describe('Profile Service', () => {
     let service: ProfileService;
@@ -223,6 +224,7 @@ describe('Profile Service', () => {
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: Router, useClass: MockRouter },
+                { provide: BrowserFingerprintService, useValue: { initialize: jest.fn() } },
             ],
         });
         service = TestBed.inject(ProfileService);

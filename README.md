@@ -25,14 +25,14 @@
    * **Multiple diagram types**: Artemis supports 7 UML diagram types (e.g. class diagrams) and 4 additional diagrams (e.g. flow charts)
    * **Easy to use**: Students can create models easily using drag and drop, they can explain the models using additional text.
    * **Integrated feedback**: Reviews can provide feedback and points directly next to the model elements.
-4. **[Text exercises](https://docs.artemis.ase.in.tum.de/user/exercises/textual/)** with manual, semi-automatic assessment based on supervised machine learning and natural language processing (NLP) using [Athene](https://github.com/ls1intum/Athene)
+4. **[Text exercises](https://docs.artemis.ase.in.tum.de/user/exercises/textual/)** with manual, semi-automatic assessment based on supervised machine learning and natural language processing (NLP) using [Athena](https://github.com/ls1intum/Athena)
    * **Integrated feedback**: Reviews can provide feedback and points directly next to the text segments.
    * **Language detection**: Artemis detects the language of the submission and shows the word and character count. 
 5. **[File upload exercises](https://docs.artemis.ase.in.tum.de/user/exercises/file-upload/)** with manual assessment
 6. **Exam mode**: Instructors can create online exams with exercise variants, integrated plagiarism checks, test runs and student reviews. You can find more information on [Exam mode student features](https://artemis.ase.in.tum.de/features/students) and on [Exam mode instructor features](https://artemis.ase.in.tum.de/features/instructors).
 7. **Grading**: Instructors can configure grade keys for courses and exams to automatically calculate grades and display them to students. Grades can be easily exported as csv files to upload them into university systems (such as Campus online)
 8. **Assessment**: Artemis uses double-blind grading and structured grading criteria to improve consistency and fairness. It integrates an assessment training process (based on example submissions and example assessments defined by the instructor), has a grading leader board, and allows students to rate the assessments. Students can complain or ask for more feedback.   
-9. **[Discussion](https://docs.artemis.ase.in.tum.de/user/discussion/)**: Instructors can post announcements. Students can ask questions, post comments, and react to other posts. Tutors can filter unanswered questions.
+9. **[Communication](https://docs.artemis.ase.in.tum.de/user/communication/)**: Instructors can post announcements. Students can ask questions, post comments, and react to other posts. Tutors can filter unanswered questions.
 10. **Notifications**: Artemis supports customizable web and email notifications. Users can enable and disable different notification types.
 11. **Team exercises**: Instructors can configure team exercises with real time collaboration and dedicated tutors per team.
 12. **Lectures**: Instructors can upload lecture slides, divide lectures into units, integrate video streams, lecture recordings, and exercises into lectures, and define learning goals.
@@ -157,7 +157,7 @@ There is a growing community of university instructors who are using Artemis.
     
 [![Matrix Chat](https://img.shields.io/matrix/artemis-platform:matrix.org?label=matrix:%20%23artemis:in.tum.de)](https://matrix.to/#/#artemis:in.tum.de)
 
-We communicate using Github issues and pull requests. Additionally, you can join us on Slack to ask questions and get support. If you are interested, please send an email to [Stephan Krusche](mailto:krusche@in.tum.de).
+We communicate using GitHub issues and pull requests. Additionally, you can join us on Slack to ask questions and get support. If you are interested, please send an email to [Stephan Krusche](mailto:krusche@in.tum.de).
 
 #### Universities with Artemis in Use
 
@@ -182,7 +182,7 @@ The following universities are actively using Artemis or are currently evaluatin
 ##### Universität Passau
 
 * https://artemis.se2.fim.uni-passau.de
-* Main contact person: [Christian Bachmaier](mailto:bachmaier@fim.uni-passau.de)
+* Main contact person: [Benedikt Fein](mailto:fein@fim.uni-passau.de)
 
 ##### Karlsruhe Institute of Technology
 

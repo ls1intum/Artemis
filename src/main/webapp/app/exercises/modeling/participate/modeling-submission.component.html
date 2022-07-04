@@ -130,7 +130,7 @@
             <jhi-rating class="mt-2 alert alert-info" [result]="addParticipationToResult(result, participation)"></jhi-rating>
         </div>
         <jhi-complaint-student-view
-            *ngIf="modelingExercise && result"
+            *ngIf="modelingExercise && result && !examMode"
             [exercise]="modelingExercise"
             [participation]="participation"
             [result]="resultWithComplaint ? resultWithComplaint : result"

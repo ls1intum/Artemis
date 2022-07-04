@@ -15,10 +15,8 @@ import { Exam } from 'app/entities/exam.model';
 import { ProgrammingExerciseGradingService } from 'app/exercises/programming/manage/services/programming-exercise-grading.service';
 import { MockProgrammingExerciseService } from '../../helpers/mocks/service/mock-programming-exercise.service';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
-import { Task } from 'app/exercises/programming/shared/instructions-render/task/programming-exercise-task.model';
 import { MockProvider } from 'ng-mocks';
 import { AlertService, AlertType } from 'app/core/util/alert.service';
-import { HttpResponse } from '@angular/common/http';
 import { ProgrammingExerciseFullGitDiffReport } from 'app/entities/hestia/programming-exercise-full-git-diff-report.model';
 import { MockNgbModalService } from '../../helpers/mocks/service/mock-ngb-modal.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
@@ -107,7 +105,7 @@ describe('ProgrammingExercise Management Detail Component', () => {
 
         comp.getAndShowFullDiff();
 
-        expect(modalService.open).toHaveBeenCalledTimes(1);
+        expect(modalService.open).toHaveBeenCalledOnce();
         expect(modalService.open).toHaveBeenCalledWith(FullGitDiffReportModalComponent, { size: 'xl', backdrop: 'static' });
     });
 
@@ -125,8 +123,8 @@ describe('ProgrammingExercise Management Detail Component', () => {
             comp.ngOnInit();
 
             // THEN
-            expect(statisticsServiceStub).toHaveBeenCalledTimes(1);
-            expect(gitDiffReportStub).toHaveBeenCalledTimes(1);
+            expect(statisticsServiceStub).toHaveBeenCalledOnce();
+            expect(gitDiffReportStub).toHaveBeenCalledOnce();
             expect(comp.programmingExercise).toEqual(programmingExercise);
             expect(comp.isExamExercise).toBeFalse();
             expect(comp.doughnutStats.participationsInPercent).toEqual(100);
@@ -154,71 +152,12 @@ describe('ProgrammingExercise Management Detail Component', () => {
             comp.ngOnInit();
 
             // THEN
-            expect(statisticsServiceStub).toHaveBeenCalledTimes(1);
-            expect(gitDiffReportStub).toHaveBeenCalledTimes(1);
+            expect(statisticsServiceStub).toHaveBeenCalledOnce();
+            expect(gitDiffReportStub).toHaveBeenCalledOnce();
             expect(comp.programmingExercise).toEqual(programmingExercise);
             expect(comp.isExamExercise).toBeTrue();
             expect(comp.programmingExercise.gitDiffReport).not.toBe(undefined);
             expect(comp.programmingExercise.gitDiffReport?.entries).toHaveLength(1);
-        });
-    });
-
-    it('should retrieve all tasks and tests extracted from the problem statement', () => {
-        const tasks: Task[] = [
-            {
-                id: 1,
-                taskName: 'Implement BubbleSort',
-                tests: ['testBubbleSort', 'testBubbleSortHidden'],
-                completeString: '',
-                hints: [],
-            },
-            {
-                id: 2,
-                taskName: 'Implement Context',
-                tests: ['testClass[Context]'],
-                completeString: '',
-                hints: [],
-            },
-        ];
-        const extractTaskMock = jest.spyOn(exerciseService, 'getTasksAndTestsExtractedFromProblemStatement').mockReturnValue(of(tasks));
-        const expectedParams = {
-            numberTasks: 2,
-            numberTestCases: 3,
-            detailedResult: '"Implement BubbleSort": testBubbleSort,testBubbleSortHidden\n"Implement Context": testClass[Context]',
-        };
-        const addAlertSpy = jest.spyOn(alertService, 'addAlert');
-        const programmingExercise = new ProgrammingExercise(new Course(), undefined);
-        programmingExercise.id = 123;
-        comp.programmingExercise = programmingExercise;
-
-        comp.getExtractedTasksAndTestsFromProblemStatement();
-
-        expect(addAlertSpy).toHaveBeenCalledTimes(1);
-        expect(addAlertSpy).toHaveBeenCalledWith({
-            message: 'artemisApp.programmingExercise.extractTasksFromProblemStatementSuccess',
-            timeout: 0,
-            translationParams: expectedParams,
-            type: AlertType.SUCCESS,
-        });
-        expect(extractTaskMock).toHaveBeenCalledTimes(1);
-        expect(extractTaskMock).toHaveBeenCalledWith(programmingExercise.id);
-    });
-
-    it('should invoke deletion of tasks and solution entries', () => {
-        const deleteTasksAndSolutionEntriesSpy = jest.spyOn(exerciseService, 'deleteTasksWithSolutionEntries').mockReturnValue(of(new HttpResponse<void>()));
-        const addAlertSpy = jest.spyOn(alertService, 'addAlert');
-        const programmingExercise = new ProgrammingExercise(new Course(), undefined);
-        programmingExercise.id = 123;
-        comp.programmingExercise = programmingExercise;
-
-        comp.deleteTasksWithSolutionEntries();
-
-        expect(deleteTasksAndSolutionEntriesSpy).toHaveBeenCalledTimes(1);
-        expect(deleteTasksAndSolutionEntriesSpy).toHaveBeenCalledWith(programmingExercise.id);
-        expect(addAlertSpy).toHaveBeenCalledTimes(1);
-        expect(addAlertSpy).toHaveBeenCalledWith({
-            message: 'artemisApp.programmingExercise.deleteTasksAndSolutionEntriesSuccess',
-            type: AlertType.SUCCESS,
         });
     });
 
@@ -232,11 +171,29 @@ describe('ProgrammingExercise Management Detail Component', () => {
 
         comp.createStructuralSolutionEntries();
 
-        expect(exerciseService.createStructuralSolutionEntries).toHaveBeenCalledTimes(1);
-        expect(alertService.addAlert).toHaveBeenCalledTimes(1);
+        expect(exerciseService.createStructuralSolutionEntries).toHaveBeenCalledOnce();
+        expect(alertService.addAlert).toHaveBeenCalledOnce();
         expect(alertService.addAlert).toHaveBeenCalledWith({
             type: AlertType.SUCCESS,
             message: 'artemisApp.programmingExercise.createStructuralSolutionEntriesSuccess',
+        });
+    });
+
+    it('Should create behavioral solution entries', () => {
+        const programmingExercise = new ProgrammingExercise(new Course(), undefined);
+        programmingExercise.id = 123;
+        comp.programmingExercise = programmingExercise;
+
+        jest.spyOn(exerciseService, 'createBehavioralSolutionEntries').mockReturnValue(of([] as ProgrammingExerciseSolutionEntry[]));
+        jest.spyOn(alertService, 'addAlert');
+
+        comp.createBehavioralSolutionEntries();
+
+        expect(exerciseService.createBehavioralSolutionEntries).toHaveBeenCalledOnce();
+        expect(alertService.addAlert).toHaveBeenCalledOnce();
+        expect(alertService.addAlert).toHaveBeenCalledWith({
+            type: AlertType.SUCCESS,
+            message: 'artemisApp.programmingExercise.createBehavioralSolutionEntriesSuccess',
         });
     });
 });

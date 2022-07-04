@@ -9,7 +9,6 @@
 $borderWidth: 7px;
 $animationTime: 0.5s;
 $border-color-default: #eee;
-$border-color-fill: $primary;
 $size: 150px;
 
 //Create how many steps
@@ -56,7 +55,7 @@ $howManySteps: 100; //this needs to be even.
         border-style: solid;
         position: absolute;
         top: 0;
-        border-color: $border-color-fill;
+        border-color: var(--primary);
     }
 
     .progress-left .progress-bar-circle {

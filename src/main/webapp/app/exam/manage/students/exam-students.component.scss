@@ -1,17 +1,17 @@
 // only place declarations within this manual scope (otherwise other components could be affected)
 jhi-exam-students {
     $dropdown-item: (
-        active-color: #28a745,
+        active-color: var(--exam-students-dropdown-item-active),
         already-registered: (
-            color: #212529,
-            background-color: #e9f6ec,
-            background-color-hover: #daf2e0,
+            color: var(--exam-students-dropdown-item-already-registered-color),
+            background-color: var(--exam-students-dropdown-item-already-registered-background-color),
+            background-color-hover: var(--exam-students-dropdown-item-already-registered-background-hover-color),
         ),
     );
 
     $datatable-row: (
         newly-registered: (
-            background-color: #c4e7cc,
+            background-color: var(--exam-students-datatable-row-newly-registered-background-color),
             animation-delay: 150ms,
             animation-duration: 1.5s,
         ),

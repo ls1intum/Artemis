@@ -78,19 +78,19 @@ describe('LoginService', () => {
         loginService.logout(true);
 
         commonExpects();
-        expect(alertServiceErrorStub).toHaveBeenCalledTimes(1);
+        expect(alertServiceErrorStub).toHaveBeenCalledOnce();
     });
 
     function commonExpects() {
-        expect(removeAuthTokenFromCachesStub).toHaveBeenCalledTimes(1);
+        expect(removeAuthTokenFromCachesStub).toHaveBeenCalledOnce();
         expect(removeAuthTokenFromCachesStub).toHaveBeenCalledWith();
-        expect(authenticateStub).toHaveBeenCalledTimes(1);
+        expect(authenticateStub).toHaveBeenCalledOnce();
         expect(authenticateStub).toHaveBeenCalledWith(undefined);
-        expect(notificationServiceCleanUpStub).toHaveBeenCalledTimes(1);
+        expect(notificationServiceCleanUpStub).toHaveBeenCalledOnce();
         expect(notificationServiceCleanUpStub).toHaveBeenCalledWith();
-        expect(alertServiceClearStub).toHaveBeenCalledTimes(1);
+        expect(alertServiceClearStub).toHaveBeenCalledOnce();
         expect(alertServiceClearStub).toHaveBeenCalledWith();
-        expect(navigateByUrlStub).toHaveBeenCalledTimes(1);
+        expect(navigateByUrlStub).toHaveBeenCalledOnce();
         expect(navigateByUrlStub).toHaveBeenCalledWith('/');
     }
 });

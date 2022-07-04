@@ -14,6 +14,7 @@
                 "registerSuccessful": "Registration successful",
                 "signUpForCourse": "Register",
                 "cancel": "Cancel",
+                "coursePrerequisites": "Prerequisites",
                 "noCourse": "No courses available for registration",
                 "courseLoading": "Courses are loading...",
                 "courseSignupConfirmationTitle": "Confirm Course Registration"
@@ -21,7 +22,6 @@
             "course": "Course"
         },
         "courseOverview": {
-            "noDescription": "No description available",
             "noCourseIcon": "No course icon available",
             "showMore": "Show more",
             "showLess": "Show less",
@@ -29,8 +29,10 @@
                 "exercises": "Exercises",
                 "statistics": "Statistics",
                 "lectures": "Lectures",
+                "learningGoals": "Learning Goals",
                 "exams": "Exams",
-                "discussion": "Discussion"
+                "communication": "Communication",
+                "plagiarismCases": "Plagiarism Cases"
             },
             "exerciseList": {
                 "filter": "Filter ({{ num }})",
@@ -130,7 +132,11 @@
                 "includeStandardCategories": "Hide Artemis standard categories:",
                 "includeIndividualCategories": "Include course specific categories:",
                 "includeAllCategories": "Select all options",
-                "exercisesWithNoCategories": "Exercises with no categories"
+                "exercisesWithNoCategories": "Exercises with no categories",
+                "pointsPerExercise": "Points per Exercise"
+            },
+            "learningGoals": {
+                "noData": "No learning goals available for this course."
             },
             "lectureList": {
                 "lectureGroupHeader": "Lectures: {{ total }}",
@@ -149,10 +155,12 @@
                 "notReleased": "Not released",
                 "version": "Version",
                 "isDownloading": "Is downloading...",
-                "downloadPdf": "Download PDF"
+                "downloadMergedPdf": "Download Complete PDF"
             },
             "exerciseDetails": {
                 "dueDate": "Due date:",
+                "runTestsAfterDueDate": "Tests run after due date:",
+                "complaintDeadline": "Complaint deadline:",
                 "categories": "Categories:",
                 "type": "Type:",
                 "difficulty": "Difficulty:",
@@ -163,6 +171,7 @@
                 "noResults": "You have no results yet",
                 "instructorActions": {
                     "title": "Instructor actions:",
+                    "titleTutor": "Tutor actions:",
                     "scores": "Scores",
                     "submissions": "Submissions",
                     "statistics": "Statistics"
@@ -177,7 +186,16 @@
                 "graded": "Graded",
                 "notGraded": "Not graded",
                 "rated": "Rated",
-                "practice": "Practice"
+                "practice": "Practice",
+                "assessmentType": "Assessment:",
+                "submissionDue": "Submission due:",
+                "submissionDueTooltip": "The submission is due by {{date}}.",
+                "assessmentDue": "Assessment due:",
+                "assessmentDueTooltip": "The assessment is due by {{date}}.",
+                "complaintDue": "Complaint due:",
+                "complaintDueTooltip": "You can write a complain until {{date}}.",
+                "complaintPossible": "Complaint possible:",
+                "complaintPossibleTooltip": "A complaint will be possible later on."
             }
         }
     }

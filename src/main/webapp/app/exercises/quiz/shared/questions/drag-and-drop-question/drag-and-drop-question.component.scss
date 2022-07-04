@@ -1,8 +1,8 @@
 @import '../../../../../../content/scss/artemis-mixins';
 
 .dnd-question {
-    background: #fefefe;
-    border: 1px solid lightgrey;
+    background: var(--quiz-question-background);
+    border: 1px solid var(--quiz-question-border-color);
     box-sizing: border-box;
     margin-bottom: 18px;
     padding: 20px;
@@ -46,8 +46,8 @@
                     flex-direction: row;
                     align-items: center;
                     justify-content: center;
-                    background: white;
-                    border: 1px dashed black;
+                    background: var(--dnd-question-drop-location-background);
+                    border: 1px dashed var(--dnd-question-drop-location-border-color);
 
                     &.drop-hover,
                     &.drop-allowed > *,
@@ -56,16 +56,16 @@
                     }
 
                     &.results {
-                        border-color: green;
-                        background: rgb(170, 255, 170);
+                        border-color: var(--dnd-question-drop-location-results-border-color);
+                        background: var(--dnd-question-drop-location-results-background);
 
                         > * {
                             opacity: 0.8;
                         }
 
                         &.incorrect {
-                            border-color: red;
-                            background: rgb(255, 170, 170);
+                            border-color: var(--dnd-question-drop-location-results-incorrect-border-color);
+                            background: var(--dnd-question-drop-location-results-incorrect-background);
                         }
 
                         .drag-item {
@@ -74,8 +74,8 @@
                     }
 
                     &.sampleSolution {
-                        border-color: black;
-                        background: white;
+                        border-color: var(--dnd-question-drop-location-results-sample-border-color);
+                        background: var(--dnd-question-drop-location-results-sample-background);
 
                         > * {
                             opacity: 1;
@@ -83,7 +83,7 @@
                     }
 
                     .result-symbol {
-                        color: orange;
+                        color: var(--dnd-question-drop-location-result-symbol-color);
                         position: absolute;
                         top: 0;
                         left: 0;
@@ -93,7 +93,7 @@
                     }
 
                     .invalid {
-                        color: red;
+                        color: var(--dnd-question-drop-location-result-invalid-color);
                         position: absolute;
                         bottom: 0px;
                         left: 2px;
@@ -106,7 +106,7 @@
                         width: 100%;
                         height: 100%;
                         margin: 0;
-                        background: white;
+                        background: var(--dnd-question-drop-location-drag-item-background);
 
                         div {
                             @media (max-width: 991.98px) {
@@ -155,7 +155,7 @@
             }
 
             .drag-items {
-                background: #eee !important;
+                background: var(--dnd-question-dnd-items-drag-items-background) !important;
                 display: flex;
                 flex-direction: row;
                 flex-wrap: wrap;
@@ -177,11 +177,11 @@
 
     /* highlight drop location in light blue when selecting a drag item */
     .cdk-drop-list-receiving {
-        background: rgba(173, 216, 230, 0.8) !important;
+        background: var(--dnd-question-drop-list-receiving-background) !important;
     }
     /* change highlight color to light green when dragging the item above a drop location */
     .cdk-drop-list-dragging {
-        background: rgb(144, 238, 144) !important;
+        background: var(--dnd-question-drop-list-dragging-background) !important;
         cursor: pointer;
     }
 

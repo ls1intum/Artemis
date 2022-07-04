@@ -2,14 +2,13 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import dayjs from 'dayjs/esm';
-import { Exercise, ExerciseType, IncludedInOverallScore, ParticipationStatus } from 'app/entities/exercise.model';
-import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
+import { Exercise, IncludedInOverallScore, ParticipationStatus } from 'app/entities/exercise.model';
+import { QuizExercise, QuizMode } from 'app/entities/quiz/quiz-exercise.model';
 import { ParticipationService } from '../participation/participation.service';
 import { map } from 'rxjs/operators';
 import { AccountService } from 'app/core/auth/account.service';
 import { StatsForDashboard } from 'app/course/dashboards/stats-for-dashboard.model';
 import { LtiConfiguration } from 'app/entities/lti-configuration.model';
-import { CourseExerciseStatisticsDTO } from 'app/exercises/shared/exercise/exercise-statistics-dto.model';
 import { TranslateService } from '@ngx-translate/core';
 import { ExerciseCategory } from 'app/entities/exercise-category.model';
 import { User } from 'app/core/user/user.model';
@@ -20,8 +19,11 @@ export type EntityArrayResponseType = HttpResponse<Exercise[]>;
 
 export interface ExerciseServicable<T extends Exercise> {
     create(exercise: T): Observable<HttpResponse<T>>;
+
     import?(exercise: T): Observable<HttpResponse<T>>;
+
     update(exercise: T, req?: any): Observable<HttpResponse<T>>;
+
     reevaluateAndUpdate(exercise: T, req?: any): Observable<HttpResponse<T>>;
 }
 
@@ -53,28 +55,56 @@ export class ExerciseService {
     }
 
     /**
-     * Validates if the date is correct
+     * Validates if the dates are correct
      */
     validateDate(exercise: Exercise) {
-        exercise.dueDateError = exercise.releaseDate && exercise.dueDate ? !exercise.dueDate.isAfter(exercise.releaseDate) : false;
+        exercise.dueDateError = this.hasDueDateError(exercise);
+        exercise.assessmentDueDateError = this.hasAssessmentDueDateError(exercise);
 
+        exercise.exampleSolutionPublicationDateError = this.hasExampleSolutionPublicationDateError(exercise);
+        exercise.exampleSolutionPublicationDateWarning = this.hasExampleSolutionPublicationDateWarning(exercise);
+    }
+
+    hasDueDateError(exercise: Exercise) {
+        return exercise.releaseDate && exercise.dueDate ? dayjs(exercise.dueDate).isBefore(exercise.releaseDate) : false;
+    }
+
+    private hasAssessmentDueDateError(exercise: Exercise) {
         if (exercise.releaseDate && exercise.assessmentDueDate) {
             if (exercise.dueDate) {
-                exercise.assessmentDueDateError = exercise.assessmentDueDate.isBefore(exercise.dueDate) || exercise.assessmentDueDate.isBefore(exercise.releaseDate);
-                return;
+                return dayjs(exercise.assessmentDueDate).isBefore(exercise.dueDate) || dayjs(exercise.assessmentDueDate).isBefore(exercise.releaseDate);
             } else {
-                exercise.assessmentDueDateError = true;
-                return;
+                return true;
             }
         }
 
         if (exercise.assessmentDueDate) {
             if (exercise.dueDate) {
-                exercise.assessmentDueDateError = !exercise.assessmentDueDate.isAfter(exercise.dueDate);
+                return dayjs(exercise.assessmentDueDate).isBefore(exercise.dueDate);
             } else {
-                exercise.assessmentDueDateError = true;
+                return true;
             }
         }
+        return false;
+    }
+
+    hasExampleSolutionPublicationDateError(exercise: Exercise) {
+        if (exercise.exampleSolutionPublicationDate) {
+            return (
+                dayjs(exercise.exampleSolutionPublicationDate).isBefore(exercise.releaseDate || null) ||
+                (dayjs(exercise.exampleSolutionPublicationDate).isBefore(exercise.dueDate || null) && exercise.includedInOverallScore !== IncludedInOverallScore.NOT_INCLUDED)
+            );
+        }
+        return false;
+    }
+
+    hasExampleSolutionPublicationDateWarning(exercise: Exercise) {
+        if (exercise.exampleSolutionPublicationDate && !dayjs(exercise.exampleSolutionPublicationDate).isSameOrAfter(exercise.dueDate || null)) {
+            if (!exercise.dueDate || exercise.includedInOverallScore === IncludedInOverallScore.NOT_INCLUDED) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**
@@ -98,7 +128,7 @@ export class ExerciseService {
     }
 
     /**
-     * Get exercise details including all results for the currently logged in user
+     * Get exercise details including all results for the currently logged-in user
      * @param { number } exerciseId - Id of the exercise to get the repos from
      */
     getExerciseDetails(exerciseId: number): Observable<EntityResponseType> {
@@ -108,9 +138,6 @@ export class ExerciseService {
 
                 if (res.body) {
                     // insert an empty list to avoid additional calls in case the list is empty on the server (because then it would be undefined in the client)
-                    if (res.body.exerciseHints === undefined) {
-                        res.body.exerciseHints = [];
-                    }
                     if (res.body.posts === undefined) {
                         res.body.posts = [];
                     }
@@ -183,12 +210,13 @@ export class ExerciseService {
      */
     getNextExerciseForHours(exercises?: Exercise[], delayInHours = 12, student?: User) {
         // check for quiz exercise in order to prioritize before other exercise types
-        const nextQuizExercises = exercises?.filter((exercise: QuizExercise) => exercise.type === ExerciseType.QUIZ && !exercise.ended);
+        // but only if the quiz is synchronized as quizzes in other modes are generally longer running and would just clog up the display all the time
+        const nextQuizExercises = exercises?.filter((exercise: QuizExercise) => exercise.quizMode === QuizMode.SYNCHRONIZED && !exercise.quizEnded);
         return (
             // 1st priority is an active quiz
             nextQuizExercises?.find((exercise: QuizExercise) => this.isActiveQuiz(exercise)) ||
             // 2nd priority is a visible quiz
-            nextQuizExercises?.find((exercise: QuizExercise) => exercise.isVisibleBeforeStart) ||
+            nextQuizExercises?.find((exercise: QuizExercise) => exercise.visibleToStudents) ||
             // 3rd priority is the next due exercise
             exercises?.find((exercise) => {
                 const studentParticipation = student ? exercise.studentParticipations?.find((participation) => participation.student?.id === student?.id) : undefined;
@@ -253,34 +281,22 @@ export class ExerciseService {
 
     /**
      * Replace dates in http-response including an exercise with the corresponding client time
-     * @param { ERT } res - Response from server including one exercise
+     * @param res - Response from server including one exercise
      */
     static convertDateFromServer<ERT extends EntityResponseType>(res: ERT): ERT {
         if (res.body) {
             res.body.releaseDate = res.body.releaseDate ? dayjs(res.body.releaseDate) : undefined;
             res.body.dueDate = res.body.dueDate ? dayjs(res.body.dueDate) : undefined;
             res.body.assessmentDueDate = res.body.assessmentDueDate ? dayjs(res.body.assessmentDueDate) : undefined;
+            res.body.exampleSolutionPublicationDate = res.body.exampleSolutionPublicationDate ? dayjs(res.body.exampleSolutionPublicationDate) : undefined;
             res.body.studentParticipations = ParticipationService.convertParticipationsDateFromServer(res.body.studentParticipations);
         }
         return res;
     }
 
     /**
-     * Look up permissions and add/replace isAtLeastInstructor, isAtLeastEditor and isAtLeastTutor to http request containing a course
-     * @param { ERT } res - Response from server including a course
-     */
-    checkPermission<ERT extends EntityResponseType>(res: ERT): ERT {
-        if (res.body && res.body.course) {
-            res.body.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(res.body.course);
-            res.body.isAtLeastEditor = this.accountService.isAtLeastEditorInCourse(res.body.course);
-            res.body.isAtLeastTutor = this.accountService.isAtLeastTutorInCourse(res.body.course);
-        }
-        return res;
-    }
-
-    /**
      * Replace dates in http-response including an array of exercises with the corresponding client time
-     * @param { EART } res - Response from server including an array of exercise
+     * @param res - Response from server including an array of exercise
      */
     static convertDateArrayFromServer<E extends Exercise, EART extends EntityArrayResponseType>(res: EART): EART {
         if (res.body) {
@@ -374,24 +390,6 @@ export class ExerciseService {
     }
 
     /**
-     * Retrieves useful statistics for course exercises
-     *
-     * Gets the {@link CourseExerciseStatisticsDTO} for each exercise proved in <code>exerciseIds</code>. Either the results of the last submission or the results of the last rated
-     * submission are considered for a student/team, depending on the value of <code>onlyConsiderRatedResults</code>
-     * @param onlyConsiderRatedResults - either the results of the last submission or the results of the last rated submission are considered
-     * @param exerciseIds - list of exercise ids (must be belong to the same course)
-     */
-    getCourseExerciseStatistics(exerciseIds: number[], onlyConsiderRatedResults: boolean): Observable<HttpResponse<CourseExerciseStatisticsDTO[]>> {
-        let params = new HttpParams();
-        params = params.append('exerciseIds', exerciseIds.join(', '));
-        params = params.append('onlyConsiderRatedResults', onlyConsiderRatedResults.toString());
-        return this.http.get<CourseExerciseStatisticsDTO[]>(`${this.resourceUrl}/exercises/course-exercise-statistics`, {
-            params,
-            observe: 'response',
-        });
-    }
-
-    /**
      * Makes sure that bonus points are zero and respect the constraint by includedInOverallScore
      * @param exercise exercise for which to set the bonus points
      */
@@ -456,6 +454,12 @@ export class ExerciseService {
             this.accountService.setAccessRightsForExerciseAndReferencedCourse(res.body as Exercise);
         }
         return res;
+    }
+
+    public getLatestDueDate(exerciseId: number): Observable<dayjs.Dayjs | undefined> {
+        return this.http
+            .get<dayjs.Dayjs>(`${this.resourceUrl}/${exerciseId}/latest-due-date`, { observe: 'response' })
+            .pipe(map((res: HttpResponse<dayjs.Dayjs>) => (res.body ? dayjs(res.body) : undefined)));
     }
 }
 

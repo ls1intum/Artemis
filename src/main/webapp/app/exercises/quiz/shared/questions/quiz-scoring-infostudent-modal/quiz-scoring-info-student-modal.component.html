@@ -9,7 +9,28 @@
         <button type="button" class="btn-close" aria-label="Close" (click)="d()"></button>
     </div>
 
-    <div class="modal-body" *ngIf="this.question.scoringType === ScoringType.ALL_OR_NOTHING">
+    <div class="modal-body" *ngIf="this.question.scoringType === ScoringType.ALL_OR_NOTHING && isSingleChoice">
+        <span class="font-weight-bold" jhiTranslate="artemisApp.quizExercise.explanationText.scoringTypeSingleChoice"></span>
+        <span jhiTranslate="artemisApp.quizExercise.explanationText.scoringTypeSingleChoiceExplanation"></span>
+        <br />
+        <div>
+            <span *ngIf="this.correctMultipleChoiceAnswers == this.multipleChoiceCorrectAnswerCorrectlyChosen && this.multipleChoiceWrongAnswerChosen == 0">
+                <span
+                    jhiTranslate="artemisApp.quizExercise.explanationText.multipleChoiceSingleChoiceCorrect"
+                    [translateValues]="{ paramScore: this.score, paramQuestionScore: this.question.points, paramPoint: this.scorePoint, paramScorePoint: this.questionPoint }"
+                ></span
+            ></span>
+
+            <span *ngIf="!(this.correctMultipleChoiceAnswers == this.multipleChoiceCorrectAnswerCorrectlyChosen && this.multipleChoiceWrongAnswerChosen == 0)">
+                <span
+                    jhiTranslate="artemisApp.quizExercise.explanationText.multipleChoiceSingleChoiceNotCorrect"
+                    [translateValues]="{ paramScore: this.score, paramQuestionScore: this.question.points, paramPoint: this.scorePoint, paramScorePoint: this.questionPoint }"
+                ></span
+            ></span>
+        </div>
+    </div>
+
+    <div class="modal-body" *ngIf="this.question.scoringType === ScoringType.ALL_OR_NOTHING && !isSingleChoice">
         <span class="font-weight-bold" jhiTranslate="artemisApp.quizExercise.explanationText.scoringTypeAllOrNothing"></span>
         <span jhiTranslate="artemisApp.quizExercise.explanationText.scoringTypeAllOrNothingExplanation"></span>
         <br />

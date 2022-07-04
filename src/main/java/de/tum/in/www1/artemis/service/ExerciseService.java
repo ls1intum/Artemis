@@ -22,7 +22,7 @@ import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
 import de.tum.in.www1.artemis.domain.scores.ParticipantScore;
 import de.tum.in.www1.artemis.repository.*;
-import de.tum.in.www1.artemis.service.scheduled.quiz.QuizScheduleService;
+import de.tum.in.www1.artemis.service.scheduled.cache.quiz.QuizScheduleService;
 import de.tum.in.www1.artemis.web.rest.dto.CourseManagementOverviewExerciseStatisticsDTO;
 import de.tum.in.www1.artemis.web.rest.dto.DueDateStat;
 import de.tum.in.www1.artemis.web.rest.dto.StatsForDashboardDTO;
@@ -78,13 +78,15 @@ public class ExerciseService {
 
     private final ExampleSubmissionRepository exampleSubmissionRepository;
 
+    private final QuizBatchService quizBatchService;
+
     public ExerciseService(ExerciseRepository exerciseRepository, AuthorizationCheckService authCheckService, QuizScheduleService quizScheduleService,
             AuditEventRepository auditEventRepository, TeamRepository teamRepository, ProgrammingExerciseRepository programmingExerciseRepository,
             LtiOutcomeUrlRepository ltiOutcomeUrlRepository, StudentParticipationRepository studentParticipationRepository, ResultRepository resultRepository,
             SubmissionRepository submissionRepository, ParticipantScoreRepository participantScoreRepository, UserRepository userRepository,
             ComplaintRepository complaintRepository, TutorLeaderboardService tutorLeaderboardService, ComplaintResponseRepository complaintResponseRepository,
             GradingCriterionRepository gradingCriterionRepository, FeedbackRepository feedbackRepository, RatingService ratingService, ExerciseDateService exerciseDateService,
-            ExampleSubmissionRepository exampleSubmissionRepository) {
+            ExampleSubmissionRepository exampleSubmissionRepository, QuizBatchService quizBatchService) {
         this.exerciseRepository = exerciseRepository;
         this.resultRepository = resultRepository;
         this.authCheckService = authCheckService;
@@ -105,6 +107,7 @@ public class ExerciseService {
         this.exerciseDateService = exerciseDateService;
         this.ratingService = ratingService;
         this.exampleSubmissionRepository = exampleSubmissionRepository;
+        this.quizBatchService = quizBatchService;
     }
 
     /**
@@ -306,6 +309,13 @@ public class ExerciseService {
                 // filter out questions and all statistical information about the quizPointStatistic from quizExercises (so users can't see which answer options are correct)
                 if (exercise instanceof QuizExercise quizExercise) {
                     quizExercise.filterSensitiveInformation();
+
+                    // if the quiz is not active the batches do not matter and there is no point in loading them
+                    if (quizExercise.isQuizStarted() && !quizExercise.isQuizEnded()) {
+                        // delete the proxy as it doesn't work; getQuizBatchForStudent will load the batches from the DB directly
+                        quizExercise.setQuizBatches(null);
+                        quizExercise.setQuizBatches(quizBatchService.getQuizBatchForStudentByLogin(quizExercise, user.getLogin()).stream().collect(Collectors.toSet()));
+                    }
                 }
             }
         }
@@ -360,7 +370,7 @@ public class ExerciseService {
      */
     public void checkExampleSubmissions(Exercise exercise) {
         // Avoid recursions
-        if (exercise.getExampleSubmissions().size() != 0) {
+        if (!exercise.getExampleSubmissions().isEmpty()) {
             Set<ExampleSubmission> exampleSubmissionsWithResults = exampleSubmissionRepository.findAllWithResultByExerciseId(exercise.getId());
             exercise.setExampleSubmissions(exampleSubmissionsWithResults);
             exercise.getExampleSubmissions().forEach(exampleSubmission -> exampleSubmission.setExercise(null));
@@ -504,7 +514,7 @@ public class ExerciseService {
 
             return dueDateA.isBefore(dueDateB) ? 1 : -1;
         });
-        var fivePastExercises = pastExercises.stream().limit(5).collect(Collectors.toList());
+        var fivePastExercises = pastExercises.stream().limit(5).toList();
 
         // Calculate the average score for all five exercises at once
         var averageScore = participantScoreRepository.findAverageScoreForExercises(fivePastExercises);
@@ -591,7 +601,7 @@ public class ExerciseService {
     private void setAssessmentsAndSubmissionsForStatisticsDTO(CourseManagementOverviewExerciseStatisticsDTO exerciseStatisticsDTO, Exercise exercise) {
         if (exercise.getAssessmentDueDate() != null && exercise.getAssessmentDueDate().isAfter(ZonedDateTime.now())) {
             long numberOfRatedAssessments = resultRepository.countNumberOfRatedResultsForExercise(exercise.getId());
-            long noOfSubmissionsInTime = submissionRepository.countUniqueSubmissionsByExerciseId(exercise.getId());
+            long noOfSubmissionsInTime = submissionRepository.countByExerciseIdSubmittedBeforeDueDate(exercise.getId());
             exerciseStatisticsDTO.setNoOfRatedAssessments(numberOfRatedAssessments);
             exerciseStatisticsDTO.setNoOfSubmissionsInTime(noOfSubmissionsInTime);
             exerciseStatisticsDTO.setNoOfAssessmentsDoneInPercent(noOfSubmissionsInTime == 0 ? 0 : Math.round(numberOfRatedAssessments * 1000.0 / noOfSubmissionsInTime) / 10.0);
@@ -639,7 +649,7 @@ public class ExerciseService {
             for (Feedback feedback : feedbackToBeUpdated) {
                 if (feedback.getGradingInstruction().getId().equals(instruction.getId())) {
                     feedback.setCredits(instruction.getCredits());
-                    feedback.setPositive(feedback.getCredits() >= 0);
+                    feedback.setPositiveViaCredits();
                 }
             }
         }

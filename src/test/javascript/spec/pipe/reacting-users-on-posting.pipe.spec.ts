@@ -35,7 +35,7 @@ describe('ReactingUsersOnPostingsPipe', () => {
         });
         tick();
         expect(transformedStringWithReactingUsers).toBe(metisUser1.name + 'artemisApp.metis.reactedTooltip');
-        expect(updateReactingUsersStringSpy).toHaveBeenCalledTimes(1);
+        expect(updateReactingUsersStringSpy).toHaveBeenCalledOnce();
     }));
 
     it('Should return string for one user that is "you"', fakeAsync(() => {
@@ -44,7 +44,7 @@ describe('ReactingUsersOnPostingsPipe', () => {
         });
         tick();
         expect(transformedStringWithReactingUsers).toBe('artemisApp.metis.you');
-        expect(updateReactingUsersStringSpy).toHaveBeenCalledTimes(1);
+        expect(updateReactingUsersStringSpy).toHaveBeenCalledOnce();
     }));
 
     it('Should return string for two users that do not include "you"', fakeAsync(() => {
@@ -54,7 +54,7 @@ describe('ReactingUsersOnPostingsPipe', () => {
         });
         tick();
         expect(transformedStringWithReactingUsers).toBe(metisUser1.name! + 'artemisApp.metis.and' + metisUser2.name! + 'artemisApp.metis.reactedTooltip');
-        expect(updateReactingUsersStringSpy).toHaveBeenCalledTimes(1);
+        expect(updateReactingUsersStringSpy).toHaveBeenCalledOnce();
     }));
 
     it('Should return string for two users that do include "you"', fakeAsync(() => {
@@ -64,7 +64,7 @@ describe('ReactingUsersOnPostingsPipe', () => {
         });
         tick();
         expect(transformedStringWithReactingUsers).toBe('artemisApp.metis.you' + 'artemisApp.metis.and' + metisUser1.name! + 'artemisApp.metis.reactedTooltip');
-        expect(updateReactingUsersStringSpy).toHaveBeenCalledTimes(1);
+        expect(updateReactingUsersStringSpy).toHaveBeenCalledOnce();
     }));
 
     it('Should return string for three users that do include "you" and separate the first two users with comma', fakeAsync(() => {
@@ -76,7 +76,7 @@ describe('ReactingUsersOnPostingsPipe', () => {
         expect(transformedStringWithReactingUsers).toBe(
             'artemisApp.metis.you' + ', ' + metisUser1.name! + 'artemisApp.metis.and' + metisTutor.name! + 'artemisApp.metis.reactedTooltip',
         );
-        expect(updateReactingUsersStringSpy).toHaveBeenCalledTimes(1);
+        expect(updateReactingUsersStringSpy).toHaveBeenCalledOnce();
     }));
 
     it('Should trim list of reacting users but always include "you', fakeAsync(() => {
@@ -120,7 +120,7 @@ describe('ReactingUsersOnPostingsPipe', () => {
                 'userF' +
                 'artemisApp.metis.reactedTooltipTrimmed',
         );
-        expect(updateReactingUsersStringSpy).toHaveBeenCalledTimes(1);
+        expect(updateReactingUsersStringSpy).toHaveBeenCalledOnce();
     }));
 
     it('Should trigger update of reacting users on language change', fakeAsync(() => {

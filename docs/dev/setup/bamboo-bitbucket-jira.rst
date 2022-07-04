@@ -35,9 +35,9 @@ Docker-Compose
 Before you start the docker-compose, check if the bamboo version in the
 ``build.gradle`` (search for ``com.atlassian.bamboo:bamboo-specs``) is
 equal to the bamboo version number in the docker compose in
-``src/main/docker/atlassian.yml`` 
-If the version number is not equal, adjust the version number. Further details about the docker-compose setup can be found in 
-``src/main/docker`` 
+``src/main/docker/atlassian.yml``
+If the version number is not equal, adjust the version number. Further details about the docker-compose setup can be found in
+``src/main/docker``
 
 Execute the docker-compose file e.g. with
 ``docker-compose -f src/main/docker/atlassian.yml up -d``.
@@ -50,8 +50,8 @@ command ``docker network prune`` to resolve this issue.
 Make sure that docker has enough memory (~ 6GB). To adapt it, go to ``Settings -> Resources``
 
 
-In case you want to enable Swift or C programming exercises, refer to the readme in 
-``src/main/docker`` 
+In case you want to enable Swift or C programming exercises, refer to the readme in
+``src/main/docker``
 
 
 Configure Bamboo, Bitbucket and Jira
@@ -70,6 +70,7 @@ under ``localhost:7990``.
    - Jira: Select ``Jira Service Management (formerly Service Desk) (Data Center)`` and ``not installed yet``
 
 #. Provide the just created license key during the setup and create an admin user with the same credentials in all 3 applications.
+   For the Bamboo database you can choose H2.
    Also, you can select the evaluation/internal/test/dev setups if you are asked.
    Follow the additional steps for Jira and Bitbucket.
 
@@ -81,7 +82,9 @@ under ``localhost:7990``.
 
    - Bitbucket: Do not connect Bitbucket with Jira yet
 
-#. Make sure that `xdg-utils <https://www.howtoinstall.me/ubuntu/18-04/xdg-utils/>`__ is installed before running the following script.
+#. Make sure that Jira, Bitbucket and Bamboo have finished starting up.
+
+    (Only Linux & Windows) Make sure that `xdg-utils <https://www.howtoinstall.me/ubuntu/18-04/xdg-utils/>`__ is installed before running the following script.
 
     .. raw:: html
 
@@ -93,12 +96,12 @@ under ``localhost:7990``.
        Make sure to execute the script from the subsystem.
        </details>
 
-   Make sure that Jira, Bitbucket and Bamboo have finished starting up.
 
    Execute the shell script ``atlassian-setup.sh`` in the
    ``src/main/docker`` directory (e.g. with
    ``src/main/docker/./atlassian-setup.sh``). This script creates
-   groups, users and disabled application links between the 3 applications.
+   groups, users and assigns the user to their respective group.
+   In addition, it configures disabled application links between the 3 applications.
 
 
 #. Enable the created `application
@@ -151,9 +154,9 @@ under ``localhost:7990``.
 
            Jira → Bitbucket
 
-#. The script *(step 3)* has already created users and groups but you need to
-   manually assign the users into their respective group in Jira. In our
-   test setup, users 1-5 are students, 6-10 are tutors, 11-15 are
+#. The script *(step 3)* has already created the required users and assigned them to their respective group in Jira.
+   Now, make sure that they are assigned correctly according to the following test setup:
+   users 1-5 are students, 6-10 are tutors, 11-15 are
    editors and 16-20 are instructors. The usernames are \artemis_test_user_{1-20}
    and the password is again the username. When you create a course in artemis
    you have to manually choose the created groups (students, tutors, editors,
@@ -190,12 +193,14 @@ under ``localhost:7990``.
 
                 Adding Crowd Server in **Bamboo**
 
+#. Give the test users User access on Bitbucket: Configure → Global permissions
 
 #. In Bamboo create a global variable named
    SERVER_PLUGIN_SECRET_PASSWORD, the value of this variable will be used
    as the secret. The value of this variable should be then stored in
    ``src/main/resources/config/application-artemis.yml`` as the value of
    ``artemis-authentication-token-value``.
+   You can create a global variable from settings on Bamboo.
 
 #. Download the
    `bamboo-server-notification-plugin <https://github.com/ls1intum/bamboo-server-notification-plugin/releases>`__
@@ -210,6 +215,8 @@ under ``localhost:7990``.
 
    -  Add capabilities menu → Capability type ``JDK`` → insert ``JDK17``
       as JDK label → insert ``/usr/lib/jvm/java-17-oracle`` as Java home.
+
+#. Create a Bamboo agent. Configure → Agents → Add local agent
 
 #. Generate a personal access token
 
@@ -249,17 +256,6 @@ under ``localhost:7990``.
                   user: <username>
                   password: <password>
                   token: #insert the token here
-
-#. Disable XSRF checking
-    Although XSRF checking is highly recommended, we currently have to disable it as Artemis does not yet support
-    sending the required headers.
-
-    - Log in as the admin user go to Bamboo -> Overview -> Security Settings
-
-       Edit the settings and disable XSRF checking:
-
-        .. figure:: bamboo-bitbucket-jira/bamboo_xsrf_disable.png
-           :align: center
 
 #. Add a SSH key for the admin user
 

@@ -30,6 +30,7 @@
             "deleteQuestion": "Do you really wish to delete the grading key?",
             "add": "Add Grade Step",
             "save": "Save",
+            "stickyGradeStep": "The last grade step is always open ended to handle scores exceeding the maximum. It is stuck to the bottom.",
             "info": {
                 "title": "Grading Key Help",
                 "general": {
@@ -78,6 +79,15 @@
                     "leftExclusiveRightInclusive": "Left boundary is excluded from and right is included in the interval",
                     "bothInclusive": "Both boundaries are included in the interval"
                 }
+            },
+            "intervalTab": {
+                "title": "Interval",
+                "mode": "Mode",
+                "pointsMode": "Points",
+                "percentageMode": "Percentage"
+            },
+            "detailedTab": {
+                "title": "Detailed"
             }
         },
         "gradingScale": {

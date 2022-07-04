@@ -103,7 +103,7 @@ describe('Example Submission Service', () => {
             const req = httpMock.expectOne({ method: 'DELETE' });
             req.flush({ status: 200 });
             tick();
-            expect(expectedResult).toBe(true);
+            expect(expectedResult).toBeTrue();
         }));
 
         it('should return an example submission', fakeAsync(() => {

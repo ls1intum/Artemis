@@ -15,14 +15,14 @@
             position: relative;
 
             &__input {
-                border: 1px solid #ced4da;
+                border: 1px solid var(--sa-question-container-input-border);
                 line-height: 35px;
                 margin-bottom: 10px;
             }
 
             &__div-input {
-                background-color: white;
-                border: 1px solid #ced4da;
+                background-color: var(--sa-question-container-input-background);
+                border: 1px solid var(--sa-question-container-input-border);
                 padding: 2px 3px;
                 width: 170px;
                 height: 40px;

@@ -70,7 +70,7 @@
                             }}:
                         </b>
                         <hr />
-                        <jhi-text-result [result]="result"></jhi-text-result>
+                        <jhi-text-result [result]="result" [course]="course"></jhi-text-result>
                         <hr />
                     </div>
                     <jhi-additional-feedback
@@ -86,7 +86,7 @@
             </ng-template>
 
             <jhi-complaint-student-view
-                *ngIf="textExercise && result && participation"
+                *ngIf="textExercise && result && participation && !examMode"
                 [exercise]="textExercise"
                 [result]="resultWithComplaint ? resultWithComplaint : result"
                 [participation]="participation"

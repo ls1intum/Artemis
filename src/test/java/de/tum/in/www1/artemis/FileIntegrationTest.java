@@ -4,8 +4,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.io.ByteArrayOutputStream;
-import java.nio.file.Paths;
+import java.nio.file.Path;
 import java.time.ZonedDateTime;
+import java.util.Comparator;
 import java.util.Set;
 
 import org.apache.pdfbox.pdmodel.PDDocument;
@@ -21,7 +22,9 @@ import org.springframework.security.test.context.support.WithMockUser;
 import com.fasterxml.jackson.databind.JsonNode;
 
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.enumeration.QuizMode;
 import de.tum.in.www1.artemis.domain.lecture.AttachmentUnit;
+import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
 import de.tum.in.www1.artemis.domain.quiz.DragAndDropQuestion;
 import de.tum.in.www1.artemis.domain.quiz.DragItem;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
@@ -104,7 +107,7 @@ public class FileIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testGetDragAndDropBackgroundFile() throws Exception {
         Course course = database.addEmptyCourse();
-        QuizExercise quizExercise = database.createQuiz(course, ZonedDateTime.now(), null);
+        QuizExercise quizExercise = database.createQuiz(course, ZonedDateTime.now(), null, QuizMode.SYNCHRONIZED);
         DragAndDropQuestion dragAndDropQuestion = (DragAndDropQuestion) quizExercise.getQuizQuestions().get(1);
         quizExerciseRepository.save(quizExercise);
 
@@ -125,7 +128,7 @@ public class FileIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testGetDragItemFile() throws Exception {
         Course course = database.addEmptyCourse();
-        QuizExercise quizExercise = database.createQuiz(course, ZonedDateTime.now(), null);
+        QuizExercise quizExercise = database.createQuiz(course, ZonedDateTime.now(), null, QuizMode.SYNCHRONIZED);
         DragAndDropQuestion dragAndDropQuestion = (DragAndDropQuestion) quizExercise.getQuizQuestions().get(1);
         quizExerciseRepository.save(quizExercise);
 
@@ -209,7 +212,8 @@ public class FileIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         lecture.setDescription("Test");
         lecture.setStartDate(ZonedDateTime.now().minusHours(1));
 
-        Attachment attachment = ModelFactory.generateAttachment(ZonedDateTime.now(), lecture);
+        Attachment attachment = ModelFactory.generateAttachment(ZonedDateTime.now());
+        attachment.setLecture(lecture);
 
         // create file
         MockMultipartFile file = new MockMultipartFile("file", filename, "application/json", "some data".getBytes());
@@ -220,7 +224,7 @@ public class FileIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         }
         String responsePath = response.get("path").asText();
         // move file from temp folder to correct folder
-        var targetFolder = Paths.get(FilePathService.getLectureAttachmentFilePath(), String.valueOf(lecture.getId())).toString();
+        var targetFolder = Path.of(FilePathService.getLectureAttachmentFilePath(), String.valueOf(lecture.getId())).toString();
         String attachmentPath = fileService.manageFilesForUpdatedFilePath(null, responsePath, targetFolder, lecture.getId(), true);
 
         attachment.setLink(attachmentPath);
@@ -293,7 +297,7 @@ public class FileIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testGetLecturePdfAttachmentsMerged_InvalidToken() throws Exception {
-        Lecture lecture = createLectureWithLectureUnits(HttpStatus.CREATED);
+        Lecture lecture = createLectureWithLectureUnits();
         request.get("/api/files/attachments/lecture/" + lecture.getId() + "/merge-pdf?access_token=random_non_valid_token", HttpStatus.FORBIDDEN, String.class);
     }
 
@@ -306,7 +310,7 @@ public class FileIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     public void testGetLecturePdfAttachmentsMerged_InvalidLectureId() throws Exception {
-        Lecture lecture = createLectureWithLectureUnits(HttpStatus.CREATED);
+        Lecture lecture = createLectureWithLectureUnits();
 
         // get access token and then send request using the access token
         String accessToken = request.get("/api/files/attachments/course/" + lecture.getCourse().getId() + "/access-token", HttpStatus.OK, String.class);
@@ -323,16 +327,38 @@ public class FileIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     public void testGetLecturePdfAttachmentsMerged() throws Exception {
-        Lecture lecture = createLectureWithLectureUnits(HttpStatus.CREATED);
+        Lecture lecture = createLectureWithLectureUnits();
+        callAndCheckMergeResult(lecture, 5);
+    }
 
+    @Test
+    @WithMockUser(username = "tutor1", roles = "TA")
+    public void testGetLecturePdfAttachmentsMerged_TutorAccessToUnreleasedUnits() throws Exception {
+        Lecture lecture = createLectureWithLectureUnits();
+
+        var attachment = lecture.getLectureUnits().stream().sorted(Comparator.comparing(LectureUnit::getId)).map(lectureUnit -> ((AttachmentUnit) lectureUnit).getAttachment())
+                .findFirst().orElseThrow();
+        attachment.setReleaseDate(ZonedDateTime.now().plusHours(2));
+        attachmentRepo.save(attachment);
+
+        // The unit is hidden but a tutor can still see it
+        // -> the merged result should contain the unit
+        callAndCheckMergeResult(lecture, 5);
+    }
+
+    private void callAndCheckMergeResult(Lecture lecture, int expectedPages) throws Exception {
         // get access token and then send request using the access token
         String accessToken = request.get("/api/files/attachments/course/" + lecture.getCourse().getId() + "/access-token", HttpStatus.OK, String.class);
         byte[] receivedFile = request.get("/api/files/attachments/lecture/" + lecture.getId() + "/merge-pdf" + "?access_token=" + accessToken, HttpStatus.OK, byte[].class);
 
         assertThat(receivedFile).isNotEmpty();
         try (PDDocument mergedDoc = PDDocument.load(receivedFile)) {
-            assertEquals(5, mergedDoc.getNumberOfPages());
+            assertEquals(expectedPages, mergedDoc.getNumberOfPages());
         }
+    }
+
+    public Lecture createLectureWithLectureUnits() throws Exception {
+        return createLectureWithLectureUnits(HttpStatus.CREATED);
     }
 
     public Lecture createLectureWithLectureUnits(HttpStatus expectedStatus) throws Exception {
@@ -343,42 +369,42 @@ public class FileIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         lecture.setStartDate(ZonedDateTime.now().minusHours(1));
         lectureRepo.save(lecture);
 
-        // create pdf file 1
-        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-        PDDocument doc1 = new PDDocument();
-        doc1.addPage(new PDPage());
-        doc1.addPage(new PDPage());
-        doc1.addPage(new PDPage());
-        doc1.save(outputStream);
-        doc1.close();
-
         Long lectureId = lecture.getId();
-        MockMultipartFile file1 = new MockMultipartFile("file", "file.pdf", "application/json", outputStream.toByteArray());
-        AttachmentUnit unit1 = uploadAttachmentUnit(file1, lectureId, expectedStatus);
+
+        // create pdf file 1
+        AttachmentUnit unit1;
+        try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream(); PDDocument doc1 = new PDDocument()) {
+            doc1.addPage(new PDPage());
+            doc1.addPage(new PDPage());
+            doc1.addPage(new PDPage());
+            doc1.save(outputStream);
+            MockMultipartFile file1 = new MockMultipartFile("file", "file.pdf", "application/json", outputStream.toByteArray());
+            unit1 = uploadAttachmentUnit(file1, lectureId, expectedStatus);
+        }
 
         // create image file
         MockMultipartFile file2 = new MockMultipartFile("file", "filename2.png", "application/json", "some text".getBytes());
         AttachmentUnit unit2 = uploadAttachmentUnit(file2, lectureId, expectedStatus);
 
-        // create pdf file 2
-        outputStream = new ByteArrayOutputStream();
-        try (PDDocument doc2 = new PDDocument()) {
+        // create pdf file 3
+        AttachmentUnit unit3;
+        try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream(); PDDocument doc2 = new PDDocument()) {
             doc2.addPage(new PDPage());
             doc2.addPage(new PDPage());
             doc2.save(outputStream);
+            MockMultipartFile file3 = new MockMultipartFile("file", "filename3.pdf", "application/json", outputStream.toByteArray());
+            unit3 = uploadAttachmentUnit(file3, lectureId, expectedStatus);
         }
-        MockMultipartFile file3 = new MockMultipartFile("file", "filename3.pdf", "application/json", outputStream.toByteArray());
-        AttachmentUnit unit3 = uploadAttachmentUnit(file3, lectureId, expectedStatus);
 
-        database.addLectureUnitsToLecture(lecture, Set.of(unit1, unit2, unit3));
+        lecture = database.addLectureUnitsToLecture(lecture, Set.of(unit1, unit2, unit3));
 
         return lecture;
     }
 
     private AttachmentUnit uploadAttachmentUnit(MockMultipartFile file, Long lectureId, HttpStatus expectedStatus) throws Exception {
-        Lecture lecture = lectureRepo.findByIdWithPostsAndLectureUnitsAndLearningGoals(lectureId).get();
+        Lecture lecture = lectureRepo.findByIdWithLectureUnits(lectureId).get();
 
-        AttachmentUnit attachmentUnit = database.createAttachmentUnit();
+        AttachmentUnit attachmentUnit = database.createAttachmentUnit(false);
 
         // upload file
         JsonNode response = request.postWithMultipartFile("/api/fileUpload?keepFileName=true", file.getOriginalFilename(), "file", file, JsonNode.class, expectedStatus);
@@ -387,8 +413,9 @@ public class FileIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         }
 
         String responsePath = response.get("path").asText();
+
         // move file from temp folder to correct folder
-        var targetFolder = Paths.get(FilePathService.getAttachmentUnitFilePath(), String.valueOf(attachmentUnit.getId())).toString();
+        var targetFolder = Path.of(FilePathService.getAttachmentUnitFilePath(), String.valueOf(attachmentUnit.getId())).toString();
 
         fileService.manageFilesForUpdatedFilePath(null, responsePath, targetFolder, lecture.getId(), true);
         var attachmentPath = targetFolder + "/" + file.getOriginalFilename();

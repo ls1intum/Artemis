@@ -5,12 +5,12 @@
             "noPosts": "Keine Beiträge gefunden.",
             "postNumberInformation": "{{ number }} Treffer",
             "addNewPost": "Neuer Beitrag",
-            "answerNow": "Jetzt beantworten",
-            "startDiscussion": "Diskussion beginnen",
+            "reply": "Beantworten",
             "showMultipleAnswers": "Zeige {{ number }} Antworten",
             "showSingleAnswer": "Zeige 1 Antwort",
             "collapseAnswers": "Antworten einklappen",
             "savePosting": "Speichern",
+            "cancel": "Abbrechen",
             "toggleThread": "Klicke, um den Thread ein-/auszuklappen",
             "deletePost": "Möchtest du deinen Beitrag löschen?",
             "confirmDeletePost": "Bitte bestätige, dass du diesen Beitrag löschen möchtest!",
@@ -36,10 +36,20 @@
             "reactedTooltipTrimmed": " und {{ number }} weitere Person(en) haben reagiert.",
             "searchEmoji": "Emoji suchen",
             "courseEmojiSelectionCategory": "Ausgewählte Emojis für diesen Kurs",
+            "editor": {
+                "reference": "Referenz",
+                "exercise": "Aufgabe",
+                "lecture": "Vortrag"
+            },
             "discussion": {
-                "label": "Diskussion",
-                "show": "Diskussion anzeigen",
-                "hide": "Diskussion einklappen"
+                "label": "Kommunikation",
+                "show": "Kommunikation anzeigen",
+                "hide": "Kommunikation einklappen"
+            },
+            "discussionSection": {
+                "searchBarDefault": "Suche nach Beiträgen",
+                "sortByDate": "Datum:",
+                "defaultSortCriterion": "Standard-Sortierung"
             },
             "overview": {
                 "title": "Beiträge",
@@ -47,7 +57,7 @@
                 "postContextFilter": "Zeige Beiträge in:",
                 "filterToUnresolved": "Ungeklärt",
                 "filterToOwn": "Eigene",
-                "filterToAnsweredOrReacted": "Reagiert oder beantwortet von Dir",
+                "filterToAnsweredOrReacted": "Reagiert",
                 "courseFilterExplanation": "(Alle Beiträge)",
                 "sortPostsBy": "Sortiere nach:",
                 "sortDescending": "Absteigend",

@@ -61,6 +61,16 @@ export const quizManagementRoute: Routes = [
         canDeactivate: [PendingChangesGuard],
     },
     {
+        path: ':courseId/quiz-exercises/:exerciseId/import',
+        component: QuizExerciseDetailComponent,
+        data: {
+            authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
+            pageTitle: 'artemisApp.quizExercise.home.importLabel',
+        },
+        canActivate: [UserRouteAccessService],
+        canDeactivate: [PendingChangesGuard],
+    },
+    {
         path: ':courseId/quiz-exercises/:exerciseId/preview',
         component: QuizParticipationComponent,
         data: {

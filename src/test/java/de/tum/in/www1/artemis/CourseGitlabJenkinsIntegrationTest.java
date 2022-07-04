@@ -164,6 +164,12 @@ public class CourseGitlabJenkinsIntegrationTest extends AbstractSpringIntegratio
     }
 
     @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testEditCourseShouldPreserveAssociations() throws Exception {
+        courseTestService.testEditCourseShouldPreserveAssociations();
+    }
+
+    @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     public void testUpdateCourseGroups() throws Exception {
         courseTestService.testUpdateCourseGroups();
@@ -550,6 +556,12 @@ public class CourseGitlabJenkinsIntegrationTest extends AbstractSpringIntegratio
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testGetAllEditorsInCourse() throws Exception {
+        courseTestService.testGetAllEditorsInCourse();
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testGetAllStudentsOrTutorsOrInstructorsInCourse_AsInstructorOfOtherCourse_forbidden() throws Exception {
         courseTestService.testGetAllStudentsOrTutorsOrInstructorsInCourse_AsInstructorOfOtherCourse_forbidden();
     }
@@ -774,5 +786,17 @@ public class CourseGitlabJenkinsIntegrationTest extends AbstractSpringIntegratio
         String registrationNumber1 = "1234567";
         String registrationNumber2 = "2345678";
         courseTestService.testAddUsersToCourseGroup(group, registrationNumber1, registrationNumber2);
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    public void testCreateCourseWithValidStartAndEndDate() throws Exception {
+        courseTestService.testCreateCourseWithValidStartAndEndDate();
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    public void testCreateCourseWithInvalidStartAndEndDate() throws Exception {
+        courseTestService.testCreateCourseWithInvalidStartAndEndDate();
     }
 }

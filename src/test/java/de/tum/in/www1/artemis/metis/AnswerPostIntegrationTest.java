@@ -168,7 +168,9 @@ public class AnswerPostIntegrationTest extends AbstractSpringIntegrationBambooBi
         database.assertSensitiveInformationHidden(returnedPosts);
         // get posts of current user and compare
         List<Post> resolvedPosts = existingPostsWithAnswers.stream()
-                .filter(post -> post.getAnswers().stream().noneMatch(answerPost -> Boolean.TRUE.equals(answerPost.doesResolvePost()))).toList();
+                .filter(post -> post.getCourseWideContext() == null || !post.getCourseWideContext().equals(CourseWideContext.ANNOUNCEMENT)
+                        && post.getAnswers().stream().noneMatch(answerPost -> Boolean.TRUE.equals(answerPost.doesResolvePost())))
+                .toList();
 
         assertThat(returnedPosts).isEqualTo(resolvedPosts);
     }

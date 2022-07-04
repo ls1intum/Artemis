@@ -85,7 +85,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
     isLoading: boolean;
     isLate: boolean; // indicates if the submission is late
     ComplaintType = ComplaintType;
-    private examMode = false;
+    examMode = false;
 
     // submission sync with team members
     teamSyncInterval: number;

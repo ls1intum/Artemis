@@ -41,15 +41,6 @@ export const programmingExerciseProblemStatementPython =
     '\n' +
     '@startuml\n' +
     '\n' +
-    'skinparam ArrowFontSize 16\n' +
-    'skinparam shadowing false\n' +
-    'skinparam class {\n' +
-    'FontSize 20\n' +
-    'AttributeFontSize 16\n' +
-    'BorderColor black\n' +
-    'ArrowColor black\n' +
-    '}\n' +
-    '\n' +
     'class Client {\n' +
     '}\n' +
     '\n' +

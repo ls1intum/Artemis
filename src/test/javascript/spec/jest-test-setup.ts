@@ -1,5 +1,7 @@
 import 'jest-canvas-mock';
 import 'app/shared/util/array.extension';
+import 'app/shared/util/map.extension';
+import 'app/shared/util/string.extension';
 import 'app/core/config/dayjs';
 import 'jest-extended';
 

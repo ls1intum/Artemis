@@ -46,6 +46,7 @@ import { NgxChartsModule } from '@swimlane/ngx-charts';
 import { UserImportModule } from 'app/shared/import/user-import.module';
 import { ArtemisExamSharedModule } from 'app/exam/shared/exam-shared.module';
 import { ExamStatusComponent } from 'app/exam/manage/exam-status.component';
+import { ArtemisExamModePickerModule } from 'app/exam/manage/exams/exam-mode-picker/exam-mode-picker.module';
 
 const ENTITY_STATES = [...examManagementState];
 
@@ -75,6 +76,7 @@ const ENTITY_STATES = [...examManagementState];
         ExampleSubmissionsModule,
         UserImportModule,
         ArtemisExamSharedModule,
+        ArtemisExamModePickerModule,
     ],
     declarations: [
         ExamManagementComponent,

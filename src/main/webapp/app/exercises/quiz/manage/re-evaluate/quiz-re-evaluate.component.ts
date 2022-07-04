@@ -121,7 +121,7 @@ export class QuizReEvaluateComponent extends QuizExerciseValidationDirective imp
 
     /**
      * @function prepareEntity
-     * @desc Makes sure the quizExercise is well formed and its fields are of the correct types
+     * @desc Makes sure the quizExercise is well-formed and its fields are of the correct types
      * @param quizExercise
      */
     prepareEntity(quizExercise: QuizExercise) {

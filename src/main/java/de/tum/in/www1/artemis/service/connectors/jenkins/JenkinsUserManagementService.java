@@ -304,10 +304,10 @@ public class JenkinsUserManagementService implements CIUserManagementService {
             throws ContinuousIntegrationException {
         var newInstructorGroup = updatedCourse.getInstructorGroupName();
         var newEditorGroup = updatedCourse.getEditorGroupName();
-        var newTeachingAssistangGroup = updatedCourse.getTeachingAssistantGroupName();
+        var newTeachingAssistantGroup = updatedCourse.getTeachingAssistantGroupName();
 
         // Don't do anything if the groups didn't change
-        if (newInstructorGroup.equals(oldInstructorGroup) && newEditorGroup.equals(oldEditorGroup) && newTeachingAssistangGroup.equals(oldTeachingAssistantGroup)) {
+        if (newInstructorGroup.equals(oldInstructorGroup) && newEditorGroup.equals(oldEditorGroup) && newTeachingAssistantGroup.equals(oldTeachingAssistantGroup)) {
             return;
         }
 

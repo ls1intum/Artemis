@@ -1,33 +1,35 @@
-<jhi-doughnut-chart
-    class="d-inline-flex"
-    [course]="exercise.course!"
-    [contentType]="DoughnutChartType.AVERAGE_EXERCISE_SCORE"
-    [exerciseId]="exercise.id!"
-    [exerciseType]="exerciseType"
-    [currentPercentage]="doughnutStats?.averageScoreOfExercise"
-    [currentAbsolute]="doughnutStats?.absoluteAveragePoints"
-    [currentMax]="doughnutStats?.maxPointsOfExercise"
->
-</jhi-doughnut-chart>
-<jhi-doughnut-chart
-    class="d-inline-flex"
-    [course]="exercise.course!"
-    [contentType]="DoughnutChartType.PARTICIPATIONS"
-    [exerciseId]="exercise.id!"
-    [exerciseType]="exerciseType"
-    [currentPercentage]="doughnutStats?.participationsInPercent"
-    [currentAbsolute]="doughnutStats?.numberOfParticipations"
-    [currentMax]="doughnutStats?.numberOfStudentsOrTeamsInCourse"
->
-</jhi-doughnut-chart>
-<jhi-doughnut-chart
-    class="d-inline-flex"
-    [course]="exercise.course!"
-    [contentType]="DoughnutChartType.QUESTIONS"
-    [exerciseId]="exercise.id!"
-    [exerciseType]="exerciseType"
-    [currentPercentage]="doughnutStats?.resolvedPostsInPercent"
-    [currentAbsolute]="doughnutStats?.numberOfResolvedPosts"
-    [currentMax]="doughnutStats?.numberOfPosts"
->
-</jhi-doughnut-chart>
+<div class="row">
+    <jhi-doughnut-chart
+        class="col-md-4"
+        [course]="exercise.course!"
+        [contentType]="DoughnutChartType.AVERAGE_EXERCISE_SCORE"
+        [exerciseId]="exercise.id!"
+        [exerciseType]="exerciseType"
+        [currentPercentage]="doughnutStats?.averageScoreOfExercise"
+        [currentAbsolute]="doughnutStats?.absoluteAveragePoints"
+        [currentMax]="doughnutStats?.maxPointsOfExercise"
+    >
+    </jhi-doughnut-chart>
+    <jhi-doughnut-chart
+        class="col-md-4"
+        [course]="exercise.course!"
+        [contentType]="DoughnutChartType.PARTICIPATIONS"
+        [exerciseId]="exercise.id!"
+        [exerciseType]="exerciseType"
+        [currentPercentage]="doughnutStats?.participationsInPercent"
+        [currentAbsolute]="doughnutStats?.numberOfParticipations"
+        [currentMax]="doughnutStats?.numberOfStudentsOrTeamsInCourse"
+    >
+    </jhi-doughnut-chart>
+    <jhi-doughnut-chart
+        class="col-md-4"
+        [course]="exercise.course!"
+        [contentType]="DoughnutChartType.QUESTIONS"
+        [exerciseId]="exercise.id!"
+        [exerciseType]="exerciseType"
+        [currentPercentage]="doughnutStats?.resolvedPostsInPercent"
+        [currentAbsolute]="doughnutStats?.numberOfResolvedPosts"
+        [currentMax]="doughnutStats?.numberOfPosts"
+    >
+    </jhi-doughnut-chart>
+</div>

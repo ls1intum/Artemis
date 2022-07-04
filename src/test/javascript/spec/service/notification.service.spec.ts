@@ -39,7 +39,7 @@ describe('Notification Service', () => {
     const course: Course = new Course();
     course.id = 42;
 
-    const quizExercise: QuizExercise = { course, title: 'test quiz', started: true, visibleToStudents: true, id: 27 } as QuizExercise;
+    const quizExercise: QuizExercise = { course, title: 'test quiz', quizStarted: true, visibleToStudents: true, id: 27 } as QuizExercise;
 
     const generateQuizNotification = () => {
         const generatedNotification = {
@@ -118,7 +118,7 @@ describe('Notification Service', () => {
 
             notificationService.interpretNotification(quizNotification);
 
-            expect(router.navigate).toHaveBeenCalledTimes(1);
+            expect(router.navigate).toHaveBeenCalledOnce();
         });
 
         it('should convert date array from server', fakeAsync(() => {
@@ -145,11 +145,11 @@ describe('Notification Service', () => {
 
             const userId = 99; // based on MockAccountService
             const notificationTopic = `/topic/user/${userId}/notifications`;
-            expect(wsSubscribeStub).toHaveBeenCalledTimes(1);
+            expect(wsSubscribeStub).toHaveBeenCalledOnce();
             expect(wsSubscribeStub).toHaveBeenCalledWith(notificationTopic);
             // websocket correctly subscribed to the topic
 
-            expect(wsReceiveNotificationStub).toHaveBeenCalledTimes(1);
+            expect(wsReceiveNotificationStub).toHaveBeenCalledOnce();
             // websocket "receive" called
 
             // add new single user notification
@@ -164,7 +164,7 @@ describe('Notification Service', () => {
 
             tick(); // position of tick is very important here !
 
-            expect(cmGetCoursesForNotificationsStub).toHaveBeenCalledTimes(1);
+            expect(cmGetCoursesForNotificationsStub).toHaveBeenCalledOnce();
             // courseManagementService.getCoursesForNotifications had been successfully subscribed to
 
             // push new courses
@@ -196,7 +196,7 @@ describe('Notification Service', () => {
 
             tick(); // position of tick is very important here !
 
-            expect(cmGetCoursesForNotificationsStub).toHaveBeenCalledTimes(1);
+            expect(cmGetCoursesForNotificationsStub).toHaveBeenCalledOnce();
             // courseManagementService.getCoursesForNotifications had been successfully subscribed to
 
             // push new courses

@@ -18,6 +18,7 @@ import com.google.common.base.Strings;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
+import de.tum.in.www1.artemis.domain.hestia.CoverageFileReport;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
@@ -67,7 +68,7 @@ public class Result extends DomainObject {
     private Boolean rated;
 
     // This explicit flag exists intentionally, as sometimes a Result is loaded from the database without
-    // loading it's Feedback list. In this case you still want to know, if Feedback for this Result exists
+    // loading its Feedback list. In this case you still want to know, if Feedback for this Result exists
     // without querying the server/database again.
     // IMPORTANT: Please note, that this flag should only be used for Programming Exercises at the moment
     // all other exercise types should set this flag to false
@@ -104,6 +105,13 @@ public class Result extends DomainObject {
 
     @Column(name = "example_result")
     private Boolean exampleResult;
+
+    // This attribute is required to forward the coverage file reports after creating the build result. This is required in order to
+    // delay referencing the corresponding test cases from the entries because the test cases are not saved in the database
+    // at this point of time but the required test case name would be lost, otherwise.
+    @Transient
+    @JsonIgnore
+    private Map<String, Set<CoverageFileReport>> fileReportsByTestCaseName;
 
     public String getResultString() {
         return resultString;
@@ -200,7 +208,7 @@ public class Result extends DomainObject {
     }
 
     /**
-     * This explicit flag exists intentionally, as sometimes a Result is loaded from the database without loading it's Feedback list. In this case you still want to know, if
+     * This explicit flag exists intentionally, as sometimes a Result is loaded from the database without loading its Feedback list. In this case you still want to know, if
      * Feedback for this Result exists without querying the server/database again. IMPORTANT: Please note, that this flag should only be used for Programming Exercises at the
      * moment all other exercise types should set this flag to false
      *
@@ -211,7 +219,7 @@ public class Result extends DomainObject {
     }
 
     /**
-     * This explicit flag exists intentionally, as sometimes a Result is loaded from the database without loading it's Feedback list. In this case you still want to know, if
+     * This explicit flag exists intentionally, as sometimes a Result is loaded from the database without loading its Feedback list. In this case you still want to know, if
      * Feedback for this Result exists without querying the server/database again. IMPORTANT: Please note, that this flag should only be used for Programming Exercises at the
      * moment all other exercise types should set this flag to false
      *
@@ -222,7 +230,7 @@ public class Result extends DomainObject {
     }
 
     /**
-     * This explicit flag exists intentionally, as sometimes a Result is loaded from the database without loading it's Feedback list. In this case you still want to know, if
+     * This explicit flag exists intentionally, as sometimes a Result is loaded from the database without loading its Feedback list. In this case you still want to know, if
      * Feedback for this Result exists without querying the server/database again. IMPORTANT: Please note, that this flag should only be used for Programming Exercises at the
      * moment all other exercise types should set this flag to false
      *
@@ -377,7 +385,7 @@ public class Result extends DomainObject {
                 continue;
             }
             if (feedback.getCredits() != null) {
-                feedback.setPositive(feedback.getCredits() >= 0);
+                feedback.setPositiveViaCredits();
             }
             else {
                 feedback.setCredits(0.0);
@@ -410,7 +418,7 @@ public class Result extends DomainObject {
      * Checks for a new feedback if the score or text has changed compared to the already existing feedback for the same element.
      */
     private boolean feedbackHasChanged(Feedback feedback) {
-        if (this.feedbacks == null || this.feedbacks.size() == 0) {
+        if (this.feedbacks == null || this.feedbacks.isEmpty()) {
             return false;
         }
         return this.feedbacks.stream().filter(existingFeedback -> existingFeedback.getReference() != null && existingFeedback.getReference().equals(feedback.getReference()))
@@ -497,12 +505,20 @@ public class Result extends DomainObject {
         this.exampleResult = exampleResult;
     }
 
+    public Map<String, Set<CoverageFileReport>> getCoverageFileReportsByTestCaseName() {
+        return fileReportsByTestCaseName;
+    }
+
+    public void setCoverageFileReportsByTestCaseName(Map<String, Set<CoverageFileReport>> fileReportsByTestCaseName) {
+        this.fileReportsByTestCaseName = fileReportsByTestCaseName;
+    }
+
     // jhipster-needle-entity-add-getters-setters - JHipster will add getters and setters here, do not remove
 
     /**
      * Updates the attributes "score" and "successful" by evaluating its submission
      */
-    public void evaluateSubmission() {
+    public void evaluateQuizSubmission() {
         if (submission instanceof QuizSubmission quizSubmission) {
             // get the exercise this result belongs to
             StudentParticipation studentParticipation = (StudentParticipation) getParticipation();
@@ -617,7 +633,7 @@ public class Result extends DomainObject {
         double totalPoints = calculateTotalPointsForProgrammingExercises();
         setScore(totalPoints, maxPoints);
 
-        // Result string has following structure e.g: "1 of 13 passed, 2 issues, 10 of 100 points"
+        // Result string has the following structure e.g: "1 of 13 passed, 2 issues, 10 of 100 points"
         // The last part of the result string has to be updated, as the points the student has achieved have changed
         String[] resultStringParts = getResultString().split(", ");
         resultStringParts[resultStringParts.length - 1] = createResultString(totalPoints, maxPoints);

@@ -33,18 +33,18 @@
         {{ 'artemisApp.studentExam.submissionNotInTime' | artemisTranslate }}
     </div>
     <ng-container *ngIf="!studentFailedToSubmit">
-        <div class="d-flex justify-content-center">
+        <div class="form-check mt-1 ps-0">
             <input
                 [(ngModel)]="confirmed"
                 type="checkbox"
                 id="confirmBox"
                 (click)="updateConfirmation()"
-                style="place-self: flex-start"
-                class="mt-1"
+                class="form-check-input"
+                [class.ms-0]="!(startView ? this.exam.confirmationStartText : this.exam.confirmationEndText)"
                 [required]="inserted"
                 [disabled]="startView ? waitingForExamStart : false"
             />
-            <span id="formatted-confirmation-text" class="d-inline-block ms-2" [innerHTML]="formattedConfirmationText"></span>
+            <label id="formatted-confirmation-text" class="form-check-label" [innerHTML]="formattedConfirmationText"></label>
         </div>
         <div style="text-align: center">
             <div class="login-form">

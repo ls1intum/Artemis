@@ -46,7 +46,7 @@ export class CourseManagementRequests {
 
     /**
      * Creates a course with the specified title and short name.
-     * @param customizeGroups whether the predefined groups should be used (so we dont have to wait more than a minute between course and programming exercise creation)
+     * @param customizeGroups whether the predefined groups should be used (so we don't have to wait more than a minute between course and programming exercise creation)
      * @param courseName the title of the course (will generate default name if not provided)
      * @param courseShortName the short name (will generate default name if not provided)
      * @param start the start date of the course (default: now() - 2 hours)
@@ -84,9 +84,10 @@ export class CourseManagementRequests {
     /**
      * Creates a course with the specified title and short name.
      * @param body an object containing either the course or exercise group the exercise will be added to
-     * @param scaMaxPenalty the max percentage (0-100) static code analysis can reduce from the points (if sca should be disabled pass null)
-     * @param dueDate when the programming exercise should be due (default is now + 1 day)
+     * @param scaMaxPenalty? the max percentage (0-100) static code analysis can reduce from the points (if sca should be disabled pass null)
+     * @param recordTestwiseCoverage enable testwise coverage analysis for this exercise (default is false)
      * @param releaseDate when the programming exercise should be available (default is now)
+     * @param dueDate when the programming exercise should be due (default is now + 1 day)
      * @param title the title of the programming exercise
      * @param programmingShortName the short name of the programming exercise
      * @param packageName the package name of the programming exercise
@@ -97,6 +98,7 @@ export class CourseManagementRequests {
     createProgrammingExercise(
         body: { course: Course } | { exerciseGroup: ExerciseGroup },
         scaMaxPenalty?: number,
+        recordTestwiseCoverage = false,
         releaseDate = day(),
         dueDate = day().add(1, 'day'),
         title = 'Cypress programming exercise ' + generateUUID(),
@@ -124,6 +126,9 @@ export class CourseManagementRequests {
             exercise.staticCodeAnalysisEnabled = true;
             exercise.maxStaticCodeAnalysisPenalty = scaMaxPenalty;
         }
+
+        exercise.testwiseCoverageEnabled = recordTestwiseCoverage;
+
         return cy.request({
             url: PROGRAMMING_EXERCISE_BASE + 'setup',
             method: POST,
@@ -337,7 +342,7 @@ export class CourseManagementRequests {
         body: { course: Course } | { exerciseGroup: ExerciseGroup },
         quizQuestions: [any],
         title = 'Cypress quiz exercise' + generateUUID(),
-        releaseDate = day(),
+        releaseDate = day().add(1, 'year'),
         duration = 600,
     ) {
         const quizExercise: any = {
@@ -401,7 +406,7 @@ export class CourseManagementRequests {
             {
                 ...multipleChoiceSubmissionTemplate.submittedAnswers[0],
                 quizQuestion: quizExercise.quizQuestions![0],
-                selectedOptions: tickOptions.map((option) => quizExercise.quizQuestions[0].answerOptions[option].body),
+                selectedOptions: tickOptions.map((option) => quizExercise.quizQuestions[0].answerOptions[option]),
             },
         ];
         const multipleChoiceSubmission = {
@@ -513,6 +518,7 @@ export class CypressExamBuilder {
         this.template.visibleDate = dayjsToString(day());
         this.template.startDate = dayjsToString(day().add(1, 'day'));
         this.template.endDate = dayjsToString(day().add(2, 'day'));
+        this.template.workingTime = 86400;
     }
 
     /**

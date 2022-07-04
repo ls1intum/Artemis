@@ -27,6 +27,9 @@ public class QuizSubmission extends Submission {
     @JsonView(QuizView.After.class)
     private Double scoreInPoints;
 
+    @Column(name = "quiz_batch")
+    private Long quizBatch;
+
     @OneToMany(mappedBy = "submission", cascade = CascadeType.ALL, fetch = FetchType.EAGER, orphanRemoval = true)
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     @JsonView(QuizView.Before.class)
@@ -43,6 +46,14 @@ public class QuizSubmission extends Submission {
 
     public void setScoreInPoints(Double scoreInPoints) {
         this.scoreInPoints = scoreInPoints;
+    }
+
+    public void setQuizBatch(Long quizBatch) {
+        this.quizBatch = quizBatch;
+    }
+
+    public Long getQuizBatch() {
+        return quizBatch;
     }
 
     public Set<SubmittedAnswer> getSubmittedAnswers() {

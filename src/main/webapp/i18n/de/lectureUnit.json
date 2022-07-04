@@ -10,14 +10,17 @@
                 "text": "Text",
                 "exercise": "Übung",
                 "video": "Video",
-                "file": "Datei"
+                "online": "Online",
+                "attachment": "Datei"
             },
             "releaseDate": "Veröffentlichungsdatum",
             "details": {
                 "releaseDateNotSet": "Kein Veröffentlichungsdatum gesetzt!",
                 "releaseDateSet": "Veröffentlichungsdatum: ",
                 "attachmentVersion": "Dateiversion: "
-            }
+            },
+            "completedTooltip": "Klicke hier, um die Vorlesungseinheit als unerledigt zu markieren",
+            "uncompletedTooltip": "Klicke hier, um die Vorlesungseinheit als erledigt zu markieren"
         },
         "textUnit": {
             "created": "Eine neue Texteinheit erstellt",
@@ -76,6 +79,37 @@
                 "buttonText": "Löschen"
             }
         },
+        "onlineUnit": {
+            "created": "Eine neue Onlineeinheit wurde erstellt",
+            "updated": "Onlineeinheit aktualisiert",
+            "tooltip": "Das ist eine Onlineeinheit",
+            "description": "Beschreibung",
+            "notReleasedTooltip": "Onlineeinheit nur sichtbar für Tutor:innen und Lehrende. Veröffentlichungsdatum:",
+            "doOpen": "Link öffnen",
+            "createVideoUnit": {
+                "title": "Erstelle Onlineeinheit",
+                "name": "Name",
+                "namePlaceHolder": "Gib der Onlineeinheit einen Namen",
+                "description": "Beschreibung",
+                "descriptionPlaceHolder": "Gib der Onlineeinheit eine Beschreibung",
+                "nameRequiredValidationError": "Der Name ist ein Pflichtfeld.",
+                "nameMaxLengthValidationError": "Der Name kann maximal 255 Zeichen lang sein.",
+                "descriptionMaxLengthValidationError": "Die Beschreibung kann maximal 1000 Zeichen lang sein.",
+                "source": "Externes Onlineangebot URL",
+                "sourcePlaceHolder": "Gib eine URL zu einem externen Onlineangebot ein.",
+                "sourceRequiredValidationError": "Link ist ein Pflichtfeld",
+                "sourceURLValidationError": "Keine valide URL",
+                "urlHelperPlaceholder": "Name und Beschreibung werden von den Metadaten des Links geladen"
+            },
+            "editOnlineUnit": {
+                "title": "Bearbeite eine Onlineeinheit"
+            },
+            "delete": {
+                "question": "Willst du wirklich die Onlineeinheit <strong>{{ title }}</strong> löschen? Du kannst diese Aktion nicht rückgängig machen!",
+                "typeNameToConfirm": "Bitte gib den Namen der Onlineeinheit zur Bestätigung ein.",
+                "buttonText": "Löschen"
+            }
+        },
         "attachmentUnit": {
             "created": "Eine neue Dateieinheit wurde erstellt",
             "updated": "Dateieinheit aktualisiert",
@@ -106,6 +140,7 @@
             "version": "Version",
             "FileName": "Dateiname",
             "description": "Beschreibung",
+            "download": "Herunterladen",
             "delete": {
                 "question": "Willst du wirklich die Dateieinheit <strong>{{ title }}</strong> löschen? Die Datei wird auch gelöscht! Du kannst diese Aktion nicht rückgängig machen!",
                 "typeNameToConfirm": "Bitte gib den Namen der Dateieinheit zur Bestätigung ein.",

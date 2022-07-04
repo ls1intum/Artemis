@@ -6,7 +6,7 @@
         <jhi-help-icon class="chart-explanation-tooltip headline-margin" placement="right auto" text="artemisApp.courseStatistics.activeStudentsExplanation"></jhi-help-icon>
     </div>
 </div>
-<div #containerRef class="col-md-12 text-center">
+<div #containerRef class="col-md-12 text-center" *ngIf="startDateAlreadyPassed; else CourseNotStartedYet">
     <ngx-charts-line-chart
         [view]="[containerRef.offsetWidth, 250]"
         [results]="ngxData"
@@ -34,3 +34,9 @@
         <fa-icon [icon]="faSpinner" [spin]="true">&nbsp;</fa-icon>
     </div>
 </div>
+<ng-template #CourseNotStartedYet>
+    <div class="col-md-12 mt-2 text-center">
+        <h4 jhiTranslate="artemisApp.course.notStartedYet"></h4>
+        <h3>{{ course.startDate | artemisDate }}</h3>
+    </div>
+</ng-template>

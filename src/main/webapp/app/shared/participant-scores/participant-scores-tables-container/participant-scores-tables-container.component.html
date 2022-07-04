@@ -1,7 +1,10 @@
 <button class="btn btn-info mb-2" (click)="reload.emit()">{{ 'global.form.refresh' | artemisTranslate }}</button>
-<div class="btn-group btn-group-toggle mb-2" ngbRadioGroup name="radioBasic" [(ngModel)]="mode">
-    <label ngbButtonLabel class="btn-primary"> <input ngbButton type="radio" [value]="'individual'" /> {{ 'artemisApp.participantScores.individual' | artemisTranslate }} </label>
-    <label ngbButtonLabel class="btn-primary"> <input ngbButton type="radio" [value]="'average'" /> {{ 'artemisApp.participantScores.average' | artemisTranslate }} </label>
+<div class="btn-group mb-2" role="group">
+    <input class="btn-check" type="radio" [value]="'individual'" id="individual-radio" [formControl]="mode" />
+    <label class="btn btn-primary" for="individual-radio"> {{ 'artemisApp.participantScores.individual' | artemisTranslate }} </label>
+
+    <input class="btn-check" type="radio" [value]="'average'" id="average-radio" [formControl]="mode" />
+    <label class="btn btn-primary" for="average-radio"> {{ 'artemisApp.participantScores.average' | artemisTranslate }} </label>
 </div>
 
 <ng-template #tipContent>{{ 'artemisApp.participantScores.notIncluded' | artemisTranslate }}</ng-template>
@@ -22,7 +25,7 @@
     {{ avgRatedGrade }}
 </span>
 
-<div [ngSwitch]="mode">
+<div [ngSwitch]="mode.value">
     <jhi-participant-scores-table *ngSwitchCase="'individual'" [isLoading]="isLoading" [participantScores]="participantScores" [course]="course"></jhi-participant-scores-table>
     <jhi-participant-scores-average-table
         *ngSwitchCase="'average'"

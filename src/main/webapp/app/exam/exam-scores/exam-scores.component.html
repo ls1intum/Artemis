@@ -10,10 +10,13 @@
             <h2 class="font-weigth-bold" *ngIf="examScoreDTO.title">
                 {{ examScoreDTO.title }}
             </h2>
-            <button class="ms-auto btn btn-primary btn-sm" (click)="exportToCsv()">
-                <fa-icon [icon]="faDownload" [fixedWidth]="true"></fa-icon>
-                <span jhiTranslate="artemisApp.examScores.exportCSV">&nbsp;Export Results as CSV</span>
-            </button>
+            <jhi-csv-export-button
+                class="ms-auto"
+                title="entity.action.export"
+                [icon]="faDownload"
+                [buttonSize]="ButtonSize.SMALL"
+                (onExport)="exportExamResults($event)"
+            ></jhi-csv-export-button>
         </div>
 
         <div class="d-flex mb-1">
@@ -35,14 +38,14 @@
 
         <!-- Filter settings -->
         <div class="d-flex align-items-center align-content-center mb-2">
-            <label class="radio-inline mb-0 d-flex align-items-center">
-                <input type="checkbox" [checked]="filterForSubmittedExams" (change)="toggleFilterForSubmittedExam()" />
-                <span class="ms-1">{{ 'artemisApp.examScores.filterForSubmittedExams' | artemisTranslate }}</span>
-            </label>
-            <label class="radio-inline ms-2 mb-0 d-flex align-items-center">
-                <input type="checkbox" [checked]="filterForNonEmptySubmissions" (change)="toggleFilterForNonEmptySubmission()" />
-                <span class="ms-1">{{ 'artemisApp.examScores.filterForNonEmptySubmissions' | artemisTranslate }}</span>
-            </label>
+            <div class="form-check form-check-inline">
+                <input class="form-check-input" type="checkbox" [checked]="filterForSubmittedExams" (change)="toggleFilterForSubmittedExam()" />
+                <label class="form-check-label">{{ 'artemisApp.examScores.filterForSubmittedExams' | artemisTranslate }}</label>
+            </div>
+            <div class="form-check form-check-inline">
+                <input class="form-check-input" type="checkbox" [checked]="filterForNonEmptySubmissions" (change)="toggleFilterForNonEmptySubmission()" />
+                <span class="form-check-label">{{ 'artemisApp.examScores.filterForNonEmptySubmissions' | artemisTranslate }}</span>
+            </div>
         </div>
 
         <!-- Exam Point Statistics -->
@@ -257,9 +260,9 @@
         </table>
 
         <div class="d-block">
-            <label *ngIf="gradingScaleExists && this.aggregatedExamResults.medianRelativePassed !== null" class="d-flex align-items-center">
-                <input type="checkbox" [checked]="showPassedMedian" (change)="toggleMedian(medianType.PASSED)" />
-                <span class="ms-1">
+            <div *ngIf="gradingScaleExists && this.aggregatedExamResults.medianRelativePassed !== null" class="form-check">
+                <input class="form-check-input" type="checkbox" [checked]="showPassedMedian" (change)="toggleMedian(medianType.PASSED)" />
+                <label class="form-check-label">
                     {{
                         'artemisApp.examScores.highlightPassedMedian'
                             | artemisTranslate
@@ -269,25 +272,27 @@
                                           : 0
                                   }
                     }}
-                </span>
-            </label>
-            <label class="d-flex align-items-center">
-                <input type="checkbox" [checked]="showOverallMedian" (change)="toggleMedian(overallChartMedianType)" />
-                <span class="ms-1">
+                </label>
+            </div>
+            <div class="form-check">
+                <input class="form-check-input" type="checkbox" [checked]="showOverallMedian" (change)="toggleMedian(overallChartMedianType)" />
+                <label class="form-check-label">
                     {{ 'artemisApp.examScores.highlightOverallMedian' | artemisTranslate: { median: this.overallChartMedian } }}
-                </span>
-            </label>
+                </label>
+            </div>
             <!-- Histogram -->
-            <jhi-participant-scores-distribution
-                [scores]="scores"
-                [scoreToHighlight]="highlightedValue"
-                [gradingScale]="gradingScale"
-                [isCourseScore]="false"
-                [dataLabelFormatting]="dataLabelFormatting"
-                (onSelect)="onSelect()"
-                class="row"
-            >
-            </jhi-participant-scores-distribution>
+            <div class="row d-flex justify-content-center">
+                <jhi-participant-scores-distribution
+                    [scores]="scores"
+                    [scoreToHighlight]="highlightedValue"
+                    [gradingScale]="gradingScale"
+                    [isCourseScore]="false"
+                    [dataLabelFormatting]="dataLabelFormatting"
+                    (onSelect)="onSelect()"
+                    class="col-lg-11"
+                >
+                </jhi-participant-scores-distribution>
+            </div>
         </div>
 
         <!-- Exercise Statistics -->

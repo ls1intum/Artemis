@@ -8,6 +8,7 @@ import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service'
  * @enum {string}
  */
 export enum ButtonType {
+    DEFAULT = 'btn-default',
     PRIMARY = 'btn-primary',
     SECONDARY = 'btn-secondary',
     SUCCESS = 'btn-success',

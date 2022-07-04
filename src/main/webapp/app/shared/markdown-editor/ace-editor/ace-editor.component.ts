@@ -2,6 +2,11 @@ import { Component, EventEmitter, Output, ElementRef, Input, forwardRef, OnInit,
 import { NG_VALUE_ACCESSOR, ControlValueAccessor } from '@angular/forms';
 import 'brace';
 import 'brace/theme/monokai';
+import 'brace/theme/chrome';
+import 'brace/theme/dreamweaver';
+import 'brace/theme/dracula';
+import { ThemeService } from 'app/core/theme/theme.service';
+import { Subscription } from 'rxjs';
 
 declare var ace: any;
 
@@ -41,14 +46,16 @@ export class AceEditorComponent implements ControlValueAccessor, OnInit, OnDestr
 
     private _options: any = {};
     private _readOnly = false;
-    private _theme = 'monokai';
-    private _mode = 'html';
+    private _theme = 'dreamweaver';
+    private _mode = 'java';
     private _autoUpdateContent = true;
     private _editor: any; // TODO: use Editor (defined in brace) or Editor (defined in ace-builds) and make sure to use typings consistently
     private _durationBeforeCallback = 0;
     private _text = '';
 
-    constructor(elementRef: ElementRef, private zone: NgZone) {
+    private themeSubscription: Subscription;
+
+    constructor(elementRef: ElementRef, private zone: NgZone, private themeService: ThemeService) {
         const el = elementRef.nativeElement;
         this.zone.runOutsideAngular(() => {
             this._editor = ace['edit'](el);
@@ -63,11 +70,11 @@ export class AceEditorComponent implements ControlValueAccessor, OnInit, OnDestr
 
     ngOnDestroy() {
         this._editor.destroy();
+        this.themeSubscription?.unsubscribe();
     }
 
     init() {
         this.setOptions(this._options || {});
-        this.setTheme(this._theme);
         this.setMode(this._mode);
         this.setReadOnly(this._readOnly);
     }
@@ -75,6 +82,8 @@ export class AceEditorComponent implements ControlValueAccessor, OnInit, OnDestr
     initEvents() {
         this._editor.on('change', () => this.updateText());
         this._editor.on('paste', () => this.updateText());
+
+        this.themeSubscription = this.themeService.getCurrentThemeObservable().subscribe(() => this.setThemeFromMode());
     }
 
     updateText() {
@@ -127,16 +136,6 @@ export class AceEditorComponent implements ControlValueAccessor, OnInit, OnDestr
     }
 
     @Input()
-    set theme(theme: string) {
-        this.setTheme(theme);
-    }
-
-    setTheme(theme: string) {
-        this._theme = theme;
-        this._editor.setTheme(`ace/theme/${theme}`);
-    }
-
-    @Input()
     set mode(mode: string) {
         this.setMode(mode);
     }
@@ -148,6 +147,14 @@ export class AceEditorComponent implements ControlValueAccessor, OnInit, OnDestr
         } else {
             this._editor.getSession().setMode(`ace/mode/${this._mode}`);
         }
+
+        this.setThemeFromMode();
+    }
+
+    private setThemeFromMode() {
+        const currentApplicationTheme = this.themeService.getCurrentTheme();
+        this._theme = this._mode.toLowerCase() === 'markdown' ? currentApplicationTheme.markdownAceTheme : currentApplicationTheme.codeAceTheme;
+        this._editor.setTheme(`ace/theme/${this._theme}`);
     }
 
     get value() {

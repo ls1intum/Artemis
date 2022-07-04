@@ -1,5 +1,5 @@
-<div class="row mt-3">
-    <div class="d-flex col-md-8">
+<div class="row mt-3 g-3">
+    <div class="col-12 col-md-6 col-lg-7 mt-0">
         <span *ngIf="!isExamMode" style="font-size: 16px" jhiTranslate="artemisApp.assessmentDashboard.exerciseTable.courseInformation"></span>
         <span *ngIf="isExamMode" style="font-size: 16px" jhiTranslate="artemisApp.assessmentDashboard.exerciseTable.examInformation"></span>
 
@@ -18,8 +18,10 @@
             </ngx-charts-pie-chart>
         </div>
     </div>
-    <div class="col-sm-4" style="min-width: 400px">
+    <div class="col-12 col-md-6 col-lg-5 overflow-scroll">
         <jhi-side-panel
+            style="min-width: 360px"
+            class="d-block"
             [panelHeader]="'artemisApp.assessmentDashboard.assessmentInformation' | artemisTranslate"
             [panelDescriptionHeader]="'artemisApp.exerciseAssessmentDashboard.totalYours' | artemisTranslate"
         >

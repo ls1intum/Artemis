@@ -1,7 +1,3 @@
-@import 'src/main/webapp/content/scss/artemis-variables';
-
-$border-color: #979797;
-
 .test-case--inactive {
     color: grey;
 }
@@ -16,14 +12,14 @@ $border-color: #979797;
     align-items: center;
     padding: 10px 0;
     justify-content: space-between;
-    border-bottom: 1px solid $border-color;
+    border-bottom: 1px solid var(--border-color);
 
     .tab-item {
         cursor: pointer;
         margin: 0 0.5em;
 
         &.active {
-            box-shadow: 0 2px 0 $artemis-dark;
+            box-shadow: 0 2px 0 var(--artemis-dark);
         }
     }
 }

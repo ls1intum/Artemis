@@ -6,7 +6,7 @@ import { Subscription } from 'rxjs';
 @Component({
     selector: 'jhi-included-in-score-badge',
     templateUrl: './included-in-score-badge.component.html',
-    styles: [],
+    styleUrls: ['./included-in-score-badge.component.scss'],
 })
 export class IncludedInScoreBadgeComponent implements OnInit, OnDestroy, OnChanges {
     @Input() includedInOverallScore: IncludedInOverallScore | undefined;
@@ -56,7 +56,7 @@ export class IncludedInScoreBadgeComponent implements OnInit, OnDestroy, OnChang
                 this.translatedTooltip = this.translateService.instant('artemisApp.exercise.includedCompletelyTooltip');
                 break;
             case IncludedInOverallScore.NOT_INCLUDED:
-                this.badgeClass = 'bg-danger';
+                this.badgeClass = 'bg-secondary';
                 this.translatedEnum = this.translateService.instant('artemisApp.exercise.notIncluded');
                 this.translatedTooltip = this.translateService.instant('artemisApp.exercise.notIncludedTooltip');
                 break;

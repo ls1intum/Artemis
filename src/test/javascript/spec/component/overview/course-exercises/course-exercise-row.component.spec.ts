@@ -7,7 +7,6 @@ import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { MockCourseExerciseService } from '../../../helpers/mocks/service/mock-course-exercise.service';
 import { MockParticipationWebsocketService } from '../../../helpers/mocks/service/mock-participation-websocket.service';
 import { Result } from 'app/entities/result.model';
-import { DeviceDetectorService } from 'ngx-device-detector';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../../../helpers/mocks/service/mock-account.service';
 import dayjs from 'dayjs/esm';
@@ -16,7 +15,7 @@ import { Exercise, ExerciseType, ParticipationStatus } from 'app/entities/exerci
 import { InitializationState } from 'app/entities/participation/participation.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { CourseExerciseRowComponent } from 'app/overview/course-exercises/course-exercise-row.component';
-import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
+import { QuizExercise, QuizBatch } from 'app/entities/quiz/quiz-exercise.model';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storage.service';
@@ -69,7 +68,6 @@ describe('CourseExerciseRowComponent', () => {
                 DummyComponent,
             ],
             providers: [
-                DeviceDetectorService,
                 { provide: ParticipationWebsocketService, useClass: MockParticipationWebsocketService },
                 { provide: CourseManagementService, useClass: MockCourseService },
                 { provide: CourseExerciseService, useClass: MockCourseExerciseService },
@@ -94,42 +92,50 @@ describe('CourseExerciseRowComponent', () => {
     });
 
     it('Participation status of quiz exercise should evaluate to QUIZ_NOT_STARTED if release date is in the past and not planned to start', () => {
-        setupForTestingParticipationStatusExerciseTypeQuiz(false, dayjs(), dayjs().subtract(3, 'minutes'), true, false);
+        setupForTestingParticipationStatusExerciseTypeQuiz(false, dayjs().add(1, 'minute'), dayjs().subtract(3, 'minutes'), true, false);
         expect(comp.exercise.participationStatus).toBe(ParticipationStatus.QUIZ_NOT_STARTED);
     });
 
     it('Participation status of quiz exercise should evaluate to QUIZ_NOT_STARTED if release date is in the future and planned to start', () => {
-        setupForTestingParticipationStatusExerciseTypeQuiz(true, dayjs(), dayjs().add(3, 'minutes'), true, false);
+        setupForTestingParticipationStatusExerciseTypeQuiz(true, dayjs().add(5, 'minutes'), dayjs().add(3, 'minutes'), true, false);
         expect(comp.exercise.participationStatus).toBe(ParticipationStatus.QUIZ_NOT_STARTED);
     });
 
     it('Participation status of quiz exercise should evaluate to QUIZ_UNINITIALIZED', () => {
-        setupForTestingParticipationStatusExerciseTypeQuiz(true, dayjs().add(3, 'minutes'), dayjs(), true, false);
+        setupForTestingParticipationStatusExerciseTypeQuiz(true, dayjs().add(3, 'minutes'), dayjs().subtract(1, 'second'), true, false);
         expect(comp.exercise.participationStatus).toBe(ParticipationStatus.QUIZ_UNINITIALIZED);
     });
 
     it('Participation status of quiz exercise should evaluate to QUIZ_NOT_PARTICIPATED if there are no participations', () => {
-        setupForTestingParticipationStatusExerciseTypeQuiz(true, dayjs(), dayjs(), true, false);
+        setupForTestingParticipationStatusExerciseTypeQuiz(true, dayjs().subtract(1, 'second'), dayjs().subtract(2, 'second'), true, false);
         expect(comp.exercise.participationStatus).toBe(ParticipationStatus.QUIZ_NOT_PARTICIPATED);
     });
 
     it('Participation status of quiz exercise should evaluate to QUIZ_ACTIVE', () => {
-        setupForTestingParticipationStatusExerciseTypeQuiz(true, dayjs().add(3, 'minutes'), dayjs(), true, true, InitializationState.INITIALIZED);
+        setupForTestingParticipationStatusExerciseTypeQuiz(true, dayjs().add(3, 'minutes'), dayjs().subtract(1, 'second'), true, true, InitializationState.INITIALIZED);
         expect(comp.exercise.participationStatus).toBe(ParticipationStatus.QUIZ_ACTIVE);
     });
 
     it('Participation status of quiz exercise should evaluate to QUIZ_SUBMITTED', () => {
-        setupForTestingParticipationStatusExerciseTypeQuiz(true, dayjs().add(3, 'minutes'), dayjs(), true, true, InitializationState.FINISHED);
+        setupForTestingParticipationStatusExerciseTypeQuiz(true, dayjs().add(3, 'minutes'), dayjs().subtract(1, 'second'), true, true, InitializationState.FINISHED);
         expect(comp.exercise.participationStatus).toBe(ParticipationStatus.QUIZ_SUBMITTED);
     });
 
     it('Participation status of quiz exercise should evaluate to QUIZ_NOT_PARTICIPATED if there are no results', () => {
-        setupForTestingParticipationStatusExerciseTypeQuiz(true, dayjs().add(3, 'minutes'), dayjs(), false, true, InitializationState.UNINITIALIZED, false);
+        setupForTestingParticipationStatusExerciseTypeQuiz(
+            true,
+            dayjs().subtract(1, 'second'),
+            dayjs().subtract(2, 'seconds'),
+            true,
+            true,
+            InitializationState.UNINITIALIZED,
+            false,
+        );
         expect(comp.exercise.participationStatus).toBe(ParticipationStatus.QUIZ_NOT_PARTICIPATED);
     });
 
     it('Participation status of quiz exercise should evaluate to QUIZ_FINISHED', () => {
-        setupForTestingParticipationStatusExerciseTypeQuiz(true, dayjs().add(3, 'minutes'), dayjs(), false, true, InitializationState.UNINITIALIZED, true);
+        setupForTestingParticipationStatusExerciseTypeQuiz(true, dayjs().subtract(3, 'minutes'), dayjs().subtract(1, 'hour'), false, true, InitializationState.UNINITIALIZED, true);
         expect(comp.exercise.participationStatus).toBe(ParticipationStatus.QUIZ_FINISHED);
     });
 
@@ -207,14 +213,20 @@ describe('CourseExerciseRowComponent', () => {
         hasParticipations: boolean,
         initializationState?: InitializationState,
         hasResults?: boolean,
+        duration = 10,
     ) => {
         comp.exercise = {
             id: 1,
             dueDate,
-            isPlannedToStart,
-            releaseDate,
+            quizBatches: isPlannedToStart
+                ? [{ startTime: releaseDate, started: isPlannedToStart && releaseDate.isBefore(dayjs()), ended: dueDate.isBefore(dayjs()) } as QuizBatch]
+                : [],
+            releaseDate: visibleToStudents ? releaseDate : undefined,
             type: ExerciseType.QUIZ,
             visibleToStudents,
+            quizStarted: isPlannedToStart && visibleToStudents && releaseDate.isBefore(dayjs()),
+            quizEnded: dueDate.isBefore(dayjs()),
+            duration,
         } as QuizExercise;
 
         if (hasParticipations) {

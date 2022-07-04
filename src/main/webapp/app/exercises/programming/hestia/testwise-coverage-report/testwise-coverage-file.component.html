@@ -1,0 +1,9 @@
+<mat-expansion-panel>
+    <mat-expansion-panel-header>
+        <mat-panel-title>
+            {{ fileName }}
+        </mat-panel-title>
+        <mat-panel-description> {{ (proportionCoveredLines * 100).toFixed(1) + ' %' }} </mat-panel-description>
+    </mat-expansion-panel-header>
+    <jhi-ace-editor #editor [mode]="'java'" [readOnly]="true" [autoUpdateContent]="true" [hidden]="false" class="code-editor-ace__content__editor"> </jhi-ace-editor>
+</mat-expansion-panel>

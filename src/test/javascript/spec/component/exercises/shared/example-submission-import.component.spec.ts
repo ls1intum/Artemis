@@ -87,7 +87,7 @@ describe('ExampleSubmissionImportComponent', () => {
         } as Exercise;
         searchResult = { numberOfPages: 3, resultsOnPage: [submission] };
         state = {
-            page: 0,
+            page: 1,
             pageSize: 10,
             searchTerm: 'initialSearchTerm',
             sortingOrder: SortingOrder.DESCENDING,
@@ -111,17 +111,17 @@ describe('ExampleSubmissionImportComponent', () => {
     };
 
     it('should set content to paging result on sort', fakeAsync(() => {
-        expect(component.listSorting).toBe(false);
+        expect(component.listSorting).toBeFalse();
         setStateAndCallOnInit(() => {
             component.listSorting = true;
             tick(10);
             expect(searchForSubmissionsSpy).toHaveBeenCalledWith({ ...state, sortingOrder: SortingOrder.ASCENDING }, exercise.id);
-            expect(component.listSorting).toBe(true);
+            expect(component.listSorting).toBeTrue();
         });
     }));
 
     it('should set content to paging result on pageChange', fakeAsync(() => {
-        expect(component.page).toBe(0);
+        expect(component.page).toBe(1);
         setStateAndCallOnInit(() => {
             component.onPageChange(2);
             tick(10);

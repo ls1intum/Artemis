@@ -28,7 +28,7 @@
                     <td width="25%">{{ question.exercise?.title || '' }}</td>
                     <td width="20%">{{ question.type }}</td>
                     <td width="5%" class="checkbox">
-                        <input type="checkbox" [(ngModel)]="question.exportQuiz" />
+                        <input class="form-check-input" type="checkbox" [(ngModel)]="question.exportQuiz" />
                     </td>
                 </tr>
             </tbody>

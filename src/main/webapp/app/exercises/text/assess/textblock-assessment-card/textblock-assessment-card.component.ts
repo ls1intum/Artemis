@@ -8,6 +8,7 @@ import { FeedbackType } from 'app/entities/feedback.model';
 import { TextBlockType } from 'app/entities/text-block.model';
 import { TextAssessmentAnalytics } from 'app/exercises/text/assess/analytics/text-assesment-analytics.service';
 import { ActivatedRoute } from '@angular/router';
+import { GradingCriterion } from 'app/exercises/shared/structured-grading-criterion/grading-criterion.model';
 
 type OptionalTextBlockRef = TextBlockRef | undefined;
 
@@ -25,6 +26,7 @@ export class TextblockAssessmentCardComponent {
     @Input() conflictType?: FeedbackConflictType;
     @Input() isLeftConflictingFeedback: boolean;
     @Input() highlightDifferences: boolean;
+    @Input() criteria?: GradingCriterion[];
 
     @Output() didSelect = new EventEmitter<OptionalTextBlockRef>();
     @Output() didChange = new EventEmitter<TextBlockRef>();

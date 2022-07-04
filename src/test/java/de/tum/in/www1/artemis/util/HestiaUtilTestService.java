@@ -8,7 +8,6 @@ import java.io.File;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.Map;
 
@@ -95,7 +94,7 @@ public class HestiaUtilTestService {
             String fileName = entry.getKey();
             String content = entry.getValue();
             // add file to the repository folder
-            Path filePath = Paths.get(templateRepo.localRepoFile + "/" + fileName);
+            Path filePath = Path.of(templateRepo.localRepoFile + "/" + fileName);
             Files.createDirectories(filePath.getParent());
             File solutionFile = Files.createFile(filePath).toFile();
             // write content to the created file
@@ -156,7 +155,7 @@ public class HestiaUtilTestService {
             String fileName = entry.getKey();
             String content = entry.getValue();
             // add file to the repository folder
-            Path filePath = Paths.get(solutionRepo.localRepoFile + "/" + fileName);
+            Path filePath = Path.of(solutionRepo.localRepoFile + "/" + fileName);
             Files.createDirectories(filePath.getParent());
             File solutionFile = Files.createFile(filePath).toFile();
             // write content to the created file
@@ -217,7 +216,7 @@ public class HestiaUtilTestService {
             String fileName = entry.getKey();
             String content = entry.getValue();
             // add file to the repository folder
-            Path filePath = Paths.get(testRepo.localRepoFile + "/" + fileName);
+            Path filePath = Path.of(testRepo.localRepoFile + "/" + fileName);
             Files.createDirectories(filePath.getParent());
             File solutionFile = Files.createFile(filePath).toFile();
             // write content to the created file

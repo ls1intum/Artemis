@@ -1,14 +1,19 @@
 import { Course } from 'app/entities/course.model';
 import { User } from 'app/core/user/user.model';
-import { CourseWideContext, VOTE_EMOJI_ID } from 'app/shared/metis/metis.util';
+import { CourseWideContext, DisplayPriority, VOTE_EMOJI_ID } from 'app/shared/metis/metis.util';
 import { Reaction } from 'app/entities/metis/reaction.model';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { Lecture } from 'app/entities/lecture.model';
 import { Post } from 'app/entities/metis/post.model';
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
+import dayjs from 'dayjs/esm';
+import { Attachment } from 'app/entities/attachment.model';
 
-export const metisLecture = { id: 1, title: 'Metis  Lecture' } as Lecture;
+export const metisAttachment = { id: 1, name: 'Metis Attachment', link: 'directory/Metis-Attachment.pdf' } as Attachment;
+
+export const metisLecture = { id: 1, title: 'Metis  Lecture', attachments: [metisAttachment] } as Lecture;
 export const metisLecture2 = { id: 1, title: 'Second Metis  Lecture' } as Lecture;
+
 export const metisExercise = { id: 1, title: 'Metis  Exercise', type: ExerciseType.TEXT } as Exercise;
 export const metisExercise2 = { id: 1, title: 'Second Metis  Exercise', type: ExerciseType.TEXT } as Exercise;
 
@@ -151,3 +156,89 @@ export const metisPostToCreateUser1 = {
     content: 'metisAnswerToCreateUser1',
     creationDate: undefined,
 } as Post;
+
+export const unApprovedAnswerPost1 = {
+    id: 1,
+    creationDate: dayjs(),
+    content: 'not approved most recent',
+    resolvesPost: false,
+} as AnswerPost;
+
+export const unApprovedAnswerPost2 = {
+    id: 2,
+    creationDate: dayjs().subtract(1, 'day'),
+    content: 'not approved',
+    resolvesPost: false,
+} as AnswerPost;
+
+export const approvedAnswerPost = {
+    id: 2,
+    creationDate: undefined,
+    content: 'approved',
+    resolvesPost: true,
+} as AnswerPost;
+
+export const sortedAnswerArray: AnswerPost[] = [approvedAnswerPost, unApprovedAnswerPost2, unApprovedAnswerPost1];
+export const unsortedAnswerArray: AnswerPost[] = [unApprovedAnswerPost1, unApprovedAnswerPost2, approvedAnswerPost];
+
+export const post = {
+    id: 1,
+    creationDate: undefined,
+    answers: unsortedAnswerArray,
+} as Post;
+
+export const post1WithCreationDate = {
+    ...metisPostExerciseUser1,
+    creationDate: dayjs(),
+    displayPriority: DisplayPriority.PINNED,
+};
+
+export const post2WithCreationDate = {
+    ...metisPostExerciseUser2,
+    creationDate: dayjs().subtract(2, 'day'),
+    displayPriority: DisplayPriority.NONE,
+};
+
+export const post3WithCreationDate = {
+    ...metisPostExerciseUser1,
+    creationDate: dayjs().subtract(1, 'day'),
+    reactions: [metisUpVoteReactionUser1, metisUpVoteReactionUser1],
+    displayPriority: DisplayPriority.NONE,
+};
+
+export const post4WithCreationDate = {
+    ...metisPostLectureUser2,
+    creationDate: dayjs().subtract(2, 'minute'),
+    reactions: [metisUpVoteReactionUser1],
+    displayPriority: DisplayPriority.ARCHIVED,
+};
+
+export const post5WithCreationDate = {
+    ...metisPostLectureUser2,
+    creationDate: dayjs().subtract(3, 'minute'),
+    reactions: [metisUpVoteReactionUser1],
+    displayPriority: DisplayPriority.NONE,
+};
+
+export const post6WithCreationDate = {
+    ...metisPostLectureUser2,
+    creationDate: dayjs().subtract(4, 'minute'),
+    reactions: [metisUpVoteReactionUser1],
+    displayPriority: DisplayPriority.NONE,
+};
+
+export const post7WithCreationDate = {
+    ...metisPostLectureUser2,
+    creationDate: dayjs().subtract(1, 'minute'),
+    displayPriority: DisplayPriority.NONE,
+};
+
+export const postsWithCreationDate = [
+    post1WithCreationDate,
+    post2WithCreationDate,
+    post3WithCreationDate,
+    post4WithCreationDate,
+    post5WithCreationDate,
+    post6WithCreationDate,
+    post7WithCreationDate,
+];

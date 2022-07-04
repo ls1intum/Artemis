@@ -8,6 +8,7 @@ import { BarChartModule } from '@swimlane/ngx-charts';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { PlagiarismInspectorService } from 'app/exercises/shared/plagiarism/plagiarism-inspector/plagiarism-inspector.service';
 import { HelpIconComponent } from 'app/shared/components/help-icon.component';
+import { ArtemisTestModule } from '../../test.module';
 
 describe('Plagiarism Run Details', () => {
     let comp: PlagiarismRunDetailsComponent;
@@ -22,7 +23,7 @@ describe('Plagiarism Run Details', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [MockModule(BarChartModule)],
+            imports: [ArtemisTestModule, MockModule(BarChartModule)],
             declarations: [PlagiarismRunDetailsComponent, MockPipe(ArtemisTranslatePipe), MockComponent(HelpIconComponent)],
             providers: [{ provide: TranslateService, useClass: MockTranslateService }, MockProvider(PlagiarismInspectorService)],
         }).compileComponents();
@@ -78,7 +79,7 @@ describe('Plagiarism Run Details', () => {
 
         comp.onSelect(event);
 
-        expect(similaritySelectedStub).toHaveBeenCalledTimes(1);
+        expect(similaritySelectedStub).toHaveBeenCalledOnce();
         expect(similaritySelectedStub).toHaveBeenCalledWith({ minimumSimilarity: minimumBorder, maximumSimilarity: maximumBorder });
         jest.restoreAllMocks();
     });

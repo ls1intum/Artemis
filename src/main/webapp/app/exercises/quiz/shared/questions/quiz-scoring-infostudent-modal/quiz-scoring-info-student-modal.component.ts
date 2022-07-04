@@ -45,6 +45,7 @@ export class QuizScoringInfoStudentModalComponent implements AfterViewInit {
     differenceMultipleChoice: number; // Difference between inTotalSelectedRightOptions and differenceMultipleChoice
     checkForCorrectAnswers = new Array<AnswerOption>();
     checkForWrongAnswers = new Array<AnswerOption>();
+    isSingleChoice: boolean;
 
     /* Drag and Drop Counting Variables*/
     differenceDragAndDrop: number; // Difference between the incorrectlyMappedDragAndDropItems and correctlyMappedDragAndDropItems
@@ -141,6 +142,7 @@ export class QuizScoringInfoStudentModalComponent implements AfterViewInit {
         this.submittedAnswerCorrectValues();
         const translationBasePath = 'artemisApp.quizExercise.explanationText.';
         const mcmQuestion = this.question as MultipleChoiceQuestion;
+        this.isSingleChoice = mcmQuestion.singleChoice ?? false;
         this.multipleChoiceAnswerOptions = mcmQuestion.answerOptions!.length;
         this.multipleChoiceCorrectAnswerCorrectlyChosen = this.checkForCorrectAnswers.length;
         this.multipleChoiceWrongAnswerChosen = this.checkForWrongAnswers.length;
@@ -216,6 +218,10 @@ export class QuizScoringInfoStudentModalComponent implements AfterViewInit {
             this.questionPoint = this.translateService.instant(translationBasePath + 'point');
         } else {
             this.questionPoint = this.translateService.instant(translationBasePath + 'points');
+        }
+
+        if (this.score === undefined) {
+            this.score = 0;
         }
 
         if (this.score === 1) {

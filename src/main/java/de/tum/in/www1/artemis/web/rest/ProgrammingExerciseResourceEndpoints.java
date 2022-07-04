@@ -56,6 +56,10 @@ public final class ProgrammingExerciseResourceEndpoints {
 
     public static final String TASKS = PROGRAMMING_EXERCISE + "/tasks";
 
+    public static final String EXPORT_SOLUTION_REPOSITORY = PROGRAMMING_EXERCISE + "/export-solution-repository";
+
+    public static final String SOLUTION_REPOSITORY_FILES_WITH_CONTENT = PROGRAMMING_EXERCISE + "/solution-files-content";
+
     private ProgrammingExerciseResourceEndpoints() {
     }
 }

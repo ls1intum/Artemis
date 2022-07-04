@@ -1,5 +1,3 @@
-@import 'src/main/webapp/content/scss/artemis-variables';
-
 $result-element-size: 25px;
 .result-history-wrapper {
     display: flex;
@@ -23,15 +21,15 @@ $result-element-size: 25px;
                 color: white;
 
                 &.success {
-                    background-color: $success;
+                    background-color: var(--success);
                 }
 
                 &.warning {
-                    background-color: $warning;
+                    background-color: var(--warning);
                 }
 
                 &.danger {
-                    background-color: $danger;
+                    background-color: var(--danger);
                 }
             }
 

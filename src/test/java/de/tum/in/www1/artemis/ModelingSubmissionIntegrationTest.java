@@ -24,13 +24,18 @@ import de.tum.in.www1.artemis.domain.enumeration.DiagramType;
 import de.tum.in.www1.artemis.domain.enumeration.ExerciseMode;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
+import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
+import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismCase;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismComparison;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismSubmission;
 import de.tum.in.www1.artemis.domain.plagiarism.modeling.ModelingSubmissionElement;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.metis.PostRepository;
+import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismCaseRepository;
+import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismComparisonRepository;
 import de.tum.in.www1.artemis.service.compass.CompassService;
 import de.tum.in.www1.artemis.util.FileUtils;
 import de.tum.in.www1.artemis.util.ModelFactory;
@@ -71,6 +76,12 @@ public class ModelingSubmissionIntegrationTest extends AbstractSpringIntegration
     @Autowired
     private PlagiarismComparisonRepository plagiarismComparisonRepository;
 
+    @Autowired
+    private PlagiarismCaseRepository plagiarismCaseRepository;
+
+    @Autowired
+    private PostRepository postRepository;
+
     private ModelingExercise classExercise;
 
     private ModelingExercise activityExercise;
@@ -96,8 +107,6 @@ public class ModelingSubmissionIntegrationTest extends AbstractSpringIntegration
     private TextExercise textExercise;
 
     private Course course;
-
-    private static final String INSTRUCTOR_STATEMENT_A = "instructor Statement A";
 
     @BeforeEach
     public void initTestCase() throws Exception {
@@ -407,11 +416,20 @@ public class ModelingSubmissionIntegrationTest extends AbstractSpringIntegration
         ModelingSubmission submission = ModelFactory.generateModelingSubmission(validModel, true);
         submission = database.addModelingSubmission(classExercise, submission, "student1");
         PlagiarismComparison<ModelingSubmissionElement> plagiarismComparison = new PlagiarismComparison<>();
-        plagiarismComparison.setInstructorStatementA(INSTRUCTOR_STATEMENT_A);
         PlagiarismSubmission<ModelingSubmissionElement> submissionA = new PlagiarismSubmission<>();
         submissionA.setStudentLogin("student1");
         submissionA.setSubmissionId(submission.getId());
         plagiarismComparison.setSubmissionA(submissionA);
+        PlagiarismCase plagiarismCase = new PlagiarismCase();
+        plagiarismCase = plagiarismCaseRepository.save(plagiarismCase);
+        Post post = new Post();
+        post.setAuthor(userRepo.getUserByLoginElseThrow("instructor1"));
+        post.setTitle("Title Plagiarism Case Post");
+        post.setContent("Content Plagiarism Case Post");
+        post.setVisibleForStudents(true);
+        post.setPlagiarismCase(plagiarismCase);
+        postRepository.save(post);
+        submissionA.setPlagiarismCase(plagiarismCase);
         plagiarismComparisonRepository.save(plagiarismComparison);
 
         var submissionResult = request.get("/api/modeling-submissions/" + submission.getId(), HttpStatus.OK, ModelingSubmission.class);

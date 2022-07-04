@@ -18,6 +18,8 @@ import { UsersImportDialogComponent } from 'app/shared/import/users-import-dialo
 import { TranslateService } from '@ngx-translate/core';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { Router } from '@angular/router';
+import * as fs from 'fs';
+import * as path from 'path';
 
 describe('UsersImportButtonComponent', () => {
     let fixture: ComponentFixture<UsersImportDialogComponent>;
@@ -117,10 +119,34 @@ describe('UsersImportButtonComponent', () => {
         component.usersToImport = studentsToImport;
         component.importUsers();
 
-        expect(examManagementService.addStudentsToExam).toHaveBeenCalledTimes(1);
-        expect(component.isImporting).toBe(false);
-        expect(component.hasImported).toBe(true);
+        expect(examManagementService.addStudentsToExam).toHaveBeenCalledOnce();
+        expect(component.isImporting).toBeFalse();
+        expect(component.hasImported).toBeTrue();
         expect(component.notFoundUsers).toHaveLength(studentsNotFound.length);
+    });
+
+    describe('should read students from csv files', () => {
+        const testDir = path.join(__dirname, '../../../../util/user-import');
+        const testFiles = fs.readdirSync(testDir);
+
+        test.each(testFiles)('reading from %s', async (testFileName) => {
+            const pathToTestFile = path.join(testDir, testFileName);
+            const csv = fs.readFileSync(pathToTestFile, 'utf-8');
+            const event = { target: { files: [csv] } };
+            await component.onCSVFileSelect(event);
+
+            expect(component.usersToImport).toHaveLength(5);
+
+            const expectedStudentDTOs: StudentDTO[] = [
+                { registrationNumber: '01234567', firstName: 'Max Moritz', lastName: 'Mustermann', login: '' },
+                { registrationNumber: '01234568', firstName: 'John-James', lastName: 'Doe', login: '' },
+                { registrationNumber: '01234569', firstName: 'Jane', lastName: 'Doe', login: '' },
+                { registrationNumber: '01234570', firstName: 'Alice', lastName: '-', login: '' },
+                { registrationNumber: '01234571', firstName: 'Bob', lastName: 'Ross', login: '' },
+            ];
+
+            expect(component.usersToImport).toEqual(expectedStudentDTOs);
+        });
     });
 
     it('should compute invalid student entries', () => {
@@ -156,8 +182,8 @@ describe('UsersImportButtonComponent', () => {
         component.usersToImport = importedStudents.concat(notImportedStudents);
         component.importUsers();
 
-        importedStudents.forEach((student) => expect(component.wasImported(student)).toBe(true));
-        notImportedStudents.forEach((student) => expect(component.wasImported(student)).toBe(false));
+        importedStudents.forEach((student) => expect(component.wasImported(student)).toBeTrue());
+        notImportedStudents.forEach((student) => expect(component.wasImported(student)).toBeFalse());
         expect(component.numberOfUsersImported).toBe(importedStudents.length);
         expect(component.numberOfUsersNotImported).toBe(notImportedStudents.length);
     });
@@ -176,17 +202,17 @@ describe('UsersImportButtonComponent', () => {
 
         fixture.detectChanges();
 
-        expect(component.hasImported).toBe(false);
-        expect(component.isSubmitDisabled).toBe(false);
+        expect(component.hasImported).toBeFalse();
+        expect(component.isSubmitDisabled).toBeFalse();
         const importButton = fixture.debugElement.query(By.css('#import'));
 
         expect(importButton).not.toBe(null);
 
         importButton.nativeElement.click();
 
-        expect(examManagementService.addStudentsToExam).toHaveBeenCalledTimes(1);
-        expect(component.isImporting).toBe(false);
-        expect(component.hasImported).toBe(true);
+        expect(examManagementService.addStudentsToExam).toHaveBeenCalledOnce();
+        expect(component.isImporting).toBeFalse();
+        expect(component.hasImported).toBeTrue();
         expect(component.notFoundUsers).toHaveLength(studentsNotFound.length);
 
         jest.spyOn(examManagementService, 'addStudentsToExam').mockReturnValue(of(fakeResponse));
@@ -198,6 +224,6 @@ describe('UsersImportButtonComponent', () => {
         expect(finishButton).not.toBeNull;
 
         finishButton.nativeElement.click();
-        expect(examManagementService.addStudentsToExam).toHaveBeenCalledTimes(1);
+        expect(examManagementService.addStudentsToExam).toHaveBeenCalledOnce();
     });
 });

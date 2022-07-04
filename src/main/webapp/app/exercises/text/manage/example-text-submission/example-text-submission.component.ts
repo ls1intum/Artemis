@@ -3,7 +3,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { Location } from '@angular/common';
 import { AlertService } from 'app/core/util/alert.service';
 import { HttpResponse } from '@angular/common/http';
-import { ExampleSubmissionService, EntityResponseType } from 'app/exercises/shared/example-submission/example-submission.service';
+import { EntityResponseType, ExampleSubmissionService } from 'app/exercises/shared/example-submission/example-submission.service';
 import { TextAssessmentService } from 'app/exercises/text/assess/text-assessment.service';
 import { TutorParticipationService } from 'app/exercises/shared/dashboards/tutor/tutor-participation.service';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
@@ -24,7 +24,7 @@ import { StructuredGradingCriterionService } from 'app/exercises/shared/structur
 import { notUndefined } from 'app/shared/util/global.utils';
 import { AssessButtonStates, Context, State, SubmissionButtonStates, UIStates } from 'app/exercises/text/manage/example-text-submission/example-text-submission-state.model';
 import { filter, switchMap, tap } from 'rxjs/operators';
-import { FeedbackMarker, ExampleSubmissionAssessCommand } from 'app/exercises/shared/example-submission/example-submission-assess-command';
+import { ExampleSubmissionAssessCommand, FeedbackMarker } from 'app/exercises/shared/example-submission/example-submission-assess-command';
 import { getCourseFromExercise } from 'app/entities/exercise.model';
 import { faEdit, faSave } from '@fortawesome/free-solid-svg-icons';
 import { faListAlt } from '@fortawesome/free-regular-svg-icons';
@@ -140,7 +140,7 @@ export class ExampleTextSubmissionComponent extends TextAssessmentBaseComponent 
             } else if (this.result?.id) {
                 this.state = State.forExistingAssessmentWithContext(this);
             }
-            // do this here to make sure  everythign is loaded before the guided tour step is loaded
+            // do this here to make sure everything is loaded before the guided tour step is loaded
             this.guidedTourService.componentPageLoaded();
         });
     }
@@ -151,8 +151,14 @@ export class ExampleTextSubmissionComponent extends TextAssessmentBaseComponent 
                 .getExampleResult(this.exerciseId, this.submission?.id!)
                 .pipe(filter(notUndefined))
                 .subscribe((result) => {
-                    this.result = result;
-                    this.exampleSubmission.submission = this.submission = result.submission;
+                    if (result) {
+                        this.result = result;
+                        this.exampleSubmission.submission = this.submission = result.submission;
+                    } else {
+                        this.result = new Result();
+                        this.result.submission = this.submission;
+                        this.submission!.results = [this.result];
+                    }
                     this.prepareTextBlocksAndFeedbacks();
                     this.areNewAssessments = this.assessments.length <= 0;
                     this.validateFeedback();

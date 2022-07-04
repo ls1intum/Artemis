@@ -19,6 +19,15 @@
             <fa-icon [icon]="faPlus"></fa-icon>
             <span jhiTranslate="artemisApp.quizExercise.home.createModelDragAndDrop"> Create new Drag and Drop Model Quiz </span>
         </a>
+        <button
+            *ngIf="course && course.isAtLeastEditor"
+            id="jh-import-entity"
+            class="btn btn-primary jh-create-entity create-quiz-exercise text-truncate mb-1 me-1"
+            (click)="openImportModal()"
+        >
+            <fa-icon [icon]="faPlus"></fa-icon>
+            <span class="hidden-sm-down" jhiTranslate="artemisApp.quizExercise.home.importLabel"> Import quiz </span>
+        </button>
         <a
             *ngIf="quizExercises && quizExercises.length > 0 && course.isAtLeastEditor"
             class="btn me-2 btn-primary jh-create-entity create-quiz-exercise text-truncate mb-1 me-1"
@@ -37,7 +46,11 @@
                     <th jhiSortBy="id"><span jhiTranslate="global.field.id">ID</span>&nbsp;<fa-icon [icon]="faSort"></fa-icon></th>
                     <th jhiSortBy="title"><span jhiTranslate="artemisApp.exercise.title">Title</span>&nbsp;<fa-icon [icon]="faSort"></fa-icon></th>
                     <th jhiSortBy="status"><span jhiTranslate="artemisApp.quizExercise.status">Status</span>&nbsp;<fa-icon [icon]="faSort"></fa-icon></th>
-                    <th jhiSortBy="releaseDate"><span jhiTranslate="artemisApp.quizExercise.startTime">Start Time</span>&nbsp;<fa-icon [icon]="faSort"></fa-icon></th>
+                    <th jhiSortBy="releaseDate"><span jhiTranslate="artemisApp.quizExercise.releaseDate">Visible from</span>&nbsp;<fa-icon [icon]="faSort"></fa-icon></th>
+                    <!-- releaseDate works similar to Exam.visibleDate -->
+                    <th jhiSortBy="startTime"><span jhiTranslate="artemisApp.quizExercise.startTime">Start of working time</span>&nbsp;<fa-icon [icon]="faSort"></fa-icon></th>
+                    <!-- startTime works similar to Exam.startDate -->
+                    <th jhiSortBy="dueDate"><span jhiTranslate="artemisApp.exercise.dueDate">Due Date</span>&nbsp;<fa-icon [icon]="faSort"></fa-icon></th>
                     <th jhiSortBy="duration"><span jhiTranslate="artemisApp.quizExercise.duration">Duration</span>&nbsp;<fa-icon [icon]="faSort"></fa-icon></th>
                     <th jhiSortBy="maxPoints"><span jhiTranslate="artemisApp.exercise.points">Points</span>&nbsp;<fa-icon [icon]="faSort"></fa-icon></th>
                     <th jhiSortBy="includedInOverallScore">
@@ -50,7 +63,12 @@
             <tbody>
                 <tr *ngFor="let quizExercise of filteredQuizExercises; trackBy: trackId" id="exercise-card-{{ quizExercise.id }}">
                     <td *ngIf="!quizIsOver(quizExercise) || !quizExercise.isAtLeastEditor">
-                        <a [routerLink]="['/course-management', quizExercise.course?.id, 'quiz-exercises', quizExercise.id, 'edit']">{{ quizExercise.id }}</a>
+                        <a
+                            *ngIf="quizExercise.status !== QuizStatus.ACTIVE; else readOnlyId"
+                            [routerLink]="['/course-management', quizExercise.course?.id, 'quiz-exercises', quizExercise.id, 'edit']"
+                            >{{ quizExercise.id }}</a
+                        >
+                        <ng-template #readOnlyId>{{ quizExercise.id }}</ng-template>
                     </td>
                     <td *ngIf="quizIsOver(quizExercise) && quizExercise.isAtLeastEditor">
                         <a [routerLink]="['/course-management', quizExercise.course?.id, 'quiz-exercises', quizExercise.id, 're-evaluate']">{{ quizExercise.id }}</a>
@@ -58,12 +76,14 @@
                     <td>{{ quizExercise.title }}</td>
                     <td>
                         <span *ngIf="quizExercise.status === QuizStatus.CLOSED">{{ 'artemisApp.quizExercise.quizStatus.closed' | artemisTranslate }}</span>
-                        <span *ngIf="quizExercise.status === QuizStatus.HIDDEN">{{ 'artemisApp.quizExercise.quizStatus.hidden' | artemisTranslate }}</span>
+                        <span *ngIf="quizExercise.status === QuizStatus.INVISIBLE">{{ 'artemisApp.quizExercise.quizStatus.invisible' | artemisTranslate }}</span>
                         <span *ngIf="quizExercise.status === QuizStatus.VISIBLE">{{ 'artemisApp.quizExercise.quizStatus.visible' | artemisTranslate }}</span>
                         <span *ngIf="quizExercise.status === QuizStatus.ACTIVE">{{ 'artemisApp.quizExercise.quizStatus.active' | artemisTranslate }}</span>
                         <span *ngIf="quizExercise.status === QuizStatus.OPEN_FOR_PRACTICE">{{ 'artemisApp.quizExercise.quizStatus.openForPractice' | artemisTranslate }}</span>
                     </td>
-                    <td>{{ quizExercise.isPlannedToStart ? (quizExercise.releaseDate | artemisDate: 'long':true) : '-' }}</td>
+                    <td>{{ quizExercise.releaseDate ? (quizExercise.releaseDate | artemisDate: 'long':true) : '-' }}</td>
+                    <td>{{ quizExercise.quizBatches?.[0]?.startTime ? (quizExercise.quizBatches![0]!.startTime | artemisDate: 'long':true) : '-' }}</td>
+                    <td>{{ quizExercise.dueDate ? (quizExercise.dueDate | artemisDate: 'long':true) : '-' }}</td>
                     <td>
                         {{ fullMinutesForSeconds(quizExercise.duration!) }}
                         <span jhiTranslate="{{ quizExercise.duration! % 60 ? 'artemisApp.quizExercise.minutesShort' : 'artemisApp.quizExercise.minutes' }}"></span>
@@ -74,13 +94,13 @@
                     </td>
                     <td>{{ quizExercise.maxPoints }}</td>
                     <td>{{ exerciseService.isIncludedInScore(quizExercise) }}</td>
-                    <td class="text-end" *ngIf="quizExercise.isAtLeastEditor">
-                        <div class="btn-group flex-btn-group-container">
+                    <td class="text-end">
+                        <div class="">
                             <button
                                 type="submit"
                                 (click)="openForPractice(quizExercise.id!)"
                                 class="btn btn-warning btn-sm me-1 mb-1"
-                                *ngIf="quizExercise.status === QuizStatus.CLOSED"
+                                *ngIf="quizExercise.status === QuizStatus.CLOSED && quizExercise.isAtLeastEditor"
                             >
                                 <fa-icon [icon]="faPlayCircle"></fa-icon>
                                 <span class="d-none d-md-inline" jhiTranslate="artemisApp.quizExercise.openForPractice"></span>
@@ -90,17 +110,70 @@
                                 type="submit"
                                 (click)="startQuiz(quizExercise.id!)"
                                 class="btn btn-warning btn-sm me-1 mb-1"
-                                *ngIf="quizExercise.status === QuizStatus.VISIBLE"
+                                *ngIf="
+                                    (quizExercise.status === QuizStatus.VISIBLE || quizExercise.status === QuizStatus.INVISIBLE) &&
+                                    quizExercise.quizMode === QuizMode.SYNCHRONIZED &&
+                                    quizExercise.isAtLeastEditor
+                                "
                             >
                                 <fa-icon [icon]="faPlayCircle"></fa-icon>
-                                <span class="d-none d-md-inline" jhiTranslate="artemisApp.quizExercise.startNow">Start Now</span>
+                                <span class="d-none d-md-inline" jhiTranslate="artemisApp.quizExercise.startQuiz">Start Quiz</span>
+                            </button>
+                            <ng-container
+                                *ngIf="(quizExercise.status === QuizStatus.VISIBLE || quizExercise.status === QuizStatus.ACTIVE) && quizExercise.quizMode == QuizMode.BATCHED"
+                            >
+                                <div *ngFor="let batch of quizExercise.quizBatches">
+                                    ID: {{ batch.id }}
+                                    <span *ngIf="!batch.ended"> PW: {{ batch.password }} </span>
+                                    <span *ngIf="batch.started && !batch.ended"> Running </span>
+                                    <span *ngIf="batch.ended"> Done </span>
+                                    <button
+                                        id="instructor-quiz-start-{{ quizExercise.id }}-{{ batch.id }}"
+                                        type="submit"
+                                        (click)="startBatch(quizExercise.id!, batch.id!)"
+                                        class="btn btn-warning btn-sm me-1 mb-1"
+                                        *ngIf="!batch.started"
+                                    >
+                                        <fa-icon [icon]="faPlayCircle"></fa-icon>
+                                        <span class="d-none d-md-inline" jhiTranslate="artemisApp.quizExercise.startQuiz">Start Quiz</span>
+                                    </button>
+                                </div>
+                                <div>
+                                    <button
+                                        id="instructor-quiz-add-{{ quizExercise.id }}"
+                                        type="submit"
+                                        (click)="addBatch(quizExercise.id!)"
+                                        class="btn btn-primary btn-sm me-1 mb-1"
+                                    >
+                                        <fa-icon [icon]="faPlus"></fa-icon>
+                                        <span class="d-none d-md-inline" jhiTranslate="artemisApp.quizExercise.addBatch">Add Batch</span>
+                                    </button>
+                                </div>
+                            </ng-container>
+                            <button
+                                *ngIf="
+                                    (quizExercise.status === QuizStatus.VISIBLE || quizExercise.status === QuizStatus.ACTIVE) &&
+                                    quizExercise.quizMode !== QuizMode.SYNCHRONIZED &&
+                                    quizExercise.isAtLeastInstructor
+                                "
+                                id="quiz-set-end-{{ quizExercise.id }}"
+                                class="mb-1"
+                                jhiDeleteButton
+                                [actionType]="ActionType.EndNow"
+                                [entityTitle]="quizExercise.title || ''"
+                                deleteQuestion="artemisApp.quizExercise.endNow.question"
+                                deleteConfirmationText="artemisApp.exercise.delete.typeNameToConfirm"
+                                (delete)="endQuiz(quizExercise.id!)"
+                                [dialogError]="dialogError$"
+                            >
+                                <fa-icon [icon]="faStopCircle"></fa-icon>
                             </button>
                             <button
                                 id="quiz-set-visible-{{ quizExercise.id }}"
                                 type="submit"
                                 (click)="showQuiz(quizExercise.id!)"
                                 class="btn btn-warning btn-sm me-1 mb-1"
-                                *ngIf="quizExercise.status === QuizStatus.HIDDEN"
+                                *ngIf="quizExercise.status === QuizStatus.INVISIBLE && quizExercise.isAtLeastEditor"
                             >
                                 <fa-icon [icon]="faEye"></fa-icon>
                                 <span class="d-none d-md-inline" jhiTranslate="artemisApp.quizExercise.showNow">Set Visible</span>

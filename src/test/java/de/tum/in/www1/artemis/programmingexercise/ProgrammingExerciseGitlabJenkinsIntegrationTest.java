@@ -1,7 +1,7 @@
 package de.tum.in.www1.artemis.programmingexercise;
 
 import static de.tum.in.www1.artemis.programmingexercise.ProgrammingExerciseTestService.studentLogin;
-import static de.tum.in.www1.artemis.programmingexercise.ProgrammingSubmissionConstants.GITLAB_REQUEST;
+import static de.tum.in.www1.artemis.programmingexercise.ProgrammingSubmissionConstants.GITLAB_PUSH_EVENT_REQUEST;
 
 import java.util.Arrays;
 import java.util.stream.Stream;
@@ -191,7 +191,7 @@ class ProgrammingExerciseGitlabJenkinsIntegrationTest extends AbstractSpringInte
     @EnumSource(ExerciseMode.class)
     @WithMockUser(username = studentLogin, roles = "USER")
     public void resumeProgrammingExerciseByPushingIntoRepo_correctInitializationState(ExerciseMode exerciseMode) throws Exception {
-        Object body = new JSONParser().parse(GITLAB_REQUEST);
+        Object body = new JSONParser().parse(GITLAB_PUSH_EVENT_REQUEST);
         programmingExerciseTestService.resumeProgrammingExerciseByPushingIntoRepo_correctInitializationState(exerciseMode, body);
     }
 
@@ -337,6 +337,42 @@ class ProgrammingExerciseGitlabJenkinsIntegrationTest extends AbstractSpringInte
     @WithMockUser(username = "admin", roles = "ADMIN")
     public void testAutomaticCleanupGitRepositories() {
         programmingExerciseTestService.automaticCleanupGitRepositories();
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void importProgrammingExerciseFromCourseToCourse_exampleSolutionPublicationDate() throws Exception {
+        programmingExerciseTestService.importProgrammingExerciseFromCourseToCourse_exampleSolutionPublicationDate();
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void createProgrammingExercise_setInvalidExampleSolutionPublicationDate_badRequest() throws Exception {
+        programmingExerciseTestService.createProgrammingExercise_setInvalidExampleSolutionPublicationDate_badRequest();
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void createProgrammingExercise_setValidExampleSolutionPublicationDate() throws Exception {
+        programmingExerciseTestService.createProgrammingExercise_setValidExampleSolutionPublicationDate();
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void testGetProgrammingExercise_asStudent_exampleSolutionVisibility() throws Exception {
+        programmingExerciseTestService.testGetProgrammingExercise_exampleSolutionVisibility(true, "student1");
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testGetProgrammingExercise_asInstructor_exampleSolutionVisibility() throws Exception {
+        programmingExerciseTestService.testGetProgrammingExercise_exampleSolutionVisibility(false, "instructor1");
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void testExportSolutionRepository_shouldReturnFileOrForbidden() throws Exception {
+        programmingExerciseTestService.exportSolutionRepository_shouldReturnFileOrForbidden();
     }
 
     // TODO: add startProgrammingExerciseStudentSubmissionFailedWithBuildlog & copyRepository_testConflictError

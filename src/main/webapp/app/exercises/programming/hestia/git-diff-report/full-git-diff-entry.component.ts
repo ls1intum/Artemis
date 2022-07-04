@@ -1,6 +1,7 @@
 import { Component, Input, OnInit, ViewChild } from '@angular/core';
 import { AceEditorComponent } from 'app/shared/markdown-editor/ace-editor/ace-editor.component';
 import { ProgrammingExerciseFullGitDiffEntry } from 'app/entities/hestia/programming-exercise-full-git-diff-entry.model';
+import { Theme, ThemeService } from 'app/core/theme/theme.service';
 
 @Component({
     selector: 'jhi-git-diff-entry',
@@ -13,12 +14,17 @@ export class FullGitDiffEntryComponent implements OnInit {
     editorNow: AceEditorComponent;
     @Input()
     diffEntry: ProgrammingExerciseFullGitDiffEntry;
+    addedLineCount: number;
+    removedLineCount: number;
 
-    constructor() {}
+    constructor(private themeService: ThemeService) {}
 
     ngOnInit(): void {
-        this.setupEditor(this.editorPrevious, this.diffEntry.previousLine, this.diffEntry.previousCode ?? '', 'rgba(248, 81, 73, 0.5)');
-        this.setupEditor(this.editorNow, this.diffEntry.line, this.diffEntry.code ?? '', 'rgba(63, 185, 80, 0.5)');
+        const isDark = this.themeService.getCurrentTheme() === Theme.DARK;
+        this.setupEditor(this.editorPrevious, this.diffEntry.previousLine, this.diffEntry.previousCode ?? '', isDark ? 'rgba(248, 81, 73, 0.15)' : 'rgba(248, 81, 73, 0.5)');
+        this.setupEditor(this.editorNow, this.diffEntry.line, this.diffEntry.code ?? '', isDark ? 'rgba(46, 160, 67, 0.15)' : 'rgba(63, 185, 80, 0.5)');
+        this.addedLineCount = this.diffEntry.code?.split('\n').filter((line) => line && line.trim().length !== 0).length ?? 0;
+        this.removedLineCount = this.diffEntry.previousCode?.split('\n').filter((line) => line && line.trim().length !== 0).length ?? 0;
     }
 
     /**
@@ -30,7 +36,6 @@ export class FullGitDiffEntryComponent implements OnInit {
      * @param color The background color of the editor
      */
     private setupEditor(editor: AceEditorComponent, line: number | undefined, code: string, color: string) {
-        editor.setTheme('dreamweaver');
         editor.getEditor().setOptions({
             animatedScroll: true,
             maxLines: Infinity,

@@ -103,8 +103,8 @@ describe('User Settings Directive', () => {
 
                 comp.ngOnInit();
 
-                expect(loadSettingsSuccessAsSettingsStructureSpy).toHaveBeenCalledTimes(1);
-                expect(extractIndividualSettingsFromSettingsStructureSpy).toHaveBeenCalledTimes(1);
+                expect(loadSettingsSuccessAsSettingsStructureSpy).toHaveBeenCalledOnce();
+                expect(extractIndividualSettingsFromSettingsStructureSpy).toHaveBeenCalledOnce();
                 expect(changeDetectorDetectChangesSpy).toHaveBeenCalled();
             });
 
@@ -129,9 +129,9 @@ describe('User Settings Directive', () => {
 
                 comp.saveSettings();
 
-                expect(saveSettingsSuccessSpy).toHaveBeenCalledTimes(1);
-                expect(extractIndividualSettingsFromSettingsStructureSpy).toHaveBeenCalledTimes(1);
-                expect(createApplyChangesEventSpy).toHaveBeenCalledTimes(1);
+                expect(saveSettingsSuccessSpy).toHaveBeenCalledOnce();
+                expect(extractIndividualSettingsFromSettingsStructureSpy).toHaveBeenCalledOnce();
+                expect(createApplyChangesEventSpy).toHaveBeenCalledOnce();
                 expect(alertServiceSuccessSpy).toHaveBeenCalled();
             });
         });

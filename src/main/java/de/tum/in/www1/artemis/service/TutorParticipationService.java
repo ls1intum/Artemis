@@ -189,7 +189,7 @@ public class TutorParticipationService {
     private void validateTutorialExampleSubmission(ExampleSubmission tutorExampleSubmission) {
         var latestResult = tutorExampleSubmission.getSubmission().getLatestResult();
         if (latestResult == null) {
-            throw new BadRequestAlertException("The training  does not contain an assessment", ENTITY_NAME, "invalid_assessment");
+            throw new BadRequestAlertException("The training does not contain an assessment", ENTITY_NAME, "invalid_assessment");
         }
         var tutorFeedback = latestResult.getFeedbacks();
         var instructorFeedback = exampleSubmissionRepository.getFeedbackForExampleSubmission(tutorExampleSubmission.getId());
@@ -225,7 +225,7 @@ public class TutorParticipationService {
         }
 
         // Pack this information into bad request exception.
-        throw new BadRequestAlertException("{\"errors\": [" + wrongFeedback + "]}", ENTITY_NAME, "invalid_assessment");
+        throw new BadRequestAlertException("{\"errors\": [" + wrongFeedback + "]}", ENTITY_NAME, "invalid_assessment", true);
     }
 
     /**

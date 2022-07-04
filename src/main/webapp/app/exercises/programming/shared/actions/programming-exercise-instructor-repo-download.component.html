@@ -1,0 +1,10 @@
+<jhi-button
+    [disabled]="!exerciseId"
+    [btnType]="ButtonType.INFO"
+    [btnSize]="ButtonSize.SMALL"
+    [shouldSubmit]="false"
+    [featureToggle]="FeatureToggle.ProgrammingExercises"
+    [icon]="faDownload"
+    [title]="'artemisApp.programmingExercise.export.downloadRepo'"
+    (onClick)="exportRepository()"
+></jhi-button>

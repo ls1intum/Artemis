@@ -5,7 +5,9 @@
 <div class="modal-body position-relative" id="result-detail-body">
     <!-- Message, if defined -->
     <div *ngIf="messageKey" class="mb-3"><h6 [innerHTML]="messageKey | artemisTranslate"></h6></div>
-    <div *ngIf="showMissingAutomaticFeedbackInformation" class="mb-3"><h6 [innerHTML]="'artemisApp.result.afterDueDateFeedbackHidden' | artemisTranslate"></h6></div>
+    <div *ngIf="showMissingAutomaticFeedbackInformation" class="mb-3">
+        <h6 [innerHTML]="'artemisApp.result.afterDueDateFeedbackHidden' | artemisTranslate: { date: latestIndividualDueDate }"></h6>
+    </div>
     <!-- Loading state -->
     <div *ngIf="isLoading; else feedbackContainer" class="text-muted d-flex justify-content-center" id="result-detail-spinner">
         <fa-icon [spin]="true" size="lg" [icon]="faCircleNotch"></fa-icon>
@@ -54,18 +56,25 @@
                     <span class="ms-1" jhiTranslate="artemisApp.result.chart.filterApplied">A filter is applied to your feedback</span>
                     <button type="button" class="ms-2 btn btn-info" (click)="resetChartFilter()" jhiTranslate="artemisApp.result.chart.reset">Reset</button>
                 </div>
-                <div *ngFor="let feedback of filteredFeedbackList" [ngClass]="['feedback-item', getClassNameForFeedbackItem(feedback)]" id="feedback-message">
+                <div *ngFor="let feedback of filteredFeedbackList" [ngClass]="['feedback-item', 'alert', getClassNameForFeedbackItem(feedback)]" id="feedback-message">
                     <span>{{ feedback.category }}</span>
-                    <span id="feedback-points" class="feedback-points" *ngIf="feedback.credits"
-                        >{{ roundScoreSpecifiedByCourseSettings(feedback.credits, course) }}P<fa-icon
+                    <span id="feedback-points" class="feedback-points" *ngIf="feedback.credits">
+                        {{ roundScoreSpecifiedByCourseSettings(feedback.actualCredits ?? feedback.credits, course) }}P
+                        <fa-icon
                             *ngIf="feedback.type === FeedbackItemType.Subsequent"
                             [icon]="faExclamationTriangle"
                             [ngbTooltip]="'artemisApp.assessment.subsequentFeedback' | artemisTranslate"
                         ></fa-icon>
+                        <fa-icon
+                            *ngIf="feedback.type === FeedbackItemType.Issue && feedback.actualCredits !== feedback.credits"
+                            [icon]="faExclamationTriangle"
+                            [ngbTooltip]="'artemisApp.programmingAssessment.codeIssueNotApplied' | artemisTranslate: { points: feedback.credits }"
+                        >
+                        </fa-icon>
                     </span>
                     <span class="feedback-title" *ngIf="feedback.title">{{ feedback.title }}</span>
                     <jhi-feedback-collapse id="feedback-text" *ngIf="feedback.text" [text]="feedback.text!" [previewText]="feedback.previewText"></jhi-feedback-collapse>
-                    <p *ngElse>No feedback available!</p>
+                    <p *ngElse jhiTranslate="artemisApp.result.noFeedback">No feedback available</p>
                 </div>
             </div>
         </div>

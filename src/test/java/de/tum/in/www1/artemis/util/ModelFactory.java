@@ -1,10 +1,19 @@
 package de.tum.in.www1.artemis.util;
 
+import static org.assertj.core.api.Assertions.fail;
+
+import java.io.File;
+import java.io.IOException;
+import java.net.URISyntaxException;
+import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
 import javax.validation.constraints.NotNull;
+
+import org.apache.commons.io.FileUtils;
+import org.springframework.util.ResourceUtils;
 
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
@@ -24,6 +33,7 @@ import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.*;
 import de.tum.in.www1.artemis.domain.submissionpolicy.LockRepositoryPolicy;
 import de.tum.in.www1.artemis.security.Role;
+import de.tum.in.www1.artemis.service.FilePathService;
 import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooBuildLogDTO;
 import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooBuildPlanDTO;
 import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooBuildResultNotificationDTO;
@@ -44,27 +54,66 @@ public class ModelFactory {
         return lecture;
     }
 
-    public static Attachment generateAttachment(ZonedDateTime startDate, Lecture lecture) {
+    /**
+     * Create a dummy attachment for testing
+     * @param date The optional upload and release date to set on the attachment
+     * @return Attachment that was created
+     */
+    public static Attachment generateAttachment(ZonedDateTime date) {
         Attachment attachment = new Attachment();
         attachment.setAttachmentType(AttachmentType.FILE);
-        attachment.setReleaseDate(startDate);
-        attachment.setUploadDate(startDate);
+        if (date != null) {
+            attachment.setReleaseDate(date);
+            attachment.setUploadDate(date);
+        }
         attachment.setName("TestAttachment");
-        attachment.setLecture(lecture);
         return attachment;
     }
 
-    public static QuizExercise generateQuizExercise(ZonedDateTime releaseDate, ZonedDateTime dueDate, Course course) {
+    /**
+     * Create a dummy attachment for testing with a placeholder image file on disk
+     * @param startDate The release date to set on the attachment
+     * @return Attachment that was created with its link set to a testing file on disk
+     */
+    public static Attachment generateAttachmentWithFile(ZonedDateTime startDate) {
+        Attachment attachment = generateAttachment(startDate);
+        String testFileName = "test_" + UUID.randomUUID().toString().substring(0, 8) + ".jpg";
+        try {
+            FileUtils.copyFile(ResourceUtils.getFile("classpath:test-data/attachment/placeholder.jpg"), new File(FilePathService.getTempFilePath(), testFileName));
+        }
+        catch (IOException ex) {
+            fail("Failed while copying test attachment files", ex);
+        }
+        attachment.setLink(Path.of("/api/files/temp/", testFileName).toString());
+        return attachment;
+    }
+
+    public static QuizBatch generateQuizBatch(QuizExercise quizExercise, ZonedDateTime startTime) {
+        var quizBatch = new QuizBatch();
+        quizBatch.setQuizExercise(quizExercise);
+        quizBatch.setStartTime(startTime);
+        return quizBatch;
+    }
+
+    public static QuizExercise generateQuizExercise(ZonedDateTime releaseDate, ZonedDateTime dueDate, QuizMode quizMode, Course course) {
         var quizExercise = (QuizExercise) populateExercise(new QuizExercise(), releaseDate, dueDate, null, course);
         quizExercise.setProblemStatement(null);
         quizExercise.setGradingInstructions(null);
         quizExercise.setPresentationScoreEnabled(false);
         quizExercise.setIsOpenForPractice(false);
-        quizExercise.setIsPlannedToStart(true);
-        quizExercise.setIsVisibleBeforeStart(true);
         quizExercise.setAllowedNumberOfAttempts(1);
         quizExercise.setDuration(10);
         quizExercise.setRandomizeQuestionOrder(true);
+        quizExercise.setQuizMode(quizMode);
+        if (quizMode == QuizMode.SYNCHRONIZED) {
+            quizExercise.setQuizBatches(Set.of(generateQuizBatch(quizExercise, releaseDate)));
+        }
+        return quizExercise;
+    }
+
+    public static QuizExercise generateQuizExerciseWithQuizBatches(ZonedDateTime releaseDate, ZonedDateTime dueDate, QuizMode quizMode, Course course) {
+        var quizExercise = generateQuizExercise(releaseDate, dueDate, quizMode, course);
+        quizExercise.setQuizBatches(Set.of(generateQuizBatch(quizExercise, releaseDate)));
         return quizExercise;
     }
 
@@ -74,8 +123,6 @@ public class ModelFactory {
         quizExercise.setGradingInstructions(null);
         quizExercise.setPresentationScoreEnabled(false);
         quizExercise.setIsOpenForPractice(false);
-        quizExercise.setIsPlannedToStart(false);
-        quizExercise.setIsVisibleBeforeStart(true);
         quizExercise.setAllowedNumberOfAttempts(1);
         quizExercise.setDuration(10);
         quizExercise.setQuizPointStatistic(new QuizPointStatistic());
@@ -118,6 +165,7 @@ public class ModelFactory {
         programmingExercise.generateAndSetProjectKey();
         programmingExercise.setAllowOfflineIde(true);
         programmingExercise.setStaticCodeAnalysisEnabled(false);
+        programmingExercise.setTestwiseCoverageEnabled(false);
         programmingExercise.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
         programmingExercise.setProgrammingLanguage(programmingLanguage);
         if (programmingLanguage == ProgrammingLanguage.JAVA) {
@@ -178,6 +226,10 @@ public class ModelFactory {
         return (FileUploadExercise) populateExerciseForExam(fileUploadExercise, exerciseGroup);
     }
 
+    public static GitUtilService.MockFileRepositoryUrl getMockFileRepositoryUrl(LocalRepository repository) throws URISyntaxException {
+        return new GitUtilService.MockFileRepositoryUrl(repository.originRepoFile);
+    }
+
     private static Exercise populateExercise(Exercise exercise, ZonedDateTime releaseDate, ZonedDateTime dueDate, ZonedDateTime assessmentDueDate, Course course) {
         exercise.setTitle(UUID.randomUUID().toString());
         exercise.setShortName("t" + UUID.randomUUID().toString().substring(0, 3));
@@ -236,7 +288,7 @@ public class ModelFactory {
     }
 
     /**
-     * Generate users that has registration numbers
+     * Generate users that have registration numbers
      *
      * @param loginPrefix prefix that will be added in front of every user's login
      * @param groups groups that the users will be added
@@ -503,6 +555,7 @@ public class ModelFactory {
         course.setEndDate(endDate);
         course.setExercises(exercises);
         course.setOnlineCourse(false);
+        course.setRegistrationEnabled(false);
         course.setPresentationScore(2);
         course.setAccuracyOfScores(1);
         return course;
@@ -510,6 +563,7 @@ public class ModelFactory {
 
     /**
      * Generates a TextAssessment event with the given parameters
+     *
      * @param eventType the type of the event
      * @param feedbackType the type of the feedback
      * @param segmentType the segment type of the event
@@ -537,6 +591,7 @@ public class ModelFactory {
 
     /**
      * Generates a list of different combinations of assessment events based on the given parameters
+     *
      * @param courseId the course id of the event
      * @param userId the userid of the event
      * @param exerciseId the exercise id of the event
@@ -569,33 +624,58 @@ public class ModelFactory {
         return events;
     }
 
+    /**
+     * Generates a RealExam with student review dates set
+     *
+     * @param course the associated course
+     * @return the created exam
+     */
     public static Exam generateExamWithStudentReviewDates(Course course) {
+        Exam exam = generateExamHelper(course, false);
         ZonedDateTime currentTime = ZonedDateTime.now();
-        Exam exam = new Exam();
-        exam.setTitle("Test exam 1");
-        exam.setVisibleDate(currentTime);
-        exam.setStartDate(currentTime.plusMinutes(10));
-        exam.setEndDate(currentTime.plusMinutes(60));
-        exam.setStartText("Start Text");
-        exam.setEndText("End Text");
-        exam.setConfirmationStartText("Confirmation Start Text");
-        exam.setConfirmationEndText("Confirmation End Text");
-        exam.setMaxPoints(90);
         exam.setNumberOfExercisesInExam(1);
         exam.setRandomizeExerciseOrder(false);
         exam.setExamStudentReviewStart(currentTime);
         exam.setExamStudentReviewEnd(currentTime.plusMinutes(60));
-        exam.setCourse(course);
         return exam;
     }
 
+    /**
+     * Generates a RealExam without student review dates set
+     *
+     * @param course the associated course
+     * @return the created exam
+     */
     public static Exam generateExam(Course course) {
+        return generateExamHelper(course, false);
+    }
+
+    /**
+     * Generates a TestExam (TestExams have no student review dates)
+     *
+     * @param course the associated course
+     * @return the created exam
+     */
+    public static Exam generateTestExam(Course course) {
+        return generateExamHelper(course, true);
+    }
+
+    /**
+     * Helper method to create an exam
+     *
+     * @param course the associated course
+     * @param testExam Boolean flag to determine whether it is a TestExam
+     * @return the created Exam
+     */
+    private static Exam generateExamHelper(Course course, boolean testExam) {
         ZonedDateTime currentTime = ZonedDateTime.now();
         Exam exam = new Exam();
-        exam.setTitle("Test exam 1");
+        exam.setTitle((testExam ? "Test " : "Real ") + "exam 1");
+        exam.setTestExam(testExam);
         exam.setVisibleDate(currentTime);
         exam.setStartDate(currentTime.plusMinutes(10));
-        exam.setEndDate(currentTime.plusMinutes(60));
+        exam.setEndDate(currentTime.plusMinutes(testExam ? 80 : 60));
+        exam.setWorkingTime(3000);
         exam.setStartText("Start Text");
         exam.setEndText("End Text");
         exam.setConfirmationStartText("Confirmation Start Text");
@@ -788,6 +868,7 @@ public class ModelFactory {
         toBeImported.setAllowOnlineEditor(template.isAllowOnlineEditor());
         toBeImported.setAllowOfflineIde(template.isAllowOfflineIde());
         toBeImported.setStaticCodeAnalysisEnabled(template.isStaticCodeAnalysisEnabled());
+        toBeImported.setTestwiseCoverageEnabled(template.isTestwiseCoverageEnabled());
         toBeImported.setTutorParticipations(null);
         toBeImported.setPosts(null);
         toBeImported.setStudentParticipations(null);
@@ -800,6 +881,7 @@ public class ModelFactory {
         toBeImported.setAttachments(null);
         toBeImported.setDueDate(template.getDueDate());
         toBeImported.setReleaseDate(template.getReleaseDate());
+        toBeImported.setExampleSolutionPublicationDate(null);
         toBeImported.setSequentialTestRuns(template.hasSequentialTestRuns());
         toBeImported.setBuildAndTestStudentSubmissionsAfterDueDate(template.getBuildAndTestStudentSubmissionsAfterDueDate());
         toBeImported.generateAndSetProjectKey();
@@ -818,6 +900,7 @@ public class ModelFactory {
 
     /**
      * Generates a minimal student participation without a specific user attached.
+     *
      * @param initializationState the state of the participation
      * @param exercise the referenced exercise of the participation
      * @return the StudentParticipation created
@@ -953,7 +1036,6 @@ public class ModelFactory {
 
     /**
      * Creates a dummy DTO with custom feedbacks used by Jenkins, which notifies about new programming exercise results.
-     *
      * Uses {@link #generateTestResultDTO(String, List, List, ProgrammingLanguage, boolean)} as basis.
      * Then adds a new {@link TestsuiteDTO} with name "CustomFeedbacks" to it.
      * This Testsuite has four {@link TestCaseDTO}s:
@@ -1209,6 +1291,7 @@ public class ModelFactory {
 
     /**
      * Generates example TextSubmissions
+     *
      * @param count How many submissions should be generated (max. 10)
      * @return A list containing the generated TextSubmissions
      */
@@ -1242,8 +1325,8 @@ public class ModelFactory {
     }
 
     /**
-     *
      * Generate an example organization entity
+     *
      * @param name of organization
      * @param shortName of organization
      * @param url of organization

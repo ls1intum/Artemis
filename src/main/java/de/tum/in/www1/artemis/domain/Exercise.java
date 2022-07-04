@@ -16,12 +16,12 @@ import com.fasterxml.jackson.annotation.*;
 import de.tum.in.www1.artemis.domain.enumeration.*;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
-import de.tum.in.www1.artemis.domain.hestia.ExerciseHint;
 import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.TutorParticipation;
+import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismCase;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.domain.view.QuizView;
 import de.tum.in.www1.artemis.web.rest.dto.DueDateStat;
@@ -43,7 +43,7 @@ import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
         @JsonSubTypes.Type(value = QuizExercise.class, name = "quiz"), @JsonSubTypes.Type(value = TextExercise.class, name = "text"),
         @JsonSubTypes.Type(value = FileUploadExercise.class, name = "file-upload"), })
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public abstract class Exercise extends BaseExercise {
+public abstract class Exercise extends BaseExercise implements Completable {
 
     @Column(name = "allow_complaints_for_automatic_assessments")
     private boolean allowComplaintsForAutomaticAssessments;
@@ -126,7 +126,9 @@ public abstract class Exercise extends BaseExercise {
     private Set<Post> posts = new HashSet<>();
 
     @OneToMany(mappedBy = "exercise", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
-    private Set<ExerciseHint> exerciseHints = new HashSet<>();
+    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
+    @JsonIncludeProperties({ "id" })
+    private Set<PlagiarismCase> plagiarismCases = new HashSet<>();
 
     // NOTE: Helpers variable names must be different from Getter name, so that Jackson ignores the @Transient annotation, but Hibernate still respects it
     @Transient
@@ -170,6 +172,16 @@ public abstract class Exercise extends BaseExercise {
 
     @Transient
     private Long numberOfRatingsTransient;
+
+    @Override
+    public boolean isCompletedFor(User user) {
+        return this.getStudentParticipations().stream().anyMatch((participation) -> participation.getStudents().contains(user));
+    }
+
+    @Override
+    public Optional<ZonedDateTime> getCompletionDate(User user) {
+        return this.getStudentParticipations().stream().filter((participation) -> participation.getStudents().contains(user)).map(Participation::getInitializationDate).findFirst();
+    }
 
     public boolean getAllowComplaintsForAutomaticAssessments() {
         return allowComplaintsForAutomaticAssessments;
@@ -353,12 +365,12 @@ public abstract class Exercise extends BaseExercise {
         this.posts = posts;
     }
 
-    public Set<ExerciseHint> getExerciseHints() {
-        return exerciseHints;
+    public Set<PlagiarismCase> getPlagiarismCases() {
+        return plagiarismCases;
     }
 
-    public void setExerciseHints(Set<ExerciseHint> exerciseHints) {
-        this.exerciseHints = exerciseHints;
+    public void setPlagiarismCases(Set<PlagiarismCase> plagiarismCases) {
+        this.plagiarismCases = plagiarismCases;
     }
 
     // jhipster-needle-entity-add-getters-setters - JHipster will add getters and setters here, do not remove
@@ -548,7 +560,7 @@ public abstract class Exercise extends BaseExercise {
             }
         }
 
-        if (submissionsWithRatedResult.size() > 0) {
+        if (!submissionsWithRatedResult.isEmpty()) {
             if (submissionsWithRatedResult.size() == 1) {
                 return submissionsWithRatedResult.get(0);
             }
@@ -557,7 +569,7 @@ public abstract class Exercise extends BaseExercise {
                 return submissionsWithRatedResult.stream().filter(s -> s.getSubmissionDate() != null).max(Comparator.comparing(Submission::getSubmissionDate)).orElse(null);
             }
         }
-        else if (submissionsWithUnratedResult.size() > 0) {
+        else if (!submissionsWithUnratedResult.isEmpty()) {
             if (this instanceof ProgrammingExercise) {
                 // this is an edge case that is treated differently: the student has not submitted before the due date and the client would otherwise think
                 // that there is no result for the submission and would display a red trigger button.
@@ -571,7 +583,7 @@ public abstract class Exercise extends BaseExercise {
                 return submissionsWithUnratedResult.stream().filter(s -> s.getSubmissionDate() != null).max(Comparator.comparing(Submission::getSubmissionDate)).orElse(null);
             }
         }
-        else if (submissionsWithoutResult.size() > 0) {
+        else if (!submissionsWithoutResult.isEmpty()) {
             if (submissionsWithoutResult.size() == 1) {
                 return submissionsWithoutResult.get(0);
             }
@@ -793,28 +805,34 @@ public abstract class Exercise extends BaseExercise {
     }
 
     /** Helper method which does a hard copy of the Grading Criteria
+     * Also fills {@code gradingInstructionCopyTracker}.
+     *
+     * @param gradingInstructionCopyTracker  The mapping from original GradingInstruction Ids to new GradingInstruction instances.
      *
      * @return A clone of the grading criteria list
      */
-    public List<GradingCriterion> copyGradingCriteria() {
+    public List<GradingCriterion> copyGradingCriteria(Map<Long, GradingInstruction> gradingInstructionCopyTracker) {
         List<GradingCriterion> newGradingCriteria = new ArrayList<>();
         for (GradingCriterion originalGradingCriterion : getGradingCriteria()) {
             GradingCriterion newGradingCriterion = new GradingCriterion();
             newGradingCriterion.setExercise(this);
             newGradingCriterion.setTitle(originalGradingCriterion.getTitle());
-            newGradingCriterion.setStructuredGradingInstructions(copyGradingInstruction(originalGradingCriterion, newGradingCriterion));
+            newGradingCriterion.setStructuredGradingInstructions(copyGradingInstruction(originalGradingCriterion, newGradingCriterion, gradingInstructionCopyTracker));
             newGradingCriteria.add(newGradingCriterion);
         }
         return newGradingCriteria;
     }
 
     /** Helper method which does a hard copy of the Grading Instructions
+     * Also fills {@code gradingInstructionCopyTracker}.
      *
      * @param originalGradingCriterion The original grading criterion which contains the grading instructions
      * @param newGradingCriterion The cloned grading criterion in which we insert the grading instructions
+     * @param gradingInstructionCopyTracker  The mapping from original GradingInstruction Ids to new GradingInstruction instances.
      * @return A clone of the grading instruction list of the grading criterion
      */
-    private List<GradingInstruction> copyGradingInstruction(GradingCriterion originalGradingCriterion, GradingCriterion newGradingCriterion) {
+    private List<GradingInstruction> copyGradingInstruction(GradingCriterion originalGradingCriterion, GradingCriterion newGradingCriterion,
+            Map<Long, GradingInstruction> gradingInstructionCopyTracker) {
         List<GradingInstruction> newGradingInstructions = new ArrayList<>();
         for (GradingInstruction originalGradingInstruction : originalGradingCriterion.getStructuredGradingInstructions()) {
             GradingInstruction newGradingInstruction = new GradingInstruction();
@@ -826,8 +844,32 @@ public abstract class Exercise extends BaseExercise {
             newGradingInstruction.setGradingCriterion(newGradingCriterion);
 
             newGradingInstructions.add(newGradingInstruction);
+            gradingInstructionCopyTracker.put(originalGradingInstruction.getId(), newGradingInstruction);
         }
         return newGradingInstructions;
+    }
+
+    /**
+     * This method is used to validate the dates of an exercise. A date is valid if there is no dueDateError or assessmentDueDateError
+     *
+     * @throws BadRequestAlertException if the dates are not valid
+     */
+    public void validateDates() {
+        // All fields are optional, so there is no error if none of them is set
+        if (getReleaseDate() == null && getDueDate() == null && getAssessmentDueDate() == null && getExampleSolutionPublicationDate() == null) {
+            return;
+        }
+        if (isExamExercise()) {
+            throw new BadRequestAlertException("An exam exercise may not have any dates set!", getTitle(), "invalidDatesForExamExercise");
+        }
+
+        // at least one is set, so we have to check the three possible errors
+        boolean areDatesValid = isNotAfterAndNotNull(getReleaseDate(), getDueDate()) && isValidAssessmentDueDate(getReleaseDate(), getDueDate(), getAssessmentDueDate())
+                && isValidExampleSolutionPublicationDate(getReleaseDate(), getDueDate(), getExampleSolutionPublicationDate(), getIncludedInOverallScore());
+
+        if (!areDatesValid) {
+            throw new BadRequestAlertException("The exercise dates are not valid", getTitle(), "noValidDates");
+        }
     }
 
     /**

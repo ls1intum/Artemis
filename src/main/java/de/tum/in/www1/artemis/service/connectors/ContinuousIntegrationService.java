@@ -13,6 +13,7 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.exception.ContinuousIntegrationException;
+import de.tum.in.www1.artemis.service.dto.AbstractBuildResultNotificationDTO;
 
 /**
  * Abstract service for managing entities related to continuous integration.
@@ -69,8 +70,9 @@ public interface ContinuousIntegrationService {
      * **Important**: make sure that participation.programmingExercise.templateParticipation is initialized, otherwise an org.hibernate.LazyInitializationException can occur
      *
      * @param participation contains the unique identifier for build plan on CI system and the url of user's personal repository copy
+     * @param branch the default branch of the git repository that is used in the build plan
      */
-    void configureBuildPlan(ProgrammingExerciseParticipation participation);
+    void configureBuildPlan(ProgrammingExerciseParticipation participation, String branch);
 
     /**
      * An empty commit might be necessary depending on the chosen CI system (e.g. on Bamboo) so that subsequent commits trigger a new build on the build plan
@@ -104,8 +106,8 @@ public interface ContinuousIntegrationService {
 
     /**
      * Get the plan key of the finished build, the information of the build gets passed via the requestBody. The requestBody must match the information passed from the
-     * (bamboo|jenkins)-server-notification-plugin, the body is described here: https://github.com/ls1intum/bamboo-server-notification-plugin or here:
-     * https://github.com/ls1intum/jenkins-server-notification-plugin
+     * (bamboo|jenkins)-server-notification-plugin, the body is described here: <a href="https://github.com/ls1intum/bamboo-server-notification-plugin">...</a> or here:
+     * <a href="https://github.com/ls1intum/jenkins-server-notification-plugin">...</a>
      *
      * @param requestBody The request Body received from the CI-Server.
      * @return the plan key of the build
@@ -114,16 +116,20 @@ public interface ContinuousIntegrationService {
     String getPlanKey(Object requestBody) throws ContinuousIntegrationException;
 
     /**
-     * Get the result of the finished build, the information of the build gets passed via the requestBody. The requestBody must match the information passed from the
-     * (bamboo|jenkins)-server-notification-plugin, the body is described here: https://github.com/ls1intum/bamboo-server-notification-plugin or here:
-     * https://github.com/ls1intum/jenkins-server-notification-plugin
-     *
-     * @param participation The participation for which the build finished
-     * @param requestBody   The request Body received from the CI-Server.
-     * @return the result of the build
-     * @throws ContinuousIntegrationException if the Body could not be parsed
+     * converts the object from the CI system (Bamboo or Jenkins) into a proper Java DTO
+     * @param requestBody the object sent from the CI system to Artemis
+     * @return the DTO with all information in Java Object form
      */
-    Result onBuildCompleted(ProgrammingExerciseParticipation participation, Object requestBody) throws ContinuousIntegrationException;
+    AbstractBuildResultNotificationDTO convertBuildResult(Object requestBody);
+
+    /**
+     * Generate an Artemis result object from the CI build result. Will use the test case results and issues in static code analysis as result feedback.
+     *
+     * @param buildResult   Build result data provided by build notification (already converted into a DTO)
+     * @param participation to attach result to.
+     * @return the created Artemis result with a score, completion date, etc.
+     */
+    Result createResultFromBuildResult(AbstractBuildResultNotificationDTO buildResult, ProgrammingExerciseParticipation participation);
 
     /**
      * Get the current status of the build for the given participation, i.e. INACTIVE, QUEUED, or BUILDING.
@@ -184,13 +190,14 @@ public interface ContinuousIntegrationService {
      * @param repoProjectKey                    The key of the project that contains the repository, e.g. 'EIST16W1', which is normally the programming exercise project key.
      * @param newRepoUrl                        The url of the newly to be referenced repository.
      * @param existingRepoUrl                   The url of the existing repository (which should be replaced).
+     * @param newBranch                         The default branch for the new repository
      * @param optionalTriggeredByRepositories   Optional list of repositories that should trigger the new build plan. If empty, no triggers get overwritten.
      */
-    void updatePlanRepository(String buildProjectKey, String buildPlanKey, String ciRepoName, String repoProjectKey, String newRepoUrl, String existingRepoUrl,
+    void updatePlanRepository(String buildProjectKey, String buildPlanKey, String ciRepoName, String repoProjectKey, String newRepoUrl, String existingRepoUrl, String newBranch,
             Optional<List<String>> optionalTriggeredByRepositories);
 
     /**
-     * Gives overall roles permissions for the defined project. A role can e.g. be all logged in users
+     * Gives overall roles permissions for the defined project. A role can e.g. be all logged-in users
      *
      * @param projectKey The key of the project to grant permissions to
      * @param groups The role of the users that should have the permissions
@@ -200,6 +207,7 @@ public interface ContinuousIntegrationService {
 
     /**
      * Set Build Plan Permissions for admins, instructors and teaching assistants.
+     *
      * @param programmingExercise   a programming exercise with the required information to set the needed build plan permissions
      * @param planName              The name of the source plan
      */
@@ -237,6 +245,8 @@ public interface ContinuousIntegrationService {
      * @return The URL as a String pointing to the to be triggered build plan in the CI system. If this is not needed/supported, an empty optional is returned.
      */
     Optional<String> getWebHookUrl(String projectKey, String buildPlanId);
+
+    void extractBuildLogStatistics(ProgrammingSubmission programmingSubmission, List<BuildLogEntry> buildLogEntries);
 
     /**
      * Path a repository should get checked out in a build plan. E.g. the assignment repository should get checked out

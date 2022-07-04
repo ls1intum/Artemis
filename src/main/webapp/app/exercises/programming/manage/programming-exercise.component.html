@@ -37,7 +37,7 @@
             <thead>
                 <tr jhiSort [(predicate)]="predicate" [(ascending)]="reverse" (sortChange)="sortRows()">
                     <th *ngIf="course.isAtLeastEditor" class="d-md-table-cell">
-                        <input type="checkbox" (change)="toggleAllProgrammingExercises()" />
+                        <input class="form-check-input" type="checkbox" (change)="toggleAllProgrammingExercises()" />
                     </th>
                     <th class="d-md-table-cell" jhiSortBy="id"><span jhiTranslate="global.field.id">ID</span>&nbsp;<fa-icon [icon]="faSort"></fa-icon></th>
                     <th jhiSortBy="title"><span jhiTranslate="artemisApp.exercise.title">Title</span>&nbsp;<fa-icon [icon]="faSort"></fa-icon></th>
@@ -69,7 +69,12 @@
             <tbody>
                 <tr *ngFor="let programmingExercise of filteredProgrammingExercises; trackBy: trackId" id="exercise-card-{{ programmingExercise.id }}">
                     <td *ngIf="programmingExercise.isAtLeastEditor" class="d-md-table-cell">
-                        <input type="checkbox" (change)="toggleProgrammingExercise(programmingExercise)" [ngModel]="isExerciseSelected(programmingExercise)" />
+                        <input
+                            class="form-check-input"
+                            type="checkbox"
+                            (change)="toggleProgrammingExercise(programmingExercise)"
+                            [ngModel]="isExerciseSelected(programmingExercise)"
+                        />
                     </td>
                     <td class="d-md-table-cell">
                         <a [routerLink]="['/course-management', courseId, 'programming-exercises', programmingExercise.id]">{{ programmingExercise.id }}</a>

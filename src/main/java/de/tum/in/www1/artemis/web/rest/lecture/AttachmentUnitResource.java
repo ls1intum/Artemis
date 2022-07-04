@@ -1,9 +1,9 @@
 package de.tum.in.www1.artemis.web.rest.lecture;
 
-import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.*;
-
 import java.net.URI;
 import java.net.URISyntaxException;
+
+import javax.ws.rs.BadRequestException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -18,6 +18,7 @@ import de.tum.in.www1.artemis.repository.AttachmentUnitRepository;
 import de.tum.in.www1.artemis.repository.LectureRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
+import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 
 @RestController
@@ -55,9 +56,14 @@ public class AttachmentUnitResource {
     public ResponseEntity<AttachmentUnit> getAttachmentUnit(@PathVariable Long attachmentUnitId, @PathVariable Long lectureId) {
         log.debug("REST request to get AttachmentUnit : {}", attachmentUnitId);
         AttachmentUnit attachmentUnit = attachmentUnitRepository.findByIdElseThrow(attachmentUnitId);
-        if (attachmentUnit.getLecture() == null || attachmentUnit.getLecture().getCourse() == null || !attachmentUnit.getLecture().getId().equals(lectureId)) {
-            return conflict();
+
+        if (attachmentUnit.getLecture() == null || attachmentUnit.getLecture().getCourse() == null) {
+            throw new ConflictException("Lecture unit must be associated to a lecture of a course", "AttachmentUnit", "lectureOrCourseMissing");
         }
+        if (!attachmentUnit.getLecture().getId().equals(lectureId)) {
+            throw new ConflictException("Requested lecture unit is not part of the specified lecture", "AttachmentUnit", "lectureIdMismatch");
+        }
+
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, attachmentUnit.getLecture().getCourse(), null);
         return ResponseEntity.ok().body(attachmentUnit);
     }
@@ -74,10 +80,13 @@ public class AttachmentUnitResource {
     public ResponseEntity<AttachmentUnit> updateAttachmentUnit(@PathVariable Long lectureId, @RequestBody AttachmentUnit attachmentUnit) {
         log.debug("REST request to update an attachment unit : {}", attachmentUnit);
         if (attachmentUnit.getId() == null) {
-            return badRequest();
+            throw new BadRequestException();
         }
-        if (attachmentUnit.getLecture() == null || attachmentUnit.getLecture().getCourse() == null || !attachmentUnit.getLecture().getId().equals(lectureId)) {
-            return conflict();
+        if (attachmentUnit.getLecture() == null || attachmentUnit.getLecture().getCourse() == null) {
+            throw new ConflictException("Lecture unit must be associated to a lecture of a course", "AttachmentUnit", "lectureOrCourseMissing");
+        }
+        if (!attachmentUnit.getLecture().getId().equals(lectureId)) {
+            throw new ConflictException("Requested lecture unit is not part of the specified lecture", "AttachmentUnit", "lectureIdMismatch");
         }
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, attachmentUnit.getLecture().getCourse(), null);
 
@@ -102,11 +111,11 @@ public class AttachmentUnitResource {
     public ResponseEntity<AttachmentUnit> createAttachmentUnit(@PathVariable Long lectureId, @RequestBody AttachmentUnit attachmentUnit) throws URISyntaxException {
         log.debug("REST request to create AttachmentUnit : {}", attachmentUnit);
         if (attachmentUnit.getId() != null) {
-            return badRequest();
+            throw new BadRequestException();
         }
         Lecture lecture = lectureRepository.findByIdWithLectureUnitsElseThrow(lectureId);
         if (lecture.getCourse() == null) {
-            return conflict();
+            throw new ConflictException("Specified lecture is not part of a course", "AttachmentUnit", "courseMissing");
         }
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, lecture.getCourse(), null);
 

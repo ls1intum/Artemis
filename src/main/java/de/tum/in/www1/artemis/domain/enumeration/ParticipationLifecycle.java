@@ -3,7 +3,7 @@ package de.tum.in.www1.artemis.domain.enumeration;
 import java.util.Optional;
 
 /**
- * Due to individual due dates for exercises some particiaptions might need a
+ * Due to individual due dates for exercises some participations might need a
  * different schedule than the exercise they belong to.
  * <p>
  * All {@link ExerciseLifecycle ExerciseLifecycles} that are not listed here can

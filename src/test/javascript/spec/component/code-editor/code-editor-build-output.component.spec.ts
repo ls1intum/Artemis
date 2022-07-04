@@ -124,10 +124,10 @@ describe('CodeEditorBuildOutputComponent', () => {
         triggerChanges(comp, { property: 'participation', currentValue: participation });
         fixture.detectChanges();
 
-        expect(getFeedbackDetailsForResultStub).toHaveBeenCalledTimes(1);
+        expect(getFeedbackDetailsForResultStub).toHaveBeenCalledOnce();
         expect(getFeedbackDetailsForResultStub).toHaveBeenCalledWith(participation.id, result.id);
-        expect(getBuildLogsStub).toHaveBeenCalledTimes(1);
-        expect(subscribeForLatestResultOfParticipationStub).toHaveBeenCalledTimes(1);
+        expect(getBuildLogsStub).toHaveBeenCalledOnce();
+        expect(subscribeForLatestResultOfParticipationStub).toHaveBeenCalledOnce();
         expect(subscribeForLatestResultOfParticipationStub).toHaveBeenCalledWith(participation.id, true);
         expect(comp.rawBuildLogs).toStrictEqual(BuildLogEntryArray.fromBuildLogs(buildLogs));
         expect(comp.rawBuildLogs.extractErrors(ProgrammingLanguage.JAVA, ProjectType.PLAIN_MAVEN)).toIncludeSameMembers(expectedBuildLogErrors);
@@ -167,7 +167,7 @@ describe('CodeEditorBuildOutputComponent', () => {
         getFeedbackDetailsForResultStub.mockReturnValue(of({ ...result, feedbacks: [] }));
         triggerChanges(comp, { property: 'participation', currentValue: participation });
         fixture.detectChanges();
-        expect(getFeedbackDetailsForResultStub).toHaveBeenCalledTimes(1);
+        expect(getFeedbackDetailsForResultStub).toHaveBeenCalledOnce();
         expect(getFeedbackDetailsForResultStub).toHaveBeenCalledWith(participation.id!, result.id!);
         expect(getBuildLogsStub).not.toHaveBeenCalled();
         expect(comp.rawBuildLogs).toStrictEqual(new BuildLogEntryArray());
@@ -191,7 +191,7 @@ describe('CodeEditorBuildOutputComponent', () => {
         triggerChanges(comp, { property: 'participation', currentValue: participation });
         fixture.detectChanges();
 
-        expect(getBuildLogsStub).toHaveBeenCalledTimes(1);
+        expect(getBuildLogsStub).toHaveBeenCalledOnce();
         expect(getBuildLogsStub).toHaveBeenCalledWith();
         expect(getFeedbackDetailsForResultStub).not.toHaveBeenCalled();
         expect(comp.rawBuildLogs).toStrictEqual(BuildLogEntryArray.fromBuildLogs(buildLogs));
@@ -218,7 +218,7 @@ describe('CodeEditorBuildOutputComponent', () => {
         triggerChanges(comp, { property: 'participation', currentValue: participation });
         fixture.detectChanges();
 
-        expect(getBuildLogsStub).toHaveBeenCalledTimes(1);
+        expect(getBuildLogsStub).toHaveBeenCalledOnce();
         expect(getBuildLogsStub).toHaveBeenCalledWith();
         expect(getFeedbackDetailsForResultStub).not.toHaveBeenCalled();
         expect(comp.rawBuildLogs).toStrictEqual(BuildLogEntryArray.fromBuildLogs(buildLogs));

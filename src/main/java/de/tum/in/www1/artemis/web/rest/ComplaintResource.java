@@ -96,6 +96,13 @@ public class ComplaintResource {
         }
 
         Result result = resultRepository.findByIdElseThrow(complaint.getResult().getId());
+
+        // For exam exercises, the POST complaints/exam/examId should be used
+        if (result.getParticipation().getExercise().isExamExercise()) {
+            throw new BadRequestAlertException("A complaint for an exam exercise cannot be filed using this component", COMPLAINT_ENTITY_NAME,
+                    "complaintAboutExamExerciseWrongComponent");
+        }
+
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.STUDENT, result.getParticipation().getExercise(), null);
 
         // To build correct creation alert on the front-end we must check which type is the complaint to apply correct i18n key.
@@ -135,6 +142,13 @@ public class ComplaintResource {
         }
 
         Result result = resultRepository.findByIdElseThrow(complaint.getResult().getId());
+
+        // For non-exam exercises, the POST complaints should be used
+        if (!result.getParticipation().getExercise().isExamExercise()) {
+            throw new BadRequestAlertException("A complaint for an course exercise cannot be filed using this component", COMPLAINT_ENTITY_NAME,
+                    "complaintAboutCourseExerciseWrongComponent");
+        }
+
         authCheckService.isOwnerOfParticipationElseThrow((StudentParticipation) result.getParticipation());
         // To build correct creation alert on the front-end we must check which type is the complaint to apply correct i18n key.
         String entityName = complaint.getComplaintType() == ComplaintType.MORE_FEEDBACK ? MORE_FEEDBACK_ENTITY_NAME : COMPLAINT_ENTITY_NAME;
@@ -280,12 +294,13 @@ public class ComplaintResource {
      * @param tutorId the id of the tutor by which we want to filter
      * @param courseId the id of the course we are interested in
      * @param complaintType the type of complaints we are interested in
+     * @param allComplaintsForTutor flag if all complaints should be send for a tutor
      * @return the ResponseEntity with status 200 (OK) and a list of complaints. The list can be empty
      */
     @GetMapping("courses/{courseId}/complaints")
     @PreAuthorize("hasRole('TA')")
     public ResponseEntity<List<Complaint>> getComplaintsByCourseId(@PathVariable Long courseId, @RequestParam ComplaintType complaintType,
-            @RequestParam(required = false) Long tutorId) {
+            @RequestParam(required = false) Long tutorId, @RequestParam(required = false) boolean allComplaintsForTutor) {
         // Filtering by courseId
         Course course = courseRepository.findByIdElseThrow(courseId);
 
@@ -301,6 +316,12 @@ public class ComplaintResource {
         if (tutorId == null) {
             complaints = complaintService.getAllComplaintsByCourseId(courseId);
             filterOutUselessDataFromComplaints(complaints, !isAtLeastInstructor);
+        }
+        else if (allComplaintsForTutor) {
+            complaints = complaintService.getAllComplaintsByCourseId(courseId);
+            filterOutUselessDataFromComplaints(complaints, !isAtLeastInstructor);
+            // For a tutor, all foreign reviewers are filtered out
+            complaints.forEach(complaint -> complaint.filterForeignReviewer(user));
         }
         else {
             complaints = complaintService.getAllComplaintsByCourseIdAndTutorId(courseId, tutorId);
@@ -330,7 +351,7 @@ public class ComplaintResource {
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, exercise, user);
         boolean isAtLeastInstructor = authCheckService.isAtLeastInstructorForExercise(exercise, user);
 
-        // Only instructors can access all complaints about a exercise without filtering by tutorId
+        // Only instructors can access all complaints about an exercise without filtering by tutorId
         if (!isAtLeastInstructor) {
             tutorId = userRepository.getUser().getId();
         }
@@ -443,7 +464,6 @@ public class ComplaintResource {
         if (filterOutStudentFromComplaints) {
             complaints.forEach(this::filterOutStudentFromComplaint);
         }
-
         complaints.forEach(this::filterOutUselessDataFromComplaint);
     }
 
@@ -474,5 +494,4 @@ public class ComplaintResource {
 
         return responseComplaints;
     }
-
 }

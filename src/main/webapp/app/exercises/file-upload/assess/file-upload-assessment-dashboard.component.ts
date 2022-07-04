@@ -14,11 +14,12 @@ import { getLatestSubmissionResult, Submission } from 'app/entities/submission.m
 import { SortService } from 'app/shared/service/sort.service';
 import { getLinkToSubmissionAssessment } from 'app/utils/navigation.utils';
 import { faBan, faEdit, faFolderOpen, faSort } from '@fortawesome/free-solid-svg-icons';
+import { AbstractAssessmentDashboard } from 'app/exercises/shared/dashboards/tutor/abstract-assessment-dashboard';
 
 @Component({
     templateUrl: './file-upload-assessment-dashboard.component.html',
 })
-export class FileUploadAssessmentDashboardComponent implements OnInit {
+export class FileUploadAssessmentDashboardComponent extends AbstractAssessmentDashboard implements OnInit {
     ExerciseType = ExerciseType;
     exercise: FileUploadExercise;
     submissions: FileUploadSubmission[] = [];
@@ -48,6 +49,7 @@ export class FileUploadAssessmentDashboardComponent implements OnInit {
         private translateService: TranslateService,
         private sortService: SortService,
     ) {
+        super();
         translateService.get('artemisApp.assessment.messages.confirmCancel').subscribe((text) => (this.cancelConfirmationText = text));
     }
 
@@ -63,7 +65,11 @@ export class FileUploadAssessmentDashboardComponent implements OnInit {
             this.examId = Number(this.route.snapshot.paramMap.get('examId'));
             this.exerciseGroupId = Number(this.route.snapshot.paramMap.get('exerciseGroupId'));
         }
-
+        this.route.queryParams.subscribe((queryParams) => {
+            if (queryParams['filterOption']) {
+                this.filterOption = Number(queryParams['filterOption']);
+            }
+        });
         this.exerciseService
             .find(this.exerciseId)
             .pipe(
@@ -104,12 +110,9 @@ export class FileUploadAssessmentDashboardComponent implements OnInit {
             )
             .subscribe((submissions: FileUploadSubmission[]) => {
                 this.submissions = submissions;
-                this.filteredSubmissions = submissions;
+                this.applyChartFilter(submissions);
+                this.busy = false;
             });
-    }
-
-    updateFilteredSubmissions(filteredSubmissions: Submission[]) {
-        this.filteredSubmissions = filteredSubmissions as FileUploadSubmission[];
     }
 
     /**

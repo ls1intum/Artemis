@@ -1464,7 +1464,7 @@ public class ModelingAssessmentIntegrationTest extends AbstractSpringIntegration
         assertThat(overwrittenResult.getScore()).isEqualTo(40L); // the instructor overwrote the score to 40%
         assertThat(overwrittenResult.hasComplaint()).isFalse();
 
-        // Also check that its correctly saved in the database
+        // Also check that it's correctly saved in the database
         ModelingSubmission savedSubmission = modelingSubmissionRepo.findWithEagerResultById(submission.getId()).orElse(null);
         assertThat(savedSubmission).isNotNull();
         assertThat(savedSubmission.getLatestResult().getScore()).isEqualTo(40L);

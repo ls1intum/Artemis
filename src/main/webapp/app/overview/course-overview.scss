@@ -1,70 +1,6 @@
-@import 'src/main/webapp/app/overview/overview-vars';
-
 /* ==========================================================================
 Course Info Bar
 ========================================================================== */
-.tab-bar {
-    display: flex;
-    align-items: center;
-    min-height: 60px;
-    margin: 0 -1.25rem;
-    $padding-y: 11px;
-    padding-top: $padding-y;
-    padding-bottom: $padding-y;
-    border-bottom: 1px solid $border-color;
-
-    .tab-item {
-        cursor: pointer;
-        margin: 0 0.5em;
-
-        &.active {
-            box-shadow: 0 2px 0 $artemis-dark;
-        }
-    }
-}
-
-.tab-bar-course-overview {
-    > div:first-child {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 0.5rem;
-
-        > div:first-child {
-            display: flex;
-            align-items: center;
-        }
-
-        .controls {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            margin-right: 3px;
-            margin-left: 3px;
-        }
-    }
-
-    > div:first-child.no-indent {
-        justify-content: start;
-
-        .controls {
-            padding-right: 0.5rem;
-            margin-right: 0;
-        }
-    }
-}
-
-@media screen and (max-width: 991px) {
-    .tab-bar-course-overview > div:first-child {
-        flex-wrap: wrap;
-
-        .controls {
-            padding-right: 0.5rem;
-            margin-right: 0;
-        }
-    }
-}
-
 .tab-bar-exercise-details {
     jhi-submission-result-status {
         width: auto;
@@ -123,7 +59,7 @@ Course Info Bar
     transition: 0.1s ease-out opacity;
 
     &.active {
-        background-color: rgba(255, 255, 255, 0.6);
+        background-color: var(--overview-refresh-overlay-bg-color);
         opacity: 1;
         pointer-events: auto;
         transition: 0.2s ease-in opacity;
@@ -133,7 +69,7 @@ Course Info Bar
         position: relative;
         top: calc(50vh - 150px - 2.5vh);
         transform: translateY(-50%);
-        color: $artemis-dark;
+        color: var(--overview-refresh-overlay-color);
     }
 }
 
@@ -144,7 +80,7 @@ Course Info Bar
 .current-week-row {
     ::ng-deep {
         > div {
-            background-color: $light-primary-background-color;
+            background-color: var(--overview-light-primary-background-color);
         }
     }
 }
@@ -153,13 +89,24 @@ Course Info Bar
     margin-top: 25px;
 
     .chart-container {
-        display: flex;
+        display: inline-flex;
         align-items: center;
-        justify-content: center;
+        justify-content: flex-end;
         margin-bottom: 20px;
 
         .chart-text {
+            margin-right: 130px;
             position: absolute;
+        }
+    }
+
+    .color-legend-container {
+        margin-bottom: 40px;
+
+        .color-legend-entry {
+            display: inline-flex;
+            align-items: center;
+            width: 100%;
         }
     }
 }
@@ -173,7 +120,7 @@ Course Info Bar
         margin-top: 16px;
         margin-left: -12px;
         margin-right: -12px;
-        border-bottom: 1px solid $light-border-color;
+        border-bottom: 1px solid var(--overview-light-border-color);
     }
 }
 
@@ -185,21 +132,11 @@ Course Info Bar
             cursor: pointer;
             border-radius: 3px;
             &:hover {
-                background-color: $light-background-color;
+                background-color: var(--overview-light-background-color);
                 .icon {
-                    color: $primary;
+                    color: var(--primary);
                 }
             }
-        }
-    }
-}
-
-.course-icon {
-    ::ng-deep {
-        img {
-            border-radius: 50%;
-            max-width: 100%;
-            max-height: 130px;
         }
     }
 }
@@ -208,16 +145,17 @@ Course Info Bar
     height: 0;
     width: 100%;
     margin: 1rem 0 0.5rem 0;
-    border-top: 1px solid $light-border-color;
+    border-top: 1px solid var(--overview-light-border-color);
 }
 
 .color-indicator {
-    height: 25px;
-    width: 25px;
+    height: 20px;
+    width: 20px;
     background-color: #0f6ab4;
     position: relative;
-    top: -3px;
-    margin-right: 15px;
+    top: -4px;
+    margin-right: 5px;
+    border-radius: 3px;
 }
 
 canvas#complete-chart {
@@ -232,7 +170,7 @@ canvas#complete-chart {
         background-color: #0f6ab4;
     }
     &:active {
-        box-shadow: 0 2px 0 $artemis-dark;
+        box-shadow: 0 2px 0 var(--artemis-dark);
     }
     &:disabled {
         background-color: gray;

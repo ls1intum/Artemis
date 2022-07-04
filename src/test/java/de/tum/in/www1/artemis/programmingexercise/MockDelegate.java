@@ -13,6 +13,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.participation.AbstractBaseProgrammingExerciseParticipation;
+import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooBuildResultDTO;
 
@@ -63,6 +64,8 @@ public interface MockDelegate {
 
     void mockTriggerFailedBuild(ProgrammingExerciseStudentParticipation participation) throws Exception;
 
+    void mockGrantReadAccess(ProgrammingExerciseStudentParticipation participation) throws URISyntaxException;
+
     void mockNotifyPush(ProgrammingExerciseStudentParticipation participation) throws Exception;
 
     void mockTriggerParticipationBuild(ProgrammingExerciseStudentParticipation participation) throws Exception;
@@ -70,6 +73,8 @@ public interface MockDelegate {
     void mockTriggerInstructorBuildAll(ProgrammingExerciseStudentParticipation participation) throws Exception;
 
     void resetMockProvider();
+
+    void verifyMocks();
 
     void mockUpdateUserInUserManagement(String oldLogin, User user, String password, Set<String> oldGroups) throws Exception;
 
@@ -103,6 +108,8 @@ public interface MockDelegate {
     void mockGetBuildPlan(String projectKey, String planName, boolean planExistsInCi, boolean planIsActive, boolean planIsBuilding, boolean failToGetBuild) throws Exception;
 
     void mockHealthInCiService(boolean isRunning, HttpStatus httpStatus) throws Exception;
+
+    void mockConfigureBuildPlan(ProgrammingExerciseParticipation participation, String defaultBranch) throws Exception;
 
     void mockCheckIfProjectExistsInVcs(ProgrammingExercise exercise, boolean existsInVcs) throws Exception;
 

@@ -19,7 +19,12 @@ describe('StudentExamSummaryComponent', () => {
     beforeEach(() => {
         return TestBed.configureTestingModule({
             declarations: [StudentExamSummaryComponent, MockComponent(ExamParticipationSummaryComponent)],
-            providers: [{ provide: ActivatedRoute, useValue: { data: of({ studentExam: studentExamValue }) } }],
+            providers: [
+                {
+                    provide: ActivatedRoute,
+                    useValue: { data: of({ studentExam: { studentExam: studentExamValue } }) },
+                },
+            ],
         })
             .compileComponents()
             .then(() => {

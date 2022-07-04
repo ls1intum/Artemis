@@ -22,6 +22,10 @@ export class LearningGoalService {
         return this.httpClient.get<LearningGoal[]>(`${this.resourceURL}/courses/${courseId}/goals`, { observe: 'response' });
     }
 
+    getAllPrerequisitesForCourse(courseId: number): Observable<EntityArrayResponseType> {
+        return this.httpClient.get<LearningGoal[]>(`${this.resourceURL}/courses/${courseId}/prerequisites`, { observe: 'response' });
+    }
+
     getProgress(learningGoalId: number, courseId: number, useParticipantScoreTable = false) {
         let params = new HttpParams();
         params = params.set('useParticipantScoreTable', String(useParticipantScoreTable));
@@ -51,6 +55,10 @@ export class LearningGoalService {
         return this.httpClient.post<LearningGoal>(`${this.resourceURL}/courses/${courseId}/goals`, copy, { observe: 'response' });
     }
 
+    addPrerequisite(learningGoalId: number, courseId: number): Observable<EntityResponseType> {
+        return this.httpClient.post(`${this.resourceURL}/courses/${courseId}/prerequisites/${learningGoalId}`, null, { observe: 'response' });
+    }
+
     update(learningGoal: LearningGoal, courseId: number): Observable<EntityResponseType> {
         const copy = this.convertDateFromClient(learningGoal);
         return this.httpClient.put(`${this.resourceURL}/courses/${courseId}/goals`, copy, { observe: 'response' });
@@ -58,6 +66,10 @@ export class LearningGoalService {
 
     delete(learningGoalId: number, courseId: number) {
         return this.httpClient.delete(`${this.resourceURL}/courses/${courseId}/goals/${learningGoalId}`, { observe: 'response' });
+    }
+
+    removePrerequisite(learningGoalId: number, courseId: number) {
+        return this.httpClient.delete(`${this.resourceURL}/courses/${courseId}/prerequisites/${learningGoalId}`, { observe: 'response' });
     }
 
     convertDateFromServerResponse(res: EntityResponseType): EntityResponseType {

@@ -28,12 +28,8 @@ import { onError } from 'app/shared/util/global.utils';
 import { AuxiliaryRepository } from 'app/entities/programming-exercise-auxiliary-repository-model';
 import { SubmissionPolicyType } from 'app/entities/submission-policy.model';
 import { faBan, faExclamationCircle, faQuestionCircle, faSave } from '@fortawesome/free-solid-svg-icons';
+import { ModePickerOption } from 'app/exercises/shared/mode-picker/mode-picker.component';
 
-// this will be extended with Gradle later on
-export enum JavaTestRepositoryProjectType {
-    MAVEN = 'MAVEN',
-    GRADLE = 'GRADLE',
-}
 @Component({
     selector: 'jhi-programming-exercise-update',
     templateUrl: './programming-exercise-update.component.html',
@@ -69,8 +65,6 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
     private selectedProgrammingLanguageValue: ProgrammingLanguage;
     // This is used to revert the select if the user cancels to override the new selected project type.
     private selectedProjectTypeValue: ProjectType;
-    // This is used to distinguish the project type between template & solution and test repository (only applies for Java exercises)
-    private selectedTestRepositoryProjectTypeValue: JavaTestRepositoryProjectType;
 
     maxPenaltyPattern = '^([0-9]|([1-9][0-9])|100)$';
     // Java package name Regex according to Java 14 JLS (https://docs.oracle.com/javase/specs/jls/se14/html/jls-7.html#jls-7.4.1),
@@ -98,6 +92,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
     existingCategories: ExerciseCategory[];
 
     public inProductionEnvironment: boolean;
+    public isBamboo: boolean;
 
     public supportsJava = true;
     public supportsPython = false;
@@ -122,6 +117,10 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
     public originalStaticCodeAnalysisEnabled: boolean | undefined;
 
     public projectTypes: ProjectType[] = [];
+    // flag describing if the template and solution projects should include a dependency
+    public withDependenciesValue = false;
+
+    public modePickerOptions: ModePickerOption<ProjectType>[] = [];
 
     // Icons
     faSave = faSave;
@@ -217,16 +216,19 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         this.staticCodeAnalysisAllowed = programmingLanguageFeature.staticCodeAnalysis;
         this.checkoutSolutionRepositoryAllowed = programmingLanguageFeature.checkoutSolutionRepositoryAllowed;
         this.sequentialTestRunsAllowed = programmingLanguageFeature.sequentialTestRuns;
-        this.projectTypes = programmingLanguageFeature.projectTypes;
-        // set the test repository project type
-        if (language === ProgrammingLanguage.JAVA) {
-            this.selectedTestRepositoryProjectTypeValue = JavaTestRepositoryProjectType.MAVEN;
-        }
+        // filter out MAVEN_MAVEN and GRADLE_GRADLE because they are not directly selectable but only via a checkbox
+        this.projectTypes = programmingLanguageFeature.projectTypes.filter((projectType) => projectType !== ProjectType.MAVEN_MAVEN && projectType !== ProjectType.GRADLE_GRADLE);
+        this.modePickerOptions = this.projectTypes.map((projectType) => ({
+            value: projectType,
+            labelKey: 'artemisApp.programmingExercise.projectTypes.' + projectType.toString(),
+            btnClass: 'btn-secondary',
+        }));
 
         if (languageChanged) {
             // Reset project type when changing programming language as not all programming languages support (the same) project types
             this.programmingExercise.projectType = this.projectTypes[0];
             this.selectedProjectTypeValue = this.projectTypes[0]!;
+            this.withDependenciesValue = false;
         }
 
         // If we switch to another language which does not support static code analysis we need to reset options related to static code analysis
@@ -238,9 +240,9 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         // Automatically enable the checkout of the solution repository for Haskell exercises
         this.programmingExercise.checkoutSolutionRepository = this.checkoutSolutionRepositoryAllowed && language === ProgrammingLanguage.HASKELL;
 
-        // Don't override the problem statement with the template in edit mode.
+        // Only load problem statement template when creating a new exercise and not when importing an existing exercise
         if (this.programmingExercise.id === undefined) {
-            this.loadProgrammingLanguageTemplate(language, this.programmingExercise.projectType!);
+            this.loadProgrammingLanguageTemplate(language);
             // Rerender the instructions as the template has changed.
             this.rerenderSubject.next();
         }
@@ -256,19 +258,12 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
      * @param type to change to.
      */
     set selectedProjectType(type: ProjectType) {
-        this.selectedProjectTypeValue = type;
-
+        // update the (selected) project type
         this.updateProjectTypeSettings(type);
 
-        if (type === ProjectType.PLAIN_MAVEN || type === ProjectType.MAVEN_MAVEN) {
-            this.selectedTestRepositoryProjectType = JavaTestRepositoryProjectType.MAVEN;
-        } else if (type === ProjectType.PLAIN_GRADLE || type === ProjectType.GRADLE_GRADLE) {
-            this.selectedTestRepositoryProjectType = JavaTestRepositoryProjectType.GRADLE;
-        }
-
-        // Don't override the problem statement with the template in edit mode.
+        // Only load problem statement template when creating a new exercise and not when importing an existing exercise
         if (this.programmingExercise.id === undefined) {
-            this.loadProgrammingLanguageTemplate(this.programmingExercise.programmingLanguage!, type);
+            this.loadProgrammingLanguageTemplate(this.programmingExercise.programmingLanguage!);
             // Rerender the instructions as the template has changed.
             this.rerenderSubject.next();
         }
@@ -278,29 +273,6 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         return this.selectedProjectTypeValue;
     }
 
-    onTestRepositoryProjectTypeChange(type: JavaTestRepositoryProjectType) {
-        this.selectedTestRepositoryProjectType = type;
-        return type;
-    }
-
-    /**
-     * Updates the test repository project type. This only applies to Java exercises with project type 'Plain Java'
-     * @param type the type to update to
-     */
-    set selectedTestRepositoryProjectType(type: JavaTestRepositoryProjectType) {
-        // this has only effect for plain java which is represented by PLAIN_MAVEN (or PLAIN_GRADLE later)
-        if (type === JavaTestRepositoryProjectType.MAVEN) {
-            // only the underlying value should be changed, not the value which is displayed in the dropdown
-            this.programmingExercise.projectType = ProjectType.PLAIN_MAVEN;
-        } else {
-            this.programmingExercise.projectType = ProjectType.PLAIN_GRADLE;
-        }
-    }
-
-    get selectedTestRepositoryProjectType() {
-        return this.selectedTestRepositoryProjectTypeValue;
-    }
-
     private updateProjectTypeSettings(type: ProjectType) {
         if (ProjectType.XCODE === type) {
             // Disable Online Editor
@@ -308,11 +280,43 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         } else if (ProjectType.FACT === type) {
             // Disallow SCA for C (FACT)
             this.disableStaticCodeAnalysis();
-        } else if (ProjectType.PLAIN_MAVEN === type || ProjectType.MAVEN_MAVEN === type) {
-            this.selectedTestRepositoryProjectTypeValue = JavaTestRepositoryProjectType.MAVEN;
-        } else if (ProjectType.PLAIN_GRADLE === type || ProjectType.GRADLE_GRADLE === type) {
-            this.selectedTestRepositoryProjectTypeValue = JavaTestRepositoryProjectType.GRADLE;
         }
+
+        // update the project types for java programming exercises according to whether dependencies should be included
+        if (this.programmingExercise.programmingLanguage === ProgrammingLanguage.JAVA) {
+            if (type === ProjectType.PLAIN_MAVEN || type === ProjectType.MAVEN_MAVEN) {
+                this.selectedProjectTypeValue = ProjectType.PLAIN_MAVEN;
+                if (this.withDependenciesValue) {
+                    this.programmingExercise.projectType = ProjectType.MAVEN_MAVEN;
+                } else {
+                    this.programmingExercise.projectType = ProjectType.PLAIN_MAVEN;
+                }
+            } else {
+                this.selectedProjectTypeValue = ProjectType.PLAIN_GRADLE;
+                if (this.withDependenciesValue) {
+                    this.programmingExercise.projectType = ProjectType.GRADLE_GRADLE;
+                } else {
+                    this.programmingExercise.projectType = ProjectType.PLAIN_GRADLE;
+                }
+            }
+        } else {
+            this.selectedProjectTypeValue = type;
+            this.programmingExercise.projectType = type;
+        }
+    }
+
+    /**
+     * Only applies to Java programming exercises.
+     * Will also trigger loading the corresponding project type template.
+     * @param withDependencies whether the project should include a dependency
+     */
+    set withDependencies(withDependencies: boolean) {
+        this.withDependenciesValue = withDependencies;
+        this.selectedProjectType = this.programmingExercise.projectType!;
+    }
+
+    get withDependencies() {
+        return this.withDependenciesValue;
     }
 
     private disableStaticCodeAnalysis() {
@@ -330,7 +334,13 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
             this.programmingExercise = programmingExercise;
             this.backupExercise = cloneDeep(this.programmingExercise);
             this.selectedProgrammingLanguageValue = this.programmingExercise.programmingLanguage!;
-            this.selectedProjectTypeValue = this.programmingExercise.projectType!;
+            if (this.programmingExercise.projectType === ProjectType.MAVEN_MAVEN) {
+                this.selectedProjectTypeValue = ProjectType.PLAIN_MAVEN;
+            } else if (this.programmingExercise.projectType === ProjectType.GRADLE_GRADLE) {
+                this.selectedProjectTypeValue = ProjectType.PLAIN_GRADLE;
+            } else {
+                this.selectedProjectTypeValue = this.programmingExercise.projectType!;
+            }
         });
 
         // If it is an import, just get the course, otherwise handle the edit and new cases
@@ -352,6 +362,9 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
                             this.courseService.find(courseId).subscribe((res) => {
                                 this.isExamMode = false;
                                 this.programmingExercise.course = res.body!;
+                                if (this.programmingExercise.course?.defaultProgrammingLanguage) {
+                                    this.selectedProgrammingLanguage = this.programmingExercise.course.defaultProgrammingLanguage!;
+                                }
                                 this.exerciseCategories = this.programmingExercise.categories || [];
                                 this.courseService.findAllCategoriesOfCourse(this.programmingExercise.course!.id!).subscribe({
                                     next: (categoryRes: HttpResponse<string[]>) => {
@@ -387,6 +400,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         this.profileService.getProfileInfo().subscribe((profileInfo) => {
             if (profileInfo) {
                 this.inProductionEnvironment = profileInfo.inProduction;
+                this.isBamboo = profileInfo.activeProfiles.includes('bamboo');
             }
         });
 
@@ -500,6 +514,13 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
 
         this.isSaving = true;
 
+        if (this.exerciseService.hasExampleSolutionPublicationDateWarning(this.programmingExercise)) {
+            this.alertService.addAlert({
+                type: AlertType.WARNING,
+                message: 'artemisApp.exercise.exampleSolutionPublicationDateWarning',
+            });
+        }
+
         if (this.isImport) {
             this.subscribeToSaveResponse(this.programmingExerciseService.importExercise(this.programmingExercise, this.recreateBuildPlans, this.updateTemplate));
         } else if (this.programmingExercise.id !== undefined) {
@@ -541,7 +562,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
 
     /**
      * When setting the programming language, a change guard is triggered.
-     * This is because we want to reload the instructions template for a different language, but don't want the user to loose unsaved changes.
+     * This is because we want to reload the instructions template for a different language, but don't want the user to lose unsaved changes.
      * If the user cancels the language will not be changed.
      *
      * @param language to switch to.
@@ -575,7 +596,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
 
     /**
      * When setting the project type, a change guard is triggered.
-     * This is because we want to reload the instructions template for a project type, but don't want the user to loose unsaved changes.
+     * This is because we want to reload the instructions template for a project type, but don't want the user to lose unsaved changes.
      * If the user cancels the project type will not be changed.
      *
      * @param projectType to switch to.
@@ -619,14 +640,12 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
      * will see a confirmation dialog about switching to a new template
      *
      * @param language The new programming language
-     * @param type The new project type
      */
-    private loadProgrammingLanguageTemplate(language: ProgrammingLanguage, type: ProjectType) {
+    private loadProgrammingLanguageTemplate(language: ProgrammingLanguage) {
         // Otherwise, just change the language and load the new template
         this.hasUnsavedChanges = false;
         this.problemStatementLoaded = false;
         this.programmingExercise.programmingLanguage = language;
-        this.programmingExercise.projectType = type;
         this.fileService.getTemplateFile('readme', this.programmingExercise.programmingLanguage, this.programmingExercise.projectType).subscribe({
             next: (file) => {
                 this.programmingExercise.problemStatement = file;

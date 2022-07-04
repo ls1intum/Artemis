@@ -13,11 +13,11 @@ import { SolutionProgrammingExerciseParticipation } from 'app/entities/participa
 import { TextPlagiarismResult } from 'app/exercises/shared/plagiarism/types/text/TextPlagiarismResult';
 import { PlagiarismOptions } from 'app/exercises/shared/plagiarism/types/PlagiarismOptions';
 import { Submission } from 'app/entities/submission.model';
-import { Task } from 'app/exercises/programming/shared/instructions-render/task/programming-exercise-task.model';
-import { ProgrammingExerciseTestCase } from 'app/entities/programming-exercise-test-case.model';
 import { ProgrammingExerciseFullGitDiffReport } from 'app/entities/hestia/programming-exercise-full-git-diff-report.model';
 import { ProgrammingExerciseGitDiffReport } from 'app/entities/hestia/programming-exercise-git-diff-report.model';
+import { CoverageReport } from 'app/entities/hestia/coverage-report.model';
 import { ProgrammingExerciseSolutionEntry } from 'app/entities/hestia/programming-exercise-solution-entry.model';
+import { ProgrammingExerciseServerSideTask } from 'app/entities/hestia/programming-exercise-task.model';
 
 export type EntityResponseType = HttpResponse<ProgrammingExercise>;
 export type EntityArrayResponseType = HttpResponse<ProgrammingExercise[]>;
@@ -27,12 +27,6 @@ export type ProgrammingExerciseTestCaseStateDTO = {
     hasStudentResult: boolean;
     testCasesChanged: boolean;
     buildAndTestStudentSubmissionsAfterDueDate?: dayjs.Dayjs;
-};
-
-export type ProgrammingExerciseTaskServerSide = {
-    id: number;
-    taskName: String;
-    testCases: ProgrammingExerciseTestCase[];
 };
 
 // TODO: we should use a proper enum here
@@ -260,7 +254,7 @@ export class ProgrammingExerciseService {
     }
 
     /**
-     * Returns a entity with true in the body if there is a programming exercise with the given id, it is released (release date < now) and there is at least one student result.
+     * Returns an entity with true in the body if there is a programming exercise with the given id, it is released (release date < now) and there is at least one student result.
      *
      * @param exerciseId ProgrammingExercise id
      */
@@ -382,6 +376,17 @@ export class ProgrammingExerciseService {
     }
 
     /**
+     * Exports the example solution repository for a given exercise, suitable for distributing to students.
+     * @param exerciseId
+     */
+    exportSolutionRepository(exerciseId: number): Observable<HttpResponse<Blob>> {
+        return this.http.get(`${this.resourceUrl}/${exerciseId}/export-solution-repository`, {
+            observe: 'response',
+            responseType: 'blob',
+        });
+    }
+
+    /**
      * Re-evaluates and updates an existing programming exercise.
      *
      * @param programmingExercise that should be updated of type {ProgrammingExercise}
@@ -419,40 +424,10 @@ export class ProgrammingExerciseService {
      * This method and all helper methods are only for testing reason and will be removed later on.
      * @param exerciseId the exercise id
      */
-    getTasksAndTestsExtractedFromProblemStatement(exerciseId: number): Observable<Task[]> {
+    getTasksAndTestsExtractedFromProblemStatement(exerciseId: number): Observable<ProgrammingExerciseServerSideTask[]> {
         return this.http
             .get(`${this.resourceUrl}/${exerciseId}/tasks`, { observe: 'response' })
-            .pipe(map((res: HttpResponse<ProgrammingExerciseTaskServerSide[]>) => this.processServerSideTasks(res)));
-    }
-
-    /**
-     * Map server response to tasks
-     * @param response the server response
-     * @private
-     */
-    private processServerSideTasks(response: HttpResponse<ProgrammingExerciseTaskServerSide[]>): Task[] {
-        return response.body?.map((task: ProgrammingExerciseTaskServerSide) => this.convertServerToClientTask(task)) ?? [];
-    }
-
-    /**
-     * Map server side task representation to client side task representation
-     * @param serverTask the server side representation of a task
-     * @private
-     */
-    private convertServerToClientTask(serverTask: ProgrammingExerciseTaskServerSide): Task {
-        return {
-            id: serverTask.id,
-            taskName: serverTask.taskName,
-            tests: serverTask.testCases.map((testCase: ProgrammingExerciseTestCase) => testCase.testName),
-        } as Task;
-    }
-
-    /**
-     * Delete all tasks and solution entries
-     * @param exerciseId the exercise id
-     */
-    deleteTasksWithSolutionEntries(exerciseId: number): Observable<HttpResponse<void>> {
-        return this.http.delete<void>(`${this.resourceUrl}/${exerciseId}/tasks`, { observe: 'response' });
+            .pipe(map((res: HttpResponse<ProgrammingExerciseServerSideTask[]>) => res.body ?? []));
     }
 
     /**
@@ -475,7 +450,40 @@ export class ProgrammingExerciseService {
         return this.http.get<ProgrammingExerciseFullGitDiffReport>(`${this.resourceUrl}/${exerciseId}/full-diff-report`);
     }
 
+    /**
+     * Gets the testwise coverage report of a programming exercise for the latest solution submission with all descending reports
+     * @param exerciseId The id of a programming exercise
+     */
+    getLatestFullTestwiseCoverageReport(exerciseId: number): Observable<CoverageReport> {
+        return this.http.get<CoverageReport>(`${this.resourceUrl}/${exerciseId}/full-testwise-coverage-report`);
+    }
+
+    /**
+     * Gets the testwise coverage report of a programming exercise for the latest solution submission without the actual reports
+     * @param exerciseId The id of a programming exercise
+     */
+    getLatestTestwiseCoverageReport(exerciseId: number): Observable<CoverageReport> {
+        return this.http.get<CoverageReport>(`${this.resourceUrl}/${exerciseId}/full-testwise-coverage-report`);
+    }
+
+    /**
+     * Gets all files from the last solution participation repository
+     */
+    getSolutionRepositoryTestFilesWithContent(exerciseId: number): Observable<Map<string, string> | undefined> {
+        return this.http.get(`${this.resourceUrl}/${exerciseId}/solution-files-content`).pipe(
+            map((res: HttpResponse<any>) => {
+                // this mapping is required because otherwise the HttpResponse object would be parsed
+                // to an arbitrary object (and not a map)
+                return res && new Map(Object.entries(res));
+            }),
+        );
+    }
+
     createStructuralSolutionEntries(exerciseId: number): Observable<ProgrammingExerciseSolutionEntry[]> {
         return this.http.post<ProgrammingExerciseSolutionEntry[]>(`${this.resourceUrl}/${exerciseId}/structural-solution-entries`, null);
+    }
+
+    createBehavioralSolutionEntries(exerciseId: number): Observable<ProgrammingExerciseSolutionEntry[]> {
+        return this.http.post<ProgrammingExerciseSolutionEntry[]>(`${this.resourceUrl}/${exerciseId}/behavioral-solution-entries`, null);
     }
 }

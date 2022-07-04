@@ -12,6 +12,11 @@ import { GradeStep, GradeStepsDTO } from 'app/entities/grade-step.model';
 import { GradeType } from 'app/entities/grading-scale.model';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { SafeHtmlPipe } from 'app/shared/pipes/safe-html.pipe';
+import { GradeStepBoundsPipe } from 'app/shared/pipes/grade-step-bounds.pipe';
+import { MockLocalStorageService } from '../../helpers/mocks/service/mock-local-storage.service';
+import { LocalStorageService } from 'ngx-webstorage';
+import { ThemeService } from 'app/core/theme/theme.service';
 
 describe('GradeKeyOverviewComponent', () => {
     let fixture: ComponentFixture<GradingKeyOverviewComponent>;
@@ -45,12 +50,20 @@ describe('GradeKeyOverviewComponent', () => {
     beforeEach(() => {
         return TestBed.configureTestingModule({
             imports: [MockModule(NgbModule)],
-            declarations: [GradingKeyOverviewComponent, MockComponent(FaIconComponent), MockPipe(ArtemisTranslatePipe), MockDirective(TranslateDirective)],
+            declarations: [
+                GradingKeyOverviewComponent,
+                MockComponent(FaIconComponent),
+                MockPipe(ArtemisTranslatePipe),
+                MockDirective(TranslateDirective),
+                MockPipe(SafeHtmlPipe),
+                MockPipe(GradeStepBoundsPipe),
+            ],
             providers: [
                 { provide: ActivatedRoute, useValue: { parent: { parent: { params: of({ courseId: 345, examId: 123 }), queryParams: of({ grade: '2.0' }) } } } },
                 { provide: Router, useClass: MockRouter },
                 MockProvider(GradingSystemService),
                 MockProvider(ArtemisNavigationUtilService),
+                { provide: LocalStorageService, useClass: MockLocalStorageService },
             ],
         })
             .compileComponents()
@@ -78,25 +91,25 @@ describe('GradeKeyOverviewComponent', () => {
         expect(comp.courseId).toEqual(345);
         expect(comp.studentGrade).toEqual('2.0');
         expect(comp.title).toEqual('Title');
-        expect(comp.isBonus).toEqual(true);
-        expect(comp.isExam).toEqual(true);
+        expect(comp.isBonus).toBeTrue();
+        expect(comp.isExam).toBeTrue();
         expect(comp.gradeSteps).toEqual([gradeStep1, gradeStep2]);
         expect(gradePointsSpy).toHaveBeenCalledWith([gradeStep1, gradeStep2], 100);
     });
 
     it('should print PDF', fakeAsync(() => {
-        const windowSpy = jest.spyOn(window, 'print').mockImplementation();
+        const printSpy = jest.spyOn(TestBed.inject(ThemeService), 'print').mockImplementation();
 
         comp.printPDF();
 
         tick();
-        expect(windowSpy).toHaveBeenCalled();
+        expect(printSpy).toHaveBeenCalled();
     }));
 
     it('should properly determine that points are not set', () => {
         comp.gradeSteps = gradeStepsDto.gradeSteps;
 
-        expect(comp.hasPointsSet()).toEqual(false);
+        expect(comp.hasPointsSet()).toBeFalse();
     });
 
     it('should properly determine that points are set', () => {
@@ -108,7 +121,7 @@ describe('GradeKeyOverviewComponent', () => {
         gradeStepWithPoints2.upperBoundPoints = 100;
         comp.gradeSteps = [gradeStepWithPoints1, gradeStepWithPoints2];
 
-        expect(comp.hasPointsSet()).toEqual(true);
+        expect(comp.hasPointsSet()).toBeTrue();
     });
 
     it('should round correctly', () => {

@@ -8,15 +8,16 @@ import { User } from 'app/core/user/user.model';
 export class Exam implements BaseEntity {
     public id?: number;
     public title?: string;
+    public testExam?: boolean;
     public visibleDate?: dayjs.Dayjs;
     public startDate?: dayjs.Dayjs;
     public endDate?: dayjs.Dayjs;
+    // Default exam working time in seconds
+    public workingTime?: number;
     public publishResultsDate?: dayjs.Dayjs;
     public examStudentReviewStart?: dayjs.Dayjs;
     public examStudentReviewEnd?: dayjs.Dayjs;
-    /**
-     * grace period in seconds - time in which students can still submit even though working time is over
-     */
+    // grace period in seconds - time in which students can still submit even though working time is over
     public gracePeriod?: number;
     public examiner?: string;
     public moduleNumber?: string;
@@ -45,13 +46,18 @@ export class Exam implements BaseEntity {
 
     public latestIndividualEndDate?: dayjs.Dayjs;
 
+    public monitoring?: boolean;
+
     constructor() {
         this.randomizeExerciseOrder = false; // default value (set by server)
         this.numberOfCorrectionRoundsInExam = 1; // default value
         this.maxPoints = 1; // default value
+        this.workingTime = 0; // will be updated during creation
+        this.testExam = false; // default value
 
         // helper attributes (calculated by the server at the time of the last request)
         this.visible = false;
         this.started = false;
+        this.monitoring = false;
     }
 }

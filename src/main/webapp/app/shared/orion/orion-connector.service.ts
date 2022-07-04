@@ -109,7 +109,7 @@ export class OrionConnectorService {
      * Gets called by the IDE. Informs the Angular app about a newly opened exercise.
      *
      * @param opened The ID of the exercise that was opened by the user.
-     * @param viewString ExerciseView which is currently open in in the IDE as string
+     * @param viewString ExerciseView which is currently open in the IDE as string
      */
     onExerciseOpened(opened: number, viewString: string): void {
         const view = ExerciseView[viewString];
@@ -176,9 +176,9 @@ export class OrionConnectorService {
     }
 
     /**
-     * Notifies Artemis if the IDE is in the process of importing (i.e. cloning) an exercise)
+     * Notifies Artemis if the IDE is in the process of importing (i.e. cloning) an exercise.
      *
-     * @param cloning True, if there is a open clone process, false otherwise
+     * @param cloning True, if there is an open clone process, false otherwise
      */
     isCloning(cloning: boolean): void {
         this.setIDEStateParameter({ cloning });

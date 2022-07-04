@@ -109,6 +109,10 @@ export const examManagementRoute: Routes = [
         canActivate: [UserRouteAccessService],
     },
     {
+        path: ':examId/monitoring',
+        loadChildren: () => import('../monitoring/exam-monitoring.module').then((m) => m.ArtemisExamMonitoringModule),
+    },
+    {
         path: ':examId/participant-scores',
         component: ExamParticipantScoresComponent,
         data: {
@@ -188,6 +192,7 @@ export const examManagementRoute: Routes = [
             pageTitle: 'artemisApp.examManagement.gradingSystem',
         },
         canActivate: [UserRouteAccessService],
+        loadChildren: () => import('app/grading-system/grading-system.module').then((m) => m.GradingSystemModule),
     },
     {
         path: ':examId/test-runs',
@@ -384,6 +389,16 @@ export const examManagementRoute: Routes = [
     // Create Quiz Exercise
     {
         path: ':examId/exercise-groups/:exerciseGroupId/quiz-exercises/new',
+        component: QuizExerciseDetailComponent,
+        data: {
+            authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
+            pageTitle: 'artemisApp.quizExercise.home.title',
+        },
+        canActivate: [UserRouteAccessService],
+    },
+    // Import Quiz Exercise
+    {
+        path: ':examId/exercise-groups/:exerciseGroupId/quiz-exercises/import/:exerciseId',
         component: QuizExerciseDetailComponent,
         data: {
             authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],

@@ -1,5 +1,3 @@
-@import 'src/main/webapp/content/scss/artemis-variables';
-
 $textareaHeight: 200px;
 
 :host {
@@ -10,15 +8,16 @@ $textareaHeight: 200px;
     width: 100%;
     height: $textareaHeight;
     padding: 10px 12px;
-    border: 1px solid #d5d5d5;
+    border: 1px solid var(--text-editor-border-color);
     border-radius: 2px;
-    background-color: #f9f9f9;
+    background-color: var(--text-editor-background);
+    color: var(--text-editor-color);
     resize: none;
 
     &:focus {
         outline: none;
-        border: 1px solid $artemis-dark;
-        background-color: #fbfbfb;
+        border: 1px solid var(--artemis-dark);
+        background-color: var(--text-editor-focus-background);
         box-shadow: 0 0 20px rgba(0, 0, 200, 0.04);
     }
 }

@@ -7,7 +7,7 @@ import static org.mockito.Mockito.*;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
-import java.nio.file.Paths;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
@@ -59,13 +59,13 @@ public class ProgrammingExerciseGitIntegrationTest extends AbstractSpringIntegra
 
         // create commits
         // the following 2 lines prepare the generation of the structural test oracle
-        var testJsonFilePath = Paths.get(localRepoFile.getPath(), "test", programmingExercise.getPackageFolderName(), "test.json");
+        var testJsonFilePath = Path.of(localRepoFile.getPath(), "test", programmingExercise.getPackageFolderName(), "test.json");
         gitUtilService.writeEmptyJsonFileToPath(testJsonFilePath);
         localGit.commit().setMessage("add test.json").setAuthor("test", "test@test.com").call();
-        var testJsonFilePath2 = Paths.get(localRepoFile.getPath(), "test", programmingExercise.getPackageFolderName(), "test2.json");
+        var testJsonFilePath2 = Path.of(localRepoFile.getPath(), "test", programmingExercise.getPackageFolderName(), "test2.json");
         gitUtilService.writeEmptyJsonFileToPath(testJsonFilePath2);
         localGit.commit().setMessage("add test2.json").setAuthor("test", "test@test.com").call();
-        var testJsonFilePath3 = Paths.get(localRepoFile.getPath(), "test", programmingExercise.getPackageFolderName(), "test3.json");
+        var testJsonFilePath3 = Path.of(localRepoFile.getPath(), "test", programmingExercise.getPackageFolderName(), "test3.json");
         gitUtilService.writeEmptyJsonFileToPath(testJsonFilePath3);
         localGit.commit().setMessage("add test3.json").setAuthor("test", "test@test.com").call();
 
@@ -76,7 +76,7 @@ public class ProgrammingExerciseGitIntegrationTest extends AbstractSpringIntegra
         doReturn(objectId).when(gitService).getLastCommitHash(any());
         doNothing().when(gitService).resetToOriginHead(any());
         doNothing().when(gitService).pullIgnoreConflicts(any());
-        doNothing().when(gitService).commitAndPush(any(), anyString(), any());
+        doNothing().when(gitService).commitAndPush(any(), anyString(), anyBoolean(), any());
     }
 
     @AfterEach

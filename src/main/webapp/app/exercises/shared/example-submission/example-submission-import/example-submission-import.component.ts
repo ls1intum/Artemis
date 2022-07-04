@@ -33,7 +33,7 @@ export class ExampleSubmissionImportComponent implements OnInit {
     content: SearchResult<Submission>;
     total = 0;
     state: PageableSearch = {
-        page: 0,
+        page: 1,
         pageSize: 10,
         searchTerm: '',
         sortingOrder: SortingOrder.DESCENDING,

@@ -48,7 +48,7 @@ public class StaticCodeAnalysisResource {
     /**
      * Get the static code analysis categories for a given exercise id.
      *
-     * @param exerciseId of the the exercise
+     * @param exerciseId of the exercise
      * @return the static code analysis categories
      */
     @GetMapping(Endpoints.CATEGORIES)
@@ -70,7 +70,7 @@ public class StaticCodeAnalysisResource {
     /**
      * Updates the static code analysis categories of a given programming exercise using the data in the request body.
      *
-     * @param exerciseId of the the exercise
+     * @param exerciseId of the exercise
      * @param categories used for the update
      * @return the updated static code analysis categories
      */
@@ -96,7 +96,7 @@ public class StaticCodeAnalysisResource {
     /**
      * Reset the static code analysis categories of the given exercise to their default configuration.
      *
-     * @param exerciseId if of the exercise for which the categories should be reseted
+     * @param exerciseId if of the exercise for which the categories should be reset
      * @return static code analysis categories with the default configuration
      */
     @PatchMapping(Endpoints.RESET)
@@ -122,7 +122,7 @@ public class StaticCodeAnalysisResource {
      */
     private void validateCategories(Set<StaticCodeAnalysisCategory> categories, Long exerciseId) {
         for (var category : categories) {
-            // Each categories must have an id
+            // Each category must have an id
             if (category.getId() == null) {
                 throw new BadRequestAlertException("Static code analysis category id is missing.", ENTITY_NAME, "scaCategoryIdError");
             }

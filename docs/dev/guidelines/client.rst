@@ -2,8 +2,6 @@
 Client
 ******
 
-WORK IN PROGRESS
-
 0. General
 ==========
 
@@ -30,8 +28,7 @@ Some general aspects:
 =============
 
 1. 1 file per logical component (e.g. parser, scanner, emitter, checker).
-2. Do not add new files. :)
-3. files with ".generated.*" suffix are auto-generated, do not hand-edit them.
+2. files with ".generated.*" suffix are auto-generated, do not hand-edit them.
 
 3. Types
 ========
@@ -96,8 +93,8 @@ Don't do one of these or any other combination of whitespaces:
 
 Ignoring this will lead to inconsistent spacing between icons and text.
 
-10. Style
-=========
+10. Code Style
+==============
 
 1. Use arrow functions over anonymous function expressions.
 2. Always surround arrow function parameters.
@@ -302,3 +299,19 @@ Here are a few tips when using this framework:
        of an specific value for the width.
 
 Some parts of these guidelines are adapted from https://github.com/microsoft/TypeScript-wiki/blob/main/Coding-guidelines.md
+
+15. Responsive Layout
+=====================
+
+Ensure that the layout of your page or component shrinks accordingly and adapts to all display sizes (responsive design).
+
+Prefer using the ``.container`` class (https://getbootstrap.com/docs/5.2/layout/containers/) when you want limit the page width on extra-large screens.
+Do not use the following for this purpose if it can be avoided:
+
+.. code-block:: html
+
+    <div class="row justify-content-center">
+        <div class="col-12 col-lg-8">
+            <!-- Do not do this -->
+        </div>
+    </div>
