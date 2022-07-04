@@ -5,7 +5,6 @@ import static de.tum.in.www1.artemis.service.util.TimeLogUtil.formatDurationFrom
 
 import java.time.ZonedDateTime;
 import java.util.*;
-import java.util.stream.Collectors;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.BadRequestException;
@@ -380,8 +379,7 @@ public class StudentExamResource {
         // 3rd fetch participations, submissions and results and connect them to the studentExam
         fetchParticipationsSubmissionsAndResultsForStudentExam(studentExam, targetUser);
 
-        List<StudentParticipation> participations = studentExam.getExercises().stream().flatMap(exercise -> exercise.getStudentParticipations().stream())
-                .collect(Collectors.toList());
+        List<StudentParticipation> participations = studentExam.getExercises().stream().flatMap(exercise -> exercise.getStudentParticipations().stream()).toList();
 
         StudentExamWithGradeDTO studentExamWithGradeDTO = examService.calculateStudentResultWithGradeAndPoints(studentExam, participations);
         studentExamWithGradeDTO.studentExam = null;  // To save bandwidth.
