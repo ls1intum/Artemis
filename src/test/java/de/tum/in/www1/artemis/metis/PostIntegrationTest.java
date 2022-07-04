@@ -547,7 +547,9 @@ public class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     @WithMockUser(username = "student1", roles = "USER")
     public void testGetPostTagsForCourse() throws Exception {
         hibernateQueryInterceptor.startQueryCount();
+
         List<String> returnedTags = request.getList("/api/courses/" + courseId + "/posts/tags", HttpStatus.OK, String.class);
+
         assertThat(hibernateQueryInterceptor.getQueryCount()).isEqualTo(3);
         // 4 different tags were used for the posts
         assertThat(returnedTags).hasSameSizeAs(postRepository.findPostTagsForCourse(courseId));
