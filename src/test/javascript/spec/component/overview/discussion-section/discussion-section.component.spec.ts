@@ -28,7 +28,7 @@ import { MockRouter } from '../../../helpers/mocks/mock-router';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockLocalStorageService } from '../../../helpers/mocks/service/mock-local-storage.service';
-import { UntypedFormBuilder, FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { FormBuilder, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { getElement, getElements } from '../../../helpers/utils/general.utils';
 import { ButtonComponent } from 'app/shared/components/button.component';
 import {
@@ -60,7 +60,7 @@ describe('PageDiscussionSectionComponent', () => {
         return TestBed.configureTestingModule({
             imports: [HttpClientTestingModule, MockModule(FormsModule), MockModule(ReactiveFormsModule)],
             providers: [
-                UntypedFormBuilder,
+                FormBuilder,
                 MockProvider(SessionStorageService),
                 { provide: ExerciseService, useClass: MockExerciseService },
                 { provide: AnswerPostService, useClass: MockAnswerPostService },

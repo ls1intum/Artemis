@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { UntypedFormBuilder, Validators } from '@angular/forms';
+import { FormBuilder, Validators } from '@angular/forms';
 
 import { AccountService } from 'app/core/auth/account.service';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
@@ -16,14 +16,14 @@ export class SettingsComponent implements OnInit {
     account: User;
     languages = LANGUAGES;
     settingsForm = this.fb.group({
-        firstName: [undefined, [Validators.required, Validators.minLength(2), Validators.maxLength(50)]],
-        lastName: [undefined, [Validators.required, Validators.minLength(2), Validators.maxLength(50)]],
-        email: [undefined, [Validators.required, Validators.minLength(5), Validators.maxLength(100), Validators.email]],
-        langKey: [undefined],
+        firstName: [undefined as string | undefined, [Validators.required, Validators.minLength(2), Validators.maxLength(50)]],
+        lastName: [undefined as string | undefined, [Validators.required, Validators.minLength(2), Validators.maxLength(50)]],
+        email: [undefined as string | undefined, [Validators.required, Validators.minLength(5), Validators.maxLength(100), Validators.email]],
+        langKey: [undefined as string | undefined],
     });
     isRegistrationEnabled = false;
 
-    constructor(private accountService: AccountService, private fb: UntypedFormBuilder, private translateService: TranslateService, private profileService: ProfileService) {}
+    constructor(private accountService: AccountService, private fb: FormBuilder, private translateService: TranslateService, private profileService: ProfileService) {}
 
     ngOnInit() {
         this.profileService.getProfileInfo().subscribe((profileInfo) => {
@@ -50,9 +50,9 @@ export class SettingsComponent implements OnInit {
     save() {
         this.success = false;
         // Note: changing the email is currently not supported, because we would need to send another activation link
-        this.account.firstName = this.settingsForm.get('firstName')!.value;
-        this.account.lastName = this.settingsForm.get('lastName')!.value;
-        this.account.langKey = this.settingsForm.get('langKey')!.value;
+        this.account.firstName = this.settingsForm.get('firstName')!.value || undefined;
+        this.account.lastName = this.settingsForm.get('lastName')!.value || undefined;
+        this.account.langKey = this.settingsForm.get('langKey')!.value || undefined;
 
         this.accountService.save(this.account).subscribe({
             next: () => {

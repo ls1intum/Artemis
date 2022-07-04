@@ -1,5 +1,5 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
-import { HttpErrorResponse, HttpHeaders, HttpResponse } from '@angular/common/http';
+import { Component, OnDestroy, OnInit, TemplateRef, ViewChild } from '@angular/core';
+import { HttpErrorResponse, HttpHeaders, HttpParams, HttpResponse } from '@angular/common/http';
 import { ActivatedRoute, Router } from '@angular/router';
 import { combineLatest, Subject, Subscription } from 'rxjs';
 import { onError } from 'app/shared/util/global.utils';
@@ -9,7 +9,7 @@ import { AccountService } from 'app/core/auth/account.service';
 import { AlertService } from 'app/core/util/alert.service';
 import { SortingOrder } from 'app/shared/table/pageable-table';
 import { debounceTime, switchMap, tap } from 'rxjs/operators';
-import { AbstractControl, UntypedFormControl, UntypedFormGroup } from '@angular/forms';
+import { AbstractControl, FormControl, FormGroup } from '@angular/forms';
 import { EventManager } from 'app/core/util/event-manager.service';
 import { ParseLinks } from 'app/core/util/parse-links.service';
 import { ASC, DESC, ITEMS_PER_PAGE, SORT } from 'app/shared/constants/pagination.constants';
@@ -18,8 +18,6 @@ import { LocalStorageService } from 'ngx-webstorage';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { Course } from 'app/entities/course.model';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { TemplateRef, ViewChild } from '@angular/core';
-import { HttpParams } from '@angular/common/http';
 import { ButtonSize } from 'app/shared/components/button.component';
 
 export class UserFilter {
@@ -118,7 +116,7 @@ export class UserManagementComponent implements OnInit, OnDestroy {
 
     private dialogErrorSource = new Subject<string>();
     dialogError = this.dialogErrorSource.asObservable();
-    userSearchForm: UntypedFormGroup;
+    userSearchForm: FormGroup;
 
     // Icons
     faSort = faSort;
@@ -183,8 +181,8 @@ export class UserManagementComponent implements OnInit, OnDestroy {
                 },
             });
 
-        this.userSearchForm = new UntypedFormGroup({
-            searchControl: new UntypedFormControl('', { validators: [this.validateUserSearch], updateOn: 'blur' }),
+        this.userSearchForm = new FormGroup({
+            searchControl: new FormControl('', { validators: [this.validateUserSearch], updateOn: 'blur' }),
         });
         this.accountService.identity().then((user) => {
             this.currentAccount = user!;

@@ -1,5 +1,5 @@
 import { Directive, Input } from '@angular/core';
-import { UntypedFormControl, NG_VALIDATORS, Validator } from '@angular/forms';
+import { FormControl, NG_VALIDATORS, Validator } from '@angular/forms';
 
 /**
  * Custom min validator as angular offers no such validator for template driven forms
@@ -14,7 +14,7 @@ export class CustomMinDirective implements Validator {
     @Input()
     customMin: number;
 
-    validate(c: UntypedFormControl): { [key: string]: any } | null {
+    validate(c: FormControl<number | undefined | null>): { [key: string]: any } | null {
         const v = c.value;
         if (v === undefined || v === null) {
             return null;

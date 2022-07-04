@@ -3,7 +3,7 @@ import { PostingCreateEditModalDirective } from 'app/shared/metis/posting-create
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { MetisService } from 'app/shared/metis/metis.service';
-import { UntypedFormBuilder, Validators } from '@angular/forms';
+import { FormBuilder, Validators } from '@angular/forms';
 import { MarkdownEditorHeight } from 'app/shared/markdown-editor/markdown-editor.component';
 import { PostContentValidationPattern } from 'app/shared/metis/metis.util';
 
@@ -17,7 +17,7 @@ export class AnswerPostCreateEditModalComponent extends PostingCreateEditModalDi
     @Input() createEditAnswerPostContainerRef: ViewContainerRef;
     editorHeight = MarkdownEditorHeight.INLINE;
 
-    constructor(protected metisService: MetisService, protected modalService: NgbModal, protected formBuilder: UntypedFormBuilder) {
+    constructor(protected metisService: MetisService, protected modalService: NgbModal, protected formBuilder: FormBuilder) {
         super(metisService, modalService, formBuilder);
     }
 

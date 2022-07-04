@@ -1,5 +1,5 @@
-import { ComponentFixture, fakeAsync, TestBed, tick, flush } from '@angular/core/testing';
-import { UntypedFormBuilder, FormsModule } from '@angular/forms';
+import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
+import { FormBuilder, FormsModule } from '@angular/forms';
 import { of } from 'rxjs';
 import { HttpHeaders, HttpResponse } from '@angular/common/http';
 
@@ -40,7 +40,7 @@ describe('ExerciseHint Management Update Component', () => {
             imports: [ArtemisTestModule, FormsModule],
             declarations: [ExerciseHintUpdateComponent, MockComponent(MarkdownEditorComponent)],
             providers: [
-                UntypedFormBuilder,
+                FormBuilder,
                 MockProvider(ProgrammingExerciseService),
                 MockProvider(ExerciseHintService),
                 MockProvider(TranslateService),

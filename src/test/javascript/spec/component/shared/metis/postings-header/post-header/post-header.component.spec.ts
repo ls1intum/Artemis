@@ -8,7 +8,7 @@ import { MockMetisService } from '../../../../../helpers/mocks/service/mock-meti
 import { PostHeaderComponent } from 'app/shared/metis/posting-header/post-header/post-header.component';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { PostCreateEditModalComponent } from 'app/shared/metis/posting-create-edit-modal/post-create-edit-modal/post-create-edit-modal.component';
-import { UntypedFormBuilder, FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { FormBuilder, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { ConfirmIconComponent } from 'app/shared/confirm-icon/confirm-icon.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -27,7 +27,7 @@ describe('PostHeaderComponent', () => {
     beforeEach(() => {
         return TestBed.configureTestingModule({
             imports: [MockModule(FormsModule), MockModule(ReactiveFormsModule)],
-            providers: [UntypedFormBuilder, { provide: MetisService, useClass: MockMetisService }],
+            providers: [FormBuilder, { provide: MetisService, useClass: MockMetisService }],
             declarations: [
                 PostHeaderComponent,
                 MockComponent(PostCreateEditModalComponent),

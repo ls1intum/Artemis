@@ -1,5 +1,5 @@
-import { ComponentFixture, TestBed, inject } from '@angular/core/testing';
-import { UntypedFormBuilder, NgModel } from '@angular/forms';
+import { ComponentFixture, inject, TestBed } from '@angular/core/testing';
+import { FormBuilder, NgModel } from '@angular/forms';
 import { of, throwError } from 'rxjs';
 import { ArtemisTestModule } from '../../test.module';
 import { PasswordResetInitComponent } from 'app/account/password-reset/init/password-reset-init.component';
@@ -23,7 +23,7 @@ describe('PasswordResetInitComponent', () => {
             imports: [ArtemisTestModule],
             declarations: [PasswordResetInitComponent, TranslatePipeMock, MockDirective(NgModel)],
             providers: [
-                UntypedFormBuilder,
+                FormBuilder,
                 { provide: ProfileService, useClass: MockProfileService },
                 MockProvider(AlertService),
                 { provide: TranslateService, useClass: MockTranslateService },

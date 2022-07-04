@@ -4,8 +4,8 @@ import { User } from 'app/core/user/user.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { PasswordService } from './password.service';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
-import { UntypedFormBuilder, Validators } from '@angular/forms';
-import { PASSWORD_MIN_LENGTH, PASSWORD_MAX_LENGTH } from 'app/app.constants';
+import { FormBuilder, Validators } from '@angular/forms';
+import { PASSWORD_MAX_LENGTH, PASSWORD_MIN_LENGTH } from 'app/app.constants';
 
 @Component({
     selector: 'jhi-password',
@@ -19,14 +19,14 @@ export class PasswordComponent implements OnInit {
     error = false;
     success = false;
     user?: User;
-    passwordForm = this.fb.group({
+    passwordForm = this.fb.nonNullable.group({
         currentPassword: ['', [Validators.required]],
         newPassword: ['', [Validators.required, Validators.minLength(PASSWORD_MIN_LENGTH), Validators.maxLength(PASSWORD_MAX_LENGTH)]],
         confirmPassword: ['', [Validators.required, Validators.minLength(PASSWORD_MIN_LENGTH), Validators.maxLength(PASSWORD_MAX_LENGTH)]],
     });
     passwordResetEnabled = false;
 
-    constructor(private passwordService: PasswordService, private accountService: AccountService, private profileService: ProfileService, private fb: UntypedFormBuilder) {}
+    constructor(private passwordService: PasswordService, private accountService: AccountService, private profileService: ProfileService, private fb: FormBuilder) {}
 
     ngOnInit() {
         this.accountService.identity().then((user) => {

@@ -3,7 +3,7 @@ import { ColorSelectorComponent } from 'app/shared/color-selector/color-selector
 import { ExerciseCategory } from 'app/entities/exercise-category.model';
 import { MatAutocompleteSelectedEvent } from '@angular/material/autocomplete';
 import { COMMA, ENTER, TAB } from '@angular/cdk/keycodes';
-import { UntypedFormControl } from '@angular/forms';
+import { FormControl } from '@angular/forms';
 import { MatChipInputEvent } from '@angular/material/chips';
 import { map, Observable, startWith } from 'rxjs';
 import { faTimes } from '@fortawesome/free-solid-svg-icons';
@@ -34,7 +34,7 @@ export class CategorySelectorComponent implements OnChanges {
     private readonly colorSelectorHeight = 150;
 
     separatorKeysCodes = [ENTER, COMMA, TAB];
-    categoryCtrl = new UntypedFormControl();
+    categoryCtrl = new FormControl<string | undefined>(undefined);
 
     // Icons
     faTimes = faTimes;

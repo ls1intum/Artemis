@@ -1,6 +1,6 @@
 import dayjs from 'dayjs/esm';
 import { Component, EventEmitter, Input, OnChanges, OnInit, Output } from '@angular/core';
-import { AbstractControl, UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
+import { AbstractControl, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import urlParser from 'js-video-url-parser';
 import { faArrowLeft } from '@fortawesome/free-solid-svg-icons';
 
@@ -51,7 +51,7 @@ export class VideoUnitFormComponent implements OnInit, OnChanges {
 
     @Output()
     formSubmitted: EventEmitter<VideoUnitFormData> = new EventEmitter<VideoUnitFormData>();
-    form: UntypedFormGroup;
+    form: FormGroup;
 
     urlValidator = urlValidator;
     videoUrlValidator = videoUrlValidator;
@@ -59,7 +59,7 @@ export class VideoUnitFormComponent implements OnInit, OnChanges {
     // Icons
     faArrowLeft = faArrowLeft;
 
-    constructor(private fb: UntypedFormBuilder) {}
+    constructor(private fb: FormBuilder) {}
 
     get nameControl() {
         return this.form.get('name');
@@ -97,11 +97,11 @@ export class VideoUnitFormComponent implements OnInit, OnChanges {
             return;
         }
         this.form = this.fb.group({
-            name: [undefined, [Validators.required, Validators.maxLength(255)]],
-            description: [undefined, [Validators.maxLength(1000)]],
-            releaseDate: [undefined],
-            source: [undefined, [Validators.required, this.urlValidator]],
-            urlHelper: [undefined, this.videoUrlValidator],
+            name: [undefined as string | undefined, [Validators.required, Validators.maxLength(255)]],
+            description: [undefined as string | undefined, [Validators.maxLength(1000)]],
+            releaseDate: [undefined as dayjs.Dayjs | undefined],
+            source: [undefined as string | undefined, [Validators.required, this.urlValidator]],
+            urlHelper: [undefined as string | undefined, this.videoUrlValidator],
         });
     }
 

@@ -12,7 +12,7 @@ import { MockComponent, MockDirective, MockModule, MockPipe } from 'ng-mocks';
 import { MockViewContainerRef } from '../../../../../helpers/mocks/service/mock-view-container-ref.service';
 import { NgbModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { AnswerPostCreateEditModalComponent } from 'app/shared/metis/posting-create-edit-modal/answer-post-create-edit-modal/answer-post-create-edit-modal.component';
-import { UntypedFormBuilder, FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { FormBuilder, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ConfirmIconComponent } from 'app/shared/confirm-icon/confirm-icon.component';
 import { PostingMarkdownEditorComponent } from 'app/shared/metis/posting-markdown-editor/posting-markdown-editor.component';
@@ -35,7 +35,7 @@ describe('AnswerPostHeaderComponent', () => {
         return TestBed.configureTestingModule({
             imports: [MockModule(FormsModule), MockModule(ReactiveFormsModule)],
             providers: [
-                UntypedFormBuilder,
+                FormBuilder,
                 { provide: MetisService, useClass: MockMetisService },
                 {
                     provide: NgbModal,

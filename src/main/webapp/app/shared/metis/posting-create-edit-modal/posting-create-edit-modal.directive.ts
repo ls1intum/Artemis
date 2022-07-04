@@ -1,5 +1,5 @@
 import { Directive, EventEmitter, Input, OnChanges, OnInit, Output, TemplateRef, ViewChild } from '@angular/core';
-import { UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
+import { FormBuilder, FormGroup } from '@angular/forms';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { Posting } from 'app/entities/metis/posting.model';
 import { MetisService } from 'app/shared/metis/metis.service';
@@ -16,10 +16,10 @@ export abstract class PostingCreateEditModalDirective<T extends Posting> impleme
     isLoading = false;
     maxContentLength = MAX_CONTENT_LENGTH;
     content: string;
-    formGroup: UntypedFormGroup;
+    formGroup: FormGroup;
     readonly EditType = PostingEditType;
 
-    protected constructor(protected metisService: MetisService, protected modalService: NgbModal, protected formBuilder: UntypedFormBuilder) {}
+    protected constructor(protected metisService: MetisService, protected modalService: NgbModal, protected formBuilder: FormBuilder) {}
 
     get editType(): PostingEditType {
         return this.posting.id ? PostingEditType.UPDATE : PostingEditType.CREATE;

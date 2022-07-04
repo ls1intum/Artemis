@@ -11,12 +11,11 @@ import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { PASSWORD_MAX_LENGTH, PASSWORD_MIN_LENGTH, USERNAME_MAX_LENGTH, USERNAME_MIN_LENGTH } from 'app/app.constants';
 import { faBan, faSave, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { COMMA, ENTER, TAB } from '@angular/cdk/keycodes';
-import { UntypedFormControl } from '@angular/forms';
+import { FormBuilder, FormControl, Validators } from '@angular/forms';
 import { MatChipInputEvent } from '@angular/material/chips';
 import { AlertService, AlertType } from 'app/core/util/alert.service';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
-import { UntypedFormBuilder, Validators } from '@angular/forms';
 
 @Component({
     selector: 'jhi-user-management-update',
@@ -40,7 +39,7 @@ export class UserManagementUpdateComponent implements OnInit {
 
     separatorKeysCodes = [ENTER, COMMA, TAB];
 
-    groupCtrl = new UntypedFormControl();
+    groupCtrl = new FormControl();
 
     // Icons
     faTimes = faTimes;
@@ -72,7 +71,7 @@ export class UserManagementUpdateComponent implements OnInit {
         private navigationUtilService: ArtemisNavigationUtilService,
         private alertService: AlertService,
         private profileService: ProfileService,
-        private fb: UntypedFormBuilder,
+        private fb: FormBuilder,
     ) {}
 
     /**

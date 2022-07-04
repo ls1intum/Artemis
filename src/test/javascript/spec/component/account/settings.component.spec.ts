@@ -1,6 +1,6 @@
-import { TestBed, tick, fakeAsync, inject } from '@angular/core/testing';
-import { UntypedFormBuilder } from '@angular/forms';
-import { throwError, of } from 'rxjs';
+import { fakeAsync, inject, TestBed, tick } from '@angular/core/testing';
+import { FormBuilder } from '@angular/forms';
+import { of, throwError } from 'rxjs';
 
 import { ArtemisTestModule } from '../../test.module';
 import { AccountService } from 'app/core/auth/account.service';
@@ -35,7 +35,7 @@ describe('SettingsComponent', () => {
             imports: [ArtemisTestModule],
             declarations: [SettingsComponent],
             providers: [
-                UntypedFormBuilder,
+                FormBuilder,
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: ProfileService, useClass: MockProfileService },

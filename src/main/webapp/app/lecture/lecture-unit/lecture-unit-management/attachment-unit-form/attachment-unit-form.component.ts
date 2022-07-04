@@ -1,6 +1,6 @@
 import { Component, ElementRef, EventEmitter, Input, OnChanges, OnInit, Output, ViewChild } from '@angular/core';
 import dayjs from 'dayjs/esm';
-import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
+import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { TranslateService } from '@ngx-translate/core';
 
 export interface AttachmentUnitFormData {
@@ -37,7 +37,7 @@ export class AttachmentUnitFormComponent implements OnInit, OnChanges {
 
     @Output()
     formSubmitted: EventEmitter<AttachmentUnitFormData> = new EventEmitter<AttachmentUnitFormData>();
-    form: UntypedFormGroup;
+    form: FormGroup;
 
     // have to handle the file input as a special case at is not part of the reactive form
     @ViewChild('fileInput', { static: false })
@@ -47,7 +47,7 @@ export class AttachmentUnitFormComponent implements OnInit, OnChanges {
     fileName: string = this.fileNamePlaceholder;
     fileInputTouched = false;
 
-    constructor(private translateService: TranslateService, private fb: UntypedFormBuilder) {}
+    constructor(private translateService: TranslateService, private fb: FormBuilder) {}
 
     ngOnChanges(): void {
         this.initializeForm();
@@ -65,11 +65,11 @@ export class AttachmentUnitFormComponent implements OnInit, OnChanges {
             return;
         }
         this.form = this.fb.group({
-            name: [undefined, [Validators.required, Validators.maxLength(255)]],
-            description: [undefined, [Validators.maxLength(1000)]],
-            releaseDate: [undefined],
+            name: [undefined as string | undefined, [Validators.required, Validators.maxLength(255)]],
+            description: [undefined as string | undefined, [Validators.maxLength(1000)]],
+            releaseDate: [undefined as dayjs.Dayjs | undefined],
             version: [1],
-            updateNotificationText: [undefined, [Validators.maxLength(1000)]],
+            updateNotificationText: [undefined as string | undefined, [Validators.maxLength(1000)]],
         });
     }
 

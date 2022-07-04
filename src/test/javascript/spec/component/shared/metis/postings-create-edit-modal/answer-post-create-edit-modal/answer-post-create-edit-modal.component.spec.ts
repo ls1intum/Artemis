@@ -4,13 +4,13 @@ import { MockMetisService } from '../../../../../helpers/mocks/service/mock-meti
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockComponent, MockModule, MockPipe } from 'ng-mocks';
 import { AnswerPostCreateEditModalComponent } from 'app/shared/metis/posting-create-edit-modal/answer-post-create-edit-modal/answer-post-create-edit-modal.component';
-import { UntypedFormBuilder, FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { FormBuilder, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { PostingMarkdownEditorComponent } from 'app/shared/metis/posting-markdown-editor/posting-markdown-editor.component';
 import { PostingButtonComponent } from 'app/shared/metis/posting-button/posting-button.component';
 import { HelpIconComponent } from 'app/shared/components/help-icon.component';
 import { ViewContainerRef } from '@angular/core';
 import { MockViewContainerRef } from '../../../../../helpers/mocks/service/mock-view-container-ref.service';
-import { metisAnswerPostToCreateUser1, metisResolvingAnswerPostUser1, metisAnswerPostUser2 } from '../../../../../helpers/sample/metis-sample-data';
+import { metisAnswerPostToCreateUser1, metisAnswerPostUser2, metisResolvingAnswerPostUser1 } from '../../../../../helpers/sample/metis-sample-data';
 
 describe('AnswerPostCreateEditModalComponent', () => {
     let component: AnswerPostCreateEditModalComponent;
@@ -29,7 +29,7 @@ describe('AnswerPostCreateEditModalComponent', () => {
                 MockComponent(PostingButtonComponent),
                 MockComponent(HelpIconComponent),
             ],
-            providers: [UntypedFormBuilder, { provide: MetisService, useClass: MockMetisService }, { provide: ViewContainerRef, useClass: MockViewContainerRef }],
+            providers: [FormBuilder, { provide: MetisService, useClass: MockMetisService }, { provide: ViewContainerRef, useClass: MockViewContainerRef }],
         })
             .compileComponents()
             .then(() => {

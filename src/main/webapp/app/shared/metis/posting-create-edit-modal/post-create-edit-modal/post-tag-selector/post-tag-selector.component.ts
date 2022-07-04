@@ -2,7 +2,7 @@ import { AfterContentChecked, ChangeDetectorRef, Component, ElementRef, EventEmi
 import { map, Observable, startWith, Subscription } from 'rxjs';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { COMMA, ENTER, TAB } from '@angular/cdk/keycodes';
-import { UntypedFormControl } from '@angular/forms';
+import { FormControl } from '@angular/forms';
 import { MatChipInputEvent } from '@angular/material/chips';
 import { MatAutocompleteSelectedEvent } from '@angular/material/autocomplete';
 import { faTimes } from '@fortawesome/free-solid-svg-icons';
@@ -23,7 +23,7 @@ export class PostTagSelectorComponent implements OnInit, OnChanges, OnDestroy, A
     tags: string[];
 
     separatorKeysCodes = [ENTER, COMMA, TAB];
-    tagCtrl = new UntypedFormControl();
+    tagCtrl = new FormControl<string | undefined>(undefined);
 
     private tagsSubscription: Subscription;
 

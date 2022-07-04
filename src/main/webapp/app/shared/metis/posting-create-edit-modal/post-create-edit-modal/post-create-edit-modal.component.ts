@@ -3,7 +3,7 @@ import { PostingCreateEditModalDirective } from 'app/shared/metis/posting-create
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { Post } from 'app/entities/metis/post.model';
 import { MetisService } from 'app/shared/metis/metis.service';
-import { UntypedFormBuilder, Validators } from '@angular/forms';
+import { FormBuilder, Validators } from '@angular/forms';
 import { Lecture } from 'app/entities/lecture.model';
 import { Exercise } from 'app/entities/exercise.model';
 import { Course } from 'app/entities/course.model';
@@ -45,7 +45,7 @@ export class PostCreateEditModalComponent extends PostingCreateEditModalDirectiv
     faAngleUp = faAngleUp;
     faAngleDown = faAngleDown;
 
-    constructor(protected metisService: MetisService, protected modalService: NgbModal, protected formBuilder: UntypedFormBuilder, private router: Router) {
+    constructor(protected metisService: MetisService, protected modalService: NgbModal, protected formBuilder: FormBuilder, private router: Router) {
         super(metisService, modalService, formBuilder);
     }
 

@@ -1,7 +1,7 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { LockRepositoryPolicy, SubmissionPenaltyPolicy, SubmissionPolicyType } from 'app/entities/submission-policy.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
-import { UntypedFormControl, UntypedFormGroup, Validators } from '@angular/forms';
+import { FormControl, FormGroup, Validators } from '@angular/forms';
 
 @Component({
     selector: 'jhi-submission-policy-update',
@@ -86,7 +86,7 @@ export class SubmissionPolicyUpdateComponent implements OnInit {
     @Input() programmingExercise: ProgrammingExercise;
     @Input() editable: boolean;
 
-    form: UntypedFormGroup;
+    form: FormGroup;
 
     selectedSubmissionPolicyType: SubmissionPolicyType;
 
@@ -97,26 +97,26 @@ export class SubmissionPolicyUpdateComponent implements OnInit {
     // This is used to ensure that only integers [1-500] can be used as input for the submission limit.
     submissionLimitPattern = '^([1-9]|([1-9][0-9])|([1-4][0-9][0-9])|500)$';
 
-    submissionLimitControl: UntypedFormControl;
-    exceedingPenaltyControl: UntypedFormControl;
+    submissionLimitControl: FormControl;
+    exceedingPenaltyControl: FormControl;
 
     // penalty can be any (point) number greater than 0
     exceedingPenaltyPattern = RegExp('^0*[1-9][0-9]*(\\.[0-9]+)?|0+\\.[0-9]*[1-9][0-9]*$');
 
     ngOnInit(): void {
         this.onSubmissionPolicyTypeChanged(this.programmingExercise.submissionPolicy?.type ?? SubmissionPolicyType.NONE);
-        this.form = new UntypedFormGroup({
-            submissionLimit: new UntypedFormControl({ value: this.programmingExercise.submissionPolicy?.submissionLimit, disabled: !this.editable }, [
+        this.form = new FormGroup({
+            submissionLimit: new FormControl({ value: this.programmingExercise.submissionPolicy?.submissionLimit, disabled: !this.editable }, [
                 Validators.pattern(this.submissionLimitPattern),
                 Validators.required,
             ]),
-            exceedingPenalty: new UntypedFormControl({ value: this.programmingExercise.submissionPolicy?.exceedingPenalty, disabled: !this.editable }, [
+            exceedingPenalty: new FormControl({ value: this.programmingExercise.submissionPolicy?.exceedingPenalty, disabled: !this.editable }, [
                 Validators.pattern(this.exceedingPenaltyPattern),
                 Validators.required,
             ]),
         });
-        this.submissionLimitControl = this.form.get('submissionLimit')! as UntypedFormControl;
-        this.exceedingPenaltyControl = this.form.get('exceedingPenalty')! as UntypedFormControl;
+        this.submissionLimitControl = this.form.get('submissionLimit')! as FormControl;
+        this.exceedingPenaltyControl = this.form.get('exceedingPenalty')! as FormControl;
     }
 
     private setAuxiliaryBooleansOnSubmissionPolicyChange(submissionPolicyType: SubmissionPolicyType) {

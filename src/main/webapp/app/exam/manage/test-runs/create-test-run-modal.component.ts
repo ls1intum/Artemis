@@ -4,7 +4,7 @@ import { StudentExam } from 'app/entities/student-exam.model';
 import { Exam } from 'app/entities/exam.model';
 import { Exercise } from 'app/entities/exercise.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
-import { UntypedFormControl, UntypedFormGroup, Validators } from '@angular/forms';
+import { FormControl, FormGroup, Validators } from '@angular/forms';
 import { ArtemisDurationFromSecondsPipe } from 'app/shared/pipes/artemis-duration-from-seconds.pipe';
 
 @Component({
@@ -15,7 +15,7 @@ import { ArtemisDurationFromSecondsPipe } from 'app/shared/pipes/artemis-duratio
 })
 export class CreateTestRunModalComponent implements OnInit {
     exam: Exam;
-    workingTimeForm: UntypedFormGroup;
+    workingTimeForm: FormGroup;
     testRunConfiguration: { [id: number]: Exercise } = {};
 
     constructor(private activeModal: NgbActiveModal, private artemisDurationFromSecondsPipe: ArtemisDurationFromSecondsPipe) {}
@@ -104,12 +104,12 @@ export class CreateTestRunModalComponent implements OnInit {
         const defaultWorkingTime = this.exam.endDate?.diff(this.exam.startDate, 'seconds');
         const workingTime = this.artemisDurationFromSecondsPipe.transform(defaultWorkingTime ?? 0);
         const workingTimeParts = workingTime.split(':');
-        this.workingTimeForm = new UntypedFormGroup({
-            minutes: new UntypedFormControl({ value: parseInt(workingTimeParts[0] ? workingTimeParts[0] : '0', 10), disabled: this.exam.visible }, [
+        this.workingTimeForm = new FormGroup({
+            minutes: new FormControl({ value: parseInt(workingTimeParts[0] ? workingTimeParts[0] : '0', 10), disabled: !!this.exam.visible }, [
                 Validators.min(0),
                 Validators.required,
             ]),
-            seconds: new UntypedFormControl({ value: parseInt(workingTimeParts[1] ? workingTimeParts[1] : '0', 10), disabled: this.exam.visible }, [
+            seconds: new FormControl({ value: parseInt(workingTimeParts[1] ? workingTimeParts[1] : '0', 10), disabled: !!this.exam.visible }, [
                 Validators.min(0),
                 Validators.max(59),
                 Validators.required,

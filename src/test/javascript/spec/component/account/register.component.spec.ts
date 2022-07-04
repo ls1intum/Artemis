@@ -1,5 +1,5 @@
-import { ComponentFixture, TestBed, inject, tick, fakeAsync } from '@angular/core/testing';
-import { UntypedFormBuilder } from '@angular/forms';
+import { ComponentFixture, fakeAsync, inject, TestBed, tick } from '@angular/core/testing';
+import { FormBuilder } from '@angular/forms';
 import { of, throwError } from 'rxjs';
 
 import { ArtemisTestModule } from '../../test.module';
@@ -25,7 +25,7 @@ describe('Component Tests', () => {
                 imports: [ArtemisTestModule],
                 declarations: [RegisterComponent],
                 providers: [
-                    UntypedFormBuilder,
+                    FormBuilder,
                     { provide: LocalStorageService, useClass: MockSyncStorage },
                     { provide: SessionStorageService, useClass: MockSyncStorage },
                     { provide: ProfileService, useClass: MockProfileService },

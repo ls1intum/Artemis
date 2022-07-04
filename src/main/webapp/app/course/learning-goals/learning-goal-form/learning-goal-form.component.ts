@@ -1,5 +1,5 @@
 import { Component, EventEmitter, Input, OnChanges, OnInit, Output } from '@angular/core';
-import { UntypedFormBuilder, UntypedFormControl, UntypedFormGroup, Validators } from '@angular/forms';
+import { FormBuilder, FormControl, FormGroup, Validators } from '@angular/forms';
 import { LearningGoalService } from 'app/course/learning-goals/learningGoal.service';
 import { of } from 'rxjs';
 import { catchError, delay, map, switchMap } from 'rxjs/operators';
@@ -13,7 +13,7 @@ import { intersection } from 'lodash-es';
  * Async Validator to make sure that a learning goal title is unique within a course
  */
 export const titleUniqueValidator = (learningGoalService: LearningGoalService, courseId: number, initialTitle?: string) => {
-    return (learningGoalTitleControl: UntypedFormControl) => {
+    return (learningGoalTitleControl: FormControl<string | undefined>) => {
         return of(learningGoalTitleControl.value).pipe(
             delay(250),
             switchMap((title) => {
@@ -26,7 +26,7 @@ export const titleUniqueValidator = (learningGoalService: LearningGoalService, c
                         if (res.body) {
                             learningGoalTitles = res.body.map((learningGoal) => learningGoal.title!);
                         }
-                        if (learningGoalTitles.includes(title)) {
+                        if (title && learningGoalTitles.includes(title)) {
                             return {
                                 titleUnique: { valid: false },
                             };
@@ -72,12 +72,12 @@ export class LearningGoalFormComponent implements OnInit, OnChanges {
     @Output()
     formSubmitted: EventEmitter<LearningGoalFormData> = new EventEmitter<LearningGoalFormData>();
 
-    form: UntypedFormGroup;
+    form: FormGroup;
     selectedLectureInDropdown: Lecture;
     selectedLectureUnitsInTable: LectureUnit[] = [];
 
     constructor(
-        private fb: UntypedFormBuilder,
+        private fb: FormBuilder,
         private learningGoalService: LearningGoalService,
         private translateService: TranslateService,
         public lectureUnitService: LectureUnitService,
@@ -111,8 +111,12 @@ export class LearningGoalFormComponent implements OnInit, OnChanges {
             initialTitle = this.formData.title;
         }
         this.form = this.fb.group({
-            title: [undefined, [Validators.required, Validators.maxLength(255)], [this.titleUniqueValidator(this.learningGoalService, this.courseId, initialTitle)]],
-            description: [undefined, [Validators.maxLength(10000)]],
+            title: [
+                undefined as string | undefined,
+                [Validators.required, Validators.maxLength(255)],
+                [this.titleUniqueValidator(this.learningGoalService, this.courseId, initialTitle)],
+            ],
+            description: [undefined as string | undefined, [Validators.maxLength(10000)]],
         });
         this.selectedLectureUnitsInTable = [];
     }

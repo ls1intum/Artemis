@@ -7,7 +7,7 @@ import { Exercise } from 'app/entities/exercise.model';
 import { Lecture } from 'app/entities/lecture.model';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { Post } from 'app/entities/metis/post.model';
-import { UntypedFormBuilder } from '@angular/forms';
+import { FormBuilder } from '@angular/forms';
 import { HttpResponse } from '@angular/common/http';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { ITEMS_PER_PAGE } from 'app/shared/constants/pagination.constants';
@@ -40,7 +40,7 @@ export class CourseDiscussionComponent extends CourseDiscussionDirective impleme
         protected metisService: MetisService,
         private activatedRoute: ActivatedRoute,
         private courseManagementService: CourseManagementService,
-        private formBuilder: UntypedFormBuilder,
+        private formBuilder: FormBuilder,
     ) {
         super(metisService);
     }
