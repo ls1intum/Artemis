@@ -300,6 +300,11 @@ export class NavbarComponent implements OnInit, OnDestroy {
             return;
         }
 
+        // Hide breadcrumbs in exam mode to avoid that students accidentally leave it
+        if (this.examModeActive()) {
+            return;
+        }
+
         // try catch for extra safety measures
         try {
             let currentPath = '/';
