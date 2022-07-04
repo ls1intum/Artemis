@@ -1,5 +1,5 @@
 import { POST } from '../../constants';
-import { COURSE_BASE } from './../../requests/CourseManagementRequests';
+import { COURSE_BASE } from '../../requests/CourseManagementRequests';
 /**
  * A class which encapsulates UI selectors and actions for the student exam management page.
  */
