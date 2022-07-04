@@ -3,8 +3,10 @@ import { getColor, groupActionsByTimestamp } from 'app/exam/monitoring/charts/mo
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ChartComponent } from 'app/exam/monitoring/charts/chart.component';
 import { NgxChartsSingleSeriesDataEntry } from 'app/shared/chart/ngx-charts-datatypes';
-import { ExamMonitoringWebsocketService } from '../../exam-monitoring-websocket.service';
+import { ExamActionService } from '../../exam-action.service';
 import { ActivatedRoute } from '@angular/router';
+import { ExamAction } from 'app/entities/exam-user-activity.model';
+import dayjs from 'dayjs/esm';
 
 @Component({
     selector: 'jhi-total-actions-chart',
@@ -13,8 +15,10 @@ import { ActivatedRoute } from '@angular/router';
 export class TotalActionsChartComponent extends ChartComponent implements OnInit, OnDestroy {
     readonly renderRate = 10;
 
-    constructor(route: ActivatedRoute, examMonitoringWebsocketService: ExamMonitoringWebsocketService, private artemisDatePipe: ArtemisDatePipe) {
-        super(route, examMonitoringWebsocketService, 'total-actions-chart', false, [getColor(2)]);
+    actionsPerTimestamp: Map<string, number> = new Map();
+
+    constructor(route: ActivatedRoute, examActionService: ExamActionService, private artemisDatePipe: ArtemisDatePipe) {
+        super(route, examActionService, 'total-actions-chart', false, [getColor(2)]);
     }
 
     ngOnInit() {
@@ -31,6 +35,13 @@ export class TotalActionsChartComponent extends ChartComponent implements OnInit
      * Create and initialize the data for the chart.
      */
     override initData() {
+        super.initData();
+        const groupedByTimestamp = groupActionsByTimestamp(this.filteredExamActions);
+
+        for (const [timestamp, actions] of Object.entries(groupedByTimestamp)) {
+            this.actionsPerTimestamp.set(timestamp, actions.length);
+        }
+
         this.createChartData();
     }
 
@@ -46,16 +57,32 @@ export class TotalActionsChartComponent extends ChartComponent implements OnInit
      * @private
      */
     private createChartData() {
-        const groupedByTimestamp = groupActionsByTimestamp(this.filteredExamActions);
-        const chartData: NgxChartsSingleSeriesDataEntry[] = [];
-        let amount = 0;
-        for (const timestamp of this.getLastXTimestamps()) {
-            const key = timestamp.toString();
-            if (key in groupedByTimestamp) {
-                amount += groupedByTimestamp[key].length;
+        const lastXTimestamps = this.getLastXTimestamps().map((timestamp) => timestamp.toString());
+
+        for (const timestamp of lastXTimestamps) {
+            if (!this.actionsPerTimestamp.has(timestamp)) {
+                this.actionsPerTimestamp.set(timestamp, 0);
             }
-            chartData.push({ name: this.artemisDatePipe.transform(timestamp, 'time', true), value: amount });
+        }
+
+        let totalTimestamps = 0;
+        const chartData: NgxChartsSingleSeriesDataEntry[] = [];
+
+        // We sort the map via keys in order to get the correct total amount of actions in each timestamp
+        const sortedMap = new Map([...this.actionsPerTimestamp.entries()].sort((a, b) => (dayjs(a[0]).isBefore(dayjs(b[0])) ? -1 : 1)));
+
+        for (const [timestamp, number] of sortedMap.entries()) {
+            totalTimestamps += number;
+            if (lastXTimestamps.includes(timestamp)) {
+                chartData.push({ name: this.artemisDatePipe.transform(timestamp, 'time', true), value: totalTimestamps });
+            }
         }
         this.ngxData = [{ name: 'actions', series: chartData }];
+    }
+
+    override evaluateAndAddAction(examAction: ExamAction) {
+        super.evaluateAndAddAction(examAction);
+        const key = examAction.ceiledTimestamp!.toString();
+        this.actionsPerTimestamp.set(key, (this.actionsPerTimestamp.get(key) ?? 0) + 1);
     }
 }

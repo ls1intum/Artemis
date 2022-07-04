@@ -17,7 +17,6 @@ import { By } from '@angular/platform-browser';
 import { MockComplaintService } from '../../helpers/mocks/service/mock-complaint.service';
 import dayjs from 'dayjs/esm';
 import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
-import { DeviceDetectorService } from 'ngx-device-detector';
 import { ModelingEditorComponent } from 'app/exercises/modeling/shared/modeling-editor.component';
 import { ModelingExercise, UMLDiagramType } from 'app/entities/modeling-exercise.model';
 import { ComplaintService } from 'app/complaints/complaint.service';
@@ -93,7 +92,6 @@ describe('ModelingSubmission Management Component', () => {
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: ActivatedRoute, useValue: route },
                 { provide: ParticipationWebsocketService, useClass: MockParticipationWebsocketService },
-                { provide: DeviceDetectorService },
             ],
         })
             .overrideModule(ArtemisTestModule, { set: { declarations: [], exports: [] } })

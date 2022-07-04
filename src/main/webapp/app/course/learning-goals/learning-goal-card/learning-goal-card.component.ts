@@ -36,7 +36,7 @@ export class LearningGoalCardComponent implements OnInit, OnDestroy {
     constructor(private modalService: NgbModal, public lectureUnitService: LectureUnitService, public translateService: TranslateService) {}
 
     ngOnInit(): void {
-        if (this.isPrerequisite || !this.learningGoalProgress || this.learningGoalProgress.totalPointsAchievableByStudentsInLearningGoal === 0) {
+        if (this.isPrerequisite || !this.learningGoalProgress) {
             this.isProgressAvailable = false;
         } else {
             this.isProgressAvailable = true;
@@ -48,7 +48,7 @@ export class LearningGoalCardComponent implements OnInit, OnDestroy {
                 pointsAchieved = this.learningGoalProgress.averagePointsAchievedByStudentInLearningGoal;
             }
 
-            const progress = (pointsAchieved / this.learningGoalProgress.totalPointsAchievableByStudentsInLearningGoal) * 100;
+            const progress = (pointsAchieved / this.learningGoalProgress.totalPointsAchievableByStudentsInLearningGoal) * 100 || 0;
             this.progressInPercent = round(progress, 1);
         }
     }

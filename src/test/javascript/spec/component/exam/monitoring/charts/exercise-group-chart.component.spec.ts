@@ -11,9 +11,9 @@ import { getColor } from 'app/exam/monitoring/charts/monitoring-chart';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { Exam } from 'app/entities/exam.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
-import { SwitchedExerciseAction } from 'app/entities/exam-user-activity.model';
+import { ExamAction, ExamActionType, SwitchedExerciseAction } from 'app/entities/exam-user-activity.model';
 import { ExerciseTemplateChartComponent } from 'app/exam/monitoring/charts/exercises/exercise-template-chart.component';
-import { createTestExercises } from '../exam-monitoring-helper';
+import { createActions, createExamActionBasedOnType, createTestExercises } from '../exam-monitoring-helper';
 import { ExerciseGroupChartComponent } from 'app/exam/monitoring/charts/exercises/exercise-group-chart.component';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { MockWebsocketService } from '../../../../helpers/mocks/service/mock-websocket.service';
@@ -67,6 +67,7 @@ describe('Exercise Group Chart Component', () => {
         jest.restoreAllMocks();
     });
 
+    // On init
     it('should call initData on init without actions', () => {
         expect(comp.ngxData).toEqual([]);
 
@@ -104,5 +105,29 @@ describe('Exercise Group Chart Component', () => {
             { name: exerciseGroup2.title!, value: param.expect[1] },
         ]);
         expect(comp.ngxColor.domain).toEqual([getColor(0), getColor(1)]);
+    });
+
+    // Evaluate and add action
+    it('should evaluate and add action', () => {
+        const action = createExamActionBasedOnType(ExamActionType.ENDED_EXAM);
+        expect(comp.filteredExamActions).toEqual([]);
+
+        comp.evaluateAndAddAction(action);
+
+        const expectedMap = new Map();
+        expectedMap.set(action.examActivityId, undefined);
+
+        expect(comp.filteredExamActions).toEqual([action]);
+        expect(comp.currentExercisePerStudent).toEqual(expectedMap);
+    });
+
+    // Filter actions
+    it.each(createActions())('should filter action', (action: ExamAction) => {
+        expect(comp.filterRenderedData(action)).toBe(
+            action.type === ExamActionType.SWITCHED_EXERCISE ||
+                action.type === ExamActionType.SAVED_EXERCISE ||
+                action.type === ExamActionType.ENDED_EXAM ||
+                action.type === ExamActionType.HANDED_IN_EARLY,
+        );
     });
 });

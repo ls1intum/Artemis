@@ -46,6 +46,7 @@
                 "accepted": "Accepted",
                 "rejected": "Rejected",
                 "showAddressedComplaints": "Show addressed complaints",
+                "showOnlyAddressedComplaints": "Only show addressed complaints",
                 "hideAddressedComplaints": "Hide addressed complaints",
                 "loadAllComplaints": "Load all complaints",
                 "loadAllComplaintsExplanation": "The list only shows filed complaints about your assessments. You can load all complaints about all reviewers by clicking this button: ",

@@ -64,7 +64,7 @@ describe('FileUploadExercise Management Update Component', () => {
 
                 // THEN
                 expect(service.create).toHaveBeenCalledWith(entity);
-                expect(comp.isSaving).toEqual(false);
+                expect(comp.isSaving).toBeFalse();
             }));
         });
 
@@ -90,7 +90,7 @@ describe('FileUploadExercise Management Update Component', () => {
 
                 // THEN
                 expect(service.update).toHaveBeenCalledWith(entity, {});
-                expect(comp.isSaving).toEqual(false);
+                expect(comp.isSaving).toBeFalse();
             }));
         });
     });
@@ -108,7 +108,7 @@ describe('FileUploadExercise Management Update Component', () => {
             comp.ngOnInit();
             tick(); // simulate async
             // THEN
-            expect(comp.isExamMode).toEqual(true);
+            expect(comp.isExamMode).toBeTrue();
             expect(comp.fileUploadExercise).toEqual(fileUploadExercise);
         }));
     });
@@ -126,7 +126,7 @@ describe('FileUploadExercise Management Update Component', () => {
             comp.ngOnInit();
             tick(); // simulate async
             // THEN
-            expect(comp.isExamMode).toEqual(false);
+            expect(comp.isExamMode).toBeFalse();
             expect(comp.fileUploadExercise).toEqual(fileUploadExercise);
         }));
     });
