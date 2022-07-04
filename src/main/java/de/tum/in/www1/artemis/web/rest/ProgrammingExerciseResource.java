@@ -14,7 +14,6 @@ import org.eclipse.jgit.api.errors.GitAPIException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -288,7 +287,6 @@ public class ProgrammingExerciseResource {
     @PutMapping(PROGRAMMING_EXERCISES)
     @PreAuthorize("hasRole('EDITOR')")
     @FeatureToggle(Feature.ProgrammingExercises)
-    @CacheEvict(cacheNames = "exerciseTitle", key = "#updatedProgrammingExercise.id")
     public ResponseEntity<ProgrammingExercise> updateProgrammingExercise(@RequestBody ProgrammingExercise updatedProgrammingExercise,
             @RequestParam(value = "notificationText", required = false) String notificationText) {
         log.debug("REST request to update ProgrammingExercise : {}", updatedProgrammingExercise);
@@ -500,7 +498,6 @@ public class ProgrammingExerciseResource {
     @DeleteMapping(PROGRAMMING_EXERCISE)
     @PreAuthorize("hasRole('INSTRUCTOR')")
     @FeatureToggle(Feature.ProgrammingExercises)
-    @CacheEvict(cacheNames = "exerciseTitle", key = "#exerciseId")
     public ResponseEntity<Void> deleteProgrammingExercise(@PathVariable long exerciseId, @RequestParam(defaultValue = "false") boolean deleteStudentReposBuildPlans,
             @RequestParam(defaultValue = "false") boolean deleteBaseReposBuildPlans) {
         log.info("REST request to delete ProgrammingExercise : {}", exerciseId);
@@ -696,7 +693,6 @@ public class ProgrammingExerciseResource {
     @PutMapping(REEVALUATE_EXERCISE)
     @PreAuthorize("hasRole('EDITOR')")
     @FeatureToggle(Feature.ProgrammingExercises)
-    @CacheEvict(cacheNames = "exerciseTitle", key = "#programmingExercise.id")
     public ResponseEntity<ProgrammingExercise> reEvaluateAndUpdateProgrammingExercise(@PathVariable long exerciseId, @RequestBody ProgrammingExercise programmingExercise,
             @RequestParam(value = "deleteFeedback", required = false) Boolean deleteFeedbackAfterGradingInstructionUpdate) {
         log.debug("REST request to re-evaluate ProgrammingExercise : {}", programmingExercise);

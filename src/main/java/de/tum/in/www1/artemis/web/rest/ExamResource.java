@@ -17,7 +17,6 @@ import java.util.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.core.io.Resource;
 import org.springframework.http.MediaType;
@@ -161,7 +160,6 @@ public class ExamResource {
      */
     @PutMapping("/courses/{courseId}/exams")
     @PreAuthorize("hasRole('INSTRUCTOR')")
-    @CacheEvict(cacheNames = "examTitle", key = "#updatedExam.id")
     public ResponseEntity<Exam> updateExam(@PathVariable Long courseId, @RequestBody Exam updatedExam) throws URISyntaxException {
         log.debug("REST request to update an exam : {}", updatedExam);
         if (updatedExam.getId() == null) {
@@ -548,7 +546,6 @@ public class ExamResource {
      */
     @DeleteMapping("/courses/{courseId}/exams/{examId}")
     @PreAuthorize("hasRole('INSTRUCTOR')")
-    @CacheEvict(cacheNames = "examTitle", key = "#updatedExam.id")
     public ResponseEntity<Void> deleteExam(@PathVariable Long courseId, @PathVariable Long examId) {
         log.info("REST request to delete exam : {}", examId);
 

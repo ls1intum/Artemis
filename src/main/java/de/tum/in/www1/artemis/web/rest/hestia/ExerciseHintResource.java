@@ -7,7 +7,6 @@ import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -119,7 +118,6 @@ public class ExerciseHintResource {
      */
     @PutMapping("programming-exercises/{exerciseId}/exercise-hints/{exerciseHintId}")
     @PreAuthorize("hasRole('EDITOR')")
-    @CacheEvict(cacheNames = "exerciseHintTitle", key = "#{exerciseId + '-' + exerciseHintId}")
     public ResponseEntity<ExerciseHint> updateExerciseHint(@RequestBody ExerciseHint exerciseHint, @PathVariable Long exerciseHintId, @PathVariable Long exerciseId) {
         log.debug("REST request to update ExerciseHint : {}", exerciseHint);
 
@@ -330,7 +328,6 @@ public class ExerciseHintResource {
      */
     @DeleteMapping("programming-exercises/{exerciseId}/exercise-hints/{exerciseHintId}")
     @PreAuthorize("hasRole('EDITOR')")
-    @CacheEvict(cacheNames = "exerciseHintTitle", key = "#{exerciseId + '-' + exerciseHintId}")
     public ResponseEntity<Void> deleteExerciseHint(@PathVariable Long exerciseId, @PathVariable Long exerciseHintId) {
         log.debug("REST request to delete ExerciseHint : {}", exerciseHintId);
         ProgrammingExercise exercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);

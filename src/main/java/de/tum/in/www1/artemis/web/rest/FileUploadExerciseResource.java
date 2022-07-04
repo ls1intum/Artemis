@@ -10,7 +10,6 @@ import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.core.io.Resource;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -154,7 +153,6 @@ public class FileUploadExerciseResource {
      */
     @PutMapping("/file-upload-exercises/{exerciseId}")
     @PreAuthorize("hasRole('EDITOR')")
-    @CacheEvict(cacheNames = "exerciseTitle", key = "#fileUploadExercise.id")
     public ResponseEntity<FileUploadExercise> updateFileUploadExercise(@RequestBody FileUploadExercise fileUploadExercise,
             @RequestParam(value = "notificationText", required = false) String notificationText, @PathVariable Long exerciseId) {
         log.debug("REST request to update FileUploadExercise : {}", fileUploadExercise);
@@ -243,7 +241,6 @@ public class FileUploadExerciseResource {
      */
     @DeleteMapping("/file-upload-exercises/{exerciseId}")
     @PreAuthorize("hasRole('INSTRUCTOR')")
-    @CacheEvict(cacheNames = "exerciseTitle", key = "#exerciseId")
     public ResponseEntity<Void> deleteFileUploadExercise(@PathVariable Long exerciseId) {
         log.info("REST request to delete FileUploadExercise : {}", exerciseId);
         var exercise = fileUploadExerciseRepository.findByIdElseThrow(exerciseId);
@@ -291,7 +288,6 @@ public class FileUploadExerciseResource {
      */
     @PutMapping(Endpoints.REEVALUATE_EXERCISE)
     @PreAuthorize("hasRole('EDITOR')")
-    @CacheEvict(cacheNames = "exerciseTitle", key = "#fileUploadExercise.id")
     public ResponseEntity<FileUploadExercise> reEvaluateAndUpdateFileUploadExercise(@PathVariable long exerciseId, @RequestBody FileUploadExercise fileUploadExercise,
             @RequestParam(value = "deleteFeedback", required = false) Boolean deleteFeedbackAfterGradingInstructionUpdate) {
         log.debug("REST request to re-evaluate FileUploadExercise : {}", fileUploadExercise);
