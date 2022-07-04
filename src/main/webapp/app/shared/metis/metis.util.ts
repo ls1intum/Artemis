@@ -1,3 +1,4 @@
+import { Validators } from '@angular/forms';
 import { Params } from '@angular/router';
 
 export enum PostingEditType {
@@ -78,8 +79,10 @@ export interface PostContextFilter {
 export interface PostingContentPart {
     contentBeforeReference?: string; // string before occurrence of reference pattern -> only for the first PostContentPart in the content of a posting
     linkToReference?: RouteComponents; // link the reference navigates to
+    attachmentToReference?: string; // attachment link the reference opens
     queryParams?: Params; // params that are required for navigating
     referenceStr?: string; // string that is within the anchor tag
+    referenceType?: ReferenceType; // type of artifact to reference
     contentAfterReference?: string; // string after occurrence of reference pattern
 }
 
@@ -91,6 +94,18 @@ export interface PostingContentPart {
 export interface PatternMatch {
     startIndex: number;
     endIndex: number;
+    referenceType: ReferenceType;
+}
+
+export enum ReferenceType {
+    POST = 'POST',
+    LECTURE = 'LECTURE',
+    ATTACHMENT = 'ATTACHMENT',
+    PROGRAMMING = 'programming',
+    MODELING = 'modeling',
+    QUIZ = 'quiz',
+    TEXT = 'text',
+    FILE_UPLOAD = 'file-upload',
 }
 
 /**
@@ -109,3 +124,13 @@ export interface ContextInformation {
 export type RouteComponents = (string | number)[];
 
 export const MetisWebsocketChannelPrefix = '/topic/metis/';
+
+/**
+ * whitespace accepted only together with a character excluding newline character
+ */
+export const PostTitleValidationPattern = Validators.pattern(/^(.)*\S+(.)*$/);
+
+/**
+ * whitespace accepted only together with a character including newline character
+ * */
+export const PostContentValidationPattern = Validators.pattern(/^(\n|\r|.)*\S+(\n|\r|.)*$/);

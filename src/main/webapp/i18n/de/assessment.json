@@ -90,7 +90,12 @@
                     "showAll": "Alle anzeigen",
                     "showLocked": "Nur gesperrte anzeigen"
                 },
-                "bonusPointExplanation": "In dieser Aufgabe gibt es {{maxPoints}} Punkte und {{maxBonusPoints}} Bonuspunkte, somit können Studierende maximal {{maxPointsWithBonus}} Punkte erreichen, was einem Score von {{maxPercentage}}% entsprechen würde."
+                "bonusPointExplanation": "In dieser Aufgabe gibt es {{maxPoints}} Punkte und {{maxBonusPoints}} Bonuspunkte, somit können Studierende maximal {{maxPointsWithBonus}} Punkte erreichen, was einem Score von {{maxPercentage}}% entsprechen würde.",
+                "resetFilter": "Filter zurücksetzen",
+                "activeFilter": "Aktiver Filter",
+                "unassessedSubmissions": "Zeige nur nicht bewertete Abgaben",
+                "manuallyAssessedSubmissions": "Zeige nur manuell bewertete Abgaben",
+                "semiAutomaticallyAssessedSubmissions": "Zeige nur Abgaben, die mit automatischer Assisstenz bewertet wurden"
             },
             "locks": {
                 "home": {

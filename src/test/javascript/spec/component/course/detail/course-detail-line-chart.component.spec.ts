@@ -164,4 +164,19 @@ describe('CourseDetailLineChartComponent', () => {
 
         expect(component.showAverage).toBeTrue();
     });
+
+    it('should create an empty chart if no students are registered yet', () => {
+        const startDate = dayjs().subtract(4, 'weeks');
+        const endDate = startDate.add(32, 'weeks');
+        component.course = { id: 42, startDate, endDate };
+        component.numberOfStudentsInCourse = 0;
+        component.initialStats = initialStats;
+
+        component.ngOnChanges();
+
+        expect(component.data[0].series).toHaveLength(5);
+        for (let week = 0; week < 5; week++) {
+            expect(component.data[0].series[week].value).toBe(0);
+        }
+    });
 });

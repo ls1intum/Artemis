@@ -274,8 +274,43 @@ public class UserResource {
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> deleteUser(@PathVariable String login) {
         log.debug("REST request to delete User: {}", login);
+        if (userRepository.isCurrentUser(login)) {
+            throw new BadRequestAlertException("You cannot delete yourself", "userManagement", "cannotDeleteYourself");
+        }
         userService.deleteUser(login);
         return ResponseEntity.ok().headers(HeaderUtil.createAlert(applicationName, "userManagement.deleted", login)).build();
+    }
+
+    /**
+     * Delete users: deletes the provided users
+     *
+     * @param logins user logins to delete
+     * @return the ResponseEntity with status 200 (OK)
+     */
+    @DeleteMapping("users")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<List<String>> deleteUsers(@RequestParam(name = "login") List<String> logins) {
+        log.debug("REST request to delete {} users", logins.size());
+        List<String> deletedUsers = new java.util.ArrayList<>();
+
+        // Get current user and remove current user from list of logins
+        var currentUser = userRepository.getUser();
+        logins.remove(currentUser.getLogin());
+
+        for (String login : logins) {
+            try {
+                if (!userRepository.isCurrentUser(login)) {
+                    userService.deleteUser(login);
+                    deletedUsers.add(login);
+                }
+            }
+            catch (Exception exception) {
+                // In order to handle all users even if some users produce exceptions, we catch them and ignore them and proceed with the remaining users
+                log.error("REST request to delete user {} failed", login);
+                log.error(exception.getMessage(), exception);
+            }
+        }
+        return ResponseEntity.ok().headers(HeaderUtil.createAlert(applicationName, "userManagement.batch.deleted", String.valueOf(deletedUsers.size()))).body(deletedUsers);
     }
 
     @PutMapping("users/notification-date")

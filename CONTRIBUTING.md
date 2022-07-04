@@ -108,3 +108,15 @@ The folder structure is further divided into:
 - service
 
 The tests located in the folder `/app` are not working at the moment and are not included in the test runs.
+
+### Mutation Testing (Server-only)
+
+We (partially) use [PIT Mutation Testing](https://pitest.org/) for mutation testing on server side. It mutates the code to break or modify functionality and re-runs the tests to see if the tests can catch (kill) the mutations by failing. The test quality is assessed by checking the percentage of the mutations killed.
+
+Since there will be multiple mutations and re-runs, it can take significantly longer to execute compared to other server tests.
+
+Location of test files: `src/test/java` (Uses the same files in Server Testing)
+
+Execution command:      `./gradlew pitest -x webapp`
+
+The report will be at:   `build/reports/pitest/index.html`
