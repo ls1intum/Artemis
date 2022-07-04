@@ -6,7 +6,6 @@ import { GuidedTourComponent } from './guided-tour.component';
     declarations: [GuidedTourComponent],
     imports: [ArtemisSharedModule],
     exports: [GuidedTourComponent],
-    providers: [DeviceDetectorService],
     entryComponents: [GuidedTourComponent],
 })
 export class GuidedTourModule {}
