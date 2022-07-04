@@ -234,7 +234,7 @@ public class ProgrammingExerciseSolutionEntryResource {
         checkTestCaseContainsSolutionEntryElseThrow(testCase, solutionEntry);
 
         programmingExerciseSolutionEntryRepository.deleteById(solutionEntryId);
-        return ResponseEntity.noContent().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, solutionEntry.toString())).build();
+        return ResponseEntity.noContent().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, solutionEntry.getId().toString())).build();
     }
 
     /**
@@ -253,7 +253,7 @@ public class ProgrammingExerciseSolutionEntryResource {
         var entriesToDelete = programmingExerciseSolutionEntryRepository.findByExerciseIdWithTestCases(exercise.getId());
 
         programmingExerciseSolutionEntryRepository.deleteAll(entriesToDelete);
-        return ResponseEntity.noContent().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, "programmingExercise", exerciseId.toString())).build();
+        return ResponseEntity.noContent().build();
     }
 
     /**

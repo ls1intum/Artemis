@@ -2,7 +2,15 @@
     <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
 </div>
 <div class="d-flex justify-content-start button-row">
-    <button type="button" class="btn btn-primary" (click)="openManualEntryCreationModal()">Create manual fragment</button>
+    <button
+        type="button"
+        class="btn btn-primary"
+        jhiTranslate="artemisApp.codeHint.management.step3.createManualFragmentButton.label"
+        [ngbTooltip]="'artemisApp.codeHint.management.step3.createManualFragmentButton.tooltip' | artemisTranslate"
+        (click)="openManualEntryCreationModal()"
+    >
+        Create manual fragment
+    </button>
     <button
         type="button"
         class="btn btn-primary"
@@ -23,13 +31,12 @@
         Generate behavioral entries
     </button>
     <button
-        jhiDeleteButton
+        jhiTranslate="artemisApp.codeHint.management.step3.deleteAllEntriesButton.label"
+        [ngbTooltip]="'artemisApp.codeHint.management.step3.deleteAllEntriesButton.tooltip' | artemisTranslate"
         type="button"
+        class="btn btn-danger"
         [disabled]="!solutionEntries?.length"
-        [entityTitle]="exercise?.id?.toString() ?? ''"
-        [deleteQuestion]="'artemisApp.learningGoal.learningGoalCard.delete.question'"
-        (delete)="deleteAllSolutionEntries()"
-        [dialogError]="dialogError$"
+        (click)="openBulkDeletionModal()"
     ></button>
 </div>
 <div class="table-responsive">
@@ -72,7 +79,7 @@
                         <button
                             jhiDeleteButton
                             [entityTitle]="entry?.id?.toString() ?? ''"
-                            [deleteQuestion]="'artemisApp.learningGoal.learningGoalCard.delete.question'"
+                            deleteQuestion="artemisApp.codeHint.management.step3.deleteIndividualEntryButton.question"
                             (delete)="deleteSolutionEntry(entry)"
                             [dialogError]="dialogError$"
                         >

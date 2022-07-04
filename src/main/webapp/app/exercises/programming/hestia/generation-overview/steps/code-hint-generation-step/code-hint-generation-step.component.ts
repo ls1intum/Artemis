@@ -4,6 +4,7 @@ import { CodeHint } from 'app/entities/hestia/code-hint-model';
 import { faWrench } from '@fortawesome/free-solid-svg-icons';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { CodeHintService } from 'app/exercises/shared/exercise-hint/services/code-hint.service';
+import { AlertService } from 'app/core/util/alert.service';
 
 @Component({
     selector: 'jhi-code-hint-generation-step',
@@ -22,7 +23,7 @@ export class CodeHintGenerationStepComponent implements OnInit {
 
     faWrench = faWrench;
 
-    constructor(private exerciseService: ProgrammingExerciseService, private codeHintService: CodeHintService) {}
+    constructor(private exerciseService: ProgrammingExerciseService, private codeHintService: CodeHintService, private alertService: AlertService) {}
 
     ngOnInit() {
         this.isLoading = true;
@@ -32,7 +33,10 @@ export class CodeHintGenerationStepComponent implements OnInit {
                 this.onCodeHintsLoaded.emit(this.codeHints);
                 this.isLoading = false;
             },
-            error: () => {},
+            error: (error) => {
+                this.isLoading = false;
+                this.alertService.error(error.message);
+            },
         });
     }
 
@@ -40,11 +44,19 @@ export class CodeHintGenerationStepComponent implements OnInit {
         this.isLoading = true;
         this.codeHintService.generateCodeHintsForExercise(this.exercise?.id!, deleteOldHints).subscribe({
             next: (generatedHints) => {
-                this.codeHints = generatedHints;
+                if (deleteOldHints) {
+                    this.codeHints = generatedHints;
+                } else {
+                    generatedHints.forEach((generatedHint) => this.codeHints?.push(generatedHint));
+                }
                 this.onCodeHintsLoaded.emit(this.codeHints);
                 this.isLoading = false;
+                this.alertService.success('artemisApp.codeHint.management.step4.' + (deleteOldHints ? 'recreateHintsButton' : 'updateHintsButton') + '.success');
             },
-            error: () => {},
+            error: (error) => {
+                this.isLoading = false;
+                this.alertService.error(error.message);
+            },
         });
     }
 }

@@ -34,6 +34,10 @@
                     "name": "Lösungs-Einträge",
                     "description": "In diesem Schritt kannst du die einzelnen Einträge auswählen, aus denen Code-Hinweise erstellt werden.",
                     "notGenerated": "Bisher wurden keine Einträge generiert.",
+                    "createManualFragmentButton": {
+                        "label": "Erstelle manuellen Eintrag",
+                        "tooltip": "Eintrag manuell mit zugehörigem Test und Datei erstellen."
+                    },
                     "structuralEntriesButton": {
                         "label": "Strukturelle Einträge generieren",
                         "tooltip": "Erstellt Einträge für strukturelle Tests. Bereits existierende strukturelle Einträge werden überschrieben."
@@ -44,7 +48,13 @@
                     },
                     "deleteAllEntriesButton": {
                         "label": "Alle Eintrage löschen",
-                        "tooltip": "Löscht alle Einträge."
+                        "tooltip": "Löscht alle Einträge für diese Aufgabe.",
+                        "question": "Bist du dir sicher, dass du alle Einträge für diese Aufgabe löschen möchtest?",
+                        "title": "Alle Einträge löschen",
+                        "success": "Alle Einträge wurden erfolgreich gelöscht"
+                    },
+                    "deleteIndividualEntryButton": {
+                        "question": "Bist du dir sicher, dass du den Eintrag mit ID {{ title }} löschen möchtest?"
                     }
                 },
                 "step4": {
@@ -53,16 +63,23 @@
                     "title": "Titel",
                     "task": "Aufgabe",
                     "notGenerated": "Bisher wurden keine Code-Hinweise generiert.",
-                    "recreateHintsButton": {
-                        "label": "Code-Hinweise neu erstellen",
-                        "tooltip": "Erstellt Code-Hinweise aus den ausgewählten Einträgen. Existierende Einträge werden überschrieben."
-                    },
                     "updateHintsButton": {
                         "label": "Code-Hinweise aktualisieren",
-                        "tooltip": "Aktualisiert die Code-Hinweise, indem die existierenden Lösungsfragmente neu zugewiesen werden. Der Titel, Beschreibung und Inhalt bleiben unverändert."
+                        "tooltip": "Erstellt neue Code-Hinweise, indem die existierenden Lösungsfragmente neu zugewiesen werden. Titel, Beschreibung und Inhalt bleiben unverändert beim ursprünglichen Hinweis.",
+                        "success": "Code-Hinweise erfolgreich aktualisiert"
+                    },
+                    "recreateHintsButton": {
+                        "label": "Code-Hinweise neu erstellen",
+                        "tooltip": "Erstellt Code-Hinweise aus den ausgewählten Einträgen. Existierende Einträge werden überschrieben.",
+                        "success": "Code-Hinweise erfolgreich neu erstellt"
                     }
                 }
             }
+        },
+        "programmingExerciseSolutionEntry": {
+            "created": "Neues Lösungsfragment erstellt mit ID {{ param }}",
+            "updated": "Lösungsfragment aktualisiert mit ID {{ param }}",
+            "deleted": "Lösungsfragment gelöscht mit ID {{ param }}"
         }
     }
 }

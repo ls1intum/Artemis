@@ -45,14 +45,14 @@ export class ManualSolutionEntryCreationModalComponent implements OnInit, OnDest
             next: (testCases) => {
                 this.testCases = testCases;
             },
-            error: () => {},
+            error: (error) => this.dialogErrorSource.error(error.message),
         });
         // TODO: change to only return the file names
         this.exerciseService.getSolutionRepositoryTestFilesWithContent(this.exerciseId).subscribe({
             next: (res) => {
                 this.solutionRepositoryFilesWithContent = res;
             },
-            error: () => {},
+            error: (error) => this.dialogErrorSource.error(error.message),
         });
     }
 
@@ -67,9 +67,7 @@ export class ManualSolutionEntryCreationModalComponent implements OnInit, OnDest
                 this.onEntryCreated.emit(createdEntry);
                 this.activeModal.close();
             },
-            error: (error) => {
-                this.dialogErrorSource.error(error.message);
-            },
+            error: (error) => this.dialogErrorSource.error(error.message),
         });
     }
 }

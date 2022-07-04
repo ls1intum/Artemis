@@ -2,6 +2,7 @@ import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { ProgrammingExerciseFullGitDiffReport } from 'app/entities/hestia/programming-exercise-full-git-diff-report.model';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { AlertService } from 'app/core/util/alert.service';
 
 @Component({
     selector: 'jhi-diff-generation-step',
@@ -18,7 +19,7 @@ export class DiffGenerationStepComponent implements OnInit {
     isLoading = false;
     gitDiffReport?: ProgrammingExerciseFullGitDiffReport;
 
-    constructor(private exerciseService: ProgrammingExerciseService) {}
+    constructor(private exerciseService: ProgrammingExerciseService, private alertService: AlertService) {}
 
     ngOnInit() {
         this.isLoading = true;
@@ -28,8 +29,9 @@ export class DiffGenerationStepComponent implements OnInit {
                 this.isLoading = false;
                 this.onGitDiffLoaded.emit(report);
             },
-            error: () => {
+            error: (error) => {
                 this.isLoading = false;
+                this.alertService.error(error.message);
             },
         });
     }

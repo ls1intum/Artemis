@@ -2,6 +2,7 @@ import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { CoverageReport } from 'app/entities/hestia/coverage-report.model';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { AlertService } from 'app/core/util/alert.service';
 
 @Component({
     selector: 'jhi-coverage-generation-step',
@@ -19,7 +20,7 @@ export class CoverageGenerationStepComponent implements OnInit {
     coverageReport?: CoverageReport;
     fileContentByPath = new Map<string, string>();
 
-    constructor(private exerciseService: ProgrammingExerciseService) {}
+    constructor(private exerciseService: ProgrammingExerciseService, private alertService: AlertService) {}
 
     ngOnInit(): void {
         this.isLoading = true;
@@ -32,8 +33,9 @@ export class CoverageGenerationStepComponent implements OnInit {
                         this.coverageReport = coverageReport;
                         this.fileContentByPath = filesWithContent;
                     },
-                    error: () => {
+                    error: (error) => {
                         this.isLoading = false;
+                        this.alertService.error(error.message);
                     },
                 });
             },

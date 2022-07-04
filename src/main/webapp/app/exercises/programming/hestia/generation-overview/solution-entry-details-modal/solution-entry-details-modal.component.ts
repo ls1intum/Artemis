@@ -32,9 +32,7 @@ export class SolutionEntryDetailsModalComponent implements OnDestroy {
                 this.solutionEntry = updatedEntry;
                 this.activeModal.close();
             },
-            error: (error) => {
-                this.dialogErrorSource.error(error.message);
-            },
+            error: (error) => this.dialogErrorSource.error(error.message),
         });
     }
 }
