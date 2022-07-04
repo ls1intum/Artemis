@@ -652,6 +652,18 @@ public class CourseTestService {
         }
     }
 
+    // Tests the amount of DB calls for a 'realistic' call to courses/for-dashboard. We should aim to maintain or lower the amount of DB calls, and be aware if they increase
+    public void testGetAllCoursesForDashboardRealisticQueryCount() throws Exception {
+        //
+        database.createMultipleCoursesWithAllExercisesAndLectures(10, 10);
+
+        hibernateQueryInterceptor.startQueryCount();
+
+        request.getList("/api/courses/for-dashboard", HttpStatus.OK, Course.class);
+
+        assertThat(hibernateQueryInterceptor.getQueryCount()).isEqualTo(34);
+    }
+
     // Test
     public void testGetCoursesWithoutActiveExercises() throws Exception {
         Course course = ModelFactory.generateCourse(1L, null, null, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");

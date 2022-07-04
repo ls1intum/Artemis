@@ -222,6 +222,12 @@ public class CourseBitbucketBambooJiraIntegrationTest extends AbstractSpringInte
     }
 
     @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void testGetAllCoursesForDashboardRealisticQueryCount() throws Exception {
+        courseTestService.testGetAllCoursesForDashboardRealisticQueryCount();
+    }
+
+    @Test
     @WithMockUser(username = "tutor1", roles = "TA")
     public void testGetCoursesWithoutActiveExercises() throws Exception {
         courseTestService.testGetCoursesWithoutActiveExercises();
