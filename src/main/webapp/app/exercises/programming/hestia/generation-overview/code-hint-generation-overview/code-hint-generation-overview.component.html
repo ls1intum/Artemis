@@ -5,7 +5,13 @@
 <div *ngIf="isPerformedByStep?.size && currentStep !== undefined && exercise">
     <div class="row">
         <div class="col">
-            <button *ngIf="allowBehavioralEntryGeneration ? currentStep !== 0 : currentStep !== 2" class="btn btn-primary" type="button" (click)="onPreviousStep()">
+            <button
+                *ngIf="allowBehavioralEntryGeneration ? currentStep !== 0 : currentStep !== 2"
+                type="button"
+                class="btn btn-primary"
+                jhiTranslate="artemisApp.codeHint.management.previousButton.label"
+                (click)="onPreviousStep()"
+            >
                 Previous
             </button>
         </div>
@@ -17,12 +23,22 @@
             ></jhi-code-hint-generation-status>
         </div>
         <div class="col text-end">
-            <jhi-help-icon *ngIf="!isNextStepAvailable()" placement="auto" text="artemisApp.codeHint.management.nextTooltip"></jhi-help-icon>
-            <button *ngIf="currentStep !== 3" class="btn btn-primary" type="button" [disabled]="!isNextStepAvailable()" (click)="onNextStep()">Next</button>
+            <jhi-help-icon *ngIf="!isNextStepAvailable()" placement="auto" text="artemisApp.codeHint.management.nextButton.tooltip"></jhi-help-icon>
+            <button
+                *ngIf="currentStep !== 3"
+                type="button"
+                class="btn btn-primary"
+                jhiTranslate="artemisApp.codeHint.management.nextButton.label"
+                [disabled]="!isNextStepAvailable()"
+                (click)="onNextStep()"
+            >
+                Next
+            </button>
         </div>
     </div>
 
     <hr />
+    <!-- Use CSS attribute "hidden" attribute instead of *ngIf, because we don't want the components to re-render (and remain in the DOM) when switching the index -->
     <ng-container *ngIf="exercise">
         <jhi-diff-generation-step
             *ngIf="allowBehavioralEntryGeneration"

@@ -31,10 +31,10 @@
         Generate behavioral entries
     </button>
     <button
-        jhiTranslate="artemisApp.codeHint.management.step3.deleteAllEntriesButton.label"
-        [ngbTooltip]="'artemisApp.codeHint.management.step3.deleteAllEntriesButton.tooltip' | artemisTranslate"
         type="button"
         class="btn btn-danger"
+        jhiTranslate="artemisApp.codeHint.management.step3.deleteAllEntriesButton.label"
+        [ngbTooltip]="'artemisApp.codeHint.management.step3.deleteAllEntriesButton.tooltip' | artemisTranslate"
         [disabled]="!solutionEntries?.length"
         (click)="openBulkDeletionModal()"
     ></button>

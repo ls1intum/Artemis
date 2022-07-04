@@ -227,9 +227,7 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
     }
 
     /**
-     * GET /repository/{participationId}/file-names
-     *
-     * Gets the file names of the repository
+     * GET /repository/{participationId}/file-names: Gets the file names of the repository
      *
      * @param participationId participation of the student/template/solution
      * @return the ResponseEntity with status 200 (OK) and a set of file names

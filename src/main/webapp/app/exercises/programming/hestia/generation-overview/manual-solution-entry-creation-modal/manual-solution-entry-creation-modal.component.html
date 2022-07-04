@@ -6,7 +6,7 @@
     <div class="modal-body">
         <div class="form-group">
             <div>
-                <label class="label-narrow" for="field_test">Test</label>
+                <label class="label-narrow" for="field_test" jhiTranslate="artemisApp.programmingExerciseSolutionEntry.test">Test Name</label>
                 <jhi-help-icon placement="auto" text=""></jhi-help-icon>
             </div>
             <select *ngIf="testCases?.length" class="form-select" required name="test" [(ngModel)]="this.solutionEntry.testCase" id="field_test">
@@ -15,7 +15,7 @@
         </div>
         <div class="form-group">
             <div>
-                <label class="label-narrow" for="field_path">File</label>
+                <label class="label-narrow" for="field_path" jhiTranslate="artemisApp.programmingExerciseSolutionEntry.file">File</label>
                 <jhi-help-icon placement="auto" text=""></jhi-help-icon>
             </div>
             <select *ngIf="solutionRepositoryFileNames?.length" class="form-select" required name="path" [(ngModel)]="this.solutionEntry.filePath" id="field_path">
@@ -25,7 +25,13 @@
         <div class="d-flex flex-row">
             <jhi-solution-entry class="flex-grow-1" [solutionEntry]="solutionEntry" [enableEditing]="true"></jhi-solution-entry>
             <div class="ps-2 flex-grow-0">
-                <button type="button" class="btn btn-primary" [disabled]="!(solutionEntry?.code && solutionEntry.testCase && solutionEntry.filePath)" (click)="onCreateEntry()">
+                <button
+                    type="button"
+                    class="btn btn-primary"
+                    jhiTranslate="entity.action.delete"
+                    (click)="onCreateEntry()"
+                    [disabled]="!(solutionEntry?.code && solutionEntry.testCase && solutionEntry.filePath)"
+                >
                     Save
                 </button>
             </div>

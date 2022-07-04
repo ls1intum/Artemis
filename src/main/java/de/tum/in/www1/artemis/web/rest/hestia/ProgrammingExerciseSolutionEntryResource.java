@@ -238,7 +238,7 @@ public class ProgrammingExerciseSolutionEntryResource {
     }
 
     /**
-     * DELETE programming-exercises/:exerciseId/solution-entries
+     * DELETE programming-exercises/:exerciseId/solution-entries: Delete all solution entries for a programming exercise
      * @param exerciseId of the exercise
      * @return the {@link ResponseEntity} with status {@code 204},
      * or with status {@code 404} if the exerciseId is not valid.

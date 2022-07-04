@@ -17,9 +17,13 @@
             "deleted": "Exercise Hint gelöscht mit ID {{ param }}",
             "management": {
                 "title": "Code-Hinweise verwalten",
-                "previous": "Zurück",
-                "next": "Weiter",
-                "nextTooltip": "Der aktuelle Schritt muss erfolgreich ausgeführt seien, damit fortgefahren werden kann.",
+                "previousButton": {
+                    "label": "Zurück"
+                },
+                "nextButton": {
+                    "label": "Weiter",
+                    "tooltip": "Der aktuelle Schritt muss erfolgreich ausgeführt seien, damit fortgefahren werden kann."
+                },
                 "step1": {
                     "name": "Git-Diff Report",
                     "description": "Der Git-Diff Report wird automatisch für das Template- und Lösungs-Repository erstellt.",
@@ -77,9 +81,13 @@
             }
         },
         "programmingExerciseSolutionEntry": {
+            "simplifiedName": "Lösungsfragment",
             "created": "Neues Lösungsfragment erstellt mit ID {{ param }}",
             "updated": "Lösungsfragment aktualisiert mit ID {{ param }}",
-            "deleted": "Lösungsfragment gelöscht mit ID {{ param }}"
+            "deleted": "Lösungsfragment gelöscht mit ID {{ param }}",
+            "test": "Test",
+            "file": "Datei",
+            "changeContentNote": "Hinweis: Änderungen an diesem Fragment werden für Hinweise mit diesem Fragment automatisch übernommen."
         }
     }
 }

@@ -17,9 +17,13 @@
             "deleted": "Deleted Code Hint with identifier {{ param }}",
             "management": {
                 "title": "Code Hint Management",
-                "previous": "Back",
-                "next": "Next",
-                "nextTooltip": "The current step has to be performed to proceed.",
+                "previousButton": {
+                    "label": "Back"
+                },
+                "nextButton": {
+                    "label": "Next",
+                    "tooltip": "The current step has to be performed to proceed."
+                },
                 "step1": {
                     "name": "Git-Diff Report",
                     "description": "The git-diff report is created automatically for the template and solution repositories for every submission to either of the repositories.",
@@ -77,9 +81,13 @@
             }
         },
         "programmingExerciseSolutionEntry": {
+            "simplifiedName": "Solution fragment",
             "created": "Created solution fragment with ID {{ param }}",
             "updated": "Updated solution fragment with ID {{ param }}",
-            "deleted": "Deleted solution fragment with ID {{ param }}"
+            "deleted": "Deleted solution fragment with ID {{ param }}",
+            "test": "Test",
+            "file": "File",
+            "changeContentNote": "Note: Changes apply to the fragments in existing code hints that contain this fragment."
         }
     }
 }

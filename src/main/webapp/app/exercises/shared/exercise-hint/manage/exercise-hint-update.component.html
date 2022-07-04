@@ -47,9 +47,16 @@
                     <jhi-code-hint-container [codeHint]="exerciseHint | castToCodeHint" [enableEditing]="true"></jhi-code-hint-container>
                 </div>
                 <div *ngIf="exerciseHint.type === HintType.CODE" class="btn-group">
-                    <button type="button" class="btn btn-primary" (click)="onOpenManualEntryCreationModal()">Create new solution entry</button>
+                    <button
+                        type="button"
+                        class="btn btn-primary"
+                        jhiTranslate="artemisApp.codeHint.management.step3.createManualFragmentButton.label"
+                        (click)="openManualEntryCreationModal()"
+                    >
+                        Create new solution entry
+                    </button>
                 </div>
-                <div *ngIf="exerciseHint?.exercise?.id" class="form-group">
+                <div *ngIf="exercise?.id" class="form-group mt-3">
                     <label class="form-control-label" jhiTranslate="artemisApp.exerciseHint.exercise" for="field_exercise">Exercise</label>
                     <input
                         type="text"
@@ -58,7 +65,7 @@
                         name="exercise"
                         id="field_exercise"
                         [disabled]="true"
-                        [ngModel]="exerciseHint.exercise && exerciseHint.exercise.title + ' (ID: ' + exerciseHint.exercise.id + ')'"
+                        [ngModel]="exercise && exercise.title + ' (ID: ' + exercise.id + ')'"
                     />
                 </div>
             </div>
@@ -66,7 +73,7 @@
                 <button type="button" id="cancel-save" class="btn btn-secondary" (click)="previousState()">
                     <fa-icon [icon]="faBan"></fa-icon>&nbsp;<span jhiTranslate="entity.action.cancel">Cancel</span>
                 </button>
-                <button type="submit" id="save-entity" [disabled]="hintForm.invalid || isSaving || !exerciseId" class="btn btn-primary">
+                <button type="submit" id="save-entity" [disabled]="hintForm.invalid || isSaving || !exercise.id" class="btn btn-primary">
                     <fa-icon [icon]="faSave"></fa-icon>&nbsp;<span jhiTranslate="entity.action.save">Save</span>
                 </button>
             </div>

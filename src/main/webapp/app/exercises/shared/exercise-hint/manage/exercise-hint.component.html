@@ -2,10 +2,8 @@
     <h2 id="page-heading">
         <span jhiTranslate="artemisApp.exerciseHint.home.title">Exercise Hints</span>
 
-        <!--
-        TODO: only display for java programming exercise
-        -->
         <a
+            *ngIf="!!exercise?.testwiseCoverageEnabled"
             id="jh-code-hints"
             [class]="containsCodeHints ? 'btn-secondary' : 'btn-primary'"
             class="btn float-end jh-create-entity create-exercise-hint"
