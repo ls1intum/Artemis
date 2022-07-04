@@ -2390,4 +2390,83 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     public void testGetExamTitleForNonExistingExam() throws Exception {
         request.get("/api/exams/123124123123/title", HttpStatus.NOT_FOUND, String.class);
     }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testGetExamForImportWithExercises_successful() throws Exception {
+        Exam received = request.get("/api/exams/" + exam2.getId(), HttpStatus.OK, Exam.class);
+        assertEquals(exam2, received);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor6", roles = "INSTRUCTOR")
+    public void testGetExamForImportWithExercises_noInstructorAccess() throws Exception {
+        request.get("/api/exams/" + exam2.getId(), HttpStatus.FORBIDDEN, Exam.class);
+    }
+
+    @Test
+    @WithMockUser(username = "tutor1", roles = "TUTOR")
+    public void testGetExamForImportWithExercises_noTutorAccess() throws Exception {
+        request.get("/api/exams/" + exam2.getId(), HttpStatus.FORBIDDEN, Exam.class);
+    }
+
+    @Test
+    @WithMockUser(username = "editor1", roles = "EDITOR")
+    public void testGetExamForImportWithExercises_noEditorAccess() throws Exception {
+        request.get("/api/exams/" + exam2.getId(), HttpStatus.FORBIDDEN, Exam.class);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testGetAllExamsOnPage_WithoutExercises_instructor_successful() throws Exception {
+        final PageableSearchDTO<String> search = database.configureSearch("");
+        final var result = request.get("/api/exams", HttpStatus.OK, SearchResultPageDTO.class, database.searchMapping(search));
+        assertThat(result.getResultsOnPage()).hasSize(2);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testGetAllExamsOnPage_WithExercises_instructor_successful() throws Exception {
+        final PageableSearchDTO<String> search = database.configureSearch("");
+        final var result = request.get("/api/exams?withExercises=true", HttpStatus.OK, SearchResultPageDTO.class, database.searchMapping(search));
+        assertThat(result.getResultsOnPage()).hasSize(1);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testGetAllExamsOnPage_WithoutExercisesAndExamsNotLinkedToCourse_instructor_successful() throws Exception {
+        Course course3 = database.addEmptyCourse();
+        course3.setInstructorGroupName("non-instructors");
+        courseRepo.save(course3);
+        database.addExamWithExerciseGroup(course3, true);
+        final PageableSearchDTO<String> search = database.configureSearch("");
+        final var result = request.get("/api/exams", HttpStatus.OK, SearchResultPageDTO.class, database.searchMapping(search));
+        assertThat(result.getResultsOnPage()).hasSize(2);
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    public void testGetAllExamsOnPage_WithoutExercisesAndExamsNotLinkedToCourse_admin_successful() throws Exception {
+        Course course3 = database.addEmptyCourse();
+        course3.setInstructorGroupName("non-instructors");
+        courseRepo.save(course3);
+        database.addExamWithExerciseGroup(course3, true);
+        final PageableSearchDTO<String> search = database.configureSearch("");
+        final var result = request.get("/api/exams", HttpStatus.OK, SearchResultPageDTO.class, database.searchMapping(search));
+        assertThat(result.getResultsOnPage()).hasSize(3);
+    }
+
+    @Test
+    @WithMockUser(username = "tutor1", roles = "TUTOR")
+    public void testGetAllExamsOnPage_tutor() throws Exception {
+        final PageableSearchDTO<String> search = database.configureSearch("");
+        request.get("/api/exams", HttpStatus.FORBIDDEN, SearchResultPageDTO.class, database.searchMapping(search));
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void testGetAllExamsOnPage_student() throws Exception {
+        final PageableSearchDTO<String> search = database.configureSearch("");
+        request.get("/api/exams", HttpStatus.FORBIDDEN, SearchResultPageDTO.class, database.searchMapping(search));
+    }
 }

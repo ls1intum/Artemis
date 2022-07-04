@@ -577,17 +577,7 @@ public class ProgrammingExerciseImportService {
 
     /**
      * Imports a programming exercise creating a new entity, copying all basic values and saving it in the database.
-     * All basic include everything except for repositories, or build plans on a remote version control server, or
-     * continuous integration server. <br>
-     * There are however, a couple of things that will never get copied:
-     * <ul>
-     *     <li>The ID</li>
-     *     <li>The template and solution participation</li>
-     *     <li>The number of complaints, assessments and more feedback requests</li>
-     *     <li>The tutor/student participations</li>
-     *     <li>The questions asked by students</li>
-     *     <li>The example submissions</li>
-     * </ul>
+     * This one is used for the Import of Programmiing Exercises during an Exam Import
      *
      * @param templateExercise The template exercise which should get imported
      * @param newExercise      The new exercise already containing values which should not get copied, i.e. overwritten

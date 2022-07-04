@@ -198,7 +198,7 @@ public class ExamImportService {
         exerciseGroupToCopy.getExercises().forEach(exerciseToCopy -> {
             // We need to set the new Exercise Group to the old exercise, so the new exercise group is correctly set for the new exercise
             exerciseToCopy.setExerciseGroup(exerciseGroupCopied);
-            Exercise exerciseCopied;
+            Exercise exerciseCopied = null;
 
             switch (exerciseToCopy.getExerciseType()) {
                 case MODELING -> {
@@ -221,15 +221,13 @@ public class ExamImportService {
                 }
 
                 case PROGRAMMING -> {
-                    final Optional<ProgrammingExercise> optionalOriginalProgrammingExercise = programmingExerciseRepository
-                            .findByIdWithEagerTestCasesStaticCodeAnalysisCategoriesHintsAndTemplateAndSolutionParticipationsAndAuxReposAndTasksWithTestCases(
-                                    exerciseToCopy.getId());
-                    // We do not want to abort the whole exam import process, we only skip the relevant exercise
-                    if (optionalOriginalProgrammingExercise.isEmpty()) {
-                        return;
-                    }
-                    exerciseCopied = programmingExerciseImportService.importProgrammingExerciseForExamImport(optionalOriginalProgrammingExercise.get(),
-                            (ProgrammingExercise) exerciseToCopy);
+                    /*
+                     * DOES NOT WORK- HELP (BADLY) NEEDED :) final Optional<ProgrammingExercise> optionalOriginalProgrammingExercise = programmingExerciseRepository
+                     * .findByIdWithEagerTestCasesStaticCodeAnalysisCategoriesHintsAndTemplateAndSolutionParticipationsAndAuxReposAndTasksWithTestCases( exerciseToCopy.getId()); //
+                     * We do not want to abort the whole exam import process, we only skip the relevant exercise if (optionalOriginalProgrammingExercise.isEmpty()) { return; }
+                     * exerciseCopied = programmingExerciseImportService.importProgrammingExerciseForExamImport(optionalOriginalProgrammingExercise.get(), (ProgrammingExercise)
+                     * exerciseToCopy);
+                     */
                 }
 
                 case FILE_UPLOAD -> {

@@ -337,7 +337,7 @@ public class ExamResource {
      * @return the ResponseEntity with status 200 (OK) and a list of exams. The list can be empty
      */
     @GetMapping("/exams")
-    @PreAuthorize("hasRole('INSTRUCTOR')")
+    @PreAuthorize("hasRole('EDITOR')")
     public ResponseEntity<SearchResultPageDTO<Exam>> getAllExamsOnPage(@RequestParam(defaultValue = "false") boolean withExercises, PageableSearchDTO<String> search) {
         final var user = userRepository.getUserWithGroupsAndAuthorities();
         return ResponseEntity.ok(examService.getAllOnPageWithSize(search, user, withExercises));
@@ -357,7 +357,6 @@ public class ExamResource {
         Exam exam = examService.findByIdWithExerciseGroupsAndExercisesElseThrow(examId);
         examAccessService.checkCourseAndExamAccessForInstructorElseThrow(exam.getCourse().getId(), examId);
 
-        examService.setExamProperties(exam);
         return ResponseEntity.ok(exam);
     }
 
