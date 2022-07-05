@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output, OnChanges } from '@angular/core';
+import { Component, EventEmitter, Input, Output, OnChanges, SimpleChanges } from '@angular/core';
 import { getLatestSubmissionResult, Submission } from 'app/entities/submission.model';
 
 /**
@@ -19,7 +19,7 @@ export class AssessmentFiltersComponent implements OnChanges {
     filterProp: FilterProp = FilterProp.ALL;
 
     @Input() submissions: Submission[] = [];
-    amountFilteredSubmissions: number;
+    @Input() amountFilteredSubmissions: number;
 
     @Output() filterChange = new EventEmitter<Submission[]>();
 
@@ -50,9 +50,11 @@ export class AssessmentFiltersComponent implements OnChanges {
         return submission && getLatestSubmissionResult(submission) && !getLatestSubmissionResult(submission)!.completionDate;
     }
 
-    ngOnChanges() {
-        this.amountFilteredSubmissions = this.submissions.filter((submission) => {
-            return AssessmentFiltersComponent.isSubmissionLocked(submission);
-        }).length;
+    ngOnChanges(changes: SimpleChanges): void {
+        if (!changes.amountFilteredSubmissions) {
+            this.amountFilteredSubmissions = this.submissions.filter((submission) => {
+                return AssessmentFiltersComponent.isSubmissionLocked(submission);
+            }).length;
+        }
     }
 }
