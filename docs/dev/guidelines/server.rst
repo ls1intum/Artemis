@@ -412,6 +412,38 @@ https://www.baeldung.com/spring-tests
 
 If you want to write tests for Programming Exercises to test student's submissions check out `this <https://confluence.ase.in.tum.de/display/ArTEMiS/Best+Practices+for+writing+Java+Programming+Exercise+Tests+in+Artemis>`__.
 
+23. Counting database query calls within tests
+==============================================
+
+It's possible to write tests for how many database calls are performed during a REST call. This is useful to ensure that code changes don't lead to more database calls,
+or at least to remind developers in case they do. It's especially important for commonly used endpoints that users access multiple times or every time they use Artemis.
+However, we should consider carefully before adding such assertions to a test as it makes the test more tedious to maintain.
+
+An example on how to track how many database calls are performed during a REST call is shown below. It's important to note that the ``hibernateQueryInterceptor.startQueryCount()``
+and the ``hibernateQueryInterceptor.getQueryCount()`` should be right before/after the REST call to avoid counting database queries performed during the setup/assertions.
+
+.. code-block:: java
+
+    public class TestClass {
+
+        @Autowired
+        private HibernateQueryInterceptor hibernateQueryInterceptor;
+
+        @Test
+        @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+        public void testQueryCount() throws Exception {
+
+            // Needs to be done right before the REST call to avoid counting queries during the setup
+            hibernateQueryInterceptor.startQueryCount();
+
+            Course receivedCourse = request.get("/api/courses/" + courses.get(0).getId() + "/for-dashboard", HttpStatus.OK, Course.class);
+
+            // Needs to be done right after the REST call to avoid counting queries during the assertions
+            assertThat(hibernateQueryInterceptor.getQueryCount()).isEqualTo(3);
+        }
+    }
+
+The library used for this is `Spring Hibernate Query Utils <https://github.com/yannbriancon/spring-hibernate-query-utils/>`_.
 
 23. Avoid using @MockBean
 =========================
