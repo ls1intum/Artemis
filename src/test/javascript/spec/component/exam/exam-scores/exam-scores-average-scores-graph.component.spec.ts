@@ -131,7 +131,7 @@ describe('ExamScoresAverageScoresGraphComponent', () => {
 
             component.onSelect(event);
 
-            expect(navigateToExerciseMock).toHaveBeenCalledTimes(0);
+            expect(navigateToExerciseMock).not.toHaveBeenCalled();
         });
 
         it('should not navigate if exercise type is missing', () => {
