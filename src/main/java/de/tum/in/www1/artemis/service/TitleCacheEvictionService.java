@@ -43,9 +43,11 @@ public class TitleCacheEvictionService implements PostUpdateEventListener, PostD
 
     @Override
     public void onPostUpdate(PostUpdateEvent event) {
-        int index = ArrayUtils.indexOf(event.getPersister().getPropertyNames(), event.getEntity() instanceof Organization ? "name" : "title");
-        if (index < 0 || !ArrayUtils.contains(event.getDirtyProperties(), index))
+        var titlePropertyName = event.getEntity() instanceof Organization ? "name" : "title";
+        int propertyIndex = ArrayUtils.indexOf(event.getPersister().getPropertyNames(), titlePropertyName);
+        if (propertyIndex < 0 || !ArrayUtils.contains(event.getDirtyProperties(), propertyIndex)) {
             return;
+        }
         evictEntityTitle(event.getEntity());
     }
 
