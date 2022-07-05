@@ -36,6 +36,7 @@ import de.tum.in.www1.artemis.service.connectors.VersionControlService;
 import de.tum.in.www1.artemis.service.feature.Feature;
 import de.tum.in.www1.artemis.service.feature.FeatureToggle;
 import de.tum.in.www1.artemis.service.programming.*;
+import de.tum.in.www1.artemis.web.rest.dto.BuildLogStatisticsDTO;
 import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
 import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
@@ -96,6 +97,8 @@ public class ProgrammingExerciseResource {
 
     private final SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository;
 
+    private final BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository;
+
     /**
      * Java package name Regex according to Java 14 JLS (<a href="https://docs.oracle.com/javase/specs/jls/se14/html/jls-7.html#jls-7.4.1">https://docs.oracle.com/javase/specs/jls/se14/html/jls-7.html#jls-7.4.1</a>),
      * with the restriction to a-z,A-Z,_ as "Java letter" and 0-9 as digits due to JavaScript/Browser Unicode character class limitations
@@ -119,7 +122,8 @@ public class ProgrammingExerciseResource {
             StaticCodeAnalysisService staticCodeAnalysisService, GradingCriterionRepository gradingCriterionRepository,
             Optional<ProgrammingLanguageFeatureService> programmingLanguageFeatureService, CourseRepository courseRepository, GitService gitService,
             AuxiliaryRepositoryService auxiliaryRepositoryService, SubmissionPolicyService submissionPolicyService,
-            SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository) {
+            SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository,
+            BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.programmingExerciseTestCaseRepository = programmingExerciseTestCaseRepository;
         this.userRepository = userRepository;
@@ -139,6 +143,7 @@ public class ProgrammingExerciseResource {
         this.auxiliaryRepositoryService = auxiliaryRepositoryService;
         this.submissionPolicyService = submissionPolicyService;
         this.solutionProgrammingExerciseParticipationRepository = solutionProgrammingExerciseParticipationRepository;
+        this.buildLogStatisticsEntryRepository = buildLogStatisticsEntryRepository;
     }
 
     /**
@@ -749,5 +754,26 @@ public class ProgrammingExerciseResource {
         var participation = solutionProgrammingExerciseParticipationRepository.findByProgrammingExerciseIdElseThrow(exerciseId);
 
         return new ModelAndView("forward:/api/repository/" + participation.getId() + "/files-content");
+    }
+
+    /**
+     * GET programming-exercise/:exerciseId/build-log-statistics
+     *
+     * Returns the solution repository files with content for a given programming exercise.
+     * Note: This endpoint redirects the request to the ProgrammingExerciseParticipationService. This is required if
+     * the solution participation id is not known for the client.
+     * @param exerciseId the exercise for which the solution repository files should be retrieved
+     * @return a redirect to the endpoint returning the files with content
+     */
+    @GetMapping(BUILD_LOG_STATISTICS)
+    @PreAuthorize("hasRole('EDITOR')")
+    @FeatureToggle(Feature.ProgrammingExercises)
+    public ResponseEntity<BuildLogStatisticsDTO> getBuildLogStatistics(@PathVariable Long exerciseId) {
+        log.debug("REST request to get builg log statistics for ProgrammingExercise with id : {}", exerciseId);
+        ProgrammingExercise exercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, exercise, null);
+
+        var buildLogStatistics = buildLogStatisticsEntryRepository.findAverageBuildLogStatisticsEntryForExercise(exercise);
+        return ResponseEntity.ok(buildLogStatistics);
     }
 }

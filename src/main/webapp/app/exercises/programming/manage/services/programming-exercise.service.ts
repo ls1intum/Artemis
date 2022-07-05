@@ -18,6 +18,7 @@ import { ProgrammingExerciseGitDiffReport } from 'app/entities/hestia/programmin
 import { CoverageReport } from 'app/entities/hestia/coverage-report.model';
 import { ProgrammingExerciseSolutionEntry } from 'app/entities/hestia/programming-exercise-solution-entry.model';
 import { ProgrammingExerciseServerSideTask } from 'app/entities/hestia/programming-exercise-task.model';
+import { BuildLogStatisticsDTO } from 'app/exercises/programming/manage/build-log-statistics-dto';
 
 export type EntityResponseType = HttpResponse<ProgrammingExercise>;
 export type EntityArrayResponseType = HttpResponse<ProgrammingExercise[]>;
@@ -485,5 +486,9 @@ export class ProgrammingExerciseService {
 
     createBehavioralSolutionEntries(exerciseId: number): Observable<ProgrammingExerciseSolutionEntry[]> {
         return this.http.post<ProgrammingExerciseSolutionEntry[]>(`${this.resourceUrl}/${exerciseId}/behavioral-solution-entries`, null);
+    }
+
+    getBuildLogStatistics(exerciseId: number): Observable<BuildLogStatisticsDTO> {
+        return this.http.get<BuildLogStatisticsDTO>(`${this.resourceUrl}/${exerciseId}/build-log-statistics`);
     }
 }

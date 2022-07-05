@@ -6,7 +6,7 @@
                 <constraints nullable="false" primaryKey="true" primaryKeyName="build_log_statistics_entryPK"/>
             </column>
             <column name="programming_submission_id" type="BIGINT"/>
-            <column name="docker_setup_duration" type="BIGINT"/>
+            <column name="agent_setup_duration" type="BIGINT"/>
             <column name="test_duration" type="BIGINT"/>
             <column name="sca_duration" type="BIGINT"/>
             <column name="total_job_duration" type="BIGINT"/>

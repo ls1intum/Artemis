@@ -423,6 +423,15 @@
                 "selectTests": "Select the tests for which the covered lines are marked:",
                 "filePath": "File Path",
                 "coveredLines": "Covered Lines"
+            },
+            "buildLogStatistics": {
+                "title": "Average build log statistics",
+                "numberOfBuilds": "# Builds",
+                "agentSetupDuration": "Setup build agent",
+                "testDuration": "Test execution",
+                "scaDuration": "Static Code Analysis",
+                "totalJobDuration": "Total Job",
+                "dependenciesDownloadedCount": "Number of downloaded dependencies"
             }
         },
         "error": {

@@ -80,7 +80,8 @@ public class BambooService extends AbstractContinuousIntegrationService {
     public BambooService(GitService gitService, ProgrammingSubmissionRepository programmingSubmissionRepository, Optional<VersionControlService> versionControlService,
             Optional<ContinuousIntegrationUpdateService> continuousIntegrationUpdateService, BambooBuildPlanService bambooBuildPlanService, FeedbackRepository feedbackRepository,
             @Qualifier("bambooRestTemplate") RestTemplate restTemplate, @Qualifier("shortTimeoutBambooRestTemplate") RestTemplate shortTimeoutRestTemplate, ObjectMapper mapper,
-            UrlService urlService, BuildLogEntryService buildLogService, TestwiseCoverageService testwiseCoverageService, BuildLogStatisticsEntryService buildLogStatisticsEntryService) {
+            UrlService urlService, BuildLogEntryService buildLogService, TestwiseCoverageService testwiseCoverageService,
+            BuildLogStatisticsEntryService buildLogStatisticsEntryService) {
         super(programmingSubmissionRepository, feedbackRepository, buildLogService, restTemplate, shortTimeoutRestTemplate);
         this.gitService = gitService;
         this.continuousIntegrationUpdateService = continuousIntegrationUpdateService;
@@ -349,7 +350,7 @@ public class BambooService extends AbstractContinuousIntegrationService {
     public void extractBuildLogStatistics(ProgrammingSubmission programmingSubmission, List<BuildLogEntry> buildLogEntries) {
         log.warn("Extracting build log stats");
         var jobStarted = buildLogEntries.stream().filter(b -> b.getLog().contains("started building on agent")).findFirst().map(BuildLogEntry::getTime).orElse(null);
-        var dockerSetupCompleted = buildLogEntries.stream().filter(b -> b.getLog().contains("Executing build")).findFirst().map(BuildLogEntry::getTime).orElse(null);
+        var agentSetupCompleted = buildLogEntries.stream().filter(b -> b.getLog().contains("Executing build")).findFirst().map(BuildLogEntry::getTime).orElse(null);
         var testsStarted = buildLogEntries.stream().filter(b -> b.getLog().contains("Starting task 'Tests'")).findFirst().map(BuildLogEntry::getTime).orElse(null);
         var testsFinished = buildLogEntries.stream().filter(b -> b.getLog().contains("Finished task 'Tests' with result")).findFirst().map(BuildLogEntry::getTime).orElse(null);
         var scaStarted = buildLogEntries.stream().filter(b -> b.getLog().contains("Starting task 'Static Code Analysis'")).findFirst().map(BuildLogEntry::getTime).orElse(null);
@@ -358,7 +359,7 @@ public class BambooService extends AbstractContinuousIntegrationService {
         var dependenciesDownloadedCount = buildLogEntries.stream().filter(b -> b.getLog().contains("Downloaded from central")).count();
 
         log.warn("jobStarted {}", jobStarted);
-        log.warn("dockerSetupCompleted {}", dockerSetupCompleted);
+        log.warn("agentSetupCompleted {}", agentSetupCompleted);
         log.warn("testsStarted {}", testsStarted);
         log.warn("testsFinished {}", testsFinished);
         log.warn("scaStarted {}", scaStarted);
@@ -366,7 +367,7 @@ public class BambooService extends AbstractContinuousIntegrationService {
         log.warn("jobFinished {}", jobFinished);
         log.warn("dependenciesDownloadedCount {}", dependenciesDownloadedCount);
 
-        buildLogStatisticsEntryService.saveBuildLogStatisticsEntry(programmingSubmission, jobStarted, dockerSetupCompleted, testsStarted, testsFinished, scaStarted, scaFinished,
+        buildLogStatisticsEntryService.saveBuildLogStatisticsEntry(programmingSubmission, jobStarted, agentSetupCompleted, testsStarted, testsFinished, scaStarted, scaFinished,
                 jobFinished, dependenciesDownloadedCount);
     }
 

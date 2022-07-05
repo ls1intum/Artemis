@@ -60,6 +60,8 @@ public final class ProgrammingExerciseResourceEndpoints {
 
     public static final String SOLUTION_REPOSITORY_FILES_WITH_CONTENT = PROGRAMMING_EXERCISE + "/solution-files-content";
 
+    public static final String BUILD_LOG_STATISTICS = PROGRAMMING_EXERCISE + "/build-log-statistics";
+
     private ProgrammingExerciseResourceEndpoints() {
     }
 }

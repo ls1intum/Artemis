@@ -18,12 +18,12 @@ public class BuildLogStatisticsEntryService {
         this.buildLogStatisticsEntryRepository = buildLogStatisticsEntryRepository;
     }
 
-    public BuildLogStatisticsEntry saveBuildLogStatisticsEntry(ProgrammingSubmission programmingSubmission, ZonedDateTime jobStarted, ZonedDateTime dockerSetupCompleted,
+    public BuildLogStatisticsEntry saveBuildLogStatisticsEntry(ProgrammingSubmission programmingSubmission, ZonedDateTime jobStarted, ZonedDateTime agentSetupCompleted,
             ZonedDateTime testsStarted, ZonedDateTime testsFinished, ZonedDateTime scaStarted, ZonedDateTime scaFinished, ZonedDateTime jobFinished,
             Long dependenciesDownloadedCount) {
-        Long dockerSetupDuration = null;
-        if (jobStarted != null && dockerSetupCompleted != null) {
-            dockerSetupDuration = ChronoUnit.SECONDS.between(jobStarted, dockerSetupCompleted);
+        Long agentSetupDuration = null;
+        if (jobStarted != null && agentSetupCompleted != null) {
+            agentSetupDuration = ChronoUnit.SECONDS.between(jobStarted, agentSetupCompleted);
         }
         Long testDuration = null;
         if (testsStarted != null && testsFinished != null) {
@@ -38,7 +38,7 @@ public class BuildLogStatisticsEntryService {
             totalJobDuration = ChronoUnit.SECONDS.between(jobStarted, jobFinished);
         }
 
-        BuildLogStatisticsEntry buildLogStatisticsEntry = new BuildLogStatisticsEntry(programmingSubmission, dockerSetupDuration, testDuration, scaDuration, totalJobDuration,
+        BuildLogStatisticsEntry buildLogStatisticsEntry = new BuildLogStatisticsEntry(programmingSubmission, agentSetupDuration, testDuration, scaDuration, totalJobDuration,
                 dependenciesDownloadedCount);
         return buildLogStatisticsEntryRepository.save(buildLogStatisticsEntry);
     }

@@ -150,11 +150,13 @@ public class ProgrammingExerciseGradingService {
 
                 continuousIntegrationService.get().extractBuildLogStatistics(latestSubmission, buildLogs);
 
-                buildLogs = buildLogService.removeUnnecessaryLogsForProgrammingLanguage(buildLogs, programmingLanguage);
-                var savedBuildLogs = buildLogService.saveBuildLogs(buildLogs, latestSubmission);
+                if (!buildResult.isBuildSuccessful()) {
+                    buildLogs = buildLogService.removeUnnecessaryLogsForProgrammingLanguage(buildLogs, programmingLanguage);
+                    var savedBuildLogs = buildLogService.saveBuildLogs(buildLogs, latestSubmission);
 
-                // Set the received logs in order to avoid duplicate entries (this removes existing logs)
-                latestSubmission.setBuildLogEntries(savedBuildLogs);
+                    // Set the received logs in order to avoid duplicate entries (this removes existing logs)
+                    latestSubmission.setBuildLogEntries(savedBuildLogs);
+                }
             }
 
             // Note: we only set one side of the relationship because we don't know yet whether the result will actually be saved

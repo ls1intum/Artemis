@@ -422,6 +422,15 @@
                 "selectTests": "Wähle die Tests aus, für die die Test-abgedeckten Zeilen markiert werden:",
                 "filePath": "Datei-Pfad",
                 "coveredLines": "Abgedeckte Zeilen"
+            },
+            "buildLogStatistics": {
+                "title": "Durchschnittliche Statistiken der Build-Logs",
+                "numberOfBuilds": "# Builds",
+                "agentSetupDuration": "Einrichtung Buildagent",
+                "testDuration": "Testausführung",
+                "scaDuration": "Statische Codeanalyse",
+                "totalJobDuration": "kompletter Job",
+                "dependenciesDownloadedCount": "Anzahl heruntergeladener Abhängigkeiten"
             }
         },
         "error": {

@@ -25,7 +25,7 @@ public class BuildLogStatisticsEntry extends DomainObject {
     private ProgrammingSubmission programmingSubmission;
 
     @Nullable
-    private Long dockerSetupDuration; // in seconds
+    private Long agentSetupDuration; // in seconds
 
     @Nullable
     private Long testDuration; // in seconds
@@ -43,10 +43,10 @@ public class BuildLogStatisticsEntry extends DomainObject {
         // Required for Hibernate
     }
 
-    public BuildLogStatisticsEntry(ProgrammingSubmission programmingSubmission, @Nullable Long dockerSetupDuration, @Nullable Long testDuration, @Nullable Long scaDuration,
+    public BuildLogStatisticsEntry(ProgrammingSubmission programmingSubmission, @Nullable Long agentSetupDuration, @Nullable Long testDuration, @Nullable Long scaDuration,
             @Nullable Long totalJobDuration, @Nullable Long dependenciesDownloadedCount) {
         this.programmingSubmission = programmingSubmission;
-        this.dockerSetupDuration = dockerSetupDuration;
+        this.agentSetupDuration = agentSetupDuration;
         this.testDuration = testDuration;
         this.scaDuration = scaDuration;
         this.totalJobDuration = totalJobDuration;
@@ -62,12 +62,12 @@ public class BuildLogStatisticsEntry extends DomainObject {
     }
 
     @Nullable
-    public Long getDockerSetupDuration() {
-        return dockerSetupDuration;
+    public Long getAgentSetupDuration() {
+        return agentSetupDuration;
     }
 
-    public void setDockerSetupDuration(@Nullable Long dockerSetupDuration) {
-        this.dockerSetupDuration = dockerSetupDuration;
+    public void setAgentSetupDuration(@Nullable Long agentSetupDuration) {
+        this.agentSetupDuration = agentSetupDuration;
     }
 
     @Nullable
