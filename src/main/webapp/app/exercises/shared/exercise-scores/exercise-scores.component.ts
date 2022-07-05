@@ -334,9 +334,11 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
             return results;
         }
         let filterFunction;
+        // If the range to filter against is [90%, 100%], a score of 100% also satisfies this range
         if (this.rangeFilter.upperBound === 100) {
             filterFunction = (result: Result) => !!result.score && result.score >= this.rangeFilter!.lowerBound && result.score <= this.rangeFilter!.upperBound;
         } else {
+            // For any other range, the score must be strictly below the upper bound
             filterFunction = (result: Result) => result.score !== undefined && result.score >= this.rangeFilter!.lowerBound && result.score < this.rangeFilter!.upperBound;
         }
 
