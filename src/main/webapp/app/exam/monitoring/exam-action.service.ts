@@ -42,6 +42,7 @@ export class ExamActionService implements IExamActionService {
 
     /**
      * Checks if a websocket connection for the exam monitoring to the server already exists.
+     * @param exam to monitor
      * If not a new one will be opened.
      *
      */
