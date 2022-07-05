@@ -4,7 +4,7 @@ import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { Exam } from 'app/entities/exam.model';
 import { ExamAction, ExamActionType, SavedExerciseAction, SwitchedExerciseAction } from 'app/entities/exam-user-activity.model';
 import dayjs from 'dayjs/esm';
-import { ceilDayjsSeconds } from 'app/exam/monitoring/charts/monitoring-chart';
+import { ceilDayjsSeconds, getEmptyCategories } from 'app/exam/monitoring/charts/monitoring-chart';
 import { HttpClient } from '@angular/common/http';
 
 const EXAM_MONITORING_TOPIC = (examId: number) => `/topic/exam-monitoring/${examId}/action`;
@@ -74,13 +74,7 @@ export class ExamActionService implements IExamActionService {
      * @private
      */
     public increaseActionByTimestampAndCategory(timestamp: string, action: ExamAction, actionsPerTimestampAndCategory: Map<string, Map<string, number>>) {
-        let categories = actionsPerTimestampAndCategory.get(timestamp);
-        if (!categories) {
-            categories = new Map();
-            Object.keys(ExamActionType).forEach((type) => {
-                categories!.set(type, 0);
-            });
-        }
+        const categories = actionsPerTimestampAndCategory.get(timestamp) ?? getEmptyCategories();
         categories.set(action.type, categories.get(action.type)! + 1);
         actionsPerTimestampAndCategory.set(timestamp, categories);
     }
