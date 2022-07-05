@@ -64,6 +64,7 @@ export class ExerciseHintUpdateComponent implements OnInit, OnDestroy {
         });
         this.route.data.subscribe(({ exerciseHint, exercise }) => {
             this.exercise = exercise;
+            exerciseHint.exercise = exercise;
             this.exerciseHint = exerciseHint;
 
             this.programmingExerciseService.getTasksAndTestsExtractedFromProblemStatement(this.exercise.id!).subscribe((tasks) => {

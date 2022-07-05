@@ -1,7 +1,7 @@
 import { ComponentFixture, fakeAsync, TestBed, tick, flush } from '@angular/core/testing';
 import { FormBuilder, FormsModule } from '@angular/forms';
 import { of } from 'rxjs';
-import { HttpHeaders, HttpResponse } from '@angular/common/http';
+import { HttpResponse } from '@angular/common/http';
 
 import { ExerciseHintUpdateComponent } from 'app/exercises/shared/exercise-hint/manage/exercise-hint-update.component';
 import { ArtemisTestModule } from '../../../test.module';

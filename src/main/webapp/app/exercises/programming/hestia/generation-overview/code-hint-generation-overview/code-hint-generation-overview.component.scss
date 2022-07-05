@@ -30,7 +30,7 @@
     }
 }
 
-// prevent resizing of opened expansion panels
+/* prevent resizing of opened expansion panels */
 .mat-expansion-panel-spacing {
     margin: 0;
 }
@@ -39,6 +39,7 @@
     .mat-expansion-panel-header {
         border-bottom: 2px solid;
     }
+
     font-weight: bold;
     cursor: default;
 }
