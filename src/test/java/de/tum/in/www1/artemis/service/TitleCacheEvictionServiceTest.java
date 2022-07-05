@@ -19,6 +19,13 @@ import de.tum.in.www1.artemis.repository.hestia.ExerciseHintRepository;
 import de.tum.in.www1.artemis.service.util.Tuple;
 import de.tum.in.www1.artemis.util.ModelFactory;
 
+/**
+ * Test for {@link TitleCacheEvictionService} that should evict entity titles from the title caches if the titles are
+ * updated, but leave them untouched if the titles don't change.
+ *
+ * The service is not directly injected / used here as it listens to Hibernate events, so we just apply
+ * CRUD operations on the entities it supports.
+ */
 public class TitleCacheEvictionServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
