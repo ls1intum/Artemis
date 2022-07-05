@@ -18,6 +18,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 
 import de.tum.in.www1.artemis.management.SecurityMetersService;
 import de.tum.in.www1.artemis.security.Role;
+import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.io.Decoders;
@@ -91,6 +92,51 @@ class TokenProviderTest {
         boolean isTokenValid = tokenProvider.validateTokenForAuthority("");
 
         assertThat(isTokenValid).isFalse();
+    }
+
+    @Test
+    void testReturnFalseWhenJWTisMissingClaims() {
+        Authentication authentication = createAuthentication();
+        Claims claimsForToken = Jwts.claims();
+        claimsForToken.put(TokenProvider.ATTACHMENT_UNIT_ID_KEY, 2);
+        String token = tokenProvider.createFileTokenWithCustomDuration(authentication, 30, claimsForToken);
+
+        Claims requiredClaims = Jwts.claims();
+        requiredClaims.put(TokenProvider.ATTACHMENT_UNIT_ID_KEY, 3);
+        requiredClaims.put(TokenProvider.FILENAME_KEY, "testfile");
+        boolean isTokenValid = tokenProvider.validateTokenForAuthorityAndFile(token, requiredClaims);
+
+        assertThat(isTokenValid).isFalse();
+    }
+
+    @Test
+    void testReturnFalseWhenJWTHasWrongValuesForClaims() {
+        Authentication authentication = createAuthentication();
+        Claims claimsForToken = Jwts.claims();
+        claimsForToken.put(TokenProvider.ATTACHMENT_UNIT_ID_KEY, 2);
+        String token = tokenProvider.createFileTokenWithCustomDuration(authentication, 30, claimsForToken);
+
+        Claims requiredClaims = Jwts.claims();
+        requiredClaims.put(TokenProvider.ATTACHMENT_UNIT_ID_KEY, 3);
+        boolean isTokenValid = tokenProvider.validateTokenForAuthorityAndFile(token, requiredClaims);
+
+        assertThat(isTokenValid).isFalse();
+    }
+
+    @Test
+    void testReturnTrueWhenJWTIsValidAndHasCorrectClaims() {
+        Authentication authentication = createAuthentication();
+        Claims claimsForToken = Jwts.claims();
+        claimsForToken.put(TokenProvider.ATTACHMENT_UNIT_ID_KEY, 2);
+        claimsForToken.put(TokenProvider.FILENAME_KEY, "testfile");
+        String token = tokenProvider.createFileTokenWithCustomDuration(authentication, 30, claimsForToken);
+
+        Claims requiredClaims = Jwts.claims();
+        requiredClaims.put(TokenProvider.ATTACHMENT_UNIT_ID_KEY, 2);
+        requiredClaims.put(TokenProvider.FILENAME_KEY, "testfile");
+        boolean isTokenValid = tokenProvider.validateTokenForAuthorityAndFile(token, requiredClaims);
+
+        assertThat(isTokenValid).isTrue();
     }
 
     @Test

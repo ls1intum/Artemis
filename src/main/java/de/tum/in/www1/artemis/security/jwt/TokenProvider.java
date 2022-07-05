@@ -157,27 +157,27 @@ public class TokenProvider {
      * Checks if custom claims are inside the signed JWT token. Also validates the JWT token if it is still valid.
      *
      * @param authToken The token that has to be checked
-     * @param customClaims The claims that should be included in the token
+     * @param requiredClaims The claims that should be included in the token
      * @return true if everything matches
      */
-    public boolean validateTokenForAuthorityAndFile(String authToken, Claims customClaims) {
-        if (!validateJwsToken(authToken) || customClaims.isEmpty()) {
+    public boolean validateTokenForAuthorityAndFile(String authToken, Claims requiredClaims) {
+        if (!validateJwsToken(authToken) || requiredClaims.isEmpty()) {
             return false;
         }
 
         Claims tokenClaims = parseClaims(authToken);
-        var allCustomClaimsPresent = false;
+        boolean allRequiredClaimsInToken = false;
 
-        for (Map.Entry<String, Object> customClaim : customClaims.entrySet()) {
+        for (Map.Entry<String, Object> requiredClaim : requiredClaims.entrySet()) {
             try {
-                allCustomClaimsPresent = tokenClaims.get(customClaim.getKey()).equals(customClaim.getValue());
+                allRequiredClaimsInToken = tokenClaims.get(requiredClaim.getKey()).equals(requiredClaim.getValue());
             }
             catch (Exception e) {
                 log.warn("Invalid action validateTokenForAuthorityAndFile: ", e);
                 return false;
             }
         }
-        return allCustomClaimsPresent;
+        return allRequiredClaimsInToken;
     }
 
     /**

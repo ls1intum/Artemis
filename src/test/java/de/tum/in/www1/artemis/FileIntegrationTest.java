@@ -163,7 +163,7 @@ public class FileIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         fileUploadSubmission.setFilePath(filePath);
 
         // get access token
-        String accessToken = request.get("/api/files/attachments/access-token/file.png", HttpStatus.OK, String.class);
+        String accessToken = request.get(fileUploadSubmission.getFilePath() + "/access-token", HttpStatus.OK, String.class);
 
         String receivedFile = request.get(fileUploadSubmission.getFilePath() + "?access_token=" + accessToken, HttpStatus.OK, String.class);
         assertThat(receivedFile).isEqualTo("some data");
@@ -173,14 +173,26 @@ public class FileIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testGetLectureAttachment() throws Exception {
-        String filename = "attachment.pdf";
-        String attachmentPath = createLectureWithAttachment(filename, HttpStatus.CREATED);
+        Attachment attachment = createLectureWithAttachment("attachment.pdf", HttpStatus.CREATED);
+        String attachmentPath = attachment.getLink();
         // get access token and then request the file using the access token
-        String accessToken = request.get("/api/files/attachments/access-token/" + filename, HttpStatus.OK, String.class);
+        String accessToken = request.get(attachmentPath + "/access-token", HttpStatus.OK, String.class);
         String receivedAttachment = request.get(attachmentPath + "?access_token=" + accessToken, HttpStatus.OK, String.class);
         assertThat(receivedAttachment).isEqualTo("some data");
 
         request.get(attachmentPath + "?access_token=random_non_valid_token", HttpStatus.FORBIDDEN, String.class);
+    }
+
+    @Test
+    @WithMockUser(username = "tutor1", roles = "TA")
+    public void testGetUnreleasedLectureAttachmentAsTutor() throws Exception {
+        Attachment attachment = createLectureWithAttachment("attachment.pdf", HttpStatus.CREATED);
+        String attachmentPath = attachment.getLink();
+        attachment.setReleaseDate(ZonedDateTime.now().plusDays(1));
+        // get access token and then request the file using the access token
+        String accessToken = request.get(attachmentPath + "/access-token", HttpStatus.OK, String.class);
+        String receivedAttachment = request.get(attachmentPath + "?access_token=" + accessToken, HttpStatus.OK, String.class);
+        assertThat(receivedAttachment).isEqualTo("some data");
     }
 
     @Test
@@ -196,17 +208,17 @@ public class FileIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         // add a new file type to allow to check the mime type detection in FileResource with an exotic extension
         fileResource.addAllowedFileExtension("exotic");
 
-        String filename = "attachment.exotic";
-        String attachmentPath = createLectureWithAttachment(filename, HttpStatus.CREATED);
+        Attachment attachment = createLectureWithAttachment("attachment.exotic", HttpStatus.CREATED);
+        String attachmentPath = attachment.getLink();
         // get access token and then request the file using the access token
-        String accessToken = request.get("/api/files/attachments/access-token/" + filename, HttpStatus.OK, String.class);
+        String accessToken = request.get(attachmentPath + "/access-token", HttpStatus.OK, String.class);
         String receivedAttachment = request.get(attachmentPath + "?access_token=" + accessToken, HttpStatus.OK, String.class);
         assertThat(receivedAttachment).isEqualTo("some data");
 
         fileResource.addRemoveFileExtension("exotic");
     }
 
-    public String createLectureWithAttachment(String filename, HttpStatus expectedStatus) throws Exception {
+    public Attachment createLectureWithAttachment(String filename, HttpStatus expectedStatus) throws Exception {
         Lecture lecture = database.createCourseWithLecture(true);
         lecture.setTitle("Test title");
         lecture.setDescription("Test");
@@ -232,7 +244,7 @@ public class FileIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
         lectureRepo.save(lecture);
         attachmentRepo.save(attachment);
-        return attachmentPath;
+        return attachment;
     }
 
     @Test
