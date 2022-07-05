@@ -20,6 +20,10 @@ import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.hestia.ExerciseHint;
 import de.tum.in.www1.artemis.domain.modeling.ApollonDiagram;
 
+/**
+ * Listens to Hibernate events and invalidates the cached titles of an entity if the title changed.
+ * This is used in endpoints that return only the title of an entity which are consumed by breadcrumbs in the client.
+ */
 @Service
 public class TitleCacheEvictionService implements PostUpdateEventListener, PostDeleteEventListener {
 
@@ -38,11 +42,14 @@ public class TitleCacheEvictionService implements PostUpdateEventListener, PostD
 
     @Override
     public void onPostDelete(PostDeleteEvent event) {
+        // On delete, we can the evict the title in all cases - we won't need it anymore
         evictEntityTitle(event.getEntity());
     }
 
     @Override
     public void onPostUpdate(PostUpdateEvent event) {
+        // Check if the title / name property is marked as "dirty" (= changed somehow) by Hibernate.
+        // If yes, evict the title from the cache
         var titlePropertyName = event.getEntity() instanceof Organization ? "name" : "title";
         int propertyIndex = ArrayUtils.indexOf(event.getPersister().getPropertyNames(), titlePropertyName);
         if (propertyIndex < 0 || !ArrayUtils.contains(event.getDirtyProperties(), propertyIndex)) {
@@ -51,6 +58,10 @@ public class TitleCacheEvictionService implements PostUpdateEventListener, PostD
         evictEntityTitle(event.getEntity());
     }
 
+    /**
+     * Evict the title of the given entity
+     * @param entity the entity which title should be evicted
+     */
     private void evictEntityTitle(Object entity) {
         if (entity instanceof Exercise exercise) {
             evictIdFromCache("exerciseTitle", exercise.getId());
@@ -81,6 +92,11 @@ public class TitleCacheEvictionService implements PostUpdateEventListener, PostD
         }
     }
 
+    /**
+     * Removes the given id from the given title cache
+     * @param cacheName the title cache to evict the entry from
+     * @param entityId the entry to evict from
+     */
     private void evictIdFromCache(String cacheName, Object entityId) {
         var cache = cacheManager.getCache(cacheName);
         if (cache == null) {
