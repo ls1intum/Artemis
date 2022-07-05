@@ -1,5 +1,5 @@
-import { DELETE } from './../../../constants';
-import { artemis } from './../../../ArtemisTesting';
+import { DELETE } from '../../../constants';
+import { artemis } from '../../../ArtemisTesting';
 import { GET, BASE_API, POST } from '../../../constants';
 import { CypressCredentials } from '../../../users';
 
