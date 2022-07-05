@@ -330,4 +330,16 @@ public class UserBambooBitbucketJiraIntegrationTest extends AbstractSpringIntegr
     public void testUserWithExternalAndInternalStatus() throws Exception {
         userTestService.testUserWithExternalAndInternalStatus();
     }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    public void testUserWithRegistrationNumber() throws Exception {
+        userTestService.testUserWithRegistrationNumber();
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    public void testUserWithoutRegistrationNumber() throws Exception {
+        userTestService.testUserWithoutRegistrationNumber();
+    }
 }

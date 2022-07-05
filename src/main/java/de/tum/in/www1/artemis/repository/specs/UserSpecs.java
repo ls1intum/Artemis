@@ -106,7 +106,7 @@ public class UserSpecs {
      * Creates the specification to look for the user without Registration Numbers.
      *
      * @param noRegistrationNumber true if the account should not have a registration number
-     * @param noRegistrationNumber false if the account should have a registration number
+     * @param withRegistrationNumber true if the account should have a registration number
      * @return specification used to chain database operations
      */
     public static Specification<User> getWithOrWithoutRegistrationNumberSpecification(Boolean noRegistrationNumber, Boolean withRegistrationNumber) {
