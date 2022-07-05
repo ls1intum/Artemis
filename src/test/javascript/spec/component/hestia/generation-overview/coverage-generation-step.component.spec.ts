@@ -5,7 +5,6 @@ import { ProgrammingExerciseService } from 'app/exercises/programming/manage/ser
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { CoverageGenerationStepComponent } from 'app/exercises/programming/hestia/generation-overview/steps/coverage-generation-step/coverage-generation-step.component';
 import { CoverageReport } from 'app/entities/hestia/coverage-report.model';
-import { PasswordResetFinishComponent } from 'app/account/password-reset/finish/password-reset-finish.component';
 
 describe('CoverageGenerationStep Component', () => {
     let comp: CoverageGenerationStepComponent;
