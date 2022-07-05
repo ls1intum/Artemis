@@ -19,8 +19,10 @@ public interface BuildLogStatisticsEntryRepository extends JpaRepository<BuildLo
                 select new de.tum.in.www1.artemis.web.rest.dto.BuildLogStatisticsDTO(count(b.id), avg(b.agentSetupDuration), avg(b.testDuration), avg(b.scaDuration), avg(b.totalJobDuration), avg(b.dependenciesDownloadedCount))
                 from BuildLogStatisticsEntry b, Submission s, Participation p
                 where b.programmingSubmission = s
-                and s.participation = p
-                and p.exercise = :#{#exercise}
+                and s.participation = p and
+               (p.exercise = :#{#exercise} or
+                p.id = :#{#exercise.solutionParticipation.id} or
+                p.id = :#{#exercise.templateParticipation.id})
             """)
     public BuildLogStatisticsDTO findAverageBuildLogStatisticsEntryForExercise(@Param("exercise") ProgrammingExercise exercise);
 
