@@ -42,20 +42,28 @@ public class TitleCacheEvictionService implements PostUpdateEventListener, PostD
 
     @Override
     public void onPostDelete(PostDeleteEvent event) {
-        // On delete, we can the evict the title in all cases - we won't need it anymore
+        // On delete, we can evict the title in all cases - we won't need it anymore
         evictEntityTitle(event.getEntity());
     }
 
+    /**
+     * Checks if the title / name property is marked as "dirty" (= changed somehow) by Hibernate.
+     * If yes, evicts the title from the cache
+     * @param event the Hibernate update event
+     */
     @Override
     public void onPostUpdate(PostUpdateEvent event) {
-        // Check if the title / name property is marked as "dirty" (= changed somehow) by Hibernate.
-        // If yes, evict the title from the cache
-        var titlePropertyName = event.getEntity() instanceof Organization ? "name" : "title";
-        int propertyIndex = ArrayUtils.indexOf(event.getPersister().getPropertyNames(), titlePropertyName);
-        if (propertyIndex < 0 || !ArrayUtils.contains(event.getDirtyProperties(), propertyIndex)) {
-            return;
+        var titlePropertyName = "title";
+
+        // special case for organizations
+        if (event.getEntity() instanceof Organization) {
+            titlePropertyName = "name";
         }
-        evictEntityTitle(event.getEntity());
+
+        int propertyIndex = ArrayUtils.indexOf(event.getPersister().getPropertyNames(), titlePropertyName);
+        if (propertyIndex >= 0 && ArrayUtils.contains(event.getDirtyProperties(), propertyIndex)) {
+            evictEntityTitle(event.getEntity());
+        }
     }
 
     /**
