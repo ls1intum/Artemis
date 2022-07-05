@@ -1,5 +1,13 @@
 import { ComponentFixture, fakeAsync, inject, TestBed, tick } from '@angular/core/testing';
-import { AuthorityFilter, OriginFilter, StatusFilter, UserFilter, UserManagementComponent, UserStorageKey } from 'app/admin/user-management/user-management.component';
+import {
+    AuthorityFilter,
+    OriginFilter,
+    RegistrationNumberFilter,
+    StatusFilter,
+    UserFilter,
+    UserManagementComponent,
+    UserStorageKey,
+} from 'app/admin/user-management/user-management.component';
 import { UserService } from 'app/core/user/user.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
@@ -313,6 +321,19 @@ describe('UserManagementComponent', () => {
         expect(comp.filters.statusFilter).toEqual(new Set([]));
     });
 
+    it.each`
+        input
+        ${RegistrationNumberFilter.WITH_REG_NO}
+        ${RegistrationNumberFilter.WITHOUT_REG_NO}
+    `('should toggle registration number filters', (param: { input: RegistrationNumberFilter }) => {
+        // Registration number
+        comp.toggleFilter(comp.filters.registrationNumberFilter, param.input);
+        expect(comp.filters.registrationNumberFilter).toEqual(new Set([param.input]));
+
+        comp.toggleFilter(comp.filters.registrationNumberFilter, param.input);
+        expect(comp.filters.registrationNumberFilter).toEqual(new Set([]));
+    });
+
     it('should return correct filter values', () => {
         comp.courses = courses;
         comp.initFilters();
@@ -384,8 +405,11 @@ describe('UserManagementComponent', () => {
         comp.filters.noAuthority = true;
         expect(comp.filters.numberOfAppliedFilters).toBe(2);
 
-        comp.filters.authorityFilter.add(AuthorityFilter.ADMIN);
+        comp.filters.registrationNumberFilter.add(RegistrationNumberFilter.WITH_REG_NO);
         expect(comp.filters.numberOfAppliedFilters).toBe(3);
+
+        comp.filters.authorityFilter.add(AuthorityFilter.ADMIN);
+        expect(comp.filters.numberOfAppliedFilters).toBe(4);
 
         comp.filters.authorityFilter.delete(AuthorityFilter.ADMIN);
         expect(comp.filters.numberOfAppliedFilters).toBe(2);
@@ -443,6 +467,22 @@ describe('UserManagementComponent', () => {
         comp.toggleOriginFilter(OriginFilter.EXTERNAL);
         expect(spy).toHaveBeenCalledWith(UserStorageKey.ORIGIN, '');
         expect(comp.filters.authorityFilter).toEqual(new Set<OriginFilter>());
+    });
+
+    it('should toggle status filter', () => {
+        const spy = jest.spyOn(localStorageService, 'store');
+
+        comp.filters = new UserFilter();
+
+        comp.toggleStatusFilter(StatusFilter.DEACTIVATED);
+
+        expect(comp.filters.statusFilter).toEqual(new Set<StatusFilter>([StatusFilter.DEACTIVATED]));
+        expect(spy).toHaveBeenCalledOnce();
+        expect(spy).toHaveBeenCalledWith(UserStorageKey.STATUS, 'DEACTIVATED');
+
+        comp.toggleStatusFilter(StatusFilter.DEACTIVATED);
+        expect(spy).toHaveBeenCalledWith(UserStorageKey.STATUS, '');
+        expect(comp.filters.authorityFilter).toEqual(new Set<StatusFilter>());
     });
 
     it('should toggle status filter', () => {
@@ -537,23 +577,32 @@ describe('UserManagementComponent', () => {
         let httpParams = new HttpParams();
         comp.filters = new UserFilter();
 
-        httpParams = httpParams.append('authorities', 'NO_AUTHORITY').append('origins', '').append('status', '').append('courseIds', '');
+        httpParams = httpParams.append('authorities', 'NO_AUTHORITY').append('origins', '').append('status', '').append('registrationNumber', '').append('courseIds', '');
         comp.filters.noAuthority = true;
 
         expect(comp.filters.adjustOptions(new HttpParams())).toEqual(httpParams);
 
         comp.filters.noAuthority = false;
-        httpParams = new HttpParams().append('authorities', '').append('origins', '').append('status', '').append('courseIds', '');
+        httpParams = new HttpParams().append('authorities', '').append('origins', '').append('status', '').append('registrationNumber', '').append('courseIds', '');
         expect(comp.filters.adjustOptions(new HttpParams())).toEqual(httpParams);
 
         comp.filters.noCourse = true;
-        httpParams = new HttpParams().append('authorities', '').append('origins', '').append('status', '').append('courseIds', -1);
+        httpParams = new HttpParams().append('authorities', '').append('origins', '').append('status', '').append('registrationNumber', '').append('courseIds', -1);
+        expect(comp.filters.adjustOptions(new HttpParams())).toEqual(httpParams);
+
+        comp.filters.registrationNumberFilter.add(RegistrationNumberFilter.WITH_REG_NO);
+        httpParams = new HttpParams().append('authorities', '').append('origins', '').append('status', '').append('registrationNumber', '6151').append('courseIds', '');
         expect(comp.filters.adjustOptions(new HttpParams())).toEqual(httpParams);
 
         comp.filters.originFilter.add(OriginFilter.INTERNAL);
         comp.filters.authorityFilter.add(AuthorityFilter.ADMIN);
         comp.filters.statusFilter.add(StatusFilter.ACTIVATED);
-        httpParams = new HttpParams().append('authorities', 'ADMIN').append('origins', 'INTERNAL').append('status', 'ACTIVATED').append('courseIds', -1);
+        httpParams = new HttpParams()
+            .append('authorities', 'ADMIN')
+            .append('origins', 'INTERNAL')
+            .append('status', 'ACTIVATED')
+            .append('registrationNumber', '')
+            .append('courseIds', -1);
         expect(comp.filters.adjustOptions(new HttpParams())).toEqual(httpParams);
     });
 });
