@@ -37,6 +37,18 @@ services:
         networks:
             artemis:
                 ipv4_address: 172.20.0.4
+    bamboo_build_agent:
+        container_name: artemis_bamboo_build_agent
+        image: ghcr.io/ls1intum/artemis-bamboo-build-agent:8.1.3
+        volumes:
+            - artemis-bamboo-build-agent:/var/atlassian/application-data/bamboo
+            - /var/run/docker.sock:/var/run/docker.sock
+        hostname: bamboo-build-agent
+        environment:
+            - BAMBOO_SERVER=http://bamboo:8085
+        networks:
+            artemis:
+                ipv4_address: 198.18.0.5
 
 networks:
   artemis:
@@ -50,3 +62,4 @@ volumes:
     artemis-jira:
     artemis-bitbucket:
     artemis-bamboo:
+    artemis-bamboo-build-agent:
