@@ -26,6 +26,7 @@ plugins {
     id "com.github.ben-manes.versions" version "0.42.0"
     id "com.github.andygoossens.modernizer" version "1.6.2"
     id 'info.solidsoft.pitest' version '1.7.4'
+    id "kr.motd.sphinx" version "2.10.0"
 }
 
 group = "de.tum.in.www1.artemis"
@@ -340,6 +341,10 @@ node {
     npmVersion = "${npm_version}"
 }
 
+sphinx {
+    sourceDirectory = "${projectDir}/docs"
+}
+
 // Command to execute the JavaDoc checkstyle verification ./gradlew checkstyleMain
 checkstyle {
     toolVersion "${checkstyle_version}"
@@ -411,3 +416,4 @@ pitest {
 // 9) Verify code coverage (after tests):           ./gradlew jacocoTestCoverageVerification
 // 10) Detects uses of legacy code:                 ./gradlew modernizer -x webapp
 // 11) Run PIT Mutation Tests:                      ./gradlew pitest -x webapp
+// 11) Generate docs:                               ./gradlew site
