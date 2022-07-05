@@ -152,19 +152,18 @@ public class TitleCacheEvictionServiceTest extends AbstractSpringIntegrationBamb
 
     @Test
     public void testEvictsTitleOnUpdateTitleOrDeleteApollonDiagram() {
-        var apollonDiagram = ModelFactory.generateApollonDiagram(DiagramType.ActivityDiagram, "activityDiagram1");
-        var fApollonDiagram = apollonDiagramRepository.save(apollonDiagram);
-        testCacheEvicted("diagramTitle", () -> new Tuple<>(fApollonDiagram.getId(), fApollonDiagram.getTitle()), List.of(
+        var apollonDiagram = apollonDiagramRepository.save(ModelFactory.generateApollonDiagram(DiagramType.ActivityDiagram, "activityDiagram1"));
+        testCacheEvicted("diagramTitle", () -> new Tuple<>(apollonDiagram.getId(), apollonDiagram.getTitle()), List.of(
                 // Should evict as we change the title
                 () -> {
-                    fApollonDiagram.setTitle(UUID.randomUUID().toString());
-                    apollonDiagramRepository.save(fApollonDiagram);
+                    apollonDiagram.setTitle(UUID.randomUUID().toString());
+                    apollonDiagramRepository.save(apollonDiagram);
                     return true;
                 },
                 // Should not evict as title remains the same
                 () -> {
-                    fApollonDiagram.setDiagramType(DiagramType.ClassDiagram); // Change some other values
-                    apollonDiagramRepository.save(fApollonDiagram);
+                    apollonDiagram.setDiagramType(DiagramType.ClassDiagram); // Change some other values
+                    apollonDiagramRepository.save(apollonDiagram);
                     return false;
                 },
                 // Should evict after deletion
