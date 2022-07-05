@@ -11,7 +11,7 @@ import { EventManager } from 'app/core/util/event-manager.service';
 import { faArrowsRotate, faCode, faEye, faFont, faPlus, faTimes, faWrench } from '@fortawesome/free-solid-svg-icons';
 import { ExerciseHint, HintType } from 'app/entities/hestia/exercise-hint.model';
 import { ExerciseType } from 'app/entities/exercise.model';
-import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { ProgrammingExercise, ProgrammingLanguage } from 'app/entities/programming-exercise.model';
 
 @Component({
     selector: 'jhi-exercise-hint',
@@ -38,6 +38,8 @@ export class ExerciseHintComponent implements OnInit, OnDestroy {
     faText = faFont;
     faCode = faCode;
     faArrowsRotate = faArrowsRotate;
+
+    readonly ProgrammingLanguage = ProgrammingLanguage;
 
     constructor(private route: ActivatedRoute, protected exerciseHintService: ExerciseHintService, private alertService: AlertService, protected eventManager: EventManager) {}
 

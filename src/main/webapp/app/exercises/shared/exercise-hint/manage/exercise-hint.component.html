@@ -3,7 +3,7 @@
         <span jhiTranslate="artemisApp.exerciseHint.home.title">Exercise Hints</span>
 
         <a
-            *ngIf="!!exercise?.testwiseCoverageEnabled"
+            *ngIf="exercise?.programmingLanguage === ProgrammingLanguage.JAVA"
             id="jh-code-hints"
             [class]="containsCodeHints ? 'btn-secondary' : 'btn-primary'"
             class="btn float-end jh-create-entity create-exercise-hint"

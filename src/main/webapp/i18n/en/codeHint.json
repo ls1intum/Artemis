@@ -36,7 +36,7 @@
                 },
                 "step3": {
                     "name": "Solution fragments",
-                    "description": "This steps allows to select the individual solution fragments from which code hints are generated.",
+                    "description": "This steps allows to edit the individual solution fragments from which code hints are generated.",
                     "notGenerated": "No solution entries have been generated yet.",
                     "createManualFragmentButton": {
                         "label": "Create manual fragment",
@@ -71,6 +71,11 @@
                         "label": "Update code hints",
                         "tooltip": "Create new code hints by re-assigning the existing solution fragments. The title, description, and content of the existing hint retain.",
                         "success": "Code hints have been updated successfully"
+                    },
+                    "createHintsButton": {
+                        "label": "Create code hints",
+                        "tooltip": "Creates code hints from the existing solution fragments.",
+                        "success": "Code hints have been created successfully"
                     },
                     "recreateHintsButton": {
                         "label": "Recreate code hints",

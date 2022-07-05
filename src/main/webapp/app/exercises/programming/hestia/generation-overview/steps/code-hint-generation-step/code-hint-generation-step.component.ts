@@ -40,7 +40,7 @@ export class CodeHintGenerationStepComponent implements OnInit {
         });
     }
 
-    generateCodeHints(deleteOldHints: boolean) {
+    generateCodeHints(deleteOldHints: boolean, buttonTranslationKey: string) {
         this.isLoading = true;
         this.codeHintService.generateCodeHintsForExercise(this.exercise?.id!, deleteOldHints).subscribe({
             next: (generatedHints) => {
@@ -51,7 +51,7 @@ export class CodeHintGenerationStepComponent implements OnInit {
                 }
                 this.onCodeHintsLoaded.emit(this.codeHints);
                 this.isLoading = false;
-                this.alertService.success('artemisApp.codeHint.management.step4.' + (deleteOldHints ? 'recreateHintsButton' : 'updateHintsButton') + '.success');
+                this.alertService.success('artemisApp.codeHint.management.step4.' + buttonTranslationKey + '.success');
             },
             error: (error) => {
                 this.isLoading = false;

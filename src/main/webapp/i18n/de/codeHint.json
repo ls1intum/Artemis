@@ -11,9 +11,9 @@
                 "structural": "S",
                 "behavioral": "V"
             },
-            "entries": "Einträge",
-            "removeEntryQuestion": "Soll dieser Eintrag wirklich entfernt werden?",
-            "noEntries": "Dieser Code-Hinweis hat keine Einträge.",
+            "entries": "Fragmente",
+            "removeEntryQuestion": "Soll dieses Fragment wirklich entfernt werden?",
+            "noEntries": "Dieser Code-Hinweis hat keine Fragmente.",
             "deleted": "Exercise Hint gelöscht mit ID {{ param }}",
             "management": {
                 "title": "Code-Hinweise verwalten",
@@ -35,30 +35,30 @@
                     "notGenerated": "Der Code-Abdeckungs-Report wurde noch nicht erzeugt."
                 },
                 "step3": {
-                    "name": "Lösungs-Einträge",
-                    "description": "In diesem Schritt kannst du die einzelnen Einträge auswählen, aus denen Code-Hinweise erstellt werden.",
-                    "notGenerated": "Bisher wurden keine Einträge generiert.",
+                    "name": "Lösungs-Fragmente",
+                    "description": "In diesem Schritt kannst du die einzelnen Fragment bearbeiten, aus denen Code-Hinweise erstellt werden.",
+                    "notGenerated": "Bisher wurden keine Fragmente generiert.",
                     "createManualFragmentButton": {
-                        "label": "Erstelle manuellen Eintrag",
-                        "tooltip": "Eintrag manuell mit zugehörigem Test und Datei erstellen."
+                        "label": "Erstelle manuelles Fragment",
+                        "tooltip": "Fragment manuell mit zugehörigem Test und Datei erstellen."
                     },
                     "structuralEntriesButton": {
-                        "label": "Strukturelle Einträge generieren",
-                        "tooltip": "Erstellt Einträge für strukturelle Tests. Bereits existierende strukturelle Einträge werden überschrieben."
+                        "label": "Strukturelle Fragmente generieren",
+                        "tooltip": "Erstellt Fragmente für strukturelle Tests. Bereits existierende strukturelle Fragmente werden überschrieben."
                     },
                     "behavioralEntriesButton": {
-                        "label": "Verhaltensweise Einträge generieren",
-                        "tooltip": "Erstellt Einträge für verhaltensweise Tests. Bereits existierende verhaltensweise Einträge werden überschrieben."
+                        "label": "Verhaltensweise Fragmente generieren",
+                        "tooltip": "Erstellt Fragmente für verhaltensweise Tests. Bereits existierende verhaltensweise Fragmente werden überschrieben."
                     },
                     "deleteAllEntriesButton": {
-                        "label": "Alle Eintrage löschen",
-                        "tooltip": "Löscht alle Einträge für diese Aufgabe.",
-                        "question": "Bist du dir sicher, dass du alle Einträge für diese Aufgabe löschen möchtest?",
-                        "title": "Alle Einträge löschen",
-                        "success": "Alle Einträge wurden erfolgreich gelöscht"
+                        "label": "Alle Fragmente löschen",
+                        "tooltip": "Löscht alle Fragmente für diese Aufgabe.",
+                        "question": "Bist du dir sicher, dass du alle Fragmente für diese Aufgabe löschen möchtest?",
+                        "title": "Alle Fragmente löschen",
+                        "success": "Alle Fragmente wurden erfolgreich gelöscht"
                     },
                     "deleteIndividualEntryButton": {
-                        "question": "Bist du dir sicher, dass du den Eintrag mit ID {{ title }} löschen möchtest?"
+                        "question": "Bist du dir sicher, dass du das Fragment mit ID {{ title }} löschen möchtest?"
                     }
                 },
                 "step4": {
@@ -72,9 +72,14 @@
                         "tooltip": "Erstellt neue Code-Hinweise, indem die existierenden Lösungsfragmente neu zugewiesen werden. Titel, Beschreibung und Inhalt bleiben unverändert beim ursprünglichen Hinweis.",
                         "success": "Code-Hinweise erfolgreich aktualisiert"
                     },
+                    "createHintsButton": {
+                        "label": "Code-Hinweise erstellen",
+                        "tooltip": "Erstellt Code-Hinweise aus den existierenden Lösungsfragmenten.",
+                        "success": "Code-Hinweise erfolgreich erstellt"
+                    },
                     "recreateHintsButton": {
                         "label": "Code-Hinweise neu erstellen",
-                        "tooltip": "Erstellt Code-Hinweise aus den ausgewählten Einträgen. Existierende Einträge werden überschrieben.",
+                        "tooltip": "Erstellt Code-Hinweise aus den existierenden Fragmenten. Existierende Hinweise werden überschrieben.",
                         "success": "Code-Hinweise erfolgreich neu erstellt"
                     }
                 }

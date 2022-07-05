@@ -57,7 +57,7 @@ describe('CodeHintGenerationStep Component', () => {
     it('should generate code hints', () => {
         const generateHintsSpy = jest.spyOn(codeHintService, 'generateCodeHintsForExercise').mockReturnValue(of(codeHints));
 
-        comp.generateCodeHints(true);
+        comp.generateCodeHints(true, 'recreateHintsButton');
 
         expect(generateHintsSpy).toHaveBeenCalledOnce();
         expect(generateHintsSpy).toHaveBeenCalledWith(1, true);
