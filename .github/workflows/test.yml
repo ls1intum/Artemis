@@ -39,6 +39,7 @@ env:
 jobs:
 
   server-tests:
+    name: Server Tests
     runs-on: ubuntu-latest
     timeout-minutes: 45
     steps:
@@ -64,8 +65,27 @@ jobs:
         access-token: ${{ secrets.GITHUB_TOKEN }}
         path: build/test-results/test/*.xml
         numFailures: 99
+    - name: Code Coverage Summary Report
+      uses: irongut/CodeCoverageSummary@v1.2.0
+      with:
+        filename: build/reports/jacoco/test/jacocoTestReport.xml
+        badge: true
+        fail_below_min: true
+        format: markdown
+        hide_branch_rate: false
+        hide_complexity: true
+        indicators: true
+        output: both
+        thresholds: '60 80'
+    - name: Add Coverage PR Comment
+      uses: marocchino/sticky-pull-request-comment@v2
+      if: github.event_name == 'pull_request'
+      with:
+        recreate: true
+        path: code-coverage-results.md
 
   server-style:
+    name: Server Code Style
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
@@ -83,6 +103,7 @@ jobs:
       if: success() || failure()
 
   client-tests:
+    name: Client Tests
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
@@ -105,27 +126,47 @@ jobs:
               access-token: ${{ secrets.GITHUB_TOKEN }}
               path: junit.xml
               numFailures: 99
+        - name: Code Coverage Summary Report
+          uses: irongut/CodeCoverageSummary@v1.2.0
+          with:
+            filename: junit.xml
+            badge: true
+            fail_below_min: true
+            format: markdown
+            hide_branch_rate: false
+            hide_complexity: true
+            indicators: true
+            output: both
+            thresholds: '60 80'
+        - name: Add Coverage PR Comment
+          uses: marocchino/sticky-pull-request-comment@v2
+          if: github.event_name == 'pull_request'
+          with:
+            recreate: true
+            path: code-coverage-results.md
 
   client-tests-selected:
-      runs-on: ubuntu-latest
-      timeout-minutes: 30
-      steps:
-          - uses: actions/checkout@v3
-            with:
-                fetch-depth: 0
-          - name: Setup Node.js
-            uses: actions/setup-node@v3
-            with:
-                node-version: '${{ env.node }}'
-                cache: 'npm'
-          - name: Install Dependencies
-            run: npm install
-          - name: Compile TypeScript Test Files With Typechecking
-            run: npm run compile:ts:tests
-          - name: TypeScript Test (Selection) Without Typechecking
-            run: npm run test-diff:ci
+    name: Selected Client Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+        - uses: actions/checkout@v3
+          with:
+              fetch-depth: 0
+        - name: Setup Node.js
+          uses: actions/setup-node@v3
+          with:
+              node-version: '${{ env.node }}'
+              cache: 'npm'
+        - name: Install Dependencies
+          run: npm install
+        - name: Compile TypeScript Test Files With Typechecking
+          run: npm run compile:ts:tests
+        - name: TypeScript Test (Selection) Without Typechecking
+          run: npm run test-diff:ci
 
   client-style:
+    name: Client Code Style
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
@@ -144,6 +185,7 @@ jobs:
       if: success() || failure()
 
   client-compilation:
+    name: Client Compilation
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:

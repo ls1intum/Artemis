@@ -40,6 +40,7 @@ env:
 jobs:
 
   build:
+    name: Build Project
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
@@ -75,6 +76,7 @@ jobs:
         asset_content_type: application/x-webarchive
 
   docker:
+    name: Create Docker Image
     needs: build
     runs-on: ubuntu-latest
     steps:
@@ -128,6 +130,7 @@ jobs:
     # TODO: Push to Chair Habour (??)
 
   deploy:
+    name: Deploy Project
     if: ${{ github.event_name == 'pull_request' }}
     needs: build
     runs-on: ubuntu-latest

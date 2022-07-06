@@ -40,7 +40,8 @@
         "preserveWhitespaces": true
     },
     "include": [
-        "src/main/webapp/app"
+        "src/main/webapp/app",
+        "jest.config.ts"
     ],
     "exclude": [
         "node_modules",

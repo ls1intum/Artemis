@@ -1,8 +1,35 @@
-const esModules = ['lodash-es', 'franc-min', 'trigram-utils', 'n-gram', 'collapse-white-space', '@angular/animations', '@angular/common', '@ls1intum/apollon',
-    '@angular/compiler', '@angular/core', '@angular/forms', '@angular/localize', '@angular/platform-browser', '@angular/platform-browser-dynamic', '@angular/router',
-    '@ngx-translate/core', '@ngx-translate/http-loader', '@fortawesome/angular-fontawesome', '@angular/cdk', '@angular/material', '@angular/cdk', 'dayjs/esm',
-    'rxjs/operators', '@ng-bootstrap/ng-bootstrap', 'ngx-webstorage', '@ctrl/ngx-emoji-mart', 'ngx-device-detector', '@swimlane/ngx-charts',
-    '@angular/service-worker', '@danielmoncada/angular-datetime-picker'].join('|');
+const esModules = [
+    'lodash-es',
+    'franc-min',
+    'trigram-utils',
+    'n-gram',
+    'collapse-white-space',
+    '@angular/animations',
+    '@angular/common',
+    '@ls1intum/apollon',
+    '@angular/compiler',
+    '@angular/core',
+    '@angular/forms',
+    '@angular/localize',
+    '@angular/platform-browser',
+    '@angular/platform-browser-dynamic',
+    '@angular/router',
+    '@ngx-translate/core',
+    '@ngx-translate/http-loader',
+    '@fortawesome/angular-fontawesome',
+    '@angular/cdk',
+    '@angular/material',
+    '@angular/cdk',
+    'dayjs/esm',
+    'rxjs/operators',
+    '@ng-bootstrap/ng-bootstrap',
+    'ngx-webstorage',
+    '@ctrl/ngx-emoji-mart',
+    'ngx-device-detector',
+    '@swimlane/ngx-charts',
+    '@angular/service-worker',
+    '@danielmoncada/angular-datetime-picker',
+].join('|');
 
 const {
     compilerOptions: { baseUrl = './' },
@@ -50,7 +77,7 @@ module.exports = {
         'src/main/webapp/app/exercises/modeling/manage/modeling-exercise.route.ts',
         'src/main/webapp/app/exam/manage/exam-management.route.ts',
         'src/main/webapp/app/exercises/shared/exercise-hint/manage/exercise-hint.route.ts',
-        'src/main/webapp/app/core/config/prod.config.ts'
+        'src/main/webapp/app/core/config/prod.config.ts',
     ],
     coverageThreshold: {
         global: {
@@ -89,6 +116,6 @@ module.exports = {
         '@env': '<rootDir>/src/main/webapp/environments/environment',
         '@src/(.*)': '<rootDir>/src/src/$1',
         '@state/(.*)': '<rootDir>/src/app/state/$1',
-        "^lodash-es$": "lodash"
+        '^lodash-es$': 'lodash',
     },
 };

@@ -33,7 +33,6 @@ env:
   node: 16.x
   java: 17
 
-
 jobs:
   analyse:
     name: Analyse

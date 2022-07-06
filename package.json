@@ -150,7 +150,7 @@
         "build": "npm run webapp:prod --",
         "compile:ts": "tsc --project tsconfig.app.json",
         "compile:ts:tests": "tsc --project tsconfig.spec.json",
-        "jest": "jest --coverage --log-heap-usage --max-workers=4 --config jest.config.js",
+        "jest": "jest --coverage --log-heap-usage --max-workers=4 --config jest.config.ts",
         "test": "ng test --coverage --log-heap-usage -w=4",
         "test-only": "ng test",
         "test-only:ci": "ng test --ci --reporters=default --reporters=jest-junit",
