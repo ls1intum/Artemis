@@ -1,15 +1,14 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
-
 import dayjs from 'dayjs/esm';
-
 import { Complaint, ComplaintType } from 'app/entities/complaint.model';
 import { ComplaintResponseService } from 'app/complaints/complaint-response.service';
 import { Exercise } from 'app/entities/exercise.model';
 import { map } from 'rxjs/operators';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { Course } from 'app/entities/course.model';
+import { AssessmentType } from 'app/entities/assessment-type.model';
 import { convertDateFromClient, convertDateFromServer } from 'app/utils/date.utils';
 
 export type EntityResponseType = HttpResponse<Complaint>;
@@ -236,13 +235,14 @@ export class ComplaintService implements IComplaintService {
      */
     getIndividualComplaintDueDate(exercise: Exercise, course: Course, studentParticipation?: StudentParticipation): dayjs.Dayjs | undefined {
         const lastResult = studentParticipation?.results?.last();
-        const now = dayjs();
-        if (!lastResult) {
+        // No complaints if there is no result or the exercise does not support complaints
+        if (!lastResult || !exercise.dueDate || (exercise.assessmentType === AssessmentType.AUTOMATIC && !exercise.allowComplaintsForAutomaticAssessments)) {
             return undefined;
         }
 
+        const now = dayjs();
         let complaintStartDate;
-        if (exercise.allowComplaintsForAutomaticAssessments && now.isAfter(exercise.dueDate)) {
+        if (exercise.allowComplaintsForAutomaticAssessments) {
             complaintStartDate = exercise.dueDate;
         } else if (lastResult.rated && !exercise.assessmentDueDate) {
             complaintStartDate = lastResult.completionDate;
