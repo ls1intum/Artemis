@@ -38,6 +38,7 @@
     #notification-sidebar-container {
         height: calc(100vh - 85px);
         overflow-y: auto;
+        overflow-x: hidden;
         .notification-item {
             cursor: pointer;
             white-space: normal;
@@ -52,7 +53,6 @@
             }
             .info {
                 font-size: 0.8rem;
-                white-space: nowrap;
             }
         }
     }
