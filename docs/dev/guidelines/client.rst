@@ -300,7 +300,7 @@ Here are a few tips when using this framework:
        appends a percentage sign to the data label.
 
        .. TIP::
-           The method is passed to the framework itself and executed there. This means on runtime, it does not have access to global variables of the component it is originally implemented in.
+           The method is passed to the framework itself and executed there. This means that at runtime it does not have access to global variables of the component it is originally implemented in.
            If this access is necessary, create a (readonly) variable assigned to this method and bind it to the component: ``readonly bindFormatting = this.formatDataLabel.bind(this);``
 
     3. Some design properties are not directly configurable via the framework (e.g. the font-size and weight of the data labels).
