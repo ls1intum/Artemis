@@ -42,7 +42,7 @@ export class UserFilter {
             options = options.append('authorities', [...this.authorityFilter].join(','));
         }
         options = options.append('origins', [...this.originFilter].join(','));
-        options = options.append('registrationNumbers', [...this.registrationNumberFilter].join(','));
+        options = options.append('registrationNumber', [...this.registrationNumberFilter].join(','));
         options = options.append('status', [...this.statusFilter].join(','));
         if (this.noCourse) {
             // -1 means that we filter for users without any course
