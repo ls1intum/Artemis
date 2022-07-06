@@ -1,9 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
-
 import dayjs from 'dayjs/esm';
-
 import { Complaint, ComplaintType } from 'app/entities/complaint.model';
 import { ComplaintResponseService } from 'app/complaints/complaint-response.service';
 import { Exercise } from 'app/entities/exercise.model';
@@ -11,7 +9,6 @@ import { map } from 'rxjs/operators';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { Course } from 'app/entities/course.model';
 import { AssessmentType } from 'app/entities/assessment-type.model';
-import { getLatestSubmissionResult } from 'app/entities/submission.model';
 
 export type EntityResponseType = HttpResponse<Complaint>;
 export type EntityResponseTypeArray = HttpResponse<Complaint[]>;
