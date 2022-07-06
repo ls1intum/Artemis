@@ -294,8 +294,8 @@ Here are a few tips when using this framework:
        .. code-block:: ts
 
           formatDataLabel(averageScore: number): string {
-                  return averageScore + '%';
-              }
+              return averageScore + '%';
+          }
 
        appends a percentage sign to the data label.
 
