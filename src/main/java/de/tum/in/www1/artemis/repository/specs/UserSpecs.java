@@ -115,7 +115,7 @@ public class UserSpecs {
         }
         else {
             return (root, query, criteriaBuilder) -> {
-                if (noRegistrationNumber == true) {
+                if (noRegistrationNumber) {
                     Predicate userWithoutRegistrationNumber = criteriaBuilder.isNull(root.get(User_.REGISTRATION_NUMBER));
                     return criteriaBuilder.and(userWithoutRegistrationNumber);
                 }
