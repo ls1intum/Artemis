@@ -764,7 +764,7 @@ public class UserTestService {
      * @param courseIds which the users are part
      * @return params for request
      */
-    private LinkedMultiValueMap<String, String> createParamsForPagingRequest(String authorities, String origins, String status, String registrationNumber, String courseIds) {
+    private LinkedMultiValueMap<String, String> createParamsForPagingRequest(String authorities, String origins, String registrationNumber, String status, String courseIds) {
         final var params = new LinkedMultiValueMap<String, String>();
         params.add("page", "0");
         params.add("pageSize", "100");
@@ -773,8 +773,8 @@ public class UserTestService {
         params.add("sortedColumn", "id");
         params.add("authorities", authorities);
         params.add("origins", origins);
+        params.add("registrationNumber", registrationNumber);
         params.add("status", status);
-        params.add("registrationNumber", "");
         params.add("courseIds", courseIds);
         return params;
     }
@@ -826,7 +826,7 @@ public class UserTestService {
 
     // Test
     public void testUserWithActivatedStatus() throws Exception {
-        final var params = createParamsForPagingRequest("USER", "", "ACTIVATED", "", "");
+        final var params = createParamsForPagingRequest("USER", "", "", "ACTIVATED", "");
 
         List<User> result;
         List<User> users;
@@ -846,7 +846,7 @@ public class UserTestService {
 
     // Test
     public void testUserWithDeactivatedStatus() throws Exception {
-        final var params = createParamsForPagingRequest("USER", "", "DEACTIVATED", "", "");
+        final var params = createParamsForPagingRequest("USER", "", "", "DEACTIVATED", "");
 
         List<User> result;
         List<User> users;
@@ -931,8 +931,9 @@ public class UserTestService {
         }
     }
 
+    // Test
     public void testUserWithRegistrationNumber() throws Exception {
-        final var params = createParamsForPagingRequest("USER", "INTERNAL,EXTERNAL", "", "5461351", "");
+        final var params = createParamsForPagingRequest("USER", "INTERNAL,EXTERNAL", "5461351", "", "");
 
         List<User> result;
         List<User> users;
@@ -952,6 +953,7 @@ public class UserTestService {
         }
     }
 
+    // Test
     public void testUserWithoutRegistrationNumber() throws Exception {
         final var params = createParamsForPagingRequest("USER", "", "", "", "");
 

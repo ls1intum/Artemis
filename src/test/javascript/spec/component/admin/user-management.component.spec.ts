@@ -412,7 +412,7 @@ describe('UserManagementComponent', () => {
         expect(comp.filters.numberOfAppliedFilters).toBe(4);
 
         comp.filters.authorityFilter.delete(AuthorityFilter.ADMIN);
-        expect(comp.filters.numberOfAppliedFilters).toBe(2);
+        expect(comp.filters.numberOfAppliedFilters).toBe(3);
     });
 
     it('should toggle course filter', () => {
@@ -577,21 +577,21 @@ describe('UserManagementComponent', () => {
         let httpParams = new HttpParams();
         comp.filters = new UserFilter();
 
-        httpParams = httpParams.append('authorities', 'NO_AUTHORITY').append('origins', '').append('status', '').append('registrationNumber', '').append('courseIds', '');
+        httpParams = httpParams.append('authorities', 'NO_AUTHORITY').append('origins', '').append('registrationNumber', '').append('status', '').append('courseIds', '');
         comp.filters.noAuthority = true;
 
         expect(comp.filters.adjustOptions(new HttpParams())).toEqual(httpParams);
 
         comp.filters.noAuthority = false;
-        httpParams = new HttpParams().append('authorities', '').append('origins', '').append('status', '').append('registrationNumber', '').append('courseIds', '');
+        httpParams = new HttpParams().append('authorities', '').append('origins', '').append('registrationNumber', '').append('status', '').append('courseIds', '');
         expect(comp.filters.adjustOptions(new HttpParams())).toEqual(httpParams);
 
         comp.filters.noCourse = true;
-        httpParams = new HttpParams().append('authorities', '').append('origins', '').append('status', '').append('registrationNumber', '').append('courseIds', -1);
+        httpParams = new HttpParams().append('authorities', '').append('origins', '').append('registrationNumber', '').append('status', '').append('courseIds', -1);
         expect(comp.filters.adjustOptions(new HttpParams())).toEqual(httpParams);
 
         comp.filters.registrationNumberFilter.add(RegistrationNumberFilter.WITH_REG_NO);
-        httpParams = new HttpParams().append('authorities', '').append('origins', '').append('status', '').append('registrationNumber', '6151').append('courseIds', '');
+        httpParams = new HttpParams().append('authorities', '').append('origins', '').append('registrationNumber', '6151').append('status', '').append('courseIds', '');
         expect(comp.filters.adjustOptions(new HttpParams())).toEqual(httpParams);
 
         comp.filters.originFilter.add(OriginFilter.INTERNAL);
@@ -600,8 +600,8 @@ describe('UserManagementComponent', () => {
         httpParams = new HttpParams()
             .append('authorities', 'ADMIN')
             .append('origins', 'INTERNAL')
-            .append('status', 'ACTIVATED')
             .append('registrationNumber', '')
+            .append('status', 'ACTIVATED')
             .append('courseIds', -1);
         expect(comp.filters.adjustOptions(new HttpParams())).toEqual(httpParams);
     });
