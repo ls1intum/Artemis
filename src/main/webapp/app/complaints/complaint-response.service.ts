@@ -40,7 +40,7 @@ export class ComplaintResponseService {
     refreshLock(complaintId: number): Observable<EntityResponseType> {
         return this.http
             .post<ComplaintResponse>(`${this.resourceUrl}/complaint/${complaintId}/refresh-lock`, {}, { observe: 'response' })
-            .pipe(map((res: EntityResponseType) => this.convertComplaintResponseResponseDatesFromServer(res)));
+            .pipe(map((res: EntityResponseType) => this.convertComplaintResponseEntityResponseDatesFromServer(res)));
     }
 
     removeLock(complaintId: number): Observable<HttpResponse<void>> {
@@ -50,20 +50,20 @@ export class ComplaintResponseService {
     createLock(complaintId: number): Observable<EntityResponseType> {
         return this.http
             .post<ComplaintResponse>(`${this.resourceUrl}/complaint/${complaintId}/create-lock`, {}, { observe: 'response' })
-            .pipe(map((res: EntityResponseType) => this.convertComplaintResponseResponseDatesFromServer(res)));
+            .pipe(map((res: EntityResponseType) => this.convertComplaintResponseEntityResponseDatesFromServer(res)));
     }
 
     resolveComplaint(complaintResponse: ComplaintResponse): Observable<EntityResponseType> {
         const copy = this.convertComplaintResponseDatesFromClient(complaintResponse);
         return this.http
             .put<ComplaintResponse>(`${this.resourceUrl}/complaint/${complaintResponse.complaint!.id}/resolve`, copy, { observe: 'response' })
-            .pipe(map((res: EntityResponseType) => this.convertComplaintResponseResponseDatesFromServer(res)));
+            .pipe(map((res: EntityResponseType) => this.convertComplaintResponseEntityResponseDatesFromServer(res)));
     }
 
     findByComplaintId(complaintId: number): Observable<EntityResponseType> {
         return this.http
             .get<ComplaintResponse>(`${this.resourceUrl}/complaint/${complaintId}`, { observe: 'response' })
-            .pipe(map((res: EntityResponseType) => this.convertComplaintResponseResponseDatesFromServer(res)));
+            .pipe(map((res: EntityResponseType) => this.convertComplaintResponseEntityResponseDatesFromServer(res)));
     }
 
     public convertComplaintResponseDatesFromClient(complaintResponse: ComplaintResponse): ComplaintResponse {
@@ -72,7 +72,7 @@ export class ComplaintResponseService {
         });
     }
 
-    public convertComplaintResponseResponseDatesFromServer(res: EntityResponseType): EntityResponseType {
+    public convertComplaintResponseEntityResponseDatesFromServer(res: EntityResponseType): EntityResponseType {
         if (res.body) {
             this.convertComplaintResponseDatesFromServer(res.body);
         }

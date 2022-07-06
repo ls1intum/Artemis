@@ -46,7 +46,7 @@ export class StatisticsService {
         const params = new HttpParams().set('courseId', '' + courseId);
         return this.http.get<CourseManagementStatisticsDTO>(`${this.resourceUrl}course-statistics`, { params }).pipe(
             map((res: CourseManagementStatisticsDTO) => {
-                StatisticsService.convertExerciseCategoriesForCourseManagementStatistics(res);
+                StatisticsService.convertExerciseCategoriesOfrCourseManagementStatisticsFromServer(res);
                 return StatisticsService.convertCourseManagementStatisticDatesFromServer(res);
             }),
         );
@@ -76,7 +76,7 @@ export class StatisticsService {
         return dto;
     }
 
-    private static convertExerciseCategoriesForCourseManagementStatistics(res: CourseManagementStatisticsDTO): CourseManagementStatisticsDTO {
+    private static convertExerciseCategoriesOfrCourseManagementStatisticsFromServer(res: CourseManagementStatisticsDTO): CourseManagementStatisticsDTO {
         res.averageScoresOfExercises.forEach((avgScoresOfExercise) => {
             avgScoresOfExercise.categories = avgScoresOfExercise.categories?.map((category) => JSON.parse(category as string) as ExerciseCategory);
         });
