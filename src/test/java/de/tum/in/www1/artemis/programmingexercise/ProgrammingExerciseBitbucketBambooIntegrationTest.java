@@ -1,7 +1,7 @@
 package de.tum.in.www1.artemis.programmingexercise;
 
 import static de.tum.in.www1.artemis.programmingexercise.ProgrammingExerciseTestService.studentLogin;
-import static de.tum.in.www1.artemis.programmingexercise.ProgrammingSubmissionConstants.BITBUCKET_REQUEST;
+import static de.tum.in.www1.artemis.programmingexercise.ProgrammingSubmissionConstants.BITBUCKET_PUSH_EVENT_REQUEST;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.doThrow;
 
@@ -184,7 +184,7 @@ public class ProgrammingExerciseBitbucketBambooIntegrationTest extends AbstractS
     @EnumSource(ExerciseMode.class)
     @WithMockUser(username = studentLogin, roles = "USER")
     public void resumeProgrammingExerciseByPushingIntoRepo_correctInitializationState(ExerciseMode exerciseMode) throws Exception {
-        final String requestAsArtemisUser = BITBUCKET_REQUEST.replace("\"name\": \"admin\"", "\"name\": \"Artemis\"").replace("\"displayName\": \"Admin\"",
+        final String requestAsArtemisUser = BITBUCKET_PUSH_EVENT_REQUEST.replace("\"name\": \"admin\"", "\"name\": \"Artemis\"").replace("\"displayName\": \"Admin\"",
                 "\"displayName\": \"Artemis\"");
         Object body = new JSONParser().parse(requestAsArtemisUser);
         programmingExerciseTestService.resumeProgrammingExerciseByPushingIntoRepo_correctInitializationState(exerciseMode, body);

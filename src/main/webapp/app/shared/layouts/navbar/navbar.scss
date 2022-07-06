@@ -3,36 +3,34 @@
 /* ==========================================================================
 Navbar
 ========================================================================== */
-.navbar-version {
-    font-size: 10px;
-    color: var(--navbar-foreground);
-}
-
 /* Don't underline the menu items on hover */
 a:not(.btn):hover {
     text-decoration: none !important;
 }
 
 .jh-navbar {
-    background-color: #353d47;
+    background-color: var(--artemis-dark);
     white-space: nowrap;
     padding: 0.2em 1em;
+
     .profile-image {
         margin: -10px 0px;
         height: 40px;
         width: 40px;
         border-radius: 50%;
     }
+
     .dropdown-item.active,
     .dropdown-item.active:focus,
     .dropdown-item.active:hover {
         background-color: var(--navbar-bg);
     }
+
     .dropdown-toggle::after {
         margin-left: 0.15em;
     }
+
     ul.navbar-nav {
-        padding: 0.5em;
         .nav-item {
             margin-left: 1.5rem;
         }
@@ -50,15 +48,67 @@ a:not(.btn):hover {
             }
         }
     }
+
     a.nav-link {
         font-weight: 400;
     }
-    .jh-navbar-toggler {
-        color: var(--navbar-foreground);
-        font-size: 1.5em;
-        padding: 10px;
-        &:hover {
-            color: var(--bs-white);
+
+    .jh-logo-container {
+        display: flex;
+        flex: 1;
+        align-items: center;
+        flex-wrap: nowrap;
+        gap: 10px;
+        height: 50px;
+
+        .navbar-brand {
+            display: flex;
+            gap: 10px;
+            padding: 10px 15px;
+            align-items: center;
+            margin-right: 0;
+            height: 100%;
+
+            img {
+                height: 30px;
+                vertical-align: middle;
+                margin-right: 10px;
+            }
+
+            .navbar-version {
+                padding-top: 3px;
+                font-size: 10px;
+                color: var(--navbar-foreground);
+            }
+
+            &:hover {
+                color: var(--navbar-foreground);
+            }
+        }
+
+        .indicators {
+            display: flex;
+            align-items: center;
+            flex-wrap: nowrap;
+            font-size: 18px;
+            height: 50px;
+        }
+
+        .toggler-wrapper {
+            flex: 1;
+            display: flex;
+            justify-content: end;
+            align-items: center;
+
+            .toggler {
+                color: var(--navbar-foreground);
+                font-size: 1.5em;
+                padding: 10px;
+
+                &:hover {
+                    color: var(--navbar-foreground);
+                }
+            }
         }
     }
 }
@@ -72,6 +122,7 @@ a:not(.btn):hover {
     overflow: auto;
     margin-left: -15px;
     min-height: 0.5rem;
+
     .breadcrumb {
         color: var(--navbar-breadcrumb-color);
         background-color: var(--navbar-breadcrumb-background);
@@ -102,51 +153,5 @@ a:not(.btn):hover {
                 display: block !important;
             }
         }
-    }
-}
-
-@media screen and (min-width: 1200px) {
-    .jh-navbar-toggler {
-        display: none;
-    }
-}
-
-@media screen and (max-width: 1200px) {
-    .jh-logo-container {
-        width: 100%;
-    }
-}
-
-.navbar-title {
-    display: inline-block;
-    vertical-align: middle;
-}
-
-/* ==========================================================================
-Logo styles
-========================================================================== */
-.navbar-brand {
-    &.logo {
-        padding: 10px 15px;
-        .logo-img {
-            height: 30px;
-            vertical-align: middle;
-        }
-
-        .row {
-            flex-wrap: nowrap;
-        }
-    }
-}
-
-.jh-logo-container {
-    display: flex;
-    flex-wrap: nowrap;
-
-    .indicators {
-        flex-wrap: nowrap;
-        font-size: 18px;
-        height: 50px;
-        align-items: center;
     }
 }

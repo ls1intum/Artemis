@@ -17,7 +17,7 @@ describe('NgbDateDayjsAdapter', () => {
         expect(adapter.fromModel(null)).toBe(null);
     });
 
-    it('should return null for other objects that are not dayjs', () => {
+    it('should return null for other objects that are not dayjs object', () => {
         expect(adapter.fromModel({} as dayjs.Dayjs)).toBe(null);
     });
 

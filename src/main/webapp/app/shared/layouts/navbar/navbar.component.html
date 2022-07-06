@@ -1,19 +1,17 @@
 <nav class="navbar navbar-dark navbar-expand-xl jh-navbar">
-    <div class="jh-logo-container float-start">
-        <a class="navbar-brand logo" routerLink="/" (click)="collapseNavbar()">
-            <div class="row">
-                <img class="logo-img col" [src]="SERVER_API_URL + 'public/images/logo.png'" />
-                <div jhiTranslate="global.title" class="navbar-title col">Artemis</div>
-                <div class="navbar-version col px-0 align-self-center">{{ version }}</div>
-            </div>
+    <div class="jh-logo-container">
+        <a class="navbar-brand" routerLink="/" (click)="collapseNavbar()">
+            <img [src]="SERVER_API_URL + 'public/images/logo.png'" />
+            <div jhiTranslate="global.title" class="navbar-title">Artemis</div>
+            <div class="navbar-version">{{ version }}</div>
         </a>
         <div class="indicators row">
             <jhi-connection-warning class="col align-self-center"></jhi-connection-warning>
             <jhi-loading-notification class="col align-self-center"></jhi-loading-notification>
         </div>
-        <div class="d-xl-none flex-grow-1 d-flex justify-content-end">
+        <div class="toggler-wrapper d-xl-none">
             <a
-                class="jh-navbar-toggler"
+                class="toggler"
                 data-toggle="collapse"
                 data-target="#navbarResponsive"
                 aria-controls="navbarResponsive"

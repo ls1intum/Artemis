@@ -29,6 +29,7 @@
             "import": {
                 "attention": "Attention! ",
                 "markdownWarning": "You can edit the problem statement after importing the exercise.",
+                "search": "Search for exercise",
                 "loading": "Loading...",
                 "table": {
                     "title": "Title",

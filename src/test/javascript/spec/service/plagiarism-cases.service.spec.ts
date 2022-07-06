@@ -139,4 +139,13 @@ describe('Plagiarism Cases Service', () => {
         req.flush(returnedFromService);
         tick();
     }));
+
+    it('should clean up plagiarism', fakeAsync(() => {
+        const returnedFromService = {};
+        service.cleanUpPlagiarism(1, 1, true).pipe(take(1)).subscribe();
+
+        const req = httpMock.expectOne({ method: 'DELETE' });
+        req.flush(returnedFromService);
+        tick();
+    }));
 });

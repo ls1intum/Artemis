@@ -42,34 +42,4 @@ export class PlagiarismComparison<E extends PlagiarismSubmissionElement> {
      * Status of this submission comparison.
      */
     status: PlagiarismStatus;
-
-    /**
-     * Status fn the statement by student A
-     */
-    statusA: PlagiarismStatus;
-
-    /**
-     * Status on the statement of student B
-     */
-    statusB: PlagiarismStatus;
-
-    /**
-     * Statement for the case by student A
-     */
-    studentStatementA?: string;
-
-    /**
-     * Statement for the case by student B
-     */
-    studentStatementB?: string;
-
-    /**
-     * Statement by instructor for student A
-     */
-    instructorStatementA?: string;
-
-    /**
-     * Statement by instructor for student B
-     */
-    instructorStatementB?: string;
 }

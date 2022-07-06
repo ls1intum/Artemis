@@ -1,7 +1,7 @@
 package de.tum.in.www1.artemis.programmingexercise;
 
 import static de.tum.in.www1.artemis.programmingexercise.ProgrammingExerciseTestService.studentLogin;
-import static de.tum.in.www1.artemis.programmingexercise.ProgrammingSubmissionConstants.GITLAB_REQUEST;
+import static de.tum.in.www1.artemis.programmingexercise.ProgrammingSubmissionConstants.GITLAB_PUSH_EVENT_REQUEST;
 
 import java.util.Arrays;
 import java.util.stream.Stream;
@@ -191,7 +191,7 @@ class ProgrammingExerciseGitlabJenkinsIntegrationTest extends AbstractSpringInte
     @EnumSource(ExerciseMode.class)
     @WithMockUser(username = studentLogin, roles = "USER")
     public void resumeProgrammingExerciseByPushingIntoRepo_correctInitializationState(ExerciseMode exerciseMode) throws Exception {
-        Object body = new JSONParser().parse(GITLAB_REQUEST);
+        Object body = new JSONParser().parse(GITLAB_PUSH_EVENT_REQUEST);
         programmingExerciseTestService.resumeProgrammingExerciseByPushingIntoRepo_correctInitializationState(exerciseMode, body);
     }
 

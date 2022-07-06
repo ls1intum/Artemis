@@ -9,7 +9,7 @@ import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { QuizExerciseService } from 'app/exercises/quiz/manage/quiz-exercise.service';
 import { Authority } from 'app/shared/constants/authority.constants';
-import { QuizStatisticsDirective } from 'app/exercises/quiz/manage/statistics/quiz-statistics.directive';
+import { QuizStatistics } from 'app/exercises/quiz/manage/statistics/quiz-statistics';
 import { faSync } from '@fortawesome/free-solid-svg-icons';
 import { calculateMaxScore } from 'app/exercises/quiz/manage/statistics/quiz-statistic/quiz-statistics.utils';
 import { round } from 'app/shared/util/utils';
@@ -19,7 +19,7 @@ import { round } from 'app/shared/util/utils';
     templateUrl: './quiz-statistic.component.html',
     styleUrls: ['../quiz-point-statistic/quiz-point-statistic.component.scss', '../../../../../shared/chart/vertical-bar-chart.scss'],
 })
-export class QuizStatisticComponent extends QuizStatisticsDirective implements OnInit, OnDestroy {
+export class QuizStatisticComponent extends QuizStatistics implements OnInit, OnDestroy {
     quizExercise: QuizExercise;
     private sub: Subscription;
 
@@ -45,6 +45,11 @@ export class QuizStatisticComponent extends QuizStatisticsDirective implements O
         private changeDetector: ChangeDetectorRef,
     ) {
         super(translateService);
+        this.translateService.onLangChange.subscribe(() => {
+            this.setAxisLabels('showStatistic.quizStatistic.xAxes', 'showStatistic.quizStatistic.yAxes');
+            this.ngxData[this.ngxData.length - 1].name = this.translateService.instant('showStatistic.quizStatistic.average');
+            this.ngxData = [...this.ngxData];
+        });
     }
 
     ngOnInit() {

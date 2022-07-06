@@ -364,7 +364,7 @@
                         "pattern": "Der Punktabzug muss eine Nummer größer als 0 sein.",
                         "required": "Der Punktabzug muss gesetzt sein."
                     },
-                    "penaltyInfoLabel": "Punktabzug je Überschreitung",
+                    "penaltyInfoLabel": "(Punktabzug je Überschreitung: {{points}} Punkte)",
                     "triggerAllInformation": "Wird der Punktabzug je Überschreitung des Abgabelimits oder das Abgabelimit selbst angepasst, muss nach dem Speichern der Abgaberichtlinie die 'Erneut Bewerten' Funktionalität genutzt werden, um die Ergebnisse der Teilnehmenden zu aktualisieren."
                 },
                 "submissionPolicyType": {
@@ -411,14 +411,14 @@
             },
             "withDependencies": "Mit beispielhafter Abhängigkeit",
             "withDependenciesTooltip": "Fügt dem generierten Projekt eine externe Apache commons-lang-Abhängigkeit als Beispiel dafür hinzu, wie Maven-Abhängigkeiten mit Artemis-Aufgaben verwendet werden sollten.",
-            "recordTestwiseCoverage": "Testweise Test-Abdeckung aufzeichnen",
-            "recordTestwiseCoverageTooltip": "Durch Aktivierung dieser Option wird die testweise Test-Abdeckung für das Lösungs-Repository aufgezeichnet. Diese Option ist nur für Java/Kotlin-Aufgaben mit nicht-sequentiellen Testläufen verfügbar.",
+            "recordTestwiseCoverage": "Testbasierte Code-Abdeckung aufzeichnen",
+            "recordTestwiseCoverageTooltip": "Durch Aktivierung dieser Option wird die testbasierte Code-Abdeckung für das Lösungs-Repository aufgezeichnet. Diese Option ist nur für Java/Kotlin-Aufgaben mit nicht-sequentiellen Testläufen verfügbar.",
             "coveredLineRatio": "Anteil Test-Abgedeckter Zeilen",
             "testwiseCoverageReport": {
-                "button": "Testweise Test-Abdeckung anzeigen",
-                "tooltip": "Zeigt die testwise Test-Abdeckung für das Lösungs-Repository.",
-                "title": "Testweise Test-Abdeckung",
-                "404": "Testweise Test-Abdeckung wurde noch nicht generiert. Bitte pushe etwas in die Lösungs- oder Test-Repositories um den Report zu erstellen.",
+                "button": "Testbasierte Code-Abdeckung anzeigen",
+                "tooltip": "Zeigt die testbasierte Code-Abdeckung für das Lösungs-Repository.",
+                "title": "Testbasierte Code-Abdeckung",
+                "404": "Testbasierte Code-Abdeckung wurde noch nicht generiert. Bitte pushe etwas in die Lösungs- oder Test-Repositories um den Report zu erstellen.",
                 "selectTests": "Wähle die Tests aus, für die die Test-abgedeckten Zeilen markiert werden:",
                 "filePath": "Datei-Pfad",
                 "coveredLines": "Abgedeckte Zeilen"

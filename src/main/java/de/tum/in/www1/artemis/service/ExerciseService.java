@@ -649,7 +649,7 @@ public class ExerciseService {
             for (Feedback feedback : feedbackToBeUpdated) {
                 if (feedback.getGradingInstruction().getId().equals(instruction.getId())) {
                     feedback.setCredits(instruction.getCredits());
-                    feedback.setPositive(feedback.getCredits() >= 0);
+                    feedback.setPositiveViaCredits();
                 }
             }
         }

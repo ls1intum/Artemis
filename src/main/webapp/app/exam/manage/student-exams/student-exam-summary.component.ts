@@ -15,6 +15,6 @@ export class StudentExamSummaryComponent implements OnInit {
      * Initialize the studentExam
      */
     ngOnInit(): void {
-        this.route.data.subscribe(({ studentExam }) => (this.studentExam = studentExam));
+        this.route.data.subscribe(({ studentExam: studentExamWithGrade }) => (this.studentExam = studentExamWithGrade.studentExam));
     }
 }

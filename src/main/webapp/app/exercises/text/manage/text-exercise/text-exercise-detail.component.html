@@ -16,7 +16,12 @@
                 </a>
             </div>
             <div *ngIf="!textExercise.releaseDate || dayjs(textExercise.releaseDate).isBefore(dayjs())" class="mt-3">
-                <jhi-exercise-detail-statistics [exercise]="textExercise" [doughnutStats]="doughnutStats" [exerciseType]="ExerciseType.TEXT"></jhi-exercise-detail-statistics>
+                <jhi-exercise-detail-statistics
+                    [exercise]="textExercise"
+                    [doughnutStats]="doughnutStats"
+                    [exerciseType]="ExerciseType.TEXT"
+                    class="d-flex justify-content-around"
+                ></jhi-exercise-detail-statistics>
                 <hr />
                 <div>
                     <h2><span jhiTranslate="artemisApp.exercise.details">Exercise Details</span></h2>

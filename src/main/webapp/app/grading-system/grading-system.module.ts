@@ -1,6 +1,5 @@
 import { NgModule } from '@angular/core';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
-import { DeviceDetectorService } from 'ngx-device-detector';
 import { DetailedGradingSystemComponent } from 'app/grading-system/detailed-grading-system/detailed-grading-system.component';
 import { GradingSystemInfoModalComponent } from 'app/grading-system/grading-system-info-modal/grading-system-info-modal.component';
 import { GradingSystemComponent } from 'app/grading-system/grading-system.component';
@@ -15,6 +14,5 @@ import { ArtemisSharedComponentModule } from 'app/shared/components/shared-compo
     imports: [ArtemisSharedModule, RouterModule.forChild(gradingSystemState), ArtemisModePickerModule, ArtemisSharedComponentModule],
     exports: [GradingSystemComponent, GradingSystemInfoModalComponent],
     entryComponents: [GradingSystemComponent],
-    providers: [DeviceDetectorService],
 })
 export class GradingSystemModule {}

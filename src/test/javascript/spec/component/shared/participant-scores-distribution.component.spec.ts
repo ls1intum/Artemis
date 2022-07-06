@@ -170,4 +170,20 @@ describe('ParticipantScoresDistributionComponent', () => {
 
         expect(component.ngxColor.domain).toEqual(Array(4).fill(GraphColors.GREY));
     });
+
+    it('should listen to window resizing', () => {
+        const realignChartSpy = jest.spyOn(component, 'realignChart');
+
+        window['innerWidth'] = 700;
+        window.dispatchEvent(new Event('resize'));
+
+        expect(realignChartSpy).toHaveBeenCalledOnce();
+        expect(component.showYAxisLabel).toBeTrue();
+
+        window['innerWidth'] = 699;
+        window.dispatchEvent(new Event('resize'));
+
+        expect(realignChartSpy).toHaveBeenCalledTimes(2);
+        expect(component.showYAxisLabel).toBeFalse();
+    });
 });

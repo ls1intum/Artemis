@@ -152,7 +152,7 @@ describe('CreateAttachmentUnitComponent', () => {
             expect(attachmentArgument.version).toEqual(attachment.version);
             expect(attachmentArgument.link).toEqual(attachment.link);
             expect(attachmentArgument.attachmentUnit).toEqual(attachmentUnit);
-            expect(navigateSpy).toHaveBeenCalledTimes(1);
+            expect(navigateSpy).toHaveBeenCalledOnce();
             navigateSpy.mockRestore();
         });
     }));

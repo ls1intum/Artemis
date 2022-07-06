@@ -1,5 +1,5 @@
 import { Component } from '@angular/core';
-import { faCheck, faFileUpload, faScroll, faVideo } from '@fortawesome/free-solid-svg-icons';
+import { faCheck, faFileUpload, faLink, faScroll, faVideo } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-unit-creation-card',
@@ -12,4 +12,5 @@ export class UnitCreationCardComponent {
     faVideo = faVideo;
     faFileUpload = faFileUpload;
     faScroll = faScroll;
+    faLink = faLink;
 }

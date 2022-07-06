@@ -2,81 +2,52 @@ package de.tum.in.www1.artemis.web.rest;
 
 import java.util.List;
 
-import javax.ws.rs.BadRequestException;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
+import org.springframework.messaging.handler.annotation.DestinationVariable;
+import org.springframework.messaging.handler.annotation.MessageMapping;
+import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RestController;
 
-import de.tum.in.www1.artemis.domain.User;
-import de.tum.in.www1.artemis.domain.exam.Exam;
-import de.tum.in.www1.artemis.domain.exam.StudentExam;
 import de.tum.in.www1.artemis.domain.exam.monitoring.ExamAction;
-import de.tum.in.www1.artemis.repository.ExamRepository;
-import de.tum.in.www1.artemis.repository.StudentExamRepository;
-import de.tum.in.www1.artemis.repository.UserRepository;
-import de.tum.in.www1.artemis.service.exam.StudentExamAccessService;
 import de.tum.in.www1.artemis.service.scheduled.cache.monitoring.ExamMonitoringScheduleService;
 
 /**
- * REST controller for managing ExamActivityResource.
+ * (Websocket) controller for managing ExamActivityResource.
  */
 @RestController
-@RequestMapping("/api")
+@Controller
 public class ExamActivityResource {
-
-    private final Logger log = LoggerFactory.getLogger(ExamActivityResource.class);
-
-    private final StudentExamAccessService studentExamAccessService;
-
-    private final StudentExamRepository studentExamRepository;
-
-    private final UserRepository userRepository;
 
     private final ExamMonitoringScheduleService examMonitoringScheduleService;
 
-    private final ExamRepository examRepository;
-
-    public ExamActivityResource(StudentExamAccessService studentExamAccessService, StudentExamRepository studentExamRepository, UserRepository userRepository,
-            ExamMonitoringScheduleService examMonitoringScheduleService, ExamRepository examRepository) {
+    public ExamActivityResource(ExamMonitoringScheduleService examMonitoringScheduleService) {
         this.examMonitoringScheduleService = examMonitoringScheduleService;
-        this.studentExamAccessService = studentExamAccessService;
-        this.studentExamRepository = studentExamRepository;
-        this.userRepository = userRepository;
-        this.examRepository = examRepository;
     }
 
     /**
-     * PUT /courses/{courseId}/exams/{examId}/student-exams/{studentExamId}/actions: Adds the performed actions by
-     * the user
+     * Adds the performed actions by the user into the cache. This method does not perform any authorization and validation checks.
      *
-     * @param courseId      the course to which the student exams belong to
-     * @param examId        the exam to which the student exams belong to
-     * @param studentExamId the student exam id where we want to add the actions
-     * @param actions       list of actions performed by the user after the last synchronisation
-     * @return 200 if successful
+     * @param examId    the exam to which the student exams belong to
+     * @param action    action performed by the user
      */
-    @PutMapping("/courses/{courseId}/exams/{examId}/student-exams/{studentExamId}/actions")
-    @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<Void> updatePerformedExamActions(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long studentExamId,
-            @RequestBody List<ExamAction> actions) {
-        Exam exam = examRepository.findByIdElseThrow(examId);
-        if (!exam.isMonitoring()) {
-            throw new BadRequestException("Monitoring is not enabled for the exam with the id " + examId);
-        }
+    @MessageMapping("/topic/exam-monitoring/{examId}/actions")
+    public void updatePerformedExamActions(@DestinationVariable Long examId, @Payload ExamAction action) {
+        examMonitoringScheduleService.addExamActions(examId, action);
+    }
 
-        StudentExam studentExam = studentExamRepository.findByIdWithExercisesElseThrow(studentExamId);
-        User currentUser = userRepository.getUserWithGroupsAndAuthorities();
-        boolean isTestRun = studentExam.isTestRun();
-        this.studentExamAccessService.checkStudentExamAccessElseThrow(courseId, examId, studentExamId, currentUser, isTestRun);
-
-        // TODO: Validate actions
-
-        actions.forEach(action -> examMonitoringScheduleService.addExamAction(examId, studentExamId, action));
-        log.info("REST request by user: {} for exam with id {} to add {} actions for student-exam {}", currentUser.getLogin(), examId, actions.size(), studentExamId);
-
-        return ResponseEntity.ok().build();
+    /**
+     * GET api/exam-monitoring/{examId}/load-actions: returns all actions of the exam.
+     *
+     * @param examId the exam to which the student exams belong to
+     * @return all exam actions of the exam
+     */
+    @GetMapping("api/exam-monitoring/{examId}/load-actions")
+    @PreAuthorize("hasRole('INSTRUCTOR')")
+    public ResponseEntity<List<ExamAction>> loadAllActions(@PathVariable Long examId) {
+        return ResponseEntity.ok().body(examMonitoringScheduleService.getAllExamActions(examId));
     }
 }

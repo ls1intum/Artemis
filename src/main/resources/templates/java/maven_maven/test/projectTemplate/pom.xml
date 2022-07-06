@@ -185,18 +185,6 @@
     <profiles>
         <profile>
             <id>coverage</id>
-            <pluginRepositories>
-                <pluginRepository>
-                    <id>oss.sonatype.org-snapshot</id>
-                    <url>https://oss.sonatype.org/content/repositories/snapshots</url>
-                    <releases>
-                        <enabled>false</enabled>
-                    </releases>
-                    <snapshots>
-                        <enabled>true</enabled>
-                    </snapshots>
-                </pluginRepository>
-            </pluginRepositories>
             <build>
                 <plugins>
                     <plugin>
@@ -212,14 +200,14 @@
                             <dependency>
                                 <groupId>com.teamscale</groupId>
                                 <artifactId>teamscale-surefire-provider</artifactId>
-                                <version>24.0.1</version>
+                                <version>24.1.1</version>
                             </dependency>
                         </dependencies>
                     </plugin>
                     <plugin>
                         <groupId>com.teamscale</groupId>
                         <artifactId>teamscale-maven-plugin</artifactId>
-                        <version>24.0.1-SNAPSHOT</version>
+                        <version>24.1.1</version>
                         <configuration>
                             <teamscaleUrl>http://localhost</teamscaleUrl>
                             <accessToken>dummy</accessToken>

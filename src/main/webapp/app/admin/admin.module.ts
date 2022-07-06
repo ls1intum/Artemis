@@ -29,6 +29,7 @@ import { MatChipsModule } from '@angular/material/chips';
 import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import { MatSelectModule } from '@angular/material/select';
 import { MatFormFieldModule } from '@angular/material/form-field';
+import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 
 const ENTITY_STATES = [...adminState];
 
@@ -45,6 +46,7 @@ const ENTITY_STATES = [...adminState];
         MatAutocompleteModule,
         MatSelectModule,
         MatFormFieldModule,
+        ArtemisSharedComponentModule,
     ],
     declarations: [
         AuditsComponent,

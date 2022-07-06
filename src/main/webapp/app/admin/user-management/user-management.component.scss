@@ -1,0 +1,31 @@
+.course-modal-section {
+    max-height: 100px;
+    list-style-type: none;
+    overflow-y: scroll;
+
+    & .course-modal-section-title {
+        display: inline-block;
+        text-overflow: ellipsis;
+        overflow: hidden;
+    }
+}
+
+.user-management-select-all {
+    min-width: 70px;
+}
+
+.radio-selection-width {
+    width: 80%;
+}
+
+.user-management-background-accent {
+    background: var(--user-management-background-color);
+}
+
+.user-management-border-bottom {
+    border-bottom: 2px solid var(--overview-blue-border-color);
+}
+
+.user-management-line-bottom {
+    border-bottom: 1px solid var(--user-management-border-color);
+}

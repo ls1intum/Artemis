@@ -9,7 +9,7 @@ import { Lecture } from 'app/entities/lecture.model';
 import { CourseScoreCalculationService } from 'app/overview/course-score-calculation.service';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { faAngleDown, faAngleUp, faSortAmountDown, faSortAmountUp } from '@fortawesome/free-solid-svg-icons';
-import { BarControlConfiguration, BarControlConfigurationProvider } from 'app/overview/course-overview.component';
+import { BarControlConfiguration, BarControlConfigurationProvider } from 'app/overview/tab-bar/tab-bar';
 
 @Component({
     selector: 'jhi-course-lectures',

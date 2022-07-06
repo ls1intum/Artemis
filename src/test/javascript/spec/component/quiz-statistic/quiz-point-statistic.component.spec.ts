@@ -234,4 +234,34 @@ describe('QuizExercise Point Statistic Component', () => {
             expect(comp.unratedData).toEqual([3, 6]);
         });
     });
+
+    describe('loadNewData', () => {
+        it('should route students back to courses', () => {
+            accountSpy = jest.spyOn(accountService, 'hasAnyAuthorityDirect').mockReturnValue(false);
+            const routerMock = jest.spyOn(router, 'navigate').mockImplementation();
+            jest.spyOn(comp, 'loadData').mockImplementation();
+            const testData = new QuizPointStatistic();
+
+            comp.loadNewData(testData);
+
+            expect(routerMock).toHaveBeenCalledOnce();
+            expect(routerMock).toHaveBeenCalledWith(['courses']);
+        });
+    });
+
+    describe('recalculate', () => {
+        it('should recalculate', fakeAsync(() => {
+            const recalculateMock = jest.spyOn(quizService, 'recalculate').mockReturnValue(of(new HttpResponse({ body: quizExercise })));
+            const loadQuizSucessMock = jest.spyOn(comp, 'loadQuizSuccess').mockImplementation();
+            comp.quizExercise = quizExercise;
+
+            comp.recalculate();
+            tick();
+
+            expect(recalculateMock).toHaveBeenCalledOnce();
+            expect(recalculateMock).toHaveBeenCalledWith(42);
+            expect(loadQuizSucessMock).toHaveBeenCalledOnce();
+            expect(loadQuizSucessMock).toHaveBeenCalledWith(quizExercise);
+        }));
+    });
 });

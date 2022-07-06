@@ -1,6 +1,7 @@
 import { Pipe, ChangeDetectorRef, PipeTransform, OnDestroy, NgZone } from '@angular/core';
 import dayjs from 'dayjs/esm';
 import { isDate } from 'app/shared/util/utils';
+import { TranslateService } from '@ngx-translate/core';
 
 @Pipe({
     name: 'artemisTimeAgo',
@@ -16,10 +17,10 @@ export class ArtemisTimeAgoPipe implements PipeTransform, OnDestroy {
     private lastText: string;
     private formatFn: (m: dayjs.Dayjs) => string;
 
-    constructor(private cdRef: ChangeDetectorRef, private ngZone: NgZone) {}
+    constructor(private cdRef: ChangeDetectorRef, private ngZone: NgZone, private translateService: TranslateService) {}
 
     format(date: dayjs.Dayjs) {
-        return date.from(dayjs(), this.lastOmitSuffix);
+        return date.locale(this.lastLocale).from(dayjs(), this.lastOmitSuffix);
     }
 
     transform(value: dayjs.ConfigType, omitSuffix?: boolean, formatFn?: (m: dayjs.Dayjs) => string): string {
@@ -27,7 +28,7 @@ export class ArtemisTimeAgoPipe implements PipeTransform, OnDestroy {
             this.lastTime = getTime(value);
             this.lastValue = value;
             this.lastOmitSuffix = omitSuffix;
-            this.lastLocale = getLocale(value);
+            this.lastLocale = this.translateService.currentLang;
             this.formatFn = formatFn || this.format.bind(this);
             this.removeTimer();
             this.createTimer();
@@ -73,7 +74,7 @@ export class ArtemisTimeAgoPipe implements PipeTransform, OnDestroy {
     }
 
     private hasChanged(value: dayjs.ConfigType, omitSuffix?: boolean): boolean {
-        return getTime(value) !== this.lastTime || getLocale(value) !== this.lastLocale || omitSuffix !== this.lastOmitSuffix;
+        return getTime(value) !== this.lastTime || this.translateService.currentLang !== this.lastLocale || omitSuffix !== this.lastOmitSuffix;
     }
 }
 
@@ -98,8 +99,4 @@ function getSecondsUntilUpdate(dayjsInstance: dayjs.Dayjs) {
     } else {
         return 3600;
     }
-}
-
-function getLocale(value: dayjs.ConfigType): string {
-    return dayjs.isDayjs(value) ? value.locale() : dayjs.locale();
 }
