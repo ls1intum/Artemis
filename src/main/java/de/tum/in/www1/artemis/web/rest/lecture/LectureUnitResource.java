@@ -12,15 +12,18 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.Lecture;
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.lecture.AttachmentUnit;
 import de.tum.in.www1.artemis.domain.lecture.ExerciseUnit;
 import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
 import de.tum.in.www1.artemis.repository.LectureRepository;
 import de.tum.in.www1.artemis.repository.LectureUnitRepository;
+import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.LectureUnitService;
 import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
+import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 
 @RestController
@@ -36,15 +39,18 @@ public class LectureUnitResource {
 
     private final AuthorizationCheckService authorizationCheckService;
 
+    private final UserRepository userRepository;
+
     private final LectureUnitRepository lectureUnitRepository;
 
     private final LectureRepository lectureRepository;
 
     private final LectureUnitService lectureUnitService;
 
-    public LectureUnitResource(AuthorizationCheckService authorizationCheckService, LectureRepository lectureRepository, LectureUnitRepository lectureUnitRepository,
-            LectureUnitService lectureUnitService) {
+    public LectureUnitResource(AuthorizationCheckService authorizationCheckService, UserRepository userRepository, LectureRepository lectureRepository,
+            LectureUnitRepository lectureUnitRepository, LectureUnitService lectureUnitService) {
         this.authorizationCheckService = authorizationCheckService;
+        this.userRepository = userRepository;
         this.lectureUnitRepository = lectureUnitRepository;
         this.lectureRepository = lectureRepository;
         this.lectureUnitService = lectureUnitService;
@@ -85,6 +91,40 @@ public class LectureUnitResource {
 
         Lecture persistedLecture = lectureRepository.save(lecture);
         return ResponseEntity.ok(persistedLecture.getLectureUnits());
+    }
+
+    /**
+     * POST lectures/:lectureId/lecture-units/:lectureUnitId/complete
+     *
+     * @param lectureId     the id of the lecture to which the unit belongs
+     * @param lectureUnitId the id of the lecture unit to mark as completed for the logged-in user
+     * @param completed     true if the lecture unit should be marked as completed, false for uncompleted
+     * @return the ResponseEntity with status 200 (OK)
+     */
+    @PostMapping("/lectures/{lectureId}/lecture-units/{lectureUnitId}/completion")
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<Void> completeLectureUnit(@PathVariable Long lectureUnitId, @PathVariable Long lectureId, @RequestParam("completed") boolean completed) {
+        log.info("REST request to mark lecture unit as completed: {}", lectureUnitId);
+        LectureUnit lectureUnit = lectureUnitRepository.findById(lectureUnitId).orElseThrow(() -> new EntityNotFoundException("lectureUnit"));
+
+        if (lectureUnit.getLecture() == null || lectureUnit.getLecture().getCourse() == null) {
+            throw new ConflictException("Lecture unit must be associated to a lecture of a course", "LectureUnit", "lectureOrCourseMissing");
+        }
+
+        if (!lectureUnit.getLecture().getId().equals(lectureId)) {
+            throw new ConflictException("Requested lecture unit is not part of the specified lecture", "LectureUnit", "lectureIdMismatch");
+        }
+
+        if (!lectureUnit.isVisibleToStudents()) {
+            throw new ConflictException("Requested lecture unit is not yet visible for students", "LectureUnit", "lectureUnitNotReleased");
+        }
+
+        User user = userRepository.getUserWithGroupsAndAuthorities();
+        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, lectureUnit.getLecture().getCourse(), user);
+
+        lectureUnitService.setLectureUnitCompletion(lectureUnit, user, completed);
+
+        return ResponseEntity.ok().build();
     }
 
     /**

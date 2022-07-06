@@ -106,11 +106,9 @@ public class TextUnitResource {
         if (textUnit.getId() != null) {
             throw new BadRequestAlertException("A new text unit cannot have an id", ENTITY_NAME, "idexists");
         }
-        Optional<Lecture> lectureOptional = lectureRepository.findByIdWithPostsAndLectureUnitsAndLearningGoals(lectureId);
-        if (lectureOptional.isEmpty()) {
-            throw new BadRequestAlertException("A new text unit must be connected to a lecture", ENTITY_NAME, "lectureempty");
-        }
-        Lecture lecture = lectureOptional.get();
+
+        Lecture lecture = lectureRepository.findByIdWithLectureUnitsElseThrow(lectureId);
+
         if (lecture.getCourse() == null || (textUnit.getLecture() != null && !lecture.getId().equals(textUnit.getLecture().getId()))) {
             throw new ConflictException("Input data not valid", ENTITY_NAME, "inputInvalid");
         }

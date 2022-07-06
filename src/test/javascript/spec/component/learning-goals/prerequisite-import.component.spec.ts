@@ -76,12 +76,12 @@ describe('PrerequisiteImportComponent', () => {
     };
 
     it('should set content to paging result on sort', fakeAsync(() => {
-        expect(comp.listSorting).toEqual(false);
+        expect(comp.listSorting).toBeFalse();
         setStateAndCallOnInit(() => {
             comp.listSorting = true;
             tick(10);
             expect(searchForLearningGoalsStub).toHaveBeenCalledWith({ ...state, sortingOrder: SortingOrder.ASCENDING });
-            expect(comp.listSorting).toEqual(true);
+            expect(comp.listSorting).toBeTrue();
         });
     }));
 

@@ -82,8 +82,8 @@ describe('Plagiarism Split View Component', () => {
             exercise: { currentValue: modelingExercise } as SimpleChange,
         });
 
-        expect(comp.isModelingExercise).toEqual(true);
-        expect(comp.isProgrammingOrTextExercise).toEqual(false);
+        expect(comp.isModelingExercise).toBeTrue();
+        expect(comp.isProgrammingOrTextExercise).toBeFalse();
     });
 
     it('checks type of text exercise', () => {
@@ -91,8 +91,8 @@ describe('Plagiarism Split View Component', () => {
             exercise: { currentValue: textExercise } as SimpleChange,
         });
 
-        expect(comp.isProgrammingOrTextExercise).toEqual(true);
-        expect(comp.isModelingExercise).toEqual(false);
+        expect(comp.isProgrammingOrTextExercise).toBeTrue();
+        expect(comp.isModelingExercise).toBeFalse();
     });
 
     it('should parse text matches for comparison', fakeAsync(() => {
@@ -204,7 +204,7 @@ describe('Plagiarism Split View Component', () => {
             { start: 0, length: 0 },
             { start: 3, length: 3 },
         ];
-        const textSubmissionElements = [
+        submissionA.elements = [
             { file: '', column: 1, line: 1 },
             { file: '', column: 2, line: 2 },
             { file: '', column: 3, line: 3 },
@@ -216,7 +216,6 @@ describe('Plagiarism Split View Component', () => {
             { file: '', column: 9, line: 9 },
             { file: '', column: 10, line: 10 },
         ] as TextSubmissionElement[];
-        submissionA.elements = textSubmissionElements;
         const mappedElements = new Map();
         mappedElements.set('none', [
             { from: { file: '', column: 1, line: 1 }, to: { file: '', column: 2, line: 2 } },
