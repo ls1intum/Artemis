@@ -52,13 +52,20 @@ const exercise2: Exercise = {
     dueDate: dayjs().add(1, 'days'),
     secondCorrectionEnabled: true,
 };
+const exercise3: Exercise = {
+    id: 7,
+    numberOfAssessmentsOfCorrectionRounds: [dueDateStat1],
+    studentAssignedTeamIdComputed: false,
+    dueDate: dayjs().add(3, 'days'),
+    secondCorrectionEnabled: true,
+};
 
 const courseEmpty: Course = {};
 
 const exam1: Exam = { id: 3, endDate: endDate1, visibleDate: visibleDate1, course: courseEmpty };
 const exam2: Exam = { id: 4, endDate: endDate2, visibleDate: visibleDate2, course: courseEmpty };
 const exams = [exam1, exam2];
-const course1: Course = { id: 1, exams, exercises: [exercise1] };
+const course1: Course = { id: 1, exams, exercises: [exercise1, exercise3] };
 const course2: Course = { id: 2, exercises: [exercise2], testCourse: true };
 const courses: Course[] = [course1, course2];
 
