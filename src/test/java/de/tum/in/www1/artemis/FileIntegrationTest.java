@@ -171,6 +171,73 @@ public class FileIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     }
 
     @Test
+    @WithMockUser(username = "tutor1", roles = "TA")
+    public void testGetFileUploadSubmissionAsTutor() throws Exception {
+        Course course = database.addCourseWithThreeFileUploadExercise();
+        FileUploadExercise fileUploadExercise = database.findFileUploadExerciseWithTitle(course.getExercises(), "released");
+        FileUploadSubmission fileUploadSubmission = ModelFactory.generateFileUploadSubmission(true);
+        fileUploadSubmission = database.addFileUploadSubmission(fileUploadExercise, fileUploadSubmission, "student1");
+
+        MockMultipartFile file = new MockMultipartFile("file", "file.png", "application/json", "some data".getBytes());
+        JsonNode response = request.postWithMultipartFile("/api/fileUpload?keepFileName=true", file.getOriginalFilename(), "file", file, JsonNode.class, HttpStatus.CREATED);
+        String responsePath = response.get("path").asText();
+        String filePath = fileService.manageFilesForUpdatedFilePath(null, responsePath,
+                FileUploadSubmission.buildFilePath(fileUploadExercise.getId(), fileUploadSubmission.getId()), fileUploadSubmission.getId(), true);
+
+        fileUploadSubmission.setFilePath(filePath);
+
+        // get access token
+        String accessToken = request.get(fileUploadSubmission.getFilePath() + "/access-token", HttpStatus.OK, String.class);
+
+        String receivedFile = request.get(fileUploadSubmission.getFilePath() + "?access_token=" + accessToken, HttpStatus.OK, String.class);
+        assertThat(receivedFile).isEqualTo("some data");
+        request.get(fileUploadSubmission.getFilePath() + "?access_token=random_non_valid_token", HttpStatus.FORBIDDEN, String.class);
+    }
+
+    @Test
+    @WithMockUser(username = "other-ta1", roles = "TA")
+    public void testGetAccessTokenForFileUploadSubmissionAsTutorNotInCourse_forbidden() throws Exception {
+        Course course = database.addCourseWithThreeFileUploadExercise();
+        FileUploadExercise fileUploadExercise = database.findFileUploadExerciseWithTitle(course.getExercises(), "released");
+        FileUploadSubmission fileUploadSubmission = ModelFactory.generateFileUploadSubmission(true);
+        fileUploadSubmission = database.addFileUploadSubmission(fileUploadExercise, fileUploadSubmission, "student1");
+        String path = "/api/files/file-upload-exercises/" + fileUploadExercise.getId() + "/submissions/" + fileUploadSubmission.getId() + "/test.png";
+        fileUploadSubmission.setFilePath(path);
+
+        // create tutor that is not in the course
+        database.addTeachingAssistant("other-tutors", "other-ta");
+
+        request.get(path + "/access-token", HttpStatus.FORBIDDEN, String.class);
+    }
+
+    @Test
+    @WithMockUser(username = "student1")
+    public void testGetAccessTokenForOwnFileUploadSubmissionAsStudent() throws Exception {
+        Course course = database.addCourseWithThreeFileUploadExercise();
+        FileUploadExercise fileUploadExercise = database.findFileUploadExerciseWithTitle(course.getExercises(), "released");
+        FileUploadSubmission fileUploadSubmission = ModelFactory.generateFileUploadSubmission(true);
+        fileUploadSubmission = database.addFileUploadSubmission(fileUploadExercise, fileUploadSubmission, "student1");
+        String path = "/api/files/file-upload-exercises/" + fileUploadExercise.getId() + "/submissions/" + fileUploadSubmission.getId() + "/test.png";
+        fileUploadSubmission.setFilePath(path);
+
+        // get access token
+        request.get(path + "/access-token", HttpStatus.OK, String.class);
+    }
+
+    @Test
+    @WithMockUser(username = "student2")
+    public void testGetAccessTokenForOtherStudentsFileUploadSubmissionAsStudent_forbidden() throws Exception {
+        Course course = database.addCourseWithThreeFileUploadExercise();
+        FileUploadExercise fileUploadExercise = database.findFileUploadExerciseWithTitle(course.getExercises(), "released");
+        FileUploadSubmission fileUploadSubmission = ModelFactory.generateFileUploadSubmission(true);
+        fileUploadSubmission = database.addFileUploadSubmission(fileUploadExercise, fileUploadSubmission, "student1");
+        String path = "/api/files/file-upload-exercises/" + fileUploadExercise.getId() + "/submissions/" + fileUploadSubmission.getId() + "/test.png";
+        fileUploadSubmission.setFilePath(path);
+
+        request.get(path + "/access-token", HttpStatus.FORBIDDEN, String.class);
+    }
+
+    @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testGetLectureAttachment() throws Exception {
         Attachment attachment = createLectureWithAttachment("attachment.pdf", HttpStatus.CREATED);
@@ -193,6 +260,27 @@ public class FileIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         String accessToken = request.get(attachmentPath + "/access-token", HttpStatus.OK, String.class);
         String receivedAttachment = request.get(attachmentPath + "?access_token=" + accessToken, HttpStatus.OK, String.class);
         assertThat(receivedAttachment).isEqualTo("some data");
+    }
+
+    @Test
+    @WithMockUser(username = "student1")
+    public void testGetUnreleasedLectureAttachmentAsStudent_forbidden() throws Exception {
+        Lecture lecture = database.createCourseWithLecture(true);
+        lecture.setTitle("Test title");
+        lecture.setDescription("Test");
+        lecture.setStartDate(ZonedDateTime.now().minusHours(1));
+
+        // generate attachment
+        Attachment attachment = ModelFactory.generateAttachment(ZonedDateTime.now());
+        attachment.setLecture(lecture);
+        attachment.setReleaseDate(ZonedDateTime.now().plusDays(1));
+        String attachmentPath = "/api/files/attachments/lecture/" + lecture.getId() + "/test.pdf";
+        attachment.setLink(attachmentPath);
+
+        lectureRepo.save(lecture);
+        attachmentRepo.save(attachment);
+
+        request.get(attachmentPath + "/access-token", HttpStatus.FORBIDDEN, String.class);
     }
 
     @Test
