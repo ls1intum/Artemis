@@ -6,6 +6,7 @@ import { ExamAction, ExamActionType, SavedExerciseAction, SwitchedExerciseAction
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { MockWebsocketService } from '../../../helpers/mocks/service/mock-websocket.service';
 import { createActions } from './exam-monitoring-helper';
+import { BehaviorSubject } from 'rxjs';
 import { ExamActionService } from 'app/exam/monitoring/exam-action.service';
 import dayjs from 'dayjs/esm';
 import { MockHttpService } from '../../../helpers/mocks/service/mock-http.service';
@@ -42,6 +43,18 @@ describe('ExamActionService', () => {
 
     afterEach(() => {
         jest.restoreAllMocks();
+    });
+
+    // Notify exam monitoring update subscribers
+    it.each([true, false])('should notify exam monitoring update subscribers', (status: boolean) => {
+        const examMonitoringStatusObservables = new Map<number, BehaviorSubject<boolean>>();
+        expect(examActionService.examMonitoringStatusObservables).toEqual(examMonitoringStatusObservables);
+
+        examActionService.notifyExamMonitoringUpdateSubscribers(exam, status);
+
+        examMonitoringStatusObservables.set(exam.id!, new BehaviorSubject(status));
+
+        expect(examActionService.examMonitoringStatusObservables).toEqual(examMonitoringStatusObservables);
     });
 
     // Prepare actions
