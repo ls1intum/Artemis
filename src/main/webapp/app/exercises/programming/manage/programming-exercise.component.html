@@ -80,16 +80,18 @@
                         <a
                             *ngIf="programmingExercise.isAtLeastEditor; else showId"
                             [routerLink]="['/course-management', courseId, 'programming-exercises', programmingExercise.id]"
-                            >{{ programmingExercise.id }}</a
                         >
+                            {{ programmingExercise.id }}
+                        </a>
                         <ng-template #showId>{{ programmingExercise.id }}</ng-template>
                     </td>
                     <td>
                         <a
                             *ngIf="programmingExercise.isAtLeastEditor; else showTitle"
                             [routerLink]="['/course-management', courseId, 'programming-exercises', programmingExercise.id]"
-                            >{{ programmingExercise.title }}</a
                         >
+                            {{ programmingExercise.title }}
+                        </a>
                         <ng-template #showTitle>{{ programmingExercise.title }}</ng-template>
                         <jhi-programming-exercise-grading-dirty-warning
                             class="ms-2"

@@ -57,16 +57,18 @@
                         <a
                             *ngIf="modelingExercise.isAtLeastEditor; else showId"
                             [routerLink]="['/course-management', modelingExercise.course?.id, 'modeling-exercises', modelingExercise.id]"
-                            >{{ modelingExercise.id }}</a
                         >
+                            {{ modelingExercise.id }}
+                        </a>
                         <ng-template #showId>{{ modelingExercise.id }}</ng-template>
                     </td>
                     <td id="modeling-exercise-{{ modelingExercise.id }}-title">
                         <a
                             *ngIf="modelingExercise.isAtLeastEditor; else showTitle"
                             [routerLink]="['/course-management', modelingExercise.course?.id, 'modeling-exercises', modelingExercise.id]"
-                            >{{ modelingExercise.title }}</a
                         >
+                            {{ modelingExercise.title }}
+                        </a>
                         <ng-template #showTitle>{{ modelingExercise.title }}</ng-template>
                     </td>
                     <td id="modeling-exercise-{{ modelingExercise.id }}-releaseDate">{{ modelingExercise.releaseDate | artemisDate }}</td>
