@@ -180,6 +180,10 @@ public class ExamResource {
         if (updatedExam.isMonitoring()) {
             examMonitoringScheduleService.scheduleExamActivitySave(result.getId());
         }
+        else {
+            examMonitoringScheduleService.cancelExamActivitySave(result.getId());
+        }
+        examMonitoringScheduleService.notifyMonitoringUpdate(result.getId(), updatedExam.isMonitoring());
 
         // We can't test dates for equality as the dates retrieved from the database lose precision. Also use instant to take timezones into account
         Comparator<ZonedDateTime> comparator = Comparator.comparing(date -> date.truncatedTo(ChronoUnit.SECONDS).toInstant());
