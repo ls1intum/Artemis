@@ -328,7 +328,7 @@ Here are a few tips when using this framework:
 
        * Axis labels are passed directly as property in the HTML template. Simply insert the translation string together with the translate pipe:
 
-       .. code-block: html+ng2
+       .. code-block:: html+ng2
 
            [xAxisLabel]="'artemisApp.examMonitoring.charts.xAxisLabel' | artemisTranslate"
            [yAxisLabel]="'artemisApp.examMonitoring.charts.yAxisLabel' | artemisTranslate"
@@ -337,7 +337,7 @@ Here are a few tips when using this framework:
          So, these names have to be translated every time the user switches the language settings.
          In this case, inject the ``TranslateService`` to the underlying component and subscribe to the ``onLangChange`` event emitter:
 
-       .. code-block: ts
+       .. code-block:: ts
 
            constructor(private translateService: TranslateService) {
                 this.translateService.onLangChange.subscribe(() => {
