@@ -47,11 +47,11 @@
             </div>
             <div class="notification-item p-3" *ngFor="let notification of sortedNotifications" (click)="startNotification(notification)">
                 <div>
-                    <h5 class="fw-medium">
+                    <h5 class="fw-medium notification-title">
                         {{ notification.title }}
                         <span class="badge ms-1 bg-primary" *ngIf="lastNotificationRead && notification.notificationDate?.isAfter(lastNotificationRead)"> new </span>
                     </h5>
-                    <div class="mb-1 text-break" [innerHTML]="notification.text"></div>
+                    <div class="mb-1 text-break notification-text" [innerHTML]="notification.text"></div>
                     <div class="info text-muted text-end">
                         {{ notification.notificationDate?.toDate() | date: 'dd.MM.yy HH:mm' }}
                         {{ 'artemisApp.notification.by' | artemisTranslate }}

@@ -56,6 +56,10 @@
             .info {
                 font-size: 0.8rem;
             }
+            .notification-title,
+            .notification-text {
+                white-space: normal;
+            }
         }
     }
     .no-notifications {
