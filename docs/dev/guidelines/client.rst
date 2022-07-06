@@ -340,9 +340,9 @@ Here are a few tips when using this framework:
        .. code-block:: ts
 
            constructor(private translateService: TranslateService) {
-                this.translateService.onLangChange.subscribe(() => {
-                    this.updateXAxisLabel(); // a method re-assigning the names of the objects to the translated string
-                });
+               this.translateService.onLangChange.subscribe(() => {
+                   this.updateXAxisLabel(); // a method re-assigning the names of the objects to the translated string
+               });
            }
 
 Some parts of these guidelines are adapted from https://github.com/microsoft/TypeScript-wiki/blob/main/Coding-guidelines.md
