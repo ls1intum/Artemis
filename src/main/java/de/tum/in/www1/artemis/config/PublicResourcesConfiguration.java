@@ -37,7 +37,7 @@ public class PublicResourcesConfiguration implements WebMvcConfigurer {
 
         var defaultCacheControl = CacheControl.maxAge(jHipsterProperties.getHttp().getCache().getTimeToLiveInDays(), TimeUnit.DAYS).cachePublic();
 
-        addResourceHandlerForPath(registry, "images", "about").setCacheControl(defaultCacheControl);
+        addResourceHandlerForPath(registry, "images").setCacheControl(defaultCacheControl);
         addResourceHandlerForPath(registry, "emoji").setCacheControl(defaultCacheControl);
     }
 

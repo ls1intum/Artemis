@@ -5,7 +5,10 @@ import static java.net.URLDecoder.decode;
 import java.io.File;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
+import java.util.EnumSet;
 
+import javax.servlet.DispatcherType;
+import javax.servlet.FilterRegistration;
 import javax.servlet.ServletContext;
 
 import org.slf4j.Logger;
@@ -24,6 +27,7 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import org.springframework.web.filter.CorsFilter;
 
 import tech.jhipster.config.JHipsterProperties;
+import tech.jhipster.web.filter.CachingHttpHeadersFilter;
 
 /**
  * Configuration of web application with Servlet 3.0 APIs.
@@ -47,6 +51,7 @@ public class WebConfigurer implements ServletContextInitializer, WebServerFactor
         if (env.getActiveProfiles().length != 0) {
             log.info("Web application configuration, using profiles: {}", (Object[]) env.getActiveProfiles());
         }
+        setCachingHttpHeaders(servletContext);
         log.info("Web application fully configured");
     }
 
@@ -58,6 +63,13 @@ public class WebConfigurer implements ServletContextInitializer, WebServerFactor
         setMimeMappings(server);
         // When running in an IDE or with ./gradlew bootRun, set location of the static web assets.
         setLocationForStaticAssets(server);
+    }
+
+    private void setCachingHttpHeaders(ServletContext server) {
+        FilterRegistration.Dynamic cachingHttpHeadersFilter = server.addFilter("cachingHttpHeadersFilter", new CachingHttpHeadersFilter(jHipsterProperties));
+        EnumSet<DispatcherType> dispatcherTypes = EnumSet.of(DispatcherType.REQUEST, DispatcherType.FORWARD, DispatcherType.ASYNC);
+        cachingHttpHeadersFilter.addMappingForUrlPatterns(dispatcherTypes, true, "*.js", "*.css", "/logo/*", "/i18n/*");
+        cachingHttpHeadersFilter.setAsyncSupported(true);
     }
 
     private void setMimeMappings(WebServerFactory server) {
