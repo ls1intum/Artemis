@@ -335,7 +335,7 @@ public class BambooService extends AbstractContinuousIntegrationService {
         ProjectType projectType = programmingExerciseParticipation.getProgrammingExercise().getProjectType();
 
         var buildLogEntries = retrieveLatestBuildLogsFromBamboo(programmingExerciseParticipation.getBuildPlanId());
-        extractBuildLogStatistics(programmingSubmission, programmingLanguage, projectType, buildLogEntries);
+        extractAndPersistBuildLogStatistics(programmingSubmission, programmingLanguage, projectType, buildLogEntries);
         buildLogEntries = buildLogService.removeUnnecessaryLogsForProgrammingLanguage(buildLogEntries, programmingLanguage);
         var savedBuildLogs = buildLogService.saveBuildLogs(buildLogEntries, programmingSubmission);
 
@@ -347,7 +347,7 @@ public class BambooService extends AbstractContinuousIntegrationService {
     }
 
     @Override
-    public void extractBuildLogStatistics(ProgrammingSubmission programmingSubmission, ProgrammingLanguage programmingLanguage, ProjectType projectType,
+    public void extractAndPersistBuildLogStatistics(ProgrammingSubmission programmingSubmission, ProgrammingLanguage programmingLanguage, ProjectType projectType,
             List<BuildLogEntry> buildLogEntries) {
         ZonedDateTime jobStarted = null;
         ZonedDateTime agentSetupCompleted = null;

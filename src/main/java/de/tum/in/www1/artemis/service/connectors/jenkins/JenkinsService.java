@@ -157,7 +157,7 @@ public class JenkinsService extends AbstractContinuousIntegrationService {
     }
 
     @Override
-    public void extractBuildLogStatistics(ProgrammingSubmission programmingSubmission, ProgrammingLanguage programmingLanguage, ProjectType projectType,
+    public void extractAndPersistBuildLogStatistics(ProgrammingSubmission programmingSubmission, ProgrammingLanguage programmingLanguage, ProjectType projectType,
             List<BuildLogEntry> buildLogEntries) {
         ZonedDateTime jobStarted = null;
         ZonedDateTime agentSetupCompleted = null;

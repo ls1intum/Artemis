@@ -18,6 +18,20 @@ public class BuildLogStatisticsEntryService {
         this.buildLogStatisticsEntryRepository = buildLogStatisticsEntryRepository;
     }
 
+    /**
+     * Generate a BuildLogStatisticsEntry from the given ZonedDateTime (and other parameters) and persist it.
+     *
+     * @param programmingSubmission the submission for which the BuildLogStatisticsEntry should be generated
+     * @param jobStarted the ZonedDateTime when the CI server started the build (does not include queueing time), or null
+     * @param agentSetupCompleted the ZonedDateTime when the CI server completed the setup of the build agent (e.g. pulling the docker images is completed), or null
+     * @param testsStarted the ZonedDateTime when the tests have been started, or null
+     * @param testsFinished the ZonedDateTime when the tests have been finished, or null
+     * @param scaStarted the ZonedDateTime when the static code analysis has been started, or null
+     * @param scaFinished the ZonedDateTime when the static code analysis has been finished, or null
+     * @param jobFinished the ZonedDateTime when the CI server completed the build, or null
+     * @param dependenciesDownloadedCount the number of dependencies downloaded during the build, or null (if it is not exposed through the logs)
+     * @return the already persisted BuildLogStatisticsEntry
+     */
     public BuildLogStatisticsEntry saveBuildLogStatisticsEntry(ProgrammingSubmission programmingSubmission, ZonedDateTime jobStarted, ZonedDateTime agentSetupCompleted,
             ZonedDateTime testsStarted, ZonedDateTime testsFinished, ZonedDateTime scaStarted, ZonedDateTime scaFinished, ZonedDateTime jobFinished,
             Long dependenciesDownloadedCount) {
