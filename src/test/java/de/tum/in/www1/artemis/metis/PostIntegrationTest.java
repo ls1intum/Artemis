@@ -4,6 +4,7 @@ import static de.tum.in.www1.artemis.service.metis.PostService.TOP_K_SIMILARITY_
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
 
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
@@ -86,24 +87,23 @@ public class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
         student1 = database.getUserByLogin("student1");
 
-        // initialize test setup and get all existing posts (there are 4 posts with lecture context, 4 with exercise context, 1 plagiarism case and 3 with course-wide context -
-        // initialized): 11
-        // posts in total
+        // initialize test setup and get all existing posts (there are 4 posts with lecture context, 4 with exercise context,
+        // 1 plagiarism case and 3 with course-wide context - initialized): 12 posts in total
         existingPosts = database.createPostsWithinCourse();
 
-        existingCoursePosts = existingPosts.stream().filter(post -> post.getPlagiarismCase() == null).collect(Collectors.toList());
+        existingCoursePosts = existingPosts.stream().filter(post -> post.getPlagiarismCase() == null).collect(Collectors.toCollection(ArrayList::new));
 
         // filter existing posts with exercise context
-        existingExercisePosts = existingCoursePosts.stream().filter(coursePost -> (coursePost.getExercise() != null)).collect(Collectors.toList());
+        existingExercisePosts = existingCoursePosts.stream().filter(coursePost -> coursePost.getExercise() != null).collect(Collectors.toCollection(ArrayList::new));
 
         // filter existing posts with lecture context
-        existingLecturePosts = existingCoursePosts.stream().filter(coursePost -> (coursePost.getLecture() != null)).collect(Collectors.toList());
+        existingLecturePosts = existingCoursePosts.stream().filter(coursePost -> coursePost.getLecture() != null).collect(Collectors.toCollection(ArrayList::new));
 
         // filter existing posts with plagiarism context
-        existingPlagiarismPosts = existingPosts.stream().filter(coursePost -> (coursePost.getPlagiarismCase() != null)).collect(Collectors.toList());
+        existingPlagiarismPosts = existingPosts.stream().filter(coursePost -> coursePost.getPlagiarismCase() != null).collect(Collectors.toCollection(ArrayList::new));
 
         // filter existing posts with course-wide context
-        existingCourseWidePosts = existingCoursePosts.stream().filter(coursePost -> (coursePost.getCourseWideContext() != null)).collect(Collectors.toList());
+        existingCourseWidePosts = existingCoursePosts.stream().filter(coursePost -> coursePost.getCourseWideContext() != null).collect(Collectors.toCollection(ArrayList::new));
 
         course = existingExercisePosts.get(0).getExercise().getCourseViaExerciseGroupOrCourseMember();
 
@@ -668,7 +668,7 @@ public class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
         List<Post> returnedPosts = request.getList("/api/courses/" + courseId + "/posts", HttpStatus.OK, Post.class, params);
         database.assertSensitiveInformationHidden(returnedPosts);
-        assertThat(returnedPosts).isEqualTo(existingPosts.stream().filter(post -> post.getId() == 1).collect(Collectors.toList()));
+        assertThat(returnedPosts).isEqualTo(existingPosts.stream().filter(post -> post.getId() == 1).toList());
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
