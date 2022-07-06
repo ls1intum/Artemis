@@ -339,6 +339,24 @@ public class FileIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     }
 
     @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testGetAttachmentUnit() throws Exception {
+        Lecture lecture = database.createCourseWithLecture(true);
+
+        MockMultipartFile file = new MockMultipartFile("file", "filename2.png", "application/json", "some data".getBytes());
+        AttachmentUnit attachmentUnit = uploadAttachmentUnit(file, lecture.getId(), HttpStatus.CREATED);
+        database.addLectureUnitsToLecture(lecture, Set.of(attachmentUnit));
+
+        String attachmentPath = attachmentUnit.getAttachment().getLink();
+        // get access token and then request the file using the access token
+        String accessToken = request.get(attachmentPath + "/access-token", HttpStatus.OK, String.class);
+        String receivedAttachment = request.get(attachmentPath + "?access_token=" + accessToken, HttpStatus.OK, String.class);
+        assertThat(receivedAttachment).isEqualTo("some data");
+
+        request.get(attachmentPath + "?access_token=random_non_valid_token", HttpStatus.FORBIDDEN, String.class);
+    }
+
+    @Test
     @WithMockUser(username = "student1")
     public void testGetAccessTokenForUnreleasedAttachmentUnitAsStudent_forbidden() throws Exception {
         Lecture lecture = database.createCourseWithLecture(true);
@@ -563,8 +581,7 @@ public class FileIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         // move file from temp folder to correct folder
         var targetFolder = Path.of(FilePathService.getAttachmentUnitFilePath(), String.valueOf(attachmentUnit.getId())).toString();
 
-        fileService.manageFilesForUpdatedFilePath(null, responsePath, targetFolder, lecture.getId(), true);
-        var attachmentPath = targetFolder + "/" + file.getOriginalFilename();
+        String attachmentPath = fileService.manageFilesForUpdatedFilePath(null, responsePath, targetFolder, attachmentUnit.getId(), true);
         attachmentUnit.getAttachment().setLink(attachmentPath);
         attachmentRepo.save(attachmentUnit.getAttachment());
 
