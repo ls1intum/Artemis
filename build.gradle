@@ -416,4 +416,4 @@ pitest {
 // 9) Verify code coverage (after tests):           ./gradlew jacocoTestCoverageVerification
 // 10) Detects uses of legacy code:                 ./gradlew modernizer -x webapp
 // 11) Run PIT Mutation Tests:                      ./gradlew pitest -x webapp
-// 11) Generate docs:                               ./gradlew site
+// 12) Generate docs:                               ./gradlew sphinx
