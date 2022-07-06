@@ -11,7 +11,7 @@ import { CourseStatisticsComponent } from 'app/overview/course-statistics/course
 import { DueDateStat } from 'app/course/dashboards/due-date-stat.model';
 import { CourseLearningGoalsComponent } from 'app/overview/course-learning-goals/course-learning-goals.component';
 import { TextExercise } from 'app/entities/text-exercise.model';
-import { ExerciseType, IncludedInOverallScore } from 'app/entities/exercise.model';
+import { Exercise, ExerciseType, IncludedInOverallScore } from 'app/entities/exercise.model';
 import { ExerciseScoresChartComponent } from 'app/overview/visualizations/exercise-scores-chart/exercise-scores-chart.component';
 import { of } from 'rxjs';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
@@ -25,11 +25,15 @@ import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { TreeviewModule } from 'app/exercises/programming/shared/code-editor/treeview/treeview.module';
 import { ExerciseCategory } from 'app/entities/exercise-category.model';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
+import { ChartCategoryFilter } from 'app/shared/chart/chart-category-filter';
 
 describe('CourseStatisticsComponent', () => {
     let comp: CourseStatisticsComponent;
     let fixture: ComponentFixture<CourseStatisticsComponent>;
     let courseScoreCalculationService: CourseScoreCalculationService;
+    let categoryFilter: ChartCategoryFilter;
+
+    const testCategories = new Set(['test1', 'test2']);
 
     const generateExerciseCategory = (type: ExerciseType, index: number) => {
         return { category: type + index.toString(), color: '#9f34eb' };
@@ -339,13 +343,15 @@ describe('CourseStatisticsComponent', () => {
                 ArtemisTranslatePipe,
                 MockDirective(NgbTooltip),
             ],
-            providers: [MockProvider(ArtemisNavigationUtilService), { provide: ActivatedRoute, useValue: { parent: { params: of(1) } } }],
+            providers: [MockProvider(ArtemisNavigationUtilService), MockProvider(ChartCategoryFilter), { provide: ActivatedRoute, useValue: { parent: { params: of(1) } } }],
         })
             .compileComponents()
             .then(() => {
                 fixture = TestBed.createComponent(CourseStatisticsComponent);
                 comp = fixture.componentInstance;
                 courseScoreCalculationService = TestBed.inject(CourseScoreCalculationService);
+                categoryFilter = TestBed.inject(ChartCategoryFilter);
+                categoryFilter.exerciseCategories = testCategories;
             });
     });
 
@@ -545,120 +551,62 @@ describe('CourseStatisticsComponent', () => {
         expect(routingStub).toHaveBeenCalledWith(['courses', 64, 'exercises', 42]);
     });
 
-    it('should deselect and select all categories', () => {
-        setupExercisesWithCategories();
+    describe('test chart filters', () => {
+        let exercises: Exercise[];
 
-        // 3 Filters: Hide optional, Exercises with no categories and quiz1
-        expect(comp.numberOfAppliedFilters).toBe(3);
-        expect(comp.exerciseCategoryFilters.get('quiz1')).toBeTrue();
-        expect(comp.exerciseCategoryFilters.get('programming1')).toBe(undefined);
-        expect(comp.allCategoriesSelected).toBeTrue();
-
-        comp.toggleAllCategories();
-
-        expect(comp.allCategoriesSelected).toBeFalse();
-        expect(comp.exerciseCategoryFilters.get('quiz1')).toBeFalse();
-        expect(comp.numberOfAppliedFilters).toBe(1);
-        comp.ngxExerciseGroups.forEach((group) => {
-            expect(group).toHaveLength(0);
+        beforeEach(() => {
+            exercises = setupExercisesWithCategories();
         });
 
-        comp.toggleAllCategories();
+        it('should filter optional exercises correctly', () => {
+            comp.toggleNotIncludedInScoreExercises();
 
-        expect(comp.allCategoriesSelected).toBeTrue();
-        expect(comp.exerciseCategoryFilters.get('quiz1')).toBeTrue();
-        expect(comp.numberOfAppliedFilters).toBe(3);
-        expect(comp.ngxExerciseGroups).toHaveLength(2);
+            expect(comp.currentlyHidingNotIncludedInScoreExercises).toBeFalse();
+            expect(comp.ngxExerciseGroups).toHaveLength(3);
+            expect(comp.ngxExerciseGroups[0][0].name).toBe('Until 18:20 too');
+        });
+
+        it('should toggle categories', () => {
+            const getCurrentFilterStateMock = jest.spyOn(categoryFilter, 'getCurrentFilterState').mockReturnValue(false);
+            const toggleCategoryMock = jest.spyOn(categoryFilter, 'toggleCategory').mockReturnValue(exercises);
+
+            comp.toggleCategory('test1');
+
+            expect(getCurrentFilterStateMock).toHaveBeenCalledOnce();
+            expect(getCurrentFilterStateMock).toHaveBeenCalledWith('test1');
+            expect(toggleCategoryMock).toHaveBeenCalledOnce();
+            expect(toggleCategoryMock).toHaveBeenCalledWith(exercises, 'test1');
+        });
+
+        it('should toggle all categories', () => {
+            const toggleAllCategoriesMock = jest.spyOn(categoryFilter, 'toggleAllCategories').mockReturnValue(exercises);
+
+            comp.toggleAllCategories();
+
+            expect(toggleAllCategoriesMock).toHaveBeenCalledOnce();
+            expect(toggleAllCategoriesMock).toHaveBeenCalledWith(exercises);
+        });
+
+        it('should toggle exercises with no categories', () => {
+            const toggleExercisesWithNoCategoryMock = jest.spyOn(categoryFilter, 'toggleExercisesWithNoCategory').mockReturnValue(exercises);
+
+            comp.toggleExercisesWithNoCategory();
+
+            expect(toggleExercisesWithNoCategoryMock).toHaveBeenCalledOnce();
+            expect(toggleExercisesWithNoCategoryMock).toHaveBeenCalledWith(exercises);
+        });
+
+        const setupExercisesWithCategories = () => {
+            const courseToAdd = { ...course };
+            const programmingCategory = generateExerciseCategory(ExerciseType.PROGRAMMING, 1);
+            const programmingWithCategory = { ...programmingExercise, categories: [programmingCategory] as ExerciseCategory[] };
+            const quizCategory = generateExerciseCategory(ExerciseType.QUIZ, 1);
+            const quizWithCategory = { ...quizExercise, categories: [quizCategory] as ExerciseCategory[] };
+            courseToAdd.exercises = [...modelingExercises, programmingWithCategory, quizWithCategory];
+            jest.spyOn(courseScoreCalculationService, 'getCourse').mockReturnValue(courseToAdd);
+            comp.ngOnInit();
+            // return all exercises that are included in score
+            return [modelingExercises[0], modelingExercises[2], modelingExercises[3], modelingExercises[4], quizWithCategory];
+        };
     });
-
-    it('should switch filter categories correctly', () => {
-        setupExercisesWithCategories();
-
-        comp.toggleNotIncludedInScoreExercises();
-
-        expect(comp.currentlyHidingNotIncludedInScoreExercises).toBeFalse();
-        expect(comp.numberOfAppliedFilters).toBe(3);
-        expect(comp.exerciseCategoryFilters.get('programming1')).toBeTrue();
-        expect(comp.exerciseCategoryFilters.get('quiz1')).toBeTrue();
-        expect(comp.ngxExerciseGroups).toHaveLength(3);
-        expect(comp.ngxExerciseGroups[0][0].name).toBe('Until 18:20 too');
-
-        comp.toggleCategory('programming1');
-
-        expect(comp.numberOfAppliedFilters).toBe(2);
-        expect(comp.exerciseCategoryFilters.get('programming1')).toBeFalse();
-        expect(comp.ngxExerciseGroups).toHaveLength(2);
-        expect(comp.ngxExerciseGroups.filter((group) => group[0].type === ExerciseType.PROGRAMMING)).toHaveLength(0);
-
-        comp.toggleCategory('quiz1');
-
-        expect(comp.numberOfAppliedFilters).toBe(1);
-        expect(comp.exerciseCategoryFilters.get('programming1')).toBeFalse();
-        expect(comp.exerciseCategoryFilters.get('quiz1')).toBeFalse();
-        expect(comp.ngxExerciseGroups).toHaveLength(1);
-        expect(comp.ngxExerciseGroups.filter((group) => group[0].type === ExerciseType.PROGRAMMING)).toHaveLength(0);
-        expect(comp.ngxExerciseGroups.filter((group) => group[0].type === ExerciseType.QUIZ)).toHaveLength(0);
-
-        comp.toggleExercisesWithNoCategory();
-
-        expect(comp.numberOfAppliedFilters).toBe(0);
-        expect(comp.ngxExerciseGroups).toHaveLength(0);
-
-        comp.toggleCategory('programming1');
-
-        expect(comp.numberOfAppliedFilters).toBe(1);
-        expect(comp.exerciseCategoryFilters.get('programming1')).toBeTrue();
-        expect(comp.ngxExerciseGroups).toHaveLength(1);
-    });
-
-    it('should handle manual reselection of all categories correctly', () => {
-        setupExercisesWithCategories();
-
-        comp.toggleNotIncludedInScoreExercises();
-        comp.toggleAllCategories();
-        comp.toggleExercisesWithNoCategory();
-        comp.toggleCategory('quiz1');
-        comp.toggleCategory('programming1');
-
-        expect(comp.numberOfAppliedFilters).toBe(3);
-        expect(comp.ngxExerciseGroups).toHaveLength(3);
-        expect(comp.ngxExerciseGroups.filter((group) => group[0].type === ExerciseType.PROGRAMMING)[0]).toHaveLength(1);
-        expect(comp.ngxExerciseGroups.filter((group) => group[0].type === ExerciseType.QUIZ)[0]).toHaveLength(1);
-        expect(comp.ngxExerciseGroups.filter((group) => group[0].type === ExerciseType.MODELING)[0]).toHaveLength(5);
-    });
-
-    it('should display an exercise with multiple categories unless both are deselected', () => {
-        const quizCategory1 = generateExerciseCategory(ExerciseType.QUIZ, 1);
-        const quizCategory2 = generateExerciseCategory(ExerciseType.QUIZ, 2);
-        const newQuizExercise = { ...quizExercise, categories: [quizCategory1, quizCategory2] as ExerciseCategory[] };
-        const usedCourse = course;
-        usedCourse.exercises = [newQuizExercise];
-        jest.spyOn(courseScoreCalculationService, 'getCourse').mockReturnValue(usedCourse);
-        comp.ngOnInit();
-
-        expect(comp.ngxExerciseGroups).toHaveLength(1);
-
-        comp.toggleCategory('quiz1');
-
-        expect(comp.ngxExerciseGroups).toHaveLength(1);
-
-        comp.toggleCategory('quiz2');
-
-        expect(comp.ngxExerciseGroups).toHaveLength(0);
-
-        comp.toggleCategory('quiz1');
-
-        expect(comp.ngxExerciseGroups).toHaveLength(1);
-    });
-
-    const setupExercisesWithCategories = () => {
-        const courseToAdd = { ...course };
-        const programmingCategory = generateExerciseCategory(ExerciseType.PROGRAMMING, 1);
-        const programmingWithCategory = { ...programmingExercise, categories: [programmingCategory] as ExerciseCategory[] };
-        const quizCategory = generateExerciseCategory(ExerciseType.QUIZ, 1);
-        const quizWithCategory = { ...quizExercise, categories: [quizCategory] as ExerciseCategory[] };
-        courseToAdd.exercises = [...modelingExercises, programmingWithCategory, quizWithCategory];
-        jest.spyOn(courseScoreCalculationService, 'getCourse').mockReturnValue(courseToAdd);
-        comp.ngOnInit();
-    };
 });
