@@ -277,6 +277,29 @@ You can find additional information on dependent sub-queries and how to identify
 
        SELECT DISTINCT ...
 
+    We can simply return null, since specifications/predicates that are null are ignored.
+
+    .. code-block:: sql
+
+        SpecificationComposition:
+
+        static <T> Specification<T> composed(@Nullable Specification<T> lhs, @Nullable Specification<T> rhs, Combiner combiner) {
+            return (root, query, builder) -> {
+                Predicate thisPredicate = toPredicate(lhs, root, query, builder);
+                Predicate otherPredicate = toPredicate(rhs, root, query, builder);
+
+                if (thisPredicate == null) {
+                    return otherPredicate;
+                }
+                return otherPredicate == null ? thisPredicate : combiner.combine(builder, thisPredicate, otherPredicate);
+            };
+        }
+
+        @Nullable
+        private static <T> Predicate toPredicate(@Nullable Specification<T> specification, Root<T> root, CriteriaQuery<?> query, CriteriaBuilder builder) {
+            return specification == null ? null : specification.toPredicate(root, query, builder);
+        }
+
 
 6. Limitations
 ==============
