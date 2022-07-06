@@ -132,7 +132,7 @@ describe('ModelingAssessmentDashboardComponent', () => {
     it('should update filtered submissions', () => {
         // setup
         component.ngOnInit();
-        component.updateFilteredSubmissions([modelingSubmission]);
+        component.applyChartFilter([modelingSubmission]);
 
         // check
         expect(component.filteredSubmissions).toEqual([modelingSubmission]);

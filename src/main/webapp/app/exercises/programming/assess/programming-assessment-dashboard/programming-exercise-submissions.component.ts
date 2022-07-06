@@ -17,11 +17,12 @@ import { areManualResultsAllowed } from 'app/exercises/shared/exercise/exercise.
 import { getLinkToSubmissionAssessment } from 'app/utils/navigation.utils';
 import { map } from 'rxjs/operators';
 import { faBan, faEdit, faFolderOpen, faSort } from '@fortawesome/free-solid-svg-icons';
+import { AbstractAssessmentDashboard } from 'app/exercises/shared/dashboards/tutor/abstract-assessment-dashboard';
 
 @Component({
     templateUrl: './programming-exercise-submissions.component.html',
 })
-export class ProgrammingExerciseSubmissionsComponent implements OnInit {
+export class ProgrammingExerciseSubmissionsComponent extends AbstractAssessmentDashboard implements OnInit {
     readonly ExerciseType = ExerciseType;
     readonly AssessmentType = AssessmentType;
     exercise: ProgrammingExercise;
@@ -54,6 +55,7 @@ export class ProgrammingExerciseSubmissionsComponent implements OnInit {
         private translateService: TranslateService,
         private sortService: SortService,
     ) {
+        super();
         translateService.get('artemisApp.programmingAssessment.confirmCancel').subscribe((text) => (this.cancelConfirmationText = text));
     }
 
@@ -68,6 +70,12 @@ export class ProgrammingExerciseSubmissionsComponent implements OnInit {
             this.examId = Number(this.route.snapshot.paramMap.get('examId'));
             this.exerciseGroupId = Number(this.route.snapshot.paramMap.get('exerciseGroupId'));
         }
+
+        this.route.queryParams.subscribe((queryParams) => {
+            if (queryParams['filterOption']) {
+                this.filterOption = Number(queryParams['filterOption']);
+            }
+        });
 
         this.exerciseService
             .find(this.exerciseId)
@@ -118,16 +126,9 @@ export class ProgrammingExerciseSubmissionsComponent implements OnInit {
                         sub.results = sub.results.filter((r) => r.assessmentType !== AssessmentType.AUTOMATIC);
                     }
                 });
+                this.applyChartFilter(submissions);
                 this.busy = false;
             });
-    }
-
-    /**
-     * Update the submission filter for assessments
-     * @param {Submission[]} filteredSubmissions - Submissions to be filtered for
-     */
-    updateFilteredSubmissions(filteredSubmissions: Submission[]) {
-        this.filteredSubmissions = filteredSubmissions as ProgrammingSubmission[];
     }
 
     /**
