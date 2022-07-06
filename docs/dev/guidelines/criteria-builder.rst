@@ -279,7 +279,7 @@ You can find additional information on dependent sub-queries and how to identify
 
     We can simply return null, since specifications/predicates that are null are ignored.
 
-    .. code-block:: sql
+    .. code-block:: java
 
         SpecificationComposition:
 
