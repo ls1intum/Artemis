@@ -330,8 +330,8 @@ Here are a few tips when using this framework:
 
        .. code-block:: html+ng2
 
-           [xAxisLabel]="'artemisApp.examMonitoring.charts.xAxisLabel' | artemisTranslate"
-           [yAxisLabel]="'artemisApp.examMonitoring.charts.yAxisLabel' | artemisTranslate"
+           [xAxisLabel]="'artemisApp.exam.charts.xAxisLabel' | artemisTranslate"
+           [yAxisLabel]="'artemisApp.exam.charts.yAxisLabel' | artemisTranslate"
 
        * For some chart types, the framework derives the ticks of one axis from the name property of the passed data objects.
          So, these names have to be translated every time the user switches the language settings.
