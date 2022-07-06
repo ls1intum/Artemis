@@ -179,7 +179,7 @@ Different joins are available (e.g. Join, ListJoin, SetJoin, CollectionJoin, ...
         Join<X, Z> join = root.join(X_.COLUMN, JoinType.LEFT).join(Y_.COLUMN, JoinType.LEFT);
 
 
-4. Sub-Queries
+5. Sub-Queries
 ==============
 
 Sub-queries are usually fine unless they are dependent sub-queries (also known as `correlated <https://en.wikipedia.org/wiki/Correlated_subquery>`_ sub queries).
@@ -192,7 +192,7 @@ Sub-queries are usually fine unless they are dependent sub-queries (also known a
 
 You can find additional information on dependent sub-queries and how to identify them `here <https://stackoverflow.com/questions/4799820/when-to-use-sql-sub-queries-versus-a-standard-join/4799847#4799847>`_.
 
-5. Examples
+6. Examples
 ===========
 
 - Specification that matches the specified string:
@@ -280,7 +280,7 @@ You can find additional information on dependent sub-queries and how to identify
     We can simply return ``null``, since specifications/predicates that are ``null`` are ignored when combining multiple specifications (e.g., ``specification.and(otherSpecification)``) or when constructing a predicate from it.
 
 
-6. Limitations
+7. Limitations
 ==============
 
 - Executing simple queries becomes more complex — but reusable.
@@ -288,7 +288,7 @@ You can find additional information on dependent sub-queries and how to identify
 - Pagination feature of Spring Data JPA does not support the use of specifications with "group by". See `issue <https://github.com/spring-projects/spring-data-jpa/issues/2361>`_.
 
 
-7. Additional links
+8. Additional links
 ===================
 
 - https://spring.io/blog/2011/04/26/advanced-spring-data-jpa-specifications-and-querydsl
