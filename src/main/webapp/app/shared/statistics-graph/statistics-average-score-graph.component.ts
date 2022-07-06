@@ -6,9 +6,10 @@ import { Color, ScaleType } from '@swimlane/ngx-charts';
 import { ExerciseType } from 'app/entities/exercise.model';
 import { NgxChartsSingleSeriesDataEntry } from 'app/shared/chart/ngx-charts-datatypes';
 import { axisTickFormattingWithPercentageSign } from 'app/shared/statistics-graph/statistics-graph.utils';
-import { ChartExerciseTypeFilterDirective } from 'app/shared/chart/chart-exercise-type-filter.directive';
+import { ChartExerciseTypeFilter } from 'app/shared/chart/chart-exercise-type-filter';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
 import { ThemeService } from 'app/core/theme/theme.service';
+import { ChartCategoryFilter } from 'app/shared/chart/chart-category-filter';
 
 interface ExerciseStatisticsEntry extends NgxChartsSingleSeriesDataEntry {
     exerciseType: ExerciseType;
@@ -26,7 +27,7 @@ export enum PerformanceInterval {
     templateUrl: './statistics-average-score-graph.component.html',
     styleUrls: ['./statistics-average-score-graph.component.scss', '../chart/vertical-bar-chart.scss'],
 })
-export class StatisticsAverageScoreGraphComponent extends ChartExerciseTypeFilterDirective implements OnInit {
+export class StatisticsAverageScoreGraphComponent implements OnInit {
     @Input()
     exerciseAverageScores: CourseManagementStatisticsModel[];
     @Input()
@@ -58,7 +59,9 @@ export class StatisticsAverageScoreGraphComponent extends ChartExerciseTypeFilte
 
     readonly yAxisTickFormatting = axisTickFormattingWithPercentageSign;
     readonly performanceIntervals = [PerformanceInterval.LOWEST, PerformanceInterval.AVERAGE, PerformanceInterval.BEST];
-    readonly convertToMapKey = ChartExerciseTypeFilterDirective.convertToMapKey;
+    readonly convertToMapKey = ChartExerciseTypeFilter.convertToMapKey;
+    readonly typeFilter = this.exerciseTypeFilter;
+    readonly chartCategoryFilter = this.categoryFilter;
     readonly CRITICAL_CLASS = 'critical-color';
     readonly MEDIAN_CLASS = 'median-color';
     readonly BEST_CLASS = 'best-color';
@@ -76,9 +79,12 @@ export class StatisticsAverageScoreGraphComponent extends ChartExerciseTypeFilte
     faArrowRight = faArrowRight;
     faFilter = faFilter;
 
-    constructor(private themeService: ThemeService, private navigationUtilService: ArtemisNavigationUtilService) {
-        super();
-    }
+    constructor(
+        private themeService: ThemeService,
+        private navigationUtilService: ArtemisNavigationUtilService,
+        private exerciseTypeFilter: ChartExerciseTypeFilter,
+        private categoryFilter: ChartCategoryFilter,
+    ) {}
 
     ngOnInit(): void {
         this.initializeChart();
@@ -88,7 +94,8 @@ export class StatisticsAverageScoreGraphComponent extends ChartExerciseTypeFilte
         this.includeAllIntervals();
         this.exerciseAverageScores = this.orderAverageScores(this.exerciseAverageScores);
         this.setUpColorDistribution();
-        this.initializeFilterOptions(this.exerciseAverageScores);
+        this.exerciseTypeFilter.initializeFilterOptions(this.exerciseAverageScores);
+        this.categoryFilter.setupCategoryFilter(this.exerciseAverageScores);
         this.setupChart(this.exerciseAverageScores);
         this.currentlyDisplayableExercises = this.exerciseAverageScores;
         this.exerciseScoresFilteredByPerformanceInterval = this.exerciseAverageScores;
@@ -227,10 +234,9 @@ export class StatisticsAverageScoreGraphComponent extends ChartExerciseTypeFilte
      * @param type the exercise type that is filtered against
      */
     toggleType(type: ExerciseType): void {
-        this.currentlyDisplayableExercises = this.orderAverageScores(this.toggleExerciseType(type, this.exerciseScoresFilteredByPerformanceInterval));
-        this.currentPeriod = 0;
-        this.setupChart(this.currentlyDisplayableExercises);
-        this.currentSize = this.currentlyDisplayableExercises.length;
+        const filteredAgainstType = this.typeFilter.toggleExerciseType<CourseManagementStatisticsModel>(type, this.exerciseScoresFilteredByPerformanceInterval);
+        const filteredAgainstCategory = this.categoryFilter.applyCurrentFilter<CourseManagementStatisticsModel>(this.exerciseScoresFilteredByPerformanceInterval);
+        this.initializeChartWithFilter(filteredAgainstCategory, filteredAgainstType);
     }
 
     /**
@@ -316,7 +322,8 @@ export class StatisticsAverageScoreGraphComponent extends ChartExerciseTypeFilte
      * @private
      */
     private initializeFilterOptionsAndSetupChartWithCurrentVisibleScores(): void {
-        this.initializeFilterOptions(this.exerciseScoresFilteredByPerformanceInterval);
+        this.exerciseTypeFilter.initializeFilterOptions(this.exerciseScoresFilteredByPerformanceInterval);
+        this.categoryFilter.setupCategoryFilter(this.exerciseScoresFilteredByPerformanceInterval);
         this.setupChart(this.exerciseScoresFilteredByPerformanceInterval);
         this.currentlyDisplayableExercises = this.exerciseScoresFilteredByPerformanceInterval;
         this.currentSize = this.exerciseScoresFilteredByPerformanceInterval.length;
@@ -346,6 +353,48 @@ export class StatisticsAverageScoreGraphComponent extends ChartExerciseTypeFilte
         });
         this.numberOfSelectedIntervals = 1;
         this.exerciseScoresFilteredByPerformanceInterval = this.filterForPerformanceInterval(interval);
+    }
+
+    /**
+     * Wrapper method that handles the toggling of a category and sets up the chart accordingly
+     * @param category the category the user selects or deselects
+     */
+    toggleCategory(category: string): void {
+        const filteredAgainstCategory = this.categoryFilter.toggleCategory<CourseManagementStatisticsModel>(this.exerciseScoresFilteredByPerformanceInterval, category);
+        const filteredAgainstType = this.typeFilter.applyCurrentFilter<CourseManagementStatisticsModel>(this.exerciseScoresFilteredByPerformanceInterval);
+        this.initializeChartWithFilter(filteredAgainstCategory, filteredAgainstType);
+    }
+
+    /**
+     * Wrapper method that handles the toggling of all categories and sets up the chart accordingly
+     */
+    toggleAllCategories(): void {
+        const filteredAgainstCategory = this.categoryFilter.toggleAllCategories<CourseManagementStatisticsModel>(this.exerciseScoresFilteredByPerformanceInterval);
+        const filteredAgainstType = this.typeFilter.applyCurrentFilter<CourseManagementStatisticsModel>(this.exerciseScoresFilteredByPerformanceInterval);
+        this.initializeChartWithFilter(filteredAgainstCategory, filteredAgainstType);
+    }
+
+    /**
+     * Wrapper method that handles the toggling of exercises with no categories and sets up the chart accordingly
+     */
+    toggleExercisesWithNoCategory(): void {
+        const filteredAgainstCategory = this.categoryFilter.toggleExercisesWithNoCategory<CourseManagementStatisticsModel>(this.exerciseScoresFilteredByPerformanceInterval);
+        const filteredAgainstType = this.typeFilter.applyCurrentFilter<CourseManagementStatisticsModel>(this.exerciseScoresFilteredByPerformanceInterval);
+        this.initializeChartWithFilter(filteredAgainstCategory, filteredAgainstType);
+    }
+
+    /**
+     * Auxiliary method to reduce code duplication.
+     * Sets the currentPeriod to zero, determines the number of displayable bars and updates the chart.
+     * @param filteredAgainstCategory the scores filtered against the current category filter setting
+     * @param filteredAgainstType the scores filtered against the current type filter setting
+     * @private
+     */
+    private initializeChartWithFilter(filteredAgainstCategory: CourseManagementStatisticsModel[], filteredAgainstType: CourseManagementStatisticsModel[]): void {
+        this.currentlyDisplayableExercises = this.orderAverageScores(filteredAgainstCategory.filter((score) => filteredAgainstType.includes(score)));
+        this.currentPeriod = 0;
+        this.setupChart(this.currentlyDisplayableExercises);
+        this.currentSize = this.currentlyDisplayableExercises.length;
     }
 
     /**

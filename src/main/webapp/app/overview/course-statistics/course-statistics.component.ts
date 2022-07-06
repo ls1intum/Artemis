@@ -13,12 +13,13 @@ import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
 import { GradeType } from 'app/entities/grading-scale.model';
 import { GradingSystemService } from 'app/grading-system/grading-system.service';
 import { GradeDTO } from 'app/entities/grade-step.model';
-import { Color, LegendPosition, ScaleType } from '@swimlane/ngx-charts';
+import { Color, ScaleType } from '@swimlane/ngx-charts';
 import { faClipboard, faFilter, faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 import { GraphColors } from 'app/entities/statistics.model';
 import { NgxChartsSingleSeriesDataEntry } from 'app/shared/chart/ngx-charts-datatypes';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
 import { BarControlConfiguration, BarControlConfigurationProvider } from 'app/overview/tab-bar/tab-bar';
+import { ChartCategoryFilter } from 'app/shared/chart/chart-category-filter';
 
 const QUIZ_EXERCISE_COLOR = '#17a2b8';
 const PROGRAMMING_EXERCISE_COLOR = '#fd7e14';
@@ -55,11 +56,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
     private courseUpdatesSubscription: Subscription;
     private translateSubscription: Subscription;
     course?: Course;
-    exerciseCategories: Set<string> = new Set();
-    exerciseCategoryFilters: Map<string, boolean> = new Map();
     numberOfAppliedFilters: number;
-    allCategoriesSelected = true;
-    includeExercisesWithNoCategory = true;
 
     private courseExercisesNotIncludedInScore: Exercise[];
     private courseExercisesFilteredByCategories: Exercise[];
@@ -161,11 +158,11 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
     } as Color;
 
     readonly roundScoreSpecifiedByCourseSettings = roundValueSpecifiedByCourseSettings;
-    readonly legendPosition = LegendPosition;
     readonly barChartTitle = ChartBarTitle;
     readonly chartHeight = 25;
     readonly barPadding = 4;
     readonly defaultSize = 50; // additional space for the x-axis and its labels
+    readonly chartCategoryFilter = this.categoryFilter;
 
     // array containing every non-empty exercise group
     ngxExerciseGroups: any[] = [];
@@ -193,6 +190,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
         private route: ActivatedRoute,
         private gradingSystemService: GradingSystemService,
         private navigationUtilService: ArtemisNavigationUtilService,
+        private categoryFilter: ChartCategoryFilter,
     ) {}
 
     ngOnInit() {
@@ -376,7 +374,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
             this.filteredExerciseIDs = this.courseExercisesNotIncludedInScore.map((exercise) => exercise.id!);
         }
         this.currentlyHidingNotIncludedInScoreExercises = !this.currentlyHidingNotIncludedInScoreExercises;
-        this.determineDisplayableCategories();
+        this.categoryFilter.setupCategoryFilter(this.courseExercises);
 
         this.groupExercisesByType(this.courseExercises);
     }
@@ -582,7 +580,8 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
         this.courseExercises = this.courseExercises.filter((exercise) => !this.courseExercisesNotIncludedInScore.includes(exercise));
         this.courseExercisesFilteredByCategories = this.courseExercises;
         this.filteredExerciseIDs = this.courseExercisesNotIncludedInScore.map((exercise) => exercise.id!);
-        this.determineDisplayableCategories();
+        this.categoryFilter.setupCategoryFilter(this.courseExercises);
+        this.calculateNumberOfAppliedFilters();
     }
 
     /**
@@ -731,84 +730,25 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
      * @param category the category that is selected or deselected
      */
     toggleCategory(category: string) {
-        const isIncluded = this.exerciseCategoryFilters.get(category)!;
-        this.exerciseCategoryFilters.set(category, !isIncluded);
-        this.numberOfAppliedFilters += !isIncluded ? 1 : -1;
-        this.applyCategoryFilter();
-
-        this.areAllCategoriesSelected(!isIncluded);
-        this.filterExerciseIDsForCategorySelection(!isIncluded!);
-    }
-
-    /**
-     * Creates an initial filter setting by including all categories
-     * @private
-     */
-    private setupCategoryFilter(): void {
-        this.exerciseCategories.forEach((category) => this.exerciseCategoryFilters.set(category, true));
-        this.allCategoriesSelected = true;
-        this.includeExercisesWithNoCategory = true;
-        this.calculateNumberOfAppliedFilters();
-    }
-
-    /**
-     * Collects all categories from the currently visible exercises (included or excluded the optional exercises depending on the prior state)
-     * @private
-     */
-    private determineDisplayableCategories(): void {
-        const exerciseCategories = this.courseExercises
-            .filter((exercise) => exercise.categories)
-            .flatMap((exercise) => exercise.categories!)
-            .map((category) => category.category!);
-        this.exerciseCategories = new Set(exerciseCategories);
-        this.setupCategoryFilter();
+        const isIncluded = this.categoryFilter.getCurrentFilterState(category)!;
+        this.courseExercisesFilteredByCategories = this.categoryFilter.toggleCategory<Exercise>(this.courseExercises, category);
+        this.setupFilteredChart(!isIncluded);
     }
 
     /**
      * Handles the use case when the user selects or deselects the option "select all categories"
      */
     toggleAllCategories(): void {
-        if (!this.allCategoriesSelected) {
-            this.setupCategoryFilter();
-            this.includeExercisesWithNoCategory = true;
-            this.calculateNumberOfAppliedFilters();
-        } else {
-            this.exerciseCategories.forEach((category) => this.exerciseCategoryFilters.set(category, false));
-            this.numberOfAppliedFilters -= this.exerciseCategories.size + 1;
-            this.allCategoriesSelected = !this.allCategoriesSelected;
-            this.includeExercisesWithNoCategory = false;
-        }
-        this.applyCategoryFilter();
-        this.filterExerciseIDsForCategorySelection(this.includeExercisesWithNoCategory);
+        this.courseExercisesFilteredByCategories = this.categoryFilter.toggleAllCategories<Exercise>(this.courseExercises);
+        this.setupFilteredChart(this.categoryFilter.allCategoriesSelected);
     }
 
     /**
      * handles the selection and deselection of "exercises with no categories" filter option
      */
     toggleExercisesWithNoCategory(): void {
-        this.numberOfAppliedFilters += this.includeExercisesWithNoCategory ? -1 : 1;
-        this.includeExercisesWithNoCategory = !this.includeExercisesWithNoCategory;
-
-        this.applyCategoryFilter();
-        this.areAllCategoriesSelected(this.includeExercisesWithNoCategory);
-        this.filterExerciseIDsForCategorySelection(this.includeExercisesWithNoCategory);
-    }
-
-    /**
-     * Auxiliary method in order to reduce code duplication
-     * Takes the currently configured exerciseCategoryFilters and applies it to the course exercises
-     *
-     * Important note: As exercises can have no or multiple categories, the filter is designed to be non-exclusive. This means
-     * as long as an exercise has at least one of the selected categories, it is displayed.
-     */
-    private applyCategoryFilter(): void {
-        this.courseExercisesFilteredByCategories = this.courseExercises.filter((exercise) => {
-            if (!exercise.categories) {
-                return this.includeExercisesWithNoCategory;
-            }
-            return exercise.categories!.flatMap((category) => this.exerciseCategoryFilters.get(category.category!)!).reduce((value1, value2) => value1 || value2);
-        });
-        this.groupExercisesByType(this.courseExercisesFilteredByCategories);
+        this.courseExercisesFilteredByCategories = this.categoryFilter.toggleExercisesWithNoCategory<Exercise>(this.courseExercises);
+        this.setupFilteredChart(this.categoryFilter.includeExercisesWithNoCategory);
     }
 
     /**
@@ -828,26 +768,8 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
         }
     }
 
-    /**
-     * Auxiliary method that checks whether all possible categories are selected and updates the allCategoriesSelected flag accordingly
-     * @param newFilterStatement indicates whether the updated filter option got selected or deselected and updates the flag accordingly
-     * @private
-     */
-    private areAllCategoriesSelected(newFilterStatement: boolean): void {
-        if (newFilterStatement) {
-            if (!this.includeExercisesWithNoCategory) {
-                this.allCategoriesSelected = false;
-            } else {
-                this.allCategoriesSelected = true;
-                this.exerciseCategoryFilters.forEach((value) => (this.allCategoriesSelected = value && this.allCategoriesSelected));
-            }
-        } else {
-            this.allCategoriesSelected = false;
-        }
-    }
-
     private calculateNumberOfAppliedFilters(): void {
-        this.numberOfAppliedFilters = this.exerciseCategories.size + (this.currentlyHidingNotIncludedInScoreExercises ? 1 : 0) + (this.includeExercisesWithNoCategory ? 1 : 0);
+        this.numberOfAppliedFilters = this.categoryFilter.numberOfActiveFilters + (this.currentlyHidingNotIncludedInScoreExercises ? 1 : 0);
     }
 
     /**
@@ -862,5 +784,17 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
         Finally, we need to add space for the x-axis and its ticks
          */
         return chartEntries * this.chartHeight + this.barPadding * (chartEntries - 1) + this.defaultSize;
+    }
+
+    /**
+     * Auxiliary method to reduce code duplication
+     * Calculates the number of applied filters, groups the updated set of exercises and updates the set of filtered IDs
+     * @param isIncluded indicates whether the updated filter is now selected or deselected and updates the filtered exercise IDs accordingly
+     * @private
+     */
+    private setupFilteredChart(isIncluded: boolean) {
+        this.calculateNumberOfAppliedFilters();
+        this.groupExercisesByType(this.courseExercisesFilteredByCategories);
+        this.filterExerciseIDsForCategorySelection(isIncluded);
     }
 }
