@@ -40,7 +40,7 @@ public class LectureImportServiceTest extends AbstractSpringIntegrationBambooBit
         List<Course> courses = this.database.createCoursesWithExercisesAndLecturesAndLectureUnits(false, true);
         Course course1 = this.courseRepository.findByIdWithExercisesAndLecturesElseThrow(courses.get(0).getId());
         long lecture1Id = course1.getLectures().stream().findFirst().get().getId();
-        this.lecture1 = this.lectureRepository.findByIdWithLectureUnitsElseThrow(lecture1Id);
+        this.lecture1 = this.lectureRepository.findByIdWithLectureUnitsAndLearningGoalsElseThrow(lecture1Id);
         this.course2 = this.database.createCourse();
 
         assertThat(this.lecture1.getLectureUnits()).isNotEmpty();
@@ -65,7 +65,7 @@ public class LectureImportServiceTest extends AbstractSpringIntegrationBambooBit
 
         // Find the imported lecture and fetch it with lecture units
         Long lecture2Id = this.course2.getLectures().stream().skip(lectureCount).findFirst().get().getId();
-        Lecture lecture2 = this.lectureRepository.findByIdWithLectureUnitsElseThrow(lecture2Id);
+        Lecture lecture2 = this.lectureRepository.findByIdWithLectureUnitsAndLearningGoalsElseThrow(lecture2Id);
 
         assertThat(lecture2.getTitle()).isEqualTo(this.lecture1.getTitle());
 

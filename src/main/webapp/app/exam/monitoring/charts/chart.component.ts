@@ -2,7 +2,7 @@ import { Color, ScaleType } from '@swimlane/ngx-charts';
 import * as shape from 'd3-shape';
 import { NgxChartsEntry } from 'app/shared/chart/ngx-charts-datatypes';
 import { Subscription } from 'rxjs';
-import { ExamMonitoringWebsocketService } from '../exam-monitoring-websocket.service';
+import { ExamActionService } from '../exam-action.service';
 import { ActivatedRoute } from '@angular/router';
 import { ExamAction } from 'app/entities/exam-user-activity.model';
 import dayjs from 'dayjs/esm';
@@ -32,13 +32,7 @@ export abstract class ChartComponent {
     legend: boolean;
     routerLink: any[];
 
-    protected constructor(
-        private route: ActivatedRoute,
-        private examMonitoringWebsocketService: ExamMonitoringWebsocketService,
-        chartIdentifierKey: string,
-        legend: boolean,
-        colors?: string[],
-    ) {
+    protected constructor(private route: ActivatedRoute, protected examActionService: ExamActionService, chartIdentifierKey: string, legend: boolean, colors?: string[]) {
         this.chartIdentifierKey = chartIdentifierKey;
         this.legend = legend;
 
@@ -60,9 +54,9 @@ export abstract class ChartComponent {
             this.courseId = Number(params['courseId']);
         });
 
-        this.examActionSubscription = this.examMonitoringWebsocketService.getExamMonitoringObservable(this.examId)?.subscribe((examAction) => {
-            if (examAction) {
-                this.filteredExamActions.push(examAction);
+        this.examActionSubscription = this.examActionService.getExamMonitoringObservable(this.examId)?.subscribe((examAction) => {
+            if (examAction && this.filterRenderedData(examAction)) {
+                this.evaluateAndAddAction(examAction);
             }
         });
     }
@@ -78,7 +72,6 @@ export abstract class ChartComponent {
     protected initRenderRate(seconds: number) {
         // Trigger change detection every x seconds and filter the data
         setInterval(() => {
-            this.filteredExamActions = [...this.filteredExamActions.filter((action) => this.filterRenderedData(action))];
             this.updateData();
         }, seconds * 1000);
     }
@@ -86,7 +79,9 @@ export abstract class ChartComponent {
     /**
      * Create and initialize the data for the chart.
      */
-    abstract initData(): void;
+    initData(): void {
+        this.filteredExamActions.push(...(this.examActionService.cachedExamActions.get(this.examId) ?? []).filter((action) => this.filterRenderedData(action)));
+    }
 
     /**
      * Updates the data for the chart.
@@ -97,8 +92,17 @@ export abstract class ChartComponent {
      * The default case is that we don't filter any actions. This filter is adapted in subclasses.
      * @param examAction
      */
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     filterRenderedData(examAction: ExamAction): boolean {
         return true;
+    }
+
+    /**
+     * The default case is that we don't evaluate the action in this place and simply add it. This evaluation is adapted in subclasses.
+     * @param examAction
+     */
+    evaluateAndAddAction(examAction: ExamAction) {
+        this.filteredExamActions.push(examAction);
     }
 
     /**

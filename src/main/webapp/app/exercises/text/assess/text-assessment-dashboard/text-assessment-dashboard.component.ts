@@ -16,11 +16,12 @@ import { getLinkToSubmissionAssessment } from 'app/utils/navigation.utils';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { map } from 'rxjs/operators';
 import { faBan, faEdit, faFolderOpen, faSort } from '@fortawesome/free-solid-svg-icons';
+import { AbstractAssessmentDashboard } from 'app/exercises/shared/dashboards/tutor/abstract-assessment-dashboard';
 
 @Component({
     templateUrl: './text-assessment-dashboard.component.html',
 })
-export class TextAssessmentDashboardComponent implements OnInit {
+export class TextAssessmentDashboardComponent extends AbstractAssessmentDashboard implements OnInit {
     ExerciseType = ExerciseType;
     exercise: TextExercise;
     submissions: TextSubmission[] = [];
@@ -33,6 +34,8 @@ export class TextAssessmentDashboardComponent implements OnInit {
     exerciseId: number;
     examId: number;
     exerciseGroupId: number;
+
+    filterOption?: number;
 
     private cancelConfirmationText: string;
 
@@ -51,6 +54,7 @@ export class TextAssessmentDashboardComponent implements OnInit {
         private translateService: TranslateService,
         private sortService: SortService,
     ) {
+        super();
         translateService.get('artemisApp.textAssessment.confirmCancel').subscribe((text) => (this.cancelConfirmationText = text));
     }
 
@@ -65,7 +69,11 @@ export class TextAssessmentDashboardComponent implements OnInit {
             this.examId = Number(this.route.snapshot.paramMap.get('examId'));
             this.exerciseGroupId = Number(this.route.snapshot.paramMap.get('exerciseGroupId'));
         }
-
+        this.route.queryParams.subscribe((queryParams) => {
+            if (queryParams['filterOption']) {
+                this.filterOption = Number(queryParams['filterOption']);
+            }
+        });
         this.exerciseService
             .find(this.exerciseId)
             .pipe(
@@ -109,17 +117,9 @@ export class TextAssessmentDashboardComponent implements OnInit {
             )
             .subscribe((submissions: TextSubmission[]) => {
                 this.submissions = submissions;
-                this.filteredSubmissions = submissions;
+                this.applyChartFilter(this.submissions);
                 this.busy = false;
             });
-    }
-
-    /**
-     * Update the submission filter for assessments
-     * @param {Submission[]} filteredSubmissions - Submissions to be filtered for
-     */
-    updateFilteredSubmissions(filteredSubmissions: Submission[]) {
-        this.filteredSubmissions = filteredSubmissions as TextSubmission[];
     }
 
     /**
