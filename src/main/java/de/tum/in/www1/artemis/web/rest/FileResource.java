@@ -457,7 +457,7 @@ public class FileResource {
      * @param filename  the filename of the file
      * @return The generated access token, 403 if the user has no access to the course
      */
-    @GetMapping("files/attachments/attachment-unit/:attachmentUnitId/:filename/access-token")
+    @GetMapping("files/attachments/attachment-unit/{attachmentUnitId}/{filename:.+}/access-token")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<String> getTemporaryAccessTokenForAttachmentUnit(@PathVariable Long attachmentUnitId, @PathVariable String filename) {
         log.debug("REST request to get an access-token for attachment unit file : {}", filename);
@@ -470,7 +470,7 @@ public class FileResource {
         // get the course for a lecture's attachment unit
         AttachmentUnit attachmentUnit = optionalAttachmentUnit.get();
         Attachment attachment = attachmentUnit.getAttachment();
-        Course course = attachment.getLecture().getCourse();
+        Course course = attachmentUnit.getLecture().getCourse();
 
         // check if the user is authorized to access the requested attachment unit
         if (!checkAttachmentAuthorization(course, attachment)) {
@@ -525,7 +525,7 @@ public class FileResource {
      * @return true if the user is authorized to access the attachment, otherwise false is returned
      */
     private boolean checkAttachmentAuthorization(Course course, Attachment attachment) {
-        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, courseRepository.findByIdElseThrow(course.getId()), null);
+        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, null);
         if (!attachment.isVisibleToStudents() && !authCheckService.isAtLeastTeachingAssistantInCourse(course, null)) {
             log.info("User not authorized to access attachment");
             return false;

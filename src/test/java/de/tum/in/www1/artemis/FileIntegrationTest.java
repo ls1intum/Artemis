@@ -42,6 +42,9 @@ public class FileIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     private AttachmentRepository attachmentRepo;
 
     @Autowired
+    private AttachmentUnitRepository attachmentUnitRepo;
+
+    @Autowired
     private QuizExerciseRepository quizExerciseRepository;
 
     @Autowired
@@ -333,6 +336,49 @@ public class FileIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         lectureRepo.save(lecture);
         attachmentRepo.save(attachment);
         return attachment;
+    }
+
+    @Test
+    @WithMockUser(username = "student1")
+    public void testGetAccessTokenForUnreleasedAttachmentUnitAsStudent_forbidden() throws Exception {
+        Lecture lecture = database.createCourseWithLecture(true);
+        lecture.setTitle("Test title");
+        lecture.setStartDate(ZonedDateTime.now().minusHours(1));
+
+        // create unreleased attachment unit
+        AttachmentUnit attachmentUnit = database.createAttachmentUnit(true);
+        attachmentUnit.setLecture(lecture);
+        Attachment attachment = attachmentUnit.getAttachment();
+        attachment.setReleaseDate(ZonedDateTime.now().plusDays(1));
+        String attachmentPath = attachment.getLink();
+
+        lectureRepo.save(lecture);
+        attachmentRepo.save(attachment);
+        attachmentUnitRepo.save(attachmentUnit);
+
+        request.get(attachmentPath + "/access-token", HttpStatus.FORBIDDEN, String.class);
+    }
+
+    @Test
+    @WithMockUser(username = "tutor1", roles = "TA")
+    public void testGetUnreleasedAttachmentUnitAsTutor() throws Exception {
+        Lecture lecture = database.createCourseWithLecture(true);
+        lecture.setTitle("Test title");
+        lecture.setStartDate(ZonedDateTime.now().minusHours(1));
+
+        // create unreleased attachment unit
+        AttachmentUnit attachmentUnit = database.createAttachmentUnit(true);
+        attachmentUnit.setLecture(lecture);
+        Attachment attachment = attachmentUnit.getAttachment();
+        attachment.setReleaseDate(ZonedDateTime.now().plusDays(1));
+        String attachmentPath = attachment.getLink();
+
+        lectureRepo.save(lecture);
+        attachmentRepo.save(attachment);
+        attachmentUnitRepo.save(attachmentUnit);
+
+        String accessToken = request.get(attachmentPath + "/access-token", HttpStatus.OK, String.class);
+        request.get(attachmentPath + "?access_token=" + accessToken, HttpStatus.OK, String.class);
     }
 
     @Test
