@@ -156,7 +156,7 @@ export class ParticipationService {
     }
 
     public mergeStudentParticipations(participations: StudentParticipation[]): StudentParticipation | undefined {
-        if (participations.length) {
+        if (participations?.length) {
             if (participations[0].type === ParticipationType.STUDENT) {
                 const combinedParticipation = new StudentParticipation();
                 this.mergeResultsAndSubmissions(combinedParticipation, participations);
@@ -170,7 +170,7 @@ export class ParticipationService {
 
     private mergeProgrammingParticipations(participations: ProgrammingExerciseStudentParticipation[]): ProgrammingExerciseStudentParticipation {
         const combinedParticipation = new ProgrammingExerciseStudentParticipation();
-        if (participations.length) {
+        if (participations?.length) {
             combinedParticipation.repositoryUrl = participations[0].repositoryUrl;
             combinedParticipation.buildPlanId = participations[0].buildPlanId;
             this.mergeResultsAndSubmissions(combinedParticipation, participations);

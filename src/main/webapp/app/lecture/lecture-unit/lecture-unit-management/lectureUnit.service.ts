@@ -56,7 +56,7 @@ export class LectureUnitService {
     }
 
     convertLectureUnitArrayDatesFromClient<T extends LectureUnit>(lectureUnits: T[]): T[] {
-        if (lectureUnits.length) {
+        if (lectureUnits?.length) {
             for (let _i = 0; _i < lectureUnits.length; _i++) {
                 lectureUnits[_i] = this.convertLectureUnitDatesFromClient(lectureUnits[_i]);
             }
