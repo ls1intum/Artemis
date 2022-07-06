@@ -274,10 +274,11 @@ public class FileResource {
     }
 
     /**
-     * GET files/file-upload-exercises/{exerciseId}/submissions/{submissionId}/access-token : Generates an access token that is valid for 30 seconds and given exerciseId and submissionId
+     * GET files/file-upload-exercises/:exerciseId/submissions/:submissionId/:filename/access-token : Generates an access token that is valid for 30 seconds and given exerciseId and submissionId
      *
      * @param exerciseId ID of the exercise the submission belongs to
      * @param submissionId ID of the submission the access token is for
+     * @param filename The filename of the file
      * @return The generated access token
      */
     @GetMapping("files/file-upload-exercises/{exerciseId}/submissions/{submissionId}/{filename:.+}/access-token")
