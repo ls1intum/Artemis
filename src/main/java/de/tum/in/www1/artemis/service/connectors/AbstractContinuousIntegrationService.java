@@ -14,6 +14,7 @@ import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipat
 import de.tum.in.www1.artemis.repository.FeedbackRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingSubmissionRepository;
 import de.tum.in.www1.artemis.service.BuildLogEntryService;
+import de.tum.in.www1.artemis.service.BuildLogStatisticsEntryService;
 import de.tum.in.www1.artemis.service.dto.AbstractBuildResultNotificationDTO;
 
 public abstract class AbstractContinuousIntegrationService implements ContinuousIntegrationService {
@@ -29,17 +30,20 @@ public abstract class AbstractContinuousIntegrationService implements Continuous
 
     protected final BuildLogEntryService buildLogService;
 
+    protected final BuildLogStatisticsEntryService buildLogStatisticsEntryService;
+
     protected final RestTemplate restTemplate;
 
     protected final RestTemplate shortTimeoutRestTemplate;
 
     public AbstractContinuousIntegrationService(ProgrammingSubmissionRepository programmingSubmissionRepository, FeedbackRepository feedbackRepository,
-            BuildLogEntryService buildLogService, RestTemplate restTemplate, RestTemplate shortTimeoutRestTemplate) {
+            BuildLogEntryService buildLogService, BuildLogStatisticsEntryService buildLogStatisticsEntryService, RestTemplate restTemplate, RestTemplate shortTimeoutRestTemplate) {
         this.programmingSubmissionRepository = programmingSubmissionRepository;
         this.feedbackRepository = feedbackRepository;
         this.restTemplate = restTemplate;
         this.shortTimeoutRestTemplate = shortTimeoutRestTemplate;
         this.buildLogService = buildLogService;
+        this.buildLogStatisticsEntryService = buildLogStatisticsEntryService;
     }
 
     @Override

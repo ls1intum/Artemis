@@ -5,6 +5,7 @@ import static de.tum.in.www1.artemis.config.Constants.SETUP_COMMIT_MESSAGE;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -39,6 +40,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.BuildPlanType;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
+import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
 import de.tum.in.www1.artemis.domain.enumeration.StaticCodeAnalysisTool;
 import de.tum.in.www1.artemis.domain.participation.Participant;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
@@ -75,21 +77,18 @@ public class BambooService extends AbstractContinuousIntegrationService {
 
     private final TestwiseCoverageService testwiseCoverageService;
 
-    private final BuildLogStatisticsEntryService buildLogStatisticsEntryService;
-
     public BambooService(GitService gitService, ProgrammingSubmissionRepository programmingSubmissionRepository, Optional<VersionControlService> versionControlService,
             Optional<ContinuousIntegrationUpdateService> continuousIntegrationUpdateService, BambooBuildPlanService bambooBuildPlanService, FeedbackRepository feedbackRepository,
             @Qualifier("bambooRestTemplate") RestTemplate restTemplate, @Qualifier("shortTimeoutBambooRestTemplate") RestTemplate shortTimeoutRestTemplate, ObjectMapper mapper,
             UrlService urlService, BuildLogEntryService buildLogService, TestwiseCoverageService testwiseCoverageService,
             BuildLogStatisticsEntryService buildLogStatisticsEntryService) {
-        super(programmingSubmissionRepository, feedbackRepository, buildLogService, restTemplate, shortTimeoutRestTemplate);
+        super(programmingSubmissionRepository, feedbackRepository, buildLogService, buildLogStatisticsEntryService, restTemplate, shortTimeoutRestTemplate);
         this.gitService = gitService;
         this.continuousIntegrationUpdateService = continuousIntegrationUpdateService;
         this.bambooBuildPlanService = bambooBuildPlanService;
         this.mapper = mapper;
         this.urlService = urlService;
         this.testwiseCoverageService = testwiseCoverageService;
-        this.buildLogStatisticsEntryService = buildLogStatisticsEntryService;
     }
 
     @Override
@@ -333,9 +332,10 @@ public class BambooService extends AbstractContinuousIntegrationService {
         // Return the logs from Bamboo (and filter them now)
         ProgrammingExerciseParticipation programmingExerciseParticipation = (ProgrammingExerciseParticipation) programmingSubmission.getParticipation();
         ProgrammingLanguage programmingLanguage = programmingExerciseParticipation.getProgrammingExercise().getProgrammingLanguage();
+        ProjectType projectType = programmingExerciseParticipation.getProgrammingExercise().getProjectType();
 
         var buildLogEntries = retrieveLatestBuildLogsFromBamboo(programmingExerciseParticipation.getBuildPlanId());
-        extractBuildLogStatistics(programmingSubmission, buildLogEntries);
+        extractBuildLogStatistics(programmingSubmission, programmingLanguage, projectType, buildLogEntries);
         buildLogEntries = buildLogService.removeUnnecessaryLogsForProgrammingLanguage(buildLogEntries, programmingLanguage);
         var savedBuildLogs = buildLogService.saveBuildLogs(buildLogEntries, programmingSubmission);
 
@@ -347,25 +347,31 @@ public class BambooService extends AbstractContinuousIntegrationService {
     }
 
     @Override
-    public void extractBuildLogStatistics(ProgrammingSubmission programmingSubmission, List<BuildLogEntry> buildLogEntries) {
-        log.warn("Extracting build log stats");
-        var jobStarted = buildLogEntries.stream().filter(b -> b.getLog().contains("started building on agent")).findFirst().map(BuildLogEntry::getTime).orElse(null);
-        var agentSetupCompleted = buildLogEntries.stream().filter(b -> b.getLog().contains("Executing build")).findFirst().map(BuildLogEntry::getTime).orElse(null);
-        var testsStarted = buildLogEntries.stream().filter(b -> b.getLog().contains("Starting task 'Tests'")).findFirst().map(BuildLogEntry::getTime).orElse(null);
-        var testsFinished = buildLogEntries.stream().filter(b -> b.getLog().contains("Finished task 'Tests' with result")).findFirst().map(BuildLogEntry::getTime).orElse(null);
-        var scaStarted = buildLogEntries.stream().filter(b -> b.getLog().contains("Starting task 'Static Code Analysis'")).findFirst().map(BuildLogEntry::getTime).orElse(null);
-        var scaFinished = buildLogEntries.stream().filter(b -> b.getLog().contains("Finished task 'Static Code Analysis'")).findFirst().map(BuildLogEntry::getTime).orElse(null);
-        var jobFinished = buildLogEntries.stream().filter(b -> b.getLog().contains("Finished building")).findFirst().map(BuildLogEntry::getTime).orElse(null);
-        var dependenciesDownloadedCount = buildLogEntries.stream().filter(b -> b.getLog().contains("Downloaded from central")).count();
+    public void extractBuildLogStatistics(ProgrammingSubmission programmingSubmission, ProgrammingLanguage programmingLanguage, ProjectType projectType,
+            List<BuildLogEntry> buildLogEntries) {
+        ZonedDateTime jobStarted = null;
+        ZonedDateTime agentSetupCompleted = null;
+        ZonedDateTime testsStarted = null;
+        ZonedDateTime testsFinished = null;
+        ZonedDateTime scaStarted = null;
+        ZonedDateTime scaFinished = null;
+        ZonedDateTime jobFinished = null;
+        Long dependenciesDownloadedCount = null;
 
-        log.warn("jobStarted {}", jobStarted);
-        log.warn("agentSetupCompleted {}", agentSetupCompleted);
-        log.warn("testsStarted {}", testsStarted);
-        log.warn("testsFinished {}", testsFinished);
-        log.warn("scaStarted {}", scaStarted);
-        log.warn("scaFinished {}", scaFinished);
-        log.warn("jobFinished {}", jobFinished);
-        log.warn("dependenciesDownloadedCount {}", dependenciesDownloadedCount);
+        if (programmingLanguage == ProgrammingLanguage.JAVA) {
+            jobStarted = buildLogEntries.stream().filter(b -> b.getLog().contains("started building on agent")).findFirst().map(BuildLogEntry::getTime).orElse(null);
+            agentSetupCompleted = buildLogEntries.stream().filter(b -> b.getLog().contains("Executing build")).findFirst().map(BuildLogEntry::getTime).orElse(null);
+            testsStarted = buildLogEntries.stream().filter(b -> b.getLog().contains("Starting task 'Tests'")).findFirst().map(BuildLogEntry::getTime).orElse(null);
+            testsFinished = buildLogEntries.stream().filter(b -> b.getLog().contains("Finished task 'Tests' with result")).findFirst().map(BuildLogEntry::getTime).orElse(null);
+            scaStarted = buildLogEntries.stream().filter(b -> b.getLog().contains("Starting task 'Static Code Analysis'")).findFirst().map(BuildLogEntry::getTime).orElse(null);
+            scaFinished = buildLogEntries.stream().filter(b -> b.getLog().contains("Finished task 'Static Code Analysis'")).findFirst().map(BuildLogEntry::getTime).orElse(null);
+            jobFinished = buildLogEntries.stream().filter(b -> b.getLog().contains("Finished building")).findFirst().map(BuildLogEntry::getTime).orElse(null);
+
+            if (projectType == ProjectType.MAVEN_MAVEN || projectType == ProjectType.PLAIN_MAVEN) {
+                // Not supported for GRADLE projects
+                dependenciesDownloadedCount = buildLogEntries.stream().filter(b -> b.getLog().contains("Downloaded from")).count();
+            }
+        }
 
         buildLogStatisticsEntryService.saveBuildLogStatisticsEntry(programmingSubmission, jobStarted, agentSetupCompleted, testsStarted, testsFinished, scaStarted, scaFinished,
                 jobFinished, dependenciesDownloadedCount);

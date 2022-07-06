@@ -146,9 +146,10 @@ public class ProgrammingExerciseGradingService {
 
             if (buildResult.hasLogs()) {
                 var programmingLanguage = participation.getProgrammingExercise().getProgrammingLanguage();
+                var projectType = participation.getProgrammingExercise().getProjectType();
                 var buildLogs = buildResult.extractBuildLogs(programmingLanguage);
 
-                continuousIntegrationService.get().extractBuildLogStatistics(latestSubmission, buildLogs);
+                continuousIntegrationService.get().extractBuildLogStatistics(latestSubmission, programmingLanguage, projectType, buildLogs);
 
                 if (!buildResult.isBuildSuccessful()) {
                     buildLogs = buildLogService.removeUnnecessaryLogsForProgrammingLanguage(buildLogs, programmingLanguage);

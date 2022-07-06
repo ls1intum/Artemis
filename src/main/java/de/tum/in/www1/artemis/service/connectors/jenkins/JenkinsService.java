@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.service.connectors.jenkins;
 
 import java.io.IOException;
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -22,6 +23,7 @@ import com.offbytwo.jenkins.JenkinsServer;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.BuildPlanType;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
+import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.exception.ContinuousIntegrationException;
@@ -29,6 +31,7 @@ import de.tum.in.www1.artemis.exception.JenkinsException;
 import de.tum.in.www1.artemis.repository.FeedbackRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingSubmissionRepository;
 import de.tum.in.www1.artemis.service.BuildLogEntryService;
+import de.tum.in.www1.artemis.service.BuildLogStatisticsEntryService;
 import de.tum.in.www1.artemis.service.connectors.AbstractContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.CIPermission;
 import de.tum.in.www1.artemis.service.connectors.ConnectorHealth;
@@ -56,8 +59,9 @@ public class JenkinsService extends AbstractContinuousIntegrationService {
 
     public JenkinsService(@Qualifier("jenkinsRestTemplate") RestTemplate restTemplate, JenkinsServer jenkinsServer, ProgrammingSubmissionRepository programmingSubmissionRepository,
             FeedbackRepository feedbackRepository, @Qualifier("shortTimeoutJenkinsRestTemplate") RestTemplate shortTimeoutRestTemplate, BuildLogEntryService buildLogService,
-            JenkinsBuildPlanService jenkinsBuildPlanService, JenkinsJobService jenkinsJobService, JenkinsInternalUrlService jenkinsInternalUrlService) {
-        super(programmingSubmissionRepository, feedbackRepository, buildLogService, restTemplate, shortTimeoutRestTemplate);
+            BuildLogStatisticsEntryService buildLogStatisticsEntryService, JenkinsBuildPlanService jenkinsBuildPlanService, JenkinsJobService jenkinsJobService,
+            JenkinsInternalUrlService jenkinsInternalUrlService) {
+        super(programmingSubmissionRepository, feedbackRepository, buildLogService, buildLogStatisticsEntryService, restTemplate, shortTimeoutRestTemplate);
         this.jenkinsServer = jenkinsServer;
         this.jenkinsBuildPlanService = jenkinsBuildPlanService;
         this.jenkinsJobService = jenkinsJobService;
@@ -153,8 +157,42 @@ public class JenkinsService extends AbstractContinuousIntegrationService {
     }
 
     @Override
-    public void extractBuildLogStatistics(ProgrammingSubmission programmingSubmission, List<BuildLogEntry> buildLogEntries) {
+    public void extractBuildLogStatistics(ProgrammingSubmission programmingSubmission, ProgrammingLanguage programmingLanguage, ProjectType projectType,
+            List<BuildLogEntry> buildLogEntries) {
+        ZonedDateTime jobStarted = null;
+        ZonedDateTime agentSetupCompleted = null;
+        ZonedDateTime testsStarted = null;
+        ZonedDateTime testsFinished = null;
+        ZonedDateTime scaStarted = null;
+        ZonedDateTime scaFinished = null;
+        ZonedDateTime jobFinished = null;
+        Long dependenciesDownloadedCount = null;
 
+        if (programmingLanguage == ProgrammingLanguage.JAVA && (projectType == ProjectType.MAVEN_MAVEN || projectType == ProjectType.PLAIN_MAVEN)) {
+            jobStarted = buildLogEntries.stream().findFirst().map(BuildLogEntry::getTime).orElse(null);
+            agentSetupCompleted = buildLogEntries.stream().filter(b -> b.getLog().contains("docker exec")).findFirst().map(BuildLogEntry::getTime).orElse(null);
+            testsStarted = buildLogEntries.stream().filter(b -> b.getLog().contains("Scanning for projects...")).findFirst().map(BuildLogEntry::getTime).orElse(null);
+            testsFinished = buildLogEntries.stream().filter(b -> b.getLog().contains("Total time:")).findFirst().map(BuildLogEntry::getTime).orElse(null);
+            scaStarted = buildLogEntries.stream().filter(b -> b.getLog().contains("Scanning for projects...")).skip(1).findFirst().map(BuildLogEntry::getTime).orElse(null);
+            scaFinished = buildLogEntries.stream().filter(b -> b.getLog().contains("Total time:")).skip(1).findFirst().map(BuildLogEntry::getTime).orElse(null);
+            jobFinished = buildLogEntries.get(buildLogEntries.size() - 1).getTime();
+            dependenciesDownloadedCount = buildLogEntries.stream().filter(b -> b.getLog().contains("Downloaded from")).count();
+        }
+        if (programmingLanguage == ProgrammingLanguage.JAVA && (projectType == ProjectType.GRADLE_GRADLE || projectType == ProjectType.PLAIN_GRADLE)) {
+            jobStarted = buildLogEntries.stream().findFirst().map(BuildLogEntry::getTime).orElse(null);
+            agentSetupCompleted = null; // Not supported
+            testsStarted = buildLogEntries.stream().filter(b -> b.getLog().contains("Starting a Gradle Daemon")).findFirst().map(BuildLogEntry::getTime).orElse(null);
+            testsFinished = buildLogEntries.stream().filter(b -> b.getLog().contains("BUILD SUCCESSFUL in") || b.getLog().contains("BUILD FAILED in")).findFirst()
+                    .map(BuildLogEntry::getTime).orElse(null);
+            scaStarted = buildLogEntries.stream().filter(b -> b.getLog().contains("Task :checkstyleMain")).findFirst().map(BuildLogEntry::getTime).orElse(null);
+            scaFinished = buildLogEntries.stream().filter(b -> b.getLog().contains("BUILD SUCCESSFUL in") || b.getLog().contains("BUILD FAILED in")).skip(1).findFirst()
+                    .map(BuildLogEntry::getTime).orElse(null);
+            jobFinished = buildLogEntries.get(buildLogEntries.size() - 1).getTime();
+            dependenciesDownloadedCount = null; // Not supported
+        }
+
+        buildLogStatisticsEntryService.saveBuildLogStatisticsEntry(programmingSubmission, jobStarted, agentSetupCompleted, testsStarted, testsFinished, scaStarted, scaFinished,
+                jobFinished, dependenciesDownloadedCount);
     }
 
     @Override
