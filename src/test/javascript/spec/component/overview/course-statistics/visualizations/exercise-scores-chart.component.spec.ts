@@ -163,32 +163,6 @@ describe('ExerciseScoresChartComponent', () => {
         expect(routingStub).toHaveBeenCalledWith(['courses', 1, 'exercises', 1]);
     });
 
-    it('should setup and execute exercise type filter correctly', () => {
-        const exerciseTypes = [ExerciseType.PROGRAMMING, ExerciseType.TEXT, ExerciseType.QUIZ, ExerciseType.MODELING, ExerciseType.FILE_UPLOAD];
-        const exerciseDTOs: ExerciseScoresDTO[] = [];
-        exerciseTypes.forEach((type, index) => {
-            const dto = generateExerciseScoresDTO(type, index, index, index * 2, 100, dayjs(), type);
-            exerciseDTOs.push(dto);
-        });
-        setUpServiceAndStartComponent(exerciseDTOs);
-
-        expect(component.numberOfActiveFilters).toBe(5);
-
-        exerciseTypes.forEach((type, index) => {
-            expect(component.typeSet.has(type)).toBeTrue();
-            expect(component.chartFilter.get(type)).toBeTrue();
-
-            component.toggleType(type);
-
-            expect(component.numberOfActiveFilters).toBe(4 - index);
-            expect(component.chartFilter.get(type)).toBeFalse();
-
-            component.ngxData.forEach((line: any) => {
-                expect(line.series.filter((exerciseEntry: any) => exerciseEntry.exerciseType === exerciseDTOs[index].exerciseType)).toHaveLength(0);
-            });
-        });
-    });
-
     const setUpServiceAndStartComponent = (exerciseDTOs: ExerciseScoresDTO[]) => {
         const exerciseScoresChartService = TestBed.inject(ExerciseScoresChartService);
         const exerciseScoresResponse: HttpResponse<ExerciseScoresDTO[]> = new HttpResponse({
