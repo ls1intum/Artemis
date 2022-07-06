@@ -300,16 +300,17 @@ Here are a few tips when using this framework:
        appends a percentage sign to the data label.
 
        .. TIP::
-           The method is passed to the framework itself and executed there. This means, it does not have access to global variables of the component it is implemented in.
-           If this access is necessary, create a (readonly) variable assigned to this method and bind it to the component:
-
-           .. code-block: ts
-
-               readonly bindFormatting = this.formatDataLabel.bind(this);
+           The method is passed to the framework itself and executed there. This means on runtime, it does not have access to global variables of the component it is originally implemented in.
+           If this access is necessary, create a (readonly) variable assigned to this method and bind it to the component: ``readonly bindFormatting = this.formatDataLabel.bind(this);``
 
     3. Some design properties are not directly configurable via the framework (e.g. the font-size and weight of the data labels).
        The tool ``::ng-deep`` is useful in these situations as it allows to change some of these properties by overwriting them in
        a corresponding style sheet. Adapting the font-size and weight of data labels would look like this:
+
+       .. WARNING::
+           ``::ng-deep`` breaks the view encapsulation of the rule. This can lead to undesired and flaky side effects on other pages of Artemis.
+           For more information, refer to the `Angular documentation <https://angular.io/guide/component-styles#deprecated-deep--and-ng-deep>`_.
+           **Therefore, only use this annotation if this is absolutely necessary.** To limit the potential of side effects, add a ``:host`` in front of the command.
 
        .. code-block:: css
 
@@ -317,11 +318,6 @@ Here are a few tips when using this framework:
                font-weight: bolder;
                font-size: 15px !important;
            }
-
-       .. WARNING::
-            ``::ng-deep`` breaks the view encapsulation of the rule. This can lead to undesired and flaky side effects on other pages of Artemis.
-            For more information, refer to the `Angular documentation <https://angular.io/guide/component-styles#deprecated-deep--and-ng-deep>`_.
-            **Therefore, only use this annotation if this is absolutely necessary.** To limit the potential of side effects, add a ``:host`` in front of the command.
 
     4. In order to make the chart responsive in width, bind it to the width of its parent container.
        First, annotate the parent container with a reference (in the example ``#containerRef``).
@@ -332,7 +328,7 @@ Here are a few tips when using this framework:
 
        5.1 Axis labels are passed directly as property in the HTML template. Simply insert the translation string together with the translate pipe:
 
-           ..code-block: html+ng2
+           .. code-block: html+ng2
 
               [xAxisLabel]="'artemisApp.examMonitoring.charts.xAxisLabel' | artemisTranslate"
               [yAxisLabel]="'artemisApp.examMonitoring.charts.yAxisLabel' | artemisTranslate"
@@ -341,7 +337,7 @@ Here are a few tips when using this framework:
            So, these names have to be translated every time the user switches the language settings.
            In this case, inject the ``TranslateService`` to the underlying component and subscribe to the ``onLangChange`` event emitter:
 
-           ..code-block: ts
+           .. code-block: ts
 
               constructor(private translateService: TranslateService) {
                       this.translateService.onLangChange.subscribe(() => {
