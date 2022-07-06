@@ -251,7 +251,7 @@ Use ``<span [ngbTooltip]="submittedDate | artemisDate">{{ submittedDate | artemi
 14. Chart Instantiation
 =======================
 
-We are using the framework ngx-charts in order to instantiate charts and diagrams in Artemis.
+We are using the framework `ngx-charts <https://github.com/swimlane/ngx-charts>`_ in order to instantiate charts and diagrams in Artemis.
 
 The following is an example HTML template for a vertical bar chart:
 
@@ -282,21 +282,72 @@ Here are a few tips when using this framework:
        Depending on the chart type, there is more than one type of tooltip configurable.
        For more information visit https://swimlane.gitbook.io/ngx-charts/
 
-    2. Some design properties are not directly configurable via the framework (e.g. the font-size and weight of the data labels).
+    2. In order to manipulate the content of the data label (e.g. the text floating above a chart bar), the framework provides a ``[dataLabelFormatting]`` property in the
+       HTML template that can be assigned to a method. For example:
+
+       .. code-block:: html+ng2
+
+          [dataLabelFormatting]="formatDataLabel"
+
+       with
+
+       .. code-block:: ts
+
+          formatDataLabel(averageScore: number): string {
+                  return averageScore + '%';
+              }
+
+       appends a percentage sign to the data label.
+
+       .. TIP::
+           The method is passed to the framework itself and executed there. This means, it does not have access to global variables of the component it is implemented in.
+           If this access is necessary, create a (readonly) variable assigned to this method and bind it to the component:
+
+           .. code-block: ts
+
+               readonly bindFormatting = this.formatDataLabel.bind(this);
+
+    3. Some design properties are not directly configurable via the framework (e.g. the font-size and weight of the data labels).
        The tool ``::ng-deep`` is useful in these situations as it allows to change some of these properties by overwriting them in
        a corresponding style sheet. Adapting the font-size and weight of data labels would look like this:
 
        .. code-block:: css
 
-           ::ng-deep .textDataLabel {
+           :host::ng-deep .textDataLabel {
                font-weight: bolder;
                font-size: 15px !important;
            }
 
-    3. In order to make the chart responsive in width, bind it to the width of its parent container.
+       .. WARNING::
+            ``::ng-deep`` breaks the view encapsulation of the rule. This can lead to undesired and flaky side effects on other pages of Artemis.
+            For more information, refer to the `Angular documentation <https://angular.io/guide/component-styles#deprecated-deep--and-ng-deep>`_.
+            **Therefore, only use this annotation if this is absolutely necessary.** To limit the potential of side effects, add a ``:host`` in front of the command.
+
+    4. In order to make the chart responsive in width, bind it to the width of its parent container.
        First, annotate the parent container with a reference (in the example ``#containerRef``).
        Then, when configuring the dimensions of the chart in ``[view]``, insert ``containerRef.offsetWidth`` instead
        of an specific value for the width.
+
+    5. There are two ways to keep axis labels and axis ticks translation-sensitive if they contain natural language:
+
+       5.1 Axis labels are passed directly as property in the HTML template. Simply insert the translation string together with the translate pipe:
+
+           ..code-block: html+ng2
+
+              [xAxisLabel]="'artemisApp.examMonitoring.charts.xAxisLabel' | artemisTranslate"
+              [yAxisLabel]="'artemisApp.examMonitoring.charts.yAxisLabel' | artemisTranslate"
+
+       5.2 For some chart types, the framework derives the ticks of one axis from the name properties of the passed data objects.
+           So, these names have to be translated every time the user switches the language settings.
+           In this case, inject the ``TranslateService`` to the underlying component and subscribe to the ``onLangChange`` event emitter:
+
+           ..code-block: ts
+
+              constructor(private translateService: TranslateService) {
+                      this.translateService.onLangChange.subscribe(() => {
+                          this.updateXAxisLabel(); // a method re-assigning the names of the objects to the translated string
+                      });
+                  }
 
 Some parts of these guidelines are adapted from https://github.com/microsoft/TypeScript-wiki/blob/main/Coding-guidelines.md
 
