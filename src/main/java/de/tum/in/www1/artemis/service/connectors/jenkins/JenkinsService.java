@@ -180,7 +180,7 @@ public class JenkinsService extends AbstractContinuousIntegrationService {
         }
         if (programmingLanguage == ProgrammingLanguage.JAVA && (projectType == ProjectType.GRADLE_GRADLE || projectType == ProjectType.PLAIN_GRADLE)) {
             jobStarted = buildLogEntries.stream().findFirst().map(BuildLogEntry::getTime).orElse(null);
-            agentSetupCompleted = null; // Not supported
+            // agentSetupCompleted is not supported
             testsStarted = buildLogEntries.stream().filter(b -> b.getLog().contains("Starting a Gradle Daemon")).findFirst().map(BuildLogEntry::getTime).orElse(null);
             testsFinished = buildLogEntries.stream().filter(b -> b.getLog().contains("BUILD SUCCESSFUL in") || b.getLog().contains("BUILD FAILED in")).findFirst()
                     .map(BuildLogEntry::getTime).orElse(null);
@@ -188,7 +188,7 @@ public class JenkinsService extends AbstractContinuousIntegrationService {
             scaFinished = buildLogEntries.stream().filter(b -> b.getLog().contains("BUILD SUCCESSFUL in") || b.getLog().contains("BUILD FAILED in")).skip(1).findFirst()
                     .map(BuildLogEntry::getTime).orElse(null);
             jobFinished = buildLogEntries.get(buildLogEntries.size() - 1).getTime();
-            dependenciesDownloadedCount = null; // Not supported
+            // dependenciesDownloadedCount is not supported
         }
 
         buildLogStatisticsEntryService.saveBuildLogStatisticsEntry(programmingSubmission, jobStarted, agentSetupCompleted, testsStarted, testsFinished, scaStarted, scaFinished,

@@ -24,6 +24,6 @@ public interface BuildLogStatisticsEntryRepository extends JpaRepository<BuildLo
                 p.id = :#{#exercise.solutionParticipation.id} or
                 p.id = :#{#exercise.templateParticipation.id})
             """)
-    public BuildLogStatisticsDTO findAverageBuildLogStatisticsEntryForExercise(@Param("exercise") ProgrammingExercise exercise);
+    BuildLogStatisticsDTO findAverageBuildLogStatisticsEntryForExercise(@Param("exercise") ProgrammingExercise exercise);
 
 }
