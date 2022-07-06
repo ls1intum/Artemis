@@ -65,6 +65,18 @@ describe('ExamActionService', () => {
         expect(examActionService.examActionObservables).toEqual(examActionObservables);
     });
 
+    // Notify exam monitoring update subscribers
+    it.each([true, false])('should notify exam monitoring update subscribers', (status: boolean) => {
+        const examMonitoringStatusObservables = new Map<number, BehaviorSubject<boolean>>();
+        expect(examActionService.examMonitoringStatusObservables).toEqual(examMonitoringStatusObservables);
+
+        examActionService.notifyExamMonitoringUpdateSubscribers(exam, status);
+
+        examMonitoringStatusObservables.set(exam.id!, new BehaviorSubject(status));
+
+        expect(examActionService.examMonitoringStatusObservables).toEqual(examMonitoringStatusObservables);
+    });
+
     // Additional methods
     it.each(createActions())('should prepare action', (examAction: ExamAction) => {
         const now = dayjs().set('seconds', 8).set('ms', 0);
