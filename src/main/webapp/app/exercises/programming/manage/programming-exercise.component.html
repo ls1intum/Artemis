@@ -77,10 +77,20 @@
                         />
                     </td>
                     <td class="d-md-table-cell">
-                        <a [routerLink]="['/course-management', courseId, 'programming-exercises', programmingExercise.id]">{{ programmingExercise.id }}</a>
+                        <a
+                            *ngIf="programmingExercise.isAtLeastEditor; else showId"
+                            [routerLink]="['/course-management', courseId, 'programming-exercises', programmingExercise.id]"
+                            >{{ programmingExercise.id }}</a
+                        >
+                        <ng-template #showId>{{ programmingExercise.id }}</ng-template>
                     </td>
                     <td>
-                        <a [routerLink]="['/course-management', courseId, 'programming-exercises', programmingExercise.id]">{{ programmingExercise.title }}</a>
+                        <a
+                            *ngIf="programmingExercise.isAtLeastEditor; else showTitle"
+                            [routerLink]="['/course-management', courseId, 'programming-exercises', programmingExercise.id]"
+                            >{{ programmingExercise.title }}</a
+                        >
+                        <ng-template #showTitle>{{ programmingExercise.title }}</ng-template>
                         <jhi-programming-exercise-grading-dirty-warning
                             class="ms-2"
                             [programmingExerciseId]="programmingExercise.id!"

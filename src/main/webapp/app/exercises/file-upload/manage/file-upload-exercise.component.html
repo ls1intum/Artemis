@@ -45,10 +45,20 @@
             <tbody class="markdown-preview">
                 <tr *ngFor="let fileUploadExercise of filteredFileUploadExercises; trackBy: trackId">
                     <td>
-                        <a [routerLink]="['/course-management', courseId, 'file-upload-exercises', fileUploadExercise.id]">{{ fileUploadExercise.id }}</a>
+                        <a
+                            *ngIf="fileUploadExercise.isAtLeastEditor; else showId"
+                            [routerLink]="['/course-management', courseId, 'file-upload-exercises', fileUploadExercise.id]"
+                            >{{ fileUploadExercise.id }}</a
+                        >
+                        <ng-template #showId>{{ fileUploadExercise.id }}</ng-template>
                     </td>
                     <td>
-                        <a [routerLink]="['/course-management', courseId, 'file-upload-exercises', fileUploadExercise.id]">{{ fileUploadExercise.title }}</a>
+                        <a
+                            *ngIf="fileUploadExercise.isAtLeastEditor; else showTitle"
+                            [routerLink]="['/course-management', courseId, 'file-upload-exercises', fileUploadExercise.id]"
+                            >{{ fileUploadExercise.title }}</a
+                        >
+                        <ng-template #showTitle>{{ fileUploadExercise.title }}</ng-template>
                     </td>
                     <td>{{ fileUploadExercise.releaseDate | artemisDate }}</td>
                     <td>{{ fileUploadExercise.dueDate | artemisDate }}</td>
