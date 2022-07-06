@@ -31,6 +31,7 @@ import { AlertService } from 'app/core/util/alert.service';
 import { Component } from '@angular/core';
 import { of } from 'rxjs';
 import dayjs from 'dayjs/esm';
+import { Exam } from 'app/entities/exam.model';
 
 const endDate1 = dayjs().add(1, 'days');
 const visibleDate1 = dayjs().subtract(1, 'days');
@@ -54,11 +55,11 @@ const exercise2: Exercise = {
 
 const courseEmpty: Course = {};
 
-const exam1 = { id: 3, endDate: endDate1, visibleDate: visibleDate1, course: courseEmpty };
-const exam2 = { id: 4, endDate: endDate2, visibleDate: visibleDate2, course: courseEmpty };
+const exam1: Exam = { id: 3, endDate: endDate1, visibleDate: visibleDate1, course: courseEmpty };
+const exam2: Exam = { id: 4, endDate: endDate2, visibleDate: visibleDate2, course: courseEmpty };
 const exams = [exam1, exam2];
-const course1 = { id: 1, exams, exercises: [exercise1] };
-const course2 = { id: 2, exercises: [exercise2] };
+const course1: Course = { id: 1, exams, exercises: [exercise1] };
+const course2: Course = { id: 2, exercises: [exercise2], testCourse: true };
 const courses: Course[] = [course1, course2];
 
 @Component({
@@ -171,8 +172,8 @@ describe('CoursesComponent', () => {
             component.ngOnInit();
 
             expect(getNextExerciseForHoursSpy).toHaveBeenCalledWith(course1.exercises);
-            expect(component.nextRelevantExercise).toEqual(exercise2);
-            expect(component.nextRelevantCourse).toEqual(exercise2.course);
+            expect(component.nextRelevantExercise).toEqual(exercise1);
+            expect(component.nextRelevantCourse).toEqual(exercise1.course);
         });
     });
 
