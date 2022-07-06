@@ -2,6 +2,7 @@ import { Component, ElementRef, EventEmitter, Input, OnChanges, OnInit, Output, 
 import dayjs from 'dayjs/esm';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { TranslateService } from '@ngx-translate/core';
+import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 
 export interface AttachmentUnitFormData {
     formProperties: FormProperties;
@@ -34,6 +35,7 @@ export class AttachmentUnitFormComponent implements OnInit, OnChanges {
     isEditMode = false;
 
     fileUploadErrorMessage?: string;
+    farQuestionCircle = faQuestionCircle;
 
     @Output()
     formSubmitted: EventEmitter<AttachmentUnitFormData> = new EventEmitter<AttachmentUnitFormData>();
