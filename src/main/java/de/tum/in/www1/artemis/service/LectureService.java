@@ -98,11 +98,8 @@ public class LectureService {
      */
     @Transactional // ok
     public void delete(Lecture lecture) {
-        Optional<Lecture> lectureToDeleteOptional = lectureRepository.findByIdWithPostsAndLectureUnitsAndLearningGoals(lecture.getId());
-        if (lectureToDeleteOptional.isEmpty()) {
-            return;
-        }
-        Lecture lectureToDelete = lectureToDeleteOptional.get();
+        Lecture lectureToDelete = lectureRepository.findByIdWithPostsAndLectureUnitsAndLearningGoalsAndCompletionsElseThrow(lecture.getId());
+
         // Hibernate sometimes adds null into the list of lecture units to keep the order, to prevent a NullPointerException we have to filter them
         List<LectureUnit> lectureUnits = lectureToDelete.getLectureUnits().stream().filter(Objects::nonNull).toList();
         // update associated learning goals

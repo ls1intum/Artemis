@@ -1,17 +1,38 @@
 <div class="row align-items-center mb-2 mt-2">
     <div class="card unit-card">
-        <div class="card-header unit-card-header row align-content-center" (click)="handleCollapse($event)">
-            <h5 class="m-0 fw-medium">
-                <fa-icon class="me-2" [icon]="getAttachmentIcon()" [ngbTooltip]="'artemisApp.attachmentUnit.tooltip' | artemisTranslate"> </fa-icon>
-                {{ attachmentUnit?.attachment?.name ? attachmentUnit?.attachment?.name : '' }}
-                <span
-                    *ngIf="!attachmentUnit?.visibleToStudents"
-                    class="badge bg-warning ms-2"
-                    ngbTooltip="{{ 'artemisApp.attachmentUnit.notReleasedTooltip' | artemisTranslate }} {{ attachmentUnit?.attachment?.releaseDate | artemisDate }}"
-                >
-                    {{ 'artemisApp.courseOverview.exerciseList.notReleased' | artemisTranslate }}
-                </span>
-            </h5>
+        <div class="card-header unit-card-header row align-content-center justify-content-between" (click)="handleCollapse($event)">
+            <div class="col-auto row align-content-center">
+                <h5 class="m-0 fw-medium">
+                    <fa-icon class="me-2" [icon]="getAttachmentIcon()" [ngbTooltip]="'artemisApp.attachmentUnit.tooltip' | artemisTranslate"> </fa-icon>
+                    {{ attachmentUnit?.attachment?.name ? attachmentUnit?.attachment?.name : '' }}
+                    <span
+                        *ngIf="!attachmentUnit?.visibleToStudents"
+                        class="badge bg-warning ms-2"
+                        ngbTooltip="{{ 'artemisApp.attachmentUnit.notReleasedTooltip' | artemisTranslate }} {{ attachmentUnit?.attachment?.releaseDate | artemisDate }}"
+                    >
+                        {{ 'artemisApp.courseOverview.exerciseList.notReleased' | artemisTranslate }}
+                    </span>
+                </h5>
+            </div>
+            <div class="col-auto" *ngIf="!isPresentationMode && attachmentUnit.visibleToStudents">
+                <fa-icon
+                    *ngIf="attachmentUnit.completed; else uncompleted"
+                    class="text-success"
+                    size="lg"
+                    [icon]="faSquareCheck"
+                    [ngbTooltip]="'artemisApp.lectureUnit.completedTooltip' | artemisTranslate"
+                    (click)="handleClick($event, false)"
+                ></fa-icon>
+                <ng-template #uncompleted>
+                    <fa-icon
+                        class="text-muted"
+                        size="lg"
+                        [icon]="faSquare"
+                        [ngbTooltip]="'artemisApp.lectureUnit.uncompletedTooltip' | artemisTranslate"
+                        (click)="handleClick($event, true)"
+                    ></fa-icon>
+                </ng-template>
+            </div>
         </div>
         <div class="card-body unit-card-body" [ngbCollapse]="isCollapsed">
             <div *ngIf="attachmentUnit?.attachment?.uploadDate">
@@ -31,7 +52,10 @@
                 {{ attachmentUnit?.description }}
             </div>
             <hr />
-            <button id="downloadButton" class="btn btn-primary btn-sm rounded-pill" (click)="downloadAttachment()">Download</button>
+            <button id="downloadButton" class="btn btn-primary btn-sm rounded-pill" (click)="downloadAttachment()">
+                <fa-icon [icon]="faDownload"></fa-icon>
+                <span class="d-none d-md-inline" jhiTranslate="artemisApp.attachmentUnit.download">Download</span>
+            </button>
         </div>
     </div>
 </div>
