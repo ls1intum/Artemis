@@ -68,7 +68,7 @@ public class WebConfigurer implements ServletContextInitializer, WebServerFactor
     private void setCachingHttpHeaders(ServletContext server) {
         FilterRegistration.Dynamic cachingHttpHeadersFilter = server.addFilter("cachingHttpHeadersFilter", new CachingHttpHeadersFilter(jHipsterProperties));
         EnumSet<DispatcherType> dispatcherTypes = EnumSet.of(DispatcherType.REQUEST, DispatcherType.FORWARD, DispatcherType.ASYNC);
-        cachingHttpHeadersFilter.addMappingForUrlPatterns(dispatcherTypes, true, "*.js", "*.css", "/logo/*", "/i18n/*");
+        cachingHttpHeadersFilter.addMappingForUrlPatterns(dispatcherTypes, true, "*.js", "*.css", "/i18n/*");
         cachingHttpHeadersFilter.setAsyncSupported(true);
     }
 
