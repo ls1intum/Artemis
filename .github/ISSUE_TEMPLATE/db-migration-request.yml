@@ -2,7 +2,7 @@ name: "⚙️  Database Migration Request"
 description: Suggest an database migration 
 labels: [database]
 assignees:
-  - @ls1intum/artemis-database-maintainer
+  - "@ls1intum/artemis-database-maintainer"
 body:
 - type: markdown
   attributes:
