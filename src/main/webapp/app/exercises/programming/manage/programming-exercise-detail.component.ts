@@ -120,10 +120,14 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
             this.courseId = this.isExamExercise ? this.programmingExercise.exerciseGroup!.exam!.course!.id! : this.programmingExercise.course!.id!;
             this.isAdmin = this.accountService.isAdmin();
 
-            const auxiliaryRepositories = this.programmingExercise.auxiliaryRepositories;
             this.programmingExerciseService.findWithTemplateAndSolutionParticipation(programmingExercise.id!, true).subscribe((updatedProgrammingExercise) => {
+                // Copy over previous information
+                const previousExercise = this.programmingExercise;
                 this.programmingExercise = updatedProgrammingExercise.body!;
-                this.programmingExercise.auxiliaryRepositories = auxiliaryRepositories;
+                this.programmingExercise.gitDiffReport = previousExercise.gitDiffReport;
+                this.programmingExercise.auxiliaryRepositories = previousExercise.auxiliaryRepositories;
+                this.programmingExercise.submissionPolicy = previousExercise.submissionPolicy;
+
                 // get the latest results for further processing
                 if (this.programmingExercise.templateParticipation) {
                     const latestTemplateResult = this.getLatestResult(this.programmingExercise.templateParticipation.submissions);

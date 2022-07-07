@@ -6,6 +6,8 @@ import { Exam } from 'app/entities/exam.model';
 import { HttpResponse } from '@angular/common/http';
 import { ExamMonitoringService } from './exam-monitoring.service';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { ExamAction } from 'app/entities/exam-user-activity.model';
+import { ExamActionService } from './exam-action.service';
 
 export class TableContent {
     translateValue: string;
@@ -31,6 +33,7 @@ export class ExamMonitoringComponent implements OnInit, OnDestroy {
 
     // Subscriptions
     private routeSubscription?: Subscription;
+    private initialLoadSubscription?: Subscription;
 
     private examId: number;
     private courseId: number;
@@ -41,6 +44,7 @@ export class ExamMonitoringComponent implements OnInit, OnDestroy {
         private route: ActivatedRoute,
         private examManagementService: ExamManagementService,
         private examMonitoringService: ExamMonitoringService,
+        private examActionService: ExamActionService,
         private artemisDataPipe: ArtemisDatePipe,
     ) {}
 
@@ -53,6 +57,12 @@ export class ExamMonitoringComponent implements OnInit, OnDestroy {
         this.examManagementService.find(this.courseId, this.examId, false, true).subscribe((examResponse: HttpResponse<Exam>) => {
             this.exam = examResponse.body!;
             this.examMonitoringService.notifyExamSubscribers(this.exam);
+
+            this.examActionService.subscribeForLatestExamAction(this.exam!);
+
+            this.initialLoadSubscription = this.examActionService.loadInitialActions(this.exam).subscribe((examActions: ExamAction[]) => {
+                this.examActionService.updateCachedActions(this.exam, examActions);
+            });
 
             this.initTable();
         });
@@ -79,5 +89,6 @@ export class ExamMonitoringComponent implements OnInit, OnDestroy {
 
     ngOnDestroy() {
         this.routeSubscription?.unsubscribe();
+        this.examActionService.unsubscribeForExamAction(this.exam!);
     }
 }

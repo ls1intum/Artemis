@@ -1,5 +1,6 @@
 import { Component, OnDestroy, OnInit, QueryList, ViewChildren } from '@angular/core';
 import dayjs from 'dayjs/esm';
+import isMobile from 'ismobilejs-es5';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Subscription } from 'rxjs';
 import { ActivatedRoute } from '@angular/router';
@@ -13,7 +14,6 @@ import { ShortAnswerQuestionComponent } from 'app/exercises/quiz/shared/question
 import { TranslateService } from '@ngx-translate/core';
 import * as smoothscroll from 'smoothscroll-polyfill';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
-import { DeviceDetectorService } from 'ngx-device-detector';
 import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { ShortAnswerSubmittedAnswer } from 'app/entities/quiz/short-answer-submitted-answer.model';
@@ -84,7 +84,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
     disconnected = false;
     unsavedChanges = false;
 
-    sendWebsocket: (submission: QuizSubmission) => void;
+    sendWebsocket?: (submission: QuizSubmission) => void;
     showingResult = false;
     userScore: number;
 
@@ -106,6 +106,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
     endDate: dayjs.Dayjs | undefined;
     password = '';
     previousRunning = false;
+    isMobile = false;
 
     /**
      * Websocket channels
@@ -137,7 +138,6 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
         private alertService: AlertService,
         private quizParticipationService: QuizParticipationService,
         private translateService: TranslateService,
-        private deviceService: DeviceDetectorService,
         private quizService: ArtemisQuizService,
         private serverDateService: ArtemisServerDateService,
     ) {
@@ -145,6 +145,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
     }
 
     ngOnInit() {
+        this.isMobile = isMobile(window.navigator.userAgent).any;
         // set correct mode
         this.subscriptionData = this.route.data.subscribe((data) => {
             this.mode = data.mode;
@@ -928,13 +929,6 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
         document.getElementById('question' + questionIndex)!.scrollIntoView({
             behavior: 'smooth',
         });
-    }
-
-    /**
-     * Determines if the current device is a mobile device
-     */
-    isMobile(): boolean {
-        return this.deviceService.isMobile();
     }
 
     /**

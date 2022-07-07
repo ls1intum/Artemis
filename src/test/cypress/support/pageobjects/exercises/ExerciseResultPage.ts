@@ -1,4 +1,4 @@
-import { GET, BASE_API } from './../../constants';
+import { GET, BASE_API } from '../../constants';
 /**
  * A class which encapsulates UI selectors and actions for the exercise result page.
  */

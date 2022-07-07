@@ -20,10 +20,12 @@ import { MockWebsocketService } from '../../../../helpers/mocks/service/mock-web
 import { Course } from 'app/entities/course.model';
 import { of } from 'rxjs';
 import { ActivatedRoute } from '@angular/router';
+import { ExamActionService } from 'app/exam/monitoring/exam-action.service';
 
 describe('Exercise Group Chart Component', () => {
     let comp: ExerciseGroupChartComponent;
     let fixture: ComponentFixture<ExerciseGroupChartComponent>;
+    let examActionService: ExamActionService;
 
     // Course
     const course = new Course();
@@ -59,6 +61,7 @@ describe('Exercise Group Chart Component', () => {
             .then(() => {
                 fixture = TestBed.createComponent(ExerciseGroupChartComponent);
                 comp = fixture.componentInstance;
+                examActionService = TestBed.inject(ExamActionService);
             });
     });
 
@@ -67,6 +70,7 @@ describe('Exercise Group Chart Component', () => {
         jest.restoreAllMocks();
     });
 
+    // On init
     it('should call initData on init without actions', () => {
         expect(comp.ngxData).toEqual([]);
 
@@ -85,15 +89,19 @@ describe('Exercise Group Chart Component', () => {
         ${[-1, -1, -1]} | ${[0, 0]}
     `('should call initData on init with actions', (param: { input: number[]; expect: number[] }) => {
         // GIVEN
+        const lastActionByStudent = new Map();
         const action1 = new SwitchedExerciseAction(param.input[0]);
         action1.examActivityId = 1;
+        lastActionByStudent.set(action1.examActivityId, action1);
         const action2 = new SwitchedExerciseAction(param.input[1]);
         action2.examActivityId = 2;
+        lastActionByStudent.set(action2.examActivityId, action2);
         const action3 = new SwitchedExerciseAction(param.input[2]);
         action3.examActivityId = 3;
+        lastActionByStudent.set(action3.examActivityId, action3);
 
+        examActionService.cachedLastActionPerStudent.set(exam.id!, lastActionByStudent);
         comp.exam = exam;
-        comp.filteredExamActions = [action1, action2, action3];
 
         // WHEN
         comp.ngOnInit();

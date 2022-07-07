@@ -20,11 +20,14 @@ import { ActivatedRoute } from '@angular/router';
 import { ceilDayjsSeconds } from 'app/exam/monitoring/charts/monitoring-chart';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { MockWebsocketService } from '../../../../helpers/mocks/service/mock-websocket.service';
+import { ExamActionType } from 'app/entities/exam-user-activity.model';
+import { ExamActionService } from 'app/exam/monitoring/exam-action.service';
 
 describe('Category Actions Chart Component', () => {
     let comp: CategoryActionsChartComponent;
     let fixture: ComponentFixture<CategoryActionsChartComponent>;
     let pipe: ArtemisDatePipe;
+    let examActionService: ExamActionService;
 
     // Course
     const course = new Course();
@@ -33,6 +36,9 @@ describe('Category Actions Chart Component', () => {
     // Exam
     const exam = new Exam();
     exam.id = 1;
+
+    const now = dayjs();
+    let ceiledNow: dayjs.Dayjs;
 
     const route = { parent: { params: of({ courseId: course.id, examId: exam.id }) } };
 
@@ -48,10 +54,13 @@ describe('Category Actions Chart Component', () => {
             ],
         })
             .compileComponents()
-            .then(() => {});
-        pipe = new ArtemisDatePipe(TestBed.inject(TranslateService));
-        fixture = TestBed.createComponent(CategoryActionsChartComponent);
-        comp = fixture.componentInstance;
+            .then(() => {
+                pipe = new ArtemisDatePipe(TestBed.inject(TranslateService));
+                fixture = TestBed.createComponent(CategoryActionsChartComponent);
+                comp = fixture.componentInstance;
+                examActionService = TestBed.inject(ExamActionService);
+                ceiledNow = ceilDayjsSeconds(now, comp.timeStampGapInSeconds);
+            });
     });
 
     afterEach(() => {
@@ -59,6 +68,7 @@ describe('Category Actions Chart Component', () => {
         jest.restoreAllMocks();
     });
 
+    // On init
     it('should call initData on init without actions', () => {
         expect(comp.ngxData).toEqual([]);
 
@@ -75,23 +85,22 @@ describe('Category Actions Chart Component', () => {
     });
 
     it('should call initData on init with actions', () => {
-        const now = dayjs();
-        const ceiledNow = ceilDayjsSeconds(now, comp.timeStampGapInSeconds);
-
         // GIVEN
-        comp.filteredExamActions = createActions().map((action) => {
-            action.timestamp = now;
-            action.ceiledTimestamp = ceiledNow;
-            return action;
+        const groupedByTimestamp = new Map();
+        const groupedByCategory = new Map();
+        Object.keys(ExamActionType).forEach((type) => {
+            groupedByCategory.set(type, 1);
         });
+        groupedByTimestamp.set(ceiledNow.toString(), groupedByCategory);
+        examActionService.cachedExamActionsGroupedByTimestampAndCategory.set(exam.id!, groupedByTimestamp);
 
         const chartSeriesData: NgxChartsMultiSeriesDataEntry[] = [];
-        comp.filteredExamActions.forEach((action) => {
+        Object.keys(ExamActionType).forEach((type) => {
             // Create series
             const series = createSingleSeriesDataEntriesWithTimestamps(comp.getLastXTimestamps(), pipe);
             // Insert value
             series.filter((data) => data.name === pipe.transform(ceiledNow, 'time', true).toString())[0].value = 1;
-            chartSeriesData.push({ name: action.type, series });
+            chartSeriesData.push({ name: type, series });
         });
 
         // WHEN

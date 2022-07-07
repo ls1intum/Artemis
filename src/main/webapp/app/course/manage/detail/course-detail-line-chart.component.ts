@@ -65,7 +65,7 @@ export class CourseDetailLineChartComponent extends ActiveStudentsChart implemen
     // Used for storing absolute values to display in tooltip
     absoluteSeries = [{}];
     curve: any = shape.curveMonotoneX;
-    average = { name: 'Average', value: 0 };
+    average = { name: 'Mean', value: 0 };
     showAverage = true;
     startDateDisplayed = false;
 
@@ -113,6 +113,7 @@ export class CourseDetailLineChartComponent extends ActiveStudentsChart implemen
      * Takes the data, converts it into percentage and sets it accordingly
      */
     private processDataAndCreateChart(array: number[]) {
+        let currentMean = 0;
         if (this.numberOfStudentsInCourse > 0) {
             const allValues = [];
             for (let i = 0; i < array.length; i++) {
@@ -120,15 +121,15 @@ export class CourseDetailLineChartComponent extends ActiveStudentsChart implemen
                 this.dataCopy[0].series[i]['value'] = roundScorePercentSpecifiedByCourseSettings(array[i] / this.numberOfStudentsInCourse, this.course); // allValues[i];
                 this.absoluteSeries[i]['absoluteValue'] = array[i];
             }
-            const currentAverage = allValues.length > 0 ? mean(allValues) : 0;
-            this.average.name = currentAverage.toFixed(2) + '%';
-            this.average.value = currentAverage;
+            currentMean = allValues.length > 0 ? mean(allValues) : 0;
         } else {
-            for (let i = 0; i < this.displayedNumberOfWeeks; i++) {
+            for (let i = 0; i < this.currentSpanSize; i++) {
                 this.dataCopy[0].series[i]['value'] = 0;
                 this.absoluteSeries[i]['absoluteValue'] = 0;
             }
         }
+        this.average.name = currentMean.toFixed(2) + '%';
+        this.average.value = currentMean;
         this.loading = false;
     }
 

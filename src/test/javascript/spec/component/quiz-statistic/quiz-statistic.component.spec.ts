@@ -260,8 +260,8 @@ describe('QuizExercise Statistic Component', () => {
 
         comp.switchRated();
 
-        expect(loadDataMock).toHaveBeenCalledTimes(1);
-        expect(comp.rated).toBe(false);
+        expect(loadDataMock).toHaveBeenCalledOnce();
+        expect(comp.rated).toBeFalse();
     });
 
     it('should format correctly', () => {

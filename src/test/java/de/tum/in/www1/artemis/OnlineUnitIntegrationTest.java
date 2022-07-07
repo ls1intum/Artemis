@@ -92,7 +92,7 @@ public class OnlineUnitIntegrationTest extends AbstractSpringIntegrationBambooBi
     public void updateOnlineUnit_asInstructor_shouldUpdateOnlineUnit() throws Exception {
         persistOnlineUnitWithLecture();
 
-        this.onlineUnit = (OnlineUnit) lectureRepository.findByIdWithPostsAndLectureUnitsAndLearningGoals(lecture1.getId()).get().getLectureUnits().stream().findFirst().get();
+        this.onlineUnit = (OnlineUnit) lectureRepository.findByIdWithLectureUnitsElseThrow(lecture1.getId()).getLectureUnits().stream().findFirst().get();
         this.onlineUnit.setSource("https://www.youtube.com/embed/8iU8LPEa4o0");
         this.onlineUnit.setDescription("Changed");
         this.onlineUnit = request.putWithResponseBody("/api/lectures/" + lecture1.getId() + "/online-units", this.onlineUnit, OnlineUnit.class, HttpStatus.OK);
@@ -122,7 +122,7 @@ public class OnlineUnitIntegrationTest extends AbstractSpringIntegrationBambooBi
         this.onlineUnit = onlineUnitRepository.save(this.onlineUnit);
         lecture1.addLectureUnit(this.onlineUnit);
         lecture1 = lectureRepository.save(lecture1);
-        this.onlineUnit = (OnlineUnit) lectureRepository.findByIdWithPostsAndLectureUnitsAndLearningGoals(lecture1.getId()).get().getLectureUnits().stream().findFirst().get();
+        this.onlineUnit = (OnlineUnit) lectureRepository.findByIdWithLectureUnitsElseThrow(lecture1.getId()).getLectureUnits().stream().findFirst().get();
     }
 
     @Test
@@ -130,7 +130,7 @@ public class OnlineUnitIntegrationTest extends AbstractSpringIntegrationBambooBi
     public void updateOnlineUnit_InstructorNotInCourse_shouldReturnForbidden() throws Exception {
         persistOnlineUnitWithLecture();
 
-        this.onlineUnit = (OnlineUnit) lectureRepository.findByIdWithPostsAndLectureUnitsAndLearningGoals(lecture1.getId()).get().getLectureUnits().stream().findFirst().get();
+        this.onlineUnit = (OnlineUnit) lectureRepository.findByIdWithLectureUnitsElseThrow(lecture1.getId()).getLectureUnits().stream().findFirst().get();
         this.onlineUnit.setDescription("Changed");
         this.onlineUnit.setSource("https://www.youtube.com/embed/8iU8LPEa4o0");
         this.onlineUnit = request.putWithResponseBody("/api/lectures/" + lecture1.getId() + "/online-units", this.onlineUnit, OnlineUnit.class, HttpStatus.FORBIDDEN);
@@ -141,7 +141,7 @@ public class OnlineUnitIntegrationTest extends AbstractSpringIntegrationBambooBi
     public void updateOnlineUnit_noId_shouldReturnBadRequest() throws Exception {
         persistOnlineUnitWithLecture();
 
-        this.onlineUnit = (OnlineUnit) lectureRepository.findByIdWithPostsAndLectureUnitsAndLearningGoals(lecture1.getId()).get().getLectureUnits().stream().findFirst().get();
+        this.onlineUnit = (OnlineUnit) lectureRepository.findByIdWithLectureUnitsElseThrow(lecture1.getId()).getLectureUnits().stream().findFirst().get();
         this.onlineUnit.setId(null);
         this.onlineUnit = request.putWithResponseBody("/api/lectures/" + lecture1.getId() + "/online-units", this.onlineUnit, OnlineUnit.class, HttpStatus.BAD_REQUEST);
     }
@@ -151,7 +151,7 @@ public class OnlineUnitIntegrationTest extends AbstractSpringIntegrationBambooBi
     public void getOnlineUnit_correctId_shouldReturnOnlineUnit() throws Exception {
         persistOnlineUnitWithLecture();
 
-        this.onlineUnit = (OnlineUnit) lectureRepository.findByIdWithPostsAndLectureUnitsAndLearningGoals(lecture1.getId()).get().getLectureUnits().stream().findFirst().get();
+        this.onlineUnit = (OnlineUnit) lectureRepository.findByIdWithLectureUnitsElseThrow(lecture1.getId()).getLectureUnits().stream().findFirst().get();
         OnlineUnit onlineUnitFromRequest = request.get("/api/lectures/" + lecture1.getId() + "/online-units/" + this.onlineUnit.getId(), HttpStatus.OK, OnlineUnit.class);
         assertThat(this.onlineUnit.getId()).isEqualTo(onlineUnitFromRequest.getId());
     }
@@ -161,7 +161,7 @@ public class OnlineUnitIntegrationTest extends AbstractSpringIntegrationBambooBi
     public void deleteOnlineUnit_correctId_shouldDeleteOnlineUnit() throws Exception {
         persistOnlineUnitWithLecture();
 
-        this.onlineUnit = (OnlineUnit) lectureRepository.findByIdWithPostsAndLectureUnitsAndLearningGoals(lecture1.getId()).get().getLectureUnits().stream().findFirst().get();
+        this.onlineUnit = (OnlineUnit) lectureRepository.findByIdWithLectureUnitsElseThrow(lecture1.getId()).getLectureUnits().stream().findFirst().get();
         assertThat(this.onlineUnit.getId()).isNotNull();
         request.delete("/api/lectures/" + lecture1.getId() + "/lecture-units/" + this.onlineUnit.getId(), HttpStatus.OK);
         request.get("/api/lectures/" + lecture1.getId() + "/online-units/" + this.onlineUnit.getId(), HttpStatus.NOT_FOUND, OnlineUnit.class);

@@ -68,6 +68,5 @@ const ENTITY_STATES = [...adminState];
         OrganizationManagementDetailComponent,
         OrganizationManagementUpdateComponent,
     ],
-    entryComponents: [HealthModalComponent],
 })
 export class ArtemisAdminModule {}
