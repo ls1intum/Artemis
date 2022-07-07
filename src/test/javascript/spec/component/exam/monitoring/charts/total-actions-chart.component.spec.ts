@@ -19,12 +19,13 @@ import { Exam } from 'app/entities/exam.model';
 import { of } from 'rxjs';
 import { ActivatedRoute } from '@angular/router';
 import { ceilDayjsSeconds } from 'app/exam/monitoring/charts/monitoring-chart';
-import { ExamAction } from 'app/entities/exam-user-activity.model';
+import { ExamActionService } from 'app/exam/monitoring/exam-action.service';
 
 describe('Total Actions Chart Component', () => {
     let comp: TotalActionsChartComponent;
     let fixture: ComponentFixture<TotalActionsChartComponent>;
     let pipe: ArtemisDatePipe;
+    let examActionService: ExamActionService;
 
     // Course
     const course = new Course();
@@ -55,6 +56,7 @@ describe('Total Actions Chart Component', () => {
                 pipe = new ArtemisDatePipe(TestBed.inject(TranslateService));
                 fixture = TestBed.createComponent(TotalActionsChartComponent);
                 comp = fixture.componentInstance;
+                examActionService = TestBed.inject(ExamActionService);
                 ceiledNow = ceilDayjsSeconds(now, comp.timeStampGapInSeconds);
             });
     });
@@ -81,35 +83,18 @@ describe('Total Actions Chart Component', () => {
         // Create series
         const series = createSingleSeriesDataEntriesWithTimestamps(comp.getLastXTimestamps(), pipe);
 
-        // GIVEN
-        comp.filteredExamActions = createActions().map((action) => {
-            action.timestamp = now;
-            action.ceiledTimestamp = ceiledNow;
-            return action;
-        });
+        const length = createActions().length;
+        const groupedByTimestamp = new Map();
+        groupedByTimestamp.set(ceiledNow.toString(), length);
+        examActionService.cachedExamActionsGroupedByTimestamp.set(exam.id!, groupedByTimestamp);
 
         // Insert value
-        series.filter((data) => data.name === pipe.transform(ceiledNow, 'time', true).toString())[0].value = comp.filteredExamActions.length;
+        series.filter((data) => data.name === pipe.transform(ceiledNow, 'time', true).toString())[0].value = length;
 
         // WHEN
         comp.ngOnInit();
 
         // THEN
         expect(comp.ngxData).toEqual([{ name: 'actions', series }]);
-    });
-
-    // Evaluate and add action
-    it.each(createActions())('should evaluate and add action', (action: ExamAction) => {
-        expect(comp.filteredExamActions).toEqual([]);
-
-        action.ceiledTimestamp = ceiledNow;
-
-        comp.evaluateAndAddAction(action);
-
-        const expectedMap = new Map();
-        expectedMap.set(ceiledNow.toString(), 1);
-
-        expect(comp.filteredExamActions).toEqual([action]);
-        expect(comp.actionsPerTimestamp).toEqual(expectedMap);
     });
 });
