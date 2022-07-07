@@ -4,11 +4,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.function.UnaryOperator;
 
 import com.hazelcast.config.Config;
 import com.hazelcast.scheduledexecutor.ScheduledTaskHandler;
 
-import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.monitoring.ExamActivity;
 import de.tum.in.www1.artemis.service.scheduled.cache.Cache;
 
@@ -35,21 +35,16 @@ abstract class ExamMonitoringCache implements Cache {
     }
 
     /**
-     * Returns the cached exam object.
-     *
-     * @return the actual Exam object, may be null.
-     */
-    abstract Exam getExam();
-
-    /**
-     * Set the cached {@link Exam} object
-     */
-    abstract void setExam(Exam exam);
-
-    /**
      * ExamActivity by student exam id
      */
     abstract Map<Long, ExamActivity> getActivities();
+
+    /**
+     * Updates a specific activity without locking the entire exam cache.
+     * @param activityId activity to update
+     * @param writeOperation performs the operation on the exam activity
+     */
+    abstract void updateActivity(Long activityId, UnaryOperator<ExamActivity> writeOperation);
 
     /**
      * The scheduled save tasks of the ExamActivity

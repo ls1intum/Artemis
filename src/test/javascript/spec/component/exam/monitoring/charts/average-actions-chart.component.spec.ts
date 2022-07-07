@@ -19,12 +19,13 @@ import { MockWebsocketService } from '../../../../helpers/mocks/service/mock-web
 import { of } from 'rxjs';
 import { ActivatedRoute } from '@angular/router';
 import { ceilDayjsSeconds } from 'app/exam/monitoring/charts/monitoring-chart';
-import { ExamAction } from 'app/entities/exam-user-activity.model';
+import { ExamActionService } from 'app/exam/monitoring/exam-action.service';
 
 describe('Average Actions Chart Component', () => {
     let comp: AverageActionsChartComponent;
     let fixture: ComponentFixture<AverageActionsChartComponent>;
     let pipe: ArtemisDatePipe;
+    let examActionService: ExamActionService;
 
     // Course
     const course = new Course();
@@ -55,6 +56,7 @@ describe('Average Actions Chart Component', () => {
                 pipe = new ArtemisDatePipe(TestBed.inject(TranslateService));
                 fixture = TestBed.createComponent(AverageActionsChartComponent);
                 comp = fixture.componentInstance;
+                examActionService = TestBed.inject(ExamActionService);
                 ceiledNow = ceilDayjsSeconds(now, comp.timeStampGapInSeconds);
             });
     });
@@ -86,30 +88,19 @@ describe('Average Actions Chart Component', () => {
         const series = createSingleSeriesDataEntriesWithTimestamps(comp.getLastXTimestamps(), pipe);
 
         // GIVEN
-        comp.filteredExamActions = createActions().map((action) => {
-            action.timestamp = now;
-            action.ceiledTimestamp = ceiledNow;
-            return action;
-        });
+        const length = createActions().length;
+        const groupedByTimestamp = new Map();
+        groupedByTimestamp.set(ceiledNow.toString(), length);
+        examActionService.cachedExamActionsGroupedByTimestamp.set(exam.id!, groupedByTimestamp);
+
         comp.registeredStudents = param.amount;
 
-        series.filter((data) => data.name === pipe.transform(ceiledNow, 'time', true).toString())[0].value = comp.filteredExamActions.length / comp.registeredStudents;
+        series.filter((data) => data.name === pipe.transform(ceiledNow, 'time', true).toString())[0].value = length / comp.registeredStudents;
 
         // WHEN
         comp.ngOnInit();
 
         // THEN
         expect(comp.ngxData).toEqual([{ name: 'actions', series }]);
-    });
-
-    // Filter actions
-    it.each(createActions())('should filter action', (action: ExamAction) => {
-        action.ceiledTimestamp = dayjs().subtract(1, 'hour');
-
-        expect(comp.filterRenderedData(action)).toBeFalse();
-
-        action.ceiledTimestamp = ceiledNow;
-
-        expect(comp.filterRenderedData(action)).toBeTrue();
     });
 });
