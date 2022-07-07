@@ -577,15 +577,25 @@ public class ProgrammingExerciseImportService {
 
     /**
      * Imports a programming exercise creating a new entity, copying all basic values and saving it in the database.
-     * This one is used for the Import of Programmiing Exercises during an Exam Import
+     * This one is used for the Import of Programming Exercises during an Exam Import
      *
      * @param templateExercise The template exercise which should get imported
      * @param newExercise      The new exercise already containing values which should not get copied, i.e. overwritten
      * @return The newly created exercise
      */
+    @Transactional
     public ProgrammingExercise importProgrammingExerciseForExamImport(final ProgrammingExercise templateExercise, final ProgrammingExercise newExercise) {
 
-        // Fetch grading criterion into exercise of participation
+        newExercise.setBuildAndTestStudentSubmissionsAfterDueDate(null);
+        if (newExercise.getSubmissionPolicy() != null) {
+            newExercise.getSubmissionPolicy().setId(null);
+        }
+        newExercise.setReleaseDate(null);
+        newExercise.setDueDate(null);
+        newExercise.setAssessmentDueDate(null);
+        newExercise.setExampleSolutionPublicationDate(null);
+
+        // Fetch grading criterion into exercise
         List<GradingCriterion> gradingCriteria = gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(newExercise.getId());
         newExercise.setGradingCriteria(gradingCriteria);
 
@@ -597,7 +607,7 @@ public class ProgrammingExerciseImportService {
 
         programmingExerciseService.scheduleOperations(importedProgrammingExercise.getId());
 
-        // Remove unnecessary fields before returing it to the client
+        // Remove unnecessary fields before returning it to the client
         importedProgrammingExercise.setTestCases(null);
         importedProgrammingExercise.setStaticCodeAnalysisCategories(null);
         importedProgrammingExercise.setTemplateParticipation(null);

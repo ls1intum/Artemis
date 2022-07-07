@@ -221,6 +221,15 @@ public class ExamImportService {
                 }
 
                 case PROGRAMMING -> {
+                    final Optional<ProgrammingExercise> optionalOriginalProgrammingExercise = programmingExerciseRepository
+                            .findByIdWithEagerTestCasesStaticCodeAnalysisCategoriesHintsAndTemplateAndSolutionParticipationsAndAuxReposAndTasksWithTestCases(
+                                    exerciseToCopy.getId());
+                    if (optionalOriginalProgrammingExercise.isEmpty()) {
+                        return;
+                    }
+                    exerciseCopied = programmingExerciseImportService.importProgrammingExerciseForExamImport(optionalOriginalProgrammingExercise.get(),
+                            (ProgrammingExercise) exerciseToCopy);
+
                     /*
                      * DOES NOT WORK- HELP (BADLY) NEEDED :) final Optional<ProgrammingExercise> optionalOriginalProgrammingExercise = programmingExerciseRepository
                      * .findByIdWithEagerTestCasesStaticCodeAnalysisCategoriesHintsAndTemplateAndSolutionParticipationsAndAuxReposAndTasksWithTestCases( exerciseToCopy.getId()); //
