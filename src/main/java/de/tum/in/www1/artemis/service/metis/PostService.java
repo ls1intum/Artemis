@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.service.metis;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import javax.validation.Valid;
@@ -19,14 +20,9 @@ import org.springframework.stereotype.Service;
 
 import com.google.common.collect.Lists;
 
-import de.tum.in.www1.artemis.domain.Course;
-import de.tum.in.www1.artemis.domain.Exercise;
-import de.tum.in.www1.artemis.domain.Lecture;
-import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.DisplayPriority;
-import de.tum.in.www1.artemis.domain.metis.CourseWideContext;
-import de.tum.in.www1.artemis.domain.metis.Post;
-import de.tum.in.www1.artemis.domain.metis.Reaction;
+import de.tum.in.www1.artemis.domain.metis.*;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismCase;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
@@ -249,6 +245,12 @@ public class PostService extends PostingService {
         else {
             throw new BadRequestAlertException("A new post cannot be associated with more than one context", METIS_POST_ENTITY_NAME, "ambiguousContext");
         }
+
+        // sets author roles to display relevant user authority icon next to author name on posting headers
+        postsInCourse.forEach(post -> {
+            setUserRolesForPostings(post);
+            post.getAnswers().forEach(answerPost -> setUserRolesForPostings(answerPost));
+        });
 
         return postsInCourse;
     }
@@ -526,6 +528,21 @@ public class PostService extends PostingService {
     private void mayInteractWithPostElseThrow(Post post, User user, Course course) {
         if (post.getCourseWideContext() == CourseWideContext.ANNOUNCEMENT || post.getPlagiarismCase() != null) {
             authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, user);
+        }
+    }
+
+    private void setUserRolesForPostings(Posting posting) {
+        Set<Authority> authorities = posting.getAuthor().getAuthorities();
+        Set<String> groups = posting.getAuthor().getGroups(); // TODO: handle user groups
+
+        if (authorities.stream().anyMatch(authority -> authority.equals(Authority.INSTRUCTOR_AUTHORITY) || authority.equals(Authority.ADMIN_AUTHORITY))) {
+            posting.setAuthorRole(UserRole.INSTRUCTOR);
+        }
+        else if (authorities.stream().anyMatch(authority -> authority.equals(Authority.TA_AUTHORITY) || authority.equals(Authority.EDITOR_AUTHORITY))) {
+            posting.setAuthorRole(UserRole.TUTOR);
+        }
+        else {
+            posting.setAuthorRole(UserRole.USER);
         }
     }
 }

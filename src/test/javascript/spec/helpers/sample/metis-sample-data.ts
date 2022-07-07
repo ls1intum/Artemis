@@ -8,6 +8,7 @@ import { Post } from 'app/entities/metis/post.model';
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
 import dayjs from 'dayjs/esm';
 import { Attachment } from 'app/entities/attachment.model';
+import { Authority } from 'app/shared/constants/authority.constants';
 
 export const metisAttachment = { id: 1, name: 'Metis Attachment', link: 'directory/Metis-Attachment.pdf' } as Attachment;
 
@@ -20,6 +21,9 @@ export const metisExercise2 = { id: 1, title: 'Second Metis  Exercise', type: Ex
 export const metisUser1 = { id: 1, name: 'username1', login: 'login1', groups: ['metisStudents'] } as User;
 export const metisUser2 = { id: 2, name: 'username2', login: 'login2', groups: ['metisStudents'] } as User;
 export const metisTutor = { id: 3, name: 'username3', login: 'login3', groups: ['metisTutors'] } as User;
+
+// TODO: remove authorities and use user roles instead
+export const metisInstructor = { id: 4, name: 'username4', login: 'login4', groups: ['metisInstructors'], authorities: [{ name: Authority.INSTRUCTOR }] };
 export const metisTags = ['Tag1', 'Tag2'];
 
 export const metisUpVoteReactionUser1 = { id: 1, user: metisUser1, emojiId: VOTE_EMOJI_ID } as Reaction;

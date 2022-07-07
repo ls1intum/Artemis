@@ -3,10 +3,7 @@ package de.tum.in.www1.artemis.domain.metis;
 import java.time.ZonedDateTime;
 import java.util.Set;
 
-import javax.persistence.Column;
-import javax.persistence.Lob;
-import javax.persistence.ManyToOne;
-import javax.persistence.MappedSuperclass;
+import javax.persistence.*;
 
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
@@ -47,6 +44,10 @@ public abstract class Posting extends DomainObject {
     @Column(name = "tokenized_content")
     private String tokenizedContent;
 
+    @JsonInclude()
+    @Transient
+    private UserRole authorRole;
+
     public String getTokenizedContent() {
         return tokenizedContent;
     }
@@ -78,6 +79,14 @@ public abstract class Posting extends DomainObject {
 
     public void setContent(String content) {
         this.content = content;
+    }
+
+    public UserRole getAuthorRole() {
+        return authorRole;
+    }
+
+    public void setAuthorRole(UserRole authorRole) {
+        this.authorRole = authorRole;
     }
 
     public abstract Set<Reaction> getReactions();
