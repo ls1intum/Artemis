@@ -2,7 +2,6 @@
     <div class="left-col">
         <div class="title-row">
             <div class="inner-row">
-                <fa-icon *ngIf="displayBackButton" [icon]="faArrowLeft" (click)="onBackClick()" class="back-button me-2"></fa-icon>
                 <fa-icon *ngIf="exercise.type" [icon]="getIcon(exercise.type)" [ngbTooltip]="getIconTooltip(exercise.type) | artemisTranslate" container="body"></fa-icon>
                 &nbsp;
                 <ng-content select="[pagetitle]"></ng-content>

@@ -84,7 +84,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
     disconnected = false;
     unsavedChanges = false;
 
-    sendWebsocket: (submission: QuizSubmission) => void;
+    sendWebsocket?: (submission: QuizSubmission) => void;
     showingResult = false;
     userScore: number;
 
