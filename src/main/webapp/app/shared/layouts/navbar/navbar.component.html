@@ -241,7 +241,7 @@
 </nav>
 <div class="breadcrumb-container">
     <div *ngIf="breadcrumbs && breadcrumbs.length > 0">
-        <ol class="breadcrumb" *jhiHasAnyAuthority="['ROLE_TA', 'ROLE_EDITOR', 'ROLE_INSTRUCTOR', 'ROLE_ADMIN']">
+        <ol class="breadcrumb">
             <li *ngFor="let breadcrumb of breadcrumbs; let i = index" class="breadcrumb-item">
                 <a
                     class="breadcrumb-link"
