@@ -1,0 +1,36 @@
+name: "⚙️  Database Migration Request"
+description: Suggest an database migration 
+labels: [database]
+assignees:
+  - @ls1intum/artemis-database-maintainer
+body:
+- type: markdown
+  attributes:
+    value: |
+      Database changes have to be reviewed carefully. Hence, we ask you to describe the change you intend to implement as detailed as possible. 
+      Please fill in this form and answer all the questions listed.
+- type: input
+  attributes:
+    label: Which feature requires the DB migration?
+    description: Also mention the Artemis subsystem(s) you're working on. 
+    placeholder: Ex. Store static code analysis reports
+  validations:
+      required: true
+- type: textarea
+  attributes:
+    label: Describe the problem you try to solve and your motivation: 
+  validations:
+      required: true
+- type: textarea
+  attributes:
+    label: Describe your preferred DB migration solution for the concrete problem: 
+    description: Add a UML data model of your solution and highlight the changes. 
+  validations:
+      required: true
+- type: textarea
+  attributes:
+    label: Describe possible alternative DB migration solutions:
+    description: Add a UML data model of your solution and highlight the changes. 
+- type: textarea
+  attributes:
+    label: Describe how you intend to implement the solution
