@@ -15,7 +15,7 @@
     <changeSet author="stoehrj" id="20220602230300-2">
         <!--
             This changelog extracts the information from the resultString of a result for programming exercises, e.g. "7 of 42 passed, 69 issues".
-            The issues are optional, other strings might be contained as well and the order of the parts is not guaranteed. Therefore, we have to use regex here
+            The issues are optional, other strings might be contained as well and the order of the parts is not guaranteed. Therefore, we have to use regex here.
             For each of the three new columns we take the corresponding substring matching the regex and the extract the numerical value.
             Since the new columns are unsigned tinyInts, the maximum value is 255, which can be exceeded in certain edge cases. Therefore, we limit them to 255
         -->
@@ -35,18 +35,73 @@
                             REGEXP_SUBSTR(result_string, '[[:digit:]]+ of [[:digit:]]+ passed'),
                             '[[:digit:]]+(?!.*[[:digit:]]+)' <!-- Last number -->
                         ) As UNSIGNED),
-                    255),
-                code_issue_count = IF(
-                    result_string REGEXP '.*[[:digit:]]+ issue.*',
-                    Least(
-                        CAST(
-                            REGEXP_SUBSTR(
-                                REGEXP_SUBSTR(result_string, '[[:digit:]]+ issue'),
-                                '[[:digit:]]+'
-                        ) As UNSIGNED),
-                        255),
-                    0)
+                    255)
             WHERE result_string REGEXP '.*[[:digit:]]+ of [[:digit:]]+ passed.*';
+        </sql>
+        <!--
+            Older formats can be in the form of "7 of 15 failed", meaning that 8 tests actually passed
+        -->
+        <sql>
+            UPDATE result
+            SET
+                passed_test_case_count = Least(
+                    CAST(
+                        REGEXP_SUBSTR(
+                            REGEXP_SUBSTR(result_string, '[[:digit:]]+ of [[:digit:]]+ failed'),
+                            '[[:digit:]]+(?!.*[[:digit:]]+)' <!-- Last number -->
+                    ) As UNSIGNED)
+                    -
+                    CAST(
+                        REGEXP_SUBSTR(
+                            REGEXP_SUBSTR(result_string, '[[:digit:]]+ of [[:digit:]]+ failed'),
+                            '[[:digit:]]+' <!-- First number -->
+                    ) As UNSIGNED),
+                    255),
+                test_case_count = Least(
+                    CAST(
+                        REGEXP_SUBSTR(
+                            REGEXP_SUBSTR(result_string, '[[:digit:]]+ of [[:digit:]]+ failed'),
+                            '[[:digit:]]+(?!.*[[:digit:]]+)' <!-- Last number -->
+                    ) As UNSIGNED),
+                    255)
+            WHERE result_string REGEXP '.*[[:digit:]]+ of [[:digit:]]+ failed.*';
+        </sql>
+        <!--
+            Older formats can be in the form of "15 passed", meaning that all tests passed
+        -->
+        <sql>
+            UPDATE result
+            SET
+                passed_test_case_count = Least(
+                    CAST(
+                        REGEXP_SUBSTR(
+                            REGEXP_SUBSTR(result_string, '[[:digit:]]+ passed.*'),
+                            '[[:digit:]]+'
+                    ) As UNSIGNED),
+                    255),
+                test_case_count = Least(
+                    CAST(
+                        REGEXP_SUBSTR(
+                            REGEXP_SUBSTR(result_string, '[[:digit:]]+ passed.*'),
+                            '[[:digit:]]+'
+                    ) As UNSIGNED),
+                    255)
+            WHERE NOT(result_string REGEXP '.*[[:digit:]]+ of [[:digit:]]+ passed.*') AND result_string REGEXP '[[:digit:]]+ passed.*';
+        </sql>
+        <!--
+            If the resultString contains information about the amount of issues, i.e. "7 issues", extract the information as well
+        -->
+        <sql>
+            UPDATE result
+            SET
+                code_issue_count = Least(
+                    CAST(
+                        REGEXP_SUBSTR(
+                            REGEXP_SUBSTR(result_string, '[[:digit:]]+ issue'),
+                            '[[:digit:]]+'
+                    ) As UNSIGNED),
+                255)
+            WHERE result_string REGEXP '.*[[:digit:]]+ issue.*';
         </sql>
     </changeSet>
 </databaseChangeLog>
