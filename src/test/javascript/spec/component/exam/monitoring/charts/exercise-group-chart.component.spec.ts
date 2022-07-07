@@ -11,19 +11,21 @@ import { getColor } from 'app/exam/monitoring/charts/monitoring-chart';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { Exam } from 'app/entities/exam.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
-import { ExamAction, ExamActionType, SwitchedExerciseAction } from 'app/entities/exam-user-activity.model';
+import { SwitchedExerciseAction } from 'app/entities/exam-user-activity.model';
 import { ExerciseTemplateChartComponent } from 'app/exam/monitoring/charts/exercises/exercise-template-chart.component';
-import { createActions, createExamActionBasedOnType, createTestExercises } from '../exam-monitoring-helper';
+import { createTestExercises } from '../exam-monitoring-helper';
 import { ExerciseGroupChartComponent } from 'app/exam/monitoring/charts/exercises/exercise-group-chart.component';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { MockWebsocketService } from '../../../../helpers/mocks/service/mock-websocket.service';
 import { Course } from 'app/entities/course.model';
 import { of } from 'rxjs';
 import { ActivatedRoute } from '@angular/router';
+import { ExamActionService } from 'app/exam/monitoring/exam-action.service';
 
 describe('Exercise Group Chart Component', () => {
     let comp: ExerciseGroupChartComponent;
     let fixture: ComponentFixture<ExerciseGroupChartComponent>;
+    let examActionService: ExamActionService;
 
     // Course
     const course = new Course();
@@ -59,6 +61,7 @@ describe('Exercise Group Chart Component', () => {
             .then(() => {
                 fixture = TestBed.createComponent(ExerciseGroupChartComponent);
                 comp = fixture.componentInstance;
+                examActionService = TestBed.inject(ExamActionService);
             });
     });
 
@@ -86,15 +89,19 @@ describe('Exercise Group Chart Component', () => {
         ${[-1, -1, -1]} | ${[0, 0]}
     `('should call initData on init with actions', (param: { input: number[]; expect: number[] }) => {
         // GIVEN
+        const lastActionByStudent = new Map();
         const action1 = new SwitchedExerciseAction(param.input[0]);
         action1.examActivityId = 1;
+        lastActionByStudent.set(action1.examActivityId, action1);
         const action2 = new SwitchedExerciseAction(param.input[1]);
         action2.examActivityId = 2;
+        lastActionByStudent.set(action2.examActivityId, action2);
         const action3 = new SwitchedExerciseAction(param.input[2]);
         action3.examActivityId = 3;
+        lastActionByStudent.set(action3.examActivityId, action3);
 
+        examActionService.cachedLastActionPerStudent.set(exam.id!, lastActionByStudent);
         comp.exam = exam;
-        comp.filteredExamActions = [action1, action2, action3];
 
         // WHEN
         comp.ngOnInit();
@@ -105,29 +112,5 @@ describe('Exercise Group Chart Component', () => {
             { name: exerciseGroup2.title!, value: param.expect[1] },
         ]);
         expect(comp.ngxColor.domain).toEqual([getColor(0), getColor(1)]);
-    });
-
-    // Evaluate and add action
-    it('should evaluate and add action', () => {
-        const action = createExamActionBasedOnType(ExamActionType.ENDED_EXAM);
-        expect(comp.filteredExamActions).toEqual([]);
-
-        comp.evaluateAndAddAction(action);
-
-        const expectedMap = new Map();
-        expectedMap.set(action.examActivityId, undefined);
-
-        expect(comp.filteredExamActions).toEqual([action]);
-        expect(comp.currentExercisePerStudent).toEqual(expectedMap);
-    });
-
-    // Filter actions
-    it.each(createActions())('should filter action', (action: ExamAction) => {
-        expect(comp.filterRenderedData(action)).toBe(
-            action.type === ExamActionType.SWITCHED_EXERCISE ||
-                action.type === ExamActionType.SAVED_EXERCISE ||
-                action.type === ExamActionType.ENDED_EXAM ||
-                action.type === ExamActionType.HANDED_IN_EARLY,
-        );
     });
 });
