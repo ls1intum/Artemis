@@ -4,6 +4,7 @@
             "home": {
                 "title": "Editor"
             },
+            "breadCrumbTitle": "Code-Editor",
             "title": "Code-Editor für Übung:",
             "instructions": "Aufgabenstellung &nbsp;",
             "unsavedChanges": "Ungespeichert.",

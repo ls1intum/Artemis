@@ -4,6 +4,7 @@
             "home": {
                 "title": "Code Editor"
             },
+            "breadCrumbTitle": "Code Editor",
             "title": "Code Editor for Exercise:",
             "instructions": "&nbsp; Instructions &nbsp;",
             "unsavedChanges": "Unsaved.",
