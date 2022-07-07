@@ -276,7 +276,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
         lectures: 'artemisApp.courseOverview.menu.lectures',
         learning_goals: 'artemisApp.courseOverview.menu.learningGoals',
         statistics: 'artemisApp.courseOverview.menu.statistics',
-        discussion: 'artemisApp.metis.discussion.label',
+        discussion: 'artemisApp.metis.communication.label',
         code_editor: 'artemisApp.editor.breadCrumbTitle',
         participate: 'artemisApp.submission.detail.title',
         live: 'artemisApp.submission.detail.title',
