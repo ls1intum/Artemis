@@ -11,26 +11,26 @@ body:
       Please fill in this form and answer all the questions listed.
 - type: input
   attributes:
-    label: Which feature requires the DB migration?
-    description: Also mention the Artemis subsystem(s) you're working on. 
-    placeholder: Ex. Store static code analysis reports
+    label: "Which feature requires the DB migration?"
+    description: "Also mention the Artemis subsystem(s) you're working on."
+    placeholder: "Ex. Store static code analysis reports"
   validations:
       required: true
 - type: textarea
   attributes:
-    label: Describe the problem you try to solve and your motivation: 
+    label: "Describe the problem you try to solve and your motivation:"
   validations:
       required: true
 - type: textarea
   attributes:
-    label: Describe your preferred DB migration solution for the concrete problem: 
-    description: Add a UML data model of your solution and highlight the changes. 
+    label: "Describe your preferred DB migration solution for the concrete problem:"
+    description: "Add a UML data model of your solution and highlight the changes." 
   validations:
       required: true
 - type: textarea
   attributes:
-    label: Describe possible alternative DB migration solutions:
-    description: Add a UML data model of your solution and highlight the changes. 
+    label: "Describe possible alternative DB migration solutions:"
+    description: "Add a UML data model of your solution and highlight the changes."
 - type: textarea
   attributes:
-    label: Describe how you intend to implement the solution
+    label: "Describe how you intend to implement the solution"
