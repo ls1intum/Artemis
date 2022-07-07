@@ -1,5 +1,5 @@
 import { LectureUnit, LectureUnitType } from 'app/entities/lecture-unit/lectureUnit.model';
-import { HttpClient, HttpResponse } from '@angular/common/http';
+import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import dayjs from 'dayjs/esm';
@@ -30,6 +30,11 @@ export class LectureUnitService {
 
     delete(lectureUnitId: number, lectureId: number) {
         return this.httpClient.delete(`${this.resourceURL}/lectures/${lectureId}/lecture-units/${lectureUnitId}`, { observe: 'response' });
+    }
+
+    setCompletion(lectureUnitId: number, lectureId: number, completed: boolean) {
+        const params = new HttpParams().set('completed', completed.toString());
+        return this.httpClient.post(`${this.resourceURL}/lectures/${lectureId}/lecture-units/${lectureUnitId}/completion`, null, { params, observe: 'response' });
     }
 
     convertDateFromClient<T extends LectureUnit>(lectureUnit: T): T {

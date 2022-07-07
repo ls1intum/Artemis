@@ -1,4 +1,4 @@
-import { COURSE_BASE } from './../../requests/CourseManagementRequests';
+import { COURSE_BASE } from '../../requests/CourseManagementRequests';
 import { artemis } from '../../ArtemisTesting';
 import { POST } from '../../constants';
 

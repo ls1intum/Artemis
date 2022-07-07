@@ -48,7 +48,7 @@
                 },
                 "remove": "Remove",
                 "achieved": "achieved",
-                "progressUnavailable": "Progress calculation is currently only available for learning goals connected to exercise units.",
+                "progressUnavailable": "Progress calculation is currently only available for learning goals connected to lecture units.",
                 "noUnitsConnected": "This learning goal is not connected to any lecture units",
                 "progressExplanation": "Progress: You achieved currently <strong>{{ progress }}%</strong> of <strong>{{ points }}</strong> points",
                 "progressCourseExplanation": "Average Course Progress: The course achieved currently on average <strong>{{ progress }}%</strong> of <strong>{{ points }}</strong> points"

@@ -90,7 +90,7 @@ describe('PostReactionsBarComponent', () => {
         metisCourse.isAtLeastTutor = false;
         metisService.setCourse(metisCourse);
         component.ngOnInit();
-        expect(component.currentUserIsAtLeastTutor).toEqual(false);
+        expect(component.currentUserIsAtLeastTutor).toBeFalse();
         fixture.detectChanges();
         const reaction = getElement(debugElement, 'ngx-emoji');
         expect(reaction).toBeDefined();
@@ -108,7 +108,7 @@ describe('PostReactionsBarComponent', () => {
         metisCourse.isAtLeastTutor = true;
         metisService.setCourse(metisCourse);
         component.ngOnInit();
-        expect(component.currentUserIsAtLeastTutor).toEqual(true);
+        expect(component.currentUserIsAtLeastTutor).toBeTrue();
         fixture.detectChanges();
         const reactions = getElements(debugElement, 'jhi-emoji');
         // emojis to be displayed it the user reaction, the pin, archive and the show answers toggle emoji
@@ -209,8 +209,8 @@ describe('PostReactionsBarComponent', () => {
         component.posting = post;
         component.sortedAnswerPosts = [];
         fixture.detectChanges();
-        const startDiscussion = fixture.debugElement.query(By.css('.start-discussion-btn')).nativeElement;
-        expect(startDiscussion.innerHTML).toContain('startDiscussion');
+        const startDiscussion = fixture.debugElement.query(By.css('.reply-btn')).nativeElement;
+        expect(startDiscussion.innerHTML).toContain('reply');
     });
 
     it('should display button to show single answer', () => {

@@ -55,6 +55,7 @@ describe('ExamMonitoringService', () => {
         jest.restoreAllMocks();
     });
 
+    // Handle action event
     it('should handle exam actions when monitoring enabled', () => {
         const examActions = createActions();
         expect(examActions).toHaveLength(Object.keys(ExamActionType).length);
@@ -75,6 +76,19 @@ describe('ExamMonitoringService', () => {
         });
     });
 
+    it.each(createActions())('should send exception to sentry during invalid handle', (action: ExamAction) => {
+        const error = new Error('Invalid');
+        const spy = jest.spyOn(artemisServerDateService, 'now').mockImplementation(() => {
+            throw error;
+        });
+
+        examMonitoringService.handleActionEvent(studentExam, action, exam.monitoring!);
+        expect(spy).toHaveBeenCalledOnce();
+        expect(captureExceptionSpy).toHaveBeenCalledOnce();
+        expect(captureExceptionSpy).toHaveBeenCalledWith(error);
+    });
+
+    // Save actions
     it.each(createActions())('should send actions when monitoring enabled and websocket connected', (action: ExamAction) => {
         const spy = jest.spyOn(examMonitoringService, 'sendAction');
         studentExam.examActivity = new ExamActivity();
@@ -116,24 +130,6 @@ describe('ExamMonitoringService', () => {
         expect(studentExam.examActivity.examActions).toHaveLength(1);
     });
 
-    it('should return the correct topic', () => {
-        const spy = jest.spyOn(ExamMonitoringService, 'buildWebsocketTopic');
-        const topic = ExamMonitoringService.buildWebsocketTopic(exam.id!);
-
-        expect(spy).toHaveBeenCalledOnce();
-
-        expect(topic).toEqual(`/topic/exam-monitoring/${exam.id}/actions`);
-    });
-
-    it.each(createActions())('should call websocket send', (action: ExamAction) => {
-        const spy = jest.spyOn(websocketService, 'send');
-
-        examMonitoringService.sendAction(action, exam.id!);
-
-        expect(spy).toHaveBeenCalledOnce();
-        expect(spy).toHaveBeenCalledWith(ExamMonitoringService.buildWebsocketTopic(exam.id!), action);
-    });
-
     it.each(createActions())('should send exception to sentry during invalid save', (action: ExamAction) => {
         const error = new Error('Invalid');
         const spy = jest.spyOn(examMonitoringService, 'sendAction').mockImplementation(() => {
@@ -149,18 +145,27 @@ describe('ExamMonitoringService', () => {
         expect(captureExceptionSpy).toHaveBeenCalledWith(error);
     });
 
-    it.each(createActions())('should send exception to sentry during invalid handle', (action: ExamAction) => {
-        const error = new Error('Invalid');
-        const spy = jest.spyOn(artemisServerDateService, 'now').mockImplementation(() => {
-            throw error;
-        });
+    // Build websocket topic
+    it('should return the correct topic', () => {
+        const spy = jest.spyOn(ExamMonitoringService, 'buildWebsocketTopic');
+        const topic = ExamMonitoringService.buildWebsocketTopic(exam.id!);
 
-        examMonitoringService.handleActionEvent(studentExam, action, exam.monitoring!);
         expect(spy).toHaveBeenCalledOnce();
-        expect(captureExceptionSpy).toHaveBeenCalledOnce();
-        expect(captureExceptionSpy).toHaveBeenCalledWith(error);
+
+        expect(topic).toEqual(`/topic/exam-monitoring/${exam.id}/actions`);
     });
 
+    // Send actions
+    it.each(createActions())('should call websocket send', (action: ExamAction) => {
+        const spy = jest.spyOn(websocketService, 'send');
+
+        examMonitoringService.sendAction(action, exam.id!);
+
+        expect(spy).toHaveBeenCalledOnce();
+        expect(spy).toHaveBeenCalledWith(ExamMonitoringService.buildWebsocketTopic(exam.id!), action);
+    });
+
+    // Notify subscribers
     it('should notify exam subscribers', () => {
         const examObservables = new Map<number, BehaviorSubject<Exam | undefined>>();
         expect(examMonitoringService.examObservables).toEqual(examObservables);
