@@ -34,7 +34,7 @@ export class AboutUsComponent implements OnInit {
         ['assessment', {}],
         ['communication', { communicationUrl: 'https://docs.artemis.ase.in.tum.de/user/communication/' }],
         ['notifications', {}],
-        ['teamExercises', {}],
+        ['teamExercises', { teamExercisesUrl: 'https://docs.artemis.ase.in.tum.de/user/exercises/team-exercises/' }],
         ['lectures', {}],
         ['integratedMarkdownEditor', {}],
         ['plagiarismChecks', { jPlagUrl: 'https://github.com/jplag/JPlag' }],
