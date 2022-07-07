@@ -120,6 +120,16 @@ public class ExamMonitoringScheduleService {
     }
 
     /**
+     * Used to update monitoring during the exam.
+     *
+     * @param examId        identifies the cache
+     * @param monitoring    new exam action
+     */
+    public void notifyMonitoringUpdate(Long examId, boolean monitoring) {
+        messagingService.sendMessage("/topic/exam-monitoring/" + examId + "/update", monitoring);
+    }
+
+    /**
      * Returns all exam actions.
      *
      * @param examId identifies the cache
