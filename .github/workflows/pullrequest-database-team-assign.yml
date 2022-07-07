@@ -1,0 +1,17 @@
+name: Pull Request Database Team Autoassign 
+on:
+  pull_request_target:
+    types: [labeled]
+
+jobs:
+  pullequestDBTeam:
+    if: ${{ github.event.label.name == 'database' }}
+    runs-on: ubuntu-latest
+    steps:
+
+      - name: Request Reviews from @ls1intum/artemis-database-maintainer
+        uses: rowi1de/auto-assign-review-teams@v1.1.3
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          teams: "@ls1intum/artemis/artemis-database-maintainer"
+
