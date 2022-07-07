@@ -2393,6 +2393,20 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testUpdateExamMonitoringStatus() throws Exception {
+        exam1.setMonitoring(true);
+        request.putWithResponseBody("/api/courses/" + course1.getId() + "/exams", exam1, Exam.class, HttpStatus.OK);
+
+        verify(this.websocketMessagingService).sendMessage("/topic/exam-monitoring/" + exam1.getId() + "/update", true);
+
+        exam1.setMonitoring(false);
+        request.putWithResponseBody("/api/courses/" + course1.getId() + "/exams", exam1, Exam.class, HttpStatus.OK);
+
+        verify(this.websocketMessagingService).sendMessage("/topic/exam-monitoring/" + exam1.getId() + "/update", false);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testGetExamForImportWithExercises_successful() throws Exception {
         Exam received = request.get("/api/exams/" + exam2.getId(), HttpStatus.OK, Exam.class);
         assertEquals(exam2, received);
