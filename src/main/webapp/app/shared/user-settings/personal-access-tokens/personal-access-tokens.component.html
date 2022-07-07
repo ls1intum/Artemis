@@ -1,0 +1,47 @@
+<h1>
+    <!--Account Information-->
+    {{ 'artemisApp.userSettings.personalAccessTokens.title' | artemisTranslate }}
+</h1>
+
+<div class="form-group">
+    <label class="label-narrow" jhiTranslate="artemisApp.userSettings.personalAccessTokens.lifetime" for="field_lifetime_days">Lifetime (Days)</label>
+    <div class="input-group">
+        <input
+            required
+            type="number"
+            class="form-control"
+            [customMin]="1"
+            [customMax]="tokenMaxLifetimeDays"
+            step="1"
+            name="lifetime"
+            id="field_lifetime_days"
+            [(ngModel)]="newTokenLifetimeDays"
+            (change)="convertTokenLifetimeFromDaysToMillis()"
+            #lifetime="ngModel"
+        />
+        <button [disabled]="!lifetime.valid || token" class="btn btn-primary btn-sm me-2 pat-button input-group-append" type="button" (click)="generateNewToken()">
+            {{ 'artemisApp.userSettings.personalAccessTokens.generate' | artemisTranslate }}
+        </button>
+    </div>
+    <ng-container *ngFor="let error of lifetime.errors! | keyvalue | removekeys: ['required']">
+        <div *ngIf="lifetime.invalid && (lifetime.dirty || lifetime.touched)" class="alert alert-danger">
+            <div [jhiTranslate]="'artemisApp.userSettings.personalAccessTokens.' + error.key"></div>
+        </div>
+    </ng-container>
+</div>
+
+<div class="form-group" *ngIf="token">
+    <label class="label-narrow" jhiTranslate="artemisApp.userSettings.personalAccessTokens.generatedToken" for="field_token">Lifetime (Days)</label>
+    <div class="input-group">
+        <input required type="text" class="form-control" name="token" id="field_token" [readonly]="true" [(ngModel)]="token" />
+        <button
+            [cdkCopyToClipboard]="token"
+            (cdkCopyToClipboardCopied)="onCopyFinished($event)"
+            [class.btn-success]="wasCopied"
+            class="btn btn-primary btn-sm me-2 pat-button input-group-append"
+            type="button"
+        >
+            {{ wasCopied ? ('artemisApp.userSettings.personalAccessTokens.copied' | artemisTranslate) : ('artemisApp.userSettings.personalAccessTokens.copy' | artemisTranslate) }}
+        </button>
+    </div>
+</div>

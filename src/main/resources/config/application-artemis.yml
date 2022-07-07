@@ -102,3 +102,5 @@ artemis:
         token-validity-in-seconds: 10800
     apollon:
         conversion-service-url: http://localhost:8080
+    personal-access-token:
+        max-lifetime: 2592000000 # 1000 * 60 * 60 * 24 * 30 ms = 30 days in milliseconds

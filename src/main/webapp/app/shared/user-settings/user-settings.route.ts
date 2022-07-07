@@ -34,6 +34,13 @@ export const userSettingsState: Routes = [
                     pageTitle: 'artemisApp.userSettings.categories.NOTIFICATION_SETTINGS',
                 },
             },
+            {
+                path: 'personal-access-tokens',
+                loadChildren: () => import('./personal-access-tokens/personal-access-tokens.module').then((m) => m.PersonalAccessTokensModule),
+                data: {
+                    pageTitle: 'artemisApp.userSettings.personalAccessTokens.title',
+                },
+            },
         ],
     },
 ];

@@ -7,6 +7,16 @@
             "userSettings": "Benutzereinstellungen",
             "accountInformation": "Account Informationen",
             "notificationSettings": "Benachrichtigungen",
+            "personalAccessTokens": {
+                "title": "Persönliche Zugriffstoken",
+                "lifetime": "Lebensdauer (Tage)",
+                "customMin": "Der Wert muss mindestens 1 sein.",
+                "customMax": "Der Wert überschreitet die maximale Lebensdauer für persönliche Zugriffstoken.",
+                "generate": "Generieren",
+                "copy": "Kopieren",
+                "copied": "Kopiert!",
+                "generatedToken": "Generiertes Token"
+            },
             "notificationSettingsFilterInfo": "Diese Einstellungen filtern auch die Seitenleiste für Mitteilungen",
             "accountInformationPage": {
                 "registrationNumber": "Matrikelnummer",
