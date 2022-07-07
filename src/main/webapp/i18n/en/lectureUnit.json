@@ -19,7 +19,9 @@
                 "releaseDateNotSet": "No release date set!",
                 "releaseDateSet": "Release date: ",
                 "attachmentVersion": "Attachment version: "
-            }
+            },
+            "completedTooltip": "Click to mark this lecture unit as uncompleted",
+            "uncompletedTooltip": "Click to mark this lecture unit as completed"
         },
         "textUnit": {
             "created": "New text unit created",
@@ -139,6 +141,7 @@
             "version": "Version",
             "FileName": "Filename",
             "description": "Description",
+            "download": "Download",
             "delete": {
                 "question": "Do you really want to delete the attachment unit <strong>{{ title }}</strong>? The attachment will also be removed! You can not undo this action!",
                 "typeNameToConfirm": "Please enter the name of the attachment for confirmation.",

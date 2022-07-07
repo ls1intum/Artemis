@@ -9,17 +9,54 @@ import { ExerciseType } from 'app/entities/exercise.model';
 import { GraphColors } from 'app/entities/statistics.model';
 import { CourseManagementStatisticsModel } from 'app/entities/quiz/course-management-statistics-model';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
+import { ChartExerciseTypeFilter } from 'app/shared/chart/chart-exercise-type-filter';
+import { ChartCategoryFilter } from 'app/shared/chart/chart-category-filter';
 
 describe('StatisticsAverageScoreGraphComponent', () => {
     let fixture: ComponentFixture<StatisticsAverageScoreGraphComponent>;
     let component: StatisticsAverageScoreGraphComponent;
     let routingStub: jest.SpyInstance;
+    let typeFilter: ChartExerciseTypeFilter;
+    let categoryFilter: ChartCategoryFilter;
 
-    const exercise1 = { exerciseId: 1, exerciseName: 'FarcadePattern', averageScore: 0, exerciseType: ExerciseType.TEXT };
-    const exercise2 = { exerciseId: 2, exerciseName: 'BridgePattern', averageScore: 20, exerciseType: ExerciseType.PROGRAMMING };
-    const exercise3 = { exerciseId: 3, exerciseName: 'VisitorPattern', averageScore: 25, exerciseType: ExerciseType.FILE_UPLOAD };
-    const exercise4 = { exerciseId: 4, exerciseName: 'AdapterPattern', averageScore: 35, exerciseType: ExerciseType.QUIZ };
-    const exercise5 = { exerciseId: 5, exerciseName: 'ProxyPattern', averageScore: 40, exerciseType: ExerciseType.MODELING };
+    let applyTypeFilterMock: jest.SpyInstance;
+    let applyCategoryFilterMock: jest.SpyInstance;
+
+    const exercise1 = {
+        exerciseId: 1,
+        exerciseName: 'FarcadePattern',
+        averageScore: 0,
+        exerciseType: ExerciseType.TEXT,
+        categories: [{ color: '#347aeb', category: 'structural pattern' }],
+    };
+    const exercise2 = {
+        exerciseId: 2,
+        exerciseName: 'BridgePattern',
+        averageScore: 20,
+        exerciseType: ExerciseType.PROGRAMMING,
+        categories: [{ color: '#347aeb', category: 'structural pattern' }],
+    };
+    const exercise3 = {
+        exerciseId: 3,
+        exerciseName: 'VisitorPattern',
+        averageScore: 25,
+        exerciseType: ExerciseType.FILE_UPLOAD,
+        categories: [{ color: '#c034eb', category: 'behavioral pattern' }],
+    };
+    const exercise4 = {
+        exerciseId: 4,
+        exerciseName: 'AdapterPattern',
+        averageScore: 35,
+        exerciseType: ExerciseType.QUIZ,
+        categories: [{ color: '#347aeb', category: 'structural pattern' }],
+    };
+    const exercise5 = {
+        exerciseId: 5,
+        exerciseName: 'ProxyPattern',
+        averageScore: 40,
+        exerciseType: ExerciseType.MODELING,
+        categories: [{ color: '#347aeb', category: 'structural pattern' }],
+    };
     const exercise6 = { exerciseId: 6, exerciseName: 'BuilderPattern', averageScore: 50, exerciseType: ExerciseType.QUIZ };
     const exercise7 = { exerciseId: 7, exerciseName: 'BehaviouralPattern', averageScore: 55, exerciseType: ExerciseType.PROGRAMMING };
     const exercise8 = { exerciseId: 8, exerciseName: 'SingletonPattern', averageScore: 56, exerciseType: ExerciseType.TEXT };
@@ -32,13 +69,16 @@ describe('StatisticsAverageScoreGraphComponent', () => {
     const courseAverageScore = 75;
 
     const exerciseTypes = [ExerciseType.PROGRAMMING, ExerciseType.MODELING, ExerciseType.QUIZ, ExerciseType.TEXT, ExerciseType.FILE_UPLOAD];
+    const typeSet: Set<ExerciseType> = new Set(exerciseTypes);
+    const categories = ['structural pattern', 'behavioral pattern'];
+    const categorySet = new Set<string>(categories);
     const exerciseTypeStrings = ['text', 'programming', 'file-upload', 'quiz', 'modeling', 'quiz', 'programming', 'text', 'file-upload', 'programming', 'modeling'];
 
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, RouterTestingModule.withRoutes([]), MockModule(BarChartModule)],
             declarations: [StatisticsAverageScoreGraphComponent, MockPipe(ArtemisTranslatePipe)],
-            providers: [MockProvider(ArtemisNavigationUtilService)],
+            providers: [MockProvider(ArtemisNavigationUtilService), MockProvider(ChartExerciseTypeFilter), MockProvider(ChartCategoryFilter)],
         })
             .compileComponents()
             .then(() => {
@@ -46,11 +86,22 @@ describe('StatisticsAverageScoreGraphComponent', () => {
                 component = fixture.componentInstance;
                 const routingService = TestBed.inject(ArtemisNavigationUtilService);
                 routingStub = jest.spyOn(routingService, 'routeInNewTab');
+                typeFilter = TestBed.inject(ChartExerciseTypeFilter);
+                typeFilter.typeSet = typeSet;
+                categoryFilter = TestBed.inject(ChartCategoryFilter);
+                categoryFilter.exerciseCategories = categorySet;
+
+                applyTypeFilterMock = jest.spyOn(typeFilter, 'applyCurrentFilter').mockReturnValue(returnValue);
+                applyCategoryFilterMock = jest.spyOn(categoryFilter, 'applyCurrentFilter').mockReturnValue(returnValue);
 
                 component.exerciseAverageScores = returnValue;
                 component.courseAverage = courseAverageScore;
                 fixture.detectChanges();
             });
+    });
+
+    afterEach(() => {
+        jest.restoreAllMocks();
     });
 
     it('should initialize', () => {
@@ -132,35 +183,61 @@ describe('StatisticsAverageScoreGraphComponent', () => {
     });
 
     describe('test filtering', () => {
-        const programmingExercises = [exercise2, exercise7, exercise10];
-        const modelingExercises = [exercise5, exercise11];
-        const quizExercises = [exercise4, exercise6];
-        const textExercises = [exercise1, exercise8];
-        const fileUploadExercises = [exercise3, exercise9];
         let expectedScores: CourseManagementStatisticsModel[];
 
         it.each(exerciseTypes)('should filter for type correctly if only one type is selected', (type: ExerciseType) => {
-            toggleAllTypes();
+            const toggleTypeMock = jest.spyOn(typeFilter, 'toggleExerciseType').mockReturnValue(returnValue);
 
             component.toggleType(type);
 
-            if (type === ExerciseType.PROGRAMMING) {
-                expect(component.currentlyDisplayableExercises).toEqual(programmingExercises);
-                expect(component.currentSize).toBe(programmingExercises.length);
-            } else if (type === ExerciseType.MODELING) {
-                expect(component.currentlyDisplayableExercises).toEqual(modelingExercises);
-                expect(component.currentSize).toBe(modelingExercises.length);
-            } else if (type === ExerciseType.QUIZ) {
-                expect(component.currentlyDisplayableExercises).toEqual(quizExercises);
-                expect(component.currentSize).toBe(quizExercises.length);
-            } else if (type === ExerciseType.TEXT) {
-                expect(component.currentlyDisplayableExercises).toEqual(textExercises);
-                expect(component.currentSize).toBe(textExercises.length);
-            } else {
-                expect(component.currentlyDisplayableExercises).toEqual(fileUploadExercises);
-                expect(component.currentSize).toBe(fileUploadExercises.length);
-            }
+            expect(toggleTypeMock).toHaveBeenCalledOnce();
+            expect(toggleTypeMock).toHaveBeenCalledWith(type, returnValue);
+            expect(applyCategoryFilterMock).toHaveBeenCalledOnce();
+            expect(applyCategoryFilterMock).toHaveBeenCalledWith(returnValue);
+            expect(component.currentlyDisplayableExercises).toStrictEqual(returnValue);
 
+            expect(component.currentPeriod).toBe(0);
+        });
+
+        it.each(categories)('should filter for category correctly if only one category is selected', (category: string) => {
+            const toggleCategoryMock = jest.spyOn(categoryFilter, 'toggleCategory').mockReturnValue(returnValue);
+
+            component.toggleCategory(category);
+
+            expect(toggleCategoryMock).toHaveBeenCalledOnce();
+            expect(toggleCategoryMock).toHaveBeenCalledWith(returnValue, category);
+            expect(applyTypeFilterMock).toHaveBeenCalledOnce();
+            expect(applyTypeFilterMock).toHaveBeenCalledWith(returnValue);
+
+            expect(component.currentlyDisplayableExercises).toStrictEqual(returnValue);
+            expect(component.currentPeriod).toBe(0);
+        });
+
+        it('should filter all categories', () => {
+            const toggleAllCategoriesMock = jest.spyOn(categoryFilter, 'toggleAllCategories').mockReturnValue(returnValue);
+
+            component.toggleAllCategories();
+
+            expect(toggleAllCategoriesMock).toHaveBeenCalledOnce();
+            expect(toggleAllCategoriesMock).toHaveBeenCalledWith(returnValue);
+            expect(applyTypeFilterMock).toHaveBeenCalledOnce();
+            expect(applyTypeFilterMock).toHaveBeenCalledWith(returnValue);
+
+            expect(component.currentlyDisplayableExercises).toStrictEqual(returnValue);
+            expect(component.currentPeriod).toBe(0);
+        });
+
+        it('should filter exercises with no category', () => {
+            const toggleExercisesWithNoCategoryMock = jest.spyOn(categoryFilter, 'toggleExercisesWithNoCategory').mockReturnValue(returnValue);
+
+            component.toggleExercisesWithNoCategory();
+
+            expect(toggleExercisesWithNoCategoryMock).toHaveBeenCalledOnce();
+            expect(toggleExercisesWithNoCategoryMock).toHaveBeenCalledWith(returnValue);
+            expect(applyTypeFilterMock).toHaveBeenCalledOnce();
+            expect(applyTypeFilterMock).toHaveBeenCalledWith(returnValue);
+
+            expect(component.currentlyDisplayableExercises).toStrictEqual(returnValue);
             expect(component.currentPeriod).toBe(0);
         });
 
@@ -215,10 +292,4 @@ describe('StatisticsAverageScoreGraphComponent', () => {
             expect(component.currentlyDisplayableExercises).toEqual(expectedScores);
         });
     });
-
-    const toggleAllTypes = () => {
-        exerciseTypes.forEach((type) => {
-            component.toggleType(type);
-        });
-    };
 });

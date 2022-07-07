@@ -240,6 +240,7 @@ export class CourseDiscussionComponent extends CourseDiscussionDirective impleme
      */
     fetchNextPage() {
         if (this.posts.length < this.totalItems) {
+            this.isLoading = true;
             this.page += 1;
             this.onSelectPage();
         }

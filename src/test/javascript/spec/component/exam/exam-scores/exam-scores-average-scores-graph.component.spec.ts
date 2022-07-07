@@ -13,10 +13,13 @@ import { BarChartModule } from '@swimlane/ngx-charts';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { GraphColors } from 'app/entities/statistics.model';
 import { NgxChartsSingleSeriesDataEntry } from 'app/shared/chart/ngx-charts-datatypes';
+import { ExerciseType } from 'app/entities/exercise.model';
+import { LocaleConversionService } from 'app/shared/service/locale-conversion.service';
 
 describe('ExamScoresAverageScoresGraphComponent', () => {
     let fixture: ComponentFixture<ExamScoresAverageScoresGraphComponent>;
     let component: ExamScoresAverageScoresGraphComponent;
+    let navigateToExerciseMock: jest.SpyInstance;
 
     const returnValue = {
         exerciseGroupId: 1,
@@ -59,6 +62,11 @@ describe('ExamScoresAverageScoresGraphComponent', () => {
                         return of(new HttpResponse({ body: { accuracyOfScores: 1 } }));
                     },
                 }),
+                MockProvider(LocaleConversionService, {
+                    toLocaleString: (score: number) => {
+                        return score.toString();
+                    },
+                }),
                 { provide: TranslateService, useClass: MockTranslateService },
             ],
         })
@@ -66,6 +74,7 @@ describe('ExamScoresAverageScoresGraphComponent', () => {
             .then(() => {
                 fixture = TestBed.createComponent(ExamScoresAverageScoresGraphComponent);
                 component = fixture.componentInstance;
+                navigateToExerciseMock = jest.spyOn(component, 'navigateToExercise').mockImplementation();
 
                 component.averageScores = returnValue;
                 fixture.detectChanges();
@@ -105,4 +114,44 @@ describe('ExamScoresAverageScoresGraphComponent', () => {
         expect(component.ngxData).toEqual(expectedData);
         expect(component.ngxColor.domain).toEqual(expectedColorDomain);
     };
+
+    describe('test exercise navigation', () => {
+        const event = { name: 'test', value: 3 };
+        it('should navigate if event is valid', () => {
+            component.lookup['test'] = { exerciseId: 42, exerciseType: ExerciseType.QUIZ };
+
+            component.onSelect(event);
+
+            expect(navigateToExerciseMock).toHaveBeenCalledOnce();
+            expect(navigateToExerciseMock).toHaveBeenCalledWith(42, ExerciseType.QUIZ);
+        });
+
+        it('should not navigate if exercise id is missing', () => {
+            component.lookup['test'] = { exerciseType: ExerciseType.QUIZ };
+
+            component.onSelect(event);
+
+            expect(navigateToExerciseMock).not.toHaveBeenCalled();
+        });
+
+        it('should not navigate if exercise type is missing', () => {
+            component.lookup['test'] = { exerciseId: 42 };
+
+            component.onSelect(event);
+
+            expect(navigateToExerciseMock).not.toHaveBeenCalled();
+        });
+    });
+
+    it('should look up absolute value', () => {
+        const roundAndPerformLocalConversionSpy = jest.spyOn(component, 'roundAndPerformLocalConversion');
+        component.course = { accuracyOfScores: 2 };
+        component.lookup['test'] = { absoluteValue: 40 };
+
+        const result = component.lookupAbsoluteValue('test');
+
+        expect(result).toBe('40');
+        expect(roundAndPerformLocalConversionSpy).toHaveBeenCalledOnce();
+        expect(roundAndPerformLocalConversionSpy).toHaveBeenCalledWith(40);
+    });
 });
