@@ -11,7 +11,7 @@ import { EXAM_MONITORING_UPDATE_URL, ExamMonitoringService } from 'app/exam/moni
 import { createActions } from './exam-monitoring-helper';
 import * as Sentry from '@sentry/browser';
 import { CaptureContext } from '@sentry/types';
-import { BehaviorSubject, of } from 'rxjs';
+import { BehaviorSubject, of, throwError } from 'rxjs';
 import { ExamActionService } from 'app/exam/monitoring/exam-action.service';
 import { MockHttpService } from '../../../helpers/mocks/service/mock-http.service';
 import { HttpClient } from '@angular/common/http';
@@ -189,7 +189,7 @@ describe('ExamMonitoringService', () => {
         expect(examMonitoringService.getExamBehaviorSubject(exam.id!)).toEqual(subject);
     });
 
-    // Send actions
+    // Update monitoring
     it.each([true, false])('should update monitoring', (monitoring: boolean) => {
         const spy = jest.spyOn(http, 'put').mockReturnValue(of(monitoring));
 
@@ -197,5 +197,17 @@ describe('ExamMonitoringService', () => {
 
         expect(spy).toHaveBeenCalledOnce();
         expect(spy).toHaveBeenCalledWith(EXAM_MONITORING_UPDATE_URL(course.id!, exam.id!), exam.monitoring, { observe: 'response' });
+        expect(exam.monitoring).toEqual(monitoring);
+    });
+
+    it.each([true, false])('should not update monitoring', (monitoring: boolean) => {
+        exam.monitoring = !monitoring;
+        const spy = jest.spyOn(http, 'put').mockReturnValue(throwError(() => {}));
+
+        examMonitoringService.updateMonitoring(exam, monitoring);
+
+        expect(spy).toHaveBeenCalledOnce();
+        expect(spy).toHaveBeenCalledWith(EXAM_MONITORING_UPDATE_URL(course.id!, exam.id!), exam.monitoring, { observe: 'response' });
+        expect(exam.monitoring).toEqual(monitoring);
     });
 });
