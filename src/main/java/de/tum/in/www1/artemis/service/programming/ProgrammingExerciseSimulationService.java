@@ -136,13 +136,11 @@ public class ProgrammingExerciseSimulationService {
 
         String commitHashBase = VCSSimulationUtils.simulateCommitHash();
         Result templateResult = createSubmissionAndResult(templateProgrammingExerciseParticipation, commitHashBase);
-        templateResult.setResultString("0 of 13 passed");
         templateResult.setScore(0D);
         resultRepository.save(templateResult);
 
         String commitHashSolution = VCSSimulationUtils.simulateCommitHash();
         Result solutionResult = createSubmissionAndResult(solutionProgrammingExerciseParticipation, commitHashSolution);
-        solutionResult.setResultString("13 of 13 passed");
         solutionResult.setScore(100D);
         resultRepository.save(solutionResult);
     }

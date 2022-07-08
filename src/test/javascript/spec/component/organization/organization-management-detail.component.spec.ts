@@ -14,7 +14,7 @@ import { Organization } from 'app/entities/organization.model';
 import { User } from 'app/core/user/user.model';
 import { Course } from 'app/entities/course.model';
 import { UserService } from 'app/core/user/user.service';
-import { NgxDatatableModule } from '@swimlane/ngx-datatable';
+import { NgxDatatableModule } from '@flaviosantoro92/ngx-datatable';
 import { DataTableComponent } from 'app/shared/data-table/data-table.component';
 import { MockComponent } from 'ng-mocks';
 import { iconsAsHTML } from 'app/utils/icons.utils';

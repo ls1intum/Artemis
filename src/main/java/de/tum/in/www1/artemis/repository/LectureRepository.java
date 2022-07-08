@@ -5,6 +5,7 @@ import java.util.Set;
 
 import javax.validation.constraints.NotNull;
 
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -89,7 +90,7 @@ public interface LectureRepository extends JpaRepository<Lecture, Long> {
             @Param("groups") Set<String> groups, Pageable pageable);
 
     /**
-     * Returns the title of the lecture with the given id
+     * Returns the title of the lecture with the given id.
      *
      * @param lectureId the id of the lecture
      * @return the name/title of the lecture or null if the lecture does not exist
@@ -99,6 +100,7 @@ public interface LectureRepository extends JpaRepository<Lecture, Long> {
             FROM Lecture lecture
             WHERE lecture.id = :lectureId
             """)
+    @Cacheable(cacheNames = "lectureTitle", key = "#lectureId", unless = "#result == null")
     String getLectureTitle(@Param("lectureId") Long lectureId);
 
     @NotNull

@@ -48,13 +48,10 @@ public abstract class AbstractContinuousIntegrationService implements Continuous
         result.setAssessmentType(AssessmentType.AUTOMATIC);
         result.setSuccessful(buildResult.isBuildSuccessful());
         result.setCompletionDate(buildResult.getBuildRunDate());
-        result.setScore(buildResult.getBuildScore());
+        result.setScore(buildResult.getBuildScore(), participation.getProgrammingExercise().getCourseViaExerciseGroupOrCourseMember());
         result.setParticipation((Participation) participation);
         addFeedbackToResult(result, buildResult);
 
-        // We assume the build has failed if no test case feedback has been sent. Static code analysis feedback might exist even though the build failed
-        boolean hasTestCaseFeedback = result.getFeedbacks().stream().anyMatch(feedback -> !feedback.isStaticCodeAnalysisFeedback());
-        result.setResultString(hasTestCaseFeedback ? buildResult.getTestsPassedString() : "No tests found");
         return result;
     }
 

@@ -18,13 +18,6 @@
                 Student login is required.
             </span>
         </div>
-        <div class="form-group">
-            <h4 class="control-label" jhiTranslate="artemisApp.result.resultString">Result</h4>
-            <input type="text" required class="form-control" name="resultString" id="resultString" [(ngModel)]="result.resultString" #resultString="ngModel" />
-            <span class="text-danger" *ngIf="resultString?.invalid && resultString?.errors?.required" jhiTranslate="artemisApp.result.resultStringRequired">
-                Result text is required.
-            </span>
-        </div>
         <div class="form-group row align-items-end">
             <div class="col-md-6">
                 <h4 class="control-label" jhiTranslate="artemisApp.result.scorePercentage">Score (in %)</h4>
