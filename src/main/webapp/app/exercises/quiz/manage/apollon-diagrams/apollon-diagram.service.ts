@@ -1,9 +1,10 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, tap } from 'rxjs';
 
 import { ApollonDiagram } from 'app/entities/apollon-diagram.model';
 import { createRequestOption } from 'app/shared/util/request.util';
+import { EntityTitleService, EntityType } from 'app/shared/layouts/navbar/entity-title.service';
 
 export type EntityResponseType = HttpResponse<ApollonDiagram>;
 
@@ -11,7 +12,7 @@ export type EntityResponseType = HttpResponse<ApollonDiagram>;
 export class ApollonDiagramService {
     private resourceUrl = SERVER_API_URL + 'api';
 
-    constructor(private http: HttpClient) {}
+    constructor(private http: HttpClient, private entityTitleService: EntityTitleService) {}
 
     /**
      * Creates diagram.
@@ -39,17 +40,9 @@ export class ApollonDiagramService {
      * @param courseId - id of the course.
      */
     find(diagramId: number, courseId: number): Observable<EntityResponseType> {
-        return this.http.get<ApollonDiagram>(`${this.resourceUrl}/course/${courseId}/apollon-diagrams/${diagramId}`, { observe: 'response' });
-    }
-
-    /**
-     * Fetches the title of the diagram with the given id
-     *
-     * @param diagramId the id of the diagram
-     * @return the title of the diagram in an HttpResponse, or an HttpErrorResponse on error
-     */
-    getTitle(diagramId: number): Observable<HttpResponse<string>> {
-        return this.http.get(`${this.resourceUrl}/apollon-diagrams/${diagramId}/title`, { observe: 'response', responseType: 'text' });
+        return this.http
+            .get<ApollonDiagram>(`${this.resourceUrl}/course/${courseId}/apollon-diagrams/${diagramId}`, { observe: 'response' })
+            .pipe(tap((res) => this.sendTitlesToEntityTitleService(res?.body)));
     }
 
     /**
@@ -66,10 +59,16 @@ export class ApollonDiagramService {
      */
     getDiagramsByCourse(courseId: number): Observable<HttpResponse<ApollonDiagram[]>> {
         const options = createRequestOption(courseId);
-        return this.http.get<ApollonDiagram[]>(`${this.resourceUrl}/course/${courseId}/apollon-diagrams`, { params: options, observe: 'response' });
+        return this.http
+            .get<ApollonDiagram[]>(`${this.resourceUrl}/course/${courseId}/apollon-diagrams`, { params: options, observe: 'response' })
+            .pipe(tap((res) => res?.body?.forEach(this.sendTitlesToEntityTitleService.bind(this))));
     }
 
     private convert(apollonDiagram: ApollonDiagram): ApollonDiagram {
         return Object.assign({}, apollonDiagram);
+    }
+
+    private sendTitlesToEntityTitleService(diagram: ApollonDiagram | undefined | null) {
+        this.entityTitleService.setTitle(EntityType.DIAGRAM, [diagram?.id], diagram?.title);
     }
 }

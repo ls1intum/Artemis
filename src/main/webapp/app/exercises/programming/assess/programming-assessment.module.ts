@@ -45,7 +45,6 @@ import { SubmissionResultStatusModule } from 'app/overview/submission-result-sta
         CodeEditorTutorAssessmentContainerComponent,
         OrionTutorAssessmentComponent,
     ],
-    entryComponents: [ProgrammingAssessmentRepoExportDialogComponent],
     exports: [ProgrammingAssessmentRepoExportButtonComponent],
 })
 export class ArtemisProgrammingAssessmentModule {}

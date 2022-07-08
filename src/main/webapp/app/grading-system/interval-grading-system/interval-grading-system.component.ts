@@ -1,7 +1,8 @@
 import { Component } from '@angular/core';
 import { GradeStep } from 'app/entities/grade-step.model';
 import { ModePickerOption } from 'app/exercises/shared/mode-picker/mode-picker.component';
-import { BaseGradingSystemComponent, GradeEditMode } from 'app/grading-system/base-grading-system/base-grading-system.component';
+import { BaseGradingSystemComponent, CsvGradeStep, GradeEditMode } from 'app/grading-system/base-grading-system/base-grading-system.component';
+import { parse } from 'papaparse';
 
 @Component({
     selector: 'jhi-interval-grading-system',
@@ -62,6 +63,11 @@ export class IntervalGradingSystemComponent extends BaseGradingSystemComponent {
         return defaultGradingScale;
     }
 
+    /**
+     * Sets the inclusivity for all grade steps based on the lowerBoundInclusivity property
+     * Called before a post/put request
+     * @override
+     */
     setInclusivity(): void {
         const gradeSteps = this.gradingScale?.gradeSteps;
         if (!(gradeSteps?.length > 0)) {
@@ -157,5 +163,22 @@ export class IntervalGradingSystemComponent extends BaseGradingSystemComponent {
             // Only sticky grade step remains, prevent total percentage is less than 100.
             this.setPercentageInterval(0, 100);
         }
+    }
+
+    /**
+     * Parse CSV file to a list of CsvGradeStep objects
+     * @param csvFile the read csv file
+     * @override
+     */
+    parseCSVFile(csvFile: File): Promise<CsvGradeStep[]> {
+        return new Promise(async (resolve, reject) => {
+            parse(csvFile, {
+                header: true,
+                skipEmptyLines: true,
+                dynamicTyping: false,
+                complete: (results) => resolve(results.data as CsvGradeStep[]),
+                error: (error) => reject(error),
+            });
+        });
     }
 }

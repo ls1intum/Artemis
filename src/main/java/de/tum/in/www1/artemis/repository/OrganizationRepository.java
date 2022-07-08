@@ -8,6 +8,7 @@ import java.util.regex.Pattern;
 
 import javax.validation.constraints.NotNull;
 
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -64,7 +65,7 @@ public interface OrganizationRepository extends JpaRepository<Organization, Long
     Long getNumberOfCoursesByOrganizationId(@Param("organizationId") long organizationId);
 
     /**
-     * Returns the title of the organization with the given id
+     * Returns the title of the organization with the given id.
      *
      * @param organizationId the id of the organization
      * @return the name/title of the organization or null if the organization does not exist
@@ -74,6 +75,7 @@ public interface OrganizationRepository extends JpaRepository<Organization, Long
             FROM Organization o
             WHERE o.id = :organizationId
             """)
+    @Cacheable(cacheNames = "organizationTitle", key = "#organizationId", unless = "#result == null")
     String getOrganizationTitle(@Param("organizationId") Long organizationId);
 
     /**
