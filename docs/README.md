@@ -48,6 +48,15 @@ make livehtml
 make.bat livehtml
 ```
 
+## Running Sphinx using gradle
+
+As a simpler alternative to installing and running [Sphinx] locally, you can run Sphinx using gradle. Simply
+use the command:
+
+```bash
+./gradlew sphinx
+```
+
 ## Tool support
 A list of useful tools to write documentation:
 - [reStructuredText for Visual Studio Code](https://www.restructuredtext.net)
