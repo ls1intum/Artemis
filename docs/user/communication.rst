@@ -1,7 +1,7 @@
-.. _discussion:
+.. _communication:
 
-Discussion
-==========
+Communication
+=============
 
 .. contents:: Content of this document
     :local:
@@ -10,15 +10,15 @@ Discussion
 Overview
 --------
 
-Artemis enables students, tutors, and instructors to actively participate in discussions.
-Various discussion features allow students to engage with peers and ask all kinds of questions whereas moderators (e.g., instructors and tutors) can provide general course information and answer content-related questions.
-Discussions can be started in different contexts, namely for lectures, exercises, or courses.
+Artemis enables students, tutors, and instructors to actively participate with its' communication feature.
+Various communication features allow students to engage with peers and ask all kinds of questions whereas moderators (e.g., instructors and tutors) can provide general course information and answer content-related questions.
+Communication can be made in different contexts, namely for lectures, exercises, or courses.
 Below, you can find more information on specific features and how to use them.
 
-Enabling Discussions
-^^^^^^^^^^^^^^^^^^^^
+Enabling Communication
+^^^^^^^^^^^^^^^^^^^^^^
 
-Artemis courses will by default enable all the discussion features.
+Artemis courses will by default enable all the communication features.
 In case you do not want to provide users with these features, you can disable this feature on course creation by unchecking the respective checkbox (``Enable postings by students``) - it can also be edited afterwards.
 
 Lecture Posts
@@ -43,13 +43,13 @@ Exemplary exercise detail page with posts:
 
 |exercise-posts|
 
-Course-wide Posts & Course Discussion Overview
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Course-wide Posts & Course Communication Overview
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Besides lecture or exercise related questions, Artemis offers a third type of posts: posts with course-wide topics, such as ``Organization`` or ``Tech Support``.
-These posts can only be created on the course discussion overview which is shown in the screenshot below.
+These posts can only be created on the course communication overview which is shown in the screenshot below.
 
-The ``Discussion`` space of an Artemis course serves as overview for *all* posts in a course.
+The ``Communication`` space of an Artemis course serves as overview for *all* posts in a course.
 Hence, course-wide posts as well as exercise posts and lecture posts are listed.
 Here, users can easily query, sort, and filter existing posts.
 
@@ -63,7 +63,7 @@ This section captures the most important features that are offered to any Artemi
 Search, Filter and Sort Posts
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-On the course discussion overview, a user can query *all* existing posts by different criteria.
+On the course communication overview, a user can query *all* existing posts by different criteria.
 This can be a text-based search, context filters (i.e., a certain lecture, exercise or course-wide topic), or other post characteristics such as if it is already resolved.
 By using different sort configurations, users can find the information they are looking for at the top of the list: for example the post that got the most votes, or the post that was created most recently.
 
@@ -113,13 +113,13 @@ Move Posts
 
 Tutors can change the context (lecture, exercise, course-wide topic) in the edit mode of the post.
 By changing the context, for example from a certain exercise to a course-wide topic, the post is automatically moved.
-In the example at hand, the post will not be shown on the according exercise page anymore, but rather only in the course-wide discussion overview, associated with that certain course-wide topic.
+In the example at hand, the post will not be shown on the according exercise page anymore, but rather only in the course-wide communication overview, associated with that certain course-wide topic.
 
 Pin Posts
 ^^^^^^^^^^
 
-By clicking the pushpin icon next to the reaction button of a post, a moderator can *pin* the discussion.
-As a consequence, the discussion is displayed at the top of any post list to receive higher attention.
+By clicking the pushpin icon next to the reaction button of a post, a moderator can *pin* the post.
+As a consequence, the post is displayed at the top of any post list to receive higher attention.
 
 Archive Posts
 ^^^^^^^^^^^^^
@@ -138,13 +138,13 @@ Post Announcements
 
 Instructors can create course-wide posts that serve as *Announcements*.
 They target every course participant and have higher relevance than normal posts.
-Announcements can be created in the course discussion overview by selecting the topic ``Announcement``.
+Announcements can be created in the course communication overview by selecting the topic ``Announcement``.
 As soon as the announcement is created, all participants, that did not actively refrain from being notified, will receive an email containing the announcement's content.
-Additionally, announcements visually differ from normal posts and are always displayed on top of the discussion overview.
+Additionally, announcements visually differ from normal posts and are always displayed on top of the communication overview.
 
-.. |lecture-posts| image:: discussion/lecture-posts.png
+.. |lecture-posts| image:: communication/lecture-posts.png
     :width: 1000
-.. |exercise-posts| image:: discussion/exercise-posts.png
+.. |exercise-posts| image:: communication/exercise-posts.png
     :width: 1000
-.. |course-posts| image:: discussion/course-posts.png
+.. |course-posts| image:: communication/course-posts.png
     :width: 1000

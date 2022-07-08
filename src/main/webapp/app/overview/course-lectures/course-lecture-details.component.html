@@ -45,10 +45,14 @@
             <div class="row m-0" *ngFor="let lectureUnit of lectureUnits">
                 <div class="col-11" [ngSwitch]="lectureUnit.type">
                     <jhi-exercise-unit *ngSwitchCase="LectureUnitType.EXERCISE" [exerciseUnit]="lectureUnit" [course]="lecture!.course!"></jhi-exercise-unit>
-                    <jhi-attachment-unit *ngSwitchCase="LectureUnitType.ATTACHMENT" [attachmentUnit]="lectureUnit"></jhi-attachment-unit>
-                    <jhi-video-unit *ngSwitchCase="LectureUnitType.VIDEO" [videoUnit]="lectureUnit"></jhi-video-unit>
-                    <jhi-text-unit *ngSwitchCase="LectureUnitType.TEXT" [textUnit]="lectureUnit"></jhi-text-unit>
-                    <jhi-online-unit *ngSwitchCase="LectureUnitType.ONLINE" [onlineUnit]="lectureUnit"></jhi-online-unit>
+                    <jhi-attachment-unit
+                        *ngSwitchCase="LectureUnitType.ATTACHMENT"
+                        [attachmentUnit]="lectureUnit"
+                        (onCompletion)="completeLectureUnit($event)"
+                    ></jhi-attachment-unit>
+                    <jhi-video-unit *ngSwitchCase="LectureUnitType.VIDEO" [videoUnit]="lectureUnit" (onCompletion)="completeLectureUnit($event)"></jhi-video-unit>
+                    <jhi-text-unit *ngSwitchCase="LectureUnitType.TEXT" [textUnit]="lectureUnit" (onCompletion)="completeLectureUnit($event)"></jhi-text-unit>
+                    <jhi-online-unit *ngSwitchCase="LectureUnitType.ONLINE" [onlineUnit]="lectureUnit" (onCompletion)="completeLectureUnit($event)"></jhi-online-unit>
                 </div>
                 <div class="col-1 my-auto mx-auto">
                     <jhi-learning-goals-popover

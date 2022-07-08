@@ -1164,7 +1164,7 @@ describe('QuizExercise Management Detail Component', () => {
                 question.solutions[0].text = 'a'.repeat(250);
                 comp.quizExercise.quizQuestions = [question];
                 comp.cacheValidation();
-                expect(comp.quizIsValid).toEqual(false);
+                expect(comp.quizIsValid).toBeFalse();
             });
 
             it('should not be valid if SA question has no correct mapping', () => {

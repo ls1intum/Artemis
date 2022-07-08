@@ -2,7 +2,7 @@ const esModules = ['lodash-es', 'franc-min', 'trigram-utils', 'n-gram', 'collaps
     '@angular/compiler', '@angular/core', '@angular/forms', '@angular/localize', '@angular/platform-browser', '@angular/platform-browser-dynamic', '@angular/router',
     '@ngx-translate/core', '@ngx-translate/http-loader', '@fortawesome/angular-fontawesome', '@angular/cdk', '@angular/material', '@angular/cdk', 'dayjs/esm',
     'rxjs/operators', '@ng-bootstrap/ng-bootstrap', 'ngx-webstorage', '@ctrl/ngx-emoji-mart', 'ngx-device-detector', '@swimlane/ngx-charts',
-    '@angular/service-worker', '@danielmoncada/angular-datetime-picker'].join('|');
+    '@angular/service-worker', '@danielmoncada/angular-datetime-picker', '@flaviosantoro92/ngx-datatable'].join('|');
 
 const {
     compilerOptions: { baseUrl = './' },
@@ -21,6 +21,9 @@ module.exports = {
                 ignoreCodes: [151001],
             },
         },
+    },
+    testEnvironmentOptions: {
+        url: 'https://artemis.fake/test'
     },
     roots: ['<rootDir>', `<rootDir>/${baseUrl}`],
     modulePaths: [`<rootDir>/${baseUrl}`],
@@ -55,15 +58,15 @@ module.exports = {
     coverageThreshold: {
         global: {
             // TODO: in the future, the following values should be increase to at least 85%
-            statements: 83.9,
-            branches: 70.7,
-            functions: 76.6,
-            lines: 83.6,
+            statements: 84.1,
+            branches: 70.9,
+            functions: 76.9,
+            lines: 83.9,
         },
     },
     setupFilesAfterEnv: ['<rootDir>/src/test/javascript/spec/jest-test-setup.ts', 'jest-extended/all'],
     moduleFileExtensions: ['ts', 'html', 'js', 'json', 'mjs'],
-    resolver: 'jest-preset-angular/build/resolvers/ng-jest-resolver.js',
+    resolver: '<rootDir>/jest.resolver.js',
     transformIgnorePatterns: [`/node_modules/(?!${esModules})`],
     transform: {
         '^.+\\.(ts|js|mjs|html|svg)$': 'jest-preset-angular',

@@ -2,11 +2,11 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ArtemisTestModule } from '../../../../test.module';
 import { MockTranslateService } from '../../../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
-import { MockPipe } from 'ng-mocks';
+import { MockModule, MockPipe } from 'ng-mocks';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { AverageActionsChartComponent } from 'app/exam/monitoring/charts/activity-log/average-actions-chart.component';
-import { NgxChartsModule } from '@swimlane/ngx-charts';
+import { LineChartModule } from '@swimlane/ngx-charts';
 import { ChartTitleComponent } from 'app/exam/monitoring/charts/chart-title.component';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import dayjs from 'dayjs/esm';
@@ -19,11 +19,13 @@ import { MockWebsocketService } from '../../../../helpers/mocks/service/mock-web
 import { of } from 'rxjs';
 import { ActivatedRoute } from '@angular/router';
 import { ceilDayjsSeconds } from 'app/exam/monitoring/charts/monitoring-chart';
+import { ExamActionService } from 'app/exam/monitoring/exam-action.service';
 
 describe('Average Actions Chart Component', () => {
     let comp: AverageActionsChartComponent;
     let fixture: ComponentFixture<AverageActionsChartComponent>;
     let pipe: ArtemisDatePipe;
+    let examActionService: ExamActionService;
 
     // Course
     const course = new Course();
@@ -33,11 +35,14 @@ describe('Average Actions Chart Component', () => {
     const exam = new Exam();
     exam.id = 1;
 
+    const now = dayjs();
+    let ceiledNow: dayjs.Dayjs;
+
     const route = { parent: { params: of({ courseId: course.id, examId: exam.id }) } };
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, NgxChartsModule, ArtemisSharedComponentModule],
+            imports: [ArtemisTestModule, MockModule(LineChartModule), ArtemisSharedComponentModule],
             declarations: [AverageActionsChartComponent, ChartTitleComponent, ActionsChartComponent, ArtemisDatePipe, MockPipe(ArtemisTranslatePipe)],
             providers: [
                 { provide: JhiWebsocketService, useClass: MockWebsocketService },
@@ -51,6 +56,8 @@ describe('Average Actions Chart Component', () => {
                 pipe = new ArtemisDatePipe(TestBed.inject(TranslateService));
                 fixture = TestBed.createComponent(AverageActionsChartComponent);
                 comp = fixture.componentInstance;
+                examActionService = TestBed.inject(ExamActionService);
+                ceiledNow = ceilDayjsSeconds(now, comp.timeStampGapInSeconds);
             });
     });
 
@@ -59,6 +66,7 @@ describe('Average Actions Chart Component', () => {
         jest.restoreAllMocks();
     });
 
+    // On init
     it('should call initData on init without actions', () => {
         expect(comp.ngxData).toEqual([]);
 
@@ -76,21 +84,18 @@ describe('Average Actions Chart Component', () => {
         ${1}
         ${2}
     `('should call initData on init with actions', (param: { amount: number }) => {
-        const now = dayjs();
-        const ceiledNow = ceilDayjsSeconds(now, comp.timeStampGapInSeconds);
-
         // Create series
         const series = createSingleSeriesDataEntriesWithTimestamps(comp.getLastXTimestamps(), pipe);
 
         // GIVEN
-        comp.filteredExamActions = createActions().map((action) => {
-            action.timestamp = now;
-            action.ceiledTimestamp = ceiledNow;
-            return action;
-        });
+        const length = createActions().length;
+        const groupedByTimestamp = new Map();
+        groupedByTimestamp.set(ceiledNow.toString(), length);
+        examActionService.cachedExamActionsGroupedByTimestamp.set(exam.id!, groupedByTimestamp);
+
         comp.registeredStudents = param.amount;
 
-        series.filter((data) => data.name === pipe.transform(ceiledNow, 'time', true).toString())[0].value = comp.filteredExamActions.length / comp.registeredStudents;
+        series.filter((data) => data.name === pipe.transform(ceiledNow, 'time', true).toString())[0].value = length / comp.registeredStudents;
 
         // WHEN
         comp.ngOnInit();

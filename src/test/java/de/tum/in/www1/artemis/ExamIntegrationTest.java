@@ -9,7 +9,6 @@ import static org.mockito.Mockito.*;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -1513,9 +1512,9 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
         // TODO avoid duplicated code with StudentExamIntegrationTest
 
-        var examVisibleDate = ZonedDateTime.now().minusMinutes(5);
-        var examStartDate = ZonedDateTime.now().plusMinutes(5);
-        var examEndDate = ZonedDateTime.now().plusMinutes(20);
+        var examVisibleDate = now().minusMinutes(5);
+        var examStartDate = now().plusMinutes(5);
+        var examEndDate = now().plusMinutes(20);
 
         Course course = database.addEmptyCourse();
         Exam exam = database.addExam(course, examVisibleDate, examStartDate, examEndDate);
@@ -1528,6 +1527,7 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         exam.setRegisteredUsers(registeredStudents);
         exam.setNumberOfExercisesInExam(exam.getExerciseGroups().size());
         exam.setRandomizeExerciseOrder(false);
+        exam.setNumberOfCorrectionRoundsInExam(2);
         exam = examRepository.save(exam);
         exam = examRepository.findWithRegisteredUsersAndExerciseGroupsAndExercisesById(exam.getId()).get();
 
@@ -1568,9 +1568,9 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         // set start and submitted date as results are created below
         studentExams.forEach(studentExam -> {
             studentExam.setStarted(true);
-            studentExam.setStartedDate(ZonedDateTime.now().minusMinutes(2));
+            studentExam.setStartedDate(now().minusMinutes(2));
             studentExam.setSubmitted(true);
-            studentExam.setSubmissionDate(ZonedDateTime.now().minusMinutes(1));
+            studentExam.setSubmissionDate(now().minusMinutes(1));
         });
         studentExamRepository.saveAll(studentExams);
 
@@ -1584,7 +1584,8 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         }
         assertEquals(participationCounter, noGeneratedParticipations);
 
-        // Score used for all exercise results
+        // Scores used for all exercise results
+        Double correctionResultScore = 60D;
         Double resultScore = 75D;
 
         // Assign results to participations and submissions
@@ -1604,14 +1605,22 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
                     submission = participation.getSubmissions().iterator().next();
                 }
                 // Create results
-                var result = new Result().score(resultScore).rated(true).resultString("Good").completionDate(ZonedDateTime.now().minusMinutes(5));
-                result.setParticipation(participation);
-                result.setAssessor(instructor);
-                result = resultRepository.save(result);
-                result.setSubmission(submission);
-                submission.addResult(result);
+                var firstResult = new Result().score(correctionResultScore).rated(true).completionDate(now().minusMinutes(5));
+                firstResult.setParticipation(participation);
+                firstResult.setAssessor(instructor);
+                firstResult = resultRepository.save(firstResult);
+                firstResult.setSubmission(submission);
+                submission.addResult(firstResult);
+
+                var correctionResult = new Result().score(resultScore).rated(true).completionDate(now().minusMinutes(5));
+                correctionResult.setParticipation(participation);
+                correctionResult.setAssessor(instructor);
+                correctionResult = resultRepository.save(correctionResult);
+                correctionResult.setSubmission(submission);
+                submission.addResult(correctionResult);
+
                 submission.submitted(true);
-                submission.setSubmissionDate(ZonedDateTime.now().minusMinutes(6));
+                submission.setSubmissionDate(now().minusMinutes(6));
                 submissionRepository.save(submission);
             }
         }
@@ -1632,6 +1641,7 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         // Compare generated results to data in ExamScoresDTO
         // Compare top-level DTO properties
         assertThat(response.maxPoints).isEqualTo(exam.getMaxPoints());
+        assertThat(response.hasSecondCorrectionAndStarted).isTrue();
 
         // For calculation assume that all exercises within an exerciseGroups have the same max points
         double calculatedAverageScore = 0.0;
@@ -1699,11 +1709,10 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
             // Calculate overall points achieved
 
-            var calculatedOverallPoints = studentExamOfUser.getExercises().stream()
-                    .filter(exercise -> !exercise.getIncludedInOverallScore().equals(IncludedInOverallScore.NOT_INCLUDED)).map(Exercise::getMaxPoints)
-                    .reduce(0.0, (total, maxScore) -> (Math.round((total + maxScore * resultScore / 100) * 10) / 10.0));
+            var calculatedOverallPoints = calculateOverallPoints(resultScore, studentExamOfUser);
 
             assertEquals(studentResult.overallPointsAchieved, calculatedOverallPoints, EPSILON);
+            assertEquals(studentResult.overallPointsAchievedInFirstCorrection, calculateOverallPoints(correctionResultScore, studentExamOfUser), EPSILON);
 
             // Calculate overall score achieved
             var calculatedOverallScore = calculatedOverallPoints / response.maxPoints * 100;
@@ -1745,7 +1754,7 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         assertThat(examChecklistDTO.getAllExamExercisesAllStudentsPrepared()).isTrue();
         assertThat(examChecklistDTO.getNumberOfTotalParticipationsForAssessment()).isEqualTo(75);
         assertThat(examChecklistDTO.getNumberOfTestRuns()).isZero();
-        assertThat(examChecklistDTO.getNumberOfTotalExamAssessmentsFinishedByCorrectionRound()).hasSize(1).containsAll((Collections.singletonList(90L)));
+        assertThat(examChecklistDTO.getNumberOfTotalExamAssessmentsFinishedByCorrectionRound()).hasSize(2).containsAll((Collections.singletonList(90L)));
 
         // change to a tutor
         database.changeUser("tutor1");
@@ -1760,13 +1769,18 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         assertThat(examChecklistDTO.getAllExamExercisesAllStudentsPrepared()).isFalse();
         assertThat(examChecklistDTO.getNumberOfTotalParticipationsForAssessment()).isEqualTo(75);
         assertThat(examChecklistDTO.getNumberOfTestRuns()).isNull();
-        assertThat(examChecklistDTO.getNumberOfTotalExamAssessmentsFinishedByCorrectionRound()).hasSize(1).containsExactly(90L);
+        assertThat(examChecklistDTO.getNumberOfTotalExamAssessmentsFinishedByCorrectionRound()).hasSize(2).containsExactly(90L, 90L);
 
         // change back to instructor user
         database.changeUser("instructor1");
 
         // Make sure delete also works if so many objects have been created before
         request.delete("/api/courses/" + course.getId() + "/exams/" + exam.getId(), HttpStatus.OK);
+    }
+
+    private double calculateOverallPoints(Double correctionResultScore, StudentExam studentExamOfUser) {
+        return studentExamOfUser.getExercises().stream().filter(exercise -> !exercise.getIncludedInOverallScore().equals(IncludedInOverallScore.NOT_INCLUDED))
+                .map(Exercise::getMaxPoints).reduce(0.0, (total, maxScore) -> (Math.round((total + maxScore * correctionResultScore / 100) * 10) / 10.0));
     }
 
     @Test
@@ -1859,7 +1873,7 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testLatestIndividualEndDate_noStudentExams() {
-        final var now = ZonedDateTime.now().truncatedTo(ChronoUnit.MINUTES);
+        final var now = now().truncatedTo(ChronoUnit.MINUTES);
         exam1.setStartDate(now.minusHours(2));
         exam1.setEndDate(now);
         final var exam = examRepository.save(exam1);
@@ -1870,7 +1884,7 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testGetAllIndividualExamEndDates() {
-        final var now = ZonedDateTime.now().truncatedTo(ChronoUnit.MINUTES);
+        final var now = now().truncatedTo(ChronoUnit.MINUTES);
         exam1.setStartDate(now.minusHours(2));
         exam1.setEndDate(now);
         final var exam = examRepository.save(exam1);
@@ -1903,7 +1917,7 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testIsExamOver_GracePeriod() {
-        final var now = ZonedDateTime.now().truncatedTo(ChronoUnit.MINUTES);
+        final var now = now().truncatedTo(ChronoUnit.MINUTES);
         exam1.setStartDate(now.minusHours(2));
         exam1.setEndDate(now);
         exam1.setGracePeriod(180);
@@ -1933,7 +1947,7 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testArchiveCourseWithExam() throws Exception {
         Course course = database.createCourseWithExamAndExercises();
-        course.setEndDate(ZonedDateTime.now().minusMinutes(5));
+        course.setEndDate(now().minusMinutes(5));
         course = courseRepo.save(course);
 
         request.put("/api/courses/" + course.getId() + "/archive", null, HttpStatus.OK);
@@ -1964,7 +1978,7 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     @WithMockUser(username = "student1", roles = "USER")
     public void testArchiveExamAsStudent_forbidden() throws Exception {
         Course course = database.addEmptyCourse();
-        course.setEndDate(ZonedDateTime.now().minusMinutes(5));
+        course.setEndDate(now().minusMinutes(5));
         course = courseRepo.save(course);
 
         Exam exam = database.addExam(course);
@@ -1977,7 +1991,7 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testArchiveExamBeforeEndDate_badRequest() throws Exception {
         Course course = database.addEmptyCourse();
-        course.setEndDate(ZonedDateTime.now().plusMinutes(5));
+        course.setEndDate(now().plusMinutes(5));
         course = courseRepo.save(course);
 
         Exam exam = database.addExam(course);
@@ -2085,9 +2099,9 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         User examTutor1 = userRepo.findOneByLogin("tutor1").get();
         User examTutor2 = userRepo.findOneByLogin("tutor2").get();
 
-        var examVisibleDate = ZonedDateTime.now().minusMinutes(5);
-        var examStartDate = ZonedDateTime.now().plusMinutes(5);
-        var examEndDate = ZonedDateTime.now().plusMinutes(20);
+        var examVisibleDate = now().minusMinutes(5);
+        var examStartDate = now().plusMinutes(5);
+        var examEndDate = now().plusMinutes(20);
         Course course = database.addEmptyCourse();
         Exam exam = database.addExam(course, examVisibleDate, examStartDate, examEndDate);
         exam.setNumberOfCorrectionRoundsInExam(numberOfCorrectionRounds);
@@ -2123,9 +2137,9 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         // set start and submitted date as results are created below
         studentExams.forEach(studentExam -> {
             studentExam.setStarted(true);
-            studentExam.setStartedDate(ZonedDateTime.now().minusMinutes(2));
+            studentExam.setStartedDate(now().minusMinutes(2));
             studentExam.setSubmitted(true);
-            studentExam.setSubmissionDate(ZonedDateTime.now().minusMinutes(1));
+            studentExam.setSubmissionDate(now().minusMinutes(1));
         });
         studentExamRepository.saveAll(studentExams);
 
@@ -2146,7 +2160,7 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
                 assertThat(participation.getSubmissions()).hasSize(1);
                 submission = participation.getSubmissions().iterator().next();
                 submission.submitted(true);
-                submission.setSubmissionDate(ZonedDateTime.now().minusMinutes(6));
+                submission.setSubmissionDate(now().minusMinutes(6));
                 submissionRepository.save(submission);
             }
         }
@@ -2170,9 +2184,9 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
                 assertThat(participation.getSubmissions()).hasSize(1);
                 submission = participation.getSubmissions().iterator().next();
                 // Create results
-                var result = new Result().score(resultScore).resultString("Good");
+                var result = new Result().score(resultScore);
                 if (exercise instanceof QuizExercise) {
-                    result.completionDate(ZonedDateTime.now().minusMinutes(4));
+                    result.completionDate(now().minusMinutes(4));
                     result.setRated(true);
                 }
                 result.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
@@ -2216,7 +2230,7 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
                 Submission submission;
                 assertThat(participation.getSubmissions()).hasSize(1);
                 submission = participation.getSubmissions().iterator().next();
-                var result = submission.getLatestResult().completionDate(ZonedDateTime.now().minusMinutes(5));
+                var result = submission.getLatestResult().completionDate(now().minusMinutes(5));
                 result.setRated(true);
                 resultRepository.save(result);
             }
@@ -2250,9 +2264,9 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
                 assertThat(participation.getSubmissions()).hasSize(1);
                 submission = participation.getSubmissions().iterator().next();
                 // Create results
-                var result = new Result().score(50D).rated(true).resultString("Good");
+                var result = new Result().score(50D).rated(true);
                 if (exercise instanceof QuizExercise) {
-                    result.completionDate(ZonedDateTime.now().minusMinutes(3));
+                    result.completionDate(now().minusMinutes(3));
                 }
                 result.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
                 result.setParticipation(participation);
@@ -2305,7 +2319,7 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
                 Submission submission;
                 assertThat(participation.getSubmissions()).hasSize(1);
                 submission = participation.getSubmissions().iterator().next();
-                var result = submission.getLatestResult().completionDate(ZonedDateTime.now().minusMinutes(5));
+                var result = submission.getLatestResult().completionDate(now().minusMinutes(5));
                 result.setRated(true);
                 resultRepository.save(result);
             }
@@ -2374,5 +2388,19 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     @WithMockUser(username = "user1", roles = "USER")
     public void testGetExamTitleForNonExistingExam() throws Exception {
         request.get("/api/exams/123124123123/title", HttpStatus.NOT_FOUND, String.class);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testUpdateExamMonitoringStatus() throws Exception {
+        exam1.setMonitoring(true);
+        request.putWithResponseBody("/api/courses/" + course1.getId() + "/exams", exam1, Exam.class, HttpStatus.OK);
+
+        verify(this.websocketMessagingService).sendMessage("/topic/exam-monitoring/" + exam1.getId() + "/update", true);
+
+        exam1.setMonitoring(false);
+        request.putWithResponseBody("/api/courses/" + course1.getId() + "/exams", exam1, Exam.class, HttpStatus.OK);
+
+        verify(this.websocketMessagingService).sendMessage("/topic/exam-monitoring/" + exam1.getId() + "/update", false);
     }
 }

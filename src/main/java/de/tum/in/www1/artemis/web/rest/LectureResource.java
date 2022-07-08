@@ -4,7 +4,6 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -112,7 +111,7 @@ public class LectureResource {
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, lecture.getCourse(), null);
 
         // Make sure that the original references are preserved.
-        Lecture originalLecture = lectureRepository.findByIdWithPostsAndLectureUnitsAndLearningGoals(lecture.getId()).get();
+        Lecture originalLecture = lectureRepository.findByIdWithLectureUnitsElseThrow(lecture.getId());
 
         // NOTE: Make sure that all references are preserved here
         lecture.setLectureUnits(originalLecture.getLectureUnits());
@@ -217,7 +216,7 @@ public class LectureResource {
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Lecture> getLectureWithDetails(@PathVariable Long lectureId) {
         log.debug("REST request to get lecture {} with details", lectureId);
-        Lecture lecture = lectureRepository.findByIdWithPostsAndLectureUnitsAndLearningGoalsElseThrow(lectureId);
+        Lecture lecture = lectureRepository.findByIdWithPostsAndLectureUnitsAndLearningGoalsAndCompletionsElseThrow(lectureId);
         Course course = lecture.getCourse();
         if (course == null) {
             return ResponseEntity.badRequest().build();
@@ -269,6 +268,8 @@ public class LectureResource {
                 return authCheckService.isAllowedToSeeLectureUnit(lectureUnit, user);
             }
         }).peek(lectureUnit -> {
+            lectureUnit.setCompleted(lectureUnit.isCompletedFor(user));
+
             if (lectureUnit instanceof ExerciseUnit) {
                 Exercise exercise = ((ExerciseUnit) lectureUnit).getExercise();
                 // we replace the exercise with one that contains all the information needed for correct display
@@ -289,11 +290,8 @@ public class LectureResource {
     @DeleteMapping("/lectures/{id}")
     @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<Void> deleteLecture(@PathVariable Long id) {
-        Optional<Lecture> optionalLecture = lectureRepository.findByIdWithPostsAndLectureUnitsAndLearningGoals(id);
-        if (optionalLecture.isEmpty()) {
-            return ResponseEntity.notFound().build();
-        }
-        Lecture lecture = optionalLecture.get();
+        Lecture lecture = lectureRepository.findByIdElseThrow(id);
+
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, lecture.getCourse(), null);
         Course course = lecture.getCourse();
         if (course == null) {

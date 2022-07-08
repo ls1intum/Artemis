@@ -25,6 +25,7 @@ import { defaultLongDateTimeFormat } from 'app/shared/pipes/artemis-date.pipe';
 import { setBuildPlanUrlForProgrammingParticipations } from 'app/exercises/shared/participation/participation.utils';
 import { faCodeBranch, faDownload, faFolderOpen, faListAlt, faSync } from '@fortawesome/free-solid-svg-icons';
 import { faFileCode } from '@fortawesome/free-regular-svg-icons';
+import { Range } from 'app/shared/util/utils';
 
 /**
  * Filter properties for a result
@@ -49,15 +50,30 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
     readonly FilterProp = FilterProp;
     readonly ExerciseType = ExerciseType;
     readonly FeatureToggle = FeatureToggle;
+    // represents all intervals selectable in the score distribution on the exercise statistics
+    readonly scoreRanges = [
+        new Range(0, 10),
+        new Range(10, 20),
+        new Range(20, 30),
+        new Range(30, 40),
+        new Range(40, 50),
+        new Range(50, 60),
+        new Range(60, 70),
+        new Range(70, 80),
+        new Range(80, 90),
+        new Range(90, 100),
+    ];
 
     course: Course;
     exercise: Exercise;
     paramSub: Subscription;
     reverse: boolean;
     results: Result[];
+    filteredResults: Result[];
     filteredResultsSize: number;
     eventSubscriber: Subscription;
     newManualResultAllowed: boolean;
+    rangeFilter?: Range;
 
     resultCriteria: {
         filterProp: FilterProp;
@@ -99,7 +115,10 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
             this.isLoading = true;
             const findCourse = this.courseService.find(params['courseId']);
             const findExercise = this.exerciseService.find(params['exerciseId']);
-
+            const filterValue = this.route.snapshot.queryParamMap.get('scoreRangeFilter');
+            if (filterValue) {
+                this.rangeFilter = this.scoreRanges[Number(filterValue)];
+            }
             forkJoin([findCourse, findExercise]).subscribe(([courseRes, exerciseRes]) => {
                 this.course = courseRes.body!;
                 this.exercise = exerciseRes.body!;
@@ -108,6 +127,7 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
                     .pipe(take(1))
                     .subscribe((results) => {
                         this.results = results[0].body || [];
+                        this.filteredResults = this.filterByScoreRange(this.results);
                         if (this.exercise.type === ExerciseType.PROGRAMMING) {
                             this.profileService.getProfileInfo().subscribe((profileInfo) => {
                                 setBuildPlanUrlForProgrammingParticipations(
@@ -302,5 +322,35 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
     formatDate(date: dayjs.Dayjs | Date | undefined) {
         // TODO: we should try to use the artemis date pipe here
         return date ? dayjs(date).format(defaultLongDateTimeFormat) : '';
+    }
+
+    /**
+     * filters the displayable results based on the given range filter
+     * @param results all results for the given exercise
+     * @returns results falling into the given score range
+     */
+    filterByScoreRange(results: Result[]): Result[] {
+        if (!this.rangeFilter) {
+            return results;
+        }
+        let filterFunction;
+        // If the range to filter against is [90%, 100%], a score of 100% also satisfies this range
+        if (this.rangeFilter.upperBound === 100) {
+            filterFunction = (result: Result) => !!result.score && result.score >= this.rangeFilter!.lowerBound && result.score <= this.rangeFilter!.upperBound;
+        } else {
+            // For any other range, the score must be strictly below the upper bound
+            filterFunction = (result: Result) => result.score !== undefined && result.score >= this.rangeFilter!.lowerBound && result.score < this.rangeFilter!.upperBound;
+        }
+
+        return results.filter(filterFunction);
+    }
+
+    /**
+     * resets the score range filter
+     */
+    resetFilterOptions(): void {
+        this.rangeFilter = undefined;
+        this.filteredResults = this.results;
+        this.resultCriteria.filterProp = FilterProp.ALL;
     }
 }

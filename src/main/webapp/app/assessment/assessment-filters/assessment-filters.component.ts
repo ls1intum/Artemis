@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, Output } from '@angular/core';
 import { getLatestSubmissionResult, Submission } from 'app/entities/submission.model';
 
 /**
@@ -13,14 +13,22 @@ enum FilterProp {
     selector: 'jhi-assessment-filters',
     templateUrl: './assessment-filters.component.html',
 })
-export class AssessmentFiltersComponent {
+export class AssessmentFiltersComponent implements OnChanges {
     FilterProp = FilterProp;
 
     filterProp: FilterProp = FilterProp.ALL;
 
     @Input() submissions: Submission[] = [];
 
+    @Input() resetFilter = false;
+
     @Output() filterChange = new EventEmitter<Submission[]>();
+
+    ngOnChanges() {
+        if (this.resetFilter) {
+            this.filterProp = FilterProp.ALL;
+        }
+    }
 
     /**
      * Updates filter to either filtering for locked or all assessments

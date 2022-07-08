@@ -55,8 +55,8 @@ describe('Static code analysis tests', () => {
      */
     function makeSuccessfulSubmissionWithScaErrors() {
         makeSubmissionAndVerifyResults(editorPage, exercise.packageName!, scaSubmission, () => {
-            editorPage.getResultScorePercentage().should('contain.text', '50%').and('be.visible');
-            editorPage.getResultPanel().contains('13 of 13 passed').click();
+            editorPage.getResultScore().contains('50%').and('be.visible');
+            editorPage.getResultScore().contains('13 of 13 passed').click();
             scaFeedback.shouldShowPointChart();
             scaFeedback.shouldShowFeedback(13, '10');
             // We have to verify those static texts here. If we don't verify those messages the only difference between the SCA and normal programming exercise

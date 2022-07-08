@@ -143,7 +143,7 @@ public class VideoUnitResource {
         normalizeVideoUrl(videoUnit);
         validateVideoUrl(videoUnit);
 
-        Lecture lecture = lectureRepository.findByIdWithPostsAndLectureUnitsAndLearningGoalsElseThrow(lectureId);
+        Lecture lecture = lectureRepository.findByIdWithLectureUnitsElseThrow(lectureId);
         if (lecture.getCourse() == null) {
             throw new ConflictException("Specified lecture is not part of a course", "VideoUnit", "courseMissing");
         }
