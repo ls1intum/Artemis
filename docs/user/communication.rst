@@ -10,7 +10,7 @@ Communication
 Overview
 --------
 
-Artemis enables students, tutors, and instructors to actively participate with its' communication feature.
+Artemis enables students, tutors, and instructors to actively participate with its communication feature.
 Various communication features allow students to engage with peers and ask all kinds of questions whereas moderators (e.g., instructors and tutors) can provide general course information and answer content-related questions.
 Communication can be made in different contexts, namely for lectures, exercises, or courses.
 Below, you can find more information on specific features and how to use them.
@@ -142,9 +142,48 @@ Announcements can be created in the course communication overview by selecting t
 As soon as the announcement is created, all participants, that did not actively refrain from being notified, will receive an email containing the announcement's content.
 Additionally, announcements visually differ from normal posts and are always displayed on top of the communication overview.
 
+Notifications
+-------------
+
+Artemis supports customizable web and email notifications. Users can enable and disable different notification types.
+
+Web Notifications
+^^^^^^^^^^^^^^^^^
+
+The web notifications can be found on the top right of the page by clicking on the bell icon.
+A red number shows the number of new messages.
+
+|notification-top-bar|
+
+|notification-side-bar|
+
+Email Notifications
+^^^^^^^^^^^^^^^^^^^
+
+Artemis can also send out emails for certain notification types.
+Additionally, Artemis can send out a weekly summary at Friday 5pm.
+
+|notification-email|
+
+Settings
+^^^^^^^^
+
+The user can change their preference for different types of notifications and decide if they want to receive emails, web notifications or no notification.
+These settings can be found after clicking on the web notifications. The gear on the top left of the sidebar then leads to the settings.
+
+|notification-settings|
+
 .. |lecture-posts| image:: communication/lecture-posts.png
     :width: 1000
 .. |exercise-posts| image:: communication/exercise-posts.png
     :width: 1000
 .. |course-posts| image:: communication/course-posts.png
+    :width: 1000
+.. |notification-top-bar| image:: communication/notification-top-bar.png
+    :width: 1000
+.. notification-side-bar| image:: communication/notification-side-bar.png
+    :width: 1000
+.. |notification-email| image:: communication/notification-email.png
+    :width: 1000
+.. |notification-settings| image:: communication/notification-settings.png
     :width: 1000
