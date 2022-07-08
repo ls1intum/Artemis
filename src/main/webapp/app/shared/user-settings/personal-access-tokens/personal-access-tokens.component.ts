@@ -9,26 +9,26 @@ import { PersonalAccessTokenService } from 'app/shared/user-settings/personal-ac
 export class PersonalAccessTokensComponent implements OnInit {
     tokenMaxLifetimeDays: number;
     newTokenLifetimeDays = 1;
-    newTokenLifetimeMillis: number;
+    newTokenLifetimeSeconds: number;
     wasCopied = false;
     token = '';
 
-    private dayInMillis = 1000 * 60 * 60 * 24;
+    private dayInSeconds = 60 * 60 * 24;
 
     constructor(private patService: PersonalAccessTokenService) {
-        this.convertTokenLifetimeFromDaysToMillis();
+        this.convertTokenLifetimeFromDaysToSeconds();
     }
 
     ngOnInit() {
-        this.patService.getTokenMaxLifetimeMillis().subscribe((resp: number) => (this.tokenMaxLifetimeDays = resp / this.dayInMillis));
+        this.patService.getTokenMaxLifetimeSeconds().subscribe((resp: number) => (this.tokenMaxLifetimeDays = resp / this.dayInSeconds));
     }
 
-    convertTokenLifetimeFromDaysToMillis() {
-        this.newTokenLifetimeMillis = this.newTokenLifetimeDays * this.dayInMillis;
+    convertTokenLifetimeFromDaysToSeconds() {
+        this.newTokenLifetimeSeconds = this.newTokenLifetimeDays * this.dayInSeconds;
     }
 
     generateNewToken() {
-        this.patService.generateNewToken(this.newTokenLifetimeMillis).subscribe((token: string) => (this.token = token));
+        this.patService.generateNewToken(this.newTokenLifetimeSeconds).subscribe((token: string) => (this.token = token));
     }
 
     /**

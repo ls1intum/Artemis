@@ -13,11 +13,11 @@ export class PersonalAccessTokenService {
 
     constructor(private http: HttpClient) {}
 
-    getTokenMaxLifetimeMillis(): Observable<number> {
+    getTokenMaxLifetimeSeconds(): Observable<number> {
         return this.http.get<number>(this.lifeTimeUrl);
     }
 
-    generateNewToken(lifetimeMillis: number): Observable<string> {
-        return this.http.post<JwtToken>(this.tokenUrl, lifetimeMillis).pipe(map((resp: JwtToken) => resp['id_token']));
+    generateNewToken(lifetimeSeconds: number): Observable<string> {
+        return this.http.post<JwtToken>(this.tokenUrl, lifetimeSeconds).pipe(map((resp: JwtToken) => resp['id_token']));
     }
 }
