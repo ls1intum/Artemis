@@ -53,6 +53,7 @@ import de.tum.in.www1.artemis.domain.metis.*;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.*;
+import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismCase;
 import de.tum.in.www1.artemis.domain.plagiarism.modeling.ModelingPlagiarismResult;
 import de.tum.in.www1.artemis.domain.plagiarism.text.TextPlagiarismResult;
 import de.tum.in.www1.artemis.domain.quiz.*;
@@ -64,6 +65,7 @@ import de.tum.in.www1.artemis.repository.hestia.ProgrammingExerciseSolutionEntry
 import de.tum.in.www1.artemis.repository.hestia.ProgrammingExerciseTaskRepository;
 import de.tum.in.www1.artemis.repository.metis.AnswerPostRepository;
 import de.tum.in.www1.artemis.repository.metis.PostRepository;
+import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismCaseRepository;
 import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismResultRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.*;
@@ -148,6 +150,9 @@ public class DatabaseUtilService {
 
     @Autowired
     private StudentParticipationRepository studentParticipationRepo;
+
+    @Autowired
+    private PlagiarismCaseRepository plagiarismCaseRepository;
 
     @Autowired
     private PlagiarismResultRepository plagiarismResultRepo;
@@ -786,6 +791,11 @@ public class DatabaseUtilService {
 
         courseRepo.save(course1);
 
+        PlagiarismCase plagiarismCase = new PlagiarismCase();
+        plagiarismCase.setExercise(textExercise);
+        plagiarismCase.setStudent(userRepo.findOneByLogin("student1").get());
+        plagiarismCase = plagiarismCaseRepository.save(plagiarismCase);
+
         List<Post> posts = new ArrayList<>();
 
         // add posts to exercise
@@ -793,6 +803,9 @@ public class DatabaseUtilService {
 
         // add posts to lecture
         posts.addAll(createBasicPosts(lecture));
+
+        // add post to plagiarismCase
+        posts.add(createBasicPost(plagiarismCase));
 
         // add posts to course with different course-wide contexts provided in input array
         CourseWideContext[] courseWideContexts = new CourseWideContext[] { CourseWideContext.ORGANIZATION, CourseWideContext.RANDOM, CourseWideContext.TECH_SUPPORT,
@@ -842,6 +855,12 @@ public class DatabaseUtilService {
             posts.add(postToAdd);
         }
         return posts;
+    }
+
+    private Post createBasicPost(PlagiarismCase plagiarismCase) {
+        Post postToAdd = createBasicPost(0);
+        postToAdd.setPlagiarismCase(plagiarismCase);
+        return postRepository.save(postToAdd);
     }
 
     private List<Post> createBasicPosts(Course courseContext, CourseWideContext[] courseWideContexts) {
