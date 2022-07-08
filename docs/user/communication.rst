@@ -180,9 +180,9 @@ These settings can be found after clicking on the web notifications. The gear on
 .. |course-posts| image:: communication/course-posts.png
     :width: 1000
 .. |notification-top-bar| image:: communication/notification-top-bar.png
-    :width: 1000
+    :width: 500
 .. |notification-side-bar| image:: communication/notification-side-bar.png
-    :width: 1000
+    :width: 500
 .. |notification-email| image:: communication/notification-email.png
     :width: 1000
 .. |notification-settings| image:: communication/notification-settings.png
