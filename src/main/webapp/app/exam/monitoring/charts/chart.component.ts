@@ -4,21 +4,16 @@ import { NgxChartsEntry } from 'app/shared/chart/ngx-charts-datatypes';
 import { Subscription } from 'rxjs';
 import { ExamActionService } from '../exam-action.service';
 import { ActivatedRoute } from '@angular/router';
-import { ExamAction } from 'app/entities/exam-user-activity.model';
 import dayjs from 'dayjs/esm';
 import { ceilDayjsSeconds } from 'app/exam/monitoring/charts/monitoring-chart';
 
 export abstract class ChartComponent {
     // Subscriptions
     protected routeSubscription?: Subscription;
-    protected examActionSubscription?: Subscription;
 
     // Exam
     protected examId: number;
     protected courseId: number;
-
-    // Actions
-    filteredExamActions: ExamAction[] = [];
 
     chartIdentifierKey = '';
 
@@ -45,19 +40,13 @@ export abstract class ChartComponent {
     }
 
     /**
-     * Inits all subscriptions.
+     * Inits all subscriptions (without the exam action subscription).
      * @protected
      */
     protected initSubscriptions() {
         this.routeSubscription = this.route.parent?.params.subscribe((params) => {
             this.examId = Number(params['examId']);
             this.courseId = Number(params['courseId']);
-        });
-
-        this.examActionSubscription = this.examActionService.getExamMonitoringObservable(this.examId)?.subscribe((examAction) => {
-            if (examAction && this.filterRenderedData(examAction)) {
-                this.evaluateAndAddAction(examAction);
-            }
         });
     }
 
@@ -66,7 +55,7 @@ export abstract class ChartComponent {
      * @protected
      */
     protected endSubscriptions() {
-        this.examActionSubscription?.unsubscribe();
+        this.routeSubscription?.unsubscribe();
     }
 
     protected initRenderRate(seconds: number) {
@@ -79,42 +68,12 @@ export abstract class ChartComponent {
     /**
      * Create and initialize the data for the chart.
      */
-    initData(): void {
-        this.filteredExamActions.push(...(this.examActionService.cachedExamActions.get(this.examId) ?? []).filter((action) => this.filterRenderedData(action)));
-    }
+    abstract initData(): void;
 
     /**
      * Updates the data for the chart.
      */
     abstract updateData(): void;
-
-    /**
-     * The default case is that we don't filter any actions. This filter is adapted in subclasses.
-     * @param examAction
-     */
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    filterRenderedData(examAction: ExamAction): boolean {
-        return true;
-    }
-
-    /**
-     * The default case is that we don't evaluate the action in this place and simply add it. This evaluation is adapted in subclasses.
-     * @param examAction
-     */
-    evaluateAndAddAction(examAction: ExamAction) {
-        this.filteredExamActions.push(examAction);
-    }
-
-    /**
-     * Method to filter actions which are not in the specified time frame.
-     * @param examAction received action
-     * @protected
-     */
-    protected filterActionsNotInTimeframe(examAction: ExamAction) {
-        return ceilDayjsSeconds(dayjs(), this.timeStampGapInSeconds)
-            .subtract(this.showNumberLastTimeStamps * this.timeStampGapInSeconds, 'seconds')
-            .isBefore(examAction.ceiledTimestamp ?? examAction.timestamp);
-    }
 
     /**
      * Method to get the last x time stamps.

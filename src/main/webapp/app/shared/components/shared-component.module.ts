@@ -13,7 +13,6 @@ import { HelpIconComponentWithoutTranslationComponent } from 'app/shared/compone
 
 @NgModule({
     imports: [ArtemisSharedModule, FeatureToggleModule, ClipboardModule],
-    entryComponents: [ConfirmAutofocusModalComponent],
     declarations: [
         ButtonComponent,
         HelpIconComponent,

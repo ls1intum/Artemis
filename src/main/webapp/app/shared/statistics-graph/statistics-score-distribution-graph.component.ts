@@ -3,6 +3,8 @@ import { round } from 'app/shared/util/utils';
 import { GraphColors } from 'app/entities/statistics.model';
 import { axisTickFormattingWithPercentageSign } from 'app/shared/statistics-graph/statistics-graph.utils';
 import { Color, ScaleType } from '@swimlane/ngx-charts';
+import { ExerciseType } from 'app/entities/exercise.model';
+import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
 
 @Component({
     selector: 'jhi-statistics-score-distribution-graph',
@@ -16,11 +18,12 @@ export class StatisticsScoreDistributionGraphComponent implements OnInit {
     scoreDistribution: number[] | undefined;
     @Input()
     numberOfExerciseScores: number | undefined;
-
-    // Histogram related properties
-    exerciseAverageLegend: string;
-    distributionLegend: string;
-    chartLegend = true;
+    @Input()
+    exerciseType: ExerciseType;
+    @Input()
+    courseId: number;
+    @Input()
+    exerciseId: number;
 
     // ngx
     ngxData: any[] = [];
@@ -35,6 +38,8 @@ export class StatisticsScoreDistributionGraphComponent implements OnInit {
     // Data
     barChartLabels: string[] = [];
     relativeChartData: number[] = [];
+
+    constructor(private navigationService: ArtemisNavigationUtilService) {}
 
     ngOnInit(): void {
         this.initializeChart();
@@ -61,5 +66,15 @@ export class StatisticsScoreDistributionGraphComponent implements OnInit {
     lookUpAbsoluteValue(bucket: string) {
         const index = this.barChartLabels.indexOf(bucket);
         return this.scoreDistribution![index];
+    }
+
+    /**
+     * Handles the event if a user clicks on a certain chart bar
+     * @param event the event passed by ngx-charts
+     */
+    selectChartBar(event: any): void {
+        const index = this.barChartLabels.indexOf(event.name);
+        const route = [`/course-management/${this.courseId}/${this.exerciseType}-exercises/${this.exerciseId}/scores`];
+        this.navigationService.routeInNewTab(route, { queryParams: { scoreRangeFilter: index } });
     }
 }

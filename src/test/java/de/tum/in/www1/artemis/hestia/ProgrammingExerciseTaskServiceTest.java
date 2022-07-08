@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.hestia;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -16,6 +17,7 @@ import de.tum.in.www1.artemis.domain.ProgrammingExerciseTestCase;
 import de.tum.in.www1.artemis.domain.hestia.CodeHint;
 import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseTask;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseTestCaseRepository;
 import de.tum.in.www1.artemis.repository.hestia.CodeHintRepository;
 import de.tum.in.www1.artemis.repository.hestia.ProgrammingExerciseTaskRepository;
 import de.tum.in.www1.artemis.service.hestia.ProgrammingExerciseTaskService;
@@ -30,6 +32,9 @@ public class ProgrammingExerciseTaskServiceTest extends AbstractSpringIntegratio
 
     @Autowired
     private ProgrammingExerciseRepository programmingExerciseRepository;
+
+    @Autowired
+    private ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository;
 
     @Autowired
     private CodeHintRepository codeHintRepository;
@@ -134,7 +139,7 @@ public class ProgrammingExerciseTaskServiceTest extends AbstractSpringIntegratio
     }
 
     /**
-     * Tests that not changing any tasks in the problem statment will not update any tasks
+     * Tests that not changing any tasks in the problem statement will not update any tasks
      */
     @Test
     public void testNoChanges() {
@@ -169,6 +174,27 @@ public class ProgrammingExerciseTaskServiceTest extends AbstractSpringIntegratio
         assertThat(programmingExerciseTaskRepository.findAll()).hasSize(1);
         assertThat(programmingExerciseTaskRepository.findById(task.getId())).isEmpty();
         assertThat(codeHintRepository.findAll()).isEmpty();
+    }
+
+    @Test
+    public void testParseTestCaseNames() {
+        List<String> testCaseNames = List.of("testClass[BubbleSort]", "testWithBraces()", "testParametrized(Parameter1, 2)[1]");
+        for (var name : testCaseNames) {
+            var testCase = new ProgrammingExerciseTestCase();
+            testCase.setExercise(programmingExercise);
+            testCase.setTestName(name);
+            testCase.setActive(true);
+            programmingExerciseTestCaseRepository.save(testCase);
+        }
+        updateProblemStatement("""
+                [task][Task 1](testClass[BubbleSort],testWithBraces(),testParametrized(Parameter1, 2)[1])
+                """);
+        var actualTasks = programmingExerciseTaskRepository.findAll();
+        assertThat(actualTasks).hasSize(1);
+        var actualTaskWithTestCases = programmingExerciseTaskRepository.findByIdWithTestCaseAndSolutionEntriesElseThrow(actualTasks.get(0).getId());
+        assertThat(actualTaskWithTestCases.getTaskName()).isEqualTo("Task 1");
+        var actualTestCaseNames = actualTaskWithTestCases.getTestCases().stream().map(ProgrammingExerciseTestCase::getTestName).toList();
+        assertThat(actualTestCaseNames).isEqualTo(testCaseNames);
     }
 
     private boolean checkTaskEqual(ProgrammingExerciseTask task, String expectedName, String expectedTestName) {

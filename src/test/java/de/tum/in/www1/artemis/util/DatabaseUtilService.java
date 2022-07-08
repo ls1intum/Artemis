@@ -1535,26 +1535,24 @@ public class DatabaseUtilService {
     }
 
     public Result addResultToParticipation(AssessmentType type, ZonedDateTime completionDate, Participation participation, boolean successful, boolean rated, double score) {
-        Result result = new Result().participation(participation).resultString("x of y passed").successful(successful).rated(rated).score(score).assessmentType(type)
-                .completionDate(completionDate);
+        Result result = new Result().participation(participation).successful(successful).rated(rated).score(score).assessmentType(type).completionDate(completionDate);
         return resultRepo.save(result);
     }
 
     public Result addResultToParticipation(AssessmentType assessmentType, ZonedDateTime completionDate, Participation participation) {
-        Result result = new Result().participation(participation).resultString("x of y passed").successful(true).rated(true).score(100D).assessmentType(assessmentType)
-                .completionDate(completionDate);
+        Result result = new Result().participation(participation).successful(true).rated(true).score(100D).assessmentType(assessmentType).completionDate(completionDate);
         return resultRepo.save(result);
     }
 
-    public Result addResultToParticipation(AssessmentType assessmentType, ZonedDateTime completionDate, Participation participation, String resultString, String assessorLogin,
+    public Result addResultToParticipation(AssessmentType assessmentType, ZonedDateTime completionDate, Participation participation, String assessorLogin,
             List<Feedback> feedbacks) {
-        Result result = new Result().participation(participation).resultString(resultString).assessmentType(assessmentType).completionDate(completionDate).feedbacks(feedbacks);
+        Result result = new Result().participation(participation).assessmentType(assessmentType).completionDate(completionDate).feedbacks(feedbacks);
         result.setAssessor(getUserByLogin(assessorLogin));
         return resultRepo.save(result);
     }
 
     public Result addResultToParticipation(Participation participation, Submission submission) {
-        Result result = new Result().participation(participation).resultString("x of y passed").successful(true).score(100D);
+        Result result = new Result().participation(participation).successful(true).score(100D);
         result = resultRepo.save(result);
         result.setSubmission(submission);
         submission.addResult(result);
@@ -1599,10 +1597,8 @@ public class DatabaseUtilService {
         return resultRepo.save(result);
     }
 
-    public Submission addResultToSubmission(final Submission submission, AssessmentType assessmentType, User user, String resultString, Double score, boolean rated,
-            ZonedDateTime completionDate) {
-        Result result = new Result().participation(submission.getParticipation()).assessmentType(assessmentType).resultString(resultString).score(score).rated(rated)
-                .completionDate(completionDate);
+    public Submission addResultToSubmission(final Submission submission, AssessmentType assessmentType, User user, Double score, boolean rated, ZonedDateTime completionDate) {
+        Result result = new Result().participation(submission.getParticipation()).assessmentType(assessmentType).score(score).rated(rated).completionDate(completionDate);
         result.setAssessor(user);
         result = resultRepo.save(result);
         result.setSubmission(submission);
@@ -1612,15 +1608,15 @@ public class DatabaseUtilService {
     }
 
     public Submission addResultToSubmission(Submission submission, AssessmentType assessmentType) {
-        return addResultToSubmission(submission, assessmentType, null, "x of y passed", 100D, true, null);
+        return addResultToSubmission(submission, assessmentType, null, 100D, true, null);
     }
 
     public Submission addResultToSubmission(Submission submission, AssessmentType assessmentType, User user) {
-        return addResultToSubmission(submission, assessmentType, user, "x of y passed", 100D, true, ZonedDateTime.now());
+        return addResultToSubmission(submission, assessmentType, user, 100D, true, ZonedDateTime.now());
     }
 
     public Submission addResultToSubmission(Submission submission, AssessmentType assessmentType, User user, Double score, boolean rated) {
-        return addResultToSubmission(submission, assessmentType, user, "x of y passed", score, rated, ZonedDateTime.now());
+        return addResultToSubmission(submission, assessmentType, user, score, rated, ZonedDateTime.now());
     }
 
     public void addRatingToResult(Result result, int score) {
@@ -2556,7 +2552,6 @@ public class DatabaseUtilService {
         result = resultRepo.save(result);
         result.setSubmission(submission);
         result.completionDate(pastTimestamp);
-        result.resultString("3 of 10 points");
         result.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
         result.setAssessor(assessor);
         result.setRated(true);
@@ -2671,10 +2666,9 @@ public class DatabaseUtilService {
         result = resultRepo.save(result);
         result.setSubmission(submission);
         submission.addResult(result);
-        // Manual results are always rated and have a resultString which is defined in the client
+        // Manual results are always rated
         if (assessmentType == AssessmentType.SEMI_AUTOMATIC) {
             result.rated(true);
-            result.resultString("1 of 13 passed, 1 issue, 5 of 10 points");
         }
         submission = programmingSubmissionRepo.save(submission);
         return submission;
@@ -2790,7 +2784,6 @@ public class DatabaseUtilService {
         result.setAssessor(getUserByLogin(assessorLogin));
         result.setScore(100D);
         result.setParticipation(participation);
-        result.setResultString(exercise.getMaxPoints(), exercise.getMaxPoints());
         if (exercise.getReleaseDate() != null) {
             result.setCompletionDate(exercise.getReleaseDate());
         }
@@ -3628,13 +3621,11 @@ public class DatabaseUtilService {
 
         double calculatedTotalPoints = resultRepo.calculateTotalPoints(storedFeedback);
         double totalPoints = resultRepo.constrainToRange(calculatedTotalPoints, 20.0);
-        storedFeedbackResult.setScore(totalPoints, 20.0);
-        storedFeedbackResult.setResultString(totalPoints, 20.0);
+        storedFeedbackResult.setScore(100.0 * totalPoints / 20.0);
 
         double calculatedTotalPoints2 = resultRepo.calculateTotalPoints(sentFeedback);
         double totalPoints2 = resultRepo.constrainToRange(calculatedTotalPoints2, 20.0);
-        sentFeedbackResult.setScore(totalPoints2, 20.0);
-        sentFeedbackResult.setResultString(totalPoints2, 20.0);
+        sentFeedbackResult.setScore(100.0 * totalPoints2 / 20.0);
 
         assertThat(storedFeedbackResult.getScore()).as("stored feedback evaluates to the same score as sent feedback").isEqualTo(sentFeedbackResult.getScore());
         storedFeedback.forEach(feedback -> assertThat(feedback.getType()).as("type has been set correctly").isEqualTo(feedbackType));
