@@ -17,7 +17,7 @@ import { ArtemisProgrammingExerciseManagementModule } from 'app/exercises/progra
 import { ArtemisQuizManagementModule } from 'app/exercises/quiz/manage/quiz-management.module';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { ArtemisDataTableModule } from 'app/shared/data-table/data-table.module';
-import { NgxDatatableModule } from '@swimlane/ngx-datatable';
+import { NgxDatatableModule } from '@flaviosantoro92/ngx-datatable';
 import { FormDateTimePickerModule } from 'app/shared/date-time-picker/date-time-picker.module';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { ArtemisMarkdownEditorModule } from 'app/shared/markdown-editor/markdown-editor.module';
