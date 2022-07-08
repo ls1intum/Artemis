@@ -193,7 +193,7 @@ class ExamActivityIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @WithMockUser(username = "admin", roles = "ADMIN")
     @EnumSource(ExamActionType.class)
-    public void testGetInitialExamActions(ExamActionType examActionType) throws Exception {
+    void testGetInitialExamActions(ExamActionType examActionType) throws Exception {
         ExamAction examAction = createExamActionBasedOnType(examActionType);
 
         examActivityResource.updatePerformedExamActions(exam.getId(), examAction);

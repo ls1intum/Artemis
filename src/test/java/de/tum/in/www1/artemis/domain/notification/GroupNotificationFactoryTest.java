@@ -24,7 +24,7 @@ import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.metis.AnswerPost;
 import de.tum.in.www1.artemis.domain.metis.Post;
 
-public class GroupNotificationFactoryTest {
+class GroupNotificationFactoryTest {
 
     private static Lecture lecture;
 

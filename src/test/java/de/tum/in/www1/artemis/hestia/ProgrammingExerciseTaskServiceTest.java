@@ -177,7 +177,7 @@ class ProgrammingExerciseTaskServiceTest extends AbstractSpringIntegrationBamboo
     }
 
     @Test
-    public void testParseTestCaseNames() {
+    void testParseTestCaseNames() {
         List<String> testCaseNames = List.of("testClass[BubbleSort]", "testWithBraces()", "testParametrized(Parameter1, 2)[1]");
         for (var name : testCaseNames) {
             var testCase = new ProgrammingExerciseTestCase();

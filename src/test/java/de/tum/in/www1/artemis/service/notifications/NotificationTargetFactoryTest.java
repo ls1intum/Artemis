@@ -13,7 +13,7 @@ import de.tum.in.www1.artemis.domain.notification.GroupNotification;
 import de.tum.in.www1.artemis.domain.notification.Notification;
 import de.tum.in.www1.artemis.domain.notification.NotificationTarget;
 
-public class NotificationTargetFactoryTest {
+class NotificationTargetFactoryTest {
 
     private static Post post;
 

@@ -24,7 +24,7 @@ import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismResult;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismSubmission;
 import de.tum.in.www1.artemis.domain.plagiarism.text.TextPlagiarismResult;
 
-public class SingleUserNotificationFactoryTest {
+class SingleUserNotificationFactoryTest {
 
     private static Lecture lecture;
 

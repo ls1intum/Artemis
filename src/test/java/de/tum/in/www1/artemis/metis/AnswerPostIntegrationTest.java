@@ -493,7 +493,7 @@ class AnswerPostIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void testEditAnswerPost_asStudent1() throws Exception {
+    void testEditAnswerPost_asStudent1() throws Exception {
         // update own post (index 0)--> OK
         AnswerPost answerPostToUpdate = editExistingAnswerPost(existingAnswerPosts.get(0));
 

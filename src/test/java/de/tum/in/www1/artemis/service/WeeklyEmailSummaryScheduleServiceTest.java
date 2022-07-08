@@ -20,7 +20,7 @@ import de.tum.in.www1.artemis.service.scheduled.WeeklyEmailSummaryScheduleServic
 /**
  * Tests if the WeeklyEmailSummaryScheduleService correctly calls the EmailSummaryService with the expected times and intervals
  */
-public class WeeklyEmailSummaryScheduleServiceTest {
+class WeeklyEmailSummaryScheduleServiceTest {
 
     private static WeeklyEmailSummaryScheduleService weeklyEmailSummaryService;
 
