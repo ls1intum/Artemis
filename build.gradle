@@ -21,7 +21,7 @@ plugins {
     id "org.springframework.boot" version "${spring_boot_version}"
     id "com.google.cloud.tools.jib" version "3.2.1"
     id "com.github.node-gradle.node" version "3.4.0"
-    id "com.diffplug.spotless" version "6.7.2"
+    id "com.diffplug.spotless" version "6.8.0"
     // this allows us to find outdated dependencies via ./gradlew dependencyUpdates
     id "com.github.ben-manes.versions" version "0.42.0"
     id "com.github.andygoossens.modernizer" version "1.6.2"
@@ -29,7 +29,7 @@ plugins {
 }
 
 group = "de.tum.in.www1.artemis"
-version = "5.8.7"
+version = "5.9.0"
 description = "Interactive Learning with Individual Feedback"
 
 sourceCompatibility=17
@@ -183,7 +183,7 @@ dependencies {
     implementation "com.thoughtworks.qdox:qdox:2.0.1"
     implementation "io.sentry:sentry-logback:6.1.4"
     implementation "io.sentry:sentry-spring-boot-starter:6.1.4"
-    implementation "org.jsoup:jsoup:1.15.1"
+    implementation "org.jsoup:jsoup:1.15.2"
     implementation "commons-codec:commons-codec:1.15"   // needed for spring security saml2
 
     implementation "org.springdoc:springdoc-openapi-ui:1.6.9"

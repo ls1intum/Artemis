@@ -10,7 +10,7 @@ import { PostingButtonComponent } from 'app/shared/metis/posting-button/posting-
 import { HelpIconComponent } from 'app/shared/components/help-icon.component';
 import { ViewContainerRef } from '@angular/core';
 import { MockViewContainerRef } from '../../../../../helpers/mocks/service/mock-view-container-ref.service';
-import { metisAnswerPostToCreateUser1, metisResolvingAnswerPostUser1, metisAnswerPostUser2 } from '../../../../../helpers/sample/metis-sample-data';
+import { metisAnswerPostToCreateUser1, metisAnswerPostUser2, metisResolvingAnswerPostUser1 } from '../../../../../helpers/sample/metis-sample-data';
 
 describe('AnswerPostCreateEditModalComponent', () => {
     let component: AnswerPostCreateEditModalComponent;
