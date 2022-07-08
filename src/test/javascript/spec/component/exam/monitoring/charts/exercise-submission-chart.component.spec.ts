@@ -11,9 +11,9 @@ import { getColor } from 'app/exam/monitoring/charts/monitoring-chart';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { Exam } from 'app/entities/exam.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
-import { ExamAction, ExamActionType, SavedExerciseAction } from 'app/entities/exam-user-activity.model';
+import { SavedExerciseAction } from 'app/entities/exam-user-activity.model';
 import { ExerciseTemplateChartComponent } from 'app/exam/monitoring/charts/exercises/exercise-template-chart.component';
-import { createActions, createExamActionBasedOnType, createTestExercises } from '../exam-monitoring-helper';
+import { createTestExercises } from '../exam-monitoring-helper';
 import { ExerciseSubmissionChartComponent } from 'app/exam/monitoring/charts/exercises/exercise-submission-chart.component';
 import { GraphColors } from 'app/entities/statistics.model';
 import { Course } from 'app/entities/course.model';
@@ -21,10 +21,12 @@ import { of } from 'rxjs';
 import { ActivatedRoute } from '@angular/router';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { MockWebsocketService } from '../../../../helpers/mocks/service/mock-websocket.service';
+import { ExamActionService } from 'app/exam/monitoring/exam-action.service';
 
 describe('Exercise Submission Chart Component', () => {
     let comp: ExerciseSubmissionChartComponent;
     let fixture: ComponentFixture<ExerciseSubmissionChartComponent>;
+    let examActionService: ExamActionService;
 
     // Course
     const course = new Course();
@@ -55,6 +57,7 @@ describe('Exercise Submission Chart Component', () => {
             .then(() => {
                 fixture = TestBed.createComponent(ExerciseSubmissionChartComponent);
                 comp = fixture.componentInstance;
+                examActionService = TestBed.inject(ExamActionService);
             });
     });
 
@@ -83,15 +86,25 @@ describe('Exercise Submission Chart Component', () => {
         ${[-1, -1, -1]} | ${[1, 2, 3]} | ${[0, 0]} | ${[getColor(0), getColor(0)]}
     `('should call initData on init with actions', (param: { input: number[]; activity: number[]; expect: number[]; color: [GraphColors] }) => {
         // GIVEN
+        const submissionsPerStudent = new Map();
         const action1 = new SavedExerciseAction(true, param.input[0], param.input[0], false, false);
         action1.examActivityId = param.activity[0];
+        let submissions = submissionsPerStudent.get(action1.examActivityId) ?? new Set();
+        submissions.add(param.input[0]);
+        submissionsPerStudent.set(action1.examActivityId, submissions);
         const action2 = new SavedExerciseAction(true, param.input[1], param.input[1], true, false);
         action2.examActivityId = param.activity[1];
+        submissions = submissionsPerStudent.get(action2.examActivityId) ?? new Set();
+        submissions.add(param.input[1]);
+        submissionsPerStudent.set(action2.examActivityId, submissions);
         const action3 = new SavedExerciseAction(true, param.input[2], param.input[2], false, true);
         action3.examActivityId = param.activity[2];
+        submissions = submissionsPerStudent.get(action3.examActivityId) ?? new Set();
+        submissions.add(param.input[2]);
+        submissionsPerStudent.set(action3.examActivityId, submissions);
 
         comp.exam = exam;
-        comp.filteredExamActions = [action1, action2, action3];
+        examActionService.cachedSubmissionsPerStudent.set(exam.id!, submissionsPerStudent);
 
         // WHEN
         comp.ngOnInit();
@@ -102,24 +115,5 @@ describe('Exercise Submission Chart Component', () => {
             { name: exercises[1].title!, value: param.expect[1] },
         ]);
         expect(comp.ngxColor.domain).toEqual(param.color);
-    });
-
-    // Evaluate and add action
-    it('should evaluate and add action', () => {
-        const action = createExamActionBasedOnType(ExamActionType.SAVED_EXERCISE);
-        expect(comp.filteredExamActions).toEqual([]);
-
-        comp.evaluateAndAddAction(action);
-
-        const expectedMap = new Map();
-        expectedMap.set(action.examActivityId, new Set([0]));
-
-        expect(comp.filteredExamActions).toEqual([action]);
-        expect(comp.submittedPerStudent).toEqual(expectedMap);
-    });
-
-    // Filter actions
-    it.each(createActions())('should filter action', (action: ExamAction) => {
-        expect(comp.filterRenderedData(action)).toBe(action.type === ExamActionType.SAVED_EXERCISE);
     });
 });
