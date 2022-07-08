@@ -163,7 +163,6 @@ public class ExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitb
         List<Course> courses = database.createCoursesWithExercisesAndLectures(true);
         for (Course course : courses) {
             for (Exercise exercise : course.getExercises()) {
-
                 hibernateQueryInterceptor.startQueryCount();
 
                 Exercise exerciseServer = request.get("/api/exercises/" + exercise.getId(), HttpStatus.OK, Exercise.class);

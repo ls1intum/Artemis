@@ -569,13 +569,10 @@ public class CourseTestService {
     // Test
     public void testGetCourseForDashboard() throws Exception {
         List<Course> courses = database.createCoursesWithExercisesAndLecturesAndLectureUnits(true, false);
-
         hibernateQueryInterceptor.startQueryCount();
 
         Course receivedCourse = request.get("/api/courses/" + courses.get(0).getId() + "/for-dashboard", HttpStatus.OK, Course.class);
 
-        // Checks the amount of DB queries done for the rest call. Needs to be done right after the rest call to avoid counting queries during the setup
-        // Ensures that the amount of queries done doesn't increase
         assertThat(hibernateQueryInterceptor.getQueryCount()).isEqualTo(6);
 
         // Test that the received course has five exercises
@@ -654,7 +651,6 @@ public class CourseTestService {
 
     // Tests the amount of DB calls for a 'realistic' call to courses/for-dashboard. We should aim to maintain or lower the amount of DB calls, and be aware if they increase
     public void testGetAllCoursesForDashboardRealisticQueryCount() throws Exception {
-        //
         database.createMultipleCoursesWithAllExercisesAndLectures(10, 10);
 
         hibernateQueryInterceptor.startQueryCount();

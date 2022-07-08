@@ -420,7 +420,7 @@ If you want to write tests for Programming Exercises to test student's submissio
 23. Counting database query calls within tests
 ==============================================
 
-It's possible to write tests for how many database calls are performed during a REST call. This is useful to ensure that code changes don't lead to more database calls,
+It's possible to write tests that check how many database calls are performed during a REST call. This is useful to ensure that code changes don't lead to more database calls,
 or at least to remind developers in case they do. It's especially important for commonly used endpoints that users access multiple times or every time they use Artemis.
 However, we should consider carefully before adding such assertions to a test as it makes the test more tedious to maintain.
 
@@ -437,7 +437,6 @@ and the ``hibernateQueryInterceptor.getQueryCount()`` should be right before/aft
         @Test
         @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
         public void testQueryCount() throws Exception {
-
             // Needs to be done right before the REST call to avoid counting queries during the setup
             hibernateQueryInterceptor.startQueryCount();
 
