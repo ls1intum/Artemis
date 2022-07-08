@@ -14,28 +14,16 @@
             ><!-- we need to make sure that result is not null, otherwise the compiler complains below -->
             <span [ngClass]="textColorClass" class="guided-tour" id="result-score">
                 <fa-icon [icon]="resultIconClass" size="lg"></fa-icon>
-                <span class="score" *ngIf="exercise" id="result-score-percentage">
-                    <span *ngIf="!short" jhiTranslate="artemisApp.result.score">Score</span>
-                    {{ roundScoreSpecifiedByCourseSettings(result.score, getCourseFromExercise(exercise!)) }}%,
-                </span>
-                <span *ngIf="resultIsPreliminary(result)">
+                <ng-container *ngIf="resultIsPreliminary(result) || hasFeedback; else notPreliminaryAndNoFeedback">
                     <span class="guided-tour result" (click)="showDetails(result)" [ngbTooltip]="resultTooltip" container="body">
                         {{ resultString }}
                     </span>
-                </span>
-                <ng-container *ngIf="!resultIsPreliminary(result)">
-                    <span *ngIf="hasFeedback">
-                        <span class="guided-tour result" (click)="showDetails(result)" [ngbTooltip]="resultTooltip" container="body">
-                            {{ resultString }}
-                        </span>
-                    </span>
-                    <span *ngIf="!hasFeedback && onlyShowSuccessfulCompileStatus" [ngbTooltip]="resultTooltip" container="body">
+                </ng-container>
+                <ng-template #notPreliminaryAndNoFeedback>
+                    <span [ngbTooltip]="resultTooltip" container="body">
                         {{ resultString }}
                     </span>
-                    <span *ngIf="!hasFeedback && !onlyShowSuccessfulCompileStatus" [ngbTooltip]="resultTooltip" container="body">
-                        {{ result.resultString }}
-                    </span>
-                </ng-container>
+                </ng-template>
                 <span *ngIf="!short"> ({{ result.completionDate! | artemisTimeAgo }}) </span>
                 <!-- TODO in the future we should make sure that result.submission.submissionDate is used here, because submissionDate and completionDate can be different for certain exercise types -->
             </span>
