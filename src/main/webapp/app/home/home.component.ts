@@ -1,6 +1,6 @@
 import { AfterViewChecked, Component, ElementRef, OnInit, Renderer2 } from '@angular/core';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { User } from 'app/core/user/user.model';
 import { Credentials } from 'app/core/auth/auth-jwt.service';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -39,8 +39,9 @@ export class HomeComponent implements OnInit, AfterViewChecked {
     captchaRequired = false;
     credentials: Credentials;
     isRegistrationEnabled = false;
+    isPasswordLoginDisabled = false;
     loading = true;
-    inputFocused = false;
+    mainElementFocused = false;
 
     // if the server is not connected to an external user management such as JIRA, we accept all valid username patterns
     usernameRegexPattern = /^[a-z0-9_-]{3,50}$/; // default, might be overridden in ngOnInit
@@ -60,6 +61,7 @@ export class HomeComponent implements OnInit, AfterViewChecked {
 
     constructor(
         private router: Router,
+        private activatedRoute: ActivatedRoute,
         private accountService: AccountService,
         private loginService: LoginService,
         private stateStorageService: StateStorageService,
@@ -116,6 +118,10 @@ export class HomeComponent implements OnInit, AfterViewChecked {
 
         this.isRegistrationEnabled = !!profileInfo.registrationEnabled;
         this.needsToAcceptTerms = !!profileInfo.needsToAcceptTerms;
+        this.activatedRoute.queryParams.subscribe((params) => {
+            const loginFormOverride = params.hasOwnProperty('showLoginForm');
+            this.isPasswordLoginDisabled = !!this.profileInfo?.saml2 && this.profileInfo.saml2.passwordLoginDisabled && !loginFormOverride;
+        });
     }
 
     registerAuthenticationSuccess() {
@@ -131,15 +137,15 @@ export class HomeComponent implements OnInit, AfterViewChecked {
 
     ngAfterViewChecked() {
         // Only focus the username input once, not on every update
-        if (this.inputFocused || this.loading) {
+        if (this.mainElementFocused || this.loading) {
             return;
         }
 
-        // Focus on the input as soon as it is visible
-        const input = this.renderer.selectRootElement('#username', true);
-        if (input) {
-            input.focus();
-            this.inputFocused = true;
+        // Focus on the main element as soon as it is visible
+        const mainElement = this.renderer.selectRootElement(this.isPasswordLoginDisabled ? '#saml2Button' : '#username', true);
+        if (mainElement) {
+            mainElement.focus();
+            this.mainElementFocused = true;
         }
 
         // If the session expired or similar display a warning
