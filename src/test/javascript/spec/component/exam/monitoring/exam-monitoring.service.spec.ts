@@ -201,17 +201,5 @@ describe('ExamMonitoringService', () => {
 
         expect(spy).toHaveBeenCalledOnce();
         expect(spy).toHaveBeenCalledWith(EXAM_MONITORING_UPDATE_URL(course.id!, exam.id!), monitoring, { observe: 'response' });
-        expect(exam.monitoring).toEqual(monitoring);
-    });
-
-    it.each([true, false])('should not update monitoring', (monitoring: boolean) => {
-        exam.monitoring = !monitoring;
-        const spy = jest.spyOn(http, 'put').mockReturnValue(throwError(() => {}));
-
-        examMonitoringService.updateMonitoring(exam, monitoring);
-
-        expect(spy).toHaveBeenCalledOnce();
-        expect(spy).toHaveBeenCalledWith(EXAM_MONITORING_UPDATE_URL(course.id!, exam.id!), monitoring, { observe: 'response' });
-        expect(exam.monitoring).not.toEqual(monitoring);
     });
 });
