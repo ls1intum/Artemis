@@ -1,14 +1,15 @@
 import { Injectable } from '@angular/core';
-import { BehaviorSubject, Observable, of } from 'rxjs';
+import { BehaviorSubject } from 'rxjs';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { Exam } from 'app/entities/exam.model';
 import { ExamAction } from 'app/entities/exam-user-activity.model';
 import dayjs from 'dayjs/esm';
 import { ceilDayjsSeconds } from 'app/exam/monitoring/charts/monitoring-chart';
 import { HttpClient } from '@angular/common/http';
+import { Observable, of } from 'rxjs';
 
 const EXAM_MONITORING_TOPIC = (examId: number) => `/topic/exam-monitoring/${examId}/action`;
-const EXAM_MONITORING_USER_TOPIC = (examId: number) => `/user/topic/exam-monitoring/${examId}/action`;
+const EXAM_MONITORING_STATUS_TOPIC = (examId: number) => `/topic/exam-monitoring/${examId}/update`;
 
 export interface IExamActionService {}
 
@@ -18,7 +19,8 @@ export class ExamActionService implements IExamActionService {
     cachedExamActions: Map<number, ExamAction[]> = new Map<number, ExamAction[]>();
     initialActionsLoaded: Map<number, boolean> = new Map<number, boolean>();
     openExamMonitoringWebsocketSubscriptions: Map<number, string> = new Map<number, string>();
-    openExamMonitoringUserWebsocketSubscriptions: Map<number, string> = new Map<number, string>();
+    examMonitoringStatusObservables: Map<number, BehaviorSubject<boolean>> = new Map<number, BehaviorSubject<boolean>>();
+    openExamMonitoringStatusWebsocketSubscriptions: Map<number, string> = new Map<number, string>();
 
     constructor(private jhiWebsocketService: JhiWebsocketService, private http: HttpClient) {}
 
@@ -40,19 +42,16 @@ export class ExamActionService implements IExamActionService {
 
     /**
      * Checks if a websocket connection for the exam monitoring to the server already exists.
+     * @param exam to monitor
      * If not a new one will be opened.
      *
      */
     private openExamMonitoringWebsocketSubscriptionIfNotExisting(exam: Exam) {
         const topic = EXAM_MONITORING_TOPIC(exam.id!);
-        const userTopic = EXAM_MONITORING_USER_TOPIC(exam.id!);
         this.openExamMonitoringWebsocketSubscriptions.set(exam.id!, topic);
-        this.openExamMonitoringUserWebsocketSubscriptions.set(exam.id!, userTopic);
 
         this.jhiWebsocketService.subscribe(topic);
-        this.jhiWebsocketService.subscribe(userTopic);
         this.jhiWebsocketService.receive(topic).subscribe((exmAction: ExamAction) => this.notifyExamActionSubscribers(exam, exmAction));
-        this.jhiWebsocketService.receive(userTopic).subscribe((exmAction: ExamAction) => this.notifyExamActionSubscribers(exam, exmAction));
     }
 
     /**
@@ -78,12 +77,64 @@ export class ExamActionService implements IExamActionService {
      * */
     public unsubscribeForExamAction(exam: Exam): void {
         const topic = EXAM_MONITORING_TOPIC(exam.id!);
-        const userTopic = EXAM_MONITORING_USER_TOPIC(exam.id!);
         this.cachedExamActions.set(exam.id!, []);
         this.initialActionsLoaded.delete(exam.id!);
         this.jhiWebsocketService.unsubscribe(topic);
-        this.jhiWebsocketService.unsubscribe(userTopic);
         this.openExamMonitoringWebsocketSubscriptions.delete(exam.id!);
+    }
+
+    /**
+     * Notify all exam monitoring update subscribers with the newest exam monitoring status.
+     * @param exam received or updated exam
+     * @param status whether the monitoring is enabled or not
+     */
+    public notifyExamMonitoringUpdateSubscribers = (exam: Exam, status: boolean) => {
+        const examMonitoringStatusObservable = this.examMonitoringStatusObservables.get(exam.id!);
+        if (!examMonitoringStatusObservable) {
+            this.examMonitoringStatusObservables.set(exam.id!, new BehaviorSubject(status));
+        } else {
+            examMonitoringStatusObservable.next(status);
+        }
+    };
+
+    /**
+     * Checks if a websocket connection for the exam monitoring update to the server already exists.
+     * If not a new one will be opened.
+     *
+     */
+    private openExamMonitoringUpdateWebsocketSubscriptionIfNotExisting(exam: Exam) {
+        const topic = EXAM_MONITORING_STATUS_TOPIC(exam.id!);
+        this.openExamMonitoringStatusWebsocketSubscriptions.set(exam.id!, topic);
+
+        this.jhiWebsocketService.subscribe(topic);
+        this.jhiWebsocketService.receive(topic).subscribe((status: boolean) => this.notifyExamMonitoringUpdateSubscribers(exam, status));
+    }
+
+    /**
+     * Subscribing to the exam monitoring update.
+     *
+     * If there is no observable for the exam monitoring update a new one will be created.
+     *
+     * @param exam the exam to observe
+     */
+    public subscribeForExamMonitoringUpdate = (exam: Exam): BehaviorSubject<Boolean> => {
+        this.openExamMonitoringUpdateWebsocketSubscriptionIfNotExisting(exam);
+        let examMonitoringStatusObservable = this.examMonitoringStatusObservables.get(exam.id!)!;
+        if (!examMonitoringStatusObservable) {
+            examMonitoringStatusObservable = new BehaviorSubject<boolean>(exam.monitoring!);
+            this.examMonitoringStatusObservables.set(exam.id!, examMonitoringStatusObservable);
+        }
+        return examMonitoringStatusObservable;
+    };
+
+    /**
+     * Unsubscribe from the exam monitoring update.
+     * @param exam the exam to unsubscribe
+     * */
+    public unsubscribeForExamMonitoringUpdate(exam: Exam): void {
+        const topic = EXAM_MONITORING_STATUS_TOPIC(exam.id!);
+        this.jhiWebsocketService.unsubscribe(topic);
+        this.openExamMonitoringStatusWebsocketSubscriptions.delete(exam.id!);
     }
 
     /**
