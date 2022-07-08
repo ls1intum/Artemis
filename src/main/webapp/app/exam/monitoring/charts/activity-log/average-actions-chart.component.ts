@@ -1,11 +1,10 @@
 import { Component, Input, OnDestroy, OnInit } from '@angular/core';
-import { getColor, groupActionsByTimestamp } from 'app/exam/monitoring/charts/monitoring-chart';
+import { getColor } from 'app/exam/monitoring/charts/monitoring-chart';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ChartComponent } from 'app/exam/monitoring/charts/chart.component';
 import { NgxChartsSingleSeriesDataEntry } from 'app/shared/chart/ngx-charts-datatypes';
 import { ExamActionService } from '../../exam-action.service';
 import { ActivatedRoute } from '@angular/router';
-import { ExamAction } from 'app/entities/exam-user-activity.model';
 
 @Component({
     selector: 'jhi-average-actions-chart',
@@ -36,7 +35,6 @@ export class AverageActionsChartComponent extends ChartComponent implements OnIn
      * Create and initialize the data for the chart.
      */
     override initData() {
-        super.initData();
         this.createChartData();
     }
 
@@ -52,22 +50,15 @@ export class AverageActionsChartComponent extends ChartComponent implements OnIn
      * @private
      */
     private createChartData() {
-        const groupedByTimestamp = groupActionsByTimestamp(this.filteredExamActions);
+        const lastXTimestamps = this.getLastXTimestamps().map((timestamp) => timestamp.toString());
+        const actionsPerTimestamp = this.examActionService.cachedExamActionsGroupedByTimestamp.get(this.examId) ?? new Map();
+
         const chartData: NgxChartsSingleSeriesDataEntry[] = [];
-        for (const timestamp of this.getLastXTimestamps()) {
-            const key = timestamp.toString();
-            let value = 0;
-            if (key in groupedByTimestamp) {
-                // Divide actions per timestamp by amount of registered students
-                value = groupedByTimestamp[key].length / this.registeredStudents;
-            }
-            chartData.push({ name: this.artemisDatePipe.transform(key, 'time', true), value });
+        for (const timestamp of lastXTimestamps) {
+            const average = (actionsPerTimestamp.get(timestamp) ?? 0) / this.registeredStudents;
+            chartData.push({ name: this.artemisDatePipe.transform(timestamp, 'time', true), value: !isNaN(average) ? average : 0 });
         }
 
         this.ngxData = [{ name: 'actions', series: chartData }];
-    }
-
-    filterRenderedData(examAction: ExamAction) {
-        return this.filterActionsNotInTimeframe(examAction);
     }
 }

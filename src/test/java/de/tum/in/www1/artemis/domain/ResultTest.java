@@ -56,11 +56,9 @@ class ResultTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
         double calculatedPoints = resultRepository.calculateTotalPoints(feedbackList);
         double totalPoints = resultRepository.constrainToRange(calculatedPoints, maxPoints);
-        result.setScore(totalPoints, maxPoints);
-        result.setResultString(totalPoints, maxPoints);
+        result.setScore(100.0 * totalPoints / maxPoints);
 
         assertThat(result.getScore()).isEqualTo(5.0 / maxPoints * 100, Offset.offset(offsetByTenThousandth));
-        assertThat(result.getResultString()).isEqualToIgnoringCase("5 of 7 points");
     }
 
     @Test
@@ -69,11 +67,9 @@ class ResultTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
         double calculatePoints = resultRepository.calculateTotalPoints(feedbackList);
         double totalPoints = resultRepository.constrainToRange(calculatePoints, 4.0);
-        result.setScore(totalPoints, 4.0);
-        result.setResultString(totalPoints, 4.0);
+        result.setScore(100.0 * totalPoints / 4.0);
 
         assertThat(result.getScore()).isEqualTo(100);
-        assertThat(result.getResultString()).isEqualToIgnoringCase("4 of 4 points");
     }
 
     @Test
@@ -89,11 +85,9 @@ class ResultTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
         double calculatePoints = resultRepository.calculateTotalPoints(feedbackList);
         double totalPoints = resultRepository.constrainToRange(calculatePoints, 7.0);
-        result.setScore(totalPoints, 7.0);
-        result.setResultString(totalPoints, 7.0);
+        result.setScore(100.0 * totalPoints / 7.0);
 
         assertThat(result.getScore()).isZero();
-        assertThat(result.getResultString()).isEqualToIgnoringCase("0 of 7 points");
     }
 
     @Test

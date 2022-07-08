@@ -91,24 +91,20 @@ class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
 
         programmingExerciseStudentParticipation = database.addStudentParticipationForProgrammingExercise(programmingExercise, "student2");
         // A new manual result and submission are created during the locking of submission for manual assessment
-        // The new result has a result string, assessment type, automatic feedbacks and assessor
+        // The new result has an assessment type, automatic feedbacks and assessor
         var automaticFeedback = new Feedback().credits(0.0).detailText("asdfasdf").type(FeedbackType.AUTOMATIC).text("asdf");
         var automaticFeedbacks = new ArrayList<Feedback>();
         automaticFeedbacks.add(automaticFeedback);
-        var newManualResult = database.addResultToParticipation(AssessmentType.SEMI_AUTOMATIC, null, programmingExerciseStudentParticipation, "2 of 3 passed", "tutor1",
-                automaticFeedbacks);
+        var newManualResult = database.addResultToParticipation(AssessmentType.SEMI_AUTOMATIC, null, programmingExerciseStudentParticipation, "tutor1", automaticFeedbacks);
         programmingExerciseStudentParticipation.addResult(newManualResult);
         // Set submission of newResult
         database.addProgrammingSubmissionToResultAndParticipation(newManualResult, programmingExerciseStudentParticipation, "123");
 
-        manualResult = ModelFactory.generateResult(true, 90D).participation(programmingExerciseStudentParticipation);
         List<Feedback> feedbacks = ModelFactory.generateFeedback().stream().peek(feedback -> feedback.setDetailText("Good work here")).collect(Collectors.toList());
+        manualResult = ModelFactory.generateResult(true, 90D).participation(programmingExerciseStudentParticipation);
         manualResult.setFeedbacks(feedbacks);
         manualResult.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
         manualResult.rated(true);
-
-        double points = manualResult.calculateTotalPointsForProgrammingExercises();
-        manualResult.resultString("3 of 3 passed, 1 issue, " + manualResult.createResultString(points, programmingExercise.getMaxPoints()));
 
         doReturn(ObjectId.fromString(dummyHash)).when(gitService).getLastCommitHash(ArgumentMatchers.any());
     }
@@ -145,7 +141,6 @@ class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
 
         assertThat(updatedResult).as("updated result found").isNotNull();
         assertThat(updatedResult.getScore()).isEqualTo(80);
-        assertThat(updatedResult.getResultString()).isEqualTo("1 of 13 passed, 1 issue, 80 of 100 points");
         assertThat(((StudentParticipation) updatedResult.getParticipation()).getStudent()).as("student of participation is hidden").isEmpty();
 
         // Check that result and submission are properly connected
@@ -274,7 +269,6 @@ class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
 
         assertThat(commitHash).isEqualToIgnoringCase("123");
         assertThat(submission.getLatestResult()).isNotNull();
-        assertThat(submission.getLatestResult().getResultString()).isEqualTo(manualResult.getResultString());
         assertThat(submission.getLatestResult().getScore()).isEqualTo(manualResult.getScore());
 
     }
@@ -285,7 +279,6 @@ class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
         Result response = request.putWithResponseBody("/api/participations/" + programmingExerciseStudentParticipation.getId() + "/manual-results", manualResult, Result.class,
                 HttpStatus.OK);
 
-        assertThat(response.getResultString()).isEqualTo("3 of 3 passed, 1 issue, 2 of 100 points");
         assertThat(response.getParticipation()).isEqualTo(manualResult.getParticipation());
         assertThat(response.getFeedbacks()).hasSameSizeAs(manualResult.getFeedbacks());
     }
@@ -296,7 +289,6 @@ class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
         Result response = request.putWithResponseBody("/api/participations/" + programmingExerciseStudentParticipation.getId() + "/manual-results?submit=true", manualResult,
                 Result.class, HttpStatus.OK);
 
-        assertThat(response.getResultString()).isEqualTo("3 of 3 passed, 1 issue, 2 of 100 points");
         assertThat(response.getSubmission()).isNotNull();
         assertThat(response.getParticipation()).isEqualTo(manualResult.getParticipation());
         assertThat(response.getFeedbacks()).hasSameSizeAs(manualResult.getFeedbacks());
@@ -391,14 +383,11 @@ class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
         manualResult.setFeedbacks(feedbacks);
         double points = manualResult.calculateTotalPointsForProgrammingExercises();
         var score = (points / programmingExercise.getMaxPoints()) * 100.0;
-        manualResult.resultString(manualResult.createResultString(points, programmingExercise.getMaxPoints()));
         manualResult.score(score);
         manualResult.rated(true);
         Result response = request.putWithResponseBody("/api/participations/" + programmingExerciseStudentParticipation.getId() + "/manual-results?submit=true", manualResult,
                 Result.class, HttpStatus.OK);
         assertThat(response.getScore()).isEqualTo(expectedScore, Offset.offset(offsetByTenThousandth));
-        double maxPoints = programmingExercise.getMaxPoints();
-        assertThat(response.getResultString()).isEqualTo((int) points + " of " + (int) maxPoints + " points");
     }
 
     @Test
@@ -410,7 +399,6 @@ class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
         feedbacks.add(new Feedback().credits(25.00).type(FeedbackType.MANUAL_UNREFERENCED).detailText("nice submission 2"));
         manualResult.setFeedbacks(feedbacks);
         double points = manualResult.calculateTotalPointsForProgrammingExercises();
-        manualResult.resultString("3 of 3 passed, 1 issue, " + manualResult.createResultString(points, programmingExercise.getMaxPoints()));
         // As maxScore is 100 points, 1 point is 1%
         manualResult.score(points);
         manualResult.rated(true);
@@ -419,19 +407,16 @@ class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
                 Result.class, HttpStatus.OK);
 
         assertThat(response.getScore()).isEqualTo(105);
-        assertThat(response.getResultString()).isEqualTo("3 of 3 passed, 1 issue, 105 of 100 points");
 
         // Check that result is capped to maximum of maxScore + bonus points -> 110
         feedbacks.add(new Feedback().credits(25.00).type(FeedbackType.MANUAL_UNREFERENCED).detailText("nice submission 3"));
         points = manualResult.calculateTotalPointsForProgrammingExercises();
         manualResult.score(points);
-        manualResult.resultString("3 of 3 passed, 1 issue, " + manualResult.createResultString(points, programmingExercise.getMaxPoints()));
 
         response = request.putWithResponseBody("/api/participations/" + programmingExerciseStudentParticipation.getId() + "/manual-results?submit=true", manualResult, Result.class,
                 HttpStatus.OK);
 
         assertThat(response.getScore()).isEqualTo(110, Offset.offset(offsetByTenThousandth));
-        assertThat(response.getResultString()).isEqualTo("3 of 3 passed, 1 issue, 110 of 100 points");
     }
 
     @Test
@@ -447,13 +432,11 @@ class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
         double points = manualResult.calculateTotalPointsForProgrammingExercises();
         // As maxScore is 100 points, 1 point is 1%
         manualResult.score(points);
-        manualResult.resultString("3 of 3 passed, 1 issue, " + manualResult.createResultString(points, programmingExercise.getMaxPoints()));
 
         Result response = request.putWithResponseBody("/api/participations/" + programmingExerciseStudentParticipation.getId() + "/manual-results?submit=true", manualResult,
                 Result.class, HttpStatus.OK);
 
         assertThat(response.getScore()).isEqualTo(4);
-        assertThat(response.getResultString()).isEqualTo("3 of 3 passed, 1 issue, 4 of 100 points");
         assertThat(response.getFeedbacks().stream().anyMatch(feedback -> feedback.getType().equals(FeedbackType.AUTOMATIC))).isTrue();
     }
 
@@ -475,22 +458,6 @@ class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
         // Result rated is missing
         request.putWithResponseBody("/api/participations/" + programmingExerciseStudentParticipation.getId() + "/manual-results", result, Result.class, HttpStatus.BAD_REQUEST);
         result.rated(true);
-
-        // Result string is missing
-        request.putWithResponseBody("/api/participations/" + programmingExerciseStudentParticipation.getId() + "/manual-results", result, Result.class, HttpStatus.BAD_REQUEST);
-
-        // Result string is too long
-        result.setResultString(
-                """
-                        Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet.  \s
-                        Duis autem vel eum iriure dolor in hendrerit in vulputate velit esse molestie consequat, vel illum dolore eu feugiat nulla facilisis at vero eros et accumsan et iusto odio dignissim qui blandit praesent luptatum zzril delenit augue duis dolore te feugait nulla facilisi. Lorem ipsum dolor sit amet, consectetuer adipiscing elit, sed diam nonummy nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat.  \s
-                        Ut wisi enim ad minim veniam, quis nostrud exerci tation ullamcorper suscipit lobortis nisl ut aliquip ex ea commodo consequat. Duis autem vel eum iriure dolor in hendrerit in vulputate velit esse molestie consequat, vel illum dolore...""");
-        request.putWithResponseBody("/api/participations/" + programmingExerciseStudentParticipation.getId() + "/manual-results", result, Result.class, HttpStatus.BAD_REQUEST);
-
-        // Result score is missing
-        result.setResultString("Good work here");
-        request.putWithResponseBody("/api/participations/" + programmingExerciseStudentParticipation.getId() + "/manual-results", result, Result.class, HttpStatus.BAD_REQUEST);
-        result.setScore(100D);
 
         // Check that not automatically created feedbacks must have a detail text
         // Manual feedback
@@ -532,12 +499,10 @@ class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
         manualResult.setFeedbacks(manualResult.getFeedbacks().subList(0, 1));
         double points = manualResult.calculateTotalPointsForProgrammingExercises();
         manualResult.setScore(points);
-        manualResult.resultString("3 of 3 passed, 1 issue, " + manualResult.createResultString(points, programmingExercise.getMaxPoints()));
         manualResult = resultRepository.save(manualResult);
 
         Result response = request.putWithResponseBody("/api/participations/" + participation.getId() + "/manual-results", manualResult, Result.class, HttpStatus.OK);
         assertThat(response.getScore()).isEqualTo(2);
-        assertThat(response.getResultString()).isEqualTo("3 of 3 passed, 1 issue, 2 of 100 points");
         assertThat(response.getParticipation()).isEqualTo(manualResult.getParticipation());
         assertThat(response.getFeedbacks()).hasSameSizeAs(manualResult.getFeedbacks());
 
@@ -559,12 +524,10 @@ class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
         // Remove feedbacks, change text and score.
         manualResult.setFeedbacks(manualResult.getFeedbacks().subList(0, 1));
         manualResult.setScore(77D);
-        manualResult.resultString("2 of 3 passed, 77 of 100 points");
         manualResult.rated(true);
 
         Result response = request.putWithResponseBody("/api/participations/" + programmingExerciseStudentParticipation.getId() + "/manual-results", manualResult, Result.class,
                 HttpStatus.OK);
-        assertThat(response.getResultString()).isEqualTo("2 of 3 passed, 77 of 100 points");
         assertThat(response.getParticipation()).isEqualTo(manualResult.getParticipation());
         assertThat(response.getFeedbacks()).hasSameSizeAs(manualResult.getFeedbacks());
     }
@@ -844,7 +807,6 @@ class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
         initialResult.setHasFeedback(false);
         initialResult.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
         initialResult.setParticipation(participation);
-        initialResult.setResultString(50.0, 100.0);
         initialResult = resultRepository.save(initialResult);
 
         programmingSubmission.addResult(initialResult);

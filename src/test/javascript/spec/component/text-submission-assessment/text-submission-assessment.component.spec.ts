@@ -75,7 +75,6 @@ describe('TextSubmissionAssessmentComponent', () => {
     submission.results = [
         {
             id: 2374,
-            resultString: '1 of 12 points',
             completionDate: dayjs('2019-07-09T11:51:23.251Z'),
             successful: false,
             score: 8,

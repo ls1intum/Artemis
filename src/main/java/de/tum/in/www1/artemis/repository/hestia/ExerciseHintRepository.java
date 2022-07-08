@@ -7,7 +7,6 @@ import javax.validation.constraints.NotNull;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import de.tum.in.www1.artemis.domain.hestia.ExerciseHint;
@@ -49,17 +48,4 @@ public interface ExerciseHintRepository extends JpaRepository<ExerciseHint, Long
     Set<ExerciseHint> findByExerciseIdWithRelations(Long exerciseId);
 
     Set<ExerciseHint> findByTaskId(Long taskId);
-
-    /**
-     * Returns the title of the hint with the given id
-     *
-     * @param hintId the id of the hint
-     * @return the name/title of the hint or null if the hint does not exist
-     */
-    @Query("""
-            SELECT h.title
-            FROM ExerciseHint h
-            WHERE h.id = :hintId
-            """)
-    String getHintTitle(@Param("hintId") Long hintId);
 }
