@@ -2,10 +2,10 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ArtemisTestModule } from '../../../../test.module';
 import { MockTranslateService } from '../../../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
-import { MockPipe } from 'ng-mocks';
+import { MockModule, MockPipe } from 'ng-mocks';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
-import { NgxChartsModule } from '@swimlane/ngx-charts';
+import { BarChartModule } from '@swimlane/ngx-charts';
 import { ChartTitleComponent } from 'app/exam/monitoring/charts/chart-title.component';
 import { getColor } from 'app/exam/monitoring/charts/monitoring-chart';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
@@ -44,7 +44,7 @@ describe('Exercise Submission Chart Component', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, NgxChartsModule, ArtemisSharedComponentModule],
+            imports: [ArtemisTestModule, MockModule(BarChartModule), ArtemisSharedComponentModule],
             declarations: [ExerciseSubmissionChartComponent, ChartTitleComponent, ExerciseTemplateChartComponent, ArtemisDatePipe, MockPipe(ArtemisTranslatePipe)],
             providers: [
                 { provide: JhiWebsocketService, useClass: MockWebsocketService },
