@@ -6,7 +6,6 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 
 import javax.validation.Valid;
-import javax.ws.rs.ForbiddenException;
 
 import org.commonmark.node.Node;
 import org.commonmark.parser.Parser;
@@ -40,6 +39,7 @@ import de.tum.in.www1.artemis.service.metis.similarity.PostSimilarityComparisonS
 import de.tum.in.www1.artemis.service.notifications.GroupNotificationService;
 import de.tum.in.www1.artemis.service.plagiarism.PlagiarismCaseService;
 import de.tum.in.www1.artemis.web.rest.dto.PostContextFilter;
+import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.websocket.dto.MetisPostAction;
 import de.tum.in.www1.artemis.web.websocket.dto.MetisPostDTO;
@@ -355,7 +355,7 @@ public class PostService extends PostingService {
             return plagiarismCasePosts;
         }
         else {
-            throw new ForbiddenException("Only instructors in the course or the students affected by the plagiarism case are allowed to view its post");
+            throw new AccessForbiddenException("Only instructors in the course or the students affected by the plagiarism case are allowed to view its post");
         }
     }
 
