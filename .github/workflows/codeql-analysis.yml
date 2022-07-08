@@ -79,6 +79,8 @@ jobs:
       env:
         NODE_OPTIONS: --max_old_space_size=6144
 
+    - run: rm -rf build/resources/main/static
+
     # ℹ️ Command-line programs to run using the OS shell.
     # 📚 https://git.io/JvXDl
 
