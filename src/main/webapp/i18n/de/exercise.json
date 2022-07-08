@@ -145,6 +145,7 @@
             "showManual": "Nur manuelle anzeigen",
             "showAutomatic": "Nur automatische anzeigen",
             "showAll": "Alle anzeigen",
+            "showingOnlyInRange": "Zeige nur Ergebnisse im Bereich: {{ range }}",
             "tagPlaceholder": "+ Kategorie",
             "isProgramming": "Das ist eine Programmieraufgabe",
             "isModeling": "Das ist eine Modellierungsaufgabe",

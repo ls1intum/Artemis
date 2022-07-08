@@ -155,8 +155,8 @@ public class CourseService {
             }
         }
         Map<ExerciseMode, List<Exercise>> exercisesGroupedByExerciseMode = exercises.stream().collect(Collectors.groupingBy(Exercise::getMode));
-        int noOfIndividualExercises = Optional.ofNullable(exercisesGroupedByExerciseMode.get(ExerciseMode.INDIVIDUAL)).orElse(List.of()).size();
-        int noOfTeamExercises = Optional.ofNullable(exercisesGroupedByExerciseMode.get(ExerciseMode.TEAM)).orElse(List.of()).size();
+        int noOfIndividualExercises = Objects.requireNonNullElse(exercisesGroupedByExerciseMode.get(ExerciseMode.INDIVIDUAL), List.of()).size();
+        int noOfTeamExercises = Objects.requireNonNullElse(exercisesGroupedByExerciseMode.get(ExerciseMode.TEAM), List.of()).size();
         log.info("/courses/for-dashboard.done in {}ms for {} courses with {} individual exercises and {} team exercises for user {}",
                 System.currentTimeMillis() - startTimeInMillis, courses.size(), noOfIndividualExercises, noOfTeamExercises, user.getLogin());
     }

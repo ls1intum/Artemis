@@ -1224,7 +1224,7 @@ public class GitService {
         var participation = (ProgrammingExerciseStudentParticipation) repo.getParticipation();
 
         // The zip filename is either the student login, team short name or some default string.
-        var studentTeamOrDefault = Optional.ofNullable(participation.getParticipantIdentifier()).orElse("student-submission" + repo.getParticipation().getId());
+        var studentTeamOrDefault = Objects.requireNonNullElse(participation.getParticipantIdentifier(), "student-submission" + repo.getParticipation().getId());
 
         String zipRepoName = fileService.removeIllegalCharacters(courseShortName + "-" + exercise.getTitle() + "-" + participation.getId());
         if (hideStudentName) {

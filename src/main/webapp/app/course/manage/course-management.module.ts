@@ -28,7 +28,7 @@ import { ArtemisComplaintsForTutorModule } from 'app/complaints/complaints-for-t
 import { ArtemisFileUploadAssessmentModule } from 'app/exercises/file-upload/assess/file-upload-assessment.module';
 import { ArtemisModelingAssessmentEditorModule } from 'app/exercises/modeling/assess/modeling-assessment-editor/modeling-assessment-editor.module';
 import { CourseGroupComponent } from 'app/course/manage/course-group.component';
-import { NgxDatatableModule } from '@swimlane/ngx-datatable';
+import { NgxDatatableModule } from '@flaviosantoro92/ngx-datatable';
 import { ArtemisDataTableModule } from 'app/shared/data-table/data-table.module';
 import { ArtemisModelingExerciseModule } from 'app/exercises/modeling/manage/modeling-exercise.module';
 import { ArtemisTextExerciseModule } from 'app/exercises/text/manage/text-exercise/text-exercise.module';
@@ -50,7 +50,7 @@ import { OrionCourseManagementExercisesComponent } from 'app/orion/management/or
 import { CourseDetailLineChartComponent } from 'app/course/manage/detail/course-detail-line-chart.component';
 import { UserImportModule } from 'app/shared/import/user-import.module';
 import { CourseManagementExercisesSearchComponent } from 'app/course/manage/course-management-exercises-search.component';
-import { NgxChartsModule } from '@swimlane/ngx-charts';
+import { LineChartModule, PieChartModule } from '@swimlane/ngx-charts';
 import { ArtemisPlagiarismModule } from 'app/exercises/shared/plagiarism/plagiarism.module';
 import { ArtemisChartsModule } from 'app/shared/chart/artemis-charts.module';
 import { ImageCropperModule } from 'app/shared/image-cropper/image-cropper.module';
@@ -89,7 +89,6 @@ import { ArtemisCoursesModule } from 'app/overview/courses.module';
         ArtemisFileUploadAssessmentModule,
         ArtemisModelingAssessmentEditorModule,
         NgxDatatableModule,
-        NgxChartsModule,
         ArtemisDataTableModule,
         ArtemisAssessmentSharedModule,
         ArtemisSharedPipesModule,
@@ -98,7 +97,8 @@ import { ArtemisCoursesModule } from 'app/overview/courses.module';
         ArtemisCourseParticipantScoresModule,
         ArtemisSharedComponentModule,
         UserImportModule,
-        NgxChartsModule,
+        LineChartModule,
+        PieChartModule,
         ArtemisPlagiarismModule,
         ArtemisChartsModule,
         ArtemisCoursesModule,

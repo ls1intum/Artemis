@@ -808,10 +808,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
         else {
             optionalExistingResult = Optional.ofNullable(submission.getResultForCorrectionRound(correctionRound - 1));
         }
-        List<Feedback> automaticFeedbacks = new ArrayList<>();
-        if (optionalExistingResult.isPresent()) {
-            automaticFeedbacks = optionalExistingResult.get().getFeedbacks().stream().map(Feedback::copyFeedback).collect(Collectors.toCollection(ArrayList::new));
-        }
+
         // Create a new result (manual result) and try to reuse the existing submission with the latest commit hash
         ProgrammingSubmission existingSubmission = getOrCreateSubmissionWithLastCommitHashForParticipation((ProgrammingExerciseStudentParticipation) submission.getParticipation(),
                 SubmissionType.MANUAL);
@@ -819,14 +816,19 @@ public class ProgrammingSubmissionService extends SubmissionService {
         newResult.setAssessor(userRepository.getUser());
         newResult.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
         // Copy automatic feedbacks into the manual result
-        for (Feedback feedback : automaticFeedbacks) {
-            feedback = feedbackRepository.save(feedback);
-            feedback.setResult(newResult);
+        List<Feedback> automaticFeedbacks = new ArrayList<>();
+        if (optionalExistingResult.isPresent()) {
+            Result existingResult = optionalExistingResult.get();
+            automaticFeedbacks = existingResult.getFeedbacks().stream().map(Feedback::copyFeedback).collect(Collectors.toList());
+            for (Feedback feedback : automaticFeedbacks) {
+                feedback = feedbackRepository.save(feedback);
+                feedback.setResult(newResult);
+            }
+
+            newResult.copyProgrammingExerciseCounters(existingResult);
         }
         newResult.setFeedbacks(automaticFeedbacks);
-        if (optionalExistingResult.isPresent()) {
-            newResult.setResultString(optionalExistingResult.get().getResultString());
-        }
+
         // Workaround to prevent the assessor turning into a proxy object after saving
         var assessor = newResult.getAssessor();
         newResult = resultRepository.save(newResult);

@@ -44,6 +44,7 @@ import {
     SwitchedExerciseAction,
 } from 'app/entities/exam-user-activity.model';
 import { ExamMonitoringService } from 'app/exam/monitoring/exam-monitoring.service';
+import { ExamActionService } from 'app/exam/monitoring/exam-action.service';
 
 type GenerateParticipationStatus = 'generating' | 'failed' | 'success';
 
@@ -92,6 +93,8 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     errorSubscription: Subscription;
     websocketSubscription?: Subscription;
 
+    examMonitoringUpdateSubscription?: Subscription;
+
     isProgrammingExercise() {
         return !this.activeExamPage.isOverviewPage && this.activeExamPage.exercise!.type === ExerciseType.PROGRAMMING;
     }
@@ -132,6 +135,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         private alertService: AlertService,
         private courseExerciseService: CourseExerciseService,
         private examMonitoringService: ExamMonitoringService,
+        private examActionService: ExamActionService,
     ) {
         // show only one synchronization error every 5s
         this.errorSubscription = this.synchronizationAlert.pipe(throttleTime(5000)).subscribe(() => {
@@ -168,6 +172,11 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                         this.studentExam = studentExam;
                         this.exam = studentExam.exam!;
                         this.initIndividualEndDates(this.exam.startDate!);
+
+                        // Listen to exam monitoring updates to disable monitoring
+                        this.examMonitoringUpdateSubscription = this.examActionService.subscribeForExamMonitoringUpdate(this.exam).subscribe((status: boolean) => {
+                            this.exam.monitoring = status;
+                        });
 
                         // only show the summary if the student was able to submit on time.
                         if (this.isOver() && this.studentExam.submitted) {
@@ -476,6 +485,8 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         });
         this.errorSubscription.unsubscribe();
         this.websocketSubscription?.unsubscribe();
+        this.examMonitoringUpdateSubscription?.unsubscribe();
+        this.examActionService.unsubscribeForExamMonitoringUpdate(this.exam);
         window.clearInterval(this.autoSaveInterval);
     }
 

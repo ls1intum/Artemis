@@ -33,14 +33,10 @@ export class ExamMonitoringComponent implements OnInit, OnDestroy {
 
     // Subscriptions
     private routeSubscription?: Subscription;
-    private examMonitoringSubscription?: Subscription;
     private initialLoadSubscription?: Subscription;
 
     private examId: number;
     private courseId: number;
-
-    // Exam Actions
-    examActions: ExamAction[] = [];
 
     exam: Exam;
 
@@ -62,14 +58,10 @@ export class ExamMonitoringComponent implements OnInit, OnDestroy {
             this.exam = examResponse.body!;
             this.examMonitoringService.notifyExamSubscribers(this.exam);
 
-            this.examMonitoringSubscription = this.examActionService.subscribeForLatestExamAction(this.exam!).subscribe((examAction) => {
-                if (examAction) {
-                    this.examActions.push(examAction);
-                }
-            });
+            this.examActionService.subscribeForLatestExamAction(this.exam!);
 
             this.initialLoadSubscription = this.examActionService.loadInitialActions(this.exam).subscribe((examActions: ExamAction[]) => {
-                examActions.forEach((action) => this.examActionService.notifyExamActionSubscribers(this.exam, action));
+                this.examActionService.updateCachedActions(this.exam, examActions);
             });
 
             this.initTable();

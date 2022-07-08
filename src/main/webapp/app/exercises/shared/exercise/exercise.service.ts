@@ -13,6 +13,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { ExerciseCategory } from 'app/entities/exercise-category.model';
 import { User } from 'app/core/user/user.model';
 import { getExerciseDueDate } from 'app/exercises/shared/exercise/exercise.utils';
+import { EntityTitleService, EntityType } from 'app/shared/layouts/navbar/entity-title.service';
 
 export type EntityResponseType = HttpResponse<Exercise>;
 export type EntityArrayResponseType = HttpResponse<Exercise[]>;
@@ -31,7 +32,13 @@ export interface ExerciseServicable<T extends Exercise> {
 export class ExerciseService {
     public resourceUrl = SERVER_API_URL + 'api/exercises';
 
-    constructor(private http: HttpClient, private participationService: ParticipationService, private accountService: AccountService, private translateService: TranslateService) {}
+    constructor(
+        private http: HttpClient,
+        private participationService: ParticipationService,
+        private accountService: AccountService,
+        private translateService: TranslateService,
+        private entityTitleService: EntityTitleService,
+    ) {}
 
     /**
      * Persist a new exercise
@@ -115,16 +122,6 @@ export class ExerciseService {
         return this.http
             .get<Exercise>(`${this.resourceUrl}/${exerciseId}`, { observe: 'response' })
             .pipe(map((res: EntityResponseType) => this.processExerciseEntityResponse(res)));
-    }
-
-    /**
-     * Fetches the title of the exercise with the given id
-     *
-     * @param exerciseId the id of the exercise
-     * @return the title of the exercise in an HttpResponse, or an HttpErrorResponse on error
-     */
-    getTitle(exerciseId: number): Observable<HttpResponse<string>> {
-        return this.http.get(`${this.resourceUrl}/${exerciseId}/title`, { observe: 'response', responseType: 'text' });
     }
 
     /**
@@ -426,6 +423,7 @@ export class ExerciseService {
         ExerciseService.convertDateFromServer(exerciseRes);
         ExerciseService.convertExerciseCategoriesFromServer(exerciseRes);
         this.setAccessRightsExerciseEntityResponseType(exerciseRes);
+        this.sendExerciseTitleToTitleService(exerciseRes?.body);
         return exerciseRes;
     }
 
@@ -437,6 +435,7 @@ export class ExerciseService {
         ExerciseService.convertDateArrayFromServer(exerciseResArray);
         ExerciseService.convertExerciseCategoryArrayFromServer(exerciseResArray);
         this.setAccessRightsExerciseEntityArrayResponseType(exerciseResArray);
+        exerciseResArray?.body?.forEach(this.sendExerciseTitleToTitleService.bind(this));
         return exerciseResArray;
     }
 
@@ -454,6 +453,13 @@ export class ExerciseService {
             this.accountService.setAccessRightsForExerciseAndReferencedCourse(res.body as Exercise);
         }
         return res;
+    }
+
+    public sendExerciseTitleToTitleService(exercise: Exercise | undefined | null) {
+        this.entityTitleService.setTitle(EntityType.EXERCISE, [exercise?.id], exercise?.title);
+        if (exercise?.course) {
+            this.entityTitleService.setTitle(EntityType.COURSE, [exercise.course.id], exercise.course.title);
+        }
     }
 
     public getLatestDueDate(exerciseId: number): Observable<dayjs.Dayjs | undefined> {
