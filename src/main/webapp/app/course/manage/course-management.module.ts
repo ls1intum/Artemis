@@ -50,7 +50,7 @@ import { OrionCourseManagementExercisesComponent } from 'app/orion/management/or
 import { CourseDetailLineChartComponent } from 'app/course/manage/detail/course-detail-line-chart.component';
 import { UserImportModule } from 'app/shared/import/user-import.module';
 import { CourseManagementExercisesSearchComponent } from 'app/course/manage/course-management-exercises-search.component';
-import { NgxChartsModule } from '@swimlane/ngx-charts';
+import { LineChartModule, PieChartModule } from '@swimlane/ngx-charts';
 import { ArtemisPlagiarismModule } from 'app/exercises/shared/plagiarism/plagiarism.module';
 import { ArtemisChartsModule } from 'app/shared/chart/artemis-charts.module';
 import { ImageCropperModule } from 'app/shared/image-cropper/image-cropper.module';
@@ -89,7 +89,6 @@ import { ArtemisCoursesModule } from 'app/overview/courses.module';
         ArtemisFileUploadAssessmentModule,
         ArtemisModelingAssessmentEditorModule,
         NgxDatatableModule,
-        NgxChartsModule,
         ArtemisDataTableModule,
         ArtemisAssessmentSharedModule,
         ArtemisSharedPipesModule,
@@ -98,7 +97,8 @@ import { ArtemisCoursesModule } from 'app/overview/courses.module';
         ArtemisCourseParticipantScoresModule,
         ArtemisSharedComponentModule,
         UserImportModule,
-        NgxChartsModule,
+        LineChartModule,
+        PieChartModule,
         ArtemisPlagiarismModule,
         ArtemisChartsModule,
         ArtemisCoursesModule,

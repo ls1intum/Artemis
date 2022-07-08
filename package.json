@@ -138,7 +138,7 @@
         "node": ">=16.13.0 <=17"
     },
     "scripts": {
-        "postinstall": "husky install && ngcc --properties es2015 browser module main --first-only --create-ivy-entry-points",
+        "postinstall": "husky install && ngcc --properties es2020 browser module main",
         "prettier:write": "prettier --write \"src/{main/webapp,test}/**/*.{json,ts,js,css,scss,html}\"",
         "prettier:check": "prettier --check \"src/{main/webapp,test}/**/*.{json,ts,js,css,scss,html}\"",
         "lint": "eslint . --ext .ts",
