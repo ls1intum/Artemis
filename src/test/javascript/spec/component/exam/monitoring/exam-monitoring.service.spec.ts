@@ -200,7 +200,7 @@ describe('ExamMonitoringService', () => {
         examMonitoringService.updateMonitoring(exam, monitoring);
 
         expect(spy).toHaveBeenCalledOnce();
-        expect(spy).toHaveBeenCalledWith(EXAM_MONITORING_UPDATE_URL(course.id!, exam.id!), exam.monitoring, { observe: 'response' });
+        expect(spy).toHaveBeenCalledWith(EXAM_MONITORING_UPDATE_URL(course.id!, exam.id!), monitoring, { observe: 'response' });
         expect(exam.monitoring).toEqual(monitoring);
     });
 
@@ -211,7 +211,7 @@ describe('ExamMonitoringService', () => {
         examMonitoringService.updateMonitoring(exam, monitoring);
 
         expect(spy).toHaveBeenCalledOnce();
-        expect(spy).toHaveBeenCalledWith(EXAM_MONITORING_UPDATE_URL(course.id!, exam.id!), exam.monitoring, { observe: 'response' });
+        expect(spy).toHaveBeenCalledWith(EXAM_MONITORING_UPDATE_URL(course.id!, exam.id!), monitoring, { observe: 'response' });
         expect(exam.monitoring).not.toEqual(monitoring);
     });
 });
