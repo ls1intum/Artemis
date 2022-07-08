@@ -4,6 +4,7 @@ import static de.tum.in.www1.artemis.service.metis.PostService.TOP_K_SIMILARITY_
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -678,19 +679,6 @@ public class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         List<Post> returnedPosts = request.getList("/api/courses/" + courseId + "/posts", HttpStatus.OK, Post.class, params);
         database.assertSensitiveInformationHidden(returnedPosts);
         assertThat(returnedPosts).isEqualTo(existingPosts.stream().filter(post -> post.getId() == 1).toList());
-    }
-
-    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
-    @ValueSource(strings = { "Title Post 1", "Content Post 1", "Tag 1" })
-    @WithMockUser(username = "student1", roles = "USER")
-    public void testGetPostsForCourse_SearchByTitleOrContentOrTag(String searchText) throws Exception {
-        var params = new LinkedMultiValueMap<String, String>();
-        params.add("searchText", searchText);
-        params.add("pagingEnabled", "true"); // search by text
-
-        List<Post> returnedPosts = request.getList("/api/courses/" + courseId + "/posts", HttpStatus.OK, Post.class, params);
-        database.assertSensitiveInformationHidden(returnedPosts);
-        assertThat(returnedPosts).hasSize(3);
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
