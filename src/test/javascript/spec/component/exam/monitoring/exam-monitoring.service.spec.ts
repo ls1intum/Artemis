@@ -60,6 +60,9 @@ describe('ExamMonitoringService', () => {
         // reset course
         course = new Course();
         course.id = 1;
+
+        // Set exam course
+        exam.course = course;
     });
 
     afterEach(() => {
@@ -191,6 +194,7 @@ describe('ExamMonitoringService', () => {
 
     // Update monitoring
     it.each([true, false])('should update monitoring', (monitoring: boolean) => {
+        exam.monitoring = !monitoring;
         const spy = jest.spyOn(http, 'put').mockReturnValue(of(monitoring));
 
         examMonitoringService.updateMonitoring(exam, monitoring);
@@ -208,6 +212,6 @@ describe('ExamMonitoringService', () => {
 
         expect(spy).toHaveBeenCalledOnce();
         expect(spy).toHaveBeenCalledWith(EXAM_MONITORING_UPDATE_URL(course.id!, exam.id!), exam.monitoring, { observe: 'response' });
-        expect(exam.monitoring).toEqual(monitoring);
+        expect(exam.monitoring).not.toEqual(monitoring);
     });
 });
