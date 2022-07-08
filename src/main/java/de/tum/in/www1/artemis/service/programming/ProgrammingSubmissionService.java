@@ -819,7 +819,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
         List<Feedback> automaticFeedbacks = new ArrayList<>();
         if (optionalExistingResult.isPresent()) {
             Result existingResult = optionalExistingResult.get();
-            automaticFeedbacks = existingResult.getFeedbacks().stream().map(Feedback::copyFeedback).collect(Collectors.toList());
+            automaticFeedbacks = existingResult.getFeedbacks().stream().map(Feedback::copyFeedback).collect(Collectors.toCollection(ArrayList::new));
             for (Feedback feedback : automaticFeedbacks) {
                 feedback = feedbackRepository.save(feedback);
                 feedback.setResult(newResult);
