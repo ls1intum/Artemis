@@ -18,7 +18,9 @@
                 "releaseDateNotSet": "Kein Veröffentlichungsdatum gesetzt!",
                 "releaseDateSet": "Veröffentlichungsdatum: ",
                 "attachmentVersion": "Dateiversion: "
-            }
+            },
+            "completedTooltip": "Klicke hier, um die Vorlesungseinheit als unerledigt zu markieren",
+            "uncompletedTooltip": "Klicke hier, um die Vorlesungseinheit als erledigt zu markieren"
         },
         "textUnit": {
             "created": "Eine neue Texteinheit erstellt",
@@ -138,6 +140,7 @@
             "version": "Version",
             "FileName": "Dateiname",
             "description": "Beschreibung",
+            "download": "Herunterladen",
             "delete": {
                 "question": "Willst du wirklich die Dateieinheit <strong>{{ title }}</strong> löschen? Die Datei wird auch gelöscht! Du kannst diese Aktion nicht rückgängig machen!",
                 "typeNameToConfirm": "Bitte gib den Namen der Dateieinheit zur Bestätigung ein.",

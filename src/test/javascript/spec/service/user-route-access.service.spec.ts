@@ -9,7 +9,6 @@ import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../helpers/mocks/service/mock-account.service';
 import { RouterTestingModule } from '@angular/router/testing';
-import { DeviceDetectorService } from 'ngx-device-detector';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { Mutable } from '../helpers/mutable';
 import { mockedActivatedRouteSnapshot } from '../helpers/mocks/activated-route/mock-activated-route-snapshot';
@@ -49,7 +48,6 @@ describe('UserRouteAccessService', () => {
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
-                { provide: DeviceDetectorService },
                 MockProvider(StateStorageService),
             ],
         })

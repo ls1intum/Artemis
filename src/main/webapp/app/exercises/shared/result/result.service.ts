@@ -8,9 +8,15 @@ import { createRequestOption } from 'app/shared/util/request.util';
 import { Feedback } from 'app/entities/feedback.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
-import { Exercise, ExerciseType } from 'app/entities/exercise.model';
+import { Exercise, ExerciseType, getCourseFromExercise } from 'app/entities/exercise.model';
 import { map, tap } from 'rxjs/operators';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
+import { TranslateService } from '@ngx-translate/core';
+import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
+import { isResultPreliminary } from 'app/exercises/programming/shared/utils/programming-exercise.utils';
+import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
+import { captureException } from '@sentry/browser';
 
 export type EntityResponseType = HttpResponse<Result>;
 export type EntityArrayResponseType = HttpResponse<Result[]>;
@@ -31,10 +37,106 @@ export class ResultService implements IResultService {
     private resultResourceUrl = SERVER_API_URL + 'api/results';
     private participationResourceUrl = SERVER_API_URL + 'api/participations';
 
-    constructor(private http: HttpClient) {}
+    private readonly maxValueProgrammingResultInts = 255; // Size of tinyInt in SQL, that is used to store these values
+
+    constructor(private http: HttpClient, private translateService: TranslateService) {}
 
     find(resultId: number): Observable<EntityResponseType> {
         return this.http.get<Result>(`${this.resultResourceUrl}/${resultId}`, { observe: 'response' }).pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
+    }
+
+    /**
+     * Generates the result string for the given exercise and result.
+     * Contains the score, achieved points and if it's a programming exercise the tests and code issues as well
+     * If either of the arguments is undefined the error is forwarded to sentry and an empty string is returned
+     * @param result the result containing all necessary information like the achieved points
+     * @param exercise the exercise where the result belongs to
+     */
+    getResultString(result?: Result, exercise?: Exercise): string {
+        if (result && exercise) {
+            return this.getResultStringDefinedParameters(result, exercise);
+        } else {
+            captureException('Tried to generate a result string, but either the result or exercise was undefined');
+            return '';
+        }
+    }
+
+    /**
+     * Generates the result string for the given exercise and result.
+     * Contains the score, achieved points and if it's a programming exercise the tests and code issues as well
+     * @param result the result containing all necessary information like the achieved points
+     * @param exercise the exercise where the result belongs to
+     */
+    private getResultStringDefinedParameters(result: Result, exercise: Exercise): string {
+        const relativeScore = roundValueSpecifiedByCourseSettings(result.score!, getCourseFromExercise(exercise));
+        const points = roundValueSpecifiedByCourseSettings((result.score! * exercise.maxPoints!) / 100, getCourseFromExercise(exercise));
+        if (exercise.type === ExerciseType.PROGRAMMING) {
+            return this.getResultStringProgrammingExercise(result, exercise as ProgrammingExercise, relativeScore, points);
+        } else {
+            return this.translateService.instant(`artemisApp.result.resultStringNonProgramming`, {
+                relativeScore,
+                points,
+                maxPoints: exercise.maxPoints,
+            });
+        }
+    }
+
+    /**
+     * Generates the result string for a programming exercise. Contains the score, achieved points and the tests and code issues as well.
+     * If the result is a build failure or no tests were executed, the string replaces some parts with a helpful explanation
+     * @param result the result containing all necessary information like the achieved points
+     * @param exercise the exercise where the result belongs to
+     * @param relativeScore the achieved score in percent
+     * @param points the amount of achieved points
+     */
+    private getResultStringProgrammingExercise(result: Result, exercise: ProgrammingExercise, relativeScore: number, points: number): string {
+        let buildAndTestMessage: string;
+        if (result.submission && (result.submission as ProgrammingSubmission).buildFailed) {
+            buildAndTestMessage = this.translateService.instant('artemisApp.result.resultStringBuildFailed');
+        } else if (!result.testCaseCount) {
+            buildAndTestMessage = this.translateService.instant('artemisApp.result.resultStringBuildSuccessfulNoTests');
+        } else {
+            buildAndTestMessage = this.translateService.instant('artemisApp.result.resultStringBuildSuccessfulTests', {
+                numberOfTestsPassed: result.passedTestCaseCount! >= this.maxValueProgrammingResultInts ? `${this.maxValueProgrammingResultInts}+` : result.passedTestCaseCount,
+                numberOfTestsTotal: result.testCaseCount! >= this.maxValueProgrammingResultInts ? `${this.maxValueProgrammingResultInts}+` : result.testCaseCount,
+            });
+        }
+
+        let resultString = this.getBaseResultStringProgrammingExercise(result, exercise, relativeScore, points, buildAndTestMessage);
+
+        if (isResultPreliminary(result, exercise)) {
+            resultString += ' (' + this.translateService.instant('artemisApp.result.preliminary') + ')';
+        }
+
+        return resultString;
+    }
+
+    /**
+     * Generates the result string for a programming exercise
+     * @param result the result containing all necessary information like the achieved points
+     * @param exercise the exercise where the result belongs to
+     * @param relativeScore the achieved score in percent
+     * @param points the amount of achieved points
+     * @param buildAndTestMessage the string containing information about the build. Either about the build failure or the passed tests
+     * @private
+     */
+    private getBaseResultStringProgrammingExercise(result: Result, exercise: ProgrammingExercise, relativeScore: number, points: number, buildAndTestMessage: string): string {
+        if (result.codeIssueCount && result.codeIssueCount > 0) {
+            return this.translateService.instant('artemisApp.result.resultStringProgrammingCodeIssues', {
+                relativeScore,
+                buildAndTestMessage,
+                numberOfIssues: result.codeIssueCount! >= this.maxValueProgrammingResultInts ? `${this.maxValueProgrammingResultInts}+` : result.codeIssueCount,
+                points,
+                maxPoints: exercise.maxPoints,
+            });
+        } else {
+            return this.translateService.instant(`artemisApp.result.resultStringProgramming`, {
+                relativeScore,
+                buildAndTestMessage,
+                points,
+                maxPoints: exercise.maxPoints,
+            });
+        }
     }
 
     getResultsForExercise(exerciseId: number, req?: any): Observable<EntityArrayResponseType> {

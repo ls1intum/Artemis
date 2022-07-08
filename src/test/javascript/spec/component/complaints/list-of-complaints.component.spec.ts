@@ -1,4 +1,4 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { ListOfComplaintsComponent } from 'app/complaints/list-of-complaints/list-of-complaints.component';
 import { MockComplaintService } from '../../helpers/mocks/service/mock-complaint.service';
 import { ComplaintService, EntityResponseTypeArray, IComplaintService } from 'app/complaints/complaint.service';
@@ -70,7 +70,6 @@ describe('ListOfComplaintsComponent', () => {
                 { provide: ComplaintService, useClass: MockComplaintService },
                 { provide: Router, useClass: MockRouter },
                 { provide: NgbModal, useClass: MockNgbModalService },
-                { provide: TranslateService, useClass: MockTranslateService },
                 { provide: ActivatedRoute, useValue: new MockActivatedRoute() },
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: ArtemisDatePipe, useClass: TranslatePipeMock },
@@ -292,6 +291,40 @@ describe('ListOfComplaintsComponent', () => {
             { queryParams: { 'correction-round': 0 } },
         );
     });
+
+    it.each(['4', '5'])(
+        'should filter complaints accordingly',
+        fakeAsync((filterOption: string) => {
+            const addressedComplaints = [complaint1, complaint2, complaint5];
+            const openComplaints = [complaint3, complaint4];
+
+            const complaints = [complaint1, complaint2, complaint3, complaint4, complaint5];
+            findAllByCourseIdStub.mockReturnValue(of({ body: complaints } as EntityResponseTypeArray));
+            comp.filterOption = Number(filterOption);
+            comp.loadComplaints();
+            tick(100);
+
+            switch (Number(filterOption)) {
+                case 4:
+                    // This filter option indicates that the user selected the part of the pie representing the number of addressed complaints
+                    // -> Only addressed complaints should be shown
+                    expect(comp.complaintsToShow).toEqual(addressedComplaints);
+                    expect(comp.showAddressedComplaints).toBeTrue();
+                    break;
+                case 5:
+                    // This filter option indicates that the user selected the part of the pie representing the number of open complaints
+                    // -> Only open complaints should be shown
+                    expect(comp.complaintsToShow).toEqual(openComplaints);
+                    expect(comp.showAddressedComplaints).toBeFalse();
+                    break;
+            }
+
+            comp.resetFilterOptions();
+
+            expect(comp.complaintsToShow).toEqual(openComplaints);
+            expect(comp.filterOption).toBeUndefined();
+        }),
+    );
 
     function verifyNotCalled(...instances: jest.SpyInstance[]) {
         for (const spyInstance of instances) {

@@ -53,10 +53,16 @@
             <tbody class="markdown-preview">
                 <tr *ngFor="let textExercise of filteredTextExercises; trackBy: trackId" id="exercise-card-{{ textExercise.id }}">
                     <td>
-                        <a [routerLink]="['/course-management', course.id, 'text-exercises', textExercise.id]">{{ textExercise.id }}</a>
+                        <a *ngIf="textExercise.isAtLeastEditor; else showId" [routerLink]="['/course-management', course.id, 'text-exercises', textExercise.id]">{{
+                            textExercise.id
+                        }}</a>
+                        <ng-template #showId>{{ textExercise.id }}</ng-template>
                     </td>
                     <td>
-                        <a [routerLink]="['/course-management', course.id, 'text-exercises', textExercise.id]">{{ textExercise.title }}</a>
+                        <a *ngIf="textExercise.isAtLeastEditor; else showTitle" [routerLink]="['/course-management', course.id, 'text-exercises', textExercise.id]">{{
+                            textExercise.title
+                        }}</a>
+                        <ng-template #showTitle>{{ textExercise.title }}</ng-template>
                     </td>
                     <td>{{ textExercise.releaseDate | artemisDate }}</td>
                     <td>{{ textExercise.dueDate | artemisDate }}</td>

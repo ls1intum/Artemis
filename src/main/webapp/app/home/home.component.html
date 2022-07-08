@@ -1,113 +1,138 @@
-<div [hidden]="loading || account">
+<div [hidden]="loading || account" class="container">
     <div class="row">
         <div class="col-md-8 offset-md-2 text-center">
             <h1 jhiTranslate="home.title">Welcome to Artemis!</h1>
             <p class="lead" jhiTranslate="home.subtitle">Interactive Learning with Individual Feedback</p>
-            <div *ngIf="!accountName" class="lead" [jhiTranslate]="'home.pleaseSignIn'">Please sign in with your account.</div>
-            <div *ngIf="accountName" class="lead" [jhiTranslate]="'home.pleaseSignInAccount'" [translateValues]="{ account: accountName }">Please sign in with your account.</div>
         </div>
     </div>
-    <div class="row mt-3">
-        <div class="col-md-6 offset-md-3">
-            <div class="row">
-                <div class="col-12 d-flex justify-content-center">
-                    <form name="loginForm" class="login-form" role="form" (change)="inputChange($event)" (ngSubmit)="login()">
-                        <div class="form-group">
-                            <div class="alert alert-danger mt-1" *ngIf="authenticationError && !captchaRequired" jhiTranslate="home.errors.failedToLogin">
-                                <span class="bold">Failed to sign in!</span> Please check your username and password and try again.
-                            </div>
-                            <div class="alert alert-info mt-1" *ngIf="externalUserManagementActive && authenticationAttempts >= 3 && !captchaRequired">
-                                <span [innerHTML]="'home.errors.loginWarning' | artemisTranslate: { url: externalUserManagementUrl, name: externalUserManagementName }"></span>
-                            </div>
-                            <div class="alert alert-danger mt-1" *ngIf="externalUserManagementActive && captchaRequired">
-                                <span
-                                    [innerHTML]="
-                                        'home.errors.externalUserManagementWarning' | artemisTranslate: { url: externalUserManagementUrl, name: externalUserManagementName }
-                                    "
-                                ></span>
-                            </div>
+    <div class="row row-divided my-5 justify-content-center">
+        <div *ngIf="!isPasswordLoginDisabled" class="login-col col-12 col-md-5 col-lg-3 h-100">
+            <!-- Traditional Authentication -->
+            <div *ngIf="!accountName" [jhiTranslate]="'home.login.traditional.pleaseSignIn'" class="lead text-center">Please sign in with your account.</div>
+            <div *ngIf="accountName" [jhiTranslate]="'home.login.traditional.pleaseSignInAccount'" [translateValues]="{ account: accountName }" class="lead text-center">
+                Please sign in with your account.
+            </div>
+
+            <form (change)="inputChange($event)" (ngSubmit)="login()" class="mb-3" name="loginForm" role="form">
+                <div class="form-group">
+                    <div *ngIf="authenticationError && !captchaRequired" class="alert alert-danger mt-1" jhiTranslate="home.errors.failedToLogin">
+                        <span class="bold">Failed to sign in!</span> Please check your username and password and try again.
+                    </div>
+                    <div *ngIf="externalUserManagementActive && authenticationAttempts >= 3 && !captchaRequired" class="alert alert-info mt-1">
+                        <span [innerHTML]="'home.errors.loginWarning' | artemisTranslate: { url: externalUserManagementUrl, name: externalUserManagementName }"></span>
+                    </div>
+                    <div *ngIf="externalUserManagementActive && captchaRequired" class="alert alert-danger mt-1">
+                        <span
+                            [innerHTML]="'home.errors.externalUserManagementWarning' | artemisTranslate: { url: externalUserManagementUrl, name: externalUserManagementName }"
+                        ></span>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="font-weight-bold" for="username" jhiTranslate="global.form.username">Login</label>
+                    <input
+                        #usernameForm="ngModel"
+                        [(ngModel)]="username"
+                        [ngModelOptions]="{ updateOn: 'blur' }"
+                        [pattern]="usernameRegexPattern"
+                        autocomplete="username"
+                        class="form-control"
+                        id="username"
+                        name="username"
+                        placeholder="{{ 'global.form.username.placeholder' | artemisTranslate }}"
+                        type="text"
+                    />
+                    <div *ngIf="usernameForm.errors && (usernameForm.dirty || usernameForm.touched)" [jhiTranslate]="errorMessageUsername" class="help-block">
+                        <p class="text-primary small">Invalid username</p>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="font-weight-bold" for="password" jhiTranslate="login.form.password">Password</label>
+                    <input
+                        [(ngModel)]="password"
+                        autocomplete="password"
+                        class="form-control"
+                        id="password"
+                        name="password"
+                        placeholder="{{ 'login.form.password.placeholder' | artemisTranslate }}"
+                        type="password"
+                    />
+                </div>
+                <div class="form-group">
+                    <div class="form-check">
+                        <label class="form-check-label" for="rememberMe">
+                            <input [(ngModel)]="rememberMe" checked class="form-check-input" id="rememberMe" name="rememberMe" type="checkbox" />
+                            <span jhiTranslate="login.form.rememberme">Remember me</span>
+                        </label>
+                    </div>
+                    <div *ngIf="needsToAcceptTerms" class="form-check">
+                        <label class="form-check-label" for="acceptTerms">
+                            <input [(ngModel)]="userAcceptedTerms" checked class="form-check-input" id="acceptTerms" name="acceptTerms" type="checkbox" />
+                            <a [routerLink]="['privacy']" jhiTranslate="login.form.acceptTerms">Accept terms</a>
+                        </label>
+                    </div>
+                </div>
+                <div class="btn-toolbar">
+                    <button
+                        [disabled]="
+                            isSubmittingLogin ||
+                            (!userAcceptedTerms && needsToAcceptTerms) ||
+                            !password ||
+                            password.length < PASSWORD_MIN_LENGTH ||
+                            !username ||
+                            username.length < USERNAME_MIN_LENGTH
+                        "
+                        class="btn btn-primary"
+                        id="login-button"
+                        type="submit"
+                    >
+                        <span *ngIf="isSubmittingLogin" class="me-1"><fa-icon [icon]="faCircleNotch" [spin]="true"></fa-icon></span>
+                        <span jhiTranslate="login.form.button"> Sign in </span>
+                    </button>
+                </div>
+            </form>
+            <div *ngIf="isRegistrationEnabled">
+                <span jhiTranslate="global.messages.info.register.noaccount">You don't have an account yet?</span>&nbsp;
+                <a class="alert-link" jhiTranslate="global.messages.info.register.link" routerLink="account/register">Register a new account</a>
+            </div>
+            <a class="alert-link" jhiTranslate="login.password.forgot" routerLink="account/reset/request">Did you forget your password?</a>
+        </div>
+        <div *ngIf="!isPasswordLoginDisabled && !!profileInfo?.saml2" class="col-12 col-md-1 p-5 h-100">
+            <div class="d-none d-md-block vertical-divider" jhiTranslate="login.divider">or</div>
+            <div class="d-md-none horizontal-divider" jhiTranslate="login.divider">or</div>
+        </div>
+        <div *ngIf="!!profileInfo?.saml2" class="login-col col-12 col-md-5 col-lg-3">
+            <!-- SAML2 Authentication -->
+            <div class="h-100 d-flex flex-column align-items-center justify-content-center">
+                <div *ngIf="!profileInfo!.saml2!.identityProviderName" [jhiTranslate]="'home.login.saml2.pleaseSignIn'" class="lead text-center">
+                    Please sign in via Single Sign-on.
+                </div>
+                <div
+                    *ngIf="profileInfo!.saml2!.identityProviderName"
+                    [jhiTranslate]="'home.login.saml2.pleaseSignInProvider'"
+                    [translateValues]="{ provider: profileInfo!.saml2!.identityProviderName }"
+                    class="lead text-center"
+                >
+                    Please sign in.
+                </div>
+
+                <div class="saml2-center d-flex flex-column align-items-center justify-content-center flex-grow-1">
+                    <div class="form-group">
+                        <div *ngIf="needsToAcceptTerms" class="form-check">
+                            <label class="form-check-label" for="acceptTerms">
+                                <input [(ngModel)]="userAcceptedTerms" class="form-check-input" type="checkbox" />
+                                <a [routerLink]="['privacy']" jhiTranslate="login.form.acceptTerms">Accept terms</a>
+                            </label>
                         </div>
-                        <div class="form-group">
-                            <label class="font-weight-bold" for="username" jhiTranslate="global.form.username">Login</label>
-                            <input
-                                type="text"
-                                class="form-control"
-                                autocomplete="username"
-                                name="username"
-                                id="username"
-                                placeholder="{{ 'global.form.username.placeholder' | artemisTranslate }}"
-                                [pattern]="usernameRegexPattern"
-                                [(ngModel)]="username"
-                                #usernameForm="ngModel"
-                                [ngModelOptions]="{ updateOn: 'blur' }"
-                            />
-                            <div class="help-block" *ngIf="usernameForm.errors && (usernameForm.dirty || usernameForm.touched)" [jhiTranslate]="errorMessageUsername">
-                                <p class="text-primary small">Invalid username</p>
-                            </div>
-                        </div>
-                        <div class="form-group">
-                            <label class="font-weight-bold" for="password" jhiTranslate="login.form.password">Password</label>
-                            <input
-                                type="password"
-                                class="form-control"
-                                autocomplete="password"
-                                name="password"
-                                id="password"
-                                placeholder="{{ 'login.form.password.placeholder' | artemisTranslate }}"
-                                [(ngModel)]="password"
-                            />
-                        </div>
-                        <div class="form-group">
-                            <div class="form-check">
-                                <label class="form-check-label" for="rememberMe">
-                                    <input class="form-check-input" type="checkbox" name="rememberMe" id="rememberMe" [(ngModel)]="rememberMe" checked />
-                                    <span jhiTranslate="login.form.rememberme">Remember me</span>
-                                </label>
-                            </div>
-                            <div class="form-check" *ngIf="needsToAcceptTerms">
-                                <label class="form-check-label" for="acceptTerms">
-                                    <input class="form-check-input" type="checkbox" name="acceptTerms" id="acceptTerms" [(ngModel)]="userAcceptedTerms" checked />
-                                    <a [routerLink]="['privacy']" jhiTranslate="login.form.acceptTerms">Accept terms</a>
-                                </label>
-                            </div>
-                        </div>
-                        <div class="btn-toolbar">
-                            <button
-                                type="submit"
-                                id="login-button"
-                                [disabled]="
-                                    isSubmittingLogin ||
-                                    (!userAcceptedTerms && needsToAcceptTerms) ||
-                                    !password ||
-                                    password.length < PASSWORD_MIN_LENGTH ||
-                                    !username ||
-                                    username.length < USERNAME_MIN_LENGTH
-                                "
-                                class="btn btn-primary btn-space"
-                            >
-                                <span *ngIf="isSubmittingLogin" class="me-1"><fa-icon [icon]="faCircleNotch" [spin]="true"></fa-icon></span>
-                                <span jhiTranslate="login.form.button"> Sign in </span>
-                            </button>
-                            <div *ngIf="profileInfo && profileInfo.saml2">
-                                <jhi-saml2-login [acceptedTerms]="!needsToAcceptTerms || userAcceptedTerms" [rememberMe]="rememberMe" [saml2Profile]="profileInfo.saml2">
-                                </jhi-saml2-login>
-                            </div>
-                        </div>
-                    </form>
+                    </div>
+
+                    <jhi-saml2-login
+                        [acceptedTerms]="!needsToAcceptTerms || userAcceptedTerms"
+                        [rememberMe]="rememberMe"
+                        [saml2Profile]="profileInfo!.saml2!"
+                        class="d-block text-center"
+                    ></jhi-saml2-login>
                 </div>
             </div>
-        </div>
-    </div>
-    <div>
-        <br /><br />
-        <div *ngIf="isRegistrationEnabled">
-            <div class="d-flex justify-content-center">
-                <span jhiTranslate="global.messages.info.register.noaccount">You don't have an account yet?</span>&nbsp;
-                <a class="alert-link" routerLink="account/register" jhiTranslate="global.messages.info.register.link">Register a new account</a>
-            </div>
-        </div>
-        <div class="d-flex justify-content-center">
-            <a class="alert-link" routerLink="account/reset/request" jhiTranslate="login.password.forgot">Did you forget your password?</a>
         </div>
     </div>
 </div>

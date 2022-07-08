@@ -283,8 +283,13 @@ you should use:
 
 Functionally both queries extract the same result set, but the first one is less efficient as the sub-query is calculated for each StudentParticipation.
 
+20. Criteria Builder
+==================================================
 
-20. REST endpoint best practices for authorization
+For more details, please visit the :doc:`./criteria-builder` page.
+
+
+21. REST endpoint best practices for authorization
 ==================================================
 
 To prevent unauthorized access to resources Artemis employs a two-step system:
@@ -331,7 +336,7 @@ To reduce duplication, do not add explicit checks for authorization or existence
 The course repository call takes care of throwing a ``404 Not Found`` exception if there exists no matching course. The ``AuthorizationCheckService`` throws a ``403 Forbidden`` exception if the user with the given role is unauthorized. Afterwards delegate to a service or repository method. The code becomes much shorter, cleaner and more maintainable.
 
 
-21. Assert using the most specific overload method
+22. Assert using the most specific overload method
 ==================================================
 
 When expecting results use ``assertThat`` for server tests. That call **must** be followed by another assertion statement like ``isTrue()``. It is best practice to use more specific assertion statement rather than always expecting boolean values.
@@ -363,7 +368,7 @@ Please read `the AssertJ documentation <https://assertj.github.io/doc/#assertj-c
 
 Some parts of these guidelines are adapted from https://medium.com/@madhupathy/ultimate-clean-code-guide-for-java-spring-based-applications-4d4c9095cc2a
 
-22. General Testing Tips
+23. General Testing Tips
 ========================
 
 Write meaningful comments for your tests.
@@ -445,7 +450,7 @@ and the ``hibernateQueryInterceptor.getQueryCount()`` should be right before/aft
 
 The library used for this is `Spring Hibernate Query Utils <https://github.com/yannbriancon/spring-hibernate-query-utils/>`_.
 
-23. Avoid using @MockBean
+24. Avoid using @MockBean
 =========================
 
 Do not use the ``@SpyBean`` or ``@MockBean`` annotation unless absolutely necessary, or possibly in an abstract Superclass. If you want to see why in more detail, take a look `here <https://www.baeldung.com/spring-tests>`__.

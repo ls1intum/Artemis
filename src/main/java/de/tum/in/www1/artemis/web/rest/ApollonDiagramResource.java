@@ -113,7 +113,7 @@ public class ApollonDiagramResource {
      */
     @GetMapping(value = "/apollon-diagrams/{diagramId}/title")
     @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<String> getExerciseTitle(@PathVariable Long diagramId) {
+    public ResponseEntity<String> getDiagramTitle(@PathVariable Long diagramId) {
         final var title = apollonDiagramRepository.getDiagramTitle(diagramId);
         return title == null ? ResponseEntity.notFound().build() : ResponseEntity.ok(title);
     }
