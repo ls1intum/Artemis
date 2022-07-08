@@ -1,4 +1,4 @@
-<div [hidden]="loading || account" class="container">
+<div [hidden]="loading || account" class="container-fluid">
     <div class="row">
         <div class="col-md-8 offset-md-2 text-center">
             <h1 jhiTranslate="home.title">Welcome to Artemis!</h1>
@@ -6,7 +6,7 @@
         </div>
     </div>
     <div class="row row-divided my-5 justify-content-center">
-        <div *ngIf="!isPasswordLoginDisabled" class="login-col col-12 col-md-5 col-lg-3 h-100">
+        <div *ngIf="!isPasswordLoginDisabled" class="login-col col-12 col-lg-5 h-100">
             <!-- Traditional Authentication -->
             <div *ngIf="!accountName" [jhiTranslate]="'home.login.traditional.pleaseSignIn'" class="lead text-center">Please sign in with your account.</div>
             <div *ngIf="accountName" [jhiTranslate]="'home.login.traditional.pleaseSignInAccount'" [translateValues]="{ account: accountName }" class="lead text-center">
@@ -96,11 +96,11 @@
             </div>
             <a class="alert-link" jhiTranslate="login.password.forgot" routerLink="account/reset/request">Did you forget your password?</a>
         </div>
-        <div *ngIf="!isPasswordLoginDisabled && !!profileInfo?.saml2" class="col-12 col-md-1 p-5 h-100">
-            <div class="d-none d-md-block vertical-divider" jhiTranslate="login.divider">or</div>
-            <div class="d-md-none horizontal-divider" jhiTranslate="login.divider">or</div>
+        <div *ngIf="!isPasswordLoginDisabled && !!profileInfo?.saml2" class="col-12 col-lg-2 p-5 h-100">
+            <div class="d-none d-lg-block vertical-divider" jhiTranslate="login.divider">or</div>
+            <div class="d-lg-none horizontal-divider" jhiTranslate="login.divider">or</div>
         </div>
-        <div *ngIf="!!profileInfo?.saml2" class="login-col col-12 col-md-5 col-lg-3">
+        <div *ngIf="!!profileInfo?.saml2" class="login-col col-12 col-lg-5">
             <!-- SAML2 Authentication -->
             <div class="h-100 d-flex flex-column align-items-center justify-content-center">
                 <div *ngIf="!profileInfo!.saml2!.identityProviderName" [jhiTranslate]="'home.login.saml2.pleaseSignIn'" class="lead text-center">
