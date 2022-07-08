@@ -2,9 +2,9 @@ import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable, of } from 'rxjs';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { Exam } from 'app/entities/exam.model';
-import { ExamAction } from 'app/entities/exam-user-activity.model';
+import { ExamAction, ExamActionType, SavedExerciseAction, SwitchedExerciseAction } from 'app/entities/exam-user-activity.model';
 import dayjs from 'dayjs/esm';
-import { ceilDayjsSeconds } from 'app/exam/monitoring/charts/monitoring-chart';
+import { ceilDayjsSeconds, getEmptyCategories } from 'app/exam/monitoring/charts/monitoring-chart';
 import { HttpClient } from '@angular/common/http';
 
 export const EXAM_MONITORING_ACTION_TOPIC = (examId: number) => `/topic/exam-monitoring/${examId}/action`;
@@ -15,8 +15,12 @@ export interface IExamActionService {}
 
 @Injectable({ providedIn: 'root' })
 export class ExamActionService implements IExamActionService {
-    examActionObservables: Map<number, BehaviorSubject<ExamAction | undefined>> = new Map<number, BehaviorSubject<ExamAction | undefined>>();
     cachedExamActions: Map<number, ExamAction[]> = new Map<number, ExamAction[]>();
+    cachedExamActionsGroupedByTimestamp: Map<number, Map<string, number>> = new Map<number, Map<string, number>>();
+    cachedExamActionsGroupedByTimestampAndCategory: Map<number, Map<string, Map<string, number>>> = new Map<number, Map<string, Map<string, number>>>();
+    cachedLastActionPerStudent: Map<number, Map<number, ExamAction>> = new Map<number, Map<number, ExamAction>>();
+    cachedNavigationsPerStudent: Map<number, Map<number, Set<number | undefined>>> = new Map<number, Map<number, Set<number | undefined>>>();
+    cachedSubmissionsPerStudent: Map<number, Map<number, Set<number | undefined>>> = new Map<number, Map<number, Set<number | undefined>>>();
     initialActionsLoaded: Map<number, boolean> = new Map<number, boolean>();
     openExamMonitoringWebsocketSubscriptions: Map<number, string> = new Map<number, string>();
     examMonitoringStatusObservables: Map<number, BehaviorSubject<boolean>> = new Map<number, BehaviorSubject<boolean>>();
@@ -25,20 +29,100 @@ export class ExamActionService implements IExamActionService {
     constructor(private jhiWebsocketService: JhiWebsocketService, private http: HttpClient) {}
 
     /**
-     * Notify all exam action subscribers with the newest exam action provided.
+     * Update, prepare and evaluate actions and insert into cache.
      * @param exam received or updated exam
-     * @param examAction received exam action
+     * @param examActions received exam actions
      */
-    public notifyExamActionSubscribers = (exam: Exam, examAction: ExamAction) => {
-        this.prepareAction(examAction);
-        this.cachedExamActions.set(exam.id!, [...(this.cachedExamActions.get(exam.id!) ?? []), examAction]);
-        const examActionObservable = this.examActionObservables.get(exam.id!);
-        if (!examActionObservable) {
-            this.examActionObservables.set(exam.id!, new BehaviorSubject(examAction));
-        } else {
-            examActionObservable.next(examAction);
+    public updateCachedActions = (exam: Exam, examActions: ExamAction[]) => {
+        // Cache and group actions
+        const actionsPerTimestamp = this.cachedExamActionsGroupedByTimestamp.get(exam.id!) ?? new Map();
+        const actionsPerTimestampAndCategory = this.cachedExamActionsGroupedByTimestampAndCategory.get(exam.id!) ?? new Map();
+        const lastActionPerStudent = this.cachedLastActionPerStudent.get(exam.id!) ?? new Map();
+        const navigatedToPerStudent = this.cachedNavigationsPerStudent.get(exam.id!) ?? new Map();
+        const submittedPerStudent = this.cachedSubmissionsPerStudent.get(exam.id!) ?? new Map();
+
+        for (const action of examActions) {
+            this.prepareAction(action);
+            const timestamp = action.ceiledTimestamp!.toString();
+
+            this.increaseActionByTimestamp(timestamp, actionsPerTimestamp);
+            this.increaseActionByTimestampAndCategory(timestamp, action, actionsPerTimestampAndCategory);
+            this.updateLastActionPerStudent(action, lastActionPerStudent);
+            this.updateNavigationsPerStudent(action, navigatedToPerStudent);
+            this.updateSubmissionsPerStudent(action, submittedPerStudent);
         }
+
+        this.cachedExamActions.set(exam.id!, [...(this.cachedExamActions.get(exam.id!) ?? []), ...examActions]);
+        this.cachedExamActionsGroupedByTimestamp.set(exam.id!, actionsPerTimestamp);
+        this.cachedExamActionsGroupedByTimestampAndCategory.set(exam.id!, actionsPerTimestampAndCategory);
+        this.cachedLastActionPerStudent.set(exam.id!, lastActionPerStudent);
+        this.cachedNavigationsPerStudent.set(exam.id!, navigatedToPerStudent);
+        this.cachedSubmissionsPerStudent.set(exam.id!, submittedPerStudent);
     };
+
+    /**
+     * Increase the actions grouped by timestamp and updates the map.
+     * @param timestamp timestamp of the action
+     * @param actionsPerTimestamp number of actions per timestamp
+     * @private
+     */
+    public increaseActionByTimestamp(timestamp: string, actionsPerTimestamp: Map<string, number>) {
+        actionsPerTimestamp.set(timestamp, (actionsPerTimestamp.get(timestamp) ?? 0) + 1);
+    }
+
+    /**
+     * Increase the actions grouped by timestamp and category and updates the map.
+     * @param timestamp timestamp of the action
+     * @param action received action
+     * @param actionsPerTimestampAndCategory number of actions per timestamp and category
+     * @private
+     */
+    public increaseActionByTimestampAndCategory(timestamp: string, action: ExamAction, actionsPerTimestampAndCategory: Map<string, Map<string, number>>) {
+        const categories = actionsPerTimestampAndCategory.get(timestamp) ?? getEmptyCategories();
+        categories.set(action.type, categories.get(action.type)! + 1);
+        actionsPerTimestampAndCategory.set(timestamp, categories);
+    }
+
+    /**
+     * Updates the last action performed by the student.
+     * @param action received action
+     * @param lastActionPerStudent last action per student
+     * @private
+     */
+    public updateLastActionPerStudent(action: ExamAction, lastActionPerStudent: Map<number, ExamAction>) {
+        const lastAction = lastActionPerStudent.get(action.examActivityId!);
+        if (!lastAction || lastAction.timestamp!.isBefore(action.timestamp!)) {
+            lastActionPerStudent.set(action.examActivityId!, action);
+        }
+    }
+
+    /**
+     * Updates the navigations per student.
+     * @param action received action
+     * @param navigatedToPerStudent navigations per student
+     * @private
+     */
+    public updateNavigationsPerStudent(action: ExamAction, navigatedToPerStudent: Map<number, Set<number | undefined>>) {
+        if (action.type === ExamActionType.SWITCHED_EXERCISE) {
+            const navigatedTo = navigatedToPerStudent.get(action.examActivityId!) ?? new Set();
+            navigatedTo.add((action as SwitchedExerciseAction).exerciseId);
+            navigatedToPerStudent.set(action.examActivityId!, navigatedTo);
+        }
+    }
+
+    /**
+     * Updates the submissions per student.
+     * @param action received action
+     * @param submittedPerStudent submissions per student
+     * @private
+     */
+    public updateSubmissionsPerStudent(action: ExamAction, submittedPerStudent: Map<number, Set<number | undefined>>) {
+        if (action.type === ExamActionType.SAVED_EXERCISE) {
+            const submitted = submittedPerStudent.get(action.examActivityId!) ?? new Set();
+            submitted.add((action as SavedExerciseAction).exerciseId);
+            submittedPerStudent.set(action.examActivityId!, submitted);
+        }
+    }
 
     /**
      * Checks if a websocket connection for the exam monitoring to the server already exists.
@@ -51,7 +135,7 @@ export class ExamActionService implements IExamActionService {
         this.openExamMonitoringWebsocketSubscriptions.set(exam.id!, topic);
 
         this.jhiWebsocketService.subscribe(topic);
-        this.jhiWebsocketService.receive(topic).subscribe((exmAction: ExamAction) => this.notifyExamActionSubscribers(exam, exmAction));
+        this.jhiWebsocketService.receive(topic).subscribe((exmAction: ExamAction) => this.updateCachedActions(exam, [exmAction]));
     }
 
     /**
@@ -61,14 +145,8 @@ export class ExamActionService implements IExamActionService {
      *
      * @param exam the exam to observe
      */
-    public subscribeForLatestExamAction = (exam: Exam): BehaviorSubject<ExamAction | undefined> => {
+    public subscribeForLatestExamAction = (exam: Exam): void => {
         this.openExamMonitoringWebsocketSubscriptionIfNotExisting(exam);
-        let examActionObservable = this.examActionObservables.get(exam.id!)!;
-        if (!examActionObservable) {
-            examActionObservable = new BehaviorSubject<ExamAction | undefined>(undefined);
-            this.examActionObservables.set(exam.id!, examActionObservable);
-        }
-        return examActionObservable;
     };
 
     /**
@@ -78,6 +156,11 @@ export class ExamActionService implements IExamActionService {
     public unsubscribeForExamAction(exam: Exam): void {
         const topic = EXAM_MONITORING_ACTION_TOPIC(exam.id!);
         this.cachedExamActions.set(exam.id!, []);
+        this.cachedExamActionsGroupedByTimestamp.set(exam.id!, new Map());
+        this.cachedExamActionsGroupedByTimestampAndCategory.set(exam.id!, new Map());
+        this.cachedLastActionPerStudent.set(exam.id!, new Map());
+        this.cachedNavigationsPerStudent.set(exam.id!, new Map());
+        this.cachedSubmissionsPerStudent.set(exam.id!, new Map());
         this.initialActionsLoaded.delete(exam.id!);
         this.jhiWebsocketService.unsubscribe(topic);
         this.openExamMonitoringWebsocketSubscriptions.delete(exam.id!);
@@ -156,14 +239,6 @@ export class ExamActionService implements IExamActionService {
      */
     public static loadActionsEndpoint(examId: number): string {
         return `${SERVER_API_URL}api/exam-monitoring/${examId}/load-actions`;
-    }
-
-    /**
-     * Returns the exam as observable.
-     * @param examId corresponding exam id
-     */
-    public getExamMonitoringObservable(examId: number): BehaviorSubject<ExamAction | undefined> | undefined {
-        return this.examActionObservables.get(examId);
     }
 
     /**

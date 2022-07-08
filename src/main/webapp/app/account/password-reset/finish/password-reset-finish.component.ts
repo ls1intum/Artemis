@@ -23,7 +23,7 @@ export class PasswordResetFinishComponent implements OnInit, AfterViewInit {
     success = false;
     key = '';
 
-    passwordForm = this.fb.group({
+    passwordForm = this.fb.nonNullable.group({
         newPassword: ['', [Validators.required, Validators.minLength(PASSWORD_MIN_LENGTH), Validators.maxLength(PASSWORD_MAX_LENGTH)]],
         confirmPassword: ['', [Validators.required, Validators.minLength(PASSWORD_MIN_LENGTH), Validators.maxLength(PASSWORD_MAX_LENGTH)]],
     });
