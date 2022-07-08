@@ -7,9 +7,9 @@ import dayjs from 'dayjs/esm';
 import { ceilDayjsSeconds } from 'app/exam/monitoring/charts/monitoring-chart';
 import { HttpClient } from '@angular/common/http';
 
-const EXAM_MONITORING_ACTION_TOPIC = (examId: number) => `/topic/exam-monitoring/${examId}/action`;
-const EXAM_MONITORING_ACTIONS_TOPIC = (examId: number) => `/topic/exam-monitoring/${examId}/actions`;
-const EXAM_MONITORING_STATUS_TOPIC = (examId: number) => `/topic/exam-monitoring/${examId}/update`;
+export const EXAM_MONITORING_ACTION_TOPIC = (examId: number) => `/topic/exam-monitoring/${examId}/action`;
+export const EXAM_MONITORING_ACTIONS_TOPIC = (examId: number) => `/topic/exam-monitoring/${examId}/actions`;
+export const EXAM_MONITORING_STATUS_TOPIC = (examId: number) => `/topic/exam-monitoring/${examId}/update`;
 
 export interface IExamActionService {}
 

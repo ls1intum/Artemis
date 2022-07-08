@@ -12,10 +12,13 @@ import { createActions } from './exam-monitoring-helper';
 import * as Sentry from '@sentry/browser';
 import { CaptureContext } from '@sentry/types';
 import { BehaviorSubject } from 'rxjs';
+import { ExamActionService } from 'app/exam/monitoring/exam-action.service';
+import { MockHttpService } from '../../../helpers/mocks/service/mock-http.service';
+import { HttpClient } from '@angular/common/http';
 
 describe('ExamMonitoringService', () => {
     let examMonitoringService: ExamMonitoringService;
-    let websocketService: JhiWebsocketService;
+    let examActionService: ExamActionService;
     let artemisServerDateService: ArtemisServerDateService;
     let captureExceptionSpy: jest.SpyInstance<string, [exception: any, captureContext?: CaptureContext | undefined]>;
     let exam: Exam;
@@ -25,12 +28,18 @@ describe('ExamMonitoringService', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule],
-            providers: [ArtemisServerDateService, ExamMonitoringService, { provide: JhiWebsocketService, useClass: MockWebsocketService }],
+            providers: [
+                ArtemisServerDateService,
+                ExamMonitoringService,
+                { provide: JhiWebsocketService, useClass: MockWebsocketService },
+                { provide: HttpClient, useClass: MockHttpService },
+                ExamActionService,
+            ],
         })
             .compileComponents()
             .then(() => {
                 examMonitoringService = TestBed.inject(ExamMonitoringService);
-                websocketService = TestBed.inject(JhiWebsocketService);
+                examActionService = TestBed.inject(ExamActionService);
                 artemisServerDateService = TestBed.inject(ArtemisServerDateService);
                 captureExceptionSpy = jest.spyOn(Sentry, 'captureException');
             });
@@ -90,7 +99,7 @@ describe('ExamMonitoringService', () => {
 
     // Save actions
     it.each(createActions())('should send actions when monitoring enabled and websocket connected', (action: ExamAction) => {
-        const spy = jest.spyOn(examMonitoringService, 'sendAction');
+        const spy = jest.spyOn(examActionService, 'sendAction');
         studentExam.examActivity = new ExamActivity();
         studentExam.examActivity.examActions.push(action);
         examMonitoringService.saveActions(exam, studentExam, true);
@@ -99,7 +108,7 @@ describe('ExamMonitoringService', () => {
     });
 
     it.each(createActions())('should not send actions when monitoring disabled', (action: ExamAction) => {
-        const spy = jest.spyOn(examMonitoringService, 'sendAction');
+        const spy = jest.spyOn(examActionService, 'sendAction');
         studentExam.examActivity = new ExamActivity();
         studentExam.examActivity.examActions.push(action);
         exam.monitoring = false;
@@ -108,7 +117,7 @@ describe('ExamMonitoringService', () => {
     });
 
     it.each(createActions())('should remove actions after send when websocket connected', (action: ExamAction) => {
-        const spy = jest.spyOn(examMonitoringService, 'sendAction');
+        const spy = jest.spyOn(examActionService, 'sendAction');
 
         studentExam.examActivity = new ExamActivity();
         studentExam.examActivity.examActions.push(action);
@@ -120,7 +129,7 @@ describe('ExamMonitoringService', () => {
     });
 
     it.each(createActions())('should not remove actions when websocket not connected', (action: ExamAction) => {
-        const spy = jest.spyOn(examMonitoringService, 'sendAction');
+        const spy = jest.spyOn(examActionService, 'sendAction');
 
         studentExam.examActivity = new ExamActivity();
         studentExam.examActivity.examActions.push(action);
@@ -132,7 +141,7 @@ describe('ExamMonitoringService', () => {
 
     it.each(createActions())('should send exception to sentry during invalid save', (action: ExamAction) => {
         const error = new Error('Invalid');
-        const spy = jest.spyOn(examMonitoringService, 'sendAction').mockImplementation(() => {
+        const spy = jest.spyOn(examActionService, 'sendAction').mockImplementation(() => {
             throw error;
         });
 
@@ -143,26 +152,6 @@ describe('ExamMonitoringService', () => {
         expect(spy).toHaveBeenCalledOnce();
         expect(captureExceptionSpy).toHaveBeenCalledOnce();
         expect(captureExceptionSpy).toHaveBeenCalledWith(error);
-    });
-
-    // Build websocket topic
-    it('should return the correct topic', () => {
-        const spy = jest.spyOn(ExamMonitoringService, 'buildWebsocketTopic');
-        const topic = ExamMonitoringService.buildWebsocketTopic(exam.id!);
-
-        expect(spy).toHaveBeenCalledOnce();
-
-        expect(topic).toEqual(`/topic/exam-monitoring/${exam.id}/actions`);
-    });
-
-    // Send actions
-    it.each(createActions())('should call websocket send', (action: ExamAction) => {
-        const spy = jest.spyOn(websocketService, 'send');
-
-        examMonitoringService.sendAction(action, exam.id!);
-
-        expect(spy).toHaveBeenCalledOnce();
-        expect(spy).toHaveBeenCalledWith(ExamMonitoringService.buildWebsocketTopic(exam.id!), action);
     });
 
     // Notify subscribers

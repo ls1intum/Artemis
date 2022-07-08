@@ -7,7 +7,7 @@ import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { MockWebsocketService } from '../../../helpers/mocks/service/mock-websocket.service';
 import { createActions } from './exam-monitoring-helper';
 import { BehaviorSubject } from 'rxjs';
-import { ExamActionService } from 'app/exam/monitoring/exam-action.service';
+import { EXAM_MONITORING_ACTIONS_TOPIC, ExamActionService } from 'app/exam/monitoring/exam-action.service';
 import dayjs from 'dayjs/esm';
 import { MockHttpService } from '../../../helpers/mocks/service/mock-http.service';
 import { HttpClient } from '@angular/common/http';
@@ -15,6 +15,7 @@ import { HttpClient } from '@angular/common/http';
 describe('ExamActionService', () => {
     let examActionService: ExamActionService;
     let httpClient: HttpClient;
+    let websocketService: JhiWebsocketService;
     let exam: Exam;
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -29,6 +30,7 @@ describe('ExamActionService', () => {
             .compileComponents()
             .then(() => {
                 examActionService = TestBed.inject(ExamActionService);
+                websocketService = TestBed.inject(JhiWebsocketService);
                 httpClient = TestBed.inject(HttpClient);
             });
     });
@@ -102,5 +104,15 @@ describe('ExamActionService', () => {
         expect(spy).toHaveBeenCalledOnce();
         expect(spy).toHaveBeenCalledWith(`api/exam-monitoring/${exam.id}/load-actions`);
         expect(examActionService.initialActionsLoaded).toEqual(initialActionsLoaded);
+    });
+
+    // Send actions
+    it.each(createActions())('should call websocket send', (action: ExamAction) => {
+        const spy = jest.spyOn(websocketService, 'send');
+
+        examActionService.sendAction(action, exam.id!);
+
+        expect(spy).toHaveBeenCalledOnce();
+        expect(spy).toHaveBeenCalledWith(EXAM_MONITORING_ACTIONS_TOPIC(exam.id!), action);
     });
 });
