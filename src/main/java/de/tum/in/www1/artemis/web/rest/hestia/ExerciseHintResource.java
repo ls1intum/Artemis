@@ -144,7 +144,7 @@ public class ExerciseHintResource {
             throw new BadRequestAlertException("Exercise hints for exams are currently not supported", EXERCISE_HINT_ENTITY_NAME, "exerciseHintNotSupported");
         }
 
-        if (exerciseHint instanceof CodeHint codeHint) {
+        if (exerciseHint instanceof CodeHint codeHint && codeHint.getSolutionEntries() != null) {
             codeHintService.updateSolutionEntriesForCodeHint(codeHint);
         }
         exerciseHint.setExerciseHintActivations(hintBeforeSaving.getExerciseHintActivations());

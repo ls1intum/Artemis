@@ -91,6 +91,7 @@
             "updated": "Updated solution fragment with ID {{ param }}",
             "deleted": "Deleted solution fragment with ID {{ param }}",
             "test": "Test",
+            "testOnlyForCurrentTask": "You can only select a test case that the currently selected task contains.",
             "file": "File",
             "changeContentNote": "Note: Changes apply to the fragments in existing code hints that contain this fragment."
         }

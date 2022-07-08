@@ -81,11 +81,14 @@ export class ExerciseHintUpdateComponent implements OnInit, OnDestroy {
     }
 
     openManualEntryCreationModal() {
+        const codeHint = this.exerciseHint as CodeHint;
+        const testCasesForCurrentTask = codeHint.programmingExerciseTask?.testCases ?? [];
         const modalRef: NgbModalRef = this.modalService.open(ManualSolutionEntryCreationModalComponent as Component, { size: 'lg', backdrop: 'static' });
         modalRef.componentInstance.exerciseId = this.exercise.id!;
-        modalRef.componentInstance.codeHint = this.exerciseHint as CodeHint;
+        modalRef.componentInstance.codeHint = codeHint;
+        modalRef.componentInstance.testCases = testCasesForCurrentTask;
         modalRef.componentInstance.onEntryCreated.subscribe((createdEntry: ProgrammingExerciseSolutionEntry) => {
-            (this.exerciseHint as CodeHint)!.solutionEntries!.push(createdEntry);
+            codeHint!.solutionEntries!.push(createdEntry);
         });
     }
 

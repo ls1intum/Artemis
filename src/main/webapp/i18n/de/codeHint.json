@@ -91,6 +91,7 @@
             "updated": "Lösungsfragment aktualisiert mit ID {{ param }}",
             "deleted": "Lösungsfragment gelöscht mit ID {{ param }}",
             "test": "Test",
+            "testOnlyForCurrentTask": "Du kannst nur Tests auswählen, die in der aktuellen Task enthalten sind.",
             "file": "Datei",
             "changeContentNote": "Hinweis: Änderungen an diesem Fragment werden für Hinweise mit diesem Fragment automatisch übernommen."
         }

@@ -54,6 +54,7 @@ export class CodeHintContainerComponent implements OnInit, OnDestroy {
         this.codeHintService.removeSolutionEntryFromCodeHint(this.codeHint.exercise!.id!, this.codeHint.id!, solutionEntryId).subscribe({
             next: () => {
                 this.sortedSolutionEntries = this.sortedSolutionEntries.filter((entry) => entry.id !== solutionEntryId);
+                this.codeHint.solutionEntries = this.sortedSolutionEntries;
                 this.dialogErrorSource.next('');
             },
             error: (error) => {

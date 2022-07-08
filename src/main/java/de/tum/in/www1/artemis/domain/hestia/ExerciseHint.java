@@ -44,7 +44,7 @@ public class ExerciseHint extends DomainObject {
     private ProgrammingExercise exercise;
 
     @ManyToOne
-    @JsonIgnoreProperties(value = "exerciseHints", allowSetters = true)
+    @JsonIgnoreProperties("exerciseHints")
     private ProgrammingExerciseTask task;
 
     @OneToMany(mappedBy = "exerciseHint", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)

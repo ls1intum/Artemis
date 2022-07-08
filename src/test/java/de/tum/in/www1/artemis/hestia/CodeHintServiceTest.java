@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.hestia;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.util.*;
 
@@ -21,6 +22,7 @@ import de.tum.in.www1.artemis.repository.hestia.CodeHintRepository;
 import de.tum.in.www1.artemis.repository.hestia.ProgrammingExerciseSolutionEntryRepository;
 import de.tum.in.www1.artemis.repository.hestia.ProgrammingExerciseTaskRepository;
 import de.tum.in.www1.artemis.service.hestia.CodeHintService;
+import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 
 @SuppressWarnings("ArraysAsListWithZeroOrOneArgument")
 public class CodeHintServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
@@ -171,7 +173,7 @@ public class CodeHintServiceTest extends AbstractSpringIntegrationBambooBitbucke
         var testCase1 = addTestCaseToExercise("testCase1");
         var testCase2 = addTestCaseToExercise("testCase2");
         var entry = addSolutionEntryToTestCase(testCase1);
-        var task = addTaskToExercise("task", new ArrayList<>(List.of(testCase1)));
+        var task = addTaskToExercise("task", new ArrayList<>(List.of(testCase1, testCase2)));
         var codeHint = addCodeHintToTask("codeHint1", task, new HashSet<>(Set.of(entry)));
 
         var entryToUpdate = codeHint.getSolutionEntries().stream().findFirst().orElseThrow();
@@ -239,5 +241,29 @@ public class CodeHintServiceTest extends AbstractSpringIntegrationBambooBitbucke
         var allEntries = solutionEntryRepository.findByExerciseIdWithTestCases(exercise.getId());
         assertThat(allEntries).hasSize(1);
         assertThat(allEntries).contains(entryToRemove);
+    }
+
+    @Test
+    @WithMockUser(username = "editor1", roles = "EDITOR")
+    public void testSaveEntryWithTestCaseUnrelatedToHintTask() {
+        // the test case of an entry belongs to a task unequal to the task of the hint that is updated
+        var unrelatedTestCase = addTestCaseToExercise("unrelatedTaskTestCase");
+        addTaskToExercise("unrelatedTask", new ArrayList<>(List.of(unrelatedTestCase)));
+        var invalidSolutionEntry = new ProgrammingExerciseSolutionEntry();
+        invalidSolutionEntry.setTestCase(unrelatedTestCase);
+        invalidSolutionEntry.setCode("abc");
+
+        var relatedTestCase = addTestCaseToExercise("relatedTaskTestCase");
+        var relatedTask = addTaskToExercise("relatedTask", new ArrayList<>(List.of(relatedTestCase)));
+        var codeHint = addCodeHintToTask("codeHint", relatedTask, new HashSet<>(Collections.emptySet()));
+
+        codeHint.setSolutionEntries(new HashSet<>(Set.of(invalidSolutionEntry)));
+        assertThrows(BadRequestAlertException.class, () -> codeHintService.updateSolutionEntriesForCodeHint(codeHint));
+
+        var entriesForHint = solutionEntryRepository.findByCodeHintId(codeHint.getId());
+        assertThat(entriesForHint).isEmpty();
+
+        var allEntries = solutionEntryRepository.findByExerciseIdWithTestCases(exercise.getId());
+        assertThat(allEntries).isEmpty();
     }
 }

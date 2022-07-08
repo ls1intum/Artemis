@@ -17,9 +17,9 @@ export class ManualSolutionEntryCreationModalComponent implements OnInit, OnDest
 
     exerciseId: number;
     codeHint?: CodeHint;
+    testCases?: ProgrammingExerciseTestCase[];
     onEntryCreated = new EventEmitter<ProgrammingExerciseSolutionEntry>();
 
-    testCases?: ProgrammingExerciseTestCase[];
     solutionRepositoryFileNames?: string[];
 
     private dialogErrorSource = new Subject<string>();
@@ -41,12 +41,15 @@ export class ManualSolutionEntryCreationModalComponent implements OnInit, OnDest
 
     ngOnInit(): void {
         this.solutionEntry.codeHint = this.codeHint;
-        this.exerciseService.getAllTestCases(this.exerciseId).subscribe({
-            next: (testCases) => {
-                this.testCases = testCases;
-            },
-            error: (error) => this.dialogErrorSource.error(error.message),
-        });
+        // only load test cases if not set as an input
+        if (!this.testCases) {
+            this.exerciseService.getAllTestCases(this.exerciseId).subscribe({
+                next: (testCases) => {
+                    this.testCases = testCases;
+                },
+                error: (error) => this.dialogErrorSource.error(error.message),
+            });
+        }
         this.exerciseService.getSolutionFileNames(this.exerciseId).subscribe({
             next: (fileNames) => {
                 this.solutionRepositoryFileNames = fileNames;

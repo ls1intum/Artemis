@@ -6,6 +6,7 @@
     <div class="modal-body">
         <div class="form-group">
             <label class="label-narrow" for="field_test" jhiTranslate="artemisApp.programmingExerciseSolutionEntry.test">Test Name</label>
+            <jhi-help-icon *ngIf="codeHint" placement="top" text="artemisApp.programmingExerciseSolutionEntry.testOnlyForCurrentTask"></jhi-help-icon>
             <select *ngIf="testCases?.length" class="form-select" required name="test" [(ngModel)]="this.solutionEntry.testCase" id="field_test">
                 <option *ngFor="let testCase of testCases" [ngValue]="testCase">{{ testCase?.testName }}</option>
             </select>
