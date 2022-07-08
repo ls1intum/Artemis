@@ -7,11 +7,11 @@ import { StudentExam } from 'app/entities/student-exam.model';
 import { ExamAction, ExamActionType, ExamActivity } from 'app/entities/exam-user-activity.model';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { MockWebsocketService } from '../../../helpers/mocks/service/mock-websocket.service';
-import { ExamMonitoringService } from 'app/exam/monitoring/exam-monitoring.service';
+import { EXAM_MONITORING_UPDATE_URL, ExamMonitoringService } from 'app/exam/monitoring/exam-monitoring.service';
 import { createActions } from './exam-monitoring-helper';
 import * as Sentry from '@sentry/browser';
 import { CaptureContext } from '@sentry/types';
-import { BehaviorSubject } from 'rxjs';
+import { BehaviorSubject, of } from 'rxjs';
 import { ExamActionService } from 'app/exam/monitoring/exam-action.service';
 import { MockHttpService } from '../../../helpers/mocks/service/mock-http.service';
 import { HttpClient } from '@angular/common/http';
@@ -20,6 +20,7 @@ describe('ExamMonitoringService', () => {
     let examMonitoringService: ExamMonitoringService;
     let examActionService: ExamActionService;
     let artemisServerDateService: ArtemisServerDateService;
+    let http: HttpClient;
     let captureExceptionSpy: jest.SpyInstance<string, [exception: any, captureContext?: CaptureContext | undefined]>;
     let exam: Exam;
     let studentExam: StudentExam;
@@ -41,6 +42,7 @@ describe('ExamMonitoringService', () => {
                 examMonitoringService = TestBed.inject(ExamMonitoringService);
                 examActionService = TestBed.inject(ExamActionService);
                 artemisServerDateService = TestBed.inject(ArtemisServerDateService);
+                http = TestBed.inject(HttpClient);
                 captureExceptionSpy = jest.spyOn(Sentry, 'captureException');
             });
     });
@@ -185,5 +187,15 @@ describe('ExamMonitoringService', () => {
         examMonitoringService.notifyExamSubscribers(exam);
 
         expect(examMonitoringService.getExamBehaviorSubject(exam.id!)).toEqual(subject);
+    });
+
+    // Send actions
+    it.each([true, false])('should update monitoring', (monitoring: boolean) => {
+        const spy = jest.spyOn(http, 'put').mockReturnValue(of(monitoring));
+
+        examMonitoringService.updateMonitoring(exam, monitoring);
+
+        expect(spy).toHaveBeenCalledOnce();
+        expect(spy).toHaveBeenCalledWith(EXAM_MONITORING_UPDATE_URL(course.id!, exam.id!), exam.monitoring, { observe: 'response' });
     });
 });
