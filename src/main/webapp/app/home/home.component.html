@@ -16,13 +16,13 @@
             <div class="login-form">
                 <form (change)="inputChange($event)" (ngSubmit)="login()" class="mb-5" name="loginForm" role="form">
                     <div class="form-group">
-                        <div *ngIf="authenticationError && !captchaRequired" class="alert alert-danger mt-1" jhiTranslate="home.errors.failedToLogin">
+                        <div *ngIf="authenticationError && !captchaRequired" class="alert alert-danger my-3" jhiTranslate="home.errors.failedToLogin">
                             <span class="bold">Failed to sign in!</span> Please check your username and password and try again.
                         </div>
-                        <div *ngIf="externalUserManagementActive && authenticationAttempts >= 3 && !captchaRequired" class="alert alert-info mt-1">
+                        <div *ngIf="externalUserManagementActive && authenticationAttempts >= 3 && !captchaRequired" class="alert alert-info my-3">
                             <span [innerHTML]="'home.errors.loginWarning' | artemisTranslate: { url: externalUserManagementUrl, name: externalUserManagementName }"></span>
                         </div>
-                        <div *ngIf="externalUserManagementActive && captchaRequired" class="alert alert-danger mt-1">
+                        <div *ngIf="externalUserManagementActive && captchaRequired" class="alert alert-danger my-3">
                             <span
                                 [innerHTML]="'home.errors.externalUserManagementWarning' | artemisTranslate: { url: externalUserManagementUrl, name: externalUserManagementName }"
                             ></span>
