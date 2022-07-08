@@ -16,7 +16,6 @@ export function initOrionConnector(connector: OrionConnectorService) {
 
 @NgModule({
     declarations: [OrionButtonComponent, ModalConfirmAutofocusComponent, OrionFilterDirective],
-    entryComponents: [ModalConfirmAutofocusComponent],
     imports: [CommonModule, ArtemisSharedModule, TranslateModule, FeatureToggleModule],
     exports: [OrionButtonComponent, OrionFilterDirective],
     providers: [{ provide: APP_INITIALIZER, useFactory: initOrionConnector, deps: [OrionConnectorService], multi: true }, OrionBuildAndTestService, OrionAssessmentService],

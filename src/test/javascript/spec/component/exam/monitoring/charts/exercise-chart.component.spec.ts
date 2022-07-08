@@ -12,18 +12,20 @@ import { ArtemisSharedComponentModule } from 'app/shared/components/shared-compo
 import { ExerciseChartComponent } from 'app/exam/monitoring/charts/exercises/exercise-chart.component';
 import { Exam } from 'app/entities/exam.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
-import { ExamAction, ExamActionType, SavedExerciseAction, SwitchedExerciseAction } from 'app/entities/exam-user-activity.model';
+import { SwitchedExerciseAction } from 'app/entities/exam-user-activity.model';
 import { ExerciseTemplateChartComponent } from 'app/exam/monitoring/charts/exercises/exercise-template-chart.component';
-import { createActions, createExamActionBasedOnType, createTestExercises } from '../exam-monitoring-helper';
+import { createTestExercises } from '../exam-monitoring-helper';
 import { of } from 'rxjs';
 import { ActivatedRoute } from '@angular/router';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { MockWebsocketService } from '../../../../helpers/mocks/service/mock-websocket.service';
 import { Course } from 'app/entities/course.model';
+import { ExamActionService } from 'app/exam/monitoring/exam-action.service';
 
 describe('Exercise Chart Component', () => {
     let comp: ExerciseChartComponent;
     let fixture: ComponentFixture<ExerciseChartComponent>;
+    let examActionService: ExamActionService;
 
     // Course
     const course = new Course();
@@ -54,6 +56,7 @@ describe('Exercise Chart Component', () => {
             .then(() => {
                 fixture = TestBed.createComponent(ExerciseChartComponent);
                 comp = fixture.componentInstance;
+                examActionService = TestBed.inject(ExamActionService);
             });
     });
 
@@ -75,11 +78,12 @@ describe('Exercise Chart Component', () => {
 
     it('should call initData on init with actions', () => {
         // GIVEN
+        const lastActionByStudent = new Map();
         const action = new SwitchedExerciseAction(0);
         action.examActivityId = 1;
-
+        lastActionByStudent.set(action.examActivityId, action);
+        examActionService.cachedLastActionPerStudent.set(exam.id!, lastActionByStudent);
         comp.exam = exam;
-        comp.filteredExamActions = [action];
 
         // WHEN
         comp.ngOnInit();
@@ -87,47 +91,5 @@ describe('Exercise Chart Component', () => {
         // THEN
         expect(comp.ngxData).toEqual([{ name: exercises[0].title!, value: 1 }]);
         expect(comp.ngxColor.domain).toEqual([getColor(0)]);
-    });
-
-    it('should call initData on init with multiple actions', () => {
-        // GIVEN
-        const savedAction = new SavedExerciseAction(false, 0, 0, false, true);
-        savedAction.examActivityId = 1;
-        const action = new SwitchedExerciseAction(0);
-        action.examActivityId = 1;
-
-        comp.exam = exam;
-        comp.filteredExamActions = [savedAction, action];
-
-        // WHEN
-        comp.ngOnInit();
-
-        // THEN
-        expect(comp.ngxData).toEqual([{ name: exercises[0].title!, value: 1 }]);
-        expect(comp.ngxColor.domain).toEqual([getColor(0)]);
-    });
-
-    // Evaluate and add action
-    it('should evaluate and add action', () => {
-        const action = createExamActionBasedOnType(ExamActionType.HANDED_IN_EARLY);
-        expect(comp.filteredExamActions).toEqual([]);
-
-        comp.evaluateAndAddAction(action);
-
-        const expectedMap = new Map();
-        expectedMap.set(action.examActivityId, undefined);
-
-        expect(comp.filteredExamActions).toEqual([action]);
-        expect(comp.currentExercisePerStudent).toEqual(expectedMap);
-    });
-
-    // Filter actions
-    it.each(createActions())('should filter action', (action: ExamAction) => {
-        expect(comp.filterRenderedData(action)).toBe(
-            action.type === ExamActionType.SWITCHED_EXERCISE ||
-                action.type === ExamActionType.SAVED_EXERCISE ||
-                action.type === ExamActionType.ENDED_EXAM ||
-                action.type === ExamActionType.HANDED_IN_EARLY,
-        );
     });
 });

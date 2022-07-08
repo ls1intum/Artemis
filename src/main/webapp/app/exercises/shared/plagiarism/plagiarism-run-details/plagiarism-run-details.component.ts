@@ -3,15 +3,10 @@ import { TextPlagiarismResult } from 'app/exercises/shared/plagiarism/types/text
 import { ModelingPlagiarismResult } from 'app/exercises/shared/plagiarism/types/modeling/ModelingPlagiarismResult';
 import { PlagiarismAndTutorEffortDirective } from 'app/exercises/shared/plagiarism/plagiarism-run-details/plagiarism-and-tutor-effort.directive';
 import { GraphColors } from 'app/entities/statistics.model';
-import { round } from 'app/shared/util/utils';
+import { Range, round } from 'app/shared/util/utils';
 import { PlagiarismComparison } from 'app/exercises/shared/plagiarism/types/PlagiarismComparison';
 import { PlagiarismInspectorService } from 'app/exercises/shared/plagiarism/plagiarism-inspector/plagiarism-inspector.service';
 import { PlagiarismStatus } from 'app/exercises/shared/plagiarism/types/PlagiarismStatus';
-
-export interface SimilarityRange {
-    minimumSimilarity: number;
-    maximumSimilarity: number;
-}
 
 interface SimilarityRangeComparisonStateDTO {
     confirmed: number;
@@ -29,7 +24,7 @@ export class PlagiarismRunDetailsComponent extends PlagiarismAndTutorEffortDirec
      * Result of the automated plagiarism detection
      */
     @Input() plagiarismResult: TextPlagiarismResult | ModelingPlagiarismResult;
-    @Output() similaritySelected: EventEmitter<SimilarityRange> = new EventEmitter<SimilarityRange>();
+    @Output() similaritySelected: EventEmitter<Range> = new EventEmitter<Range>();
 
     yScaleMax = 5;
     totalDetectedPlagiarisms: number;
@@ -85,7 +80,7 @@ export class PlagiarismRunDetailsComponent extends PlagiarismAndTutorEffortDirec
         let comparisonsWithinRange;
         let additionInformationEntry;
         steps.forEach((minimumSimilarity) => {
-            comparisonsWithinRange = this.inspectorService.filterComparisons({ minimumSimilarity, maximumSimilarity: minimumSimilarity + 10 }, comparisons);
+            comparisonsWithinRange = this.inspectorService.filterComparisons(new Range(minimumSimilarity, minimumSimilarity + 10), comparisons);
             additionInformationEntry = {
                 confirmed: comparisonsWithinRange.filter((comparison) => comparison.status === PlagiarismStatus.CONFIRMED).length,
                 denied: comparisonsWithinRange.filter((comparison) => comparison.status === PlagiarismStatus.DENIED).length,
@@ -112,9 +107,9 @@ export class PlagiarismRunDetailsComponent extends PlagiarismAndTutorEffortDirec
     onSelect(event: any): void {
         const interval = event.name as string;
         const separatorIndex = interval.indexOf('-');
-        const minimumSimilarity = parseInt(interval.slice(1, separatorIndex), 10);
-        const maximumSimilarity = parseInt(interval.slice(separatorIndex + 1, interval.length - 2), 10);
+        const lowerBound = parseInt(interval.slice(1, separatorIndex), 10);
+        const upperBound = parseInt(interval.slice(separatorIndex + 1, interval.length - 2), 10);
 
-        this.similaritySelected.emit({ maximumSimilarity, minimumSimilarity });
+        this.similaritySelected.emit(new Range(lowerBound, upperBound));
     }
 }
