@@ -17,6 +17,7 @@ import { participationStatus } from 'app/exercises/shared/exercise/exercise.util
 import { CourseManagementOverviewStatisticsDto } from 'app/course/manage/overview/course-management-overview-statistics-dto.model';
 import { CourseManagementDetailViewDto } from 'app/course/manage/course-management-detail-view-dto.model';
 import { StudentDTO } from 'app/entities/student-dto.model';
+import { EntityTitleService, EntityType } from 'app/shared/layouts/navbar/entity-title.service';
 import { convertDateFromClient } from 'app/utils/date.utils';
 
 export type EntityResponseType = HttpResponse<Course>;
@@ -31,7 +32,7 @@ export class CourseManagementService {
     private coursesForNotifications: BehaviorSubject<Course[] | undefined> = new BehaviorSubject<Course[] | undefined>(undefined);
     private fetchingCoursesForNotifications = false;
 
-    constructor(private http: HttpClient, private lectureService: LectureService, private accountService: AccountService) {}
+    constructor(private http: HttpClient, private lectureService: LectureService, private accountService: AccountService, private entityTitleService: EntityTitleService) {}
 
     /**
      * creates a course using a POST request
@@ -85,16 +86,6 @@ export class CourseManagementService {
      */
     getStatisticsForLifetimeOverview(courseId: number): Observable<number[]> {
         return this.http.get<number[]>(`${this.resourceUrl}/${courseId}/statistics-lifetime-overview`);
-    }
-
-    /**
-     * Fetches the title of the course with the given id
-     *
-     * @param courseId the id of the course
-     * @return the title of the course in an HttpResponse, or an HttpErrorResponse on error
-     */
-    getTitle(courseId: number): Observable<HttpResponse<string>> {
-        return this.http.get(`${this.resourceUrl}/${courseId}/title`, { observe: 'response', responseType: 'text' });
     }
 
     /**
@@ -421,6 +412,7 @@ export class CourseManagementService {
         this.setLearningGoalsIfNone(courseRes);
         this.setAccessRightsCourseEntityResponseType(courseRes);
         this.convertExerciseCategoriesFromServer(courseRes);
+        this.sendCourseTitleAndExerciseTitlesToTitleService(courseRes?.body);
         return courseRes;
     }
 
@@ -433,6 +425,7 @@ export class CourseManagementService {
         this.convertCourseArrayResponseDatesFromServer(courseRes);
         this.convertExerciseCategoryArrayFromServer(courseRes);
         this.setAccessRightsCourseEntityArrayResponseType(courseRes);
+        courseRes?.body?.forEach(this.sendCourseTitleAndExerciseTitlesToTitleService.bind(this));
         return courseRes;
     }
 
@@ -554,5 +547,16 @@ export class CourseManagementService {
             map((res: EntityArrayResponseType) => this.processCourseEntityArrayResponseType(res)),
             map((res: EntityArrayResponseType) => this.setCoursesForNotifications(res)),
         );
+    }
+
+    private sendCourseTitleAndExerciseTitlesToTitleService(course: Course | null | undefined) {
+        this.entityTitleService.setTitle(EntityType.COURSE, [course?.id], course?.title);
+
+        course?.exercises?.forEach((exercise) => {
+            this.entityTitleService.setTitle(EntityType.EXERCISE, [exercise.id], exercise.title);
+        });
+        course?.lectures?.forEach((lecture) => this.entityTitleService.setTitle(EntityType.LECTURE, [lecture.id], lecture.title));
+        course?.exams?.forEach((exam) => this.entityTitleService.setTitle(EntityType.EXAM, [exam.id], exam.title));
+        course?.organizations?.forEach((org) => this.entityTitleService.setTitle(EntityType.ORGANIZATION, [org.id], org.name));
     }
 }

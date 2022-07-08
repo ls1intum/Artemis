@@ -135,18 +135,6 @@ describe('Course Management Service', () => {
         tick();
     }));
 
-    it('should get title of the course', fakeAsync(() => {
-        returnedFromService = course.title!;
-        courseManagementService
-            .getTitle(course.id!)
-            .pipe(take(1))
-            .subscribe((res) => expect(res.body).toEqual(course.title));
-
-        const req = httpMock.expectOne({ method: 'GET', url: `${resourceUrl}/${course.id}/title` });
-        req.flush(returnedFromService);
-        tick();
-    }));
-
     it('should find course with exercises', fakeAsync(() => {
         courseManagementService
             .findWithExercises(course.id!)

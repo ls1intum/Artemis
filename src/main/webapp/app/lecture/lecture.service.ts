@@ -1,12 +1,13 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { map } from 'rxjs/operators';
+import { map, tap } from 'rxjs/operators';
 import { createRequestOption } from 'app/shared/util/request.util';
 import { Lecture } from 'app/entities/lecture.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { LectureUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/lectureUnit.service';
 import { convertDateFromClient, convertDateFromServer } from 'app/utils/date.utils';
+import { EntityTitleService, EntityType } from 'app/shared/layouts/navbar/entity-title.service';
 
 type EntityResponseType = HttpResponse<Lecture>;
 type EntityArrayResponseType = HttpResponse<Lecture[]>;
@@ -15,7 +16,12 @@ type EntityArrayResponseType = HttpResponse<Lecture[]>;
 export class LectureService {
     public resourceUrl = SERVER_API_URL + 'api/lectures';
 
-    constructor(protected http: HttpClient, private accountService: AccountService, private lectureUnitService: LectureUnitService) {}
+    constructor(
+        protected http: HttpClient,
+        private accountService: AccountService,
+        private lectureUnitService: LectureUnitService,
+        private entityTitleService: EntityTitleService,
+    ) {}
 
     create(lecture: Lecture): Observable<EntityResponseType> {
         const copy = this.convertLectureDatesFromClient(lecture);
@@ -32,6 +38,7 @@ export class LectureService {
             map((res: EntityResponseType) => {
                 this.convertLectureResponseDatesFromServer(res);
                 this.setAccessRightsLecture(res.body);
+                this.sendTitlesToEntityTitleService(res?.body);
                 return res;
             }),
         );
@@ -48,26 +55,18 @@ export class LectureService {
                 }
                 this.convertLectureResponseDatesFromServer(res);
                 this.setAccessRightsLecture(res.body);
+                this.sendTitlesToEntityTitleService(res?.body);
                 return res;
             }),
         );
     }
 
-    /**
-     * Fetches the title of the lecture with the given id
-     *
-     * @param lectureId the id of the lecture
-     * @return the title of the lecture in an HttpResponse, or an HttpErrorResponse on error
-     */
-    getTitle(lectureId: number): Observable<HttpResponse<string>> {
-        return this.http.get(`${this.resourceUrl}/${lectureId}/title`, { observe: 'response', responseType: 'text' });
-    }
-
     query(req?: any): Observable<EntityArrayResponseType> {
         const options = createRequestOption(req);
-        return this.http
-            .get<Lecture[]>(this.resourceUrl, { params: options, observe: 'response' })
-            .pipe(map((res: EntityArrayResponseType) => this.convertLectureArrayResponseDatesFromServer(res)));
+        return this.http.get<Lecture[]>(this.resourceUrl, { params: options, observe: 'response' }).pipe(
+            map((res: EntityArrayResponseType) => this.convertLectureArrayResponseDatesFromServer(res)),
+            tap((res: EntityArrayResponseType) => res?.body?.forEach(this.sendTitlesToEntityTitleService.bind(this))),
+        );
     }
 
     findAllByCourseId(courseId: number, withLectureUnits = false): Observable<EntityArrayResponseType> {
@@ -80,6 +79,7 @@ export class LectureService {
             .pipe(
                 map((res: EntityArrayResponseType) => this.convertLectureArrayResponseDatesFromServer(res)),
                 map((res: EntityArrayResponseType) => this.setAccessRightsLectureEntityArrayResponseType(res)),
+                tap((res: EntityArrayResponseType) => res?.body?.forEach(this.sendTitlesToEntityTitleService.bind(this))),
             );
     }
 
@@ -100,6 +100,7 @@ export class LectureService {
                 map((res: EntityResponseType) => {
                     this.convertLectureResponseDatesFromServer(res);
                     this.setAccessRightsLecture(res.body);
+                    this.sendTitlesToEntityTitleService(res?.body);
                     return res;
                 }),
             );
@@ -188,5 +189,9 @@ export class LectureService {
                 return this.convertLectureDatesFromServer(lecture)!;
             });
         }
+    }
+
+    private sendTitlesToEntityTitleService(lecture: Lecture | undefined | null) {
+        this.entityTitleService.setTitle(EntityType.LECTURE, [lecture?.id], lecture?.title);
     }
 }

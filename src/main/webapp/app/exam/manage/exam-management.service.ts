@@ -17,6 +17,7 @@ import { StatsForDashboard } from 'app/course/dashboards/stats-for-dashboard.mod
 import { reconnectSubmissions, Submission } from 'app/entities/submission.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { convertDateFromClient, convertDateFromServer } from 'app/utils/date.utils';
+import { EntityTitleService, EntityType } from 'app/shared/layouts/navbar/entity-title.service';
 
 type EntityResponseType = HttpResponse<Exam>;
 type EntityArrayResponseType = HttpResponse<Exam[]>;
@@ -25,7 +26,7 @@ type EntityArrayResponseType = HttpResponse<Exam[]>;
 export class ExamManagementService {
     public resourceUrl = SERVER_API_URL + 'api/courses';
 
-    constructor(private router: Router, private http: HttpClient, private accountService: AccountService) {}
+    constructor(private router: Router, private http: HttpClient, private accountService: AccountService, private entityTitleService: EntityTitleService) {}
 
     /**
      * Create an exam on the server using a POST request.
@@ -68,18 +69,9 @@ export class ExamManagementService {
                     if (res.body?.course) {
                         this.accountService.setAccessRightsForCourse(res.body.course);
                     }
+                    this.sendTitlesToEntityTitleService(res?.body);
                 }),
             );
-    }
-
-    /**
-     * Fetches the title of the exam with the given id
-     *
-     * @param examId the id of the exam
-     * @return the title of the exam in an HttpResponse, or an HttpErrorResponse on error
-     */
-    getTitle(examId: number): Observable<HttpResponse<string>> {
-        return this.http.get(`api/exams/${examId}/title`, { observe: 'response', responseType: 'text' });
     }
 
     /**
@@ -114,9 +106,10 @@ export class ExamManagementService {
      * @param courseId The course id.
      */
     findAllExamsForCourse(courseId: number): Observable<EntityArrayResponseType> {
-        return this.http
-            .get<Exam[]>(`${this.resourceUrl}/${courseId}/exams`, { observe: 'response' })
-            .pipe(map((res: EntityArrayResponseType) => ExamManagementService.convertCourseArrayResponseDatesFromServer(res)));
+        return this.http.get<Exam[]>(`${this.resourceUrl}/${courseId}/exams`, { observe: 'response' }).pipe(
+            map((res: EntityArrayResponseType) => ExamManagementService.convertCourseArrayResponseDatesFromServer(res)),
+            tap((res: EntityArrayResponseType) => res?.body?.forEach(this.sendTitlesToEntityTitleService.bind(this))),
+        );
     }
 
     /**
@@ -124,18 +117,20 @@ export class ExamManagementService {
      * @param courseId The course id where the quiz should be created
      */
     findAllExamsAccessibleToUser(courseId: number): Observable<EntityArrayResponseType> {
-        return this.http
-            .get<Exam[]>(`${this.resourceUrl}/${courseId}/exams-for-user`, { observe: 'response' })
-            .pipe(map((res: EntityArrayResponseType) => ExamManagementService.convertCourseArrayResponseDatesFromServer(res)));
+        return this.http.get<Exam[]>(`${this.resourceUrl}/${courseId}/exams-for-user`, { observe: 'response' }).pipe(
+            map((res: EntityArrayResponseType) => ExamManagementService.convertCourseArrayResponseDatesFromServer(res)),
+            tap((res: EntityArrayResponseType) => res?.body?.forEach(this.sendTitlesToEntityTitleService.bind(this))),
+        );
     }
 
     /**
      * Find all exams that are held today and in the future.
      */
     findAllCurrentAndUpcomingExams(): Observable<EntityArrayResponseType> {
-        return this.http
-            .get<Exam[]>(`${this.resourceUrl}/upcoming-exams`, { observe: 'response' })
-            .pipe(map((res: EntityArrayResponseType) => ExamManagementService.convertCourseArrayResponseDatesFromServer(res)));
+        return this.http.get<Exam[]>(`${this.resourceUrl}/upcoming-exams`, { observe: 'response' }).pipe(
+            map((res: EntityArrayResponseType) => ExamManagementService.convertCourseArrayResponseDatesFromServer(res)),
+            tap((res: EntityArrayResponseType) => res?.body?.forEach(this.sendTitlesToEntityTitleService.bind(this))),
+        );
     }
 
     /**
@@ -151,7 +146,10 @@ export class ExamManagementService {
         } else {
             url = `${this.resourceUrl}/${courseId}/exams/${examId}/exam-for-assessment-dashboard`;
         }
-        return this.http.get<Exam>(url, { observe: 'response' }).pipe(map((res: EntityResponseType) => ExamManagementService.convertCourseResponseDateFromServer(res)));
+        return this.http.get<Exam>(url, { observe: 'response' }).pipe(
+            map((res: EntityResponseType) => ExamManagementService.convertCourseResponseDateFromServer(res)),
+            tap((res: EntityResponseType) => this.sendTitlesToEntityTitleService(res.body)),
+        );
     }
 
     getLatestIndividualEndDateOfExam(courseId: number, examId: number): Observable<HttpResponse<ExamInformationDTO>> {
@@ -413,5 +411,9 @@ export class ExamManagementService {
      */
     archiveExam(courseId: number, examId: number): Observable<HttpResponse<any>> {
         return this.http.put(`${this.resourceUrl}/${courseId}/exams/${examId}/archive`, {}, { observe: 'response' });
+    }
+
+    private sendTitlesToEntityTitleService(exam: Exam | undefined | null) {
+        this.entityTitleService.setTitle(EntityType.EXAM, [exam?.id], exam?.title);
     }
 }
