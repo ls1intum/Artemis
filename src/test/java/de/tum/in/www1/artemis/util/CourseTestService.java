@@ -573,7 +573,7 @@ public class CourseTestService {
 
         Course receivedCourse = request.get("/api/courses/" + courses.get(0).getId() + "/for-dashboard", HttpStatus.OK, Course.class);
 
-        assertThat(hibernateQueryInterceptor.getQueryCount()).isEqualTo(6);
+        assertThat(hibernateQueryInterceptor.getQueryCount()).isEqualTo(8);
 
         // Test that the received course has five exercises
         assertThat(receivedCourse.getExercises()).as("Five exercises are returned").hasSize(5);
@@ -649,8 +649,9 @@ public class CourseTestService {
         }
     }
 
-    // Tests the amount of DB calls for a 'realistic' call to courses/for-dashboard. We should aim to maintain or lower the amount of DB calls, and be aware if they increase
+    // Test
     public void testGetAllCoursesForDashboardRealisticQueryCount() throws Exception {
+        // Tests the amount of DB calls for a 'realistic' call to courses/for-dashboard. We should aim to maintain or lower the amount of DB calls, and be aware if they increase
         database.createMultipleCoursesWithAllExercisesAndLectures(10, 10);
 
         hibernateQueryInterceptor.startQueryCount();
