@@ -230,7 +230,7 @@ class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testCreatePlagiarismPost() throws Exception {
+    void testCreatePlagiarismPost() throws Exception {
         doNothing().when(singleUserNotificationService).notifyUserAboutNewPlagiarismCase(any(), any());
 
         Post postToSave = createPostWithoutContext();
@@ -576,7 +576,7 @@ class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testGetPostsForCourse_WithPlagiarismCaseIdRequestParam_asInstructor() throws Exception {
+    void testGetPostsForCourse_WithPlagiarismCaseIdRequestParam_asInstructor() throws Exception {
         // request param plagiarismCaseId will fetch all posts that match this context filter
         var params = new LinkedMultiValueMap<String, String>();
         params.add("plagiarismCaseId", plagiarismCaseId.toString());
@@ -589,7 +589,7 @@ class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void testGetPostsForCourse_WithPlagiarismCaseIdRequestParam_asStudent() throws Exception {
+    void testGetPostsForCourse_WithPlagiarismCaseIdRequestParam_asStudent() throws Exception {
         // request param plagiarismCaseId will fetch all posts that match this context filter
         var params = new LinkedMultiValueMap<String, String>();
         params.add("plagiarismCaseId", plagiarismCaseId.toString());
@@ -602,7 +602,7 @@ class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
 
     @Test
     @WithMockUser(username = "student2", roles = "USER")
-    public void testGetPostsForCourse_WithPlagiarismCaseIdRequestParam_asStudent_Forbidden() throws Exception {
+    void testGetPostsForCourse_WithPlagiarismCaseIdRequestParam_asStudent_Forbidden() throws Exception {
         // request param plagiarismCaseId will fetch all posts that match this context filter
         var params = new LinkedMultiValueMap<String, String>();
         params.add("plagiarismCaseId", plagiarismCaseId.toString());
