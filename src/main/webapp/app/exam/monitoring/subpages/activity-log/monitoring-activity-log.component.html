@@ -41,6 +41,7 @@
                                     [rows]="settings.rows"
                                     [scrollbarH]="settings.scrollbarH"
                                 >
+                                    <!-- We cannot set the maxWidth as undefined, so we have to set a large number -->
                                     <ngx-datatable-column
                                         *ngFor="let column of this.columns"
                                         [prop]="column.prop"
@@ -48,7 +49,6 @@
                                         [width]="column.width"
                                         [maxWidth]="column.maxWidth ?? 10000"
                                     >
-                                        <!-- We cannot set this value as undefined, so we have to set a high number -->
                                         <ng-template ngx-datatable-header-template>
                                             <span class="datatable-header-cell-wrapper" (click)="controls.onSort(column.prop)">
                                                 <span
