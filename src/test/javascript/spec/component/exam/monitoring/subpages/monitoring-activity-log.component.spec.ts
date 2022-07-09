@@ -10,6 +10,7 @@ import { MockSyncStorage } from '../../../../helpers/mocks/service/mock-sync-sto
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MonitoringActivityLogComponent } from 'app/exam/monitoring/subpages/activity-log/monitoring-activity-log.component';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { ExamActionService } from 'app/exam/monitoring/exam-action.service';
 
 describe('Monitoring Activity Log Component', () => {
     // Course
@@ -34,6 +35,7 @@ describe('Monitoring Activity Log Component', () => {
                 { provide: ActivatedRoute, useValue: route },
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
+                { provide: ExamActionService },
                 { provide: ArtemisDatePipe },
             ],
         })
