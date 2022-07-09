@@ -14,6 +14,8 @@ import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
 
+import com.yannbriancon.interceptor.HibernateQueryInterceptor;
+
 import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
 import de.tum.in.www1.artemis.programmingexercise.MockDelegate;
 import de.tum.in.www1.artemis.service.*;
@@ -106,6 +108,9 @@ public abstract class AbstractArtemisIntegrationTest implements MockDelegate {
 
     @Autowired
     protected RequestUtilService request;
+
+    @Autowired
+    protected HibernateQueryInterceptor hibernateQueryInterceptor;
 
     @BeforeEach
     public void mockMailService() {

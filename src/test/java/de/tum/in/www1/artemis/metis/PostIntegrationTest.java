@@ -24,8 +24,6 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 
-import com.yannbriancon.interceptor.HibernateQueryInterceptor;
-
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Exercise;
@@ -48,9 +46,6 @@ public class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
     @Autowired
     private PlagiarismCaseRepository plagiarismCaseRepository;
-
-    @Autowired
-    private HibernateQueryInterceptor hibernateQueryInterceptor;
 
     private List<Post> existingPosts;
 

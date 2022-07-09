@@ -15,8 +15,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
-import com.yannbriancon.interceptor.HibernateQueryInterceptor;
-
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.*;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
@@ -58,9 +56,6 @@ public class ExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitb
 
     @Autowired
     private ExerciseService exerciseService;
-
-    @Autowired
-    private HibernateQueryInterceptor hibernateQueryInterceptor;
 
     @BeforeEach
     public void init() {
