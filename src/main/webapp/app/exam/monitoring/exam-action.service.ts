@@ -130,7 +130,7 @@ export class ExamActionService implements IExamActionService {
      * If not a new one will be opened.
      *
      */
-    private openExamMonitoringWebsocketSubscriptionIfNotExisting(exam: Exam) {
+    public openExamMonitoringWebsocketSubscriptionIfNotExisting(exam: Exam) {
         const topic = EXAM_MONITORING_ACTION_TOPIC(exam.id!);
         this.openExamMonitoringWebsocketSubscriptions.set(exam.id!, topic);
 
@@ -185,7 +185,7 @@ export class ExamActionService implements IExamActionService {
      * If not a new one will be opened.
      *
      */
-    private openExamMonitoringUpdateWebsocketSubscriptionIfNotExisting(exam: Exam) {
+    public openExamMonitoringUpdateWebsocketSubscriptionIfNotExisting(exam: Exam) {
         const topic = EXAM_MONITORING_STATUS_TOPIC(exam.id!);
         this.openExamMonitoringStatusWebsocketSubscriptions.set(exam.id!, topic);
 

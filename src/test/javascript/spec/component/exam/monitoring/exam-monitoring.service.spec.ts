@@ -11,7 +11,7 @@ import { EXAM_MONITORING_UPDATE_URL, ExamMonitoringService } from 'app/exam/moni
 import { createActions } from './exam-monitoring-helper';
 import * as Sentry from '@sentry/browser';
 import { CaptureContext } from '@sentry/types';
-import { BehaviorSubject, of, throwError } from 'rxjs';
+import { BehaviorSubject, of } from 'rxjs';
 import { ExamActionService } from 'app/exam/monitoring/exam-action.service';
 import { MockHttpService } from '../../../helpers/mocks/service/mock-http.service';
 import { HttpClient } from '@angular/common/http';
@@ -159,6 +159,19 @@ describe('ExamMonitoringService', () => {
         expect(captureExceptionSpy).toHaveBeenCalledWith(error);
     });
 
+    // Handle and save action
+    it.each(createActions())('should handle and save action', (action: ExamAction) => {
+        const handleActionEventSpy = jest.spyOn(examMonitoringService, 'handleActionEvent').mockImplementation(() => {});
+        const saveActionsSpy = jest.spyOn(examMonitoringService, 'saveActions').mockImplementation(() => {});
+
+        examMonitoringService.handleAndSaveActionEvent(exam, studentExam, action, true);
+
+        expect(handleActionEventSpy).toHaveBeenCalledOnce();
+        expect(handleActionEventSpy).toHaveBeenCalledWith(studentExam, action, exam.monitoring);
+        expect(saveActionsSpy).toHaveBeenCalledOnce();
+        expect(saveActionsSpy).toHaveBeenCalledWith(exam, studentExam, true);
+    });
+
     // Notify subscribers
     it('should notify exam subscribers', () => {
         const examObservables = new Map<number, BehaviorSubject<Exam | undefined>>();
@@ -201,5 +214,10 @@ describe('ExamMonitoringService', () => {
 
         expect(spy).toHaveBeenCalledOnce();
         expect(spy).toHaveBeenCalledWith(EXAM_MONITORING_UPDATE_URL(course.id!, exam.id!), monitoring, { observe: 'response' });
+    });
+
+    // topics
+    it('should get correct exam monitoring update url', () => {
+        expect(EXAM_MONITORING_UPDATE_URL(exam.course?.id!, exam.id!)).toEqual(`${SERVER_API_URL}/api/exam-monitoring/${exam.course?.id!}/update/${exam.id!}`);
     });
 });

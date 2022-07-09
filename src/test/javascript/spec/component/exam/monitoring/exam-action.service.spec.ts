@@ -6,8 +6,8 @@ import { ExamAction, ExamActionType, SavedExerciseAction, SwitchedExerciseAction
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { MockWebsocketService } from '../../../helpers/mocks/service/mock-websocket.service';
 import { createActions } from './exam-monitoring-helper';
-import { BehaviorSubject } from 'rxjs';
-import { EXAM_MONITORING_ACTIONS_TOPIC, ExamActionService } from 'app/exam/monitoring/exam-action.service';
+import { BehaviorSubject, of } from 'rxjs';
+import { EXAM_MONITORING_ACTION_TOPIC, EXAM_MONITORING_ACTIONS_TOPIC, EXAM_MONITORING_STATUS_TOPIC, ExamActionService } from 'app/exam/monitoring/exam-action.service';
 import dayjs from 'dayjs/esm';
 import { MockHttpService } from '../../../helpers/mocks/service/mock-http.service';
 import { HttpClient } from '@angular/common/http';
@@ -57,6 +57,12 @@ describe('ExamActionService', () => {
         examMonitoringStatusObservables.set(exam.id!, new BehaviorSubject(status));
 
         expect(examActionService.examMonitoringStatusObservables).toEqual(examMonitoringStatusObservables);
+
+        examActionService.notifyExamMonitoringUpdateSubscribers(exam, !status);
+
+        examMonitoringStatusObservables.get(exam.id!)!.next(!status);
+
+        expect(examActionService.examMonitoringStatusObservables).toEqual(examMonitoringStatusObservables);
     });
 
     // Prepare actions
@@ -84,6 +90,17 @@ describe('ExamActionService', () => {
 
         expect(spy).toHaveBeenCalledOnce();
         expect(spy).toHaveBeenCalledWith(`api/exam-monitoring/${exam.id}/load-actions`);
+        expect(examActionService.initialActionsLoaded).toEqual(initialActionsLoaded);
+    });
+
+    it('should not load initial actions', () => {
+        const spy = jest.spyOn(httpClient, 'get');
+        const initialActionsLoaded = new Map<number, boolean>();
+        initialActionsLoaded.set(exam.id!, true);
+        examActionService.initialActionsLoaded.set(exam.id!, true);
+
+        examActionService.loadInitialActions(exam);
+        expect(spy).not.toHaveBeenCalled();
         expect(examActionService.initialActionsLoaded).toEqual(initialActionsLoaded);
     });
 
@@ -254,5 +271,60 @@ describe('ExamActionService', () => {
 
         expect(spy).toHaveBeenCalledOnce();
         expect(spy).toHaveBeenCalledWith(EXAM_MONITORING_ACTIONS_TOPIC(exam.id!), action);
+    });
+
+    // open exam monitoring websocket subscription if not existing
+    it.each(createActions())('should open exam monitoring websocket subscription if not existing', (action: ExamAction) => {
+        const topic = EXAM_MONITORING_ACTION_TOPIC(exam.id!);
+        const subscribeSpy = jest.spyOn(websocketService, 'subscribe').mockImplementation(() => {});
+        const receiveSpy = jest.spyOn(websocketService, 'receive').mockReturnValue(of(action));
+        const updateCachedActionsSpy = jest.spyOn(examActionService, 'updateCachedActions');
+
+        examActionService.openExamMonitoringWebsocketSubscriptionIfNotExisting(exam);
+
+        expect(examActionService.openExamMonitoringWebsocketSubscriptions).toEqual(new Map([[exam.id, topic]]));
+
+        expect(subscribeSpy).toHaveBeenCalledOnce();
+        expect(subscribeSpy).toHaveBeenCalledWith(topic);
+
+        expect(receiveSpy).toHaveBeenCalledOnce();
+        expect(receiveSpy).toHaveBeenCalledWith(topic);
+
+        expect(updateCachedActionsSpy).toHaveBeenCalledOnce();
+        expect(updateCachedActionsSpy).toHaveBeenCalledWith(exam, [action]);
+    });
+
+    // open exam monitoring update websocket subscription if not existing
+    it.each([true, false])('should open exam monitoring update websocket subscription if not existing', (status: boolean) => {
+        const topic = EXAM_MONITORING_STATUS_TOPIC(exam.id!);
+        const subscribeSpy = jest.spyOn(websocketService, 'subscribe').mockImplementation(() => {});
+        const receiveSpy = jest.spyOn(websocketService, 'receive').mockReturnValue(of(status));
+        const notifyExamMonitoringUpdateSubscribersSpy = jest.spyOn(examActionService, 'notifyExamMonitoringUpdateSubscribers');
+
+        examActionService.openExamMonitoringUpdateWebsocketSubscriptionIfNotExisting(exam);
+
+        expect(examActionService.openExamMonitoringStatusWebsocketSubscriptions).toEqual(new Map([[exam.id, topic]]));
+
+        expect(subscribeSpy).toHaveBeenCalledOnce();
+        expect(subscribeSpy).toHaveBeenCalledWith(topic);
+
+        expect(receiveSpy).toHaveBeenCalledOnce();
+        expect(receiveSpy).toHaveBeenCalledWith(topic);
+
+        expect(notifyExamMonitoringUpdateSubscribersSpy).toHaveBeenCalledOnce();
+        expect(notifyExamMonitoringUpdateSubscribersSpy).toHaveBeenCalledWith(exam, status);
+    });
+
+    // topics
+    it('should get correct exam monitoring action topic', () => {
+        expect(EXAM_MONITORING_ACTION_TOPIC(exam.id!)).toEqual(`/topic/exam-monitoring/${exam.id!}/action`);
+    });
+
+    it('should get correct exam monitoring actions topic', () => {
+        expect(EXAM_MONITORING_ACTIONS_TOPIC(exam.id!)).toEqual(`/topic/exam-monitoring/${exam.id!}/actions`);
+    });
+
+    it('should get correct exam monitoring status topic', () => {
+        expect(EXAM_MONITORING_STATUS_TOPIC(exam.id!)).toEqual(`/topic/exam-monitoring/${exam.id!}/update`);
     });
 });
