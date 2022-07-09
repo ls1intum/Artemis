@@ -68,4 +68,4 @@ artemis:
     apollon:
         conversion-service-url: http://localhost:8080
     personal-access-token:
-        max-lifetime-in-seconds: 2592000 # 60 * 60 * 24 * 30 ss = 30 days in seconds
+        max-lifetime-in-seconds: 2592000 # 60 * 60 * 24 * 30 s = 30 days in seconds
