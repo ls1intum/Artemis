@@ -63,7 +63,7 @@
                                                 <ng-template *ngTemplateOutlet="timestampRef; context: { timestamp: value }"></ng-template>
                                             </ng-container>
                                             <ng-container *ngSwitchCase="'detailRef'">
-                                                <ng-template *ngTemplateOutlet="detailRef; context: { $implicit: 'World', value: row }"></ng-template>
+                                                <ng-template *ngTemplateOutlet="detailRef; context: { value: row }"></ng-template>
                                             </ng-container>
                                         </container-element>
                                     </ng-template>
