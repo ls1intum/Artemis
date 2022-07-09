@@ -55,8 +55,4 @@ export class MonitoringActivityLogComponent implements OnInit, OnDestroy {
         this.examSubscription?.unsubscribe();
         this.routeSubscription?.unsubscribe();
     }
-
-    log(value: any) {
-        return JSON.stringify(value, undefined, 2);
-    }
 }
