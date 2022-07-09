@@ -2,18 +2,15 @@
 Main page styles
 ========================================================================== */
 
-@media (max-width: 576px) {
-    h1 {
-        font-size: 1.6rem;
-    }
-    .lead {
-        font-size: 0.9rem;
-    }
-}
-
 .login-col {
-    min-width: 33%;
     min-height: 150px;
+    width: 455px;
+    min-width: 455px;
+
+    .login-form {
+        max-width: 360px;
+        margin: auto;
+    }
 }
 
 .row-divided {
@@ -75,15 +72,32 @@ Main page styles
 
     &::before {
         margin-right: 1em;
+        margin-left: 15%;
     }
 
     &::after {
         margin-left: 1em;
+        margin-right: 15%;
     }
 }
 
-@media (min-width: 768px) {
+@media (min-width: 1200px) {
     .saml2-center {
         margin-top: -40px;
+    }
+}
+
+@media (max-width: 576px) {
+    h1 {
+        font-size: 1.6rem;
+    }
+
+    .lead {
+        font-size: 0.85rem;
+    }
+
+    .login-col {
+        width: 385px;
+        min-width: 385px;
     }
 }
