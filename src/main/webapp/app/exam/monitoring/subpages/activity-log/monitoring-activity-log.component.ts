@@ -3,7 +3,6 @@ import { Exam } from 'app/entities/exam.model';
 import { ActivatedRoute } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { ExamMonitoringService } from 'app/exam/monitoring/exam-monitoring.service';
-import { faListAlt } from '@fortawesome/free-solid-svg-icons';
 import { ExamActionService } from 'app/exam/monitoring/exam-action.service';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 
@@ -28,8 +27,6 @@ export class MonitoringActivityLogComponent implements OnInit, OnDestroy {
         { prop: 'type', minWidth: 150, width: 200 },
         { prop: 'detail', minWidth: 250, width: 300, template: 'detailRef' },
     ];
-
-    faListAlt = faListAlt;
 
     constructor(
         private route: ActivatedRoute,
