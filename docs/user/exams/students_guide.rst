@@ -25,11 +25,11 @@ Prerequisites
 
     - **Java IDE with JDK 17**
 
-        **Recommendation:** Eclipse IDE 2021‑12.
+        **Recommendation:** IntelliJ IDEA 2022.1.3.
 
     - **Git Client**
 
-        **Recommendation:** SourceTree
+        **Recommendation:** IntelliJ comes with an integrated git client
 
 
 Offline Mode
