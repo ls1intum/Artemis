@@ -29,8 +29,8 @@
                                  referencedTableName="grading_scale"
                                  referencedColumnNames="id"/>
         <addForeignKeyConstraint baseTableName="bonus_source"
-                                 baseColumnNames="exercise_hint_id"
-                                 constraintName="fk_bonus_source_source_grading_scale_id"
+                                 baseColumnNames="target_grading_scale_id"
+                                 constraintName="fk_bonus_source_target_grading_scale_id"
                                  referencedTableName="grading_scale"
                                  referencedColumnNames="id"/>
         <addUniqueConstraint tableName="bonus_source"
