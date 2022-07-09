@@ -1,3 +1,80 @@
-<div>
-    <div class="mt-3">Under active development</div>
+<div class="d-flex flex-column mt-3">
+    <jhi-monitoring-box
+        title="{{ 'artemisApp.examMonitoring.menu.activity-log.title' | artemisTranslate }}"
+        description="{{ 'artemisApp.examMonitoring.menu.activity-log.description' | artemisTranslate }}"
+    >
+        <ng-container content>
+            <div class="container-fluid">
+                <div class="row">
+                    <div class="col-xl-6">
+                        <jhi-total-actions-chart></jhi-total-actions-chart>
+                    </div>
+                    <div class="col-xl-6">
+                        <jhi-average-actions-chart [registeredStudents]="this.exam.numberOfRegisteredUsers!"></jhi-average-actions-chart>
+                    </div>
+                </div>
+                <div class="row pt-4">
+                    <div class="col">
+                        <jhi-category-actions-chart></jhi-category-actions-chart>
+                    </div>
+                </div>
+                <div class="row pt-4 separator"></div>
+                <div class="row pt-4">
+                    <div class="row pt-3">
+                        <jhi-data-table
+                            id="registered-students"
+                            entityType="examAction"
+                            [allEntities]="this.examActionService.cachedExamActions.get(this.examId!) ?? []"
+                            entitiesPerPageTranslation="artemisApp.examMonitoring.menu.activity-log.actionsPerPage"
+                            showAllEntitiesTranslation="artemisApp.examMonitoring.menu.activity-log.showAllActions"
+                            [searchEnabled]="false"
+                        >
+                            <ng-template let-settings="settings" let-controls="controls">
+                                <ngx-datatable
+                                    class="bootstrap"
+                                    [limit]="settings.limit"
+                                    [sortType]="settings.sortType"
+                                    [columnMode]="settings.columnMode"
+                                    [headerHeight]="settings.headerHeight"
+                                    [footerHeight]="settings.footerHeight"
+                                    [rowHeight]="settings.rowHeight"
+                                    [rows]="settings.rows"
+                                    [scrollbarH]="settings.scrollbarH"
+                                >
+                                    <ngx-datatable-column
+                                        *ngFor="let column of this.columns"
+                                        [prop]="column.prop"
+                                        [minWidth]="column.minWidth"
+                                        [width]="column.width"
+                                        [maxWidth]="column.maxWidth ?? 10000"
+                                    >
+                                        <!-- We cannot set this value as undefined, so we have to set a high number -->
+                                        <ng-template ngx-datatable-header-template>
+                                            <span class="datatable-header-cell-wrapper" (click)="controls.onSort(column.prop)">
+                                                <span
+                                                    class="datatable-header-cell-label bold sortable"
+                                                    [jhiTranslate]="'artemisApp.examMonitoring.menu.activity-log.' + column.prop"
+                                                >
+                                                    {{ column.prop }}
+                                                </span>
+                                                <fa-icon [icon]="controls.iconForSortPropField(column.prop)"></fa-icon>
+                                            </span>
+                                        </ng-template>
+                                        <ng-template ngx-datatable-cell-template let-value="value">
+                                            <span *ngIf="!column.template">{{ value }}</span>
+                                            <ng-template *ngTemplateOutlet="timestampRef; context: { $implicit: 'World', timestamp: value }"></ng-template>
+                                        </ng-template>
+                                    </ngx-datatable-column>
+                                </ngx-datatable>
+                            </ng-template>
+                        </jhi-data-table>
+                    </div>
+                </div>
+            </div>
+        </ng-container>
+    </jhi-monitoring-box>
 </div>
+
+<ng-template #timestampRef let-timestamp="timestamp">
+    <span>{{ this.artemisDatePipe.transform(timestamp, 'time', true) }}</span>
+</ng-template>
