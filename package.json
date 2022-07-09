@@ -33,7 +33,7 @@
         "@ngx-translate/http-loader": "7.0.0",
         "@sentry/browser": "7.5.1",
         "@swimlane/ngx-charts": "20.1.0",
-        "@swimlane/ngx-datatable": "20.0.0",
+        "@flaviosantoro92/ngx-datatable": "1.0.2",
         "ace-builds": "1.7.1",
         "bootstrap": "5.2.0-beta1",
         "brace": "0.11.1",
@@ -72,9 +72,6 @@
     "overrides": {
         "showdown-katex": {
             "showdown": "2.1.0"
-        },
-        "@swimlane/ngx-datatable": {
-            "rxjs": "7.5.5"
         },
         "ngx-infinite-scroll": {
             "@angular/common": "14.0.5",
@@ -138,7 +135,7 @@
         "node": ">=16.13.0 <=17"
     },
     "scripts": {
-        "postinstall": "husky install && ngcc --properties es2020 browser module main",
+        "postinstall": "husky install",
         "prettier:write": "prettier --write \"src/{main/webapp,test}/**/*.{json,ts,js,css,scss,html}\"",
         "prettier:check": "prettier --check \"src/{main/webapp,test}/**/*.{json,ts,js,css,scss,html}\"",
         "lint": "eslint . --ext .ts",

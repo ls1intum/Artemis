@@ -32,7 +32,6 @@
             "buildOutput": "Build Ergebnisse",
             "building": "Build und Tests werden ausgeführt...",
             "buildFailed": "Build gescheitert",
-            "buildSuccessful": "Build erfolgreich, keine Tests ausgeführt",
             "noBuildOutput": "Keine Build-Ergebnisse verfügbar.",
             "selectFile": "Wähle eine Datei aus, um zu beginnen!",
             "downloadBuildResult": "Build-Ergebnis herunterladen",

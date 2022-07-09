@@ -32,7 +32,6 @@
             "buildOutput": "&nbsp; Build Output",
             "building": "Building and testing...",
             "buildFailed": "Build Failed",
-            "buildSuccessful": "Build Successful, no tests executed",
             "noBuildOutput": "No build results available",
             "selectFile": "Select a file to get started!",
             "downloadBuildResult": "Download Build Result",
