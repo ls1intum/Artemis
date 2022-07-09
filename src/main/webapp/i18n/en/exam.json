@@ -491,7 +491,8 @@
                     "showAllActions": "Show all actions",
                     "studentExamId": "Exam-ID",
                     "timestamp": "Timestamp",
-                    "type": "Category"
+                    "type": "Category",
+                    "detail": "Detail"
                 }
             },
             "charts": {

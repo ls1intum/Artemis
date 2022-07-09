@@ -56,11 +56,14 @@
                                             <fa-icon [icon]="controls.iconForSortPropField(column.prop)"></fa-icon>
                                         </span>
                                     </ng-template>
-                                    <ng-template ngx-datatable-cell-template let-value="value">
+                                    <ng-template ngx-datatable-cell-template let-row="row" let-value="value">
                                         <span *ngIf="!column.template">{{ value }}</span>
                                         <container-element *ngIf="column.template" [ngSwitch]="column.template">
                                             <ng-container *ngSwitchCase="'timestampRef'">
-                                                <ng-template *ngTemplateOutlet="timestampRef; context: { $implicit: 'World', timestamp: value }"></ng-template>
+                                                <ng-template *ngTemplateOutlet="timestampRef; context: { timestamp: value }"></ng-template>
+                                            </ng-container>
+                                            <ng-container *ngSwitchCase="'detailRef'">
+                                                <ng-template *ngTemplateOutlet="detailRef; context: { $implicit: 'World', value: row }"></ng-template>
                                             </ng-container>
                                         </container-element>
                                     </ng-template>
@@ -76,4 +79,27 @@
 
 <ng-template #timestampRef let-timestamp="timestamp">
     <span>{{ this.artemisDatePipe.transform(timestamp, 'time', true) }}</span>
+</ng-template>
+
+<ng-template #detailRef let-value="value">
+    <container-element [ngSwitch]="value.type">
+        <div *ngSwitchCase="'STARTED_EXAM'">
+            <span>Session ID: {{ value.sessionId }}</span>
+        </div>
+        <div *ngSwitchCase="'ENDED_EXAM'"><span>---</span></div>
+        <div *ngSwitchCase="'HANDED_IN_EARLY'"><span>---</span></div>
+        <div *ngSwitchCase="'CONTINUED_AFTER_HAND_IN_EARLY'"><span>---</span></div>
+        <div *ngSwitchCase="'SWITCHED_EXERCISE'">
+            <span>Exercise ID: {{ value.exerciseId }}</span>
+        </div>
+        <div *ngSwitchCase="'SAVED_EXERCISE'">
+            <span
+                >Exercise ID: {{ value.exerciseId }} | Submission ID: {{ value.submissionId }} | Forced: {{ value.forced }} | Failed: {{ value.failed }} | Automatically:
+                {{ value.automatically }}</span
+            >
+        </div>
+        <div *ngSwitchCase="'CONNECTION_UPDATED'">
+            <span>Connected: {{ value.connected }}</span>
+        </div>
+    </container-element>
 </ng-template>

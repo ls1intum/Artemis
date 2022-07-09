@@ -490,7 +490,8 @@
                     "showAllActions": "Zeige alle Aktionen",
                     "studentExamId": "Klausur-ID",
                     "timestamp": "Zeitpunkt",
-                    "type": "Kategorie"
+                    "type": "Kategorie",
+                    "detail": "Detail"
                 }
             },
             "charts": {

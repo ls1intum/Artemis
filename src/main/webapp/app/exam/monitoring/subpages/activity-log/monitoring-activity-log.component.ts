@@ -27,6 +27,7 @@ export class MonitoringActivityLogComponent implements OnInit, OnDestroy {
         { prop: 'studentExamId', minWidth: 150, width: 200, maxWidth: 200 },
         { prop: 'timestamp', minWidth: 150, width: 200, template: 'timestampRef' },
         { prop: 'type', minWidth: 150, width: 200 },
+        { prop: 'detail', minWidth: 250, width: 300, template: 'detailRef' },
     ];
 
     faListAlt = faListAlt;
@@ -53,5 +54,9 @@ export class MonitoringActivityLogComponent implements OnInit, OnDestroy {
     ngOnDestroy() {
         this.examSubscription?.unsubscribe();
         this.routeSubscription?.unsubscribe();
+    }
+
+    log(value: any) {
+        return JSON.stringify(value, undefined, 2);
     }
 }
