@@ -2,13 +2,15 @@ package de.tum.in.www1.artemis.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.*;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.net.URL;
-import java.util.Optional;
 
 import org.gitlab4j.api.GitLabApiException;
+import org.gitlab4j.api.models.Project;
+import org.gitlab4j.api.models.Trigger;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -22,7 +24,7 @@ import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.exception.GitLabCIException;
 
-public class GitlabCIServiceTest extends AbstractSpringIntegrationGitlabCIGitlabSamlTest {
+class GitlabCIServiceTest extends AbstractSpringIntegrationGitlabCIGitlabSamlTest {
 
     @Value("${artemis.version-control.url}")
     private URL gitlabServerUrl;
@@ -31,13 +33,13 @@ public class GitlabCIServiceTest extends AbstractSpringIntegrationGitlabCIGitlab
     private ContinuousIntegrationTestService continuousIntegrationTestService;
 
     @BeforeEach
-    public void initTestCase() throws Exception {
+    void initTestCase() throws Exception {
         gitlabRequestMockProvider.enableMockingOfRequests();
         continuousIntegrationTestService.setup(this, continuousIntegrationService);
     }
 
     @AfterEach
-    public void tearDown() throws IOException {
+    void tearDown() throws IOException {
         database.resetDatabase();
         super.resetMockProvider();
         super.resetSpyBeans();
@@ -46,7 +48,7 @@ public class GitlabCIServiceTest extends AbstractSpringIntegrationGitlabCIGitlab
 
     @Test
     @WithMockUser(roles = "INSTRUCTOR", username = "instructor1")
-    public void testHealth() throws Exception {
+    void testHealth() throws Exception {
         var health = continuousIntegrationService.health();
         assertThat(health.isUp()).isTrue();
         assertThat(health.getAdditionalInfo()).containsEntry("cf.", "Version Control Server").containsEntry("url", gitlabServerUrl);
@@ -54,15 +56,15 @@ public class GitlabCIServiceTest extends AbstractSpringIntegrationGitlabCIGitlab
 
     @Test
     @WithMockUser(roles = "INSTRUCTOR", username = "instructor1")
-    public void testGetWebHookUrl() {
-        // TODO
+    void testGetWebHookUrl() {
+        // TODO: adapt when actual implementation has been added
         var result = continuousIntegrationService.getWebHookUrl(null, null);
-        assertThat(result).isEqualTo(Optional.empty());
+        assertThat(result).isNotPresent();
     }
 
     @Test
     @WithMockUser(roles = "INSTRUCTOR", username = "instructor1")
-    public void testGetBuildStatus() {
+    void testGetBuildStatus() {
         // TODO
         var result = continuousIntegrationService.getBuildStatus(null);
         assertThat(result).isNull();
@@ -70,31 +72,43 @@ public class GitlabCIServiceTest extends AbstractSpringIntegrationGitlabCIGitlab
 
     @Test
     @WithMockUser(roles = "INSTRUCTOR", username = "instructor1")
-    public void testTriggerBuildSuccess() throws GitLabApiException {
+    void testTriggerBuildSuccess() throws GitLabApiException, URISyntaxException {
+        final String repositoryUrl = "http://some.test.url/PROJECTNAME/REPONAME-exercise.git";
+        final String repositoryPath = urlService.getRepositoryPathFromRepositoryUrl(new VcsRepositoryUrl(repositoryUrl));
+        final ProgrammingExerciseStudentParticipation participation = new ProgrammingExerciseStudentParticipation();
+        participation.setRepositoryUrl(repositoryUrl);
         mockTriggerBuild(null);
-        ProgrammingExerciseStudentParticipation participation = new ProgrammingExerciseStudentParticipation();
-        participation.setRepositoryUrl("http://some.test.url/PROJECTNAME/REPONAME-exercise.git");
+
         continuousIntegrationService.triggerBuild(participation);
+
+        verify(gitlab, atLeastOnce()).getPipelineApi();
+        verify(gitlab.getPipelineApi(), times(1)).triggerPipeline(eq(repositoryPath), any(Trigger.class), anyString(), any());
     }
 
     @Test
     @WithMockUser(roles = "INSTRUCTOR", username = "instructor1")
-    public void testTriggerBuildFails() throws GitLabApiException {
+    void testTriggerBuildFails() throws GitLabApiException, URISyntaxException {
+        final String repositoryUrl = "http://some.test.url/PROJECTNAME/REPONAME-exercise.git";
+        final String repositoryPath = urlService.getRepositoryPathFromRepositoryUrl(new VcsRepositoryUrl(repositoryUrl));
+        final ProgrammingExerciseStudentParticipation participation = new ProgrammingExerciseStudentParticipation();
+        participation.setRepositoryUrl(repositoryUrl);
         mockTriggerBuildFailed(null);
-        ProgrammingExerciseStudentParticipation participation = new ProgrammingExerciseStudentParticipation();
-        participation.setRepositoryUrl("http://some.test.url/PROJECTNAME/REPONAME-exercise.git");
+
         assertThatThrownBy(() -> continuousIntegrationService.triggerBuild(participation)).isInstanceOf(GitLabCIException.class);
+
+        verify(gitlab, atLeastOnce()).getPipelineApi();
+        verify(gitlab.getPipelineApi(), never()).triggerPipeline(eq(repositoryPath), any(Trigger.class), anyString(), any());
     }
 
     @Test
     @WithMockUser(roles = "INSTRUCTOR", username = "instructor1")
-    public void testConfigureBuildPlanSuccess() throws Exception {
+    void testConfigureBuildPlanSuccess() throws Exception {
         continuousIntegrationTestService.testConfigureBuildPlan();
     }
 
     @Test
     @WithMockUser(roles = "INSTRUCTOR", username = "instructor1")
-    public void testConfigureBuildPlanFails() throws GitLabApiException {
+    void testConfigureBuildPlanFails() throws GitLabApiException {
         mockAddBuildPlanToGitLabRepositoryConfiguration(true);
 
         ProgrammingExerciseStudentParticipation participation = new ProgrammingExerciseStudentParticipation();
@@ -104,20 +118,21 @@ public class GitlabCIServiceTest extends AbstractSpringIntegrationGitlabCIGitlab
 
     @Test
     @WithMockUser(roles = "INSTRUCTOR", username = "instructor1")
-    public void testCreateBuildPlanForExercise() throws GitLabApiException, URISyntaxException {
+    void testCreateBuildPlanForExercise() throws GitLabApiException, URISyntaxException {
+        final String repositoryUrl = "http://some.test.url/PROJECTNAME/REPONAME-exercise.git";
+        final String repositoryPath = urlService.getRepositoryPathFromRepositoryUrl(new VcsRepositoryUrl(repositoryUrl));
         mockAddBuildPlanToGitLabRepositoryConfiguration(false);
-        continuousIntegrationService.createBuildPlanForExercise(null, null, new VcsRepositoryUrl("http://some.test.url/PROJECTNAME/REPONAME-exercise.git"), null, null);
+
+        continuousIntegrationService.createBuildPlanForExercise(null, null, new VcsRepositoryUrl(repositoryUrl), null, null);
+
+        verify(gitlab, atLeastOnce()).getProjectApi();
+        verify(gitlab.getProjectApi(), atLeastOnce()).getProject(eq(repositoryPath));
+        verify(gitlab.getProjectApi(), atLeastOnce()).updateProject(any(Project.class));
     }
 
     @Test
     @WithMockUser(roles = "INSTRUCTOR", username = "instructor1")
-    public void testRecreateBuildPlansForExercise() throws GitLabApiException {
-
-    }
-
-    @Test
-    @WithMockUser(roles = "INSTRUCTOR", username = "instructor1")
-    public void testUnsupportedMethods() {
+    void testUnsupportedMethods() {
         continuousIntegrationService.createProjectForExercise(null);
         continuousIntegrationService.removeAllDefaultProjectPermissions(null);
         continuousIntegrationService.givePlanPermissions(null, null);

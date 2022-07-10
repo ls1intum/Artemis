@@ -19,7 +19,8 @@ public class GitLabCIBuildPlanLinkInfoContributor implements InfoContributor {
 
     @Override
     public void contribute(Info.Builder builder) {
-        // TODO
+        // TODO: Add a template build plan url. Jenkins and Bamboo each use specific wildcards, which are then interpreted in the client. Since GitLab CI has a other structure (no
+        // build plan ids) a change in the client code is necessary.
         builder.withDetail(Constants.INFO_BUILD_PLAN_URL_DETAIL, gitlabServerUrl);
     }
 }

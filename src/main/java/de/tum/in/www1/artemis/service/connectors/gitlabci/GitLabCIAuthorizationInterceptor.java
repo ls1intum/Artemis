@@ -24,6 +24,7 @@ public class GitLabCIAuthorizationInterceptor implements ClientHttpRequestInterc
     @NotNull
     @Override
     public ClientHttpResponse intercept(HttpRequest request, @NotNull byte[] body, @NotNull ClientHttpRequestExecution execution) throws IOException {
-        return GitLabAuthorizationInterceptor.intercept(request, body, execution, gitlabPrivateToken);
+        request.getHeaders().add(GitLabAuthorizationInterceptor.GITLAB_AUTHORIZATION_HEADER_NAME, gitlabPrivateToken);
+        return execution.execute(request, body);
     }
 }

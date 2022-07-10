@@ -16,18 +16,15 @@ import org.springframework.stereotype.Component;
 @Component
 public class GitLabAuthorizationInterceptor implements ClientHttpRequestInterceptor {
 
+    public static final String GITLAB_AUTHORIZATION_HEADER_NAME = "Private-Token";
+
     @Value("${artemis.version-control.token}")
     private String gitlabPrivateToken;
 
     @NotNull
     @Override
     public ClientHttpResponse intercept(HttpRequest request, @NotNull byte[] body, @NotNull ClientHttpRequestExecution execution) throws IOException {
-        return intercept(request, body, execution, gitlabPrivateToken);
-    }
-
-    public static ClientHttpResponse intercept(HttpRequest request, @NotNull byte[] body, @NotNull ClientHttpRequestExecution execution, String gitlabPrivateToken)
-            throws IOException {
-        request.getHeaders().add("Private-Token", gitlabPrivateToken);
+        request.getHeaders().add(GITLAB_AUTHORIZATION_HEADER_NAME, gitlabPrivateToken);
         return execution.execute(request, body);
     }
 }

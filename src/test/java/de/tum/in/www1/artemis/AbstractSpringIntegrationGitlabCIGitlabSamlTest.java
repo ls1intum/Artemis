@@ -10,6 +10,7 @@ import java.net.URISyntaxException;
 import java.util.List;
 import java.util.Set;
 
+import org.gitlab4j.api.GitLabApi;
 import org.gitlab4j.api.GitLabApiException;
 import org.junit.jupiter.api.AfterEach;
 import org.mockito.Mockito;
@@ -47,7 +48,8 @@ import de.tum.in.www1.artemis.util.AbstractArtemisIntegrationTest;
 @TestPropertySource(properties = { "artemis.user-management.use-external=false" })
 public abstract class AbstractSpringIntegrationGitlabCIGitlabSamlTest extends AbstractArtemisIntegrationTest {
 
-    // please only use this to verify method calls using Mockito. Do not mock methods, instead mock the communication with Jenkins using the corresponding RestTemplate.
+    // please only use this to verify method calls using Mockito. Do not mock methods, instead mock the communication with Gitlab using the corresponding RestTemplate and
+    // GitlabApi.
     @SpyBean
     protected GitLabCIService continuousIntegrationService;
 
@@ -55,6 +57,9 @@ public abstract class AbstractSpringIntegrationGitlabCIGitlabSamlTest extends Ab
     // GitlabApi.
     @SpyBean
     protected GitLabService versionControlService;
+
+    @SpyBean
+    protected GitLabApi gitlab;
 
     @Autowired
     protected PasswordService passwordService;
@@ -68,7 +73,7 @@ public abstract class AbstractSpringIntegrationGitlabCIGitlabSamlTest extends Ab
 
     @AfterEach
     public void resetSpyBeans() {
-        Mockito.reset(continuousIntegrationService, versionControlService, relyingPartyRegistrationRepository, mailService);
+        Mockito.reset(continuousIntegrationService, versionControlService, relyingPartyRegistrationRepository, mailService, gitlab);
         super.resetSpyBeans();
     }
 
