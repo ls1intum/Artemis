@@ -529,7 +529,7 @@
                     "tooltip": "Shows the current number of students"
                 },
                 "exercise-detail-navigation-chart": {
-                    "name": "Number of first navigation",
+                    "name": "Number of first navigations",
                     "tooltip": "Shows the number of first navigations"
                 },
                 "exercise-detail-submission-chart": {

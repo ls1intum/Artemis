@@ -1,6 +1,7 @@
 import { Component, Input } from '@angular/core';
 import { Color } from '@swimlane/ngx-charts';
 import { NgxChartsEntry } from 'app/shared/chart/ngx-charts-datatypes';
+import { round } from 'app/shared/util/utils';
 
 @Component({
     selector: 'jhi-exercise-detail-template-chart',
@@ -28,12 +29,5 @@ export class ExerciseDetailTemplateChartComponent {
 
     constructor() {}
 
-    /**
-     * Rounds the number correctly to two decimal digits.
-     * https://stackoverflow.com/questions/11832914/how-to-round-to-at-most-2-decimal-places-if-necessary
-     * @param num
-     */
-    roundToTwo(num: number) {
-        return Math.round((num + Number.EPSILON) * 100) / 100;
-    }
+    round = round;
 }
