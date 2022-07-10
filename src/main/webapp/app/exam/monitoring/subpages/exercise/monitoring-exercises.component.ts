@@ -59,16 +59,28 @@ export class MonitoringExercisesComponent implements OnInit, OnDestroy {
         this.routeSubscription?.unsubscribe();
     }
 
+    /**
+     * Toggle the visibility of the row.
+     * @param exercise selected exercise
+     */
     toggleExpandRow(exercise: Exercise) {
         this.table.rowDetail.toggleExpandRow(exercise);
     }
 
+    /**
+     * Event-Listener to receive the actions performed on the table.
+     * @param event received event
+     */
     onActivate(event: any) {
         if (event.type === 'click') {
             this.toggleExpandRow(event.row);
         }
     }
 
+    /**
+     * Some values have duplicate translation entries. We remove the unique identifiers.
+     * @param prop property as string
+     */
     prepareProp(prop: string) {
         if (prop.startsWith('_')) {
             return prop.substring(1);

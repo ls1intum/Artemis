@@ -1,4 +1,4 @@
-import { Component, Input, OnDestroy, OnInit } from '@angular/core';
+import { Component, Input } from '@angular/core';
 import { Exercise } from 'app/entities/exercise.model';
 import { Exam } from 'app/entities/exam.model';
 
@@ -6,13 +6,9 @@ import { Exam } from 'app/entities/exam.model';
     selector: 'jhi-monitoring-exercise-detail',
     templateUrl: './monitoring-exercise-detail.component.html',
 })
-export class MonitoringExerciseDetailComponent implements OnInit, OnDestroy {
+export class MonitoringExerciseDetailComponent {
     @Input() exercise: Exercise;
     @Input() exam: Exam;
 
     constructor() {}
-
-    ngOnInit() {}
-
-    ngOnDestroy() {}
 }
