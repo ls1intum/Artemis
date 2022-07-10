@@ -11,7 +11,7 @@
                             class="badge bg-info ms-2 exam-monitoring-badge align-items-center"
                         ></span>
                     </div>
-                    <button class="hand btn btn-primary" [class.btn-success]="this.exam.monitoring" [class.btn-danger]="!this.exam.monitoring" (click)="updateMonitoring()">
+                    <button class="hand btn btn-primary" [class.btn-success]="!this.exam.monitoring" [class.btn-danger]="this.exam.monitoring" (click)="updateMonitoring()">
                         <span [jhiTranslate]="'artemisApp.examMonitoring.' + (this.exam.monitoring ? 'disable' : 'enable')">Enable</span>
                     </button>
                 </div>
