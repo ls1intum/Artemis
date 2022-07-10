@@ -105,7 +105,7 @@ describe('ProgrammingExercise Management Detail Component', () => {
 
         comp.getAndShowFullDiff();
 
-        expect(modalService.open).toHaveBeenCalledTimes(1);
+        expect(modalService.open).toHaveBeenCalledOnce();
         expect(modalService.open).toHaveBeenCalledWith(FullGitDiffReportModalComponent, { size: 'xl', backdrop: 'static' });
     });
 
@@ -123,8 +123,8 @@ describe('ProgrammingExercise Management Detail Component', () => {
             comp.ngOnInit();
 
             // THEN
-            expect(statisticsServiceStub).toHaveBeenCalledTimes(1);
-            expect(gitDiffReportStub).toHaveBeenCalledTimes(1);
+            expect(statisticsServiceStub).toHaveBeenCalledOnce();
+            expect(gitDiffReportStub).toHaveBeenCalledOnce();
             expect(comp.programmingExercise).toEqual(programmingExercise);
             expect(comp.isExamExercise).toBeFalse();
             expect(comp.doughnutStats.participationsInPercent).toEqual(100);
@@ -152,8 +152,8 @@ describe('ProgrammingExercise Management Detail Component', () => {
             comp.ngOnInit();
 
             // THEN
-            expect(statisticsServiceStub).toHaveBeenCalledTimes(1);
-            expect(gitDiffReportStub).toHaveBeenCalledTimes(1);
+            expect(statisticsServiceStub).toHaveBeenCalledOnce();
+            expect(gitDiffReportStub).toHaveBeenCalledOnce();
             expect(comp.programmingExercise).toEqual(programmingExercise);
             expect(comp.isExamExercise).toBeTrue();
             expect(comp.programmingExercise.gitDiffReport).not.toBe(undefined);
@@ -171,8 +171,8 @@ describe('ProgrammingExercise Management Detail Component', () => {
 
         comp.createStructuralSolutionEntries();
 
-        expect(exerciseService.createStructuralSolutionEntries).toHaveBeenCalledTimes(1);
-        expect(alertService.addAlert).toHaveBeenCalledTimes(1);
+        expect(exerciseService.createStructuralSolutionEntries).toHaveBeenCalledOnce();
+        expect(alertService.addAlert).toHaveBeenCalledOnce();
         expect(alertService.addAlert).toHaveBeenCalledWith({
             type: AlertType.SUCCESS,
             message: 'artemisApp.programmingExercise.createStructuralSolutionEntriesSuccess',
@@ -189,8 +189,8 @@ describe('ProgrammingExercise Management Detail Component', () => {
 
         comp.createBehavioralSolutionEntries();
 
-        expect(exerciseService.createBehavioralSolutionEntries).toHaveBeenCalledTimes(1);
-        expect(alertService.addAlert).toHaveBeenCalledTimes(1);
+        expect(exerciseService.createBehavioralSolutionEntries).toHaveBeenCalledOnce();
+        expect(alertService.addAlert).toHaveBeenCalledOnce();
         expect(alertService.addAlert).toHaveBeenCalledWith({
             type: AlertType.SUCCESS,
             message: 'artemisApp.programmingExercise.createBehavioralSolutionEntriesSuccess',

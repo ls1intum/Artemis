@@ -85,7 +85,7 @@ describe('ExerciseHint Management Component', () => {
 
         comp.removeEntryFromCodeHint(solutionEntry1.id);
 
-        expect(removeEntrySpy).toHaveBeenCalledTimes(1);
+        expect(removeEntrySpy).toHaveBeenCalledOnce();
         expect(removeEntrySpy).toHaveBeenCalledWith(2, 3, 1);
     });
 });

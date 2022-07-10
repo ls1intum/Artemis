@@ -42,7 +42,6 @@ function urlValidator(control: AbstractControl) {
 @Component({
     selector: 'jhi-video-unit-form',
     templateUrl: './video-unit-form.component.html',
-    styleUrls: ['./video-unit-form.component.scss'],
 })
 export class VideoUnitFormComponent implements OnInit, OnChanges {
     @Input()
@@ -98,11 +97,11 @@ export class VideoUnitFormComponent implements OnInit, OnChanges {
             return;
         }
         this.form = this.fb.group({
-            name: [undefined, [Validators.required, Validators.maxLength(255)]],
-            description: [undefined, [Validators.maxLength(1000)]],
-            releaseDate: [undefined],
-            source: [undefined, [Validators.required, this.urlValidator]],
-            urlHelper: [undefined, this.videoUrlValidator],
+            name: [undefined as string | undefined, [Validators.required, Validators.maxLength(255)]],
+            description: [undefined as string | undefined, [Validators.maxLength(1000)]],
+            releaseDate: [undefined as dayjs.Dayjs | undefined],
+            source: [undefined as string | undefined, [Validators.required, this.urlValidator]],
+            urlHelper: [undefined as string | undefined, this.videoUrlValidator],
         });
     }
 

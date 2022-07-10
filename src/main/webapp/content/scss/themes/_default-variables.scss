@@ -165,6 +165,9 @@ $reaction-button-reacted-color: $metis-light-blue;
 $reaction-button-reacted-accent-color: $metis-blue;
 $reaction-button-emoji-count-color: black;
 
+$metis-post-tag-selector-tag-option-background: white;
+$metis-post-tag-selector-tag-option-hover-background: $gray-200;
+
 // Component: plagiarism-inspector.component.scss
 $plagiarism-inspector-darker-artemis-dark: darken($artemis-dark, 4);
 
@@ -373,6 +376,10 @@ $exam-participation-footer-connected-background: #d1ecf1;
 $exam-participation-footer-disconnected-background: #fff2cc;
 $exam-text-exam-summary-background: #f8f9fa;
 
+// Exam Monitoring
+$exam-monitoring-card-border-color: $border-color;
+$exam-monitoring-card-footer-background-color: rgba($black, 0.02);
+
 // Assessment
 $textblock-assessment-span-hover-background: $gray-300;
 $textblock-assessment-text-feedback-positive-color: $success;
@@ -459,3 +466,7 @@ $graph-green: rgba(40, 164, 40, 1);
 $graph-red: rgba(204, 0, 0, 1);
 $graph-yellow: rgba(230, 174, 6, 1);
 $graph-black: rgba(53, 61, 71, 1);
+
+// User-Management
+$user-management-background-color: rgba($black, 0.02);
+$user-management-border-color: rgba($black, 0.15);

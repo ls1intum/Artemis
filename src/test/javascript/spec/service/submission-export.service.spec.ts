@@ -65,6 +65,6 @@ describe('Submission Export Service', () => {
             .subscribe((resp) => (expectedResult = resp.ok));
         const req = httpMock.expectOne({ method: 'POST' });
         req.flush(new Blob());
-        expect(expectedResult).toBe(true);
+        expect(expectedResult).toBeTrue();
     });
 });

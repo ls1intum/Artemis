@@ -198,7 +198,7 @@ describe('Exam Update Component', () => {
         // trigger save
         component.save();
         tick();
-        expect(updateSpy).toHaveBeenCalledTimes(1);
+        expect(updateSpy).toHaveBeenCalledOnce();
         expect(component.isSaving).toBeFalse();
     }));
 
@@ -293,7 +293,7 @@ describe('Exam Update Component', () => {
         // trigger save
         component.save();
         tick();
-        expect(alertServiceSpy).toHaveBeenCalledTimes(1);
+        expect(alertServiceSpy).toHaveBeenCalledOnce();
         expect(component.isSaving).toBeFalse();
 
         updateStub.mockRestore();
@@ -308,7 +308,7 @@ describe('Exam Update Component', () => {
         // trigger save
         component.save();
         tick();
-        expect(createSpy).toHaveBeenCalledTimes(1);
+        expect(createSpy).toHaveBeenCalledOnce();
         expect(component.isSaving).toBeFalse();
     }));
 
@@ -323,7 +323,7 @@ describe('Exam Update Component', () => {
         // trigger save
         component.save();
         tick();
-        expect(alertServiceSpy).toHaveBeenCalledTimes(1);
+        expect(alertServiceSpy).toHaveBeenCalledOnce();
         expect(component.isSaving).toBeFalse();
 
         createStub.mockRestore();

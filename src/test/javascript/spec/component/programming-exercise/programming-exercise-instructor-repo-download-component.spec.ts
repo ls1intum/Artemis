@@ -47,7 +47,7 @@ describe('ProgrammingExerciseInstructorRepoDownloadComponent', () => {
             const exportInstructorRepositorySpy = jest.spyOn(service, 'exportInstructorRepository');
             component.repositoryType = repoType;
             component.exportRepository();
-            expect(exportInstructorRepositorySpy).toHaveBeenCalledTimes(1);
+            expect(exportInstructorRepositorySpy).toHaveBeenCalledOnce();
             exportInstructorRepositorySpy.mockRestore();
         });
     });

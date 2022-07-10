@@ -35,6 +35,7 @@ import { GraphColors } from 'app/entities/statistics.model';
 import { NgxChartsMultiSeriesDataEntry } from 'app/shared/chart/ngx-charts-datatypes';
 import { axisTickFormattingWithPercentageSign } from 'app/shared/statistics-graph/statistics-graph.utils';
 import { Course } from 'app/entities/course.model';
+import dayjs from 'dayjs/esm';
 
 export enum FeedbackItemType {
     Issue,
@@ -52,7 +53,7 @@ export class FeedbackItem {
     text?: string; // this is typically feedback.detailText
     positive?: boolean;
     credits?: number;
-    appliedCredits?: number;
+    actualCredits?: number;
 }
 
 export const feedbackPreviewCharacterLimit = 300;
@@ -67,8 +68,8 @@ export class ResultDetailComponent implements OnInit {
     readonly BuildLogType = BuildLogType;
     readonly AssessmentType = AssessmentType;
     readonly ExerciseType = ExerciseType;
-    readonly roundScoreSpecifiedByCourseSettings = roundValueSpecifiedByCourseSettings;
     readonly FeedbackItemType = FeedbackItemType;
+    readonly roundScoreSpecifiedByCourseSettings = roundValueSpecifiedByCourseSettings;
 
     @Input() exercise?: Exercise;
     @Input() result: Result;
@@ -89,6 +90,7 @@ export class ResultDetailComponent implements OnInit {
      * the result.
      */
     @Input() showMissingAutomaticFeedbackInformation = false;
+    @Input() latestIndividualDueDate?: dayjs.Dayjs;
 
     isLoading = false;
     loadingFailed = false;
@@ -329,7 +331,6 @@ export class ResultDetailComponent implements OnInit {
             previewText,
             positive: false,
             credits: feedback.credits,
-            appliedCredits: feedback.credits,
         };
     }
 
@@ -352,7 +353,7 @@ export class ResultDetailComponent implements OnInit {
             previewText,
             positive: false,
             credits: scaIssue.penalty ? -scaIssue.penalty : feedback.credits,
-            appliedCredits: feedback.credits,
+            actualCredits: feedback.credits,
         };
     }
 
@@ -519,12 +520,12 @@ export class ResultDetailComponent implements OnInit {
         }
 
         const sumCredits = (sum: number, feedbackItem: FeedbackItem) => sum + (feedbackItem.credits || 0);
-        const sumAppliedCredits = (sum: number, feedbackItem: FeedbackItem) => sum + (feedbackItem.appliedCredits || 0);
+        const sumActualCredits = (sum: number, feedbackItem: FeedbackItem) => sum + (feedbackItem.actualCredits || 0);
 
         let testCaseCredits = feedbackList.filter((item) => item.type === FeedbackItemType.Test).reduce(sumCredits, 0);
         const positiveCredits = feedbackList.filter((item) => item.type !== FeedbackItemType.Test && item.credits && item.credits > 0).reduce(sumCredits, 0);
 
-        let codeIssueCredits = -feedbackList.filter((item) => item.type === FeedbackItemType.Issue).reduce(sumAppliedCredits, 0);
+        let codeIssueCredits = -feedbackList.filter((item) => item.type === FeedbackItemType.Issue).reduce(sumActualCredits, 0);
         const codeIssuePenalties = -feedbackList.filter((item) => item.type === FeedbackItemType.Issue).reduce(sumCredits, 0);
         const negativeCredits = -feedbackList.filter((item) => item.type !== FeedbackItemType.Issue && item.credits && item.credits < 0).reduce(sumCredits, 0);
 
@@ -679,7 +680,7 @@ export class ResultDetailComponent implements OnInit {
         } else {
             this.showOnlyNegativeFeedback = !this.showOnlyNegativeFeedback;
             // by the second predicate we filter all feedback items that do not deduct any points
-            filterPredicate = (feedback: FeedbackItem) => feedback.positive === false && feedback.appliedCredits;
+            filterPredicate = (feedback: FeedbackItem) => feedback.positive === false && feedback.actualCredits;
             this.showOnlyPositiveFeedback = false;
         }
         // we reset the item list in order to make sure that maximal one feedback type is filtered at any time by the chart

@@ -1,0 +1,73 @@
+<div *ngIf="exam">
+    <div class="d-flex flex-column">
+        <div class="mt-3">
+            <jhi-monitoring-box
+                title="{{ 'artemisApp.examMonitoring.menu.exercises.title' | artemisTranslate }}"
+                description="{{ 'artemisApp.examMonitoring.menu.exercises.description' | artemisTranslate }}"
+                linkTo="exercises"
+                [courseId]="this.courseId"
+                [examId]="this.examId"
+            >
+                <ng-container content>
+                    <div class="container-fluid">
+                        <div class="row">
+                            <div class="col-xxl-6">
+                                <jhi-exercise-group-chart [exam]="this.exam"></jhi-exercise-group-chart>
+                            </div>
+                            <div class="col-xxl-6">
+                                <jhi-exercise-chart [exam]="this.exam"></jhi-exercise-chart>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-xxl-6">
+                                <jhi-exercise-navigation-chart [exam]="this.exam"></jhi-exercise-navigation-chart>
+                            </div>
+                            <div class="col-xxl-6">
+                                <jhi-exercise-submission-chart [exam]="this.exam"></jhi-exercise-submission-chart>
+                            </div>
+                        </div>
+                    </div>
+                </ng-container>
+                <ng-container footer>
+                    <div>
+                        <a
+                            [routerLink]="['/course-management', this.courseId, 'exams', this.examId, 'exercise-groups']"
+                            class="btn btn-primary"
+                            [ngbTooltip]="'artemisApp.examMonitoring.menu.exercises.groups' | artemisTranslate"
+                        >
+                            <fa-icon [icon]="faListAlt"></fa-icon>
+                            <span>{{ 'artemisApp.examMonitoring.menu.exercises.groups' | artemisTranslate }}</span>
+                        </a>
+                    </div>
+                </ng-container>
+            </jhi-monitoring-box>
+        </div>
+        <div class="mt-3">
+            <jhi-monitoring-box
+                title="{{ 'artemisApp.examMonitoring.menu.activity-log.title' | artemisTranslate }}"
+                description="{{ 'artemisApp.examMonitoring.menu.activity-log.description' | artemisTranslate }}"
+                linkTo="activity-log"
+                [courseId]="this.courseId"
+                [examId]="this.examId"
+            >
+                <ng-container content>
+                    <div class="container-fluid">
+                        <div class="row">
+                            <div class="col-xl-6">
+                                <jhi-total-actions-chart></jhi-total-actions-chart>
+                            </div>
+                            <div class="col-xl-6">
+                                <jhi-average-actions-chart [registeredStudents]="this.exam.numberOfRegisteredUsers!"></jhi-average-actions-chart>
+                            </div>
+                        </div>
+                        <div class="row pt-4">
+                            <div class="col">
+                                <jhi-category-actions-chart></jhi-category-actions-chart>
+                            </div>
+                        </div>
+                    </div>
+                </ng-container>
+            </jhi-monitoring-box>
+        </div>
+    </div>
+</div>

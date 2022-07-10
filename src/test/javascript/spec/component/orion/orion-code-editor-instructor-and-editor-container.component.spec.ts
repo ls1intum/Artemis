@@ -67,7 +67,7 @@ describe('CodeEditorInstructorAndEditorOrionContainerComponent', () => {
         // @ts-ignore
         comp.applyDomainChange({}, {});
 
-        expect(selectRepositorySpy).toHaveBeenCalledTimes(1);
+        expect(selectRepositorySpy).toHaveBeenCalledOnce();
         expect(selectRepositorySpy).toHaveBeenCalledWith(REPOSITORY.TEST);
     });
 
@@ -77,7 +77,7 @@ describe('CodeEditorInstructorAndEditorOrionContainerComponent', () => {
 
         comp.ngOnInit();
 
-        expect(orionStateStub).toHaveBeenCalledTimes(1);
+        expect(orionStateStub).toHaveBeenCalledOnce();
         expect(orionStateStub).toHaveBeenCalledWith();
         expect(comp.orionState).toEqual(orionState);
     });
@@ -88,9 +88,9 @@ describe('CodeEditorInstructorAndEditorOrionContainerComponent', () => {
 
         comp.buildLocally();
 
-        expect(isBuildingSpy).toHaveBeenCalledTimes(1);
+        expect(isBuildingSpy).toHaveBeenCalledOnce();
         expect(isBuildingSpy).toHaveBeenCalledWith(true);
-        expect(buildLocallySpy).toHaveBeenCalledTimes(1);
+        expect(buildLocallySpy).toHaveBeenCalledOnce();
         expect(buildLocallySpy).toHaveBeenCalledWith();
     });
 
@@ -107,11 +107,11 @@ describe('CodeEditorInstructorAndEditorOrionContainerComponent', () => {
 
         comp.submit();
 
-        expect(submitSpy).toHaveBeenCalledTimes(1);
+        expect(submitSpy).toHaveBeenCalledOnce();
         expect(submitSpy).toHaveBeenCalledWith();
-        expect(isBuildingSpy).toHaveBeenCalledTimes(1);
+        expect(isBuildingSpy).toHaveBeenCalledOnce();
         expect(isBuildingSpy).toHaveBeenCalledWith(true);
-        expect(listenOnBuildOutputSpy).toHaveBeenCalledTimes(1);
+        expect(listenOnBuildOutputSpy).toHaveBeenCalledOnce();
         expect(listenOnBuildOutputSpy).toHaveBeenCalledWith(exercise, participation);
     });
 });

@@ -166,7 +166,10 @@ export class ExamStudentsComponent implements OnInit, OnDestroy {
                     this.flashRowClass(cssClasses.newlyRegistered);
                 },
                 error: (error: HttpErrorResponse) => {
-                    this.onError(`artemisApp.exam.${error.headers.get('x-null-error')}`);
+                    if (error.status === 403) {
+                        this.onError(`artemisApp.exam.error.${error.error.errorKey}`);
+                    }
+                    this.isTransitioning = false;
                 },
             });
         } else {

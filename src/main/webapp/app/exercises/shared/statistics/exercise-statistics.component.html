@@ -1,7 +1,20 @@
 <div *ngIf="exercise">
+    <h2 class="row mb-5 col-md-2" id="statistics-page-heading" jhiTranslate="exercise-statistics.title">Exercise statistics</h2>
+    <div class="mb-3 d-flex justify-content-around">
+        <jhi-exercise-detail-statistics [exercise]="exercise" [doughnutStats]="exerciseStatistics" [exerciseType]="exercise.type!"></jhi-exercise-detail-statistics>
+    </div>
+    <jhi-statistics-score-distribution-graph
+        *ngIf="exerciseStatistics"
+        [averageScoreOfExercise]="exerciseStatistics?.averageScoreOfExercise"
+        [scoreDistribution]="exerciseStatistics?.scoreDistribution"
+        [numberOfExerciseScores]="exerciseStatistics?.numberOfExerciseScores"
+        [exerciseType]="exercise.type!"
+        [courseId]="exercise.course!.id!"
+        [exerciseId]="exercise.id!"
+    ></jhi-statistics-score-distribution-graph>
+    <div class="separator w-100 mb-4"></div>
     <div class="row mb-5">
-        <h2 class="col-md-2" id="statistics-page-heading" jhiTranslate="exercise-statistics.title">Course statistics</h2>
-        <div class="col-md-9 btn-group btn-group-toggle" data-toggle="buttons">
+        <div class="offset-md-2 col-md-9 btn-group btn-group-toggle" data-toggle="buttons">
             <label class="btn btn-secondary" [class.active]="currentSpan === SpanType.DAY">
                 <input type="radio" name="options" id="option1" (click)="onTabChanged(SpanType.DAY)" />{{ 'statistics.span.day' | artemisTranslate }}
             </label>
@@ -19,16 +32,8 @@
             </label>
         </div>
     </div>
-    <div class="mb-3 d-flex justify-content-around">
-        <jhi-exercise-detail-statistics [exercise]="exercise" [doughnutStats]="exerciseStatistics" [exerciseType]="exercise.type!"></jhi-exercise-detail-statistics>
-    </div>
-    <jhi-statistics-score-distribution-graph
-        *ngIf="exerciseStatistics"
-        [averageScoreOfExercise]="exerciseStatistics?.averageScoreOfExercise"
-        [scoreDistribution]="exerciseStatistics?.scoreDistribution"
-        [numberOfExerciseScores]="exerciseStatistics?.numberOfExerciseScores"
-    ></jhi-statistics-score-distribution-graph>
     <div *ngFor="let graph of graphTypes; let i = index" id="exercise-statistics-graph-{{ i }}" class="graph">
+        <hr *ngIf="i !== 0" />
         <jhi-statistics-graph [graphType]="graph" [currentSpan]="currentSpan" [statisticsView]="statisticsView" [entityId]="exercise?.id"> </jhi-statistics-graph>
     </div>
 </div>

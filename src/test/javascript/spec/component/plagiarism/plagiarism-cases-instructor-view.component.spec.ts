@@ -139,9 +139,9 @@ describe('Plagiarism Cases Student View Component', () => {
     });
 
     it('should check if student has responded for a plagiarism case', () => {
-        expect(component.hasStudentAnswer(plagiarismCase1)).toBe(true);
-        expect(component.hasStudentAnswer(plagiarismCase2)).toBe(false);
-        expect(component.hasStudentAnswer(plagiarismCase3)).toBe(false);
+        expect(component.hasStudentAnswer(plagiarismCase1)).toBeTrue();
+        expect(component.hasStudentAnswer(plagiarismCase2)).toBeFalse();
+        expect(component.hasStudentAnswer(plagiarismCase3)).toBeFalse();
     });
 
     it('should export plagiarism cases as CSV', () => {
@@ -153,7 +153,7 @@ describe('Plagiarism Cases Student View Component', () => {
             'Student 2, Test Exercise 2, No verdict yet, -, -\n',
         ];
         component.exportPlagiarismCases();
-        expect(downloadSpy).toHaveBeenCalledTimes(1);
+        expect(downloadSpy).toHaveBeenCalledOnce();
         expect(downloadSpy).toHaveBeenCalledWith(new Blob(expectedBlob, { type: 'text/csv' }), 'plagiarism-cases.csv');
     });
 });

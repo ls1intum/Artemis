@@ -32,7 +32,7 @@ describe('PasswordService', () => {
 
         passwordService.save(newPassword, currentPassword).subscribe();
 
-        expect(postStub).toHaveBeenCalledTimes(1);
+        expect(postStub).toHaveBeenCalledOnce();
         expect(postStub).toHaveBeenCalledWith(postURL, { currentPassword, newPassword });
     });
 });

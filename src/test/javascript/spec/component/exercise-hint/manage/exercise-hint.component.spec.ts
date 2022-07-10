@@ -54,7 +54,7 @@ describe('ExerciseHint Management Component', () => {
         comp.ngOnInit();
 
         // THEN
-        expect(service.findByExerciseId).toHaveBeenCalledTimes(1);
+        expect(service.findByExerciseId).toHaveBeenCalledOnce();
         expect(service.findByExerciseId).toHaveBeenCalledWith(15);
         expect(comp.exerciseHints[0]).toEqual(expect.objectContaining({ id: 123 }));
     });
@@ -69,9 +69,9 @@ describe('ExerciseHint Management Component', () => {
 
         comp.deleteExerciseHint(123);
 
-        expect(deleteHintMock).toHaveBeenCalledTimes(1);
+        expect(deleteHintMock).toHaveBeenCalledOnce();
         expect(deleteHintMock).toHaveBeenCalledWith(15, 123);
-        expect(broadcastSpy).toHaveBeenCalledTimes(1);
+        expect(broadcastSpy).toHaveBeenCalledOnce();
         expect(broadcastSpy).toHaveBeenCalledWith({
             name: 'exerciseHintListModification',
             content: 'Deleted an exerciseHint',

@@ -40,7 +40,7 @@ import { ProgrammingAssessmentManualResultService } from 'app/exercises/programm
 import { ModelingAssessmentService } from 'app/exercises/modeling/assess/modeling-assessment.service';
 import { Result } from 'app/entities/result.model';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { NgxDatatableModule } from '@swimlane/ngx-datatable';
+import { NgxDatatableModule } from '@flaviosantoro92/ngx-datatable';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ResultComponent } from 'app/exercises/shared/result/result.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -170,7 +170,7 @@ describe('ParticipationSubmissionComponent', () => {
         fixture.detectChanges();
         tick();
 
-        expect(comp.isLoading).toBe(false);
+        expect(comp.isLoading).toBeFalse();
         // check if findAllSubmissionsOfParticipationStub() is called and works
         expect(findAllSubmissionsOfParticipationStub).toHaveBeenCalled();
         expect(comp.participation).toEqual(participation);
@@ -211,7 +211,7 @@ describe('ParticipationSubmissionComponent', () => {
         fixture.detectChanges();
         tick();
 
-        expect(comp.isLoading).toBe(false);
+        expect(comp.isLoading).toBeFalse();
         expect(findWithTemplateAndSolutionParticipationStub).toHaveBeenCalled();
         expect(comp.exercise).toEqual(programmingExercise);
         expect(comp.participation).toEqual(templateParticipation);
@@ -248,7 +248,7 @@ describe('ParticipationSubmissionComponent', () => {
         fixture.detectChanges();
         tick();
 
-        expect(comp.isLoading).toBe(false);
+        expect(comp.isLoading).toBeFalse();
         expect(findWithTemplateAndSolutionParticipationStub).toHaveBeenCalled();
         expect(comp.participation).toEqual(solutionParticipation);
         expect(comp.submissions).toEqual(solutionParticipation.submissions);

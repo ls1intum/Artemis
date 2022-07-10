@@ -283,7 +283,6 @@ describe('TextAssessment Service', () => {
         submission.results = [
             {
                 id: 2374,
-                resultString: '1 of 12 points',
                 score: 8,
                 rated: true,
                 hasFeedback: true,
@@ -386,7 +385,7 @@ describe('TextAssessment Service', () => {
 
         resolver.resolve(snapshot);
 
-        expect(newStudentParticipationStub).toHaveBeenCalledTimes(1);
+        expect(newStudentParticipationStub).toHaveBeenCalledOnce();
         expect(newStudentParticipationStub).toHaveBeenCalledWith(1, 'lock', 0);
     });
 
@@ -403,7 +402,7 @@ describe('TextAssessment Service', () => {
 
         resolver.resolve(snapshot);
 
-        expect(studentParticipationSpy).toHaveBeenCalledTimes(1);
+        expect(studentParticipationSpy).toHaveBeenCalledOnce();
         expect(studentParticipationSpy).toHaveBeenCalledWith(1, 2, undefined, 1);
     });
 
@@ -420,7 +419,7 @@ describe('TextAssessment Service', () => {
 
         resolver.resolve(snapshot);
 
-        expect(feedbackConflictSpy).toHaveBeenCalledTimes(1);
+        expect(feedbackConflictSpy).toHaveBeenCalledOnce();
         expect(feedbackConflictSpy).toHaveBeenCalledWith(1, 2, 3);
     });
 

@@ -5,7 +5,8 @@
     </div>
     <div class="modal-body">
         <div class="form-group form-inline">
-            Search for exercise: <input class="form-control ms-2" type="text" name="searchExcercise" [(ngModel)]="searchTerm" />
+            <span jhiTranslate="artemisApp.exercise.import.search">Search for exercise</span>:
+            <input class="form-control ms-2" type="text" name="searchExcercise" [(ngModel)]="searchTerm" />
             <span class="ms-3" *ngIf="loading" jhiTranslate="artemisApp.exercise.import.loading">Loading...</span>
         </div>
         <table class="table table-striped flex">

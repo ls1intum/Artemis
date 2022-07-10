@@ -121,11 +121,11 @@ describe('ExamParticipationCoverComponent', () => {
 
         component.startView = true;
         component.updateConfirmation();
-        expect(component.startEnabled).toBe(false);
+        expect(component.startEnabled).toBeFalse();
 
         component.startView = false;
         component.updateConfirmation();
-        expect(component.endEnabled).toBe(false);
+        expect(component.endEnabled).toBeFalse();
     });
 
     it('should start exam', fakeAsync(() => {
@@ -137,7 +137,7 @@ describe('ExamParticipationCoverComponent', () => {
 
         component.startExam();
 
-        expect(saveStudentExamSpy).toHaveBeenCalledTimes(1);
+        expect(saveStudentExamSpy).toHaveBeenCalledOnce();
         expect(saveStudentExamSpy).toHaveBeenCalledWith(exam!.course!.id, exam!.id, studentExam);
 
         component.testRun = false;
@@ -156,7 +156,7 @@ describe('ExamParticipationCoverComponent', () => {
         component.startExam();
         tick();
         jest.advanceTimersByTime(UI_RELOAD_TIME + 1); // simulate setInterval time passing
-        expect(component.waitingForExamStart).toBe(true);
+        expect(component.waitingForExamStart).toBeTrue();
         const difference = Math.ceil(component.exam.startDate.diff(now, 'seconds') / 60);
         expect(component.timeUntilStart).toBe(difference + ' min');
 
@@ -164,13 +164,13 @@ describe('ExamParticipationCoverComponent', () => {
         component.startExam();
         tick();
         jest.advanceTimersByTime(UI_RELOAD_TIME + 1); // simulate setInterval time passing
-        expect(component.waitingForExamStart).toBe(true);
+        expect(component.waitingForExamStart).toBeTrue();
         expect(component.timeUntilStart).toBe('');
     }));
 
     it('test run should always have already started', () => {
         component.testRun = true;
-        expect(component.hasStarted()).toBe(true);
+        expect(component.hasStarted()).toBeTrue();
     });
 
     it('should update displayed times if exam suddenly started ', () => {
@@ -180,7 +180,7 @@ describe('ExamParticipationCoverComponent', () => {
         const eventSpy = jest.spyOn(component.onExamStarted, 'emit');
 
         component.updateDisplayedTimes(studentExam);
-        expect(eventSpy).toHaveBeenCalledTimes(1);
+        expect(eventSpy).toHaveBeenCalledOnce();
     });
 
     it('should create the relative time text correctly', () => {
@@ -194,20 +194,20 @@ describe('ExamParticipationCoverComponent', () => {
         component.onExamEnded = new EventEmitter<StudentExam>();
         const saveStudentExamSpy = jest.spyOn(component.onExamEnded, 'emit');
         component.submitExam();
-        expect(saveStudentExamSpy).toHaveBeenCalledTimes(1);
+        expect(saveStudentExamSpy).toHaveBeenCalledOnce();
     });
 
     it('should continue after handing in early', () => {
         component.onExamContinueAfterHandInEarly = new EventEmitter<void>();
         const saveStudentExamSpy = jest.spyOn(component.onExamContinueAfterHandInEarly, 'emit');
         component.continueAfterHandInEarly();
-        expect(saveStudentExamSpy).toHaveBeenCalledTimes(1);
+        expect(saveStudentExamSpy).toHaveBeenCalledOnce();
     });
 
     it('should get start button enabled and end button enabled', () => {
         fixture.detectChanges();
         component.testRun = true;
-        expect(component.startButtonEnabled).toBe(false);
+        expect(component.startButtonEnabled).toBeFalse();
 
         const now = dayjs();
         jest.spyOn(artemisServerDateService, 'now').mockReturnValue(now);
@@ -216,15 +216,15 @@ describe('ExamParticipationCoverComponent', () => {
         component.accountName = 'admin';
         component.confirmed = true;
         component.exam.visibleDate = dayjs().subtract(1, 'hours');
-        expect(component.startButtonEnabled).toBe(true);
+        expect(component.startButtonEnabled).toBeTrue();
 
         component.handInPossible = true;
-        expect(component.endButtonEnabled).toBe(true);
+        expect(component.endButtonEnabled).toBeTrue();
     });
 
     it('should get end button enabled', () => {
         component.enteredName = 'admin';
-        expect(component.inserted).toBe(true);
+        expect(component.inserted).toBeTrue();
     });
 
     it('should disable exam button', () => {
@@ -237,12 +237,12 @@ describe('ExamParticipationCoverComponent', () => {
         component.confirmed = true;
         component.exam.visibleDate = dayjs().subtract(1, 'hours');
         component.exam.visibleDate = dayjs().add(1, 'hours');
-        expect(component.startButtonEnabled).toBe(false);
+        expect(component.startButtonEnabled).toBeFalse();
     });
 
     it('should get whether student failed to submit', () => {
         component.testRun = true;
-        expect(component.studentFailedToSubmit).toBe(false);
+        expect(component.studentFailedToSubmit).toBeFalse();
 
         component.testRun = false;
         const startDate = dayjs();
@@ -252,6 +252,6 @@ describe('ExamParticipationCoverComponent', () => {
         component.studentExam.workingTime = 3600;
         component.exam.gracePeriod = 1;
         component.studentExam.submitted = false;
-        expect(component.studentFailedToSubmit).toBe(true);
+        expect(component.studentFailedToSubmit).toBeTrue();
     });
 });

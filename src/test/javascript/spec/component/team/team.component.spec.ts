@@ -3,7 +3,7 @@ import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
-import { NgxDatatableModule } from '@swimlane/ngx-datatable';
+import { NgxDatatableModule } from '@flaviosantoro92/ngx-datatable';
 import { AccountService } from 'app/core/auth/account.service';
 import { User } from 'app/core/user/user.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
@@ -98,7 +98,7 @@ describe('TeamComponent', () => {
             comp.ngOnInit();
             expect(comp.exercise).toEqual(mockExercise);
             expect(comp.team).toEqual(mockTeam);
-            expect(comp.isTeamOwner).toEqual(false);
+            expect(comp.isTeamOwner).toBeFalse();
             expect(exerciseService['find']).toHaveBeenCalled();
         });
 
@@ -109,7 +109,7 @@ describe('TeamComponent', () => {
                 comp.ngOnInit();
                 expect(exerciseStub).toHaveBeenCalled();
                 expect(alertServiceStub).toHaveBeenCalled();
-                expect(comp.isLoading).toEqual(false);
+                expect(comp.isLoading).toBeFalse();
             });
         });
 
@@ -120,7 +120,7 @@ describe('TeamComponent', () => {
                 comp.ngOnInit();
                 expect(teamStub).toHaveBeenCalled();
                 expect(alertServiceStub).toHaveBeenCalled();
-                expect(comp.isLoading).toEqual(false);
+                expect(comp.isLoading).toBeFalse();
             });
         });
     });
@@ -132,7 +132,7 @@ describe('TeamComponent', () => {
                 fixture = TestBed.createComponent(TeamComponent);
                 comp = fixture.componentInstance;
                 comp.ngOnInit();
-                expect(comp.isTeamOwner).toEqual(true);
+                expect(comp.isTeamOwner).toBeTrue();
             });
         });
     });
@@ -149,7 +149,7 @@ describe('TeamComponent', () => {
             comp.ngOnInit();
             jest.spyOn(router, 'navigate');
             comp.onTeamDelete();
-            expect(router['navigate']).toHaveBeenCalledTimes(1);
+            expect(router['navigate']).toHaveBeenCalledOnce();
             expect(router['navigate']).toHaveBeenCalledWith(['/course-management', mockExercise.course?.id, 'exercises', mockExercise.id, 'teams']);
         });
     });

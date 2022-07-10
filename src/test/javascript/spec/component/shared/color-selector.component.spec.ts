@@ -36,7 +36,7 @@ describe('ColorSelectorComponent', () => {
 
         expect(component.colorSelectorPosition).toEqual({ left: 0, top: 10 });
         expect(component.height).toBe(7);
-        expect(component.showColorSelector).toBe(true);
+        expect(component.showColorSelector).toBeTrue();
 
         component.showColorSelector = false;
 
@@ -44,7 +44,7 @@ describe('ColorSelectorComponent', () => {
 
         expect(component.colorSelectorPosition).toEqual({ left: 0, top: 65 });
         expect(component.height).toBe(7);
-        expect(component.showColorSelector).toBe(true);
+        expect(component.showColorSelector).toBeTrue();
     });
 
     it('should set the tag colors correctly', () => {
@@ -72,7 +72,7 @@ describe('ColorSelectorComponent', () => {
         DEFAULT_COLORS.forEach((color) => {
             component.showColorSelector = true;
             component.selectColorForTag(color);
-            expect(component.showColorSelector).toBe(false);
+            expect(component.showColorSelector).toBeFalse();
             expect(emitMock).toHaveBeenCalledWith(color);
         });
     });
@@ -81,7 +81,7 @@ describe('ColorSelectorComponent', () => {
         component.showColorSelector = true;
         component.cancelColorSelector();
 
-        expect(component.showColorSelector).toBe(false);
+        expect(component.showColorSelector).toBeFalse();
     });
 
     it('should close the color selector correctly', () => {
@@ -95,18 +95,18 @@ describe('ColorSelectorComponent', () => {
 
         component.clickOutside(event);
 
-        expect(component.showColorSelector).toBe(true);
+        expect(component.showColorSelector).toBeTrue();
 
         target.className = 'color-preview';
 
         component.clickOutside(event);
 
-        expect(component.showColorSelector).toBe(true);
+        expect(component.showColorSelector).toBeTrue();
 
         target.className = 'jhi-alert';
 
         component.clickOutside(event);
 
-        expect(component.showColorSelector).toBe(false);
+        expect(component.showColorSelector).toBeFalse();
     });
 });

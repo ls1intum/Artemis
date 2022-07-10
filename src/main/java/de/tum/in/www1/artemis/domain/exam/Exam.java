@@ -30,10 +30,16 @@ public class Exam extends DomainObject {
     private String title;
 
     /**
-     * This boolean indicates weather it is a RealExam (false) or TestExams (true)
+     * This boolean indicates whether it is a RealExam (false) or TestExams (true)
      */
     @Column(name = "test_exam")
     private boolean testExam;
+
+    /**
+     * This boolean indicates whether monitoring is enabled
+     */
+    @Column(name = "monitoring")
+    private boolean monitoring;
 
     /**
      * student can see the exam in the UI from this date onwards
@@ -157,6 +163,14 @@ public class Exam extends DomainObject {
 
     public void setTestExam(boolean testExam) {
         this.testExam = testExam;
+    }
+
+    public boolean isMonitoring() {
+        return monitoring;
+    }
+
+    public void setMonitoring(boolean monitoring) {
+        this.monitoring = monitoring;
     }
 
     @NotNull

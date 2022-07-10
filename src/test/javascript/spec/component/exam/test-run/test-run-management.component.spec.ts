@@ -93,7 +93,7 @@ describe('Test Run Management Component', () => {
 
             expect(examManagementService.find).toHaveBeenCalledWith(course.id!, exam.id!, false, true);
             expect(examManagementService.findAllTestRunsForExam).toHaveBeenCalledWith(course.id!, exam.id!);
-            expect(userSpy).toHaveBeenCalledTimes(1);
+            expect(userSpy).toHaveBeenCalledOnce();
 
             expect(component.exam).toEqual(exam);
             expect(component.isExamStarted).toEqual(exam.started!);

@@ -88,6 +88,9 @@ export class ProgrammingExerciseTaskExtensionWrapper implements ArtemisShowdownE
 
     /**
      * Creates and returns an extension to current exercise.
+     * The task regex is coupled to the value used in ProgrammingExerciseTaskService in the server and
+     * `TaskCommand` in the client
+     * If you change the regex, make sure to change it in all places!
      */
     getExtension() {
         const extension: ShowdownExtension = {

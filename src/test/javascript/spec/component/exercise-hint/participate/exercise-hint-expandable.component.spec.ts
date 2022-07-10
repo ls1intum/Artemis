@@ -49,7 +49,7 @@ describe('Exercise Hint Expandable Component', () => {
     it('should load available exercise hint content', () => {
         const activateHintSpy = jest.spyOn(service, 'activateExerciseHint').mockReturnValue(of({ body: availableExerciseHint } as ExerciseHintResponse));
         comp.displayHintContent();
-        expect(activateHintSpy).toHaveBeenCalledTimes(1);
+        expect(activateHintSpy).toHaveBeenCalledOnce();
         expect(activateHintSpy).toHaveBeenCalledWith(1, 2);
         expect(comp.expanded).toBeTrue();
         expect(comp.isLoading).toBeFalse();
@@ -74,7 +74,7 @@ describe('Exercise Hint Expandable Component', () => {
         comp.exerciseHint = availableExerciseHint;
         comp.onRate({ oldValue: 0, newValue: 4, starRating: new StarRatingComponent() });
 
-        expect(rateSpy).toHaveBeenCalledTimes(1);
+        expect(rateSpy).toHaveBeenCalledOnce();
         expect(rateSpy).toHaveBeenCalledWith(1, 2, 4);
         expect(comp.exerciseHint.currentUserRating).toBe(4);
     });

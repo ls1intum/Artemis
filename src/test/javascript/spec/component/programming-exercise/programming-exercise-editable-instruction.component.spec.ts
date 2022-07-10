@@ -206,7 +206,7 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
 
         forceRenderSubject.next();
 
-        expect(generateHtmlSubjectStub).toHaveBeenCalledTimes(1);
+        expect(generateHtmlSubjectStub).toHaveBeenCalledOnce();
 
         fixture.destroy();
         flush();
@@ -241,8 +241,8 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
         comp.onAnalysisUpdate(analysis);
         tick();
 
-        expect(session.clearAnnotations).toHaveBeenCalledTimes(1);
-        expect(session.setAnnotations).toHaveBeenCalledTimes(1);
+        expect(session.clearAnnotations).toHaveBeenCalledOnce();
+        expect(session.setAnnotations).toHaveBeenCalledOnce();
         expect(session.setAnnotations).toHaveBeenCalledWith(expectedWarnings);
 
         fixture.destroy();

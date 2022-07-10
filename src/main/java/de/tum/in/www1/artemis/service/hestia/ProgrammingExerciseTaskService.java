@@ -25,6 +25,9 @@ public class ProgrammingExerciseTaskService {
      * Example: "[task][Implement BubbleSort](testBubbleSort,testBubbleSortHidden)". Following values are extracted by the named capturing groups:
      * - name: "Implement BubbleSort"
      * - tests: "testBubbleSort,testBubbleSortHidden"
+     *
+     * This is coupled to the value used in `ProgrammingExerciseTaskExtensionWrapper` and `TaskCommand` in the client
+     * If you change the regex, make sure to change it in all places!
      */
     private final Pattern taskPatternForProblemStatementMarkdown = Pattern.compile("\\[task]\\[(?<name>[^\\[\\]]+)]\\((?<tests>.*)\\)");
 
@@ -130,18 +133,60 @@ public class ProgrammingExerciseTaskService {
         var testCases = programmingExerciseTestCaseRepository.findByExerciseIdAndActive(exercise.getId(), true);
         while (matcher.find()) {
             var taskName = matcher.group("name");
-            var testCaseNames = matcher.group("tests");
+            var capturedTestCaseNames = matcher.group("tests");
 
             var task = new ProgrammingExerciseTask();
             task.setTaskName(taskName);
             task.setExercise(exercise);
-            String[] testNames = testCaseNames.split(",");
-            for (String testName : testNames) {
-                String finalTestName = testName.trim();
-                testCases.stream().filter(tc -> tc.getTestName().equals(finalTestName)).findFirst().ifPresent(task.getTestCases()::add);
+            var testCaseNames = extractTestCaseNames(capturedTestCaseNames);
+
+            for (String testName : testCaseNames) {
+                testCases.stream().filter(tc -> tc.getTestName().equals(testName)).findFirst().ifPresent(task.getTestCases()::add);
             }
             tasks.add(task);
         }
         return tasks;
+    }
+
+    /**
+     * Get the test case names from the captured group by splitting by ',' if there are no unclosed rounded brackets for
+     * the current test case. This respects the fact that parameterized tests may contain commas.
+     * Example: "testInsert(InsertMock, 1),testClass[SortStrategy],testWithBraces()" results in the following list
+     * ["testInsert(InsertMock, 1)", "testClass[SortStrategy]", "testWithBraces()"]
+     * @param capturedTestCaseNames the captured test case names matched from the problem statement
+     * @return test case names
+     */
+    private List<String> extractTestCaseNames(String capturedTestCaseNames) {
+        List<String> testCaseNames = new ArrayList<>();
+        if ("".equals(capturedTestCaseNames)) {
+            return testCaseNames;
+        }
+
+        int numberUnclosedRoundedBrackets = 0;
+        StringBuilder currentTestCaseName = new StringBuilder();
+        for (int i = 0; i < capturedTestCaseNames.length(); i++) {
+            char currentChar = capturedTestCaseNames.charAt(i);
+
+            // check potential split
+            if (currentChar == ',' && numberUnclosedRoundedBrackets == 0) {
+                testCaseNames.add(currentTestCaseName.toString().trim());
+                currentTestCaseName = new StringBuilder();
+                continue;
+            }
+
+            // count the numbers of brackets
+            if (currentChar == '(') {
+                numberUnclosedRoundedBrackets++;
+            }
+            else if (currentChar == ')') {
+                numberUnclosedRoundedBrackets--;
+            }
+
+            currentTestCaseName.append(currentChar);
+        }
+
+        testCaseNames.add(currentTestCaseName.toString().trim());
+
+        return testCaseNames;
     }
 }

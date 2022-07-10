@@ -1,13 +1,14 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
-
 import dayjs from 'dayjs/esm';
-
 import { Complaint, ComplaintType } from 'app/entities/complaint.model';
 import { ComplaintResponseService } from 'app/complaints/complaint-response.service';
 import { Exercise } from 'app/entities/exercise.model';
 import { map } from 'rxjs/operators';
+import { StudentParticipation } from 'app/entities/participation/student-participation.model';
+import { Course } from 'app/entities/course.model';
+import { AssessmentType } from 'app/entities/assessment-type.model';
 
 export type EntityResponseType = HttpResponse<Complaint>;
 export type EntityResponseTypeArray = HttpResponse<Complaint[]>;
@@ -222,13 +223,42 @@ export class ComplaintService implements IComplaintService {
         return false;
     }
 
+    /**
+     * Calculates the date until which a complaint can be filed at least
+     * @param exercise for which the student can complain
+     * @param studentParticipation of the student in the exercise that can complain
+     * @param course in which the exercise is
+     * @return the date until which the student can complain
+     */
+    getIndividualComplaintDueDate(exercise: Exercise, course: Course, studentParticipation?: StudentParticipation): dayjs.Dayjs | undefined {
+        const lastResult = studentParticipation?.results?.last();
+        // No complaints if there is no result or the exercise does not support complaints
+        if (!lastResult || !exercise.dueDate || (exercise.assessmentType === AssessmentType.AUTOMATIC && !exercise.allowComplaintsForAutomaticAssessments)) {
+            return undefined;
+        }
+
+        const now = dayjs();
+        let complaintStartDate;
+        if (exercise.allowComplaintsForAutomaticAssessments) {
+            complaintStartDate = exercise.dueDate;
+        } else if (lastResult.rated && !exercise.assessmentDueDate) {
+            complaintStartDate = lastResult.completionDate;
+        } else if (lastResult.rated && now.isAfter(exercise.assessmentDueDate)) {
+            complaintStartDate = exercise.assessmentDueDate!.isAfter(lastResult.completionDate) ? exercise.assessmentDueDate : lastResult.completionDate;
+        } else {
+            return undefined;
+        }
+
+        return dayjs(complaintStartDate).add(course.maxComplaintTimeDays!, 'days');
+    }
+
     private requestComplaintsFromUrl(url: string): Observable<EntityResponseTypeArray> {
         return this.http.get<Complaint[]>(url, { observe: 'response' }).pipe(map((res: EntityResponseTypeArray) => this.convertDateFromServerArray(res)));
     }
 
     private convertDateFromClient(complaint: Complaint): Complaint {
         return Object.assign({}, complaint, {
-            submittedTime: complaint.submittedTime && dayjs(complaint.submittedTime).isValid ? complaint.submittedTime.toJSON() : undefined,
+            submittedTime: complaint.submittedTime && dayjs(complaint.submittedTime).isValid() ? complaint.submittedTime.toJSON() : undefined,
         });
     }
 

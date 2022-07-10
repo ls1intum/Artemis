@@ -9,6 +9,8 @@ import { CreateTextUnitComponent } from 'app/lecture/lecture-unit/lecture-unit-m
 import { EditTextUnitComponent } from 'app/lecture/lecture-unit/lecture-unit-management/edit-text-unit/edit-text-unit.component';
 import { CreateVideoUnitComponent } from 'app/lecture/lecture-unit/lecture-unit-management/create-video-unit/create-video-unit.component';
 import { EditVideoUnitComponent } from 'app/lecture/lecture-unit/lecture-unit-management/edit-video-unit/edit-video-unit.component';
+import { CreateOnlineUnitComponent } from 'app/lecture/lecture-unit/lecture-unit-management/create-online-unit/create-online-unit.component';
+import { EditOnlineUnitComponent } from 'app/lecture/lecture-unit/lecture-unit-management/edit-online-unit/edit-online-unit.component';
 
 export const lectureUnitRoute: Routes = [
     {
@@ -52,6 +54,14 @@ export const lectureUnitRoute: Routes = [
                 },
             },
             {
+                path: 'online-units/create',
+                component: CreateOnlineUnitComponent,
+                data: {
+                    authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
+                    pageTitle: 'artemisApp.onlineUnit.createOnlineUnit.title',
+                },
+            },
+            {
                 path: 'text-units/create',
                 component: CreateTextUnitComponent,
                 data: {
@@ -73,6 +83,14 @@ export const lectureUnitRoute: Routes = [
                 data: {
                     authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
                     pageTitle: 'artemisApp.videoUnit.editVideoUnit.title',
+                },
+            },
+            {
+                path: 'online-units/:onlineUnitId/edit',
+                component: EditOnlineUnitComponent,
+                data: {
+                    authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
+                    pageTitle: 'artemisApp.onlineUnit.editOnlineUnit.title',
                 },
             },
             {

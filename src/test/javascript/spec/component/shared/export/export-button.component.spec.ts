@@ -34,6 +34,6 @@ describe('ExportButtonComponent', () => {
         comp.openExportModal(new MouseEvent('click'));
         const csvExportButton = fixture.debugElement.query(By.css('jhi-button'));
         expect(csvExportButton).not.toBe(null);
-        expect(modalServiceOpenStub).toHaveBeenCalledTimes(1);
+        expect(modalServiceOpenStub).toHaveBeenCalledOnce();
     });
 });

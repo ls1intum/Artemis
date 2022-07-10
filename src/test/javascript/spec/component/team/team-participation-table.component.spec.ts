@@ -19,7 +19,7 @@ import { Submission, SubmissionExerciseType } from 'app/entities/submission.mode
 import { Router, RouterModule } from '@angular/router';
 import { MockDirective, MockModule, MockPipe, MockProvider, MockComponent } from 'ng-mocks';
 import { TranslateService } from '@ngx-translate/core';
-import { NgxDatatableModule } from '@swimlane/ngx-datatable';
+import { NgxDatatableModule } from '@flaviosantoro92/ngx-datatable';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
@@ -223,7 +223,7 @@ describe('TeamParticipationTableComponent', () => {
         const participation = exercise2.studentParticipations![0];
         comp.openAssessmentEditor(exercise2, participation, 'new');
         tick();
-        expect(router.navigate).toHaveBeenCalledTimes(1);
+        expect(router.navigate).toHaveBeenCalledOnce();
         expect(router.navigate).toHaveBeenCalledWith([
             '/course-management',
             course.id!.toString(),
@@ -237,17 +237,17 @@ describe('TeamParticipationTableComponent', () => {
 
     it('Check enabled assessment button for exercises without due date', () => {
         const expectedAssessmentActionButtonDisabled = comp.isAssessmentButtonDisabled(exercise2, submission2);
-        expect(expectedAssessmentActionButtonDisabled).toBe(false);
+        expect(expectedAssessmentActionButtonDisabled).toBeFalse();
     });
 
     it('Check enabled assessment button for exercises with submission and passed due date', () => {
         const expectedAssessmentActionButtonDisabled = comp.isAssessmentButtonDisabled(exercise3, submission3);
-        expect(expectedAssessmentActionButtonDisabled).toBe(false);
+        expect(expectedAssessmentActionButtonDisabled).toBeFalse();
     });
 
     it('Check disabled assessment button for exercises without submission', () => {
         const expectedAssessmentActionButtonDisabled = comp.isAssessmentButtonDisabled(exercise1, undefined);
-        expect(expectedAssessmentActionButtonDisabled).toBe(true);
+        expect(expectedAssessmentActionButtonDisabled).toBeTrue();
     });
 
     it('Check disabled assessment button for exercises before due date as tutor', () => {
@@ -258,7 +258,7 @@ describe('TeamParticipationTableComponent', () => {
             },
             submission4,
         );
-        expect(expectedAssessmentActionButtonDisabled).toBe(true);
+        expect(expectedAssessmentActionButtonDisabled).toBeTrue();
     });
 
     it('Check disabled assessment button for programming exercises before due date as instructor', () => {
@@ -269,7 +269,7 @@ describe('TeamParticipationTableComponent', () => {
             },
             submission4,
         );
-        expect(expectedAssessmentActionButtonDisabled).toBe(true);
+        expect(expectedAssessmentActionButtonDisabled).toBeTrue();
     });
 
     it('Check enabled assessment button for exercises before due date as instructor', () => {
@@ -280,6 +280,6 @@ describe('TeamParticipationTableComponent', () => {
             },
             submission5,
         );
-        expect(expectedAssessmentActionButtonDisabled).toBe(false);
+        expect(expectedAssessmentActionButtonDisabled).toBeFalse();
     });
 });

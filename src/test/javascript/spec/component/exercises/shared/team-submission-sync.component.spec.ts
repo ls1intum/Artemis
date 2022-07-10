@@ -82,20 +82,20 @@ describe('Team Submission Sync Component', () => {
         component.ngOnInit();
 
         expect(component.websocketTopic).toBe(expectedWebsocketTopic);
-        expect(websocketSubscribeSpy).toHaveBeenCalledTimes(1);
+        expect(websocketSubscribeSpy).toHaveBeenCalledOnce();
         expect(websocketSubscribeSpy).toHaveBeenCalledWith(expectedWebsocketTopic);
 
         // checks for setupReceiver
-        expect(websocketReceiveMock).toHaveBeenCalledTimes(1);
+        expect(websocketReceiveMock).toHaveBeenCalledOnce();
         expect(websocketReceiveMock).toHaveBeenCalledWith(expectedWebsocketTopic);
-        expect(receiveSubmissionEventEmitter).toHaveBeenCalledTimes(1);
+        expect(receiveSubmissionEventEmitter).toHaveBeenCalledOnce();
         expect(receiveSubmissionEventEmitter).toHaveBeenCalledWith(submissionSyncPayload?.submission);
 
         // checks for setupSender
         expect(textSubmissionWithParticipation).not.toBe(undefined);
         expect(textSubmissionWithParticipation?.participation?.exercise).toBe(undefined);
         expect(textSubmissionWithParticipation?.participation?.submissions).toBeEmpty();
-        expect(websocketSendSpy).toHaveBeenCalledTimes(1);
+        expect(websocketSendSpy).toHaveBeenCalledOnce();
         expect(websocketSendSpy).toHaveBeenCalledWith(expectedWebsocketTopic + '/update', textSubmissionWithParticipation);
     });
 });

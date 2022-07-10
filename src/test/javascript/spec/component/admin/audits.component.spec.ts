@@ -113,7 +113,7 @@ describe('AuditsComponent', () => {
             expect(comp.fromDate).toBe(getDate(false));
             expect(comp.itemsPerPage).toBe(ITEMS_PER_PAGE);
             expect(comp.page).toBe(1);
-            expect(comp.ascending).toBe(false);
+            expect(comp.ascending).toBeFalse();
             expect(comp.predicate).toBe('id');
         });
     });

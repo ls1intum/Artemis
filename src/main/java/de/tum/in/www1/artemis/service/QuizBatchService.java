@@ -15,8 +15,9 @@ import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.QuizMode;
 import de.tum.in.www1.artemis.domain.quiz.*;
+import de.tum.in.www1.artemis.exception.QuizJoinException;
 import de.tum.in.www1.artemis.repository.*;
-import de.tum.in.www1.artemis.service.scheduled.quiz.QuizScheduleService;
+import de.tum.in.www1.artemis.service.scheduled.cache.quiz.QuizScheduleService;
 
 @Service
 public class QuizBatchService {
@@ -88,15 +89,19 @@ public class QuizBatchService {
      * @param batchId the id of the batch to join without a password; currently not implemented; unused for INDIVIDUAL mode
      * @return the batch that was joined, or empty if the batch could not be found
      */
-    public Optional<QuizBatch> joinBatch(QuizExercise quizExercise, User user, @Nullable String password, @Nullable Long batchId) {
-        Optional<QuizBatch> quizBatch = switch (quizExercise.getQuizMode()) {
-            case SYNCHRONIZED -> Optional.empty();
-            case BATCHED -> quizBatchRepository.findByQuizExerciseAndPassword(quizExercise, password);
-            case INDIVIDUAL -> Optional.of(createIndividualBatch(quizExercise, user));
+    public QuizBatch joinBatch(QuizExercise quizExercise, User user, @Nullable String password, @Nullable Long batchId) throws QuizJoinException {
+        QuizBatch quizBatch = switch (quizExercise.getQuizMode()) {
+            case SYNCHRONIZED -> throw new QuizJoinException("quizBatchJoinSynchronized", "Cannot join batch in synchronized quiz");
+            case BATCHED -> quizBatchRepository.findByQuizExerciseAndPassword(quizExercise, password)
+                    .orElseThrow(() -> new QuizJoinException("quizBatchNotFound", "Batch does not exist"));
+            case INDIVIDUAL -> createIndividualBatch(quizExercise, user);
         };
 
-        quizBatch = quizBatch.filter(batch -> !batch.isEnded());
-        quizBatch.ifPresent(batch -> quizScheduleService.joinQuizBatch(quizExercise, batch, user));
+        if (quizBatch.isEnded()) {
+            throw new QuizJoinException("quizBatchExpired", "Batch has expired");
+        }
+
+        quizScheduleService.joinQuizBatch(quizExercise, quizBatch, user);
         return quizBatch;
     }
 

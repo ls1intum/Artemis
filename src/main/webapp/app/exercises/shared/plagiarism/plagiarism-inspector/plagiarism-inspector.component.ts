@@ -19,8 +19,10 @@ import { tap } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
 import { faChevronRight, faExclamationTriangle, faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
-import { SimilarityRange } from 'app/exercises/shared/plagiarism/plagiarism-run-details/plagiarism-run-details.component';
+import { Range } from 'app/shared/util/utils';
 import { PlagiarismInspectorService } from 'app/exercises/shared/plagiarism/plagiarism-inspector/plagiarism-inspector.service';
+import { PlagiarismCasesService } from 'app/course/plagiarism-cases/shared/plagiarism-cases.service';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 
 export type PlagiarismCheckState = {
     state: 'COMPLETED' | 'RUNNING';
@@ -104,6 +106,11 @@ export class PlagiarismInspectorComponent implements OnInit {
      */
     sidebarOffset = 0;
 
+    /**
+     * Whether all plagiarism comparisons should be deleted. If this is true, comparisons with the status "approved" or "denied" will also be deleted
+     */
+    deleteAllPlagiarismComparisons = false;
+
     readonly FeatureToggle = FeatureToggle;
 
     // Icons
@@ -120,6 +127,8 @@ export class PlagiarismInspectorComponent implements OnInit {
         private websocketService: JhiWebsocketService,
         private translateService: TranslateService,
         private inspectorService: PlagiarismInspectorService,
+        private plagiarismCasesService: PlagiarismCasesService,
+        private modalService: NgbModal,
     ) {}
 
     ngOnInit() {
@@ -379,7 +388,7 @@ export class PlagiarismInspectorComponent implements OnInit {
      * selected by the user in the chart
      * @param range the range selected by the user in the chart by clicking on a chart bar
      */
-    filterByChart(range: SimilarityRange): void {
+    filterByChart(range: Range): void {
         this.visibleComparisons = this.inspectorService.filterComparisons(range, this.plagiarismResult?.comparisons);
         const index = this.plagiarismResult?.comparisons.indexOf(this.visibleComparisons[0]) ?? 0;
         this.sidebarOffset = index !== -1 ? index : 0;
@@ -412,5 +421,41 @@ export class PlagiarismInspectorComponent implements OnInit {
     getSelectedComparison(): PlagiarismComparison<any> {
         // as the id is unique, the filtered array should always have length 1
         return this.visibleComparisons!.filter((comparison) => comparison.id === this.selectedComparisonId)[0];
+    }
+
+    /**
+     * Switches the state if all plagiarism comparisons should be deleted
+     */
+    toggleDeleteAllPlagiarismComparisons(): void {
+        this.deleteAllPlagiarismComparisons = !this.deleteAllPlagiarismComparisons;
+    }
+
+    /**
+     * Clean up plagiarism results and related objects belonging to this exercise
+     */
+    cleanUpPlagiarism(): void {
+        this.plagiarismCasesService.cleanUpPlagiarism(this.exercise.id!, this.plagiarismResult!.id!, this.deleteAllPlagiarismComparisons).subscribe({
+            next: () => {
+                if (this.deleteAllPlagiarismComparisons) {
+                    this.deleteAllPlagiarismComparisons = false;
+                    this.plagiarismResult = undefined;
+                } else {
+                    this.deleteAllPlagiarismComparisons = false;
+                    this.getLatestPlagiarismResult();
+                }
+            },
+        });
+    }
+
+    /**
+     * Open a modal that requires the user's confirmation.
+     * @param content the modal content
+     */
+    openCleanUpModal(content: any) {
+        this.modalService.open(content).result.then((result: string) => {
+            if (result === 'confirm') {
+                this.cleanUpPlagiarism();
+            }
+        });
     }
 }

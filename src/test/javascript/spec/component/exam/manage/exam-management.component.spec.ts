@@ -84,7 +84,7 @@ describe('Exam Management Component', () => {
         comp.ngOnInit();
 
         // THEN
-        expect(courseManagementService.find).toHaveBeenCalledTimes(1);
+        expect(courseManagementService.find).toHaveBeenCalledOnce();
         expect(comp.course).toEqual(course);
     });
 
@@ -99,7 +99,7 @@ describe('Exam Management Component', () => {
         comp.ngOnInit();
 
         // THEN
-        expect(service.findAllExamsForCourse).toHaveBeenCalledTimes(1);
+        expect(service.findAllExamsForCourse).toHaveBeenCalledOnce();
         expect(comp.exams).toEqual([exam]);
     });
 
@@ -119,7 +119,7 @@ describe('Exam Management Component', () => {
         comp.ngOnInit();
 
         // THEN
-        expect(service.getLatestIndividualEndDateOfExam).toHaveBeenCalledTimes(1);
+        expect(service.getLatestIndividualEndDateOfExam).toHaveBeenCalledOnce();
         expect(comp.exams[0].latestIndividualEndDate).toEqual(examInformationDTO.latestIndividualEndDate);
     });
 
@@ -134,7 +134,7 @@ describe('Exam Management Component', () => {
         eventManager.broadcast({ name: 'examListModification', content: 'dummy' });
 
         // THEN
-        expect(service.findAllExamsForCourse).toHaveBeenCalledTimes(1);
+        expect(service.findAllExamsForCourse).toHaveBeenCalledOnce();
         expect(comp.exams).toEqual([exam]);
     });
 
@@ -187,6 +187,6 @@ describe('Exam Management Component', () => {
         comp.sortRows();
 
         // THEN
-        expect(sortService.sortByProperty).toHaveBeenCalledTimes(1);
+        expect(sortService.sortByProperty).toHaveBeenCalledOnce();
     });
 });

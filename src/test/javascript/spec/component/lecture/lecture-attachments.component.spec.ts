@@ -132,7 +132,7 @@ describe('LectureAttachmentsComponent', () => {
         fixture.detectChanges();
         tick();
         expect(comp.attachments.length).toBe(3);
-        expect(attachmentServiceFindAllByLectureIdStub).toHaveBeenCalledTimes(1);
+        expect(attachmentServiceFindAllByLectureIdStub).toHaveBeenCalledOnce();
     }));
 
     it('should not accept too large file', fakeAsync(() => {
@@ -156,14 +156,14 @@ describe('LectureAttachmentsComponent', () => {
         const fileAlert = fixture.debugElement.query(By.css('#too-large-file-alert'));
         expect(comp.attachments.length).toBe(2);
         expect(fileAlert).not.toBe(null);
-        expect(attachmentServiceFindAllByLectureIdStub).toHaveBeenCalledTimes(1);
+        expect(attachmentServiceFindAllByLectureIdStub).toHaveBeenCalledOnce();
     }));
 
     it('should exit saveAttachment', fakeAsync(() => {
         fixture.detectChanges();
         comp.attachmentToBeCreated = undefined;
         comp.saveAttachment();
-        expect(attachmentServiceFindAllByLectureIdStub).toHaveBeenCalledTimes(1);
+        expect(attachmentServiceFindAllByLectureIdStub).toHaveBeenCalledOnce();
         expect(comp.attachmentToBeCreated).toEqual({
             lecture: comp.lecture,
             attachmentType: AttachmentType.FILE,
@@ -197,9 +197,9 @@ describe('LectureAttachmentsComponent', () => {
             ),
         );
         comp.saveAttachment();
-        expect(attachmentServiceUpdateStub).toHaveBeenCalledTimes(1);
+        expect(attachmentServiceUpdateStub).toHaveBeenCalledOnce();
         expect(comp.attachments[1].version).toBe(2);
-        expect(attachmentServiceFindAllByLectureIdStub).toHaveBeenCalledTimes(1);
+        expect(attachmentServiceFindAllByLectureIdStub).toHaveBeenCalledOnce();
     }));
 
     it('should edit attachment', fakeAsync(() => {
@@ -209,7 +209,7 @@ describe('LectureAttachmentsComponent', () => {
         comp.editAttachment(newAttachment);
         expect(comp.attachmentToBeCreated).toBe(newAttachment);
         expect(comp.attachmentBackup).toEqual(newAttachment);
-        expect(attachmentServiceFindAllByLectureIdStub).toHaveBeenCalledTimes(1);
+        expect(attachmentServiceFindAllByLectureIdStub).toHaveBeenCalledOnce();
     }));
 
     it('should delete attachment', fakeAsync(() => {
@@ -225,8 +225,8 @@ describe('LectureAttachmentsComponent', () => {
         const attachmentServiceDeleteStub = jest.spyOn(attachmentService, 'delete').mockReturnValue(of(new HttpResponse({ body: null })));
         comp.deleteAttachment(toDelete);
         expect(comp.attachments.length).toBe(1);
-        expect(attachmentServiceDeleteStub).toHaveBeenCalledTimes(1);
-        expect(attachmentServiceFindAllByLectureIdStub).toHaveBeenCalledTimes(1);
+        expect(attachmentServiceDeleteStub).toHaveBeenCalledOnce();
+        expect(attachmentServiceFindAllByLectureIdStub).toHaveBeenCalledOnce();
     }));
 
     it('should call cancel', fakeAsync(() => {
@@ -242,7 +242,7 @@ describe('LectureAttachmentsComponent', () => {
         comp.attachmentBackup = toCancel;
         comp.cancel();
         expect(comp.attachments[1]).toBe(toCancel);
-        expect(attachmentServiceFindAllByLectureIdStub).toHaveBeenCalledTimes(1);
+        expect(attachmentServiceFindAllByLectureIdStub).toHaveBeenCalledOnce();
     }));
 
     it('should download attachment', fakeAsync(() => {
@@ -266,6 +266,6 @@ describe('LectureAttachmentsComponent', () => {
         comp.setLectureAttachment(object);
         expect(comp.attachmentFile).toBe(myBlob1);
         expect(comp.attachmentToBeCreated.link).toBe(myBlob1.name);
-        expect(attachmentServiceFindAllByLectureIdStub).toHaveBeenCalledTimes(1);
+        expect(attachmentServiceFindAllByLectureIdStub).toHaveBeenCalledOnce();
     }));
 });

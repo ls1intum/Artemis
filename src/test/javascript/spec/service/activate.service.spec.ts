@@ -25,7 +25,7 @@ describe('ActivateService', () => {
 
         activateService.get(key).subscribe();
 
-        expect(getStub).toHaveBeenCalledTimes(1);
+        expect(getStub).toHaveBeenCalledOnce();
         expect(getStub).toHaveBeenCalledWith(getURL, {
             params: new HttpParams().set('key', key),
         });

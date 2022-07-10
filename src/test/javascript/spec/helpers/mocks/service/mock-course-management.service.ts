@@ -4,6 +4,7 @@ import { Course, CourseGroup } from 'app/entities/course.model';
 import { TextExercise } from 'app/entities/text-exercise.model';
 import { Exercise } from 'app/entities/exercise.model';
 import { User } from '@sentry/browser';
+import { EntityArrayResponseType } from 'app/course/manage/course-management.service';
 
 export class MockCourseManagementService {
     mockExercises: Exercise[] = [new TextExercise(undefined, undefined)];
@@ -35,6 +36,10 @@ export class MockCourseManagementService {
     };
 
     getAllUsersInCourseGroup(courseId: number, courseGroup: CourseGroup): Observable<HttpResponse<User[]>> {
+        return of(new HttpResponse({ body: [] }));
+    }
+
+    getAll(): Observable<EntityArrayResponseType> {
         return of(new HttpResponse({ body: [] }));
     }
 }

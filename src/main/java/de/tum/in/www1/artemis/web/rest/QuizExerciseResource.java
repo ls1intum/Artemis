@@ -22,12 +22,13 @@ import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.QuizMode;
 import de.tum.in.www1.artemis.domain.quiz.QuizBatch;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
+import de.tum.in.www1.artemis.exception.QuizJoinException;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.exam.ExamDateService;
 import de.tum.in.www1.artemis.service.notifications.GroupNotificationService;
-import de.tum.in.www1.artemis.service.scheduled.quiz.QuizScheduleService;
+import de.tum.in.www1.artemis.service.scheduled.cache.quiz.QuizScheduleService;
 import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
 import de.tum.in.www1.artemis.web.rest.dto.QuizBatchJoinDTO;
 import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
@@ -346,14 +347,12 @@ public class QuizExerciseResource {
                     .headers(HeaderUtil.createFailureAlert(applicationName, true, "quizExercise", "quizAttemptsExceeded", "Maximum number of attempts reached.")).build();
         }
 
-        var quizBatch = quizBatchService.joinBatch(quizExercise, user, joinRequest.password, joinRequest.batchId);
-
-        if (quizBatch.isEmpty()) {
-            return ResponseEntity.notFound().headers(HeaderUtil.createFailureAlert(applicationName, true, "quizExercise", "quizBatchNotFound", "Quiz batch not found or invalid."))
-                    .build();
+        try {
+            return ResponseEntity.ok(quizBatchService.joinBatch(quizExercise, user, joinRequest.password, joinRequest.batchId));
         }
-
-        return ResponseEntity.ok(quizBatch.get());
+        catch (QuizJoinException ex) {
+            return ResponseEntity.notFound().headers(HeaderUtil.createFailureAlert(applicationName, true, "quizExercise", ex.getError(), ex.getMessage())).build();
+        }
     }
 
     /**

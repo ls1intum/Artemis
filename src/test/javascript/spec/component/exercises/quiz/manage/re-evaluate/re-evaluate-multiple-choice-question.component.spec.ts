@@ -79,7 +79,7 @@ describe('ReEvaluateMultipleChoiceQuestionComponent', () => {
             button.click();
             fixture.detectChanges();
 
-            expect(emitSpy).toHaveBeenCalledTimes(1);
+            expect(emitSpy).toHaveBeenCalledOnce();
         });
 
         it('move-down', () => {
@@ -90,7 +90,7 @@ describe('ReEvaluateMultipleChoiceQuestionComponent', () => {
             button.click();
             fixture.detectChanges();
 
-            expect(emitSpy).toHaveBeenCalledTimes(1);
+            expect(emitSpy).toHaveBeenCalledOnce();
         });
 
         it('delete', () => {
@@ -101,7 +101,7 @@ describe('ReEvaluateMultipleChoiceQuestionComponent', () => {
             button.click();
             fixture.detectChanges();
 
-            expect(emitSpy).toHaveBeenCalledTimes(1);
+            expect(emitSpy).toHaveBeenCalledOnce();
         });
 
         it('reset', () => {

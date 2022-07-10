@@ -11,7 +11,8 @@
             "deductions": "Deductions",
             "penaltyTooltip": "Penalty: {{ percentage }}% of all penalties.",
             "issuesTooltip": "Issues: {{ percentage }}% of all detected issues.",
-            "deductionsTooltip": "Deductions: {{ percentage }}% of all deducted points."
+            "deductionsTooltip": "Deductions: {{ percentage }}% of all deducted points.",
+            "codeIssueNotApplied": "This issue does not deduct the maximum amount of possible points, since similar code issues already deduct enough points. If this was the only issue, it would deduct {{points}} points."
         }
     }
 }

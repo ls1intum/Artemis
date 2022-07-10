@@ -29,13 +29,14 @@
             "import": {
                 "attention": "Achtung! ",
                 "markdownWarning": "Die Aufgabenstellung kann nach dem Import geändert werden.",
+                "search": "Suche nach einer Aufgabe",
                 "loading": "Lade...",
                 "table": {
                     "title": "Titel",
                     "language": "Programmiersprache",
                     "course": "Kurs",
                     "examQuestion": "Klausuraufgabe",
-                    "doImport": "Import"
+                    "doImport": "Importieren"
                 }
             },
             "exercise": "Aufgabe",
@@ -144,6 +145,7 @@
             "showManual": "Nur manuelle anzeigen",
             "showAutomatic": "Nur automatische anzeigen",
             "showAll": "Alle anzeigen",
+            "showingOnlyInRange": "Zeige nur Ergebnisse im Bereich: {{ range }}",
             "tagPlaceholder": "+ Kategorie",
             "isProgramming": "Das ist eine Programmieraufgabe",
             "isModeling": "Das ist eine Modellierungsaufgabe",

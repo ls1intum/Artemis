@@ -29,6 +29,7 @@
             "import": {
                 "attention": "Attention! ",
                 "markdownWarning": "You can edit the problem statement after importing the exercise.",
+                "search": "Search for exercise",
                 "loading": "Loading...",
                 "table": {
                     "title": "Title",
@@ -144,6 +145,7 @@
             "showManual": "Show Manual",
             "showAutomatic": "Show Automatic",
             "showAll": "Show All",
+            "showingOnlyInRange": "Showing only results in range: {{ range }}",
             "tagPlaceholder": "+ Category",
             "isProgramming": "This is a programming exercise",
             "isModeling": "This is a modeling exercise",

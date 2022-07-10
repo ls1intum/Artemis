@@ -1,4 +1,4 @@
-<div class="course-detail-parent-container col overflow-hidden">
+<div class="course-detail-parent-container col">
     <div class="row justify-content-center chart-title-line">
         <div class="d-inline-flex flex-nowrap justify-content-center">
             <a [routerLink]="['/course-management', course.id, 'course-statistics']" class="text-center">
@@ -10,14 +10,15 @@
     <ng-container *ngIf="startDateAlreadyPassed; else courseNotStartedYet">
         <div class="row d-flex justify-content-center align-items-center flex-nowrap" style="flex: 1">
             <fa-icon
-                *ngIf="!startDateDisplayed"
+                *ngIf="!startDateDisplayed || !showsCurrentWeek"
                 [icon]="faArrowLeft"
                 size="2x"
-                class="col-md-1 d-flex justify-content-end align-items-center"
+                class="col-1 px-0 d-flex justify-content-end align-items-center"
                 role="button"
                 (click)="switchTimeSpan(LEFT)"
+                [class.hide-arrow]="startDateDisplayed"
             ></fa-icon>
-            <div #containerRef class="chart col-md-9 mt-1 justify-content-center h-99">
+            <div #containerRef class="chart col-md-10 mt-1 justify-content-center align-items-start h-99" [ngClass]="showsCurrentWeek && startDateDisplayed ? 'col-12' : 'col-10'">
                 <ngx-charts-line-chart
                     [view]="[containerRef.offsetWidth, 500]"
                     [scheme]="chartColor"
@@ -54,8 +55,9 @@
             </h1>
             <fa-icon
                 [icon]="faArrowRight"
+                *ngIf="!startDateDisplayed || !showsCurrentWeek"
                 size="2x"
-                class="col-md-1 d-flex justify-content-start align-items-center"
+                class="col-1 px-0 d-flex justify-content-start align-items-center"
                 role="button"
                 (click)="switchTimeSpan(RIGHT)"
                 [ngClass]="{ 'hide-arrow': showsCurrentWeek }"
@@ -63,9 +65,29 @@
         </div>
         <div class="col-md-10 offset-md-1 mt-4 justify-content-center d-flex align-items-center flex-column">
             <h5>{{ chartTime }}</h5>
+            <div *ngIf="course.startDate" class="mb-2">
+                <div class="btn-group">
+                    <div
+                        class="btn"
+                        [ngClass]="!showLifetimeOverview ? 'btn-primary selected' : 'btn-default'"
+                        (click)="displayDefaultChartScope()"
+                        ngbTooltip="{{ 'artemisApp.courseStatistics.scopeButton.recentWeekTooltip' | artemisTranslate }}"
+                    >
+                        {{ 'artemisApp.courseStatistics.scopeButton.recentWeekButton' | artemisTranslate }}
+                    </div>
+                    <div
+                        class="btn"
+                        [ngClass]="showLifetimeOverview ? 'btn-primary selected' : 'btn-default'"
+                        (click)="displayLifetimeOverview()"
+                        ngbTooltip="{{ 'artemisApp.courseStatistics.scopeButton.lifetimeOverviewTooltip' | artemisTranslate }}"
+                    >
+                        {{ 'artemisApp.courseStatistics.scopeButton.lifetimeOverviewButtonLabel' | artemisTranslate }}
+                    </div>
+                </div>
+            </div>
             <div class="form-check flex-grow-0">
                 <input class="form-check-input" type="checkbox" [checked]="showAverage" (change)="toggleAverageLine()" />
-                <label class="form-check-label">{{ 'artemisApp.courseStatistics.averageReferenceLineCheckboxLabel' | artemisTranslate }}</label>
+                <label class="form-check-label">{{ 'artemisApp.courseStatistics.meanReferenceLineCheckboxLabel' | artemisTranslate }}</label>
             </div>
         </div>
     </ng-container>

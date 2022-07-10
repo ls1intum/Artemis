@@ -38,7 +38,7 @@ describe('Exercise Update Warning Component Tests', () => {
 
         fixture.detectChanges();
 
-        expect(saveExerciseWithoutReevaluationSpy).toHaveBeenCalledTimes(1);
+        expect(saveExerciseWithoutReevaluationSpy).toHaveBeenCalledOnce();
         expect(emitSpy).toHaveBeenCalled();
     });
 
@@ -51,7 +51,7 @@ describe('Exercise Update Warning Component Tests', () => {
 
         fixture.detectChanges();
 
-        expect(reEvaluateExerciseSpy).toHaveBeenCalledTimes(1);
+        expect(reEvaluateExerciseSpy).toHaveBeenCalledOnce();
         expect(emitSpy).toHaveBeenCalled();
     });
 
@@ -64,8 +64,8 @@ describe('Exercise Update Warning Component Tests', () => {
 
         fixture.detectChanges();
 
-        expect(clearSpy).toHaveBeenCalledTimes(1);
-        expect(cancelledEmitSpy).toHaveBeenCalledTimes(1);
+        expect(clearSpy).toHaveBeenCalledOnce();
+        expect(cancelledEmitSpy).toHaveBeenCalledOnce();
     });
 
     it('should toggle deleteFeedback', () => {
@@ -73,6 +73,6 @@ describe('Exercise Update Warning Component Tests', () => {
 
         fixture.detectChanges();
 
-        expect(comp.deleteFeedback).toBe(true);
+        expect(comp.deleteFeedback).toBeTrue();
     });
 });

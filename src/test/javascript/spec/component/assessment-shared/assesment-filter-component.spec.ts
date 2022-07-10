@@ -56,7 +56,7 @@ describe('AssessmentFiltersComponent', () => {
         component.updateFilter(component.FilterProp.LOCKED);
         expect(component.filterProp).toBe(component.FilterProp.LOCKED);
         expect(component.submissions).toBe(submissions);
-        expect(emitSpy).toHaveBeenCalledTimes(1);
+        expect(emitSpy).toHaveBeenCalledOnce();
         expect(emitSpy).toHaveBeenCalledWith(expectedResult);
     });
 });

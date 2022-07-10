@@ -15,6 +15,7 @@ describe('SCA category distribution chart', () => {
     let component: ScaCategoryDistributionChartComponent;
     let fixture: ComponentFixture<ScaCategoryDistributionChartComponent>;
 
+    let instantSpy: jest.SpyInstance;
     let routingStub: jest.SpyInstance;
 
     const category1 = {
@@ -63,6 +64,9 @@ describe('SCA category distribution chart', () => {
         component = fixture.componentInstance;
         const routingService = TestBed.inject(ArtemisNavigationUtilService);
         routingStub = jest.spyOn(routingService, 'routeInNewTab').mockImplementation();
+
+        const translationService = TestBed.inject(TranslateService);
+        instantSpy = jest.spyOn(translationService, 'instant');
     });
 
     it('should process the categories correctly', () => {
@@ -129,6 +133,24 @@ describe('SCA category distribution chart', () => {
         expect(component.ngxData[2].series[0].value).toBe(0);
     });
 
+    it('should update the translation', () => {
+        const prefix = 'artemisApp.programmingAssessment.';
+        const labels = ['penalty', 'issues', 'deductions'];
+        component.ngxData = [
+            { name: '', series: [] },
+            { name: '', series: [] },
+            { name: '', series: [] },
+        ];
+
+        component.updateTranslations();
+
+        expect(instantSpy).toHaveBeenCalledTimes(3);
+        instantSpy.mock.calls.forEach((calls, index) => {
+            expect(calls[0]).toBe(prefix.concat(labels[index]));
+            expect(component.ngxData[index].name).toBe(prefix.concat(labels[index]));
+        });
+    });
+
     describe('test chart interaction', () => {
         let event: any;
         let emitStub: jest.SpyInstance;
@@ -153,7 +175,7 @@ describe('SCA category distribution chart', () => {
             component.onSelect(event);
 
             expect(emitStub).toHaveBeenCalledWith(77);
-            expect(component.tableFiltered).toBe(true);
+            expect(component.tableFiltered).toBeTrue();
         });
 
         it('should reset the table correctly', () => {
@@ -162,7 +184,7 @@ describe('SCA category distribution chart', () => {
             component.resetTableFilter();
 
             expect(emitStub).toHaveBeenCalledWith(-5);
-            expect(component.tableFiltered).toBe(false);
+            expect(component.tableFiltered).toBeFalse();
         });
     });
 });

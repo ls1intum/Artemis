@@ -181,9 +181,9 @@ describe('PageDiscussionSectionComponent', () => {
         component.exercise = metisExercise;
         component.ngOnInit();
         tick();
-        expect(component.formGroup.get('filterToUnresolved')?.value).toBe(false);
-        expect(component.formGroup.get('filterToOwn')?.value).toBe(false);
-        expect(component.formGroup.get('filterToAnsweredOrReacted')?.value).toBe(false);
+        expect(component.formGroup.get('filterToUnresolved')?.value).toBeFalse();
+        expect(component.formGroup.get('filterToOwn')?.value).toBeFalse();
+        expect(component.formGroup.get('filterToAnsweredOrReacted')?.value).toBeFalse();
         fixture.detectChanges();
         const searchInput = getElement(fixture.debugElement, 'input[name=searchText]');
         expect(searchInput.textContent).toBe('');
@@ -264,9 +264,9 @@ describe('PageDiscussionSectionComponent', () => {
         tick();
         fixture.detectChanges();
 
-        expect(component.currentPostContextFilter.filterToUnresolved).toBe(true);
-        expect(component.currentPostContextFilter.filterToOwn).toBe(true);
-        expect(component.currentPostContextFilter.filterToAnsweredOrReacted).toBe(true);
+        expect(component.currentPostContextFilter.filterToUnresolved).toBeTrue();
+        expect(component.currentPostContextFilter.filterToOwn).toBeTrue();
+        expect(component.currentPostContextFilter.filterToAnsweredOrReacted).toBeTrue();
         expect(metisServiceGetFilteredPostsSpy).toHaveBeenCalledTimes(5);
     }));
 });

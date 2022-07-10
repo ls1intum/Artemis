@@ -14,7 +14,7 @@ export class LearningGoalsPopoverComponent implements OnInit {
     @Input()
     learningGoals: LearningGoal[] = [];
     @Input()
-    navigateTo: 'learningGoalManagement' | 'courseStatistics' = 'courseStatistics';
+    navigateTo: 'learningGoalManagement' | 'courseLearningGoals' = 'courseLearningGoals';
 
     navigationArray: string[] = [];
 
@@ -26,8 +26,8 @@ export class LearningGoalsPopoverComponent implements OnInit {
     ngOnInit(): void {
         if (this.courseId) {
             switch (this.navigateTo) {
-                case 'courseStatistics': {
-                    this.navigationArray = ['/courses', `${this.courseId}`, 'statistics'];
+                case 'courseLearningGoals': {
+                    this.navigationArray = ['/courses', `${this.courseId}`, 'learning-goals'];
                     break;
                 }
                 case 'learningGoalManagement': {

@@ -2,7 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Course } from 'app/entities/course.model';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
-import { NgxDatatableModule } from '@swimlane/ngx-datatable';
+import { NgxDatatableModule } from '@flaviosantoro92/ngx-datatable';
 import { FontAwesomeTestingModule } from '@fortawesome/angular-fontawesome/testing';
 import { TranslateModule } from '@ngx-translate/core';
 import { RouterTestingModule } from '@angular/router/testing';
@@ -88,7 +88,7 @@ describe('StudentExamDetailTableRowComponent', () => {
             type: ExerciseType.PROGRAMMING,
         };
         const route = studentExamDetailTableRowComponent.getAssessmentLink(programmingExercise);
-        expect(getAssessmentLinkSpy).toHaveBeenCalledTimes(1);
+        expect(getAssessmentLinkSpy).toHaveBeenCalledOnce();
         expect(route).toEqual(['/course-management', '23', 'exams', '1', 'exercise-groups', '13', 'programming-exercises', '12', 'submissions']);
     });
 
@@ -107,7 +107,7 @@ describe('StudentExamDetailTableRowComponent', () => {
         };
         const submission = { id: 14 };
         const route = studentExamDetailTableRowComponent.getAssessmentLink(modelingExercise, submission);
-        expect(getAssessmentLinkSpy).toHaveBeenCalledTimes(1);
+        expect(getAssessmentLinkSpy).toHaveBeenCalledOnce();
         expect(route).toEqual(['/course-management', '23', 'exams', '1', 'exercise-groups', '12', 'modeling-exercises', '12', 'submissions', '14', 'assessment']);
     });
 });

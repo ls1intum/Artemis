@@ -17,6 +17,7 @@ import { participationStatus } from 'app/exercises/shared/exercise/exercise.util
 import { CourseManagementOverviewStatisticsDto } from 'app/course/manage/overview/course-management-overview-statistics-dto.model';
 import { CourseManagementDetailViewDto } from 'app/course/manage/course-management-detail-view-dto.model';
 import { StudentDTO } from 'app/entities/student-dto.model';
+import { EntityTitleService, EntityType } from 'app/shared/layouts/navbar/entity-title.service';
 
 export type EntityResponseType = HttpResponse<Course>;
 export type EntityArrayResponseType = HttpResponse<Course[]>;
@@ -30,7 +31,7 @@ export class CourseManagementService {
     private coursesForNotifications: BehaviorSubject<Course[] | undefined> = new BehaviorSubject<Course[] | undefined>(undefined);
     private fetchingCoursesForNotifications = false;
 
-    constructor(private http: HttpClient, private lectureService: LectureService, private accountService: AccountService) {}
+    constructor(private http: HttpClient, private lectureService: LectureService, private accountService: AccountService, private entityTitleService: EntityTitleService) {}
 
     /**
      * creates a course using a POST request
@@ -79,13 +80,11 @@ export class CourseManagementService {
     }
 
     /**
-     * Fetches the title of the course with the given id
-     *
-     * @param courseId the id of the course
-     * @return the title of the course in an HttpResponse, or an HttpErrorResponse on error
+     * get the active users for the lifetime overview of the line chart in the detail view
+     * @param courseId the id of the course of which the statistics should be fetched
      */
-    getTitle(courseId: number): Observable<HttpResponse<string>> {
-        return this.http.get(`${this.resourceUrl}/${courseId}/title`, { observe: 'response', responseType: 'text' });
+    getStatisticsForLifetimeOverview(courseId: number): Observable<number[]> {
+        return this.http.get<number[]>(`${this.resourceUrl}/${courseId}/statistics-lifetime-overview`);
     }
 
     /**
@@ -409,8 +408,10 @@ export class CourseManagementService {
      */
     private processCourseEntityResponseType(courseRes: EntityResponseType): EntityResponseType {
         this.convertDateFromServer(courseRes);
+        this.setLearningGoalsIfNone(courseRes);
         this.setAccessRightsCourseEntityResponseType(courseRes);
         this.convertExerciseCategoriesFromServer(courseRes);
+        this.sendCourseTitleAndExerciseTitlesToTitleService(courseRes?.body);
         return courseRes;
     }
 
@@ -423,6 +424,7 @@ export class CourseManagementService {
         this.convertDateArrayFromServer(courseRes);
         this.convertExerciseCategoryArrayFromServer(courseRes);
         this.setAccessRightsCourseEntityArrayResponseType(courseRes);
+        courseRes?.body?.forEach(this.sendCourseTitleAndExerciseTitlesToTitleService.bind(this));
         return courseRes;
     }
 
@@ -491,6 +493,19 @@ export class CourseManagementService {
         course.lectures = this.lectureService.convertDatesForLecturesFromServer(course.lectures);
     }
 
+    /**
+     * Set the learning goals and prerequisites to an empty array if undefined
+     * We late distinguish between undefined (not yet fetched) and an empty array (fetched but course has none)
+     * @param res The server response containing a course object
+     */
+    private setLearningGoalsIfNone(res: EntityResponseType): EntityResponseType {
+        if (res.body) {
+            res.body.learningGoals = res.body.learningGoals || [];
+            res.body.prerequisites = res.body.prerequisites || [];
+        }
+        return res;
+    }
+
     private setAccessRightsCourseEntityArrayResponseType(res: EntityArrayResponseType): EntityArrayResponseType {
         if (res.body) {
             res.body.forEach((course: Course) => {
@@ -531,5 +546,16 @@ export class CourseManagementService {
             map((res: EntityArrayResponseType) => this.processCourseEntityArrayResponseType(res)),
             map((res: EntityArrayResponseType) => this.setCoursesForNotifications(res)),
         );
+    }
+
+    private sendCourseTitleAndExerciseTitlesToTitleService(course: Course | null | undefined) {
+        this.entityTitleService.setTitle(EntityType.COURSE, [course?.id], course?.title);
+
+        course?.exercises?.forEach((exercise) => {
+            this.entityTitleService.setTitle(EntityType.EXERCISE, [exercise.id], exercise.title);
+        });
+        course?.lectures?.forEach((lecture) => this.entityTitleService.setTitle(EntityType.LECTURE, [lecture.id], lecture.title));
+        course?.exams?.forEach((exam) => this.entityTitleService.setTitle(EntityType.EXAM, [exam.id], exam.title));
+        course?.organizations?.forEach((org) => this.entityTitleService.setTitle(EntityType.ORGANIZATION, [org.id], org.name));
     }
 }

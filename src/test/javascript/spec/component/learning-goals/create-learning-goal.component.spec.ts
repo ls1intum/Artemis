@@ -108,8 +108,8 @@ describe('CreateLearningGoal', () => {
             learningGoal.lectureUnits = formData.connectedLectureUnits;
 
             expect(createSpy).toHaveBeenCalledWith(learningGoal, 1);
-            expect(createSpy).toHaveBeenCalledTimes(1);
-            expect(navigateSpy).toHaveBeenCalledTimes(1);
+            expect(createSpy).toHaveBeenCalledOnce();
+            expect(navigateSpy).toHaveBeenCalledOnce();
         });
     });
 });

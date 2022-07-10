@@ -174,15 +174,15 @@ describe('CodeEditorStudentIntegration', () => {
 
         routeSubject.next({ participationId: 1 });
 
-        expect(container.loadingParticipation).toBe(true);
+        expect(container.loadingParticipation).toBeTrue();
 
         findWithLatestResultSubject.next(participation);
         getFeedbackDetailsForResultSubject.next({ body: feedbacks });
 
         expect(getStudentParticipationWithLatestResultStub).toHaveBeenNthCalledWith(1, participation.id);
         expect(getFeedbackDetailsForResultStub).toHaveBeenNthCalledWith(1, participation.id, result.id);
-        expect(container.loadingParticipation).toBe(false);
-        expect(container.participationCouldNotBeFetched).toBe(false);
+        expect(container.loadingParticipation).toBeFalse();
+        expect(container.participationCouldNotBeFetched).toBeFalse();
         expect(container.participation).toEqual({ ...participation, results: [{ ...result, feedbacks }] });
     });
 
@@ -209,10 +209,10 @@ describe('CodeEditorStudentIntegration', () => {
         isCleanSubject.next({ repositoryStatus: CommitState.CLEAN });
 
         // Repository should be locked, the student can't write into it anymore.
-        expect(container.repositoryIsLocked).toBe(true);
+        expect(container.repositoryIsLocked).toBeTrue();
         expect(getElement(containerDebugElement, '.locked-container').innerHTML).toContain('fa-icon');
-        expect(container.codeEditorContainer.fileBrowser.disableActions).toBe(true);
-        expect(container.codeEditorContainer.actions.disableActions).toBe(true);
+        expect(container.codeEditorContainer.fileBrowser.disableActions).toBeTrue();
+        expect(container.codeEditorContainer.actions.disableActions).toBeTrue();
     });
 
     it('should abort initialization and show error state if participation cannot be retrieved', () => {
@@ -222,12 +222,12 @@ describe('CodeEditorStudentIntegration', () => {
 
         routeSubject.next({ participationId: 1 });
 
-        expect(container.loadingParticipation).toBe(true);
+        expect(container.loadingParticipation).toBeTrue();
 
         findWithLatestResultSubject.error('fatal error');
 
-        expect(container.loadingParticipation).toBe(false);
-        expect(container.participationCouldNotBeFetched).toBe(true);
+        expect(container.loadingParticipation).toBeFalse();
+        expect(container.participationCouldNotBeFetched).toBeTrue();
         expect(getFeedbackDetailsForResultStub).not.toHaveBeenCalled();
         expect(container.participation).toBe(undefined);
     });

@@ -112,7 +112,7 @@ jobs:
       uses: docker/login-action@v2
       with:
         registry: ghcr.io
-        username: ${{ github.actor }}
+        username: ${{ github.repository_owner }}
         password: ${{ secrets.GITHUB_TOKEN }}
       if: ${{ steps.compute-tag.outputs.result != 'FALSE' }}
     - name: Push to GitHub Container Registry

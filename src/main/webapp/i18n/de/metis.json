@@ -5,8 +5,7 @@
             "noPosts": "Keine Beiträge gefunden.",
             "postNumberInformation": "{{ number }} Treffer",
             "addNewPost": "Neuer Beitrag",
-            "answerNow": "Jetzt beantworten",
-            "startDiscussion": "Diskussion beginnen",
+            "reply": "Beantworten",
             "showMultipleAnswers": "Zeige {{ number }} Antworten",
             "showSingleAnswer": "Zeige 1 Antwort",
             "collapseAnswers": "Antworten einklappen",
@@ -37,10 +36,15 @@
             "reactedTooltipTrimmed": " und {{ number }} weitere Person(en) haben reagiert.",
             "searchEmoji": "Emoji suchen",
             "courseEmojiSelectionCategory": "Ausgewählte Emojis für diesen Kurs",
+            "editor": {
+                "reference": "Referenz",
+                "exercise": "Aufgabe",
+                "lecture": "Vortrag"
+            },
             "discussion": {
-                "label": "Diskussion",
-                "show": "Diskussion anzeigen",
-                "hide": "Diskussion einklappen"
+                "label": "Kommunikation",
+                "show": "Kommunikation anzeigen",
+                "hide": "Kommunikation einklappen"
             },
             "discussionSection": {
                 "searchBarDefault": "Suche nach Beiträgen",

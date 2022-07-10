@@ -31,7 +31,7 @@ describe('Reaction Service', () => {
         }));
 
         it('should delete a Reaction', fakeAsync(() => {
-            service.delete(1, metisReactionUser2).subscribe((resp) => expect(resp.ok).toBe(true));
+            service.delete(1, metisReactionUser2).subscribe((resp) => expect(resp.ok).toBeTrue());
             const req = httpMock.expectOne({ method: 'DELETE' });
             req.flush({ status: 200 });
             tick();

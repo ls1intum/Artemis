@@ -76,23 +76,23 @@ describe('CourseRegistrationComponent', () => {
     it('should initialize', fakeAsync(() => {
         component.ngOnInit();
         tick();
-        expect(identityStub).toHaveBeenCalledTimes(1);
-        expect(getProfileInfoStub).toHaveBeenCalledTimes(1);
-        expect(component.userIsAllowedToRegister).toBe(true);
+        expect(identityStub).toHaveBeenCalledOnce();
+        expect(getProfileInfoStub).toHaveBeenCalledOnce();
+        expect(component.userIsAllowedToRegister).toBeTrue();
     }));
 
     it('should show registrable courses', () => {
         component.loadRegistrableCourses();
 
         expect(component.coursesToSelect).toHaveLength(1);
-        expect(findAllToRegisterStub).toHaveBeenCalledTimes(1);
+        expect(findAllToRegisterStub).toHaveBeenCalledOnce();
     });
 
     it('should register for course', () => {
         component.coursesToSelect = [course1, course2];
         component.registerForCourse(1);
 
-        expect(registerForCourseStub).toHaveBeenCalledTimes(1);
+        expect(registerForCourseStub).toHaveBeenCalledOnce();
         expect(component.coursesToSelect).toEqual([course2]);
     });
 
@@ -102,7 +102,7 @@ describe('CourseRegistrationComponent', () => {
 
         component.showPrerequisites(course1.id!);
 
-        expect(openModalSpy).toHaveBeenCalledTimes(1);
+        expect(openModalSpy).toHaveBeenCalledOnce();
         expect(openModalSpy).toHaveBeenCalledWith(CoursePrerequisitesModalComponent, { size: 'xl' });
     });
 });

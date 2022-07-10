@@ -77,7 +77,7 @@ describe('LearningGoalFormComponent', () => {
         learningGoalFormComponentFixture.detectChanges();
         tick(250); // async validator fires after 250ms and fully filled in form should now be valid!
         expect(learningGoalFormComponent.form.valid).toBeTrue();
-        expect(getAllForCourseSpy).toHaveBeenCalledTimes(1);
+        expect(getAllForCourseSpy).toHaveBeenCalledOnce();
         const submitFormSpy = jest.spyOn(learningGoalFormComponent, 'submitForm');
         const submitFormEventSpy = jest.spyOn(learningGoalFormComponent.formSubmitted, 'emit');
 
@@ -85,7 +85,7 @@ describe('LearningGoalFormComponent', () => {
         submitButton.click();
 
         learningGoalFormComponentFixture.whenStable().then(() => {
-            expect(submitFormSpy).toHaveBeenCalledTimes(1);
+            expect(submitFormSpy).toHaveBeenCalledOnce();
             expect(submitFormEventSpy).toHaveBeenCalledWith({
                 title: exampleTitle,
                 description: exampleDescription,

@@ -165,7 +165,7 @@ $browserupgrade-color: black;
 $browserupgrade-color-background: #ccc;
 $ng-valid-border: green;
 $ng-invalid-border: red;
-$gutter-background: #f1f1f1;
+$gutter-background: #bbb;
 $error-color: white;
 $error-background: red;
 $readonly-background: #eee;
@@ -251,6 +251,9 @@ $reaction-button-reacted-color: $gray-800;
 $reaction-button-reacted-color: $gray-800;
 $reaction-button-reacted-accent-color: $metis-blue;
 $reaction-button-emoji-count-color: $gray-200;
+
+$metis-post-tag-selector-tag-option-background: $neutral-dark;
+$metis-post-tag-selector-tag-option-hover-background: $neutral-dark-l-5;
 
 // Component: plagiarism-inspector.component.scss
 $plagiarism-inspector-darker-artemis-dark: darken($artemis-dark, 4);
@@ -460,6 +463,10 @@ $exam-participation-footer-connected-background: #114d4f;
 $exam-participation-footer-disconnected-background: #6c4e05;
 $exam-text-exam-summary-background: transparent;
 
+// Exam Monitoring
+$exam-monitoring-card-border-color: $border-color;
+$exam-monitoring-card-footer-background-color: rgba($white, 0.02);
+
 // Assessment
 $textblock-assessment-span-hover-background: $gray-700;
 $textblock-assessment-text-feedback-positive-color: $success;
@@ -546,3 +553,7 @@ $graph-green: rgba(40, 164, 40, 1);
 $graph-red: rgba(204, 0, 0, 1);
 $graph-yellow: rgba(230, 174, 6, 1);
 $graph-black: rgb(229, 229, 229);
+
+// User-Management
+$user-management-background-color: rgba($white, 0.02);
+$user-management-border-color: rgba($white, 0.15);

@@ -49,7 +49,7 @@ describe('ModelingExamSummaryComponent', () => {
         const modelingEditorComponent = modelingEditor.componentInstance;
         expect(modelingEditorComponent.diagramType).toEqual(UMLDiagramType.ClassDiagram);
         expect(modelingEditorComponent.umlModel).toEqual({ model: true });
-        expect(modelingEditorComponent.readOnly).toEqual(true);
+        expect(modelingEditorComponent.readOnly).toBeTrue();
         expect(modelingEditorComponent.withExplanation).toEqual(!!mockSubmission.explanationText);
         expect(modelingEditorComponent.explanation).toEqual(mockSubmission.explanationText);
     });

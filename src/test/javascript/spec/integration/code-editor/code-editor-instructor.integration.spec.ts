@@ -15,7 +15,6 @@ import { MockAccountService } from '../../helpers/mocks/service/mock-account.ser
 import { MockRouter } from '../../helpers/mocks/mock-router';
 import { problemStatement } from '../../helpers/sample/problemStatement.json';
 import { MockProgrammingExerciseParticipationService } from '../../helpers/mocks/service/mock-programming-exercise-participation.service';
-import { DeviceDetectorService } from 'ngx-device-detector';
 import { CodeEditorInstructorAndEditorContainerComponent } from 'app/exercises/programming/manage/code-editor/code-editor-instructor-and-editor-container.component';
 import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
 import { MockCourseExerciseService } from '../../helpers/mocks/service/mock-course-exercise.service';
@@ -120,7 +119,6 @@ describe('CodeEditorInstructorIntegration', () => {
             providers: [
                 JhiLanguageHelper,
                 ChangeDetectorRef,
-                DeviceDetectorService,
                 { provide: Router, useClass: MockRouter },
                 { provide: AccountService, useClass: MockAccountService },
                 { provide: ActivatedRoute, useClass: MockActivatedRouteWithSubjects },
@@ -207,7 +205,7 @@ describe('CodeEditorInstructorIntegration', () => {
         container.ngOnInit();
         routeSubject.next({ exerciseId: 1 });
         expect(container.codeEditorContainer).toBe(undefined); // Have to use this as it's a component
-        expect(findWithParticipationsStub).toHaveBeenCalledTimes(1);
+        expect(findWithParticipationsStub).toHaveBeenCalledOnce();
         expect(findWithParticipationsStub).toHaveBeenCalledWith(exercise.id);
         expect(container.loadingState).toBe(container.LOADING_STATE.INITIALIZING);
     };
@@ -239,7 +237,7 @@ describe('CodeEditorInstructorIntegration', () => {
         findWithParticipationsSubject.next({ body: exercise });
 
         expect(getLatestResultWithFeedbacksStub).not.toHaveBeenCalled();
-        expect(setDomainSpy).toHaveBeenCalledTimes(1);
+        expect(setDomainSpy).toHaveBeenCalledOnce();
         expect(setDomainSpy).toHaveBeenCalledWith([DomainType.PARTICIPATION, exercise.templateParticipation]);
         expect(container.exercise).toEqual(exercise);
         expect(container.selectedRepository).toBe(container.REPOSITORY.TEMPLATE);
@@ -303,7 +301,7 @@ describe('CodeEditorInstructorIntegration', () => {
 
         findWithParticipationsSubject.next({ body: exercise });
 
-        expect(setDomainSpy).toHaveBeenCalledTimes(1);
+        expect(setDomainSpy).toHaveBeenCalledOnce();
         expect(setDomainSpy).toHaveBeenCalledWith([DomainType.TEST_REPOSITORY, exercise]);
         expect(container.selectedParticipation).toBe(undefined);
         expect(container.selectedRepository).toBe(container.REPOSITORY.TEST);
@@ -371,7 +369,7 @@ describe('CodeEditorInstructorIntegration', () => {
 
         checkSolutionRepository(exercise);
 
-        expect(findWithParticipationsStub).toHaveBeenCalledTimes(1);
+        expect(findWithParticipationsStub).toHaveBeenCalledOnce();
         expect(findWithParticipationsStub).toHaveBeenCalledWith(exercise.id);
         expect(setDomainSpy).toHaveBeenCalledTimes(2);
         expect(setDomainSpy).toHaveBeenNthCalledWith(1, [DomainType.PARTICIPATION, exercise.studentParticipations[0]]);
@@ -401,7 +399,7 @@ describe('CodeEditorInstructorIntegration', () => {
 
         containerFixture.detectChanges();
 
-        expect(setDomainSpy).toHaveBeenCalledTimes(1);
+        expect(setDomainSpy).toHaveBeenCalledOnce();
         expect(setDomainSpy).toHaveBeenCalledWith([DomainType.PARTICIPATION, exercise.solutionParticipation]);
         checkSolutionRepository(exercise);
     });

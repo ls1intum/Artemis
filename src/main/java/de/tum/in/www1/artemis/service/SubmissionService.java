@@ -302,7 +302,7 @@ public class SubmissionService {
     private void copyFeedbackToResult(Result result, List<Feedback> feedbacks) {
         feedbacks.forEach(feedback -> {
             Feedback newFeedback = feedback.copyFeedback();
-            newFeedback.setPositive(newFeedback.getCredits() > 0);
+            newFeedback.setPositiveViaCredits();
             result.addFeedback(newFeedback);
         });
         resultRepository.save(result);
@@ -353,10 +353,10 @@ public class SubmissionService {
      * @return the newResult
      */
     private Result copyResultContentAndAddToSubmission(Submission submission, Result newResult, Result oldResult) {
-        newResult.setResultString(oldResult.getResultString());
         newResult.setScore(oldResult.getScore());
         newResult.setHasFeedback(oldResult.getHasFeedback());
         newResult.setRated(oldResult.isRated());
+        newResult.copyProgrammingExerciseCounters(oldResult);
         var savedResult = resultRepository.save(newResult);
         savedResult.setSubmission(submission);
         submission.addResult(savedResult);
@@ -403,7 +403,7 @@ public class SubmissionService {
                 result.setParticipation(studentParticipation);
                 result.setAssessor(assessor);
                 result.setCompletionDate(ZonedDateTime.now());
-                result.setScore(score);
+                result.setScore(score, studentParticipation.getExercise().getCourseViaExerciseGroupOrCourseMember());
                 result.rated(true);
                 // we set the assessment type to semi-automatic so that it does not appear to the tutors for manual assessment
                 // if we would use AssessmentType.AUTOMATIC, it would be eligible for manual assessment
@@ -460,7 +460,6 @@ public class SubmissionService {
         // copy feedback from automatic result
         if (existingAutomaticResult.isPresent()) {
             draftAssessment.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
-            draftAssessment.setResultString(existingAutomaticResult.get().getResultString());
             // also saves the draft assessment
             draftAssessment.setFeedbacks(copyFeedbackToNewResult(draftAssessment, existingAutomaticResult.get()));
         }

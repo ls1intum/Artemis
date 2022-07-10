@@ -9,3 +9,19 @@
 .invalid-question {
     color: red;
 }
+
+.button-row {
+    padding-left: 61px;
+}
+
+@media (max-width: 575px) {
+    .button-row {
+        padding-left: 0;
+    }
+}
+
+@media (max-width: 430px) {
+    .show-solution {
+        margin-bottom: 0.25rem;
+    }
+}

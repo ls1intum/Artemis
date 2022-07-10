@@ -357,6 +357,24 @@ export class MetisService implements OnDestroy {
     }
 
     /**
+     * returns the router link required for navigating to the exercise referenced within a posting
+     * @param {string} exerciseId ID of the exercise to be navigated to
+     * @return {string} router link of the exercise
+     */
+    getLinkForExercise(exerciseId: string): string {
+        return `/courses/${this.getCourse().id}/exercises/${exerciseId}`;
+    }
+
+    /**
+     * returns the router link required for navigating to the lecture referenced within a posting
+     * @param {string} lectureId ID of the lecture to be navigated to
+     * @return {string} router link of the lecture
+     */
+    getLinkForLecture(lectureId: string): string {
+        return `/courses/${this.getCourse().id}/lectures/${lectureId}`;
+    }
+
+    /**
      * determines the routing params required for navigating to the detail view of the given post
      * @param {Post} post to be navigated to
      * @return {Params} required parameter key-value pair

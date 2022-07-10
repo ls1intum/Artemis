@@ -1,7 +1,3 @@
-:host {
-    white-space: initial;
-}
-
 .light-button {
     border: 0;
     background-color: transparent;
@@ -42,8 +38,10 @@
     #notification-sidebar-container {
         height: calc(100vh - 85px);
         overflow-y: auto;
+        overflow-x: hidden;
         .notification-item {
             cursor: pointer;
+            white-space: normal;
             &:nth-child(even) {
                 background-color: var(--notification-sb-even-child-bg);
             }

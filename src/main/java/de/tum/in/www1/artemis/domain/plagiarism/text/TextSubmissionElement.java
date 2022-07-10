@@ -4,6 +4,7 @@ import javax.persistence.Column;
 import javax.persistence.Entity;
 
 import de.jplag.Token;
+import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismSubmission;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismSubmissionElement;
 
 @Entity
@@ -26,9 +27,10 @@ public class TextSubmissionElement extends PlagiarismSubmissionElement {
      * Create a new TextSubmissionElement instance from an existing JPlag Token
      *
      * @param token the JPlag Token to create the TextSubmissionElement from
+     * @param plagiarismSubmission the PlagiarismSubmission the TextSubmissionElement belongs to
      * @return a new TextSubmissionElement instance
      */
-    public static TextSubmissionElement fromJPlagToken(Token token) {
+    public static TextSubmissionElement fromJPlagToken(Token token, PlagiarismSubmission<TextSubmissionElement> plagiarismSubmission) {
         TextSubmissionElement textSubmissionElement = new TextSubmissionElement();
 
         textSubmissionElement.setColumn(token.getColumn());
@@ -36,6 +38,7 @@ public class TextSubmissionElement extends PlagiarismSubmissionElement {
         textSubmissionElement.setFile(token.file);
         textSubmissionElement.setType(token.type);
         textSubmissionElement.setLength(token.getLength());
+        textSubmissionElement.setPlagiarismSubmission(plagiarismSubmission);
 
         return textSubmissionElement;
     }

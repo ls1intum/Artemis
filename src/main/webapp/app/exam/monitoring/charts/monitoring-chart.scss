@@ -1,0 +1,18 @@
+.bar-chart {
+    width: 100% !important;
+    height: 100% !important;
+    min-height: 200px;
+
+    :host::ng-deep .legend-labels {
+        background-color: var(--exam-monitoring-card-footer-background-color) !important;
+    }
+}
+
+.line-chart {
+    width: 100% !important;
+    height: 100% !important;
+
+    :host::ng-deep .legend-labels {
+        background-color: var(--exam-monitoring-card-footer-background-color) !important;
+    }
+}

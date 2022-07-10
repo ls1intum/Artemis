@@ -155,7 +155,7 @@ describe('MultipleChoiceQuestionEditComponent', () => {
         component.changesInMarkdown();
 
         expectCleanupQuestion();
-        expect(spy).toHaveBeenCalledTimes(1);
+        expect(spy).toHaveBeenCalledOnce();
     });
 
     function expectCleanupQuestion() {
@@ -170,6 +170,6 @@ describe('MultipleChoiceQuestionEditComponent', () => {
         const spy = jest.spyOn(component, 'deleteQuestion');
         const deleteButton = fixture.debugElement.query(By.css(`.delete-button`));
         deleteButton.nativeElement.click();
-        expect(spy).toHaveBeenCalledTimes(1);
+        expect(spy).toHaveBeenCalledOnce();
     });
 });

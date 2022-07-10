@@ -7,7 +7,7 @@ import { CourseDetailLineChartComponent } from 'app/course/manage/detail/course-
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 import { ArtemisTestModule } from '../../../test.module';
-import { NgxChartsModule } from '@swimlane/ngx-charts';
+import { LineChartModule } from '@swimlane/ngx-charts';
 import { MockCourseManagementService } from '../../../helpers/mocks/service/mock-course-management.service';
 import { HelpIconComponent } from 'app/shared/components/help-icon.component';
 import dayjs from 'dayjs/esm';
@@ -21,7 +21,7 @@ describe('CourseDetailLineChartComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, MockModule(NgxChartsModule)],
+            imports: [ArtemisTestModule, MockModule(LineChartModule)],
             declarations: [CourseDetailLineChartComponent, MockPipe(ArtemisTranslatePipe), MockComponent(HelpIconComponent)],
             providers: [MockCourseManagementService, { provide: TranslateService, useClass: MockTranslateService }],
         })
@@ -81,7 +81,7 @@ describe('CourseDetailLineChartComponent', () => {
 
         component.ngOnChanges();
 
-        expect(component.startDateAlreadyPassed).toBe(false);
+        expect(component.startDateAlreadyPassed).toBeFalse();
     });
 
     it('should show only 2 weeks if start date is 1 week ago', () => {
@@ -102,21 +102,24 @@ describe('CourseDetailLineChartComponent', () => {
 
         component.ngOnChanges();
 
-        expect(component.data[0].series[16].name).toBe('calendar_week ' + endDate.isoWeek());
+        expect(component.data[0].series[16].name).toBe(endDate.isoWeek().toString());
     });
 
     it('should adapt if course phase is smaller than 4 weeks', () => {
         const endDate = dayjs().subtract(1, 'weeks');
         component.course = { startDate: dayjs().subtract(2, 'weeks'), endDate };
-        component.initialStats = initialStats.slice(15);
+        component.overviewStats = initialStats.slice(15);
 
         component.ngOnChanges();
+
+        expect(component.showLifetimeOverview).toBeTrue();
+        expect(component.startDateDisplayed).toBeTrue();
+        expect(component.showsCurrentWeek).toBeTrue();
 
         expect(component.data[0].series).toHaveLength(2);
         expect(component.data[0].series[0].value).toBe(24);
         expect(component.data[0].series[1].value).toBe(84);
-        expect(component.data[0].series[1].name).toBe('calendar_week ' + endDate.isoWeek());
-        expect(component.startDateDisplayed).toBe(true);
+        expect(component.data[0].series[1].name).toBe(endDate.isoWeek().toString());
     });
 
     it('should limit the next view if start date is reached', () => {
@@ -134,8 +137,46 @@ describe('CourseDetailLineChartComponent', () => {
 
         expect(component.data[0].series).toHaveLength(1);
         expect(component.data[0].series[0].value).toBe(84);
-        expect(component.data[0].series[0].name).toBe('calendar_week ' + startDate.isoWeek());
-        expect(getStatisticsDataMock).toHaveBeenCalledTimes(1);
+        expect(component.data[0].series[0].name).toBe(startDate.isoWeek().toString());
+        expect(getStatisticsDataMock).toHaveBeenCalledOnce();
         expect(getStatisticsDataMock).toHaveBeenCalledWith(42, -1);
+    });
+
+    it('should create lifetime overview', () => {
+        const getOverviewDataMock = jest.spyOn(service, 'getStatisticsForLifetimeOverview').mockReturnValue(of(initialStats));
+        const startDate = dayjs().subtract(17, 'weeks');
+        component.course = { id: 42, startDate };
+
+        component.displayLifetimeOverview();
+
+        expect(component.showLifetimeOverview).toBeTrue();
+        expect(getOverviewDataMock).toHaveBeenCalledOnce();
+        expect(getOverviewDataMock).toHaveBeenCalledWith(42);
+        for (let i = 0; i < 17; i++) {
+            expect(component.absoluteSeries[i]['absoluteValue']).toBe(initialStats[i]);
+        }
+    });
+
+    it('should toggle the average reference line', () => {
+        component.showAverage = false;
+
+        component.toggleAverageLine();
+
+        expect(component.showAverage).toBeTrue();
+    });
+
+    it('should create an empty chart if no students are registered yet', () => {
+        const startDate = dayjs().subtract(4, 'weeks');
+        const endDate = startDate.add(32, 'weeks');
+        component.course = { id: 42, startDate, endDate };
+        component.numberOfStudentsInCourse = 0;
+        component.initialStats = initialStats;
+
+        component.ngOnChanges();
+
+        expect(component.data[0].series).toHaveLength(5);
+        for (let week = 0; week < 5; week++) {
+            expect(component.data[0].series[week].value).toBe(0);
+        }
     });
 });
