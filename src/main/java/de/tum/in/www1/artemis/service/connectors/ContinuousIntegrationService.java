@@ -104,8 +104,6 @@ public interface ContinuousIntegrationService {
      */
     void deleteBuildPlan(String projectKey, String buildPlanId);
 
-    // TODO: GitLab CI Server Notification Plugin
-
     /**
      * Get the plan key of the finished build, the information of the build gets passed via the requestBody. The requestBody must match the information passed from the
      * (bamboo|jenkins)-server-notification-plugin, the body is described here: https://github.com/ls1intum/bamboo-server-notification-plugin or here:
