@@ -21,15 +21,15 @@ Prerequisites
 
     **Recommendation:** Chromium (based), e.g. Google Chrome, newest version.
 
-- The following prerequisites are only required if your exam contains programming exercises:
+- The following prerequisites are only required if your exam contains Java programming exercises:
 
     - **Java IDE with JDK 17**
 
-        **Recommendation:** IntelliJ IDEA 2022.1.3.
+        **Recommendation:** IntelliJ IDEA 2022.1.3 or Eclipse IDE 2022-06.
 
     - **Git Client**
 
-        **Recommendation:** IntelliJ comes with an integrated git client
+        **Recommendation:** Use the git client integrated into IntelliJ and Eclipse! (Alternative: SourceTree or GitKraken)
 
 
 Offline Mode
