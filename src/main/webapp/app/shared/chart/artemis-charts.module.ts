@@ -5,10 +5,10 @@ import { StatisticsGraphComponent } from 'app/shared/statistics-graph/statistics
 import { StatisticsScoreDistributionGraphComponent } from 'app/shared/statistics-graph/statistics-score-distribution-graph.component';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { RouterModule } from '@angular/router';
-import { NgxChartsModule } from '@swimlane/ngx-charts';
+import { BarChartModule, LineChartModule, PieChartModule } from '@swimlane/ngx-charts';
 
 @NgModule({
-    imports: [ArtemisSharedModule, RouterModule, NgxChartsModule],
+    imports: [ArtemisSharedModule, RouterModule, BarChartModule, LineChartModule, PieChartModule],
     declarations: [DoughnutChartComponent, StatisticsAverageScoreGraphComponent, StatisticsGraphComponent, StatisticsScoreDistributionGraphComponent],
     exports: [DoughnutChartComponent, StatisticsAverageScoreGraphComponent, StatisticsGraphComponent, StatisticsScoreDistributionGraphComponent],
 })

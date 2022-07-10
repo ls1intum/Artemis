@@ -50,7 +50,7 @@ describe('ThemeService', () => {
                     if (query === '(prefers-color-scheme: dark)') {
                         return { media: '(prefers-color-scheme: dark)', matches: false, addEventListener: jest.fn() } as any as MediaQueryList;
                     }
-                    throw new Error('Shouldnt happen');
+                    throw new Error('Should not happen');
                 });
             });
     });
@@ -73,7 +73,7 @@ describe('ThemeService', () => {
 
         expect(newElement.id).toBe(THEME_OVERRIDE_ID);
         expect(newElement.rel).toBe('stylesheet');
-        expect(newElement.href).toBe('theme-dark.css');
+        expect(newElement.href).toStartWith('theme-dark.css');
         expect(newElement.onload).toEqual(expect.any(Function));
         expect(headElement.getElementsByTagName).toHaveBeenCalledOnce();
         expect(headElement.getElementsByTagName).toHaveBeenCalledWith('link');

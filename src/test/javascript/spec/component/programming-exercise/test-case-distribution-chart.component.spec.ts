@@ -16,6 +16,7 @@ describe('Test case distribution chart', () => {
     let component: TestCaseDistributionChartComponent;
     let fixture: ComponentFixture<TestCaseDistributionChartComponent>;
 
+    let instantSpy: jest.SpyInstance;
     let routingStub: jest.SpyInstance;
 
     const configureComponent = (testCases: ProgrammingExerciseTestCase[]) => {
@@ -80,6 +81,9 @@ describe('Test case distribution chart', () => {
 
         const routingService = TestBed.inject(ArtemisNavigationUtilService);
         routingStub = jest.spyOn(routingService, 'routeInNewTab');
+
+        const translationService = TestBed.inject(TranslateService);
+        instantSpy = jest.spyOn(translationService, 'instant');
     });
 
     it('should handle no test cases appropriately', () => {
@@ -202,5 +206,25 @@ describe('Test case distribution chart', () => {
 
         expect(emitStub).toHaveBeenCalledWith(-5);
         expect(component.tableFiltered).toBeFalse();
+    });
+
+    it('should update the translation', () => {
+        const prefix = 'artemisApp.programmingExercise.configureGrading.charts.';
+        const labels = ['testCaseWeights.weight', 'testCaseWeights.weightAndBonus', 'testCasePoints.points'];
+        component.ngxWeightData = [
+            { name: '', series: [] },
+            { name: '', series: [] },
+        ];
+        component.ngxPointsData = [{ name: '', series: [] }];
+
+        component.updateTranslation();
+
+        expect(instantSpy).toHaveBeenCalledTimes(3);
+        instantSpy.mock.calls.forEach((calls, index) => {
+            expect(calls[0]).toBe(prefix.concat(labels[index]));
+        });
+        expect(component.ngxWeightData[0].name).toBe(prefix.concat(labels[0]));
+        expect(component.ngxWeightData[1].name).toBe(prefix.concat(labels[1]));
+        expect(component.ngxPointsData[0].name).toBe(prefix.concat(labels[2]));
     });
 });
