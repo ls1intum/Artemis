@@ -216,8 +216,8 @@ describe('ExamMonitoringService', () => {
         expect(spy).toHaveBeenCalledWith(EXAM_MONITORING_UPDATE_URL(course.id!, exam.id!), monitoring, { observe: 'response' });
     });
 
-    // topics
+    // url
     it('should get correct exam monitoring update url', () => {
-        expect(EXAM_MONITORING_UPDATE_URL(exam.course?.id!, exam.id!)).toEqual(`${SERVER_API_URL}/api/exam-monitoring/${exam.course?.id!}/update/${exam.id!}`);
+        expect(EXAM_MONITORING_UPDATE_URL(exam.course?.id!, exam.id!)).toEqual(`${SERVER_API_URL}/api/courses/${exam.course?.id!}/exams/${exam.id!}/statistics`);
     });
 });

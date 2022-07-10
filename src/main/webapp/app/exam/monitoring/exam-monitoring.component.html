@@ -4,9 +4,15 @@
         <div class="course-info-bar">
             <div class="row">
                 <div class="col general-info d-flex justify-content-between">
-                    <h2 jhiTranslate="artemisApp.examMonitoring.title"></h2>
+                    <div class="d-flex flex-row align-items-center">
+                        <h2 class="mb-1" jhiTranslate="artemisApp.examMonitoring.title"></h2>
+                        <span
+                            [jhiTranslate]="'artemisApp.examMonitoring.' + (this.exam.monitoring ? 'enabled' : 'disabled')"
+                            class="badge bg-info ms-2 exam-monitoring-badge align-items-center"
+                        ></span>
+                    </div>
                     <button class="hand btn btn-primary" [class.btn-success]="this.exam.monitoring" [class.btn-danger]="!this.exam.monitoring" (click)="updateMonitoring()">
-                        <span [jhiTranslate]="'artemisApp.examMonitoring.' + (this.exam.monitoring ? 'enabled' : 'disabled')">Enable</span>
+                        <span [jhiTranslate]="'artemisApp.examMonitoring.' + (this.exam.monitoring ? 'disable' : 'enable')">Enable</span>
                     </button>
                 </div>
             </div>

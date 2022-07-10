@@ -465,6 +465,8 @@
         "examMonitoring": {
             "title": "Exam live statistics",
             "description": "The exam live statistics dashboard allows instructors to view students' actions during the exam and analyze the resulting data.",
+            "enable": "Enable",
+            "disable": "Disable",
             "enabled": "Enabled",
             "disabled": "Disabled",
             "table": {

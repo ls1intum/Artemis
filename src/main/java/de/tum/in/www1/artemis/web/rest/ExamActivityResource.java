@@ -59,14 +59,14 @@ public class ExamActivityResource {
     }
 
     /**
-     * PUT api/exam-monitoring/{courseId}/update/{examId}: disable or enable the monitoring
+     * PUT api/courses/{courseId}/exams/{examId}/statistics: disable or enable the monitoring
      *
      * @param courseId the course to which the exam belongs to
      * @param examId the exam to which the student exams belong to
      * @param monitoring new status of the monitoring
      * @return all exam actions of the exam
      */
-    @PutMapping("api/exam-monitoring/{courseId}/update/{examId}")
+    @PutMapping("api/courses/{courseId}/exams/{examId}/statistics")
     @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<Boolean> updateMonitoring(@PathVariable Long courseId, @PathVariable Long examId, @RequestBody boolean monitoring) {
         examAccessService.checkCourseAndExamAccessForInstructorElseThrow(courseId, examId);

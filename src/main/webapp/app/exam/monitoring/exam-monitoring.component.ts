@@ -97,6 +97,11 @@ export class ExamMonitoringComponent implements OnInit, OnDestroy {
         this.examMonitoringService.updateMonitoring(this.exam, !this.exam.monitoring).subscribe({
             next: () => {
                 this.exam.monitoring = !this.exam.monitoring;
+                if (!this.exam.monitoring) {
+                    this.examActionService.unsubscribeForExamAction(this.exam!);
+                } else {
+                    this.examActionService.subscribeForLatestExamAction(this.exam!);
+                }
             },
             error: (err: HttpErrorResponse) => {
                 onError(this.alertService, err);

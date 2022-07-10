@@ -220,7 +220,7 @@ public class ExamActivityIntegrationTest extends AbstractSpringIntegrationBamboo
         exam.setMonitoring(!monitoring);
         exam = examRepository.save(exam);
 
-        var result = request.putWithResponseBody("/api/exam-monitoring/" + course.getId() + "/update/" + exam.getId(), monitoring, Boolean.class, HttpStatus.OK);
+        var result = request.putWithResponseBody("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/statistics", monitoring, Boolean.class, HttpStatus.OK);
 
         assertEquals(result, monitoring);
         assertEquals(examRepository.findByIdElseThrow(exam.getId()).isMonitoring(), monitoring);
