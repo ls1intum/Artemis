@@ -18,7 +18,7 @@
                     <div class="col-md-4"><img class="img-fluid w-100 rounded" [src]="SERVER_API_URL + pm.photoDirectory" /></div>
                     <div class="col-md-8">
                         <h4 class="font-weight-bold">{{ pm.fullName }}</h4>
-                        <h5>{{ pm.role }}</h5>
+                        <h5>{{ 'aboutUsOverview.' + pm.role | artemisTranslate }}</h5>
                         <span>
                             <i></i>
                             <a href="{{ pm.website }}" target="_blank">Website</a></span

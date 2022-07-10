@@ -62,6 +62,7 @@
             "text": "<b>Open-source:</b> Free to use with a large community and many active maintainers."
         },
         "getInTouch": "Get in touch",
-        "contributors": "Individual contributors"
+        "contributors": "Individual contributors",
+        "projectManager": "Project Manager"
     }
 }
