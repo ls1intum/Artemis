@@ -72,7 +72,7 @@ describe('ExamInformationComponent', () => {
         component.studentExam = studentExam;
         fixture.detectChanges();
         expect(fixture).not.toBeUndefined();
-        expect(component.examEndDate?.isSame(dayjs(exam.startDate).add(studentExam.workingTime!, 'seconds'))).toEqual(true);
+        expect(component.examEndDate?.isSame(dayjs(exam.startDate).add(studentExam.workingTime!, 'seconds'))).toBeTrue();
     });
 
     it('should detect if the end date is on another day', () => {

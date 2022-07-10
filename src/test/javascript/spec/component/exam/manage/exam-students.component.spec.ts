@@ -3,7 +3,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, convertToParamMap, UrlSegment } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
 import { TranslateService } from '@ngx-translate/core';
-import { NgxDatatableModule } from '@swimlane/ngx-datatable';
+import { NgxDatatableModule } from '@flaviosantoro92/ngx-datatable';
 import { User } from 'app/core/user/user.model';
 import { UserService } from 'app/core/user/user.service';
 import { Course } from 'app/entities/course.model';
@@ -195,6 +195,6 @@ describe('ExamStudentsComponent', () => {
 
     it('should test on error', () => {
         component.onError('ErrorString');
-        expect(component.isTransitioning).toEqual(false);
+        expect(component.isTransitioning).toBeFalse();
     });
 });

@@ -5,6 +5,7 @@ import java.util.Set;
 
 import javax.validation.constraints.NotNull;
 
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -44,10 +45,20 @@ public interface LectureRepository extends JpaRepository<Lecture, Long> {
             FROM Lecture lecture
             LEFT JOIN FETCH lecture.posts
             LEFT JOIN FETCH lecture.lectureUnits lu
+            LEFT JOIN FETCH lu.completedUsers cu
             LEFT JOIN FETCH lu.learningGoals
             WHERE lecture.id = :#{#lectureId}
             """)
-    Optional<Lecture> findByIdWithPostsAndLectureUnitsAndLearningGoals(@Param("lectureId") Long lectureId);
+    Optional<Lecture> findByIdWithPostsAndLectureUnitsAndLearningGoalsAndCompletions(@Param("lectureId") Long lectureId);
+
+    @Query("""
+            SELECT lecture
+            FROM Lecture lecture
+            LEFT JOIN FETCH lecture.lectureUnits lu
+            LEFT JOIN FETCH lu.learningGoals
+            WHERE lecture.id = :#{#lectureId}
+            """)
+    Optional<Lecture> findByIdWithLectureUnitsAndLearningGoals(@Param("lectureId") Long lectureId);
 
     @Query("""
             SELECT lecture
@@ -79,7 +90,7 @@ public interface LectureRepository extends JpaRepository<Lecture, Long> {
             @Param("groups") Set<String> groups, Pageable pageable);
 
     /**
-     * Returns the title of the lecture with the given id
+     * Returns the title of the lecture with the given id.
      *
      * @param lectureId the id of the lecture
      * @return the name/title of the lecture or null if the lecture does not exist
@@ -89,6 +100,7 @@ public interface LectureRepository extends JpaRepository<Lecture, Long> {
             FROM Lecture lecture
             WHERE lecture.id = :lectureId
             """)
+    @Cacheable(cacheNames = "lectureTitle", key = "#lectureId", unless = "#result == null")
     String getLectureTitle(@Param("lectureId") Long lectureId);
 
     @NotNull
@@ -97,8 +109,13 @@ public interface LectureRepository extends JpaRepository<Lecture, Long> {
     }
 
     @NotNull
-    default Lecture findByIdWithPostsAndLectureUnitsAndLearningGoalsElseThrow(Long lectureId) {
-        return findByIdWithPostsAndLectureUnitsAndLearningGoals(lectureId).orElseThrow(() -> new EntityNotFoundException("Lecture", lectureId));
+    default Lecture findByIdWithLectureUnitsAndLearningGoalsElseThrow(Long lectureId) {
+        return findByIdWithLectureUnitsAndLearningGoals(lectureId).orElseThrow(() -> new EntityNotFoundException("Lecture", lectureId));
+    }
+
+    @NotNull
+    default Lecture findByIdWithPostsAndLectureUnitsAndLearningGoalsAndCompletionsElseThrow(Long lectureId) {
+        return findByIdWithPostsAndLectureUnitsAndLearningGoalsAndCompletions(lectureId).orElseThrow(() -> new EntityNotFoundException("Lecture", lectureId));
     }
 
     @NotNull

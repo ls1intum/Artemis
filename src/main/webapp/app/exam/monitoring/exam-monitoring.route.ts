@@ -10,6 +10,7 @@ export const examMonitoringRoute: Routes = [
     {
         path: '',
         redirectTo: 'overview',
+        pathMatch: 'full',
     },
     {
         path: '',

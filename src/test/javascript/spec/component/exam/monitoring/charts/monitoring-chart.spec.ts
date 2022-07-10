@@ -1,15 +1,16 @@
 import {
     getColor,
-    getCurrentAmountOfStudentsPerExercises,
+    getCurrentExercisePerStudent,
     getSavedExerciseActionsGroupedByActivityId,
     groupActionsByActivityId,
     groupActionsByTimestamp,
     groupActionsByType,
     insertNgxDataAndColorForExerciseMap,
+    updateCurrentExerciseOfStudent,
 } from 'app/exam/monitoring/charts/monitoring-chart';
 import { GraphColors } from 'app/entities/statistics.model';
 import dayjs from 'dayjs/esm';
-import { ExamActionType, SwitchedExerciseAction } from 'app/entities/exam-user-activity.model';
+import { EndedExamAction, ExamAction, ExamActionType, SwitchedExerciseAction } from 'app/entities/exam-user-activity.model';
 import { Exam } from 'app/entities/exam.model';
 import { TextExercise } from 'app/entities/text-exercise.model';
 import { NgxChartsSingleSeriesDataEntry } from 'app/shared/chart/ngx-charts-datatypes';
@@ -18,6 +19,7 @@ import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { createActions, createExamActionBasedOnType } from '../exam-monitoring-helper';
 
 describe('Monitoring charts helper methods', () => {
+    // Get color
     it('should return a color', () => {
         const colors = [GraphColors.LIGHT_BLUE, GraphColors.LIGHT_GREY, GraphColors.BLUE, GraphColors.GREY, GraphColors.DARK_BLUE];
         colors.forEach((color, index) => {
@@ -26,6 +28,7 @@ describe('Monitoring charts helper methods', () => {
         expect(getColor(colors.length)).toEqual(colors[0]);
     });
 
+    // Group actions by timestamp
     it('should group actions by timestamp in one group', () => {
         const actions = createActions();
         const now = dayjs();
@@ -47,12 +50,14 @@ describe('Monitoring charts helper methods', () => {
         expect(grouped[later.toString()]).toHaveLength(1);
     });
 
+    // Group actions by type
     it('should group actions by type', () => {
         const actions = createActions();
         const grouped = groupActionsByType(actions);
         actions.forEach((action) => expect(grouped[action.type]).toEqual([action]));
     });
 
+    // Group actions by activity id
     it('should group actions by activity id', () => {
         const actions = createActions().map((action, index) => {
             action.examActivityId = index;
@@ -62,6 +67,7 @@ describe('Monitoring charts helper methods', () => {
         actions.forEach((action) => expect(grouped[action.examActivityId!]).toEqual([action]));
     });
 
+    // Filter actions and group by activity id
     it('should filter actions for SavedExerciseAction and group actions by activity id', () => {
         const actions = createActions().map((action) => {
             action.examActivityId = 0;
@@ -71,43 +77,74 @@ describe('Monitoring charts helper methods', () => {
         expect(grouped[0]).toEqual(actions.filter((action) => action.type === ExamActionType.SAVED_EXERCISE));
     });
 
-    it('should get current amount of students per exercise - 0', () => {
-        const amount = getCurrentAmountOfStudentsPerExercises([]);
-        expect(amount).toEqual(new Map());
+    // Get current exercise of students
+    it('should get current exercise per student - 0', () => {
+        const currentExercisePerStudent = getCurrentExercisePerStudent(new Map());
+        expect(currentExercisePerStudent).toEqual(new Map());
     });
 
-    it('should get current amount of students per exercise - 1', () => {
+    it('should get current exercise of student - 1', () => {
+        const lastActionPerStudent = new Map();
         const action = createExamActionBasedOnType(ExamActionType.SWITCHED_EXERCISE);
         action.examActivityId = 0;
-        const amount = getCurrentAmountOfStudentsPerExercises([action]);
+        lastActionPerStudent.set(action.examActivityId, action);
+        const currentExercisePerStudent = getCurrentExercisePerStudent(lastActionPerStudent);
+        const expectedMap = new Map();
+        expectedMap.set(0, 0);
+        expect(currentExercisePerStudent).toEqual(expectedMap);
+    });
+
+    it('should get current exercise of student - ignore multiple switches', () => {
+        const lastActionPerStudent = new Map();
+        const action1 = new SwitchedExerciseAction(1);
+        action1.examActivityId = 0;
+        action1.timestamp = dayjs();
+        lastActionPerStudent.set(action1.examActivityId, action1);
+        const action2 = new SwitchedExerciseAction(1);
+        action2.examActivityId = 0;
+        action2.timestamp = dayjs().add(1, 'hour');
+        lastActionPerStudent.set(action2.examActivityId, action2);
+        const currentExercisePerStudent = getCurrentExercisePerStudent(lastActionPerStudent);
         const expectedMap = new Map();
         expectedMap.set(0, 1);
-        expect(amount).toEqual(expectedMap);
+        expect(currentExercisePerStudent).toEqual(expectedMap);
     });
 
-    it('should get current amount of students per exercise - ignore multiple switches', () => {
-        const action1 = new SwitchedExerciseAction(1);
-        action1.timestamp = dayjs();
-        const action2 = new SwitchedExerciseAction(1);
-        action2.timestamp = dayjs().add(1, 'hour');
-        const amount = getCurrentAmountOfStudentsPerExercises([action1, action2]);
-        const expectedMap = new Map();
-        expectedMap.set(1, 1);
-        expect(amount).toEqual(expectedMap);
-    });
-
-    it('should get current amount of students per exercise - multiple values', () => {
-        const action1 = new SwitchedExerciseAction(1);
+    it.each`
+        input                                                             | expect
+        ${[new SwitchedExerciseAction(1), new SwitchedExerciseAction(2)]} | ${[1, 2]}
+        ${[new EndedExamAction(), new SwitchedExerciseAction(2)]}         | ${[undefined, 2]}
+    `('should get current exercise of students - multiple values', (param: { input: ExamAction[]; expect: (number | undefined)[] }) => {
+        const lastActionPerStudent = new Map();
+        const action1 = param.input[0];
         action1.examActivityId = 1;
-        const action2 = new SwitchedExerciseAction(2);
+        lastActionPerStudent.set(action1.examActivityId, action1);
+        const action2 = param.input[1];
         action2.examActivityId = 2;
-        const amount = getCurrentAmountOfStudentsPerExercises([action1, action2]);
+        lastActionPerStudent.set(action2.examActivityId, action2);
+        const currentExercisePerStudent = getCurrentExercisePerStudent(lastActionPerStudent);
         const expectedMap = new Map();
-        expectedMap.set(1, 1);
-        expectedMap.set(2, 1);
-        expect(amount).toEqual(expectedMap);
+        expectedMap.set(1, param.expect[0]);
+        expectedMap.set(2, param.expect[1]);
+        expect(currentExercisePerStudent).toEqual(expectedMap);
     });
 
+    // Update current exercise of students
+    it.each`
+        input                            | expect
+        ${new SwitchedExerciseAction(1)} | ${1}
+        ${new EndedExamAction()}         | ${undefined}
+    `('should update the current exercise of student', (param: { input: ExamAction; expect: number | undefined }) => {
+        const action = param.input;
+        action.examActivityId = 0;
+        const currentExercisePerStudent = new Map<number, number | undefined>();
+        updateCurrentExerciseOfStudent(param.input, currentExercisePerStudent);
+        const expectedMap = new Map();
+        expectedMap.set(0, param.expect);
+        expect(currentExercisePerStudent).toEqual(expectedMap);
+    });
+
+    // Insert data and color into chart
     it('should insert chart data and color for exercise map', () => {
         const exam = new Exam();
         const exercise1 = new TextExercise(undefined, undefined);
