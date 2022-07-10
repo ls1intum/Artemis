@@ -3,7 +3,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
-import { NgxDatatableModule } from '@swimlane/ngx-datatable';
+import { NgxDatatableModule } from '@flaviosantoro92/ngx-datatable';
 import { User } from 'app/core/user/user.model';
 import { UserService } from 'app/core/user/user.service';
 import { CourseGroupComponent } from 'app/course/manage/course-group.component';

@@ -1771,7 +1771,7 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
         var result = results.get(0);
         assertThat(result.getSubmission().getId()).isEqualTo(quizSubmissionId);
 
-        assertThat(result.getResultString()).isEqualTo("4 of 9 points");
+        assertThat(result.getScore()).isEqualTo(44.4);
         var resultQuizSubmission = (QuizSubmission) result.getSubmission();
         assertThat(resultQuizSubmission.getScoreInPoints()).isEqualTo(4D);
         var submittedAnswers = resultQuizSubmission.getSubmittedAnswers();
