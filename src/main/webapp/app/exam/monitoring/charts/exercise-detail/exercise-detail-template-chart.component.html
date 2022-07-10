@@ -1,0 +1,14 @@
+<div>
+    <jhi-chart-title
+        [routerLink]="routerLink"
+        nameTranslationValue="artemisApp.examMonitoring.charts.{{ chartIdentifierKey }}.name"
+        tooltipTranslationValue="artemisApp.examMonitoring.charts.{{ chartIdentifierKey }}.tooltip"
+    ></jhi-chart-title>
+    <div class="doughnut-chart-container">
+        <div class="doughnut-chart-text">
+            <h2 *ngIf="reached !== undefined && total !== undefined" class="text-center">{{ (reached / total) * 100 }}%</h2>
+            <h4 *ngIf="reached !== undefined && total !== undefined" class="text-center">{{ reached }} / {{ total }}</h4>
+        </div>
+        <ngx-charts-pie-chart [view]="[200, 200]" [results]="ngxData" [scheme]="ngxColor" [doughnut]="true"> </ngx-charts-pie-chart>
+    </div>
+</div>

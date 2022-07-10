@@ -8,9 +8,12 @@
     }
 
     .monitoring-card-header {
-        cursor: pointer;
         border-bottom: 2px solid var(--primary);
         background: var(--exam-monitoring-card-footer-background-color);
+    }
+
+    .monitoring-card-header-pointer {
+        cursor: pointer;
     }
 
     .monitoring-card-content {

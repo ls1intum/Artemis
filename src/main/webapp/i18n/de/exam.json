@@ -481,7 +481,13 @@
                 "exercises": {
                     "title": "Aufgaben",
                     "description": "Zeigt die aktuelle Teilnahme der Studierenden in den jeweilgen Aufgaben und Aufgabengruppen",
-                    "groups": "Aufgabengruppen"
+                    "groups": "Aufgabengruppen",
+                    "exercisesPerPage": "{{number}} Aufgaben pro Seite",
+                    "showAllExercises": "Zeige alle Aufgaben",
+                    "id": "Aufgabe",
+                    "exerciseGroup.id": "Aufgabengruppe",
+                    "_title": "Titel",
+                    "type": "Typ"
                 },
                 "activity-log": {
                     "title": "Aktivitäten",
@@ -516,6 +522,18 @@
                     "xAxisLabel": "Anzahl an Ansichten",
                     "yAxisLabel": "Aufgaben",
                     "legendTitle": "Aufgaben"
+                },
+                "exercise-detail-current-chart": {
+                    "name": "Aktuelle Anzahl der Studierenden",
+                    "tooltip": "Zeigt die aktuelle Anzahl an Studierenden"
+                },
+                "exercise-detail-navigation-chart": {
+                    "name": "Anzahl der ersten Ansichten",
+                    "tooltip": "Zeigt die aktuelle Anzahl der ersten Ansichten"
+                },
+                "exercise-detail-submission-chart": {
+                    "name": "Anzahl der Ersteinreichungen",
+                    "tooltip": "Zeigt die aktuelle Anzahl an Ersteinreichungen"
                 },
                 "average-actions-chart": {
                     "name": "Durchschnittliche Anzahl an Aktionen pro Studierende",
