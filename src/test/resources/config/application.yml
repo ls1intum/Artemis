@@ -149,6 +149,10 @@ management:
         env:
             enabled: true
 
+spring-hibernate-query-utils:
+    n-plus-one-queries-detection:
+        enabled: false
+
 sentry:
     dsn: https://not-activated@sentry.io/0000000
     send-default-pii: true
