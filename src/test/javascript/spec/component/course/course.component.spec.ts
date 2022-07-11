@@ -267,8 +267,8 @@ describe('CoursesComponent', () => {
             workingTime: 3600,
             testExam: true,
         };
-        const course3 = { id: 3, exams: [testExam1], exercises: [exercise1] };
-        const coursesWithTestExam = [course1, course2, course3];
+        const course6 = { id: 3, exams: [testExam1], exercises: [exercise1] };
+        const coursesWithTestExam = [course1, course2, course6];
 
         const findAllForDashboardSpy = jest.spyOn(courseService, 'findAllForDashboard');
         const courseScoreCalculationServiceSpy = jest.spyOn(courseScoreCalculationService, 'setCourses');
