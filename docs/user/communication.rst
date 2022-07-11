@@ -151,7 +151,7 @@ Web Notifications
 ^^^^^^^^^^^^^^^^^
 
 The web notifications can be found on the top right of the page by clicking on the bell icon.
-A red number shows the number of new messages.
+A red indicator shows the number of new messages.
 
 |notification-top-bar|
 
@@ -169,7 +169,7 @@ Settings
 ^^^^^^^^
 
 The user can change their preference for different types of notifications and decide if they want to receive emails, web notifications or no notification.
-These settings can be found after clicking on the web notifications. The gear on the top left of the sidebar then leads to the settings.
+These settings can be found after opening the web notifications. The gear on the top left of the sidebar then leads to the settings.
 
 |notification-settings|
 
