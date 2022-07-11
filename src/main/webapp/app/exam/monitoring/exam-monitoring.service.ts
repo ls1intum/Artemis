@@ -6,6 +6,7 @@ import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { StudentExam } from 'app/entities/student-exam.model';
 import { ExamAction, ExamActivity } from 'app/entities/exam-user-activity.model';
 import { captureException } from '@sentry/browser';
+import dayjs from 'dayjs/esm';
 
 @Injectable({ providedIn: 'root' })
 export class ExamMonitoringService {
@@ -39,14 +40,15 @@ export class ExamMonitoringService {
      * @param studentExam current student exam
      * @param examAction performed action
      * @param monitoring true if monitoring is enabled
+     * @param timestamp provided timestamp of the action. Usefully for actions which are async but called earlier.
      */
-    public handleActionEvent(studentExam: StudentExam, examAction: ExamAction, monitoring: boolean) {
+    public handleActionEvent(studentExam: StudentExam, examAction: ExamAction, monitoring: boolean, timestamp?: dayjs.Dayjs) {
         if (!monitoring) {
             return;
         }
         try {
             const examActivity = studentExam.examActivity || new ExamActivity();
-            examAction.timestamp = this.serverDateService.now();
+            examAction.timestamp = timestamp ?? this.serverDateService.now();
             examAction.studentExamId = studentExam.id;
             examActivity.addAction(examAction);
             studentExam.examActivity = examActivity;
@@ -85,9 +87,10 @@ export class ExamMonitoringService {
      * @param studentExam current student exam
      * @param examAction performed action
      * @param connected true if we have a connection
+     * @param timestamp provided timestamp of the action. Usefully for actions which are async but called earlier.
      */
-    public handleAndSaveActionEvent(exam: Exam, studentExam: StudentExam, examAction: ExamAction, connected: boolean) {
-        this.handleActionEvent(studentExam, examAction, !!exam.monitoring);
+    public handleAndSaveActionEvent(exam: Exam, studentExam: StudentExam, examAction: ExamAction, connected: boolean, timestamp?: dayjs.Dayjs) {
+        this.handleActionEvent(studentExam, examAction, !!exam.monitoring, timestamp);
         this.saveActions(exam, studentExam, connected);
     }
 
