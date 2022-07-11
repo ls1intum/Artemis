@@ -171,9 +171,12 @@ http://pmd.sourceforge.net/ruleset/2.0.0 ">
           message="Don't use Collectors.toList()"
           class="net.sourceforge.pmd.lang.rule.XPathRule">
         <description>
-            Collectors.toList() should not be used.
-            Use the .toList() for an unmodifiable list or .collect(Collectors.toCollection(ArrayList::new)) for a modifiable list.
+            <![CDATA[
+                Collectors.toList() should not be used.
+                Use the .toList() for an unmodifiable list or .collect(Collectors.toCollection(ArrayList::new)) for a modifiable list.
+            ]]>
         </description>
+        <priority>3</priority>
         <properties>
             <property name="version" value="2.0"/>
             <property name="xpath">
