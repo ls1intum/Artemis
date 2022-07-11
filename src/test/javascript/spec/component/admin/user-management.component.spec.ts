@@ -591,7 +591,7 @@ describe('UserManagementComponent', () => {
         expect(comp.filters.adjustOptions(new HttpParams())).toEqual(httpParams);
 
         comp.filters.registrationNumberFilter.add(RegistrationNumberFilter.WITH_REG_NO);
-        httpParams = new HttpParams().append('authorities', '').append('origins', '').append('registrationNumber', '6151').append('status', '').append('courseIds', '');
+        httpParams = new HttpParams().append('authorities', '').append('origins', '').append('registrationNumber', 'WITH_REG_NO').append('status', '').append('courseIds', -1);
         expect(comp.filters.adjustOptions(new HttpParams())).toEqual(httpParams);
 
         comp.filters.originFilter.add(OriginFilter.INTERNAL);

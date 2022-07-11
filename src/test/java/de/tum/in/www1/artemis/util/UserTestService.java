@@ -931,7 +931,11 @@ public class UserTestService {
         }
     }
 
-    // Test
+    /**
+     * Test for the user search with the following parameters:
+     * @Param registrationNumber
+     * @throws Exception if the user is not the same as the expected user
+     */
     public void testUserWithRegistrationNumber() throws Exception {
         final var params = createParamsForPagingRequest("USER", "INTERNAL,EXTERNAL", "5461351", "", "");
 
@@ -953,7 +957,11 @@ public class UserTestService {
         }
     }
 
-    // Test
+    /**
+     * Test for the user search with the following parameters:
+     * @Param registrationNumber
+     * @throws Exception if the user is not the same as the expected user
+     */
     public void testUserWithoutRegistrationNumber() throws Exception {
         final var params = createParamsForPagingRequest("USER", "", "", "", "");
 
