@@ -86,7 +86,7 @@ $ease-out: cubic-bezier(0.9, 0, 0.1, 1);
                 }
             }
 
-            &:hover {
+            &:hover .sun-and-moon {
                 > :is(.moon, .sun) {
                     fill: var(--bs-body-color);
                 }
