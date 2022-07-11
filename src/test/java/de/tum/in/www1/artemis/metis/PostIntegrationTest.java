@@ -31,7 +31,9 @@ import de.tum.in.www1.artemis.domain.enumeration.DisplayPriority;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.metis.CourseWideContext;
 import de.tum.in.www1.artemis.domain.metis.Post;
+import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismCase;
 import de.tum.in.www1.artemis.repository.metis.PostRepository;
+import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismCaseRepository;
 import de.tum.in.www1.artemis.service.notifications.GroupNotificationService;
 import de.tum.in.www1.artemis.web.rest.dto.PostContextFilter;
 
@@ -40,11 +42,18 @@ public class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     @Autowired
     private PostRepository postRepository;
 
+    @Autowired
+    private PlagiarismCaseRepository plagiarismCaseRepository;
+
     private List<Post> existingPosts;
+
+    private List<Post> existingCoursePosts;
 
     private List<Post> existingExercisePosts;
 
     private List<Post> existingLecturePosts;
+
+    private List<Post> existingPlagiarismPosts;
 
     private List<Post> existingCourseWidePosts;
 
@@ -55,6 +64,8 @@ public class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     private Long exerciseId;
 
     private Long lectureId;
+
+    private Long plagiarismCaseId;
 
     private Validator validator;
 
@@ -72,18 +83,23 @@ public class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
         student1 = database.getUserByLogin("student1");
 
-        // initialize test setup and get all existing posts (there are 4 posts with lecture context, 4 with exercise context, and 3 with course-wide context - initialized): 11
-        // posts in total
+        // initialize test setup and get all existing posts (there are 4 posts with lecture context, 4 with exercise context,
+        // 1 plagiarism case and 3 with course-wide context - initialized): 12 posts in total
         existingPosts = database.createPostsWithinCourse();
 
+        existingCoursePosts = existingPosts.stream().filter(post -> post.getPlagiarismCase() == null).toList();
+
         // filter existing posts with exercise context
-        existingExercisePosts = existingPosts.stream().filter(coursePost -> (coursePost.getExercise() != null)).toList();
+        existingExercisePosts = existingCoursePosts.stream().filter(coursePost -> (coursePost.getExercise() != null)).toList();
 
         // filter existing posts with lecture context
-        existingLecturePosts = existingPosts.stream().filter(coursePost -> (coursePost.getLecture() != null)).toList();
+        existingLecturePosts = existingCoursePosts.stream().filter(coursePost -> (coursePost.getLecture() != null)).toList();
+
+        // filter existing posts with plagiarism context
+        existingPlagiarismPosts = existingPosts.stream().filter(coursePost -> coursePost.getPlagiarismCase() != null).toList();
 
         // filter existing posts with course-wide context
-        existingCourseWidePosts = existingPosts.stream().filter(coursePost -> (coursePost.getCourseWideContext() != null)).toList();
+        existingCourseWidePosts = existingCoursePosts.stream().filter(coursePost -> (coursePost.getCourseWideContext() != null)).toList();
 
         course = existingExercisePosts.get(0).getExercise().getCourseViaExerciseGroupOrCourseMember();
 
@@ -92,6 +108,8 @@ public class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         exerciseId = existingExercisePosts.get(0).getExercise().getId();
 
         lectureId = existingLecturePosts.get(0).getLecture().getId();
+
+        plagiarismCaseId = existingPlagiarismPosts.get(0).getPlagiarismCase().getId();
 
         GroupNotificationService groupNotificationService = mock(GroupNotificationService.class);
         doNothing().when(groupNotificationService).notifyAllGroupsAboutNewPostForExercise(any(), any());
@@ -206,6 +224,24 @@ public class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         request.postWithResponseBody("/api/courses/" + courseId + "/posts", postToSave, Post.class, HttpStatus.FORBIDDEN);
         assertThat(existingPosts.size()).isEqualTo(postRepository.count());
         verify(groupNotificationService, times(0)).notifyAllGroupsAboutNewAnnouncement(any(), any());
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testCreatePlagiarismPost() throws Exception {
+        doNothing().when(singleUserNotificationService).notifyUserAboutNewPlagiarismCase(any(), any());
+
+        Post postToSave = createPostWithoutContext();
+        postToSave.setCourse(course);
+
+        final PlagiarismCase plagiarismCase = plagiarismCaseRepository.save(new PlagiarismCase());
+        postToSave.setPlagiarismCase(plagiarismCase);
+
+        request.postWithResponseBody("/api/courses/" + courseId + "/posts", postToSave, Post.class, HttpStatus.CREATED);
+
+        List<Post> updatedPlagiarismCasePosts = postRepository.findPostsByPlagiarismCaseId(plagiarismCase.getId());
+        assertThat(updatedPlagiarismCasePosts).hasSize(1);
+        verify(singleUserNotificationService, times(1)).notifyUserAboutNewPlagiarismCase(any(), any());
     }
 
     @Test
@@ -492,7 +528,7 @@ public class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         List<Post> returnedPosts = request.getList("/api/courses/" + courseId + "/posts", HttpStatus.OK, Post.class, params);
         // get amount of posts with that certain
         database.assertSensitiveInformationHidden(returnedPosts);
-        assertThat(returnedPosts).hasSameSizeAs(existingPosts);
+        assertThat(returnedPosts).hasSameSizeAs(existingCoursePosts);
     }
 
     @Test
@@ -537,6 +573,43 @@ public class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     }
 
     @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testGetPostsForCourse_WithPlagiarismCaseIdRequestParam_asInstructor() throws Exception {
+        // request param plagiarismCaseId will fetch all posts that match this context filter
+        var params = new LinkedMultiValueMap<String, String>();
+        params.add("plagiarismCaseId", plagiarismCaseId.toString());
+
+        List<Post> returnedPosts = request.getList("/api/courses/" + courseId + "/posts", HttpStatus.OK, Post.class, params);
+        database.assertSensitiveInformationHidden(returnedPosts);
+        // get amount of posts with certain plagiarism context
+        assertThat(returnedPosts).hasSameSizeAs(existingPlagiarismPosts);
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void testGetPostsForCourse_WithPlagiarismCaseIdRequestParam_asStudent() throws Exception {
+        // request param plagiarismCaseId will fetch all posts that match this context filter
+        var params = new LinkedMultiValueMap<String, String>();
+        params.add("plagiarismCaseId", plagiarismCaseId.toString());
+
+        List<Post> returnedPosts = request.getList("/api/courses/" + courseId + "/posts", HttpStatus.OK, Post.class, params);
+        database.assertSensitiveInformationHidden(returnedPosts);
+        // get amount of posts with certain plagiarism context
+        assertThat(returnedPosts).hasSameSizeAs(existingPlagiarismPosts);
+    }
+
+    @Test
+    @WithMockUser(username = "student2", roles = "USER")
+    public void testGetPostsForCourse_WithPlagiarismCaseIdRequestParam_asStudent_Forbidden() throws Exception {
+        // request param plagiarismCaseId will fetch all posts that match this context filter
+        var params = new LinkedMultiValueMap<String, String>();
+        params.add("plagiarismCaseId", plagiarismCaseId.toString());
+
+        List<Post> returnedPosts = request.getList("/api/courses/" + courseId + "/posts", HttpStatus.FORBIDDEN, Post.class, params);
+        assertThat(returnedPosts).isNull();
+    }
+
+    @Test
     @WithMockUser(username = "tutor1", roles = "USER")
     public void testGetPostsForCourse_WithInvalidRequestParams_badRequest() throws Exception {
         // request param courseWideContext will fetch all course posts that match this context filter
@@ -574,7 +647,7 @@ public class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         List<Post> returnedPosts = request.getList("/api/courses/" + courseId + "/posts", HttpStatus.OK, Post.class, params);
         database.assertSensitiveInformationHidden(returnedPosts);
         // get posts of current user and compare
-        assertThat(returnedPosts).isEqualTo(existingPosts.stream().filter(post -> student1.getId().equals(post.getAuthor().getId())).toList());
+        assertThat(returnedPosts).isEqualTo(existingCoursePosts.stream().filter(post -> student1.getId().equals(post.getAuthor().getId())).toList());
     }
 
     @Test
@@ -587,7 +660,7 @@ public class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         List<Post> returnedPosts = request.getList("/api/courses/" + courseId + "/posts", HttpStatus.OK, Post.class, params);
         database.assertSensitiveInformationHidden(returnedPosts);
         // get posts of current user without announcements and compare
-        List<Post> postsWithoutAnnouncements = existingPosts.stream()
+        List<Post> postsWithoutAnnouncements = existingCoursePosts.stream()
                 .filter(post -> (post.getCourseWideContext() == null || !post.getCourseWideContext().equals(CourseWideContext.ANNOUNCEMENT))).toList();
 
         assertThat(returnedPosts).isEqualTo(postsWithoutAnnouncements);
