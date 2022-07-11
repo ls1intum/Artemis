@@ -62,6 +62,13 @@ Similar to course statistics instructors can have an overview of different learn
 
 Learning Goal Statistics
 ^^^^^^^^^^^^^^^^^^^^^^^^
+In case learning goals are defined and connected to different lecture units, the progress of the learning goals is shown on the learning goals management page.
+
+|instructors-learning-goals-statistics|
+
+When clicking on a learning goal, a modal opens and shows detailed statistics about the learning goal and its associated lecture unit(s).
+
+|instructors-learning-goals-statistics-detail|
 
 
 .. |students-statistics| image:: learning-analytics/students-statistics.png
@@ -79,4 +86,8 @@ Learning Goal Statistics
 .. |instructors-course-statistics| image:: learning-analytics/instructors-course-statistics.png
     :width: 1000
 .. |instructors-exercise-statistics| image:: learning-analytics/instructors-exercise-statistics.png
+    :width: 1000
+.. |instructors-learning-goals-statistics| image:: learning-analytics/instructors-learning-goals-statistics.png
+    :width: 1000
+.. |instructors-learning-goals-statistics-detail| image:: learning-analytics/instructors-learning-goals-statistics-detail.png
     :width: 1000
