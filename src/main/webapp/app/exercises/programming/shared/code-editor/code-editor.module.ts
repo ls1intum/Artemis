@@ -59,7 +59,6 @@ import { TreeviewModule } from 'app/exercises/programming/shared/code-editor/tre
         CodeEditorBuildOutputComponent,
         CodeEditorContainerComponent,
     ],
-    entryComponents: [CodeEditorFileBrowserDeleteComponent, CodeEditorResolveConflictModalComponent, CodeEditorConfirmRefreshModalComponent],
     providers: [],
 })
 export class ArtemisCodeEditorModule {}

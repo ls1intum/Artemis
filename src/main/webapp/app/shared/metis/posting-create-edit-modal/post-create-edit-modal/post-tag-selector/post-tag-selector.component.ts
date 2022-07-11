@@ -23,7 +23,7 @@ export class PostTagSelectorComponent implements OnInit, OnChanges, OnDestroy, A
     tags: string[];
 
     separatorKeysCodes = [ENTER, COMMA, TAB];
-    tagCtrl = new FormControl();
+    tagCtrl = new FormControl<string | undefined>(undefined);
 
     private tagsSubscription: Subscription;
 
