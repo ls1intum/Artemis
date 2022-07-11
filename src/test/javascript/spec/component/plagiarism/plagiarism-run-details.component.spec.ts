@@ -9,6 +9,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { PlagiarismInspectorService } from 'app/exercises/shared/plagiarism/plagiarism-inspector/plagiarism-inspector.service';
 import { HelpIconComponent } from 'app/shared/components/help-icon.component';
 import { ArtemisTestModule } from '../../test.module';
+import { Range } from 'app/shared/util/utils';
 
 describe('Plagiarism Run Details', () => {
     let comp: PlagiarismRunDetailsComponent;
@@ -80,7 +81,7 @@ describe('Plagiarism Run Details', () => {
         comp.onSelect(event);
 
         expect(similaritySelectedStub).toHaveBeenCalledOnce();
-        expect(similaritySelectedStub).toHaveBeenCalledWith({ minimumSimilarity: minimumBorder, maximumSimilarity: maximumBorder });
+        expect(similaritySelectedStub).toHaveBeenCalledWith(new Range(minimumBorder, maximumBorder));
         jest.restoreAllMocks();
     });
 

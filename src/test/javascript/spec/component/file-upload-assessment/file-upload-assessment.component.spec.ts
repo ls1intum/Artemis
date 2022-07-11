@@ -629,7 +629,6 @@ const createSubmission = (exercise: FileUploadExercise) => {
 const createResult = (submission: FileUploadSubmission) => {
     const result = new Result();
     result.id = 2374;
-    result.resultString = '1 of 12 points';
     result.completionDate = dayjs('2019-07-09T11:51:23.251Z');
     result.successful = false;
     result.score = 1;

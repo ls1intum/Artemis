@@ -1,21 +1,22 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, tap } from 'rxjs';
 
 import { Organization } from 'app/entities/organization.model';
 import { OrganizationCountDto } from 'app/admin/organization-management/organization-count-dto.model';
+import { EntityTitleService, EntityType } from 'app/shared/layouts/navbar/entity-title.service';
 
 @Injectable({ providedIn: 'root' })
 export class OrganizationManagementService {
     public resourceUrl = SERVER_API_URL + 'api/organizations';
 
-    constructor(private http: HttpClient) {}
+    constructor(private http: HttpClient, private entityTitleService: EntityTitleService) {}
 
     /**
      * Send GET request to retrieve all organizations
      */
     getOrganizations(): Observable<Organization[]> {
-        return this.http.get<Organization[]>(this.resourceUrl);
+        return this.http.get<Organization[]>(this.resourceUrl).pipe(tap((orgs) => orgs?.forEach(this.sendTitlesToEntityTitleService.bind(this))));
     }
 
     /**
@@ -31,7 +32,7 @@ export class OrganizationManagementService {
      * @param organizationId
      */
     getOrganizationById(organizationId: number): Observable<Organization> {
-        return this.http.get(`${this.resourceUrl}/${organizationId}`);
+        return this.http.get(`${this.resourceUrl}/${organizationId}`).pipe(tap((org) => this.sendTitlesToEntityTitleService(org)));
     }
 
     /**
@@ -40,7 +41,7 @@ export class OrganizationManagementService {
      * @param organizationId
      */
     getOrganizationByIdWithUsersAndCourses(organizationId: number): Observable<Organization> {
-        return this.http.get(`${this.resourceUrl}/${organizationId}/full`);
+        return this.http.get(`${this.resourceUrl}/${organizationId}/full`).pipe(tap((org) => this.sendTitlesToEntityTitleService(org)));
     }
 
     /**
@@ -48,7 +49,7 @@ export class OrganizationManagementService {
      * @param courseId the id of the course to retrieve the organizations from
      */
     getOrganizationsByCourse(courseId: number): Observable<Organization[]> {
-        return this.http.get<Organization[]>(`${this.resourceUrl}/courses/${courseId}`);
+        return this.http.get<Organization[]>(`${this.resourceUrl}/courses/${courseId}`).pipe(tap((orgs) => orgs?.forEach(this.sendTitlesToEntityTitleService.bind(this))));
     }
 
     /**
@@ -56,7 +57,7 @@ export class OrganizationManagementService {
      * @param userId the id of the user to retrieve the organizations from
      */
     getOrganizationsByUser(userId: number): Observable<Organization[]> {
-        return this.http.get<Organization[]>(`${this.resourceUrl}/users/${userId}`);
+        return this.http.get<Organization[]>(`${this.resourceUrl}/users/${userId}`).pipe(tap((orgs) => orgs?.forEach(this.sendTitlesToEntityTitleService.bind(this))));
     }
 
     /**
@@ -101,7 +102,7 @@ export class OrganizationManagementService {
         return this.http.post<void>(`${this.resourceUrl}/${organizationId}/users/${userLogin}`, {}, { observe: 'response' });
     }
 
-    getTitle(organizationId: number): Observable<HttpResponse<string>> {
-        return this.http.get(`${this.resourceUrl}/${organizationId}/title`, { observe: 'response', responseType: 'text' });
+    private sendTitlesToEntityTitleService(org: Organization | undefined | null) {
+        this.entityTitleService.setTitle(EntityType.ORGANIZATION, [org?.id], org?.name);
     }
 }
