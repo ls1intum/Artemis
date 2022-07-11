@@ -90,4 +90,4 @@ When clicking on a learning goal, a modal opens and shows detailed statistics ab
 .. |instructors-learning-goals-statistics| image:: learning-analytics/instructors-learning-goals-statistics.png
     :width: 1000
 .. |instructors-learning-goals-statistics-detail| image:: learning-analytics/instructors-learning-goals-statistics-detail.png
-    :width: 1000
+    :width: 600
