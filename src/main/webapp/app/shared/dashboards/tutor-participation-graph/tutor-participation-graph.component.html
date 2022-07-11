@@ -1,7 +1,8 @@
-<div class="row justify-content-center">
+<div class="row justify-content-center overflow-hidden">
     <ul>
         <li class="not_participated" [ngClass]="calculateClasses(NOT_PARTICIPATED)">0</li>
         <li
+            class="ms-0"
             [ngClass]="calculateClasses(REVIEWED_INSTRUCTIONS)"
             (click)="navigate()"
             [ngbTooltip]="'artemisApp.assessmentDashboard.readGradingInstructions' | artemisTranslate"

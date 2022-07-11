@@ -5,71 +5,69 @@
 
 <div *ngIf="exercise">
     <div *ngIf="!isTestRun" class="row my-3 d-flex justify-content-between">
-        <div class="col-sm-8">
-            <div class="row">
-                <div class="col-8">
-                    <p class="h3" style="text-align: left">
-                        {{ 'artemisApp.exerciseAssessmentDashboard.yourStatus' | artemisTranslate }}:
-                        {{ 'artemisApp.exerciseAssessmentDashboard.tutorParticipationStatus.title.' + yourStatusTitle | artemisTranslate }}
-                    </p>
-                    <jhi-tutor-participation-graph
-                        [exercise]="exercise"
-                        [tutorParticipation]="tutorParticipation"
-                        [numberOfSubmissions]="numberOfSubmissions"
-                        [totalNumberOfAssessments]="totalNumberOfAssessments"
-                        [numberOfComplaints]="complaintsDashboardInfo.total"
-                        [numberOfOpenComplaints]="complaintsDashboardInfo.total - complaintsDashboardInfo.done!"
-                        [numberOfMoreFeedbackRequests]="moreFeedbackRequestsDashboardInfo.total"
-                        [numberOfOpenMoreFeedbackRequests]="moreFeedbackRequestsDashboardInfo.total - moreFeedbackRequestsDashboardInfo.done!"
-                        [numberOfAssessmentsOfCorrectionRounds]="numberOfAssessmentsOfCorrectionRounds"
-                        style="display: block"
-                    >
-                    </jhi-tutor-participation-graph>
-                    <p style="text-align: left; float: left; font-size: 16px">
-                        {{ 'artemisApp.exerciseAssessmentDashboard.tutorParticipationStatus.description.' + tutorParticipation.status!.toString() | artemisTranslate }}
-                    </p>
+        <div class="col-12 col-md-7 col-xl-4">
+            <p class="h3" style="text-align: left">
+                {{ 'artemisApp.exerciseAssessmentDashboard.yourStatus' | artemisTranslate }}:
+                {{ 'artemisApp.exerciseAssessmentDashboard.tutorParticipationStatus.title.' + yourStatusTitle | artemisTranslate }}
+            </p>
+            <jhi-tutor-participation-graph
+                [exercise]="exercise"
+                [tutorParticipation]="tutorParticipation"
+                [numberOfSubmissions]="numberOfSubmissions"
+                [totalNumberOfAssessments]="totalNumberOfAssessments"
+                [numberOfComplaints]="complaintsDashboardInfo.total"
+                [numberOfOpenComplaints]="complaintsDashboardInfo.total - complaintsDashboardInfo.done!"
+                [numberOfMoreFeedbackRequests]="moreFeedbackRequestsDashboardInfo.total"
+                [numberOfOpenMoreFeedbackRequests]="moreFeedbackRequestsDashboardInfo.total - moreFeedbackRequestsDashboardInfo.done!"
+                [numberOfAssessmentsOfCorrectionRounds]="numberOfAssessmentsOfCorrectionRounds"
+                style="display: block"
+            >
+            </jhi-tutor-participation-graph>
+            <p style="text-align: left; float: left; font-size: 16px">
+                {{ 'artemisApp.exerciseAssessmentDashboard.tutorParticipationStatus.description.' + tutorParticipation.status!.toString() | artemisTranslate }}
+            </p>
 
-                    <div
-                        *ngIf="isAtLeastInstructor && exam?.numberOfCorrectionRoundsInExam && exam!.numberOfCorrectionRoundsInExam! > 1 && isExamMode && !isTestRun"
-                        style="display: inline-block"
-                    >
-                        <ng-container *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR']">
-                            <jhi-second-correction-enable-button
-                                (ngModelChange)="toggleSecondCorrection()"
-                                [secondCorrectionEnabled]="secondCorrectionEnabled"
-                                [togglingSecondCorrectionButton]="togglingSecondCorrectionButton"
-                            ></jhi-second-correction-enable-button>
-                            <a class="btn btn-primary btn-sm ms-1" [routerLink]="getSubmissionsLinkForExercise(exercise)">
-                                <span jhiTranslate="artemisApp.assessmentDashboard.submissions">Submissions</span>
-                            </a>
-                        </ng-container>
-                    </div>
-                </div>
-
-                <div *ngIf="numberOfSubmissions.total > 0" class="col-4 pie-chart pb-2 d-flex justify-content-end" style="margin-top: -20px">
-                    <ngx-charts-pie-chart
-                        [customColors]="customColors"
-                        [view]="view"
-                        [results]="assessments"
-                        [legend]="true"
-                        [legendTitle]="''"
-                        [legendPosition]="legendPosition"
-                        [animations]="false"
-                        [trimLabels]="false"
-                        (select)="navigateToExerciseSubmissionOverview($event)"
-                    >
-                        <ng-template #tooltipTemplate let-model="model"> {{ ((model.value * 100) / this.numberOfSubmissions.total).toFixed(2) }}% </ng-template>
-                    </ngx-charts-pie-chart>
-                </div>
+            <div
+                *ngIf="isAtLeastInstructor && exam?.numberOfCorrectionRoundsInExam && exam!.numberOfCorrectionRoundsInExam! > 1 && isExamMode && !isTestRun"
+                style="display: inline-block"
+            >
+                <ng-container *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR']">
+                    <jhi-second-correction-enable-button
+                        (ngModelChange)="toggleSecondCorrection()"
+                        [secondCorrectionEnabled]="secondCorrectionEnabled"
+                        [togglingSecondCorrectionButton]="togglingSecondCorrectionButton"
+                    ></jhi-second-correction-enable-button>
+                    <a class="btn btn-primary btn-sm ms-1" [routerLink]="getSubmissionsLinkForExercise(exercise)">
+                        <span jhiTranslate="artemisApp.assessmentDashboard.submissions">Submissions</span>
+                    </a>
+                </ng-container>
             </div>
         </div>
 
-        <div class="col-sm-4" style="min-width: 400px">
+        <div class="col-12 col-md-5 col-xl-4 d-flex justify-content-center justify-content-lg-end" *ngIf="numberOfSubmissions.total > 0">
+            <ngx-charts-pie-chart
+                style="margin-top: -20px"
+                class="overflow-hidden"
+                [customColors]="customColors"
+                [view]="view"
+                [results]="assessments"
+                [legend]="true"
+                [legendTitle]="''"
+                [legendPosition]="legendPosition"
+                [animations]="false"
+                [trimLabels]="false"
+                (select)="navigateToExerciseSubmissionOverview($event)"
+            >
+                <ng-template #tooltipTemplate let-model="model"> {{ ((model.value * 100) / this.numberOfSubmissions.total).toFixed(2) }}% </ng-template>
+            </ngx-charts-pie-chart>
+        </div>
+
+        <div class="col-12 col-lg-7 col-xl-4" style="min-width: 360px">
             <jhi-side-panel
                 [panelHeader]="'artemisApp.exerciseAssessmentDashboard.exerciseInformation' | artemisTranslate"
                 [panelDescriptionHeader]="'artemisApp.exerciseAssessmentDashboard.totalYours' | artemisTranslate"
             >
-                <div class="row mb-1">
+                <div class="row g-0 mb-1">
                     <div class="col-7">
                         {{ 'artemisApp.assessmentDashboard.submissions' | artemisTranslate }}
                     </div>
@@ -93,7 +91,7 @@
                     </div>
                 </div>
 
-                <div class="row mb-1" *ngIf="complaintsEnabled">
+                <div class="row g-0 mb-1" *ngIf="complaintsEnabled">
                     <div class="col-7">{{ 'artemisApp.assessmentDashboard.complaints' | artemisTranslate }}</div>
                     <div class="col-5">
                         <div *ngIf="isAtLeastInstructor">
@@ -114,7 +112,7 @@
                     </div>
                 </div>
 
-                <div class="row mb-1" *ngIf="feedbackRequestEnabled">
+                <div class="row g-0 mb-1" *ngIf="feedbackRequestEnabled">
                     <div class="col-7">
                         {{ 'artemisApp.assessmentDashboard.moreFeedbackRequests' | artemisTranslate }}
                     </div>
@@ -141,7 +139,7 @@
                     </div>
                 </div>
 
-                <div class="row mb-1">
+                <div class="row g-0 mb-1">
                     <div class="col-7">{{ 'artemisApp.exerciseAssessmentDashboard.ratings' | artemisTranslate }}</div>
                     <div class="col-5">{{ ratingsDashboardInfo.total }} | {{ ratingsDashboardInfo.tutor }}</div>
                 </div>
