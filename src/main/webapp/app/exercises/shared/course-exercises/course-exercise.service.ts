@@ -89,6 +89,18 @@ export class CourseExerciseService {
     }
 
     /**
+     * starts the exercise with the identifier exerciseId
+     * @param exerciseId - the unique identifier of the exercise
+     */
+    startPracticeMode(exerciseId: number): Observable<StudentParticipation> {
+        return this.http.post<StudentParticipation>(SERVER_API_URL + `api/exercises/${exerciseId}/participations/practice-mode`, {}).pipe(
+            map((participation: StudentParticipation) => {
+                return this.handleParticipation(participation);
+            }),
+        );
+    }
+
+    /**
      * resumes the programming exercise with the identifier exerciseId
      * @param exerciseId - the unique identifier of the exercise
      */

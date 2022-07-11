@@ -14,6 +14,7 @@ import { StudentParticipation } from 'app/entities/participation/student-partici
 import { finalize } from 'rxjs/operators';
 import { faEye, faFolderOpen, faPlayCircle, faRedo, faSignal, faUsers, faExternalLinkAlt } from '@fortawesome/free-solid-svg-icons';
 import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
+import dayjs from 'dayjs/esm';
 
 @Component({
     selector: 'jhi-exercise-details-student-actions',
@@ -25,6 +26,7 @@ export class ExerciseDetailsStudentActionsComponent {
     FeatureToggle = FeatureToggle;
     readonly ExerciseType = ExerciseType;
     readonly ParticipationStatus = ParticipationStatus;
+    readonly dayjs = dayjs;
 
     @Input() @HostBinding('class.col') equalColumns = true;
     @Input() @HostBinding('class.col-auto') smallColumns = false;
@@ -109,6 +111,32 @@ export class ExerciseDetailsStudentActionsComponent {
                         } else {
                             this.alertService.success('artemisApp.exercise.personalRepositoryOnline');
                         }
+                    }
+                },
+                error: () => {
+                    this.alertService.warning('artemisApp.exercise.startError');
+                },
+            });
+    }
+
+    /**
+     * start the exercise
+     */
+    startPracticeMode() {
+        this.exercise.loading = true;
+        this.courseExerciseService
+            .startPracticeMode(this.exercise.id!)
+            .pipe(finalize(() => (this.exercise.loading = false)))
+            .subscribe({
+                next: (participation) => {
+                    if (participation) {
+                        this.exercise.studentParticipations = [participation];
+                        this.exercise.participationStatus = participationStatus(this.exercise);
+                    }
+                    if ((this.exercise as ProgrammingExercise).allowOfflineIde) {
+                        this.alertService.success('artemisApp.exercise.personalRepositoryClone');
+                    } else {
+                        this.alertService.success('artemisApp.exercise.personalRepositoryOnline');
                     }
                 },
                 error: () => {

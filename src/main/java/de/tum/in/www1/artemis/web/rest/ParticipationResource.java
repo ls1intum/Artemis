@@ -49,7 +49,7 @@ import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
  * REST controller for managing Participation.
  */
 @RestController
-@RequestMapping(ParticipationResource.Endpoints.ROOT)
+@RequestMapping("/api")
 @PreAuthorize("hasRole('ADMIN')")
 public class ParticipationResource {
 
@@ -137,7 +137,7 @@ public class ParticipationResource {
      * @return the ResponseEntity with status 201 (Created) and the participation within the body, or with status 404 (Not Found)
      * @throws URISyntaxException If the URI for the created participation could not be created
      */
-    @PostMapping(Endpoints.START_PARTICIPATION)
+    @PostMapping("/exercises/{exerciseId}/participations")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Participation> startParticipation(@PathVariable Long exerciseId) throws URISyntaxException {
         log.debug("REST request to start Exercise : {}", exerciseId);
@@ -179,6 +179,42 @@ public class ParticipationResource {
             // 3) add the task to the schedule service
             // scheduleService.scheduleTask(exercise, ExerciseLifecycle.DUE, task);
         }
+
+        // remove sensitive information before sending participation to the client
+        participation.getExercise().filterSensitiveInformation();
+        return ResponseEntity.created(new URI("/api/participations/" + participation.getId())).body(participation);
+    }
+
+    /**
+     * POST /exercises/:exerciseId/participations : start the "participationId" exercise for the current user.
+     *
+     * @param exerciseId the participationId of the exercise for which to init a participation
+     * @return the ResponseEntity with status 201 (Created) and the participation within the body, or with status 404 (Not Found)
+     * @throws URISyntaxException If the URI for the created participation could not be created
+     */
+    @PostMapping("/exercises/{exerciseId}/participations/practice-mode")
+    @PreAuthorize("hasRole('USER')")
+    @FeatureToggle(Feature.ProgrammingExercises)
+    public ResponseEntity<Participation> startPracticeParticipation(@PathVariable Long exerciseId) throws URISyntaxException {
+        log.debug("REST request to start Exercise : {}", exerciseId);
+        Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
+        User user = userRepository.getUserWithGroupsAndAuthorities();
+
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.STUDENT, exercise, user);
+        if (exercise.isExamExercise()) {
+            throw new BadRequestAlertException("The practice mode cannot be used in an exam", ENTITY_NAME, "noPracticeModeInExam");
+        }
+        if (exercise.isTeamMode()) {
+            throw new BadRequestAlertException("The practice mode is not yet supported for team exercises", ENTITY_NAME, "noPracticeModeForTeams");
+        }
+        if (!(exercise instanceof ProgrammingExercise)) {
+            throw new BadRequestAlertException("The practice can only be used for programming exercises", ENTITY_NAME, "practiceModeOnlyForProgramming");
+        }
+        if (exercise.getDueDate() == null || exercise.getDueDate().isAfter(now())) {
+            throw new AccessForbiddenException("The practice mode cannot be started before the due date");
+        }
+
+        StudentParticipation participation = participationService.startPracticeMode(exercise, user);
 
         // remove sensitive information before sending participation to the client
         participation.getExercise().filterSensitiveInformation();
@@ -704,15 +740,5 @@ public class ParticipationResource {
         checkAccessPermissionAtLeastInstructor(participation, user);
         List<Submission> submissions = submissionRepository.findAllWithResultsAndAssessorByParticipationId(participationId);
         return ResponseEntity.ok(submissions);
-    }
-
-    public static final class Endpoints {
-
-        public static final String ROOT = "/api";
-
-        public static final String START_PARTICIPATION = "/exercises/{exerciseId}/participations";
-
-        private Endpoints() {
-        }
     }
 }

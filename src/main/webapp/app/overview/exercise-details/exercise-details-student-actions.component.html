@@ -196,6 +196,20 @@
             *ngIf="participationStatusWrapper() === ParticipationStatus.UNINITIALIZED && isStartExerciseAvailable()"
             (click)="startExercise()"
         ></button>
+        <button
+            [id]="'start-practice-' + exercise.id"
+            class="start-exercise"
+            jhi-exercise-action-button
+            [buttonIcon]="faPlayCircle"
+            [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
+            [buttonLabel]="('artemisApp.exerciseActions.startExercise' | artemisTranslate) + 'Practice mode'"
+            [buttonLoading]="!!exercise.loading"
+            [smallButton]="smallButtons"
+            [hideLabelMobile]="false"
+            *ngIf="dayjs(exercise.dueDate).isBefore(dayjs())"
+            (click)="startPracticeMode()"
+        ></button>
+
         <!-- TODO: Exam mode reuses the whole component at the moment. We need the clone repo button but not the open
         code editor button. We should think about refactoring the clone repo button into a own component -->
         <ng-container *ngIf="shouldDisplayIDEButtons()">

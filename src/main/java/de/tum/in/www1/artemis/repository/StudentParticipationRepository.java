@@ -84,6 +84,17 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
     @Query("""
             SELECT DISTINCT p FROM StudentParticipation p
             LEFT JOIN FETCH p.submissions s
+            WHERE p.exercise.id = :#{#exerciseId}
+                AND p.student.login = :#{#username}
+                AND (s.type <> 'ILLEGAL' OR s.type IS NULL)
+                AND p.testRun = :#{#testRun}
+            """)
+    Optional<StudentParticipation> findWithEagerLegalSubmissionsByExerciseIdAndStudentLoginAndTestRun(@Param("exerciseId") Long exerciseId, @Param("username") String username,
+            @Param("testRun") Boolean testRun);
+
+    @Query("""
+            SELECT DISTINCT p FROM StudentParticipation p
+            LEFT JOIN FETCH p.submissions s
             where p.exercise.id = :#{#exerciseId}
                 AND p.team.id = :#{#teamId}
                 AND (s.type <> 'ILLEGAL' OR s.type IS NULL)
