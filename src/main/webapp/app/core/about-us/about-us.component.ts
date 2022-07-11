@@ -39,7 +39,7 @@ export class AboutUsComponent implements OnInit {
         ['integratedMarkdownEditor', {}],
         ['plagiarismChecks', { jPlagUrl: 'https://github.com/jplag/JPlag' }],
         ['learningAnalytics', {}],
-        ['scalable', {}],
+        ['scalable', { scalingUrl: 'https://docs.artemis.ase.in.tum.de/user/scaling/' }],
         ['highUserSatisfaction', {}],
         ['customizable', {}],
         ['openSource', {}],
