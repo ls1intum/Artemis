@@ -63,6 +63,7 @@
         },
         "getInTouch": "Get in touch",
         "contributors": "Individual contributors",
-        "projectManager": "Project Manager"
+        "projectManager": "Project Manager",
+        "website": "Website"
     }
 }
