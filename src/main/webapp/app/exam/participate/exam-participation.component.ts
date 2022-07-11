@@ -428,7 +428,8 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
             const index = this.studentExam.exercises.findIndex((exercise) => !this.activeExamPage.isOverviewPage && exercise.id === this.activeExamPage.exercise!.id);
             this.exerciseIndex = index ? index : 0;
             this.examMonitoringService.handleAndSaveActionEvent(this.exam, this.studentExam, new ContinuedAfterHandedInEarlyAction(), this.connected);
-            this.examMonitoringService.handleAndSaveActionEvent(this.exam, this.studentExam, new SwitchedExerciseAction(index), this.connected);
+            const exerciseId = this.studentExam.exercises[index]?.id;
+            this.examMonitoringService.handleAndSaveActionEvent(this.exam, this.studentExam, new SwitchedExerciseAction(exerciseId), this.connected);
         }
     }
 
@@ -501,7 +502,6 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
      * @param exerciseChange
      */
     onPageChange(exerciseChange: { overViewChange: boolean; exercise?: Exercise; forceSave: boolean }): void {
-        this.examMonitoringService.handleAndSaveActionEvent(this.exam, this.studentExam, new SwitchedExerciseAction(exerciseChange.exercise?.id), this.connected);
         const activeComponent = this.activePageComponent;
         if (activeComponent) {
             activeComponent.onDeactivate();
@@ -512,6 +512,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
             // an error here should never lead to the wrong exercise being shown
             captureException(error);
         }
+        this.examMonitoringService.handleAndSaveActionEvent(this.exam, this.studentExam, new SwitchedExerciseAction(exerciseChange.exercise?.id), this.connected);
         if (!exerciseChange.overViewChange) {
             this.initializeExercise(exerciseChange.exercise!);
         } else {
