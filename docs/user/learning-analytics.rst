@@ -35,6 +35,25 @@ To get a quick overview about the achieved points per exercise, a bar chart show
 
 Learning Analytics for Instructors
 ------------------
+Artemis provides instructors with several different learning analytics, which are detailed in this section.
+Key statistics such as the number of total assessments or the average student score are already displayed on the course's main page.
+|instructors-basic-statistics|
+
+Course Statistics
+^^^^^^^^^^^^^^^^^
+More detailed as well as additional course statistics can be inspected by instructors when navigating to the course's ``Statistics`` page.
+|instructors-course-statistics-button|
+On this page instructors can explore and evaluate all available course statistics such as the average points, number of submissions, number of active users, and much more.
+All the statistics can be generated for different time frames.
+|instructors-course-statistics|
+
+Exercise Statistics
+^^^^^^^^^^^^^^^^^^^
+Similar to course statistics instructors can have an overview of different learning metrics such as the average score or the participation rate for a specific exercise.
+|instructors-exercise-statistics|
+
+Learning Goal Statistics
+^^^^^^^^^^^^^^^^^^^^^^^^
 
 
 .. |students-statistics| image:: learning-analytics/students-statistics.png
@@ -44,4 +63,12 @@ Learning Analytics for Instructors
 .. |students-performance-in-exercises| image:: learning-analytics/students-performance-in-exercises.png
     :width: 1000
 .. |students-points-per-exercise| image:: learning-analytics/students-points-per-exercise.png
+    :width: 1000
+.. |instructors-basic-statistics| image:: learning-analytics/instructors-basic-statistics.png
+    :width: 1000
+.. |instructors-course-statistics-button| image:: learning-analytics/instructors-course-statistics-button.png
+    :width: 1000
+.. |instructors-course-statistics| image:: learning-analytics/instructors-course-statistics.png
+    :width: 1000
+.. |instructors-exercise-statistics| image:: learning-analytics/instructors-exercise-statistics.png
     :width: 1000
