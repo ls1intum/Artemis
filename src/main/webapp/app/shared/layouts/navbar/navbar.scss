@@ -69,7 +69,7 @@ a:not(.btn):hover {
     }
 
     @media screen and (min-width: 480px) {
-        ul.navbar-nav {
+        ul.navbar-nav:not(.vertical) {
             justify-content: flex-end;
 
             .nav-item:first-child {
