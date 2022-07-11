@@ -47,7 +47,7 @@
             "text": "<b>Plagiarism checks</b> for programming exercises (based on <a href={{ jPlagUrl }}>JPlag</a>), text exercises, and modeling exercises."
         },
         "learningAnalytics": {
-            "text": "<b>Learning analytics:</b> Statistics to compare based on the course average. Evaluate the average performance based on exercises and learning goals."
+            "text": "<a href={{ learningAnalyticsUrl }}>Learning analytics:</a> Statistics to compare based on the course average. Evaluate the average performance based on exercises and learning goals."
         },
         "scalable": {
             "text": "<b>Scalable</b> to multiple courses with thousands of students. Configure additional build agents in the continuous integration environment."

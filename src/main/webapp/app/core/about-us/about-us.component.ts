@@ -38,7 +38,7 @@ export class AboutUsComponent implements OnInit {
         ['lectures', {}],
         ['integratedMarkdownEditor', {}],
         ['plagiarismChecks', { jPlagUrl: 'https://github.com/jplag/JPlag' }],
-        ['learningAnalytics', {}],
+        ['learningAnalytics', { learningAnalyticsUrl: 'https://docs.artemis.ase.in.tum.de/user/learning-analytics/' }],
         ['scalable', {}],
         ['highUserSatisfaction', {}],
         ['customizable', {}],
