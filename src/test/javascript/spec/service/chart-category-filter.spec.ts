@@ -8,6 +8,8 @@ import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import dayjs from 'dayjs/esm';
 import { ExerciseCategory } from 'app/entities/exercise-category.model';
+import { InitializationState } from 'app/entities/participation/participation.model';
+import { AssessmentType } from 'app/entities/assessment-type.model';
 
 const generateExerciseCategory = (type: ExerciseType, index: number) => {
     return { category: type + index.toString(), color: '#9f34eb' };
@@ -101,7 +103,6 @@ const modelingExercises = [
                 results: [
                     {
                         id: 231,
-                        resultString: '11 of 12 points',
                         completionDate: dayjs('2019-06-17T09:30:17.761+02:00'),
                         successful: false,
                         score: 92,
@@ -142,7 +143,6 @@ const modelingExercises = [
                 results: [
                     {
                         id: 230,
-                        resultString: '9 of 12 points',
                         completionDate: dayjs('2019-06-17T09:30:17.761+02:00'),
                         successful: false,
                         score: 75,
@@ -169,8 +169,8 @@ const modelingExercises = [
     },
 ] as ModelingExercise[];
 
-const fileUploadExercise = {
-    type: 'file-upload',
+const fileUploadExercise: FileUploadExercise = {
+    type: ExerciseType.FILE_UPLOAD,
     id: 196,
     title: 'Until 18:20 too',
     includedInOverallScore: IncludedInOverallScore.INCLUDED_AS_BONUS,
@@ -180,19 +180,18 @@ const fileUploadExercise = {
     studentParticipations: [
         {
             id: 250,
-            initializationState: 'FINISHED',
+            initializationState: InitializationState.FINISHED,
             initializationDate: dayjs('2019-06-16T18:10:28.293+02:00'),
             presentationScore: 1,
             results: [
                 {
                     id: 231,
-                    resultString: '9 of 12 points',
                     completionDate: dayjs('2019-06-17T09:30:17.761+02:00'),
                     successful: false,
                     score: 75,
                     rated: true,
                     hasFeedback: false,
-                    assessmentType: 'MANUAL',
+                    assessmentType: AssessmentType.MANUAL,
                     hasComplaint: false,
                 },
             ],
@@ -203,16 +202,21 @@ const fileUploadExercise = {
                 email: 'krusche+testuser_1@in.tum.de',
                 activated: true,
                 langKey: 'en',
+                internal: false,
+                guidedTourSettings: [],
             },
         },
     ],
     numberOfSubmissions: new DueDateStat(),
     totalNumberOfAssessments: new DueDateStat(),
     numberOfComplaints: 0,
-} as FileUploadExercise;
+    numberOfAssessmentsOfCorrectionRounds: [],
+    secondCorrectionEnabled: false,
+    studentAssignedTeamIdComputed: false,
+};
 
-const quizExercise = {
-    type: 'quiz',
+const quizExercise: QuizExercise = {
+    type: ExerciseType.QUIZ,
     id: 197,
     title: 'Until 18:20 too',
     categories: [generateExerciseCategory(ExerciseType.QUIZ, 1)] as ExerciseCategory[],
@@ -221,19 +225,18 @@ const quizExercise = {
     studentParticipations: [
         {
             id: 251,
-            initializationState: 'FINISHED',
+            initializationState: InitializationState.FINISHED,
             initializationDate: dayjs('2019-06-16T18:10:28.293+02:00'),
             presentationScore: 7,
             results: [
                 {
                     id: 232,
-                    resultString: '1 of 3 points',
                     completionDate: dayjs('2019-06-17T09:30:17.761+02:00'),
                     successful: false,
                     score: 33,
                     rated: true,
                     hasFeedback: false,
-                    assessmentType: 'MANUAL',
+                    assessmentType: AssessmentType.MANUAL,
                     hasComplaint: false,
                 },
             ],
@@ -244,16 +247,21 @@ const quizExercise = {
                 email: 'krusche+testuser_1@in.tum.de',
                 activated: true,
                 langKey: 'en',
+                internal: false,
+                guidedTourSettings: [],
             },
         },
     ],
     numberOfSubmissions: new DueDateStat(),
     totalNumberOfAssessments: new DueDateStat(),
     numberOfComplaints: 0,
-} as QuizExercise;
+    numberOfAssessmentsOfCorrectionRounds: [],
+    secondCorrectionEnabled: false,
+    studentAssignedTeamIdComputed: false,
+};
 
-const programmingExercise = {
-    type: 'programming',
+const programmingExercise: ProgrammingExercise = {
+    type: ExerciseType.PROGRAMMING,
     id: 198,
     title: 'Until 18:20 too',
     categories: [generateExerciseCategory(ExerciseType.PROGRAMMING, 1)] as ExerciseCategory[],
@@ -264,19 +272,18 @@ const programmingExercise = {
     studentParticipations: [
         {
             id: 252,
-            initializationState: 'FINISHED',
+            initializationState: InitializationState.FINISHED,
             initializationDate: dayjs('2019-06-16T18:10:28.293+02:00'),
             presentationScore: 6,
             results: [
                 {
                     id: 233,
-                    resultString: '17 of 17 points',
                     completionDate: dayjs('2019-06-17T09:30:17.761+02:00'),
                     successful: false,
                     score: 100,
                     rated: true,
                     hasFeedback: false,
-                    assessmentType: 'MANUAL',
+                    assessmentType: AssessmentType.MANUAL,
                     hasComplaint: false,
                 },
             ],
@@ -287,13 +294,18 @@ const programmingExercise = {
                 email: 'krusche+testuser_1@in.tum.de',
                 activated: true,
                 langKey: 'en',
+                internal: false,
+                guidedTourSettings: [],
             },
         },
     ],
     numberOfSubmissions: new DueDateStat(),
     totalNumberOfAssessments: new DueDateStat(),
     numberOfComplaints: 0,
-} as ProgrammingExercise;
+    numberOfAssessmentsOfCorrectionRounds: [],
+    secondCorrectionEnabled: false,
+    studentAssignedTeamIdComputed: false,
+};
 
 let results: Exercise[];
 const courseExercises = [...modelingExercises, programmingExercise, quizExercise, fileUploadExercise];
