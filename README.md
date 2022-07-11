@@ -38,7 +38,7 @@
 12. **Lectures**: Instructors can upload lecture slides, divide lectures into units, integrate video streams, lecture recordings, and exercises into lectures, and define learning goals.
 13. **Integrated markdown editor**: Instructors define problem statements using Markdown to easily format the text and integrate images and links.
 14. **Plagiarism checks**: Artemis integrates plagiarism checks for programming exercises (based on [JPlag](https://github.com/jplag/JPlag)), text exercises, and modeling exercises. It allows notifying students about identified plagiarism. Students can review and comment on the allegation. 
-15. **Learning analytics**: Artemis integrated different statistics for students to compare themselves to the course average. It allows instructors to evaluate the average student performance based on exercises and learning goals.
+15. **[Learning analytics]((https://docs.artemis.ase.in.tum.de/user/learning-analytics/))**: Artemis integrated different statistics for students to compare themselves to the course average. It allows instructors to evaluate the average student performance based on exercises and learning goals.
 16. **Scalable**: Artemis scales to multiple courses with thousands of students. In fact, the largest course had 2,400 students. Administrators can easily scale Artemis with additional build agents in the continuous integration environment.
 17. **High user satisfaction**: Artemis is easy to use, provides guided tutorials. Developers focus on usability, user experience, and performance.
 18. **Customizable**: It supports multiple instructors, editors, and tutors per course and allows instructors to customize many course settings
