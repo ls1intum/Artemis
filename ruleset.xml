@@ -178,9 +178,11 @@ http://pmd.sourceforge.net/ruleset/2.0.0 ">
         <properties>
             <property name="version" value="2.0"/>
             <property name="xpath">
-            <![CDATA[
-                //PrimaryPrefix[Name[@Image = "Collectors.toList" or @Image = "toList"]]
-            ]]>
+                <value>
+                    <![CDATA[
+                        //PrimaryPrefix[Name[@Image = "Collectors.toList" or @Image = "toList"]]
+                    ]]>
+                </value>
             </property>
         </properties>
     </rule>
