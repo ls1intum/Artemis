@@ -23,7 +23,7 @@ export class ExamResolve implements Resolve<Exam> {
         const examId = route.params['examId'] ? route.params['examId'] : undefined;
         const withStudents = route.data['requestOptions'] ? route.data['requestOptions'].withStudents : false;
         const withExerciseGroups = route.data['requestOptions'] ? route.data['requestOptions'].withExerciseGroups : false;
-        const isImport = route.data['requestOptions'] ? route.data['requestOptions'].forImport : false;
+        const isImport = route.data['requestOptions']?.forImport ?? false;
         if (isImport && examId) {
             // When importing an exam, the courseId cannot be used, as the exam.course.id may deviate from the target course id
             // Additionally, the exercises are needed to select the exercises, that should be imported alongside the exam

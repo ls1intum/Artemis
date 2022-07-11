@@ -16,7 +16,6 @@ import { ExamChecklist } from 'app/entities/exam-checklist.model';
 import { StatsForDashboard } from 'app/course/dashboards/stats-for-dashboard.model';
 import { reconnectSubmissions, Submission } from 'app/entities/submission.model';
 import { AccountService } from 'app/core/auth/account.service';
-import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { EntityTitleService, EntityType } from 'app/shared/layouts/navbar/entity-title.service';
 
 type EntityResponseType = HttpResponse<Exam>;

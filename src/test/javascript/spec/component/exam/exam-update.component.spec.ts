@@ -47,8 +47,8 @@ describe('Exam Update Component', () => {
     let component: ExamUpdateComponent;
     let fixture: ComponentFixture<ExamUpdateComponent>;
     let examManagementService: ExamManagementService;
-    const exam = new Exam();
-    exam.id = 1;
+    const examWithoutExercises = new Exam();
+    examWithoutExercises.id = 1;
 
     const course = new Course();
     course.id = 1;
@@ -95,7 +95,7 @@ describe('Exam Update Component', () => {
                             data: {
                                 subscribe: (fn: (value: Params) => void) =>
                                     fn({
-                                        exam: exam,
+                                        exam: examWithoutExercises,
                                     }),
                             },
                             snapshot: {
@@ -165,38 +165,38 @@ describe('Exam Update Component', () => {
         });
 
         it('should validate the dates correctly', () => {
-            exam.visibleDate = dayjs().add(1, 'hours');
-            exam.startDate = dayjs().add(2, 'hours');
-            exam.endDate = dayjs().add(3, 'hours');
-            exam.workingTime = 3600;
+            examWithoutExercises.visibleDate = dayjs().add(1, 'hours');
+            examWithoutExercises.startDate = dayjs().add(2, 'hours');
+            examWithoutExercises.endDate = dayjs().add(3, 'hours');
+            examWithoutExercises.workingTime = 3600;
             fixture.detectChanges();
             expect(component.isValidConfiguration).toBeTrue();
 
-            exam.publishResultsDate = dayjs().add(4, 'hours');
-            exam.examStudentReviewStart = dayjs().add(5, 'hours');
-            exam.examStudentReviewEnd = dayjs().add(6, 'hours');
+            examWithoutExercises.publishResultsDate = dayjs().add(4, 'hours');
+            examWithoutExercises.examStudentReviewStart = dayjs().add(5, 'hours');
+            examWithoutExercises.examStudentReviewEnd = dayjs().add(6, 'hours');
             fixture.detectChanges();
             expect(component.isValidConfiguration).toBeTrue();
 
-            exam.visibleDate = undefined;
-            exam.startDate = undefined;
-            exam.endDate = undefined;
+            examWithoutExercises.visibleDate = undefined;
+            examWithoutExercises.startDate = undefined;
+            examWithoutExercises.endDate = undefined;
             fixture.detectChanges();
             expect(component.isValidConfiguration).toBeFalse();
 
-            exam.visibleDate = dayjs().add(1, 'hours');
-            exam.startDate = dayjs().add(2, 'hours');
-            exam.endDate = dayjs().add(3, 'hours');
-            exam.examStudentReviewEnd = undefined;
+            examWithoutExercises.visibleDate = dayjs().add(1, 'hours');
+            examWithoutExercises.startDate = dayjs().add(2, 'hours');
+            examWithoutExercises.endDate = dayjs().add(3, 'hours');
+            examWithoutExercises.examStudentReviewEnd = undefined;
             fixture.detectChanges();
             expect(component.isValidConfiguration).toBeFalse();
 
-            exam.examStudentReviewStart = dayjs().add(6, 'hours');
-            exam.examStudentReviewEnd = dayjs().add(5, 'hours');
+            examWithoutExercises.examStudentReviewStart = dayjs().add(6, 'hours');
+            examWithoutExercises.examStudentReviewEnd = dayjs().add(5, 'hours');
             fixture.detectChanges();
             expect(component.isValidConfiguration).toBeFalse();
 
-            exam.examStudentReviewStart = undefined;
+            examWithoutExercises.examStudentReviewStart = undefined;
             fixture.detectChanges();
             expect(component.isValidConfiguration).toBeFalse();
         });
@@ -214,86 +214,86 @@ describe('Exam Update Component', () => {
         }));
 
         it('should calculate the working time for RealExams correctly', () => {
-            exam.testExam = false;
+            examWithoutExercises.testExam = false;
 
-            exam.startDate = undefined;
-            exam.endDate = dayjs().add(2, 'hours');
+            examWithoutExercises.startDate = undefined;
+            examWithoutExercises.endDate = dayjs().add(2, 'hours');
             fixture.detectChanges();
             // Without a valid startDate, the workingTime should be 0
-            // exam.workingTime is stored in seconds
-            expect(exam.workingTime).toBe(0);
+            // examWithoutExercises.workingTime is stored in seconds
+            expect(examWithoutExercises.workingTime).toBe(0);
             // the component returns the workingTime in Minutes
             expect(component.calculateWorkingTime).toBe(0);
 
-            exam.startDate = dayjs().add(0, 'hours');
-            exam.endDate = dayjs().add(2, 'hours');
+            examWithoutExercises.startDate = dayjs().add(0, 'hours');
+            examWithoutExercises.endDate = dayjs().add(2, 'hours');
             fixture.detectChanges();
-            expect(exam.workingTime).toBe(7200);
+            expect(examWithoutExercises.workingTime).toBe(7200);
             expect(component.calculateWorkingTime).toBe(120);
 
-            exam.startDate = dayjs().add(0, 'hours');
-            exam.endDate = undefined;
+            examWithoutExercises.startDate = dayjs().add(0, 'hours');
+            examWithoutExercises.endDate = undefined;
             fixture.detectChanges();
             // Without an endDate, the working time should be 0;
-            expect(exam.workingTime).toBe(0);
+            expect(examWithoutExercises.workingTime).toBe(0);
             expect(component.calculateWorkingTime).toBe(0);
         });
 
         it('should not calculate the working time for testExams', () => {
-            exam.testExam = true;
-            exam.workingTime = 3600;
-            exam.startDate = dayjs().add(0, 'hours');
-            exam.endDate = dayjs().add(12, 'hours');
+            examWithoutExercises.testExam = true;
+            examWithoutExercises.workingTime = 3600;
+            examWithoutExercises.startDate = dayjs().add(0, 'hours');
+            examWithoutExercises.endDate = dayjs().add(12, 'hours');
             fixture.detectChanges();
-            expect(exam.workingTime).toBe(3600);
+            expect(examWithoutExercises.workingTime).toBe(3600);
             expect(component.calculateWorkingTime).toBe(60);
         });
 
         it('validates the working time for TestExams correctly', () => {
-            exam.testExam = true;
-            exam.workingTime = undefined;
+            examWithoutExercises.testExam = true;
+            examWithoutExercises.workingTime = undefined;
             fixture.detectChanges();
             expect(component.validateWorkingTime).toBeFalse();
 
-            exam.startDate = undefined;
-            exam.endDate = undefined;
+            examWithoutExercises.startDate = undefined;
+            examWithoutExercises.endDate = undefined;
             expect(component.validateWorkingTime).toBeFalse();
 
-            exam.startDate = dayjs().add(0, 'hours');
-            exam.workingTime = 3600;
-            exam.endDate = dayjs().subtract(2, 'hours');
+            examWithoutExercises.startDate = dayjs().add(0, 'hours');
+            examWithoutExercises.workingTime = 3600;
+            examWithoutExercises.endDate = dayjs().subtract(2, 'hours');
             expect(component.validateWorkingTime).toBeFalse();
 
-            exam.endDate = dayjs().add(2, 'hours');
+            examWithoutExercises.endDate = dayjs().add(2, 'hours');
             expect(component.validateWorkingTime).toBeTrue();
 
-            exam.workingTime = 7200;
+            examWithoutExercises.workingTime = 7200;
             expect(component.validateWorkingTime).toBeTrue();
 
-            exam.workingTime = 10800;
+            examWithoutExercises.workingTime = 10800;
             expect(component.validateWorkingTime).toBeFalse();
         });
 
         it('validates the working time for RealExams correctly', () => {
-            exam.testExam = false;
+            examWithoutExercises.testExam = false;
 
-            exam.workingTime = undefined;
-            exam.startDate = undefined;
-            exam.endDate = undefined;
+            examWithoutExercises.workingTime = undefined;
+            examWithoutExercises.startDate = undefined;
+            examWithoutExercises.endDate = undefined;
             fixture.detectChanges();
             expect(component.validateWorkingTime).toBeFalse();
 
-            exam.workingTime = 3600;
+            examWithoutExercises.workingTime = 3600;
             expect(component.validateWorkingTime).toBeFalse();
 
-            exam.startDate = dayjs().add(0, 'hours');
+            examWithoutExercises.startDate = dayjs().add(0, 'hours');
             expect(component.validateWorkingTime).toBeFalse();
 
-            exam.endDate = dayjs().add(1, 'hours');
+            examWithoutExercises.endDate = dayjs().add(1, 'hours');
             expect(component.validateWorkingTime).toBeTrue();
         });
 
-        it('should correctly catch HTTPError when updating the exam', fakeAsync(() => {
+        it('should correctly catch HTTPError when updating the examWithoutExercises', fakeAsync(() => {
             const alertService = TestBed.inject(AlertService);
             const httpError = new HttpErrorResponse({ error: 'Forbidden', status: 403 });
             fixture.detectChanges();
@@ -311,7 +311,7 @@ describe('Exam Update Component', () => {
         }));
 
         it('should create', fakeAsync(() => {
-            exam.id = undefined;
+            examWithoutExercises.id = undefined;
             fixture.detectChanges();
 
             const createSpy = jest.spyOn(examManagementService, 'create');
@@ -323,7 +323,7 @@ describe('Exam Update Component', () => {
             expect(component.isSaving).toBeFalse();
         }));
 
-        it('should correctly catch HTTPError when creating the exam', fakeAsync(() => {
+        it('should correctly catch HTTPError when creating the examWithoutExercises', fakeAsync(() => {
             const alertService = TestBed.inject(AlertService);
             const httpError = new HttpErrorResponse({ error: 'Forbidden', status: 403 });
             fixture.detectChanges();
@@ -348,8 +348,8 @@ describe('Exam Update Component', () => {
         course2.id = 2;
 
         // Initializing one Exercise Group per Exercise Type
-        let exerciseGroup1 = { title: 'exerciseGroup1' } as ExerciseGroup;
-        let modelingExercise = new ModelingExercise(UMLDiagramType.ClassDiagram, undefined, exerciseGroup1);
+        const exerciseGroup1 = { title: 'exerciseGroup1' } as ExerciseGroup;
+        const modelingExercise = new ModelingExercise(UMLDiagramType.ClassDiagram, undefined, exerciseGroup1);
         modelingExercise.id = 1;
         modelingExercise.title = 'ModelingExercise';
         exerciseGroup1.exercises = [modelingExercise];
@@ -454,16 +454,6 @@ describe('Exam Update Component', () => {
                             );
                         },
                     }),
-                    /* MockProvider(ExamManagementService, {
-                        import: () => {
-                            return of(
-                                new HttpResponse({
-                                    body: {},
-                                    status: 200,
-                                }),
-                            );
-                        },
-                    }),*/
                 ],
             }).compileComponents();
 
@@ -491,7 +481,7 @@ describe('Exam Update Component', () => {
             expect(component.exam.gracePeriod).toEqual(90);
             expect(component.exam.maxPoints).toEqual(15);
             expect(component.exam.numberOfExercisesInExam).toEqual(5);
-            expect(component.exam.randomizeExerciseOrder).toEqual(true);
+            expect(component.exam.randomizeExerciseOrder).toBeTrue();
             expect(component.exam.publishResultsDate).toBeUndefined();
             expect(component.exam.examStudentReviewStart).toBeUndefined();
             expect(component.exam.examStudentReviewEnd).toBeUndefined();
@@ -506,7 +496,7 @@ describe('Exam Update Component', () => {
             expect(component.exam.studentExams).toBeUndefined();
         });
 
-        it('should  perform input of an exam with exercises successfully', () => {
+        it('should  perform input of an examWithoutExercises with exercises successfully', () => {
             const importSpy = jest.spyOn(examManagementService, 'import').mockReturnValue(
                 of(
                     new HttpResponse({
@@ -523,7 +513,7 @@ describe('Exam Update Component', () => {
             expect(alertSpy).toHaveBeenCalledTimes(0);
         });
 
-        it('should  trigger an alarm for a wrong user input in the exam exercises', () => {
+        it('should  trigger an alarm for a wrong user input in the examWithoutExercises exercises', () => {
             const importSpy = jest.spyOn(examManagementService, 'import').mockReturnValue(
                 of(
                     new HttpResponse({
@@ -536,9 +526,9 @@ describe('Exam Update Component', () => {
 
             fixture.detectChanges();
 
-            // We need to "fake" a wrong user input here. To not affect the other tests, the wrong exam is a deep clone of the examForImport
-            let exerciseGroup2 = { title: 'exerciseGroup2' } as ExerciseGroup;
-            let modelingExercise2 = new ModelingExercise(UMLDiagramType.ClassDiagram, undefined, exerciseGroup2);
+            // We need to "fake" a wrong user input here. To not affect the other tests, the wrong examWithoutExercises is a deep clone of the examForImport
+            const exerciseGroup2 = { title: 'exerciseGroup2' } as ExerciseGroup;
+            const modelingExercise2 = new ModelingExercise(UMLDiagramType.ClassDiagram, undefined, exerciseGroup2);
             modelingExercise2.id = 2;
             exerciseGroup2.exercises = [modelingExercise2];
             const examWithError = cloneDeep(examForImport);
@@ -551,11 +541,11 @@ describe('Exam Update Component', () => {
             fixture.detectChanges();
             component.save();
 
-            expect(importSpy).toHaveBeenCalledTimes(0);
+            expect(importSpy).not.toHaveBeenCalled();
             expect(alertSpy).toHaveBeenCalledOnce();
         });
 
-        it('should perform import of exam AND correctly process conflict exception from server', () => {
+        it('should perform import of examWithoutExercises AND correctly process conflict exception from server', () => {
             const preCheckError = new HttpErrorResponse({
                 error: { errorKey: 'examContainsProgrammingExercisesWithInvalidKey', numberOfInvalidProgrammingExercises: 2, params: { exerciseGroups: [exerciseGroup1] } },
                 status: 400,

@@ -287,6 +287,6 @@ describe('Exercise Groups Component', () => {
 
         expect(modalService.open).toHaveBeenCalled();
         expect(comp.exerciseGroups).toEqual([exerciseGroup]);
-        expect(alertSpy).toHaveBeenCalledTimes(1);
+        expect(alertSpy).toHaveBeenCalledOnce();
     }));
 });

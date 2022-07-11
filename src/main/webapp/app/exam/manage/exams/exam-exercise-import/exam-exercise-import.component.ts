@@ -170,27 +170,32 @@ export class ExamExerciseImportComponent implements OnInit {
             }
             if (value.size > 0) {
                 value.forEach((exercise) => {
-                    let correctTitle;
-                    let correctShortName = true;
-                    if (exercise.type === ExerciseType.PROGRAMMING) {
-                        correctShortName =
-                            exercise.shortName?.length! > 2 &&
-                            this.shortNamePattern.test(exercise.shortName!) &&
-                            exercise.shortName !== this.getPlaceholderShortNameOfProgrammingExercise(exercise.id!);
-                        correctTitle =
-                            exercise.title?.length! > 0 &&
-                            this.titleNamePattern.test(exercise.title!) &&
-                            exercise.title !== this.getPlaceholderTitleOfProgrammingExercise(exercise.id!);
-                    } else {
-                        correctTitle = exercise.title?.length! > 0;
+                    if (!validConfiguration) {
+                        return false;
                     }
-                    if (!correctTitle || !correctShortName) {
-                        validConfiguration = false;
+                    if (exercise.type === ExerciseType.PROGRAMMING) {
+                        validConfiguration = this.validateProgrammingExercise(exercise);
+                    } else {
+                        validConfiguration = exercise.title?.length! > 0;
                     }
                 });
             }
         });
         return validConfiguration;
+    }
+
+    /**
+     * Helper-Method to validate the settings of a programming exercise
+     * @private
+     */
+    private validateProgrammingExercise(exercise: Exercise): boolean {
+        const correctShortName =
+            exercise.shortName?.length! > 2 &&
+            this.shortNamePattern.test(exercise.shortName!) &&
+            exercise.shortName !== this.getPlaceholderShortNameOfProgrammingExercise(exercise.id!);
+        const correctTitle =
+            exercise.title?.length! > 0 && this.titleNamePattern.test(exercise.title!) && exercise.title !== this.getPlaceholderTitleOfProgrammingExercise(exercise.id!);
+        return correctShortName && correctTitle;
     }
 
     /**
