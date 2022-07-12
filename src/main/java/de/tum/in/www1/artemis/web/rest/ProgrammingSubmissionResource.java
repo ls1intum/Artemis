@@ -294,7 +294,7 @@ public class ProgrammingSubmissionResource {
         }
         catch (Exception ex) {
             log.debug(
-                    "Commit hash could not be parsed for from test repository from exercise {}, the submission will be created with the latest commitHash of the solution repository.",
+                    "Commit hash could not be parsed from test repository from exercise {}, the submission will be created with the latest commit hash of the solution repository.",
                     exerciseId, ex);
         }
 
