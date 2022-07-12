@@ -20,13 +20,13 @@ Administrators can then specify options in the creation form, instructors can la
 - **Course Description**: Description of the course that will e.g. be shown in the Course Registration table and in the header of the course (once a user clicks on the course in their dashboard).
 - **Course Organizations**: Users and Courses can be grouped into different organizations (e.g. based on the email-address of users). Users will then only see courses from their organizations, allowing multiple organizations to use the same Artemis environment without interfering with each other.
   If no course organization is set, all users can interact with the course.
-- **Start/End**: Start and End Date of the course. Users can only self-register to a course between the Start and End date.
-- **Test Course**: Whether this course should be used for testing. Upcoming exams and exercises within test courses are not displayed to users.
+- **Start/End**: Start and End Date of the course. Users can only self-register to a course between the Start and End Date.
+- **Test Course**: Whether this course should be used for testing. Upcoming exams and exercises within Test Courses are not displayed to users.
 - **Semester**: The semester in which the course is conducted. Courses are grouped by semesters to simplify the search in Artemis environments with a large number of courses.
-- **Maximum number of points for course**: This number is used for the grading key calculation. Updating the maximum number will recalculate the grading key, if it has been setup before.
-- **Amount of decimal places used for calculating the scores**: Specify the granularity for score calculations. You might have to increase this value, if you create exercises with a small number of maximum points and a large number of tests.
+- **Maximum number of points for course**: This number is used for the grading key calculation. Updating the maximum number will recalculate the grading key, if it has been set up before.
+- **Amount of decimal places used for calculating the scores**: Specify the granularity for score calculations. You might have to increase this value if you create exercises with a small number of maximum points and a large number of tests.
 - **Default Programming Language**: The programming language that should be preselected when a new programming exercise is created in this course.
-- **Customize group names**: Allows specifying custom group names that should be used in external user management systems. Default group names (based on the course short name) will be used if not specified. **Note**: Only administrators can change this settings, instructors can not change it.
+- **Customize group names**: Allows specifying custom group names that should be used in external user management systems. Default group names (based on the course short name) will be used if not specified. **Note**: Only administrators can change this setting. Instructors can not change it.
 - **Enable complaints**: Whether complaints should be enabled in this course. Details regarding complaints can be found `here </user/exercises/general#complaints>`_.
 - **Enable more feedback requests**: Whether more feedback requests should be enabled in this course. Details regarding more feedback requests can be found `here </user/exercises/general#more-feedback-requests>`_.
 - **Enable postings by students**: Whether the posting sections should be enabled for lectures and exercises. More details regarding this can be found in the `Communication documentation </user/communication>`_.
