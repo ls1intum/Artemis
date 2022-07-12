@@ -198,6 +198,32 @@ public class FileIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     }
 
     @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testGetAccessTokenForFileUploadSubmission_InvalidIds() throws Exception {
+        Course course = database.addCourseWithThreeFileUploadExercise();
+        FileUploadExercise fileUploadExercise = database.findFileUploadExerciseWithTitle(course.getExercises(), "released");
+        FileUploadSubmission fileUploadSubmission = ModelFactory.generateFileUploadSubmission(true);
+        fileUploadSubmission = database.addFileUploadSubmission(fileUploadExercise, fileUploadSubmission, "student1");
+
+        MockMultipartFile file = new MockMultipartFile("file", "file.png", "application/json", "some data".getBytes());
+        JsonNode response = request.postWithMultipartFile("/api/fileUpload?keepFileName=true", file.getOriginalFilename(), "file", file, JsonNode.class, HttpStatus.CREATED);
+        String responsePath = response.get("path").asText();
+        String filePath = fileService.manageFilesForUpdatedFilePath(null, responsePath,
+                FileUploadSubmission.buildFilePath(fileUploadExercise.getId(), fileUploadSubmission.getId()), fileUploadSubmission.getId(), true);
+
+        fileUploadSubmission.setFilePath(filePath);
+
+        // invalid exercise id
+        request.get("/api/files/file-upload-exercises/" + 999999999 + "/submissions/" + fileUploadSubmission.getId() + "/file.png/access-token", HttpStatus.BAD_REQUEST,
+                String.class);
+        // invalid submission id
+        request.get("/api/files/file-upload-exercises/" + fileUploadExercise.getId() + "/submissions/" + 999999999 + "/file.png/access-token", HttpStatus.BAD_REQUEST,
+                String.class);
+        // invalid exercise and submission id
+        request.get("/api/files/file-upload-exercises/" + 999999999 + "/submissions/" + 999999999 + "/file.png/access-token", HttpStatus.BAD_REQUEST, String.class);
+    }
+
+    @Test
     @WithMockUser(username = "other-ta1", roles = "TA")
     public void testGetAccessTokenForFileUploadSubmissionAsTutorNotInCourse_forbidden() throws Exception {
         Course course = database.addCourseWithThreeFileUploadExercise();
@@ -284,6 +310,14 @@ public class FileIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         attachmentRepo.save(attachment);
 
         request.get(attachmentPath + "/access-token", HttpStatus.FORBIDDEN, String.class);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testGetLectureAttachment_InvalidLectureId() throws Exception {
+        String invalidLectureAttachmentPath = "/api/files/attachments/lecture/999999999/testfile.pdf";
+        request.get(invalidLectureAttachmentPath + "/access-token", HttpStatus.BAD_REQUEST, String.class);
+        request.get(invalidLectureAttachmentPath + "?access_token=random_non_valid_token", HttpStatus.BAD_REQUEST, String.class);
     }
 
     @Test
@@ -397,6 +431,14 @@ public class FileIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
         String accessToken = request.get(attachmentPath + "/access-token", HttpStatus.OK, String.class);
         request.get(attachmentPath + "?access_token=" + accessToken, HttpStatus.OK, String.class);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testGetAttachmentUnit_InvalidAttachmentUnitId() throws Exception {
+        String invalidAttachmentUnitPath = "/api/files/attachments/attachment-unit/999999999/testfile.pdf";
+        request.get(invalidAttachmentUnitPath + "/access-token", HttpStatus.BAD_REQUEST, String.class);
+        request.get(invalidAttachmentUnitPath + "?access_token=random_non_valid_token", HttpStatus.BAD_REQUEST, String.class);
     }
 
     @Test

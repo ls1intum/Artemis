@@ -289,7 +289,7 @@ public class FileResource {
 
         Optional<FileUploadSubmission> optionalSubmission = fileUploadSubmissionRepository.findById(submissionId);
         Optional<FileUploadExercise> optionalFileUploadExercise = fileUploadExerciseRepository.findById(exerciseId);
-        if (optionalSubmission.isEmpty()) {
+        if (optionalSubmission.isEmpty() || optionalFileUploadExercise.isEmpty()) {
             return ResponseEntity.badRequest().build();
         }
 
