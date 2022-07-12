@@ -3,7 +3,7 @@ Open-Source
 
 We are dedicated to provide great software support for excellent teaching. To achieve that, we develop Artemis as `free and open-source <https://www.youtube.com/watch?v=EMi3PCW23yQ>`__ software. The core ideas of free software always have been "use", "study", "share", and "improve". 
 
-With Artemis, we embrace all of the aspects:
+With Artemis, we embrace all of those aspects:
 
 * Artemis is **used** by over ten universities and thousands of students. 
 * Artemis is part of active research and is constantly improved by students as part of university courses or masters/bachelors theses. **Studying** the Artemis source code helps our students to improve their software engineering skills while working on a real, actively used product.  
