@@ -27,7 +27,7 @@ the time of the day.
 | This setting will be disabled if you ever change the theme of Artemis manually. To re-enable the synchronized
   behavior, enable this setting in the theme settings popover.
 | In the following example, the user has manually set the light theme, but the OS reports a preference of dark
-  themes, so the theme changes automatically.
+  themes, so the theme changes automatically when enabling the synchronization.
 
 .. figure:: ./synchronize_theme.gif
     :alt: Re-enable theme synchronization in the theme popover
