@@ -93,7 +93,7 @@ public class UserScheduleService {
             }
             catch (VersionControlException e) {
                 // Ignore exception since the user should still be deleted but log it.
-                log.warn("Cannot remove non-activated user " + existingUser.getLogin() + " from the VCS: ", e);
+                log.warn("Cannot remove non-activated user {} from the VCS: ", existingUser.getLogin(), e);
             }
         });
         deleteUser(existingUser);

@@ -366,7 +366,7 @@ public class FileResource {
 
         Optional<byte[]> file = fileService.mergePdfFiles(attachmentLinks, lectureRepository.getLectureTitle(lectureId));
         if (file.isEmpty()) {
-            log.error("Failed to merge PDF lecture units for lecture with id : " + lectureId);
+            log.error("Failed to merge PDF lecture units for lecture with id {} ", lectureId);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
 
@@ -549,7 +549,7 @@ public class FileResource {
             return ResponseEntity.ok().headers(headers).contentType(MediaType.parseMediaType(mimeType)).header("filename", filename).body(file);
         }
         catch (IOException ex) {
-            log.error("Failed to download file: " + filename + "on path: " + path, ex);
+            log.error("Failed to download file: {} on path: {}", filename, path, ex);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
