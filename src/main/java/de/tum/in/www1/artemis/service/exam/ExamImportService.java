@@ -58,8 +58,6 @@ public class ExamImportService {
 
     private final ProgrammingExerciseImportService programmingExerciseImportService;
 
-    private final GradingCriterionRepository gradingCriterionRepository;
-
     private final FileUploadExerciseRepository fileUploadExerciseRepository;
 
     private final FileUploadImportService fileUploadImportService;
@@ -69,8 +67,8 @@ public class ExamImportService {
             ExerciseGroupRepository exerciseGroupRepository, ExamAccessService examAccessService, QuizExerciseRepository quizExerciseRepository,
             QuizExerciseImportService importQuizExercise, CourseRepository courseRepository, ProgrammingExerciseService programmingExerciseService,
             ProgrammingExerciseService programmingExerciseService1, ProgrammingExerciseRepository programmingExerciseRepository,
-            ProgrammingExerciseImportService programmingExerciseImportService, GradingCriterionRepository gradingCriterionRepository,
-            FileUploadExerciseRepository fileUploadExerciseRepository, FileUploadImportService fileUploadImportService) {
+            ProgrammingExerciseImportService programmingExerciseImportService, FileUploadExerciseRepository fileUploadExerciseRepository,
+            FileUploadImportService fileUploadImportService) {
         this.textExerciseImportService = textExerciseImportService;
         this.textExerciseRepository = textExerciseRepository;
         this.modelingExerciseImportService = modelingExerciseImportService;
@@ -84,7 +82,6 @@ public class ExamImportService {
         this.programmingExerciseService = programmingExerciseService1;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.programmingExerciseImportService = programmingExerciseImportService;
-        this.gradingCriterionRepository = gradingCriterionRepository;
         this.fileUploadExerciseRepository = fileUploadExerciseRepository;
         this.fileUploadImportService = fileUploadImportService;
     }
@@ -189,11 +186,11 @@ public class ExamImportService {
      * Helper method to create a copy of the given ExerciseGroups and its Exercises
      *
      * @param exerciseGroupToCopy the exercise group to copy
-     * @param examCopied          the already copied exam to attach to the exercise group
+     * @param targetExam          the already copied exam to attach to the exercise group
      */
-    private void copySingleExerciseGroupWithExercises(ExerciseGroup exerciseGroupToCopy, Exam examCopied) {
+    private void copySingleExerciseGroupWithExercises(ExerciseGroup exerciseGroupToCopy, Exam targetExam) {
         // Create a new ExerciseGroup with the same name and boolean:mandatory
-        ExerciseGroup exerciseGroupCopied = copyExerciseGroupWithTitleAndIsMandatory(exerciseGroupToCopy, examCopied);
+        ExerciseGroup exerciseGroupCopied = copyExerciseGroupWithTitleAndIsMandatory(exerciseGroupToCopy, targetExam);
         // Copy each exercise within the existing Exercise Group
         exerciseGroupToCopy.getExercises().forEach(exerciseToCopy -> {
             // We need to set the new Exercise Group to the old exercise, so the new exercise group is correctly set for the new exercise
@@ -206,7 +203,7 @@ public class ExamImportService {
                             .findByIdWithExampleSubmissionsAndResults(exerciseToCopy.getId());
                     // We do not want to abort the whole exam import process, we only skip the relevant exercise
                     if (optionalOriginalModellingExercise.isEmpty()) {
-                        return;
+                        break;
                     }
                     exerciseCopied = modelingExerciseImportService.importModelingExercise(optionalOriginalModellingExercise.get(), (ModelingExercise) exerciseToCopy);
                 }
@@ -215,7 +212,7 @@ public class ExamImportService {
                     final Optional<TextExercise> optionalOriginalTextExercise = textExerciseRepository.findByIdWithExampleSubmissionsAndResults(exerciseToCopy.getId());
                     // We do not want to abort the whole exam import process, we only skip the relevant exercise
                     if (optionalOriginalTextExercise.isEmpty()) {
-                        return;
+                        break;
                     }
                     exerciseCopied = textExerciseImportService.importTextExercise(optionalOriginalTextExercise.get(), (TextExercise) exerciseToCopy);
                 }
@@ -225,7 +222,7 @@ public class ExamImportService {
                             .findByIdWithEagerTestCasesStaticCodeAnalysisCategoriesHintsAndTemplateAndSolutionParticipationsAndAuxReposAndTasksWithTestCases(
                                     exerciseToCopy.getId());
                     if (optionalOriginalProgrammingExercise.isEmpty()) {
-                        return;
+                        break;
                     }
                     exerciseCopied = programmingExerciseImportService.importProgrammingExerciseForExamImport(optionalOriginalProgrammingExercise.get(),
                             (ProgrammingExercise) exerciseToCopy);
@@ -243,7 +240,7 @@ public class ExamImportService {
                     final Optional<FileUploadExercise> optionalFileUploadExercise = fileUploadExerciseRepository.findById(exerciseToCopy.getId());
                     // We do not want to abort the whole exam import process, we only skip the relevant exercise
                     if (optionalFileUploadExercise.isEmpty()) {
-                        return;
+                        break;
                     }
                     exerciseCopied = fileUploadImportService.importFileUploadExercise(optionalFileUploadExercise.get(), (FileUploadExercise) exerciseToCopy);
                 }
@@ -252,14 +249,11 @@ public class ExamImportService {
                     final Optional<QuizExercise> optionalOriginalQuizExercise = quizExerciseRepository.findById(exerciseToCopy.getId());
                     // We do not want to abort the whole exam import process, we only skip the relevant exercise
                     if (optionalOriginalQuizExercise.isEmpty()) {
-                        return;
+                        break;
                     }
                     exerciseCopied = quizExerciseImportService.importQuizExercise(optionalOriginalQuizExercise.get(), (QuizExercise) exerciseToCopy);
                 }
 
-                default -> {
-                    return;
-                }
             }
             // Attach the newly created Exercise to the new Exercise Group
             if (exerciseCopied != null) {
@@ -280,8 +274,12 @@ public class ExamImportService {
         ExerciseGroup exerciseGroupCopied = new ExerciseGroup();
         exerciseGroupCopied.setTitle(exerciseGroupToCopy.getTitle());
         exerciseGroupCopied.setIsMandatory(exerciseGroupToCopy.getIsMandatory());
+
+        // The Exam needs to be reloaded, so the changes within the last exercise group in {@link ExamImportService#copySingleExerciseGroupWithExercises} are updated
+        targetExam = examRepository.findWithExerciseGroupsAndExercisesByIdOrElseThrow(targetExam.getId());
         targetExam.addExerciseGroup(exerciseGroupCopied);
         targetExam = examRepository.save(targetExam);
+        // When saving, an id is assigned to the exercise group. To retrieve the created exercise group, we get the last exercise group from the list
         exerciseGroupCopied = targetExam.getExerciseGroups().get(targetExam.getExerciseGroups().size() - 1);
         return exerciseGroupCopied;
     }
