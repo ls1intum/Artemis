@@ -20,7 +20,7 @@ You can change the theme manually at any time by clicking the theme switcher ico
 Synchronize the theme with your operating system
 ------------------------------------------------
 
-By default, Artemis will choose the dark theme if you indicated that you prefer dark themes in your OS settings.
+By default, Artemis will choose the preferred theme according to your OS settings.
 This is especially useful if you use a mechanism that changes your UI theme system-wide based on your ambient light or
 the time of the day.
 
