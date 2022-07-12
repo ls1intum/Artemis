@@ -43,6 +43,8 @@ Key statistics such as the number of total assessments or the average student sc
 
 |instructors-basic-statistics|
 
+.. _course_statistics:
+
 Course Statistics
 ^^^^^^^^^^^^^^^^^
 More detailed as well as additional course statistics can be inspected by instructors when navigating to the course's ``Statistics`` page.
@@ -57,7 +59,7 @@ All the statistics can be generated for different time frames.
 Exercise Statistics
 ^^^^^^^^^^^^^^^^^^^
 Similar to course statistics instructors can have an overview of different learning metrics such as the average score or the participation rate for a specific exercise.
-To get to this view, instructors can either click on one of the average score bars of the :ref:`Course Statistics` or click on the ``Statistics`` button that is displayed on each exercise overview page.
+To get to this view, instructors can either click on one of the average score bars of the :ref:`Course Statistics <course_statistics>` or click on the ``Statistics`` button that is displayed on each exercise overview page.
 
 |instructors-exercise-statistics|
 
