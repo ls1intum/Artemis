@@ -26,7 +26,7 @@ A donut diagram shows students their overall achieved points in the course.
 
 Performance in Exercises
 ^^^^^^^^^^^^^^^^^^^^^^^^
-Students can compare their scores to the best, overall score as well as the average score for each individual exercise with the help of a line chart.
+Students can compare their scores to the best overall score as well as the average score for each individual exercise with the help of a line chart.
 
 |students-performance-in-exercises|
 
@@ -57,6 +57,7 @@ All the statistics can be generated for different time frames.
 Exercise Statistics
 ^^^^^^^^^^^^^^^^^^^
 Similar to course statistics instructors can have an overview of different learning metrics such as the average score or the participation rate for a specific exercise.
+To get to this view, instructors can either click on one of the average score bars of the :ref:`Course Statistics` or click on the ``Statistics`` button that is displayed on each exercise overview page.
 
 |instructors-exercise-statistics|
 
