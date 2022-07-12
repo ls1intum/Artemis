@@ -42,7 +42,7 @@
 16. **Scalable**: Artemis scales to multiple courses with thousands of students. In fact, the largest course had 2,400 students. Administrators can easily scale Artemis with additional build agents in the continuous integration environment.
 17. **High user satisfaction**: Artemis is easy to use, provides guided tutorials. Developers focus on usability, user experience, and performance.
 18. **Customizable**: It supports multiple instructors, editors, and tutors per course and allows instructors to customize many course settings
-19. **[Open-source](https://docs.artemis.ase.in.tum.de/dev/open-source.html)**: Free to use with a large community and many active maintainers.
+19. **[Open-source](https://docs.artemis.ase.in.tum.de/dev/open-source/)**: Free to use with a large community and many active maintainers.
 
 ## Roadmap
 
