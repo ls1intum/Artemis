@@ -25,11 +25,11 @@ features and controls of Artemis:
 
 You can exit a Guided Tour at any time by clicking the close-icon in the top right of the modal box.
 
-Restart or resume Guided Tours
+Restart or Resume Guided Tours
 ------------------------------
 
 In case you have cancelled a previous tour or want to do an already finished tour again, you can start any tour that
-is available on your current page by opening your account menu and selecting it:
+is available on your current page by opening your account menu and selecting "Continue Tutorial":
 
 .. figure:: ./resume_tutorial.gif
     :alt: Open user menu to resume a tour
@@ -38,6 +38,6 @@ You can run all tours as often as you'd like. Any changes to the tutorial course
 will be reset automatically.
 
 .. note::
-    You need to be on the page where you started the tour the last time resume or restart it. The menu will
+    To resume or restart a tour, you need to be on the page where you started it the last time. The menu will
     **not** show resumable tours that are not available on the page you're currently on.
 
