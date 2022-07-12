@@ -7,7 +7,7 @@ import { StudentExamService } from 'app/exam/manage/student-exams/student-exam.s
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { TranslateService } from '@ngx-translate/core';
 import { StudentExamStatusComponent } from 'app/exam/manage/student-exams/student-exam-status.component';
-import { NgxDatatableModule } from '@swimlane/ngx-datatable';
+import { NgxDatatableModule } from '@flaviosantoro92/ngx-datatable';
 import { RouterTestingModule } from '@angular/router/testing';
 import { ArtemisDurationFromSecondsPipe } from 'app/shared/pipes/artemis-duration-from-seconds.pipe';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';

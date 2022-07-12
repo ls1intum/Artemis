@@ -166,7 +166,7 @@ public class AssessmentServiceTest extends AbstractSpringIntegrationBambooBitbuc
         resultRepository.submitResult(result, exercise, exerciseDateService.getDueDate(result.getParticipation()));
         resultRepository.save(result);
 
-        assertThat(result.getResultString()).isEqualTo("6 of 7 points");
+        assertThat(result.getScore()).isEqualTo(85.7); // 85.7 = 6/7 * 100
     }
 
     @Test
@@ -188,7 +188,7 @@ public class AssessmentServiceTest extends AbstractSpringIntegrationBambooBitbuc
         resultRepository.submitResult(result, exercise, exerciseDateService.getDueDate(result.getParticipation()));
         resultRepository.save(result);
 
-        assertThat(result.getResultString()).isEqualTo("6 of 7 points");
+        assertThat(result.getScore()).isEqualTo(85.7); // 85.7 = 6/7 * 100
     }
 
     @Test
@@ -210,7 +210,7 @@ public class AssessmentServiceTest extends AbstractSpringIntegrationBambooBitbuc
         resultRepository.submitResult(result, exercise, exerciseDateService.getDueDate(result.getParticipation()));
         resultRepository.save(result);
 
-        assertThat(result.getResultString()).isEqualTo("6 of 7 points");
+        assertThat(result.getScore()).isEqualTo(85.7); // 85.7 = 6/7 * 100
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
