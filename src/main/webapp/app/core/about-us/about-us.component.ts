@@ -41,7 +41,7 @@ export class AboutUsComponent implements OnInit {
         ['learningAnalytics', {}],
         ['scalable', {}],
         ['highUserSatisfaction', {}],
-        ['customizable', {}],
+        ['customizable', { customizableUrl: 'https://docs.artemis.ase.in.tum.de/user/courses/customizable' }],
         ['openSource', {}],
     ];
 
