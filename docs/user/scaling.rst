@@ -35,7 +35,7 @@ Artemis
 Artemis supports scaling to provide high availability as well as improved performance.
 
 This is especially important if you plan to conduct exams using Artemis.
-Details regarding the scaling of Artemis can be found in the `corresponding section of the documentation</dev/setup/distributed>`_.
+Details regarding the scaling of Artemis can be found in the `corresponding section of the documentation </dev/setup/distributed>`_.
 
 Depending on your setup and the number of users, you might be required to also scale/optimize other parts of the Artemis infrastructure, e.g. the database or used third-party systems.
 Please refer to the corresponding documentations for detailed information.
