@@ -50,7 +50,7 @@ Student Submission
 
 - Once they start the exercise, they will now have the option to work on it in an online modeling editor by clicking on  the |open-modeling-editor| button.
 
-- The screenshot below depicts the online modeling exercise interface for students. They can read the Problem Statement, work on the online editor and also provide explanation to their solutions, if needed.
+- The screenshot below depicts the online modeling exercise interface for students. They can read the Problem Statement, work on the online editor and also provide an explanation to their solutions, if needed.
 
     .. figure:: modeling/modeling-exercise-students-interface.png
               :align: center
