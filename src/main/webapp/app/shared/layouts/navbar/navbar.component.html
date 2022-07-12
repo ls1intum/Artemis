@@ -1,5 +1,5 @@
 <ng-template #iconMenu>
-    <div id="navbar-icon-menu" [class.in-collapsed-menu]="iconsMovedToMenu">
+    <div id="navbar-icon-menu" [ngClass]="{ evenly: isNavbarNavVertical, 'in-menu': iconsMovedToMenu }">
         <jhi-notification-sidebar *ngIf="currAccount && !examModeActive()"></jhi-notification-sidebar>
         <jhi-theme-switch [popoverPlacement]="iconsMovedToMenu ? 'bottom' : 'bottom-right'"></jhi-theme-switch>
         <div

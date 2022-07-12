@@ -12,8 +12,8 @@ a:not(.btn):hover {
     display: flex;
     flex-direction: row;
     gap: 30px;
+    justify-content: flex-end;
     color: var(--navbar-dark-color);
-    justify-content: space-evenly;
     align-items: center;
     transition: color 0.2s;
     padding: 0 10px 0 20px;
@@ -22,9 +22,16 @@ a:not(.btn):hover {
         color: var(--bs-body-color);
     }
 
-    &.in-collapsed-menu {
+    &.evenly {
+        justify-content: space-evenly;
         gap: 5px;
-        padding: 5px 0;
+        padding-left: 10px;
+        padding-right: 10px;
+    }
+
+    &.in-menu {
+        padding-top: 5px;
+        padding-bottom: 5px;
     }
 }
 
