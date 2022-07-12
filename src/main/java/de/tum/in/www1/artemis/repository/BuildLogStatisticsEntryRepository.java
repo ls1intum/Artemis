@@ -21,8 +21,8 @@ public interface BuildLogStatisticsEntryRepository extends JpaRepository<BuildLo
                 where b.programmingSubmission = s
                 and s.participation = p and
                (p.exercise = :#{#exercise} or
-                p.id = :#{#exercise.solutionParticipation.id} or
-                p.id = :#{#exercise.templateParticipation.id})
+                :#{#exercise.solutionParticipation != null ? #exercise.solutionParticipation.id : #exercise.solutionParticipation} = p.id or
+                :#{#exercise.templateParticipation != null ? #exercise.templateParticipation.id : #exercise.templateParticipation} = p.id)
             """)
     BuildLogStatisticsDTO findAverageBuildLogStatisticsEntryForExercise(@Param("exercise") ProgrammingExercise exercise);
 

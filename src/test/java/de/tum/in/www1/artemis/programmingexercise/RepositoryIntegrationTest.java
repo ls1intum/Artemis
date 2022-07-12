@@ -44,6 +44,7 @@ import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.service.BuildLogStatisticsEntryService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseParticipationService;
 import de.tum.in.www1.artemis.util.GitUtilService;
 import de.tum.in.www1.artemis.util.LocalRepository;
@@ -70,6 +71,9 @@ public class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBi
 
     @Autowired
     private ProgrammingExerciseParticipationService programmingExerciseParticipationService;
+
+    @Autowired
+    private BuildLogStatisticsEntryService buildLogStatisticsEntryService;
 
     private ProgrammingExercise programmingExercise;
 
