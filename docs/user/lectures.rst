@@ -9,7 +9,7 @@ Lectures
 
 Overview
 --------
-Apart from exercises and exams, Artemis can also host the lectures of a course.
+Apart from :ref:`Exercises` and :ref:`Exams`, Artemis can also host the **Lectures** of a course.
 
 Students
 ^^^^^^^^
@@ -28,6 +28,9 @@ Instructors can upload lecture slides, divide lectures into units, integrate vid
 On the course management site, clicking on |lectures-management-btn| opens the following page for managing lectures.
 
 |lectures-management|
+
+Lectures
+--------
 
 Instructors have two options for creating a lecture.
 
@@ -64,7 +67,12 @@ Students complete lecture units automatically (e.g., when they are opened) or ma
 
 |lecture-details|
 
-Instructors can create, delete and manage the order of lecture units on the lecture unit management page.
+Instructors can create lecture units on the lecture unit management page.
+
+|units-management-empty|
+
+After adding lecture units, instructors may edit or delete each one with the buttons to the right of the unit.
+Using the arrow buttons, the order of the lecture units can be changed.
 
 |units-management|
 
@@ -77,7 +85,10 @@ Students complete this unit once they download the file.
 
 Exercise Unit
 ^^^^^^^^^^^^
-tbd.
+An exercise can be added as a unit to a lecture.
+For the exercise unit, Artemis uses the title, release date, etc. of the exercise itself.
+
+|create-exercise-unit|
 
 Online Unit
 ^^^^^^^^^^^
@@ -133,6 +144,8 @@ Then, select a lecture from the dropdown and click on its units to associate the
     :width: 800
 .. |import-lecture-btn| image:: lectures/import-lecture-button.png
     :width: 120
+.. |units-management-empty| image:: lectures/units-management-empty.png
+    :width: 800
 .. |units-management| image:: lectures/units-management.png
     :width: 800
 .. |create-online-unit| image:: lectures/create-online-unit.png
@@ -142,6 +155,8 @@ Then, select a lecture from the dropdown and click on its units to associate the
 .. |create-video-unit| image:: lectures/create-video-unit.png
     :width: 800
 .. |create-attachment-unit| image:: lectures/create-attachment-unit.png
+    :width: 800
+.. |create-exercise-unit| image:: lectures/create-exercise-unit.png
     :width: 800
 .. |learning-goals-management| image:: lectures/learning-goals-management.png
     :width: 800
