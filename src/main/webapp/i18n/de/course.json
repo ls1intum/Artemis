@@ -41,7 +41,7 @@
                 "description": "Diese Nummer gibt an, wie viele Zeichen für die Antwort pro Beschwerde maximal verwendet werden darf."
             },
             "postsEnabled": {
-                "title": "Kommunikationsfeatures aktivieren",
+                "title": "Kommunikationsfunktionen aktivieren",
                 "description": "Kommunikationsbereich auf Vorlesungs- und Übungsseiten aktivieren."
             },
             "complaintsEnabled": {
