@@ -30,7 +30,7 @@ The following sections describe the supported features and the process of creati
     .. figure:: modeling/create-new-modeling-exercise.png
               :align: center
 
-Following screenshot illustrates first section of the form. It consists of:
+Following screenshot illustrates the first section of the form. It consists of:
 
 - *Title*: Title of an exercise
 - *Categories*: Category of an exercise
@@ -57,7 +57,7 @@ Following screenshot illustrates first section of the form. It consists of:
     .. figure:: modeling/class-diagram-diagram-type.png
               :align: center
 
-Following screenshot illustrates section section of the form. It consists of:
+Following screenshot illustrates the second section of the form. It consists of:
 
 - *Enable automatic assessment suggestions*: Option that determines whether or not to enable assessment suggestions automatically
 - *Problem Statement*: Field to state problem statement of an exercise
@@ -72,7 +72,7 @@ Following screenshot illustrates section section of the form. It consists of:
     .. figure:: modeling/create-modeling-exercise-form-hint.png
               :align: center
 
-Following screenshot illustrates last section of the form. It consists of:
+Following screenshot illustrates the last section of the form. It consists of:
 
 - *Example Solution*: Example solution of an exercise
 - *Example Solution Explanation*: Explanation of example solution of an exercise
