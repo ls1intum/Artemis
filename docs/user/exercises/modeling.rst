@@ -183,7 +183,7 @@ When the due date is over you can assess the submissions.
     .. figure:: modeling/assessment-instruction.png
               :align: center
 
-- Feedback to the entire submission can also be added by clicking on |add-new-feedback| button.
+- Feedback to the entire submission can also be added by clicking on the |add-new-feedback| button.
 
     .. figure:: modeling/feedback-modal.png
               :align: center
