@@ -17,16 +17,18 @@ To perform the plagiarism check, the responsible tutors must initiate the checki
 Features for Tutors
 -----------------------
 The tutors are responsible for checking the plagiarism attempts of students. They execute the plagiarism checks and mark the potential plagiarism candidates to notify the instructors.
-This process is visualized in the following diagram. |tutor-workflow|
+This process is visualized in the following diagram.
+|tutor-workflow|
 
- 1. Open the Exercise via: Course Management → Course → Exercises → Your Exercise".  |exercise-page|
+ 1. Open the Exercise via: Course Management → Course → Exercises → Your Exercise".
+ |exercise-page|
  2. Access the plagiarism tool as seen in the picture
  3. Run the Plagiarism Check.
   a. You can preadjust the similarity threshhold and other features if deemed necessary (most of the time not, depends on the exercise type)
   |run-settings|
-
   b. Checking big exercises can take a long time (sometimes multiple hours) and be very resource heavy → Start the checks at times when Artemis is less used
- 4. Start checking for plagiarism. |run-results|
+ 4. Start checking for plagiarism
+ |run-results|
   a. Assess if the presented matches are real plagiarism or not
   b. Depending on your assessment either deny or accept the match as plagiarism
   c. Continue until the matches start to get "too different"
@@ -46,9 +48,9 @@ This section captures the most important features that are offered to Artemis st
 
 
 
-.. |tutor-workflow| image:: plagiarism-check/tutor/tutor-workflow.png
+.. |tutor-workflow| image:: plagiarism-check/tutor/tutor_workflow.png
     :width: 1000
-.. |exercise-page| image:: plagiarism-check/tutor/exercise-page.png
+.. |exercise-page| image:: plagiarism-check/tutor/exercise_page.png
     :width: 1000
 .. |run-results| image:: plagiarism-check/tutor/run-results.png
     :width: 1000
