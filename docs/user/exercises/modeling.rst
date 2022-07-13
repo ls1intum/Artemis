@@ -63,23 +63,23 @@ The following screenshot illustrates the first section of the form. It consists 
 The following screenshot illustrates the second section of the form. It consists of:
 
 - *Enable automatic assessment suggestions*: When enabled, Artemis tries to automatically suggest assessments for diagram elements based on previously graded submissions for this exercise.
-- *Problem Statement*: Field to state problem statement of an exercise
+- *Problem Statement*: The task description of the exercise as seen by students
 - *Assessment Instructions*: Instructions for instructor while assessing the submission
 
     .. figure:: modeling/create-modeling-exercise-form-2.png
               :align: center
 
 .. note::
-    If you are not clear about any of the fields, you can access to the field hints by hovering on |hint| icon, when available.
+    If you are not clear about any of the fields, you can access additional hints by hovering over the |hint| icon for many of them.
 
     .. figure:: modeling/create-modeling-exercise-form-hint.png
               :align: center
 
-Following screenshot illustrates the last section of the form. It consists of:
+The following screenshot illustrates the last section of the form. It consists of:
 
 - *Example Solution*: Example solution of an exercise
-- *Example Solution Explanation*: Explanation of example solution of an exercise
-- *Example Solution Publication Date*: Date after which example solution is accessible for students
+- *Example Solution Explanation*: Explanation of the example solution
+- *Example Solution Publication Date*: Date after which the example solution is accessible for students. Leave empty to not publish the solution.
 
     .. figure:: modeling/create-modeling-exercise-form-3.png
               :align: center
@@ -92,15 +92,16 @@ You will then be redirected to **Example Submissions for Assessment Training** P
               :align: center
 
 In this page, you can either *Create Example Submission* or *Use as Example Submission* for Assessment Training.
+Example submission can be used to assess the submissions of students semi-automatically.
+Artemis uses those submissions to automatically apply the known assessment comments to similar model elements in other submissions as well.
 
-- Select |create-example-submission| if you want to create Example submission from scratch.
-- Alternatively, you can also use the submission submitted by Students as an Example Submission. For that, click on |use-as-example-submission|
+- Select |create-example-submission| if you want to create an example submission from scratch.
+- Alternatively, after the exercise already started, you can also use some submissions submitted by students as an example submission. For that, click on |use-as-example-submission|
 
-Example Submission can be used to assess the submissions of students by instructors manually or automatically via Assessment Training feature.
 
 .. note::
-    Artemis uses semi-automatic grading of modeling exercises using Machine Learning.
-    You can hence train the model by selecting *Use in Assessment Training* checkbox while creating an Example Submission.
+    Artemis uses semi-automatic grading of modeling exercises using machine learning.
+    You can hence train the model by selecting *Use in Assessment Training* checkbox while creating an example submission.
 
     .. figure:: modeling/use-in-assessment-training.png
               :align: center
