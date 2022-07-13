@@ -185,7 +185,7 @@ public class ProgrammingExerciseExportImportResource {
             upgradeService.upgradeTemplate(importedProgrammingExercise);
         }
 
-        HttpHeaders responseHeaders;
+        HttpHeaders responseHeaders = null;
         // Copy or recreate the build plans
         try {
             if (recreateBuildPlans) {
@@ -198,7 +198,6 @@ public class ProgrammingExerciseExportImportResource {
                 // The importBuildPlans method includes this process
                 programmingExerciseImportService.importBuildPlans(originalProgrammingExercise, importedProgrammingExercise);
             }
-            responseHeaders = HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, importedProgrammingExercise.getTitle());
         }
         catch (Exception e) {
             responseHeaders = HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "importExerciseTriggerPlanFail", "Unable to trigger imported build plans");
