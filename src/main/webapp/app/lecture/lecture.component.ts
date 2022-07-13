@@ -93,6 +93,7 @@ export class LectureComponent implements OnInit, OnDestroy {
                     .subscribe({
                         next: (res: Lecture) => {
                             this.lectures.push(res);
+                            this.router.navigate(['course-management', res.course!.id, 'lectures', res.id]);
                         },
                         error: (res: HttpErrorResponse) => onError(this.alertService, res),
                     });
