@@ -42,7 +42,7 @@
             },
             "postsEnabled": {
                 "title": "Kommunikationsfeatures aktivieren",
-                "description": "Kommunikationsbereich auf Vorlesung- und Übungsseiten aktivieren."
+                "description": "Kommunikationsbereich auf Vorlesungs- und Übungsseiten aktivieren."
             },
             "complaintsEnabled": {
                 "title": "Beschwerden von Studierenden aktivieren",
