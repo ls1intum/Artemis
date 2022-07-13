@@ -62,7 +62,7 @@ The following screenshot illustrates the first section of the form. It consists 
 
 The following screenshot illustrates the second section of the form. It consists of:
 
-- *Enable automatic assessment suggestions*: Option that determines whether or not to enable assessment suggestions automatically
+- *Enable automatic assessment suggestions*: When enabled, Artemis tries to automatically suggest assessments for diagram elements based on previously graded submissions for this exercise.
 - *Problem Statement*: Field to state problem statement of an exercise
 - *Assessment Instructions*: Instructions for instructor while assessing the submission
 
