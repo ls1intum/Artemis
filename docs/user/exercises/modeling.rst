@@ -15,7 +15,7 @@ Conducting a Modeling exercise consists of 3 steps:
 3. **Instructor assesses submissions:** Reviews the submitted exercises and creates results for the students.
 
 Setup
---------
+-----
 
 The following sections describe the supported features and the process of creating a new modeling exercise.
 
@@ -35,17 +35,17 @@ Create new modeling exercise
 
 The following screenshot illustrates the first section of the form. It consists of:
 
-- *Title*: Title of an exercise
-- *Categories*: Category of an exercise
-- *Difficulty*: Difficulty of an exercise. (No level, Easy, Medium or Hard)
-- *Mode*: Solving mode of an exercise. *This cannot be changed afterwards* (Individual or Team)
-- *Release Date*: Date after which students can access the exercise
-- *Due Date*: Date till when students can access the exercise
-- *Assessment Due Date*: Date till when instructors can assess the exercise submitted by students
-- *Inclusion in course score calculation*: Option that determines whether or not to include exercise in course score calculation
-- *Points*: Total point of an exercise
-- *Bonus Points*: Bonus points of an exercise
-- *Diagram Type*: Type of diagram that is used throughout an exercise
+- **Title**: Title of an exercise
+- **Categories**: Category of an exercise
+- **Difficulty**: Difficulty of an exercise. (No level, Easy, Medium or Hard)
+- **Mode**: Solving mode of an exercise. *This cannot be changed afterwards* (Individual or Team)
+- **Release Date**: Date after which students can access the exercise
+- **Due Date**: Date till when students can access the exercise
+- **Assessment Due Date**: Date till when instructors can assess the exercise submitted by students
+- **Inclusion in course score calculation**: Option that determines whether or not to include exercise in course score calculation
+- **Points**: Total point of an exercise
+- **Bonus Points**: Bonus points of an exercise
+- **Diagram Type**: Type of diagram that is used throughout an exercise
 
     .. figure:: modeling/create-modeling-exercise-form-1.png
               :align: center
@@ -55,6 +55,7 @@ The following screenshot illustrates the first section of the form. It consists 
 
 .. note::
    - The field **Diagram Type** determines the components that students/instructors can use while working on the exercise.
+   - This option cannot be changed after creating the exercise.
    - For example: If the instructor selects class diagram as its diagram type, users (instructors/students) will now only be able to use components of class diagram throughout the exercise.
 
     .. figure:: modeling/class-diagram-diagram-type.png
@@ -62,9 +63,9 @@ The following screenshot illustrates the first section of the form. It consists 
 
 The following screenshot illustrates the second section of the form. It consists of:
 
-- *Enable automatic assessment suggestions*: When enabled, Artemis tries to automatically suggest assessments for diagram elements based on previously graded submissions for this exercise.
-- *Problem Statement*: The task description of the exercise as seen by students
-- *Assessment Instructions*: Instructions for instructor while assessing the submission
+- **Enable automatic assessment suggestions**: When enabled, Artemis tries to automatically suggest assessments for diagram elements based on previously graded submissions for this exercise.
+- **Problem Statement**: The task description of the exercise as seen by students
+- **Assessment Instructions**: Instructions for instructor while assessing the submission
 
     .. figure:: modeling/create-modeling-exercise-form-2.png
               :align: center
@@ -77,9 +78,9 @@ The following screenshot illustrates the second section of the form. It consists
 
 The following screenshot illustrates the last section of the form. It consists of:
 
-- *Example Solution*: Example solution of an exercise
-- *Example Solution Explanation*: Explanation of the example solution
-- *Example Solution Publication Date*: Date after which the example solution is accessible for students. Leave empty to not publish the solution.
+- **Example Solution**: Example solution of an exercise
+- **Example Solution Explanation**: Explanation of the example solution
+- **Example Solution Publication Date**: Date after which the example solution is accessible for students. Leave empty to not publish the solution.
 
     .. figure:: modeling/create-modeling-exercise-form-3.png
               :align: center
@@ -220,3 +221,4 @@ Once you're done assessing the solution, you can either:
 .. |submit| image:: modeling/submit.png
 .. |cancel| image:: modeling/cancel.png
 .. |exercise-dashboard-button| image:: modeling/exercise-dashboard-button.png
+.. |import| image:: modeling/import.png
