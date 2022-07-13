@@ -72,21 +72,46 @@ This process is visualized in the following diagram.
 
 |tutor-workflow|
 
- 1. Open the Exercise via: Course Management → Course → Exercises → Your Exercise".
- 2. Access the plagiarism tool as seen in the picture
-  |exercise-page|
- 3. Run the Plagiarism Check.
-  a. Tutor can adjust the similarity threshold and other settings as described in section :ref:`settings` if deemed necessary (most of the time not, depends on the exercise type).
-  b. Checking big exercises can take a long time (sometimes multiple hours) and be very resource heavy → Start the checks at times when Artemis is less used
- 4. Start checking for plagiarism.
-  a. Assess if the presented matches are real plagiarism or not.
-  b. Depending on your assessment either deny or confirm the match as plagiarism.
-  c. Continue until the matches start to get "too different".
+1. Open the Exercise via: Course Management → Course → Exercises → Your Exercise".
+2. Access the plagiarism tool as seen in the picture
+ |exercise-page|
+
+3. Run the Plagiarism Check.
+ a. Tutor can adjust the similarity threshold and other settings as described in section :ref:`settings` if deemed necessary (most of the time not, depends on the exercise type).
+ b. Checking big exercises can take a long time (sometimes multiple hours) and be very resource heavy → Start the checks at times when Artemis is less used
+4. Start checking for plagiarism.
+ a. Assess if the presented matches are real plagiarism or not.
+ b. Depending on your assessment either deny or confirm the match as plagiarism.
+ c. Continue until the matches start to get "too different".
 
 
 Instructors
 ^^^^^^^^^^^
-The following feature is only available for instructors.
+The instructors can execute the same actions as tutors, additionally they are able to make a final decision on the particular confirmed plagiarism case.
+The proces is visualized in the following diagram.
+
+1. Open the plagiarism cases via: Course Management → Course → Plagiarism Cases.
+ |plagiarism-cases-navigation|
+
+2. Overview the current status of all confirmed plagiarism cases by inspecting the management overview.
+The overview provides following information about each confirmed case:
+ |confirmed-plagiarism-cases-management|
+
+ a. In how many comparisons the confirmed case appears.
+ b. Student was notified or not.
+ c. Student has responded or not.
+ d. Final verdict.
+
+3. Export the confirmed cases as CSV file to analyse them in another editor.
+4. Notify the student about the potential plagiarism case and ask him for statement.
+ |student-notification|
+
+4. Select one confirmed case and make a final verdict by selecting one of 3 available options. The final verdict must be approved by clicking ok in the dialog.
+ |verdict-dialog|
+
+ a. Point deduction in % (minimum value 0%, maximum 100). Deduct points and confirm  the verdict in the dialog.
+ b. Warning. The instructor can write a warning message to the student and confirm the verdict by in the dialog.
+ c. Plagiarism.
 
 Students
 ^^^^^^^^
@@ -102,6 +127,16 @@ This section captures the most important features that are offered to Artemis st
 .. |plagiarism-actions1| image:: plagiarism-check/actions/plagiarism-actions1.png
     :width: 1000
 .. |clean-up-dialog| image:: plagiarism-check/actions/clean-up-dialog.png
+    :width: 500
+.. |plagiarism-cases-navigation| image:: plagiarism-check/instructor/plagiarism-cases-navigation.png
+    :width: 1000
+.. |confirmed-plagiarism-cases-management| image:: plagiarism-check/instructor/confirmed-plagiarism-cases-management.png
+    :width: 1000
+.. |selected-confirmed-case| image:: plagiarism-check/instructor/selected-confirmed-case.png
+    :width: 1000
+.. |verdict-dialog| image:: plagiarism-check/instructor/point-deduction-verdict.png
+    :width: 500
+.. |student-notification| image:: plagiarism-check/instructor/student-notification.png
     :width: 500
 .. |exercise-page| image:: plagiarism-check/tutor/exercise_page.png
     :width: 1000
