@@ -23,13 +23,17 @@ export class ArtemisNavigationUtilService {
     /**
      * Navigates to the last page if possible or to the fallback url if not
      * @param fallbackUrl Url to navigate to if current page is first navigation
+     * @return true if navigation was called; false otherwise
      */
-    navigateBack(fallbackUrl: string[] = []) {
+    navigateBack(fallbackUrl: string[] = []): boolean {
         if (!this.onFirstPage) {
             this.location.back();
         } else if (fallbackUrl) {
             this.router.navigate(fallbackUrl);
+        } else {
+            return false;
         }
+        return true;
     }
 
     /**
@@ -78,14 +82,14 @@ export class ArtemisNavigationUtilService {
      * @param exercise the updated or created exercise
      */
     navigateBackFromExerciseUpdate(exercise?: Exercise) {
+        if (this.navigateBack()) {
+            return;
+        }
         if (exercise?.exerciseGroup?.exam?.course?.id) {
             // If an exercise group is set we are in exam mode
             this.router.navigate(['course-management', exercise.exerciseGroup.exam.course.id.toString(), 'exams', exercise.exerciseGroup.exam.id!.toString(), 'exercise-groups']);
         } else if (exercise?.course?.id) {
             this.router.navigate(['course-management', exercise.course.id.toString(), 'exercises']);
-        } else {
-            // Fallback
-            this.navigateBack();
         }
     }
 
