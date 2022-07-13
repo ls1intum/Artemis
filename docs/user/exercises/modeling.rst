@@ -60,7 +60,7 @@ The following screenshot illustrates the first section of the form. It consists 
     .. figure:: modeling/class-diagram-diagram-type.png
               :align: center
 
-Following screenshot illustrates the second section of the form. It consists of:
+The following screenshot illustrates the second section of the form. It consists of:
 
 - *Enable automatic assessment suggestions*: Option that determines whether or not to enable assessment suggestions automatically
 - *Problem Statement*: Field to state problem statement of an exercise
