@@ -47,7 +47,7 @@ export class ProgressBarComponent implements OnInit, OnChanges, OnDestroy {
         if (this.percentage < 50) {
             this.backgroundColorClass = 'bg-danger';
         } else if (this.percentage < 100) {
-            this.foregroundColorClass = 'bg-warning';
+            this.backgroundColorClass = 'bg-warning';
         } else {
             this.backgroundColorClass = 'bg-success';
         }
