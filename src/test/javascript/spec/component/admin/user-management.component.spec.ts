@@ -481,7 +481,7 @@ describe('UserManagementComponent', () => {
         expect(spy).toHaveBeenCalledWith(UserStorageKey.REGISTRATION_NUMBER, 'WITHOUT_REG_NO');
 
         comp.toggleRegistrationNumberFilter(RegistrationNumberFilter.WITHOUT_REG_NO);
-        expect(spy).toHaveBeenCalledWith(UserStorageKey.STATUS, '');
+        expect(spy).toHaveBeenCalledWith(UserStorageKey.REGISTRATION_NUMBER, '');
         expect(comp.filters.authorityFilter).toEqual(new Set<RegistrationNumberFilter>());
     });
 
@@ -600,7 +600,7 @@ describe('UserManagementComponent', () => {
         httpParams = new HttpParams()
             .append('authorities', 'ADMIN')
             .append('origins', 'INTERNAL')
-            .append('registrationNumbers', '')
+            .append('registrationNumbers', 'WITH_REG_NO')
             .append('status', 'ACTIVATED')
             .append('courseIds', -1);
         expect(comp.filters.adjustOptions(new HttpParams())).toEqual(httpParams);
