@@ -457,7 +457,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
     }
 
     /**
-     * Return to the previous page or a default if no previous page exists
+     * Return to the exercise overview page
      */
     previousState() {
         this.navigationUtilService.navigateBackFromExerciseUpdate(this.programmingExercise);
