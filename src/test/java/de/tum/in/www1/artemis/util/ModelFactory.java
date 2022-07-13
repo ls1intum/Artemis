@@ -1114,6 +1114,10 @@ public class ModelFactory {
     }
 
     public static BambooBuildResultNotificationDTO generateBambooBuildResult(String repoName, List<String> successfulTestNames, List<String> failedTestNames) {
+        return generateBambooBuildResult(repoName, successfulTestNames, failedTestNames, failedTestNames.isEmpty());
+    }
+
+    public static BambooBuildResultNotificationDTO generateBambooBuildResult(String repoName, List<String> successfulTestNames, List<String> failedTestNames, boolean successful) {
         final var notification = new BambooBuildResultNotificationDTO();
         final var build = new BambooBuildResultNotificationDTO.BambooBuildDTO();
         final var summary = new BambooBuildResultNotificationDTO.BambooTestSummaryDTO();
@@ -1145,7 +1149,7 @@ public class ModelFactory {
 
         build.setNumber(42);
         build.setReason("foobar");
-        build.setSuccessful(failedTestNames.isEmpty());
+        build.setSuccessful(successful);
         build.setBuildCompletedDate(ZonedDateTime.now().minusSeconds(5));
         build.setArtifact(false);
         build.setTestSummary(summary);
@@ -1169,7 +1173,21 @@ public class ModelFactory {
      * @return notification with build logs
      */
     public static BambooBuildResultNotificationDTO generateBambooBuildResultWithLogs(String repoName, List<String> successfulTestNames, List<String> failedTestNames) {
-        var notification = generateBambooBuildResult(repoName, successfulTestNames, failedTestNames);
+        return generateBambooBuildResultWithLogs(repoName, successfulTestNames, failedTestNames, true);
+    }
+
+    /**
+     * Generate a Bamboo notification with build logs of various sizes
+     *
+     * @param repoName repository name
+     * @param successfulTestNames names of successful tests
+     * @param failedTestNames names of failed tests
+     * @param successful Whether the build was successful
+     * @return notification with build logs
+     */
+    public static BambooBuildResultNotificationDTO generateBambooBuildResultWithLogs(String repoName, List<String> successfulTestNames, List<String> failedTestNames,
+            boolean successful) {
+        var notification = generateBambooBuildResult(repoName, successfulTestNames, failedTestNames, successful);
         notification.getBuild().getTestSummary().setDescription("No tests found");
 
         String logWith254Chars = "a".repeat(254);
@@ -1222,42 +1240,42 @@ public class ModelFactory {
 
     public static BambooBuildResultNotificationDTO generateBambooBuildResultWithAnalyticsLogs(String repoName, List<String> successfulTestNames, List<String> failedTestNames,
             boolean sca) {
-        var notification = generateBambooBuildResult(repoName, successfulTestNames, failedTestNames);
+        var notification = generateBambooBuildResult(repoName, successfulTestNames, failedTestNames, true);
 
         var jobStarted = new BambooBuildLogDTO();
         jobStarted.setDate(ZonedDateTime.of(2021, 5, 10, 14, 58, 30, 0, ZoneId.systemDefault()));
         jobStarted.setLog("started building on agent 1");
 
         var executingBuild = new BambooBuildLogDTO();
-        executingBuild.setDate(ZonedDateTime.of(2021, 5, 10, 14, 0, 0, 0, ZoneId.systemDefault()));
+        executingBuild.setDate(ZonedDateTime.of(2021, 5, 10, 15, 0, 0, 0, ZoneId.systemDefault()));
         executingBuild.setLog("Executing build");
 
         var testingStarted = new BambooBuildLogDTO();
-        testingStarted.setDate(ZonedDateTime.of(2021, 5, 10, 14, 0, 5, 0, ZoneId.systemDefault()));
+        testingStarted.setDate(ZonedDateTime.of(2021, 5, 10, 15, 0, 5, 0, ZoneId.systemDefault()));
         testingStarted.setLog("Starting task 'Tests'");
 
         var dependency1Downloaded = new BambooBuildLogDTO();
-        dependency1Downloaded.setDate(ZonedDateTime.of(2021, 5, 10, 14, 0, 10, 0, ZoneId.systemDefault()));
+        dependency1Downloaded.setDate(ZonedDateTime.of(2021, 5, 10, 15, 0, 10, 0, ZoneId.systemDefault()));
         dependency1Downloaded.setLog("Dependency 1 Downloaded from");
 
         var testingFinished = new BambooBuildLogDTO();
-        testingFinished.setDate(ZonedDateTime.of(2021, 5, 10, 14, 0, 15, 0, ZoneId.systemDefault()));
+        testingFinished.setDate(ZonedDateTime.of(2021, 5, 10, 15, 0, 15, 0, ZoneId.systemDefault()));
         testingFinished.setLog("Finished task 'Tests' with result");
 
         var scaStarted = new BambooBuildLogDTO();
-        scaStarted.setDate(ZonedDateTime.of(2021, 5, 10, 14, 0, 16, 0, ZoneId.systemDefault()));
+        scaStarted.setDate(ZonedDateTime.of(2021, 5, 10, 15, 0, 16, 0, ZoneId.systemDefault()));
         scaStarted.setLog("Starting task 'Static Code Analysis'");
 
         var dependency2Downloaded = new BambooBuildLogDTO();
-        dependency2Downloaded.setDate(ZonedDateTime.of(2021, 5, 10, 14, 0, 20, 0, ZoneId.systemDefault()));
+        dependency2Downloaded.setDate(ZonedDateTime.of(2021, 5, 10, 15, 0, 20, 0, ZoneId.systemDefault()));
         dependency2Downloaded.setLog("Dependency 2 Downloaded from");
 
         var scaFinished = new BambooBuildLogDTO();
-        scaFinished.setDate(ZonedDateTime.of(2021, 5, 10, 14, 0, 27, 0, ZoneId.systemDefault()));
+        scaFinished.setDate(ZonedDateTime.of(2021, 5, 10, 15, 0, 27, 0, ZoneId.systemDefault()));
         scaFinished.setLog("Finished task 'Static Code Analysis'");
 
         var jobFinished = new BambooBuildLogDTO();
-        jobFinished.setDate(ZonedDateTime.of(2021, 5, 10, 14, 0, 30, 0, ZoneId.systemDefault()));
+        jobFinished.setDate(ZonedDateTime.of(2021, 5, 10, 15, 0, 30, 0, ZoneId.systemDefault()));
         jobFinished.setLog("Finished building");
 
         if (sca) {
@@ -1278,7 +1296,7 @@ public class ModelFactory {
 
     public static BambooBuildResultNotificationDTO generateBambooBuildResultWithStaticCodeAnalysisReport(String repoName, List<String> successfulTestNames,
             List<String> failedTestNames, ProgrammingLanguage programmingLanguage) {
-        var notification = generateBambooBuildResult(repoName, successfulTestNames, failedTestNames);
+        var notification = generateBambooBuildResult(repoName, successfulTestNames, failedTestNames, true);
         var reports = generateStaticCodeAnalysisReports(programmingLanguage);
         notification.getBuild().getJobs().get(0).setStaticCodeAnalysisReports(reports);
         return notification;
