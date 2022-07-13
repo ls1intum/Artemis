@@ -6,6 +6,7 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
+import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -1215,6 +1216,57 @@ public class ModelFactory {
 
         notification.getBuild().getJobs().iterator().next().setLogs(List.of(buildLogDTO254Chars, buildLogDTO255Chars, buildLogDTO256Chars, largeBuildLogDTO, logTypicalErrorLog,
                 logTypicalDuplicatedErrorLog, logWarning, logWarningIllegalReflectiveAccess, logCompilationError, logBuildError));
+
+        return notification;
+    }
+
+    public static BambooBuildResultNotificationDTO generateBambooBuildResultWithAnalyticsLogs(String repoName, List<String> successfulTestNames, List<String> failedTestNames,
+            boolean sca) {
+        var notification = generateBambooBuildResult(repoName, successfulTestNames, failedTestNames);
+
+        var jobStarted = new BambooBuildLogDTO();
+        jobStarted.setDate(ZonedDateTime.of(2021, 5, 10, 14, 58, 30, 0, ZoneId.systemDefault()));
+        jobStarted.setLog("started building on agent 1");
+
+        var executingBuild = new BambooBuildLogDTO();
+        executingBuild.setDate(ZonedDateTime.of(2021, 5, 10, 14, 0, 0, 0, ZoneId.systemDefault()));
+        executingBuild.setLog("Executing build");
+
+        var testingStarted = new BambooBuildLogDTO();
+        testingStarted.setDate(ZonedDateTime.of(2021, 5, 10, 14, 0, 5, 0, ZoneId.systemDefault()));
+        testingStarted.setLog("Starting task 'Tests'");
+
+        var dependency1Downloaded = new BambooBuildLogDTO();
+        dependency1Downloaded.setDate(ZonedDateTime.of(2021, 5, 10, 14, 0, 10, 0, ZoneId.systemDefault()));
+        dependency1Downloaded.setLog("Dependency 1 Downloaded from");
+
+        var testingFinished = new BambooBuildLogDTO();
+        testingFinished.setDate(ZonedDateTime.of(2021, 5, 10, 14, 0, 15, 0, ZoneId.systemDefault()));
+        testingFinished.setLog("Finished task 'Tests' with result");
+
+        var scaStarted = new BambooBuildLogDTO();
+        scaStarted.setDate(ZonedDateTime.of(2021, 5, 10, 14, 0, 16, 0, ZoneId.systemDefault()));
+        scaStarted.setLog("Starting task 'Static Code Analysis'");
+
+        var dependency2Downloaded = new BambooBuildLogDTO();
+        dependency2Downloaded.setDate(ZonedDateTime.of(2021, 5, 10, 14, 0, 20, 0, ZoneId.systemDefault()));
+        dependency2Downloaded.setLog("Dependency 2 Downloaded from");
+
+        var scaFinished = new BambooBuildLogDTO();
+        scaFinished.setDate(ZonedDateTime.of(2021, 5, 10, 14, 0, 27, 0, ZoneId.systemDefault()));
+        scaFinished.setLog("Finished task 'Static Code Analysis'");
+
+        var jobFinished = new BambooBuildLogDTO();
+        jobFinished.setDate(ZonedDateTime.of(2021, 5, 10, 14, 0, 30, 0, ZoneId.systemDefault()));
+        jobFinished.setLog("Finished building");
+
+        if (sca) {
+            notification.getBuild().getJobs().iterator().next().setLogs(
+                    List.of(jobStarted, executingBuild, testingStarted, dependency1Downloaded, testingFinished, scaStarted, dependency2Downloaded, scaFinished, jobFinished));
+        }
+        else {
+            notification.getBuild().getJobs().iterator().next().setLogs(List.of(jobStarted, executingBuild, testingStarted, dependency1Downloaded, testingFinished, jobFinished));
+        }
 
         return notification;
     }

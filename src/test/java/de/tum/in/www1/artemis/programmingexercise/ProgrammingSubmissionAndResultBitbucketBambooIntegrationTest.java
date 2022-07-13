@@ -81,6 +81,9 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
     private ProgrammingExerciseRepository programmingExerciseRepository;
 
     @Autowired
+    private BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository;
+
+    @Autowired
     private ExamRepository examRepository;
 
     @Autowired
@@ -666,6 +669,67 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
         assertThat(submissions.get(0).getId()).isEqualTo(submission.getId());
     }
 
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    void shouldExtractBuildLogAnalytics_noSca() throws Exception {
+        // Precondition: Database has participation and a programming submission but no result.
+        String userLogin = "student1";
+        database.addCourseWithOneProgrammingExercise(false, false, ProgrammingLanguage.JAVA);
+        ProgrammingExercise exercise = programmingExerciseRepository.findAllWithEagerParticipationsAndLegalSubmissions().get(1);
+        var participation = database.addStudentParticipationForProgrammingExercise(exercise, userLogin);
+
+        postResultWithBuildAnalyticsLogs(participation.getBuildPlanId(), HttpStatus.OK, false, false);
+
+        var statistics = buildLogStatisticsEntryRepository.findAverageBuildLogStatisticsEntryForExercise(exercise);
+        assertThat(statistics.getBuildCount()).isEqualTo(1);
+        assertThat(statistics.getAgentSetupDuration()).isEqualTo(90);
+        assertThat(statistics.getTestDuration()).isEqualTo(10);
+        assertThat(statistics.getScaDuration()).isEqualTo(null);
+        assertThat(statistics.getTotalJobDuration()).isEqualTo(110);
+        assertThat(statistics.getDependenciesDownloadedCount()).isEqualTo(1);
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    void shouldExtractBuildLogAnalytics_sca() throws Exception {
+        // Precondition: Database has participation and a programming submission but no result.
+        String userLogin = "student1";
+        database.addCourseWithOneProgrammingExercise(false, false, ProgrammingLanguage.JAVA);
+        ProgrammingExercise exercise = programmingExerciseRepository.findAllWithEagerParticipationsAndLegalSubmissions().get(1);
+        var participation = database.addStudentParticipationForProgrammingExercise(exercise, userLogin);
+
+        postResultWithBuildAnalyticsLogs(participation.getBuildPlanId(), HttpStatus.OK, false, true);
+
+        var statistics = buildLogStatisticsEntryRepository.findAverageBuildLogStatisticsEntryForExercise(exercise);
+        assertThat(statistics.getBuildCount()).isEqualTo(1);
+        assertThat(statistics.getAgentSetupDuration()).isEqualTo(90);
+        assertThat(statistics.getTestDuration()).isEqualTo(10);
+        assertThat(statistics.getScaDuration()).isEqualTo(11);
+        assertThat(statistics.getTotalJobDuration()).isEqualTo(120);
+        assertThat(statistics.getDependenciesDownloadedCount()).isEqualTo(2);
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    void shouldExtractBuildLogAnalytics_unsupportedProgrammingLanguage() throws Exception {
+        // Precondition: Database has participation and a programming submission but no result.
+        String userLogin = "student1";
+        database.addCourseWithOneProgrammingExercise(false, false, ProgrammingLanguage.PYTHON); // Python is not supported
+        ProgrammingExercise exercise = programmingExerciseRepository.findAllWithEagerParticipationsAndLegalSubmissions().get(1);
+        var participation = database.addStudentParticipationForProgrammingExercise(exercise, userLogin);
+
+        postResultWithBuildAnalyticsLogs(participation.getBuildPlanId(), HttpStatus.OK, false, true);
+
+        var statistics = buildLogStatisticsEntryRepository.findAverageBuildLogStatisticsEntryForExercise(exercise);
+        // Should not extract any statistics
+        assertThat(statistics.getBuildCount()).isEqualTo(1);
+        assertThat(statistics.getAgentSetupDuration()).isEqualTo(null);
+        assertThat(statistics.getTestDuration()).isEqualTo(null);
+        assertThat(statistics.getScaDuration()).isEqualTo(null);
+        assertThat(statistics.getTotalJobDuration()).isEqualTo(null);
+        assertThat(statistics.getDependenciesDownloadedCount()).isEqualTo(null);
+    }
+
     @NotNull
     private StudentExam createEndedStudentExamWithGracePeriod(User user, Integer gracePeriod) {
         var course = database.addEmptyCourse();
@@ -867,6 +931,11 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
 
     private void postResultWithBuildLogs(String participationId, HttpStatus expectedStatus, boolean additionalCommit) throws Exception {
         var bambooBuildResult = ModelFactory.generateBambooBuildResultWithLogs(ASSIGNMENT_REPO_NAME, List.of(), List.of());
+        postResult(participationId, bambooBuildResult, expectedStatus, additionalCommit);
+    }
+
+    private void postResultWithBuildAnalyticsLogs(String participationId, HttpStatus expectedStatus, boolean additionalCommit, boolean sca) throws Exception {
+        var bambooBuildResult = ModelFactory.generateBambooBuildResultWithAnalyticsLogs(ASSIGNMENT_REPO_NAME, List.of(), List.of(), sca);
         postResult(participationId, bambooBuildResult, expectedStatus, additionalCommit);
     }
 

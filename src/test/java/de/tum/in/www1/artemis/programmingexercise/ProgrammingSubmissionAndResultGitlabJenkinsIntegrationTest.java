@@ -37,10 +37,7 @@ import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
 import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
-import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
-import de.tum.in.www1.artemis.repository.ProgrammingExerciseStudentParticipationRepository;
-import de.tum.in.www1.artemis.repository.ProgrammingSubmissionRepository;
-import de.tum.in.www1.artemis.repository.ResultRepository;
+import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.connectors.jenkins.dto.CommitDTO;
 import de.tum.in.www1.artemis.service.connectors.jenkins.dto.TestResultsDTO;
@@ -59,6 +56,9 @@ public class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends 
 
     @Autowired
     private ProgrammingExerciseRepository programmingExerciseRepository;
+
+    @Autowired
+    private BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository;
 
     @Autowired
     private ResultRepository resultRepository;
@@ -133,6 +133,100 @@ public class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends 
         database.changeUser(userLogin);
         var receivedLogs = request.get("/api/repository/" + participation.getId() + "/buildlogs", HttpStatus.OK, List.class);
         assertThat(receivedLogs).isNotEmpty();
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    void shouldExtractBuildLogAnalytics_noSca() throws Exception {
+        // Precondition: Database has participation and a programming submission.
+        String userLogin = "student1";
+        database.addCourseWithOneProgrammingExercise(false, false, ProgrammingLanguage.JAVA);
+        ProgrammingExercise exercise = programmingExerciseRepository.findAllWithEagerParticipationsAndLegalSubmissions().get(1);
+        var participation = database.addStudentParticipationForProgrammingExercise(exercise, userLogin);
+
+        List<String> logs = new ArrayList<>();
+        logs.add("[2021-05-10T14:58:30.000Z] Agents is getting prepared");
+        logs.add("[2021-05-10T15:00:00.000Z] docker exec"); // Job started
+        logs.add("[2021-05-10T15:00:05.000Z] Scanning for projects..."); // Build & test started
+        logs.add("[2021-05-10T15:00:10.000Z] Dependency 1 Downloaded from");
+        logs.add("[2021-05-10T15:00:15.000Z] Total time: Some time"); // Build & test finished
+        logs.add("[2021-05-10T15:00:20.000Z] Everything finished"); // Job finished
+
+        var notification = createJenkinsNewResultNotification(exercise.getProjectKey(), userLogin, ProgrammingLanguage.JAVA, List.of());
+        notification.setLogs(logs);
+        postResult(notification, HttpStatus.OK);
+
+        var statistics = buildLogStatisticsEntryRepository.findAverageBuildLogStatisticsEntryForExercise(exercise);
+        assertThat(statistics.getBuildCount()).isEqualTo(1);
+        assertThat(statistics.getAgentSetupDuration()).isEqualTo(90);
+        assertThat(statistics.getTestDuration()).isEqualTo(10);
+        assertThat(statistics.getScaDuration()).isEqualTo(null);
+        assertThat(statistics.getTotalJobDuration()).isEqualTo(110);
+        assertThat(statistics.getDependenciesDownloadedCount()).isEqualTo(1);
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    void shouldExtractBuildLogAnalytics_sca() throws Exception {
+        // Precondition: Database has participation and a programming submission.
+        String userLogin = "student1";
+        database.addCourseWithOneProgrammingExercise(false, false, ProgrammingLanguage.JAVA);
+        ProgrammingExercise exercise = programmingExerciseRepository.findAllWithEagerParticipationsAndLegalSubmissions().get(1);
+        database.addStudentParticipationForProgrammingExercise(exercise, userLogin);
+
+        List<String> logs = new ArrayList<>();
+        logs.add("[2021-05-10T14:58:30.000Z] Agents is getting prepared");
+        logs.add("[2021-05-10T15:00:00.000Z] docker exec"); // Job started
+        logs.add("[2021-05-10T15:00:05.000Z] Scanning for projects..."); // Build & test started
+        logs.add("[2021-05-10T15:00:20.000Z] Dependency 1 Downloaded from");
+        logs.add("[2021-05-10T15:00:15.000Z] Total time: Some time"); // Build & test finished
+        logs.add("[2021-05-10T15:00:16.000Z] Scanning for projects..."); // SCA started
+        logs.add("[2021-05-10T15:00:20.000Z] Dependency 2 Downloaded from");
+        logs.add("[2021-05-10T15:00:27.000Z] Total time: Some time"); // SCA finished
+        logs.add("[2021-05-10T15:00:30.000Z] Everything finished"); // Job finished
+
+        var notification = createJenkinsNewResultNotification(exercise.getProjectKey(), userLogin, ProgrammingLanguage.JAVA, List.of());
+        notification.setLogs(logs);
+        postResult(notification, HttpStatus.OK);
+
+        var statistics = buildLogStatisticsEntryRepository.findAverageBuildLogStatisticsEntryForExercise(exercise);
+        assertThat(statistics.getBuildCount()).isEqualTo(1);
+        assertThat(statistics.getAgentSetupDuration()).isEqualTo(90);
+        assertThat(statistics.getTestDuration()).isEqualTo(10);
+        assertThat(statistics.getScaDuration()).isEqualTo(11);
+        assertThat(statistics.getTotalJobDuration()).isEqualTo(120);
+        assertThat(statistics.getDependenciesDownloadedCount()).isEqualTo(2);
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    void shouldExtractBuildLogAnalytics_unsupportedProgrammingLanguage() throws Exception {
+        // Precondition: Database has participation and a programming submission.
+        String userLogin = "student1";
+        database.addCourseWithOneProgrammingExercise(false, false, ProgrammingLanguage.PYTHON);
+        ProgrammingExercise exercise = programmingExerciseRepository.findAllWithEagerParticipationsAndLegalSubmissions().get(1);
+        var participation = database.addStudentParticipationForProgrammingExercise(exercise, userLogin);
+
+        List<String> logs = new ArrayList<>();
+        logs.add("[2021-05-10T14:58:30.000Z] Agents is getting prepared");
+        logs.add("[2021-05-10T15:00:00.000Z] docker exec"); // Job started
+        logs.add("[2021-05-10T15:00:05.000Z] Scanning for projects..."); // Build & test started
+        logs.add("[2021-05-10T15:00:20.000Z] Dependency 1 Downloaded from");
+        logs.add("[2021-05-10T15:00:15.000Z] Total time: Some time"); // Build & test finished
+        logs.add("[2021-05-10T15:00:20.000Z] Everything finished"); // Job finished
+
+        var notification = createJenkinsNewResultNotification(exercise.getProjectKey(), userLogin, ProgrammingLanguage.PYTHON, List.of());
+        notification.setLogs(logs);
+        postResult(notification, HttpStatus.OK);
+
+        var statistics = buildLogStatisticsEntryRepository.findAverageBuildLogStatisticsEntryForExercise(exercise);
+        // Should not extract any statistics
+        assertThat(statistics.getBuildCount()).isEqualTo(1);
+        assertThat(statistics.getAgentSetupDuration()).isEqualTo(null);
+        assertThat(statistics.getTestDuration()).isEqualTo(null);
+        assertThat(statistics.getScaDuration()).isEqualTo(null);
+        assertThat(statistics.getTotalJobDuration()).isEqualTo(null);
+        assertThat(statistics.getDependenciesDownloadedCount()).isEqualTo(null);
     }
 
     private static Stream<Arguments> shouldSaveBuildLogsOnStudentParticipationArguments() {
