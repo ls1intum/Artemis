@@ -55,7 +55,7 @@ The following screenshot illustrates the first section of the form. It consists 
 
 .. note::
    - The field **Diagram Type** determines the components that students/instructors can use while working on the exercise.
-   - For example: If the instructor selects Class diagram as its Diagram Type, users (instructors/students) will now only be able to use components of class diagram throughout the exercise.
+   - For example: If the instructor selects class diagram as its diagram type, users (instructors/students) will now only be able to use components of class diagram throughout the exercise.
 
     .. figure:: modeling/class-diagram-diagram-type.png
               :align: center
