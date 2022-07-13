@@ -60,8 +60,11 @@ After the plagiarism check was executed the results can be expected in different
 2. Selected submission. When the user selects the submission from the submission list on the left side of the plagiarism run result view, new actions can be selected to initiate the plagiarism case workflow. We will provide more information to the the workflow in the next sections.
  |run-results-selected-submissions|
 
-Tutors workflow
----------------
+Plagiarism Case Workflow
+------------------------
+
+Tutors
+^^^^^^
 The tutors are responsible for checking the plagiarism attempts of students. They execute the plagiarism checks and mark the potential plagiarism candidates to notify the instructors.
 This process is visualized in the following diagram.
 
@@ -82,12 +85,12 @@ This process is visualized in the following diagram.
  5. Check if the tutors have mentioned any suspicious submissions in the Confluence page and check them for validity
 
 
-Instructors workflow
---------------------
+Instructors
+^^^^^^^^^^^
 The following feature is only available for instructors.
 
-Students workflow
-------------------
+Students
+^^^^^^^^
 This section captures the most important features that are offered to Artemis students.
 
 
@@ -96,11 +99,11 @@ This section captures the most important features that are offered to Artemis st
 
 
 .. |tutor-workflow| image:: plagiarism-check/tutor/tutor_workflow.png
-    :width: 1000
+    :width: 700
 .. |plagiarism-actions1| image:: plagiarism-check/actions/plagiarism-actions1.png
     :width: 1000
 .. |clean-up-dialog| image:: plagiarism-check/actions/clean-up-dialog.png
-    :width: 1000
+    :width: 500
 .. |exercise-page| image:: plagiarism-check/tutor/exercise_page.png
     :width: 1000
 .. |run-results| image:: plagiarism-check/results/run-results.png
