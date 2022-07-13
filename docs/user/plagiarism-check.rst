@@ -90,6 +90,8 @@ Instructors
 The instructors can execute the same actions as tutors, additionally they are able to make a final decision on the particular confirmed plagiarism case.
 The proces is visualized in the following diagram.
 
+|instructors-workflow|
+
 1. Open the plagiarism cases via: Course Management → Course → Plagiarism Cases.
  |plagiarism-cases-navigation|
 
@@ -111,11 +113,20 @@ The overview provides following information about each confirmed case:
 
  a. Point deduction in % (minimum value 0%, maximum 100). Deduct points and confirm  the verdict in the dialog.
  b. Warning. The instructor can write a warning message to the student and confirm the verdict by in the dialog.
- c. Plagiarism.
+ c. Plagiarism. Next steps must be made manually by contacting responsible persons in the university to mark the student grade as "Unterschleif".
 
 Students
 ^^^^^^^^
-This section captures the most important features that are offered to Artemis students.
+After the student got a notification that the instructor asked for the statement, he or she has one week to respond. 
+The proces is visualized in the following diagram.
+
+|student-workflow|
+
+1. Open the notified plagiarism confirmed case via: Course Overview → Course → Exercise → Plagiarism Case.
+ |student-plagiarism-case-navigation|
+
+2. Reply the message of the instructor.
+3. Wait for the final verdict.
 
 
 
@@ -137,6 +148,12 @@ This section captures the most important features that are offered to Artemis st
 .. |verdict-dialog| image:: plagiarism-check/instructor/point-deduction-verdict.png
     :width: 500
 .. |student-notification| image:: plagiarism-check/instructor/student-notification.png
+    :width: 500
+.. |instructors-workflow| image:: plagiarism-check/instructor/instructors-workflow.png
+    :width: 500
+.. |student-plagiarism-case-navigation| image:: plagiarism-check/student/plagiarism-case-navigation.png
+    :width: 1000
+.. |student-workflow| image:: plagiarism-check/student/student-workflow.png
     :width: 500
 .. |exercise-page| image:: plagiarism-check/tutor/exercise_page.png
     :width: 1000
