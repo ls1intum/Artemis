@@ -15,12 +15,6 @@ Team exercises are supported for:
 * :doc:`Textual exercises <textual>`
 * :doc:`File upload exercises <file-upload>`
 
-There are three important aspects to team exercises:
-
-1. **Instructor sets up exercises and teams:** Creates and configures the exercises to use **Team mode**, assigns students and tutors to teams.
-2. **Students work in teams:** Collaboratively work on the exercises.
-3. **Tutors overview the teams:** Review the handed in files and create manual results for the students.
-
 Setup
 -----
 
@@ -50,7 +44,7 @@ tutor can also be assigned to the team.
 
     Create team dialog
 
-Instructors can also edit and delete already existing teams.
+Instructors can also |edit_button| and |delete_button| already existing teams.
 
 To facilitate the process of creating teams, instructors can use the |export_teams_button| button to export the teams in an exercise to a file, which can then be imported in other exercises.
 
@@ -63,7 +57,26 @@ another exercise in the course. In both cases, instructors must choose if they w
 
     Import strategy
 
-The same team can be shared for multiple exercises. Viewing the page for a single teams allows both students, tutors and instructors to get an overview of all the
+
+Collaboration
+-------------
+
+When working on a team exercise, students can work collaboratively using the live editors. This is available for
+:doc:`Modeling exercises <modeling>` and :doc:`Textual exercises <textual>`.
+
+The live editors show the status of all the team members, and allow students to simultaneously edit the same exercise:
+
+.. figure:: team-exercises/live_modeling_editor.png
+    :align: center
+    :alt: Live modeling editor
+
+    Live modeling editor
+
+
+Team overview
+--------------
+
+The same team can be shared for multiple exercises. Viewing the page for a single team allows students, tutors and instructors to get an overview of all the
 exercises for that team along with their current status. To access the team overview page, users can click on |team_button| or on the team's short name.
 
 .. figure:: team-exercises/team_overview_page.png
@@ -71,20 +84,6 @@ exercises for that team along with their current status. To access the team over
     :alt: Team overview
 
     Team overview
-
-
-Collaboration
--------------
-
-Users can see their team
-Show shared text editor
-Users can see the live status of the other teams
-
-
-Tutor overview
---------------
-
-Show the tutor overview for the team for multiple exercises
 
 
 .. |teams_button| image:: team-exercises/teams_button.png
