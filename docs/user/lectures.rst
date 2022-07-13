@@ -14,23 +14,26 @@ Apart from :ref:`Exercises` and :ref:`Exams`, Artemis can also host the **Lectur
 Students
 ^^^^^^^^
 
-Students can see all published lectures of a course, grouped by date, by clicking on the tab labeled *Lectures*.
+Students can see all published lectures of a course, grouped by date, when clicking on the tab labeled *Lectures*.
 
 |lectures-overview|
 
-Clicking on a lecture leads to following page, where students can see the title, description, lecture units, and attachments.
+Clicking on a lecture leads to the following page, where students can see the title, description, lecture units, and attachments.
 
 |lecture-details|
 
 Instructors
 ^^^^^^^^^^^
-Instructors can upload lecture slides, divide lectures into units, integrate video streams, lecture recordings, and exercises into lectures, and define learning goals.
+Instructors can upload lecture slides and integrate online resources, video streams or lecture recordings.
+This material can be grouped into logical lecture units.
+To directly link the the necessary knowledge to its application, regular course exercises can be made part of lectures, too.
+Instructors can also define learning goals so that students can easier keep track of the knowledge they should have after working with those lecture materials.
 On the course management site, clicking on |lectures-management-btn| opens the following page for managing lectures.
 
 |lectures-management|
 
-Lectures
---------
+Managing Lectures
+-----------------
 
 Instructors have two options for creating a lecture.
 
@@ -39,8 +42,8 @@ Instructors have two options for creating a lecture.
 
         |create-lecture|
 
-    2. Alternatively, instructors can also import a lecture from a any other course where they at least have *editor* access.
-    Clicking on |import-lecture-btn| opens the import modal, where instructors search for an exisiting lecture and import it.
+    2. Alternatively, instructors can also import a lecture from any other course where they at least have *editor* access.
+    Clicking on |import-lecture-btn| opens the import modal, where instructors can search for an existing lecture and import it.
 
         |import-lecture|
 
@@ -56,7 +59,7 @@ Lectures can be divided into lecture units, which can be of the following types:
 
     * **Text unit:** A text with markup.
     * **Exercise unit:** An exercise from the same course.
-    * **Video unit:** An embedded video stream or video from an external source (e.g., RGB live steam, YouTube video).
+    * **Video unit:** An embedded video stream or video from an external source.
     * **Online unit:** A link to an external website.
     * **Attachment unit:** A file that the student may download.
 
@@ -87,6 +90,7 @@ Exercise Unit
 ^^^^^^^^^^^^
 An exercise can be added as a unit to a lecture.
 For the exercise unit, Artemis uses the title, release date, etc. of the exercise itself.
+Students complete this unit when they participate in the exercise.
 
 |create-exercise-unit|
 
@@ -100,14 +104,14 @@ Students complete this unit once they navigate to the external website.
 
 Text Unit
 ^^^^^^^^^
-An text unit consists of a name, some rich-text content and optionally a release date.
+A text unit consists of a name, some rich-text content and optionally a release date.
 Students complete this unit as soon as they open it.
 
 |create-text-unit|
 
 Video Unit
 ^^^^^^^^^^^
-An video unit consists of a name, an embeddable video link, and optionally a description and release date.
+A video unit consists of a name, an embeddable video link, and optionally a description and release date.
 Artemis can convert the website link from common video sources (RGB, YouTube, Vimeo) to an embeddable URL using the arrow button.
 Students complete this unit when they watch the video for at least five minutes.
 
@@ -121,7 +125,7 @@ Instructors can define learning goals to group course content and associate unit
 |learning-goals-management|
 
 To create a learning goal, as an instructor click on the plus button and enter a name and description.
-Then, select a lecture from the dropdown and click on its units to associate them with this learning goal.
+Then select a lecture from the dropdown and mark some of its units to associate them with this learning goal.
 
 |create-learning-goal|
 
