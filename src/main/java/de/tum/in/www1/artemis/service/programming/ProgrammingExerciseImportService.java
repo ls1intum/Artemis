@@ -485,11 +485,11 @@ public class ProgrammingExerciseImportService {
         newExercise.setExampleSolutionPublicationDate(null);
         newExercise.setTemplateParticipation(null);
         newExercise.setSolutionParticipation(null);
-        newExercise.setExerciseHints(new HashSet<>());
+        newExercise.setExerciseHints(null);
         newExercise.setTestCases(null);
         newExercise.setStaticCodeAnalysisCategories(null);
-        newExercise.setAttachments(new HashSet<>());
-        newExercise.setPlagiarismCases(new HashSet<>());
+        newExercise.setAttachments(null);
+        newExercise.setPlagiarismCases(null);
         newExercise.setNumberOfMoreFeedbackRequests(null);
         newExercise.setNumberOfComplaints(null);
         newExercise.setTotalNumberOfAssessments(null);
