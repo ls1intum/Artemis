@@ -24,10 +24,11 @@ Clicking on a lecture leads to the following page, where students can see the ti
 
 Instructors
 ^^^^^^^^^^^
-Instructors can upload lecture slides and integrate online resources, video streams or lecture recordings.
-This material can be grouped into logical lecture units.
-To directly link the the necessary knowledge to its application, regular course exercises can be made part of lectures, too.
-Instructors can also define learning goals so that students can easier keep track of the knowledge they should have after working with those lecture materials.
+Instructors can upload files, such as lecture slides, and partition the lecture's content into individual lecture units.
+Lecture units can consist of files, text, external links, videos or livestreams (e.g., lecture recordings).
+To directly link the necessary knowledge to its application, regular course exercises can be added to the lecture as a unit, too.
+Instructors can also define learning goals so that students can keep track of the knowledge they should have after working with those lecture materials.
+
 On the course management site, clicking on |lectures-management-btn| opens the following page for managing lectures.
 
 |lectures-management|
