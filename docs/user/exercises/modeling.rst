@@ -173,7 +173,7 @@ When the due date is over you can assess the submissions.
 
 - Click on |assess-submission| button of specific student. You will then be redirected to the assessment page where you will be able to assess submission of that student.
 
-- You can now start assessing the elements of the model by double clicking it. Once you double click, you will get an assessment modal where you can assign points, feedback and navigate through all other assessable components.
+- You can now start assessing the elements of the model by double clicking it. Once you double click, you will get an assessment dialog where you can assign points, feedback and navigate through all other assessable components.
 
     .. figure:: modeling/assessment-modal.png
               :align: center
