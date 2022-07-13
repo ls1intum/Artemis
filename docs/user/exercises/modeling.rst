@@ -163,12 +163,12 @@ When the due date is over you can assess the submissions.
     .. figure:: modeling/assessment-dashboard.png
               :align: center
 
-- Then click on Submissions of the modeling exercise
+- Then click on Submissions of the modeling exercise.
 
     .. figure:: modeling/exercise-dashboard.png
               :align: center
 
-- You will then be redirected to *Submissions* Dashboard
+- You will then be redirected to *Submissions and Assessments* Page.
 
     .. figure:: modeling/submissions-dashboard.png
               :align: center
