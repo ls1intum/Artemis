@@ -95,8 +95,7 @@ The process is visualized in the following diagram.
 1. Open the plagiarism cases via: Course Management → Course → Plagiarism Cases.
  |plagiarism-cases-navigation|
 
-2. Overview the current status of all confirmed plagiarism cases by inspecting the management overview.
-The overview provides the following information about each confirmed case:
+2. Overview the current status of all confirmed plagiarism cases by inspecting the management overview. The overview provides the following information about each confirmed case:
  |confirmed-plagiarism-cases-management|
 
  a. In how many comparisons the confirmed case appears.
@@ -105,10 +104,13 @@ The overview provides the following information about each confirmed case:
  d. Final verdict.
 
 3. Export the confirmed cases as CSV file to analyze them in another editor.
-4. Notify the student about the potential plagiarism case and ask him for statement.
+4. Select one confirmed case and navigate to the case detail view.
+ |selected-confirmed-case|
+
+5. Notify the student about the potential plagiarism case and ask him or her for statement.
  |student-notification|
 
-5. Select one confirmed case and make a final verdict by selecting one of 3 available options. The final verdict must be approved by clicking ok in the dialog.
+6. Make a final verdict by selecting one of 3 available options. The final verdict must be approved by clicking ok in the dialog.
  |verdict-dialog|
 
  a. Point deduction in % (minimum value 0%, maximum 100). Deduct points and confirm  the verdict in the dialog.
