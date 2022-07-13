@@ -32,7 +32,7 @@
             "text": "<a href={{ communicationUrl }}>Communication:</a> Post announcements. Ask questions, post comments, and react to other posts. Filter unanswered questions."
         },
         "notifications": {
-            "text": "<b>Notifications:</b> Customizable for web and email. Users can enable and disable different notification types."
+            "text": "<a href = {{ notificationsURL }}>Notifications:</a> Customizable for web and email. Users can enable and disable different notification types."
         },
         "teamExercises": {
             "text": "<b>Team exercises</b> with real time collaboration and dedicated tutors per team."

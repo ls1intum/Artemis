@@ -33,7 +33,7 @@
 7. **Grading**: Instructors can configure grade keys for courses and exams to automatically calculate grades and display them to students. Grades can be easily exported as csv files to upload them into university systems (such as Campus online)
 8. **Assessment**: Artemis uses double-blind grading and structured grading criteria to improve consistency and fairness. It integrates an assessment training process (based on example submissions and example assessments defined by the instructor), has a grading leader board, and allows students to rate the assessments. Students can complain or ask for more feedback.   
 9. **[Communication](https://docs.artemis.ase.in.tum.de/user/communication/)**: Instructors can post announcements. Students can ask questions, post comments, and react to other posts. Tutors can filter unanswered questions.
-10. **Notifications**: Artemis supports customizable web and email notifications. Users can enable and disable different notification types.
+10. **[Notifications](https://docs.artemis.ase.in.tum.de/user/communication/notificatioins)**: Artemis supports customizable web and email notifications. Users can enable and disable different notification types.
 11. **Team exercises**: Instructors can configure team exercises with real time collaboration and dedicated tutors per team.
 12. **Lectures**: Instructors can upload lecture slides, divide lectures into units, integrate video streams, lecture recordings, and exercises into lectures, and define learning goals.
 13. **Integrated markdown editor**: Instructors define problem statements using Markdown to easily format the text and integrate images and links.
