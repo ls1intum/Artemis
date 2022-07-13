@@ -33,7 +33,7 @@ Create new modeling exercise
     .. figure:: modeling/create-new-modeling-exercise.png
               :align: center
 
-Following screenshot illustrates the first section of the form. It consists of:
+The following screenshot illustrates the first section of the form. It consists of:
 
 - *Title*: Title of an exercise
 - *Categories*: Category of an exercise
