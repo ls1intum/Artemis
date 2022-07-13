@@ -140,9 +140,10 @@ As soon as the announcement is created, all participants, that did not actively 
 Additionally, announcements visually differ from normal posts and are always displayed on top of the communication overview.
 
 Notifications
--------------
+^^^^^^^^^^^^^
 
 The users on Artemis can be notified about these posts as well as other events like released exercises directly in Artemis and via mail.
+
 .. toctree::
    :maxdepth: 2
 
