@@ -80,6 +80,8 @@ public class ProgrammingExerciseImportService {
 
     private final UrlService urlService;
 
+    private final TemplateUpgradePolicy templateUpgradePolicy;
+
     public ProgrammingExerciseImportService(ExerciseHintService exerciseHintService, ExerciseHintRepository exerciseHintRepository,
             Optional<VersionControlService> versionControlService, Optional<ContinuousIntegrationService> continuousIntegrationService,
             ProgrammingExerciseParticipationService programmingExerciseParticipationService, ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository,
@@ -87,7 +89,7 @@ public class ProgrammingExerciseImportService {
             ProgrammingExerciseService programmingExerciseService, GitService gitService, FileService fileService, UserRepository userRepository,
             StaticCodeAnalysisService staticCodeAnalysisService, AuxiliaryRepositoryRepository auxiliaryRepositoryRepository, SubmissionPolicyRepository submissionPolicyRepository,
             UrlService urlService, ProgrammingExerciseTaskRepository programmingExerciseTaskRepository, ProgrammingExerciseSolutionEntryRepository solutionEntryRepository,
-            GradingCriterionRepository gradingCriterionRepository) {
+            GradingCriterionRepository gradingCriterionRepository, TemplateUpgradePolicy templateUpgradePolicy) {
         this.exerciseHintService = exerciseHintService;
         this.exerciseHintRepository = exerciseHintRepository;
         this.versionControlService = versionControlService;
@@ -107,6 +109,7 @@ public class ProgrammingExerciseImportService {
         this.programmingExerciseTaskRepository = programmingExerciseTaskRepository;
         this.solutionEntryRepository = solutionEntryRepository;
         this.gradingCriterionRepository = gradingCriterionRepository;
+        this.templateUpgradePolicy = templateUpgradePolicy;
     }
 
     /**
@@ -529,7 +532,7 @@ public class ProgrammingExerciseImportService {
      * @param templateExercise the exercise from which the values that should be replaced are extracted
      * @param newExercise      the exercise from which the values that should be inserted are extracted
      * @throws GitAPIException If the checkout/push of one repository fails
-     * @throws IOException     If the values in the files could not be replaced
+     * @throws IOException If the values in the files could not be replaced
      */
     private void adjustProjectNames(ProgrammingExercise templateExercise, ProgrammingExercise newExercise) throws GitAPIException, IOException {
         final var projectKey = newExercise.getProjectKey();
@@ -564,7 +567,7 @@ public class ProgrammingExerciseImportService {
      * @param repositoryName the name of the repository that should be adjusted
      * @param user           the user which performed the action (used as Git author)
      * @throws GitAPIException If the checkout/push of one repository fails
-     * @throws IOException     If the values in the files could not be replaced
+     * @throws IOException If the values in the files could not be replaced
      */
     private void adjustProjectName(Map<String, String> replacements, String projectKey, String repositoryName, User user) throws GitAPIException, IOException {
         final var repositoryUrl = versionControlService.get().getCloneRepositoryUrl(projectKey, repositoryName);
@@ -577,15 +580,13 @@ public class ProgrammingExerciseImportService {
     }
 
     /**
-     * Imports a programming exercise creating a new entity, copying all basic values and saving it in the database.
-     * This one is used for the Import of Programming Exercises during an Exam Import
+     * Prepares a Programming Exercise for the import by setting irrelevant data to null.
+     * Additionally, the grading Criteria is loaded and attached to the exercise, as this needs to be released before the import
      *
-     * @param templateExercise The template exercise which should get imported
-     * @param newExercise      The new exercise already containing values which should not get copied, i.e. overwritten
-     * @return The newly created exercise
+     * @param newExercise      The new exercise which should be prepared for the import
+     * @return The programming exercise ready for importing
      */
-    @Transactional
-    public ProgrammingExercise importProgrammingExerciseForExamImport(final ProgrammingExercise templateExercise, final ProgrammingExercise newExercise) {
+    public ProgrammingExercise prepareProgrammingExerciseForImport(final ProgrammingExercise newExercise) {
 
         newExercise.setBuildAndTestStudentSubmissionsAfterDueDate(null);
         if (newExercise.getSubmissionPolicy() != null) {
@@ -602,20 +603,62 @@ public class ProgrammingExerciseImportService {
 
         newExercise.forceNewProjectKey();
 
-        final ProgrammingExercise importedProgrammingExercise = importProgrammingExerciseBasis(templateExercise, newExercise);
-        importRepositories(templateExercise, importedProgrammingExercise);
-        importBuildPlans(templateExercise, importedProgrammingExercise);
+        return newExercise;
+    }
+
+    /**
+     * Method to process the import of a ProgrammingExercise
+     * The {@link ProgrammingExerciseImportService#importBuildPlansForProgrammingExercise(ProgrammingExercise, ProgrammingExercise, boolean)} has to be called subsequently.
+     * @param originalProgrammingExercise the Programming Exercise which should be used as a blueprint
+     * @param newExercise The new exercise already containing values which should not get copied, i.e. overwritten
+     * @param updateTemplate if the template files should be updated
+     * @return the imported programming exercise
+     */
+    @Transactional
+    public ProgrammingExercise importProgrammingExercise(final ProgrammingExercise originalProgrammingExercise, final ProgrammingExercise newExercise, boolean updateTemplate) {
+        newExercise.generateAndSetProjectKey();
+        programmingExerciseService.checkIfProjectExists(newExercise);
+
+        final var importedProgrammingExercise = importProgrammingExerciseBasis(originalProgrammingExercise, newExercise);
+        importRepositories(originalProgrammingExercise, importedProgrammingExercise);
+
+        // Update the template files
+        if (updateTemplate) {
+            TemplateUpgradeService upgradeService = templateUpgradePolicy.getUpgradeService(importedProgrammingExercise.getProgrammingLanguage());
+            upgradeService.upgradeTemplate(importedProgrammingExercise);
+        }
 
         programmingExerciseService.scheduleOperations(importedProgrammingExercise.getId());
 
-        // Remove unnecessary fields before returning it to the client
-        importedProgrammingExercise.setTestCases(null);
-        importedProgrammingExercise.setStaticCodeAnalysisCategories(null);
-        importedProgrammingExercise.setTemplateParticipation(null);
-        importedProgrammingExercise.setSolutionParticipation(null);
-        importedProgrammingExercise.setExerciseHints(null);
-        importedProgrammingExercise.setTasks(null);
-
         return importedProgrammingExercise;
     }
+
+    /**
+     * Method to import the build plans for a ProgrammingExercise
+     * @param originalProgrammingExercise the Programming Exercise which should be used as a blueprint
+     * @param importedProgrammingExercise the already imported Programming Exercise for which the build plans should be imported
+     * @param recreateBuildPlans if the build plans should be recreated
+     * @return false if an Exception was thrown, true if successful
+     */
+    public boolean importBuildPlansForProgrammingExercise(final ProgrammingExercise originalProgrammingExercise, final ProgrammingExercise importedProgrammingExercise,
+            boolean recreateBuildPlans) {
+        // Copy or recreate the build plans
+        try {
+            if (recreateBuildPlans) {
+                // Create completely new build plans for the exercise
+                programmingExerciseService.setupBuildPlansForNewExercise(importedProgrammingExercise);
+            }
+            else {
+                // We have removed the automatic build trigger from test to base for new programming exercises.
+                // We also remove this build trigger in the case of an import as the source exercise might still have this trigger.
+                // The importBuildPlans method includes this process
+                importBuildPlans(originalProgrammingExercise, importedProgrammingExercise);
+            }
+        }
+        catch (Exception e) {
+            return false;
+        }
+        return true;
+    }
+
 }

@@ -224,16 +224,10 @@ public class ExamImportService {
                     if (optionalOriginalProgrammingExercise.isEmpty()) {
                         break;
                     }
-                    exerciseCopied = programmingExerciseImportService.importProgrammingExerciseForExamImport(optionalOriginalProgrammingExercise.get(),
-                            (ProgrammingExercise) exerciseToCopy);
-
-                    /*
-                     * DOES NOT WORK- HELP (BADLY) NEEDED :) final Optional<ProgrammingExercise> optionalOriginalProgrammingExercise = programmingExerciseRepository
-                     * .findByIdWithEagerTestCasesStaticCodeAnalysisCategoriesHintsAndTemplateAndSolutionParticipationsAndAuxReposAndTasksWithTestCases( exerciseToCopy.getId()); //
-                     * We do not want to abort the whole exam import process, we only skip the relevant exercise if (optionalOriginalProgrammingExercise.isEmpty()) { return; }
-                     * exerciseCopied = programmingExerciseImportService.importProgrammingExerciseForExamImport(optionalOriginalProgrammingExercise.get(), (ProgrammingExercise)
-                     * exerciseToCopy);
-                     */
+                    exerciseToCopy = programmingExerciseImportService.prepareProgrammingExerciseForImport((ProgrammingExercise) exerciseToCopy);
+                    exerciseCopied = programmingExerciseImportService.importProgrammingExercise(optionalOriginalProgrammingExercise.get(), (ProgrammingExercise) exerciseToCopy,
+                            false);
+                    programmingExerciseImportService.importBuildPlansForProgrammingExercise(optionalOriginalProgrammingExercise.get(), (ProgrammingExercise) exerciseCopied, false);
                 }
 
                 case FILE_UPLOAD -> {

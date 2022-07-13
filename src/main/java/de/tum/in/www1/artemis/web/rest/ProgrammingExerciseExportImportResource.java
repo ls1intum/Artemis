@@ -173,40 +173,17 @@ public class ProgrammingExerciseExportImportResource {
         Course originalCourse = courseService.retrieveCourseOverExerciseGroupOrCourseId(originalProgrammingExercise);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, originalCourse, user);
 
-        newExercise.generateAndSetProjectKey();
-        programmingExerciseService.checkIfProjectExists(newExercise);
-
-        final var importedProgrammingExercise = programmingExerciseImportService.importProgrammingExerciseBasis(originalProgrammingExercise, newExercise);
-        programmingExerciseImportService.importRepositories(originalProgrammingExercise, importedProgrammingExercise);
-
-        // Update the template files
-        if (updateTemplate) {
-            TemplateUpgradeService upgradeService = templateUpgradePolicy.getUpgradeService(importedProgrammingExercise.getProgrammingLanguage());
-            upgradeService.upgradeTemplate(importedProgrammingExercise);
-        }
+        final ProgrammingExercise importedProgrammingExercise = programmingExerciseImportService.importProgrammingExercise(originalProgrammingExercise, newExercise,
+                updateTemplate);
 
         HttpHeaders responseHeaders;
-        // Copy or recreate the build plans
-        try {
-            if (recreateBuildPlans) {
-                // Create completely new build plans for the exercise
-                programmingExerciseService.setupBuildPlansForNewExercise(importedProgrammingExercise);
-            }
-            else {
-                // We have removed the automatic build trigger from test to base for new programming exercises.
-                // We also remove this build trigger in the case of an import as the source exercise might still have this trigger.
-                // The importBuildPlans method includes this process
-                programmingExerciseImportService.importBuildPlans(originalProgrammingExercise, importedProgrammingExercise);
-            }
+        if (programmingExerciseImportService.importBuildPlansForProgrammingExercise(originalProgrammingExercise, importedProgrammingExercise, recreateBuildPlans)) {
             responseHeaders = HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, importedProgrammingExercise.getTitle());
         }
-        catch (Exception e) {
+        else {
             responseHeaders = HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "importExerciseTriggerPlanFail", "Unable to trigger imported build plans");
         }
 
-        programmingExerciseService.scheduleOperations(importedProgrammingExercise.getId());
-
-        // Remove unnecessary fields
         importedProgrammingExercise.setTestCases(null);
         importedProgrammingExercise.setStaticCodeAnalysisCategories(null);
         importedProgrammingExercise.setTemplateParticipation(null);
@@ -219,6 +196,7 @@ public class ProgrammingExerciseExportImportResource {
 
     /**
      * GET /programming-exercises/:exerciseId/export-instructor-exercise
+     *
      * @param exerciseId The id of the programming exercise
      * @return ResponseEntity with status
      * @throws IOException if something during the zip process went wrong
@@ -248,7 +226,8 @@ public class ProgrammingExerciseExportImportResource {
 
     /**
      * GET /programming-exercises/:exerciseId/export-instructor-repository/:repositoryType : sends a test, solution or template repository as a zip file
-     * @param exerciseId The id of the programming exercise
+     *
+     * @param exerciseId     The id of the programming exercise
      * @param repositoryType The type of repository to zip and send
      * @return ResponseEntity with status
      * @throws IOException if something during the zip process went wrong
@@ -268,7 +247,8 @@ public class ProgrammingExerciseExportImportResource {
 
     /**
      * GET /programming-exercises/:exerciseId/export-instructor-auxiliary-repository/:repositoryType : sends an auxiliary repository as a zip file
-     * @param exerciseId The id of the programming exercise
+     *
+     * @param exerciseId   The id of the programming exercise
      * @param repositoryId The id of the auxiliary repository
      * @return ResponseEntity with status
      * @throws IOException if something during the zip process went wrong
@@ -419,6 +399,7 @@ public class ProgrammingExerciseExportImportResource {
 
     /**
      * GET /programming-exercises/:exerciseId/export-solution-repository : sends a solution repository as a zip file without .git directory.
+     *
      * @param exerciseId The id of the programming exercise
      * @return ResponseEntity with status
      * @throws IOException if something during the zip process went wrong
