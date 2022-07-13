@@ -45,9 +45,9 @@ Actions
         Plagiarism detection can take a long time for large courses.
 1. Detect plagiarism. The user can execute the plagiarism check using this action.
 
-2. Rerun plagiarism detection. The user can rerun the plagiarism check by executing this action. It can be helpful to check the plagiarism with different settings mentioned in section
+2. Rerun plagiarism detection. The user can rerun the plagiarism check by executing this action. It can be helpful to check the plagiarism with different settings mentioned in section.
 
-3. Clean up. The user can clean up the latest plagiarism check results for the selected exercise. It helps to keep the database clean and safe storage capacity. Moreover, it should improve the overall system performance. To execute the clean-up action the user must approve it by clicking ok on the dialog, as this action cleans all potentially approved or denied plagiarism cases.
+3. Clean up. The user can clean up the latest plagiarism check results for the selected exercise. It helps to keep the database clean and safe storage capacity. Moreover, it should improve the overall system performance. To execute the clean-up action, the user must approve it by clicking ok on the dialog, as this action cleans all potentially approved or denied plagiarism cases.
 
 |clean-up-dialog|
 
@@ -55,11 +55,11 @@ Actions
 
 Results
 ^^^^^^^
-After the plagiarism check was executed the results can be expected in different views.
+After the plagiarism check was executed, the results can be expected in different views.
 
 1. Overview of the similarity distribution. This statistical overview shows the similarity distribution based on the percentage as a histogram chart. The user can analyze the distribution quickly and adjust the plagiarism check settings as needed accordingly.
  |run-results|
-2. Selected submission. When the user selects the submission from the submission list on the left side of the plagiarism run result view, new actions can be selected to initiate the plagiarism check workflow. We will provide more information to the the workflow in the next sections.
+2. Selected submission. When the user selects the submission from the submission list on the left side of the plagiarism run result view, new actions can be selected to initiate the plagiarism check workflow. We will provide further details to the workflow in the next section.
  |run-results-selected-submissions|
 
 Plagiarism Check Workflow
@@ -81,7 +81,7 @@ This process is visualized in the following diagram.
  b. Checking big exercises can take a long time (sometimes multiple hours) and be very resource heavy → Start the checks at times when Artemis is less used
 4. Start checking for plagiarism.
  a. Assess if the presented matches are real plagiarism or not.
- b. Depending on your assessment either deny or confirm the match as plagiarism.
+ b. Depending on your assessment, either deny or confirm the match as plagiarism.
  c. Continue until the matches start to get "too different".
 
 
@@ -96,7 +96,7 @@ The process is visualized in the following diagram.
  |plagiarism-cases-navigation|
 
 2. Overview the current status of all confirmed plagiarism cases by inspecting the management overview.
-The overview provides following information about each confirmed case:
+The overview provides the following information about each confirmed case:
  |confirmed-plagiarism-cases-management|
 
  a. In how many comparisons the confirmed case appears.
@@ -104,7 +104,7 @@ The overview provides following information about each confirmed case:
  c. Student has responded or not.
  d. Final verdict.
 
-3. Export the confirmed cases as CSV file to analyse them in another editor.
+3. Export the confirmed cases as CSV file to analyze them in another editor.
 4. Notify the student about the potential plagiarism case and ask him for statement.
  |student-notification|
 
