@@ -160,7 +160,7 @@ When the due date is over you can assess the submissions.
 
 - Click on |assess-submission| button of specific student. You will then be redirected to the assessment page where you will be able to assess submission of that student.
 
-- You can now start assessing the elements of the model by double clicking it. Once you double click, you will get an assessment modal where you can assign points and feedback.
+- You can now start assessing the elements of the model by double clicking it. Once you double click, you will get an assessment modal where you can assign points, feedback and navigate through all other assessable components.
 
     .. figure:: modeling/assessment-modal.png
               :align: center
@@ -173,7 +173,19 @@ When the due date is over you can assess the submissions.
 - Feedback to the entire submission can also be added by clicking on |add-new-feedback| button.
 
     .. figure:: modeling/feedback-modal.png
-              :align: left
+              :align: center
+
+Once you're done assessing the solution, you can either:
+
+- Click on |save| to save the incomplete assessment so that you can continue it afterwards.
+
+- Click on |submit| to submit the assessment.
+
+- Click on |cancel| to cancel and release the lock of the assessment.
+
+- Click on |exercise-dashboard-button| to navigate to exercise dashboard page.
+
+
 
 .. |edit| image:: modeling/edit.png
     :scale: 75
@@ -191,3 +203,6 @@ When the due date is over you can assess the submissions.
 .. |submission| image:: modeling/submission.png
 .. |example-submission| image:: modeling/example-submission.png
 .. |delete| image:: modeling/delete.png
+.. |submit| image:: modeling/submit.png
+.. |cancel| image:: modeling/cancel.png
+.. |exercise-dashboard-button| image:: modeling/exercise-dashboard-button.png
