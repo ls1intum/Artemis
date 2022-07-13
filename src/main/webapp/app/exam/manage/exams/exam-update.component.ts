@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { Exam } from 'app/entities/exam.model';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { Observable } from 'rxjs';
@@ -39,6 +39,7 @@ export class ExamUpdateComponent implements OnInit {
         private alertService: AlertService,
         private courseManagementService: CourseManagementService,
         private navigationUtilService: ArtemisNavigationUtilService,
+        private router: Router,
         private accountService: AccountService,
     ) {}
 
@@ -85,14 +86,15 @@ export class ExamUpdateComponent implements OnInit {
 
     subscribeToSaveResponse(result: Observable<HttpResponse<Exam>>) {
         result.subscribe({
-            next: () => this.onSaveSuccess(),
+            next: (response: HttpResponse<Exam>) => this.onSaveSuccess(response.body!),
             error: (err: HttpErrorResponse) => this.onSaveError(err),
         });
     }
 
-    private onSaveSuccess() {
+    private onSaveSuccess(exam: Exam) {
         this.isSaving = false;
-        this.previousState();
+        this.router.navigate(['course-management', this.course.id, 'exams', exam.id]);
+        window.scrollTo(0, 0);
     }
 
     private onSaveError(error: HttpErrorResponse) {
