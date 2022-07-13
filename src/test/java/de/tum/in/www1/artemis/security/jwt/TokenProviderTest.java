@@ -101,8 +101,9 @@ class TokenProviderTest {
         claimsForToken.put(TokenProvider.ATTACHMENT_UNIT_ID_KEY, 2);
         String token = tokenProvider.createFileTokenWithCustomDuration(authentication, 30, claimsForToken);
 
+        // attachment id and filename are required
         Claims requiredClaims = Jwts.claims();
-        requiredClaims.put(TokenProvider.ATTACHMENT_UNIT_ID_KEY, 3);
+        requiredClaims.put(TokenProvider.ATTACHMENT_UNIT_ID_KEY, 2);
         requiredClaims.put(TokenProvider.FILENAME_KEY, "testfile");
         boolean isTokenValid = tokenProvider.validateTokenForAuthorityAndFile(token, requiredClaims);
 
