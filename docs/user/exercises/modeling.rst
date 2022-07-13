@@ -2,7 +2,7 @@ Modeling exercise
 =================
 .. contents:: Content of this document
     :local:
-    :depth: 2
+    :depth: 3
 
 
 Overview
@@ -24,6 +24,9 @@ The following sections describe the supported features and the process of creati
 
     .. figure:: modeling/course-management-course-dashboard.png
               :align: center
+
+Create new modeling exercise
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 - Click on **Create new modeling exercise**
 
@@ -102,13 +105,23 @@ Example Submission can be used to assess the submissions of students by instruct
     .. figure:: modeling/use-in-assessment-training.png
               :align: center
 
+Import Modeling Exercise
+^^^^^^^^^^^^^^^^^^^^^^^^
+
 - Alternatively, you can also import modeling exercise from the existing one by clicking on **Import Modeling Exercise**
 
     .. figure:: modeling/import-modeling-exercise.png
               :align: center
 
+- An import modal will prompt up, where you will have an option to select and import previous modeling exercises from the list by clicking on |import| button.
 
-  Result: **Modeling Exercise**
+    .. figure:: modeling/import-modeling-exercise-modal.png
+              :align: center
+
+- Once you import one of the exercise, you will then be redirected to form which is similar to *Create new modeling exercise* form with all the fields filled from imported exercise. You can now modify the fields as per your necessity to create a new Modeling Exercise.
+
+Result
+^^^^^^
 
     .. figure:: modeling/course-dashboard-exercise-modeling.png
               :align: center
