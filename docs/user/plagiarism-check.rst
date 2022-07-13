@@ -88,7 +88,7 @@ This process is visualized in the following diagram.
 Instructors
 ^^^^^^^^^^^
 The instructors can execute the same actions as tutors, additionally they are able to make a final decision on the particular confirmed plagiarism case.
-The proces is visualized in the following diagram.
+The process is visualized in the following diagram.
 
 |instructors-workflow|
 
@@ -108,7 +108,7 @@ The overview provides following information about each confirmed case:
 4. Notify the student about the potential plagiarism case and ask him for statement.
  |student-notification|
 
-4. Select one confirmed case and make a final verdict by selecting one of 3 available options. The final verdict must be approved by clicking ok in the dialog.
+5. Select one confirmed case and make a final verdict by selecting one of 3 available options. The final verdict must be approved by clicking ok in the dialog.
  |verdict-dialog|
 
  a. Point deduction in % (minimum value 0%, maximum 100). Deduct points and confirm  the verdict in the dialog.
@@ -118,7 +118,7 @@ The overview provides following information about each confirmed case:
 Students
 ^^^^^^^^
 After the student got a notification that the instructor asked for the statement, he or she has one week to respond. 
-The proces is visualized in the following diagram.
+The process is visualized in the following diagram.
 
 |student-workflow|
 
