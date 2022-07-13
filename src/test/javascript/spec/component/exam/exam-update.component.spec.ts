@@ -193,7 +193,7 @@ describe('Exam Update Component', () => {
     it('should update', fakeAsync(() => {
         fixture.detectChanges();
 
-        const updateSpy = jest.spyOn(examManagementService, 'update');
+        const updateSpy = jest.spyOn(examManagementService, 'update').mockReturnValue(of(new HttpResponse<Exam>({ body: { ...exam, id: 1 } })));
 
         // trigger save
         component.save();
@@ -303,7 +303,7 @@ describe('Exam Update Component', () => {
         exam.id = undefined;
         fixture.detectChanges();
 
-        const createSpy = jest.spyOn(examManagementService, 'create');
+        const createSpy = jest.spyOn(examManagementService, 'create').mockReturnValue(of(new HttpResponse<Exam>({ body: { ...exam, id: 1 } })));
 
         // trigger save
         component.save();

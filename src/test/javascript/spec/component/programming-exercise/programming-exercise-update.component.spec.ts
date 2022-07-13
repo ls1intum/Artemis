@@ -142,7 +142,7 @@ describe('ProgrammingExercise Management Update Component', () => {
             // GIVEN
             const entity = new ProgrammingExercise(undefined, undefined);
             entity.releaseDate = dayjs(); // We will get a warning if we do not set a release date
-            jest.spyOn(programmingExerciseService, 'automaticSetup').mockReturnValue(of(new HttpResponse({ body: entity })));
+            jest.spyOn(programmingExerciseService, 'automaticSetup').mockReturnValue(of(new HttpResponse({ body: { ...entity, id: 2 } })));
             comp.programmingExercise = entity;
             comp.programmingExercise.course = course;
             // WHEN
@@ -159,7 +159,7 @@ describe('ProgrammingExercise Management Update Component', () => {
             const entity = new ProgrammingExercise(undefined, undefined);
             entity.releaseDate = dayjs(); // We will get a warning if we do not set a release date
             entity.title = 'My Exercise   ';
-            jest.spyOn(programmingExerciseService, 'automaticSetup').mockReturnValue(of(new HttpResponse({ body: entity })));
+            jest.spyOn(programmingExerciseService, 'automaticSetup').mockReturnValue(of(new HttpResponse({ body: { ...entity, id: 1 } })));
             comp.programmingExercise = entity;
             comp.programmingExercise.course = course;
 
