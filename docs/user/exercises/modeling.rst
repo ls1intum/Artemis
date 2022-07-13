@@ -178,7 +178,7 @@ When the due date is over you can assess the submissions.
     .. figure:: modeling/assessment-modal.png
               :align: center
 
-- Alternatively, you can also assess the diagram by dragging and dropping assessment instructions from *Assessment Instructions* section.
+- Alternatively, you can also assess the diagram by dragging and dropping assessment instructions from the *Assessment Instructions* section.
 
     .. figure:: modeling/assessment-instruction.png
               :align: center
