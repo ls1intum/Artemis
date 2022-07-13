@@ -7,15 +7,15 @@ Plagiarism checks
     :local:
     :depth: 2
 
-Overview
---------
+Plagiarism checks Overview
+--------------------------
 
 Artemis allows tutors and exercise instructors to check assignments submissions from students for plagiarism.
 With this feature, different types of assignments can be checked in Artemis, including programming assignments, modeling assignments, and text assignments.
 To perform the plagiarism check, the responsible tutors must initiate the checking process for a specific task. Below, we describe the plagiarism check workflows from the perspective of various Artemis users using a UML Activity Diagram.
 
-Plagiarism check settings
-^^^^^^^^^^^^^^^^^^^^^^^^^
+Settings
+^^^^^^^^
 |run-settings|
 
 1. Similarity Threshold in % (minimum value 0, maximum value 100).
@@ -35,8 +35,8 @@ Plagiarism check settings
   b. Modeling exercises: Consider only submissions that have at least as many modeling elements as the specified value.
   c. Text exercises: Consider only submissions that have at least as many words as the specified value.
 
-Plagiarism check actions
-^^^^^^^^^^^^^^^^^^^^^^^^
+Actions
+^^^^^^^
 |plagiarism-actions1|
 
 .. note::
@@ -45,12 +45,23 @@ Plagiarism check actions
 
 2. Rerun plagiarism detection. The user can rerun the plagiarism check by executing this action. It can be helpful to check the plagiarism with different settings mentioned in section
 
-3. Clean up. The user can clean up the latest plagiarism check results for the selected exercise. It helps to keep the database clean and safe storage capacity. Moreover, it should improve the overall system performance.
+3. Clean up. The user can clean up the latest plagiarism check results for the selected exercise. It helps to keep the database clean and safe storage capacity. Moreover, it should improve the overall system performance. To execute the clean-up action the user must approve it by clicking ok on the dialog, as this action cleans all potentially approved or denied plagiarism cases.
+
+|clean-up-dialog|
 
 4. Download. The user can download the plagiarism results in JSON or CSV format to open them in a selected editor for the further analysis.
 
+Results
+^^^^^^^
+After the plagiarism check was executed the results can be expected in different views.
+
+1. Overview of the similarity distribution. This statistical overview shows the similarity distribution based on the percentage as a histogram chart. The user can analyze the distribution quickly and adjust the plagiarism check settings as needed accordingly.
+ |run-results|
+2. Selected submission. When the user selects the submission from the submission list on the left side of the plagiarism run result view, new actions can be selected to initiate the plagiarism case workflow. We will provide more information to the the workflow in the next sections.
+ |run-results-selected-submissions|
+
 Tutors workflow
------------------------
+---------------
 The tutors are responsible for checking the plagiarism attempts of students. They execute the plagiarism checks and mark the potential plagiarism candidates to notify the instructors.
 This process is visualized in the following diagram.
 
@@ -86,11 +97,15 @@ This section captures the most important features that are offered to Artemis st
 
 .. |tutor-workflow| image:: plagiarism-check/tutor/tutor_workflow.png
     :width: 1000
-.. |plagiarism-actions1| image:: plagiarism-check/general/plagiarism-actions1.png
+.. |plagiarism-actions1| image:: plagiarism-check/actions/plagiarism-actions1.png
+    :width: 1000
+.. |clean-up-dialog| image:: plagiarism-check/actions/clean-up-dialog.png
     :width: 1000
 .. |exercise-page| image:: plagiarism-check/tutor/exercise_page.png
     :width: 1000
-.. |run-results| image:: plagiarism-check/tutor/run-results.png
+.. |run-results| image:: plagiarism-check/results/run-results.png
+    :width: 1000
+.. |run-results-selected-submissions| image:: plagiarism-check/results/run-results-selected-submission.png
     :width: 1000
 .. |run-settings| image:: plagiarism-check/tutor/running-check-settings.png
     :width: 1000
