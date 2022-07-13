@@ -12,16 +12,14 @@ Overview
 
 Artemis allows tutors and exercise instructors to check assignments submissions from students for plagiarism.
 With this feature, different types of assignments can be checked in Artemis, including programming assignments, modeling assignments, and text assignments.
-To perform the plagiarism check, the responsible tutors must initiate the checking process for a specific task.
-
-Below, we describe the plagiarism check workflows from the perspective of various actors using a UML Activity Diagram where different actors are responsible for the process.
+To perform the plagiarism check, the responsible tutors must initiate the checking process for a specific task. Below, we describe the plagiarism check workflows from the perspective of various Artemis users using a UML Activity Diagram.
 
 Features for Tutors
 -----------------------
-The following features are only available for tutors.
+The tutors are responsible for checking the plagiarism attempts of students. They execute the plagiarism checks and mark the potential plagiarism candidates to notify the instructors.
+This process is visualized in the following diagram. |tutor-workflow|
 
-.. |lecture-posts| image:: plagiarism-check/tutor/tutor-workflow.png
-    :width: 1000
+
 
 Features for Instructors
 ------------------------
@@ -36,7 +34,8 @@ This section captures the most important features that are offered to Artemis st
 
 
 
-
+.. |tutor-workflow| image:: plagiarism-check/tutor/tutor-workflow.png
+    :width: 1000
 .. |exercise-posts| image:: communication/exercise-posts.png
     :width: 1000
 .. |course-posts| image:: communication/course-posts.png
