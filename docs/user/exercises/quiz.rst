@@ -135,6 +135,3 @@ This section describes the process to create a quiz exercise.
     :scale: 50
 .. |AddSelectedQuestionsButton| image:: quiz/add-selected-questions-button.png
     :scale: 50
-
-
-
