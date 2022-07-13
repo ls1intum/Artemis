@@ -24,8 +24,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
 
-import com.yannbriancon.interceptor.HibernateQueryInterceptor;
-
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.*;
@@ -125,9 +123,6 @@ public class CourseTestService {
 
     @Autowired
     private ParticipationService participationService;
-
-    @Autowired
-    private HibernateQueryInterceptor hibernateQueryInterceptor;
 
     private final static int numberOfStudents = 8;
 
@@ -569,11 +564,8 @@ public class CourseTestService {
     // Test
     public void testGetCourseForDashboard() throws Exception {
         List<Course> courses = database.createCoursesWithExercisesAndLecturesAndLectureUnits(true, false);
-        hibernateQueryInterceptor.startQueryCount();
 
         Course receivedCourse = request.get("/api/courses/" + courses.get(0).getId() + "/for-dashboard", HttpStatus.OK, Course.class);
-
-        assertThat(hibernateQueryInterceptor.getQueryCount()).isEqualTo(8);
 
         // Test that the received course has five exercises
         assertThat(receivedCourse.getExercises()).as("Five exercises are returned").hasSize(5);
@@ -610,12 +602,8 @@ public class CourseTestService {
     public void testGetAllCoursesForDashboard() throws Exception {
         database.createCoursesWithExercisesAndLecturesAndLectureUnits(true, false);
 
-        hibernateQueryInterceptor.startQueryCount();
-
         // Perform the request that is being tested here
         List<Course> courses = request.getList("/api/courses/for-dashboard", HttpStatus.OK, Course.class);
-
-        assertThat(hibernateQueryInterceptor.getQueryCount()).isEqualTo(6);
 
         // Test that the prepared inactive course was filtered out
         assertThat(courses).as("Inactive course was filtered out").hasSize(1);
@@ -650,27 +638,11 @@ public class CourseTestService {
     }
 
     // Test
-    public void testGetAllCoursesForDashboardRealisticQueryCount() throws Exception {
-        // Tests the amount of DB calls for a 'realistic' call to courses/for-dashboard. We should aim to maintain or lower the amount of DB calls, and be aware if they increase
-        database.createMultipleCoursesWithAllExercisesAndLectures(10, 10);
-
-        hibernateQueryInterceptor.startQueryCount();
-
-        request.getList("/api/courses/for-dashboard", HttpStatus.OK, Course.class);
-
-        assertThat(hibernateQueryInterceptor.getQueryCount()).isEqualTo(34);
-    }
-
-    // Test
     public void testGetCoursesWithoutActiveExercises() throws Exception {
         Course course = ModelFactory.generateCourse(1L, null, null, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
         courseRepo.save(course);
 
-        hibernateQueryInterceptor.startQueryCount();
-
         List<Course> courses = request.getList("/api/courses/for-dashboard", HttpStatus.OK, Course.class);
-
-        assertThat(hibernateQueryInterceptor.getQueryCount()).isEqualTo(3);
 
         assertThat(courses).as("Only one course is returned").hasSize(1);
         assertThat(courses.stream().findFirst().get().getExercises()).as("Course doesn't have any exercises").isEmpty();
@@ -688,20 +660,12 @@ public class CourseTestService {
         courseRepo.save(courseNotActivePast);
         courseRepo.save(courseNotActiveFuture);
 
-        hibernateQueryInterceptor.startQueryCount();
-
         List<Course> courses = request.getList("/api/courses/for-dashboard", HttpStatus.OK, Course.class);
-
-        assertThat(hibernateQueryInterceptor.getQueryCount()).isEqualTo(3);
 
         assertThat(courses).as("Exactly one course is returned").hasSize(1);
         assertThat(courses.get(0)).as("Active course is returned").isEqualTo(courseActive);
 
-        hibernateQueryInterceptor.startQueryCount();
-
         List<Course> coursesForNotifications = request.getList("/api/courses/for-notifications", HttpStatus.OK, Course.class);
-
-        assertThat(hibernateQueryInterceptor.getQueryCount()).isEqualTo(2);
 
         assertThat(coursesForNotifications).as("Exactly one course is returned").hasSize(1);
         assertThat(coursesForNotifications.get(0)).as("Active course is returned").isEqualTo(courseActive);

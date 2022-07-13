@@ -158,11 +158,7 @@ public class ExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitb
         List<Course> courses = database.createCoursesWithExercisesAndLectures(true);
         for (Course course : courses) {
             for (Exercise exercise : course.getExercises()) {
-                hibernateQueryInterceptor.startQueryCount();
-
                 Exercise exerciseServer = request.get("/api/exercises/" + exercise.getId(), HttpStatus.OK, Exercise.class);
-
-                assertThat(hibernateQueryInterceptor.getQueryCount()).isEqualTo(3);
 
                 // Test that certain properties were set correctly
                 assertThat(exerciseServer.getReleaseDate()).as("Release date is present").isNotNull();
