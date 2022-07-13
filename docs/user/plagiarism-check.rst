@@ -7,12 +7,14 @@ Plagiarism checks
     :local:
     :depth: 2
 
-Plagiarism checks Overview
+Plagiarism Check Overview
 --------------------------
 
 Artemis allows tutors and exercise instructors to check assignments submissions from students for plagiarism.
 With this feature, different types of assignments can be checked in Artemis, including programming assignments, modeling assignments, and text assignments.
 To perform the plagiarism check, the responsible tutors must initiate the checking process for a specific task. Below, we describe the plagiarism check workflows from the perspective of various Artemis users using a UML Activity Diagram.
+
+.. _settings:
 
 Settings
 ^^^^^^^^
@@ -57,10 +59,10 @@ After the plagiarism check was executed the results can be expected in different
 
 1. Overview of the similarity distribution. This statistical overview shows the similarity distribution based on the percentage as a histogram chart. The user can analyze the distribution quickly and adjust the plagiarism check settings as needed accordingly.
  |run-results|
-2. Selected submission. When the user selects the submission from the submission list on the left side of the plagiarism run result view, new actions can be selected to initiate the plagiarism case workflow. We will provide more information to the the workflow in the next sections.
+2. Selected submission. When the user selects the submission from the submission list on the left side of the plagiarism run result view, new actions can be selected to initiate the plagiarism check workflow. We will provide more information to the the workflow in the next sections.
  |run-results-selected-submissions|
 
-Plagiarism Case Workflow
+Plagiarism Check Workflow
 ------------------------
 
 Tutors
@@ -71,18 +73,15 @@ This process is visualized in the following diagram.
 |tutor-workflow|
 
  1. Open the Exercise via: Course Management → Course → Exercises → Your Exercise".
- |exercise-page|
  2. Access the plagiarism tool as seen in the picture
+  |exercise-page|
  3. Run the Plagiarism Check.
-  a. Tutor can adjust the similarity threshold and other features if deemed necessary (most of the time not, depends on the exercise type)
-  |run-settings|
+  a. Tutor can adjust the similarity threshold and other settings as described in section :ref:`settings` if deemed necessary (most of the time not, depends on the exercise type).
   b. Checking big exercises can take a long time (sometimes multiple hours) and be very resource heavy → Start the checks at times when Artemis is less used
- 4. Start checking for plagiarism
- |run-results|
-  a. Assess if the presented matches are real plagiarism or not
-  b. Depending on your assessment either deny or accept the match as plagiarism
-  c. Continue until the matches start to get "too different"
- 5. Check if the tutors have mentioned any suspicious submissions in the Confluence page and check them for validity
+ 4. Start checking for plagiarism.
+  a. Assess if the presented matches are real plagiarism or not.
+  b. Depending on your assessment either deny or confirm the match as plagiarism.
+  c. Continue until the matches start to get "too different".
 
 
 Instructors
@@ -98,7 +97,7 @@ This section captures the most important features that are offered to Artemis st
 
 
 
-.. |tutor-workflow| image:: plagiarism-check/tutor/tutor_workflow.png
+.. |tutor-workflow| image:: plagiarism-check/workflow/tutor-workflow.png
     :width: 700
 .. |plagiarism-actions1| image:: plagiarism-check/actions/plagiarism-actions1.png
     :width: 1000
