@@ -23,17 +23,13 @@ export class ArtemisNavigationUtilService {
     /**
      * Navigates to the last page if possible or to the fallback url if not
      * @param fallbackUrl Url to navigate to if current page is first navigation
-     * @return true if navigation was called; false otherwise
      */
-    navigateBack(fallbackUrl: string[] = []): boolean {
+    navigateBack(fallbackUrl?: (string | number)[]) {
         if (!this.onFirstPage) {
             this.location.back();
         } else if (fallbackUrl) {
             this.router.navigate(fallbackUrl);
-        } else {
-            return false;
         }
-        return true;
     }
 
     /**
@@ -57,16 +53,16 @@ export class ArtemisNavigationUtilService {
             // If an exercise group is set we are in exam mode
             this.router.navigate([
                 'course-management',
-                exercise.exerciseGroup.exam.course.id.toString(),
+                exercise.exerciseGroup.exam.course.id,
                 'exams',
-                exercise.exerciseGroup.exam.id!.toString(),
+                exercise.exerciseGroup.exam.id!,
                 'exercise-groups',
                 exercise.exerciseGroup.id!,
                 exercise.type! + '-exercises',
                 exercise.id,
             ]);
         } else if (exercise?.course?.id) {
-            this.router.navigate(['course-management', exercise.course.id.toString(), exercise.type! + '-exercises', exercise.id!.toString()]);
+            this.router.navigate(['course-management', exercise.course.id, exercise.type! + '-exercises', exercise.id]);
         } else {
             // Fallback
             this.navigateBack();
@@ -82,15 +78,14 @@ export class ArtemisNavigationUtilService {
      * @param exercise the updated or created exercise
      */
     navigateBackFromExerciseUpdate(exercise?: Exercise) {
-        if (this.navigateBack()) {
-            return;
-        }
+        let fallback: (string | number)[] | undefined = undefined;
         if (exercise?.exerciseGroup?.exam?.course?.id) {
             // If an exercise group is set we are in exam mode
-            this.router.navigate(['course-management', exercise.exerciseGroup.exam.course.id.toString(), 'exams', exercise.exerciseGroup.exam.id!.toString(), 'exercise-groups']);
+            fallback = ['/course-management', exercise.exerciseGroup.exam.course.id, 'exams', exercise.exerciseGroup.exam.id!, 'exercise-groups'];
         } else if (exercise?.course?.id) {
-            this.router.navigate(['course-management', exercise.course.id.toString(), 'exercises']);
+            fallback = ['/course-management', exercise.course.id, 'exercises'];
         }
+        this.navigateBack(fallback);
     }
 
     replaceNewWithIdInUrl(url: string, id: number) {
