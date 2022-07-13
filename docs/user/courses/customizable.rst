@@ -1,10 +1,11 @@
 Customizing Courses
-=================
+===================
 .. contents:: Content of this document
     :local:
     :depth: 2
 
-Courses contain both exercises and exams and different roles can be attached to different sets of course participants: Instructors, Editors, Tutors and Users.
+Courses contain `exercises </user/exercises>`_,  `exams </user/exam_mode>`_ and lectures.
+Different roles can be attached to different sets of course participants: Instructors, Editors, Tutors and Users.
 You can find a detailed listing of the different roles and their corresponding permissions `here </admin/accessRights>`_.
 
 Creating courses
