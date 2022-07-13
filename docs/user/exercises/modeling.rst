@@ -54,7 +54,7 @@ Following screenshot illustrates the first section of the form. It consists of:
    Fields marked with red are mandatory to be filled.
 
 .. note::
-   - Field **Diagram Type** determines the components that students/instructors can use while working on the exercise.
+   - The field **Diagram Type** determines the components that students/instructors can use while working on the exercise.
    - For example: If the instructor selects Class diagram as its Diagram Type, users (instructors/students) will now only be able to use components of class diagram throughout the exercise.
 
     .. figure:: modeling/class-diagram-diagram-type.png
