@@ -469,20 +469,20 @@ describe('UserManagementComponent', () => {
         expect(comp.filters.authorityFilter).toEqual(new Set<OriginFilter>());
     });
 
-    it('should toggle status filter', () => {
+    it('should toggle registration number filter', () => {
         const spy = jest.spyOn(localStorageService, 'store');
 
         comp.filters = new UserFilter();
 
-        comp.toggleStatusFilter(StatusFilter.DEACTIVATED);
+        comp.toggleRegistrationNumberFilter(RegistrationNumberFilter.WITHOUT_REG_NO);
 
-        expect(comp.filters.statusFilter).toEqual(new Set<StatusFilter>([StatusFilter.DEACTIVATED]));
+        expect(comp.filters.registrationNumberFilter).toEqual(new Set<RegistrationNumberFilter>([RegistrationNumberFilter.WITHOUT_REG_NO]));
         expect(spy).toHaveBeenCalledOnce();
-        expect(spy).toHaveBeenCalledWith(UserStorageKey.STATUS, 'DEACTIVATED');
+        expect(spy).toHaveBeenCalledWith(UserStorageKey.REGISTRATION_NUMBER, 'WITHOUT_REG_NO');
 
-        comp.toggleStatusFilter(StatusFilter.DEACTIVATED);
+        comp.toggleRegistrationNumberFilter(RegistrationNumberFilter.WITHOUT_REG_NO);
         expect(spy).toHaveBeenCalledWith(UserStorageKey.STATUS, '');
-        expect(comp.filters.authorityFilter).toEqual(new Set<StatusFilter>());
+        expect(comp.filters.authorityFilter).toEqual(new Set<RegistrationNumberFilter>());
     });
 
     it('should toggle status filter', () => {

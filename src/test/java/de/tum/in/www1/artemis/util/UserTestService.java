@@ -549,7 +549,7 @@ public class UserTestService {
         params.add("sortedColumn", "id");
         params.add("authorities", "");
         params.add("origins", "");
-        params.add("registrationNumber", "");
+        params.add("registrationNumbers", "");
         params.add("status", "");
         params.add("courseIds", "");
         List<UserDTO> users = request.getList("/api/users", HttpStatus.OK, UserDTO.class, params);
@@ -588,7 +588,7 @@ public class UserTestService {
         params.add("authorities", "USER");
         params.add("origins", "");
         params.add("status", "");
-        params.add("registrationNumber", "");
+        params.add("registrationNumbers", "");
         params.add("courseIds", "");
         List<User> users = request.getList("/api/users", HttpStatus.OK, User.class, params);
         assertThat(users).hasSize(1);
@@ -760,6 +760,7 @@ public class UserTestService {
      * Helper method to create the params.
      * @param authorities authorities of the users
      * @param origins of the users
+     * @param registrationNumbers of the users
      * @param status of the users
      * @param courseIds which the users are part
      * @return params for request
@@ -773,7 +774,7 @@ public class UserTestService {
         params.add("sortedColumn", "id");
         params.add("authorities", authorities);
         params.add("origins", origins);
-        params.add("registrationNumber", registrationNumber);
+        params.add("registrationNumbers", registrationNumber);
         params.add("status", status);
         params.add("courseIds", courseIds);
         return params;
@@ -806,7 +807,7 @@ public class UserTestService {
         Course course = database.addEmptyCourse();
         courseRepository.save(course);
 
-        final var params = createParamsForPagingRequest("USER", "", "", "", Long.toString(course.getId()));
+        final var params = createParamsForPagingRequest("USER", "", "WITHOUT_REG_NO", "", Long.toString(course.getId()));
 
         List<User> result;
         List<User> users;
@@ -826,7 +827,7 @@ public class UserTestService {
 
     // Test
     public void testUserWithActivatedStatus() throws Exception {
-        final var params = createParamsForPagingRequest("USER", "", "", "ACTIVATED", "");
+        final var params = createParamsForPagingRequest("USER", "", "WITHOUT_REG_NO", "ACTIVATED", "");
 
         List<User> result;
         List<User> users;
@@ -846,7 +847,7 @@ public class UserTestService {
 
     // Test
     public void testUserWithDeactivatedStatus() throws Exception {
-        final var params = createParamsForPagingRequest("USER", "", "", "DEACTIVATED", "");
+        final var params = createParamsForPagingRequest("USER", "", "WITHOUT_REG_NO", "DEACTIVATED", "");
 
         List<User> result;
         List<User> users;
@@ -868,7 +869,7 @@ public class UserTestService {
 
     // Test
     public void testUserWithInternalStatus() throws Exception {
-        final var params = createParamsForPagingRequest("USER", "INTERNAL", "", "", "");
+        final var params = createParamsForPagingRequest("USER", "INTERNAL", "WITHOUT_REG_NO", "", "");
 
         List<User> result;
         List<User> users;
@@ -890,7 +891,7 @@ public class UserTestService {
 
     // Test
     public void testUserWithExternalStatus() throws Exception {
-        final var params = createParamsForPagingRequest("USER", "EXTERNAL", "", "", "");
+        final var params = createParamsForPagingRequest("USER", "EXTERNAL", "WITHOUT_REG_NO", "", "");
 
         List<User> result;
         List<User> users;
@@ -912,7 +913,7 @@ public class UserTestService {
 
     // Test
     public void testUserWithExternalAndInternalStatus() throws Exception {
-        final var params = createParamsForPagingRequest("USER", "INTERNAL,EXTERNAL", "", "", "");
+        final var params = createParamsForPagingRequest("USER", "INTERNAL,EXTERNAL", "WITHOUT_REG_NO", "", "");
 
         List<User> result;
         List<User> users;
@@ -933,11 +934,11 @@ public class UserTestService {
 
     /**
      * Test for the user search with the following parameters:
-     * @Param registrationNumber
+     * @Param registrationNumbers
      * @throws Exception if the user is not the same as the expected user
      */
     public void testUserWithRegistrationNumber() throws Exception {
-        final var params = createParamsForPagingRequest("USER", "INTERNAL,EXTERNAL", "5461351", "", "");
+        final var params = createParamsForPagingRequest("USER", "INTERNAL,EXTERNAL", "WITH_REG_NO", "", "");
 
         List<User> result;
         List<User> users;
@@ -949,21 +950,20 @@ public class UserTestService {
             userRepository.deleteAll();
             users = database.addUsers(number[0], number[1], number[2], number[3]).stream().peek(user -> user.setGroups(Collections.emptySet())).toList();
             users.get(0).setRegistrationNumber("");
-            users.get(1).setRegistrationNumber("5461351");
+            users.get(1).setRegistrationNumber("");
             userRepository.saveAll(users);
             result = request.getList("/api/users", HttpStatus.OK, User.class, params);
-            assertThat(result).hasSize(1); // user
-            assertThat(result.get(0)).isEqualTo(users.get(1));
+            assertThat(result).isEqualTo(Collections.emptyList());
         }
     }
 
     /**
      * Test for the user search with the following parameters:
-     * @Param registrationNumber
+     * @Param registrationNumbers
      * @throws Exception if the user is not the same as the expected user
      */
     public void testUserWithoutRegistrationNumber() throws Exception {
-        final var params = createParamsForPagingRequest("USER", "", "", "", "");
+        final var params = createParamsForPagingRequest("USER", "", "WITHOUT_REG_NO", "", "");
 
         List<User> result;
         List<User> users;
@@ -978,8 +978,7 @@ public class UserTestService {
             users.get(1).setRegistrationNumber("");
             userRepository.saveAll(users);
             result = request.getList("/api/users", HttpStatus.OK, User.class, params);
-            assertThat(result).hasSize(1); // user
-            assertThat(result.get(0)).isEqualTo(users.get(1));
+            assertThat(result.get(0)).isEqualTo(users.get(2));
         }
     }
 }
