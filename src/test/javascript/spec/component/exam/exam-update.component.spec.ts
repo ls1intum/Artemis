@@ -29,6 +29,7 @@ import { HelpIconComponent } from 'app/shared/components/help-icon.component';
 import { ArtemisExamModePickerModule } from 'app/exam/manage/exams/exam-mode-picker/exam-mode-picker.module';
 import { CustomMinDirective } from 'app/shared/validators/custom-min-validator.directive';
 import { CustomMaxDirective } from 'app/shared/validators/custom-max-validator.directive';
+import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
 
 @Component({
     template: '',
@@ -328,4 +329,15 @@ describe('Exam Update Component', () => {
 
         createStub.mockRestore();
     }));
+
+    it('should call the back method on the nav util service on previousState', () => {
+        const navUtilService = TestBed.inject(ArtemisNavigationUtilService);
+        const spy = jest.spyOn(navUtilService, 'navigateBackWithOptional').mockImplementation();
+        component.course = course;
+        component.exam = exam;
+        exam.id = 1;
+        component.previousState();
+        expect(spy).toHaveBeenCalledOnce();
+        expect(spy).toHaveBeenCalledWith(['course-management', course.id!.toString(), 'exams'], exam.id!.toString());
+    });
 });
