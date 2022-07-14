@@ -1,4 +1,11 @@
-<button id="add-unreferenced-feedback" class="btn btn-success mt-4" (click)="addUnreferencedFeedback()" [disabled]="readOnly">
+<button
+    id="add-unreferenced-feedback"
+    (drop)="createAssessmentOnDrop($event)"
+    (dragover)="$event.preventDefault()"
+    class="btn btn-success mt-4"
+    (click)="addUnreferencedFeedback()"
+    [disabled]="readOnly"
+>
     {{ 'artemisApp.fileUploadAssessment.addFeedback' | artemisTranslate }}
 </button>
 <ng-container *ngIf="!busy">

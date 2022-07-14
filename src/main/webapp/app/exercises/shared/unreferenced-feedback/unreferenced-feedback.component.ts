@@ -1,5 +1,6 @@
 import { Component, Input, Output, EventEmitter } from '@angular/core';
 import { Feedback, FeedbackType } from 'app/entities/feedback.model';
+import { StructuredGradingCriterionService } from 'app/exercises/shared/structured-grading-criterion/structured-grading-criterion.service';
 
 @Component({
     selector: 'jhi-unreferenced-feedback',
@@ -26,6 +27,8 @@ export class UnreferencedFeedbackComponent {
     }
 
     @Output() feedbacksChange = new EventEmitter<Feedback[]>();
+
+    constructor(public structuredGradingCriterionService: StructuredGradingCriterionService) {}
 
     public deleteAssessment(assessmentToDelete: Feedback): void {
         const indexToDelete = this.unreferencedFeedback.indexOf(assessmentToDelete);
@@ -89,5 +92,16 @@ export class UnreferencedFeedbackComponent {
             return id;
         });
         return Math.max(...references.concat([0])) + 1;
+    }
+
+    createAssessmentOnDrop(event: Event) {
+        this.addUnreferencedFeedback();
+        const newFeedback: Feedback | undefined = this.unreferencedFeedback.last();
+        console.log(newFeedback);
+        if (newFeedback !== undefined) {
+            this.structuredGradingCriterionService.updateFeedbackWithStructuredGradingInstructionEvent(newFeedback, event);
+            this.updateAssessment(newFeedback);
+            console.log('assessment was updated');
+        }
     }
 }
