@@ -40,7 +40,7 @@ export class AboutUsComponent implements OnInit {
         ['plagiarismChecks', { jPlagUrl: 'https://github.com/jplag/JPlag' }],
         ['learningAnalytics', {}],
         ['scalable', {}],
-        ['highUserSatisfaction', {}],
+        ['highUserSatisfaction', { userExperienceUrl: 'https://docs.artemis.ase.in.tum.de/user/user-experience/' }],
         ['customizable', {}],
         ['openSource', { openSourceUrl: 'https://docs.artemis.ase.in.tum.de/dev/open-source/' }],
     ];

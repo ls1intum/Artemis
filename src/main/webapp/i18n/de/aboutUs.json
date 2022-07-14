@@ -53,7 +53,7 @@
             "text": "<b>Skalierbar</b> auf mehrere Kurse mit Tausenden von Studierenden. Konfigurieren von zusätzlichen Build-Agenten in der kontinuierlichen Integrationsumgebung."
         },
         "highUserSatisfaction": {
-            "text": "<b>Hohe Benutzerzufriedenheit:</b> Artemis ist einfach zu bedienen und bietet geführte Tutorials. Die Entwickler konzentrieren sich auf Benutzerfreundlichkeit, Benutzererfahrung und Leistung."
+            "text": "<a href={{ userExperienceUrl }}>Hohe Benutzerzufriedenheit:</a> Artemis ist einfach zu bedienen und bietet geführte Tutorials. Die Entwickler konzentrieren sich auf Benutzerfreundlichkeit, Benutzererfahrung und Leistung."
         },
         "customizable": {
             "text": "<b>Anpassbar:</b> Artemis unterstützt mehrere Lehrende, Bearbeitende und Tutoren pro Kurs und erlaubt den Lehrenden viele Kurseinstellungen anzupassen."
