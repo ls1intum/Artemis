@@ -98,7 +98,7 @@ describe('EditTextUnitComponent', () => {
 
         editTextUnitComponentFixture.detectChanges();
         editTextUnitComponentFixture.whenStable().then(() => {
-            expect(findByIdStub).toHaveBeenCalledTimes(1);
+            expect(findByIdStub).toHaveBeenCalledOnce();
             expect(editTextUnitComponent.formData.name).toEqual(originalTextUnit.name);
             expect(editTextUnitComponent.formData.releaseDate).toEqual(originalTextUnit.releaseDate);
             expect(editTextUnitComponent.formData.content).toEqual(originalTextUnit.content);
@@ -148,9 +148,9 @@ describe('EditTextUnitComponent', () => {
         textUnitForm.formSubmitted.emit(formDate);
 
         editTextUnitComponentFixture.whenStable().then(() => {
-            expect(findByIdStub).toHaveBeenCalledTimes(1);
-            expect(updatedStub).toHaveBeenCalledTimes(1);
-            expect(navigateSpy).toHaveBeenCalledTimes(1);
+            expect(findByIdStub).toHaveBeenCalledOnce();
+            expect(updatedStub).toHaveBeenCalledOnce();
+            expect(navigateSpy).toHaveBeenCalledOnce();
             navigateSpy.mockRestore();
         });
     }));

@@ -27,6 +27,11 @@ public class SavedExerciseAction extends ExamAction {
      */
     private Long submissionId;
 
+    /**
+     * The corresponding exercise id.
+     */
+    private Long exerciseId;
+
     public boolean isForced() {
         return forced;
     }
@@ -57,5 +62,13 @@ public class SavedExerciseAction extends ExamAction {
 
     public void setSubmissionId(Long submissionId) {
         this.submissionId = submissionId;
+    }
+
+    public Long getExerciseId() {
+        return exerciseId;
+    }
+
+    public void setExerciseId(Long exerciseId) {
+        this.exerciseId = exerciseId;
     }
 }

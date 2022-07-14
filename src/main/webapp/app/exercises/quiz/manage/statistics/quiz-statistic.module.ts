@@ -1,5 +1,4 @@
 import { NgModule } from '@angular/core';
-import { NgxChartsModule } from '@swimlane/ngx-charts';
 import { RouterModule } from '@angular/router';
 import { QuizStatisticComponent } from './quiz-statistic/quiz-statistic.component';
 import { QuizPointStatisticComponent } from './quiz-point-statistic/quiz-point-statistic.component';
@@ -11,11 +10,12 @@ import { quizStatisticRoute } from 'app/exercises/quiz/manage/statistics/quiz-st
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { ArtemisQuizQuestionTypesModule } from 'app/exercises/quiz/shared/questions/artemis-quiz-question-types.module';
 import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
+import { BarChartModule } from '@swimlane/ngx-charts';
 
 const ENTITY_STATES = [...quizStatisticRoute];
 
 @NgModule({
-    imports: [ArtemisSharedModule, RouterModule.forChild(ENTITY_STATES), ArtemisQuizQuestionTypesModule, ArtemisMarkdownModule, NgxChartsModule],
+    imports: [ArtemisSharedModule, RouterModule.forChild(ENTITY_STATES), ArtemisQuizQuestionTypesModule, ArtemisMarkdownModule, BarChartModule],
     declarations: [
         QuizStatisticComponent,
         QuizPointStatisticComponent,

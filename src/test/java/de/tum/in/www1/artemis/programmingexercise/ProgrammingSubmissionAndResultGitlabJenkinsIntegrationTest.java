@@ -2,7 +2,7 @@ package de.tum.in.www1.artemis.programmingexercise;
 
 import static de.tum.in.www1.artemis.config.Constants.NEW_RESULT_RESOURCE_PATH;
 import static de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage.JAVA;
-import static de.tum.in.www1.artemis.programmingexercise.ProgrammingSubmissionConstants.GITLAB_REQUEST;
+import static de.tum.in.www1.artemis.programmingexercise.ProgrammingSubmissionConstants.GITLAB_PUSH_EVENT_REQUEST;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -167,7 +167,7 @@ public class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends 
     public void shouldSetSubmissionDateForBuildCorrectlyIfOnlyOnePushIsReceived() throws Exception {
         testService.setUp_shouldSetSubmissionDateForBuildCorrectlyIfOnlyOnePushIsReceived();
         String userLogin = "student1";
-        var pushJSON = (JSONObject) new JSONParser().parse(GITLAB_REQUEST);
+        var pushJSON = (JSONObject) new JSONParser().parse(GITLAB_PUSH_EVENT_REQUEST);
         var firstCommitHash = (String) pushJSON.get("before");
         var secondCommitHash = (String) pushJSON.get("after");
         var firstCommitDate = ZonedDateTime.now().minusSeconds(60);
@@ -256,7 +256,6 @@ public class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends 
         assertThat(result.getHasFeedback()).isFalse();
         assertThat(result.isSuccessful()).isFalse();
         assertThat(result.getScore()).isEqualTo(0D);
-        assertThat(result.getResultString()).isEqualTo("No tests found");
 
         // Assert that the submission linked to the participation
         var submission = (ProgrammingSubmission) result.getSubmission();
@@ -301,7 +300,7 @@ public class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends 
      * This is the simulated request from the VCS to Artemis on a new commit.
      */
     private ProgrammingSubmission postSubmission(Long participationId, HttpStatus expectedStatus) throws Exception {
-        return testService.postSubmission(participationId, expectedStatus, GITLAB_REQUEST);
+        return testService.postSubmission(participationId, expectedStatus, GITLAB_PUSH_EVENT_REQUEST);
     }
 
     private void assertNoNewSubmissions(ProgrammingSubmission existingSubmission) {

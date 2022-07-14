@@ -1,7 +1,6 @@
 package de.tum.in.www1.artemis.service.programming;
 
 import static de.tum.in.www1.artemis.config.Constants.*;
-import static java.util.stream.Collectors.toList;
 
 import java.time.ZonedDateTime;
 import java.util.*;
@@ -140,7 +139,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
                     commit.getBranch());
         }
         catch (Exception ex) {
-            log.error("Commit could not be parsed for submission from participation " + programmingExerciseParticipation, ex);
+            log.error("Commit could not be parsed for submission from participation {}", programmingExerciseParticipation, ex);
             throw new IllegalArgumentException(ex);
         }
 
@@ -213,7 +212,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
                 programmingExerciseGitDiffReportService.updateReport(programmingExerciseParticipation.getProgrammingExercise());
             }
             catch (Exception e) {
-                log.error("Unable to update git-diff for programming exercise " + programmingExerciseParticipation.getProgrammingExercise().getId(), e);
+                log.error("Unable to update git-diff for programming exercise {}", programmingExerciseParticipation.getProgrammingExercise().getId(), e);
             }
         }
     }
@@ -337,7 +336,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
                     Thread.sleep(externalSystemRequestBatchWaitingTime);
                 }
                 catch (InterruptedException ex) {
-                    log.error("Exception encountered when pausing before executing successive build for participation " + participation.getId(), ex);
+                    log.error("Exception encountered when pausing before executing successive build for participation {}", participation.getId(), ex);
                 }
             }
             triggerBuild(participation);
@@ -666,7 +665,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
             // Latest submission might be illegal
             submissions = participations.stream().map(StudentParticipation::findLatestLegalOrIllegalSubmission).filter(Optional::isPresent).map(Optional::get)
                     // filter out the submissions that don't have a result (but a null value) for the correctionRound
-                    .filter(submission -> submission.hasResultForCorrectionRound(correctionRound)).collect(toList());
+                    .filter(submission -> submission.hasResultForCorrectionRound(correctionRound)).collect(Collectors.toList());
         }
         else {
             submissions = this.submissionRepository.findAllByParticipationExerciseIdAndResultAssessor(exerciseId, tutor);
@@ -681,7 +680,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
                 latestResult.setSubmission(null);
             }
         });
-        List<ProgrammingSubmission> programmingSubmissions = submissions.stream().map(submission -> (ProgrammingSubmission) submission).collect(toList());
+        List<ProgrammingSubmission> programmingSubmissions = submissions.stream().map(submission -> (ProgrammingSubmission) submission).collect(Collectors.toList());
         // In Exam-Mode, the Submissions are retrieved from the studentParticipationRepository, for which the Set<Submission> is appended
         // In non-Exam Mode, the Submissions are retrieved from the submissionRepository, for which no Set<submission> is appended
         return removeExerciseAndSubmissionSet(programmingSubmissions, examMode);
@@ -809,10 +808,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
         else {
             optionalExistingResult = Optional.ofNullable(submission.getResultForCorrectionRound(correctionRound - 1));
         }
-        List<Feedback> automaticFeedbacks = new ArrayList<>();
-        if (optionalExistingResult.isPresent()) {
-            automaticFeedbacks = optionalExistingResult.get().getFeedbacks().stream().map(Feedback::copyFeedback).collect(Collectors.toList());
-        }
+
         // Create a new result (manual result) and try to reuse the existing submission with the latest commit hash
         ProgrammingSubmission existingSubmission = getOrCreateSubmissionWithLastCommitHashForParticipation((ProgrammingExerciseStudentParticipation) submission.getParticipation(),
                 SubmissionType.MANUAL);
@@ -820,14 +816,19 @@ public class ProgrammingSubmissionService extends SubmissionService {
         newResult.setAssessor(userRepository.getUser());
         newResult.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
         // Copy automatic feedbacks into the manual result
-        for (Feedback feedback : automaticFeedbacks) {
-            feedback = feedbackRepository.save(feedback);
-            feedback.setResult(newResult);
+        List<Feedback> automaticFeedbacks = new ArrayList<>();
+        if (optionalExistingResult.isPresent()) {
+            Result existingResult = optionalExistingResult.get();
+            automaticFeedbacks = existingResult.getFeedbacks().stream().map(Feedback::copyFeedback).collect(Collectors.toList());
+            for (Feedback feedback : automaticFeedbacks) {
+                feedback = feedbackRepository.save(feedback);
+                feedback.setResult(newResult);
+            }
+
+            newResult.copyProgrammingExerciseCounters(existingResult);
         }
         newResult.setFeedbacks(automaticFeedbacks);
-        if (optionalExistingResult.isPresent()) {
-            newResult.setResultString(optionalExistingResult.get().getResultString());
-        }
+
         // Workaround to prevent the assessor turning into a proxy object after saving
         var assessor = newResult.getAssessor();
         newResult = resultRepository.save(newResult);

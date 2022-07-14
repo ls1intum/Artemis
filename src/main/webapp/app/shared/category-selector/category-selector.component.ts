@@ -34,7 +34,7 @@ export class CategorySelectorComponent implements OnChanges {
     private readonly colorSelectorHeight = 150;
 
     separatorKeysCodes = [ENTER, COMMA, TAB];
-    categoryCtrl = new FormControl();
+    categoryCtrl = new FormControl<string | undefined>(undefined);
 
     // Icons
     faTimes = faTimes;

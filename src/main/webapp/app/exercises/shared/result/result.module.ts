@@ -6,10 +6,10 @@ import { ResultDetailComponent } from 'app/exercises/shared/result/result-detail
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { FeedbackCollapseComponent } from 'app/exercises/shared/result/feedback-collapse.component';
 import { SubmissionResultStatusModule } from 'app/overview/submission-result-status.module';
-import { NgxChartsModule } from '@swimlane/ngx-charts';
+import { BarChartModule } from '@swimlane/ngx-charts';
 
 @NgModule({
-    imports: [ArtemisSharedModule, ArtemisProgrammingExerciseActionsModule, ArtemisSharedComponentModule, SubmissionResultStatusModule, NgxChartsModule],
+    imports: [ArtemisSharedModule, ArtemisProgrammingExerciseActionsModule, ArtemisSharedComponentModule, SubmissionResultStatusModule, BarChartModule],
     declarations: [ResultDetailComponent, ResultHistoryComponent, FeedbackCollapseComponent],
     exports: [ResultDetailComponent, ResultHistoryComponent],
 })

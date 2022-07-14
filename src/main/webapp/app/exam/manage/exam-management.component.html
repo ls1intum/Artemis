@@ -57,40 +57,52 @@
                     </td>
                     <td class="d-md-table-cell">
                         <div class="btn-group flex-btn-group-container">
-                            <div class="btn-group-vertical me-1 mb-1">
+                            <div class="btn-group-vertical me-1 mb-1 exam-management-button-section">
                                 <a
                                     *ngIf="course.isAtLeastEditor"
                                     [routerLink]="[exam.id, 'exercise-groups']"
-                                    class="btn btn-primary btn-sm me-1 mb-1 exercise-button"
+                                    class="btn btn-primary btn-sm me-1 mb-1 exercise-button d-flex align-items-center justify-content-center"
                                     id="exercises-button-{{ exam.id }}-groups"
                                 >
-                                    <fa-icon [icon]="faListAlt"></fa-icon>
-                                    <span class="d-none d-md-inline">{{ 'artemisApp.examManagement.exerciseGroups' | artemisTranslate }}</span>
+                                    <div>
+                                        <fa-icon [icon]="faListAlt"></fa-icon>
+                                        <span class="d-none d-md-inline">{{ 'artemisApp.examManagement.exerciseGroups' | artemisTranslate }}</span>
+                                    </div>
                                 </a>
                                 <a
                                     *ngIf="course.isAtLeastInstructor"
                                     [routerLink]="[exam.id, 'student-exams']"
-                                    class="btn btn-primary btn-sm me-1 mb-1"
+                                    class="btn btn-primary btn-sm me-1 mb-1 d-flex align-items-center justify-content-center"
                                     id="student-exams-{{ exam.id }}"
                                 >
-                                    <fa-icon [icon]="faEye"></fa-icon>
-                                    <span class="d-none d-md-inline">{{ 'artemisApp.examManagement.studentExams' | artemisTranslate }}</span>
+                                    <div>
+                                        <fa-icon [icon]="faEye"></fa-icon>
+                                        <span class="d-none d-md-inline">{{ 'artemisApp.examManagement.studentExams' | artemisTranslate }}</span>
+                                    </div>
                                 </a>
                                 <a
                                     *ngIf="!exam.testExam && ((course.isAtLeastTutor && examHasFinished(exam)) || course.isAtLeastInstructor)"
                                     [routerLink]="[exam.id, 'assessment-dashboard']"
-                                    class="btn btn-primary btn-sm me-1 mb-1 exercise-button"
+                                    class="btn btn-primary btn-sm me-1 mb-1 exercise-button d-flex align-items-center justify-content-center"
                                     id="exercises-button-{{ exam.id }}"
                                 >
-                                    <fa-icon [icon]="faThList"></fa-icon>
-                                    <span class="d-none d-md-inline">{{ 'artemisApp.examManagement.assessmentDashboard' | artemisTranslate }}</span>
+                                    <div>
+                                        <fa-icon [icon]="faThList"></fa-icon>
+                                        <span class="d-none d-md-inline">{{ 'artemisApp.examManagement.assessmentDashboard' | artemisTranslate }}</span>
+                                    </div>
                                 </a>
-                                <a *ngIf="course.isAtLeastInstructor" [routerLink]="[exam.id, 'edit']" class="btn btn-warning btn-sm me-1 mb-1">
-                                    <fa-icon [icon]="faWrench"></fa-icon>
-                                    <span class="d-none d-md-inline">{{ 'entity.action.edit' | artemisTranslate }}</span>
+                                <a
+                                    *ngIf="course.isAtLeastInstructor"
+                                    [routerLink]="[exam.id, 'edit']"
+                                    class="btn btn-warning btn-sm me-1 mb-1 d-flex align-items-center justify-content-center"
+                                >
+                                    <div>
+                                        <fa-icon [icon]="faWrench"></fa-icon>
+                                        <span class="d-none d-md-inline">{{ 'entity.action.edit' | artemisTranslate }}</span>
+                                    </div>
                                 </a>
                             </div>
-                            <div class="btn-group-vertical me-1 mb-1">
+                            <div class="btn-group-vertical me-1 mb-1 exam-management-button-section">
                                 <a *ngIf="course.isAtLeastInstructor" [routerLink]="[exam.id, 'test-runs']" class="btn btn-info btn-sm me-1 mb-1 assessment-dashboard">
                                     <fa-icon [icon]="faUser"></fa-icon>
                                     <span class="d-none d-md-inline">{{ 'artemisApp.examManagement.testRun.testRun' | artemisTranslate }}</span>

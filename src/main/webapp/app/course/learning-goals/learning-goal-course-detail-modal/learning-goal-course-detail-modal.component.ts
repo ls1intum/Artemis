@@ -17,6 +17,8 @@ export class LearningGoalCourseDetailModalComponent implements OnInit {
     learningGoal: LearningGoal;
     @Input()
     learningGoalCourseProgress: CourseLearningGoalProgress;
+    @Input()
+    isPrerequisite: Boolean;
 
     public lectureUnitIdToLectureUnitCourseProgress = new Map();
 
@@ -31,7 +33,7 @@ export class LearningGoalCourseDetailModalComponent implements OnInit {
     constructor(public activeModal: NgbActiveModal, public lectureUnitService: LectureUnitService, public sortService: SortService) {}
 
     ngOnInit(): void {
-        if (this.learningGoalCourseProgress && this.learningGoalCourseProgress.totalPointsAchievableByStudentsInLearningGoal > 0) {
+        if (!this.isPrerequisite && this.learningGoalCourseProgress) {
             this.isProgressAvailable = true;
 
             if (this.learningGoalCourseProgress.progressInLectureUnits) {
@@ -40,7 +42,7 @@ export class LearningGoalCourseDetailModalComponent implements OnInit {
 
             const progress =
                 (this.learningGoalCourseProgress.averagePointsAchievedByStudentInLearningGoal / this.learningGoalCourseProgress.totalPointsAchievableByStudentsInLearningGoal) *
-                100;
+                    100 || 0;
             this.progressInPercent = round(progress, 1);
         }
     }

@@ -1,4 +1,4 @@
-import { ComponentFixture, fakeAsync, TestBed, tick, flush } from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import { FormBuilder, FormsModule } from '@angular/forms';
 import { of } from 'rxjs';
 import { HttpHeaders, HttpResponse } from '@angular/common/http';
@@ -131,7 +131,7 @@ describe('ExerciseHint Management Update Component', () => {
 
             // THEN
             expect(service.update).toHaveBeenCalledWith(2, entity);
-            expect(comp.isSaving).toEqual(false);
+            expect(comp.isSaving).toBeFalse();
         }));
 
         it('Should call create service on save for new entity', fakeAsync(() => {
@@ -148,7 +148,7 @@ describe('ExerciseHint Management Update Component', () => {
 
             // THEN
             expect(service.create).toHaveBeenCalledWith(2, entity);
-            expect(comp.isSaving).toEqual(false);
+            expect(comp.isSaving).toBeFalse();
         }));
     });
 });

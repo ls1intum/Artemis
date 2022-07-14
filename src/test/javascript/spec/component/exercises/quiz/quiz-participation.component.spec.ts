@@ -37,14 +37,15 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { AlertService } from 'app/core/util/alert.service';
 import { FeatureToggleDirective } from 'app/shared/feature-toggle/feature-toggle.directive';
 import { MockWebsocketService } from '../../../helpers/mocks/service/mock-websocket.service';
+import { MultipleChoiceQuestion } from 'app/entities/quiz/multiple-choice-question.model';
 
 // Store a copy of now to avoid timing issues
 const now = dayjs();
-const question1 = { id: 1, type: QuizQuestionType.DRAG_AND_DROP, points: 1, dragItems: [], invalid: false, exportQuiz: false, randomizeOrder: true } as QuizQuestion;
-const question2 = { id: 2, type: QuizQuestionType.MULTIPLE_CHOICE, points: 2, answerOptions: [], invalid: false, exportQuiz: false, randomizeOrder: true } as QuizQuestion;
-const question3 = { id: 3, type: QuizQuestionType.SHORT_ANSWER, points: 3, invalid: false, exportQuiz: false, randomizeOrder: true } as QuizQuestion;
+const question1: QuizQuestion = { id: 1, type: QuizQuestionType.DRAG_AND_DROP, points: 1, invalid: false, exportQuiz: false, randomizeOrder: true };
+const question2: MultipleChoiceQuestion = { id: 2, type: QuizQuestionType.MULTIPLE_CHOICE, points: 2, answerOptions: [], invalid: false, exportQuiz: false, randomizeOrder: true };
+const question3: QuizQuestion = { id: 3, type: QuizQuestionType.SHORT_ANSWER, points: 3, invalid: false, exportQuiz: false, randomizeOrder: true };
 
-const quizExercise = {
+const quizExercise: QuizExercise = {
     id: 1,
     quizQuestions: [question1, question2, question3],
     releaseDate: dayjs(now).subtract(2, 'minutes'),
@@ -58,8 +59,11 @@ const quizExercise = {
         },
     ],
     quizMode: QuizMode.SYNCHRONIZED,
-} as QuizExercise;
-const quizExerciseForPractice = {
+    numberOfAssessmentsOfCorrectionRounds: [],
+    secondCorrectionEnabled: false,
+    studentAssignedTeamIdComputed: false,
+};
+const quizExerciseForPractice: QuizExercise = {
     id: 1,
     quizQuestions: [question1, question2, question3],
     releaseDate: dayjs(now).subtract(4, 'minutes'),
@@ -67,8 +71,11 @@ const quizExerciseForPractice = {
     quizStarted: true,
     quizEnded: true,
     isOpenForPractice: true,
-} as QuizExercise;
-const quizExerciseForResults = {
+    numberOfAssessmentsOfCorrectionRounds: [],
+    secondCorrectionEnabled: false,
+    studentAssignedTeamIdComputed: false,
+};
+const quizExerciseForResults: QuizExercise = {
     id: 1,
     quizQuestions: [question1, question2, question3],
     releaseDate: dayjs(now).subtract(4, 'minutes'),
@@ -83,13 +90,19 @@ const quizExerciseForResults = {
         },
     ],
     quizMode: QuizMode.SYNCHRONIZED,
-} as QuizExercise;
-const quizExerciseUnreleased = {
+    numberOfAssessmentsOfCorrectionRounds: [],
+    secondCorrectionEnabled: false,
+    studentAssignedTeamIdComputed: false,
+};
+const quizExerciseUnreleased: QuizExercise = {
     id: 1,
     quizQuestions: [question1, question2, question3],
     releaseDate: dayjs(now).add(2, 'days'),
     dueDate: dayjs(now).add(4, 'days'),
-} as QuizExercise;
+    numberOfAssessmentsOfCorrectionRounds: [],
+    secondCorrectionEnabled: false,
+    studentAssignedTeamIdComputed: false,
+};
 
 const testBedDeclarations = [
     QuizParticipationComponent,
@@ -150,7 +163,7 @@ describe('QuizParticipationComponent', () => {
                     component = fixture.componentInstance;
 
                     const participationService = fixture.debugElement.injector.get(ParticipationService);
-                    const participation = { exercise: { ...quizExercise } } as StudentParticipation;
+                    const participation: StudentParticipation = { exercise: { ...quizExercise } };
                     participationSpy = jest
                         .spyOn(participationService, 'findParticipationForCurrentUser')
                         .mockReturnValue(of({ body: participation } as HttpResponse<StudentParticipation>));
@@ -196,6 +209,37 @@ describe('QuizParticipationComponent', () => {
             expect(updateSpy).toHaveBeenCalled();
         }));
 
+        it('should check quiz end in intervals', fakeAsync(() => {
+            fixture.detectChanges();
+
+            const checkQuizEndSpy = jest.spyOn(component, 'checkForQuizEnd');
+            tick(5000);
+            fixture.detectChanges();
+            discardPeriodicTasks();
+
+            expect(checkQuizEndSpy).toHaveBeenCalled();
+        }));
+
+        it('should add alert on quiz end', fakeAsync(() => {
+            fixture.detectChanges();
+
+            component.endDate = dayjs().add(1, 'seconds');
+            component.quizExercise.quizMode = QuizMode.BATCHED;
+            component.submission.submissionDate = dayjs();
+
+            const alertService = fixture.debugElement.injector.get(AlertService);
+            const alertSpy = jest.spyOn(alertService, 'success');
+
+            const checkQuizEndSpy = jest.spyOn(component, 'checkForQuizEnd');
+
+            tick(2000);
+            fixture.detectChanges();
+            discardPeriodicTasks();
+
+            expect(checkQuizEndSpy).toHaveBeenCalled();
+            expect(alertSpy).toHaveBeenCalledOnce();
+        }));
+
         it('should refresh quiz', () => {
             exerciseService = fixture.debugElement.injector.get(QuizExerciseService);
             fixture.detectChanges();
@@ -229,7 +273,7 @@ describe('QuizParticipationComponent', () => {
         ])('should join %s batches that have started %p', (quizMode, started) => {
             exerciseService = fixture.debugElement.injector.get(QuizExerciseService);
             const participationService = fixture.debugElement.injector.get(ParticipationService);
-            const participation = { exercise: { ...quizExercise, quizBatches: [], quizMode, quizStarted: false } as QuizExercise } as StudentParticipation;
+            const participation: StudentParticipation = { exercise: { ...quizExercise, quizBatches: [], quizMode, quizStarted: false } as QuizExercise };
             participationSpy = jest
                 .spyOn(participationService, 'findParticipationForCurrentUser')
                 .mockReturnValue(of({ body: participation } as HttpResponse<StudentParticipation>));
@@ -318,10 +362,10 @@ describe('QuizParticipationComponent', () => {
         it('should show results after ending', () => {
             fixture.detectChanges();
 
-            const answer = { scoreInPoints: 1, quizQuestion: question2 } as SubmittedAnswer;
-            const quizSubmission = { submissionDate: now.subtract(3, 'minutes'), submittedAnswers: [answer], scoreInPoints: 1 } as QuizSubmission;
-            const result = { resultString: 'result!', submission: quizSubmission } as Result;
-            const participation = { exercise: quizExerciseForResults, results: [result] } as StudentParticipation;
+            const answer: SubmittedAnswer = { scoreInPoints: 1, quizQuestion: question2 };
+            const quizSubmission: QuizSubmission = { submissionDate: now.subtract(3, 'minutes'), submittedAnswers: [answer], scoreInPoints: 1 };
+            const result: Result = { submission: quizSubmission };
+            const participation: StudentParticipation = { exercise: quizExerciseForResults, results: [result] };
             component.showQuizResultAfterQuizEnd(participation);
 
             expect(participationSpy).toHaveBeenCalledWith(quizExercise.id);
@@ -375,7 +419,7 @@ describe('QuizParticipationComponent', () => {
 
         it('should apply participation', () => {
             const submission: QuizSubmission = { id: 1, submissionDate: dayjs().subtract(10, 'minutes'), submittedAnswers: [] };
-            const result: Result = { id: 1, submission, resultString: 'result-string' };
+            const result: Result = { id: 1, submission };
             const endedQuizExercise = { ...quizExercise, quizEnded: true };
             const participation: StudentParticipation = { exercise: endedQuizExercise, results: [result] };
 
@@ -538,7 +582,7 @@ describe('QuizParticipationComponent', () => {
             fixture.detectChanges();
 
             const request = httpMock.expectOne({ method: 'POST' });
-            const quizSubmission = { submissionDate: now, submitted: true } as QuizSubmission;
+            const quizSubmission: QuizSubmission = { submissionDate: now, submitted: true };
             request.flush({ submission: quizSubmission, participation: { exercise: quizExerciseForPractice } as StudentParticipation } as Result);
             expect(request.request.url).toBe(`api/exercises/${quizExerciseForPractice.id}/submissions/practice`);
             fixture.detectChanges();

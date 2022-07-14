@@ -21,7 +21,7 @@ describe(`NotificationInterceptor`, () => {
     });
 
     it('should create a success alert if alert headers are given', () => {
-        const requestMock = new HttpRequest('GET', `${SERVER_API_URL}/test`);
+        const requestMock = new HttpRequest('GET', `${SERVER_API_URL}test`);
         const mockHandler = {
             handle: () =>
                 of(
@@ -41,7 +41,7 @@ describe(`NotificationInterceptor`, () => {
     });
 
     it('should not spawn an alert if headers are missing', () => {
-        const requestMock = new HttpRequest('GET', `${SERVER_API_URL}/test`);
+        const requestMock = new HttpRequest('GET', `${SERVER_API_URL}test`);
         const mockHandler = {
             handle: () =>
                 of(

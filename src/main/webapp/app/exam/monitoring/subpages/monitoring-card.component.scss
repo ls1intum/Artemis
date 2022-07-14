@@ -1,0 +1,29 @@
+.monitoring-card {
+    a,
+    a:hover,
+    a:visited,
+    a:active {
+        color: inherit !important;
+        text-decoration: none !important;
+    }
+
+    .monitoring-card-header {
+        border-bottom: 2px solid var(--primary);
+        background: var(--exam-monitoring-card-footer-background-color);
+    }
+
+    .monitoring-card-header-pointer {
+        cursor: pointer;
+    }
+
+    .monitoring-card-content {
+        border-left: 2px solid var(--exam-monitoring-card-footer-background-color);
+        border-right: 2px solid var(--exam-monitoring-card-footer-background-color);
+    }
+
+    .monitoring-card-footer {
+        min-height: 50px;
+        border-top: 2px solid var(--primary);
+        background: var(--exam-monitoring-card-footer-background-color);
+    }
+}

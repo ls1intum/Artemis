@@ -80,7 +80,7 @@ public class LearningGoalResource {
     public ResponseEntity<CourseLearningGoalProgress> getLearningGoalProgressOfCourse(@PathVariable Long learningGoalId, @PathVariable Long courseId,
             @RequestParam(defaultValue = "false", required = false) boolean useParticipantScoreTable) {
         log.debug("REST request to get course progress for LearningGoal : {}", learningGoalId);
-        var learningGoal = findLearningGoal(Role.INSTRUCTOR, learningGoalId, courseId);
+        var learningGoal = findLearningGoal(Role.INSTRUCTOR, learningGoalId, courseId, true);
         CourseLearningGoalProgress courseLearningGoalProgress = learningGoalService.calculateLearningGoalCourseProgress(learningGoal, useParticipantScoreTable);
         return ResponseEntity.ok().body(courseLearningGoalProgress);
     }
@@ -98,7 +98,7 @@ public class LearningGoalResource {
     public ResponseEntity<IndividualLearningGoalProgress> getLearningGoalProgress(@PathVariable Long learningGoalId, @PathVariable Long courseId,
             @RequestParam(defaultValue = "false", required = false) boolean useParticipantScoreTable) {
         log.debug("REST request to get performance for LearningGoal : {}", learningGoalId);
-        var learningGoal = findLearningGoal(Role.STUDENT, learningGoalId, courseId);
+        var learningGoal = findLearningGoal(Role.STUDENT, learningGoalId, courseId, true);
         var user = userRepository.getUserWithGroupsAndAuthorities();
         var individualLearningGoalProgress = learningGoalService.calculateLearningGoalProgress(learningGoal, user, useParticipantScoreTable);
         return ResponseEntity.ok().body(individualLearningGoalProgress);
@@ -114,7 +114,7 @@ public class LearningGoalResource {
     @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<Void> deleteLectureUnit(@PathVariable Long learningGoalId, @PathVariable Long courseId) {
         log.info("REST request to delete a LearningGoal : {}", learningGoalId);
-        var learningGoal = findLearningGoal(Role.INSTRUCTOR, learningGoalId, courseId);
+        var learningGoal = findLearningGoal(Role.INSTRUCTOR, learningGoalId, courseId, false);
         learningGoalRepository.deleteById(learningGoal.getId());
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, learningGoal.getTitle())).build();
     }
@@ -130,16 +130,10 @@ public class LearningGoalResource {
         log.debug("REST request to get learning goals for course with id: {}", courseId);
         Course course = courseRepository.findByIdElseThrow(courseId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
+
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
 
-        Set<LearningGoal> learningGoals = learningGoalRepository.findAllByCourseIdWithLectureUnitsUnidirectional(courseId);
-        // if the user is a student the not yet released lecture units need to be filtered out
-        if (authorizationCheckService.isOnlyStudentInCourse(course, user)) {
-            for (LearningGoal learningGoal : learningGoals) {
-                Set<LectureUnit> visibleLectureUnits = learningGoal.getLectureUnits().parallelStream().filter(LectureUnit::isVisibleToStudents).collect(Collectors.toSet());
-                learningGoal.setLectureUnits(visibleLectureUnits);
-            }
-        }
+        Set<LearningGoal> learningGoals = learningGoalService.findAllForCourse(course, user);
 
         return ResponseEntity.ok(new ArrayList<>(learningGoals));
     }
@@ -155,12 +149,19 @@ public class LearningGoalResource {
     @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<LearningGoal> getLearningGoal(@PathVariable Long learningGoalId, @PathVariable Long courseId) {
         log.debug("REST request to get LearningGoal : {}", learningGoalId);
-        var learningGoal = findLearningGoal(Role.INSTRUCTOR, learningGoalId, courseId);
+        var learningGoal = findLearningGoal(Role.INSTRUCTOR, learningGoalId, courseId, false);
         return ResponseEntity.ok().body(learningGoal);
     }
 
-    private LearningGoal findLearningGoal(Role role, Long learningGoalId, Long courseId) {
-        var learningGoal = learningGoalRepository.findByIdWithLectureUnitsBidirectionalElseThrow(learningGoalId);
+    private LearningGoal findLearningGoal(Role role, Long learningGoalId, Long courseId, boolean withCompletions) {
+        LearningGoal learningGoal;
+        if (withCompletions) {
+            learningGoal = learningGoalRepository.findByIdWithLectureUnitsAndCompletionsElseThrow(learningGoalId);
+        }
+        else {
+            learningGoal = learningGoalRepository.findByIdWithLectureUnitsBidirectionalElseThrow(learningGoalId);
+        }
+
         if (learningGoal.getCourse() == null) {
             throw new ConflictException("A learning goal must belong to a course", "LearningGoal", "learningGoalNoCourse");
         }
@@ -287,18 +288,14 @@ public class LearningGoalResource {
     public ResponseEntity<List<LearningGoal>> getPrerequisites(@PathVariable Long courseId) {
         log.debug("REST request to get prerequisites for course with id: {}", courseId);
         Course course = courseRepository.findByIdElseThrow(courseId);
+        User user = userRepository.getUserWithGroupsAndAuthorities();
 
         // Authorization check is skipped when course is open to self-registration
         if (!course.isRegistrationEnabled()) {
-            User user = userRepository.getUserWithGroupsAndAuthorities();
             authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
         }
 
-        Set<LearningGoal> prerequisites = learningGoalRepository.findPrerequisitesByCourseId(courseId);
-        // Remove all lecture units as not needed for now
-        for (LearningGoal prerequisite : prerequisites) {
-            prerequisite.setLectureUnits(Collections.emptySet());
-        }
+        Set<LearningGoal> prerequisites = learningGoalService.findAllPrerequisitesForCourse(course, user);
 
         return ResponseEntity.ok(new ArrayList<>(prerequisites));
     }

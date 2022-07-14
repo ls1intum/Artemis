@@ -716,7 +716,7 @@ describe('ExerciseAssessmentDashboardComponent', () => {
     });
 
     describe('pie chart interaction', () => {
-        let event: { value?: number; name?: string };
+        let event: any;
 
         it('should not navigate if user is not instructor', () => {
             jest.spyOn(accountService, 'hasAnyAuthorityDirect').mockReturnValue(false);
@@ -727,20 +727,21 @@ describe('ExerciseAssessmentDashboardComponent', () => {
             expect(routingStub).not.toHaveBeenCalled();
         });
 
-        it('should not navigate if user is instructor but clicked the chart legend', () => {
-            jest.spyOn(accountService, 'hasAnyAuthorityDirect').mockReturnValue(true);
-            event = { name: 'assessed submissions' };
+        it('should navigate if user is instructor but clicked the chart legend', () => {
+            event = 'test';
 
-            comp.navigateToExerciseSubmissionOverview(event);
-
-            expect(routingStub).not.toHaveBeenCalled();
+            assertRoutingPerformed();
         });
 
         it('should navigate if user is instructor and clicked pie part', () => {
-            jest.spyOn(accountService, 'hasAnyAuthorityDirect').mockReturnValue(true);
-            event = { value: 40 };
+            event = { name: 'test', value: 40 };
 
+            assertRoutingPerformed();
+        });
+        const assertRoutingPerformed = () => {
+            jest.spyOn(accountService, 'hasAnyAuthorityDirect').mockReturnValue(true);
             const exercises = [programmingExercise, modelingExercise, textExercise, fileUploadExercise];
+            comp.assessments = [event];
 
             exercises.forEach((preparedExercise) => {
                 comp.exercise = preparedExercise;
@@ -749,9 +750,11 @@ describe('ExerciseAssessmentDashboardComponent', () => {
 
                 comp.navigateToExerciseSubmissionOverview(event);
 
-                expect(routingStub).toHaveBeenCalledWith(['course-management', 42, preparedExercise.type + '-exercises', preparedExercise.id, 'submissions']);
+                expect(routingStub).toHaveBeenCalledWith(['course-management', 42, preparedExercise.type + '-exercises', preparedExercise.id, 'submissions'], {
+                    queryParams: { filterOption: 0 },
+                });
             });
-        });
+        };
     });
 
     it('should toggle second correction', () => {

@@ -220,6 +220,10 @@ export class QuizScoringInfoStudentModalComponent implements AfterViewInit {
             this.questionPoint = this.translateService.instant(translationBasePath + 'points');
         }
 
+        if (this.score === undefined) {
+            this.score = 0;
+        }
+
         if (this.score === 1) {
             this.scorePoint = this.translateService.instant(translationBasePath + 'point');
         } else {

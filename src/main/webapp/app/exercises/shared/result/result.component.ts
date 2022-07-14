@@ -23,20 +23,23 @@ import { getExerciseDueDate, hasExerciseDueDatePassed } from 'app/exercises/shar
 import { faCircleNotch, faExclamationCircle, faFile } from '@fortawesome/free-solid-svg-icons';
 import { faCheckCircle, faCircle, faQuestionCircle, faTimesCircle } from '@fortawesome/free-regular-svg-icons';
 import { isModelingOrTextOrFileUpload, isParticipationInDueTime, isProgrammingOrQuiz } from 'app/exercises/shared/participation/participation.utils';
+import { ResultService } from 'app/exercises/shared/result/result.service';
+import { Feedback } from 'app/entities/feedback.model';
+import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 
 /**
  * Enumeration object representing the possible options that
  * the status of the result's template can be in.
  */
-enum ResultTemplateStatus {
+export enum ResultTemplateStatus {
     /**
-     * An automatic result is currectly being generated and should be available soon.
+     * An automatic result is currently being generated and should be available soon.
      * This is currently only relevant for programming exercises.
      */
     IS_BUILDING = 'IS_BUILDING',
     /**
      * A regular, finished result is available.
-     * Can be rated (counts toward the score) or not rated (after the dealine for pratice).
+     * Can be rated (counts toward the score) or not rated (after the deadline for practice).
      */
     HAS_RESULT = 'HAS_RESULT',
     /**
@@ -88,9 +91,10 @@ export enum MissingResultInfo {
  * e.g. by using Object.assign to trigger ngOnChanges which makes sure that the result is updated
  */
 export class ResultComponent implements OnInit, OnChanges {
-    // make constants available to html for comparison
+    // make constants available to html
     readonly ResultTemplateStatus = ResultTemplateStatus;
     readonly MissingResultInfo = MissingResultInfo;
+    readonly ParticipationType = ParticipationType;
     readonly roundScoreSpecifiedByCourseSettings = roundValueSpecifiedByCourseSettings;
     readonly getCourseFromExercise = getCourseFromExercise;
 
@@ -104,7 +108,6 @@ export class ResultComponent implements OnInit, OnChanges {
     @Input() missingResultInfo = MissingResultInfo.NONE;
     @Input() exercise?: Exercise;
 
-    ParticipationType = ParticipationType;
     textColorClass: string;
     hasFeedback: boolean;
     resultIconClass: IconProp;
@@ -114,6 +117,8 @@ export class ResultComponent implements OnInit, OnChanges {
     onlyShowSuccessfulCompileStatus: boolean;
 
     resultTooltip: string;
+
+    latestIndividualDueDate?: dayjs.Dayjs;
 
     // Icons
     faCircleNotch = faCircleNotch;
@@ -127,6 +132,8 @@ export class ResultComponent implements OnInit, OnChanges {
         private translate: TranslateService,
         private http: HttpClient,
         private modalService: NgbModal,
+        private exerciseService: ExerciseService,
+        private resultService: ResultService,
     ) {}
 
     /**
@@ -135,7 +142,7 @@ export class ResultComponent implements OnInit, OnChanges {
      */
     ngOnInit(): void {
         if (!this.result && this.participation) {
-            this.exercise = this.exercise || getExercise(this.participation);
+            this.exercise = this.exercise ?? getExercise(this.participation);
             this.participation.exercise = this.exercise;
 
             if (this.participation.results && this.participation.results.length > 0) {
@@ -162,10 +169,10 @@ export class ResultComponent implements OnInit, OnChanges {
         } else if (!this.participation && this.result && this.result.participation) {
             // make sure this.participation is initialized in case it was not passed
             this.participation = this.result.participation;
-            this.exercise = this.exercise || getExercise(this.participation);
+            this.exercise = this.exercise ?? getExercise(this.participation);
             this.participation.exercise = this.exercise;
         } else if (this.participation) {
-            this.exercise = this.exercise || getExercise(this.participation);
+            this.exercise = this.exercise ?? getExercise(this.participation);
             this.participation.exercise = this.exercise;
         } else if (!this.result?.exampleResult) {
             // result of example submission does not have participation
@@ -175,7 +182,17 @@ export class ResultComponent implements OnInit, OnChanges {
 
         // Note: it can still happen here that this.result is undefined, e.g. when this.participation.results.length == 0
         this.submission = this.result?.submission;
+
+        if (this.result) {
+            this.result.submission = this.result.submission ?? this.submission;
+        }
         this.evaluate();
+
+        this.translate.onLangChange.subscribe(() => {
+            if (!!this.resultString) {
+                this.resultString = this.resultService.getResultString(this.result, this.exercise);
+            }
+        });
     }
 
     /**
@@ -205,18 +222,20 @@ export class ResultComponent implements OnInit, OnChanges {
         if (this.templateStatus === ResultTemplateStatus.LATE) {
             this.textColorClass = this.getTextColorClass();
             this.resultIconClass = this.getResultIconClass();
+            this.resultString = this.resultService.getResultString(this.result, this.exercise);
         } else if (this.result && (this.result.score || this.result.score === 0) && (this.result.rated || this.result.rated == undefined || this.showUngradedResults)) {
             this.onlyShowSuccessfulCompileStatus = this.getOnlyShowSuccessfulCompileStatus();
             this.textColorClass = this.getTextColorClass();
             this.hasFeedback = this.getHasFeedback();
             this.resultIconClass = this.getResultIconClass();
-            this.resultString = this.buildResultString();
+            this.resultString = this.resultService.getResultString(this.result, this.exercise);
             this.resultTooltip = this.buildResultTooltip();
         } else if (this.templateStatus !== ResultTemplateStatus.MISSING) {
             // make sure that we do not display results that are 'rated=false' or that do not have a score
             // this state is only possible if no rated results are available at all, so we show the info that no graded result is available
             this.templateStatus = ResultTemplateStatus.NO_RESULT;
             this.result = undefined;
+            this.resultString = '';
         }
     }
 
@@ -230,7 +249,7 @@ export class ResultComponent implements OnInit, OnChanges {
             }
         }
 
-        // If there is a problem, it has priority and we show that instead
+        // If there is a problem, it has priority, and we show that instead
         if (this.missingResultInfo !== MissingResultInfo.NONE) {
             return ResultTemplateStatus.MISSING;
         }
@@ -297,26 +316,6 @@ export class ResultComponent implements OnInit, OnChanges {
     }
 
     /**
-     * Gets the build result string.
-     */
-    buildResultString() {
-        if (this.isBuildFailed(this.submission)) {
-            return this.isManualResult(this.result) ? this.result!.resultString : this.translate.instant('artemisApp.editor.buildFailed');
-            // Only show the 'preliminary' string for programming student participation results and if the buildAndTestAfterDueDate has not passed.
-        }
-
-        const buildSuccessful = this.translate.instant('artemisApp.editor.buildSuccessful');
-        const resultStringCompiledMessage = this.result!.resultString?.replace('0 of 0 passed', buildSuccessful) ?? buildSuccessful;
-
-        if (this.participation && isProgrammingExerciseStudentParticipation(this.participation) && isResultPreliminary(this.result!, this.exercise as ProgrammingExercise)) {
-            const preliminary = '(' + this.translate.instant('artemisApp.result.preliminary') + ')';
-            return `${resultStringCompiledMessage} ${preliminary}`;
-        } else {
-            return resultStringCompiledMessage;
-        }
-    }
-
-    /**
      * Gets the tooltip text that should be displayed next to the result string. Not required.
      */
     buildResultTooltip() {
@@ -365,13 +364,13 @@ export class ResultComponent implements OnInit, OnChanges {
             componentInstance.messageKey = 'artemisApp.result.notLatestSubmission';
         }
 
-        // The information should only be shown in case it is after the due date
-        // and some automatic test case feedbacks are possibly hidden due to
-        // other students still working on the exercise.
-        componentInstance.showMissingAutomaticFeedbackInformation =
+        if (
             this.result?.assessmentType === AssessmentType.AUTOMATIC &&
             this.exercise?.type === ExerciseType.PROGRAMMING &&
-            hasExerciseDueDatePassed(this.exercise, this.participation);
+            hasExerciseDueDatePassed(this.exercise, this.participation)
+        ) {
+            this.determineShowMissingAutomaticFeedbackInformation(componentInstance);
+        }
     }
 
     /**
@@ -408,8 +407,13 @@ export class ResultComponent implements OnInit, OnChanges {
      *
      */
     getOnlyShowSuccessfulCompileStatus(): boolean {
-        const zeroTestsPassed = this.result?.resultString?.includes('0 of 0 passed') ?? false;
-        return this.templateStatus !== ResultTemplateStatus.NO_RESULT && this.templateStatus !== ResultTemplateStatus.IS_BUILDING && zeroTestsPassed;
+        const zeroTestsPassed = (this.result?.feedbacks?.filter((feedback) => Feedback.isStaticCodeAnalysisFeedback(feedback)).length || 0) === 0;
+        return (
+            this.templateStatus !== ResultTemplateStatus.NO_RESULT &&
+            this.templateStatus !== ResultTemplateStatus.IS_BUILDING &&
+            !this.isBuildFailed(this.submission) &&
+            zeroTestsPassed
+        );
     }
 
     /**
@@ -506,7 +510,7 @@ export class ResultComponent implements OnInit, OnChanges {
      * build.
      * @param submission the submission
      */
-    isBuildFailed(submission: Submission | undefined) {
+    isBuildFailed(submission?: Submission) {
         const isProgrammingSubmission = submission && submission.submissionExerciseType === SubmissionExerciseType.PROGRAMMING;
         return isProgrammingSubmission && (submission as ProgrammingSubmission).buildFailed;
     }
@@ -515,7 +519,27 @@ export class ResultComponent implements OnInit, OnChanges {
      * Returns true if the specified result is not automatic.
      * @param result the result.
      */
-    isManualResult(result: Result | undefined) {
+    isManualResult(result?: Result) {
         return result?.assessmentType !== AssessmentType.AUTOMATIC;
+    }
+
+    /**
+     * Determines if some information about testcases could still be hidden because of later individual due dates
+     * @param componentInstance the detailed result view
+     */
+    private determineShowMissingAutomaticFeedbackInformation(componentInstance: ResultDetailComponent) {
+        if (!this.latestIndividualDueDate) {
+            this.exerciseService.getLatestDueDate(this.exercise!.id!).subscribe((latestIndividualDueDate?: dayjs.Dayjs) => {
+                this.latestIndividualDueDate = latestIndividualDueDate;
+                this.initializeMissingAutomaticFeedbackAndLatestIndividualDueDate(componentInstance);
+            });
+        } else {
+            this.initializeMissingAutomaticFeedbackAndLatestIndividualDueDate(componentInstance);
+        }
+    }
+
+    private initializeMissingAutomaticFeedbackAndLatestIndividualDueDate(componentInstance: ResultDetailComponent) {
+        componentInstance.showMissingAutomaticFeedbackInformation = dayjs().isBefore(this.latestIndividualDueDate);
+        componentInstance.latestIndividualDueDate = this.latestIndividualDueDate;
     }
 }

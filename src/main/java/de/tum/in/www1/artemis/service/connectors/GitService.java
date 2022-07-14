@@ -763,7 +763,7 @@ public class GitService {
             pullCommand(git).call();
         }
         catch (GitAPIException ex) {
-            log.error("Cannot pull the repo " + repo.getLocalPath(), ex);
+            log.error("Cannot pull the repo {}", repo.getLocalPath(), ex);
             // TODO: we should send this error to the client and let the user handle it there, e.g. by choosing to reset the repository
         }
     }
@@ -1223,7 +1223,7 @@ public class GitService {
         var participation = (ProgrammingExerciseStudentParticipation) repo.getParticipation();
 
         // The zip filename is either the student login, team short name or some default string.
-        var studentTeamOrDefault = Optional.ofNullable(participation.getParticipantIdentifier()).orElse("student-submission" + repo.getParticipation().getId());
+        var studentTeamOrDefault = Objects.requireNonNullElse(participation.getParticipantIdentifier(), "student-submission" + repo.getParticipation().getId());
 
         String zipRepoName = fileService.removeIllegalCharacters(courseShortName + "-" + exercise.getTitle() + "-" + participation.getId());
         if (hideStudentName) {

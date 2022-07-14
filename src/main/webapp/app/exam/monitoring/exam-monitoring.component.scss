@@ -1,0 +1,28 @@
+.exam-monitoring-description {
+    font-size: 16px;
+}
+
+.exam-monitoring-side-panel {
+    min-width: 400px;
+    max-width: 500px;
+}
+
+.exam-monitoring-badge {
+    font-size: 10px;
+    height: 20px;
+}
+
+.exam-monitoring-side-panel-container {
+    display: flex;
+    align-items: flex-end;
+    justify-content: flex-end;
+}
+
+@media (max-width: 767px) {
+    .exam-monitoring-side-panel-container {
+        padding-top: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+}

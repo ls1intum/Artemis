@@ -188,6 +188,22 @@ public class AccountResource {
     }
 
     /**
+     * {@code POST  /account/change-language} : changes the current user's language key.
+     *
+     * @param languageKey languageKey to change to.
+     * @throws BadRequestAlertException {@code 400 (Bad Request)} if the language key is not 'en' or 'de'.
+     */
+    @PostMapping(path = "/account/change-language")
+    public void changeLanguageKey(@RequestBody String languageKey) {
+        User user = userRepository.getUser();
+        String langKey = languageKey.replaceAll("\"", "").toLowerCase().trim();
+        if (!"en".equals(langKey) && !"de".equals(langKey)) {
+            throw new BadRequestAlertException("Language key %s not supported!".formatted(languageKey), "Account", "invalidLanguageKey");
+        }
+        userService.updateUserLanguageKey(user.getId(), langKey);
+    }
+
+    /**
      * {@code POST   /account/reset-password/init} : Send an email to reset the password of the user.
      *
      * @param mailUsername string containing either mail or username of the user.

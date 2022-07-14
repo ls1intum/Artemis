@@ -102,7 +102,7 @@ describe('EditVideoUnitComponent', () => {
         const videoUnitFormStubComponent: VideoUnitFormStubComponent = editVideoUnitComponentFixture.debugElement.query(By.directive(VideoUnitFormStubComponent)).componentInstance;
         editVideoUnitComponentFixture.detectChanges(); // onInit
         expect(editVideoUnitComponent.videoUnit).toEqual(videoUnitOfResponse);
-        expect(findByIdStub).toHaveBeenCalledTimes(1);
+        expect(findByIdStub).toHaveBeenCalledOnce();
         expect(editVideoUnitComponent.formData.name).toEqual(videoUnitOfResponse.name);
         expect(editVideoUnitComponent.formData.releaseDate).toEqual(videoUnitOfResponse.releaseDate);
         expect(editVideoUnitComponent.formData.description).toEqual(videoUnitOfResponse.description);
@@ -128,7 +128,7 @@ describe('EditVideoUnitComponent', () => {
         const findByIdStub = jest.spyOn(videoUnitService, 'findById').mockReturnValue(of(findByIdResponse));
 
         editVideoUnitComponentFixture.detectChanges(); // onInit
-        expect(findByIdStub).toHaveBeenCalledTimes(1);
+        expect(findByIdStub).toHaveBeenCalledOnce();
         expect(editVideoUnitComponent.videoUnit).toEqual(videoUnitInDatabase);
 
         const changedUnit: VideoUnit = {
@@ -151,8 +151,8 @@ describe('EditVideoUnitComponent', () => {
             source: changedUnit.source,
         });
 
-        expect(updatedStub).toHaveBeenCalledTimes(1);
-        expect(navigateSpy).toHaveBeenCalledTimes(1);
+        expect(updatedStub).toHaveBeenCalledOnce();
+        expect(navigateSpy).toHaveBeenCalledOnce();
         navigateSpy.mockRestore();
     });
 });

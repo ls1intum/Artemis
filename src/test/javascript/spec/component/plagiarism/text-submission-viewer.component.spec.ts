@@ -75,10 +75,46 @@ describe('Text Submission Viewer Component', () => {
         expect(comp.isProgrammingExercise).toBeTrue();
     });
 
+    it('sorts and filters the files when fetching a programming submission', () => {
+        comp.exercise = { type: ExerciseType.PROGRAMMING } as ProgrammingExercise;
+
+        const filesUnordered = {
+            'a/': FileType.FOLDER,
+            z: FileType.FILE,
+            kContinuedName: FileType.FILE,
+            'd/': FileType.FOLDER,
+            b_file: FileType.FILE,
+            e: FileType.FILE,
+        };
+
+        comp.matches = new Map();
+        comp.matches.set('e', [{ from: new TextSubmissionElement(), to: new TextSubmissionElement() }]);
+        comp.matches.set('kContinuedName', [{ from: new TextSubmissionElement(), to: new TextSubmissionElement() }]);
+
+        jest.spyOn(repositoryService, 'getRepositoryContent').mockReturnValue(of(filesUnordered));
+
+        comp.ngOnChanges({
+            plagiarismSubmission: { currentValue: { submissionId: 2 } } as SimpleChange,
+        });
+
+        expect(repositoryService.getRepositoryContent).toHaveBeenCalledOnce();
+        expect(comp.isProgrammingExercise).toBeTrue();
+
+        // files with matches first, then the ones without match; each section ordered lexicographically
+        const expectedFiles = [
+            { file: 'e', hasMatch: true },
+            { file: 'kContinuedName', hasMatch: true },
+            { file: 'b_file', hasMatch: false },
+            { file: 'z', hasMatch: false },
+        ];
+        expect(comp.files).toEqual(expectedFiles);
+    });
+
     it('filters files of type FILE', () => {
         const filtered = comp.filterFiles(files);
 
         expect(filtered).toHaveLength(3);
+        expect(filtered).not.toContain('src/');
     });
 
     it('handles file selection', () => {

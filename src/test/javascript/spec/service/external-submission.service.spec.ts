@@ -2,11 +2,12 @@ import { ArtemisTestModule } from '../test.module';
 import { ExternalSubmissionService } from 'app/exercises/shared/external-submission/external-submission.service';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
-import { Exercise, ExerciseType } from 'app/entities/exercise.model';
+import { ExerciseType } from 'app/entities/exercise.model';
 import { Result } from 'app/entities/result.model';
 import { User } from 'app/core/user/user.model';
 import { EntityResponseType, ResultService } from 'app/exercises/shared/result/result.service';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
+import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 
 describe('External Submission Service', () => {
     let httpMock: HttpTestingController;
@@ -28,9 +29,15 @@ describe('External Submission Service', () => {
         const resultService = TestBed.inject(ResultService);
         const convertDateFromServerSpy = jest.spyOn(resultService, 'convertDateFromServer').mockImplementation((param) => param);
 
-        const exercise = { id: 1, type: ExerciseType.PROGRAMMING } as Exercise;
-        const user = { id: 2, login: 'ab12cde' } as User;
-        const result = { id: undefined, resultString: 'fooBar' } as Result;
+        const exercise: ProgrammingExercise = {
+            id: 1,
+            type: ExerciseType.PROGRAMMING,
+            numberOfAssessmentsOfCorrectionRounds: [],
+            secondCorrectionEnabled: false,
+            studentAssignedTeamIdComputed: false,
+        };
+        const user: User = { internal: false, id: 2, login: 'ab12cde', guidedTourSettings: [] };
+        const result: Result = { id: undefined };
 
         let createResult: EntityResponseType | undefined;
         service.create(exercise, user, result).subscribe((subResult) => (createResult = subResult));

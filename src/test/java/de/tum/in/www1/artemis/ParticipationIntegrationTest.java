@@ -508,6 +508,7 @@ public class ParticipationIntegrationTest extends AbstractSpringIntegrationBambo
         final var participationsToUpdate = new StudentParticipationList((StudentParticipation) submission.getParticipation());
         final var response = request.putWithResponseBodyList(String.format("/api/exercises/%d/participations/update-individual-due-date", exercise.getId()), participationsToUpdate,
                 StudentParticipation.class, HttpStatus.OK);
+        exercise = (FileUploadExercise) exerciseRepo.findByIdElseThrow(exercise.getId());
 
         assertThat(response).hasSize(1);
         assertThat(response.get(0).getIndividualDueDate()).isEqualToIgnoringNanos(submission.getParticipation().getIndividualDueDate());

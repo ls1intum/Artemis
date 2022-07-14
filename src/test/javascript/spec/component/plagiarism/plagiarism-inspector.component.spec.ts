@@ -7,6 +7,7 @@ import { PlagiarismCheckState, PlagiarismInspectorComponent } from 'app/exercise
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { ArtemisTestModule } from '../../test.module';
 import { downloadFile } from 'app/shared/util/download.util';
+import { Range } from 'app/shared/util/utils';
 import { ModelingPlagiarismResult } from 'app/exercises/shared/plagiarism/types/modeling/ModelingPlagiarismResult';
 import { PlagiarismStatus } from 'app/exercises/shared/plagiarism/types/PlagiarismStatus';
 import { TextExerciseService } from 'app/exercises/text/manage/text-exercise/text-exercise.service';
@@ -22,11 +23,14 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { PlagiarismDetailsComponent } from 'app/exercises/shared/plagiarism/plagiarism-details/plagiarism-details.component';
 import { PlagiarismRunDetailsComponent } from 'app/exercises/shared/plagiarism/plagiarism-run-details/plagiarism-run-details.component';
 import { PlagiarismSidebarComponent } from 'app/exercises/shared/plagiarism/plagiarism-sidebar/plagiarism-sidebar.component';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { NgbModal, NgbModalRef, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { NgModel } from '@angular/forms';
 import { PlagiarismInspectorService } from 'app/exercises/shared/plagiarism/plagiarism-inspector/plagiarism-inspector.service';
 import { PlagiarismComparison } from 'app/exercises/shared/plagiarism/types/PlagiarismComparison';
 import { TextSubmissionElement } from 'app/exercises/shared/plagiarism/types/text/TextSubmissionElement';
+import { PlagiarismCasesService } from 'app/course/plagiarism-cases/shared/plagiarism-cases.service';
+import { HttpResponse } from '@angular/common/http';
+import { MockNgbModalService } from '../../helpers/mocks/service/mock-ngb-modal.service';
 
 jest.mock('app/shared/util/download.util', () => ({
     downloadFile: jest.fn(),
@@ -47,6 +51,8 @@ describe('Plagiarism Inspector Component', () => {
     let programmingExerciseService: ProgrammingExerciseService;
     let textExerciseService: TextExerciseService;
     let inspectorService: PlagiarismInspectorService;
+    let plagiarismCasesService: PlagiarismCasesService;
+    let modalService: NgbModal;
 
     const modelingExercise = { id: 123, type: ExerciseType.MODELING } as ModelingExercise;
     const textExercise = { id: 234, type: ExerciseType.TEXT } as TextExercise;
@@ -82,6 +88,7 @@ describe('Plagiarism Inspector Component', () => {
     } as ModelingPlagiarismResult;
 
     const textPlagiarismResult = {
+        id: 123,
         comparisons,
     } as TextPlagiarismResult;
 
@@ -99,6 +106,7 @@ describe('Plagiarism Inspector Component', () => {
             ],
             providers: [
                 { provide: ActivatedRoute, useValue: activatedRoute },
+                { provide: NgbModal, useClass: MockNgbModalService },
                 MockProvider(JhiWebsocketService),
                 MockProvider(TranslateService),
                 MockProvider(PlagiarismInspectorService),
@@ -112,6 +120,8 @@ describe('Plagiarism Inspector Component', () => {
                 programmingExerciseService = TestBed.inject(ProgrammingExerciseService);
                 textExerciseService = fixture.debugElement.injector.get(TextExerciseService);
                 inspectorService = TestBed.inject(PlagiarismInspectorService);
+                plagiarismCasesService = TestBed.inject(PlagiarismCasesService);
+                modalService = TestBed.inject(NgbModal);
             });
     });
 
@@ -284,7 +294,7 @@ describe('Plagiarism Inspector Component', () => {
     describe('test chart interactivity', () => {
         it('should apply filter and reset it', () => {
             const filterComparisonsMock = jest.spyOn(inspectorService, 'filterComparisons').mockReturnValue([]);
-            const range = { minimumSimilarity: 20, maximumSimilarity: 30 };
+            const range = new Range(20, 30);
             comp.plagiarismResult = textPlagiarismResult;
 
             comp.filterByChart(range);
@@ -318,4 +328,48 @@ describe('Plagiarism Inspector Component', () => {
             expect(selected).toEqual(expected);
         });
     });
+
+    it('should clean up plagiarism', fakeAsync(() => {
+        const cleanUpPlagiarismSpy = jest.spyOn(plagiarismCasesService, 'cleanUpPlagiarism').mockReturnValue(of(new HttpResponse<void>()));
+        const getLatestPlagiarismResultSpy = jest.spyOn(comp, 'getLatestPlagiarismResult');
+        comp.exercise = textExercise;
+        comp.plagiarismResult = textPlagiarismResult;
+
+        comp.cleanUpPlagiarism();
+
+        tick();
+
+        expect(cleanUpPlagiarismSpy).toHaveBeenCalledWith(textExercise.id, textPlagiarismResult.id, false);
+        expect(getLatestPlagiarismResultSpy).toHaveBeenCalledOnce();
+        expect(comp.deleteAllPlagiarismComparisons).toBeFalse();
+    }));
+
+    it('should clean up plagiarism and delete all plagiarism comparisons', fakeAsync(() => {
+        const cleanUpPlagiarismSpy = jest.spyOn(plagiarismCasesService, 'cleanUpPlagiarism').mockReturnValue(of(new HttpResponse<void>()));
+        comp.exercise = textExercise;
+        comp.plagiarismResult = textPlagiarismResult;
+        comp.deleteAllPlagiarismComparisons = true;
+
+        comp.cleanUpPlagiarism();
+
+        tick();
+
+        expect(cleanUpPlagiarismSpy).toHaveBeenCalledWith(textExercise.id, textPlagiarismResult.id, true);
+        expect(comp.deleteAllPlagiarismComparisons).toBeFalse();
+        expect(comp.plagiarismResult).toBe(undefined);
+    }));
+
+    it('should call cleanUpPlagiarism on confirm modal', fakeAsync(() => {
+        const cleanUpPlagiarismSpy = jest.spyOn(comp, 'cleanUpPlagiarism');
+        const mockReturnValue = { result: Promise.resolve('confirm') } as NgbModalRef;
+        jest.spyOn(modalService, 'open').mockReturnValue(mockReturnValue);
+        comp.exercise = textExercise;
+        comp.plagiarismResult = textPlagiarismResult;
+
+        comp.openCleanUpModal(undefined);
+
+        tick();
+
+        expect(cleanUpPlagiarismSpy).toHaveBeenCalledOnce();
+    }));
 });

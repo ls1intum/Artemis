@@ -710,9 +710,11 @@ export class QuizExerciseDetailComponent extends QuizExerciseValidationDirective
                 await this.addQuestions(questions);
                 // Reset the invalid flagged questions
                 this.invalidFlaggedQuestions = {};
+                this.cacheValidation();
             });
         } else {
             await this.addQuestions(questions);
+            this.cacheValidation();
         }
     }
 

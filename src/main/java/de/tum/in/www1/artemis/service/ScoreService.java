@@ -87,11 +87,11 @@ public class ScoreService {
 
         if (associatedParticipantScore.getLastResult() == null && associatedParticipantScore.getLastRatedResult() == null) {
             participantScoreRepository.deleteById(associatedParticipantScore.getId());
-            logger.info("Deleted an existing participant score: " + originalParticipantScoreStructure);
+            logger.info("Deleted an existing participant score: {}", originalParticipantScoreStructure);
         }
         else {
             ParticipantScore updatedParticipantScore = participantScoreRepository.saveAndFlush(associatedParticipantScore);
-            logger.info("Updated an existing participant score. Was: " + originalParticipantScoreStructure + ". Is: " + updatedParticipantScore);
+            logger.debug("Updated an existing participant score. Was: {}. Is: {}", originalParticipantScoreStructure, updatedParticipantScore);
         }
     }
 
@@ -222,7 +222,7 @@ public class ScoreService {
             setLastRatedAttributes(newStudentScore, newResult, exercise);
         }
         StudentScore studentScore = studentScoreRepository.saveAndFlush(newStudentScore);
-        logger.info("Saved a new student score: " + studentScore);
+        logger.info("Saved a new student score: {}", studentScore);
     }
 
     private void createNewTeamScore(Result newResult, StudentParticipation studentParticipation, Exercise exercise) {
@@ -234,7 +234,7 @@ public class ScoreService {
             setLastRatedAttributes(newTeamScore, newResult, exercise);
         }
         TeamScore teamScore = teamScoreRepository.saveAndFlush(newTeamScore);
-        logger.info("Saved a new team score: " + teamScore);
+        logger.info("Saved a new team score: {}", teamScore);
     }
 
     /**
@@ -262,7 +262,7 @@ public class ScoreService {
             setLastRatedAttributes(participantScore, null, exercise);
         }
         participantScoreRepository.saveAndFlush(participantScore);
-        logger.info("Updated an existing participant score. Was: " + originalParticipantScoreStructure + ". Is: " + participantScore);
+        logger.debug("Updated an existing participant score. Was: {}. Is: {}", originalParticipantScoreStructure, participantScore);
     }
 
     /**

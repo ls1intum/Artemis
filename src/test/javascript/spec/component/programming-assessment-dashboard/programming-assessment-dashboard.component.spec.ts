@@ -2,7 +2,7 @@ import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testin
 import { TranslateService } from '@ngx-translate/core';
 import { ArtemisTestModule } from '../../test.module';
 import { ActivatedRoute, convertToParamMap, Router } from '@angular/router';
-import { of } from 'rxjs';
+import { BehaviorSubject, of } from 'rxjs';
 import { RouterTestingModule } from '@angular/router/testing';
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
 import { AccountService } from 'app/core/auth/account.service';
@@ -77,6 +77,7 @@ describe('ProgrammingAssessmentDashboardComponent', () => {
                                 exerciseId: programmingExercise2.id,
                             }),
                         },
+                        queryParams: new BehaviorSubject({}),
                     },
                 },
             ],
@@ -102,7 +103,7 @@ describe('ProgrammingAssessmentDashboardComponent', () => {
         // test for init values
         expect(component).toBeTruthy();
         expect(component.submissions).toEqual([]);
-        expect(component.reverse).toEqual(false);
+        expect(component.reverse).toBeFalse();
         expect(component.predicate).toEqual('id');
         expect(component.filteredSubmissions).toEqual([]);
 
@@ -166,7 +167,7 @@ describe('ProgrammingAssessmentDashboardComponent', () => {
 
         // setup
         component.ngOnInit();
-        component.updateFilteredSubmissions([programmingSubmission1]);
+        component.applyChartFilter([programmingSubmission1]);
         // check
         expect(component.filteredSubmissions).toEqual([programmingSubmission1]);
     });

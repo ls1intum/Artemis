@@ -1,0 +1,90 @@
+#exercise-header {
+    display: flex;
+    flex-wrap: wrap;
+    flex-direction: row;
+    justify-content: flex-start;
+    gap: 10px;
+    font-size: 1.3rem;
+    line-height: 1.2;
+    font-weight: 300;
+
+    .right-col {
+        flex: 0 0 auto;
+
+        > div {
+            display: flex;
+            width: 100%;
+            justify-content: space-between;
+            gap: 10px;
+        }
+
+        > div:not(:last-child) {
+            margin-bottom: 5px;
+        }
+    }
+
+    .left-col {
+        flex: 1 1 auto;
+
+        @supports (flex-basis: min-content) {
+            flex: 1 1 min-content;
+        }
+
+        min-width: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+
+        .title-row {
+            display: flex;
+            gap: 5px;
+            flex-wrap: wrap;
+
+            .inner-row {
+                margin-bottom: 0;
+                margin-right: 10px;
+                font-size: 1.575rem;
+                white-space: nowrap;
+                text-overflow: ellipsis;
+                overflow: hidden;
+            }
+
+            .badge-row {
+                display: flex;
+                gap: 5px;
+                flex-wrap: wrap;
+
+                .exercise-categories {
+                    display: flex;
+                    gap: 5px;
+                }
+            }
+        }
+
+        .points-row {
+            display: flex;
+            align-items: center;
+        }
+
+        .assessment-row,
+        .submission-row {
+            white-space: nowrap;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.25em;
+            align-items: center;
+        }
+    }
+
+    .fw-500 {
+        font-weight: 500;
+    }
+
+    @media (max-width: 575px) {
+        font-size: 1.1em;
+
+        .left-col .title-row .inner-row {
+            font-size: 1.3em;
+        }
+    }
+}

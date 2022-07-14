@@ -17,7 +17,7 @@ import { ArtemisProgrammingExerciseManagementModule } from 'app/exercises/progra
 import { ArtemisQuizManagementModule } from 'app/exercises/quiz/manage/quiz-management.module';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { ArtemisDataTableModule } from 'app/shared/data-table/data-table.module';
-import { NgxDatatableModule } from '@swimlane/ngx-datatable';
+import { NgxDatatableModule } from '@flaviosantoro92/ngx-datatable';
 import { FormDateTimePickerModule } from 'app/shared/date-time-picker/date-time-picker.module';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { ArtemisMarkdownEditorModule } from 'app/shared/markdown-editor/markdown-editor.module';
@@ -42,7 +42,7 @@ import { QuizExerciseGroupCellComponent } from './exercise-groups/quiz-exercise-
 import { ArtemisTextSubmissionAssessmentModule } from 'app/exercises/text/assess/text-submission-assessment.module';
 import { StudentExamDetailTableRowComponent } from 'app/exam/manage/student-exams/student-exam-detail-table-row/student-exam-detail-table-row.component';
 import { ExampleSubmissionsModule } from 'app/exercises/shared/example-submission/example-submissions.module';
-import { NgxChartsModule } from '@swimlane/ngx-charts';
+import { BarChartModule } from '@swimlane/ngx-charts';
 import { UserImportModule } from 'app/shared/import/user-import.module';
 import { ArtemisExamSharedModule } from 'app/exam/shared/exam-shared.module';
 import { ExamStatusComponent } from 'app/exam/manage/exam-status.component';
@@ -53,7 +53,6 @@ const ENTITY_STATES = [...examManagementState];
 @NgModule({
     // TODO: For better modularization we could define an exercise module with the corresponding exam routes
     imports: [
-        NgxChartsModule,
         RouterModule.forChild(ENTITY_STATES),
         ArtemisTextExerciseModule,
         ArtemisExamScoresModule,
@@ -77,6 +76,7 @@ const ENTITY_STATES = [...examManagementState];
         UserImportModule,
         ArtemisExamSharedModule,
         ArtemisExamModePickerModule,
+        BarChartModule,
     ],
     declarations: [
         ExamManagementComponent,
