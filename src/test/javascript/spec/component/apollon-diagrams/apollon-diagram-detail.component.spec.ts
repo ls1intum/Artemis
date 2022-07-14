@@ -13,7 +13,7 @@ import { HttpResponse } from '@angular/common/http';
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
 import { ApollonDiagramDetailComponent } from 'app/exercises/quiz/manage/apollon-diagrams/apollon-diagram-detail.component';
 import { TranslateService } from '@ngx-translate/core';
-import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
+import { MockLanguageHelper, MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { MockRouter } from '../../helpers/mocks/mock-router';
 import * as testClassDiagram from '../../util/modeling/test-models/class-diagram.json';
 import { UMLModel } from '@ls1intum/apollon';
@@ -55,6 +55,7 @@ describe('ApollonDiagramDetail Component', () => {
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: ActivatedRoute, useValue: route },
                 { provide: Router, useClass: MockRouter },
+                { provide: JhiLanguageHelper, useClass: MockLanguageHelper },
             ],
             schemas: [],
         })
