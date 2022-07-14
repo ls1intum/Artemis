@@ -116,7 +116,7 @@ export class ExamStatusComponent implements OnChanges {
      */
     private isExamPreparationFinished(): boolean {
         if (this.isTestExam) {
-            // For test eams, only the exerciseConfiguration needs to be performed by the instructor
+            // For test exam, only the exerciseConfiguration needs to be performed by the instructor
             return this.configuredExercises;
         } else {
             return this.configuredExercises && this.registeredStudents && this.generatedStudentExams && this.preparedExerciseStart;
@@ -195,7 +195,7 @@ export class ExamStatusComponent implements OnChanges {
     private setExamPreparation(): void {
         // Step 1.1:
         this.configuredExercises = this.areAllExercisesConfigured();
-        // For test eams, only the exerciseConfiguration needs to be performed by the instructor
+        // For test exam, only the exerciseConfiguration needs to be performed by the instructor
         if (!this.isTestExam) {
             // Step 1.2
             this.registeredStudents = this.examChecklistService.checkAtLeastOneRegisteredStudent(this.exam);

@@ -55,7 +55,7 @@ export class ExamUpdateComponent implements OnInit {
             if (!this.exam.gracePeriod) {
                 this.exam.gracePeriod = 180;
             }
-            // test eams only feature automatic assessment
+            // test exam only feature automatic assessment
             if (this.exam.testExam) {
                 this.exam.numberOfCorrectionRoundsInExam = 0;
             } else if (!this.exam.numberOfCorrectionRoundsInExam) {
@@ -131,7 +131,7 @@ export class ExamUpdateComponent implements OnInit {
     /**
      * Validates the given StartDate.
      * For real exams, the visibleDate has to be strictly prior the startDate.
-     * For test eams, the visibleDate has to be prior or equal to the startDate.
+     * For test exam, the visibleDate has to be prior or equal to the startDate.
      */
     get isValidStartDate(): boolean {
         if (this.exam.startDate === undefined) {
@@ -168,7 +168,7 @@ export class ExamUpdateComponent implements OnInit {
 
     /**
      * Validates the WorkingTime.
-     * For test eams, the WorkingTime should be at least 1 and smaller / equal to the working window
+     * For test exam, the WorkingTime should be at least 1 and smaller / equal to the working window
      * For real exams, the WorkingTime is calculated based on the startDate and EndDate and should match the time difference.
      */
     get validateWorkingTime(): boolean {

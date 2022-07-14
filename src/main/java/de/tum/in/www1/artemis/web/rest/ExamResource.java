@@ -249,7 +249,7 @@ public class ExamResource {
     /**
      * Checks that the visible/start/end-dates are present and in the correct order.
      * For real exams: visibleDate < startDate < endDate
-     * For test eams: visibleDate <= startDate < endDate
+     * For test exam: visibleDate <= startDate < endDate
      *
      * @param exam the exam to be checked
      */
@@ -271,7 +271,7 @@ public class ExamResource {
     }
 
     /**
-     * Validates the working time, which should be equal (real exams) or smaller / equal (test eams) to the
+     * Validates the working time, which should be equal (real exams) or smaller / equal (test exam) to the
      * difference between start- and endDate.
      *
      * @param exam the exam to be checked
