@@ -14,22 +14,22 @@
     speak: none;
 }
 
-.datatable-icon-left:before {
+.datatable-icon-left::before {
     content: '⟨';
 }
 
-.datatable-icon-right:before {
+.datatable-icon-right::before {
     content: '⟩';
 }
 
-.datatable-icon-down:before {
+.datatable-icon-down::before {
     content: '∨';
 }
 
-.datatable-icon-skip:before {
+.datatable-icon-skip::before {
     content: '⟫';
 }
 
-.datatable-icon-prev:before {
+.datatable-icon-prev::before {
     content: '⟪';
 }

@@ -13,11 +13,8 @@ import { getCurrentExercisePerStudent } from 'app/exam/monitoring/charts/monitor
     templateUrl: './exercise-detail-current-chart.component.html',
 })
 export class ExerciseDetailCurrentChartComponent extends ChartComponent implements OnInit, OnDestroy {
-    // Input
     @Input()
     exam: Exam;
-
-    // Input
     @Input()
     exercise: Exercise;
 

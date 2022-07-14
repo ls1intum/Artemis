@@ -12,11 +12,8 @@ import { GraphColors } from 'app/entities/statistics.model';
     templateUrl: './exercise-detail-submission-chart.component.html',
 })
 export class ExerciseDetailSubmissionChartComponent extends ChartComponent implements OnInit, OnDestroy {
-    // Input
     @Input()
     exam: Exam;
-
-    // Input
     @Input()
     exercise: Exercise;
 

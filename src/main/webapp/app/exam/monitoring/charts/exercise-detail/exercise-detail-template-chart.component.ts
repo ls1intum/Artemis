@@ -9,7 +9,6 @@ import { round } from 'app/shared/util/utils';
     styleUrls: ['../monitoring-chart.scss'],
 })
 export class ExerciseDetailTemplateChartComponent {
-    // Input
     @Input()
     ngxData: NgxChartsEntry[];
     @Input()
