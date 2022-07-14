@@ -8,10 +8,11 @@ Overview
 --------
 
 1. Prepare a quiz exercise (Instructor)
+
 2. Resolve a quiz exercise (Student)
 3. Assess the submissions (Instructor)
 
-1. Prepare a quiz exercise
+Prepare a quiz exercise
 --------
 This section describes the process to create a quiz exercise.
 
@@ -21,10 +22,10 @@ This section describes the process to create a quiz exercise.
     .. figure:: quiz/course-dashboard.png
             :align: center
 
-- In the quiz exercises part click on the create a quiz button
+Create new quiz exercise
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-    .. figure:: quiz/buttons-to-create-a-quiz.png
-            :align: center
+- In the quiz exercises part click on the Create Quiz button |CreateAQuizButton|
 
 - The following form will be open for create the quiz.
 
@@ -125,7 +126,86 @@ This section describes the process to create a quiz exercise.
         - Cancel Button
         - Save Button
 
+Create Drag and Drop Model Quiz
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+    - In the quiz exercises part click on the Create Quiz button |CreateDragAndDropQuizButton|
+
+    - In the Apollon Diagrams page is possible to see the list of Apollon Diagrams and the possible actions to perform with them: Open and Delete.
+
+        .. figure:: quiz/apollon-diagrams.png
+            :align: center
+
+    - Clicking in the creation of a new Apollon Diagram button |CreateANewApollonDiagram| opens the following form
+
+        .. figure:: quiz/Apollon-form.png
+            :align: center
+            :scale: 50
+
+        - Title of the Drag and Drop Model Quiz
+        - Diagram Type list picker allows to select among:
+
+            - Class Diagram
+            - Activity Diagram
+            - Object Diagram
+            - Use Case Diagram
+            - Communication Diagram
+            - Component Diagram
+            - Deployment Diagram
+            - Petri Net
+            - Syntax Tree
+            - Flowchart
+
+        - Save Button
+        - Cancel Button
+
+    - Click the save button to open Apollon editor
+
+        .. figure:: quiz/apollon-editor.png
+            :align: center
+
+        - Title
+        - Crop image to selection
+        - Download Button
+        - Generate a Quiz Exercise Button
+        - Save Button
+        - Modeling field
+        - Elements to Drag and Drop in the Modeling field.
+
+
+Import a Quiz
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+    - In the quiz exercises part, click on the Import a Quiz button |ImportQuizButton|
+
+    - The list of existing quizzes will appear
+
+        .. figure:: quiz/import-list-quizzes.png
+            :align: center
+            :scale: 50
+
+        - The searching bar
+        - The list of quizzes
+        - By clicking the Import Button |ImportButton| opens the quiz editor with the existing questions. Here is posible to change the title of the quiz and the rest parameters that is possible to edit in the **Create new quiz exercise**.
+
+Export a Quiz
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+    - In the quiz exercises part, click on the Export Quiz Exercises button |ExportQuizExerciseButton|
+
+    - The list of quizzes will be shown
+
+        .. figure:: quiz/export-quizzes-list.png
+            :align: center
+            :scale: 50
+
+        - Select te quizzes for being exported
+        - The Export Button |ExportButton| will download the quiz in a JSON file.
+
+
+
+Resolve a quiz exercise
+--------
 
 
 
@@ -134,4 +214,18 @@ This section describes the process to create a quiz exercise.
 .. |CourseManagementButton| image:: quiz/CourseManagementButton.png
     :scale: 50
 .. |AddSelectedQuestionsButton| image:: quiz/add-selected-questions-button.png
+    :scale: 50
+.. |CreateANewApollonDiagram| image:: quiz/create-a-new-apollon-diagram.png
+    :scale: 50
+.. |CreateAQuizButton| image:: quiz/create-quiz-button.png
+    :scale: 50
+.. |CreateDragAndDropQuizButton| image:: quiz/create-drag-and-drop-quiz.png
+    :scale: 50
+.. |ImportQuizButton| image:: quiz/import-quiz-button.png
+    :scale: 50
+.. |ImportButton| image:: quiz/import-button.png
+    :scale: 50
+.. |ExportQuizExerciseButton| image:: quiz/export-quiz-button.png
+    :scale: 50
+.. |ExportButton| image:: quiz/export-button.png
     :scale: 50
