@@ -667,7 +667,7 @@ public class StudentExamResource {
      * (Different way, as studentExam <-> participations are linked with the startedDate <-> initializationDate
      *
      * @param studentExam the student exam in question
-     * @param currentUser logged-in user with groups and authorities
+     * @param user logged-in user with groups and authorities
      */
     private void fetchParticipationsSubmissionsAndResultsForTestExam(StudentExam studentExam, User user) {
         // 1st: Load (Quiz-)Exercises

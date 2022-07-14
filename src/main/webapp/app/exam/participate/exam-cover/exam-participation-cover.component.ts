@@ -88,7 +88,7 @@ export class ExamParticipationCoverComponent implements OnInit, OnDestroy {
             if (this.testRun) {
                 this.graceEndDate = dayjs(this.testRunStartTime!).add(this.studentExam.workingTime!, 'seconds').add(this.exam.gracePeriod!, 'seconds');
             } else if (this.testExam) {
-                this.graceEndDate = dayjs().add(this.studentExam.workingTime!, 'seconds').add(this.exam.gracePeriod!, 'seconds');
+                this.graceEndDate = dayjs(this.studentExam.startedDate!).add(this.studentExam.workingTime!, 'seconds').add(this.exam.gracePeriod!, 'seconds');
             } else {
                 this.graceEndDate = dayjs(this.exam.startDate).add(this.studentExam.workingTime!, 'seconds').add(this.exam.gracePeriod!, 'seconds');
             }

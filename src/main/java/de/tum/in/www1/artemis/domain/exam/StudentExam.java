@@ -209,7 +209,7 @@ public class StudentExam extends AbstractAuditingEntity {
 
     /**
      * Determines if the Results of an Exam are already published
-     * For a test exam, the Results are autmoatically published once the studentExam was submitted
+     * For a test exam, the Results are automatically published once the studentExam was submitted
      * For real exams, {@link Exam#resultsPublished()} is called
      *
      * @return true the results are published

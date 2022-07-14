@@ -1,10 +1,8 @@
 <div class="mt-3 mb-4 text-center">
-    <div class="mb-2" *ngIf="isTestExam">
-        <ng-container>
-            <strong class="font-weight-bold">{{ 'artemisApp.examManagement.testExam.examMode' | artemisTranslate }}:</strong>
-            <div *ngIf="!isTestExam" class="mx-2 badge bg-success">{{ 'artemisApp.examManagement.testExam.realExam' | artemisTranslate }}</div>
-            <div *ngIf="isTestExam" class="mx-2 badge bg-primary">{{ 'artemisApp.examManagement.testExam.testExam' | artemisTranslate }}</div>
-        </ng-container>
+    <div class="mb-2">
+        <strong class="font-weight-bold">{{ 'artemisApp.examManagement.testExam.examMode' | artemisTranslate }} :</strong>
+        <div *ngIf="!isTestExam" class="mx-2 badge bg-success">{{ 'artemisApp.examManagement.testExam.realExam' | artemisTranslate }}</div>
+        <div *ngIf="isTestExam" class="mx-2 badge bg-primary">{{ 'artemisApp.examManagement.testExam.testExam' | artemisTranslate }}</div>
     </div>
     <!-- For test exams, the currentDate (analogous to the real exam) and the workingTime should be displayed -->
     <div class="mb-2" *ngIf="exam && isTestExam">
@@ -17,33 +15,33 @@
             {{ exam.workingTime! | artemisDurationFromSeconds }}
         </span>
         <span *ngIf="studentExam.submitted && studentExam.submissionDate && studentExam.startedDate" class="mx-2">
-            <strong class="font-weight-bold">{{ 'artemisApp.exam.overview.testExam.workingTimeCalculated' | artemisTranslate }}: </strong>
+            <strong class="font-weight-bold">{{ 'artemisApp.exam.overview.testExam.workingTimeCalculated' | artemisTranslate }} : </strong>
             <jhi-testexam-working-time [studentExam]="studentExam"></jhi-testexam-working-time>
         </span>
     </div>
-    <div class="mb-2" *ngIf="exam && !isTestExam">
-        <ng-container *ngIf="exam.startDate">
-            <div *ngIf="isExamOverMultipleDays; else examSingleDay">
-                <span class="mx-2">
-                    <strong class="font-weight-bold">{{ 'artemisApp.exam.time' | artemisTranslate }}:</strong>
-                    {{ exam.startDate | artemisDate: 'long-date' }} {{ exam.startDate | artemisDate: 'time' }}
-                    -
-                    {{ examEndDate | artemisDate: 'long-date' }} {{ examEndDate | artemisDate: 'time' }}
-                </span>
-            </div>
-            <ng-template #examSingleDay>
-                <span class="mx-2">
-                    <strong class="font-weight-bold">{{ 'artemisApp.exam.date' | artemisTranslate }}:</strong>
-                    {{ exam.startDate | artemisDate: 'long-date' }}
-                </span>
-                <span class="mx-2">
-                    <strong class="font-weight-bold">{{ 'artemisApp.exam.time' | artemisTranslate }}:</strong>
-                    {{ exam.startDate | artemisDate: 'time' }}
-                    -
-                    {{ examEndDate | artemisDate: 'time' }}
-                </span>
-            </ng-template>
-        </ng-container>
+    <div class="mb-2" *ngIf="exam && !isTestExam && exam.startDate">
+        <div *ngIf="isExamOverMultipleDays; else examSingleDay">
+            <span class="mx-2">
+                <strong class="font-weight-bold">{{ 'artemisApp.exam.time' | artemisTranslate }}:</strong>
+                {{ exam.startDate | artemisDate: 'long-date' }} {{ exam.startDate | artemisDate: 'time' }}
+                -
+                {{ examEndDate | artemisDate: 'long-date' }} {{ examEndDate | artemisDate: 'time' }}
+            </span>
+        </div>
+        <ng-template #examSingleDay>
+            <span class="mx-2">
+                <strong class="font-weight-bold">{{ 'artemisApp.exam.date' | artemisTranslate }}:</strong>
+                {{ exam.startDate | artemisDate: 'long-date' }}
+            </span>
+            <span class="mx-2">
+                <strong class="font-weight-bold">{{ 'artemisApp.exam.time' | artemisTranslate }}:</strong>
+                {{ exam.startDate | artemisDate: 'time' }}
+                -
+                {{ examEndDate | artemisDate: 'time' }}
+            </span>
+        </ng-template>
+    </div>
+    <div class="mb-2">
         <span class="mx-2" *ngIf="exam && exam.startDate && exam.endDate">
             <strong class="font-weight-bold">{{ 'artemisApp.exam.duration' | artemisTranslate }}:</strong>
             <ng-container *ngIf="studentExam && studentExam.workingTime">

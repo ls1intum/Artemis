@@ -385,7 +385,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
             )
             .subscribe({
                 next: (studentExam: StudentExam) => {
-                    if (studentExam.exam?.testExam) {
+                    if (studentExam.exam!.testExam) {
                         // If we have a test exam, we reload the summary from the server.
                         this.examParticipationService
                             .loadStudentExamWithExercisesForSummary(this.courseId, this.examId, studentExam.id!)

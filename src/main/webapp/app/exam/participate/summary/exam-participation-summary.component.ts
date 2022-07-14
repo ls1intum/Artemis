@@ -126,6 +126,7 @@ export class ExamParticipationSummaryComponent implements OnInit {
         if (this.testRunConduction || this.testExamConduction) {
             return false;
         } else if (this.isTestRun || this.isTestExam) {
+            console.log('Hello');
             return true;
         }
         return this.studentExam?.exam?.publishResultsDate && dayjs(this.studentExam.exam.publishResultsDate).isBefore(dayjs());
