@@ -4,6 +4,7 @@
     </span>
     <jhi-button
         submitbutton
+        *ngIf="isOwnerOfParticipation"
         [disabled]="(!isActive && !isLate) || !submission || !submissionFile || !!result"
         [title]="!isLate ? 'entity.action.submit' : 'entity.action.submitDeadlineMissed'"
         (onClick)="submitExercise()"
@@ -18,7 +19,7 @@
     <!--region Left Panel-->
     <div left-body class="px-2 pb-2 w-100">
         <div class="row">
-            <div class="col-12 col-md-6" *ngIf="(isActive || isLate) && !result && fileUploadExercise && submission">
+            <div class="col-12 col-md-6" *ngIf="(isActive || isLate) && !result && fileUploadExercise && submission && isOwnerOfParticipation">
                 <div class="form-group">
                     <label class="form-control-label" jhiTranslate="artemisApp.fileUploadSubmission.selectFile">Please select </label>
                     <div class="input-group background-file">
