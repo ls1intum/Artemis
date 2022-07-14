@@ -42,7 +42,7 @@ export class AboutUsComponent implements OnInit {
         ['scalable', {}],
         ['highUserSatisfaction', {}],
         ['customizable', {}],
-        ['openSource', {}],
+        ['openSource', { openSourceUrl: 'https://docs.artemis.ase.in.tum.de/dev/open-source/' }],
     ];
 
     readonly SERVER_API_URL = SERVER_API_URL;
