@@ -464,6 +464,10 @@
         "examMonitoring": {
             "title": "Klausur Live Statistik",
             "description": "Die Klausur Live Statistik Ansicht erlaubt es die Aktionen der Studierenden während der Klausur einzusehen und die daraus resultierenden Daten zu analysieren.",
+            "enable": "Aktivieren",
+            "disable": "Deaktivieren",
+            "enabled": "Aktiviert",
+            "disabled": "Deaktiviert",
             "table": {
                 "panelHeader": "Klausurinformationen",
                 "panelDescriptionHeader": "Details",

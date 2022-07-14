@@ -174,9 +174,13 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                         this.initIndividualEndDates(this.exam.startDate!);
 
                         // Listen to exam monitoring updates to disable monitoring
-                        this.examMonitoringUpdateSubscription = this.examActionService.subscribeForExamMonitoringUpdate(this.exam).subscribe((status: boolean) => {
-                            this.exam.monitoring = status;
-                        });
+                        try {
+                            this.examMonitoringUpdateSubscription = this.examActionService.subscribeForExamMonitoringUpdate(this.exam).subscribe((status: boolean) => {
+                                this.exam.monitoring = status;
+                            });
+                        } catch (error) {
+                            captureException(error);
+                        }
 
                         // only show the summary if the student was able to submit on time.
                         if (this.isOver() && this.studentExam.submitted) {
