@@ -109,7 +109,6 @@ public class PlagiarismCaseIntegrationTest extends AbstractSpringIntegrationBamb
             plagiarismCasesList.add(plagiarismCase);
         }
 
-
         return plagiarismCasesList;
     }
 
@@ -172,7 +171,7 @@ public class PlagiarismCaseIntegrationTest extends AbstractSpringIntegrationBamb
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testGetPlagiarismCaseForInstructor() throws Exception {
         var plagiarismCase = request.get("/api/courses/" + course.getId() + "/plagiarism-cases/" + plagiarismCase1.getId() + "/for-instructor", HttpStatus.OK,
-            PlagiarismCase.class);
+                PlagiarismCase.class);
         assertThat(plagiarismCase).as("should get plagiarism case for instructor").isEqualTo(plagiarismCase1);
     }
 

@@ -26,12 +26,11 @@ public interface PlagiarismCaseRepository extends JpaRepository<PlagiarismCase, 
             """)
     Optional<PlagiarismCase> findByStudentLoginAndExerciseIdWithPlagiarismSubmissions(@Param("studentLogin") String studentLogin, @Param("exerciseId") Long exerciseId);
 
-    // we have a one to one relationship between PlagiarismSubmission and PlagiarismComparison, therefore we use a normal JOIN (== INNER JOIN) and not a left (outer) JOIN
     @Query("""
             SELECT DISTINCT plagiarismCase FROM PlagiarismCase plagiarismCase
             LEFT JOIN FETCH plagiarismCase.post
             LEFT JOIN FETCH plagiarismCase.plagiarismSubmissions plagiarismSubmissions
-            JOIN FETCH plagiarismSubmissions.plagiarismComparison plagiarismComparison
+            LEFT JOIN FETCH plagiarismSubmissions.plagiarismComparison plagiarismComparison
             WHERE plagiarismCase.exercise.course.id = :courseId
             """)
     List<PlagiarismCase> findByCourseIdWithPlagiarismSubmissionsAndComparison(@Param("courseId") Long courseId);
