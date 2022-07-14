@@ -1,19 +1,12 @@
-<button
-    id="add-unreferenced-feedback"
-    class="btn btn-success mt-4"
-    (drop)="createAssessmentOnDrop($event)"
-    (dragover)="$event.preventDefault()"
-    (click)="addUnreferencedFeedback()"
-    [disabled]="readOnly"
->
+<button id="add-unreferenced-feedback" class="btn btn-success mt-4" (click)="addUnreferencedFeedback()" [disabled]="readOnly">
     {{ 'artemisApp.fileUploadAssessment.addFeedback' | artemisTranslate }}
 </button>
 <ng-container *ngIf="!busy">
-    <div class="row mt-4">
+    <div class="row mt-4" (drop)="createAssessmentOnDrop($event)" (dragover)="$event.preventDefault()">
         <h4 class="col-12" jhiTranslate="artemisApp.assessment.detail.feedback">Feedback</h4>
         <div *ngIf="!unreferencedFeedback || unreferencedFeedback.length == 0" class="col-12 col-lg-8 col-xl-6">
             <div class="alert alert-secondary text-center" role="alert">
-                <p>{{ 'artemisApp.fileUploadAssessment.assessInstruction' | artemisTranslate }}</p>
+                <p>{{ 'artemisApp.fileUploadAssessment.assessInstructionWithDropOption' | artemisTranslate }}</p>
             </div>
         </div>
         <div *ngFor="let assessment of unreferencedFeedback; let i = index" class="col-12 col-lg-6 col-xl-6">
