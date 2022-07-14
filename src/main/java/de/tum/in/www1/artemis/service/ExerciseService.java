@@ -649,7 +649,7 @@ public class ExerciseService {
             for (Feedback feedback : feedbackToBeUpdated) {
                 if (feedback.getGradingInstruction().getId().equals(instruction.getId())) {
                     feedback.setCredits(instruction.getCredits());
-                    feedback.setPositive(feedback.getCredits() >= 0);
+                    feedback.setPositiveViaCredits();
                 }
             }
         }
@@ -679,7 +679,7 @@ public class ExerciseService {
                 result.updateAllFeedbackItems(savedFeedback, exercise instanceof ProgrammingExercise);
             }
 
-            if (!(exercise instanceof ProgrammingExercise)) {
+            if (!(exercise instanceof ProgrammingExercise programmingExercise)) {
                 final Optional<ZonedDateTime> dueDate;
                 if (result.getParticipation() == null) {
                     // this is only the case for example submissions, due date does not matter then
@@ -691,7 +691,7 @@ public class ExerciseService {
                 resultRepository.submitResult(result, exercise, dueDate);
             }
             else {
-                result.calculateScoreForProgrammingExercise(exercise.getMaxPoints());
+                result.calculateScoreForProgrammingExercise(programmingExercise);
                 resultRepository.save(result);
             }
         }

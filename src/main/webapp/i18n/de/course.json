@@ -41,8 +41,8 @@
                 "description": "Diese Nummer gibt an, wie viele Zeichen für die Antwort pro Beschwerde maximal verwendet werden darf."
             },
             "postsEnabled": {
-                "title": "Posts von Studierenden aktivieren",
-                "description": "Postings auf Vorlesung- und Übungsseite aktivieren / deaktivieren"
+                "title": "Kommunikationsfunktionen aktivieren",
+                "description": "Kommunikationsbereich auf Vorlesungs- und Übungsseiten aktivieren."
             },
             "complaintsEnabled": {
                 "title": "Beschwerden von Studierenden aktivieren",
@@ -199,7 +199,7 @@
             "activeStudents": "Aktive Studierende",
             "activeStudentsExplanation": "Aktive Studierende sind Studierende, die in der entsprechenden Woche mindestens eine Lösung eingereicht haben.",
             "average": "Durchschnitt: ",
-            "averageReferenceLineCheckboxLabel": "Zeige den Durchschnitt als Referenz-Linie",
+            "meanReferenceLineCheckboxLabel": "Zeige den Durchschnitt als Referenz-Linie",
             "exerciseType": "Aufgabentyp",
             "programming": "Programmierung",
             "quiz": "Quiz",

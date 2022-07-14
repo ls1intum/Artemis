@@ -1,4 +1,4 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, TestBed } from '@angular/core/testing';
 import { HttpResponse } from '@angular/common/http';
 import { of } from 'rxjs';
 import { ArtemisTestModule } from '../../../test.module';
@@ -18,6 +18,7 @@ import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { MockWebsocketService } from '../../../helpers/mocks/service/mock-websocket.service';
 import { createTestExercises } from './exam-monitoring-helper';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
+import { ExamActionService } from 'app/exam/monitoring/exam-action.service';
 
 describe('Exam Monitoring Component', () => {
     // Course
@@ -40,6 +41,7 @@ describe('Exam Monitoring Component', () => {
     let fixture: ComponentFixture<ExamMonitoringComponent>;
     let examMonitoringService: ExamMonitoringService;
     let examManagementService: ExamManagementService;
+    let examActionService: ExamActionService;
     let pipe: ArtemisDatePipe;
 
     const route = { params: of({ courseId: course.id, examId: exam.id }) };
@@ -62,6 +64,7 @@ describe('Exam Monitoring Component', () => {
                 comp = fixture.componentInstance;
                 examMonitoringService = TestBed.inject(ExamMonitoringService);
                 examManagementService = TestBed.inject(ExamManagementService);
+                examActionService = TestBed.inject(ExamActionService);
             });
     });
 
@@ -70,6 +73,7 @@ describe('Exam Monitoring Component', () => {
         jest.restoreAllMocks();
     });
 
+    // On init
     it('should call find of examManagementService to get the exam on init', () => {
         // GIVEN
         const responseFakeExam = { body: exam as Exam } as HttpResponse<Exam>;
@@ -191,4 +195,32 @@ describe('Exam Monitoring Component', () => {
         // THEN
         expect(comp.table).toEqual(table);
     });
+
+    it('should call subscribeForLatestExamAction of examActionService to get the latest actions on init', () => {
+        // GIVEN
+        const responseFakeExam = { body: exam as Exam } as HttpResponse<Exam>;
+        jest.spyOn(examManagementService, 'find').mockReturnValue(of(responseFakeExam));
+        jest.spyOn(examActionService, 'subscribeForLatestExamAction');
+
+        // WHEN
+        comp.ngOnInit();
+
+        // THEN
+        expect(examActionService.subscribeForLatestExamAction).toHaveBeenCalledOnce();
+        expect(examActionService.subscribeForLatestExamAction).toHaveBeenCalledWith(exam);
+    });
+
+    it('should call loadInitialActions of examActionService to get the initial actions on init', fakeAsync(() => {
+        // GIVEN
+        const responseFakeExam = { body: exam as Exam } as HttpResponse<Exam>;
+        jest.spyOn(examManagementService, 'find').mockReturnValue(of(responseFakeExam));
+        jest.spyOn(examActionService, 'loadInitialActions');
+
+        // WHEN
+        comp.ngOnInit();
+
+        // THEN
+        expect(examActionService.loadInitialActions).toHaveBeenCalledOnce();
+        expect(examActionService.loadInitialActions).toHaveBeenCalledWith(exam);
+    }));
 });

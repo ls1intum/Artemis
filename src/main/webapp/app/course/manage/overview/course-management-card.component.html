@@ -223,11 +223,11 @@
             *ngIf="course.isAtLeastTutor && course.postsEnabled"
             [routerLink]="['/courses', course.id, 'discussion']"
             class="btn btn-primary me-1 mb-1"
-            [ngbTooltip]="'artemisApp.metis.discussion.label' | artemisTranslate"
+            [ngbTooltip]="'artemisApp.metis.communication.label' | artemisTranslate"
             id="course-card-open-discussions"
         >
             <fa-icon [icon]="faComments"></fa-icon>
-            <span class="d-none d-xl-inline">{{ 'artemisApp.metis.discussion.label' | artemisTranslate }}</span>
+            <span class="d-none d-xl-inline">{{ 'artemisApp.metis.communication.label' | artemisTranslate }}</span>
         </a>
         <a
             *ngIf="course.isAtLeastInstructor"

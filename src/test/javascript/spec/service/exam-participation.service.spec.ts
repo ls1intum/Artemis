@@ -17,6 +17,8 @@ import { StudentParticipation } from 'app/entities/participation/student-partici
 import { TextSubmission } from 'app/entities/text-submission.model';
 import { Result } from 'app/entities/result.model';
 import { getLatestSubmissionResult } from 'app/entities/submission.model';
+import { StudentExamWithGradeDTO, StudentResult } from 'app/exam/exam-scores/exam-score-dtos.model';
+import { GradeType } from 'app/entities/grading-scale.model';
 
 describe('Exam Participation Service', () => {
     let service: ExamParticipationService;
@@ -82,6 +84,26 @@ describe('Exam Participation Service', () => {
             .loadStudentExamForTestExamWithExercisesForSummary(1, 1, 1)
             .pipe(take(1))
             .subscribe((resp) => expect(resp).toMatchObject({ body: studentExam }));
+        const req = httpMock.expectOne({ method: 'GET' });
+        req.flush(returnedFromService);
+    });
+
+    it('should load a student exam grade info for summary', async () => {
+        const studentExamWithGrade: StudentExamWithGradeDTO = {
+            maxPoints: 100,
+            maxBonusPoints: 10,
+            studentResult: {} as StudentResult,
+            gradeType: GradeType.GRADE,
+            achievedPointsPerExercise: {
+                1: 20,
+                2: 10,
+            },
+        };
+        const returnedFromService = Object.assign({}, studentExamWithGrade);
+        service
+            .loadStudentExamGradeInfoForSummary(1, 1)
+            .pipe(take(1))
+            .subscribe((resp) => expect(resp).toMatchObject({ body: studentExamWithGrade }));
         const req = httpMock.expectOne({ method: 'GET' });
         req.flush(returnedFromService);
     });

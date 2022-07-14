@@ -50,6 +50,6 @@ describe('IncludedInScoreBadge', () => {
         component.ngOnChanges();
         component.ngOnInit();
 
-        expect(component.badgeClass).toBe('bg-danger');
+        expect(component.badgeClass).toBe('bg-secondary');
     });
 });

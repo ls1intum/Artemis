@@ -7,7 +7,7 @@ import { MonitoringOverviewComponent } from 'app/exam/monitoring/subpages/overvi
 import { MonitoringExercisesComponent } from 'app/exam/monitoring/subpages/exercise/monitoring-exercises.component';
 import { MonitoringCardComponent } from 'app/exam/monitoring/subpages/monitoring-card.component';
 import { MonitoringActivityLogComponent } from 'app/exam/monitoring/subpages/activity-log/monitoring-activity-log.component';
-import { NgxChartsModule } from '@swimlane/ngx-charts';
+import { BarChartModule, LineChartModule } from '@swimlane/ngx-charts';
 import { ExerciseChartComponent } from 'app/exam/monitoring/charts/exercises/exercise-chart.component';
 import { ArtemisSidePanelModule } from 'app/shared/side-panel/side-panel.module';
 import { ExerciseGroupChartComponent } from 'app/exam/monitoring/charts/exercises/exercise-group-chart.component';
@@ -20,11 +20,22 @@ import { ExerciseSubmissionChartComponent } from 'app/exam/monitoring/charts/exe
 import { ExerciseNavigationChartComponent } from 'app/exam/monitoring/charts/exercises/exercise-navigation-chart.component';
 import { ActionsChartComponent } from 'app/exam/monitoring/charts/activity-log/actions-chart.component';
 import { ExerciseTemplateChartComponent } from 'app/exam/monitoring/charts/exercises/exercise-template-chart.component';
+import { NgxDatatableModule } from '@flaviosantoro92/ngx-datatable';
+import { ArtemisDataTableModule } from 'app/shared/data-table/data-table.module';
 
 const ENTITY_STATES = [...examMonitoringState];
 
 @NgModule({
-    imports: [RouterModule.forChild(ENTITY_STATES), ArtemisSharedCommonModule, NgxChartsModule, ArtemisSidePanelModule, ArtemisSharedComponentModule],
+    imports: [
+        RouterModule.forChild(ENTITY_STATES),
+        ArtemisSharedCommonModule,
+        BarChartModule,
+        LineChartModule,
+        ArtemisSidePanelModule,
+        ArtemisSharedComponentModule,
+        NgxDatatableModule,
+        ArtemisDataTableModule,
+    ],
     declarations: [
         ExamMonitoringComponent,
         MonitoringOverviewComponent,

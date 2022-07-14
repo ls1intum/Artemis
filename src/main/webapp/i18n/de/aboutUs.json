@@ -3,33 +3,67 @@
         "title": "Artemis: Interaktives Lernen mit individuellem Feedback",
         "feature": "Haupteigenschaften",
         "exercises": {
-            "title": "Artemis unterstützt folgende Aufgabentypen",
-            "detail": {
-                "programmingExercises": "Programmierübungen mit Versionskontrolle und automatischer Bewertung anhand von Testfällen und kontinuierlicher Integration",
-                "quiz": "Quizübungen mit Multiple-Choice-, Drag & Drop- und Kurzantwort-Quizfragen",
-                "modelingExercises": "Modellierungsübungen mit halbautomatischer Bewertung unter Verwendung von Machine Learning Konzepten",
-                "textExercises": "Textübungen mit manueller (und experimenteller halbautomatischer) Bewertung",
-                "uploadExercises": "Übungen zum Hochladen von Dateien mit anschießender manueller Bewertung"
+            "programming": {
+                "text": "<a href='{{ programmingUrl }}'>Programmieraufgaben</a> mit Versionskontrolle, automatischer individueller Rückmeldung und statischer Code-Analyse."
+            },
+            "quiz": {
+                "text": "<a href={{ quizUrl }}>Quizaufgaben</a> mit Multiple-Choice-, Drag-and-Drop- und Freitext-Fragen im Einzel-, Synchron- oder Gruppenmodus zusätzlich mit einem Übungsmodus."
+            },
+            "modeling": {
+                "text": "<a href={{ modelingUrl }}>Modellierungsaufgaben</a> basierend auf dem einfach zu bedienenden Online-Modellierungseditor <a href={{ apollonUrl }}>Apollon</a> mit halbautomatischer Bewertung."
+            },
+            "text": {
+                "text": "<a href={{ textUrl }}>Textaufgaben</a> mit halbautomatischer Bewertung (NLP) mit <a href={{ athenaUrl }}>Athena</a>."
+            },
+            "fileUpload": {
+                "text": "<a href={{ fileUploadUrl }}>Aufgaben zum Hochladen von Dateien</a> mit manueller Bewertung."
             }
         },
         "exam": {
-            "title": "Artemis unterstützt folgende Features für Klausuren",
-            "detail": {
-                "supportedExerciseTypes": "Alle Aufgabentypen sind auch in der Klausur verfügbar",
-                "randomSelectionOfVariants": "Mehrere Varianten von Aufgaben können erstellt und den Studierenden zufällig zugewiesen werden",
-                "fullFeatureOverview": {
-                    "description": "Gesamter Überblick über alle Features:",
-                    "studentLink": "Überblick für Studierende",
-                    "instructorLink": "Überblick für Lehrende"
-                },
-                "instructions": {
-                    "description": "Anleitung für das Klausurfeature:",
-                    "studentLink": "Anleitung für Studierende",
-                    "instructorLink": "Anleitung für Lehrende"
-                }
-            }
+            "text": "<b>Prüfungsmodus:</b> <a href={{ instructorFeatureUrl }}>Lehrende</a> können Online-Prüfungen mit Aufgabenvarianten, integrierter Plagiatsprüfung, Testläufen und Studierendenbewertungen erstellen. <a href={{ studentFeatureUrl }}>Studierende</a> nehmen problemlos teil."
+        },
+        "grading": {
+            "text": "<b>Benotung:</b> Berechnen/Anzeigen von Noten mit konfigurierbaren Notenschlüsseln für Kurse/Prüfungen. Export als csv-Dateien zu Hochschulsysteme (z.B. CAMPUSonline)."
+        },
+        "assessment": {
+            "text": "<b>Bewertung:</b> Doppelblind-Bewertung mit strukturierten Bewertungskriterien, Ranglisten sowie Bewertungen/Beschwerden verbessert die Konsistenz/Fairness."
+        },
+        "communication": {
+            "text": "<a href={{ communicationUrl }}>Kommunikation:</a> Ankündigungen veröffentlichen. Fragen stellen, Kommentare abgeben und auf andere Beiträge reagieren. Fragen filtern."
+        },
+        "notifications": {
+            "text": "<b>Benachrichtigungen:</b> Anpassbare Web- und E-Mail-Benachrichtigungen. Benutzer können verschiedene Benachrichtigungstypen aktivieren und deaktivieren."
+        },
+        "teamExercises": {
+            "text": "<b>Gruppenaufgaben</b> mit Echtzeitzusammenarbeit und eigenen Tutoren pro Gruppe."
+        },
+        "lectures": {
+            "text": "<b>Vorlesungen:</b> Hochladen von Vorlesungsfolien für mehrere Einheiten, integrieren von Videostreams, Vorlesungsaufzeichnungen und Aufgaben in Vorlesungen und definieren von Lernzielen."
+        },
+        "integratedMarkdownEditor": {
+            "text": "<b>Integrierter Markdown-Editor:</b> Die Lehrenden können Problemstellungen im Markdown-Format definieren und zudem Bilder und Links integrieren."
+        },
+        "plagiarismChecks": {
+            "text": "<b>Plagiatsüberprüfungen:</b> Artemis integriert Plagiatsprüfungen für Programmieraufgaben (basierend auf <a href={{ jPlagUrl }}>JPlag</a>), Text- und Modellierungsaufgaben."
+        },
+        "learningAnalytics": {
+            "text": "<b>Lernanalytik:</b> Statistiken, mit denen sich die Studierenden mit dem Kursdurchschnitt vergleichen können. Bewerten der durchschnittliche Leistung der Studierenden anhand von Aufgaben und Lernzielen."
+        },
+        "scalable": {
+            "text": "<b>Skalierbar</b> auf mehrere Kurse mit Tausenden von Studierenden. Konfigurieren von zusätzlichen Build-Agenten in der kontinuierlichen Integrationsumgebung."
+        },
+        "highUserSatisfaction": {
+            "text": "<b>Hohe Benutzerzufriedenheit:</b> Artemis ist einfach zu bedienen und bietet geführte Tutorials. Die Entwickler konzentrieren sich auf Benutzerfreundlichkeit, Benutzererfahrung und Leistung."
+        },
+        "customizable": {
+            "text": "<b>Anpassbar:</b> Artemis unterstützt mehrere Lehrende, Bearbeitende und Tutoren pro Kurs und erlaubt den Lehrenden viele Kurseinstellungen anzupassen."
+        },
+        "openSource": {
+            "text": "<b>Open-source:</b> Kostenlos zu verwenden mit einer großen Gemeinschaft und vielen aktiven Entwicklern."
         },
         "getInTouch": "Kontakt",
-        "contributors": "Mitwirkende"
+        "contributors": "Mitwirkende",
+        "projectManager": "Projekt Manager",
+        "website": "Webseite"
     }
 }

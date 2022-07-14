@@ -9,6 +9,14 @@ export class ExerciseReferenceCommand extends MultiOptionCommand {
     constructor(metisService: MetisService) {
         super();
         this.metisService = metisService;
+
+        this.setValues(
+            this.metisService.getCourse().exercises!?.map((exercise) => ({
+                id: exercise.id!.toString(),
+                value: exercise.title!,
+                type: exercise.type,
+            })),
+        );
     }
 
     /**
@@ -20,7 +28,7 @@ export class ExerciseReferenceCommand extends MultiOptionCommand {
      */
     execute(selectedExerciseId: string): void {
         const selectedExercise = this.getValues().find((value) => value.id.toString() === selectedExerciseId)!;
-        const referenceLink = `[${selectedExercise.value}](${this.metisService.getLinkForExercise(selectedExercise.id)})`;
+        const referenceLink = `[${selectedExercise.type}]${selectedExercise.value}(${this.metisService.getLinkForExercise(selectedExercise.id)})[/${selectedExercise.type}]`;
         this.insertText(referenceLink);
         this.focus();
     }

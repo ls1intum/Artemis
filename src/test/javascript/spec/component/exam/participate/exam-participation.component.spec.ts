@@ -109,6 +109,7 @@ describe('ExamParticipationComponent', () => {
                 alertService = TestBed.inject(AlertService);
                 artemisServerDateService = TestBed.inject(ArtemisServerDateService);
                 fixture.detectChanges();
+                comp.exam = new Exam();
             });
     });
 
@@ -132,6 +133,7 @@ describe('ExamParticipationComponent', () => {
         });
         it('should initialize and not display test run ribbon', () => {
             TestBed.inject(ActivatedRoute).params = of({ courseId: '1', examId: '2' });
+            comp.exam.id = 2;
             comp.ngOnInit();
             fixture.detectChanges();
             expect(fixture).toBeTruthy();

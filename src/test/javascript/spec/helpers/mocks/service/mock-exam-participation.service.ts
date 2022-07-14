@@ -1,7 +1,8 @@
 import { StudentExam } from 'app/entities/student-exam.model';
 import { Exercise } from 'app/entities/exercise.model';
-import { BehaviorSubject } from 'rxjs';
+import { BehaviorSubject, of } from 'rxjs';
 import { Observable } from 'rxjs';
+import { StudentExamWithGradeDTO } from 'app/exam/exam-scores/exam-score-dtos.model';
 
 const studentExamInstance = new StudentExam();
 const exercise = { id: 7 };
@@ -21,6 +22,10 @@ export class MockExamParticipationService {
 
     loadStudentExamWithExercisesForConductionOfTestExam(courseId: number, examId: number, studentExamId: number): Observable<StudentExam> {
         return examParticipationSubjectMock;
+    }
+
+    loadStudentExamGradeInfoForSummary(courseId: number, examId: number, userId?: number): Observable<StudentExamWithGradeDTO> {
+        return of({} as StudentExamWithGradeDTO);
     }
 
     getExamExerciseIds = (): number[] => {

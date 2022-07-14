@@ -5,8 +5,7 @@
             "noPosts": "No posts found.",
             "postNumberInformation": "{{ number }} match(es)",
             "addNewPost": "New post",
-            "answerNow": "Reply now",
-            "startDiscussion": "Start discussion",
+            "reply": "Reply",
             "showMultipleAnswers": "Show {{ number }} replies",
             "showSingleAnswer": "Show 1 reply",
             "collapseAnswers": "Hide replies",
@@ -38,12 +37,14 @@
             "searchEmoji": "Search emoji",
             "courseEmojiSelectionCategory": "Selected emojis for this course",
             "editor": {
-                "exercise": "Exercise"
+                "reference": "Reference",
+                "exercise": "Exercise",
+                "lecture": "Lecture"
             },
-            "discussion": {
-                "label": "Discussion",
-                "show": "Show discussion",
-                "hide": "Hide discussion"
+            "communication": {
+                "label": "Communication",
+                "show": "Show communication",
+                "hide": "Hide communication"
             },
             "discussionSection": {
                 "searchBarDefault": "Search for a post",

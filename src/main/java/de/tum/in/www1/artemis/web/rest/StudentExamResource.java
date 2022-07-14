@@ -6,6 +6,7 @@ import static de.tum.in.www1.artemis.service.util.TimeLogUtil.formatDurationFrom
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.BadRequestException;
@@ -35,6 +36,7 @@ import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.exam.*;
 import de.tum.in.www1.artemis.service.scheduled.cache.monitoring.ExamMonitoringScheduleService;
 import de.tum.in.www1.artemis.service.util.HttpRequestUtils;
+import de.tum.in.www1.artemis.web.rest.dto.StudentExamWithGradeDTO;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
@@ -103,6 +105,8 @@ public class StudentExamResource {
 
     /**
      * GET /courses/{courseId}/exams/{examId}/student-exams/{studentExamId} : Find a student exam by id.
+     * Includes aggregate points, assessment result and grade calculations if the exam is assessed.
+     * See {@link StudentExamWithGradeDTO} for more explanation.
      *
      * @param courseId      the course to which the student exam belongs to
      * @param examId        the exam to which the student exam belongs to
@@ -111,7 +115,7 @@ public class StudentExamResource {
      */
     @GetMapping("/courses/{courseId}/exams/{examId}/student-exams/{studentExamId}")
     @PreAuthorize("hasRole('INSTRUCTOR')")
-    public ResponseEntity<StudentExam> getStudentExam(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long studentExamId) {
+    public ResponseEntity<StudentExamWithGradeDTO> getStudentExam(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long studentExamId) {
         log.debug("REST request to get student exam : {}", studentExamId);
 
         examAccessService.checkCourseAndExamAndStudentExamAccessElseThrow(courseId, examId, studentExamId);
@@ -131,7 +135,9 @@ public class StudentExamResource {
         }
         studentExam.getUser().setVisibleRegistrationNumber();
 
-        return ResponseEntity.ok(studentExam);
+        StudentExamWithGradeDTO studentExamWithGradeDTO = examService.calculateStudentResultWithGradeAndPoints(studentExam, participations);
+
+        return ResponseEntity.ok(studentExamWithGradeDTO);
     }
 
     /**
@@ -455,6 +461,57 @@ public class StudentExamResource {
     }
 
     /**
+     * GET /courses/{courseId}/exams/{examId}/student-exams/grade-summary : Return student exam result, aggregate points, assessment result
+     * for a student exam and grade calculations if the exam is assessed. Only instructors can use userId parameter to get exam results of other users,
+     * if the caller is a student, userId should either be the user id of the caller or empty.
+     *
+     * Does not return the student exam itself to save bandwidth.
+     *
+     * See {@link StudentExamWithGradeDTO} for more explanation.
+     *
+     * @param courseId  the course to which the student exam belongs to
+     * @param examId    the exam to which the student exam belongs to
+     * @param userId    the user id of the student whose grade summary is requested
+     * @return the ResponseEntity with status 200 (OK) and with the StudentExamWithGradeDTO instance without the student exam as body
+     */
+    @GetMapping("/courses/{courseId}/exams/{examId}/student-exams/grade-summary")
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<StudentExamWithGradeDTO> getStudentExamGradesForSummary(@PathVariable Long courseId, @PathVariable Long examId,
+            @RequestParam(required = false) Long userId) {
+        long start = System.currentTimeMillis();
+        User currentUser = userRepository.getUserWithGroupsAndAuthorities();
+        log.debug("REST request to get the student exam grades of user with id {} for exam {} by user {}", userId, examId, currentUser.getLogin());
+
+        User targetUser = userId == null ? currentUser : userRepository.findByIdWithGroupsAndAuthoritiesElseThrow(userId);
+        StudentExam studentExam = findStudentExamWithExercisesElseThrow(targetUser, examId, courseId);
+
+        boolean isAtLeastInstructor = authorizationCheckService.isAtLeastInstructorInCourse(studentExam.getExam().getCourse(), currentUser);
+        if (!isAtLeastInstructor && !currentUser.getId().equals(targetUser.getId())) {
+            throw new AccessForbiddenException("Current user cannot access grade info for target user");
+        }
+
+        // check that the studentExam has been submitted, otherwise /student-exams/conduction should be used
+        if (!studentExam.isSubmitted() || !studentExam.areResultsPublishedYet()) {
+            throw new AccessForbiddenException();
+        }
+
+        loadExercisesForStudentExam(studentExam);
+
+        // 3rd fetch participations, submissions and results and connect them to the studentExam
+        fetchParticipationsSubmissionsAndResultsForStudentExam(studentExam, targetUser);
+
+        List<StudentParticipation> participations = studentExam.getExercises().stream().flatMap(exercise -> exercise.getStudentParticipations().stream())
+                .collect(Collectors.toList());
+
+        StudentExamWithGradeDTO studentExamWithGradeDTO = examService.calculateStudentResultWithGradeAndPoints(studentExam, participations);
+        studentExamWithGradeDTO.studentExam = null;  // To save bandwidth.
+
+        log.info("getStudentExamGradesForSummary done in {}ms for {} exercises for target user {} by caller user {}", System.currentTimeMillis() - start,
+                studentExam.getExercises().size(), targetUser.getLogin(), currentUser.getLogin());
+        return ResponseEntity.ok(studentExamWithGradeDTO);
+    }
+
+    /**
      * GET /courses/{courseId}/exams/{examId}/test-runs : Find all test runs for the exam
      *
      * @param courseId the id of the course
@@ -596,7 +653,12 @@ public class StudentExamResource {
 
         // 3rd fetch participations, submissions and results and connect them to the studentExam
         fetchParticipationsSubmissionsAndResultsForStudentExam(studentExam, currentUser);
-
+        for (var exercise : studentExam.getExercises()) {
+            for (var participation : exercise.getStudentParticipations()) {
+                // remove inner exercise from participation
+                participation.setExercise(null);
+            }
+        }
         // 4th create new exam session
         createNewExamSession(request, studentExam);
 
@@ -712,8 +774,6 @@ public class StudentExamResource {
 
         // add relevant submission (relevancy depends on InitializationState) with its result to participation
         if (participation != null) {
-            // remove inner exercise from participation
-            participation.setExercise(null);
             // only include the latest submission
             Optional<Submission> optionalLatestSubmission = participation.findLatestLegalOrIllegalSubmission();
             if (optionalLatestSubmission.isPresent()) {
@@ -727,18 +787,27 @@ public class StudentExamResource {
                     quizSubmission.filterForExam(studentExam.areResultsPublishedYet(), isAtLeastInstructor);
                 }
             }
+            else {
+                // To prevent LazyInitializationException.
+                participation.setResults(Set.of());
+            }
             // add participation into an array
             exercise.setStudentParticipations(Set.of(participation));
+        }
+        else {
+            // To prevent LazyInitializationException.
+            exercise.setStudentParticipations(Set.of());
         }
     }
 
     /**
      * Helper method which attaches the result to its participation.
      * For direct automatic feedback during the exam conduction for {@link ProgrammingExercise}, we need to attach the results.
-     * We also attach the result if the results are already published for the exam. See {@link StudentExam#areResultsPublishedYet}
-     *
-     * @param studentExam         the given studentExam
-     * @param participation       the given participation of the student
+     * We also attach the result if the results are already published for the exam.
+     * If no suitable Result is found for StudentParticipation, an empty Result set is assigned to prevent LazyInitializationException on future reads.
+     * See {@link StudentExam#areResultsPublishedYet}
+     * @param studentExam the given studentExam
+     * @param participation the given participation of the student
      * @param isAtLeastInstructor flag for instructor access privileges
      */
     private void setResultIfNecessary(StudentExam studentExam, StudentParticipation participation, boolean isAtLeastInstructor) {
@@ -747,6 +816,8 @@ public class StudentExamResource {
                 || studentExam.areResultsPublishedYet();
         Optional<Submission> latestSubmission = participation.findLatestSubmission();
 
+        // To prevent LazyInitializationException.
+        participation.setResults(Set.of());
         if ((isStudentAllowedToSeeResult || isAtLeastInstructor) && latestSubmission.isPresent()) {
             var lastSubmission = latestSubmission.get();
             // Also set the latest result into the participation as the client expects it there for programming exercises

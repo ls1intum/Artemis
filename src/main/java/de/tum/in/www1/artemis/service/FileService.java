@@ -24,6 +24,7 @@ import org.apache.commons.io.filefilter.IOFileFilter;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.apache.pdfbox.io.MemoryUsageSetting;
 import org.apache.pdfbox.multipdf.PDFMergerUtility;
+import org.apache.pdfbox.pdmodel.PDDocumentInformation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.DisposableBean;
@@ -787,7 +788,7 @@ public class FileService implements DisposableBean {
                 futures.remove(path);
             }
             catch (IOException e) {
-                log.error("Deleting the file " + path + " did not work", e);
+                log.error("Deleting the file {} did not work", path, e);
             }
         }, delayInMinutes, TimeUnit.MINUTES);
 
@@ -810,7 +811,7 @@ public class FileService implements DisposableBean {
                 futures.remove(path);
             }
             catch (IOException e) {
-                log.error("Deleting the directory " + path + " did not work", e);
+                log.error("Deleting the directory {} did not work", path, e);
             }
         }, delayInMinutes, TimeUnit.MINUTES);
 
@@ -916,10 +917,11 @@ public class FileService implements DisposableBean {
     /**
      * Merge the PDF files located in the given paths.
      *
-     * @param paths list of paths to merge
+     * @param paths             list of paths to merge
+     * @param mergedPdfFileName title of merged pdf file
      * @return byte array of the merged file
      */
-    public Optional<byte[]> mergePdfFiles(List<String> paths) {
+    public Optional<byte[]> mergePdfFiles(List<String> paths, String mergedPdfFileName) {
         if (paths == null || paths.isEmpty()) {
             return Optional.empty();
         }
@@ -933,8 +935,14 @@ public class FileService implements DisposableBean {
                     pdfMerger.addSource(new File(path));
                 }
             }
+
+            PDDocumentInformation pdDocumentInformation = new PDDocumentInformation();
+            pdDocumentInformation.setTitle(mergedPdfFileName);
+            pdfMerger.setDestinationDocumentInformation(pdDocumentInformation);
+
             pdfMerger.setDestinationStream(outputStream);
             pdfMerger.mergeDocuments(MemoryUsageSetting.setupTempFileOnly());
+
         }
         catch (IOException e) {
             log.warn("Could not merge files");

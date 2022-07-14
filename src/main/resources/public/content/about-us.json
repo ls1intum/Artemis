@@ -3,13 +3,13 @@
         {
             "fullName": "Prof. Dr. Stephan Krusche",
             "photoDirectory": "public/images/about/Stephan_Krusche.jpg",
-            "role": "Project Manager",
+            "role": "projectManager",
             "website": "https://ase.in.tum.de/lehrstuhl_1/people/362-stephan-krusche"
         },
         {
             "fullName": "Jan Philip Bernius",
             "photoDirectory": "public/images/about/Jan_Philip_Bernius.jpg",
-            "role": "Project Manager ",
+            "role": "projectManager",
             "website": "https://ase.in.tum.de/lehrstuhl_1/people/1013-jan-philip-bernius"
         }
     ],
@@ -306,7 +306,7 @@
         },
         {
             "fullName": "Moritz Aberle",
-            "photoDirectory": "public/images/about/placeholder-man.png"
+            "photoDirectory": "public/images/about/Moritz_Aberle.jpg"
         },
         {
             "fullName": "Swornim Shrestha",
@@ -319,6 +319,26 @@
         {
             "fullName": "Michael Allgaier",
             "photoDirectory": "public/images/about/Michael_Allgaier.jpg"
+        },
+        {
+            "fullName": "Manuel Manso",
+            "photoDirectory": "public/images/about/Manuel_Manso.jpg"
+        },
+        {
+            "fullName": "Florian Gareis",
+            "photoDirectory": "public/images/about/Florian_Gareis.jpg"
+        },
+        {
+            "fullName": "Daniel Gomes da Costa",
+            "photoDirectory": "public/images/about/Daniel_Gomes_da_Costa.jpg"
+        },
+        {
+            "fullName": "Maximilian Sölch",
+            "photoDirectory": "public/images/about/Maximilian_Soelch.jpg"
+        },
+        {
+            "fullName": "Evgeny Volynsky",
+            "photoDirectory": "public/images/about/Evgeny_Volynsky.jpg"
         }
     ]
 }

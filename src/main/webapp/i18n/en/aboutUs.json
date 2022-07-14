@@ -1,36 +1,69 @@
 {
     "aboutUsOverview": {
-        "title": "Artemis: Interactive Learning with Individual Feedback\n",
-        "feature": "Main Features\n",
+        "title": "Artemis: Interactive Learning with Individual Feedback",
+        "feature": "Main Features",
         "exercises": {
-            "title": "Artemis supports the following exercises",
-            "detail": {
-                "programmingExercises": "Programming exercises with version control and automatic assessment with test cases and continuous integration",
-                "quiz": "Quiz exercises with multiple choice, drag and drop and short answer quiz questions",
-                "modelingExercises": "Modeling exercises with semi-automatic assessment using machine learning concepts",
-                "textExercises": "Textual exercises with manual (and experimental semi-automatic) assessment",
-                "uploadExercises": "File upload exercises with manual assessment"
+            "programming": {
+                "text": "<a href='{{ programmingUrl }}'>Programming exercises</a> with version control, automatic individual feedback based on test cases and static code analysis."
+            },
+            "quiz": {
+                "text": "<a href={{ quizUrl }}>Quiz exercises</a> with multiple choice, drag and drop, and short answer questions in individual, synchronized or batched mode with a practice mode."
+            },
+            "modeling": {
+                "text": "<a href={{ modelingUrl }}>Modeling exercises</a> with an easy-to-use online modeling editor <a href={{ apollonUrl }}>Apollon</a> with semi-automatic assessment."
+            },
+            "text": {
+                "text": "<a href={{ textUrl }}>Text exercises</a> with semi-automatic assessment using <a href={{ athenaUrl }}>Athena</a>."
+            },
+            "fileUpload": {
+                "text": "<a href={{ fileUploadUrl }}>File upload exercises</a> with manual assessment."
             }
         },
         "exam": {
-            "title": "Artemis supports the following features for exams",
-            "detail": {
-                "supportedExerciseTypes": "All exercises from above are also available for exams",
-                "randomSelectionOfVariants": "Multiple variants per exercise can be created and randomly selected for every student",
-
-                "fullFeatureOverview": {
-                    "description": "Complete overview of all features:",
-                    "studentLink": "Overview for students",
-                    "instructorLink": "Overview for instructors"
-                },
-                "instructions": {
-                    "description": "Guide for the exam feature:",
-                    "studentLink": "Instructions for students",
-                    "instructorLink": "Instructions for instructors"
-                }
-            }
+            "text": "<b>Exam mode:</b> <a href={{ instructorFeatureUrl }}>Instructors</a> create exams with variants, integrated plagiarism checks, test runs and student reviews. <a href={{ studentFeatureUrl }}>Students</a> participate with ease."
+        },
+        "grading": {
+            "text": "<b>Grading:</b> Calculate and display grades using configurable grade keys for courses and exams. Export as csv files to university systems (e.g. CAMPUSonline)."
+        },
+        "assessment": {
+            "text": "<b>Assessment:</b> Double-blind grading with structured criteria, integrated training, a leader board, ratings, and complaints improve consistency and fairness."
+        },
+        "communication": {
+            "text": "<a href={{ communicationUrl }}>Communication:</a> Post announcements. Ask questions, post comments, and react to other posts. Filter unanswered questions."
+        },
+        "notifications": {
+            "text": "<b>Notifications:</b> Customizable for web and email. Users can enable and disable different notification types."
+        },
+        "teamExercises": {
+            "text": "<b>Team exercises</b> with real time collaboration and dedicated tutors per team."
+        },
+        "lectures": {
+            "text": "<b>Lectures:</b> Upload lecture slides for multiple units, integrate video streams, lecture recordings, and exercises into lectures, and define learning goals."
+        },
+        "integratedMarkdownEditor": {
+            "text": "<b>Integrated markdown editor:</b> Instructors define problem statements using Markdown to easily format the text and integrate images and links."
+        },
+        "plagiarismChecks": {
+            "text": "<b>Plagiarism checks</b> for programming exercises (based on <a href={{ jPlagUrl }}>JPlag</a>), text exercises, and modeling exercises."
+        },
+        "learningAnalytics": {
+            "text": "<b>Learning analytics:</b> Statistics to compare based on the course average. Evaluate the average performance based on exercises and learning goals."
+        },
+        "scalable": {
+            "text": "<b>Scalable</b> to multiple courses with thousands of students. Configure additional build agents in the continuous integration environment."
+        },
+        "highUserSatisfaction": {
+            "text": "<b>High user satisfaction:</b> Artemis is easy to use and provides guided tutorials. Developers focus on usability, user experience, and performance."
+        },
+        "customizable": {
+            "text": "<b>Customizable:</b> It supports multiple instructors, editors, and tutors per course and allows instructors to customize many course settings."
+        },
+        "openSource": {
+            "text": "<b>Open-source:</b> Free to use with a large community and many active maintainers."
         },
         "getInTouch": "Get in touch",
-        "contributors": "Individual contributors"
+        "contributors": "Individual contributors",
+        "projectManager": "Project Manager",
+        "website": "Website"
     }
 }
