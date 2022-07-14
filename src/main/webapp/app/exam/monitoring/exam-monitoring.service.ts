@@ -11,7 +11,6 @@ import dayjs from 'dayjs/esm';
 
 export const EXAM_MONITORING_UPDATE_URL = (courseId: number, examId: number) => `${SERVER_API_URL}/api/courses/${courseId}/exams/${examId}/statistics`;
 
-
 @Injectable({ providedIn: 'root' })
 export class ExamMonitoringService {
     examObservables: Map<number, BehaviorSubject<Exam | undefined>> = new Map<number, BehaviorSubject<Exam>>();
