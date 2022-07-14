@@ -1,23 +1,27 @@
-<button id="add-unreferenced-feedback" class="btn btn-success mt-4" (click)="addUnreferencedFeedback()" [disabled]="readOnly">
-    {{ 'artemisApp.fileUploadAssessment.addFeedback' | artemisTranslate }}
-</button>
-<ng-container *ngIf="!busy">
-    <div class="row mt-4" (drop)="createAssessmentOnDrop($event)" (dragover)="$event.preventDefault()">
-        <h4 class="col-12" jhiTranslate="artemisApp.assessment.detail.feedback">Feedback</h4>
-        <div *ngIf="!unreferencedFeedback || unreferencedFeedback.length == 0" class="col-12 col-lg-8 col-xl-6">
-            <div class="alert alert-secondary text-center" role="alert">
-                <p>{{ 'artemisApp.fileUploadAssessment.assessInstructionWithDropOption' | artemisTranslate }}</p>
+<div (drop)="createAssessmentOnDrop($event)" (dragover)="$event.preventDefault()">
+    <div class="col-md-6">
+        <button id="add-unreferenced-feedback" class="btn btn-success mt-4" (click)="addUnreferencedFeedback()" [disabled]="readOnly">
+            {{ 'artemisApp.fileUploadAssessment.addFeedback' | artemisTranslate }}
+        </button>
+        <ng-container *ngIf="!busy">
+            <div class="row mt-4">
+                <h4 class="col-12" jhiTranslate="artemisApp.assessment.detail.feedback">Feedback</h4>
+                <div *ngIf="!unreferencedFeedback || unreferencedFeedback.length == 0" class="col-12 col-lg-8 col-xl-6">
+                    <div class="alert alert-secondary text-center" role="alert">
+                        <p>{{ 'artemisApp.fileUploadAssessment.assessInstructionWithDropOption' | artemisTranslate }}</p>
+                    </div>
+                </div>
+                <div *ngFor="let assessment of unreferencedFeedback; let i = index" class="col-12 col-lg-6 col-xl-6">
+                    <jhi-assessment-detail
+                        *ngIf="assessment.type === FeedbackType.MANUAL_UNREFERENCED"
+                        [(assessment)]="unreferencedFeedback[i]"
+                        (assessmentChange)="updateAssessment(assessment)"
+                        (deleteAssessment)="deleteAssessment($event)"
+                        [readOnly]="readOnly"
+                        [highlightDifferences]="highlightDifferences"
+                    ></jhi-assessment-detail>
+                </div>
             </div>
-        </div>
-        <div *ngFor="let assessment of unreferencedFeedback; let i = index" class="col-12 col-lg-6 col-xl-6">
-            <jhi-assessment-detail
-                *ngIf="assessment.type === FeedbackType.MANUAL_UNREFERENCED"
-                [(assessment)]="unreferencedFeedback[i]"
-                (assessmentChange)="updateAssessment(assessment)"
-                (deleteAssessment)="deleteAssessment($event)"
-                [readOnly]="readOnly"
-                [highlightDifferences]="highlightDifferences"
-            ></jhi-assessment-detail>
-        </div>
+        </ng-container>
     </div>
-</ng-container>
+</div>
