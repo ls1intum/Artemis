@@ -10,7 +10,6 @@ Overview
 1. Prepare a quiz exercise (Instructor)
 
 2. Resolve a quiz exercise (Student)
-3. Assess the submissions (Instructor)
 
 Prepare a quiz exercise
 --------
@@ -186,7 +185,7 @@ Import a Quiz
 
         - The searching bar
         - The list of quizzes
-        - By clicking the Import Button |ImportButton| opens the quiz editor with the existing questions. Here is posible to change the title of the quiz and the rest parameters that is possible to edit in the **Create new quiz exercise**.
+        - By clicking the Import Button |ImportButton| opens the quiz editor with the existing questions. Here is possible to edit all parameter such as in the **Create new quiz exercise**.
 
 Export a Quiz
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -206,8 +205,67 @@ Export a Quiz
 
 Resolve a quiz exercise
 --------
+    - If there is a quiz exercise as a current exercise, will be possible to see it from the course overview or inside any course.
 
+        .. figure:: quiz/current-quiz-exercise.png
+            :align: center
+            :scale: 50
 
+        - The name of the quiz
+        - The button to start the quiz
+        - The category
+        - The message if the quiz is active
+        - The due date
+
+    - To start the quiz, the student must press the Open Quiz Button |OpenQuizButton|
+
+    - If the quiz is set to start in a specific hour, the student will se a message asking to wait
+
+        .. figure:: quiz/please-wait-message.png
+            :align: center
+            :scale: 50
+
+    - When the quiz starts, the student can see and solve the questions.
+
+        .. figure:: quiz/one-choice-question.png
+            :align: center
+            :scale: 50
+
+        - Number and title of the question
+        - Points for solving that question
+        - The quiz statement
+
+        - Options
+            - Options with circles means one choice could be correct.
+            - Options with squares means multiple options could be correct.
+
+        - In the footer:
+
+            - Number of questions and overall points
+            - Time left to complete the quiz
+            - Last time saved: The quiz will be save after any chenge.
+            - Connection status
+            - Submit button.
+
+        - In case of Drag and Drop questions, in the right side will be the items to be dran and drop in the option spots.
+
+        .. figure:: quiz/drag-and-drop-view.png
+            :align: center
+            :scale: 40
+
+        - To submit and finish the quiz, the student must be press the submit button |SubmitButton|. However, when the quiz time's up, the answers will be submitted automatically.
+
+    - The assessment is automatic and the student can see the results.
+
+        .. figure:: quiz/final-quiz.png
+            :align: center
+            :scale: 35
+
+    - In the case of Drag and Drop questions, the solution is shown by clicking the show sample solution button |ShowSampleSolutionButton|.
+
+        .. figure:: quiz/solution-drag-and-drop.png
+            :align: center
+            :scale: 40
 
 
 
@@ -228,4 +286,10 @@ Resolve a quiz exercise
 .. |ExportQuizExerciseButton| image:: quiz/export-quiz-button.png
     :scale: 50
 .. |ExportButton| image:: quiz/export-button.png
+    :scale: 50
+.. |OpenQuizButton| image:: quiz/open-quiz-button.png
+    :scale: 50
+.. |SubmitButton| image:: quiz/submit-button.png
+    :scale: 50
+.. |ShowSampleSolutionButton| image:: quiz/show-sample-solution.png
     :scale: 50
