@@ -1,5 +1,5 @@
-[class^='datatable-icon-']:before,
-[class*=' datatable-icon-']:before {
+[class^='datatable-icon-']::before,
+[class*=' datatable-icon-']::before {
     display: inline-block;
     position: relative;
     transform: scale(1.5, 0.6);
