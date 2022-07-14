@@ -7,17 +7,24 @@ Plagiarism checks
     :local:
     :depth: 2
 
-Plagiarism Check Overview
+Introduction
 --------------------------
 
 Artemis allows tutors and exercise instructors to check assignments submissions from students for plagiarism.
 With this feature, different types of assignments can be checked in Artemis, including programming assignments, modeling assignments, and text assignments.
-To perform the plagiarism check, the responsible tutors must initiate the checking process for a specific task. Below, we describe the plagiarism check workflows from the perspective of various Artemis users using a UML Activity Diagram.
+To perform the plagiarism check, the responsible tutors must initiate the checking process for a specific exercise.
+First, we give an overview of different available features of the plagiarism check.
+Next, we explain the plagiarism check workflows from the perspective of various Artemis users, using a UML Activity Diagrams to visualize the process.
+
+Plagiarism Check Overview
+--------------------------
+In this section we give an overview of available features of plagiarism check. We explain different configuration settings, possible user actions and present the plagiarism result views, which are accessible after plagiarism check run.
 
 .. _settings:
 
 Settings
 ^^^^^^^^
+Before starting the plagiarism check, the user can configure different settings to get the best possible results.
 |run-settings|
 
 1. Similarity Threshold in % (minimum value 0, maximum value 100).
@@ -39,6 +46,7 @@ Settings
 
 Actions
 ^^^^^^^
+The user can use different actions to run plagiarism check, inspect the results or improve the performance.
 |plagiarism-actions1|
 
 .. note::
@@ -63,7 +71,9 @@ After the plagiarism check was executed, the results can be expected in differen
  |run-results-selected-submissions|
 
 Plagiarism Check Workflow
-------------------------
+-------------------------
+
+In this section, we explain the process of the plagiarism case detection process from different users' perspective.
 
 Tutors
 ^^^^^^
