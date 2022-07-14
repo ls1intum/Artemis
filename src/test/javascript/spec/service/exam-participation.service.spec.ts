@@ -49,7 +49,7 @@ describe('Exam Participation Service', () => {
     it('should load a StudentExam with exercises for conduction', async () => {
         const returnedFromService = Object.assign({ started: true }, studentExam);
         service
-            .loadStudentExamWithExercisesForConduction(1, 1)
+            .loadStudentExamWithExercisesForConduction(1, 1, 1)
             .pipe(take(1))
             .subscribe((resp) => expect(resp).toMatchObject({ body: studentExam }));
 
@@ -60,7 +60,7 @@ describe('Exam Participation Service', () => {
     it('should load a StudentExam with exercises for conduction of TestExam', async () => {
         const returnedFromService = Object.assign({ started: true }, studentExam);
         service
-            .loadStudentExamWithExercisesForConductionOfTestExam(1, 1, 1)
+            .loadStudentExamWithExercisesForConduction(1, 1, 1)
             .pipe(take(1))
             .subscribe((resp) => expect(resp).toMatchObject({ body: studentExam }));
 
@@ -71,7 +71,7 @@ describe('Exam Participation Service', () => {
     it('should load a StudentExam with exercises for summary', async () => {
         const returnedFromService = Object.assign({}, studentExam);
         service
-            .loadStudentExamWithExercisesForSummary(1, 1)
+            .loadStudentExamWithExercisesForSummary(1, 1, 1)
             .pipe(take(1))
             .subscribe((resp) => expect(resp).toMatchObject({ body: studentExam }));
         const req = httpMock.expectOne({ method: 'GET' });
@@ -81,7 +81,7 @@ describe('Exam Participation Service', () => {
     it('should load a StudentExam with exercises for summary', async () => {
         const returnedFromService = Object.assign({}, studentExam);
         service
-            .loadStudentExamForTestExamWithExercisesForSummary(1, 1, 1)
+            .loadStudentExamWithExercisesForSummary(1, 1, 1)
             .pipe(take(1))
             .subscribe((resp) => expect(resp).toMatchObject({ body: studentExam }));
         const req = httpMock.expectOne({ method: 'GET' });
@@ -154,7 +154,7 @@ describe('Exam Participation Service', () => {
             studentExam,
         );
         service
-            .loadStudentExamForTestExam(1, 1)
+            .loadStudentExam(1, 1)
             .pipe(take(1))
             .subscribe((resp) => expect(resp).toMatchObject({ body: studentExam }));
 
@@ -181,7 +181,7 @@ describe('Exam Participation Service', () => {
             studentExam,
         );
         service
-            .loadStudentExamForTestExamById(1, 1, 1)
+            .loadStudentExamWithExercisesForConduction(1, 1, 1)
             .pipe(take(1))
             .subscribe((resp) => expect(resp).toMatchObject({ body: studentExam }));
 

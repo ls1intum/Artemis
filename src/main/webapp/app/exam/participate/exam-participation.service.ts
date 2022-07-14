@@ -35,20 +35,10 @@ export class ExamParticipationService {
      * Retrieves a {@link StudentExam} from server or localstorage. Will also mark the student exam as started
      * @param courseId the id of the course the exam is created in
      * @param examId the id of the exam
-     */
-    public loadStudentExamWithExercisesForConduction(courseId: number, examId: number): Observable<StudentExam> {
-        const url = this.getResourceURL(courseId, examId) + '/student-exams/conduction';
-        return this.getStudentExamFromServer(url, courseId, examId);
-    }
-
-    /**
-     * Retrieves a {@link StudentExam} from server or localstorage. Will also mark the student exam as started
-     * @param courseId the id of the course the exam is created in
-     * @param examId the id of the exam
      * @param studentExamId the id of the student Exam which should be loaded
      * @returns the studentExam with Exercises for the conduction-phase
      */
-    public loadStudentExamWithExercisesForConductionOfTestExam(courseId: number, examId: number, studentExamId: number): Observable<StudentExam> {
+    public loadStudentExamWithExercisesForConduction(courseId: number, examId: number, studentExamId: number): Observable<StudentExam> {
         const url = this.getResourceURL(courseId, examId) + '/student-exams/' + studentExamId + '/conduction';
         return this.getStudentExamFromServer(url, courseId, examId);
     }
@@ -68,21 +58,10 @@ export class ExamParticipationService {
      * Retrieves a {@link StudentExam} from server or localstorage for display of the summary.
      * @param courseId the id of the course the exam is created in
      * @param examId the id of the exam
-     */
-    public loadStudentExamWithExercisesForSummary(courseId: number, examId: number): Observable<StudentExam> {
-        const url = this.getResourceURL(courseId, examId) + '/student-exams/summary';
-        return this.getStudentExamFromServer(url, courseId, examId);
-    }
-
-    /**
-     * Retrieves a {@link StudentExam} from server or localstorage for display of the summary.
-     * Needed to display the summary for test exams, as one student can have multiple studentExams.
-     * @param courseId the id of the course the exam is created in
-     * @param examId the id of the exam
      * @param studentExamId the id of the studentExam
      * @returns a studentExam with Exercises for the summary-phase
      */
-    public loadStudentExamForTestExamWithExercisesForSummary(courseId: number, examId: number, studentExamId: number): Observable<StudentExam> {
+    public loadStudentExamWithExercisesForSummary(courseId: number, examId: number, studentExamId: number): Observable<StudentExam> {
         const url = this.getResourceURL(courseId, examId) + '/student-exams/' + studentExamId + '/summary';
         return this.getStudentExamFromServer(url, courseId, examId);
     }
@@ -123,47 +102,12 @@ export class ExamParticipationService {
     }
 
     /**
-     * Loads {@link Exam} object from server
+     * Loads {@link StudentExam} object from server
      * @param courseId the id of the course the exam is created in
      * @param examId the id of the exam
      */
     public loadStudentExam(courseId: number, examId: number): Observable<StudentExam> {
         const url = this.getResourceURL(courseId, examId) + '/start';
-        return this.httpClient.get<StudentExam>(url).pipe(
-            map((studentExam: StudentExam) => {
-                const convertedStudentExam = ExamParticipationService.convertStudentExamDateFromServer(studentExam);
-                this.currentlyLoadedStudentExam.next(convertedStudentExam);
-                return convertedStudentExam;
-            }),
-        );
-    }
-
-    /**
-     * Loads {@link StudentExam} object for a test exam from server
-     * @param courseId the id of the course the exam is created in
-     * @param examId the id of the exam
-     * @returns a studentExam without exercises for the start-phase
-     */
-    public loadStudentExamForTestExam(courseId: number, examId: number): Observable<StudentExam> {
-        const url = this.getResourceURL(courseId, examId) + '/start-test-exam';
-        return this.httpClient.get<StudentExam>(url).pipe(
-            map((studentExam: StudentExam) => {
-                const convertedStudentExam = ExamParticipationService.convertStudentExamDateFromServer(studentExam);
-                this.currentlyLoadedStudentExam.next(convertedStudentExam);
-                return convertedStudentExam;
-            }),
-        );
-    }
-
-    /**
-     * Loads {@link StudentExam} object for a test exam from server
-     * @param courseId the id of the course the exam is created in
-     * @param examId the id of the exam
-     * @param studentExamId the id of the studentExam we want to fetch
-     * @returns the StudentExam for the specified id without Exercises for the start-phase
-     */
-    public loadStudentExamForTestExamById(courseId: number, examId: number, studentExamId: number): Observable<StudentExam> {
-        const url = this.getResourceURL(courseId, examId) + '/test-exam/' + studentExamId + '/start';
         return this.httpClient.get<StudentExam>(url).pipe(
             map((studentExam: StudentExam) => {
                 const convertedStudentExam = ExamParticipationService.convertStudentExamDateFromServer(studentExam);

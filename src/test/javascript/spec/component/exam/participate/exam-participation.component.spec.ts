@@ -189,7 +189,7 @@ describe('ExamParticipationComponent', () => {
         studentExam.exam = new Exam();
         studentExam.exam.startDate = dayjs().subtract(2000, 'seconds');
         studentExam.workingTime = 100;
-        const studentExamWithExercises = new StudentExam();
+        const studentExamWithExercises = { id: 1 };
         TestBed.inject(ActivatedRoute).params = of({ courseId: '1', examId: '2' });
         const loadStudentExamSpy = jest.spyOn(examParticipationService, 'loadStudentExam').mockReturnValue(of(studentExam));
         const loadStudentExamWithExercisesForSummary = jest.spyOn(examParticipationService, 'loadStudentExamWithExercisesForSummary').mockReturnValue(of(studentExamWithExercises));
@@ -214,7 +214,7 @@ describe('ExamParticipationComponent', () => {
         studentExam.exam.course = new Course();
         studentExam.workingTime = 100;
         TestBed.inject(ActivatedRoute).params = of({ courseId: '1', examId: '2', studentExamId: 'new' });
-        const loadTestRunStub = jest.spyOn(examParticipationService, 'loadStudentExamForTestExam').mockReturnValue(of(studentExam));
+        const loadTestRunStub = jest.spyOn(examParticipationService, 'loadStudentExam').mockReturnValue(of(studentExam));
         comp.ngOnInit();
         expect(loadTestRunStub).toHaveBeenCalledOnce();
         expect(comp.studentExam).toEqual(studentExam);
@@ -230,10 +230,8 @@ describe('ExamParticipationComponent', () => {
         const studentExamWithExercises = new StudentExam();
         studentExamWithExercises.id = 3;
         TestBed.inject(ActivatedRoute).params = of({ courseId: '1', examId: '2', studentExamId: '3' });
-        const loadStudentExamSpy = jest.spyOn(examParticipationService, 'loadStudentExamForTestExamById').mockReturnValue(of(studentExam));
-        const loadStudentExamWithExercisesForSummary = jest
-            .spyOn(examParticipationService, 'loadStudentExamForTestExamWithExercisesForSummary')
-            .mockReturnValue(of(studentExamWithExercises));
+        const loadStudentExamSpy = jest.spyOn(examParticipationService, 'loadStudentExam').mockReturnValue(of(studentExam));
+        const loadStudentExamWithExercisesForSummary = jest.spyOn(examParticipationService, 'loadStudentExamWithExercisesForSummary').mockReturnValue(of(studentExamWithExercises));
         comp.ngOnInit();
         expect(loadStudentExamSpy).toHaveBeenCalledOnce();
         expect(comp.studentExam).toEqual(studentExam);
@@ -251,10 +249,8 @@ describe('ExamParticipationComponent', () => {
         const studentExamWithExercises = new StudentExam();
         studentExamWithExercises.id = 3;
         TestBed.inject(ActivatedRoute).params = of({ courseId: '1', examId: '2', studentExamId: '3' });
-        const loadStudentExamSpy = jest.spyOn(examParticipationService, 'loadStudentExamForTestExamById').mockReturnValue(of(studentExam));
-        const loadStudentExamWithExercisesForSummary = jest
-            .spyOn(examParticipationService, 'loadStudentExamForTestExamWithExercisesForSummary')
-            .mockReturnValue(of(studentExamWithExercises));
+        const loadStudentExamSpy = jest.spyOn(examParticipationService, 'loadStudentExam').mockReturnValue(of(studentExam));
+        const loadStudentExamWithExercisesForSummary = jest.spyOn(examParticipationService, 'loadStudentExamWithExercisesForSummary').mockReturnValue(of(studentExamWithExercises));
         studentExam.exam.course = new Course();
         studentExam.ended = true;
         studentExam.submitted = true;

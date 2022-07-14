@@ -51,7 +51,8 @@ public class ExamAccessService {
     }
 
     /**
-     * Checks if the current user is allowed to see the requested exam. If he is allowed the exam will be returned.
+     * Real Exams: Checks if the current user is allowed to see the requested exam. If he is allowed the exam will be returned.
+     * Test Exams: Either retrieves an existing StudentExam from the Database or generates a new StudentExam
      *
      * @param courseId The id of the course
      * @param examId   The id of the exam
@@ -64,23 +65,28 @@ public class ExamAccessService {
         Course course = courseRepository.findByIdElseThrow(courseId);
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, currentUser);
 
-        // Check that the exam exists
-        Optional<StudentExam> studentExam = studentExamRepository.findByExamIdAndUserId(examId, currentUser.getId());
-        if (studentExam.isEmpty()) {
-            throw new EntityNotFoundException(ENTITY_NAME, examId);
+        // Check that the student exam exists
+        Optional<StudentExam> optionalStudentExam = studentExamRepository.findByExamIdAndUserId(examId, currentUser.getId());
+
+        StudentExam studentExam;
+        // If an studentExam can be fund, we can proceed
+        if (optionalStudentExam.isPresent()) {
+            studentExam = optionalStudentExam.get();
+        }
+        else {
+            // Only Test Exams can be self-created by the user. To limit the number of DB-calls, the following method
+            // will check, if the exam is a Real Exam (throws Forbidden Exception) or a Test Exam (new Test Exam generated)
+            studentExam = studentExamService.generateTestExam(examId, currentUser);
+            // For the start of the exam, the exercises are not needed. They are later loaded via StudentExamResource
+            studentExam.setExercises(null);
         }
 
-        Exam exam = studentExam.get().getExam();
-
-        if (exam.isTestExam()) {
-            throw new AccessForbiddenException("The requested Exam is a RealExam");
-        }
+        Exam exam = studentExam.getExam();
 
         checkExamBelongsToCourseElseThrow(courseId, exam);
 
-        // Check that the current user is registered for the exam
-        if (!examRepository.isUserRegisteredForExam(examId, currentUser.getId())) {
-            throw new AccessForbiddenException(ENTITY_NAME, examId);
+        if (!examId.equals(exam.getId())) {
+            throw new AccessForbiddenException("The provided examId does not match with the examId of the studentExam");
         }
 
         // Check that the exam is visible
@@ -88,7 +94,18 @@ public class ExamAccessService {
             throw new AccessForbiddenException(ENTITY_NAME, examId);
         }
 
-        return studentExam.get();
+        if (exam.isTestExam()) {
+            // Check that the current user is registered for the test exam. Otherwise, the student can self-register.
+            examRegistrationService.checkRegistrationOrRegisterStudentToTestExam(course, exam.getId(), currentUser);
+        }
+        else {
+            // Check that the current user is registered for the exam
+            if (!examRepository.isUserRegisteredForExam(examId, currentUser.getId())) {
+                throw new AccessForbiddenException(ENTITY_NAME, examId);
+            }
+        }
+
+        return studentExam;
     }
 
     /**
@@ -121,53 +138,6 @@ public class ExamAccessService {
         studentExam.setExercises(null);
 
         checkStudentAccessToTestExamAndExamIsVisible(course, currentUser, exam);
-
-        return studentExam;
-    }
-
-    /**
-     * Either retrieves an existing StudentExam for a test exam from the Database or generates a new StudentExam
-     *
-     * @param courseId - the course to which the exam is linked
-     * @param examId   - the exam for which the studentExam should be retrieved
-     * @return a StudentExam, either existing or newly generated
-     */
-    public StudentExam fetchStudentExamForTestExamOrGenerateTestExam(Long courseId, Long examId) {
-        User currentUser = userRepository.getUserWithGroupsAndAuthorities();
-
-        // Check that the current user is at least student in the course.
-        Course course = courseRepository.findByIdElseThrow(courseId);
-        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, currentUser);
-
-        StudentExam studentExam;
-
-        // If a StudentExam exists for the exam, we can retrieve it from the database
-        Optional<StudentExam> optionalStudentExam = studentExamRepository.findByExamIdAndUserId(examId, currentUser.getId());
-
-        if (optionalStudentExam.isPresent()) {
-            studentExam = optionalStudentExam.get();
-
-            // For submitted studentExams, the /summary should be used
-            if (Boolean.TRUE.equals(studentExam.isSubmitted()) || studentExam.getSubmissionDate() != null) {
-                throw new AccessForbiddenException("The requested studentExam is already submitted");
-            }
-
-            if (Boolean.TRUE.equals(studentExam.isEnded())) {
-                throw new AccessForbiddenException("The requested studentExam has already ended");
-            }
-
-            if (!studentExam.getExam().isTestExam()) {
-                throw new AccessForbiddenException("The requested exam is no TestExam");
-            }
-
-        }
-        else {
-            studentExam = studentExamService.generateTestExam(examId, currentUser);
-        }
-        // For the start of the exam, the exercises are not needed. They are later loaded via StudentExamResource
-        studentExam.setExercises(null);
-
-        checkStudentAccessToTestExamAndExamIsVisible(course, currentUser, studentExam.getExam());
 
         return studentExam;
     }

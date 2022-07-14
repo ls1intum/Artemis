@@ -1310,6 +1310,13 @@ public class DatabaseUtilService {
         return studentExam;
     }
 
+    public StudentExam addStudentExamWithUser(Exam exam, User user) {
+        StudentExam studentExam = ModelFactory.generateStudentExam(exam);
+        studentExam.setUser(user);
+        studentExamRepository.save(studentExam);
+        return studentExam;
+    }
+
     public StudentExam addStudentExamForTestExam(Exam exam, User user) {
         StudentExam studentExam = ModelFactory.generateStudentExamForTestExam(exam);
         studentExam.setUser(user);

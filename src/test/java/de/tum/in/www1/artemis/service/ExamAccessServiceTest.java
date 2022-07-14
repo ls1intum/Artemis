@@ -284,8 +284,8 @@ public class ExamAccessServiceTest extends AbstractSpringIntegrationBambooBitbuc
     @WithMockUser(username = "student1", roles = "USER")
     public void testCheckAndGetCourseAndExamAccessForConduction_registeredUser() {
         testExam1.setRegisteredUsers(Set.of());
-        examRepository.save(testExam1);
-        assertThatThrownBy(() -> examAccessService.getExamInCourseElseThrow(course1.getId(), testExam1.getId())).isInstanceOf(AccessForbiddenException.class);
+        examRepository.save(exam1);
+        assertThatThrownBy(() -> examAccessService.getExamInCourseElseThrow(course1.getId(), exam1.getId())).isInstanceOf(AccessForbiddenException.class);
     }
 
     @Test
@@ -331,35 +331,13 @@ public class ExamAccessServiceTest extends AbstractSpringIntegrationBambooBitbuc
         User student1 = database.getUserByLogin("student1");
         student1.setGroups(Set.of());
         userRepository.save(student1);
-        assertThatThrownBy(() -> examAccessService.fetchStudentExamForTestExamOrGenerateTestExam(course1.getId(), testExam1.getId())).isInstanceOf(AccessForbiddenException.class);
-    }
-
-    @Test
-    @WithMockUser(username = "student1", roles = "USER")
-    public void testFetchStudentExamForTestExamOrGenerateTestExam_StudentExamPresent_submitted() {
-        studentExamForTestExam1.setSubmitted(true);
-        studentExamRepository.save(studentExamForTestExam1);
-        assertThatThrownBy(() -> examAccessService.fetchStudentExamForTestExamOrGenerateTestExam(course1.getId(), testExam1.getId())).isInstanceOf(AccessForbiddenException.class);
-
-        studentExamForTestExam1.setSubmitted(false);
-        studentExamForTestExam1.setSubmissionDate(ZonedDateTime.now().minusMinutes(5));
-        assertThatThrownBy(() -> examAccessService.fetchStudentExamForTestExamOrGenerateTestExam(course1.getId(), testExam1.getId())).isInstanceOf(AccessForbiddenException.class);
-    }
-
-    @Test
-    @WithMockUser(username = "student1", roles = "USER")
-    public void testFetchStudentExamForTestExamOrGenerateTestExam_ended() {
-        studentExamForTestExam1.setStarted(true);
-        studentExamForTestExam1.setStartedDate(ZonedDateTime.now().minusHours(10));
-        studentExamRepository.save(studentExamForTestExam1);
-        assertThatThrownBy(() -> examAccessService.fetchStudentExamForTestExamOrGenerateTestExam(course1.getId(), testExam1.getId())).isInstanceOf(AccessForbiddenException.class);
-
+        assertThatThrownBy(() -> examAccessService.getExamInCourseElseThrow(course1.getId(), testExam1.getId())).isInstanceOf(AccessForbiddenException.class);
     }
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
     public void testFetchStudentExamForTestExamOrGenerateTestExam_realExam() {
-        assertThatThrownBy(() -> examAccessService.fetchStudentExamForTestExamOrGenerateTestExam(course1.getId(), exam1.getId())).isInstanceOf(AccessForbiddenException.class);
+        assertThatThrownBy(() -> examAccessService.getExamInCourseElseThrow(course1.getId(), exam1.getId())).isInstanceOf(AccessForbiddenException.class);
     }
 
     @Test
@@ -367,16 +345,16 @@ public class ExamAccessServiceTest extends AbstractSpringIntegrationBambooBitbuc
     public void testFetchStudentExamForTestExamOrGenerateTestExam_notVisible() {
         testExam1.setVisibleDate(ZonedDateTime.now().plusHours(5));
         examRepository.save(testExam1);
-        assertThatThrownBy(() -> examAccessService.fetchStudentExamForTestExamOrGenerateTestExam(course1.getId(), testExam1.getId())).isInstanceOf(AccessForbiddenException.class);
+        assertThatThrownBy(() -> examAccessService.getExamInCourseElseThrow(course1.getId(), testExam1.getId())).isInstanceOf(AccessForbiddenException.class);
     }
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
     public void testFetchStudentExamForTestExamOrGenerateTestExam_success_studentExamPresent() {
-        StudentExam studentExam = examAccessService.fetchStudentExamForTestExamOrGenerateTestExam(course1.getId(), testExam1.getId());
+        StudentExam studentExam = examAccessService.getExamInCourseElseThrow(course1.getId(), testExam1.getId());
         assertThat(studentExam.equals(studentExamForTestExam1)).isEqualTo(true);
 
-        StudentExam studentExam2 = examAccessService.fetchStudentExamForTestExamOrGenerateTestExam(course2.getId(), testExam2.getId());
+        StudentExam studentExam2 = examAccessService.getExamInCourseElseThrow(course2.getId(), testExam2.getId());
         assertThat(studentExam2.equals(studentExamForTestExam2)).isEqualTo(true);
     }
 

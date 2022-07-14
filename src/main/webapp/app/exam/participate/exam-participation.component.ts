@@ -181,54 +181,18 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                     },
                     error: () => (this.loadingExam = false),
                 });
-            } else if (this.testExam && !this.studentExamId) {
-                // Case "new" test exam - the latest studentExam will be fetched from the server
-                this.examParticipationService.loadStudentExamForTestExam(this.courseId, this.examId).subscribe({
-                    next: (studentExam) => {
-                        this.studentExam = studentExam;
-                        this.exam = studentExam.exam!;
-                        this.testExamStartTime = dayjs();
-                        this.initIndividualEndDates(this.testExamStartTime);
-                    },
-                    error: () => (this.loadingExam = false),
-                });
-            } else if (this.testExam && this.studentExamId) {
-                // Case existing studentExam for test exam -> fetch with ID from server
-                this.examParticipationService.loadStudentExamForTestExamById(this.courseId, this.examId, this.studentExamId).subscribe({
-                    next: (studentExam) => {
-                        this.studentExam = studentExam;
-                        this.exam = studentExam.exam!;
-                        this.testExamStartTime = dayjs();
-                        this.initIndividualEndDates(this.testExamStartTime);
-
-                        // only show the summary if the student was able to submit on time.
-                        if (this.isOver() && this.studentExam.submitted) {
-                            this.examParticipationService
-                                .loadStudentExamForTestExamWithExercisesForSummary(this.courseId, this.examId, this.studentExam.id!)
-                                .subscribe((studentExamWithExercises: StudentExam) => (this.studentExam = studentExamWithExercises));
-                        }
-
-                        // Directly start the exam when we continue from a failed save
-                        if (this.examParticipationService.lastSaveFailed(this.courseId, this.examId)) {
-                            this.examParticipationService
-                                .loadStudentExamWithExercisesForConductionFromLocalStorage(this.courseId, this.examId)
-                                .subscribe((localExam: StudentExam) => {
-                                    this.studentExam = localExam;
-                                    this.loadingExam = false;
-                                    this.examStarted(this.studentExam);
-                                });
-                        } else {
-                            this.loadingExam = false;
-                        }
-                    },
-                    error: () => (this.loadingExam = false),
-                });
             } else {
                 this.examParticipationService.loadStudentExam(this.courseId, this.examId).subscribe({
                     next: (studentExam) => {
                         this.studentExam = studentExam;
                         this.exam = studentExam.exam!;
-                        this.initIndividualEndDates(this.exam.startDate!);
+                        if (this.exam.testExam) {
+                            // For TestExams, we either set the StartTime to the current time or the startedDate of the studentExam, if existent
+                            this.testExamStartTime = this.studentExam.startedDate ? this.studentExam.startedDate! : dayjs();
+                            this.initIndividualEndDates(this.testExamStartTime);
+                        } else {
+                            this.initIndividualEndDates(this.exam.startDate!);
+                        }
 
                         // Listen to exam monitoring updates to disable monitoring
                         try {
@@ -242,7 +206,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                         // only show the summary if the student was able to submit on time.
                         if (this.isOver() && this.studentExam.submitted) {
                             this.examParticipationService
-                                .loadStudentExamWithExercisesForSummary(this.courseId, this.examId)
+                                .loadStudentExamWithExercisesForSummary(this.courseId, this.examId, this.studentExam.id!)
                                 .subscribe((studentExamWithExercises: StudentExam) => (this.studentExam = studentExamWithExercises));
                         }
 
@@ -424,7 +388,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                     if (studentExam.exam?.testExam) {
                         // If we have a test exam, we reload the summary from the server.
                         this.examParticipationService
-                            .loadStudentExamForTestExamWithExercisesForSummary(this.courseId, this.examId, studentExam.id!)
+                            .loadStudentExamWithExercisesForSummary(this.courseId, this.examId, studentExam.id!)
                             .subscribe((studentExamWithExercises: StudentExam) => (this.studentExam = studentExamWithExercises));
                     } else {
                         this.studentExam = studentExam;

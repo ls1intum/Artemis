@@ -137,9 +137,9 @@ export class ExamParticipationCoverComponent implements OnInit, OnDestroy {
         if (this.testRun) {
             this.examParticipationService.saveStudentExamToLocalStorage(this.exam.course!.id!, this.exam.id!, this.studentExam);
             this.onExamStarted.emit(this.studentExam);
-        } else if (this.testExam) {
+        } else {
             this.examParticipationService
-                .loadStudentExamWithExercisesForConductionOfTestExam(this.exam.course!.id!, this.exam.id!, this.studentExam.id!)
+                .loadStudentExamWithExercisesForConduction(this.exam.course!.id!, this.exam.id!, this.studentExam.id!)
                 .subscribe((studentExam: StudentExam) => {
                     this.studentExam = studentExam;
                     this.examParticipationService.saveStudentExamToLocalStorage(this.exam.course!.id!, this.exam.id!, studentExam);
@@ -155,22 +155,6 @@ export class ExamParticipationCoverComponent implements OnInit, OnDestroy {
                         }, UI_RELOAD_TIME);
                     }
                 });
-        } else {
-            this.examParticipationService.loadStudentExamWithExercisesForConduction(this.exam.course!.id!, this.exam.id!).subscribe((studentExam: StudentExam) => {
-                this.studentExam = studentExam;
-                this.examParticipationService.saveStudentExamToLocalStorage(this.exam.course!.id!, this.exam.id!, studentExam);
-                if (this.hasStarted()) {
-                    this.onExamStarted.emit(studentExam);
-                } else {
-                    this.waitingForExamStart = true;
-                    if (this.interval) {
-                        clearInterval(this.interval);
-                    }
-                    this.interval = window.setInterval(() => {
-                        this.updateDisplayedTimes(studentExam);
-                    }, UI_RELOAD_TIME);
-                }
-            });
         }
     }
 

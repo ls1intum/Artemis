@@ -118,7 +118,6 @@ const studentExamForTestExam = {
     user,
     exercises,
 } as StudentExam;
-const studentExam = { id: 1, exam, user, exercises } as StudentExam;
 const gradeInfo: StudentExamWithGradeDTO = {
     maxPoints: 100,
     maxBonusPoints: 10,

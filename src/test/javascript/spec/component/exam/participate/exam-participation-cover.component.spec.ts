@@ -38,6 +38,7 @@ describe('ExamParticipationCoverComponent', () => {
     exam.testExam = false;
     const studentExam: StudentExam = new StudentExam();
     studentExam.testRun = false;
+    studentExam.id = 1;
 
     let component: ExamParticipationCoverComponent;
     let fixture: ComponentFixture<ExamParticipationCoverComponent>;
@@ -189,7 +190,7 @@ describe('ExamParticipationCoverComponent', () => {
         const exercise1 = { id: 87, type: ExerciseType.TEXT } as Exercise;
         component.studentExam.exercises = [exercise1];
 
-        jest.spyOn(examParticipationService, 'loadStudentExamWithExercisesForConductionOfTestExam').mockReturnValue(of(studentExam));
+        jest.spyOn(examParticipationService, 'loadStudentExamWithExercisesForConduction').mockReturnValue(of(studentExam));
 
         component.exam.startDate = dayjs().subtract(1, 'days');
 
