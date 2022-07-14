@@ -1,8 +1,8 @@
 <button
     id="add-unreferenced-feedback"
+    class="btn btn-success mt-4"
     (drop)="createAssessmentOnDrop($event)"
     (dragover)="$event.preventDefault()"
-    class="btn btn-success mt-4"
     (click)="addUnreferencedFeedback()"
     [disabled]="readOnly"
 >
