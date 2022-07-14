@@ -25,7 +25,8 @@ In this section we give an overview of available features of plagiarism check. W
 Settings
 ^^^^^^^^
 Before starting the plagiarism check, the user can configure different settings to get the best possible results.
- |run-settings|
+
+|run-settings|
 
 1. Similarity Threshold in % (minimum value 0, maximum value 100).
 
@@ -47,15 +48,16 @@ Before starting the plagiarism check, the user can configure different settings 
 Actions
 ^^^^^^^
 The user can use different actions to run plagiarism check, inspect the results or improve the performance.
- |plagiarism-actions1|
+
+|plagiarism-actions1|
 
 .. note::
         Plagiarism detection can take a long time for large courses.
 1. Detect plagiarism. The user can execute the plagiarism check using this action.
 
-2. Rerun plagiarism detection. The user can rerun the plagiarism check by executing this action. It can be helpful to check the plagiarism with different settings mentioned in section.
+2. Rerun plagiarism detection. The user can rerun the plagiarism check by executing this action. It can be helpful to check for plagiarism using the different settings as described in section :ref:`settings`.
 
-3. Clean up. The user can clean up the latest plagiarism check results for the selected exercise. It helps to keep the database clean and safe storage capacity. Moreover, it should improve the overall system performance. To execute the clean-up action, the user must approve it by clicking ok on the dialog, as this action cleans all potentially approved or denied plagiarism cases.
+3. Clean up. The user can clean up the latest plagiarism check results for the selected exercise. It helps to keep the database slim and safe storage capacity. Moreover, it should improve the overall system performance. To execute the clean-up action, the user must approve it by clicking ok on the dialog, as this action deletes all potentially approved or denied plagiarism cases.
 
 |clean-up-dialog|
 
@@ -63,7 +65,7 @@ The user can use different actions to run plagiarism check, inspect the results 
 
 Results
 ^^^^^^^
-After the plagiarism check was executed, the results can be expected in different views.
+After the plagiarism check was executed, the results can be inspected in different views.
 
 1. Overview of the similarity distribution. This statistical overview shows the similarity distribution based on the percentage as a histogram chart. The user can analyze the distribution quickly and adjust the plagiarism check settings as needed accordingly.
  |run-results|
@@ -123,7 +125,7 @@ The process is visualized in the following diagram.
 6. Make a final verdict by selecting one of 3 available options. The final verdict must be approved by clicking ok in the dialog.
  |verdict-dialog|
 
- a. Point deduction in % (minimum value 0%, maximum 100). Deduct points and confirm  the verdict in the dialog.
+ a. Point deduction in % (minimum value 0%, maximum 100). Deduct exercise points and confirm  the verdict in the dialog.
  b. Warning. The instructor can write a warning message to the student and confirm the verdict by in the dialog.
  c. Plagiarism. Next steps must be made manually by contacting responsible persons in the university to mark the student grade as "Unterschleif".
 
@@ -137,7 +139,7 @@ The process is visualized in the following diagram.
 1. Open the notified plagiarism confirmed case via: Course Overview → Course → Exercise → Plagiarism Case.
  |student-plagiarism-case-navigation|
 
-2. Reply the message of the instructor.
+2. Reply to the message of the instructor.
 3. Wait for the final verdict.
 
 .. |plagiarism-actions1| image:: plagiarism-check/actions/plagiarism-actions1.png
