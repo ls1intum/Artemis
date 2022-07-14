@@ -140,8 +140,6 @@ The process is visualized in the following diagram.
 2. Reply the message of the instructor.
 3. Wait for the final verdict.
 
-.. |tutor-workflow| image:: plagiarism-check/workflow/tutor-workflow.png
-    :width: 700
 .. |plagiarism-actions1| image:: plagiarism-check/actions/plagiarism-actions1.png
     :width: 1000
 .. |clean-up-dialog| image:: plagiarism-check/actions/clean-up-dialog.png
@@ -158,15 +156,17 @@ The process is visualized in the following diagram.
     :width: 500
 .. |instructors-workflow| image:: plagiarism-check/instructor/instructors-workflow.png
     :width: 700
+.. |tutor-workflow| image:: plagiarism-check/tutor/tutor-workflow.png
+    :width: 700
+.. |run-settings| image:: plagiarism-check/tutor/running-check-settings.png
+    :width: 1000
+.. |exercise-page| image:: plagiarism-check/tutor/exercise_page.png
+    :width: 1000
 .. |student-plagiarism-case-navigation| image:: plagiarism-check/student/plagiarism-case-navigation.png
     :width: 1000
 .. |student-workflow| image:: plagiarism-check/student/student-workflow.png
     :width: 700
-.. |exercise-page| image:: plagiarism-check/tutor/exercise_page.png
-    :width: 1000
 .. |run-results| image:: plagiarism-check/results/run-results.png
     :width: 1000
 .. |run-results-selected-submissions| image:: plagiarism-check/results/run-results-selected-submission.png
-    :width: 1000
-.. |run-settings| image:: plagiarism-check/tutor/running-check-settings.png
     :width: 1000
