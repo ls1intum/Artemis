@@ -42,6 +42,10 @@
                     <fa-icon [icon]="faUser"></fa-icon>
                     <span>{{ 'artemisApp.examManagement.students' | artemisTranslate }}</span>
                 </a>
+                <a [routerLink]="getExamRoutesByIdentifier('bonus-sources')" class="btn btn-info mt-1">
+                    <fa-icon [icon]="faAward"></fa-icon>
+                    <span>{{ 'artemisApp.examManagement.bonusSource' | artemisTranslate }}</span>
+                </a>
                 <button
                     jhiDeleteButton
                     [actionType]="resetType"

@@ -8,9 +8,10 @@ import { RouterModule } from '@angular/router';
 import { IntervalGradingSystemComponent } from 'app/grading-system/interval-grading-system/interval-grading-system.component';
 import { ArtemisModePickerModule } from 'app/exercises/shared/mode-picker/mode-picker.module';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
+import { BonusComponent } from './bonus/bonus.component';
 
 @NgModule({
-    declarations: [GradingSystemComponent, DetailedGradingSystemComponent, IntervalGradingSystemComponent, GradingSystemInfoModalComponent],
+    declarations: [GradingSystemComponent, DetailedGradingSystemComponent, IntervalGradingSystemComponent, GradingSystemInfoModalComponent, BonusComponent],
     imports: [ArtemisSharedModule, RouterModule.forChild(gradingSystemState), ArtemisModePickerModule, ArtemisSharedComponentModule],
     exports: [GradingSystemComponent, GradingSystemInfoModalComponent],
 })

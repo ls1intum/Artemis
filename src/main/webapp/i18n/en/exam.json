@@ -306,6 +306,7 @@
             "studentExams": "Student Exams",
             "students": "Students",
             "gradingSystem": "Grading Key",
+            "bonusSource": "Bonus Source",
             "testExam": {
                 "realExam": "Exam",
                 "testExam": "Test Exam",
