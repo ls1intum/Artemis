@@ -19,6 +19,7 @@ import { missingTranslationHandler, translatePartialLoader } from './config/tran
 import dayjs from 'dayjs/esm';
 import './config/dayjs';
 import { NgbDateDayjsAdapter } from 'app/core/config/datepicker-adapter';
+import { JhiLanguageHelper } from 'app/core/language/language.helper';
 
 @NgModule({
     imports: [
@@ -98,11 +99,11 @@ import { NgbDateDayjsAdapter } from 'app/core/config/datepicker-adapter';
     ],
 })
 export class ArtemisCoreModule {
-    constructor(dpConfig: NgbDatepickerConfig, translateService: TranslateService, sessionStorageService: SessionStorageService) {
+    constructor(dpConfig: NgbDatepickerConfig, translateService: TranslateService, languageHelper: JhiLanguageHelper, sessionStorageService: SessionStorageService) {
         registerLocaleData(locale);
         dpConfig.minDate = { year: dayjs().subtract(100, 'year').year(), month: 1, day: 1 };
         translateService.setDefaultLang('en');
-        const langKey = sessionStorageService.retrieve('locale') ?? 'en';
-        translateService.use(langKey);
+        const languageKey = sessionStorageService.retrieve('locale') || languageHelper.determinePreferredLanguage();
+        translateService.use(languageKey);
     }
 }
