@@ -486,7 +486,13 @@
                 },
                 "activity-log": {
                     "title": "Activity log",
-                    "description": "Shows the past and current activities of active students"
+                    "description": "Shows the past and current activities of active students",
+                    "actionsPerPage": "{{number}} actions per page",
+                    "showAllActions": "Show all actions",
+                    "studentExamId": "Exam-ID",
+                    "timestamp": "Timestamp",
+                    "type": "Category",
+                    "detail": "Detail"
                 }
             },
             "charts": {
