@@ -238,22 +238,7 @@
         </thead>
         <tbody>
             <tr>
-                <td>7</td>
-                <td>
-                    <span>{{ 'artemisApp.examManagement.checklist.tableItem.examMonitoring' | artemisTranslate }}</span>
-                </td>
-                <td>
-                    <span>{{ 'artemisApp.examManagement.checklist.descriptionItem.examMonitoring' | artemisTranslate }}</span>
-                </td>
-                <td>
-                    <a [routerLink]="['monitoring']" class="btn btn-info" id="monitoring-button-{{ exam.id }}">
-                        <fa-icon [icon]="faEye"></fa-icon>
-                        <span class="d-none d-md-inline">{{ 'artemisApp.examManagement.examMonitoring' | artemisTranslate }}</span>
-                    </a>
-                </td>
-            </tr>
-            <tr>
-                <td>8</td>
+                <td>1</td>
                 <td>
                     <span>{{ 'artemisApp.examManagement.checklist.tableItem.conductExam' | artemisTranslate }}</span>
                 </td>
@@ -314,6 +299,21 @@
                     <a [routerLink]="getExamRoutesByIdentifier('student-exams')" class="btn btn-primary">
                         <fa-icon [icon]="faEye"></fa-icon>
                         <span class="d-none d-md-inline">{{ 'artemisApp.examManagement.studentExams' | artemisTranslate }}</span>
+                    </a>
+                </td>
+            </tr>
+            <tr>
+                <td>2</td>
+                <td>
+                    <span>{{ 'artemisApp.examManagement.checklist.tableItem.examMonitoring' | artemisTranslate }}</span>
+                </td>
+                <td>
+                    <span>{{ 'artemisApp.examManagement.checklist.descriptionItem.examMonitoring' | artemisTranslate }}</span>
+                </td>
+                <td>
+                    <a [routerLink]="['monitoring']" class="btn btn-info" id="monitoring-button-{{ exam.id }}">
+                        <fa-icon [icon]="faEye"></fa-icon>
+                        <span class="d-none d-md-inline">{{ 'artemisApp.examManagement.examMonitoring' | artemisTranslate }}</span>
                     </a>
                 </td>
             </tr>
