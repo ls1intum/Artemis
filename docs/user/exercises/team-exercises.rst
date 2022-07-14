@@ -90,5 +90,7 @@ exercises for that team along with their current status. To access the team over
 .. |create_team_button| image:: team-exercises/create_team_button.png
 .. |export_teams_button| image:: team-exercises/export_teams_button.png
 .. |import_teams_button| image:: team-exercises/import_teams_button.png
+.. |edit_button| image:: team-exercises/edit_button.png
+.. |delete_button| image:: team-exercises/delete_button.png
 .. |team_button| image:: team-exercises/team_button.png
 
