@@ -113,7 +113,7 @@ Students complete this unit as soon as they open it.
 Video Unit
 ^^^^^^^^^^^
 A video unit consists of a name, an embeddable video link, and optionally a description and release date.
-Artemis can convert the website link from common video sources (RGB, YouTube, Vimeo) to an embeddable URL using the arrow button.
+Artemis can convert the website link from common video sources to an embeddable URL using the arrow button.
 Students complete this unit when they watch the video for at least five minutes.
 
 |create-video-unit|
