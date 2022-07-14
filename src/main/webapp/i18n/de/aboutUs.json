@@ -59,7 +59,7 @@
             "text": "<b>Anpassbar:</b> Artemis unterstützt mehrere Lehrende, Bearbeitende und Tutoren pro Kurs und erlaubt den Lehrenden viele Kurseinstellungen anzupassen."
         },
         "openSource": {
-            "text": "<b>Open-source:</b> Kostenlos zu verwenden mit einer großen Gemeinschaft und vielen aktiven Entwicklern."
+            "text": "<a href={{ openSourceUrl }}>Open-source:</a> Kostenlos zu verwenden mit einer großen Gemeinschaft und vielen aktiven Entwicklern."
         },
         "getInTouch": "Kontakt",
         "contributors": "Mitwirkende",

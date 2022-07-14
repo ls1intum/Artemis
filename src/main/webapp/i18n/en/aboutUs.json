@@ -59,7 +59,7 @@
             "text": "<b>Customizable:</b> It supports multiple instructors, editors, and tutors per course and allows instructors to customize many course settings."
         },
         "openSource": {
-            "text": "<b>Open-source:</b> Free to use with a large community and many active maintainers."
+            "text": "<a href={{ openSourceUrl }}>Open-source:</a> Free to use with a large community and many active maintainers."
         },
         "getInTouch": "Get in touch",
         "contributors": "Individual contributors",
