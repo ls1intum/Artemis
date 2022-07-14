@@ -57,11 +57,13 @@ public class PlagiarismComparison<E extends PlagiarismSubmissionElement> extends
     /**
      * Similarity of the compared submissions (between 0 and 1).
      */
+    @Column(name = "similarity")
     private double similarity;
 
     /**
      * Status of this submission comparison.
      */
+    @Column(name = "status")
     private PlagiarismStatus status = PlagiarismStatus.NONE;
 
     /**
@@ -74,9 +76,7 @@ public class PlagiarismComparison<E extends PlagiarismSubmissionElement> extends
         PlagiarismComparison<TextSubmissionElement> comparison = new PlagiarismComparison<>();
 
         comparison.setSubmissionA(PlagiarismSubmission.fromJPlagSubmission(jplagComparison.getFirstSubmission()));
-        comparison.getSubmissionA().setPlagiarismComparison(comparison);
         comparison.setSubmissionB(PlagiarismSubmission.fromJPlagSubmission(jplagComparison.getSecondSubmission()));
-        comparison.getSubmissionB().setPlagiarismComparison(comparison);
         comparison.setMatches(jplagComparison.getMatches().stream().map(PlagiarismMatch::fromJPlagMatch).collect(Collectors.toSet()));
         comparison.setSimilarity(jplagComparison.similarity());
         comparison.setStatus(PlagiarismStatus.NONE);
@@ -86,10 +86,14 @@ public class PlagiarismComparison<E extends PlagiarismSubmissionElement> extends
 
     public void setSubmissionA(PlagiarismSubmission<?> submissionA) {
         this.submissionA = (PlagiarismSubmission<E>) submissionA;
+        // Important: make sure to maintain the custom bidirectional association
+        this.submissionA.setPlagiarismComparison(this);
     }
 
     public void setSubmissionB(PlagiarismSubmission<?> submissionB) {
         this.submissionB = (PlagiarismSubmission<E>) submissionB;
+        // Important: make sure to maintain the custom bidirectional association
+        this.submissionB.setPlagiarismComparison(this);
     }
 
     public PlagiarismSubmission<E> getSubmissionA() {
