@@ -167,7 +167,7 @@ describe('ExamMonitoringService', () => {
         examMonitoringService.handleAndSaveActionEvent(exam, studentExam, action, true);
 
         expect(handleActionEventSpy).toHaveBeenCalledOnce();
-        expect(handleActionEventSpy).toHaveBeenCalledWith(studentExam, action, exam.monitoring);
+        expect(handleActionEventSpy).toHaveBeenCalledWith(studentExam, action, exam.monitoring, undefined);
         expect(saveActionsSpy).toHaveBeenCalledOnce();
         expect(saveActionsSpy).toHaveBeenCalledWith(exam, studentExam, true);
     });
