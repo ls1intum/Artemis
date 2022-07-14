@@ -7,6 +7,18 @@
     height: 10px;
 }
 
+.table-col {
+    min-width: 360px;
+}
+
+.chart-col .chart {
+    margin-top: -20px;
+}
+
+.no-bottom-space {
+    margin-bottom: -15px;
+}
+
 :host::ng-deep.legend-labels {
     background-color: transparent !important;
 }

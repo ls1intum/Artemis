@@ -3,11 +3,13 @@ import { Subscription } from 'rxjs';
 import { ActivatedRoute } from '@angular/router';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { Exam } from 'app/entities/exam.model';
-import { HttpResponse } from '@angular/common/http';
+import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ExamMonitoringService } from './exam-monitoring.service';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ExamAction } from 'app/entities/exam-user-activity.model';
 import { ExamActionService } from './exam-action.service';
+import { onError } from 'app/shared/util/global.utils';
+import { AlertService } from 'app/core/util/alert.service';
 
 export class TableContent {
     translateValue: string;
@@ -46,6 +48,7 @@ export class ExamMonitoringComponent implements OnInit, OnDestroy {
         private examMonitoringService: ExamMonitoringService,
         private examActionService: ExamActionService,
         private artemisDataPipe: ArtemisDatePipe,
+        private alertService: AlertService,
     ) {}
 
     ngOnInit() {
@@ -85,6 +88,25 @@ export class ExamMonitoringComponent implements OnInit, OnDestroy {
         const exerciseGroups = new TableContent('exerciseGroups', this.exam.exerciseGroups?.length ?? 0);
 
         this.table.push(title, start, end, students, exercises, exerciseGroups);
+    }
+
+    /**
+     * Updates the current state of the exam monitoring.
+     */
+    updateMonitoring() {
+        this.examMonitoringService.updateMonitoring(this.exam, !this.exam.monitoring).subscribe({
+            next: () => {
+                this.exam.monitoring = !this.exam.monitoring;
+                if (!this.exam.monitoring) {
+                    this.examActionService.unsubscribeForExamAction(this.exam!);
+                } else {
+                    this.examActionService.subscribeForLatestExamAction(this.exam!);
+                }
+            },
+            error: (err: HttpErrorResponse) => {
+                onError(this.alertService, err);
+            },
+        });
     }
 
     ngOnDestroy() {

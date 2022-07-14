@@ -465,6 +465,10 @@
         "examMonitoring": {
             "title": "Exam live statistics",
             "description": "The exam live statistics dashboard allows instructors to view students' actions during the exam and analyze the resulting data.",
+            "enable": "Enable",
+            "disable": "Disable",
+            "enabled": "Enabled",
+            "disabled": "Disabled",
             "table": {
                 "panelHeader": "Exam Information",
                 "panelDescriptionHeader": "Details",
@@ -492,7 +496,13 @@
                 },
                 "activity-log": {
                     "title": "Activity log",
-                    "description": "Shows the past and current activities of active students"
+                    "description": "Shows the past and current activities of active students",
+                    "actionsPerPage": "{{number}} actions per page",
+                    "showAllActions": "Show all actions",
+                    "studentExamId": "Exam-ID",
+                    "timestamp": "Timestamp",
+                    "type": "Category",
+                    "detail": "Detail"
                 }
             },
             "charts": {
