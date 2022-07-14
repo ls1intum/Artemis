@@ -25,7 +25,7 @@ In this section we give an overview of available features of plagiarism check. W
 Settings
 ^^^^^^^^
 Before starting the plagiarism check, the user can configure different settings to get the best possible results.
-|run-settings|
+ |run-settings|
 
 1. Similarity Threshold in % (minimum value 0, maximum value 100).
 
@@ -47,7 +47,7 @@ Before starting the plagiarism check, the user can configure different settings 
 Actions
 ^^^^^^^
 The user can use different actions to run plagiarism check, inspect the results or improve the performance.
-|plagiarism-actions1|
+ |plagiarism-actions1|
 
 .. note::
         Plagiarism detection can take a long time for large courses.
