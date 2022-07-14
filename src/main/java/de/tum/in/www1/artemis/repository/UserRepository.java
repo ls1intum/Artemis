@@ -176,6 +176,11 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
     @Query("Update User user set user.hideNotificationsUntil = :#{#hideNotificationUntil} where user.id = :#{#userId}")
     void updateUserNotificationVisibility(@Param("userId") Long userId, @Param("hideNotificationUntil") ZonedDateTime hideNotificationUntil);
 
+    @Modifying
+    @Transactional // ok because of modifying query
+    @Query("Update User user set user.langKey = :#{#languageKey} where user.id = :#{#userId}")
+    void updateUserLanguageKey(@Param("userId") Long userId, @Param("languageKey") String languageKey);
+
     @EntityGraph(type = LOAD, attributePaths = { "groups" })
     @Query("select user from User user where :#{#groupName} member of user.groups and user not in :#{#ignoredUsers}")
     List<User> findAllInGroupContainingAndNotIn(@Param("groupName") String groupName, @Param("ignoredUsers") Set<User> ignoredUsers);
