@@ -10,7 +10,7 @@ describe('Submission Policy Service', () => {
     let submissionPolicyService: SubmissionPolicyService;
     let lockRepositoryPolicy: LockRepositoryPolicy;
     let programmingExercise: ProgrammingExercise;
-    const expectedUrl = SERVER_API_URL + '/api/programming-exercises/1/submission-policy';
+    const expectedUrl = SERVER_API_URL + 'api/programming-exercises/1/submission-policy';
     const statusOk = { status: 200 };
 
     beforeEach(() => {
