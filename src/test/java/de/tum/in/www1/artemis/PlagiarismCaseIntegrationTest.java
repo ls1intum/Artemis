@@ -87,10 +87,8 @@ public class PlagiarismCaseIntegrationTest extends AbstractSpringIntegrationBamb
             textPlagiarismResult = database.createTextPlagiarismResultForExercise(textExercise);
             plagiarismComparison = new PlagiarismComparison<>();
 
-            if (i % 2 == 0) {
-                plagiarismSubmission1 = new PlagiarismSubmission<>();
-                plagiarismSubmission2 = new PlagiarismSubmission<>();
-            }
+            plagiarismSubmission1 = new PlagiarismSubmission<>();
+            plagiarismSubmission2 = new PlagiarismSubmission<>();
 
             plagiarismCase.setExercise(textExercise);
             plagiarismCase.setStudent(student);
