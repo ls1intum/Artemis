@@ -13,10 +13,10 @@ import de.tum.in.www1.artemis.repository.GradingScaleRepository;
  * A bonus source for an exam that maps bonus from another course or exam to the target exam
  */
 @Entity
-@Table(name = "bonus_source")
+@Table(name = "bonus")
 @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public class BonusSource extends DomainObject {
+public class Bonus extends DomainObject {
 
     private static final int CALCULATION_MINUS = -1;
 
@@ -26,22 +26,19 @@ public class BonusSource extends DomainObject {
     @Column(name = "bonus_strategy")
     private BonusStrategy bonusStrategy = BonusStrategy.GRADES_DISCRETE; // default
 
-    // @Column(name = "value")
-    // private double value;
-
     /**
      * Can be either +1 or -1 to add or subtract bonus.
      */
-    @Column(name = "calculation")
+    @Column(name = "calculationSign")
     private Integer calculationSign;
 
     @ManyToOne(optional = false)
     @JoinColumn(name = "source_grading_scale_id", referencedColumnName = "id")
-    private GradingScale sourceGradingScale;
+    private GradingScale source;
 
-    @ManyToOne(optional = false)
-    @JoinColumn(name = "target_grading_scale_id", referencedColumnName = "id")
-    private GradingScale targetGradingScale;
+    // @ManyToOne(optional = false)
+    // @JoinColumn(name = "target_grading_scale_id", referencedColumnName = "id")
+    // private GradingScale target;
 
     public BonusStrategy getBonusStrategy() {
         return bonusStrategy;
@@ -51,24 +48,25 @@ public class BonusSource extends DomainObject {
         this.bonusStrategy = bonusStrategy;
     }
 
-    public GradingScale getSourceGradingScale() {
-        return sourceGradingScale;
+    public GradingScale getSource() {
+        return source;
     }
 
-    public void setSourceGradingScale(GradingScale sourceGradingScale) {
-        this.sourceGradingScale = sourceGradingScale;
+    public void setSource(GradingScale sourceGradingScale) {
+        this.source = sourceGradingScale;
     }
 
-    public GradingScale getTargetGradingScale() {
-        return targetGradingScale;
+    public GradingScale getTarget() {
+        // return target;
+        return null;
     }
 
-    public void setTargetGradingScale(GradingScale targetGradingScale) {
-        this.targetGradingScale = targetGradingScale;
+    public void setTarget(GradingScale targetGradingScale) {
+        // this.target = targetGradingScale;
     }
 
     public Integer getCalculationSign() {
-        return calculationSign;
+        return (int) Math.signum(1.0);
     }
 
     public void setCalculationSign(Integer calculationSign) {
@@ -76,7 +74,7 @@ public class BonusSource extends DomainObject {
     }
 
     public String calculateGradeWithBonus(GradingScaleRepository gradingScaleRepository, Double achievedPointsForBonus, Double achievedPointsForTarget) {
-        return getBonusStrategy().calculateGradeWithBonus(gradingScaleRepository, getTargetGradingScale(), achievedPointsForTarget, getSourceGradingScale(), achievedPointsForBonus,
-                getCalculationSign());
+        return getBonusStrategy().calculateGradeWithBonus(gradingScaleRepository, gradingScaleRepository.findByBonusFromId(getId()).orElse(null), achievedPointsForTarget,
+                getSource(), achievedPointsForBonus, getCalculationSign());
     }
 }

@@ -1,19 +1,20 @@
 package de.tum.in.www1.artemis.repository;
 
 import java.util.Optional;
+import java.util.Set;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import de.tum.in.www1.artemis.domain.BonusSource;
+import de.tum.in.www1.artemis.domain.Bonus;
 
 /**
  * Spring Data JPA for the BonusSource entity
  */
 @Repository
-public interface BonusSourceRepository extends JpaRepository<BonusSource, Long> {
+public interface BonusRepository extends JpaRepository<Bonus, Long> {
 
     /**
      * Find a bonus source by its source grading scale id
@@ -21,7 +22,7 @@ public interface BonusSourceRepository extends JpaRepository<BonusSource, Long> 
      * @param sourceGradindScaleId the source grading scale id
      * @return an Optional with the bonus source if such scale exists and an empty Optional otherwise
      */
-    Optional<BonusSource> findBySourceGradingScaleId(@Param("sourceGradindScaleId") Long sourceGradindScaleId);
+    Optional<Bonus> findBySource(@Param("sourceGradindScaleId") Long sourceGradindScaleId);
 
     /**
      * Find a bonus source with its source grading scale belonging to the course with given id
@@ -30,11 +31,11 @@ public interface BonusSourceRepository extends JpaRepository<BonusSource, Long> 
      * @return an Optional with the bonus source if such scale exists and an empty Optional otherwise
      */
     @Query("""
-            SELECT bonusSource
-            FROM BonusSource bonusSource
-            WHERE bonusSource.sourceGradingScale.course.id = :#{#courseId}
+            SELECT bonus
+            FROM Bonus bonus
+            WHERE bonus.source.course.id = :#{#courseId}
             """)
-    Optional<BonusSource> findBySourceCourseId(@Param("courseId") Long courseId);
+    Optional<Bonus> findBySourceCourseId(@Param("courseId") Long courseId);
 
     /**
      * Find a bonus source with its source grading scale belonging to the exam with given id
@@ -43,18 +44,18 @@ public interface BonusSourceRepository extends JpaRepository<BonusSource, Long> 
      * @return an Optional with the bonus source if such scale exists and an empty Optional otherwise
      */
     @Query("""
-            SELECT bonusSource
-            FROM BonusSource bonusSource
-            WHERE bonusSource.sourceGradingScale.exam.id = :#{#examId}
+            SELECT bonus
+            FROM Bonus bonus
+            WHERE bonus.source.exam.id = :#{#examId}
             """)
-    Optional<BonusSource> findBySourceExamId(@Param("examId") Long examId);
+    Optional<Bonus> findBySourceExamId(@Param("examId") Long examId);
 
     @Query("""
-            SELECT bonusSource
-            FROM BonusSource bonusSource
-            WHERE bonusSource.targetGradingScale.exam.id = :#{#examId}
+            SELECT gs.bonusFrom
+            FROM GradingScale gs
+            WHERE gs.exam.id = :#{#examId}
             """)
-    Optional<BonusSource> findByTargetExamId(@Param("examId") Long examId);
+    Set<Bonus> findAllByTargetExamId(@Param("examId") Long examId);
 
     // /**
     // * Finds a bonus source for course by id or throws an exception if no such bonus source exists.

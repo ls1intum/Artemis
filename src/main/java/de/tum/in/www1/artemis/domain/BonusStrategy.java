@@ -10,6 +10,7 @@ public enum BonusStrategy implements IBonusStrategy {
         public String calculateGradeWithBonus(GradingScaleRepository gradingScaleRepository, GradingScale targetGradingScale, Double targetPoints, GradingScale sourceGradingScale,
                 Double sourcePoints, double calculationSign) {
             // TODO: Ata Implement.
+
             return null;
         }
     },

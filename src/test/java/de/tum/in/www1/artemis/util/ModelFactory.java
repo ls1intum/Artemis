@@ -1345,4 +1345,15 @@ public class ModelFactory {
         organization.setEmailPattern(emailPattern);
         return organization;
     }
+
+    public static Bonus generateBonusSource(BonusStrategy bonusStrategy, int calculationSign, GradingScale sourceGradngScale, GradingScale targetGradingScale) {
+        Bonus bonus = new Bonus();
+        bonus.setBonusStrategy(bonusStrategy);
+        bonus.setCalculationSign(calculationSign);
+        bonus.setSource(sourceGradngScale);
+        // bonusSource.setTarget(targetGradingScale);
+        targetGradingScale.addBonus(bonus);
+        return bonus;
+
+    }
 }

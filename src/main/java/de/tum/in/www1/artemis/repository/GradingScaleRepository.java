@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.repository;
 
+import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
+
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
@@ -10,6 +12,7 @@ import javax.validation.constraints.NotNull;
 import org.springframework.dao.IncorrectResultSizeDataAccessException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -124,6 +127,11 @@ public interface GradingScaleRepository extends JpaRepository<GradingScale, Long
     Page<GradingScale> findByTitleInCourseOrExamAndUserHasAccessToCourse(@Param("partialTitle") String partialTitle, @Param("groups") Set<String> groups, Pageable pageable);
 
     // Page<GradingScale> findByCourse_TitleIgnoreCaseContainingOrExam_TitleIgnoreCaseContaining(String partialCourseTitle, String partialExamTitle, Pageable pageable);
+
+    Optional<GradingScale> findByBonusFromId(@Param("bonusId") Long bonusId);
+
+    @EntityGraph(type = LOAD, attributePaths = "bonusFrom")
+    Optional<GradingScale> findWithEagerBonusFromByExamId(@Param("examId") Long examId);
 
     /**
      * Maps a grade percentage to a valid grade step within the grading scale or throws an exception if no match was found
