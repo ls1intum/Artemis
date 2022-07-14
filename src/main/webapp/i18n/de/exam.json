@@ -489,7 +489,13 @@
                 },
                 "activity-log": {
                     "title": "Aktivitäten",
-                    "description": "Zeigt die vergangenen und aktuellen Aktivitäten der aktiven Studierenden"
+                    "description": "Zeigt die vergangenen und aktuellen Aktivitäten der aktiven Studierenden",
+                    "actionsPerPage": "{{number}} Aktionen pro Seite",
+                    "showAllActions": "Zeige alle Aktionen",
+                    "studentExamId": "Klausur-ID",
+                    "timestamp": "Zeitpunkt",
+                    "type": "Kategorie",
+                    "detail": "Detail"
                 }
             },
             "charts": {

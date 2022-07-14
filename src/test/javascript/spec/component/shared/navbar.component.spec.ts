@@ -23,6 +23,8 @@ import { ArtemisTestModule } from '../../test.module';
 import { MockRouterLinkActiveOptionsDirective, MockRouterLinkDirective } from '../../helpers/mocks/directive/mock-router-link.directive';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { JhiConnectionWarningComponent } from 'app/shared/connection-warning/connection-warning.component';
+import { AccountService } from 'app/core/auth/account.service';
+import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
 import { EntityTitleService, EntityType } from 'app/shared/layouts/navbar/entity-title.service';
 import { ThemeSwitchComponent } from 'app/core/theme/theme-switch.component';
 
@@ -82,6 +84,7 @@ describe('NavbarComponent', () => {
             ],
             providers: [
                 MockProvider(UrlSerializer),
+                MockProvider(MockAccountService),
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: TranslateService, useClass: MockTranslateService },
@@ -111,7 +114,34 @@ describe('NavbarComponent', () => {
         expect(component).not.toBeNull();
     });
 
-    it('should build breadcrumbs for students', () => {
+    it('should make api call when logged in user changes language', () => {
+        const languageService = fixture.debugElement.injector.get(TranslateService);
+        const useSpy = jest.spyOn(languageService, 'use');
+        const accountService = fixture.debugElement.injector.get(AccountService);
+        const languageChangeSpy = jest.spyOn(accountService, 'updateLanguage');
+
+        fixture.detectChanges();
+        component.changeLanguage('elvish');
+
+        expect(useSpy).toHaveBeenCalledWith('elvish');
+        expect(languageChangeSpy).toHaveBeenCalledWith('elvish');
+    });
+
+    it('should not make api call when anonymous user changes language', () => {
+        const languageService = fixture.debugElement.injector.get(TranslateService);
+        const useSpy = jest.spyOn(languageService, 'use');
+        const accountService = fixture.debugElement.injector.get(AccountService);
+        const languageChangeSpy = jest.spyOn(accountService, 'updateLanguage');
+
+        fixture.detectChanges();
+        component.currAccount = undefined;
+        component.changeLanguage('elvish');
+
+        expect(useSpy).toHaveBeenCalledWith('elvish');
+        expect(languageChangeSpy).toHaveBeenCalledTimes(0);
+    });
+
+    it('should not build breadcrumbs for students', () => {
         const testUrl = '/courses/1/exercises';
         router.setUrl(testUrl);
 

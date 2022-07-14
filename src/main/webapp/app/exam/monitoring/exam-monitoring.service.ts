@@ -7,8 +7,10 @@ import { ExamActionService } from 'app/exam/monitoring/exam-action.service';
 import { captureException } from '@sentry/browser';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
 import { HttpClient, HttpResponse } from '@angular/common/http';
+import dayjs from 'dayjs/esm';
 
 export const EXAM_MONITORING_UPDATE_URL = (courseId: number, examId: number) => `${SERVER_API_URL}/api/courses/${courseId}/exams/${examId}/statistics`;
+
 
 @Injectable({ providedIn: 'root' })
 export class ExamMonitoringService {
@@ -42,14 +44,15 @@ export class ExamMonitoringService {
      * @param studentExam current student exam
      * @param examAction performed action
      * @param monitoring true if monitoring is enabled
+     * @param timestamp provided timestamp of the action. Usefully for actions which are async but called earlier.
      */
-    public handleActionEvent(studentExam: StudentExam, examAction: ExamAction, monitoring: boolean) {
+    public handleActionEvent(studentExam: StudentExam, examAction: ExamAction, monitoring: boolean, timestamp?: dayjs.Dayjs) {
         if (!monitoring) {
             return;
         }
         try {
             const examActivity = studentExam.examActivity || new ExamActivity();
-            examAction.timestamp = this.serverDateService.now();
+            examAction.timestamp = timestamp ?? this.serverDateService.now();
             examAction.studentExamId = studentExam.id;
             examActivity.addAction(examAction);
             studentExam.examActivity = examActivity;
@@ -88,9 +91,10 @@ export class ExamMonitoringService {
      * @param studentExam current student exam
      * @param examAction performed action
      * @param connected true if we have a connection
+     * @param timestamp provided timestamp of the action. Usefully for actions which are async but called earlier.
      */
-    public handleAndSaveActionEvent(exam: Exam, studentExam: StudentExam, examAction: ExamAction, connected: boolean) {
-        this.handleActionEvent(studentExam, examAction, !!exam.monitoring);
+    public handleAndSaveActionEvent(exam: Exam, studentExam: StudentExam, examAction: ExamAction, connected: boolean, timestamp?: dayjs.Dayjs) {
+        this.handleActionEvent(studentExam, examAction, !!exam.monitoring, timestamp);
         this.saveActions(exam, studentExam, connected);
     }
 
