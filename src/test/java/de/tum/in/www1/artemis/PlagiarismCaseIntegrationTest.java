@@ -51,41 +51,66 @@ public class PlagiarismCaseIntegrationTest extends AbstractSpringIntegrationBamb
 
     private static PlagiarismCase plagiarismCase3;
 
+    private static ArrayList<PlagiarismCase> plagiarismCases;
+
     @BeforeEach
     public void initTestCase() {
-        database.addUsers(3, 1, 1, 1);
+        // We need at least 3 cases
+        plagiarismCases = this.createPlagiarismCases(100);
+        plagiarismCase1 = plagiarismCases.get(0);
+        plagiarismCase2 = plagiarismCases.get(1);
+        plagiarismCase3 = plagiarismCases.get(2);
+    }
+
+    /***
+     * Create a given amount of plagiarism cases
+     * @param numberOfPlagiarismCases The required number of cases
+     * @return The list of generated plagiarism cases
+     */
+    private ArrayList<PlagiarismCase> createPlagiarismCases(int numberOfPlagiarismCases) {
+        var plagiarismCasesList = new ArrayList<PlagiarismCase>();
+        PlagiarismCase plagiarismCase = null;
+        User student = null;
+        PlagiarismResult<TextSubmissionElement> textPlagiarismResult = null;
+        PlagiarismComparison<TextSubmissionElement> plagiarismComparison = null;
+        PlagiarismSubmission<TextSubmissionElement> plagiarismSubmission1 = null;
+        PlagiarismSubmission<TextSubmissionElement> plagiarismSubmission2 = null;
+
+        // Per case, we have always 2 students
+        database.addUsers(numberOfPlagiarismCases * 2, 1, 1, 1);
         course = database.addCourseWithOneFinishedTextExercise();
         textExercise = textExerciseRepository.findByCourseIdWithCategories(course.getId()).get(0);
-        plagiarismCase1 = new PlagiarismCase();
-        plagiarismCase1.setExercise(textExercise);
-        User student1 = database.getUserByLogin("student1");
-        plagiarismCase1.setStudent(student1);
-        plagiarismCase1 = plagiarismCaseRepository.save(plagiarismCase1);
-        PlagiarismResult<TextSubmissionElement> textPlagiarismResult = database.createTextPlagiarismResultForExercise(textExercise);
-        PlagiarismComparison<TextSubmissionElement> plagiarismComparison = new PlagiarismComparison<>();
-        plagiarismComparison.setPlagiarismResult(textPlagiarismResult);
-        plagiarismComparison = plagiarismComparisonRepository.save(plagiarismComparison);
-        PlagiarismSubmission<TextSubmissionElement> plagiarismSubmission1 = new PlagiarismSubmission<>();
-        plagiarismSubmission1.setStudentLogin("student1");
-        plagiarismSubmission1.setPlagiarismCase(plagiarismCase1);
-        plagiarismSubmission1.setPlagiarismComparison(plagiarismComparison);
-        PlagiarismSubmission<TextSubmissionElement> plagiarismSubmission2 = new PlagiarismSubmission<>();
-        plagiarismSubmission2.setStudentLogin("student2");
-        plagiarismSubmission2.setPlagiarismCase(plagiarismCase1);
-        plagiarismSubmission2.setPlagiarismComparison(plagiarismComparison);
-        plagiarismComparison.setSubmissionA(plagiarismSubmission1);
-        plagiarismComparison.setSubmissionB(plagiarismSubmission2);
-        plagiarismComparisonRepository.save(plagiarismComparison);
-        plagiarismCase2 = new PlagiarismCase();
-        plagiarismCase2.setExercise(textExercise);
-        User student2 = database.getUserByLogin("student2");
-        plagiarismCase2.setStudent(student2);
-        plagiarismCase2 = plagiarismCaseRepository.save(plagiarismCase2);
-        plagiarismCase3 = new PlagiarismCase();
-        plagiarismCase3.setExercise(textExercise);
-        User student3 = database.getUserByLogin("student3");
-        plagiarismCase3.setStudent(student3);
-        plagiarismCase3 = plagiarismCaseRepository.save(plagiarismCase3);
+
+        for (int i = 0; i < numberOfPlagiarismCases; i++) {
+            plagiarismCase = new PlagiarismCase();
+            student = database.getUserByLogin("student" + (i + 1));
+            textPlagiarismResult = database.createTextPlagiarismResultForExercise(textExercise);
+            plagiarismComparison = new PlagiarismComparison<>();
+
+            plagiarismSubmission1 = new PlagiarismSubmission<>();
+            plagiarismSubmission2 = new PlagiarismSubmission<>();
+
+            plagiarismCase.setExercise(textExercise);
+            plagiarismCase.setStudent(student);
+            plagiarismCase = plagiarismCaseRepository.save(plagiarismCase);
+
+            plagiarismComparison.setPlagiarismResult(textPlagiarismResult);
+            plagiarismComparison = plagiarismComparisonRepository.save(plagiarismComparison);
+
+            plagiarismSubmission1.setStudentLogin("student" + (i + 1));
+            plagiarismSubmission1.setPlagiarismCase(plagiarismCase);
+            plagiarismSubmission1.setPlagiarismComparison(plagiarismComparison);
+            plagiarismSubmission2.setStudentLogin("student" + (i + 2));
+            plagiarismSubmission2.setPlagiarismCase(plagiarismCase);
+            plagiarismSubmission2.setPlagiarismComparison(plagiarismComparison);
+            plagiarismComparison.setSubmissionA(plagiarismSubmission1);
+            plagiarismComparison.setSubmissionB(plagiarismSubmission2);
+            plagiarismComparisonRepository.save(plagiarismComparison);
+            plagiarismCasesList.add(plagiarismCase);
+        }
+
+
+        return plagiarismCasesList;
     }
 
     @AfterEach
@@ -115,13 +140,10 @@ public class PlagiarismCaseIntegrationTest extends AbstractSpringIntegrationBamb
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testGetPlagiarismCasesForCourseForInstructor() throws Exception {
-        var plagiarismCases = request.getList("/api/courses/" + course.getId() + "/plagiarism-cases/for-instructor", HttpStatus.OK, PlagiarismCase.class);
-        var plagiarismCasesList = new ArrayList<PlagiarismCase>();
-        plagiarismCasesList.add(plagiarismCase1);
-        plagiarismCasesList.add(plagiarismCase2);
-        plagiarismCasesList.add(plagiarismCase3);
-        assertThat(plagiarismCases).as("should get plagiarism cases for instructor").isEqualTo(plagiarismCasesList);
-        for (var submission : plagiarismCases.get(0).getPlagiarismSubmissions()) {
+        var plagiarismCasesResponse = request.getList("/api/courses/" + course.getId() + "/plagiarism-cases/for-instructor", HttpStatus.OK, PlagiarismCase.class);
+        var plagiarismCasesList = plagiarismCases;
+        assertThat(plagiarismCasesResponse).as("should get plagiarism cases for instructor").isEqualTo(plagiarismCasesList);
+        for (var submission : plagiarismCasesResponse.get(0).getPlagiarismSubmissions()) {
             assertThat(submission.getPlagiarismComparison().getPlagiarismResult().getExercise()).as("should prepare plagiarism case response entity").isEqualTo(null);
             assertThat(submission.getPlagiarismComparison().getSubmissionA()).as("should prepare plagiarism case response entity").isEqualTo(null);
             assertThat(submission.getPlagiarismComparison().getSubmissionB()).as("should prepare plagiarism case response entity").isEqualTo(null);
@@ -150,7 +172,7 @@ public class PlagiarismCaseIntegrationTest extends AbstractSpringIntegrationBamb
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testGetPlagiarismCaseForInstructor() throws Exception {
         var plagiarismCase = request.get("/api/courses/" + course.getId() + "/plagiarism-cases/" + plagiarismCase1.getId() + "/for-instructor", HttpStatus.OK,
-                PlagiarismCase.class);
+            PlagiarismCase.class);
         assertThat(plagiarismCase).as("should get plagiarism case for instructor").isEqualTo(plagiarismCase1);
     }
 
