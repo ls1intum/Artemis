@@ -73,68 +73,6 @@ public class BonusIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     }
 
     /**
-     * Test get request for non-existing bonus source
-     *
-     * @throws Exception
-     */
-    @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testGetBonusSourceForCourseNotFound() throws Exception {
-        request.get("/api/courses/" + course.getId() + "/grading-scale", HttpStatus.OK, Void.class);
-    }
-
-    /**
-     * Test get request for non-existing bonus source
-     *
-     * @throws Exception
-     */
-    @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testGetBonusSourceForExamNotFound() throws Exception {
-        request.get("/api/courses/" + course.getId() + "/exams/" + targetExamGradingScale.getId() + "/grading-scale", HttpStatus.OK, Void.class);
-    }
-
-    // /**
-    // * Test post request for existing bonus source
-    // *
-    // * @throws Exception
-    // */
-    // @Test
-    // @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    // public void testSaveBonusForTargetAndSourceAlreadyExists() throws Exception {
-    // bonusRepository.save(examBonus);
-    //
-    // request.post("/api/courses/" + course.getId() + "/exams/" + targetExamGradingScale.getId() + "/bonus-source", examBonus, HttpStatus.BAD_REQUEST);
-    // }
-
-    /**
-     * Test post request for bonus source without set grade steps
-     *
-     * @throws Exception
-     */
-    @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testSaveBonusSourceForExamGradeStepsAreNotSet() throws Exception {
-
-        request.post("/api/courses/" + course.getId() + "/exams/" + targetExamGradingScale.getId() + "/grading-scale", examBonus, HttpStatus.BAD_REQUEST);
-    }
-
-    /**
-     * Test post request with invalid grade steps
-     *
-     * @throws Exception
-     */
-    @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testSaveBonusSourceForCourseInvalidGradeSteps() throws Exception {
-        // gradeSteps = database.generateGradeStepSet(courseBonusSource, false);
-
-        request.post("/api/courses/" + course.getId() + "/grading-scale", courseBonus, HttpStatus.BAD_REQUEST);
-    }
-
-    // TODO: Ata: Delete unnecessary parts above.
-
-    /**
      * Test get request for bonus source
      *
      * @throws Exception
