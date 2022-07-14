@@ -66,7 +66,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     courseId: number;
     examId: number;
     testRunId: number;
-    testExam: boolean;
+    testExam = false;
     studentExamId: number;
     testRunStartTime?: dayjs.Dayjs;
     testExamStartTime?: dayjs.Dayjs;
@@ -157,16 +157,11 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
             // As a student can have multiple test exams, the studentExamId is passed as a parameter.
             if (params['studentExamId']) {
                 // If a new StudentExam should be created, the keyword new is used (and no StudentExam exists)
+                this.testExam = true;
                 if (params['studentExamId'] !== 'new') {
-                    this.testExam = true;
                     this.studentExamId = parseInt(params['studentExamId'], 10);
-                } else {
-                    this.testExam = true;
                 }
-            } else {
-                this.testExam = false;
             }
-
             this.loadingExam = true;
             if (!!this.testRunId) {
                 this.examParticipationService.loadTestRunWithExercisesForConduction(this.courseId, this.examId, this.testRunId).subscribe({
