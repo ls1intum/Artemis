@@ -17,7 +17,7 @@ import { Exam } from 'app/entities/exam.model';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
 import { LocaleConversionService } from 'app/shared/service/locale-conversion.service';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
-import { HttpResponse } from '@angular/common/http';
+import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { ApollonDiagramService } from 'app/exercises/quiz/manage/apollon-diagrams/apollon-diagram.service';
 import { LectureService } from 'app/lecture/lecture.service';
@@ -53,6 +53,7 @@ import { ExerciseHintService } from 'app/exercises/shared/exercise-hint/shared/e
 import { Exercise } from 'app/entities/exercise.model';
 import { ThemeService } from 'app/core/theme/theme.service';
 import { EntityTitleService, EntityType } from 'app/shared/layouts/navbar/entity-title.service';
+import { onError } from 'app/shared/util/global.utils';
 
 @Component({
     selector: 'jhi-navbar',
