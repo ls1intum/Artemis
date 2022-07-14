@@ -35,7 +35,6 @@ describe('Modeling Assessment Service', () => {
         describe('methods returning a result', () => {
             elemDefault = new Result();
             elemDefault.id = 1;
-            elemDefault.resultString = '5 of 5 points';
             elemDefault.score = 5;
             elemDefault.hasComplaint = false;
             elemDefault.completionDate = dayjs();

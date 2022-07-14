@@ -1,10 +1,17 @@
 {
     "home": {
         "title": "Willkommen zu Artemis!",
-        "login": "Login",
         "subtitle": "Interaktives Lernen mit Individuellem Feedback",
-        "pleaseSignInAccount": "Bitte melde dich mit deinen {{account}} Zugangsdaten an.",
-        "pleaseSignIn": "Bitte melde dich mit deinen Zugangsdaten an.",
+        "login": {
+            "traditional": {
+                "pleaseSignInAccount": "Bitte melde dich mit deinen {{account}} Zugangsdaten an.",
+                "pleaseSignIn": "Bitte melde dich mit deinen Zugangsdaten an."
+            },
+            "saml2": {
+                "pleaseSignInProvider": "Bitte melde dich via {{provider}} an.",
+                "pleaseSignIn": "Bitte melde dich via Single Sign-on an."
+            }
+        },
         "logged": {
             "message": "Du bist als Nutzer:in \"{{username}}\" angemeldet."
         },

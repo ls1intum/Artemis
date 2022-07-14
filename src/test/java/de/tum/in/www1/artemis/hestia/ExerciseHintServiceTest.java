@@ -241,7 +241,7 @@ public class ExerciseHintServiceTest extends AbstractSpringIntegrationBambooBitb
 
     private void addResultWithSuccessfulTestCases(Collection<ProgrammingExerciseTestCase> successfulTestCases) {
         var submission = database.createProgrammingSubmission(studentParticipation, false);
-        Result result = new Result().participation(submission.getParticipation()).assessmentType(AssessmentType.AUTOMATIC).resultString("3 out of 3 failed").score(0D).rated(true)
+        Result result = new Result().participation(submission.getParticipation()).assessmentType(AssessmentType.AUTOMATIC).score(0D).rated(true)
                 .completionDate(ZonedDateTime.now().plusSeconds(timeOffset++));
         result = resultRepository.save(result);
         result.setSubmission(submission);
