@@ -32,7 +32,7 @@
             "text": "<a href={{ communicationUrl }}>Kommunikation:</a> Ankündigungen veröffentlichen. Fragen stellen, Kommentare abgeben und auf andere Beiträge reagieren. Fragen filtern."
         },
         "notifications": {
-            "text": "<b>Benachrichtigungen:</b> Anpassbare Web- und E-Mail-Benachrichtigungen. Benutzer können verschiedene Benachrichtigungstypen aktivieren und deaktivieren."
+            "text": "<a href = {{ notificationsURL }}>Benachrichtigungen:</a> Anpassbare Web- und E-Mail-Benachrichtigungen. Benutzer können verschiedene Benachrichtigungstypen aktivieren und deaktivieren."
         },
         "teamExercises": {
             "text": "<b>Gruppenaufgaben</b> mit Echtzeitzusammenarbeit und eigenen Tutoren pro Gruppe."
