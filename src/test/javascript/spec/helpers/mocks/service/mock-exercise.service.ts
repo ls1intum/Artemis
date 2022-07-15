@@ -2,7 +2,7 @@ import { of, Observable } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
 import { Exercise } from 'app/entities/exercise.model';
 import { EntityArrayResponseType, EntityResponseType } from 'app/exercises/shared/exercise/exercise.service';
-import dayjs from 'dayjs/esm';
+import { convertDateFromClient } from 'app/utils/date.utils';
 
 export class MockExerciseService {
     find(exerciseId: number) {
@@ -18,11 +18,11 @@ export class MockExerciseService {
         return of({ body: entity }) as Observable<HttpResponse<T>>;
     }
 
-    static convertExerciseForServer<E extends Exercise>(exercise: E): Exercise {
+    static convertExerciseFromClient<E extends Exercise>(exercise: E): Exercise {
         return exercise;
     }
 
-    static convertDateArrayFromServer<E extends Exercise, EART extends EntityArrayResponseType>(res: EART): EART {
+    static convertExerciseArrayDatesFromServer<E extends Exercise, EART extends EntityArrayResponseType>(res: EART): EART {
         return res;
     }
 
@@ -30,15 +30,15 @@ export class MockExerciseService {
         return res;
     }
 
-    static convertDateFromServer<ERT extends EntityResponseType>(res: ERT): ERT {
+    static convertExerciseResponseDatesFromServer<ERT extends EntityResponseType>(res: ERT): ERT {
         return res;
     }
 
-    static convertDateFromClient<E extends Exercise>(exercise: E): E {
+    static convertExerciseDatesFromClient<E extends Exercise>(exercise: E): E {
         return Object.assign({}, exercise, {
-            releaseDate: exercise.releaseDate && dayjs(exercise.releaseDate).isValid() ? dayjs(exercise.releaseDate).toJSON() : undefined,
-            dueDate: exercise.dueDate && dayjs(exercise.dueDate).isValid() ? dayjs(exercise.dueDate).toJSON() : undefined,
-            assessmentDueDate: exercise.assessmentDueDate && dayjs(exercise.assessmentDueDate).isValid() ? dayjs(exercise.assessmentDueDate).toJSON() : undefined,
+            releaseDate: convertDateFromClient(exercise.releaseDate),
+            dueDate: convertDateFromClient(exercise.dueDate),
+            assessmentDueDate: convertDateFromClient(exercise.assessmentDueDate),
         });
     }
 

@@ -97,9 +97,9 @@ describe('Programming exercise assessment', () => {
         cy.login(admin);
         return courseManagement.createCourse(true).then((response) => {
             course = response.body;
-            courseManagement.addStudentToCourse(course.id!, student.username);
+            courseManagement.addStudentToCourse(course, student);
             courseManagement.addTutorToCourse(course, tutor);
-            courseManagement.addInstructorToCourse(course.id!, instructor);
+            courseManagement.addInstructorToCourse(course, instructor);
             dueDate = dayjs().add(25, 'seconds');
             assessmentDueDate = dueDate.add(30, 'seconds');
             courseManagement

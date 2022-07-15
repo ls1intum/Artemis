@@ -6,7 +6,7 @@ import { CourseManagementStatisticsDTO } from 'app/course/manage/course-manageme
 import { ExerciseManagementStatisticsDto } from 'app/exercises/shared/statistics/exercise-management-statistics-dto';
 import { map } from 'rxjs/operators';
 import { round } from 'app/shared/util/utils';
-import dayjs from 'dayjs/esm';
+import { convertDateFromServer } from 'app/utils/date.utils';
 import { ExerciseCategory } from 'app/entities/exercise-category.model';
 
 @Injectable({ providedIn: 'root' })
@@ -46,8 +46,8 @@ export class StatisticsService {
         const params = new HttpParams().set('courseId', '' + courseId);
         return this.http.get<CourseManagementStatisticsDTO>(`${this.resourceUrl}course-statistics`, { params }).pipe(
             map((res: CourseManagementStatisticsDTO) => {
-                StatisticsService.convertExerciseCategoriesForCourseManagementStatistics(res);
-                return StatisticsService.convertDatesFromServer(res);
+                StatisticsService.convertExerciseCategoriesOfrCourseManagementStatisticsFromServer(res);
+                return StatisticsService.convertCourseManagementStatisticDatesFromServer(res);
             }),
         );
     }
@@ -69,14 +69,14 @@ export class StatisticsService {
         return stats;
     }
 
-    private static convertDatesFromServer(dto: CourseManagementStatisticsDTO): CourseManagementStatisticsDTO {
+    private static convertCourseManagementStatisticDatesFromServer(dto: CourseManagementStatisticsDTO): CourseManagementStatisticsDTO {
         dto.averageScoresOfExercises.forEach((averageScores) => {
-            averageScores.releaseDate = averageScores.releaseDate !== null ? dayjs(averageScores.releaseDate) : undefined;
+            averageScores.releaseDate = convertDateFromServer(averageScores.releaseDate);
         });
         return dto;
     }
 
-    private static convertExerciseCategoriesForCourseManagementStatistics(res: CourseManagementStatisticsDTO): CourseManagementStatisticsDTO {
+    private static convertExerciseCategoriesOfrCourseManagementStatisticsFromServer(res: CourseManagementStatisticsDTO): CourseManagementStatisticsDTO {
         res.averageScoresOfExercises.forEach((avgScoresOfExercise) => {
             avgScoresOfExercise.categories = avgScoresOfExercise.categories?.map((category) => JSON.parse(category as string) as ExerciseCategory);
         });

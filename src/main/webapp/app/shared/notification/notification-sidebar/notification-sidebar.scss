@@ -1,6 +1,12 @@
 .light-button {
     border: 0;
     background-color: transparent;
+    color: var(--navbar-dark-color);
+    transition: color 0.2s;
+}
+
+.light-button:hover {
+    color: var(--bs-body-color);
 }
 
 .notification-overlay {

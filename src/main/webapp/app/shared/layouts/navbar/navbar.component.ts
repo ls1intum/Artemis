@@ -76,6 +76,8 @@ export class NavbarComponent implements OnInit, OnDestroy {
     breadcrumbs: Breadcrumb[];
     breadcrumbSubscriptions: Subscription[];
     isCollapsed: boolean;
+    iconsMovedToMenu: boolean;
+    isNavbarNavVertical: boolean;
 
     // Icons
     faBars = faBars;
@@ -139,7 +141,34 @@ export class NavbarComponent implements OnInit, OnDestroy {
 
     @HostListener('window:resize')
     onResize() {
-        this.isCollapsed = window.innerWidth < 1200;
+        // Figure out breakpoints depending on available menu options and length of login
+        let neededWidthToNotRequireCollapse: number;
+        let neededWidthToDisplayCollapsedOptionsHorizontally = 150;
+        let neededWidthForIconOptionsToBeInMainNavBar: number;
+        if (this.currAccount) {
+            const nameLength = (this.currAccount.login?.length ?? 0) * 8;
+            neededWidthForIconOptionsToBeInMainNavBar = 580 + nameLength;
+            neededWidthToNotRequireCollapse = 700 + nameLength;
+
+            const hasServerAdminOption = this.accountService.hasAnyAuthorityDirect([Authority.ADMIN]);
+            const hasCourseManageOption = this.accountService.hasAnyAuthorityDirect([Authority.TA, Authority.INSTRUCTOR, Authority.EDITOR, Authority.ADMIN]);
+            if (hasCourseManageOption) {
+                neededWidthToNotRequireCollapse += 200;
+                neededWidthToDisplayCollapsedOptionsHorizontally += 200;
+            }
+            if (hasServerAdminOption) {
+                neededWidthToNotRequireCollapse += 225;
+                neededWidthToDisplayCollapsedOptionsHorizontally += 225;
+            }
+        } else {
+            // For login screen, we only see language and theme selectors which are smaller
+            neededWidthToNotRequireCollapse = 510;
+            neededWidthForIconOptionsToBeInMainNavBar = 430;
+        }
+
+        this.isCollapsed = window.innerWidth < neededWidthToNotRequireCollapse;
+        this.isNavbarNavVertical = window.innerWidth < Math.max(neededWidthToDisplayCollapsedOptionsHorizontally, 480);
+        this.iconsMovedToMenu = window.innerWidth < neededWidthForIconOptionsToBeInMainNavBar;
     }
 
     ngOnInit() {
@@ -159,6 +188,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
                 tap((user: User) => {
                     this.currAccount = user;
                     this.passwordResetEnabled = user?.internal || false;
+                    this.onResize();
                 }),
             )
             .subscribe();

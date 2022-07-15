@@ -18,6 +18,7 @@ import { CourseManagementOverviewStatisticsDto } from 'app/course/manage/overvie
 import { CourseManagementDetailViewDto } from 'app/course/manage/course-management-detail-view-dto.model';
 import { StudentDTO } from 'app/entities/student-dto.model';
 import { EntityTitleService, EntityType } from 'app/shared/layouts/navbar/entity-title.service';
+import { convertDateFromClient } from 'app/utils/date.utils';
 
 export type EntityResponseType = HttpResponse<Course>;
 export type EntityArrayResponseType = HttpResponse<Course[]>;
@@ -38,7 +39,7 @@ export class CourseManagementService {
      * @param course - the course to be created on the server
      */
     create(course: Course): Observable<EntityResponseType> {
-        const copy = CourseManagementService.convertDateFromClient(course);
+        const copy = CourseManagementService.convertCourseDatesFromClient(course);
         return this.http.post<Course>(this.resourceUrl, copy, { observe: 'response' }).pipe(map((res: EntityResponseType) => this.processCourseEntityResponseType(res)));
     }
 
@@ -47,7 +48,7 @@ export class CourseManagementService {
      * @param course - the course to be updated
      */
     update(course: Course): Observable<EntityResponseType> {
-        const copy = CourseManagementService.convertDateFromClient(course);
+        const copy = CourseManagementService.convertCourseDatesFromClient(course);
         return this.http.put<Course>(this.resourceUrl, copy, { observe: 'response' }).pipe(map((res: EntityResponseType) => this.processCourseEntityResponseType(res)));
     }
 
@@ -407,7 +408,7 @@ export class CourseManagementService {
      * @private
      */
     private processCourseEntityResponseType(courseRes: EntityResponseType): EntityResponseType {
-        this.convertDateFromServer(courseRes);
+        this.convertCourseResponseDateFromServer(courseRes);
         this.setLearningGoalsIfNone(courseRes);
         this.setAccessRightsCourseEntityResponseType(courseRes);
         this.convertExerciseCategoriesFromServer(courseRes);
@@ -421,7 +422,7 @@ export class CourseManagementService {
      * @private
      */
     private processCourseEntityArrayResponseType(courseRes: EntityArrayResponseType): EntityArrayResponseType {
-        this.convertDateArrayFromServer(courseRes);
+        this.convertCourseArrayResponseDatesFromServer(courseRes);
         this.convertExerciseCategoryArrayFromServer(courseRes);
         this.setAccessRightsCourseEntityArrayResponseType(courseRes);
         courseRes?.body?.forEach(this.sendCourseTitleAndExerciseTitlesToTitleService.bind(this));
@@ -436,22 +437,22 @@ export class CourseManagementService {
         return res;
     }
 
-    private static convertDateFromClient(course: Course): Course {
+    private static convertCourseDatesFromClient(course: Course): Course {
         // copy of the object
         return Object.assign({}, course, {
-            startDate: course.startDate && dayjs(course.startDate).isValid() ? course.startDate.toJSON() : undefined,
-            endDate: course.endDate && dayjs(course.endDate).isValid() ? course.endDate.toJSON() : undefined,
+            startDate: convertDateFromClient(course.startDate),
+            endDate: convertDateFromClient(course.endDate),
         });
     }
 
-    private convertDateFromServer(res: EntityResponseType): EntityResponseType {
+    private convertCourseResponseDateFromServer(res: EntityResponseType): EntityResponseType {
         if (res.body) {
             this.setCourseDates(res.body);
         }
         return res;
     }
 
-    private convertDateArrayFromServer(res: EntityArrayResponseType): EntityArrayResponseType {
+    private convertCourseArrayResponseDatesFromServer(res: EntityArrayResponseType): EntityArrayResponseType {
         if (res.body) {
             res.body.forEach((course: Course) => this.setCourseDates(course));
         }
@@ -490,7 +491,7 @@ export class CourseManagementService {
         course.startDate = course.startDate ? dayjs(course.startDate) : undefined;
         course.endDate = course.endDate ? dayjs(course.endDate) : undefined;
         course.exercises = ExerciseService.convertExercisesDateFromServer(course.exercises);
-        course.lectures = this.lectureService.convertDatesForLecturesFromServer(course.lectures);
+        course.lectures = this.lectureService.convertLectureArrayDatesFromServer(course.lectures);
     }
 
     /**
