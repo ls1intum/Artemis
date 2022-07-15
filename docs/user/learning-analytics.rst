@@ -11,7 +11,8 @@ Overview
 --------
 Artemis integrates different statistics for students to compare themselves to the course average.
 It allows instructors to evaluate the average student performance based on exercises and learning goals.
-  .. note::
+
+.. note::
     To preserve the individual's data privacy, Artemis calculates the data on the fly and only shows aggregated data to instructors so that it's not possible to track an individual student within the learning analytics modules.
 
 Learning Analytics for Students
