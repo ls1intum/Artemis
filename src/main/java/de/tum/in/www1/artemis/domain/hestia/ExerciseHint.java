@@ -4,6 +4,8 @@ import java.util.HashSet;
 import java.util.Set;
 
 import javax.persistence.*;
+import javax.validation.constraints.Max;
+import javax.validation.constraints.Min;
 
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
@@ -50,6 +52,11 @@ public class ExerciseHint extends DomainObject {
     @OneToMany(mappedBy = "exerciseHint", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
     @JsonIgnore
     private Set<ExerciseHintActivation> exerciseHintActivations = new HashSet<>();
+
+    @Column(name = "display_threshold", columnDefinition = "TINYINT")
+    @Min(0)
+    @Max(100)
+    private short displayThreshold = 3;
 
     @Transient
     private Integer currentUserRatingTransient;
@@ -138,12 +145,15 @@ public class ExerciseHint extends DomainObject {
     /**
      * Returns a threshold value that defines when this exercise hint is displayed to student participating in a programming exercise.
      * The algorithm defining if the hint is display is described in {@link de.tum.in.www1.artemis.service.hestia.ExerciseHintService#getAvailableExerciseHints}
-     * Note: This value is currently fixed but planned to be adjustable.
      *
      * @return the display threshold value
      */
-    public int getDisplayThreshold() {
-        return 3;
+    public short getDisplayThreshold() {
+        return displayThreshold;
+    }
+
+    public void setDisplayThreshold(short displayThreshold) {
+        this.displayThreshold = displayThreshold;
     }
 
     /**
