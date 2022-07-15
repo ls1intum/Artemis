@@ -130,7 +130,7 @@
                 "version": "Version",
                 "fileRequiredValidationError": "Du musst eine Datei zum uploaden auswählen.",
                 "chooseFile": "Datei auswählen",
-                "fileLimitations": "\".png\", \".jpg\", \".jpeg\", \".svg\", \".pdf\", \".zip\", \".doc\", \".docx\", \".csv\", \".xls\", \".xlsx\", \".ppt\", \".pptx\", \".pages\", \".rtf\", \".numbers\", \".key\", \".odt\", \".ods\", \".odp\", \".odg\", \".odf\". Max. Dateigröße 10 mb",
+                "fileLimitation": "Max. Dateigröße 10 mb",
                 "fileFormat": "Unterstützte Formate"
             },
             "editAttachmentUnit": {
