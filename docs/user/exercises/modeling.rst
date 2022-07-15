@@ -19,8 +19,8 @@ Setup
 
 The following sections describe the supported features and the process of creating a new modeling exercise.
 
-- Open |course-management|
-- Navigate into **Exercises** of your preferred course
+- Open |course-management|.
+- Navigate into **Exercises** of your preferred course.
 
     .. figure:: modeling/course-management-course-dashboard.png
               :align: center
@@ -28,24 +28,24 @@ The following sections describe the supported features and the process of creati
 Create new modeling exercise
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-- Click on **Create new modeling exercise**
+- Click on **Create new modeling exercise**.
 
     .. figure:: modeling/create-new-modeling-exercise.png
               :align: center
 
 The following screenshot illustrates the first section of the form. It consists of:
 
-- **Title**: Title of an exercise
-- **Categories**: Category of an exercise
-- **Difficulty**: Difficulty of an exercise. (No level, Easy, Medium or Hard)
-- **Mode**: Solving mode of an exercise. *This cannot be changed afterwards* (Individual or Team)
-- **Release Date**: Date after which students can access the exercise
-- **Due Date**: Date till when students can access the exercise
-- **Assessment Due Date**: Date till when instructors can assess the exercise submitted by students
-- **Inclusion in course score calculation**: Option that determines whether or not to include exercise in course score calculation
-- **Points**: Total points of an exercise
-- **Bonus Points**: Bonus points of an exercise
-- **Diagram Type**: Type of diagram that is used throughout an exercise
+- **Title**: Title of an exercise.
+- **Categories**: Category of an exercise.
+- **Difficulty**: Difficulty of an exercise. (No level, Easy, Medium or Hard).
+- **Mode**: Solving mode of an exercise. *This cannot be changed afterwards* (Individual or Team).
+- **Release Date**: Date after which students can access the exercise.
+- **Due Date**: Date till when students can work on the exercise.
+- **Assessment Due Date**: Date after which students can view the feedback of the assessments from the instructors.
+- **Inclusion in course score calculation**: Option that determines whether or not to include exercise in course score calculation.
+- **Points**: Total points of an exercise.
+- **Bonus Points**: Bonus points of an exercise.
+- **Diagram Type**: Type of diagram that is used throughout an exercise.
 
     .. figure:: modeling/create-modeling-exercise-form-1.png
               :align: center
@@ -64,8 +64,8 @@ The following screenshot illustrates the first section of the form. It consists 
 The following screenshot illustrates the second section of the form. It consists of:
 
 - **Enable automatic assessment suggestions**: When enabled, Artemis tries to automatically suggest assessments for diagram elements based on previously graded submissions for this exercise.
-- **Problem Statement**: The task description of the exercise as seen by students
-- **Assessment Instructions**: Instructions for instructors while assessing the submission
+- **Problem Statement**: The task description of the exercise as seen by students.
+- **Assessment Instructions**: Instructions for instructors while assessing the submission.
 
     .. figure:: modeling/create-modeling-exercise-form-2.png
               :align: center
@@ -78,16 +78,16 @@ The following screenshot illustrates the second section of the form. It consists
 
 The following screenshot illustrates the last section of the form. It consists of:
 
-- **Example Solution**: Example solution of an exercise
-- **Example Solution Explanation**: Explanation of the example solution
-- **Example Solution Publication Date**: Date after which the example solution is accessible for students. Leave empty to not publish the solution.
+- **Example Solution**: Example solution of an exercise.
+- **Example Solution Explanation**: Explanation of the example solution.
+- **Example Solution Publication Date**: Date after which the example solution is accessible for students. If you leave this field empty, the solution will not be published.
 
     .. figure:: modeling/create-modeling-exercise-form-3.png
               :align: center
 
 
 Once you are done defining the schema of an exercise, you can now create an exercise by clicking on |save| button.
-You will then be redirected to **Example Submissions for Assessment Training** Page
+You will then be redirected to **Example Submissions for Assessment Training** Page.
 
     .. figure:: modeling/example-submission-for-assessment-training.png
               :align: center
@@ -97,7 +97,7 @@ Example submissions can be used to assess the submissions of students semi-autom
 Artemis uses those submissions to automatically apply the known assessment comments to similar model elements in other submissions as well.
 
 - Select |create-example-submission| if you want to create an example submission from scratch.
-- Alternatively, after the exercise already started, you can also use some submissions submitted by students as an example submission. For that, click on |use-as-example-submission|
+- Alternatively, after the exercise already started, you can also use some submissions submitted by students as an example submission. For that, click on |use-as-example-submission|.
 
 
 .. note::
@@ -110,7 +110,7 @@ Artemis uses those submissions to automatically apply the known assessment comme
 Import Modeling Exercise
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
-- Alternatively, you can also import modeling exercise from the existing one by clicking on **Import Modeling Exercise**
+- Alternatively, you can also import modeling exercise from the existing one by clicking on **Import Modeling Exercise**.
 
     .. figure:: modeling/import-modeling-exercise.png
               :align: center
@@ -120,7 +120,7 @@ Import Modeling Exercise
     .. figure:: modeling/import-modeling-exercise-modal.png
               :align: center
 
-- Once you import one of the exercise, you will then be redirected to form which is similar to *Create new modeling exercise* form with all the fields filled from imported exercise. You can now modify the fields as per your necessity to create a new Modeling Exercise.
+- Once you import one of the exercise, you will then be redirected to a form which is similar to *Create new modeling exercise* form with all the fields filled from imported exercise. You can now modify the fields as per your necessity to create a new Modeling Exercise.
 
 Result
 ^^^^^^
@@ -158,7 +158,7 @@ Assessment
 
 When the due date is over you can assess the submissions.
 
-- To assess the submissions, first click on Assessment Dashboard
+- To assess the submissions, first click on Assessment Dashboard.
 
     .. figure:: modeling/assessment-dashboard.png
               :align: center
