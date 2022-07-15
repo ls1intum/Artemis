@@ -32,4 +32,4 @@ export default defineConfig({
         supportFile: 'support/index.ts',
         baseUrl: 'http://localhost:8080',
     },
-})
+});

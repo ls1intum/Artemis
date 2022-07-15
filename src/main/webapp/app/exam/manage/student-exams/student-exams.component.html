@@ -4,30 +4,32 @@
     </h2>
     <hr />
     <div>
-        <button
-            id="generateStudentExamsButton"
-            class="btn btn-primary mt-1"
-            (click)="handleGenerateStudentExams()"
-            *ngIf="course?.isAtLeastInstructor"
-            [disabled]="isLoading || isExamStarted"
-        >
-            <span *ngIf="isLoading" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-            <span jhiTranslate="artemisApp.studentExams.generateStudentExams">Generate student exams</span>
-        </button>
-        <button
-            id="generateMissingStudentExamsButton"
-            class="btn btn-primary mt-1"
-            (click)="generateMissingStudentExams()"
-            *ngIf="course?.isAtLeastInstructor"
-            [disabled]="isLoading || !hasStudentsWithoutExam || isExamStarted"
-        >
-            <span *ngIf="isLoading" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-            <span jhiTranslate="artemisApp.studentExams.generateMissingStudentExams">Generate missing individual exams</span>
-        </button>
-        <button id="startExercisesButton" class="btn btn-primary mt-1" (click)="startExercises()" *ngIf="course?.isAtLeastInstructor" [disabled]="isLoading || isExamStarted">
-            <span *ngIf="isLoading" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-            <span jhiTranslate="artemisApp.studentExams.startExercises">Start Exercises</span>
-        </button>
+        <ng-container *ngIf="!isTestExam">
+            <button
+                id="generateStudentExamsButton"
+                class="btn btn-primary mt-1"
+                (click)="handleGenerateStudentExams()"
+                *ngIf="course?.isAtLeastInstructor"
+                [disabled]="isLoading || isExamStarted"
+            >
+                <span *ngIf="isLoading" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                <span jhiTranslate="artemisApp.studentExams.generateStudentExams">Generate student exams</span>
+            </button>
+            <button
+                id="generateMissingStudentExamsButton"
+                class="btn btn-primary mt-1"
+                (click)="generateMissingStudentExams()"
+                *ngIf="course?.isAtLeastInstructor"
+                [disabled]="isLoading || !hasStudentsWithoutExam || isExamStarted"
+            >
+                <span *ngIf="isLoading" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                <span jhiTranslate="artemisApp.studentExams.generateMissingStudentExams">Generate missing individual exams</span>
+            </button>
+            <button id="startExercisesButton" class="btn btn-primary mt-1" (click)="startExercises()" *ngIf="course?.isAtLeastInstructor" [disabled]="isLoading || isExamStarted">
+                <span *ngIf="isLoading" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                <span jhiTranslate="artemisApp.studentExams.startExercises">Start Exercises</span>
+            </button>
+        </ng-container>
         <button
             id="handleUnlockAllRepositoriesButton"
             class="btn btn-danger mt-1"
@@ -45,7 +47,7 @@
             <span jhiTranslate="artemisApp.studentExams.lockAllRepositories">Lock all repositories</span>
         </button>
     </div>
-    <jhi-student-exam-status *ngIf="!isLoading" [hasStudentsWithoutExam]="hasStudentsWithoutExam"> </jhi-student-exam-status>
+    <jhi-student-exam-status *ngIf="!isLoading" [isTestExam]="isTestExam" [hasStudentsWithoutExam]="hasStudentsWithoutExam"></jhi-student-exam-status>
 </div>
 <jhi-data-table
     [isLoading]="isLoading"
