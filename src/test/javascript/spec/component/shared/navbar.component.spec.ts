@@ -29,7 +29,6 @@ import { EntityTitleService, EntityType } from 'app/shared/layouts/navbar/entity
 import { ThemeSwitchComponent } from 'app/core/theme/theme-switch.component';
 import { Authority } from 'app/shared/constants/authority.constants';
 import { User } from 'app/core/user/user.model';
-import { AccountService } from 'app/core/auth/account.service';
 
 class MockBreadcrumb {
     label: string;
