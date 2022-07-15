@@ -15,7 +15,7 @@ const EXERCISE_PARTICIPATION_TOPIC = (exerciseId: number) => `/topic/exercise/${
 
 export interface IParticipationWebsocketService {
     addParticipation: (participation: Participation, exercise?: Exercise) => void;
-    getParticipationForExercise: (exerciseId: number) => StudentParticipation | undefined;
+    getParticipationForExercise: (exerciseId: number, testRun: boolean) => StudentParticipation | undefined;
     subscribeForParticipationChanges: () => BehaviorSubject<Participation | undefined>;
     subscribeForLatestResultOfParticipation: (participationId: number, personal: boolean, exerciseId?: number) => BehaviorSubject<Result | undefined>;
     unsubscribeForLatestResultOfParticipation: (participationId: number, exercise: Exercise) => void;
@@ -130,14 +130,14 @@ export class ParticipationWebsocketService implements IParticipationWebsocketSer
      * @param exerciseId ID of the exercise that the participations belong to.
      * @return the cached student participation for the exercise or undefined
      */
-    public getParticipationForExercise(exerciseId: number) {
+    public getParticipationForExercise(exerciseId: number, testRun: boolean) {
         const participationsForExercise = [...this.cachedParticipations.values()].filter((participation) => {
-            return participation.exercise?.id === exerciseId;
+            return participation.exercise?.id === exerciseId && participation.testRun === testRun;
         });
-        if (participationsForExercise && participationsForExercise.length === 1) {
+        if (participationsForExercise?.length === 1) {
             return participationsForExercise[0];
         }
-        if (participationsForExercise && participationsForExercise.length > 1) {
+        if (participationsForExercise?.length > 1) {
             return this.participationService.mergeStudentParticipations(participationsForExercise);
         }
         return undefined;

@@ -202,11 +202,11 @@
             jhi-exercise-action-button
             [buttonIcon]="faPlayCircle"
             [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
-            [buttonLabel]="('artemisApp.exerciseActions.startExercise' | artemisTranslate) + 'Practice mode'"
+            [buttonLabel]="'artemisApp.exerciseActions.startPracticeMode' | artemisTranslate"
             [buttonLoading]="!!exercise.loading"
             [smallButton]="smallButtons"
             [hideLabelMobile]="false"
-            *ngIf="dayjs(exercise.dueDate).isBefore(dayjs())"
+            *ngIf="!examMode && dayjs(exercise.dueDate).isBefore(dayjs())"
             (click)="startPracticeMode()"
         ></button>
 

@@ -46,7 +46,7 @@ import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { UMLModel } from '@ls1intum/apollon';
 import { SafeHtml } from '@angular/platform-browser';
-import { faBook, faExternalLinkAlt, faEye, faFileSignature, faListAlt, faSignal, faTable, faWrench, faAngleDown, faAngleUp } from '@fortawesome/free-solid-svg-icons';
+import { faBook, faEye, faFileSignature, faListAlt, faSignal, faTable, faWrench, faAngleDown, faAngleUp } from '@fortawesome/free-solid-svg-icons';
 import { TextExercise } from 'app/entities/text-exercise.model';
 import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
 import { PlagiarismCasesService } from 'app/course/plagiarism-cases/shared/plagiarism-cases.service';
@@ -74,7 +74,6 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     private currentUser: User;
     private exerciseId: number;
     public courseId: number;
-    private subscription: Subscription;
     public exercise?: Exercise;
     public resultWithComplaint?: Result;
     public latestRatedResult?: Result;
@@ -98,6 +97,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     plagiarismCase?: PlagiarismCase;
     availableExerciseHints: ExerciseHint[];
     activatedExerciseHints: ExerciseHint[];
+    practiceMode: boolean;
 
     public modelingExercise?: ModelingExercise;
     public exampleSolution?: SafeHtml;
@@ -121,7 +121,6 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     faTable = faTable;
     faListAlt = faListAlt;
     faSignal = faSignal;
-    faExternalLinkAlt = faExternalLinkAlt;
     faFileSignature = faFileSignature;
     faAngleDown = faAngleDown;
     faAngleUp = faAngleUp;
@@ -155,7 +154,10 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     ) {}
 
     ngOnInit() {
-        this.subscription = this.route.params.subscribe((params) => {
+        this.route.queryParams.subscribe((params) => {
+            this.practiceMode = params['practice-mode'];
+        });
+        this.route.params.subscribe((params) => {
             const didExerciseChange = this.exerciseId !== parseInt(params['exerciseId'], 10);
             const didCourseChange = this.courseId !== parseInt(params['courseId'], 10);
             this.exerciseId = parseInt(params['exerciseId'], 10);
@@ -193,7 +195,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
 
     loadExercise() {
         this.exercise = undefined;
-        this.studentParticipation = this.participationWebsocketService.getParticipationForExercise(this.exerciseId);
+        this.studentParticipation = this.participationWebsocketService.getParticipationForExercise(this.exerciseId, this.practiceMode);
         this.resultWithComplaint = getFirstResultWithComplaintFromResults(this.studentParticipation?.results);
         this.exerciseService.getExerciseDetails(this.exerciseId).subscribe((exerciseResponse: HttpResponse<Exercise>) => {
             this.handleNewExercise(exerciseResponse.body!);
@@ -297,7 +299,8 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         const filteredParticipations = participations.filter((participation: StudentParticipation) => {
             const personal = participation.student?.id === this.currentUser.id;
             const team = participation.team?.students?.map((s) => s.id).includes(this.currentUser.id);
-            return personal || team;
+            const practiceParticipation = participation.testRun === this.practiceMode;
+            return (personal || team) && practiceParticipation;
         });
         filteredParticipations.forEach((participation: Participation) => {
             if (participation.results) {
@@ -337,7 +340,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     mergeResultsAndSubmissionsForParticipations() {
         // if there are new student participation(s) from the server, we need to update this.studentParticipation
         if (this.exercise) {
-            if (this.exercise.studentParticipations && this.exercise.studentParticipations.length > 0) {
+            if (this.exercise.studentParticipations?.length) {
                 this.studentParticipation = this.participationService.mergeStudentParticipations(this.exercise.studentParticipations);
                 this.sortResults();
                 // Add exercise to studentParticipation, as the result component is dependent on its existence.

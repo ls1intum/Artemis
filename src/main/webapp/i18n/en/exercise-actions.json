@@ -13,6 +13,7 @@
             "resumeExerciseError": "Error trying to resume the exercise",
             "openCodeEditor": "Open code editor",
             "openModelingEditor": "Open modeling editor",
+            "startPracticeMode": "Start practice mode",
             "importIntoIntelliJ": "Open in IntelliJ",
             "cloneRepository": "Clone Repository",
             "clonePersonalRepository": "Clone your personal repository for this exercise:",

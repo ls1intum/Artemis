@@ -66,7 +66,7 @@ export class CourseExerciseRowComponent implements OnInit, OnDestroy, OnChanges 
     }
 
     ngOnChanges(): void {
-        const cachedParticipation = this.participationWebsocketService.getParticipationForExercise(this.exercise.id!);
+        const cachedParticipation = this.participationWebsocketService.getParticipationForExercise(this.exercise.id!, false);
         if (cachedParticipation) {
             this.exercise.studentParticipations = [cachedParticipation];
         }

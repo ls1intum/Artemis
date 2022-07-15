@@ -147,7 +147,7 @@ export class ParticipationService {
 
     public static convertParticipationsDateFromServer(participations?: StudentParticipation[]) {
         const convertedParticipations: StudentParticipation[] = [];
-        if (participations && participations.length > 0) {
+        if (participations?.length) {
             participations.forEach((participation: StudentParticipation) => {
                 convertedParticipations.push(ParticipationService.convertParticipationDatesFromServer(participation)!);
             });
@@ -156,7 +156,7 @@ export class ParticipationService {
     }
 
     public mergeStudentParticipations(participations: StudentParticipation[]): StudentParticipation | undefined {
-        if (participations && participations.length > 0) {
+        if (participations?.length) {
             if (participations[0].type === ParticipationType.STUDENT) {
                 const combinedParticipation = new StudentParticipation();
                 this.mergeResultsAndSubmissions(combinedParticipation, participations);
@@ -170,7 +170,7 @@ export class ParticipationService {
 
     private mergeProgrammingParticipations(participations: ProgrammingExerciseStudentParticipation[]): ProgrammingExerciseStudentParticipation {
         const combinedParticipation = new ProgrammingExerciseStudentParticipation();
-        if (participations && participations.length > 0) {
+        if (participations?.length) {
             combinedParticipation.repositoryUrl = participations[0].repositoryUrl;
             combinedParticipation.buildPlanId = participations[0].buildPlanId;
             this.mergeResultsAndSubmissions(combinedParticipation, participations);
@@ -213,12 +213,12 @@ export class ParticipationService {
         });
 
         // make sure that results and submissions are connected with the participation because some components need this
-        if (combinedParticipation.results && combinedParticipation.results.length > 0) {
+        if (combinedParticipation.results?.length) {
             combinedParticipation.results.forEach((result) => {
                 result.participation = combinedParticipation;
             });
         }
-        if (combinedParticipation.submissions && combinedParticipation.submissions.length > 0) {
+        if (combinedParticipation.submissions?.length) {
             combinedParticipation.submissions.forEach((submission) => {
                 submission.participation = combinedParticipation;
             });
