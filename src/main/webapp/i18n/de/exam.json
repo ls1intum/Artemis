@@ -232,6 +232,7 @@
             "studentExamStatusSuccess": "Alle registrierten Studierenden haben eine Klausur",
             "studentExamStatusWarning": "Nicht alle registrierten Studierenden haben eine Klausur",
             "studentExamStatusWarningTooltip": "Klicke auf den Button 'Fehlende individuelle Klausuren erstellen', um die fehlenden Klausuren zu generieren. Alternativ, klicke auf den Button 'Individuelle Klausuren erstellen', um alle Klausuren zu löschen und neu zu generieren",
+            "studentExamStatusTestExam": "Die Klausuren werden automatisch erstellt, sobald ein Studierender eine Testklausur started",
             "unlockAllRepositoriesSuccess": "Repositories von {{number}} Programmieraufgaben wurden entsperrt.",
             "unlockAllRepositoriesFailure": "Es gab einen Fehler beim Entsperren der Repositories:\n {{message}}",
             "lockAllRepositoriesSuccess": "Repositories von {{number}} Programmieraufgaben wurden gesperrt.",
@@ -346,6 +347,7 @@
                 "showAllUsers": "Alle Studierenden anzeigen",
                 "searchForUsers": "Studierende für diese Klausur anmelden durch Suchen nach Login oder Namen",
                 "searchNoResults": "Keine Studierenden gefunden",
+                "testExamSelfRegistration": "Studierende werden automatisch für die Klausur registriert, wenn diese mit der Bearbeitung beginnen",
                 "login": "Login",
                 "name": "Name",
                 "firstName": "Vorname",
@@ -391,6 +393,7 @@
             },
             "checklist": {
                 "title": "Checkliste für die Durchführung von Prüfungen",
+                "conductionPlannedFromTo": "Die Durchführung ist vom {{ from }} bis {{ to }} geplant",
                 "introduction": "Diese Seite gibt einen Überblick über die verschiedenen Schritte zur Durchführung von Prüfungen. Genauere Erklärungen zu den einzelnen Schritten können in der",
                 "linkDescription": "externen Dokumentation",
                 "introductionPart2": "eingesehen werden.",
@@ -398,6 +401,10 @@
                 "description": "Beschreibung",
                 "status": "Aktueller Status",
                 "goTo": "Seite",
+                "testExam": {
+                    "title": "Checkliste für die Durchführung von Testklausuren",
+                    "introduction": "Diese Seite gibt einen Überblick über die verschiedenen Schritte zur Durchführung von Testklausuren"
+                },
                 "tableItem": {
                     "register": "Registrierung der Studierenden zur Klausur",
                     "exerciseGroups": "Erstellung mindestens einer Aufgabengruppe mit mindestens einer Aufgabe",
@@ -606,12 +613,26 @@
                 "generateStudentExams": "Generiere Klausuren: ",
                 "registered": "{{ generated }} von {{ total }}",
                 "notRegistered": "Keine Studierenden registriert",
-                "prepareExerciseStart": "Bereite Aufgabenstart vor"
+                "prepareExerciseStart": "Bereite Aufgabenstart vor",
+                "testExam": {
+                    "examPreparation": "Testklausur-Vorbereitung",
+                    "maxPointsCorrect": "Klausurpunkte richtig eingestellt auf ",
+                    "maxPointsWrong": "Klausurpunkte sollten {{ points }} sein"
+                }
             },
             "conduction": {
                 "examConduction": "Klausurdurchführung",
+                "workingTime": "Arbeitszeit",
                 "startedExams": "Begonnene Klausuren",
-                "submittedExams": "Abgegebene Klausuren"
+                "submittedExams": "Abgegebene Klausuren",
+                "conductionSuspended": "Studierende können keine Klausur starten!",
+                "testExam": {
+                    "examConduction": "Testklausur-Durchführung",
+                    "numberOfStudents": "Anzahl der Studierenden",
+                    "startedExams": "Begonnene Testklausuren",
+                    "submittedExams": "Abgegebene Testklausuren",
+                    "conductionSuspended": "Studierende können keine Testklausuren starten!"
+                }
             },
             "correction": {
                 "examCorrection": "Klausurkorrektur",
