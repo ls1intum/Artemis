@@ -315,14 +315,14 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
                     this.pushToData(exercise, series);
                 } else {
                     exercise.studentParticipations.forEach((participation) => {
-                        if (participation.results && participation.results.length > 0) {
+                        if (participation.results?.length) {
                             const participationResult = this.courseCalculationService.getResultForParticipation(participation, exercise.dueDate!);
-                            if (participationResult && participationResult.rated) {
+                            if (participationResult?.rated) {
                                 const roundedParticipationScore = roundValueSpecifiedByCourseSettings(participationResult.score!, this.course);
                                 const cappedParticipationScore = Math.min(roundedParticipationScore, 100);
                                 const roundedParticipationPoints = roundValueSpecifiedByCourseSettings((participationResult.score! * exercise.maxPoints!) / 100, this.course);
-                                const missedScore = 100 - cappedParticipationScore;
-                                const missedPoints = Math.max(exercise.maxPoints! - roundedParticipationPoints, 0);
+                                const missedScore = roundValueSpecifiedByCourseSettings(100 - cappedParticipationScore, this.course);
+                                const missedPoints = roundValueSpecifiedByCourseSettings(Math.max(exercise.maxPoints! - roundedParticipationPoints, 0), this.course);
                                 series[5].value = missedScore;
                                 series[5].absoluteValue = missedPoints;
                                 series[5].afterDueDate = false;
