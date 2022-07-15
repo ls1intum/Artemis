@@ -53,15 +53,17 @@
             "text": "<b>Scalable</b> to multiple courses with thousands of students. Configure additional build agents in the continuous integration environment."
         },
         "highUserSatisfaction": {
-            "text": "<b>High user satisfaction:</b> Artemis is easy to use and provides guided tutorials. Developers focus on usability, user experience, and performance."
+            "text": "<a href={{ userExperienceUrl }}>High user satisfaction:</a> Artemis is easy to use and provides guided tutorials. Developers focus on usability, user experience, and performance."
         },
         "customizable": {
             "text": "<b>Customizable:</b> It supports multiple instructors, editors, and tutors per course and allows instructors to customize many course settings."
         },
         "openSource": {
-            "text": "<b>Open-source:</b> Free to use with a large community and many active maintainers."
+            "text": "<a href={{ openSourceUrl }}>Open-source:</a> Free to use with a large community and many active maintainers."
         },
         "getInTouch": "Get in touch",
-        "contributors": "Individual contributors"
+        "contributors": "Individual contributors",
+        "projectManager": "Project Manager",
+        "website": "Website"
     }
 }

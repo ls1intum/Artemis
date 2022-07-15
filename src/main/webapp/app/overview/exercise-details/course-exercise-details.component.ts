@@ -389,9 +389,10 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
                             this.availableExerciseHints = availableRes!.body!.filter(
                                 (availableHint) => !this.activatedExerciseHints.some((activatedHint) => availableHint.id === activatedHint.id),
                             );
-                            if (this.availableExerciseHints.length) {
+                            const filteredAvailableExerciseHints = this.availableExerciseHints.filter((hint) => hint.displayThreshold !== 0);
+                            if (filteredAvailableExerciseHints.length) {
                                 this.alertService.info('artemisApp.exerciseHint.availableHintsAlertMessage', {
-                                    taskName: this.availableExerciseHints.first()?.programmingExerciseTask?.taskName,
+                                    taskName: filteredAvailableExerciseHints.first()?.programmingExerciseTask?.taskName,
                                 });
                             }
                         });

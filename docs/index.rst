@@ -27,6 +27,7 @@ All these exercises are supposed to be run either live in the lecture with insta
    user/orion
    user/communication
    user/learning-analytics
+   user/user-experience
 
 
 .. toctree::
@@ -43,6 +44,7 @@ All these exercises are supposed to be run either live in the lecture with insta
    dev/testservers
    dev/docker
    dev/cypress
+   dev/open-source
 
 
 .. toctree::

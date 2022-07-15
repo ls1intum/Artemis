@@ -20,11 +20,22 @@ import { ExerciseSubmissionChartComponent } from 'app/exam/monitoring/charts/exe
 import { ExerciseNavigationChartComponent } from 'app/exam/monitoring/charts/exercises/exercise-navigation-chart.component';
 import { ActionsChartComponent } from 'app/exam/monitoring/charts/activity-log/actions-chart.component';
 import { ExerciseTemplateChartComponent } from 'app/exam/monitoring/charts/exercises/exercise-template-chart.component';
+import { NgxDatatableModule } from '@flaviosantoro92/ngx-datatable';
+import { ArtemisDataTableModule } from 'app/shared/data-table/data-table.module';
 
 const ENTITY_STATES = [...examMonitoringState];
 
 @NgModule({
-    imports: [RouterModule.forChild(ENTITY_STATES), ArtemisSharedCommonModule, BarChartModule, LineChartModule, ArtemisSidePanelModule, ArtemisSharedComponentModule],
+    imports: [
+        RouterModule.forChild(ENTITY_STATES),
+        ArtemisSharedCommonModule,
+        BarChartModule,
+        LineChartModule,
+        ArtemisSidePanelModule,
+        ArtemisSharedComponentModule,
+        NgxDatatableModule,
+        ArtemisDataTableModule,
+    ],
     declarations: [
         ExamMonitoringComponent,
         MonitoringOverviewComponent,
