@@ -101,7 +101,7 @@ export class ExamManagementService {
      */
     findWithExercisesAndWithoutCourseId(examId: number): Observable<EntityResponseType> {
         return this.http
-            .get<Exam>(`api/exams/${examId}`, { observe: 'response' })
+            .get<Exam>(`${SERVER_API_URL}api/exams/${examId}`, { observe: 'response' })
             .pipe(map((res: EntityResponseType) => ExamManagementService.convertDateFromServer(res)))
             .pipe(
                 tap((res: EntityResponseType) => {

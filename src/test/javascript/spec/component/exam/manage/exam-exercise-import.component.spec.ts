@@ -19,42 +19,42 @@ describe('Exam Exercise Import Component', () => {
     let fixture: ComponentFixture<ExamExerciseImportComponent>;
 
     // Initializing one Exercise Group per Exercise Type
-    let exerciseGroup1 = { title: 'exerciseGroup1' } as ExerciseGroup;
-    let modelingExercise = new ModelingExercise(UMLDiagramType.ClassDiagram, undefined, exerciseGroup1);
+    const exerciseGroup1 = { title: 'exerciseGroup1' } as ExerciseGroup;
+    const modelingExercise = new ModelingExercise(UMLDiagramType.ClassDiagram, undefined, exerciseGroup1);
     modelingExercise.id = 1;
     modelingExercise.title = 'ModelingExercise';
     exerciseGroup1.exercises = [modelingExercise];
 
     // Exercise Group contains two exercises
-    let exerciseGroup2 = { title: 'exerciseGroup2' } as ExerciseGroup;
-    let textExercise = new TextExercise(undefined, exerciseGroup2);
+    const exerciseGroup2 = { title: 'exerciseGroup2' } as ExerciseGroup;
+    const textExercise = new TextExercise(undefined, exerciseGroup2);
     textExercise.id = 2;
     textExercise.title = 'TextExercise';
-    let textExercise2 = new TextExercise(undefined, exerciseGroup2);
+    const textExercise2 = new TextExercise(undefined, exerciseGroup2);
     textExercise2.id = 22;
     textExercise2.title = 'TextExercise2';
     exerciseGroup2.exercises = [textExercise, textExercise2];
 
-    let exerciseGroup3 = { title: 'exerciseGroup3' } as ExerciseGroup;
-    let programmingExercise = new ProgrammingExercise(undefined, exerciseGroup3);
+    const exerciseGroup3 = { title: 'exerciseGroup3' } as ExerciseGroup;
+    const programmingExercise = new ProgrammingExercise(undefined, exerciseGroup3);
     programmingExercise.id = 3;
     programmingExercise.title = 'ProgrammingExercise';
     programmingExercise.shortName = 'progEx';
     exerciseGroup3.exercises = [programmingExercise];
 
-    let exerciseGroup4 = { title: 'exerciseGroup4' } as ExerciseGroup;
-    let quizExercise = new QuizExercise(undefined, exerciseGroup4);
+    const exerciseGroup4 = { title: 'exerciseGroup4' } as ExerciseGroup;
+    const quizExercise = new QuizExercise(undefined, exerciseGroup4);
     quizExercise.id = 4;
     quizExercise.title = 'QuizExercise';
     exerciseGroup4.exercises = [quizExercise];
 
-    let exerciseGroup5 = { title: 'exerciseGroup5' } as ExerciseGroup;
-    let fileUploadExercise = new FileUploadExercise(undefined, exerciseGroup5);
+    const exerciseGroup5 = { title: 'exerciseGroup5' } as ExerciseGroup;
+    const fileUploadExercise = new FileUploadExercise(undefined, exerciseGroup5);
     fileUploadExercise.id = 5;
     fileUploadExercise.title = 'FileUploadExercise';
     exerciseGroup5.exercises = [fileUploadExercise];
 
-    let exam1 = {
+    const exam1 = {
         id: 10,
         exerciseGroups: [exerciseGroup1, exerciseGroup2, exerciseGroup3, exerciseGroup4, exerciseGroup5],
     } as Exam;
@@ -139,8 +139,8 @@ describe('Exam Exercise Import Component', () => {
 
         // Step 2: Simulate exception by the server, as the programming exercise project key is not unique -> title and short name are undefined;
         // Therefore create exercise group that is replacing the exerciseGroup3
-        let exerciseGroup3Rejected = {} as ExerciseGroup;
-        let programmingExerciseRejected = new ProgrammingExercise(undefined, exerciseGroup3Rejected);
+        const exerciseGroup3Rejected = {} as ExerciseGroup;
+        const programmingExerciseRejected = new ProgrammingExercise(undefined, exerciseGroup3Rejected);
         programmingExerciseRejected.id = 3;
         exerciseGroup3Rejected.exercises = [programmingExerciseRejected];
         component.exam = {

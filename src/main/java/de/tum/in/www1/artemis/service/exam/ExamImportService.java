@@ -67,10 +67,9 @@ public class ExamImportService {
     public ExamImportService(TextExerciseImportService textExerciseImportService, TextExerciseRepository textExerciseRepository,
             ModelingExerciseImportService modelingExerciseImportService, ModelingExerciseRepository modelingExerciseRepository, ExamRepository examRepository,
             ExerciseGroupRepository exerciseGroupRepository, ExamAccessService examAccessService, QuizExerciseRepository quizExerciseRepository,
-            QuizExerciseImportService importQuizExercise, CourseRepository courseRepository, ProgrammingExerciseService programmingExerciseService,
-            ProgrammingExerciseService programmingExerciseService1, ProgrammingExerciseRepository programmingExerciseRepository,
-            ProgrammingExerciseImportService programmingExerciseImportService, FileUploadExerciseRepository fileUploadExerciseRepository,
-            FileUploadImportService fileUploadImportService, GradingCriterionRepository gradingCriterionRepository) {
+            QuizExerciseImportService importQuizExercise, CourseRepository courseRepository, ProgrammingExerciseService programmingExerciseService1,
+            ProgrammingExerciseRepository programmingExerciseRepository, ProgrammingExerciseImportService programmingExerciseImportService,
+            FileUploadExerciseRepository fileUploadExerciseRepository, FileUploadImportService fileUploadImportService, GradingCriterionRepository gradingCriterionRepository) {
         this.textExerciseImportService = textExerciseImportService;
         this.textExerciseRepository = textExerciseRepository;
         this.modelingExerciseImportService = modelingExerciseImportService;

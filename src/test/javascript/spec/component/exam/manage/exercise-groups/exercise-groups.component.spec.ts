@@ -154,7 +154,7 @@ describe('Exercise Groups Component', () => {
         comp.deleteExerciseGroup(0, {});
         tick();
 
-        expect(exerciseGroupService.delete).toHaveBeenCalled();
+        expect(exerciseGroupService.delete).toHaveBeenCalledOnce();
         expect(comp.exerciseGroups).toHaveLength(groups.length - 1);
     }));
 
@@ -201,8 +201,8 @@ describe('Exercise Groups Component', () => {
         comp.openImportModal(groups[0], ExerciseType.PROGRAMMING);
         tick();
 
-        expect(modalService.open).toHaveBeenCalled();
-        expect(router.navigate).toHaveBeenCalled();
+        expect(modalService.open).toHaveBeenCalledOnce();
+        expect(router.navigate).toHaveBeenCalledOnce();
     }));
 
     it('opens the import modal for text exercises', fakeAsync(() => {
@@ -213,8 +213,8 @@ describe('Exercise Groups Component', () => {
         comp.openImportModal(groups[0], ExerciseType.TEXT);
         tick();
 
-        expect(modalService.open).toHaveBeenCalled();
-        expect(routerNavigateStub).toHaveBeenCalled();
+        expect(modalService.open).toHaveBeenCalledOnce();
+        expect(routerNavigateStub).toHaveBeenCalledOnce();
     }));
 
     it('opens the import modal for modeling exercises', fakeAsync(() => {
@@ -225,8 +225,8 @@ describe('Exercise Groups Component', () => {
         comp.openImportModal(groups[0], ExerciseType.MODELING);
         tick();
 
-        expect(modalService.open).toHaveBeenCalled();
-        expect(router.navigate).toHaveBeenCalled();
+        expect(modalService.open).toHaveBeenCalledOnce();
+        expect(router.navigate).toHaveBeenCalledOnce();
     }));
 
     it('moves up an exercise group', () => {
@@ -285,7 +285,7 @@ describe('Exercise Groups Component', () => {
         comp.openExerciseGroupImportModal();
         tick();
 
-        expect(modalService.open).toHaveBeenCalled();
+        expect(modalService.open).toHaveBeenCalledOnce();
         expect(comp.exerciseGroups).toEqual([exerciseGroup]);
         expect(alertSpy).toHaveBeenCalledOnce();
     }));

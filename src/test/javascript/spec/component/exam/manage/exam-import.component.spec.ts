@@ -32,15 +32,15 @@ describe('Exam Import Component', () => {
     let examManagementService: ExamManagementService;
     let alertService: AlertService;
 
-    let exam1 = { id: 1 } as Exam;
+    const exam1 = { id: 1 } as Exam;
 
     // Initializing one Exercise Group
-    let exerciseGroup1 = { title: 'exerciseGroup1' } as ExerciseGroup;
-    let modelingExercise = new ModelingExercise(UMLDiagramType.ClassDiagram, undefined, exerciseGroup1);
+    const exerciseGroup1 = { title: 'exerciseGroup1' } as ExerciseGroup;
+    const modelingExercise = new ModelingExercise(UMLDiagramType.ClassDiagram, undefined, exerciseGroup1);
     modelingExercise.id = 1;
     modelingExercise.title = 'ModelingExercise';
     exerciseGroup1.exercises = [modelingExercise];
-    let exam1WithExercises = { id: 1, exerciseGroups: [exerciseGroup1] } as Exam;
+    const exam1WithExercises = { id: 1, exerciseGroups: [exerciseGroup1] } as Exam;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -161,8 +161,8 @@ describe('Exam Import Component', () => {
         const modalSpy = jest.spyOn(activeModal, 'close');
 
         component.subsequentExerciseGroupSelection = true;
-        let exerciseGroup2 = { title: 'exerciseGroup2' } as ExerciseGroup;
-        let modelingExercise2 = new ModelingExercise(UMLDiagramType.ClassDiagram, undefined, exerciseGroup2);
+        const exerciseGroup2 = { title: 'exerciseGroup2' } as ExerciseGroup;
+        const modelingExercise2 = new ModelingExercise(UMLDiagramType.ClassDiagram, undefined, exerciseGroup2);
         modelingExercise2.id = 2;
         exerciseGroup2.exercises = [modelingExercise2];
         component.exam = { id: 1, exerciseGroups: [exerciseGroup2] } as Exam;

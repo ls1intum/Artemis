@@ -1,4 +1,4 @@
-<div class="alert alert-info" [hidden]="containsProgrammingExercises.size === 0">
+<div *ngIf="containsProgrammingExercises.size !== 0" class="alert alert-info">
     <span jhiTranslate="artemisApp.examManagement.exerciseGroup.importModal.infoProgrammingExercises"></span>
 </div>
 <table class="table table-striped">
