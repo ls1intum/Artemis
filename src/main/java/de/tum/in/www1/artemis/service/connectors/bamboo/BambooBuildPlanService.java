@@ -175,7 +175,7 @@ public class BambooBuildPlanService {
 
         // Do not run the builds in extra docker containers if the dev-profile is active
         // Xcode has no dockerfile, it only runs on agents (e.g. sb2-agent-0050562fddde)
-        if (!activeProfiles.contains(JHipsterConstants.SPRING_PROFILE_DEVELOPMENT) && !ProjectType.XCODE.equals(projectType) || true) {
+        if (!activeProfiles.contains(JHipsterConstants.SPRING_PROFILE_DEVELOPMENT) && !ProjectType.XCODE.equals(projectType)) {
             defaultJob.dockerConfiguration(dockerConfigurationImageNameFor(programmingLanguage, Optional.ofNullable(projectType)));
         }
         switch (programmingLanguage) {
