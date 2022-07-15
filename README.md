@@ -35,7 +35,7 @@
 9. **[Communication](https://docs.artemis.ase.in.tum.de/user/communication/)**: Instructors can post announcements. Students can ask questions, post comments, and react to other posts. Tutors can filter unanswered questions.
 10. **[Notifications](https://docs.artemis.ase.in.tum.de/user/notifications)**: Artemis supports customizable web and email notifications. Users can enable and disable different notification types.
 11. **Team exercises**: Instructors can configure team exercises with real time collaboration and dedicated tutors per team.
-12. **Lectures**: Instructors can upload lecture slides, divide lectures into units, integrate video streams, lecture recordings, and exercises into lectures, and define learning goals.
+12. **[Lectures](https://docs.artemis.ase.in.tum.de/user/lectures/)**: Instructors can upload lecture slides, divide lectures into units, integrate video streams, lecture recordings, and exercises into lectures, and define learning goals.
 13. **Integrated markdown editor**: Instructors define problem statements using Markdown to easily format the text and integrate images and links.
 14. **Plagiarism checks**: Artemis integrates plagiarism checks for programming exercises (based on [JPlag](https://github.com/jplag/JPlag)), text exercises, and modeling exercises. It allows notifying students about identified plagiarism. Students can review and comment on the allegation. 
 15. **Learning analytics**: Artemis integrated different statistics for students to compare themselves to the course average. It allows instructors to evaluate the average student performance based on exercises and learning goals.
