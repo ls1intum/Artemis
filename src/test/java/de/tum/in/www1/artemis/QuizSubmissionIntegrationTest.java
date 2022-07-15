@@ -26,6 +26,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Result;
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.QuizMode;
 import de.tum.in.www1.artemis.domain.enumeration.ScoringType;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
@@ -33,7 +34,8 @@ import de.tum.in.www1.artemis.domain.quiz.*;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.QuizBatchService;
 import de.tum.in.www1.artemis.service.QuizExerciseService;
-import de.tum.in.www1.artemis.service.scheduled.quiz.QuizScheduleService;
+import de.tum.in.www1.artemis.service.scheduled.cache.quiz.QuizScheduleService;
+import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.web.websocket.QuizSubmissionWebsocketService;
 
 public class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
@@ -272,12 +274,14 @@ public class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
         }
     }
 
-    @Test
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @WithMockUser(username = "student1", roles = "USER")
-    public void testQuizSubmitLiveMode() throws Exception {
+    @EnumSource(QuizMode.class)
+    public void testQuizSubmitLiveMode(QuizMode quizMode) throws Exception {
         List<Course> courses = database.createCoursesWithExercisesAndLectures(false);
         Course course = courses.get(0);
-        QuizExercise quizExercise = database.createQuiz(course, ZonedDateTime.now().minusSeconds(10), null, QuizMode.SYNCHRONIZED);
+        QuizExercise quizExercise = database.createQuiz(course, ZonedDateTime.now().minusSeconds(10), null, quizMode);
+        quizExercise.setDuration(600);
         quizExercise = quizExerciseService.save(quizExercise);
 
         // at the beginning there are no submissions and no participants
@@ -285,6 +289,13 @@ public class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
         assertThat(participationRepository.findAll()).isEmpty();
 
         int numberOfParticipants = 10;
+
+        if (quizMode != QuizMode.SYNCHRONIZED) {
+            var batch = quizBatchService.save(ModelFactory.generateQuizBatch(quizExercise, ZonedDateTime.now().minusSeconds(10)));
+            for (int i = 1; i <= numberOfParticipants; i++) {
+                joinQuizBatch(quizExercise, batch, "student" + i);
+            }
+        }
 
         for (int i = 1; i <= numberOfParticipants; i++) {
             database.changeUser("student" + i);
@@ -310,6 +321,12 @@ public class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
         assertThat(participationRepository.findAll()).hasSize(numberOfParticipants);
     }
 
+    private void joinQuizBatch(QuizExercise quizExercise, QuizBatch batch, String username) {
+        var user = new User();
+        user.setLogin(username);
+        quizScheduleService.joinQuizBatch(quizExercise, batch, user);
+    }
+
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @WithMockUser(username = "student1", roles = "USER")
     @EnumSource(QuizMode.class)
@@ -319,18 +336,31 @@ public class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
         QuizExercise quizExercise = database.createQuiz(course, ZonedDateTime.now().plusSeconds(20), ZonedDateTime.now().plusSeconds(30), quizMode);
         quizExercise.setDuration(10);
         quizExercise = quizExerciseService.save(quizExercise);
+
+        if (quizMode != QuizMode.SYNCHRONIZED) {
+            var batch = quizBatchService.save(ModelFactory.generateQuizBatch(quizExercise, ZonedDateTime.now().plusSeconds(10)));
+            joinQuizBatch(quizExercise, batch, "student1");
+        }
+
         QuizSubmission quizSubmission = database.generateSubmissionForThreeQuestions(quizExercise, 1, false, null);
         request.postWithResponseBody("/api/exercises/" + quizExercise.getId() + "/submissions/live", quizSubmission, Result.class, HttpStatus.BAD_REQUEST);
     }
 
-    @Test
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @WithMockUser(username = "student1", roles = "USER")
-    public void testQuizSubmitLiveMode_badRequest_alreadySubmitted() throws Exception {
+    @EnumSource(QuizMode.class)
+    public void testQuizSubmitLiveMode_badRequest_alreadySubmitted(QuizMode quizMode) throws Exception {
         List<Course> courses = database.createCoursesWithExercisesAndLectures(false);
         Course course = courses.get(0);
-        QuizExercise quizExercise = database.createQuiz(course, ZonedDateTime.now(), ZonedDateTime.now().plusSeconds(10), QuizMode.SYNCHRONIZED);
+        QuizExercise quizExercise = database.createQuiz(course, ZonedDateTime.now().minusSeconds(5), ZonedDateTime.now().plusSeconds(10), quizMode);
         quizExercise.setDuration(10);
         quizExercise = quizExerciseService.save(quizExercise);
+
+        if (quizMode != QuizMode.SYNCHRONIZED) {
+            var batch = quizBatchService.save(ModelFactory.generateQuizBatch(quizExercise, ZonedDateTime.now().minusSeconds(5)));
+            joinQuizBatch(quizExercise, batch, "student1");
+        }
+
         QuizSubmission quizSubmission = database.generateSubmissionForThreeQuestions(quizExercise, 1, false, ZonedDateTime.now());
         // submit quiz for the first time, expected status = OK
         request.postWithResponseBody("/api/exercises/" + quizExercise.getId() + "/submissions/live", quizSubmission, Result.class, HttpStatus.OK);
@@ -358,19 +388,30 @@ public class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
         request.postWithResponseBody("/api/exercises/" + invalidExerciseId + "/submissions/live", quizSubmission, Result.class, HttpStatus.NOT_FOUND);
     }
 
-    @Test
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @WithMockUser(username = "student1", roles = "USER")
-    public void testQuizSubmitNoMoreAttemptsLeftLiveMode_badRequest() throws Exception {
+    @EnumSource(QuizMode.class)
+    public void testQuizSubmitNoDatabaseRequests(QuizMode quizMode) throws Exception {
         Course course = database.createCourse();
-        QuizExercise quizExercise = database.createQuiz(course, ZonedDateTime.now().minusHours(5), null, QuizMode.SYNCHRONIZED);
+        QuizExercise quizExercise = database.createQuiz(course, ZonedDateTime.now().minusHours(5), null, quizMode);
         quizExercise.setDuration(360);
         quizExercise.getQuizBatches().forEach(batch -> batch.setStartTime(ZonedDateTime.now().minusMinutes(5)));
-        quizExercise.setAllowedNumberOfAttempts(0);
         quizExerciseService.save(quizExercise);
 
+        if (quizMode != QuizMode.SYNCHRONIZED) {
+            var batch = quizBatchService.save(ModelFactory.generateQuizBatch(quizExercise, ZonedDateTime.now().minusSeconds(5)));
+            joinQuizBatch(quizExercise, batch, "student1");
+        }
+
         QuizSubmission quizSubmission = database.generateSubmissionForThreeQuestions(quizExercise, 1, false, ZonedDateTime.now());
-        // submit quiz more times than the allowed number of attempts, expected status = BAD_REQUEST
-        request.postWithResponseBody("/api/exercises/" + quizExercise.getId() + "/submissions/live", quizSubmission, Result.class, HttpStatus.BAD_REQUEST);
+
+        // this database request cause no database queries
+        // TODO: how can this be checked in the tests?
+        // These things that help would need to be configured globally show-sql configuration, hibernate Inspector and StatementInterceptor, H2 logging
+        // the mysql general query log can be enabled on the fly but mysql is not the database backend for the tests
+
+        request.postWithResponseBody("/api/exercises/" + quizExercise.getId() + "/submissions/live", quizSubmission, Result.class, HttpStatus.OK);
+
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
@@ -742,7 +783,7 @@ public class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
         assertThat(results).hasSize(1);
         var result = results.get(0);
 
-        assertThat(result.getResultString()).isEqualTo("1 of 9 points");
+        assertThat(result.getScore()).isEqualTo(11.1);
 
         var submittedAnswers = ((QuizSubmission) result.getSubmission()).getSubmittedAnswers();
         for (SubmittedAnswer submittedAnswer : submittedAnswers) {
@@ -792,11 +833,11 @@ public class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
         assertThat(results).hasSize(1);
         var result = results.get(0);
 
-        var resultString = switch (scoringType) {
-            case ALL_OR_NOTHING, PROPORTIONAL_WITH_PENALTY -> "0 of 9 points";
-            case PROPORTIONAL_WITHOUT_PENALTY -> "4 of 9 points";
+        double expectedScore = switch (scoringType) {
+            case ALL_OR_NOTHING, PROPORTIONAL_WITH_PENALTY -> 0;
+            case PROPORTIONAL_WITHOUT_PENALTY -> 44.4;
         };
-        assertThat(result.getResultString()).isEqualTo(resultString);
+        assertThat(result.getScore()).isEqualTo(expectedScore);
     }
 
     private void checkQuizNotStarted(String path) {

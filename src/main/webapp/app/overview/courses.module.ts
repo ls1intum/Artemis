@@ -18,7 +18,8 @@ import { ArtemisSharedPipesModule } from 'app/shared/pipes/shared-pipes.module';
 import { RatingModule } from 'app/exercises/shared/rating/rating.module';
 import { ArtemisExerciseButtonsModule } from 'app/overview/exercise-details/exercise-buttons.module';
 import { ArtemisCourseExerciseRowModule } from 'app/overview/course-exercises/course-exercise-row.module';
-import { NgxChartsModule } from '@swimlane/ngx-charts';
+import { PieChartModule } from '@swimlane/ngx-charts';
+import { HeaderCourseComponent } from 'app/overview/header-course.component';
 
 @NgModule({
     imports: [
@@ -33,11 +34,12 @@ import { NgxChartsModule } from '@swimlane/ngx-charts';
         ArtemisComplaintsModule,
         FeatureToggleModule,
         RatingModule,
-        NgxChartsModule,
+        PieChartModule,
     ],
     declarations: [
         CoursesComponent,
         CourseOverviewComponent,
+        HeaderCourseComponent,
         CourseCardComponent,
         CourseExercisesComponent,
         CourseLecturesComponent,
@@ -45,5 +47,6 @@ import { NgxChartsModule } from '@swimlane/ngx-charts';
         CourseExamsComponent,
         CourseExamDetailComponent,
     ],
+    exports: [HeaderCourseComponent],
 })
 export class ArtemisCoursesModule {}

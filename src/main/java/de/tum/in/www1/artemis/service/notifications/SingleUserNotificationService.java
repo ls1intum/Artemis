@@ -17,7 +17,7 @@ import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.domain.notification.NotificationTitleTypeConstants;
 import de.tum.in.www1.artemis.domain.notification.SingleUserNotification;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
-import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismComparison;
+import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismCase;
 import de.tum.in.www1.artemis.repository.SingleUserNotificationRepository;
 import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
@@ -64,7 +64,7 @@ public class SingleUserNotificationService {
             // Exercise related
             case EXERCISE_SUBMISSION_ASSESSED, FILE_SUBMISSION_SUCCESSFUL -> createNotification((Exercise) notificationSubject, notificationType, (User) typeSpecificInformation);
             // Plagiarism related
-            case NEW_POSSIBLE_PLAGIARISM_CASE_STUDENT, PLAGIARISM_CASE_FINAL_STATE_STUDENT -> createNotification((PlagiarismComparison) notificationSubject, notificationType,
+            case NEW_PLAGIARISM_CASE_STUDENT, PLAGIARISM_CASE_VERDICT_STUDENT -> createNotification((PlagiarismCase) notificationSubject, notificationType,
                     (User) typeSpecificInformation, author);
 
             default -> throw new UnsupportedOperationException("Can not create notification for type : " + notificationType);
@@ -188,22 +188,20 @@ public class SingleUserNotificationService {
 
     /**
      * Notify student about possible plagiarism case.
-     *
-     * @param plagiarismComparison that hold the major information for the plagiarism case
+     *  @param plagiarismCase that hold the major information for the plagiarism case
      * @param student who should be notified
      */
-    public void notifyUserAboutNewPossiblePlagiarismCase(PlagiarismComparison plagiarismComparison, User student) {
-        notifyRecipientWithNotificationType(plagiarismComparison, NEW_POSSIBLE_PLAGIARISM_CASE_STUDENT, student, userRepository.getUser());
+    public void notifyUserAboutNewPlagiarismCase(PlagiarismCase plagiarismCase, User student) {
+        notifyRecipientWithNotificationType(plagiarismCase, NEW_PLAGIARISM_CASE_STUDENT, student, userRepository.getUser());
     }
 
     /**
-     * Notify student about plagiarism case update.
-     *
-     * @param plagiarismComparison that hold the major information for the plagiarism case
+     * Notify student about plagiarism case verdict.
+     *  @param plagiarismCase that hold the major information for the plagiarism case
      * @param student who should be notified
      */
-    public void notifyUserAboutFinalPlagiarismState(PlagiarismComparison plagiarismComparison, User student) {
-        notifyRecipientWithNotificationType(plagiarismComparison, PLAGIARISM_CASE_FINAL_STATE_STUDENT, student, userRepository.getUser());
+    public void notifyUserAboutPlagiarismCaseVerdict(PlagiarismCase plagiarismCase, User student) {
+        notifyRecipientWithNotificationType(plagiarismCase, PLAGIARISM_CASE_VERDICT_STUDENT, student, userRepository.getUser());
     }
 
     /**

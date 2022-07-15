@@ -164,7 +164,7 @@ public class TextSubmissionResource extends AbstractSubmissionResource {
 
         if (!authCheckService.isAtLeastTeachingAssistantForExercise(textSubmission.getParticipation().getExercise())) {
             // anonymize and throw exception if not authorized to view submission
-            plagiarismService.anonymizeSubmissionForStudentView(textSubmission, userRepository.getUser().getLogin());
+            plagiarismService.anonymizeSubmissionForStudent(textSubmission, userRepository.getUser().getLogin());
             return ResponseEntity.ok(textSubmission);
         }
 

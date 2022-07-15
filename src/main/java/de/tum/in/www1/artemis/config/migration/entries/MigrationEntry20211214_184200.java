@@ -31,7 +31,7 @@ public class MigrationEntry20211214_184200 extends MigrationEntry {
     }
 
     /**
-     * Retrieves all users from the database and executes the processing method in batches of a 100 users to prevent database timeouts
+     * Retrieves all users from the database and executes the processing method in batches of 100 users to prevent database timeouts
      */
     @Override
     public void execute() {
@@ -41,7 +41,7 @@ public class MigrationEntry20211214_184200 extends MigrationEntry {
         List<User> users = userRepository.findAllByInternal(false);
         LOGGER.info("Found {} users to process with `User.isInternal=false`.", users.size());
         int remainder = users.size() % listSize;
-        int listCount = (int) Math.floor(users.size() / 100f);
+        int listCount = users.size() / listSize;
         for (int i = 0; i < listCount; i++) {
             List<User> sublist = users.subList(i * listSize, (i + 1) * listSize);
             processUsers(sublist);

@@ -21,9 +21,7 @@ import { ProgrammingAssessmentManualResultService } from 'app/exercises/programm
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { Complaint } from 'app/entities/complaint.model';
 import { ComplaintService } from 'app/complaints/complaint.service';
-import { ExerciseHintService } from 'app/exercises/shared/exercise-hint/manage/exercise-hint.service';
 import { MockRepositoryFileService } from '../../helpers/mocks/service/mock-repository-file.service';
-import { MockExerciseHintService } from '../../helpers/mocks/service/mock-exercise-hint.service';
 import { MockNgbModalService } from '../../helpers/mocks/service/mock-ngb-modal.service';
 import { CodeEditorTutorAssessmentContainerComponent } from 'app/exercises/programming/assess/code-editor-tutor-assessment-container.component';
 import { Result } from 'app/entities/result.model';
@@ -46,7 +44,6 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { CodeEditorContainerComponent } from 'app/exercises/programming/shared/code-editor/container/code-editor-container.component';
 import { ResultComponent } from 'app/exercises/shared/result/result.component';
 import { IncludedInScoreBadgeComponent } from 'app/exercises/shared/exercise-headers/included-in-score-badge.component';
-import { ExerciseHintStudentComponent } from 'app/exercises/shared/exercise-hint/participate/exercise-hint-student-dialog.component';
 import { AssessmentInstructionsComponent } from 'app/assessment/assessment-instructions/assessment-instructions/assessment-instructions.component';
 import { UnreferencedFeedbackComponent } from 'app/exercises/shared/unreferenced-feedback/unreferenced-feedback.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
@@ -112,7 +109,6 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
         hasComplaint: true,
         assessmentType: AssessmentType.SEMI_AUTOMATIC,
         id: 2,
-        resultString: '1 of 13 passed',
     };
     result.submission!.id = 1;
 
@@ -181,7 +177,6 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
                 MockComponent(CodeEditorInstructionsComponent),
                 MockComponent(ResultComponent),
                 MockComponent(IncludedInScoreBadgeComponent),
-                MockComponent(ExerciseHintStudentComponent),
                 MockComponent(AssessmentInstructionsComponent),
                 MockComponent(UnreferencedFeedbackComponent),
                 MockPipe(ArtemisTranslatePipe),
@@ -192,7 +187,6 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: ParticipationWebsocketService, useClass: MockParticipationWebsocketService },
                 { provide: RepositoryFileService, useClass: MockRepositoryFileService },
-                { provide: ExerciseHintService, useClass: MockExerciseHintService },
                 { provide: NgbModal, useClass: MockNgbModalService },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: LocalStorageService, useClass: MockSyncStorage },
@@ -246,10 +240,10 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
         comp.ngOnInit();
         tick(100);
 
-        expect(getIdentityStub).toHaveBeenCalledTimes(1);
-        expect(lockAndGetProgrammingSubmissionParticipationStub).toHaveBeenCalledTimes(1);
-        expect(findBySubmissionIdStub).toHaveBeenCalledTimes(1);
-        expect(comp.isAssessor).toBe(true);
+        expect(getIdentityStub).toHaveBeenCalledOnce();
+        expect(lockAndGetProgrammingSubmissionParticipationStub).toHaveBeenCalledOnce();
+        expect(findBySubmissionIdStub).toHaveBeenCalledOnce();
+        expect(comp.isAssessor).toBeTrue();
         expect(comp.complaint).not.toBe(null);
         fixture.detectChanges();
 
@@ -271,7 +265,7 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
 
         comp.ngOnInit();
         tick(100);
-        expect(getProgrammingSubmissionForExerciseWithoutAssessmentStub).toHaveBeenCalledTimes(1);
+        expect(getProgrammingSubmissionForExerciseWithoutAssessmentStub).toHaveBeenCalledOnce();
         flush();
     }));
 
@@ -280,9 +274,9 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
         comp.ngOnInit();
         tick(100);
 
-        expect(getIdentityStub).toHaveBeenCalledTimes(1);
-        expect(lockAndGetProgrammingSubmissionParticipationStub).toHaveBeenCalledTimes(1);
-        expect(findBySubmissionIdStub).toHaveBeenCalledTimes(1);
+        expect(getIdentityStub).toHaveBeenCalledOnce();
+        expect(lockAndGetProgrammingSubmissionParticipationStub).toHaveBeenCalledOnce();
+        expect(findBySubmissionIdStub).toHaveBeenCalledOnce();
         expect(comp.complaint).toBe(undefined);
         fixture.detectChanges();
 
@@ -389,9 +383,9 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
         const alertElement = debugElement.queryAll(By.css('jhi-alert'));
 
         expect(comp.manualResult?.feedbacks?.length).toBe(3);
-        expect(comp.manualResult?.feedbacks!.some((feedback) => feedback.type === FeedbackType.AUTOMATIC)).toBe(true);
-        expect(comp.manualResult?.feedbacks!.some((feedback) => feedback.type === FeedbackType.MANUAL)).toBe(true);
-        expect(comp.manualResult?.feedbacks!.some((feedback) => feedback.type === FeedbackType.MANUAL_UNREFERENCED)).toBe(true);
+        expect(comp.manualResult?.feedbacks!.some((feedback) => feedback.type === FeedbackType.AUTOMATIC)).toBeTrue();
+        expect(comp.manualResult?.feedbacks!.some((feedback) => feedback.type === FeedbackType.MANUAL)).toBeTrue();
+        expect(comp.manualResult?.feedbacks!.some((feedback) => feedback.type === FeedbackType.MANUAL_UNREFERENCED)).toBeTrue();
         expect(alertElement).not.toBe(null);
 
         // Reset feedbacks
@@ -401,9 +395,9 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
         const alertElementSubmit = debugElement.queryAll(By.css('jhi-alert'));
 
         expect(comp.manualResult?.feedbacks?.length).toBe(3);
-        expect(comp.manualResult?.feedbacks!.some((feedback) => feedback.type === FeedbackType.AUTOMATIC)).toBe(true);
-        expect(comp.manualResult?.feedbacks!.some((feedback) => feedback.type === FeedbackType.MANUAL)).toBe(true);
-        expect(comp.manualResult?.feedbacks!.some((feedback) => feedback.type === FeedbackType.MANUAL_UNREFERENCED)).toBe(true);
+        expect(comp.manualResult?.feedbacks!.some((feedback) => feedback.type === FeedbackType.AUTOMATIC)).toBeTrue();
+        expect(comp.manualResult?.feedbacks!.some((feedback) => feedback.type === FeedbackType.MANUAL)).toBeTrue();
+        expect(comp.manualResult?.feedbacks!.some((feedback) => feedback.type === FeedbackType.MANUAL_UNREFERENCED)).toBeTrue();
         expect(alertElementSubmit).not.toBe(null);
         flush();
     }));
@@ -417,11 +411,11 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
         const confirmSpy = jest.spyOn(window, 'confirm');
         comp.cancel();
 
-        expect(confirmSpy).toHaveBeenCalledTimes(1);
+        expect(confirmSpy).toHaveBeenCalledOnce();
         tick(100);
-        expect(comp.cancelBusy).toBe(false);
-        expect(navigateBackStub).toHaveBeenCalledTimes(1);
-        expect(cancelBackStub).toHaveBeenCalledTimes(1);
+        expect(comp.cancelBusy).toBeFalse();
+        expect(navigateBackStub).toHaveBeenCalledOnce();
+        expect(cancelBackStub).toHaveBeenCalledOnce();
         flush();
     }));
 
@@ -445,7 +439,7 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
             'assessment',
         ];
         const queryParams = { queryParams: { 'correction-round': 0 } };
-        expect(getProgrammingSubmissionForExerciseWithoutAssessmentStub).toHaveBeenCalledTimes(1);
+        expect(getProgrammingSubmissionForExerciseWithoutAssessmentStub).toHaveBeenCalledOnce();
         expect(routerStub).toHaveBeenCalledWith(url, queryParams);
         flush();
     }));
@@ -508,7 +502,7 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
         comp.ngOnInit();
         tick(100);
         comp.onUpdateAssessmentAfterComplaint(new ComplaintResponse());
-        expect(updateAfterComplaintStub).toHaveBeenCalledTimes(1);
+        expect(updateAfterComplaintStub).toHaveBeenCalledOnce();
         expect(comp.manualResult!.score).toBe(100);
         flush();
     }));

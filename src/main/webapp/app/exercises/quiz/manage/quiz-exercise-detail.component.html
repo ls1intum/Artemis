@@ -1,8 +1,9 @@
 <div class="row" *ngIf="quizExercise">
     <div class="col-lg-12">
         <h4 class="title">
-            <span *ngIf="quizExercise.id && quizExercise.course" jhiTranslate="artemisApp.quizExercise.edit.title" [translateValues]="{ param: quizExercise.course.title }"> </span>
-            <span *ngIf="!quizExercise.id && quizExercise.course" jhiTranslate="artemisApp.quizExercise.new.title" [translateValues]="{ param: quizExercise.course.title }"> </span>
+            <h4 *ngIf="!quizExercise.id" id="jhi-text-exercise-heading-create" jhiTranslate="artemisApp.quizExercise.home.createLabel">Create a new Quiz Exercise</h4>
+            <h4 *ngIf="!isImport && quizExercise.id" id="jhi-text-exercise-heading-edit" jhiTranslate="artemisApp.quizExercise.home.editLabel">Edit Quiz Exercise</h4>
+            <h4 *ngIf="isImport" id="jhi-text-exercise-heading-import" jhiTranslate="artemisApp.quizExercise.home.importLabel">Import Quiz Exercise</h4>
             <span class="badge bg-info align-text-top float-end">
                 <span jhiTranslate="artemisApp.quizExercise.maxScore"></span>&nbsp;
                 <span class="badge max-score">{{ calculateMaxExerciseScore() }}</span>
@@ -14,6 +15,10 @@
             <div class="quiz-is-active-overlay alert alert-warning">
                 <span jhiTranslate="artemisApp.quizExercise.edit.quizHasStarted"></span>
             </div>
+        </div>
+        <div class="form-group" [hidden]="isImport || !quizExercise.id">
+            <label for="id" jhiTranslate="global.field.id">ID</label>
+            <input type="text" class="form-control" id="id" name="id" [(ngModel)]="quizExercise.id" readonly />
         </div>
         <div class="edit-quiz">
             <div class="form-group">
@@ -93,20 +98,20 @@
                             <label class="form-check-label custom-control-label" for="cbRandomizeOrder" jhiTranslate="artemisApp.quizExercise.randomizeQuestionOrder"> </label>
                         </div>
                         <ng-container *ngIf="!isExamMode">
-                            <div class="form-check custom-control">
-                                <span jhiTranslate="artemisApp.quizExercise.quizMode.title" class="colon-suffix no-flex-shrink"></span>
-                                <jhi-help-icon placement="auto" text="artemisApp.quizExercise.quizMode.explanation"></jhi-help-icon>
-                                <select class="form-select" [(ngModel)]="quizExercise.quizMode" (ngModelChange)="cacheValidation()">
-                                    <option [value]="QuizMode.SYNCHRONIZED">{{ 'artemisApp.quizExercise.quizMode.synchronized' | artemisTranslate }}</option>
-                                    <option [value]="QuizMode.BATCHED">{{ 'artemisApp.quizExercise.quizMode.batched' | artemisTranslate }}</option>
-                                    <option [value]="QuizMode.INDIVIDUAL">{{ 'artemisApp.quizExercise.quizMode.individual' | artemisTranslate }}</option>
-                                </select>
-                            </div>
+                            <label jhiTranslate="artemisApp.quizExercise.quizMode.title" class="colon-suffix no-flex-shrink"></label>
+                            <jhi-help-icon placement="auto" text="artemisApp.quizExercise.quizMode.explanation"></jhi-help-icon>
+                            <select class="form-select" [(ngModel)]="quizExercise.quizMode" (ngModelChange)="cacheValidation()">
+                                <option [value]="QuizMode.SYNCHRONIZED">{{ 'artemisApp.quizExercise.quizMode.synchronized' | artemisTranslate }}</option>
+                                <option [value]="QuizMode.BATCHED">{{ 'artemisApp.quizExercise.quizMode.batched' | artemisTranslate }}</option>
+                                <option [value]="QuizMode.INDIVIDUAL">{{ 'artemisApp.quizExercise.quizMode.individual' | artemisTranslate }}</option>
+                            </select>
                             <ng-container>
+                                <!-- releaseDate works similar to Exam.visibleDate -->
                                 <jhi-date-time-picker
                                     id="release-date"
                                     class="form-element"
-                                    labelName="{{ 'artemisApp.exercise.releaseDate' | artemisTranslate }}"
+                                    labelName="{{ 'artemisApp.quizExercise.releaseDate' | artemisTranslate }}"
+                                    labelTooltip="{{ 'artemisApp.quizExercise.releaseDateExplanation.' + quizExercise.quizMode | artemisTranslate }}"
                                     [(ngModel)]="quizExercise.releaseDate"
                                     (valueChange)="cacheValidation()"
                                     [error]="false"
@@ -123,7 +128,7 @@
                                     (valueChange)="cacheValidation()"
                                     [(ngModel)]="quizExercise.dueDate"
                                 ></jhi-date-time-picker>
-                                <span *ngIf="quizExercise.dueDateError" class="invalid-feedback">{{ 'artemisApp.exercise.dueDateError' | artemisTranslate }}</span>
+                                <span *ngIf="quizExercise.dueDateError" class="invalid-feedback">{{ 'artemisApp.quizExercise.dueDateError' | artemisTranslate }}</span>
                             </ng-container>
                             <div class="form-check custom-control custom-checkbox" *ngIf="quizExercise.quizMode === QuizMode.SYNCHRONIZED">
                                 <input
@@ -133,30 +138,35 @@
                                     [(ngModel)]="scheduleQuizStart"
                                     (ngModelChange)="cacheValidation()"
                                 />
-                                <label class="form-check-label custom-control-label" for="cbScheduleQuizStart" jhiTranslate="artemisApp.quizExercise.startTime"> </label>
+                                <label class="form-check-label custom-control-label" for="cbScheduleQuizStart" jhiTranslate="artemisApp.quizExercise.setStartTime"> </label>
+                                <jhi-help-icon placement="auto" text="artemisApp.quizExercise.startTimeExplanation"></jhi-help-icon>
                             </div>
                             <div class="form-check custom-control custom-checkbox" *ngIf="quizExercise.quizMode === QuizMode.BATCHED && false">
                                 <!-- no scheduled batched mode yet -->
                                 <jhi-button (click)="addQuizBatch()" [btnType]="ButtonType.DEFAULT" title="artemisApp.quizExercise.addBatch"></jhi-button>
                             </div>
-                            <ng-container *ngIf="quizExercise.quizBatches && quizExercise.quizMode !== QuizMode.INDIVIDUAL">
+                            <ng-container *ngIf="quizExercise.quizBatches && quizExercise.quizMode === QuizMode.SYNCHRONIZED">
+                                <!-- Change "quizExercise.quizMode === QuizMode.SYNCHRONIZED" above to "quizExercise.quizMode !== QuizMode.INDIVIDUAL" when scheduled batched mode is active -->
                                 <div *ngFor="let quizBatch of quizExercise.quizBatches; let first = first">
+                                    <!-- startTime works similar to Exam.startDate -->
                                     <jhi-date-time-picker
                                         class="form-element"
-                                        name="dueDate"
+                                        name="startTime"
                                         [shouldDisplayTimeZoneWarning]="first"
-                                        [error]="quizBatch.startDateError ?? false"
+                                        labelName="{{ 'artemisApp.quizExercise.startTime' | artemisTranslate }}"
+                                        [error]="quizBatch.startTimeError ?? false"
                                         (valueChange)="cacheValidation()"
                                         [(ngModel)]="quizBatch.startTime"
                                     ></jhi-date-time-picker>
-                                    <span *ngIf="quizBatch.startDateError" class="invalid-feedback">{{ 'artemisApp.quizExercise.startDate' | artemisTranslate }}</span>
+                                    <span *ngIf="quizBatch.startTimeError" class="invalid-feedback">{{
+                                        (quizExercise.quizMode === QuizMode.SYNCHRONIZED
+                                            ? 'artemisApp.quizExercise.startTimeErrorSynchronized'
+                                            : 'artemisApp.quizExercise.startTimeError'
+                                        ) | artemisTranslate
+                                    }}</span>
                                     <!-- no scheduled batched mode yet -->
-                                    <jhi-button
-                                        *ngIf="quizExercise.quizMode === QuizMode.BATCHED && false"
-                                        (click)="removeQuizBatch(quizBatch)"
-                                        [btnType]="ButtonType.ERROR"
-                                        [icon]="faXmark"
-                                    ></jhi-button>
+                                    <!-- Change *ngIf="false" below to "quizExercise.quizMode === QuizMode.BATCHED" when scheduled batched mode is active -->
+                                    <jhi-button *ngIf="false" (click)="removeQuizBatch(quizBatch)" [btnType]="ButtonType.ERROR" [icon]="faXmark"></jhi-button>
                                 </div>
                             </ng-container>
                         </ng-container>
@@ -260,27 +270,6 @@
             <div class="edit-quiz-footer">
                 <div class="container">
                     <div class="edit-quiz-footer-content">
-                        <div class="form-group" *ngIf="!isExamMode" style="width: max-content !important">
-                            <span jhiTranslate="artemisApp.quizExercise.status" class="colon-suffix me-1" style="align-self: center"></span>
-                            <select
-                                *ngIf="showDropdown === 'isOpenForPractice'"
-                                class="form-select"
-                                [(ngModel)]="quizExercise.isOpenForPractice"
-                                (ngModelChange)="cacheValidation()"
-                                title="status"
-                            >
-                                <option *ngFor="let option of statusOptionsPractice" [value]="option.key">
-                                    <span *ngIf="option.key === true">{{ 'artemisApp.quizExercise.quizStatus.openForPractice' | artemisTranslate }}</span>
-                                    <span *ngIf="option.key === false">{{ 'artemisApp.quizExercise.quizStatus.closed' | artemisTranslate }}</span>
-                                </option>
-                            </select>
-                            <select *ngIf="showDropdown === 'active'" class="form-select" title="status" disabled>
-                                <option *ngFor="let option of statusOptionsActive" [value]="option.key">
-                                    {{ 'artemisApp.quizExercise.quizStatus.active' | artemisTranslate }}
-                                </option>
-                            </select>
-                        </div>
-
                         <div class="form-group flex-fill ms-3" *ngIf="!isExamMode && quizExercise.id">
                             <div class="form-group flex-fill">
                                 <input
@@ -341,6 +330,7 @@
                                 id="quiz-save"
                                 class="btn btn-success"
                                 (click)="save()"
+                                [disabled]="isSaving || quizExercise.dueDateError || hasErrorInQuizBatches()"
                                 [ngClass]="{ disabled: !pendingChangesCache || !quizIsValid || hasSavedQuizStarted || isSaving }"
                                 jhiTranslate="entity.action.save"
                                 [ngbTooltip]="quizIsValid ? '' : tooltipTranslate"

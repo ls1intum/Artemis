@@ -46,8 +46,9 @@
                     "typeNameToConfirm": "Bitte gib zur Bestätigung den Namen des Lernziels ein.",
                     "buttonText": "Löschen"
                 },
+                "remove": "Entfernen",
                 "achieved": "erreicht",
-                "progressUnavailable": "Die Fortschrittsberechnung ist momentan nur verfügbar für Lernziele, welche mit Aufgabeneinheiten verbunden sind.",
+                "progressUnavailable": "Die Fortschrittsberechnung ist momentan nur für Lernziele verfügbar, welche mit Lerneinheiten verbunden wurden.",
                 "noUnitsConnected": "Das Lernziel ist mit keinen Vorlesungseinheiten verbunden",
                 "progressExplanation": "Fortschritt: Momentan hast du <strong>{{ progress }}%</strong> von <strong>{{ points }}</strong> Punkten erreicht.",
                 "progressCourseExplanation": "Durchschnittlicher Kurs Fortschritt: Momentan hat der Kurs durchschnittlich <strong>{{ progress }}%</strong> von <strong>{{ points }}</strong> Punkten erreicht."
@@ -56,6 +57,23 @@
                 "connectedLearningGoals": "Verbundene Lernziele",
                 "explanation": "Diese Vorlesungseinheit hilft dir bei der Erreichung der folgenden Lernziele: ",
                 "noLearningGoals": "Keine Lernziele verbunden mit dieser Vorlesungseinheit! "
+            },
+            "prerequisite": {
+                "title": "Voraussetzungen",
+                "managePrerequisites": {
+                    "title": "Voraussetzungen verwalten"
+                },
+                "import": {
+                    "title": "Voraussetzungen hinzufügen",
+                    "table": {
+                        "title": "Titel",
+                        "course": "Kurs",
+
+                        "doSelect": "Auswählen"
+                    },
+                    "searchLearningGoal": "Nach Lernziel suchen:",
+                    "loading": "Lade..."
+                }
             }
         }
     }

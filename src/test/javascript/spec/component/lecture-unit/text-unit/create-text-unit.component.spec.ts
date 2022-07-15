@@ -113,8 +113,8 @@ describe('CreateTextUnitComponent', () => {
         textUnitForm.formSubmitted.emit(formDate);
 
         createTextUnitComponentFixture.whenStable().then(() => {
-            expect(createStub).toHaveBeenCalledTimes(1);
-            expect(navigateSpy).toHaveBeenCalledTimes(1);
+            expect(createStub).toHaveBeenCalledOnce();
+            expect(navigateSpy).toHaveBeenCalledOnce();
             navigateSpy.mockRestore();
         });
     }));

@@ -11,6 +11,7 @@ import { LearningGoalCardComponent } from 'app/course/learning-goals/learning-go
 import { LearningGoalDetailModalComponent } from './learning-goal-detail-modal/learning-goal-detail-modal.component';
 import { LearningGoalsPopoverComponent } from './learning-goals-popover/learning-goals-popover.component';
 import { LearningGoalCourseDetailModalComponent } from './learning-goal-course-detail-modal/learning-goal-course-detail-modal.component';
+import { PrerequisiteImportComponent } from 'app/course/learning-goals/learning-goal-management/prerequisite-import.component';
 
 @NgModule({
     imports: [ArtemisSharedModule, ReactiveFormsModule, ArtemisSharedComponentModule, RouterModule],
@@ -23,8 +24,8 @@ import { LearningGoalCourseDetailModalComponent } from './learning-goal-course-d
         LearningGoalDetailModalComponent,
         LearningGoalsPopoverComponent,
         LearningGoalCourseDetailModalComponent,
+        PrerequisiteImportComponent,
     ],
     exports: [LearningGoalCardComponent, LearningGoalsPopoverComponent],
-    entryComponents: [LearningGoalDetailModalComponent],
 })
 export class ArtemisLearningGoalsModule {}

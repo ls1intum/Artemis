@@ -48,9 +48,9 @@ describe('TreeviewItem', () => {
                 collapsed: false,
                 children: [{ text: 'Child 1', value: 11, collapsed: false } as TreeviewItem<number>],
             });
-            expect(treeviewItem.children[0].collapsed).toBe(false);
+            expect(treeviewItem.children[0].collapsed).toBeFalse();
             treeviewItem.setCollapsedRecursive(true);
-            expect(treeviewItem.children[0].collapsed).toBe(true);
+            expect(treeviewItem.children[0].collapsed).toBeTrue();
         });
     });
 
@@ -76,11 +76,11 @@ describe('TreeviewItem', () => {
                 value: 1,
                 children: [{ text: 'Child 1', value: 11 } as TreeviewItem<number>],
             });
-            expect(treeviewItem.children[0].disabled).toBe(false);
+            expect(treeviewItem.children[0].disabled).toBeFalse();
             treeviewItem.disabled = true;
-            expect(treeviewItem.children[0].disabled).toBe(true);
+            expect(treeviewItem.children[0].disabled).toBeTrue();
             treeviewItem.disabled = true;
-            expect(treeviewItem.children[0].disabled).toBe(true);
+            expect(treeviewItem.children[0].disabled).toBeTrue();
         });
     });
 

@@ -203,7 +203,7 @@ describe('TextAssessment Service', () => {
     it('should send feedback', async () => {
         textSubmission.atheneTextAssessmentTrackingToken = '12345';
         service.trackAssessment(textSubmission);
-        httpMock.expectOne({ url: `${SERVER_API_URL}/athene-tracking/text-exercise-assessment`, method: 'POST' });
+        httpMock.expectOne({ url: `${SERVER_API_URL}athene-tracking/text-exercise-assessment`, method: 'POST' });
     });
 
     it('should send assessment event to analytics', fakeAsync(() => {
@@ -211,7 +211,7 @@ describe('TextAssessment Service', () => {
         service.addTextAssessmentEvent(assessmentEvent).subscribe((response) => {
             expect(response.status).toBe(200);
         });
-        const mockRequest = httpMock.expectOne({ url: `${SERVER_API_URL}/api/analytics/text-assessment/events`, method: 'POST' });
+        const mockRequest = httpMock.expectOne({ url: `${SERVER_API_URL}api/analytics/text-assessment/events`, method: 'POST' });
         mockRequest.flush(mockResponse);
         tick();
     }));
@@ -283,7 +283,6 @@ describe('TextAssessment Service', () => {
         submission.results = [
             {
                 id: 2374,
-                resultString: '1 of 12 points',
                 score: 8,
                 rated: true,
                 hasFeedback: true,
@@ -354,7 +353,7 @@ describe('TextAssessment Service', () => {
             .subscribe((resp) => expect(resp).toBe(responseNumberOfTutors));
 
         const req = httpMock.expectOne({
-            url: `/api/analytics/text-assessment/courses/1/text-exercises/1/tutors-involved`,
+            url: `${SERVER_API_URL}api/analytics/text-assessment/courses/1/text-exercises/1/tutors-involved`,
             method: 'GET',
         });
         req.flush(responseNumberOfTutors);
@@ -386,7 +385,7 @@ describe('TextAssessment Service', () => {
 
         resolver.resolve(snapshot);
 
-        expect(newStudentParticipationStub).toHaveBeenCalledTimes(1);
+        expect(newStudentParticipationStub).toHaveBeenCalledOnce();
         expect(newStudentParticipationStub).toHaveBeenCalledWith(1, 'lock', 0);
     });
 
@@ -403,7 +402,7 @@ describe('TextAssessment Service', () => {
 
         resolver.resolve(snapshot);
 
-        expect(studentParticipationSpy).toHaveBeenCalledTimes(1);
+        expect(studentParticipationSpy).toHaveBeenCalledOnce();
         expect(studentParticipationSpy).toHaveBeenCalledWith(1, 2, undefined, 1);
     });
 
@@ -420,7 +419,7 @@ describe('TextAssessment Service', () => {
 
         resolver.resolve(snapshot);
 
-        expect(feedbackConflictSpy).toHaveBeenCalledTimes(1);
+        expect(feedbackConflictSpy).toHaveBeenCalledOnce();
         expect(feedbackConflictSpy).toHaveBeenCalledWith(1, 2, 3);
     });
 

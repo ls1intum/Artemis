@@ -1,8 +1,6 @@
 package de.tum.in.www1.artemis.service.hestia;
 
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.Set;
+import java.util.*;
 import java.util.regex.Pattern;
 
 import org.springframework.stereotype.Service;
@@ -10,31 +8,34 @@ import org.springframework.stereotype.Service;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseTask;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseTestCaseRepository;
-import de.tum.in.www1.artemis.repository.hestia.CodeHintRepository;
+import de.tum.in.www1.artemis.repository.hestia.ExerciseHintRepository;
 import de.tum.in.www1.artemis.repository.hestia.ProgrammingExerciseTaskRepository;
 
 @Service
 public class ProgrammingExerciseTaskService {
 
-    private ProgrammingExerciseTaskRepository programmingExerciseTaskRepository;
+    private final ProgrammingExerciseTaskRepository programmingExerciseTaskRepository;
 
-    private ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository;
+    private final ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository;
 
-    private CodeHintRepository codeHintRepository;
+    private final ExerciseHintRepository exerciseHintRepository;
 
     /**
      * Pattern that is used to extract the tasks (capturing group "name") and test case names (capturing group "tests") from the problem statement.
      * Example: "[task][Implement BubbleSort](testBubbleSort,testBubbleSortHidden)". Following values are extracted by the named capturing groups:
      * - name: "Implement BubbleSort"
      * - tests: "testBubbleSort,testBubbleSortHidden"
+     *
+     * This is coupled to the value used in `ProgrammingExerciseTaskExtensionWrapper` and `TaskCommand` in the client
+     * If you change the regex, make sure to change it in all places!
      */
     private final Pattern taskPatternForProblemStatementMarkdown = Pattern.compile("\\[task]\\[(?<name>[^\\[\\]]+)]\\((?<tests>.*)\\)");
 
     public ProgrammingExerciseTaskService(ProgrammingExerciseTaskRepository programmingExerciseTaskRepository,
-            ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository, CodeHintRepository codeHintRepository) {
+            ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository, ExerciseHintRepository exerciseHintRepository) {
         this.programmingExerciseTaskRepository = programmingExerciseTaskRepository;
         this.programmingExerciseTestCaseRepository = programmingExerciseTestCaseRepository;
-        this.codeHintRepository = codeHintRepository;
+        this.exerciseHintRepository = exerciseHintRepository;
     }
 
     /**
@@ -44,8 +45,8 @@ public class ProgrammingExerciseTaskService {
      * @param task The task to delete
      */
     public void delete(ProgrammingExerciseTask task) {
-        var codeHints = codeHintRepository.findByTaskId(task.getId());
-        codeHintRepository.deleteAll(codeHints);
+        var exerciseHints = exerciseHintRepository.findByTaskId(task.getId());
+        exerciseHintRepository.deleteAll(exerciseHints);
         programmingExerciseTaskRepository.delete(task);
     }
 
@@ -55,13 +56,14 @@ public class ProgrammingExerciseTaskService {
      * If there is already a task with the same test cases as a new one, but with a different name the existing one will be renamed.
      *
      * @param exercise The programming exercise to extract the tasks from
+     * @return The current tasks of the exercise
      */
-    public void updateTasksFromProblemStatement(ProgrammingExercise exercise) {
+    public Set<ProgrammingExerciseTask> updateTasksFromProblemStatement(ProgrammingExercise exercise) {
         var previousTasks = programmingExerciseTaskRepository.findByExerciseIdWithTestCases(exercise.getId());
-        var extractedTasks = extractTasks(exercise);
+        var extractedTasks = new HashSet<>(extractTasks(exercise));
         // No changes
         if (previousTasks.equals(extractedTasks)) {
-            return;
+            return previousTasks;
         }
         // Add all tasks that did not change
         var tasksToBeSaved = new HashSet<>(previousTasks);
@@ -95,35 +97,96 @@ public class ProgrammingExerciseTaskService {
         // Save all tasks
         for (ProgrammingExerciseTask task : tasksToBeSaved) {
             task.setExercise(exercise);
-            programmingExerciseTaskRepository.save(task);
         }
+        return new HashSet<>(programmingExerciseTaskRepository.saveAll(tasksToBeSaved));
+    }
+
+    /**
+     * Gets the tasks of a programming exercise sorted by their order in the problem statement
+     * TODO: Replace this with an @OrderColumn on tasks in ProgrammingExercise
+     *
+     * @param exercise The programming exercise
+     * @return The sorted tasks
+     */
+    public List<ProgrammingExerciseTask> getSortedTasks(ProgrammingExercise exercise) {
+        var unsortedTasks = programmingExerciseTaskRepository.findByExerciseIdWithTestCases(exercise.getId());
+        var sortedExtractedTasks = extractTasks(exercise);
+        return sortedExtractedTasks.stream()
+                .map(extractedTask -> unsortedTasks.stream().filter(task -> task.getTestCases().equals(extractedTask.getTestCases())).findFirst().orElse(null))
+                .filter(Objects::nonNull).toList();
     }
 
     /**
      * Returns the extracted tasks and test cases from the problem statement markdown and
      * maps the tasks to the corresponding test cases for a programming exercise
+     *
      * @param exercise the exercise for which the tasks and test cases should be extracted
      * @return the extracted tasks with the corresponding test cases
      */
-    private Set<ProgrammingExerciseTask> extractTasks(ProgrammingExercise exercise) {
+    private List<ProgrammingExerciseTask> extractTasks(ProgrammingExercise exercise) {
+        var tasks = new ArrayList<ProgrammingExerciseTask>();
         var problemStatement = exercise.getProblemStatement();
+        if (problemStatement == null || problemStatement.isEmpty()) {
+            return tasks;
+        }
         var matcher = taskPatternForProblemStatementMarkdown.matcher(problemStatement);
         var testCases = programmingExerciseTestCaseRepository.findByExerciseIdAndActive(exercise.getId(), true);
-        var tasks = new HashSet<ProgrammingExerciseTask>();
         while (matcher.find()) {
             var taskName = matcher.group("name");
-            var testCaseNames = matcher.group("tests");
+            var capturedTestCaseNames = matcher.group("tests");
 
             var task = new ProgrammingExerciseTask();
             task.setTaskName(taskName);
             task.setExercise(exercise);
-            String[] testNames = testCaseNames.split(",");
-            for (String testName : testNames) {
-                String finalTestName = testName.trim();
-                testCases.stream().filter(tc -> tc.getTestName().equals(finalTestName)).findFirst().ifPresent(task.getTestCases()::add);
+            var testCaseNames = extractTestCaseNames(capturedTestCaseNames);
+
+            for (String testName : testCaseNames) {
+                testCases.stream().filter(tc -> tc.getTestName().equals(testName)).findFirst().ifPresent(task.getTestCases()::add);
             }
             tasks.add(task);
         }
         return tasks;
+    }
+
+    /**
+     * Get the test case names from the captured group by splitting by ',' if there are no unclosed rounded brackets for
+     * the current test case. This respects the fact that parameterized tests may contain commas.
+     * Example: "testInsert(InsertMock, 1),testClass[SortStrategy],testWithBraces()" results in the following list
+     * ["testInsert(InsertMock, 1)", "testClass[SortStrategy]", "testWithBraces()"]
+     * @param capturedTestCaseNames the captured test case names matched from the problem statement
+     * @return test case names
+     */
+    private List<String> extractTestCaseNames(String capturedTestCaseNames) {
+        List<String> testCaseNames = new ArrayList<>();
+        if ("".equals(capturedTestCaseNames)) {
+            return testCaseNames;
+        }
+
+        int numberUnclosedRoundedBrackets = 0;
+        StringBuilder currentTestCaseName = new StringBuilder();
+        for (int i = 0; i < capturedTestCaseNames.length(); i++) {
+            char currentChar = capturedTestCaseNames.charAt(i);
+
+            // check potential split
+            if (currentChar == ',' && numberUnclosedRoundedBrackets == 0) {
+                testCaseNames.add(currentTestCaseName.toString().trim());
+                currentTestCaseName = new StringBuilder();
+                continue;
+            }
+
+            // count the numbers of brackets
+            if (currentChar == '(') {
+                numberUnclosedRoundedBrackets++;
+            }
+            else if (currentChar == ')') {
+                numberUnclosedRoundedBrackets--;
+            }
+
+            currentTestCaseName.append(currentChar);
+        }
+
+        testCaseNames.add(currentTestCaseName.toString().trim());
+
+        return testCaseNames;
     }
 }

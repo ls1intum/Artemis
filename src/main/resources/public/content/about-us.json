@@ -3,13 +3,13 @@
         {
             "fullName": "Prof. Dr. Stephan Krusche",
             "photoDirectory": "public/images/about/Stephan_Krusche.jpg",
-            "role": "Project Manager",
+            "role": "projectManager",
             "website": "https://ase.in.tum.de/lehrstuhl_1/people/362-stephan-krusche"
         },
         {
             "fullName": "Jan Philip Bernius",
             "photoDirectory": "public/images/about/Jan_Philip_Bernius.jpg",
-            "role": "Project Manager ",
+            "role": "projectManager",
             "website": "https://ase.in.tum.de/lehrstuhl_1/people/1013-jan-philip-bernius"
         }
     ],
@@ -60,6 +60,7 @@
         },
         {
             "fullName": "Francisco De las Casas Young",
+            "sortBy": "De las Casas Young",
             "photoDirectory": "public/images/about/Francisco_De_Las_Casas_Young.png"
         },
         {
@@ -180,6 +181,7 @@
         },
         {
             "fullName": "Mai Ton Nu Cam",
+            "sortBy": "Mai Ton Nu Cam",
             "photoDirectory": "public/images/about/Mai_Ton_Nu_Cam.jpg"
         },
         {
@@ -273,6 +275,70 @@
         {
             "fullName": "Lorena Schlesinger",
             "photoDirectory": "public/images/about/Lorena_Schlesinger.jpg"
+        },
+        {
+            "fullName": "Patrick Bassner",
+            "photoDirectory": "public/images/about/Patrick_Bassner.jpg"
+        },
+        {
+            "fullName": "Ali Canberk Anar",
+            "photoDirectory": "public/images/about/Ali_Canberk_Anar.jpg"
+        },
+        {
+            "fullName": "Dominik Weinzierl",
+            "photoDirectory": "public/images/about/Dominik_Weinzierl.png"
+        },
+        {
+            "fullName": "Ole Vester",
+            "photoDirectory": "public/images/about/Ole_Vester.jpg"
+        },
+        {
+            "fullName": "Timor Morrien",
+            "photoDirectory": "public/images/about/Timor_Morrien.jpg"
+        },
+        {
+            "fullName": "Valerie Bucher",
+            "photoDirectory": "public/images/about/Valerie_Bucher.png"
+        },
+        {
+            "fullName": "Georg Willer",
+            "photoDirectory": "public/images/about/Georg_Willer.jpg"
+        },
+        {
+            "fullName": "Moritz Aberle",
+            "photoDirectory": "public/images/about/Moritz_Aberle.jpg"
+        },
+        {
+            "fullName": "Swornim Shrestha",
+            "photoDirectory": "public/images/about/Swornim_Shrestha.png"
+        },
+        {
+            "fullName": "Ata Keşfeden",
+            "photoDirectory": "public/images/about/Ata_Kesfeden.jpg"
+        },
+        {
+            "fullName": "Michael Allgaier",
+            "photoDirectory": "public/images/about/Michael_Allgaier.jpg"
+        },
+        {
+            "fullName": "Manuel Manso",
+            "photoDirectory": "public/images/about/Manuel_Manso.jpg"
+        },
+        {
+            "fullName": "Florian Gareis",
+            "photoDirectory": "public/images/about/Florian_Gareis.jpg"
+        },
+        {
+            "fullName": "Daniel Gomes da Costa",
+            "photoDirectory": "public/images/about/Daniel_Gomes_da_Costa.jpg"
+        },
+        {
+            "fullName": "Maximilian Sölch",
+            "photoDirectory": "public/images/about/Maximilian_Soelch.jpg"
+        },
+        {
+            "fullName": "Evgeny Volynsky",
+            "photoDirectory": "public/images/about/Evgeny_Volynsky.jpg"
         }
     ]
 }

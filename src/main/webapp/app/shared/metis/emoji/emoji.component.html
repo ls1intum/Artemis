@@ -1,0 +1,3 @@
+<!-- Using two instances to 'rerender' if the theme changes -->
+<ngx-emoji *ngIf="!dark" [backgroundImageFn]="utils.EMOJI_SHEET_URL" class="emoji" [emoji]="emoji" [size]="16"></ngx-emoji>
+<ngx-emoji *ngIf="dark" [imageUrlFn]="utils.singleDarkModeEmojiUrlFn" [backgroundImageFn]="utils.EMOJI_SHEET_URL" class="emoji" [emoji]="emoji" [size]="16"></ngx-emoji>

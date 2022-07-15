@@ -288,7 +288,7 @@ public class ModelFactory {
     }
 
     /**
-     * Generate users that has registration numbers
+     * Generate users that have registration numbers
      *
      * @param loginPrefix prefix that will be added in front of every user's login
      * @param groups groups that the users will be added
@@ -555,6 +555,7 @@ public class ModelFactory {
         course.setEndDate(endDate);
         course.setExercises(exercises);
         course.setOnlineCourse(false);
+        course.setRegistrationEnabled(false);
         course.setPresentationScore(2);
         course.setAccuracyOfScores(1);
         return course;

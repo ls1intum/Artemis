@@ -60,7 +60,7 @@ public class ExerciseUnitResource {
         if (exerciseUnit.getId() != null) {
             throw new BadRequestException();
         }
-        Lecture lecture = lectureRepository.findByIdWithPostsAndLectureUnitsAndLearningGoalsElseThrow(lectureId);
+        Lecture lecture = lectureRepository.findByIdWithLectureUnitsElseThrow(lectureId);
         if (lecture.getCourse() == null) {
             throw new ConflictException("Specified lecture is not part of a course", "ExerciseUnit", "courseMissing");
         }
@@ -79,7 +79,7 @@ public class ExerciseUnitResource {
     }
 
     /**
-     * GET /lectures/:lectureId/exercise-units : gets the exercise units associated with an lecture
+     * GET /lectures/:lectureId/exercise-units : gets the exercise units associated with a lecture
      *
      * @param lectureId the id of the lecture to get the exercise-units for
      * @return the ResponseEntity with status 200 (OK) and with body the found exercise units
@@ -88,7 +88,7 @@ public class ExerciseUnitResource {
     @PreAuthorize("hasRole('EDITOR')")
     public ResponseEntity<List<ExerciseUnit>> getAllExerciseUnitsOfLecture(@PathVariable Long lectureId) {
         log.debug("REST request to get all exercise units for lecture : {}", lectureId);
-        Lecture lecture = lectureRepository.findByIdWithPostsAndLectureUnitsAndLearningGoalsElseThrow(lectureId);
+        Lecture lecture = lectureRepository.findByIdWithLectureUnitsAndLearningGoalsElseThrow(lectureId);
         if (lecture.getCourse() == null) {
             throw new ConflictException("Specified lecture is not part of a course", "ExerciseUnit", "courseMissing");
         }

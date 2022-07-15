@@ -84,6 +84,6 @@ describe('DoughnutChartComponent', () => {
         component.ngOnInit();
         component.openCorrespondingPage();
 
-        expect(navigateSpy).toHaveBeenCalledTimes(1);
+        expect(navigateSpy).toHaveBeenCalledOnce();
     });
 });

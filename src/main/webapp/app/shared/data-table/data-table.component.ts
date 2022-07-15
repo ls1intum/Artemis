@@ -1,7 +1,7 @@
 import { Component, ContentChild, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges, TemplateRef, ViewEncapsulation, ViewChild, ElementRef } from '@angular/core';
 import { debounceTime, distinctUntilChanged, map, tap } from 'rxjs/operators';
 import { Observable } from 'rxjs';
-import { ColumnMode, SortType } from '@swimlane/ngx-datatable';
+import { ColumnMode, SortType } from '@flaviosantoro92/ngx-datatable';
 import { get, isNumber, flatten } from 'lodash-es';
 import { BaseEntity } from 'app/shared/model/base-entity';
 import { LocalStorageService } from 'ngx-webstorage';
@@ -72,6 +72,7 @@ export class DataTableComponent implements OnInit, OnChanges {
      * @property searchNoResultsTranslation Translation string that has the variable {{ length }} in it (default: 'artemisApp.dataTable.search.noResults')
      * @property searchPlaceholderTranslation Translation string that is used for the placeholder in the search input field
      * @property searchFields Fields of entity whose values will be compared to the user's search string (allows nested attributes, e.g. ['student.login', 'student.name'])
+     * @property searchEnabled Flag whether searching is enabled (default: true)
      * @property searchEntityFilterEnabled Flag whether searching should cause a filtering of the entities (default: true)
      * @function searchTextFromEntity Function that takes an entity and returns a text that is inserted into the search input field when clicking on an autocomplete suggestion
      * @function searchResultFormatter Function that takes an entity and returns the text for the autocomplete suggestion result row
@@ -93,6 +94,7 @@ export class DataTableComponent implements OnInit, OnChanges {
     @Input() searchNoResultsTranslation = 'artemisApp.dataTable.search.noResults';
     @Input() searchPlaceholderTranslation: string;
     @Input() searchFields: string[] = [];
+    @Input() searchEnabled = true;
     @Input() searchEntityFilterEnabled = true;
     @Input() searchTextFromEntity: (entity: BaseEntity) => string = entityToString;
     @Input() searchResultFormatter: (entity: BaseEntity) => string = entityToString;
@@ -366,7 +368,7 @@ export class DataTableComponent implements OnInit, OnChanges {
                 map(({ text, searchWords }) => {
                     // We only execute the autocomplete for the last keyword in the provided list.
                     const lastSearchWord = searchWords.last();
-                    // Don't execute autocomplete for less then two inputted characters.
+                    // Don't execute autocomplete for less than two inputted characters.
                     if (!lastSearchWord || lastSearchWord.length < this.minSearchQueryLength) {
                         this.searchQueryTooShort = true;
                         return { text, entities: [] };

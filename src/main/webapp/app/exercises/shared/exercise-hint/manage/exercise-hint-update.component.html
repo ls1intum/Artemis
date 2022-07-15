@@ -1,7 +1,9 @@
 <div class="row justify-content-center">
-    <div class="col-8">
+    <div class="col-md-8">
         <form name="editForm" role="form" novalidate (ngSubmit)="save()" #hintForm="ngForm">
-            <h2 id="jhi-exercise-hint-heading" jhiTranslate="artemisApp.exerciseHint.home.createOrEditLabel">Create or edit a Exercise Hint</h2>
+            <h2 id="jhi-exercise-hint-heading" [jhiTranslate]="'artemisApp.exerciseHint.home.' + (this.exerciseHint.id ? 'editLabel' : 'createLabel')">
+                Create or edit a Exercise Hint
+            </h2>
             <div>
                 <div class="form-group" [hidden]="!exerciseHint?.id">
                     <label for="id" jhiTranslate="global.field.id">ID</label>
@@ -11,6 +13,43 @@
                     <label class="form-control-label" jhiTranslate="artemisApp.exerciseHint.title" for="field_title">Title</label>
                     <input type="text" required minlength="3" class="form-control" name="title" id="field_title" [(ngModel)]="exerciseHint.title" />
                 </div>
+
+                <div class="form-group">
+                    <div>
+                        <label class="label-narrow" jhiTranslate="artemisApp.exerciseHint.description" for="field_description">Description</label>
+                        <jhi-help-icon placement="auto" text="artemisApp.exerciseHint.descriptionTooltip"></jhi-help-icon>
+                    </div>
+                    <input type="text" required minlength="3" class="form-control" name="description" id="field_description" [(ngModel)]="exerciseHint.description" />
+                </div>
+                <div class="form-group">
+                    <div>
+                        <label class="label-narrow" jhiTranslate="artemisApp.exerciseHint.task" for="field_task">Task</label>
+                        <ng-container *ngIf="exerciseHint.type === 'code'">
+                            <jhi-help-icon placement="auto" text="artemisApp.exerciseHint.taskTooltip"></jhi-help-icon>
+                        </ng-container>
+                    </div>
+                    <select class="form-select" required name="task" [(ngModel)]="this.exerciseHint.programmingExerciseTask" id="field_task">
+                        <option *ngFor="let task of tasks" [ngValue]="task">{{ task.taskName }}</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <div>
+                        <label class="label-narrow" jhiTranslate="artemisApp.exerciseHint.displayThreshold" for="field_description">Display Threshold</label>
+                        <jhi-help-icon placement="auto" text="artemisApp.exerciseHint.displayThresholdTooltip"></jhi-help-icon>
+                    </div>
+                    <input
+                        type="number"
+                        required
+                        min="0"
+                        max="100"
+                        class="form-control"
+                        name="displayThreshold"
+                        id="field_displayThreshold"
+                        [(ngModel)]="exerciseHint.displayThreshold"
+                    />
+                </div>
+
                 <div class="form-group hint-form__editor-wrapper">
                     <jhi-markdown-editor
                         [markdown]="exerciseHint.content"
@@ -22,7 +61,10 @@
                         [editorMode]="editorMode"
                     ></jhi-markdown-editor>
                 </div>
-                <div *ngIf="!isLoading; else exerciseLoading" class="form-group">
+                <div *ngIf="exerciseHint.type === HintType.CODE" class="form-group hint-form__editor-wrapper">
+                    <jhi-code-hint-container [codeHint]="exerciseHint | castToCodeHint" [enableEditing]="true"></jhi-code-hint-container>
+                </div>
+                <div *ngIf="exerciseHint?.exercise?.id" class="form-group">
                     <label class="form-control-label" jhiTranslate="artemisApp.exerciseHint.exercise" for="field_exercise">Exercise</label>
                     <input
                         type="text"
@@ -34,15 +76,12 @@
                         [ngModel]="exerciseHint.exercise && exerciseHint.exercise.title + ' (ID: ' + exerciseHint.exercise.id + ')'"
                     />
                 </div>
-                <ng-template #exerciseLoading>
-                    <fa-icon [icon]="faCircleNotch" [spin]="true" class="mb-3 text-secondary"></fa-icon>
-                </ng-template>
             </div>
             <div>
                 <button type="button" id="cancel-save" class="btn btn-secondary" (click)="previousState()">
                     <fa-icon [icon]="faBan"></fa-icon>&nbsp;<span jhiTranslate="entity.action.cancel">Cancel</span>
                 </button>
-                <button type="submit" id="save-entity" [disabled]="hintForm.invalid || isSaving || isLoading || exerciseNotFound" class="btn btn-primary">
+                <button type="submit" id="save-entity" [disabled]="hintForm.invalid || isSaving || !exerciseId" class="btn btn-primary">
                     <fa-icon [icon]="faSave"></fa-icon>&nbsp;<span jhiTranslate="entity.action.save">Save</span>
                 </button>
             </div>

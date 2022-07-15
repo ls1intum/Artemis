@@ -29,6 +29,6 @@ describe('ModalConfirmAutofocusComponent', () => {
 
         const closeSpy = jest.spyOn(modal, 'close').mockImplementation();
         closeButton.nativeElement.click();
-        expect(closeSpy).toHaveBeenCalledTimes(1);
+        expect(closeSpy).toHaveBeenCalledOnce();
     });
 });

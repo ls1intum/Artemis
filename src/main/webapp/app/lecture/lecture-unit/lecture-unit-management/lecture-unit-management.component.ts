@@ -44,7 +44,7 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
         private router: Router,
         private lectureService: LectureService,
         private alertService: AlertService,
-        private lectureUnitService: LectureUnitService,
+        public lectureUnitService: LectureUnitService,
     ) {}
 
     ngOnDestroy(): void {
@@ -179,6 +179,7 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
             case LectureUnitType.ATTACHMENT:
             case LectureUnitType.TEXT:
             case LectureUnitType.VIDEO:
+            case LectureUnitType.ONLINE:
                 return true;
             default:
                 return false;
@@ -193,19 +194,10 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
                 return ['video-units', lectureUnit.id, 'edit'];
             case LectureUnitType.TEXT:
                 return ['text-units', lectureUnit.id, 'edit'];
+            case LectureUnitType.ONLINE:
+                return ['online-units', lectureUnit.id, 'edit'];
             default:
                 return;
-        }
-    }
-
-    getLectureUnitName(lectureUnit: LectureUnit): string {
-        switch (lectureUnit.type) {
-            case LectureUnitType.ATTACHMENT:
-                return (<AttachmentUnit>lectureUnit)?.attachment?.name || '';
-            case LectureUnitType.EXERCISE:
-                return (<ExerciseUnit>lectureUnit)?.exercise?.title || '';
-            default:
-                return lectureUnit.name || '';
         }
     }
 

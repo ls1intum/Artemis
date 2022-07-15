@@ -64,7 +64,7 @@ describe('JvmThreadsComponent', () => {
 
         button.nativeElement.click();
 
-        expect(spy).toHaveBeenCalledTimes(1);
+        expect(spy).toHaveBeenCalledOnce();
         expect(spy).toHaveBeenCalledWith(MetricsModalThreadsComponent, { size: 'xl' });
         expect(mockModalRef.componentInstance.threads).toEqual(threads);
     });

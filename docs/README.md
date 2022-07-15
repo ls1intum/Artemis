@@ -20,7 +20,7 @@ or
 pip3 install -r requirements.txt
 ```
 The [Installing Sphinx] documentation explains more install options.
-For macOS, it is recommended to installation it using homebrew:
+For macOS, it is recommended to install it using homebrew:
 ```bash
 brew install sphinx-doc
 brew link sphinx-doc --force

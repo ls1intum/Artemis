@@ -222,6 +222,29 @@ During the exam creation and configuration, you can create your exam and configu
 .. note::
         You should delete test runs before the actual exam conduction takes place.
 
+1.8 Exam Checklist
+^^^^^^^^^^^^^^^^^^
+- After you create an exam, the exam checklist appears at the top of the exam's detail page.
+- The exam checklist helps you oversee and ensure every step of the exam is executed correctly.
+- You can track the progress of the steps mentioned in this document and spot missed steps easily.
+- Each row of the checklist includes the name of the task, description and short summary where it is applicable and the page column which navigates the instructors to the relevant action.
+- Going through each task from the start until the current task and making sure the description column contains no warnings or errors can help instructors conduct the exam smoothly.
+
+.. figure:: instructor/exam_checklist.png
+   :alt: Exam Checklist
+   :align: center
+
+   In Progress Exam Checklist
+
+- The exam list page displays a more concise overview of the exam steps in the ``Exam Status`` column.
+- You can glance over the preparation, conduction and correction status of the exams in the list.
+
+.. figure:: instructor/exam_checklist_overview.png
+   :alt: Exam Status Overview
+   :align: center
+
+   Exam Status Overview
+
 .. _exam_conduction:
 
 2. **Conduction**
@@ -332,6 +355,33 @@ If you want you can also enable the :ref:`second correction <Before the exam's a
 
 - At the bottom of the page you will find the option |check_plagiarism|.
 
+3.4 Grading Key
+^^^^^^^^^^^^^^^
+- Optionally, you can create a grading key for your exam by clicking |grade_key| at the top of the exam's detail page.
+- Defining a grading key allows the exam score to be converted to a grade automatically by Artemis, students are then able to see their own grades after the specified `Release Date of Results`.
+- Using a grading key also enhances the generated statistics so that the instructor is able to view grade distributions.
+- For an easy out-of-the-box configuration, you can click |generate_default_grade_key| and then click ``Save``.
+- By default, grades are defined as percentages of the total obtainable score. You can also display their point equivalent if you specify ``Maximum number of points for exam``.
+- If you would like to define custom grade steps, you can use the |add_grade_step| button and modify the grade step intervals.
+
+.. note::
+    Keep an eye out for the warnings at the bottom of the page to ensure that the grading key is valid.
+
+- ``Inclusivity`` field allows you to decide which grade should be assigned if the student's score is exactly equal to a boundary value between two grades.
+- There are two grade types you can use: ``Grade`` and ``Bonus``. The ``Grade`` type allows you to set a final grade for the exam with custom grade step names, while the ``Bonus`` type allows you to assign bonus points to each grade step so they can contribute to the grade of another course or exam.
+
+.. note::
+    If the ``Grade Type`` is ``Grade`` you should set ``First Passing Grade``.
+
+- For more fine grained control, you can switch to ``Detailed`` editing mode and set grade step bounds manually.
+- |import_export| buttons enable you to save the grading key as a CSV file and re-use it in other courses and exams.
+
+
+.. figure:: instructor/grade_key_editor.png
+   :alt: Default Grading Key
+   :align: center
+
+   Default Grading Key
 
 
 
@@ -423,3 +473,7 @@ Artemis collects the complaints submitted by the students during the :ref:`stude
 .. |import_students| image:: instructor/buttons/import_students.png
 .. |register_course_students| image:: instructor/buttons/register_course_students.png
 .. |configure_grading_button| image:: instructor/buttons/configure_grading.png
+.. |grade_key| image:: instructor/buttons/grade_key.png
+.. |add_grade_step| image:: instructor/buttons/add_grade_step.png
+.. |import_export| image:: instructor/buttons/import_export.png
+.. |generate_default_grade_key| image:: instructor/buttons/generate_default_grade_key.png

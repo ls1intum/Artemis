@@ -3,16 +3,18 @@ import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { QuizExercise, QuizMode, QuizStatus } from 'app/entities/quiz/quiz-exercise.model';
 import { QuizExerciseService } from './quiz-exercise.service';
 import { AccountService } from 'app/core/auth/account.service';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { ExerciseComponent } from 'app/exercises/shared/exercise/exercise.component';
 import { TranslateService } from '@ngx-translate/core';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
 import { SortService } from 'app/shared/service/sort.service';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { AlertService } from 'app/core/util/alert.service';
 import { EventManager } from 'app/core/util/event-manager.service';
 import { faEye, faFileExport, faPlayCircle, faPlus, faSignal, faSort, faStopCircle, faTable, faTimes, faWrench } from '@fortawesome/free-solid-svg-icons';
+import { QuizExerciseImportComponent } from 'app/exercises/quiz/manage/quiz-exercise-import.component';
 
 @Component({
     selector: 'jhi-quiz-exercise',
@@ -42,6 +44,8 @@ export class QuizExerciseComponent extends ExerciseComponent {
         private quizExerciseService: QuizExerciseService,
         private accountService: AccountService,
         private alertService: AlertService,
+        private modalService: NgbModal,
+        private router: Router,
         private sortService: SortService,
         public exerciseService: ExerciseService,
         courseService: CourseManagementService,
@@ -158,14 +162,12 @@ export class QuizExerciseComponent extends ExerciseComponent {
      * @param quizExerciseId the quiz exercise id to end
      */
     endQuiz(quizExerciseId: number) {
-        this.quizExerciseService.end(quizExerciseId).subscribe({
+        return this.quizExerciseService.end(quizExerciseId).subscribe({
             next: (res: HttpResponse<QuizExercise>) => {
                 this.handleNewQuizExercise(res.body!);
+                this.dialogErrorSource.next('');
             },
-            error: (res: HttpErrorResponse) => {
-                this.onError(res);
-                this.loadOne(quizExerciseId);
-            },
+            error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
         });
     }
 
@@ -272,7 +274,7 @@ export class QuizExerciseComponent extends ExerciseComponent {
                 });
                 this.dialogErrorSource.next('');
             },
-            error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.headers.get('X-artemisApp-error')!),
+            error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
         });
     }
 
@@ -289,12 +291,25 @@ export class QuizExerciseComponent extends ExerciseComponent {
                 });
                 this.dialogErrorSource.next('');
             },
-            error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.headers.get('X-artemisApp-error')!),
+            error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
         });
     }
 
     public sortRows() {
         this.sortService.sortByProperty(this.quizExercises, this.predicate, this.reverse);
         this.applyFilter();
+    }
+
+    /**
+     * Opens the import modal for a quiz exercise
+     */
+    openImportModal() {
+        const modalRef = this.modalService.open(QuizExerciseImportComponent, { size: 'lg', backdrop: 'static' });
+        modalRef.result.then(
+            (result: QuizExercise) => {
+                this.router.navigate(['course-management', this.courseId, 'quiz-exercises', result.id, 'import']);
+            },
+            () => {},
+        );
     }
 }

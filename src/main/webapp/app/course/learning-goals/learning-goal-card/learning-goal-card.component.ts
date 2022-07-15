@@ -19,6 +19,10 @@ export class LearningGoalCardComponent implements OnInit, OnDestroy {
     learningGoal: LearningGoal;
     @Input()
     learningGoalProgress: IndividualLearningGoalProgress | CourseLearningGoalProgress | undefined;
+    @Input()
+    isPrerequisite: Boolean;
+    @Input()
+    displayOnly: Boolean;
 
     public predicate = 'id';
     public reverse = false;
@@ -32,7 +36,7 @@ export class LearningGoalCardComponent implements OnInit, OnDestroy {
     constructor(private modalService: NgbModal, public lectureUnitService: LectureUnitService, public translateService: TranslateService) {}
 
     ngOnInit(): void {
-        if (!this.learningGoalProgress || this.learningGoalProgress.totalPointsAchievableByStudentsInLearningGoal === 0) {
+        if (this.isPrerequisite || !this.learningGoalProgress) {
             this.isProgressAvailable = false;
         } else {
             this.isProgressAvailable = true;
@@ -44,7 +48,7 @@ export class LearningGoalCardComponent implements OnInit, OnDestroy {
                 pointsAchieved = this.learningGoalProgress.averagePointsAchievedByStudentInLearningGoal;
             }
 
-            const progress = (pointsAchieved / this.learningGoalProgress.totalPointsAchievableByStudentsInLearningGoal) * 100;
+            const progress = (pointsAchieved / this.learningGoalProgress.totalPointsAchievableByStudentsInLearningGoal) * 100 || 0;
             this.progressInPercent = round(progress, 1);
         }
     }
@@ -63,22 +67,33 @@ export class LearningGoalCardComponent implements OnInit, OnDestroy {
         }
     }
 
+    /**
+     * Opens the modal with details (e.g., progress report) about the clicked learning goal
+     */
     openLearningGoalDetailsModal() {
+        // For prerequisites do not open the modal for now
+        // TODO: Later we will display connected lecture units also for prerequisites
+        if (this.isPrerequisite) {
+            return;
+        }
+
         if (this.learningGoalProgress && this.isCourseProgress(this.learningGoalProgress)) {
             const modalRef = this.modalService.open(this.CourseDetailModalComponent, {
-                size: 'xl',
+                size: 'lg',
             });
             if (modalRef) {
                 modalRef.componentInstance.learningGoal = this.learningGoal;
                 modalRef.componentInstance.learningGoalCourseProgress = this.learningGoalProgress;
+                modalRef.componentInstance.isPrerequisite = this.isPrerequisite;
             }
         } else {
             const modalRef = this.modalService.open(this.DetailModalComponent, {
-                size: 'xl',
+                size: 'lg',
             });
             if (modalRef) {
                 modalRef.componentInstance.learningGoal = this.learningGoal;
                 modalRef.componentInstance.learningGoalProgress = this.learningGoalProgress;
+                modalRef.componentInstance.isPrerequisite = this.isPrerequisite;
             }
         }
     }

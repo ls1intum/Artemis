@@ -106,6 +106,7 @@ public class FileUploadExerciseResource {
 
         FileUploadExercise result = fileUploadExerciseRepository.save(fileUploadExercise);
         groupNotificationService.checkNotificationsForNewExercise(fileUploadExercise, instanceMessageSendService);
+
         return ResponseEntity.created(new URI("/api/file-upload-exercises/" + result.getId()))
                 .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, result.getId().toString())).body(result);
     }
@@ -291,7 +292,7 @@ public class FileUploadExerciseResource {
             @RequestParam(value = "deleteFeedback", required = false) Boolean deleteFeedbackAfterGradingInstructionUpdate) {
         log.debug("REST request to re-evaluate FileUploadExercise : {}", fileUploadExercise);
 
-        // check that the exercise is exist for given id
+        // check that the exercise exists for given id
         fileUploadExerciseRepository.findByIdElseThrow(exerciseId);
         authCheckService.checkGivenExerciseIdSameForExerciseInRequestBodyElseThrow(exerciseId, fileUploadExercise);
 

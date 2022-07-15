@@ -77,9 +77,9 @@ describe('User Settings Service', () => {
 
             const resultMap = notificationSettingsService.createUpdatedNotificationTitleActivationMap(notificationSettingsForTesting);
 
-            expect(resultMap.has(type1)).toBe(true);
-            expect(resultMap.has(type2)).toBe(true);
-            expect(resultMap.has(type3)).toBe(true);
+            expect(resultMap.has(type1)).toBeTrue();
+            expect(resultMap.has(type2)).toBeTrue();
+            expect(resultMap.has(type3)).toBeTrue();
 
             expect(resultMap.size).toEqual(3);
 

@@ -231,7 +231,7 @@ public class ProgrammingExerciseResource {
         }
 
         // Check if project type is selected
-        if (programmingLanguageFeature.getProjectTypes().size() > 0) {
+        if (!programmingLanguageFeature.getProjectTypes().isEmpty()) {
             if (programmingExercise.getProjectType() == null) {
                 return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName, "The project type is not set", "projectTypeNotSet")).body(null);
             }
@@ -293,6 +293,8 @@ public class ProgrammingExerciseResource {
         if (updatedProgrammingExercise.getId() == null) {
             throw new BadRequestAlertException("Programming exercise cannot have an empty id when updating", ENTITY_NAME, "noProgrammingExerciseId");
         }
+
+        updatedProgrammingExercise.validateGeneralSettings();
 
         // Valid exercises have set either a course or an exerciseGroup
         updatedProgrammingExercise.checkCourseAndExerciseGroupExclusivity(ENTITY_NAME);

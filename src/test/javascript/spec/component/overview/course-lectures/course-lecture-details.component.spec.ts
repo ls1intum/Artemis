@@ -44,6 +44,7 @@ import { CourseExerciseRowComponent } from 'app/overview/course-exercises/course
 import { MockFileService } from '../../../helpers/mocks/service/mock-file.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { MockRouter } from '../../../helpers/mocks/mock-router';
+import { LectureUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/lectureUnit.service';
 
 describe('CourseLectureDetails', () => {
     let fixture: ComponentFixture<CourseLectureDetailsComponent>;
@@ -75,6 +76,7 @@ describe('CourseLectureDetails', () => {
         lectureUnit3.name = 'Unit 3';
         lectureUnit3.releaseDate = releaseDate;
         lectureUnit3.lecture = lecture;
+        lectureUnit3.visibleToStudents = true;
 
         lecture.lectureUnits = [lectureUnit1, lectureUnit2, lectureUnit3];
 
@@ -119,6 +121,7 @@ describe('CourseLectureDetails', () => {
                         return response;
                     },
                 }),
+                MockProvider(LectureUnitService),
                 MockProvider(AlertService),
                 { provide: FileService, useClass: MockFileService },
                 { provide: Router, useValue: MockRouter },
@@ -178,6 +181,42 @@ describe('CourseLectureDetails', () => {
         expect(courseLecturesDetailsComponent.hasPdfLectureUnit).toBeFalse();
     }));
 
+    it('should check attachment release date', fakeAsync(() => {
+        const attachment = getAttachmentUnit(lecture, 1, dayjs().add(1, 'day')).attachment!;
+
+        expect(courseLecturesDetailsComponent.attachmentNotReleased(attachment)).toBeTrue();
+
+        attachment.releaseDate = dayjs().subtract(1, 'day');
+        expect(courseLecturesDetailsComponent.attachmentNotReleased(attachment)).toBeFalse();
+
+        attachment.releaseDate = undefined;
+        expect(courseLecturesDetailsComponent.attachmentNotReleased(attachment)).toBeFalse();
+    }));
+
+    it('should get the attachment extension', fakeAsync(() => {
+        const attachment = getAttachmentUnit(lecture, 1, dayjs()).attachment!;
+
+        expect(courseLecturesDetailsComponent.attachmentExtension(attachment)).toEqual('pdf');
+
+        attachment.link = '/path/to/file/test.test.docx';
+        expect(courseLecturesDetailsComponent.attachmentExtension(attachment)).toEqual('docx');
+
+        attachment.link = undefined;
+        expect(courseLecturesDetailsComponent.attachmentExtension(attachment)).toEqual('N/A');
+    }));
+
+    it('should download file for attachment', fakeAsync(() => {
+        const fileService = TestBed.inject(FileService);
+        const downloadFileSpy = jest.spyOn(fileService, 'downloadFileWithAccessToken');
+        const attachment = getAttachmentUnit(lecture, 1, dayjs()).attachment!;
+
+        courseLecturesDetailsComponent.downloadAttachment(attachment.link);
+
+        expect(downloadFileSpy).toHaveBeenCalledOnce();
+        expect(downloadFileSpy).toHaveBeenCalledWith(attachment.link);
+        expect(courseLecturesDetailsComponent.isDownloadingLink).toBeUndefined();
+    }));
+
     it('should download PDF file', fakeAsync(() => {
         fixture.detectChanges();
 
@@ -186,7 +225,68 @@ describe('CourseLectureDetails', () => {
         expect(downloadButton).not.toBeNull();
 
         downloadButton.nativeElement.click();
-        expect(downloadAttachmentStub).toHaveBeenCalledTimes(1);
+        expect(downloadAttachmentStub).toHaveBeenCalledOnce();
+    }));
+
+    it('should set lecture unit as completed', fakeAsync(() => {
+        const lectureUnitService = TestBed.inject(LectureUnitService);
+        const completeSpy = jest.spyOn(lectureUnitService, 'setCompletion');
+        completeSpy.mockReturnValue(of(new HttpResponse<any>()));
+
+        courseLecturesDetailsComponent.lecture = lecture;
+        courseLecturesDetailsComponent.ngOnInit();
+        fixture.detectChanges();
+
+        expect(lectureUnit3.completed).toBeFalsy();
+        courseLecturesDetailsComponent.completeLectureUnit({ lectureUnit: lectureUnit3, completed: true });
+        expect(completeSpy).toHaveBeenCalledOnce();
+        expect(completeSpy).toHaveBeenCalledWith(lectureUnit3.id, lecture.id, true);
+        expect(lectureUnit3.completed).toBeTrue();
+    }));
+
+    it('should set lecture unit as uncompleted', fakeAsync(() => {
+        const lectureUnitService = TestBed.inject(LectureUnitService);
+        const completeSpy = jest.spyOn(lectureUnitService, 'setCompletion');
+        completeSpy.mockReturnValue(of(new HttpResponse<any>()));
+
+        lectureUnit3.completed = true;
+        courseLecturesDetailsComponent.lecture = lecture;
+        courseLecturesDetailsComponent.ngOnInit();
+        fixture.detectChanges();
+
+        expect(lectureUnit3.completed).toBeTrue();
+        courseLecturesDetailsComponent.completeLectureUnit({ lectureUnit: lectureUnit3, completed: false });
+        expect(completeSpy).toHaveBeenCalledOnce();
+        expect(completeSpy).toHaveBeenCalledWith(lectureUnit3.id, lecture.id, false);
+        expect(lectureUnit3.completed).toBeFalse();
+    }));
+
+    it('should not set completion status if already completed', fakeAsync(() => {
+        const lectureUnitService = TestBed.inject(LectureUnitService);
+        const completeSpy = jest.spyOn(lectureUnitService, 'setCompletion');
+        completeSpy.mockReturnValue(of(new HttpResponse<any>()));
+
+        courseLecturesDetailsComponent.lecture = lecture;
+        courseLecturesDetailsComponent.ngOnInit();
+        fixture.detectChanges();
+
+        lectureUnit3.completed = true;
+        courseLecturesDetailsComponent.completeLectureUnit({ lectureUnit: lectureUnit3, completed: true });
+        expect(completeSpy).not.toHaveBeenCalled();
+    }));
+
+    it('should not set completion status if not visible', fakeAsync(() => {
+        const lectureUnitService = TestBed.inject(LectureUnitService);
+        const completeSpy = jest.spyOn(lectureUnitService, 'setCompletion');
+        completeSpy.mockReturnValue(of(new HttpResponse<any>()));
+
+        courseLecturesDetailsComponent.lecture = lecture;
+        courseLecturesDetailsComponent.ngOnInit();
+        fixture.detectChanges();
+
+        lectureUnit3.visibleToStudents = false;
+        courseLecturesDetailsComponent.completeLectureUnit({ lectureUnit: lectureUnit3, completed: true });
+        expect(completeSpy).not.toHaveBeenCalled();
     }));
 });
 
@@ -195,7 +295,7 @@ const getAttachmentUnit = (lecture: Lecture, id: number, releaseDate: dayjs.Dayj
     attachment.id = id;
     attachment.version = 1;
     attachment.attachmentType = AttachmentType.FILE;
-    attachment.releaseDate = dayjs().year(2020).month(3).date(5);
+    attachment.releaseDate = releaseDate;
     attachment.uploadDate = dayjs().year(2020).month(3).date(5);
     attachment.name = 'test';
     attachment.link = '/path/to/file/test.pdf';
@@ -203,7 +303,7 @@ const getAttachmentUnit = (lecture: Lecture, id: number, releaseDate: dayjs.Dayj
     const attachmentUnit = new AttachmentUnit();
     attachmentUnit.id = id;
     attachmentUnit.name = 'Unit 1';
-    attachmentUnit.releaseDate = releaseDate;
+    attachmentUnit.releaseDate = attachment.releaseDate;
     attachmentUnit.lecture = lecture;
     attachmentUnit.attachment = attachment;
     attachment.attachmentUnit = attachmentUnit;

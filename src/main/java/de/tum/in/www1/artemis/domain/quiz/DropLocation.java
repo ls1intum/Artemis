@@ -136,7 +136,7 @@ public class DropLocation extends TempIdObject {
         Set<DragItem> correctDragItems = question.getCorrectDragItemsForDropLocation(this);
         DragItem selectedDragItem = dndAnswer.getSelectedDragItemForDropLocation(this);
 
-        return ((correctDragItems.size() == 0 && selectedDragItem == null) || (selectedDragItem != null && correctDragItems.contains(selectedDragItem)));
+        return ((correctDragItems.isEmpty() && selectedDragItem == null) || (selectedDragItem != null && correctDragItems.contains(selectedDragItem)));
         // this drop location was meant to stay empty and user didn't drag anything onto it
         // OR the user dragged one of the correct drag items onto this drop location
         // => this is correct => Return true;

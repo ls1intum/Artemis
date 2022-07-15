@@ -28,11 +28,17 @@
         }
     }
 
+    .indicator {
+        margin-right: 5px;
+        display: flex;
+        align-items: center;
+    }
+
     .student-status {
         @include status-change-transition;
 
         display: inline-flex;
-        color: #ccc;
+        color: var(--secondary);
     }
 
     .student-name {
@@ -42,16 +48,16 @@
         text-overflow: ellipsis;
         overflow: hidden;
         white-space: nowrap;
-        color: #6c757d;
+        color: var(--secondary);
     }
 
     .online {
         .student-status {
-            color: green;
+            color: var(--success);
         }
 
         .student-name {
-            color: initial;
+            color: var(--bs-body-color);
         }
     }
 
@@ -81,11 +87,8 @@
 }
 
 .typing-indicator {
-    $side-overlap: 3px;
-
     display: flex;
-    width: 12.25px + 2 * $side-overlap;
-    margin: 0 -$side-overlap;
+    width: 18px;
     opacity: 0.6;
 
     & > div {
@@ -95,7 +98,7 @@
         border-radius: 100%;
         -webkit-animation: bounce-delay 1.4s infinite ease-in-out both;
         animation: bounce-delay 1.4s infinite ease-in-out both;
-        background: black;
+        background: var(--bs-body-color);
     }
 
     .bounce1 {

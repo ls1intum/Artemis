@@ -3,6 +3,7 @@ import { TextBlockRef } from 'app/entities/text-block-ref.model';
 import { TextSubmission } from 'app/entities/text-submission.model';
 import { TextBlock } from 'app/entities/text-block.model';
 import { GradingCriterion } from 'app/exercises/shared/structured-grading-criterion/grading-criterion.model';
+import { wordSelection } from 'app/exercises/text/shared/manual-text-selection/manual-text-selection.component';
 
 @Component({
     selector: 'jhi-manual-textblock-selection',
@@ -29,32 +30,19 @@ export class ManualTextblockSelectionComponent {
     }
 
     /**
-     * Called by <jhi-manual-text-selection> component (form [jhiTextSelect] directive).
+     * Called by <jhi-manual-text-selection> component.
      * Select Text within text block ref group and emit to parent component if it is indeed a new text block.
      *
-     * @param text response from directive.
-     * @param group TextBlockRefGroup of text blocks allowed to select text in.
+     * @param selectedWords first and last word selected received from <jhi-manual-text-selection>.
      */
-    handleTextSelection(text: string, group: TextBlockRefGroup): void {
-        // Text Selection returns <br> for linebreaks, model uses \n so we need to convert.
-        text = text.replace(/<br>/g, '\n');
-
+    handleTextSelection(selectedWords: wordSelection[]): void {
         // create new Text Block for text
         const textBlockRef = TextBlockRef.new();
         const textBlock = textBlockRef.block;
 
-        const baseIndex = group.startIndex;
-        const groupText = group.getText(this.submission);
-
-        const startIndexInGroup = groupText.indexOf(text);
-
-        if (text.length > groupText.length || startIndexInGroup === -1) {
-            return;
-        }
-
         if (textBlock) {
-            textBlock.startIndex = baseIndex! + startIndexInGroup;
-            textBlock.endIndex = textBlock.startIndex + text.length;
+            textBlock.startIndex = selectedWords[0].index;
+            textBlock.endIndex = selectedWords[1].index + selectedWords[1].word.length;
             textBlock.setTextFromSubmission(this.submission);
             textBlock.computeId();
             const existingRef = this.textBlockRefs.find((ref) => ref.block?.id === textBlock.id);
@@ -70,7 +58,7 @@ export class ManualTextblockSelectionComponent {
     }
 }
 
-class TextBlockRefGroup {
+export class TextBlockRefGroup {
     public refs: TextBlockRef[];
 
     constructor(textBlockRef: TextBlockRef) {

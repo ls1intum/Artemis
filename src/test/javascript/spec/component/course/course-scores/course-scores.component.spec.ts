@@ -2,17 +2,10 @@ import { HttpResponse } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
-import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
+import { MockLanguageHelper, MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 import { User } from 'app/core/user/user.model';
-import {
-    CourseScoresComponent,
-    EMAIL_KEY,
-    HighlightType,
-    NAME_KEY,
-    OVERALL_COURSE_POINTS_KEY,
-    OVERALL_COURSE_SCORE_KEY,
-    USERNAME_KEY,
-} from 'app/course/course-scores/course-scores.component';
+import { CourseScoresComponent, HighlightType } from 'app/course/course-scores/course-scores.component';
+import { EMAIL_KEY, NAME_KEY, COURSE_OVERALL_POINTS_KEY, COURSE_OVERALL_SCORE_KEY, USERNAME_KEY } from 'app/shared/export/export-constants';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { Course } from 'app/entities/course.model';
 import { Exercise, ExerciseType, IncludedInOverallScore } from 'app/entities/exercise.model';
@@ -40,7 +33,8 @@ import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { ExerciseTypeStatisticsMap } from 'app/course/course-scores/exercise-type-statistics-map';
 import { CsvDecimalSeparator, CsvExportOptions, CsvFieldSeparator, CsvQuoteStrings } from 'app/shared/export/export-modal.component';
 import { ExportButtonComponent } from 'app/shared/export/export-button.component';
-import { CommonSpreadsheetCellObject } from 'app/course/course-scores/course-scores-excel-row-builder';
+import { CommonSpreadsheetCellObject } from 'app/shared/export/excel-export-row-builder';
+import { JhiLanguageHelper } from 'app/core/language/language.helper';
 
 describe('CourseScoresComponent', () => {
     let fixture: ComponentFixture<CourseScoresComponent>;
@@ -258,6 +252,7 @@ describe('CourseScoresComponent', () => {
                     useValue: { params: of({ courseId: 1 }) },
                 },
                 { provide: TranslateService, useClass: MockTranslateService },
+                { provide: JhiLanguageHelper, useClass: MockLanguageHelper },
                 MockProvider(ParticipantScoresService),
                 MockProvider(GradingSystemService, {
                     findGradingScaleForCourse: () => {
@@ -444,7 +439,7 @@ describe('CourseScoresComponent', () => {
             { t: 'n', v: 0.5, z: '0%' },
         );
         const maxRow = generatedRows[3];
-        expect(maxRow[OVERALL_COURSE_POINTS_KEY]).toEqual({ t: 'n', v: 30 });
+        expect(maxRow[COURSE_OVERALL_POINTS_KEY]).toEqual({ t: 'n', v: 30 });
     });
 
     it('should generate csv correctly', () => {
@@ -480,7 +475,7 @@ describe('CourseScoresComponent', () => {
         const user2Row = generatedRows[1];
         validateUserExportRow(user2Row, user2.name!, user2.login!, user2.email!, '0', '0%', '5', '5', '50%', '0', '0%', '10', '0%', '15', '50%');
         const maxRow = generatedRows[3];
-        expect(maxRow[OVERALL_COURSE_POINTS_KEY]).toEqual('30');
+        expect(maxRow[COURSE_OVERALL_POINTS_KEY]).toEqual('30');
     });
 
     it('should set grading scale properties correctly', () => {
@@ -557,7 +552,7 @@ describe('CourseScoresComponent', () => {
         expect(userRow['Modeling Score']).toEqual(expectedModelingScore);
         expect(userRow['File-upload Points']).toEqual(expectedFileUploadPoints);
         expect(userRow['File-upload Score']).toEqual(expectedFileUploadScore);
-        expect(userRow[OVERALL_COURSE_POINTS_KEY]).toEqual(expectedOverallCoursePoints);
-        expect(userRow[OVERALL_COURSE_SCORE_KEY]).toEqual(expectedOverallCourseScore);
+        expect(userRow[COURSE_OVERALL_POINTS_KEY]).toEqual(expectedOverallCoursePoints);
+        expect(userRow[COURSE_OVERALL_SCORE_KEY]).toEqual(expectedOverallCourseScore);
     }
 });

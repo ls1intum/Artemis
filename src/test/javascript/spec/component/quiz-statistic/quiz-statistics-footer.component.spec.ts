@@ -82,7 +82,7 @@ describe('QuizExercise Statistic Footer Component', () => {
         expect(quizServiceFindSpy).toHaveBeenCalledWith(42);
         expect(loadSpy).toHaveBeenCalledWith(quizExercise);
         expect(comp.question).toEqual(question);
-        expect(updateDisplayedTimesSpy).toHaveBeenCalledTimes(1);
+        expect(updateDisplayedTimesSpy).toHaveBeenCalledOnce();
     }));
 
     it('should set quiz and update properties', () => {
@@ -96,7 +96,7 @@ describe('QuizExercise Statistic Footer Component', () => {
         expect(accountSpy).toHaveBeenCalled();
         expect(comp.quizExercise).toEqual(quizExercise);
         expect(comp.question).toEqual(question);
-        expect(comp.waitingForQuizStart).toEqual(false);
+        expect(comp.waitingForQuizStart).toBeFalse();
     });
 
     it('should return remaining Time', () => {

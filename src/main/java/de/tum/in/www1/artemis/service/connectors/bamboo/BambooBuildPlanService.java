@@ -430,8 +430,8 @@ public class BambooBuildPlanService {
                         .recipientString(artemisServerUrl + NEW_RESULT_RESOURCE_API_PATH));
     }
 
-    private BitbucketServerRepository createBuildPlanRepository(String name, String vcsProjectKey, String repositorySlug, String defaultBranch) {
-        return new BitbucketServerRepository().name(name).branch(defaultBranch).repositoryViewer(new BitbucketServerRepositoryViewer())
+    private BitbucketServerRepository createBuildPlanRepository(String name, String vcsProjectKey, String repositorySlug, String branch) {
+        return new BitbucketServerRepository().name(name).branch(branch).repositoryViewer(new BitbucketServerRepositoryViewer())
                 .server(new ApplicationLink().name(vcsApplicationLinkName))
                 // make sure to use lower case to avoid problems in change detection between
                 // Bamboo and Bitbucket

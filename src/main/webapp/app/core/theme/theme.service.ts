@@ -12,7 +12,7 @@ export const THEME_OVERRIDE_ID = 'artemis-theme-override';
  */
 export class Theme {
     public static readonly LIGHT = new Theme('LIGHT', true, undefined, faSun, 'chrome', 'dreamweaver');
-    public static readonly DARK = new Theme('DARK', false, 'theme-dark.css', faMoon, 'monokai', 'monokai');
+    public static readonly DARK = new Theme('DARK', false, 'theme-dark.css', faMoon, 'dracula', 'dracula');
 
     private constructor(identifier: string, isDefault: boolean, fileName: string | undefined, icon: IconDefinition, markdownAceTheme: string, codeAceTheme: string) {
         this.identifier = identifier;
@@ -211,7 +211,8 @@ export class ThemeService {
             const newTag = document.createElement('link');
             newTag.id = THEME_OVERRIDE_ID;
             newTag.rel = 'stylesheet';
-            newTag.href = theme.fileName!;
+            // Use cache busting so the browser will reload the stylesheet at least once per hour
+            newTag.href = theme.fileName! + '?_=' + new Date().setMinutes(0, 0, 0);
 
             // As soon as the new style sheet loaded, remove the old override (if present)
             // and fire the subject to inform other services and components

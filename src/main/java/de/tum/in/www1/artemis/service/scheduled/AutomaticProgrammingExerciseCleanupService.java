@@ -95,7 +95,7 @@ public class AutomaticProgrammingExerciseCleanupService {
         var endDate1 = endDate2.minusYears(1).truncatedTo(ChronoUnit.DAYS);
 
         // Cleanup all student repos in the REPOS folder (based on the student participations) 8 weeks after the exercise due date
-        log.info("Search for exercises with due date from " + endDate1 + " until " + endDate2);
+        log.info("Search for exercises with due date from {} until {}", endDate1, endDate2);
         var programmingExercises = programmingExerciseRepository.findAllWithStudentParticipationByRecentDueDate(endDate1, endDate2);
         programmingExercises.addAll(programmingExerciseRepository.findAllWithStudentParticipationByRecentExamEndDate(endDate1, endDate2));
         log.info("Found {} programming exercises {} to clean {} local student repositories", programmingExercises.size(),
@@ -109,7 +109,7 @@ public class AutomaticProgrammingExerciseCleanupService {
         }
 
         // Cleanup template, tests and solution repos in the REPOS folder 8 weeks after the course or exam is over
-        log.info("Search for exercises with course or exam date from " + endDate1 + " until " + endDate2);
+        log.info("Search for exercises with course or exam date from {} until {}", endDate1, endDate2);
         programmingExercises = programmingExerciseRepository.findAllByRecentCourseEndDate(endDate1, endDate2);
         programmingExercises.addAll(programmingExerciseRepository.findAllByRecentExamEndDate(endDate1, endDate2));
         log.info("Found {} programming exercise to clean local template, test and solution: {}", programmingExercises.size(),
@@ -184,7 +184,7 @@ public class AutomaticProgrammingExerciseCleanupService {
             }
 
             // 1st case: delete the build plan 1 day after the build and test student submissions after due date, because then no builds should be executed any more
-            // and the students repos will be locked anyways.
+            // and the students repos will be locked anyway.
             if (programmingExercise.getBuildAndTestStudentSubmissionsAfterDueDate().plusDays(1).isBefore(now())) {
                 participationsWithBuildPlanToDelete.add(participation);
                 countAfterBuildAndTestDate.getAndIncrement();
@@ -254,7 +254,7 @@ public class AutomaticProgrammingExerciseCleanupService {
                 participationService.cleanupBuildPlan(participation);
             }
             catch (Exception ex) {
-                log.error("Could not cleanup build plan in participation " + participation.getId(), ex);
+                log.error("Could not cleanup build plan in participation {}", participation.getId(), ex);
             }
 
             index++;

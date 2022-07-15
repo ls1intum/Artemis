@@ -90,7 +90,7 @@ public class AtheneRequestMockProvider {
     }
 
     /**
-     * Mocks /queueStatus api from Athene used to retrieve meta data on processed jobs. Currently used as a health check endpoint.
+     * Mocks /queueStatus api from Athene used to retrieve metadata on processed jobs. Currently used as a health check endpoint.
      *
      * @param success Successful response or timeout.
      */

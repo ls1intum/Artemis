@@ -4,6 +4,7 @@ import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import {
     faChartPie,
     faCheckSquare,
+    faClipboardCheck,
     faCode,
     faCodeBranch,
     faCogs,
@@ -12,6 +13,7 @@ import {
     faCubes,
     faEye,
     faFile,
+    faFileAlt,
     faHdd,
     faMagic,
     faMicrochip,
@@ -168,6 +170,15 @@ export class FeatureOverviewComponent implements OnInit {
             '/content/images/feature-overview/students/complaint.png',
         );
 
+        const featureGradeKey = new Feature(
+            'featureOverview.students.feature.gradeKey.title',
+            'featureOverview.students.feature.gradeKey.shortDescription',
+            'featureOverview.students.feature.gradeKey.descriptionTextOne',
+            faFileAlt,
+            undefined,
+            '/content/images/feature-overview/students/student_grade_key.png',
+        );
+
         this.features = [
             featureConduction,
             featureOffline,
@@ -180,6 +191,7 @@ export class FeatureOverviewComponent implements OnInit {
             featureSummary,
             featureQualityAndFair,
             featureOnlineReview,
+            featureGradeKey,
         ];
 
         // only add login feature for tum accounts
@@ -312,6 +324,26 @@ export class FeatureOverviewComponent implements OnInit {
             undefined,
             '/content/images/feature-overview/instructors/exam_statistics.png',
         );
+
+        const featureChecklist = new Feature(
+            'featureOverview.instructor.feature.checklist.title',
+            'featureOverview.instructor.feature.checklist.shortDescription',
+            'featureOverview.instructor.feature.checklist.descriptionTextOne',
+            faClipboardCheck,
+            undefined,
+            '/content/images/feature-overview/instructors/exam_checklist.png',
+            '/content/images/feature-overview/instructors/exam_checklist_overview.png',
+        );
+        featureChecklist.centerTextAndImageOne();
+
+        const featureGradeKey = new Feature(
+            'featureOverview.instructor.feature.gradeKey.title',
+            'featureOverview.instructor.feature.gradeKey.shortDescription',
+            'featureOverview.instructor.feature.gradeKey.descriptionTextOne',
+            faFileAlt,
+            undefined,
+            '/content/images/feature-overview/instructors/grade_key_editor.png',
+        );
         this.features = [
             featureCreateConductAssess,
             featureConfiguration,
@@ -326,6 +358,8 @@ export class FeatureOverviewComponent implements OnInit {
             featureAssessmentMonitoring,
             featureComplaints,
             featureStatistics,
+            featureChecklist,
+            featureGradeKey,
         ];
     }
 

@@ -233,15 +233,14 @@
         <title>Class with Attributes</title>
         <g id="Graphic_73">
           <title>Attributes</title>
-          <rect x="369.76163" y="846.354" width="101.47675" height="110" stroke="black" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
+          <rect x="369.76163" y="846.354" width="101.47675" height="92.5712" stroke="black" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
           <text transform="translate(375.76163 852.354)" fill="black">
-            <tspan font-family="Helvetica" font-size="12" font-weight="400" fill="black" x="0" y="11">resultString</tspan>
-            <tspan font-family="Helvetica" font-size="12" font-weight="400" fill="black" x="0" y="25">completionDate</tspan>
-            <tspan font-family="Helvetica" font-size="12" font-weight="400" fill="black" x="0" y="39">successful</tspan>
-            <tspan font-family="Helvetica" font-size="12" font-weight="400" fill="black" x="0" y="53">buildArtifact</tspan>
-            <tspan font-family="Helvetica" font-size="12" font-weight="400" fill="black" x="0" y="67">score</tspan>
-            <tspan font-family="Helvetica" font-size="12" font-weight="400" fill="black" x="0" y="81">rated</tspan>
-            <tspan font-family="Helvetica" font-size="12" font-weight="400" fill="black" x="0" y="95">hasFeedback</tspan>
+            <tspan font-family="Helvetica" font-size="12" font-weight="400" fill="black" x="0" y="11">completionDate</tspan>
+            <tspan font-family="Helvetica" font-size="12" font-weight="400" fill="black" x="0" y="25">successful</tspan>
+            <tspan font-family="Helvetica" font-size="12" font-weight="400" fill="black" x="0" y="39">buildArtifact</tspan>
+            <tspan font-family="Helvetica" font-size="12" font-weight="400" fill="black" x="0" y="53">score</tspan>
+            <tspan font-family="Helvetica" font-size="12" font-weight="400" fill="black" x="0" y="67">rated</tspan>
+            <tspan font-family="Helvetica" font-size="12" font-weight="400" fill="black" x="0" y="81">hasFeedback</tspan>
           </text>
         </g>
         <g id="Graphic_72">
@@ -376,10 +375,10 @@
         </g>
       </g>
       <g id="Line_123">
-        <path d="M 273.8662 941.3278 L 369.76163 941.3278 L 369.76163 942.8427" marker-start="url(#StickArrow_Marker)" stroke="black" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
+        <path d="M 273.8662 931.3278 L 369.76163 931.3278 L 369.76163 931.8427" marker-start="url(#StickArrow_Marker)" stroke="black" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
       </g>
       <g id="Graphic_124">
-        <text transform="translate(268.4 924.3278)" fill="black">
+        <text transform="translate(268.4 915)" fill="black">
           <tspan font-family="Helvetica" font-size="10" font-weight="400" fill="black" x="0" y="10">assessmentType</tspan>
         </text>
       </g>
@@ -702,15 +701,15 @@
         </g>
       </g>
       <g id="Line_207">
-        <path d="M 417.6928 992.6 L 420.5 992.6 L 420.5 966.754" marker-end="url(#StickArrow_Marker_2)" stroke="black" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
+        <path d="M 417.6928 992.6 L 420.5 992.6 L 420.5 946.754" marker-end="url(#StickArrow_Marker_2)" stroke="black" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
       </g>
       <g id="Graphic_205">
-        <text transform="translate(405.3345 957)" fill="black">
+        <text transform="translate(405.3345 940)" fill="black">
           <tspan font-family="Helvetica" font-size="9" font-weight="400" fill="black" x="0" y="9">1</tspan>
         </text>
       </g>
       <g id="Graphic_203">
-        <text transform="translate(430.50757 957)" fill="black">
+        <text transform="translate(430.50757 940)" fill="black">
           <tspan font-family="Helvetica" font-size="10" font-weight="400" fill="black" x="0" y="10">result</tspan>
         </text>
       </g>

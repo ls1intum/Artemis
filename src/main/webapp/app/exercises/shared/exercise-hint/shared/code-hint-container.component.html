@@ -1,0 +1,13 @@
+<div *ngFor="let solutionEntry of sortedSolutionEntries">
+    <div class="mb-3">
+        <jhi-solution-entry
+            [solutionEntry]="solutionEntry"
+            [enableEditing]="enableEditing"
+            [dialogError]="dialogError$"
+            (onRemoveEntry)="removeEntryFromCodeHint(solutionEntry.id!)"
+        ></jhi-solution-entry>
+    </div>
+</div>
+<div *ngIf="!sortedSolutionEntries.length">
+    <span jhiTranslate="artemisApp.codeHint.noEntries">This code hint has no solution entries.</span>
+</div>

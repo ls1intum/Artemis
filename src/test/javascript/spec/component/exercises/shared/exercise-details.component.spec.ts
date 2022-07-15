@@ -61,9 +61,9 @@ describe('ExerciseDetailsComponent', () => {
         fixture.detectChanges();
         expect(component).not.toBe(null);
         expect(component.programmingExercise).not.toBe(null);
-        expect(isAtLeastTutor).toHaveBeenCalledTimes(1);
-        expect(isAtLeastEditor).toHaveBeenCalledTimes(1);
-        expect(isAtLeastInstructor).toHaveBeenCalledTimes(1);
+        expect(isAtLeastTutor).toHaveBeenCalledOnce();
+        expect(isAtLeastEditor).toHaveBeenCalledOnce();
+        expect(isAtLeastInstructor).toHaveBeenCalledOnce();
     });
 
     it('should show timeline', () => {
@@ -98,9 +98,9 @@ describe('ExerciseDetailsComponent', () => {
             component.exercise = textExercise;
             fixture.detectChanges();
             expect(component.programmingExercise).toBe(undefined);
-            expect(isAtLeastTutor).toHaveBeenCalledTimes(1);
-            expect(isAtLeastEditor).toHaveBeenCalledTimes(1);
-            expect(isAtLeastInstructor).toHaveBeenCalledTimes(1);
+            expect(isAtLeastTutor).toHaveBeenCalledOnce();
+            expect(isAtLeastEditor).toHaveBeenCalledOnce();
+            expect(isAtLeastInstructor).toHaveBeenCalledOnce();
         });
 
         it('should show grading criteria', () => {

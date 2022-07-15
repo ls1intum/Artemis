@@ -1,44 +1,6 @@
 <div class="row mb-2 col-12">
     <div class="col-12">
-        <jhi-post [posting]="post"></jhi-post>
-        <div class="row">
-            <div class="col-12">
-                <ng-container *ngIf="showAnswers">
-                    <jhi-answer-post *ngFor="let answerPost of sortedAnswerPosts" [posting]="answerPost"></jhi-answer-post>
-                </ng-container>
-                <!-- start discussion -->
-                <button *ngIf="sortedAnswerPosts.length === 0" class="btn btn-sm btn-outline-secondary mt-2" (click)="createAnswerPostModal.open()">
-                    <fa-icon [icon]="faComments"></fa-icon>
-                    <span class="d-none d-md-inline">{{ 'artemisApp.metis.startDiscussion' | artemisTranslate }}</span>
-                </button>
-                <!-- add new answer to expanded discussion -->
-                <button *ngIf="showAnswers && sortedAnswerPosts.length > 0" class="btn btn-sm btn-outline-secondary mt-2" (click)="createAnswerPostModal.open()">
-                    <fa-icon [icon]="faComments"></fa-icon>
-                    <span class="d-none d-md-inline">{{ 'artemisApp.metis.answerNow' | artemisTranslate }}</span>
-                </button>
-                <!-- expand answers -->
-                <button *ngIf="!showAnswers && sortedAnswerPosts.length > 0" class="btn btn-sm btn-outline-secondary mt-2" (click)="showAnswers = true">
-                    <fa-icon [icon]="faComments"></fa-icon>
-                    <span class="d-none d-md-inline">
-                        {{
-                            sortedAnswerPosts.length === 1
-                                ? ('artemisApp.metis.showSingleAnswer' | artemisTranslate)
-                                : ('artemisApp.metis.showMultipleAnswers' | artemisTranslate: { number: sortedAnswerPosts.length })
-                        }}</span
-                    >
-                </button>
-                <!-- collapse answers -->
-                <button *ngIf="showAnswers && sortedAnswerPosts.length > 0" class="btn btn-sm btn-outline-secondary mt-2" (click)="showAnswers = false">
-                    <fa-icon [icon]="faEyeSlash"></fa-icon>
-                    <span class="d-none d-md-inline"> {{ 'artemisApp.metis.collapseAnswers' | artemisTranslate }}</span>
-                </button>
-                <jhi-answer-post-create-edit-modal
-                    #createAnswerPostModal
-                    [posting]="createdAnswerPost"
-                    (onCreate)="showAnswers = true; createdAnswerPost = createEmptyAnswerPost()"
-                ></jhi-answer-post-create-edit-modal>
-            </div>
-        </div>
+        <jhi-post [posting]="post" [showAnswers]="showAnswers"></jhi-post>
     </div>
 </div>
 <div class="post-separation-line"></div>

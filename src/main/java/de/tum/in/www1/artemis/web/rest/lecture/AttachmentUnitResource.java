@@ -93,7 +93,6 @@ public class AttachmentUnitResource {
         // Make sure that the original references are preserved.
         AttachmentUnit originalAttachmentUnit = attachmentUnitRepository.findById(attachmentUnit.getId()).get();
         attachmentUnit.setAttachment(originalAttachmentUnit.getAttachment());
-        attachmentUnit.setOrder(originalAttachmentUnit.getOrder());
 
         AttachmentUnit result = attachmentUnitRepository.save(attachmentUnit);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, attachmentUnit.getId().toString())).body(result);

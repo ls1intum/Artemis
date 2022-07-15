@@ -3,7 +3,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
-import { NgxDatatableModule } from '@swimlane/ngx-datatable';
+import { NgxDatatableModule } from '@flaviosantoro92/ngx-datatable';
 import { User } from 'app/core/user/user.model';
 import { UserService } from 'app/core/user/user.service';
 import { CourseGroupComponent } from 'app/course/manage/course-group.component';
@@ -26,7 +26,7 @@ import { MockRouterLinkDirective } from '../../helpers/mocks/directive/mock-rout
 import { UsersImportButtonComponent } from 'app/shared/import/users-import-button.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { AlertService } from 'app/core/util/alert.service';
-import { EMAIL_KEY, NAME_KEY, REGISTRATION_NUMBER_KEY, USERNAME_KEY } from 'app/course/course-scores/course-scores.component';
+import { EMAIL_KEY, NAME_KEY, REGISTRATION_NUMBER_KEY, USERNAME_KEY } from 'app/shared/export/export-constants';
 
 jest.mock('export-to-csv', () => ({
     ExportToCsv: jest.fn().mockImplementation(() => ({
@@ -120,7 +120,7 @@ describe('Course Management Detail Component', () => {
                 expect(users).toEqual([courseGroupUser]);
             });
             expect(searchStub).toHaveBeenCalledWith(loginOrName);
-            expect(searchStub).toHaveBeenCalledTimes(1);
+            expect(searchStub).toHaveBeenCalledOnce();
         });
 
         it('should set search no results if search returns no result', () => {
@@ -128,9 +128,9 @@ describe('Course Management Detail Component', () => {
             comp.searchAllUsers(loginStream).subscribe((users: any) => {
                 expect(users).toEqual([]);
             });
-            expect(comp.searchNoResults).toBe(true);
+            expect(comp.searchNoResults).toBeTrue();
             expect(searchStub).toHaveBeenCalledWith(loginOrName);
-            expect(searchStub).toHaveBeenCalledTimes(1);
+            expect(searchStub).toHaveBeenCalledOnce();
         });
 
         it('should return empty if search text is shorter than three characters', () => {
@@ -147,9 +147,9 @@ describe('Course Management Detail Component', () => {
             comp.searchAllUsers(loginStream).subscribe((users: any) => {
                 expect(users).toEqual([]);
             });
-            expect(comp.searchFailed).toBe(true);
+            expect(comp.searchFailed).toBeTrue();
             expect(searchStub).toHaveBeenCalledWith(loginOrName);
-            expect(searchStub).toHaveBeenCalledTimes(1);
+            expect(searchStub).toHaveBeenCalledOnce();
         });
     });
 
@@ -169,10 +169,10 @@ describe('Course Management Detail Component', () => {
             const fake = jest.fn();
             comp.onAutocompleteSelect(user, fake);
             expect(addUserStub).toHaveBeenCalledWith(course.id, courseGroup, user.login);
-            expect(addUserStub).toHaveBeenCalledTimes(1);
+            expect(addUserStub).toHaveBeenCalledOnce();
             expect(comp.allCourseGroupUsers).toEqual([courseGroupUser]);
             expect(fake).toHaveBeenCalledWith(user);
-            expect(fake).toHaveBeenCalledTimes(1);
+            expect(fake).toHaveBeenCalledOnce();
         });
 
         it('should call callback if user is already in the group', () => {
@@ -182,7 +182,7 @@ describe('Course Management Detail Component', () => {
             expect(addUserStub).not.toHaveBeenCalled();
             expect(comp.allCourseGroupUsers).toEqual([courseGroupUser]);
             expect(fake).toHaveBeenCalledWith(user);
-            expect(fake).toHaveBeenCalledTimes(1);
+            expect(fake).toHaveBeenCalledOnce();
         });
     });
 
@@ -199,7 +199,7 @@ describe('Course Management Detail Component', () => {
         it('should given user from group', () => {
             comp.removeFromGroup(courseGroupUser);
             expect(removeUserStub).toHaveBeenCalledWith(course.id, courseGroup, courseGroupUser.login);
-            expect(removeUserStub).toHaveBeenCalledTimes(1);
+            expect(removeUserStub).toHaveBeenCalledOnce();
             expect(comp.allCourseGroupUsers).toEqual([courseGroupUser2]);
         });
 
@@ -271,7 +271,7 @@ describe('Course Management Detail Component', () => {
 
         comp.exportUserInformation();
 
-        expect(exportAsCsvMock).toHaveBeenCalledTimes(1);
+        expect(exportAsCsvMock).toHaveBeenCalledOnce();
         const generatedRows = exportAsCsvMock.mock.calls[0][0];
 
         const expectedRow1 = {};

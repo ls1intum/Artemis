@@ -1,5 +1,5 @@
 <div class="row justify-content-center">
-    <div class="col-8">
+    <div class="col-md-8">
         <div *ngIf="exerciseHint">
             <h2><span jhiTranslate="artemisApp.exerciseHint.detail.title">Exercise Hint</span> {{ exerciseHint.id }}</h2>
             <hr />
@@ -8,9 +8,20 @@
                 <dd>
                     <span>{{ exerciseHint.title }}</span>
                 </dd>
+                <dt><span jhiTranslate="artemisApp.exerciseHint.description">Description</span></dt>
+                <dd>
+                    <span>{{ exerciseHint.description }}</span>
+                </dd>
+                <dt><span jhiTranslate="artemisApp.exerciseHint.task">Content</span></dt>
+                <dd>
+                    <span>{{ exerciseHint?.programmingExerciseTask?.taskName ?? '-' }}</span>
+                </dd>
                 <dt><span jhiTranslate="artemisApp.exerciseHint.content">Content</span></dt>
                 <dd>
                     <span *ngIf="exerciseHint.content" [innerHTML]="exerciseHint.content | htmlForMarkdown"></span>
+                </dd>
+                <dd *ngIf="exerciseHint.type === HintType.CODE">
+                    <jhi-code-hint-container [codeHint]="exerciseHint | castToCodeHint"></jhi-code-hint-container>
                 </dd>
                 <dt><span jhiTranslate="artemisApp.exerciseHint.exercise">Exercise</span></dt>
                 <dd>

@@ -100,7 +100,7 @@ describe('QuizExercise Point Statistic Component', () => {
             expect(quizServiceFindSpy).toHaveBeenCalledWith(42);
             expect(loadQuizSuccessSpy).toHaveBeenCalledWith(quizExercise);
             expect(comp.quizExerciseChannel).toEqual('/topic/courses/2/quizExercises');
-            expect(updateDisplayedTimesSpy).toHaveBeenCalledTimes(1);
+            expect(updateDisplayedTimesSpy).toHaveBeenCalledOnce();
             discardPeriodicTasks();
         }));
 
@@ -184,7 +184,7 @@ describe('QuizExercise Point Statistic Component', () => {
             // check
             expect(routerSpy).not.toHaveBeenCalled();
             expect(comp.quizExercise).toEqual(quizExercise);
-            expect(comp.waitingForQuizStart).toBe(false);
+            expect(comp.waitingForQuizStart).toBeFalse();
             expect(loadDataSpy).toHaveBeenCalled();
         });
     });
@@ -233,5 +233,35 @@ describe('QuizExercise Point Statistic Component', () => {
             expect(comp.ratedData).toEqual([2, 5]);
             expect(comp.unratedData).toEqual([3, 6]);
         });
+    });
+
+    describe('loadNewData', () => {
+        it('should route students back to courses', () => {
+            accountSpy = jest.spyOn(accountService, 'hasAnyAuthorityDirect').mockReturnValue(false);
+            const routerMock = jest.spyOn(router, 'navigate').mockImplementation();
+            jest.spyOn(comp, 'loadData').mockImplementation();
+            const testData = new QuizPointStatistic();
+
+            comp.loadNewData(testData);
+
+            expect(routerMock).toHaveBeenCalledOnce();
+            expect(routerMock).toHaveBeenCalledWith(['courses']);
+        });
+    });
+
+    describe('recalculate', () => {
+        it('should recalculate', fakeAsync(() => {
+            const recalculateMock = jest.spyOn(quizService, 'recalculate').mockReturnValue(of(new HttpResponse({ body: quizExercise })));
+            const loadQuizSucessMock = jest.spyOn(comp, 'loadQuizSuccess').mockImplementation();
+            comp.quizExercise = quizExercise;
+
+            comp.recalculate();
+            tick();
+
+            expect(recalculateMock).toHaveBeenCalledOnce();
+            expect(recalculateMock).toHaveBeenCalledWith(42);
+            expect(loadQuizSucessMock).toHaveBeenCalledOnce();
+            expect(loadQuizSucessMock).toHaveBeenCalledWith(quizExercise);
+        }));
     });
 });

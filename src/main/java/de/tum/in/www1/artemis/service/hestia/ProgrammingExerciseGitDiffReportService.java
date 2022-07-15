@@ -121,8 +121,6 @@ public class ProgrammingExerciseGitDiffReportService {
 
     /**
      * Converts a normal git-diff entry to a full git-diff entry containing the actual code block of the change it represents.
-     * This method should not be called twice for the same programming exercise at the same time, as this will result in
-     * the creation of 2 reports. See https://github.com/ls1intum/Artemis/pull/4893 for more information about it.
      *
      * @param entry The normal git-diff entry
      * @param templateRepoFiles The files of the solution repository
@@ -158,6 +156,8 @@ public class ProgrammingExerciseGitDiffReportService {
      * Updates the ProgrammingExerciseGitDiffReport of a programming exercise.
      * If there were no changes since the last report was created this will not do anything.
      * If there were changes to at least one of the repositories a new report will be created.
+     * This method should not be called twice for the same programming exercise at the same time, as this will result in
+     * the creation of 2 reports. See https://github.com/ls1intum/Artemis/pull/4893 for more information about it.
      *
      * @param programmingExercise The programming exercise
      * @return The git-diff report for the given programming exercise
@@ -196,7 +196,6 @@ public class ProgrammingExerciseGitDiffReportService {
                 programmingExerciseGitDiffReportRepository.delete(existingReport);
             }
             newReport = programmingExerciseGitDiffReportRepository.save(newReport);
-            programmingExercise.setGitDiffReport(newReport);
             programmingExerciseRepository.save(programmingExercise);
             return newReport;
         }

@@ -29,12 +29,6 @@
             "submissionLocked": "submission locked",
             "studentSubmission": "Student submission",
             "instructions": "&nbsp; Instructions &nbsp;",
-            "detail": {
-                "credits": {
-                    "one": "{{credits}} credit",
-                    "many": "{{credits}} credits"
-                }
-            },
             "editor": {
                 "assess": "Assess"
             },
@@ -59,7 +53,7 @@
                     "reused": "Reused {{reusedCount}} times"
                 }
             },
-            "assessmentInstruction": "Please hover over and click on the text block you want to assess.<br>Hold <code>alt</code>/<code>option</code> while selecting a piece of text to assess custom blocks.",
+            "assessmentInstruction": "Please hover over and click on the text block you want to assess.<br>To assess custom text blocks, hold <code>alt</code>/<code>option</code> while clicking in any order on the first and last word of a text segment.",
             "conflict": {
                 "assessor": "Assessor: You",
                 "otherAssessor": "Assessor: {{otherUser}}",

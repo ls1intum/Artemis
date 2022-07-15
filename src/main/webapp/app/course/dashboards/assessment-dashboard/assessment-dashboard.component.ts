@@ -24,7 +24,7 @@ import { TutorLeaderboardElement } from 'app/shared/dashboards/tutor-leaderboard
 import { faSort } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
-    selector: 'jhi-courses',
+    selector: 'jhi-assessment-dashboard',
     templateUrl: './assessment-dashboard.component.html',
     styleUrls: ['./exam-assessment-buttons/exam-assessment-buttons.component.scss'],
     providers: [CourseManagementService],

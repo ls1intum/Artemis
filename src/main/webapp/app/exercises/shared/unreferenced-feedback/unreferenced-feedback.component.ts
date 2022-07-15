@@ -61,7 +61,6 @@ export class UnreferencedFeedbackComponent {
 
     public addUnreferencedFeedback(): void {
         const feedback = new Feedback();
-        feedback.credits = 0;
         feedback.type = FeedbackType.MANUAL_UNREFERENCED;
 
         // Assign the next id to the unreferenced feedback

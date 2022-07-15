@@ -218,7 +218,7 @@ describe('ExampleTextSubmissionComponent', () => {
         const alertErrorSpy = jest.spyOn(alertService, 'error');
         comp.saveAssessments();
 
-        expect(alertErrorSpy).toHaveBeenCalledTimes(1);
+        expect(alertErrorSpy).toHaveBeenCalledOnce();
     });
 
     it('editing submission from assessment state switches state', fakeAsync(() => {
@@ -309,7 +309,7 @@ describe('ExampleTextSubmissionComponent', () => {
         const alertErrorSpy = jest.spyOn(alertService, 'error');
         comp.checkAssessment();
 
-        expect(alertErrorSpy).toHaveBeenCalledTimes(1);
+        expect(alertErrorSpy).toHaveBeenCalledOnce();
     });
 
     it('when wrong tutor assessment, upon server response should mark feedback as incorrect', fakeAsync(() => {
@@ -365,8 +365,8 @@ describe('ExampleTextSubmissionComponent', () => {
         comp.createNewExampleTextSubmission();
         tick();
 
-        expect(createStub).toHaveBeenCalledTimes(1);
-        expect(alertSuccessSpy).toHaveBeenCalledTimes(1);
+        expect(createStub).toHaveBeenCalledOnce();
+        expect(alertSuccessSpy).toHaveBeenCalledOnce();
     }));
 
     it('should not create example submission', fakeAsync(() => {
@@ -378,8 +378,8 @@ describe('ExampleTextSubmissionComponent', () => {
         comp.createNewExampleTextSubmission();
         tick();
 
-        expect(createStub).toHaveBeenCalledTimes(1);
-        expect(alertErrorSpy).toHaveBeenCalledTimes(1);
+        expect(createStub).toHaveBeenCalledOnce();
+        expect(alertErrorSpy).toHaveBeenCalledOnce();
     }));
 
     it('should read and understood', () => {
@@ -398,9 +398,9 @@ describe('ExampleTextSubmissionComponent', () => {
         comp.readAndUnderstood();
 
         // THEN
-        expect(alertSpy).toHaveBeenCalledTimes(1);
+        expect(alertSpy).toHaveBeenCalledOnce();
         expect(alertSpy).toHaveBeenCalledWith('artemisApp.exampleSubmission.readSuccessfully');
-        expect(routerSpy).toHaveBeenCalledTimes(1);
+        expect(routerSpy).toHaveBeenCalledOnce();
     });
 
     it('should go back with exam', fakeAsync(() => {
@@ -462,10 +462,10 @@ describe('ExampleTextSubmissionComponent', () => {
         comp.updateExampleTextSubmission();
 
         // THEN
-        expect(exampleSubmissionServiceSpy).toHaveBeenCalledTimes(1);
+        expect(exampleSubmissionServiceSpy).toHaveBeenCalledOnce();
         expect(comp.exampleSubmission).toEqual(exampleSubmission);
-        expect(comp.unsavedSubmissionChanges).toBe(false);
-        expect(alertSuccessSpy).toHaveBeenCalledTimes(1);
+        expect(comp.unsavedSubmissionChanges).toBeFalse();
+        expect(alertSuccessSpy).toHaveBeenCalledOnce();
         expect(alertSuccessSpy).toHaveBeenCalledWith('artemisApp.exampleSubmission.saveSuccessful');
     });
 

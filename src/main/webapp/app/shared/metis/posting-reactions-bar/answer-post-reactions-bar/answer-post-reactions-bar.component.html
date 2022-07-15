@@ -1,4 +1,4 @@
-<div class="me-0 row justify-content-end">
+<div class="me-0 p-1 row">
     <div class="col-auto p-0" *ngFor="let reactionMetaData of reactionMetaDataMap | keyvalue">
         <button
             class="reaction-button clickable"
@@ -6,7 +6,7 @@
             (click)="updateReaction(reactionMetaData.key)"
             [ngbTooltip]="reactionMetaData.value.reactingUsers | reactingUsersOnPosting | async"
         >
-            <ngx-emoji class="emoji" [emoji]="reactionMetaData.key" [size]="16"> </ngx-emoji>
+            <jhi-emoji [emoji]="reactionMetaData.key"></jhi-emoji>
             <span class="emoji-count" [class.reaction-count--reacted]="reactionMetaData.value.hasReacted">{{ reactionMetaData.value.count }}</span>
         </button>
     </div>
@@ -30,17 +30,18 @@
         [cdkConnectedOverlayOpen]="showReactionSelector"
         (backdropClick)="toggleEmojiSelect()"
     >
-        <emoji-mart
+        <jhi-emoji-picker
             [emojisToShowFilter]="emojisToShowFilter"
             (emojiSelect)="selectReaction($event)"
             [categoriesIcons]="categoriesIcons"
-            [emojiSize]="20"
-            [showSingleCategory]="true"
-            [showPreview]="false"
-            [color]="'#0065bd'"
             [recent]="selectedCourseEmojis"
-            [i18n]="{ search: 'artemisApp.metis.searchEmoji' | artemisTranslate, categories: { recent: 'artemisApp.metis.courseEmojiSelectionCategory' | artemisTranslate } }"
-            [darkMode]="darkModeEmojiPicker"
-        ></emoji-mart>
+        ></jhi-emoji-picker>
     </ng-template>
+    <!-- add new answer to expanded discussion -->
+    <div class="col-auto p-0" *ngIf="isLastAnswer">
+        <button class="reaction-button clickable reply-btn" (click)="openPostingCreateEditModal.emit()">
+            <jhi-emoji [emoji]="speechBalloonId"></jhi-emoji>
+            <span class="emoji-count">{{ 'artemisApp.metis.reply' | artemisTranslate }}</span>
+        </button>
+    </div>
 </div>

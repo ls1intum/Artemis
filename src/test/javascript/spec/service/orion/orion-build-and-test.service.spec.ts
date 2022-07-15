@@ -86,13 +86,13 @@ describe('OrionBuildAndTestService', () => {
 
         serviceUnderTest.listenOnBuildOutputAndForwardChanges(exercise);
 
-        expect(participationSubscriptionStub).toHaveBeenCalledTimes(1);
+        expect(participationSubscriptionStub).toHaveBeenCalledOnce();
         expect(participationSubscriptionStub).toHaveBeenCalledWith(exercise.studentParticipations![0].id, true);
-        expect(onBuildStartedSpy).toHaveBeenCalledTimes(1);
+        expect(onBuildStartedSpy).toHaveBeenCalledOnce();
         expect(onTestResultSpy).not.toHaveBeenCalled();
         expect(onBuildFinishedSpy).not.toHaveBeenCalled();
-        expect(onBuildFailedSpy).toHaveBeenCalledTimes(1);
-        expect(buildLogsStub).toHaveBeenCalledTimes(1);
+        expect(onBuildFailedSpy).toHaveBeenCalledOnce();
+        expect(buildLogsStub).toHaveBeenCalledOnce();
     });
 
     it('should fetch the build logs if submission is available and the submission could not be build', () => {
@@ -104,13 +104,13 @@ describe('OrionBuildAndTestService', () => {
 
         serviceUnderTest.listenOnBuildOutputAndForwardChanges(exercise);
 
-        expect(participationSubscriptionStub).toHaveBeenCalledTimes(1);
+        expect(participationSubscriptionStub).toHaveBeenCalledOnce();
         expect(participationSubscriptionStub).toHaveBeenCalledWith(exercise.studentParticipations![0].id, true);
-        expect(onBuildStartedSpy).toHaveBeenCalledTimes(1);
+        expect(onBuildStartedSpy).toHaveBeenCalledOnce();
         expect(onTestResultSpy).not.toHaveBeenCalled();
         expect(onBuildFinishedSpy).not.toHaveBeenCalled();
-        expect(onBuildFailedSpy).toHaveBeenCalledTimes(1);
-        expect(buildLogsStub).toHaveBeenCalledTimes(1);
+        expect(onBuildFailedSpy).toHaveBeenCalledOnce();
+        expect(buildLogsStub).toHaveBeenCalledOnce();
     });
 
     it('should forward all testcase feedback if build was successful', () => {
@@ -121,11 +121,11 @@ describe('OrionBuildAndTestService', () => {
 
         serviceUnderTest.listenOnBuildOutputAndForwardChanges(exercise);
 
-        expect(participationSubscriptionStub).toHaveBeenCalledTimes(1);
+        expect(participationSubscriptionStub).toHaveBeenCalledOnce();
         expect(participationSubscriptionStub).toHaveBeenCalledWith(exercise.studentParticipations![0].id, true);
-        expect(onBuildStartedSpy).toHaveBeenCalledTimes(1);
+        expect(onBuildStartedSpy).toHaveBeenCalledOnce();
         expect(onTestResultSpy).toHaveBeenCalledTimes(2);
-        expect(onBuildFinishedSpy).toHaveBeenCalledTimes(1);
+        expect(onBuildFinishedSpy).toHaveBeenCalledOnce();
         expect(onBuildFailedSpy).not.toHaveBeenCalled();
         expect(buildLogsStub).not.toHaveBeenCalled();
     });
@@ -138,14 +138,14 @@ describe('OrionBuildAndTestService', () => {
 
         serviceUnderTest.listenOnBuildOutputAndForwardChanges(exercise);
 
-        expect(participationSubscriptionStub).toHaveBeenCalledTimes(1);
+        expect(participationSubscriptionStub).toHaveBeenCalledOnce();
         expect(participationSubscriptionStub).toHaveBeenCalledWith(exercise.studentParticipations![0].id, true);
-        expect(onBuildStartedSpy).toHaveBeenCalledTimes(1);
+        expect(onBuildStartedSpy).toHaveBeenCalledOnce();
         expect(onTestResultSpy).toHaveBeenCalledTimes(2);
         feedbacks.forEach((feedback, index) => {
             expect(onTestResultSpy).toHaveBeenNthCalledWith(index + 1, feedback.positive, feedback.text, feedback.detailText);
         });
-        expect(onBuildFinishedSpy).toHaveBeenCalledTimes(1);
+        expect(onBuildFinishedSpy).toHaveBeenCalledOnce();
         expect(onBuildFailedSpy).not.toHaveBeenCalled();
         expect(buildLogsStub).not.toHaveBeenCalled();
     });
@@ -156,10 +156,10 @@ describe('OrionBuildAndTestService', () => {
 
         serviceUnderTest.buildAndTestExercise(exercise);
 
-        expect(listenOnBuildOutputAndForwardChangesSpy).toHaveBeenCalledTimes(1);
+        expect(listenOnBuildOutputAndForwardChangesSpy).toHaveBeenCalledOnce();
         expect(listenOnBuildOutputAndForwardChangesSpy).toHaveBeenCalledWith(exercise);
 
-        expect(triggerBuildStub).toHaveBeenCalledTimes(1);
+        expect(triggerBuildStub).toHaveBeenCalledOnce();
         expect(triggerBuildStub).toHaveBeenCalledWith(32);
     });
 
@@ -176,7 +176,7 @@ describe('OrionBuildAndTestService', () => {
 
         serviceUnderTest.buildAndTestExercise(exercise);
 
-        expect(resultSubscriptionSpy).toHaveBeenCalledTimes(1);
-        expect(buildLogSubscriptionSpy).toHaveBeenCalledTimes(1);
+        expect(resultSubscriptionSpy).toHaveBeenCalledOnce();
+        expect(buildLogSubscriptionSpy).toHaveBeenCalledOnce();
     });
 });

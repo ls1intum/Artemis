@@ -23,7 +23,7 @@ describe(`BrowserFingerprintInterceptor`, () => {
     });
 
     const testExpectedFingerprintAndInstanceID = (localFingerprint: string, localInstanceIdentifier: string) => {
-        const requestMock = new HttpRequest('GET', `${SERVER_API_URL}/test`);
+        const requestMock = new HttpRequest('GET', `${SERVER_API_URL}test`);
         const cloneSpy = jest.spyOn(requestMock, 'clone');
         const mockHandler = {
             handle: jest.fn(),
@@ -31,14 +31,14 @@ describe(`BrowserFingerprintInterceptor`, () => {
 
         fingerprintInterceptor.intercept(requestMock, mockHandler);
 
-        expect(cloneSpy).toHaveBeenCalledTimes(1);
+        expect(cloneSpy).toHaveBeenCalledOnce();
         expect(cloneSpy).toHaveBeenCalledWith({
             setHeaders: {
                 'X-Artemis-Client-Instance-ID': localInstanceIdentifier,
                 'X-Artemis-Client-Fingerprint': localFingerprint,
             },
         });
-        expect(mockHandler.handle).toHaveBeenCalledTimes(1);
+        expect(mockHandler.handle).toHaveBeenCalledOnce();
     };
 
     it('should add fingerprint and instance ID if request goes to artemis', () => {
@@ -51,7 +51,7 @@ describe(`BrowserFingerprintInterceptor`, () => {
             instanceIdentifier: of(undefined),
         } as any as BrowserFingerprintService);
 
-        const requestMock = new HttpRequest('GET', `${SERVER_API_URL}/test`);
+        const requestMock = new HttpRequest('GET', `${SERVER_API_URL}test`);
         const cloneSpy = jest.spyOn(requestMock, 'clone');
         const mockHandler = {
             handle: jest.fn(),
@@ -60,7 +60,7 @@ describe(`BrowserFingerprintInterceptor`, () => {
         fingerprintInterceptor.intercept(requestMock, mockHandler);
 
         expect(cloneSpy).toHaveBeenCalledTimes(0);
-        expect(mockHandler.handle).toHaveBeenCalledTimes(1);
+        expect(mockHandler.handle).toHaveBeenCalledOnce();
         expect(mockHandler.handle).toHaveBeenCalledWith(requestMock);
     });
 
@@ -74,7 +74,7 @@ describe(`BrowserFingerprintInterceptor`, () => {
         fingerprintInterceptor.intercept(requestMock, mockHandler);
 
         expect(cloneSpy).toHaveBeenCalledTimes(0);
-        expect(mockHandler.handle).toHaveBeenCalledTimes(1);
+        expect(mockHandler.handle).toHaveBeenCalledOnce();
         expect(mockHandler.handle).toHaveBeenCalledWith(requestMock);
     });
 });

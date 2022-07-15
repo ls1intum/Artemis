@@ -69,7 +69,7 @@ describe('TextExercise Import Component', () => {
         comp.clear();
 
         // THEN
-        expect(activeModalSpy).toHaveBeenCalledTimes(1);
+        expect(activeModalSpy).toHaveBeenCalledOnce();
         expect(activeModalSpy).toHaveBeenCalledWith('cancel');
     });
 
@@ -81,7 +81,7 @@ describe('TextExercise Import Component', () => {
         comp.openImport(exercise);
 
         // THEN
-        expect(activeModalSpy).toHaveBeenCalledTimes(1);
+        expect(activeModalSpy).toHaveBeenCalledOnce();
         expect(activeModalSpy).toHaveBeenCalledWith(exercise);
     });
 
@@ -120,7 +120,7 @@ describe('TextExercise Import Component', () => {
         fixture.detectChanges();
         comp.sortRows();
 
-        expect(sortServiceSpy).toHaveBeenCalledTimes(1);
+        expect(sortServiceSpy).toHaveBeenCalledOnce();
         expect(sortServiceSpy).toHaveBeenCalledWith([], comp.column.ID, false);
     });
 
@@ -140,6 +140,6 @@ describe('TextExercise Import Component', () => {
 
         tick(300);
 
-        expect(pagingServiceSpy).toHaveBeenCalledTimes(1);
+        expect(pagingServiceSpy).toHaveBeenCalledOnce();
     }));
 });

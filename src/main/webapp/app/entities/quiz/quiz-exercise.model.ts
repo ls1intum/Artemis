@@ -10,7 +10,7 @@ export enum QuizStatus {
     OPEN_FOR_PRACTICE,
     ACTIVE,
     VISIBLE,
-    HIDDEN,
+    INVISIBLE,
 }
 
 export enum QuizMode {
@@ -28,7 +28,7 @@ export class QuizBatch {
     password?: string;
 
     // local helpers
-    startDateError?: boolean;
+    startTimeError?: boolean;
 }
 
 export class QuizExercise extends Exercise {

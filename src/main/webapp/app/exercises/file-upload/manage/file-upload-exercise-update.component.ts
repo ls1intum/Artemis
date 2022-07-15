@@ -86,7 +86,7 @@ export class FileUploadExerciseUpdateComponent implements OnInit {
                 this.fileUploadExercise.includedInOverallScore = IncludedInOverallScore.INCLUDED_COMPLETELY;
             }
 
-            this.saveCommand = new SaveExerciseCommand(this.modalService, this.popupService, this.fileUploadExerciseService, this.backupExercise, this.editType);
+            this.saveCommand = new SaveExerciseCommand(this.modalService, this.popupService, this.fileUploadExerciseService, this.backupExercise, this.editType, this.alertService);
         });
     }
 
@@ -117,7 +117,7 @@ export class FileUploadExerciseUpdateComponent implements OnInit {
     }
     /**
      * Updates categories for file upload exercise
-     * @param categories list of exercies categories
+     * @param categories list of exercise categories
      */
     updateCategories(categories: ExerciseCategory[]) {
         this.fileUploadExercise.categories = categories;

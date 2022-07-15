@@ -22,38 +22,38 @@ describe('Assessment Service', () => {
         it('should show during assessment', () => {
             const isAllowedBeforeDueDate = isAllowedToModifyFeedback(false, false, true, false, resultLock, undefined, exercise);
             const isAllowedAfterDueDate = isAllowedToModifyFeedback(false, false, true, true, resultLock, undefined, exercise);
-            expect(isAllowedBeforeDueDate).toBe(true);
-            expect(isAllowedAfterDueDate).toBe(true);
+            expect(isAllowedBeforeDueDate).toBeTrue();
+            expect(isAllowedAfterDueDate).toBeTrue();
         });
 
         it('should hide after assessment without complaint', () => {
             const isAllowed = isAllowedToModifyFeedback(false, false, true, true, result, undefined, exercise);
-            expect(isAllowed).toBe(false);
+            expect(isAllowed).toBeFalse();
         });
 
         it('should show correctly after assessment with complaint', () => {
             const isAllowedAssessor = isAllowedToModifyFeedback(false, false, true, true, result, complaint, exercise);
             const isAllowedNotAssessor = isAllowedToModifyFeedback(false, false, false, true, result, complaint, exercise);
-            expect(isAllowedAssessor).toBe(false);
-            expect(isAllowedNotAssessor).toBe(true);
+            expect(isAllowedAssessor).toBeFalse();
+            expect(isAllowedNotAssessor).toBeTrue();
         });
 
         it('should hide for feedback requests', () => {
             complaint.result = result;
             const isAllowed = isAllowedToModifyFeedback(false, false, true, true, result, feedbackRequest, exercise);
-            expect(isAllowed).toBe(false);
+            expect(isAllowed).toBeFalse();
         });
 
         it('should hide if no complaint is set', () => {
             const isAllowed = isAllowedToModifyFeedback(false, false, true, true, result, undefined, exercise);
-            expect(isAllowed).toBe(false);
+            expect(isAllowed).toBeFalse();
         });
 
         it('should show if no complaint is set and the assessment is still running', () => {
             const isAllowedSubmitted = isAllowedToModifyFeedback(false, false, true, false, resultLock, undefined, exercise);
             const isAllowedNotSubmitted = isAllowedToModifyFeedback(false, false, true, false, result, undefined, exercise);
-            expect(isAllowedSubmitted).toBe(true);
-            expect(isAllowedNotSubmitted).toBe(true);
+            expect(isAllowedSubmitted).toBeTrue();
+            expect(isAllowedNotSubmitted).toBeTrue();
         });
     });
 
@@ -61,43 +61,43 @@ describe('Assessment Service', () => {
         it('should allow if is assessor in teammode', () => {
             const isAllowedComplaint = isAllowedToRespondToComplaintAction(false, false, true, complaint, teamExercise);
             const isAllowedFeedbackRequest = isAllowedToRespondToComplaintAction(false, false, true, feedbackRequest, teamExercise);
-            expect(isAllowedComplaint).toBe(true);
-            expect(isAllowedFeedbackRequest).toBe(true);
+            expect(isAllowedComplaint).toBeTrue();
+            expect(isAllowedFeedbackRequest).toBeTrue();
         });
 
         it('should not allow if is not assessor in teammode', () => {
             const isAllowedComplaint = isAllowedToRespondToComplaintAction(false, false, false, complaint, teamExercise);
             const isAllowedFeedbackRequest = isAllowedToRespondToComplaintAction(false, false, false, feedbackRequest, teamExercise);
-            expect(isAllowedComplaint).toBe(false);
-            expect(isAllowedFeedbackRequest).toBe(false);
+            expect(isAllowedComplaint).toBeFalse();
+            expect(isAllowedFeedbackRequest).toBeFalse();
         });
 
         it('should allow for assessor if on a test run', () => {
             const isAllowedAssessor = isAllowedToRespondToComplaintAction(false, true, true, complaint, exercise);
             const isAllowedNotAssessor = isAllowedToRespondToComplaintAction(false, true, false, complaint, exercise);
-            expect(isAllowedAssessor).toBe(true);
-            expect(isAllowedNotAssessor).toBe(false);
+            expect(isAllowedAssessor).toBeTrue();
+            expect(isAllowedNotAssessor).toBeFalse();
         });
 
         it('should allow if assessor is not defined on individual exercises', () => {
             const isAllowedComplaint = isAllowedToRespondToComplaintAction(false, false, true, complaintOnAutomaticResult, exerciseAutomatic);
             const isAllowedFeedbackRequest = isAllowedToRespondToComplaintAction(false, false, true, feedbackRequestOnAutomaticResult, exerciseAutomatic);
-            expect(isAllowedComplaint).toBe(true);
-            expect(isAllowedFeedbackRequest).toBe(true);
+            expect(isAllowedComplaint).toBeTrue();
+            expect(isAllowedFeedbackRequest).toBeTrue();
         });
 
         it('should allow correctly for complaint', () => {
             const isAllowedAssessor = isAllowedToRespondToComplaintAction(false, false, true, complaint, exercise);
             const isAllowedNotAssessor = isAllowedToRespondToComplaintAction(false, false, false, complaint, exercise);
-            expect(isAllowedAssessor).toBe(false);
-            expect(isAllowedNotAssessor).toBe(true);
+            expect(isAllowedAssessor).toBeFalse();
+            expect(isAllowedNotAssessor).toBeTrue();
         });
 
         it('should allow correctly for feedback request', () => {
             const isAllowedAssessor = isAllowedToRespondToComplaintAction(false, false, true, feedbackRequest, exercise);
             const isAllowedNotAssessor = isAllowedToRespondToComplaintAction(false, false, false, feedbackRequest, exercise);
-            expect(isAllowedAssessor).toBe(true);
-            expect(isAllowedNotAssessor).toBe(false);
+            expect(isAllowedAssessor).toBeTrue();
+            expect(isAllowedNotAssessor).toBeFalse();
         });
     });
 });

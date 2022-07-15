@@ -196,7 +196,7 @@ public class FileResource {
      *
      * @param questionId ID of the drag and drop question, the file belongs to
      * @param filename   the filename of the file
-     * @return The requested file, 403 if the logged in user is not allowed to access it, or 404 if the file doesn't exist
+     * @return The requested file, 403 if the logged-in user is not allowed to access it, or 404 if the file doesn't exist
      */
     @GetMapping("files/drag-and-drop/backgrounds/{questionId}/{filename:.+}")
     @PreAuthorize("hasRole('USER')")
@@ -210,7 +210,7 @@ public class FileResource {
      *
      * @param dragItemId ID of the drag item, the file belongs to
      * @param filename   the filename of the file
-     * @return The requested file, 403 if the logged in user is not allowed to access it, or 404 if the file doesn't exist
+     * @return The requested file, 403 if the logged-in user is not allowed to access it, or 404 if the file doesn't exist
      */
     @GetMapping("files/drag-and-drop/drag-items/{dragItemId}/{filename:.+}")
     @PreAuthorize("hasRole('USER')")
@@ -226,7 +226,7 @@ public class FileResource {
      * @param exerciseId id of the exercise, the file belongs to
      * @param filename  the filename of the file
      * @param temporaryAccessToken The access token is required to authenticate the user that accesses it
-     * @return The requested file, 403 if the logged in user is not allowed to access it, or 404 if the file doesn't exist
+     * @return The requested file, 403 if the logged-in user is not allowed to access it, or 404 if the file doesn't exist
      */
     @GetMapping("files/file-upload-exercises/{exerciseId}/submissions/{submissionId}/{filename:.+}")
     @PreAuthorize("permitAll()")
@@ -252,7 +252,7 @@ public class FileResource {
      *
      * @param courseId ID of the course, the image belongs to
      * @param filename the filename of the file
-     * @return The requested file, 403 if the logged in user is not allowed to access it, or 404 if the file doesn't exist
+     * @return The requested file, 403 if the logged-in user is not allowed to access it, or 404 if the file doesn't exist
      */
     @GetMapping("files/course/icons/{courseId}/{filename:.+}")
     @PreAuthorize("hasRole('USER')")
@@ -311,7 +311,7 @@ public class FileResource {
      * @param lectureId ID of the lecture, the attachment belongs to
      * @param filename  the filename of the file
      * @param temporaryAccessToken The access token is required to authenticate the user that accesses it
-     * @return The requested file, 403 if the logged in user is not allowed to access it, or 404 if the file doesn't exist
+     * @return The requested file, 403 if the logged-in user is not allowed to access it, or 404 if the file doesn't exist
      */
     @GetMapping("files/attachments/lecture/{lectureId}/{filename:.+}")
     @PreAuthorize("permitAll()")
@@ -364,13 +364,13 @@ public class FileResource {
                         .toString())
                 .toList();
 
-        Optional<byte[]> file = fileService.mergePdfFiles(attachmentLinks);
+        Optional<byte[]> file = fileService.mergePdfFiles(attachmentLinks, lectureRepository.getLectureTitle(lectureId));
         if (file.isEmpty()) {
-            log.error("Failed to merge PDF lecture units for lecture with id : " + lectureId);
+            log.error("Failed to merge PDF lecture units for lecture with id {}", lectureId);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
-        return ResponseEntity.ok().contentType(MediaType.APPLICATION_PDF).body(file.get());
 
+        return ResponseEntity.ok().contentType(MediaType.APPLICATION_PDF).body(file.get());
     }
 
     /**
@@ -379,7 +379,7 @@ public class FileResource {
      * @param attachmentUnitId     ID of the attachment unit, the attachment belongs to
      * @param filename             the filename of the file
      * @param temporaryAccessToken The access token is required to authenticate the user that accesses it
-     * @return The requested file, 403 if the logged in user is not allowed to access it, or 404 if the file doesn't exist
+     * @return The requested file, 403 if the logged-in user is not allowed to access it, or 404 if the file doesn't exist
      */
     @GetMapping("files/attachments/attachment-unit/{attachmentUnitId}/{filename:.+}")
     @PreAuthorize("permitAll()")
@@ -430,7 +430,7 @@ public class FileResource {
 
     /**
      * Helper method which handles the file creation for both normal file uploads and for markdown
-     * @param file The file to be uplaoded
+     * @param file The file to be uploaded
      * @param keepFileName specifies if original file name should be kept
      * @param markdown boolean which is set to true, when we are uploading a file within the markdown editor
      * @return The path of the file
@@ -531,7 +531,10 @@ public class FileResource {
             HttpHeaders headers = new HttpHeaders();
 
             // attachment will force the user to download the file
-            String contentType = filename.endsWith("htm") || filename.endsWith("html") || filename.endsWith("svg") || filename.endsWith("svgz") ? "attachment" : "inline";
+            String lowerCaseFilename = filename.toLowerCase();
+            String contentType = lowerCaseFilename.endsWith("htm") || lowerCaseFilename.endsWith("html") || lowerCaseFilename.endsWith("svg") || lowerCaseFilename.endsWith("svgz")
+                    ? "attachment"
+                    : "inline";
             headers.setContentDisposition(ContentDisposition.builder(contentType).filename(filename).build());
 
             FileNameMap fileNameMap = URLConnection.getFileNameMap();
@@ -546,7 +549,7 @@ public class FileResource {
             return ResponseEntity.ok().headers(headers).contentType(MediaType.parseMediaType(mimeType)).header("filename", filename).body(file);
         }
         catch (IOException ex) {
-            log.error("Failed to download file: " + filename + "on path: " + path, ex);
+            log.error("Failed to download file: {} on path: {}", filename, path, ex);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }

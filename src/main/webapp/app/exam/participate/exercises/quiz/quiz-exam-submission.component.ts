@@ -143,7 +143,7 @@ export class QuizExamSubmissionComponent extends ExamSubmissionComponent impleme
                     // add the array of selected options to the dictionary (add an empty array, if there is no submittedAnswer for this question)
                     if (submittedAnswer) {
                         const selectedOptions = (submittedAnswer as MultipleChoiceSubmittedAnswer).selectedOptions;
-                        // needs to be cloned, because of two way binding, otherwise -> instant update in submission
+                        // needs to be cloned, because of two-way binding, otherwise -> instant update in submission
                         this.selectedAnswerOptions.set(question.id!, selectedOptions ? cloneDeep(selectedOptions) : []);
                     } else {
                         // not found, set to empty array
@@ -153,7 +153,7 @@ export class QuizExamSubmissionComponent extends ExamSubmissionComponent impleme
                     // add the array of mappings to the dictionary (add an empty array, if there is no submittedAnswer for this question)
                     if (submittedAnswer) {
                         const mappings = (submittedAnswer as DragAndDropSubmittedAnswer).mappings;
-                        // needs to be cloned, because of two way binding, otherwise -> instant update in submission
+                        // needs to be cloned, because of two-way binding, otherwise -> instant update in submission
                         this.dragAndDropMappings.set(question.id!, mappings ? cloneDeep(mappings) : []);
                     } else {
                         // not found, set to empty array
@@ -163,7 +163,7 @@ export class QuizExamSubmissionComponent extends ExamSubmissionComponent impleme
                     // add the array of submitted texts to the dictionary (add an empty array, if there is no submittedAnswer for this question)
                     if (submittedAnswer) {
                         const submittedTexts = (submittedAnswer as ShortAnswerSubmittedAnswer).submittedTexts;
-                        // needs to be cloned, because of two way binding, otherwise -> instant update in submission
+                        // needs to be cloned, because of two-way binding, otherwise -> instant update in submission
                         this.shortAnswerSubmittedTexts.set(question.id!, submittedTexts ? cloneDeep(submittedTexts) : []);
                     } else {
                         // not found, set to empty array

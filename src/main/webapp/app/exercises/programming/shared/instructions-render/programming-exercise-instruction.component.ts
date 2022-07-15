@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnChanges, OnDestroy, Output, SimpleChanges } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, OnDestroy, Output, SimpleChanges, ViewContainerRef } from '@angular/core';
 import { SafeHtml } from '@angular/platform-browser';
 import { TranslateService } from '@ngx-translate/core';
 import { ShowdownExtension } from 'showdown';
@@ -11,7 +11,6 @@ import { ProgrammingExerciseTaskExtensionWrapper } from './extensions/programmin
 import { ProgrammingExercisePlantUmlExtensionWrapper } from 'app/exercises/programming/shared/instructions-render/extensions/programming-exercise-plant-uml.extension';
 import { ProgrammingExerciseInstructionService } from 'app/exercises/programming/shared/instructions-render/service/programming-exercise-instruction.service';
 import { TaskArray, TaskArrayWithExercise } from 'app/exercises/programming/shared/instructions-render/task/programming-exercise-task.model';
-import { ExerciseHint } from 'app/entities/hestia/exercise-hint.model';
 import { Participation } from 'app/entities/participation/participation.model';
 import { Feedback } from 'app/entities/feedback.model';
 import { ResultService } from 'app/exercises/shared/result/result.service';
@@ -19,7 +18,6 @@ import { RepositoryFileService } from 'app/exercises/shared/result/repository.se
 import { problemStatementHasChanged } from 'app/exercises/shared/exercise/exercise.utils';
 import { ProgrammingExerciseParticipationService } from 'app/exercises/programming/manage/services/programming-exercise-participation.service';
 import { Result } from 'app/entities/result.model';
-import { ExerciseHintService } from 'app/exercises/shared/exercise-hint/manage/exercise-hint.service';
 import { findLatestResult } from 'app/shared/util/utils';
 import { faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { hasParticipationChanged } from 'app/exercises/shared/participation/participation.utils';
@@ -32,10 +30,9 @@ import { hasParticipationChanged } from 'app/exercises/shared/participation/part
 export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDestroy {
     @Input() public exercise: ProgrammingExercise;
     @Input() public participation: Participation;
-    @Input() public exerciseHints: ExerciseHint[];
     @Input() generateHtmlEvents: Observable<void>;
     @Input() personalParticipation: boolean;
-    // If there are no instructions available (neither in the exercise problemStatement or the legacy README.md) emits an event
+    // If there are no instructions available (neither in the exercise problemStatement nor the legacy README.md) emits an event
     @Output()
     public onNoInstructionsAvailable = new EventEmitter();
 
@@ -70,6 +67,7 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
     faSpinner = faSpinner;
 
     constructor(
+        public viewContainerRef: ViewContainerRef,
         private translateService: TranslateService,
         private resultService: ResultService,
         private repositoryFileService: RepositoryFileService,
@@ -79,8 +77,9 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
         private programmingExerciseTaskWrapper: ProgrammingExerciseTaskExtensionWrapper,
         private programmingExercisePlantUmlWrapper: ProgrammingExercisePlantUmlExtensionWrapper,
         private programmingExerciseParticipationService: ProgrammingExerciseParticipationService,
-        private exerciseHintService: ExerciseHintService,
-    ) {}
+    ) {
+        this.programmingExerciseTaskWrapper.viewContainerRef = this.viewContainerRef;
+    }
 
     /**
      * If the participation changes, the participation's instructions need to be loaded and the
@@ -92,11 +91,6 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
             .pipe(
                 // Set up the markdown extensions if they are not set up yet so that tasks, UMLs, etc. can be parsed.
                 tap((markdownExtensionsInitialized: boolean) => !markdownExtensionsInitialized && this.setupMarkdownSubscriptions()),
-                switchMap(() => this.loadExerciseHints(this.exercise.id)),
-                tap((hints: ExerciseHint[]) => {
-                    this.exerciseHints = hints;
-                    this.programmingExerciseTaskWrapper.exerciseHints = hints;
-                }),
                 // If the participation has changed, set up the websocket subscriptions.
                 map(() => hasParticipationChanged(changes)),
                 tap((participationHasChanged: boolean) => {
@@ -156,25 +150,6 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
                 }),
             )
             .subscribe();
-    }
-
-    private loadExerciseHints(exerciseId: number | undefined) {
-        if (this.exerciseHints) {
-            return of(this.exerciseHints);
-        }
-
-        if (this.exercise && this.exercise.exerciseHints) {
-            return of(this.exercise.exerciseHints);
-        }
-
-        if (!exerciseId) {
-            return of([]);
-        }
-
-        return this.exerciseHintService.findByExerciseId(exerciseId).pipe(
-            map(({ body }) => body),
-            catchError(() => of([])),
-        );
     }
 
     /**

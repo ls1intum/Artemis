@@ -1,0 +1,105 @@
+<div class="d-flex flex-column mt-3">
+    <jhi-monitoring-box
+        title="{{ 'artemisApp.examMonitoring.menu.activity-log.title' | artemisTranslate }}"
+        description="{{ 'artemisApp.examMonitoring.menu.activity-log.description' | artemisTranslate }}"
+    >
+        <ng-container content>
+            <div class="container-fluid">
+                <div class="row">
+                    <div class="col-xl-6">
+                        <jhi-total-actions-chart></jhi-total-actions-chart>
+                    </div>
+                    <div class="col-xl-6">
+                        <jhi-average-actions-chart [registeredStudents]="this.exam.numberOfRegisteredUsers!"></jhi-average-actions-chart>
+                    </div>
+                </div>
+                <div class="row pt-4">
+                    <div class="col">
+                        <jhi-category-actions-chart></jhi-category-actions-chart>
+                    </div>
+                </div>
+                <div class="row pt-4 separator"></div>
+                <div class="row pt-3">
+                    <jhi-data-table
+                        id="registered-students"
+                        entityType="examAction"
+                        [allEntities]="this.examActionService.cachedExamActions.get(this.examId!) ?? []"
+                        entitiesPerPageTranslation="artemisApp.examMonitoring.menu.activity-log.actionsPerPage"
+                        showAllEntitiesTranslation="artemisApp.examMonitoring.menu.activity-log.showAllActions"
+                        [searchEnabled]="false"
+                    >
+                        <ng-template let-settings="settings" let-controls="controls">
+                            <ngx-datatable
+                                class="bootstrap"
+                                [limit]="settings.limit"
+                                [sortType]="settings.sortType"
+                                [columnMode]="settings.columnMode"
+                                [headerHeight]="settings.headerHeight"
+                                [footerHeight]="settings.footerHeight"
+                                [rowHeight]="settings.rowHeight"
+                                [rows]="settings.rows"
+                                [scrollbarH]="settings.scrollbarH"
+                            >
+                                <!-- We cannot set the maxWidth as undefined, so we have to set a large number -->
+                                <ngx-datatable-column
+                                    *ngFor="let column of this.columns"
+                                    [prop]="column.prop"
+                                    [minWidth]="column.minWidth"
+                                    [width]="column.width"
+                                    [maxWidth]="column.maxWidth ?? 10000"
+                                >
+                                    <ng-template ngx-datatable-header-template>
+                                        <span class="datatable-header-cell-wrapper" (click)="controls.onSort(column.prop)">
+                                            <span class="datatable-header-cell-label bold sortable" [jhiTranslate]="'artemisApp.examMonitoring.menu.activity-log.' + column.prop">
+                                                {{ column.prop }}
+                                            </span>
+                                            <fa-icon [icon]="controls.iconForSortPropField(column.prop)"></fa-icon>
+                                        </span>
+                                    </ng-template>
+                                    <ng-template ngx-datatable-cell-template let-row="row" let-value="value">
+                                        <span *ngIf="!column.template">{{ value }}</span>
+                                        <container-element *ngIf="column.template" [ngSwitch]="column.template">
+                                            <ng-container *ngSwitchCase="'timestampRef'">
+                                                <ng-template *ngTemplateOutlet="timestampRef; context: { timestamp: value }"></ng-template>
+                                            </ng-container>
+                                            <ng-container *ngSwitchCase="'detailRef'">
+                                                <ng-template *ngTemplateOutlet="detailRef; context: { value: row }"></ng-template>
+                                            </ng-container>
+                                        </container-element>
+                                    </ng-template>
+                                </ngx-datatable-column>
+                            </ngx-datatable>
+                        </ng-template>
+                    </jhi-data-table>
+                </div>
+            </div>
+        </ng-container>
+    </jhi-monitoring-box>
+</div>
+
+<ng-template #timestampRef let-timestamp="timestamp">
+    <span>{{ this.artemisDatePipe.transform(timestamp, 'time', true) }}</span>
+</ng-template>
+
+<ng-template #detailRef let-value="value">
+    <container-element [ngSwitch]="value.type">
+        <div *ngSwitchCase="'STARTED_EXAM'">
+            <span>Session ID: {{ value.sessionId }}</span>
+        </div>
+        <div *ngSwitchCase="'ENDED_EXAM'"><span>---</span></div>
+        <div *ngSwitchCase="'HANDED_IN_EARLY'"><span>---</span></div>
+        <div *ngSwitchCase="'CONTINUED_AFTER_HAND_IN_EARLY'"><span>---</span></div>
+        <div *ngSwitchCase="'SWITCHED_EXERCISE'">
+            <span>Exercise ID: {{ value.exerciseId }}</span>
+        </div>
+        <div *ngSwitchCase="'SAVED_EXERCISE'">
+            <span
+                >Exercise ID: {{ value.exerciseId }} | Submission ID: {{ value.submissionId }} | Forced: {{ value.forced }} | Failed: {{ value.failed }} | Automatically:
+                {{ value.automatically }}</span
+            >
+        </div>
+        <div *ngSwitchCase="'CONNECTION_UPDATED'">
+            <span>Connected: {{ value.connected }}</span>
+        </div>
+    </container-element>
+</ng-template>

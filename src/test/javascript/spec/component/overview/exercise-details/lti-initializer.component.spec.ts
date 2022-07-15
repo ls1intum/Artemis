@@ -64,7 +64,7 @@ describe('LtiInitializerComponent', () => {
         initializeLTIUserStub.mockReturnValue(of({ body: { password: returnedPassword } }));
 
         comp.ngOnInit();
-        expect(initializeLTIUserStub).toHaveBeenCalledTimes(1);
+        expect(initializeLTIUserStub).toHaveBeenCalledOnce();
         expect(infoSpy).not.toHaveBeenCalled();
         expect(navigateSpy).not.toHaveBeenCalled();
         expect(comp.modalRef).not.toBe(undefined); // External reference
@@ -75,9 +75,9 @@ describe('LtiInitializerComponent', () => {
         initializeLTIUserStub.mockReturnValue(of({ body: { password: undefined } }));
 
         comp.ngOnInit();
-        expect(initializeLTIUserStub).toHaveBeenCalledTimes(1);
-        expect(infoSpy).toHaveBeenCalledTimes(1);
-        expect(navigateSpy).toHaveBeenCalledTimes(1);
+        expect(initializeLTIUserStub).toHaveBeenCalledOnce();
+        expect(infoSpy).toHaveBeenCalledOnce();
+        expect(navigateSpy).toHaveBeenCalledOnce();
         expect(comp.modalRef).toBe(undefined);
     });
 });

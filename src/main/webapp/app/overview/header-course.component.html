@@ -1,0 +1,17 @@
+<div class="course-info-bar" [ngStyle]="{ backgroundColor: course.color || ARTEMIS_DEFAULT_COLOR }" id="course-detail-info-bar">
+    <div class="row">
+        <div class="col general-info">
+            <h3 class="fw-medium" [class.mb-0]="!courseDescription">{{ course.title }}</h3>
+            <ng-container *ngIf="courseDescription">
+                <h5 class="fw-medium">{{ courseDescription }}</h5>
+                <h6 class="fw-medium" role="button" *ngIf="enableShowMore" (click)="toggleCourseDescription()">
+                    {{ 'artemisApp.courseOverview.' + (longDescriptionShown ? 'showLess' : 'showMore') | artemisTranslate }}
+                </h6>
+            </ng-container>
+        </div>
+        <div class="col-2 d-none d-lg-flex justify-content-end course-icon" *ngIf="course.courseIcon">
+            <jhi-secured-image [src]="course.courseIcon" [cachingStrategy]="CachingStrategy.LOCAL_STORAGE" [alt]="'artemisApp.courseOverview.noCourseIcon' | artemisTranslate">
+            </jhi-secured-image>
+        </div>
+    </div>
+</div>

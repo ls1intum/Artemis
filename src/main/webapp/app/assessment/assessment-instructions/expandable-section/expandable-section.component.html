@@ -1,13 +1,13 @@
-<h5 *ngIf="hasTranslation === false && headerKey !== null && isSubHeader === false" class="expandable-header" (click)="isCollapsed = !isCollapsed">
+<h5 *ngIf="hasTranslation === false && headerKey !== null && isSubHeader === false" class="expandable-header" (click)="toggleCollapsed()">
     {{ headerKey }}
     <fa-icon [icon]="isCollapsed ? faAngleRight : faAngleDown"></fa-icon>
 </h5>
 
-<h5 *ngIf="hasTranslation === true && headerKey !== null && isSubHeader === false" class="expandable-header" (click)="isCollapsed = !isCollapsed">
+<h5 *ngIf="hasTranslation === true && headerKey !== null && isSubHeader === false" class="expandable-header" (click)="toggleCollapsed()">
     {{ headerKey | artemisTranslate }}
     <fa-icon [icon]="isCollapsed ? faAngleRight : faAngleDown"></fa-icon>
 </h5>
-<h6 *ngIf="hasTranslation === false && headerKey !== null && isSubHeader === true" class="expandable-header" (click)="isCollapsed = !isCollapsed">
+<h6 *ngIf="hasTranslation === false && headerKey !== null && isSubHeader === true" class="expandable-header" (click)="toggleCollapsed()">
     {{ headerKey }}
     <fa-icon [icon]="isCollapsed ? faAngleRight : faAngleDown"></fa-icon>
 </h6>

@@ -382,7 +382,7 @@ public class GroupNotificationFactoryTest {
 
     /**
      * Tests the functionality that deals with notifications that have the notification type of NEW_REPLY_FOR_EXERCISE_POST.
-     * I.e. notifications that originate from a new reply for a exercise post.
+     * I.e. notifications that originate from a new reply for an exercise post.
      */
     @Test
     public void createNotificationBasedOnAnswerPost_withNotificationType_NewReplyForExercisePost() {

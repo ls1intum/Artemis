@@ -1,83 +1,114 @@
-<div class="row mb-3">
-    <div class="col-md-2 d-flex">
-        <div class="row flex-grow-1">
-            <div class="col-md-8 d-flex flex-column">
-                <h3>{{ 'artemisApp.course.averageScore' | artemisTranslate }}</h3>
-                <h4>{{ 'artemisApp.courseStatistics.courseAverage' | artemisTranslate }}: {{ courseAverage }}%</h4>
-            </div>
-            <fa-icon
-                *ngIf="currentSize > 10 && currentPeriod > 0"
-                [icon]="faArrowLeft"
-                size="3x"
-                class="col-md-4 d-flex justify-content-end align-items-center"
-                role="button"
-                (click)="switchTimeSpan(LEFT)"
-            ></fa-icon>
-        </div>
+<div class="row mb-3 d-flex justify-content-center">
+    <div class="col-xl-1 d-flex flex-column">
+        <h3>{{ 'artemisApp.course.averageScore' | artemisTranslate }}</h3>
+        <h4>{{ 'artemisApp.courseStatistics.courseAverage' | artemisTranslate }}: {{ courseAverage }}%</h4>
     </div>
-    <div #containerRef class="col-md-8">
-        <ngx-charts-bar-vertical
-            [view]="[containerRef.offsetWidth, 300]"
-            [results]="ngxData"
-            [scheme]="ngxColor"
-            [yScaleMax]="100"
-            [xAxis]="true"
-            [yAxis]="true"
-            [yAxisTickFormatting]="yAxisTickFormatting"
-            [dataLabelFormatting]="formatDataLabel"
-            [showDataLabel]="true"
-            (select)="onSelect($event)"
-            class="row"
-        >
-            <ng-template #tooltipTemplate let-model="model">
-                <b>{{ model.name }}</b> <br />
-                <span>{{ 'artemisApp.courseStatistics.exerciseAverage' | artemisTranslate }}: {{ model.value }}%</span> <br />
-                <b
-                    >{{ 'artemisApp.courseStatistics.exerciseType' | artemisTranslate }}:
-                    {{ 'artemisApp.courseStatistics.' + convertTypeForTooltip(model.name, model.value) | artemisTranslate }}</b
-                >
-            </ng-template>
-        </ngx-charts-bar-vertical>
-    </div>
-    <fa-icon
-        *ngIf="currentSize > 10 + currentPeriod; else placeholder"
-        [icon]="faArrowRight"
-        size="3x"
-        class="col d-flex align-items-center switch-forward"
-        role="button"
-        (click)="switchTimeSpan(RIGHT)"
-    ></fa-icon>
-    <ng-template #placeholder>
-        <div class="switch-forward-placeholder"></div>
-    </ng-template>
-    <div class="col d-flex flex-column align-items-center justify-content-center ms-4">
-        <div *ngIf="typeSet.size > 0" class="filter mb-3" aria-label="Filter Dropdown" ngbDropdown>
-            <button
-                class="btn"
-                [ngClass]="{ 'btn-secondary': numberOfActiveFilters === 0, 'btn-success': numberOfActiveFilters > 0 }"
-                ngbDropdownToggle
-                id="filter-dropdown-button"
+    <div class="row col-xl-11 chart-row">
+        <fa-icon
+            [icon]="faArrowLeft"
+            size="2x"
+            class="col-1 d-flex align-items-center justify-content-end"
+            role="button"
+            (click)="switchTimeSpan(LEFT)"
+            [class.hidden]="!(currentSize > maxSpanSize && currentPeriod > 0)"
+        ></fa-icon>
+        <div #containerRef class="col-lg-8 ps-0 chart-container">
+            <ngx-charts-bar-vertical
+                [view]="[containerRef.offsetWidth, 300]"
+                [results]="ngxData"
+                [scheme]="ngxColor"
+                [yScaleMax]="100"
+                [xAxis]="true"
+                [yAxis]="true"
+                [yAxisTickFormatting]="yAxisTickFormatting"
+                [dataLabelFormatting]="formatDataLabel"
+                [showDataLabel]="true"
+                (select)="onSelect($event)"
             >
-                <fa-icon [icon]="faFilter"></fa-icon>
-                <span>{{ 'artemisApp.courseOverview.exerciseList.filter' | artemisTranslate: { num: numberOfActiveFilters } }}</span>
-            </button>
-            <ul ngbDropdownMenu class="checkbox-menu text-nowrap pe-2" aria-labelledby="filter-dropdown-button">
-                <li>
-                    <b class="ms-2">{{ 'artemisApp.exercise-scores-chart.includeType' | artemisTranslate }}</b>
-                </li>
-                <li *ngFor="let type of typeSet">
-                    <label>
-                        <input class="ms-2 form-check-input" (change)="toggleType(type)" [checked]="chartFilter.get(convertToMapKey(type))" type="checkbox" />
-                        <span class="ms-2">{{ 'artemisApp.exercise-scores-chart.' + type.toLowerCase() + 'Plural' | artemisTranslate }}</span>
-                    </label>
-                </li>
-            </ul>
+                <ng-template #tooltipTemplate let-model="model">
+                    <b>{{ model.name }}</b> <br />
+                    <span>{{ 'artemisApp.courseStatistics.exerciseAverage' | artemisTranslate }}: {{ model.value }}%</span> <br />
+                    <b
+                        >{{ 'artemisApp.courseStatistics.exerciseType' | artemisTranslate }}:
+                        {{ 'artemisApp.courseStatistics.' + convertTypeForTooltip(model.name, model.value) | artemisTranslate }}</b
+                    >
+                </ng-template>
+            </ngx-charts-bar-vertical>
         </div>
-        <div class="d-flex align-items-center">
-            <div class="legend-container">
-                <div *ngFor="let interval of performanceIntervals" class="legend-entry" (click)="togglePerformanceInterval(interval)">
-                    <div class="color-legend" [ngClass]="displayColorMap.get(interval)!"></div>
-                    <span>{{ 'artemisApp.courseStatistics.chartLegend.' + interval | artemisTranslate }}</span>
+        <fa-icon
+            [icon]="faArrowRight"
+            size="2x"
+            class="col-1 d-flex align-items-center switch-forward"
+            role="button"
+            (click)="switchTimeSpan(RIGHT)"
+            [class.hidden]="!(currentSize > maxSpanSize + currentPeriod)"
+        ></fa-icon>
+        <ng-template #placeholder>
+            <div class="switch-forward-placeholder"></div>
+        </ng-template>
+        <div class="col-lg-2 d-flex flex-column align-items-center justify-content-center">
+            <div *ngIf="typeFilter.typeSet.size > 0" class="filter my-3" aria-label="Filter Dropdown" ngbDropdown>
+                <button
+                    class="btn"
+                    [class.btn-secondary]="!(chartCategoryFilter.numberOfActiveFilters + typeFilter.numberOfActiveFilters)"
+                    [class.btn-success]="chartCategoryFilter.numberOfActiveFilters + typeFilter.numberOfActiveFilters > 0"
+                    ngbDropdownToggle
+                    id="filter-dropdown-button"
+                >
+                    <fa-icon [icon]="faFilter"></fa-icon>
+                    <span>{{
+                        'artemisApp.courseOverview.exerciseList.filter' | artemisTranslate: { num: typeFilter.numberOfActiveFilters + chartCategoryFilter.numberOfActiveFilters }
+                    }}</span>
+                </button>
+                <ul ngbDropdownMenu class="checkbox-menu text-nowrap pe-2" aria-labelledby="filter-dropdown-button">
+                    <li *ngIf="typeFilter.typeSet.size">
+                        <b class="ms-2">{{ 'artemisApp.exercise-scores-chart.includeType' | artemisTranslate }}</b>
+                    </li>
+                    <li *ngFor="let type of typeFilter.typeSet">
+                        <label>
+                            <input class="ms-2 form-check-input" (change)="toggleType(type)" [checked]="typeFilter.getCurrentFilterState(convertToMapKey(type))" type="checkbox" />
+                            <span class="ms-2">{{ 'artemisApp.exercise-scores-chart.' + type.toLowerCase() + 'Plural' | artemisTranslate }}</span>
+                        </label>
+                    </li>
+                    <li class="mt-1 mb-1">
+                        <b class="ms-2">{{ 'artemisApp.courseOverview.statistics.includeIndividualCategories' | artemisTranslate }}</b>
+                    </li>
+                    <li>
+                        <label class="mb-1">
+                            <input class="ms-2 form-check-input" (change)="toggleAllCategories()" [checked]="chartCategoryFilter.allCategoriesSelected" type="checkbox" />
+                            <b class="ms-2">{{ 'artemisApp.courseOverview.statistics.includeAllCategories' | artemisTranslate }}</b>
+                        </label>
+                    </li>
+                    <li *ngIf="chartCategoryFilter.exercisesWithoutCategoriesPresent">
+                        <label>
+                            <input
+                                class="ms-2 form-check-input"
+                                (change)="toggleExercisesWithNoCategory()"
+                                [checked]="chartCategoryFilter.includeExercisesWithNoCategory"
+                                type="checkbox"
+                            />
+                            <span class="ms-2">{{ 'artemisApp.courseOverview.statistics.exercisesWithNoCategories' | artemisTranslate }}</span>
+                        </label>
+                    </li>
+                    <li *ngFor="let category of chartCategoryFilter.exerciseCategories">
+                        <label>
+                            <input
+                                class="ms-2 form-check-input"
+                                (change)="toggleCategory(category)"
+                                [checked]="chartCategoryFilter.getCurrentFilterState(category)"
+                                type="checkbox"
+                            />
+                            <span class="ms-2">{{ category }}</span>
+                        </label>
+                    </li>
+                </ul>
+            </div>
+            <div class="d-flex align-items-center">
+                <div class="legend-container">
+                    <div *ngFor="let interval of performanceIntervals" class="legend-entry" (click)="togglePerformanceInterval(interval)">
+                        <div class="color-legend" [ngClass]="displayColorMap.get(interval)!"></div>
+                        <span>{{ 'artemisApp.courseStatistics.chartLegend.' + interval | artemisTranslate }}</span>
+                    </div>
                 </div>
             </div>
         </div>

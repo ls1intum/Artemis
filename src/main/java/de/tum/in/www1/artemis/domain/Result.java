@@ -1,8 +1,8 @@
 package de.tum.in.www1.artemis.domain;
 
+import static de.tum.in.www1.artemis.config.Constants.SIZE_OF_UNSIGNED_TINYINT;
 import static de.tum.in.www1.artemis.service.util.RoundingUtil.*;
 
-import java.text.DecimalFormat;
 import java.time.ZonedDateTime;
 import java.util.*;
 
@@ -36,10 +36,6 @@ import de.tum.in.www1.artemis.service.listeners.ResultListener;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class Result extends DomainObject {
 
-    @Column(name = "result_string")
-    @JsonView(QuizView.After.class)
-    private String resultString;
-
     @Column(name = "completion_date")
     @JsonView(QuizView.Before.class)
     private ZonedDateTime completionDate;
@@ -68,7 +64,7 @@ public class Result extends DomainObject {
     private Boolean rated;
 
     // This explicit flag exists intentionally, as sometimes a Result is loaded from the database without
-    // loading it's Feedback list. In this case you still want to know, if Feedback for this Result exists
+    // loading its Feedback list. In this case you still want to know if Feedback for this Result exists
     // without querying the server/database again.
     // IMPORTANT: Please note, that this flag should only be used for Programming Exercises at the moment
     // all other exercise types should set this flag to false
@@ -106,71 +102,22 @@ public class Result extends DomainObject {
     @Column(name = "example_result")
     private Boolean exampleResult;
 
+    // The following attributes are only used for Programming Exercises
+    @Column(name = "test_case_count")
+    private Integer testCaseCount = 0;
+
+    @Column(name = "passed_test_case_count")
+    private Integer passedTestCaseCount = 0;
+
+    @Column(name = "code_issue_count")
+    private Integer codeIssueCount = 0;
+
     // This attribute is required to forward the coverage file reports after creating the build result. This is required in order to
     // delay referencing the corresponding test cases from the entries because the test cases are not saved in the database
     // at this point of time but the required test case name would be lost, otherwise.
     @Transient
     @JsonIgnore
     private Map<String, Set<CoverageFileReport>> fileReportsByTestCaseName;
-
-    public String getResultString() {
-        return resultString;
-    }
-
-    public Result resultString(String resultString) {
-        this.resultString = resultString;
-        return this;
-    }
-
-    public void setResultString(String resultString) {
-        this.resultString = resultString;
-    }
-
-    /**
-     * Sets the resultString attribute
-     *
-     * @param totalPoints total amount of points between 0 and maxPoints
-     * @param maxPoints   maximum points reachable at corresponding exercise
-     */
-    public void setResultString(double totalPoints, double maxPoints) {
-        resultString = createResultString(totalPoints, maxPoints);
-    }
-
-    /**
-     * Sets the resultString attribute
-     *
-     * @param totalPoints total amount of points between 0 and maxPoints
-     * @param maxPoints   maximum points reachable at corresponding exercise
-     * @param course      the course that specifies the accuracy of the score
-     */
-    public void setResultString(double totalPoints, double maxPoints, Course course) {
-        resultString = createResultString(totalPoints, maxPoints, course);
-    }
-
-    /**
-     * Builds the resultString attribute
-     *
-     * @param totalPoints total amount of scored points
-     * @param maxPoints   maximum score reachable at corresponding exercise
-     * @return String with result string in this format "2 of 13 points"
-     */
-    public String createResultString(double totalPoints, double maxPoints) {
-        return createResultString(totalPoints, maxPoints, participation.getExercise().getCourseViaExerciseGroupOrCourseMember());
-    }
-
-    /**
-     * Builds the resultString attribute, e.g. "4.2 of 69 points"
-     *
-     * @param totalPoints total amount of scored points
-     * @param maxPoints   maximum score reachable at corresponding exercise
-     * @param course      the course that specifies the accuracy of the score
-     * @return String with result string in this format "2 of 13 points"
-     */
-    public String createResultString(double totalPoints, double maxPoints, Course course) {
-        double pointsRounded = roundScoreSpecifiedByCourseSettings(totalPoints, course);
-        DecimalFormat formatter = new DecimalFormat("#.#");
-        return formatter.format(pointsRounded) + " of " + formatter.format(maxPoints) + " points";
-    }
 
     public ZonedDateTime getCompletionDate() {
         return completionDate;
@@ -208,7 +155,7 @@ public class Result extends DomainObject {
     }
 
     /**
-     * This explicit flag exists intentionally, as sometimes a Result is loaded from the database without loading it's Feedback list. In this case you still want to know, if
+     * This explicit flag exists intentionally, as sometimes a Result is loaded from the database without loading its Feedback list. In this case you still want to know, if
      * Feedback for this Result exists without querying the server/database again. IMPORTANT: Please note, that this flag should only be used for Programming Exercises at the
      * moment all other exercise types should set this flag to false
      *
@@ -219,7 +166,7 @@ public class Result extends DomainObject {
     }
 
     /**
-     * This explicit flag exists intentionally, as sometimes a Result is loaded from the database without loading it's Feedback list. In this case you still want to know, if
+     * This explicit flag exists intentionally, as sometimes a Result is loaded from the database without loading its Feedback list. In this case you still want to know, if
      * Feedback for this Result exists without querying the server/database again. IMPORTANT: Please note, that this flag should only be used for Programming Exercises at the
      * moment all other exercise types should set this flag to false
      *
@@ -230,7 +177,7 @@ public class Result extends DomainObject {
     }
 
     /**
-     * This explicit flag exists intentionally, as sometimes a Result is loaded from the database without loading it's Feedback list. In this case you still want to know, if
+     * This explicit flag exists intentionally, as sometimes a Result is loaded from the database without loading its Feedback list. In this case you still want to know, if
      * Feedback for this Result exists without querying the server/database again. IMPORTANT: Please note, that this flag should only be used for Programming Exercises at the
      * moment all other exercise types should set this flag to false
      *
@@ -243,8 +190,8 @@ public class Result extends DomainObject {
     }
 
     /**
-     * 1. set score and round it to 4 decimal places
-     * 2. set successful = true, if score >= 100 or false if not
+     * Sets the score to the specified score rounded to 4 decimal places.
+     * If you are handling student results that potentially need rounding, use {@link Result#setScore(Double score, Course course)} instead!
      *
      * @param score new score
      */
@@ -266,21 +213,8 @@ public class Result extends DomainObject {
      */
     public void setScore(Double score, Course course) {
         if (score != null) {
-            // We need to round the score to four decimal places to have a score of 99.999999 to be rounded to 100.0.
-            // Otherwise, a result would not be successful.
-            this.score = roundScoreSpecifiedByCourseSettings(score, course);
-            this.successful = this.score >= 100.0;
+            setScore(roundScoreSpecifiedByCourseSettings(score, course));
         }
-    }
-
-    /**
-     * calculates and sets the score attribute and accordingly the successful flag
-     *
-     * @param totalPoints total amount of points between 0 and maxPoints
-     * @param maxPoints   maximum points reachable at corresponding exercise
-     */
-    public void setScore(double totalPoints, double maxPoints) {
-        setScore(totalPoints / maxPoints * 100);
     }
 
     /**
@@ -385,7 +319,7 @@ public class Result extends DomainObject {
                 continue;
             }
             if (feedback.getCredits() != null) {
-                feedback.setPositive(feedback.getCredits() >= 0);
+                feedback.setPositiveViaCredits();
             }
             else {
                 feedback.setCredits(0.0);
@@ -418,7 +352,7 @@ public class Result extends DomainObject {
      * Checks for a new feedback if the score or text has changed compared to the already existing feedback for the same element.
      */
     private boolean feedbackHasChanged(Feedback feedback) {
-        if (this.feedbacks == null || this.feedbacks.size() == 0) {
+        if (this.feedbacks == null || this.feedbacks.isEmpty()) {
             return false;
         }
         return this.feedbacks.stream().filter(existingFeedback -> existingFeedback.getReference() != null && existingFeedback.getReference().equals(feedback.getReference()))
@@ -505,6 +439,30 @@ public class Result extends DomainObject {
         this.exampleResult = exampleResult;
     }
 
+    public Integer getTestCaseCount() {
+        return testCaseCount;
+    }
+
+    public void setTestCaseCount(int testCaseCount) {
+        this.testCaseCount = Math.min(testCaseCount, SIZE_OF_UNSIGNED_TINYINT);
+    }
+
+    public Integer getPassedTestCaseCount() {
+        return passedTestCaseCount;
+    }
+
+    public void setPassedTestCaseCount(int passedTestCaseCount) {
+        this.passedTestCaseCount = Math.min(passedTestCaseCount, SIZE_OF_UNSIGNED_TINYINT);
+    }
+
+    public Integer getCodeIssueCount() {
+        return codeIssueCount;
+    }
+
+    public void setCodeIssueCount(int codeIssueCount) {
+        this.codeIssueCount = Math.min(codeIssueCount, SIZE_OF_UNSIGNED_TINYINT);
+    }
+
     public Map<String, Set<CoverageFileReport>> getCoverageFileReportsByTestCaseName() {
         return fileReportsByTestCaseName;
     }
@@ -518,15 +476,13 @@ public class Result extends DomainObject {
     /**
      * Updates the attributes "score" and "successful" by evaluating its submission
      */
-    public void evaluateSubmission() {
+    public void evaluateQuizSubmission() {
         if (submission instanceof QuizSubmission quizSubmission) {
             // get the exercise this result belongs to
             StudentParticipation studentParticipation = (StudentParticipation) getParticipation();
             QuizExercise quizExercise = (QuizExercise) studentParticipation.getExercise();
             // update score
-            setScore(quizExercise.getScoreForSubmission(quizSubmission));
-            // update result string
-            setResultString(quizExercise.getScoreInPointsForSubmission(quizSubmission), quizExercise.getOverallQuizPoints());
+            setScore(quizExercise.getScoreForSubmission(quizSubmission), quizExercise.getCourseViaExerciseGroupOrCourseMember());
         }
     }
 
@@ -574,8 +530,9 @@ public class Result extends DomainObject {
 
     @Override
     public String toString() {
-        return "Result{" + "id=" + getId() + ", resultString='" + resultString + '\'' + ", completionDate=" + completionDate + ", successful=" + successful + ", score=" + score
-                + ", rated=" + rated + ", hasFeedback=" + hasFeedback + ", assessmentType=" + assessmentType + ", hasComplaint=" + hasComplaint + '}';
+        return "Result{" + "id" + getId() + ", completionDate=" + completionDate + ", successful=" + successful + ", score=" + score + ", rated=" + rated + ", hasFeedback="
+                + hasFeedback + ", assessmentType=" + assessmentType + ", hasComplaint=" + hasComplaint + ", testCaseCount=" + testCaseCount + ", passedTestCaseCount="
+                + passedTestCaseCount + ", codeIssueCount=" + codeIssueCount + '}';
     }
 
     /**
@@ -609,7 +566,7 @@ public class Result extends DomainObject {
         /*
          * Calculated score from automatic test feedbacks, is capped to max points + bonus points, see also see {@link ProgrammingExerciseGradingService#updateScore}
          */
-        double maxPoints = programmingExercise.getMaxPoints() + Optional.ofNullable(programmingExercise.getBonusPoints()).orElse(0.0);
+        double maxPoints = programmingExercise.getMaxPoints() + Objects.requireNonNullElse(programmingExercise.getBonusPoints(), 0.0);
         if (scoreAutomaticTests > maxPoints) {
             scoreAutomaticTests = maxPoints;
         }
@@ -626,17 +583,21 @@ public class Result extends DomainObject {
     }
 
     /**
-     * calculates the score and the result string for programming exercises
-     * @param maxPoints the max points of the exercise
+     * calculates the score for programming exercises
+     * @param exercise the exercise
      */
-    public void calculateScoreForProgrammingExercise(Double maxPoints) {
+    public void calculateScoreForProgrammingExercise(ProgrammingExercise exercise) {
         double totalPoints = calculateTotalPointsForProgrammingExercises();
-        setScore(totalPoints, maxPoints);
+        setScore(totalPoints, exercise.getMaxPoints(), exercise.getCourseViaExerciseGroupOrCourseMember());
+    }
 
-        // Result string has following structure e.g: "1 of 13 passed, 2 issues, 10 of 100 points"
-        // The last part of the result string has to be updated, as the points the student has achieved have changed
-        String[] resultStringParts = getResultString().split(", ");
-        resultStringParts[resultStringParts.length - 1] = createResultString(totalPoints, maxPoints);
-        setResultString(String.join(", ", resultStringParts));
+    /**
+     * Copies the relevant counters for programming exercises i.e. amount of (passed) test cases and code issues into this result
+     * @param originalResult the source for the values
+     */
+    public void copyProgrammingExerciseCounters(Result originalResult) {
+        setTestCaseCount(originalResult.getTestCaseCount());
+        setPassedTestCaseCount(originalResult.getPassedTestCaseCount());
+        setCodeIssueCount(originalResult.getCodeIssueCount());
     }
 }

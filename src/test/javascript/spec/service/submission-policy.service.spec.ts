@@ -10,7 +10,7 @@ describe('Submission Policy Service', () => {
     let submissionPolicyService: SubmissionPolicyService;
     let lockRepositoryPolicy: LockRepositoryPolicy;
     let programmingExercise: ProgrammingExercise;
-    const expectedUrl = SERVER_API_URL + '/api/programming-exercises/1/submission-policy';
+    const expectedUrl = SERVER_API_URL + 'api/programming-exercises/1/submission-policy';
     const statusOk = { status: 200 };
 
     beforeEach(() => {
@@ -40,7 +40,7 @@ describe('Submission Policy Service', () => {
             tick();
 
             const request = httpMock.expectOne({ method: 'POST', url: expectedUrl });
-            expect(lockRepositoryPolicy.active).toBe(false);
+            expect(lockRepositoryPolicy.active).toBeFalse();
             request.flush(lockRepositoryPolicy);
             tick();
 
@@ -81,7 +81,7 @@ describe('Submission Policy Service', () => {
 
         it('should issue delete request', fakeAsync(() => {
             const removePolicySubscription = submissionPolicyService.removeSubmissionPolicyFromProgrammingExercise(programmingExercise.id!).subscribe((response) => {
-                expect(response.ok).toBe(true);
+                expect(response.ok).toBeTrue();
             });
             tick();
 
@@ -94,7 +94,7 @@ describe('Submission Policy Service', () => {
 
         it('should issue enable request', fakeAsync(() => {
             const removePolicySubscription = submissionPolicyService.enableSubmissionPolicyOfProgrammingExercise(programmingExercise.id!).subscribe((response) => {
-                expect(response.ok).toBe(true);
+                expect(response.ok).toBeTrue();
             });
             tick();
 
@@ -106,7 +106,7 @@ describe('Submission Policy Service', () => {
 
         it('should issue disable request', fakeAsync(() => {
             const removePolicySubscription = submissionPolicyService.disableSubmissionPolicyOfProgrammingExercise(programmingExercise.id!).subscribe((response) => {
-                expect(response.ok).toBe(true);
+                expect(response.ok).toBeTrue();
             });
             tick();
 

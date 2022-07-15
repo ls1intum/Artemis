@@ -1,5 +1,52 @@
 {
     "userManagement": {
+        "batch": {
+            "all": "All",
+            "delete": {
+                "question": "Are you sure you want to permanently delete <strong>{{ title }}</strong> users? This action can NOT be undone!",
+                "typeNumberToConfirm": "Please type in the number of users to confirm."
+            },
+            "deleted": "Deleted {{ param }} Users"
+        },
+        "filter": {
+            "modal": {
+                "open": "Filter ({{ num }})",
+                "title": "Filter User",
+                "close": "Close"
+            },
+            "authority": {
+                "title": "Role ({{ num }})",
+                "tooltip": "Filter the users according to their permissions",
+                "admin": "Admin",
+                "instructor": "Instructor",
+                "editor": "Editor",
+                "ta": "Tutor",
+                "user": "Student",
+                "without": "No Role",
+                "withoutTooltip": "Select all users without any role"
+            },
+            "origin": {
+                "title": "Origin ({{ num }})",
+                "tooltip": "Filters the users based on their administrative location",
+                "internal": "Internal",
+                "external": "External"
+            },
+            "status": {
+                "title": "Status ({{ num }})",
+                "tooltip": "Filter the users based on their account status",
+                "activated": "Activated",
+                "deactivated": "Deactivated"
+            },
+            "course": {
+                "title": "Course ({{ num }})",
+                "tooltip": "Filters the users according to their course affiliation",
+                "without": "No Course",
+                "withoutTooltip": "Select all users without any course"
+            },
+            "apply": "Apply",
+            "all": "All",
+            "none": "None"
+        },
         "home": {
             "title": "Users",
             "createLabel": "Create a new user",

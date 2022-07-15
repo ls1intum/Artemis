@@ -24,6 +24,8 @@ public interface CoverageReportRepository extends JpaRepository<CoverageReport, 
 
     Boolean existsBySubmissionId(@Param("submissionId") Long submissionId);
 
+    void deleteBySubmissionId(Long submissionId);
+
     @Query("""
             SELECT DISTINCT r FROM CoverageReport r
             LEFT JOIN FETCH r.submission s

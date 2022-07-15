@@ -17,19 +17,19 @@ export class ComplaintResponseService {
     constructor(private http: HttpClient, private accountService: AccountService) {}
 
     /**
-     * Checks if a complaint response is locked for the currently logged in user
+     * Checks if a complaint response is locked for the currently logged-in user
      *
      * A complaint response is never locked for the creator of the complaint response and for instructors
      *
      * @param complaintResponse complaint response to check the lock status for
-     * @param exercise exercise used to find out if currently logged in user is instructor
+     * @param exercise exercise used to find out if currently logged-in user is instructor
      */
     isComplaintResponseLockedForLoggedInUser(complaintResponse: ComplaintResponse, exercise: Exercise): boolean {
         return !this.accountService.isAtLeastInstructorForExercise(exercise) && !this.isComplaintResponseLockedByLoggedInUser(complaintResponse);
     }
 
     /**
-     * Checks if the lock on a complaint response is active and if the currently logged in user is the creator of the lock
+     * Checks if the lock on a complaint response is active and if the currently logged-in user is the creator of the lock
      * @param complaintResponse complaint response to check
      */
     isComplaintResponseLockedByLoggedInUser(complaintResponse: ComplaintResponse): boolean {
@@ -69,7 +69,7 @@ export class ComplaintResponseService {
 
     public convertDateFromClient(complaintResponse: ComplaintResponse): ComplaintResponse {
         return Object.assign({}, complaintResponse, {
-            submittedTime: complaintResponse.submittedTime != undefined && dayjs(complaintResponse.submittedTime).isValid ? complaintResponse.submittedTime.toJSON() : undefined,
+            submittedTime: complaintResponse.submittedTime != undefined && dayjs(complaintResponse.submittedTime).isValid() ? complaintResponse.submittedTime.toJSON() : undefined,
         });
     }
 

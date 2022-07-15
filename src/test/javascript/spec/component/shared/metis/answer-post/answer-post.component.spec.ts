@@ -8,6 +8,7 @@ import { AnswerPostHeaderComponent } from 'app/shared/metis/posting-header/answe
 import { AnswerPostFooterComponent } from 'app/shared/metis/posting-footer/answer-post-footer/answer-post-footer.component';
 import { PostingContentComponent } from 'app/shared/metis/posting-content/posting-content.components';
 import { metisResolvingAnswerPostUser1 } from '../../../../helpers/sample/metis-sample-data';
+import { AnswerPostCreateEditModalComponent } from 'app/shared/metis/posting-create-edit-modal/answer-post-create-edit-modal/answer-post-create-edit-modal.component';
 
 describe('AnswerPostComponent', () => {
     let component: AnswerPostComponent;
@@ -21,6 +22,7 @@ describe('AnswerPostComponent', () => {
                 MockPipe(HtmlForMarkdownPipe),
                 MockComponent(AnswerPostHeaderComponent),
                 MockComponent(PostingContentComponent),
+                MockComponent(AnswerPostCreateEditModalComponent),
                 MockComponent(AnswerPostFooterComponent),
             ],
         })
@@ -34,12 +36,21 @@ describe('AnswerPostComponent', () => {
 
     it('should contain an answer post header', () => {
         const header = getElement(debugElement, 'jhi-answer-post-header');
-        expect(header).toBeDefined();
+        expect(header).not.toBeNull();
+    });
+
+    it('should contain reference to container for rendering answerPostCreateEditModal component', () => {
+        expect(component.containerRef).not.toBeNull();
+    });
+
+    it('should contain component to edit answer post', () => {
+        const answerPostCreateEditModal = getElement(debugElement, 'jhi-answer-post-create-edit-modal');
+        expect(answerPostCreateEditModal).not.toBeNull();
     });
 
     it('should contain an answer post footer', () => {
         const footer = getElement(debugElement, 'jhi-answer-post-footer');
-        expect(footer).toBeDefined();
+        expect(footer).not.toBeNull();
     });
 
     it('should have correct content', () => {

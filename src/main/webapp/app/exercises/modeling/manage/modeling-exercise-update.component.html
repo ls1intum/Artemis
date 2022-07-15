@@ -2,7 +2,7 @@
     <div>
         <h4 *ngIf="!modelingExercise.id" id="jhi-modeling-exercise-heading-create" jhiTranslate="artemisApp.modelingExercise.home.createLabel">Create a new Modeling Exercise</h4>
         <h4 *ngIf="!isImport && modelingExercise.id" id="jhi-modeling-exercise-heading-edit" jhiTranslate="artemisApp.modelingExercise.home.editLabel">Edit a Modeling Exercise</h4>
-        <h4 *ngIf="isImport" id="jhi-modeling-exercise-heading-import" jhiTranslate="artemisApp.modelingExercise.home.importLabel"></h4>
+        <h4 *ngIf="isImport" id="jhi-modeling-exercise-heading-import" jhiTranslate="artemisApp.modelingExercise.home.importLabel">Import Modeling Exercise</h4>
     </div>
     <div>
         <div class="form-group" [hidden]="!modelingExercise.id">
@@ -72,6 +72,7 @@
             <div>
                 <jhi-included-in-overall-score-picker
                     [(includedInOverallScore)]="modelingExercise.includedInOverallScore"
+                    (includedInOverallScoreChange)="validateDate()"
                     [allowNotIncluded]="!isExamMode"
                     id="modeling-includeInScore-picker"
                 ></jhi-included-in-overall-score-picker>
@@ -194,7 +195,12 @@
                 name="exampleSolutionPublicationDate"
                 labelName="{{ 'artemisApp.exercise.exampleSolutionPublicationDate' | artemisTranslate }}"
                 [(ngModel)]="modelingExercise.exampleSolutionPublicationDate"
+                [error]="modelingExercise.exampleSolutionPublicationDateError!"
+                (valueChange)="validateDate()"
             ></jhi-date-time-picker>
+            <span *ngIf="modelingExercise.exampleSolutionPublicationDateError" class="invalid-feedback">{{
+                'artemisApp.exercise.exampleSolutionPublicationDateError' | artemisTranslate
+            }}</span>
         </div>
         <div class="form-group" *ngIf="!modelingExercise.id || isImport">
             <label class="form-control-label" jhiTranslate="artemisApp.modelingExercise.exampleSubmissions">Example submissions</label>
@@ -211,7 +217,13 @@
         </button>
         <button
             type="button"
-            [disabled]="editForm.form.invalid || isSaving || modelingExercise.dueDateError || modelingExercise.assessmentDueDateError"
+            [disabled]="
+                editForm.form.invalid ||
+                isSaving ||
+                modelingExercise.dueDateError ||
+                modelingExercise.assessmentDueDateError ||
+                modelingExercise.exampleSolutionPublicationDateError
+            "
             class="btn btn-primary"
             id="modeling-exercise-creation-save"
             (click)="save()"

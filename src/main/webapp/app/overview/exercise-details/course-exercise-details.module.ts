@@ -25,6 +25,7 @@ import { SubmissionResultStatusModule } from 'app/overview/submission-result-sta
 import { LtiInitializerComponent } from 'app/overview/exercise-details/lti-initializer.component';
 import { LtiInitializerModalComponent } from 'app/overview/exercise-details/lti-initializer-modal.component';
 import { ArtemisProgrammingExerciseManagementModule } from 'app/exercises/programming/manage/programming-exercise-management.module';
+import { ArtemisExerciseHintParticipationModule } from 'app/exercises/shared/exercise-hint/participate/exercise-hint-participation.module';
 
 const routes: Routes = [
     {
@@ -66,6 +67,7 @@ const routes: Routes = [
         ArtemisMarkdownModule,
         SubmissionResultStatusModule,
         ArtemisProgrammingExerciseManagementModule,
+        ArtemisExerciseHintParticipationModule,
     ],
     declarations: [CourseExerciseDetailsComponent, OrionCourseExerciseDetailsComponent, LtiInitializerComponent, LtiInitializerModalComponent],
     exports: [CourseExerciseDetailsComponent, OrionCourseExerciseDetailsComponent],

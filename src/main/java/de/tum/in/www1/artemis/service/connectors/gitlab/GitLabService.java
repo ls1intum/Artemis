@@ -37,8 +37,9 @@ import de.tum.in.www1.artemis.domain.Commit;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
+import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.exception.VersionControlException;
-import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.UrlService;
 import de.tum.in.www1.artemis.service.connectors.AbstractVersionControlService;
 import de.tum.in.www1.artemis.service.connectors.ConnectorHealth;
@@ -69,8 +70,9 @@ public class GitLabService extends AbstractVersionControlService {
     private final ScheduledExecutorService scheduler;
 
     public GitLabService(UserRepository userRepository, @Qualifier("shortTimeoutGitlabRestTemplate") RestTemplate shortTimeoutRestTemplate, GitLabApi gitlab, UrlService urlService,
-            GitLabUserManagementService gitLabUserManagementService, GitService gitService, ApplicationContext applicationContext) {
-        super(applicationContext, gitService, urlService);
+            GitLabUserManagementService gitLabUserManagementService, GitService gitService, ApplicationContext applicationContext,
+            ProgrammingExerciseStudentParticipationRepository studentParticipationRepository, ProgrammingExerciseRepository programmingExerciseRepository) {
+        super(applicationContext, gitService, urlService, studentParticipationRepository, programmingExerciseRepository);
         this.userRepository = userRepository;
         this.shortTimeoutRestTemplate = shortTimeoutRestTemplate;
         this.gitlab = gitlab;
@@ -79,8 +81,8 @@ public class GitLabService extends AbstractVersionControlService {
     }
 
     @Override
-    public void configureRepository(ProgrammingExercise exercise, VcsRepositoryUrl repositoryUrl, Set<User> users, boolean allowAccess) {
-        for (User user : users) {
+    public void configureRepository(ProgrammingExercise exercise, ProgrammingExerciseStudentParticipation participation, boolean allowAccess) {
+        for (User user : participation.getStudents()) {
             String username = user.getLogin();
 
             // This is a failsafe in case a user was not created in VCS on registration
@@ -91,15 +93,15 @@ public class GitLabService extends AbstractVersionControlService {
             if (allowAccess && !Boolean.FALSE.equals(exercise.isAllowOfflineIde())) {
                 // only add access to the repository if the offline IDE usage is NOT explicitly disallowed
                 // NOTE: null values are interpreted as offline IDE is allowed
-                addMemberToRepository(repositoryUrl, user);
+                addMemberToRepository(participation.getVcsRepositoryUrl(), user);
             }
 
             // Validate that the access token exist, if it is required
             gitLabUserManagementService.generateVersionControlAccessTokenIfNecessary(user);
         }
 
-        var defaultBranch = getDefaultBranchOfRepository(repositoryUrl);
-        protectBranch(repositoryUrl, defaultBranch);
+        String branch = getOrRetrieveBranchOfStudentParticipation(participation);
+        protectBranch(participation.getVcsRepositoryUrl(), branch);
     }
 
     @Override
@@ -108,7 +110,7 @@ public class GitLabService extends AbstractVersionControlService {
         final var userId = gitLabUserManagementService.getUserId(user.getLogin());
 
         try {
-            log.info("repositoryPath: " + repositoryPath + ", userId: " + userId);
+            log.info("repositoryPath: {}, userId: {}", repositoryPath, userId);
             gitlab.getProjectApi().addMember(repositoryPath, userId, DEVELOPER);
         }
         catch (GitLabApiException e) {
@@ -186,7 +188,7 @@ public class GitLabService extends AbstractVersionControlService {
      * @param repositoryPath The id of the repository
      * @param branch         The branch to protect
      * @param delayTime      Time until the call is executed
-     * @param delayTimeUnit  The unit of the time (e.g seconds, minutes)
+     * @param delayTimeUnit  The unit of the time (e.g. seconds, minutes)
      */
     private void protectBranch(String repositoryPath, String branch, Long delayTime, TimeUnit delayTimeUnit) {
         scheduler.schedule(() -> {
@@ -213,7 +215,7 @@ public class GitLabService extends AbstractVersionControlService {
      * @param repositoryPath The id of the repository
      * @param branch         The branch to unprotect
      * @param delayTime      Time until the call is executed
-     * @param delayTimeUnit  The unit of the time (e.g seconds, minutes)
+     * @param delayTimeUnit  The unit of the time (e.g. seconds, minutes)
      */
     private void unprotectBranch(String repositoryPath, String branch, Long delayTime, TimeUnit delayTimeUnit) {
         scheduler.schedule(() -> {
@@ -233,7 +235,7 @@ public class GitLabService extends AbstractVersionControlService {
         final var projectKey = exercise.getProjectKey();
 
         // Optional webhook from the version control system to the continuous integration system
-        // This allows the continuous integration system to immediately build when new commits are pushed (in contrast to pulling regurlarly)
+        // This allows the continuous integration system to immediately build when new commits are pushed (in contrast to pulling regularly)
         final var templatePlanNotificationUrl = getContinuousIntegrationService().getWebHookUrl(projectKey, exercise.getTemplateParticipation().getBuildPlanId());
         final var solutionPlanNotificationUrl = getContinuousIntegrationService().getWebHookUrl(projectKey, exercise.getSolutionParticipation().getBuildPlanId());
         if (templatePlanNotificationUrl.isPresent() && solutionPlanNotificationUrl.isPresent()) {
@@ -249,7 +251,7 @@ public class GitLabService extends AbstractVersionControlService {
             super.addWebHookForParticipation(participation);
 
             // Optional webhook from the version control system to the continuous integration system
-            // This allows the continuous integration system to immediately build when new commits are pushed (in contrast to pulling regurlarly)
+            // This allows the continuous integration system to immediately build when new commits are pushed (in contrast to pulling regularly)
             getContinuousIntegrationService().getWebHookUrl(participation.getProgrammingExercise().getProjectKey(), participation.getBuildPlanId())
                     .ifPresent(hookUrl -> addAuthenticatedWebHook(participation.getVcsRepositoryUrl(), hookUrl, "Artemis trigger to CI", ciToken));
         }
@@ -279,7 +281,7 @@ public class GitLabService extends AbstractVersionControlService {
             gitlab.getGroupApi().deleteGroup(projectKey);
         }
         catch (GitLabApiException e) {
-            // Do not throw an exception if we try to delete a non-existant repository.
+            // Do not throw an exception if we try to delete a non-existent repository.
             if (e.getHttpStatus() != 404) {
                 throw new GitLabException("Unable to delete group in GitLab: " + projectKey, e);
             }
@@ -294,7 +296,7 @@ public class GitLabService extends AbstractVersionControlService {
             gitlab.getProjectApi().deleteProject(repositoryPath);
         }
         catch (GitLabApiException e) {
-            // Do not throw an exception if we try to delete a non-existant repository.
+            // Do not throw an exception if we try to delete a non-existent repository.
             if (e.getHttpStatus() != HttpStatus.SC_NOT_FOUND) {
                 throw new GitLabException("Error trying to delete repository on GitLab: " + repositoryName, e);
             }
@@ -327,14 +329,22 @@ public class GitLabService extends AbstractVersionControlService {
     public Commit getLastCommitDetails(Object requestBody) throws VersionControlException {
         final var details = GitLabPushNotificationDTO.convert(requestBody);
         final var commit = new Commit();
-        // We will notify for every commit, so we can just use the first commit in the notification list
-        final var gitLabCommit = details.getCommits().get(0);
-        commit.setMessage(gitLabCommit.getMessage());
-        commit.setAuthorEmail(gitLabCommit.getAuthor().getEmail());
-        commit.setAuthorName(gitLabCommit.getAuthor().getName());
-        final var ref = details.getRef().split("/");
-        commit.setBranch(ref[ref.length - 1]);
-        commit.setCommitHash(gitLabCommit.getHash());
+        // Gitlab specifically provide the previous latest commit and the new latest commit after the given push event
+        // Here we retrieve the hash of the new latest commit
+        final var gitLabCommitHash = details.getNewHash();
+        commit.setCommitHash(gitLabCommitHash);
+        // Here we search for the commit details for the given commit hash
+        // Technically these details should always be present but as this could change, we handle the edge case
+        final var firstMatchingCommit = details.getCommits().stream().filter(com -> gitLabCommitHash.equals(com.getHash())).findFirst();
+        if (firstMatchingCommit.isPresent()) {
+            // Fill commit with commit details
+            final var gitLabCommit = firstMatchingCommit.get();
+            commit.setMessage(gitLabCommit.getMessage());
+            commit.setAuthorEmail(gitLabCommit.getAuthor().getEmail());
+            commit.setAuthorName(gitLabCommit.getAuthor().getName());
+            final var ref = details.getRef().split("/");
+            commit.setBranch(ref[ref.length - 1]);
+        }
 
         return commit;
     }
@@ -416,7 +426,7 @@ public class GitLabService extends AbstractVersionControlService {
                 gitLabUserManagementService.addUserToGroupsOfExercises(userId, List.of(exercise), accessLevel);
             }
             catch (GitLabException e) {
-                // ignore the exception and continue with the next user, one non existing user or issue here should not
+                // ignore the exception and continue with the next user, one non-existing user or issue here should not
                 // prevent the creation of the whole programming exercise
                 log.warn("Skipped adding user {} to groups of exercise {}: {}", user.getLogin(), exercise, e.getMessage());
             }
@@ -456,7 +466,7 @@ public class GitLabService extends AbstractVersionControlService {
     }
 
     /**
-     * Updates the acess level of the user if it's a member of the repository.
+     * Updates the access level of the user if it's a member of the repository.
      *
      * @param repositoryUrl The url of the repository
      * @param username      the username of the gitlab user

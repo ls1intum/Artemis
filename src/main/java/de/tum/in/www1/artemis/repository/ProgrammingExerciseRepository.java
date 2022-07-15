@@ -85,6 +85,17 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
     Set<ProgrammingExercise> findAllWithEagerTestCases();
 
     /**
+     * Returns all programming exercises with their hints and tasks
+     * @return all programming exercises
+     */
+    @Query("""
+            SELECT p FROM ProgrammingExercise p
+            LEFT JOIN FETCH p.tasks
+            LEFT JOIN FETCH p.exerciseHints
+            """)
+    Set<ProgrammingExercise> findAllWithEagerTasksAndHints();
+
+    /**
      * Get a programmingExercise with template and solution participation, each with the latest result and feedbacks.
      *
      * @param exerciseId the id of the exercise that should be fetched.
@@ -213,20 +224,15 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
      */
     @Query("""
             SELECT pe FROM ProgrammingExercise pe
-            WHERE pe.shortName IS NOT NULL AND (
-                pe.id IN (
-                    SELECT coursePe.id
-                    FROM ProgrammingExercise coursePe
+            WHERE (pe.id IN
+                    (SELECT coursePe.id FROM ProgrammingExercise coursePe
                     WHERE (coursePe.course.instructorGroupName IN :groups OR coursePe.course.editorGroupName IN :groups)
-                        AND (coursePe.title LIKE %:partialTitle% OR coursePe.course.title LIKE %:partialCourseTitle%)
-                ) OR pe.id IN (
-                    SELECT examPe.id
-                    FROM ProgrammingExercise examPe
-                    WHERE (examPe.exerciseGroup.exam.course.instructorGroupName IN :groups OR examPe.exerciseGroup.exam.course.editorGroupName IN :groups)
-                        AND (examPe.title LIKE %:partialTitle% OR examPe.exerciseGroup.exam.course.title LIKE %:partialCourseTitle%)
-                )
-            )
-            """)
+                    AND (coursePe.title LIKE %:partialTitle% OR coursePe.course.title LIKE %:partialCourseTitle%))
+                OR pe.id IN
+                    (SELECT coursePe.id FROM ProgrammingExercise coursePe
+                    WHERE (coursePe.exerciseGroup.exam.course.instructorGroupName IN :groups OR coursePe.exerciseGroup.exam.course.editorGroupName IN :groups)
+                    AND (coursePe.title LIKE %:partialTitle% OR coursePe.exerciseGroup.exam.course.title LIKE %:partialCourseTitle%)))
+                        """)
     Page<ProgrammingExercise> findByTitleInExerciseOrCourseAndUserHasAccessToCourse(@Param("partialTitle") String partialTitle,
             @Param("partialCourseTitle") String partialCourseTitle, @Param("groups") Set<String> groups, Pageable pageable);
 
@@ -242,7 +248,8 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
             LEFT JOIN FETCH p.solutionParticipation
             LEFT JOIN FETCH p.auxiliaryRepositories
             LEFT JOIN FETCH p.tasks t
-            LEFT JOIN FETCH t.testCases
+            LEFT JOIN FETCH t.testCases tc
+            LEFT JOIN FETCH tc.solutionEntries
             WHERE p.id = :#{#exerciseId}
             """)
     Optional<ProgrammingExercise> findByIdWithEagerTestCasesStaticCodeAnalysisCategoriesHintsAndTemplateAndSolutionParticipationsAndAuxReposAndTasksWithTestCases(

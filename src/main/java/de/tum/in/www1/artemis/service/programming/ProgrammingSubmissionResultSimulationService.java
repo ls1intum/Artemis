@@ -62,7 +62,7 @@ public class ProgrammingSubmissionResultSimulationService {
      * This functionality is only for testing purposes (noVersionControlAndContinuousIntegrationAvailable)
      * @param programmingExercise the used programmingExercise
      * @param participant the participant object of the user
-     * @param user the user who wants to particpate
+     * @param user the user who wants to participate
      * @return the newly created and stored participation
      */
     public ProgrammingExerciseStudentParticipation createParticipation(ProgrammingExercise programmingExercise, Participant participant, User user) {
@@ -122,7 +122,6 @@ public class ProgrammingSubmissionResultSimulationService {
         result.setSubmission(programmingSubmission.get());
         result.setParticipation(programmingExerciseStudentParticipation);
         result.setRated(true);
-        result.resultString("7 of 13 passed");
         result.setScore(7.0 / 13.0);
         result.setAssessmentType(AssessmentType.AUTOMATIC);
         result.setCompletionDate(ZonedDateTime.now());
@@ -137,7 +136,7 @@ public class ProgrammingSubmissionResultSimulationService {
      * @param result for which the feedback should be created
      * @param methodName of the testcase
      * @param positive is the testcase positive or not
-     * @param errorMessageString will only added if the test case fails otherwise use null
+     * @param errorMessageString will only be added if the test case fails otherwise use null
      */
     public void createFeedback(Result result, String methodName, boolean positive, @Nullable String errorMessageString) {
         Feedback feedback = new Feedback();

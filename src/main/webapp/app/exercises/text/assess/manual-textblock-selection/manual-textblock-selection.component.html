@@ -10,8 +10,6 @@
     ></jhi-textblock-assessment-card>
     <ng-template #selectionInterface>
         <!-- DO NOT ADD LINEBREAKS INSIDE <jhi-manual-text-selection> -->
-        <jhi-manual-text-selection [positionRelative]="true" (assess)="handleTextSelection($event, group)"
-            ><span [textContent]="group.getText(submission)"></span
-        ></jhi-manual-text-selection>
+        <jhi-manual-text-selection [submission]="submission" [words]="group" [textBlockRefGroup]="group" (didSelectWord)="handleTextSelection($event)"></jhi-manual-text-selection>
     </ng-template>
 </ng-container>

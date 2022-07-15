@@ -11,6 +11,7 @@ export enum ActionType {
     Remove = 'remove',
     Unlink = 'unlink',
     NoButtonTextDelete = 'noButtonTextDelete',
+    EndNow = 'endNow',
 }
 
 /**
@@ -33,7 +34,7 @@ export class DeleteDialogData {
     // object with check name as a key and i18n key as a value, check names will be used for the return statement
     additionalChecks?: { [key: string]: string };
 
-    // type of the the action that delete dialog will handle
+    // type of the action that the delete dialog will handle
     actionType: ActionType;
 
     // output event passed to the delete dialog component

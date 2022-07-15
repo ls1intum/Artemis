@@ -99,7 +99,7 @@ public class UMLAttribute extends UMLElement implements Serializable {
 
     @Override
     public String toString() {
-        return "Attribute " + name + (attributeType != null && !"".equals(attributeType) ? ": " + attributeType : "") + " in class " + parentElement.getName();
+        return "Attribute " + name + (attributeType != null && !attributeType.isEmpty() ? ": " + attributeType : "") + " in class " + parentElement.getName();
     }
 
     @Override

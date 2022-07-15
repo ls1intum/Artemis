@@ -44,20 +44,29 @@ import de.tum.in.www1.artemis.domain.enumeration.*;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
+import de.tum.in.www1.artemis.domain.hestia.CodeHint;
 import de.tum.in.www1.artemis.domain.hestia.ExerciseHint;
+import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseSolutionEntry;
+import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseTask;
 import de.tum.in.www1.artemis.domain.lecture.*;
 import de.tum.in.www1.artemis.domain.metis.*;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.*;
+import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismCase;
 import de.tum.in.www1.artemis.domain.plagiarism.modeling.ModelingPlagiarismResult;
 import de.tum.in.www1.artemis.domain.plagiarism.text.TextPlagiarismResult;
 import de.tum.in.www1.artemis.domain.quiz.*;
 import de.tum.in.www1.artemis.domain.submissionpolicy.SubmissionPolicy;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.hestia.CodeHintRepository;
 import de.tum.in.www1.artemis.repository.hestia.ExerciseHintRepository;
+import de.tum.in.www1.artemis.repository.hestia.ProgrammingExerciseSolutionEntryRepository;
+import de.tum.in.www1.artemis.repository.hestia.ProgrammingExerciseTaskRepository;
 import de.tum.in.www1.artemis.repository.metis.AnswerPostRepository;
 import de.tum.in.www1.artemis.repository.metis.PostRepository;
+import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismCaseRepository;
+import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismResultRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.user.PasswordService;
@@ -104,6 +113,9 @@ public class DatabaseUtilService {
     private LectureRepository lectureRepo;
 
     @Autowired
+    private LearningGoalRepository learningGoalRepo;
+
+    @Autowired
     private ExerciseRepository exerciseRepo;
 
     @Autowired
@@ -138,6 +150,9 @@ public class DatabaseUtilService {
 
     @Autowired
     private StudentParticipationRepository studentParticipationRepo;
+
+    @Autowired
+    private PlagiarismCaseRepository plagiarismCaseRepository;
 
     @Autowired
     private PlagiarismResultRepository plagiarismResultRepo;
@@ -236,6 +251,9 @@ public class DatabaseUtilService {
     private VideoUnitRepository videoUnitRepository;
 
     @Autowired
+    private OnlineUnitRepository onlineUnitRepository;
+
+    @Autowired
     private OrganizationRepository organizationRepository;
 
     @Autowired
@@ -249,6 +267,15 @@ public class DatabaseUtilService {
 
     @Autowired
     private SubmissionPolicyRepository submissionPolicyRepository;
+
+    @Autowired
+    private ProgrammingExerciseTaskRepository programmingExerciseTaskRepository;
+
+    @Autowired
+    private ProgrammingExerciseSolutionEntryRepository solutionEntryRepository;
+
+    @Autowired
+    private CodeHintRepository codeHintRepository;
 
     @Autowired
     private RatingRepository ratingRepo;
@@ -449,6 +476,14 @@ public class DatabaseUtilService {
         return createCourseWithOrganizations("organization1", "org1", "org.org", "This is organization1", null, "^.*@matching.*$");
     }
 
+    public LearningGoal createLearningGoal(Course course) {
+        LearningGoal learningGoal = new LearningGoal();
+        learningGoal.setTitle("Example Competency");
+        learningGoal.setDescription("Magna pars studiorum, prodita quaerimus.");
+        learningGoal.setCourse(course);
+        return learningGoalRepo.save(learningGoal);
+    }
+
     public TextExercise createIndividualTextExercise(Course course, ZonedDateTime pastTimestamp, ZonedDateTime futureTimestamp, ZonedDateTime futureFutureTimestamp) {
         TextExercise textExercise = ModelFactory.generateTextExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, course);
         textExercise.setMaxPoints(10.0);
@@ -556,7 +591,7 @@ public class DatabaseUtilService {
     }
 
     public Lecture addLectureUnitsToLecture(Lecture lecture, Set<LectureUnit> lectureUnits) {
-        Lecture l = lectureRepo.findByIdWithPostsAndLectureUnitsAndLearningGoals(lecture.getId()).get();
+        Lecture l = lectureRepo.findByIdWithLectureUnits(lecture.getId()).get();
         for (LectureUnit lectureUnit : lectureUnits) {
             l.addLectureUnit(lectureUnit);
         }
@@ -592,6 +627,13 @@ public class DatabaseUtilService {
         videoUnit.setDescription("Lorem Ipsum");
         videoUnit.setSource("http://video.fake");
         return videoUnitRepository.save(videoUnit);
+    }
+
+    public OnlineUnit createOnlineUnit() {
+        OnlineUnit onlineUnit = new OnlineUnit();
+        onlineUnit.setDescription("Lorem Ipsum");
+        onlineUnit.setSource("http://video.fake");
+        return onlineUnitRepository.save(onlineUnit);
     }
 
     public List<Course> createCoursesWithExercisesAndLectures(boolean withParticipations) throws Exception {
@@ -749,6 +791,11 @@ public class DatabaseUtilService {
 
         courseRepo.save(course1);
 
+        PlagiarismCase plagiarismCase = new PlagiarismCase();
+        plagiarismCase.setExercise(textExercise);
+        plagiarismCase.setStudent(userRepo.findOneByLogin("student1").get());
+        plagiarismCase = plagiarismCaseRepository.save(plagiarismCase);
+
         List<Post> posts = new ArrayList<>();
 
         // add posts to exercise
@@ -757,8 +804,12 @@ public class DatabaseUtilService {
         // add posts to lecture
         posts.addAll(createBasicPosts(lecture));
 
+        // add post to plagiarismCase
+        posts.add(createBasicPost(plagiarismCase));
+
         // add posts to course with different course-wide contexts provided in input array
-        CourseWideContext[] courseWideContexts = new CourseWideContext[] { CourseWideContext.ORGANIZATION, CourseWideContext.RANDOM, CourseWideContext.TECH_SUPPORT };
+        CourseWideContext[] courseWideContexts = new CourseWideContext[] { CourseWideContext.ORGANIZATION, CourseWideContext.RANDOM, CourseWideContext.TECH_SUPPORT,
+                CourseWideContext.ANNOUNCEMENT };
         posts.addAll(createBasicPosts(course1, courseWideContexts));
 
         return posts;
@@ -806,9 +857,15 @@ public class DatabaseUtilService {
         return posts;
     }
 
+    private Post createBasicPost(PlagiarismCase plagiarismCase) {
+        Post postToAdd = createBasicPost(0);
+        postToAdd.setPlagiarismCase(plagiarismCase);
+        return postRepository.save(postToAdd);
+    }
+
     private List<Post> createBasicPosts(Course courseContext, CourseWideContext[] courseWideContexts) {
         List<Post> posts = new ArrayList<>();
-        for (int i = 0; i < 3; i++) {
+        for (int i = 0; i < courseWideContexts.length; i++) {
             Post postToAdd = createBasicPost(i);
             postToAdd.setCourse(courseContext);
             postToAdd.setCourseWideContext(courseWideContexts[i]);
@@ -1497,26 +1554,24 @@ public class DatabaseUtilService {
     }
 
     public Result addResultToParticipation(AssessmentType type, ZonedDateTime completionDate, Participation participation, boolean successful, boolean rated, double score) {
-        Result result = new Result().participation(participation).resultString("x of y passed").successful(successful).rated(rated).score(score).assessmentType(type)
-                .completionDate(completionDate);
+        Result result = new Result().participation(participation).successful(successful).rated(rated).score(score).assessmentType(type).completionDate(completionDate);
         return resultRepo.save(result);
     }
 
     public Result addResultToParticipation(AssessmentType assessmentType, ZonedDateTime completionDate, Participation participation) {
-        Result result = new Result().participation(participation).resultString("x of y passed").successful(true).rated(true).score(100D).assessmentType(assessmentType)
-                .completionDate(completionDate);
+        Result result = new Result().participation(participation).successful(true).rated(true).score(100D).assessmentType(assessmentType).completionDate(completionDate);
         return resultRepo.save(result);
     }
 
-    public Result addResultToParticipation(AssessmentType assessmentType, ZonedDateTime completionDate, Participation participation, String resultString, String assessorLogin,
+    public Result addResultToParticipation(AssessmentType assessmentType, ZonedDateTime completionDate, Participation participation, String assessorLogin,
             List<Feedback> feedbacks) {
-        Result result = new Result().participation(participation).resultString(resultString).assessmentType(assessmentType).completionDate(completionDate).feedbacks(feedbacks);
+        Result result = new Result().participation(participation).assessmentType(assessmentType).completionDate(completionDate).feedbacks(feedbacks);
         result.setAssessor(getUserByLogin(assessorLogin));
         return resultRepo.save(result);
     }
 
     public Result addResultToParticipation(Participation participation, Submission submission) {
-        Result result = new Result().participation(participation).resultString("x of y passed").successful(true).score(100D);
+        Result result = new Result().participation(participation).successful(true).score(100D);
         result = resultRepo.save(result);
         result.setSubmission(submission);
         submission.addResult(result);
@@ -1561,10 +1616,8 @@ public class DatabaseUtilService {
         return resultRepo.save(result);
     }
 
-    public Submission addResultToSubmission(final Submission submission, AssessmentType assessmentType, User user, String resultString, Double score, boolean rated,
-            ZonedDateTime completionDate) {
-        Result result = new Result().participation(submission.getParticipation()).assessmentType(assessmentType).resultString(resultString).score(score).rated(rated)
-                .completionDate(completionDate);
+    public Submission addResultToSubmission(final Submission submission, AssessmentType assessmentType, User user, Double score, boolean rated, ZonedDateTime completionDate) {
+        Result result = new Result().participation(submission.getParticipation()).assessmentType(assessmentType).score(score).rated(rated).completionDate(completionDate);
         result.setAssessor(user);
         result = resultRepo.save(result);
         result.setSubmission(submission);
@@ -1574,15 +1627,15 @@ public class DatabaseUtilService {
     }
 
     public Submission addResultToSubmission(Submission submission, AssessmentType assessmentType) {
-        return addResultToSubmission(submission, assessmentType, null, "x of y passed", 100D, true, null);
+        return addResultToSubmission(submission, assessmentType, null, 100D, true, null);
     }
 
     public Submission addResultToSubmission(Submission submission, AssessmentType assessmentType, User user) {
-        return addResultToSubmission(submission, assessmentType, user, "x of y passed", 100D, true, ZonedDateTime.now());
+        return addResultToSubmission(submission, assessmentType, user, 100D, true, ZonedDateTime.now());
     }
 
     public Submission addResultToSubmission(Submission submission, AssessmentType assessmentType, User user, Double score, boolean rated) {
-        return addResultToSubmission(submission, assessmentType, user, "x of y passed", score, rated, ZonedDateTime.now());
+        return addResultToSubmission(submission, assessmentType, user, score, rated, ZonedDateTime.now());
     }
 
     public void addRatingToResult(Result result, int score) {
@@ -1730,14 +1783,21 @@ public class DatabaseUtilService {
         return createProgrammingSubmission(participation, buildFailed, TestConstants.COMMIT_HASH_STRING);
     }
 
-    public TextExercise addCourseExamExerciseGroupWithOneTextExercise() {
+    public TextExercise addCourseExamExerciseGroupWithOneTextExercise(String title) {
         ExerciseGroup exerciseGroup = addExerciseGroupWithExamAndCourse(true);
         TextExercise textExercise = ModelFactory.generateTextExerciseForExam(exerciseGroup);
+        if (title != null) {
+            textExercise.setTitle(title);
+        }
         final var exercisesNrBefore = exerciseRepo.count();
         textExercise.setKnowledge(textAssessmentKnowledgeService.createNewKnowledge());
         exerciseRepo.save(textExercise);
         assertThat(exercisesNrBefore + 1).as("one exercise got stored").isEqualTo(exerciseRepo.count());
         return textExercise;
+    }
+
+    public TextExercise addCourseExamExerciseGroupWithOneTextExercise() {
+        return addCourseExamExerciseGroupWithOneTextExercise(null);
     }
 
     public TextExercise addCourseExamWithReviewDatesExerciseGroupWithOneTextExercise() {
@@ -2037,7 +2097,7 @@ public class DatabaseUtilService {
     }
 
     /**
-     * @return A empty course
+     * @return An empty course
      */
     public Course addEmptyCourse() {
         Course course = ModelFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
@@ -2511,7 +2571,6 @@ public class DatabaseUtilService {
         result = resultRepo.save(result);
         result.setSubmission(submission);
         result.completionDate(pastTimestamp);
-        result.resultString("3 of 10 points");
         result.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
         result.setAssessor(assessor);
         result.setRated(true);
@@ -2626,10 +2685,9 @@ public class DatabaseUtilService {
         result = resultRepo.save(result);
         result.setSubmission(submission);
         submission.addResult(result);
-        // Manual results are always rated and have a resultString which is defined in the client
+        // Manual results are always rated
         if (assessmentType == AssessmentType.SEMI_AUTOMATIC) {
             result.rated(true);
-            result.resultString("1 of 13 passed, 1 issue, 5 of 10 points");
         }
         submission = programmingSubmissionRepo.save(submission);
         return submission;
@@ -2745,7 +2803,6 @@ public class DatabaseUtilService {
         result.setAssessor(getUserByLogin(assessorLogin));
         result.setScore(100D);
         result.setParticipation(participation);
-        result.setResultString(exercise.getMaxPoints(), exercise.getMaxPoints());
         if (exercise.getReleaseDate() != null) {
             result.setCompletionDate(exercise.getReleaseDate());
         }
@@ -2997,27 +3054,76 @@ public class DatabaseUtilService {
         }
     }
 
-    public void addHintsToExercise(Exercise exercise) {
+    public void addHintsToExercise(ProgrammingExercise exercise) {
         ExerciseHint exerciseHint1 = new ExerciseHint().content("content 1").exercise(exercise).title("title 1");
         ExerciseHint exerciseHint2 = new ExerciseHint().content("content 2").exercise(exercise).title("title 2");
         ExerciseHint exerciseHint3 = new ExerciseHint().content("content 3").exercise(exercise).title("title 3");
+        exerciseHint1.setDisplayThreshold((short) 3);
+        exerciseHint2.setDisplayThreshold((short) 3);
+        exerciseHint3.setDisplayThreshold((short) 3);
         Set<ExerciseHint> hints = new HashSet<>();
         hints.add(exerciseHint1);
         hints.add(exerciseHint2);
         hints.add(exerciseHint3);
         exercise.setExerciseHints(hints);
         exerciseHintRepository.saveAll(hints);
+        programmingExerciseRepository.save(exercise);
+    }
+
+    public void addTasksToProgrammingExercise(ProgrammingExercise programmingExercise) {
+        StringBuilder problemStatement = new StringBuilder(programmingExercise.getProblemStatement());
+        problemStatement.append('\n');
+
+        var tasks = programmingExercise.getTestCases().stream().map(testCase -> {
+            var task = new ProgrammingExerciseTask();
+            task.setTaskName("Task for " + testCase.getTestName());
+            task.setExercise(programmingExercise);
+            task.setTestCases(Collections.singleton(testCase));
+            testCase.setTasks(Collections.singleton(task));
+            problemStatement.append("[task][").append(task.getTaskName()).append("](")
+                    .append(task.getTestCases().stream().map(ProgrammingExerciseTestCase::getTestName).collect(Collectors.joining(","))).append(")\n");
+            return task;
+        }).toList();
+        programmingExercise.setTasks(tasks);
+        programmingExercise.setProblemStatement(problemStatement.toString());
+        programmingExerciseTaskRepository.saveAll(tasks);
+        programmingExerciseRepository.save(programmingExercise);
+    }
+
+    public void addSolutionEntriesToProgrammingExercise(ProgrammingExercise programmingExercise) {
+        for (ProgrammingExerciseTestCase testCase : programmingExercise.getTestCases()) {
+            var solutionEntry = new ProgrammingExerciseSolutionEntry();
+            solutionEntry.setFilePath("test.txt");
+            solutionEntry.setLine(1);
+            solutionEntry.setCode("Line for " + testCase.getTestName());
+            solutionEntry.setTestCase(testCase);
+
+            testCase.setSolutionEntries(Collections.singleton(solutionEntry));
+            solutionEntryRepository.save(solutionEntry);
+        }
+    }
+
+    public void addCodeHintsToProgrammingExercise(ProgrammingExercise programmingExercise) {
+        for (ProgrammingExerciseTask task : programmingExercise.getTasks()) {
+            var solutionEntries = task.getTestCases().stream().flatMap(testCase -> testCase.getSolutionEntries().stream()).collect(Collectors.toSet());
+            var codeHint = new CodeHint();
+            codeHint.setTitle("Code Hint for " + task.getTaskName());
+            codeHint.setContent("Content for " + task.getTaskName());
+            codeHint.setExercise(programmingExercise);
+            codeHint.setSolutionEntries(solutionEntries);
+            codeHint.setProgrammingExerciseTask(task);
+
+            programmingExercise.getExerciseHints().add(codeHint);
+            codeHintRepository.save(codeHint);
+            for (ProgrammingExerciseSolutionEntry solutionEntry : solutionEntries) {
+                solutionEntry.setCodeHint(codeHint);
+                solutionEntryRepository.save(solutionEntry);
+            }
+        }
     }
 
     public ProgrammingExercise loadProgrammingExerciseWithEagerReferences(ProgrammingExercise lazyExercise) {
         return programmingExerciseTestRepository.findOneWithEagerEverything(lazyExercise.getId());
-    }
-
-    public <T extends Exercise> void addHintsToProblemStatement(T exercise) {
-        final var statement = exercise.getProblemStatement() == null ? "" : exercise.getProblemStatement();
-        final var hintsInStatement = exercise.getExerciseHints().stream().map(ExerciseHint::getId).map(Object::toString).collect(Collectors.joining(", ", "{", "}"));
-        exercise.setProblemStatement(statement + hintsInStatement);
-        exerciseRepo.save(exercise);
     }
 
     /**
@@ -3537,13 +3643,11 @@ public class DatabaseUtilService {
 
         double calculatedTotalPoints = resultRepo.calculateTotalPoints(storedFeedback);
         double totalPoints = resultRepo.constrainToRange(calculatedTotalPoints, 20.0);
-        storedFeedbackResult.setScore(totalPoints, 20.0);
-        storedFeedbackResult.setResultString(totalPoints, 20.0);
+        storedFeedbackResult.setScore(100.0 * totalPoints / 20.0);
 
         double calculatedTotalPoints2 = resultRepo.calculateTotalPoints(sentFeedback);
         double totalPoints2 = resultRepo.constrainToRange(calculatedTotalPoints2, 20.0);
-        sentFeedbackResult.setScore(totalPoints2, 20.0);
-        sentFeedbackResult.setResultString(totalPoints2, 20.0);
+        sentFeedbackResult.setScore(100.0 * totalPoints2 / 20.0);
 
         assertThat(storedFeedbackResult.getScore()).as("stored feedback evaluates to the same score as sent feedback").isEqualTo(sentFeedbackResult.getScore());
         storedFeedback.forEach(feedback -> assertThat(feedback.getType()).as("type has been set correctly").isEqualTo(feedbackType));

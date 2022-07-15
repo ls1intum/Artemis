@@ -219,7 +219,7 @@ public abstract class Participation extends DomainObject implements Participatio
     @Nullable
     private Result findLatestResult(boolean filterIllegalResults) {
         Set<Result> results = this.results;
-        if (results == null || results.size() == 0) {
+        if (results == null || results.isEmpty()) {
             return null;
         }
 
@@ -232,7 +232,7 @@ public abstract class Participation extends DomainObject implements Participatio
         List<Result> sortedResultsWithCompletionDate = results.stream().filter(r -> r.getCompletionDate() != null)
                 .sorted(Comparator.comparing(Result::getCompletionDate).reversed()).toList();
 
-        if (sortedResultsWithCompletionDate.size() == 0) {
+        if (sortedResultsWithCompletionDate.isEmpty()) {
             return null;
         }
         return sortedResultsWithCompletionDate.get(0);
@@ -270,7 +270,7 @@ public abstract class Participation extends DomainObject implements Participatio
      */
     private <T extends Submission> Optional<T> findLatestSubmission(boolean includeIllegalSubmissions) {
         Set<Submission> submissions = this.submissions;
-        if (submissions == null || submissions.size() == 0) {
+        if (submissions == null || submissions.isEmpty()) {
             return Optional.empty();
         }
 

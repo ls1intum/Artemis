@@ -36,7 +36,6 @@ export class FullGitDiffEntryComponent implements OnInit {
      * @param color The background color of the editor
      */
     private setupEditor(editor: AceEditorComponent, line: number | undefined, code: string, color: string) {
-        editor.setTheme(this.themeService.getCurrentTheme().codeAceTheme);
         editor.getEditor().setOptions({
             animatedScroll: true,
             maxLines: Infinity,

@@ -70,9 +70,9 @@ public interface ContinuousIntegrationService {
      * **Important**: make sure that participation.programmingExercise.templateParticipation is initialized, otherwise an org.hibernate.LazyInitializationException can occur
      *
      * @param participation contains the unique identifier for build plan on CI system and the url of user's personal repository copy
-     * @param defaultBranch the default branch of the git repository that is used in the build plan
+     * @param branch the default branch of the git repository that is used in the build plan
      */
-    void configureBuildPlan(ProgrammingExerciseParticipation participation, String defaultBranch);
+    void configureBuildPlan(ProgrammingExerciseParticipation participation, String branch);
 
     /**
      * An empty commit might be necessary depending on the chosen CI system (e.g. on Bamboo) so that subsequent commits trigger a new build on the build plan
@@ -106,8 +106,8 @@ public interface ContinuousIntegrationService {
 
     /**
      * Get the plan key of the finished build, the information of the build gets passed via the requestBody. The requestBody must match the information passed from the
-     * (bamboo|jenkins)-server-notification-plugin, the body is described here: https://github.com/ls1intum/bamboo-server-notification-plugin or here:
-     * https://github.com/ls1intum/jenkins-server-notification-plugin
+     * (bamboo|jenkins)-server-notification-plugin, the body is described here: <a href="https://github.com/ls1intum/bamboo-server-notification-plugin">...</a> or here:
+     * <a href="https://github.com/ls1intum/jenkins-server-notification-plugin">...</a>
      *
      * @param requestBody The request Body received from the CI-Server.
      * @return the plan key of the build
@@ -190,14 +190,14 @@ public interface ContinuousIntegrationService {
      * @param repoProjectKey                    The key of the project that contains the repository, e.g. 'EIST16W1', which is normally the programming exercise project key.
      * @param newRepoUrl                        The url of the newly to be referenced repository.
      * @param existingRepoUrl                   The url of the existing repository (which should be replaced).
-     * @param newDefaultBranch                  The default branch for the new repository
+     * @param newBranch                         The default branch for the new repository
      * @param optionalTriggeredByRepositories   Optional list of repositories that should trigger the new build plan. If empty, no triggers get overwritten.
      */
-    void updatePlanRepository(String buildProjectKey, String buildPlanKey, String ciRepoName, String repoProjectKey, String newRepoUrl, String existingRepoUrl,
-            String newDefaultBranch, Optional<List<String>> optionalTriggeredByRepositories);
+    void updatePlanRepository(String buildProjectKey, String buildPlanKey, String ciRepoName, String repoProjectKey, String newRepoUrl, String existingRepoUrl, String newBranch,
+            Optional<List<String>> optionalTriggeredByRepositories);
 
     /**
-     * Gives overall roles permissions for the defined project. A role can e.g. be all logged in users
+     * Gives overall roles permissions for the defined project. A role can e.g. be all logged-in users
      *
      * @param projectKey The key of the project to grant permissions to
      * @param groups The role of the users that should have the permissions

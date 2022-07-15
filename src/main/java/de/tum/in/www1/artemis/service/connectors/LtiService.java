@@ -115,7 +115,7 @@ public class LtiService {
      */
     public void handleLaunchRequest(LtiLaunchRequestDTO launchRequest, Exercise exercise) {
 
-        // Authenticate the the LTI user
+        // Authenticate the LTI user
         Optional<Authentication> auth = authenticateLtiUser(launchRequest);
 
         if (auth.isPresent()) {
@@ -179,7 +179,7 @@ public class LtiService {
     }
 
     /**
-     * Signs in the LTI user into the exercise app. Therefore it creates an user, if necessary.
+     * Signs in the LTI user into the exercise app. Therefore it creates a user, if necessary.
      *
      * @param launchRequest The launch request, sent by LTI consumer
      * @return the authentication based on the user who invoked the launch request
@@ -220,7 +220,7 @@ public class LtiService {
         // 3. Case: Lookup user with the LTI email address. Sign in as this user.
         // Check if lookup by email is enabled
         if (launchRequest.getCustom_lookup_user_by_email()) {
-            // check if an user with this email address exists
+            // check if a user with this email address exists
             final var usernameLookupByEmail = artemisAuthenticationProvider.getUsernameForEmail(email);
             if (usernameLookupByEmail.isPresent()) {
                 return loginUserByEmail(launchRequest, usernameLookupByEmail.get(), email, fullname);
@@ -298,7 +298,7 @@ public class LtiService {
     }
 
     /**
-     * Add an user to the course student group
+     * Add a user to the course student group
      *
      * @param user   the user who should be added the course
      * @param course the course to which the user should be added

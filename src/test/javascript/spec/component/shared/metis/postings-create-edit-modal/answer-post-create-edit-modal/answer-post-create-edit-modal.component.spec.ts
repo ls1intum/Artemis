@@ -3,20 +3,20 @@ import { MetisService } from 'app/shared/metis/metis.service';
 import { MockMetisService } from '../../../../../helpers/mocks/service/mock-metis-service.service';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockComponent, MockModule, MockPipe } from 'ng-mocks';
-import { MockNgbModalService } from '../../../../../helpers/mocks/service/mock-ngb-modal.service';
-import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { AnswerPostCreateEditModalComponent } from 'app/shared/metis/posting-create-edit-modal/answer-post-create-edit-modal/answer-post-create-edit-modal.component';
 import { FormBuilder, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { PostingMarkdownEditorComponent } from 'app/shared/metis/posting-markdown-editor/posting-markdown-editor.component';
 import { PostingButtonComponent } from 'app/shared/metis/posting-button/posting-button.component';
 import { HelpIconComponent } from 'app/shared/components/help-icon.component';
-import { metisAnswerPostToCreateUser1, metisResolvingAnswerPostUser1, metisAnswerPostUser2 } from '../../../../../helpers/sample/metis-sample-data';
+import { ViewContainerRef } from '@angular/core';
+import { MockViewContainerRef } from '../../../../../helpers/mocks/service/mock-view-container-ref.service';
+import { metisAnswerPostToCreateUser1, metisAnswerPostUser2, metisResolvingAnswerPostUser1 } from '../../../../../helpers/sample/metis-sample-data';
 
 describe('AnswerPostCreateEditModalComponent', () => {
     let component: AnswerPostCreateEditModalComponent;
     let fixture: ComponentFixture<AnswerPostCreateEditModalComponent>;
     let metisService: MetisService;
-    let modal: MockNgbModalService;
+    let viewContainerRef: ViewContainerRef;
     let updatePostingMock: jest.SpyInstance;
 
     beforeEach(() => {
@@ -29,14 +29,14 @@ describe('AnswerPostCreateEditModalComponent', () => {
                 MockComponent(PostingButtonComponent),
                 MockComponent(HelpIconComponent),
             ],
-            providers: [FormBuilder, { provide: MetisService, useClass: MockMetisService }],
+            providers: [FormBuilder, { provide: MetisService, useClass: MockMetisService }, { provide: ViewContainerRef, useClass: MockViewContainerRef }],
         })
             .compileComponents()
             .then(() => {
                 fixture = TestBed.createComponent(AnswerPostCreateEditModalComponent);
                 component = fixture.componentInstance;
                 metisService = TestBed.inject(MetisService);
-                modal = TestBed.inject(NgbModal);
+                viewContainerRef = TestBed.inject(ViewContainerRef);
                 updatePostingMock = jest.spyOn(component, 'updatePosting');
             });
     });
@@ -59,15 +59,22 @@ describe('AnswerPostCreateEditModalComponent', () => {
         expect(component.content).toEqual(metisAnswerPostToCreateUser1.content);
     });
 
-    it('should invoke the modalService', () => {
-        const componentInstance = { title: String, content: String };
-        const result = new Promise((resolve) => resolve(true));
-        const modalServiceOpenMock = jest.spyOn(modal, 'open').mockReturnValue(<NgbModalRef>{
-            componentInstance,
-            result,
-        });
+    it('should invoke create embedded view', () => {
+        component.posting = metisResolvingAnswerPostUser1;
+        const viewContainerRefCreateEmbeddedView = jest.spyOn(viewContainerRef, 'createEmbeddedView');
+        component.createEditAnswerPostContainerRef = viewContainerRef;
+        fixture.detectChanges();
         component.open();
-        expect(modalServiceOpenMock).toHaveBeenCalled();
+        expect(viewContainerRefCreateEmbeddedView).toHaveBeenCalled();
+    });
+
+    it('should invoke clear embedded view', () => {
+        component.posting = metisResolvingAnswerPostUser1;
+        const viewContainerRefClear = jest.spyOn(viewContainerRef, 'clear');
+        component.createEditAnswerPostContainerRef = viewContainerRef;
+        fixture.detectChanges();
+        component.close();
+        expect(viewContainerRefClear).toHaveBeenCalled();
     });
 
     it('should invoke updatePosting when confirming', () => {

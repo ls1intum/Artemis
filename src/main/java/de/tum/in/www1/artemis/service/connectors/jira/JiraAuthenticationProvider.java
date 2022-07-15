@@ -130,7 +130,7 @@ public class JiraAuthenticationProvider extends ArtemisAuthenticationProviderImp
             // If we want to skip the password check, we can just use the ADMIN auth, which is already injected in the default restTemplate
             // Otherwise, we create our own authorization and use the credentials of the user.
             if (skipPasswordCheck) {
-                // this is only the case if the systems wants to login a user automatically (e.g. based on Oauth in LTI)
+                // this is only the case if the systems wants to log in a user automatically (e.g. based on Oauth in LTI)
                 // when we provide null, the default restTemplate header will be used automatically
                 authenticationResponse = restTemplate.exchange(path, HttpMethod.GET, null, JiraUserDTO.class);
             }
@@ -337,7 +337,7 @@ public class JiraAuthenticationProvider extends ArtemisAuthenticationProviderImp
                     });
 
             var results = authenticationResponse.getBody();
-            if (results == null || results.size() == 0) {
+            if (results == null || results.isEmpty()) {
                 // no result
                 return Optional.empty();
             }
@@ -345,7 +345,7 @@ public class JiraAuthenticationProvider extends ArtemisAuthenticationProviderImp
             return Optional.of(firstResult.getName());
         }
         catch (HttpClientErrorException e) {
-            log.error("Could not get JIRA username for email address " + email, e);
+            log.error("Could not get JIRA username for email address {}", email, e);
             throw new ArtemisAuthenticationException("Error while checking eMail address", e);
         }
 

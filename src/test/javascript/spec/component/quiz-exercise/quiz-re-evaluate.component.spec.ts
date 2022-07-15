@@ -123,9 +123,9 @@ describe('QuizExercise Re-evaluate Component', () => {
 
     it('Should initialize quiz exercise', () => {
         comp.ngOnInit();
-        expect(comp.isValidQuiz()).toBe(true);
+        expect(comp.isValidQuiz()).toBeTrue();
         expect(comp.quizExercise).toEqual(quizExercise);
-        expect(quizServiceFindStub).toHaveBeenCalledTimes(1);
+        expect(quizServiceFindStub).toHaveBeenCalledOnce();
     });
 
     it('Should create correct duration strings', () => {
@@ -164,7 +164,7 @@ describe('QuizExercise Re-evaluate Component', () => {
     it('Should have pending changes', () => {
         comp.ngOnInit();
         comp.quizExercise.quizQuestions![0].points = 5;
-        expect(comp.pendingChanges()).toBe(true);
+        expect(comp.pendingChanges()).toBeTrue();
     });
 
     it('Should move down the quiz question', () => {
@@ -199,7 +199,7 @@ describe('QuizExercise Re-evaluate Component', () => {
             comp.resetAll();
             comp.onQuestionUpdated();
 
-            expect(comp.quizIsValid).toBe(true);
+            expect(comp.quizIsValid).toBeTrue();
         });
 
         describe('Quiz mc question validation', () => {
@@ -216,7 +216,7 @@ describe('QuizExercise Re-evaluate Component', () => {
 
                 comp.onQuestionUpdated();
 
-                expect(comp.quizIsValid).toBe(false);
+                expect(comp.quizIsValid).toBeFalse();
             });
 
             it('Should be invalid if quiz explanation is too long', () => {
@@ -225,7 +225,7 @@ describe('QuizExercise Re-evaluate Component', () => {
 
                 comp.onQuestionUpdated();
 
-                expect(comp.quizIsValid).toBe(false);
+                expect(comp.quizIsValid).toBeFalse();
             });
 
             it('Should be invalid if answer option hint is too long', () => {
@@ -233,7 +233,7 @@ describe('QuizExercise Re-evaluate Component', () => {
 
                 comp.onQuestionUpdated();
 
-                expect(comp.quizIsValid).toBe(false);
+                expect(comp.quizIsValid).toBeFalse();
             });
 
             it('Should be invalid if answer option explanation is too long', () => {
@@ -241,7 +241,7 @@ describe('QuizExercise Re-evaluate Component', () => {
 
                 comp.onQuestionUpdated();
 
-                expect(comp.quizIsValid).toBe(false);
+                expect(comp.quizIsValid).toBeFalse();
             });
         });
 
@@ -257,7 +257,7 @@ describe('QuizExercise Re-evaluate Component', () => {
 
                 comp.onQuestionUpdated();
 
-                expect(comp.quizIsValid).toBe(false);
+                expect(comp.quizIsValid).toBeFalse();
             });
 
             it('Should be invalid if question explanation is invalid', () => {
@@ -266,7 +266,7 @@ describe('QuizExercise Re-evaluate Component', () => {
 
                 comp.onQuestionUpdated();
 
-                expect(comp.quizIsValid).toBe(false);
+                expect(comp.quizIsValid).toBeFalse();
             });
         });
     });

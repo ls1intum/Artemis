@@ -740,6 +740,58 @@ public class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBa
     }
 
     @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void createModelingExercise_setInvalidExampleSolutionPublicationDate_badRequest() throws Exception {
+        final var baseTime = ZonedDateTime.now();
+        final Course course = database.addCourseWithOneModelingExercise();
+        ModelingExercise modelingExercise = modelingExerciseRepository.findByCourseIdWithCategories(course.getId()).get(0);
+        modelingExercise.setId(null);
+        modelingExercise.setAssessmentDueDate(null);
+        modelingExercise.setIncludedInOverallScore(IncludedInOverallScore.INCLUDED_COMPLETELY);
+
+        modelingExercise.setReleaseDate(baseTime.plusHours(1));
+        modelingExercise.setDueDate(baseTime.plusHours(3));
+        modelingExercise.setExampleSolutionPublicationDate(baseTime.plusHours(2));
+
+        request.postWithResponseBody("/api/modeling-exercises/", modelingExercise, ModelingExercise.class, HttpStatus.BAD_REQUEST);
+
+        modelingExercise.setReleaseDate(baseTime.plusHours(3));
+        modelingExercise.setDueDate(null);
+        modelingExercise.setExampleSolutionPublicationDate(baseTime.plusHours(2));
+
+        request.postWithResponseBody("/api/modeling-exercises/", modelingExercise, ModelingExercise.class, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void createModelingExercise_setValidExampleSolutionPublicationDate() throws Exception {
+        final var baseTime = ZonedDateTime.now();
+        final Course course = database.addCourseWithOneModelingExercise();
+        ModelingExercise modelingExercise = modelingExerciseRepository.findByCourseIdWithCategories(course.getId()).get(0);
+        modelingExercise.setId(null);
+        modelingExercise.setAssessmentDueDate(null);
+        modelingExercise.setIncludedInOverallScore(IncludedInOverallScore.INCLUDED_COMPLETELY);
+
+        modelingExercise.setReleaseDate(baseTime.plusHours(1));
+        modelingExercise.setDueDate(baseTime.plusHours(2));
+        var exampleSolutionPublicationDate = baseTime.plusHours(3);
+        modelingExercise.setExampleSolutionPublicationDate(exampleSolutionPublicationDate);
+
+        var result = request.postWithResponseBody("/api/modeling-exercises/", modelingExercise, ModelingExercise.class, HttpStatus.CREATED);
+        assertThat(result.getExampleSolutionPublicationDate()).isEqualTo(exampleSolutionPublicationDate);
+
+        modelingExercise.setIncludedInOverallScore(IncludedInOverallScore.NOT_INCLUDED);
+        modelingExercise.setReleaseDate(baseTime.plusHours(1));
+        modelingExercise.setDueDate(baseTime.plusHours(3));
+        exampleSolutionPublicationDate = baseTime.plusHours(2);
+        modelingExercise.setExampleSolutionPublicationDate(exampleSolutionPublicationDate);
+
+        result = request.postWithResponseBody("/api/modeling-exercises/", modelingExercise, ModelingExercise.class, HttpStatus.CREATED);
+        assertThat(result.getExampleSolutionPublicationDate()).isEqualTo(exampleSolutionPublicationDate);
+
+    }
+
+    @Test
     @WithMockUser(username = "student1", roles = "USER")
     public void testGetModelingExercise_asStudent_exampleSolutionVisibility() throws Exception {
         testGetModelingExercise_exampleSolutionVisibility(true, "student1");
@@ -809,7 +861,6 @@ public class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBa
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testImportModelingExercise_setGradingInstructionForCopiedFeedback() throws Exception {
-
         var now = ZonedDateTime.now();
         Course course1 = database.addEmptyCourse();
         Course course2 = database.addEmptyCourse();

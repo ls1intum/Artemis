@@ -26,7 +26,6 @@ export interface FileProperties {
 @Component({
     selector: 'jhi-attachment-unit-form',
     templateUrl: './attachment-unit-form.component.html',
-    styleUrls: ['./attachment-unit-form.component.scss'],
 })
 export class AttachmentUnitFormComponent implements OnInit, OnChanges {
     @Input()
@@ -66,11 +65,11 @@ export class AttachmentUnitFormComponent implements OnInit, OnChanges {
             return;
         }
         this.form = this.fb.group({
-            name: [undefined, [Validators.required, Validators.maxLength(255)]],
-            description: [undefined, [Validators.maxLength(1000)]],
-            releaseDate: [undefined],
+            name: [undefined as string | undefined, [Validators.required, Validators.maxLength(255)]],
+            description: [undefined as string | undefined, [Validators.maxLength(1000)]],
+            releaseDate: [undefined as dayjs.Dayjs | undefined],
             version: [1],
-            updateNotificationText: [undefined, [Validators.maxLength(1000)]],
+            updateNotificationText: [undefined as string | undefined, [Validators.maxLength(1000)]],
         });
     }
 

@@ -37,7 +37,7 @@ There are variables for several paths:
 Templates
 #########
 
-Templates are shipped with Artemis (they can be found within the ``src/main/resources/templates`` folder in Github).
+Templates are shipped with Artemis (they can be found within the ``src/main/resources/templates`` folder in GitHub).
 These templates should fit well for many deployments, but one might want to change some of them for special deployments.
 
 As of now, you can overwrite the ``jenkins`` folders that is present within the ``src/main/resources/templates`` folder.

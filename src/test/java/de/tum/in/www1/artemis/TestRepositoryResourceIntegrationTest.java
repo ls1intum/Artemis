@@ -72,7 +72,7 @@ public class TestRepositoryResourceIntegrationTest extends AbstractSpringIntegra
 
         // add folder to the repository folder
         filePath = Path.of(testRepo.localRepoFile + "/" + currentLocalFolderName);
-        Files.createDirectory(filePath).toFile();
+        Files.createDirectory(filePath);
 
         var testRepoUrl = new GitUtilService.MockFileRepositoryUrl(testRepo.localRepoFile);
         programmingExercise.setTestRepositoryUrl(testRepoUrl.toString());
@@ -84,8 +84,7 @@ public class TestRepositoryResourceIntegrationTest extends AbstractSpringIntegra
         doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(testRepo.localRepoFile.toPath(), null)).when(gitService).getOrCheckoutRepository(eq(testRepoUrl), eq(false),
                 any());
 
-        bitbucketRequestMockProvider.enableMockingOfRequests(true);
-        bitbucketRequestMockProvider.mockDefaultBranch(defaultBranch, urlService.getProjectKeyFromRepositoryUrl(testRepoUrl));
+        doReturn(defaultBranch).when(versionControlService).getOrRetrieveBranchOfExercise(programmingExercise);
     }
 
     @AfterEach
@@ -380,9 +379,9 @@ public class TestRepositoryResourceIntegrationTest extends AbstractSpringIntegra
 
         // Create file in the remote repository
         Path filePath = Path.of(testRepo.originRepoFile + "/" + fileName);
-        Files.createFile(filePath).toFile();
+        Files.createFile(filePath);
 
-        // Check if the file exists in the remote repository and that it doesn't yet exists in the local repository
+        // Check if the file exists in the remote repository and that it doesn't yet exist in the local repository
         assertThat(Files.exists(Path.of(testRepo.originRepoFile + "/" + fileName))).isTrue();
         assertThat(Files.exists(Path.of(testRepo.localRepoFile + "/" + fileName))).isFalse();
 
@@ -442,7 +441,7 @@ public class TestRepositoryResourceIntegrationTest extends AbstractSpringIntegra
         List<Ref> refs = testRepo.localGit.branchList().setListMode(ListBranchCommand.ListMode.REMOTE).call();
         var result = testRepo.localGit.merge().include(refs.get(0).getObjectId()).setStrategy(MergeStrategy.RESOLVE).call();
         var status = testRepo.localGit.status().call();
-        assertThat(status.getConflicting().size() > 0).isTrue();
+        assertThat(status.getConflicting()).isNotEmpty();
         assertThat(result.getMergeStatus()).isEqualTo(MergeResult.MergeStatus.CONFLICTING);
 
         // Execute the reset Rest call

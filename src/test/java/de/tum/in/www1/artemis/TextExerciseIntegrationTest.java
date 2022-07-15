@@ -27,6 +27,7 @@ import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismStatus;
 import de.tum.in.www1.artemis.domain.plagiarism.text.TextPlagiarismResult;
 import de.tum.in.www1.artemis.domain.plagiarism.text.TextSubmissionElement;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismComparisonRepository;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import de.tum.in.www1.artemis.util.InvalidExamExerciseDatesArgumentProvider;
 import de.tum.in.www1.artemis.util.InvalidExamExerciseDatesArgumentProvider.InvalidExamExerciseDateConfiguration;
@@ -715,7 +716,7 @@ public class TextExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
     public void testInstructorGetsOnlyResultsFromOwningCourses() throws Exception {
         database.addCourseWithOneReleasedTextExercise();
         final var search = database.configureSearch("");
-        final var result = request.get("/api/text-exercises/", HttpStatus.OK, SearchResultPageDTO.class, database.searchMapping(search));
+        final var result = request.get("/api/text-exercises", HttpStatus.OK, SearchResultPageDTO.class, database.searchMapping(search));
         assertThat(result.getResultsOnPage()).isNullOrEmpty();
     }
 
@@ -727,15 +728,44 @@ public class TextExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
         database.addCourseWithOneReleasedTextExercise("Essay Master");
 
         final var searchText = database.configureSearch("Text");
-        final var resultText = request.get("/api/text-exercises/", HttpStatus.OK, SearchResultPageDTO.class, database.searchMapping(searchText));
+        final var resultText = request.get("/api/text-exercises", HttpStatus.OK, SearchResultPageDTO.class, database.searchMapping(searchText));
         assertThat(resultText.getResultsOnPage()).hasSize(1);
 
         final var searchEssay = database.configureSearch("Essay");
-        final var resultEssay = request.get("/api/text-exercises/", HttpStatus.OK, SearchResultPageDTO.class, database.searchMapping(searchEssay));
+        final var resultEssay = request.get("/api/text-exercises", HttpStatus.OK, SearchResultPageDTO.class, database.searchMapping(searchEssay));
         assertThat(resultEssay.getResultsOnPage()).hasSize(2);
 
         final var searchNon = database.configureSearch("Non");
-        final var resultNon = request.get("/api/text-exercises/", HttpStatus.OK, SearchResultPageDTO.class, database.searchMapping(searchNon));
+        final var resultNon = request.get("/api/text-exercises", HttpStatus.OK, SearchResultPageDTO.class, database.searchMapping(searchNon));
+        assertThat(resultNon.getResultsOnPage()).isNullOrEmpty();
+    }
+
+    @Test
+    @WithMockUser(username = "instructorother1", roles = "INSTRUCTOR")
+    public void testInstructorGetsOnlyResultsFromOwningExams() throws Exception {
+        database.addCourseExamExerciseGroupWithOneTextExercise();
+        final var search = database.configureSearch("");
+        final var result = request.get("/api/text-exercises", HttpStatus.OK, SearchResultPageDTO.class, database.searchMapping(search));
+        assertThat(result.getResultsOnPage()).isNullOrEmpty();
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testInstructorGetResultsFromOwningExamsNotEmpty() throws Exception {
+        database.addCourseExamExerciseGroupWithOneTextExercise("Text");
+        database.addCourseExamExerciseGroupWithOneTextExercise("Essay Bachelor");
+        database.addCourseExamExerciseGroupWithOneTextExercise("Essay Master");
+
+        final var searchText = database.configureSearch("Text");
+        final var resultText = request.get("/api/text-exercises", HttpStatus.OK, SearchResultPageDTO.class, database.searchMapping(searchText));
+        assertThat(resultText.getResultsOnPage()).hasSize(1);
+
+        final var searchEssay = database.configureSearch("Essay");
+        final var resultEssay = request.get("/api/text-exercises", HttpStatus.OK, SearchResultPageDTO.class, database.searchMapping(searchEssay));
+        assertThat(resultEssay.getResultsOnPage()).hasSize(2);
+
+        final var searchNon = database.configureSearch("Non");
+        final var resultNon = request.get("/api/text-exercises", HttpStatus.OK, SearchResultPageDTO.class, database.searchMapping(searchNon));
         assertThat(resultNon.getResultsOnPage()).isNullOrEmpty();
     }
 
@@ -746,7 +776,7 @@ public class TextExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
         database.addCourseInOtherInstructionGroupAndExercise("Text");
 
         final var search = database.configureSearch("Text");
-        final var result = request.get("/api/text-exercises/", HttpStatus.OK, SearchResultPageDTO.class, database.searchMapping(search));
+        final var result = request.get("/api/text-exercises", HttpStatus.OK, SearchResultPageDTO.class, database.searchMapping(search));
         assertThat(result.getResultsOnPage()).hasSize(2);
     }
 
@@ -1060,6 +1090,57 @@ public class TextExerciseIntegrationTest extends AbstractSpringIntegrationBamboo
         TextExercise textExercise = textExerciseRepository.findByCourseIdWithCategories(course.getId()).get(0);
 
         request.putWithResponseBody("/api/text-exercises/" + 123456789 + "/re-evaluate", textExercise, TextExercise.class, HttpStatus.NOT_FOUND);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void createTextExercise_setInvalidExampleSolutionPublicationDate_badRequest() throws Exception {
+        final var baseTime = ZonedDateTime.now();
+        final Course course = database.addCourseWithOneReleasedTextExercise();
+        TextExercise textExercise = textExerciseRepository.findByCourseIdWithCategories(course.getId()).get(0);
+        textExercise.setId(null);
+        textExercise.setAssessmentDueDate(null);
+        textExercise.setIncludedInOverallScore(IncludedInOverallScore.INCLUDED_COMPLETELY);
+
+        textExercise.setReleaseDate(baseTime.plusHours(1));
+        textExercise.setDueDate(baseTime.plusHours(3));
+        textExercise.setExampleSolutionPublicationDate(baseTime.plusHours(2));
+
+        request.postWithResponseBody("/api/text-exercises/", textExercise, TextExercise.class, HttpStatus.BAD_REQUEST);
+
+        textExercise.setReleaseDate(baseTime.plusHours(3));
+        textExercise.setDueDate(null);
+        textExercise.setExampleSolutionPublicationDate(baseTime.plusHours(2));
+
+        request.postWithResponseBody("/api/text-exercises/", textExercise, TextExercise.class, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void createTextExercise_setValidExampleSolutionPublicationDate() throws Exception {
+        final var baseTime = ZonedDateTime.now();
+        final Course course = database.addCourseWithOneReleasedTextExercise();
+        TextExercise textExercise = textExerciseRepository.findByCourseIdWithCategories(course.getId()).get(0);
+        textExercise.setId(null);
+        textExercise.setAssessmentDueDate(null);
+        textExercise.setIncludedInOverallScore(IncludedInOverallScore.INCLUDED_COMPLETELY);
+
+        textExercise.setReleaseDate(baseTime.plusHours(1));
+        textExercise.setDueDate(baseTime.plusHours(2));
+        var exampleSolutionPublicationDate = baseTime.plusHours(3);
+        textExercise.setExampleSolutionPublicationDate(exampleSolutionPublicationDate);
+
+        var result = request.postWithResponseBody("/api/text-exercises/", textExercise, TextExercise.class, HttpStatus.CREATED);
+        assertThat(result.getExampleSolutionPublicationDate()).isEqualTo(exampleSolutionPublicationDate);
+
+        textExercise.setIncludedInOverallScore(IncludedInOverallScore.NOT_INCLUDED);
+        textExercise.setReleaseDate(baseTime.plusHours(1));
+        textExercise.setDueDate(baseTime.plusHours(3));
+        exampleSolutionPublicationDate = baseTime.plusHours(2);
+        textExercise.setExampleSolutionPublicationDate(exampleSolutionPublicationDate);
+
+        result = request.postWithResponseBody("/api/text-exercises/", textExercise, TextExercise.class, HttpStatus.CREATED);
+        assertThat(result.getExampleSolutionPublicationDate()).isEqualTo(exampleSolutionPublicationDate);
     }
 
     @Test

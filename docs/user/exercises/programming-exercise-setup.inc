@@ -86,7 +86,7 @@ Instructors can still use those templates to generate programming exercises and 
 .. note::
   Documentation for FACT framework can be found here: https://fact.readthedocs.io/en/latest/
 
-We encourage instructors to contribute improvements to the existing ``templates`` or to provide new templates. Please contact Stephan Krusche and/or create Pull Requests in the Github repository.
+We encourage instructors to contribute improvements to the existing ``templates`` or to provide new templates. Please contact Stephan Krusche and/or create Pull Requests in the GitHub repository.
 
 Exercise Creation
 ^^^^^^^^^^^^^^^^^
@@ -383,7 +383,7 @@ Exercise Creation
       git clone "$BASE-solution.git" "$NAME/solution"
 
       # hardlink the various assignment interfaces to ensure they stay in sync
-      # the version in the solution repositiory is authoritive in case of conflict
+      # the version in the solution repository is authoritative in case of conflict
       rm "$NAME/template/src/assignment.mli"
       rm "$NAME/tests/assignment/assignment.mli"
       rm "$NAME/tests/solution/solution.mli"

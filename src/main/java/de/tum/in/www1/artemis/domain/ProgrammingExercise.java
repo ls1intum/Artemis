@@ -20,7 +20,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import de.tum.in.www1.artemis.domain.enumeration.*;
-import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseGitDiffReport;
+import de.tum.in.www1.artemis.domain.hestia.ExerciseHint;
 import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseTask;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.SolutionProgrammingExerciseParticipation;
@@ -103,7 +103,7 @@ public class ProgrammingExercise extends Exercise {
 
     @OneToMany(mappedBy = "exercise", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
     @JsonIgnoreProperties("exercise")
-    private Set<ProgrammingExerciseTask> tasks = new HashSet<>();
+    private List<ProgrammingExerciseTask> tasks = new ArrayList<>();
 
     @OneToMany(mappedBy = "exercise", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
     @JsonIgnoreProperties("exercise")
@@ -121,14 +121,14 @@ public class ProgrammingExercise extends Exercise {
     @Column(name = "project_type", table = "programming_exercise_details")
     private ProjectType projectType;
 
-    // Should be lazily loaded, but Hibernate does not support lazy loading for OneToOne relations
-    // Therefore we need JsonIgnore here
-    @OneToOne(mappedBy = "programmingExercise", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
-    @JsonIgnore
-    private ProgrammingExerciseGitDiffReport gitDiffReport;
+    @OneToMany(mappedBy = "exercise", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
+    private Set<ExerciseHint> exerciseHints = new HashSet<>();
 
     @Column(name = "testwise_coverage_enabled", table = "programming_exercise_details")
     private boolean testwiseCoverageEnabled;
+
+    @Column(name = "branch", table = "programming_exercise_details")
+    private String branch;
 
     /**
      * This boolean flag determines whether the solution repository should be checked out during the build (additional to the student's submission).
@@ -275,6 +275,14 @@ public class ProgrammingExercise extends Exercise {
 
     public String getProjectKey() {
         return this.projectKey;
+    }
+
+    public void setBranch(String branch) {
+        this.branch = branch;
+    }
+
+    public String getBranch() {
+        return branch;
     }
 
     /**
@@ -518,11 +526,11 @@ public class ProgrammingExercise extends Exercise {
         this.testCases = testCases;
     }
 
-    public Set<ProgrammingExerciseTask> getTasks() {
+    public List<ProgrammingExerciseTask> getTasks() {
         return tasks;
     }
 
-    public void setTasks(Set<ProgrammingExerciseTask> tasks) {
+    public void setTasks(List<ProgrammingExerciseTask> tasks) {
         this.tasks = tasks;
     }
 
@@ -754,11 +762,11 @@ public class ProgrammingExercise extends Exercise {
         }
     }
 
-    public ProgrammingExerciseGitDiffReport getGitDiffReport() {
-        return gitDiffReport;
+    public Set<ExerciseHint> getExerciseHints() {
+        return exerciseHints;
     }
 
-    public void setGitDiffReport(ProgrammingExerciseGitDiffReport programmingExerciseGitDiffReport) {
-        this.gitDiffReport = programmingExerciseGitDiffReport;
+    public void setExerciseHints(Set<ExerciseHint> exerciseHints) {
+        this.exerciseHints = exerciseHints;
     }
 }

@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, EventEmitter, OnInit, Output } from '@angular/core';
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
 import { PostingHeaderDirective } from 'app/shared/metis/posting-header/posting-header.directive';
 import { MetisService } from 'app/shared/metis/metis.service';
@@ -11,6 +11,8 @@ import { faCheck, faPencilAlt } from '@fortawesome/free-solid-svg-icons';
     styleUrls: ['../../metis.component.scss'],
 })
 export class AnswerPostHeaderComponent extends PostingHeaderDirective<AnswerPost> implements OnInit {
+    @Output() openPostingCreateEditModal = new EventEmitter<void>();
+
     isAuthorOfOriginalPost: boolean;
     isAnswerOfAnnouncement: boolean;
     readonly CourseWideContext = CourseWideContext;

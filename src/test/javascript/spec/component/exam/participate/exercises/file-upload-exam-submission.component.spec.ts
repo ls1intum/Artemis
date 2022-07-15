@@ -176,11 +176,11 @@ describe('FileUploadExamSubmissionComponent', () => {
         });
         it('should return true if isSynced false', () => {
             comp.studentSubmission.isSynced = false;
-            expect(comp.hasUnsavedChanges()).toEqual(true);
+            expect(comp.hasUnsavedChanges()).toBeTrue();
         });
         it('should return false if isSynced true', () => {
             comp.studentSubmission.isSynced = true;
-            expect(comp.hasUnsavedChanges()).toEqual(false);
+            expect(comp.hasUnsavedChanges()).toBeFalse();
         });
     });
 
@@ -224,7 +224,7 @@ describe('FileUploadExamSubmissionComponent', () => {
         fixture.detectChanges();
 
         // check that properties are set properly
-        expect(jhiErrorSpy).toHaveBeenCalledTimes(1);
+        expect(jhiErrorSpy).toHaveBeenCalledOnce();
         expect(comp.submissionFile).toBeUndefined();
         expect(comp.studentSubmission!.filePath).toBeUndefined();
 
@@ -252,7 +252,7 @@ describe('FileUploadExamSubmissionComponent', () => {
         fixture.detectChanges();
 
         // check that properties are set properly
-        expect(jhiErrorSpy).toHaveBeenCalledTimes(1);
+        expect(jhiErrorSpy).toHaveBeenCalledOnce();
         expect(comp.submissionFile).toBeUndefined();
         expect(comp.studentSubmission!.filePath).toBeUndefined();
 

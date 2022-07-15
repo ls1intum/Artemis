@@ -67,7 +67,7 @@ describe('Create Test Run Modal Component', () => {
             fixture.detectChanges();
             expect(comp.testRunConfiguration[1]).toEqual(exercise);
             expect(comp.exam.exerciseGroups!.length).toEqual(1);
-            expect(comp.testRunConfigured).toEqual(true);
+            expect(comp.testRunConfigured).toBeTrue();
             const createTestRunButton = fixture.debugElement.query(By.css('#createTestRunButton')).nativeElement;
             createTestRunButton.click();
             expect(closeStub).toHaveBeenCalled();

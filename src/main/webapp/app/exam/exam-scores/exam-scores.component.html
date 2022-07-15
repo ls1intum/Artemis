@@ -10,10 +10,13 @@
             <h2 class="font-weigth-bold" *ngIf="examScoreDTO.title">
                 {{ examScoreDTO.title }}
             </h2>
-            <button class="ms-auto btn btn-primary btn-sm" (click)="exportToCsv()">
-                <fa-icon [icon]="faDownload" [fixedWidth]="true"></fa-icon>
-                <span jhiTranslate="artemisApp.examScores.exportCSV">&nbsp;Export Results as CSV</span>
-            </button>
+            <jhi-csv-export-button
+                class="ms-auto"
+                title="entity.action.export"
+                [icon]="faDownload"
+                [buttonSize]="ButtonSize.SMALL"
+                (onExport)="exportExamResults($event)"
+            ></jhi-csv-export-button>
         </div>
 
         <div class="d-flex mb-1">
@@ -278,16 +281,18 @@
                 </label>
             </div>
             <!-- Histogram -->
-            <jhi-participant-scores-distribution
-                [scores]="scores"
-                [scoreToHighlight]="highlightedValue"
-                [gradingScale]="gradingScale"
-                [isCourseScore]="false"
-                [dataLabelFormatting]="dataLabelFormatting"
-                (onSelect)="onSelect()"
-                class="row"
-            >
-            </jhi-participant-scores-distribution>
+            <div class="row d-flex justify-content-center">
+                <jhi-participant-scores-distribution
+                    [scores]="scores"
+                    [scoreToHighlight]="highlightedValue"
+                    [gradingScale]="gradingScale"
+                    [isCourseScore]="false"
+                    [dataLabelFormatting]="dataLabelFormatting"
+                    (onSelect)="onSelect()"
+                    class="col-lg-11"
+                >
+                </jhi-participant-scores-distribution>
+            </div>
         </div>
 
         <!-- Exercise Statistics -->

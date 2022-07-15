@@ -5,12 +5,12 @@
             "noPosts": "No posts found.",
             "postNumberInformation": "{{ number }} match(es)",
             "addNewPost": "New post",
-            "answerNow": "Reply now",
-            "startDiscussion": "Start discussion",
+            "reply": "Reply",
             "showMultipleAnswers": "Show {{ number }} replies",
             "showSingleAnswer": "Show 1 reply",
             "collapseAnswers": "Hide replies",
             "savePosting": "Save",
+            "cancel": "Cancel",
             "toggleThread": "Click to toggle the thread",
             "deletePost": "Do you want to delete your post?",
             "confirmDeletePost": "Please confirm that you want to delete this post!",
@@ -36,10 +36,20 @@
             "reactedTooltipTrimmed": " and {{ number }} more reacted.",
             "searchEmoji": "Search emoji",
             "courseEmojiSelectionCategory": "Selected emojis for this course",
-            "discussion": {
-                "label": "Discussion",
-                "show": "Show discussion",
-                "hide": "Hide discussion"
+            "editor": {
+                "reference": "Reference",
+                "exercise": "Exercise",
+                "lecture": "Lecture"
+            },
+            "communication": {
+                "label": "Communication",
+                "show": "Show communication",
+                "hide": "Hide communication"
+            },
+            "discussionSection": {
+                "searchBarDefault": "Search for a post",
+                "sortByDate": "Date:",
+                "defaultSortCriterion": "Default sorting"
             },
             "overview": {
                 "title": "Posts",
@@ -48,7 +58,7 @@
                 "courseFilterExplanation": "(All posts)",
                 "filterToUnresolved": "Unresolved",
                 "filterToOwn": "Own",
-                "filterToAnsweredOrReacted": "Reacted or replied by you",
+                "filterToAnsweredOrReacted": "Reacted",
                 "sortPostsBy": "Sort by:",
                 "sortDescending": "Descending",
                 "sortAscending": "Ascending",

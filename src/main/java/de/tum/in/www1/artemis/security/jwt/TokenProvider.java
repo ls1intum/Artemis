@@ -98,7 +98,7 @@ public class TokenProvider {
     /**
      * Generates an access token that allows a user to download a file. This token is only valid for the given validity period.
      *
-     * @param authentication Currently active authentication mostly the currently logged in user
+     * @param authentication Currently active authentication mostly the currently logged-in user
      * @param durationValidityInSeconds The duration how long the access token should be valid
      * @param fileName The name of the file, which the token belongs to
      * @return File access token as a JWT token
@@ -119,7 +119,7 @@ public class TokenProvider {
     /**
      * Generates an access token that allows a user to download a file of a course. This token is only valid for the given validity period.
      *
-     * @param authentication Currently active authentication mostly the currently logged in user
+     * @param authentication Currently active authentication mostly the currently logged-in user
      * @param durationValidityInSeconds The duration how long the access token should be valid
      * @param courseId The id of the course, which the token belongs to
      * @return File access token as a JWT token

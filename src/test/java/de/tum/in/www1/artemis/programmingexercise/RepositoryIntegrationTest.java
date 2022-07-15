@@ -161,8 +161,8 @@ public class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBi
         doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(studentRepository.localRepoFile.toPath(), null)).when(gitService).getOrCheckoutRepository(participation);
 
         bitbucketRequestMockProvider.enableMockingOfRequests(true);
-        bitbucketRequestMockProvider.mockDefaultBranch(defaultBranch, participation.getVcsRepositoryUrl());
-        bitbucketRequestMockProvider.mockDefaultBranch(defaultBranch, programmingExercise.getVcsTemplateRepositoryUrl());
+        doReturn(defaultBranch).when(versionControlService).getOrRetrieveBranchOfStudentParticipation(participation);
+        doReturn(defaultBranch).when(versionControlService).getOrRetrieveBranchOfExercise(programmingExercise);
 
         logs.add(buildLogEntry);
         logs.add(largeBuildLogEntry);
@@ -440,7 +440,7 @@ public class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBi
         Path filePath = Path.of(studentRepository.originRepoFile.toString()).resolve(fileName);
         Files.createFile(filePath);
 
-        // Check if the file exists in the remote repository and that it doesn't yet exists in the local repository
+        // Check if the file exists in the remote repository and that it doesn't yet exist in the local repository
         assertThat(Files.exists(Path.of(studentRepository.originRepoFile.toString()).resolve(fileName))).isTrue();
         assertThat(Files.exists(Path.of(studentRepository.localRepoFile.toString()).resolve(fileName))).isFalse();
 
@@ -500,7 +500,7 @@ public class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBi
         List<Ref> refs = studentRepository.localGit.branchList().setListMode(ListBranchCommand.ListMode.REMOTE).call();
         var result = studentRepository.localGit.merge().include(refs.get(0).getObjectId()).setStrategy(MergeStrategy.RESOLVE).call();
         var status = studentRepository.localGit.status().call();
-        assertThat(status.getConflicting().size() > 0).isTrue();
+        assertThat(status.getConflicting()).isNotEmpty();
         assertThat(result.getMergeStatus()).isEqualTo(MergeResult.MergeStatus.CONFLICTING);
 
         // Execute the reset Rest call
@@ -879,7 +879,7 @@ public class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBi
         database.addSolutionParticipationForProgrammingExercise(programmingExercise);
         database.addTemplateParticipationForProgrammingExercise(programmingExercise);
 
-        // Check with programmingExercise null and an non-existent participation id
+        // Check with programmingExercise null and a non-existent participation id
         participation.setProgrammingExercise(null);
         participation.setId(123456L);
         programmingExercise.getSolutionParticipation().setProgrammingExercise(null);
@@ -934,7 +934,7 @@ public class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBi
         doAnswer((Answer<Void>) invocation -> {
             ((ProgrammingExercise) participation.getExercise()).setBuildAndTestStudentSubmissionsAfterDueDate(null);
             return null;
-        }).when(versionControlService).configureRepository(programmingExercise, participation.getVcsRepositoryUrl(), participation.getStudents(), true);
+        }).when(versionControlService).configureRepository(programmingExercise, participation, true);
 
         programmingExerciseParticipationService.unlockStudentRepository(programmingExercise, participation);
 

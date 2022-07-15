@@ -29,7 +29,7 @@ describe('LearningGoalPopoverComponent', () => {
             imports: [
                 NgbPopoverModule,
                 RouterTestingModule.withRoutes([
-                    { path: 'courses/:courseId/statistics', component: DummyStatisticsComponent },
+                    { path: 'courses/:courseId/learning-goals', component: DummyStatisticsComponent },
                     { path: 'course-management/:courseId/goal-management', component: DummyManagementComponent },
                 ]),
             ],
@@ -53,9 +53,9 @@ describe('LearningGoalPopoverComponent', () => {
         expect(learningGoalPopoverComponent).toBeDefined();
     });
 
-    it('should navigate to course statistics', fakeAsync(() => {
+    it('should navigate to course learning goals', fakeAsync(() => {
         const location: Location = TestBed.inject(Location);
-        learningGoalPopoverComponent.navigateTo = 'courseStatistics';
+        learningGoalPopoverComponent.navigateTo = 'courseLearningGoals';
         learningGoalPopoverComponent.learningGoals = [new LearningGoal()];
         learningGoalPopoverComponent.courseId = 1;
         learningGoalPopoverComponentFixture.detectChanges();
@@ -65,7 +65,7 @@ describe('LearningGoalPopoverComponent', () => {
         const anchor = learningGoalPopoverComponentFixture.debugElement.query(By.css('a')).nativeElement;
         anchor.click();
         tick();
-        expect(location.path()).toEqual('/courses/1/statistics');
+        expect(location.path()).toEqual('/courses/1/learning-goals');
     }));
 
     it('should navigate to learning goal management', fakeAsync(() => {

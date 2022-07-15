@@ -74,7 +74,7 @@ export class CodeEditorTutorAssessmentInlineFeedbackComponent {
     }
 
     /**
-     * When a inline feedback already exists, we set it back and display it the viewOnly mode.
+     * When an inline feedback already exists, we set it back and display it the viewOnly mode.
      * Otherwise the component is not displayed anymore in the parent component
      */
     cancelFeedback() {

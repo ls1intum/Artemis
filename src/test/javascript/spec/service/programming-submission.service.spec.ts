@@ -108,11 +108,11 @@ describe('ProgrammingSubmissionService', () => {
         let submission;
         submissionService.getLatestPendingSubmissionByParticipationId(participationId, 10, true).subscribe((sub) => (submission = sub));
         expect(submission).toEqual({ submissionState: ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION, submission: currentSubmission, participationId });
-        expect(wsSubscribeStub).toHaveBeenCalledTimes(1);
+        expect(wsSubscribeStub).toHaveBeenCalledOnce();
         expect(wsSubscribeStub).toHaveBeenCalledWith(submissionTopic);
-        expect(wsReceiveStub).toHaveBeenCalledTimes(1);
+        expect(wsReceiveStub).toHaveBeenCalledOnce();
         expect(wsReceiveStub).toHaveBeenCalledWith(submissionTopic);
-        expect(participationWsLatestResultStub).toHaveBeenCalledTimes(1);
+        expect(participationWsLatestResultStub).toHaveBeenCalledOnce();
         expect(participationWsLatestResultStub).toHaveBeenCalledWith(participationId, true, 10);
     });
 
@@ -183,7 +183,7 @@ describe('ProgrammingSubmissionService', () => {
         tick(10);
 
         // Expect the fallback mechanism to kick in after the timeout
-        expect(getLatestResultStub).toHaveBeenCalledTimes(1);
+        expect(getLatestResultStub).toHaveBeenCalledOnce();
         expect(getLatestResultStub).toHaveBeenCalledWith(participationId, true);
 
         // HAS_FAILED_SUBMISSION is expected as the result provided by getLatestResult does not match the pending submission
@@ -223,9 +223,9 @@ describe('ProgrammingSubmissionService', () => {
         tick(10);
 
         // Expect the fallback mechanism to kick in after the timeout
-        expect(getLatestResultStub).toHaveBeenCalledTimes(1);
+        expect(getLatestResultStub).toHaveBeenCalledOnce();
         expect(getLatestResultStub).toHaveBeenCalledWith(participationId, true);
-        expect(notifyAllResultSubscribersStub).toHaveBeenCalledTimes(1);
+        expect(notifyAllResultSubscribersStub).toHaveBeenCalledOnce();
         expect(notifyAllResultSubscribersStub).toHaveBeenCalledWith({ ...result, participation: { id: participationId } });
         wsLatestResultSubject.next(result);
 
@@ -267,7 +267,7 @@ describe('ProgrammingSubmissionService', () => {
             submission = sub;
         });
 
-        expect(httpGetStub).toHaveBeenCalledTimes(1);
+        expect(httpGetStub).toHaveBeenCalledOnce();
         expect(httpGetStub).toHaveBeenCalledWith('api/programming-exercises/3/latest-pending-submissions');
         // Fetching the latest pending submission should not trigger a rest call for a cached submission.
         expect(fetchLatestPendingSubmissionSpy).not.toHaveBeenCalled();
@@ -276,7 +276,7 @@ describe('ProgrammingSubmissionService', () => {
 
         // Fetching the latest pending submission should trigger a rest call if the submission is not cached.
         submissionService.getLatestPendingSubmissionByParticipationId(participation3.id!, exerciseId, true).subscribe();
-        expect(fetchLatestPendingSubmissionSpy).toHaveBeenCalledTimes(1);
+        expect(fetchLatestPendingSubmissionSpy).toHaveBeenCalledOnce();
         expect(fetchLatestPendingSubmissionSpy).toHaveBeenCalledWith(participation3.id);
     });
 
@@ -289,10 +289,10 @@ describe('ProgrammingSubmissionService', () => {
 
         let receivedSubmissionState: ExerciseSubmissionState = {};
         submissionService.getSubmissionStateOfExercise(exerciseId).subscribe((state) => (receivedSubmissionState = state));
-        expect(fetchLatestPendingSubmissionsByExerciseIdSpy).toHaveBeenCalledTimes(1);
+        expect(fetchLatestPendingSubmissionsByExerciseIdSpy).toHaveBeenCalledOnce();
         expect(fetchLatestPendingSubmissionsByExerciseIdSpy).toHaveBeenCalledWith(exerciseId);
         expect(receivedSubmissionState).toEqual(submissionState);
-        expect(httpGetStub).toHaveBeenCalledTimes(1);
+        expect(httpGetStub).toHaveBeenCalledOnce();
         expect(httpGetStub).toHaveBeenCalledWith(SERVER_API_URL + `api/programming-exercises/${exerciseId}/latest-pending-submissions`);
     });
 
@@ -309,10 +309,10 @@ describe('ProgrammingSubmissionService', () => {
 
         let receivedSubmissionState: ExerciseSubmissionState = {};
         submissionService.getSubmissionStateOfExercise(exerciseId).subscribe((state) => (receivedSubmissionState = state));
-        expect(fetchLatestPendingSubmissionsByExerciseIdSpy).toHaveBeenCalledTimes(1);
+        expect(fetchLatestPendingSubmissionsByExerciseIdSpy).toHaveBeenCalledOnce();
         expect(fetchLatestPendingSubmissionsByExerciseIdSpy).toHaveBeenCalledWith(exerciseId);
         expect(receivedSubmissionState).toEqual(expectedSubmissionState);
-        expect(httpGetStub).toHaveBeenCalledTimes(1);
+        expect(httpGetStub).toHaveBeenCalledOnce();
         expect(httpGetStub).toHaveBeenCalledWith(SERVER_API_URL + `api/programming-exercises/${exerciseId}/latest-pending-submissions`);
     });
 
@@ -333,10 +333,10 @@ describe('ProgrammingSubmissionService', () => {
 
         let receivedSubmissionState: ExerciseSubmissionState = {};
         submissionService.getSubmissionStateOfExercise(exerciseId).subscribe((state) => (receivedSubmissionState = state));
-        expect(fetchLatestPendingSubmissionsByExerciseIdSpy).toHaveBeenCalledTimes(1);
+        expect(fetchLatestPendingSubmissionsByExerciseIdSpy).toHaveBeenCalledOnce();
         expect(fetchLatestPendingSubmissionsByExerciseIdSpy).toHaveBeenCalledWith(exerciseId);
         expect(receivedSubmissionState).toEqual(expectedSubmissionState);
-        expect(httpGetStub).toHaveBeenCalledTimes(1);
+        expect(httpGetStub).toHaveBeenCalledOnce();
         expect(httpGetStub).toHaveBeenCalledWith(SERVER_API_URL + `api/programming-exercises/${exerciseId}/latest-pending-submissions`);
 
         let resultEta = -1;
@@ -357,6 +357,6 @@ describe('ProgrammingSubmissionService', () => {
 
         // Should now unsubscribe as last participation for topic was unsubscribed
         submissionService.unsubscribeForLatestSubmissionOfParticipation(2);
-        expect(wsUnsubscribeStub).toHaveBeenCalledTimes(1);
+        expect(wsUnsubscribeStub).toHaveBeenCalledOnce();
     });
 });

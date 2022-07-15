@@ -539,7 +539,7 @@ public class GitService {
      *
      * @param localPath           to git repo on server.
      * @param remoteRepositoryUrl the remote repository url for the git repository, will be added to the Repository object for later use, can be null
-     * @param defaultBranch       the name of the branch that should be used as defalut branch
+     * @param defaultBranch       the name of the branch that should be used as default branch
      * @return the git repository in the localPath or **null** if it does not exist on the server.
      */
     public Repository getExistingCheckedOutRepositoryByLocalPath(@NotNull Path localPath, @Nullable VcsRepositoryUrl remoteRepositoryUrl, String defaultBranch) {
@@ -763,7 +763,7 @@ public class GitService {
             pullCommand(git).call();
         }
         catch (GitAPIException ex) {
-            log.error("Cannot pull the repo " + repo.getLocalPath(), ex);
+            log.error("Cannot pull the repo {}", repo.getLocalPath(), ex);
             // TODO: we should send this error to the client and let the user handle it there, e.g. by choosing to reset the repository
         }
     }
@@ -907,7 +907,7 @@ public class GitService {
      *
      * @param repository          Local Repository Object.
      * @param programmingExercise ProgrammingExercise associated with this repo.
-     * @param overwriteMain       If false keeps main and creates squash commit in seperate branch, if true squashes main
+     * @param overwriteMain       If false keeps main and creates squash commit in separate branch, if true squashes main
      */
     public void combineAllStudentCommits(Repository repository, ProgrammingExercise programmingExercise, boolean overwriteMain) {
         try (Git studentGit = new Git(repository)) {
@@ -1223,7 +1223,7 @@ public class GitService {
         var participation = (ProgrammingExerciseStudentParticipation) repo.getParticipation();
 
         // The zip filename is either the student login, team short name or some default string.
-        var studentTeamOrDefault = Optional.ofNullable(participation.getParticipantIdentifier()).orElse("student-submission" + repo.getParticipation().getId());
+        var studentTeamOrDefault = Objects.requireNonNullElse(participation.getParticipantIdentifier(), "student-submission" + repo.getParticipation().getId());
 
         String zipRepoName = fileService.removeIllegalCharacters(courseShortName + "-" + exercise.getTitle() + "-" + participation.getId());
         if (hideStudentName) {

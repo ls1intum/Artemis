@@ -41,7 +41,7 @@ public class LegacyPasswordService {
     }
 
     /**
-     * Get the the password encryptor with MD5 and DES encryption algorithm
+     * Get the password encryptor with MD5 and DES encryption algorithm
      *
      * @return existing encryptor or newly created encryptor
      */

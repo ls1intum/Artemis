@@ -528,7 +528,7 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
     }
 
     /**
-     * Submitting the result means it is saved with a calculated score, result string and a completion date.
+     * Submitting the result means it is saved with a calculated score and a completion date.
      * @param result the result which should be set to submitted
      * @param exercise the exercises to which the result belongs, which is needed to get points and to determine if the result is rated or not
      * @param dueDate before which the result is considered to be rated
@@ -536,7 +536,7 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
      */
     default Result submitResult(Result result, Exercise exercise, Optional<ZonedDateTime> dueDate) {
         double maxPoints = exercise.getMaxPoints();
-        double bonusPoints = Optional.ofNullable(exercise.getBonusPoints()).orElse(0.0);
+        double bonusPoints = Objects.requireNonNullElse(exercise.getBonusPoints(), 0.0);
 
         // Exam results and manual results of programming exercises and example submissions are always to rated
         if (exercise.isExamExercise() || exercise instanceof ProgrammingExercise || Boolean.TRUE.equals(result.isExampleResult())) {
@@ -550,9 +550,8 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
         // Take bonus points into account to achieve a result score > 100%
         double calculatedPoints = calculateTotalPoints(result.getFeedbacks());
         double totalPoints = constrainToRange(calculatedPoints, maxPoints + bonusPoints);
-        // Set score and resultString according to maxPoints, to establish results with score > 100%
+        // Set score according to maxPoints, to establish results with score > 100%
         result.setScore(totalPoints, maxPoints, exercise.getCourseViaExerciseGroupOrCourseMember());
-        result.setResultString(totalPoints, maxPoints, exercise.getCourseViaExerciseGroupOrCourseMember());
 
         // Workaround to prevent the assessor turning into a proxy object after saving
         var assessor = result.getAssessor();

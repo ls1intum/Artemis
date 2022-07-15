@@ -75,7 +75,7 @@ export class TextFeedbackConflictsComponent extends TextAssessmentBaseComponent 
     }
 
     /**
-     *  Handles the resizable layout on the right hand side. Adapted from:
+     *  Handles the resizable layout on the right-hand side. Adapted from:
      *  @see resizeable-container.component.ts
      */
     ngAfterViewInit() {

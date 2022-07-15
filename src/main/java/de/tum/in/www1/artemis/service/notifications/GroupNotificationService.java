@@ -190,8 +190,8 @@ public class GroupNotificationService {
      * Auxiliary method that calls two other methods to check (create/schedule) notifications when a new exercise has been created
      * E.g. ExerciseReleased notification or AssessedExerciseSubmission notification
      *
-     * @param exercise
-     * @param instanceMessageSendService
+     * @param exercise that is created
+     * @param instanceMessageSendService that will call the service to update the scheduled exercise-created notification
      */
     public void checkNotificationsForNewExercise(Exercise exercise, InstanceMessageSendService instanceMessageSendService) {
         checkNotificationForExerciseRelease(exercise, instanceMessageSendService);

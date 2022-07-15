@@ -54,7 +54,7 @@ describe('DeleteDialogDirective', () => {
 
     it('directive should be correctly initialized', () => {
         fixture.detectChanges();
-        expect(translateSpy).toHaveBeenCalledTimes(1);
+        expect(translateSpy).toHaveBeenCalledOnce();
         expect(translateSpy).toHaveBeenCalledWith('entity.action.delete');
 
         // Check that button was assigned with proper classes and type.
@@ -83,21 +83,21 @@ describe('DeleteDialogDirective', () => {
         const directiveEl = debugElement.query(By.directive(DeleteButtonDirective));
         directiveEl.nativeElement.click();
         fixture.detectChanges();
-        expect(deleteDialogSpy).toHaveBeenCalledTimes(1);
+        expect(deleteDialogSpy).toHaveBeenCalledOnce();
         discardPeriodicTasks();
     }));
 
     it('action type cleanup should change button title', () => {
         comp.actionType = ActionType.Cleanup;
         fixture.detectChanges();
-        expect(translateSpy).toHaveBeenCalledTimes(1);
+        expect(translateSpy).toHaveBeenCalledOnce();
         expect(translateSpy).toHaveBeenCalledWith('entity.action.cleanup');
     });
 
     it('action type reset should change button title', () => {
         comp.actionType = ActionType.Reset;
         fixture.detectChanges();
-        expect(translateSpy).toHaveBeenCalledTimes(1);
+        expect(translateSpy).toHaveBeenCalledOnce();
         expect(translateSpy).toHaveBeenCalledWith('entity.action.reset');
     });
 });

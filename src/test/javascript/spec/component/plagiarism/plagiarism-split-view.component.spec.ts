@@ -16,7 +16,7 @@ import { MockComponent, MockPipe } from 'ng-mocks';
 import { ModelingSubmissionViewerComponent } from 'app/exercises/shared/plagiarism/plagiarism-split-view/modeling-submission-viewer/modeling-submission-viewer.component';
 import { TextSubmissionViewerComponent } from 'app/exercises/shared/plagiarism/plagiarism-split-view/text-submission-viewer/text-submission-viewer.component';
 import { PlagiarismStatus } from 'app/exercises/shared/plagiarism/types/PlagiarismStatus';
-import { PlagiarismCasesService } from 'app/course/plagiarism-cases/plagiarism-cases.service';
+import { PlagiarismCasesService } from 'app/course/plagiarism-cases/shared/plagiarism-cases.service';
 import { ArtemisTestModule } from '../../test.module';
 import { ModelingSubmissionElement } from 'app/exercises/shared/plagiarism/types/modeling/ModelingSubmissionElement';
 import { HttpResponse } from '@angular/common/http';
@@ -82,8 +82,8 @@ describe('Plagiarism Split View Component', () => {
             exercise: { currentValue: modelingExercise } as SimpleChange,
         });
 
-        expect(comp.isModelingExercise).toEqual(true);
-        expect(comp.isProgrammingOrTextExercise).toEqual(false);
+        expect(comp.isModelingExercise).toBeTrue();
+        expect(comp.isProgrammingOrTextExercise).toBeFalse();
     });
 
     it('checks type of text exercise', () => {
@@ -91,8 +91,8 @@ describe('Plagiarism Split View Component', () => {
             exercise: { currentValue: textExercise } as SimpleChange,
         });
 
-        expect(comp.isProgrammingOrTextExercise).toEqual(true);
-        expect(comp.isModelingExercise).toEqual(false);
+        expect(comp.isProgrammingOrTextExercise).toBeTrue();
+        expect(comp.isModelingExercise).toBeFalse();
     });
 
     it('should parse text matches for comparison', fakeAsync(() => {
@@ -108,9 +108,9 @@ describe('Plagiarism Split View Component', () => {
 
         tick();
 
-        expect(comp.isProgrammingOrTextExercise).toBe(true);
-        expect(comp.isModelingExercise).toBe(false);
-        expect(comp.parseTextMatches).toHaveBeenCalledTimes(1);
+        expect(comp.isProgrammingOrTextExercise).toBeTrue();
+        expect(comp.isModelingExercise).toBeFalse();
+        expect(comp.parseTextMatches).toHaveBeenCalledOnce();
     }));
 
     it('should subscribe to the split control subject', () => {
@@ -120,7 +120,7 @@ describe('Plagiarism Split View Component', () => {
         comp.ngOnInit();
 
         // eslint-disable-next-line deprecation/deprecation
-        expect(comp.splitControlSubject.subscribe).toHaveBeenCalledTimes(1);
+        expect(comp.splitControlSubject.subscribe).toHaveBeenCalledOnce();
     });
 
     it('should collapse the left pane', () => {
@@ -204,7 +204,7 @@ describe('Plagiarism Split View Component', () => {
             { start: 0, length: 0 },
             { start: 3, length: 3 },
         ];
-        const textSubmissionElements = [
+        submissionA.elements = [
             { file: '', column: 1, line: 1 },
             { file: '', column: 2, line: 2 },
             { file: '', column: 3, line: 3 },
@@ -216,7 +216,6 @@ describe('Plagiarism Split View Component', () => {
             { file: '', column: 9, line: 9 },
             { file: '', column: 10, line: 10 },
         ] as TextSubmissionElement[];
-        submissionA.elements = textSubmissionElements;
         const mappedElements = new Map();
         mappedElements.set('none', [
             { from: { file: '', column: 1, line: 1 }, to: { file: '', column: 2, line: 2 } },

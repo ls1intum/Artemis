@@ -2,36 +2,76 @@
     <h2>
         <span id="user-management-page-heading" jhiTranslate="userManagement.home.title">Users</span>
         <a class="btn btn-primary float-end jh-create-entity" [routerLink]="['./new']">
-            <fa-icon [icon]="faPlus"></fa-icon> <span jhiTranslate="userManagement.home.createLabel">Create a new User</span>
+            <fa-icon [icon]="faPlus"></fa-icon>
+            <span jhiTranslate="userManagement.home.createLabel">Create a new User</span>
         </a>
     </h2>
     <div class="table-responsive" *ngIf="users">
         <form [formGroup]="userSearchForm">
-            <div class="form-group form-inline">
-                <label for="field_searchTerm" class="form-control-label" jhiTranslate="userManagement.searchForUser">Search for User: </label>
-                <input
-                    class="form-control ms-3"
-                    type="text"
-                    name="searchTerm"
-                    id="field_searchTerm"
-                    formControlName="searchControl"
-                    [(ngModel)]="searchTerm"
-                    (focusout)="loadAll()"
-                />
-                <button class="btn btn-primary ms-3" (click)="loadAll()">
-                    <span jhiTranslate="userManagement.search">Search</span>
-                </button>
-                <ng-container *ngIf="searchControl.invalid && (searchControl.dirty || searchControl.touched)">
-                    <div class="alert alert-danger ms-3 mb-0">
-                        <div jhiTranslate="userManagement.searchError">Search term must be empty or at least 3 character.</div>
+            <div class="container-fluid">
+                <div class="row">
+                    <div class="col">
+                        <div class="form-group form-inline">
+                            <label for="field_searchTerm" class="form-control-label" jhiTranslate="userManagement.searchForUser">Search for User: </label>
+                            <input
+                                class="form-control ms-3"
+                                type="text"
+                                name="searchTerm"
+                                id="field_searchTerm"
+                                formControlName="searchControl"
+                                [(ngModel)]="searchTerm"
+                                (focusout)="loadAll()"
+                            />
+                            <button class="btn btn-primary ms-3" (click)="loadAll()">
+                                <span jhiTranslate="userManagement.search">Search</span>
+                            </button>
+                            <ng-container *ngIf="searchControl.invalid && (searchControl.dirty || searchControl.touched)">
+                                <div class="alert alert-danger ms-3 mb-0">
+                                    <div jhiTranslate="userManagement.searchError">Search term must be empty or at least 3 character.</div>
+                                </div>
+                            </ng-container>
+                            <span class="ms-3" *ngIf="loadingSearchResult" jhiTranslate="userManagement.loading">Loading...</span>
+                        </div>
                     </div>
-                </ng-container>
-                <span class="ms-3" *ngIf="loadingSearchResult" jhiTranslate="userManagement.loading">Loading...</span>
+                    <div class="col p-0">
+                        <div class="d-flex justify-content-center justify-content-md-end">
+                            <button
+                                jhiDeleteButton
+                                [buttonSize]="medium"
+                                [entityTitle]="this.selectedUsers.length.toString()"
+                                deleteQuestion="userManagement.batch.delete.question"
+                                deleteConfirmationText="userManagement.batch.delete.typeNumberToConfirm"
+                                (delete)="this.deleteAllSelectedUsers()"
+                                [dialogError]="this.dialogError"
+                                [disabled]="!this.selectedUsers.length"
+                            >
+                                <fa-icon [icon]="faTimes"></fa-icon>
+                            </button>
+                            <button
+                                class="btn"
+                                (click)="this.open(content)"
+                                [ngClass]="{ 'btn-secondary': !filters.numberOfAppliedFilters, 'btn-success': !!filters.numberOfAppliedFilters }"
+                            >
+                                <fa-icon [icon]="faFilter"></fa-icon>
+                                <span class="d-s-none d-md-inline">{{ 'userManagement.filter.modal.open' | artemisTranslate: { num: filters.numberOfAppliedFilters } }}</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
             </div>
         </form>
-        <table class="table table-striped" aria-describedby="user-management-page-heading">
+        <table class="table table-striped user-management-table" aria-describedby="user-management-page-heading">
             <thead>
                 <tr jhiSort [(predicate)]="predicate" [(ascending)]="ascending" (sortChange)="transition()">
+                    <th class="user-management-select-all">
+                        <span class="pe-1" jhiTranslate="userManagement.batch.all">All</span>
+                        <input
+                            class="form-check-input"
+                            [checked]="this.selectedUsers.length === this.usersWithoutCurrentUser.length"
+                            (change)="this.toggleAllUserSelection()"
+                            type="checkbox"
+                        />
+                    </th>
                     <th jhiSortBy="id">
                         <span jhiTranslate="global.field.id">ID</span>
                         <fa-icon [icon]="faSort"></fa-icon>
@@ -76,6 +116,15 @@
             </thead>
             <tbody *ngIf="users">
                 <tr *ngFor="let user of users; trackBy: trackIdentity">
+                    <td>
+                        <input
+                            class="form-check-input"
+                            [disabled]="!currentAccount || currentAccount.login === user.login"
+                            [checked]="this.selectedUsers.includes(user)"
+                            (change)="this.toggleUser(user)"
+                            type="checkbox"
+                        />
+                    </td>
                     <td>
                         <a [routerLink]="['./', user.login]">{{ user.id }}</a>
                     </td>
@@ -160,3 +209,201 @@
         </div>
     </div>
 </div>
+
+<!-- Modal -->
+<ng-template #content let-modal>
+    <div class="modal-header">
+        <h5 class="modal-title">{{ 'userManagement.filter.modal.title' | artemisTranslate }}</h5>
+        <button type="button" class="btn-close" aria-label="Close" (click)="modal.dismiss()"></button>
+    </div>
+    <div class="modal-body">
+        <div class="container-fluid">
+            <div class="row user-management-border-bottom">
+                <div class="col d-flex flex-row pb-1">
+                    <h5 class="my-0">{{ 'userManagement.filter.authority.title' | artemisTranslate: { num: this.filters.authorityFilter.size } }}</h5>
+                    <jhi-help-icon class="ps-1" placement="top" text="userManagement.filter.authority.tooltip"></jhi-help-icon>
+                </div>
+            </div>
+            <div class="row user-management-background-accent">
+                <div class="col pt-2 user-management-line-bottom">
+                    <div class="container-fluid mb-2 radio-selection-width px-0">
+                        <div class="row">
+                            <div class="form-check col-3 d-flex justify-content-center">
+                                <input
+                                    class="form-check-input"
+                                    type="radio"
+                                    (click)="selectAllRoles()"
+                                    [checked]="this.filters.authorityFilter.size === this.authorityFilters.length && !this.filters.noAuthority"
+                                />
+                                <label class="form-check-label ps-1">
+                                    {{ 'userManagement.filter.all' | artemisTranslate }}
+                                </label>
+                            </div>
+                            <div class="form-check col-6 d-flex justify-content-center">
+                                <input
+                                    class="form-check-input"
+                                    type="radio"
+                                    (click)="selectEmptyRoles()"
+                                    [checked]="this.filters.authorityFilter.size === 0 && this.filters.noAuthority"
+                                />
+                                <label class="form-check-label ps-1">
+                                    {{ 'userManagement.filter.authority.without' | artemisTranslate }}
+                                </label>
+                                <jhi-help-icon class="ps-1" placement="top" text="userManagement.filter.authority.withoutTooltip"></jhi-help-icon>
+                            </div>
+                            <div class="form-check col-3 d-flex justify-content-center">
+                                <input
+                                    class="form-check-input"
+                                    type="radio"
+                                    (click)="deselectAllRoles()"
+                                    [checked]="this.filters.authorityFilter.size === 0 && !this.filters.noAuthority"
+                                />
+                                <label class="form-check-label ps-1">
+                                    {{ 'userManagement.filter.none' | artemisTranslate }}
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row user-management-background-accent">
+                <div class="col container px-3">
+                    <ul class="text-nowrap list-unstyled row my-0 py-2">
+                        <li *ngFor="let authority of this.authorityFilters" class="col-4">
+                            <label>
+                                <input
+                                    class="form-check-input"
+                                    (change)="this.toggleAuthorityFilter(this.filters.authorityFilter, authority)"
+                                    [checked]="this.filters.authorityFilter.has(authority)"
+                                    type="checkbox"
+                                />
+                                <span class="ms-2">{{ 'userManagement.filter.authority.' + authority.toString().toLowerCase() | artemisTranslate }}</span>
+                            </label>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            <div class="row row user-management-border-bottom">
+                <div class="col d-flex flex-row pt-3 pb-1">
+                    <h5 class="my-0">{{ 'userManagement.filter.origin.title' | artemisTranslate: { num: this.filters.originFilter.size } }}</h5>
+                    <jhi-help-icon class="ps-1" placement="top" text="userManagement.filter.origin.tooltip"></jhi-help-icon>
+                </div>
+            </div>
+            <div class="row user-management-background-accent">
+                <div class="col container px-3">
+                    <ul class="text-nowrap list-unstyled row my-0 py-2">
+                        <li *ngFor="let origin of this.originFilters" class="col">
+                            <label>
+                                <input class="form-check-input" (change)="this.toggleOriginFilter(origin)" [checked]="this.filters.originFilter.has(origin)" type="radio" />
+                                <span class="ps-1">{{ 'userManagement.filter.origin.' + origin.toString().toLowerCase() | artemisTranslate }}</span>
+                            </label>
+                        </li>
+                        <li class="col-3">
+                            <input class="form-check-input" type="radio" (click)="this.toggleOriginFilter()" [checked]="this.filters.originFilter.size === 0" />
+                            <label class="form-check-label ps-1">
+                                {{ 'userManagement.filter.none' | artemisTranslate }}
+                            </label>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            <div class="row user-management-border-bottom">
+                <div class="col d-flex flex-row pt-3 pb-1">
+                    <h5 class="my-0">{{ 'userManagement.filter.status.title' | artemisTranslate: { num: this.filters.statusFilter.size } }}</h5>
+                    <jhi-help-icon class="ps-1" placement="top" text="userManagement.filter.status.tooltip"></jhi-help-icon>
+                </div>
+            </div>
+            <div class="row user-management-background-accent">
+                <div class="col container px-3">
+                    <ul class="text-nowrap list-unstyled row my-0 py-2">
+                        <li *ngFor="let status of this.statusFilters" class="col">
+                            <label>
+                                <input class="form-check-input" (change)="this.toggleStatusFilter(status)" [checked]="this.filters.statusFilter.has(status)" type="radio" />
+                                <span class="ps-1">{{ 'userManagement.filter.status.' + status.toString().toLowerCase() | artemisTranslate }}</span>
+                            </label>
+                        </li>
+                        <li class="col-3">
+                            <input class="form-check-input" type="radio" (click)="this.toggleStatusFilter()" [checked]="this.filters.statusFilter.size === 0" />
+                            <label class="form-check-label ps-1">
+                                {{ 'userManagement.filter.none' | artemisTranslate }}
+                            </label>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            <div class="row user-management-border-bottom">
+                <div class="col d-flex flex-row pt-3 pb-1">
+                    <h5 class="my-0">{{ 'userManagement.filter.course.title' | artemisTranslate: { num: this.filters.courseFilter.size } }}</h5>
+                    <jhi-help-icon class="ps-1" placement="top" text="userManagement.filter.course.tooltip"></jhi-help-icon>
+                </div>
+            </div>
+            <div class="row user-management-background-accent">
+                <div class="col pt-2 user-management-line-bottom">
+                    <div class="container-fluid mb-2 radio-selection-width px-0">
+                        <div class="row">
+                            <div class="form-check col-3 d-flex justify-content-center">
+                                <input
+                                    class="form-check-input"
+                                    type="radio"
+                                    (click)="selectAllCourses()"
+                                    [checked]="this.filters.courseFilter.size === this.courses.length && !this.filters.noCourse"
+                                />
+                                <label class="form-check-label ps-1">
+                                    {{ 'userManagement.filter.all' | artemisTranslate }}
+                                </label>
+                            </div>
+                            <div class="form-check col-6 d-flex justify-content-center">
+                                <input
+                                    class="form-check-input"
+                                    type="radio"
+                                    (click)="selectEmptyCourses()"
+                                    [checked]="this.filters.courseFilter.size === 0 && this.filters.noCourse"
+                                />
+                                <label class="form-check-label ps-1">
+                                    {{ 'userManagement.filter.course.without' | artemisTranslate }}
+                                </label>
+                                <jhi-help-icon class="ps-1" placement="top" text="userManagement.filter.course.withoutTooltip"></jhi-help-icon>
+                            </div>
+                            <div class="form-check col-3 d-flex justify-content-center">
+                                <input
+                                    class="form-check-input"
+                                    type="radio"
+                                    (click)="deselectAllCourses()"
+                                    [checked]="this.filters.courseFilter.size === 0 && !this.filters.noCourse"
+                                />
+                                <label class="form-check-label ps-1">
+                                    {{ 'userManagement.filter.none' | artemisTranslate }}
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row user-management-background-accent">
+                <div class="col px-3 pe-0">
+                    <ul class="text-nowrap list-unstyled m-0 course-modal-section px-0 py-1">
+                        <li *ngFor="let course of this.courseFilters">
+                            <label>
+                                <input
+                                    class="form-check-input"
+                                    (change)="this.toggleCourseFilter(this.filters.courseFilter, course.id!)"
+                                    [checked]="this.filters.courseFilter.has(course.id!)"
+                                    type="checkbox"
+                                />
+                                <span class="ms-2 course-modal-section-title">{{ course.title ?? '' }}</span>
+                            </label>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" (click)="modal.close()">
+            {{ 'userManagement.filter.modal.close' | artemisTranslate }}
+        </button>
+        <button class="btn btn-primary" (click)="applyFilter()">
+            <span jhiTranslate="userManagement.filter.apply">Apply</span>
+        </button>
+    </div>
+</ng-template>

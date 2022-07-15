@@ -46,7 +46,7 @@ export class CourseManagementRequests {
 
     /**
      * Creates a course with the specified title and short name.
-     * @param customizeGroups whether the predefined groups should be used (so we dont have to wait more than a minute between course and programming exercise creation)
+     * @param customizeGroups whether the predefined groups should be used (so we don't have to wait more than a minute between course and programming exercise creation)
      * @param courseName the title of the course (will generate default name if not provided)
      * @param courseShortName the short name (will generate default name if not provided)
      * @param start the start date of the course (default: now() - 2 hours)
@@ -406,7 +406,7 @@ export class CourseManagementRequests {
             {
                 ...multipleChoiceSubmissionTemplate.submittedAnswers[0],
                 quizQuestion: quizExercise.quizQuestions![0],
-                selectedOptions: tickOptions.map((option) => quizExercise.quizQuestions[0].answerOptions[option].body),
+                selectedOptions: tickOptions.map((option) => quizExercise.quizQuestions[0].answerOptions[option]),
             },
         ];
         const multipleChoiceSubmission = {

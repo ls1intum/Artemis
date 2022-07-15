@@ -25,6 +25,7 @@ import de.tum.in.www1.artemis.domain.enumeration.QuizMode;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.view.QuizView;
+import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 
 /**
  * A QuizExercise contains multiple quiz quizQuestions, which can be either multiple choice, drag and drop or short answer. Artemis supports live quizzes with a start and end time which are
@@ -76,7 +77,7 @@ public class QuizExercise extends Exercise {
     @JsonView(QuizView.During.class)
     private List<QuizQuestion> quizQuestions = new ArrayList<>();
 
-    @OneToMany(mappedBy = "quizExercise", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "quizExercise", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     @JsonView(QuizView.Before.class)
     private Set<QuizBatch> quizBatches = new HashSet<>();
@@ -193,7 +194,7 @@ public class QuizExercise extends Exercise {
     @JsonIgnore
     public Boolean isValid() {
         // check title
-        if (getTitle() == null || getTitle().equals("")) {
+        if (getTitle() == null || getTitle().isEmpty()) {
             return false;
         }
 
@@ -411,6 +412,9 @@ public class QuizExercise extends Exercise {
         // reset unchangeable attributes: ( dueDate, releaseDate, question.points)
         this.setDueDate(originalQuizExercise.getDueDate());
         this.setReleaseDate(originalQuizExercise.getReleaseDate());
+
+        // cannot update batches
+        this.setQuizBatches(originalQuizExercise.getQuizBatches());
 
         // remove added Questions, which are not allowed to be added
         Set<QuizQuestion> addedQuizQuestions = new HashSet<>();
@@ -699,6 +703,17 @@ public class QuizExercise extends Exercise {
         else {
             return QuizView.Before.class;
         }
+    }
+
+    @JsonIgnore
+    @Override
+    public void validateDates() {
+        super.validateDates();
+        quizBatches.forEach(quizBatch -> {
+            if (quizBatch.getStartTime().isBefore(getReleaseDate())) {
+                throw new BadRequestAlertException("Start time must not be before release date!", getTitle(), "noValidDates");
+            }
+        });
     }
 
     @Override

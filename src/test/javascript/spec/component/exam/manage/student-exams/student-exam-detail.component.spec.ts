@@ -11,7 +11,7 @@ import { HttpResponse } from '@angular/common/http';
 import { of } from 'rxjs';
 import { ActivatedRoute, convertToParamMap, Params } from '@angular/router';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
-import { NgxDatatableModule } from '@swimlane/ngx-datatable';
+import { NgxDatatableModule } from '@flaviosantoro92/ngx-datatable';
 import { FontAwesomeTestingModule } from '@fortawesome/angular-fontawesome/testing';
 import { TranslateModule } from '@ngx-translate/core';
 import { RouterTestingModule } from '@angular/router/testing';
@@ -27,12 +27,13 @@ import { Result } from 'app/entities/result.model';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { StudentExamDetailTableRowComponent } from 'app/exam/manage/student-exams/student-exam-detail-table-row/student-exam-detail-table-row.component';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
-import { GradingSystemService } from 'app/grading-system/grading-system.service';
 import { DataTableComponent } from 'app/shared/data-table/data-table.component';
 import { AlertService } from 'app/core/util/alert.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { MockTranslateValuesDirective } from '../../../../helpers/mocks/directive/mock-translate-values.directive';
 import { StudentExamWorkingTimeComponent } from 'app/exam/shared/student-exam-working-time.component';
+import { GradeType } from 'app/entities/grading-scale.model';
+import { StudentExamWithGradeDTO } from 'app/exam/exam-scores/exam-score-dtos.model';
 
 describe('StudentExamDetailComponent', () => {
     let studentExamDetailComponentFixture: ComponentFixture<StudentExamDetailComponent>;
@@ -41,13 +42,13 @@ describe('StudentExamDetailComponent', () => {
     let student: User;
     let studentExam: StudentExam;
     let studentExam2: StudentExam;
+    let studentExamWithGrade: StudentExamWithGradeDTO;
     let exercise: Exercise;
     let exam: Exam;
     let studentParticipation: StudentParticipation;
     let result: Result;
 
     let studentExamService: any;
-    let gradingSystemService: GradingSystemService;
 
     beforeEach(() => {
         course = { id: 1 };
@@ -94,6 +95,23 @@ describe('StudentExamDetailComponent', () => {
             submissionDate: dayjs(),
             exercises: [exercise],
         };
+
+        studentExamWithGrade = {
+            studentExam,
+            maxPoints: 100,
+            gradeType: GradeType.NONE,
+            studentResult: {
+                userId: 1,
+                name: 'user1',
+                login: 'user1',
+                eMail: 'user1@tum.de',
+                registrationNumber: '111',
+                overallPointsAchieved: 40,
+                overallScoreAchieved: 40,
+                overallPointsAchievedInFirstCorrection: 90,
+                submitted: true,
+            },
+        } as StudentExamWithGradeDTO;
 
         return TestBed.configureTestingModule({
             imports: [
@@ -149,10 +167,7 @@ describe('StudentExamDetailComponent', () => {
                                 }),
                         },
                         data: {
-                            subscribe: (fn: (value: any) => void) =>
-                                fn({
-                                    studentExam,
-                                }),
+                            subscribe: (fn: (value: any) => void) => fn({ studentExam: studentExamWithGrade }),
                         },
                         snapshot: {
                             paramMap: convertToParamMap({
@@ -169,7 +184,6 @@ describe('StudentExamDetailComponent', () => {
                 studentExamDetailComponentFixture = TestBed.createComponent(StudentExamDetailComponent);
                 studentExamDetailComponent = studentExamDetailComponentFixture.componentInstance;
                 studentExamService = TestBed.inject(StudentExamService);
-                gradingSystemService = TestBed.inject(GradingSystemService);
             });
     });
 
@@ -184,10 +198,8 @@ describe('StudentExamDetailComponent', () => {
     };
 
     it('initialize', () => {
-        const gradeSpy = jest.spyOn(gradingSystemService, 'matchPercentageToGradeStepForExam');
         studentExamDetailComponentFixture.detectChanges();
 
-        expect(gradeSpy).toHaveBeenCalledTimes(1);
         expect(course.id).toBe(1);
         expect(studentExamDetailComponent.achievedTotalPoints).toBe(40);
 
@@ -200,8 +212,8 @@ describe('StudentExamDetailComponent', () => {
         studentExamDetailComponentFixture.detectChanges();
 
         studentExamDetailComponent.saveWorkingTime();
-        expect(studentExamSpy).toHaveBeenCalledTimes(1);
-        expect(studentExamDetailComponent.isSavingWorkingTime).toBe(false);
+        expect(studentExamSpy).toHaveBeenCalledOnce();
+        expect(studentExamDetailComponent.isSavingWorkingTime).toBeFalse();
         expect(course.id).toBe(1);
         expect(studentExamDetailComponent.achievedTotalPoints).toBe(40);
         expect(studentExamDetailComponent.maxTotalPoints).toBe(100);
@@ -214,7 +226,7 @@ describe('StudentExamDetailComponent', () => {
         studentExamDetailComponent.saveWorkingTime();
         studentExamDetailComponent.saveWorkingTime();
         expect(studentExamSpy).toHaveBeenCalledTimes(3);
-        expect(studentExamDetailComponent.isSavingWorkingTime).toBe(false);
+        expect(studentExamDetailComponent.isSavingWorkingTime).toBeFalse();
         expect(course.id).toBe(1);
         expect(studentExamDetailComponent.achievedTotalPoints).toBe(40);
         expect(studentExamDetailComponent.maxTotalPoints).toBe(100);
@@ -222,7 +234,7 @@ describe('StudentExamDetailComponent', () => {
 
     it('should disable the working time form while saving', () => {
         studentExamDetailComponent.isSavingWorkingTime = true;
-        expect(studentExamDetailComponent.isFormDisabled()).toBe(true);
+        expect(studentExamDetailComponent.isFormDisabled()).toBeTrue();
     });
 
     it('should disable the working time form after a test run is submitted', () => {
@@ -230,10 +242,10 @@ describe('StudentExamDetailComponent', () => {
         studentExamDetailComponent.studentExam = studentExam;
 
         studentExamDetailComponent.studentExam.submitted = false;
-        expect(studentExamDetailComponent.isFormDisabled()).toBe(false);
+        expect(studentExamDetailComponent.isFormDisabled()).toBeFalse();
 
         studentExamDetailComponent.studentExam.submitted = true;
-        expect(studentExamDetailComponent.isFormDisabled()).toBe(true);
+        expect(studentExamDetailComponent.isFormDisabled()).toBeTrue();
     });
 
     it('should disable the working time form after the exam is visible to a student', () => {
@@ -241,10 +253,10 @@ describe('StudentExamDetailComponent', () => {
         studentExamDetailComponent.studentExam = studentExam;
 
         studentExamDetailComponent.studentExam.exam!.visibleDate = dayjs().add(1, 'hour');
-        expect(studentExamDetailComponent.isFormDisabled()).toBe(false);
+        expect(studentExamDetailComponent.isFormDisabled()).toBeFalse();
 
         studentExamDetailComponent.studentExam.exam!.visibleDate = dayjs().subtract(1, 'hour');
-        expect(studentExamDetailComponent.isFormDisabled()).toBe(true);
+        expect(studentExamDetailComponent.isFormDisabled()).toBeTrue();
     });
 
     it('should disable the working time form if there is no exam', () => {
@@ -252,19 +264,19 @@ describe('StudentExamDetailComponent', () => {
         studentExamDetailComponent.studentExam = studentExam;
 
         studentExamDetailComponent.studentExam.exam = undefined;
-        expect(studentExamDetailComponent.isFormDisabled()).toBe(true);
+        expect(studentExamDetailComponent.isFormDisabled()).toBeTrue();
     });
 
     it('should get examIsOver', () => {
         studentExamDetailComponent.studentExam = studentExam;
         studentExam.exam!.gracePeriod = 100;
-        expect(studentExamDetailComponent.examIsOver()).toBe(false);
+        expect(studentExamDetailComponent.examIsOver()).toBeFalse();
         studentExam.exam!.endDate = dayjs().add(-20, 'seconds');
-        expect(studentExamDetailComponent.examIsOver()).toBe(false);
+        expect(studentExamDetailComponent.examIsOver()).toBeFalse();
         studentExam.exam!.endDate = dayjs().add(-200, 'seconds');
-        expect(studentExamDetailComponent.examIsOver()).toBe(true);
+        expect(studentExamDetailComponent.examIsOver()).toBeTrue();
         studentExam.exam = undefined;
-        expect(studentExamDetailComponent.examIsOver()).toBe(false);
+        expect(studentExamDetailComponent.examIsOver()).toBeFalse();
     });
 
     it('should toggle to unsubmitted', () => {
@@ -275,8 +287,8 @@ describe('StudentExamDetailComponent', () => {
 
         studentExamDetailComponent.toggle();
 
-        expect(toggleSubmittedStateSpy).toHaveBeenCalledTimes(1);
-        expect(studentExamDetailComponent.studentExam.submitted).toBe(true);
+        expect(toggleSubmittedStateSpy).toHaveBeenCalledOnce();
+        expect(studentExamDetailComponent.studentExam.submitted).toBeTrue();
         // the toggle uses the current time as submission date,
         // therefore no useful assertion about a concrete value is possible here
         expect(studentExamDetailComponent.studentExam.submissionDate).not.toBe(undefined);

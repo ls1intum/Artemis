@@ -5,10 +5,13 @@ import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphTyp
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import javax.annotation.Nullable;
 import javax.validation.constraints.NotNull;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -28,7 +31,6 @@ public interface QuizExerciseRepository extends JpaRepository<QuizExercise, Long
     @Query("""
             SELECT DISTINCT e FROM QuizExercise e
             LEFT JOIN FETCH e.categories
-            LEFT JOIN FETCH e.quizBatches
             WHERE e.course.id = :#{#courseId}
             """)
     List<QuizExercise> findByCourseIdWithCategories(@Param("courseId") Long courseId);
@@ -51,8 +53,11 @@ public interface QuizExerciseRepository extends JpaRepository<QuizExercise, Long
     @EntityGraph(type = LOAD, attributePaths = { "quizQuestions", "quizPointStatistic", "quizQuestions.quizQuestionStatistic", "categories", "quizBatches" })
     Optional<QuizExercise> findWithEagerQuestionsAndStatisticsById(Long quizExerciseId);
 
-    @EntityGraph(type = LOAD, attributePaths = { "quizQuestions", "quizBatches" })
+    @EntityGraph(type = LOAD, attributePaths = { "quizQuestions" })
     Optional<QuizExercise> findWithEagerQuestionsById(Long quizExerciseId);
+
+    @EntityGraph(type = LOAD, attributePaths = { "quizBatches" })
+    Optional<QuizExercise> findWithEagerBatchesById(Long quizExerciseId);
 
     @NotNull
     default QuizExercise findByIdElseThrow(Long quizExerciseId) throws EntityNotFoundException {
@@ -76,14 +81,20 @@ public interface QuizExerciseRepository extends JpaRepository<QuizExercise, Long
      * @param quizExerciseId the id of the entity
      * @return the entity
      */
-    @Nullable
-    default QuizExercise findOneWithQuestions(Long quizExerciseId) {
-        return findWithEagerQuestionsById(quizExerciseId).orElse(null);
-    }
-
     @NotNull
     default QuizExercise findByIdWithQuestionsElseThrow(Long quizExerciseId) {
         return findWithEagerQuestionsById(quizExerciseId).orElseThrow(() -> new EntityNotFoundException("Quiz Exercise", quizExerciseId));
+    }
+
+    /**
+     * Get one quiz exercise by id and eagerly load batches
+     *
+     * @param quizExerciseId the id of the entity
+     * @return the entity
+     */
+    @NotNull
+    default QuizExercise findByIdWithBatchesElseThrow(Long quizExerciseId) {
+        return findWithEagerBatchesById(quizExerciseId).orElseThrow(() -> new EntityNotFoundException("Quiz Exercise", quizExerciseId));
     }
 
     /**
@@ -105,4 +116,41 @@ public interface QuizExerciseRepository extends JpaRepository<QuizExercise, Long
     default List<QuizExercise> findAllPlannedToStartInTheFuture() {
         return findAllPlannedToStartAfter(ZonedDateTime.now());
     }
+
+    /**
+     * Query which fetches all the quiz exercises which match the search criteria.
+     *
+     * @param partialTitle exercise title search term
+     * @param partialCourseTitle course title search term
+     * @param partialExamTitle exam title search term
+     * @param partialExamCourseTitle exam course title search term
+     * @param pageable Pageable
+     * @return Page with search results
+     */
+    Page<QuizExercise> findByTitleIgnoreCaseContainingOrCourse_TitleIgnoreCaseContainingOrExerciseGroup_Exam_TitleIgnoreCaseContainingOrExerciseGroup_Exam_Course_TitleIgnoreCaseContaining(
+            String partialTitle, String partialCourseTitle, String partialExamTitle, String partialExamCourseTitle, Pageable pageable);
+
+    /**
+     * Query which fetches all the quiz exercises for which the user is instructor in the course and matching the search criteria.
+     * As JPQL doesn't support unions, the distinction for course exercises and exam exercises is made with sub queries.
+     *
+     * @param partialTitle exercise title search term
+     * @param partialCourseTitle course title search term
+     * @param groups user groups
+     * @param pageable Pageable
+     * @return Page with search results
+     */
+    @Query("""
+            SELECT qe FROM QuizExercise qe
+            WHERE (qe.id IN
+                    (SELECT courseQe.id FROM QuizExercise courseQe
+                    WHERE (courseQe.course.instructorGroupName IN :groups OR courseQe.course.editorGroupName IN :groups)
+                    AND (courseQe.title LIKE %:partialTitle% OR courseQe.course.title LIKE %:partialCourseTitle%))
+                OR qe.id IN
+                    (SELECT examQe.id FROM QuizExercise examQe
+                    WHERE (examQe.exerciseGroup.exam.course.instructorGroupName IN :groups OR examQe.exerciseGroup.exam.course.editorGroupName IN :groups)
+                    AND (examQe.title LIKE %:partialTitle% OR examQe.exerciseGroup.exam.course.title LIKE %:partialCourseTitle%)))
+                        """)
+    Page<QuizExercise> findByTitleInExerciseOrCourseAndUserHasAccessToCourse(@Param("partialTitle") String partialTitle, @Param("partialCourseTitle") String partialCourseTitle,
+            @Param("groups") Set<String> groups, Pageable pageable);
 }

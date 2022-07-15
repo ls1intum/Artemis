@@ -44,7 +44,7 @@
                                 style="margin-top: 5px; max-width: 800px; width: 100%"
                             />
                             <p>{{ feature.descriptionTextOne | artemisTranslate }}</p>
-                            <img *ngIf="feature.imageTwo" class="text-wrap-left" src=" {{ feature.imageTwo }}" alt="feature-image-two" style="max-width: 800px; width: 100%" />
+                            <img *ngIf="feature.imageTwo" class="text-wrap-left" src="{{ feature.imageTwo }}" alt="feature-image-two" style="max-width: 800px; width: 100%" />
                             <p>{{ feature.descriptionTextTwo | artemisTranslate }}</p>
                         </ng-container>
                         <ng-template #alignFirstImageLeftTwoImages>
@@ -56,7 +56,7 @@
                                 style="margin-top: 5px; max-width: 800px; width: 100%"
                             />
                             <p>{{ feature.descriptionTextOne | artemisTranslate }}</p>
-                            <img *ngIf="feature.imageTwo" class="text-wrap-right" src=" {{ feature.imageTwo }}" alt="feature-image-two" style="max-width: 800px; width: 100%" />
+                            <img *ngIf="feature.imageTwo" class="text-wrap-right" src="{{ feature.imageTwo }}" alt="feature-image-two" style="max-width: 800px; width: 100%" />
                             <p>{{ feature.descriptionTextTwo | artemisTranslate }}</p>
                         </ng-template>
                     </ng-container>
@@ -71,7 +71,7 @@
                                     style="margin-top: 5px; max-width: 800px; width: 100%"
                                 />
                                 <p>{{ feature.descriptionTextOne | artemisTranslate }}</p>
-                                <img *ngIf="feature.imageTwo" class="center" src=" {{ feature.imageTwo }}" alt="feature-image-two" style="max-width: 800px; width: 100%" />
+                                <img *ngIf="feature.imageTwo" class="center" src="{{ feature.imageTwo }}" alt="feature-image-two" style="max-width: 800px; width: 100%" />
                             </ng-container>
                             <ng-template #alignFirstImageLeft>
                                 <img
@@ -82,7 +82,7 @@
                                     style="margin-top: 5px; max-width: 800px; width: 100%"
                                 />
                                 <p>{{ feature.descriptionTextOne | artemisTranslate }}</p>
-                                <img *ngIf="feature.imageTwo" class="center" src=" {{ feature.imageTwo }}" alt="feature-image-two" style="max-width: 800px; width: 100%" />
+                                <img *ngIf="feature.imageTwo" class="center" src="{{ feature.imageTwo }}" alt="feature-image-two" style="max-width: 800px; width: 100%" />
                             </ng-template>
                         </ng-container>
                         <ng-template #centerTextAndImage>

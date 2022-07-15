@@ -6,6 +6,7 @@ import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
 import { VERSION } from 'app/app.constants';
 import { StaticContentService } from 'app/shared/service/static-content.service';
 import { AboutUsModel } from 'app/core/about-us/models/about-us-model';
+import { ContributorModel } from 'app/core/about-us/models/contributor-model';
 
 @Component({
     selector: 'jhi-about-us',
@@ -16,14 +17,33 @@ export class AboutUsComponent implements OnInit {
     private readonly issueBaseUrl = 'https://github.com/ls1intum/Artemis/issues/new?projects=ls1intum/1';
     readonly bugReportUrl = `${this.issueBaseUrl}&labels=bug&template=bug-report.yml`;
     readonly featureRequestUrl = `${this.issueBaseUrl}&labels=feature&template=feature-request.yml`;
-    readonly examFeatureOverviewUrlStudents = '../features/students/';
-    readonly examFeatureOverviewUrlInstructors = '../features/instructors/';
-    readonly examInstructionsUrlStudents = 'https://docs.artemis.ase.in.tum.de/user/exams/students_guide/';
-    readonly examInstructionsUrlInstructors = 'https://docs.artemis.ase.in.tum.de/user/exams/instructors_guide/';
     readonly releaseNotesUrl = `https://github.com/ls1intum/Artemis/releases/tag/${VERSION}`;
 
     email: string;
     data: AboutUsModel;
+
+    // Array of tuple containing translation keys and translation values
+    readonly sections: [string, { [key: string]: string }][] = [
+        ['exercises.programming', { programmingUrl: 'https://docs.artemis.ase.in.tum.de/user/exercises/programming/' }],
+        ['exercises.quiz', { quizUrl: 'https://docs.artemis.ase.in.tum.de/user/exercises/quiz/' }],
+        ['exercises.modeling', { modelingUrl: 'https://docs.artemis.ase.in.tum.de/user/exercises/modeling/', apollonUrl: 'https://apollon.ase.in.tum.de/' }],
+        ['exercises.text', { textUrl: 'https://docs.artemis.ase.in.tum.de/user/exercises/textual/', athenaUrl: 'https://github.com/ls1intum/Athena' }],
+        ['exercises.fileUpload', { fileUploadUrl: 'https://docs.artemis.ase.in.tum.de/user/exercises/file-upload/' }],
+        ['exam', { studentFeatureUrl: '/features/students', instructorFeatureUrl: '/features/instructors' }],
+        ['grading', {}],
+        ['assessment', {}],
+        ['communication', { communicationUrl: 'https://docs.artemis.ase.in.tum.de/user/communication/' }],
+        ['notifications', {}],
+        ['teamExercises', {}],
+        ['lectures', {}],
+        ['integratedMarkdownEditor', {}],
+        ['plagiarismChecks', { jPlagUrl: 'https://github.com/jplag/JPlag' }],
+        ['learningAnalytics', {}],
+        ['scalable', {}],
+        ['highUserSatisfaction', { userExperienceUrl: 'https://docs.artemis.ase.in.tum.de/user/user-experience/' }],
+        ['customizable', {}],
+        ['openSource', { openSourceUrl: 'https://docs.artemis.ase.in.tum.de/dev/open-source/' }],
+    ];
 
     readonly SERVER_API_URL = SERVER_API_URL;
 
@@ -35,7 +55,12 @@ export class AboutUsComponent implements OnInit {
      */
     ngOnInit(): void {
         this.staticContentService.getStaticJsonFromArtemisServer('about-us.json').subscribe((data) => {
-            this.data = data;
+            // Map contributors into the model, as the returned data are just plain objects
+            this.data = { ...data, contributors: data.contributors.map((con: any) => new ContributorModel(con.fullName, con.photoDirectory, con.sortBy, con.role, con.website)) };
+
+            // Sort by last name
+            // Either the last "word" in the name, or the dedicated sortBy field, if present
+            this.data?.contributors?.sort((a, b) => a.getSortIndex().localeCompare(b.getSortIndex()));
         });
 
         this.profileService

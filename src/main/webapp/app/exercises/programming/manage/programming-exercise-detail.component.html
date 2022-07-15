@@ -1,5 +1,5 @@
 <div class="row justify-content-center programming-exercise-detail-wrapper-class">
-    <div class="col-8">
+    <div class="col-md-8">
         <div *ngIf="programmingExercise">
             <h2><span jhiTranslate="artemisApp.programmingExercise.detail.title">Programming Exercise</span> {{ programmingExercise.id }}</h2>
             <hr />
@@ -151,29 +151,7 @@
                 At the moment, this is only visible to admins as the actual main functionality has not yet been added on the server.
                 In the future, this feature will be available to editors and instructors as well.
                 -->
-                <div *ngIf="isAdmin && programmingExercise.programmingLanguage == ProgrammingLanguage.JAVA">
-                    <span class="me-1">
-                        <button
-                            [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
-                            type="button"
-                            (click)="getExtractedTasksAndTestsFromProblemStatement()"
-                            class="btn btn-secondary btn-sm"
-                            ngbTooltip="{{ 'artemisApp.programmingExercise.extractTasksFromProblemStatementWarning' | artemisTranslate }}"
-                        >
-                            <span jhiTranslate="artemisApp.programmingExercise.extractTasksFromProblemStatementTitle">Extract Tasks</span>
-                        </button>
-                    </span>
-                    <span class="me-1">
-                        <button
-                            [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
-                            type="button"
-                            (click)="deleteTasksWithSolutionEntries()"
-                            class="btn btn-secondary btn-sm"
-                            ngbTooltip="{{ 'artemisApp.programmingExercise.deleteTasksAndSolutionEntriesWarning' | artemisTranslate }}"
-                        >
-                            <span jhiTranslate="artemisApp.programmingExercise.deleteTasksAndSolutionEntriesTitle">Delete Tasks</span>
-                        </button>
-                    </span>
+                <div *ngIf="programmingExercise.isAtLeastEditor && programmingExercise.programmingLanguage == ProgrammingLanguage.JAVA">
                     <span class="me-1">
                         <button
                             [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
@@ -185,9 +163,31 @@
                             <span jhiTranslate="artemisApp.programmingExercise.createStructuralSolutionEntriesTitle">Create Structural Solution Entries</span>
                         </button>
                     </span>
+                    <span *ngIf="programmingExercise.testwiseCoverageEnabled" class="me-1">
+                        <button
+                            [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
+                            type="button"
+                            (click)="createBehavioralSolutionEntries()"
+                            class="btn btn-secondary btn-sm"
+                            ngbTooltip="{{ 'artemisApp.programmingExercise.createBehavioralSolutionEntriesTooltip' | artemisTranslate }}"
+                        >
+                            <span jhiTranslate="artemisApp.programmingExercise.createBehavioralSolutionEntriesTitle">Create Behavioral Solution Entries</span>
+                        </button>
+                    </span>
+                    <span class="me-1">
+                        <button
+                            [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
+                            type="button"
+                            (click)="generateCodeHints()"
+                            class="btn btn-secondary btn-sm"
+                            ngbTooltip="{{ 'artemisApp.programmingExercise.generateCodeHintsTooltip' | artemisTranslate }}"
+                        >
+                            <span jhiTranslate="artemisApp.programmingExercise.generateCodeHintsTitle">Generate Code Hints</span>
+                        </button>
+                    </span>
                 </div>
                 <div *ngIf="programmingExercise.isAtLeastEditor">
-                    <span class="mr-1">
+                    <span class="me-1">
                         <button
                             [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
                             type="button"
@@ -198,7 +198,7 @@
                             <span jhiTranslate="artemisApp.programmingExercise.diffReport.button">Update Diff-Report</span>
                         </button>
                     </span>
-                    <span class="mr-1" *ngIf="programmingExercise.programmingLanguage === ProgrammingLanguage.JAVA && programmingExercise.testwiseCoverageEnabled">
+                    <span class="me-1" *ngIf="programmingExercise.programmingLanguage === ProgrammingLanguage.JAVA && programmingExercise.testwiseCoverageEnabled">
                         <button
                             [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
                             type="button"
@@ -284,8 +284,13 @@
                     </button>
                 </div>
             </div>
-            <div *ngIf="programmingExercise.releaseDate != undefined && dayjs(programmingExercise.releaseDate).isBefore(dayjs())" class="mt-3">
-                <jhi-exercise-detail-statistics [exercise]="programmingExercise" [doughnutStats]="doughnutStats" [exerciseType]="PROGRAMMING"></jhi-exercise-detail-statistics>
+            <div *ngIf="!programmingExercise.releaseDate || dayjs(programmingExercise.releaseDate).isBefore(dayjs())" class="mt-3">
+                <jhi-exercise-detail-statistics
+                    [exercise]="programmingExercise"
+                    [doughnutStats]="doughnutStats"
+                    [exerciseType]="PROGRAMMING"
+                    class="d-flex justify-content-around"
+                ></jhi-exercise-detail-statistics>
                 <hr />
                 <div>
                     <h2><span jhiTranslate="artemisApp.exercise.details">Exercise Details</span></h2>
@@ -321,7 +326,7 @@
                     ></span>
                 </dd>
                 <ng-container *ngIf="programmingExercise.submissionPolicy != undefined">
-                    <dt><span jhiTranslate="artemisApp.programmingExercise.submissionPolicy.submissionLimitTitle">Submission Limit</span></dt>
+                    <dt><span jhiTranslate="artemisApp.programmingExercise.submissionPolicy.submissionLimitTitle">Submission limit</span></dt>
                     <dd>
                         <span>{{ programmingExercise.submissionPolicy.submissionLimit }}</span>
                     </dd>
@@ -340,13 +345,13 @@
                     <span jhiTranslate="artemisApp.programmingExercise.templateRepositoryUrl">Template Repository Url</span>
                     <div class="clone-buttons" *ngIf="programmingExercise.templateParticipation && programmingExercise.templateParticipation.repositoryUrl">
                         <jhi-clone-repo-button
-                            class="ml-2"
+                            class="ms-2"
                             [smallButtons]="true"
                             [repositoryUrl]="programmingExercise?.templateParticipation?.repositoryUrl! || ''"
                             [isTeamParticipation]="false"
                         ></jhi-clone-repo-button>
                         <jhi-programming-exercise-instructor-repo-download
-                            class="ml-2"
+                            class="ms-2"
                             [exerciseId]="programmingExercise.id!"
                             [repositoryType]="'TEMPLATE'"
                         ></jhi-programming-exercise-instructor-repo-download>
@@ -417,13 +422,13 @@
                             <dt>
                                 <span>{{ auxiliaryRepository.name }} Repository</span>
                                 <jhi-clone-repo-button
-                                    class="ml-2"
+                                    class="ms-2"
                                     [smallButtons]="true"
                                     [repositoryUrl]="auxiliaryRepository.repositoryUrl!"
                                     [isTeamParticipation]="false"
                                 ></jhi-clone-repo-button>
                                 <jhi-programming-exercise-instructor-repo-download
-                                    class="ml-2"
+                                    class="ms-2"
                                     [exerciseId]="programmingExercise.id!"
                                     [repositoryType]="'AUXILIARY'"
                                     [auxiliaryRepositoryId]="auxiliaryRepository.id!"
@@ -433,7 +438,7 @@
                                         >Checkout Directory: {{ auxiliaryRepository.checkoutDirectory }}
                                     </span>
                                     <ng-template #noCheckoutDirectorySet>
-                                        <fa-icon [icon]="faExclamationTriangle" class="text-warning mr-1" [ngbTooltip]="noCheckoutDirectorySetTooltip"></fa-icon>
+                                        <fa-icon [icon]="faExclamationTriangle" class="text-warning me-1" [ngbTooltip]="noCheckoutDirectorySetTooltip"></fa-icon>
                                         <span jhiTranslate="artemisApp.programmingExercise.noCheckoutDirectorySet">Checkout Directory was not set</span>
                                     </ng-template>
                                     <ng-template #noCheckoutDirectorySetTooltip>

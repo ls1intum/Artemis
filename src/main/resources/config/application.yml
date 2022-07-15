@@ -34,9 +34,9 @@ artemis:
         # Defines the used docker images for certain programming languages
         build:
             images:
-                JAVA: "ls1tum/artemis-maven-template:java17-6"
-                KOTLIN: "ls1tum/artemis-maven-template:java17-6"
-                EMPTY: "ls1tum/artemis-maven-template:java17-6"
+                JAVA: "ls1tum/artemis-maven-template:java17-8"
+                KOTLIN: "ls1tum/artemis-maven-template:java17-8"
+                EMPTY: "ls1tum/artemis-maven-template:java17-8"
                 PYTHON: "ls1tum/artemis-python-docker:latest"
                 C: "ls1tum/artemis-c-docker:latest"
                 C_FACT: "sharingcodeability/fact:latest"
@@ -241,6 +241,9 @@ jhipster:
         from: artemis@localhost
     registry:
         password: AN-ADMIN-PASSWORD-THAT-MUST-BE-CHANGED (FROM REGISTRY CONFIG)
+    http:
+        cache: # Used by the CachingHttpHeadersFilter
+            timeToLiveInDays: 1461
     cache: # Cache configuration
         hazelcast: # Hazelcast distributed cache
             time-to-live-seconds: 3600

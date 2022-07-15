@@ -1,5 +1,5 @@
-import { DELETE } from './../../../constants';
-import { artemis } from './../../../ArtemisTesting';
+import { DELETE } from '../../../constants';
+import { artemis } from '../../../ArtemisTesting';
 import { GET, BASE_API, POST } from '../../../constants';
 import { CypressCredentials } from '../../../users';
 
@@ -23,7 +23,7 @@ export class OnlineEditorPage {
     }
 
     /**
-     * Writes all the content in the corresponding files in the online editor. NOTE: This does not create non existing files.
+     * Writes all the content in the corresponding files in the online editor. NOTE: This does not create non-existing files.
      * It only opens existing files and writes the content there!
      * @param submission object which contains the information about which files need to be edited with what content
      * @param packageName the package name of the project to overwrite it in the submission templates
@@ -121,8 +121,8 @@ export class OnlineEditorPage {
     /**
      * @returns the element containing the result score percentage.
      */
-    getResultScorePercentage() {
-        return cy.get('#result-score-percentage');
+    getResultScore() {
+        return cy.get('#result-score');
     }
 
     /**

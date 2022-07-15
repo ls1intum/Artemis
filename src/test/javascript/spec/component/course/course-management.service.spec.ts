@@ -66,6 +66,8 @@ describe('Course Management Service', () => {
         course.lectures = undefined;
         course.startDate = undefined;
         course.endDate = undefined;
+        course.learningGoals = [];
+        course.prerequisites = [];
         returnedFromService = { ...course } as Course;
         participations = [new StudentParticipation()];
         convertExercisesDateFromServerSpy = jest.spyOn(ExerciseService, 'convertExercisesDateFromServer').mockReturnValue(exercises);
@@ -130,18 +132,6 @@ describe('Course Management Service', () => {
             .pipe(take(1))
             .subscribe((res) => expect(res.body).toEqual(course));
         requestAndExpectDateConversion('GET', `${resourceUrl}/${course.id}`, returnedFromService, course, true);
-        tick();
-    }));
-
-    it('should get title of the course', fakeAsync(() => {
-        returnedFromService = course.title!;
-        courseManagementService
-            .getTitle(course.id!)
-            .pipe(take(1))
-            .subscribe((res) => expect(res.body).toEqual(course.title));
-
-        const req = httpMock.expectOne({ method: 'GET', url: `${resourceUrl}/${course.id}/title` });
-        req.flush(returnedFromService);
         tick();
     }));
 
@@ -417,6 +407,17 @@ describe('Course Management Service', () => {
             .subscribe((res) => expect(res.body).toEqual({}));
         const req = httpMock.expectOne({ method: 'DELETE', url: `${resourceUrl}/${course.id}/${courseGroup}/${user.login}` });
         req.flush({});
+        tick();
+    }));
+
+    it('should return lifetime overview data', fakeAsync(() => {
+        const stats = [34, 23, 45, 67, 89, 201, 67, 890, 1359];
+        courseManagementService
+            .getStatisticsForLifetimeOverview(course.id!)
+            .pipe(take(1))
+            .subscribe((res) => expect(res).toEqual(stats));
+        const req = httpMock.expectOne({ method: 'GET', url: `${resourceUrl}/${course.id}/statistics-lifetime-overview` });
+        req.flush(stats);
         tick();
     }));
 

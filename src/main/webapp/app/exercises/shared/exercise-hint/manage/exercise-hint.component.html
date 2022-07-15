@@ -26,8 +26,29 @@
                     <td>
                         <a [routerLink]="[exerciseHint.id]">{{ exerciseHint.id }}</a>
                     </td>
-                    <td>{{ exerciseHint.title }}</td>
-                    <td [innerHTML]="exerciseHint.content | htmlForMarkdown"></td>
+                    <td>
+                        {{ exerciseHint.title }}
+                        <br />
+                        <span *ngIf="exerciseHint.type === HintType.CODE && exerciseHint.exercise?.type === ExerciseType.PROGRAMMING" class="badge bg-info"
+                            ><fa-icon [icon]="faCode"></fa-icon> {{ 'artemisApp.codeHint.type' | artemisTranslate }}</span
+                        >
+                        <span *ngIf="exerciseHint.type === HintType.TEXT && exerciseHint.exercise?.type === ExerciseType.PROGRAMMING" class="badge bg-info"
+                            ><fa-icon [icon]="faText"></fa-icon> {{ 'artemisApp.exerciseHint.textHint' | artemisTranslate }}</span
+                        >
+                    </td>
+                    <td>
+                        <div>
+                            <span [innerHTML]="exerciseHint.content | htmlForMarkdown"></span>
+                        </div>
+                        <div *ngIf="exerciseHint.type === HintType.CODE">
+                            <span>
+                                {{ (exerciseHint | castToCodeHint).solutionEntries?.length ?? 0 }}
+                                {{
+                                    ((exerciseHint | castToCodeHint).solutionEntries?.length === 1 ? 'artemisApp.codeHint.entry' : 'artemisApp.codeHint.entries') | artemisTranslate
+                                }}
+                            </span>
+                        </div>
+                    </td>
                     <td>
                         <span>{{ exerciseHint.exercise?.id }}</span>
                     </td>

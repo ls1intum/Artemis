@@ -1,0 +1,38 @@
+<div class="monitoring-card d-flex flex-column">
+    <a
+        *ngIf="linkTo"
+        class="monitoring-card-header monitoring-card-header-pointer container-fluid"
+        [routerLink]="linkTo && ['/course-management', this.courseId, 'exams', this.examId, 'monitoring', linkTo!]"
+    >
+        <ng-template [ngTemplateOutlet]="monitoringCardHeader"></ng-template>
+    </a>
+
+    <div *ngIf="!linkTo" class="monitoring-card-header container-fluid">
+        <ng-template [ngTemplateOutlet]="monitoringCardHeader"></ng-template>
+    </div>
+
+    <div class="monitoring-card-content p-3">
+        <ng-content select="[content]"></ng-content>
+    </div>
+
+    <div class="d-flex flex-row align-items-center px-2 py-1 monitoring-card-footer">
+        <ng-content select="[footer]"></ng-content>
+    </div>
+</div>
+
+<ng-template #monitoringCardHeader>
+    <div class="row justify-content-between">
+        <div class="col-10">
+            <div class="container-fluid p-0">
+                <h4 data-testid="monitoring-card-title" class="fw-medium pt-2">{{ this.title }}</h4>
+                <h6 data-testid="monitoring-card-description" *ngIf="this.description" class="overflow-hidden text-truncate fw-light pb-1">{{ this.description }}</h6>
+            </div>
+        </div>
+        <div *ngIf="linkTo" class="col-2">
+            <div class="d-flex h-100 justify-content-end">
+                <fa-icon class="ng-fa-icon align-self-center" size="2x" [icon]="this.faArrowRight"></fa-icon>
+            </div>
+        </div>
+    </div>
+    <ng-content select="[header]"></ng-content>
+</ng-template>

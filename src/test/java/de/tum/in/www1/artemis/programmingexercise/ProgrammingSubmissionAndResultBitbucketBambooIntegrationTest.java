@@ -146,7 +146,7 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
     void shouldNotCreateSubmissionOnNotifyPushForInvalidParticipationId() throws Exception {
         long fakeParticipationId = 9999L;
         JSONParser jsonParser = new JSONParser();
-        Object obj = jsonParser.parse(BITBUCKET_REQUEST);
+        Object obj = jsonParser.parse(BITBUCKET_PUSH_EVENT_REQUEST);
         // Api should return not found.
         request.postWithoutLocation(PROGRAMMING_SUBMISSION_RESOURCE_API_PATH + fakeParticipationId, obj, HttpStatus.NOT_FOUND, new HttpHeaders());
         // No submission should be created for the fake participation.
@@ -155,7 +155,7 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
 
     private ProgrammingSubmission mockCommitInfoAndPostSubmission(long participationId) throws Exception {
         // set the author name to "Artemis"
-        final String requestAsArtemisUser = BITBUCKET_REQUEST.replace("\"name\": \"admin\"", "\"name\": \"Artemis\"").replace("\"displayName\": \"Admin\"",
+        final String requestAsArtemisUser = BITBUCKET_PUSH_EVENT_REQUEST.replace("\"name\": \"admin\"", "\"name\": \"Artemis\"").replace("\"displayName\": \"Admin\"",
                 "\"displayName\": \"Artemis\"");
         // mock request for fetchCommitInfo()
         final String projectKey = "test201904bprogrammingexercise6";
@@ -164,6 +164,7 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
         bitbucketRequestMockProvider.mockFetchCommitInfo(projectKey, slug, hash);
         ProgrammingExercise programmingExercise = (ProgrammingExercise) participationRepository.findById(participationId).orElseThrow().getExercise();
         bitbucketRequestMockProvider.mockGetDefaultBranch(defaultBranch, programmingExercise.getProjectKey());
+        doReturn(defaultBranch).when(versionControlService).getOrRetrieveBranchOfExercise(programmingExercise);
         bitbucketRequestMockProvider.mockGetPushDate(programmingExercise.getProjectKey(), hash, ZonedDateTime.now());
         bitbucketRequestMockProvider.mockPutDefaultBranch(programmingExercise.getProjectKey());
         return testService.postSubmission(participationId, HttpStatus.OK, requestAsArtemisUser);
@@ -210,6 +211,7 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
         database.addCourseWithOneProgrammingExerciseAndSpecificTestCases();
         ProgrammingExercise exercise = programmingExerciseRepository.findAllWithEagerParticipationsAndLegalSubmissions().get(1);
         bitbucketRequestMockProvider.mockGetDefaultBranch(defaultBranch, exercise.getProjectKey());
+        doReturn(defaultBranch).when(versionControlService).getOrRetrieveBranchOfExercise(exercise);
         bitbucketRequestMockProvider.mockGetPushDate(exercise.getProjectKey(), "9b3a9bd71a0d80e5bbc42204c319ed3d1d4f0d6d", ZonedDateTime.now());
         bitbucketRequestMockProvider.mockPutDefaultBranch(exercise.getProjectKey());
         var participation = database.addStudentParticipationForProgrammingExercise(exercise, "student3");
@@ -253,6 +255,7 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
     @WithMockUser(username = "student1", roles = "USER")
     void shouldHandleNewBuildResultCreatedByCommit(IntegrationTestParticipationType participationType, boolean additionalCommit) throws Exception {
         bitbucketRequestMockProvider.mockGetDefaultBranch(defaultBranch, exercise.getProjectKey());
+        doReturn(defaultBranch).when(versionControlService).getOrRetrieveBranchOfExercise(exercise);
         bitbucketRequestMockProvider.mockGetPushDate(exercise.getProjectKey(), "9b3a9bd71a0d80e5bbc42204c319ed3d1d4f0d6d", ZonedDateTime.now());
         bitbucketRequestMockProvider.mockDefaultBranch(defaultBranch, exercise.getProjectKey());
 
@@ -297,6 +300,7 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
     @WithMockUser(username = "student1", roles = "USER")
     void shouldNotLinkTwoResultsToTheSameSubmission(IntegrationTestParticipationType participationType) throws Exception {
         bitbucketRequestMockProvider.mockGetDefaultBranch(defaultBranch, exercise.getProjectKey());
+        doReturn(defaultBranch).when(versionControlService).getOrRetrieveBranchOfExercise(exercise);
         bitbucketRequestMockProvider.mockGetPushDate(exercise.getProjectKey(), "9b3a9bd71a0d80e5bbc42204c319ed3d1d4f0d6d", ZonedDateTime.now());
         bitbucketRequestMockProvider.mockDefaultBranch(defaultBranch, exercise.getProjectKey());
 
@@ -341,7 +345,7 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
     void shouldNotCreateTwoSubmissionsForTwoIdenticalCommits(IntegrationTestParticipationType participationType) throws Exception {
         bitbucketRequestMockProvider.mockGetDefaultBranch(defaultBranch, exercise.getProjectKey());
         bitbucketRequestMockProvider.mockGetPushDate(exercise.getProjectKey(), "9b3a9bd71a0d80e5bbc42204c319ed3d1d4f0d6d", ZonedDateTime.now());
-        bitbucketRequestMockProvider.mockDefaultBranch(defaultBranch, exercise.getProjectKey());
+        doReturn(defaultBranch).when(versionControlService).getOrRetrieveBranchOfExercise(exercise);
 
         Long participationId = getParticipationIdByType(participationType, 0);
         // Post the same submission twice.
@@ -559,7 +563,7 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
     @WithMockUser(username = "student1", roles = "USER")
     public void shouldSetSubmissionDateForBuildCorrectlyIfOnlyOnePushIsReceived() throws Exception {
         testService.setUp_shouldSetSubmissionDateForBuildCorrectlyIfOnlyOnePushIsReceived();
-        var pushJSON = (JSONObject) new JSONParser().parse(BITBUCKET_REQUEST);
+        var pushJSON = (JSONObject) new JSONParser().parse(BITBUCKET_PUSH_EVENT_REQUEST);
         var changes = (JSONArray) pushJSON.get("changes");
         var firstChange = (JSONObject) changes.get(0);
         var firstCommitHash = (String) firstChange.get("fromHash");
@@ -568,6 +572,7 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
         var firstCommitDate = secondCommitDate.minusSeconds(30);
 
         bitbucketRequestMockProvider.mockGetDefaultBranch(defaultBranch, testService.programmingExercise.getProjectKey());
+        doReturn(defaultBranch).when(versionControlService).getOrRetrieveBranchOfExercise(testService.programmingExercise);
         bitbucketRequestMockProvider.mockGetPushDate(testService.programmingExercise.getProjectKey(), firstCommitHash, firstCommitDate);
 
         // First commit is pushed but not recorded
@@ -698,6 +703,7 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
         final String hash = "9b3a9bd71a0d80e5bbc42204c319ed3d1d4f0d6d";
         bitbucketRequestMockProvider.mockFetchCommitInfo(projectKey, slug, hash);
         bitbucketRequestMockProvider.mockGetDefaultBranch(defaultBranch, programmingExercise.getProjectKey());
+        doReturn(defaultBranch).when(versionControlService).getOrRetrieveBranchOfExercise(programmingExercise);
         bitbucketRequestMockProvider.mockGetPushDate(programmingExercise.getProjectKey(), "9b3a9bd71a0d80e5bbc42204c319ed3d1d4f0d6d", ZonedDateTime.now());
         bitbucketRequestMockProvider.mockDefaultBranch(defaultBranch, programmingExercise.getProjectKey());
         ProgrammingSubmission submission = mockCommitInfoAndPostSubmission(participation.getId());
@@ -779,7 +785,6 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
         assertThat(result.getHasFeedback()).isFalse();
         assertThat(result.isSuccessful()).isFalse();
         assertThat(result.getScore()).isZero();
-        assertThat(result.getResultString()).isEqualTo("No tests found");
 
         // Assert that the submission linked to the participation
         var submission = (ProgrammingSubmission) result.getSubmission();
@@ -805,7 +810,7 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
      * This is the simulated request from the VCS to Artemis on a new commit.
      */
     private ProgrammingSubmission postSubmission(Long participationId, HttpStatus expectedStatus) throws Exception {
-        return testService.postSubmission(participationId, expectedStatus, BITBUCKET_REQUEST);
+        return testService.postSubmission(participationId, expectedStatus, BITBUCKET_PUSH_EVENT_REQUEST);
     }
 
     /**
@@ -814,7 +819,7 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
     @SuppressWarnings("unchecked")
     private void postTestRepositorySubmission() throws Exception {
         JSONParser jsonParser = new JSONParser();
-        Object obj = jsonParser.parse(BITBUCKET_REQUEST);
+        Object obj = jsonParser.parse(BITBUCKET_PUSH_EVENT_REQUEST);
 
         Map<String, Object> requestBodyMap = (Map<String, Object>) obj;
         List<Map<String, Object>> changes = (List<Map<String, Object>>) requestBodyMap.get("changes");
@@ -830,7 +835,7 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
     @SuppressWarnings("unchecked")
     private void postTestRepositorySubmissionWithoutCommit(HttpStatus status) throws Exception {
         JSONParser jsonParser = new JSONParser();
-        Object obj = jsonParser.parse(BITBUCKET_REQUEST_WITHOUT_COMMIT);
+        Object obj = jsonParser.parse(BITBUCKET_PUSH_EVENT_REQUEST_WITHOUT_COMMIT);
         request.postWithoutLocation(TEST_CASE_CHANGED_API_PATH + exerciseId, obj, status, new HttpHeaders());
     }
 
@@ -890,7 +895,7 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
 
     private BambooBuildResultNotificationDTO createBambooBuildResultNotificationDTO() throws Exception {
         JSONParser jsonParser = new JSONParser();
-        Object obj = jsonParser.parse(BAMBOO_REQUEST);
+        Object obj = jsonParser.parse(BAMBOO_BUILD_RESULT_REQUEST);
 
         ObjectMapper mapper = new ObjectMapper();
         mapper.registerModule(new JavaTimeModule());

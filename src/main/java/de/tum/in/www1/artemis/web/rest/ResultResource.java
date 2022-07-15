@@ -201,7 +201,7 @@ public class ResultResource {
         }
         List<ProgrammingExerciseStudentParticipation> participations = programmingExerciseStudentParticipationRepository.findByBuildPlanId(planKey);
         ProgrammingExerciseStudentParticipation participation = null;
-        if (participations.size() > 0) {
+        if (!participations.isEmpty()) {
             participation = participations.get(0);
             if (participations.size() > 1) {
                 // in the rare case of multiple participations, take the latest one.
@@ -494,7 +494,7 @@ public class ResultResource {
 
         // Check if a result exists already for this exercise and student. If so, do nothing and just inform the instructor.
         Optional<StudentParticipation> optionalParticipation = participationService.findOneByExerciseAndStudentLoginAnyStateWithEagerResults(exercise, studentLogin);
-        if (optionalParticipation.isPresent() && optionalParticipation.get().getResults() != null && optionalParticipation.get().getResults().size() > 0) {
+        if (optionalParticipation.isPresent() && optionalParticipation.get().getResults() != null && !optionalParticipation.get().getResults().isEmpty()) {
             return ResponseEntity.badRequest()
                     .headers(HeaderUtil.createFailureAlert(applicationName, true, "result", "resultAlreadyExists", "A result already exists for this student in this exercise."))
                     .build();

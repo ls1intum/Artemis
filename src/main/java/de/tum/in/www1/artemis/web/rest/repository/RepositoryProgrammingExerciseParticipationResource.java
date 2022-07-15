@@ -42,8 +42,6 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 @PreAuthorize("hasRole('USER')")
 public class RepositoryProgrammingExerciseParticipationResource extends RepositoryResource {
 
-    private final ParticipationRepository participationRepository;
-
     private final ProgrammingExerciseParticipationService participationService;
 
     private final ExamSubmissionService examSubmissionService;
@@ -54,6 +52,8 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
 
     private final SubmissionPolicyService submissionPolicyService;
 
+    private final ParticipationRepository participationRepository;
+
     public RepositoryProgrammingExerciseParticipationResource(UserRepository userRepository, AuthorizationCheckService authCheckService, GitService gitService,
             Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService, RepositoryService repositoryService,
             ProgrammingExerciseParticipationService participationService, ProgrammingExerciseRepository programmingExerciseRepository,
@@ -61,11 +61,11 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
             ProgrammingSubmissionRepository programmingSubmissionRepository, SubmissionPolicyService submissionPolicyService) {
         super(userRepository, authCheckService, gitService, continuousIntegrationService, repositoryService, versionControlService, programmingExerciseRepository);
         this.participationService = participationService;
-        this.participationRepository = participationRepository;
         this.examSubmissionService = examSubmissionService;
         this.buildLogService = buildLogService;
         this.programmingSubmissionRepository = programmingSubmissionRepository;
         this.submissionPolicyService = submissionPolicyService;
+        this.participationRepository = participationRepository;
     }
 
     @Override
@@ -135,8 +135,8 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
             return gitService.getOrCheckoutRepository(repositoryUrl, pullOnGet);
         }
         else {
-            String defaultBranch = versionControlService.get().getDefaultBranchOfRepository(repositoryUrl);
-            return gitService.getOrCheckoutRepository(repositoryUrl, pullOnGet, defaultBranch);
+            String branch = versionControlService.get().getOrRetrieveBranchOfParticipation(programmingParticipation);
+            return gitService.getOrCheckoutRepository(repositoryUrl, pullOnGet, branch);
         }
     }
 
@@ -156,6 +156,21 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
             throw new IllegalArgumentException();
         }
         return participationService.canAccessParticipation((ProgrammingExerciseParticipation) participation);
+    }
+
+    @Override
+    String getOrRetrieveBranchOfDomainObject(Long participationID) {
+        Participation participation = participationRepository.findByIdElseThrow(participationID);
+        if (!(participation instanceof ProgrammingExerciseParticipation programmingParticipation)) {
+            throw new IllegalArgumentException();
+        }
+        else if (participation instanceof ProgrammingExerciseStudentParticipation studentParticipation) {
+            return versionControlService.get().getOrRetrieveBranchOfStudentParticipation(studentParticipation);
+        }
+        else {
+            ProgrammingExercise programmingExercise = programmingExerciseRepository.getProgrammingExerciseFromParticipation(programmingParticipation);
+            return versionControlService.get().getOrRetrieveBranchOfExercise(programmingExercise);
+        }
     }
 
     @Override

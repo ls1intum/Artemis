@@ -1,26 +1,4 @@
-<div (jhiTextSelect)="didSelectSolutionText($event)">
+<div>
     <!-- DO NOT ADD LINEBREAKS INSIDE div.manual-text-selection-area -->
-    <div class="manual-text-selection-area"><ng-content></ng-content></div>
-
-    <div
-        *ngIf="hostRectangle"
-        class="indicator"
-        [style.left.px]="hostRectangle.left"
-        [style.top.px]="positionRelative ? hostRectangle.top - 50 : hostRectangle.top + 20"
-        [style.width.px]="hostRectangle.width"
-        [style.height.px]="0"
-        [style.position]="positionRelative ? 'relative' : 'absolute'"
-    >
-        <div class="indicator__cta">
-            <!--
-                NOTE: Because we DON'T WANT the selected text to get deselected
-                when we click on the call-to-action, we have to PREVENT THE
-                DEFAULT BEHAVIOR and STOP PROPAGATION on some of the events. The
-                byproduct of this is that the (click) event won't fire. As such,
-                we then have to consume the click-intent by way of the (mouseup)
-                event.
-            -->
-            <a (mousedown)="$event.preventDefault()" (mouseup)="$event.stopPropagation(); assessAction()" class="indicator__cta-link">{{ assessText }}</a>
-        </div>
-    </div>
+    <span class="manual-text-selection-area" tabindex="-1" *ngFor="let word of submissionWords; let i = index" (click)="calculateIndex(i); selectWord(word)">{{ ' ' + word }}</span>
 </div>

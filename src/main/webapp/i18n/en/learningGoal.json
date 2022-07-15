@@ -46,8 +46,9 @@
                     "typeNameToConfirm": "Please enter the name of the learning goal for confirmation.",
                     "buttonText": "Delete"
                 },
+                "remove": "Remove",
                 "achieved": "achieved",
-                "progressUnavailable": "Progress calculation is currently only available for learning goals connected to exercise units.",
+                "progressUnavailable": "Progress calculation is currently only available for learning goals connected to lecture units.",
                 "noUnitsConnected": "This learning goal is not connected to any lecture units",
                 "progressExplanation": "Progress: You achieved currently <strong>{{ progress }}%</strong> of <strong>{{ points }}</strong> points",
                 "progressCourseExplanation": "Average Course Progress: The course achieved currently on average <strong>{{ progress }}%</strong> of <strong>{{ points }}</strong> points"
@@ -56,6 +57,23 @@
                 "connectedLearningGoals": "Connected Learning Goals",
                 "explanation": "This lecture unit helps you to achieve the following learning goals: ",
                 "noLearningGoals": "No learning goals are connected with this lecture unit! "
+            },
+            "prerequisite": {
+                "title": "Prerequisites",
+                "managePrerequisites": {
+                    "title": "Prerequisite Management"
+                },
+                "import": {
+                    "title": "Add prerequisites",
+                    "table": {
+                        "title": "Title",
+                        "course": "Course",
+                        "semester": "Semester",
+                        "doSelect": "Select"
+                    },
+                    "searchLearningGoal": "Search learning goal:",
+                    "loading": "Loading..."
+                }
             }
         }
     }

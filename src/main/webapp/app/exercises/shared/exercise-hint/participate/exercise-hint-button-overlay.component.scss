@@ -1,0 +1,20 @@
+:host {
+    position: sticky;
+    bottom: 0;
+    left: 0;
+    z-index: 100;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+}
+
+.btn {
+    box-shadow: none;
+}
+
+.animated-button {
+    animation: 0.4s highlight;
+    animation-delay: 0.8s;
+    animation-iteration-count: 3;
+}

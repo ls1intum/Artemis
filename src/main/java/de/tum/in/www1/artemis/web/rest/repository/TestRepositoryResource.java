@@ -64,6 +64,12 @@ public class TestRepositoryResource extends RepositoryResource {
     }
 
     @Override
+    String getOrRetrieveBranchOfDomainObject(Long exerciseId) {
+        ProgrammingExercise exercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
+        return versionControlService.get().getOrRetrieveBranchOfExercise(exercise);
+    }
+
+    @Override
     @GetMapping(value = "/test-repository/{exerciseId}/files", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Map<String, FileType>> getFiles(@PathVariable Long exerciseId) {
         return super.getFiles(exerciseId);

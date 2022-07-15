@@ -1,14 +1,21 @@
 package de.tum.in.www1.artemis.repository.metis;
 
+import static de.tum.in.www1.artemis.repository.specs.PostSpecs.*;
+
 import java.util.List;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import de.tum.in.www1.artemis.domain.metis.CourseWideContext;
 import de.tum.in.www1.artemis.domain.metis.Post;
+import de.tum.in.www1.artemis.web.rest.dto.PostContextFilter;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 /**
@@ -16,31 +23,35 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
  */
 @SuppressWarnings("unused")
 @Repository
-public interface PostRepository extends JpaRepository<Post, Long> {
+public interface PostRepository extends JpaRepository<Post, Long>, JpaSpecificationExecutor<Post> {
 
     List<Post> findPostsByAuthorLogin(String login);
 
-    @Query("""
-            SELECT DISTINCT post FROM Post post
-            LEFT JOIN post.lecture lecture LEFT JOIN post.exercise exercise
-            LEFT JOIN post.answers answer LEFT JOIN post.reactions reaction
-            WHERE (lecture.course.id = :#{#courseId}
-                OR exercise.course.id = :#{#courseId}
-                OR post.course.id = :#{#courseId})
-            AND (:#{#courseWideContext} IS NULL
-                OR post.courseWideContext = :#{#courseWideContext})
-            AND (:#{#own} = false
-                OR post.author.id = :#{#userId})
-            AND (:#{#reactedOrReplied} = false
-                OR answer.author.id = :#{#userId}
-                OR reaction.user.id = :#{#userId})
-            AND (:#{#unresolved} = false
-                OR NOT EXISTS (SELECT answerPost FROM post.answers answerPost
-                    WHERE answerPost.resolvesPost = true
-                    AND answerPost.post.id = post.id))
-            """)
-    List<Post> findPostsForCourse(@Param("courseId") Long courseId, @Param("courseWideContext") CourseWideContext courseWideContext, @Param("unresolved") boolean unresolved,
-            @Param("own") boolean own, @Param("reactedOrReplied") boolean reactedOrReplied, @Param("userId") Long userId);
+    /**
+     * Generates SQL Query via specifications to filter and sort Posts
+     * @param postContextFilter filtering and sorting properties for Posts
+     * @param userId            id of the user performing the call, needed on certain filters
+     * @param pagingEnabled     whether a page of posts or all posts will be fetched
+     * @param pageable          paging object which contains the page number and number of records to fetch
+     * @return  returns a Page of Posts or all Posts within a Page, which is treated as a List by the client.
+     */
+    default Page<Post> findPosts(PostContextFilter postContextFilter, Long userId, boolean pagingEnabled, Pageable pageable) {
+        Specification<Post> specification = Specification.where(distinct())
+                .and(getCourseSpecification(postContextFilter.getCourseId(), postContextFilter.getLectureId(), postContextFilter.getExerciseId())
+                        .and(getLectureSpecification(postContextFilter.getLectureId()).and(getExerciseSpecification(postContextFilter.getExerciseId()))
+                                .and(getSearchTextSpecification(postContextFilter.getSearchText())).and(getCourseWideContextSpecification(postContextFilter.getCourseWideContext()))
+                                .and(getOwnSpecification(postContextFilter.getFilterToOwn(), userId)))
+                        .and(getAnsweredOrReactedSpecification(postContextFilter.getFilterToAnsweredOrReacted(), userId))
+                        .and(getUnresolvedSpecification(postContextFilter.getFilterToUnresolved()))
+                        .and(getSortSpecification(pagingEnabled, postContextFilter.getPostSortCriterion(), postContextFilter.getSortingOrder())));
+
+        if (pagingEnabled) {
+            return findAll(specification, pageable);
+        }
+        else {
+            return new PageImpl<>(findAll(specification));
+        }
+    }
 
     @Query("""
             SELECT DISTINCT tag FROM Post post
@@ -54,36 +65,9 @@ public interface PostRepository extends JpaRepository<Post, Long> {
     @Query("""
             SELECT DISTINCT post FROM Post post
             LEFT JOIN post.answers answer LEFT JOIN post.reactions reaction
-            WHERE post.lecture.id = :#{#lectureId}
-            AND (:#{#own} = false
-                OR post.author.id = :#{#userId})
-            AND (:#{#reactedOrReplied} = false
-                OR answer.author.id = :#{#userId}
-                OR reaction.user.id = :#{#userId})
-            AND (:#{#unresolved} = false
-                OR NOT EXISTS (SELECT answerPost FROM post.answers answerPost
-                    WHERE answerPost.resolvesPost = true
-                    AND answerPost.post.id = post.id))
-                """)
-    List<Post> findPostsByLectureId(@Param("lectureId") Long lectureId, @Param("unresolved") boolean unresolved, @Param("own") boolean own,
-            @Param("reactedOrReplied") boolean reactedOrReplied, @Param("userId") Long userId);
-
-    @Query("""
-            SELECT DISTINCT post FROM Post post
-            LEFT JOIN post.answers answer LEFT JOIN post.reactions reaction
-            WHERE post.exercise.id = :#{#exerciseId}
-            AND (:#{#own} = false
-                OR post.author.id = :#{#userId})
-            AND (:#{#reactedOrReplied} = false
-                OR answer.author.id = :#{#userId}
-                OR reaction.user.id = :#{#userId})
-            AND (:#{#unresolved} = false
-                OR NOT EXISTS (SELECT answerPost FROM post.answers answerPost
-                    WHERE answerPost.resolvesPost = true
-                    AND answerPost.post.id = post.id))
+            WHERE post.plagiarismCase.id = :#{#plagiarismCaseId}
             """)
-    List<Post> findPostsByExerciseId(@Param("exerciseId") Long exerciseId, @Param("unresolved") boolean unresolved, @Param("own") boolean own,
-            @Param("reactedOrReplied") boolean reactedOrReplied, @Param("userId") Long userId);
+    List<Post> findPostsByPlagiarismCaseId(@Param("plagiarismCaseId") Long plagiarismCaseId);
 
     default Post findByIdElseThrow(Long postId) throws EntityNotFoundException {
         return findById(postId).orElseThrow(() -> new EntityNotFoundException("Post", postId));

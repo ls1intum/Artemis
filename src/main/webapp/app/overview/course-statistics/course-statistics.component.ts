@@ -15,9 +15,11 @@ import { GradingSystemService } from 'app/grading-system/grading-system.service'
 import { GradeDTO } from 'app/entities/grade-step.model';
 import { Color, ScaleType } from '@swimlane/ngx-charts';
 import { faClipboard, faFilter, faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
-import { BarControlConfiguration, BarControlConfigurationProvider } from 'app/overview/course-overview.component';
 import { GraphColors } from 'app/entities/statistics.model';
+import { NgxChartsSingleSeriesDataEntry } from 'app/shared/chart/ngx-charts-datatypes';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
+import { BarControlConfiguration, BarControlConfigurationProvider } from 'app/overview/tab-bar/tab-bar';
+import { ChartCategoryFilter } from 'app/shared/chart/chart-category-filter';
 
 const QUIZ_EXERCISE_COLOR = '#17a2b8';
 const PROGRAMMING_EXERCISE_COLOR = '#fd7e14';
@@ -28,6 +30,10 @@ const FILE_UPLOAD_EXERCISE_COLOR = '#2D9C88';
 type ExerciseTypeMap = {
     [type in ExerciseType]: number;
 };
+
+interface YourOverallPointsEntry extends NgxChartsSingleSeriesDataEntry {
+    color: string;
+}
 
 enum ChartBarTitle {
     NO_DUE_DATE = 'No due date',
@@ -50,11 +56,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
     private courseUpdatesSubscription: Subscription;
     private translateSubscription: Subscription;
     course?: Course;
-    exerciseCategories: Set<string> = new Set();
-    exerciseCategoryFilters: Map<string, boolean> = new Map();
     numberOfAppliedFilters: number;
-    allCategoriesSelected = true;
-    includeExercisesWithNoCategory = true;
 
     private courseExercisesNotIncludedInScore: Exercise[];
     private courseExercisesFilteredByCategories: Exercise[];
@@ -90,6 +92,8 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
     overallPresentationScore = 0;
     presentationScoresPerExercise: ExerciseTypeMap;
 
+    doughnutChartColors: string[] = [PROGRAMMING_EXERCISE_COLOR, QUIZ_EXERCISE_COLOR, MODELING_EXERCISE_COLOR, TEXT_EXERCISE_COLOR, FILE_UPLOAD_EXERCISE_COLOR, GraphColors.RED];
+
     public exerciseTitles: object = {
         quiz: {
             name: this.translateService.instant('artemisApp.course.quizExercises'),
@@ -114,7 +118,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
     };
 
     // ngx-charts
-    ngxDoughnutData: any[] = [];
+    ngxDoughnutData: YourOverallPointsEntry[] = [];
 
     // Labels for the different parts in Your overall points chart
     programmingPointLabel = 'programmingPointLabel';
@@ -123,12 +127,13 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
     textPointLabel = 'textPointLabel';
     fileUploadPointLabel = 'fileUploadPointLabel';
     missingPointsLabel = 'missingPointsLabel';
+    labels = [this.programmingPointLabel, this.quizPointLabel, this.modelingPointLabel, this.textPointLabel, this.fileUploadPointLabel, this.missingPointsLabel];
 
     ngxDoughnutColor = {
         name: 'Your overall points color',
         selectable: true,
         group: ScaleType.Ordinal,
-        domain: [PROGRAMMING_EXERCISE_COLOR, QUIZ_EXERCISE_COLOR, MODELING_EXERCISE_COLOR, TEXT_EXERCISE_COLOR, FILE_UPLOAD_EXERCISE_COLOR, GraphColors.RED],
+        domain: [], // colors: orange, turquoise, violet, bordeaux, green, red
     } as Color;
 
     // arrays representing each exercise group
@@ -154,9 +159,10 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
 
     readonly roundScoreSpecifiedByCourseSettings = roundValueSpecifiedByCourseSettings;
     readonly barChartTitle = ChartBarTitle;
-    readonly chartHeight = 45;
-    readonly barPadding = 6;
-    readonly defaultSize = 50; // additional space for the x axis and its labels
+    readonly chartHeight = 25;
+    readonly barPadding = 4;
+    readonly defaultSize = 50; // additional space for the x-axis and its labels
+    readonly chartCategoryFilter = this.categoryFilter;
 
     // array containing every non-empty exercise group
     ngxExerciseGroups: any[] = [];
@@ -184,6 +190,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
         private route: ActivatedRoute,
         private gradingSystemService: GradingSystemService,
         private navigationUtilService: ArtemisNavigationUtilService,
+        private categoryFilter: ChartCategoryFilter,
     ) {}
 
     ngOnInit() {
@@ -313,17 +320,16 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
                             if (participationResult && participationResult.rated) {
                                 const roundedParticipationScore = roundValueSpecifiedByCourseSettings(participationResult.score!, this.course);
                                 const cappedParticipationScore = Math.min(roundedParticipationScore, 100);
+                                const roundedParticipationPoints = roundValueSpecifiedByCourseSettings((participationResult.score! * exercise.maxPoints!) / 100);
                                 const missedScore = 100 - cappedParticipationScore;
-                                const replaced = participationResult.resultString!.replace(',', '.');
-                                const split = replaced.split(' ');
-                                const missedPoints = Math.max(parseFloat(split[2]) - parseFloat(split[0]), 0);
+                                const missedPoints = Math.max(exercise.maxPoints! - roundedParticipationPoints, 0);
                                 series[5].value = missedScore;
                                 series[5].absoluteValue = missedPoints;
                                 series[5].afterDueDate = false;
                                 series[5].notParticipated = false;
                                 series[5].exerciseId = exercise.id;
 
-                                this.identifyBar(exercise, series, roundedParticipationScore, parseFloat(split[0]));
+                                this.identifyBar(exercise, series, roundedParticipationScore, roundedParticipationPoints);
                                 this.pushToData(exercise, series);
                             }
                         } else {
@@ -367,7 +373,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
             this.filteredExerciseIDs = this.courseExercisesNotIncludedInScore.map((exercise) => exercise.id!);
         }
         this.currentlyHidingNotIncludedInScoreExercises = !this.currentlyHidingNotIncludedInScoreExercises;
-        this.determineDisplayableCategories();
+        this.categoryFilter.setupCategoryFilter(this.courseExercises);
 
         this.groupExercisesByType(this.courseExercises);
     }
@@ -403,6 +409,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
         if (totalMissedPoints < 0) {
             totalMissedPoints = 0;
         }
+        const scores = [programmingExerciseTotalScore, quizzesTotalScore, modelingExerciseTotalScore, textExerciseTotalScore, fileUploadExerciseTotalScore, totalMissedPoints];
         const absoluteScores = {} as ExerciseTypeMap;
         absoluteScores[ExerciseType.QUIZ] = quizzesTotalScore;
         absoluteScores[ExerciseType.PROGRAMMING] = programmingExerciseTotalScore;
@@ -410,12 +417,17 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
         absoluteScores[ExerciseType.TEXT] = textExerciseTotalScore;
         absoluteScores[ExerciseType.FILE_UPLOAD] = fileUploadExerciseTotalScore;
         this.overallPointsPerExercise = absoluteScores;
-        this.ngxDoughnutData.push({ name: this.programmingPointLabel, value: programmingExerciseTotalScore });
-        this.ngxDoughnutData.push({ name: this.quizPointLabel, value: quizzesTotalScore });
-        this.ngxDoughnutData.push({ name: this.modelingPointLabel, value: modelingExerciseTotalScore });
-        this.ngxDoughnutData.push({ name: this.textPointLabel, value: textExerciseTotalScore });
-        this.ngxDoughnutData.push({ name: this.fileUploadPointLabel, value: fileUploadExerciseTotalScore });
-        this.ngxDoughnutData.push({ name: this.missingPointsLabel, value: totalMissedPoints });
+        scores.forEach((score, index) => {
+            if (score > 0) {
+                this.ngxDoughnutData.push({
+                    name: 'artemisApp.courseOverview.statistics.' + this.labels[index],
+                    value: score,
+                    color: this.doughnutChartColors[index],
+                });
+                this.ngxDoughnutColor.domain.push(this.doughnutChartColors[index]);
+            }
+        });
+
         this.ngxDoughnutData = [...this.ngxDoughnutData];
     }
 
@@ -535,7 +547,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
 
     /**
      * Calculates an arbitrary score type for an arbitrary exercise type
-     * @param exerciseType the exercise type for which the score should be calculates. Must be an element of {Programming, Modeling, Quiz, Text, File upload}
+     * @param exerciseType the exercise type for which the score should be calculated. Must be an element of {Programming, Modeling, Quiz, Text, File upload}
      * @param scoreType the score type that should be calculated. Element of {Absolute score, Max points,Current relative score,Presentation score,Reachable points,Relative score}
      * @returns requested score value
      * @private
@@ -567,14 +579,15 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
         this.courseExercises = this.courseExercises.filter((exercise) => !this.courseExercisesNotIncludedInScore.includes(exercise));
         this.courseExercisesFilteredByCategories = this.courseExercises;
         this.filteredExerciseIDs = this.courseExercisesNotIncludedInScore.map((exercise) => exercise.id!);
-        this.determineDisplayableCategories();
+        this.categoryFilter.setupCategoryFilter(this.courseExercises);
+        this.calculateNumberOfAppliedFilters();
     }
 
     /**
      * Depending on the type of the exercise, it adds a new object containing
-     * the different scores of the correspnding exercise group of the chart
+     * the different scores of the corresponding exercise group of the chart
      * @param exercise an arbitrary exercise of a course
-     * @param series an array of dedicated objects containing the students performance in this exercise that is visualized by the chart
+     * @param series an array of dedicated objects containing the students' performance in this exercise that is visualized by the chart
      * @private
      */
     private pushToData(exercise: Exercise, series: any[]): void {
@@ -621,7 +634,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
     }
 
     /**
-     * Adds some meta data to every non-empty exercise group and pushes it to ngxExerciseGroups
+     * Adds some metadata to every non-empty exercise group and pushes it to ngxExerciseGroups
      * @param exerciseGroups array containing the exercise groups
      * @param types array containing all possible exercise types (programming, modeling, quiz, text, file upload)
      * @private
@@ -688,7 +701,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
     }
 
     /**
-     * Sets the maximum scale on the x axis if there are exercises with > 100%
+     * Sets the maximum scale on the x-axis if there are exercises with > 100%
      * @param exerciseGroup the exercise group
      * @private
      * @returns maximum value visible on xAxis
@@ -716,84 +729,25 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
      * @param category the category that is selected or deselected
      */
     toggleCategory(category: string) {
-        const isIncluded = this.exerciseCategoryFilters.get(category)!;
-        this.exerciseCategoryFilters.set(category, !isIncluded);
-        this.numberOfAppliedFilters += !isIncluded ? 1 : -1;
-        this.applyCategoryFilter();
-
-        this.areAllCategoriesSelected(!isIncluded);
-        this.filterExerciseIDsForCategorySelection(!isIncluded!);
-    }
-
-    /**
-     * Creates an initial filter setting by including all categories
-     * @private
-     */
-    private setupCategoryFilter(): void {
-        this.exerciseCategories.forEach((category) => this.exerciseCategoryFilters.set(category, true));
-        this.allCategoriesSelected = true;
-        this.includeExercisesWithNoCategory = true;
-        this.calculateNumberOfAppliedFilters();
-    }
-
-    /**
-     * Collects all categories from the currently visible exercises (included or excluded the optional exercises depending on the prior state)
-     * @private
-     */
-    private determineDisplayableCategories(): void {
-        const exerciseCategories = this.courseExercises
-            .filter((exercise) => exercise.categories)
-            .flatMap((exercise) => exercise.categories!)
-            .map((category) => category.category!);
-        this.exerciseCategories = new Set(exerciseCategories);
-        this.setupCategoryFilter();
+        const isIncluded = this.categoryFilter.getCurrentFilterState(category)!;
+        this.courseExercisesFilteredByCategories = this.categoryFilter.toggleCategory<Exercise>(this.courseExercises, category);
+        this.setupFilteredChart(!isIncluded);
     }
 
     /**
      * Handles the use case when the user selects or deselects the option "select all categories"
      */
     toggleAllCategories(): void {
-        if (!this.allCategoriesSelected) {
-            this.setupCategoryFilter();
-            this.includeExercisesWithNoCategory = true;
-            this.calculateNumberOfAppliedFilters();
-        } else {
-            this.exerciseCategories.forEach((category) => this.exerciseCategoryFilters.set(category, false));
-            this.numberOfAppliedFilters -= this.exerciseCategories.size + 1;
-            this.allCategoriesSelected = !this.allCategoriesSelected;
-            this.includeExercisesWithNoCategory = false;
-        }
-        this.applyCategoryFilter();
-        this.filterExerciseIDsForCategorySelection(this.includeExercisesWithNoCategory);
+        this.courseExercisesFilteredByCategories = this.categoryFilter.toggleAllCategories<Exercise>(this.courseExercises);
+        this.setupFilteredChart(this.categoryFilter.allCategoriesSelected);
     }
 
     /**
      * handles the selection and deselection of "exercises with no categories" filter option
      */
     toggleExercisesWithNoCategory(): void {
-        this.numberOfAppliedFilters += this.includeExercisesWithNoCategory ? -1 : 1;
-        this.includeExercisesWithNoCategory = !this.includeExercisesWithNoCategory;
-
-        this.applyCategoryFilter();
-        this.areAllCategoriesSelected(this.includeExercisesWithNoCategory);
-        this.filterExerciseIDsForCategorySelection(this.includeExercisesWithNoCategory);
-    }
-
-    /**
-     * Auxiliary method in order to reduce code duplication
-     * Takes the currently configured exerciseCategoryFilters and applies it to the course exercises
-     *
-     * Important note: As exercises can have no or multiple categories, the filter is designed to be non-exclusive. This means
-     * as long as an exercise has at least one of the selected categories, it is displayed.
-     */
-    private applyCategoryFilter(): void {
-        this.courseExercisesFilteredByCategories = this.courseExercises.filter((exercise) => {
-            if (!exercise.categories) {
-                return this.includeExercisesWithNoCategory;
-            }
-            return exercise.categories!.flatMap((category) => this.exerciseCategoryFilters.get(category.category!)!).reduce((value1, value2) => value1 || value2);
-        });
-        this.groupExercisesByType(this.courseExercisesFilteredByCategories);
+        this.courseExercisesFilteredByCategories = this.categoryFilter.toggleExercisesWithNoCategory<Exercise>(this.courseExercises);
+        this.setupFilteredChart(this.categoryFilter.includeExercisesWithNoCategory);
     }
 
     /**
@@ -813,26 +767,8 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
         }
     }
 
-    /**
-     * Auxiliary method that checks whether all possible categories are selected and updates the allCategoriesSelected flag accordingly
-     * @param newFilterStatement indicates whether the updated filter option got selected or deselected and updates the flag accordingly
-     * @private
-     */
-    private areAllCategoriesSelected(newFilterStatement: boolean): void {
-        if (newFilterStatement) {
-            if (!this.includeExercisesWithNoCategory) {
-                this.allCategoriesSelected = false;
-            } else {
-                this.allCategoriesSelected = true;
-                this.exerciseCategoryFilters.forEach((value) => (this.allCategoriesSelected = value && this.allCategoriesSelected));
-            }
-        } else {
-            this.allCategoriesSelected = false;
-        }
-    }
-
     private calculateNumberOfAppliedFilters(): void {
-        this.numberOfAppliedFilters = this.exerciseCategories.size + (this.currentlyHidingNotIncludedInScoreExercises ? 1 : 0) + (this.includeExercisesWithNoCategory ? 1 : 0);
+        this.numberOfAppliedFilters = this.categoryFilter.numberOfActiveFilters + (this.currentlyHidingNotIncludedInScoreExercises ? 1 : 0);
     }
 
     /**
@@ -844,8 +780,20 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
         /*
         Each chart bar should have a height of 45px
         Furthermore we have to take the bar padding between the bars into account
-        Finally, we need to add space for the x axis and its ticks
+        Finally, we need to add space for the x-axis and its ticks
          */
         return chartEntries * this.chartHeight + this.barPadding * (chartEntries - 1) + this.defaultSize;
+    }
+
+    /**
+     * Auxiliary method to reduce code duplication
+     * Calculates the number of applied filters, groups the updated set of exercises and updates the set of filtered IDs
+     * @param isIncluded indicates whether the updated filter is now selected or deselected and updates the filtered exercise IDs accordingly
+     * @private
+     */
+    private setupFilteredChart(isIncluded: boolean) {
+        this.calculateNumberOfAppliedFilters();
+        this.groupExercisesByType(this.courseExercisesFilteredByCategories);
+        this.filterExerciseIDsForCategorySelection(isIncluded);
     }
 }

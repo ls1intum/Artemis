@@ -1,7 +1,7 @@
 import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { Observable, of } from 'rxjs';
 import { Subscription } from 'rxjs';
-import { catchError, mergeMap, map, switchMap, tap } from 'rxjs/operators';
+import { catchError, mergeMap, map, tap } from 'rxjs/operators';
 import { ProgrammingExerciseParticipationService } from 'app/exercises/programming/manage/services/programming-exercise-participation.service';
 import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
 import { codeEditorTour } from 'app/guided-tour/tours/code-editor-tour';
@@ -15,7 +15,6 @@ import { Result } from 'app/entities/result.model';
 import { Feedback, FeedbackType, checkSubsequentFeedbackInAssessment } from 'app/entities/feedback.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { DomainType } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
-import { ExerciseHintService } from 'app/exercises/shared/exercise-hint/manage/exercise-hint.service';
 import { ActivatedRoute } from '@angular/router';
 import { CodeEditorContainerComponent } from 'app/exercises/programming/shared/code-editor/container/code-editor-container.component';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
@@ -28,6 +27,9 @@ import { SubmissionPolicyService } from 'app/exercises/programming/manage/servic
 import { hasExerciseDueDatePassed } from 'app/exercises/shared/exercise/exercise.utils';
 import { faCircleNotch, faTimesCircle } from '@fortawesome/free-solid-svg-icons';
 import { ExerciseHint } from 'app/entities/hestia/exercise-hint.model';
+import { ExerciseHintService } from 'app/exercises/shared/exercise-hint/shared/exercise-hint.service';
+import { HttpResponse } from '@angular/common/http';
+import { AlertService } from 'app/core/util/alert.service';
 
 @Component({
     selector: 'jhi-code-editor-student',
@@ -45,6 +47,9 @@ export class CodeEditorStudentContainerComponent implements OnInit, OnDestroy {
     participation: StudentParticipation;
     exercise: ProgrammingExercise;
     course?: Course;
+
+    activatedExerciseHints?: ExerciseHint[];
+    availableExerciseHints?: ExerciseHint[];
 
     // Fatal error state: when the participation can't be retrieved, the code editor is unusable for the student
     loadingParticipation = false;
@@ -64,9 +69,10 @@ export class CodeEditorStudentContainerComponent implements OnInit, OnDestroy {
         private domainService: DomainService,
         private programmingExerciseParticipationService: ProgrammingExerciseParticipationService,
         private guidedTourService: GuidedTourService,
-        private exerciseHintService: ExerciseHintService,
         private submissionPolicyService: SubmissionPolicyService,
         private route: ActivatedRoute,
+        private alertService: AlertService,
+        private exerciseHintService: ExerciseHintService,
     ) {}
 
     /**
@@ -102,14 +108,11 @@ export class CodeEditorStudentContainerComponent implements OnInit, OnDestroy {
                         if (this.participation.results && this.participation.results[0] && this.participation.results[0].feedbacks) {
                             checkSubsequentFeedbackInAssessment(this.participation.results[0].feedbacks);
                         }
-                    }),
-                    switchMap(() => {
-                        return this.loadExerciseHints();
+                        this.loadStudentExerciseHints();
                     }),
                 )
                 .subscribe({
-                    next: (exerciseHints: ExerciseHint[]) => {
-                        this.exercise.exerciseHints = exerciseHints;
+                    next: () => {
                         this.loadingParticipation = false;
                         this.guidedTourService.enableTourForExercise(this.exercise, codeEditorTour, true);
                     },
@@ -128,16 +131,6 @@ export class CodeEditorStudentContainerComponent implements OnInit, OnDestroy {
         if (this.paramSub) {
             this.paramSub.unsubscribe();
         }
-    }
-
-    /**
-     * Load exercise hints. Take them from the exercise if available.
-     */
-    private loadExerciseHints() {
-        if (!this.exercise.exerciseHints) {
-            return this.exerciseHintService.findByExerciseId(this.exercise.id!).pipe(map(({ body }) => body || []));
-        }
-        return of(this.exercise.exerciseHints);
     }
 
     /**
@@ -195,5 +188,29 @@ export class CodeEditorStudentContainerComponent implements OnInit, OnDestroy {
             return getUnreferencedFeedback(this.latestResult.feedbacks) ?? [];
         }
         return [];
+    }
+
+    loadStudentExerciseHints() {
+        this.exerciseHintService.getActivatedExerciseHints(this.exercise.id!).subscribe((activatedRes?: HttpResponse<ExerciseHint[]>) => {
+            this.activatedExerciseHints = activatedRes!.body!;
+
+            this.exerciseHintService.getAvailableExerciseHints(this.exercise.id!).subscribe((availableRes?: HttpResponse<ExerciseHint[]>) => {
+                // filter out the activated hints from the available hints
+                this.availableExerciseHints = availableRes!.body!.filter(
+                    (availableHint) => !this.activatedExerciseHints?.some((activatedHint) => availableHint.id === activatedHint.id),
+                );
+                const filteredAvailableExerciseHints = this.availableExerciseHints.filter((hint) => hint.displayThreshold !== 0);
+                if (filteredAvailableExerciseHints.length) {
+                    this.alertService.info('artemisApp.exerciseHint.availableHintsAlertMessage', {
+                        taskName: filteredAvailableExerciseHints.first()?.programmingExerciseTask?.taskName,
+                    });
+                }
+            });
+        });
+    }
+
+    onHintActivated(exerciseHint: ExerciseHint) {
+        this.availableExerciseHints = this.availableExerciseHints?.filter((hint) => hint.id !== exerciseHint.id);
+        this.activatedExerciseHints?.push(exerciseHint);
     }
 }

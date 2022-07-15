@@ -13,14 +13,18 @@ import { TranslateService } from '@ngx-translate/core';
 import { ExerciseCategory } from 'app/entities/exercise-category.model';
 import { User } from 'app/core/user/user.model';
 import { getExerciseDueDate } from 'app/exercises/shared/exercise/exercise.utils';
+import { EntityTitleService, EntityType } from 'app/shared/layouts/navbar/entity-title.service';
 
 export type EntityResponseType = HttpResponse<Exercise>;
 export type EntityArrayResponseType = HttpResponse<Exercise[]>;
 
 export interface ExerciseServicable<T extends Exercise> {
     create(exercise: T): Observable<HttpResponse<T>>;
+
     import?(exercise: T): Observable<HttpResponse<T>>;
+
     update(exercise: T, req?: any): Observable<HttpResponse<T>>;
+
     reevaluateAndUpdate(exercise: T, req?: any): Observable<HttpResponse<T>>;
 }
 
@@ -28,7 +32,13 @@ export interface ExerciseServicable<T extends Exercise> {
 export class ExerciseService {
     public resourceUrl = SERVER_API_URL + 'api/exercises';
 
-    constructor(private http: HttpClient, private participationService: ParticipationService, private accountService: AccountService, private translateService: TranslateService) {}
+    constructor(
+        private http: HttpClient,
+        private participationService: ParticipationService,
+        private accountService: AccountService,
+        private translateService: TranslateService,
+        private entityTitleService: EntityTitleService,
+    ) {}
 
     /**
      * Persist a new exercise
@@ -52,28 +62,56 @@ export class ExerciseService {
     }
 
     /**
-     * Validates if the date is correct
+     * Validates if the dates are correct
      */
     validateDate(exercise: Exercise) {
-        exercise.dueDateError = exercise.releaseDate && exercise.dueDate ? !exercise.dueDate.isAfter(exercise.releaseDate) : false;
+        exercise.dueDateError = this.hasDueDateError(exercise);
+        exercise.assessmentDueDateError = this.hasAssessmentDueDateError(exercise);
 
+        exercise.exampleSolutionPublicationDateError = this.hasExampleSolutionPublicationDateError(exercise);
+        exercise.exampleSolutionPublicationDateWarning = this.hasExampleSolutionPublicationDateWarning(exercise);
+    }
+
+    hasDueDateError(exercise: Exercise) {
+        return exercise.releaseDate && exercise.dueDate ? dayjs(exercise.dueDate).isBefore(exercise.releaseDate) : false;
+    }
+
+    private hasAssessmentDueDateError(exercise: Exercise) {
         if (exercise.releaseDate && exercise.assessmentDueDate) {
             if (exercise.dueDate) {
-                exercise.assessmentDueDateError = exercise.assessmentDueDate.isBefore(exercise.dueDate) || exercise.assessmentDueDate.isBefore(exercise.releaseDate);
-                return;
+                return dayjs(exercise.assessmentDueDate).isBefore(exercise.dueDate) || dayjs(exercise.assessmentDueDate).isBefore(exercise.releaseDate);
             } else {
-                exercise.assessmentDueDateError = true;
-                return;
+                return true;
             }
         }
 
         if (exercise.assessmentDueDate) {
             if (exercise.dueDate) {
-                exercise.assessmentDueDateError = !exercise.assessmentDueDate.isAfter(exercise.dueDate);
+                return dayjs(exercise.assessmentDueDate).isBefore(exercise.dueDate);
             } else {
-                exercise.assessmentDueDateError = true;
+                return true;
             }
         }
+        return false;
+    }
+
+    hasExampleSolutionPublicationDateError(exercise: Exercise) {
+        if (exercise.exampleSolutionPublicationDate) {
+            return (
+                dayjs(exercise.exampleSolutionPublicationDate).isBefore(exercise.releaseDate || null) ||
+                (dayjs(exercise.exampleSolutionPublicationDate).isBefore(exercise.dueDate || null) && exercise.includedInOverallScore !== IncludedInOverallScore.NOT_INCLUDED)
+            );
+        }
+        return false;
+    }
+
+    hasExampleSolutionPublicationDateWarning(exercise: Exercise) {
+        if (exercise.exampleSolutionPublicationDate && !dayjs(exercise.exampleSolutionPublicationDate).isSameOrAfter(exercise.dueDate || null)) {
+            if (!exercise.dueDate || exercise.includedInOverallScore === IncludedInOverallScore.NOT_INCLUDED) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**
@@ -87,17 +125,7 @@ export class ExerciseService {
     }
 
     /**
-     * Fetches the title of the exercise with the given id
-     *
-     * @param exerciseId the id of the exercise
-     * @return the title of the exercise in an HttpResponse, or an HttpErrorResponse on error
-     */
-    getTitle(exerciseId: number): Observable<HttpResponse<string>> {
-        return this.http.get(`${this.resourceUrl}/${exerciseId}/title`, { observe: 'response', responseType: 'text' });
-    }
-
-    /**
-     * Get exercise details including all results for the currently logged in user
+     * Get exercise details including all results for the currently logged-in user
      * @param { number } exerciseId - Id of the exercise to get the repos from
      */
     getExerciseDetails(exerciseId: number): Observable<EntityResponseType> {
@@ -107,9 +135,6 @@ export class ExerciseService {
 
                 if (res.body) {
                     // insert an empty list to avoid additional calls in case the list is empty on the server (because then it would be undefined in the client)
-                    if (res.body.exerciseHints === undefined) {
-                        res.body.exerciseHints = [];
-                    }
                     if (res.body.posts === undefined) {
                         res.body.posts = [];
                     }
@@ -398,6 +423,7 @@ export class ExerciseService {
         ExerciseService.convertDateFromServer(exerciseRes);
         ExerciseService.convertExerciseCategoriesFromServer(exerciseRes);
         this.setAccessRightsExerciseEntityResponseType(exerciseRes);
+        this.sendExerciseTitleToTitleService(exerciseRes?.body);
         return exerciseRes;
     }
 
@@ -409,6 +435,7 @@ export class ExerciseService {
         ExerciseService.convertDateArrayFromServer(exerciseResArray);
         ExerciseService.convertExerciseCategoryArrayFromServer(exerciseResArray);
         this.setAccessRightsExerciseEntityArrayResponseType(exerciseResArray);
+        exerciseResArray?.body?.forEach(this.sendExerciseTitleToTitleService.bind(this));
         return exerciseResArray;
     }
 
@@ -426,6 +453,19 @@ export class ExerciseService {
             this.accountService.setAccessRightsForExerciseAndReferencedCourse(res.body as Exercise);
         }
         return res;
+    }
+
+    public sendExerciseTitleToTitleService(exercise: Exercise | undefined | null) {
+        this.entityTitleService.setTitle(EntityType.EXERCISE, [exercise?.id], exercise?.title);
+        if (exercise?.course) {
+            this.entityTitleService.setTitle(EntityType.COURSE, [exercise.course.id], exercise.course.title);
+        }
+    }
+
+    public getLatestDueDate(exerciseId: number): Observable<dayjs.Dayjs | undefined> {
+        return this.http
+            .get<dayjs.Dayjs>(`${this.resourceUrl}/${exerciseId}/latest-due-date`, { observe: 'response' })
+            .pipe(map((res: HttpResponse<dayjs.Dayjs>) => (res.body ? dayjs(res.body) : undefined)));
     }
 }
 

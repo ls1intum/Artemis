@@ -32,7 +32,7 @@
         #popover="ngbPopover"
         [autoClose]="false"
         [animation]="animate"
-        placement="bottom-right"
+        [placement]="popoverPlacement"
     >
         <div class="theme-toggle" [ngClass]="{ dark: isDark }" id="theme-toggle">
             <svg class="sun-and-moon" aria-hidden="true" width="24" height="24" viewBox="0 0 24 24">

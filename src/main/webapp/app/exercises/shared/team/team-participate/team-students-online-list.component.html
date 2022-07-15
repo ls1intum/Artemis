@@ -2,7 +2,7 @@
     <h5 class="fw-medium">Team</h5>
     <ul class="team-students-online-list">
         <li class="student-item" *ngFor="let student of studentList" [ngClass]="{ online: isOnline(student) }">
-            <div class="me-2">
+            <div class="indicator">
                 <div *ngIf="isOther(student) && isTyping(student); else circle" class="typing-indicator">
                     <div class="bounce1"></div>
                     <div class="bounce2"></div>

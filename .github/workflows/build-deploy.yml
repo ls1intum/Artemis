@@ -109,10 +109,10 @@ jobs:
 
     # Push to GitHub Container Registry
     - name: Login to GitHub Container Registry
-      uses: docker/login-action@v1
+      uses: docker/login-action@v2
       with:
         registry: ghcr.io
-        username: ${{ github.actor }}
+        username: ${{ github.repository_owner }}
         password: ${{ secrets.GITHUB_TOKEN }}
       if: ${{ steps.compute-tag.outputs.result != 'FALSE' }}
     - name: Push to GitHub Container Registry
@@ -172,7 +172,7 @@ jobs:
       id: artifact-name
       run: echo "::set-output name=war-file::$(ls)"
 
-    # Downlaod artemis-server-cli from GH without cloning the Repo
+    # Download artemis-server-cli from GH without cloning the Repo
     - name: Fetch Artemis CLI
       run: |
         wget ${{ env.RAW_URL }}/artemis-server-cli

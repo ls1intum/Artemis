@@ -111,12 +111,12 @@ describe('ExampleSubmissionImportComponent', () => {
     };
 
     it('should set content to paging result on sort', fakeAsync(() => {
-        expect(component.listSorting).toBe(false);
+        expect(component.listSorting).toBeFalse();
         setStateAndCallOnInit(() => {
             component.listSorting = true;
             tick(10);
             expect(searchForSubmissionsSpy).toHaveBeenCalledWith({ ...state, sortingOrder: SortingOrder.ASCENDING }, exercise.id);
-            expect(component.listSorting).toBe(true);
+            expect(component.listSorting).toBeTrue();
         });
     }));
 

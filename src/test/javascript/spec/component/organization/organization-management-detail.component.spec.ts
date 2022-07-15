@@ -14,7 +14,7 @@ import { Organization } from 'app/entities/organization.model';
 import { User } from 'app/core/user/user.model';
 import { Course } from 'app/entities/course.model';
 import { UserService } from 'app/core/user/user.service';
-import { NgxDatatableModule } from '@swimlane/ngx-datatable';
+import { NgxDatatableModule } from '@flaviosantoro92/ngx-datatable';
 import { DataTableComponent } from 'app/shared/data-table/data-table.component';
 import { MockComponent } from 'ng-mocks';
 import { iconsAsHTML } from 'app/utils/icons.utils';
@@ -144,15 +144,15 @@ describe('OrganizationManagementDetailComponent', () => {
                 { id: user1.id, login: user1.login },
                 { id: user2.id, login: user2.login },
             ]);
-            expect(component.searchNoResults).toBe(false);
-            expect(component.searchFailed).toBe(false);
+            expect(component.searchNoResults).toBeFalse();
+            expect(component.searchFailed).toBeFalse();
         });
 
         tick();
-        expect(userService.search).toHaveBeenCalledTimes(1);
+        expect(userService.search).toHaveBeenCalledOnce();
 
         typeAheadButtons.forEach((button) => {
-            expect(button.insertAdjacentHTML).toHaveBeenCalledTimes(1);
+            expect(button.insertAdjacentHTML).toHaveBeenCalledOnce();
             expect(button.insertAdjacentHTML).toHaveBeenCalledWith('beforeend', iconsAsHTML['users-plus']);
         });
 
@@ -165,11 +165,11 @@ describe('OrganizationManagementDetailComponent', () => {
         component.searchAllUsers(of({ text: 'user', entities: [] })).subscribe();
         tick();
 
-        expect(typeAheadButtons[0].insertAdjacentHTML).toHaveBeenCalledTimes(1);
+        expect(typeAheadButtons[0].insertAdjacentHTML).toHaveBeenCalledOnce();
         expect(typeAheadButtons[0].insertAdjacentHTML).toHaveBeenCalledWith('beforeend', iconsAsHTML['users']);
-        expect(typeAheadButtons[0].classList.add).toHaveBeenCalledTimes(1);
+        expect(typeAheadButtons[0].classList.add).toHaveBeenCalledOnce();
         expect(typeAheadButtons[0].classList.add).toHaveBeenCalledWith('already-member');
-        expect(typeAheadButtons[1].insertAdjacentHTML).toHaveBeenCalledTimes(1);
+        expect(typeAheadButtons[1].insertAdjacentHTML).toHaveBeenCalledOnce();
         expect(typeAheadButtons[1].insertAdjacentHTML).toHaveBeenCalledWith('beforeend', iconsAsHTML['users-plus']);
         expect(typeAheadButtons[1].classList.add).not.toHaveBeenCalled();
     }));
@@ -185,8 +185,8 @@ describe('OrganizationManagementDetailComponent', () => {
 
         result.subscribe((a) => {
             expect(a).toStrictEqual([]);
-            expect(component.searchNoResults).toBe(false);
-            expect(component.searchFailed).toBe(false);
+            expect(component.searchNoResults).toBeFalse();
+            expect(component.searchFailed).toBeFalse();
         });
 
         tick();
@@ -201,12 +201,12 @@ describe('OrganizationManagementDetailComponent', () => {
 
         result.subscribe((a) => {
             expect(a).toStrictEqual([]);
-            expect(component.searchNoResults).toBe(true);
-            expect(component.searchFailed).toBe(false);
+            expect(component.searchNoResults).toBeTrue();
+            expect(component.searchFailed).toBeFalse();
         });
 
         tick();
-        expect(userService.search).toHaveBeenCalledTimes(1);
+        expect(userService.search).toHaveBeenCalledOnce();
     }));
 
     it('should set the search failed flag if search failed', fakeAsync(() => {
@@ -217,12 +217,12 @@ describe('OrganizationManagementDetailComponent', () => {
 
         result.subscribe((a) => {
             expect(a).toStrictEqual([]);
-            expect(component.searchNoResults).toBe(false);
-            expect(component.searchFailed).toBe(true);
+            expect(component.searchNoResults).toBeFalse();
+            expect(component.searchFailed).toBeTrue();
         });
 
         tick();
-        expect(userService.search).toHaveBeenCalledTimes(1);
+        expect(userService.search).toHaveBeenCalledOnce();
     }));
 
     it('should add the user to organization on autocomplete select', fakeAsync(() => {
@@ -234,12 +234,12 @@ describe('OrganizationManagementDetailComponent', () => {
         const newUser = { id: 2, login: 'test' } as User;
         component.onAutocompleteSelect(newUser, callback);
         tick();
-        expect(addUserSpy).toHaveBeenCalledTimes(1);
+        expect(addUserSpy).toHaveBeenCalledOnce();
         expect(addUserSpy).toHaveBeenCalledWith(7, 'test');
         expect(component.organization.users).toContain(newUser);
-        expect(callback).toHaveBeenCalledTimes(1);
+        expect(callback).toHaveBeenCalledOnce();
         expect(callback).toHaveBeenCalledWith(newUser);
-        expect(flashSpy).toHaveBeenCalledTimes(1);
+        expect(flashSpy).toHaveBeenCalledOnce();
         expect(flashSpy).toHaveBeenCalledWith('newly-added-member');
 
         const existingUser = { id: 1 } as User;
@@ -247,7 +247,7 @@ describe('OrganizationManagementDetailComponent', () => {
         tick();
         expect(callback).toHaveBeenCalledTimes(2);
         expect(callback).toHaveBeenCalledWith(existingUser);
-        expect(addUserSpy).toHaveBeenCalledTimes(1);
+        expect(addUserSpy).toHaveBeenCalledOnce();
     }));
 
     function createTestUsers() {

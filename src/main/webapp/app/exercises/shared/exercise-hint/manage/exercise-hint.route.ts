@@ -4,7 +4,7 @@ import { ActivatedRouteSnapshot, Resolve, Routes } from '@angular/router';
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
 import { of } from 'rxjs';
 import { filter, map } from 'rxjs/operators';
-import { ExerciseHintService } from './exercise-hint.service';
+import { ExerciseHintService } from '../shared/exercise-hint.service';
 import { ExerciseHintComponent } from './exercise-hint.component';
 import { ExerciseHintDetailComponent } from './exercise-hint-detail.component';
 import { ExerciseHint } from 'app/entities/hestia/exercise-hint.model';

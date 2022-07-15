@@ -102,7 +102,7 @@
                 {
                   "type": "initial",
                   "maximumWarning": "2mb",
-                  "maximumError": "2.2mb"
+                  "maximumError": "2.3mb"
                 },
                 {
                   "type": "anyComponentStyle",
@@ -147,7 +147,6 @@
       }
     }
   },
-  "defaultProject": "artemis",
   "cli": {
     "analytics": false,
     "packageManager": "npm",

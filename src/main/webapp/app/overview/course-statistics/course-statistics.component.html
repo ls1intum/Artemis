@@ -1,12 +1,7 @@
 <ng-template #controls>
     <div class="d-flex row course-overview-controls justify-content-end">
         <div class="col" aria-label="Filter Dropdown" ngbDropdown>
-            <button
-                class="btn"
-                [ngClass]="{ 'btn-secondary': numberOfAppliedFilters === 0, 'btn-success': numberOfAppliedFilters > 0 }"
-                ngbDropdownToggle
-                id="filter-dropdown-button"
-            >
+            <button class="btn" [class.btn-secondary]="!numberOfAppliedFilters" [class.btn-success]="!!numberOfAppliedFilters" ngbDropdownToggle id="filter-dropdown-button">
                 <fa-icon [icon]="faFilter"></fa-icon>
                 <span>{{ 'artemisApp.courseOverview.exerciseList.filter' | artemisTranslate: { num: numberOfAppliedFilters } }}</span>
             </button>
@@ -23,19 +18,24 @@
                 </li>
                 <li>
                     <label class="mb-1">
-                        <input class="ms-2 form-check-input" (change)="toggleAllCategories()" [checked]="allCategoriesSelected" type="checkbox" />
+                        <input class="ms-2 form-check-input" (change)="toggleAllCategories()" [checked]="chartCategoryFilter.allCategoriesSelected" type="checkbox" />
                         <b class="ms-2">{{ 'artemisApp.courseOverview.statistics.includeAllCategories' | artemisTranslate }}</b>
                     </label>
                 </li>
-                <li>
+                <li *ngIf="chartCategoryFilter.exercisesWithoutCategoriesPresent">
                     <label>
-                        <input class="ms-2 form-check-input" (change)="toggleExercisesWithNoCategory()" [checked]="includeExercisesWithNoCategory" type="checkbox" />
+                        <input
+                            class="ms-2 form-check-input"
+                            (change)="toggleExercisesWithNoCategory()"
+                            [checked]="chartCategoryFilter.includeExercisesWithNoCategory"
+                            type="checkbox"
+                        />
                         <span class="ms-2">{{ 'artemisApp.courseOverview.statistics.exercisesWithNoCategories' | artemisTranslate }}</span>
                     </label>
                 </li>
-                <li *ngFor="let category of exerciseCategories">
+                <li *ngFor="let category of chartCategoryFilter.exerciseCategories">
                     <label>
-                        <input class="ms-2 form-check-input" (change)="toggleCategory(category)" [checked]="exerciseCategoryFilters.get(category)" type="checkbox" />
+                        <input class="ms-2 form-check-input" (change)="toggleCategory(category)" [checked]="chartCategoryFilter.getCurrentFilterState(category)" type="checkbox" />
                         <span class="ms-2">{{ category }}</span>
                     </label>
                 </li>
@@ -45,78 +45,102 @@
 </ng-template>
 
 <div *ngIf="course">
-    <div class="row" *ngIf="course.exercises && course.exercises.length > 0 && ngxExerciseGroups.length > 0; else noStatistics">
-        <div class="co-12 col-md-4 statistic-summary">
-            <h2 class="text-center">{{ 'artemisApp.courseOverview.statistics.totalScore' | artemisTranslate }}</h2>
-            <div class="chart-container">
-                <div class="chart-text">
-                    <h2 class="text-center">{{ currentRelativeScore }} %</h2>
-                    <h4 class="text-center">{{ overallPoints }} / {{ reachablePoints }} Pts</h4>
+    <div class="row" *ngIf="course.exercises && course.exercises.length > 0; else noStatistics">
+        <div class="statistic-summary">
+            <h2>{{ 'artemisApp.courseOverview.statistics.totalScore' | artemisTranslate }}</h2>
+            <div class="row d-flex justify-content-center align-items-start">
+                <div class="chart-container col-md-6" #doughnutref>
+                    <div class="chart-text">
+                        <h2 class="text-center">{{ currentRelativeScore }} %</h2>
+                        <h4 class="text-center">{{ overallPoints }} / {{ reachablePoints }} Pts</h4>
+                    </div>
+                    <ngx-charts-pie-chart [view]="[350, 350]" [results]="ngxDoughnutData" [scheme]="ngxDoughnutColor" [doughnut]="true">
+                        <ng-template #tooltipTemplate let-model="model">
+                            <span>{{ model.name | artemisTranslate }}: {{ model.value }}</span>
+                        </ng-template>
+                    </ngx-charts-pie-chart>
                 </div>
-                <ngx-charts-pie-chart [view]="[250, 250]" [results]="ngxDoughnutData" [scheme]="ngxDoughnutColor" [doughnut]="true">
-                    <ng-template #tooltipTemplate let-model="model">
-                        <span>{{ 'artemisApp.courseOverview.statistics.' + model.name | artemisTranslate }}: {{ model.value }}</span>
-                    </ng-template>
-                </ngx-charts-pie-chart>
-            </div>
-            <h4 class="text-center" id="absolute-course-score">{{ 'artemisApp.courseOverview.statistics.yourPoints' | artemisTranslate: { number: overallPoints } }}</h4>
-            <h4 class="text-center" id="reachable-course-score">
-                <span>
-                    {{ 'artemisApp.courseOverview.statistics.reachablePoints' | artemisTranslate: { number: reachablePoints, relative: currentRelativeScore } }}
-                </span>
-                <fa-icon
-                    id="reachable-help"
-                    class="me-1"
-                    [icon]="faQuestionCircle"
-                    ngbTooltip="{{ 'artemisApp.courseOverview.statistics.reachableHelp' | artemisTranslate }}"
-                ></fa-icon>
-            </h4>
-            <h4 class="text-center mb-4" id="max-course-score">
-                <span>
-                    {{ 'artemisApp.courseOverview.statistics.totalPoints' | artemisTranslate: { number: overallMaxPoints, relative: totalRelativeScore } }}
-                </span>
-                <fa-icon id="total-help" class="me-1" [icon]="faQuestionCircle" ngbTooltip="{{ 'artemisApp.courseOverview.statistics.totalHelp' | artemisTranslate }}"></fa-icon>
-            </h4>
-            <div *ngIf="gradingScaleExists" class="mb-5">
-                <h4 *ngIf="!isBonus" class="text-center">{{ 'artemisApp.courseOverview.statistics.grade' | artemisTranslate }}: {{ gradeDTO?.gradeName }}</h4>
-                <h4 *ngIf="isBonus" class="text-center">{{ 'artemisApp.courseOverview.statistics.bonus' | artemisTranslate }}: {{ gradeDTO?.gradeName }}</h4>
-                <h6 class="text-center">
-                    {{ 'artemisApp.courseOverview.statistics.gradeInfo' | artemisTranslate }}
-                    <fa-icon
-                        id="reachable-help"
-                        class="me-1"
-                        [icon]="faQuestionCircle"
-                        ngbTooltip="{{
-                            isBonus ? ('artemisApp.courseOverview.statistics.bonusHelp' | artemisTranslate) : ('artemisApp.courseOverview.statistics.gradeHelp' | artemisTranslate)
-                        }}"
-                    ></fa-icon>
-                </h6>
-                <div class="text-center mt-3">
-                    <a class="btn btn-primary" [routerLink]="['grading-key']" [queryParams]="{ grade: gradeDTO?.gradeName }">
-                        <fa-icon [icon]="faClipboard"></fa-icon>
-                        <span
-                            >&nbsp;{{
-                                isBonus ? ('artemisApp.exam.examSummary.gradeKeyButtonBonus' | artemisTranslate) : ('artemisApp.exam.examSummary.gradeKeyButton' | artemisTranslate)
-                            }}</span
-                        >
-                    </a>
+                <div class="col-md-3 d-flex flex-column align-self-end color-legend-container">
+                    <div class="color-legend-entry" *ngFor="let exerciseType of ngxDoughnutData">
+                        <div class="color-indicator" [style.background]="exerciseType.color"></div>
+                        <h5 class="fw-bolder">{{ exerciseType.name | artemisTranslate }}</h5>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <h5 class="fw-bolder" id="absolute-course-score">
+                        {{ 'artemisApp.courseOverview.statistics.yourPoints' | artemisTranslate: { number: overallPoints } }}
+                    </h5>
+                    <h5 class="fw-bolder" id="reachable-course-score">
+                        <span>
+                            {{ 'artemisApp.courseOverview.statistics.reachablePoints' | artemisTranslate: { number: reachablePoints, relative: currentRelativeScore } }}
+                        </span>
+                        <fa-icon
+                            id="reachable-help"
+                            class="me-1"
+                            [icon]="faQuestionCircle"
+                            ngbTooltip="{{ 'artemisApp.courseOverview.statistics.reachableHelp' | artemisTranslate }}"
+                        ></fa-icon>
+                    </h5>
+                    <h5 class="mb-4 statistics-legend" id="max-course-score">
+                        <span>
+                            {{ 'artemisApp.courseOverview.statistics.totalPoints' | artemisTranslate: { number: overallMaxPoints, relative: totalRelativeScore } }}
+                        </span>
+                        <fa-icon
+                            id="total-help"
+                            class="me-1"
+                            [icon]="faQuestionCircle"
+                            ngbTooltip="{{ 'artemisApp.courseOverview.statistics.totalHelp' | artemisTranslate }}"
+                        ></fa-icon>
+                    </h5>
+                    <div *ngIf="gradingScaleExists" class="mb-5">
+                        <h5 *ngIf="!isBonus" class="fw-bolder">{{ 'artemisApp.courseOverview.statistics.grade' | artemisTranslate }}: {{ gradeDTO?.gradeName }}</h5>
+                        <h5 *ngIf="isBonus" class="fw-bolder">{{ 'artemisApp.courseOverview.statistics.bonus' | artemisTranslate }}: {{ gradeDTO?.gradeName }}</h5>
+                        <h6>
+                            {{ 'artemisApp.courseOverview.statistics.gradeInfo' | artemisTranslate }}
+                            <fa-icon
+                                id="reachable-help"
+                                class="me-1"
+                                [icon]="faQuestionCircle"
+                                ngbTooltip="{{
+                                    isBonus
+                                        ? ('artemisApp.courseOverview.statistics.bonusHelp' | artemisTranslate)
+                                        : ('artemisApp.courseOverview.statistics.gradeHelp' | artemisTranslate)
+                                }}"
+                            ></fa-icon>
+                        </h6>
+                        <div class="mt-3">
+                            <a class="btn btn-primary" [routerLink]="['grading-key']" [queryParams]="{ grade: gradeDTO?.gradeName }">
+                                <fa-icon [icon]="faClipboard"></fa-icon>
+                                <span>
+                                    {{
+                                        isBonus
+                                            ? ('artemisApp.exam.examSummary.gradeKeyButtonBonus' | artemisTranslate)
+                                            : ('artemisApp.exam.examSummary.gradeKeyButton' | artemisTranslate)
+                                    }}
+                                </span>
+                            </a>
+                        </div>
+                    </div>
+                    <div *ngIf="course.presentationScore !== 0">
+                        <h3>{{ 'artemisApp.courseOverview.statistics.totalPresentationScore' | artemisTranslate: { number: overallPresentationScore } }}</h3>
+                        <h3>{{ 'artemisApp.courseOverview.statistics.presentationScoreBonus' | artemisTranslate: { number: course.presentationScore } }}</h3>
+                    </div>
                 </div>
             </div>
-            <div *ngIf="course.presentationScore !== 0">
-                <h2 class="text-center">{{ 'artemisApp.courseOverview.statistics.totalPresentationScore' | artemisTranslate: { number: overallPresentationScore } }}</h2>
-                <h2 class="text-center">{{ 'artemisApp.courseOverview.statistics.presentationScoreBonus' | artemisTranslate: { number: course.presentationScore } }}</h2>
-            </div>
+            <hr />
         </div>
-        <div class="col-12 col-md-8">
-            <div class="row mt-3" *ngFor="let exerciseGroup of ngxExerciseGroups" id="{{ exerciseGroup[0].type }}-wrapper">
+        <jhi-exercise-scores-chart class="col-12" [filteredExerciseIDs]="filteredExerciseIDs"></jhi-exercise-scores-chart>
+        <hr />
+        <div class="col-12 mb-3">
+            <h2>{{ 'artemisApp.courseOverview.statistics.pointsPerExercise' | artemisTranslate }}</h2>
+            <div class="row mt-3 d-flex justify-content-end" *ngFor="let exerciseGroup of ngxExerciseGroups" id="{{ exerciseGroup[0].type }}-wrapper">
                 <div class="col-12 mb-1 d-flex align-items-center">
-                    <div class="color-indicator" [style.background]="exerciseTitles[exerciseGroup[0].type].color"></div>
-                    <h2>
+                    <h4>
                         {{
                             'artemisApp.courseOverview.statistics.exerciseCount'
                                 | artemisTranslate: { number: exerciseGroup.length, type: exerciseTitles[exerciseGroup[0].type].name }
                         }}
-                    </h2>
+                    </h4>
                 </div>
                 <div #containerRef class="col-12 col-md-8">
                     <ngx-charts-bar-horizontal-stacked
@@ -127,6 +151,7 @@
                         [yAxis]="true"
                         [xScaleMax]="exerciseGroup[0].xScaleMax"
                         [barPadding]="barPadding"
+                        [maxXAxisTickLength]="15"
                         (select)="onSelect($event)"
                     >
                         <!-- This template is managing the tooltip content depending of the bar that is selected by the user and the properties of the corresponding exercise-->
@@ -179,9 +204,11 @@
                         </ng-template>
                     </ngx-charts-bar-horizontal-stacked>
                 </div>
-                <div class="col-12 col-md-4 align-self-center" *ngIf="exerciseGroup && exerciseGroup.length > 0">
-                    <h4 id="absolute-score">{{ 'artemisApp.courseOverview.statistics.yourPoints' | artemisTranslate: { number: exerciseGroup[0].absoluteScore } }}</h4>
-                    <h4 id="reachable-score">
+                <div class="col-12 col-md-3 align-self-top mt-2" *ngIf="exerciseGroup && exerciseGroup.length > 0">
+                    <h5 class="fw-bolder" id="absolute-score">
+                        {{ 'artemisApp.courseOverview.statistics.yourPoints' | artemisTranslate: { number: exerciseGroup[0].absoluteScore } }}
+                    </h5>
+                    <h5 class="fw-bolder" id="reachable-score">
                         <span>
                             {{
                                 'artemisApp.courseOverview.statistics.reachablePoints'
@@ -194,8 +221,8 @@
                             [icon]="faQuestionCircle"
                             ngbTooltip="{{ 'artemisApp.courseOverview.statistics.reachableHelpExerciseGroup' | artemisTranslate }}"
                         ></fa-icon>
-                    </h4>
-                    <h4 id="max-score">
+                    </h5>
+                    <h5 class="fw-bolder" id="max-score">
                         <span>
                             {{
                                 'artemisApp.courseOverview.statistics.totalPoints'
@@ -208,18 +235,14 @@
                             [icon]="faQuestionCircle"
                             ngbTooltip="{{ 'artemisApp.courseOverview.statistics.totalHelpExerciseGroup' | artemisTranslate }}"
                         ></fa-icon>
-                    </h4>
-                    <h4 *ngIf="exerciseGroup[0].presentationScoreEnabled && course.presentationScore !== 0" id="presentation-score">
+                    </h5>
+                    <h5 *ngIf="exerciseGroup[0].presentationScoreEnabled && course.presentationScore !== 0" class="fw-bolder" id="presentation-score">
                         {{ 'artemisApp.courseOverview.statistics.presentationScore' | artemisTranslate: { number: exerciseGroup[0].presentationScore } }}
-                    </h4>
+                    </h5>
                 </div>
             </div>
         </div>
     </div>
-    <hr />
-    <jhi-course-learning-goals [courseId]="courseId"></jhi-course-learning-goals>
-    <hr />
-    <jhi-exercise-scores-chart [filteredExerciseIDs]="filteredExerciseIDs"></jhi-exercise-scores-chart>
     <ng-template #noStatistics>
         <div class="row">
             <div class="col mt-3">

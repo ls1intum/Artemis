@@ -101,7 +101,7 @@ describe('TreeviewItemComponent', () => {
         }));
 
         it('should render "Parent 1", "Child 1" & "Child 2" with checked', () => {
-            expect(parentCheckbox.nativeElement.checked).toEqual(true);
+            expect(parentCheckbox.nativeElement.checked).toBeTrue();
             expect(childrenCheckboxes.map((element) => element.nativeElement.checked)).toEqual([false, false]);
         });
 
@@ -154,11 +154,11 @@ describe('TreeviewItemComponent', () => {
             }));
 
             it('should uncheck "Parent 1"', () => {
-                expect(parentCheckbox.nativeElement.checked).toEqual(false);
+                expect(parentCheckbox.nativeElement.checked).toBeFalse();
             });
 
             it('should raise event checkedChange', () => {
-                expect(checkedChangeSpy).toHaveBeenCalledTimes(1);
+                expect(checkedChangeSpy).toHaveBeenCalledOnce();
                 expect(checkedChangeSpy).toHaveBeenCalledWith(true);
             });
 
@@ -171,11 +171,11 @@ describe('TreeviewItemComponent', () => {
                 }));
 
                 it('should keep "Parent 1" checked', () => {
-                    expect(parentCheckbox.nativeElement.checked).toEqual(true);
+                    expect(parentCheckbox.nativeElement.checked).toBeTrue();
                 });
 
                 it('should raise event checkedChange', () => {
-                    expect(checkedChangeSpy).toHaveBeenCalledTimes(1);
+                    expect(checkedChangeSpy).toHaveBeenCalledOnce();
                     expect(checkedChangeSpy).toHaveBeenCalledWith(true);
                 });
             });
@@ -193,11 +193,11 @@ describe('TreeviewItemComponent', () => {
                 }));
 
                 it('should not check "Parent 1"', () => {
-                    expect(parentCheckbox.nativeElement.checked).toEqual(false);
+                    expect(parentCheckbox.nativeElement.checked).toBeFalse();
                 });
 
                 it('should raise event checkedChange', () => {
-                    expect(checkedChangeSpy).toHaveBeenCalledTimes(1);
+                    expect(checkedChangeSpy).toHaveBeenCalledOnce();
                     expect(checkedChangeSpy).toHaveBeenCalledWith(false);
                 });
             });

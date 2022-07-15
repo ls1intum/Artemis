@@ -21,7 +21,7 @@ describe(`NotificationInterceptor`, () => {
     });
 
     it('should create a success alert if alert headers are given', () => {
-        const requestMock = new HttpRequest('GET', `${SERVER_API_URL}/test`);
+        const requestMock = new HttpRequest('GET', `${SERVER_API_URL}test`);
         const mockHandler = {
             handle: () =>
                 of(
@@ -36,12 +36,12 @@ describe(`NotificationInterceptor`, () => {
 
         notificationInterceptor.intercept(requestMock, mockHandler).subscribe();
 
-        expect(alertServiceMock.success).toHaveBeenCalledTimes(1);
+        expect(alertServiceMock.success).toHaveBeenCalledOnce();
         expect(alertServiceMock.success).toHaveBeenCalledWith('Test', { param: 'ABC' });
     });
 
     it('should not spawn an alert if headers are missing', () => {
-        const requestMock = new HttpRequest('GET', `${SERVER_API_URL}/test`);
+        const requestMock = new HttpRequest('GET', `${SERVER_API_URL}test`);
         const mockHandler = {
             handle: () =>
                 of(

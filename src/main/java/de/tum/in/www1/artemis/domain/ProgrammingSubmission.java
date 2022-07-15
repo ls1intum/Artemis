@@ -10,12 +10,10 @@ import javax.validation.constraints.NotNull;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
-import de.tum.in.www1.artemis.domain.hestia.CoverageReport;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 
@@ -42,12 +40,6 @@ public class ProgrammingSubmission extends Submission {
     @JsonIgnoreProperties(value = "programmingSubmission", allowSetters = true)
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     private List<BuildLogEntry> buildLogEntries = new ArrayList<>();
-
-    // This attribute is only valid for ProgrammingSubmissions related to a SolutionProgrammingExerciseParticipation.
-    // If the submission is deleted, the coverage report with all child entities are deleted.
-    @OneToOne(mappedBy = "submission", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
-    @JsonIgnore
-    private CoverageReport coverageReport;
 
     /**
      * There can be two reasons for the case that there is no programmingSubmission:
@@ -109,14 +101,6 @@ public class ProgrammingSubmission extends Submission {
 
     public void setBuildLogEntries(List<BuildLogEntry> buildLogEntries) {
         this.buildLogEntries = buildLogEntries;
-    }
-
-    public CoverageReport getCoverageReport() {
-        return coverageReport;
-    }
-
-    public void setCoverageReport(CoverageReport testwiseCoverageReport) {
-        this.coverageReport = testwiseCoverageReport;
     }
 
     public boolean belongsToTestRepository() {
