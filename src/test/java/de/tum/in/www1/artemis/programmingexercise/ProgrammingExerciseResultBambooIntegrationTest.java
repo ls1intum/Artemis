@@ -104,7 +104,7 @@ class ProgrammingExerciseResultBambooIntegrationTest extends AbstractSpringInteg
         var resultNotification = ModelFactory.generateBambooBuildResultWithLogs(Constants.ASSIGNMENT_REPO_NAME, List.of("test1"), List.of());
         bitbucketRequestMockProvider.mockGetPushDate(programmingExerciseResultTestService.getProgrammingExercise().getProjectKey(), TestConstants.COMMIT_HASH_STRING,
                 ZonedDateTime.now());
-        programmingExerciseResultTestService.shouldStoreBuildLogsForSubmission(resultNotification);
+        programmingExerciseResultTestService.shouldNotStoreBuildLogsForSubmission(resultNotification);
     }
 
     @Test
@@ -113,7 +113,7 @@ class ProgrammingExerciseResultBambooIntegrationTest extends AbstractSpringInteg
         var resultNotification = ModelFactory.generateBambooBuildResultWithLogs(Constants.ASSIGNMENT_REPO_NAME, List.of("test1"), List.of());
         bitbucketRequestMockProvider.mockGetPushDate(programmingExerciseResultTestService.getProgrammingExercise().getProjectKey(), TestConstants.COMMIT_HASH_STRING,
                 ZonedDateTime.now());
-        programmingExerciseResultTestService.shouldSaveBuildLogsInBuildLogRepository(resultNotification);
+        programmingExerciseResultTestService.shouldNotSaveBuildLogsInBuildLogRepository(resultNotification);
     }
 
     @Test

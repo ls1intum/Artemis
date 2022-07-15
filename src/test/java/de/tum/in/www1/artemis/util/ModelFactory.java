@@ -1173,7 +1173,7 @@ public class ModelFactory {
      * @return notification with build logs
      */
     public static BambooBuildResultNotificationDTO generateBambooBuildResultWithLogs(String repoName, List<String> successfulTestNames, List<String> failedTestNames) {
-        return generateBambooBuildResultWithLogs(repoName, successfulTestNames, failedTestNames, true);
+        return generateBambooBuildResultWithLogs(repoName, successfulTestNames, failedTestNames, failedTestNames.isEmpty());
     }
 
     /**
