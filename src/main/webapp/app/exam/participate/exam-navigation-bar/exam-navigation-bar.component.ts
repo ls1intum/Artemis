@@ -143,13 +143,11 @@ export class ExamNavigationBarComponent implements OnInit {
         if (submission && this.exercises[this.exerciseIndex].type !== ExerciseType.PROGRAMMING) {
             submission.submitted = true;
         }
-        if (changeExercise) {
-            if (newIndex > this.exercises.length - 1) {
-                // we are in the last exercise, if out of range "change" active exercise to current in order to trigger a save
-                this.changePage(false, this.exerciseIndex, true);
-            } else {
-                this.changePage(false, newIndex, true);
-            }
+        if (!changeExercise || newIndex > this.exercises.length - 1) {
+            // we are either in the last exercise or we do not want to change exercise, so "change" active exercise to current in order to trigger a save
+            this.changePage(false, this.exerciseIndex, true);
+        } else {
+            this.changePage(false, newIndex, true);
         }
     }
 
