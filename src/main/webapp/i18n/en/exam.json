@@ -465,6 +465,10 @@
         "examMonitoring": {
             "title": "Exam live statistics",
             "description": "The exam live statistics dashboard allows instructors to view students' actions during the exam and analyze the resulting data.",
+            "enable": "Enable",
+            "disable": "Disable",
+            "enabled": "Enabled",
+            "disabled": "Disabled",
             "table": {
                 "panelHeader": "Exam Information",
                 "panelDescriptionHeader": "Details",
@@ -482,11 +486,23 @@
                 "exercises": {
                     "title": "Exercises",
                     "description": "Shows the current participation of the students in the respective exercise and exercise groups",
-                    "groups": "Exercise Groups"
+                    "groups": "Exercise Groups",
+                    "exercisesPerPage": "{{number}} exercises per page",
+                    "showAllExercises": "Show all exercises",
+                    "id": "Exercise",
+                    "exerciseGroup.id": "Exercise group",
+                    "_title": "Title",
+                    "type": "Type"
                 },
                 "activity-log": {
                     "title": "Activity log",
-                    "description": "Shows the past and current activities of active students"
+                    "description": "Shows the past and current activities of active students",
+                    "actionsPerPage": "{{number}} actions per page",
+                    "showAllActions": "Show all actions",
+                    "studentExamId": "Exam-ID",
+                    "timestamp": "Timestamp",
+                    "type": "Category",
+                    "detail": "Detail"
                 }
             },
             "charts": {
@@ -517,6 +533,18 @@
                     "xAxisLabel": "Amount of navigations",
                     "yAxisLabel": "Exercises",
                     "legendTitle": "Exercises"
+                },
+                "exercise-detail-current-chart": {
+                    "name": "Current number of students",
+                    "tooltip": "Shows the current number of students"
+                },
+                "exercise-detail-navigation-chart": {
+                    "name": "Number of first navigations",
+                    "tooltip": "Shows the number of first navigations"
+                },
+                "exercise-detail-submission-chart": {
+                    "name": "Number of first submissions",
+                    "tooltip": "Shows the number of first submissions"
                 },
                 "average-actions-chart": {
                     "name": "Average number of actions per student",

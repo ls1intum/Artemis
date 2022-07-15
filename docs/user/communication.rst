@@ -7,10 +7,7 @@ Communication
     :local:
     :depth: 2
 
-Overview
---------
-
-Artemis enables students, tutors, and instructors to actively participate with its' communication feature.
+Artemis enables students, tutors, and instructors to actively participate with its communication feature.
 Various communication features allow students to engage with peers and ask all kinds of questions whereas moderators (e.g., instructors and tutors) can provide general course information and answer content-related questions.
 Communication can be made in different contexts, namely for lectures, exercises, or courses.
 Below, you can find more information on specific features and how to use them.
@@ -141,6 +138,7 @@ They target every course participant and have higher relevance than normal posts
 Announcements can be created in the course communication overview by selecting the topic ``Announcement``.
 As soon as the announcement is created, all participants, that did not actively refrain from being notified, will receive an email containing the announcement's content.
 Additionally, announcements visually differ from normal posts and are always displayed on top of the communication overview.
+
 
 .. |lecture-posts| image:: communication/lecture-posts.png
     :width: 1000
