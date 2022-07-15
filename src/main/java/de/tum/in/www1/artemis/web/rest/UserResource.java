@@ -199,24 +199,25 @@ public class UserResource {
     /**
      * PUT ldap : Updates an existing User based on the info available in the LDAP server.
      *
-     * @param managedUserVM the user to update
+     * @param login of the user to update
      * @return the ResponseEntity with status 200 (OK) and with body the updated user
      */
-    @PutMapping("users/ldap-sync")
+    @PutMapping("users/{login:" + Constants.LOGIN_REGEX + "}/ldap-sync")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<UserDTO> ldapUserSync(@Valid @RequestBody ManagedUserVM managedUserVM) {
-        log.debug("REST request to update ldap information User : {}", managedUserVM);
+    public ResponseEntity<UserDTO> ldapUserSync(@PathVariable String login) {
+        log.debug("REST request to update ldap information User : {}", login);
 
-        var existingUser = userRepository.findByIdWithGroupsAndAuthoritiesAndOrganizationsElseThrow(managedUserVM.getId());
+        var existingUser = userRepository.findOneWithGroupsAndAuthoritiesByLogin(login);
 
-        var updatedUser = userService.createUserFromLdap(existingUser.getRegistrationNumber());
-
-        if (updatedUser.isPresent()) {
-            return ResponseEntity.ok().headers(HeaderUtil.createAlert(applicationName, "userManagement.updated", managedUserVM.getLogin())).body(new UserDTO(updatedUser.get()));
+        if (existingUser.isPresent()) {
+            var ldapUser = userService.updateUserFromLdap(existingUser.get().getRegistrationNumber());
+            if (ldapUser.isPresent()) {
+                return ResponseEntity.ok().headers(HeaderUtil.createAlert(applicationName, "userManagement.updated", login)).body(new UserDTO(ldapUser.get()));
+            }
         }
-        else {
-            return ResponseEntity.notFound().build();
-        }
+
+        return ResponseEntity.notFound().build();
+
     }
 
     /**

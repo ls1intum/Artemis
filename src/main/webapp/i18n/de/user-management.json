@@ -33,7 +33,7 @@
             },
             "registrationNumber": {
                 "title": "Die Registrierungsnummer ({{ num }})",
-                "tooltip": "Es filtert die Benutzer anhand ihrer Registrierungsnummer",
+                "tooltip": "Filter die Nutzer:innen anhand ihrer Registrierungsnummer",
                 "with_reg_no": "Mit Registrierungsnummer",
                 "without_reg_no": "Ohne Registrierungsnummer"
             },

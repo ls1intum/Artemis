@@ -252,6 +252,18 @@ public class UserCreationService {
         return saveUser(user);
     }
 
+    public User updateUserLdap(@NotNull User user, String login, String firstName, String lastName, String email, String registrationNumber) {
+        user.setLogin(login.toLowerCase());
+        user.setFirstName(firstName);
+        user.setLastName(lastName);
+        user.setEmail(email.toLowerCase());
+        user.setRegistrationNumber(registrationNumber);
+
+        log.debug("Changed Information for User: {}", user);
+
+        return saveUser(user);
+    }
+
     /**
      * Activate user
      *

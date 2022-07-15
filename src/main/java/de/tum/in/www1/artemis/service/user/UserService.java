@@ -376,6 +376,30 @@ public class UserService {
         return Optional.empty();
     }
 
+    public Optional<User> updateUserFromLdap(String registrationNumber) {
+        if (!StringUtils.hasText(registrationNumber)) {
+            return Optional.empty();
+        }
+        if (ldapUserService.isPresent()) {
+            Optional<LdapUserDto> ldapUserOptional = ldapUserService.get().findByRegistrationNumber(registrationNumber);
+            if (ldapUserOptional.isPresent()) {
+                LdapUserDto ldapUser = ldapUserOptional.get();
+                log.info("Ldap User {} has registration number: {}", ldapUser.getUsername(), ldapUser.getRegistrationNumber());
+                var existingUser = userRepository.findOneByLogin(ldapUser.getUsername());
+
+                // Update all information of the user if it exists in the database with the information provided by the LDAP.
+                User user = userCreationService.updateUserLdap(existingUser.get(), ldapUser.getUsername(), ldapUser.getFirstName(), ldapUser.getLastName(), ldapUser.getEmail(),
+                        ldapUser.getRegistrationNumber());
+
+                return Optional.of(user);
+            }
+            else {
+                log.warn("Ldap User with registration number {} not found", registrationNumber);
+            }
+        }
+        return Optional.empty();
+    }
+
     /**
      * Updates the user (and synchronizes its password) and its groups in the connected version control system (e.g. GitLab if available).
      * Also updates the user groups in the used authentication provider (like {@link JiraAuthenticationProvider}.
