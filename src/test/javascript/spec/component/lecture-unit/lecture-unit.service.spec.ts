@@ -70,7 +70,7 @@ describe('LectureUnitService', () => {
     });
 
     it('should receive updated order array', fakeAsync(() => {
-        convertDateFromServerEntitySpy = jest.spyOn(service, 'convertDateFromServerEntity');
+        convertDateFromServerEntitySpy = jest.spyOn(service, 'convertLectureUnitDateFromServer');
         const orderArray = [videoUnit, attachmentUnit, textUnit, exerciseUnit];
         service.updateOrder(1, orderArray).subscribe((resp) => (expectedResultArray = resp));
         const req = httpMock.expectOne({ method: 'PUT' });
