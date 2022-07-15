@@ -200,7 +200,7 @@ public class ProgrammingExercise extends Exercise {
      */
     @JsonIgnore
     public List<AuxiliaryRepository> getAuxiliaryRepositoriesForBuildPlan() {
-        return this.auxiliaryRepositories.stream().filter(AuxiliaryRepository::shouldBeIncludedInBuildPlan).collect(Collectors.toList());
+        return this.auxiliaryRepositories.stream().filter(AuxiliaryRepository::shouldBeIncludedInBuildPlan).toList();
     }
 
     public void addAuxiliaryRepository(AuxiliaryRepository repository) {

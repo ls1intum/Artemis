@@ -6,7 +6,6 @@ import static org.mockito.Mockito.*;
 
 import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import javax.validation.ConstraintViolation;
 import javax.validation.Validation;
@@ -88,7 +87,7 @@ public class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         // 1 plagiarism case and 3 with course-wide context - initialized): 12 posts in total
         existingPosts = database.createPostsWithinCourse();
 
-        existingCoursePosts = existingPosts.stream().filter(post -> post.getPlagiarismCase() == null).collect(Collectors.toList());
+        existingCoursePosts = existingPosts.stream().filter(post -> post.getPlagiarismCase() == null).toList();
 
         // filter existing posts with exercise context
         existingExercisePosts = existingCoursePosts.stream().filter(coursePost -> (coursePost.getExercise() != null)).toList();
