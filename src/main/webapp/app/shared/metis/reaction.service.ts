@@ -2,9 +2,8 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
-
 import { Reaction } from 'app/entities/metis/reaction.model';
-import dayjs from 'dayjs/esm';
+import { convertDateFromServer } from 'app/utils/date.utils';
 
 type EntityResponseType = HttpResponse<Reaction>;
 
@@ -21,7 +20,9 @@ export class ReactionService {
      * @return {Observable<EntityResponseType>}
      */
     create(courseId: number, reaction: Reaction): Observable<EntityResponseType> {
-        return this.http.post<Reaction>(`${this.resourceUrl}${courseId}/postings/reactions`, reaction, { observe: 'response' }).pipe(map(this.convertDateFromServer));
+        return this.http
+            .post<Reaction>(`${this.resourceUrl}${courseId}/postings/reactions`, reaction, { observe: 'response' })
+            .pipe(map(this.convertPostingResponseDateFromServer));
     }
 
     /**
@@ -39,9 +40,9 @@ export class ReactionService {
      * @param   {HttpResponse<Reaction>} res
      * @return  {HttpResponse<Reaction>}
      */
-    private convertDateFromServer(res: HttpResponse<Reaction>): HttpResponse<Reaction> {
+    private convertPostingResponseDateFromServer(res: HttpResponse<Reaction>): HttpResponse<Reaction> {
         if (res.body) {
-            res.body.creationDate = res.body.creationDate ? dayjs(res.body.creationDate) : undefined;
+            res.body.creationDate = convertDateFromServer(res.body.creationDate);
         }
         return res;
     }

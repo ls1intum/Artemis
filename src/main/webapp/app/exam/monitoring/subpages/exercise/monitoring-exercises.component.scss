@@ -1,0 +1,7 @@
+.separator {
+    border-bottom: 2px solid var(--primary);
+}
+
+:host::ng-deep .datatable-row-detail {
+    height: 100% !important;
+}

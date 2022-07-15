@@ -2,12 +2,12 @@ import { LectureUnit, LectureUnitType } from 'app/entities/lecture-unit/lectureU
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
-import dayjs from 'dayjs/esm';
 import { Injectable } from '@angular/core';
 import { AttachmentUnit } from 'app/entities/lecture-unit/attachmentUnit.model';
 import { AttachmentService } from 'app/lecture/attachment.service';
 import { ExerciseUnit } from 'app/entities/lecture-unit/exerciseUnit.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
+import { convertDateFromClient, convertDateFromServer } from 'app/utils/date.utils';
 
 type EntityArrayResponseType = HttpResponse<LectureUnit[]>;
 
@@ -25,7 +25,7 @@ export class LectureUnitService {
         const lectureUnitIds = lectureUnits.map((lectureUnit) => lectureUnit.id);
         return this.httpClient
             .put<LectureUnit[]>(`${this.resourceURL}/lectures/${lectureId}/lecture-units-order`, lectureUnitIds, { observe: 'response' })
-            .pipe(map((res: EntityArrayResponseType) => this.convertDateArrayFromServerResponse(res)));
+            .pipe(map((res: EntityArrayResponseType) => this.convertLectureUnitResponseArrayDatesFromServer(res)));
     }
 
     delete(lectureUnitId: number, lectureId: number) {
@@ -37,80 +37,80 @@ export class LectureUnitService {
         return this.httpClient.post(`${this.resourceURL}/lectures/${lectureId}/lecture-units/${lectureUnitId}/completion`, null, { params, observe: 'response' });
     }
 
-    convertDateFromClient<T extends LectureUnit>(lectureUnit: T): T {
+    convertLectureUnitDatesFromClient<T extends LectureUnit>(lectureUnit: T): T {
         if (lectureUnit.type === LectureUnitType.ATTACHMENT) {
             if ((<AttachmentUnit>lectureUnit).attachment) {
-                (<AttachmentUnit>lectureUnit).attachment = this.attachmentService.convertDateFromClient((<AttachmentUnit>lectureUnit).attachment!);
+                (<AttachmentUnit>lectureUnit).attachment = this.attachmentService.convertAttachmentDatesFromClient((<AttachmentUnit>lectureUnit).attachment!);
                 return lectureUnit;
             }
         } else if (lectureUnit.type === LectureUnitType.EXERCISE) {
             if ((<ExerciseUnit>lectureUnit).exercise) {
-                (<ExerciseUnit>lectureUnit).exercise = ExerciseService.convertDateFromClient((<ExerciseUnit>lectureUnit).exercise!);
+                (<ExerciseUnit>lectureUnit).exercise = ExerciseService.convertExerciseDatesFromClient((<ExerciseUnit>lectureUnit).exercise!);
                 (<ExerciseUnit>lectureUnit).exercise!.categories = ExerciseService.stringifyExerciseCategories((<ExerciseUnit>lectureUnit).exercise!);
                 return lectureUnit;
             }
         }
         return Object.assign({}, lectureUnit, {
-            releaseDate: lectureUnit.releaseDate && dayjs(lectureUnit.releaseDate).isValid() ? lectureUnit.releaseDate.toJSON() : undefined,
+            releaseDate: convertDateFromClient(lectureUnit.releaseDate),
         });
     }
 
-    convertDateArrayFromClient<T extends LectureUnit>(lectureUnits: T[]): T[] {
-        if (lectureUnits && lectureUnits.length > 0) {
+    convertLectureUnitArrayDatesFromClient<T extends LectureUnit>(lectureUnits: T[]): T[] {
+        if (lectureUnits?.length) {
             for (let _i = 0; _i < lectureUnits.length; _i++) {
-                lectureUnits[_i] = this.convertDateFromClient(lectureUnits[_i]);
+                lectureUnits[_i] = this.convertLectureUnitDatesFromClient(lectureUnits[_i]);
             }
         }
         return lectureUnits;
     }
 
-    convertDateFromServerResponse<T extends LectureUnit>(res: HttpResponse<T>): HttpResponse<T> {
+    convertLectureUnitResponseDatesFromServer<T extends LectureUnit>(res: HttpResponse<T>): HttpResponse<T> {
         if (res.body) {
             if (res.body.type === LectureUnitType.ATTACHMENT) {
                 if ((<AttachmentUnit>res.body).attachment) {
-                    (<AttachmentUnit>res.body).attachment = this.attachmentService.convertAttachmentDateFromServer((<AttachmentUnit>res.body).attachment);
+                    (<AttachmentUnit>res.body).attachment = this.attachmentService.convertAttachmentDatesFromServer((<AttachmentUnit>res.body).attachment);
                 }
             } else if (res.body.type === LectureUnitType.EXERCISE) {
                 if ((<ExerciseUnit>res.body).exercise) {
-                    (<ExerciseUnit>res.body).exercise = ExerciseService.convertExerciseDateFromServer((<ExerciseUnit>res.body).exercise);
+                    (<ExerciseUnit>res.body).exercise = ExerciseService.convertExerciseDatesFromServer((<ExerciseUnit>res.body).exercise);
                     ExerciseService.parseExerciseCategories((<ExerciseUnit>res.body).exercise);
                 }
             } else {
-                res.body.releaseDate = res.body.releaseDate ? dayjs(res.body.releaseDate) : undefined;
+                res.body.releaseDate = convertDateFromServer(res.body.releaseDate);
             }
         }
         return res;
     }
 
-    convertDateFromServerEntity<T extends LectureUnit>(lectureUnit: T): T {
+    convertLectureUnitDateFromServer<T extends LectureUnit>(lectureUnit: T): T {
         if (lectureUnit.type === LectureUnitType.ATTACHMENT) {
             if ((<AttachmentUnit>lectureUnit).attachment) {
-                (<AttachmentUnit>lectureUnit).attachment = this.attachmentService.convertAttachmentDateFromServer((<AttachmentUnit>lectureUnit).attachment);
+                (<AttachmentUnit>lectureUnit).attachment = this.attachmentService.convertAttachmentDatesFromServer((<AttachmentUnit>lectureUnit).attachment);
             }
         } else if (lectureUnit.type === LectureUnitType.EXERCISE) {
             if ((<ExerciseUnit>lectureUnit).exercise) {
-                (<ExerciseUnit>lectureUnit).exercise = ExerciseService.convertExerciseDateFromServer((<ExerciseUnit>lectureUnit).exercise);
+                (<ExerciseUnit>lectureUnit).exercise = ExerciseService.convertExerciseDatesFromServer((<ExerciseUnit>lectureUnit).exercise);
                 ExerciseService.parseExerciseCategories((<ExerciseUnit>lectureUnit).exercise);
             }
         } else {
-            lectureUnit.releaseDate = lectureUnit.releaseDate ? dayjs(lectureUnit.releaseDate) : undefined;
+            lectureUnit.releaseDate = convertDateFromServer(lectureUnit.releaseDate);
         }
         return lectureUnit;
     }
 
-    convertDateArrayFromServerResponse<T extends LectureUnit>(res: HttpResponse<T[]>): HttpResponse<T[]> {
+    convertLectureUnitResponseArrayDatesFromServer<T extends LectureUnit>(res: HttpResponse<T[]>): HttpResponse<T[]> {
         if (res.body) {
             res.body.forEach((lectureUnit: LectureUnit) => {
-                this.convertDateFromServerEntity(lectureUnit);
+                this.convertLectureUnitDateFromServer(lectureUnit);
             });
         }
         return res;
     }
 
-    convertDateArrayFromServerEntity<T extends LectureUnit>(res: T[]): T[] {
+    convertLectureUnitArrayDatesFromServer<T extends LectureUnit>(res: T[]): T[] {
         if (res) {
             res.forEach((lectureUnit: LectureUnit) => {
-                this.convertDateFromServerEntity(lectureUnit);
+                this.convertLectureUnitDateFromServer(lectureUnit);
             });
         }
         return res;
