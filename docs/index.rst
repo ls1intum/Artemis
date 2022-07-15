@@ -23,6 +23,7 @@ All these exercises are supposed to be run either live in the lecture with insta
    :maxdepth: 3
 
    user/exercises
+   user/lectures
    user/exam_mode
    user/orion
    user/communication

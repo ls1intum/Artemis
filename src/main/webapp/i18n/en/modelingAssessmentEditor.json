@@ -10,7 +10,7 @@
         },
         "messages": {
             "lock": "You now have the lock on this submission. Only you can assess this model. Please assess this model before opening other submissions.",
-            "noModel": "No model could be found for this submission.",
+            "noModel": "This submission does not contain a model.",
             "loadSubmissionFailed": "Retrieving requested submission failed.",
             "saveSuccessful": "Your assessment was saved successfully!",
             "saveFailed": "Saving your assessment failed!",
