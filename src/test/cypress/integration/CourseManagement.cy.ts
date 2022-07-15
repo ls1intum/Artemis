@@ -31,10 +31,12 @@ describe('Course management', () => {
     });
 
     describe('Manual student selection', () => {
+        let course: Course;
         let courseId: number;
 
         beforeEach(() => {
             artemisRequests.courseManagement.createCourse(false, courseName, courseShortName).then((response: Cypress.Response<Course>) => {
+                course = response.body;
                 courseId = response.body!.id!;
             });
         });
@@ -56,8 +58,9 @@ describe('Course management', () => {
         });
 
         it('Removes a student manually from the course', () => {
-            const username = artemis.users.getStudentOne().username;
-            artemisRequests.courseManagement.addStudentToCourse(courseId, username);
+            const user = artemis.users.getStudentOne();
+            const username = user.username;
+            artemisRequests.courseManagement.addStudentToCourse(course, user);
             navigationBar.openCourseManagement();
             courseManagementPage.openStudentOverviewOfCourse(courseId);
             cy.get('#registered-students').contains(username).should('be.visible');
