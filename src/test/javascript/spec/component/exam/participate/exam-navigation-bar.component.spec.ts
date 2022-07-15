@@ -160,7 +160,8 @@ describe('Exam Navigation Bar Component', () => {
 
         comp.saveExercise(changeExercise);
 
-        expect(comp.changePage).not.toHaveBeenCalled();
+        expect(comp.changePage).toHaveBeenCalledOnce();
+        expect(comp.changePage).toHaveBeenCalledWith(false, comp.exerciseIndex, true);
     });
 
     it('should hand in the exam early', () => {
