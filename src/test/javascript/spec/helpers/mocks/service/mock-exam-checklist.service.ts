@@ -36,4 +36,8 @@ export class MockExamChecklistService {
         checklist.allExamExercisesAllStudentsPrepared = true;
         return of(checklist);
     }
+
+    calculateExercisePoints(pointsExercisesEqual: boolean, exam: Exam) {
+        return pointsExercisesEqual ? 10 : 0;
+    }
 }
