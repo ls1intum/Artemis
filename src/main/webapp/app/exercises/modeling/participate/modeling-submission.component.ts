@@ -19,7 +19,7 @@ import { ApollonDiagramService } from 'app/exercises/quiz/manage/apollon-diagram
 import { hasExerciseDueDatePassed, participationStatus } from 'app/exercises/shared/exercise/exercise.utils';
 import { addParticipationToResult, getUnreferencedFeedback } from 'app/exercises/shared/result/result.utils';
 import { ResultService } from 'app/exercises/shared/result/result.service';
-import { TextEditorService } from 'app/exercises/text/participate/text-editor.service';
+import { AccountService } from 'app/core/auth/account.service';
 import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
 import { modelingTour } from 'app/guided-tour/tours/modeling-tour';
 import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
@@ -54,6 +54,8 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
     private resultUpdateListener: Subscription;
 
     participation: StudentParticipation;
+    isOwnerOfParticipation: boolean;
+
     modelingExercise: ModelingExercise;
     course?: Course;
     result?: Result;
@@ -112,7 +114,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
         private router: Router,
         private participationWebsocketService: ParticipationWebsocketService,
         private guidedTourService: GuidedTourService,
-        private textService: TextEditorService,
+        private accountService: AccountService,
     ) {
         this.isSaving = false;
         this.autoSaveTimer = 0;
@@ -155,6 +157,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
             modelingSubmission.participation!.results = [getLatestSubmissionResult(modelingSubmission)!];
         }
         this.participation = modelingSubmission.participation as StudentParticipation;
+        this.isOwnerOfParticipation = this.accountService.isOwnerOfParticipation(this.participation);
 
         // reconnect participation <--> submission
         this.participation.submissions = [<ModelingSubmission>omit(modelingSubmission, 'participation')];

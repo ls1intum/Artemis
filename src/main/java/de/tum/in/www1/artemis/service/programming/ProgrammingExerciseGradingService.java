@@ -160,7 +160,7 @@ public class ProgrammingExerciseGradingService {
             // NOTE: the result is not saved yet, but is connected to the submission, the submission is not completely saved yet
         }
         catch (ContinuousIntegrationException ex) {
-            log.error("Result for participation " + participation.getId() + " could not be created", ex);
+            log.error("Result for participation {} could not be created", participation.getId(), ex);
         }
 
         return Optional.ofNullable(newResult).map(result -> processNewProgrammingExerciseResult(participation, result));
@@ -202,7 +202,7 @@ public class ProgrammingExerciseGradingService {
                 submissionDate = versionControlService.get().getPushDate(participation, commitHash.get(), null);
             }
             catch (VersionControlException e) {
-                log.error("Could not retrieve push date for participation " + participation.getId() + " and build plan " + participation.getBuildPlanId(), e);
+                log.error("Could not retrieve push date for participation {} and build plan {}", participation.getId(), participation.getBuildPlanId(), e);
             }
         }
         var submission = createFallbackSubmission(participation, submissionDate, commitHash.orElse(null));
