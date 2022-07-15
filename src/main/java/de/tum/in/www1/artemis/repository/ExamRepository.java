@@ -9,6 +9,7 @@ import java.util.stream.Collectors;
 
 import javax.validation.constraints.NotNull;
 
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -91,7 +92,7 @@ public interface ExamRepository extends JpaRepository<Exam, Long> {
     long countGeneratedStudentExamsByExamWithoutTestRuns(@Param("examId") long examId);
 
     /**
-     * Returns the title of the exam with the given id
+     * Returns the title of the exam with the given id.
      *
      * @param examId the id of the exam
      * @return the name/title of the exam or null if the exam does not exist
@@ -101,6 +102,7 @@ public interface ExamRepository extends JpaRepository<Exam, Long> {
             FROM Exam e
             WHERE e.id = :examId
             """)
+    @Cacheable(cacheNames = "examTitle", key = "#examId", unless = "#result == null")
     String getExamTitle(@Param("examId") Long examId);
 
     @NotNull

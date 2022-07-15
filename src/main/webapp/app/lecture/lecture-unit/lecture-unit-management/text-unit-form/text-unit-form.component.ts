@@ -83,8 +83,8 @@ export class TextUnitFormComponent implements OnInit, OnChanges, OnDestroy {
             return;
         }
         this.form = this.fb.group({
-            name: [undefined, [Validators.required, Validators.maxLength(255)]],
-            releaseDate: [undefined],
+            name: [undefined as string | undefined, [Validators.required, Validators.maxLength(255)]],
+            releaseDate: [undefined as dayjs.Dayjs | undefined],
         });
     }
 

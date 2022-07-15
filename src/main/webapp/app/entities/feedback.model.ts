@@ -82,6 +82,16 @@ export class Feedback implements BaseEntity {
         this.credits = 0;
     }
 
+    public static isTestCaseFeedback(feedback: Feedback): boolean {
+        if (feedback.type !== FeedbackType.AUTOMATIC) {
+            return false;
+        }
+        if (!feedback.text) {
+            return true;
+        }
+        return !feedback.text.includes(STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER, 0) && !feedback.text.includes(SUBMISSION_POLICY_FEEDBACK_IDENTIFIER, 0);
+    }
+
     public static isStaticCodeAnalysisFeedback(that: Feedback): boolean {
         if (!that.text) {
             return false;

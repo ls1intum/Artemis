@@ -1,5 +1,5 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
-import { HttpErrorResponse, HttpHeaders, HttpResponse } from '@angular/common/http';
+import { Component, OnDestroy, OnInit, TemplateRef, ViewChild } from '@angular/core';
+import { HttpErrorResponse, HttpHeaders, HttpParams, HttpResponse } from '@angular/common/http';
 import { ActivatedRoute, Router } from '@angular/router';
 import { combineLatest, Subject, Subscription } from 'rxjs';
 import { onError } from 'app/shared/util/global.utils';
@@ -18,8 +18,6 @@ import { LocalStorageService } from 'ngx-webstorage';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { Course } from 'app/entities/course.model';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { TemplateRef, ViewChild } from '@angular/core';
-import { HttpParams } from '@angular/common/http';
 import { ButtonSize } from 'app/shared/components/button.component';
 
 export class UserFilter {
