@@ -31,7 +31,7 @@ export class RegisterComponent implements OnInit, AfterViewInit {
 
     usernamePattern = '^[a-zA-Z0-9]*';
 
-    registerForm = this.fb.group({
+    registerForm = this.fb.nonNullable.group({
         firstName: ['', [Validators.required, Validators.minLength(2)]],
         lastName: ['', [Validators.required, Validators.minLength(2)]],
         login: ['', [Validators.required, Validators.minLength(USERNAME_MIN_LENGTH), Validators.maxLength(USERNAME_MAX_LENGTH), Validators.pattern(this.usernamePattern)]],

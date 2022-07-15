@@ -1,6 +1,6 @@
 import { NgModule } from '@angular/core';
 import { RouterModule } from '@angular/router';
-import { NgxDatatableModule } from '@swimlane/ngx-datatable';
+import { NgxDatatableModule } from '@flaviosantoro92/ngx-datatable';
 import { ArtemisTableModule } from 'app/shared/table/table.module';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { ArtemisProgrammingExerciseActionsModule } from 'app/exercises/programming/shared/actions/programming-exercise-actions.module';
@@ -16,7 +16,7 @@ import { TestCaseDistributionChartComponent } from 'app/exercises/programming/ma
 import { ScaCategoryDistributionChartComponent } from 'app/exercises/programming/manage/grading/charts/sca-category-distribution-chart.component';
 import { ProgrammingExerciseGradingSubmissionPolicyConfigurationActionsComponent } from 'app/exercises/programming/manage/grading/programming-exercise-grading-submission-policy-configuration-actions.component';
 import { SubmissionPolicyUpdateModule } from 'app/exercises/shared/submission-policy/submission-policy-update.module';
-import { NgxChartsModule } from '@swimlane/ngx-charts';
+import { BarChartModule } from '@swimlane/ngx-charts';
 
 @NgModule({
     imports: [
@@ -30,7 +30,7 @@ import { NgxChartsModule } from '@swimlane/ngx-charts';
         // programming exercise sub modules.
         ArtemisProgrammingExerciseActionsModule,
         SubmissionPolicyUpdateModule,
-        NgxChartsModule,
+        BarChartModule,
     ],
     declarations: [
         ProgrammingExerciseConfigureGradingComponent,

@@ -64,7 +64,7 @@ export class TextAssessmentService {
     public addTextAssessmentEvent(assessmentEvent: TextAssessmentEvent): Observable<EntityResponseEventType> {
         const body = Object.assign({}, assessmentEvent);
         return this.http
-            .post<TextAssessmentEvent>('/api/analytics/text-assessment/events', body, { observe: 'response' })
+            .post<TextAssessmentEvent>(this.resourceUrl + '/analytics/text-assessment/events', body, { observe: 'response' })
             .pipe(map((res: EntityResponseEventType) => Object.assign({}, res)));
     }
 
@@ -74,7 +74,7 @@ export class TextAssessmentService {
      * @param exerciseId the id of the respective assessment event exercise id
      */
     public getNumberOfTutorsInvolvedInAssessment(courseId: number, exerciseId: number): Observable<number> {
-        return this.http.get<number>(`/api/analytics/text-assessment/courses/${courseId}/text-exercises/${exerciseId}/tutors-involved`);
+        return this.http.get<number>(`${this.resourceUrl}/analytics/text-assessment/courses/${courseId}/text-exercises/${exerciseId}/tutors-involved`);
     }
 
     /**
@@ -314,7 +314,7 @@ export class TextAssessmentService {
 
             // The request is directly routed to athene via nginx
             this.http
-                .post(`${SERVER_API_URL}/athene-tracking/text-exercise-assessment`, trackingObject, {
+                .post(`${SERVER_API_URL}athene-tracking/text-exercise-assessment`, trackingObject, {
                     headers: { 'X-Athene-Tracking-Authorization': submission.atheneTextAssessmentTrackingToken },
                 })
                 .subscribe();

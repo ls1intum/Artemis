@@ -211,7 +211,8 @@ export class ThemeService {
             const newTag = document.createElement('link');
             newTag.id = THEME_OVERRIDE_ID;
             newTag.rel = 'stylesheet';
-            newTag.href = theme.fileName!;
+            // Use cache busting so the browser will reload the stylesheet at least once per hour
+            newTag.href = theme.fileName! + '?_=' + new Date().setMinutes(0, 0, 0);
 
             // As soon as the new style sheet loaded, remove the old override (if present)
             // and fire the subject to inform other services and components

@@ -1,6 +1,5 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { Exam } from 'app/entities/exam.model';
-import { ExamManagementService } from '../../../manage/exam-management.service';
 import { ActivatedRoute } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { ExamMonitoringService } from 'app/exam/monitoring/exam-monitoring.service';
@@ -21,7 +20,7 @@ export class MonitoringOverviewComponent implements OnInit, OnDestroy {
 
     faListAlt = faListAlt;
 
-    constructor(private route: ActivatedRoute, private examManagementService: ExamManagementService, private examMonitoringService: ExamMonitoringService) {}
+    constructor(private route: ActivatedRoute, private examMonitoringService: ExamMonitoringService) {}
 
     ngOnInit() {
         this.routeSubscription = this.route.parent?.params.subscribe((params) => {

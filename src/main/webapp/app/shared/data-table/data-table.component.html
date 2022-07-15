@@ -10,7 +10,7 @@
                 </button>
             </div>
         </div>
-        <div class="search-container">
+        <div *ngIf="searchEnabled" class="search-container">
             <input
                 #ngbTypeahead
                 id="typeahead-basic"

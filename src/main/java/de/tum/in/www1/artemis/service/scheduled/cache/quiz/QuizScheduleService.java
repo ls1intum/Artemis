@@ -641,7 +641,7 @@ public class QuizScheduleService {
                 // this automatically saves the results due to CascadeType.ALL
                 quizSubmission = quizSubmissionRepository.save(quizSubmission);
 
-                log.info("Successfully saved submission in quiz " + quizExercise.getTitle() + " for user " + username);
+                log.info("Successfully saved submission in quiz {} for user {}", quizExercise.getTitle(), username);
 
                 // reconnect entities after save
                 participation.setSubmissions(Set.of(quizSubmission));

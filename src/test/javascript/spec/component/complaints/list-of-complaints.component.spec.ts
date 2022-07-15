@@ -70,7 +70,6 @@ describe('ListOfComplaintsComponent', () => {
                 { provide: ComplaintService, useClass: MockComplaintService },
                 { provide: Router, useClass: MockRouter },
                 { provide: NgbModal, useClass: MockNgbModalService },
-                { provide: TranslateService, useClass: MockTranslateService },
                 { provide: ActivatedRoute, useValue: new MockActivatedRoute() },
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: ArtemisDatePipe, useClass: TranslatePipeMock },
