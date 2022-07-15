@@ -18,7 +18,7 @@ Team exercises are supported for:
 Setup
 -----
 
-When creating an exercise, the instructor needs to configure the exercise to use **Team mode**. This is only available during the creation of the exercise, as it **can not be changed later on**.
+When creating an exercise, the instructor first needs to select the mode **Team**. This is only available during the creation of the exercise, as it **can not be changed later on**.
 The team size can also be configured, but it is just a recommendation that can be overridden when creating the actual teams.
 
 .. figure:: team-exercises/set_team_mode.png
