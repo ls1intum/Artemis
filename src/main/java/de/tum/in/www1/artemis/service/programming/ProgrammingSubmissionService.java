@@ -139,7 +139,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
                     commit.getBranch());
         }
         catch (Exception ex) {
-            log.error("Commit could not be parsed for submission from participation " + programmingExerciseParticipation, ex);
+            log.error("Commit could not be parsed for submission from participation {}", programmingExerciseParticipation, ex);
             throw new IllegalArgumentException(ex);
         }
 
@@ -212,7 +212,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
                 programmingExerciseGitDiffReportService.updateReport(programmingExerciseParticipation.getProgrammingExercise());
             }
             catch (Exception e) {
-                log.error("Unable to update git-diff for programming exercise " + programmingExerciseParticipation.getProgrammingExercise().getId(), e);
+                log.error("Unable to update git-diff for programming exercise {}", programmingExerciseParticipation.getProgrammingExercise().getId(), e);
             }
         }
     }
@@ -336,7 +336,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
                     Thread.sleep(externalSystemRequestBatchWaitingTime);
                 }
                 catch (InterruptedException ex) {
-                    log.error("Exception encountered when pausing before executing successive build for participation " + participation.getId(), ex);
+                    log.error("Exception encountered when pausing before executing successive build for participation {}", participation.getId(), ex);
                 }
             }
             triggerBuild(participation);

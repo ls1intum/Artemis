@@ -165,6 +165,8 @@ public class ExerciseHintService {
         var subsequentNumberOfSuccessfulSubmissionsByTask = tasks.stream()
                 .collect(Collectors.toMap(task -> task, task -> subsequentNumberOfSubmissionsForTaskWithStatus(submissions, task, true)));
 
+        var availableHints = new HashSet<ExerciseHint>();
+
         for (int i = 0; i < tasks.size(); i++) {
             var task = tasks.get(i);
             int subsequentNumberOfUnsuccessfulSubmissionsForCurrentTask = subsequentNumberOfUnsuccessfulSubmissionsByTask.get(task);
@@ -198,10 +200,13 @@ public class ExerciseHintService {
             var availableHintsForCurrentTask = getAvailableExerciseHintsForTask(subsequentNumberSuccessfulSubmissionsForPreviousTask,
                     subsequentNumberOfUnsuccessfulSubmissionsForCurrentTask, hintsInTask);
             if (!availableHintsForCurrentTask.isEmpty()) {
-                return availableHintsForCurrentTask;
+                availableHints.addAll(availableHintsForCurrentTask);
+                break;
             }
         }
-        return new HashSet<>();
+        // Hints with a threshold of 0 will always be displayed
+        availableHints.addAll(exerciseHints.stream().filter(hint -> hint.getDisplayThreshold() == 0).toList());
+        return availableHints;
     }
 
     private boolean isTaskSuccessfulInSubmission(ProgrammingExerciseTask task, Submission submission) {

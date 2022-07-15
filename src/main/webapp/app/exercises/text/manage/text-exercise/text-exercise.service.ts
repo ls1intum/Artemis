@@ -25,7 +25,7 @@ export class TextExerciseService implements ExerciseServicable<TextExercise> {
      * @param textExercise that should be stored of type {TextExercise}
      */
     create(textExercise: TextExercise): Observable<EntityResponseType> {
-        let copy = ExerciseService.convertDateFromClient(textExercise);
+        let copy = ExerciseService.convertExerciseDatesFromClient(textExercise);
         copy = ExerciseService.setBonusPointsConstrainedByIncludedInOverallScore(copy);
         copy.categories = ExerciseService.stringifyExerciseCategories(copy);
         return this.http
@@ -41,7 +41,7 @@ export class TextExerciseService implements ExerciseServicable<TextExercise> {
      * (like the old ID) will be handled by the server.
      */
     import(adaptedSourceTextExercise: TextExercise) {
-        let copy = ExerciseService.convertDateFromClient(adaptedSourceTextExercise);
+        let copy = ExerciseService.convertExerciseDatesFromClient(adaptedSourceTextExercise);
         copy = ExerciseService.setBonusPointsConstrainedByIncludedInOverallScore(copy);
         copy.categories = ExerciseService.stringifyExerciseCategories(copy);
         return this.http
@@ -56,7 +56,7 @@ export class TextExerciseService implements ExerciseServicable<TextExercise> {
      */
     update(textExercise: TextExercise, req?: any): Observable<EntityResponseType> {
         const options = createRequestOption(req);
-        let copy = ExerciseService.convertDateFromClient(textExercise);
+        let copy = ExerciseService.convertExerciseDatesFromClient(textExercise);
         copy = ExerciseService.setBonusPointsConstrainedByIncludedInOverallScore(copy);
         copy.categories = ExerciseService.stringifyExerciseCategories(copy);
         return this.http
@@ -131,7 +131,7 @@ export class TextExerciseService implements ExerciseServicable<TextExercise> {
      */
     reevaluateAndUpdate(textExercise: TextExercise, req?: any): Observable<EntityResponseType> {
         const options = createRequestOption(req);
-        let copy = ExerciseService.convertDateFromClient(textExercise);
+        let copy = ExerciseService.convertExerciseDatesFromClient(textExercise);
         copy = ExerciseService.setBonusPointsConstrainedByIncludedInOverallScore(copy);
         copy.categories = ExerciseService.stringifyExerciseCategories(copy);
         return this.http

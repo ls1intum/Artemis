@@ -16,6 +16,8 @@ import { ProgrammingExerciseServerSideTask } from 'app/entities/hestia/programmi
 import { onError } from 'app/shared/util/global.utils';
 import { Exercise } from 'app/entities/exercise.model';
 
+const DEFAULT_DISPLAY_THRESHOLD = 3;
+
 @Component({
     selector: 'jhi-exercise-hint-update',
     templateUrl: './exercise-hint-update.component.html',
@@ -63,6 +65,7 @@ export class ExerciseHintUpdateComponent implements OnInit, OnDestroy {
         });
         this.route.data.subscribe(({ exerciseHint }) => {
             this.exerciseHint = exerciseHint;
+            this.exerciseHint.displayThreshold = this.exerciseHint.displayThreshold ?? DEFAULT_DISPLAY_THRESHOLD;
 
             if (!this.exerciseHint.exercise) {
                 this.programmingExerciseService

@@ -625,7 +625,7 @@ public class ModelFactory {
     }
 
     /**
-     * Generates a RealExam with student review dates set
+     * Generates a real exam with student review dates set
      *
      * @param course the associated course
      * @return the created exam
@@ -641,7 +641,7 @@ public class ModelFactory {
     }
 
     /**
-     * Generates a RealExam without student review dates set
+     * Generates a real exam without student review dates set
      *
      * @param course the associated course
      * @return the created exam
@@ -651,7 +651,7 @@ public class ModelFactory {
     }
 
     /**
-     * Generates a TestExam (TestExams have no student review dates)
+     * Generates a test eam (test exam have no student review dates)
      *
      * @param course the associated course
      * @return the created exam
@@ -664,7 +664,7 @@ public class ModelFactory {
      * Helper method to create an exam
      *
      * @param course the associated course
-     * @param testExam Boolean flag to determine whether it is a TestExam
+     * @param testExam Boolean flag to determine whether it is a test eam
      * @return the created Exam
      */
     private static Exam generateExamHelper(Course course, boolean testExam) {
@@ -683,6 +683,7 @@ public class ModelFactory {
         exam.setMaxPoints(90);
         exam.setNumberOfExercisesInExam(1);
         exam.setRandomizeExerciseOrder(false);
+        exam.setNumberOfCorrectionRoundsInExam(testExam ? 0 : 1);
         exam.setCourse(course);
         return exam;
     }

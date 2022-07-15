@@ -371,6 +371,51 @@ public class AccountResourceIntegrationTest extends AbstractSpringIntegrationBam
     }
 
     @Test
+    @WithMockUser(username = "authenticateduser")
+    public void changePasswordSamePassword() throws Exception {
+        User user = ModelFactory.generateActivatedUser("authenticateduser");
+        bitbucketRequestMockProvider.mockUserExists("authenticateduser");
+        userCreationService.createUser(new ManagedUserVM(user));
+
+        PasswordChangeDTO pwChange = new PasswordChangeDTO(ModelFactory.USER_PASSWORD, ModelFactory.USER_PASSWORD);
+        // make request
+        request.postWithoutLocation("/api/account/change-password", pwChange, HttpStatus.BAD_REQUEST, null);
+    }
+
+    @Test
+    @WithMockUser(username = "authenticateduser")
+    public void changeLanguageKey() throws Exception {
+        // create user in repo
+        User user = ModelFactory.generateActivatedUser("authenticateduser");
+        user.setLangKey("en");
+        bitbucketRequestMockProvider.mockUserExists("authenticateduser");
+        User createdUser = userCreationService.createUser(new ManagedUserVM(user));
+        assertThat(createdUser.getLangKey()).isEqualTo("en");
+
+        // make request
+        request.postWithoutLocation("/api/account/change-language", "de", HttpStatus.OK, null);
+
+        // check result
+        Optional<User> updatedUser = userRepository.findOneByLogin("authenticateduser");
+        assertThat(updatedUser).isPresent();
+        assertThat(updatedUser.get().getLangKey()).isEqualTo("de");
+    }
+
+    @Test
+    @WithMockUser(username = "authenticateduser")
+    public void changeLanguageKeyNotSupported() throws Exception {
+        // create user in repo
+        User user = ModelFactory.generateActivatedUser("authenticateduser");
+        user.setLangKey("en");
+        bitbucketRequestMockProvider.mockUserExists("authenticateduser");
+        User createdUser = userCreationService.createUser(new ManagedUserVM(user));
+        assertThat(createdUser.getLangKey()).isEqualTo("en");
+
+        // make request
+        request.postWithoutLocation("/api/account/change-language", "loremIpsum", HttpStatus.BAD_REQUEST, null);
+    }
+
+    @Test
     public void passwordResetByEmail() throws Exception {
         String newPassword = getValidPassword();
         // create user in repo

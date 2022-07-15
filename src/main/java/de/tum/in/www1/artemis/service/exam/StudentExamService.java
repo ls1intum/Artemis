@@ -354,7 +354,7 @@ public class StudentExamService {
                         programmingExerciseParticipationService.lockStudentRepository((ProgrammingExercise) exercise, participation);
                     }
                     catch (Exception e) {
-                        log.error("Locking programming exercise " + exercise.getId() + " submitted manually by " + currentUser.getLogin() + " failed", e);
+                        log.error("Locking programming exercise {} submitted manually by {} failed", exercise.getId(), currentUser.getLogin(), e);
                     }
                 }
             }

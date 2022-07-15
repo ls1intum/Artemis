@@ -3058,6 +3058,9 @@ public class DatabaseUtilService {
         ExerciseHint exerciseHint1 = new ExerciseHint().content("content 1").exercise(exercise).title("title 1");
         ExerciseHint exerciseHint2 = new ExerciseHint().content("content 2").exercise(exercise).title("title 2");
         ExerciseHint exerciseHint3 = new ExerciseHint().content("content 3").exercise(exercise).title("title 3");
+        exerciseHint1.setDisplayThreshold((short) 3);
+        exerciseHint2.setDisplayThreshold((short) 3);
+        exerciseHint3.setDisplayThreshold((short) 3);
         Set<ExerciseHint> hints = new HashSet<>();
         hints.add(exerciseHint1);
         hints.add(exerciseHint2);
