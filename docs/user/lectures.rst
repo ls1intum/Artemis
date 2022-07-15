@@ -88,7 +88,7 @@ Students complete this unit once they download the file.
 |create-attachment-unit|
 
 Exercise Unit
-^^^^^^^^^^^^
+^^^^^^^^^^^^^
 An exercise can be added as a unit to a lecture.
 For the exercise unit, Artemis uses the title, release date, etc. of the exercise itself.
 Students complete this unit when they participate in the exercise.
@@ -111,7 +111,7 @@ Students complete this unit as soon as they open it.
 |create-text-unit|
 
 Video Unit
-^^^^^^^^^^^
+^^^^^^^^^^
 A video unit consists of a name, an embeddable video link, and optionally a description and release date.
 Artemis can convert the website link from common video sources to an embeddable URL using the arrow button.
 Students complete this unit when they watch the video for at least five minutes.
