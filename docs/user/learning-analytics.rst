@@ -11,6 +11,7 @@ Overview
 --------
 Artemis integrates different statistics for students to compare themselves to the course average.
 It allows instructors to evaluate the average student performance based on exercises and learning goals.
+To preserve the individual's data privacy, Artemis calculates the data on the fly and only shows aggregated data to instructors so that it's not possible to track an individual student within the learning analytics modules.
 
 Learning Analytics for Students
 ------------------
@@ -35,6 +36,16 @@ Points per Exercise
 To get a quick overview about the achieved points per exercise, a bar chart shows the achieved points of the student for every exercise grouped by the exercise type.
 
 |students-points-per-exercise|
+
+Learning Goal Statistics
+^^^^^^^^^^^^^^^^^^^^^^^^
+In case learning goals are defined and connected to different lecture units, students can get an overview of their progress for the different learning goals on the learning goals page.
+
+|students-learning-goals-statistics|
+
+When clicking on a learning goal, a modal opens and shows detailed statistics about the learning goal and the students progress in the associated lecture unit(s).
+
+|students-learning-goals-statistics-detail|
 
 Learning Analytics for Instructors
 ------------------
@@ -82,6 +93,10 @@ When clicking on a learning goal, a modal opens and shows detailed statistics ab
     :width: 1000
 .. |students-points-per-exercise| image:: learning-analytics/students-points-per-exercise.png
     :width: 1000
+.. |students-learning-goals-statistics| image:: learning-analytics/students-learning-goals-statistics.png
+    :width: 1000
+.. |students-learning-goals-statistics-detail| image:: learning-analytics/students-learning-goals-statistics-detail.png
+    :width: 600
 .. |instructors-basic-statistics| image:: learning-analytics/instructors-basic-statistics.png
     :width: 1000
 .. |instructors-course-statistics-button| image:: learning-analytics/instructors-course-statistics-button.png
