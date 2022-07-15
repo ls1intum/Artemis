@@ -90,6 +90,23 @@ export class ExamChecklistService {
     }
 
     /**
+     * Method to calculate the number of Points in an exam
+     * @param pointsExercisesEqual flag indicating whether within every exercise groups the max points equal
+     * @param exam the corresponding exam
+     */
+    calculateExercisePoints(pointsExercisesEqual: boolean, exam: Exam): number {
+        let sumPointsExerciseGroups = 0;
+        if (pointsExercisesEqual) {
+            exam.exerciseGroups!.forEach((exerciseGroup) => {
+                if (exerciseGroup!.exercises && exerciseGroup.exercises.length !== 0) {
+                    sumPointsExerciseGroups += exerciseGroup!.exercises![0]!.maxPoints!;
+                }
+            });
+        }
+        return sumPointsExerciseGroups;
+    }
+
+    /**
      * indicates whether every exercise group of an exam contains at least one exercise
      * @param exam the corresponding exam
      */
