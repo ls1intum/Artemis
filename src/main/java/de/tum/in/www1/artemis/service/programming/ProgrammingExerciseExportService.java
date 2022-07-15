@@ -382,7 +382,7 @@ public class ProgrammingExerciseExportService {
         }
         catch (Exception ex) {
             var error = "Failed to export instructor repository " + repositoryName + " for programming exercise '" + exercise.getTitle() + "' (id: " + exercise.getId() + ")";
-            log.info(error + ": " + ex.getMessage());
+            log.info("{}: {}", error, ex.getMessage());
             exportErrors.add(error);
         }
         return Optional.empty();
@@ -587,7 +587,7 @@ public class ProgrammingExerciseExportService {
             FileUtils.deleteDirectory(projectPath.toFile());
         }
         catch (IOException ex) {
-            log.warn("The project root directory '" + projectPath + "' could not be deleted.", ex);
+            log.warn("The project root directory '{}' could not be deleted.", projectPath, ex);
         }
     }
 
@@ -650,7 +650,7 @@ public class ProgrammingExerciseExportService {
             gitService.commit(repository, "Add participant identifier (student login or team short name) to project name");
         }
         catch (GitAPIException ex) {
-            log.error("Cannot stage or commit to the repository " + repository.getLocalPath(), ex);
+            log.error("Cannot stage or commit to the repository {}", repository.getLocalPath(), ex);
         }
         finally {
             // if repo is not closed, it causes weird IO issues when trying to delete the repo again
@@ -691,7 +691,7 @@ public class ProgrammingExerciseExportService {
 
         }
         catch (SAXException | IOException | ParserConfigurationException | TransformerException | XPathException ex) {
-            log.error("Cannot rename pom.xml file in " + repo.getLocalPath(), ex);
+            log.error("Cannot rename pom.xml file in {}", repo.getLocalPath(), ex);
         }
     }
 
@@ -722,7 +722,7 @@ public class ProgrammingExerciseExportService {
 
         }
         catch (SAXException | IOException | ParserConfigurationException | TransformerException | XPathException ex) {
-            log.error("Cannot rename .project file in " + repo.getLocalPath(), ex);
+            log.error("Cannot rename .project file in {}", repo.getLocalPath(), ex);
         }
     }
 
