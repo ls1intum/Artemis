@@ -12,8 +12,8 @@ export function ParticipationSimulation(timeout, exerciseId, participationId, co
     this.newFiles = content.newFiles;
     this.content = content.content;
 
-    this.returnsExpectedResult = function (result, expectedResult, resultString) {
-        console.log('Received test result ' + result.successful + ', ' + result.resultString);
+    this.returnsExpectedResult = function (result, expectedResult) {
+        console.log('Received test result ' + result.successful);
 
         switch (expectedResult) {
             case TestResult.SUCCESS:
@@ -23,8 +23,7 @@ export function ParticipationSimulation(timeout, exerciseId, participationId, co
                 break;
             case TestResult.FAIL:
                 {
-                    if (result.successful || !result.hasFeedback || result.resultString !== resultString)
-                        fail('FAILTEST: The result for participation ' + participationId + ' did not fail with ' + resultString + '! Was ' + result.resultString);
+                    if (result.successful || !result.hasFeedback) fail('FAILTEST: The result for participation ' + participationId + ' did not fail!');
                 }
                 break;
             default: {
@@ -185,7 +184,7 @@ function updateFileContent(artemis, participationId, content) {
     }
 }
 
-export function simulateSubmission(artemis, participationSimulation, expectedResult, resultString) {
+export function simulateSubmission(artemis, participationSimulation, expectedResult) {
     // First, we have to create all new files
     if (participationSimulation.newFiles) {
         participationSimulation.newFiles.forEach((file) => createNewFile(artemis, participationSimulation.participationId, file));
@@ -214,7 +213,7 @@ export function simulateSubmission(artemis, participationSimulation, expectedRes
             if (message.startsWith('MESSAGE\n') && extractDestination(message) === '/user/topic/newResults') {
                 socket.close();
                 const result = participationSimulation.extractResultFromWebSocketMessage(message);
-                participationSimulation.returnsExpectedResult(result, expectedResult, resultString);
+                participationSimulation.returnsExpectedResult(result, expectedResult);
                 console.log(`RECEIVE new result for test user ` + __VU);
             }
         });
@@ -226,7 +225,7 @@ export function simulateSubmission(artemis, participationSimulation, expectedRes
             console.log('Websocket timed out, trying to GET now');
             const result = getLatestResult(artemis, participationSimulation.participationId);
             if (result !== undefined) {
-                participationSimulation.returnsExpectedResult(result, expectedResult, resultString);
+                participationSimulation.returnsExpectedResult(result, expectedResult);
             } else {
                 fail('FAILTEST: Did not receive result for test user ' + __VU);
             }

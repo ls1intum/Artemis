@@ -69,7 +69,7 @@ export class ComplaintResponseService {
 
     public convertDateFromClient(complaintResponse: ComplaintResponse): ComplaintResponse {
         return Object.assign({}, complaintResponse, {
-            submittedTime: complaintResponse.submittedTime != undefined && dayjs(complaintResponse.submittedTime).isValid ? complaintResponse.submittedTime.toJSON() : undefined,
+            submittedTime: complaintResponse.submittedTime != undefined && dayjs(complaintResponse.submittedTime).isValid() ? complaintResponse.submittedTime.toJSON() : undefined,
         });
     }
 

@@ -117,7 +117,7 @@ public class ModelingExerciseScheduleService implements IExerciseScheduleService
             }
         }
         catch (Exception e) {
-            log.error("Failed to schedule exercise " + exercise.getId(), e);
+            log.error("Failed to schedule exercise {}", exercise.getId(), e);
         }
     }
 

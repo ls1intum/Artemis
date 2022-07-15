@@ -52,7 +52,7 @@ public class PlantUmlService {
                 try (var inputStream = themeResource.getInputStream()) {
                     Files.createDirectories(PATH_TMP_THEME);
                     Files.write(path, inputStream.readAllBytes());
-                    log.info("UML theme stored successfully to " + path);
+                    log.info("UML theme stored successfully to {}", path);
                 }
                 catch (IOException e) {
                     log.error("Unable to store UML dark theme");
