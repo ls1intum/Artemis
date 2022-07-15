@@ -216,8 +216,8 @@ public class ExerciseHintService {
         var testCasesInTask = task.getTestCases();
         var feedbacks = result.getFeedbacks();
         // the feedback can either not exist (e.g. for skipped test cases), or the attribute positive may not be set
-        return feedbacks.stream().filter(feedback -> feedback == null || testCasesInTask.stream().anyMatch(testCase -> Objects.equals(testCase.getTestName(), feedback.getText())))
-                .allMatch(feedback -> feedback != null && Boolean.TRUE.equals(feedback.isPositive()));
+        return feedbacks.stream().filter(feedback -> feedback != null && testCasesInTask.stream().anyMatch(testCase -> Objects.equals(testCase.getTestName(), feedback.getText())))
+                .allMatch(feedback -> Boolean.TRUE.equals(feedback.isPositive()));
     }
 
     private List<Submission> getSubmissionsForStudent(ProgrammingExercise exercise, User student) {
