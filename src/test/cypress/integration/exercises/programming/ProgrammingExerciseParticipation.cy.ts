@@ -51,9 +51,9 @@ describe('Programming exercise participations', () => {
         cy.login(users.getAdmin(), '/');
         courseManagement.createCourse(true).then((response) => {
             course = response.body;
-            courseManagement.addStudentToCourse(course.id!, users.getStudentOne().username);
-            courseManagement.addStudentToCourse(course.id!, users.getStudentTwo().username);
-            courseManagement.addStudentToCourse(course.id!, users.getStudentThree().username);
+            courseManagement.addStudentToCourse(course, users.getStudentOne());
+            courseManagement.addStudentToCourse(course, users.getStudentTwo());
+            courseManagement.addStudentToCourse(course, users.getStudentThree());
             courseManagement.createProgrammingExercise({ course }).then((exerciseResponse) => {
                 exercise = exerciseResponse.body;
             });
