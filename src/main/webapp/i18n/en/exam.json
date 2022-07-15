@@ -486,7 +486,13 @@
                 "exercises": {
                     "title": "Exercises",
                     "description": "Shows the current participation of the students in the respective exercise and exercise groups",
-                    "groups": "Exercise Groups"
+                    "groups": "Exercise Groups",
+                    "exercisesPerPage": "{{number}} exercises per page",
+                    "showAllExercises": "Show all exercises",
+                    "id": "Exercise",
+                    "exerciseGroup.id": "Exercise group",
+                    "_title": "Title",
+                    "type": "Type"
                 },
                 "activity-log": {
                     "title": "Activity log",
@@ -527,6 +533,18 @@
                     "xAxisLabel": "Amount of navigations",
                     "yAxisLabel": "Exercises",
                     "legendTitle": "Exercises"
+                },
+                "exercise-detail-current-chart": {
+                    "name": "Current number of students",
+                    "tooltip": "Shows the current number of students"
+                },
+                "exercise-detail-navigation-chart": {
+                    "name": "Number of first navigations",
+                    "tooltip": "Shows the number of first navigations"
+                },
+                "exercise-detail-submission-chart": {
+                    "name": "Number of first submissions",
+                    "tooltip": "Shows the number of first submissions"
                 },
                 "average-actions-chart": {
                     "name": "Average number of actions per student",

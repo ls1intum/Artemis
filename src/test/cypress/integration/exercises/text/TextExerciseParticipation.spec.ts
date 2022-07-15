@@ -21,7 +21,7 @@ describe('Text exercise participation', () => {
         cy.login(users.getAdmin());
         courseManagement.createCourse().then((response) => {
             course = response.body;
-            courseManagement.addStudentToCourse(course.id!, users.getStudentOne().username);
+            courseManagement.addStudentToCourse(course, users.getStudentOne());
             courseManagement.createTextExercise({ course }).then((exerciseResponse: Cypress.Response<TextExercise>) => {
                 exercise = exerciseResponse.body;
             });
