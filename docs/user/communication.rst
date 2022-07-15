@@ -139,15 +139,6 @@ Announcements can be created in the course communication overview by selecting t
 As soon as the announcement is created, all participants, that did not actively refrain from being notified, will receive an email containing the announcement's content.
 Additionally, announcements visually differ from normal posts and are always displayed on top of the communication overview.
 
-Notifications
-^^^^^^^^^^^^^
-
-The users on Artemis can be notified about these posts as well as other events like released exercises directly in Artemis and via mail.
-
-.. toctree::
-   :maxdepth: 2
-
-   Notifications <communication/notifications>
 
 .. |lecture-posts| image:: communication/lecture-posts.png
     :width: 1000
