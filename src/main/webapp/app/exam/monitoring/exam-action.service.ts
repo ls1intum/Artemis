@@ -1,6 +1,5 @@
 import { Injectable } from '@angular/core';
-import { Observable, of } from 'rxjs';
-import { BehaviorSubject } from 'rxjs';
+import { BehaviorSubject, Observable, of } from 'rxjs';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { Exam } from 'app/entities/exam.model';
 import { ExamAction, ExamActionType, SavedExerciseAction, SwitchedExerciseAction } from 'app/entities/exam-user-activity.model';
@@ -8,8 +7,9 @@ import dayjs from 'dayjs/esm';
 import { ceilDayjsSeconds, getEmptyCategories } from 'app/exam/monitoring/charts/monitoring-chart';
 import { HttpClient } from '@angular/common/http';
 
-const EXAM_MONITORING_TOPIC = (examId: number) => `/topic/exam-monitoring/${examId}/action`;
-const EXAM_MONITORING_STATUS_TOPIC = (examId: number) => `/topic/exam-monitoring/${examId}/update`;
+export const EXAM_MONITORING_ACTION_TOPIC = (examId: number) => `/topic/exam-monitoring/${examId}/action`;
+export const EXAM_MONITORING_ACTIONS_TOPIC = (examId: number) => `/topic/exam-monitoring/${examId}/actions`;
+export const EXAM_MONITORING_STATUS_TOPIC = (examId: number) => `/topic/exam-monitoring/${examId}/update`;
 
 export interface IExamActionService {}
 
@@ -130,8 +130,8 @@ export class ExamActionService implements IExamActionService {
      * If not a new one will be opened.
      *
      */
-    private openExamMonitoringWebsocketSubscriptionIfNotExisting(exam: Exam) {
-        const topic = EXAM_MONITORING_TOPIC(exam.id!);
+    public openExamMonitoringWebsocketSubscriptionIfNotExisting(exam: Exam) {
+        const topic = EXAM_MONITORING_ACTION_TOPIC(exam.id!);
         this.openExamMonitoringWebsocketSubscriptions.set(exam.id!, topic);
 
         this.jhiWebsocketService.subscribe(topic);
@@ -154,7 +154,7 @@ export class ExamActionService implements IExamActionService {
      * @param exam the exam to unsubscribe
      * */
     public unsubscribeForExamAction(exam: Exam): void {
-        const topic = EXAM_MONITORING_TOPIC(exam.id!);
+        const topic = EXAM_MONITORING_ACTION_TOPIC(exam.id!);
         this.cachedExamActions.set(exam.id!, []);
         this.cachedExamActionsGroupedByTimestamp.set(exam.id!, new Map());
         this.cachedExamActionsGroupedByTimestampAndCategory.set(exam.id!, new Map());
@@ -185,7 +185,7 @@ export class ExamActionService implements IExamActionService {
      * If not a new one will be opened.
      *
      */
-    private openExamMonitoringUpdateWebsocketSubscriptionIfNotExisting(exam: Exam) {
+    public openExamMonitoringUpdateWebsocketSubscriptionIfNotExisting(exam: Exam) {
         const topic = EXAM_MONITORING_STATUS_TOPIC(exam.id!);
         this.openExamMonitoringStatusWebsocketSubscriptions.set(exam.id!, topic);
 
@@ -249,5 +249,15 @@ export class ExamActionService implements IExamActionService {
     public prepareAction(examAction: ExamAction) {
         examAction.timestamp = dayjs(examAction.timestamp);
         examAction.ceiledTimestamp = ceilDayjsSeconds(examAction.timestamp, 15);
+    }
+
+    /**
+     * Syncs the collected action to the server.
+     * @param examAction performed action
+     * @param examId of the current exam
+     */
+    public sendAction(examAction: ExamAction, examId: number): void {
+        const topic = EXAM_MONITORING_ACTIONS_TOPIC(examId);
+        this.jhiWebsocketService.send(topic, examAction);
     }
 }

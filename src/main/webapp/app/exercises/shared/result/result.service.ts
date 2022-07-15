@@ -11,6 +11,7 @@ import { StudentParticipation } from 'app/entities/participation/student-partici
 import { Exercise, ExerciseType, getCourseFromExercise } from 'app/entities/exercise.model';
 import { map, tap } from 'rxjs/operators';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
+import { convertDateFromClient, convertDateFromServer } from 'app/utils/date.utils';
 import { TranslateService } from '@ngx-translate/core';
 import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
 import { isResultPreliminary } from 'app/exercises/programming/shared/utils/programming-exercise.utils';
@@ -42,7 +43,9 @@ export class ResultService implements IResultService {
     constructor(private http: HttpClient, private translateService: TranslateService) {}
 
     find(resultId: number): Observable<EntityResponseType> {
-        return this.http.get<Result>(`${this.resultResourceUrl}/${resultId}`, { observe: 'response' }).pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
+        return this.http
+            .get<Result>(`${this.resultResourceUrl}/${resultId}`, { observe: 'response' })
+            .pipe(map((res: EntityResponseType) => this.convertResultResponseDatesFromServer(res)));
     }
 
     /**
@@ -171,23 +174,16 @@ export class ResultService implements IResultService {
         return this.http.delete<void>(`${this.resultResourceUrl}/${resultId}`, { observe: 'response' });
     }
 
-    public convertDateFromClient(result: Result): Result {
+    public convertResultDatesFromClient(result: Result): Result {
         return Object.assign({}, result, {
-            completionDate:
-                // Result completionDate is a dayjs object -> toJSON.
-                result.completionDate && dayjs.isDayjs(result.completionDate)
-                    ? result.completionDate.toJSON()
-                    : // Result completionDate would be a valid date -> keep string.
-                    result.completionDate && dayjs(result.completionDate).isValid()
-                    ? result.completionDate
-                    : // No valid date -> remove date.
-                      null,
+            completionDate: convertDateFromClient(result.completionDate),
+            submission: undefined,
         });
     }
 
     protected convertArrayResponse(res: EntityArrayResponseType): EntityArrayResponseType {
         if (res.body) {
-            res.body.forEach((result: Result) => this.convertResultResponse(result));
+            res.body.forEach((result: Result) => this.convertResultDatesFromServer(result));
         }
         return res;
     }
@@ -195,7 +191,7 @@ export class ResultService implements IResultService {
     protected convertResultWithPointsResponse(res: ResultsWithPointsArrayResponseType): ResultsWithPointsArrayResponseType {
         if (res.body) {
             res.body.forEach((resultWithPoints: ResultWithPointsPerGradingCriterion) => {
-                this.convertResultResponse(resultWithPoints.result);
+                this.convertResultDatesFromServer(resultWithPoints.result);
                 const pointsMap = new Map<number, number>();
                 Object.keys(resultWithPoints.pointsPerCriterion).forEach((key) => {
                     pointsMap.set(Number(key), resultWithPoints.pointsPerCriterion[key]);
@@ -206,24 +202,24 @@ export class ResultService implements IResultService {
         return res;
     }
 
-    private convertResultResponse(result: Result) {
-        result.completionDate = result.completionDate ? dayjs(result.completionDate) : undefined;
-        result.participation = this.convertParticipationDateFromServer(result.participation! as StudentParticipation);
+    private convertResultDatesFromServer(result: Result) {
+        result.completionDate = convertDateFromServer(result.completionDate);
+        result.participation = this.convertParticipationDatesFromServer(result.participation! as StudentParticipation);
     }
 
-    public convertDateFromServer(res: EntityResponseType): EntityResponseType {
+    public convertResultResponseDatesFromServer(res: EntityResponseType): EntityResponseType {
         if (res.body) {
-            res.body.completionDate = res.body.completionDate ? dayjs(res.body.completionDate) : undefined;
-            res.body.participation = this.convertParticipationDateFromServer(res.body.participation! as StudentParticipation);
+            res.body.completionDate = convertDateFromServer(res.body.completionDate);
+            res.body.participation = this.convertParticipationDatesFromServer(res.body.participation! as StudentParticipation);
         }
         return res;
     }
 
-    private convertParticipationDateFromServer(participation: StudentParticipation): StudentParticipation {
+    private convertParticipationDatesFromServer(participation: StudentParticipation): StudentParticipation {
         if (participation) {
             ParticipationService.convertParticipationDatesFromServer(participation);
             if (participation.exercise) {
-                participation.exercise = ExerciseService.convertExerciseDateFromServer(participation.exercise);
+                participation.exercise = ExerciseService.convertExerciseDatesFromServer(participation.exercise);
             }
         }
         return participation;
