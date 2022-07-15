@@ -45,7 +45,7 @@
                     #textEditor
                     class="text-editor-textarea"
                     [(ngModel)]="answer"
-                    [readonly]="!isActive || !submission"
+                    [readonly]="!isActive || !submission || !isOwnerOfParticipation"
                     [disabled]="!isActive || !submission"
                     (keydown.tab)="onTextEditorTab(textEditor, $event)"
                     (input)="onTextEditorInput($event)"

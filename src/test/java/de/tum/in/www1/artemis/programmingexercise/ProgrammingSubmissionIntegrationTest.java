@@ -695,7 +695,6 @@ public class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrat
         assertThat(storedSubmission.getLatestResult().getFeedbacks()).hasSameSizeAs(automaticResults);
         assertThat(storedSubmission.getLatestResult().getAssessor()).as("assessor is tutor1").isEqualTo(user);
         assertThat(submission.getLatestResult()).isNotNull();
-        assertThat(storedSubmission.getLatestResult().getResultString()).isEqualTo(submission.getLatestResult().getResultString());
 
         // Make sure no new submissions are created
         var latestSubmissions = submissionRepository.findAll();

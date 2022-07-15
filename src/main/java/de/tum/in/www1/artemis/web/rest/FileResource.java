@@ -366,7 +366,7 @@ public class FileResource {
 
         Optional<byte[]> file = fileService.mergePdfFiles(attachmentLinks, lectureRepository.getLectureTitle(lectureId));
         if (file.isEmpty()) {
-            log.error("Failed to merge PDF lecture units for lecture with id : " + lectureId);
+            log.error("Failed to merge PDF lecture units for lecture with id {}", lectureId);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
 
@@ -531,7 +531,10 @@ public class FileResource {
             HttpHeaders headers = new HttpHeaders();
 
             // attachment will force the user to download the file
-            String contentType = filename.endsWith("htm") || filename.endsWith("html") || filename.endsWith("svg") || filename.endsWith("svgz") ? "attachment" : "inline";
+            String lowerCaseFilename = filename.toLowerCase();
+            String contentType = lowerCaseFilename.endsWith("htm") || lowerCaseFilename.endsWith("html") || lowerCaseFilename.endsWith("svg") || lowerCaseFilename.endsWith("svgz")
+                    ? "attachment"
+                    : "inline";
             headers.setContentDisposition(ContentDisposition.builder(contentType).filename(filename).build());
 
             FileNameMap fileNameMap = URLConnection.getFileNameMap();
@@ -546,7 +549,7 @@ public class FileResource {
             return ResponseEntity.ok().headers(headers).contentType(MediaType.parseMediaType(mimeType)).header("filename", filename).body(file);
         }
         catch (IOException ex) {
-            log.error("Failed to download file: " + filename + "on path: " + path, ex);
+            log.error("Failed to download file: {} on path: {}", filename, path, ex);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }

@@ -4,6 +4,7 @@ import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Feedback;
@@ -19,6 +20,7 @@ import de.tum.in.www1.artemis.repository.hestia.ExerciseHintRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
+import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
 
 @Service
 public class ExerciseHintService {
@@ -163,6 +165,8 @@ public class ExerciseHintService {
         var subsequentNumberOfSuccessfulSubmissionsByTask = tasks.stream()
                 .collect(Collectors.toMap(task -> task, task -> subsequentNumberOfSubmissionsForTaskWithStatus(submissions, task, true)));
 
+        var availableHints = new HashSet<ExerciseHint>();
+
         for (int i = 0; i < tasks.size(); i++) {
             var task = tasks.get(i);
             int subsequentNumberOfUnsuccessfulSubmissionsForCurrentTask = subsequentNumberOfUnsuccessfulSubmissionsByTask.get(task);
@@ -196,10 +200,13 @@ public class ExerciseHintService {
             var availableHintsForCurrentTask = getAvailableExerciseHintsForTask(subsequentNumberSuccessfulSubmissionsForPreviousTask,
                     subsequentNumberOfUnsuccessfulSubmissionsForCurrentTask, hintsInTask);
             if (!availableHintsForCurrentTask.isEmpty()) {
-                return availableHintsForCurrentTask;
+                availableHints.addAll(availableHintsForCurrentTask);
+                break;
             }
         }
-        return new HashSet<>();
+        // Hints with a threshold of 0 will always be displayed
+        availableHints.addAll(exerciseHints.stream().filter(hint -> hint.getDisplayThreshold() == 0).toList());
+        return availableHints;
     }
 
     private boolean isTaskSuccessfulInSubmission(ProgrammingExerciseTask task, Submission submission) {
@@ -254,5 +261,25 @@ public class ExerciseHintService {
             }
         }
         return availableHintsForTask;
+    }
+
+    /**
+     * Returns the title of the hint identified by the given hint id if the exercise id stored in the hint matches the
+     * provided exercise id.
+     *
+     * @param exerciseId the exercise id that must match the one stored in the hint
+     * @param exerciseHintId the id of the hint
+     * @return the title of the hint if it was found; null otherwise
+     *
+     * @throws ConflictException if the provided exercise id does not match the one stored in the hint
+     */
+    @Cacheable(cacheNames = "exerciseHintTitle", key = "''.concat(#exerciseId).concat('-').concat(#exerciseHintId)", unless = "#result == null")
+    public String getExerciseHintTitle(Long exerciseId, Long exerciseHintId) {
+        final var hint = exerciseHintRepository.findByIdElseThrow(exerciseHintId);
+        if (hint.getExercise() == null || !hint.getExercise().getId().equals(exerciseId)) {
+            throw new ConflictException("An exercise hint can only be retrieved if the exerciseIds match.", "exerciseHint", "exerciseIdsMismatch");
+        }
+
+        return hint.getTitle();
     }
 }

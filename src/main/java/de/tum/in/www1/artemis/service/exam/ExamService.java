@@ -922,7 +922,7 @@ public class ExamService {
                 log.debug("Finished combination of template commits for programming exercise {}", programmingExerciseWithTemplateParticipation);
             }
             catch (GitAPIException e) {
-                log.error("An error occurred when trying to combine template commits for exam " + exam.getId() + ".", e);
+                log.error("An error occurred when trying to combine template commits for exam {}.", exam.getId(), e);
             }
         }));
     }
