@@ -26,6 +26,7 @@ All these exercises are supposed to be run either live in the lecture with insta
    user/exam_mode
    user/orion
    user/communication
+   user/notifications
    user/user-experience
 
 
