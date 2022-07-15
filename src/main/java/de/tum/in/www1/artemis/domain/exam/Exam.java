@@ -30,7 +30,7 @@ public class Exam extends DomainObject {
     private String title;
 
     /**
-     * This boolean indicates whether it is a real exam (false) or test exams (true)
+     * This boolean indicates whether it is a real exam (false) or test exam (true)
      */
     @Column(name = "test_exam")
     private boolean testExam;

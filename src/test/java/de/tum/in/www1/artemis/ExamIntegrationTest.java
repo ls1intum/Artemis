@@ -830,19 +830,42 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testCreateTestExam_asInstructor_testExam_CorrectionRoundViolation() throws Exception {
+        Exam exam = ModelFactory.generateTestExam(course1);
+        exam.setNumberOfCorrectionRoundsInExam(1);
+        request.post("/api/courses/" + course1.getId() + "/exams", exam, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testCreateTestExam_asInstructor_realExam_CorrectionRoundViolation() throws Exception {
+        Exam exam = ModelFactory.generateExam(course1);
+        exam.setNumberOfCorrectionRoundsInExam(0);
+        request.post("/api/courses/" + course1.getId() + "/exams", exam, HttpStatus.BAD_REQUEST);
+
+        exam.setNumberOfCorrectionRoundsInExam(3);
+        request.post("/api/courses/" + course1.getId() + "/exams", exam, HttpStatus.BAD_REQUEST);
+
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testUpdateTestExam_asInstructor_withExamModeChanged() throws Exception {
         // The Exam-Mode should not be changeable with a PUT / update operation, a CONFLICT should be returned instead
         // Case 1: test exam should be updated to real exam
         Exam examA = ModelFactory.generateTestExam(course1);
         Exam createdExamA = request.postWithResponseBody("/api/courses/" + course1.getId() + "/exams", examA, Exam.class, HttpStatus.CREATED);
+        createdExamA.setNumberOfCorrectionRoundsInExam(1);
         createdExamA.setTestExam(false);
         request.putWithResponseBody("/api/courses/" + course1.getId() + "/exams", createdExamA, Exam.class, HttpStatus.CONFLICT);
 
         // Case 2: real exam should be updated to test exam
         Exam examB = ModelFactory.generateTestExam(course1);
+        examB.setNumberOfCorrectionRoundsInExam(1);
         examB.setTestExam(false);
         Exam createdExamB = request.postWithResponseBody("/api/courses/" + course1.getId() + "/exams", examB, Exam.class, HttpStatus.CREATED);
         createdExamB.setTestExam(true);
+        createdExamB.setNumberOfCorrectionRoundsInExam(0);
         request.putWithResponseBody("/api/courses/" + course1.getId() + "/exams", createdExamB, Exam.class, HttpStatus.CONFLICT);
 
     }

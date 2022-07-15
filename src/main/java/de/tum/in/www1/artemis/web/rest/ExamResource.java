@@ -227,7 +227,7 @@ public class ExamResource {
 
         checkExamForWorkingTimeConflictsElseThrow(exam);
 
-        checkExamPointsElseThrow(exam);
+        checkExamPointsAndCorrectionRoundsElseThrow(exam);
     }
 
     /**
@@ -271,7 +271,7 @@ public class ExamResource {
     }
 
     /**
-     * Validates the working time, which should be equal (real exams) or smaller / equal (test exams) to the
+     * Validates the working time, which should be equal (real exams) or smaller / equal (test exam) to the
      * difference between start- and endDate.
      *
      * @param exam the exam to be checked
@@ -298,9 +298,17 @@ public class ExamResource {
      *
      * @param exam the exam to be checked
      */
-    private void checkExamPointsElseThrow(Exam exam) {
+    private void checkExamPointsAndCorrectionRoundsElseThrow(Exam exam) {
         if (exam.getMaxPoints() <= 0) {
             throw new BadRequestAlertException("An exam cannot have negative points.", ENTITY_NAME, "negativePoints");
+        }
+
+        if (exam.isTestExam() && exam.getNumberOfCorrectionRoundsInExam() != 0) {
+            throw new BadRequestAlertException("A testExam has to have 0 correction rounds", ENTITY_NAME, "correctionRoundViolation");
+        }
+
+        if (!exam.isTestExam() && (exam.getNumberOfCorrectionRoundsInExam() <= 0 || exam.getNumberOfCorrectionRoundsInExam() > 2)) {
+            throw new BadRequestAlertException("A realExam has to have either 1 or 2 correction rounds", ENTITY_NAME, "correctionRoundViolation");
         }
     }
 

@@ -25,7 +25,7 @@ export class ExamUpdateComponent implements OnInit {
     workingTimeInMinutes: number;
     // The maximum working time in Minutes (used as a dynamic max-value for the working time Input)
     maxWorkingTimeInMinutes: number;
-    // Interims-boolean to hide the option to create an test exam in production, as the feature is not yet fully implemented
+    // Interims-boolean to hide test exams and exam monitoring, as they are not yet fully implemented
     isAdmin: boolean;
 
     // Icons
@@ -55,7 +55,10 @@ export class ExamUpdateComponent implements OnInit {
             if (!this.exam.gracePeriod) {
                 this.exam.gracePeriod = 180;
             }
-            if (!this.exam.numberOfCorrectionRoundsInExam) {
+            // test exam only feature automatic assessment
+            if (this.exam.testExam) {
+                this.exam.numberOfCorrectionRoundsInExam = 0;
+            } else if (!this.exam.numberOfCorrectionRoundsInExam) {
                 this.exam.numberOfCorrectionRoundsInExam = 1;
             }
         });
@@ -114,7 +117,11 @@ export class ExamUpdateComponent implements OnInit {
     }
 
     get isValidNumberOfCorrectionRounds(): boolean {
-        return this.exam?.numberOfCorrectionRoundsInExam! < 3 && this.exam?.numberOfCorrectionRoundsInExam! > 0;
+        if (this.exam.testExam) {
+            return this.exam.numberOfCorrectionRoundsInExam === 0;
+        } else {
+            return this.exam?.numberOfCorrectionRoundsInExam! < 3 && this.exam?.numberOfCorrectionRoundsInExam! > 0;
+        }
     }
 
     get isValidMaxPoints(): boolean {

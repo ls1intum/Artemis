@@ -651,7 +651,7 @@ public class ModelFactory {
     }
 
     /**
-     * Generates a test exam (test exams have no student review dates)
+     * Generates a test eam (test exams have no student review dates)
      *
      * @param course the associated course
      * @return the created exam
@@ -683,6 +683,7 @@ public class ModelFactory {
         exam.setMaxPoints(90);
         exam.setNumberOfExercisesInExam(1);
         exam.setRandomizeExerciseOrder(false);
+        exam.setNumberOfCorrectionRoundsInExam(testExam ? 0 : 1);
         exam.setCourse(course);
         return exam;
     }

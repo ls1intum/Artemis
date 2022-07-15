@@ -207,29 +207,49 @@
                     </a>
                 </td>
             </tr>
+        </tbody>
+    </table>
+    <hr />
+    <h3>{{ 'artemisApp.examStatus.conduction.' + (isTestExam ? 'testExam.' : '') + 'examConduction' | artemisTranslate }}</h3>
+    <b>{{
+        'artemisApp.examManagement.checklist.conductionPlannedFromTo'
+            | artemisTranslate
+                : {
+                      from: exam.startDate! | artemisDate,
+                      to: exam.endDate! | artemisDate
+                  }
+    }}</b>
+    <table class="table table-striped">
+        <thead>
             <tr>
-                <td>7</td>
-                <td>
-                    <span>{{ 'artemisApp.examManagement.checklist.tableItem.examMonitoring' | artemisTranslate }}</span>
-                </td>
-                <td>
-                    <span>{{ 'artemisApp.examManagement.checklist.descriptionItem.examMonitoring' | artemisTranslate }}</span>
-                </td>
-                <td>
-                    <a [routerLink]="['monitoring']" class="btn btn-info" id="monitoring-button-{{ exam.id }}">
-                        <fa-icon [icon]="faEye"></fa-icon>
-                        <span class="d-none d-md-inline">{{ 'artemisApp.examManagement.examMonitoring' | artemisTranslate }}</span>
-                    </a>
-                </td>
+                <th>
+                    <span>#</span>
+                </th>
+                <th>
+                    <span>{{ 'artemisApp.examManagement.checklist.checklistItem' | artemisTranslate }}</span>
+                </th>
+                <th>
+                    <span>{{ 'artemisApp.examManagement.checklist.description' | artemisTranslate }}</span>
+                </th>
+                <th>
+                    <span>{{ 'artemisApp.examManagement.checklist.goTo' | artemisTranslate }}</span>
+                </th>
             </tr>
+        </thead>
+        <tbody>
             <tr>
-                <td>8</td>
+                <td>1</td>
                 <td>
                     <span>{{ 'artemisApp.examManagement.checklist.tableItem.conductExam' | artemisTranslate }}</span>
                 </td>
                 <td>
                     <span>{{ 'artemisApp.examManagement.checklist.descriptionItem.conductExam' | artemisTranslate }}</span>
                     <hr />
+                    <!-- Display number of registered students -->
+                    <div *ngIf="exam.numberOfRegisteredUsers">
+                        <span>{{ 'artemisApp.examManagement.checklist.textitems.studentsregistered' | artemisTranslate }} {{ exam.numberOfRegisteredUsers! }}</span>
+                        <hr />
+                    </div>
                     <!-- Display started exams-->
                     <div
                         *ngIf="
@@ -283,141 +303,180 @@
                 </td>
             </tr>
             <tr>
-                <td>9</td>
+                <td>2</td>
                 <td>
-                    <span>{{ 'artemisApp.examManagement.checklist.tableItem.assessAllSubmissions' | artemisTranslate }}</span>
+                    <span>{{ 'artemisApp.examManagement.checklist.tableItem.examMonitoring' | artemisTranslate }}</span>
                 </td>
                 <td>
-                    <span>{{ 'artemisApp.examManagement.checklist.descriptionItem.assessAllSubmissions' | artemisTranslate }}</span>
-
-                    <hr />
-                    <!-- Display assessment progress summed up over all exercises, by correction round -->
-
-                    <div *ngIf="examChecklist && examChecklist.numberOfTotalExamAssessmentsFinishedByCorrectionRound !== null && examChecklist.numberOfExamsSubmitted !== 0">
-                        <div *ngFor="let finishedByCorrectionRound of examChecklist.numberOfTotalExamAssessmentsFinishedByCorrectionRound; let index = index">
-                            <hr *ngIf="index > 0" />
-                            <span> {{ 'artemisApp.examManagement.checklist.textitems.correctionRound' | artemisTranslate }} {{ index + 1 }}: </span>
-                            <div style="padding-top: 5px">
-                                <jhi-progress-bar
-                                    [denominator]="examChecklist.numberOfTotalParticipationsForAssessment"
-                                    [numerator]="finishedByCorrectionRound!"
-                                    [percentage]="(finishedByCorrectionRound! / examChecklist.numberOfTotalParticipationsForAssessment) * 100"
-                                >
-                                </jhi-progress-bar>
-                            </div>
-                        </div>
-                    </div>
-                    <div *ngIf="examChecklist && examChecklist.numberOfExamsSubmitted === 0">
-                        <span>{{ 'artemisApp.examManagement.checklist.textitems.noSubmissions' | artemisTranslate }}</span>
-                    </div>
-                    <br />
+                    <span>{{ 'artemisApp.examManagement.checklist.descriptionItem.examMonitoring' | artemisTranslate }}</span>
                 </td>
                 <td>
-                    <a [routerLink]="getExamRoutesByIdentifier('assessment-dashboard')" class="btn btn-primary">
-                        <fa-icon [icon]="faThList"></fa-icon>
-                        <span>{{ 'artemisApp.examManagement.assessmentDashboard' | artemisTranslate }}</span>
-                    </a>
-                </td>
-            </tr>
-            <tr>
-                <td>10</td>
-                <td>
-                    <span>{{ 'artemisApp.examManagement.checklist.tableItem.publishResults' | artemisTranslate }}</span>
-                </td>
-                <td>
-                    <span>{{ 'artemisApp.examManagement.checklist.descriptionItem.publishResults' | artemisTranslate }}</span>
-
-                    <hr />
-                    <ul class="list-unstyled">
-                        <li class="list-group-item border-1">
-                            <span>
-                                <jhi-exam-checklist-check [checkAttribute]="!!exam.publishResultsDate"></jhi-exam-checklist-check>
-                                <span>{{ 'artemisApp.examManagement.checklist.textitems.pulishingdateset' | artemisTranslate }}</span>
-                            </span>
-                        </li>
-                    </ul>
-                </td>
-                <td>
-                    <a id="editButton_publish" [routerLink]="getExamRoutesByIdentifier('edit')" class="btn btn-warning">
-                        <fa-icon [icon]="faWrench"></fa-icon>&nbsp;<span jhiTranslate="entity.action.edit"> Edit</span>
-                    </a>
-                </td>
-            </tr>
-            <tr>
-                <td>11</td>
-                <td>
-                    <span>{{ 'artemisApp.examManagement.checklist.tableItem.examReview' | artemisTranslate }}</span>
-                </td>
-                <td>
-                    <span>{{ 'artemisApp.examManagement.checklist.descriptionItem.examReview' | artemisTranslate }}</span>
-
-                    <hr />
-                    <ul class="list-unstyled">
-                        <li class="list-group-item border-1">
-                            <span>
-                                <jhi-exam-checklist-check [checkAttribute]="!!exam.examStudentReviewStart"></jhi-exam-checklist-check>
-                                <span>{{ 'artemisApp.examManagement.checklist.textitems.startdatereviewset' | artemisTranslate }}</span>
-                            </span>
-                        </li>
-                        <li class="list-group-item border-1">
-                            <span>
-                                <jhi-exam-checklist-check [checkAttribute]="!!exam.examStudentReviewEnd"></jhi-exam-checklist-check>
-                                <span>{{ 'artemisApp.examManagement.checklist.textitems.enddatereviewset' | artemisTranslate }}</span>
-                            </span>
-                        </li>
-                    </ul>
-                </td>
-                <td>
-                    <a id="editButton_review" [routerLink]="getExamRoutesByIdentifier('edit')" class="btn btn-warning">
-                        <fa-icon [icon]="faWrench"></fa-icon>&nbsp;<span jhiTranslate="entity.action.edit">Edit</span>
-                    </a>
-                </td>
-            </tr>
-            <tr>
-                <td>12</td>
-                <td>
-                    <span>{{ 'artemisApp.examManagement.checklist.tableItem.resolveComplaints' | artemisTranslate }}</span>
-                </td>
-                <td>
-                    <span>{{ 'artemisApp.examManagement.checklist.descriptionItem.resolveComplaints' | artemisTranslate }}</span>
-                    <hr />
-                    <div *ngIf="examChecklist && examChecklist.numberOfAllComplaintsDone !== null && examChecklist.numberOfAllComplaints !== 0">
-                        <div style="padding-top: 5px">
-                            <jhi-progress-bar
-                                [denominator]="examChecklist.numberOfAllComplaints!"
-                                [numerator]="examChecklist.numberOfAllComplaintsDone!"
-                                [percentage]="(examChecklist.numberOfAllComplaintsDone! / examChecklist.numberOfAllComplaints!) * 100"
-                            >
-                            </jhi-progress-bar>
-                        </div>
-                    </div>
-                    <div *ngIf="examChecklist && examChecklist.numberOfAllComplaints === 0">
-                        <span>{{ 'artemisApp.examManagement.checklist.textitems.noComplaints' | artemisTranslate }}</span>
-                    </div>
-                    <br />
-                </td>
-                <td>
-                    <a [routerLink]="getExamRoutesByIdentifier('assessment-dashboard')" class="btn btn-primary" id="tutor-exam-dashboard-button_table_complaints">
-                        <fa-icon [icon]="faThList"></fa-icon>
-                        <span>{{ 'artemisApp.examManagement.assessmentDashboard' | artemisTranslate }}</span>
-                    </a>
-                </td>
-            </tr>
-            <tr>
-                <td>13</td>
-                <td>
-                    <span>{{ 'artemisApp.examManagement.checklist.tableItem.exportResults' | artemisTranslate }}</span>
-                </td>
-                <td>
-                    <span>{{ 'artemisApp.examManagement.checklist.descriptionItem.exportResults' | artemisTranslate }}</span>
-                </td>
-                <td>
-                    <a [routerLink]="getExamRoutesByIdentifier('scores')" class="btn btn-info" id="scores-button_publish_result">
+                    <a [routerLink]="['monitoring']" class="btn btn-info" id="monitoring-button-{{ exam.id }}">
                         <fa-icon [icon]="faEye"></fa-icon>
-                        <span>{{ 'entity.action.scores' | artemisTranslate }}</span>
+                        <span class="d-none d-md-inline">{{ 'artemisApp.examManagement.examMonitoring' | artemisTranslate }}</span>
                     </a>
                 </td>
             </tr>
         </tbody>
     </table>
+    <hr />
+    <ng-container *ngIf="!isTestExam">
+        <h3>{{ 'artemisApp.examStatus.correction.examCorrection' | artemisTranslate }}</h3>
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>
+                        <span>#</span>
+                    </th>
+                    <th>
+                        <span>{{ 'artemisApp.examManagement.checklist.checklistItem' | artemisTranslate }}</span>
+                    </th>
+                    <th>
+                        <span>{{ 'artemisApp.examManagement.checklist.description' | artemisTranslate }}</span>
+                    </th>
+                    <th>
+                        <span>{{ 'artemisApp.examManagement.checklist.goTo' | artemisTranslate }}</span>
+                    </th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>1</td>
+                    <td>
+                        <span>{{ 'artemisApp.examManagement.checklist.tableItem.assessAllSubmissions' | artemisTranslate }}</span>
+                    </td>
+                    <td>
+                        <span>{{ 'artemisApp.examManagement.checklist.descriptionItem.assessAllSubmissions' | artemisTranslate }}</span>
+
+                        <hr />
+                        <!-- Display assessment progress summed up over all exercises, by correction round -->
+
+                        <div *ngIf="examChecklist && examChecklist.numberOfTotalExamAssessmentsFinishedByCorrectionRound !== null && examChecklist.numberOfExamsSubmitted !== 0">
+                            <div *ngFor="let finishedByCorrectionRound of examChecklist.numberOfTotalExamAssessmentsFinishedByCorrectionRound; let index = index">
+                                <hr *ngIf="index > 0" />
+                                <span> {{ 'artemisApp.examManagement.checklist.textitems.correctionRound' | artemisTranslate }} {{ index + 1 }} : </span>
+                                <div class="pt-2">
+                                    <jhi-progress-bar
+                                        [denominator]="examChecklist.numberOfTotalParticipationsForAssessment"
+                                        [numerator]="finishedByCorrectionRound!"
+                                        [percentage]="(finishedByCorrectionRound! / examChecklist.numberOfTotalParticipationsForAssessment) * 100"
+                                    >
+                                    </jhi-progress-bar>
+                                </div>
+                            </div>
+                        </div>
+                        <div *ngIf="examChecklist && examChecklist.numberOfExamsSubmitted === 0">
+                            <span>{{ 'artemisApp.examManagement.checklist.textitems.noSubmissions' | artemisTranslate }}</span>
+                        </div>
+                        <br />
+                    </td>
+                    <td>
+                        <a [routerLink]="getExamRoutesByIdentifier('assessment-dashboard')" class="btn btn-primary">
+                            <fa-icon [icon]="faThList"></fa-icon>
+                            <span>{{ 'artemisApp.examManagement.assessmentDashboard' | artemisTranslate }}</span>
+                        </a>
+                    </td>
+                </tr>
+                <tr>
+                    <td>2</td>
+                    <td>
+                        <span>{{ 'artemisApp.examManagement.checklist.tableItem.publishResults' | artemisTranslate }}</span>
+                    </td>
+                    <td>
+                        <span>{{ 'artemisApp.examManagement.checklist.descriptionItem.publishResults' | artemisTranslate }}</span>
+
+                        <hr />
+                        <ul class="list-unstyled">
+                            <li class="list-group-item border-1">
+                                <span>
+                                    <jhi-exam-checklist-check [checkAttribute]="!!exam.publishResultsDate"></jhi-exam-checklist-check>
+                                    <span>{{ 'artemisApp.examManagement.checklist.textitems.pulishingdateset' | artemisTranslate }}</span>
+                                </span>
+                            </li>
+                        </ul>
+                    </td>
+                    <td>
+                        <a id="editButton_publish" [routerLink]="getExamRoutesByIdentifier('edit')" class="btn btn-warning">
+                            <fa-icon [icon]="faWrench"></fa-icon>&nbsp;<span jhiTranslate="entity.action.edit"> Edit</span>
+                        </a>
+                    </td>
+                </tr>
+                <tr>
+                    <td>3</td>
+                    <td>
+                        <span>{{ 'artemisApp.examManagement.checklist.tableItem.examReview' | artemisTranslate }}</span>
+                    </td>
+                    <td>
+                        <span>{{ 'artemisApp.examManagement.checklist.descriptionItem.examReview' | artemisTranslate }}</span>
+
+                        <hr />
+                        <ul class="list-unstyled">
+                            <li class="list-group-item border-1">
+                                <span>
+                                    <jhi-exam-checklist-check [checkAttribute]="!!exam.examStudentReviewStart"></jhi-exam-checklist-check>
+                                    <span>{{ 'artemisApp.examManagement.checklist.textitems.startdatereviewset' | artemisTranslate }}</span>
+                                </span>
+                            </li>
+                            <li class="list-group-item border-1">
+                                <span>
+                                    <jhi-exam-checklist-check [checkAttribute]="!!exam.examStudentReviewEnd"></jhi-exam-checklist-check>
+                                    <span>{{ 'artemisApp.examManagement.checklist.textitems.enddatereviewset' | artemisTranslate }}</span>
+                                </span>
+                            </li>
+                        </ul>
+                    </td>
+                    <td>
+                        <a id="editButton_review" [routerLink]="getExamRoutesByIdentifier('edit')" class="btn btn-warning">
+                            <fa-icon [icon]="faWrench"></fa-icon>&nbsp;<span jhiTranslate="entity.action.edit">Edit</span>
+                        </a>
+                    </td>
+                </tr>
+                <tr>
+                    <td>4</td>
+                    <td>
+                        <span>{{ 'artemisApp.examManagement.checklist.tableItem.resolveComplaints' | artemisTranslate }}</span>
+                    </td>
+                    <td>
+                        <span>{{ 'artemisApp.examManagement.checklist.descriptionItem.resolveComplaints' | artemisTranslate }}</span>
+                        <hr />
+                        <div *ngIf="examChecklist && examChecklist.numberOfAllComplaintsDone !== null && examChecklist.numberOfAllComplaints !== 0">
+                            <div class="pt-2">
+                                <jhi-progress-bar
+                                    [denominator]="examChecklist.numberOfAllComplaints!"
+                                    [numerator]="examChecklist.numberOfAllComplaintsDone!"
+                                    [percentage]="(examChecklist.numberOfAllComplaintsDone! / examChecklist.numberOfAllComplaints!) * 100"
+                                >
+                                </jhi-progress-bar>
+                            </div>
+                        </div>
+                        <div *ngIf="examChecklist && examChecklist.numberOfAllComplaints === 0">
+                            <span>{{ 'artemisApp.examManagement.checklist.textitems.noComplaints' | artemisTranslate }}</span>
+                        </div>
+                        <br />
+                    </td>
+                    <td>
+                        <a [routerLink]="getExamRoutesByIdentifier('assessment-dashboard')" class="btn btn-primary" id="tutor-exam-dashboard-button_table_complaints">
+                            <fa-icon [icon]="faThList"></fa-icon>
+                            <span>{{ 'artemisApp.examManagement.assessmentDashboard' | artemisTranslate }}</span>
+                        </a>
+                    </td>
+                </tr>
+                <tr>
+                    <td>5</td>
+                    <td>
+                        <span>{{ 'artemisApp.examManagement.checklist.tableItem.exportResults' | artemisTranslate }}</span>
+                    </td>
+                    <td>
+                        <span>{{ 'artemisApp.examManagement.checklist.descriptionItem.exportResults' | artemisTranslate }}</span>
+                    </td>
+                    <td>
+                        <a [routerLink]="getExamRoutesByIdentifier('scores')" class="btn btn-info" id="scores-button_publish_result">
+                            <fa-icon [icon]="faEye"></fa-icon>
+                            <span>{{ 'entity.action.scores' | artemisTranslate }}</span>
+                        </a>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </ng-container>
 </div>

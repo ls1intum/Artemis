@@ -25,12 +25,25 @@ describe('ExamStatusComponent', () => {
 
     let getExamStatisticsStub: jest.SpyInstance;
 
+    let calculateExercisePointsStub: jest.SpyInstance;
+
     let exam: Exam;
+
+    let testExam: Exam;
 
     const prepareForExamConductionStateTest = (startDate: dayjs.Dayjs, endDateOffset: number, offsetType: DateOffsetType) => {
         exam.startDate = startDate;
         exam.endDate = dayjs().add(endDateOffset, offsetType);
+        testExam.maxPoints = 0;
         component.exam = exam;
+    };
+
+    const prepareForTestExamConductionStateTest = (startDate: dayjs.Dayjs, endDateOffset: number, offsetType: DateOffsetType) => {
+        testExam.startDate = startDate;
+        testExam.endDate = dayjs().add(endDateOffset, offsetType);
+        testExam.maxPoints = 10;
+        testExam.testExam = true;
+        component.exam = testExam;
     };
 
     const prepareForExamReviewStateTest = (endDate: dayjs.Dayjs) => {
@@ -55,11 +68,12 @@ describe('ExamStatusComponent', () => {
             });
 
         exam = new Exam();
+        testExam = new Exam();
     });
 
     it('should set examConductionState correctly if exam is started but not finished yet', () => {
         prepareForExamConductionStateTest(dayjs().add(-1, DateOffsetType.HOURS), 1, DateOffsetType.DAYS);
-
+        component.mandatoryPreparationFinished = true;
         component.ngOnChanges();
 
         expect(component.examConductionState).toBe(ExamConductionState.RUNNING);
@@ -75,7 +89,7 @@ describe('ExamStatusComponent', () => {
 
     it('should set examConductionState correctly if exam is finished', () => {
         prepareForExamConductionStateTest(dayjs().add(-2, DateOffsetType.DAYS), -1, DateOffsetType.DAYS);
-
+        component.mandatoryPreparationFinished = true;
         component.ngOnChanges();
 
         expect(component.examConductionState).toBe(ExamConductionState.FINISHED);
@@ -137,11 +151,58 @@ describe('ExamStatusComponent', () => {
         expect(component.preparedExerciseStart).toBeTrue();
         expect(component.numberOfGeneratedStudentExams).toBe(42);
         expect(component.examPreparationFinished).toBeTrue();
+        expect(component.mandatoryPreparationFinished).toBeTrue();
         expect(getExamStatisticsStub).toHaveBeenCalledWith(exam);
 
         examChecklist.numberOfGeneratedStudentExams = undefined;
         component.ngOnChanges();
 
         expect(component.numberOfGeneratedStudentExams).toBe(0);
+    });
+
+    it('should set examConductionState correctly if TestExam is started but not finished yet', () => {
+        prepareForTestExamConductionStateTest(dayjs().add(-1, DateOffsetType.HOURS), 1, DateOffsetType.DAYS);
+        component.mandatoryPreparationFinished = true;
+        component.ngOnChanges();
+
+        expect(component.examConductionState).toBe(ExamConductionState.RUNNING);
+    });
+
+    it('should set examConductionState correctly if TestExam is started but not finished yet AND preparation is not finished', () => {
+        prepareForTestExamConductionStateTest(dayjs().add(-1, DateOffsetType.HOURS), 1, DateOffsetType.DAYS);
+        component.mandatoryPreparationFinished = false;
+        component.ngOnChanges();
+
+        expect(component.examConductionState).toBe(ExamConductionState.ERROR);
+    });
+
+    it('should set examConductionState correctly if TestExam not started yet', () => {
+        prepareForTestExamConductionStateTest(dayjs().add(1, DateOffsetType.DAYS), 2, DateOffsetType.DAYS);
+
+        component.ngOnChanges();
+
+        expect(component.examConductionState).toBe(ExamConductionState.PLANNED);
+    });
+
+    it('should set flags for TestExam preparation steps correctly', () => {
+        const examChecklist = new ExamChecklist();
+        examChecklist.allExamExercisesAllStudentsPrepared = undefined;
+        examChecklist.numberOfGeneratedStudentExams = undefined;
+        getExamStatisticsStub = jest.spyOn(examChecklistService, 'getExamStatistics').mockReturnValue(of(examChecklist));
+        calculateExercisePointsStub = jest.spyOn(examChecklistService, 'calculateExercisePoints').mockReturnValue(10);
+        prepareForTestExamConductionStateTest(dayjs().add(1, DateOffsetType.DAYS), 2, DateOffsetType.DAYS);
+        component.isAtLeastInstructor = true;
+
+        component.ngOnChanges();
+
+        expect(component.configuredExercises).toBeTrue();
+        expect(component.registeredStudents).toBeFalse();
+        expect(component.generatedStudentExams).toBeFalse();
+        expect(component.preparedExerciseStart).toBeFalse();
+        expect(component.numberOfGeneratedStudentExams).toBe(0);
+        expect(component.examPreparationFinished).toBeTrue();
+        expect(component.mandatoryPreparationFinished).toBeTrue();
+        expect(getExamStatisticsStub).toHaveBeenCalledWith(testExam);
+        expect(calculateExercisePointsStub).toHaveBeenCalledWith(true, testExam);
     });
 });

@@ -25,7 +25,7 @@
                     <input class="form-control" required type="text" name="title" id="title" [(ngModel)]="exam.title" />
                 </div>
             </div>
-            <!-- Creation of test exams is currently hidden for all non-admins, as the feature is not yet fully implemented -->
+            <!-- Changing to test exams is currently hidden for all non-admins, as the feature is not yet fully implemented -->
             <div class="form-group" *ngIf="isAdmin">
                 <div>
                     <label class="form-check-label" jhiTranslate="artemisApp.examManagement.testExam.examMode">Exam Mode</label>
@@ -142,7 +142,7 @@
                 <label class="form-check-label" for="DublerandomizeExerciseOrder" jhiTranslate="artemisApp.examManagement.randomizeQuestionOrder"> Randomize Question Order </label>
             </div>
             <!-- Section exam assessment and student review
-            Deactivated for test exams, as results are provided right after a test exam run and complaints are not possible  -->
+            Deactivated for test exam, as results are provided right after a test eam run and complaints are not possible  -->
             <div *ngIf="!exam.testExam">
                 <hr />
                 <h5 class="pb-1" jhiTranslate="artemisApp.examManagement.sections.assessment">Exam Assessment</h5>
