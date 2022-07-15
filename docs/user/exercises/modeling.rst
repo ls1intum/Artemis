@@ -43,7 +43,7 @@ The following screenshot illustrates the first section of the form. It consists 
 - **Due Date**: Date till when students can access the exercise
 - **Assessment Due Date**: Date till when instructors can assess the exercise submitted by students
 - **Inclusion in course score calculation**: Option that determines whether or not to include exercise in course score calculation
-- **Points**: Total point of an exercise
+- **Points**: Total points of an exercise
 - **Bonus Points**: Bonus points of an exercise
 - **Diagram Type**: Type of diagram that is used throughout an exercise
 
@@ -56,7 +56,7 @@ The following screenshot illustrates the first section of the form. It consists 
 .. note::
    - The field **Diagram Type** determines the components that students/instructors can use while working on the exercise.
    - This option cannot be changed after creating the exercise.
-   - For example: If the instructor selects class diagram as its diagram type, users (instructors/students) will now only be able to use components of class diagram throughout the exercise.
+   - For example: If the instructor selects class diagram as its diagram type, users (instructors/students) will now only be able to use components of class diagrams throughout the exercise.
 
     .. figure:: modeling/class-diagram-diagram-type.png
               :align: center
@@ -65,7 +65,7 @@ The following screenshot illustrates the second section of the form. It consists
 
 - **Enable automatic assessment suggestions**: When enabled, Artemis tries to automatically suggest assessments for diagram elements based on previously graded submissions for this exercise.
 - **Problem Statement**: The task description of the exercise as seen by students
-- **Assessment Instructions**: Instructions for instructor while assessing the submission
+- **Assessment Instructions**: Instructions for instructors while assessing the submission
 
     .. figure:: modeling/create-modeling-exercise-form-2.png
               :align: center
@@ -93,7 +93,7 @@ You will then be redirected to **Example Submissions for Assessment Training** P
               :align: center
 
 In this page, you can either *Create Example Submission* or *Use as Example Submission* for Assessment Training.
-Example submission can be used to assess the submissions of students semi-automatically.
+Example submissions can be used to assess the submissions of students semi-automatically.
 Artemis uses those submissions to automatically apply the known assessment comments to similar model elements in other submissions as well.
 
 - Select |create-example-submission| if you want to create an example submission from scratch.
