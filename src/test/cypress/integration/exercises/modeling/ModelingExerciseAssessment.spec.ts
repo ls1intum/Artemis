@@ -86,9 +86,9 @@ describe('Modeling Exercise Assessment Spec', () => {
         cy.login(admin);
         return courseManagementRequests.createCourse(true).then((response) => {
             course = response.body;
-            courseManagementRequests.addStudentToCourse(course.id!, student.username);
+            courseManagementRequests.addStudentToCourse(course, student);
             courseManagementRequests.addTutorToCourse(course, tutor);
-            courseManagementRequests.addInstructorToCourse(course.id!, instructor);
+            courseManagementRequests.addInstructorToCourse(course, instructor);
             courseManagementRequests.createModelingExercise({ course }).then((modelingResponse) => {
                 modelingExercise = modelingResponse.body;
             });
