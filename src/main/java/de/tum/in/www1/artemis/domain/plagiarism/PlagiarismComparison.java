@@ -84,6 +84,10 @@ public class PlagiarismComparison<E extends PlagiarismSubmissionElement> extends
         return comparison;
     }
 
+    /**
+     * Maintain the bidirectional relationship manually
+     * @param submissionA the new submission which will be attached to the comparison
+     */
     public void setSubmissionA(PlagiarismSubmission<?> submissionA) {
         this.submissionA = (PlagiarismSubmission<E>) submissionA;
         if (this.submissionA != null) {
@@ -92,6 +96,10 @@ public class PlagiarismComparison<E extends PlagiarismSubmissionElement> extends
         }
     }
 
+    /**
+     * Maintain the bidirectional relationship manually
+     * @param submissionB the new submission which will be attached to the comparison
+     */
     public void setSubmissionB(PlagiarismSubmission<?> submissionB) {
         this.submissionB = (PlagiarismSubmission<E>) submissionB;
         if (this.submissionB != null) {
