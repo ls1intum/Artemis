@@ -127,8 +127,7 @@ public class ProgrammingExerciseImportService {
      * @param newExercise      The new exercise already containing values which should not get copied, i.e. overwritten
      * @return The newly created exercise
      */
-    @Transactional
-    // ok because we create many objects in a rather complex way and need a rollback in case of exceptions
+    @Transactional // ok because we create many objects in a rather complex way and need a rollback in case of exceptions
     public ProgrammingExercise importProgrammingExerciseBasis(final ProgrammingExercise templateExercise, final ProgrammingExercise newExercise) {
         // Set values we don't want to copy to null
         setupExerciseForImport(newExercise);
