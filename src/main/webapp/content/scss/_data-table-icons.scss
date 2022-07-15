@@ -1,5 +1,5 @@
-[class^='datatable-icon-']:before,
-[class*=' datatable-icon-']:before {
+[class^='datatable-icon-']::before,
+[class*=' datatable-icon-']::before {
     display: inline-block;
     position: relative;
     transform: scale(1.5, 0.6);
@@ -14,18 +14,22 @@
     speak: none;
 }
 
-.datatable-icon-left:before {
+.datatable-icon-left::before {
     content: '⟨';
 }
 
-.datatable-icon-right:before {
+.datatable-icon-right::before {
     content: '⟩';
 }
 
-.datatable-icon-skip:before {
+.datatable-icon-down::before {
+    content: '∨';
+}
+
+.datatable-icon-skip::before {
     content: '⟫';
 }
 
-.datatable-icon-prev:before {
+.datatable-icon-prev::before {
     content: '⟪';
 }
