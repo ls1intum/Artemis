@@ -169,10 +169,9 @@ describe('Exam Navigation Bar Component', () => {
         jest.spyOn(comp.onExamHandInEarly, 'emit');
 
         comp.handInEarly();
-        jest.spyOn(comp, 'saveExercise');
 
         expect(comp.saveExercise).toHaveBeenCalled();
-        expect(comp.onPageChanged.emit).toHaveBeenCalled();
+        expect(comp.onPageChanged.emit).toHaveBeenCalledOnce();
         expect(comp.onPageChanged.emit).toHaveBeenCalledWith(
             expect.objectContaining({
                 overViewChange: false,
