@@ -44,9 +44,11 @@
                     </td>
                     <td class="d-md-table-cell">
                         <ng-container>
-                            <span class="bold" *ngIf="course.isAtLeastInstructor; else notClickableExamTitle">
+                            <div class="bold" *ngIf="course.isAtLeastInstructor; else notClickableExamTitle">
                                 <a id="exam-{{ exam.id }}-title" [routerLink]="[exam.id]">{{ exam.title }}</a>
-                            </span>
+                            </div>
+                            <div class="badge bg-success" *ngIf="!exam.testExam">{{ 'artemisApp.examManagement.testExam.realExam' | artemisTranslate }}</div>
+                            <div class="badge bg-primary" *ngIf="exam.testExam">{{ 'artemisApp.examManagement.testExam.testExam' | artemisTranslate }}</div>
                         </ng-container>
                         <ng-template #notClickableExamTitle>
                             <span>
@@ -83,7 +85,7 @@
                                     </div>
                                 </a>
                                 <a
-                                    *ngIf="(course.isAtLeastTutor && examHasFinished(exam)) || course.isAtLeastInstructor"
+                                    *ngIf="!exam.testExam && ((course.isAtLeastTutor && examHasFinished(exam)) || course.isAtLeastInstructor)"
                                     [routerLink]="[exam.id, 'assessment-dashboard']"
                                     class="btn btn-primary btn-sm me-1 mb-1 exercise-button d-flex align-items-center justify-content-center"
                                     id="exercises-button-{{ exam.id }}"
@@ -110,7 +112,7 @@
                                     <span class="d-none d-md-inline">{{ 'artemisApp.examManagement.testRun.testRun' | artemisTranslate }}</span>
                                 </a>
                                 <a
-                                    *ngIf="course.isAtLeastInstructor"
+                                    *ngIf="!exam.testExam && course.isAtLeastInstructor"
                                     [routerLink]="[exam.id, 'students']"
                                     class="btn btn-info btn-sm me-1 mb-1 assessment-dashboard"
                                     id="student-button-{{ exam.id }}"

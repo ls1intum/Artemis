@@ -339,6 +339,49 @@ describe('Exam Update Component', () => {
 
             createStub.mockRestore();
         }));
+
+        it('should correctly validate the number of correction rounds in a testExams', () => {
+            exam.testExam = true;
+            exam.numberOfCorrectionRoundsInExam = 1;
+            fixture.detectChanges();
+
+            expect(component.exam.numberOfCorrectionRoundsInExam).toBe(0);
+            expect(component.isValidNumberOfCorrectionRounds).toBeTrue();
+
+            exam.numberOfCorrectionRoundsInExam = 0;
+            fixture.detectChanges();
+
+            expect(component.exam.numberOfCorrectionRoundsInExam).toBe(0);
+            expect(component.isValidNumberOfCorrectionRounds).toBeTrue();
+        });
+
+        it('should correctly validate the number of correction rounds in a realExam', () => {
+            exam.testExam = false;
+
+            exam.numberOfCorrectionRoundsInExam = undefined;
+            fixture.detectChanges();
+
+            expect(component.exam.numberOfCorrectionRoundsInExam).toBe(1);
+            expect(component.isValidNumberOfCorrectionRounds).toBeTrue();
+
+            exam.numberOfCorrectionRoundsInExam = 1;
+            fixture.detectChanges();
+
+            expect(component.exam.numberOfCorrectionRoundsInExam).toBe(1);
+            expect(component.isValidNumberOfCorrectionRounds).toBeTrue();
+
+            exam.numberOfCorrectionRoundsInExam = 2;
+            fixture.detectChanges();
+
+            expect(component.exam.numberOfCorrectionRoundsInExam).toBe(2);
+            expect(component.isValidNumberOfCorrectionRounds).toBeTrue();
+
+            exam.numberOfCorrectionRoundsInExam = 3;
+            fixture.detectChanges();
+
+            expect(component.exam.numberOfCorrectionRoundsInExam).toBe(3);
+            expect(component.isValidNumberOfCorrectionRounds).toBeFalse();
+        });
     });
 
     describe('import exams', () => {

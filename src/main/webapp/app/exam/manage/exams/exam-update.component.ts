@@ -28,7 +28,7 @@ export class ExamUpdateComponent implements OnInit {
     workingTimeInMinutes: number;
     // The maximum working time in Minutes (used as a dynamic max-value for the working time Input)
     maxWorkingTimeInMinutes: number;
-    // Interims-boolean to hide the option to create an TestExam in production, as the feature is not yet fully implemented
+    // Interims-boolean to hide the option to create an test eam in production, as the feature is not yet fully implemented
     isAdmin: boolean;
     isImport = false;
     // Expose enums to the template
@@ -74,7 +74,10 @@ export class ExamUpdateComponent implements OnInit {
             if (!this.exam.gracePeriod) {
                 this.exam.gracePeriod = 180;
             }
-            if (!this.exam.numberOfCorrectionRoundsInExam) {
+            // test exam only feature automatic assessment
+            if (this.exam.testExam) {
+                this.exam.numberOfCorrectionRoundsInExam = 0;
+            } else if (!this.exam.numberOfCorrectionRoundsInExam) {
                 this.exam.numberOfCorrectionRoundsInExam = 1;
             }
         });
@@ -150,7 +153,11 @@ export class ExamUpdateComponent implements OnInit {
     }
 
     get isValidNumberOfCorrectionRounds(): boolean {
-        return this.exam?.numberOfCorrectionRoundsInExam! < 3 && this.exam?.numberOfCorrectionRoundsInExam! > 0;
+        if (this.exam.testExam) {
+            return this.exam.numberOfCorrectionRoundsInExam === 0;
+        } else {
+            return this.exam?.numberOfCorrectionRoundsInExam! < 3 && this.exam?.numberOfCorrectionRoundsInExam! > 0;
+        }
     }
 
     get isValidMaxPoints(): boolean {
@@ -159,8 +166,8 @@ export class ExamUpdateComponent implements OnInit {
 
     /**
      * Validates the given StartDate.
-     * For RealExams, the visibleDate has to be strictly prior the startDate.
-     * For TestExams, the visibleDate has to be prior or equal to the startDate.
+     * For real exams, the visibleDate has to be strictly prior the startDate.
+     * For test exam, the visibleDate has to be prior or equal to the startDate.
      */
     get isValidStartDate(): boolean {
         if (this.exam.startDate === undefined) {
@@ -181,7 +188,7 @@ export class ExamUpdateComponent implements OnInit {
     }
 
     /**
-     * Calculates the WorkingTime for RealExams based on the start- and end-time.
+     * Calculates the WorkingTime for real exams based on the start- and end-time.
      */
     get calculateWorkingTime(): number {
         if (!this.exam.testExam) {
@@ -197,8 +204,8 @@ export class ExamUpdateComponent implements OnInit {
 
     /**
      * Validates the WorkingTime.
-     * For TestExams, the WorkingTime should be at least 1 and smaller / equal to the working window
-     * For RealExams, the WorkingTime is calculated based on the startDate and EndDate and should match the time difference.
+     * For test exam, the WorkingTime should be at least 1 and smaller / equal to the working window
+     * For real exams, the WorkingTime is calculated based on the startDate and EndDate and should match the time difference.
      */
     get validateWorkingTime(): boolean {
         if (this.exam.testExam) {
@@ -218,7 +225,7 @@ export class ExamUpdateComponent implements OnInit {
 
     /**
      * Used to convert workingTimeInMinutes into exam.workingTime (in seconds) every time, the user inputs a new
-     * working time for a TestExam
+     * working time for a test eam
      * @param event when the user inputs a new working time
      */
     convertWorkingTimeFromMinutesToSeconds(event: any) {

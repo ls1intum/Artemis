@@ -231,6 +231,7 @@
             "studentExamStatusSuccess": "All registered students have an individual exam",
             "studentExamStatusWarning": "Not all registered students have an individual exam",
             "studentExamStatusWarningTooltip": "Click on the button 'Generate missing individual exams' to create the missing student exams. Alternatively, click the button 'Generate individual exams' to delete and re-create exams for all students",
+            "studentExamStatusTestExam": "StudentExams are automatically created once a student requests to start a Test Exam",
             "evaluateQuizExerciseSuccess": "{{number}} quiz exercises successfully evaluated!",
             "evaluateQuizExerciseFailure": "There was an error during the evaluation of the quiz exercises:\n {{message}}",
             "assessUnsubmittedStudentExamsSuccess": "Reviewed all student exams and assessed the unsubmitted or empty modeling and text exercises with 0 points.",
@@ -352,6 +353,7 @@
                 "showAllUsers": "Show all students",
                 "searchForUsers": "Register a student for this exam by searching for login or name",
                 "searchNoResults": "No students found",
+                "testExamSelfRegistration": "Students are automatically registered for the Test Exam when starting a Test Exam",
                 "login": "Login",
                 "name": "Name",
                 "firstName": "First name",
@@ -414,6 +416,7 @@
             },
             "checklist": {
                 "title": "Exam Checklist",
+                "conductionPlannedFromTo": "The conduction is planned from {{ from }} to {{ to }}",
                 "introduction": "This page gives an overview over the various steps when conducting an exam. In the",
                 "linkDescription": "external documentation",
                 "introductionPart2": "you can find more details about the individual steps.",
@@ -421,6 +424,10 @@
                 "description": "Description",
                 "status": "Current status",
                 "goTo": "Page",
+                "testExam": {
+                    "title": "Test Exam Checklist",
+                    "introduction": "This page gives an overview over the various steps when creating a Test Exam."
+                },
                 "tableItem": {
                     "register": "Register students for the exam",
                     "exerciseGroups": "Create at least one exercise group with exercises",
@@ -487,6 +494,10 @@
         "examMonitoring": {
             "title": "Exam live statistics",
             "description": "The exam live statistics dashboard allows instructors to view students' actions during the exam and analyze the resulting data.",
+            "enable": "Enable",
+            "disable": "Disable",
+            "enabled": "Enabled",
+            "disabled": "Disabled",
             "table": {
                 "panelHeader": "Exam Information",
                 "panelDescriptionHeader": "Details",
@@ -504,11 +515,23 @@
                 "exercises": {
                     "title": "Exercises",
                     "description": "Shows the current participation of the students in the respective exercise and exercise groups",
-                    "groups": "Exercise Groups"
+                    "groups": "Exercise Groups",
+                    "exercisesPerPage": "{{number}} exercises per page",
+                    "showAllExercises": "Show all exercises",
+                    "id": "Exercise",
+                    "exerciseGroup.id": "Exercise group",
+                    "_title": "Title",
+                    "type": "Type"
                 },
                 "activity-log": {
                     "title": "Activity log",
-                    "description": "Shows the past and current activities of active students"
+                    "description": "Shows the past and current activities of active students",
+                    "actionsPerPage": "{{number}} actions per page",
+                    "showAllActions": "Show all actions",
+                    "studentExamId": "Exam-ID",
+                    "timestamp": "Timestamp",
+                    "type": "Category",
+                    "detail": "Detail"
                 }
             },
             "charts": {
@@ -539,6 +562,18 @@
                     "xAxisLabel": "Amount of navigations",
                     "yAxisLabel": "Exercises",
                     "legendTitle": "Exercises"
+                },
+                "exercise-detail-current-chart": {
+                    "name": "Current number of students",
+                    "tooltip": "Shows the current number of students"
+                },
+                "exercise-detail-navigation-chart": {
+                    "name": "Number of first navigations",
+                    "tooltip": "Shows the number of first navigations"
+                },
+                "exercise-detail-submission-chart": {
+                    "name": "Number of first submissions",
+                    "tooltip": "Shows the number of first submissions"
                 },
                 "average-actions-chart": {
                     "name": "Average number of actions per student",
@@ -601,12 +636,26 @@
                 "generateStudentExams": "Generate student exams: ",
                 "registered": "{{ generated }} of {{ total }}",
                 "notRegistered": "No students registered",
-                "prepareExerciseStart": "Prepare exercise start"
+                "prepareExerciseStart": "Prepare exercise start",
+                "testExam": {
+                    "examPreparation": "Test Exam preparation",
+                    "maxPointsCorrect": "Exam Points correctly set to ",
+                    "maxPointsWrong": "Exam Points should be set to {{ points }}"
+                }
             },
             "conduction": {
                 "examConduction": "Exam conduction",
+                "workingTime": "Working Time",
                 "startedExams": "Started exams",
-                "submittedExams": "Submitted exams"
+                "submittedExams": "Submitted exams",
+                "conductionSuspended": "Students cannot start their Exam!",
+                "testExam": {
+                    "examConduction": "Test Exam conduction",
+                    "numberOfStudents": "Number of students",
+                    "startedExams": "Started Test Exams",
+                    "submittedExams": "Submitted Test Exams",
+                    "conductionSuspended": "Students cannot start a Test Exam!"
+                }
             },
             "correction": {
                 "examCorrection": "Exam correction",
