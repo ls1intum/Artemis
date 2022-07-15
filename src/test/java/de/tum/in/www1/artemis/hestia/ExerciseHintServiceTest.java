@@ -201,7 +201,7 @@ public class ExerciseHintServiceTest extends AbstractSpringIntegrationBambooBitb
         var availableExerciseHints = exerciseHintService.getAvailableExerciseHints(exercise, student);
         assertThat(availableExerciseHints).containsExactly(hints.get(0));
     }
-    
+
     @Test
     public void testGetAvailableExerciseHints_skippedTestsConsideredAsNegative() {
         // create result with feedbacks with "null" for attribute "positive"
