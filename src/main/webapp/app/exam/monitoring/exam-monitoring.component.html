@@ -1,10 +1,21 @@
 <div>
-    <div *ngIf="exam && exam.monitoring">
+    <div *ngIf="exam">
         <!-- Exam Monitoring info bar -->
         <div class="course-info-bar">
             <div class="row">
-                <div class="col general-info">
-                    <h2 jhiTranslate="artemisApp.examMonitoring.title"></h2>
+                <div class="col general-info d-flex justify-content-between">
+                    <div class="d-flex flex-row align-items-center">
+                        <h2 class="mb-1" jhiTranslate="artemisApp.examMonitoring.title"></h2>
+                        <span
+                            [jhiTranslate]="'artemisApp.examMonitoring.' + (this.exam.monitoring ? 'enabled' : 'disabled')"
+                            class="badge ms-2 exam-monitoring-badge align-items-center"
+                            [class.bg-danger]="!this.exam.monitoring"
+                            [class.bg-success]="this.exam.monitoring"
+                        ></span>
+                    </div>
+                    <button class="hand btn btn-primary" [class.btn-success]="!this.exam.monitoring" [class.btn-danger]="this.exam.monitoring" (click)="updateMonitoring()">
+                        <span [jhiTranslate]="'artemisApp.examMonitoring.' + (this.exam.monitoring ? 'disable' : 'enable')">Enable</span>
+                    </button>
                 </div>
             </div>
         </div>
@@ -40,7 +51,7 @@
                 </div>
             </div>
         </div>
-        <div class="position-relative">
+        <div *ngIf="exam.monitoring" class="position-relative">
             <router-outlet></router-outlet>
         </div>
     </div>

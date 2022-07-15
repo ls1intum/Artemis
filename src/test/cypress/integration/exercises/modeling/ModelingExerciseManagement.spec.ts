@@ -29,8 +29,8 @@ describe('Modeling Exercise Management Spec', () => {
         cy.login(admin);
         courseManagementRequests.createCourse().then((courseResp: Cypress.Response<Course>) => {
             course = courseResp.body;
-            courseManagementRequests.addInstructorToCourse(course.id!, instructor);
-            courseManagementRequests.addStudentToCourse(course.id!, student.username);
+            courseManagementRequests.addInstructorToCourse(course, instructor);
+            courseManagementRequests.addStudentToCourse(course, student);
         });
     });
 

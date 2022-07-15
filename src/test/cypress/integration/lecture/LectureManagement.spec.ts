@@ -23,7 +23,7 @@ describe('Lecture management', () => {
         cy.login(admin);
         courseManagementRequests.createCourse().then((response) => {
             course = response.body;
-            courseManagementRequests.addInstructorToCourse(course.id!, instructor);
+            courseManagementRequests.addInstructorToCourse(course, instructor);
         });
     });
 

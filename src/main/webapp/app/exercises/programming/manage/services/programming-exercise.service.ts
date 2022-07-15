@@ -18,6 +18,7 @@ import { ProgrammingExerciseGitDiffReport } from 'app/entities/hestia/programmin
 import { CoverageReport } from 'app/entities/hestia/coverage-report.model';
 import { ProgrammingExerciseSolutionEntry } from 'app/entities/hestia/programming-exercise-solution-entry.model';
 import { ProgrammingExerciseServerSideTask } from 'app/entities/hestia/programming-exercise-task.model';
+import { convertDateFromClient, convertDateFromServer } from 'app/utils/date.utils';
 
 export type EntityResponseType = HttpResponse<ProgrammingExercise>;
 export type EntityArrayResponseType = HttpResponse<ProgrammingExercise[]>;
@@ -293,11 +294,8 @@ export class ProgrammingExerciseService {
      */
     convertDataFromClient(exercise: ProgrammingExercise) {
         const copy = {
-            ...ExerciseService.convertDateFromClient(exercise),
-            buildAndTestStudentSubmissionsAfterDueDate:
-                exercise.buildAndTestStudentSubmissionsAfterDueDate && dayjs(exercise.buildAndTestStudentSubmissionsAfterDueDate).isValid()
-                    ? dayjs(exercise.buildAndTestStudentSubmissionsAfterDueDate).toJSON()
-                    : undefined,
+            ...ExerciseService.convertExerciseDatesFromClient(exercise),
+            buildAndTestStudentSubmissionsAfterDueDate: convertDateFromClient(exercise.buildAndTestStudentSubmissionsAfterDueDate),
         };
         // Remove exercise from template & solution participation to avoid circular dependency issues.
         // Also remove the results, as they can have circular structures as well and don't have to be saved here.
@@ -317,14 +315,12 @@ export class ProgrammingExerciseService {
      *
      * @param entity ProgrammingExercise
      */
-    static convertDateFromServer(entity: EntityResponseType) {
-        const res = ExerciseService.convertDateFromServer(entity);
+    static convertProgrammingExerciseResponseDatesFromServer(entity: EntityResponseType) {
+        const res = ExerciseService.convertExerciseResponseDatesFromServer(entity);
         if (!res.body) {
             return res;
         }
-        res.body.buildAndTestStudentSubmissionsAfterDueDate = res.body.buildAndTestStudentSubmissionsAfterDueDate
-            ? dayjs(res.body.buildAndTestStudentSubmissionsAfterDueDate)
-            : undefined;
+        res.body.buildAndTestStudentSubmissionsAfterDueDate = convertDateFromServer(res.body.buildAndTestStudentSubmissionsAfterDueDate);
         return res;
     }
 
@@ -413,7 +409,7 @@ export class ProgrammingExerciseService {
      * @param exerciseRes
      */
     private processProgrammingExerciseEntityResponse(exerciseRes: EntityResponseType): EntityResponseType {
-        ProgrammingExerciseService.convertDateFromServer(exerciseRes);
+        ProgrammingExerciseService.convertProgrammingExerciseResponseDatesFromServer(exerciseRes);
         ExerciseService.convertExerciseCategoriesFromServer(exerciseRes);
         this.exerciseService.setAccessRightsExerciseEntityResponseType(exerciseRes);
         this.exerciseService.sendExerciseTitleToTitleService(exerciseRes?.body);
