@@ -340,7 +340,7 @@ describe('ExamParticipationComponent', () => {
     it('should initialize exercises when exam starts', () => {
         const studentExam = new StudentExam();
         studentExam.workingTime = 100;
-        comp.testRunStartTime = dayjs().subtract(1000, 'seconds');
+        comp.testStartTime = dayjs().subtract(1000, 'seconds');
         comp.exam = new Exam();
         testExamStarted(studentExam);
     });

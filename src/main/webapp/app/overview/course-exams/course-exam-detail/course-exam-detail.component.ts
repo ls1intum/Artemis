@@ -73,7 +73,7 @@ export class CourseExamDetailComponent implements OnInit, OnDestroy {
      */
     openExam() {
         if (this.exam.testExam) {
-            if (this.examState === ExamState.NO_MORE_ATTEMPTS) {
+            if (this.examState === ExamState.NO_MORE_ATTEMPTS || this.examState === ExamState.CLOSED) {
                 return;
             }
             this.router.navigate(['courses', this.course.id, 'exams', this.exam.id, 'test-exam', 'new']);
@@ -115,19 +115,22 @@ export class CourseExamDetailComponent implements OnInit, OnDestroy {
             return;
         }
         if (dayjs(this.exam.endDate).isBefore(dayjs())) {
-            // The longest individual working time is stored on the server side, but should not be extra loaded. Therefore, a sufficiently large time extension is selected.
-            const endDateWithTimeExtension = dayjs(this.exam.endDate).add(this.exam.workingTime! * 3, 'seconds');
-            if (endDateWithTimeExtension.isAfter(dayjs())) {
-                this.examState = ExamState.TIMEEXTENSION;
-                return;
+            if (!this.exam.testExam) {
+                // The longest individual working time is stored on the server side, but should not be extra loaded. Therefore, a sufficiently large time extension is selected.
+                const endDateWithTimeExtension = dayjs(this.exam.endDate).add(this.exam.workingTime! * 3, 'seconds');
+                if (endDateWithTimeExtension.isAfter(dayjs())) {
+                    this.examState = ExamState.TIMEEXTENSION;
+                    return;
+                } else {
+                    this.examState = ExamState.CLOSED;
+                    return;
+                }
             } else {
                 this.examState = ExamState.CLOSED;
-                if (this.exam.testExam) {
-                    // For test exams, we can cancel the subscription and lock the possibility to click on the exam tile
-                    // For real exams, a CLOSED real exam can switch into a STUDENTREVIEW real exam
-                    this.maxAttemptsReached = true;
-                    this.cancelExamStateSubscription();
-                }
+                // For test exams, we can cancel the subscription and lock the possibility to click on the exam tile
+                // For real exams, a CLOSED real exam can switch into a STUDENTREVIEW real exam
+                this.maxAttemptsReached = true;
+                this.cancelExamStateSubscription();
                 return;
             }
         }

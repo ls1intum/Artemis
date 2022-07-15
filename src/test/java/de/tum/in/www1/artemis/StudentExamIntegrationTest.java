@@ -3,7 +3,6 @@ package de.tum.in.www1.artemis;
 import static de.tum.in.www1.artemis.domain.enumeration.BuildPlanType.*;
 import static de.tum.in.www1.artemis.util.SensitiveInformationUtil.*;
 import static de.tum.in.www1.artemis.util.TestConstants.*;
-import static java.time.ZonedDateTime.now;
 import static org.assertj.core.api.Assertions.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -2077,7 +2076,7 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
     @WithMockUser(username = "student1", roles = "USER")
     public void testGetStudentExamForConduction_notVisible() throws Exception {
         Exam testExam = database.addTestExam(course1);
-        testExam.setVisibleDate(now().plusMinutes(60));
+        testExam.setVisibleDate(ZonedDateTime.now().plusMinutes(60));
         testExam = examRepository.save(testExam);
         StudentExam studentExam = database.addStudentExamWithUser(testExam, database.getUserByLogin("student1"));
 

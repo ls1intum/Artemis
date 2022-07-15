@@ -1,9 +1,8 @@
-<div *ngIf="exam" (click)="openExam()" id="exam-{{ exam.id }}">
+<div *ngIf="exam" [ngClass]="{ clickable: !maxAttemptsReached && !(exam.testExam && examState === 'CLOSED') }" (click)="openExam()" id="exam-{{ exam.id }}">
     <!-- Signature colors for the header: Blue for test exams and Green for RedExams -->
     <div
         [ngClass]="{
             'row card-header': true,
-            clickable: !maxAttemptsReached || (exam.testExam && examState === 'CLOSED'),
             'bg-primary': exam.testExam,
             'bg-success': !exam.testExam
         }"

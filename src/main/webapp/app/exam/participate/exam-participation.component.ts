@@ -68,15 +68,13 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     testRunId: number;
     testExam = false;
     studentExamId: number;
-    testRunStartTime?: dayjs.Dayjs;
-    testExamStartTime?: dayjs.Dayjs;
+    testStartTime?: dayjs.Dayjs;
 
     // determines if component was once drawn visited
     pageComponentVisited: boolean[];
 
     // needed, because studentExam is downloaded only when exam is started
     exam: Exam;
-    examTitle = '';
     studentExam: StudentExam;
 
     individualStudentEndDate: dayjs.Dayjs;
@@ -170,8 +168,8 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                         this.studentExam.exam!.course = new Course();
                         this.studentExam.exam!.course.id = this.courseId;
                         this.exam = studentExam.exam!;
-                        this.testRunStartTime = dayjs();
-                        this.initIndividualEndDates(this.testRunStartTime);
+                        this.testStartTime = dayjs();
+                        this.initIndividualEndDates(this.testStartTime);
                         this.loadingExam = false;
                     },
                     error: () => (this.loadingExam = false),
@@ -183,8 +181,8 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                         this.exam = studentExam.exam!;
                         if (this.exam.testExam) {
                             // For TestExams, we either set the StartTime to the current time or the startedDate of the studentExam, if existent
-                            this.testExamStartTime = this.studentExam.startedDate ? this.studentExam.startedDate! : dayjs();
-                            this.initIndividualEndDates(this.testExamStartTime);
+                            this.testStartTime = this.studentExam.startedDate ? this.studentExam.startedDate! : dayjs();
+                            this.initIndividualEndDates(this.testStartTime);
                         } else {
                             this.initIndividualEndDates(this.exam.startDate!);
                         }
@@ -280,10 +278,8 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
             const exerciseIds = exercises.map((exercise) => exercise.id).filter(Number) as number[];
             this.examParticipationService.setExamExerciseIds(exerciseIds);
             // set endDate with workingTime
-            if (!!this.testRunId) {
-                this.individualStudentEndDate = this.testRunStartTime!.add(this.studentExam.workingTime!, 'seconds');
-            } else if (this.testExam) {
-                this.individualStudentEndDate = this.testExamStartTime!.add(this.studentExam.workingTime!, 'seconds');
+            if (!!this.testRunId || this.testExam) {
+                this.individualStudentEndDate = this.testStartTime!.add(this.studentExam.workingTime!, 'seconds');
             } else {
                 this.individualStudentEndDate = dayjs(this.exam.startDate).add(this.studentExam.workingTime!, 'seconds');
             }
