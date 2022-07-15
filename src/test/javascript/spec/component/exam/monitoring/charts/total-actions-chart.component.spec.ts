@@ -2,11 +2,11 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ArtemisTestModule } from '../../../../test.module';
 import { MockTranslateService } from '../../../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
-import { MockPipe } from 'ng-mocks';
+import { MockModule, MockPipe } from 'ng-mocks';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { AverageActionsChartComponent } from 'app/exam/monitoring/charts/activity-log/average-actions-chart.component';
-import { NgxChartsModule } from '@swimlane/ngx-charts';
+import { BarChartModule } from '@swimlane/ngx-charts';
 import { ChartTitleComponent } from 'app/exam/monitoring/charts/chart-title.component';
 import dayjs from 'dayjs/esm';
 import { TotalActionsChartComponent } from 'app/exam/monitoring/charts/activity-log/total-actions-chart.component';
@@ -19,12 +19,13 @@ import { Exam } from 'app/entities/exam.model';
 import { of } from 'rxjs';
 import { ActivatedRoute } from '@angular/router';
 import { ceilDayjsSeconds } from 'app/exam/monitoring/charts/monitoring-chart';
-import { ExamAction } from 'app/entities/exam-user-activity.model';
+import { ExamActionService } from 'app/exam/monitoring/exam-action.service';
 
 describe('Total Actions Chart Component', () => {
     let comp: TotalActionsChartComponent;
     let fixture: ComponentFixture<TotalActionsChartComponent>;
     let pipe: ArtemisDatePipe;
+    let examActionService: ExamActionService;
 
     // Course
     const course = new Course();
@@ -41,7 +42,7 @@ describe('Total Actions Chart Component', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, NgxChartsModule],
+            imports: [ArtemisTestModule, MockModule(BarChartModule)],
             declarations: [AverageActionsChartComponent, ChartTitleComponent, ActionsChartComponent, ArtemisDatePipe, MockPipe(ArtemisTranslatePipe)],
             providers: [
                 { provide: ActivatedRoute, useValue: route },
@@ -55,6 +56,7 @@ describe('Total Actions Chart Component', () => {
                 pipe = new ArtemisDatePipe(TestBed.inject(TranslateService));
                 fixture = TestBed.createComponent(TotalActionsChartComponent);
                 comp = fixture.componentInstance;
+                examActionService = TestBed.inject(ExamActionService);
                 ceiledNow = ceilDayjsSeconds(now, comp.timeStampGapInSeconds);
             });
     });
@@ -81,35 +83,18 @@ describe('Total Actions Chart Component', () => {
         // Create series
         const series = createSingleSeriesDataEntriesWithTimestamps(comp.getLastXTimestamps(), pipe);
 
-        // GIVEN
-        comp.filteredExamActions = createActions().map((action) => {
-            action.timestamp = now;
-            action.ceiledTimestamp = ceiledNow;
-            return action;
-        });
+        const length = createActions().length;
+        const groupedByTimestamp = new Map();
+        groupedByTimestamp.set(ceiledNow.toString(), length);
+        examActionService.cachedExamActionsGroupedByTimestamp.set(exam.id!, groupedByTimestamp);
 
         // Insert value
-        series.filter((data) => data.name === pipe.transform(ceiledNow, 'time', true).toString())[0].value = comp.filteredExamActions.length;
+        series.filter((data) => data.name === pipe.transform(ceiledNow, 'time', true).toString())[0].value = length;
 
         // WHEN
         comp.ngOnInit();
 
         // THEN
         expect(comp.ngxData).toEqual([{ name: 'actions', series }]);
-    });
-
-    // Evaluate and add action
-    it.each(createActions())('should evaluate and add action', (action: ExamAction) => {
-        expect(comp.filteredExamActions).toEqual([]);
-
-        action.ceiledTimestamp = ceiledNow;
-
-        comp.evaluateAndAddAction(action);
-
-        const expectedMap = new Map();
-        expectedMap.set(ceiledNow.toString(), 1);
-
-        expect(comp.filteredExamActions).toEqual([action]);
-        expect(comp.actionsPerTimestamp).toEqual(expectedMap);
     });
 });

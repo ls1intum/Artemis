@@ -43,7 +43,6 @@ describe('Submission Service', () => {
             results: [
                 {
                     id: 2374,
-                    resultString: '1 of 12 points',
                     score: 8,
                     rated: true,
                     hasFeedback: true,
@@ -124,7 +123,6 @@ describe('Submission Service', () => {
 
         const firstResult: Result = {
             id: 3556,
-            resultString: '3 of 12 points',
             score: 24,
             rated: true,
             hasFeedback: true,
@@ -161,7 +159,7 @@ describe('Submission Service', () => {
         const result = submission.results![0];
         result.completionDate = dateStr as any; // String should be converted to proper type by the tested service.
 
-        service.convertResultsDateFromServer(submission.results);
+        service.convertResultArrayDatesFromServer(submission.results);
 
         expect(result.completionDate).toEqual(date);
     });

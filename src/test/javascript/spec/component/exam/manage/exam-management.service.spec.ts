@@ -45,7 +45,7 @@ describe('Exam Management Service Tests', () => {
     it('should create an exam', fakeAsync(() => {
         // GIVEN
         const mockExam: Exam = { id: 1 };
-        const mockCopyExam = ExamManagementService.convertDateFromClient({ id: 1 });
+        const mockCopyExam = ExamManagementService.convertExamDatesFromClient({ id: 1 });
 
         // WHEN
         service.create(course.id!, mockExam).subscribe((res) => expect(res.body).toEqual(mockExam));
@@ -62,7 +62,7 @@ describe('Exam Management Service Tests', () => {
     it('should update an exam', fakeAsync(() => {
         // GIVEN
         const mockExam: Exam = { id: 1 };
-        const mockCopyExam = ExamManagementService.convertDateFromClient({ id: 1 });
+        const mockCopyExam = ExamManagementService.convertExamDatesFromClient({ id: 1 });
 
         // WHEN
         service.update(course.id!, mockExam).subscribe((res) => expect(res.body).toEqual(mockExam));
@@ -80,7 +80,7 @@ describe('Exam Management Service Tests', () => {
         // GIVEN
         const mockExam: Exam = { id: 1 };
         const expected: Exam = { id: 1 };
-        const mockCopyExam = ExamManagementService.convertDateFromClient(expected);
+        const mockCopyExam = ExamManagementService.convertExamDatesFromClient(expected);
         // WHEN
         service.find(course.id!, mockExam.id!).subscribe((res) => expect(res.body).toEqual(mockCopyExam));
 
@@ -95,20 +95,6 @@ describe('Exam Management Service Tests', () => {
 
         // CLEANUP
         req.flush(expected);
-        tick();
-    }));
-
-    it('should get the exam title', fakeAsync(() => {
-        // GIVEN
-        const mockExam: Exam = { id: 1 };
-        const expectedTitle = 'expectedTitle';
-
-        // WHEN
-        service.getTitle(mockExam.id!).subscribe((res) => expect(res.body).toEqual(expectedTitle));
-
-        // THEN
-        const req = httpMock.expectOne({ method: 'GET', url: `api/exams/${mockExam.id!}/title` });
-        req.flush(expectedTitle);
         tick();
     }));
 

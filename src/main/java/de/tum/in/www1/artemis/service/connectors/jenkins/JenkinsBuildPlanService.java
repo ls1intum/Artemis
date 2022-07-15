@@ -37,6 +37,7 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.BuildPlanType;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
+import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.exception.JenkinsException;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
@@ -93,27 +94,33 @@ public class JenkinsBuildPlanService {
      * @param exercise the programming exercise
      * @param planKey the name of the plan
      * @param repositoryURL the url of the vcs repository
-     * @param testRepositoryURL the url of the tests vcs repository
      */
-    public void createBuildPlanForExercise(ProgrammingExercise exercise, String planKey, VcsRepositoryUrl repositoryURL, VcsRepositoryUrl testRepositoryURL) {
-        repositoryURL = jenkinsInternalUrlService.toInternalVcsUrl(repositoryURL);
-        testRepositoryURL = jenkinsInternalUrlService.toInternalVcsUrl(testRepositoryURL);
+    void createBuildPlanForExercise(ProgrammingExercise exercise, String planKey, VcsRepositoryUrl repositoryURL) {
+        final JenkinsXmlConfigBuilder.InternalVcsRepositoryURLs internalRepositoryUrls = getInternalRepositoryUrls(exercise, repositoryURL);
 
-        var programmingLanguage = exercise.getProgrammingLanguage();
-        var staticCodeAnalysisEnabled = exercise.isStaticCodeAnalysisEnabled();
-        var isSequentialTestRuns = exercise.hasSequentialTestRuns();
+        ProgrammingLanguage programmingLanguage = exercise.getProgrammingLanguage();
+        boolean staticCodeAnalysisEnabled = exercise.isStaticCodeAnalysisEnabled();
+        boolean isSequentialTestRuns = exercise.hasSequentialTestRuns();
         var isSolutionPlan = planKey.equals(BuildPlanType.SOLUTION.getName());
         var testwiseCoverageAnalysisEnabled = exercise.isTestwiseCoverageEnabled() && isSolutionPlan;
 
         final var configBuilder = builderFor(programmingLanguage, exercise.getProjectType());
-        Document jobConfig = configBuilder.buildBasicConfig(programmingLanguage, Optional.ofNullable(exercise.getProjectType()), testRepositoryURL, repositoryURL,
-                staticCodeAnalysisEnabled, isSequentialTestRuns, testwiseCoverageAnalysisEnabled);
+        Document jobConfig = configBuilder.buildBasicConfig(programmingLanguage, Optional.ofNullable(exercise.getProjectType()), internalRepositoryUrls, staticCodeAnalysisEnabled,
+                isSequentialTestRuns, testwiseCoverageAnalysisEnabled);
 
-        var jobFolder = exercise.getProjectKey();
-        var job = jobFolder + "-" + planKey;
+        String jobFolder = exercise.getProjectKey();
+        String job = jobFolder + "-" + planKey;
         jenkinsJobService.createJobInFolder(jobConfig, jobFolder, job);
         givePlanPermissions(exercise, planKey);
         triggerBuild(jobFolder, job);
+    }
+
+    private JenkinsXmlConfigBuilder.InternalVcsRepositoryURLs getInternalRepositoryUrls(final ProgrammingExercise exercise, final VcsRepositoryUrl assignmentRepositoryUrl) {
+        final VcsRepositoryUrl assignmentUrl = jenkinsInternalUrlService.toInternalVcsUrl(assignmentRepositoryUrl);
+        final VcsRepositoryUrl testUrl = jenkinsInternalUrlService.toInternalVcsUrl(exercise.getRepositoryURL(RepositoryType.TESTS));
+        final VcsRepositoryUrl solutionUrl = jenkinsInternalUrlService.toInternalVcsUrl(exercise.getRepositoryURL(RepositoryType.SOLUTION));
+
+        return new JenkinsXmlConfigBuilder.InternalVcsRepositoryURLs(assignmentUrl, testUrl, solutionUrl);
     }
 
     /**

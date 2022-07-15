@@ -399,22 +399,15 @@ public class SubmissionPolicyIntegrationTest extends AbstractSpringIntegrationBa
         }
         Optional<Result> result = gradingService.processNewProgrammingExerciseResult(participation, resultNotification);
         assertThat(result).isPresent();
-        if (type == EnforcePolicyTestType.POLICY_ACTIVE) {
-            assertThat(result.get().getResultString()).contains("1 of 1 Submissions");
-        }
-        else {
-            assertThat(result.get().getResultString()).doesNotContain("1 of 1 Submissions");
-        }
+
         database.addProgrammingSubmissionToResultAndParticipation(new Result().score(25.0), participation, "commit1");
         result = gradingService.processNewProgrammingExerciseResult(participation, resultNotification);
         assertThat(result).isPresent();
         if (type == EnforcePolicyTestType.POLICY_ACTIVE) {
             assertThat(result.get().isRated()).isFalse();
-            assertThat(result.get().getResultString()).contains(", 3 Submissions");
         }
         else {
             assertThat(result.get().isRated()).isTrue();
-            assertThat(result.get().getResultString()).doesNotContain(", 3 Submissions");
         }
     }
 
@@ -440,12 +433,10 @@ public class SubmissionPolicyIntegrationTest extends AbstractSpringIntegrationBa
         assertThat(result).isPresent();
         if (type == EnforcePolicyTestType.POLICY_ACTIVE) {
             assertThat(result.get().getScore()).isEqualTo(15);
-            assertThat(result.get().getResultString()).contains(", 2 Submissions");
             assertThat(result.get().getFeedbacks().stream().anyMatch(feedback -> feedback.getText().startsWith(SUBMISSION_POLICY_FEEDBACK_IDENTIFIER))).isTrue();
         }
         else {
             assertThat(result.get().getScore()).isEqualTo(25);
-            assertThat(result.get().getResultString()).doesNotContain(", 2 Submissions");
             assertThat(result.get().getFeedbacks().stream().anyMatch(feedback -> feedback.getText().startsWith(SUBMISSION_POLICY_FEEDBACK_IDENTIFIER))).isFalse();
         }
     }

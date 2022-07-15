@@ -14,8 +14,8 @@ describe('ProgrammingExerciseInstructionService', () => {
             completionDate: dayjs('2019-06-06T22:15:29.203+02:00'),
             successful: true,
             feedbacks: [
-                { text: 'testBubbleSort', detail_text: 'lorem ipsum', positive: true },
-                { text: 'testMergeSort', detail_text: 'lorem ipsum', positive: true },
+                { text: 'testBubbleSort', detailText: 'lorem ipsum', positive: true },
+                { text: 'testMergeSort', detailText: 'lorem ipsum', positive: true },
             ],
         } as any;
         const testCases = result.feedbacks.map(({ text }: { text: string }) => text);
@@ -35,8 +35,8 @@ describe('ProgrammingExerciseInstructionService', () => {
             completionDate: dayjs('2019-06-06T22:15:29.203+02:00'),
             successful: false,
             feedbacks: [
-                { text: 'testBubbleSort', detail_text: 'lorem ipsum', positive: false },
-                { text: 'testMergeSort', detail_text: 'lorem ipsum', positive: true },
+                { text: 'testBubbleSort', detailText: 'lorem ipsum', positive: false },
+                { text: 'testMergeSort', detailText: 'lorem ipsum', positive: true },
             ],
         } as any;
         const testCases = result.feedbacks.map(({ text }: { text: string }) => text);
@@ -51,7 +51,7 @@ describe('ProgrammingExerciseInstructionService', () => {
             id: 1,
             completionDate: dayjs('2018-06-06T22:15:29.203+02:00'),
             successful: false,
-            feedbacks: [{ text: 'testBubbleSort', detail_text: 'lorem ipsum', positive: false }],
+            feedbacks: [{ text: 'testBubbleSort', detailText: 'lorem ipsum', positive: false }],
         } as any;
         const testCases = ['testBubbleSort', 'testMergeSort'];
 
@@ -65,7 +65,7 @@ describe('ProgrammingExerciseInstructionService', () => {
             id: 1,
             completionDate: dayjs('2019-06-06T22:15:29.203+02:00'),
             successful: false,
-            feedbacks: [{ text: 'irrelevantTest', detail_text: 'lorem ipsum', positive: true }],
+            feedbacks: [{ text: 'irrelevantTest', detailText: 'lorem ipsum', positive: true }],
         } as any;
         const testCases = ['testBubbleSort', 'testMergeSort'];
 

@@ -3,13 +3,13 @@ import { PlagiarismInspectorService } from 'app/exercises/shared/plagiarism/plag
 import { ArtemisTestModule } from '../test.module';
 import { PlagiarismComparison } from 'app/exercises/shared/plagiarism/types/PlagiarismComparison';
 import { TextSubmissionElement } from 'app/exercises/shared/plagiarism/types/text/TextSubmissionElement';
-import { SimilarityRange } from 'app/exercises/shared/plagiarism/plagiarism-run-details/plagiarism-run-details.component';
+import { Range } from 'app/shared/util/utils';
 
 describe('PlagiarismInspectorService', () => {
     let service: PlagiarismInspectorService;
 
     let result: PlagiarismComparison<TextSubmissionElement>[];
-    let range: SimilarityRange;
+    let range: Range;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -84,7 +84,7 @@ describe('PlagiarismInspectorService', () => {
     ] as PlagiarismComparison<TextSubmissionElement>[];
 
     it.each([0, 10, 20, 30, 40, 50, 60, 70, 80])('should filter comparisons correctly for range < 100%', (minimumSimilarity: number) => {
-        range = { minimumSimilarity, maximumSimilarity: minimumSimilarity + 10 };
+        range = { lowerBound: minimumSimilarity, upperBound: minimumSimilarity + 10 };
         const index = Math.round(minimumSimilarity / 10);
 
         result = service.filterComparisons(range, comparisons);
@@ -94,7 +94,7 @@ describe('PlagiarismInspectorService', () => {
     });
 
     it('should filter comparisons correctly for maximal range 100%', () => {
-        range = { minimumSimilarity: 90, maximumSimilarity: 100 };
+        range = { lowerBound: 90, upperBound: 100 };
 
         result = service.filterComparisons(range, comparisons);
 
@@ -103,7 +103,7 @@ describe('PlagiarismInspectorService', () => {
     });
 
     it('should return empty array if comparisons are empty', () => {
-        range = { minimumSimilarity: 30, maximumSimilarity: 40 };
+        range = { lowerBound: 30, upperBound: 40 };
 
         result = service.filterComparisons(range, undefined);
 

@@ -72,7 +72,7 @@ public class JenkinsService extends AbstractContinuousIntegrationService {
     @Override
     public void createBuildPlanForExercise(ProgrammingExercise exercise, String planKey, VcsRepositoryUrl repositoryURL, VcsRepositoryUrl testRepositoryURL,
             VcsRepositoryUrl solutionRepositoryURL) {
-        jenkinsBuildPlanService.createBuildPlanForExercise(exercise, planKey, repositoryURL, testRepositoryURL);
+        jenkinsBuildPlanService.createBuildPlanForExercise(exercise, planKey, repositoryURL);
     }
 
     @Override
@@ -86,9 +86,8 @@ public class JenkinsService extends AbstractContinuousIntegrationService {
         deleteBuildPlan(projectKey, exercise.getTemplateBuildPlanId());
         deleteBuildPlan(projectKey, exercise.getSolutionBuildPlanId());
 
-        final VcsRepositoryUrl testsRepositoryUrl = exercise.getRepositoryURL(RepositoryType.TESTS);
-        jenkinsBuildPlanService.createBuildPlanForExercise(exercise, BuildPlanType.TEMPLATE.getName(), exercise.getRepositoryURL(RepositoryType.TEMPLATE), testsRepositoryUrl);
-        jenkinsBuildPlanService.createBuildPlanForExercise(exercise, BuildPlanType.SOLUTION.getName(), exercise.getRepositoryURL(RepositoryType.SOLUTION), testsRepositoryUrl);
+        jenkinsBuildPlanService.createBuildPlanForExercise(exercise, BuildPlanType.TEMPLATE.getName(), exercise.getRepositoryURL(RepositoryType.TEMPLATE));
+        jenkinsBuildPlanService.createBuildPlanForExercise(exercise, BuildPlanType.SOLUTION.getName(), exercise.getRepositoryURL(RepositoryType.SOLUTION));
     }
 
     @Override
@@ -189,6 +188,10 @@ public class JenkinsService extends AbstractContinuousIntegrationService {
                 var feedback = feedbackRepository.createFeedbackFromTestCase(testCase.getName(), feedbackMessages, testCase.isSuccessful(), programmingLanguage, projectType);
                 result.addFeedback(feedback);
             }
+
+            int passedTestCasesAmount = (int) job.getTestCases().stream().filter(TestCaseDTO::isSuccessful).count();
+            result.setTestCaseCount(result.getTestCaseCount() + job.getTests());
+            result.setPassedTestCaseCount(result.getPassedTestCaseCount() + passedTestCasesAmount);
         }
 
         // Extract static code analysis feedback if option was enabled
@@ -196,6 +199,7 @@ public class JenkinsService extends AbstractContinuousIntegrationService {
         if (Boolean.TRUE.equals(programmingExercise.isStaticCodeAnalysisEnabled()) && staticCodeAnalysisReports != null && !staticCodeAnalysisReports.isEmpty()) {
             var scaFeedbackList = feedbackRepository.createFeedbackFromStaticCodeAnalysisReports(staticCodeAnalysisReports);
             result.addFeedbacks(scaFeedbackList);
+            result.setCodeIssueCount(scaFeedbackList.size());
         }
 
         final var testwiseCoverageReport = testResults.getTestwiseCoverageReport();
