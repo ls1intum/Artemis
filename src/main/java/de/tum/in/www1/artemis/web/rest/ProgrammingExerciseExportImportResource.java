@@ -69,15 +69,11 @@ public class ProgrammingExerciseExportImportResource {
 
     private final AuthorizationCheckService authCheckService;
 
-    private final ProgrammingExerciseService programmingExerciseService;
-
     private final ProgrammingExerciseImportService programmingExerciseImportService;
 
     private final ProgrammingExerciseExportService programmingExerciseExportService;
 
     private final Optional<ProgrammingLanguageFeatureService> programmingLanguageFeatureService;
-
-    private final TemplateUpgradePolicy templateUpgradePolicy;
 
     private final AuxiliaryRepositoryRepository auxiliaryRepositoryRepository;
 
@@ -92,11 +88,9 @@ public class ProgrammingExerciseExportImportResource {
         this.userRepository = userRepository;
         this.courseService = courseService;
         this.authCheckService = authCheckService;
-        this.programmingExerciseService = programmingExerciseService;
         this.programmingExerciseImportService = programmingExerciseImportService;
         this.programmingExerciseExportService = programmingExerciseExportService;
         this.programmingLanguageFeatureService = programmingLanguageFeatureService;
-        this.templateUpgradePolicy = templateUpgradePolicy;
         this.auxiliaryRepositoryRepository = auxiliaryRepositoryRepository;
         this.submissionPolicyService = submissionPolicyService;
     }
@@ -173,8 +167,7 @@ public class ProgrammingExerciseExportImportResource {
         Course originalCourse = courseService.retrieveCourseOverExerciseGroupOrCourseId(originalProgrammingExercise);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, originalCourse, user);
 
-        final ProgrammingExercise importedProgrammingExercise = programmingExerciseImportService.importProgrammingExercise(originalProgrammingExercise, newExercise,
-                updateTemplate);
+        final var importedProgrammingExercise = programmingExerciseImportService.importProgrammingExercise(originalProgrammingExercise, newExercise, updateTemplate);
 
         HttpHeaders responseHeaders;
         if (programmingExerciseImportService.importBuildPlansForProgrammingExercise(originalProgrammingExercise, importedProgrammingExercise, recreateBuildPlans)) {
