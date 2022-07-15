@@ -25,7 +25,8 @@
                     <input class="form-control" required type="text" name="title" id="title" [(ngModel)]="exam.title" />
                 </div>
             </div>
-            <div class="form-group">
+            <!-- Changing to test exams is currently hidden for all non-admins, as the feature is not yet fully implemented -->
+            <div class="form-group" *ngIf="isAdmin">
                 <div>
                     <label class="form-check-label" jhiTranslate="artemisApp.examManagement.testExam.examMode">Exam Mode</label>
                     <jhi-help-icon placement="top" text="artemisApp.examManagement.testExam.examModeTooltip"></jhi-help-icon>
