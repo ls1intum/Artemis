@@ -75,6 +75,7 @@ jobs:
         asset_content_type: application/x-webarchive
 
   docker:
+    if: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == 'ls1intum/Artemis' }}
     needs: build
     runs-on: ubuntu-latest
     steps:

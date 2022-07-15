@@ -481,6 +481,24 @@ public class ModelingAssessmentIntegrationTest extends AbstractSpringIntegration
         assertThat(automaticResult).as("automatic result is not created").isNull();
     }
 
+    /**
+     * Tests that a submission without model (can happen for exam submissions) does not throw an exception and does
+     * not create an automatic result.
+     * @throws Exception any exception in the test
+     */
+    @Test
+    @WithMockUser(username = "student2")
+    public void testAutomaticAssessmentUponModelSubmission_emptyModel() throws Exception {
+        database.createAndSaveParticipationForExercise(classExercise, "student2");
+
+        ModelingSubmission submission = ModelFactory.generateModelingSubmission(null, true);
+        ModelingSubmission storedSubmission = request.postWithResponseBody("/api/exercises/" + classExercise.getId() + "/modeling-submissions", submission,
+                ModelingSubmission.class, HttpStatus.OK);
+
+        Result automaticResult = compassService.getSuggestionResult(storedSubmission, classExercise);
+        assertThat(automaticResult).as("automatic result is not created").isNull();
+    }
+
     @Test
     @WithMockUser(username = "student2")
     public void testAutomaticAssessmentUponModelSubmission_activityDiagram_identicalModel() throws Exception {

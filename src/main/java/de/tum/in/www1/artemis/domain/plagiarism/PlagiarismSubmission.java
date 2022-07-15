@@ -94,7 +94,7 @@ public class PlagiarismSubmission<E extends PlagiarismSubmissionElement> extends
                 submissionId = Long.parseLong(submissionIdAndStudentLogin[0]);
             }
             catch (NumberFormatException e) {
-                logger.error("Invalid submissionId: " + e.getMessage());
+                logger.error("Invalid submissionId: {}", e.getMessage());
             }
 
             studentLogin = submissionIdAndStudentLogin[1];
