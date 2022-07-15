@@ -341,14 +341,14 @@ describe('Exam Update Component', () => {
         }));
 
         it('should correctly validate the number of correction rounds in a testExams', () => {
-            exam.testExam = true;
-            exam.numberOfCorrectionRoundsInExam = 1;
+            examWithoutExercises.testExam = true;
+            examWithoutExercises.numberOfCorrectionRoundsInExam = 1;
             fixture.detectChanges();
 
             expect(component.exam.numberOfCorrectionRoundsInExam).toBe(0);
             expect(component.isValidNumberOfCorrectionRounds).toBeTrue();
 
-            exam.numberOfCorrectionRoundsInExam = 0;
+            examWithoutExercises.numberOfCorrectionRoundsInExam = 0;
             fixture.detectChanges();
 
             expect(component.exam.numberOfCorrectionRoundsInExam).toBe(0);
@@ -356,27 +356,27 @@ describe('Exam Update Component', () => {
         });
 
         it('should correctly validate the number of correction rounds in a realExam', () => {
-            exam.testExam = false;
+            examWithoutExercises.testExam = false;
 
-            exam.numberOfCorrectionRoundsInExam = undefined;
+            examWithoutExercises.numberOfCorrectionRoundsInExam = undefined;
             fixture.detectChanges();
 
             expect(component.exam.numberOfCorrectionRoundsInExam).toBe(1);
             expect(component.isValidNumberOfCorrectionRounds).toBeTrue();
 
-            exam.numberOfCorrectionRoundsInExam = 1;
+            examWithoutExercises.numberOfCorrectionRoundsInExam = 1;
             fixture.detectChanges();
 
             expect(component.exam.numberOfCorrectionRoundsInExam).toBe(1);
             expect(component.isValidNumberOfCorrectionRounds).toBeTrue();
 
-            exam.numberOfCorrectionRoundsInExam = 2;
+            examWithoutExercises.numberOfCorrectionRoundsInExam = 2;
             fixture.detectChanges();
 
             expect(component.exam.numberOfCorrectionRoundsInExam).toBe(2);
             expect(component.isValidNumberOfCorrectionRounds).toBeTrue();
 
-            exam.numberOfCorrectionRoundsInExam = 3;
+            examWithoutExercises.numberOfCorrectionRoundsInExam = 3;
             fixture.detectChanges();
 
             expect(component.exam.numberOfCorrectionRoundsInExam).toBe(3);
