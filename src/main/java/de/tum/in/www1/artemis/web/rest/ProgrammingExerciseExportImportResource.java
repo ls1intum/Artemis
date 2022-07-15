@@ -19,7 +19,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.core.io.Resource;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -167,24 +166,26 @@ public class ProgrammingExerciseExportImportResource {
         Course originalCourse = courseService.retrieveCourseOverExerciseGroupOrCourseId(originalProgrammingExercise);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, originalCourse, user);
 
-        final var importedProgrammingExercise = programmingExerciseImportService.importProgrammingExercise(originalProgrammingExercise, newExercise, updateTemplate);
+        try {
+            var importedProgrammingExercise = programmingExerciseImportService.importProgrammingExercise(originalProgrammingExercise, newExercise, updateTemplate,
+                    recreateBuildPlans);
 
-        HttpHeaders responseHeaders;
-        if (programmingExerciseImportService.importBuildPlansForProgrammingExercise(originalProgrammingExercise, importedProgrammingExercise, recreateBuildPlans)) {
-            responseHeaders = HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, importedProgrammingExercise.getTitle());
+            // remove certain properties which are not relevant for the client to keep the response small
+            importedProgrammingExercise.setTestCases(null);
+            importedProgrammingExercise.setStaticCodeAnalysisCategories(null);
+            importedProgrammingExercise.setTemplateParticipation(null);
+            importedProgrammingExercise.setSolutionParticipation(null);
+            importedProgrammingExercise.setExerciseHints(null);
+            importedProgrammingExercise.setTasks(null);
+
+            return ResponseEntity.ok().headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, importedProgrammingExercise.getTitle()))
+                    .body(importedProgrammingExercise);
+
         }
-        else {
-            responseHeaders = HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "importExerciseTriggerPlanFail", "Unable to trigger imported build plans");
+        catch (Exception ex) {
+            return ResponseEntity.internalServerError()
+                    .headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "importExerciseTriggerPlanFail", "Unable to import programming exercise")).build();
         }
-
-        importedProgrammingExercise.setTestCases(null);
-        importedProgrammingExercise.setStaticCodeAnalysisCategories(null);
-        importedProgrammingExercise.setTemplateParticipation(null);
-        importedProgrammingExercise.setSolutionParticipation(null);
-        importedProgrammingExercise.setExerciseHints(null);
-        importedProgrammingExercise.setTasks(null);
-
-        return ResponseEntity.ok().headers(responseHeaders).body(importedProgrammingExercise);
     }
 
     /**

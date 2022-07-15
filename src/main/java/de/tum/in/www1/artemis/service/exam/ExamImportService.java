@@ -62,13 +62,15 @@ public class ExamImportService {
 
     private final FileUploadImportService fileUploadImportService;
 
+    private final GradingCriterionRepository gradingCriterionRepository;
+
     public ExamImportService(TextExerciseImportService textExerciseImportService, TextExerciseRepository textExerciseRepository,
             ModelingExerciseImportService modelingExerciseImportService, ModelingExerciseRepository modelingExerciseRepository, ExamRepository examRepository,
             ExerciseGroupRepository exerciseGroupRepository, ExamAccessService examAccessService, QuizExerciseRepository quizExerciseRepository,
             QuizExerciseImportService importQuizExercise, CourseRepository courseRepository, ProgrammingExerciseService programmingExerciseService,
             ProgrammingExerciseService programmingExerciseService1, ProgrammingExerciseRepository programmingExerciseRepository,
             ProgrammingExerciseImportService programmingExerciseImportService, FileUploadExerciseRepository fileUploadExerciseRepository,
-            FileUploadImportService fileUploadImportService) {
+            FileUploadImportService fileUploadImportService, GradingCriterionRepository gradingCriterionRepository) {
         this.textExerciseImportService = textExerciseImportService;
         this.textExerciseRepository = textExerciseRepository;
         this.modelingExerciseImportService = modelingExerciseImportService;
@@ -84,6 +86,7 @@ public class ExamImportService {
         this.programmingExerciseImportService = programmingExerciseImportService;
         this.fileUploadExerciseRepository = fileUploadExerciseRepository;
         this.fileUploadImportService = fileUploadImportService;
+        this.gradingCriterionRepository = gradingCriterionRepository;
     }
 
     /**
@@ -224,10 +227,9 @@ public class ExamImportService {
                     if (optionalOriginalProgrammingExercise.isEmpty()) {
                         break;
                     }
-                    exerciseToCopy = programmingExerciseImportService.prepareProgrammingExerciseForImport((ProgrammingExercise) exerciseToCopy);
+                    prepareProgrammingExerciseForExamImport((ProgrammingExercise) exerciseToCopy);
                     exerciseCopied = programmingExerciseImportService.importProgrammingExercise(optionalOriginalProgrammingExercise.get(), (ProgrammingExercise) exerciseToCopy,
-                            false);
-                    programmingExerciseImportService.importBuildPlansForProgrammingExercise(optionalOriginalProgrammingExercise.get(), (ProgrammingExercise) exerciseCopied, false);
+                            false, false);
                 }
 
                 case FILE_UPLOAD -> {
@@ -255,6 +257,31 @@ public class ExamImportService {
             }
         });
         exerciseGroupRepository.save(exerciseGroupCopied);
+    }
+
+    /**
+     * Prepares a Programming Exercise for the import by setting irrelevant data to null.
+     * Additionally, the grading Criteria is loaded and attached to the exercise, as this needs to be released before the import
+     *
+     * @param newExercise      The new exercise which should be prepared for the import
+     */
+    private void prepareProgrammingExerciseForExamImport(final ProgrammingExercise newExercise) {
+
+        // we do not support the following values as part of exam exercises
+        newExercise.setBuildAndTestStudentSubmissionsAfterDueDate(null);
+        newExercise.setSubmissionPolicy(null);
+        newExercise.setReleaseDate(null);
+        newExercise.setDueDate(null);
+        newExercise.setAssessmentDueDate(null);
+        newExercise.setExampleSolutionPublicationDate(null);
+
+        // TODO: explain why this is actually necessary in this case (we don't do it in the "normal" single import)
+
+        // Fetch grading criterion into exercise
+        List<GradingCriterion> gradingCriteria = gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(newExercise.getId());
+        newExercise.setGradingCriteria(gradingCriteria);
+
+        newExercise.forceNewProjectKey();
     }
 
     /**

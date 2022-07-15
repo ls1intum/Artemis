@@ -332,8 +332,7 @@ public class ProgrammingExercise extends Exercise {
             return;
         }
         // Get course over exerciseGroup for exam programming exercises
-        Course course = getCourseViaExerciseGroupOrCourseMember();
-        this.projectKey = (course.getShortName() + this.getShortName()).toUpperCase().replaceAll("\\s+", "");
+        forceNewProjectKey();
     }
 
     public void forceNewProjectKey() {

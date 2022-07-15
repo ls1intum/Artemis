@@ -76,8 +76,6 @@ public class ProgrammingExerciseImportService {
 
     private final ProgrammingExerciseSolutionEntryRepository solutionEntryRepository;
 
-    private final GradingCriterionRepository gradingCriterionRepository;
-
     private final UrlService urlService;
 
     private final TemplateUpgradePolicy templateUpgradePolicy;
@@ -108,7 +106,6 @@ public class ProgrammingExerciseImportService {
         this.urlService = urlService;
         this.programmingExerciseTaskRepository = programmingExerciseTaskRepository;
         this.solutionEntryRepository = solutionEntryRepository;
-        this.gradingCriterionRepository = gradingCriterionRepository;
         this.templateUpgradePolicy = templateUpgradePolicy;
     }
 
@@ -580,42 +577,15 @@ public class ProgrammingExerciseImportService {
     }
 
     /**
-     * Prepares a Programming Exercise for the import by setting irrelevant data to null.
-     * Additionally, the grading Criteria is loaded and attached to the exercise, as this needs to be released before the import
+     * Method to process the import of a ProgrammingExercise. TODO Add more documentation
      *
-     * @param newExercise      The new exercise which should be prepared for the import
-     * @return The programming exercise ready for importing
-     */
-    public ProgrammingExercise prepareProgrammingExerciseForImport(final ProgrammingExercise newExercise) {
-
-        newExercise.setBuildAndTestStudentSubmissionsAfterDueDate(null);
-        if (newExercise.getSubmissionPolicy() != null) {
-            newExercise.getSubmissionPolicy().setId(null);
-        }
-        newExercise.setReleaseDate(null);
-        newExercise.setDueDate(null);
-        newExercise.setAssessmentDueDate(null);
-        newExercise.setExampleSolutionPublicationDate(null);
-
-        // Fetch grading criterion into exercise
-        List<GradingCriterion> gradingCriteria = gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(newExercise.getId());
-        newExercise.setGradingCriteria(gradingCriteria);
-
-        newExercise.forceNewProjectKey();
-
-        return newExercise;
-    }
-
-    /**
-     * Method to process the import of a ProgrammingExercise
-     * The {@link ProgrammingExerciseImportService#importBuildPlansForProgrammingExercise(ProgrammingExercise, ProgrammingExercise, boolean)} has to be called subsequently.
      * @param originalProgrammingExercise the Programming Exercise which should be used as a blueprint
      * @param newExercise The new exercise already containing values which should not get copied, i.e. overwritten
      * @param updateTemplate if the template files should be updated
      * @return the imported programming exercise
      */
-    @Transactional
-    public ProgrammingExercise importProgrammingExercise(final ProgrammingExercise originalProgrammingExercise, final ProgrammingExercise newExercise, boolean updateTemplate) {
+    public ProgrammingExercise importProgrammingExercise(ProgrammingExercise originalProgrammingExercise, ProgrammingExercise newExercise, boolean updateTemplate,
+            boolean recreateBuildPlans) {
         newExercise.generateAndSetProjectKey();
         programmingExerciseService.checkIfProjectExists(newExercise);
 
@@ -628,37 +598,18 @@ public class ProgrammingExerciseImportService {
             upgradeService.upgradeTemplate(importedProgrammingExercise);
         }
 
-        programmingExerciseService.scheduleOperations(importedProgrammingExercise.getId());
+        if (recreateBuildPlans) {
+            // Create completely new build plans for the exercise
+            programmingExerciseService.setupBuildPlansForNewExercise(importedProgrammingExercise);
+        }
+        else {
+            // We have removed the automatic build trigger from test to base for new programming exercises.
+            // We also remove this build trigger in the case of an import as the source exercise might still have this trigger.
+            // The importBuildPlans method includes this process
+            importBuildPlans(originalProgrammingExercise, importedProgrammingExercise);
+        }
 
+        programmingExerciseService.scheduleOperations(importedProgrammingExercise.getId());
         return importedProgrammingExercise;
     }
-
-    /**
-     * Method to import the build plans for a ProgrammingExercise
-     * @param originalProgrammingExercise the Programming Exercise which should be used as a blueprint
-     * @param importedProgrammingExercise the already imported Programming Exercise for which the build plans should be imported
-     * @param recreateBuildPlans if the build plans should be recreated
-     * @return false if an Exception was thrown, true if successful
-     */
-    public boolean importBuildPlansForProgrammingExercise(final ProgrammingExercise originalProgrammingExercise, final ProgrammingExercise importedProgrammingExercise,
-            boolean recreateBuildPlans) {
-        // Copy or recreate the build plans
-        try {
-            if (recreateBuildPlans) {
-                // Create completely new build plans for the exercise
-                programmingExerciseService.setupBuildPlansForNewExercise(importedProgrammingExercise);
-            }
-            else {
-                // We have removed the automatic build trigger from test to base for new programming exercises.
-                // We also remove this build trigger in the case of an import as the source exercise might still have this trigger.
-                // The importBuildPlans method includes this process
-                importBuildPlans(originalProgrammingExercise, importedProgrammingExercise);
-            }
-        }
-        catch (Exception e) {
-            return false;
-        }
-        return true;
-    }
-
 }
