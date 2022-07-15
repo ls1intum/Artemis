@@ -47,11 +47,11 @@ export class LearningGoalService {
     findById(learningGoalId: number, courseId: number) {
         return this.httpClient
             .get<LearningGoal>(`${this.resourceURL}/courses/${courseId}/goals/${learningGoalId}`, { observe: 'response' })
-            .pipe(map((res: EntityResponseType) => this.convertDateFromServerResponse(res)));
+            .pipe(map((res: EntityResponseType) => this.convertLectureUnitArrayResponseDateFromServer(res)));
     }
 
     create(learningGoal: LearningGoal, courseId: number): Observable<EntityResponseType> {
-        const copy = this.convertDateFromClient(learningGoal);
+        const copy = this.convertLearningGoalDatesFromClient(learningGoal);
         return this.httpClient.post<LearningGoal>(`${this.resourceURL}/courses/${courseId}/goals`, copy, { observe: 'response' });
     }
 
@@ -60,7 +60,7 @@ export class LearningGoalService {
     }
 
     update(learningGoal: LearningGoal, courseId: number): Observable<EntityResponseType> {
-        const copy = this.convertDateFromClient(learningGoal);
+        const copy = this.convertLearningGoalDatesFromClient(learningGoal);
         return this.httpClient.put(`${this.resourceURL}/courses/${courseId}/goals`, copy, { observe: 'response' });
     }
 
@@ -72,17 +72,17 @@ export class LearningGoalService {
         return this.httpClient.delete(`${this.resourceURL}/courses/${courseId}/prerequisites/${learningGoalId}`, { observe: 'response' });
     }
 
-    convertDateFromServerResponse(res: EntityResponseType): EntityResponseType {
+    convertLectureUnitArrayResponseDateFromServer(res: EntityResponseType): EntityResponseType {
         if (res.body?.lectureUnits) {
-            res.body.lectureUnits = this.lectureUnitService.convertDateArrayFromServerEntity(res.body.lectureUnits);
+            res.body.lectureUnits = this.lectureUnitService.convertLectureUnitArrayDatesFromServer(res.body.lectureUnits);
         }
         return res;
     }
 
-    convertDateFromClient(learningGoal: LearningGoal): LearningGoal {
+    convertLearningGoalDatesFromClient(learningGoal: LearningGoal): LearningGoal {
         const copy = Object.assign({}, learningGoal);
         if (copy.lectureUnits) {
-            copy.lectureUnits = this.lectureUnitService.convertDateArrayFromClient(copy.lectureUnits);
+            copy.lectureUnits = this.lectureUnitService.convertLectureUnitArrayDatesFromClient(copy.lectureUnits);
         }
         return copy;
     }

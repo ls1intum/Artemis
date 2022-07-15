@@ -124,7 +124,7 @@ public class ModelingPlagiarismDetectionService {
                         }
                     }
                     catch (IOException e) {
-                        log.error("Parsing the modeling submission " + modelingSubmission.getId() + " did throw an exception:", e);
+                        log.error("Parsing the modeling submission {} did throw an exception:", modelingSubmission.getId(), e);
                     }
 
                     processedSubmissionCount.getAndIncrement();

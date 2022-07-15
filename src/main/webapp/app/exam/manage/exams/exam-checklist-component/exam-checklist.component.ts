@@ -20,6 +20,9 @@ export class ExamChecklistComponent implements OnChanges {
     totalPoints = false;
     hasOptionalExercises = false;
     countMandatoryExercises = 0;
+    isTestExam: boolean;
+
+    examPreparationFinished: boolean;
 
     // Icons
     faEye = faEye;
@@ -31,6 +34,7 @@ export class ExamChecklistComponent implements OnChanges {
     constructor(private examChecklistService: ExamChecklistService) {}
 
     ngOnChanges() {
+        this.isTestExam = this.exam.testExam!;
         this.pointsExercisesEqual = this.examChecklistService.checkPointsExercisesEqual(this.exam);
         this.totalPoints = this.examChecklistService.checkTotalPointsMandatory(this.pointsExercisesEqual, this.exam);
         this.allGroupsContainExercise = this.examChecklistService.checkEachGroupContainsExercise(this.exam);

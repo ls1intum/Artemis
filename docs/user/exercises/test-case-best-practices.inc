@@ -401,6 +401,4 @@ Java best practices
   - The Reflection API is limited when it comes to constant attributes. Constant attributes are static final attributes
     with a primitive or ``String`` type. Java inlines such attributes during compile-time, which makes it more or less
     impossible to change the value during runtime.
-  - Interface methods are always ``public abstract``, so you shouldn't explicitly declare them as either ``public`` or
-    ``abstract``. This is especially important when creating/writing structural tests.
   - Be careful with long output, arrays or ``Strings``. This might be unreadable in Artemis or even cut of after 5000 characters.
