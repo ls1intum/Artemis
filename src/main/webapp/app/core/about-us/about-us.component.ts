@@ -33,7 +33,7 @@ export class AboutUsComponent implements OnInit {
         ['grading', {}],
         ['assessment', {}],
         ['communication', { communicationUrl: 'https://docs.artemis.ase.in.tum.de/user/communication/' }],
-        ['notifications', {}],
+        ['notifications', { notificationsURL: 'https://docs.artemis.ase.in.tum.de/user/notifications' }],
         ['teamExercises', {}],
         ['lectures', {}],
         ['integratedMarkdownEditor', {}],
